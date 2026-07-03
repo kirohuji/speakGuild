@@ -644,7 +644,7 @@ function TrainingTopicDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="flex max-h-[92vh] flex-col gap-0 p-0 sm:max-w-5xl">
+      <DialogContent className="flex max-h-[92vh] w-[calc(100vw-1.5rem)] flex-col gap-0 p-0 sm:max-w-[88rem]">
         <DialogHeader className="shrink-0 border-b border-border/70 px-6 pb-4 pt-5">
           <DialogTitle className="sr-only">{edit ? '编辑话题' : '新增话题'}</DialogTitle>
           <div className="flex flex-wrap items-start justify-between gap-3 pr-8">

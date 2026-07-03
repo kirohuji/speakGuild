@@ -41,6 +41,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
   const [local, setLocal] = useState<ChunkSubstitutionItem>(value)
   const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
   const [imageUploading, setImageUploading] = useState<string | null>(null)
+  const [aiBusy, setAiBusy] = useState<'generate' | 'hints' | 'polish' | null>(null)
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   useEffect(() => { setLocal(value) }, [value])
@@ -113,6 +114,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
     const selectedChunk = chunks.find(c => c.text === local.chunk)
     const source = selectedVocab?.word || selectedChunk?.text || local.chunk
     if (!source) { toast.error('请先输入或选择核心词/句块'); return }
+    setAiBusy('generate')
     try {
       const { post } = await import('@/lib/request')
       const res: any = await post('/practice-ai/generate-drills', {
@@ -128,12 +130,14 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         toast.success(`已生成 ${res.items.length} 道题目`)
       }
     } catch { toast.error('AI 生成失败') }
+    finally { setAiBusy(null) }
   }
 
   // AI 为所有题目生成提示
   const aiGenerateHints = async () => {
     const source = local.chunk
     if (!source) { toast.error('请先输入核心词/句块'); return }
+    setAiBusy('hints')
     try {
       const { post } = await import('@/lib/request')
       const res: any = await post('/practice-ai/generate-drills', {
@@ -151,6 +155,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         toast.success(`已为 ${res.hints.length} 道题生成提示`)
       }
     } catch { toast.error('AI 生成提示失败') }
+    finally { setAiBusy(null) }
   }
 
   // AI 润色：改进现有题目的中文提示和英文答案
@@ -158,6 +163,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
     const source = local.chunk
     if (!source) { toast.error('请先输入核心词/句块'); return }
     if (!local.items.length) { toast.error('请先添加题目'); return }
+    setAiBusy('polish')
     try {
       const { post } = await import('@/lib/request')
       const res: any = await post('/practice-ai/generate-drills', {
@@ -174,6 +180,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         toast.success(`已润色 ${res.items.length} 道题目`)
       }
     } catch { toast.error('AI 润色失败') }
+    finally { setAiBusy(null) }
   }
 
   return (
@@ -236,76 +243,91 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         <div className="flex items-center justify-between">
           <Label className="text-xs">练习题目 ({local.items.length})</Label>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerate}><Zap className="size-3" />AI 生成</Button>
-            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerateHints}><Zap className="size-3" />AI 提示</Button>
-            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiPolish} disabled={!local.items.length}><Sparkles className="size-3" />AI 润色</Button>
+            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerate} disabled={aiBusy !== null}>
+              {aiBusy === 'generate' ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
+              {aiBusy === 'generate' ? '生成中' : 'AI 生成'}
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerateHints} disabled={aiBusy !== null}>
+              {aiBusy === 'hints' ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
+              {aiBusy === 'hints' ? '提示中' : 'AI 提示'}
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiPolish} disabled={!local.items.length || aiBusy !== null}>
+              {aiBusy === 'polish' ? <Loader2 className="size-3 animate-spin" /> : <Sparkles className="size-3" />}
+              {aiBusy === 'polish' ? '润色中' : 'AI 润色'}
+            </Button>
             <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={addItem}><Plus className="size-3" />添加</Button>
           </div>
         </div>
-        {local.items.map((item, idx) => (
-          <div key={idx} className="flex gap-2 items-start">
-            <span className="mt-2 text-[10px] text-muted-foreground w-4 text-right">{idx + 1}</span>
-            <div className="flex-1 space-y-1.5">
-              <Input className="h-7 text-xs" value={item.zh} onChange={e => updateItem(idx, 'zh', e.target.value)}
-                placeholder={local.direction === 'en_to_zh' ? '中文答案...' : '中文提示...'} />
-              <div className="flex gap-1">
-                <Input className="h-7 text-xs flex-1" value={item.answer} onChange={e => updateItem(idx, 'answer', e.target.value)}
-                  placeholder={local.direction === 'en_to_zh' ? '英文原文...' : '英文答案...'} />
-                {item.audioUrl && (
-                  <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听题目音频"
-                    onClick={() => playAudioUrl(item.audioUrl)}>
-                    <Play className="size-3" />
+        <div className="overflow-x-auto pb-2">
+          <div className="flex min-w-max gap-2">
+            {local.items.map((item, idx) => (
+              <div key={idx} className="w-[21rem] shrink-0 rounded-md border border-border/60 bg-muted/10 p-2">
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <Badge variant="outline" className="text-[10px]">题 {idx + 1}</Badge>
+                  <Button variant="ghost" size="icon-sm" className="text-destructive size-6" onClick={() => removeItem(idx)}>
+                    <Trash2 className="size-3" />
                   </Button>
-                )}
-                <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成题目 TTS"
-                  disabled={!item.answer?.trim() || ttsGenerating === `item-${idx}`}
-                  onClick={() => generateItemAudio(idx)}>
-                  {ttsGenerating === `item-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
-                </Button>
-                {/* Image upload */}
-                <input
-                  ref={(el) => { fileInputRefs.current[idx] = el }}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleItemImageUpload(idx, f); e.target.value = '' }}
-                />
-                {item.imageUrl ? (
-                  <div className="relative shrink-0">
-                    <img src={item.imageUrl} alt="题目配图" className="size-7 rounded object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => removeItemImage(idx)}
-                      className="absolute -right-1 -top-1 flex size-3.5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
-                    >
-                      <X className="size-2" />
-                    </button>
+                </div>
+                <div className="space-y-1.5">
+                  <Input className="h-7 text-xs" value={item.zh} onChange={e => updateItem(idx, 'zh', e.target.value)}
+                    placeholder={local.direction === 'en_to_zh' ? '中文答案...' : '中文提示...'} />
+                  <div className="flex gap-1">
+                    <Input className="h-7 text-xs flex-1" value={item.answer} onChange={e => updateItem(idx, 'answer', e.target.value)}
+                      placeholder={local.direction === 'en_to_zh' ? '英文原文...' : '英文答案...'} />
+                    {item.audioUrl && (
+                      <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听题目音频"
+                        onClick={() => playAudioUrl(item.audioUrl)}>
+                        <Play className="size-3" />
+                      </Button>
+                    )}
+                    <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成题目 TTS"
+                      disabled={!item.answer?.trim() || ttsGenerating === `item-${idx}`}
+                      onClick={() => generateItemAudio(idx)}>
+                      {ttsGenerating === `item-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
+                    </Button>
+                    <input
+                      ref={(el) => { fileInputRefs.current[idx] = el }}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleItemImageUpload(idx, f); e.target.value = '' }}
+                    />
+                    {item.imageUrl ? (
+                      <div className="relative shrink-0">
+                        <img src={item.imageUrl} alt="题目配图" className="size-7 rounded object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeItemImage(idx)}
+                          className="absolute -right-1 -top-1 flex size-3.5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+                        >
+                          <X className="size-2" />
+                        </button>
+                      </div>
+                    ) : (
+                      <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="上传题目配图"
+                        disabled={imageUploading === `img-${idx}`}
+                        onClick={() => fileInputRefs.current[idx]?.click()}>
+                        {imageUploading === `img-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <ImageIcon className="size-3" />}
+                      </Button>
+                    )}
                   </div>
-                ) : (
-                  <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="上传题目配图"
-                    disabled={imageUploading === `img-${idx}`}
-                    onClick={() => fileInputRefs.current[idx]?.click()}>
-                    {imageUploading === `img-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <ImageIcon className="size-3" />}
-                  </Button>
-                )}
+                  <Input className="h-7 text-xs text-muted-foreground" value={item.hint ?? ''} onChange={e => updateItem(idx, 'hint', e.target.value)}
+                    placeholder="教学提示（选填）" />
+                  <WarmupItemPreview
+                    type="chunk_substitution"
+                    displayText={local.chunk}
+                    displayMeaning={local.chunkMeaning}
+                    promptZh={item.zh}
+                    answer={item.answer}
+                    imageUrl={item.imageUrl}
+                    direction={local.direction}
+                    kind={local.kind}
+                  />
+                </div>
               </div>
-              <Input className="h-7 text-xs text-muted-foreground" value={item.hint ?? ''} onChange={e => updateItem(idx, 'hint', e.target.value)}
-                placeholder="教学提示（选填）" />
-              {/* Mobile preview for this item */}
-              <WarmupItemPreview
-                type="chunk_substitution"
-                displayText={local.chunk}
-                displayMeaning={local.chunkMeaning}
-                promptZh={item.zh}
-                answer={item.answer}
-                imageUrl={item.imageUrl}
-                direction={local.direction}
-                kind={local.kind}
-              />
-            </div>
-            <Button variant="ghost" size="icon-sm" className="text-destructive h-7 w-7 mt-1" onClick={() => removeItem(idx)}><Trash2 className="size-3" /></Button>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </div>
   )

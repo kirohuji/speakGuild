@@ -44,6 +44,7 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
   // Local state for source chunk (not persisted, used for AI generation)
   const [sourceChunk, setSourceChunk] = useState('')
   const [generatingLong, setGeneratingLong] = useState(false)
+  const [decomposing, setDecomposing] = useState(false)
   const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
 
   useEffect(() => {
@@ -135,6 +136,7 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
       toast.error('请先输入完整长句或使用 AI 生成长句')
       return
     }
+    setDecomposing(true)
     try {
       const { post } = await import('@/lib/request')
       const res: any = await post('/practice-ai/generate-drills', {
@@ -149,6 +151,7 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
         toast.success(`已生成 ${res.levels.length} 级拆解`)
       }
     } catch { toast.error('AI 生成失败') }
+    finally { setDecomposing(false) }
   }
 
   return (
@@ -202,7 +205,7 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
             onClick={aiGenerateLongSentence}
             disabled={generatingLong || !sourceChunk.trim()}
           >
-            <Zap className="size-3" />
+            {generatingLong ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
             {generatingLong ? '生成中...' : 'AI 生成长句'}
           </Button>
         </div>
@@ -242,8 +245,9 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
         <div className="flex items-center justify-between">
           <Label className="text-xs">拆解层级 ({local.levels.length})</Label>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerate}>
-              <Zap className="size-3" />AI 拆解
+            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerate} disabled={decomposing || generatingLong}>
+              {decomposing ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
+              {decomposing ? '拆解中' : 'AI 拆解'}
             </Button>
             <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={addLevel}>
               <Plus className="size-3" />添加层级
@@ -255,53 +259,55 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
             输入完整长句后，点击「AI 拆解」自动生成渐进式层级。
           </p>
         )}
-        {local.levels.map((level, idx) => (
-          <div key={idx} className="space-y-2 rounded border border-border/40 bg-background/50 p-3">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-[10px]">L{level.level}</Badge>
-              <Input className="h-7 flex-1 text-xs" value={level.label}
-                onChange={e => updateLevel(idx, { label: e.target.value })} placeholder="e.g. 核心句 / 加地点 / 加原因" />
-              <Button variant="ghost" size="icon-sm" className="text-destructive h-7 w-7" onClick={() => removeLevel(idx)}><Trash2 className="size-3" /></Button>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label className="text-[10px] text-muted-foreground">英文</Label>
-                <div className="flex gap-1">
-                  <Input className="h-7 text-xs flex-1" value={level.en}
-                    onChange={e => updateLevel(idx, { en: e.target.value })} placeholder="She speaks well." />
-                  {level.audioUrl && (
-                    <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听层级音频"
-                      onClick={() => playAudioUrl(level.audioUrl)}>
-                      <Play className="size-3" />
+        <div className="overflow-x-auto pb-2">
+          <div className="flex min-w-max gap-2">
+            {local.levels.map((level, idx) => (
+              <div key={idx} className="w-[24rem] shrink-0 space-y-2 rounded border border-border/40 bg-background/50 p-3">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-[10px]">L{level.level}</Badge>
+                  <Input className="h-7 flex-1 text-xs" value={level.label}
+                    onChange={e => updateLevel(idx, { label: e.target.value })} placeholder="e.g. 核心句 / 加地点 / 加原因" />
+                  <Button variant="ghost" size="icon-sm" className="text-destructive h-7 w-7" onClick={() => removeLevel(idx)}><Trash2 className="size-3" /></Button>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">英文</Label>
+                  <div className="flex gap-1">
+                    <Input className="h-7 text-xs flex-1" value={level.en}
+                      onChange={e => updateLevel(idx, { en: e.target.value })} placeholder="She speaks well." />
+                    {level.audioUrl && (
+                      <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听层级音频"
+                        onClick={() => playAudioUrl(level.audioUrl)}>
+                        <Play className="size-3" />
+                      </Button>
+                    )}
+                    <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成层级 TTS"
+                      disabled={!level.en?.trim() || ttsGenerating === `level-${idx}`}
+                      onClick={() => generateLevelAudio(idx)}>
+                      {ttsGenerating === `level-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
                     </Button>
-                  )}
-                  <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成层级 TTS"
-                    disabled={!level.en?.trim() || ttsGenerating === `level-${idx}`}
-                    onClick={() => generateLevelAudio(idx)}>
-                    {ttsGenerating === `level-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
-                  </Button>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">中文</Label>
+                  <Input className="h-7 text-xs" value={level.zh}
+                    onChange={e => updateLevel(idx, { zh: e.target.value })} placeholder="她说得好。" />
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">高亮文本</Label>
+                    <Input className="h-7 text-xs" value={level.highlight ?? ''}
+                      onChange={e => updateLevel(idx, { highlight: e.target.value })} placeholder="e.g. at the hotel" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">提示文字</Label>
+                    <Input className="h-7 text-xs" value={level.hint ?? ''}
+                      onChange={e => updateLevel(idx, { hint: e.target.value })} placeholder="试着加入地点" />
+                  </div>
                 </div>
               </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] text-muted-foreground">中文</Label>
-                <Input className="h-7 text-xs" value={level.zh}
-                  onChange={e => updateLevel(idx, { zh: e.target.value })} placeholder="她说得好。" />
-              </div>
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label className="text-[10px] text-muted-foreground">高亮文本（新增部分）</Label>
-                <Input className="h-7 text-xs" value={level.highlight ?? ''}
-                  onChange={e => updateLevel(idx, { highlight: e.target.value })} placeholder="e.g. at the hotel" />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] text-muted-foreground">提示文字</Label>
-                <Input className="h-7 text-xs" value={level.hint ?? ''}
-                  onChange={e => updateLevel(idx, { hint: e.target.value })} placeholder="试着加入地点" />
-              </div>
-            </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </div>
   )

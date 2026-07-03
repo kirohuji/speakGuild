@@ -41,6 +41,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
   const [local, setLocal] = useState<VocabSentenceBuildingItem>(value)
   const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
   const [imageUploading, setImageUploading] = useState<string | null>(null)
+  const [aiBusy, setAiBusy] = useState<'generate' | 'hints' | null>(null)
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   useEffect(() => { setLocal(value) }, [value])
@@ -134,6 +135,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
 
   const aiGenerate = async () => {
     if (!local.vocabWord) { toast.error('请先输入核心词汇'); return }
+    setAiBusy('generate')
     try {
       const { post } = await import('@/lib/request')
       const res: any = await post('/practice-ai/generate-drills', {
@@ -152,10 +154,12 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
         toast.success(`已生成 ${res.patterns.length} 组搭配`)
       }
     } catch { toast.error('AI 生成失败') }
+    finally { setAiBusy(null) }
   }
 
   const aiGenerateHints = async () => {
     if (!local.vocabWord) { toast.error('请先输入核心词汇'); return }
+    setAiBusy('hints')
     try {
       const { post } = await import('@/lib/request')
       const allItems = local.patterns.flatMap(p => p.items)
@@ -177,6 +181,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
         toast.success(`已为 ${res.hints.length} 道题生成提示`)
       }
     } catch { toast.error('AI 生成提示失败') }
+    finally { setAiBusy(null) }
   }
 
   return (
@@ -213,8 +218,14 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
         <div className="flex items-center justify-between">
           <Label className="text-xs">句型搭配 ({local.patterns.length})</Label>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerate}><Zap className="size-3" />AI 生成</Button>
-            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerateHints}><Zap className="size-3" />AI 提示</Button>
+            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerate} disabled={aiBusy !== null}>
+              {aiBusy === 'generate' ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
+              {aiBusy === 'generate' ? '生成中' : 'AI 生成'}
+            </Button>
+            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerateHints} disabled={aiBusy !== null}>
+              {aiBusy === 'hints' ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
+              {aiBusy === 'hints' ? '提示中' : 'AI 提示'}
+            </Button>
             <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={addPattern}><Plus className="size-3" />添加句型</Button>
           </div>
         </div>
@@ -234,66 +245,72 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                 ))}
               </div>
             )}
-            {pattern.items.map((item, iIdx) => (
-              <div key={iIdx} className="flex gap-2 items-start">
-                <span className="mt-2 text-[10px] text-muted-foreground w-4 text-right">{iIdx + 1}</span>
-                <div className="flex-1 space-y-1.5">
-                  <Input className="h-7 text-xs" value={item.zh} onChange={e => updatePatternItem(pIdx, iIdx, 'zh', e.target.value)} placeholder="中文提示..." />
-                  <div className="flex gap-1">
-                    <Input className="h-7 text-xs flex-1" value={item.answer} onChange={e => updatePatternItem(pIdx, iIdx, 'answer', e.target.value)} placeholder="英文答案..." />
-                    {item.audioUrl && (
-                      <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听题目音频"
-                        onClick={() => playAudioUrl(item.audioUrl)}>
-                        <Play className="size-3" />
+            <div className="overflow-x-auto pb-2">
+              <div className="flex min-w-max gap-2">
+                {pattern.items.map((item, iIdx) => (
+                  <div key={iIdx} className="w-[21rem] shrink-0 rounded-md border border-border/60 bg-muted/10 p-2">
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      <Badge variant="outline" className="text-[10px]">题 {iIdx + 1}</Badge>
+                      <Button variant="ghost" size="icon-sm" className="text-destructive size-6" onClick={() => removePatternItem(pIdx, iIdx)}>
+                        <Trash2 className="size-3" />
                       </Button>
-                    )}
-                    <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成题目 TTS"
-                      disabled={!item.answer?.trim() || ttsGenerating === `item-${pIdx}-${iIdx}`}
-                      onClick={() => generateItemAudio(pIdx, iIdx)}>
-                      {ttsGenerating === `item-${pIdx}-${iIdx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
-                    </Button>
-                    {/* Image upload */}
-                    <input
-                    ref={(el) => { fileInputRefs.current[pIdx * 1000 + iIdx] = el }}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleItemImageUpload(pIdx, iIdx, f); e.target.value = '' }}
-                    />
-                    {item.imageUrl ? (
-                      <div className="relative shrink-0">
-                        <img src={item.imageUrl} alt="题目配图" className="size-7 rounded object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => removeItemImage(pIdx, iIdx)}
-                          className="absolute -right-1 -top-1 flex size-3.5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
-                        >
-                          <X className="size-2" />
-                        </button>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Input className="h-7 text-xs" value={item.zh} onChange={e => updatePatternItem(pIdx, iIdx, 'zh', e.target.value)} placeholder="中文提示..." />
+                      <div className="flex gap-1">
+                        <Input className="h-7 text-xs flex-1" value={item.answer} onChange={e => updatePatternItem(pIdx, iIdx, 'answer', e.target.value)} placeholder="英文答案..." />
+                        {item.audioUrl && (
+                          <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听题目音频"
+                            onClick={() => playAudioUrl(item.audioUrl)}>
+                            <Play className="size-3" />
+                          </Button>
+                        )}
+                        <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成题目 TTS"
+                          disabled={!item.answer?.trim() || ttsGenerating === `item-${pIdx}-${iIdx}`}
+                          onClick={() => generateItemAudio(pIdx, iIdx)}>
+                          {ttsGenerating === `item-${pIdx}-${iIdx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
+                        </Button>
+                        <input
+                          ref={(el) => { fileInputRefs.current[pIdx * 1000 + iIdx] = el }}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleItemImageUpload(pIdx, iIdx, f); e.target.value = '' }}
+                        />
+                        {item.imageUrl ? (
+                          <div className="relative shrink-0">
+                            <img src={item.imageUrl} alt="题目配图" className="size-7 rounded object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => removeItemImage(pIdx, iIdx)}
+                              className="absolute -right-1 -top-1 flex size-3.5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+                            >
+                              <X className="size-2" />
+                            </button>
+                          </div>
+                        ) : (
+                          <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="上传题目配图"
+                            disabled={imageUploading === `img-${pIdx}-${iIdx}`}
+                            onClick={() => fileInputRefs.current[pIdx * 1000 + iIdx]?.click()}>
+                            {imageUploading === `img-${pIdx}-${iIdx}` ? <Loader2 className="size-3 animate-spin" /> : <ImageIcon className="size-3" />}
+                          </Button>
+                        )}
                       </div>
-                    ) : (
-                      <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="上传题目配图"
-                        disabled={imageUploading === `img-${pIdx}-${iIdx}`}
-                        onClick={() => fileInputRefs.current[pIdx * 1000 + iIdx]?.click()}>
-                        {imageUploading === `img-${pIdx}-${iIdx}` ? <Loader2 className="size-3 animate-spin" /> : <ImageIcon className="size-3" />}
-                      </Button>
-                    )}
+                      <Input className="h-7 text-xs text-muted-foreground" value={item.hint ?? ''} onChange={e => updatePatternItem(pIdx, iIdx, 'hint', e.target.value)} placeholder="教学提示（选填）" />
+                      <WarmupItemPreview
+                        type="vocab_sentence_building"
+                        displayText={pattern.chunk}
+                        displayMeaning={local.vocabMeaning}
+                        promptZh={item.zh}
+                        answer={item.answer}
+                        imageUrl={item.imageUrl}
+                        direction={local.direction}
+                      />
+                    </div>
                   </div>
-                  <Input className="h-7 text-xs text-muted-foreground" value={item.hint ?? ''} onChange={e => updatePatternItem(pIdx, iIdx, 'hint', e.target.value)} placeholder="教学提示（选填）" />
-                  {/* Mobile preview for this item */}
-                  <WarmupItemPreview
-                    type="vocab_sentence_building"
-                    displayText={pattern.chunk}
-                    displayMeaning={local.vocabMeaning}
-                    promptZh={item.zh}
-                    answer={item.answer}
-                    imageUrl={item.imageUrl}
-                    direction={local.direction}
-                  />
-                </div>
-                <Button variant="ghost" size="icon-sm" className="text-destructive h-7 w-7 mt-1" onClick={() => removePatternItem(pIdx, iIdx)}><Trash2 className="size-3" /></Button>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         ))}
       </div>

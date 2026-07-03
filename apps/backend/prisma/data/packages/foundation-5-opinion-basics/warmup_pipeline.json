@@ -10,13 +10,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "我正在… · 中译英",
-          "chunk": "test",
+          "chunk": "test / study / eat",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "我每天学英语。/ 我正在备考。",
               "answer": "I study English every day. / Im studying for a test now.",
               "targetWord": "test"
+            },
+            {
+              "zh": "我平时在家吃饭。/ 我正在吃午饭。",
+              "answer": "I usually eat at home. / Im eating lunch right now.",
+              "targetWord": "eat"
+            },
+            {
+              "zh": "她每天看书。/ 她正在看书。",
+              "answer": "She reads every day. / She is reading a book right now.",
+              "targetWord": "study"
             }
           ]
         },
@@ -59,6 +69,38 @@
               "slotValues": {
                 "slot1": "eating breakfast, drinking coffee, reading a book, cooking dinner"
               }
+            },
+            {
+              "zh": "他现在正在___。",
+              "answer": "He is studying for a test right now.",
+              "pattern": "He/She is ___ right now.",
+              "slotValues": {
+                "slot1": "studying, working, sleeping, cooking"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "我正在… · 一词多句",
+          "vocabWord": "eat / study / work",
+          "vocabMeaning": "吃 / 学习 / 工作",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I usually ___. / I'm ___ing right now.",
+              "items": [
+                { "zh": "我通常在家吃饭。/ 我现在正在吃饭。", "answer": "I usually eat at home. / I'm eating right now." },
+                { "zh": "我每天晚上学习。/ 我现在正在学习。", "answer": "I study every evening. / I'm studying right now." }
+              ]
+            },
+            {
+              "chunk": "He/She ___. / Right now he/she is ___ing.",
+              "items": [
+                { "zh": "他在医院工作。/ 他现在正在工作。", "answer": "He works in a hospital. / Right now he is working." },
+                { "zh": "她早上跑步。/ 她现在正在跑步。", "answer": "She runs in the morning. / Right now she is running." }
+              ]
             }
           ]
         }
@@ -76,13 +118,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "他/她正在… · 中译英",
-          "chunk": "test",
+          "chunk": "work / sleep / run",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我每天学英语。/ 我正在备考。",
-              "answer": "I study English every day. / Im studying for a test now.",
-              "targetWord": "test"
+              "zh": "他每天上班。/ 他现在正在工作。",
+              "answer": "He works every day. / He is working right now.",
+              "targetWord": "work"
+            },
+            {
+              "zh": "宝宝每天睡很久。/ 宝宝正在睡觉。",
+              "answer": "The baby sleeps a lot. / The baby is sleeping now.",
+              "targetWord": "sleep"
+            },
+            {
+              "zh": "她早上跑步。/ 她现在正在跑步。",
+              "answer": "She runs in the morning. / She is running right now.",
+              "targetWord": "run"
             }
           ]
         },
@@ -92,18 +144,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "他/她正在… · 英译中",
-          "chunk": "lot / wait",
+          "chunk": "work / sleep / run",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "It rains a lot in summer. / Its raining outside right now.",
-              "answer": "夏天多雨。/ 外面正在下雨。",
-              "targetWord": "lot"
+              "en": "He works in a hospital. / He is working on a report now.",
+              "answer": "他在医院工作。/ 他正在写报告。",
+              "targetWord": "work"
             },
             {
-              "en": "People wait for the bus here. / People are waiting in line.",
-              "answer": "人们在这等公交。/ 人们正在排队。",
-              "targetWord": "wait"
+              "en": "The baby sleeps peacefully. / The baby is sleeping now.",
+              "answer": "宝宝睡得安稳。/ 宝宝正在睡觉。",
+              "targetWord": "sleep"
+            },
+            {
+              "en": "She runs every morning. / She is running in the park right now.",
+              "answer": "她每天早上跑步。/ 她正在公园跑步。",
+              "targetWord": "run"
             }
           ]
         },
@@ -135,6 +192,30 @@
               }
             }
           ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "他/她正在… · 一词多句",
+          "vocabWord": "work / sleep / play",
+          "vocabMeaning": "工作 / 睡觉 / 玩",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "He/She ___. / Right now he/she is ___ing.",
+              "items": [
+                { "zh": "他在办公室工作。/ 他现在正在工作。", "answer": "He works in an office. / Right now he is working." },
+                { "zh": "她教英语。/ 她现在正在教课。", "answer": "She teaches English. / Right now she is teaching." }
+              ]
+            },
+            {
+              "chunk": "They ___. / Right now they are ___ing.",
+              "items": [
+                { "zh": "孩子们每天玩。/ 他们现在正在玩。", "answer": "The children play every day. / Right now they are playing." },
+                { "zh": "宝宝每天睡很久。/ 宝宝现在正在睡觉。", "answer": "The baby sleeps a lot. / Right now the baby is sleeping." }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -150,13 +231,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "此刻场景描述 · 中译英",
-          "chunk": "lot",
+          "chunk": "rain / snow / sun",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "夏天多雨。/ 外面正在下雨。",
               "answer": "It rains a lot in summer. / Its raining outside right now.",
-              "targetWord": "lot"
+              "targetWord": "rain"
+            },
+            {
+              "zh": "冬天常下雪。/ 现在正在下雪。",
+              "answer": "It often snows in winter. / It is snowing right now.",
+              "targetWord": "snow"
+            },
+            {
+              "zh": "白天出太阳。/ 现在太阳正照着。",
+              "answer": "The sun shines during the day. / The sun is shining now.",
+              "targetWord": "sun"
             }
           ]
         },
@@ -166,13 +257,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "此刻场景描述 · 英译中",
-          "chunk": "wait",
+          "chunk": "rain / snow / wind",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "People wait for the bus here. / People are waiting in line.",
-              "answer": "人们在这等公交。/ 人们正在排队。",
-              "targetWord": "wait"
+              "en": "It rains a lot in spring. / Its raining outside now.",
+              "answer": "春天多雨。/ 外面正在下雨。",
+              "targetWord": "rain"
+            },
+            {
+              "en": "It snows in winter. / Its snowing right now.",
+              "answer": "冬天下雪。/ 现在正在下雪。",
+              "targetWord": "snow"
+            },
+            {
+              "en": "The wind blows hard. / The wind is blowing now.",
+              "answer": "风很大。/ 现在正在刮风。",
+              "targetWord": "wind"
             }
           ]
         },
@@ -231,38 +332,115 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "感官动词对比 · 中译英",
-          "chunk": "thinking",
+          "chunk": "thinking / see / look",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "她觉得是好主意。/ 她正在思考问题。",
               "answer": "She thinks its a good idea. / Shes thinking about the problem.",
               "targetWord": "thinking"
+            },
+            {
+              "zh": "我看到了小鸟。/ 我正在看窗外。",
+              "answer": "I see the birds. / Im looking out of the window.",
+              "targetWord": "see"
+            },
+            {
+              "zh": "这看起来不错。——我在看你说的那件。",
+              "answer": "This looks good. -- Im looking at the one you mentioned.",
+              "targetWord": "look"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "感官动词对比 · 英译中",
+          "chunk": "think / see / look",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "She thinks its a good idea. / She is thinking about it now.",
+              "answer": "她觉得是好主意。/ 她正在考虑。",
+              "targetWord": "think"
+            },
+            {
+              "en": "I see a car outside. / Im seeing my friends tonight.",
+              "answer": "我看到外面有辆车。/ 我今晚去见朋友。",
+              "targetWord": "see"
+            },
+            {
+              "en": "You look great today! / What are you looking at?",
+              "answer": "你今天看起来很棒！/ 你在看什么？",
+              "targetWord": "look"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "感官动词对比 · 句型",
-          "pattern": "I think ___ is ___.",
-          "patternMeaning": "我觉得___正在___。",
+          "pattern": "I think ___. (状态) / Im thinking about ___. (进行)",
+          "patternMeaning": "我觉得___。/ 我正在思考___。",
           "slots": [
-            "he",
-            "sleeping, she",
-            "working, it"
+            "she is nice the problem",
+            "he is smart the lesson",
+            "it is good the plan"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我觉得___正在___。",
-              "answer": "I think he is sleeping.",
-              "pattern": "I think ___ is ___.",
+              "zh": "我觉得___。 / 我正在思考___。",
+              "answer": "I think she is nice. / Im thinking about the problem.",
+              "pattern": "I think ___. / Im thinking about ___.",
               "slotValues": {
-                "slot1": "he",
-                "slot2": "sleeping, she",
-                "slot3": "working, it"
+                "slot1": "she is nice the problem",
+                "slot2": "he is smart the lesson"
               }
+            },
+            {
+              "zh": "我觉得___。 / 我正在思考___。",
+              "answer": "I think he is smart. / Im thinking about the lesson.",
+              "pattern": "I think ___. / Im thinking about ___.",
+              "slotValues": {
+                "slot1": "he is smart the lesson",
+                "slot2": "it is good the plan"
+              }
+            },
+            {
+              "zh": "我看到___。/ 我正在看___。",
+              "answer": "I see a bird outside. / Im looking at the birds.",
+              "pattern": "I see ___. / Im looking at ___.",
+              "slotValues": {
+                "slot1": "a bird outside the birds",
+                "slot2": "a car in the street the cars"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "感官动词对比 · 一词多句",
+          "vocabWord": "think / see / look",
+          "vocabMeaning": "思考 / 看见 / 看",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I think ___. / Im thinking about ___.",
+              "items": [
+                { "zh": "我觉得她是个好老师。/ 我正在想这节课。", "answer": "I think she is a good teacher. / Im thinking about the lesson." },
+                { "zh": "我觉得这是个好主意。/ 我正在思考这个计划。", "answer": "I think it is a good idea. / Im thinking about the plan." }
+              ]
+            },
+            {
+              "chunk": "I see ___. / Im looking at ___.",
+              "items": [
+                { "zh": "我看到外面有辆车。/ 我正在看那辆车。", "answer": "I see a car outside. / Im looking at the car." },
+                { "zh": "我看到一些鸟。/ 我正在看那些鸟。", "answer": "I see some birds. / Im looking at the birds." }
+              ]
             }
           ]
         }
@@ -280,50 +458,115 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "平时vs今天 · 中译英",
-          "chunk": "tonight",
+          "chunk": "tonight / today / week",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "我们通常在家吃。/ 我们今晚出去吃。",
               "answer": "We usually eat at home. / Were eating out tonight.",
               "targetWord": "tonight"
+            },
+            {
+              "zh": "他平时坐公交上班。/ 他今天打的。",
+              "answer": "He usually takes the bus to work. / He is taking a taxi today.",
+              "targetWord": "today"
+            },
+            {
+              "zh": "我平时走路去上学。/ 这周我骑车。",
+              "answer": "I normally walk to school. / Im riding a bike this week.",
+              "targetWord": "week"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "平时vs今天 · 英译中",
+          "chunk": "tonight / today / week",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "We usually eat at home. / Were eating out tonight.",
+              "answer": "我们通常在家吃。/ 我们今晚出去吃。",
+              "targetWord": "tonight"
+            },
+            {
+              "en": "I usually walk to school. / Im riding a bike today.",
+              "answer": "我平时走路去上学。/ 我今天骑车。",
+              "targetWord": "today"
+            },
+            {
+              "en": "He normally works in Beijing. / He is working in Shanghai this week.",
+              "answer": "他平时在北京工作。/ 他这周在上海。",
+              "targetWord": "week"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "平时vs今天 · 句型",
-          "pattern": "I usually ___",
-          "patternMeaning": " but today I'm ___.",
+          "pattern": "I usually ___ but today I'm ___.",
+          "patternMeaning": "我通常___但今天___。",
           "slots": [
-            "我通常___但今天___。"
+            "take the bus taking a taxi",
+            "eat at home eating out",
+            "walk to school riding a bike"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": " but today I'm ___.",
-              "answer": "take the bus / taking a taxi, eat at home / eating out, walk / driving",
-              "pattern": "I usually ___",
+              "zh": "我通常___但今天___。",
+              "answer": "I usually take the bus but today I'm taking a taxi.",
+              "pattern": "I usually ___ but today I'm ___.",
               "slotValues": {
-                "slot1": "我通常___但今天___。"
+                "slot1": "take the bus taking a taxi",
+                "slot2": "eat at home eating out"
               }
             },
             {
-              "zh": " but this week I'm ___.",
-              "answer": "walk to school / riding a bike, work in Beijing / working in Shanghai",
-              "pattern": "I normally ___",
+              "zh": "我通常___但今天___。",
+              "answer": "I usually eat at home but today I'm eating out.",
+              "pattern": "I usually ___ but today I'm ___.",
               "slotValues": {
-                "slot1": "我通常___但这周___。"
+                "slot1": "eat at home eating out",
+                "slot2": "walk to school riding a bike"
               }
             },
             {
-              "zh": " but I'm staying in ___ this month.",
-              "answer": "Beijing / Shanghai, London / New York, Tokyo / Osaka",
-              "pattern": "I live in ___",
+              "zh": "我通常___但这周___。",
+              "answer": "I normally walk to school but this week I'm riding a bike.",
+              "pattern": "I normally ___ but this week I'm ___.",
               "slotValues": {
-                "slot1": "我住在___但这个月待在___。"
+                "slot1": "walk to school riding a bike",
+                "slot2": "take the bus taking a taxi"
               }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "平时vs今天 · 一词多句",
+          "vocabWord": "usually / today / this week",
+          "vocabMeaning": "通常 / 今天 / 这周",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I usually ___ but today I'm ___ing.",
+              "items": [
+                { "zh": "我通常坐公交但今天打车。", "answer": "I usually take the bus but today I'm taking a taxi." },
+                { "zh": "我通常在家吃但今天出去吃。", "answer": "I usually eat at home but today I'm eating out." }
+              ]
+            },
+            {
+              "chunk": "I normally ___ but this week I'm ___ing.",
+              "items": [
+                { "zh": "我通常走路去上学但这周骑车。", "answer": "I normally walk to school but this week I'm riding a bike." },
+                { "zh": "他通常在北京工作但这周在上海。", "answer": "He normally works in Beijing but this week he's working in Shanghai." }
+              ]
             }
           ]
         }
@@ -341,13 +584,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "此刻状态 · 中译英",
-          "chunk": "lot",
+          "chunk": "tired / cold / hot",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "春天雨水多。/ 现在正在下雨。",
-              "answer": "It rains a lot in spring. / Its raining right now.",
-              "targetWord": "lot"
+              "zh": "我下班后觉得累。/ 我现在好累。",
+              "answer": "I feel tired after work. / Im feeling really tired now.",
+              "targetWord": "tired"
+            },
+            {
+              "zh": "冬天天气冷。/ 我正在觉得冷。",
+              "answer": "It is cold in winter. / Im feeling cold right now.",
+              "targetWord": "cold"
+            },
+            {
+              "zh": "夏天天气热。/ 我现在觉得热。",
+              "answer": "It is hot in summer. / Im feeling hot right now.",
+              "targetWord": "hot"
             }
           ]
         },
@@ -376,37 +629,32 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "此刻状态 · 句型",
-          "pattern": "I ___ after work",
-          "patternMeaning": " but today I'm ___ right now.",
+          "pattern": "I feel ___ after work. / Im feeling ___ right now.",
+          "patternMeaning": "我下班后___。/ 我现在___。",
           "slots": [
-            "我下班后___但此刻___。"
+            "tired tired",
+            "hungry hungry",
+            "sleepy sleepy"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": " but today I'm ___ right now.",
-              "answer": "feel tired / feeling tired, feel hungry / feeling hungry",
-              "pattern": "I ___ after work",
+              "zh": "我下班后___。/ 我现在___。",
+              "answer": "I feel tired after work. / Im feeling tired right now.",
+              "pattern": "I feel ___ after work. / Im feeling ___ right now.",
               "slotValues": {
-                "slot1": "我下班后___但此刻___。"
+                "slot1": "tired tired",
+                "slot2": "hungry hungry"
               }
             },
             {
-              "zh": "___这里___。",
-              "answer": "It rains a lot here in summer.",
-              "pattern": "It ___ here in ___.",
+              "zh": "天___了。",
+              "answer": "Its getting dark. Lets go inside.",
+              "pattern": "Its getting ___. Lets ___.",
               "slotValues": {
-                "slot1": "rains a lot",
-                "slot2": "summer, snows",
-                "slot3": "winter, gets hot"
-              }
-            },
-            {
-              "zh": "此刻正在___。",
-              "answer": "It's raining right now.",
-              "pattern": "It's ___ing right now.",
-              "slotValues": {
-                "slot1": "rain, snow, get dark, get cold"
+                "slot1": "dark go inside",
+                "slot2": "cold wear a jacket",
+                "slot3": "late go home"
               }
             },
             {
@@ -435,142 +683,90 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "近期变化 · 中译英",
-          "chunk": "normally",
+          "chunk": "normally / change / month",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "我平时走路去学校。/ 这个月我骑自行车。",
               "answer": "I normally walk to school. / Im riding a bike this month.",
               "targetWord": "normally"
+            },
+            {
+              "zh": "她平时穿工作服。/ 今天她穿裙子。",
+              "answer": "She usually wears a uniform. / Today she is wearing a dress.",
+              "targetWord": "change"
+            },
+            {
+              "zh": "我通常7点起床。/ 最近我8点起床。",
+              "answer": "I usually get up at 7. / These days Im getting up at 8.",
+              "targetWord": "month"
             }
           ]
         },
         {
-          "id": "pd_1",
-          "type": "pattern_drill",
-          "title": "近期变化 · 句型",
-          "pattern": "I usually ___",
-          "patternMeaning": " but today I'm ___.",
-          "slots": [
-            "我通常___但今天___。"
-          ],
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": " but today I'm ___.",
-              "answer": "take the bus / taking a taxi, eat at home / eating out, walk / driving",
-              "pattern": "I usually ___",
-              "slotValues": {
-                "slot1": "我通常___但今天___。"
-              }
-            },
-            {
-              "zh": " but this week I'm ___.",
-              "answer": "walk to school / riding a bike, work in Beijing / working in Shanghai",
-              "pattern": "I normally ___",
-              "slotValues": {
-                "slot1": "我通常___但这周___。"
-              }
-            },
-            {
-              "zh": " but today she's ___ing.",
-              "answer": "wears a uniform / wearing a dress, wears a suit / wearing jeans",
-              "pattern": "She ___ at work",
-              "slotValues": {
-                "slot1": "她上班___但今天___。"
-              }
-            },
-            {
-              "zh": " but today I'm ___ at ___.",
-              "answer": "get up / 7 / getting up / 8, have breakfast / 7 / having breakfast / 8",
-              "pattern": "I ___ at ___",
-              "slotValues": {
-                "slot1": "我___点___但今天___点___。"
-              }
-            },
-            {
-              "zh": " but this week we're ___ on ___.",
-              "answer": "meet / Fridays / meeting / Thursday, eat out / Saturdays / eating out / Friday",
-              "pattern": "We usually ___ on ___",
-              "slotValues": {
-                "slot1": "我们通常___但本周___。"
-              }
-            }
-          ]
-        }
-      ]
-    }
-  },
-  "双时态叙事": {
-    "outputTraining": {
-      "version": 1,
-      "enabled": true,
-      "pipeline": [
-        {
-          "id": "cs_zh_0",
+          "id": "cs_en_1",
           "type": "chunk_substitution",
           "kind": "word",
-          "direction": "zh_to_en",
-          "title": "双时态叙事 · 中译英",
-          "chunk": "thinking",
+          "direction": "en_to_zh",
+          "title": "近期变化 · 英译中",
+          "chunk": "normally / change / month",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我觉得她是好老师。/ 我正在想这节课。",
-              "answer": "I think she is a good teacher. / Right now Im thinking about the lesson.",
-              "targetWord": "thinking"
+              "en": "I normally walk to school. / Im riding a bike this month.",
+              "answer": "我平时走路去学校。/ 这个月我骑自行车。",
+              "targetWord": "normally"
+            },
+            {
+              "en": "She usually wears a uniform. / Today she is wearing a dress.",
+              "answer": "她平时穿工作服。/ 今天她穿裙子。",
+              "targetWord": "change"
+            },
+            {
+              "en": "We usually meet on Fridays. / This week we are meeting on Thursday.",
+              "answer": "我们通常周五见面。/ 这周我们周四见面。",
+              "targetWord": "month"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "pd_2",
           "type": "pattern_drill",
-          "title": "双时态叙事 · 句型",
-          "pattern": "I usually ___",
-          "patternMeaning": " but today I'm ___.",
+          "title": "近期变化 · 句型",
+          "pattern": "I usually ___ but this month I'm ___ing.",
+          "patternMeaning": "我通常___但这个月___。",
           "slots": [
-            "我通常___但今天___。"
+            "walk to school riding a bike",
+            "get up at 7 getting up at 8",
+            "eat at home eating out"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": " but today I'm ___.",
-              "answer": "take the bus / taking a taxi, eat at home / eating out, walk / driving",
-              "pattern": "I usually ___",
+              "zh": "我通常___但这个月___。",
+              "answer": "I usually walk to school but this month I'm riding a bike.",
+              "pattern": "I usually ___ but this month I'm ___ing.",
               "slotValues": {
-                "slot1": "我通常___但今天___。"
+                "slot1": "walk to school riding a bike",
+                "slot2": "get up at 7 getting up at 8"
               }
             },
             {
-              "zh": " but this week I'm ___.",
-              "answer": "walk to school / riding a bike, work in Beijing / working in Shanghai",
-              "pattern": "I normally ___",
+              "zh": "她通常___但今天___。",
+              "answer": "She usually wears a uniform but today she is wearing a dress.",
+              "pattern": "She usually ___ but today she is ___ing.",
               "slotValues": {
-                "slot1": "我通常___但这周___。"
+                "slot1": "wears a uniform wearing a dress",
+                "slot2": "takes the bus taking a taxi"
               }
             },
             {
-              "zh": " but today she's ___ing.",
-              "answer": "wears a uniform / wearing a dress, wears a suit / wearing jeans",
-              "pattern": "She ___ at work",
+              "zh": "我们通常___但这周___。",
+              "answer": "We usually meet on Fridays but this week we are meeting on Thursday.",
+              "pattern": "We usually ___ on ___ but this week we are ___ing on ___.",
               "slotValues": {
-                "slot1": "她上班___但今天___。"
-              }
-            },
-            {
-              "zh": " but today I'm ___ at ___.",
-              "answer": "get up / 7 / getting up / 8, have breakfast / 7 / having breakfast / 8",
-              "pattern": "I ___ at ___",
-              "slotValues": {
-                "slot1": "我___点___但今天___点___。"
-              }
-            },
-            {
-              "zh": " but this week we're ___ on ___.",
-              "answer": "meet / Fridays / meeting / Thursday, eat out / Saturdays / eating out / Friday",
-              "pattern": "We usually ___ on ___",
-              "slotValues": {
-                "slot1": "我们通常___但本周___。"
+                "slot1": "meet Fridays meeting Thursday",
+                "slot2": "eat out Saturdays eating out Friday"
               }
             }
           ]
@@ -589,53 +785,93 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "有时/很少/从不 · 中译英",
-          "chunk": "smoke",
+          "chunk": "smoke / always / never",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "我从不抽烟。",
               "answer": "I never smoke.",
               "targetWord": "smoke"
+            },
+            {
+              "zh": "他上班总是迟到。",
+              "answer": "He is always late for work.",
+              "targetWord": "always"
+            },
+            {
+              "zh": "我几乎不吃垃圾食品。",
+              "answer": "I rarely eat junk food.",
+              "targetWord": "never"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "有时/很少/从不 · 英译中",
+          "chunk": "always / never / sometimes",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I always get up at 7.",
+              "answer": "我总是7点起床。",
+              "targetWord": "always"
+            },
+            {
+              "en": "He never eats meat.",
+              "answer": "他从来不吃肉。",
+              "targetWord": "never"
+            },
+            {
+              "en": "I sometimes watch TV after work.",
+              "answer": "我下班后有时看电视。",
+              "targetWord": "sometimes"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "有时/很少/从不 · 句型",
-          "pattern": "I sometimes ___ after ___.",
-          "patternMeaning": "我有时在___后___。",
+          "pattern": "I ___.",
+          "patternMeaning": "我___。",
           "slots": [
-            "watch TV",
-            "work, go for a walk",
-            "dinner, read"
+            "never smoke",
+            "always get up at 7",
+            "sometimes watch TV"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我有时在___后___。",
-              "answer": "I sometimes watch TV after work.",
-              "pattern": "I sometimes ___ after ___.",
-              "slotValues": {
-                "slot1": "watch TV",
-                "slot2": "work, go for a walk",
-                "slot3": "dinner, read"
-              }
-            },
-            {
-              "zh": "我很少___。",
-              "answer": "I rarely eat junk food.",
-              "pattern": "I rarely ___.",
-              "slotValues": {
-                "slot1": "eat junk food, drink soda, watch TV, go out"
-              }
-            },
-            {
-              "zh": "我从不___。",
+              "zh": "我___。",
               "answer": "I never smoke.",
-              "pattern": "I never ___.",
+              "pattern": "I ___.",
               "slotValues": {
-                "slot1": "smoke, eat meat, drink alcohol, get up late"
+                "slot1": "never smoke",
+                "slot2": "always get up at 7",
+                "slot3": "sometimes watch TV"
+              }
+            },
+            {
+              "zh": "他___。",
+              "answer": "He is always late for work.",
+              "pattern": "He is always ___.",
+              "slotValues": {
+                "slot1": "late for work",
+                "slot2": "happy",
+                "slot3": "busy"
+              }
+            },
+            {
+              "zh": "我___在___。",
+              "answer": "I sometimes eat out on weekends.",
+              "pattern": "I sometimes ___ on ___.",
+              "slotValues": {
+                "slot1": "eat out weekends",
+                "slot2": "go hiking Sundays",
+                "slot3": "watch TV Fridays"
               }
             }
           ]
@@ -654,41 +890,87 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "have状态用法 · 中译英",
-          "chunk": "headache",
+          "chunk": "headache / have / has",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "我头疼。",
               "answer": "I have a headache.",
               "targetWord": "headache"
+            },
+            {
+              "zh": "他有一辆车。",
+              "answer": "He has a car.",
+              "targetWord": "have"
+            },
+            {
+              "zh": "她有一双蓝眼睛。",
+              "answer": "She has blue eyes.",
+              "targetWord": "has"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "have状态用法 · 英译中",
+          "chunk": "have / has / headache",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I have a car.",
+              "answer": "我有一辆车。",
+              "targetWord": "have"
+            },
+            {
+              "en": "He has two sisters.",
+              "answer": "他有两个姐妹。",
+              "targetWord": "has"
+            },
+            {
+              "en": "Do you have a headache? -- Yes, I have a bad one.",
+              "answer": "你头疼吗？——是的，头疼得厉害。",
+              "targetWord": "headache"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "have状态用法 · 句型",
-          "pattern": "I have ___. (状态，不用进行时)",
+          "pattern": "I have ___.",
           "patternMeaning": "我有___。",
           "slots": [
-            "a car, two brothers, a headache, blue eyes, a dog"
+            "a car, a headache, two brothers",
+            "blue eyes, a dog, a cold"
           ],
           "direction": "zh_to_en",
           "items": [
             {
               "zh": "我有___。",
               "answer": "I have a car.",
-              "pattern": "I have ___. (状态，不用进行时)",
+              "pattern": "I have ___.",
               "slotValues": {
-                "slot1": "a car, two brothers, a headache, blue eyes, a dog"
+                "slot1": "a car, a headache, two brothers"
               }
             },
             {
-              "zh": " 不用进行时)",
-              "answer": "a sister, a bike, a cold, brown hair, a big house",
-              "pattern": "He has ___. (状态",
+              "zh": "他有___。",
+              "answer": "He has a car.",
+              "pattern": "He has ___.",
               "slotValues": {
-                "slot1": "他有___。"
+                "slot1": "a car, a sister, a cold, blue eyes"
+              }
+            },
+            {
+              "zh": "她___吗？是的，她有___。",
+              "answer": "Does she have a dog? -- Yes, she has a small dog.",
+              "pattern": "Does she have ___? -- Yes, she has ___.",
+              "slotValues": {
+                "slot1": "a dog a small dog",
+                "slot2": "a car a red car"
               }
             }
           ]
@@ -707,18 +989,54 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "have动作用法 · 中译英",
-          "chunk": "lot",
+          "chunk": "breakfast / dinner / party",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "她有很多工作。/ 她这周很忙。",
-              "answer": "She has a lot of work. / Shes having a busy week.",
-              "targetWord": "lot"
+              "zh": "我通常吃早餐。/ 我正在吃早餐。",
+              "answer": "I usually have breakfast. / Im having breakfast now.",
+              "targetWord": "breakfast"
+            },
+            {
+              "zh": "我们通常6点吃晚餐。/ 我们正在吃晚餐。",
+              "answer": "We usually have dinner at 6. / Were having dinner now.",
+              "targetWord": "dinner"
+            },
+            {
+              "zh": "他们每周开派对。/ 他们正在开派对。",
+              "answer": "They have a party every week. / They are having a party now.",
+              "targetWord": "party"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "have动作用法 · 英译中",
+          "chunk": "breakfast / dinner / party",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "I usually have breakfast at home. / Im having breakfast now.",
+              "answer": "我通常在家吃早餐。/ 我正在吃早餐。",
+              "targetWord": "breakfast"
+            },
+            {
+              "en": "We have dinner together on Sundays. / Were having dinner now.",
+              "answer": "我们周日一起吃晚餐。/ 我们正在吃晚餐。",
+              "targetWord": "dinner"
+            },
+            {
+              "en": "They have a party tonight. / They are having a party right now.",
+              "answer": "他们今晚开派对。/ 他们正在开派对。",
+              "targetWord": "party"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "have动作用法 · 句型",
           "pattern": "I'm having ___ right now.",
@@ -737,13 +1055,23 @@
               }
             },
             {
-              "zh": "她这___正在___。",
+              "zh": "她这周正在___。",
               "answer": "She is having a busy week.",
-              "pattern": "She is having ___ this ___. (临时经历)",
+              "pattern": "She is having ___ this ___.",
               "slotValues": {
-                "slot1": "a busy",
-                "slot2": "week, a good",
-                "slot3": "day, a hard"
+                "slot1": "a busy week",
+                "slot2": "a good day",
+                "slot3": "a hard time"
+              }
+            },
+            {
+              "zh": "他们正在___。",
+              "answer": "They are having a meeting right now.",
+              "pattern": "They are having ___ right now.",
+              "slotValues": {
+                "slot1": "a meeting",
+                "slot2": "lunch",
+                "slot3": "fun"
               }
             }
           ]
@@ -762,65 +1090,90 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "get变得/收到 · 中译英",
-          "chunk": "lot",
+          "chunk": "lot / get / become",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "我上班收很多邮件。/ 我最近收到好多垃圾邮件。",
               "answer": "I get a lot of emails at work. / Im getting a lot of spam these days.",
               "targetWord": "lot"
+            },
+            {
+              "zh": "我开始累了。——我们休息一下吧。",
+              "answer": "Im getting tired. -- Lets take a break.",
+              "targetWord": "get"
+            },
+            {
+              "zh": "天黑了。——我们进去吧。",
+              "answer": "Its getting dark. -- Lets go inside.",
+              "targetWord": "become"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "get变得/收到 · 英译中",
+          "chunk": "get / become / receive",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "Im getting tired. Lets take a break.",
+              "answer": "我开始累了。我们休息一下吧。",
+              "targetWord": "get"
+            },
+            {
+              "en": "Its getting dark. Lets go inside.",
+              "answer": "天黑了。我们进去吧。",
+              "targetWord": "become"
+            },
+            {
+              "en": "I get a lot of emails every day. / Im getting too many emails lately.",
+              "answer": "我每天收很多邮件。/ 我最近收到太多邮件了。",
+              "targetWord": "receive"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "get变得/收到 · 句型",
           "pattern": "I'm getting ___. Let's ___.",
           "patternMeaning": "我开始___了。我们___吧。",
           "slots": [
-            "tired",
-            "take a break, hungry",
-            "eat something, cold"
+            "tired take a break",
+            "hungry eat something",
+            "cold go inside"
           ],
           "direction": "zh_to_en",
           "items": [
             {
               "zh": "我开始___了。我们___吧。",
-              "answer": "I'm getting tired. Let's take a break.",
-              "pattern": "I'm getting ___. Let's ___.",
+              "answer": "Im getting tired. Lets take a break.",
+              "pattern": "Im getting ___. Lets ___.",
               "slotValues": {
-                "slot1": "tired",
-                "slot2": "take a break, hungry",
-                "slot3": "eat something, cold"
+                "slot1": "tired take a break",
+                "slot2": "hungry eat something"
               }
             },
             {
               "zh": "天___了。我们___吧。",
-              "answer": "It's getting dark. Let's go inside.",
-              "pattern": "It's getting ___. Let's ___.",
+              "answer": "Its getting dark. Lets go inside.",
+              "pattern": "Its getting ___. Lets ___.",
               "slotValues": {
-                "slot1": "dark",
-                "slot2": "go inside, cold",
-                "slot3": "wear a jacket, late"
+                "slot1": "dark go inside",
+                "slot2": "cold wear a jacket"
               }
             },
             {
-              "zh": " but these days I'm getting ___.",
-              "answer": "a lot of emails / too much spam, good feedback / more requests",
-              "pattern": "I get ___ every day",
-              "slotValues": {
-                "slot1": "我每天___但这些天___。"
-              }
-            },
-            {
-              "zh": "当___时她会___。",
+              "zh": "她当___时会___。",
               "answer": "She gets angry when people are late.",
               "pattern": "She gets ___ when ___.",
               "slotValues": {
-                "slot1": "angry",
-                "slot2": "people are late, worried",
-                "slot3": "her kids are out late"
+                "slot1": "angry people are late",
+                "slot2": "worried her kids are out late"
               }
             }
           ]
@@ -839,45 +1192,91 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "get短语动词 · 中译英",
-          "chunk": "well",
+          "chunk": "well / along / up",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "他跟谁都处得好。/ 他现在处得更好了。",
               "answer": "He gets along well with everyone. / Hes getting along better now.",
               "targetWord": "well"
+            },
+            {
+              "zh": "你和新同学相处如何？——我们处得很好。",
+              "answer": "How do you get along with your new classmates? -- We get along well.",
+              "targetWord": "along"
+            },
+            {
+              "zh": "她通常7点起床。/ 她正在起床。",
+              "answer": "She usually gets up at 7. / She is getting up now.",
+              "targetWord": "up"
             }
           ]
         },
         {
-          "id": "pd_1",
+          "id": "cs_en_1",
+          "type": "chunk_substitution",
+          "kind": "word",
+          "direction": "en_to_zh",
+          "title": "get短语动词 · 英译中",
+          "chunk": "along / up / ready",
+          "chunkMeaning": "",
+          "items": [
+            {
+              "en": "He gets along well with everyone. / Hes getting along better now.",
+              "answer": "他跟谁都处得好。/ 他现在处得更好了。",
+              "targetWord": "along"
+            },
+            {
+              "en": "She gets up at 7 every day. / She is getting up right now.",
+              "answer": "她每天7点起床。/ 她正在起床。",
+              "targetWord": "up"
+            },
+            {
+              "en": "She gets ready quickly. / She is getting ready for school.",
+              "answer": "她准备得很快。/ 她正在准备上学。",
+              "targetWord": "ready"
+            }
+          ]
+        },
+        {
+          "id": "pd_2",
           "type": "pattern_drill",
           "title": "get短语动词 · 句型",
-          "pattern": "He is getting ___ with ___ (正在变得/相处)",
-          "patternMeaning": "他正在___。",
+          "pattern": "He gets along ___ with ___.",
+          "patternMeaning": "他和___相处___。",
           "slots": [
-            "better",
-            "his work, along well",
-            "his classmates, tired"
+            "well everyone",
+            "badly his boss",
+            "well his classmates"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "他正在___。",
-              "answer": "He is getting along well with his classmates.",
-              "pattern": "He is getting ___ with ___ (正在变得/相处)",
+              "zh": "他和___相处___。",
+              "answer": "He gets along well with everyone.",
+              "pattern": "He gets along ___ with ___.",
               "slotValues": {
-                "slot1": "better",
-                "slot2": "his work, along well",
-                "slot3": "his classmates, tired"
+                "slot1": "well everyone",
+                "slot2": "badly his boss"
               }
             },
             {
-              "zh": " but she usually ___.",
-              "answer": "ready / takes her time, dressed / is quick, up / gets up at 7",
-              "pattern": "Right now she's getting ___",
+              "zh": "他正在___。",
+              "answer": "He is getting up right now.",
+              "pattern": "He is getting ___ right now.",
               "slotValues": {
-                "slot1": "她正在___但她通常___。"
+                "slot1": "up",
+                "slot2": "ready",
+                "slot3": "dressed"
+              }
+            },
+            {
+              "zh": "她正在___但她通常___。",
+              "answer": "Right now shes getting ready, but she usually takes her time.",
+              "pattern": "Right now shes getting ___, but she usually ___.",
+              "slotValues": {
+                "slot1": "ready takes her time",
+                "slot2": "dressed is quick"
               }
             }
           ]
