@@ -9,8 +9,11 @@
     "dev": "pnpm --parallel -r dev",
     "dev:backend": "pnpm --filter @manyu/backend dev",
     "dev:frontend": "pnpm --filter @manyu/frontend dev",
+    "dev:company": "pnpm --filter @manyu/company dev",
     "build": "pnpm -r build",
+    "build:company": "pnpm --filter @manyu/company build",
     "lint": "pnpm -r lint",
+    "typecheck:company": "pnpm --filter @manyu/company build",
     "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {

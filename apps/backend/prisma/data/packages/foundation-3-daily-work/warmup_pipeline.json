@@ -84,6 +84,23 @@
               }
             }
           ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "他每天做什么 · 一词多句",
+          "vocabWord": "gets up / goes / eats",
+          "vocabMeaning": "起床 / 去 / 吃",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "He/She ___ at ___.",
+              "items": [
+                { "zh": "他7点起床。", "answer": "He gets up at 7." },
+                { "zh": "她6点起床。", "answer": "She gets up at 6." }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -153,6 +170,23 @@
               }
             }
           ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "工作与学习 · 一词多句",
+          "vocabWord": "works / studies / teaches",
+          "vocabMeaning": "工作 / 学习 / 教学",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "He/She works in a ___.",
+              "items": [
+                { "zh": "她在医院工作。", "answer": "She works in a hospital." },
+                { "zh": "他在学校工作。", "answer": "He works in a school." }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -168,13 +202,13 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "周末活动 · 中译英",
-          "chunk": "after",
+          "chunk": "football",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "她运动后喝水。",
-              "answer": "She drinks water after exercise.",
-              "targetWord": "after"
+              "zh": "他周末踢足球。",
+              "answer": "He plays football on weekends.",
+              "targetWord": "football"
             }
           ]
         },
@@ -184,13 +218,13 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "周末活动 · 英译中",
-          "chunk": "after",
+          "chunk": "grandparents",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "She watches TV after dinner.",
-              "answer": "她晚饭后看电视。",
-              "targetWord": "after"
+              "en": "She visits her grandparents on Sundays.",
+              "answer": "她周日去看望祖父母。",
+              "targetWord": "grandparents"
             }
           ]
         },
@@ -198,63 +232,43 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "周末活动 · 句型",
-          "pattern": "He/She gets up at ___.",
-          "patternMeaning": "他/她...点起床。",
+          "pattern": "He/She plays ___ on weekends.",
+          "patternMeaning": "他/她周末玩/做...",
           "slots": [
-            "6",
-            "7",
-            "7:30"
+            "football",
+            "basketball",
+            "games"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "他/她...点起床。",
-              "answer": "He gets up at 7.",
-              "pattern": "He/She gets up at ___.",
+              "zh": "他/她周末玩/做...",
+              "answer": "He plays football on weekends.",
+              "pattern": "He/She plays ___ on weekends.",
               "slotValues": {
-                "slot1": "6",
-                "slot2": "7",
-                "slot3": "7:30"
+                "slot1": "football",
+                "slot2": "basketball",
+                "slot3": "games"
               }
             },
             {
-              "zh": "他/她乘...去...",
-              "answer": "She goes to school by bus.",
-              "pattern": "He/She goes to ___ by ___.",
+              "zh": "他/她周日...",
+              "answer": "She visits her grandparents on Sundays.",
+              "pattern": "He/She visits ___ on Sundays.",
               "slotValues": {
-                "slot1": "school bus",
-                "slot2": "work car",
-                "slot3": "the park bike"
+                "slot1": "her grandparents",
+                "slot2": "his friends",
+                "slot3": "his uncle"
               }
             },
             {
-              "zh": "他/她在...吃...",
-              "answer": "He eats lunch at school.",
-              "pattern": "He/She eats ___ at ___.",
+              "zh": "他/她周末放松/在家。",
+              "answer": "He relaxes at home on weekends.",
+              "pattern": "He/She ___ on weekends.",
               "slotValues": {
-                "slot1": "breakfast at 7",
-                "slot2": "lunch at school",
-                "slot3": "dinner at home"
-              }
-            },
-            {
-              "zh": "他/她...后喝...",
-              "answer": "She drinks water after exercise.",
-              "pattern": "He/She drinks ___ after ___.",
-              "slotValues": {
-                "slot1": "water exercise",
-                "slot2": "juice breakfast",
-                "slot3": "milk dinner"
-              }
-            },
-            {
-              "zh": "他/她不做...",
-              "answer": "He doesn't eat junk food.",
-              "pattern": "He/She doesn't ___.",
-              "slotValues": {
-                "slot1": "eat junk food",
-                "slot2": "drink soda",
-                "slot3": "smoke"
+                "slot1": "relaxes at home",
+                "slot2": "goes out",
+                "slot3": "stays at home"
               }
             }
           ]
@@ -806,6 +820,23 @@
               }
             }
           ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "场景描述 · 一词多句",
+          "vocabWord": "look / running / picture",
+          "vocabMeaning": "看 / 跑 / 图片",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Look! The ___ is ___ing ___.",
+              "items": [
+                { "zh": "看！那个男孩在追他的狗。", "answer": "Look! The boy is running after his dog." },
+                { "zh": "看！那个女孩在跳舞。", "answer": "Look! The girl is dancing on stage." }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -853,6 +884,23 @@
                 "slot2": "the phone rang",
                 "slot3": "the car stopped"
               }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "简单故事 · 一词多句",
+          "vocabWord": "suddenly / started / rang",
+          "vocabMeaning": "突然 / 开始 / 响",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Suddenly ___. Everyone ___.",
+              "items": [
+                { "zh": "突然下雨了。大家都跑回家了。", "answer": "Suddenly it started to rain. Everyone ran home." },
+                { "zh": "突然电话响了。大家都跳了起来。", "answer": "Suddenly the phone rang. Everyone jumped." }
+              ]
             }
           ]
         }

@@ -10,7 +10,7 @@ scene_title,topic_title,category,text,meaning,difficulty,description,examples_js
 基础③·描述家人,她喜欢什么,likes to,He likes to read books.,他喜欢看书。,L1,likes+to do。,"[{""en"":""She likes to swim."",""zh"":""她喜欢游泳。""}]"
 基础③·描述家人,她不喜欢什么,doesn't like,She doesn't like cold weather.,她不喜欢冷天。,L1,doesn't like+名词。,"[{""en"":""He doesn't like spiders."",""zh"":""他不喜欢蜘蛛。""}]"
 基础③·描述家人,她不喜欢什么,doesn't like to,He doesn't like to watch TV.,他不喜欢看电视。,L1,doesn't like+to do。,"[{""en"":""She doesn't like to cook."",""zh"":""她不喜欢做饭。""}]"
-基础③·描述家人,疑问与回答,Does,Dose he like sports? Yes he does.,他喜欢运动吗？喜欢。,L1,Does...like?疑问句。,"[{""en"":""Does she like music?"",""zh"":""她喜欢音乐吗？""}]"
+基础③·描述家人,疑问与回答,Does,Does he like sports? Yes he does.,他喜欢运动吗？喜欢。,L1,Does...like?疑问句。,"[{""en"":""Does she like music?"",""zh"":""她喜欢音乐吗？""}]"
 基础③·描述家人,疑问与回答,What does,What does she like? She likes music.,她喜欢什么？她喜欢音乐。,L1,What does...like?。,"[{""en"":""What does he like?"",""zh"":""他喜欢什么？""}]"
 基础③·描述家人,家人职业,job,My mother is a nurse. She works in a hospital.,我妈妈是护士。她在医院工作。,L1,职业+地点。,"[{""en"":""My father is a doctor. He works in a hospital."",""zh"":""我爸爸是医生。他在医院工作。""}]"
 基础③·描述家人,家人习惯,always,My dad always gets up early.,我爸爸总是早起。,L1,频率副词+第三人称。,"[{""en"":""My mom always drinks tea."",""zh"":""我妈妈总是喝茶。""}]"

@@ -17,6 +17,16 @@
               "zh": "我每天早上吃早餐。",
               "answer": "I eat breakfast every morning.",
               "targetWord": "breakfast"
+            },
+            {
+              "zh": "我中午吃午饭。",
+              "answer": "I have lunch at noon.",
+              "targetWord": "lunch"
+            },
+            {
+              "zh": "我晚上吃晚饭。",
+              "answer": "I have dinner in the evening.",
+              "targetWord": "dinner"
             }
           ]
         },
@@ -26,13 +36,18 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "我每天做什么 · 英译中",
-          "chunk": "meat",
+          "chunk": "meat / coffee",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I don't eat meat.",
-              "answer": "我不吃肉。",
+              "en": "I eat meat for dinner.",
+              "answer": "我晚餐吃肉。",
               "targetWord": "meat"
+            },
+            {
+              "en": "I drink coffee in the morning.",
+              "answer": "我早上喝咖啡。",
+              "targetWord": "coffee"
             }
           ]
         },
@@ -112,6 +127,16 @@
               "zh": "我每天学英语。",
               "answer": "I study English every day.",
               "targetWord": "study"
+            },
+            {
+              "zh": "我周末踢足球。",
+              "answer": "I play football on weekends.",
+              "targetWord": "football"
+            },
+            {
+              "zh": "我早上听音乐。",
+              "answer": "I listen to music in the morning.",
+              "targetWord": "music"
             }
           ]
         },
@@ -121,13 +146,18 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "我的日常动作 · 英译中",
-          "chunk": "football",
+          "chunk": "football / music",
           "chunkMeaning": "",
           "items": [
             {
               "en": "I play football on weekends.",
               "answer": "我周末踢足球。",
               "targetWord": "football"
+            },
+            {
+              "en": "I listen to music in the car.",
+              "answer": "我在车里听音乐。",
+              "targetWord": "music"
             }
           ]
         },
@@ -187,6 +217,16 @@
               "zh": "我早上洗澡。",
               "answer": "I take a shower in the morning.",
               "targetWord": "shower"
+            },
+            {
+              "zh": "我7点起床。",
+              "answer": "I get up at 7.",
+              "targetWord": "get up"
+            },
+            {
+              "zh": "我8点出门。",
+              "answer": "I leave for work at 8.",
+              "targetWord": "leave"
             }
           ]
         },
@@ -224,6 +264,23 @@
               }
             }
           ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "起床到出门 · 一词多句",
+          "vocabWord": "shower",
+          "vocabMeaning": "淋浴",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I take a shower ___.",
+              "items": [
+                { "zh": "我早上洗澡。", "answer": "I take a shower in the morning." },
+                { "zh": "我晚上洗澡。", "answer": "I take a shower in the evening." }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -246,6 +303,16 @@
               "zh": "我晚饭后看电视。",
               "answer": "I watch TV after dinner.",
               "targetWord": "dinner"
+            },
+            {
+              "zh": "我晚上看书。",
+              "answer": "I read books at night.",
+              "targetWord": "read"
+            },
+            {
+              "zh": "我晚上11点睡觉。",
+              "answer": "I go to bed at 11 pm.",
+              "targetWord": "bed"
             }
           ]
         },
@@ -273,6 +340,23 @@
               }
             }
           ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "晚上做什么 · 一词多句",
+          "vocabWord": "watch TV / read / go to bed",
+          "vocabMeaning": "看电视 / 阅读 / 睡觉",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I ___ after dinner.",
+              "items": [
+                { "zh": "我晚饭后看电视。", "answer": "I watch TV after dinner." },
+                { "zh": "我晚饭后看书。", "answer": "I read books after dinner." }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -288,13 +372,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "几点起床 · 中译英",
-          "chunk": "bed",
+          "chunk": "bed / get up / o'clock",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "我晚上11点睡觉。",
               "answer": "I go to bed at 11 pm.",
               "targetWord": "bed"
+            },
+            {
+              "zh": "我7点起床。",
+              "answer": "I get up at 7 o'clock.",
+              "targetWord": "get up"
+            },
+            {
+              "zh": "我6点起床。",
+              "answer": "I get up at 6 o'clock.",
+              "targetWord": "clock"
             }
           ]
         },
@@ -323,63 +417,43 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "几点起床 · 句型",
-          "pattern": "I go to ___ by ___.",
-          "patternMeaning": "我乘...去...",
+          "pattern": "I get up at ___.",
+          "patternMeaning": "我...点起床。",
           "slots": [
-            "work",
-            "bus",
-            "school"
+            "7",
+            "6",
+            "8"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我乘...去...",
-              "answer": "I go to work by bus.",
-              "pattern": "I go to ___ by ___.",
+              "zh": "我...点起床。",
+              "answer": "I get up at 7 o'clock.",
+              "pattern": "I get up at ___.",
               "slotValues": {
-                "slot1": "work",
-                "slot2": "bus",
-                "slot3": "school"
+                "slot1": "7",
+                "slot2": "6",
+                "slot3": "8"
               }
             },
             {
-              "zh": "我坐...去...",
-              "answer": "I take the bus to work.",
-              "pattern": "I take the ___ to ___.",
+              "zh": "我...点吃早餐/午餐/晚餐。",
+              "answer": "I have breakfast at 7.",
+              "pattern": "I have ___ at ___.",
               "slotValues": {
-                "slot1": "bus",
-                "slot2": "school",
-                "slot3": "subway"
+                "slot1": "breakfast 7",
+                "slot2": "lunch 12",
+                "slot3": "dinner 6"
               }
             },
             {
-              "zh": "我到......",
-              "answer": "I come to school early.",
-              "pattern": "I come to ___ ___.",
+              "zh": "我...点到家/睡觉/出门。",
+              "answer": "I come home at 6 pm.",
+              "pattern": "I ___ at ___.",
               "slotValues": {
-                "slot1": "school early",
-                "slot2": "work on time",
-                "slot3": "home late"
-              }
-            },
-            {
-              "zh": "我...在...",
-              "answer": "I stay at home on Sundays.",
-              "pattern": "I stay at ___ on ___.",
-              "slotValues": {
-                "slot1": "home",
-                "slot2": "Sundays",
-                "slot3": "the office"
-              }
-            },
-            {
-              "zh": "我在...等...",
-              "answer": "I wait for the bus at the stop.",
-              "pattern": "I wait for ___ at the ___.",
-              "slotValues": {
-                "slot1": "the bus",
-                "slot2": "stop",
-                "slot3": "my friend"
+                "slot1": "come home 6 pm",
+                "slot2": "go to bed 11 pm",
+                "slot3": "leave for work 8"
               }
             }
           ]
@@ -394,9 +468,9 @@
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我很早到学校。",
-              "answer": "I come to school early.",
-              "targetWord": "early"
+              "zh": "我7点起床。",
+              "answer": "I get up at 7.",
+              "targetWord": "get up"
             }
           ]
         }
@@ -414,13 +488,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "上学/上班 · 中译英",
-          "chunk": "bed",
+          "chunk": "leave / work / school",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我晚上11点睡觉。",
-              "answer": "I go to bed at 11 pm.",
-              "targetWord": "bed"
+              "zh": "我8点去上班。",
+              "answer": "I leave for work at 8.",
+              "targetWord": "leave"
+            },
+            {
+              "zh": "我乘公交去上班。",
+              "answer": "I go to work by bus.",
+              "targetWord": "work"
+            },
+            {
+              "zh": "我走路去学校。",
+              "answer": "I walk to school.",
+              "targetWord": "school"
             }
           ]
         },
@@ -430,18 +514,18 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "上学/上班 · 英译中",
-          "chunk": "breakfast / lunch",
+          "chunk": "bus / subway",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I have breakfast at 7.",
-              "answer": "我7点吃早餐。",
-              "targetWord": "breakfast"
+              "en": "I go to work by bus.",
+              "answer": "我乘公交去上班。",
+              "targetWord": "bus"
             },
             {
-              "en": "I have lunch at 12.",
-              "answer": "我12点吃午饭。",
-              "targetWord": "lunch"
+              "en": "I take the subway to school.",
+              "answer": "我坐地铁去学校。",
+              "targetWord": "subway"
             }
           ]
         },
@@ -520,9 +604,9 @@
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我很早到学校。",
-              "answer": "I come to school early.",
-              "targetWord": "early"
+              "zh": "我准时上班。",
+              "answer": "I come to work on time.",
+              "targetWord": "on time"
             }
           ]
         }
@@ -540,13 +624,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "放学/下班后 · 中译英",
-          "chunk": "bed",
+          "chunk": "home / homework / housework",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我晚上11点睡觉。",
-              "answer": "I go to bed at 11 pm.",
-              "targetWord": "bed"
+              "zh": "我下午6点到家。",
+              "answer": "I come home at 6 pm.",
+              "targetWord": "home"
+            },
+            {
+              "zh": "我放学后做作业。",
+              "answer": "I do my homework after school.",
+              "targetWord": "homework"
+            },
+            {
+              "zh": "我下班后做家务。",
+              "answer": "I do housework after work.",
+              "targetWord": "housework"
             }
           ]
         },
@@ -556,18 +650,18 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "放学/下班后 · 英译中",
-          "chunk": "breakfast / lunch",
+          "chunk": "homework / housework",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I have breakfast at 7.",
-              "answer": "我7点吃早餐。",
-              "targetWord": "breakfast"
+              "en": "I do my homework after school.",
+              "answer": "我放学后做作业。",
+              "targetWord": "homework"
             },
             {
-              "en": "I have lunch at 12.",
-              "answer": "我12点吃午饭。",
-              "targetWord": "lunch"
+              "en": "I do housework after work.",
+              "answer": "我下班后做家务。",
+              "targetWord": "housework"
             }
           ]
         },
@@ -575,63 +669,43 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "放学/下班后 · 句型",
-          "pattern": "I go to ___ by ___.",
-          "patternMeaning": "我乘...去...",
+          "pattern": "I come home at ___.",
+          "patternMeaning": "我...点到家。",
           "slots": [
-            "work",
-            "bus",
-            "school"
+            "6 pm",
+            "5 pm",
+            "7 pm"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我乘...去...",
-              "answer": "I go to work by bus.",
-              "pattern": "I go to ___ by ___.",
+              "zh": "我...点到家。",
+              "answer": "I come home at 6 pm.",
+              "pattern": "I come home at ___.",
               "slotValues": {
-                "slot1": "work",
-                "slot2": "bus",
-                "slot3": "school"
+                "slot1": "6 pm",
+                "slot2": "5 pm",
+                "slot3": "7 pm"
               }
             },
             {
-              "zh": "我坐...去...",
-              "answer": "I take the bus to work.",
-              "pattern": "I take the ___ to ___.",
+              "zh": "我放学/下班后做...",
+              "answer": "I do my homework after school.",
+              "pattern": "I do ___ after school/work.",
               "slotValues": {
-                "slot1": "bus",
-                "slot2": "school",
-                "slot3": "subway"
+                "slot1": "my homework after school",
+                "slot2": "housework after work",
+                "slot3": "exercise after school"
               }
             },
             {
-              "zh": "我到......",
-              "answer": "I come to school early.",
-              "pattern": "I come to ___ ___.",
-              "slotValues": {
-                "slot1": "school early",
-                "slot2": "work on time",
-                "slot3": "home late"
-              }
-            },
-            {
-              "zh": "我...在...",
+              "zh": "我...待在家/休息。",
               "answer": "I stay at home on Sundays.",
               "pattern": "I stay at ___ on ___.",
               "slotValues": {
-                "slot1": "home",
-                "slot2": "Sundays",
-                "slot3": "the office"
-              }
-            },
-            {
-              "zh": "我在...等...",
-              "answer": "I wait for the bus at the stop.",
-              "pattern": "I wait for ___ at the ___.",
-              "slotValues": {
-                "slot1": "the bus",
-                "slot2": "stop",
-                "slot3": "my friend"
+                "slot1": "home on Sundays",
+                "slot2": "home on weekends",
+                "slot3": "the office on weekdays"
               }
             }
           ]
@@ -646,9 +720,9 @@
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我很早到学校。",
-              "answer": "I come to school early.",
-              "targetWord": "early"
+              "zh": "我放学后做作业。",
+              "answer": "I do my homework after school.",
+              "targetWord": "homework"
             }
           ]
         }
@@ -666,13 +740,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "时间规划 · 中译英",
-          "chunk": "bed",
+          "chunk": "wait / keys / phone",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我晚上11点睡觉。",
-              "answer": "I go to bed at 11 pm.",
-              "targetWord": "bed"
+              "zh": "我在车站等公交。",
+              "answer": "I wait for the bus at the stop.",
+              "targetWord": "wait"
+            },
+            {
+              "zh": "我在找我的钥匙。",
+              "answer": "I look for my keys.",
+              "targetWord": "keys"
+            },
+            {
+              "zh": "我在找我的手机。",
+              "answer": "I look for my phone.",
+              "targetWord": "phone"
             }
           ]
         },
@@ -682,18 +766,18 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "时间规划 · 英译中",
-          "chunk": "breakfast / lunch",
+          "chunk": "keys / phone",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I have breakfast at 7.",
-              "answer": "我7点吃早餐。",
-              "targetWord": "breakfast"
+              "en": "I look for my keys.",
+              "answer": "我在找我的钥匙。",
+              "targetWord": "keys"
             },
             {
-              "en": "I have lunch at 12.",
-              "answer": "我12点吃午饭。",
-              "targetWord": "lunch"
+              "en": "I look for my phone.",
+              "answer": "我在找我的手机。",
+              "targetWord": "phone"
             }
           ]
         },
@@ -701,55 +785,15 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "时间规划 · 句型",
-          "pattern": "I go to ___ by ___.",
-          "patternMeaning": "我乘...去...",
+          "pattern": "I wait for ___ at the ___.",
+          "patternMeaning": "我在...等...",
           "slots": [
-            "work",
-            "bus",
-            "school"
+            "the bus stop",
+            "my friend station",
+            "the train airport"
           ],
           "direction": "zh_to_en",
           "items": [
-            {
-              "zh": "我乘...去...",
-              "answer": "I go to work by bus.",
-              "pattern": "I go to ___ by ___.",
-              "slotValues": {
-                "slot1": "work",
-                "slot2": "bus",
-                "slot3": "school"
-              }
-            },
-            {
-              "zh": "我坐...去...",
-              "answer": "I take the bus to work.",
-              "pattern": "I take the ___ to ___.",
-              "slotValues": {
-                "slot1": "bus",
-                "slot2": "school",
-                "slot3": "subway"
-              }
-            },
-            {
-              "zh": "我到......",
-              "answer": "I come to school early.",
-              "pattern": "I come to ___ ___.",
-              "slotValues": {
-                "slot1": "school early",
-                "slot2": "work on time",
-                "slot3": "home late"
-              }
-            },
-            {
-              "zh": "我...在...",
-              "answer": "I stay at home on Sundays.",
-              "pattern": "I stay at ___ on ___.",
-              "slotValues": {
-                "slot1": "home",
-                "slot2": "Sundays",
-                "slot3": "the office"
-              }
-            },
             {
               "zh": "我在...等...",
               "answer": "I wait for the bus at the stop.",
@@ -758,6 +802,26 @@
                 "slot1": "the bus",
                 "slot2": "stop",
                 "slot3": "my friend"
+              }
+            },
+            {
+              "zh": "我找...",
+              "answer": "I look for my keys.",
+              "pattern": "I look for ___.",
+              "slotValues": {
+                "slot1": "my keys",
+                "slot2": "my phone",
+                "slot3": "a job"
+              }
+            },
+            {
+              "zh": "我到得...（早/晚/准时）",
+              "answer": "I come to school early.",
+              "pattern": "I come to ___ ___.",
+              "slotValues": {
+                "slot1": "school early",
+                "slot2": "work on time",
+                "slot3": "home late"
               }
             }
           ]
@@ -772,9 +836,9 @@
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我很早到学校。",
-              "answer": "I come to school early.",
-              "targetWord": "early"
+              "zh": "我在找我的钥匙。",
+              "answer": "I look for my keys.",
+              "targetWord": "keys"
             }
           ]
         }
@@ -792,13 +856,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "我想买… · 中译英",
-          "chunk": "buy",
+          "chunk": "buy / shoe / shopping",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "我想买一件新衬衫。",
               "answer": "I want to buy a new shirt.",
               "targetWord": "buy"
+            },
+            {
+              "zh": "我想买一双鞋。",
+              "answer": "I want to buy a pair of shoes.",
+              "targetWord": "shoe"
+            },
+            {
+              "zh": "我需要去购物。",
+              "answer": "I need to go shopping.",
+              "targetWord": "shopping"
             }
           ]
         },
@@ -808,7 +882,7 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "我想买… · 英译中",
-          "chunk": "shopping / size",
+          "chunk": "shopping / dress",
           "chunkMeaning": "",
           "items": [
             {
@@ -817,9 +891,9 @@
               "targetWord": "shopping"
             },
             {
-              "en": "Do you have this in a smaller size?",
-              "answer": "这个有小一号的吗？",
-              "targetWord": "size"
+              "en": "I want to buy a dress.",
+              "answer": "我想买一条裙子。",
+              "targetWord": "dress"
             }
           ]
         },
@@ -902,13 +976,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "试穿与挑选 · 中译英",
-          "chunk": "size",
+          "chunk": "size / fit / expensive",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "这个有小一号的吗？",
               "answer": "Do you have this in a smaller size?",
               "targetWord": "size"
+            },
+            {
+              "zh": "这件很合身。",
+              "answer": "This fits well.",
+              "targetWord": "fit"
+            },
+            {
+              "zh": "这个太贵了。",
+              "answer": "This is too expensive.",
+              "targetWord": "expensive"
             }
           ]
         },
@@ -946,6 +1030,23 @@
               }
             }
           ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "试穿与挑选 · 一词多句",
+          "vocabWord": "size / fit",
+          "vocabMeaning": "尺码 / 合身",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Do you have this in ___?",
+              "items": [
+                { "zh": "这个有小一号的吗？", "answer": "Do you have this in a smaller size?" },
+                { "zh": "这个有蓝色的吗？", "answer": "Do you have this in blue?" }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -961,13 +1062,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "天气与活动 · 中译英",
-          "chunk": "buy",
+          "chunk": "sunny / warm / cold",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我想买一件新衬衫。",
-              "answer": "I want to buy a new shirt.",
-              "targetWord": "buy"
+              "zh": "今天天晴。我们出去吧！",
+              "answer": "It's sunny today. Let's go out!",
+              "targetWord": "sunny"
+            },
+            {
+              "zh": "今天很暖和。",
+              "answer": "It is warm today.",
+              "targetWord": "warm"
+            },
+            {
+              "zh": "今天很冷。",
+              "answer": "It is cold today.",
+              "targetWord": "cold"
             }
           ]
         },
@@ -977,18 +1088,18 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "天气与活动 · 英译中",
-          "chunk": "shopping / size",
+          "chunk": "warm / umbrella",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I need to go shopping this weekend.",
-              "answer": "我这周末需要去购物。",
-              "targetWord": "shopping"
+              "en": "What's the weather like? It's warm and sunny.",
+              "answer": "天气怎么样？暖和晴朗。",
+              "targetWord": "warm"
             },
             {
-              "en": "Do you have this in a smaller size?",
-              "answer": "这个有小一号的吗？",
-              "targetWord": "size"
+              "en": "I need an umbrella. It's raining outside.",
+              "answer": "我需要一把伞。外面在下雨。",
+              "targetWord": "umbrella"
             }
           ]
         },
@@ -996,63 +1107,63 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "天气与活动 · 句型",
-          "pattern": "I want to buy ___.",
-          "patternMeaning": "我想买...",
+          "pattern": "It's ___ today. Let's ___.",
+          "patternMeaning": "今天...。我们...吧！",
           "slots": [
-            "a shirt",
-            "shoes",
-            "a gift"
+            "sunny go out",
+            "cold stay in",
+            "warm take a walk"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我想买...",
-              "answer": "I want to buy a new shirt.",
-              "pattern": "I want to buy ___.",
+              "zh": "今天...。我们...吧！",
+              "answer": "It's sunny today. Let's go out!",
+              "pattern": "It's ___ today. Let's ___!",
               "slotValues": {
-                "slot1": "a shirt",
-                "slot2": "shoes",
-                "slot3": "a gift"
+                "slot1": "sunny",
+                "slot2": "go out",
+                "slot3": "warm"
               }
             },
             {
-              "zh": "...多少钱？",
-              "answer": "How much is this? It is 50 yuan.",
-              "pattern": "How much is ___?",
+              "zh": "天气怎么样？...",
+              "answer": "What's the weather like? It's warm and sunny.",
+              "pattern": "What's the weather like? It's ___.",
               "slotValues": {
-                "slot1": "this",
-                "slot2": "that",
-                "slot3": "the red one"
+                "slot1": "warm and sunny",
+                "slot2": "cold and windy",
+                "slot3": "hot and humid"
               }
             },
             {
-              "zh": "这些多少钱？",
-              "answer": "How much are these? They are 100 yuan.",
-              "pattern": "How much are ___?",
+              "zh": "我每...出去...",
+              "answer": "I go out for a walk every evening.",
+              "pattern": "I go out for ___ every ___.",
               "slotValues": {
-                "slot1": "these",
-                "slot2": "those shoes",
-                "slot3": "the apples"
+                "slot1": "a walk evening",
+                "slot2": "a run morning",
+                "slot3": "a coffee afternoon"
               }
             },
             {
-              "zh": "我能试穿...吗？",
-              "answer": "Can I try this on?",
-              "pattern": "Can I try ___ on?",
+              "zh": "我们这...去...吧。",
+              "answer": "Let's go to the park this afternoon.",
+              "pattern": "Let's go to ___ this ___.",
               "slotValues": {
-                "slot1": "this jacket",
-                "slot2": "these shoes",
-                "slot3": "that dress"
+                "slot1": "the park afternoon",
+                "slot2": "the beach weekend",
+                "slot3": "the movies evening"
               }
             },
             {
-              "zh": "这个有...的吗？",
-              "answer": "Do you have this in a smaller size?",
-              "pattern": "Do you have this in ___?",
+              "zh": "我需要...因为...",
+              "answer": "I need an umbrella. It's raining outside.",
+              "pattern": "I need ___. It's ___.",
               "slotValues": {
-                "slot1": "a smaller size",
-                "slot2": "blue",
-                "slot3": "another color"
+                "slot1": "an umbrella raining",
+                "slot2": "a coat cold",
+                "slot3": "a hat sunny"
               }
             }
           ]
@@ -1071,13 +1182,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "出行计划 · 中译英",
-          "chunk": "buy",
+          "chunk": "walk / bus / subway",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "我想买一件新衬衫。",
-              "answer": "I want to buy a new shirt.",
-              "targetWord": "buy"
+              "zh": "我走路去学校。",
+              "answer": "I walk to school.",
+              "targetWord": "walk"
+            },
+            {
+              "zh": "我坐公交去上班。",
+              "answer": "I take the bus to work.",
+              "targetWord": "bus"
+            },
+            {
+              "zh": "我坐地铁去学校。",
+              "answer": "I take the subway to school.",
+              "targetWord": "subway"
             }
           ]
         },
@@ -1087,18 +1208,18 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "出行计划 · 英译中",
-          "chunk": "shopping / size",
+          "chunk": "umbrella / coat",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "I need to go shopping this weekend.",
-              "answer": "我这周末需要去购物。",
-              "targetWord": "shopping"
+              "en": "I need an umbrella. It's raining outside.",
+              "answer": "我需要一把伞。外面在下雨。",
+              "targetWord": "umbrella"
             },
             {
-              "en": "Do you have this in a smaller size?",
-              "answer": "这个有小一号的吗？",
-              "targetWord": "size"
+              "en": "I need a coat. It's cold outside.",
+              "answer": "我需要一件外套。外面很冷。",
+              "targetWord": "coat"
             }
           ]
         },
@@ -1106,63 +1227,43 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "出行计划 · 句型",
-          "pattern": "I want to buy ___.",
-          "patternMeaning": "我想买...",
+          "pattern": "I ___ to ___. It's not far.",
+          "patternMeaning": "我...去...。不远。",
           "slots": [
-            "a shirt",
-            "shoes",
-            "a gift"
+            "walk school",
+            "drive work",
+            "ride the store"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我想买...",
-              "answer": "I want to buy a new shirt.",
-              "pattern": "I want to buy ___.",
+              "zh": "我...去...。不远。",
+              "answer": "I walk to school. It's not far.",
+              "pattern": "I ___ to ___. It's not far.",
               "slotValues": {
-                "slot1": "a shirt",
-                "slot2": "shoes",
-                "slot3": "a gift"
+                "slot1": "walk",
+                "slot2": "school",
+                "slot3": "drive"
               }
             },
             {
-              "zh": "...多少钱？",
-              "answer": "How much is this? It is 50 yuan.",
-              "pattern": "How much is ___?",
+              "zh": "我每...出去...",
+              "answer": "I go out for a walk every evening.",
+              "pattern": "I go out for ___ every ___.",
               "slotValues": {
-                "slot1": "this",
-                "slot2": "that",
-                "slot3": "the red one"
+                "slot1": "a walk evening",
+                "slot2": "a run morning",
+                "slot3": "a coffee afternoon"
               }
             },
             {
-              "zh": "这些多少钱？",
-              "answer": "How much are these? They are 100 yuan.",
-              "pattern": "How much are ___?",
+              "zh": "我需要...，因为...",
+              "answer": "I need an umbrella. It's raining outside.",
+              "pattern": "I need ___. It's ___.",
               "slotValues": {
-                "slot1": "these",
-                "slot2": "those shoes",
-                "slot3": "the apples"
-              }
-            },
-            {
-              "zh": "我能试穿...吗？",
-              "answer": "Can I try this on?",
-              "pattern": "Can I try ___ on?",
-              "slotValues": {
-                "slot1": "this jacket",
-                "slot2": "these shoes",
-                "slot3": "that dress"
-              }
-            },
-            {
-              "zh": "这个有...的吗？",
-              "answer": "Do you have this in a smaller size?",
-              "pattern": "Do you have this in ___?",
-              "slotValues": {
-                "slot1": "a smaller size",
-                "slot2": "blue",
-                "slot3": "another color"
+                "slot1": "an umbrella raining",
+                "slot2": "a coat cold",
+                "slot3": "a hat sunny"
               }
             }
           ]
@@ -1181,13 +1282,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "点餐 · 中译英",
-          "chunk": "menu",
+          "chunk": "menu / order / bill",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "请给我菜单好吗？",
               "answer": "Can I have the menu please?",
               "targetWord": "menu"
+            },
+            {
+              "zh": "我想点一个披萨。",
+              "answer": "I would like to order a pizza.",
+              "targetWord": "order"
+            },
+            {
+              "zh": "请给我账单。",
+              "answer": "Can I have the bill please?",
+              "targetWord": "bill"
             }
           ]
         },
@@ -1197,13 +1308,18 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "点餐 · 英译中",
-          "chunk": "order",
+          "chunk": "order / recommend",
           "chunkMeaning": "",
           "items": [
             {
               "en": "I would like to order a pizza and a salad.",
               "answer": "我想点一个披萨和一份沙拉。",
               "targetWord": "order"
+            },
+            {
+              "en": "What do you recommend?",
+              "answer": "你有什么推荐的？",
+              "targetWord": "recommend"
             }
           ]
         },
@@ -1256,18 +1372,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "打电话与发消息 · 中译英",
-          "chunk": "menu / order",
+          "chunk": "call / message / text",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "请给我菜单好吗？",
-              "answer": "Can I have the menu please?",
-              "targetWord": "menu"
+              "zh": "我每天给妈妈打电话。",
+              "answer": "I call my mom every day.",
+              "targetWord": "call"
             },
             {
-              "zh": "我想点一个披萨和一份沙拉。",
-              "answer": "I would like to order a pizza and a salad.",
-              "targetWord": "order"
+              "zh": "我给朋友发了一条消息。",
+              "answer": "I send a message to my friend.",
+              "targetWord": "message"
+            },
+            {
+              "zh": "我给他发短信。",
+              "answer": "I text him.",
+              "targetWord": "text"
             }
           ]
         },
@@ -1302,54 +1423,14 @@
           "type": "pattern_drill",
           "title": "打电话与发消息 · 句型",
           "pattern": "Can I have ___, please?",
-          "patternMeaning": "请给我...好吗？",
+          "patternMeaning": "我每...给...打电话。",
           "slots": [
-            "the menu",
-            "a glass of water",
-            "the bill"
+            "my mom day",
+            "my friend weekend",
+            "my parents evening"
           ],
           "direction": "zh_to_en",
           "items": [
-            {
-              "zh": "请给我...好吗？",
-              "answer": "Can I have the menu please?",
-              "pattern": "Can I have ___, please?",
-              "slotValues": {
-                "slot1": "the menu",
-                "slot2": "a glass of water",
-                "slot3": "the bill"
-              }
-            },
-            {
-              "zh": "我想点...",
-              "answer": "I'd like to order a pizza and a salad.",
-              "pattern": "I'd like to order ___.",
-              "slotValues": {
-                "slot1": "a pizza",
-                "slot2": "a burger",
-                "slot3": "fried rice"
-              }
-            },
-            {
-              "zh": "你推荐什么？...",
-              "answer": "What do you recommend? The pasta is very good.",
-              "pattern": "What do you recommend? ___ is very good.",
-              "slotValues": {
-                "slot1": "the pasta",
-                "slot2": "the steak",
-                "slot3": "the fish"
-              }
-            },
-            {
-              "zh": "...很...！",
-              "answer": "The food is delicious! I love it.",
-              "pattern": "The ___ is ___!",
-              "slotValues": {
-                "slot1": "food delicious",
-                "slot2": "soup hot",
-                "slot3": "cake sweet"
-              }
-            },
             {
               "zh": "我每...给...打电话。",
               "answer": "I call my mom every day.",
@@ -1358,6 +1439,36 @@
                 "slot1": "my mom",
                 "slot2": "day",
                 "slot3": "my friend"
+              }
+            },
+            {
+              "zh": "我给...发消息。",
+              "answer": "I send a message to my friend.",
+              "pattern": "I send a message to ___.",
+              "slotValues": {
+                "slot1": "my friend",
+                "slot2": "my mom",
+                "slot3": "my boss"
+              }
+            },
+            {
+              "zh": "你能...回我电话吗？",
+              "answer": "Can you call me back later?",
+              "pattern": "Can you call me back ___?",
+              "slotValues": {
+                "slot1": "later",
+                "slot2": "tonight",
+                "slot3": "tomorrow"
+              }
+            },
+            {
+              "zh": "我现在在...",
+              "answer": "I am busy right now.",
+              "pattern": "I am ___ right now.",
+              "slotValues": {
+                "slot1": "busy",
+                "slot2": "at work",
+                "slot3": "in a meeting"
               }
             }
           ]
@@ -1369,19 +1480,19 @@
           "levels": [
             {
               "level": 1,
-              "label": "基础句",
-              "en": "Can I have the menu please?",
-              "zh": "请给我菜单好吗？",
-              "highlight": "menu",
-              "hint": "从简单开始"
+              "label": "打电话",
+              "en": "I call my mom every day.",
+              "zh": "我每天给妈妈打电话。",
+              "highlight": "call",
+              "hint": "先说打电话"
             },
             {
               "level": 2,
-              "label": "加细节",
-              "en": "I would like to order a pizza and a salad.",
-              "zh": "我想点一个披萨和一份沙拉。",
-              "highlight": "order",
-              "hint": "加信息"
+              "label": "加发消息",
+              "en": "I call my mom every day. I send a message to my friend.",
+              "zh": "我每天给妈妈打电话。我给朋友发消息。",
+              "highlight": "message",
+              "hint": "加发消息"
             }
           ]
         }
@@ -1399,13 +1510,18 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "约见面 · 中译英",
-          "chunk": "meet",
+          "chunk": "meet / later / minute",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "我们下午3点在咖啡店见面吧。",
               "answer": "Let's meet at the coffee shop at 3 pm.",
               "targetWord": "meet"
+            },
+            {
+              "zh": "我在路上了。10分钟后到。",
+              "answer": "I am on my way. I will be there in 10 minutes.",
+              "targetWord": "later"
             }
           ]
         },
@@ -1431,6 +1547,33 @@
                 "slot2": "3 pm",
                 "slot3": "the station"
               }
+            },
+            {
+              "zh": "我们...在...见面。",
+              "answer": "Let's meet at the station at 5 pm.",
+              "pattern": "Let's meet at ___ at ___.",
+              "slotValues": {
+                "slot1": "the station",
+                "slot2": "5 pm",
+                "slot3": "the park"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "约见面 · 一词多句",
+          "vocabWord": "meet / station / coffee shop",
+          "vocabMeaning": "见面 / 车站 / 咖啡店",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Let's meet at ___ at ___.",
+              "items": [
+                { "zh": "我们3点在咖啡店见吧。", "answer": "Let's meet at the coffee shop at 3 pm." },
+                { "zh": "我们5点在车站见吧。", "answer": "Let's meet at the station at 5 pm." }
+              ]
             }
           ]
         }
@@ -1448,13 +1591,18 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "迟到与道歉 · 中译英",
-          "chunk": "late",
+          "chunk": "late / traffic / sorry",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "抱歉我迟到了。路上很堵。",
               "answer": "Sorry I am late. The traffic was bad.",
               "targetWord": "late"
+            },
+            {
+              "zh": "抱歉我迟到了。公交晚了。",
+              "answer": "Sorry I am late. The bus was late.",
+              "targetWord": "traffic"
             }
           ]
         },
@@ -1480,6 +1628,33 @@
                 "slot2": "the bus late",
                 "slot3": "the alarm broken"
               }
+            },
+            {
+              "zh": "抱歉迟到。...很...",
+              "answer": "Sorry, I'm late. The bus was late.",
+              "pattern": "Sorry, I'm late. ___ was ___.",
+              "slotValues": {
+                "slot1": "the bus late",
+                "slot2": "the traffic bad",
+                "slot3": "the alarm broken"
+              }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "迟到与道歉 · 一词多句",
+          "vocabWord": "late / traffic / bus",
+          "vocabMeaning": "迟到 / 交通 / 公交",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Sorry, I'm late. ___ was ___.",
+              "items": [
+                { "zh": "抱歉我迟到了。路上很堵。", "answer": "Sorry, I'm late. The traffic was bad." },
+                { "zh": "抱歉我迟到了。公交晚了。", "answer": "Sorry, I'm late. The bus was late." }
+              ]
             }
           ]
         }
@@ -1497,13 +1672,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "否定祈使句 · 中译英",
-          "chunk": "late",
+          "chunk": "late / worry / forget",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "上课别迟到。",
               "answer": "Don't be late for class.",
               "targetWord": "late"
+            },
+            {
+              "zh": "别担心。",
+              "answer": "Don't worry.",
+              "targetWord": "worry"
+            },
+            {
+              "zh": "别忘了带书。",
+              "answer": "Don't forget to bring your book.",
+              "targetWord": "forget"
             }
           ]
         },
@@ -1541,6 +1726,23 @@
               }
             }
           ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "否定祈使句 · 一词多句",
+          "vocabWord": "don't / worry / forget",
+          "vocabMeaning": "别 / 担心 / 忘记",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Don't ___.",
+              "items": [
+                { "zh": "别担心。", "answer": "Don't worry." },
+                { "zh": "别迟到。", "answer": "Don't be late." }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -1556,13 +1758,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "Let's提议 · 中译英",
-          "chunk": "meet",
+          "chunk": "meet / go / eat",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "我们3点见吧。",
               "answer": "Let's meet at 3 o'clock.",
               "targetWord": "meet"
+            },
+            {
+              "zh": "我们走吧！",
+              "answer": "Let's go!",
+              "targetWord": "go"
+            },
+            {
+              "zh": "我们吃吧！",
+              "answer": "Let's eat!",
+              "targetWord": "eat"
             }
           ]
         },
@@ -1600,6 +1812,23 @@
               }
             }
           ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "Let's提议 · 一词多句",
+          "vocabWord": "let's / go / eat",
+          "vocabMeaning": "让我们 / 去 / 吃",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Let's ___!",
+              "items": [
+                { "zh": "我们走吧！", "answer": "Let's go!" },
+                { "zh": "我们吃吧！", "answer": "Let's eat!" }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -1615,13 +1844,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "提醒与建议 · 中译英",
-          "chunk": "late",
+          "chunk": "late / careful / quiet",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "上课别迟到。",
               "answer": "Don't be late for class.",
               "targetWord": "late"
+            },
+            {
+              "zh": "小心！",
+              "answer": "Be careful!",
+              "targetWord": "careful"
+            },
+            {
+              "zh": "请安静。",
+              "answer": "Please be quiet.",
+              "targetWord": "quiet"
             }
           ]
         },
@@ -1725,13 +1964,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "综合运用 · 中译英",
-          "chunk": "late",
+          "chunk": "late / careful / quiet",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "上课别迟到。",
               "answer": "Don't be late for class.",
               "targetWord": "late"
+            },
+            {
+              "zh": "小心！",
+              "answer": "Be careful!",
+              "targetWord": "careful"
+            },
+            {
+              "zh": "请安静。",
+              "answer": "Please be quiet.",
+              "targetWord": "quiet"
             }
           ]
         },

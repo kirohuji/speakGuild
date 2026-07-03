@@ -131,7 +131,7 @@
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "你很善良。",
+              "zh": "你很好。",
               "answer": "You are very good.",
               "targetWord": "good"
             },
@@ -148,7 +148,7 @@
             {
               "zh": "你真聪明！",
               "answer": "You are very smart!",
-              "targetWord": "good"
+              "targetWord": "smart"
             }
           ]
         },
@@ -347,6 +347,23 @@
               "hint": "加上身份信息"
             }
           ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "我的信息 · 一词多句",
+          "vocabWord": "My name is / I am from / I am a",
+          "vocabMeaning": "我叫 / 我来自 / 我是",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "My name is ___. I am from ___.",
+              "items": [
+                { "zh": "我叫李明。我来自中国。", "answer": "My name is Li Ming. I am from China." },
+                { "zh": "我叫汤姆。我来自美国。", "answer": "My name is Tom. I am from America." }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -431,7 +448,7 @@
               }
             },
             {
-              "zh": "谢谢你...",
+              "zh": "谢谢你的帮助...",
               "answer": "Thank you for your help.",
               "pattern": "Thank you for ___.",
               "slotValues": {
@@ -531,6 +548,23 @@
                 "slot1": "is",
                 "slot2": "10"
               }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "年龄与数字 · 一词多句",
+          "vocabWord": "How old / years old",
+          "vocabMeaning": "多大 / 岁",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "How old ___ you? I am ___ years old.",
+              "items": [
+                { "zh": "你多大了？我20岁。", "answer": "How old are you? I am 20 years old." },
+                { "zh": "他多大了？他10岁。", "answer": "How old is he? He is 10 years old." }
+              ]
             }
           ]
         }
@@ -728,6 +762,23 @@
               }
             }
           ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "颜色与大小 · 一词多句",
+          "vocabWord": "red / blue / green",
+          "vocabMeaning": "红色 / 蓝色 / 绿色",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "The ___ is ___.",
+              "items": [
+                { "zh": "苹果是红色的。", "answer": "The apple is red." },
+                { "zh": "包是蓝色的。", "answer": "The bag is blue." }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -917,6 +968,23 @@
               "slotValues": {
                 "slot1": "nice"
               }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "天气描述 · 一词多句",
+          "vocabWord": "sunny / hot / cold / warm",
+          "vocabMeaning": "晴天 / 热 / 冷 / 暖和",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "It is ___ today.",
+              "items": [
+                { "zh": "今天很热。", "answer": "It is very hot today." },
+                { "zh": "今天很冷。", "answer": "It is very cold today." }
+              ]
             }
           ]
         }
@@ -1252,7 +1320,7 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "职业身份 · 英译中",
-          "chunk": "student / bus / nurse",
+          "chunk": "student / doctor / nurse",
           "chunkMeaning": "",
           "items": [
             {
@@ -1261,9 +1329,9 @@
               "targetWord": "student"
             },
             {
-              "en": "The bus is red.",
-              "answer": "公交车是红色的。",
-              "targetWord": "bus"
+              "en": "He is a doctor.",
+              "answer": "他是一名医生。",
+              "targetWord": "doctor"
             },
             {
               "en": "She is a good nurse.",
@@ -2045,27 +2113,27 @@
           "levels": [
             {
               "level": 1,
-              "label": "整点",
-              "en": "It is three o'clock.",
-              "zh": "三点了。",
-              "highlight": "clock",
-              "hint": "先说整点"
+              "label": "说一个时间",
+              "en": "I get up at six o'clock.",
+              "zh": "我六点起床。",
+              "highlight": "get up",
+              "hint": "先说一个时间点"
             },
             {
               "level": 2,
-              "label": "加分钟",
-              "en": "It is half past three.",
-              "zh": "三点半了。",
-              "highlight": "half",
-              "hint": "加半点"
+              "label": "加第二个时间",
+              "en": "I get up at six o'clock. I have breakfast at seven.",
+              "zh": "我六点起床。我七点吃早餐。",
+              "highlight": "have breakfast",
+              "hint": "加上第二个时间"
             },
             {
               "level": 3,
-              "label": "综合",
-              "en": "I get up at half past six.",
-              "zh": "我六点半起床。",
-              "highlight": "past",
-              "hint": "用时间描述日常"
+              "label": "完整时间线",
+              "en": "I get up at six o'clock. I have breakfast at seven. I go to school at eight.",
+              "zh": "我六点起床。我七点吃早餐。我八点上学。",
+              "highlight": "go to school",
+              "hint": "用时间线描述早晨"
             }
           ]
         }
@@ -2172,19 +2240,19 @@
             },
             {
               "level": 2,
-              "label": "说日期",
-              "en": "It is May 1st.",
-              "zh": "今天是5月1日。",
+              "label": "加日期",
+              "en": "Today is Monday. It is May 1st.",
+              "zh": "今天是周一。是5月1日。",
               "highlight": "May",
-              "hint": "加月份和日期"
+              "hint": "加上月份和日期"
             },
             {
               "level": 3,
-              "label": "完整表达",
-              "en": "Today is Monday, May 1st.",
-              "zh": "今天是5月1日星期一。",
-              "highlight": "Monday",
-              "hint": "组合星期和日期"
+              "label": "加活动",
+              "en": "Today is Monday. It is May 1st. I have English class.",
+              "zh": "今天是周一，5月1日。我有英语课。",
+              "highlight": "class",
+              "hint": "加上活动安排"
             }
           ]
         }
@@ -2242,13 +2310,13 @@
               "targetWord": "morning"
             },
             {
-              "en": "Good afternoon!",
-              "answer": "下午好！",
+              "en": "I have lunch in the afternoon.",
+              "answer": "我下午吃午饭。",
               "targetWord": "afternoon"
             },
             {
-              "en": "Good evening!",
-              "answer": "晚上好！",
+              "en": "I watch TV in the evening.",
+              "answer": "我晚上看电视。",
               "targetWord": "evening"
             }
           ]
@@ -2370,6 +2438,23 @@
               }
             }
           ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "频率表达 · 一词多句",
+          "vocabWord": "always / never",
+          "vocabMeaning": "总是 / 从不",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I ___ eat breakfast.",
+              "items": [
+                { "zh": "我总是吃早餐。", "answer": "I always eat breakfast." },
+                { "zh": "我从不吃早餐。", "answer": "I never eat breakfast." }
+              ]
+            }
+          ]
         }
       ]
     }
@@ -2473,27 +2558,27 @@
           "levels": [
             {
               "level": 1,
-              "label": "基本需求",
+              "label": "基本想要",
               "en": "I want a coffee.",
               "zh": "我想要一杯咖啡。",
               "highlight": "want",
-              "hint": "先表达想要"
+              "hint": "先说想要什么"
             },
             {
               "level": 2,
-              "label": "礼貌表达",
-              "en": "I would like some water.",
-              "zh": "我想要一些水。",
+              "label": "礼貌加需求",
+              "en": "I want a coffee. I would like some water too.",
+              "zh": "我想要一杯咖啡。还想要一些水。",
               "highlight": "like",
-              "hint": "用would like更礼貌"
+              "hint": "用would like礼貌地加需求"
             },
             {
               "level": 3,
               "label": "表达需要",
-              "en": "I need help.",
-              "zh": "我需要帮助。",
+              "en": "I want a coffee. I would like some water too. I need a menu.",
+              "zh": "我想要一杯咖啡。还想要一些水。我需要一份菜单。",
               "highlight": "need",
-              "hint": "用need表达必须"
+              "hint": "用need表达还需要什么"
             }
           ]
         }
@@ -2589,6 +2674,23 @@
               "slotValues": {
                 "slot1": "go now"
               }
+            }
+          ]
+        },
+        {
+          "id": "vsb_1",
+          "type": "vocab_sentence_building",
+          "title": "我能/我会 · 一词多句",
+          "vocabWord": "I can / Can you",
+          "vocabMeaning": "我会 / 你能",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I can ___. Can you ___?",
+              "items": [
+                { "zh": "我会说英语。你会说英语吗？", "answer": "I can speak English. Can you speak English?" },
+                { "zh": "我会游泳。你会游泳吗？", "answer": "I can swim. Can you swim?" }
+              ]
             }
           ]
         }

@@ -112,5 +112,19 @@ services:
     ports:
       - "3605:443"
 
+  company-nginx:
+    build:
+      context: .
+      dockerfile: docker/company-nginx.Dockerfile
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
+    container_name: manyu-company-nginx
+    restart: unless-stopped
+    volumes:
+      - ${COMPANY_SSL_DEPLOY:-./ssl}:/etc/nginx/ssl:ro
+    ports:
+      - "${COMPANY_HTTP_PORT:-9081}:80"
+      - "${COMPANY_HTTPS_PORT:-9443}:443"
+
 volumes:
   postgres_data:
