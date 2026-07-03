@@ -475,7 +475,7 @@ function TrainingTopicDialog({
   chunks: Chunk[]
   vocabs: Vocabulary[]
   patterns: SentencePatternFull[]
-  onSaved: () => void
+  onSaved: (topic: TrainingTopic) => void
 }) {
   const [form, setForm] = useState<any>({})
   const [saving, setSaving] = useState(false)
@@ -628,10 +628,16 @@ function TrainingTopicDialog({
     try {
       const payload = { ...form }
       delete payload.sentencePatterns // no longer used; patternIds is the new way
-      if (edit) await updateTrainingTopic(edit.id, payload)
-      else await createTrainingTopic(payload)
+      const saved = edit ? await updateTrainingTopic(edit.id, payload) : await createTrainingTopic(payload)
+      setForm((prev: any) => ({
+        ...prev,
+        id: saved.id,
+        sceneId: saved.sceneId,
+        sortOrder: saved.sortOrder,
+      }))
+      setLastInitKey(saved.id)
       toast.success('话题已保存')
-      onSaved()
+      onSaved(saved)
     } catch { toast.error('保存失败') }
     finally { setSaving(false) }
   }
@@ -1075,6 +1081,19 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   const topicItems = getPageItems(topics, Math.min(topicPage, topicTotalPages), topicPageSize)
   const currentPackageTypeLabel = packageTypeLabel(scene?.packageType)
 
+  const handleTopicSaved = (saved: TrainingTopic) => {
+    setTopics((prev) => {
+      const existingIndex = prev.findIndex((topic) => topic.id === saved.id)
+      if (existingIndex >= 0) {
+        const next = [...prev]
+        next[existingIndex] = saved
+        return next
+      }
+      return [...prev, saved].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    })
+    setEditTopic(saved)
+  }
+
   if (loading) return (
     <div className="space-y-3">
       {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
@@ -1264,7 +1283,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
       )}
 
       <TrainingTopicDialog open={topicDialog} onClose={() => setTopicDialog(false)}
-        edit={editTopic} sceneId={sceneId} packageType={scene.packageType} chunks={chunks} vocabs={vocabs} patterns={patterns} onSaved={load} />
+        edit={editTopic} sceneId={sceneId} packageType={scene.packageType} chunks={chunks} vocabs={vocabs} patterns={patterns} onSaved={handleTopicSaved} />
       <EpisodeEditDialog
         open={storyDialog}
         onClose={() => setStoryDialog(false)}

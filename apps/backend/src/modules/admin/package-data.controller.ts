@@ -242,7 +242,25 @@ export class PackageDataController {
         warmupPipeline = JSON.parse(readFileSync(pipelinePath, 'utf-8'));
       }
 
-      // 导入 Ink 脚本（从 ink-scripts/ 子目录）
+      // 4. 查找已有场景（按包目录名推断 packageType 和场景标题）
+      const packageType = packageDirName.startsWith('daily-') ? 'daily'
+        : packageDirName.startsWith('exam-') ? 'exam'
+        : packageDirName.startsWith('story-') ? 'story'
+        : packageDirName.startsWith('course-') ? 'course'
+        : packageDirName.startsWith('foundation-') ? 'foundation'
+        : 'daily';
+
+      let sceneTitle = sceneRows[0]?.title || packageDirName;
+      const existingScene = await this.prisma.scene.findFirst({
+        where: { title: sceneTitle, packageType: packageType as any },
+      });
+
+      // 5. 如果已存在，先清空关联数据
+      if (existingScene) {
+        await this.cleanupScene(existingScene.id);
+      }
+
+      // 导入 Ink 脚本（从 ink-scripts/ 子目录）。必须在 cleanup 后执行，避免同 key 脚本被场景清理删掉。
       const inkKeyToId = new Map<string, string>();
       const inkDir = join(pkgDir, 'ink-scripts');
       if (existsSync(inkDir)) {
@@ -263,30 +281,12 @@ export class PackageDataController {
             const ink = await this.prisma.inkScript.upsert({
               where: { key },
               create: { key, title, scriptType: 'practice', inkSource: raw, inkJson: {} },
-              update: { inkSource: raw },
+              update: { title, scriptType: 'practice', inkSource: raw },
             });
             inkKeyToId.set(key, ink.id);
           }
           if (inkFiles.length > 0) console.log(`  ✓ ${inkFiles.length} 个 Ink 脚本`);
         } catch { /* no ink dir or parse error */ }
-      }
-
-      // 4. 查找已有场景（按包目录名推断 packageType 和场景标题）
-      const packageType = packageDirName.startsWith('daily-') ? 'daily'
-        : packageDirName.startsWith('exam-') ? 'exam'
-        : packageDirName.startsWith('story-') ? 'story'
-        : packageDirName.startsWith('course-') ? 'course'
-        : packageDirName.startsWith('foundation-') ? 'foundation'
-        : 'daily';
-
-      let sceneTitle = sceneRows[0]?.title || packageDirName;
-      const existingScene = await this.prisma.scene.findFirst({
-        where: { title: sceneTitle, packageType: packageType as any },
-      });
-
-      // 5. 如果已存在，先清空关联数据
-      if (existingScene) {
-        await this.cleanupScene(existingScene.id);
       }
 
       // 6. 获取场景分类

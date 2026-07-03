@@ -148,6 +148,16 @@
               "zh": "我在哪里买票？——你可以在那边的机器上买。",
               "answer": "Where do I buy a ticket? -- You can buy one at the machine over there.",
               "targetWord": "ticket"
+            },
+            {
+              "zh": "这班火车几点发车？——下午3点。",
+              "answer": "What time does this train leave? -- At 3 pm.",
+              "targetWord": "train"
+            },
+            {
+              "zh": "去上海的高铁要多久？——大约5小时。",
+              "answer": "How long does the high-speed train to Shanghai take? -- About 5 hours.",
+              "targetWord": "train"
             }
           ]
         },
@@ -157,13 +167,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "问时间与交通 · 英译中",
-          "chunk": "airport",
+          "chunk": "airport / train / ticket",
           "chunkMeaning": "",
           "items": [
             {
               "en": "How much does it cost to go to the airport? -- About 120 yuan.",
               "answer": "去机场要多少钱？——大约120元。",
               "targetWord": "airport"
+            },
+            {
+              "en": "What time does the next train leave? -- At 3:30 pm from platform 2.",
+              "answer": "下一班火车几点发车？——下午3点半，2号站台。",
+              "targetWord": "train"
+            },
+            {
+              "en": "Where can I buy a ticket? -- You can buy one online or at the station.",
+              "answer": "我在哪里可以买票？——你可以在网上买或在车站买。",
+              "targetWord": "ticket"
             }
           ]
         },
@@ -236,18 +256,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "乘坐公共交通 · 中译英",
-          "chunk": "excuse / left",
+          "chunk": "bus / train / metro",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "请问，最近的地铁站在哪里？——就在拐角处。",
-              "answer": "Excuse me, where is the nearest subway station? -- Its just around the corner.",
-              "targetWord": "excuse"
+              "zh": "坐公交车去火车站要多久？——大概30分钟。",
+              "answer": "How long does it take to get to the train station by bus? -- About 30 minutes.",
+              "targetWord": "bus"
             },
             {
-              "zh": "我怎么去博物馆？——直走在拐角左转。",
-              "answer": "How do I get to the museum? -- Go straight and turn left at the corner.",
-              "targetWord": "left"
+              "zh": "地铁票多少钱一张？——5块。",
+              "answer": "How much is a metro ticket? -- 5 yuan.",
+              "targetWord": "ticket"
+            },
+            {
+              "zh": "这趟车到市中心吗？——到的。",
+              "answer": "Does this bus go to the city center? -- Yes, it does.",
+              "targetWord": "bus"
             }
           ]
         },
@@ -257,28 +282,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "乘坐公共交通 · 英译中",
-          "chunk": "across / far / station",
+          "chunk": "line / transfer / station",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Is there a pharmacy near here? -- Yes, theres one across the street.",
-              "answer": "附近有药店吗？——有的，街对面有一家。",
-              "targetWord": "across"
+              "en": "Which line goes to the airport? -- Take Line 10 to the end.",
+              "answer": "哪条线到机场？——坐10号线到终点站。",
+              "targetWord": "line"
             },
             {
-              "en": "How far is it from here? -- Its about 10 minutes on foot.",
-              "answer": "从这里有多远？——走路大约10分钟。",
-              "targetWord": "far"
+              "en": "Do I need to transfer? -- Yes, change at the next station.",
+              "answer": "我需要换乘吗？——是的，下一站换乘。",
+              "targetWord": "transfer"
             },
             {
-              "en": "Am I going the right way to the station? -- Yes, keep going straight.",
-              "answer": "我去车站的方向对吗？——对，直走。",
+              "en": "How many stops to the train station? -- Three stops.",
+              "answer": "到火车站有几站？——三站。",
               "targetWord": "station"
-            },
-            {
-              "en": "Do you have a map? -- Sure. Let me show you.",
-              "answer": "你有地图吗？——有，我给你看。",
-              "targetWord": "map"
             }
           ]
         },
@@ -286,51 +306,61 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "乘坐公共交通 · 句型",
-          "pattern": "Where is the nearest ___?",
-          "patternMeaning": "最近的___在哪里？",
+          "pattern": "Does this ___ go to ___?",
+          "patternMeaning": "这趟___到___吗？",
           "slots": [
-            "subway station, bus stop, ATM, restroom, pharmacy, hospital"
+            "bus the city center",
+            "train Shanghai",
+            "metro the airport"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "最近的___在哪里？",
-              "answer": "Where is the nearest subway station?",
-              "pattern": "Where is the nearest ___?",
+              "zh": "这趟___到___吗？",
+              "answer": "Does this bus go to the city center?",
+              "pattern": "Does this ___ go to ___?",
               "slotValues": {
-                "slot1": "subway station, bus stop, ATM, restroom, pharmacy, hospital"
+                "slot1": "bus the city center",
+                "slot2": "train Shanghai"
               }
             },
             {
-              "zh": "___在哪里？",
-              "answer": "Where are the restrooms?",
-              "pattern": "Where are the ___?",
+              "zh": "哪趟___去___？",
+              "answer": "Which bus goes to the airport?",
+              "pattern": "Which ___ goes to ___?",
               "slotValues": {
-                "slot1": "restrooms, elevators, stairs, exits, lockers, ticket machines"
+                "slot1": "bus the airport",
+                "slot2": "train Beijing"
               }
             },
             {
-              "zh": "我怎么去___？",
-              "answer": "How do I get to the museum?",
-              "pattern": "How do I get to ___?",
+              "zh": "___需要多久？",
+              "answer": "How long does it take by bus?",
+              "pattern": "How long does it take by ___?",
               "slotValues": {
-                "slot1": "the museum, the airport, the train station, the city center, your hotel"
+                "slot1": "bus",
+                "slot2": "train",
+                "slot3": "metro"
               }
             },
             {
-              "zh": "附近有___吗？",
-              "answer": "Is there a pharmacy near here?",
-              "pattern": "Is there a ___ near here?",
+              "zh": "___多少钱？",
+              "answer": "How much is a bus ticket?",
+              "pattern": "How much is a ___ ticket?",
               "slotValues": {
-                "slot1": "pharmacy, supermarket, post office, park, bank, coffee shop"
+                "slot1": "bus",
+                "slot2": "train",
+                "slot3": "metro"
               }
             },
             {
-              "zh": "___离这里多远？",
-              "answer": "How far is it from here?",
-              "pattern": "How far is ___ from here?",
+              "zh": "到___有几站？",
+              "answer": "How many stops to the airport?",
+              "pattern": "How many stops to ___?",
               "slotValues": {
-                "slot1": "the airport, your hotel, the beach, downtown, the hospital"
+                "slot1": "the airport",
+                "slot2": "the train station",
+                "slot3": "downtown"
               }
             }
           ]
@@ -343,18 +373,18 @@
             {
               "level": 1,
               "label": "基础句",
-              "en": "Excuse me, where is the nearest subway station? -- Its just around the corner.",
-              "zh": "请问，最近的地铁站在哪里？——就在拐角处。",
-              "highlight": "excuse",
-              "hint": "从简单开始"
+              "en": "How long does it take to get to the train station by bus? -- About 30 minutes.",
+              "zh": "坐公交车去火车站要多久？——大概30分钟。",
+              "highlight": "bus",
+              "hint": "从交通工具开始"
             },
             {
               "level": 2,
               "label": "加细节",
-              "en": "How do I get to the museum? -- Go straight and turn left at the corner.",
-              "zh": "我怎么去博物馆？——直走在拐角左转。",
-              "highlight": "left",
-              "hint": "加信息"
+              "en": "Where do I get off? -- Get off at the third stop.",
+              "zh": "我在哪里下车？——第三站下车。",
+              "highlight": "stop",
+              "hint": "加下车地点"
             }
           ]
         }
@@ -372,18 +402,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "问方向与距离 · 中译英",
-          "chunk": "excuse / left",
+          "chunk": "right / straight / corner",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "请问，最近的地铁站在哪里？——就在拐角处。",
-              "answer": "Excuse me, where is the nearest subway station? -- Its just around the corner.",
-              "targetWord": "excuse"
+              "zh": "请问，这附近有银行吗？——有的，就在右边。",
+              "answer": "Excuse me, is there a bank near here? -- Yes, its on the right.",
+              "targetWord": "right"
             },
             {
-              "zh": "我怎么去博物馆？——直走在拐角左转。",
-              "answer": "How do I get to the museum? -- Go straight and turn left at the corner.",
-              "targetWord": "left"
+              "zh": "去邮局怎么走？——一直走到红绿灯右转。",
+              "answer": "How do I get to the post office? -- Go straight to the traffic light and turn right.",
+              "targetWord": "straight"
+            },
+            {
+              "zh": "超市离这里远吗？——不远，拐角就是。",
+              "answer": "Is the supermarket far from here? -- No, its just around the corner.",
+              "targetWord": "corner"
             }
           ]
         },
@@ -393,28 +428,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "问方向与距离 · 英译中",
-          "chunk": "across / far / station",
+          "chunk": "block / minute / near",
           "chunkMeaning": "",
           "items": [
             {
+              "en": "Its about two blocks away. -- Is that far? -- No, just 5 minutes walk.",
+              "answer": "大概两个街区远。——远吗？——不远，走路5分钟。",
+              "targetWord": "block"
+            },
+            {
+              "en": "How far is the park from here? -- Its only 10 minutes by bike.",
+              "answer": "公园离这里多远？——骑自行车只要10分钟。",
+              "targetWord": "minute"
+            },
+            {
               "en": "Is there a pharmacy near here? -- Yes, theres one across the street.",
               "answer": "附近有药店吗？——有的，街对面有一家。",
-              "targetWord": "across"
-            },
-            {
-              "en": "How far is it from here? -- Its about 10 minutes on foot.",
-              "answer": "从这里有多远？——走路大约10分钟。",
-              "targetWord": "far"
-            },
-            {
-              "en": "Am I going the right way to the station? -- Yes, keep going straight.",
-              "answer": "我去车站的方向对吗？——对，直走。",
-              "targetWord": "station"
-            },
-            {
-              "en": "Do you have a map? -- Sure. Let me show you.",
-              "answer": "你有地图吗？——有，我给你看。",
-              "targetWord": "map"
+              "targetWord": "near"
             }
           ]
         },
@@ -422,51 +452,62 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "问方向与距离 · 句型",
-          "pattern": "Where is the nearest ___?",
-          "patternMeaning": "最近的___在哪里？",
+          "pattern": "How far is ___ from here?",
+          "patternMeaning": "___离这里有多远？",
           "slots": [
-            "subway station, bus stop, ATM, restroom, pharmacy, hospital"
+            "the park 5 minutes walk",
+            "the supermarket 2 blocks away",
+            "the airport 30 minutes drive"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "最近的___在哪里？",
-              "answer": "Where is the nearest subway station?",
-              "pattern": "Where is the nearest ___?",
+              "zh": "___离这里有多远？",
+              "answer": "How far is the park from here? -- Its only 5 minutes walk.",
+              "pattern": "How far is ___ from here? -- Its ___.",
               "slotValues": {
-                "slot1": "subway station, bus stop, ATM, restroom, pharmacy, hospital"
+                "slot1": "the park 5 minutes walk",
+                "slot2": "the supermarket 2 blocks"
+              }
+            },
+            {
+              "zh": "去___怎么走？",
+              "answer": "How do I get to the post office? -- Go straight and turn right.",
+              "pattern": "How do I get to ___? -- ___.",
+              "slotValues": {
+                "slot1": "the post office Go straight and turn right",
+                "slot2": "the museum take the subway",
+                "slot3": "your hotel go straight for 2 blocks"
+              }
+            },
+            {
+              "zh": "这附近有___吗？",
+              "answer": "Is there a bank near here? -- Yes, its on the right.",
+              "pattern": "Is there a ___ near here? -- ___.",
+              "slotValues": {
+                "slot1": "bank its on the right",
+                "slot2": "hotel go straight",
+                "slot3": "restaurant its on the corner"
               }
             },
             {
               "zh": "___在哪里？",
-              "answer": "Where are the restrooms?",
-              "pattern": "Where are the ___?",
+              "answer": "Where is the nearest restroom? -- Go straight, its on your left.",
+              "pattern": "Where is the nearest ___? -- ___.",
               "slotValues": {
-                "slot1": "restrooms, elevators, stairs, exits, lockers, ticket machines"
+                "slot1": "restroom go straight",
+                "slot2": "ATM go to the second floor",
+                "slot3": "exit go straight and turn left"
               }
             },
             {
-              "zh": "我怎么去___？",
-              "answer": "How do I get to the museum?",
-              "pattern": "How do I get to ___?",
+              "zh": "___要走多远？",
+              "answer": "How long does it take to walk to the station? -- About 15 minutes.",
+              "pattern": "How long does it take to walk to ___? -- ___.",
               "slotValues": {
-                "slot1": "the museum, the airport, the train station, the city center, your hotel"
-              }
-            },
-            {
-              "zh": "附近有___吗？",
-              "answer": "Is there a pharmacy near here?",
-              "pattern": "Is there a ___ near here?",
-              "slotValues": {
-                "slot1": "pharmacy, supermarket, post office, park, bank, coffee shop"
-              }
-            },
-            {
-              "zh": "___离这里多远？",
-              "answer": "How far is it from here?",
-              "pattern": "How far is ___ from here?",
-              "slotValues": {
-                "slot1": "the airport, your hotel, the beach, downtown, the hospital"
+                "slot1": "the station about 15 minutes",
+                "slot2": "the park 10 minutes",
+                "slot3": "the bus stop 5 minutes"
               }
             }
           ]
@@ -479,18 +520,18 @@
             {
               "level": 1,
               "label": "基础句",
-              "en": "Excuse me, where is the nearest subway station? -- Its just around the corner.",
-              "zh": "请问，最近的地铁站在哪里？——就在拐角处。",
-              "highlight": "excuse",
-              "hint": "从简单开始"
+              "en": "Excuse me, is there a bank near here? -- Yes, its on the right.",
+              "zh": "请问，这附近有银行吗？——有的，就在右边。",
+              "highlight": "right",
+              "hint": "从问方向开始"
             },
             {
               "level": 2,
-              "label": "加细节",
-              "en": "How do I get to the museum? -- Go straight and turn left at the corner.",
-              "zh": "我怎么去博物馆？——直走在拐角左转。",
-              "highlight": "left",
-              "hint": "加信息"
+              "label": "加距离",
+              "en": "How far is the park from here? -- Its only 5 minutes walk.",
+              "zh": "公园离这里多远？——走路5分钟。",
+              "highlight": "minute",
+              "hint": "加上距离信息"
             }
           ]
         }
@@ -508,18 +549,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "打车与接送 · 中译英",
-          "chunk": "excuse / left",
+          "chunk": "taxi / meter / ride",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "请问，最近的地铁站在哪里？——就在拐角处。",
-              "answer": "Excuse me, where is the nearest subway station? -- Its just around the corner.",
-              "targetWord": "excuse"
+              "zh": "请帮我打辆车。——好的，马上到。",
+              "answer": "Please call a taxi for me. -- Sure, its coming right away.",
+              "targetWord": "taxi"
             },
             {
-              "zh": "我怎么去博物馆？——直走在拐角左转。",
-              "answer": "How do I get to the museum? -- Go straight and turn left at the corner.",
-              "targetWord": "left"
+              "zh": "去机场打表大概多少钱？——大概150块。",
+              "answer": "How much is it to the airport by meter? -- About 150 yuan.",
+              "targetWord": "meter"
+            },
+            {
+              "zh": "能帮我拿一下行李吗？——好的，没问题。",
+              "answer": "Can you help me with my luggage? -- Sure, no problem.",
+              "targetWord": "ride"
             }
           ]
         },
@@ -529,28 +575,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "打车与接送 · 英译中",
-          "chunk": "across / far / station",
+          "chunk": "airport / luggage / ride",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Is there a pharmacy near here? -- Yes, theres one across the street.",
-              "answer": "附近有药店吗？——有的，街对面有一家。",
-              "targetWord": "across"
+              "en": "How much is a taxi to the airport? -- It depends on traffic.",
+              "answer": "打车去机场多少钱？——看交通情况。",
+              "targetWord": "airport"
             },
             {
-              "en": "How far is it from here? -- Its about 10 minutes on foot.",
-              "answer": "从这里有多远？——走路大约10分钟。",
-              "targetWord": "far"
+              "en": "Could you put my luggage in the trunk? -- Of course.",
+              "answer": "能把我的行李放后备箱吗？——当然。",
+              "targetWord": "luggage"
             },
             {
-              "en": "Am I going the right way to the station? -- Yes, keep going straight.",
-              "answer": "我去车站的方向对吗？——对，直走。",
-              "targetWord": "station"
-            },
-            {
-              "en": "Do you have a map? -- Sure. Let me show you.",
-              "answer": "你有地图吗？——有，我给你看。",
-              "targetWord": "map"
+              "en": "Please take me to this address. -- Sure, get in please.",
+              "answer": "请送我到这个地址。——好的，请上车。",
+              "targetWord": "ride"
             }
           ]
         },
@@ -558,51 +599,60 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "打车与接送 · 句型",
-          "pattern": "Where is the nearest ___?",
-          "patternMeaning": "最近的___在哪里？",
+          "pattern": "Please take me to ___.",
+          "patternMeaning": "请送我到___。",
           "slots": [
-            "subway station, bus stop, ATM, restroom, pharmacy, hospital"
+            "the airport, this address, the train station, the hospital",
+            "the hotel, the mall, the park"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "最近的___在哪里？",
-              "answer": "Where is the nearest subway station?",
-              "pattern": "Where is the nearest ___?",
+              "zh": "请送我到___。",
+              "answer": "Please take me to the airport.",
+              "pattern": "Please take me to ___.",
               "slotValues": {
-                "slot1": "subway station, bus stop, ATM, restroom, pharmacy, hospital"
+                "slot1": "the airport, this address, the train station"
               }
             },
             {
-              "zh": "___在哪里？",
-              "answer": "Where are the restrooms?",
-              "pattern": "Where are the ___?",
+              "zh": "去___多少钱？",
+              "answer": "How much is it to the airport?",
+              "pattern": "How much is it to ___?",
               "slotValues": {
-                "slot1": "restrooms, elevators, stairs, exits, lockers, ticket machines"
+                "slot1": "the airport",
+                "slot2": "the train station",
+                "slot3": "this address"
               }
             },
             {
-              "zh": "我怎么去___？",
-              "answer": "How do I get to the museum?",
-              "pattern": "How do I get to ___?",
+              "zh": "请在这里停。",
+              "answer": "Please stop here.",
+              "pattern": "Please stop ___.",
               "slotValues": {
-                "slot1": "the museum, the airport, the train station, the city center, your hotel"
+                "slot1": "here",
+                "slot2": "at the corner",
+                "slot3": "in front of the hotel"
               }
             },
             {
-              "zh": "附近有___吗？",
-              "answer": "Is there a pharmacy near here?",
-              "pattern": "Is there a ___ near here?",
+              "zh": "你能___吗？",
+              "answer": "Can you help me with my luggage?",
+              "pattern": "Can you ___?",
               "slotValues": {
-                "slot1": "pharmacy, supermarket, post office, park, bank, coffee shop"
+                "slot1": "help me with my luggage",
+                "slot2": "open the trunk",
+                "slot3": "wait here a moment"
               }
             },
             {
-              "zh": "___离这里多远？",
-              "answer": "How far is it from here?",
-              "pattern": "How far is ___ from here?",
+              "zh": "___要多久？",
+              "answer": "How long does it take to get to the airport?",
+              "pattern": "How long does it take to get to ___?",
               "slotValues": {
-                "slot1": "the airport, your hotel, the beach, downtown, the hospital"
+                "slot1": "the airport",
+                "slot2": "the train station",
+                "slot3": "downtown"
               }
             }
           ]
@@ -615,103 +665,18 @@
             {
               "level": 1,
               "label": "基础句",
-              "en": "Excuse me, where is the nearest subway station? -- Its just around the corner.",
-              "zh": "请问，最近的地铁站在哪里？——就在拐角处。",
-              "highlight": "excuse",
-              "hint": "从简单开始"
+              "en": "Please call a taxi for me. -- Sure, its coming right away.",
+              "zh": "请帮我打辆车。——好的，马上到。",
+              "highlight": "taxi",
+              "hint": "从打车开始"
             },
             {
               "level": 2,
-              "label": "加细节",
-              "en": "How do I get to the museum? -- Go straight and turn left at the corner.",
-              "zh": "我怎么去博物馆？——直走在拐角左转。",
-              "highlight": "left",
-              "hint": "加信息"
-            }
-          ]
-        }
-      ]
-    }
-  },
-  "购物问询": {
-    "outputTraining": {
-      "version": 1,
-      "enabled": true,
-      "pipeline": [
-        {
-          "id": "cs_zh_0",
-          "type": "chunk_substitution",
-          "kind": "word",
-          "direction": "zh_to_en",
-          "title": "购物问询 · 中译英",
-          "chunk": "check",
-          "chunkMeaning": "",
-          "items": [
-            {
-              "zh": "你们有这个小号的吗？——我看看。有的，给你。",
-              "answer": "Do you have this in a small size? -- Let me check. Yes, here you are.",
-              "targetWord": "check"
-            }
-          ]
-        },
-        {
-          "id": "cs_en_1",
-          "type": "chunk_substitution",
-          "kind": "word",
-          "direction": "en_to_zh",
-          "title": "购物问询 · 英译中",
-          "chunk": "major",
-          "chunkMeaning": "",
-          "items": [
-            {
-              "en": "Do you take cards? -- Yes, we take all major cards.",
-              "answer": "你们收卡吗？——收，所有主要卡都收。",
-              "targetWord": "major"
-            }
-          ]
-        },
-        {
-          "id": "pd_2",
-          "type": "pattern_drill",
-          "title": "购物问询 · 句型",
-          "pattern": "How much is ___?",
-          "patternMeaning": "___多少钱？",
-          "slots": [
-            "this",
-            "that",
-            "the red one"
-          ],
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": "___多少钱？",
-              "answer": "How much is this?",
-              "pattern": "How much is ___?",
-              "slotValues": {
-                "slot1": "this",
-                "slot2": "that",
-                "slot3": "the red one"
-              }
-            },
-            {
-              "zh": "___多少钱？",
-              "answer": "How much are these?",
-              "pattern": "How much are ___?",
-              "slotValues": {
-                "slot1": "these shoes",
-                "slot2": "the apples",
-                "slot3": "those flowers"
-              }
-            },
-            {
-              "zh": "这个有___吗？",
-              "answer": "Do you have this in a small size?",
-              "pattern": "Do you have this in ___?",
-              "slotValues": {
-                "slot1": "a small size",
-                "slot2": "blue",
-                "slot3": "another color"
-              }
+              "label": "加目的地",
+              "en": "Please take me to the airport. -- Okay, get in please.",
+              "zh": "请送我到机场。——好的，请上车。",
+              "highlight": "airport",
+              "hint": "加上目的地"
             }
           ]
         }
@@ -729,13 +694,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "试穿与尺寸 · 中译英",
-          "chunk": "left",
+          "chunk": "fitting / size / medium",
           "chunkMeaning": "",
           "items": [
             {
               "zh": "我想试穿这个。试衣间在哪？——那边，左边。",
               "answer": "I want to try this on. Where is the fitting room? -- Over there, on the left.",
-              "targetWord": "left"
+              "targetWord": "fitting"
+            },
+            {
+              "zh": "这个有大号的吗？——有的，我给你拿。",
+              "answer": "Do you have this in a large size? -- Yes, let me get one for you.",
+              "targetWord": "size"
+            },
+            {
+              "zh": "这个有点小，你们有中号吗？",
+              "answer": "This is a bit small. Do you have medium?",
+              "targetWord": "medium"
             }
           ]
         },
@@ -745,13 +720,23 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "试穿与尺寸 · 英译中",
-          "chunk": "check",
+          "chunk": "check / small / fit",
           "chunkMeaning": "",
           "items": [
             {
               "en": "Do you have this in medium? -- Let me check for you.",
               "answer": "你们有中号的吗？——我帮你查一下。",
               "targetWord": "check"
+            },
+            {
+              "en": "This is too small. Do you have a larger size?",
+              "answer": "这个太小了。有大一号的吗？",
+              "targetWord": "small"
+            },
+            {
+              "en": "How does it fit? -- Its a little tight.",
+              "answer": "穿着怎么样？——有点紧。",
+              "targetWord": "fit"
             }
           ]
         },

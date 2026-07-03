@@ -1,11 +1,23 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, Zap, Loader2, GripVertical, Trash2, ChevronUp, ChevronDown, ChevronRight, Info } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import {
+  ArrowLeftRight,
+  Braces,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  FileText,
+  Info,
+  Layers,
+  Plus,
+  Power,
+  Trash2,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
-import { toast } from 'sonner'
+import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
 
 import {
@@ -43,6 +55,38 @@ interface Props {
 
 let _idCounter = Date.now()
 const genId = () => `warmup_${++_idCounter}`
+
+const itemTypeOptions: Array<{
+  type: WarmupPipelineItem['type']
+  label: string
+  description: string
+  icon: typeof ArrowLeftRight
+}> = [
+  {
+    type: 'chunk_substitution',
+    label: '句块替换',
+    description: '中英互换，把词或句块练成可输出表达。',
+    icon: ArrowLeftRight,
+  },
+  {
+    type: 'vocab_sentence_building',
+    label: '一词多句',
+    description: '围绕核心词汇，用多种句式做输出变化。',
+    icon: Layers,
+  },
+  {
+    type: 'sentence_decomposition',
+    label: '句子拆解',
+    description: '从核心句逐级扩展，训练长句组织能力。',
+    icon: FileText,
+  },
+  {
+    type: 'pattern_drill',
+    label: '句型操练',
+    description: '固定句型框架加可变槽位，练快速套用。',
+    icon: Braces,
+  },
+]
 
 function newChunkSubstitution(): ChunkSubstitutionItem {
   return {
@@ -169,6 +213,16 @@ export function WarmupPipelineTab({ value, onChange, vocabs = [], chunks = [], p
     return '句型操练'
   }
 
+  const itemCountLabel = (item: WarmupPipelineItem) => {
+    if ('items' in item) return `${item.items.length} 题`
+    if (item.type === 'vocab_sentence_building') {
+      const count = item.patterns.reduce((sum, pattern) => sum + pattern.items.length, 0)
+      return `${count} 题`
+    }
+    if (item.type === 'sentence_decomposition') return `${item.levels.length} 层`
+    return '未配置'
+  }
+
   const renderItemForm = (item: WarmupPipelineItem, idx: number) => {
     const common = { key: item.id, onDelete: () => deleteItem(idx) }
     switch (item.type) {
@@ -215,23 +269,62 @@ export function WarmupPipelineTab({ value, onChange, vocabs = [], chunks = [], p
   }
 
   return (
-    <div className="mt-0 space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-start gap-2">
-          <div>
-            <Label className="text-sm">知识点练习流水线</Label>
-            <p className="text-xs text-muted-foreground mt-1">
-              配置热身阶段的知识点练习题目，支持四种题型，帮助学习者从不同维度攻克输出难点。
+    <div className="mt-0 space-y-5">
+      <div className="rounded-lg border border-border/70 bg-background">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border/70 p-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <Label className="text-sm font-semibold">知识点练习流水线</Label>
+              <Badge variant={local.enabled ? 'default' : 'secondary'} className="gap-1 text-[10px]">
+                <Power className="size-3" />
+                {local.enabled ? '已启用' : '已停用'}
+              </Badge>
+              <Badge variant="outline" className="text-[10px]">v{local.version || 1}</Badge>
+              <Badge variant="outline" className="text-[10px]">{local.pipeline.length} 组练习</Badge>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              配置热身阶段的知识点练习。保存话题后会作为 metadata.outputTraining 写入，不会影响基础提示和 Ink 绑定。
             </p>
           </div>
+          <div className="flex items-center gap-2 rounded-md border border-border/70 bg-muted/20 px-3 py-2">
+            <span className="text-xs text-muted-foreground">启用</span>
+            <Switch checked={local.enabled} onCheckedChange={(enabled) => commit({ enabled })} />
+          </div>
+        </div>
+
+        <div className="grid gap-2 p-3 md:grid-cols-4">
+          {itemTypeOptions.map(({ type, label, description, icon: Icon }) => (
+            <button
+              key={type}
+              type="button"
+              className="group rounded-md border border-border/70 bg-muted/10 p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
+              onClick={() => addItem(type)}
+            >
+              <span className="flex items-center gap-2 text-sm font-medium">
+                <span className="flex size-8 items-center justify-center rounded-md bg-background text-muted-foreground transition-colors group-hover:text-primary">
+                  <Icon className="size-4" />
+                </span>
+                {label}
+                <Plus className="ml-auto size-3.5 text-muted-foreground transition-colors group-hover:text-primary" />
+              </span>
+              <span className="mt-2 block text-xs leading-relaxed text-muted-foreground">{description}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-start gap-2 rounded-lg border border-border/70 bg-muted/20 p-3">
+        <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+        <div className="min-w-0 flex-1 text-xs leading-relaxed text-muted-foreground">
+          每一组练习都会在学习端按顺序出现。建议一个话题保持 3-6 组，先句块替换，再一词多句或句型操练，最后用句子拆解收束。
+        </div>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="size-6 text-muted-foreground hover:text-foreground mt-0.5">
-                <Info className="size-3.5" />
+              <Button variant="ghost" size="sm" className="h-6 shrink-0 px-2 text-[11px] text-muted-foreground hover:text-foreground">
+                查看题型说明
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 text-sm" align="start" side="bottom">
+            <PopoverContent className="w-80 text-sm" align="end" side="bottom">
               <div className="space-y-3">
                 <div>
                   <p className="font-semibold text-sm">句块替换 / 单词替换</p>
@@ -275,27 +368,12 @@ export function WarmupPipelineTab({ value, onChange, vocabs = [], chunks = [], p
               </div>
             </PopoverContent>
           </Popover>
-        </div>
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => addItem('chunk_substitution')}>
-            <Plus className="size-3.5 mr-1" />句块替换
-          </Button>
-          <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => addItem('vocab_sentence_building')}>
-            <Plus className="size-3.5 mr-1" />一词多句
-          </Button>
-          <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => addItem('sentence_decomposition')}>
-            <Plus className="size-3.5 mr-1" />句子拆解
-          </Button>
-          <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => addItem('pattern_drill')}>
-            <Plus className="size-3.5 mr-1" />句型操练
-          </Button>
-        </div>
       </div>
 
-      {/* Pipeline items */}
       {local.pipeline.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border bg-background/60 px-6 py-12 text-center text-sm text-muted-foreground">
-          还没有配置任何练习题目。点击上方按钮添加。
+        <div className="rounded-lg border border-dashed border-border bg-background/60 px-6 py-14 text-center">
+          <p className="text-sm font-medium text-foreground">还没有配置练习题目</p>
+          <p className="mt-1 text-xs text-muted-foreground">从上方选择一种题型添加，新增项会默认折叠，展开后编辑具体题目。</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -325,26 +403,26 @@ export function WarmupPipelineTab({ value, onChange, vocabs = [], chunks = [], p
                     <ChevronDown className="size-3.5" />
                   </Button>
                 </div>
-                {/* Collapsible card */}
                 <div className={cn(
-                  'flex-1 min-w-0 rounded-lg border border-border/60 bg-muted/10',
+                  'flex-1 min-w-0 rounded-lg border border-border/60 bg-background shadow-sm',
+                  isCollapsed && 'bg-muted/10',
                   !isCollapsed && 'pb-3',
                 )}>
-                  {/* Clickable header */}
                   <button
                     type="button"
-                    className="flex items-center gap-2 w-full px-3 py-2.5 text-left hover:bg-muted/20 transition-colors rounded-t-lg"
+                    className="flex w-full items-center gap-2 rounded-t-lg px-3 py-2.5 text-left transition-colors hover:bg-muted/20"
                     onClick={() => toggleCollapse(item.id)}
                   >
                     <ChevronRight className={cn(
                       'size-3.5 text-muted-foreground shrink-0 transition-transform',
                       !isCollapsed && 'rotate-90',
                     )} />
-                    <Badge variant="secondary" className="text-[10px] shrink-0">{typeLabel(item)}</Badge>
+                    <Badge variant="secondary" className="shrink-0 text-[10px]">{typeLabel(item)}</Badge>
                     {'direction' in item && (
-                      <Badge variant="outline" className="text-[10px] shrink-0">{item.direction === 'en_to_zh' ? '英→中' : '中→英'}</Badge>
+                      <Badge variant="outline" className="shrink-0 text-[10px]">{item.direction === 'en_to_zh' ? '英→中' : '中→英'}</Badge>
                     )}
-                    <span className={cn('text-xs truncate flex-1', item.title ? 'font-medium' : 'text-muted-foreground')}>
+                    <Badge variant="outline" className="shrink-0 text-[10px]">{itemCountLabel(item)}</Badge>
+                    <span className={cn('min-w-0 flex-1 truncate text-xs', item.title ? 'font-medium' : 'text-muted-foreground')}>
                       {item.title || '未命名练习'}
                     </span>
                     <Button

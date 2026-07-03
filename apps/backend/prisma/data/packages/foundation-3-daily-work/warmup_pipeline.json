@@ -17,6 +17,16 @@
               "zh": "她运动后喝水。",
               "answer": "She drinks water after exercise.",
               "targetWord": "after"
+            },
+            {
+              "zh": "他7点起床。",
+              "answer": "He gets up at 7.",
+              "targetWord": "get"
+            },
+            {
+              "zh": "她坐公交上学。",
+              "answer": "She goes to school by bus.",
+              "targetWord": "go"
             }
           ]
         },
@@ -123,6 +133,16 @@
               "zh": "她晚饭后看电视。",
               "answer": "She watches TV after dinner.",
               "targetWord": "after"
+            },
+            {
+              "zh": "他在医院工作。",
+              "answer": "He works in a hospital.",
+              "targetWord": "work"
+            },
+            {
+              "zh": "她在大学学英语。",
+              "answer": "She studies English at university.",
+              "targetWord": "study"
             }
           ]
         },
@@ -209,6 +229,16 @@
               "zh": "他周末踢足球。",
               "answer": "He plays football on weekends.",
               "targetWord": "football"
+            },
+            {
+              "zh": "她周日去看望祖父母。",
+              "answer": "She visits her grandparents on Sundays.",
+              "targetWord": "grandparents"
+            },
+            {
+              "zh": "他周末在家放松。",
+              "answer": "He relaxes at home on weekends.",
+              "targetWord": "home"
             }
           ]
         },
@@ -218,13 +248,18 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "周末活动 · 英译中",
-          "chunk": "grandparents",
+          "chunk": "grandparents / home",
           "chunkMeaning": "",
           "items": [
             {
               "en": "She visits her grandparents on Sundays.",
               "answer": "她周日去看望祖父母。",
               "targetWord": "grandparents"
+            },
+            {
+              "en": "He relaxes at home on weekends.",
+              "answer": "他周末在家放松。",
+              "targetWord": "home"
             }
           ]
         },
@@ -287,13 +322,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "肯定与否定 · 中译英",
-          "chunk": "park",
+          "chunk": "like / don't like",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "孩子们在公园玩。",
-              "answer": "The children play in the park.",
-              "targetWord": "park"
+              "zh": "他喜欢咖啡。",
+              "answer": "He likes coffee.",
+              "targetWord": "like"
+            },
+            {
+              "zh": "她不喜欢茶。",
+              "answer": "She doesn't like tea.",
+              "targetWord": "coffee"
+            },
+            {
+              "zh": "你不喜欢猫吗？",
+              "answer": "Don't you like cats?",
+              "targetWord": "cat"
             }
           ]
         },
@@ -303,13 +348,18 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "肯定与否定 · 英译中",
-          "chunk": "everyone",
+          "chunk": "doesn't / don't",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Everyone likes him.",
-              "answer": "大家都喜欢他。",
-              "targetWord": "everyone"
+              "en": "He doesn't like coffee.",
+              "answer": "他不喜欢咖啡。",
+              "targetWord": "coffee"
+            },
+            {
+              "en": "I don't have a car.",
+              "answer": "我没有车。",
+              "targetWord": "car"
             }
           ]
         },
@@ -386,13 +436,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "have vs has · 中译英",
-          "chunk": "park",
+          "chunk": "have / has",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "孩子们在公园玩。",
-              "answer": "The children play in the park.",
-              "targetWord": "park"
+              "zh": "我有一只猫。她有一条狗。",
+              "answer": "I have a cat. She has a dog.",
+              "targetWord": "have"
+            },
+            {
+              "zh": "他有一个哥哥。我有一个妹妹。",
+              "answer": "He has a brother. I have a sister.",
+              "targetWord": "brother"
+            },
+            {
+              "zh": "她有一辆新自行车。",
+              "answer": "She has a new bike.",
+              "targetWord": "bike"
             }
           ]
         },
@@ -402,13 +462,18 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "have vs has · 英译中",
-          "chunk": "everyone",
+          "chunk": "has / have",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Everyone likes him.",
-              "answer": "大家都喜欢他。",
-              "targetWord": "everyone"
+              "en": "She has a new bike.",
+              "answer": "她有一辆新自行车。",
+              "targetWord": "bike"
+            },
+            {
+              "en": "He has two sisters.",
+              "answer": "他有两个姐妹。",
+              "targetWord": "sisters"
             }
           ]
         },
@@ -416,57 +481,60 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "have vs has · 句型",
-          "pattern": "I ___ and he/she ___ too.",
-          "patternMeaning": "我...他/她也...。",
+          "pattern": "I have ___ but she has ___.",
+          "patternMeaning": "我有...但她有...。",
           "slots": [
-            "like music likes music",
-            "eat breakfast eats breakfast"
+            "a cat a dog",
+            "a bike a car"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我...他/她也...。",
-              "answer": "I like music and she likes music too.",
-              "pattern": "I ___ and he/she ___ too.",
+              "zh": "我有...但她有...。",
+              "answer": "I have a cat but she has a dog.",
+              "pattern": "I have ___ but she has ___.",
               "slotValues": {
-                "slot1": "like music likes music",
-                "slot2": "eat breakfast eats breakfast"
-              }
-            },
-            {
-              "zh": "我...但他/她...。",
-              "answer": "I like coffee but she likes tea.",
-              "pattern": "I ___ but he/she ___.",
-              "slotValues": {
-                "slot1": "like coffee likes tea",
-                "slot2": "have a bike has a car"
-              }
-            },
-            {
-              "zh": "我...但他/她不...。",
-              "answer": "I like coffee but she doesn't like coffee.",
-              "pattern": "I ___ but he/she doesn't ___.",
-              "slotValues": {
-                "slot1": "like coffee like coffee",
-                "slot2": "have a pet have a pet"
-              }
-            },
-            {
-              "zh": "我不...但他/她...。",
-              "answer": "I don't have a pet but she has a cat.",
-              "pattern": "I don't ___ but he/she ___.",
-              "slotValues": {
-                "slot1": "have a pet has a cat",
-                "slot2": "drink coffee drinks tea"
-              }
-            },
-            {
-              "zh": "我有...他/她有...。",
-              "answer": "I have a brother and he has a sister.",
-              "pattern": "I have ___ and he/she has ___.",
-              "slotValues": {
-                "slot1": "a brother a sister",
+                "slot1": "a cat a dog",
                 "slot2": "a bike a car"
+              }
+            },
+            {
+              "zh": "我有...但他有...。",
+              "answer": "I have a bike but he has a car.",
+              "pattern": "I have ___ but he has ___.",
+              "slotValues": {
+                "slot1": "a bike a car",
+                "slot2": "a cat a dog"
+              }
+            },
+            {
+              "zh": "他/她...。",
+              "answer": "She has a beautiful garden.",
+              "pattern": "She/he has a ___.",
+              "slotValues": {
+                "slot1": "beautiful garden",
+                "slot2": "new phone",
+                "slot3": "big house"
+              }
+            },
+            {
+              "zh": "我/我们...。",
+              "answer": "We have a nice teacher.",
+              "pattern": "We/I have a ___.",
+              "slotValues": {
+                "slot1": "nice teacher",
+                "slot2": "big problem",
+                "slot3": "good idea"
+              }
+            },
+            {
+              "zh": "他/她有什么？",
+              "answer": "She has a new phone.",
+              "pattern": "What does he/she have? He/She has a ___.",
+              "slotValues": {
+                "slot1": "new phone",
+                "slot2": "red car",
+                "slot3": "big house"
               }
             }
           ]
@@ -485,13 +553,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "时间习惯对比 · 中译英",
-          "chunk": "park",
+          "chunk": "early / late",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "孩子们在公园玩。",
-              "answer": "The children play in the park.",
-              "targetWord": "park"
+              "zh": "他早上七点起床。",
+              "answer": "He gets up at 7 in the morning.",
+              "targetWord": "early"
+            },
+            {
+              "zh": "她晚上跑步。我早上跑步。",
+              "answer": "She runs in the evening. I run in the morning.",
+              "targetWord": "run"
+            },
+            {
+              "zh": "你每天喝咖啡吗？",
+              "answer": "Do you drink coffee every day?",
+              "targetWord": "everyday"
             }
           ]
         },
@@ -501,13 +579,18 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "时间习惯对比 · 英译中",
-          "chunk": "everyone",
+          "chunk": "late / early",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Everyone likes him.",
-              "answer": "大家都喜欢他。",
-              "targetWord": "everyone"
+              "en": "I get up early but he gets up late.",
+              "answer": "我早起但他晚起。",
+              "targetWord": "late"
+            },
+            {
+              "en": "She drinks tea but I drink coffee.",
+              "answer": "她喝茶但我喝咖啡。",
+              "targetWord": "tea"
             }
           ]
         },
@@ -515,57 +598,58 @@
           "id": "pd_2",
           "type": "pattern_drill",
           "title": "时间习惯对比 · 句型",
-          "pattern": "I ___ and he/she ___ too.",
-          "patternMeaning": "我...他/她也...。",
+          "pattern": "He/She ___ at ___ but I ___ at ___.",
+          "patternMeaning": "他/她...点...但我...点...。",
           "slots": [
-            "like music likes music",
-            "eat breakfast eats breakfast"
+            "gets up 7 get up 8",
+            "goes to bed 10 go to bed 11",
+            "has lunch 12 have lunch 1"
           ],
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我...他/她也...。",
-              "answer": "I like music and she likes music too.",
-              "pattern": "I ___ and he/she ___ too.",
+              "zh": "他/她...但我...。",
+              "answer": "She gets up at 7 but I get up at 8.",
+              "pattern": "She/He ___ at ___ but I ___ at ___.",
               "slotValues": {
-                "slot1": "like music likes music",
-                "slot2": "eat breakfast eats breakfast"
+                "slot1": "gets up 7 get up 8",
+                "slot2": "goes to bed 10 go to bed 11"
               }
             },
             {
-              "zh": "我...但他/她...。",
-              "answer": "I like coffee but she likes tea.",
-              "pattern": "I ___ but he/she ___.",
+              "zh": "他/她...但我...。",
+              "answer": "He goes to bed at 10 but I go to bed at 11.",
+              "pattern": "He/She ___ at ___ but I ___ at ___.",
               "slotValues": {
-                "slot1": "like coffee likes tea",
-                "slot2": "have a bike has a car"
+                "slot1": "goes to bed 10 go to bed 11",
+                "slot2": "gets up 7 get up 8"
               }
             },
             {
-              "zh": "我...但他/她不...。",
-              "answer": "I like coffee but she doesn't like coffee.",
-              "pattern": "I ___ but he/she doesn't ___.",
+              "zh": "我每天...但他/她...。",
+              "answer": "I read every day but he watches TV.",
+              "pattern": "I ___ every day but he/she ___.",
               "slotValues": {
-                "slot1": "like coffee like coffee",
-                "slot2": "have a pet have a pet"
-              }
-            },
-            {
-              "zh": "我不...但他/她...。",
-              "answer": "I don't have a pet but she has a cat.",
-              "pattern": "I don't ___ but he/she ___.",
-              "slotValues": {
-                "slot1": "have a pet has a cat",
+                "slot1": "read watches TV",
                 "slot2": "drink coffee drinks tea"
               }
             },
             {
-              "zh": "我有...他/她有...。",
-              "answer": "I have a brother and he has a sister.",
-              "pattern": "I have ___ and he/she has ___.",
+              "zh": "她总是...而我...。",
+              "answer": "She always runs in the morning but I run at night.",
+              "pattern": "She always ___ but I ___.",
               "slotValues": {
-                "slot1": "a brother a sister",
-                "slot2": "a bike a car"
+                "slot1": "runs in the morning run at night",
+                "slot2": "eats healthy food eat fast food"
+              }
+            },
+            {
+              "zh": "谁...得更早/晚？",
+              "answer": "I get up earlier than my brother.",
+              "pattern": "I ___ earlier/later than ___.",
+              "slotValues": {
+                "slot1": "get up my brother",
+                "slot2": "go to bed my sister"
               }
             }
           ]
@@ -584,13 +668,23 @@
           "kind": "word",
           "direction": "zh_to_en",
           "title": "他们的生活 · 中译英",
-          "chunk": "park",
+          "chunk": "live / work",
           "chunkMeaning": "",
           "items": [
             {
-              "zh": "孩子们在公园玩。",
-              "answer": "The children play in the park.",
-              "targetWord": "park"
+              "zh": "他们住在北京。",
+              "answer": "They live in Beijing.",
+              "targetWord": "live"
+            },
+            {
+              "zh": "他们在公司工作。",
+              "answer": "They work in an office.",
+              "targetWord": "company"
+            },
+            {
+              "zh": "他们每天走路去上学。",
+              "answer": "They walk to school every day.",
+              "targetWord": "walk"
             }
           ]
         },
@@ -600,13 +694,18 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "他们的生活 · 英译中",
-          "chunk": "everyone",
+          "chunk": "live / parents",
           "chunkMeaning": "",
           "items": [
             {
-              "en": "Everyone likes him.",
-              "answer": "大家都喜欢他。",
-              "targetWord": "everyone"
+              "en": "They live in a small town.",
+              "answer": "他们住在一个小镇里。",
+              "targetWord": "town"
+            },
+            {
+              "en": "Their parents are very kind.",
+              "answer": "他们的父母很和蔼。",
+              "targetWord": "parents"
             }
           ]
         },
@@ -695,6 +794,16 @@
               "zh": "我阿姨在医院工作。她照顾病人。",
               "answer": "My aunt works in a hospital. She takes care of patients.",
               "targetWord": "aunt"
+            },
+            {
+              "zh": "他的工作很有趣。他经常出差。",
+              "answer": "His job is very interesting. He travels a lot.",
+              "targetWord": "job"
+            },
+            {
+              "zh": "她在家工作。她是一名作家。",
+              "answer": "She works from home. She is a writer.",
+              "targetWord": "writer"
             }
           ]
         },
@@ -783,6 +892,16 @@
               "zh": "看！那个男孩在追他的狗。",
               "answer": "Look! The boy is running after his dog.",
               "targetWord": "after"
+            },
+            {
+              "zh": "看！那个女孩在跳舞。",
+              "answer": "Look! The girl is dancing on stage.",
+              "targetWord": "look"
+            },
+            {
+              "zh": "画里，一个女孩在树下看书。",
+              "answer": "In the picture, a girl is reading under a tree.",
+              "targetWord": "picture"
             }
           ]
         },
@@ -859,6 +978,16 @@
               "zh": "突然，下雨了。大家都跑回家了。",
               "answer": "Suddenly it started to rain. Everyone ran home.",
               "targetWord": "suddenly"
+            },
+            {
+              "zh": "她打开门，对我笑了笑。",
+              "answer": "She opened the door and smiled at me.",
+              "targetWord": "smile"
+            },
+            {
+              "zh": "他给我讲了个搞笑的故事。",
+              "answer": "He told me a funny story.",
+              "targetWord": "funny"
             }
           ]
         },
@@ -882,6 +1011,16 @@
               "slotValues": {
                 "slot1": "it started to rain",
                 "slot2": "the phone rang",
+                "slot3": "the car stopped"
+              }
+            },
+            {
+              "zh": "突然...。",
+              "answer": "Suddenly the phone rang.",
+              "pattern": "Suddenly ___.",
+              "slotValues": {
+                "slot1": "the phone rang",
+                "slot2": "it started to rain",
                 "slot3": "the car stopped"
               }
             }
@@ -925,6 +1064,16 @@
               "zh": "公园里有一只大狗。它很友好。",
               "answer": "There was a big dog in the park. It was very friendly.",
               "targetWord": "park"
+            },
+            {
+              "zh": "花园里有一只猫。它很可爱。",
+              "answer": "There was a cat in the garden. It was very cute.",
+              "targetWord": "garden"
+            },
+            {
+              "zh": "街上有一个男人。他在笑。",
+              "answer": "There was a man on the street. He was smiling.",
+              "targetWord": "man"
             }
           ]
         },
@@ -934,13 +1083,18 @@
           "kind": "word",
           "direction": "en_to_zh",
           "title": "图片描述 · 英译中",
-          "chunk": "funny",
+          "chunk": "funny / story / laugh",
           "chunkMeaning": "",
           "items": [
             {
               "en": "He told me a funny story. I laughed so hard.",
               "answer": "他给我讲了个搞笑的故事。我笑死了！",
               "targetWord": "funny"
+            },
+            {
+              "en": "The girl in the picture is smiling. She looks happy.",
+              "answer": "照片里的女孩在微笑。她看起来很开心。",
+              "targetWord": "smile"
             }
           ]
         },
@@ -963,6 +1117,15 @@
               "slotValues": {
                 "slot1": "big dog the park friendly",
                 "slot2": "cat the garden cute"
+              }
+            },
+            {
+              "zh": "...里有一个...它很...。",
+              "answer": "There was a cat in the garden. It was very cute.",
+              "pattern": "There was a ___ in ___. It was ___.",
+              "slotValues": {
+                "slot1": "cat the garden cute",
+                "slot2": "big dog the park friendly"
               }
             }
           ]

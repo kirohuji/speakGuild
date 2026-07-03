@@ -338,6 +338,16 @@
                 "slot2": "dinner",
                 "slot3": "read books"
               }
+            },
+            {
+              "zh": "我...后做...",
+              "answer": "I read books after dinner.",
+              "pattern": "I ___ after ___.",
+              "slotValues": {
+                "slot1": "read books",
+                "slot2": "dinner",
+                "slot3": "study"
+              }
             }
           ]
         },
@@ -470,6 +480,16 @@
             {
               "zh": "我7点起床。",
               "answer": "I get up at 7.",
+              "targetWord": "get up"
+            },
+            {
+              "zh": "每天早上7点起床。",
+              "answer": "Get up at 7 every morning.",
+              "targetWord": "wake up"
+            },
+            {
+              "zh": "他6点起床。",
+              "answer": "He gets up at 6.",
               "targetWord": "get up"
             }
           ]
@@ -607,6 +627,16 @@
               "zh": "我准时上班。",
               "answer": "I come to work on time.",
               "targetWord": "on time"
+            },
+            {
+              "zh": "她8点去上学。",
+              "answer": "She goes to school at 8.",
+              "targetWord": "go to school"
+            },
+            {
+              "zh": "他坐公交车上班。",
+              "answer": "He takes the bus to work.",
+              "targetWord": "bus"
             }
           ]
         }
@@ -723,6 +753,16 @@
               "zh": "我放学后做作业。",
               "answer": "I do my homework after school.",
               "targetWord": "homework"
+            },
+            {
+              "zh": "我下班后去健身。",
+              "answer": "I go to the gym after work.",
+              "targetWord": "gym"
+            },
+            {
+              "zh": "放学后她在图书馆看书。",
+              "answer": "She reads books in the library after school.",
+              "targetWord": "library"
             }
           ]
         }
@@ -839,6 +879,16 @@
               "zh": "我在找我的钥匙。",
               "answer": "I look for my keys.",
               "targetWord": "keys"
+            },
+            {
+              "zh": "我需要更多时间完成作业。",
+              "answer": "I need more time to finish my homework.",
+              "targetWord": "homework"
+            },
+            {
+              "zh": "我计划晚上学习英语。",
+              "answer": "I plan to study English in the evening.",
+              "targetWord": "study"
             }
           ]
         }
