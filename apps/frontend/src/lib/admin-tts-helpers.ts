@@ -1,5 +1,6 @@
 import { synthesizeAsset } from '@/lib/tts-api'
 import { listAiProviders, type AiProviderItem } from '@/features/admin/api-ai-models'
+import { getFileAssetContentUrl } from '@/features/file-assets/api'
 
 type TtsAccent = 'us' | 'uk' | 'neutral'
 
@@ -97,7 +98,7 @@ export async function synthesizeAdminAudio(
     bizType,
     bizId,
   } as any)
-  return result.url
+  return getFileAssetContentUrl(result.assetId)
 }
 
 /** 简单播放音频 URL */

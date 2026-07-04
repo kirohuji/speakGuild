@@ -71,6 +71,12 @@ export function getFileAssetLongLivedUrl(assetId: string): Promise<{ url: string
   return get(`/file-assets/${assetId}/long-lived-url`)
 }
 
+/** 稳定资源 URL：后端内部处理临时签名，适合长期保存到内容数据里 */
+export function getFileAssetContentUrl(assetId: string): string {
+  const base = import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu'
+  return `${base}/file-assets/${assetId}/content`
+}
+
 /** 获取当前头像 */
 export function getCurrentAvatar(): Promise<{ url: string } | null> {
   return get('/file-assets/avatar/current')
