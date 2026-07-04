@@ -3,14 +3,18 @@ import {
   ArrowLeftRight,
   AlertTriangle,
   Braces,
+  ChevronLeft,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   CheckCircle2,
   FileText,
   Info,
   Layers,
+  Loader2,
   Plus,
   Power,
+  Sparkles,
   Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -20,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
+import { toast } from 'sonner'
 
 import {
   ChunkSubstitutionForm,
@@ -52,6 +57,11 @@ interface Props {
   vocabs?: { id: string; word: string; meaning: string }[]
   chunks?: { id: string; text: string; meaning: string }[]
   patterns?: { id: string; pattern: string; meaning?: string }[]
+  topicTitle?: string
+  topicIndex?: number
+  topicTotal?: number
+  onPrevTopic?: () => void
+  onNextTopic?: () => void
 }
 
 let _idCounter = Date.now()
@@ -145,9 +155,45 @@ function newPatternDrill(): PatternDrillItem {
   }
 }
 
-export function WarmupPipelineTab({ value, onChange, vocabs = [], chunks = [], patterns = [] }: Props) {
+type HintableWarmupItem = ChunkSubstitutionItem['items'][number]
+  | VocabSentenceBuildingItem['patterns'][number]['items'][number]
+  | PatternDrillItem['items'][number]
+
+const looksEnglish = (text?: string) => /[A-Za-z]/.test(text ?? '')
+
+const isLegacyEnToZhItem = (item: HintableWarmupItem, direction?: string) => (
+  direction === 'en_to_zh' && !item.en && looksEnglish(item.answer) && Boolean(item.zh)
+)
+
+const getPromptText = (item: HintableWarmupItem, direction?: string) => {
+  if (direction !== 'en_to_zh') return item.zh ?? item.en ?? ''
+  if (item.en) return item.en
+  if (isLegacyEnToZhItem(item, direction)) return item.answer
+  return item.zh ?? item.answer ?? ''
+}
+
+const getAnswerText = (item: HintableWarmupItem, direction?: string) => {
+  if (direction !== 'en_to_zh') return item.answer ?? ''
+  if (item.en) return item.answer ?? item.zh ?? ''
+  if (isLegacyEnToZhItem(item, direction)) return item.zh ?? ''
+  return item.answer ?? ''
+}
+
+export function WarmupPipelineTab({
+  value,
+  onChange,
+  vocabs = [],
+  chunks = [],
+  patterns = [],
+  topicTitle,
+  topicIndex,
+  topicTotal,
+  onPrevTopic,
+  onNextTopic,
+}: Props) {
   const [local, setLocal] = useState<WarmupPipelineData>(value)
   const [selectedItemId, setSelectedItemId] = useState<string | null>(value.pipeline[0]?.id ?? null)
+  const [aiHintingAll, setAiHintingAll] = useState(false)
   const prevIdsRef = useRef<string>('')
 
   useEffect(() => {
@@ -199,6 +245,118 @@ export function WarmupPipelineTab({ value, onChange, vocabs = [], chunks = [], p
     commit({ pipeline: next })
   }
 
+  const generateAllHints = async () => {
+    const hintableCount = local.pipeline.reduce((sum, item) => {
+      if (item.type === 'sentence_decomposition') return sum
+      if (item.type === 'vocab_sentence_building') {
+        return sum + item.patterns.reduce((inner, pattern) => inner + pattern.items.length, 0)
+      }
+      return sum + item.items.length
+    }, 0)
+
+    if (!hintableCount) {
+      toast.error('当前话题还没有可生成提示的题目')
+      return
+    }
+
+    setAiHintingAll(true)
+    try {
+      const { post } = await import('@/lib/request')
+      let appliedCount = 0
+      const nextPipeline: WarmupPipelineItem[] = []
+
+      for (const item of local.pipeline) {
+        if (item.type === 'chunk_substitution') {
+          if (!item.chunk || !item.items.length) {
+            nextPipeline.push(item)
+            continue
+          }
+          const direction = item.direction ?? 'zh_to_en'
+          const res: any = await post('/practice-ai/generate-drills', {
+            type: 'chunk_substitution',
+            keyword: item.chunk,
+            meaning: item.chunkMeaning || '',
+            direction,
+            kind: item.kind ?? 'chunk',
+            generateHints: true,
+            itemCount: item.items.length,
+            items: item.items.map((it) => ({ zh: getPromptText(it, direction), answer: getAnswerText(it, direction) })),
+          })
+          const hints = Array.isArray(res?.hints) ? res.hints : []
+          appliedCount += hints.filter(Boolean).length
+          nextPipeline.push({
+            ...item,
+            items: item.items.map((it, index) => ({ ...it, hint: hints[index] ?? it.hint ?? '' })),
+          })
+          continue
+        }
+
+        if (item.type === 'pattern_drill') {
+          if (!item.pattern || !item.items.length) {
+            nextPipeline.push(item)
+            continue
+          }
+          const direction = item.direction ?? 'zh_to_en'
+          const res: any = await post('/practice-ai/generate-drills', {
+            type: 'pattern_drill',
+            keyword: item.pattern,
+            meaning: item.patternMeaning || '',
+            direction,
+            generateHints: true,
+            itemCount: item.items.length,
+            items: item.items.map((it) => ({ zh: getPromptText(it, direction), answer: getAnswerText(it, direction) })),
+          })
+          const hints = Array.isArray(res?.hints) ? res.hints : []
+          appliedCount += hints.filter(Boolean).length
+          nextPipeline.push({
+            ...item,
+            items: item.items.map((it, index) => ({ ...it, hint: hints[index] ?? it.hint ?? '' })),
+          })
+          continue
+        }
+
+        if (item.type === 'vocab_sentence_building') {
+          const allItems = item.patterns.flatMap((pattern) => pattern.items)
+          if (!item.vocabWord || !allItems.length) {
+            nextPipeline.push(item)
+            continue
+          }
+          const direction = item.direction ?? 'zh_to_en'
+          const res: any = await post('/practice-ai/generate-drills', {
+            type: 'vocab_sentence_building',
+            keyword: item.vocabWord,
+            meaning: item.vocabMeaning || '',
+            direction,
+            generateHints: true,
+            itemCount: allItems.length,
+            items: allItems.map((it) => ({ zh: getPromptText(it, direction), answer: getAnswerText(it, direction) })),
+          })
+          const hints = Array.isArray(res?.hints) ? res.hints : []
+          appliedCount += hints.filter(Boolean).length
+          let hintIndex = 0
+          nextPipeline.push({
+            ...item,
+            patterns: item.patterns.map((pattern) => ({
+              ...pattern,
+              items: pattern.items.map((it) => ({ ...it, hint: hints[hintIndex++] ?? it.hint ?? '' })),
+            })),
+          })
+          continue
+        }
+
+        nextPipeline.push(item)
+      }
+
+      commit({ pipeline: nextPipeline })
+      if (appliedCount) toast.success(`已为 ${appliedCount} 道题生成 AI 提示`)
+      else toast.error('AI 未返回教学提示，请检查题目关键词后重试')
+    } catch (err: any) {
+      toast.error(err?.message || '批量生成 AI 提示失败')
+    } finally {
+      setAiHintingAll(false)
+    }
+  }
+
   const typeLabel = (item: WarmupPipelineItem) => {
     if (item.type === 'chunk_substitution') return item.kind === 'word' ? '单词替换' : '句块替换'
     if (item.type === 'vocab_sentence_building') return '一词多句'
@@ -244,6 +402,13 @@ export function WarmupPipelineTab({ value, onChange, vocabs = [], chunks = [], p
     .filter((item): item is SentenceDecompositionItem => item.type === 'sentence_decomposition')
     .reduce((sum, item) => sum + item.levels.length, 0)
   const totalPracticeItems = local.pipeline.reduce((sum, item) => sum + getPracticeItemCount(item), 0)
+  const totalHintableItems = local.pipeline.reduce((sum, item) => {
+    if (item.type === 'sentence_decomposition') return sum
+    if (item.type === 'vocab_sentence_building') {
+      return sum + item.patterns.reduce((inner, pattern) => inner + pattern.items.length, 0)
+    }
+    return sum + item.items.length
+  }, 0)
   const singleItemSections = local.pipeline.filter((item) => getPracticeItemCount(item) === 1).length
 
   const validationItems: ValidationItem[] = [
@@ -335,7 +500,56 @@ export function WarmupPipelineTab({ value, onChange, vocabs = [], chunks = [], p
   }
 
   return (
-    <div className="mt-0 grid min-h-[660px] gap-4 xl:grid-cols-[19rem_minmax(0,1fr)]">
+    <div className="mt-0 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-background px-4 py-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="truncate text-sm font-semibold">{topicTitle?.trim() || '未命名话题'}</p>
+            {typeof topicIndex === 'number' && topicTotal ? (
+              <Badge variant="outline" className="text-[10px]">话题 {topicIndex + 1}/{topicTotal}</Badge>
+            ) : null}
+          </div>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {totalPracticeItems} 题 · {local.pipeline.length} 步 · {totalHintableItems} 题可生成 AI 提示
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-8"
+            title="上一个话题"
+            disabled={!onPrevTopic || aiHintingAll}
+            onClick={onPrevTopic}
+          >
+            <ChevronLeft className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-8"
+            title="下一个话题"
+            disabled={!onNextTopic || aiHintingAll}
+            onClick={onNextTopic}
+          >
+            <ChevronRight className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 gap-1.5"
+            disabled={aiHintingAll || totalHintableItems === 0}
+            onClick={generateAllHints}
+          >
+            {aiHintingAll ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+            全部 AI 提示
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid min-h-[660px] gap-4 xl:grid-cols-[19rem_minmax(0,1fr)]">
       <aside className="rounded-lg border border-border/70 bg-background">
         <div className="border-b border-border/70 px-3 py-2.5">
           <div className="flex items-center justify-between gap-3">
@@ -557,6 +771,7 @@ export function WarmupPipelineTab({ value, onChange, vocabs = [], chunks = [], p
           </div>
         </div>
       </section>
+      </div>
     </div>
   )
 }

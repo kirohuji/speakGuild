@@ -465,7 +465,7 @@ function VocabularyLookupPreview({
 // ─── Training Topic Dialog ──────────────────────────────────
 
 function TrainingTopicDialog({
-  open, onClose, edit, sceneId, packageType, chunks, vocabs, patterns, onSaved,
+  open, onClose, edit, sceneId, packageType, chunks, vocabs, patterns, topicIndex, topicTotal, onPrevTopic, onNextTopic, onSaved,
 }: {
   open: boolean
   onClose: () => void
@@ -475,6 +475,10 @@ function TrainingTopicDialog({
   chunks: Chunk[]
   vocabs: Vocabulary[]
   patterns: SentencePatternFull[]
+  topicIndex?: number
+  topicTotal?: number
+  onPrevTopic?: () => void
+  onNextTopic?: () => void
   onSaved: (topic: TrainingTopic) => void
 }) {
   const [form, setForm] = useState<any>({})
@@ -488,6 +492,7 @@ function TrainingTopicDialog({
   const [storyPageSize, setStoryPageSize] = useState(20)
   const [storyTotal, setStoryTotal] = useState(0)
   const storiesLoadedRef = useRef(false)
+  const nextInitialTabRef = useRef<'basic' | 'warmup'>('basic')
   // Fetch the bound story individually (bypasses pagination)
   const [boundStory, setBoundStory] = useState<StoryData | null>(null)
   // Stable key to only re-init form when a different topic is opened, not on prop reference change
@@ -539,9 +544,17 @@ function TrainingTopicDialog({
     })
     setStorySearch('')
     setStoryType('all')
-    setActiveTab('basic')
+    setActiveTab(nextInitialTabRef.current)
+    nextInitialTabRef.current = 'basic'
     setLastInitKey(editKey)
   }, [open, editKey, sceneId, packageType, lastInitKey])
+
+  const navigateTopicFromWarmup = (navigate?: () => void) => {
+    if (!navigate) return
+    nextInitialTabRef.current = 'warmup'
+    setActiveTab('warmup')
+    navigate()
+  }
 
   // Fetch the currently bound story individually (bypasses pagination)
   useEffect(() => {
@@ -1020,6 +1033,11 @@ function TrainingTopicDialog({
                 vocabs={vocabs}
                 chunks={chunks}
                 patterns={patterns}
+                topicTitle={form.title || edit?.title || ''}
+                topicIndex={topicIndex}
+                topicTotal={topicTotal}
+                onPrevTopic={onPrevTopic ? () => navigateTopicFromWarmup(onPrevTopic) : undefined}
+                onNextTopic={onNextTopic ? () => navigateTopicFromWarmup(onNextTopic) : undefined}
               />
             </TabsContent>
           </div>
@@ -1079,6 +1097,11 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
 
   const topicTotalPages = getTotalPages(topics.length, topicPageSize)
   const topicItems = getPageItems(topics, Math.min(topicPage, topicTotalPages), topicPageSize)
+  const sortedTopics = useMemo(
+    () => [...topics].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
+    [topics],
+  )
+  const editTopicIndex = editTopic ? sortedTopics.findIndex((topic) => topic.id === editTopic.id) : -1
   const currentPackageTypeLabel = packageTypeLabel(scene?.packageType)
 
   const handleTopicSaved = (saved: TrainingTopic) => {
@@ -1283,7 +1306,12 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
       )}
 
       <TrainingTopicDialog open={topicDialog} onClose={() => setTopicDialog(false)}
-        edit={editTopic} sceneId={sceneId} packageType={scene.packageType} chunks={chunks} vocabs={vocabs} patterns={patterns} onSaved={handleTopicSaved} />
+        edit={editTopic} sceneId={sceneId} packageType={scene.packageType} chunks={chunks} vocabs={vocabs} patterns={patterns}
+        topicIndex={editTopicIndex >= 0 ? editTopicIndex : undefined}
+        topicTotal={sortedTopics.length}
+        onPrevTopic={editTopicIndex > 0 ? () => setEditTopic(sortedTopics[editTopicIndex - 1]) : undefined}
+        onNextTopic={editTopicIndex >= 0 && editTopicIndex < sortedTopics.length - 1 ? () => setEditTopic(sortedTopics[editTopicIndex + 1]) : undefined}
+        onSaved={handleTopicSaved} />
       <EpisodeEditDialog
         open={storyDialog}
         onClose={() => setStoryDialog(false)}
