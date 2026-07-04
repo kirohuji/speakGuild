@@ -354,6 +354,8 @@ export class LearningService {
             metadata: true,
             suggestedDurationSec: true,
             _count: { select: { activeChunks: true, topicVocabs: true } },
+            topicVocabs: { select: { vocabId: true } },
+            activeChunks: { select: { chunkId: true } },
           },
           orderBy: { sortOrder: 'asc' },
         },
@@ -376,13 +378,18 @@ export class LearningService {
 
     const fullList = allScenes.map((scene) => {
       const prog = progressMap.get(scene.id);
-      // Compute totals from topics
-      let vocabCount = 0;
-      let chunkCount = 0;
+      const vocabIds = new Set<string>();
+      const chunkIds = new Set<string>();
       for (const t of scene.trainingTopics) {
-        vocabCount += (t as any)._count?.topicVocabs ?? 0;
-        chunkCount += (t as any)._count?.activeChunks ?? 0;
+        for (const tv of (t as any).topicVocabs ?? []) {
+          if (tv.vocabId) vocabIds.add(tv.vocabId);
+        }
+        for (const ac of (t as any).activeChunks ?? []) {
+          if (ac.chunkId) chunkIds.add(ac.chunkId);
+        }
       }
+      const vocabCount = vocabIds.size;
+      const chunkCount = chunkIds.size;
       const warmupItemIds = this.buildWarmupPracticeItemIds(scene.id, scene.trainingTopics);
       const completedWarmupItemIds = completedWarmupItemIdsByScene.get(scene.id) ?? new Set<string>();
       const completedPracticeCount = warmupItemIds.filter((itemId) => completedWarmupItemIds.has(itemId)).length;
@@ -481,6 +488,8 @@ export class LearningService {
                 metadata: true,
                 suggestedDurationSec: true,
                 _count: { select: { activeChunks: true, topicVocabs: true } },
+                topicVocabs: { select: { vocabId: true } },
+                activeChunks: { select: { chunkId: true } },
               },
               orderBy: { sortOrder: 'asc' },
             },
@@ -494,13 +503,18 @@ export class LearningService {
 
     return progresses.map((p) => {
       const scene = p.scene;
-      // Compute totals from topics
-      let vocabCount = 0;
-      let chunkCount = 0;
+      const vocabIds = new Set<string>();
+      const chunkIds = new Set<string>();
       for (const t of scene.trainingTopics) {
-        vocabCount += (t as any)._count?.topicVocabs ?? 0;
-        chunkCount += (t as any)._count?.activeChunks ?? 0;
+        for (const tv of (t as any).topicVocabs ?? []) {
+          if (tv.vocabId) vocabIds.add(tv.vocabId);
+        }
+        for (const ac of (t as any).activeChunks ?? []) {
+          if (ac.chunkId) chunkIds.add(ac.chunkId);
+        }
       }
+      const vocabCount = vocabIds.size;
+      const chunkCount = chunkIds.size;
       const warmupItemIds = this.buildWarmupPracticeItemIds(scene.id, scene.trainingTopics);
       const completedWarmupItemIds = completedWarmupItemIdsByScene.get(scene.id) ?? new Set<string>();
       const completedPracticeCount = warmupItemIds.filter((itemId) => completedWarmupItemIds.has(itemId)).length;

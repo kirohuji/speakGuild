@@ -25,14 +25,16 @@ export function useCachedAudio() {
 
     // Stop any currently playing audio
     audioRef.current?.pause()
-    audioRef.current = null
+    const audio = new Audio()
+    audio.preload = 'auto'
+    audioRef.current = audio
 
     // Normalize protocol-relative URLs
     let resolvedUrl = url?.startsWith('//') ? `https:${url}` : (url ?? '')
 
     if (isNative()) {
       try {
-        if (assetId && !resolvedUrl) {
+        if (assetId) {
           const fresh = await getFileAssetPrivateUrl(assetId)
           resolvedUrl = fresh.url
         }
@@ -54,11 +56,28 @@ export function useCachedAudio() {
     }
 
     if (!resolvedUrl) return
-    const audio = new Audio(resolvedUrl)
-    audioRef.current = audio
-    audio.play().catch(() => {
-      // Silently ignore autoplay restrictions or playback errors
-    })
+    try {
+      audio.src = resolvedUrl
+      audio.load()
+      await audio.play()
+    } catch {
+      if (!assetId) return
+      try {
+        const fresh = await getFileAssetPrivateUrl(assetId)
+        const fallbackUrl = isNative()
+          ? await assetCacheService.download({
+              url: fresh.url,
+              assetId,
+              role,
+            })
+          : fresh.url
+        audio.src = fallbackUrl
+        audio.load()
+        await audio.play()
+      } catch (error) {
+        console.warn('[useCachedAudio] playback failed', error)
+      }
+    }
   }, [])
 
   /**

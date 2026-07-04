@@ -100,6 +100,14 @@ export const assetCacheService = {
     const key = await assetKey({ ...ref, url })
     const cached = await localDb.get<LocalAsset>('local_assets', key)
     if (cached?.status === 'ready' && cached.localUri) {
+      if (isNative() && cached.localPath) {
+        try {
+          await Filesystem.stat({ path: cached.localPath, directory: Directory.Data })
+        } catch {
+          await localDb.delete('local_assets', key)
+          return this.download({ ...ref, url })
+        }
+      }
       await localDb.put('local_assets', { ...cached, lastAccessedAt: new Date().toISOString() })
       return isNative() ? toLoadableUrl(cached.localUri) : cached.localUri
     }
