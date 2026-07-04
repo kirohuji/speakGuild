@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { synthesizeAdminAudio, playAudioUrl } from '@/lib/admin-tts-helpers'
-import { getFileAssetLongLivedUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
+import { deleteFileReference, getFileAssetLongLivedUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
 import { WarmupItemPreview } from './warmup-item-preview'
 
 export interface PatternDrillItem {
@@ -148,6 +148,17 @@ export function PatternDrillForm({ value, onChange, onDelete, patterns = [] }: P
     } finally {
       setTtsGenerating(null)
     }
+  }
+
+  const removeItemAudio = async (idx: number) => {
+    const item = local.items[idx]
+    if (item.audioAssetId) {
+      await deleteFileReference(item.audioAssetId, 'warmup_pattern_drill', `${local.id}-${idx}`).catch(() => undefined)
+    }
+    const next = [...local.items]
+    next[idx] = { ...next[idx], audioUrl: undefined, audioAssetId: undefined }
+    commit({ items: next })
+    toast.success('题目音频已移除')
   }
 
   const aiGenerate = async () => {
@@ -303,6 +314,12 @@ export function PatternDrillForm({ value, onChange, onDelete, patterns = [] }: P
                       <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听题目音频"
                         onClick={() => playAudioUrl(item.audioUrl, item.audioAssetId)}>
                         <Play className="size-3" />
+                      </Button>
+                    )}
+                    {(item.audioUrl || item.audioAssetId) && (
+                      <Button size="icon-sm" variant="ghost" className="size-7 shrink-0 text-destructive" title="移除题目音频"
+                        onClick={() => removeItemAudio(idx)}>
+                        <X className="size-3" />
                       </Button>
                     )}
                     <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成题目 TTS"

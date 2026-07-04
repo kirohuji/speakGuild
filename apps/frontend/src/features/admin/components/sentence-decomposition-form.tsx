@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { synthesizeAdminAudio, playAudioUrl } from '@/lib/admin-tts-helpers'
+import { deleteFileReference } from '@/features/file-assets/api'
 
 export interface SentenceDecompositionItem {
   id: string
@@ -110,6 +111,17 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
     } finally {
       setTtsGenerating(null)
     }
+  }
+
+  const removeLevelAudio = async (idx: number) => {
+    const level = local.levels[idx]
+    if (level?.audioAssetId) {
+      await deleteFileReference(level.audioAssetId, 'warmup_sent_decomp', `${local.id}-${idx}`).catch(() => undefined)
+    }
+    const next = [...local.levels]
+    next[idx] = { ...next[idx], audioUrl: undefined, audioAssetId: undefined }
+    commit({ levels: next })
+    toast.success('层级音频已移除')
   }
 
   const aiGenerateLongSentence = async () => {
@@ -279,6 +291,12 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
                       <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听层级音频"
                         onClick={() => playAudioUrl(level.audioUrl, level.audioAssetId)}>
                         <Play className="size-3" />
+                      </Button>
+                    )}
+                    {(level.audioUrl || level.audioAssetId) && (
+                      <Button size="icon-sm" variant="ghost" className="size-7 shrink-0 text-destructive" title="移除层级音频"
+                        onClick={() => removeLevelAudio(idx)}>
+                        <Trash2 className="size-3" />
                       </Button>
                     )}
                     <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成层级 TTS"

@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { synthesizeAdminAudio, playAudioUrl } from '@/lib/admin-tts-helpers'
-import { getFileAssetLongLivedUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
+import { deleteFileReference, getFileAssetLongLivedUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
 import { WarmupItemPreview } from './warmup-item-preview'
 
 export interface VocabSentenceBuildingItem {
@@ -184,6 +184,19 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
     }
   }
 
+  const removeItemAudio = async (pIdx: number, iIdx: number) => {
+    const item = local.patterns[pIdx]?.items[iIdx]
+    if (item?.audioAssetId) {
+      await deleteFileReference(item.audioAssetId, 'warmup_vocab_build', `${local.id}-${pIdx}-${iIdx}`).catch(() => undefined)
+    }
+    const next = [...local.patterns]
+    const items = [...next[pIdx].items]
+    items[iIdx] = { ...items[iIdx], audioUrl: undefined, audioAssetId: undefined }
+    next[pIdx] = { ...next[pIdx], items }
+    commit({ patterns: next })
+    toast.success('题目音频已移除')
+  }
+
   const aiGenerate = async () => {
     if (!local.vocabWord) { toast.error('请先输入核心词汇'); return }
     setAiBusy('generate')
@@ -321,6 +334,12 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                           <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听题目音频"
                             onClick={() => playAudioUrl(item.audioUrl, item.audioAssetId)}>
                             <Play className="size-3" />
+                          </Button>
+                        )}
+                        {(item.audioUrl || item.audioAssetId) && (
+                          <Button size="icon-sm" variant="ghost" className="size-7 shrink-0 text-destructive" title="移除题目音频"
+                            onClick={() => removeItemAudio(pIdx, iIdx)}>
+                            <X className="size-3" />
                           </Button>
                         )}
                         <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成题目 TTS"
