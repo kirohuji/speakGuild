@@ -79,7 +79,12 @@ export function NativeBridgeProvider({ children }: { children: React.ReactNode }
 
     // ── App 从后台恢复：节流检查 ──
     let resumeHandle: PluginListenerHandle | null = null;
+    let pauseHandle: PluginListenerHandle | null = null;
     void (async () => {
+      pauseHandle = await App.addListener('pause', () => {
+        useLearningStore.getState().pauseActivePackTasks('应用已进入后台')
+      })
+
       resumeHandle = await App.addListener('resume', () => {
         const now = Date.now();
 
@@ -130,6 +135,7 @@ export function NativeBridgeProvider({ children }: { children: React.ReactNode }
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
+      pauseHandle?.remove();
       resumeHandle?.remove();
     };
   }, []);

@@ -121,14 +121,26 @@ function InProgressUnitCard({
   const [quitting, setQuitting] = useState(false)
   const Icon = getCategoryIcon(unit.categoryName)
   const needsDownload = !isPackDownloaded
-  const showPackAction = needsDownload || hasPackUpdate
   const pct = Math.max(0, Math.min(100, unit.completionPercent ?? 0))
   const completedPracticeCount = unit.progress?.completedPracticeCount ?? 0
   const totalPracticeCount = unit.progress?.totalPracticeCount ?? unit.topicCount ?? 0
   const downloadTask = useLearningStore((state) => state.downloadTasks.find((task) => task.packId === unit.id))
   const isTaskActive = !!downloadTask && downloadTask.status !== 'done' && downloadTask.status !== 'error'
+  const isPaused = downloadTask?.status === 'paused'
   const isUninstalling = downloadTask?.kind === 'uninstall' && isTaskActive
-  const isPackBusy = isPackInstalling || isTaskActive
+  const isPackBusy = isPackInstalling || (isTaskActive && !isPaused)
+  const resumePackTask = useLearningStore((state) => state.resumePackTask)
+  const showPackAction = isTaskActive || needsDownload || hasPackUpdate
+  const packActionText = (() => {
+    if (isPaused) return downloadTask?.kind === 'uninstall' ? '卸载已暂停' : '下载已暂停'
+    if (isTaskActive) {
+      if (downloadTask?.kind === 'uninstall') return downloadTask.stepLabel ?? '卸载中'
+      if (downloadTask?.status === 'queued') return '排队下载中'
+      return downloadTask?.stepLabel ?? '下载中'
+    }
+    if (needsDownload) return t('learning.packNeedsDownload')
+    return t('learning.packUpdateAvailable', { defaultValue: '学习包有版本更新' })
+  })()
 
   const handleQuit = useCallback(async () => {
     if (isPackBusy) return
@@ -151,6 +163,15 @@ function InProgressUnitCard({
       toast.error(t('learning.packDownloadFailed'))
     }
   }, [isPackBusy, onDownloadPack, t])
+
+  const handleResumePackTask = useCallback(async () => {
+    if (!downloadTask || downloadTask.status !== 'paused') return
+    try {
+      await resumePackTask(unit.id)
+    } catch {
+      toast.error(downloadTask.kind === 'uninstall' ? '继续卸载失败，请重试' : t('learning.packDownloadFailed'))
+    }
+  }, [downloadTask, resumePackTask, t, unit.id])
 
   return (
     <div className={cn('overflow-hidden rounded-lg bg-muted/30 transition-opacity', isPackBusy && 'opacity-55')}>
@@ -201,24 +222,22 @@ function InProgressUnitCard({
 
         {showPackAction && (
           <div className="mt-3 flex items-center justify-between gap-3 rounded-md border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2">
-            <p className="min-w-0 flex-1 truncate text-xs text-amber-700 dark:text-amber-300">
-              {needsDownload
-                ? t('learning.packNeedsDownload')
-                : t('learning.packUpdateAvailable', { defaultValue: '学习包有版本更新' })}
-            </p>
+            <p className="min-w-0 flex-1 truncate text-xs text-amber-700 dark:text-amber-300">{packActionText}</p>
             <Button
               type="button"
               variant="ghost"
-              disabled={isPackBusy || !onDownloadPack}
-              onClick={handleDownloadPack}
+              disabled={isPackBusy || (!isPaused && !onDownloadPack)}
+              onClick={isPaused ? handleResumePackTask : handleDownloadPack}
               className={cn(
                 'h-8 shrink-0 rounded-full px-2 text-amber-700 hover:bg-amber-500/10 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200',
-                isPackBusy ? 'min-w-14 gap-1.5' : 'w-8 px-0',
+                isPackBusy || isPaused ? 'min-w-14 gap-1.5' : 'w-8 px-0',
               )}
-              aria-label={isPackBusy ? t('learning.packDownloading') : t('learning.downloadPack')}
-              title={isPackBusy ? t('learning.packDownloading') : t('learning.downloadPack')}
+              aria-label={isPaused ? packActionText : isPackBusy ? t('learning.packDownloading') : t('learning.downloadPack')}
+              title={isPaused ? packActionText : isPackBusy ? t('learning.packDownloading') : t('learning.downloadPack')}
             >
-              {isPackBusy ? (
+              {isPaused ? (
+                <span className="text-[11px] font-semibold">继续</span>
+              ) : isPackBusy ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
                   <span className="text-[11px] font-semibold tabular-nums">{Math.round(downloadTask?.progress ?? 0)}%</span>

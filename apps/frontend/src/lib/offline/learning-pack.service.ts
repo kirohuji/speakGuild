@@ -601,13 +601,23 @@ export const learningPackService = {
         if (!entry) continue
         assetTasks.push({ asset, entry, index: i })
       }
-      const progressForAssets = (done: number, label: string, currentItem?: string) => {
+      const progressForAssetRead = (done: number, label: string, currentItem?: string) => {
         const total = Math.max(assetTasks.length, 1)
-        const pct = 40 + (done / total) * 52
+        const pct = 40 + (done / total) * 35
         report('extracting_assets', pct, {
           label,
           current: Math.min(done, assetTasks.length),
           total: assetTasks.length,
+          currentItem,
+        })
+      }
+      const progressForAssetWrite = (done: number, totalToWrite: number, currentItem?: string) => {
+        const total = Math.max(totalToWrite, 1)
+        const pct = 75 + (done / total) * 20
+        report('extracting_assets', pct, {
+          label: '写入本地资源',
+          current: Math.min(done, totalToWrite),
+          total: totalToWrite,
           currentItem,
         })
       }
@@ -619,7 +629,7 @@ export const learningPackService = {
       const assetResults: AssetResult[] = []
       for (let i = 0; i < assetTasks.length; i += ASSET_CONCURRENCY) {
         const batch = assetTasks.slice(i, i + ASSET_CONCURRENCY)
-        progressForAssets(i, '读取资源文件', batch[0]?.asset?.path ?? batch[0]?.asset?.url)
+        progressForAssetRead(i, '读取资源文件', batch[0]?.asset?.path ?? batch[0]?.asset?.url)
         const batchResults = await Promise.all(
           batch.map(async ({ asset, entry, index }): Promise<AssetResult> => {
             try {
@@ -635,7 +645,7 @@ export const learningPackService = {
           }),
         )
         assetResults.push(...batchResults)
-        progressForAssets(assetResults.length, '校验资源文件', batch[batch.length - 1]?.asset?.path ?? batch[batch.length - 1]?.asset?.url)
+        progressForAssetRead(assetResults.length, '校验资源文件', batch[batch.length - 1]?.asset?.path ?? batch[batch.length - 1]?.asset?.url)
       }
 
       // ── 阶段 B：批量写入文件系统 + SQLite ──
@@ -682,12 +692,13 @@ export const learningPackService = {
 
       // 并行写文件 + 批量写 SQLite 引用
       let savedFiles = 0
+      progressForAssetWrite(0, filesToSave.length, filesToSave[0]?.asset?.path ?? filesToSave[0]?.asset?.url)
       await Promise.all([
         ...filesToSave.map(async ({ asset, sha256, buffer }) => {
-          progressForAssets(assetResults.length + savedFiles, '写入本地资源', asset.path ?? asset.url)
+          progressForAssetWrite(savedFiles, filesToSave.length, asset.path ?? asset.url)
           const saved = await assetCacheService.saveFromBufferWithSha256({ ...asset, sha256 }, buffer, sha256)
           savedFiles++
-          progressForAssets(assetResults.length + savedFiles, '写入本地资源', asset.path ?? asset.url)
+          progressForAssetWrite(savedFiles, filesToSave.length, asset.path ?? asset.url)
           return saved
         }),
         assetRefsToWrite.length > 0
@@ -697,7 +708,7 @@ export const learningPackService = {
 
       const assetSkip = totalAssets - assetTasks.length
       console.log(`[learning-pack] ✅ ⑨ 资源提取完成: ${assetOk} 成功 (${assetDeduped} 去重复用), ${assetSkip} 跳过, ${assetFail} 失败`)
-      report('finishing', 95, { label: '完成安装' })
+      report('finishing', 99, { label: '完成安装' })
 
       const result = await persistInstalledRecord(manifest)
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(1)

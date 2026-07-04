@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { AlertCircle, ChevronDown, DownloadCloud, Loader2, PackageOpen, Trash2 } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Progress } from '@/components/ui/progress'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
 import { useLearningStore, type DownloadTask } from '@/stores/learning.store'
 
@@ -15,6 +16,7 @@ function isRunning(task: DownloadTask) {
 
 function statusLabel(task: DownloadTask) {
   if (task.status === 'queued') return '排队中'
+  if (task.status === 'paused') return task.stepLabel ?? '已暂停'
   if (task.status === 'uninstalling') return task.stepLabel ?? '卸载中'
   if (task.status === 'extracting') return task.stepLabel ?? '写入本地资源'
   if (task.status === 'error') return task.kind === 'uninstall' ? '卸载失败' : '下载失败'
@@ -94,6 +96,7 @@ export function LearningPackDownloadDrawer({
   onOpenChange: (open: boolean) => void
 }) {
   const downloadTasks = useLearningStore((state) => state.downloadTasks)
+  const resumePackTask = useLearningStore((state) => state.resumePackTask)
   const tasks = useMemo(() => activeTasks(downloadTasks), [downloadTasks])
   const runningCount = tasks.filter(isRunning).length
   const percent = aggregatePercent(tasks)
@@ -129,6 +132,8 @@ export function LearningPackDownloadDrawer({
                     <div className="flex aspect-square size-[44px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
                       {task.status === 'error' ? (
                         <AlertCircle className="size-4 text-destructive" />
+                      ) : task.status === 'paused' ? (
+                        <DownloadCloud className="size-4 text-muted-foreground" />
                       ) : task.kind === 'uninstall' ? (
                         <Trash2 className="size-4 text-destructive/80" />
                       ) : isRunning(task) ? (
@@ -169,6 +174,17 @@ export function LearningPackDownloadDrawer({
                         <code className="block rounded-md bg-muted px-2 py-1.5 font-mono text-[11px] text-foreground">
                           {task.kind === 'uninstall' ? (task.stepLabel || task.step || '等待开始') : (compactPath(task.currentItem) || task.step || '等待开始')}
                         </code>
+                        {task.status === 'paused' && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="mt-1 h-8 w-full rounded-full text-xs"
+                            onClick={() => void resumePackTask(task.packId)}
+                          >
+                            继续{task.kind === 'uninstall' ? '卸载' : '下载'}
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>

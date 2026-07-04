@@ -32,12 +32,15 @@ export interface DownloadTask {
   currentItem?: string
   current?: number
   total?: number
-  status: 'queued' | 'downloading' | 'extracting' | 'uninstalling' | 'done' | 'error'
+  status: 'queued' | 'downloading' | 'extracting' | 'uninstalling' | 'paused' | 'done' | 'error'
+  pausedFrom?: Exclude<DownloadTask['status'], 'paused'>
   error?: string
 }
 
 /** 最大并发下载数 */
 const MAX_CONCURRENT_DOWNLOADS = 2
+const PACK_TASKS_STORAGE_KEY = 'manyu.learning-pack.tasks.v1'
+const activePackTaskIds = new Set<string>()
 
 interface LearningStore {
   // 我的学习
@@ -83,6 +86,8 @@ interface LearningStore {
   checkPackUpdates: (silent?: boolean) => Promise<void>
   downloadUnitPack: (unitId: string) => Promise<void>
   uninstallUnitPack: (unitId: string) => Promise<void>
+  pauseActivePackTasks: (reason?: string) => void
+  resumePackTask: (packId: string) => Promise<void>
   /** 清除所有离线数据 */
   clearAllOfflineData: () => Promise<void>
 }
@@ -156,7 +161,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   downloadedPacks: [],
   packInstallingIds: [],
   availablePackUpdates: [],
-  downloadTasks: [],
+  downloadTasks: readPersistedPackTasks(),
 
   /** 首次加载：我的学习 + 商店 */
   async fetchMyLearning() {
@@ -323,7 +328,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       const updateProgress = (progress: number, status: DownloadTask['status']) => {
         set((s) => ({
           downloadTasks: s.downloadTasks.map((t) =>
-            t.packId === next.packId ? { ...t, progress: Math.min(99, progress), status } : t,
+            t.packId === next.packId ? { ...t, progress: Math.max(t.progress ?? 0, Math.min(99, progress)), status } : t,
           ),
         }))
       }
@@ -364,6 +369,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async quitUnit(unitId) {
+    if (activePackTaskIds.has(unitId)) return
     const state = getState()
     const unitTitle =
       state.myUnits.find((unit) => unit.id === unitId)?.title ??
@@ -377,6 +383,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       lastAt = now
     }
     console.log(`[learning-store:quit:${unitId}] start`)
+    activePackTaskIds.add(unitId)
     set((s) => ({
       downloadTasks: [
         ...s.downloadTasks.filter((task) => task.packId !== unitId),
@@ -449,6 +456,8 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
         packInstallingIds: s.packInstallingIds.filter((id) => id !== unitId),
       }))
       toast.error(i18n.t('learning.packUninstallFailed', { defaultValue: `${unitTitle} 卸载失败，请重试` }))
+    } finally {
+      activePackTaskIds.delete(unitId)
     }
   },
 
@@ -516,6 +525,50 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     }))
   },
 
+  pauseActivePackTasks(reason = '应用已进入后台') {
+    set((s) => ({
+      downloadTasks: s.downloadTasks.map((task) =>
+        task.status === 'queued' || task.status === 'downloading' || task.status === 'extracting' || task.status === 'uninstalling'
+          ? {
+              ...task,
+              status: 'paused' as const,
+              pausedFrom: task.status,
+              step: 'paused',
+              stepLabel: reason,
+            }
+          : task,
+      ),
+    }))
+  },
+
+  async resumePackTask(packId) {
+    const task = getState().downloadTasks.find((item) => item.packId === packId)
+    if (!task || task.status !== 'paused') return
+
+    if (activePackTaskIds.has(packId)) {
+      set((s) => ({
+        downloadTasks: s.downloadTasks.map((item) =>
+          item.packId === packId
+            ? {
+                ...item,
+                status: item.pausedFrom === 'uninstalling' ? 'uninstalling' : 'downloading',
+                stepLabel: item.kind === 'uninstall' ? '继续卸载' : '继续下载',
+              }
+            : item,
+        ),
+      }))
+      return
+    }
+
+    if (task.kind === 'uninstall') {
+      await getState().quitUnit(packId)
+      return
+    }
+
+    enqueueDownloadTask(packId, task.title)
+    processDownloadQueue()
+  },
+
   async clearAllOfflineData() {
     console.log('[learning-store] 🧹 清除所有离线数据...')
     const packs = await learningPackService.listInstalled()
@@ -567,6 +620,7 @@ async function processDownloadQueue() {
   }))
 
   try {
+    activePackTaskIds.add(next.packId)
     if (!await checkNetworkBeforeDownload()) {
       useLearningStore.setState((s) => ({
         downloadTasks: s.downloadTasks.filter((t) => t.packId !== next.packId),
@@ -586,7 +640,7 @@ async function processDownloadQueue() {
           t.packId === next.packId && (t.status === 'downloading' || t.status === 'extracting')
             ? {
                 ...t,
-                progress,
+                progress: Math.max(t.progress ?? 0, progress),
                 step,
                 status,
                 stepLabel: detail?.label,
@@ -654,9 +708,49 @@ async function processDownloadQueue() {
     }))
     toast.error(i18n.t('learning.packDownloadFailed', { defaultValue: `${next.title} 下载失败，请重试` }))
   } finally {
+    activePackTaskIds.delete(next.packId)
     processDownloadQueue()
   }
 }
+
+function readPersistedPackTasks(): DownloadTask[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = window.localStorage.getItem(PACK_TASKS_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .filter((task: Partial<DownloadTask>) => task?.packId && task?.title && task.status !== 'done')
+      .map((task: DownloadTask) => ({
+        ...task,
+        status: task.status === 'error' ? 'error' : 'paused',
+        pausedFrom: task.status === 'paused' ? task.pausedFrom : task.status,
+        step: task.status === 'error' ? task.step : 'paused',
+        stepLabel: task.status === 'error' ? task.stepLabel : '上次任务已暂停',
+      }))
+  } catch {
+    return []
+  }
+}
+
+function persistPackTasks(tasks: DownloadTask[]) {
+  if (typeof window === 'undefined') return
+  const active = tasks.filter((task) => task.status !== 'done')
+  try {
+    if (active.length === 0) {
+      window.localStorage.removeItem(PACK_TASKS_STORAGE_KEY)
+    } else {
+      window.localStorage.setItem(PACK_TASKS_STORAGE_KEY, JSON.stringify(active))
+    }
+  } catch {
+    // ignore storage quota/private mode errors
+  }
+}
+
+useLearningStore.subscribe((state) => {
+  persistPackTasks(state.downloadTasks)
+})
 
 /** App 启动/恢复时调用：检查已安装包更新 + 加载本地状态 */
 export async function startupPackSync() {
