@@ -374,7 +374,17 @@ export class ContentAdminController {
   @Delete('training-topics/:id')
   async deleteTrainingTopic(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
-    return this.prisma.trainingTopic.delete({ where: { id } });
+    return this.prisma.$transaction(async (tx) => {
+      await tx.inkScript.updateMany({ where: { topicId: id }, data: { topicId: null } });
+      await tx.practiceWarmupRecord.deleteMany({ where: { topicId: id } });
+      await tx.userWarmupItemProgress.deleteMany({ where: { topicId: id } });
+      await tx.userDailyPracticeAttempt.deleteMany({ where: { topicId: id } });
+      await tx.practiceSession.deleteMany({ where: { topicId: id } });
+      await tx.trainingTopicChunk.deleteMany({ where: { topicId: id } });
+      await tx.trainingTopicVocab.deleteMany({ where: { topicId: id } });
+      await tx.trainingTopicSentencePattern.deleteMany({ where: { topicId: id } });
+      return tx.trainingTopic.delete({ where: { id } });
+    });
   }
 
   // ════════════════════════════════════════════════════════════

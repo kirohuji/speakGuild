@@ -53,6 +53,24 @@ function packageTypeLabel(type?: Scene['packageType']) {
   return '日常'
 }
 
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`
+  if (value && typeof value === 'object') {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .filter(([, entry]) => entry !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, entry]) => `${JSON.stringify(key)}:${stableStringify(entry)}`)
+      .join(',')}}`
+  }
+  return JSON.stringify(value)
+}
+
+function serializeTrainingTopicForm(form: Record<string, any>) {
+  const payload = { ...form }
+  delete payload.sentencePatterns
+  return stableStringify(payload)
+}
+
 const PACKAGE_TYPE_FILTERS: Array<{ id: Scene['packageType']; label: string }> = [
   { id: 'daily', label: '日常' },
   { id: 'exam', label: '考试' },
@@ -493,6 +511,7 @@ function TrainingTopicDialog({
   const [storyTotal, setStoryTotal] = useState(0)
   const storiesLoadedRef = useRef(false)
   const nextInitialTabRef = useRef<'basic' | 'warmup'>('basic')
+  const savedFormSnapshotRef = useRef('')
   // Fetch the bound story individually (bypasses pagination)
   const [boundStory, setBoundStory] = useState<StoryData | null>(null)
   // Stable key to only re-init form when a different topic is opened, not on prop reference change
@@ -509,7 +528,7 @@ function TrainingTopicDialog({
     if (lastInitKey === editKey) return // already initialized for this topic, skip
 
     if (edit) {
-      setForm({
+      const nextForm = {
         ...edit,
         chunkIds: edit.activeChunks?.map((ac: any) => ac.chunk.id) ?? [],
         vocabIds: edit.topicVocabs?.map((tv: any) => tv.vocab.id) ?? [],
@@ -518,30 +537,36 @@ function TrainingTopicDialog({
           ...(edit.metadata ?? {}),
           outputTraining: edit.metadata?.outputTraining ?? { version: 1, enabled: true, pipeline: [] },
         },
-      })
+      }
+      setForm(nextForm)
+      savedFormSnapshotRef.current = serializeTrainingTopicForm(nextForm)
     }
-    else setForm({
-      sceneId,
-      type: packageType === 'exam' ? 'ielts' : 'daily',
-      metadata: {
-        ...(packageType === 'exam'
-          ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview' }
-          : {}),
-        outputTraining: { version: 1, enabled: true, pipeline: [] },
-      },
-      title: '',
-      description: '',
-      teachingMarkdown: '',
-      promptEn: '',
-      promptZh: '',
-      difficulty: 'L2',
-      suggestedDurationSec: 60,
-      sortOrder: 0,
-      chunkIds: [],
-      vocabIds: [],
-      patternIds: [],
-      inkScriptId: '',
-    })
+    else {
+      const nextForm = {
+        sceneId,
+        type: packageType === 'exam' ? 'ielts' : 'daily',
+        metadata: {
+          ...(packageType === 'exam'
+            ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview' }
+            : {}),
+          outputTraining: { version: 1, enabled: true, pipeline: [] },
+        },
+        title: '',
+        description: '',
+        teachingMarkdown: '',
+        promptEn: '',
+        promptZh: '',
+        difficulty: 'L2',
+        suggestedDurationSec: 60,
+        sortOrder: 0,
+        chunkIds: [],
+        vocabIds: [],
+        patternIds: [],
+        inkScriptId: '',
+      }
+      setForm(nextForm)
+      savedFormSnapshotRef.current = serializeTrainingTopicForm(nextForm)
+    }
     setStorySearch('')
     setStoryType('all')
     setActiveTab(nextInitialTabRef.current)
@@ -549,10 +574,19 @@ function TrainingTopicDialog({
     setLastInitKey(editKey)
   }, [open, editKey, sceneId, packageType, lastInitKey])
 
-  const navigateTopicFromWarmup = (navigate?: () => void) => {
-    if (!navigate) return
+  const saveAndNavigateTopicFromWarmup = async (navigate?: () => void) => {
+    if (!navigate || saving) return
     nextInitialTabRef.current = 'warmup'
     setActiveTab('warmup')
+    if (serializeTrainingTopicForm(form) === savedFormSnapshotRef.current) {
+      navigate()
+      return
+    }
+    const saved = await saveTopic()
+    if (!saved) {
+      nextInitialTabRef.current = 'basic'
+      return
+    }
     navigate()
   }
 
@@ -635,8 +669,11 @@ function TrainingTopicDialog({
     })
   }
 
-  const handleSave = async () => {
-    if (!form.title?.trim() || !form.promptEn?.trim()) return
+  const saveTopic = async () => {
+    if (!form.title?.trim() || !form.promptEn?.trim()) {
+      toast.error('请先填写标题和英文提示')
+      return null
+    }
     setSaving(true)
     try {
       const payload = { ...form }
@@ -649,10 +686,19 @@ function TrainingTopicDialog({
         sortOrder: saved.sortOrder,
       }))
       setLastInitKey(saved.id)
+      savedFormSnapshotRef.current = serializeTrainingTopicForm({ ...payload, id: saved.id, sceneId: saved.sceneId, sortOrder: saved.sortOrder })
       toast.success('话题已保存')
       onSaved(saved)
-    } catch { toast.error('保存失败') }
+      return saved
+    } catch {
+      toast.error('保存失败')
+      return null
+    }
     finally { setSaving(false) }
+  }
+
+  const handleSave = async () => {
+    await saveTopic()
   }
 
   return (
@@ -1036,8 +1082,8 @@ function TrainingTopicDialog({
                 topicTitle={form.title || edit?.title || ''}
                 topicIndex={topicIndex}
                 topicTotal={topicTotal}
-                onPrevTopic={onPrevTopic ? () => navigateTopicFromWarmup(onPrevTopic) : undefined}
-                onNextTopic={onNextTopic ? () => navigateTopicFromWarmup(onNextTopic) : undefined}
+                onPrevTopic={onPrevTopic && !saving ? () => saveAndNavigateTopicFromWarmup(onPrevTopic) : undefined}
+                onNextTopic={onNextTopic && !saving ? () => saveAndNavigateTopicFromWarmup(onNextTopic) : undefined}
               />
             </TabsContent>
           </div>
