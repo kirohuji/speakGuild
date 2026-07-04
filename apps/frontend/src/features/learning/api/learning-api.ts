@@ -1,5 +1,7 @@
 import { del, get, post } from '@/lib/request'
 
+const LEARNING_PACK_DOWNLOAD_TIMEOUT_MS = 10 * 60_000
+
 // ---- 类型定义 ----
 
 export interface TopicSummary {
@@ -253,7 +255,7 @@ export const learningApi = {
     get<ArrayBuffer>(`/learning/units/${unitId}/download-pack`, undefined, {
       dedupe: false,
       responseType: 'arraybuffer',
-      timeout: 120_000,
+      timeout: LEARNING_PACK_DOWNLOAD_TIMEOUT_MS,
     }),
 
   checkPacks: (installed: Array<{ packId: string; version?: number }>) =>
@@ -264,7 +266,7 @@ export const learningApi = {
     get<ArrayBuffer>(`/learning/units/${unitId}/download-delta?from=${fromVersion}&to=${toVersion}`, undefined, {
       dedupe: false,
       responseType: 'arraybuffer',
-      timeout: 120_000,
+      timeout: LEARNING_PACK_DOWNLOAD_TIMEOUT_MS,
     }),
 
   /** 更新学习单元进度 */

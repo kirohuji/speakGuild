@@ -10,7 +10,12 @@ import {
   type UnitDetail,
 } from '@/features/learning/api/learning-api'
 import { pointsApi, type CheckInCalendar } from '@/features/points/api'
-import { learningPackService, learningRepository, type InstalledLearningPack } from '@/lib/offline'
+import {
+  learningPackService,
+  learningRepository,
+  type InstalledLearningPack,
+  type LearningPackInstallProgress,
+} from '@/lib/offline'
 import { isNative } from '@/lib/native/platform'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { toast } from 'sonner'
@@ -20,9 +25,14 @@ import i18n from '@/lib/i18n'
 export interface DownloadTask {
   packId: string
   title: string
+  kind?: 'download' | 'uninstall'
   progress: number        // 0-100
   step?: string           // 当前步骤标识（如 'downloading', 'extracting_assets'）
-  status: 'queued' | 'downloading' | 'extracting' | 'done' | 'error'
+  stepLabel?: string
+  currentItem?: string
+  current?: number
+  total?: number
+  status: 'queued' | 'downloading' | 'extracting' | 'uninstalling' | 'done' | 'error'
   error?: string
 }
 
@@ -354,6 +364,11 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async quitUnit(unitId) {
+    const state = getState()
+    const unitTitle =
+      state.myUnits.find((unit) => unit.id === unitId)?.title ??
+      state.downloadedPacks.find((pack) => pack.packId === unitId)?.title ??
+      unitId
     const startedAt = performance.now()
     let lastAt = startedAt
     const lap = (label: string, extra?: Record<string, unknown>) => {
@@ -362,11 +377,39 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       lastAt = now
     }
     console.log(`[learning-store:quit:${unitId}] start`)
+    set((s) => ({
+      downloadTasks: [
+        ...s.downloadTasks.filter((task) => task.packId !== unitId),
+        {
+          packId: unitId,
+          title: unitTitle,
+          kind: 'uninstall' as const,
+          status: 'uninstalling' as const,
+          progress: 5,
+          step: 'quitting',
+          stepLabel: '退出学习',
+        },
+      ],
+      packInstallingIds: s.packInstallingIds.includes(unitId)
+        ? s.packInstallingIds
+        : [...s.packInstallingIds, unitId],
+    }))
+    const updateUninstallProgress = (progress: number, step: string, stepLabel: string) => {
+      set((s) => ({
+        downloadTasks: s.downloadTasks.map((task) =>
+          task.packId === unitId
+            ? { ...task, progress, step, stepLabel, status: 'uninstalling' as const }
+            : task,
+        ),
+      }))
+    }
     try {
       await learningRepository.quitUnit(unitId)
       lap('remote/local learning repository quit')
+      updateUninstallProgress(35, 'removing_assets', '清理本地资源')
       await learningPackService.uninstall(unitId)
       lap('local pack uninstall')
+      updateUninstallProgress(82, 'refreshing', '刷新学习计划')
       const downloadedPacks = await learningPackService.listInstalled()
       lap('list installed packs', { installedCount: downloadedPacks.length })
       set((current) => ({
@@ -375,10 +418,37 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       }))
       await getState().refreshMyUnits()
       lap('refresh my units')
+      set((s) => ({
+        downloadTasks: s.downloadTasks.map((task) =>
+          task.packId === unitId
+            ? { ...task, progress: 100, status: 'done' as const, step: 'done', stepLabel: '卸载完成' }
+            : task,
+        ),
+        packInstallingIds: s.packInstallingIds.filter((id) => id !== unitId),
+      }))
+      toast.success(i18n.t('learning.packUninstallSuccess', {
+        title: unitTitle,
+        defaultValue: `${unitTitle} 已卸载`,
+      }))
+      setTimeout(() => {
+        useLearningStore.setState((s) => ({
+          downloadTasks: s.downloadTasks.filter(
+            (task) => !(task.packId === unitId && task.status === 'done'),
+          ),
+        }))
+      }, 3000)
       console.log(`[learning-store:quit:${unitId}] done: ${(performance.now() - startedAt).toFixed(1)}ms`)
     } catch (error) {
       console.warn(`[learning-store:quit:${unitId}] failed after ${(performance.now() - startedAt).toFixed(1)}ms`, error)
-      // ignore
+      set((s) => ({
+        downloadTasks: s.downloadTasks.map((task) =>
+          task.packId === unitId
+            ? { ...task, status: 'error' as const, error: error instanceof Error ? error.message : '卸载失败', stepLabel: '卸载失败' }
+            : task,
+        ),
+        packInstallingIds: s.packInstallingIds.filter((id) => id !== unitId),
+      }))
+      toast.error(i18n.t('learning.packUninstallFailed', { defaultValue: `${unitTitle} 卸载失败，请重试` }))
     }
   },
 
@@ -469,7 +539,7 @@ function enqueueDownloadTask(packId: string, title: string) {
   useLearningStore.setState((s) => ({
     downloadTasks: [
       ...s.downloadTasks.filter((task) => task.packId !== packId),
-      { packId, title, progress: 0, status: 'queued' as const },
+      { packId, title, kind: 'download' as const, progress: 0, status: 'queued' as const },
     ],
     packInstallingIds: s.packInstallingIds.includes(packId)
       ? s.packInstallingIds
@@ -484,7 +554,7 @@ async function processDownloadQueue() {
   ).length
   if (running >= MAX_CONCURRENT_DOWNLOADS) return
 
-  const next = state.downloadTasks.find((t) => t.status === 'queued')
+  const next = state.downloadTasks.find((t) => t.status === 'queued' && (t.kind ?? 'download') === 'download')
   if (!next) {
     console.log('[learning-store] 📭 下载队列已清空')
     return
@@ -509,11 +579,21 @@ async function processDownloadQueue() {
     console.log(`[learning-store] ⏳ 开始下载: ${next.title}`)
 
     // 真实进度回调：安装流程每步上报
-    const onProgress = (step: string, progress: number) => {
+    const onProgress = (step: string, progress: number, detail?: LearningPackInstallProgress) => {
+      const status: DownloadTask['status'] = step === 'extracting_assets' ? 'extracting' : 'downloading'
       useLearningStore.setState((s) => ({
         downloadTasks: s.downloadTasks.map((t) =>
-          t.packId === next.packId && t.status === 'downloading'
-            ? { ...t, progress, step }
+          t.packId === next.packId && (t.status === 'downloading' || t.status === 'extracting')
+            ? {
+                ...t,
+                progress,
+                step,
+                status,
+                stepLabel: detail?.label,
+                currentItem: detail?.currentItem,
+                current: detail?.current,
+                total: detail?.total,
+              }
             : t,
         ),
       }))

@@ -102,11 +102,16 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
             </Badge>
           </div>
           {isDownloading && (
-            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary transition-all duration-300"
-                style={{ width: `${downloadProgress}%` }}
-              />
+            <div className="mt-2 flex items-center gap-2">
+              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-300"
+                  style={{ width: `${downloadProgress}%` }}
+                />
+              </div>
+              <span className="w-8 text-right text-[10px] font-semibold tabular-nums text-muted-foreground">
+                {Math.round(downloadProgress)}%
+              </span>
             </div>
           )}
           {downloadTask?.status === 'queued' && (

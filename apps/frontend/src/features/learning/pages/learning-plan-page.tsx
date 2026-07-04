@@ -28,6 +28,7 @@ import { practiceRepository } from '@/lib/offline'
 import { useLearningStore } from '@/stores/learning.store'
 import { MyLearningView } from '../components/my-learning-view'
 import { ShopView } from '../components/shop-view'
+import { LearningPackDownloadDrawer, LearningPackDownloadStatusButton } from '@/layout/learning-pack-download-monitor'
 
 export function LearningPlanPage() {
   const { t } = useTranslation()
@@ -35,6 +36,7 @@ export function LearningPlanPage() {
   const [shopOpen, setShopOpen] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
   const [memberOpen, setMemberOpen] = useState(false)
+  const [downloadDrawerOpen, setDownloadDrawerOpen] = useState(false)
 
   const myUnits = useLearningStore((s) => s.myUnits)
   const myLoading = useLearningStore((s) => s.myLoading)
@@ -81,14 +83,15 @@ export function LearningPlanPage() {
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
         <div className="mb-3 flex items-center justify-between">
           <div />
-          <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45 lg:hidden">
+          <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45">
+            <LearningPackDownloadStatusButton onClick={() => setDownloadDrawerOpen(true)} embedded />
             <button type="button" onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
-              className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
+              className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground lg:hidden"
               aria-label={t('profile.records')}>
               <ClipboardList className="size-[18px]" />
             </button>
             <button type="button" onClick={(e) => { e.currentTarget.blur(); setShopOpen(true); refreshShop(); fetchTags() }}
-              className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
+              className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground lg:hidden"
               aria-label={t('member.title')}>
               <ShoppingBag className="size-[18px]" />
             </button>
@@ -117,6 +120,8 @@ export function LearningPlanPage() {
             </div>
           </DrawerContent>
         </Drawer>
+
+        <LearningPackDownloadDrawer open={downloadDrawerOpen} onOpenChange={setDownloadDrawerOpen} />
 
         <Drawer open={shopOpen} onOpenChange={setShopOpen}>
           <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-0 bg-background">

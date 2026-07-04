@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import type { MyUnit } from '../api/learning-api'
 import { getCategoryIcon } from './category-icons'
 import { LearningWeekTracker } from './week-tracker'
+import { useLearningStore } from '@/stores/learning.store'
 
 interface Props {
   myUnits: MyUnit[]
@@ -124,41 +125,45 @@ function InProgressUnitCard({
   const pct = Math.max(0, Math.min(100, unit.completionPercent ?? 0))
   const completedPracticeCount = unit.progress?.completedPracticeCount ?? 0
   const totalPracticeCount = unit.progress?.totalPracticeCount ?? unit.topicCount ?? 0
+  const downloadTask = useLearningStore((state) => state.downloadTasks.find((task) => task.packId === unit.id))
+  const isTaskActive = !!downloadTask && downloadTask.status !== 'done' && downloadTask.status !== 'error'
+  const isUninstalling = downloadTask?.kind === 'uninstall' && isTaskActive
+  const isPackBusy = isPackInstalling || isTaskActive
 
   const handleQuit = useCallback(async () => {
+    if (isPackBusy) return
     setQuitting(true)
+    setConfirmQuit(false)
     try {
       await onQuit?.()
-      toast.success(t('learning.quitSuccess'))
     } catch {
       toast.error(t('learning.quitFailed'))
     } finally {
       setQuitting(false)
-      setConfirmQuit(false)
     }
-  }, [t, onQuit])
+  }, [isPackBusy, onQuit, t])
 
   const handleDownloadPack = useCallback(async () => {
-    if (!onDownloadPack || isPackInstalling) return
+    if (!onDownloadPack || isPackBusy) return
     try {
       await onDownloadPack()
     } catch {
       toast.error(t('learning.packDownloadFailed'))
     }
-  }, [isPackInstalling, onDownloadPack, t])
+  }, [isPackBusy, onDownloadPack, t])
 
   return (
-    <div className="overflow-hidden rounded-lg bg-muted/30">
+    <div className={cn('overflow-hidden rounded-lg bg-muted/30 transition-opacity', isPackBusy && 'opacity-55')}>
       <div className="p-3.5">
         <Link
           to={`/learning/units/${unit.id}`}
-          aria-disabled={needsDownload}
+          aria-disabled={needsDownload || isPackBusy}
           onClick={(event) => {
-            if (needsDownload) event.preventDefault()
+            if (needsDownload || isPackBusy) event.preventDefault()
           }}
           className={cn(
             'flex gap-3',
-            needsDownload && 'cursor-default opacity-80',
+            (needsDownload || isPackBusy) && 'cursor-default',
           )}
         >
           <div className="relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
@@ -171,9 +176,11 @@ function InProgressUnitCard({
               <div className="min-w-0 flex-1">
                 <h3 className="line-clamp-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</h3>
               </div>
-              <button type="button" onClick={(e) => { e.preventDefault(); setConfirmQuit(true) }}
-                className="-mr-2 -mt-2 flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 hover:bg-red-500/10 hover:text-red-400">
-                <X className="size-5" />
+              <button type="button" disabled={isPackBusy} onClick={(e) => { e.preventDefault(); if (!isPackBusy) setConfirmQuit(true) }}
+                className={cn(
+                  '-mr-2 -mt-2 flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 hover:bg-red-500/10 hover:text-red-400 disabled:pointer-events-none disabled:opacity-45',
+                )}>
+                {isUninstalling ? <Loader2 className="size-5 animate-spin" /> : <X className="size-5" />}
               </button>
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
@@ -202,14 +209,23 @@ function InProgressUnitCard({
             <Button
               type="button"
               variant="ghost"
-              size="icon"
-              disabled={isPackInstalling || !onDownloadPack}
+              disabled={isPackBusy || !onDownloadPack}
               onClick={handleDownloadPack}
-              className="size-8 shrink-0 rounded-full text-amber-700 hover:bg-amber-500/10 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200"
-              aria-label={isPackInstalling ? t('learning.packDownloading') : t('learning.downloadPack')}
-              title={isPackInstalling ? t('learning.packDownloading') : t('learning.downloadPack')}
+              className={cn(
+                'h-8 shrink-0 rounded-full px-2 text-amber-700 hover:bg-amber-500/10 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200',
+                isPackBusy ? 'min-w-14 gap-1.5' : 'w-8 px-0',
+              )}
+              aria-label={isPackBusy ? t('learning.packDownloading') : t('learning.downloadPack')}
+              title={isPackBusy ? t('learning.packDownloading') : t('learning.downloadPack')}
             >
-              {isPackInstalling ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+              {isPackBusy ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  <span className="text-[11px] font-semibold tabular-nums">{Math.round(downloadTask?.progress ?? 0)}%</span>
+                </>
+              ) : (
+                <Download className="size-4" />
+              )}
             </Button>
           </div>
         )}

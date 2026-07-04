@@ -39,6 +39,19 @@ export interface InstalledLearningPack {
   lastError?: string
 }
 
+export interface LearningPackInstallProgress {
+  label?: string
+  current?: number
+  total?: number
+  currentItem?: string
+}
+
+export type LearningPackInstallProgressHandler = (
+  step: string,
+  progress: number,
+  detail?: LearningPackInstallProgress,
+) => void
+
 function pushUrlAsset(assets: AssetRef[], url?: string | null, role?: AssetRef['role']) {
   if (!url || url.startsWith('blob:') || url.startsWith('data:')) return
   if (assets.some((asset) => asset.url === url)) return
@@ -395,7 +408,7 @@ export const learningPackService = {
     }
   },
 
-  async installUnit(unitId: string, onProgress?: (step: string, progress: number) => void): Promise<InstalledLearningPack> {
+  async installUnit(unitId: string, onProgress?: LearningPackInstallProgressHandler): Promise<InstalledLearningPack> {
     try {
       console.log('[learning-pack] installUnit start zip-only mode', {
         unitId,
@@ -409,17 +422,17 @@ export const learningPackService = {
     }
   },
 
-  async installUnitFromZip(unitId: string, onProgress?: (step: string, progress: number) => void): Promise<InstalledLearningPack> {
-    const report = (step: string, progress: number) => {
-      onProgress?.(step, Math.min(99, Math.round(progress)))
+  async installUnitFromZip(unitId: string, onProgress?: LearningPackInstallProgressHandler): Promise<InstalledLearningPack> {
+    const report = (step: string, progress: number, detail?: LearningPackInstallProgress) => {
+      onProgress?.(step, Math.min(99, Math.round(progress)), detail)
     }
     const startTime = performance.now()
     console.log('[learning-pack] ⏳ ① 下载 zip...')
-    report('downloading', 5)
+    report('downloading', 5, { label: '下载学习包' })
     const zipBuffer = await learningApi.downloadPack(unitId)
     const zipSizeMB = (zipBuffer.byteLength / 1024 / 1024).toFixed(1)
     console.log(`[learning-pack] ✅ ① zip 下载完成: ${zipSizeMB} MB (${zipBuffer.byteLength} bytes)`)
-    report('parsing', 15)
+    report('parsing', 15, { label: '解析压缩包' })
 
     console.log('[learning-pack] ⏳ ② 解析 zip 条目...')
     const reader = new ZipReader(new BlobReader(new Blob([zipBuffer], { type: 'application/zip' })))
@@ -435,7 +448,7 @@ export const learningPackService = {
       }
       console.log(`[learning-pack] ✅ ② zip 解析完成: ${fileCount} 个文件, ${dirCount} 个目录`)
       console.log('[learning-pack] zip entries summary', summarizeZipEntries(entries))
-      report('reading_manifest', 20)
+      report('reading_manifest', 20, { label: '读取清单' })
 
       console.log('[learning-pack] ⏳ ③ 读取 manifest + checksums...')
       const manifest = await readJsonEntry<LearningPackManifest>(entries, 'pack-manifest.json')
@@ -475,7 +488,7 @@ export const learningPackService = {
         throw error
       }
       console.log(`[learning-pack] ✅ ④ scene.json: ${sceneText.length} 字符, SHA256 校验通过`)
-      report('reading_topics', 25)
+      report('reading_topics', 25, { label: '读取话题内容' })
 
       console.log('[learning-pack] ⏳ ⑤ 读取话题数据...')
       const topicDetails: any[] = []
@@ -498,7 +511,7 @@ export const learningPackService = {
         }
       }
       console.log(`[learning-pack] ✅ ⑤ 话题: ${topicDetails.length} 个`)
-      report('persisting_content', 30)
+      report('persisting_content', 30, { label: '写入学习内容' })
 
       const now = new Date().toISOString()
       console.log('[learning-pack] ⏳ ⑥ 写入 downloaded_packs 记录...')
@@ -544,7 +557,7 @@ export const learningPackService = {
         throw error
       }
       console.log('[learning-pack] ✅ ⑦ 单元内容写入完成')
-      report('indexing', 35)
+      report('indexing', 35, { label: '建立内容索引' })
 
       console.log('[learning-pack] ⏳ ⑧ 写入内容索引表...')
       try {
@@ -559,7 +572,7 @@ export const learningPackService = {
         throw error
       }
       console.log('[learning-pack] ✅ ⑧ 索引表写入完成')
-      report('extracting_assets', 40)
+      report('extracting_assets', 40, { label: '提取离线资源', current: 0, total: manifest.assets?.length ?? 0 })
 
       console.log(`[learning-pack] ⏳ ⑨ 提取资源文件 (${manifest.assets?.length ?? 0} 个)...`)
       const totalAssets = manifest.assets?.length ?? 0
@@ -588,6 +601,16 @@ export const learningPackService = {
         if (!entry) continue
         assetTasks.push({ asset, entry, index: i })
       }
+      const progressForAssets = (done: number, label: string, currentItem?: string) => {
+        const total = Math.max(assetTasks.length, 1)
+        const pct = 40 + (done / total) * 52
+        report('extracting_assets', pct, {
+          label,
+          current: Math.min(done, assetTasks.length),
+          total: assetTasks.length,
+          currentItem,
+        })
+      }
 
       type AssetResult =
         | { ok: true; asset: any; sha256: string; buffer: ArrayBuffer; index: number }
@@ -596,6 +619,7 @@ export const learningPackService = {
       const assetResults: AssetResult[] = []
       for (let i = 0; i < assetTasks.length; i += ASSET_CONCURRENCY) {
         const batch = assetTasks.slice(i, i + ASSET_CONCURRENCY)
+        progressForAssets(i, '读取资源文件', batch[0]?.asset?.path ?? batch[0]?.asset?.url)
         const batchResults = await Promise.all(
           batch.map(async ({ asset, entry, index }): Promise<AssetResult> => {
             try {
@@ -611,6 +635,7 @@ export const learningPackService = {
           }),
         )
         assetResults.push(...batchResults)
+        progressForAssets(assetResults.length, '校验资源文件', batch[batch.length - 1]?.asset?.path ?? batch[batch.length - 1]?.asset?.url)
       }
 
       // ── 阶段 B：批量写入文件系统 + SQLite ──
@@ -656,10 +681,15 @@ export const learningPackService = {
       }
 
       // 并行写文件 + 批量写 SQLite 引用
+      let savedFiles = 0
       await Promise.all([
-        ...filesToSave.map(({ asset, sha256, buffer }) =>
-          assetCacheService.saveFromBufferWithSha256({ ...asset, sha256 }, buffer, sha256),
-        ),
+        ...filesToSave.map(async ({ asset, sha256, buffer }) => {
+          progressForAssets(assetResults.length + savedFiles, '写入本地资源', asset.path ?? asset.url)
+          const saved = await assetCacheService.saveFromBufferWithSha256({ ...asset, sha256 }, buffer, sha256)
+          savedFiles++
+          progressForAssets(assetResults.length + savedFiles, '写入本地资源', asset.path ?? asset.url)
+          return saved
+        }),
         assetRefsToWrite.length > 0
           ? localDb.putMany('asset_refs', assetRefsToWrite)
           : Promise.resolve(),
@@ -667,6 +697,7 @@ export const learningPackService = {
 
       const assetSkip = totalAssets - assetTasks.length
       console.log(`[learning-pack] ✅ ⑨ 资源提取完成: ${assetOk} 成功 (${assetDeduped} 去重复用), ${assetSkip} 跳过, ${assetFail} 失败`)
+      report('finishing', 95, { label: '完成安装' })
 
       const result = await persistInstalledRecord(manifest)
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(1)
