@@ -138,7 +138,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
 
   const generateItemAudio = async (idx: number) => {
     const item = local.items[idx]
-    const text = (local.direction === 'en_to_zh' ? getPromptText(item) : getAnswerText(item)).trim()
+    const text = getAudioText(item).trim()
     if (!text) return
     const key = `item-${idx}`
     setTtsGenerating(key)
@@ -154,6 +154,26 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
       setTtsGenerating(null)
     }
   }
+
+  const getAudioText = (item: ChunkSubstitutionItem['items'][number]) => {
+    return local.direction === 'en_to_zh' ? getPromptText(item) : getAnswerText(item)
+  }
+
+  const renderAudioControls = (item: ChunkSubstitutionItem['items'][number], idx: number) => (
+    <>
+      {item.audioUrl && (
+        <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听英文音频"
+          onClick={() => playAudioUrl(item.audioUrl)}>
+          <Play className="size-3" />
+        </Button>
+      )}
+      <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成英文 TTS"
+        disabled={!getAudioText(item).trim() || ttsGenerating === `item-${idx}`}
+        onClick={() => generateItemAudio(idx)}>
+        {ttsGenerating === `item-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
+      </Button>
+    </>
+  )
 
   // AI 生成：根据选中的词汇和方向批量生成题目
   const aiGenerate = async () => {
@@ -327,22 +347,15 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
                   </Button>
                 </div>
                 <div className="space-y-1.5">
-                  <Input className="h-7 text-xs" value={getPromptText(item)} onChange={e => updatePromptText(idx, e.target.value)}
-                    placeholder={local.direction === 'en_to_zh' ? '英文原文...' : '中文提示...'} />
+                  <div className="flex gap-1">
+                    <Input className="h-7 text-xs flex-1" value={getPromptText(item)} onChange={e => updatePromptText(idx, e.target.value)}
+                      placeholder={local.direction === 'en_to_zh' ? '英文原文...' : '中文提示...'} />
+                    {local.direction === 'en_to_zh' && renderAudioControls(item, idx)}
+                  </div>
                   <div className="flex gap-1">
                     <Input className="h-7 text-xs flex-1" value={getAnswerText(item)} onChange={e => updateAnswerText(idx, e.target.value)}
                       placeholder={local.direction === 'en_to_zh' ? '中文答案...' : '英文答案...'} />
-                    {item.audioUrl && (
-                      <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听题目音频"
-                        onClick={() => playAudioUrl(item.audioUrl)}>
-                        <Play className="size-3" />
-                      </Button>
-                    )}
-                    <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成题目 TTS"
-                      disabled={!(local.direction === 'en_to_zh' ? getPromptText(item) : getAnswerText(item)).trim() || ttsGenerating === `item-${idx}`}
-                      onClick={() => generateItemAudio(idx)}>
-                      {ttsGenerating === `item-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
-                    </Button>
+                    {local.direction !== 'en_to_zh' && renderAudioControls(item, idx)}
                     <input
                       ref={(el) => { fileInputRefs.current[idx] = el }}
                       type="file"
