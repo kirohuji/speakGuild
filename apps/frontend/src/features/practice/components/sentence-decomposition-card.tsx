@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/cn'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
+import { useCachedAudio } from '@/hooks/use-cached-audio'
 
 interface DecompositionLevel {
   level: number
@@ -16,6 +17,8 @@ interface DecompositionLevel {
   zh: string
   highlight?: string
   hint?: string
+  audioUrl?: string
+  audioAssetId?: string
 }
 
 interface SentenceDecompositionCardProps {
@@ -55,6 +58,7 @@ export function SentenceDecompositionCard({
   const [currentIdx, setCurrentIdx] = useState(0)
 
   const current = levels[currentIdx]
+  const exerciseAudio = useCachedAudio()
   const previous = currentIdx > 0 ? levels[currentIdx - 1] : null
   const isDone = currentIdx >= totalLevels
   const isFirst = currentIdx === 0
@@ -317,7 +321,21 @@ export function SentenceDecompositionCard({
 
       {/* 本级 — 高亮新增 */}
       <div className="rounded-md bg-primary/[0.04] px-3 py-2">
-        {renderCurrentLine()}
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">{renderCurrentLine()}</div>
+          {(current.audioUrl || current.audioAssetId) && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="size-8 shrink-0 rounded-full"
+              title="播放句子音频"
+              onClick={() => exerciseAudio.play(current.audioUrl, current.audioAssetId, 'warmup_audio')}
+            >
+              <Play className="size-3.5" />
+            </Button>
+          )}
+        </div>
         <p className="mt-1.5 text-sm text-muted-foreground">{current.zh}</p>
         {current.hint && (
           <p className="mt-1 text-[11px] text-primary/70">{current.hint}</p>

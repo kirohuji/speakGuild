@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react'
 import { assetCacheService } from '@/lib/offline/asset-cache.service'
 import { isNative } from '@/lib/native'
+import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
 
 /**
  * Capacitor-first audio playback hook.
@@ -19,27 +20,40 @@ import { isNative } from '@/lib/native'
 export function useCachedAudio() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  const play = useCallback(async (url: string) => {
-    if (!url) return
+  const play = useCallback(async (url?: string | null, assetId?: string | null, role = 'voice') => {
+    if (!url && !assetId) return
 
     // Stop any currently playing audio
     audioRef.current?.pause()
     audioRef.current = null
 
     // Normalize protocol-relative URLs
-    let resolvedUrl = url.startsWith('//') ? `https:${url}` : url
+    let resolvedUrl = url?.startsWith('//') ? `https:${url}` : (url ?? '')
 
     if (isNative()) {
       try {
+        if (assetId && !resolvedUrl) {
+          const fresh = await getFileAssetPrivateUrl(assetId)
+          resolvedUrl = fresh.url
+        }
         resolvedUrl = await assetCacheService.resolve({
           url: resolvedUrl,
-          role: 'voice',
+          assetId: assetId ?? undefined,
+          role,
         })
       } catch {
         // Fall back to direct URL if caching fails
       }
+    } else if (assetId) {
+      try {
+        const fresh = await getFileAssetPrivateUrl(assetId)
+        resolvedUrl = fresh.url
+      } catch {
+        // Fall back to the saved URL.
+      }
     }
 
+    if (!resolvedUrl) return
     const audio = new Audio(resolvedUrl)
     audioRef.current = audio
     audio.play().catch(() => {

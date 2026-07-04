@@ -33,7 +33,7 @@ import { toast } from 'sonner'
 import { practiceRepository } from '@/lib/offline'
 
 // ── 类型 ──
-type SimplePromptItem = { zh?: string; en?: string; answer?: string; hint?: string }
+type SimplePromptItem = { zh?: string; en?: string; answer?: string; hint?: string; imageUrl?: string; audioUrl?: string; audioAssetId?: string }
 type VocabPromptItem = {
   vocabId: string
   promptZh: string

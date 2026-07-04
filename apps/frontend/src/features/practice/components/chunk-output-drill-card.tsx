@@ -8,13 +8,14 @@ import { practiceAiApi, type DrillDirection } from '../api/english-practice-api'
 import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
 import { PracticeAnswerInput } from './practice-answer-input'
 import { useCachedImage } from '@/hooks/use-cached-image'
+import { useCachedAudio } from '@/hooks/use-cached-audio'
 
 type DrillStatus = 'idle' | 'judging' | 'passed' | 'failed'
 type HintLevel = 'none' | 'hint' | 'answer'
 
 interface ChunkOutputDrillCardProps {
   chunk: { text: string; meaning?: string; description?: string | null }
-  items: { zh?: string; en?: string; answer?: string; hint?: string; imageUrl?: string }[]
+  items: { zh?: string; en?: string; answer?: string; hint?: string; imageUrl?: string; audioUrl?: string; audioAssetId?: string }[]
   stepId: string
   stepType?: 'chunk_substitution' | 'vocab_sentence_building'
   groupTitle?: string
@@ -84,6 +85,7 @@ export function ChunkOutputDrillCard({
 
   const current = items[currentIdx]
   const { resolvedUrl: cachedImageUrl } = useCachedImage(current.imageUrl)
+  const exerciseAudio = useCachedAudio()
   const totalItems = items.length
   const isZhToEn = direction === 'zh_to_en'
   const looksEnglish = (text?: string) => /[A-Za-z]/.test(text ?? '')
@@ -210,7 +212,21 @@ export function ChunkOutputDrillCard({
       {/* Task prompt */}
       <div className="rounded-lg bg-muted/20 px-3 py-2.5">
         <p className="text-xs text-muted-foreground">{promptLabel}</p>
-        <p className="text-base font-semibold text-foreground">{displayText}</p>
+        <div className="mt-0.5 flex items-start gap-2">
+          <p className="min-w-0 flex-1 text-base font-semibold text-foreground">{displayText}</p>
+          {(current.audioUrl || current.audioAssetId) && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="size-8 shrink-0 rounded-full"
+              title="播放题目音频"
+              onClick={() => exerciseAudio.play(current.audioUrl, current.audioAssetId, 'warmup_audio')}
+            >
+              <Play className="size-3.5" />
+            </Button>
+          )}
+        </div>
         {/* {isZhToEn && (
           <p className="mt-1 text-[11px] text-muted-foreground">
             重点不是背参考答案，而是把上面的固定表达套进新句子里。

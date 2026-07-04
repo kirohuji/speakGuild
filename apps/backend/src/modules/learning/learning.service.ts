@@ -122,8 +122,11 @@ export class LearningService {
 
   private pushAsset(assets: any[], url?: string | null, role?: string) {
     if (!url || url.startsWith('blob:') || url.startsWith('data:')) return;
-    if (assets.some((asset) => asset.url === url)) return;
-    assets.push({ url, role });
+    const existing = assets.find((asset) => asset.url === url);
+    if (existing) return existing;
+    const asset: any = { url, role };
+    assets.push(asset);
+    return asset;
   }
 
   private isPackagedAsset(asset: any) {
@@ -859,15 +862,35 @@ export class LearningService {
       }
     }
 
+    const pushWarmupAudioAsset = async (item: any) => {
+      const assetId = typeof item?.audioAssetId === 'string' ? item.audioAssetId.trim() : '';
+      if (assetId) {
+        try {
+          const signed = await this.fileAssets.getPrivateUrlByAssetId(assetId);
+          const asset = this.pushAsset(assets, signed.url, 'warmup_audio');
+          if (asset) {
+            asset.assetId = assetId;
+            asset.mimeType = signed.mimeType ?? asset.mimeType;
+            asset.size = signed.size ?? asset.size;
+          }
+          return;
+        } catch {
+          // Fall through to legacy audioUrl if the asset was removed or is unavailable.
+        }
+      }
+      if (typeof item?.audioUrl === 'string') this.pushAsset(assets, item.audioUrl, 'warmup_audio');
+    };
+
     // ── topicDetails: per-topic data (each topic has its own vocabs & activeChunks) ──
-    const topicDetails = topics.map((topic) => {
-      // ── Collect warmup pipeline image assets; audio URLs are cached lazily on first play. ──
+    const topicDetails = await Promise.all(topics.map(async (topic) => {
+      // ── Collect warmup pipeline media assets. Audio is packaged into the offline zip. ──
       const outputTraining = (topic.metadata as any)?.outputTraining;
       if (outputTraining?.pipeline && Array.isArray(outputTraining.pipeline)) {
         for (const step of outputTraining.pipeline) {
           // Collect per-item audioUrl + imageUrl from chunk_substitution / pattern_drill
           if (step.items && Array.isArray(step.items)) {
             for (const item of step.items) {
+              await pushWarmupAudioAsset(item);
               if (typeof item.imageUrl === 'string') this.pushAsset(assets, item.imageUrl, 'warmup_image');
             }
           }
@@ -876,9 +899,15 @@ export class LearningService {
             for (const pattern of step.patterns) {
               if (pattern.items && Array.isArray(pattern.items)) {
                 for (const item of pattern.items) {
+                  await pushWarmupAudioAsset(item);
                   if (typeof item.imageUrl === 'string') this.pushAsset(assets, item.imageUrl, 'warmup_image');
                 }
               }
+            }
+          }
+          if (step.levels && Array.isArray(step.levels)) {
+            for (const level of step.levels) {
+              await pushWarmupAudioAsset(level);
             }
           }
         }
@@ -918,7 +947,7 @@ export class LearningService {
           masteryStatus: 'not_learned' as const,
         })),
       };
-    });
+    }));
 
     // Strip derived data from unitDetail — frontend collects from topicDetails
     const { vocabularies: _v, chunks: _c, sentencePatterns: _sp, trainingTopics: _tt, ...leanUnitDetail } = unitDetail as any;

@@ -100,7 +100,7 @@ export function GuidedWarmupPhase({
     candidate: DailyPracticeCandidate | null
     render: () => React.ReactNode
   }
-type SimplePromptItem = { zh?: string; en?: string; answer?: string; hint?: string; imageUrl?: string; audioUrl?: string }
+type SimplePromptItem = { zh?: string; en?: string; answer?: string; hint?: string; imageUrl?: string; audioUrl?: string; audioAssetId?: string }
 type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string[]; suggestedAnswer?: string; hint?: string }
 
 function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en' | 'en_to_zh' = 'zh_to_en') {
