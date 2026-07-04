@@ -1,6 +1,6 @@
 import { synthesizeAsset } from '@/lib/tts-api'
 import { listAiProviders, type AiProviderItem } from '@/features/admin/api-ai-models'
-import { getFileAssetContentUrl } from '@/features/file-assets/api'
+import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
 
 type TtsAccent = 'us' | 'uk' | 'neutral'
 
@@ -87,7 +87,7 @@ export async function synthesizeAdminAudio(
   bizType: string,
   bizId: string,
   accent: TtsAccent = 'neutral',
-): Promise<string> {
+): Promise<{ assetId: string; url: string }> {
   const active = await getActiveTtsProvider()
   const result = await synthesizeAsset({
     text,
@@ -98,14 +98,19 @@ export async function synthesizeAdminAudio(
     bizType,
     bizId,
   } as any)
-  return getFileAssetContentUrl(result.assetId)
+  return { assetId: result.assetId, url: result.url }
 }
 
 /** 简单播放音频 URL */
-export function playAudioUrl(url?: string | null): void {
-  if (!url) return
-  const audio = new Audio(url)
-  audio.play().catch(() => {
+export async function playAudioUrl(url?: string | null, assetId?: string | null): Promise<void> {
+  let playableUrl = url || ''
+  if (assetId) {
+    const fresh = await getFileAssetPrivateUrl(assetId)
+    playableUrl = fresh.url
+  }
+  if (!playableUrl) return
+  const audio = new Audio(playableUrl)
+  await audio.play().catch(() => {
     // 静默失败，避免未捕获的 Promise rejection
   })
 }

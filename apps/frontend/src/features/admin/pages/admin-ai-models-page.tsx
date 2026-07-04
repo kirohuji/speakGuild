@@ -75,52 +75,56 @@ const MINIMAX_MODELS = [
 ];
 
 const MINIMAX_ENGLISH_VOICES = [
-  { id: 'English_expressive_narrator', label: 'Expressive Narrator' },
-  { id: 'English_radiant_girl', label: 'Radiant Girl' },
-  { id: 'English_magnetic_voiced_man', label: 'Magnetic-voiced Male' },
-  { id: 'English_compelling_lady1', label: 'Compelling Lady' },
-  { id: 'English_Aussie_Bloke', label: 'Aussie Bloke' },
-  { id: 'English_captivating_female1', label: 'Captivating Female' },
-  { id: 'English_Upbeat_Woman', label: 'Upbeat Woman' },
-  { id: 'English_Trustworth_Man', label: 'Trustworthy Man' },
-  { id: 'English_CalmWoman', label: 'Calm Woman' },
-  { id: 'English_UpsetGirl', label: 'Upset Girl' },
-  { id: 'English_Gentle-voiced_man', label: 'Gentle-voiced Man' },
-  { id: 'English_Whispering_girl', label: 'Whispering Girl' },
-  { id: 'English_Diligent_Man', label: 'Diligent Man' },
-  { id: 'English_Graceful_Lady', label: 'Graceful Lady' },
-  { id: 'English_ReservedYoungMan', label: 'Reserved Young Man' },
-  { id: 'English_PlayfulGirl', label: 'Playful Girl' },
-  { id: 'English_ManWithDeepVoice', label: 'Man With Deep Voice' },
-  { id: 'English_MaturePartner', label: 'Mature Partner' },
-  { id: 'English_FriendlyPerson', label: 'Friendly Guy' },
-  { id: 'English_MatureBoss', label: 'Bossy Lady' },
-  { id: 'English_Debator', label: 'Male Debater' },
-  { id: 'English_LovelyGirl', label: 'Lovely Girl' },
-  { id: 'English_Steadymentor', label: 'Reliable Man' },
-  { id: 'English_Deep-VoicedGentleman', label: 'Deep-voiced Gentleman' },
-  { id: 'English_Wiselady', label: 'Wise Lady' },
-  { id: 'English_CaptivatingStoryteller', label: 'Captivating Storyteller' },
-  { id: 'English_DecentYoungMan', label: 'Decent Young Man' },
-  { id: 'English_SentimentalLady', label: 'Sentimental Lady' },
-  { id: 'English_ImposingManner', label: 'Imposing Queen' },
-  { id: 'English_SadTeen', label: 'Teen Boy' },
-  { id: 'English_PassionateWarrior', label: 'Passionate Warrior' },
-  { id: 'English_WiseScholar', label: 'Wise Scholar' },
-  { id: 'English_Soft-spokenGirl', label: 'Soft-Spoken Girl' },
-  { id: 'English_SereneWoman', label: 'Serene Woman' },
-  { id: 'English_ConfidentWoman', label: 'Confident Woman' },
-  { id: 'English_PatientMan', label: 'Patient Man' },
-  { id: 'English_Comedian', label: 'Comedian' },
-  { id: 'English_BossyLeader', label: 'Bossy Leader' },
-  { id: 'English_Strong-WilledBoy', label: 'Strong-Willed Boy' },
-  { id: 'English_StressedLady', label: 'Stressed Lady' },
-  { id: 'English_AssertiveQueen', label: 'Assertive Queen' },
-  { id: 'English_AnimeCharacter', label: 'Female Narrator' },
-  { id: 'English_Jovialman', label: 'Jovial Man' },
-  { id: 'English_WhimsicalGirl', label: 'Whimsical Girl' },
-  { id: 'English_Kind-heartedGirl', label: 'Kind-Hearted Girl' },
-];
+  { id: 'English_expressive_narrator', label: 'Expressive Narrator', tone: 'balanced' },
+  { id: 'English_radiant_girl', label: 'Radiant Girl', tone: 'bright' },
+  { id: 'English_magnetic_voiced_man', label: 'Magnetic-voiced Male', tone: 'balanced' },
+  { id: 'English_compelling_lady1', label: 'Compelling Lady', tone: 'balanced' },
+  { id: 'English_Aussie_Bloke', label: 'Aussie Bloke', tone: 'character' },
+  { id: 'English_captivating_female1', label: 'Captivating Female', tone: 'balanced' },
+  { id: 'English_Upbeat_Woman', label: 'Upbeat Woman', tone: 'bright' },
+  { id: 'English_Trustworth_Man', label: 'Trustworthy Man', tone: 'balanced' },
+  { id: 'English_CalmWoman', label: 'Calm Woman', tone: 'balanced' },
+  { id: 'English_UpsetGirl', label: 'Upset Girl', tone: 'character' },
+  { id: 'English_Gentle-voiced_man', label: 'Gentle-voiced Man', tone: 'balanced' },
+  { id: 'English_Whispering_girl', label: 'Whispering Girl', tone: 'extreme' },
+  { id: 'English_Diligent_Man', label: 'Diligent Man', tone: 'balanced' },
+  { id: 'English_Graceful_Lady', label: 'Graceful Lady', tone: 'balanced' },
+  { id: 'English_ReservedYoungMan', label: 'Reserved Young Man', tone: 'balanced' },
+  { id: 'English_PlayfulGirl', label: 'Playful Girl', tone: 'bright' },
+  { id: 'English_ManWithDeepVoice', label: 'Man With Deep Voice', tone: 'extreme' },
+  { id: 'English_MaturePartner', label: 'Mature Partner', tone: 'balanced' },
+  { id: 'English_FriendlyPerson', label: 'Friendly Guy', tone: 'balanced' },
+  { id: 'English_MatureBoss', label: 'Bossy Lady', tone: 'character' },
+  { id: 'English_Debator', label: 'Male Debater', tone: 'character' },
+  { id: 'English_LovelyGirl', label: 'Lovely Girl', tone: 'bright' },
+  { id: 'English_Steadymentor', label: 'Reliable Man', tone: 'balanced' },
+  { id: 'English_Deep-VoicedGentleman', label: 'Deep-voiced Gentleman', tone: 'extreme' },
+  { id: 'English_Wiselady', label: 'Wise Lady', tone: 'balanced' },
+  { id: 'English_CaptivatingStoryteller', label: 'Captivating Storyteller', tone: 'character' },
+  { id: 'English_DecentYoungMan', label: 'Decent Young Man', tone: 'balanced' },
+  { id: 'English_SentimentalLady', label: 'Sentimental Lady', tone: 'character' },
+  { id: 'English_ImposingManner', label: 'Imposing Queen', tone: 'extreme' },
+  { id: 'English_SadTeen', label: 'Teen Boy', tone: 'extreme' },
+  { id: 'English_PassionateWarrior', label: 'Passionate Warrior', tone: 'character' },
+  { id: 'English_WiseScholar', label: 'Wise Scholar', tone: 'balanced' },
+  { id: 'English_Soft-spokenGirl', label: 'Soft-Spoken Girl', tone: 'bright' },
+  { id: 'English_SereneWoman', label: 'Serene Woman', tone: 'balanced' },
+  { id: 'English_ConfidentWoman', label: 'Confident Woman', tone: 'balanced' },
+  { id: 'English_PatientMan', label: 'Patient Man', tone: 'balanced' },
+  { id: 'English_Comedian', label: 'Comedian', tone: 'character' },
+  { id: 'English_BossyLeader', label: 'Bossy Leader', tone: 'character' },
+  { id: 'English_Strong-WilledBoy', label: 'Strong-Willed Boy', tone: 'extreme' },
+  { id: 'English_StressedLady', label: 'Stressed Lady', tone: 'character' },
+  { id: 'English_AssertiveQueen', label: 'Assertive Queen', tone: 'character' },
+  { id: 'English_AnimeCharacter', label: 'Female Narrator', tone: 'extreme' },
+  { id: 'English_Jovialman', label: 'Jovial Man', tone: 'character' },
+  { id: 'English_WhimsicalGirl', label: 'Whimsical Girl', tone: 'bright' },
+  { id: 'English_Kind-heartedGirl', label: 'Kind-Hearted Girl', tone: 'bright' },
+] as const;
+
+const MINIMAX_BALANCED_ENGLISH_VOICE_IDS = MINIMAX_ENGLISH_VOICES
+  .filter((voice) => voice.tone === 'balanced')
+  .map((voice) => voice.id);
 
 const HUME_MODELS = [
   { value: '2', label: 'Octave 2' },
@@ -574,7 +578,8 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 px-2.5 py-2">
                     <span className="text-xs text-muted-foreground">Selected {selectedRandomVoiceIds.length}/{MINIMAX_ENGLISH_VOICES.length}</span>
                     <div className="flex gap-1.5">
-                      <Button type="button" size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => setSelectedRandomVoiceIds(MINIMAX_ENGLISH_VOICES.map((voice) => voice.id))}>All</Button>
+                      <Button type="button" size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => setSelectedRandomVoiceIds(MINIMAX_BALANCED_ENGLISH_VOICE_IDS)}>Balanced</Button>
+                      <Button type="button" size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => setSelectedRandomVoiceIds(MINIMAX_ENGLISH_VOICES.map((voice) => voice.id))}>All styles</Button>
                       <Button type="button" size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => setSelectedRandomVoiceIds([])}>Clear</Button>
                     </div>
                   </div>
@@ -597,7 +602,10 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
                             </span>
                             <span className="min-w-0">
                               <span className="block truncate text-xs font-medium">{voice.label}</span>
-                              <span className="block truncate font-mono text-[10px] text-muted-foreground">{voice.id}</span>
+                              <span className="mt-0.5 flex min-w-0 items-center gap-1.5">
+                                <Badge variant={voice.tone === 'balanced' ? 'secondary' : voice.tone === 'extreme' ? 'destructive' : 'outline'} className="h-4 px-1 text-[9px] capitalize">{voice.tone}</Badge>
+                                <span className="truncate font-mono text-[10px] text-muted-foreground">{voice.id}</span>
+                              </span>
                             </span>
                           </button>
                         );
@@ -612,6 +620,7 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
                   placeholder={'English_Trustworth_Man\nEnglish_CalmWoman'}
                 />
                 <p className="text-[11px] text-muted-foreground">Official MiniMax English system voices are listed above. You can also edit the final saved list manually.</p>
+                <p className="text-[11px] text-muted-foreground">Use Balanced for learning exercises. All styles includes bright, child, deep, whisper, and character voices, so pitch may vary a lot.</p>
               </div>
             </>
           ) : isHume ? (

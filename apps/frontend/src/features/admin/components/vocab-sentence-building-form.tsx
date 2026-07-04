@@ -20,7 +20,7 @@ export interface VocabSentenceBuildingItem {
   direction?: 'zh_to_en' | 'en_to_zh'
   patterns: Array<{
     chunk: string
-    items: Array<{ zh?: string; en?: string; answer: string; hint?: string; audioUrl?: string; imageUrl?: string }>
+    items: Array<{ zh?: string; en?: string; answer: string; hint?: string; audioUrl?: string; audioAssetId?: string; imageUrl?: string }>
   }>
 }
 
@@ -170,10 +170,10 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
     const key = `item-${pIdx}-${iIdx}`
     setTtsGenerating(key)
     try {
-      const url = await synthesizeAdminAudio(text, 'warmup_vocab_build', `${local.id}-${pIdx}-${iIdx}`)
+      const audio = await synthesizeAdminAudio(text, 'warmup_vocab_build', `${local.id}-${pIdx}-${iIdx}`)
       const next = [...local.patterns]
       const items = [...next[pIdx].items]
-      items[iIdx] = { ...items[iIdx], audioUrl: url }
+      items[iIdx] = { ...items[iIdx], audioUrl: audio.url, audioAssetId: audio.assetId }
       next[pIdx] = { ...next[pIdx], items }
       commit({ patterns: next })
       toast.success('题目音频已生成')
@@ -319,7 +319,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                         <Input className="h-7 text-xs flex-1" value={getAnswerText(item)} onChange={e => updateAnswerText(pIdx, iIdx, e.target.value)} placeholder={local.direction === 'en_to_zh' ? '中文答案...' : '英文答案...'} />
                         {item.audioUrl && (
                           <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听题目音频"
-                            onClick={() => playAudioUrl(item.audioUrl)}>
+                            onClick={() => playAudioUrl(item.audioUrl, item.audioAssetId)}>
                             <Play className="size-3" />
                           </Button>
                         )}

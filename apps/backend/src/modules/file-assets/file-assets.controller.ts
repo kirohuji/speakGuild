@@ -6,9 +6,8 @@ import {
   Param,
   Post,
   Req,
-  Res,
 } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import { CompleteUploadDto } from './dto/complete-upload.dto';
 import { CreateCosPolicyDto } from './dto/create-cos-policy.dto';
 import { CreateReferenceDto } from './dto/create-reference.dto';
@@ -63,12 +62,6 @@ export class FileAssetsController {
   @Get(':id/long-lived-url')
   getLongLivedUrl(@Param('id') id: string) {
     return this.fileAssetsService.getAssetLongLivedUrl(id);
-  }
-
-  @Get(':id/content')
-  async getContent(@Param('id') id: string, @Res() res: Response) {
-    const signed = await this.fileAssetsService.getPrivateUrlByAssetId(id);
-    return res.redirect(signed.url);
   }
 
   @Get(':id/references')

@@ -22,6 +22,7 @@ export interface SentenceDecompositionItem {
     highlight?: string
     hint?: string
     audioUrl?: string
+    audioAssetId?: string
   }>
 }
 
@@ -99,9 +100,9 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
     const key = `level-${idx}`
     setTtsGenerating(key)
     try {
-      const url = await synthesizeAdminAudio(text, 'warmup_sent_decomp', `${local.id}-${idx}`)
+      const audio = await synthesizeAdminAudio(text, 'warmup_sent_decomp', `${local.id}-${idx}`)
       const next = [...local.levels]
-      next[idx] = { ...next[idx], audioUrl: url }
+      next[idx] = { ...next[idx], audioUrl: audio.url, audioAssetId: audio.assetId }
       commit({ levels: next })
       toast.success('层级音频已生成')
     } catch (err: any) {
@@ -276,7 +277,7 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
                       onChange={e => updateLevel(idx, { en: e.target.value })} placeholder="She speaks well." />
                     {level.audioUrl && (
                       <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听层级音频"
-                        onClick={() => playAudioUrl(level.audioUrl)}>
+                        onClick={() => playAudioUrl(level.audioUrl, level.audioAssetId)}>
                         <Play className="size-3" />
                       </Button>
                     )}

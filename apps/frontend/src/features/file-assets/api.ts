@@ -71,10 +71,9 @@ export function getFileAssetLongLivedUrl(assetId: string): Promise<{ url: string
   return get(`/file-assets/${assetId}/long-lived-url`)
 }
 
-/** 稳定资源 URL：后端内部处理临时签名，适合长期保存到内容数据里 */
-export function getFileAssetContentUrl(assetId: string): string {
-  const base = import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu'
-  return `${base}/file-assets/${assetId}/content`
+/** 获取文件当前可播放/下载 URL。URL 会过期，不要长期保存；长期保存 assetId。 */
+export function getFileAssetPrivateUrl(assetId: string): Promise<{ url: string; expiresInSeconds?: number }> {
+  return get(`/file-assets/${assetId}/private-url`)
 }
 
 /** 获取当前头像 */

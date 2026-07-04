@@ -20,7 +20,7 @@ export interface ChunkSubstitutionItem {
   chunkMeaning?: string
   direction?: 'zh_to_en' | 'en_to_zh'
   kind?: 'chunk' | 'word'
-  items: Array<{ zh?: string; en?: string; answer: string; hint?: string; audioUrl?: string; imageUrl?: string }>
+  items: Array<{ zh?: string; en?: string; answer: string; hint?: string; audioUrl?: string; audioAssetId?: string; imageUrl?: string }>
 }
 
 interface Props {
@@ -143,9 +143,9 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
     const key = `item-${idx}`
     setTtsGenerating(key)
     try {
-      const url = await synthesizeAdminAudio(text, 'warmup_chunk_sub', `${local.id}-${idx}`)
+      const audio = await synthesizeAdminAudio(text, 'warmup_chunk_sub', `${local.id}-${idx}`)
       const next = [...local.items]
-      next[idx] = { ...next[idx], audioUrl: url }
+      next[idx] = { ...next[idx], audioUrl: audio.url, audioAssetId: audio.assetId }
       commit({ items: next })
       toast.success('题目音频已生成')
     } catch (err: any) {
@@ -163,7 +163,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
     <>
       {item.audioUrl && (
         <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听英文音频"
-          onClick={() => playAudioUrl(item.audioUrl)}>
+          onClick={() => playAudioUrl(item.audioUrl, item.audioAssetId)}>
           <Play className="size-3" />
         </Button>
       )}
