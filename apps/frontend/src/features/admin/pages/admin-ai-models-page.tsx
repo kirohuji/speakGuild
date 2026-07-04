@@ -74,6 +74,54 @@ const MINIMAX_MODELS = [
   'speech-01-turbo',
 ];
 
+const MINIMAX_ENGLISH_VOICES = [
+  { id: 'English_expressive_narrator', label: 'Expressive Narrator' },
+  { id: 'English_radiant_girl', label: 'Radiant Girl' },
+  { id: 'English_magnetic_voiced_man', label: 'Magnetic-voiced Male' },
+  { id: 'English_compelling_lady1', label: 'Compelling Lady' },
+  { id: 'English_Aussie_Bloke', label: 'Aussie Bloke' },
+  { id: 'English_captivating_female1', label: 'Captivating Female' },
+  { id: 'English_Upbeat_Woman', label: 'Upbeat Woman' },
+  { id: 'English_Trustworth_Man', label: 'Trustworthy Man' },
+  { id: 'English_CalmWoman', label: 'Calm Woman' },
+  { id: 'English_UpsetGirl', label: 'Upset Girl' },
+  { id: 'English_Gentle-voiced_man', label: 'Gentle-voiced Man' },
+  { id: 'English_Whispering_girl', label: 'Whispering Girl' },
+  { id: 'English_Diligent_Man', label: 'Diligent Man' },
+  { id: 'English_Graceful_Lady', label: 'Graceful Lady' },
+  { id: 'English_ReservedYoungMan', label: 'Reserved Young Man' },
+  { id: 'English_PlayfulGirl', label: 'Playful Girl' },
+  { id: 'English_ManWithDeepVoice', label: 'Man With Deep Voice' },
+  { id: 'English_MaturePartner', label: 'Mature Partner' },
+  { id: 'English_FriendlyPerson', label: 'Friendly Guy' },
+  { id: 'English_MatureBoss', label: 'Bossy Lady' },
+  { id: 'English_Debator', label: 'Male Debater' },
+  { id: 'English_LovelyGirl', label: 'Lovely Girl' },
+  { id: 'English_Steadymentor', label: 'Reliable Man' },
+  { id: 'English_Deep-VoicedGentleman', label: 'Deep-voiced Gentleman' },
+  { id: 'English_Wiselady', label: 'Wise Lady' },
+  { id: 'English_CaptivatingStoryteller', label: 'Captivating Storyteller' },
+  { id: 'English_DecentYoungMan', label: 'Decent Young Man' },
+  { id: 'English_SentimentalLady', label: 'Sentimental Lady' },
+  { id: 'English_ImposingManner', label: 'Imposing Queen' },
+  { id: 'English_SadTeen', label: 'Teen Boy' },
+  { id: 'English_PassionateWarrior', label: 'Passionate Warrior' },
+  { id: 'English_WiseScholar', label: 'Wise Scholar' },
+  { id: 'English_Soft-spokenGirl', label: 'Soft-Spoken Girl' },
+  { id: 'English_SereneWoman', label: 'Serene Woman' },
+  { id: 'English_ConfidentWoman', label: 'Confident Woman' },
+  { id: 'English_PatientMan', label: 'Patient Man' },
+  { id: 'English_Comedian', label: 'Comedian' },
+  { id: 'English_BossyLeader', label: 'Bossy Leader' },
+  { id: 'English_Strong-WilledBoy', label: 'Strong-Willed Boy' },
+  { id: 'English_StressedLady', label: 'Stressed Lady' },
+  { id: 'English_AssertiveQueen', label: 'Assertive Queen' },
+  { id: 'English_AnimeCharacter', label: 'Female Narrator' },
+  { id: 'English_Jovialman', label: 'Jovial Man' },
+  { id: 'English_WhimsicalGirl', label: 'Whimsical Girl' },
+  { id: 'English_Kind-heartedGirl', label: 'Kind-Hearted Girl' },
+];
+
 const HUME_MODELS = [
   { value: '2', label: 'Octave 2' },
   { value: '1', label: 'Octave 1' },
@@ -408,6 +456,7 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
   const [apiKey, setApiKey] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
   const [groupId, setGroupId] = useState('');
+  const [randomVoiceIds, setRandomVoiceIds] = useState('');
   const [voiceName, setVoiceName] = useState('Ava Song');
   const [voiceProvider, setVoiceProvider] = useState('HUME_AI');
   const [elevenLabsVoiceId, setElevenLabsVoiceId] = useState('JBFqnCBsd6RMkjVDRZzb');
@@ -425,6 +474,8 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
     setApiKey(item.apiKey ?? '');
     setBaseUrl(item.provider === 'deepseek' ? (item.baseUrl || 'https://api.deepseek.com') : item.provider === 'elevenlabs' ? (item.baseUrl || 'https://api.elevenlabs.io') : item.provider === 'minimax' ? (item.baseUrl || 'https://api.minimax.io') : (item.baseUrl ?? ''));
     setGroupId(String((cfg as Record<string, unknown>).groupId ?? ''));
+    const configuredVoices = (cfg as Record<string, unknown>).randomVoiceIds ?? (cfg as Record<string, unknown>).voiceIds ?? '';
+    setRandomVoiceIds(Array.isArray(configuredVoices) ? configuredVoices.join('\n') : String(configuredVoices ?? ''));
     setVoiceName(String((cfg as Record<string, unknown>).voiceName ?? 'Ava Song'));
     setVoiceProvider(String((cfg as Record<string, unknown>).voiceProvider ?? 'HUME_AI'));
     setElevenLabsVoiceId(String((cfg as Record<string, unknown>).voiceId ?? 'JBFqnCBsd6RMkjVDRZzb'));
@@ -444,6 +495,18 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
   const isMiniMax = item.type === 'tts' && item.provider === 'minimax';
   const isHume = item.type === 'tts' && item.provider === 'hume';
   const isElevenLabs = item.type === 'tts' && item.provider === 'elevenlabs';
+  const selectedRandomVoiceIds = randomVoiceIds.split(/[\n,，]/).map((voice) => voice.trim()).filter(Boolean);
+
+  const setSelectedRandomVoiceIds = (voices: string[]) => {
+    setRandomVoiceIds(Array.from(new Set(voices)).join('\n'));
+  };
+
+  const toggleRandomVoice = (voiceId: string) => {
+    const selected = new Set(selectedRandomVoiceIds);
+    if (selected.has(voiceId)) selected.delete(voiceId);
+    else selected.add(voiceId);
+    setSelectedRandomVoiceIds([...selected]);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -461,6 +524,8 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
         config.enableTimestamps = enableTimestamps;
       } else if (isMiniMax) {
         config.groupId = groupId.trim();
+        const voiceIds = randomVoiceIds.split(/[\n,，]/).map((voice) => voice.trim()).filter(Boolean);
+        if (voiceIds.length) config.randomVoiceIds = voiceIds;
       } else if (isHume) {
         config.voiceName = voiceName.trim() || 'Ava Song';
         config.voiceProvider = voiceProvider === 'CUSTOM_VOICE' ? 'CUSTOM_VOICE' : 'HUME_AI';
@@ -503,6 +568,51 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
               <div className="space-y-2"><Label>Base URL</Label><Input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} className="font-mono text-sm" placeholder="https://api.minimax.io" /></div>
               <div className="space-y-2"><Label>MINIMAX_API_KEY</Label><SecretInput value={apiKey} onChange={setApiKey} placeholder="Use env var when empty" /></div>
               <div className="space-y-2"><Label>MINIMAX_GROUP_ID</Label><Input value={groupId} onChange={(event) => setGroupId(event.target.value)} className="font-mono text-sm" placeholder="1943473439796896389" /></div>
+              <div className="space-y-2">
+                <Label>Random voice IDs</Label>
+                <div className="rounded-md border border-border/70 bg-muted/10">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 px-2.5 py-2">
+                    <span className="text-xs text-muted-foreground">Selected {selectedRandomVoiceIds.length}/{MINIMAX_ENGLISH_VOICES.length}</span>
+                    <div className="flex gap-1.5">
+                      <Button type="button" size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => setSelectedRandomVoiceIds(MINIMAX_ENGLISH_VOICES.map((voice) => voice.id))}>All</Button>
+                      <Button type="button" size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => setSelectedRandomVoiceIds([])}>Clear</Button>
+                    </div>
+                  </div>
+                  <div className="max-h-56 overflow-y-auto p-2">
+                    <div className="grid gap-1.5 sm:grid-cols-2">
+                      {MINIMAX_ENGLISH_VOICES.map((voice) => {
+                        const selected = selectedRandomVoiceIds.includes(voice.id);
+                        return (
+                          <button
+                            key={voice.id}
+                            type="button"
+                            onClick={() => toggleRandomVoice(voice.id)}
+                            className={cn(
+                              'flex min-h-9 items-center gap-2 rounded-md border px-2 py-1.5 text-left transition-colors',
+                              selected ? 'border-primary/50 bg-primary/5 text-foreground' : 'border-border/60 bg-background hover:bg-muted/40',
+                            )}
+                          >
+                            <span className={cn('flex size-4 shrink-0 items-center justify-center rounded border', selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted/20')}>
+                              {selected && <Check className="size-3" />}
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block truncate text-xs font-medium">{voice.label}</span>
+                              <span className="block truncate font-mono text-[10px] text-muted-foreground">{voice.id}</span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+                <Textarea
+                  value={randomVoiceIds}
+                  onChange={(event) => setRandomVoiceIds(event.target.value)}
+                  className="min-h-16 font-mono text-xs"
+                  placeholder={'English_Trustworth_Man\nEnglish_CalmWoman'}
+                />
+                <p className="text-[11px] text-muted-foreground">Official MiniMax English system voices are listed above. You can also edit the final saved list manually.</p>
+              </div>
             </>
           ) : isHume ? (
             <>

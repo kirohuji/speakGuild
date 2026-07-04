@@ -3,6 +3,24 @@ import { listAiProviders, type AiProviderItem } from '@/features/admin/api-ai-mo
 
 type TtsAccent = 'us' | 'uk' | 'neutral'
 
+function parseVoiceIds(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean)
+  }
+  if (typeof value === 'string') {
+    return value
+      .split(/[\n,，]/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+  return []
+}
+
+function pickRandom<T>(items: T[]): T | undefined {
+  if (!items.length) return undefined
+  return items[Math.floor(Math.random() * items.length)]
+}
+
 /**
  * 获取当前激活的 TTS Provider 配置
  * 供管理后台各模块复用
@@ -24,14 +42,21 @@ export async function getActiveTtsProvider(): Promise<AiProviderItem> {
 export function getTtsVoiceId(item: AiProviderItem, accent: TtsAccent): string | undefined {
   const config = item.config ?? {}
   const accentKeys = accent === 'us'
-    ? ['usVoiceId', 'americanVoiceId', 'voiceIdUs', 'voiceUs']
+    ? ['usVoiceIds', 'americanVoiceIds', 'voiceIdsUs', 'voiceUsList', 'usVoiceId', 'americanVoiceId', 'voiceIdUs', 'voiceUs']
     : accent === 'uk'
-      ? ['ukVoiceId', 'britishVoiceId', 'voiceIdUk', 'voiceUk']
-      : []
+      ? ['ukVoiceIds', 'britishVoiceIds', 'voiceIdsUk', 'voiceUkList', 'ukVoiceId', 'britishVoiceId', 'voiceIdUk', 'voiceUk']
+      : ['randomVoiceIds', 'voiceIds', 'voices']
   for (const key of accentKeys) {
-    const value = config[key]
-    if (typeof value === 'string' && value.trim()) return value.trim()
+    const candidates = parseVoiceIds(config[key])
+    const voiceId = pickRandom(candidates)
+    if (voiceId) return voiceId
   }
+  const randomVoiceId = pickRandom([
+    ...parseVoiceIds(config.randomVoiceIds),
+    ...parseVoiceIds(config.voiceIds),
+    ...parseVoiceIds(config.voices),
+  ])
+  if (randomVoiceId) return randomVoiceId
   const fallback = typeof config.voiceId === 'string'
     ? config.voiceId
     : typeof config.voiceName === 'string'
