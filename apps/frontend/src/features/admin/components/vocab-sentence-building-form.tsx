@@ -20,7 +20,7 @@ export interface VocabSentenceBuildingItem {
   direction?: 'zh_to_en' | 'en_to_zh'
   patterns: Array<{
     chunk: string
-    items: Array<{ zh: string; answer: string; hint?: string; audioUrl?: string; imageUrl?: string }>
+    items: Array<{ zh?: string; en?: string; answer: string; hint?: string; audioUrl?: string; imageUrl?: string }>
   }>
 }
 
@@ -68,7 +68,57 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
     commit({ patterns: next })
   }
 
-  const updatePatternItem = (pIdx: number, iIdx: number, field: 'zh' | 'answer' | 'hint', val: string) => {
+  const looksEnglish = (text?: string) => /[A-Za-z]/.test(text ?? '')
+
+  const isLegacyEnToZhItem = (item: VocabSentenceBuildingItem['patterns'][number]['items'][number]) => (
+    local.direction === 'en_to_zh' && !item.en && looksEnglish(item.answer) && Boolean(item.zh)
+  )
+
+  const getPromptText = (item: VocabSentenceBuildingItem['patterns'][number]['items'][number]) => {
+    if (local.direction !== 'en_to_zh') return item.zh ?? item.en ?? ''
+    if (item.en) return item.en
+    if (isLegacyEnToZhItem(item)) return item.answer
+    return item.zh ?? item.answer ?? ''
+  }
+
+  const getAnswerText = (item: VocabSentenceBuildingItem['patterns'][number]['items'][number]) => {
+    if (local.direction !== 'en_to_zh') return item.answer ?? ''
+    if (item.en) return item.answer ?? item.zh ?? ''
+    if (isLegacyEnToZhItem(item)) return item.zh ?? ''
+    return item.answer ?? ''
+  }
+
+  const updatePromptText = (pIdx: number, iIdx: number, val: string) => {
+    const current = local.patterns[pIdx].items[iIdx]
+    if (local.direction !== 'en_to_zh') {
+      updatePatternItem(pIdx, iIdx, 'zh', val)
+      return
+    }
+    const next = [...local.patterns]
+    const items = [...next[pIdx].items]
+    items[iIdx] = isLegacyEnToZhItem(current)
+      ? { ...current, en: val, answer: current.zh ?? '', zh: undefined }
+      : { ...current, en: val }
+    next[pIdx] = { ...next[pIdx], items }
+    commit({ patterns: next })
+  }
+
+  const updateAnswerText = (pIdx: number, iIdx: number, val: string) => {
+    const current = local.patterns[pIdx].items[iIdx]
+    if (local.direction !== 'en_to_zh') {
+      updatePatternItem(pIdx, iIdx, 'answer', val)
+      return
+    }
+    const next = [...local.patterns]
+    const items = [...next[pIdx].items]
+    items[iIdx] = isLegacyEnToZhItem(current)
+      ? { ...current, en: current.answer, answer: val, zh: undefined }
+      : { ...current, answer: val }
+    next[pIdx] = { ...next[pIdx], items }
+    commit({ patterns: next })
+  }
+
+  const updatePatternItem = (pIdx: number, iIdx: number, field: 'zh' | 'en' | 'answer' | 'hint', val: string) => {
     const next = [...local.patterns]
     const items = [...next[pIdx].items]
     items[iIdx] = { ...items[iIdx], [field]: val }
@@ -114,7 +164,8 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
   }
 
   const generateItemAudio = async (pIdx: number, iIdx: number) => {
-    const text = local.patterns[pIdx]?.items[iIdx]?.answer?.trim()
+    const item = local.patterns[pIdx]?.items[iIdx]
+    const text = (local.direction === 'en_to_zh' ? getPromptText(item) : getAnswerText(item)).trim()
     if (!text) return
     const key = `item-${pIdx}-${iIdx}`
     setTtsGenerating(key)
@@ -149,7 +200,11 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
       if (res?.patterns?.length) {
         commit({ patterns: res.patterns.map((p: any) => ({
           chunk: p.chunk,
-          items: (p.items || []).map((it: any) => ({ zh: it.zh, answer: it.answer })),
+          items: (p.items || []).map((it: any) => (
+            (local.direction ?? 'zh_to_en') === 'en_to_zh'
+              ? { en: it.en ?? it.zh, answer: it.answer }
+              : { zh: it.zh ?? it.en, answer: it.answer }
+          )),
         })) })
         toast.success(`已生成 ${res.patterns.length} 组搭配`)
       }
@@ -167,9 +222,10 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
         type: 'vocab_sentence_building',
         keyword: local.vocabWord,
         meaning: local.vocabMeaning || '',
+        direction: local.direction ?? 'zh_to_en',
         generateHints: true,
         itemCount: allItems.length,
-        items: allItems.map(it => ({ zh: it.zh, answer: it.answer })),
+        items: allItems.map(it => ({ zh: getPromptText(it), answer: getAnswerText(it) })),
       })
       if (res?.hints?.length) {
         let hintIdx = 0
@@ -179,6 +235,8 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
         }))
         commit({ patterns: updated })
         toast.success(`已为 ${res.hints.length} 道题生成提示`)
+      } else {
+        toast.error('AI 未返回教学提示，请稍后重试')
       }
     } catch { toast.error('AI 生成提示失败') }
     finally { setAiBusy(null) }
@@ -256,9 +314,9 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                       </Button>
                     </div>
                     <div className="space-y-1.5">
-                      <Input className="h-7 text-xs" value={item.zh} onChange={e => updatePatternItem(pIdx, iIdx, 'zh', e.target.value)} placeholder="中文提示..." />
+                      <Input className="h-7 text-xs" value={getPromptText(item)} onChange={e => updatePromptText(pIdx, iIdx, e.target.value)} placeholder={local.direction === 'en_to_zh' ? '英文原文...' : '中文提示...'} />
                       <div className="flex gap-1">
-                        <Input className="h-7 text-xs flex-1" value={item.answer} onChange={e => updatePatternItem(pIdx, iIdx, 'answer', e.target.value)} placeholder="英文答案..." />
+                        <Input className="h-7 text-xs flex-1" value={getAnswerText(item)} onChange={e => updateAnswerText(pIdx, iIdx, e.target.value)} placeholder={local.direction === 'en_to_zh' ? '中文答案...' : '英文答案...'} />
                         {item.audioUrl && (
                           <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听题目音频"
                             onClick={() => playAudioUrl(item.audioUrl)}>
@@ -266,7 +324,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                           </Button>
                         )}
                         <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成题目 TTS"
-                          disabled={!item.answer?.trim() || ttsGenerating === `item-${pIdx}-${iIdx}`}
+                          disabled={!(local.direction === 'en_to_zh' ? getPromptText(item) : getAnswerText(item)).trim() || ttsGenerating === `item-${pIdx}-${iIdx}`}
                           onClick={() => generateItemAudio(pIdx, iIdx)}>
                           {ttsGenerating === `item-${pIdx}-${iIdx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
                         </Button>
@@ -301,8 +359,8 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                         type="vocab_sentence_building"
                         displayText={pattern.chunk}
                         displayMeaning={local.vocabMeaning}
-                        promptZh={item.zh}
-                        answer={item.answer}
+                        promptZh={getPromptText(item)}
+                        answer={getAnswerText(item)}
                         imageUrl={item.imageUrl}
                         direction={local.direction}
                       />

@@ -100,8 +100,20 @@ export function GuidedWarmupPhase({
     candidate: DailyPracticeCandidate | null
     render: () => React.ReactNode
   }
-type SimplePromptItem = { zh: string; answer?: string; hint?: string; imageUrl?: string; audioUrl?: string }
+type SimplePromptItem = { zh?: string; en?: string; answer?: string; hint?: string; imageUrl?: string; audioUrl?: string }
 type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string[]; suggestedAnswer?: string; hint?: string }
+
+function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en' | 'en_to_zh' = 'zh_to_en') {
+  const looksEnglish = (text?: string) => /[A-Za-z]/.test(text ?? '')
+  const isLegacyEnToZhItem = direction === 'en_to_zh' && !prompt.en && looksEnglish(prompt.answer) && Boolean(prompt.zh)
+  const promptText = direction === 'zh_to_en'
+    ? (prompt.zh ?? prompt.en ?? '')
+    : (prompt.en ?? (isLegacyEnToZhItem ? prompt.answer : prompt.zh) ?? prompt.answer ?? '')
+  const expectedAnswer = direction === 'zh_to_en'
+    ? (prompt.answer ?? '')
+    : (prompt.en ? (prompt.answer ?? prompt.zh ?? '') : (isLegacyEnToZhItem ? prompt.zh ?? '' : prompt.answer ?? prompt.zh ?? ''))
+  return { promptText, expectedAnswer }
+}
 
   const buildWarmupReferencePreloads = useCallback((items: any[]): WarmupReferencePreloadInput[] => {
     const references: WarmupReferencePreloadInput[] = []
@@ -109,11 +121,12 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
       if (item.type === 'chunk_substitution') {
         ;((item.items ?? []) as SimplePromptItem[]).forEach((prompt) => {
           const direction = item.direction ?? 'zh_to_en'
+          const ref = getSimplePromptReference(prompt, direction)
           references.push({
             stepType: 'chunk_substitution',
             direction,
-            prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
-            expectedAnswer: direction === 'zh_to_en' ? prompt.answer : prompt.zh,
+            prompt: ref.promptText,
+            expectedAnswer: ref.expectedAnswer,
           })
         })
       } else if (item.type === 'vocab_drill') {
@@ -130,22 +143,24 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
         for (const pattern of item.patterns ?? []) {
           ;((pattern.items ?? []) as SimplePromptItem[]).forEach((prompt) => {
             const direction = item.direction ?? 'zh_to_en'
+            const ref = getSimplePromptReference(prompt, direction)
             references.push({
               stepType: 'vocab_sentence_building',
               direction,
-              prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
-              expectedAnswer: direction === 'zh_to_en' ? prompt.answer : prompt.zh,
+              prompt: ref.promptText,
+              expectedAnswer: ref.expectedAnswer,
             })
           })
         }
       } else if (item.type === 'pattern_drill') {
         ;((item.items ?? []) as SimplePromptItem[]).forEach((prompt) => {
           const direction = item.direction ?? 'zh_to_en'
+          const ref = getSimplePromptReference(prompt, direction)
           references.push({
             stepType: 'pattern_drill',
             direction,
-            prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
-            expectedAnswer: direction === 'zh_to_en' ? prompt.answer : prompt.zh,
+            prompt: ref.promptText,
+            expectedAnswer: ref.expectedAnswer,
           })
         })
       }
@@ -214,6 +229,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
       if (item.type === 'chunk_substitution') {
         const dirLabel = item.direction === 'en_to_zh' ? '英→中' : '中→英'
         ;((item.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
+          const ref = getSimplePromptReference(sub, item.direction ?? 'zh_to_en')
           makeStep({
             item,
             type: 'chunk_substitution',
@@ -221,7 +237,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
             promptIndex: subIdx,
             label: `${item.title} (${dirLabel})`,
             displayLabel: item.kind === 'word' ? '词汇替换' : '句块替换',
-            headerContent: item.chunk || sub.zh || item.title || '',
+            headerContent: item.chunk || ref.promptText || item.title || '',
             render: (stepId) => (
               <ChunkOutputDrillCard
                 chunk={{ text: item.chunk, meaning: item.chunkMeaning || '', description: null }}
@@ -259,6 +275,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
       } else if (item.type === 'vocab_sentence_building') {
         for (const [patternIndex, pattern] of (item.patterns ?? []).entries()) {
           ;((pattern.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
+            const ref = getSimplePromptReference(sub, item.direction ?? 'zh_to_en')
             makeStep({
               item,
               type: 'vocab_sentence_building',
@@ -268,7 +285,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
               patternIndex,
               label: `${item.vocabWord} + ${pattern.chunk}`,
               displayLabel: '一词多句',
-              headerContent: item.vocabWord || pattern.chunk || sub.zh || '',
+              headerContent: item.vocabWord || pattern.chunk || ref.promptText || '',
               render: (flatId) => (
                 <ChunkOutputDrillCard
                   chunk={{ text: item.vocabWord || pattern.chunk, meaning: item.vocabMeaning || '' }}
@@ -306,6 +323,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
       } else if (item.type === 'pattern_drill') {
         const dirLabel = item.direction === 'en_to_zh' ? '英→中' : '中→英'
         ;((item.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
+          const ref = getSimplePromptReference(sub, item.direction ?? 'zh_to_en')
           makeStep({
             item,
             type: 'pattern_drill',
@@ -313,7 +331,7 @@ type VocabPromptItem = { vocabId: string; promptZh: string; targetWords?: string
             promptIndex: subIdx,
             label: `${item.title} (${dirLabel})`,
             displayLabel: '句型操练',
-            headerContent: item.pattern || sub.zh || item.title || '',
+            headerContent: item.pattern || ref.promptText || item.title || '',
             render: (stepId) => (
               <PatternDrillCard
                 pattern={item.pattern}

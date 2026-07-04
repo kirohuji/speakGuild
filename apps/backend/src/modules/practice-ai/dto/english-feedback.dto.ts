@@ -166,11 +166,15 @@ export class GenerateDrillsDto {
   @IsOptional()
   generateHints?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  polish?: boolean;
+
   @IsNumber()
   @IsOptional()
   itemCount?: number;
 
   @IsArray()
   @IsOptional()
-  items?: Array<{ zh: string; answer: string }>;
+  items?: Array<{ zh?: string; en?: string; answer?: string; hint?: string }>;
 }

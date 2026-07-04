@@ -134,7 +134,7 @@ export class AiModelService {
     return {
       provider: active?.provider ?? 'deepseek',
       apiKey: active?.apiKey || process.env.DEEPSEEK_API_KEY?.trim() || '',
-      model: active?.model || 'deepseek-v4-pro',
+      model: active?.model || 'deepseek-v4',
       baseUrl: active?.baseUrl || 'https://api.deepseek.com',
     };
   }
@@ -254,7 +254,7 @@ export class AiModelService {
       { type: 'tts', provider: 'cartesia', label: 'Cartesia', model: '', apiKey: '', baseUrl: '', sortOrder: 1 },
       { type: 'tts', provider: 'hume', label: 'Hume AI', model: '2', apiKey: process.env.HUME_API_KEY?.trim() || '', baseUrl: '', config: { voiceName: 'Ava Song', voiceProvider: 'HUME_AI' }, sortOrder: 2 },
       { type: 'tts', provider: 'elevenlabs', label: 'ElevenLabs', model: 'eleven_multilingual_v2', apiKey: process.env.ELEVENLABS_API_KEY?.trim() || '', baseUrl: 'https://api.elevenlabs.io', config: { voiceId: process.env.ELEVENLABS_VOICE_ID?.trim() || 'JBFqnCBsd6RMkjVDRZzb' }, sortOrder: 3 },
-      { type: 'llm', provider: 'deepseek', label: 'DeepSeek', model: 'deepseek-v4-pro', apiKey: process.env.DEEPSEEK_API_KEY?.trim() || '', baseUrl: 'https://api.deepseek.com', sortOrder: 0 },
+      { type: 'llm', provider: 'deepseek', label: 'DeepSeek', model: 'deepseek-v4', apiKey: process.env.DEEPSEEK_API_KEY?.trim() || '', baseUrl: 'https://api.deepseek.com', sortOrder: 0 },
       { type: 'llm', provider: 'openai', label: 'OpenAI', model: 'gpt-4o', apiKey: '', baseUrl: 'https://api.openai.com/v1', sortOrder: 1 },
     ];
 

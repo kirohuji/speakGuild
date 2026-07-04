@@ -22,6 +22,23 @@ type PlacementSceneBase = {
   _count: { trainingTopics: number; storyEpisodes: number };
 };
 
+type DrillGenerationDto = {
+  type: 'chunk_substitution' | 'vocab_sentence_building' | 'sentence_decomposition' | 'pattern_drill';
+  keyword: string;
+  meaning?: string;
+  direction?: string;
+  kind?: string;
+  count?: number;
+  chunks?: string[];
+  sentence?: string;
+  zh?: string;
+  generateSentence?: boolean;
+  generateHints?: boolean;
+  polish?: boolean;
+  itemCount?: number;
+  items?: Array<{ zh?: string; en?: string; answer?: string; hint?: string }>;
+};
+
 @Injectable()
 export class EnglishPracticeAiService {
   private readonly logger = new Logger(EnglishPracticeAiService.name);
@@ -33,11 +50,22 @@ export class EnglishPracticeAiService {
     private readonly aiModel: AiModelService,
   ) {}
 
-  private async getProvider() {
+  private async getLlmConfigOrThrow() {
     const config = await this.aiModel.getLlmConfig();
     if (!config.apiKey) throw new BadRequestException('未配置 LLM API Key');
+    return config;
+  }
+
+  private async getProvider() {
+    const config = await this.getLlmConfigOrThrow();
     const model = this.llmFactory.create(config);
     return () => model;
+  }
+
+  private async getLlmRuntime() {
+    const config = await this.getLlmConfigOrThrow();
+    const model = this.llmFactory.create(config);
+    return { config, provider: () => model };
   }
 
   private parseLevel(value: unknown) {
@@ -47,6 +75,13 @@ export class EnglishPracticeAiService {
 
   private extractJson(text: string) {
     return text.match(/```json\s*([\s\S]*?)\s*```/)?.[1] ?? text;
+  }
+
+  private buildChatCompletionsUrl(baseUrl: string) {
+    const normalized = (baseUrl || 'https://api.deepseek.com').replace(/\/+$/, '');
+    return normalized.endsWith('/chat/completions')
+      ? normalized
+      : `${normalized}/chat/completions`;
   }
 
   private normalizeLearningGoals(goals?: string[]) {
@@ -514,6 +549,183 @@ For correction/upgraded/retryRequired: only populate these when the response is 
     feedback: z.string(),
     correction: z.string().nullable(),
   });
+
+  private drillHintsSchema = z.object({
+    hints: z.array(z.string()),
+  });
+
+  private normalizeDrillHints(hints: unknown, dto: {
+    type: 'chunk_substitution' | 'vocab_sentence_building' | 'sentence_decomposition' | 'pattern_drill';
+    keyword: string;
+    direction?: string;
+    itemCount?: number;
+    items?: Array<{ zh?: string; en?: string; answer?: string; hint?: string }>;
+  }) {
+    const itemCount = dto.items?.length || dto.itemCount || 0;
+    const normalized = Array.isArray(hints)
+      ? hints.map((hint) => String(hint ?? '').trim())
+      : [];
+    const fallback = this.buildFallbackDrillHints(dto);
+    return Array.from({ length: itemCount }, (_, index) => normalized[index] || fallback[index] || '先抓住题目的核心意思，再用自然的表达完成句子。');
+  }
+
+  private parseDrillHintText(text: string) {
+    const cleaned = this.extractJson(text).trim();
+    try {
+      const parsed = JSON.parse(cleaned);
+      const result = this.drillHintsSchema.safeParse(parsed);
+      if (result.success) return result.data.hints;
+    } catch {
+      // Fall through to line-based parsing. Some providers truncate or mangle JSON.
+    }
+
+    const lines = text
+      .replace(/```[\s\S]*?```/g, (block) => block.replace(/```[a-z]*\n?/gi, '').replace(/```/g, ''))
+      .split(/\r?\n/)
+      .map((line) => line
+        .trim()
+        .replace(/^[-*]\s*/, '')
+        .replace(/^(?:HINT\s*)?\d+[\).:：]\s*/i, '')
+        .replace(/^["'“”]+|["'“”]+$/g, '')
+        .trim())
+      .filter((line) => (
+        line
+        && !/^\{|\}|\[|\]$/.test(line)
+        && !/^["']?hints?["']?\s*[:：]?$/i.test(line)
+        && !/^"hints"\s*:\s*\[?$/i.test(line)
+      ));
+
+    if (lines.length) return lines;
+
+    const quoted = [...text.matchAll(/"([^"\n]{6,})"/g)]
+      .map((match) => match[1].trim())
+      .filter((value) => value && value !== 'hints');
+    return quoted;
+  }
+
+  private async generateDrillHintsObject(params: {
+    config: LlmConfig;
+    provider: () => ReturnType<LlmProviderFactory['create']>;
+    system: string;
+    prompt: string;
+    dto: DrillGenerationDto;
+  }) {
+    const maxOutputTokens = Math.max(1000, (params.dto.items?.length ?? params.dto.itemCount ?? 4) * 180);
+    const providerName = params.config.provider.trim().toLowerCase();
+
+    if (providerName === 'deepseek') {
+      let lastError: unknown = null;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const response = await fetch(this.buildChatCompletionsUrl(params.config.baseUrl), {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${params.config.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: params.config.model,
+              messages: [
+                { role: 'system', content: params.system },
+                {
+                  role: 'user',
+                  content: `${params.prompt}\n\nReturn a complete JSON object only. It must start with {"hints":[ and must be valid JSON.`,
+                },
+              ],
+              response_format: { type: 'json_object' },
+              temperature: attempt === 0 ? 0.2 : 0,
+              max_tokens: maxOutputTokens,
+            }),
+          });
+
+          const payload = await response.json().catch(() => null) as any;
+          if (!response.ok) {
+            throw new Error(payload?.error?.message || payload?.message || `DeepSeek JSON output failed (${response.status})`);
+          }
+
+          const content = String(payload?.choices?.[0]?.message?.content ?? '').trim();
+          if (!content) {
+            throw new Error(`DeepSeek JSON output was empty; finish_reason=${payload?.choices?.[0]?.finish_reason ?? 'unknown'}`);
+          }
+
+          const parsed = JSON.parse(this.extractJson(content).trim());
+          const result = this.drillHintsSchema.safeParse(parsed);
+          if (!result.success) throw new Error(`DeepSeek JSON output schema mismatch: ${result.error.message}`);
+          return result.data;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+      throw lastError instanceof Error ? lastError : new Error(String(lastError));
+    }
+
+    const result = await generateObject({
+      model: params.provider(),
+      system: params.system,
+      prompt: params.prompt,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      schema: this.drillHintsSchema as any,
+      temperature: 0.6,
+      maxOutputTokens,
+    });
+    return result.object as { hints: string[] };
+  }
+
+  private buildFallbackDrillHints(dto: {
+    type: 'chunk_substitution' | 'vocab_sentence_building' | 'sentence_decomposition' | 'pattern_drill';
+    keyword: string;
+    direction?: string;
+    itemCount?: number;
+    items?: Array<{ zh?: string; en?: string; answer?: string; hint?: string }>;
+  }) {
+    const isEnToZh = dto.direction === 'en_to_zh';
+    const target = dto.keyword?.trim();
+    const items: Array<{ zh?: string; en?: string; answer?: string; hint?: string }> = dto.items?.length
+      ? dto.items
+      : Array.from({ length: dto.itemCount ?? 0 }, () => ({}));
+    return items.map((item) => {
+      if (item.hint?.trim()) return item.hint.trim();
+      const promptText = this.getDrillPromptText(item, dto.direction);
+      const answerText = this.getDrillAnswerText(item, dto.direction);
+      if (dto.type === 'pattern_drill') {
+        return isEnToZh
+          ? `先看英文句子的结构，抓住句型「${target}」表达的关系，再翻成自然中文。`
+          : `先套住句型「${target}」，再把中文里的具体信息放进空位，最后检查语序。`;
+      }
+      if (dto.type === 'vocab_sentence_building') {
+        return isEnToZh
+          ? '先找出英文里的核心词和搭配，再用中文说清楚完整意思。'
+          : `先确定要表达的场景，再参考答案里的搭配，把「${target || '核心词'}」放进完整句子。`;
+      }
+      if (!promptText && answerText) {
+        return isEnToZh
+          ? '这道题目前只有参考中文，先补上英文原句，再根据英文意思生成更具体的提示。'
+          : `这道题目前只有中文内容，先把它当作题干，再尝试用「${target || '核心表达'}」写出自然英文。`;
+      }
+      return isEnToZh
+        ? '先理解英文原句的核心意思，再翻成自然中文，不必逐词硬翻。'
+        : `先看中文要表达的核心意思，再参考答案的说法；如果适合，用「${target || '核心表达'}」完成自然英文句子。`;
+    });
+  }
+
+  private getDrillPromptText(item: { zh?: string; en?: string; answer?: string }, direction?: string) {
+    if (direction !== 'en_to_zh') return item.zh ?? item.en ?? '';
+    if (item.en) return item.en;
+    if (this.looksEnglish(item.answer) && item.zh) return item.answer ?? '';
+    return item.zh ?? item.answer ?? '';
+  }
+
+  private getDrillAnswerText(item: { zh?: string; en?: string; answer?: string }, direction?: string) {
+    if (direction === 'en_to_zh') {
+      if (item.en) return item.answer ?? item.zh ?? '';
+      if (this.looksEnglish(item.answer) && item.zh) return item.zh;
+    }
+    return item.answer ?? '';
+  }
+
+  private looksEnglish(value?: string) {
+    return /[A-Za-z]/.test(value ?? '');
+  }
 
   /** 知识点热身单题快速判定：Zod 约束 AI 必须返回合法 JSON */
   async judgeWarmupTurn(dto: WarmupTurnJudgeDto, userId?: string) {
@@ -1105,23 +1317,9 @@ Rules:
   }
 
   /** AI 生成练习题：根据关键词和题型批量生成练习项目 */
-  async generateDrills(dto: {
-    type: 'chunk_substitution' | 'vocab_sentence_building' | 'sentence_decomposition' | 'pattern_drill';
-    keyword: string;
-    meaning?: string;
-    direction?: string;
-    kind?: string;
-    count?: number;
-    chunks?: string[];
-    sentence?: string;
-    zh?: string;
-    generateSentence?: boolean;
-    generateHints?: boolean;
-    polish?: boolean;
-    itemCount?: number;
-    items?: Array<{ zh: string; answer: string; hint?: string }>;
-  }) {
-    const provider = await this.getProvider();
+  async generateDrills(dto: DrillGenerationDto) {
+    const runtime = await this.getLlmRuntime();
+    const provider = runtime.provider;
     const count = Math.min(dto.count ?? 4, 8);
     const direction = dto.direction ?? 'zh_to_en';
     const kind = dto.kind ?? 'chunk';
@@ -1129,7 +1327,7 @@ Rules:
     // ── Generate per-item teaching hints ──
     if (dto.generateHints && dto.items?.length) {
       const system = `You are an ESL teaching assistant for Chinese learners of English.
-For each exercise item below, write a short, helpful teaching hint (1-2 sentences in Chinese).
+For each exercise item below, write one short, helpful teaching hint in Chinese.
 Each hint should guide the learner on how to construct the answer without giving it away completely.
 
 Tailor hints to the exercise type:
@@ -1137,10 +1335,35 @@ Tailor hints to the exercise type:
 - pattern_drill: hint about how to fill the pattern's slot with the right words
 - vocab_sentence_building: hint about which sentence pattern or collocation to use for this specific item
 
-Return ONLY a JSON object: { "hints": ["hint1", "hint2", ...] }`;
+Return exactly ${dto.items.length} hints.
+Return ONLY valid JSON. Do not return markdown, code fences, comments, or extra text.
+The JSON schema is exactly:
+{ "hints": ["提示1", "提示2"] }
 
-      const itemsJson = dto.items.map((it, i) => `[${i + 1}] ZH: ${it.zh} | Answer: ${it.answer}`).join('\n')
-      const user = `Type: ${dto.type}, Keyword: "${dto.keyword}"${dto.meaning ? `, Meaning: ${dto.meaning}` : ''}\nExercises:\n${itemsJson}`;
+The word JSON must appear in your response only as part of the valid JSON object.`;
+
+      const isEnToZh = dto.direction === 'en_to_zh';
+      const promptLabel = isEnToZh ? 'English prompt' : 'Chinese prompt';
+      const answerLabel = isEnToZh ? 'Chinese answer' : 'English answer';
+      const itemsJson = dto.items.map((it, i) => {
+        const promptText = this.getDrillPromptText(it, dto.direction);
+        const answerText = this.getDrillAnswerText(it, dto.direction);
+        return `[${i + 1}] ${promptLabel}: ${promptText || '(missing)'} | ${answerLabel}: ${answerText || '(missing)'}`;
+      }).join('\n')
+      const user = `Type: ${dto.type}, Keyword: "${dto.keyword}"${dto.meaning ? `, Meaning: ${dto.meaning}` : ''}, Direction: ${dto.direction ?? 'zh_to_en'}\nExercises:\n${itemsJson}`;
+
+      try {
+        const object = await this.generateDrillHintsObject({
+          config: runtime.config,
+          provider,
+          system,
+          prompt: user,
+          dto,
+        });
+        return { hints: this.normalizeDrillHints(object.hints, dto) };
+      } catch (error) {
+        this.logger.debug(`Structured drill hint generation fell back to text JSON: ${error instanceof Error ? error.message : String(error)}`);
+      }
 
       try {
         const { text } = await generateText({
@@ -1148,12 +1371,12 @@ Return ONLY a JSON object: { "hints": ["hint1", "hint2", ...] }`;
           system,
           prompt: user,
           temperature: 0.6,
-          maxOutputTokens: 500,
+          maxOutputTokens: Math.max(500, dto.items.length * 120),
         });
-        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        return JSON.parse(cleaned);
-      } catch {
-        return { hints: [] };
+        return { hints: this.normalizeDrillHints(this.parseDrillHintText(text), dto) };
+      } catch (error) {
+        this.logger.warn(`Text drill hint generation failed: ${error instanceof Error ? error.message : String(error)}`);
+        return { hints: this.buildFallbackDrillHints(dto) };
       }
     }
 

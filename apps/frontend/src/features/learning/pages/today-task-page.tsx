@@ -33,7 +33,7 @@ import { toast } from 'sonner'
 import { practiceRepository } from '@/lib/offline'
 
 // ── 类型 ──
-type SimplePromptItem = { zh: string; answer?: string; hint?: string }
+type SimplePromptItem = { zh?: string; en?: string; answer?: string; hint?: string }
 type VocabPromptItem = {
   vocabId: string
   promptZh: string
@@ -65,16 +65,29 @@ type PracticeGroup = {
 
 function buildTodayReferencePreloads(steps: NonNullable<ReturnType<typeof useDailyPracticeStore.getState>['plan']>['steps']): WarmupReferencePreloadInput[] {
   const references: WarmupReferencePreloadInput[] = []
+  const simpleReference = (prompt: any, direction: 'zh_to_en' | 'en_to_zh') => {
+    const looksEnglish = (text?: string) => /[A-Za-z]/.test(text ?? '')
+    const isLegacyEnToZhItem = direction === 'en_to_zh' && !prompt.en && looksEnglish(prompt.answer) && Boolean(prompt.zh)
+    return {
+      promptText: direction === 'zh_to_en'
+        ? (prompt.zh ?? prompt.en ?? '')
+        : (prompt.en ?? (isLegacyEnToZhItem ? prompt.answer : prompt.zh) ?? prompt.answer ?? ''),
+      expectedAnswer: direction === 'zh_to_en'
+        ? (prompt.answer ?? '')
+        : (prompt.en ? (prompt.answer ?? prompt.zh ?? '') : (isLegacyEnToZhItem ? prompt.zh ?? '' : prompt.answer ?? prompt.zh ?? '')),
+    }
+  }
   for (const source of steps) {
     const item = source.item
     const prompt = source.prompt
     if (source.type === 'chunk_substitution') {
       const direction = item.direction ?? 'zh_to_en'
+      const { promptText, expectedAnswer } = simpleReference(prompt, direction)
       references.push({
         stepType: 'chunk_substitution',
         direction,
-        prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
-        expectedAnswer: direction === 'zh_to_en' ? prompt.answer : prompt.zh,
+        prompt: promptText,
+        expectedAnswer,
       })
     } else if (source.type === 'vocab_drill') {
       const direction = item.direction ?? 'zh_to_en'
@@ -86,19 +99,21 @@ function buildTodayReferencePreloads(steps: NonNullable<ReturnType<typeof useDai
       })
     } else if (source.type === 'vocab_sentence_building') {
       const direction = item.direction ?? 'zh_to_en'
+      const { promptText, expectedAnswer } = simpleReference(prompt, direction)
       references.push({
         stepType: 'vocab_sentence_building',
         direction,
-        prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
-        expectedAnswer: direction === 'zh_to_en' ? prompt.answer : prompt.zh,
+        prompt: promptText,
+        expectedAnswer,
       })
     } else if (source.type === 'pattern_drill') {
       const direction = item.direction ?? 'zh_to_en'
+      const { promptText, expectedAnswer } = simpleReference(prompt, direction)
       references.push({
         stepType: 'pattern_drill',
         direction,
-        prompt: direction === 'zh_to_en' ? prompt.zh : (prompt.answer ?? prompt.zh),
-        expectedAnswer: direction === 'zh_to_en' ? prompt.answer : prompt.zh,
+        prompt: promptText,
+        expectedAnswer,
       })
     }
   }

@@ -20,7 +20,7 @@ export interface ChunkSubstitutionItem {
   chunkMeaning?: string
   direction?: 'zh_to_en' | 'en_to_zh'
   kind?: 'chunk' | 'word'
-  items: Array<{ zh: string; answer: string; hint?: string; audioUrl?: string; imageUrl?: string }>
+  items: Array<{ zh?: string; en?: string; answer: string; hint?: string; audioUrl?: string; imageUrl?: string }>
 }
 
 interface Props {
@@ -57,7 +57,53 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
     commit({ items: [...local.items, { zh: '', answer: '', hint: '' }] })
   }
 
-  const updateItem = (idx: number, field: 'zh' | 'answer' | 'hint', val: string) => {
+  const looksEnglish = (text?: string) => /[A-Za-z]/.test(text ?? '')
+
+  const isLegacyEnToZhItem = (item: ChunkSubstitutionItem['items'][number]) => (
+    local.direction === 'en_to_zh' && !item.en && looksEnglish(item.answer) && Boolean(item.zh)
+  )
+
+  const getPromptText = (item: ChunkSubstitutionItem['items'][number]) => {
+    if (local.direction !== 'en_to_zh') return item.zh ?? item.en ?? ''
+    if (item.en) return item.en
+    if (isLegacyEnToZhItem(item)) return item.answer
+    return item.zh ?? item.answer ?? ''
+  }
+
+  const getAnswerText = (item: ChunkSubstitutionItem['items'][number]) => {
+    if (local.direction !== 'en_to_zh') return item.answer ?? ''
+    if (item.en) return item.answer ?? item.zh ?? ''
+    if (isLegacyEnToZhItem(item)) return item.zh ?? ''
+    return item.answer ?? ''
+  }
+
+  const updatePromptText = (idx: number, val: string) => {
+    const current = local.items[idx]
+    if (local.direction !== 'en_to_zh') {
+      updateItem(idx, 'zh', val)
+      return
+    }
+    const next = [...local.items]
+    next[idx] = isLegacyEnToZhItem(current)
+      ? { ...current, en: val, answer: current.zh ?? '', zh: undefined }
+      : { ...current, en: val }
+    commit({ items: next })
+  }
+
+  const updateAnswerText = (idx: number, val: string) => {
+    const current = local.items[idx]
+    if (local.direction !== 'en_to_zh') {
+      updateItem(idx, 'answer', val)
+      return
+    }
+    const next = [...local.items]
+    next[idx] = isLegacyEnToZhItem(current)
+      ? { ...current, en: current.answer, answer: val, zh: undefined }
+      : { ...current, answer: val }
+    commit({ items: next })
+  }
+
+  const updateItem = (idx: number, field: 'zh' | 'en' | 'answer' | 'hint', val: string) => {
     const next = [...local.items]
     next[idx] = { ...next[idx], [field]: val }
     commit({ items: next })
@@ -91,7 +137,8 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
   }
 
   const generateItemAudio = async (idx: number) => {
-    const text = local.items[idx]?.answer?.trim()
+    const item = local.items[idx]
+    const text = (local.direction === 'en_to_zh' ? getPromptText(item) : getAnswerText(item)).trim()
     if (!text) return
     const key = `item-${idx}`
     setTtsGenerating(key)
@@ -126,7 +173,11 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         count: 4,
       })
       if (res?.items?.length) {
-        commit({ items: res.items.map((it: any) => ({ zh: it.zh, answer: it.answer })) })
+        commit({ items: res.items.map((it: any) => (
+          (local.direction ?? 'zh_to_en') === 'en_to_zh'
+            ? { en: it.en ?? it.zh, answer: it.answer }
+            : { zh: it.zh ?? it.en, answer: it.answer }
+        )) })
         toast.success(`已生成 ${res.items.length} 道题目`)
       }
     } catch { toast.error('AI 生成失败') }
@@ -144,15 +195,18 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         type: 'chunk_substitution',
         keyword: source,
         meaning: local.chunkMeaning || '',
+        direction: local.direction ?? 'zh_to_en',
         kind: local.kind ?? 'chunk',
         generateHints: true,
         itemCount: local.items.length,
-        items: local.items.map(it => ({ zh: it.zh, answer: it.answer })),
+        items: local.items.map(it => ({ zh: getPromptText(it), answer: getAnswerText(it) })),
       })
       if (res?.hints?.length) {
         const updated = local.items.map((it, i) => ({ ...it, hint: res.hints[i] ?? it.hint ?? '' }))
         commit({ items: updated })
         toast.success(`已为 ${res.hints.length} 道题生成提示`)
+      } else {
+        toast.error('AI 未返回教学提示，请稍后重试')
       }
     } catch { toast.error('AI 生成提示失败') }
     finally { setAiBusy(null) }
@@ -173,10 +227,14 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         direction: local.direction ?? 'zh_to_en',
         kind: local.kind ?? 'chunk',
         polish: true,
-        items: local.items.map(it => ({ zh: it.zh, answer: it.answer })),
+        items: local.items.map(it => ({ zh: getPromptText(it), answer: getAnswerText(it) })),
       })
       if (res?.items?.length) {
-        commit({ items: local.items.map((it, i) => ({ ...it, zh: res.items[i]?.zh ?? it.zh, answer: res.items[i]?.answer ?? it.answer })) })
+        commit({ items: local.items.map((it, i) => (
+          (local.direction ?? 'zh_to_en') === 'en_to_zh'
+            ? { ...it, en: res.items[i]?.en ?? res.items[i]?.zh ?? getPromptText(it), answer: res.items[i]?.answer ?? getAnswerText(it), zh: undefined }
+            : { ...it, zh: res.items[i]?.zh ?? res.items[i]?.en ?? it.zh, answer: res.items[i]?.answer ?? it.answer }
+        )) })
         toast.success(`已润色 ${res.items.length} 道题目`)
       }
     } catch { toast.error('AI 润色失败') }
@@ -269,11 +327,11 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
                   </Button>
                 </div>
                 <div className="space-y-1.5">
-                  <Input className="h-7 text-xs" value={item.zh} onChange={e => updateItem(idx, 'zh', e.target.value)}
-                    placeholder={local.direction === 'en_to_zh' ? '中文答案...' : '中文提示...'} />
+                  <Input className="h-7 text-xs" value={getPromptText(item)} onChange={e => updatePromptText(idx, e.target.value)}
+                    placeholder={local.direction === 'en_to_zh' ? '英文原文...' : '中文提示...'} />
                   <div className="flex gap-1">
-                    <Input className="h-7 text-xs flex-1" value={item.answer} onChange={e => updateItem(idx, 'answer', e.target.value)}
-                      placeholder={local.direction === 'en_to_zh' ? '英文原文...' : '英文答案...'} />
+                    <Input className="h-7 text-xs flex-1" value={getAnswerText(item)} onChange={e => updateAnswerText(idx, e.target.value)}
+                      placeholder={local.direction === 'en_to_zh' ? '中文答案...' : '英文答案...'} />
                     {item.audioUrl && (
                       <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听题目音频"
                         onClick={() => playAudioUrl(item.audioUrl)}>
@@ -281,7 +339,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
                       </Button>
                     )}
                     <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="生成题目 TTS"
-                      disabled={!item.answer?.trim() || ttsGenerating === `item-${idx}`}
+                      disabled={!(local.direction === 'en_to_zh' ? getPromptText(item) : getAnswerText(item)).trim() || ttsGenerating === `item-${idx}`}
                       onClick={() => generateItemAudio(idx)}>
                       {ttsGenerating === `item-${idx}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}
                     </Button>
@@ -317,8 +375,8 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
                     type="chunk_substitution"
                     displayText={local.chunk}
                     displayMeaning={local.chunkMeaning}
-                    promptZh={item.zh}
-                    answer={item.answer}
+                    promptZh={getPromptText(item)}
+                    answer={getAnswerText(item)}
                     imageUrl={item.imageUrl}
                     direction={local.direction}
                     kind={local.kind}

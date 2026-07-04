@@ -15,7 +15,7 @@ type HintLevel = 'none' | 'hint' | 'answer'
 interface PatternDrillCardProps {
   pattern: string
   patternMeaning?: string
-  items: { zh: string; answer?: string; hint?: string; imageUrl?: string }[]
+  items: { zh?: string; en?: string; answer?: string; hint?: string; imageUrl?: string }[]
   stepId: string
   groupTitle?: string
   direction?: DrillDirection
@@ -89,6 +89,14 @@ export function PatternDrillCard({
   const { resolvedUrl: cachedImageUrl } = useCachedImage(current.imageUrl)
   const totalItems = items.length
   const isZhToEn = direction === 'zh_to_en'
+  const looksEnglish = (text?: string) => /[A-Za-z]/.test(text ?? '')
+  const isLegacyEnToZhItem = !isZhToEn && !current.en && looksEnglish(current.answer) && Boolean(current.zh)
+  const promptText = isZhToEn
+    ? (current.zh ?? current.en ?? '')
+    : (current.en ?? (isLegacyEnToZhItem ? current.answer : current.zh) ?? current.answer ?? '')
+  const expectedAnswer = isZhToEn
+    ? (current.answer ?? '')
+    : (current.en ? (current.answer ?? current.zh ?? '') : (isLegacyEnToZhItem ? current.zh ?? '' : current.answer ?? current.zh ?? ''))
 
   const teachingHint = useMemo(() => {
     if (current?.hint) return current.hint
@@ -98,15 +106,15 @@ export function PatternDrillCard({
 
   const skip = useCallback(() => {
     if (!current || status === 'judging' || status === 'passed') return
-    const correctionText = current.answer || ''
+    const correctionText = expectedAnswer || ''
     setStatus('failed')
     setHintLevel('answer')
     setFeedback('已标记为需要复练。最后会集中再练一次。')
     setCorrection(correctionText)
     onComplete?.(currentIdx, false, 'miss')
     store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
-    store.recordEntry({ stepId, stepType: 'pattern_drill', zh: current.zh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, displayLabel: '句型操练', score: 'miss', usedHintLevel: 3, correction: correctionText })
-  }, [current, currentIdx, groupTitle, onComplete, status, stepId, store, userInput])
+    store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, displayLabel: '句型操练', score: 'miss', usedHintLevel: 3, correction: correctionText })
+  }, [current, currentIdx, expectedAnswer, groupTitle, onComplete, promptText, status, stepId, store, userInput])
 
   const retryCurrent = useCallback(() => {
     if (isReview || status === 'judging') return
@@ -127,8 +135,8 @@ export function PatternDrillCard({
       const judgement = await practiceAiApi.judgeWarmupTurn({
         stepType: 'pattern_drill',
         direction,
-        prompt: isZhToEn ? current.zh : (current.answer ?? current.zh),
-        expectedAnswer: isZhToEn ? current.answer : current.zh,
+        prompt: promptText,
+        expectedAnswer,
         userAnswer: userInput.trim(),
         targetText: pattern,
         targetMeaning: patternMeaning,
@@ -140,26 +148,26 @@ export function PatternDrillCard({
         setHintLevel('answer')
         onComplete?.(currentIdx, true, score)
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', hintLevel, score })
-        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle, displayLabel: '句型操练', score, usedHintLevel: hintLevelValue(hintLevel) })
+        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle, displayLabel: '句型操练', score, usedHintLevel: hintLevelValue(hintLevel) })
       } else {
         setStatus('failed')
         setFeedback(judgement.feedback || '再试一次')
-        setCorrection(judgement.correction || (isZhToEn ? current.answer : current.zh) || '')
+        setCorrection(judgement.correction || expectedAnswer || '')
         onComplete?.(currentIdx, false, 'miss')
-        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || (isZhToEn ? current.answer : current.zh) || '', hintLevel, score: 'miss' })
-        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: current.zh, answer: current.answer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle, displayLabel: '句型操练', score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || (isZhToEn ? current.answer : current.zh) || '' })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || expectedAnswer || '', hintLevel, score: 'miss' })
+        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle, displayLabel: '句型操练', score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || expectedAnswer || '' })
       }
     } catch (err: any) {
       setStatus('failed')
       setFeedback(err?.message || '反馈不可用')
     }
-  }, [userInput, current, status, currentIdx, isZhToEn, pattern, onComplete, stepId, store, groupTitle, hintLevel])
+  }, [userInput, current, status, currentIdx, pattern, onComplete, stepId, store, groupTitle, hintLevel, direction, promptText, expectedAnswer, patternMeaning])
 
 
   if (!current) return null
 
   const promptLabel = isZhToEn ? '用英文说出' : '用中文说出'
-  const displayText = isZhToEn ? current.zh : (current.answer ?? current.zh)
+  const displayText = promptText
 
   return (
     <div className="space-y-2.5">
