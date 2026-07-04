@@ -1,5 +1,8 @@
 import { del, get, post } from '@/lib/request';
 
+const LEARNING_PACK_BUILD_TIMEOUT_MS = 10 * 60_000;
+const LEARNING_PACK_MUTATION_TIMEOUT_MS = 2 * 60_000;
+
 export type LearningPackStatus = 'draft' | 'building' | 'published' | 'failed';
 export type LearningPackType = 'daily' | 'exam' | 'story' | 'course' | 'foundation';
 
@@ -52,15 +55,21 @@ export const learningPackAdminApi = {
   scenes: () => get<LearningPackSceneOption[]>('/admin/learning-packs/scenes'),
   filters: () => get<LearningPackFilters>('/admin/learning-packs/filters'),
   generate: (data: { sceneId: string; version?: number; title?: string; publish?: boolean }) =>
-    post<LearningPackItem>('/admin/learning-packs/generate', data),
+    post<LearningPackItem>('/admin/learning-packs/generate', data, {
+      timeout: LEARNING_PACK_BUILD_TIMEOUT_MS,
+    }),
   upload: (data: { sceneId: string; assetId: string; version?: number; title?: string; publish?: boolean }) =>
-    post<LearningPackItem>('/admin/learning-packs/upload', data),
+    post<LearningPackItem>('/admin/learning-packs/upload', data, {
+      timeout: LEARNING_PACK_MUTATION_TIMEOUT_MS,
+    }),
   download: (id: string) =>
     get<ArrayBuffer>(`/admin/learning-packs/${id}/download`, undefined, {
       dedupe: false,
       responseType: 'arraybuffer',
-      timeout: 120_000,
+      timeout: LEARNING_PACK_BUILD_TIMEOUT_MS,
     }),
-  publish: (id: string) => post<LearningPackItem>(`/admin/learning-packs/${id}/publish`),
+  publish: (id: string) => post<LearningPackItem>(`/admin/learning-packs/${id}/publish`, undefined, {
+    timeout: LEARNING_PACK_MUTATION_TIMEOUT_MS,
+  }),
   remove: (id: string) => del<{ success: boolean }>(`/admin/learning-packs/${id}`),
 };
