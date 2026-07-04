@@ -68,13 +68,13 @@ export function LearningPackDownloadStatusButton({
       className={cn(
         'relative inline-flex items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground',
         embedded
-          ? 'size-9 hover:bg-background/45'
+          ? 'size-9 p-0.5 hover:bg-background/45'
           : 'border border-border/60 bg-background/70 shadow-sm hover:bg-muted',
         !embedded && (mobile ? 'size-9' : 'size-8'),
         className,
       )}
     >
-      <DownloadCloud className={cn('shrink-0', mobile ? 'size-[18px]' : 'size-4')} />
+      <DownloadCloud className={cn('shrink-0', mobile || embedded ? 'size-[18px]' : 'size-4')} />
       {tasks.length > 0 && (
         <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border">
           {running ? (
