@@ -50,7 +50,7 @@ export async function prepareImportedPackageContent(sceneId: string): Promise<Pa
     errors: [],
   }
 
-  const topics = await listTrainingTopics(sceneId)
+  const topics = await listTrainingTopics(sceneId, { detail: 'full' })
   const vocabById = new Map<string, any>()
   const chunkById = new Map<string, any>()
   const patternById = new Map<string, any>()

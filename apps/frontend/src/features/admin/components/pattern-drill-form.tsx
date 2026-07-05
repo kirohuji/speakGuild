@@ -26,6 +26,7 @@ interface Props {
   onChange: (value: PatternDrillItem) => void
   onDelete: () => void
   patterns?: { id: string; pattern: string; meaning?: string }[]
+  generationContext?: Record<string, unknown>
 }
 
 const computePatternDrillTitle = (item: { pattern: string }) => {
@@ -33,7 +34,7 @@ const computePatternDrillTitle = (item: { pattern: string }) => {
   return `${item.pattern} 句型操练`
 }
 
-export function PatternDrillForm({ value, onChange, onDelete, patterns = [] }: Props) {
+export function PatternDrillForm({ value, onChange, onDelete, patterns = [], generationContext }: Props) {
   const [local, setLocal] = useState<PatternDrillItem>(value)
   const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
   const [imageUploading, setImageUploading] = useState<string | null>(null)
@@ -172,41 +173,52 @@ export function PatternDrillForm({ value, onChange, onDelete, patterns = [] }: P
         meaning: local.patternMeaning || '',
         direction: local.direction ?? 'zh_to_en',
         count: 4,
+        ...(generationContext ?? {}),
       })
       if (res?.items?.length) {
-        commit({ items: res.items.map((it: any) => (
+        const newItems: PatternDrillItem['items'] = res.items.map((it: any) => (
           (local.direction ?? 'zh_to_en') === 'en_to_zh'
-            ? { en: it.en ?? it.zh, answer: it.answer }
-            : { zh: it.zh ?? it.en, answer: it.answer }
-        )) })
+            ? { en: it.en ?? it.zh, answer: it.answer, hint: it.hint ?? '' }
+            : { zh: it.zh ?? it.en, answer: it.answer, hint: it.hint ?? '' }
+        ))
+        commit({ items: newItems })
         toast.success(`已生成 ${res.items.length} 道题目`)
+        // 自动触发 AI 提示生成
+        await aiGenerateHints(newItems, local.pattern)
       }
     } catch { toast.error('AI 生成失败') }
     finally { setAiBusy(null) }
   }
 
-  const aiGenerateHints = async () => {
-    if (!local.pattern) { toast.error('请先输入句型模板'); return }
+  const aiGenerateHints = async (items?: PatternDrillItem['items'], overridePattern?: string) => {
+    const pattern = overridePattern || local.pattern
+    const targetItems = items ?? local.items
+    if (!pattern) { toast.error('请先输入句型模板'); return }
+    if (!targetItems.length) return
     setAiBusy('hints')
     try {
       const { post } = await import('@/lib/request')
       const res: any = await post('/practice-ai/generate-drills', {
         type: 'pattern_drill',
-        keyword: local.pattern,
+        keyword: pattern,
         meaning: local.patternMeaning || '',
         direction: local.direction ?? 'zh_to_en',
         generateHints: true,
-        itemCount: local.items.length,
-        items: local.items.map(it => ({ zh: getPromptText(it), answer: getAnswerText(it) })),
+        itemCount: targetItems.length,
+        items: targetItems.map(it => ({ zh: getPromptText(it), answer: getAnswerText(it) })),
+        ...(generationContext ?? {}),
       })
       if (res?.hints?.length) {
-        const updated = local.items.map((it, i) => ({ ...it, hint: res.hints[i] ?? it.hint ?? '' }))
+        const updated = targetItems.map((it, i) => ({ ...it, hint: res.hints[i] ?? it.hint ?? '' }))
         commit({ items: updated })
         toast.success(`已为 ${res.hints.length} 道题生成提示`)
       } else {
-        toast.error('AI 未返回教学提示，请稍后重试')
+        // 自动触发时不弹错误 toast，静默处理
+        if (!items) toast.error('AI 未返回教学提示，请稍后重试')
       }
-    } catch { toast.error('AI 生成提示失败') }
+    } catch {
+      if (!items) toast.error('AI 生成提示失败')
+    }
     finally { setAiBusy(null) }
   }
 
@@ -223,6 +235,7 @@ export function PatternDrillForm({ value, onChange, onDelete, patterns = [] }: P
         direction: local.direction ?? 'zh_to_en',
         polish: true,
         items: local.items.map(it => ({ zh: getPromptText(it), answer: getAnswerText(it) })),
+        ...(generationContext ?? {}),
       })
       if (res?.items?.length) {
         commit({ items: local.items.map((it, i) => (
@@ -283,7 +296,7 @@ export function PatternDrillForm({ value, onChange, onDelete, patterns = [] }: P
               {aiBusy === 'generate' ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
               {aiBusy === 'generate' ? '生成中' : 'AI 生成'}
             </Button>
-            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerateHints} disabled={aiBusy !== null}>
+            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={() => aiGenerateHints()} disabled={aiBusy !== null}>
               {aiBusy === 'hints' ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
               {aiBusy === 'hints' ? '提示中' : 'AI 提示'}
             </Button>

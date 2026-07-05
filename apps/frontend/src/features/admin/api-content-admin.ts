@@ -137,8 +137,11 @@ export interface TrainingTopic {
   topicVocabs?: { id: string; vocab: Vocabulary; sortOrder: number }[]
 }
 
-export async function listTrainingTopics(sceneId?: string): Promise<TrainingTopic[]> {
-  return get('/admin/content/training-topics', sceneId ? { sceneId } : undefined)
+export async function listTrainingTopics(sceneId?: string, options?: { detail?: 'summary' | 'full' }): Promise<TrainingTopic[]> {
+  return get('/admin/content/training-topics', {
+    ...(sceneId ? { sceneId } : {}),
+    ...(options?.detail === 'full' ? { detail: 'full' } : {}),
+  })
 }
 
 export async function createTrainingTopic(data: any): Promise<TrainingTopic> {
@@ -580,6 +583,10 @@ export interface GenerateTeachingMarkdownResult {
 
 export async function generateTeachingMarkdown(id: string): Promise<GenerateTeachingMarkdownResult> {
   return post(`/admin/content/stories/${id}/generate-teaching`)
+}
+
+export async function generateTopicTeachingMarkdown(id: string): Promise<GenerateTeachingMarkdownResult> {
+  return post(`/admin/content/training-topics/${id}/generate-teaching`)
 }
 
 // ═══ Content Library: Vocabulary, Chunk, Sentence Pattern ═══

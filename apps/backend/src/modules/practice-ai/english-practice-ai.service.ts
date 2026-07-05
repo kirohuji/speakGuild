@@ -30,6 +30,8 @@ type DrillGenerationDto = {
   kind?: string;
   count?: number;
   chunks?: string[];
+  topicTitle?: string;
+  difficulty?: string;
   sentence?: string;
   zh?: string;
   generateSentence?: boolean;
@@ -37,6 +39,16 @@ type DrillGenerationDto = {
   polish?: boolean;
   itemCount?: number;
   items?: Array<{ zh?: string; en?: string; answer?: string; hint?: string }>;
+  materials?: {
+    vocabs?: Array<{ id?: string; word?: string; meaning?: string }>;
+    chunks?: Array<{ id?: string; text?: string; meaning?: string }>;
+    patterns?: Array<{ id?: string; pattern?: string; meaning?: string }>;
+  };
+  usedRefs?: {
+    vocabIds?: string[];
+    chunkIds?: string[];
+    patternIds?: string[];
+  };
 };
 
 @Injectable()
@@ -727,6 +739,45 @@ For correction/upgraded/retryRequired: only populate these when the response is 
     return /[A-Za-z]/.test(value ?? '');
   }
 
+  private buildDrillGenerationContext(dto: DrillGenerationDto) {
+    const materialLines: string[] = [];
+    const used = dto.usedRefs ?? {};
+    const vocabs = dto.materials?.vocabs ?? [];
+    const chunks = dto.materials?.chunks ?? [];
+    const patterns = dto.materials?.patterns ?? [];
+    const isUsed = (id: string | undefined, ids?: string[]) => Boolean(id && ids?.includes(id));
+
+    if (dto.topicTitle) materialLines.push(`Topic: ${dto.topicTitle}`);
+    if (dto.difficulty) materialLines.push(`Difficulty: ${dto.difficulty}`);
+
+    if (vocabs.length) {
+      materialLines.push('Topic vocabulary:');
+      for (const vocab of vocabs.slice(0, 30)) {
+        materialLines.push(`- ${vocab.word}${vocab.meaning ? `: ${vocab.meaning}` : ''}${isUsed(vocab.id, used.vocabIds) ? ' [used]' : ' [unused]'}`);
+      }
+    }
+    if (chunks.length) {
+      materialLines.push('Topic chunks:');
+      for (const chunk of chunks.slice(0, 30)) {
+        materialLines.push(`- ${chunk.text}${chunk.meaning ? `: ${chunk.meaning}` : ''}${isUsed(chunk.id, used.chunkIds) ? ' [used]' : ' [unused]'}`);
+      }
+    }
+    if (patterns.length) {
+      materialLines.push('Topic sentence patterns:');
+      for (const pattern of patterns.slice(0, 30)) {
+        materialLines.push(`- ${pattern.pattern}${pattern.meaning ? `: ${pattern.meaning}` : ''}${isUsed(pattern.id, used.patternIds) ? ' [used]' : ' [unused]'}`);
+      }
+    }
+
+    if (!materialLines.length) return '';
+    return `\n\nCurrent topic material pool. Prefer unused materials when possible, but keep the required keyword/pattern. Avoid repetitive items that only change a name, pronoun, or adjective.\n${materialLines.join('\n')}`;
+  }
+
+  private addFallbackHintsToItems<T extends { zh?: string; en?: string; answer?: string; hint?: string }>(items: T[], dto: DrillGenerationDto) {
+    const hints = this.buildFallbackDrillHints({ ...dto, itemCount: items.length, items });
+    return items.map((item, index) => ({ ...item, hint: item.hint?.trim() || hints[index] || '' }));
+  }
+
   /** 知识点热身单题快速判定：Zod 约束 AI 必须返回合法 JSON */
   async judgeWarmupTurn(dto: WarmupTurnJudgeDto, userId?: string) {
     const provider = await this.getProvider();
@@ -1323,6 +1374,7 @@ Rules:
     const count = Math.min(dto.count ?? 4, 8);
     const direction = dto.direction ?? 'zh_to_en';
     const kind = dto.kind ?? 'chunk';
+    const generationContext = this.buildDrillGenerationContext(dto);
 
     // ── Generate per-item teaching hints ──
     if (dto.generateHints && dto.items?.length) {
@@ -1350,7 +1402,7 @@ The word JSON must appear in your response only as part of the valid JSON object
         const answerText = this.getDrillAnswerText(it, dto.direction);
         return `[${i + 1}] ${promptLabel}: ${promptText || '(missing)'} | ${answerLabel}: ${answerText || '(missing)'}`;
       }).join('\n')
-      const user = `Type: ${dto.type}, Keyword: "${dto.keyword}"${dto.meaning ? `, Meaning: ${dto.meaning}` : ''}, Direction: ${dto.direction ?? 'zh_to_en'}\nExercises:\n${itemsJson}`;
+      const user = `Type: ${dto.type}, Keyword: "${dto.keyword}"${dto.meaning ? `, Meaning: ${dto.meaning}` : ''}, Direction: ${dto.direction ?? 'zh_to_en'}${generationContext}\nExercises:\n${itemsJson}`;
 
       try {
         const object = await this.generateDrillHintsObject({
@@ -1426,14 +1478,16 @@ Rules:
 - If direction is "en_to_zh", swap: the prompt is the English sentence and answer is the Chinese translation.
 - Keep sentences natural, practical, and at an intermediate level.
 - Vary the sentence contexts (different situations, verb tenses, subjects).
+- Add a short Chinese "hint" for every item.
+- Use the topic material pool below. Prefer unused vocabulary/chunks when they fit.
 
 Return ONLY a JSON object (no markdown):
-{ "items": [{ "zh": "中文句子", "answer": "English sentence" }, ...] }`;
+{ "items": [{ "zh": "中文句子", "answer": "English sentence", "hint": "中文提示" }, ...] }`;
 
       const user = `Target: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}
 Direction: ${direction}
 Kind: ${kind}
-Count: ${count}`;
+Count: ${count}${generationContext}`;
 
       const { text } = await generateText({
         model: provider(),
@@ -1443,9 +1497,9 @@ Count: ${count}`;
         maxOutputTokens: 1200,
       });
       try {
-        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const cleaned = this.extractJson(text).replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         const parsed = JSON.parse(cleaned);
-        return { items: (parsed.items ?? []).slice(0, count) };
+        return { items: this.addFallbackHintsToItems((parsed.items ?? []).slice(0, count), dto) };
       } catch {
         return { items: [] };
       }
@@ -1460,14 +1514,16 @@ For each pattern:
 - "chunk" is a sentence starter or collocation frame using the target word (e.g., "She easily...", "I find it easy to...")
 - Each pattern has 2-3 "items" with zh (Chinese prompt) and answer (English full sentence using the chunk)
 - Vary the patterns to show different uses of the word
+- Add a short Chinese "hint" for every item.
+- Use the topic material pool below. Prefer unused sentence patterns/chunks when they fit.
 
 ${availableChunks ? `You may use these available chunks as inspiration: ${availableChunks}` : ''}
 
 Return ONLY a JSON object (no markdown):
-{ "patterns": [{ "chunk": "sentence starter", "items": [{ "zh": "中文", "answer": "English" }, ...] }, ...] }`;
+{ "patterns": [{ "chunk": "sentence starter", "items": [{ "zh": "中文", "answer": "English", "hint": "中文提示" }, ...] }, ...] }`;
 
       const user = `Word: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}
-Create 3 patterns with 2-3 items each.`;
+Create 3 patterns with 2-3 items each.${generationContext}`;
 
       const { text } = await generateText({
         model: provider(),
@@ -1477,8 +1533,17 @@ Create 3 patterns with 2-3 items each.`;
         maxOutputTokens: 1500,
       });
       try {
-        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        return JSON.parse(cleaned);
+        const cleaned = this.extractJson(text).replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        let hintIndex = 0;
+        const allItems = (parsed.patterns ?? []).flatMap((pattern: any) => pattern.items ?? []);
+        const hints = this.buildFallbackDrillHints({ ...dto, itemCount: allItems.length, items: allItems });
+        return {
+          patterns: (parsed.patterns ?? []).map((pattern: any) => ({
+            ...pattern,
+            items: (pattern.items ?? []).map((item: any) => ({ ...item, hint: item.hint?.trim() || hints[hintIndex++] || '' })),
+          })),
+        };
       } catch {
         return { patterns: [] };
       }
@@ -1496,11 +1561,12 @@ The sentence should:
 - Sound like natural spoken English
 - Add time, place, reason, or manner to make it vivid
 - Be suitable for sentence decomposition exercises
+- Fit the topic material pool and difficulty below.
 
 Return ONLY a JSON object (no markdown):
 { "fullSentence": "the generated long English sentence", "fullSentenceZh": "Chinese translation" }`;
 
-        const user = `Chunk: "${chunk}"${dto.meaning ? `\nMeaning: ${dto.meaning}` : ''}`;
+        const user = `Chunk: "${chunk}"${dto.meaning ? `\nMeaning: ${dto.meaning}` : ''}${generationContext}`;
 
         const { text } = await generateText({
           model: provider(),
@@ -1541,7 +1607,7 @@ Each level needs:
 Return ONLY a JSON object (no markdown):
 { "levels": [{ "level": 1, "label": "...", "en": "...", "zh": "...", "highlight": "...", "hint": "..." }, ...] }`;
 
-      const user = `Full sentence: "${fullSentence}"${fullZh ? `\nChinese: ${fullZh}` : ''}`;
+      const user = `Full sentence: "${fullSentence}"${fullZh ? `\nChinese: ${fullZh}` : ''}${generationContext}`;
 
       const { text } = await generateText({
         model: provider(),
@@ -1570,14 +1636,16 @@ Rules:
 - If direction is "en_to_zh", swap: the prompt is the English sentence using the pattern, and answer is Chinese.
 - Vary the slot fillers to show different real-world uses of the same pattern.
 - Keep sentences practical and at an intermediate level.
+- Add a short Chinese "hint" for every item.
+- Use the topic material pool below. Prefer unused vocabulary/chunks when they fit.
 
 Return ONLY a JSON object (no markdown):
-{ "items": [{ "zh": "中文句子", "answer": "English sentence using the pattern" }, ...] }`;
+{ "items": [{ "zh": "中文句子", "answer": "English sentence using the pattern", "hint": "中文提示" }, ...] }`;
 
       const user = `Pattern: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}
 Direction: ${direction}
 Count: ${count}
-Create exercises where the learner practices this pattern with different content.`;
+Create exercises where the learner practices this pattern with different content.${generationContext}`;
 
       const { text } = await generateText({
         model: provider(),
@@ -1587,9 +1655,9 @@ Create exercises where the learner practices this pattern with different content
         maxOutputTokens: 1200,
       });
       try {
-        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const cleaned = this.extractJson(text).replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         const parsed = JSON.parse(cleaned);
-        return { items: (parsed.items ?? []).slice(0, count) };
+        return { items: this.addFallbackHintsToItems((parsed.items ?? []).slice(0, count), dto) };
       } catch {
         return { items: [] };
       }

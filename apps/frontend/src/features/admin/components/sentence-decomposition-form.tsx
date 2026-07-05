@@ -33,6 +33,7 @@ interface Props {
   onDelete: () => void
   chunks?: { id: string; text: string; meaning: string }[]
   patterns?: { id: string; pattern: string; meaning?: string }[]
+  generationContext?: Record<string, unknown>
 }
 
 const computeDecompTitle = (item: { fullSentence: string }) => {
@@ -41,7 +42,7 @@ const computeDecompTitle = (item: { fullSentence: string }) => {
   return `${truncated} 句子拆解`
 }
 
-export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = [], patterns = [] }: Props) {
+export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = [], patterns = [], generationContext }: Props) {
   const [local, setLocal] = useState<SentenceDecompositionItem>(value)
   // Local state for source chunk (not persisted, used for AI generation)
   const [sourceChunk, setSourceChunk] = useState('')
@@ -133,6 +134,7 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
         type: 'sentence_decomposition',
         keyword: sourceChunk.trim(),
         generateSentence: true,
+        ...(generationContext ?? {}),
       })
       if (res?.fullSentence) {
         commit({ fullSentence: res.fullSentence, fullSentenceZh: res.fullSentenceZh ?? '' })
@@ -158,6 +160,7 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
         sentence: local.fullSentence,
         zh: local.fullSentenceZh,
         count: 5,
+        ...(generationContext ?? {}),
       })
       if (res?.levels?.length) {
         commit({ levels: res.levels })

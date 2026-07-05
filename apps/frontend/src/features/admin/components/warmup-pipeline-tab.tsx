@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   ArrowLeftRight,
   AlertTriangle,
+  BarChart3,
   Braces,
   ChevronLeft,
   ChevronDown,
@@ -11,11 +12,13 @@ import {
   FileText,
   Info,
   Layers,
+  ListChecks,
   Loader2,
   Plus,
   Power,
   Sparkles,
   Trash2,
+  Volume2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,8 +26,11 @@ import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
+import { synthesizeAdminAudio } from '@/lib/admin-tts-helpers'
 
 import {
   ChunkSubstitutionForm,
@@ -62,6 +68,10 @@ interface Props {
   topicTotal?: number
   onPrevTopic?: () => void
   onNextTopic?: () => void
+  difficulty?: string
+  teachingMarkdown?: string | null
+  onTeachingMarkdownChange?: (value: string) => void
+  onGenerateTeaching?: () => Promise<string | null>
 }
 
 let _idCounter = Date.now()
@@ -190,10 +200,17 @@ export function WarmupPipelineTab({
   topicTotal,
   onPrevTopic,
   onNextTopic,
+  difficulty,
+  teachingMarkdown,
+  onTeachingMarkdownChange,
+  onGenerateTeaching,
 }: Props) {
   const [local, setLocal] = useState<WarmupPipelineData>(value)
   const [selectedItemId, setSelectedItemId] = useState<string | null>(value.pipeline[0]?.id ?? null)
   const [aiHintingAll, setAiHintingAll] = useState(false)
+  const [aiAudioAll, setAiAudioAll] = useState(false)
+  const [teachingGenerating, setTeachingGenerating] = useState(false)
+  const [teachingMode, setTeachingMode] = useState<'edit' | 'preview'>('edit')
   const prevIdsRef = useRef<string>('')
 
   useEffect(() => {
@@ -217,6 +234,91 @@ export function WarmupPipelineTab({
     next[idx] = item
     commit({ pipeline: next })
   }
+
+  const allItemText = (item: WarmupPipelineItem) => {
+    if (item.type === 'sentence_decomposition') {
+      return [item.fullSentence, item.fullSentenceZh, ...item.levels.flatMap((level) => [level.en, level.zh, level.hint])].join('\n')
+    }
+    if (item.type === 'vocab_sentence_building') {
+      return [
+        item.vocabWord,
+        item.vocabMeaning,
+        ...item.patterns.flatMap((pattern) => [
+          pattern.chunk,
+          ...pattern.items.flatMap((it) => [getPromptText(it, item.direction), getAnswerText(it, item.direction), it.hint]),
+        ]),
+      ].join('\n')
+    }
+    if (item.type === 'chunk_substitution') {
+      return [item.chunk, item.chunkMeaning, ...item.items.flatMap((it) => [getPromptText(it, item.direction), getAnswerText(it, item.direction), it.hint])].join('\n')
+    }
+    return [item.pattern, item.patternMeaning, ...item.items.flatMap((it) => [getPromptText(it, item.direction), getAnswerText(it, item.direction), it.hint])].join('\n')
+  }
+
+  const materialCoverage = useMemo(() => {
+    const itemTexts = local.pipeline.map((item) => allItemText(item).toLowerCase())
+    const hasText = (needle: string) => {
+      const lower = needle.trim().toLowerCase()
+      return Boolean(lower) && itemTexts.some((text) => text.includes(lower))
+    }
+    return {
+      vocabIds: vocabs.filter((vocab) => hasText(vocab.word)).map((vocab) => vocab.id),
+      chunkIds: chunks.filter((chunk) => hasText(chunk.text)).map((chunk) => chunk.id),
+      patternIds: patterns.filter((pattern) => hasText(pattern.pattern)).map((pattern) => pattern.id),
+    }
+  }, [local.pipeline, vocabs, chunks, patterns])
+
+  const generationContext = useMemo(() => ({
+    topicTitle: topicTitle?.trim() || undefined,
+    difficulty: difficulty || undefined,
+    materials: {
+      vocabs: vocabs.map((vocab) => ({ id: vocab.id, word: vocab.word, meaning: vocab.meaning })),
+      chunks: chunks.map((chunk) => ({ id: chunk.id, text: chunk.text, meaning: chunk.meaning })),
+      patterns: patterns.map((pattern) => ({ id: pattern.id, pattern: pattern.pattern, meaning: pattern.meaning })),
+    },
+    usedRefs: materialCoverage,
+  }), [topicTitle, difficulty, vocabs, chunks, patterns, materialCoverage])
+
+  const materialUsageStats = useMemo(() => {
+    const countInText = (text: string, needle: string) => {
+      const lowerText = text.toLowerCase()
+      const lowerNeedle = needle.trim().toLowerCase()
+      if (!lowerNeedle) return 0
+      return lowerText.split(lowerNeedle).length - 1
+    }
+    const itemStats = local.pipeline.map((item) => {
+      const text = allItemText(item)
+      return {
+        id: item.id,
+        vocabs: vocabs
+          .map((vocab) => ({ ...vocab, count: countInText(text, vocab.word) }))
+          .filter((entry) => entry.count > 0),
+        chunks: chunks
+          .map((chunk) => ({ ...chunk, count: countInText(text, chunk.text) }))
+          .filter((entry) => entry.count > 0),
+        patterns: patterns
+          .map((pattern) => ({ ...pattern, count: countInText(text, pattern.pattern) }))
+          .filter((entry) => entry.count > 0),
+      }
+    })
+    return {
+      itemStats,
+      totals: {
+        vocabs: vocabs.map((vocab) => ({
+          ...vocab,
+          count: itemStats.reduce((sum, stat) => sum + (stat.vocabs.find((entry) => entry.id === vocab.id)?.count ?? 0), 0),
+        })),
+        chunks: chunks.map((chunk) => ({
+          ...chunk,
+          count: itemStats.reduce((sum, stat) => sum + (stat.chunks.find((entry) => entry.id === chunk.id)?.count ?? 0), 0),
+        })),
+        patterns: patterns.map((pattern) => ({
+          ...pattern,
+          count: itemStats.reduce((sum, stat) => sum + (stat.patterns.find((entry) => entry.id === pattern.id)?.count ?? 0), 0),
+        })),
+      },
+    }
+  }, [local.pipeline, vocabs, chunks, patterns])
 
   const deleteItem = (idx: number) => {
     const deletedId = local.pipeline[idx]?.id
@@ -281,6 +383,7 @@ export function WarmupPipelineTab({
             generateHints: true,
             itemCount: item.items.length,
             items: item.items.map((it) => ({ zh: getPromptText(it, direction), answer: getAnswerText(it, direction) })),
+            ...generationContext,
           })
           const hints = Array.isArray(res?.hints) ? res.hints : []
           appliedCount += hints.filter(Boolean).length
@@ -305,6 +408,7 @@ export function WarmupPipelineTab({
             generateHints: true,
             itemCount: item.items.length,
             items: item.items.map((it) => ({ zh: getPromptText(it, direction), answer: getAnswerText(it, direction) })),
+            ...generationContext,
           })
           const hints = Array.isArray(res?.hints) ? res.hints : []
           appliedCount += hints.filter(Boolean).length
@@ -330,6 +434,7 @@ export function WarmupPipelineTab({
             generateHints: true,
             itemCount: allItems.length,
             items: allItems.map((it) => ({ zh: getPromptText(it, direction), answer: getAnswerText(it, direction) })),
+            ...generationContext,
           })
           const hints = Array.isArray(res?.hints) ? res.hints : []
           appliedCount += hints.filter(Boolean).length
@@ -354,6 +459,92 @@ export function WarmupPipelineTab({
       toast.error(err?.message || '批量生成 AI 提示失败')
     } finally {
       setAiHintingAll(false)
+    }
+  }
+
+  const generateAllEnglishAudio = async () => {
+    const pendingCount = local.pipeline.reduce((sum, item) => {
+      if (!('direction' in item) || item.direction !== 'en_to_zh') return sum
+      if (item.type === 'vocab_sentence_building') {
+        return sum + item.patterns.reduce((inner, pattern) => inner + pattern.items.filter((it) => getPromptText(it, item.direction).trim() && !it.audioAssetId).length, 0)
+      }
+      return sum + item.items.filter((it) => getPromptText(it, item.direction).trim() && !it.audioAssetId).length
+    }, 0)
+    if (!pendingCount) {
+      toast.error('没有需要生成英文音频的英→中题目')
+      return
+    }
+
+    setAiAudioAll(true)
+    try {
+      let generatedCount = 0
+      const nextPipeline: WarmupPipelineItem[] = []
+      for (const item of local.pipeline) {
+        if (item.type === 'chunk_substitution' && item.direction === 'en_to_zh') {
+          const items = [...item.items]
+          for (let idx = 0; idx < items.length; idx += 1) {
+            const text = getPromptText(items[idx], item.direction).trim()
+            if (!text || items[idx].audioAssetId) continue
+            const audio = await synthesizeAdminAudio(text, 'warmup_chunk_sub', `${item.id}-${idx}`)
+            items[idx] = { ...items[idx], audioUrl: audio.url, audioAssetId: audio.assetId }
+            generatedCount += 1
+          }
+          nextPipeline.push({ ...item, items })
+          continue
+        }
+        if (item.type === 'pattern_drill' && item.direction === 'en_to_zh') {
+          const items = [...item.items]
+          for (let idx = 0; idx < items.length; idx += 1) {
+            const text = getPromptText(items[idx], item.direction).trim()
+            if (!text || items[idx].audioAssetId) continue
+            const audio = await synthesizeAdminAudio(text, 'warmup_pattern_drill', `${item.id}-${idx}`)
+            items[idx] = { ...items[idx], audioUrl: audio.url, audioAssetId: audio.assetId }
+            generatedCount += 1
+          }
+          nextPipeline.push({ ...item, items })
+          continue
+        }
+        if (item.type === 'vocab_sentence_building' && item.direction === 'en_to_zh') {
+          const nextPatterns = []
+          for (let pIdx = 0; pIdx < item.patterns.length; pIdx += 1) {
+            const pattern = item.patterns[pIdx]
+            const items = [...pattern.items]
+            for (let iIdx = 0; iIdx < items.length; iIdx += 1) {
+              const text = getPromptText(items[iIdx], item.direction).trim()
+              if (!text || items[iIdx].audioAssetId) continue
+              const audio = await synthesizeAdminAudio(text, 'warmup_vocab_build', `${item.id}-${pIdx}-${iIdx}`)
+              items[iIdx] = { ...items[iIdx], audioUrl: audio.url, audioAssetId: audio.assetId }
+              generatedCount += 1
+            }
+            nextPatterns.push({ ...pattern, items })
+          }
+          nextPipeline.push({ ...item, patterns: nextPatterns })
+          continue
+        }
+        nextPipeline.push(item)
+      }
+      commit({ pipeline: nextPipeline })
+      toast.success(`已生成 ${generatedCount} 条英文题干音频`)
+    } catch (err: any) {
+      toast.error(err?.message || '批量生成英文音频失败')
+    } finally {
+      setAiAudioAll(false)
+    }
+  }
+
+  const generateTeaching = async () => {
+    if (!onGenerateTeaching) return
+    setTeachingGenerating(true)
+    try {
+      const markdown = await onGenerateTeaching()
+      if (markdown != null) {
+        onTeachingMarkdownChange?.(markdown)
+        toast.success('教学文档已生成')
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'AI 生成教学文档失败')
+    } finally {
+      setTeachingGenerating(false)
     }
   }
 
@@ -453,6 +644,12 @@ export function WarmupPipelineTab({
   const validationIssueCount = validationItems.filter((item) => item.tone !== 'ok').length
   const selectedIndex = local.pipeline.findIndex((item) => item.id === selectedItemId)
   const selectedItem = selectedIndex >= 0 ? local.pipeline[selectedIndex] : null
+  const materialGroups = [
+    { label: '单词', items: materialUsageStats.totals.vocabs, usedIds: materialCoverage.vocabIds, getText: (item: { word: string }) => item.word },
+    { label: '句块', items: materialUsageStats.totals.chunks, usedIds: materialCoverage.chunkIds, getText: (item: { text: string }) => item.text },
+    { label: '句型', items: materialUsageStats.totals.patterns, usedIds: materialCoverage.patternIds, getText: (item: { pattern: string }) => item.pattern },
+  ]
+  const getItemMaterialStats = (itemId: string) => materialUsageStats.itemStats.find((stat) => stat.id === itemId)
 
   const renderItemForm = (item: WarmupPipelineItem, idx: number) => {
     const common = { key: item.id, onDelete: () => deleteItem(idx) }
@@ -465,6 +662,7 @@ export function WarmupPipelineTab({
             onChange={(v) => updateItem(idx, v)}
             vocabs={vocabs}
             chunks={chunks}
+            generationContext={generationContext}
           />
         )
       case 'vocab_sentence_building':
@@ -475,6 +673,7 @@ export function WarmupPipelineTab({
             onChange={(v) => updateItem(idx, v)}
             vocabs={vocabs}
             chunks={chunks}
+            generationContext={generationContext}
           />
         )
       case 'sentence_decomposition':
@@ -485,6 +684,7 @@ export function WarmupPipelineTab({
             onChange={(v) => updateItem(idx, v)}
             chunks={chunks}
             patterns={patterns}
+            generationContext={generationContext}
           />
         )
       case 'pattern_drill':
@@ -494,14 +694,108 @@ export function WarmupPipelineTab({
             value={item}
             onChange={(v) => updateItem(idx, v)}
             patterns={patterns}
+            generationContext={generationContext}
           />
         )
     }
   }
 
+  const renderMaterialPoolPopover = () => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5">
+          <ListChecks className="size-3.5" />
+          材料池
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[30rem] p-3" align="end" side="bottom">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-xs font-semibold">当前材料池与使用次数</p>
+          <Badge variant="outline" className="text-[10px]">{difficulty || 'L2'}</Badge>
+        </div>
+        <div className="space-y-3">
+          {materialGroups.map((group) => (
+            <div key={group.label} className="space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] font-medium">{group.label}</p>
+                <span className="text-[10px] text-muted-foreground">已用 {group.usedIds.length}/{group.items.length}</span>
+              </div>
+              <div className="flex max-h-24 flex-wrap gap-1 overflow-y-auto pr-1">
+                {group.items.length ? group.items.map((item: any) => {
+                  const used = item.count > 0
+                  return (
+                    <Badge
+                      key={item.id}
+                      variant={used ? 'default' : 'outline'}
+                      className={cn('max-w-full gap-1 truncate px-1.5 text-[10px]', !used && 'text-muted-foreground')}
+                    >
+                      <span className="truncate">{group.getText(item)}</span>
+                      <span className="tabular-nums">x{item.count}</span>
+                    </Badge>
+                  )
+                }) : (
+                  <span className="text-[10px] text-muted-foreground">暂无</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+
+  const renderItemMaterialPopover = (item: WarmupPipelineItem) => {
+    const stats = getItemMaterialStats(item.id)
+    const summary = [
+      ...(stats?.vocabs ?? []).slice(0, 2).map((entry) => entry.word),
+      ...(stats?.chunks ?? []).slice(0, 1).map((entry) => entry.text),
+      ...(stats?.patterns ?? []).slice(0, 1).map((entry) => entry.pattern),
+    ]
+    const total = (stats?.vocabs.length ?? 0) + (stats?.chunks.length ?? 0) + (stats?.patterns.length ?? 0)
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="mt-1 flex max-w-full items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <BarChart3 className="size-3 shrink-0" />
+            <span className="truncate">{summary.length ? summary.join(' / ') : '未匹配材料'}</span>
+            {total > summary.length ? <span className="shrink-0">+{total - summary.length}</span> : null}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72 p-2" align="start" side="right">
+          <div className="space-y-2">
+            {[
+              ['单词', stats?.vocabs ?? [], (entry: any) => entry.word],
+              ['句块', stats?.chunks ?? [], (entry: any) => entry.text],
+              ['句型', stats?.patterns ?? [], (entry: any) => entry.pattern],
+            ].map(([label, entries, getText]) => (
+              <div key={label as string}>
+                <p className="mb-1 text-[10px] font-semibold text-muted-foreground">{label as string}</p>
+                <div className="flex flex-wrap gap-1">
+                  {(entries as any[]).length ? (entries as any[]).map((entry) => (
+                    <Badge key={entry.id} variant="outline" className="max-w-full gap-1 truncate text-[10px]">
+                      <span className="truncate">{(getText as (value: any) => string)(entry)}</span>
+                      <span className="tabular-nums">x{entry.count}</span>
+                    </Badge>
+                  )) : (
+                    <span className="text-[10px] text-muted-foreground">暂无匹配</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    )
+  }
+
   return (
-    <div className="mt-0 space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-background px-4 py-3">
+    <div className="mt-0 space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/70 bg-background px-3 py-2">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="truncate text-sm font-semibold">{topicTitle?.trim() || '未命名话题'}</p>
@@ -514,6 +808,7 @@ export function WarmupPipelineTab({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
+          {renderMaterialPoolPopover()}
           <Button
             type="button"
             variant="outline"
@@ -540,17 +835,28 @@ export function WarmupPipelineTab({
             type="button"
             size="sm"
             className="h-8 gap-1.5"
-            disabled={aiHintingAll || totalHintableItems === 0}
+            disabled={aiHintingAll || aiAudioAll || totalHintableItems === 0}
             onClick={generateAllHints}
           >
             {aiHintingAll ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
             全部 AI 提示
           </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1.5"
+            disabled={aiHintingAll || aiAudioAll}
+            onClick={generateAllEnglishAudio}
+          >
+            {aiAudioAll ? <Loader2 className="size-3.5 animate-spin" /> : <Volume2 className="size-3.5" />}
+            全部 AI 音频
+          </Button>
         </div>
       </div>
 
-      <div className="grid min-h-[660px] gap-4 xl:grid-cols-[19rem_minmax(0,1fr)]">
-      <aside className="rounded-lg border border-border/70 bg-background">
+      <div className="grid h-[min(660px,calc(92vh-15rem))] min-h-[520px] gap-3 xl:grid-cols-[19rem_minmax(0,1fr)]">
+      <aside className="flex min-h-0 flex-col rounded-lg border border-border/70 bg-background">
         <div className="border-b border-border/70 px-3 py-2.5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -566,7 +872,7 @@ export function WarmupPipelineTab({
           </div>
         </div>
 
-        <div className="p-2">
+        <div className="min-h-0 flex-1 overflow-y-auto p-2">
           {local.pipeline.length === 0 ? (
             <div className="rounded-md border border-dashed border-border bg-muted/10 px-4 py-8 text-center">
               <p className="text-sm font-medium text-foreground">还没有题目</p>
@@ -606,6 +912,9 @@ export function WarmupPipelineTab({
                         </span>
                       </span>
                     </button>
+                    <div className="border-t border-border/50 px-2 py-1">
+                      {renderItemMaterialPopover(item)}
+                    </div>
                     <div className="flex items-center justify-end gap-0.5 border-t border-border/50 px-1.5 py-0.5">
                       <Button variant="ghost" size="icon-sm" className="size-5" disabled={idx === 0} onClick={() => moveItem(idx, -1)}>
                         <ChevronUp className="size-3.5" />
@@ -624,7 +933,7 @@ export function WarmupPipelineTab({
           )}
         </div>
 
-        <div className="border-t border-border/70 px-2 py-2">
+        <div className="shrink-0 border-t border-border/70 px-2 py-2">
           <div className="mb-1.5 flex items-center justify-between">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">添加题型</p>
             <Popover>
@@ -673,7 +982,7 @@ export function WarmupPipelineTab({
           </div>
         </div>
 
-        <div className="border-t border-border/70 px-2 py-2">
+        <div className="shrink-0 border-t border-border/70 px-2 py-2">
           <div className="grid grid-cols-3 gap-1.5">
             {[
               ['步骤', `${local.pipeline.length}`],
@@ -746,30 +1055,72 @@ export function WarmupPipelineTab({
         </div>
       </aside>
 
-      <section className="min-w-0">
-        <div className="rounded-lg border border-border/70 bg-background">
+      <section className="min-h-0 min-w-0">
+        <Tabs defaultValue="exercise" className="flex h-full min-h-0 flex-col rounded-lg border border-border/70 bg-background">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-3">
             <div className="min-w-0">
-              <p className="text-sm font-semibold">{selectedItem ? selectedItem.title || '未命名练习' : '选择左侧题目'}</p>
+              <p className="text-sm font-semibold">{selectedItem ? selectedItem.title || '未命名练习' : '知识点练习'}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {selectedItem ? `${typeLabel(selectedItem)} · ${itemCountLabel(selectedItem)}` : '添加或选择一个练习组后在这里编辑。'}
               </p>
             </div>
-            {selectedItem && (
-              <Badge variant="outline" className="text-[10px]">第 {selectedIndex + 1} 步</Badge>
-            )}
+            <div className="flex items-center gap-2">
+              {selectedItem && (
+                <Badge variant="outline" className="text-[10px]">第 {selectedIndex + 1} 步</Badge>
+              )}
+              <TabsList className="h-8 bg-muted/50">
+                <TabsTrigger value="exercise" className="h-7 px-3 text-xs">题目编辑</TabsTrigger>
+                <TabsTrigger value="teaching" className="h-7 px-3 text-xs">教学文档</TabsTrigger>
+              </TabsList>
+            </div>
           </div>
-          <div className="p-4">
+
+          <TabsContent value="exercise" className="m-0 min-h-0 flex-1 overflow-y-auto p-4">
             {selectedItem ? (
               renderItemForm(selectedItem, selectedIndex)
             ) : (
               <div className="rounded-lg border border-dashed border-border bg-muted/10 px-6 py-14 text-center">
                 <p className="text-sm font-medium">暂无选中的练习组</p>
-                <p className="mt-1 text-xs text-muted-foreground">从下方添加题型开始配置。</p>
+                <p className="mt-1 text-xs text-muted-foreground">从左侧添加题型开始配置。</p>
               </div>
             )}
-          </div>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="teaching" className="m-0 min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold">教学文档</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">保存话题后，学习端会读取这份 Markdown。</p>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Tabs value={teachingMode} onValueChange={(value) => setTeachingMode(value as 'edit' | 'preview')}>
+                  <TabsList className="h-8 bg-muted/50">
+                    <TabsTrigger value="edit" className="h-7 px-3 text-xs">编辑</TabsTrigger>
+                    <TabsTrigger value="preview" className="h-7 px-3 text-xs">预览</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-8 gap-1.5"
+                  disabled={!onGenerateTeaching || teachingGenerating}
+                  onClick={generateTeaching}
+                >
+                  {teachingGenerating ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                  AI 生成
+                </Button>
+              </div>
+            </div>
+            <MarkdownEditor
+              value={teachingMarkdown ?? ''}
+              onChange={onTeachingMarkdownChange}
+              height={360}
+              preview={teachingMode}
+              placeholder="这里可以维护话题级教学说明。"
+            />
+          </TabsContent>
+        </Tabs>
       </section>
       </div>
     </div>

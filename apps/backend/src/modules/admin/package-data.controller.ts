@@ -334,8 +334,9 @@ export class PackageDataController {
         },
       });
 
-      // 8. 导入词汇
-      const vocabIdMap = new Map<string, string>();
+      // 8. 导入词汇（按 topic_title 归类，空则为 scene 级共享）
+      const topicVocabMap = new Map<string, string[]>(); // topic_title → vocabId[]
+      const sceneVocabMap = new Map<string, string[]>(); // scene_title → vocabId[]
       for (const row of vocabRows) {
         const vocab = await this.prisma.vocabulary.upsert({
           where: { word: row.word },
@@ -348,11 +349,20 @@ export class PackageDataController {
           },
           update: { meaning: row.meaning },
         });
-        vocabIdMap.set(row.word, vocab.id);
+        if (row.topic_title) {
+          const ids = topicVocabMap.get(row.topic_title) ?? [];
+          ids.push(vocab.id);
+          topicVocabMap.set(row.topic_title, ids);
+        } else {
+          const ids = sceneVocabMap.get(row.scene_title) ?? [];
+          ids.push(vocab.id);
+          sceneVocabMap.set(row.scene_title, ids);
+        }
       }
 
-      // 9. 导入句块
-      const chunkIdMap = new Map<string, string>();
+      // 9. 导入句块（按 topic_title 归类，空则为 scene 级共享）
+      const topicChunkMap = new Map<string, string[]>(); // topic_title → chunkId[]
+      const sceneChunkMap = new Map<string, string[]>(); // scene_title → chunkId[]
       for (const row of chunkRows) {
         const chunk = await this.prisma.chunk.upsert({
           where: { text: row.text },
@@ -364,7 +374,15 @@ export class PackageDataController {
           },
           update: { meaning: row.meaning, category: row.category || '' },
         });
-        chunkIdMap.set(row.text, chunk.id);
+        if (row.topic_title) {
+          const ids = topicChunkMap.get(row.topic_title) ?? [];
+          ids.push(chunk.id);
+          topicChunkMap.set(row.topic_title, ids);
+        } else {
+          const ids = sceneChunkMap.get(row.scene_title) ?? [];
+          ids.push(chunk.id);
+          sceneChunkMap.set(row.scene_title, ids);
+        }
       }
 
       // 10. 导入训练话题
@@ -393,16 +411,20 @@ export class PackageDataController {
           },
         });
 
-        // 关联词汇
-        const allVocabIds = [...vocabIdMap.values()];
+        // 关联词汇（按 topic_title 过滤 + scene 级共享）
+        const sceneVocabIds = sceneVocabMap.get(row.scene_title) ?? [];
+        const topicVocabIds = topicVocabMap.get(row.title) ?? [];
+        const allVocabIds = [...new Set([...sceneVocabIds, ...topicVocabIds])];
         if (allVocabIds.length > 0) {
           await this.prisma.trainingTopicVocab.createMany({
             data: allVocabIds.map((vocabId, i) => ({ topicId: topic.id, vocabId, sortOrder: i })),
             skipDuplicates: true,
           });
         }
-        // 关联句块
-        const allChunkIds = [...chunkIdMap.values()];
+        // 关联句块（按 topic_title 过滤 + scene 级共享）
+        const sceneChunkIds = sceneChunkMap.get(row.scene_title) ?? [];
+        const topicChunkIds = topicChunkMap.get(row.title) ?? [];
+        const allChunkIds = [...sceneChunkIds, ...topicChunkIds];
         if (allChunkIds.length > 0) {
           await this.prisma.trainingTopicChunk.createMany({
             data: allChunkIds.map((chunkId, i) => ({ topicId: topic.id, chunkId, sortOrder: i })),
@@ -468,18 +490,28 @@ export class PackageDataController {
           },
         });
 
-        // 关联词汇和句块
-        const allVocabIds = [...vocabIdMap.values()];
-        if (allVocabIds.length > 0) {
+        // 关联词汇和句块（关卡级共享全部资源池）
+        const allEpisodeVocabIds = [
+          ...new Set([
+            ...topicVocabMap.values(),
+            ...sceneVocabMap.values(),
+          ].flat()),
+        ];
+        if (allEpisodeVocabIds.length > 0) {
           await this.prisma.storyEpisodeVocabulary.createMany({
-            data: allVocabIds.map((vocabId, i) => ({ episodeId: episode.id, vocabId, sortOrder: i })),
+            data: allEpisodeVocabIds.map((vocabId, i) => ({ episodeId: episode.id, vocabId, sortOrder: i })),
             skipDuplicates: true,
           });
         }
-        const allChunkIds = [...chunkIdMap.values()];
-        if (allChunkIds.length > 0) {
+        const allEpisodeChunkIds = [
+          ...new Set([
+            ...topicChunkMap.values(),
+            ...sceneChunkMap.values(),
+          ].flat()),
+        ];
+        if (allEpisodeChunkIds.length > 0) {
           await this.prisma.storyEpisodeChunk.createMany({
-            data: allChunkIds.map((chunkId, i) => ({ episodeId: episode.id, chunkId, sortOrder: i })),
+            data: allEpisodeChunkIds.map((chunkId, i) => ({ episodeId: episode.id, chunkId, sortOrder: i })),
             skipDuplicates: true,
           });
         }
@@ -895,24 +927,42 @@ export class PackageDataController {
       },
     });
 
-    const vocabIdMap = new Map<string, string>();
+    const topicVocabMap2 = new Map<string, string[]>();
+    const sceneVocabMap2 = new Map<string, string[]>();
     for (const row of vocabRows) {
       const vocab = await this.prisma.vocabulary.upsert({
         where: { word: row.word },
         create: { word: row.word, meaning: row.meaning, partOfSpeech: row.part_of_speech || null, difficulty: row.difficulty || 'L1', sortOrder: parseInt(row.sort_order) || 0 },
         update: { meaning: row.meaning },
       });
-      vocabIdMap.set(row.word, vocab.id);
+      if (row.topic_title) {
+        const ids = topicVocabMap2.get(row.topic_title) ?? [];
+        ids.push(vocab.id);
+        topicVocabMap2.set(row.topic_title, ids);
+      } else {
+        const ids = sceneVocabMap2.get(row.scene_title) ?? [];
+        ids.push(vocab.id);
+        sceneVocabMap2.set(row.scene_title, ids);
+      }
     }
 
-    const chunkIdMap = new Map<string, string>();
+    const topicChunkMap2 = new Map<string, string[]>();
+    const sceneChunkMap2 = new Map<string, string[]>();
     for (const row of chunkRows) {
       const chunk = await this.prisma.chunk.upsert({
         where: { text: row.text },
         create: { text: row.text, meaning: row.meaning, category: row.category || '', difficulty: row.difficulty || 'L2' },
         update: { meaning: row.meaning, category: row.category || '' },
       });
-      chunkIdMap.set(row.text, chunk.id);
+      if (row.topic_title) {
+        const ids = topicChunkMap2.get(row.topic_title) ?? [];
+        ids.push(chunk.id);
+        topicChunkMap2.set(row.topic_title, ids);
+      } else {
+        const ids = sceneChunkMap2.get(row.scene_title) ?? [];
+        ids.push(chunk.id);
+        sceneChunkMap2.set(row.scene_title, ids);
+      }
     }
 
     const topicIds: string[] = [];
@@ -965,9 +1015,13 @@ export class PackageDataController {
           data: { topicId: topic.id },
         }).catch(() => {});
       }
-      const allVocabs = [...vocabIdMap.values()];
+      const sceneVocabIds2 = sceneVocabMap2.get(sceneTitle) ?? [];
+      const topicVocabIds2 = topicVocabMap2.get(row.title) ?? [];
+      const allVocabs = [...new Set([...sceneVocabIds2, ...topicVocabIds2])];
       if (allVocabs.length) await this.prisma.trainingTopicVocab.createMany({ data: allVocabs.map((v, i) => ({ topicId: topic.id, vocabId: v, sortOrder: i })), skipDuplicates: true });
-      const allChunks = [...chunkIdMap.values()];
+      const sceneChunkIds2 = sceneChunkMap2.get(sceneTitle) ?? [];
+      const topicChunkIds2 = topicChunkMap2.get(row.title) ?? [];
+      const allChunks = [...sceneChunkIds2, ...topicChunkIds2];
       if (allChunks.length) await this.prisma.trainingTopicChunk.createMany({ data: allChunks.map((c, i) => ({ topicId: topic.id, chunkId: c, sortOrder: i })), skipDuplicates: true });
       topicIds.push(topic.id);
     }
@@ -1002,10 +1056,10 @@ export class PackageDataController {
           rewards: this.parseJsonSafe(row.rewards_json),
         },
       });
-      const allVocabs = [...vocabIdMap.values()];
-      if (allVocabs.length) await this.prisma.storyEpisodeVocabulary.createMany({ data: allVocabs.map((v, i) => ({ episodeId: episode.id, vocabId: v, sortOrder: i })), skipDuplicates: true });
-      const allChunks = [...chunkIdMap.values()];
-      if (allChunks.length) await this.prisma.storyEpisodeChunk.createMany({ data: allChunks.map((c, i) => ({ episodeId: episode.id, chunkId: c, sortOrder: i })), skipDuplicates: true });
+      const allEpVocabs = [...new Set([...topicVocabMap2.values(), ...sceneVocabMap2.values()].flat())];
+      if (allEpVocabs.length) await this.prisma.storyEpisodeVocabulary.createMany({ data: allEpVocabs.map((v, i) => ({ episodeId: episode.id, vocabId: v, sortOrder: i })), skipDuplicates: true });
+      const allEpChunks = [...new Set([...topicChunkMap2.values(), ...sceneChunkMap2.values()].flat())];
+      if (allEpChunks.length) await this.prisma.storyEpisodeChunk.createMany({ data: allEpChunks.map((c, i) => ({ episodeId: episode.id, chunkId: c, sortOrder: i })), skipDuplicates: true });
     }
 
     let warmupMatched = 0;

@@ -30,6 +30,7 @@ interface Props {
   onDelete: () => void
   vocabs?: { id: string; word: string; meaning: string }[]
   chunks?: { id: string; text: string; meaning: string }[]
+  generationContext?: Record<string, unknown>
 }
 
 const computeVocabSubTitle = (item: { vocabWord: string }) => {
@@ -37,7 +38,7 @@ const computeVocabSubTitle = (item: { vocabWord: string }) => {
   return `${item.vocabWord} 一词多句`
 }
 
-export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = [], chunks = [] }: Props) {
+export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = [], chunks = [], generationContext }: Props) {
   const [local, setLocal] = useState<VocabSentenceBuildingItem>(value)
   const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
   const [imageUploading, setImageUploading] = useState<string | null>(null)
@@ -209,49 +210,60 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
         direction: local.direction ?? 'zh_to_en',
         count: 3,
         chunks: chunks.map(c => c.text).slice(0, 10),
+        ...(generationContext ?? {}),
       })
       if (res?.patterns?.length) {
-        commit({ patterns: res.patterns.map((p: any) => ({
+        const newPatterns: VocabSentenceBuildingItem['patterns'] = res.patterns.map((p: any) => ({
           chunk: p.chunk,
           items: (p.items || []).map((it: any) => (
             (local.direction ?? 'zh_to_en') === 'en_to_zh'
-              ? { en: it.en ?? it.zh, answer: it.answer }
-              : { zh: it.zh ?? it.en, answer: it.answer }
+              ? { en: it.en ?? it.zh, answer: it.answer, hint: it.hint ?? '' }
+              : { zh: it.zh ?? it.en, answer: it.answer, hint: it.hint ?? '' }
           )),
-        })) })
+        }))
+        commit({ patterns: newPatterns })
         toast.success(`已生成 ${res.patterns.length} 组搭配`)
+        // 自动触发 AI 提示生成
+        await aiGenerateHints(newPatterns, local.vocabWord)
       }
     } catch { toast.error('AI 生成失败') }
     finally { setAiBusy(null) }
   }
 
-  const aiGenerateHints = async () => {
-    if (!local.vocabWord) { toast.error('请先输入核心词汇'); return }
+  const aiGenerateHints = async (patterns?: VocabSentenceBuildingItem['patterns'], overrideWord?: string) => {
+    const word = overrideWord || local.vocabWord
+    const targetPatterns = patterns ?? local.patterns
+    if (!word) { toast.error('请先输入核心词汇'); return }
+    const allItems = targetPatterns.flatMap(p => p.items)
+    if (!allItems.length) return
     setAiBusy('hints')
     try {
       const { post } = await import('@/lib/request')
-      const allItems = local.patterns.flatMap(p => p.items)
       const res: any = await post('/practice-ai/generate-drills', {
         type: 'vocab_sentence_building',
-        keyword: local.vocabWord,
+        keyword: word,
         meaning: local.vocabMeaning || '',
         direction: local.direction ?? 'zh_to_en',
         generateHints: true,
         itemCount: allItems.length,
         items: allItems.map(it => ({ zh: getPromptText(it), answer: getAnswerText(it) })),
+        ...(generationContext ?? {}),
       })
       if (res?.hints?.length) {
         let hintIdx = 0
-        const updated = local.patterns.map(p => ({
+        const updated = targetPatterns.map(p => ({
           ...p,
           items: p.items.map(it => ({ ...it, hint: res.hints[hintIdx++] ?? it.hint ?? '' })),
         }))
         commit({ patterns: updated })
         toast.success(`已为 ${res.hints.length} 道题生成提示`)
       } else {
-        toast.error('AI 未返回教学提示，请稍后重试')
+        // 自动触发时不弹错误 toast，静默处理
+        if (!patterns) toast.error('AI 未返回教学提示，请稍后重试')
       }
-    } catch { toast.error('AI 生成提示失败') }
+    } catch {
+      if (!patterns) toast.error('AI 生成提示失败')
+    }
     finally { setAiBusy(null) }
   }
 
@@ -293,7 +305,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
               {aiBusy === 'generate' ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
               {aiBusy === 'generate' ? '生成中' : 'AI 生成'}
             </Button>
-            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerateHints} disabled={aiBusy !== null}>
+            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={() => aiGenerateHints()} disabled={aiBusy !== null}>
               {aiBusy === 'hints' ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
               {aiBusy === 'hints' ? '提示中' : 'AI 提示'}
             </Button>

@@ -29,6 +29,7 @@ interface Props {
   onDelete: () => void
   vocabs?: { id: string; word: string; meaning: string }[]
   chunks?: { id: string; text: string; meaning: string }[]
+  generationContext?: Record<string, unknown>
 }
 
 const computeChunkSubTitle = (item: { chunk: string; kind?: string }) => {
@@ -37,7 +38,7 @@ const computeChunkSubTitle = (item: { chunk: string; kind?: string }) => {
   return `${item.chunk} ${typeLabel}`
 }
 
-export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], chunks = [] }: Props) {
+export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], chunks = [], generationContext }: Props) {
   const [local, setLocal] = useState<ChunkSubstitutionItem>(value)
   const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
   const [imageUploading, setImageUploading] = useState<string | null>(null)
@@ -208,23 +209,29 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         direction: local.direction ?? 'zh_to_en',
         kind: local.kind ?? 'chunk',
         count: 4,
+        ...(generationContext ?? {}),
       })
       if (res?.items?.length) {
-        commit({ items: res.items.map((it: any) => (
+        const newItems: ChunkSubstitutionItem['items'] = res.items.map((it: any) => (
           (local.direction ?? 'zh_to_en') === 'en_to_zh'
-            ? { en: it.en ?? it.zh, answer: it.answer }
-            : { zh: it.zh ?? it.en, answer: it.answer }
-        )) })
+            ? { en: it.en ?? it.zh, answer: it.answer, hint: it.hint ?? '' }
+            : { zh: it.zh ?? it.en, answer: it.answer, hint: it.hint ?? '' }
+        ))
+        commit({ items: newItems })
         toast.success(`已生成 ${res.items.length} 道题目`)
+        // 自动触发 AI 提示生成
+        await aiGenerateHints(newItems, source)
       }
     } catch { toast.error('AI 生成失败') }
     finally { setAiBusy(null) }
   }
 
   // AI 为所有题目生成提示
-  const aiGenerateHints = async () => {
-    const source = local.chunk
+  const aiGenerateHints = async (items?: ChunkSubstitutionItem['items'], overrideSource?: string) => {
+    const source = overrideSource || local.chunk
+    const targetItems = items ?? local.items
     if (!source) { toast.error('请先输入核心词/句块'); return }
+    if (!targetItems.length) return
     setAiBusy('hints')
     try {
       const { post } = await import('@/lib/request')
@@ -235,17 +242,21 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         direction: local.direction ?? 'zh_to_en',
         kind: local.kind ?? 'chunk',
         generateHints: true,
-        itemCount: local.items.length,
-        items: local.items.map(it => ({ zh: getPromptText(it), answer: getAnswerText(it) })),
+        itemCount: targetItems.length,
+        items: targetItems.map(it => ({ zh: getPromptText(it), answer: getAnswerText(it) })),
+        ...(generationContext ?? {}),
       })
       if (res?.hints?.length) {
-        const updated = local.items.map((it, i) => ({ ...it, hint: res.hints[i] ?? it.hint ?? '' }))
+        const updated = targetItems.map((it, i) => ({ ...it, hint: res.hints[i] ?? it.hint ?? '' }))
         commit({ items: updated })
         toast.success(`已为 ${res.hints.length} 道题生成提示`)
       } else {
-        toast.error('AI 未返回教学提示，请稍后重试')
+        // 自动触发时不弹错误 toast，静默处理
+        if (!items) toast.error('AI 未返回教学提示，请稍后重试')
       }
-    } catch { toast.error('AI 生成提示失败') }
+    } catch {
+      if (!items) toast.error('AI 生成提示失败')
+    }
     finally { setAiBusy(null) }
   }
 
@@ -265,6 +276,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         kind: local.kind ?? 'chunk',
         polish: true,
         items: local.items.map(it => ({ zh: getPromptText(it), answer: getAnswerText(it) })),
+        ...(generationContext ?? {}),
       })
       if (res?.items?.length) {
         commit({ items: local.items.map((it, i) => (
@@ -342,7 +354,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
               {aiBusy === 'generate' ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
               {aiBusy === 'generate' ? '生成中' : 'AI 生成'}
             </Button>
-            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={aiGenerateHints} disabled={aiBusy !== null}>
+            <Button size="sm" variant="outline" className="h-7 text-[11px] gap-1" onClick={() => aiGenerateHints()} disabled={aiBusy !== null}>
               {aiBusy === 'hints' ? <Loader2 className="size-3 animate-spin" /> : <Zap className="size-3" />}
               {aiBusy === 'hints' ? '提示中' : 'AI 提示'}
             </Button>

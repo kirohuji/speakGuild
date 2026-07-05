@@ -37,8 +37,8 @@ import {
   listScenes, getScene, createScene, updateScene, deleteScene,
   listVocabularies, createVocabulary, updateVocabulary, deleteVocabulary,
   listTrainingTopics, createTrainingTopic, updateTrainingTopic, deleteTrainingTopic,
-  listAllChunks, listStories, getStory, listScriptEpisodes, deleteScriptEpisode,
-  listLibraryPatterns,
+  getTrainingTopic, listAllChunks, listStories, getStory, listScriptEpisodes, deleteScriptEpisode,
+  listLibraryPatterns, generateTopicTeachingMarkdown,
   type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData, type SentencePatternFull, type StoryEpisode,
 } from '../api-content-admin'
 import { EpisodeEditDialog } from './admin-script-page'
@@ -518,6 +518,20 @@ function TrainingTopicDialog({
   const editKey = edit?.id ?? '__new__'
   const [lastInitKey, setLastInitKey] = useState<string | null>(null)
 
+  // 过滤为当前话题绑定的材料（而非全系统材料），供 AI 生成使用
+  const boundVocabs = useMemo(
+    () => vocabs.filter(v => (form.vocabIds ?? []).includes(v.id)),
+    [vocabs, form.vocabIds],
+  )
+  const boundChunks = useMemo(
+    () => chunks.filter(c => (form.chunkIds ?? []).includes(c.id)),
+    [chunks, form.chunkIds],
+  )
+  const boundPatterns = useMemo(
+    () => patterns.filter(p => (form.patternIds ?? []).includes(p.id)),
+    [patterns, form.patternIds],
+  )
+
   // Only re-init form when a genuinely different topic is opened (keyed by edit.id)
   // This prevents form reset when parent re-fetches data after save
   useEffect(() => {
@@ -699,6 +713,14 @@ function TrainingTopicDialog({
 
   const handleSave = async () => {
     await saveTopic()
+  }
+
+  const handleGenerateTopicTeaching = async () => {
+    const topicId = form.id ?? edit?.id
+    const topic = topicId ? { id: topicId } : await saveTopic()
+    if (!topic?.id) return null
+    const result = await generateTopicTeachingMarkdown(topic.id)
+    return result.markdown
   }
 
   return (
@@ -1076,10 +1098,14 @@ function TrainingTopicDialog({
               <WarmupPipelineTab
                 value={form.metadata?.outputTraining ?? { version: 1, enabled: true, pipeline: [] }}
                 onChange={(v) => setForm({ ...form, metadata: { ...(form.metadata ?? {}), outputTraining: v } })}
-                vocabs={vocabs}
-                chunks={chunks}
-                patterns={patterns}
+                vocabs={boundVocabs}
+                chunks={boundChunks}
+                patterns={boundPatterns}
                 topicTitle={form.title || edit?.title || ''}
+                difficulty={form.difficulty ?? edit?.difficulty ?? 'L2'}
+                teachingMarkdown={form.teachingMarkdown ?? ''}
+                onTeachingMarkdownChange={(teachingMarkdown) => setForm({ ...form, teachingMarkdown })}
+                onGenerateTeaching={handleGenerateTopicTeaching}
                 topicIndex={topicIndex}
                 topicTotal={topicTotal}
                 onPrevTopic={onPrevTopic && !saving ? () => saveAndNavigateTopicFromWarmup(onPrevTopic) : undefined}
@@ -1118,6 +1144,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   const [editVocab, setEditVocab] = useState<Vocabulary | null>(null)
   const [topicDialog, setTopicDialog] = useState(false)
   const [editTopic, setEditTopic] = useState<TrainingTopic | null>(null)
+  const [openingTopicId, setOpeningTopicId] = useState<string | null>(null)
   const [storyDialog, setStoryDialog] = useState(false)
   const [editStoryEpisode, setEditStoryEpisode] = useState<StoryEpisode | null>(null)
   const [topicPage, setTopicPage] = useState(1)
@@ -1163,6 +1190,25 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
     setEditTopic(saved)
   }
 
+  const openTopicEditor = async (topic: TrainingTopic | null) => {
+    if (!topic) {
+      setEditTopic(null)
+      setTopicDialog(true)
+      return
+    }
+    setOpeningTopicId(topic.id)
+    try {
+      const fullTopic = await getTrainingTopic(topic.id)
+      if (!fullTopic) throw new Error('话题不存在')
+      setEditTopic(fullTopic)
+      setTopicDialog(true)
+    } catch (error: any) {
+      toast.error(error?.message || '话题详情加载失败')
+    } finally {
+      setOpeningTopicId(null)
+    }
+  }
+
   if (loading) return (
     <div className="space-y-3">
       {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
@@ -1187,7 +1233,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
             <CardTitle className="text-base flex items-center gap-2">
               <Layers className="size-4" /> 训练话题 ({topics.length})
             </CardTitle>
-            <Button size="sm" variant="outline" onClick={() => { setEditTopic(null); setTopicDialog(true) }}>
+            <Button size="sm" variant="outline" onClick={() => openTopicEditor(null)}>
               <Plus className="size-3.5 mr-1" /> 添加
             </Button>
           </CardHeader>
@@ -1211,7 +1257,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
                   <tbody className="divide-y divide-border">
                     {topicItems.map((t) => (
                       <tr key={t.id} className="cursor-pointer transition-colors hover:bg-muted/30"
-                        onClick={() => { setEditTopic(t); setTopicDialog(true) }}>
+                        onClick={() => openTopicEditor(t)}>
                         <td className="px-4 py-3">
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
@@ -1247,8 +1293,9 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
                         <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-1">
                             <Button size="icon" variant="ghost" className="size-8"
-                              onClick={(e) => { e.stopPropagation(); setEditTopic(t); setTopicDialog(true) }}>
-                              <Edit3 className="size-3.5" />
+                              disabled={openingTopicId === t.id}
+                              onClick={(e) => { e.stopPropagation(); openTopicEditor(t) }}>
+                              {openingTopicId === t.id ? <Loader2 className="size-3.5 animate-spin" /> : <Edit3 className="size-3.5" />}
                             </Button>
                             <Button size="icon" variant="ghost" className="size-8 text-destructive"
                               onClick={async (e) => { e.stopPropagation(); await deleteTrainingTopic(t.id); load() }}>
@@ -1355,8 +1402,8 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
         edit={editTopic} sceneId={sceneId} packageType={scene.packageType} chunks={chunks} vocabs={vocabs} patterns={patterns}
         topicIndex={editTopicIndex >= 0 ? editTopicIndex : undefined}
         topicTotal={sortedTopics.length}
-        onPrevTopic={editTopicIndex > 0 ? () => setEditTopic(sortedTopics[editTopicIndex - 1]) : undefined}
-        onNextTopic={editTopicIndex >= 0 && editTopicIndex < sortedTopics.length - 1 ? () => setEditTopic(sortedTopics[editTopicIndex + 1]) : undefined}
+        onPrevTopic={editTopicIndex > 0 ? () => openTopicEditor(sortedTopics[editTopicIndex - 1]) : undefined}
+        onNextTopic={editTopicIndex >= 0 && editTopicIndex < sortedTopics.length - 1 ? () => openTopicEditor(sortedTopics[editTopicIndex + 1]) : undefined}
         onSaved={handleTopicSaved} />
       <EpisodeEditDialog
         open={storyDialog}

@@ -139,6 +139,14 @@ export class GenerateDrillsDto {
 
   @IsString()
   @IsOptional()
+  topicTitle?: string;
+
+  @IsString()
+  @IsOptional()
+  difficulty?: string;
+
+  @IsString()
+  @IsOptional()
   kind?: string;
 
   @IsNumber()
@@ -177,4 +185,20 @@ export class GenerateDrillsDto {
   @IsArray()
   @IsOptional()
   items?: Array<{ zh?: string; en?: string; answer?: string; hint?: string }>;
+
+  @IsObject()
+  @IsOptional()
+  materials?: {
+    vocabs?: Array<{ id?: string; word?: string; meaning?: string }>;
+    chunks?: Array<{ id?: string; text?: string; meaning?: string }>;
+    patterns?: Array<{ id?: string; pattern?: string; meaning?: string }>;
+  };
+
+  @IsObject()
+  @IsOptional()
+  usedRefs?: {
+    vocabIds?: string[];
+    chunkIds?: string[];
+    patternIds?: string[];
+  };
 }

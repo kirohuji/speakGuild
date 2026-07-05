@@ -211,13 +211,78 @@ export class ContentAdminController {
   // ════════════════════════════════════════════════════════════
 
   @Get('training-topics')
-  async listTrainingTopics(@Req() req: Request, @Query('sceneId') sceneId?: string) {
+  async listTrainingTopics(
+    @Req() req: Request,
+    @Query('sceneId') sceneId?: string,
+    @Query('detail') detail?: string,
+  ) {
     await this.requireAdmin(req);
     const where: any = {};
     if (sceneId) where.sceneId = sceneId;
+    if (detail === 'full') {
+      return this.prisma.trainingTopic.findMany({
+        where,
+        orderBy: { sortOrder: 'asc' },
+        include: {
+          scene: { select: { id: true, title: true } },
+          topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
+          topicVocabs: { include: { vocab: true }, orderBy: { sortOrder: 'asc' } },
+          activeChunks: {
+            include: { chunk: { include: { examples: { orderBy: { sortOrder: 'asc' } } } } },
+            orderBy: { sortOrder: 'asc' },
+          },
+        },
+      });
+    }
+
     return this.prisma.trainingTopic.findMany({
       where,
       orderBy: { sortOrder: 'asc' },
+      select: {
+        id: true,
+        sceneId: true,
+        type: true,
+        title: true,
+        promptEn: true,
+        promptZh: true,
+        suggestedDurationSec: true,
+        difficulty: true,
+        inkScriptId: true,
+        sortOrder: true,
+        scene: { select: { id: true, title: true } },
+        topicPatterns: {
+          select: {
+            id: true,
+            sortOrder: true,
+            pattern: { select: { id: true, pattern: true, meaning: true } },
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+        topicVocabs: {
+          select: {
+            id: true,
+            sortOrder: true,
+            vocab: { select: { id: true, word: true, meaning: true, sortOrder: true } },
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+        activeChunks: {
+          select: {
+            id: true,
+            sortOrder: true,
+            chunk: { select: { id: true, text: true, meaning: true } },
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+    });
+  }
+
+  @Get('training-topics/:id')
+  async getTrainingTopic(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.prisma.trainingTopic.findUnique({
+      where: { id },
       include: {
         scene: { select: { id: true, title: true } },
         topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
@@ -1118,8 +1183,8 @@ export class ContentAdminController {
     await this.requireAdmin(req);
 
     try {
-      const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
-      if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
+      const llmConfig = await this.aiModelService.getLlmConfig();
+      if (!llmConfig.apiKey) throw new Error('LLM API Key 未配置');
 
       // ── 1. 获取话题完整信息 ──
       const topic = await this.prisma.trainingTopic.findUnique({
@@ -1203,8 +1268,8 @@ export class ContentAdminController {
       const roleBlock = roleBlockParts.join('\n');
 
       // ── 4. 调用 DeepSeek 生成 ──
-      const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
-      const model = client.chat('deepseek-chat');
+      const client = createOpenAI({ apiKey: llmConfig.apiKey, baseURL: llmConfig.baseUrl });
+      const model = client.chat(llmConfig.model);
 
       const { text } = await generateText({
         model,
@@ -1651,8 +1716,8 @@ ${dialogueTexts}
     await this.requireAdmin(req);
 
     try {
-      const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
-      if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
+      const llmConfig = await this.aiModelService.getLlmConfig();
+      if (!llmConfig.apiKey) throw new Error('LLM API Key 未配置');
 
       // 获取故事及话题完整信息
       const story = await this.prisma.inkScript.findUnique({
@@ -1732,8 +1797,8 @@ ${dialogueTexts}
 
       const contextBlock = parts.join('\n');
 
-      const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
-      const model = client.chat('deepseek-chat');
+      const client = createOpenAI({ apiKey: llmConfig.apiKey, baseURL: llmConfig.baseUrl });
+      const model = client.chat(llmConfig.model);
 
       const { text } = await generateText({
         model,
@@ -1790,6 +1855,120 @@ ${contextBlock}
         message: 'success',
         data: { markdown: md },
       };
+    } catch (err: any) {
+      return { code: 500, message: err.message, data: null };
+    }
+  }
+
+  /**
+   * AI 生成话题教学文档（Markdown）
+   * 用于「学习内容 / 编辑话题 / 知识点练习」中的话题级教学说明。
+   */
+  @Post('training-topics/:id/generate-teaching')
+  async generateTopicTeachingMarkdown(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+
+    try {
+      const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
+      if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
+
+      const topic = await this.prisma.trainingTopic.findUnique({
+        where: { id },
+        include: {
+          activeChunks: { include: { chunk: { include: { examples: { take: 3, orderBy: { sortOrder: 'asc' } } } } } },
+          topicVocabs: { include: { vocab: true } },
+          topicPatterns: { include: { pattern: true } },
+          scene: true,
+        },
+      });
+
+      if (!topic) throw new Error('话题不存在');
+
+      const outputTraining = (topic.metadata as any)?.outputTraining;
+      const pipeline = Array.isArray(outputTraining?.pipeline) ? outputTraining.pipeline : [];
+      const exerciseLines = pipeline.slice(0, 8).map((item: any, index: number) => {
+        if (item.type === 'chunk_substitution') return `${index + 1}. ${item.kind === 'word' ? '单词替换' : '句块替换'}: ${item.chunk || item.title || ''} (${item.direction || 'zh_to_en'})`;
+        if (item.type === 'vocab_sentence_building') return `${index + 1}. 一词多句: ${item.vocabWord || item.title || ''} (${item.direction || 'zh_to_en'})`;
+        if (item.type === 'pattern_drill') return `${index + 1}. 句型操练: ${item.pattern || item.title || ''} (${item.direction || 'zh_to_en'})`;
+        if (item.type === 'sentence_decomposition') return `${index + 1}. 句子拆解: ${item.fullSentence || item.title || ''}`;
+        return `${index + 1}. ${item.title || item.type || '练习'}`;
+      });
+
+      const parts: string[] = [];
+      parts.push('## 话题信息');
+      parts.push(`- 标题: ${topic.title}`);
+      if (topic.scene?.title) parts.push(`- 场景: ${topic.scene.title}`);
+      if (topic.description) parts.push(`- 描述: ${topic.description}`);
+      if (topic.promptZh) parts.push(`- 训练目标: ${topic.promptZh}`);
+      if (topic.promptEn) parts.push(`- 英文目标: ${topic.promptEn}`);
+      if (topic.knowledgePoints) parts.push(`- 知识点: ${topic.knowledgePoints}`);
+      parts.push(`- 难度: ${topic.difficulty}`);
+
+      if (topic.topicVocabs?.length) {
+        parts.push('\n## 核心词汇');
+        for (const tv of topic.topicVocabs) {
+          parts.push(`- ${tv.vocab.word}${tv.vocab.meaning ? ` — ${tv.vocab.meaning}` : ''}`);
+        }
+      }
+
+      if (topic.activeChunks?.length) {
+        parts.push('\n## 句块');
+        for (const tc of topic.activeChunks) {
+          parts.push(`- ${tc.chunk.text}${tc.chunk.meaning ? ` — ${tc.chunk.meaning}` : ''}`);
+          for (const ex of tc.chunk.examples ?? []) {
+            parts.push(`  - ${ex.en}${ex.zh ? ` → ${ex.zh}` : ''}`);
+          }
+        }
+      }
+
+      if (topic.topicPatterns?.length) {
+        parts.push('\n## 句型');
+        for (const tp of topic.topicPatterns) {
+          parts.push(`- ${tp.pattern.pattern}${tp.pattern.meaning ? ` — ${tp.pattern.meaning}` : ''}`);
+        }
+      }
+
+      if (exerciseLines.length) {
+        parts.push('\n## 已配置练习');
+        parts.push(exerciseLines.join('\n'));
+      }
+
+      const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
+      const model = client.chat('deepseek-chat');
+      const { text } = await generateText({
+        model,
+        prompt: `你是一名英语学习教学设计专家。请根据以下话题材料和知识点练习配置，生成一份面向中国英语学习者的课前教学文档。
+
+要求：
+1. 全部用中文写，英文例句保留英文。
+2. 语气自然、明确，像老师在练习前做 briefing。
+3. 长度 300-600 字。
+4. 使用 Markdown，按下面结构输出。
+5. 内容要贴合当前难度，不要泛泛而谈。
+
+结构：
+## 场景目标
+## 核心表达
+## 句型提醒
+## 练习策略
+## 易错提醒
+
+输入信息：
+
+${parts.join('\n')}
+
+直接输出 Markdown，不要额外说明。`,
+        temperature: 0.5,
+        maxOutputTokens: 3000,
+      });
+
+      const markdown = text
+        .replace(/```markdown\s*/gi, '')
+        .replace(/```md\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+
+      return { code: 200, message: 'success', data: { markdown } };
     } catch (err: any) {
       return { code: 500, message: err.message, data: null };
     }
