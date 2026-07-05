@@ -42,7 +42,7 @@ import {
   type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData, type SentencePatternFull, type StoryEpisode,
 } from '../api-content-admin'
 import { EpisodeEditDialog } from './admin-script-page'
-import { WarmupPipelineTab, type WarmupPipelineData } from '../components/warmup-pipeline-tab'
+import { WarmupPipelineTab, buildWarmupMaterialUsage, type WarmupPipelineData } from '../components/warmup-pipeline-tab'
 import { packageDataAdminApi } from '../api-package-data'
 
 function packageTypeLabel(type?: Scene['packageType']) {
@@ -68,6 +68,18 @@ function stableStringify(value: unknown): string {
 function serializeTrainingTopicForm(form: Record<string, any>) {
   const payload = { ...form }
   delete payload.sentencePatterns
+  if (payload.metadata?.outputTraining?.materialUsage?.generatedAt) {
+    payload.metadata = {
+      ...payload.metadata,
+      outputTraining: {
+        ...payload.metadata.outputTraining,
+        materialUsage: {
+          ...payload.metadata.outputTraining.materialUsage,
+          generatedAt: '__ignored__',
+        },
+      },
+    }
+  }
   return stableStringify(payload)
 }
 
@@ -683,6 +695,22 @@ function TrainingTopicDialog({
     })
   }
 
+  const withRecomputedWarmupUsage = (sourceForm: Record<string, any>) => {
+    const outputTraining = sourceForm.metadata?.outputTraining as WarmupPipelineData | undefined
+    if (!outputTraining?.pipeline) return sourceForm
+    const materialUsage = buildWarmupMaterialUsage(outputTraining, vocabs, chunks, patterns)
+    return {
+      ...sourceForm,
+      metadata: {
+        ...(sourceForm.metadata ?? {}),
+        outputTraining: {
+          ...outputTraining,
+          materialUsage,
+        },
+      },
+    }
+  }
+
   const saveTopic = async () => {
     if (!form.title?.trim() || !form.promptEn?.trim()) {
       toast.error('请先填写标题和英文提示')
@@ -690,11 +718,13 @@ function TrainingTopicDialog({
     }
     setSaving(true)
     try {
-      const payload = { ...form }
+      const formWithUsage = withRecomputedWarmupUsage(form)
+      const payload = { ...formWithUsage }
       delete payload.sentencePatterns // no longer used; patternIds is the new way
       const saved = edit ? await updateTrainingTopic(edit.id, payload) : await createTrainingTopic(payload)
       setForm((prev: any) => ({
         ...prev,
+        metadata: formWithUsage.metadata,
         id: saved.id,
         sceneId: saved.sceneId,
         sortOrder: saved.sortOrder,

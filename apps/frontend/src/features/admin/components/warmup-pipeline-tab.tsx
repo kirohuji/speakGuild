@@ -55,6 +55,29 @@ export interface WarmupPipelineData {
   version: number
   enabled: boolean
   pipeline: WarmupPipelineItem[]
+  materialUsage?: WarmupMaterialUsage
+}
+
+export interface WarmupMaterialUsage {
+  generatedAt: string
+  usedRefs: {
+    vocabIds: string[]
+    chunkIds: string[]
+    patternIds: string[]
+  }
+  totals: {
+    vocabs: Array<{ id: string; word: string; meaning?: string; count: number }>
+    chunks: Array<{ id: string; text: string; meaning?: string; count: number }>
+    patterns: Array<{ id: string; pattern: string; meaning?: string; count: number }>
+  }
+  itemStats: Array<{
+    id: string
+    type: WarmupPipelineItem['type']
+    title?: string
+    vocabs: Array<{ id: string; word: string; meaning?: string; count: number }>
+    chunks: Array<{ id: string; text: string; meaning?: string; count: number }>
+    patterns: Array<{ id: string; pattern: string; meaning?: string; count: number }>
+  }>
 }
 
 interface Props {
@@ -108,6 +131,8 @@ const itemTypeOptions: Array<{
     icon: Braces,
   },
 ]
+
+const WARMUP_BATCH_AI_TIMEOUT_MS = 300_000
 
 type ValidationTone = 'ok' | 'warn' | 'error'
 
@@ -189,6 +214,199 @@ const getAnswerText = (item: HintableWarmupItem, direction?: string) => {
   return item.answer ?? ''
 }
 
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+const normalizeForUsage = (value: string) => value
+  .toLowerCase()
+  .replace(/[’‘]/g, "'")
+  .replace(/\s+/g, ' ')
+  .trim()
+
+const isSameMaterial = (left?: string, right?: string) => normalizeForUsage(left ?? '') === normalizeForUsage(right ?? '')
+
+const tokenizeUsageText = (value: string) => normalizeForUsage(value)
+  .replace(/['"]/g, '')
+  .match(/[a-z0-9]+/g) ?? []
+
+const hasOrderedTokens = (textTokens: string[], patternTokens: string[]) => {
+  if (!patternTokens.length) return false
+  let cursor = 0
+  for (const token of textTokens) {
+    if (token === patternTokens[cursor]) cursor += 1
+    if (cursor >= patternTokens.length) return true
+  }
+  return false
+}
+
+const getPatternFixedParts = (pattern: string) => normalizeForUsage(pattern)
+  .replace(/\[[^\]]*]/g, '|')
+  .replace(/\{[^}]*}/g, '|')
+  .replace(/<[^>]*>/g, '|')
+  .replace(/\([^)]*\)/g, '|')
+  .replace(/_{2,}/g, '|')
+  .replace(/\.{2,}/g, '|')
+  .replace(/\s*\/\s*/g, '|')
+  .split('|')
+  .map((part) => part.replace(/[^a-z0-9'\s]/g, ' ').replace(/\s+/g, ' ').trim())
+  .filter((part) => tokenizeUsageText(part).length >= 2 || part.length >= 4)
+
+const countMaterialInText = (text: string, needle: string, mode: 'word' | 'phrase') => {
+  const normalizedNeedle = normalizeForUsage(needle)
+  if (!normalizedNeedle) return 0
+  const normalizedText = normalizeForUsage(text)
+  if (!normalizedText) return 0
+  const escaped = escapeRegExp(normalizedNeedle)
+  const pattern = mode === 'word'
+    ? new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, 'gi')
+    : new RegExp(escaped, 'gi')
+  return [...normalizedText.matchAll(pattern)].length
+}
+
+const countPatternInText = (text: string, pattern: string) => {
+  const exactCount = countMaterialInText(text, pattern, 'phrase')
+  if (exactCount > 0) return exactCount
+
+  const normalizedText = normalizeForUsage(text)
+  const fixedParts = getPatternFixedParts(pattern)
+  if (fixedParts.length) {
+    const matchedParts = fixedParts.filter((part) => normalizedText.includes(part))
+    if (matchedParts.length === fixedParts.length) return 1
+    if (fixedParts.length >= 2 && matchedParts.length >= Math.ceil(fixedParts.length * 0.7)) return 1
+  }
+
+  const patternTokens = tokenizeUsageText(pattern)
+    .filter((token) => !['slot', 'slots', 'someone', 'something', 'somebody', 'noun', 'verb', 'adj', 'adjective', 'object'].includes(token))
+  const usefulTokens = patternTokens.filter((token) => token.length > 1)
+  if (usefulTokens.length >= 3 && hasOrderedTokens(tokenizeUsageText(text), usefulTokens)) return 1
+
+  return 0
+}
+
+const countDirectMaterialUse = (item: WarmupPipelineItem, material: string, group: 'vocab' | 'chunk' | 'pattern') => {
+  if (item.type === 'sentence_decomposition') {
+    return item.sourceKind === group && isSameMaterial(item.sourceText, material)
+      ? Math.max(1, item.levels.length)
+      : 0
+  }
+
+  if (group === 'vocab') {
+    if (item.type === 'vocab_sentence_building' && isSameMaterial(item.vocabWord, material)) {
+      return Math.max(1, item.patterns.reduce((sum, pattern) => sum + pattern.items.length, 0))
+    }
+    if (item.type === 'chunk_substitution' && item.kind === 'word' && isSameMaterial(item.chunk, material)) {
+      return Math.max(1, item.items.length)
+    }
+    return 0
+  }
+
+  if (group === 'chunk') {
+    if (item.type === 'chunk_substitution' && item.kind !== 'word' && isSameMaterial(item.chunk, material)) {
+      return Math.max(1, item.items.length)
+    }
+    if (item.type === 'vocab_sentence_building') {
+      return item.patterns.reduce((sum, pattern) => (
+        sum + (isSameMaterial(pattern.chunk, material) ? Math.max(1, pattern.items.length) : 0)
+      ), 0)
+    }
+    return 0
+  }
+
+  if (item.type === 'pattern_drill' && isSameMaterial(item.pattern, material)) {
+    return Math.max(1, item.items.length)
+  }
+  if (item.type === 'vocab_sentence_building') {
+    return item.patterns.reduce((sum, pattern) => (
+      sum + (isSameMaterial(pattern.chunk, material) ? Math.max(1, pattern.items.length) : 0)
+    ), 0)
+  }
+  return 0
+}
+
+const materialCount = (item: WarmupPipelineItem, text: string, material: string, group: 'vocab' | 'chunk' | 'pattern') => {
+  const directCount = countDirectMaterialUse(item, material, group)
+  const textCount = group === 'pattern'
+    ? countPatternInText(text, material)
+    : countMaterialInText(text, material, group === 'vocab' ? 'word' : 'phrase')
+  return Math.max(directCount, textCount)
+}
+
+const getWarmupItemText = (item: WarmupPipelineItem) => {
+  if (item.type === 'sentence_decomposition') {
+    return [item.title, item.sourceText, item.fullSentence, item.fullSentenceZh, ...item.levels.flatMap((level) => [level.en, level.zh, level.hint])].join('\n')
+  }
+  if (item.type === 'vocab_sentence_building') {
+    return [
+      item.vocabWord,
+      item.vocabMeaning,
+      ...item.patterns.flatMap((pattern) => [
+        pattern.chunk,
+        ...pattern.items.flatMap((it) => [getPromptText(it, item.direction), getAnswerText(it, item.direction), it.hint]),
+      ]),
+    ].join('\n')
+  }
+  if (item.type === 'chunk_substitution') {
+    return [item.chunk, item.chunkMeaning, ...item.items.flatMap((it) => [getPromptText(it, item.direction), getAnswerText(it, item.direction), it.hint])].join('\n')
+  }
+  return [item.pattern, item.patternMeaning, ...item.items.flatMap((it) => [getPromptText(it, item.direction), getAnswerText(it, item.direction), it.hint])].join('\n')
+}
+
+export function buildWarmupMaterialUsage(
+  value: WarmupPipelineData,
+  vocabs: { id: string; word: string; meaning?: string }[] = [],
+  chunks: { id: string; text: string; meaning?: string }[] = [],
+  patterns: { id: string; pattern: string; meaning?: string }[] = [],
+): WarmupMaterialUsage {
+  const itemStats = (value.pipeline ?? []).map((item) => {
+    const text = getWarmupItemText(item)
+    return {
+      id: item.id,
+      type: item.type,
+      title: item.title,
+      vocabs: vocabs
+        .map((vocab) => ({ id: vocab.id, word: vocab.word, meaning: vocab.meaning, count: materialCount(item, text, vocab.word, 'vocab') }))
+        .filter((entry) => entry.count > 0),
+      chunks: chunks
+        .map((chunk) => ({ id: chunk.id, text: chunk.text, meaning: chunk.meaning, count: materialCount(item, text, chunk.text, 'chunk') }))
+        .filter((entry) => entry.count > 0),
+      patterns: patterns
+        .map((pattern) => ({ id: pattern.id, pattern: pattern.pattern, meaning: pattern.meaning, count: materialCount(item, text, pattern.pattern, 'pattern') }))
+        .filter((entry) => entry.count > 0),
+    }
+  })
+
+  const totals = {
+    vocabs: vocabs.map((vocab) => ({
+      id: vocab.id,
+      word: vocab.word,
+      meaning: vocab.meaning,
+      count: itemStats.reduce((sum, stat) => sum + (stat.vocabs.find((entry) => entry.id === vocab.id)?.count ?? 0), 0),
+    })),
+    chunks: chunks.map((chunk) => ({
+      id: chunk.id,
+      text: chunk.text,
+      meaning: chunk.meaning,
+      count: itemStats.reduce((sum, stat) => sum + (stat.chunks.find((entry) => entry.id === chunk.id)?.count ?? 0), 0),
+    })),
+    patterns: patterns.map((pattern) => ({
+      id: pattern.id,
+      pattern: pattern.pattern,
+      meaning: pattern.meaning,
+      count: itemStats.reduce((sum, stat) => sum + (stat.patterns.find((entry) => entry.id === pattern.id)?.count ?? 0), 0),
+    })),
+  }
+
+  return {
+    generatedAt: new Date().toISOString(),
+    usedRefs: {
+      vocabIds: totals.vocabs.filter((entry) => entry.count > 0).map((entry) => entry.id),
+      chunkIds: totals.chunks.filter((entry) => entry.count > 0).map((entry) => entry.id),
+      patternIds: totals.patterns.filter((entry) => entry.count > 0).map((entry) => entry.id),
+    },
+    totals,
+    itemStats,
+  }
+}
+
 export function WarmupPipelineTab({
   value,
   onChange,
@@ -207,6 +425,7 @@ export function WarmupPipelineTab({
 }: Props) {
   const [local, setLocal] = useState<WarmupPipelineData>(value)
   const [selectedItemId, setSelectedItemId] = useState<string | null>(value.pipeline[0]?.id ?? null)
+  const [aiGeneratingMissing, setAiGeneratingMissing] = useState(false)
   const [aiHintingAll, setAiHintingAll] = useState(false)
   const [aiAudioAll, setAiAudioAll] = useState(false)
   const [teachingGenerating, setTeachingGenerating] = useState(false)
@@ -224,7 +443,11 @@ export function WarmupPipelineTab({
   }, [value])
 
   const commit = (patch: Partial<WarmupPipelineData>) => {
-    const next = { ...local, ...patch }
+    const base = { ...local, ...patch }
+    const next = {
+      ...base,
+      materialUsage: buildWarmupMaterialUsage(base, vocabs, chunks, patterns),
+    }
     setLocal(next)
     onChange(next)
   }
@@ -235,38 +458,11 @@ export function WarmupPipelineTab({
     commit({ pipeline: next })
   }
 
-  const allItemText = (item: WarmupPipelineItem) => {
-    if (item.type === 'sentence_decomposition') {
-      return [item.fullSentence, item.fullSentenceZh, ...item.levels.flatMap((level) => [level.en, level.zh, level.hint])].join('\n')
-    }
-    if (item.type === 'vocab_sentence_building') {
-      return [
-        item.vocabWord,
-        item.vocabMeaning,
-        ...item.patterns.flatMap((pattern) => [
-          pattern.chunk,
-          ...pattern.items.flatMap((it) => [getPromptText(it, item.direction), getAnswerText(it, item.direction), it.hint]),
-        ]),
-      ].join('\n')
-    }
-    if (item.type === 'chunk_substitution') {
-      return [item.chunk, item.chunkMeaning, ...item.items.flatMap((it) => [getPromptText(it, item.direction), getAnswerText(it, item.direction), it.hint])].join('\n')
-    }
-    return [item.pattern, item.patternMeaning, ...item.items.flatMap((it) => [getPromptText(it, item.direction), getAnswerText(it, item.direction), it.hint])].join('\n')
-  }
-
-  const materialCoverage = useMemo(() => {
-    const itemTexts = local.pipeline.map((item) => allItemText(item).toLowerCase())
-    const hasText = (needle: string) => {
-      const lower = needle.trim().toLowerCase()
-      return Boolean(lower) && itemTexts.some((text) => text.includes(lower))
-    }
-    return {
-      vocabIds: vocabs.filter((vocab) => hasText(vocab.word)).map((vocab) => vocab.id),
-      chunkIds: chunks.filter((chunk) => hasText(chunk.text)).map((chunk) => chunk.id),
-      patternIds: patterns.filter((pattern) => hasText(pattern.pattern)).map((pattern) => pattern.id),
-    }
-  }, [local.pipeline, vocabs, chunks, patterns])
+  const materialUsageStats = useMemo(
+    () => buildWarmupMaterialUsage(local, vocabs, chunks, patterns),
+    [local, vocabs, chunks, patterns],
+  )
+  const materialCoverage = materialUsageStats.usedRefs
 
   const generationContext = useMemo(() => ({
     topicTitle: topicTitle?.trim() || undefined,
@@ -278,47 +474,6 @@ export function WarmupPipelineTab({
     },
     usedRefs: materialCoverage,
   }), [topicTitle, difficulty, vocabs, chunks, patterns, materialCoverage])
-
-  const materialUsageStats = useMemo(() => {
-    const countInText = (text: string, needle: string) => {
-      const lowerText = text.toLowerCase()
-      const lowerNeedle = needle.trim().toLowerCase()
-      if (!lowerNeedle) return 0
-      return lowerText.split(lowerNeedle).length - 1
-    }
-    const itemStats = local.pipeline.map((item) => {
-      const text = allItemText(item)
-      return {
-        id: item.id,
-        vocabs: vocabs
-          .map((vocab) => ({ ...vocab, count: countInText(text, vocab.word) }))
-          .filter((entry) => entry.count > 0),
-        chunks: chunks
-          .map((chunk) => ({ ...chunk, count: countInText(text, chunk.text) }))
-          .filter((entry) => entry.count > 0),
-        patterns: patterns
-          .map((pattern) => ({ ...pattern, count: countInText(text, pattern.pattern) }))
-          .filter((entry) => entry.count > 0),
-      }
-    })
-    return {
-      itemStats,
-      totals: {
-        vocabs: vocabs.map((vocab) => ({
-          ...vocab,
-          count: itemStats.reduce((sum, stat) => sum + (stat.vocabs.find((entry) => entry.id === vocab.id)?.count ?? 0), 0),
-        })),
-        chunks: chunks.map((chunk) => ({
-          ...chunk,
-          count: itemStats.reduce((sum, stat) => sum + (stat.chunks.find((entry) => entry.id === chunk.id)?.count ?? 0), 0),
-        })),
-        patterns: patterns.map((pattern) => ({
-          ...pattern,
-          count: itemStats.reduce((sum, stat) => sum + (stat.patterns.find((entry) => entry.id === pattern.id)?.count ?? 0), 0),
-        })),
-      },
-    }
-  }, [local.pipeline, vocabs, chunks, patterns])
 
   const deleteItem = (idx: number) => {
     const deletedId = local.pipeline[idx]?.id
@@ -459,6 +614,188 @@ export function WarmupPipelineTab({
       toast.error(err?.message || '批量生成 AI 提示失败')
     } finally {
       setAiHintingAll(false)
+    }
+  }
+
+  const generateMissingPracticeItems = async () => {
+    const missingVocabs = materialUsageStats.totals.vocabs.filter((entry) => entry.count === 0)
+    const missingChunks = materialUsageStats.totals.chunks.filter((entry) => entry.count === 0)
+    const missingPatterns = materialUsageStats.totals.patterns.filter((entry) => entry.count === 0)
+    const missingCount = missingVocabs.length + missingChunks.length + missingPatterns.length
+    if (!missingCount) {
+      toast.success('当前材料都已经覆盖')
+      return
+    }
+
+    setAiGeneratingMissing(true)
+    try {
+      const { post } = await import('@/lib/request')
+      const generatedItems: WarmupPipelineItem[] = []
+      const plannedTypeCounts: Record<WarmupPipelineItem['type'], number> = {
+        chunk_substitution: local.pipeline.filter((item) => item.type === 'chunk_substitution').length,
+        vocab_sentence_building: local.pipeline.filter((item) => item.type === 'vocab_sentence_building').length,
+        sentence_decomposition: local.pipeline.filter((item) => item.type === 'sentence_decomposition').length,
+        pattern_drill: local.pipeline.filter((item) => item.type === 'pattern_drill').length,
+      }
+      const chooseType = <T extends WarmupPipelineItem['type']>(options: T[]) => {
+        const minCount = Math.min(...options.map((type) => plannedTypeCounts[type]))
+        const candidates = options.filter((type) => plannedTypeCounts[type] === minCount)
+        const selected = candidates[Math.floor(Math.random() * candidates.length)] ?? options[0]
+        plannedTypeCounts[selected] += 1
+        return selected
+      }
+
+      const buildSubstitutionItem = async (target: { text: string; meaning?: string; kind: 'word' | 'chunk' }) => {
+        const res: any = await post('/practice-ai/generate-drills', {
+          type: 'chunk_substitution',
+          keyword: target.text,
+          meaning: target.meaning || '',
+          direction: 'zh_to_en',
+          kind: target.kind,
+          count: 4,
+          ...generationContext,
+        }, { timeout: WARMUP_BATCH_AI_TIMEOUT_MS })
+        if (!Array.isArray(res?.items) || !res.items.length) return null
+        return {
+          id: genId(),
+          type: 'chunk_substitution' as const,
+          title: `${target.text} ${target.kind === 'word' ? '单词替换' : '句块替换'}`,
+          chunk: target.text,
+          chunkMeaning: target.meaning || '',
+          direction: 'zh_to_en' as const,
+          kind: target.kind,
+          items: res.items.map((it: any) => ({
+            zh: it.zh ?? it.en ?? '',
+            answer: it.answer ?? '',
+            hint: it.hint ?? '',
+          })),
+        }
+      }
+
+      const buildVocabBuildingItem = async (target: { word: string; meaning?: string }) => {
+        const res: any = await post('/practice-ai/generate-drills', {
+          type: 'vocab_sentence_building',
+          keyword: target.word,
+          meaning: target.meaning || '',
+          direction: 'zh_to_en',
+          count: 3,
+          chunks: chunks.map((chunk) => chunk.text).slice(0, 10),
+          ...generationContext,
+        }, { timeout: WARMUP_BATCH_AI_TIMEOUT_MS })
+        if (!Array.isArray(res?.patterns) || !res.patterns.length) return null
+        return {
+          id: genId(),
+          type: 'vocab_sentence_building' as const,
+          title: `${target.word} 一词多句`,
+          vocabWord: target.word,
+          vocabMeaning: target.meaning || '',
+          direction: 'zh_to_en' as const,
+          patterns: res.patterns.map((pattern: any) => ({
+            chunk: pattern.chunk || target.word,
+            items: (pattern.items ?? []).map((it: any) => ({
+              zh: it.zh ?? it.en ?? '',
+              answer: it.answer ?? '',
+              hint: it.hint ?? '',
+            })),
+          })),
+        }
+      }
+
+      const buildPatternDrillItem = async (target: { pattern: string; meaning?: string }) => {
+        const res: any = await post('/practice-ai/generate-drills', {
+          type: 'pattern_drill',
+          keyword: target.pattern,
+          meaning: target.meaning || '',
+          direction: 'zh_to_en',
+          count: 4,
+          ...generationContext,
+        }, { timeout: WARMUP_BATCH_AI_TIMEOUT_MS })
+        if (!Array.isArray(res?.items) || !res.items.length) return null
+        return {
+          id: genId(),
+          type: 'pattern_drill' as const,
+          title: `${target.pattern} 句型操练`,
+          pattern: target.pattern,
+          patternMeaning: target.meaning || '',
+          direction: 'zh_to_en' as const,
+          items: res.items.map((it: any) => ({
+            zh: it.zh ?? it.en ?? '',
+            answer: it.answer ?? '',
+            hint: it.hint ?? '',
+          })),
+        }
+      }
+
+      const buildSentenceDecompositionItem = async (target: { text: string; meaning?: string; sourceKind: 'vocab' | 'chunk' | 'pattern' }) => {
+        const sentenceRes: any = await post('/practice-ai/generate-drills', {
+          type: 'sentence_decomposition',
+          keyword: target.text,
+          meaning: target.meaning || '',
+          generateSentence: true,
+          ...generationContext,
+        }, { timeout: WARMUP_BATCH_AI_TIMEOUT_MS })
+        const fullSentence = sentenceRes?.fullSentence || target.text
+        const decompRes: any = await post('/practice-ai/generate-drills', {
+          type: 'sentence_decomposition',
+          keyword: fullSentence,
+          sentence: fullSentence,
+          zh: sentenceRes?.fullSentenceZh || target.meaning || '',
+          count: 5,
+          ...generationContext,
+        }, { timeout: WARMUP_BATCH_AI_TIMEOUT_MS })
+        if (!Array.isArray(decompRes?.levels) || !decompRes.levels.length) return null
+        return {
+          id: genId(),
+          type: 'sentence_decomposition' as const,
+          title: `${fullSentence.slice(0, 20)}${fullSentence.length > 20 ? '...' : ''} 句子拆解`,
+          sourceText: target.text,
+          sourceKind: target.sourceKind,
+          fullSentence,
+          fullSentenceZh: sentenceRes?.fullSentenceZh || '',
+          levels: decompRes.levels,
+        }
+      }
+
+      const targets = [
+        ...missingVocabs.map((vocab) => ({ group: 'vocab' as const, ...vocab })),
+        ...missingChunks.map((chunk) => ({ group: 'chunk' as const, ...chunk })),
+        ...missingPatterns.map((pattern) => ({ group: 'pattern' as const, ...pattern })),
+      ].sort(() => Math.random() - 0.5)
+
+      for (const target of targets) {
+        let item: WarmupPipelineItem | null = null
+        if (target.group === 'vocab') {
+          const type = chooseType(['chunk_substitution', 'vocab_sentence_building'])
+          item = type === 'chunk_substitution'
+            ? await buildSubstitutionItem({ text: target.word, meaning: target.meaning, kind: 'word' })
+            : await buildVocabBuildingItem({ word: target.word, meaning: target.meaning })
+        } else if (target.group === 'chunk') {
+          const type = chooseType(['chunk_substitution', 'sentence_decomposition'])
+          item = type === 'chunk_substitution'
+            ? await buildSubstitutionItem({ text: target.text, meaning: target.meaning, kind: 'chunk' })
+            : await buildSentenceDecompositionItem({ text: target.text, meaning: target.meaning, sourceKind: 'chunk' })
+        } else {
+          const type = chooseType(['pattern_drill', 'sentence_decomposition'])
+          item = type === 'pattern_drill'
+            ? await buildPatternDrillItem({ pattern: target.pattern, meaning: target.meaning })
+            : await buildSentenceDecompositionItem({ text: target.pattern, meaning: target.meaning, sourceKind: 'pattern' })
+        }
+        if (item) generatedItems.push(item)
+      }
+
+      if (!generatedItems.length) {
+        toast.error('AI 没有生成可用题目，请稍后重试')
+        return
+      }
+
+      const nextPipeline = [...local.pipeline, ...generatedItems]
+      commit({ pipeline: nextPipeline })
+      setSelectedItemId(generatedItems[0].id)
+      toast.success(`已补齐生成 ${generatedItems.length} 个题组`)
+    } catch (err: any) {
+      toast.error(err?.message || '全部 AI 生成失败')
+    } finally {
+      setAiGeneratingMissing(false)
     }
   }
 
@@ -649,6 +986,7 @@ export function WarmupPipelineTab({
     { label: '句块', items: materialUsageStats.totals.chunks, usedIds: materialCoverage.chunkIds, getText: (item: { text: string }) => item.text },
     { label: '句型', items: materialUsageStats.totals.patterns, usedIds: materialCoverage.patternIds, getText: (item: { pattern: string }) => item.pattern },
   ]
+  const missingMaterialCount = materialGroups.reduce((sum, group) => sum + group.items.filter((item: any) => item.count === 0).length, 0)
   const getItemMaterialStats = (itemId: string) => materialUsageStats.itemStats.find((stat) => stat.id === itemId)
 
   const renderItemForm = (item: WarmupPipelineItem, idx: number) => {
@@ -815,7 +1153,7 @@ export function WarmupPipelineTab({
             size="icon"
             className="size-8"
             title="上一个话题"
-            disabled={!onPrevTopic || aiHintingAll}
+            disabled={!onPrevTopic || aiGeneratingMissing || aiHintingAll || aiAudioAll}
             onClick={onPrevTopic}
           >
             <ChevronLeft className="size-4" />
@@ -826,7 +1164,7 @@ export function WarmupPipelineTab({
             size="icon"
             className="size-8"
             title="下一个话题"
-            disabled={!onNextTopic || aiHintingAll}
+            disabled={!onNextTopic || aiGeneratingMissing || aiHintingAll || aiAudioAll}
             onClick={onNextTopic}
           >
             <ChevronRight className="size-4" />
@@ -835,7 +1173,18 @@ export function WarmupPipelineTab({
             type="button"
             size="sm"
             className="h-8 gap-1.5"
-            disabled={aiHintingAll || aiAudioAll || totalHintableItems === 0}
+            disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll || missingMaterialCount === 0}
+            onClick={generateMissingPracticeItems}
+          >
+            {aiGeneratingMissing ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+            全部 AI 生成{missingMaterialCount ? ` ${missingMaterialCount}` : ''}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1.5"
+            disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll || totalHintableItems === 0}
             onClick={generateAllHints}
           >
             {aiHintingAll ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
@@ -846,7 +1195,7 @@ export function WarmupPipelineTab({
             size="sm"
             variant="outline"
             className="h-8 gap-1.5"
-            disabled={aiHintingAll || aiAudioAll}
+            disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll}
             onClick={generateAllEnglishAudio}
           >
             {aiAudioAll ? <Loader2 className="size-3.5 animate-spin" /> : <Volume2 className="size-3.5" />}

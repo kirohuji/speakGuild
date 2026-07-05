@@ -13,6 +13,8 @@ export interface SentenceDecompositionItem {
   id: string
   type: 'sentence_decomposition'
   title: string
+  sourceText?: string
+  sourceKind?: 'vocab' | 'chunk' | 'pattern'
   fullSentence: string
   fullSentenceZh: string
   levels: Array<{
