@@ -600,9 +600,228 @@ Alice: Great choice! Let me show you our collection.
 
 ---
 
+## 动态地图编辑器设计
+
+动态地图编辑器的方向是：PixiJS 负责地图舞台和高频交互，React 负责编辑器外壳、表单、面板和保存逻辑；数据库保存一份清晰的地图文档，而不是把建筑、触发器、装饰物都塞进 `GameLocation`。
+
+### 当前边界
+
+已经存在的能力：
+
+- `GameMap` / `GameLocation` / `GameRoom` 已经能表达地图、地点和房间导航。
+- 前端已有 NQTR 内容工坊入口和地图管理 tab。
+- 运行时可以通过地点进入 VN 场景或对话内容。
+
+需要避免的混乱点：
+
+- `GameLocation` 只负责游戏导航语义，不应该承担所有地图对象。
+- 百分比坐标适合简单地点标记，但动态地图还需要世界坐标、缩放、网格吸附、对象尺寸、旋转、锚点、层级排序和碰撞范围。
+- React 不适合承担高频拖拽和渲染循环；Pixi 不适合承担复杂表单和业务状态。
+
+### 推荐数据模型
+
+```typescript
+interface MapDocument {
+  mapId: string
+  version: number
+  canvas: {
+    width: number
+    height: number
+    backgroundAssetId?: string
+    gridSize?: number
+  }
+  layers: MapLayer[]
+  objects: MapObject[]
+}
+
+interface MapLayer {
+  id: string
+  name: string
+  visible: boolean
+  locked: boolean
+  order: number
+}
+
+interface MapObject {
+  id: string
+  layerId: string
+  type: 'location' | 'sprite' | 'trigger' | 'decoration'
+  x: number
+  y: number
+  width?: number
+  height?: number
+  rotation?: number
+  zIndex?: number
+  assetId?: string
+  locationId?: string
+  roomId?: string
+  behavior?: Record<string, unknown>
+}
+```
+
+`Location` / `Room` 仍然负责“用户能去哪儿、触发什么内容”；`MapObject` 负责“地图上看起来是什么、怎么被编辑”。
+
+### 编辑器能力分期
+
+第一阶段：整理现有地图编辑器
+
+- Pixi 舞台展示地图背景、地点 marker、基础拖拽。
+- React 属性面板编辑地点名称、坐标、解锁条件和关联内容。
+- 保存时只写已有 `GameLocation` 字段，降低迁移风险。
+
+第二阶段：引入正式地图对象
+
+- 新增 `MapDocument` / `MapObject` 存储结构。
+- 支持图层、sprite、trigger、decoration。
+- 支持对象复制、删除、锁定、隐藏、网格吸附和层级排序。
+
+第三阶段：运行时预览接近真实游戏
+
+- 编辑模式和预览模式使用同一份 `MapDocument`。
+- 预览模式隐藏编辑控件，只保留可点击对象、导航和 VN 入口。
+- 地图对象行为通过 `behavior` 或脚本配置驱动，而不是写死在组件里。
+
+## VN 预览布局与混合模式
+
+NQTR 故事预览分为四种模式：
+
+1. **竖屏**：模拟移动端正式练习体验。
+2. **横屏**：方便后台编辑时检查舞台和角色站位。
+3. **混合模式**：上半区横屏 VN 舞台，下半区歌词式台词列表，可线性 seek。
+4. **视频模式**：Remotion Player + 歌词列表，后续支持导出 MP4。
+
+### 混合模式核心决策
+
+混合模式不使用 InkJS 引擎。它直接将 `parseComposer()` 产出的 `ComposerScene[]` 铺平成 `MixedTimelineFrame[]`，像视频时间轴一样任意 seek。每一帧自包含渲染所需的全部场景状态，点击任意帧只改变 `activeFrameIndex`，不会调用 `saveState()` / `loadState()` / `continue()` / `choose()`。
+
+```typescript
+interface MixedTimelineFrame {
+  id: string
+  index: number
+  sceneId: string
+  nodeName?: string
+  speaker?: string
+  text: string
+  translation?: string
+  backgroundUrl?: string
+  bgFit?: 'cover' | 'contain'
+  expression?: string
+  position?: 'left' | 'center' | 'right'
+  audioUrl?: string
+  isUser?: boolean
+  source: 'line' | 'defaultAnswer' | 'choice' | 'system'
+}
+```
+
+### Wait/Input 默认回答
+
+混合模式需要完整播放包含 `# wait:input` 的 VN，但它本身不允许管理员手动输入。因此等待用户输入节点需要 `defaultAnswer`：
+
+```ink
+# objective:Greet the receptionist and introduce yourself
+# hint:Try using "I'm here to check in."
+# chunks:I'm here to..., My name is...
+# defaultAnswer:Hi, I'm Alex. I'm here to check in.
+# wait:input
+```
+
+规则：
+
+- `defaultAnswer` 只用于 admin 混合模式自动推进，不代表正式用户答案。
+- 混合模式不显示输入框，也不显示 `objective`、`hint`、`chunks`。
+- 第一版建议跳过 AI 评估，直接使用默认回答推进，避免只读预览被异步评估卡住。
+- 缺少 `defaultAnswer` 时，时间轴停止展开后续帧，并在歌词栏提示缺失默认回答。
+
+### 组件边界
+
+| 组件 | 职责 |
+|------|------|
+| `InkStoryEditor` | 管理 preview layout，提供竖屏、横屏、混合、视频入口。 |
+| `VnStoryPreview` | 根据模式选择普通 VN player 或混合/视频预览。 |
+| `flattenComposerToTimeline()` | 将 composer 数据展开为线性帧列表。 |
+| `VnMixedPreviewPlayer` | 纯展示组件，渲染 Pixi 舞台、歌词列表和 seek 状态。 |
+| `PixiVnStage` | 从 `VnPlayer` 中拆出的可复用舞台层，避免复制 Pixi 初始化逻辑。 |
+
+### 混合模式验收标准
+
+- 上半区是横屏 VN 舞台，下半区是可滚动台词列表。
+- 点击歌词列表任意项，舞台同步渲染该帧。
+- 当前句自动高亮，并在 activeIndex 变化时滚动到可见位置。
+- 播放 / 暂停 / 上一句 / 下一句状态一致。
+- 混合模式不写正式用户练习结果，不触发 AI 评估。
+
+## Remotion 视频模式
+
+视频模式与混合模式共享业务能力，但渲染层使用 React + Remotion。第一阶段先在 admin 中实现可播放的视频预览；后续再接服务端导出 MP4。
+
+### 选型原则
+
+- Remotion Player 负责 frame-accurate 预览和 seek。
+- Remotion timeline 使用明确的 frame/duration 表达每句台词的起止。
+- 视频画面用 React DOM / CSS / image / audio 重建 VN 画面，不把 Pixi canvas 直接塞进 Remotion composition。
+- admin UI 的歌词 list 和跟读 drawer 不进入视频画面。
+
+### 数据模型
+
+```typescript
+interface RemotionTimelineFrame extends MixedTimelineFrame {
+  startFrame: number
+  endFrame: number
+  durationFrames: number
+  resolvedAudioUrl?: string
+  audioSource?: 'tts' | 'recording' | 'none'
+}
+
+interface RemotionVideoInput {
+  fps: number
+  width: number
+  height: number
+  frames: RemotionTimelineFrame[]
+}
+```
+
+### 组件结构
+
+| 组件 / 函数 | 职责 |
+|-------------|------|
+| `buildRemotionTimeline()` | 从 mixed timeline 生成带 frame 区间的 Remotion timeline。 |
+| `NqtrVideoComposition` | Remotion composition 本体，渲染背景、角色、台词和音频。 |
+| `NqtrVideoPlayer` | 包装 Remotion Player，负责播放、暂停、seek 和当前帧回调。 |
+| `NqtrVideoPreviewPlayer` | Admin 预览 UI：上半区 Player，下半区歌词 list 和控制条。 |
+
+### 与混合模式的关系
+
+| 模式 | 渲染层 | 时间轴 | 适用场景 |
+|------|--------|--------|----------|
+| mixed | Pixi stage + React list | `MixedTimelineFrame[]` | 后台快速预览、检查 VN 状态。 |
+| video | Remotion Player | `RemotionTimelineFrame[]` | 视频预览、后续导出 MP4。 |
+
+播放互斥规则：TTS、Remotion、用户录音只能同时播放一个。点击录音回放或打开跟读 drawer 时，应暂停 Remotion Player。
+
+### 后端导出方向
+
+服务端导出 MP4 的流程：
+
+1. 前端提交 `RemotionVideoInput` 或故事 ID + 版本。
+2. 后端解析故事、补齐私有资源 URL 和音频资源。
+3. 调用 Remotion renderer 的 `renderMedia()`。
+4. 上传 MP4 到 COS，返回 `FileAsset`。
+5. 用户录音替换音轨时，先确认录音格式可被 Chromium 播放；必要时后端转码为 `mp3` 或 `wav`。
+
+第一版不要求完成服务端导出，只要求 admin 视频预览可播放、可 seek、歌词 list 高亮正确。
+
+### 风险
+
+- 音频自动播放限制：需要用户手势后播放。
+- 私有资源 URL 过期：导出时必须重新签名或使用服务端可读资源。
+- 前后端 parser 漂移：视频导出应复用同一套 composer/timeline 规则。
+- Pixi 与 Remotion 不兼容：不要依赖 WebGL/canvas 进入无头导出链路。
+
+---
+
 ## 相关文档
 
 - [Ink 标签规则说明](./Ink标签规则说明.md) — Ink DSL 完整语法参考
 - [内容架构设计](./内容架构设计.md) — 整体内容体系设计
 - [输出练习链路设计方案](./输出练习链路设计方案.md) — 用户练习流程
-- [学习计划与今日任务联动设计](./学习计划与今日任务联动设计.md) — 学习路径
+- [学习包离线与今日任务系统](./学习包离线与今日任务系统.md) — 学习路径、离线包和今日任务

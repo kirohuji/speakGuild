@@ -1,8 +1,57 @@
-# 本地 STT 离线识别方案
+# 本地 AI 与语音能力方案
 
-> 目标：参照当前“本地 AI 判题”的实现方式，为语音转文字增加可选本地 STT 能力。用户可通过开关启用本地 STT，选择模型 variant，Web 与 Capacitor 双端共用同一套上层 API；模型下载、状态、占用和清理统一放进存储管理。
+> 本文档合并原 `本地STT离线识别方案.md` 和 `transformers-功能总览.md`。目标是统一记录本地 warmup judge、本地 STT、Transformers.js 使用边界和云端兜底策略。
 
-## 一、现状
+## 一、当前本地 AI 使用情况
+
+当前项目只正式使用 `@huggingface/transformers` 的 feature extraction：
+
+| 项目 | 详情 |
+|---|---|
+| 功能 | `feature-extraction` |
+| 模型 | `Xenova/all-MiniLM-L6-v2`，384 维句子嵌入 |
+| 代码位置 | `apps/frontend/src/lib/local-ai/warmup-embedding.worker.ts` |
+| 用途 | 对用户答案和参考答案做语义相似度判断 |
+| 推理参数 | `extractor(text, { pooling: 'mean', normalize: true })` |
+| 量化精度 | 默认 `q8`，可选 `fp16` / `fp32` |
+| 运行环境 | Web Worker，浏览器 WebView / Capacitor App |
+
+处理流程：
+
+```text
+用户作答
+  → Worker 用 MiniLM 算用户答案向量
+  → 与参考答案向量做 cosine similarity
+  → 结合词面重叠率、目标表达命中率
+  → 输出 strong / ok / weak / miss
+  → 低置信度 fallback 到云端 DeepSeek
+```
+
+设计原则：
+
+- 本地 AI 只做预筛，不做不可解释的最终判定。
+- 低置信度自动回退云端。
+- 模型健康错误会自动关闭本地 AI 开关。
+- 所有本地推理必须在 Web Worker 中运行，避免阻塞 UI。
+
+## 二、Transformers.js 扩展边界
+
+项目可考虑的本地化方向：
+
+| 优先级 | 功能 | 理由 | 模型参考 |
+|---|---|---|---|
+| 高 | Sentence Similarity | 可能替换当前手写 cosine 流程 | `Xenova/all-MiniLM-L6-v2` |
+| 中 | Text-to-text Generation | 小模型做翻译/改写/纠错，减轻云端压力 | `Xenova/LaMini-Flan-T5-77M` |
+| 中 | Automatic Speech Recognition | 本地语音转文字，减少 Whisper API 调用 | `Xenova/whisper-tiny` |
+| 低 | Text Classification | 判断作文/口语级别 | DistilBERT 类模型 |
+
+约束：
+
+- 移动端本地模型优先控制在 50MB 左右；STT 模型可以更大，但必须用户主动下载。
+- 生成式大模型、LLaMA、GPT-2 等不适合当前移动端本地加载。
+- 优先使用量化模型；WebGPU 只能作为检测后的加速选项。
+
+## 三、本地 STT 现状
 
 当前语音输入链路主要在：
 
