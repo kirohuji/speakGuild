@@ -378,41 +378,107 @@ const exerciseSignature = (item: HintableWarmupItem, direction?: string) => [
 ].filter(Boolean).join(' => ')
 
 function compactWarmupPipeline(pipeline: WarmupPipelineItem[]) {
-  const globalSignatures: string[] = []
   let removedCount = 0
 
-  const keepUniqueExercises = <T extends HintableWarmupItem>(items: T[], direction?: string, minKeep = 2) => {
+  const keepUniqueExercises = <T extends HintableWarmupItem>(
+    items: T[],
+    globalSigs: string[],
+    direction?: string,
+    minKeep = 2,
+  ) => {
     const kept: T[] = []
+    const localSigs: string[] = []
     for (const item of items) {
       const signature = exerciseSignature(item, direction)
       const duplicate = signature
-        ? [...kept.map((it) => exerciseSignature(it, direction)), ...globalSignatures].some((existing) => isSimilarExercise(signature, existing))
+        ? [...localSigs, ...globalSigs].some((existing) => isSimilarExercise(signature, existing))
         : false
       if (duplicate && kept.length >= minKeep) {
         removedCount += 1
         continue
       }
       kept.push(item)
-      if (signature) globalSignatures.push(signature)
+      if (signature) localSigs.push(signature)
     }
-    return kept
+    // Return kept items AND their signatures (to feed into global tracking)
+    return { kept, sigs: localSigs }
   }
 
-  const nextPipeline = pipeline.map((item) => {
-    if (item.type === 'chunk_substitution' || item.type === 'pattern_drill') {
-      return {
-        ...item,
-        items: keepUniqueExercises(item.items, item.direction, Math.min(2, item.items.length)),
-      }
+  // ── Phase 1: Merge same-type groups with same target material ──
+  const mergeKey = (item: WarmupPipelineItem): string | null => {
+    if (item.type === 'sentence_decomposition') return null // never merge
+    if (item.type === 'chunk_substitution') {
+      return `${item.type}|${item.direction ?? 'zh_to_en'}|${normalizeForUsage(item.chunk)}|${item.kind ?? 'chunk'}`
+    }
+    if (item.type === 'pattern_drill') {
+      return `${item.type}|${item.direction ?? 'zh_to_en'}|${normalizeForUsage(item.pattern)}`
     }
     if (item.type === 'vocab_sentence_building') {
-      return {
-        ...item,
-        patterns: item.patterns.map((pattern) => ({
-          ...pattern,
-          items: keepUniqueExercises(pattern.items, item.direction, Math.min(2, pattern.items.length)),
-        })).filter((pattern) => pattern.items.length > 0),
+      return `${item.type}|${normalizeForUsage(item.vocabWord)}`
+    }
+    return null
+  }
+
+  const merged = new Map<string, WarmupPipelineItem>()
+  const mergeOrder: string[] = []
+
+  for (const item of pipeline) {
+    const key = mergeKey(item)
+    if (key === null) {
+      mergeOrder.push(`__sole__${item.id}`)
+      merged.set(`__sole__${item.id}`, item)
+      continue
+    }
+
+    const existing = merged.get(key)
+    if (!existing) {
+      mergeOrder.push(key)
+      merged.set(key, item)
+      continue
+    }
+
+    // Merge items from item into existing (just concatenate, dedup in Phase 2)
+    if (existing.type === 'chunk_substitution' && item.type === 'chunk_substitution') {
+      merged.set(key, { ...existing, items: [...existing.items, ...item.items] })
+    } else if (existing.type === 'pattern_drill' && item.type === 'pattern_drill') {
+      merged.set(key, { ...existing, items: [...existing.items, ...item.items] })
+    } else if (existing.type === 'vocab_sentence_building' && item.type === 'vocab_sentence_building') {
+      const allPatterns = [...existing.patterns, ...item.patterns]
+      const patternMap = new Map<string, (typeof allPatterns)[number]>()
+      for (const p of allPatterns) {
+        const pk = normalizeForUsage(p.chunk)
+        const ep = patternMap.get(pk)
+        if (ep) {
+          patternMap.set(pk, { ...ep, items: [...ep.items, ...p.items] })
+        } else {
+          patternMap.set(pk, p)
+        }
       }
+      merged.set(key, {
+        ...existing,
+        patterns: [...patternMap.values()].filter((p) => p.items.length > 0),
+      })
+    }
+  }
+
+  let nextPipeline = mergeOrder.map((key) => merged.get(key)!).filter(Boolean)
+
+  // ── Phase 2: Fresh intra-group dedup on merged result ──
+  const globalSignatures: string[] = []
+
+  nextPipeline = nextPipeline.map((item) => {
+    if (item.type === 'chunk_substitution' || item.type === 'pattern_drill') {
+      const { kept } = keepUniqueExercises(item.items, globalSignatures, item.direction, Math.min(2, item.items.length))
+      globalSignatures.push(...kept.map((it) => exerciseSignature(it, item.direction)).filter(Boolean))
+      return { ...item, items: kept }
+    }
+    if (item.type === 'vocab_sentence_building') {
+      const nextPatterns = item.patterns.map((pattern) => {
+        const { kept } = keepUniqueExercises(pattern.items, globalSignatures, item.direction, Math.min(2, pattern.items.length))
+        globalSignatures.push(...kept.map((it) => exerciseSignature(it, item.direction)).filter(Boolean))
+        return { ...pattern, items: kept }
+      }).filter((pattern) => pattern.items.length > 0)
+      return { ...item, patterns: nextPatterns }
     }
     return item
   }).filter((item) => {
@@ -501,6 +567,7 @@ export function WarmupPipelineTab({
   const [aiGeneratingMissing, setAiGeneratingMissing] = useState(false)
   const [aiHintingAll, setAiHintingAll] = useState(false)
   const [aiAudioAll, setAiAudioAll] = useState(false)
+  const [compacting, setCompacting] = useState(false)
   const [teachingGenerating, setTeachingGenerating] = useState(false)
   const [teachingMode, setTeachingMode] = useState<'edit' | 'preview'>('edit')
   const prevIdsRef = useRef<string>('')
@@ -576,14 +643,37 @@ export function WarmupPipelineTab({
   }
 
   const compactDuplicates = (showToast = true) => {
-    const result = compactWarmupPipeline(local.pipeline)
-    if (!result.removedCount) {
-      if (showToast) toast.success('没有发现需要压缩的重复题目')
-      return result
+    console.log('[compactDuplicates] clicked, pipeline length:', local.pipeline.length)
+    if (compacting) {
+      console.log('[compactDuplicates] already compacting, skip')
+      return { pipeline: local.pipeline, removedCount: 0 }
     }
-    commit({ pipeline: result.pipeline })
-    if (showToast) toast.success(`已去掉 ${result.removedCount} 条重复/相似题目`)
-    return result
+    setCompacting(true)
+    try {
+      const t0 = performance.now()
+      const result = compactWarmupPipeline(local.pipeline)
+      console.log('[compactDuplicates] done in', (performance.now() - t0).toFixed(1), 'ms, removed:', result.removedCount,
+        'before:', local.pipeline.length, 'after:', result.pipeline.length)
+      if (!result.removedCount) {
+        const merged = result.pipeline.length !== local.pipeline.length
+        const msg = merged
+          ? `已合并 ${local.pipeline.length - result.pipeline.length} 个重复题组，未发现需要去重的题目`
+          : '没有发现需要压缩的重复题目'
+        if (showToast) toast.success(msg)
+        commit({ pipeline: result.pipeline })
+        return result
+      }
+      commit({ pipeline: result.pipeline })
+      if (showToast) toast.success(`已去掉 ${result.removedCount} 条重复/相似题目`)
+      return result
+    } catch (err: any) {
+      const msg = `去重压缩失败: ${err?.message || '未知错误'}`
+      console.error('[compactDuplicates] error:', err)
+      if (showToast) toast.error(msg)
+      return { pipeline: local.pipeline, removedCount: 0 }
+    } finally {
+      setCompacting(false)
+    }
   }
 
   const generateAllHints = async () => {
@@ -1324,10 +1414,10 @@ export function WarmupPipelineTab({
             size="sm"
             variant="outline"
             className="h-8 gap-1.5"
-            disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll || totalPracticeItems === 0}
+            disabled={compacting || aiGeneratingMissing || aiHintingAll || aiAudioAll || totalPracticeItems === 0}
             onClick={() => compactDuplicates(true)}
           >
-            <Scissors className="size-3.5" />
+            {compacting ? <Loader2 className="size-3.5 animate-spin" /> : <Scissors className="size-3.5" />}
             去重压缩
           </Button>
           <Button
