@@ -202,3 +202,36 @@ export class GenerateDrillsDto {
     patternIds?: string[];
   };
 }
+
+export class GenerateWarmupPipelineDto {
+  @IsString()
+  @IsOptional()
+  topicTitle?: string;
+
+  @IsString()
+  @IsOptional()
+  difficulty?: string;
+
+  @IsObject()
+  @IsOptional()
+  materials?: {
+    vocabs?: Array<{ id?: string; word?: string; meaning?: string; count?: number }>;
+    chunks?: Array<{ id?: string; text?: string; meaning?: string; count?: number }>;
+    patterns?: Array<{ id?: string; pattern?: string; meaning?: string; count?: number }>;
+  };
+
+  @IsObject()
+  @IsOptional()
+  structure?: {
+    zhToEnItems?: number;
+    enToZhItems?: number;
+    patternItems?: number;
+    expansionUnits?: number;
+    steps?: number;
+    totalItems?: number;
+  };
+
+  @IsArray()
+  @IsOptional()
+  previousPipeline?: Array<Record<string, unknown>>;
+}

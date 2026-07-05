@@ -1,7 +1,7 @@
 import { Body, Controller, Param, Post, Req, HttpException } from '@nestjs/common';
 import type { Request } from 'express';
 import { EnglishPracticeAiService } from './english-practice-ai.service';
-import { DialogueTurnJudgeDto, PlacementAssessmentDto, GenerateDrillsDto, WarmupTurnJudgeDto } from './dto/english-feedback.dto';
+import { DialogueTurnJudgeDto, PlacementAssessmentDto, GenerateDrillsDto, GenerateWarmupPipelineDto, WarmupTurnJudgeDto } from './dto/english-feedback.dto';
 import { EnglishPracticeService } from '../practice/english-practice.service';
 import { requireAuthSession } from '../auth/session.util';
 import { AiQuotaService } from '../../common/ai-quota/ai-quota.service';
@@ -99,5 +99,12 @@ export class EnglishPracticeAiController {
   async generateDrills(@Req() req: Request, @Body() dto: GenerateDrillsDto) {
     await requireAuthSession(req);
     return this.service.generateDrills(dto);
+  }
+
+  /** AI 一次性补齐知识点练习：根据材料覆盖和结构目标生成多个题组 */
+  @Post('generate-warmup-pipeline')
+  async generateWarmupPipeline(@Req() req: Request, @Body() dto: GenerateWarmupPipelineDto) {
+    await requireAuthSession(req);
+    return this.service.generateWarmupPipeline(dto);
   }
 }

@@ -297,7 +297,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
       </div>
 
       {/* Patterns */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label className="text-xs">句型搭配 ({local.patterns.length})</Label>
           <div className="flex gap-2">
@@ -312,29 +312,63 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
             <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={addPattern}><Plus className="size-3" />添加句型</Button>
           </div>
         </div>
-        {local.patterns.map((pattern, pIdx) => (
-          <div key={pIdx} className="space-y-2 rounded border border-border/40 bg-background/50 p-3">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-muted-foreground">句型 {pIdx + 1}</span>
-              <Input className="h-7 flex-1 text-xs" value={pattern.chunk}
-                onChange={e => updatePattern(pIdx, { chunk: e.target.value })} placeholder="e.g. I'd like to..." />
-              <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => addPatternItem(pIdx)}><Plus className="size-3" /></Button>
-            </div>
-            {chunks.length > 0 && pIdx === 0 && (
-              <div className="flex flex-wrap gap-1">
-                {chunks.slice(0, 6).map(c => (
-                  <Badge key={c.id} variant="outline" className={cn('cursor-pointer text-[10px]', pattern.chunk === c.text && 'border-primary')}
-                    onClick={() => updatePattern(pIdx, { chunk: c.text })}>{c.text}</Badge>
-                ))}
+
+        {/* 句型编辑行（紧凑） */}
+        {local.patterns.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {local.patterns.map((pattern, pIdx) => (
+              <div key={pIdx} className="flex items-center gap-1 rounded border border-border/40 bg-background/50 px-2 py-1">
+                <span className="text-[10px] text-muted-foreground shrink-0">句型{pIdx + 1}</span>
+                <Input
+                  className="h-6 w-28 text-xs"
+                  value={pattern.chunk}
+                  onChange={e => updatePattern(pIdx, { chunk: e.target.value })}
+                  placeholder="e.g. I'd like to..."
+                />
+                {local.patterns.length > 1 && (
+                  <Button variant="ghost" size="icon-sm" className="size-5 text-destructive"
+                    onClick={() => {
+                      const next = local.patterns.filter((_, i) => i !== pIdx)
+                      commit({ patterns: next.length ? next : [{ chunk: '', items: [{ zh: '', answer: '' }] }] })
+                    }}>
+                    <Trash2 className="size-3" />
+                  </Button>
+                )}
               </div>
-            )}
-            <div className="overflow-x-auto pb-2">
-              <div className="flex min-w-max gap-2">
-                {pattern.items.map((item, iIdx) => (
-                  <div key={iIdx} className="w-[21rem] shrink-0 rounded-md border border-border/60 bg-muted/10 p-2">
+            ))}
+          </div>
+        )}
+        {chunks.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {chunks.slice(0, 8).map(c => (
+              <Badge key={c.id} variant="outline" className={cn('cursor-pointer text-[10px] truncate max-w-[180px]', local.patterns.some(p => p.chunk === c.text) && 'border-primary')}
+                onClick={() => {
+                  // 找到第一个空的 pattern 填充，否则添加新 pattern
+                  const emptyIdx = local.patterns.findIndex(p => !p.chunk.trim())
+                  if (emptyIdx >= 0) {
+                    updatePattern(emptyIdx, { chunk: c.text })
+                  } else {
+                    commit({ patterns: [...local.patterns, { chunk: c.text, items: [{ zh: '', answer: '' }] }] })
+                  }
+                }}>{c.text}</Badge>
+            ))}
+          </div>
+        )}
+
+        {/* 题目卡片列表 — 扁平化，所有 pattern 的 item 统一左右排列 */}
+        <div className="overflow-x-auto pb-2">
+          <div className="flex min-w-max gap-2">
+            {local.patterns.flatMap((pattern, pIdx) =>
+              pattern.items.map((item, iIdx) => {
+                const globalIdx = local.patterns.slice(0, pIdx).reduce((sum, p) => sum + p.items.length, 0) + iIdx
+                return (
+                  <div key={`${pIdx}-${iIdx}`} className="w-[21rem] shrink-0 rounded-md border border-border/60 bg-muted/10 p-2">
                     <div className="mb-1.5 flex items-center justify-between gap-2">
-                      <Badge variant="outline" className="text-[10px]">题 {iIdx + 1}</Badge>
-                      <Button variant="ghost" size="icon-sm" className="text-destructive size-6" onClick={() => removePatternItem(pIdx, iIdx)}>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Badge variant="outline" className="text-[10px] shrink-0">题 {globalIdx + 1}</Badge>
+                        <Badge variant="secondary" className="text-[10px] truncate max-w-[120px] shrink-0">{pattern.chunk || `句型${pIdx + 1}`}</Badge>
+                      </div>
+                      <Button variant="ghost" size="icon-sm" className="text-destructive size-6 shrink-0" onClick={() => removePatternItem(pIdx, iIdx)}>
                         <Trash2 className="size-3" />
                       </Button>
                     </div>
@@ -397,11 +431,22 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                       />
                     </div>
                   </div>
+                )
+              })
+            )}
+            {/* 添加按钮卡片 */}
+            <div className="w-[21rem] shrink-0 rounded-md border border-dashed border-border bg-muted/5 p-2 flex flex-col items-center justify-center gap-2 min-h-[180px]">
+              <span className="text-[10px] text-muted-foreground">添加题目到</span>
+              <div className="flex flex-wrap gap-1.5 justify-center">
+                {local.patterns.map((pattern, pIdx) => (
+                  <Button key={pIdx} size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => addPatternItem(pIdx)}>
+                    <Plus className="size-3" /> {pattern.chunk || `句型${pIdx + 1}`}
+                  </Button>
                 ))}
               </div>
             </div>
           </div>
-        ))}
+        </div>
       </div>
     </div>
   )
