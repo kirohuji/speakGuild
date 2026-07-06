@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Lightbulb, Eye, Loader2, CheckCircle2, ChevronDown, Layers3, Play, Pause, Repeat2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -22,9 +23,9 @@ interface VocabOutputCardProps {
   stepId: string
   direction?: DrillDirection
   onComplete?: (index: number, passed: boolean, score: WarmupScore) => void
-  /** Dialog 已提供题型标签时，隐藏内部 header badge */
+  /** Dialog 已提供题型标签时，隐藏内�?header badge */
   hideHeader?: boolean
-  /** 只读回顾模式：传入已保存的练习数据 */
+  /** 只读回顾模式：传入已保存的练习数�?*/
   reviewData?: {
     userAnswer: string
     passed: boolean
@@ -73,8 +74,9 @@ export function VocabOutputCard({
   hideHeader = false,
   reviewData,
 }: VocabOutputCardProps) {
-  // ── 只读回顾模式：走完全相同的渲染路径 ──
+  // ── 只读回顾模式：走完全相同的渲染路�?──
   const isReview = !!reviewData
+  const { t } = useTranslation()
 
   const store = useWarmupSessionStore()
   const saved = isReview ? undefined : store.stepStates[stepId]
@@ -97,18 +99,18 @@ export function VocabOutputCard({
     if (current?.hint) return current.hint
     if (!current?.targetWords?.length) return null
     const words = current.targetWords.join('、')
-    return `请使用以下词汇表达：${words}。试着把它们放进一个完整的句子里。`
-  }, [current?.hint, current?.targetWords])
+    return t('practiceSession.warmupDrill.vocabHint', { words })
+  }, [current?.hint, current?.targetWords, t])
 
   const skip = useCallback(() => {
     if (!current || judging || result?.passed) return
     const correctionText = current.suggestedAnswer || ''
     setHintLevel('answer')
-    setResult({ passed: false, feedback: '已标记为需要复练。最后会集中再练一次。', correction: correctionText })
+    setResult({ passed: false, feedback: t('practiceSession.warmupDrill.skippedHint'), correction: correctionText })
     onComplete?.(currentIdx, false, 'miss')
     store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
-    store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle: title, displayLabel: '词汇输出', score: 'miss', usedHintLevel: 3, correction: correctionText })
-  }, [current, currentIdx, judging, onComplete, result?.passed, stepId, store, title, userInput])
+    store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle: title, displayLabel: t('todayTask.vocabDrill'), score: 'miss', usedHintLevel: 3, correction: correctionText })
+  }, [current, currentIdx, judging, onComplete, result?.passed, stepId, store, t, title, userInput])
 
   const retryCurrent = useCallback(() => {
     if (isReview || judging) return
@@ -134,23 +136,23 @@ export function VocabOutputCard({
       })
       const score = judgement.passed && hintLevel !== 'none' ? scoreFromHint(judgement.passed, hintLevel) : judgement.score
       if (judgement.passed) {
-        setResult({ passed: true, feedback: judgement.feedback || '正确！' })
+        setResult({ passed: true, feedback: judgement.feedback || t('practiceSession.warmupDrill.correct') })
         setHintLevel('answer')
         onComplete?.(currentIdx, true, score)
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', hintLevel, score })
-        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle: title, displayLabel: '词汇输出', score, usedHintLevel: hintLevelValue(hintLevel) })
+        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle: title, displayLabel: t('todayTask.vocabDrill'), score, usedHintLevel: hintLevelValue(hintLevel) })
       } else {
-        setResult({ passed: false, feedback: judgement.feedback || '再试一次', correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '' })
+        setResult({ passed: false, feedback: judgement.feedback || t('practiceSession.tryAgain'), correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '' })
         onComplete?.(currentIdx, false, 'miss')
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '', hintLevel, score: 'miss' })
-        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle: title, displayLabel: '词汇输出', score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '' })
+        store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle: title, displayLabel: t('todayTask.vocabDrill'), score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '' })
       }
     } catch (err: any) {
-      setResult({ passed: false, feedback: err?.message || '反馈不可用' })
+      setResult({ passed: false, feedback: err?.message || t('practiceSession.warmupDrill.feedbackUnavailable') })
     } finally {
       setJudging(false)
     }
-  }, [userInput, current, judging, currentIdx, isZhToEn, onComplete, stepId, store, title, hintLevel])
+  }, [userInput, current, judging, currentIdx, isZhToEn, onComplete, stepId, store, t, title, hintLevel])
 
   const advance = useCallback(() => {
     setResult(null)
@@ -161,7 +163,7 @@ export function VocabOutputCard({
 
   if (!current) return null
 
-  const promptLabel = isZhToEn ? '语境 / 中文意图' : '用中文说出'
+  const promptLabel = isZhToEn ? t('practiceSession.warmupDrill.contextLabel') : t('practiceSession.warmupDrill.sayInChinese')
   const displayText = isZhToEn ? current.promptZh : (current.suggestedAnswer ?? current.promptZh)
 
   return (
@@ -171,7 +173,7 @@ export function VocabOutputCard({
       <div className="flex items-center gap-2">
         <Badge variant="secondary" className="gap-1 text-[10px]">
           <Layers3 className="size-3" />
-          一词多句
+          {t('todayTask.vocabSentenceBuilding')}
         </Badge>
         <Badge variant="outline" className="text-[10px]">{title}</Badge>
         <span className="ml-auto text-[10px] text-muted-foreground">{currentIdx + 1}/{totalItems}</span>
@@ -181,7 +183,7 @@ export function VocabOutputCard({
       {/* Target words */}
       {isZhToEn && current.targetWords?.length ? (
         <div className="rounded-lg bg-gradient-to-br from-blue-500/8 to-blue-500/3 px-3 py-2.5">
-          <p className="text-xs text-muted-foreground">这题要自然用到</p>
+          <p className="text-xs text-muted-foreground">{t('practiceSession.warmupDrill.targetWordsLabel')}</p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {current.targetWords.map((word) => (
               <span key={word} className="rounded-md bg-blue-500/15 px-2 py-1 text-sm font-medium text-blue-700 dark:text-blue-300">{word}</span>
@@ -195,9 +197,7 @@ export function VocabOutputCard({
         <p className="text-xs text-muted-foreground">{promptLabel}</p>
         <p className="text-base font-semibold text-foreground">{displayText}</p>
         {isZhToEn && (
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            你可以写自己的句子，只要目标词用得自然、意思表达清楚。
-          </p>
+          <p className="text-[11px] text-muted-foreground">{t('practiceSession.warmupDrill.vocabFreeHint')}</p>
         )}
       </div>
 
@@ -213,7 +213,7 @@ export function VocabOutputCard({
             disabled={judging || !!result?.passed}
           >
             {hintLevel === 'answer' ? <Eye className="size-3.5" /> : <Lightbulb className="size-3.5" />}
-            {hintLevel === 'none' ? '提示' : hintLevel === 'hint' ? '查看答案' : '收起答案'}
+            {hintLevel === 'none' ? t('practiceSession.warmupDrill.hint') : hintLevel === 'hint' ? t('practiceSession.showAnswer') : t('practiceSession.warmupDrill.hideAnswer')}
           </Button>
           <button
             type="button"
@@ -221,7 +221,7 @@ export function VocabOutputCard({
             disabled={judging || !!result?.passed}
             className="rounded-full px-3 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground disabled:pointer-events-none disabled:opacity-45"
           >
-            我不会
+            {t('practiceSession.warmupDrill.dontKnow')}
           </button>
         </div>
 
@@ -237,7 +237,7 @@ export function VocabOutputCard({
               <>
                 {teachingHint && <Separator className="opacity-50" />}
                 <div>
-                  <p className="text-[10px] text-muted-foreground mb-1">参考答案</p>
+                  <p className="text-[10px] text-muted-foreground mb-1">{t('practiceSession.warmupDrill.referenceAnswer')}</p>
                   <p className="text-sm font-medium text-foreground">
                     {highlightWords(current.suggestedAnswer, current.targetWords ?? [])}
                   </p>
@@ -247,9 +247,9 @@ export function VocabOutputCard({
             {hintLevel === 'answer' && (
               <details className="text-[10px] text-muted-foreground">
                 <summary className="flex cursor-pointer list-none items-center gap-1 hover:text-foreground">
-                  <ChevronDown className="size-3" /> 学习说明
+                  <ChevronDown className="size-3" /> {t('practiceSession.warmupDrill.learningNote')}
                 </summary>
-                <p className="mt-1">目标是把同一个词放进不同语境里，而不是背这一句参考答案。</p>
+                <p className="mt-1">{t('practiceSession.warmupDrill.learningNoteDesc')}</p>
               </details>
             )}
           </div>
@@ -257,28 +257,28 @@ export function VocabOutputCard({
       </div>
       )}
 
-      {/* 回顾模式：直接展示参考答案 */}
+      {/* 回顾模式：直接展示参考答�?*/}
       {isReview && current.suggestedAnswer && (
         <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-2.5">
-          <p className="text-[10px] text-muted-foreground mb-1">参考答案</p>
+          <p className="text-[10px] text-muted-foreground mb-1">{t('practiceSession.warmupDrill.referenceAnswer')}</p>
           <p className="text-sm font-medium text-foreground">
             {highlightWords(current.suggestedAnswer, current.targetWords ?? [])}
           </p>
         </div>
       )}
 
-      {/* Input — persist on success; 回顾模式 disabled */}
+      {/* Input �?persist on success; 回顾模式 disabled */}
       <PracticeAnswerInput
         value={userInput}
         onChange={(nextValue) => { if (!result?.passed) { setUserInput(nextValue); setResult(null) } }}
-        placeholder={isZhToEn ? '用目标词写一句自然的英文...' : '输入中文...'}
+        placeholder={isZhToEn ? t('practiceSession.warmupDrill.vocabPlaceholder') : t('practiceSession.warmupDrill.inputPlaceholderZh')}
         disabled={isReview || judging || !!result?.passed}
         onEnter={isReview ? undefined : submit}
         onAudioChange={isReview ? undefined : setAudioUrl}
         lang={isZhToEn ? 'en-US' : 'zh-CN'}
       />
 
-      {/* 回顾模式：录音回放 */}
+      {/* 回顾模式：录音回�?*/}
       {isReview && audioUrl && (
         <button
           type="button"
@@ -293,7 +293,7 @@ export function VocabOutputCard({
           className="inline-flex items-center gap-1.5 self-start rounded-full bg-muted/60 px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
         >
           {playing ? <Pause className="size-3" /> : <Play className="size-3 ml-0.5" />}
-          录音回放
+          {t('practiceSession.warmupDrill.audioPlayback')}
         </button>
       )}
 
@@ -302,7 +302,7 @@ export function VocabOutputCard({
         <div className={cn('rounded-lg px-3 py-2', result.passed ? 'bg-green-500/10' : 'bg-amber-500/10')}>
           <div className="flex items-center gap-1.5">
             {result.passed ? <CheckCircle2 className="size-3.5 text-green-500" /> : null}
-            <p className="text-xs font-medium">{result.passed ? '正确！' : '再试一次'}</p>
+            <p className="text-xs font-medium">{result.passed ? t('practiceSession.warmupDrill.correct') : t('practiceSession.tryAgain')}</p>
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground">{result.feedback}</p>
           {result.correction && !result.passed && (
@@ -311,13 +311,13 @@ export function VocabOutputCard({
         </div>
       )}
 
-      {/* Submit — 回顾模式隐藏 */}
+      {/* Submit �?回顾模式隐藏 */}
       {!isReview && (
       <div className="space-y-2">
         {result?.passed ? (
           <Button className="min-h-9 w-full rounded-xl gap-1.5" size="sm" variant="outline" onClick={retryCurrent}>
             <Repeat2 className="size-3.5" />
-            重新练习当前题
+            {t('practiceSession.warmupDrill.retryCurrent')}
           </Button>
         ) : (
           <Button
@@ -326,11 +326,11 @@ export function VocabOutputCard({
             disabled={judging || !userInput.trim()}
           >
             {judging ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-            {judging ? '评判中...' : '提交'}
+            {judging ? t('practiceSession.warmupDrill.judging') : t('practiceSession.submit')}
           </Button>
         )}
         {result && !result.passed && (
-          <p className="text-center text-[11px] text-muted-foreground">已加入本轮错题，最后会集中再练一次。</p>
+          <p className="text-center text-[11px] text-muted-foreground">{t('practiceSession.warmupDrill.failedHint')}</p>
         )}
       </div>
       )}

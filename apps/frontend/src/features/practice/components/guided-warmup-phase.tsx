@@ -283,7 +283,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
               pattern,
               promptIndex: subIdx,
               patternIndex,
-              label: `${item.vocabWord} + ${pattern.chunk}`,
+              label: item.vocabWord,
               displayLabel: '一词多句',
               headerContent: item.vocabWord || pattern.chunk || ref.promptText || '',
               render: (flatId) => (
@@ -294,7 +294,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
                   stepType="vocab_sentence_building"
                   direction={item.direction ?? 'zh_to_en'}
                   kind="word"
-                  groupTitle={`${item.vocabWord} + ${pattern.chunk}`}
+                  groupTitle={item.vocabWord}
                   onComplete={(_subIdx, _passed, score) => markDone(flatId, score)}
                 />
               ),

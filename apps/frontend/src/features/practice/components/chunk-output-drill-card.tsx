@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Lightbulb, Eye, Loader2, CheckCircle2, Repeat2, Play, Pause } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -22,7 +23,7 @@ interface ChunkOutputDrillCardProps {
   direction?: DrillDirection
   kind?: 'chunk' | 'word'
   onComplete?: (itemIndex: number, passed: boolean, score: WarmupScore) => void
-  /** 只读回顾模式：传入已保存的练习数据 */
+  /** 只读回顾模式：传入已保存的练习数�?*/
   reviewData?: {
     userAnswer: string
     passed: boolean
@@ -32,7 +33,7 @@ interface ChunkOutputDrillCardProps {
   } | null
 }
 
-/** 在文本中高亮目标词/句块 */
+/** 在文本中高亮目标�?句块 */
 function highlightChunk(text: string, target: string) {
   if (!target) return text
   const idx = text.toLowerCase().indexOf(target.toLowerCase())
@@ -56,7 +57,7 @@ function hintLevelValue(hintLevel: HintLevel): 0 | 1 | 2 | 3 {
   return 0
 }
 
-/** Chunk 输出热身卡片 — 渐进式提示 + 高亮教学 */
+/** Chunk 输出热身卡片 �?渐进式提�?+ 高亮教学 */
 export function ChunkOutputDrillCard({
   chunk,
   items,
@@ -68,8 +69,9 @@ export function ChunkOutputDrillCard({
   onComplete,
   reviewData,
 }: ChunkOutputDrillCardProps) {
-  // ── 只读回顾模式：走完全相同的渲染路径，仅初始化状态 + 禁用交互 ──
+  // ── 只读回顾模式：走完全相同的渲染路径，仅初始化状�?+ 禁用交互 ──
   const isReview = !!reviewData
+  const { t } = useTranslation()
 
   const store = useWarmupSessionStore()
   const saved = isReview ? undefined : store.stepStates[stepId]
@@ -97,30 +99,30 @@ export function ChunkOutputDrillCard({
     ? (current.answer ?? '')
     : (current.en ? (current.answer ?? current.zh ?? '') : (isLegacyEnToZhItem ? current.zh ?? '' : current.answer ?? current.zh ?? ''))
   const typeLabel = stepType === 'vocab_sentence_building'
-    ? '一词多句'
+    ? t('todayTask.vocabSentenceBuilding')
     : kind === 'word'
-      ? '词汇替换'
-      : '句块替换'
+      ? t('todayTask.wordSubstitution')
+      : t('todayTask.chunkSubstitution')
 
-  // ── 教学提示（优先使用题目配置的 hint） ──
+  // ── 教学提示（优先使用题目配置的 hint�?──
   const teachingHint = useMemo(() => {
     if (current?.hint) return current.hint
     if (!chunk.text || !chunk.meaning) return null
-    if (kind === 'word') return `核心词汇「${chunk.text}」意思是「${chunk.meaning}」，在英文中使用。`
-    return `使用句块「${chunk.text}」（${chunk.meaning}）来表达。试着把这个句块放进你的回答里。`
-  }, [current?.hint, chunk.text, chunk.meaning, kind])
+    if (kind === 'word') return t('practiceSession.warmupDrill.wordHint', { word: chunk.text, meaning: chunk.meaning })
+    return t('practiceSession.warmupDrill.chunkHint', { chunk: chunk.text, meaning: chunk.meaning })
+  }, [current?.hint, chunk.text, chunk.meaning, kind, t])
 
   const skip = useCallback(() => {
     if (!current || status === 'judging' || status === 'passed') return
     const correctionText = expectedAnswer || ''
     setStatus('failed')
     setHintLevel('answer')
-    setFeedback('已标记为需要复练。先往后走，最后会集中再练一次。')
+    setFeedback(t('practiceSession.warmupDrill.skippedHint'))
     setCorrection(correctionText)
     onComplete?.(currentIdx, false, 'miss')
     store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
     store.recordEntry({ stepId, stepType, zh: promptText, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, displayLabel: typeLabel, score: 'miss', usedHintLevel: 3, correction: correctionText })
-  }, [current, currentIdx, expectedAnswer, groupTitle, onComplete, promptText, status, stepId, stepType, store, typeLabel, userInput])
+  }, [current, currentIdx, expectedAnswer, groupTitle, onComplete, promptText, status, stepId, stepType, store, t, typeLabel, userInput])
 
   const retryCurrent = useCallback(() => {
     if (isReview || status === 'judging') return
@@ -151,14 +153,14 @@ export function ChunkOutputDrillCard({
       const score = judgement.passed && hintLevel !== 'none' ? scoreFromHint(judgement.passed, hintLevel) : judgement.score
       if (judgement.passed) {
         setStatus('passed')
-        setFeedback(judgement.feedback || '正确！')
+        setFeedback(judgement.feedback || t('practiceSession.warmupDrill.correct'))
         setHintLevel('answer') // 自动显示答案
         onComplete?.(currentIdx, true, score)
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', hintLevel, score })
         store.recordEntry({ stepId, stepType, zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle, displayLabel: typeLabel, score, usedHintLevel: hintLevelValue(hintLevel) })
       } else {
         setStatus('failed')
-        setFeedback(judgement.feedback || '再试一次')
+        setFeedback(judgement.feedback || t('practiceSession.tryAgain'))
         setCorrection(judgement.correction || expectedAnswer || '')
         onComplete?.(currentIdx, false, 'miss')
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || expectedAnswer || '', hintLevel, score: 'miss' })
@@ -166,14 +168,14 @@ export function ChunkOutputDrillCard({
       }
     } catch (err: any) {
       setStatus('failed')
-      setFeedback(err?.message || '反馈不可用')
+      setFeedback(err?.message || t('practiceSession.warmupDrill.feedbackUnavailable'))
     }
-  }, [userInput, current, status, currentIdx, isZhToEn, onComplete, stepId, stepType, store, groupTitle, hintLevel, direction, promptText, expectedAnswer, chunk.text, chunk.meaning, typeLabel])
+  }, [userInput, current, status, currentIdx, isZhToEn, onComplete, stepId, stepType, store, groupTitle, hintLevel, direction, promptText, expectedAnswer, chunk.text, chunk.meaning, typeLabel, t])
 
 
   if (!current) return null
 
-  const promptLabel = isZhToEn ? '替换成完整英文句子' : '用中文说出'
+  const promptLabel = isZhToEn ? t('practiceSession.warmupDrill.sayInEnglish') : t('practiceSession.warmupDrill.sayInChinese')
   const displayText = promptText
 
   return (
@@ -184,25 +186,27 @@ export function ChunkOutputDrillCard({
           <Repeat2 className="size-3" />
           {typeLabel}
         </Badge>
-        {groupTitle && <Badge variant="outline" className="text-[10px]">{groupTitle}</Badge>}
+        {/* {groupTitle && <Badge variant="outline" className="text-[10px]">{groupTitle}</Badge>} */}
         <span className="ml-auto text-[10px] text-muted-foreground">{currentIdx + 1}/{totalItems}</span>
       </div>
 
-      {/* Chunk display  — highlighted target */}
-      <div className="rounded-lg bg-gradient-to-br from-primary/8 to-primary/3 px-3 py-2.5">
-        {/* <p className="text-xs text-muted-foreground">{kind === 'word' ? '必须使用这个词' : '必须使用这个句块'}</p> */}
-        <p className="mt-0.5 text-base font-bold text-primary">{chunk.text}</p>
+      {/* Chunk display — highlighted target */}
+      {kind === 'word' && (
+      <div className="flex items-baseline gap-2 rounded-lg bg-gradient-to-br from-primary/8 to-primary/3 px-3 py-2.5">
+        {/* <p className="text-xs text-muted-foreground">{kind === 'word' ? '必须使用这个词汇' : '必须使用这个句块'}</p> */}
+        <p className="text-base font-bold text-primary">{chunk.text}</p>
         {chunk.meaning && (
-          <p className="mt-0.5 text-xs text-muted-foreground">{chunk.meaning}</p>
+          <p className="text-xs text-muted-foreground">{chunk.meaning}</p>
         )}
       </div>
+      )}
 
       {/* Item image */}
       {cachedImageUrl && (
         <div className="overflow-hidden rounded-lg">
           <img
             src={cachedImageUrl}
-            alt="题目配图"
+            alt={t('practiceSession.warmupDrill.questionImage')}
             className="w-full h-41 object-cover bg-muted/10"
             loading="lazy"
           />
@@ -220,7 +224,7 @@ export function ChunkOutputDrillCard({
               variant="ghost"
               size="icon-sm"
               className="size-8 shrink-0 rounded-full"
-              title="播放题目音频"
+              title={t('practiceSession.warmupDrill.playAudio')}
               onClick={() => exerciseAudio.play(current.audioUrl, current.audioAssetId, 'warmup_audio')}
             >
               <Play className="size-3.5" />
@@ -229,7 +233,7 @@ export function ChunkOutputDrillCard({
         </div>
         {/* {isZhToEn && (
           <p className="mt-1 text-[11px] text-muted-foreground">
-            重点不是背参考答案，而是把上面的固定表达套进新句子里。
+            重点不是背参考答案，而是把上面的固定表达套进新句子里�?
           </p>
         )} */}
       </div>
@@ -246,7 +250,7 @@ export function ChunkOutputDrillCard({
             disabled={status === 'judging' || status === 'passed'}
           >
             {hintLevel === 'answer' ? <Eye className="size-3.5" /> : <Lightbulb className="size-3.5" />}
-            {hintLevel === 'none' ? '提示' : hintLevel === 'hint' ? '查看答案' : '收起答案'}
+            {hintLevel === 'none' ? t('practiceSession.warmupDrill.hint') : hintLevel === 'hint' ? t('practiceSession.showAnswer') : t('practiceSession.warmupDrill.hideAnswer')}
           </Button>
           <button
             type="button"
@@ -254,7 +258,7 @@ export function ChunkOutputDrillCard({
             disabled={status === 'judging' || status === 'passed'}
             className="rounded-full px-3 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground disabled:pointer-events-none disabled:opacity-45"
           >
-            我不会
+            {t('practiceSession.warmupDrill.dontKnow')}
           </button>
         </div>
 
@@ -273,7 +277,7 @@ export function ChunkOutputDrillCard({
               <>
                 {teachingHint && <Separator className="opacity-50" />}
                 <div>
-                  <p className="text-[10px] text-muted-foreground mb-1">参考答案</p>
+                  <p className="text-[10px] text-muted-foreground mb-1">{t('practiceSession.warmupDrill.referenceAnswer')}</p>
                   <p className="text-sm font-medium text-foreground">
                     {highlightChunk(current.answer, chunk.text)}
                   </p>
@@ -286,28 +290,28 @@ export function ChunkOutputDrillCard({
       </div>
       )}
 
-      {/* 回顾模式：直接展示参考答案 */}
+      {/* 回顾模式：直接展示参考答�?*/}
       {isReview && current.answer && (
         <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-2.5">
-          <p className="text-[10px] text-muted-foreground mb-1">参考答案</p>
+          <p className="text-[10px] text-muted-foreground mb-1">{t('practiceSession.warmupDrill.referenceAnswer')}</p>
           <p className="text-sm font-medium text-foreground">
             {highlightChunk(current.answer, chunk.text)}
           </p>
         </div>
       )}
 
-      {/* Input area — persist on success; 回顾模式 disabled */}
+      {/* Input area �?persist on success; 回顾模式 disabled */}
       <PracticeAnswerInput
         value={userInput}
         onChange={(nextValue) => { if (status !== 'passed') { setUserInput(nextValue); setStatus('idle'); setFeedback('') } }}
-        placeholder={isZhToEn ? `写一句英文，必须包含「${chunk.text}」...` : '输入中文...'}
+        placeholder={isZhToEn ? t('practiceSession.warmupDrill.inputPlaceholderEn', { chunk: chunk.text }) : t('practiceSession.warmupDrill.inputPlaceholderZh')}
         disabled={isReview || status === 'judging' || status === 'passed'}
         onEnter={isReview ? undefined : submit}
         onAudioChange={isReview ? undefined : setAudioUrl}
         lang={isZhToEn ? 'en-US' : 'zh-CN'}
       />
 
-      {/* 回顾模式：录音回放按钮 */}
+      {/* 回顾模式：录音回放按�?*/}
       {isReview && audioUrl && (
         <button
           type="button"
@@ -322,7 +326,7 @@ export function ChunkOutputDrillCard({
           className="inline-flex items-center gap-1.5 self-start rounded-full bg-muted/60 px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
         >
           {playing ? <Pause className="size-3" /> : <Play className="size-3 ml-0.5" />}
-          录音回放
+          {t('practiceSession.warmupDrill.audioPlayback')}
         </button>
       )}
 
@@ -331,7 +335,7 @@ export function ChunkOutputDrillCard({
         <div className={cn('rounded-lg px-3 py-2', status === 'passed' ? 'bg-green-500/10' : 'bg-amber-500/10')}>
           <div className="flex items-center gap-1.5">
             {status === 'passed' ? <CheckCircle2 className="size-3.5 text-green-500" /> : null}
-            <p className="text-xs font-medium">{status === 'passed' ? '正确！' : '再试一次'}</p>
+            <p className="text-xs font-medium">{status === 'passed' ? t('practiceSession.warmupDrill.correct') : t('practiceSession.tryAgain')}</p>
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground">{feedback}</p>
           {correction && (
@@ -340,13 +344,13 @@ export function ChunkOutputDrillCard({
         </div>
       )}
 
-      {/* Submit — 回顾模式隐藏 */}
+      {/* Submit �?回顾模式隐藏 */}
       {!isReview && (
       <div className="space-y-2">
         {status === 'passed' ? (
           <Button className="min-h-9 w-full rounded-xl gap-1.5" size="sm" variant="outline" onClick={retryCurrent}>
             <Repeat2 className="size-3.5" />
-            重新练习当前题
+            {t('practiceSession.warmupDrill.retryCurrent')}
           </Button>
         ) : (
           <Button
@@ -355,11 +359,11 @@ export function ChunkOutputDrillCard({
             disabled={status === 'judging' || !userInput.trim()}
           >
             {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-            {status === 'judging' ? '评判中...' : '提交'}
+            {status === 'judging' ? t('practiceSession.warmupDrill.judging') : t('practiceSession.submit')}
           </Button>
         )}
         {status === 'failed' && (
-          <p className="text-center text-[11px] text-muted-foreground">已加入本轮错题，先继续往后练，最后会集中再来一次。</p>
+          <p className="text-center text-[11px] text-muted-foreground">{t('practiceSession.warmupDrill.failedHint')}</p>
         )}
       </div>
       )}

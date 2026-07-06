@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Lightbulb, Eye, Loader2, CheckCircle2, Braces, Play, Pause, Repeat2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -21,9 +22,9 @@ interface PatternDrillCardProps {
   groupTitle?: string
   direction?: DrillDirection
   onComplete?: (itemIndex: number, passed: boolean, score: WarmupScore) => void
-  /** Dialog 已提供题型标签时，隐藏内部 header badge */
+  /** Dialog 已提供题型标签时，隐藏内�?header badge */
   hideHeader?: boolean
-  /** 只读回顾模式：传入已保存的练习数据 */
+  /** 只读回顾模式：传入已保存的练习数�?*/
   reviewData?: {
     userAnswer: string
     passed: boolean
@@ -35,7 +36,7 @@ interface PatternDrillCardProps {
 
 /** 高亮答案中的句型 key words */
 function highlightPattern(text: string, pattern: string) {
-  // Extract key words from pattern like "I'd like to [verb]..." → highlight "I'd like to"
+  // Extract key words from pattern like "I'd like to [verb]..." �?highlight "I'd like to"
   const keyWords = pattern.replace(/\[.*?\]/g, '').replace(/\.{3}/g, '').trim()
   if (!keyWords || keyWords.length < 2) return text
   const idx = text.toLowerCase().indexOf(keyWords.toLowerCase())
@@ -71,8 +72,9 @@ export function PatternDrillCard({
   hideHeader = false,
   reviewData,
 }: PatternDrillCardProps) {
-  // ── 只读回顾模式：走完全相同的渲染路径 ──
+  // ── 只读回顾模式：走完全相同的渲染路�?──
   const isReview = !!reviewData
+  const { t } = useTranslation()
 
   const store = useWarmupSessionStore()
   const saved = isReview ? undefined : store.stepStates[stepId]
@@ -103,20 +105,20 @@ export function PatternDrillCard({
   const teachingHint = useMemo(() => {
     if (current?.hint) return current.hint
     if (!pattern || !patternMeaning) return null
-    return `句型「${pattern}」表示「${patternMeaning}」。把中文意思套入这个句型框架中，替换 [ ... ] 部分即可。`
-  }, [current?.hint, pattern, patternMeaning])
+    return t('practiceSession.warmupDrill.patternHint', { pattern, meaning: patternMeaning })
+  }, [current?.hint, pattern, patternMeaning, t])
 
   const skip = useCallback(() => {
     if (!current || status === 'judging' || status === 'passed') return
     const correctionText = expectedAnswer || ''
     setStatus('failed')
     setHintLevel('answer')
-    setFeedback('已标记为需要复练。最后会集中再练一次。')
+    setFeedback(t('practiceSession.warmupDrill.skippedHint'))
     setCorrection(correctionText)
     onComplete?.(currentIdx, false, 'miss')
     store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
-    store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, displayLabel: '句型操练', score: 'miss', usedHintLevel: 3, correction: correctionText })
-  }, [current, currentIdx, expectedAnswer, groupTitle, onComplete, promptText, status, stepId, store, userInput])
+    store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, displayLabel: t('todayTask.patternDrill'), score: 'miss', usedHintLevel: 3, correction: correctionText })
+  }, [current, currentIdx, expectedAnswer, groupTitle, onComplete, promptText, status, stepId, store, t, userInput])
 
   const retryCurrent = useCallback(() => {
     if (isReview || status === 'judging') return
@@ -146,29 +148,29 @@ export function PatternDrillCard({
       const score = judgement.passed && hintLevel !== 'none' ? scoreFromHint(judgement.passed, hintLevel) : judgement.score
       if (judgement.passed) {
         setStatus('passed')
-        setFeedback(judgement.feedback || '正确！')
+        setFeedback(judgement.feedback || t('practiceSession.warmupDrill.correct'))
         setHintLevel('answer')
         onComplete?.(currentIdx, true, score)
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', hintLevel, score })
-        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle, displayLabel: '句型操练', score, usedHintLevel: hintLevelValue(hintLevel) })
+        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle, displayLabel: t('todayTask.patternDrill'), score, usedHintLevel: hintLevelValue(hintLevel) })
       } else {
         setStatus('failed')
-        setFeedback(judgement.feedback || '再试一次')
+        setFeedback(judgement.feedback || t('practiceSession.tryAgain'))
         setCorrection(judgement.correction || expectedAnswer || '')
         onComplete?.(currentIdx, false, 'miss')
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || expectedAnswer || '', hintLevel, score: 'miss' })
-        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle, displayLabel: '句型操练', score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || expectedAnswer || '' })
+        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle, displayLabel: t('todayTask.patternDrill'), score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || expectedAnswer || '' })
       }
     } catch (err: any) {
       setStatus('failed')
-      setFeedback(err?.message || '反馈不可用')
+      setFeedback(err?.message || t('practiceSession.warmupDrill.feedbackUnavailable'))
     }
-  }, [userInput, current, status, currentIdx, pattern, onComplete, stepId, store, groupTitle, hintLevel, direction, promptText, expectedAnswer, patternMeaning])
+  }, [userInput, current, status, currentIdx, pattern, onComplete, stepId, store, groupTitle, hintLevel, direction, promptText, expectedAnswer, patternMeaning, t])
 
 
   if (!current) return null
 
-  const promptLabel = isZhToEn ? '用英文说出' : '用中文说出'
+  const promptLabel = isZhToEn ? t('practiceSession.warmupDrill.sayInEnglish') : t('practiceSession.warmupDrill.sayInChinese')
   const displayText = promptText
 
   return (
@@ -177,16 +179,16 @@ export function PatternDrillCard({
       {!hideHeader && (
       <div className="flex items-center gap-2">
         <Badge variant="secondary" className="text-[10px] gap-1">
-          <Braces className="size-3" />句型
+          <Braces className="size-3" />{t('todayTask.patternDrill')}
         </Badge>
-        {groupTitle && <Badge variant="outline" className="text-[10px]">{groupTitle}</Badge>}
+        {/* {groupTitle && <Badge variant="outline" className="text-[10px]">{groupTitle}</Badge>} */}
         <span className="ml-auto text-[10px] text-muted-foreground">{currentIdx + 1}/{totalItems}</span>
       </div>
       )}
 
       {/* Pattern display */}
       <div className="rounded-lg bg-gradient-to-br from-violet-500/8 to-violet-500/3 px-1 py-2.5">
-        <p className="text-xs text-muted-foreground">核心句型</p>
+        <p className="text-xs text-muted-foreground">{t('practiceSession.warmupDrill.corePattern')}</p>
         <p className="mt-0.5 font-mono text-base font-bold text-violet-600 dark:text-violet-400">{pattern}</p>
         {patternMeaning && <p className="mt-0.5 text-xs text-muted-foreground">{patternMeaning}</p>}
       </div>
@@ -196,7 +198,7 @@ export function PatternDrillCard({
         <div className="overflow-hidden rounded-lg">
           <img
             src={cachedImageUrl}
-            alt="题目配图"
+            alt={t('practiceSession.warmupDrill.questionImage')}
             className="w-full h-41 object-cover bg-muted/10"
             loading="lazy"
           />
@@ -214,7 +216,7 @@ export function PatternDrillCard({
               variant="ghost"
               size="icon-sm"
               className="size-8 shrink-0 rounded-full"
-              title="播放题目音频"
+              title={t('practiceSession.warmupDrill.playAudio')}
               onClick={() => exerciseAudio.play(current.audioUrl, current.audioAssetId, 'warmup_audio')}
             >
               <Play className="size-3.5" />
@@ -235,7 +237,7 @@ export function PatternDrillCard({
             disabled={status === 'judging' || status === 'passed'}
           >
             {hintLevel === 'answer' ? <Eye className="size-3.5" /> : <Lightbulb className="size-3.5" />}
-            {hintLevel === 'none' ? '提示' : hintLevel === 'hint' ? '查看答案' : '收起答案'}
+            {hintLevel === 'none' ? t('practiceSession.warmupDrill.hint') : hintLevel === 'hint' ? t('practiceSession.showAnswer') : t('practiceSession.warmupDrill.hideAnswer')}
           </Button>
           <button
             type="button"
@@ -243,7 +245,7 @@ export function PatternDrillCard({
             disabled={status === 'judging' || status === 'passed'}
             className="rounded-full px-3 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground disabled:pointer-events-none disabled:opacity-45"
           >
-            我不会
+            {t('practiceSession.warmupDrill.dontKnow')}
           </button>
         </div>
 
@@ -259,7 +261,7 @@ export function PatternDrillCard({
               <>
                 {teachingHint && <Separator className="opacity-50" />}
                 <div>
-                  <p className="text-[10px] text-muted-foreground mb-1">参考答案</p>
+                  <p className="text-[10px] text-muted-foreground mb-1">{t('practiceSession.warmupDrill.referenceAnswer')}</p>
                   <p className="text-sm font-medium text-foreground">{highlightPattern(current.answer, pattern)}</p>
                   {current.zh && <p className="mt-0.5 text-[11px] text-muted-foreground">{current.zh}</p>}
                 </div>
@@ -270,26 +272,26 @@ export function PatternDrillCard({
       </div>
       )}
 
-      {/* 回顾模式：直接展示参考答案 */}
+      {/* 回顾模式：直接展示参考答�?*/}
       {isReview && current.answer && (
         <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-2.5">
-          <p className="text-[10px] text-muted-foreground mb-1">参考答案</p>
+          <p className="text-[10px] text-muted-foreground mb-1">{t('practiceSession.warmupDrill.referenceAnswer')}</p>
           <p className="text-sm font-medium text-foreground">{highlightPattern(current.answer, pattern)}</p>
         </div>
       )}
 
-      {/* Input area — persist on success; 回顾模式 disabled */}
+      {/* Input area �?persist on success; 回顾模式 disabled */}
       <PracticeAnswerInput
         value={userInput}
         onChange={(nextValue) => { if (status !== 'passed') { setUserInput(nextValue); setStatus('idle'); setFeedback('') } }}
-        placeholder={isZhToEn ? '输入英文...' : '输入中文...'}
+        placeholder={isZhToEn ? t('practiceSession.warmupDrill.inputPlaceholderEn', { chunk: pattern }) : t('practiceSession.warmupDrill.inputPlaceholderZh')}
         disabled={isReview || status === 'judging' || status === 'passed'}
         onEnter={isReview ? undefined : submit}
         onAudioChange={isReview ? undefined : setAudioUrl}
         lang={isZhToEn ? 'en-US' : 'zh-CN'}
       />
 
-      {/* 回顾模式：录音回放 */}
+      {/* 回顾模式：录音回�?*/}
       {isReview && audioUrl && (
         <button
           type="button"
@@ -304,7 +306,7 @@ export function PatternDrillCard({
           className="inline-flex items-center gap-1.5 self-start rounded-full bg-muted/60 px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
         >
           {playing ? <Pause className="size-3" /> : <Play className="size-3 ml-0.5" />}
-          录音回放
+          {t('practiceSession.warmupDrill.audioPlayback')}
         </button>
       )}
 
@@ -313,20 +315,20 @@ export function PatternDrillCard({
         <div className={cn('rounded-lg px-3 py-2', status === 'passed' ? 'bg-green-500/10' : 'bg-amber-500/10')}>
           <div className="flex items-center gap-1.5">
             {status === 'passed' ? <CheckCircle2 className="size-3.5 text-green-500" /> : null}
-            <p className="text-xs font-medium">{status === 'passed' ? '正确！' : '再试一次'}</p>
+            <p className="text-xs font-medium">{status === 'passed' ? t('practiceSession.warmupDrill.correct') : t('practiceSession.tryAgain')}</p>
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground">{feedback}</p>
           {correction && <p className="mt-1 text-[11px] text-blue-600 dark:text-blue-400">{highlightPattern(correction, pattern)}</p>}
         </div>
       )}
 
-      {/* Submit — 回顾模式隐藏 */}
+      {/* Submit �?回顾模式隐藏 */}
       {!isReview && (
       <div className="space-y-2">
         {status === 'passed' ? (
           <Button className="min-h-9 w-full rounded-xl gap-1.5" size="sm" variant="outline" onClick={retryCurrent}>
             <Repeat2 className="size-3.5" />
-            重新练习当前题
+            {t('practiceSession.warmupDrill.retryCurrent')}
           </Button>
         ) : (
           <Button
@@ -335,11 +337,11 @@ export function PatternDrillCard({
             disabled={status === 'judging' || !userInput.trim()}
           >
             {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
-            {status === 'judging' ? '评判中...' : '提交'}
+            {status === 'judging' ? t('practiceSession.warmupDrill.judging') : t('practiceSession.submit')}
           </Button>
         )}
         {status === 'failed' && (
-          <p className="text-center text-[11px] text-muted-foreground">已加入本轮错题，最后会集中再练一次。</p>
+          <p className="text-center text-[11px] text-muted-foreground">{t('practiceSession.warmupDrill.failedHint')}</p>
         )}
       </div>
       )}
