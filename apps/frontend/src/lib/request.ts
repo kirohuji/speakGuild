@@ -37,7 +37,7 @@ const failedUntil = new Map<string, number>()
 
 const instance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu',
-  timeout: 15000,
+  timeout: 60000,
   headers: { 'Content-Type': 'application/json' },
 })
 
