@@ -173,7 +173,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
 
   const renderAudioControls = (item: ChunkSubstitutionItem['items'][number], idx: number) => (
     <>
-      {item.audioUrl && (
+      {(item.audioUrl || item.audioAssetId) && (
         <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听英文音频"
           onClick={() => playAudioUrl(item.audioUrl, item.audioAssetId)}>
           <Play className="size-3" />

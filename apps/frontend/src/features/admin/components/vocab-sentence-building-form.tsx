@@ -376,7 +376,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                       <Input className="h-7 text-xs" value={getPromptText(item)} onChange={e => updatePromptText(pIdx, iIdx, e.target.value)} placeholder={local.direction === 'en_to_zh' ? '英文原文...' : '中文提示...'} />
                       <div className="flex gap-1">
                         <Input className="h-7 text-xs flex-1" value={getAnswerText(item)} onChange={e => updateAnswerText(pIdx, iIdx, e.target.value)} placeholder={local.direction === 'en_to_zh' ? '中文答案...' : '英文答案...'} />
-                        {item.audioUrl && (
+                        {(item.audioUrl || item.audioAssetId) && (
                           <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" title="试听题目音频"
                             onClick={() => playAudioUrl(item.audioUrl, item.audioAssetId)}>
                             <Play className="size-3" />
