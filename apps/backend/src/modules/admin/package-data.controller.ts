@@ -27,15 +27,67 @@ import * as AdmZip from 'adm-zip';
 import { Readable } from 'stream';
 import { parse } from 'csv-parse/sync';
 import { AdminTasksService } from '../admin-tasks/admin-tasks.service';
+import { FileAssetsService } from '../file-assets/file-assets.service';
+import { FileAssetGroup } from '@prisma/client';
+import { createHash } from 'node:crypto';
 
 // ── 类型定义 ──
 type CsvRow = Record<string, string>;
+
+function sha256Buffer(buf: Buffer) {
+  return createHash('sha256').update(buf).digest('hex');
+}
+
+/** 递归遍历 warmup pipeline 中所有的 audioAssetId */
+function collectAudioAssetIds(pipeline: any[]): string[] {
+  const ids = new Set<string>();
+  for (const step of pipeline) {
+    const walkItems = (items: any[]) => {
+      for (const item of items) {
+        if (typeof item?.audioAssetId === 'string' && item.audioAssetId.trim()) {
+          ids.add(item.audioAssetId.trim());
+        }
+      }
+    };
+    if (step.items) walkItems(step.items);
+    if (step.levels) walkItems(step.levels);
+    if (step.patterns) {
+      for (const p of step.patterns) {
+        if (p.items) walkItems(p.items);
+      }
+    }
+  }
+  return [...ids];
+}
+
+/** 递归替换 warmup pipeline 中所有的 audioAssetId */
+function remapAudioAssetIds(pipeline: any[], idMap: Map<string, string>) {
+  for (const step of pipeline) {
+    const walkItems = (items: any[]) => {
+      for (const item of items) {
+        if (typeof item?.audioAssetId === 'string' && idMap.has(item.audioAssetId)) {
+          item.audioAssetId = idMap.get(item.audioAssetId);
+          // 清掉旧的 audioUrl，避免过期 URL 干扰
+          if (item.audioUrl) item.audioUrl = undefined;
+        }
+      }
+    };
+    if (step.items) walkItems(step.items);
+    if (step.levels) walkItems(step.levels);
+    if (step.patterns) {
+      for (const p of step.patterns) {
+        if (p.items) walkItems(p.items);
+      }
+    }
+  }
+}
 
 @Controller('admin/content/packages')
 export class PackageDataController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly adminTasksService: AdminTasksService,
+    private readonly fileAssets: FileAssetsService,
   ) {}
 
   private async requireAdmin(req: Request) {
@@ -517,7 +569,55 @@ export class PackageDataController {
         }
       }
 
-      // 13. 导入 warmup_pipeline
+      // 12b. 导入打包的音频文件（asset_map.json → 上传 COS → 生成新 FileAsset）
+      const audioIdMap = new Map<string, string>(); // oldAssetId → newAssetId
+      const assetMapPath = join(pkgDir, 'asset_map.json');
+      if (existsSync(assetMapPath)) {
+        const assetMap: Record<string, { filename: string; sha256: string; mimeType: string }> =
+          JSON.parse(readFileSync(assetMapPath, 'utf-8'));
+        const audioDir = join(pkgDir, 'assets', 'audio');
+        for (const [oldAssetId, info] of Object.entries(assetMap)) {
+          const audioPath = join(audioDir, info.filename);
+          if (!existsSync(audioPath)) {
+            console.warn(`[import] audio file not found: ${info.filename}`);
+            continue;
+          }
+          try {
+            const buf = readFileSync(audioPath);
+            const actualSha256 = sha256Buffer(buf);
+            // 用实际 SHA256 查找去重（不同环境可能有相同文件）
+            const existing = await this.prisma.fileAsset.findUnique({
+              where: { sha256: actualSha256 },
+              select: { id: true },
+            });
+            if (existing) {
+              audioIdMap.set(oldAssetId, existing.id);
+              console.log(`[import] audio dedup: ${oldAssetId} → ${existing.id}`);
+              continue;
+            }
+            // 上传到目标 COS
+            const asset = await this.fileAssets.createAssetFromBuffer({
+              buffer: buf,
+              filename: info.filename,
+              mimeType: info.mimeType,
+              group: 'tts' as FileAssetGroup,
+            });
+            audioIdMap.set(oldAssetId, asset.id);
+            // 建立系统引用防止被清理
+            await this.fileAssets.createSystemReference(asset.id, 'warmup_audio_import', oldAssetId);
+            console.log(`[import] audio uploaded: ${oldAssetId} → ${asset.id}`);
+          } catch (err: any) {
+            console.warn(`[import] failed to upload audio ${info.filename}: ${err.message}`);
+          }
+        }
+        if (audioIdMap.size > 0) {
+          console.log(`[import] remapped ${audioIdMap.size} audio asset IDs`);
+        }
+        // 如果在 warmup pipeline 中引用了 imageUrl 里的 fileAssetId，一并尝试上传
+        // （目前 imageUrl 存的是长签名 URL 而非 assetId，暂不处理）
+      }
+
+      // 13. 导入 warmup_pipeline（含 audioAssetId 映射）
       let warmupMatched = 0;
       for (const [topicTitle, pipelineData] of Object.entries(warmupPipeline)) {
         let topicId = topicIdMap.get(topicTitle);
@@ -530,6 +630,13 @@ export class PackageDataController {
           }
         }
         if (topicId) {
+          // 替换 audioAssetId 为新环境的 ID
+          if (audioIdMap.size > 0) {
+            const pipeline = (pipelineData as any).outputTraining?.pipeline;
+            if (Array.isArray(pipeline)) {
+              remapAudioAssetIds(pipeline, audioIdMap);
+            }
+          }
           await this.prisma.trainingTopic.update({
             where: { id: topicId },
             data: { metadata: pipelineData as any },
@@ -764,6 +871,47 @@ export class PackageDataController {
     }
     const warmupJson = JSON.stringify(warmupData, null, 2);
 
+    // 8b. 收集 warmup pipeline 中的 audioAssetId，下载音频文件打包进 ZIP
+    const bundledAudio: Array<{ assetId: string; filename: string; buffer: Buffer; sha256: string; mimeType: string }> = [];
+    {
+      const seenAssetIds = new Set<string>();
+      for (const pipelineData of Object.values(warmupData)) {
+        const pipeline = (pipelineData as any).outputTraining?.pipeline;
+        if (!Array.isArray(pipeline)) continue;
+        for (const assetId of collectAudioAssetIds(pipeline)) {
+          if (seenAssetIds.has(assetId)) continue;
+          seenAssetIds.add(assetId);
+          try {
+            const signed = await this.fileAssets.getPrivateUrlByAssetId(assetId);
+            const resp = await fetch(signed.url);
+            if (!resp.ok) {
+              console.warn(`[export] download audio ${assetId}: HTTP ${resp.status}`);
+              continue;
+            }
+            const buf = Buffer.from(await resp.arrayBuffer());
+            const sha256 = sha256Buffer(buf);
+            const mimeType = signed.mimeType ?? resp.headers.get('content-type')?.split(';')[0] ?? 'audio/mpeg';
+            const ext = mimeType.includes('mp3') || mimeType.includes('mpeg') ? 'mp3'
+              : mimeType.includes('wav') || mimeType.includes('wave') ? 'wav'
+              : mimeType.includes('ogg') ? 'ogg'
+              : 'mp3';
+            const filename = `${sha256.substring(0, 16)}.${ext}`;
+            bundledAudio.push({ assetId, filename, buffer: buf, sha256, mimeType });
+          } catch (err: any) {
+            console.warn(`[export] bundle audio ${assetId}: ${err.message}`);
+          }
+        }
+      }
+    }
+    // 构建映射表：oldAssetId → { filename, sha256, mimeType }
+    const assetMap: Record<string, { filename: string; sha256: string; mimeType: string }> = {};
+    for (const a of bundledAudio) {
+      assetMap[a.assetId] = { filename: a.filename, sha256: a.sha256, mimeType: a.mimeType };
+    }
+    if (bundledAudio.length > 0) {
+      console.log(`[export] bundled ${bundledAudio.length} audio files`);
+    }
+
     // 9. 打包 ZIP
     const zip = new AdmZip();
     const prefix = `${dirName}/`;
@@ -775,6 +923,13 @@ export class PackageDataController {
     if (epCsv.split('\n').length > 2) zip.addFile(prefix + 'script_episodes.csv', Buffer.from(epCsv, 'utf-8'));
     if (epChunkCsv.split('\n').length > 2) zip.addFile(prefix + 'episode_chunks.csv', Buffer.from(epChunkCsv, 'utf-8'));
     zip.addFile(prefix + 'warmup_pipeline.json', Buffer.from(warmupJson, 'utf-8'));
+    // 将音频文件和映射表写入 ZIP
+    if (bundledAudio.length > 0) {
+      zip.addFile(prefix + 'asset_map.json', Buffer.from(JSON.stringify(assetMap, null, 2), 'utf-8'));
+      for (const a of bundledAudio) {
+        zip.addFile(prefix + 'assets/audio/' + a.filename, a.buffer);
+      }
+    }
 
     // 导出 Ink 脚本（如果有）
     const topicIds = scene.trainingTopics.map(t => t.id);
