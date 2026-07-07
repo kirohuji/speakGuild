@@ -56,7 +56,17 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
   const isMobile = useIsMobile()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [mobileView, setMobileView] = useState<MobileView>('home')
+  const [prevView, setPrevView] = useState<MobileView | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+
+  const goTo = (view: MobileView) => {
+    setPrevView(mobileView)
+    setMobileView(view)
+  }
+  const goBack = () => {
+    setMobileView(prevView || 'home')
+    setPrevView(null)
+  }
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const setBottomNavVisible = useLayoutStore((s) => s.setBottomNavVisible)
 
@@ -81,18 +91,18 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
         <div className="h-full min-h-0">
           {mobileView === 'home' ? (
             <div>
-              <MobileProfileHome onNavigate={setMobileView} onFeedbackOpen={onFeedbackOpen} />
+              <MobileProfileHome onNavigate={goTo} onFeedbackOpen={onFeedbackOpen} />
             </div>
           ) : (
             <MobileProfileDetail
               title={t(mobileTitles[mobileView])}
-              onBack={() => setMobileView('home')}
+              onBack={goBack}
             >
               {mobileView === 'overview' && <OverviewTab />}
               {mobileView === 'records' && <RecordsTab />}
               {mobileView === 'words' && <WordsTab />}
               {mobileView === 'account' && <AccountTab />}
-              {mobileView === 'settings' && <MobileSettingsView onFeedbackOpen={onFeedbackOpen} onNavigate={setMobileView} />}
+              {mobileView === 'settings' && <MobileSettingsView onFeedbackOpen={onFeedbackOpen} onNavigate={goTo} />}
               {mobileView === 'appearance' && <AppearanceContent />}
               {mobileView === 'member' && <MemberPage compact />}
               {mobileView === 'storage' && <MobileStorageView />}

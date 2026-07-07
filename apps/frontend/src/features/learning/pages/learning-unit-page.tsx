@@ -225,8 +225,9 @@ export function LearningUnitPage() {
     setExpandedItemId(null)
   }, [])
 
-  if (loading) return <MobilePageLoading rows={5} />
-  if (!unit) return (
+  // 当前 unit 已有数据时不展示骨架，避免切换/重进时闪烁
+  if (loading && unit?.id !== unitId) return <MobilePageLoading rows={5} />
+  if (!unit && !loading) return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
       <Target className="size-12 text-muted-foreground/40" />
       <p className="text-muted-foreground">{t('learning.unitNotFound')}</p>

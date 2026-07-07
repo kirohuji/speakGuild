@@ -48,7 +48,7 @@ export function MyLearningView({
   const updatePackIdSet = useMemo(() => new Set(updatePackIds), [updatePackIds])
   const installingPackIdSet = useMemo(() => new Set(installingPackIds), [installingPackIds])
 
-  if (loading) {
+  if (loading && myUnits.length === 0) {
     return <MobilePageLoading rows={3} minHeightClassName="min-h-[40vh]" />
   }
 

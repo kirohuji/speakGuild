@@ -362,9 +362,9 @@ export function MobileStorageView() {
   const detailContainerClass = 'border-b border-border/50 bg-muted/10 pl-[4.5rem] pr-4'
   const detailRowClass = 'border-b border-border/50 py-3 last:border-b-0'
 
-  // 计算中动画：立即展示，最短停留 2 秒
+  // 计算中动画：立即展示，Web 端最短停留 2 秒；Capacitor 端数据到了就消
   const [showCalculating, setShowCalculating] = useState(false)
-  const holdTimerRef = React.useRef<ReturnType<typeof setTimeout>>()
+  const holdTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const holdActiveRef = React.useRef(false)
 
   useEffect(() => {
@@ -377,10 +377,17 @@ export function MobileStorageView() {
   useEffect(() => {
     if (!loading && stats && !holdActiveRef.current) {
       holdActiveRef.current = true
-      holdTimerRef.current = setTimeout(() => {
+      if (isNativeRuntime) {
+        // Capacitor 端数据到了直接消，不额外等待
         setShowCalculating(false)
         holdActiveRef.current = false
-      }, 2000)
+      } else {
+        // Web 端保留最短停留，确保用户能看到动画
+        holdTimerRef.current = setTimeout(() => {
+          setShowCalculating(false)
+          holdActiveRef.current = false
+        }, 2000)
+      }
     }
     return () => {
       if (holdTimerRef.current) clearTimeout(holdTimerRef.current)
