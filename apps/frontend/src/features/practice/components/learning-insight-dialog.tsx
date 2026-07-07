@@ -9,6 +9,7 @@ import {
   ExternalLink,
   FileText,
   Layers,
+  ArrowLeftRight,
   ListMusic,
   Loader2,
   Save,
@@ -550,6 +551,8 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
   const subtitle = item.kind === 'word' ? item.meaning : item.meaning
   const label = item.kind === 'word' ? t('insight.vocabulary') : item.kind === 'chunk' ? t('insight.chunk') : t('insight.pattern')
   const isWord = item.kind === 'word'
+  const hasBothPhonetics = isWord && item.phoneticUs && item.phoneticUk
+  const [showUk, setShowUk] = useState(false)
 
   const { play: playAudio } = useCachedAudio()
 
@@ -563,14 +566,33 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
           <Badge variant="secondary" className="mb-1.5">{label}</Badge>
           <h2 className="break-words text-xl font-bold leading-tight text-foreground">{title}</h2>
           {subtitle && <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>}
-          {/* 音标：左右排列 */}
+          {/* 音标：切换按钮在左，音标在右 */}
           {isWord && (item.phoneticUs || item.phoneticUk) && (
-            <div className="mt-2 flex items-center gap-2">
-              {item.phoneticUs && (
-                <PhoneticPill label="美" value={item.phoneticUs} audioUrl={item.audioUsUrl} onPlay={playAudio} />
-              )}
-              {item.phoneticUk && (
-                <PhoneticPill label="英" value={item.phoneticUk} audioUrl={item.audioUkUrl} onPlay={playAudio} />
+            <div className="mt-2 flex items-center gap-1.5">
+              {hasBothPhonetics ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowUk((prev) => !prev)}
+                    className="flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    aria-label={showUk ? '切换美式' : '切换英式'}
+                  >
+                    <ArrowLeftRight className="size-3.5" />
+                  </button>
+                  <PhoneticPill
+                    label={showUk ? '英' : '美'}
+                    value={showUk ? item.phoneticUk! : item.phoneticUs!}
+                    audioUrl={showUk ? item.audioUkUrl : item.audioUsUrl}
+                    onPlay={playAudio}
+                  />
+                </>
+              ) : (
+                <PhoneticPill
+                  label={item.phoneticUs ? '美' : '英'}
+                  value={(item.phoneticUs || item.phoneticUk)!}
+                  audioUrl={item.phoneticUs ? item.audioUsUrl : item.audioUkUrl}
+                  onPlay={playAudio}
+                />
               )}
             </div>
           )}
@@ -654,20 +676,27 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
   const dictEntry = dictData !== 'loading' ? dictData : null
 
   const saveWord = async () => {
-    if (saved) return
     setSaving(true)
-    setSaved(true)
-    await learningContentRepository.saveExpressionEntryAndSync({
-      kind: 'word',
-      text: item.word,
-      meaning: item.meaning,
-      sceneName: item.sceneName,
-      corrected: item.description,
-      contentSnapshot: item,
-      sourceType: 'learning-library',
-    })
-    toast.success(t('insight.addToVocab'))
-    setSaving(false)
+    try {
+      if (saved) {
+        await learningContentRepository.deleteExpressionByTextAndSync('word', item.word)
+        setSaved(false)
+      } else {
+        await learningContentRepository.saveExpressionEntryAndSync({
+          kind: 'word',
+          text: item.word,
+          meaning: item.meaning,
+          sceneName: item.sceneName,
+          corrected: item.description,
+          contentSnapshot: item,
+          sourceType: 'learning-library',
+        })
+        setSaved(true)
+        toast.success(t('insight.savedToLibrary'))
+      }
+    } finally {
+      setSaving(false)
+    }
   }
 
   const changeTab = (value: string) => {
@@ -684,6 +713,12 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
           <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
           <TabsTrigger value="dictionary">词典</TabsTrigger>
         </TabsList>
+        {!hideSave && (
+          <Button onClick={saveWord} disabled={saving} variant={saved ? 'secondary' : 'default'} size="sm" className="ml-auto h-7 gap-1 px-2 text-[11px]">
+            {saving ? <Loader2 className="size-3 animate-spin" /> : <BookmarkPlus className="size-3" />}
+            {saving ? t('learning.processing') : saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
+          </Button>
+        )}
       </div>
       <div className="relative min-h-0 flex-1">
         {/* 释义 */}
@@ -757,15 +792,6 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
                   </p>
                 ) : (
                   <p className="px-4 py-4 text-sm text-muted-foreground">暂无释义</p>
-                )}
-
-                {!hideSave && (
-                  <div className="border-t border-border/60 px-4 py-3">
-                    <Button size="sm" onClick={saveWord} disabled={saving} className="gap-1.5">
-                      {saving ? <Loader2 className="size-4 animate-spin" /> : <BookmarkPlus className="size-4" />}
-                      {saved ? t('insight.alreadyAdded') : t('insight.addToVocab')}
-                    </Button>
-                  </div>
                 )}
               </section>
             </div>
@@ -846,17 +872,17 @@ function PhoneticPill({
   onPlay: (url: string) => void
 }) {
   return (
-    <span className="inline-flex h-8 items-center gap-1.5 rounded-md bg-muted px-2.5 font-mono text-xs text-muted-foreground">
+    <span className="inline-flex h-7 items-center gap-1 rounded-md bg-muted px-2 font-mono text-[11px] text-muted-foreground">
       <span className="font-sans text-[10px] font-semibold text-foreground/70">{label}</span>
       <span>{value}</span>
       {audioUrl && (
         <button
           type="button"
           onClick={() => onPlay(audioUrl)}
-          className="ml-0.5 inline-flex size-5 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+          className="inline-flex size-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
           aria-label={`${label}发音`}
         >
-          <Volume2 className="size-3.5" />
+          <Volume2 className="size-3" />
         </button>
       )}
     </span>
@@ -1087,9 +1113,9 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
           <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
         </TabsList>
         {!hideSave && (
-          <Button onClick={saveChunk} disabled={saved || saving} variant={saved ? 'secondary' : 'default'} size="sm" className="ml-auto gap-1.5">
-            {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
-            {saved ? t('insight.alreadyAdded') : t('insight.saveToLibrary')}
+          <Button onClick={saveChunk} disabled={saving} variant={saved ? 'secondary' : 'default'} size="sm" className="ml-auto h-7 gap-1 px-2 text-[11px]">
+            {saving ? <Loader2 className="size-3 animate-spin" /> : <BookmarkPlus className="size-3" />}
+            {saving ? t('learning.processing') : saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
           </Button>
         )}
       </div>
@@ -1148,9 +1174,9 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
           <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
         </TabsList>
         {!hideSave && (
-          <Button onClick={savePattern} disabled={saved || saving} variant={saved ? 'secondary' : 'default'} size="sm" className="ml-auto gap-1.5">
-            {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
-            {saved ? t('insight.alreadyAdded') : t('insight.saveToLibrary')}
+          <Button onClick={savePattern} disabled={saving} variant={saved ? 'secondary' : 'default'} size="sm" className="ml-auto h-7 gap-1 px-2 text-[11px]">
+            {saving ? <Loader2 className="size-3 animate-spin" /> : <BookmarkPlus className="size-3" />}
+            {saving ? t('learning.processing') : saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
           </Button>
         )}
       </div>

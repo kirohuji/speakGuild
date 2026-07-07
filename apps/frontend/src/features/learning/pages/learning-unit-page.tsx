@@ -20,6 +20,8 @@ import {
   LearningInsightDialog,
   type LearningInsightItem,
 } from '@/features/practice/components/learning-insight-dialog'
+import { MarkdownContent } from '@/features/system/components/markdown-content'
+import { extractCoreUsage } from '@/lib/markdown-utils'
 
 const PREP_PAGE_SIZE = 8
 
@@ -611,7 +613,11 @@ function VocabPrepCard({
 
         {expanded && (
           <div className="px-3 pb-3 pt-2">
-            {vocab.description && <p className="mb-3 text-xs leading-5 text-muted-foreground">{vocab.description}</p>}
+            {vocab.description && (
+              <div className="mb-3 line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
+                <MarkdownContent content={extractCoreUsage(vocab.description)} />
+              </div>
+            )}
             <div className="flex gap-2">
               <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onOpen}>
                 <Search className="size-3.5" /> {t('learning.view')}
@@ -663,7 +669,6 @@ function ChunkPrepCard({
             <div className="flex min-w-0 items-center gap-2">
               <p className="truncate text-sm font-semibold text-foreground">{chunk.text}</p>
               {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
-              <Badge variant="outline" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{chunk.difficulty}</Badge>
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{chunk.meaning}</p>
           </div>
@@ -672,7 +677,11 @@ function ChunkPrepCard({
 
         {expanded && (
           <div className="px-3 pb-3 pt-2">
-            {chunk.description && <p className="mb-3 text-xs leading-5 text-muted-foreground">{chunk.description}</p>}
+            {chunk.description && (
+              <div className="mb-3 line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
+                <MarkdownContent content={extractCoreUsage(chunk.description)} />
+              </div>
+            )}
             {chunk.examples[0] && (
               <div className="mb-3 rounded-md bg-muted/45 p-2.5">
                 <p className="text-xs font-medium leading-5 text-foreground">{chunk.examples[0].en}</p>
@@ -681,7 +690,7 @@ function ChunkPrepCard({
             )}
             <div className="flex gap-2">
               <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onOpen}>
-                <Search className="size-3.5" /> {t('learning.viewExpression')}
+                <Search className="size-3.5" /> {t('learning.view')}
               </Button>
               <Button
                 size="sm"

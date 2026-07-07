@@ -21,6 +21,9 @@ import { learningContentRepository, practiceRepository } from '@/lib/offline'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { GuidedWarmupPhase } from '../components/guided-warmup-phase'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
+import { MarkdownContent } from '@/features/system/components/markdown-content'
+import { extractCoreUsage } from '@/lib/markdown-utils'
+
 import { PracticeTurnFeedback } from '../components/practice-turn-feedback'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
 import { PrepPager } from '../components/prep-pager'
@@ -1001,8 +1004,12 @@ export function PracticeSessionPage() {
                               <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
                             </button>
                             {isExpanded && (
-                              <div className="border-t border-border/50 px-3 pb-3 pt-2">
-                                {/* <p className="text-sm leading-6 text-muted-foreground">{v.meaning}</p> */}
+                              <div className="px-3 pb-3 pt-2">
+                                {v.description && (
+                                  <div className="mb-3 line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
+                                    <MarkdownContent content={extractCoreUsage(v.description)} />
+                                  </div>
+                                )}
                                 <div className="flex gap-2 mt-2">
                                   <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`word:${v.id}`)}>
                                     <Search className="size-3.5" /> {t('learning.view')}
@@ -1086,7 +1093,7 @@ export function PracticeSessionPage() {
                               <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
                             </button>
                             {isExpanded && (
-                              <div className="border-t border-border/50 px-3 pb-3 pt-2">
+                              <div className="px-3 pb-3 pt-2">
                                 {p.example && <p className="text-sm leading-6 text-muted-foreground">{t('practiceSession.example')}: {p.example}</p>}
                                 <div className="flex gap-2 mt-2">
                                   <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`pattern:${absoluteIndex}`)}>

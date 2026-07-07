@@ -1,9 +1,11 @@
-import { ChevronRight, Lightbulb, MessageSquareText, BookmarkPlus, Search } from 'lucide-react'
+import { ChevronRight, MessageSquareText, BookmarkPlus, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/cn'
+import { MarkdownContent } from '@/features/system/components/markdown-content'
+import { extractCoreUsage } from '@/lib/markdown-utils'
 import type { TopicDetail } from '../api/english-practice-api'
 
 type ChunkItem = TopicDetail['activeChunks'][number]
@@ -39,27 +41,12 @@ export function ChunkActivationPanel({
 }: ChunkActivationPanelProps) {
   const { t } = useTranslation()
   const hasChunks = chunks.length > 0
-  const displayTotal = totalCount ?? chunks.length
-  const displayCollected = collectedCount ?? chunks.filter((chunk) => collectedTexts.has(chunk.text)).length
 
   return (
-    <div className="rounded-lg bg-muted/30 p-3">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Lightbulb className="size-4 text-primary" />
-          <p className="text-sm font-semibold text-foreground">{t('learning.chunks')}</p>
-        </div>
-        <Badge variant="secondary" className="rounded-full text-[10px]">
-          {displayCollected}/{displayTotal}
-        </Badge>
-      </div>
+    <div>
       {hasChunks ? (
-        <>
-          <p className="mb-3 text-xs leading-5 text-muted-foreground">
-            {t('practiceSession.chunkHint')}
-          </p>
-          <div className="space-y-2">
-            {chunks.map((chunk) => (
+        <div className="space-y-2">
+          {chunks.map((chunk) => (
               <ChunkActivationItem
                 key={chunk.id}
                 chunk={chunk}
@@ -75,8 +62,7 @@ export function ChunkActivationPanel({
                 onRemove={() => onRemove(chunk)}
               />
             ))}
-          </div>
-        </>
+        </div>
       ) : (
         <div className="rounded-lg bg-background/55 p-4 text-sm text-muted-foreground">
           {t('practiceSession.noChunkHint')}
@@ -133,9 +119,13 @@ function ChunkActivationItem({
         </button>
 
         {expanded && (
-          <div className="border-t border-border/50 px-3 pb-3 pt-2 space-y-2">
-            {chunk.description && <p className="text-xs leading-relaxed text-muted-foreground">{chunk.description}</p>}
-            {chunk.examples?.slice(0, 2).map((example, index) => (
+          <div className="px-3 pb-3 pt-2 space-y-2">
+            {chunk.description && (
+              <div className="line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
+                <MarkdownContent content={extractCoreUsage(chunk.description)} />
+              </div>
+            )}
+            {chunk.examples?.slice(0, 1).map((example, index) => (
               <div key={`${chunk.id}-${index}`} className="rounded-md bg-muted/60 p-2.5">
                 <p className="text-xs font-medium text-foreground">{example.en}</p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">{example.zh}</p>
