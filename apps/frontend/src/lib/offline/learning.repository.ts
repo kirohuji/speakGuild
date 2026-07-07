@@ -73,13 +73,23 @@ async function aggregateUnitContent(unitDetail: any): Promise<any> {
     } catch { /* topic not cached yet, skip */ }
   }
 
-  return {
+  const aggregated = {
     ...unitDetail,
     vocabularies: [...vocabMap.values()],
     chunks: [...chunkMap.values()],
     sentencePatterns: [...patternMap.values()],
     trainingTopics,
   }
+  // 回写聚合结果，下次进入直接命中快速路径
+  cacheAggregated(unitDetail.id, aggregated)
+  return aggregated
+}
+
+/** 聚合后回写缓存，下次进入直接命中快速路径 */
+async function cacheAggregated(unitId: string, aggregated: any) {
+  try {
+    await localDb.put('downloaded_unit_details', { ...aggregated, id: unitId })
+  } catch { /* 非关键路径，静默失败 */ }
 }
 
 function summaryToMyUnit(unit: LearningUnitSummary | UnitDetail): MyUnit {

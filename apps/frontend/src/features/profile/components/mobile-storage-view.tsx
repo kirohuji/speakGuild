@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { BrainCircuit, ChevronDown, ChevronRight, Database, Download, Globe2, HardDrive, Mic, Smartphone, Trash2 } from 'lucide-react'
+import { BrainCircuit, ChevronDown, ChevronRight, Database, Download, Globe2, HardDrive, Loader2, Mic, Smartphone, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
@@ -253,32 +253,62 @@ export function MobileStorageView() {
   const modelRuntimeLabel = isNativeRuntime
     ? t('settings.storage.localModelRuntimeCapacitor', { defaultValue: 'Capacitor 端' })
     : t('settings.storage.localModelRuntimeWeb', { defaultValue: 'Web 端' })
-  const modelStatusText = !isNativeRuntime && modelStatus?.nativeAvailable
-    ? t('settings.storage.localModelWebReady', { defaultValue: '浏览器缓存 · 首次在线加载' })
-    : modelUnavailable
-    ? t('settings.storage.localModelNativeOnly', { defaultValue: '仅支持 iOS / Android App' })
-    : modelDownload.active
-      ? t('settings.storage.localModelDownloading', { percent: modelDownload.percent, defaultValue: `下载中 ${modelDownload.percent}%` })
-      : modelLoading
-        ? '...'
-        : modelInstalled
-          ? `${t('settings.storage.localModelInstalled', { defaultValue: '已下载' })} · ${formatBytes(modelStatus?.bytes)}`
-          : modelStatus?.health === 'manifest_missing' || modelStatus?.health === 'manifest_mismatch'
-            ? `${t('settings.storage.localModelNeedsRedownload', { defaultValue: '需要重新下载' })} · ${formatBytes(modelStatus?.bytes)}`
-          : `${t('settings.storage.localModelNotInstalled', { defaultValue: '未下载' })} · ${formatBytes(selectedVariant.estimatedBytes)}`
-  const sttModelStatusText = !isNativeRuntime && sttModelStatus?.nativeAvailable
-    ? t('settings.storage.localSttModelWebReady', { defaultValue: '浏览器缓存 · 首次在线加载' })
-    : sttModelUnavailable
-      ? t('settings.storage.localModelNativeOnly', { defaultValue: '仅支持 iOS / Android App' })
-      : sttModelDownload.active
-        ? t('settings.storage.localModelDownloading', { percent: sttModelDownload.percent, defaultValue: `下载中 ${sttModelDownload.percent}%` })
-        : sttModelLoading
-          ? '...'
-          : sttModelInstalled
-            ? `${t('settings.storage.localModelInstalled', { defaultValue: '已下载' })} · ${formatBytes(sttModelStatus?.bytes)}`
-            : sttModelStatus?.health === 'manifest_missing' || sttModelStatus?.health === 'manifest_mismatch'
-              ? `${t('settings.storage.localModelNeedsRedownload', { defaultValue: '需要重新下载' })} · ${formatBytes(sttModelStatus?.bytes)}`
-              : `${t('settings.storage.localModelNotInstalled', { defaultValue: '未下载' })} · ${formatBytes(selectedSttVariant.estimatedBytes)}`
+
+  function getModelStatusText(): string {
+    // Web 端有浏览器缓存能力
+    if (!isNativeRuntime && modelStatus?.nativeAvailable) {
+      return t('settings.storage.localModelWebReady', { defaultValue: '浏览器缓存 · 首次在线加载' })
+    }
+    // 原生不可用
+    if (modelUnavailable) {
+      return t('settings.storage.localModelNativeOnly', { defaultValue: '仅支持 iOS / Android App' })
+    }
+    // 正在下载
+    if (modelDownload.active) {
+      return t('settings.storage.localModelDownloading', {
+        percent: modelDownload.percent,
+        defaultValue: `下载中 ${modelDownload.percent}%`,
+      })
+    }
+    // 加载中
+    if (modelLoading) return '...'
+    // 已下载
+    if (modelInstalled) {
+      return `${t('settings.storage.localModelInstalled', { defaultValue: '已下载' })} · ${formatBytes(modelStatus?.bytes)}`
+    }
+    // 需要重新下载
+    if (modelStatus?.health === 'manifest_missing' || modelStatus?.health === 'manifest_mismatch') {
+      return `${t('settings.storage.localModelNeedsRedownload', { defaultValue: '需要重新下载' })} · ${formatBytes(modelStatus?.bytes)}`
+    }
+    // 未下载
+    return `${t('settings.storage.localModelNotInstalled', { defaultValue: '未下载' })} · ${formatBytes(selectedVariant.estimatedBytes)}`
+  }
+
+  function getSttModelStatusText(): string {
+    if (!isNativeRuntime && sttModelStatus?.nativeAvailable) {
+      return t('settings.storage.localSttModelWebReady', { defaultValue: '浏览器缓存 · 首次在线加载' })
+    }
+    if (sttModelUnavailable) {
+      return t('settings.storage.localModelNativeOnly', { defaultValue: '仅支持 iOS / Android App' })
+    }
+    if (sttModelDownload.active) {
+      return t('settings.storage.localModelDownloading', {
+        percent: sttModelDownload.percent,
+        defaultValue: `下载中 ${sttModelDownload.percent}%`,
+      })
+    }
+    if (sttModelLoading) return '...'
+    if (sttModelInstalled) {
+      return `${t('settings.storage.localModelInstalled', { defaultValue: '已下载' })} · ${formatBytes(sttModelStatus?.bytes)}`
+    }
+    if (sttModelStatus?.health === 'manifest_missing' || sttModelStatus?.health === 'manifest_mismatch') {
+      return `${t('settings.storage.localModelNeedsRedownload', { defaultValue: '需要重新下载' })} · ${formatBytes(sttModelStatus?.bytes)}`
+    }
+    return `${t('settings.storage.localModelNotInstalled', { defaultValue: '未下载' })} · ${formatBytes(selectedSttVariant.estimatedBytes)}`
+  }
+
+  const modelStatusText = getModelStatusText()
+  const sttModelStatusText = getSttModelStatusText()
   const embeddingCacheCount = embeddingModelKey ? embeddingStats?.currentModelCount ?? 0 : embeddingStats?.count ?? 0
   const embeddingCacheBytes = embeddingModelKey ? embeddingStats?.currentModelBytes ?? 0 : embeddingStats?.bytes ?? 0
 
@@ -305,8 +335,8 @@ export function MobileStorageView() {
   const AssetStatRow = ({ label, count, bytes }: { label: string; count?: number; bytes?: number }) => (
     <div className="flex items-center justify-between border-b border-border/50 py-2.5 last:border-b-0">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-xs font-medium">
-        {loading ? '...' : `${count ?? 0} ${t('profile.fileCount', { defaultValue: '个文件' })} · ${formatBytes(bytes)}`}
+      <span className="text-xs font-medium tabular-nums">
+        {count ?? 0} {t('profile.fileCount', { defaultValue: '个文件' })} · {formatBytes(bytes)}
       </span>
     </div>
   )
@@ -332,14 +362,68 @@ export function MobileStorageView() {
   const detailContainerClass = 'border-b border-border/50 bg-muted/10 pl-[4.5rem] pr-4'
   const detailRowClass = 'border-b border-border/50 py-3 last:border-b-0'
 
+  // 计算中动画：立即展示，最短停留 2 秒
+  const [showCalculating, setShowCalculating] = useState(false)
+  const holdTimerRef = React.useRef<ReturnType<typeof setTimeout>>()
+  const holdActiveRef = React.useRef(false)
+
+  useEffect(() => {
+    if (loading && !stats) {
+      setShowCalculating(true)
+      holdActiveRef.current = false
+    }
+  }, [loading, stats])
+
+  useEffect(() => {
+    if (!loading && stats && !holdActiveRef.current) {
+      holdActiveRef.current = true
+      holdTimerRef.current = setTimeout(() => {
+        setShowCalculating(false)
+        holdActiveRef.current = false
+      }, 2000)
+    }
+    return () => {
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current)
+    }
+  }, [loading, stats])
+
+  const showRefreshing = loading && stats
+
+  // ── iOS 风格"计算中"加载态 ──
+  if (showCalculating) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24">
+        <div className="relative">
+          <div className="absolute inset-0 animate-ping rounded-full bg-primary/10" />
+          <div className="relative flex size-14 items-center justify-center rounded-full bg-primary/10">
+            <Loader2 className="size-7 animate-spin text-primary" />
+          </div>
+        </div>
+        <p className="mt-5 text-sm font-medium text-foreground">
+          {t('profile.calculating', { defaultValue: '正在计算缓存大小…' })}
+        </p>
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          {t('profile.calculatingHint', { defaultValue: '这可能需要几秒钟' })}
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-5">
+      {/* 刷新中顶部指示器 */}
+      {showRefreshing && (
+        <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-0.5 overflow-hidden bg-transparent">
+          <div className="h-full w-1/3 animate-[mobile-progress_1.1s_ease-in-out_infinite] rounded-full bg-primary/70" />
+        </div>
+      )}
+
       <IosSection header={t('profile.cacheDistribution', { defaultValue: '缓存分布' })}>
         <div className="space-y-4 px-4 py-4">
           <div>
             <div className="mb-2 flex items-center justify-between">
               <span className="text-sm font-medium">{t('profile.totalCache', { defaultValue: '本地缓存总量' })}</span>
-              <span className="text-sm text-muted-foreground">{loading ? '...' : formatBytes(totalBytes)}</span>
+              <span className="text-sm tabular-nums text-muted-foreground">{formatBytes(totalBytes)}</span>
             </div>
             <div className="flex h-2 overflow-hidden rounded-full bg-muted">
               {activeSegments.length === 0 || totalBytes <= 0 ? (
@@ -362,7 +446,7 @@ export function MobileStorageView() {
                   <span className={cn('h-2 w-2 flex-shrink-0 rounded-full', segment.color)} />
                   <span className="truncate">{segment.label}</span>
                 </span>
-                <span className="flex-shrink-0 font-medium">{loading ? '...' : formatBytes(segment.value)}</span>
+                <span className="flex-shrink-0 font-medium tabular-nums">{formatBytes(segment.value)}</span>
               </div>
             ))}
           </div>
@@ -696,7 +780,7 @@ export function MobileStorageView() {
           icon={HardDrive}
           iconBg="bg-blue-500"
           label={t('profile.downloadedPacks', { defaultValue: '已下载学习包' })}
-          subtitle={loading ? undefined : `${stats?.downloadedPackCount ?? 0} ${t('profile.packCount', { defaultValue: '个学习包' })} · ${stats?.offlineVocabularyCount ?? 0} ${t('settings.storage.words')}`}
+          subtitle={`${stats?.downloadedPackCount ?? 0} ${t('profile.packCount', { defaultValue: '个学习包' })} · ${stats?.offlineVocabularyCount ?? 0} ${t('settings.storage.words')}`}
           right={(
             <div className="flex items-center gap-1.5">
               <ClearButton category="packs" />
@@ -715,9 +799,9 @@ export function MobileStorageView() {
         />
         {expanded.packs && (
           <div className={detailContainerClass}>
-            {loading ? (
-              <p className="py-3 text-xs text-muted-foreground">...</p>
-            ) : details?.packs.length ? (
+            {!details?.packs.length ? (
+              <p className="py-3 text-xs text-muted-foreground">{t('settings.storage.noPacks')}</p>
+            ) : (
               <div>
                 {details.packs.map((pack) => (
                   <div key={pack.packId} className={detailRowClass}>
@@ -750,8 +834,6 @@ export function MobileStorageView() {
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="py-3 text-xs text-muted-foreground">{t('settings.storage.noPacks')}</p>
             )}
           </div>
         )}
@@ -759,7 +841,7 @@ export function MobileStorageView() {
           icon={Database}
           iconBg="bg-emerald-500"
           label={t('profile.localAssets', { defaultValue: '本地资源文件' })}
-          subtitle={loading ? undefined : `${stats?.localAssetCount ?? 0} ${t('profile.fileCount', { defaultValue: '个文件' })} · ${formatBytes(stats?.localAssetBytes)} · ${stats?.audioAssetCount ?? 0} ${t('settings.storage.audio')} · ${stats?.imageAssetCount ?? 0} ${t('settings.storage.images')}`}
+          subtitle={`${stats?.localAssetCount ?? 0} ${t('profile.fileCount', { defaultValue: '个文件' })} · ${formatBytes(stats?.localAssetBytes)} · ${stats?.audioAssetCount ?? 0} ${t('settings.storage.audio')} · ${stats?.imageAssetCount ?? 0} ${t('settings.storage.images')}`}
           right={(
             <div className="flex items-center gap-1.5">
               <ClearButton category="assets" />
@@ -788,12 +870,12 @@ export function MobileStorageView() {
         )}
         <IosRow
           label={t('profile.offlineDictionary', { defaultValue: '离线词典缓存' })}
-          subtitle={loading ? undefined : `${stats?.dictionaryEntryCount ?? 0} ${t('profile.recordCount', { defaultValue: '条记录' })} · ${formatBytes(stats?.dictionaryBytes)}`}
+          subtitle={`${stats?.dictionaryEntryCount ?? 0} ${t('profile.recordCount', { defaultValue: '条记录' })} · ${formatBytes(stats?.dictionaryBytes)}`}
           right={<ClearButton category="dictionary" />}
         />
         <IosRow
           label={t('profile.expressionCache', { defaultValue: '学习库缓存' })}
-          subtitle={loading ? undefined : `${stats?.expressionEntryCount ?? 0} ${t('profile.recordCount', { defaultValue: '条记录' })} · ${formatBytes(stats?.expressionBytes)}`}
+          subtitle={`${stats?.expressionEntryCount ?? 0} ${t('profile.recordCount', { defaultValue: '条记录' })} · ${formatBytes(stats?.expressionBytes)}`}
           right={<ClearButton category="expressions" />}
           last
         />
@@ -802,16 +884,16 @@ export function MobileStorageView() {
       <IosSection header={t('profile.syncStatus', { defaultValue: '同步状态' })}>
         <IosRow
           label={t('profile.pendingSync', { defaultValue: '待同步操作' })}
-          value={loading ? '...' : String(stats?.pendingOutboxCount ?? 0)}
+          value={String(stats?.pendingOutboxCount ?? 0)}
           onTap={() => setExpanded((current) => ({ ...current, sync: !current.sync }))}
-          right={<div className="flex items-center gap-1 text-muted-foreground"><span className="text-sm">{loading ? '...' : String(stats?.pendingOutboxCount ?? 0)}</span><ToggleIcon open={expanded.sync} /></div>}
+          right={<div className="flex items-center gap-1 text-muted-foreground"><span className="text-sm tabular-nums">{String(stats?.pendingOutboxCount ?? 0)}</span><ToggleIcon open={expanded.sync} /></div>}
           last={!expanded.sync}
         />
         {expanded.sync && (
           <div className="bg-muted/10 pl-4 pr-4">
-            {loading ? (
-              <p className="py-3 text-xs text-muted-foreground">...</p>
-            ) : details?.outbox.length ? (
+            {!details?.outbox.length ? (
+              <p className="py-3 text-xs text-muted-foreground">{t('settings.storage.noPendingOps')}</p>
+            ) : (
               <div>
                 {details.outbox.map((item) => (
                   <div key={item.id} className={detailRowClass}>
@@ -827,8 +909,6 @@ export function MobileStorageView() {
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="py-3 text-xs text-muted-foreground">{t('settings.storage.noPendingOps')}</p>
             )}
           </div>
         )}

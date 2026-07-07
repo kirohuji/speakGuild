@@ -458,10 +458,10 @@ export const dailyPracticeRepository = {
     const candidates = units.flatMap(buildCandidates)
     const itemIds = candidates.map((candidate) => candidate.itemId)
 
-    try {
-      const remote = await dailyPracticeApi.progress(itemIds)
-      await localDb.putMany('daily_practice_items', remote.items.map((item: any) => ({ ...item, id: item.itemId })))
-    } catch { /* offline: local state is enough */ }
+    // 后台静默同步进度，不阻塞 UI
+    dailyPracticeApi.progress(itemIds)
+      .then(remote => { localDb.putMany('daily_practice_items', remote.items.map((item: any) => ({ ...item, id: item.itemId }))) })
+      .catch(() => { /* offline: local state is enough */ })
 
     const localProgress = await localDb.list<DailyPracticeProgress>('daily_practice_items')
     const progressMap = new Map(localProgress.map((item) => [item.itemId, item]))
