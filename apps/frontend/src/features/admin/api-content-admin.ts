@@ -96,6 +96,7 @@ export interface Vocabulary {
   meaning: string
   description?: string | null
   sortOrder: number
+  tier?: 'core' | 'ext' | 'carry'
 }
 
 export async function listVocabularies(): Promise<Vocabulary[]> {

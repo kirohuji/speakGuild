@@ -6,6 +6,10 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AiQuotaService } from '../../common/ai-quota/ai-quota.service';
 import { LlmProviderFactory, type LlmConfig } from '../../common/llm/llm-provider.factory';
 import { AiModelService } from '../ai-model/ai-model.service';
+import {
+  WARMUP_PIPELINE_SYSTEM_PROMPT,
+  buildWarmupPipelineUserPrompt,
+} from './prompts/warmup-pipeline.prompt';
 
 const PLACEMENT_GOAL_PACKAGE_TYPES: Record<string, string> = {
   foundation_start: 'foundation',
@@ -55,7 +59,7 @@ type WarmupPipelineGenerationDto = {
   topicTitle?: string;
   difficulty?: string;
   materials?: {
-    vocabs?: Array<{ id?: string; word?: string; meaning?: string; count?: number }>;
+    vocabs?: Array<{ id?: string; word?: string; meaning?: string; count?: number; tier?: 'core' | 'ext' | 'carry' }>;
     chunks?: Array<{ id?: string; text?: string; meaning?: string; count?: number }>;
     patterns?: Array<{ id?: string; pattern?: string; meaning?: string; count?: number }>;
   };
@@ -1475,111 +1479,60 @@ Rules:
         ].join('\n')
       : '';
 
-    const system = `You are an ESL exercise planner and generator for Chinese learners.
-Generate a compact set of warmup exercise groups in ONE JSON response.
-
-Exercise group types:
-1. chunk_substitution
-   Fields: type, title, chunk, chunkMeaning, direction("zh_to_en"|"en_to_zh"), kind("word"|"chunk"), items[]
-   Items (zh_to_en): {zh: "中文题干", answer: "English answer", hint: "提示"}
-   Items (en_to_zh): {en: "English prompt", answer: "中文答案", hint: "提示"}
-   NEVER mix: if direction=zh_to_en, ALL items use {zh, answer}. If direction=en_to_zh, ALL items use {en, answer}.
-2. vocab_sentence_building
-   Fields: type, title, vocabWord, vocabMeaning, direction("zh_to_en"), patterns[{chunk, items[]}]
-   Items follow same direction rule as above.
-3. pattern_drill
-   Fields: type, title, pattern, patternMeaning, direction("zh_to_en"|"en_to_zh"), items[]
-   Items follow same direction rule as above.
-4. sentence_decomposition
-   Fields: type, title, sourceText, sourceKind("vocab"|"chunk"|"pattern"), fullSentence, fullSentenceZh, levels[]
-   Levels: [{level:1-5, label:"加对象"|"加程度"|"加时间"|"加原因", en:"English at this level", zh:"Chinese translation", highlight:"newly added element text", hint:"Chinese hint"}]
-   CRITICAL — Progressive decomposition rules:
-   - ALL levels decompose the SAME fullSentence, from simple to complete. Never generate different sentences per level.
-   - Level 1: core skeleton (subject + verb only). Example: "I'd like to check in."
-   - Level 2: add object or basic complement. Example: "I'd like to check in for my reservation."
-   - Level 3: add adverb, degree, or manner. Example: "I'd like to check in for my reservation now."
-   - Level 4: add time, place, or frequency. Example: "I'd like to check in for my reservation at 3pm now."
-   - Level 5: the full original sentence with all elements restored.
-   - Each level's English MUST be a strict substring or close variant of the previous level plus ONE new element. The progression must be visible: L1 ⊂ L2 ⊂ L3 ⊂ L4 ⊂ L5.
-   - "highlight" field: the exact text added at THIS level compared to the previous. Example L2 highlight: "for my reservation". L3 highlight: "now".
-   - "zh" field: Chinese translation of THIS level's English (also progressive, not the same every level).
-   - "label" field: short Chinese label of what was added, e.g., "加对象", "加方式", "加时间", "加地点", "完整句".
-
-Rules:
-- Return ONLY valid JSON: { "pipeline": [...] }
-- Do not include ids; frontend will assign ids.
-- Generate MULTIPLE groups of the same type when there are many missing materials — do NOT stop at the minimum. For example, if 5 vocab words are missing, generate 2-3 separate chunk_substitution groups (each targeting different words), not just one.
-- Each group should target a DIFFERENT material (word/chunk/pattern). Do not put all missing materials into one giant group.
-- Use missing materials preferentially, but choose exercise types naturally and vary them.
-- Mix types: do not generate only chunk_substitution groups. Include at least one pattern_drill, one vocab_sentence_building, and varied combinations.
-- IMPORTANT — en_to_zh comprehension check: Always include at least 2 en_to_zh items (chunk_substitution with direction="en_to_zh"). These confirm the learner can read/hear English and understand it — not just produce it. Use natural English sentences, not textbook examples.
-- Avoid homogeneous output and near-duplicate sentences.
-- Keep each group compact: 2-4 translation items per group, 2-3 pattern groups for vocab_sentence_building, 4-5 progressive levels for sentence_decomposition (L1 ⊂ L2 ⊂ L3 ⊂ L4 ⊂ L5, same sentence, incremental).
-- CRITICAL: Every group MUST have at least 2 items — never generate a group with only 1 item (that creates a "single-item section" which is invalid). If you can only fill 1 item for a material, combine it with another material in the same group.
-- STRUCTURE TARGETS (aim for these, not just the minimum):
-  * Total practice items: 8-15 (ideal range). Below 6 is a hard failure.
-  * Total groups (steps): 3-5 (ideal range). More than 5 is acceptable only if all materials are covered.
-  * zh_to_en output items: at least 3 (output activation, step 1 priority).
-  * en_to_zh comprehension items: at least 2 (input check — confirms reading/listening understanding).
-  * pattern_drill items: at least 2 (structural output training — ensures learner can use sentence patterns flexibly).
-  * Zero single-item groups: every group 2+ items.
-- PIPELINE ORDERING (the pipeline array is an ordered sequence — position matters):
-  * The FIRST group(s) MUST be zh_to_en chunk_substitution — these are the warmup opener that activates the learner's English output. Like "中译英替换" in the UI, this is step 1 of the warmup flow.
-  * Follow with en_to_zh comprehension check groups — after producing English, confirm understanding.
-  * Then pattern_drill or vocab_sentence_building groups for deeper practice.
-  * Sentence decomposition (if any) goes last as the consolidation exercise.
-  * Do NOT put en_to_zh or decomposition before zh_to_en. The order is: output activation → input check → structure drill → consolidation.
-- HINT WRITING RULES (critical — every item MUST have a specific, helpful hint):
-  * chunk_substitution: Guide how to use the target word/chunk naturally. Point to sentence structure or collocation. Example for "I'm late": "想想'迟到'用英语怎么说？主语是 I，后面跟什么？" — NOT "用目标词造句".
-  * pattern_drill: Guide how to fill the pattern slot. Point to which Chinese part maps to the slot. Example for "I'd like to [verb]": "先确定'想要做'对应句型哪部分，再把'点一杯咖啡'放进去。"
-  * vocab_sentence_building: Suggest which collocation fits this item. Point to the relationship between vocab and pattern chunk. Example for "check in" with "I'd like to...": "用酒店前台场景，想想办理入住第一句话怎么说。"
-  * sentence_decomposition: Each level's hint builds on the previous — guide what to ADD next. Example: Level1 "先找出主语和核心动词" → Level2 "加上宾语，说明要做什么" → Level3 "加时间状语，什么时候做" → Level4 "加地点/方式，在哪里/怎么做" → Level5 "补全所有修饰成分，形成完整句". Hints must reference the specific element being added, not generic advice.
-  * NEVER use generic hints like "用目标词造句", "注意语法", "参考句型", "按照提示完成句子". Each hint MUST reference the SPECIFIC word/chunk and context.
-  * Hints in Chinese, 10-25 characters, actionable.
-- For en_to_zh, put English prompt in "en" and Chinese answer in "answer". Do NOT include a "zh" field on en_to_zh items.
-- For zh_to_en, put Chinese prompt in "zh" and English answer in "answer". Do NOT include an "en" field on zh_to_en items.
-- CRITICAL: Every item in a group must follow the group's direction. If direction="zh_to_en", ALL items use {zh, answer} — never mix {en, answer} items into a zh_to_en group, and never include both zh and en on the same item. Direction mixing within one group is invalid.
-- Make sure generated English actually uses the target material or clearly demonstrates the source pattern.
-- IMPORTANT: Review the PREVIOUSLY GENERATED ITEMS section below. Do NOT generate the same exercises again. Instead, fix gaps: if previous items were too short, make them richer; if they were too similar, vary the scenarios; if a material was covered poorly, cover it better this time.`;
-
+    // ── Classify vocabs by tier ──
+    const tier = (t?: string): 'core' | 'ext' | 'carry' => {
+      if (t === 'ext' || t === 'carry') return t;
+      return 'core'; // default
+    };
+    const missingCoreVocabs = missingVocabs.filter((v) => tier(v.tier) === 'core');
+    const missingExtVocabs = missingVocabs.filter((v) => tier(v.tier) === 'ext');
+    const missingCarryVocabs = missingVocabs.filter((v) => tier(v.tier) === 'carry');
     const totalMissing = missingVocabs.length + missingChunks.length + missingPatterns.length;
 
-    const prompt = [
-      `Topic: ${dto.topicTitle || 'Untitled topic'}`,
-      `Difficulty: ${dto.difficulty || 'L2'}`,
+    const vocabPoolSummary = vocabs.length
+      ? vocabs.map((v) => {
+          const status = (v.count ?? 0) > 0 ? 'used' : 'missing';
+          return `${v.word} [${tier(v.tier)}] [${status}]`;
+        }).join(', ')
+      : 'none';
+
+    const chunkPoolSummary = chunks.length
+      ? chunks.map((c) => `${c.text}${(c.count ?? 0) > 0 ? ' [used]' : ' [missing]'}`).join(' | ')
+      : 'none';
+
+    const patternPoolSummary = patterns.length
+      ? patterns.map((p) => `${p.pattern}${(p.count ?? 0) > 0 ? ' [used]' : ' [missing]'}`).join(' | ')
+      : 'none';
+
+    const prompt = buildWarmupPipelineUserPrompt({
+      topicTitle: dto.topicTitle || 'Untitled topic',
+      difficulty: dto.difficulty || 'L2',
       previousSummary,
-      `You need to generate exercises to cover ${totalMissing} missing materials.`,
-      'Generate enough groups — do NOT stop at just one group per type.',
-      '',
-      'Structure targets (aim for the ideal range):',
-      `- Total practice items: target 8-15 (currently have ${structure.totalItems ?? 0}, need at least ${Math.max(0, 6 - (structure.totalItems ?? 0))} more to pass minimum)`,
-      `- Total groups/steps: target 3-5 (currently have ${structure.steps ?? 0}, need at least ${Math.max(0, 3 - (structure.steps ?? 0))} more)`,
-      `- zh_to_en output items: at least 3 total (currently ${structure.zhToEnItems ?? 0}) — MUST be the FIRST groups in pipeline (warmup opener, 中译英替换输出激活)`,
-      `- en_to_zh comprehension items: at least 2 total (currently ${structure.enToZhItems ?? 0}) — follow zh_to_en, confirm understanding`,
-      `- pattern_drill items: at least 2 total (currently ${structure.patternItems ?? 0}) — structural output training`,
-      `- expansion groups: at least 1 (currently ${structure.expansionUnits ?? 0}) — sentence_decomposition or vocab_sentence_building, place last`,
-      `- Every group MUST have ≥2 items — zero single-item groups tolerated`,
-      `IMPORTANT: If ${totalMissing} materials are missing, generate MORE groups than the minimum to cover them. Do not stop at just meeting the floor.`,
-      '',
-      'Missing vocabulary (count=0):',
-      missingVocabs.map((item) => `- ${item.word}${item.meaning ? `: ${item.meaning}` : ''}`).join('\n') || '- none',
-      '',
-      'Missing chunks (count=0):',
-      missingChunks.map((item) => `- ${item.text}${item.meaning ? `: ${item.meaning}` : ''}`).join('\n') || '- none',
-      '',
-      'Missing sentence patterns (count=0):',
-      missingPatterns.map((item) => `- ${item.pattern}${item.meaning ? `: ${item.meaning}` : ''}`).join('\n') || '- none',
-      '',
-      'Full material pool for context:',
-      `Vocabulary: ${vocabs.map((item) => `${item.word}${(item.count ?? 0) > 0 ? ' [used]' : ' [missing]'}`).join(', ') || 'none'}`,
-      `Chunks: ${chunks.map((item) => `${item.text}${(item.count ?? 0) > 0 ? ' [used]' : ' [missing]'}`).join(' | ') || 'none'}`,
-      `Patterns: ${patterns.map((item) => `${item.pattern}${(item.count ?? 0) > 0 ? ' [used]' : ' [missing]'}`).join(' | ') || 'none'}`,
-    ].join('\n');
+      totalMissing,
+      structure: {
+        totalItems: structure.totalItems ?? 0,
+        steps: structure.steps ?? 0,
+        zhToEnItems: structure.zhToEnItems ?? 0,
+        enToZhItems: structure.enToZhItems ?? 0,
+        patternItems: structure.patternItems ?? 0,
+        expansionUnits: structure.expansionUnits ?? 0,
+      },
+      materials: {
+        missingCoreVocabs: missingCoreVocabs.map((v) => ({ word: v.word ?? '', meaning: v.meaning })),
+        missingExtVocabs: missingExtVocabs.map((v) => ({ word: v.word ?? '', meaning: v.meaning })),
+        missingCarryVocabs: missingCarryVocabs.map((v) => ({ word: v.word ?? '', meaning: v.meaning })),
+        missingChunks: missingChunks.map((c) => ({ text: c.text ?? '', meaning: c.meaning })),
+        missingPatterns: missingPatterns.map((p) => ({ pattern: p.pattern ?? '', meaning: p.meaning })),
+        vocabPoolSummary,
+        chunkPoolSummary,
+        patternPoolSummary,
+      },
+    });
 
     try {
       const { text } = await generateText({
         model: provider(),
-        system,
+        system: WARMUP_PIPELINE_SYSTEM_PROMPT,
         prompt,
         temperature: 0.65,
         maxOutputTokens: 16000,

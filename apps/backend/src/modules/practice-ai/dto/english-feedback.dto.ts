@@ -215,7 +215,7 @@ export class GenerateWarmupPipelineDto {
   @IsObject()
   @IsOptional()
   materials?: {
-    vocabs?: Array<{ id?: string; word?: string; meaning?: string; count?: number }>;
+    vocabs?: Array<{ id?: string; word?: string; meaning?: string; count?: number; tier?: 'core' | 'ext' | 'carry' }>;
     chunks?: Array<{ id?: string; text?: string; meaning?: string; count?: number }>;
     patterns?: Array<{ id?: string; pattern?: string; meaning?: string; count?: number }>;
   };

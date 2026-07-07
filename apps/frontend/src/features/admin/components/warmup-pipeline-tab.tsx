@@ -67,7 +67,7 @@ export interface WarmupMaterialUsage {
     patternIds: string[]
   }
   totals: {
-    vocabs: Array<{ id: string; word: string; meaning?: string; count: number }>
+    vocabs: Array<{ id: string; word: string; meaning?: string; count: number; tier?: 'core' | 'ext' | 'carry' }>
     chunks: Array<{ id: string; text: string; meaning?: string; count: number }>
     patterns: Array<{ id: string; pattern: string; meaning?: string; count: number }>
   }
@@ -75,7 +75,7 @@ export interface WarmupMaterialUsage {
     id: string
     type: WarmupPipelineItem['type']
     title?: string
-    vocabs: Array<{ id: string; word: string; meaning?: string; count: number }>
+    vocabs: Array<{ id: string; word: string; meaning?: string; tier?: 'core' | 'ext' | 'carry'; count: number }>
     chunks: Array<{ id: string; text: string; meaning?: string; count: number }>
     patterns: Array<{ id: string; pattern: string; meaning?: string; count: number }>
   }>
@@ -502,7 +502,7 @@ export function buildWarmupMaterialUsage(
       type: item.type,
       title: item.title,
       vocabs: vocabs
-        .map((vocab) => ({ id: vocab.id, word: vocab.word, meaning: vocab.meaning, count: materialCount(item, text, vocab.word, 'vocab') }))
+        .map((vocab) => ({ id: vocab.id, word: vocab.word, meaning: vocab.meaning, tier: vocab.tier, count: materialCount(item, text, vocab.word, 'vocab') }))
         .filter((entry) => entry.count > 0),
       chunks: chunks
         .map((chunk) => ({ id: chunk.id, text: chunk.text, meaning: chunk.meaning, count: materialCount(item, text, chunk.text, 'chunk') }))
@@ -518,6 +518,7 @@ export function buildWarmupMaterialUsage(
       id: vocab.id,
       word: vocab.word,
       meaning: vocab.meaning,
+      tier: vocab.tier,
       count: itemStats.reduce((sum, stat) => sum + (stat.vocabs.find((entry) => entry.id === vocab.id)?.count ?? 0), 0),
     })),
     chunks: chunks.map((chunk) => ({
@@ -608,7 +609,7 @@ export function WarmupPipelineTab({
     topicTitle: topicTitle?.trim() || undefined,
     difficulty: difficulty || undefined,
     materials: {
-      vocabs: vocabs.map((vocab) => ({ id: vocab.id, word: vocab.word, meaning: vocab.meaning })),
+      vocabs: vocabs.map((vocab) => ({ id: vocab.id, word: vocab.word, meaning: vocab.meaning, tier: vocab.tier })),
       chunks: chunks.map((chunk) => ({ id: chunk.id, text: chunk.text, meaning: chunk.meaning })),
       patterns: patterns.map((pattern) => ({ id: pattern.id, pattern: pattern.pattern, meaning: pattern.meaning })),
     },
