@@ -967,8 +967,8 @@ export function PracticeSessionPage() {
 
             <Tabs value={prepTab} onValueChange={handlePrepTabChange} className="w-full" data-mobile-route-swipe>
               <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-                <TabsTrigger value="vocab" className="rounded-md text-xs">{t('practiceSession.sceneVocab')} ({detail.vocabularies.length})</TabsTrigger>
-                <TabsTrigger value="chunk" className="rounded-md text-xs">{t('practiceSession.coreExpressions')} ({detail.activeChunks.length})</TabsTrigger>
+                <TabsTrigger value="vocab" className="rounded-md text-xs">{t('learning.vocab')} ({detail.vocabularies.length})</TabsTrigger>
+                <TabsTrigger value="chunk" className="rounded-md text-xs">{t('learning.coreChunks')} ({detail.activeChunks.length})</TabsTrigger>
                 <TabsTrigger value="pattern" className="rounded-md text-xs">{t('learning.patterns')} ({detail.sentencePatterns?.length ?? 0})</TabsTrigger>
               </TabsList>
 

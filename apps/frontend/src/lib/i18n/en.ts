@@ -950,6 +950,7 @@ const en = {
       continue: 'Continue',
       vocab: 'Vocab',
       chunks: 'Chunks',
+      coreChunks: 'Core Chunks',
       topics: 'Topics',
       practiceProgress: 'Practiced {{done}}/{{total}}',
       learnAgain: 'Learn again',

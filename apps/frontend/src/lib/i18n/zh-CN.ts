@@ -952,6 +952,7 @@ const zhCN = {
       continue: '继续学习',
       vocab: '词汇',
       chunks: '句块',
+      coreChunks: '核心句块',
       topics: '话题',
       practiceProgress: '已练 {{done}}/{{total}}',
       learnAgain: '重新学习',

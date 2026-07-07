@@ -301,7 +301,7 @@ export function LearningUnitPage() {
               <BookText className="size-3.5" /> {t('learning.vocab')} {allVocabCount}
             </TabsTrigger>
             <TabsTrigger value="chunk" className="gap-1.5 rounded-md text-xs">
-              <MessageSquareText className="size-3.5" /> {t('learning.chunks')} {allChunkCount}
+              <MessageSquareText className="size-3.5" /> {t('learning.coreChunks')} {allChunkCount}
             </TabsTrigger>
             <TabsTrigger value="pattern" className="gap-1.5 rounded-md text-xs">
               <Search className="size-3.5" /> {t('learning.patterns')} {patternDialogItems.length}

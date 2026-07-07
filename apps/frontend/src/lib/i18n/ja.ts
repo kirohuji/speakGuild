@@ -950,6 +950,7 @@ const ja = {
       continue: '続ける',
       vocab: '語彙',
       chunks: 'チャンク',
+      coreChunks: 'コアチャンク',
       topics: 'トピック',
       practiceProgress: '練習済み {{done}}/{{total}}',
       learnAgain: 'もう一度学習',
