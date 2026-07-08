@@ -10,6 +10,8 @@ import { refreshLearningBadgeFromTodayRun, registerLearningReminderActions, resc
 import { isNative, revenueCat } from '@/lib/native'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { useSearchStore } from '@/stores/search.store'
+import { useDailyPracticeStore } from '@/stores/daily-practice.store'
+import { useLearningStore } from '@/stores/learning.store'
 
 const OTA_USER_ID_KEY = 'manyu-ota-user-id'
 const AUTH_SESSION_CACHE_KEY = 'manyu-auth-session-cache'
@@ -134,6 +136,8 @@ function setCurrentSessionSnapshot(session: SessionPayload) {
 }
 
 async function clearUserScopedClientData() {
+  useDailyPracticeStore.getState().reset()
+  useLearningStore.getState().resetUserState()
   try {
     await offlineStorageService.clearUserData()
   } catch (error) {

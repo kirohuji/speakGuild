@@ -29,26 +29,37 @@ export function StartupWarmupProvider({ children }: { children: ReactNode }) {
     scheduleIdleWork(() => {
       if (sessionUserIdRef.current !== userId) return
 
-      void localDb.count('kv').catch((error) => {
-        console.warn('[startup-warmup] offline db warmup failed:', error)
-      })
+      void (async () => {
+        try {
+          await Promise.all([
+            localDb.count('kv'),
+            localDb.count('expression_entries'),
+          ])
+        } catch (error) {
+          console.warn('[startup-warmup] offline db warmup failed:', error)
+        }
 
-      const learningStore = useLearningStore.getState()
-      if (learningStore.myUnits.length === 0) {
-        void learningStore.fetchMyLearning().catch((error) => {
+        if (sessionUserIdRef.current !== userId) return
+
+        const learningStore = useLearningStore.getState()
+        try {
+          if (learningStore.myUnits.length === 0) {
+            await learningStore.fetchMyLearning()
+          }
+          await learningStore.fetchDownloadedPacks()
+        } catch (error) {
           console.warn('[startup-warmup] learning plan warmup failed:', error)
-        })
-      }
-      void learningStore.fetchDownloadedPacks().catch((error) => {
-        console.warn('[startup-warmup] downloaded packs warmup failed:', error)
-      })
+        }
 
-      const dailyStore = useDailyPracticeStore.getState()
-      if (!dailyStore.plan && !dailyStore.loading) {
-        void dailyStore.loadToday().catch((error) => {
-          console.warn('[startup-warmup] today plan warmup failed:', error)
-        })
-      }
+        if (sessionUserIdRef.current !== userId) return
+
+        const dailyStore = useDailyPracticeStore.getState()
+        if (!dailyStore.plan && !dailyStore.loading) {
+          await dailyStore.loadToday().catch((error) => {
+            console.warn('[startup-warmup] today plan warmup failed:', error)
+          })
+        }
+      })()
     }, 1_000)
   }, [session?.user?.id])
 

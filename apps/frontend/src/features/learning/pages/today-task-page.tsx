@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import {
   ArrowRight, Blocks, Braces, ChevronDown, ChevronLeft, ChevronRight,
   ClipboardList, ListChecks, ListMusic, PenLine, Replace, Split, Target,
-  CheckCircle2,
+  CheckCircle2, Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -15,7 +15,6 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
-import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { cn } from '@/lib/cn'
 import { isIOS } from '@/lib/native'
 import { ChunkOutputDrillCard } from '@/features/practice/components/chunk-output-drill-card'
@@ -632,7 +631,27 @@ export function TodayTaskPage() {
   }, [autoNextEnabled, currentIdx, currentStepDone, drawerOpen, hasNext, steps.length])
 
   // ── 加载态：仅在无缓存数据时展示 ──
-  if (loading && !plan) return <MobilePageLoading rows={4} />
+  if (loading && !plan) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
+        <div className="rounded-lg bg-muted/30 px-5 py-6">
+          <div className="flex items-center gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Loader2 className="size-4 animate-spin" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-foreground">
+                {t('todayTask.fetchingPlan', { defaultValue: '正在拉取学习计划' })}
+              </p>
+              <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                {t('todayTask.fetchingPlanHint', { defaultValue: '恢复学习包后会自动安排今日任务。' })}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // ── 空态 ──
   if (error || (!loading && !plan)) {

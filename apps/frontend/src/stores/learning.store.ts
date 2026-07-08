@@ -18,6 +18,7 @@ import {
 } from '@/lib/offline'
 import { isNative } from '@/lib/native/platform'
 import { usePreferencesStore } from '@/stores/preferences.store'
+import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { toast } from 'sonner'
 import i18n from '@/lib/i18n'
 
@@ -88,6 +89,7 @@ interface LearningStore {
   uninstallUnitPack: (unitId: string) => Promise<void>
   pauseActivePackTasks: (reason?: string) => void
   resumePackTask: (packId: string) => Promise<void>
+  resetUserState: () => void
   /** 清除所有离线数据 */
   clearAllOfflineData: () => Promise<void>
 }
@@ -346,6 +348,9 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       }))
       await getState().refreshMyUnits()
 
+      // 新包安装后，重置今日任务计划，下次进入时重新从本地 SQLite 构建
+      useDailyPracticeStore.getState().reset()
+
       // 3 秒后从队列移除已完成的
       setTimeout(() => {
         set((s) => ({
@@ -425,6 +430,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       }))
       await getState().refreshMyUnits()
       lap('refresh my units')
+
+      // 卸载包后，重置今日任务计划，下次进入时重新从本地 SQLite 构建
+      useDailyPracticeStore.getState().reset()
+
       set((s) => ({
         downloadTasks: s.downloadTasks.map((task) =>
           task.packId === unitId
@@ -567,6 +576,23 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
 
     enqueueDownloadTask(packId, task.title)
     processDownloadQueue()
+  },
+
+  resetUserState() {
+    set({
+      myUnits: [],
+      myLoading: true,
+      shopUnits: [],
+      shopTotal: 0,
+      shopPage: 1,
+      shopHasMore: false,
+      shopLoading: false,
+      checkInData: null,
+      checkInLoading: false,
+      tags: [],
+      unitDetail: null,
+      unitDetailLoading: false,
+    })
   },
 
   async clearAllOfflineData() {

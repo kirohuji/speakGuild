@@ -16,6 +16,7 @@ interface DailyPracticeState {
   completeStep: (step: ScheduledDailyPracticeItem, score: WarmupScore) => Promise<void>
   submitToday: (records: WarmupRecordEntry[], localWarmupRecordId?: string | null) => Promise<void>
   reshuffle: (targetPackId?: string | null, targetDate?: string | null, mode?: DailyPracticePlanMode) => Promise<void>
+  reset: () => void
 }
 
 export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
@@ -80,5 +81,9 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
 
   async reshuffle(targetPackId, targetDate, mode) {
     await get().loadToday(targetPackId, targetDate, mode, true)
+  },
+
+  reset() {
+    set({ plan: null, loading: false, error: null, submitting: false })
   },
 }))

@@ -68,6 +68,8 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
   const [deleteError, setDeleteError] = useState('')
   const [deleteMessage, setDeleteMessage] = useState('')
   const [testingLearningReminder, setTestingLearningReminder] = useState(false)
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const [logoutLoading, setLogoutLoading] = useState(false)
 
   // ─── 版本更新 ──────────────────────────────────────
   const [appVersion, setAppVersion] = useState('')
@@ -281,6 +283,20 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     }
   }
 
+  const handleConfirmLogout = async () => {
+    if (logoutLoading) return
+    setLogoutLoading(true)
+    try {
+      await signOut()
+      setShowLogoutDialog(false)
+      navigate('/auth/login')
+    } catch (error: any) {
+      toast.error(error?.message || t('profile.logoutFailed', { defaultValue: '退出登录失败，请重试' }))
+    } finally {
+      setLogoutLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-5">
       <IosSection>
@@ -479,7 +495,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
         <div className="px-4 py-3">
           <button
             type="button"
-            onClick={async () => { await signOut(); navigate('/auth/login'); }}
+            onClick={() => setShowLogoutDialog(true)}
             className="w-full text-center text-sm font-medium text-red-500"
           >
             {t('profile.logout')}
@@ -573,6 +589,39 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
                 {t('common.confirm')}
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showLogoutDialog} onOpenChange={(open) => { if (!logoutLoading) setShowLogoutDialog(open) }}>
+        <DialogContent
+          className="w-[calc(100%-2rem)] max-w-sm rounded-2xl p-5 sm:p-6"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>{t('profile.logout')}</DialogTitle>
+            <DialogDescription className="text-sm leading-6 text-muted-foreground">
+              {t('profile.logoutConfirmHint', { defaultValue: '确定要退出当前账号吗？本机的用户数据会被清理，已下载学习包会保留。' })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row justify-end gap-2 space-x-0">
+            <Button
+              variant="outline"
+              className="flex-1 sm:flex-none"
+              onClick={() => setShowLogoutDialog(false)}
+              disabled={logoutLoading}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1 sm:flex-none"
+              onClick={handleConfirmLogout}
+              disabled={logoutLoading}
+            >
+              {logoutLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {logoutLoading ? t('profile.loggingOut', { defaultValue: '退出中' }) : t('common.confirm')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -349,7 +349,10 @@ function buildCandidates(unit: UnitDetail): DailyPracticeCandidate[] {
 
 async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: string | null): Promise<UnitDetail[]> {
   // 获取当前用户已加入的学习包列表（my_learning_units 是用户级表，退出登录时会被清空）
-  const myUnits = await learningRepository.getCachedMyUnits().catch(() => [])
+  const cachedMyUnits = await learningRepository.getCachedMyUnits().catch(() => [])
+  const myUnits = cachedMyUnits.length > 0
+    ? cachedMyUnits
+    : await learningRepository.getMyUnits().catch(() => [])
   const enrolledIds = new Set(myUnits.map((u) => u.id))
 
   if (targetPackId) {
@@ -457,6 +460,22 @@ export const dailyPracticeRepository = {
     const units = await this.resolveCandidateUnits(packScope, targetPackId)
     const candidates = units.flatMap(buildCandidates)
     const itemIds = candidates.map((candidate) => candidate.itemId)
+    if (units.length === 0 || candidates.length === 0) {
+      if (date === todayKey()) void setLearningBadgeCount(0)
+      return {
+        date,
+        scope: packScope,
+        mode,
+        dailyGoal,
+        availableReviewCount: 0,
+        practicePoolCount: 0,
+        units,
+        steps: [],
+        topicStats: [],
+        scheduledItemIds: [],
+        completedItemIds: [],
+      }
+    }
 
     // 后台静默同步进度，不阻塞 UI
     dailyPracticeApi.progress(itemIds)

@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 import { BookOpen, CheckCircle2, ChevronRight, Download, Loader2, RotateCcw, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { Button } from '@/components/ui/button'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -49,7 +48,23 @@ export function MyLearningView({
   const installingPackIdSet = useMemo(() => new Set(installingPackIds), [installingPackIds])
 
   if (loading && myUnits.length === 0) {
-    return <MobilePageLoading rows={3} minHeightClassName="min-h-[40vh]" />
+    return (
+      <div className="rounded-lg bg-muted/30 px-5 py-6">
+        <div className="flex items-center gap-3">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Loader2 className="size-4 animate-spin" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-foreground">
+              {t('learning.fetchingPlan', { defaultValue: '正在拉取学习计划' })}
+            </p>
+            <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+              {t('learning.fetchingPlanHint', { defaultValue: '会优先恢复你的学习包和本地离线内容。' })}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (myUnits.length === 0) {
@@ -66,6 +81,12 @@ export function MyLearningView({
 
   return (
     <div className="space-y-5">
+      {loading && (
+        <div className="flex items-center gap-2 rounded-lg bg-muted/25 px-3 py-2 text-xs text-muted-foreground">
+          <Loader2 className="size-3.5 animate-spin" />
+          <span>{t('learning.refreshingPlan', { defaultValue: '正在更新学习计划' })}</span>
+        </div>
+      )}
       <LearningWeekTracker />
 
       {inProgress.length > 0 && (
