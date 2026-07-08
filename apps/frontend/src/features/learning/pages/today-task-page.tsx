@@ -641,10 +641,10 @@ export function TodayTaskPage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-foreground">
-                {t('todayTask.fetchingPlan', { defaultValue: '正在拉取学习计划' })}
+                {t('todayTask.fetchingPlan')}
               </p>
               <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-                {t('todayTask.fetchingPlanHint', { defaultValue: '恢复学习包后会自动安排今日任务。' })}
+                {t('todayTask.fetchingPlanHint')}
               </p>
             </div>
           </div>
@@ -938,7 +938,7 @@ export function TodayTaskPage() {
                           </Badge>
                         </div>
                         <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          {topic.activeChunksCount} {t('todayTask.expressions')} · {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} {t('todayTask.minutes')}{detail ? ` · ${detail}` : ''}
+                          {topic.activeChunksCount} {t('todayTask.expressions')}{detail ? ` · ${detail}` : ''}
                         </p>
                         <div className="mt-2 flex items-center gap-2">
                           <SegmentedBar

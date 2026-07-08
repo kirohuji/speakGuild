@@ -107,6 +107,8 @@ export interface TrainingTopicItem {
   metadata?: any
   suggestedDurationSec: number
   activeChunks: { id: string; text: string; meaning: string }[]
+  vocabularies?: VocabItem[]
+  sentencePatterns?: SentencePattern[]
 }
 
 export interface UnitDetail {

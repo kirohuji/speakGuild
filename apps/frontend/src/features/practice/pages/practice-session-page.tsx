@@ -1142,9 +1142,6 @@ export function PracticeSessionPage() {
                 <BookOpen className="size-4 text-accent" />
                 <p className="text-sm font-semibold text-foreground">{t('practiceSession.practiceTitle')}</p>
               </div>
-              <span className="shrink-0 text-[11px] text-muted-foreground">
-                {t('practiceHub.suggested')} {Math.max(1, Math.round(detail.topic.suggestedDurationSec / 60))} {t('practiceSession.minutes')}
-              </span>
             </div>
             <p className="text-lg font-semibold leading-7 text-foreground">{detail.topic.promptEn}</p>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{detail.topic.promptZh}</p>

@@ -1,6 +1,6 @@
 import { assetCacheService, type AssetRef } from './asset-cache.service'
 import { learningApi } from '@/features/learning/api/learning-api'
-import { learningRepository } from './learning.repository'
+import { buildAggregatedUnitContent, learningRepository } from './learning.repository'
 import { localDb } from './unified-storage'
 import { practiceRepository } from './practice.repository'
 import { syncOutbox } from './sync-outbox'
@@ -141,14 +141,8 @@ function summarizeZipEntries(entries: Map<string, Entry>) {
 }
 
 async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
-  await localDb.put('downloaded_unit_details', {
-    id: unitDetail.id,
-    ...unitDetail,
-    downloadedAt: new Date().toISOString(),
-  })
-  console.log(`[learning-pack]   SQLite: downloaded_unit_details/${unitDetail.id} (unit)`)
-
   let inkCount = 0
+  const mergedTopicDetails: Array<{ topicId: string; detail: any }> = []
   for (const topicDetail of topicDetails) {
     if (topicDetail?.inkScript) {
       await localDb.put('ink_scripts', {
@@ -162,6 +156,7 @@ async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
     }
     // Merge unit-level shared data into the stored topic detail
     const merged = mergeTopicDetail(topicDetail, unitDetail)
+    mergedTopicDetails.push({ topicId: topicDetail.topic.id, detail: merged })
     await localDb.put('downloaded_unit_details', {
       id: `topic:${topicDetail.topic.id}`,
       unitId: unitDetail.id,
@@ -171,6 +166,13 @@ async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
     })
   }
   console.log(`[learning-pack]   SQLite: ${topicDetails.length} 个 topic, ${inkCount} 个 ink_script`)
+  const aggregatedUnitDetail = buildAggregatedUnitContent(unitDetail, mergedTopicDetails)
+  await localDb.put('downloaded_unit_details', {
+    id: unitDetail.id,
+    ...aggregatedUnitDetail,
+    downloadedAt: new Date().toISOString(),
+  })
+  console.log(`[learning-pack]   SQLite: downloaded_unit_details/${unitDetail.id} (unit view)`)
 }
 
 /**

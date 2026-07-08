@@ -799,7 +799,6 @@ function PracticeTopicCard({
   onStart: () => void
   [key: `data-${string}`]: string | undefined
 }) {
-  const { t } = useTranslation()
   return (
     <Card
       className="cursor-pointer border-0 bg-orange-500/[0.06] shadow-none transition-colors hover:bg-orange-500/[0.1]"
@@ -817,9 +816,6 @@ function PracticeTopicCard({
               <Badge variant="secondary" className="text-[10px]">{topic.difficulty}</Badge>
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{topic.promptZh}</p>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {t('practiceHub.suggested')} {Math.round(topic.suggestedDurationSec / 60)} {t('practiceSession.minutes')}
-            </p>
           </div>
           <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
         </div>

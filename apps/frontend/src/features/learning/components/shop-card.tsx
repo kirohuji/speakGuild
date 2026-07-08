@@ -115,7 +115,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
             </div>
           )}
           {downloadTask?.status === 'queued' && (
-            <p className="mt-1 text-[10px] text-muted-foreground">{t('learning.queued', { defaultValue: '⏳ 排队中...' })}</p>
+            <p className="mt-1 text-[10px] text-muted-foreground">{t('learning.queued')}</p>
           )}
         </div>
       </button>
@@ -177,11 +177,11 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
               ) : downloadTask?.status === 'queued' ? (
                 <Button className="w-full gap-2" disabled>
                   <Spinner data-icon="inline-start" />
-                  {t('learning.waitingDownload', { defaultValue: '等待下载...' })}
+                  {t('learning.waitingDownload')}
                 </Button>
               ) : downloadTask?.status === 'error' ? (
                 <Button className="w-full gap-2" variant="destructive" onClick={handleAcquire}>
-                  {t('learning.downloadFailedRetry', { defaultValue: '下载失败，点击重试' })}
+                  {t('learning.downloadFailedRetry')}
                 </Button>
               ) : downloadTask?.status === 'done' || justEnrolled ? (
                 <Button variant="outline" className="w-full gap-2" onClick={() => { setDetailOpen(false); navigate(`/learning/units/${unit.id}`) }}>
@@ -196,7 +196,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
               ) : (
                 <Button className="w-full gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire} data-spotlight="confirm-start">
                   {acquiring ? <Spinner data-icon="inline-start" /> : <ArrowRight className="size-4" />}
-                  {acquiring ? t('learning.downloading', { defaultValue: '下载中' }) : unit.isUnlocked && !unit.isLocked ? t('learning.start') : `${t('learning.level')}.${unit.requiredUserLevel} ${t('learning.unlock')}`}
+                  {acquiring ? t('learning.downloading') : unit.isUnlocked && !unit.isLocked ? t('learning.start') : `${t('learning.level')}.${unit.requiredUserLevel} ${t('learning.unlock')}`}
                 </Button>
               )}
             </div>

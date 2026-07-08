@@ -43,6 +43,27 @@ const MAX_CONCURRENT_DOWNLOADS = 2
 const PACK_TASKS_STORAGE_KEY = 'manyu.learning-pack.tasks.v1'
 const activePackTaskIds = new Set<string>()
 
+function packTaskStepLabel(step: string, kind: DownloadTask['kind'] = 'download') {
+  if (kind === 'uninstall') {
+    if (step === 'quitting') return i18n.t('learning.packTaskStepQuitting')
+    if (step === 'removing_assets') return i18n.t('learning.packTaskStepRemovingAssets')
+    if (step === 'refreshing') return i18n.t('learning.packTaskStepRefreshingPlan')
+    if (step === 'done') return i18n.t('learning.packTaskStepUninstallDone')
+    if (step === 'paused') return i18n.t('learning.packTaskPaused')
+    return i18n.t('learning.packTaskUninstalling')
+  }
+  if (step === 'downloading') return i18n.t('learning.packTaskStepDownloadingPack')
+  if (step === 'parsing') return i18n.t('learning.packTaskStepParsingPack')
+  if (step === 'reading_manifest') return i18n.t('learning.packTaskStepReadingManifest')
+  if (step === 'reading_topics') return i18n.t('learning.packTaskStepReadingTopics')
+  if (step === 'persisting_content') return i18n.t('learning.packTaskStepPersistingContent')
+  if (step === 'indexing') return i18n.t('learning.packTaskStepIndexing')
+  if (step === 'extracting_assets') return i18n.t('learning.packTaskStepExtractingAssets')
+  if (step === 'finishing') return i18n.t('learning.packTaskStepFinishing')
+  if (step === 'paused') return i18n.t('learning.packTaskPaused')
+  return i18n.t('learning.packTaskDownloading')
+}
+
 interface LearningStore {
   // 我的学习
   myUnits: MyUnit[]
@@ -116,7 +137,7 @@ async function checkNetworkBeforeDownload(): Promise<boolean> {
     // 当前是蜂窝网络
     if (wifiOnlyMedia) {
       // 仅 WiFi 模式 → 阻止，弹提示
-      toast.error(i18n.t('profile.wifiOnlyBlocked', { defaultValue: '当前为移动网络，请在 WiFi 环境下下载' }), {
+      toast.error(i18n.t('profile.wifiOnlyBlocked'), {
         duration: 4000,
       })
       return false
@@ -124,15 +145,15 @@ async function checkNetworkBeforeDownload(): Promise<boolean> {
 
     // 允许移动网络 → 弹确认对话框
     return await new Promise<boolean>((resolve) => {
-      toast(i18n.t('profile.cellularDownloadConfirm', { defaultValue: '当前使用蜂窝网络，下载可能消耗流量' }), {
+      toast(i18n.t('profile.cellularDownloadConfirm'), {
         duration: 10000,
         position: 'top-center',
         action: {
-          label: i18n.t('common.confirm', { defaultValue: '继续下载' }),
+          label: i18n.t('common.confirm'),
           onClick: () => resolve(true),
         },
         cancel: {
-          label: i18n.t('common.cancel', { defaultValue: '取消' }),
+          label: i18n.t('common.cancel'),
           onClick: () => resolve(false),
         },
       })
@@ -363,9 +384,9 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       set((s) => ({
         downloadTasks: s.downloadTasks.map((t) =>
           t.packId === next.packId
-            ? { ...t, status: 'error' as const, error: error?.message ?? '下载失败' }
-            : t,
-        ),
+          ? { ...t, status: 'error' as const, error: error?.message ?? i18n.t('learning.packTaskDownloadFailed') }
+          : t,
+      ),
       }))
     } finally {
       // 继续处理队列中的下一个
@@ -399,7 +420,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
           status: 'uninstalling' as const,
           progress: 5,
           step: 'quitting',
-          stepLabel: '退出学习',
+          stepLabel: packTaskStepLabel('quitting', 'uninstall'),
         },
       ],
       packInstallingIds: s.packInstallingIds.includes(unitId)
@@ -418,10 +439,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     try {
       await learningRepository.quitUnit(unitId)
       lap('remote/local learning repository quit')
-      updateUninstallProgress(35, 'removing_assets', '清理本地资源')
+      updateUninstallProgress(35, 'removing_assets', packTaskStepLabel('removing_assets', 'uninstall'))
       await learningPackService.uninstall(unitId)
       lap('local pack uninstall')
-      updateUninstallProgress(82, 'refreshing', '刷新学习计划')
+      updateUninstallProgress(82, 'refreshing', packTaskStepLabel('refreshing', 'uninstall'))
       const downloadedPacks = await learningPackService.listInstalled()
       lap('list installed packs', { installedCount: downloadedPacks.length })
       set((current) => ({
@@ -437,14 +458,13 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       set((s) => ({
         downloadTasks: s.downloadTasks.map((task) =>
           task.packId === unitId
-            ? { ...task, progress: 100, status: 'done' as const, step: 'done', stepLabel: '卸载完成' }
+            ? { ...task, progress: 100, status: 'done' as const, step: 'done', stepLabel: packTaskStepLabel('done', 'uninstall') }
             : task,
         ),
         packInstallingIds: s.packInstallingIds.filter((id) => id !== unitId),
       }))
       toast.success(i18n.t('learning.packUninstallSuccess', {
         title: unitTitle,
-        defaultValue: `${unitTitle} 已卸载`,
       }))
       setTimeout(() => {
         useLearningStore.setState((s) => ({
@@ -459,12 +479,12 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       set((s) => ({
         downloadTasks: s.downloadTasks.map((task) =>
           task.packId === unitId
-            ? { ...task, status: 'error' as const, error: error instanceof Error ? error.message : '卸载失败', stepLabel: '卸载失败' }
+            ? { ...task, status: 'error' as const, error: error instanceof Error ? error.message : i18n.t('learning.packTaskUninstallFailed'), stepLabel: i18n.t('learning.packTaskUninstallFailed') }
             : task,
         ),
         packInstallingIds: s.packInstallingIds.filter((id) => id !== unitId),
       }))
-      toast.error(i18n.t('learning.packUninstallFailed', { defaultValue: `${unitTitle} 卸载失败，请重试` }))
+      toast.error(i18n.t('learning.packUninstallFailed', { title: unitTitle }))
     } finally {
       activePackTaskIds.delete(unitId)
     }
@@ -499,13 +519,13 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
         }
       }
       if (!silent && result.updates.length > 0) {
-        toast.info(i18n.t('learning.packUpdatesAvailable', { defaultValue: '有学习包可更新' }))
+        toast.info(i18n.t('learning.packUpdatesAvailable'))
       }
     } catch (error) {
       set({ downloadedPacks })
       console.warn('[learning-store]   → 检查失败', error)
       if (!silent) {
-        toast.error(i18n.t('learning.packUpdateCheckFailed', { defaultValue: '学习包更新检查失败' }))
+        toast.error(i18n.t('learning.packUpdateCheckFailed'))
       }
     }
   },
@@ -534,7 +554,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     }))
   },
 
-  pauseActivePackTasks(reason = '应用已进入后台') {
+  pauseActivePackTasks(reason = i18n.t('learning.packTaskPausedInBackground')) {
     set((s) => ({
       downloadTasks: s.downloadTasks.map((task) =>
         task.status === 'queued' || task.status === 'downloading' || task.status === 'extracting' || task.status === 'uninstalling'
@@ -561,7 +581,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
             ? {
                 ...item,
                 status: item.pausedFrom === 'uninstalling' ? 'uninstalling' : 'downloading',
-                stepLabel: item.kind === 'uninstall' ? '继续卸载' : '继续下载',
+                stepLabel: item.kind === 'uninstall' ? i18n.t('learning.resumeUninstall') : i18n.t('learning.resumeDownload'),
               }
             : item,
         ),
@@ -608,7 +628,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       packInstallingIds: [],
     })
     console.log('[learning-store] ✅ 离线数据已清除')
-    toast.success(i18n.t('profile.offlineDataCleared', { defaultValue: '离线数据已清除' }))
+    toast.success(i18n.t('profile.offlineDataCleared'))
   },
 }))
 
@@ -669,7 +689,7 @@ async function processDownloadQueue() {
                 progress: Math.max(t.progress ?? 0, progress),
                 step,
                 status,
-                stepLabel: detail?.label,
+                stepLabel: packTaskStepLabel(step, 'download'),
                 currentItem: detail?.currentItem,
                 current: detail?.current,
                 total: detail?.total,
@@ -704,7 +724,6 @@ async function processDownloadQueue() {
     console.log(`[learning-store] ✅ 下载完成: ${next.title}`)
     toast.success(i18n.t('learning.packDownloadSuccess', {
       title: next.title,
-      defaultValue: `${next.title} 下载完成`,
     }))
 
     const downloadedPacks = await learningPackService.listInstalled()
@@ -725,14 +744,14 @@ async function processDownloadQueue() {
   } catch (error: any) {
     console.error(`[learning-store] ❌ 下载失败: ${next.title}`, error)
     useLearningStore.setState((s) => ({
-      downloadTasks: s.downloadTasks.map((t) =>
-        t.packId === next.packId
-          ? { ...t, status: 'error' as const, error: error?.message ?? '下载失败' }
+        downloadTasks: s.downloadTasks.map((t) =>
+          t.packId === next.packId
+          ? { ...t, status: 'error' as const, error: error?.message ?? i18n.t('learning.packTaskDownloadFailed') }
           : t,
       ),
       packInstallingIds: s.packInstallingIds.filter((id) => id !== next.packId),
     }))
-    toast.error(i18n.t('learning.packDownloadFailed', { defaultValue: `${next.title} 下载失败，请重试` }))
+    toast.error(i18n.t('learning.packDownloadFailed'))
   } finally {
     activePackTaskIds.delete(next.packId)
     processDownloadQueue()
@@ -753,7 +772,7 @@ function readPersistedPackTasks(): DownloadTask[] {
         status: task.status === 'error' ? 'error' : 'paused',
         pausedFrom: task.status === 'paused' ? task.pausedFrom : task.status,
         step: task.status === 'error' ? task.step : 'paused',
-        stepLabel: task.status === 'error' ? task.stepLabel : '上次任务已暂停',
+        stepLabel: task.status === 'error' ? task.stepLabel : i18n.t('learning.packTaskPausedFromLastRun'),
       }))
   } catch {
     return []

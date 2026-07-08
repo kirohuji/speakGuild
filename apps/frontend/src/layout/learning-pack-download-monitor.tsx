@@ -151,7 +151,7 @@ export function LearningPackDownloadDrawer({
                         <span className="shrink-0 text-xs font-semibold tabular-nums text-foreground">{taskPercent(task)}%</span>
                       </div>
                       <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                        <span className="truncate">{taskTitle(task, t)} · {statusLabel(task, t)}</span>
+                        <span className="truncate">{taskTitle(task, t)} / {statusLabel(task, t)}</span>
                         {typeof task.current === 'number' && typeof task.total === 'number' && task.total > 0 && (
                           <span className="shrink-0 tabular-nums">{task.current}/{task.total}</span>
                         )}

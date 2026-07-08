@@ -56,10 +56,10 @@ export function MyLearningView({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-foreground">
-              {t('learning.fetchingPlan', { defaultValue: '正在拉取学习计划' })}
+              {t('learning.fetchingPlan')}
             </p>
             <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-              {t('learning.fetchingPlanHint', { defaultValue: '会优先恢复你的学习包和本地离线内容。' })}
+              {t('learning.fetchingPlanHint')}
             </p>
           </div>
         </div>
@@ -84,7 +84,7 @@ export function MyLearningView({
       {loading && (
         <div className="flex items-center gap-2 rounded-lg bg-muted/25 px-3 py-2 text-xs text-muted-foreground">
           <Loader2 className="size-3.5 animate-spin" />
-          <span>{t('learning.refreshingPlan', { defaultValue: '正在更新学习计划' })}</span>
+          <span>{t('learning.refreshingPlan')}</span>
         </div>
       )}
       <LearningWeekTracker />
@@ -160,7 +160,7 @@ function InProgressUnitCard({
       return downloadTask?.stepLabel ?? t('learning.packTaskDownloading')
     }
     if (needsDownload) return t('learning.packNeedsDownload')
-    return t('learning.packUpdateAvailable', { defaultValue: '学习包有版本更新' })
+    return t('learning.packUpdateAvailable')
   })()
 
   const handleQuit = useCallback(async () => {
@@ -283,7 +283,7 @@ function InProgressUnitCard({
                 {t('common.cancel')}
               </Button>
               <Button variant="destructive" className="flex-1 rounded-xl" disabled={quitting} onClick={handleQuit}>
-                {quitting ? t('learning.uninstalling', { defaultValue: '卸载中' }) : t('learning.quitConfirm')}
+                {quitting ? t('learning.uninstalling') : t('learning.quitConfirm')}
               </Button>
             </div>
           </DialogContent>

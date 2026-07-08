@@ -13,13 +13,77 @@ type LocalDailyPracticeProgress = {
   bestScoreRank?: number | null
 }
 
+type TopicDetailRecord = {
+  topicId: string
+  detail: any
+}
+
 async function isPackInstalled(unitId: string) {
   const pack = await localDb.get<{ status?: string }>('downloaded_packs', unitId)
   return pack?.status === 'installed'
 }
 
+export function buildAggregatedUnitContent(unitDetail: any, topicDetails: TopicDetailRecord[]): any {
+  const vocabMap = new Map<string, any>()
+  const chunkMap = new Map<string, any>()
+  const patternMap = new Map<string, any>()
+  const trainingTopics: any[] = []
+
+  for (const { topicId: fallbackTopicId, detail } of topicDetails) {
+    if (!detail) continue
+    const topicId = detail.topic?.id ?? fallbackTopicId
+
+    trainingTopics.push({
+      id: topicId,
+      title: detail.topic?.title,
+      promptEn: detail.topic?.promptEn,
+      promptZh: detail.topic?.promptZh,
+      difficulty: detail.topic?.difficulty,
+      suggestedDurationSec: detail.topic?.suggestedDurationSec,
+      metadata: detail.topic?.metadata,
+      vocabularies: detail.vocabularies ?? [],
+      activeChunks: (detail.activeChunks ?? []).map((c: any) => ({
+        id: c.id,
+        text: c.text,
+        meaning: c.meaning,
+      })),
+      sentencePatterns: (detail.sentencePatterns ?? []).map((p: any) => ({
+        ...p,
+        topicId,
+        topicTitle: detail.topic?.title,
+      })),
+    })
+
+    for (const v of detail.vocabularies ?? []) {
+      if (!vocabMap.has(v.id)) vocabMap.set(v.id, v)
+    }
+    for (const c of detail.activeChunks ?? []) {
+      if (!chunkMap.has(c.id)) chunkMap.set(c.id, c)
+    }
+    for (const p of detail.sentencePatterns ?? []) {
+      const key = p.pattern ?? p.id ?? JSON.stringify(p)
+      if (!patternMap.has(key)) {
+        patternMap.set(key, { ...p, topicId, topicTitle: detail.topic?.title })
+      }
+    }
+  }
+
+  return {
+    ...unitDetail,
+    vocabularies: [...vocabMap.values()],
+    chunks: [...chunkMap.values()],
+    sentencePatterns: [...patternMap.values()],
+    trainingTopics,
+    __offlineAggregatedView: true,
+    __offlineAggregatedTopicIds: topicDetails.map((record) => record.topicId),
+    __offlineAggregatedAt: new Date().toISOString(),
+  }
+}
+
 /** Aggregate vocabs/chunks/patterns/trainingTopics from stored topic details into a unitDetail */
 async function aggregateUnitContent(unitDetail: any): Promise<any> {
+  if (unitDetail?.__offlineAggregatedView) return unitDetail
+
   // Get topic IDs from the pack manifest (or fall back to trainingTopics if still present)
   let topicIds: string[] = (unitDetail.trainingTopics ?? []).map((t: any) => t.id)
   if (topicIds.length === 0) {
@@ -27,57 +91,18 @@ async function aggregateUnitContent(unitDetail: any): Promise<any> {
     topicIds = pack?.manifest?.topics ?? []
   }
 
-  const vocabMap = new Map<string, any>()
-  const chunkMap = new Map<string, any>()
-  const patternMap = new Map<string, any>()
-  const trainingTopics: any[] = []
-
-  for (const topicId of topicIds) {
+  const topicDetails = (await Promise.all(topicIds.map(async (topicId) => {
     try {
       const cached = await localDb.get<{ detail: any }>('downloaded_unit_details', `topic:${topicId}`)
-      const detail = cached?.detail
-      if (!detail) continue
+      return cached?.detail ? { topicId, detail: cached.detail } : null
+    } catch {
+      return null
+    }
+  }))).filter((record): record is TopicDetailRecord => Boolean(record))
 
-      // Extract trainingTopic card from topicDetail
-      trainingTopics.push({
-        id: detail.topic?.id ?? topicId,
-        title: detail.topic?.title,
-        promptEn: detail.topic?.promptEn,
-        promptZh: detail.topic?.promptZh,
-        difficulty: detail.topic?.difficulty,
-        suggestedDurationSec: detail.topic?.suggestedDurationSec,
-        metadata: detail.topic?.metadata,
-        activeChunks: (detail.activeChunks ?? []).map((c: any) => ({
-          id: c.id,
-          text: c.text,
-          meaning: c.meaning,
-        })),
-      })
-
-      for (const v of detail.vocabularies ?? []) {
-        if (!vocabMap.has(v.id)) vocabMap.set(v.id, v)
-      }
-      for (const c of detail.activeChunks ?? []) {
-        if (!chunkMap.has(c.id)) chunkMap.set(c.id, c)
-      }
-      for (const p of detail.sentencePatterns ?? []) {
-        const key = p.pattern ?? p.id ?? JSON.stringify(p)
-        if (!patternMap.has(key)) {
-          patternMap.set(key, { ...p, topicId, topicTitle: detail.topic?.title })
-        }
-      }
-    } catch { /* topic not cached yet, skip */ }
-  }
-
-  const aggregated = {
-    ...unitDetail,
-    vocabularies: [...vocabMap.values()],
-    chunks: [...chunkMap.values()],
-    sentencePatterns: [...patternMap.values()],
-    trainingTopics,
-  }
+  const aggregated = buildAggregatedUnitContent(unitDetail, topicDetails)
   // 回写聚合结果，下次进入直接命中快速路径
-  cacheAggregated(unitDetail.id, aggregated)
+  void cacheAggregated(unitDetail.id, aggregated)
   return aggregated
 }
 
