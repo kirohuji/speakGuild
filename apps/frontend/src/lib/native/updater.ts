@@ -28,12 +28,20 @@ type UpdateListener = (info: UpdateInfo) => void;
 type DownloadCompleteListener = (info: { bundleId: string; version: string }) => void;
 type DownloadListener = (percent: number) => void;
 type FailedListener = (error: any) => void;
+type PendingDownloadedUpdate = {
+  version: string;
+  bundleId: string;
+  url?: string;
+  isMandatory?: boolean;
+  shouldNotify?: boolean;
+};
 
 const updateListeners: UpdateListener[] = [];
 const downloadCompleteListeners: DownloadCompleteListener[] = [];
 const downloadListeners: DownloadListener[] = [];
 const failedListeners: FailedListener[] = [];
 const OTA_DEVICE_ID_KEY = 'manyu-ota-device-id';
+const PENDING_DOWNLOADED_UPDATE_KEY = 'manyu-pending-downloaded-update';
 
 function getCheckUpdateUrl() {
   const apiBase = (import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu').replace(/\/$/, '');
@@ -48,6 +56,45 @@ function getOrCreateOtaDeviceId() {
     : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
   localStorage.setItem(OTA_DEVICE_ID_KEY, id);
   return id;
+}
+
+function readPendingDownloadedUpdate(): PendingDownloadedUpdate | null {
+  try {
+    const raw = localStorage.getItem(PENDING_DOWNLOADED_UPDATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PendingDownloadedUpdate;
+    return parsed?.version && parsed?.bundleId ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writePendingDownloadedUpdate(update: PendingDownloadedUpdate) {
+  try {
+    localStorage.setItem(PENDING_DOWNLOADED_UPDATE_KEY, JSON.stringify(update));
+  } catch {
+    // ignore storage failures; duplicate download prevention is best-effort
+  }
+}
+
+function clearPendingDownloadedUpdate() {
+  try {
+    localStorage.removeItem(PENDING_DOWNLOADED_UPDATE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function compareVersions(a: string, b: string): number {
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const va = pa[i] || 0;
+    const vb = pb[i] || 0;
+    if (va > vb) return 1;
+    if (va < vb) return -1;
+  }
+  return 0;
 }
 
 async function getNativeAppInfo() {
@@ -153,6 +200,10 @@ class UpdaterService implements UpdaterAPI {
       const bundle = (current as any)?.bundle;
       const currentBundle = bundle?.version || (current as any)?.current || '';
       const builtin = (current as any)?.native || (current as any)?.builtin || bundle?.version || '';
+      const pending = readPendingDownloadedUpdate();
+      if (pending?.version && currentBundle && compareVersions(currentBundle, pending.version) >= 0) {
+        clearPendingDownloadedUpdate();
+      }
 
       return {
         version: currentBundle,
@@ -240,6 +291,21 @@ class UpdaterService implements UpdaterAPI {
       console.log(`[Updater] 📡 Update found: v${data.version} (mandatory=${isMandatory}, notify=${shouldNotify})`);
 
       // 3. 通知监听器：发现新版本
+      const pendingDownloaded = readPendingDownloadedUpdate();
+      if (pendingDownloaded?.version === data.version) {
+        console.log(`[Updater] downloaded bundle v${data.version} is already waiting for restart`);
+        if (shouldNotify || isMandatory) {
+          updateListeners.forEach((cb) => cb({ version: data.version, url: data.url, isMandatory, shouldNotify }));
+          downloadCompleteListeners.forEach((cb) => cb({ bundleId: pendingDownloaded.bundleId, version: data.version }));
+        }
+        return {
+          newVersion: data.version,
+          url: data.url,
+          isMandatory,
+          shouldNotify,
+        };
+      }
+
       if (shouldNotify || isMandatory) {
         updateListeners.forEach((cb) => cb({ version: data.version, url: data.url, isMandatory, shouldNotify }));
       }
@@ -261,6 +327,13 @@ class UpdaterService implements UpdaterAPI {
         // 普通更新：标记为下次启动时使用（切后台后生效）
         console.log(`[Updater] 📦 Normal — set as next bundle: v${data.version}`);
         await CapacitorUpdater.next({ id: bundle.id });
+        writePendingDownloadedUpdate({
+          version: data.version,
+          bundleId: bundle.id,
+          url: data.url,
+          isMandatory,
+          shouldNotify,
+        });
       }
 
       return {

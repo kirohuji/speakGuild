@@ -26,12 +26,19 @@ export function Header() {
   const lastSyncLog = useOfflineSyncStore((s) => s.logs[0])
   const updateStatus = useAppUpdateStore((s) => s.status)
   const updateDialogOpen = useAppUpdateStore((s) => s.dialogOpen)
+  const updateVersion = useAppUpdateStore((s) => s.version)
+  const updateShouldNotify = useAppUpdateStore((s) => s.shouldNotify)
+  const updateIsMandatory = useAppUpdateStore((s) => s.isMandatory)
   const openUpdateDialog = useAppUpdateStore((s) => s.openDialog)
   const isAdmin = session?.user?.role === 'admin'
   const user = session?.user
   const fallback = (user?.name || user?.email || '我').slice(0, 1).toUpperCase()
 
-  const showBackgroundUpdate = updateStatus === 'downloading' && !updateDialogOpen
+  const showBackgroundUpdate =
+    updateStatus === 'downloading' &&
+    !updateDialogOpen &&
+    Boolean(updateVersion) &&
+    (updateShouldNotify || updateIsMandatory)
 
   const navItems = [
     { label: t('nav.home'), path: '/portal' },

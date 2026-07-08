@@ -119,12 +119,19 @@ function MobileTopBar({
   const isSyncing = useOfflineSyncStore((s) => s.isSyncing)
   const updateStatus = useAppUpdateStore((s) => s.status)
   const updateDialogOpen = useAppUpdateStore((s) => s.dialogOpen)
+  const updateVersion = useAppUpdateStore((s) => s.version)
+  const updateShouldNotify = useAppUpdateStore((s) => s.shouldNotify)
+  const updateIsMandatory = useAppUpdateStore((s) => s.isMandatory)
   const openUpdateDialog = useAppUpdateStore((s) => s.openDialog)
   const isOnline = useOnlineStatus()
   const user = session?.user
   const fallback = (user?.name || user?.email || '我').slice(0, 1).toUpperCase()
   const profileActive = pathname.startsWith('/profile') || pathname.startsWith('/account')
-  const showBackgroundUpdate = updateStatus === 'downloading' && !updateDialogOpen
+  const showBackgroundUpdate =
+    updateStatus === 'downloading' &&
+    !updateDialogOpen &&
+    Boolean(updateVersion) &&
+    (updateShouldNotify || updateIsMandatory)
 
   React.useEffect(() => {
     if (user?.id && !avatarLoaded) {
