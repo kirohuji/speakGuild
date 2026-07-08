@@ -54,12 +54,16 @@ export function LearningPlanPage() {
   const downloadUnitPack = useLearningStore((s) => s.downloadUnitPack)
 
   useEffect(() => {
-    fetchMyLearning()
+    if (myUnits.length === 0) {
+      fetchMyLearning()
+    }
     fetchDownloadedPacks()
-  }, [fetchMyLearning, fetchDownloadedPacks])
+  }, [fetchMyLearning, fetchDownloadedPacks, myUnits.length])
 
   useEffect(() => {
-    void refreshMyUnits()
+    const timeout = window.setTimeout(() => {
+      void refreshMyUnits()
+    }, myUnits.length > 0 ? 1_500 : 3_000)
 
     const refreshVisibleLearning = () => {
       if (document.visibilityState === 'visible') void refreshMyUnits()
@@ -71,10 +75,11 @@ export function LearningPlanPage() {
     document.addEventListener('visibilitychange', refreshVisibleLearning)
     window.addEventListener('focus', refreshFocusedLearning)
     return () => {
+      window.clearTimeout(timeout)
       document.removeEventListener('visibilitychange', refreshVisibleLearning)
       window.removeEventListener('focus', refreshFocusedLearning)
     }
-  }, [location.key, refreshMyUnits])
+  }, [location.key, myUnits.length, refreshMyUnits])
 
   const inProgress = myUnits.filter((u) => u.completionPercent < 100)
   const completed = myUnits.filter((u) => u.completionPercent >= 100)

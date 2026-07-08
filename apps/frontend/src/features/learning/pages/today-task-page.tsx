@@ -201,15 +201,23 @@ export function TodayTaskPage() {
   const warmupSessionHydratedKeyRef = useRef<string | null>(null)
   const planMode: DailyPracticePlanMode = (searchParams.get('mode') as DailyPracticePlanMode) || (dailyPracticeLastMode as DailyPracticePlanMode) || 'review'
   const [planRunSeed, setPlanRunSeed] = useState(0)
+  const currentPlanReusable = Boolean(
+    plan &&
+    planRunSeed === 0 &&
+    plan.mode === planMode &&
+    (!targetDate || plan.date === targetDate) &&
+    (!targetPackId || plan.units.some((unit) => unit.id === targetPackId)),
+  )
 
   useEffect(() => {
+    if (currentPlanReusable) return
     warmupStore.clearSession()
     setHasSubmittedToday(false)
     setReviewRoundStarted(false)
     setReviewRoundFinished(false)
     setReviewRunNonce(0)
     loadToday(targetPackId, targetDate, planMode, planRunSeed > 0)
-  }, [loadToday, targetPackId, targetDate, planMode, planRunSeed])
+  }, [currentPlanReusable, loadToday, targetPackId, targetDate, planMode, planRunSeed])
 
   useEffect(() => {
     if (!localAiWarmupJudgeEnabled) return

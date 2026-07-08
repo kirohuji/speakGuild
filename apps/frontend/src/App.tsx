@@ -7,6 +7,7 @@ import { NativeBridgeProvider } from '@/lib/native'
 import { isNative } from '@/lib/native/platform'
 import { KeyboardProvider } from '@/providers/keyboard-provider'
 import { AuthProvider } from '@/providers/auth-provider'
+import { StartupWarmupProvider } from '@/providers/startup-warmup-provider'
 import { ThemePresetProvider } from '@/providers/theme-preset-provider'
 import { AuthRouteGate } from '@/providers/auth-route-guard'
 import { OnboardingProvider } from '@/providers/onboarding-provider'
@@ -60,6 +61,7 @@ export default function App() {
         <NativeBridgeProvider>
           <KeyboardProvider>
           <AuthProvider>
+            <StartupWarmupProvider>
             <ThemePresetProvider>
             <HashRouter>
             <AuthRouteGate>
@@ -146,6 +148,7 @@ export default function App() {
             }}
           />
           </ThemePresetProvider>
+          </StartupWarmupProvider>
       </AuthProvider>
       </KeyboardProvider>
       </NativeBridgeProvider>

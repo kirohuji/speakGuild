@@ -46,6 +46,14 @@ const NativeBridgeContext = createContext<NativeCapabilities | null>(null);
 
 const RESUME_THROTTLE_MS = 5 * 60 * 1000; // 5 分钟
 
+function scheduleIdleWork(task: () => void, timeout = 2_000) {
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(task, { timeout });
+    return;
+  }
+  setTimeout(task, timeout);
+}
+
 export function NativeBridgeProvider({ children }: { children: React.ReactNode }) {
   const lastResumeCheckRef = useRef(0);
 
@@ -63,6 +71,14 @@ export function NativeBridgeProvider({ children }: { children: React.ReactNode }
     });
 
     console.log('[NativeBridge] initialized (native)');
+
+    // Open SQLite shortly after the first frame. User-scoped data warmup runs
+    // after auth has resolved, inside AuthProvider.
+    scheduleIdleWork(() => {
+      void localDb.count('kv').catch((err) => {
+        console.warn('[NativeBridge] offline db warmup failed:', err);
+      });
+    }, 3_000);
 
     // ── 延迟的重任务（避免竞争首帧渲染）──
     const t1 = setTimeout(() => {

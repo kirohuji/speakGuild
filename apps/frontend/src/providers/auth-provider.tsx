@@ -12,6 +12,7 @@ import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { useSearchStore } from '@/stores/search.store'
 
 const OTA_USER_ID_KEY = 'manyu-ota-user-id'
+const AUTH_SESSION_CACHE_KEY = 'manyu-auth-session-cache'
 
 /**
  * App 前台同步 Hook
@@ -98,6 +99,32 @@ type SessionPayload = Session | null
 
 let currentSessionSnapshot: SessionPayload = null
 
+function readCachedSession(): SessionPayload {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(AUTH_SESSION_CACHE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Partial<Session>
+    if (!parsed?.user?.id) return null
+    return parsed as Session
+  } catch {
+    return null
+  }
+}
+
+function writeCachedSession(session: SessionPayload) {
+  if (typeof window === 'undefined') return
+  try {
+    if (session?.user?.id) {
+      localStorage.setItem(AUTH_SESSION_CACHE_KEY, JSON.stringify(session))
+    } else {
+      localStorage.removeItem(AUTH_SESSION_CACHE_KEY)
+    }
+  } catch {
+    // ignore storage quota/private mode errors
+  }
+}
+
 export function getCurrentSessionSnapshot() {
   return currentSessionSnapshot
 }
@@ -139,7 +166,7 @@ interface AuthContextValue {
   session: Session | null
   isLoading: boolean
   isAuthenticated: boolean
-  refreshSession: (options?: { revokeOtherSessions?: boolean }) => Promise<Session | null>
+  refreshSession: (options?: { revokeOtherSessions?: boolean; allowCacheFallback?: boolean }) => Promise<Session | null>
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, name: string) => Promise<void>
   signOut: () => Promise<void>
@@ -148,14 +175,17 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const cachedSessionRef = useRef<SessionPayload>(readCachedSession())
+  const [session, setSession] = useState<Session | null>(() => cachedSessionRef.current)
+  const [isLoading, setIsLoading] = useState(() => !cachedSessionRef.current)
 
   // Listen for 401 events from request interceptor (token expired/invalid)
   // so we can clear session and let AuthRouteGate redirect to login
   useEffect(() => {
     const handleUnauthorized = () => {
       setCurrentSessionSnapshot(null)
+      writeCachedSession(null)
+      localStorage.removeItem(OTA_USER_ID_KEY)
       setSession(null)
       void clearUserScopedClientData()
     }
@@ -163,14 +193,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
   }, [])
 
+  useEffect(() => {
+    if (cachedSessionRef.current?.user?.id) {
+      setCurrentSessionSnapshot(cachedSessionRef.current)
+      localStorage.setItem(OTA_USER_ID_KEY, cachedSessionRef.current.user.id)
+    }
+  }, [])
+
   useAppForegroundSync(session?.user?.id)
 
-  const fetchSession = async (): Promise<Session | null> => {
+  const fetchSession = async (options: { allowCacheFallback?: boolean } = {}): Promise<Session | null> => {
     try {
       const raw = await authClient.getSession()
       const nextSession = normalizeSessionResponse(raw)
       setCurrentSessionSnapshot(nextSession)
       setSession(nextSession)
+      writeCachedSession(nextSession)
 
       if (nextSession?.user?.id) {
         localStorage.setItem(OTA_USER_ID_KEY, nextSession.user.id)
@@ -180,8 +218,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       return nextSession
-    } catch {
+    } catch (error) {
+      const cached = options.allowCacheFallback === false ? null : readCachedSession()
+      if (cached?.user?.id) {
+        setCurrentSessionSnapshot(cached)
+        setSession(cached)
+        localStorage.setItem(OTA_USER_ID_KEY, cached.user.id)
+        console.warn('[auth] session refresh failed; using cached session:', error)
+        return cached
+      }
+
       setCurrentSessionSnapshot(null)
+      writeCachedSession(null)
       setSession(null)
       localStorage.removeItem(OTA_USER_ID_KEY)
       useConfigStore.getState().clearConfig()
@@ -234,9 +282,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [session?.user?.id])
 
-  const refreshSession = async (options?: { revokeOtherSessions?: boolean }) => {
+  const refreshSession = async (options?: { revokeOtherSessions?: boolean; allowCacheFallback?: boolean }) => {
     setIsLoading(true)
-    const nextSession = await fetchSession()
+    const nextSession = await fetchSession({ allowCacheFallback: options?.allowCacheFallback })
     if (options?.revokeOtherSessions && nextSession?.user?.id) {
       await revokeOtherSessions().catch((error) => {
         console.warn('[auth] revoke other sessions failed:', error)
@@ -249,7 +297,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     try {
       await authClient.signIn.email({ email, password })
-      const nextSession = await refreshSession({ revokeOtherSessions: true })
+      const nextSession = await refreshSession({ revokeOtherSessions: true, allowCacheFallback: false })
       if (!nextSession?.user?.id) {
         throw new Error('登录失败，请检查账号或密码')
       }
@@ -264,7 +312,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true)
     try {
       await authClient.signUp.email({ email, password, name })
-      await refreshSession()
+      await refreshSession({ allowCacheFallback: false })
     } catch (err: any) {
       const msg = err?.data?.message || err?.message || '注册失败，请稍后重试'
       setIsLoading(false)
@@ -285,6 +333,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearBearerToken()
     useProfileCacheStore.getState().reset()
     localStorage.removeItem(OTA_USER_ID_KEY)
+    writeCachedSession(null)
     setSession(null)
     setCurrentSessionSnapshot(null)
   }
