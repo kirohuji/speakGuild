@@ -83,6 +83,42 @@ function serializeTrainingTopicForm(form: Record<string, any>) {
   return stableStringify(payload)
 }
 
+function mergeById<T extends { id: string }>(...groups: Array<Array<T | null | undefined> | null | undefined>) {
+  const map = new Map<string, T>()
+  groups.flatMap((group) => group ?? []).forEach((item) => {
+    if (item?.id && !map.has(item.id)) map.set(item.id, item)
+  })
+  return [...map.values()]
+}
+
+function normalizeTopicPattern(item: any): SentencePatternFull | null {
+  const pattern = (item as any)?.pattern
+  if (!pattern?.id) return null
+  return {
+    id: pattern.id,
+    pattern: pattern.pattern,
+    meaning: pattern.meaning ?? null,
+    category: pattern.category ?? null,
+    description: pattern.description ?? null,
+    slots: pattern.slots,
+    examples: pattern.examples,
+    difficulty: pattern.difficulty ?? 'L1',
+    createdAt: pattern.createdAt ?? '',
+    updatedAt: pattern.updatedAt ?? '',
+  }
+}
+
+async function listAllLibraryPatternsForAdmin() {
+  const first = await listLibraryPatterns({ page: 1, pageSize: 100 })
+  if (first.totalPages <= 1) return first.items
+  const rest = await Promise.all(
+    Array.from({ length: first.totalPages - 1 }, (_, index) =>
+      listLibraryPatterns({ page: index + 2, pageSize: 100 }).then((result) => result.items),
+    ),
+  )
+  return [...first.items, ...rest.flat()]
+}
+
 const PACKAGE_TYPE_FILTERS: Array<{ id: Scene['packageType']; label: string }> = [
   { id: 'daily', label: '日常' },
   { id: 'exam', label: '考试' },
@@ -531,17 +567,33 @@ function TrainingTopicDialog({
   const [lastInitKey, setLastInitKey] = useState<string | null>(null)
 
   // 过滤为当前话题绑定的材料（而非全系统材料），供 AI 生成使用
+  const topicBoundPatterns = useMemo(
+    () => (edit?.topicPatterns ?? []).map(normalizeTopicPattern).filter(Boolean) as SentencePatternFull[],
+    [edit?.topicPatterns],
+  )
+  const selectablePatterns = useMemo(
+    () => mergeById(patterns, topicBoundPatterns),
+    [patterns, topicBoundPatterns],
+  )
+  const selectableVocabs = useMemo(
+    () => mergeById(vocabs, (edit?.topicVocabs ?? []).map((tv: any) => tv.vocab).filter(Boolean)),
+    [vocabs, edit?.topicVocabs],
+  )
+  const selectableChunks = useMemo(
+    () => mergeById(chunks, (edit?.activeChunks ?? []).map((ac: any) => ac.chunk).filter(Boolean)),
+    [chunks, edit?.activeChunks],
+  )
   const boundVocabs = useMemo(
-    () => vocabs.filter(v => (form.vocabIds ?? []).includes(v.id)),
-    [vocabs, form.vocabIds],
+    () => selectableVocabs.filter(v => (form.vocabIds ?? []).includes(v.id)),
+    [selectableVocabs, form.vocabIds],
   )
   const boundChunks = useMemo(
-    () => chunks.filter(c => (form.chunkIds ?? []).includes(c.id)),
-    [chunks, form.chunkIds],
+    () => selectableChunks.filter(c => (form.chunkIds ?? []).includes(c.id)),
+    [selectableChunks, form.chunkIds],
   )
   const boundPatterns = useMemo(
-    () => patterns.filter(p => (form.patternIds ?? []).includes(p.id)),
-    [patterns, form.patternIds],
+    () => selectablePatterns.filter(p => (form.patternIds ?? []).includes(p.id)),
+    [selectablePatterns, form.patternIds],
   )
 
   // Only re-init form when a genuinely different topic is opened (keyed by edit.id)
@@ -698,7 +750,7 @@ function TrainingTopicDialog({
   const withRecomputedWarmupUsage = (sourceForm: Record<string, any>) => {
     const outputTraining = sourceForm.metadata?.outputTraining as WarmupPipelineData | undefined
     if (!outputTraining?.pipeline) return sourceForm
-    const materialUsage = buildWarmupMaterialUsage(outputTraining, vocabs, chunks, patterns)
+    const materialUsage = buildWarmupMaterialUsage(outputTraining, boundVocabs, boundChunks, boundPatterns)
     return {
       ...sourceForm,
       metadata: {
@@ -921,7 +973,7 @@ function TrainingTopicDialog({
 
                 <TabsContent value="patterns" className="mt-0">
                   <SearchSelectTable
-                    items={patterns}
+                    items={selectablePatterns}
                     selectedIds={form.patternIds ?? []}
                     onToggle={(id) => {
                       const ids = form.patternIds ?? []
@@ -943,7 +995,7 @@ function TrainingTopicDialog({
 
                 <TabsContent value="chunks" className="mt-0">
                   <SearchSelectTable
-                    items={chunks}
+                    items={selectableChunks}
                     selectedIds={form.chunkIds ?? []}
                     onToggle={(id) => {
                       const ids = form.chunkIds ?? []
@@ -965,7 +1017,7 @@ function TrainingTopicDialog({
 
                 <TabsContent value="vocabs" className="mt-0">
                   <SearchSelectTable
-                    items={vocabs}
+                    items={selectableVocabs}
                     selectedIds={form.vocabIds ?? []}
                     onToggle={(id) => {
                       const ids = form.vocabIds ?? []
@@ -1167,6 +1219,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   const [vocabs, setVocabs] = useState<Vocabulary[]>([])
   const [patterns, setPatterns] = useState<SentencePatternFull[]>([])
   const [topics, setTopics] = useState<TrainingTopic[]>([])
+  const [topicTotal, setTopicTotal] = useState(0)
   const [storyEpisodes, setStoryEpisodes] = useState<StoryEpisode[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -1180,26 +1233,32 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   const [topicPage, setTopicPage] = useState(1)
   const [topicPageSize, setTopicPageSize] = useState(10)
 
-  const load = async () => {
-    setLoading(true)
+  const load = async (
+    nextTopicPage = topicPage,
+    nextTopicPageSize = topicPageSize,
+    options: { showLoading?: boolean } = {},
+  ) => {
+    if (options.showLoading ?? true) setLoading(true)
     try {
-      const [s, v, t, p, e] = await Promise.all([
-        getScene(sceneId), listVocabularies(), listTrainingTopics(sceneId),
-        listLibraryPatterns({ pageSize: 999 }).then((r) => r.items),
+      const [s, v, topicResult, p, e] = await Promise.all([
+        getScene(sceneId), listVocabularies(), listTrainingTopics(sceneId, { page: nextTopicPage, pageSize: nextTopicPageSize }),
+        listAllLibraryPatternsForAdmin(),
         listScriptEpisodes(sceneId),
       ])
-      setScene(s); setVocabs(v); setTopics(t); setPatterns(p); setStoryEpisodes(e)
+      setScene(s); setVocabs(v); setTopics(topicResult.items); setTopicTotal(topicResult.total); setPatterns(p); setStoryEpisodes(e)
     } catch {}
-    finally { setLoading(false) }
+    finally {
+      if (options.showLoading ?? true) setLoading(false)
+    }
   }
 
-  useEffect(() => { load() }, [sceneId])
+  useEffect(() => { load() }, [sceneId, topicPage, topicPageSize])
   useEffect(() => {
     setTopicPage(1)
   }, [sceneId])
 
-  const topicTotalPages = getTotalPages(topics.length, topicPageSize)
-  const topicItems = getPageItems(topics, Math.min(topicPage, topicTotalPages), topicPageSize)
+  const topicTotalPages = getTotalPages(topicTotal, topicPageSize)
+  const topicItems = topics
   const sortedTopics = useMemo(
     () => [...topics].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
     [topics],
@@ -1208,6 +1267,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   const currentPackageTypeLabel = packageTypeLabel(scene?.packageType)
 
   const handleTopicSaved = (saved: TrainingTopic) => {
+    void load(topicPage, topicPageSize, { showLoading: false })
     setTopics((prev) => {
       const existingIndex = prev.findIndex((topic) => topic.id === saved.id)
       if (existingIndex >= 0) {
@@ -1217,6 +1277,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
       }
       return [...prev, saved].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
     })
+    if (!topics.some((topic) => topic.id === saved.id)) setTopicTotal((total) => total + 1)
     setEditTopic(saved)
   }
 
@@ -1261,14 +1322,14 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Layers className="size-4" /> 训练话题 ({topics.length})
+              <Layers className="size-4" /> 训练话题 ({topicTotal})
             </CardTitle>
             <Button size="sm" variant="outline" onClick={() => openTopicEditor(null)}>
               <Plus className="size-3.5 mr-1" /> 添加
             </Button>
           </CardHeader>
           <CardContent className="p-0">
-            {topics.length === 0 ? (
+            {topicTotal === 0 ? (
               <div className="py-12 text-center">
                 <p className="text-sm font-medium text-muted-foreground">暂无话题</p>
                 <p className="mt-1 text-xs text-muted-foreground/60">添加后会显示在这里</p>
@@ -1340,7 +1401,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
               </div>
             )}
             <AdminPagination
-              total={topics.length}
+              total={topicTotal}
               page={Math.min(topicPage, topicTotalPages)}
               pageSize={topicPageSize}
               onPageChange={setTopicPage}

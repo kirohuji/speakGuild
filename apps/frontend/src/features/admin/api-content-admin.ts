@@ -138,10 +138,17 @@ export interface TrainingTopic {
   topicVocabs?: { id: string; vocab: Vocabulary; sortOrder: number }[]
 }
 
-export async function listTrainingTopics(sceneId?: string, options?: { detail?: 'summary' | 'full' }): Promise<TrainingTopic[]> {
+export function listTrainingTopics(sceneId?: string, options?: { detail?: 'summary' | 'full' }): Promise<TrainingTopic[]>
+export function listTrainingTopics(sceneId: string | undefined, options: { detail?: 'summary' | 'full'; page: number; pageSize: number }): Promise<PaginatedResult<TrainingTopic>>
+export async function listTrainingTopics(
+  sceneId?: string,
+  options?: { detail?: 'summary' | 'full'; page?: number; pageSize?: number },
+): Promise<TrainingTopic[] | PaginatedResult<TrainingTopic>> {
   return get('/admin/content/training-topics', {
     ...(sceneId ? { sceneId } : {}),
     ...(options?.detail === 'full' ? { detail: 'full' } : {}),
+    ...(options?.page ? { page: options.page } : {}),
+    ...(options?.pageSize ? { pageSize: options.pageSize } : {}),
   })
 }
 

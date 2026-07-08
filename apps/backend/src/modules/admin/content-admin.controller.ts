@@ -215,29 +215,42 @@ export class ContentAdminController {
     @Req() req: Request,
     @Query('sceneId') sceneId?: string,
     @Query('detail') detail?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
   ) {
     await this.requireAdmin(req);
     const where: any = {};
     if (sceneId) where.sceneId = sceneId;
+    const hasPagination = page !== undefined || pageSize !== undefined;
+    const p = Math.max(1, parseInt(page || '1'));
+    const ps = Math.min(100, Math.max(1, parseInt(pageSize || '20')));
+    const pagination = hasPagination ? { skip: (p - 1) * ps, take: ps } : undefined;
     if (detail === 'full') {
-      return this.prisma.trainingTopic.findMany({
+      const query = {
         where,
-        orderBy: { sortOrder: 'asc' },
+        orderBy: { sortOrder: 'asc' as const },
         include: {
           scene: { select: { id: true, title: true } },
-          topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
-          topicVocabs: { include: { vocab: true }, orderBy: { sortOrder: 'asc' } },
+          topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' as const } },
+          topicVocabs: { include: { vocab: true }, orderBy: { sortOrder: 'asc' as const } },
           activeChunks: {
-            include: { chunk: { include: { examples: { orderBy: { sortOrder: 'asc' } } } } },
-            orderBy: { sortOrder: 'asc' },
+            include: { chunk: { include: { examples: { orderBy: { sortOrder: 'asc' as const } } } } },
+            orderBy: { sortOrder: 'asc' as const },
           },
         },
-      });
+        ...(pagination ?? {}),
+      };
+      if (!hasPagination) return this.prisma.trainingTopic.findMany(query);
+      const [items, total] = await Promise.all([
+        this.prisma.trainingTopic.findMany(query),
+        this.prisma.trainingTopic.count({ where }),
+      ]);
+      return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
     }
 
-    return this.prisma.trainingTopic.findMany({
+    const query = {
       where,
-      orderBy: { sortOrder: 'asc' },
+      orderBy: { sortOrder: 'asc' as const },
       select: {
         id: true,
         sceneId: true,
@@ -256,7 +269,7 @@ export class ContentAdminController {
             sortOrder: true,
             pattern: { select: { id: true, pattern: true, meaning: true } },
           },
-          orderBy: { sortOrder: 'asc' },
+          orderBy: { sortOrder: 'asc' as const },
         },
         topicVocabs: {
           select: {
@@ -264,7 +277,7 @@ export class ContentAdminController {
             sortOrder: true,
             vocab: { select: { id: true, word: true, meaning: true, sortOrder: true } },
           },
-          orderBy: { sortOrder: 'asc' },
+          orderBy: { sortOrder: 'asc' as const },
         },
         activeChunks: {
           select: {
@@ -272,10 +285,17 @@ export class ContentAdminController {
             sortOrder: true,
             chunk: { select: { id: true, text: true, meaning: true } },
           },
-          orderBy: { sortOrder: 'asc' },
+          orderBy: { sortOrder: 'asc' as const },
         },
       },
-    });
+      ...(pagination ?? {}),
+    };
+    if (!hasPagination) return this.prisma.trainingTopic.findMany(query);
+    const [items, total] = await Promise.all([
+      this.prisma.trainingTopic.findMany(query),
+      this.prisma.trainingTopic.count({ where }),
+    ]);
+    return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
   }
 
   @Get('training-topics/:id')

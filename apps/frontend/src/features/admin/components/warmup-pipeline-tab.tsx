@@ -84,7 +84,7 @@ export interface WarmupMaterialUsage {
 interface Props {
   value: WarmupPipelineData
   onChange: (value: WarmupPipelineData) => void
-  vocabs?: { id: string; word: string; meaning: string }[]
+  vocabs?: { id: string; word: string; meaning: string; tier?: 'core' | 'ext' | 'carry' }[]
   chunks?: { id: string; text: string; meaning: string }[]
   patterns?: { id: string; pattern: string; meaning?: string }[]
   topicTitle?: string
@@ -491,7 +491,7 @@ function compactWarmupPipeline(pipeline: WarmupPipelineItem[]) {
 
 export function buildWarmupMaterialUsage(
   value: WarmupPipelineData,
-  vocabs: { id: string; word: string; meaning?: string }[] = [],
+  vocabs: { id: string; word: string; meaning?: string; tier?: 'core' | 'ext' | 'carry' }[] = [],
   chunks: { id: string; text: string; meaning?: string }[] = [],
   patterns: { id: string; pattern: string; meaning?: string }[] = [],
 ): WarmupMaterialUsage {
