@@ -96,7 +96,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   dailyGoal: 20,
   dailyPracticeMixedPacks: false,
   dailyPracticeRandomOrder: true,
-  dailyPracticeLastMode: 'review',
+  dailyPracticeLastMode: 'practice',
   localAiWarmupJudgeEnabled: false,
   localAiWarmupModelVariant: 'q8',
   learningReminderEnabled: true,

@@ -24,7 +24,7 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
   error: null,
   submitting: false,
 
-  async loadToday(targetPackId, targetDate, mode = 'review', forceNew = false) {
+  async loadToday(targetPackId, targetDate, mode = 'practice', forceNew = false) {
     set({ loading: true, error: null })
     try {
       const plan = await dailyPracticeRepository.buildTodayPlan(targetPackId, targetDate, mode, { forceNew })

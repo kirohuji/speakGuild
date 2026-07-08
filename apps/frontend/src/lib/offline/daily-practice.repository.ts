@@ -446,7 +446,7 @@ export const dailyPracticeRepository = {
   async buildTodayPlan(
     targetPackId?: string | null,
     targetDate?: string | null,
-    mode: DailyPracticePlanMode = 'review',
+    mode: DailyPracticePlanMode = 'practice',
     options: { forceNew?: boolean } = {},
   ): Promise<DailyPracticePlan> {
     const date = normalizePlanDate(targetDate)

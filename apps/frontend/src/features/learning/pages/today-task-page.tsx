@@ -63,6 +63,17 @@ type PracticeGroup = {
   totalCount: number
 }
 
+const TODAY_TASK_MODE_SESSION_KEY = 'manyu-today-task-mode'
+
+function normalizePlanMode(mode: string | null): DailyPracticePlanMode {
+  return mode === 'review' || mode === 'practice' ? mode : 'practice'
+}
+
+function getSessionPlanMode(): DailyPracticePlanMode {
+  if (typeof window === 'undefined') return 'practice'
+  return normalizePlanMode(window.sessionStorage.getItem(TODAY_TASK_MODE_SESSION_KEY))
+}
+
 function buildTodayReferencePreloads(steps: NonNullable<ReturnType<typeof useDailyPracticeStore.getState>['plan']>['steps']): WarmupReferencePreloadInput[] {
   const references: WarmupReferencePreloadInput[] = []
   const simpleReference = (prompt: any, direction: 'zh_to_en' | 'en_to_zh') => {
@@ -180,8 +191,6 @@ export function TodayTaskPage() {
   const completeStep = useDailyPracticeStore((s) => s.completeStep)
   const submitToday = useDailyPracticeStore((s) => s.submitToday)
   const dailyPracticeRandomOrder = usePreferencesStore((s) => s.dailyPracticeRandomOrder)
-  const dailyPracticeLastMode = usePreferencesStore((s) => s.dailyPracticeLastMode)
-  const setDailyPracticeLastMode = usePreferencesStore((s) => s.setDailyPracticeLastMode)
   const localAiWarmupJudgeEnabled = usePreferencesStore((s) => s.localAiWarmupJudgeEnabled)
 
   // 练习状态
@@ -199,7 +208,7 @@ export function TodayTaskPage() {
   const [reviewRunNonce, setReviewRunNonce] = useState(0)
   const localAiPreloadKeyRef = useRef<string | null>(null)
   const warmupSessionHydratedKeyRef = useRef<string | null>(null)
-  const planMode: DailyPracticePlanMode = (searchParams.get('mode') as DailyPracticePlanMode) || (dailyPracticeLastMode as DailyPracticePlanMode) || 'review'
+  const planMode = searchParams.has('mode') ? normalizePlanMode(searchParams.get('mode')) : getSessionPlanMode()
   const [planRunSeed, setPlanRunSeed] = useState(0)
   const currentPlanReusable = Boolean(
     plan &&
@@ -259,7 +268,7 @@ export function TodayTaskPage() {
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
 
   const switchPlanMode = useCallback((nextMode: DailyPracticePlanMode) => {
-    setDailyPracticeLastMode(nextMode)
+    window.sessionStorage.setItem(TODAY_TASK_MODE_SESSION_KEY, nextMode)
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
       next.set('mode', nextMode)
