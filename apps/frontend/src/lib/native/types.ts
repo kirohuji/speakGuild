@@ -37,6 +37,8 @@ export interface UpdaterAPI {
   onDownload(callback: (percent: number) => void): void;
   /** 注册下载完成回调 */
   onDownloadComplete(callback: (info: { version: string }) => void): void;
+  /** 注册更新阶段回调 */
+  onStage(callback: (stage: string) => void): void;
   /** 注册更新失败回调 */
   onFailed(callback: (error: any) => void): void;
 }

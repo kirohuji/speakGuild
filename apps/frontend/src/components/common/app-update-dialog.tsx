@@ -17,6 +17,7 @@ export function AppUpdateDialog() {
   const status = useAppUpdateStore((s) => s.status)
   const version = useAppUpdateStore((s) => s.version)
   const displayPercent = useAppUpdateStore((s) => s.displayPercent)
+  const stage = useAppUpdateStore((s) => s.stage)
   const closeDialog = useAppUpdateStore((s) => s.closeDialog)
   const resetAfterRestart = useAppUpdateStore((s) => s.resetAfterRestart)
   const downloaded = status === 'ready'
@@ -46,7 +47,7 @@ export function AppUpdateDialog() {
         <div className="space-y-3 py-2">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span>{downloaded ? t('settings.downloadComplete') : t('settings.downloading2')}</span>
+              <span>{downloaded ? t('settings.downloadComplete') : t(`settings.updateStages.${stage}`, { defaultValue: t('settings.downloading2') })}</span>
               <span className="text-muted-foreground">{percent}%</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-muted">

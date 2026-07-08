@@ -27,6 +27,7 @@ type UpdateInfo = { version: string; url?: string; isMandatory?: boolean; should
 type UpdateListener = (info: UpdateInfo) => void;
 type DownloadCompleteListener = (info: { bundleId: string; version: string }) => void;
 type DownloadListener = (percent: number) => void;
+type StageListener = (stage: string) => void;
 type FailedListener = (error: any) => void;
 type PendingDownloadedUpdate = {
   version: string;
@@ -39,6 +40,7 @@ type PendingDownloadedUpdate = {
 const updateListeners: UpdateListener[] = [];
 const downloadCompleteListeners: DownloadCompleteListener[] = [];
 const downloadListeners: DownloadListener[] = [];
+const stageListeners: StageListener[] = [];
 const failedListeners: FailedListener[] = [];
 const OTA_DEVICE_ID_KEY = 'manyu-ota-device-id';
 const PENDING_DOWNLOADED_UPDATE_KEY = 'manyu-pending-downloaded-update';
@@ -130,6 +132,10 @@ class UpdaterService implements UpdaterAPI {
   private _listenersRegistered = false;
   /** 防止 checkUpdate() 重复调用 */
   private _checking = false;
+
+  private emitStage(stage: string): void {
+    stageListeners.forEach((cb) => cb(stage));
+  }
 
   /**
    * 一次性注册 CapacitorUpdater 原生事件监听（仅用于进度上报和错误日志）。
@@ -235,7 +241,9 @@ class UpdaterService implements UpdaterAPI {
     this.registerListeners();
 
     try {
+      this.emitStage('checkingCurrent');
       const current = await this.getCurrent();
+      this.emitStage('collectingDeviceInfo');
       const platform = getPlatform();
       const userId = localStorage.getItem('manyu-ota-user-id') || undefined;
       const deviceId = getOrCreateOtaDeviceId();
@@ -259,6 +267,7 @@ class UpdaterService implements UpdaterAPI {
       });
 
       // 1. 请求后端检查接口
+      this.emitStage('requestingUpdateInfo');
       const res = await fetch(checkUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -283,17 +292,20 @@ class UpdaterService implements UpdaterAPI {
       // 2. 无更新
       if (!data.version || !data.url) {
         console.log('[Updater] 📡 No update available');
+        this.emitStage('noUpdate');
         return {};
       }
 
       const isMandatory: boolean = data.isMandatory ?? false;
       const shouldNotify: boolean = data.shouldNotify ?? true;
       console.log(`[Updater] 📡 Update found: v${data.version} (mandatory=${isMandatory}, notify=${shouldNotify})`);
+      this.emitStage('updateFound');
 
       // 3. 通知监听器：发现新版本
       const pendingDownloaded = readPendingDownloadedUpdate();
       if (pendingDownloaded?.version === data.version) {
         console.log(`[Updater] downloaded bundle v${data.version} is already waiting for restart`);
+        this.emitStage('alreadyDownloaded');
         if (shouldNotify || isMandatory) {
           updateListeners.forEach((cb) => cb({ version: data.version, url: data.url, isMandatory, shouldNotify }));
           downloadCompleteListeners.forEach((cb) => cb({ bundleId: pendingDownloaded.bundleId, version: data.version }));
@@ -312,6 +324,7 @@ class UpdaterService implements UpdaterAPI {
 
       // 4. 下载 bundle
       console.log(`[Updater] ⬇️ Downloading v${data.version}...`);
+      this.emitStage('downloadingBundle');
       const bundle = await CapacitorUpdater.download({
         url: data.url,
         version: data.version,
@@ -321,11 +334,13 @@ class UpdaterService implements UpdaterAPI {
       if (isMandatory) {
         // 强制更新：立即重启应用新 bundle
         console.log(`[Updater] 🔥 Mandatory — applying NOW: v${data.version}`);
+        this.emitStage('applyingUpdate');
         await CapacitorUpdater.set({ id: bundle.id });
         // set() 成功时 JS 上下文立即销毁，不会执行到此行以下
       } else {
         // 普通更新：标记为下次启动时使用（切后台后生效）
         console.log(`[Updater] 📦 Normal — set as next bundle: v${data.version}`);
+        this.emitStage('preparingNextLaunch');
         await CapacitorUpdater.next({ id: bundle.id });
         writePendingDownloadedUpdate({
           version: data.version,
@@ -344,6 +359,7 @@ class UpdaterService implements UpdaterAPI {
       };
     } catch (err) {
       console.error('[Updater] checkUpdate failed:', err);
+      this.emitStage('failed');
       return {};
     } finally {
       this._checking = false;
@@ -371,6 +387,12 @@ class UpdaterService implements UpdaterAPI {
   onDownloadComplete(callback: (info: { bundleId: string; version: string }) => void): void {
     this.registerListeners();
     downloadCompleteListeners.push(callback);
+  }
+
+  /** 注册：更新阶段回调 */
+  onStage(callback: (stage: string) => void): void {
+    this.registerListeners();
+    stageListeners.push(callback);
   }
 
   /** 注册：更新失败回调 */

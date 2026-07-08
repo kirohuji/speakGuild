@@ -153,11 +153,11 @@ function InProgressUnitCard({
   const resumePackTask = useLearningStore((state) => state.resumePackTask)
   const showPackAction = isTaskActive || needsDownload || hasPackUpdate
   const packActionText = (() => {
-    if (isPaused) return downloadTask?.kind === 'uninstall' ? '卸载已暂停' : '下载已暂停'
+    if (isPaused) return downloadTask?.kind === 'uninstall' ? t('learning.packUninstallPaused') : t('learning.packDownloadPaused')
     if (isTaskActive) {
-      if (downloadTask?.kind === 'uninstall') return downloadTask.stepLabel ?? '卸载中'
-      if (downloadTask?.status === 'queued') return '排队下载中'
-      return downloadTask?.stepLabel ?? '下载中'
+      if (downloadTask?.kind === 'uninstall') return downloadTask.stepLabel ?? t('learning.packTaskUninstalling')
+      if (downloadTask?.status === 'queued') return t('learning.packDownloadQueued')
+      return downloadTask?.stepLabel ?? t('learning.packTaskDownloading')
     }
     if (needsDownload) return t('learning.packNeedsDownload')
     return t('learning.packUpdateAvailable', { defaultValue: '学习包有版本更新' })
@@ -190,7 +190,7 @@ function InProgressUnitCard({
     try {
       await resumePackTask(unit.id)
     } catch {
-      toast.error(downloadTask.kind === 'uninstall' ? '继续卸载失败，请重试' : t('learning.packDownloadFailed'))
+      toast.error(downloadTask.kind === 'uninstall' ? t('learning.resumeUninstallFailed') : t('learning.packDownloadFailed'))
     }
   }, [downloadTask, resumePackTask, t, unit.id])
 
@@ -257,7 +257,7 @@ function InProgressUnitCard({
               title={isPaused ? packActionText : isPackBusy ? t('learning.packDownloading') : t('learning.downloadPack')}
             >
               {isPaused ? (
-                <span className="text-[11px] font-semibold">继续</span>
+                <span className="text-[11px] font-semibold">{t('common.continue')}</span>
               ) : isPackBusy ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />

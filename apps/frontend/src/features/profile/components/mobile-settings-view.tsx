@@ -75,6 +75,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
   const [appVersion, setAppVersion] = useState('')
   const [versionLoading, setVersionLoading] = useState(true)
   const checking = useAppUpdateStore((s) => s.checking)
+  const updateStage = useAppUpdateStore((s) => s.stage)
   const prepareManualCheck = useAppUpdateStore((s) => s.prepareManualCheck)
   const finishNoUpdate = useAppUpdateStore((s) => s.finishNoUpdate)
   const bindUpdaterEvents = useAppUpdateStore((s) => s.bindUpdaterEvents)
@@ -446,6 +447,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
           <>
             <IosRow
               label={t('settings.checkVersion')}
+              subtitle={checking ? t(`settings.updateStages.${updateStage}`, { defaultValue: t('settings.checkingUpdate') }) : undefined}
               // subtitle={versionLoading ? '加载中...' : appVersion || 'web'}
               right={
                 <div className="flex items-center gap-1 text-muted-foreground">

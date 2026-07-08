@@ -228,9 +228,6 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="line-clamp-1 text-sm font-medium text-foreground">{topic.title}</p>
-                        <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          {t('practiceHub.suggested')} {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} {t('practiceSession.minutes')}
-                        </p>
                       </div>
                       <Badge variant="outline" className="rounded-full text-[10px]">{topic.difficulty}</Badge>
                     </div>
