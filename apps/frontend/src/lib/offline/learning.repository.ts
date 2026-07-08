@@ -42,11 +42,7 @@ export function buildAggregatedUnitContent(unitDetail: any, topicDetails: TopicD
       suggestedDurationSec: detail.topic?.suggestedDurationSec,
       metadata: detail.topic?.metadata,
       vocabularies: detail.vocabularies ?? [],
-      activeChunks: (detail.activeChunks ?? []).map((c: any) => ({
-        id: c.id,
-        text: c.text,
-        meaning: c.meaning,
-      })),
+      activeChunks: detail.activeChunks ?? [],
       sentencePatterns: (detail.sentencePatterns ?? []).map((p: any) => ({
         ...p,
         topicId,

@@ -1266,6 +1266,7 @@ const zhCN = {
       questions: '题',
       randomAgain: '再随机一组',
       practiceAgain: '再练下一组',
+      continuePractice: '继续练习',
       done: '完成 {{count}}',
       pending: '待练 {{count}}',
       overdue: '超期 {{count}}',

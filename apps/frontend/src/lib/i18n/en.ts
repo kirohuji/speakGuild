@@ -1264,6 +1264,7 @@ const en = {
       questions: 'questions',
       randomAgain: 'Random Set',
       practiceAgain: 'Next Set',
+      continuePractice: 'Continue Practice',
       done: 'Done {{count}}',
       pending: 'Pending {{count}}',
       overdue: 'Overdue {{count}}',

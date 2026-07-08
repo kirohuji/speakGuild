@@ -1264,6 +1264,7 @@ const ja = {
       questions: '問',
       randomAgain: 'ランダムでもう一组',
       practiceAgain: '次の組を練習',
+      continuePractice: '練習を続ける',
       done: '完了 {{count}}',
       pending: '未練 {{count}}',
       overdue: '超過 {{count}}',

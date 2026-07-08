@@ -267,12 +267,27 @@ export function TodayTaskPage() {
   const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
 
   const switchPlanMode = useCallback((nextMode: DailyPracticePlanMode) => {
+    if (nextMode === plan?.mode) return
     window.sessionStorage.setItem(TODAY_TASK_MODE_SESSION_KEY, nextMode)
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
       next.set('mode', nextMode)
       return next
     })
+    setPlanRunSeed(0)
+    setCurrentIdx(0)
+    setDoneIds(new Set())
+    setDrawerOpen(false)
+    setPlaylistOpen(false)
+    setRecordsOpen(false)
+    setReviewRoundStarted(false)
+    setReviewRoundFinished(false)
+    setReviewRunNonce(0)
+    setHasSubmittedToday(false)
+    warmupStore.clearSession()
+  }, [plan?.mode, setSearchParams, warmupStore])
+
+  const startNewPracticeSet = useCallback(() => {
     setPlanRunSeed(Date.now())
     setCurrentIdx(0)
     setDoneIds(new Set())
@@ -460,6 +475,7 @@ export function TodayTaskPage() {
   // ── 进度统计 ──
   const doneCount = steps.filter((s) => doneIds.has(s.id)).length
   const donePercent = steps.length > 0 ? (doneCount / steps.length) * 100 : 0
+  const hasPracticeSteps = steps.length > 0
   const allDone = steps.length > 0 && doneCount >= steps.length
   const weakRecords = useMemo(
     () => warmupStore.records.filter((record) => record.score === 'weak' || record.score === 'miss'),
@@ -599,6 +615,24 @@ export function TodayTaskPage() {
     const target = group.steps.find(({ step }) => !doneIds.has(step.id)) ?? group.steps[0]
     if (target) openStepAt(target.index)
   }, [doneIds, openStepAt])
+
+  const continueCurrentPractice = useCallback(() => {
+    if (needsReviewRound) {
+      startWeakReviewRound()
+      return
+    }
+    const firstPendingIndex = steps.findIndex((step) => !doneIds.has(step.id))
+    openStepAt(firstPendingIndex >= 0 ? firstPendingIndex : 0)
+  }, [doneIds, needsReviewRound, openStepAt, startWeakReviewRound, steps])
+
+  const handlePracticeRoundAction = useCallback(() => {
+    if (!hasPracticeSteps) return
+    if (allDone && !needsReviewRound) {
+      startNewPracticeSet()
+      return
+    }
+    continueCurrentPractice()
+  }, [allDone, continueCurrentPractice, hasPracticeSteps, needsReviewRound, startNewPracticeSet])
 
   // ── 今日练习记录 ──
   const todayRecords = useMemo(() => {
@@ -772,16 +806,22 @@ export function TodayTaskPage() {
         {plan.mode === 'practice' && (
           <button
             type="button"
-            disabled={!allDone || needsReviewRound}
-            onClick={() => switchPlanMode('practice')}
+            disabled={!hasPracticeSteps}
+            onClick={handlePracticeRoundAction}
             className={cn(
               'mt-3 flex w-full items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium transition-colors',
-              (!allDone || needsReviewRound)
+              !hasPracticeSteps
                 ? 'cursor-not-allowed border-muted-foreground/20 bg-muted/30 text-muted-foreground'
+                : (!allDone || needsReviewRound)
+                ? 'border-blue-300/45 bg-background/70 text-blue-700 hover:bg-blue-500/10 dark:text-blue-300'
                 : 'border-blue-300/60 bg-blue-500/10 text-blue-700 hover:bg-blue-500/15 dark:text-blue-300',
             )}
           >
-            {dailyPracticeRandomOrder ? t('todayTask.randomAgain') : t('todayTask.practiceAgain')}
+            {!hasPracticeSteps
+              ? t('todayTask.noPractice')
+              : allDone && !needsReviewRound
+              ? (dailyPracticeRandomOrder ? t('todayTask.randomAgain') : t('todayTask.practiceAgain'))
+              : t('todayTask.continuePractice')}
           </button>
         )}
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">

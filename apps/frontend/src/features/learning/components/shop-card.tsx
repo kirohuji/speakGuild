@@ -42,13 +42,18 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
   const Icon = (unit.isUnlocked && !unit.isLocked) ? getCategoryIcon(unit.categoryName ?? '') : Lock
   const totalTopicPages = Math.max(1, Math.ceil((unit.topics?.length ?? 0) / pageSize))
   const pagedTopics = (unit.topics ?? []).slice((topicPage - 1) * pageSize, topicPage * pageSize)
-  const isJoined = unit.progress !== null
+  const isJoinedInPlan = useLearningStore((s) => s.myUnits.some((myUnit) => myUnit.id === unit.id))
 
   // 下载进度
   const downloadTask = useLearningStore((s) =>
     s.downloadTasks.find((t) => t.packId === unit.id),
   )
+  const installedPack = useLearningStore((s) =>
+    s.downloadedPacks.find((pack) => pack.packId === unit.id && pack.status === 'installed'),
+  )
   const isDownloading = downloadTask?.status === 'downloading' || downloadTask?.status === 'extracting'
+  const isPackReady = Boolean(installedPack || downloadTask?.status === 'done')
+  const isJoined = isJoinedInPlan && isPackReady
   const downloadProgress = downloadTask?.progress ?? 0
 
   const handleAcquire = useCallback(async () => {
