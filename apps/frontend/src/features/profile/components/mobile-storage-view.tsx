@@ -921,12 +921,12 @@ export function MobileStorageView() {
         )}
       </IosSection>
 
-      <IosSection header="测试数据">
+      <IosSection header={t('settings.storage.testData')}>
         <IosRow
           icon={Trash2}
           iconBg="bg-orange-500"
-          label={clearing === 'practice' ? t('common.clearing', { defaultValue: '清除中...' }) : '清空练习测试数据'}
-          subtitle="清除今日任务、知识点练习、练习记录、进度和相关待同步操作；保留学习包与资源缓存"
+          label={clearing === 'practice' ? t('common.clearing', { defaultValue: '清除中...' }) : t('settings.storage.clearPracticeTestData')}
+          subtitle={t('settings.storage.clearPracticeTestDataHint')}
           last
           onTap={clearing ? undefined : () => handleClear('practice')}
         />

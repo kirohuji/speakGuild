@@ -702,7 +702,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
           <p className="line-clamp-2 text-xs text-muted-foreground/70">{flatSteps[currentIdx]?.label ?? ''}</p>
         </div>
         <label className="flex shrink-0 items-center gap-1.5 rounded-full bg-background/70 px-2 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70">
-          <span>自动</span>
+          <span>{t('todayTask.autoNext')}</span>
           <Switch
             checked={autoNextEnabled}
             onCheckedChange={setAutoNextEnabled}

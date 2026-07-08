@@ -45,14 +45,14 @@ function warmupRecordKeys(record: WarmupRecord) {
   return [...keys]
 }
 
-function warmupRecordDisplayTitle(record: WarmupRecord, fallback: string) {
+function warmupRecordDisplayTitle(record: WarmupRecord, fallback: string, questionUnit: string) {
   const items = Array.isArray(record.items) ? record.items : []
   const first = items[0] as any
   if (!first) return record.topicTitle || fallback
   const title = first.groupTitle || first.displayLabel || record.topicTitle || fallback
   const prompt = first.zh || first.promptZh || first.answer || first.suggestedAnswer
   if (items.length === 1 && prompt && prompt !== title) return `${title} · ${String(prompt).slice(0, 28)}`
-  return items.length > 1 ? `${title} · ${items.length} 题` : title
+  return items.length > 1 ? `${title} · ${items.length} ${questionUnit}` : title
 }
 
 function warmupRecordPracticeCount(record: WarmupRecord) {
@@ -107,12 +107,12 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
   const typeLabel = (item: any) => {
     if (item.displayLabel) return item.displayLabel
     const type = item.stepType ?? item.type
-    if (type === 'chunk_substitution') return '句块替换'
-    if (type === 'vocab_sentence_building') return '一词多句'
-    if (type === 'pattern_drill') return '句型操练'
-    if (type === 'vocab_drill') return '词汇输出'
-    if (type === 'sentence_decomposition') return '句子拆解'
-    return '练习'
+    if (type === 'chunk_substitution') return t('todayTask.chunkSubstitution')
+    if (type === 'vocab_sentence_building') return t('todayTask.vocabSentenceBuilding')
+    if (type === 'pattern_drill') return t('todayTask.patternDrill')
+    if (type === 'vocab_drill') return t('todayTask.vocabDrill')
+    if (type === 'sentence_decomposition') return t('todayTask.sentenceDecomposition')
+    return t('todayTask.practice')
   }
 
   return (
@@ -121,7 +121,7 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
         <div className="flex items-center justify-between px-5 py-3 border-b">
           <DrawerTitle className="flex items-center gap-2 text-lg">
             <History className="size-5" />
-            练习记录
+            {t('todayTask.practiceRecords')}
           </DrawerTitle>
           <button
             onClick={() => onOpenChange(false)}
@@ -133,12 +133,12 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
 
         <ScrollArea className="flex-1 px-4 pb-8">
           {loading ? (
-            <div className="py-16 text-center text-sm text-muted-foreground">加载中...</div>
+            <div className="py-16 text-center text-sm text-muted-foreground">{t('common.loading')}</div>
           ) : records.length === 0 ? (
             <div className="py-16 text-center">
               <FileText className="mx-auto size-10 text-muted-foreground/30" />
-              <p className="mt-3 text-sm text-muted-foreground">暂无练习记录</p>
-              <p className="text-xs text-muted-foreground/60">完成知识点练习后会自动保存</p>
+              <p className="mt-3 text-sm text-muted-foreground">{t('todayTask.noTodayPracticeRecords')}</p>
+              <p className="text-xs text-muted-foreground/60">{t('todayTask.todayPracticeRecordsEmptyHint')}</p>
             </div>
           ) : (
             <div className="space-y-2 pt-4">
@@ -162,15 +162,15 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
                         {record.score ?? '-'}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{warmupRecordDisplayTitle(record, topicTitle)}</p>
+                        <p className="text-sm font-medium truncate">{warmupRecordDisplayTitle(record, topicTitle, t('todayTask.questions'))}</p>
                         <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                           <Clock3 className="size-3" />
                           {fmtDate(record.createdAt)}
                           <span>·</span>
                           <Target className="size-3" />
-                          {passedItems}/{totalItems} 通过
+                          {t('todayTask.recordPassed', { passed: passedItems, total: totalItems })}
                           <span>·</span>
-                          练习 {practiceCount} 次
+                          {t('todayTask.practiceTimes', { count: practiceCount })}
                         </div>
                       </div>
                       <ChevronDown className={cn('size-4 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
@@ -180,7 +180,7 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
                       <div className="border-t px-4 py-3 space-y-3">
                         {record.feedback && (
                           <div className="rounded-lg bg-muted/50 px-3 py-2.5">
-                            <p className="text-xs font-medium text-muted-foreground mb-1">AI 综合评估</p>
+                            <p className="text-xs font-medium text-muted-foreground mb-1">{t('todayTask.aiAssessment')}</p>
                             <p className="text-sm text-foreground">{record.feedback}</p>
                           </div>
                         )}
@@ -195,15 +195,15 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
                                   <XCircle className="size-3.5 text-red-400" />
                                 }
                                 {item.groupTitle && <span className="text-[10px] text-muted-foreground truncate">{item.groupTitle}</span>}
-                                {item.practiceCount > 1 && <span className="text-[10px] text-muted-foreground">练习 {item.practiceCount} 次</span>}
+                                {item.practiceCount > 1 && <span className="text-[10px] text-muted-foreground">{t('todayTask.practiceTimes', { count: item.practiceCount })}</span>}
                               </div>
-                              <p className="text-xs text-muted-foreground">题目: {item.zh || item.promptZh}</p>
+                              <p className="text-xs text-muted-foreground">{t('todayTask.questionLabel')}: {item.zh || item.promptZh}</p>
                               {item.answer || item.suggestedAnswer ? (
-                                <p className="text-xs">答案: <span className="text-green-600 dark:text-green-400">{item.answer || item.suggestedAnswer}</span></p>
+                                <p className="text-xs">{t('todayTask.answerLabel')}: <span className="text-green-600 dark:text-green-400">{item.answer || item.suggestedAnswer}</span></p>
                               ) : null}
                               {item.userAnswer && (
                                 <div>
-                                  <p className="mb-1 text-[10px] text-muted-foreground">你的回答</p>
+                                  <p className="mb-1 text-[10px] text-muted-foreground">{t('learning.yourAnswer')}</p>
                                   <div className={cn(
                                     'min-h-[52px] rounded-lg bg-muted/30 px-3 py-2 text-sm leading-6',
                                     item.passed ? 'text-green-700 dark:text-green-300' : 'text-red-600 dark:text-red-300',
@@ -222,7 +222,7 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
                                 className="h-8 w-full justify-between rounded-lg px-2 text-xs"
                                 onClick={() => setReplayItem({ ...item, index: idx })}
                               >
-                                回放此题
+                                {t('todayTask.replayQuestion')}
                                 <ChevronRight className="size-3.5" />
                               </Button>
                             </div>
@@ -239,8 +239,8 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
       </DrawerContent>
       <Dialog open={!!replayItem} onOpenChange={(nextOpen) => { if (!nextOpen) setReplayItem(null) }}>
         <DialogContent className="!z-[10001] w-[calc(100vw-2rem)] max-w-md rounded-2xl p-0 [&>button]:hidden">
-          <DialogTitle className="sr-only">知识点练习回放</DialogTitle>
-          <DialogDescription className="sr-only">查看题目、用户回答与 AI 反馈</DialogDescription>
+          <DialogTitle className="sr-only">{t('todayTask.replayDialogTitle')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('todayTask.replayDialogDesc')}</DialogDescription>
           {replayItem && (
             <div className="overflow-hidden rounded-2xl">
               <div className="border-b border-border/60 bg-muted/20 px-5 py-4">
@@ -262,28 +262,28 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
               </div>
               <div className="space-y-3 px-5 py-4">
                 <div className="rounded-lg bg-muted/20 px-3 py-2.5">
-                  <p className="text-xs text-muted-foreground">题目</p>
+                  <p className="text-xs text-muted-foreground">{t('todayTask.questionLabel')}</p>
                   <p className="mt-1 text-base font-semibold text-foreground">{replayItem.zh || replayItem.promptZh}</p>
                 </div>
                 {(replayItem.answer || replayItem.suggestedAnswer || replayItem.correction) && (
                   <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-2.5">
-                    <p className="text-[10px] text-muted-foreground">参考答案</p>
+                    <p className="text-[10px] text-muted-foreground">{t('todayTask.referenceAnswer')}</p>
                     <p className="mt-1 text-sm font-medium text-foreground">
                       {replayItem.answer || replayItem.suggestedAnswer || replayItem.correction}
                     </p>
                   </div>
                 )}
                 <div>
-                  <p className="mb-1.5 text-xs text-muted-foreground">你的回答</p>
+                  <p className="mb-1.5 text-xs text-muted-foreground">{t('learning.yourAnswer')}</p>
                   <div className="min-h-[72px] rounded-lg bg-background/70 px-3 py-2 text-base leading-6 ring-1 ring-border/45">
-                    {replayItem.userAnswer || '未作答'}
+                    {replayItem.userAnswer || t('todayTask.notAnswered')}
                   </div>
                 </div>
                 {replayItem.feedback && (
                   <div className={cn('rounded-lg px-3 py-2.5', replayItem.passed ? 'bg-green-500/10' : 'bg-amber-500/10')}>
                     <div className="flex items-center gap-1.5">
                       {replayItem.passed ? <CheckCircle2 className="size-3.5 text-green-500" /> : <XCircle className="size-3.5 text-amber-500" />}
-                      <p className="text-xs font-medium">{replayItem.passed ? '正确！' : '反馈'}</p>
+                      <p className="text-xs font-medium">{replayItem.passed ? t('todayTask.correct') : t('todayTask.feedback')}</p>
                     </div>
                     <p className="mt-1 text-[11px] text-muted-foreground">{replayItem.feedback}</p>
                   </div>

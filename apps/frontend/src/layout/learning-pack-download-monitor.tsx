@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlertCircle, ChevronDown, DownloadCloud, Loader2, PackageOpen, Trash2 } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Progress } from '@/components/ui/progress'
@@ -14,17 +15,17 @@ function isRunning(task: DownloadTask) {
   return task.status === 'downloading' || task.status === 'extracting' || task.status === 'uninstalling'
 }
 
-function statusLabel(task: DownloadTask) {
-  if (task.status === 'queued') return '排队中'
-  if (task.status === 'paused') return task.stepLabel ?? '已暂停'
-  if (task.status === 'uninstalling') return task.stepLabel ?? '卸载中'
-  if (task.status === 'extracting') return task.stepLabel ?? '写入本地资源'
-  if (task.status === 'error') return task.kind === 'uninstall' ? '卸载失败' : '下载失败'
-  return task.stepLabel ?? '下载中'
+function statusLabel(task: DownloadTask, t: ReturnType<typeof useTranslation>['t']) {
+  if (task.status === 'queued') return t('learning.packTaskQueued')
+  if (task.status === 'paused') return task.stepLabel ?? t('learning.packTaskPaused')
+  if (task.status === 'uninstalling') return task.stepLabel ?? t('learning.packTaskUninstalling')
+  if (task.status === 'extracting') return task.stepLabel ?? t('learning.packTaskExtracting')
+  if (task.status === 'error') return task.kind === 'uninstall' ? t('learning.packTaskUninstallFailed') : t('learning.packTaskDownloadFailed')
+  return task.stepLabel ?? t('learning.packTaskDownloading')
 }
 
-function taskTitle(task: DownloadTask) {
-  return (task.kind ?? 'download') === 'uninstall' ? '卸载学习包' : '下载学习包'
+function taskTitle(task: DownloadTask, t: ReturnType<typeof useTranslation>['t']) {
+  return (task.kind ?? 'download') === 'uninstall' ? t('learning.packTaskUninstallTitle') : t('learning.packTaskDownloadTitle')
 }
 
 function taskPercent(task: DownloadTask) {
@@ -55,6 +56,7 @@ export function LearningPackDownloadStatusButton({
   mobile?: boolean
   embedded?: boolean
 }) {
+  const { t } = useTranslation()
   const downloadTasks = useLearningStore((state) => state.downloadTasks)
   const tasks = useMemo(() => activeTasks(downloadTasks), [downloadTasks])
 
@@ -64,7 +66,7 @@ export function LearningPackDownloadStatusButton({
     <button
       type="button"
       onClick={onClick}
-      aria-label="学习包任务"
+      aria-label={t('learning.packTasksTitle')}
       className={cn(
         'relative inline-flex items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground',
         embedded
@@ -95,6 +97,7 @@ export function LearningPackDownloadDrawer({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { t } = useTranslation()
   const downloadTasks = useLearningStore((state) => state.downloadTasks)
   const resumePackTask = useLearningStore((state) => state.resumePackTask)
   const tasks = useMemo(() => activeTasks(downloadTasks), [downloadTasks])
@@ -107,10 +110,10 @@ export function LearningPackDownloadDrawer({
         <DrawerHeader className="shrink-0 px-4 pb-1 pt-2 text-left">
           <DrawerTitle className="flex items-center gap-2 text-base font-semibold">
             <DownloadCloud className="size-4 text-primary" />
-            学习包任务
+            {t('learning.packTasksTitle')}
           </DrawerTitle>
           <p className="text-xs text-muted-foreground">
-            {tasks.length > 0 ? `${runningCount} 个正在处理 · ${percent}%` : '当前没有学习包任务'}
+            {tasks.length > 0 ? t('learning.packTasksSummary', { count: runningCount, percent }) : t('learning.noPackTasks')}
           </p>
         </DrawerHeader>
 
@@ -118,7 +121,7 @@ export function LearningPackDownloadDrawer({
           {tasks.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center text-sm text-muted-foreground">
               <PackageOpen className="mb-3 size-8 opacity-45" />
-              暂无学习包任务
+              {t('learning.noPackTasksEmpty')}
             </div>
           ) : (
             <div className="space-y-2">
@@ -148,7 +151,7 @@ export function LearningPackDownloadDrawer({
                         <span className="shrink-0 text-xs font-semibold tabular-nums text-foreground">{taskPercent(task)}%</span>
                       </div>
                       <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                        <span className="truncate">{taskTitle(task)} · {statusLabel(task)}</span>
+                        <span className="truncate">{taskTitle(task, t)} · {statusLabel(task, t)}</span>
                         {typeof task.current === 'number' && typeof task.total === 'number' && task.total > 0 && (
                           <span className="shrink-0 tabular-nums">{task.current}/{task.total}</span>
                         )}
@@ -161,18 +164,18 @@ export function LearningPackDownloadDrawer({
                   <div className="border-t border-border/40 px-3.5 py-3 text-xs">
                     {task.status === 'error' ? (
                       <p className="rounded-md bg-destructive/10 px-2 py-1.5 text-destructive">
-                        {task.error ?? (task.kind === 'uninstall' ? '卸载失败，请重试' : '下载失败，请重试')}
+                        {task.error ?? (task.kind === 'uninstall' ? t('learning.packTaskUninstallFailedRetry') : t('learning.packTaskDownloadFailedRetry'))}
                       </p>
                     ) : (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between gap-3 text-muted-foreground">
-                          <span>{task.kind === 'uninstall' ? '当前步骤' : '当前资源'}</span>
+                          <span>{task.kind === 'uninstall' ? t('learning.packTaskCurrentStep') : t('learning.packTaskCurrentResource')}</span>
                           {typeof task.total === 'number' && task.total > 0 && typeof task.current === 'number' && (
-                            <span className="tabular-nums">剩余 {Math.max(0, task.total - task.current)} 个</span>
+                            <span className="tabular-nums">{t('learning.packTaskRemaining', { count: Math.max(0, task.total - task.current) })}</span>
                           )}
                         </div>
                         <code className="block rounded-md bg-muted px-2 py-1.5 font-mono text-[11px] text-foreground">
-                          {task.kind === 'uninstall' ? (task.stepLabel || task.step || '等待开始') : (compactPath(task.currentItem) || task.step || '等待开始')}
+                          {task.kind === 'uninstall' ? (task.stepLabel || task.step || t('learning.packTaskWaiting')) : (compactPath(task.currentItem) || task.step || t('learning.packTaskWaiting'))}
                         </code>
                         {task.status === 'paused' && (
                           <Button
@@ -182,7 +185,7 @@ export function LearningPackDownloadDrawer({
                             className="mt-1 h-8 w-full rounded-full text-xs"
                             onClick={() => void resumePackTask(task.packId)}
                           >
-                            继续{task.kind === 'uninstall' ? '卸载' : '下载'}
+                            {task.kind === 'uninstall' ? t('learning.resumeUninstall') : t('learning.resumeDownload')}
                           </Button>
                         )}
                       </div>

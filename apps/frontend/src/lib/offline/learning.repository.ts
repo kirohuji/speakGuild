@@ -20,10 +20,6 @@ async function isPackInstalled(unitId: string) {
 
 /** Aggregate vocabs/chunks/patterns/trainingTopics from stored topic details into a unitDetail */
 async function aggregateUnitContent(unitDetail: any): Promise<any> {
-  if (unitDetail.vocabularies?.length && unitDetail.chunks?.length && unitDetail.trainingTopics?.length) {
-    return unitDetail // already has aggregated data
-  }
-
   // Get topic IDs from the pack manifest (or fall back to trainingTopics if still present)
   let topicIds: string[] = (unitDetail.trainingTopics ?? []).map((t: any) => t.id)
   if (topicIds.length === 0) {
@@ -51,7 +47,7 @@ async function aggregateUnitContent(unitDetail: any): Promise<any> {
         difficulty: detail.topic?.difficulty,
         suggestedDurationSec: detail.topic?.suggestedDurationSec,
         metadata: detail.topic?.metadata,
-        activeChunks: (detail.activeChunks ?? []).slice(0, 3).map((c: any) => ({
+        activeChunks: (detail.activeChunks ?? []).map((c: any) => ({
           id: c.id,
           text: c.text,
           meaning: c.meaning,

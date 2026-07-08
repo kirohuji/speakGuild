@@ -601,7 +601,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
           <DialogHeader>
             <DialogTitle>{t('profile.logout')}</DialogTitle>
             <DialogDescription className="text-sm leading-6 text-muted-foreground">
-              {t('profile.logoutConfirmHint', { defaultValue: '确定要退出当前账号吗？本机的用户数据会被清理，已下载学习包会保留。' })}
+              {t('profile.logoutConfirmHint')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-row justify-end gap-2 space-x-0">
@@ -620,7 +620,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
               disabled={logoutLoading}
             >
               {logoutLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {logoutLoading ? t('profile.loggingOut', { defaultValue: '退出中' }) : t('common.confirm')}
+              {logoutLoading ? t('profile.loggingOut') : t('common.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>
