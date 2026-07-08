@@ -5,6 +5,7 @@ import { Bell, Loader2, WifiOff, Wrench } from 'lucide-react'
 import { Header } from './header'
 import { Footer } from './footer'
 import { BottomNav } from './bottom-nav'
+import { AppUpdateDialog } from '@/components/common/app-update-dialog'
 import { useAuth } from '@/providers/auth-provider'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
@@ -14,6 +15,7 @@ import { NotificationListPage } from '@/features/notification/pages/notification
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
+import { useAppUpdateStore } from '@/stores/app-update.store'
 import { cn } from '@/lib/cn'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { isDevHost } from '@/lib/dev-host'
@@ -75,6 +77,7 @@ export function RootLayout() {
       </main>
       {!isAuthPage && !isMobile && !immersiveMode && <Footer />}
       {!isAuthPage && showBottomNav && <BottomNav />}
+      {!isAuthPage && <AppUpdateDialog />}
       <Drawer open={profileDrawerOpen} onOpenChange={setProfileDrawerOpen}>
         <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-border/70 bg-background app-surface">
           <DrawerHeader className="shrink-0 px-4 pb-1 pt-2 text-left">
@@ -114,10 +117,14 @@ function MobileTopBar({
   const avatarLoaded = useProfileCacheStore((s) => s.avatarLoaded)
   const loadProfileHome = useProfileCacheStore((s) => s.loadProfileHome)
   const isSyncing = useOfflineSyncStore((s) => s.isSyncing)
+  const updateStatus = useAppUpdateStore((s) => s.status)
+  const updateDialogOpen = useAppUpdateStore((s) => s.dialogOpen)
+  const openUpdateDialog = useAppUpdateStore((s) => s.openDialog)
   const isOnline = useOnlineStatus()
   const user = session?.user
   const fallback = (user?.name || user?.email || '我').slice(0, 1).toUpperCase()
   const profileActive = pathname.startsWith('/profile') || pathname.startsWith('/account')
+  const showBackgroundUpdate = updateStatus === 'downloading' && !updateDialogOpen
 
   React.useEffect(() => {
     if (user?.id && !avatarLoaded) {
@@ -127,6 +134,16 @@ function MobileTopBar({
 
   return (
     <header className="fixed right-4 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-40 flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45">
+      {showBackgroundUpdate && (
+        <button
+          type="button"
+          onClick={openUpdateDialog}
+          aria-label={t('settings.downloading2')}
+          className="relative flex size-9 items-center justify-center rounded-full text-primary transition-colors hover:bg-background/45 hover:text-primary"
+        >
+          <Loader2 className="size-[18px] animate-spin" />
+        </button>
+      )}
       <button
         type="button"
         onClick={onNotificationOpen}

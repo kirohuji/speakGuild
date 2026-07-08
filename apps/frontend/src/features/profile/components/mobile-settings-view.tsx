@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ChevronRight, Loader2, Download, RefreshCw, CheckCircle2 } from 'lucide-react'
+import { ChevronRight, Loader2 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -13,6 +13,7 @@ import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useConfigStore } from '@/stores/config.store'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
+import { useAppUpdateStore } from '@/stores/app-update.store'
 import { IosRow, IosSection } from '@/features/profile/components/ios-components'
 import { AlarmTimePicker } from '@/features/profile/components/alarm-time-picker'
 import { SystemDocumentDrawer } from '@/features/system/components/system-document-drawer'
@@ -71,11 +72,10 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
   // ─── 版本更新 ──────────────────────────────────────
   const [appVersion, setAppVersion] = useState('')
   const [versionLoading, setVersionLoading] = useState(true)
-  const [checking, setChecking] = useState(false)
-  const [updateDialog, setUpdateDialog] = useState<{ version: string; url: string; releaseNotes: string } | null>(null)
-  const [downloading, setDownloading] = useState(false)
-  const [downloadPercent, setDownloadPercent] = useState(0)
-  const [downloaded, setDownloaded] = useState(false)
+  const checking = useAppUpdateStore((s) => s.checking)
+  const prepareManualCheck = useAppUpdateStore((s) => s.prepareManualCheck)
+  const finishNoUpdate = useAppUpdateStore((s) => s.finishNoUpdate)
+  const bindUpdaterEvents = useAppUpdateStore((s) => s.bindUpdaterEvents)
 
   useEffect(() => {
     updater.getCurrent().then((current) => {
@@ -84,34 +84,9 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
   }, [])
 
   // ─── 监听 updater 事件（组件卸载后不再更新状态）──
-  const mountedRef = useRef(true)
   useEffect(() => {
-    mountedRef.current = true
-    return () => { mountedRef.current = false }
-  }, [])
-
-  useEffect(() => {
-    updater.onUpdateAvailable((info) => {
-      if (!mountedRef.current) return
-      if (info.version) {
-        setDownloading(true)
-        setUpdateDialog({ version: info.version, url: info.url || '', releaseNotes: '' })
-      }
-    })
-    updater.onDownload((percent) => {
-      if (!mountedRef.current) return
-      setDownloadPercent(Math.round(percent))
-    })
-    updater.onDownloadComplete(() => {
-      if (!mountedRef.current) return
-      setDownloaded(true)
-    })
-    updater.onFailed(() => {
-      if (!mountedRef.current) return
-      setDownloading(false)
-      setDownloadPercent(0)
-    })
-  }, [])
+    bindUpdaterEvents(updater)
+  }, [bindUpdaterEvents])
 
   // 处理账户删除
   const handleDeleteAccount = async () => {
@@ -293,11 +268,7 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
 
   // ─── 版本检查 ──────────────────────────────────────
   const handleCheckUpdate = async () => {
-    setChecking(true)
-    setUpdateDialog(null)
-    setDownloading(false)
-    setDownloaded(false)
-    setDownloadPercent(0)
+    prepareManualCheck()
     try {
       const result = await updater.checkUpdate()
       if (!result.newVersion) {
@@ -306,33 +277,8 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
     } catch {
       toast.error(t('settings.checkUpdateFailed'))
     } finally {
-      setChecking(false)
+      finishNoUpdate()
     }
-  }
-
-  useEffect(() => {
-    updater.onUpdateAvailable((info) => {
-      if (info.version) {
-        setDownloading(true)
-        setUpdateDialog({ version: info.version, url: info.url || '', releaseNotes: '' })
-      }
-    })
-    updater.onDownload((percent) => {
-      setDownloadPercent(Math.round(percent))
-    })
-    updater.onDownloadComplete(() => {
-      setDownloaded(true)
-    })
-    updater.onFailed(() => {
-      setDownloading(false)
-      setDownloadPercent(0)
-    })
-  }, [])
-
-  const handleRestartApp = () => {
-    setUpdateDialog(null)
-    setDownloading(false)
-    window.location.reload()
   }
 
   return (
@@ -552,59 +498,6 @@ export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackO
       )}
 
       {/* 版本更新弹窗 */}
-      <Dialog open={updateDialog !== null} onOpenChange={() => { setUpdateDialog(null); setDownloading(false); }}>
-        <DialogContent
-          className="w-[calc(100%-2rem)] max-w-sm rounded-2xl p-5 sm:p-6"
-          onOpenAutoFocus={(event) => event.preventDefault()}
-        >
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {downloaded ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <Download className="h-5 w-5 text-primary" />}
-              {downloaded ? t('settings.updateReady') : t('settings.newVersion')}
-            </DialogTitle>
-            <DialogDescription className="text-sm">
-              {t('settings.versionInfo', { version: updateDialog?.version, downloaded: downloaded ? t('settings.downloadedDone') : t('settings.downloading') })}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-3 py-2">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span>{downloaded ? t('settings.downloadComplete') : t('settings.downloading2')}</span>
-                <span className="text-muted-foreground">{downloaded ? 100 : downloadPercent}%</span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-primary transition-all duration-300"
-                  style={{ width: `${downloaded ? 100 : downloadPercent}%` }}
-                />
-              </div>
-            </div>
-            {downloaded && (
-              <p className="text-xs text-muted-foreground">
-                {t('settings.updateDesc')}
-              </p>
-            )}
-          </div>
-
-          <DialogFooter className="flex-row justify-end gap-2 space-x-0">
-            <Button
-              variant="outline"
-              className="flex-1 sm:flex-none"
-              onClick={() => { setUpdateDialog(null); setDownloading(false); }}
-            >
-              {downloaded ? t('settings.restartLater') : t('settings.backgroundDownload')}
-            </Button>
-            {downloaded && (
-              <Button className="flex-1 sm:flex-none gap-1.5" onClick={handleRestartApp}>
-                <RefreshCw className="h-4 w-4" />
-                {t('settings.restartApp')}
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* 删除账户确认弹窗 */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent

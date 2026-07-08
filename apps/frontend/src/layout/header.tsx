@@ -9,6 +9,7 @@ import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
 import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
+import { useAppUpdateStore } from '@/stores/app-update.store'
 import { isDevHost } from '@/lib/dev-host'
 
 export function Header() {
@@ -23,9 +24,14 @@ export function Header() {
   const loadProfileHome = useProfileCacheStore((s) => s.loadProfileHome)
   const isSyncing = useOfflineSyncStore((s) => s.isSyncing)
   const lastSyncLog = useOfflineSyncStore((s) => s.logs[0])
+  const updateStatus = useAppUpdateStore((s) => s.status)
+  const updateDialogOpen = useAppUpdateStore((s) => s.dialogOpen)
+  const openUpdateDialog = useAppUpdateStore((s) => s.openDialog)
   const isAdmin = session?.user?.role === 'admin'
   const user = session?.user
   const fallback = (user?.name || user?.email || '我').slice(0, 1).toUpperCase()
+
+  const showBackgroundUpdate = updateStatus === 'downloading' && !updateDialogOpen
 
   const navItems = [
     { label: t('nav.home'), path: '/portal' },
@@ -139,6 +145,18 @@ export function Header() {
                 </div>
               )}
             </div>
+
+            {showBackgroundUpdate && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={openUpdateDialog}
+                aria-label={t('settings.downloading2')}
+                className="h-8 w-8 text-primary"
+              >
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </Button>
+            )}
 
             {user && (
               <Link

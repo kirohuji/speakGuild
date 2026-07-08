@@ -51,7 +51,7 @@ const SystemPrivacyConcisePage = lazy(() => import('@/features/system/pages/syst
 const SystemIcpPage = lazy(() => import('@/features/system/pages/system-icp-page').then(m => ({ default: m.SystemIcpPage })))
 
 function PageLoader() {
-  return <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">Loading...</div>
+  return <div className="flex min-h-[100dvh] items-center justify-center bg-background text-sm text-muted-foreground">Loading...</div>
 }
 
 export default function App() {

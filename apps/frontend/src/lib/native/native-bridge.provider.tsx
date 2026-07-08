@@ -29,6 +29,7 @@ import { Style } from '@capacitor/status-bar';
 import { App } from '@capacitor/app';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { useLearningStore } from '@/stores/learning.store';
+import { useAppUpdateStore } from '@/stores/app-update.store';
 import { isDevHost } from '@/lib/dev-host';
 import { localDb } from '@/lib/offline/unified-storage';
 
@@ -60,8 +61,11 @@ export function NativeBridgeProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (!isNative()) return;
 
+    useAppUpdateStore.getState().bindUpdaterEvents(capabilities.updater);
+
     // ── 首帧立即执行（notifyAppReady 有 10s 超时硬要求）──
-    void capabilities.splashScreen.hide().catch(() => {});
+    // SplashScreen is hidden by AuthRouteGate after the first route is ready,
+    // so native and web loading layers do not briefly overlap during cold start.
     void capabilities.statusBar.setStyle({ style: Style.Dark }).catch(() => {});
     void capabilities.updater.notifyAppReady().catch((err) => {
       console.warn('[NativeBridge] notifyAppReady failed:', err);
