@@ -536,7 +536,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
     if (!autoNextEnabled || !hasNext || allDone || !currentStepDone) return
     const timer = window.setTimeout(() => {
       setCurrentIdx((prev) => Math.min(totalSteps - 1, prev + 1))
-    }, 3000)
+    }, 2000)
     return () => window.clearTimeout(timer)
   }, [allDone, autoNextEnabled, currentIdx, currentStepDone, hasNext, totalSteps])
 

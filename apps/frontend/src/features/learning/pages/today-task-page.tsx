@@ -660,7 +660,7 @@ export function TodayTaskPage() {
     if (!drawerOpen || !autoNextEnabled || !hasNext || !currentStepDone) return
     const timer = window.setTimeout(() => {
       setCurrentIdx((prev) => Math.min(steps.length - 1, prev + 1))
-    }, 3000)
+    }, 2000)
     return () => window.clearTimeout(timer)
   }, [autoNextEnabled, currentIdx, currentStepDone, drawerOpen, hasNext, steps.length])
 
