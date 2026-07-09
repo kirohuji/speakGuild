@@ -809,19 +809,33 @@ export function TodayTaskPage() {
             disabled={!hasPracticeSteps}
             onClick={handlePracticeRoundAction}
             className={cn(
-              'mt-3 flex w-full items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium transition-colors',
+              'mt-3 flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left transition-colors active:scale-[0.99]',
               !hasPracticeSteps
-                ? 'cursor-not-allowed border-muted-foreground/20 bg-muted/30 text-muted-foreground'
+                ? 'cursor-not-allowed border-muted-foreground/20 bg-muted/25 text-muted-foreground'
                 : (!allDone || needsReviewRound)
-                ? 'border-primary/35 bg-background text-primary hover:bg-primary/10'
-                : 'border-primary/50 bg-primary/10 text-primary hover:bg-primary/15',
+                ? 'border-primary/20 bg-primary/[0.06] text-primary hover:bg-primary/[0.08]'
+                : 'border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-700 hover:bg-emerald-500/[0.08] dark:text-emerald-300',
             )}
           >
-            {!hasPracticeSteps
-              ? t('todayTask.noPractice')
-              : allDone && !needsReviewRound
-              ? (dailyPracticeRandomOrder ? t('todayTask.randomAgain') : t('todayTask.practiceAgain'))
-              : t('todayTask.continuePractice')}
+            <span className="min-w-0 flex-1 truncate text-xs font-medium">
+              {!hasPracticeSteps
+                ? t('todayTask.noPractice')
+                : allDone && !needsReviewRound
+                ? (dailyPracticeRandomOrder ? t('todayTask.randomAgain') : t('todayTask.practiceAgain'))
+                : t('todayTask.continuePractice')}
+            </span>
+            {hasPracticeSteps && (
+              <span
+                className={cn(
+                  'inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-semibold transition-colors',
+                  (!allDone || needsReviewRound)
+                    ? 'text-primary hover:bg-primary/10'
+                    : 'text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-300',
+                )}
+              >
+                {allDone && !needsReviewRound ? <CheckCircle2 className="size-4" /> : <ArrowRight className="size-4" />}
+              </span>
+            )}
           </button>
         )}
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
