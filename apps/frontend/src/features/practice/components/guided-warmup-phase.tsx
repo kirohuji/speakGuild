@@ -694,22 +694,22 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden pt-[calc(1rem+env(safe-area-inset-top,0px))]">
       {/* Header */}
-      <div className="mb-4 flex shrink-0 items-center gap-3 px-4">
-        <Button variant="ghost" size="icon" onClick={onBack}><ArrowLeft className="size-5" /></Button>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted-foreground">{t('practiceSession.warmupTitle')} · {currentIdx + 1}/{totalSteps}</p>
-          <h1 className="truncate text-lg font-bold text-foreground">{topicTitle}</h1>
-          <p className="line-clamp-2 text-xs text-muted-foreground/70">{flatSteps[currentIdx]?.label ?? ''}</p>
+      <div className="mb-4 grid shrink-0 grid-cols-[2.25rem_minmax(0,1fr)] items-start gap-3 px-4">
+        <Button variant="ghost" size="icon" onClick={onBack} className="mt-0.5"><ArrowLeft className="size-5" /></Button>
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-2">
+          <p className="min-w-0 truncate text-xs text-muted-foreground">{t('practiceSession.warmupTitle')} · {currentIdx + 1}/{totalSteps}</p>
+          <label className="flex shrink-0 items-center gap-1.5 rounded-full bg-background/70 px-2 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70">
+            <span>{t('todayTask.autoNext')}</span>
+            <Switch
+              checked={autoNextEnabled}
+              onCheckedChange={setAutoNextEnabled}
+              disabled={totalSteps <= 1}
+              className="origin-right scale-90"
+            />
+          </label>
+          <h1 className="col-span-2 line-clamp-2 break-words text-lg font-bold leading-snug text-foreground">{topicTitle}</h1>
+          <p className="col-span-2 line-clamp-2 break-words text-xs text-muted-foreground/70">{flatSteps[currentIdx]?.label ?? ''}</p>
         </div>
-        <label className="flex shrink-0 items-center gap-1.5 rounded-full bg-background/70 px-2 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70">
-          <span>{t('todayTask.autoNext')}</span>
-          <Switch
-            checked={autoNextEnabled}
-            onCheckedChange={setAutoNextEnabled}
-            disabled={totalSteps <= 1}
-            className="origin-right scale-90"
-          />
-        </label>
       </div>
       <Progress value={((currentIdx + 1) / totalSteps) * 100} className="mb-4 h-1.5 shrink-0 px-4" />
 

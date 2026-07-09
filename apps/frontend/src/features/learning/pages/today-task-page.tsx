@@ -1044,35 +1044,41 @@ export function TodayTaskPage() {
           <div className="flex min-h-0 flex-1 flex-col">
             {/* Header：Badge 标识题型，大字展示练习内容 */}
             <div className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-9 md:px-6">
-              <div className="flex items-start gap-3">
+              <div className="grid grid-cols-[2.25rem_minmax(0,1fr)] items-start gap-3">
                 <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   {(() => { const Icon = currentMeta.icon; return <Icon className="size-[18px]" /> })()}
                 </div>
-                <div className="w-0 flex-1 overflow-hidden">
-                  <Badge variant="secondary" className="mb-1.5">{currentMeta.label}</Badge>
-                  <h2 className="truncate text-lg font-bold leading-tight text-foreground">
-                    {currentStep?.headerContent || currentStep?.label}
-                  </h2>
-                  <p className="truncate mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                    {currentStep?.topicTitle}
-                  </p>
+                <div className="min-w-0 space-y-2">
+                  <div className="flex min-w-0 items-center justify-between gap-2">
+                    <Badge variant="secondary" className="min-w-0 max-w-[45%] truncate">{currentMeta.label}</Badge>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <label className="flex items-center gap-1.5 rounded-full bg-background/70 px-2 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70">
+                        <span>{t('todayTask.autoNext')}</span>
+                        <Switch
+                          checked={autoNextEnabled}
+                          onCheckedChange={setAutoNextEnabled}
+                          disabled={steps.length <= 1}
+                          className="origin-right scale-90"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setDrawerOpen(false)}
+                        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                      >
+                        <ChevronDown className="size-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="line-clamp-2 break-words text-lg font-bold leading-snug text-foreground">
+                      {currentStep?.headerContent || currentStep?.label}
+                    </h2>
+                    <p className="mt-1 line-clamp-1 break-words text-sm leading-relaxed text-muted-foreground">
+                      {currentStep?.topicTitle}
+                    </p>
+                  </div>
                 </div>
-                <label className="flex shrink-0 items-center gap-1.5 rounded-full bg-background/70 px-2 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70">
-                  <span>{t('todayTask.autoNext')}</span>
-                  <Switch
-                    checked={autoNextEnabled}
-                    onCheckedChange={setAutoNextEnabled}
-                    disabled={steps.length <= 1}
-                    className="origin-right scale-90"
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setDrawerOpen(false)}
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                >
-                  <ChevronDown className="size-4" />
-                </button>
               </div>
             </div>
 

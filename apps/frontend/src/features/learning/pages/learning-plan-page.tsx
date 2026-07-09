@@ -458,25 +458,25 @@ function WarmupRecordDetailDrawer({
         <div className="flex h-full flex-col">
           {/* Header — 与练习 Dialog 一致 */}
           <div className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-9 md:px-6">
-            <div className="flex items-start gap-3">
+            <div className="grid grid-cols-[2.25rem_minmax(0,1fr)] items-start gap-3">
               <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <CheckCircle2 className="size-[18px]" />
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground">
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-2">
+                <p className="min-w-0 truncate text-xs text-muted-foreground">
                   {record.topicTitle || t('learning.warmupPractice')} · {t('common.total')} {record.score ?? '-'} {t('learning.scoreUnit')}
                 </p>
-                <h2 className="truncate text-lg font-bold leading-tight text-foreground">
+                <button
+                  type="button"
+                  onClick={() => onOpenChange(false)}
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                >
+                  <ChevronDown className="size-4" />
+                </button>
+                <h2 className="col-span-2 line-clamp-2 break-words text-lg font-bold leading-snug text-foreground">
                   {current?.groupTitle || current?.displayLabel || current?.zh || t('learning.practiceReview')}
                 </h2>
               </div>
-              <button
-                type="button"
-                onClick={() => onOpenChange(false)}
-                className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-              >
-                <ChevronDown className="size-4" />
-              </button>
             </div>
           </div>
 
