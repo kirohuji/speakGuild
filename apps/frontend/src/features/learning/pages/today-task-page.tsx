@@ -813,8 +813,8 @@ export function TodayTaskPage() {
               !hasPracticeSteps
                 ? 'cursor-not-allowed border-muted-foreground/20 bg-muted/30 text-muted-foreground'
                 : (!allDone || needsReviewRound)
-                ? 'border-blue-300/45 bg-background/70 text-blue-700 hover:bg-blue-500/10 dark:text-blue-300'
-                : 'border-blue-300/60 bg-blue-500/10 text-blue-700 hover:bg-blue-500/15 dark:text-blue-300',
+                ? 'border-primary/35 bg-background text-primary hover:bg-primary/10'
+                : 'border-primary/50 bg-primary/10 text-primary hover:bg-primary/15',
             )}
           >
             {!hasPracticeSteps

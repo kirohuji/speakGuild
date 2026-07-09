@@ -595,7 +595,7 @@ function VocabPrepCard({
   }
 
   return (
-    <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors', expanded && 'bg-primary/[0.06]')}>
+    <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors')}>
       <CardContent className="p-0">
         <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle} {...rest}>
           <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400">
@@ -659,7 +659,7 @@ function ChunkPrepCard({
   }
 
   return (
-    <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors', expanded && 'bg-primary/[0.06]')}>
+    <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors')}>
       <CardContent className="p-0">
         <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle}>
           <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -736,7 +736,7 @@ function PatternPrepCard({
   }
 
   return (
-    <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors', expanded && 'bg-primary/[0.06]')}>
+    <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors')}>
       <CardContent className="p-0">
         <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle}>
           <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
