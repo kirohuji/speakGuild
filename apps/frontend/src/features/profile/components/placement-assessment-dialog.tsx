@@ -819,7 +819,7 @@ export function LearningAssessmentDialog({
                 ? t('profile.placement.finish')
                 : t('profile.placement.submit')}
           </Button>
-          {step === 0 && (
+          {step === 0 && canSkipPlacement && (
             <Button
               type="button"
               variant="outline"
