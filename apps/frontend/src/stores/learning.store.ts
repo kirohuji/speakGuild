@@ -105,6 +105,7 @@ interface LearningStore {
   enrollUnit: (unitId: string, title?: string) => Promise<void>
   quitUnit: (unitId: string) => Promise<void>
   fetchDownloadedPacks: () => Promise<void>
+  syncPackStateAfterLocalChange: () => Promise<void>
   checkPackUpdates: (silent?: boolean) => Promise<void>
   downloadUnitPack: (unitId: string) => Promise<void>
   uninstallUnitPack: (unitId: string) => Promise<void>
@@ -205,6 +206,13 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       const units = await learningRepository.getMyUnits().catch(() => [] as MyUnit[])
       if (units.length > 0) set({ myUnits: units })
     }
+  },
+
+  async syncPackStateAfterLocalChange() {
+    const downloadedPacks = await learningPackService.listInstalled()
+    set({ downloadedPacks })
+    await getState().refreshMyUnits()
+    useDailyPracticeStore.getState().reset()
   },
 
   async fetchShop(params) {
@@ -362,15 +370,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       updateProgress(100, 'done')
       console.log(`[learning-store] ✅ 下载完成: ${next.title}`)
 
-      const downloadedPacks = await learningPackService.listInstalled()
+      await getState().syncPackStateAfterLocalChange()
       set((current) => ({
-        downloadedPacks,
         availablePackUpdates: current.availablePackUpdates.filter((update) => update.packId !== next.packId),
       }))
-      await getState().refreshMyUnits()
-
-      // 新包安装后，重置今日任务计划，下次进入时重新从本地 SQLite 构建
-      useDailyPracticeStore.getState().reset()
 
       // 3 秒后从队列移除已完成的
       setTimeout(() => {
@@ -443,17 +446,12 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       await learningPackService.uninstall(unitId)
       lap('local pack uninstall')
       updateUninstallProgress(82, 'refreshing', packTaskStepLabel('refreshing', 'uninstall'))
-      const downloadedPacks = await learningPackService.listInstalled()
-      lap('list installed packs', { installedCount: downloadedPacks.length })
+      await getState().syncPackStateAfterLocalChange()
+      const installedCount = getState().downloadedPacks.length
+      lap('sync pack state after uninstall', { installedCount })
       set((current) => ({
-        downloadedPacks,
         availablePackUpdates: current.availablePackUpdates.filter((update) => update.packId !== unitId),
       }))
-      await getState().refreshMyUnits()
-      lap('refresh my units')
-
-      // 卸载包后，重置今日任务计划，下次进入时重新从本地 SQLite 构建
-      useDailyPracticeStore.getState().reset()
 
       set((s) => ({
         downloadTasks: s.downloadTasks.map((task) =>
@@ -547,9 +545,8 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
 
   async uninstallUnitPack(unitId) {
     await learningPackService.uninstall(unitId)
-    const downloadedPacks = await learningPackService.listInstalled()
+    await getState().syncPackStateAfterLocalChange()
     set((state) => ({
-      downloadedPacks,
       availablePackUpdates: state.availablePackUpdates.filter((update) => update.packId !== unitId),
     }))
   },
@@ -621,8 +618,8 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     for (const pack of packs) {
       await learningPackService.uninstall(pack.packId)
     }
+    await getState().syncPackStateAfterLocalChange()
     set({
-      downloadedPacks: [],
       availablePackUpdates: [],
       downloadTasks: [],
       packInstallingIds: [],
@@ -726,13 +723,11 @@ async function processDownloadQueue() {
       title: next.title,
     }))
 
-    const downloadedPacks = await learningPackService.listInstalled()
     const updates = useLearningStore.getState().availablePackUpdates
+    await useLearningStore.getState().syncPackStateAfterLocalChange()
     useLearningStore.setState({
-      downloadedPacks,
       availablePackUpdates: updates.filter((u) => u.packId !== next.packId),
     })
-    await useLearningStore.getState().refreshMyUnits()
 
     setTimeout(() => {
       useLearningStore.setState((s) => ({

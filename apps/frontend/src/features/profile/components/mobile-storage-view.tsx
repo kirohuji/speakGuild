@@ -80,7 +80,7 @@ export function MobileStorageView() {
     setLocalSttModelVariant,
     setLocalSttFallbackToCloud,
   } = usePreferencesStore()
-  const fetchDownloadedPacks = useLearningStore((s) => s.fetchDownloadedPacks)
+  const syncPackStateAfterLocalChange = useLearningStore((s) => s.syncPackStateAfterLocalChange)
 
   const refresh = useCallback(() => {
     setLoading(true)
@@ -137,7 +137,9 @@ export function MobileStorageView() {
     setClearing(category)
     try {
       await offlineStorageService.clearCategory(category)
-      if (category === 'packs' || category === 'all') await fetchDownloadedPacks()
+      if (category === 'packs' || category === 'all') {
+        await syncPackStateAfterLocalChange()
+      }
       toast.success(category === 'all' ? t('profile.cacheAllCleared', { defaultValue: '缓存已全部清除' }) : t('profile.cacheCleared', { defaultValue: '缓存已清除' }))
       refresh()
     } catch (error: any) {
@@ -145,13 +147,13 @@ export function MobileStorageView() {
     } finally {
       setClearing(null)
     }
-  }, [fetchDownloadedPacks, refresh, t])
+  }, [refresh, syncPackStateAfterLocalChange, t])
 
   const handleClearPack = useCallback(async (packId: string) => {
     setDeletingPackId(packId)
     try {
       await offlineStorageService.clearPack(packId)
-      await fetchDownloadedPacks()
+      await syncPackStateAfterLocalChange()
       toast.success(t('profile.cacheCleared', { defaultValue: '缓存已清除' }))
       refresh()
     } catch (error: any) {
@@ -159,7 +161,7 @@ export function MobileStorageView() {
     } finally {
       setDeletingPackId(null)
     }
-  }, [fetchDownloadedPacks, refresh, t])
+  }, [refresh, syncPackStateAfterLocalChange, t])
 
   const handleDownloadModel = useCallback(async () => {
     setModelDownload({ active: true, percent: 0 })

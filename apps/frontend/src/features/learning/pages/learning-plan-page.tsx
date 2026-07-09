@@ -97,7 +97,8 @@ export function LearningPlanPage() {
             </button>
             <button type="button" onClick={(e) => { e.currentTarget.blur(); setShopOpen(true); refreshShop(); fetchTags() }}
               className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground lg:hidden"
-              aria-label={t('member.title')}>
+              aria-label={t('member.title')}
+              data-spotlight="open-shop">
               <ShoppingBag className="size-[18px]" />
             </button>
           </div>

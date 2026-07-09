@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { BookOpen, CheckCircle2, ChevronRight, Download, Loader2, RotateCcw, X } from 'lucide-react'
+import { AlertCircle, BookOpen, CheckCircle2, ChevronRight, Download, Loader2, RotateCcw, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -146,6 +146,7 @@ function InProgressUnitCard({
   const completedPracticeCount = unit.progress?.completedPracticeCount ?? 0
   const totalPracticeCount = unit.progress?.totalPracticeCount ?? unit.topicCount ?? 0
   const downloadTask = useLearningStore((state) => state.downloadTasks.find((task) => task.packId === unit.id))
+  const isTaskError = downloadTask?.status === 'error'
   const isTaskActive = !!downloadTask && downloadTask.status !== 'done' && downloadTask.status !== 'error'
   const isPaused = downloadTask?.status === 'paused'
   const isUninstalling = downloadTask?.kind === 'uninstall' && isTaskActive
@@ -153,6 +154,7 @@ function InProgressUnitCard({
   const resumePackTask = useLearningStore((state) => state.resumePackTask)
   const showPackAction = isTaskActive || needsDownload || hasPackUpdate
   const packActionText = (() => {
+    if (isTaskError) return downloadTask?.error || t('learning.downloadFailedRetry')
     if (isPaused) return downloadTask?.kind === 'uninstall' ? t('learning.packUninstallPaused') : t('learning.packDownloadPaused')
     if (isTaskActive) {
       if (downloadTask?.kind === 'uninstall') return downloadTask.stepLabel ?? t('learning.packTaskUninstalling')
@@ -195,7 +197,7 @@ function InProgressUnitCard({
   }, [downloadTask, resumePackTask, t, unit.id])
 
   return (
-    <div className={cn('overflow-hidden rounded-lg bg-muted/30 transition-opacity', isPackBusy && 'opacity-55')}>
+    <div className="overflow-hidden rounded-lg bg-muted/30">
       <div className="p-3.5">
         <Link
           to={`/learning/units/${unit.id}`}
@@ -204,8 +206,8 @@ function InProgressUnitCard({
             if (needsDownload || isPackBusy) event.preventDefault()
           }}
           className={cn(
-            'flex gap-3',
-            (needsDownload || isPackBusy) && 'cursor-default',
+            'flex gap-3 transition-opacity',
+            (needsDownload || isPackBusy) && 'cursor-default opacity-55',
           )}
         >
           <div className="relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
@@ -242,21 +244,37 @@ function InProgressUnitCard({
         </Link>
 
         {showPackAction && (
-          <div className="mt-3 flex items-center justify-between gap-3 rounded-md border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2">
-            <p className="min-w-0 flex-1 truncate text-xs text-amber-700 dark:text-amber-300">{packActionText}</p>
+          <div className={cn(
+            'mt-3 flex items-center justify-between gap-3 rounded-md border px-3 py-2',
+            isTaskError
+              ? 'border-destructive/25 bg-destructive/[0.06]'
+              : 'border-amber-500/20 bg-amber-500/[0.06]',
+          )}>
+            <p className={cn(
+              'min-w-0 flex-1 truncate text-xs',
+              isTaskError ? 'text-destructive' : 'text-amber-700 dark:text-amber-300',
+            )}>{packActionText}</p>
             <Button
               type="button"
               variant="ghost"
               disabled={isPackBusy || (!isPaused && !onDownloadPack)}
               onClick={isPaused ? handleResumePackTask : handleDownloadPack}
               className={cn(
-                'h-8 shrink-0 rounded-full px-2 text-amber-700 hover:bg-amber-500/10 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200',
-                isPackBusy || isPaused ? 'min-w-14 gap-1.5' : 'w-8 px-0',
+                'h-8 shrink-0 rounded-full px-2',
+                isTaskError
+                  ? 'text-destructive hover:bg-destructive/10 hover:text-destructive'
+                  : 'text-amber-700 hover:bg-amber-500/10 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200',
+                isPackBusy || isPaused || isTaskError ? 'min-w-14 gap-1.5' : 'w-8 px-0',
               )}
-              aria-label={isPaused ? packActionText : isPackBusy ? t('learning.packDownloading') : t('learning.downloadPack')}
-              title={isPaused ? packActionText : isPackBusy ? t('learning.packDownloading') : t('learning.downloadPack')}
+              aria-label={isTaskError ? t('learning.downloadFailedRetry') : isPaused ? packActionText : isPackBusy ? t('learning.packDownloading') : t('learning.downloadPack')}
+              title={isTaskError ? t('learning.downloadFailedRetry') : isPaused ? packActionText : isPackBusy ? t('learning.packDownloading') : t('learning.downloadPack')}
             >
-              {isPaused ? (
+              {isTaskError ? (
+                <>
+                  <AlertCircle className="size-4" />
+                  <span className="text-[11px] font-semibold">{t('common.retry', { defaultValue: '重试' })}</span>
+                </>
+              ) : isPaused ? (
                 <span className="text-[11px] font-semibold">{t('common.continue')}</span>
               ) : isPackBusy ? (
                 <>

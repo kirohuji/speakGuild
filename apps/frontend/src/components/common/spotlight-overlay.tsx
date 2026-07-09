@@ -80,10 +80,12 @@ export function SpotlightOverlay({
   const [tooltipStyle, setTooltipStyle] = useState<Record<string, string | number>>({})
   const rafRef = useRef<number>(0)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const [targetMissing, setTargetMissing] = useState(false)
 
   // 步骤切换时重置 targetRect，避免旧步骤的高亮位置残留
   useEffect(() => {
     setTargetRect(null)
+    setTargetMissing(false)
   }, [step.id])
 
   // 实时追踪目标元素位置
@@ -104,6 +106,7 @@ export function SpotlightOverlay({
     const tryFind = () => {
       const el = document.querySelector(step.targetSelector)
       if (el) {
+        setTargetMissing(false)
         // 首次找到时，若元素不在可视区域内则滚动到视口中央
         if (el !== foundEl) {
           foundEl = el
@@ -126,6 +129,7 @@ export function SpotlightOverlay({
         rafRef.current = requestAnimationFrame(tryFind)
       } else {
         console.warn('[Spotlight] timed out looking for:', step.targetSelector)
+        setTargetMissing(true)
       }
     }
     // 稍微延迟一下等 DOM 渲染
@@ -161,8 +165,71 @@ export function SpotlightOverlay({
     return () => document.removeEventListener('click', handler, true)
   }, [step.targetSelector, step.clickToAdvance, onNext])
 
-  // 没有找到目标时不渲染
+  // 目标不存在时给用户一个出口，避免引导状态卡住但页面没有任何提示。
   if (!targetRect) {
+    if (targetMissing) {
+      return (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 px-6">
+          <div className="w-full max-w-[280px] rounded-2xl bg-card p-4 text-card-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.06)] dark:shadow-none dark:ring-1 dark:ring-white/[0.07]">
+            <div className="mb-3 flex items-center justify-end">
+              <div className="flex gap-1.5">
+                {Array.from({ length: totalSteps }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1 rounded-full transition-all duration-300 ${
+                      i === stepIndex
+                        ? 'w-7 bg-primary'
+                        : i < stepIndex
+                          ? 'w-1.5 bg-primary/40'
+                          : 'w-1.5 bg-border'
+                    }`}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={() => setShowExitConfirm(true)}
+                className="ml-auto flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+            {isTestMode && (
+              <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600">
+                <FlaskConical className="size-3" /> 测试模式
+              </div>
+            )}
+            <h3 className="text-[15px] font-semibold leading-snug text-foreground">
+              {step.title}
+            </h3>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
+              这个入口暂时不可见，可能是数据还没准备好或当前账号状态不同。可以先跳过这一步继续。
+            </p>
+            <div className="mt-4 flex justify-end">
+              <Button size="sm" onClick={() => onNext(false)}>
+                {stepIndex >= totalSteps - 1 ? '完成' : '跳过这一步'}
+                {stepIndex < totalSteps - 1 && <ChevronRight className="ml-1 size-3.5" />}
+              </Button>
+            </div>
+
+            <Dialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+              <DialogContent
+                className="max-w-sm rounded-2xl w-[90vw] !z-[10000]"
+                overlayClassName="!z-[10000]"
+              >
+                <DialogHeader>
+                  <DialogTitle>退出新手引导？</DialogTitle>
+                  <DialogDescription>你可以之后在设置中重新开启引导。</DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="!flex-row justify-center gap-2">
+                  <Button variant="outline" onClick={() => setShowExitConfirm(false)}>继续引导</Button>
+                  <Button onClick={() => { setShowExitConfirm(false); onSkip() }}>退出</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      )
+    }
     return null
   }
 
@@ -280,6 +347,14 @@ export function SpotlightOverlay({
             <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
               {step.description}
             </p>
+            {!step.clickToAdvance && (
+              <div className="mt-4 flex justify-end">
+                <Button size="sm" onClick={() => onNext(false)}>
+                  {stepIndex >= totalSteps - 1 ? '完成' : '知道了'}
+                  {stepIndex < totalSteps - 1 && <ChevronRight className="ml-1 size-3.5" />}
+                </Button>
+              </div>
+            )}
           </div>
         </motion.div>
       </AnimatePresence>

@@ -667,7 +667,7 @@ export function TodayTaskPage() {
   // ── 加载态：仅在无缓存数据时展示 ──
   if (loading && !plan) {
     return (
-      <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
+      <div className="mx-auto max-w-2xl px-4 pb-24 pt-4" data-spotlight="today-overview">
         <div className="rounded-lg bg-muted/30 px-5 py-6">
           <div className="flex items-center gap-3">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -690,7 +690,7 @@ export function TodayTaskPage() {
   // ── 空态 ──
   if (error || (!loading && !plan)) {
     return (
-      <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
+      <div className="mx-auto max-w-2xl px-4 pb-24 pt-4" data-spotlight="today-overview">
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Target className="size-12 text-muted-foreground/40" />
           <p className="mt-4 text-muted-foreground">
@@ -715,7 +715,7 @@ export function TodayTaskPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
+    <div className="mx-auto max-w-2xl px-4 pb-24 pt-4" data-spotlight="today-overview">
       {/* ── Header ── */}
       <div className="mb-3 flex items-center justify-between">
         <div className="min-w-0 flex-1">

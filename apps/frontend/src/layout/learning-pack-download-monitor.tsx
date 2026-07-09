@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, ChevronDown, DownloadCloud, Loader2, PackageOpen, Trash2 } from 'lucide-react'
+import { AlertCircle, ChevronDown, DownloadCloud, Loader2, PackageOpen, RotateCcw, Trash2 } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -100,6 +100,7 @@ export function LearningPackDownloadDrawer({
   const { t } = useTranslation()
   const downloadTasks = useLearningStore((state) => state.downloadTasks)
   const resumePackTask = useLearningStore((state) => state.resumePackTask)
+  const downloadUnitPack = useLearningStore((state) => state.downloadUnitPack)
   const tasks = useMemo(() => activeTasks(downloadTasks), [downloadTasks])
   const runningCount = tasks.filter(isRunning).length
   const percent = aggregatePercent(tasks)
@@ -163,9 +164,22 @@ export function LearningPackDownloadDrawer({
 
                   <div className="border-t border-border/40 px-3.5 py-3 text-xs">
                     {task.status === 'error' ? (
-                      <p className="rounded-md bg-destructive/10 px-2 py-1.5 text-destructive">
-                        {task.error ?? (task.kind === 'uninstall' ? t('learning.packTaskUninstallFailedRetry') : t('learning.packTaskDownloadFailedRetry'))}
-                      </p>
+                      <div className="flex items-center gap-2 rounded-md bg-destructive/10 px-2 py-1.5 text-destructive">
+                        <p className="min-w-0 flex-1 truncate">
+                          {task.error ?? (task.kind === 'uninstall' ? t('learning.packTaskUninstallFailedRetry') : t('learning.packTaskDownloadFailedRetry'))}
+                        </p>
+                        {task.kind !== 'uninstall' && (
+                          <button
+                            type="button"
+                            className="flex size-7 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-destructive/10 active:bg-destructive/15"
+                            onClick={() => void downloadUnitPack(task.packId)}
+                            aria-label={t('learning.downloadFailedRetry')}
+                            title={t('learning.downloadFailedRetry')}
+                          >
+                            <RotateCcw className="size-3.5" />
+                          </button>
+                        )}
+                      </div>
                     ) : (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between gap-3 text-muted-foreground">

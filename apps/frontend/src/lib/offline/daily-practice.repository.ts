@@ -293,9 +293,10 @@ function nextProgress(progress: DailyPracticeProgress, score: WarmupScore, date:
 function buildCandidates(unit: UnitDetail): DailyPracticeCandidate[] {
   const candidates: DailyPracticeCandidate[] = []
   for (const topic of unit.trainingTopics ?? []) {
-    const pipeline = topic.metadata?.outputTraining?.enabled
-      ? (topic.metadata.outputTraining.pipeline ?? [])
-      : []
+    const outputTraining = topic.metadata?.outputTraining
+    const pipeline = outputTraining?.enabled === false
+      ? []
+      : (outputTraining?.pipeline ?? [])
     for (const item of pipeline) {
       const type = item.type
       const push = (prompt: any, promptIndex: number, extra: Partial<DailyPracticeCandidate> & { pattern?: any } = {}) => {
@@ -350,26 +351,35 @@ function buildCandidates(unit: UnitDetail): DailyPracticeCandidate[] {
 async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: string | null): Promise<UnitDetail[]> {
   // 获取当前用户已加入的学习包列表（my_learning_units 是用户级表，退出登录时会被清空）
   const cachedMyUnits = await learningRepository.getCachedMyUnits().catch(() => [])
-  const myUnits = cachedMyUnits.length > 0
+  let myUnits = cachedMyUnits.length > 0
     ? cachedMyUnits
     : await learningRepository.getMyUnits().catch(() => [])
-  const enrolledIds = new Set(myUnits.map((u) => u.id))
-
-  if (targetPackId) {
-    // 即使通过 URL 指定了 packId，也必须检查当前用户是否已加入该学习包
-    if (!enrolledIds.has(targetPackId)) return []
-    const detail = await learningRepository.getCachedUnitDetail(targetPackId)
-    return detail ? [detail] : []
-  }
-
-  if (enrolledIds.size === 0) return []
-
   const packs = await learningPackService.listInstalled().catch(() => [])
   const installedIds = new Set(
     packs.filter((pack) => pack.status === 'installed').map((pack) => pack.packId),
   )
 
-  // 只选择同时满足"已安装"+"用户已加入"的学习包
+  const hasInstalledEnrolledPack = () => myUnits.some((unit) => installedIds.has(unit.id))
+  const shouldRefreshEnrollment = targetPackId
+    ? installedIds.has(targetPackId) && !myUnits.some((unit) => unit.id === targetPackId)
+    : installedIds.size > 0 && !hasInstalledEnrolledPack()
+
+  if (shouldRefreshEnrollment) {
+    myUnits = await learningRepository.refreshMyUnits().catch(() => myUnits)
+  }
+
+  const enrolledIds = new Set(myUnits.map((u) => u.id))
+
+  if (targetPackId) {
+    // 即使通过 URL 指定了 packId，也必须检查当前用户是否已加入并安装了该学习包。
+    if (!enrolledIds.has(targetPackId) || !installedIds.has(targetPackId)) return []
+    const detail = await learningRepository.getCachedUnitDetail(targetPackId)
+    return detail ? [detail] : []
+  }
+
+  if (enrolledIds.size === 0 || installedIds.size === 0) return []
+
+  // 只选择同时满足"已安装"+"用户已加入"的学习包。
   const candidateIds = [...enrolledIds].filter((id) => installedIds.has(id))
   const unitIds = scope === 'mixed'
     ? candidateIds
