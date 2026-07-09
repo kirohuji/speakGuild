@@ -759,6 +759,7 @@ export function TodayTaskPage() {
         </button>
         <button
           type="button"
+          data-spotlight="today-practice-button"
           onClick={() => switchPlanMode('practice')}
           className={cn(
             'rounded-lg border px-3 py-2.5 text-left transition-colors active:scale-[0.98]',

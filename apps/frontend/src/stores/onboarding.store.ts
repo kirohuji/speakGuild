@@ -53,7 +53,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: 'today-overview',
     route: '/today',
-    targetSelector: '[data-spotlight="today-overview"]',
+    targetSelector: '[data-spotlight="today-practice-button"]',
     title: '每天从这里练',
     description: '今日任务会根据你的学习包安排输出练习和复练。看到任务后，按自己的节奏开始就好。',
     clickToAdvance: false,
