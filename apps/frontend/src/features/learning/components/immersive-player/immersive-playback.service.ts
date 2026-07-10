@@ -12,6 +12,11 @@ let configured = false
 let htmlAudio: HTMLAudioElement | null = null
 let currentNativeAssetId: string | null = null
 
+type MediaMetadataLabels = {
+  artist?: string
+  album?: string
+}
+
 function normalizeUrl(url: string) {
   return url.startsWith('//') ? `https:${url}` : url
 }
@@ -56,11 +61,11 @@ async function configureNativeAudio() {
 }
 
 export const immersivePlaybackService = {
-  async setMediaMetadata(segment: PlaybackSegment, playbackRate: number, state: 'none' | 'paused' | 'playing') {
+  async setMediaMetadata(segment: PlaybackSegment, playbackRate: number, state: 'none' | 'paused' | 'playing', labels?: MediaMetadataLabels) {
     await MediaSession.setMetadata({
       title: segment.title,
-      artist: segment.subtitle || '漫语町',
-      album: '学习库沉浸式播放',
+      artist: segment.subtitle || labels?.artist || 'ManYu',
+      album: labels?.album || 'Immersive Library Playback',
     }).catch(() => undefined)
     await MediaSession.setPlaybackState({ playbackState: state }).catch(() => undefined)
     await MediaSession.setPositionState({ playbackRate }).catch(() => undefined)
@@ -73,12 +78,12 @@ export const immersivePlaybackService = {
     ))
   },
 
-  async playSegment(segment: PlaybackSegment, playbackRate: number, onNativeState?: (event: PlaybackStateEvent) => void, onStarted?: () => void): Promise<void> {
+  async playSegment(segment: PlaybackSegment, playbackRate: number, onNativeState?: (event: PlaybackStateEvent) => void, onStarted?: () => void, labels?: MediaMetadataLabels): Promise<void> {
     const audioUrl = await resolveAudioUrl(segment)
     if (!audioUrl) throw new Error('No audio URL available')
 
     await this.stopCurrent()
-    await this.setMediaMetadata(segment, playbackRate, 'playing')
+    await this.setMediaMetadata(segment, playbackRate, 'playing', labels)
 
     if (isNative()) {
       await configureNativeAudio()
@@ -99,8 +104,8 @@ export const immersivePlaybackService = {
         isUrl: true,
         notificationMetadata: {
           title: segment.title,
-          artist: segment.subtitle || '漫语町',
-          album: '学习库沉浸式播放',
+          artist: segment.subtitle || labels?.artist || 'ManYu',
+          album: labels?.album || 'Immersive Library Playback',
         },
       })
       await NativeAudio.setRate({ assetId, rate: playbackRate }).catch(() => undefined)

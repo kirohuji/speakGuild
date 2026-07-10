@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type React from 'react'
 import {
   BookOpen,
@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
@@ -41,17 +42,23 @@ type ImmersivePlayerDialogProps = {
 }
 
 const TYPE_META = {
-  word: { label: '单词', Icon: BookOpen, tone: 'bg-sky-500/10 text-sky-600 dark:text-sky-300' },
-  chunk: { label: '句块', Icon: Layers, tone: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300' },
-  pattern: { label: '句型', Icon: Sparkles, tone: 'bg-violet-500/10 text-violet-600 dark:text-violet-300' },
-} satisfies Record<ImmersivePlayerItem['kind'], { label: string; Icon: typeof BookOpen; tone: string }>
+  word: { Icon: BookOpen, tone: 'bg-sky-500/10 text-sky-600 dark:text-sky-300' },
+  chunk: { Icon: Layers, tone: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300' },
+  pattern: { Icon: Sparkles, tone: 'bg-violet-500/10 text-violet-600 dark:text-violet-300' },
+} satisfies Record<ImmersivePlayerItem['kind'], { Icon: typeof BookOpen; tone: string }>
 
-const SEGMENT_LABEL: Record<PlaybackSegmentRole, string> = {
-  main: '原文',
-  meaning: '释义',
-  example: '例句',
-  exampleTranslation: '例句译文',
-}
+const KIND_LABEL_KEY = {
+  word: 'immersivePlayer.kind.word',
+  chunk: 'immersivePlayer.kind.chunk',
+  pattern: 'immersivePlayer.kind.pattern',
+} satisfies Record<ImmersivePlayerItem['kind'], string>
+
+const SEGMENT_LABEL_KEY = {
+  main: 'immersivePlayer.segment.main',
+  meaning: 'immersivePlayer.segment.meaning',
+  example: 'immersivePlayer.segment.example',
+  exampleTranslation: 'immersivePlayer.segment.exampleTranslation',
+} satisfies Record<PlaybackSegmentRole, string>
 
 export function ImmersivePlayerDialog({
   open,
@@ -60,6 +67,7 @@ export function ImmersivePlayerDialog({
   index,
   onIndexChange,
 }: ImmersivePlayerDialogProps) {
+  const { t } = useTranslation()
   const settings = useImmersivePlayerPreferences((s) => s.settings)
   const updateSettings = useImmersivePlayerPreferences((s) => s.updateSettings)
   const current = items[index] ?? null
@@ -69,6 +77,10 @@ export function ImmersivePlayerDialog({
   const [segmentRole, setSegmentRole] = useState<PlaybackSegmentRole | null>(null)
   const runRef = useRef(0)
   const sleepTimerRef = useRef<number | null>(null)
+  const mediaMetadataLabels = useMemo(() => ({
+    artist: t('app.name'),
+    album: t('immersivePlayer.mediaAlbum'),
+  }), [t])
 
   const hasPrev = index > 0
   const hasNext = index < items.length - 1
@@ -98,7 +110,7 @@ export function ImmersivePlayerDialog({
     const segments = buildPlaybackSegments(current, settings)
     if (segments.length === 0) {
       setStatus('idle')
-      toast.warning('当前内容没有可播放的片段')
+      toast.warning(t('immersivePlayer.noPlayableSegments'))
       return
     }
 
@@ -115,6 +127,7 @@ export function ImmersivePlayerDialog({
             if (event.reason === 'remotePause') setStatus('paused')
           },
           () => setStatus('playing'),
+          mediaMetadataLabels,
         )
         if (runRef.current !== runId) return
         setStatus('playing')
@@ -131,10 +144,10 @@ export function ImmersivePlayerDialog({
       console.warn('[immersive-player] playback failed', error)
       if (runRef.current === runId) {
         setStatus('error')
-        toast.error('播放失败，已跳过当前片段')
+        toast.error(t('immersivePlayer.playFailed'))
       }
     }
-  }, [current, gotoNext, hasNext, settings])
+  }, [current, gotoNext, hasNext, mediaMetadataLabels, settings, t])
 
   const togglePlay = useCallback(async () => {
     if (status === 'playing') {
@@ -206,7 +219,7 @@ export function ImmersivePlayerDialog({
           className="left-0 top-0 !z-[10000] flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0 pt-safe md:left-[50%] md:top-[50%] md:h-[88vh] md:max-w-3xl md:translate-x-[-50%] md:translate-y-[-50%] md:rounded-2xl md:pt-0 [&>button]:hidden"
         >
           <DialogTitle className="sr-only">{current.title}</DialogTitle>
-          <DialogDescription className="sr-only">{current.meaning || current.sceneName || '沉浸式学习播放器'}</DialogDescription>
+          <DialogDescription className="sr-only">{current.meaning || current.sceneName || t('immersivePlayer.description')}</DialogDescription>
 
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-9 md:px-6">
@@ -217,8 +230,8 @@ export function ImmersivePlayerDialog({
                 <div className="min-w-0 space-y-2">
                   <div className="flex min-w-0 items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2">
-                      <Badge variant="secondary" className="shrink-0">{meta.label}</Badge>
-                      {segmentRole && <Badge variant="outline" className="shrink-0 text-[10px]">{SEGMENT_LABEL[segmentRole]}</Badge>}
+                      <Badge variant="secondary" className="shrink-0">{t(KIND_LABEL_KEY[current.kind])}</Badge>
+                      {segmentRole && <Badge variant="outline" className="shrink-0 text-[10px]">{t(SEGMENT_LABEL_KEY[segmentRole])}</Badge>}
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
                       {settings.sleepTimerMinutes > 0 && (
@@ -230,7 +243,7 @@ export function ImmersivePlayerDialog({
                         type="button"
                         onClick={() => setSettingsOpen(true)}
                         className="flex size-8 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                        aria-label="播放设置"
+                        aria-label={t('immersivePlayer.settingsTitle')}
                       >
                         <Settings2 className="size-4" />
                       </button>
@@ -238,7 +251,7 @@ export function ImmersivePlayerDialog({
                         type="button"
                         onClick={() => onOpenChange(false)}
                         className="flex size-8 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                        aria-label="关闭"
+                        aria-label={t('immersivePlayer.close')}
                       >
                         <ChevronDown className="size-4" />
                       </button>
@@ -249,7 +262,7 @@ export function ImmersivePlayerDialog({
                       'line-clamp-2 break-words font-bold leading-tight text-foreground',
                       settings.textVisible ? 'text-2xl md:text-3xl' : 'text-lg text-muted-foreground',
                     )}>
-                      {settings.textVisible ? current.title : '文案已隐藏'}
+                      {settings.textVisible ? current.title : t('immersivePlayer.hidden')}
                     </h2>
                     {settings.textVisible && (
                       <p className="mt-1 line-clamp-1 break-words text-sm leading-relaxed text-muted-foreground">
@@ -281,7 +294,7 @@ export function ImmersivePlayerDialog({
                 {!hiddenText && current.exampleEn && (
                   <section className="rounded-lg bg-muted/45 px-4 py-4">
                     <div className="mb-2 flex items-center gap-2 text-[11px] font-medium text-muted-foreground">
-                      <MessageSquareText className="size-3.5" /> 例句
+                      <MessageSquareText className="size-3.5" /> {t('immersivePlayer.segment.example')}
                     </div>
                     <p className="text-base font-medium leading-7 text-foreground">{current.exampleEn}</p>
                     {!hiddenText && current.exampleZh && (
@@ -297,7 +310,7 @@ export function ImmersivePlayerDialog({
                 variant="ghost"
                 size="icon"
                 onClick={() => updateSettings({ textVisible: !settings.textVisible })}
-                aria-label={settings.textVisible ? '隐藏文案' : '显示文案'}
+                aria-label={settings.textVisible ? t('immersivePlayer.hideText') : t('immersivePlayer.showText')}
                 className="size-11 rounded-full justify-self-start"
               >
                 {settings.textVisible ? <Eye className="size-5" /> : <EyeOff className="size-5" />}
@@ -321,7 +334,7 @@ export function ImmersivePlayerDialog({
                 </Button>
               </div>
 
-              <Button variant="ghost" size="icon" onClick={() => setQueueOpen(true)} aria-label="播放队列" className="size-11 rounded-full justify-self-end">
+              <Button variant="ghost" size="icon" onClick={() => setQueueOpen(true)} aria-label={t('immersivePlayer.queueTitle')} className="size-11 rounded-full justify-self-end">
                 <ListMusic className="size-5" />
               </Button>
             </div>
@@ -355,44 +368,46 @@ function ImmersiveSettingsDrawer({
   settings: ImmersivePlaybackSettings
   onChange: (settings: Partial<ImmersivePlaybackSettings>) => void
 }) {
+  const { t } = useTranslation()
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[88dvh] rounded-t-2xl pt-safe !z-[10001]" overlayClassName="!z-[10001]">
         <div className="flex items-center justify-between px-5 py-3">
-          <DrawerTitle className="text-base">播放设置</DrawerTitle>
-          <button type="button" onClick={() => onOpenChange(false)} className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <DrawerTitle className="text-base">{t('immersivePlayer.settingsTitle')}</DrawerTitle>
+          <button type="button" onClick={() => onOpenChange(false)} aria-label={t('immersivePlayer.close')} className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <X className="size-4" />
           </button>
         </div>
         <ScrollArea className="min-h-0 flex-1 px-5 pb-8">
           <div className="space-y-5 py-2">
-            <OptionGroup label="定时关闭">
+            <OptionGroup label={t('immersivePlayer.settings.sleepTimer')}>
               <SegmentedOptions
                 value={settings.sleepTimerMinutes}
-                options={[0, 15, 30, 60].map((value) => ({ value, label: value === 0 ? '关闭' : `${value}m` }))}
+                options={[0, 15, 30, 60].map((value) => ({ value, label: value === 0 ? t('immersivePlayer.settings.off') : t('immersivePlayer.settings.minutes', { count: value }) }))}
                 onChange={(value) => onChange({ sleepTimerMinutes: value as ImmersivePlaybackSettings['sleepTimerMinutes'] })}
               />
             </OptionGroup>
-            <OptionGroup label="单条播放次数">
+            <OptionGroup label={t('immersivePlayer.settings.repeatPerItem')}>
               <SegmentedOptions
                 value={settings.repeatPerItem}
-                options={[1, 2, 3, 5].map((value) => ({ value, label: `${value}次` }))}
+                options={[1, 2, 3, 5].map((value) => ({ value, label: t('immersivePlayer.settings.times', { count: value }) }))}
                 onChange={(value) => onChange({ repeatPerItem: value as ImmersivePlaybackSettings['repeatPerItem'] })}
               />
             </OptionGroup>
-            <OptionGroup label="播放倍速">
+            <OptionGroup label={t('immersivePlayer.settings.playbackRate')}>
               <SegmentedOptions
                 value={settings.playbackRate}
-                options={[0.75, 1, 1.25, 1.5].map((value) => ({ value, label: `${value}x` }))}
+                options={[0.75, 1, 1.25, 1.5].map((value) => ({ value, label: t('immersivePlayer.settings.speed', { value }) }))}
                 onChange={(value) => onChange({ playbackRate: value as ImmersivePlaybackSettings['playbackRate'] })}
               />
             </OptionGroup>
-            <SwitchRow label="播放原文" checked={settings.playMainText} onChange={(value) => onChange({ playMainText: value })} />
-            <SwitchRow label="播放译文" checked={settings.playMeaning} onChange={(value) => onChange({ playMeaning: value })} />
-            <SwitchRow label="播放例句" checked={settings.playExample} onChange={(value) => onChange({ playExample: value })} />
-            <SwitchRow label="播放例句译文" checked={settings.playExampleTranslation} onChange={(value) => onChange({ playExampleTranslation: value })} />
-            <SwitchRow label="自动下一条" checked={settings.autoNext} onChange={(value) => onChange({ autoNext: value })} />
-            <SwitchRow label="循环队列" checked={settings.loopQueue} onChange={(value) => onChange({ loopQueue: value })} />
+            <SwitchRow label={t('immersivePlayer.settings.playMainText')} checked={settings.playMainText} onChange={(value) => onChange({ playMainText: value })} />
+            <SwitchRow label={t('immersivePlayer.settings.playMeaning')} checked={settings.playMeaning} onChange={(value) => onChange({ playMeaning: value })} />
+            <SwitchRow label={t('immersivePlayer.settings.playExample')} checked={settings.playExample} onChange={(value) => onChange({ playExample: value })} />
+            <SwitchRow label={t('immersivePlayer.settings.playExampleTranslation')} checked={settings.playExampleTranslation} onChange={(value) => onChange({ playExampleTranslation: value })} />
+            <SwitchRow label={t('immersivePlayer.settings.autoNext')} checked={settings.autoNext} onChange={(value) => onChange({ autoNext: value })} />
+            <SwitchRow label={t('immersivePlayer.settings.loopQueue')} checked={settings.loopQueue} onChange={(value) => onChange({ loopQueue: value })} />
           </div>
         </ScrollArea>
       </DrawerContent>
@@ -413,12 +428,14 @@ function ImmersiveQueueDrawer({
   index: number
   onSelect: (index: number) => void
 }) {
+  const { t } = useTranslation()
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]">
         <div className="flex items-center justify-between px-5 py-3">
-          <DrawerTitle className="text-lg">播放队列</DrawerTitle>
-          <button type="button" onClick={() => onOpenChange(false)} className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <DrawerTitle className="text-lg">{t('immersivePlayer.queueTitle')}</DrawerTitle>
+          <button type="button" onClick={() => onOpenChange(false)} aria-label={t('immersivePlayer.close')} className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <ChevronDown className="size-5" />
           </button>
         </div>
@@ -438,9 +455,9 @@ function ImmersiveQueueDrawer({
                   <Icon className="size-4 shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{item.title}</p>
-                    <p className="truncate text-xs text-muted-foreground">{item.meaning || item.sceneName || meta.label}</p>
+                    <p className="truncate text-xs text-muted-foreground">{item.meaning || item.sceneName || t(KIND_LABEL_KEY[item.kind])}</p>
                   </div>
-                  {active && <Badge variant="default" className="px-1.5 py-0 text-[10px]">当前</Badge>}
+                  {active && <Badge variant="default" className="px-1.5 py-0 text-[10px]">{t('immersivePlayer.current')}</Badge>}
                 </button>
               )
             })}
