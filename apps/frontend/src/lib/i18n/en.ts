@@ -697,6 +697,7 @@ const en = {
     practiceVn: {
       teaching: 'Teaching',
       teachingDesc: 'Review the scenario notes and speaking strategies for this topic.',
+      loadingTeaching: 'Loading teaching notes...',
       noTeaching: 'No teaching document has been configured for this topic yet.',
       hint: 'Hint',
       objective: 'Objective',

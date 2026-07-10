@@ -699,6 +699,7 @@ const zhCN = {
     practiceVn: {
       teaching: '教学',
       teachingDesc: '查看这个话题的场景说明和表达策略。',
+      loadingTeaching: '正在加载教学内容...',
       noTeaching: '这个话题暂时还没有配置教学文档。',
       hint: '提示',
       objective: '目标',

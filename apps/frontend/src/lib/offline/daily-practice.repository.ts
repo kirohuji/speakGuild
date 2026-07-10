@@ -62,6 +62,9 @@ export interface TopicDailyPracticeStats {
   packId: string
   packTitle: string
   activeChunksCount: number
+  vocabCount: number
+  chunkCount: number
+  patternCount: number
   suggestedDurationSec: number
   difficulty: string
   totalCount: number
@@ -427,6 +430,9 @@ function buildTopicStats(
       packId: unit.id,
       packTitle: unit.title,
       activeChunksCount: topic.activeChunks?.length ?? 0,
+      vocabCount: topic.vocabularies?.length ?? 0,
+      chunkCount: topic.activeChunks?.length ?? 0,
+      patternCount: topic.sentencePatterns?.length ?? 0,
       suggestedDurationSec: topic.suggestedDurationSec,
       difficulty: topic.difficulty,
       totalCount: total,

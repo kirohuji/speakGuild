@@ -697,6 +697,7 @@ const ja = {
     practiceVn: {
       teaching: '学習ポイント',
       teachingDesc: 'このトピックの場面説明と表現のコツを確認します。',
+      loadingTeaching: '学習内容を読み込んでいます...',
       noTeaching: 'このトピックにはまだ学習ドキュメントが設定されていません。',
       hint: 'ヒント',
       objective: '目標',
