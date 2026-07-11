@@ -30,8 +30,8 @@ services:
       PORT: 3001
       DATABASE_URL: postgresql://${POSTGRES_USER:-manyu}:${POSTGRES_PASSWORD:-manyu}@db:5432/${POSTGRES_DB:-manyu}
       REDIS_URL: ${REDIS_URL:-redis://127.0.0.1:6379}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost,capacitor://localhost,ionic://localhost}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3001}
+      FRONTEND_URL: ${FRONTEND_URL:-https://hope.lourd.top:3605,capacitor://localhost,ionic://localhost}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://hope.lourd.top:3605}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
       WECHAT_CLIENT_ID: ${WECHAT_CLIENT_ID:-}
       WECHAT_CLIENT_SECRET: ${WECHAT_CLIENT_SECRET:-}
@@ -56,7 +56,7 @@ services:
       COS_SECRET_ID: ${COS_SECRET_ID:-}
       COS_SECRET_KEY: ${COS_SECRET_KEY:-}
       COS_PRIVATE_URL_EXPIRES_SECONDS: ${COS_PRIVATE_URL_EXPIRES_SECONDS:-3600}
-      BACKEND_URL: ${BACKEND_URL:-}
+      BACKEND_URL: ${BACKEND_URL:-https://hope.lourd.top:3605}
       WHISPER_TIMEOUT_MS: ${WHISPER_TIMEOUT_MS:-300000}
       ALIPAY_APP_ID: ${ALIPAY_APP_ID:-}
       ALIPAY_PRIVATE_KEY: ${ALIPAY_PRIVATE_KEY:-}
@@ -110,21 +110,9 @@ services:
     volumes:
       - ${SSL_DEPLOY:-./ssl}:/etc/nginx/ssl:ro
     ports:
-      - "3605:443"
-
-  company-nginx:
-    build:
-      context: .
-      dockerfile: docker/company-nginx.Dockerfile
-      args:
-        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
-    container_name: manyu-company-nginx
-    restart: unless-stopped
-    volumes:
-      - ${COMPANY_SSL_DEPLOY:-./ssl}:/etc/nginx/ssl:ro
-    ports:
-      - "${COMPANY_HTTP_PORT:-9081}:80"
-      - "${COMPANY_HTTPS_PORT:-9443}:443"
+      - "80:80"
+      - "443:443"
+      - "3605:3605"
 
 volumes:
   postgres_data:
