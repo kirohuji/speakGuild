@@ -13,6 +13,7 @@ import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { toast } from 'sonner'
 import { expressionApi, type MasteryStatus } from '@/features/practice/api/english-practice-api'
 import { LearningInsightDialog, type LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
+import { ImmersivePlayerDialog, mapInsightItemsToImmersiveItems, type ImmersivePlayerItem } from '@/features/learning/components/immersive-player'
 import { cn } from '@/lib/cn'
 import { isNative } from '@/lib/native'
 import {
@@ -168,6 +169,9 @@ export function ExpressionLibraryPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogIndex, setDialogIndex] = useState(0)
   const [dialogItems, setDialogItems] = useState<LearningInsightItem[]>([])
+  const [immersiveOpen, setImmersiveOpen] = useState(false)
+  const [immersiveIndex, setImmersiveIndex] = useState(0)
+  const [immersiveItems, setImmersiveItems] = useState<ImmersivePlayerItem[]>([])
 
   // 展开的列表项
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
@@ -351,6 +355,14 @@ export function ExpressionLibraryPage() {
     setDialogItems(items)
     setDialogIndex(Math.min(startIndex, items.length - 1))
     setDialogOpen(true)
+  }, [])
+
+  const openImmersivePlayer = useCallback((items: LearningInsightItem[], startIndex: number) => {
+    const mappedItems = mapInsightItemsToImmersiveItems(items)
+    if (mappedItems.length === 0) return
+    setImmersiveItems(mappedItems)
+    setImmersiveIndex(Math.min(startIndex, mappedItems.length - 1))
+    setImmersiveOpen(true)
   }, [])
 
   useEffect(() => {
@@ -629,7 +641,7 @@ export function ExpressionLibraryPage() {
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
                 <button
-                  onClick={() => openDialog(visibleDialogItems, 0)}
+                  onClick={() => openImmersivePlayer(visibleDialogItems, 0)}
                   className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600"
                 >
                   <ExternalLink className="size-3" /> {t('expressionLib.immersive')}
@@ -655,7 +667,7 @@ export function ExpressionLibraryPage() {
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
                 <button
-                  onClick={() => openDialog(visibleDialogItems, 0)}
+                  onClick={() => openImmersivePlayer(visibleDialogItems, 0)}
                   className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-600"
                 >
                   <ExternalLink className="size-3" /> {t('expressionLib.immersive')}
@@ -681,7 +693,7 @@ export function ExpressionLibraryPage() {
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
                 <button
-                  onClick={() => openDialog(visibleDialogItems, 0)}
+                  onClick={() => openImmersivePlayer(visibleDialogItems, 0)}
                   className="flex items-center gap-1 text-xs text-violet-500 hover:text-violet-600"
                 >
                   <ExternalLink className="size-3" /> {t('expressionLib.immersive')}
@@ -702,6 +714,13 @@ export function ExpressionLibraryPage() {
         items={dialogItems} index={dialogIndex} open={dialogOpen}
         onOpenChange={setDialogOpen} onIndexChange={setDialogIndex}
         hideSaveActions
+      />
+      <ImmersivePlayerDialog
+        items={immersiveItems}
+        index={Math.min(immersiveIndex, Math.max(immersiveItems.length - 1, 0))}
+        open={immersiveOpen}
+        onOpenChange={setImmersiveOpen}
+        onIndexChange={setImmersiveIndex}
       />
     </div>
   )

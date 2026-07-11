@@ -25,6 +25,7 @@ import { useWarmupSessionStore, type WarmupRecordEntry, type WarmupScore } from 
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import type { DailyPracticePlanMode, DailyPracticeStatus } from '@/lib/offline/daily-practice.repository'
 import { TodayRecordsDrawer } from '../components/today-records-drawer'
+import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { preloadWarmupLocalJudge, type WarmupReferencePreloadInput } from '@/lib/local-ai/warmup-local-judge'
 import { useAuth } from '@/providers/auth-provider'
@@ -161,15 +162,6 @@ function useTypeMeta(t: (key: string) => string): Record<string, { label: string
   }), [t])
 }
 
-function useTopicStatusMeta(t: (key: string) => string): Record<DailyPracticeStatus, { label: string; badge: string; bar: string }> {
-  return useMemo(() => ({
-    overdue: { label: t('todayTask.statusOverdue'), badge: 'border-red-300 text-red-600 bg-red-500/10', bar: 'bg-red-500' },
-    review: { label: t('todayTask.statusReview'), badge: 'border-amber-300 text-amber-700 bg-amber-500/10', bar: 'bg-amber-500' },
-    new: { label: t('todayTask.statusNew'), badge: 'border-blue-300 text-blue-600 bg-blue-500/10', bar: 'bg-muted-foreground/45' },
-    done: { label: t('todayTask.statusDone'), badge: 'border-emerald-300 text-emerald-600 bg-emerald-500/10', bar: 'bg-emerald-500' },
-    mastered: { label: t('todayTask.statusMastered'), badge: 'border-violet-300 text-violet-600 bg-violet-500/10', bar: 'bg-violet-500' },
-  }), [t])
-}
 
 // ── 组件 ──
 export function TodayTaskPage() {
@@ -177,7 +169,6 @@ export function TodayTaskPage() {
   const { session } = useAuth()
   const isAdmin = session?.user?.role === 'admin'
   const TYPE_META = useTypeMeta(t)
-  const TOPIC_STATUS_META = useTopicStatusMeta(t)
   const warmupStore = useWarmupSessionStore()
   const [searchParams, setSearchParams] = useSearchParams()
   const targetPackId = searchParams.get('packId') || null
@@ -200,6 +191,9 @@ export function TodayTaskPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
+  const [teachingOpen, setTeachingOpen] = useState(false)
+  const [teachingMarkdown, setTeachingMarkdown] = useState('')
+  const [teachingLoading, setTeachingLoading] = useState(false)
   const [historicalTodayRecords, setHistoricalTodayRecords] = useState<WarmupRecordEntry[]>([])
   const [autoNextEnabled, setAutoNextEnabled] = useState(false)
   const [reviewRoundStarted, setReviewRoundStarted] = useState(false)
@@ -207,6 +201,7 @@ export function TodayTaskPage() {
   const [reviewRunNonce, setReviewRunNonce] = useState(0)
   const localAiPreloadKeyRef = useRef<string | null>(null)
   const warmupSessionHydratedKeyRef = useRef<string | null>(null)
+  const teachingRequestIdRef = useRef(0)
   const planMode = searchParams.has('mode') ? normalizePlanMode(searchParams.get('mode')) : getSessionPlanMode()
   const [planRunSeed, setPlanRunSeed] = useState(0)
   const currentPlanReusable = Boolean(
@@ -497,6 +492,18 @@ export function TodayTaskPage() {
       setDrawerOpen(true)
     }
   }, [steps, warmupStore, weakStepIds])
+
+  const openTopicTeaching = useCallback(async (topicId: string) => {
+    const requestId = teachingRequestIdRef.current + 1
+    teachingRequestIdRef.current = requestId
+    setTeachingMarkdown('')
+    setTeachingLoading(true)
+    setTeachingOpen(true)
+    const detail = await practiceRepository.getTopicDetail(topicId)
+    if (teachingRequestIdRef.current !== requestId) return
+    setTeachingMarkdown(detail?.topic?.teachingMarkdown || '')
+    setTeachingLoading(false)
+  }, [])
 
   useEffect(() => {
     if (allDone && reviewRoundStarted && !reviewRoundFinished) {
@@ -963,7 +970,6 @@ export function TodayTaskPage() {
               </div>
               <div className="space-y-1.5">
                 {filteredTopics.map((topic, index) => {
-                  const statusMeta = TOPIC_STATUS_META[topic.status]
                   const detail = isReviewMode
                     ? [
                         topic.overdueCount > 0 ? `${t('todayTask.statusOverdue')} ${topic.overdueCount}` : null,
@@ -972,28 +978,34 @@ export function TodayTaskPage() {
                       ].filter(Boolean).join(' · ')
                     : null
                   const unPracticed = topic.totalCount - topic.doneTodayCount - topic.masteredCount
+                  const assetSummary = [
+                    topic.vocabCount > 0 ? `${topic.vocabCount} ${t('learning.vocab')}` : null,
+                    topic.chunkCount > 0 ? `${topic.chunkCount} ${t('learning.chunks')}` : null,
+                    topic.patternCount > 0 ? `${topic.patternCount} ${t('learning.patterns')}` : null,
+                  ].filter(Boolean).join(' · ')
                   return (
-                    <Link
-                      key={topic.topicId}
-                      to={`/practice/session/${topic.topicId}?mode=${plan.mode}`}
-                      className="flex items-center gap-3 rounded-lg bg-muted/25 px-3 py-3 transition-colors hover:bg-muted/50 active:scale-[0.98]"
-                    >
-                      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
-                        {index + 1}
-                      </div>
-                      <div className="min-w-0 flex-1">
+                    <div key={topic.topicId} className="group flex overflow-hidden rounded-lg bg-muted/25 transition-colors hover:bg-muted/50">
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => { void openTopicTeaching(topic.topicId) }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            void openTopicTeaching(topic.topicId)
+                          }
+                        }}
+                        className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 px-3 py-3 active:scale-[0.99]"
+                      >
+                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                          {index + 1}
+                        </div>
+                        <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 items-center gap-2">
                           <p className="line-clamp-1 flex-1 text-sm font-medium text-foreground">{topic.topicTitle}</p>
-                          <Badge variant="outline" className={cn('shrink-0 rounded-full text-[10px]', isReviewMode ? statusMeta.badge : 'border-muted-foreground/30 text-muted-foreground')}>
-                            {isReviewMode
-                              ? statusMeta.label
-                              : unPracticed > 0
-                                ? `${unPracticed} ${t('todayTask.pendingItems')}`
-                                : t('todayTask.completed')}
-                          </Badge>
                         </div>
                         <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          {topic.activeChunksCount} {t('todayTask.expressions')}{detail ? ` · ${detail}` : ''}
+                          {assetSummary || `${topic.totalCount} ${t('todayTask.exercises')}`}{detail ? ` · ${detail}` : ''}
                         </p>
                         <div className="mt-2 flex items-center gap-2">
                           <SegmentedBar
@@ -1017,9 +1029,17 @@ export function TodayTaskPage() {
                             }
                           </span>
                         </div>
+                        </div>
                       </div>
-                      <Badge variant="outline" className="rounded-full text-[10px]">{topic.difficulty}</Badge>
-                    </Link>
+                      <Link
+                        to={`/practice/session/${topic.topicId}?mode=${plan.mode}`}
+                        onClick={(event) => event.stopPropagation()}
+                        className="flex w-10 shrink-0 items-center justify-center text-muted-foreground/60 transition-colors hover:text-foreground"
+                        aria-label={`${topic.topicTitle} ${t('todayTask.practice')}`}
+                      >
+                        <ChevronRight className="size-4" />
+                      </Link>
+                    </div>
                   )
                 })}
               </div>
@@ -1029,6 +1049,14 @@ export function TodayTaskPage() {
       })()}
 
       {/* ── 练习 Dialog（与 LearningInsightDialog 完全统一）── */}
+      <PracticeVnDrawer
+        open={teachingOpen}
+        onOpenChange={setTeachingOpen}
+        teachingMarkdown={teachingMarkdown}
+        loading={teachingLoading}
+        hideToggles
+      />
+
       <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
         <DialogContent
           data-keyboard-overlay="practice"

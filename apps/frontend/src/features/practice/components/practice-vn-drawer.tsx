@@ -15,6 +15,7 @@ import { cn } from '@/lib/cn'
 
 interface PracticeVnDrawerProps {
   teachingMarkdown?: string
+  loading?: boolean
   onOpen?: () => void | Promise<void>
   hideToggles?: boolean
   triggerClassName?: string
@@ -26,6 +27,7 @@ interface PracticeVnDrawerProps {
 
 export function PracticeVnDrawer({
   teachingMarkdown,
+  loading = false,
   onOpen,
   hideToggles = false,
   triggerClassName,
@@ -93,7 +95,13 @@ export function PracticeVnDrawer({
           </DrawerHeader>
 
           <ScrollArea className="min-h-0 flex-1">
-            {teachingMarkdown ? (
+            {loading ? (
+              <div className="flex h-full items-center justify-center px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4">
+                <p className="rounded-2xl border border-dashed border-border/70 px-4 py-8 text-center text-xs text-muted-foreground">
+                  {t('practiceVn.loadingTeaching')}
+                </p>
+              </div>
+            ) : teachingMarkdown ? (
               <section className="px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4">
                 <MarkdownRenderer content={teachingMarkdown} variant="teaching" />
               </section>
