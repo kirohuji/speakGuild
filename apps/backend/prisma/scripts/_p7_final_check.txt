@@ -1,0 +1,5 @@
+
+Slots: 171 (all unique words in core rows)
+Cross overlap: 0
+Intra dupes: 0
+ALL CLEAN

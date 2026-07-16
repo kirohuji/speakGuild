@@ -1,5 +1,5 @@
 # Master Core Vocabulary — All 7 Foundation Packs
-# 1719 unique words (zero cross-pack overlap)
+# 1724 unique words (zero cross-pack overlap)
 # Generated 2026-07-16
 # Packs: ① beginner ② daily-life ③ daily-work ④ essential-phrases ⑤ opinion-basics ⑥ social-express ⑦ travel-basic
 'll
@@ -17,7 +17,6 @@ account
 accountable
 accumulate
 achieve
-achievement
 acquaintance
 acquire
 acquires
@@ -42,6 +41,7 @@ aid
 alarm
 all the time
 allergy
+allow
 ally
 almost
 along
@@ -68,6 +68,7 @@ anomaly
 answer
 any
 anyone
+anytime
 anyway
 apart
 apologize
@@ -465,6 +466,7 @@ english
 enjoy
 enjoyment
 enlisted
+enroll
 enrolled
 enter
 entertain
@@ -623,6 +625,7 @@ gloomy
 glow
 go
 goal
+godspeed
 gone
 gonna
 good
@@ -630,7 +633,6 @@ goodbye
 gorgeous
 got
 gradually
-graduation
 grateful
 great
 green
@@ -799,6 +801,7 @@ leave
 lecture
 left
 lend
+let
 lick
 lifeguard
 lift
@@ -1036,6 +1039,7 @@ perhaps
 periodically
 permanent
 permanently
+permit
 persistently
 pharmacy
 phase
@@ -1102,7 +1106,6 @@ progress
 project
 promise
 promoted
-promotion
 promptly
 pronounce
 proof
@@ -1119,6 +1122,7 @@ push
 put
 puzzled
 qr
+qualify
 quality
 quantity
 quarter
@@ -1157,6 +1161,7 @@ refreshed
 refund
 refundable
 refuse
+register
 regular
 regularly
 relationship
@@ -1191,7 +1196,6 @@ rest
 restore
 resume
 retired
-retirement
 retreat
 return
 reunion
@@ -1425,6 +1429,7 @@ support
 suppose
 supposedly
 surcharge
+sure
 surely
 surf
 surgery
@@ -1580,13 +1585,13 @@ ultimately
 umbrella
 under
 understand
+undertake
 unexpectedly
 unfortunately
 unless
 unlikely
 unlimited
 unlock
-unpack
 until
 until now
 unusual
