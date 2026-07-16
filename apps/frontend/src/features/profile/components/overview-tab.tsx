@@ -105,6 +105,23 @@ export function OverviewTab() {
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">{t('profile.learningActivity', { defaultValue: '学习活跃度' })}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {hmLoading ? <Skeleton className="h-52 rounded-xl" /> : (
+            <ActivityCalendarSection
+              days={heatmap}
+              year={year}
+              onPrevYear={() => setYear((value) => value - 1)}
+              onNextYear={() => setYear((value) => Math.min(maxYear, value + 1))}
+              maxYear={maxYear}
+            />
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
@@ -157,6 +174,7 @@ function ActivityCalendarSection({
 
   return (
     <div>
+      <YearlyTrend days={days} />
       <div className="flex justify-end overflow-x-auto">
         <ActivityCalendar
           data={yearData}
@@ -177,6 +195,43 @@ function ActivityCalendarSection({
         />
       </div>
       <YearNavigator year={year} onPrevYear={onPrevYear} onNextYear={onNextYear} maxYear={maxYear} />
+    </div>
+  )
+}
+
+function YearlyTrend({ days }: { days: ActivityDay[] }) {
+  const { t } = useTranslation()
+  const values = Array.from({ length: 12 }, (_, index) => {
+    const prefix = `${new Date(days[0]?.date ?? Date.now()).getFullYear()}-${String(index + 1).padStart(2, '0')}`
+    const monthDays = days.filter((day) => day.date.startsWith(prefix))
+    return {
+      label: `${index + 1}月`,
+      minutes: Math.ceil(monthDays.reduce((sum, day) => sum + (day.activeSeconds ?? 0), 0) / 60),
+      questions: monthDays.reduce((sum, day) => sum + (day.questionCount ?? day.count), 0),
+    }
+  })
+  const maxMinutes = Math.max(1, ...values.map((item) => item.minutes))
+  const maxQuestions = Math.max(1, ...values.map((item) => item.questions))
+  const width = 360
+  const height = 116
+  const inset = 12
+  const plotHeight = 76
+  const step = width / 12
+  const points = values.map((item, index) => `${step * index + step / 2},${inset + plotHeight - item.questions / maxQuestions * plotHeight}`).join(' ')
+  return (
+    <div className="mb-5 rounded-xl bg-muted/30 p-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">{t('profile.yearlyTrend', { defaultValue: '全年学习趋势' })}</p>
+        <p className="text-[10px] text-muted-foreground">{t('profile.yearlyTrendHint', { defaultValue: '柱：分钟 · 线：题数' })}</p>
+      </div>
+      <svg viewBox={`0 0 ${width} ${height}`} className="mt-2 h-[116px] w-full" role="img" aria-label="全年练习分钟和完成题数趋势">
+        {values.map((item, index) => {
+          const barHeight = item.minutes ? Math.max(4, item.minutes / maxMinutes * plotHeight) : 0
+          return <rect key={item.label} x={step * index + step * .28} y={inset + plotHeight - barHeight} width={step * .44} height={barHeight} rx="3" fill="hsl(var(--primary) / .22)" />
+        })}
+        <polyline points={points} fill="none" stroke="hsl(var(--accent))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        {values.map((item, index) => <text key={`${item.label}:text`} x={step * index + step / 2} y={height - 6} textAnchor="middle" fontSize="9" fill="hsl(var(--muted-foreground))">{index + 1}</text>)}
+      </svg>
     </div>
   )
 }

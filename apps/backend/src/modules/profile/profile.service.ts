@@ -161,23 +161,47 @@ export class ProfileService {
     return streak;
   }
 
-  async getActivityHeatmap(userId: string) {
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-
-    const activities = await this.prisma.dailyActivity.findMany({
+  async getActivityHeatmap(userId: string, year?: number) {
+    const targetYear = Number.isInteger(year) && year! >= 2020 && year! <= new Date().getFullYear()
+      ? year!
+      : new Date().getFullYear();
+    const start = new Date(targetYear, 0, 1);
+    const end = new Date(targetYear + 1, 0, 1);
+    const [activities, runs] = await Promise.all([
+      this.prisma.dailyActivity.findMany({
       where: {
         userId,
-        date: { gte: oneYearAgo },
+        date: { gte: start, lt: end },
       },
       orderBy: { date: 'asc' },
-    });
+      }),
+      (this.prisma as any).userDailyPracticeRun.findMany({
+        where: { userId, date: { gte: start, lt: end } },
+        select: { date: true, completedItemIds: true, stats: true },
+      }),
+    ]);
+
+    const byDate = new Map<string, { count: number; questionCount: number; activeSeconds: number }>();
+    for (const activity of activities) {
+      const key = activity.date.toISOString().slice(0, 10);
+      byDate.set(key, { count: activity.count, questionCount: activity.count, activeSeconds: 0 });
+    }
+    for (const run of runs) {
+      const key = run.date.toISOString().slice(0, 10);
+      const stats = run.stats && typeof run.stats === 'object' && !Array.isArray(run.stats) ? run.stats : {};
+      const sources = stats.activity && typeof stats.activity === 'object' && !Array.isArray(stats.activity) ? Object.values(stats.activity) as any[] : [];
+      const dialogueQuestions = sources.filter((item) => item?.scope === 'dialogue').reduce((total, item) => total + Math.max(0, Number(item?.questionCount) || 0), 0);
+      const activeSeconds = sources.reduce((total, item) => total + Math.max(0, Math.min(1800, Number(item?.activeSeconds) || 0)), 0);
+      const previous = byDate.get(key) ?? { count: 0, questionCount: 0, activeSeconds: 0 };
+      byDate.set(key, {
+        count: Math.max(previous.count, run.completedItemIds?.length ?? 0, dialogueQuestions),
+        questionCount: (run.completedItemIds?.length ?? 0) + dialogueQuestions,
+        activeSeconds,
+      });
+    }
 
     return {
-      activities: activities.map((a) => ({
-        date: a.date,
-        count: a.count,
-      })),
+      activities: [...byDate.entries()].map(([date, item]) => ({ date, ...item })),
     };
   }
 

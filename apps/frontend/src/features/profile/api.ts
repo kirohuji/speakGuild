@@ -17,6 +17,8 @@ export interface ActivityDay {
   date: string
   count: number
   level: 0 | 1 | 2 | 3 | 4
+  questionCount?: number
+  activeSeconds?: number
 }
 
 export interface PracticeRecord {
@@ -101,7 +103,7 @@ export const getProfileOverview = (): Promise<ProfileOverview> =>
 
 export const getActivityHeatmap = async (year?: number): Promise<ActivityDay[]> => {
   try {
-    const res = await get<{ activities: { date: string; count: number }[] }>(
+    const res = await get<{ activities: { date: string; count: number; questionCount?: number; activeSeconds?: number }[] }>(
       '/profile/activity-heatmap',
       { year: year || new Date().getFullYear() },
     )
@@ -111,6 +113,8 @@ export const getActivityHeatmap = async (year?: number): Promise<ActivityDay[]> 
       date: typeof a.date === 'string' ? a.date : new Date(a.date).toISOString().slice(0, 10),
       count: a.count,
       level: (Math.min(4, Math.ceil((a.count / max) * 4)) as ActivityDay['level']),
+      questionCount: a.questionCount ?? a.count,
+      activeSeconds: a.activeSeconds ?? 0,
     }))
   } catch {
     return []

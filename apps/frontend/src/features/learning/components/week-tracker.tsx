@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isAfter, isSameDay, parseISO, startOfDay, startOfMonth, startOfWeek } from 'date-fns'
+import { addMonths, addWeeks, addYears, eachDayOfInterval, endOfMonth, endOfWeek, endOfYear, format, isAfter, isSameDay, parseISO, startOfDay, startOfMonth, startOfWeek, startOfYear } from 'date-fns'
 import { enUS, ja, zhCN } from 'date-fns/locale'
-import { CalendarDays, Flame, CalendarCheck, ChevronLeft, ChevronRight, Clock3, ListChecks } from 'lucide-react'
+import { CalendarDays, CalendarRange, Flame, CalendarCheck, ChevronLeft, ChevronRight, Clock3, ListChecks, BarChart3 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
@@ -75,7 +75,9 @@ function CheckInCalendarDrawer({
   const loading = useLearningStore((s) => s.checkInLoading)
   const fetchCheckInCalendar = useLearningStore((s) => s.fetchCheckInCalendar)
   const [month, setMonth] = useState(() => startOfMonth(new Date()))
-  const [view, setView] = useState<'week' | 'month'>('week')
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }))
+  const [year, setYear] = useState(() => startOfYear(new Date()))
+  const [view, setView] = useState<'week' | 'month' | 'year'>('week')
   const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date())
   const today = useMemo(() => startOfDay(new Date()), [])
   const calendarLocale = i18n.language.startsWith('ja')
@@ -85,15 +87,16 @@ function CheckInCalendarDrawer({
       : zhCN
   const visibleRange = useMemo(() => {
     if (view === 'week') {
-      const weekStart = startOfWeek(today, { weekStartsOn: 1 })
-      const weekEnd = endOfWeek(today, { weekStartsOn: 1 })
-      return { startDate: format(weekStart, 'yyyy-MM-dd'), endDate: format(weekEnd, 'yyyy-MM-dd') }
+      return { startDate: format(weekStart, 'yyyy-MM-dd'), endDate: format(endOfWeek(weekStart, { weekStartsOn: 1 }), 'yyyy-MM-dd') }
+    }
+    if (view === 'year') {
+      return { startDate: format(startOfYear(year), 'yyyy-MM-dd'), endDate: format(endOfYear(year), 'yyyy-MM-dd') }
     }
     return {
       startDate: format(startOfWeek(startOfMonth(month), { locale: calendarLocale, weekStartsOn: 1 }), 'yyyy-MM-dd'),
       endDate: format(endOfWeek(endOfMonth(month), { locale: calendarLocale, weekStartsOn: 1 }), 'yyyy-MM-dd'),
     }
-  }, [calendarLocale, month, today, view])
+  }, [calendarLocale, month, view, weekStart, year])
   const checkedInDates = useMemo<Date[]>(
     () => data?.dates.map((date) => parseISO(date)) ?? [],
     [data],
@@ -122,16 +125,26 @@ function CheckInCalendarDrawer({
   }, [month, today])
 
   const canGoToNextMonth = !isAfter(startOfMonth(addMonths(month, 1)), startOfMonth(today))
+  const canGoToNextWeek = !isAfter(addWeeks(weekStart, 1), startOfWeek(today, { weekStartsOn: 1 }))
+  const canGoToNextYear = !isAfter(startOfYear(addYears(year, 1)), startOfYear(today))
+  const changeWeek = useCallback((offset: number) => {
+    const nextWeek = addWeeks(weekStart, offset)
+    if (!isAfter(nextWeek, startOfWeek(today, { weekStartsOn: 1 }))) {
+      setWeekStart(nextWeek)
+      setSelectedDay(nextWeek)
+    }
+  }, [today, weekStart])
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="h-[min(88dvh,700px)] rounded-t-[28px] border-border/70 bg-background drawer-surface">
         <DrawerHeader className="shrink-0 px-4 pb-2 pt-2 text-left">
           <div className="flex items-center justify-between gap-3">
-            <DrawerTitle className="text-base font-semibold">{t('learning.checkInCalendar')}</DrawerTitle>
-            <ToggleGroup type="single" value={view} onValueChange={(value) => value && setView(value as 'week' | 'month')} variant="outline" size="sm" className="gap-0">
-              <ToggleGroupItem value="week" className="h-7 px-3 text-xs">{t('learning.week', { defaultValue: '本周' })}</ToggleGroupItem>
-              <ToggleGroupItem value="month" className="h-7 px-3 text-xs">{t('learning.month', { defaultValue: '本月' })}</ToggleGroupItem>
+            <DrawerTitle className="text-base font-semibold">{t('learning.myLearning', { defaultValue: '我的学习' })}</DrawerTitle>
+            <ToggleGroup type="single" value={view} onValueChange={(value) => value && setView(value as 'week' | 'month' | 'year')} variant="outline" size="sm" className="rounded-full border border-border/60 bg-muted/50 p-0.5">
+              <ToggleGroupItem value="week" aria-label="周视图" className="h-7 min-w-10 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">周</ToggleGroupItem>
+              <ToggleGroupItem value="month" aria-label="月视图" className="h-7 min-w-10 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">月</ToggleGroupItem>
+              <ToggleGroupItem value="year" aria-label="年视图" className="h-7 min-w-10 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">年</ToggleGroupItem>
             </ToggleGroup>
           </div>
         </DrawerHeader>
@@ -154,15 +167,25 @@ function CheckInCalendarDrawer({
             <div className="rounded-2xl bg-muted/40 px-3 py-2.5">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Clock3 className="size-3.5" />
-                {t('learning.activeDuration', { defaultValue: '有效练习' })}
+                {t('learning.activeDuration', { defaultValue: '练习分钟' })}
               </div>
               <p className="mt-1 text-lg font-bold tabular-nums">{formatDuration(summary.activeSeconds)}</p>
             </div>
           </div>
 
           {view === 'week' ? (
-            <WeeklyActivity days={visibleDays} dailyStats={dailyStats} locale={calendarLocale} today={today} />
-          ) : (
+            <WeeklyActivity
+              days={visibleDays}
+              dailyStats={dailyStats}
+              locale={calendarLocale}
+              today={today}
+              selectedDay={selectedDay}
+              onSelectDay={setSelectedDay}
+              onPrevWeek={() => changeWeek(-1)}
+              onNextWeek={() => changeWeek(1)}
+              canGoToNextWeek={canGoToNextWeek}
+            />
+          ) : view === 'month' ? (
           <div className="min-h-0 flex-1 overflow-hidden rounded-2xl bg-background">
             <div className="flex items-center justify-between px-3 pt-3">
               <Button type="button" variant="ghost" size="icon" className="touch-manipulation"
@@ -188,6 +211,14 @@ function CheckInCalendarDrawer({
                 classNames={{ month_caption: 'hidden' }} className="mx-auto w-full [--cell-size:2.15rem]" />
             </div>
           </div>
+          ) : (
+            <YearlyActivity
+              year={year}
+              dailyStats={dailyStats}
+              onPrevYear={() => setYear((value) => addYears(value, -1))}
+              onNextYear={() => setYear((value) => addYears(value, 1))}
+              canGoToNextYear={canGoToNextYear}
+            />
           )}
           <div className="flex shrink-0 items-center justify-between rounded-xl bg-muted/30 px-3 py-2.5 text-xs">
             <div className="min-w-0">
@@ -206,42 +237,142 @@ function CheckInCalendarDrawer({
 }
 
 function formatDuration(seconds: number) {
-  const safeSeconds = Math.max(0, Math.floor(seconds))
-  if (safeSeconds < 60) return `${safeSeconds}秒`
-  const minutes = Math.floor(safeSeconds / 60)
-  if (minutes < 60) return `${minutes}分`
-  return `${Math.floor(minutes / 60)}时${minutes % 60}分`
+  return `${Math.ceil(Math.max(0, seconds) / 60)} 分钟`
 }
 
-function WeeklyActivity({ days, dailyStats, locale, today }: {
+function WeeklyActivity({ days, dailyStats, locale, today, selectedDay, onSelectDay, onPrevWeek, onNextWeek, canGoToNextWeek }: {
   days: Date[]
   dailyStats: Map<string, { date: string; questionCount: number; activeSeconds: number }>
   locale: typeof zhCN
   today: Date
+  selectedDay?: Date
+  onSelectDay: (day: Date) => void
+  onPrevWeek: () => void
+  onNextWeek: () => void
+  canGoToNextWeek: boolean
 }) {
-  const maxSeconds = Math.max(60, ...days.map((day) => dailyStats.get(format(day, 'yyyy-MM-dd'))?.activeSeconds ?? 0))
+  const { t } = useTranslation()
+  const items = days.map((day) => {
+    const stat = dailyStats.get(format(day, 'yyyy-MM-dd'))
+    return { day, minutes: Math.ceil((stat?.activeSeconds ?? 0) / 60), questionCount: stat?.questionCount ?? 0 }
+  })
+  const hasData = items.some((item) => item.minutes > 0 || item.questionCount > 0)
+  const maxMinutes = Math.max(1, ...items.map((item) => item.minutes))
+  const maxQuestions = Math.max(1, ...items.map((item) => item.questionCount))
+  const chartWidth = 320
+  const chartHeight = 112
+  const top = 12
+  const bottom = 17
+  const innerHeight = chartHeight - top - bottom
+  const step = chartWidth / items.length
+  const points = items.map((item, index) => {
+    const x = step * index + step / 2
+    const y = top + innerHeight - (item.questionCount / maxQuestions) * innerHeight
+    return `${x},${y}`
+  }).join(' ')
   return (
-    <div className="min-h-0 flex-1 rounded-2xl bg-muted/20 px-3 pb-3 pt-4">
-      <div className="flex h-full items-end justify-between gap-1.5">
-        {days.map((day) => {
-          const stat = dailyStats.get(format(day, 'yyyy-MM-dd'))
-          const seconds = stat?.activeSeconds ?? 0
-          const height = seconds > 0 ? Math.max(10, Math.round((seconds / maxSeconds) * 76)) : 4
-          return (
-            <div key={day.toISOString()} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1.5">
-              <span className="h-4 text-[10px] tabular-nums text-muted-foreground">{stat?.questionCount ? `${stat.questionCount}题` : ''}</span>
-              <div className="flex h-[88px] w-full items-end rounded-full bg-background/70 px-1.5 pb-1">
-                <div className={cn('w-full rounded-full transition-all duration-300', seconds > 0 ? 'bg-primary' : 'bg-transparent')} style={{ height }} />
-              </div>
-              <span className={cn('text-[10px]', isSameDay(day, today) ? 'font-semibold text-primary' : 'text-muted-foreground')}>
-                {format(day, 'EEEEE', { locale })}
-              </span>
-              <span className={cn('text-xs tabular-nums', isSameDay(day, today) ? 'font-semibold text-foreground' : 'text-muted-foreground')}>
-                {format(day, 'd')}
-              </span>
-            </div>
-          )
-        })}
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-background">
+      <div className="flex items-center justify-between gap-3 px-3 pt-3">
+        <div>
+          <p className="text-sm font-semibold">{t('learning.weeklyRhythm', { defaultValue: '本周练习节奏' })}</p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">{t('learning.chartLegend', { defaultValue: '柱状为分钟，折线为完成题数' })}</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <Button type="button" variant="ghost" size="icon-sm" className="size-7 rounded-full" onClick={onPrevWeek} aria-label="Previous week">
+            <ChevronLeft />
+          </Button>
+          <Button type="button" variant="ghost" size="icon-sm" className="size-7 rounded-full" onClick={onNextWeek} disabled={!canGoToNextWeek} aria-label="Next week">
+            <ChevronRight />
+          </Button>
+        </div>
+      </div>
+      <div className="mt-1 flex items-center gap-2 px-3 text-[10px] text-muted-foreground">
+        <span className="flex items-center gap-1"><i className="size-2 rounded-sm bg-primary" />分钟</span>
+        <span className="flex items-center gap-1"><i className="size-2 rounded-full bg-accent" />题数</span>
+      </div>
+      <div className="relative mt-2 min-h-0 flex-1 px-3">
+        <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none" className="absolute inset-x-3 top-0 h-[calc(100%-4.5rem)] w-[calc(100%-1.5rem)] overflow-visible" role="img" aria-label="每周练习分钟与完成题数">
+          {[0.25, 0.5, 0.75].map((ratio) => <line key={ratio} x1="0" x2={chartWidth} y1={top + innerHeight * ratio} y2={top + innerHeight * ratio} stroke="hsl(var(--border))" strokeDasharray="2 4" />)}
+          {items.map((item, index) => {
+            const height = item.minutes > 0 ? Math.max(5, (item.minutes / maxMinutes) * innerHeight) : 18
+            const x = step * index + step * 0.23
+            return <rect key={item.day.toISOString()} x={x} y={top + innerHeight - height} width={step * 0.54} height={height} rx="4" fill={item.minutes > 0 ? 'hsl(var(--primary) / 0.72)' : 'hsl(var(--muted))'} />
+          })}
+          {hasData && <polyline points={points} fill="none" stroke="hsl(var(--accent))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+          {hasData && items.map((item, index) => {
+            const x = step * index + step / 2
+            const y = top + innerHeight - (item.questionCount / maxQuestions) * innerHeight
+            return <circle key={`point:${item.day.toISOString()}`} cx={x} cy={y} r="3" fill="hsl(var(--background))" stroke="hsl(var(--accent))" strokeWidth="2" />
+          })}
+        </svg>
+        {!hasData && <p className="pointer-events-none absolute inset-x-0 top-11 text-center text-[10px] text-muted-foreground">完成一次练习后，这里会显示学习趋势</p>}
+        <div className="absolute inset-x-3 bottom-2 grid grid-cols-7 gap-1 border-t border-border/60 pt-1.5">
+          {items.map((item) => (
+            <button key={item.day.toISOString()} type="button" onClick={() => onSelectDay(item.day)} className={cn('mx-auto flex size-[2.15rem] min-w-0 flex-col items-center justify-center rounded-xl text-[10px] transition-colors', isSameDay(item.day, selectedDay ?? new Date(0)) ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/60')}>
+              <span>{format(item.day, 'EEEEE', { locale })}</span>
+              <span className={cn('tabular-nums', isSameDay(item.day, today) && 'font-semibold')}>{format(item.day, 'd')}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function YearlyActivity({ year, dailyStats, onPrevYear, onNextYear, canGoToNextYear }: {
+  year: Date
+  dailyStats: Map<string, { date: string; questionCount: number; activeSeconds: number }>
+  onPrevYear: () => void
+  onNextYear: () => void
+  canGoToNextYear: boolean
+}) {
+  const values = Array.from({ length: 12 }, (_, index) => {
+    const prefix = `${format(year, 'yyyy')}-${String(index + 1).padStart(2, '0')}`
+    const days = [...dailyStats.values()].filter((item) => item.date.startsWith(prefix))
+    return {
+      label: index + 1,
+      minutes: Math.ceil(days.reduce((sum, item) => sum + item.activeSeconds, 0) / 60),
+      questions: days.reduce((sum, item) => sum + item.questionCount, 0),
+    }
+  })
+  const hasData = values.some((item) => item.minutes > 0 || item.questions > 0)
+  const maxMinutes = Math.max(1, ...values.map((item) => item.minutes))
+  const maxQuestions = Math.max(1, ...values.map((item) => item.questions))
+  const width = 360
+  const height = 116
+  const top = 12
+  const plotHeight = 76
+  const step = width / values.length
+  const points = values.map((item, index) => `${step * index + step / 2},${top + plotHeight - item.questions / maxQuestions * plotHeight}`).join(' ')
+
+  return (
+    <div className="min-h-0 flex-1 overflow-hidden rounded-2xl bg-background">
+      <div className="flex items-center justify-between gap-3 px-3 pt-3">
+        <div>
+          <p className="text-sm font-semibold">全年学习趋势</p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">柱状为分钟，折线为完成题数</p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <Button type="button" variant="ghost" size="icon-sm" className="size-7 rounded-full" onClick={onPrevYear} aria-label="Previous year">
+            <ChevronLeft />
+          </Button>
+          <span className="min-w-10 text-center text-xs font-medium tabular-nums">{format(year, 'yyyy')}</span>
+          <Button type="button" variant="ghost" size="icon-sm" className="size-7 rounded-full" onClick={onNextYear} disabled={!canGoToNextYear} aria-label="Next year">
+            <ChevronRight />
+          </Button>
+        </div>
+      </div>
+      <div className="relative mt-2 px-3">
+        <svg viewBox={`0 0 ${width} ${height}`} className="h-[116px] w-full" role="img" aria-label="全年练习分钟与完成题数">
+          {[0.25, 0.5, 0.75].map((ratio) => <line key={ratio} x1="0" x2={width} y1={top + plotHeight * ratio} y2={top + plotHeight * ratio} stroke="hsl(var(--border))" strokeDasharray="2 4" />)}
+          {values.map((item, index) => {
+            const barHeight = item.minutes > 0 ? Math.max(4, item.minutes / maxMinutes * plotHeight) : 12
+            return <rect key={item.label} x={step * index + step * .28} y={top + plotHeight - barHeight} width={step * .44} height={barHeight} rx="3" fill={item.minutes > 0 ? 'hsl(var(--primary) / .72)' : 'hsl(var(--muted))'} />
+          })}
+          {hasData && <polyline points={points} fill="none" stroke="hsl(var(--accent))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
+          {values.map((item, index) => <text key={item.label} x={step * index + step / 2} y={height - 6} textAnchor="middle" fontSize="9" fill="hsl(var(--muted-foreground))">{item.label}</text>)}
+        </svg>
+        {!hasData && <p className="pointer-events-none absolute inset-x-0 top-11 text-center text-[10px] text-muted-foreground">完成练习后，这里会显示全年趋势</p>}
       </div>
     </div>
   )

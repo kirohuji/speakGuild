@@ -15,9 +15,9 @@ export class ProfileController {
   }
 
   @Get('activity-heatmap')
-  async getActivityHeatmap(@Req() req: Request) {
+  async getActivityHeatmap(@Req() req: Request, @Query('year') year?: string) {
     const session = await requireAuthSession(req);
-    return this.profileService.getActivityHeatmap(session.user.id);
+    return this.profileService.getActivityHeatmap(session.user.id, Number(year));
   }
 
   @Get('practice-records')
