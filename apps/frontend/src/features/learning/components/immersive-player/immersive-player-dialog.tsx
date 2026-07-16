@@ -27,7 +27,7 @@ import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
-import { isIOS } from '@/lib/native'
+import { isIOS, isNative } from '@/lib/native'
 import { buildPlaybackSegments } from './immersive-player.mapper'
 import { immersivePlaybackService } from './immersive-playback.service'
 import { useImmersivePlayerPreferences } from './immersive-player.store'
@@ -372,10 +372,10 @@ function ImmersiveSettingsDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[88dvh] rounded-t-2xl pt-safe !z-[10001]" overlayClassName="!z-[10001]">
+      <DrawerContent className={cn('max-h-[88dvh] rounded-t-2xl !z-[10001]', isIOS() && 'pb-safe')} overlayClassName="!z-[10001]">
         <div className="flex items-center justify-between px-5 py-3">
           <DrawerTitle className="text-base">{t('immersivePlayer.settingsTitle')}</DrawerTitle>
-          <button type="button" onClick={() => onOpenChange(false)} aria-label={t('immersivePlayer.close')} className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <button type="button" onClick={() => onOpenChange(false)} aria-label={t('immersivePlayer.close')} className={cn('flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground', isNative() && 'hidden')}>
             <X className="size-4" />
           </button>
         </div>

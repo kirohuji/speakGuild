@@ -342,6 +342,41 @@
     overflow: hidden;
   }
 
+  /* 练习弹窗在原生键盘展开时，把题目操作区让给输入区域。
+     头部完整淡出后收缩，底部导航收起；键盘关闭后由属性移除自动复原。 */
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='practice'] [data-keyboard-practice-header] {
+    max-height: 3rem;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+    padding-top: 0.75rem;
+    padding-bottom: 0.5rem;
+    transition: max-height 220ms ease, margin 220ms ease, padding 220ms ease;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='practice'] [data-keyboard-practice-title] {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-0.25rem);
+    transition: opacity 120ms ease, transform 180ms ease;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='practice'] [data-keyboard-practice-progress] {
+    margin-bottom: 0.5rem;
+    transition: margin 220ms ease;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='practice'] [data-keyboard-practice-footer] {
+    max-height: 0;
+    min-height: 0;
+    overflow: hidden;
+    border-top-width: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: max-height 220ms ease, padding 220ms ease, opacity 160ms ease, border-width 220ms ease;
+  }
+
   @media (min-width: 768px) {
     body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='practice'] {
       left: 50% !important;

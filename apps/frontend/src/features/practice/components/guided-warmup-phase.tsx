@@ -694,7 +694,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden pt-[calc(1rem+env(safe-area-inset-top,0px))]">
       {/* Header */}
-      <div className="mb-4 grid shrink-0 grid-cols-[2.25rem_minmax(0,1fr)] items-start gap-3 px-4">
+      <div data-keyboard-practice-header className="mb-4 grid shrink-0 grid-cols-[2.25rem_minmax(0,1fr)_2.25rem] items-start gap-3 px-4">
         <Button variant="ghost" size="icon" onClick={onBack} className="mt-0.5"><ArrowLeft className="size-5" /></Button>
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-2">
           <p className="min-w-0 truncate text-xs text-muted-foreground">{t('practiceSession.warmupTitle')} · {currentIdx + 1}/{totalSteps}</p>
@@ -707,11 +707,12 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
               className="origin-right scale-90"
             />
           </label>
-          <h1 className="col-span-2 line-clamp-2 break-words text-lg font-bold leading-snug text-foreground">{topicTitle}</h1>
-          <p className="col-span-2 line-clamp-2 break-words text-xs text-muted-foreground/70">{flatSteps[currentIdx]?.label ?? ''}</p>
+          <h1 data-keyboard-practice-title className="col-span-2 line-clamp-2 break-words text-lg font-bold leading-snug text-foreground">{topicTitle}</h1>
+          <p data-keyboard-practice-title className="col-span-2 line-clamp-2 break-words text-xs text-muted-foreground/70">{flatSteps[currentIdx]?.label ?? ''}</p>
         </div>
+        <Button variant="ghost" size="icon" onClick={onBack} className="mt-0.5"><ChevronDown className="size-5" /></Button>
       </div>
-      <Progress value={((currentIdx + 1) / totalSteps) * 100} className="mb-4 h-1.5 shrink-0 px-4" />
+      <Progress data-keyboard-practice-progress value={((currentIdx + 1) / totalSteps) * 100} className="mb-4 h-1.5 shrink-0 px-4" />
 
       {/* Current card — scrollable */}
       <div className="min-h-0 min-w-0 flex-1 overscroll-contain overflow-x-hidden overflow-y-auto px-4 pb-4">
@@ -721,7 +722,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
       </div>
 
       {/* Bottom nav — fixed at bottom like LearningInsightDialog */}
-      <div className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
+      <div data-keyboard-practice-footer className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
         <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
           <ChevronLeft className="size-4" /> 上一个
         </Button>
