@@ -1,0 +1,107 @@
+=== PACK 7 VOCAB CROSS-REFERENCE ===
+Master words (packs 1-6): 1553
+
+--- 🅰️ 计划与预测 ---
+  [将来时结构]
+    NEW (5): will, 'll, won't, gonna（口语）, shall
+    CHUNKS (5): will not | be going to | am going to | is going to | are going to
+  [时间词（将来）]
+    NEW (1): ultimately
+    EXT (7): tomorrow(←1-beginner), tonight(←1-beginner), later(←1-beginner), soon(←1-beginner), someday(←2-daily-life), eventually(←3-daily-work), finally(←3-daily-work)
+    CHUNKS (20): the day after tomorrow | this weekend | this week | this month | this year | next week | next month | next year | next Monday | next summer | later today | later this week | very soon | real soon | one day | in the future | in the near future | from now on | before long | by then
+  [计划动词]
+    NEW (7): travel, visit, move, leave, arrive, stay, participate
+    EXT (6): start(←2-daily-life), begin(←2-daily-life), meet(←1-beginner), join(←2-daily-life), attend(←2-daily-life), return(←2-daily-life,2-daily-life)
+    CHUNKS (2): come back | go back
+  [预测动词]
+    NEW (3): shine, become, occur
+    EXT (7): rain(←1-beginner), snow(←1-beginner), storm(←2-daily-life), happen(←2-daily-life), change(←2-daily-life), improve(←2-daily-life), appear(←3-daily-work)
+    CHUNKS (5): get dark | turn out | work out | show up | take place
+  [预测程度词]
+    NEW (8): probably, definitely, certainly, absolutely, possibly, likely, unlikely, surely
+    EXT (2): maybe(←2-daily-life), perhaps(←2-daily-life)
+    CHUNKS (10): I think | I believe | I guess | I suppose | I expect | I hope | I wonder | I doubt | I'm sure | I'm not sure
+  Scene total: 24 new + 22 ext
+
+--- 🅱️ 能力与请求 ---
+  [can 能力动词]
+    NEW (13): drive, sing, draw, paint, count, solve, explain, type, fix, repair, design, program, code
+    EXT (7): swim(←1-beginner), cook(←1-beginner), dance(←1-beginner), read(←1-beginner), write(←1-beginner), translate(←4-essential-phrases), build(←2-daily-life)
+  [运动/技能动词]
+    NEW (5): ski, skate, dive, climb, jog
+    EXT (2): surf(←2-daily-life), hike(←2-daily-life)
+    CHUNKS (13): play football | play basketball | play tennis | play the guitar | play the piano | play chess | ride a bike | ride a horse | run fast | jump high | throw far | lift heavy | speak slowly
+  [语言能力]
+    NEW (2): understand, communicate
+    EXT (7): read(←1-beginner), write(←1-beginner), express(←4-essential-phrases), pronounce(←4-essential-phrases,4-essential-phrases), spell(←4-essential-phrases), translate(←4-essential-phrases), interpret(←4-essential-phrases)
+    CHUNKS (11): speak English | speak Chinese | speak Japanese | speak French | speak Spanish | speak Arabic | speak Korean | explain in English | say it in English | understand the meaning | make myself understood
+  [请求帮助动词]
+    NEW (9): assist, pass, hand, open, close, lock, unlock, fix, repair
+    EXT (7): help(←1-beginner), bring(←1-beginner), take(←1-beginner), hold(←2-daily-life), carry(←2-daily-life), lift(←2-daily-life), clean(←2-daily-life)
+    CHUNKS (4): turn on | turn off | plug in | set up
+  [请求许可动词]
+    NEW (10): park, leave, wait, stay, smoke, eat, drink, record, touch, try
+    EXT (5): use(←2-daily-life), borrow(←2-daily-life), sit(←1-beginner), stand(←1-beginner), keep(←1-beginner)
+    CHUNKS (5): come in | go out | take a photo | bring in | take out
+  [Could 礼貌副词]
+    NEW (17): kindly, simply, quickly, slowly, carefully, safely, directly, conveniently, comfortably, politely, properly, clearly, loudly, quietly, softly, patiently, briefly
+    EXT (3): please(←1-beginner), just(←1-beginner), immediately(←3-daily-work)
+  [礼貌响应短语]
+    NEW (4): sure, absolutely, certainly, anytime
+    CHUNKS (16): go ahead | of course | no problem | by all means | help yourself | after you | not at all | my pleasure | don't mention it | it's nothing | happy to help | I'd be happy to | with pleasure | yes please | no thank you | that's very kind of you
+  Scene total: 60 new + 31 ext
+
+--- 🅲 建议与义务 ---
+  [should 建议动词]
+    NEW (5): try, study, sleep, practice, explain
+    EXT (15): take(←1-beginner), see(←1-beginner), call(←1-beginner), rest(←2-daily-life), exercise(←2-daily-life), read(←1-beginner), ask(←1-beginner), tell(←1-beginner), show(←1-beginner), describe(←3-daily-work), check(←1-beginner), confirm(←4-essential-phrases), verify(←4-essential-phrases), review(←2-daily-life), prepare(←2-daily-life)
+  [shouldn't 不建议动词]
+    NEW (5): stress, panic, overeat, ignore, quit
+    EXT (6): worry(←1-beginner), rush(←2-daily-life), hurry(←2-daily-life), oversleep(←3-daily-work), avoid(←2-daily-life), delay(←2-daily-life)
+    CHUNKS (9): stay up | drink too much | work too hard | spend too much | waste time | skip meals | put off | give up | lose hope
+  [must 强制动词]
+    NEW (8): stop, wait, stay, follow, obey, respect, arrive, leave
+    EXT (12): remain(←3-daily-work), keep(←1-beginner), wear(←2-daily-life), bring(←1-beginner), show(←1-beginner), provide(←3-daily-work), submit(←2-daily-life), report(←2-daily-life), finish(←2-daily-life), complete(←2-daily-life), pay(←1-beginner), sign(←4-essential-phrases)
+  [mustn't 禁止动词]
+    NEW (10): smoke, drink, park, touch, feed, enter, cross, shout, litter, park
+    EXT (1): run(←1-beginner)
+    CHUNKS (9): turn left | turn right | use your phone | take photos | bring food | bring pets | open the door | touch the button | go inside
+  [have to 客观义务动词]
+    NEW (6): participate, study, practice, train, leave, arrive
+    EXT (9): work(←1-beginner), go(←1-beginner), come(←1-beginner), finish(←2-daily-life), complete(←2-daily-life), submit(←2-daily-life), attend(←2-daily-life), prepare(←2-daily-life), exercise(←2-daily-life)
+    CHUNKS (5): wake up | get up | pick up | drop off | take care of
+  Scene total: 34 new + 43 ext
+
+--- 🅳 情态综合 ---
+  [may 可能动词]
+    NEW (5): arrive, leave, end, worsen, occur
+    EXT (13): rain(←1-beginner), snow(←1-beginner), storm(←2-daily-life), flood(←4-essential-phrases), happen(←2-daily-life), change(←2-daily-life), start(←2-daily-life), continue(←2-daily-life), improve(←2-daily-life), increase(←3-daily-work), decrease(←3-daily-work), appear(←3-daily-work), disappear(←3-daily-work)
+    CHUNKS (2): take place | be delayed
+  [might 可能动词]
+    NEW (4): say, offer, try, participate
+    EXT (16): come(←1-beginner), go(←1-beginner), call(←1-beginner), tell(←1-beginner), ask(←1-beginner), agree(←3-daily-work), refuse(←2-daily-life), decide(←5-opinion-basics), choose(←2-daily-life), forget(←2-daily-life), remember(←2-daily-life), attempt(←5-opinion-basics), succeed(←2-daily-life), fail(←2-daily-life), win(←5-opinion-basics), lose(←3-daily-work)
+  [Would you like 邀请动词]
+    NEW (1): sing
+    EXT (1): dance(←1-beginner)
+    CHUNKS (13): join us | come with us | watch a movie | go for a walk | try this dish | sit here | play a game | take a break | have lunch together | come over | stay for dinner | go shopping | see a show
+  [Will you 请求意愿动词]
+    NEW (8): teach, promise, swear, allow, permit, let, stay, wait
+    EXT (12): help(←1-beginner), come(←1-beginner), call(←1-beginner), write(←1-beginner), send(←1-beginner), tell(←1-beginner), show(←1-beginner), lend(←2-daily-life), give(←1-beginner), agree(←3-daily-work), make(←1-beginner), keep(←1-beginner)
+  [客气礼貌词]
+    EXT (4): please(←1-beginner), thanks(←1-beginner), sorry(←1-beginner), pardon(←1-beginner)
+    CHUNKS (16): thank you | excuse me | excuse the interruption | forgive me | I apologize | I'm sorry to bother you | I hate to ask but | if you don't mind | if it's not too much trouble | when you have a moment | at your earliest convenience | I'd appreciate it | that would be great | that's very kind | you're too kind | I'm most grateful
+  Scene total: 18 new + 46 ext
+
+--- 🅴 祝愿与承诺 ---
+  [祝福用语]
+    NEW (1): Godspeed
+    CHUNKS (14): Good luck! | Good luck on | Best of luck | Wish you luck | Best wishes | All the best | Warmest regards | Take care | Stay safe | Safe travels | Bon voyage | Break a leg | Knock 'em dead | Go get 'em
+  [祝贺用语]
+    NEW (3): Congratulations!, Excellent!, Bravo!
+    CHUNKS (12): Congratulations on | Well done! | Great job! | Good for you! | That's wonderful! | I'm so proud of you! | You deserve it! | That's fantastic! | Way to go! | Amazing work! | Keep up the good work! | You rock!
+  Scene total: 4 new + 0 ext
+
+=== SUMMARY ===
+Total NEW words: 140
+Total EXT words (overlap with packs 1-6): 142
+Total unique new words available for core allocation: 140

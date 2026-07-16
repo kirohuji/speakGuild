@@ -1,0 +1,271 @@
+=== 1-beginner (58 patterns) ===
+1. I am ___.
+2. I am ___ years old.
+3. I am from ___.
+4. I am not ___. I am ___.
+5. You are very ___.
+6. Are you ___? Yes I am.
+7. How are you? I am ___.
+8. My name is ___. I am from ___.
+9. I am a ___. I am ___ years old.
+10. Nice to meet you. I am ___.
+11. Thank you for ___.
+12. How old ___ you? I am ___.
+13. It is ___.
+14. What is this? It is ___.
+15. It is not ___. It is ___.
+16. It is ___ and ___.
+17. The ___ is ___.
+18. It is ___ the ___.
+19. Where is ___? It is ___.
+20. It is ___ today.
+21. The weather is ___ today.
+22. There is ___ on the ___.
+23. There are ___ ___.
+24. He is ___. His name is ___.
+25. She is ___. Her name is ___.
+26. My ___ is a ___.
+27. I have ___ ___.
+28. He is a ___. / She is a ___.
+29. What does he do? He is ___.
+30. He is ___ and ___.
+31. I am from ___. I speak ___.
+32. ___! How are you?
+33. See you ___!
+34. Where are you from? I am from ___.
+35. What do you do? I am a ___.
+36. How is ___? It is ___.
+37. This is my ___.
+38. Are you ___? I am ___.
+39. I have ___ ___.
+40. What time is it? It is ___.
+41. I ___ at ___.
+42. Today is ___.
+43. I ___ on ___.
+44. I ___ every ___.
+45. I will ___ ___.
+46. I ___ ___ ___.
+47. He ___ ___s ___.
+48. I want ___.
+49. I would like ___.
+50. I need ___.
+51. I can ___.
+52. Can you ___?
+53. I like ___.
+54. I don't like ___.
+55. I am ___. I want to ___.
+56. I am ___. I need to ___.
+57. Can you help me ___?
+58. Excuse me ___?
+
+=== 2-daily-life (55 patterns) ===
+1. I ___ every morning/day.
+2. I ___ at night.
+3. I ___ on weekends.
+4. I don't ___.
+5. I ___ from ___ to ___.
+6. I do ___ after school.
+7. I ___ every ___.
+8. I ___ in the ___.
+9. I ___ at ___ o'clock.
+10. I ___ after ___.
+11. I like ___.
+12. I like to ___.
+13. I love ___.
+14. I don't like ___.
+15. I want a ___.
+16. I want to ___.
+17. I would like ___.
+18. I need ___.
+19. I need to ___.
+20. I have a ___.
+21. I have ___.
+22. Do you have ___?
+23. I don't have ___.
+24. I can ___.
+25. Can I ___?
+26. I ___ at ___.
+27. I ___ in the ___.
+28. I go to ___ by ___.
+29. I take the ___ to ___.
+30. I come to ___ ___.
+31. I stay at ___ on ___.
+32. I wait for ___ at the ___.
+33. I look for ___.
+34. I want to buy ___.
+35. How much is ___?
+36. How much are ___?
+37. Can I try ___ on?
+38. Do you have this in ___?
+39. This is too ___.
+40. I'll take ___. Here's ___.
+41. It's ___ today. Let's ___!
+42. What's the weather like? — It's ___.
+43. I go out for ___ every ___.
+44. Let's go to ___ this ___.
+45. I ___ to ___. It's not far.
+46. Can I have ___, please?
+47. I'd like to order ___.
+48. What do you recommend? — ___ is very good.
+49. The ___ is ___!
+50. I call ___ every ___.
+51. I send ___ to ___.
+52. Can you ___ me ___?
+53. Let's meet at ___ at ___.
+54. I'm on my way. I'll be there in ___.
+55. Sorry, I'm late. ___ was ___.
+
+=== 3-daily-work (45 patterns) ===
+1. He/She is my ___.
+2. He/She is a ___.
+3. He/She is very ___.
+4. He/She has a ___.
+5. He/She has ___ ___.
+6. He/She doesn't have a ___.
+7. His/Her name is ___.
+8. His/Her ___ is ___.
+9. He/She likes ___.
+10. He/She likes to ___.
+11. He/She doesn't like ___.
+12. Does he/she like ___? — Yes, he/she does.
+13. What does he/she like? — He/She likes ___.
+14. He/She gets up at ___.
+15. He/She goes to ___ by ___.
+16. He/She eats ___ at ___.
+17. He/She drinks ___ after ___.
+18. He/She comes home at ___.
+19. He/She goes to bed at ___.
+20. He/She doesn't ___.
+21. He/She works in a ___.
+22. He/She studies ___ at ___.
+23. He/She ___ after ___.
+24. Where does he/she ___? — He/She ___.
+25. Does he/she ___ on weekends? — Yes/No.
+26. I ___, and he/she ___ too.
+27. I ___, but he/she ___.
+28. I ___, but he/she doesn't ___.
+29. I don't ___, but he/she ___.
+30. I have ___, and he/she has ___.
+31. I ___ at ___, but he/she ___ at ___.
+32. My ___ is ___. His/Her ___ is ___.
+33. They ___.
+34. My parents ___.
+35. The children/students ___.
+36. Their ___ is/are ___.
+37. ___'s ___ is a ___.
+38. Everyone ___.
+39. He/She is a ___. He/She ___.
+40. My ___ works in a ___. He/She ___.
+41. His/Her job is ___. He/She ___.
+42. He/She works from ___. He/She is a ___.
+43. Look! The ___ is ___ing ___.
+44. In the picture, ___ is ___ing ___.
+45. There was a ___ in ___. It was ___.
+
+=== 4-essential-phrases (59 patterns) ===
+1. Where is the nearest ___?
+2. Where are the ___?
+3. How do I get to ___?
+4. Is there a ___ near here?
+5. How far is ___ from here?
+6. Am I going the right way to ___?
+7. What time does ___ open/close?
+8. What time is ___?
+9. Which ___ goes to ___?
+10. How long does it take to ___?
+11. Where do I ___?
+12. Does this ___ stop at ___?
+13. How much does it cost to go to ___?
+14. How much is ___?
+15. How much are ___?
+16. Do you have this in ___?
+17. I want to try ___ on. Where is the fitting room?
+18. Do you have other ___?
+19. Do you take ___?
+20. I need ___, please.
+21. I want to see ___, please.
+22. What do you recommend? / What do you recommend for ___?
+23. Does this contain/have ___?
+24. Is ___ included?
+25. Do you have any ___ options?
+26. Is there a table ___?
+27. What do you do? — I'm a ___. / I work in ___.
+28. Where are you from? — I'm from ___.
+29. How's it going? — ___.
+30. What do you do ___?
+31. What kind of ___ do you like?
+32. Do you like ___?
+33. What ___ do you want to ___?
+34. Are you free ___?
+35. Do you want to ___?
+36. What time do you want to ___?
+37. Where do you want to ___?
+38. How is ___?
+39. Is everything ___?
+40. Do you need ___?
+41. Is ___ there, please?
+42. Who's calling, please? — This is ___.
+43. Is ___ available?
+44. When is ___ back?
+45. When is a good time to ___?
+46. Please ask him to ___.
+47. Please tell him ___.
+48. Does ___ know ___?
+49. Do I ___ or ___?
+50. What's your ___?
+51. Help! Where is the nearest ___?
+52. How do I ___?
+53. Is there a ___ here?
+54. Is everyone ___?
+55. What do I do? I have a ___.
+56. Do I need to ___?
+57. Is there a ___ open right now?
+58. Do you speak ___?
+59. How much does it cost to ___?
+
+=== 5-opinion-basics (44 patterns) ===
+1. I'm ___ right now.
+2. He/She is ___ at the moment.
+3. They/We are ___ right now.
+4. I ___ every day, but right now I'm ___.
+5. He usually ___, but today he's ___.
+6. Look! ___ is/are ___.
+7. It's ___ outside.
+8. People are ___ing.
+9. I think ___ is ___.
+10. Right now I'm ___, and my friend is ___.
+11. I usually ___, but today I'm ___.
+12. I normally ___, but this week I'm ___.
+13. She ___ at work, but today she's ___ing.
+14. I ___ at ___, but today I'm ___ at ___.
+15. We usually ___ on ___, but this week we're ___ on ___.
+16. I live in ___, but I'm staying in ___ this month.
+17. I ___ after work, but today I'm ___ right now.
+18. It ___ here in ___.
+19. It's ___ing right now.
+20. ___ is/are ___ing right now.
+21. I always ___.
+22. I usually ___ in the ___.
+23. I often ___ before ___.
+24. I sometimes ___ after ___.
+25. I rarely ___.
+26. I never ___.
+27. She is always ___.
+28. He is never ___.
+29. I usually ___, but this month I'm ___.
+30. I think ___ is ___ing. He/She usually ___ at this time.
+31. How often do you ___? — I ___ once/twice a ___.
+32. I have ___. (状态，❌ 不用进行时)
+33. He has ___. (状态)
+34. I ___ every day, but right now I'm having ___.
+35. I'm having ___ right now.
+36. She is having ___ this ___ (临时经历).
+37. I get up at ___, but right now I'm getting up.
+38. I get home at ___, but today I'm getting home ___.
+39. I'm getting ___. Let's ___.
+40. It's getting ___. Let's ___.
+41. I get ___ every day, but these days I'm getting ___.
+42. She gets ___ when ___.
+43. He is getting ___ with ___ (正在变得/相处).
+44. Right now she's getting ___ (正在变得), but she usually ___.
+

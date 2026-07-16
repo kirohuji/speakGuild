@@ -1,0 +1,353 @@
+=== 1-beginner (92 chunks) ===
+1. Hello! I am Li Ming.
+2. I am a student.
+3. I am from China.
+4. I am 20 years old.
+5. I am not a teacher. I am a student.
+6. You are very kind.
+7. Are you a student? Yes, I am.
+8. How are you? I am fine.
+9. Nice to meet you!
+10. My name is Li Ming.
+11. I am from Beijing.
+12. Thank you very much!
+13. Please come in.
+14. You're welcome.
+15. How old are you?
+16. It is a book.
+17. What is this? It is a pen.
+18. It is very big.
+19. The apple is red.
+20. It is big and red.
+21. It is on the table.
+22. It is in the bag.
+23. Where is the book?
+24. It is sunny today.
+25. It is very hot today.
+26. There is a book on the table.
+27. There are two pens.
+28. It is not a pen. It is a pencil.
+29. He is my friend.
+30. She is a teacher.
+31. His name is Tom.
+32. My father is a doctor.
+33. I have one brother.
+34. He is a doctor. / She is a nurse.
+35. He is tall and thin.
+36. She is very pretty.
+37. I am from China. I speak Chinese.
+38. We are good friends.
+39. They are from China.
+40. We are both students.
+41. Good morning! How are you?
+42. Goodbye! See you!
+43. See you later!
+44. Where are you from? I am from China.
+45. What do you do? I am a student.
+46. How is your day? It is good.
+47. Not bad, thank you.
+48. This is my friend Tom.
+49. Have you met my brother?
+50. Are you okay? I am fine.
+51. Take care! See you!
+52. Thanks a lot!
+53. Excuse me, where is the station?
+54. Could you help me please?
+55. Let me introduce myself.
+56. How's it going? — Pretty good.
+57. one two three four five six seven eight nine ten
+58. eleven twelve thirteen fourteen fifteen sixteen
+59. twenty-one to one hundred
+60. a hundred, a thousand, a million
+61. first, second, third, fourth, fifth
+62. the first time / the second floor
+63. What time is it? — It's three o'clock.
+64. It's half past three.
+65. It's a quarter past six / a quarter to six.
+66. It's four twenty.
+67. Today is Monday. / Today is Tuesday.
+68. I go to school on Monday. / on weekdays.
+69. January, February, March, April...
+70. My birthday is in May.
+71. Today is May 1st. / March 3rd.
+72. I was born in 2000. / in 1998.
+73. How much is it? — It's 50 yuan.
+74. How old are you? — I'm 25 years old.
+75. My phone number is one-three-eight...
+76. I study English every day.
+77. I always eat breakfast.
+78. I often go to the park on weekends.
+79. I want a coffee.
+80. I would like some water.
+81. I need help.
+82. I can speak English.
+83. Can you help me?
+84. Can I go now?
+85. I like coffee.
+86. I don't like cold weather.
+87. I love music.
+88. I am hungry. I want to eat.
+89. I am thirsty. Can I have water?
+90. I am tired. I need to rest.
+91. Can you help me find this?
+92. Excuse me, where is the bathroom?
+
+=== 2-daily-life (90 chunks) ===
+1. I eat breakfast every morning.
+2. I drink coffee in the morning.
+3. I go to school every day.
+4. I don't eat meat.
+5. I study English every day.
+6. I play football on weekends.
+7. I listen to music in the car.
+8. I write emails at work.
+9. I get up at 7 o'clock.
+10. I take a shower in the morning.
+11. I leave for work at 8.
+12. I read books at night.
+13. I watch TV after dinner.
+14. I go to bed at 11 pm.
+15. I relax on weekends.
+16. I visit my grandparents on Sundays.
+17. I hang out with friends on Saturday.
+18. I work from 9 to 5.
+19. I do my homework after school.
+20. I walk my dog every evening.
+21. I like coffee.
+22. I like to read books.
+23. I love music.
+24. I don't like cold weather.
+25. I want a new phone.
+26. I want to learn Spanish.
+27. I would like some water.
+28. I need some help.
+29. I need to go now.
+30. I have a brother.
+31. I have two cats.
+32. I have a question.
+33. Do you have a pen? — Yes, I do.
+34. I don't have a car.
+35. I can speak English.
+36. Can I go now?
+37. I get up at 7 o'clock.
+38. I go to bed at 11 pm.
+39. I have breakfast at 7.
+40. I have lunch at 12.
+41. I come home at 6 pm.
+42. I leave for work at 8.
+43. I go to work by bus.
+44. I take the subway to school.
+45. I come to school early.
+46. I stay at home on Sundays.
+47. I wait for the bus at the stop.
+48. I look for my keys.
+49. I want to buy a new shirt.
+50. I need to go shopping this weekend.
+51. How much is this? — It's 50 yuan.
+52. How much are these? — They're 100 yuan.
+53. Can I try this on? — Sure.
+54. Do you have this in a smaller size?
+55. This is too expensive. Do you have a cheaper one?
+56. I'll take this one. Here's the money.
+57. It's sunny today. Let's go out!
+58. What's the weather like today? — It's warm and sunny.
+59. I need an umbrella. It's raining outside.
+60. I go out for a walk every evening.
+61. Let's go to the park this afternoon.
+62. I walk to school. It's not far from my home.
+63. I'm hungry. Let's eat out tonight.
+64. Can I have the menu, please?
+65. I'd like to order a pizza and a salad.
+66. What do you recommend? — The pasta is very good.
+67. I'll have the same.
+68. The food is delicious! I love it.
+69. Can I have the bill, please? — Sure. It's 120 yuan.
+70. I call my mom every day.
+71. I send messages to my friends on WeChat.
+72. Can you call me back later? I'm busy right now.
+73. Let's meet at the coffee shop at 3 pm.
+74. I'm on my way. I'll be there in 10 minutes.
+75. Sorry, I'm late. The traffic was bad.
+76. I check my phone first thing in the morning.
+77. Sit down, please.
+78. Open the door, please.
+79. Please be quiet.
+80. Come here. / Go there.
+81. Don't worry.
+82. Don't be late for class.
+83. Don't forget to bring your book.
+84. Let's go!
+85. Let's meet at 3 o'clock.
+86. Let's not wait any longer.
+87. Be careful!
+88. Please be on time.
+89. Let's go out for dinner tonight.
+90. Don't forget to call me when you arrive.
+
+=== 3-daily-work (61 chunks) ===
+1. He is my father. She is my mother.
+2. He is a doctor. She is a teacher.
+3. He is very tall. She is very kind.
+4. His name is Tom. Her name is Anna.
+5. He has a car. She has a cat.
+6. He has two brothers.
+7. He doesn't have a phone.
+8. She likes music. He likes sports.
+9. He likes to read books.
+10. She doesn't like cold weather.
+11. He doesn't like to watch TV.
+12. Does he like sports? — Yes, he does.
+13. What does she like? — She likes music.
+14. My mother is a nurse. She works in a hospital.
+15. My dad always gets up early.
+16. He gets up at 7 every morning.
+17. She goes to school by bus.
+18. He eats lunch at school.
+19. She drinks water after exercise.
+20. He doesn't eat junk food.
+21. She gets up at 6 every day.
+22. He comes home at 6 pm.
+23. She goes to bed at 10 pm.
+24. He works in a hospital.
+25. She studies English at university.
+26. He teaches music at a school.
+27. She watches TV after dinner.
+28. He does his homework in the evening.
+29. Does he work on weekends? — No, he doesn't.
+30. Where does she study? — She studies at a university.
+31. I like music, and she likes music too.
+32. I eat breakfast, but he eats lunch only.
+33. I like coffee, but she doesn't like coffee.
+34. I don't have a pet, but she has a cat.
+35. I have a brother, and he has a sister.
+36. I have a bike, but she doesn't have a bike.
+37. I get up at 6, but he gets up at 8.
+38. My name is Tom. His name is Jack.
+39. They live in Beijing.
+40. They have a car and a dog.
+41. My parents work very hard.
+42. The children play in the park.
+43. People here speak Chinese.
+44. Their house is very big.
+45. Tom's mother is a nurse.
+46. This is Tom's book. It is on the desk.
+47. Everyone likes him.
+48. Nobody knows his name.
+49. He is a firefighter. He helps people.
+50. He drives a taxi. He works at night.
+51. My aunt works in a hospital. She takes care of patients.
+52. His job is very interesting. He travels a lot.
+53. She works from home. She is a writer.
+54. He wants to be a scientist when he grows up.
+55. Look! The boy runs after his dog.
+56. In the picture, a girl reads under a tree.
+57. She opens the door and smiles at me.
+58. Suddenly, it starts to rain. Everyone runs home.
+59. There is a big dog in the park. It is very friendly.
+60. I see a man on the street. He looks happy.
+61. He tells me a funny story. I laugh so hard!
+
+=== 4-essential-phrases (70 chunks) ===
+1. Excuse me, where is the nearest subway station?
+2. How do I get to the museum?
+3. Is there a pharmacy near here?
+4. How far is it from here?
+5. Am I going the right way to the station?
+6. Do you have a map?
+7. Is this seat taken?
+8. What time does the museum open?
+9. What time is the next train to Shanghai?
+10. Which bus goes to the city center?
+11. How long does it take to get there?
+12. Where do I buy a ticket?
+13. Does this bus stop at the museum?
+14. How much does it cost to go to the airport?
+15. How much is this?
+16. How much are these?
+17. Do you have this in a small size?
+18. I want to try this on. Where is the fitting room?
+19. This is a little expensive. Do you have other ones?
+20. Do you take cards?
+21. I need a receipt, please.
+22. I want to see the menu, please.
+23. What do you recommend?
+24. Does this dish contain nuts?
+25. I want the bill, please.
+26. Is service charge included?
+27. Do you have any vegetarian options?
+28. Is there a table by the window?
+29. What do you do?
+30. Where are you from?
+31. How's it going?
+32. What do you do for fun?
+33. What kind of music do you like?
+34. Do you like traveling?
+35. What countries do you want to visit?
+36. Are you free this weekend?
+37. Do you want to grab lunch together?
+38. What time do you want to meet?
+39. Where do you want to meet?
+40. How is your day?
+41. Is everything okay? You look tired.
+42. Do you need help?
+43. Hello, is Mr. Wang there, please?
+44. Who's calling, please?
+45. Is Mr. Wang available?
+46. When is he back?
+47. I want to call back. When is a good time?
+48. Do you hear me? The signal is bad here.
+49. Sorry, I think you have the wrong number.
+50. I want to leave a message. Is that okay?
+51. Please take a message for me.
+52. Please ask him to call me back.
+53. Please tell him I called.
+54. Does he know I called?
+55. Do I call back or wait for his call?
+56. What's your phone number?
+57. Help! Is anyone here?
+58. Where is the nearest hospital?
+59. How do I call an ambulance?
+60. Is there a doctor here?
+61. Is anyone calling the police?
+62. Is everyone okay?
+63. What happened? Tell me what you see.
+64. I don't feel well. Where is the nearest hospital?
+65. What do I do? I have a bad headache.
+66. Do I need to see a doctor?
+67. Is there a pharmacy open right now?
+68. Please help me. I'm lost.
+69. Do you speak Chinese?
+70. How much does it cost to see a doctor here?
+
+=== 5-opinion-basics (30 chunks) ===
+1. I always get up at 7.
+2. I usually drink coffee in the morning.
+3. I often read before bed.
+4. I sometimes watch TV after work.
+5. I rarely eat junk food.
+6. I never smoke.
+7. She is always late for class.
+8. He is never tired in the morning.
+9. I usually work in Beijing, but this week I'm working in Shanghai.
+10. She is a teacher, but today she is learning English herself.
+11. Right now I'm cooking, and my sister is setting the table.
+12. I think he is sleeping. He usually takes a nap at this time.
+13. I usually walk to work, but this month I'm taking the bus.
+14. How often do you exercise? — I usually go running three times a week.
+15. I have a car.
+16. I have two brothers.
+17. I have a headache.
+18. She has blue eyes.
+19. I have breakfast at 7.
+20. I have a meeting at 3.
+21. I have a good time at parties.
+22. She has a lot of work.
+23. I get up at 7 every day.
+24. I get home at 6 pm.
+25. I get to work by bus.
+26. I get tired easily.
+27. It gets dark early in winter.
+28. She gets angry when people are late.
+29. I get a lot of emails at work.
+30. He gets along well with everyone.
+

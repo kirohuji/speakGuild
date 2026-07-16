@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { addMonths, addWeeks, addYears, eachDayOfInterval, endOfMonth, endOfWeek, endOfYear, format, isAfter, isSameDay, parseISO, startOfDay, startOfMonth, startOfWeek, startOfYear } from 'date-fns'
 import { enUS, ja, zhCN } from 'date-fns/locale'
-import { CalendarDays, CalendarRange, Flame, CalendarCheck, ChevronLeft, ChevronRight, Clock3, ListChecks, BarChart3 } from 'lucide-react'
+import { CalendarDays, Flame, CalendarCheck, ChevronLeft, ChevronRight, Clock3, ListChecks } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
@@ -11,6 +11,31 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { cn } from '@/lib/cn'
 import { useLearningStore } from '@/stores/learning.store'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
+import { Bar, CartesianGrid, ComposedChart, LabelList, Line, XAxis, YAxis } from 'recharts'
+
+function useLearningChartConfig() {
+  const { t } = useTranslation()
+  return {
+    minutes: { label: t('learning.activeDuration', { defaultValue: '练习分钟' }), color: 'hsl(var(--primary))' },
+    questions: { label: t('learning.questionsCompleted', { defaultValue: '完成题数' }), color: 'hsl(var(--accent))' },
+  } satisfies ChartConfig
+}
+
+const weeklyChartMock = [
+  { minutes: 12, questions: 8 },
+  { minutes: 24, questions: 16 },
+  { minutes: 8, questions: 5 },
+  { minutes: 31, questions: 21 },
+  { minutes: 18, questions: 12 },
+  { minutes: 27, questions: 18 },
+  { minutes: 15, questions: 10 },
+]
+
+const yearlyChartMock = [18, 24, 15, 32, 21, 38, 26, 29, 20, 34, 28, 41].map((minutes, index) => ({
+  minutes,
+  questions: [12, 16, 9, 23, 14, 27, 18, 21, 13, 25, 19, 30][index],
+}))
 
 export function LearningWeekTracker() {
   const { t } = useTranslation()
@@ -77,7 +102,7 @@ function CheckInCalendarDrawer({
   const [month, setMonth] = useState(() => startOfMonth(new Date()))
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }))
   const [year, setYear] = useState(() => startOfYear(new Date()))
-  const [view, setView] = useState<'week' | 'month' | 'year'>('week')
+  const [view, setView] = useState<'week' | 'month' | 'year'>('month')
   const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date())
   const today = useMemo(() => startOfDay(new Date()), [])
   const calendarLocale = i18n.language.startsWith('ja')
@@ -177,6 +202,7 @@ function CheckInCalendarDrawer({
             <WeeklyActivity
               days={visibleDays}
               dailyStats={dailyStats}
+              checkedInDates={checkedInDates}
               locale={calendarLocale}
               today={today}
               selectedDay={selectedDay}
@@ -204,7 +230,7 @@ function CheckInCalendarDrawer({
                 <ChevronRight className="size-4" />
               </Button>
             </div>
-            <div className="overflow-hidden">
+            <div className="overflow-hidden" onPointerDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
               <Calendar mode="single" selected={selectedDay} onSelect={setSelectedDay} month={month} hideNavigation locale={calendarLocale} disabled={{ after: today }}
                 modifiers={{ checkedIn: checkedInDates }}
                 modifiersClassNames={{ checkedIn: 'relative after:absolute after:bottom-1 after:left-1/2 after:size-2 after:-translate-x-1/2 after:rounded-full after:bg-primary after:content-[""]' }}
@@ -215,6 +241,12 @@ function CheckInCalendarDrawer({
             <YearlyActivity
               year={year}
               dailyStats={dailyStats}
+              today={today}
+              onSelectMonth={(target) => {
+                setMonth(target)
+                setSelectedDay(target)
+                setView('month')
+              }}
               onPrevYear={() => setYear((value) => addYears(value, -1))}
               onNextYear={() => setYear((value) => addYears(value, 1))}
               canGoToNextYear={canGoToNextYear}
@@ -240,9 +272,10 @@ function formatDuration(seconds: number) {
   return `${Math.ceil(Math.max(0, seconds) / 60)} 分钟`
 }
 
-function WeeklyActivity({ days, dailyStats, locale, today, selectedDay, onSelectDay, onPrevWeek, onNextWeek, canGoToNextWeek }: {
+function WeeklyActivity({ days, dailyStats, checkedInDates, locale, today, selectedDay, onSelectDay, onPrevWeek, onNextWeek, canGoToNextWeek }: {
   days: Date[]
   dailyStats: Map<string, { date: string; questionCount: number; activeSeconds: number }>
+  checkedInDates: Date[]
   locale: typeof zhCN
   today: Date
   selectedDay?: Date
@@ -252,24 +285,18 @@ function WeeklyActivity({ days, dailyStats, locale, today, selectedDay, onSelect
   canGoToNextWeek: boolean
 }) {
   const { t } = useTranslation()
+  const chartConfig = useLearningChartConfig()
   const items = days.map((day) => {
     const stat = dailyStats.get(format(day, 'yyyy-MM-dd'))
     return { day, minutes: Math.ceil((stat?.activeSeconds ?? 0) / 60), questionCount: stat?.questionCount ?? 0 }
   })
   const hasData = items.some((item) => item.minutes > 0 || item.questionCount > 0)
-  const maxMinutes = Math.max(1, ...items.map((item) => item.minutes))
-  const maxQuestions = Math.max(1, ...items.map((item) => item.questionCount))
-  const chartWidth = 320
-  const chartHeight = 112
-  const top = 12
-  const bottom = 17
-  const innerHeight = chartHeight - top - bottom
-  const step = chartWidth / items.length
-  const points = items.map((item, index) => {
-    const x = step * index + step / 2
-    const y = top + innerHeight - (item.questionCount / maxQuestions) * innerHeight
-    return `${x},${y}`
-  }).join(' ')
+  const usingMockData = !hasData && import.meta.env.DEV
+  const chartData = items.map((item, index) => ({
+    day: format(item.day, 'EEEEE', { locale }),
+    minutes: usingMockData ? weeklyChartMock[index].minutes : item.minutes,
+    questions: usingMockData ? weeklyChartMock[index].questions : item.questionCount,
+  }))
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-background">
       <div className="flex items-center justify-between gap-3 px-3 pt-3">
@@ -291,41 +318,46 @@ function WeeklyActivity({ days, dailyStats, locale, today, selectedDay, onSelect
         <span className="flex items-center gap-1"><i className="size-2 rounded-full bg-accent" />题数</span>
       </div>
       <div className="relative mt-2 min-h-0 flex-1 px-3">
-        <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none" className="absolute inset-x-3 top-0 h-[calc(100%-4.5rem)] w-[calc(100%-1.5rem)] overflow-visible" role="img" aria-label="每周练习分钟与完成题数">
-          {[0.25, 0.5, 0.75].map((ratio) => <line key={ratio} x1="0" x2={chartWidth} y1={top + innerHeight * ratio} y2={top + innerHeight * ratio} stroke="hsl(var(--border))" strokeDasharray="2 4" />)}
-          {items.map((item, index) => {
-            const height = item.minutes > 0 ? Math.max(5, (item.minutes / maxMinutes) * innerHeight) : 18
-            const x = step * index + step * 0.23
-            return <rect key={item.day.toISOString()} x={x} y={top + innerHeight - height} width={step * 0.54} height={height} rx="4" fill={item.minutes > 0 ? 'hsl(var(--primary) / 0.72)' : 'hsl(var(--muted))'} />
-          })}
-          {hasData && <polyline points={points} fill="none" stroke="hsl(var(--accent))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
-          {hasData && items.map((item, index) => {
-            const x = step * index + step / 2
-            const y = top + innerHeight - (item.questionCount / maxQuestions) * innerHeight
-            return <circle key={`point:${item.day.toISOString()}`} cx={x} cy={y} r="3" fill="hsl(var(--background))" stroke="hsl(var(--accent))" strokeWidth="2" />
-          })}
-        </svg>
-        {!hasData && <p className="pointer-events-none absolute inset-x-0 top-11 text-center text-[10px] text-muted-foreground">完成一次练习后，这里会显示学习趋势</p>}
-        <div className="absolute inset-x-3 bottom-2 grid grid-cols-7 gap-1 border-t border-border/60 pt-1.5">
-          {items.map((item) => (
-            <button key={item.day.toISOString()} type="button" onClick={() => onSelectDay(item.day)} className={cn('mx-auto flex size-[2.15rem] min-w-0 flex-col items-center justify-center rounded-xl text-[10px] transition-colors', isSameDay(item.day, selectedDay ?? new Date(0)) ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/60')}>
-              <span>{format(item.day, 'EEEEE', { locale })}</span>
-              <span className={cn('tabular-nums', isSameDay(item.day, today) && 'font-semibold')}>{format(item.day, 'd')}</span>
-            </button>
-          ))}
+        <ChartContainer config={chartConfig} className="absolute inset-x-3 top-0 h-[calc(100%-4.5rem)] w-[calc(100%-1.5rem)] pb-2">
+          <ComposedChart accessibilityLayer data={chartData} margin={{ top: 18, right: 0, left: 0, bottom: 0 }}>
+            <CartesianGrid vertical={false} />
+            <XAxis dataKey="day" hide />
+            <YAxis hide yAxisId="metric" />
+            <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
+            <Bar dataKey="minutes" yAxisId="metric" barSize={14} fill="var(--color-minutes)" radius={[4, 4, 0, 0]} isAnimationActive={false}>
+              <LabelList dataKey="minutes" position="top" offset={5} className="fill-muted-foreground" fontSize={10} />
+            </Bar>
+            <Line type="linear" dataKey="questions" yAxisId="metric" stroke="var(--color-questions)" strokeWidth={3} dot={{ r: 3, fill: 'var(--color-questions)', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={false} />
+          </ComposedChart>
+        </ChartContainer>
+        <div className="absolute inset-x-3 bottom-2 [--cell-size:2.15rem]">
+          <div className="grid grid-cols-7 text-center text-xs font-normal text-muted-foreground">
+            {items.map((item) => <span key={`weekday:${item.day.toISOString()}`}>{format(item.day, 'EEEEE', { locale })}</span>)}
+          </div>
+          <div className="mt-1.5 grid grid-cols-7">
+            {items.map((item) => (
+              <button key={item.day.toISOString()} type="button" onClick={() => onSelectDay(item.day)} className={cn('flex aspect-square size-full min-h-[--cell-size] items-center justify-center rounded-xl p-0 text-xs font-normal leading-normal transition-colors', checkedInDates.some((date) => isSameDay(date, item.day)) && 'relative after:absolute after:bottom-1 after:left-1/2 after:size-2 after:-translate-x-1/2 after:rounded-full after:bg-primary after:content-[""]', isSameDay(item.day, selectedDay ?? new Date(0)) ? 'bg-muted text-foreground' : 'text-foreground hover:bg-muted')}>
+                {format(item.day, 'd')}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-function YearlyActivity({ year, dailyStats, onPrevYear, onNextYear, canGoToNextYear }: {
+function YearlyActivity({ year, dailyStats, today, onSelectMonth, onPrevYear, onNextYear, canGoToNextYear }: {
   year: Date
   dailyStats: Map<string, { date: string; questionCount: number; activeSeconds: number }>
+  today: Date
+  onSelectMonth: (month: Date) => void
   onPrevYear: () => void
   onNextYear: () => void
   canGoToNextYear: boolean
 }) {
+  const { t } = useTranslation()
+  const chartConfig = useLearningChartConfig()
   const values = Array.from({ length: 12 }, (_, index) => {
     const prefix = `${format(year, 'yyyy')}-${String(index + 1).padStart(2, '0')}`
     const days = [...dailyStats.values()].filter((item) => item.date.startsWith(prefix))
@@ -336,21 +368,19 @@ function YearlyActivity({ year, dailyStats, onPrevYear, onNextYear, canGoToNextY
     }
   })
   const hasData = values.some((item) => item.minutes > 0 || item.questions > 0)
-  const maxMinutes = Math.max(1, ...values.map((item) => item.minutes))
-  const maxQuestions = Math.max(1, ...values.map((item) => item.questions))
-  const width = 360
-  const height = 116
-  const top = 12
-  const plotHeight = 76
-  const step = width / values.length
-  const points = values.map((item, index) => `${step * index + step / 2},${top + plotHeight - item.questions / maxQuestions * plotHeight}`).join(' ')
+  const usingMockData = !hasData && import.meta.env.DEV
+  const chartData = values.map((item, index) => ({
+    ...item,
+    minutes: usingMockData ? yearlyChartMock[index].minutes : item.minutes,
+    questions: usingMockData ? yearlyChartMock[index].questions : item.questions,
+  }))
 
   return (
-    <div className="min-h-0 flex-1 overflow-hidden rounded-2xl bg-background">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-background">
       <div className="flex items-center justify-between gap-3 px-3 pt-3">
         <div>
-          <p className="text-sm font-semibold">全年学习趋势</p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">柱状为分钟，折线为完成题数</p>
+          <p className="text-sm font-semibold">{t('profile.yearlyTrend', { defaultValue: '全年学习趋势' })}</p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">{t('profile.yearlyTrendHint', { defaultValue: '柱状为分钟，折线为完成题数' })}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <Button type="button" variant="ghost" size="icon-sm" className="size-7 rounded-full" onClick={onPrevYear} aria-label="Previous year">
@@ -362,17 +392,31 @@ function YearlyActivity({ year, dailyStats, onPrevYear, onNextYear, canGoToNextY
           </Button>
         </div>
       </div>
-      <div className="relative mt-2 px-3">
-        <svg viewBox={`0 0 ${width} ${height}`} className="h-[116px] w-full" role="img" aria-label="全年练习分钟与完成题数">
-          {[0.25, 0.5, 0.75].map((ratio) => <line key={ratio} x1="0" x2={width} y1={top + plotHeight * ratio} y2={top + plotHeight * ratio} stroke="hsl(var(--border))" strokeDasharray="2 4" />)}
+      <div className="relative mt-2 min-h-0 flex-1 px-3">
+        <ChartContainer config={chartConfig} className="absolute inset-x-3 top-0 h-[calc(100%-3.75rem)] w-[calc(100%-1.5rem)]">
+          <ComposedChart accessibilityLayer data={chartData} margin={{ top: 18, right: 0, left: 0, bottom: 0 }}>
+            <CartesianGrid vertical={false} />
+            <XAxis dataKey="label" hide />
+            <YAxis hide yAxisId="metric" />
+            <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
+            <Bar dataKey="minutes" yAxisId="metric" barSize={10} fill="var(--color-minutes)" radius={[4, 4, 0, 0]} isAnimationActive={false}>
+              <LabelList dataKey="minutes" position="top" offset={5} className="fill-muted-foreground" fontSize={9} />
+            </Bar>
+            <Line type="linear" dataKey="questions" yAxisId="metric" stroke="var(--color-questions)" strokeWidth={3} dot={{ r: 2.5, fill: 'var(--color-questions)', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={false} />
+          </ComposedChart>
+        </ChartContainer>
+        <div className="absolute inset-x-3 bottom-2 grid grid-cols-12 [--cell-size:2.15rem]">
           {values.map((item, index) => {
-            const barHeight = item.minutes > 0 ? Math.max(4, item.minutes / maxMinutes * plotHeight) : 12
-            return <rect key={item.label} x={step * index + step * .28} y={top + plotHeight - barHeight} width={step * .44} height={barHeight} rx="3" fill={item.minutes > 0 ? 'hsl(var(--primary) / .72)' : 'hsl(var(--muted))'} />
+            const monthDate = startOfMonth(new Date(year.getFullYear(), index, 1))
+            const isFuture = isAfter(monthDate, startOfMonth(today))
+            return (
+              <button key={item.label} type="button" disabled={isFuture} onClick={() => onSelectMonth(monthDate)} className="flex h-[--cell-size] w-full items-center justify-center rounded-xl p-0 text-[10px] font-normal leading-normal text-foreground transition-colors hover:bg-muted disabled:text-muted-foreground disabled:opacity-35">
+                {item.label}
+              </button>
+            )
           })}
-          {hasData && <polyline points={points} fill="none" stroke="hsl(var(--accent))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
-          {values.map((item, index) => <text key={item.label} x={step * index + step / 2} y={height - 6} textAnchor="middle" fontSize="9" fill="hsl(var(--muted-foreground))">{item.label}</text>)}
-        </svg>
-        {!hasData && <p className="pointer-events-none absolute inset-x-0 top-11 text-center text-[10px] text-muted-foreground">完成练习后，这里会显示全年趋势</p>}
+        </div>
+        {/* {!hasData && <p className="pointer-events-none absolute inset-x-0 top-11 text-center text-[10px] text-muted-foreground">完成练习后，这里会显示全年趋势</p>} */}
       </div>
     </div>
   )
