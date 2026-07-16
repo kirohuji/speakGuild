@@ -220,12 +220,12 @@ export function CompanyPage() {
 
                   <div className="flex items-center gap-4">
                     <a
-                      href="https://hope.lourd.top:8443"
+                      href="https://hope.lourd.top:3605"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[11px] font-medium text-muted-foreground hover:text-primary transition-colors"
                     >
-                      hope.lourd.top:8443
+                      hope.lourd.top:3605
                     </a>
                     <a
                       href="https://github.com/kirohuji/hope-front"

@@ -35,7 +35,12 @@ async function bootstrap() {
     .filter(Boolean);
   const allowedOrigins = originsFromEnv.length
     ? originsFromEnv
-    : ['https://hope.lourd.top:2605', 'capacitor://localhost', 'ionic://localhost', 'http://localhost'];
+    : [
+        'https://hope.lourd.top:3605',
+        'capacitor://localhost',
+        'ionic://localhost',
+        'http://localhost',
+      ];
 
   const expressApp = app.getHttpAdapter().getInstance();
 
