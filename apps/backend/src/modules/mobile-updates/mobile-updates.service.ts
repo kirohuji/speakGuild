@@ -79,6 +79,31 @@ export class MobileUpdatesService {
           lastCheckAt: new Date(),
         },
       }).catch(() => { /* 静默失败，不影响 check 主流程 */ })
+
+      const latestLogin = await this.prisma.userLoginLog.findFirst({
+        where: { userId },
+        orderBy: { loginAt: 'desc' },
+        select: { id: true },
+      }).catch(() => null);
+      if (latestLogin) {
+        await this.prisma.userLoginLog.update({
+          where: { id: latestLogin.id },
+          data: {
+            deviceId: params.deviceId || null,
+            platform: platform || null,
+            deviceModel: params.deviceModel || null,
+            deviceName: params.deviceName || null,
+            manufacturer: params.manufacturer || null,
+            operatingSystem: params.operatingSystem || null,
+            osVersion: params.osVersion || null,
+            ipAddress: params.ipAddress || undefined,
+            nativeBuild: params.nativeBuild || null,
+            nativeVersion: params.nativeVersion || null,
+            bundleVersion: currentBundleVersion || null,
+            deviceReportedAt: new Date(),
+          },
+        }).catch(() => { /* 设备信息补全失败不影响 OTA 检查 */ });
+      }
     }
 
     // 内测用户使用 tester 表里指定的 channel，否则用客户端传来的 channel（默认 production）

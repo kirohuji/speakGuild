@@ -42,6 +42,16 @@ export class AdminController {
     return this.adminService.getUserDetail(id);
   }
 
+  @Get('users/:id/login-history')
+  async getUserLoginHistory(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Query() pagination: PaginationDto,
+  ) {
+    await this.requireAdmin(req);
+    return this.adminService.getUserLoginHistory(id, pagination);
+  }
+
   @Get('users/:id/learning-overview')
   async getUserLearningOverview(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);

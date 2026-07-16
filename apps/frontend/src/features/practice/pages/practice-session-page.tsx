@@ -32,6 +32,7 @@ import { VnPlayerBoundary } from '../components/vn-player-boundary'
 import { useLayoutStore } from '@/stores/layout.store'
 import { usePracticeStore } from '@/stores/practice.store'
 import { useFeatureFlagsStore } from '@/stores/feature-flags.store'
+import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import {
   characterMatchesSpeaker,
@@ -105,6 +106,13 @@ export function PracticeSessionPage() {
   const [usedChunks, setUsedChunks] = useState<Set<string>>(new Set())
   const [aiHints, setAiHints] = useState<{ type: 'chunk' | 'pattern'; text: string; meaning?: string; example?: string }[]>([])
   const [teachingMarkdown, setTeachingMarkdown] = useState('')
+
+  useEffectivePracticeTimer({
+    enabled: phase === 'practice' && Boolean(practiceSessionId),
+    sourceId: practiceSessionId,
+    scope: 'dialogue',
+    questionCount: dialogueRounds.filter((round) => !round.isNpc).length,
+  })
 
   // ── Analysis state ──
   const [analysisResult, setAnalysisResult] = useState<any>(null)

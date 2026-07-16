@@ -480,6 +480,14 @@ export const dailyPracticeApi = {
 
   complete: (payload: any) =>
     post<{ runId: string; syncedAttempts: string[]; warmupRecordId: string | null }>('/practice/daily-practice/complete', payload),
+
+  recordActivity: (payload: {
+    date: string
+    sourceId: string
+    scope: 'daily' | 'dialogue'
+    activeSeconds: number
+    questionCount?: number
+  }) => post('/practice/daily-practice/activity', payload),
 }
 
 export default practiceApi

@@ -31,6 +31,7 @@ import { preloadWarmupLocalJudge, type WarmupReferencePreloadInput } from '@/lib
 import { useAuth } from '@/providers/auth-provider'
 import { toast } from 'sonner'
 import { practiceRepository } from '@/lib/offline'
+import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 
 // ── 类型 ──
 type SimplePromptItem = { zh?: string; en?: string; answer?: string; hint?: string; imageUrl?: string; audioUrl?: string; audioAssetId?: string }
@@ -204,6 +205,12 @@ export function TodayTaskPage() {
   const teachingRequestIdRef = useRef(0)
   const planMode = searchParams.has('mode') ? normalizePlanMode(searchParams.get('mode')) : getSessionPlanMode()
   const [planRunSeed, setPlanRunSeed] = useState(0)
+  useEffectivePracticeTimer({
+    enabled: drawerOpen && Boolean(plan?.date),
+    sourceId: plan?.date ? `daily:${plan.date}` : null,
+    scope: 'daily',
+    questionCount: doneIds.size,
+  })
   const currentPlanReusable = Boolean(
     plan &&
     planRunSeed === 0 &&

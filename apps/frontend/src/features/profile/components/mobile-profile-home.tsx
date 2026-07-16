@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
 import {
-  User, Settings, Camera, Gift, GraduationCap, IdCard, Crown, MessageSquare,
+  User, Settings, Camera, Gift, GraduationCap, IdCard, Crown, MessageSquare, CircleHelp,
   CheckCircle2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -17,6 +17,7 @@ import { IosRow, IosSection } from '@/features/profile/components/ios-components
 import { LearningAssessmentDialog, goalLabelMap, normalizeLearningGoals } from '@/features/profile/components/placement-assessment-dialog'
 import { FeedbackDialog } from '@/features/feedback/components/feedback-dialog'
 import { MobileInviteDrawer } from '@/features/referral/components/mobile-invite-drawer'
+import { MobileFaqDrawer } from '@/features/profile/components/mobile-faq-drawer'
 
 export type MobileView = 'overview' | 'records' | 'words' | 'account' | 'settings' | 'home' | 'appearance' | 'member' | 'storage'
 
@@ -37,6 +38,7 @@ export function MobileProfileHome({
   const loadProfileHome = useProfileCacheStore((s) => s.loadProfileHome)
   const [showLanguageDialog, setShowLanguageDialog] = useState(false)
   const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false)
+  const [showFaqDrawer, setShowFaqDrawer] = useState(false)
   const [showInviteDrawer, setShowInviteDrawer] = useState(false)
   const [showAssessmentDialog, setShowAssessmentDialog] = useState(false)
 
@@ -137,7 +139,20 @@ export function MobileProfileHome({
           // subtitle="好友注册成功后，你获得 5 天会员"
           onTap={() => setShowInviteDrawer(true)}
         />
-        <IosRow icon={MessageSquare} iconBg="bg-emerald-500" label={t('feedback.title')} last onTap={onFeedbackOpen ?? (() => setShowFeedbackDrawer(true))} />
+        <IosRow
+          icon={CircleHelp}
+          iconBg="bg-primary"
+          label={t('settings.faq', { defaultValue: '常见问题' })}
+          subtitle={t('settings.faqSubtitle', { defaultValue: '学习、语音、会员与账号问题' })}
+          onTap={() => setShowFaqDrawer(true)}
+        />
+        <IosRow
+          icon={MessageSquare}
+          iconBg="bg-emerald-500"
+          label={t('feedback.title')}
+          last
+          onTap={onFeedbackOpen ?? (() => setShowFeedbackDrawer(true))}
+        />
       </IosSection>
 
       {/* 外观与语言（保留在"我的"首页，点击弹窗切换） */}
@@ -193,6 +208,12 @@ export function MobileProfileHome({
       />
 
       <MobileInviteDrawer open={showInviteDrawer} onOpenChange={setShowInviteDrawer} />
+
+      <MobileFaqDrawer
+        open={showFaqDrawer}
+        onOpenChange={setShowFaqDrawer}
+        onFeedbackOpen={onFeedbackOpen ?? (() => setShowFeedbackDrawer(true))}
+      />
 
       {!onFeedbackOpen && <FeedbackDialog open={showFeedbackDrawer} onOpenChange={setShowFeedbackDrawer} />}
 

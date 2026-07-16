@@ -297,7 +297,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       set({ checkInData: data, checkInLoading: false })
     } catch {
       set((s) => ({
-        checkInData: s.checkInData ?? { dates: [], totalCheckIns: 0, currentStreak: 0 },
+        checkInData: s.checkInData ?? { dates: [], totalCheckIns: 0, currentStreak: 0, dailyStats: [] },
         checkInLoading: false,
       }))
     }

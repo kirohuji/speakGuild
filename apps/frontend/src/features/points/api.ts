@@ -21,6 +21,7 @@ export interface CheckInCalendar {
   dates: string[]
   totalCheckIns: number
   currentStreak: number
+  dailyStats: Array<{ date: string; questionCount: number; activeSeconds: number }>
 }
 
 export const pointsApi = {

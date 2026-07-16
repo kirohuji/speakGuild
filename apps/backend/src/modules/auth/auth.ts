@@ -49,6 +49,24 @@ export const auth: any = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  databaseHooks: {
+    session: {
+      create: {
+        after: async (session) => {
+          await prisma.userLoginLog.create({
+            data: {
+              userId: session.userId,
+              sessionId: session.id,
+              loginAt: session.createdAt,
+              expiresAt: session.expiresAt,
+              ipAddress: session.ipAddress,
+              userAgent: session.userAgent,
+            },
+          }).catch(() => { /* 登录日志失败不能阻断用户登录 */ });
+        },
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
   },

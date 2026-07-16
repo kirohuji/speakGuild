@@ -18,4 +18,10 @@ export class DailyPracticeController {
     const session = await requireAuthSession(req);
     return this.service.complete(session.user.id, body);
   }
+
+  @Post('activity')
+  async recordActivity(@Req() req: Request, @Body() body: any) {
+    const session = await requireAuthSession(req);
+    return this.service.recordActivity(session.user.id, body);
+  }
 }

@@ -25,7 +25,7 @@ import { cn } from '@/lib/cn'
 import type { MobileView } from '@/features/profile/components/mobile-profile-home'
 import { SyncLogDialog } from './sync-log-dialog'
 
-export function MobileSettingsView({ onFeedbackOpen, onNavigate }: { onFeedbackOpen?: () => void; onNavigate?: (view: MobileView) => void }) {
+export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileView) => void }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { session, signOut } = useAuth()

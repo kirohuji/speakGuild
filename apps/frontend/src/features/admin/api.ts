@@ -135,6 +135,32 @@ export interface AdminUsersResult {
   pageSize: number;
 }
 
+export interface AdminLoginHistoryItem {
+  id: string;
+  loginAt: string;
+  expiresAt: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  deviceId: string | null;
+  platform: string | null;
+  deviceModel: string | null;
+  deviceName: string | null;
+  manufacturer: string | null;
+  operatingSystem: string | null;
+  osVersion: string | null;
+  nativeBuild: string | null;
+  nativeVersion: string | null;
+  bundleVersion: string | null;
+  deviceReportedAt: string | null;
+}
+
+export interface AdminLoginHistoryResult {
+  list: AdminLoginHistoryItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface AdminMember {
   id: string;
   userId: string;
@@ -198,6 +224,10 @@ export async function listUsers(params: {
 
 export async function getUserDetail(id: string) {
   return get<AdminUserDetail>(`/admin/users/${id}`);
+}
+
+export async function getUserLoginHistory(id: string, params: { page?: number; pageSize?: number }) {
+  return get<AdminLoginHistoryResult>(`/admin/users/${id}/login-history`, params);
 }
 
 export async function getUserLearningOverview(id: string) {

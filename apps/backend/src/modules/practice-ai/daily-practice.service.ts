@@ -45,6 +45,23 @@ interface DailyPracticeRunInput {
   stats?: any;
 }
 
+type ActivityStats = Record<string, { scope: 'daily' | 'dialogue'; activeSeconds: number; questionCount: number }>;
+
+function toActivityStats(value: unknown): ActivityStats {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  const raw = (value as any).activity;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  return Object.fromEntries(Object.entries(raw).flatMap(([key, item]) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
+    const scope = (item as any).scope === 'dialogue' ? 'dialogue' : 'daily';
+    return [[key, {
+      scope,
+      activeSeconds: Math.max(0, Math.min(1800, Number((item as any).activeSeconds) || 0)),
+      questionCount: Math.max(0, Number((item as any).questionCount) || 0),
+    }]];
+  }));
+}
+
 export function warmupScoreRank(score?: string | null) {
   if (score === 'strong') return 3;
   if (score === 'ok') return 2;
@@ -82,6 +99,44 @@ export class DailyPracticeService {
     return { items };
   }
 
+  async recordActivity(userId: string, body: {
+    date?: string;
+    sourceId?: string;
+    scope?: 'daily' | 'dialogue';
+    activeSeconds?: number;
+    questionCount?: number;
+  }) {
+    const date = typeof body.date === 'string' ? startOfDate(body.date) : new Date();
+    const sourceId = String(body.sourceId ?? '').trim();
+    const scope = body.scope === 'dialogue' ? 'dialogue' : 'daily';
+    const activeSeconds = Math.max(0, Math.min(1800, Math.floor(Number(body.activeSeconds) || 0)));
+    if (!/^[-:_a-zA-Z0-9]{3,180}$/.test(sourceId) || activeSeconds === 0) {
+      return { accepted: false };
+    }
+
+    const existing = await (this.prisma as any).userDailyPracticeRun.findUnique({
+      where: { userId_date: { userId, date } },
+      select: { stats: true },
+    });
+    const activity = toActivityStats(existing?.stats);
+    const previous = activity[sourceId];
+    activity[sourceId] = {
+      scope,
+      activeSeconds: Math.max(previous?.activeSeconds ?? 0, activeSeconds),
+      questionCount: Math.max(previous?.questionCount ?? 0, Math.floor(Number(body.questionCount) || 0)),
+    };
+    const currentStats = existing?.stats && typeof existing.stats === 'object' && !Array.isArray(existing.stats)
+      ? existing.stats as Record<string, unknown>
+      : {};
+
+    await (this.prisma as any).userDailyPracticeRun.upsert({
+      where: { userId_date: { userId, date } },
+      create: { userId, date, scope, packIds: [], scheduledItemIds: [], completedItemIds: [], stats: { ...currentStats, activity } },
+      update: { stats: { ...currentStats, activity } },
+    });
+    return { accepted: true };
+  }
+
   async complete(userId: string, body: {
     run: DailyPracticeRunInput;
     attempts: DailyPracticeAttemptInput[];
@@ -90,6 +145,14 @@ export class DailyPracticeService {
   }) {
     const syncedAttempts: string[] = [];
 
+    const existingRun = await (this.prisma as any).userDailyPracticeRun.findUnique({
+      where: { userId_date: { userId, date: startOfDate(body.run.date) } },
+      select: { stats: true },
+    });
+    const mergedStats = {
+      ...(existingRun?.stats && typeof existingRun.stats === 'object' && !Array.isArray(existingRun.stats) ? existingRun.stats : {}),
+      ...(body.run.stats ?? {}),
+    };
     const run = await (this.prisma as any).userDailyPracticeRun.upsert({
       where: { userId_date: { userId, date: startOfDate(body.run.date) } },
       create: {
@@ -99,14 +162,14 @@ export class DailyPracticeService {
         packIds: body.run.packIds ?? [],
         scheduledItemIds: body.run.scheduledItemIds ?? [],
         completedItemIds: body.run.completedItemIds ?? [],
-        stats: body.run.stats ?? {},
+        stats: mergedStats,
       },
       update: {
         scope: body.run.scope,
         packIds: body.run.packIds ?? [],
         scheduledItemIds: body.run.scheduledItemIds ?? [],
         completedItemIds: body.run.completedItemIds ?? [],
-        stats: body.run.stats ?? {},
+        stats: mergedStats,
       },
     });
 

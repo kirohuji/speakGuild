@@ -98,6 +98,7 @@ model User {
   referredBy             Referral?
   feedbacks              Feedback[]
   mobileOtaTester        MobileOtaTester?
+  loginLogs              UserLoginLog[]
 
   // --- English Output Training: 用户画像扩展 ---
   learningGoals      String[]            @default([])
@@ -140,6 +141,31 @@ model Session {
 
   @@index([userId])
   @@map("session")
+}
+
+model UserLoginLog {
+  id         String   @id @default(cuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  sessionId  String?  @unique
+  loginAt    DateTime @default(now())
+  expiresAt  DateTime?
+  ipAddress  String?
+  userAgent  String?
+  deviceId         String?
+  platform         String?
+  deviceModel      String?
+  deviceName       String?
+  manufacturer     String?
+  operatingSystem  String?
+  osVersion        String?
+  nativeBuild      String?
+  nativeVersion    String?
+  bundleVersion    String?
+  deviceReportedAt DateTime?
+
+  @@index([userId, loginAt])
+  @@map("user_login_log")
 }
 
 model Account {

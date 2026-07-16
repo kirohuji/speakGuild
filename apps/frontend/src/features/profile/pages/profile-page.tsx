@@ -102,7 +102,7 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
               {mobileView === 'records' && <RecordsTab />}
               {mobileView === 'words' && <WordsTab />}
               {mobileView === 'account' && <AccountTab />}
-              {mobileView === 'settings' && <MobileSettingsView onFeedbackOpen={onFeedbackOpen} onNavigate={goTo} />}
+              {mobileView === 'settings' && <MobileSettingsView onNavigate={goTo} />}
               {mobileView === 'appearance' && <AppearanceContent />}
               {mobileView === 'member' && <MemberPage compact />}
               {mobileView === 'storage' && <MobileStorageView />}

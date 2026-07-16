@@ -293,6 +293,41 @@ export class AdminService {
     });
   }
 
+  async getUserLoginHistory(userId: string, pagination: PaginationDto) {
+    const page = pagination.page ?? 1;
+    const pageSize = Math.min(pagination.pageSize ?? 10, 50);
+    const where = { userId };
+    const [list, total] = await this.prisma.$transaction([
+      this.prisma.userLoginLog.findMany({
+        where,
+        select: {
+          id: true,
+          loginAt: true,
+          expiresAt: true,
+          ipAddress: true,
+          userAgent: true,
+          deviceId: true,
+          platform: true,
+          deviceModel: true,
+          deviceName: true,
+          manufacturer: true,
+          operatingSystem: true,
+          osVersion: true,
+          nativeBuild: true,
+          nativeVersion: true,
+          bundleVersion: true,
+          deviceReportedAt: true,
+        },
+        orderBy: { loginAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.userLoginLog.count({ where }),
+    ]);
+
+    return { list, total, page, pageSize };
+  }
+
   async updateUserOtaTest(userId: string, dto: UpdateUserOtaTestDto) {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
     if (!user) {

@@ -20,10 +20,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/cn';
 import {
-  listUsers, updateUserRole, getUserDetail, getUserAiUsage, getUserLearningOverview,
+  listUsers, updateUserRole, getUserDetail, getUserAiUsage, getUserLearningOverview, getUserLoginHistory,
   updateUserOtaTest,
   type AdminUser, type AdminUserDetail, type AdminUsersResult, type UserAiUsage, type AdminUserLearningOverview,
+  type AdminLoginHistoryResult,
 } from '@/features/admin/api';
+import { AdminPagination } from '@/features/admin/components/admin-pagination';
 import { useAuth } from '@/providers/auth-provider';
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -517,15 +519,28 @@ function UserRow({
   const [otaReleaseLine, setOtaReleaseLine] = useState('');
   const [otaTargetVersion, setOtaTargetVersion] = useState('');
   const [otaNotes, setOtaNotes] = useState('');
+  const [loginHistory, setLoginHistory] = useState<AdminLoginHistoryResult | null>(null);
+  const [loginHistoryLoading, setLoginHistoryLoading] = useState(false);
+
+  const loadLoginHistory = async (page = 1, pageSize = loginHistory?.pageSize ?? 10) => {
+    setLoginHistoryLoading(true);
+    try {
+      setLoginHistory(await getUserLoginHistory(user.id, { page, pageSize }));
+    } finally {
+      setLoginHistoryLoading(false);
+    }
+  };
 
   const openDetail = async () => {
     setDetailOpen(true);
     setDetailLoading(true);
     setLearningOverview(null);
+    setLoginHistory(null);
     try {
-      const [d, overview] = await Promise.all([
+      const [d, overview, history] = await Promise.all([
         getUserDetail(user.id),
         getUserLearningOverview(user.id).catch(() => null),
+        getUserLoginHistory(user.id, { page: 1, pageSize: 10 }).catch(() => null),
       ]);
       setDetail(d);
       setOtaEnabled(Boolean(d.mobileOtaTester?.enabled));
@@ -535,6 +550,7 @@ function UserRow({
       setOtaTargetVersion(d.mobileOtaTester?.targetVersion || '');
       setOtaNotes(d.mobileOtaTester?.notes || '');
       setLearningOverview(overview);
+      setLoginHistory(history);
     } catch {
       setDetail(null);
     } finally {
@@ -854,21 +870,49 @@ function UserRow({
                           <div className="flex items-center justify-between border-b px-4 py-3">
                             <p className="flex items-center gap-2 text-sm font-medium">
                               <MonitorSmartphone className="h-4 w-4 text-emerald-500" />
-                              登录会话
+                              登录历史
                             </p>
-                            <Badge variant="outline" className="text-xs">{detail.sessions?.length ?? 0} 个有效会话</Badge>
+                            <Badge variant="outline" className="text-xs">共 {loginHistory?.total ?? 0} 次登录</Badge>
                           </div>
                           <div className="divide-y">
-                            {detail.sessions?.length ? detail.sessions.map((session) => (
+                            {loginHistoryLoading ? (
+                              <div className="flex items-center justify-center px-4 py-10 text-sm text-muted-foreground">
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />加载登录记录
+                              </div>
+                            ) : loginHistory?.list.length ? loginHistory.list.map((session) => (
                               <div key={session.id} className="px-4 py-3">
                                 <div className="flex items-center justify-between gap-3">
-                                  <p className="truncate text-sm font-medium">{summarizeUserAgent(session.userAgent)}</p>
-                                  <span className="shrink-0 text-[11px] text-muted-foreground">{fmtDateTime(session.updatedAt)}</span>
+                                  <p className="truncate text-sm font-medium">
+                                    {session.deviceName || session.deviceModel || summarizeUserAgent(session.userAgent)}
+                                  </p>
+                                  <span className="shrink-0 text-[11px] text-muted-foreground">登录于 {fmtDateTime(session.loginAt)}</span>
                                 </div>
-                                <p className="mt-1 truncate text-xs text-muted-foreground">IP: {session.ipAddress || '未知'} · 过期: {fmtDateTime(session.expiresAt)}</p>
+                                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                  <Badge variant="outline" className="text-[10px]">{platformLabel(session.platform)}</Badge>
+                                  {(session.operatingSystem || session.osVersion) && (
+                                    <Badge variant="secondary" className="text-[10px]">
+                                      {[session.operatingSystem, session.osVersion].filter(Boolean).join(' ')}
+                                    </Badge>
+                                  )}
+                                  {session.nativeVersion && <Badge variant="secondary" className="text-[10px]">App {versionWithBuild(session.nativeVersion, session.nativeBuild)}</Badge>}
+                                  {session.bundleVersion && <Badge variant="secondary" className="text-[10px]">OTA v{session.bundleVersion}</Badge>}
+                                </div>
+                                <p className="mt-1.5 truncate text-xs text-muted-foreground">
+                                  IP: {session.ipAddress || '未知'} · 厂商: {session.manufacturer || '未知'} · 过期: {fmtDateTime(session.expiresAt)}
+                                </p>
                               </div>
-                            )) : <p className="px-4 py-8 text-center text-sm text-muted-foreground">暂无有效登录会话</p>}
+                            )) : <p className="px-4 py-8 text-center text-sm text-muted-foreground">暂无登录记录</p>}
                           </div>
+                          {loginHistory && (
+                            <AdminPagination
+                              total={loginHistory.total}
+                              page={loginHistory.page}
+                              pageSize={loginHistory.pageSize}
+                              pageSizes={[5, 10, 20, 50]}
+                              onPageChange={(page) => void loadLoginHistory(page, loginHistory.pageSize)}
+                              onPageSizeChange={(pageSize) => void loadLoginHistory(1, pageSize)}
+                            />
+                          )}
                         </div>
 
                         <div className="space-y-4">

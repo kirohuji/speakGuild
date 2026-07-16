@@ -88,7 +88,7 @@ export class PointsService {
       throw new BadRequestException(`日历查询范围不能超过 ${MAX_CALENDAR_RANGE_DAYS} 天`);
     }
 
-    const [checkIns, totalCheckIns, status] = await Promise.all([
+    const [checkIns, totalCheckIns, status, runs] = await Promise.all([
       this.prisma.userCheckIn.findMany({
         where: {
           userId,
@@ -99,12 +99,31 @@ export class PointsService {
       }),
       this.prisma.userCheckIn.count({ where: { userId } }),
       this.getCheckInStatus(userId),
+      (this.prisma as any).userDailyPracticeRun.findMany({
+        where: { userId, date: { gte: rangeStart, lte: rangeEnd } },
+        select: { date: true, completedItemIds: true, stats: true },
+      }),
     ]);
+
+    const dailyStats = runs.map((run: any) => {
+      const stats = run.stats && typeof run.stats === 'object' && !Array.isArray(run.stats) ? run.stats : {};
+      const activity = stats.activity && typeof stats.activity === 'object' && !Array.isArray(stats.activity) ? Object.values(stats.activity) as any[] : [];
+      const activeSeconds = activity.reduce((total, item) => total + Math.max(0, Math.min(1800, Number(item?.activeSeconds) || 0)), 0);
+      const dialogueQuestions = activity
+        .filter((item) => item?.scope === 'dialogue')
+        .reduce((total, item) => total + Math.max(0, Number(item?.questionCount) || 0), 0);
+      return {
+        date: formatCalendarDate(run.date),
+        questionCount: (run.completedItemIds?.length ?? 0) + dialogueQuestions,
+        activeSeconds,
+      };
+    });
 
     return {
       dates: checkIns.map((item) => formatCalendarDate(item.date)),
       totalCheckIns,
       currentStreak: status.currentStreak,
+      dailyStats,
     };
   }
 
