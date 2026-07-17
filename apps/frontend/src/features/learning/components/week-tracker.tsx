@@ -11,7 +11,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { cn } from '@/lib/cn'
 import { useLearningStore } from '@/stores/learning.store'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
+import { ChartContainer, type ChartConfig } from '@/components/ui/chart'
 import { Bar, CartesianGrid, Cell, ComposedChart, LabelList, Line, ReferenceLine, XAxis, YAxis } from 'recharts'
 
 function useLearningChartConfig() {
@@ -45,12 +45,18 @@ const monthlyChartMock = [
   [16, 11], [27, 20], [35, 26],
 ].map(([minutes, questions]) => ({ minutes, questions }))
 
-type MonthlyActivityData = {
-  dateKey: string
-  date: string
-  label: string
-  minutes: number
-  questions: number
+function getChartCardPosition(index: number, itemCount: number) {
+  const anchor = `${((index + 0.5) / itemCount) * 100}%`
+  return {
+    left: `clamp(3.75rem, ${anchor}, calc(100% - 3.75rem))`,
+    transform: 'translateX(-50%)',
+  }
+}
+
+function getChartCardTop(value: number, maxValue: number, plotHeight: number, topMargin: number) {
+  const ratio = maxValue > 0 ? value / maxValue : 0
+  const barTop = topMargin + (1 - ratio) * plotHeight
+  return Math.max(4, barTop - 46)
 }
 
 export function LearningWeekTracker() {
@@ -190,8 +196,8 @@ function CheckInCalendarDrawer({
             </ToggleGroup>
           </div>
         </DrawerHeader>
-        <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-          <div className="grid grid-cols-3 gap-2">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+          <div className="grid shrink-0 grid-cols-3 gap-2">
             <div className="rounded-2xl bg-muted/40 px-3 py-2.5">
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <CalendarCheck className="size-3.5" />
@@ -230,7 +236,7 @@ function CheckInCalendarDrawer({
             />
           ) : view === 'month' ? (
           <div
-            className="flex min-h-0 flex-1 touch-pan-y flex-col overflow-hidden rounded-2xl bg-background"
+            className="flex flex-none touch-pan-y flex-col rounded-2xl bg-background"
             onPointerDownCapture={(event) => {
               monthSwipeStartRef.current = { x: event.clientX, y: event.clientY }
             }}
@@ -263,8 +269,8 @@ function CheckInCalendarDrawer({
                 <ChevronRight className="size-4" />
               </Button>
             </div>
-            <MonthlyActivityChart days={visibleDays} dailyStats={dailyStats} locale={calendarLocale} selectedDay={selectedDay} />
-            <div className="min-h-0 flex-1 overflow-y-auto" onPointerDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
+            <MonthlyActivityChart days={visibleDays} dailyStats={dailyStats} locale={calendarLocale} selectedDay={selectedDay} onSelectDay={setSelectedDay} />
+            <div className="flex-none" onPointerDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
               <Calendar mode="single" selected={selectedDay} onSelect={setSelectedDay} month={month} hideNavigation locale={calendarLocale} disabled={{ after: today }}
                 modifiers={{ checkedIn: checkedInDates }}
                 modifiersClassNames={{ checkedIn: 'relative after:absolute after:bottom-1 after:left-1/2 after:size-2 after:-translate-x-1/2 after:rounded-full after:bg-primary after:content-[""]' }}
@@ -286,7 +292,7 @@ function CheckInCalendarDrawer({
               canGoToNextYear={canGoToNextYear}
             />
           )}
-          <div className="flex shrink-0 items-center justify-between rounded-xl bg-muted/30 px-3 py-2.5 text-xs">
+          {/* <div className="flex shrink-0 items-center justify-between rounded-xl bg-muted/30 px-3 py-2.5 text-xs">
             <div className="min-w-0">
               <p className="font-medium text-foreground">{selectedDay ? format(selectedDay, 'M月d日', { locale: calendarLocale }) : t('learning.today', { defaultValue: '今天' })}</p>
               <p className="mt-0.5 text-muted-foreground">{focusedStats?.questionCount ?? 0}{t('learning.questionsUnit', { defaultValue: '题' })} · {formatDuration(focusedStats?.activeSeconds ?? 0)}</p>
@@ -295,7 +301,7 @@ function CheckInCalendarDrawer({
               <Flame className="size-3.5" />
               {t('learning.currentStreak')} {data?.currentStreak ?? 0}{t('learning.days')}
             </div>
-          </div>
+          </div> */}
         </div>
       </DrawerContent>
     </Drawer>
@@ -329,12 +335,18 @@ function WeeklyActivity({ days, dailyStats, checkedInDates, locale, today, selec
   const usingMockData = !hasData && import.meta.env.DEV
   const chartData = items.map((item, index) => ({
     day: format(item.day, 'EEEEE', { locale }),
+    dateKey: format(item.day, 'yyyy-MM-dd'),
+    date: format(item.day, 'M/d', { locale }),
     minutes: usingMockData ? weeklyChartMock[index].minutes : item.minutes,
     questions: usingMockData ? weeklyChartMock[index].questions : item.questionCount,
   }))
+  const selectedDateKey = selectedDay ? format(selectedDay, 'yyyy-MM-dd') : undefined
+  const selectedChartIndex = chartData.findIndex((item) => item.dateKey === selectedDateKey)
+  const selectedChartItem = selectedChartIndex >= 0 ? chartData[selectedChartIndex] : null
+  const chartMaxValue = Math.max(1, ...chartData.flatMap((item) => [item.minutes, item.questions]))
   return (
     <div
-      className="flex min-h-0 flex-1 touch-pan-y flex-col overflow-hidden rounded-2xl bg-background"
+      className="flex h-[440px] flex-none touch-pan-y flex-col overflow-hidden rounded-2xl bg-background"
       onPointerDown={(event) => {
         swipeStartRef.current = { x: event.clientX, y: event.clientY }
       }}
@@ -370,17 +382,35 @@ function WeeklyActivity({ days, dailyStats, checkedInDates, locale, today, selec
       </div>
       <div className="relative mt-2 min-h-0 flex-1 px-3">
         <ChartContainer config={chartConfig} className="absolute inset-x-3 top-0 h-[calc(100%-4.5rem)] w-[calc(100%-1.5rem)] pb-2">
-          <ComposedChart accessibilityLayer data={chartData} margin={{ top: 18, right: 0, left: 0, bottom: 0 }}>
+          <ComposedChart
+            accessibilityLayer
+            data={chartData}
+            margin={{ top: 18, right: 0, left: 0, bottom: 0 }}
+            onClick={(state) => {
+              if (typeof state?.activeTooltipIndex !== 'number') return
+              const target = items[state.activeTooltipIndex]
+              if (target) onSelectDay(target.day)
+            }}
+          >
             <CartesianGrid vertical={false} />
             <XAxis dataKey="day" hide />
             <YAxis hide yAxisId="metric" />
-            <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
+            {selectedDateKey && <ReferenceLine x={chartData[selectedChartIndex]?.day} yAxisId="metric" stroke="hsl(var(--accent))" strokeOpacity={0.75} strokeWidth={1.5} />}
             <Bar dataKey="minutes" yAxisId="metric" barSize={14} fill="var(--color-minutes)" radius={[4, 4, 0, 0]} isAnimationActive={false}>
+              {chartData.map((item) => {
+                const isSelected = item.dateKey === selectedDateKey
+                return <Cell key={item.dateKey} fill={isSelected ? 'hsl(var(--accent))' : 'var(--color-minutes)'} stroke={isSelected ? 'hsl(var(--accent))' : 'transparent'} strokeWidth={isSelected ? 2 : 0} />
+              })}
               <LabelList dataKey="minutes" position="top" offset={5} className="fill-muted-foreground" fontSize={10} />
             </Bar>
             <Line type="linear" dataKey="questions" yAxisId="metric" stroke="var(--color-questions)" strokeWidth={3} dot={{ r: 3, fill: 'var(--color-questions)', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={false} />
           </ComposedChart>
         </ChartContainer>
+        {selectedChartItem && (
+          <div className="pointer-events-none absolute z-10" style={{ ...getChartCardPosition(selectedChartIndex, chartData.length), top: getChartCardTop(selectedChartItem.minutes, chartMaxValue, 300, 18) }}>
+            <ActivityInfoCard title={selectedChartItem.date} minutes={selectedChartItem.minutes} questions={selectedChartItem.questions} />
+          </div>
+        )}
         <div className="absolute inset-x-3 bottom-2 [--cell-size:2.15rem]">
           <div className="grid grid-cols-7 text-center text-xs font-normal text-muted-foreground">
             {items.map((item) => <span key={`weekday:${item.day.toISOString()}`}>{format(item.day, 'EEEEE', { locale })}</span>)}
@@ -398,11 +428,12 @@ function WeeklyActivity({ days, dailyStats, checkedInDates, locale, today, selec
   )
 }
 
-function MonthlyActivityChart({ days, dailyStats, locale, selectedDay }: {
+function MonthlyActivityChart({ days, dailyStats, locale, selectedDay, onSelectDay }: {
   days: Date[]
   dailyStats: Map<string, { date: string; questionCount: number; activeSeconds: number }>
   locale: typeof zhCN
   selectedDay?: Date
+  onSelectDay: (day: Date) => void
 }) {
   const { t } = useTranslation()
   const chartConfig = useLearningChartConfig()
@@ -424,36 +455,28 @@ function MonthlyActivityChart({ days, dailyStats, locale, selectedDay }: {
   const selectedDateKey = selectedDay ? format(selectedDay, 'yyyy-MM-dd') : undefined
   const selectedChartIndex = chartData.findIndex((item) => item.dateKey === selectedDateKey)
   const selectedChartItem = selectedChartIndex >= 0 ? chartData[selectedChartIndex] : null
-  const [isChartInteracting, setIsChartInteracting] = useState(false)
-
-  useEffect(() => {
-    setIsChartInteracting(false)
-  }, [selectedDateKey])
-
+  const chartMaxValue = Math.max(1, ...chartData.flatMap((item) => [item.minutes, item.questions]))
   return (
     <section className="shrink-0 px-3 pt-2">
       <div className="mb-1 flex items-center justify-between">
         <p className="text-xs font-medium text-foreground">{t('learning.monthlyRhythm', { defaultValue: '本月练习趋势' })}</p>
         <p className="text-[10px] text-muted-foreground">{t('learning.chartLegend', { defaultValue: '柱状为分钟，折线为完成题数' })}</p>
       </div>
-      <div
-        className="relative"
-        onPointerDown={() => setIsChartInteracting(true)}
-        onMouseEnter={() => setIsChartInteracting(true)}
-        onMouseLeave={() => setIsChartInteracting(false)}
-      >
+      <div className="relative">
         <ChartContainer config={chartConfig} className="h-[116px] w-full">
-          <ComposedChart accessibilityLayer data={chartData} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
+          <ComposedChart
+            accessibilityLayer
+            data={chartData}
+            margin={{ top: 8, right: 0, left: 0, bottom: 0 }}
+            onClick={(state) => {
+              if (typeof state?.activeTooltipIndex !== 'number') return
+              const target = days[state.activeTooltipIndex]
+              if (target) onSelectDay(target)
+            }}
+          >
             <CartesianGrid vertical={false} />
             <XAxis dataKey="dateKey" axisLine={false} tickLine={false} interval={4} tick={{ fontSize: 9 }} tickFormatter={(value) => String(value).slice(-2).replace(/^0/, '')} />
             <YAxis hide yAxisId="metric" />
-            <ChartTooltip
-              cursor={false}
-              content={(props) => {
-                const item = props.payload?.[0]?.payload as MonthlyActivityData | undefined
-                return props.active && item ? <ActivityInfoCard title={item.date} minutes={item.minutes} questions={item.questions} /> : null
-              }}
-            />
             {selectedDateKey && <ReferenceLine x={selectedDateKey} yAxisId="metric" stroke="hsl(var(--accent))" strokeOpacity={0.75} strokeWidth={1.5} />}
             <Bar dataKey="minutes" yAxisId="metric" barSize={5} fill="var(--color-minutes)" radius={[2, 2, 0, 0]} isAnimationActive={false}>
               {chartData.map((item) => {
@@ -464,8 +487,8 @@ function MonthlyActivityChart({ days, dailyStats, locale, selectedDay }: {
             <Line type="linear" dataKey="questions" yAxisId="metric" stroke="var(--color-questions)" strokeWidth={2} dot={false} activeDot={{ r: 3 }} isAnimationActive={false} />
           </ComposedChart>
         </ChartContainer>
-        {selectedChartItem && !isChartInteracting && (
-          <div className="pointer-events-none absolute top-1 z-10 -translate-x-1/2" style={{ left: `${((selectedChartIndex + 0.5) / chartData.length) * 100}%` }}>
+        {selectedChartItem && (
+          <div className="pointer-events-none absolute z-10" style={{ ...getChartCardPosition(selectedChartIndex, chartData.length), top: getChartCardTop(selectedChartItem.minutes, chartMaxValue, 76, 8) }}>
             <ActivityInfoCard title={selectedChartItem.date} minutes={selectedChartItem.minutes} questions={selectedChartItem.questions} />
           </div>
         )}
@@ -477,7 +500,7 @@ function MonthlyActivityChart({ days, dailyStats, locale, selectedDay }: {
 function ActivityInfoCard({ title, minutes, questions }: { title: string; minutes: number; questions: number }) {
   const { t } = useTranslation()
   return (
-    <div className="rounded-md border border-accent bg-background px-2 py-1 text-[10px] shadow-md">
+    <div className="w-28 rounded-md border border-accent bg-background px-2 py-1 text-[10px] shadow-md">
       <p className="font-medium text-foreground">{title}</p>
       <p className="mt-0.5 whitespace-nowrap text-muted-foreground">{formatDuration(minutes * 60)} · {questions}{t('learning.questionsUnit', { defaultValue: '题' })}</p>
     </div>
@@ -495,6 +518,8 @@ function YearlyActivity({ year, dailyStats, today, onSelectMonth, onPrevYear, on
 }) {
   const { t } = useTranslation()
   const chartConfig = useLearningChartConfig()
+  const [selectedMonthIndex, setSelectedMonthIndex] = useState<number | null>(null)
+  useEffect(() => setSelectedMonthIndex(null), [year])
   const values = Array.from({ length: 12 }, (_, index) => {
     const prefix = `${format(year, 'yyyy')}-${String(index + 1).padStart(2, '0')}`
     const days = [...dailyStats.values()].filter((item) => item.date.startsWith(prefix))
@@ -511,9 +536,11 @@ function YearlyActivity({ year, dailyStats, today, onSelectMonth, onPrevYear, on
     minutes: usingMockData ? yearlyChartMock[index].minutes : item.minutes,
     questions: usingMockData ? yearlyChartMock[index].questions : item.questions,
   }))
+  const selectedChartItem = selectedMonthIndex === null ? null : chartData[selectedMonthIndex]
+  const chartMaxValue = Math.max(1, ...chartData.flatMap((item) => [item.minutes, item.questions]))
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-background">
+    <div className="flex h-[440px] flex-none flex-col overflow-hidden rounded-2xl bg-background">
       <div className="flex items-center justify-between gap-3 px-3 pt-3">
         <div>
           <p className="text-sm font-semibold">{t('profile.yearlyTrend', { defaultValue: '全年学习趋势' })}</p>
@@ -531,31 +558,38 @@ function YearlyActivity({ year, dailyStats, today, onSelectMonth, onPrevYear, on
       </div>
       <div className="relative mt-2 min-h-0 flex-1 px-3">
         <ChartContainer config={chartConfig} className="absolute inset-x-3 top-0 h-[calc(100%-3.75rem)] w-[calc(100%-1.5rem)]">
-          <ComposedChart accessibilityLayer data={chartData} margin={{ top: 18, right: 0, left: 0, bottom: 0 }}>
+          <ComposedChart
+            accessibilityLayer
+            data={chartData}
+            margin={{ top: 18, right: 0, left: 0, bottom: 0 }}
+            onClick={(state) => {
+              if (typeof state?.activeTooltipIndex === 'number') setSelectedMonthIndex(state.activeTooltipIndex)
+            }}
+          >
             <CartesianGrid vertical={false} />
             <XAxis dataKey="label" hide />
-            <YAxis hide yAxisId="metric" />
-            <ChartTooltip
-              cursor={false}
-              content={(props) => {
-                const item = props.payload?.[0]?.payload as { label: number; minutes: number; questions: number } | undefined
-                return props.active && item
-                  ? <ActivityInfoCard title={`${format(year, 'yyyy')}-${String(item.label).padStart(2, '0')}`} minutes={item.minutes} questions={item.questions} />
-                  : null
-              }}
-            />
+            <YAxis hide yAxisId="metric" domain={[0, chartMaxValue]} />
+            {selectedChartItem && <ReferenceLine x={selectedChartItem.label} yAxisId="metric" stroke="hsl(var(--accent))" strokeOpacity={0.75} strokeWidth={1.5} />}
             <Bar dataKey="minutes" yAxisId="metric" barSize={10} fill="var(--color-minutes)" radius={[4, 4, 0, 0]} isAnimationActive={false}>
-              <LabelList dataKey="minutes" position="top" offset={5} className="fill-muted-foreground" fontSize={9} />
+              {chartData.map((item, index) => {
+                const isSelected = index === selectedMonthIndex
+                return <Cell key={item.label} fill={isSelected ? 'hsl(var(--accent))' : 'var(--color-minutes)'} stroke={isSelected ? 'hsl(var(--accent))' : 'transparent'} strokeWidth={isSelected ? 2 : 0} />
+              })}
             </Bar>
             <Line type="linear" dataKey="questions" yAxisId="metric" stroke="var(--color-questions)" strokeWidth={3} dot={{ r: 2.5, fill: 'var(--color-questions)', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={false} />
           </ComposedChart>
         </ChartContainer>
+        {selectedChartItem && selectedMonthIndex !== null && (
+          <div className="pointer-events-none absolute z-10" style={{ ...getChartCardPosition(selectedMonthIndex, chartData.length), top: getChartCardTop(selectedChartItem.minutes, chartMaxValue, 298, 18) }}>
+            <ActivityInfoCard title={`${format(year, 'yyyy')}-${String(selectedChartItem.label).padStart(2, '0')}`} minutes={selectedChartItem.minutes} questions={selectedChartItem.questions} />
+          </div>
+        )}
         <div className="absolute inset-x-3 bottom-2 grid grid-cols-12 [--cell-size:2.15rem]">
           {values.map((item, index) => {
             const monthDate = startOfMonth(new Date(year.getFullYear(), index, 1))
             const isFuture = isAfter(monthDate, startOfMonth(today))
             return (
-              <button key={item.label} type="button" disabled={isFuture} onClick={() => onSelectMonth(monthDate)} className="flex h-[--cell-size] w-full items-center justify-center rounded-xl p-0 text-[10px] font-normal leading-normal text-foreground transition-colors hover:bg-muted disabled:text-muted-foreground disabled:opacity-35">
+              <button key={item.label} type="button" disabled={isFuture} onClick={() => { setSelectedMonthIndex(index); onSelectMonth(monthDate) }} className={cn('flex h-[--cell-size] w-full items-center justify-center rounded-xl p-0 text-[10px] font-normal leading-normal text-foreground transition-colors hover:bg-muted disabled:text-muted-foreground disabled:opacity-35', index === selectedMonthIndex && 'bg-muted')}>
                 {item.label}
               </button>
             )
