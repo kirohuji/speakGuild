@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { addMonths, addWeeks, addYears, eachDayOfInterval, endOfMonth, endOfWeek, endOfYear, format, isAfter, isSameDay, parseISO, startOfDay, startOfMonth, startOfWeek, startOfYear } from 'date-fns'
 import { enUS, ja, zhCN } from 'date-fns/locale'
@@ -12,7 +12,7 @@ import { cn } from '@/lib/cn'
 import { useLearningStore } from '@/stores/learning.store'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
-import { Bar, CartesianGrid, ComposedChart, LabelList, Line, XAxis, YAxis } from 'recharts'
+import { Bar, CartesianGrid, Cell, ComposedChart, LabelList, Line, ReferenceLine, XAxis, YAxis } from 'recharts'
 
 function useLearningChartConfig() {
   const { t } = useTranslation()
@@ -36,6 +36,22 @@ const yearlyChartMock = [18, 24, 15, 32, 21, 38, 26, 29, 20, 34, 28, 41].map((mi
   minutes,
   questions: [12, 16, 9, 23, 14, 27, 18, 21, 13, 25, 19, 30][index],
 }))
+
+const monthlyChartMock = [
+  [8, 5], [16, 11], [0, 0], [24, 17], [12, 8], [31, 22], [18, 13],
+  [0, 0], [21, 15], [28, 20], [14, 9], [36, 25], [19, 14], [9, 6],
+  [0, 0], [26, 18], [33, 23], [17, 12], [22, 16], [0, 0], [29, 21],
+  [13, 10], [38, 27], [20, 15], [11, 7], [0, 0], [25, 19], [32, 24],
+  [16, 11], [27, 20], [35, 26],
+].map(([minutes, questions]) => ({ minutes, questions }))
+
+type MonthlyActivityData = {
+  dateKey: string
+  date: string
+  label: string
+  minutes: number
+  questions: number
+}
 
 export function LearningWeekTracker() {
   const { t } = useTranslation()
@@ -159,15 +175,16 @@ function CheckInCalendarDrawer({
       setSelectedDay(nextWeek)
     }
   }, [today, weekStart])
+  const monthSwipeStartRef = useRef<{ x: number; y: number } | null>(null)
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="h-[min(88dvh,700px)] rounded-t-[28px] border-border/70 bg-background drawer-surface">
         <DrawerHeader className="shrink-0 px-4 pb-2 pt-2 text-left">
           <div className="flex items-center justify-between gap-3">
-            <DrawerTitle className="text-base font-semibold">{t('learning.myLearning', { defaultValue: '我的学习' })}</DrawerTitle>
+            <DrawerTitle className="text-base font-semibold">{t('learning.myLearning')}</DrawerTitle>
             <ToggleGroup type="single" value={view} onValueChange={(value) => value && setView(value as 'week' | 'month' | 'year')} variant="outline" size="sm" className="rounded-full border border-border/60 bg-muted/50 p-0.5">
-              <ToggleGroupItem value="week" aria-label="周视图" className="h-7 min-w-10 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">周</ToggleGroupItem>
+              {/* <ToggleGroupItem value="week" aria-label="周视图" className="h-7 min-w-10 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">周</ToggleGroupItem> */}
               <ToggleGroupItem value="month" aria-label="月视图" className="h-7 min-w-10 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">月</ToggleGroupItem>
               <ToggleGroupItem value="year" aria-label="年视图" className="h-7 min-w-10 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">年</ToggleGroupItem>
             </ToggleGroup>
@@ -212,9 +229,25 @@ function CheckInCalendarDrawer({
               canGoToNextWeek={canGoToNextWeek}
             />
           ) : view === 'month' ? (
-          <div className="min-h-0 flex-1 overflow-hidden rounded-2xl bg-background">
+          <div
+            className="flex min-h-0 flex-1 touch-pan-y flex-col overflow-hidden rounded-2xl bg-background"
+            onPointerDownCapture={(event) => {
+              monthSwipeStartRef.current = { x: event.clientX, y: event.clientY }
+            }}
+            onPointerUpCapture={(event) => {
+              const start = monthSwipeStartRef.current
+              monthSwipeStartRef.current = null
+              if (!start) return
+              const deltaX = event.clientX - start.x
+              const deltaY = event.clientY - start.y
+              if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY)) return
+              if (deltaX < 0 && canGoToNextMonth) changeMonth(1)
+              if (deltaX > 0) changeMonth(-1)
+            }}
+            onPointerCancel={() => { monthSwipeStartRef.current = null }}
+          >
             <div className="flex items-center justify-between px-3 pt-3">
-              <Button type="button" variant="ghost" size="icon" className="touch-manipulation"
+              <Button type="button" variant="ghost" size="icon" className="touch-manipulation transition-none hover:!bg-transparent active:!scale-100"
                 onPointerDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}
                 onClick={() => changeMonth(-1)} aria-label="Previous month">
                 <ChevronLeft className="size-4" />
@@ -223,14 +256,15 @@ function CheckInCalendarDrawer({
                 {format(month, 'yyyy MMMM', { locale: calendarLocale })}
                 {loading && <Spinner className="size-3.5 text-muted-foreground" />}
               </div>
-              <Button type="button" variant="ghost" size="icon" className="touch-manipulation"
+              <Button type="button" variant="ghost" size="icon" className="touch-manipulation transition-none hover:!bg-transparent active:!scale-100"
                 disabled={!canGoToNextMonth}
                 onPointerDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}
                 onClick={() => changeMonth(1)} aria-label="Next month">
                 <ChevronRight className="size-4" />
               </Button>
             </div>
-            <div className="overflow-hidden" onPointerDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
+            <MonthlyActivityChart days={visibleDays} dailyStats={dailyStats} locale={calendarLocale} selectedDay={selectedDay} />
+            <div className="min-h-0 flex-1 overflow-y-auto" onPointerDown={(event) => event.stopPropagation()} onTouchStart={(event) => event.stopPropagation()}>
               <Calendar mode="single" selected={selectedDay} onSelect={setSelectedDay} month={month} hideNavigation locale={calendarLocale} disabled={{ after: today }}
                 modifiers={{ checkedIn: checkedInDates }}
                 modifiersClassNames={{ checkedIn: 'relative after:absolute after:bottom-1 after:left-1/2 after:size-2 after:-translate-x-1/2 after:rounded-full after:bg-primary after:content-[""]' }}
@@ -286,6 +320,7 @@ function WeeklyActivity({ days, dailyStats, checkedInDates, locale, today, selec
 }) {
   const { t } = useTranslation()
   const chartConfig = useLearningChartConfig()
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null)
   const items = days.map((day) => {
     const stat = dailyStats.get(format(day, 'yyyy-MM-dd'))
     return { day, minutes: Math.ceil((stat?.activeSeconds ?? 0) / 60), questionCount: stat?.questionCount ?? 0 }
@@ -298,7 +333,23 @@ function WeeklyActivity({ days, dailyStats, checkedInDates, locale, today, selec
     questions: usingMockData ? weeklyChartMock[index].questions : item.questionCount,
   }))
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-background">
+    <div
+      className="flex min-h-0 flex-1 touch-pan-y flex-col overflow-hidden rounded-2xl bg-background"
+      onPointerDown={(event) => {
+        swipeStartRef.current = { x: event.clientX, y: event.clientY }
+      }}
+      onPointerUp={(event) => {
+        const start = swipeStartRef.current
+        swipeStartRef.current = null
+        if (!start) return
+        const deltaX = event.clientX - start.x
+        const deltaY = event.clientY - start.y
+        if (Math.abs(deltaX) < 48 || Math.abs(deltaX) <= Math.abs(deltaY)) return
+        if (deltaX < 0 && canGoToNextWeek) onNextWeek()
+        if (deltaX > 0) onPrevWeek()
+      }}
+      onPointerCancel={() => { swipeStartRef.current = null }}
+    >
       <div className="flex items-center justify-between gap-3 px-3 pt-3">
         <div>
           <p className="text-sm font-semibold">{t('learning.weeklyRhythm', { defaultValue: '本周练习节奏' })}</p>
@@ -343,6 +394,92 @@ function WeeklyActivity({ days, dailyStats, checkedInDates, locale, today, selec
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function MonthlyActivityChart({ days, dailyStats, locale, selectedDay }: {
+  days: Date[]
+  dailyStats: Map<string, { date: string; questionCount: number; activeSeconds: number }>
+  locale: typeof zhCN
+  selectedDay?: Date
+}) {
+  const { t } = useTranslation()
+  const chartConfig = useLearningChartConfig()
+  const realChartData = days.map((day) => {
+    const stat = dailyStats.get(format(day, 'yyyy-MM-dd'))
+    return {
+      dateKey: format(day, 'yyyy-MM-dd'),
+      date: format(day, 'M/d', { locale }),
+      label: format(day, 'd', { locale }),
+      minutes: Math.ceil((stat?.activeSeconds ?? 0) / 60),
+      questions: stat?.questionCount ?? 0,
+    }
+  })
+  const usingMockData = !realChartData.some((item) => item.minutes > 0 || item.questions > 0)
+  const chartData = realChartData.map((item) => {
+    const mock = monthlyChartMock[(item.label ? Number(item.label) : 1) - 1] ?? monthlyChartMock[0]
+    return usingMockData ? { ...item, ...mock } : item
+  })
+  const selectedDateKey = selectedDay ? format(selectedDay, 'yyyy-MM-dd') : undefined
+  const selectedChartIndex = chartData.findIndex((item) => item.dateKey === selectedDateKey)
+  const selectedChartItem = selectedChartIndex >= 0 ? chartData[selectedChartIndex] : null
+  const [isChartInteracting, setIsChartInteracting] = useState(false)
+
+  useEffect(() => {
+    setIsChartInteracting(false)
+  }, [selectedDateKey])
+
+  return (
+    <section className="shrink-0 px-3 pt-2">
+      <div className="mb-1 flex items-center justify-between">
+        <p className="text-xs font-medium text-foreground">{t('learning.monthlyRhythm', { defaultValue: '本月练习趋势' })}</p>
+        <p className="text-[10px] text-muted-foreground">{t('learning.chartLegend', { defaultValue: '柱状为分钟，折线为完成题数' })}</p>
+      </div>
+      <div
+        className="relative"
+        onPointerDown={() => setIsChartInteracting(true)}
+        onMouseEnter={() => setIsChartInteracting(true)}
+        onMouseLeave={() => setIsChartInteracting(false)}
+      >
+        <ChartContainer config={chartConfig} className="h-[116px] w-full">
+          <ComposedChart accessibilityLayer data={chartData} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
+            <CartesianGrid vertical={false} />
+            <XAxis dataKey="dateKey" axisLine={false} tickLine={false} interval={4} tick={{ fontSize: 9 }} tickFormatter={(value) => String(value).slice(-2).replace(/^0/, '')} />
+            <YAxis hide yAxisId="metric" />
+            <ChartTooltip
+              cursor={false}
+              content={(props) => {
+                const item = props.payload?.[0]?.payload as MonthlyActivityData | undefined
+                return props.active && item ? <ActivityInfoCard title={item.date} minutes={item.minutes} questions={item.questions} /> : null
+              }}
+            />
+            {selectedDateKey && <ReferenceLine x={selectedDateKey} yAxisId="metric" stroke="hsl(var(--accent))" strokeOpacity={0.75} strokeWidth={1.5} />}
+            <Bar dataKey="minutes" yAxisId="metric" barSize={5} fill="var(--color-minutes)" radius={[2, 2, 0, 0]} isAnimationActive={false}>
+              {chartData.map((item) => {
+                const isSelected = item.dateKey === selectedDateKey
+                return <Cell key={item.dateKey} fill={isSelected ? 'hsl(var(--accent))' : 'var(--color-minutes)'} stroke={isSelected ? 'hsl(var(--accent))' : 'transparent'} strokeWidth={isSelected ? 2 : 0} />
+              })}
+            </Bar>
+            <Line type="linear" dataKey="questions" yAxisId="metric" stroke="var(--color-questions)" strokeWidth={2} dot={false} activeDot={{ r: 3 }} isAnimationActive={false} />
+          </ComposedChart>
+        </ChartContainer>
+        {selectedChartItem && !isChartInteracting && (
+          <div className="pointer-events-none absolute top-1 z-10 -translate-x-1/2" style={{ left: `${((selectedChartIndex + 0.5) / chartData.length) * 100}%` }}>
+            <ActivityInfoCard title={selectedChartItem.date} minutes={selectedChartItem.minutes} questions={selectedChartItem.questions} />
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function ActivityInfoCard({ title, minutes, questions }: { title: string; minutes: number; questions: number }) {
+  const { t } = useTranslation()
+  return (
+    <div className="rounded-md border border-accent bg-background px-2 py-1 text-[10px] shadow-md">
+      <p className="font-medium text-foreground">{title}</p>
+      <p className="mt-0.5 whitespace-nowrap text-muted-foreground">{formatDuration(minutes * 60)} · {questions}{t('learning.questionsUnit', { defaultValue: '题' })}</p>
     </div>
   )
 }
@@ -398,7 +535,15 @@ function YearlyActivity({ year, dailyStats, today, onSelectMonth, onPrevYear, on
             <CartesianGrid vertical={false} />
             <XAxis dataKey="label" hide />
             <YAxis hide yAxisId="metric" />
-            <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
+            <ChartTooltip
+              cursor={false}
+              content={(props) => {
+                const item = props.payload?.[0]?.payload as { label: number; minutes: number; questions: number } | undefined
+                return props.active && item
+                  ? <ActivityInfoCard title={`${format(year, 'yyyy')}-${String(item.label).padStart(2, '0')}`} minutes={item.minutes} questions={item.questions} />
+                  : null
+              }}
+            />
             <Bar dataKey="minutes" yAxisId="metric" barSize={10} fill="var(--color-minutes)" radius={[4, 4, 0, 0]} isAnimationActive={false}>
               <LabelList dataKey="minutes" position="top" offset={5} className="fill-muted-foreground" fontSize={9} />
             </Bar>

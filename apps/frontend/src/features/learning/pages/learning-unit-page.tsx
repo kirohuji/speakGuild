@@ -405,7 +405,7 @@ export function LearningUnitPage() {
         <Button
           variant="ghost"
           size="sm"
-          className="mt-3 w-full gap-1.5 text-xs text-muted-foreground"
+          className="mt-3 w-full gap-1.5 text-xs text-muted-foreground transition-none hover:!bg-transparent hover:!text-muted-foreground active:!scale-100"
           onClick={() => toggleSection('knowledge')}
         >
           <ChevronDown className="size-3.5" /> {t('learning.expandAll', { count: allVocabCount + allChunkCount + patternDialogItems.length })}

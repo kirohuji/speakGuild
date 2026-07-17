@@ -1136,7 +1136,7 @@ export function PracticeSessionPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="mt-3 w-full gap-1.5 text-xs text-muted-foreground"
+              className="mt-3 w-full gap-1.5 text-xs text-muted-foreground transition-none hover:!bg-transparent hover:!text-muted-foreground active:!scale-100"
               onClick={() => setPrepCollapsed(false)}
             >
               <ChevronDown className="size-3.5" /> {t('learning.expandAll', { count: detail.vocabularies.length + detail.activeChunks.length + (detail.sentencePatterns?.length ?? 0) })}
