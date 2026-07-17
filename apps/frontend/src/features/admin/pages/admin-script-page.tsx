@@ -24,7 +24,7 @@ import {
     type StoryEpisode, type SceneCategory, type Scene, type Chunk, type Vocabulary,
 } from '../api-content-admin'
 
-export function AdminScriptPage() {
+export function AdminScriptPage({ sceneId }: { sceneId?: string } = {}) {
     const [episodes, setEpisodes] = useState<StoryEpisode[]>([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
@@ -35,7 +35,7 @@ export function AdminScriptPage() {
     const load = async () => {
         setLoading(true)
         try {
-            const eps = await listScriptEpisodes()
+            const eps = await listScriptEpisodes(sceneId)
             setEpisodes(eps)
         } catch { }
         finally { setLoading(false) }
@@ -50,7 +50,7 @@ export function AdminScriptPage() {
         }
     }
 
-    useEffect(() => { load() }, [])
+    useEffect(() => { load() }, [sceneId])
 
     const filteredEpisodes = episodes.filter((ep) =>
         !search || ep.title.includes(search) || ep.chapterTitle.includes(search) || ep.npcName?.includes(search)
@@ -81,20 +81,20 @@ export function AdminScriptPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">剧本关卡管理</h1>
-                    <p className="text-sm text-muted-foreground">管理剧本章节和关卡配置</p>
+                    <h1 className="text-2xl font-bold">章节与剧集管理</h1>
+                    <p className="text-sm text-muted-foreground">维护剧情包中的章节、剧集顺序和高级配置</p>
                 </div>
-                <EpisodeCreateButton onCreated={load} />
+                <EpisodeCreateButton onCreated={load} defaultSceneId={sceneId} />
             </div>
 
             <div className="relative max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input className="pl-9" placeholder="搜索关卡..." value={search} onChange={(e) => setSearch(e.target.value)} />
+                <Input className="pl-9" placeholder="搜索章节或剧集..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
 
             <Card>
                 <CardHeader className="pb-3">
-                    <CardTitle className="text-base">关卡列表</CardTitle>
+                    <CardTitle className="text-base">剧集列表</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                     {loading ? (
@@ -107,7 +107,7 @@ export function AdminScriptPage() {
                         <div className="flex flex-col items-center py-16 text-center">
                             <Film className="h-12 w-12 text-muted-foreground/30" />
                             <p className="mt-4 text-sm font-medium text-muted-foreground">
-                                {search ? '没有匹配的关卡' : '暂无关卡'}
+                                {search ? '没有匹配的剧集' : '暂无剧集'}
                             </p>
                             <p className="mt-1 text-xs text-muted-foreground/60">
                                 {search ? '尝试更换搜索关键词' : '新增后会显示在这里'}
@@ -118,7 +118,7 @@ export function AdminScriptPage() {
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b border-border bg-muted/40">
-                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">关卡</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">剧集</th>
                                         <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground md:table-cell">章节</th>
                                         <th className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">要求</th>
                                         <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">记录</th>
@@ -177,12 +177,12 @@ export function AdminScriptPage() {
     )
 }
 
-function EpisodeCreateButton({ onCreated }: { onCreated: () => void }) {
+function EpisodeCreateButton({ onCreated, defaultSceneId }: { onCreated: () => void; defaultSceneId?: string }) {
     const [open, setOpen] = useState(false)
     return (
         <>
-            <Button onClick={() => setOpen(true)}><Plus className="size-4 mr-1" /> 新增关卡</Button>
-            <EpisodeEditDialog open={open} onClose={() => setOpen(false)} edit={null} onSaved={onCreated} />
+            <Button onClick={() => setOpen(true)}><Plus className="size-4 mr-1" /> 新建剧集</Button>
+            <EpisodeEditDialog open={open} onClose={() => setOpen(false)} edit={null} onSaved={onCreated} defaultSceneId={defaultSceneId} />
         </>
     )
 }
@@ -193,7 +193,7 @@ function EpisodeDetailView({ episode, onSaved, onClose }: { episode: StoryEpisod
         <div className="space-y-6">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-base">关卡配置</CardTitle>
+                    <CardTitle className="text-base">剧集配置</CardTitle>
                     <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
                         <Edit3 className="size-3.5 mr-1" /> 编辑
                     </Button>
@@ -271,11 +271,13 @@ export function EpisodeEditDialog({
     const [categories, setCategories] = useState<SceneCategory[]>([])
     const [scenes, setScenes] = useState<Scene[]>([])
     const [chunks, setChunks] = useState<Chunk[]>([])
+    const [existingEpisodes, setExistingEpisodes] = useState<StoryEpisode[]>([])
 
     useEffect(() => {
-        listSceneCategories().then(setCategories).catch(() => { })
-        listScenes().then(setScenes).catch(() => { })
+        listSceneCategories('story').then(setCategories).catch(() => { })
+        listScenes(undefined, 'story').then(setScenes).catch(() => { })
         listAllChunks().then(setChunks).catch(() => { })
+        listScriptEpisodes().then(setExistingEpisodes).catch(() => { })
     }, [])
 
     useEffect(() => {
@@ -285,7 +287,7 @@ export function EpisodeEditDialog({
             vocabIds: edit.coreVocabularies?.map((item: any) => item.vocab?.id ?? item.vocabId).filter(Boolean) ?? [],
         })
         else setForm({
-            chapterId: 'chapter_0', chapterTitle: '新手体验',
+            chapterId: '', chapterTitle: '',
             episodeOrder: 1, title: '', description: '', sceneId: defaultSceneId ?? '',
             requiredOutputLevel: 'L1', requiredUserLevel: 1,
             vocabRequiredCount: 6, vocabTotalCount: 10,
@@ -299,12 +301,16 @@ export function EpisodeEditDialog({
     }, [edit, open, defaultSceneId])
 
     const handleSave = async () => {
-        if (!form.title?.trim()) return
+        if (!form.title?.trim() || !form.sceneId || !form.chapterTitle?.trim()) return
         setSaving(true)
         try {
-            if (edit) await updateScriptEpisode(edit.id, form)
-            else await createScriptEpisode(form)
-            toast.success('关卡已保存')
+            const payload = {
+                ...form,
+                chapterId: form.chapterId || `chapter_${Date.now().toString(36)}`,
+            }
+            if (edit) await updateScriptEpisode(edit.id, payload)
+            else await createScriptEpisode(payload)
+            toast.success('剧集已保存')
             onSaved()
             onClose()
         } catch { toast.error('保存失败') }
@@ -315,22 +321,12 @@ export function EpisodeEditDialog({
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>{edit ? '编辑关卡' : '新增关卡'}</DialogTitle>
+                    <DialogTitle>{edit ? '编辑剧集' : '新建剧集'}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label>章节 ID</Label>
-                            <Input value={form.chapterId ?? ''} onChange={(e) => setForm({ ...form, chapterId: e.target.value })} placeholder="chapter_0" />
-                        </div>
-                        <div>
-                            <Label>章节标题</Label>
-                            <Input value={form.chapterTitle ?? ''} onChange={(e) => setForm({ ...form, chapterTitle: e.target.value })} placeholder="新手体验" />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <Label>标题</Label>
+                            <Label>剧集标题</Label>
                             <Input value={form.title ?? ''} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="宿舍 Check-in" />
                         </div>
                         <div>
@@ -340,18 +336,18 @@ export function EpisodeEditDialog({
                         </div>
                     </div>
                     <MarkdownEditor
-                        label="关卡说明"
+                        label="剧集简介"
                         value={form.description ?? ''}
                         onChange={(value) => setForm({ ...form, description: value })}
                         height={150}
                         preview="edit"
-                        placeholder="这个关卡训练什么能力、用户需要完成什么情境任务..."
+                        placeholder="这一集发生什么、用户扮演谁、需要推动什么剧情..."
                     />
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <Label>关联场景</Label>
-                            <Select value={form.sceneId} onChange={(e) => setForm({ ...form, sceneId: e.target.value })}>
-                                <option value="">选择场景</option>
+                            <Label>所属剧情包</Label>
+                            <Select value={form.sceneId} onChange={(e) => setForm({ ...form, sceneId: e.target.value, chapterId: '', chapterTitle: '' })}>
+                                <option value="">选择剧情包</option>
                                 {categories.map((cat) => (
                                     <optgroup key={cat.id} label={cat.name}>
                                         {scenes.filter((s) => s.categoryId === cat.id).map((s) => (
@@ -361,6 +357,27 @@ export function EpisodeEditDialog({
                                 ))}
                             </Select>
                         </div>
+                        <div>
+                            <Label>所属章节</Label>
+                            <Select
+                                value={form.chapterId || '__new__'}
+                                onChange={(e) => {
+                                    const value = e.target.value
+                                    const chapter = existingEpisodes.find((item) => item.sceneId === form.sceneId && item.chapterId === value)
+                                    setForm({ ...form, chapterId: value === '__new__' ? '' : value, chapterTitle: chapter?.chapterTitle ?? '' })
+                                }}
+                            >
+                                <option value="__new__">＋ 新建章节</option>
+                                {Array.from(new Map(existingEpisodes.filter((item) => item.sceneId === form.sceneId).map((item) => [item.chapterId, item])).values()).map((item) => (
+                                    <option key={item.chapterId} value={item.chapterId}>{item.chapterTitle}</option>
+                                ))}
+                            </Select>
+                        </div>
+                        {!form.chapterId && <div className="col-span-2">
+                            <Label>新章节名称</Label>
+                            <Input value={form.chapterTitle ?? ''} onChange={(e) => setForm({ ...form, chapterTitle: e.target.value })} placeholder="例如：第一章 · 初到漫语町" />
+                            <p className="mt-1 text-xs text-muted-foreground">内部章节 Key 会在保存时自动生成，无需手工填写。</p>
+                        </div>}
                         <div className="flex items-center gap-2">
                             <div className="flex-1">
                                 <Label>等级要求</Label>
@@ -371,7 +388,7 @@ export function EpisodeEditDialog({
                                 </Select>
                             </div>
                             <div className="flex-1">
-                                <Label>预览关卡</Label>
+                                <Label>预览剧集</Label>
                                 <Select value={form.isPreview ? 'true' : 'false'}
                                     onChange={(e) => setForm({ ...form, isPreview: e.target.value === 'true' })}>
                                     <option value="false">否</option>
@@ -486,7 +503,7 @@ export function EpisodeEditDialog({
 
                         <div className="flex justify-end gap-2 pt-2">
                             <Button variant="outline" onClick={onClose}>取消</Button>
-                            <Button onClick={handleSave} disabled={saving || !form.title?.trim()}>保存</Button>
+                            <Button onClick={handleSave} disabled={saving || !form.title?.trim() || !form.sceneId || !form.chapterTitle?.trim()}>保存</Button>
                         </div>
                     </div>
                 </div>

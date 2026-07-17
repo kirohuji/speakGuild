@@ -25,9 +25,10 @@ interface StoryWorkshopTabProps {
   locations: GameLocationData[]
   characters: GameCharacter[]
   initialStoryId?: string
+  workspace?: 'practice' | 'narrative'
 }
 
-export function StoryWorkshopTab({ locations, characters, initialStoryId }: StoryWorkshopTabProps) {
+export function StoryWorkshopTab({ locations, characters, initialStoryId, workspace = 'practice' }: StoryWorkshopTabProps) {
   const [stories, setStories] = useState<StoryData[]>([])
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
@@ -50,7 +51,7 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const params: any = { page, pageSize: PAGE_SIZE }
+      const params: any = { page, pageSize: PAGE_SIZE, scope: workspace }
       if (search) params.search = search
       if (packageTypeFilter !== 'all') params.packageType = packageTypeFilter
       if (categoryFilter !== 'all') params.categoryId = categoryFilter
@@ -60,7 +61,7 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
       setTotalPages(data.totalPages)
     } catch { toast.error('加载故事列表失败') }
     finally { setLoading(false) }
-  }, [page, search, packageTypeFilter, categoryFilter])
+  }, [page, search, packageTypeFilter, categoryFilter, workspace])
 
   useEffect(() => { load() }, [load])
 
@@ -131,7 +132,7 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
         title: data.title,
         inkJson: data.inkJson,
         inkSource: data.inkSource,
-        scriptType: 'practice',
+        scriptType: editingStory?.scriptType ?? (workspace === 'practice' ? 'practice' : 'episode'),
         version: (editingStory?.version ?? 0) + 1,
         locationId: data.locationId ?? null,
         characterId: data.characterId ?? null,
@@ -157,7 +158,7 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
       throw new Error('保存失败')
     }
     finally { setSaving(false) }
-  }, [editingStory, load])
+  }, [editingStory, load, workspace])
 
   const handleDelete = useCallback(async (story: StoryData) => {
     if (!confirm(`确定删除故事 "${story.title}"？此操作不可撤销。`)) return
@@ -302,7 +303,9 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
           </Button>
           <div className="flex-1">
             <h2 className="text-lg font-bold">
-              {isCreating ? '新建故事' : `编辑: ${editingStory?.title}`}
+              {isCreating
+                ? workspace === 'practice' ? '新建话题实战' : '新建剧情脚本'
+                : `编辑: ${editingStory?.title}`}
             </h2>
             <p className="text-xs text-muted-foreground">
               {isCreating
@@ -352,7 +355,7 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="搜索标题、Key 或关联话题..."
+            placeholder={workspace === 'practice' ? '搜索标题、Key 或关联话题...' : '搜索剧情标题或 Key...'}
             className="pl-9"
           />
         </div>
@@ -388,7 +391,7 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
           学习包管理
         </Button>
         <Button size="sm" onClick={openCreate}>
-          <Plus className="mr-1 size-4" />新建故事
+          <Plus className="mr-1 size-4" />{workspace === 'practice' ? '新建话题实战' : '新建剧情脚本'}
         </Button>
       </div>
 
@@ -396,16 +399,18 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16">
           <ScrollText className="size-10 text-muted-foreground/30" />
           <p className="mt-3 text-sm text-muted-foreground">
-            {search || packageTypeFilter !== 'all' || categoryFilter !== 'all' ? '没有匹配的故事' : '暂无故事'}
+            {search || packageTypeFilter !== 'all' || categoryFilter !== 'all'
+              ? '没有匹配的内容'
+              : workspace === 'practice' ? '暂无话题实战' : '暂无剧情脚本'}
           </p>
           {!search && packageTypeFilter === 'all' && categoryFilter === 'all' && (
             <>
               <p className="mt-1 text-xs text-muted-foreground/60">
-                点击「新建故事」开始编写第一个对话脚本
+                {workspace === 'practice' ? '从学习包话题创建练习 VN' : '创建剧情关卡、支线或 NPC 对话脚本'}
               </p>
               <Button variant="outline" size="sm" className="mt-4" onClick={openCreate}>
                 <Plus className="mr-1 size-3.5" />
-                新建故事
+                {workspace === 'practice' ? '新建话题实战' : '新建剧情脚本'}
               </Button>
             </>
           )}
@@ -554,18 +559,20 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId }: Stor
         </>
       )}
 
-      {/* NQTR Architecture Guide */}
+      {/* Workspace guide */}
       <Card className="border-dashed bg-muted/20">
         <CardContent className="flex items-start gap-3 p-4">
           <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
             <BookOpen className="size-4 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-medium">NQTR 架构说明</p>
+            <p className="text-sm font-medium">{workspace === 'practice' ? '练习 VN 归属规则' : '剧情脚本归属规则'}</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              故事需要<strong>地点</strong>（在地图管理中创建）和<strong>角色</strong>（在角色管理中创建）。
-              完成故事编写后，前往<strong>场景管理</strong> → 选择场景 → 训练话题 →
-              绑定 Ink 脚本，用户即可在练习中使用该故事进行对话练习。
+              {workspace === 'practice' ? (
+                <>这里仅管理学习包话题的<strong>练习型 VN</strong>。脚本应绑定 TrainingTopic，角色和地点只是可选素材；完成后回到学习包话题确认绑定关系。</>
+              ) : (
+                <>这里管理剧情关卡、地图支线和 NPC 对话。角色与地图在同一个“剧情包内容”工作区维护，所有类型复用当前这一套 Ink 编辑器。</>
+              )}
             </p>
           </div>
         </CardContent>

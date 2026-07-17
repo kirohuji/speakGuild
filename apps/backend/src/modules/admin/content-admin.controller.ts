@@ -962,6 +962,7 @@ export class ContentAdminController {
     @Req() req: Request,
     @Query('search') search?: string,
     @Query('scriptType') scriptType?: string,
+    @Query('scope') scope?: 'practice' | 'narrative',
     @Query('packageType') packageType?: string,
     @Query('categoryId') categoryId?: string,
     @Query('page') page?: string,
@@ -977,6 +978,8 @@ export class ContentAdminController {
       ]
     }
     if (scriptType && scriptType !== 'all') where.scriptType = scriptType
+    else if (scope === 'practice') where.scriptType = 'practice'
+    else if (scope === 'narrative') where.scriptType = { not: 'practice' }
     // 一级分类 (packageType) 和二级分类 (categoryId) 都通过 trainingTopic → scene 过滤
     const sceneWhere: any = {}
     if (packageType && packageType !== 'all') sceneWhere.packageType = packageType

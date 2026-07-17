@@ -511,6 +511,7 @@ export interface StoryFilters {
 export async function listStories(params?: {
   search?: string
   scriptType?: string
+  scope?: 'practice' | 'narrative'
   packageType?: string
   categoryId?: string
   page?: number
