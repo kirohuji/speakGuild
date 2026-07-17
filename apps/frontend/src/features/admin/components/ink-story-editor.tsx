@@ -809,7 +809,7 @@ export function InkStoryEditor({
             </div>
           )}
 
-          <div className="grid gap-3 xl:grid-cols-[230px_minmax(0,1fr)_320px]">
+          <div className="grid gap-3 xl:grid-cols-[180px_minmax(0,1fr)_250px]">
             <div className="rounded-lg border border-border bg-card">
               <div className="flex items-center justify-between border-b border-border px-3 py-2">
                 <p className="text-sm font-semibold">场景</p>

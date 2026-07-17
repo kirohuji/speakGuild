@@ -12,8 +12,7 @@ import { Select, SelectItem } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { CharactersTab } from '../components/characters-tab'
 import { MapsTab } from '../components/maps-tab'
-import { EpisodeStudio } from '../components/episode-studio'
-import { AdminScriptPage } from './admin-script-page'
+import { StoryChapterStudio } from '../components/story-chapter-studio'
 import {
   listCharacters,
   listLocations,
@@ -27,7 +26,7 @@ import {
   type SceneCategory,
 } from '../api-content-admin'
 
-type NarrativeTab = 'studio' | 'episodes' | 'characters' | 'maps'
+type NarrativeTab = 'studio' | 'characters' | 'maps'
 
 /** 独立剧情包工作区：一套 Ink 编辑器 + 剧集配置 + 共享角色/地图资产。 */
 export function AdminNarrativePage() {
@@ -52,7 +51,7 @@ export function AdminNarrativePage() {
     return matchesSearch && matchesCategory && matchesAccess
   })
   const requestedTab = searchParams.get('tab')
-  const activeTab: NarrativeTab = requestedTab === 'episodes' || requestedTab === 'characters' || requestedTab === 'maps'
+  const activeTab: NarrativeTab = requestedTab === 'characters' || requestedTab === 'maps'
     ? requestedTab
     : 'studio'
 
@@ -127,7 +126,7 @@ export function AdminNarrativePage() {
         {!selectedPackage && <Button onClick={() => openPackageDialog()}><Plus className="mr-2 size-4" />新建剧情包</Button>}
       </header>
 
-      {!selectedPackage && (activeTab === 'studio' || activeTab === 'episodes') ? (
+      {!selectedPackage && activeTab === 'studio' ? (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative w-full sm:w-[280px]"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索剧情包..." className="pl-9" /></div>
@@ -143,21 +142,18 @@ export function AdminNarrativePage() {
         </div>
       ) : <Tabs value={activeTab} onValueChange={changeTab}>
         <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl bg-muted/55 p-1 sm:w-fit">
-          <TabsTrigger value="studio" className="gap-2 px-4"><BookOpen className="size-4" />剧集制作</TabsTrigger>
-          <TabsTrigger value="episodes" className="gap-2 px-4">高级配置</TabsTrigger>
+          <TabsTrigger value="studio" className="gap-2 px-4"><BookOpen className="size-4" />章节剧情</TabsTrigger>
           <TabsTrigger value="characters" className="gap-2 px-4"><UserCircle className="size-4" />角色资产 <span className="text-[10px] opacity-60">{characters.length}</span></TabsTrigger>
           <TabsTrigger value="maps" className="gap-2 px-4"><Map className="size-4" />地图世界 <span className="text-[10px] opacity-60">{locations.length}</span></TabsTrigger>
         </TabsList>
 
         <TabsContent value="studio" className="mt-4">
-          <EpisodeStudio
+          <StoryChapterStudio
             packageId={selectedPackage?.id ?? ''}
             locations={locations}
             characters={characters}
-            onOpenAdvanced={() => changeTab('episodes')}
           />
         </TabsContent>
-        <TabsContent value="episodes" className="mt-4"><AdminScriptPage sceneId={selectedPackage?.id} /></TabsContent>
         <TabsContent value="characters" className="mt-4"><CharactersTab onCharactersChange={setCharacters} /></TabsContent>
         <TabsContent value="maps" className="mt-4"><MapsTab onLocationsChange={setLocations} /></TabsContent>
       </Tabs>}
