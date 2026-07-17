@@ -1,9 +1,14 @@
-# Master Core Vocabulary — All 7 Foundation Packs
-# 1724 unique words (zero cross-pack overlap)
-# Generated 2026-07-16
-# Packs: ① beginner ② daily-life ③ daily-work ④ essential-phrases ⑤ opinion-basics ⑥ social-express ⑦ travel-basic
+# Master Core Vocabulary — All 10 Foundation Packs
+# 2204 unique words (zero cross-pack overlap)
+# Generated 2026-07-17
+# Packs: ① beginner ② daily-life ③ daily-work ④ essential-phrases ⑤ opinion-basics ⑥ social-express ⑦ travel-basic ⑧ integrated-express ⑨ describe-compare
 'll
+a book to read
 a decade ago
+a little cheaper
+a lot easier
+a or b?
+a place to stay
 a while ago
 able
 above
@@ -22,17 +27,26 @@ acquire
 acquires
 across
 active
+actually
 adapt
 adaptation
+additionally
 address
 adjust
 adjustment
 adult
 advance
+advantage
+advice
 advise
+advocate
 afford
+affordable
 afraid
+after
+after that
 afterward
+afterwards
 age
 ages ago
 ago
@@ -44,11 +58,14 @@ allergy
 allow
 ally
 almost
+almost as good as
 along
 alphabet
 already
+alright
 also
 alternative
+alternatively
 although
 always
 am
@@ -60,6 +77,8 @@ america
 amount
 amused
 ancient
+and
+angrily
 angry
 anniversary
 annoyed
@@ -67,6 +86,7 @@ annoying
 anomaly
 answer
 any
+anyhow
 anyone
 anytime
 anyway
@@ -88,6 +108,26 @@ arrange
 arrangement
 arrival
 artist
+as
+as a consequence
+as a matter of fact
+as a result
+as bright as
+as dark as
+as deep as
+as far as
+as far as i'm concerned
+as heavy as
+as high as
+as long as
+as loud as
+as low as
+as many books as
+as much water as
+as quiet as
+as soon as
+as well as
+as wide as
 asap
 aside
 ask
@@ -99,6 +139,8 @@ assume
 assure
 at
 at first
+at first...later on...after a while...in the end
+at last
 at that time
 ate
 attain
@@ -114,10 +156,12 @@ average
 avoid
 awake
 awful
+back
 back in the day
 back in time
 back then
 backward
+bad→worse
 bag
 balance
 bald
@@ -128,9 +172,12 @@ barely
 bargain
 bath
 battery
+be partial to
 beautiful
+because
 become
 been
+before
 before long
 beforehand
 begin
@@ -140,9 +187,13 @@ behind
 believe
 belong
 below
+benefit
 beside
+besides
 better
+better and better
 between
+between the two
 beyond
 bicycle
 big
@@ -167,17 +218,20 @@ boring
 born
 borrow
 boss
+both...and
 bottom
 boulevard
 bowl
 box
 brand
 brave
+brave enough
 bread
 breakfast
 breezy
 bridge
 briefly
+bright enough
 brighter
 brilliant
 bring
@@ -188,13 +242,17 @@ browse
 brunette
 brush
 brushed
+budget-friendly
 build
 busier
 busy
 butter
 button
 buy
+by contrast
+by far the best
 by now
+by the way
 by then
 bye
 bypass
@@ -206,6 +264,7 @@ calm
 came
 camping
 can
+can you tell me where
 cancel
 capture
 car
@@ -225,11 +284,13 @@ ceremony
 certainly
 chair
 challenging
+champion
 change
 charge
 charity
 chat
 cheap
+cheap→cheaper
 check
 checked
 cheer
@@ -263,6 +324,7 @@ code
 coffee
 coin
 cold
+coldly
 collar
 colleague
 collect
@@ -281,14 +343,22 @@ community
 commute
 companion
 compare
+compared to
+compared to before
+compared to the past
+comparison
 compass
 competitive
 complete
 completely
+compromise
+con
 concentrate
 concern
+concerning
 concert
 conclude
+concurrently
 conductor
 conference
 confidence
@@ -297,7 +367,9 @@ confirm
 confused
 congratulate
 connection
+consequently
 consider
+considerably
 consistently
 constantly
 contain
@@ -307,15 +379,18 @@ continue
 continuously
 contrast
 contribute
+convenient
 conveniently
 convention
 cook
 cooked
+cooking relaxes me
 cool
 cooperate
 coordinate
 cope
 cost
+cost-effective
 cotton
 could
 count
@@ -356,7 +431,9 @@ decline
 decrease
 dedicated
 deduce
+deep enough
 deeper
+deep→deeper
 defective
 definitely
 delay
@@ -388,11 +465,16 @@ dictionary
 did
 didn't
 differ
+difference
+different
+different from before
+difficult
 dinner
 direction
 directly
 directory
 dirty
+disadvantage
 disagree
 disappear
 disappointed
@@ -414,6 +496,7 @@ done
 door
 dosage
 double
+double the size of
 doublecheck
 doubt
 down
@@ -422,6 +505,7 @@ downward
 doze
 drank
 draw
+drawback
 dream
 dress
 drink
@@ -433,25 +517,32 @@ drop
 dropoff
 drove
 dry
+due to
 during
 dust
+e.g.
 each time
 eager
 earlier
 earlier on
 earlier that day
 early
+early→earlier
 earn
 earthquake
+easily
+easy→easier
 eaten
 eavesdrop
 echo
+economical
 effort
 egg
 eight
 eighteen
 eighth
 eighty
+either...or
 elevator
 eleven
 embarrassed
@@ -460,6 +551,8 @@ empty
 encourage
 endless
 endlessly
+endorse
+endorsement
 energetic
 engineer
 english
@@ -474,10 +567,14 @@ enthusiast
 enthusiastic
 entirely
 entrance
+er
 era
 escape
 estimate
 evacuate
+even
+even if
+even more difficult
 event
 eventually
 ever
@@ -486,6 +583,7 @@ every time
 everybody
 everyone
 everything
+everything that i know
 evidence
 evolution
 evolve
@@ -518,28 +616,35 @@ fail
 faithfully
 fake
 family
+famous
 fan
 fancy
 fantastic
+far better
 faraway
 fare
 farmer
+far→farther
+far→further
 fascinated
 fashion
 fast
 faster
 father
 fault
+favor
 favorite
 feast
 february
 fee
 feed
+feedback
 feel
 felt
 ferry
 festival
 fetch
+fewer people than
 fifteen
 fifth
 fifty
@@ -553,6 +658,7 @@ finished
 firefighter
 first
 firstaid
+firstly
 fishing
 fit
 five
@@ -570,9 +676,14 @@ focus
 foggy
 fold
 follow
+following that
 for
+for example
+for instance
 forget
 forgive
+forgot meeting (did meet)
+forgot to meet (didn't meet)
 fork
 formal
 formerly
@@ -593,6 +704,7 @@ friday
 fried
 friendly
 from
+from my perspective
 from now on
 from time to time
 front
@@ -601,6 +713,7 @@ fulfill
 full
 funny
 furious
+furthermore
 future
 gain
 gallery
@@ -618,6 +731,7 @@ genuine
 genuinely
 gesture
 give
+give me something to eat
 glad
 glance
 glass
@@ -643,12 +757,15 @@ grow
 guarantee
 guess
 guest
+guidance
 guide
 gym
 habit
 had
 hailed
 half
+half as
+half as heavy as
 hand
 handle
 handsome
@@ -656,23 +773,31 @@ hang
 hang out
 happen
 happier
+happily
 happy
 harder
 hardly
 hardly ever
 has
 hate
+have a preference for
 he
+he admitted (that)
+he said (that)
 headset
 heal
 healthier
+healthy→healthier
 hear
 heavier
+heavily
+heavy→heavier
 hello
 helmet
 help
 helped
 helpful
+hence
 henceforth
 here
 herself
@@ -680,9 +805,11 @@ hesitant
 hi
 highly
 highway
+high→higher
 hike
 himself
 historic
+hmm
 hobby
 hobbyist
 hold
@@ -691,6 +818,7 @@ holiday
 home
 homeward
 honest
+honestly
 hope
 hopeless
 host
@@ -706,18 +834,120 @@ hungry
 hurry
 husband
 i
+i agreed to come
+i apologize for forgetting
+i attempted to fix it
+i believe (that)
+i believe that learning english is fun
+i called to check
+i came here to study
+i continued working
+i decided to go
+i decided to learn english because i think it's important for my future
+i dislike cooking
+i don't believe (that)
+i don't know how
+i don't know what
+i don't know when
+i don't know where
+i don't know why
+i don't mind helping
+i don't think (that)
+i doubt (that)
+i enjoy reading
+i enjoy traveling because i think it's the best way to learn about different cultures
+i expect to finish
+i feel (that)
+i finished writing
+i gave up drinking
+i guess (that)
+i hate waiting
+i have a lot to learn
+i have nothing to say
+i have something to tell you
+i heard (that)
+i hope to see
+i imagine (that)
+i intend to stay
+i keep trying
+i know (that)
+i know that he wants to be a doctor
+i like swimming
+i love watching movies
+i mean
+i need someone to help
+i notice (that)
+i offered to drive
+i plan to visit
+i prefer staying home
+i promised to help
+i realize (that)
+i refused to leave
+i saved money to travel
+i spend time reading
+i started learning
+i stopped smoking
+i suppose (that)
+i think (that)
+i think it's important to practice
+i understand how
+i volunteered to cook
+i want to learn
+i went to the store to buy
+i wish to travel
+i woke up early to exercise
+i wonder if
+i wonder why
+i would like to apply
+i'm afraid of failing
+i'm certain (that)
+i'm confident (that)
+i'm excited about starting
+i'm fond of traveling
+i'm good at remembering names
+i'm interested in learning
+i'm not certain (that)
+i'm not sure (that)
+i'm positive (that)
+i'm proud of achieving
+i'm sorry for being late
+i'm sorry for disturbing you
+i'm sorry for making you wait
+i'm sure (that)
+i'm tired of waiting
 idea
 identify
 if
+if not
+if not...then...
+if so...
+if...then...
 imagine
 immediate
 immediately
+important
 improve
 in
+in a word
+in addition
+in addition to
+in case
+in comparison
+in conclusion
+in contrast
 in earlier times
+in fact
 in former times
 in modern times
+in my opinion
+in my view
+in order to succeed
+in short
+in terms of
 in the beginning
+in the end
+in the event that
+in the meantime
 in the near future
 in the old days
 in the past
@@ -725,16 +955,20 @@ in this era
 in those days
 include
 includes
+including
 incorrect
 increase
 indoors
 inevitably
+inexpensive
 infer
 infinite
 inform
 infrequently
 initially
+initially...subsequently...eventually...finally
 injection
+input
 inside
 insomnia
 inspire
@@ -757,7 +991,18 @@ inward
 iron
 irregular
 is
+is this cheaper than that?
 it
+it's becoming
+it's dangerous to ignore
+it's easy to forget
+it's fun to travel
+it's getting
+it's growing
+it's hard to say
+it's important to practice
+it's necessary to prepare
+it's possible to achieve
 its
 itself
 jam
@@ -774,6 +1019,8 @@ juice
 july
 june
 just
+just as
+just as good as
 keen
 keep
 keeps
@@ -788,25 +1035,32 @@ lack
 landmark
 lane
 language
+large→larger
 last
+lastly
 late
 lately
 later
 lawyer
 lazy
+lean towards
 learn
 learned
+learning english takes time
 leather
 leave
 lecture
 left
 lend
+less and less important
+less time than
 let
 lick
 lifeguard
 lift
 light
 lighter
+lightly
 lightning
 like
 liked
@@ -815,6 +1069,7 @@ link
 list
 listen
 litter
+little→less
 live
 lobby
 local
@@ -830,9 +1085,11 @@ look
 loose
 lose
 loud
+loud enough
 loudly
 loudspeaker
 love
+low→lower
 luggage
 lunch
 mailbox
@@ -841,6 +1098,7 @@ mainly
 make
 manage
 many
+many→more
 march
 match
 material
@@ -882,6 +1140,9 @@ month
 monthly
 mop
 more
+more and more popular
+more money than
+moreover
 morning
 most
 most days
@@ -890,7 +1151,10 @@ mother
 motivate
 motivated
 moved
+moving on
 much
+much worse
+much→more
 multitask
 muscular
 museum
@@ -909,17 +1173,22 @@ near
 nearby
 nearest
 nearly
+nearly as good as
+near→nearer
 necessary
 need
 negative
 neighbor
 neither
+neither...nor
 nervous
 network
 never
+nevertheless
 new
 next
 nice
+nicely
 night
 nightmare
 nil
@@ -928,9 +1197,11 @@ nineteen
 ninety
 ninth
 no
+no comparison
 no one
 nobody
 noisy
+nomination
 none
 noon
 nope
@@ -938,15 +1209,29 @@ nor
 norm
 nostalgia
 not
+not as bright as
+not as crowded as
+not as deep as
+not as heavy as
+not as loud as
+not just...but
+not nearly as
+not only...but also
+not really they are about the same
+not to mention
 note
 nothing
+nothing that i regret
 notice
 notify
 november
 now
 now and then
+now that
 nowadays
 nowhere
+nowhere near as
+nowhere near as good as
 nudge
 number
 numerous
@@ -969,7 +1254,12 @@ oily
 ok
 okay
 old
+old enough
 on
+on another note
+on balance
+on condition that
+on the contrary
 once
 once in a while
 once upon a time
@@ -977,13 +1267,16 @@ one
 one day
 online
 only
+only if
 open
 operator
 opinion
 opposite
 opt
+opt for
 option
 or
+or else
 orange
 order
 organize
@@ -1000,8 +1293,10 @@ outward
 over
 overhear
 overpass
+overpriced
 oversleep
 overwhelmingly
+owing to
 own
 owns
 packed
@@ -1034,6 +1329,7 @@ pedestrian
 peek
 peer
 pen
+people who care about you
 percentage
 perhaps
 periodically
@@ -1041,6 +1337,8 @@ permanent
 permanently
 permit
 persistently
+personally
+perspective
 pharmacy
 phase
 phone
@@ -1065,11 +1363,13 @@ pleasant
 please
 pleased
 pledge
+plus
 police
 polish
 polite
 politely
 poorer
+popular
 portion
 possess
 possesses
@@ -1094,8 +1394,10 @@ pretty
 prevent
 previously
 price
+pricey
 prior
 priority
+pro
 probably
 problem
 proceed
@@ -1105,21 +1407,26 @@ program
 progress
 project
 promise
+promote
 promoted
 promptly
 pronounce
 proof
 properly
 proportion
+proposal
 propose
 protect
 provide
+provided that
+providing that
 pull
 punctual
 purple
 purse
 push
 put
+put in a good word for
 puzzled
 qr
 qualify
@@ -1140,10 +1447,13 @@ rarely
 rarely ever
 rate
 rather
+rating
 ratio
 read
+reading improves vocabulary
 realize
 rearrange
+reasonable
 rebuild
 recall
 receipt
@@ -1152,15 +1462,18 @@ recently
 reception
 recognize
 recommend
+recommendation
 record
 recover
 red
+referral
 reflect
 refresh
 refreshed
 refund
 refundable
 refuse
+regarding
 register
 regular
 regularly
@@ -1173,6 +1486,8 @@ reliable
 reluctant
 remain
 remember
+remember locking (did it)
+remember to lock (must do it)
 remind
 reminisce
 renew
@@ -1203,6 +1518,9 @@ review
 revolution
 rewarding
 rice
+rich enough
+right after
+right before
 ring
 rinse
 rise
@@ -1219,8 +1537,10 @@ routine
 routinely
 rude
 run
+running is good for health
 rush
 sad
+sadly
 safe
 safely
 safer
@@ -1258,11 +1578,13 @@ seen
 seldom
 seldom ever
 select
+selection
 selfish
 sell
 seminar
 send
 september
+seriously
 serve
 set
 seven
@@ -1276,6 +1598,9 @@ shallower
 shampoo
 share
 she
+she mentioned (that)
+she said that she enjoys working here
+she told me (that)
 sheet
 shelter
 shine
@@ -1284,6 +1609,8 @@ short
 shortcut
 shorter
 shortly
+shortly after
+shortly before
 shortterm
 should
 shout
@@ -1294,14 +1621,19 @@ shower
 shy
 sick
 side
+side by side
 sidewalk
 sign
+significantly
 silent
 silk
 similar
+similarity
 simpler
 simply
+simultaneously
 since
+since...therefore...
 sincerely
 sing
 singer
@@ -1323,15 +1655,18 @@ skyward
 sleep
 sleepy
 sleeve
+slightly
 slippers
 slow
 slower
 slowly
 small
 smart
+smart enough
 smell
 smoke
 smoother
+smoothly
 snack
 snap
 sniff
@@ -1339,7 +1674,9 @@ snooze
 snore
 snow
 so
+so as to avoid
 so far
+so long as
 soak
 soap
 social
@@ -1353,6 +1690,7 @@ some
 somebody
 someday
 someone
+someone who understands
 something
 sometimes
 somewhat
@@ -1365,6 +1703,8 @@ soup
 sour
 sparkle
 speak
+speak highly of
+speaking of which
 special
 speculate
 speech
@@ -1383,6 +1723,7 @@ stage
 stairs
 stand
 standard
+standpoint
 stare
 start
 started
@@ -1392,10 +1733,13 @@ stay
 stayed
 steadily
 steamed
+steep
 still
 stolen
 stood
 stop
+stopped smoking (quit)
+stopped to smoke (paused for a cigarette)
 stopping
 storm
 stormy
@@ -1409,6 +1753,7 @@ stretch
 stripe
 striped
 strong
+strong enough
 strongly
 struggle
 stuck
@@ -1417,10 +1762,13 @@ study
 style
 stylish
 submit
+subsequently
 subway
 succeed
+such as
 suddenly
 suggest
+suggestion
 suitcase
 summer
 sunday
@@ -1442,6 +1790,7 @@ sweep
 sweet
 swiftly
 swim
+swimming is fun
 switch
 switchboard
 syllable
@@ -1468,31 +1817,90 @@ tell
 temporarily
 temporary
 ten
+ten times faster than
 tenth
 terminal
 terrible
 terrified
+testimonial
 text
 thank
+thank you for coming
+thank you for helping
+thank you for your time
 thanks
+thanks to
 that afternoon
 that evening
 that morning
 that night
 the best
+the best thing that ever happened
+the best thing that you can do is to keep trying
+the book that i like most
+the book that i read
+the cheaper the better
+the city where i was born
+the clear winner is x
+the company where i work
 the day after tomorrow
 the day before
 the day before yesterday
+the day when we first met
+the easiest
+the fewest problems
 the first
+the first thing that i want to do is to sleep
+the food that i like
+the friend who helped me
+the friend who helped me is someone that i can always trust
 the funniest
+the girl who is talking
 the greatest
+the heaviest
+the highest
+the key difference is
 the last
 the least
+the least amount of
+the longer you wait the harder it gets
+the lowest
+the main advantage is
+the man who lives there
+the memory that i cherish most
+the moment
 the month before
+the more the merrier
 the most
+the most difficult
+the most important
+the most of all
+the most popular
+the movie that i enjoy most
+the movie that i watched
+the one that you showed me
 the only
+the only way that i know is to practice
+the person who called
+the person who inspires me most
+the place that i love most
+the place that i visited
+the place where i grew up
 the previous
+the reason i started this journey is that i wanted to challenge myself
+the reason why i came
+the reason why i chose this is because
+the reason why i left
+the reason why...is that...
+the restaurant where we met
+the right person to ask
+the song that i heard
+the sooner the better
 the strangest
+the teacher who taught me
+the thing that i value most
+the thing that matters most is
+the things that i want
 the week before
 the worst
 the year before
@@ -1502,26 +1910,37 @@ them
 themselves
 then
 there
+there are many things that i want to learn
+there is not much difference between them
 thereafter
 therefore
 these days
 they
+they explained (that)
+they reported (that)
 thicker
 thing
 think
 thinner
 third
 thirsty
+thirsty→thirstier
 thirteen
 thirty
+this leads to...
+this one is definitely better
+this results in...
 thoroughly
 thought
 thousand
 three
+three times as
+three times as expensive as
 thrilled
 throughout
 thunder
 thursday
+thus
 ticket
 tidy
 tight
@@ -1531,6 +1950,10 @@ timetable
 tip
 tired
 to
+to be honest
+to begin with
+to start with
+to sum up
 toast
 today
 together
@@ -1538,6 +1961,18 @@ told
 tomorrow
 tonight
 too
+too bright
+too close
+too dark
+too early
+too far
+too heavy
+too high
+too late
+too light
+too low
+too many
+too much
 took
 toothbrush
 top
@@ -1549,6 +1984,7 @@ tougher
 tour
 towel
 town
+trade-off
 tradition
 traditional
 traffic
@@ -1564,31 +2000,41 @@ translator
 trapped
 travel
 traveled
+traveling broadens the mind
 treat
 treatment
 trendy
 trip
+triple the amount of
 triumph
 trunk
 trust
+truthfully
 tuesday
 tunnel
 turn out
 twelve
 twenty
 twice
+twice as
+twice as big as
 two
 type
 typical
 ugly
 ultimately
+um
 umbrella
 under
+underpriced
 understand
 undertake
 unexpectedly
 unfortunately
 unless
+unless...otherwise...
+unlike
+unlike before
 unlikely
 unlimited
 unlock
@@ -1599,10 +2045,12 @@ up
 up to now
 uptown
 upward
+urge
 urgent
 us
 use
 used
+useful
 username
 usually
 utterly
@@ -1623,16 +2071,20 @@ vital
 voicemail
 volume
 volunteer
+vouch for
 vow
 waist
 wait
 waiter
+waiting is the hardest part
 walk
 walked
 wallet
 wander
 ward
 warm
+warm enough
+warmly
 warn
 warranty
 was
@@ -1645,6 +2097,7 @@ water
 way back
 we
 wealthier
+wealthy→wealthier
 wear
 weather
 website
@@ -1661,24 +2114,38 @@ were
 weren't
 wet
 what
+what i believe is that hard work always pays off
+what i find interesting is that
+what i like most about this city is the people
+what sets them apart is
+what surprises me is how
+what's more
 whatever
 whatfor
 whatsoever
 when
+when it comes to
+when you compare the two
 whenever
 where
 whereas
 whereto
 wherever
 whether
+whether...or
+whether...or not
 which
+which is better
+while
 white
 who
 whom
 whose
 why
 whyever
+wide enough
 wider
+wide→wider
 wife
 will
 willing
@@ -1689,6 +2156,7 @@ wink
 winter
 wipe
 wish
+with respect to
 withdraw
 within
 witness
@@ -1702,21 +2170,33 @@ worker
 workshop
 worry
 worse
+worse and worse
 worth
 would
+would rather
 wrinkled
 write
 written
 wrote
+x and y are evenly matched
+x comes out ahead
+x edges out y slightly
+x is clearly better
+x is far superior
+x outweighs y in terms of quality
+x proves to be better
 yawn
 year
 yearly
 yellow
 yes
+yes much cheaper
 yesterday
 yesteryear
+yet
 yoga
 you
+you know
 young
 your
 yourself

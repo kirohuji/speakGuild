@@ -10,11 +10,13 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
+import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { toast } from 'sonner'
 import { expressionApi, type MasteryStatus } from '@/features/practice/api/english-practice-api'
 import { LearningInsightDialog, type LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
 import { ImmersivePlayerDialog, mapInsightItemsToImmersiveItems, type ImmersivePlayerItem } from '@/features/learning/components/immersive-player'
 import { cn } from '@/lib/cn'
+import { extractCoreUsage } from '@/lib/markdown-utils'
 import { isNative } from '@/lib/native'
 import {
   learningContentRepository,
@@ -461,6 +463,14 @@ export function ExpressionLibraryPage() {
     const text = isWord ? (expr.original ?? '') : (expr.chunkText ?? expr.corrected ?? '')
     const displayKey = isWord ? (expr.original ?? expr.id) : expr.id
     const isExpanded = expandedItemId === displayKey
+    const insight = visibleDialogItems[index]
+    const meaning = insight?.kind === 'word'
+      ? insight.meaning
+      : insight?.kind === 'chunk'
+        ? insight.meaning
+        : insight?.kind === 'pattern'
+          ? insight.meaning
+          : undefined
 
     const iconEl = isWord ? (
       <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400">
@@ -497,8 +507,8 @@ export function ExpressionLibraryPage() {
                   </Badge>
                 )}
               </div>
-              {expr.sceneName && (
-                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{expr.sceneName}</p>
+              {meaning && (
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{meaning}</p>
               )}
               {isWord && expr.createdAt && (
                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -558,17 +568,34 @@ export function ExpressionLibraryPage() {
           {isExpanded && (
             <div className="border-t border-border/50 px-3 pb-3 pt-2">
               {/* 显示简要意思 */}
-              {isWord ? (
-                <div className="rounded-md bg-muted/45 p-2.5">
-                  <p className="text-xs leading-5 text-muted-foreground">{expr.chunkText || expr.corrected || t('expressionLib.noMeaning')}</p>
+              {insight?.kind === 'word' && insight.description && (
+                <div className="line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
+                  <MarkdownContent content={extractCoreUsage(insight.description)} />
                 </div>
-              ) : (
-                <div className="rounded-md bg-muted/45 p-2.5">
-                  <p className="text-xs font-medium leading-5 text-foreground">{text}</p>
-                  {expr.original && (
-                    <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{expr.original}</p>
+              )}
+              {insight?.kind === 'chunk' && (
+                <div className="space-y-2">
+                  {insight.description && (
+                    <div className="line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
+                      <MarkdownContent content={extractCoreUsage(insight.description)} />
+                    </div>
                   )}
+                  {insight.examples?.slice(0, 1).map((example, exampleIndex) => (
+                    <div key={`${insight.id}-${exampleIndex}`} className="rounded-md bg-muted/60 p-2.5">
+                      <p className="text-xs font-medium text-foreground">{example.en}</p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">{example.zh}</p>
+                      {example.note && <p className="mt-1 text-[11px] text-muted-foreground">{example.note}</p>}
+                    </div>
+                  ))}
                 </div>
+              )}
+              {insight?.kind === 'pattern' && insight.example && (
+                <p className="text-sm leading-6 text-muted-foreground">
+                  {t('practiceSession.example')}: {insight.example}
+                </p>
+              )}
+              {!insight && (
+                <p className="text-xs leading-5 text-muted-foreground">{expr.chunkText || expr.corrected || t('expressionLib.noMeaning')}</p>
               )}
 
               {/* 展开后显示复习信息 */}

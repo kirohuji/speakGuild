@@ -26,6 +26,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/cn'
+import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { isIOS } from '@/lib/native'
 import { get } from '@/lib/request'
 import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
@@ -349,24 +350,8 @@ function renderInline(text: string): ReactNode {
 }
 
 function RichText({ text }: { text: string }) {
-  const sections = parseDescriptionSections(text)
-
-  if (sections.length === 0) return null
-
-  return (
-    <div className="overflow-hidden rounded-md border border-border/70 bg-background">
-      <div className="divide-y divide-border/60">
-        {sections.map((section, i) => (
-          <div key={i} className="px-4 py-3.5">
-            {section.title && (
-              <h4 className="mb-2 text-xs font-semibold tracking-wide text-foreground/80">{section.title}</h4>
-            )}
-            <SectionBody text={section.body} />
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+  if (!text.trim()) return null
+  return <MarkdownContent content={text} />
 }
 
 interface LearningInsightDialogProps {
