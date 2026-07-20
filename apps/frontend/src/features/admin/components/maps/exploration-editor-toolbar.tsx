@@ -1,4 +1,4 @@
-import { ArrowLeft, Eye, Plus, Wrench } from "lucide-react";
+import { ArrowLeft, Edit3, Eye, Plus, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectItem } from "@/components/ui/select";
 import type { GameLocationData, GameMapData } from "../../api-content-admin";
@@ -14,6 +14,7 @@ export function ExplorationEditorToolbar({
   editable,
   onMapChange,
   onCreateMap,
+  onEditMap,
   onBack,
   onToggleMode,
   onCreateNode,
@@ -26,6 +27,7 @@ export function ExplorationEditorToolbar({
   editable: boolean;
   onMapChange: (id: string) => void;
   onCreateMap: () => void;
+  onEditMap: () => void;
   onBack: () => void;
   onToggleMode: () => void;
   onCreateNode: () => void;
@@ -46,6 +48,10 @@ export function ExplorationEditorToolbar({
       <Button variant="outline" size="sm" onClick={onCreateMap}>
         <Plus className="mr-1 size-4" />
         新建地图
+      </Button>
+      <Button variant="outline" size="sm" onClick={onEditMap} disabled={!selectedMap}>
+        <Edit3 className="mr-1 size-4" />
+        地图底图
       </Button>
       <div className="mx-1 h-6 w-px bg-border" />
       {level === "location" && (

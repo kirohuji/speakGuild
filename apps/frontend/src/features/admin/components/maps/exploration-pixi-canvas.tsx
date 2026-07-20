@@ -5,11 +5,11 @@ import {
   Container,
   Graphics,
   Sprite,
+  Text as PixiText,
   Texture,
   type FederatedPointerEvent,
   type Graphics as PixiGraphics,
 } from "pixi.js";
-import { ImageOff } from "lucide-react";
 
 extend({ Container, Graphics, Sprite });
 
@@ -58,10 +58,6 @@ export function ExplorationPixiCanvas(props: ExplorationPixiCanvasProps) {
     return () => observer.disconnect();
   }, []);
 
-  const scale = Math.min(size.width / WORLD_WIDTH, size.height / WORLD_HEIGHT);
-  const offsetX = (size.width - WORLD_WIDTH * scale) / 2;
-  const offsetY = (size.height - WORLD_HEIGHT * scale) / 2;
-
   return (
     <div
       ref={hostRef}
@@ -80,44 +76,6 @@ export function ExplorationPixiCanvas(props: ExplorationPixiCanvasProps) {
           viewportHeight={size.height}
         />
       </Application>
-      <div className="pointer-events-none absolute inset-0">
-        {props.nodes
-          .filter((node) => !node.hidden)
-          .map((node) => (
-            <div
-              key={node.id}
-              className="absolute -translate-x-1/2 text-center text-white drop-shadow-[0_2px_3px_rgba(0,0,0,0.95)]"
-              style={{
-                left: offsetX + (node.x / 100) * WORLD_WIDTH * scale,
-                top:
-                  offsetY +
-                  (node.y / 100) * WORLD_HEIGHT * scale +
-                  (node.height * scale) / 2 +
-                  10,
-              }}
-            >
-              <p className="whitespace-nowrap text-xs font-semibold">
-                {node.title}
-              </p>
-              {node.subtitle && (
-                <p className="mt-0.5 whitespace-nowrap text-[10px] text-white/65">
-                  {node.subtitle}
-                </p>
-              )}
-            </div>
-          ))}
-      </div>
-      {!props.backgroundUrl && (
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-white/45">
-          <ImageOff className="size-9" />
-          <p className="mt-3 text-sm">{props.emptyLabel}</p>
-        </div>
-      )}
-      <div className="pointer-events-none absolute bottom-3 left-3 rounded-full border border-white/10 bg-black/45 px-3 py-1.5 text-[11px] text-white/65 backdrop-blur">
-        {props.editable
-          ? "拖动图片热点调整位置 · 双击进入"
-          : "预览模式 · 点击热点查看"}
-      </div>
     </div>
   );
 }
@@ -127,6 +85,7 @@ function ExplorationStage({
   nodes,
   selectedId,
   editable,
+  emptyLabel,
   onSelect,
   onOpen,
   onMove,
@@ -136,6 +95,7 @@ function ExplorationStage({
   viewportWidth: number;
   viewportHeight: number;
 }) {
+  const worldRef = useRef<Container>(null);
   const background = useTexture(backgroundUrl);
   const scale = Math.min(
     viewportWidth / WORLD_WIDTH,
@@ -154,8 +114,39 @@ function ExplorationStage({
     [scale],
   );
 
+  useEffect(() => {
+    const world = worldRef.current;
+    if (!world) return;
+    const messages: PixiText[] = [];
+    if (!backgroundUrl) {
+      const empty = new PixiText({
+        text: emptyLabel,
+        style: {
+          fontFamily: "sans-serif",
+          fontSize: 28,
+          align: "center",
+          fill: 0x94a3b8,
+        },
+      });
+      empty.anchor.set(0.5);
+      empty.position.set(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
+      world.addChild(empty);
+      messages.push(empty);
+    }
+    const hint = new PixiText({
+      text: editable
+        ? "拖动图片热点调整位置  ·  双击进入"
+        : "预览模式  ·  点击热点查看",
+      style: { fontFamily: "sans-serif", fontSize: 17, fill: 0xcbd5e1 },
+    });
+    hint.position.set(28, WORLD_HEIGHT - 42);
+    world.addChild(hint);
+    messages.push(hint);
+    return () => messages.forEach((message) => message.destroy());
+  }, [backgroundUrl, editable, emptyLabel]);
+
   return (
-    <pixiContainer x={offsetX} y={offsetY} scale={scale}>
+    <pixiContainer ref={worldRef} x={offsetX} y={offsetY} scale={scale}>
       <pixiGraphics draw={drawFrame} />
       {background && (
         <pixiSprite
@@ -219,6 +210,43 @@ function HotspotNode({
       selected || hovered ? 1 + Math.sin(performance.now() / 230) * 0.025 : 1;
     ref.current.scale.set(pulse);
   });
+
+  useEffect(() => {
+    const container = ref.current;
+    if (!container) return;
+    const title = new PixiText({
+      text: node.title,
+      style: {
+        fontFamily: "sans-serif",
+        fontSize: 22,
+        fontWeight: "600",
+        fill: 0xffffff,
+        stroke: { color: 0x0f172a, width: 5 },
+      },
+    });
+    title.anchor.set(0.5, 0);
+    title.position.set(0, node.height / 2 + 14);
+    container.addChild(title);
+    let subtitle: PixiText | null = null;
+    if (node.subtitle) {
+      subtitle = new PixiText({
+        text: node.subtitle,
+        style: {
+          fontFamily: "sans-serif",
+          fontSize: 14,
+          fill: 0xcbd5e1,
+          stroke: { color: 0x0f172a, width: 4 },
+        },
+      });
+      subtitle.anchor.set(0.5, 0);
+      subtitle.position.set(0, node.height / 2 + 42);
+      container.addChild(subtitle);
+    }
+    return () => {
+      title.destroy();
+      subtitle?.destroy();
+    };
+  }, [node.height, node.subtitle, node.title]);
 
   const drawGlow = useCallback(
     (g: PixiGraphics) => {

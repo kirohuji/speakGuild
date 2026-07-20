@@ -445,6 +445,7 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
           setLevel("world");
         }}
         onCreateMap={() => openMap()}
+        onEditMap={() => selectedMap && openMap(selectedMap)}
         onBack={() => {
           setLevel("world");
           setRoomId("");
