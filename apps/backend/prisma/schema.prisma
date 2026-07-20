@@ -101,27 +101,27 @@ model User {
   loginLogs              UserLoginLog[]
 
   // --- English Output Training: 用户画像扩展 ---
-  learningGoals      String[]            @default([])
-  outputLevel        String              @default("L1")
-  outputLevelDetail  Json?
-  totalXp            Int                 @default(0)
-  points             Int                 @default(0)
-  userLevel          Int                 @default(1)
-  sceneProgresses    UserSceneProgress[]
-  chunkProgresses    UserChunkProgress[]
-  expressionItems    ExpressionItem[]
-  storyRecords       StoryRecord[]
-  storyTurns         StoryTurn[]
-  practiceSessions   PracticeSession[]
-  warmupItemProgresses UserWarmupItemProgress[]
-  dailyPracticeRuns    UserDailyPracticeRun[]
+  learningGoals         String[]                   @default([])
+  outputLevel           String                     @default("L1")
+  outputLevelDetail     Json?
+  totalXp               Int                        @default(0)
+  points                Int                        @default(0)
+  userLevel             Int                        @default(1)
+  sceneProgresses       UserSceneProgress[]
+  chunkProgresses       UserChunkProgress[]
+  expressionItems       ExpressionItem[]
+  storyRecords          StoryRecord[]
+  storyTurns            StoryTurn[]
+  practiceSessions      PracticeSession[]
+  warmupItemProgresses  UserWarmupItemProgress[]
+  dailyPracticeRuns     UserDailyPracticeRun[]
   dailyPracticeAttempts UserDailyPracticeAttempt[]
-  explorationRecords ExplorationRecord[]
-  userAchievementsV2 UserAchievementV2[]
-  gameSaves          GameSave[]
-  checkIns           UserCheckIn[]
-  pointTransactions  PointTransaction[]
-  aiUsages           AiUsageDaily[]
+  explorationRecords    ExplorationRecord[]
+  userAchievementsV2    UserAchievementV2[]
+  gameSaves             GameSave[]
+  checkIns              UserCheckIn[]
+  pointTransactions     PointTransaction[]
+  aiUsages              AiUsageDaily[]
 
   @@unique([email])
   @@index([deletionScheduledAt])
@@ -144,14 +144,14 @@ model Session {
 }
 
 model UserLoginLog {
-  id         String   @id @default(cuid())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
-  sessionId  String?  @unique
-  loginAt    DateTime @default(now())
-  expiresAt  DateTime?
-  ipAddress  String?
-  userAgent  String?
+  id               String    @id @default(cuid())
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  sessionId        String?   @unique
+  loginAt          DateTime  @default(now())
+  expiresAt        DateTime?
+  ipAddress        String?
+  userAgent        String?
   deviceId         String?
   platform         String?
   deviceModel      String?
@@ -278,18 +278,19 @@ model SystemConfig {
 
 /// AI 供应商配置：管理 STT / TTS / LLM 各类模型供应商的参数
 model AiProvider {
-  id        String   @id @default(cuid())
-  type      String   /// stt | tts | llm
-  provider  String   /// 供应商标识: whisper | tencent | minimax | cartesia | deepseek | openai
-  label     String   /// 显示名称
-  model     String   @default("") /// 默认模型名
-  apiKey    String   @default("") /// API 密钥
-  baseUrl   String   @default("") /// API 基础地址
-  config    Json?    /// 供应商特定配置: { temperature?, enableTimestamps?, ... }
-  isActive  Boolean  @default(false) /// 是否为该类型当前激活的供应商
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String          @id @default(cuid())
+  type      String /// stt | tts | llm
+  provider  String /// 供应商标识: whisper | tencent | minimax | cartesia | deepseek | openai
+  label     String /// 显示名称
+  model     String          @default("") /// 默认模型名
+  apiKey    String          @default("") /// API 密钥
+  baseUrl   String          @default("") /// API 基础地址
+  config    Json? /// 供应商特定配置: { temperature?, enableTimestamps?, ... }
+  isActive  Boolean         @default(false) /// 是否为该类型当前激活的供应商
+  sortOrder Int             @default(0)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  voices    TtsVoiceAsset[]
 
   @@unique([type, provider])
   @@map("ai_provider")
@@ -988,28 +989,28 @@ model PracticeWarmupRecord {
 }
 
 model UserWarmupItemProgress {
-  id               String   @id @default(cuid())
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId           String
-  itemId           String
-  packId           String
-  topicId          String
-  type             String
-  status           String   @default("new")
-  dueDate          DateTime @db.Date
-  lastPracticedAt  DateTime?
-  bestScore        String?
-  bestScoreRank    Int      @default(0)
-  lastScore        String?
-  lastScoreRank    Int      @default(0)
-  attempts         Int      @default(0)
-  correctCount     Int      @default(0)
-  streak           Int      @default(0)
-  lapseCount       Int      @default(0)
-  intervalDays     Int      @default(0)
-  easeFactor       Float    @default(2.5)
-  updatedAt        DateTime @updatedAt
-  createdAt        DateTime @default(now())
+  id              String    @id @default(cuid())
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  itemId          String
+  packId          String
+  topicId         String
+  type            String
+  status          String    @default("new")
+  dueDate         DateTime  @db.Date
+  lastPracticedAt DateTime?
+  bestScore       String?
+  bestScoreRank   Int       @default(0)
+  lastScore       String?
+  lastScoreRank   Int       @default(0)
+  attempts        Int       @default(0)
+  correctCount    Int       @default(0)
+  streak          Int       @default(0)
+  lapseCount      Int       @default(0)
+  intervalDays    Int       @default(0)
+  easeFactor      Float     @default(2.5)
+  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime  @default(now())
 
   @@unique([userId, itemId])
   @@index([userId, packId])
@@ -1247,7 +1248,7 @@ model UserSceneProgress {
 // ──── 探索模式（视觉小说架构）───
 
 model GameCharacter {
-  id                 String              @id @default(cuid())
+  id                 String                  @id @default(cuid())
   name               String
   displayName        String
   role               String
@@ -1256,14 +1257,54 @@ model GameCharacter {
   spriteBaseUrl      String?
   expressions        Json?
   defaultPosition    String?
-  ttsVoice           String? // TTS 音色 ID（如 MiniMax/Cartesia voice ID）
-  ttsModel           String? // TTS 模型（如 speech-2.8-hd）
-  ttsParams          Json? // TTS 参数（如 { speed, pitch, vol }）
   roomNpcs           GameRoomNpc[]
   explorationRecords ExplorationRecord[]
-  createdAt          DateTime            @default(now())
+  voiceBindings      CharacterVoiceBinding[]
+  createdAt          DateTime                @default(now())
 
   @@map("game_character")
+}
+
+/// 从 TTS 厂商同步或手工录入的全局音色资产。
+model TtsVoiceAsset {
+  id                String                  @id @default(cuid())
+  providerId        String
+  externalVoiceId   String
+  displayName       String
+  category          String                  @default("system")
+  language          String?
+  gender            String?
+  description       String?
+  previewUrl        String?
+  metadata          Json?
+  isAvailable       Boolean                 @default(true)
+  syncedAt          DateTime?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  provider          AiProvider              @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  characterBindings CharacterVoiceBinding[]
+
+  @@unique([providerId, externalVoiceId])
+  @@index([providerId, isAvailable])
+  @@map("tts_voice_asset")
+}
+
+/// 角色对厂商音色的引用；模型和参数仅作为该角色的可选覆盖配置。
+model CharacterVoiceBinding {
+  id           String        @id @default(cuid())
+  characterId  String
+  voiceAssetId String
+  model        String?
+  params       Json?
+  isDefault    Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  character    GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  voiceAsset   TtsVoiceAsset @relation(fields: [voiceAssetId], references: [id], onDelete: Restrict)
+
+  @@unique([characterId, voiceAssetId])
+  @@index([characterId])
+  @@map("character_voice_binding")
 }
 
 model GameMap {
@@ -1291,33 +1332,33 @@ model GameMap {
 // ──── NQTR Navigation: Map → Location → Room（Pixi-VN 三级层级）────
 
 model GameLocation {
-  id                  String         @id @default(cuid())
-  map                 GameMap        @relation(fields: [mapId], references: [id])
+  id                  String              @id @default(cuid())
+  map                 GameMap             @relation(fields: [mapId], references: [id])
   mapId               String
   name                String
   displayName         String
   description         String?
-  posX                Float          @default(0)
-  posY                Float          @default(0)
+  posX                Float               @default(0)
+  posY                Float               @default(0)
   icon                String?
-  iconWidth           Int            @default(26)
-  iconHeight          Int            @default(26)
+  iconWidth           Int                 @default(26)
+  iconHeight          Int                 @default(26)
   backgroundUrl       String?
   bgmUrl              String?
   ambientUrl          String?
-  locationType        String         @default("building")
+  locationType        String              @default("building")
   sceneId             String?
-  scene               Scene?         @relation(fields: [sceneId], references: [id])
+  scene               Scene?              @relation(fields: [sceneId], references: [id])
   rooms               GameRoom[]
   explorationRecords  ExplorationRecord[]
-  requiredOutputLevel String         @default("L1")
-  requiredSceneIds    String[]       @default([])
+  requiredOutputLevel String              @default("L1")
+  requiredSceneIds    String[]            @default([])
   requiredFlags       Json?
-  disabled            Boolean        @default(false)
-  hidden              Boolean        @default(false)
-  isPreview           Boolean        @default(false)
-  sortOrder           Int            @default(0)
-  createdAt           DateTime       @default(now())
+  disabled            Boolean             @default(false)
+  hidden              Boolean             @default(false)
+  isPreview           Boolean             @default(false)
+  sortOrder           Int                 @default(0)
+  createdAt           DateTime            @default(now())
 
   @@map("game_location")
 }
@@ -1395,20 +1436,20 @@ model InkScript {
 }
 
 model GameSave {
-  id                 String   @id @default(cuid())
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId             String
-  inkState           Json?
-  currentMapId       String?
-  currentLocationId  String?
-  currentRoomId      String?
-  visitedRoomIds     String[] @default([])
-  flags              Json?
-  saveName           String   @default("自动存档")
-  playTimeSeconds    Int      @default(0)
-  slot               Int      @default(1)
-  updatedAt          DateTime @updatedAt
-  createdAt          DateTime @default(now())
+  id                String   @id @default(cuid())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String
+  inkState          Json?
+  currentMapId      String?
+  currentLocationId String?
+  currentRoomId     String?
+  visitedRoomIds    String[] @default([])
+  flags             Json?
+  saveName          String   @default("自动存档")
+  playTimeSeconds   Int      @default(0)
+  slot              Int      @default(1)
+  updatedAt         DateTime @updatedAt
+  createdAt         DateTime @default(now())
 
   @@unique([userId, slot])
   @@index([userId, updatedAt(sort: Desc)])
@@ -1528,23 +1569,23 @@ model AiUsageDaily {
 // ── OTA 热更新：MobileBundle 安装包管理（zip 存在 COS，关联 FileAsset）──
 
 model MobileBundle {
-  id               String    @id @default(cuid())
-  version          String // 语义化版本号，如 "1.2.3"
-  platform         String // ios | android
-  channel          String    @default("production") // production | staging（正式版 / 预发布）
-  releaseLine      String?
-  notifyPolicy     String    @default("auto") // auto | silent | force
-  allowMajorUpgrade Boolean  @default(false)
-  assetId          String // 关联 FileAsset（COS 上的 zip 文件）
-  asset            FileAsset @relation(fields: [assetId], references: [id])
-  checksum         String // SHA256 校验值
-  minNativeVersion String? // 最低原生版本要求
-  rolloutPercent   Int       @default(100) // 灰度比例 0-100
-  enabled          Boolean   @default(true) // 是否启用（可快速下架）
-  isMandatory      Boolean   @default(false) // 是否强制更新（忽略灰度，下载后立即提示重启）
-  releaseNotes     String?   @db.Text // 更新日志
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  version           String // 语义化版本号，如 "1.2.3"
+  platform          String // ios | android
+  channel           String    @default("production") // production | staging（正式版 / 预发布）
+  releaseLine       String?
+  notifyPolicy      String    @default("auto") // auto | silent | force
+  allowMajorUpgrade Boolean   @default(false)
+  assetId           String // 关联 FileAsset（COS 上的 zip 文件）
+  asset             FileAsset @relation(fields: [assetId], references: [id])
+  checksum          String // SHA256 校验值
+  minNativeVersion  String? // 最低原生版本要求
+  rolloutPercent    Int       @default(100) // 灰度比例 0-100
+  enabled           Boolean   @default(true) // 是否启用（可快速下架）
+  isMandatory       Boolean   @default(false) // 是否强制更新（忽略灰度，下载后立即提示重启）
+  releaseNotes      String?   @db.Text // 更新日志
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   @@unique([version, platform, channel])
   @@index([platform, channel, enabled])
@@ -1556,15 +1597,15 @@ model MobileBundle {
 // ──── 词典条目（FreeDictionaryAPI 清洗后数据）────
 
 model MobileOtaTester {
-  id                String   @id @default(cuid())
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId            String   @unique
-  enabled           Boolean  @default(true)
-  channel           String   @default("production")
-  platform          String?
-  targetReleaseLine String?
-  targetVersion     String?
-  notes             String?  @db.Text
+  id                  String    @id @default(cuid())
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              String    @unique
+  enabled             Boolean   @default(true)
+  channel             String    @default("production")
+  platform            String?
+  targetReleaseLine   String?
+  targetVersion       String?
+  notes               String?   @db.Text
   lastPlatform        String?
   lastDeviceModel     String?
   lastDeviceName      String?
@@ -1576,8 +1617,8 @@ model MobileOtaTester {
   lastBundleVersion   String?
   lastNativeVersion   String?
   lastCheckAt         DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   @@index([enabled, channel])
   @@index([targetReleaseLine])

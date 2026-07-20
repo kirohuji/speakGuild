@@ -5,7 +5,7 @@ import {
   Users, Settings, BarChart3, Bell,
   ChevronRight, ChevronDown, CreditCard, Receipt,
   MessageSquare, Award, Palette, Quote,
-  Smartphone, FileText, Wrench, PanelLeftClose, PanelLeftOpen, Library, BookOpen, Archive, Brain, ListChecks, ScrollText,
+  Smartphone, FileText, Wrench, PanelLeftClose, PanelLeftOpen, Library, BookOpen, Archive, Brain, ListChecks, ScrollText, Boxes,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -53,6 +53,7 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
       { key: 'learning-content', label: t('admin.learningContentManagement', { defaultValue: '学习包内容' }), icon: Archive, path: '/admin/learning-content' },
       { key: 'nqtr', label: t('admin.nqtrWorkshop', { defaultValue: '练习话题' }), icon: Palette, path: '/admin/nqtr' },
       { key: 'narrative', label: '剧情包内容', icon: ScrollText, path: '/admin/narrative' },
+      { key: 'narrative-assets', label: '剧情共享资产', icon: Boxes, path: '/admin/narrative-assets' },
       { key: 'achievements', label: t('admin.achievementManagement', { defaultValue: '成就管理' }), icon: Award, path: '/admin/achievements' },
       { key: 'daily-sentences', label: t('admin.dailySentences', { defaultValue: '每日一句' }), icon: Quote, path: '/admin/daily-sentences' },
       { key: 'content-library', label: t('admin.contentLibrary', { defaultValue: '内容语料库' }), icon: Library, path: '/admin/content-library' },

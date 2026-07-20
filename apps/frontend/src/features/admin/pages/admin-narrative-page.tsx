@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, Map, Pencil, Plus, Search, UserCircle } from 'lucide-react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ArrowLeft, BookOpen, Pencil, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -10,8 +9,6 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectItem } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { CharactersTab } from '../components/characters-tab'
-import { MapsTab } from '../components/maps-tab'
 import { StoryChapterStudio } from '../components/story-chapter-studio'
 import {
   listCharacters,
@@ -26,9 +23,7 @@ import {
   type SceneCategory,
 } from '../api-content-admin'
 
-type NarrativeTab = 'studio' | 'characters' | 'maps'
-
-/** 独立剧情包工作区：一套 Ink 编辑器 + 剧集配置 + 共享角色/地图资产。 */
+/** 剧情包工作区：只管理剧情包与章节，并引用全局角色、地图资产。 */
 export function AdminNarrativePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [characters, setCharacters] = useState<GameCharacter[]>([])
@@ -50,10 +45,6 @@ export function AdminNarrativePage() {
     const matchesAccess = accessFilter === 'all' || (accessFilter === 'free' ? item.isFree : !item.isFree)
     return matchesSearch && matchesCategory && matchesAccess
   })
-  const requestedTab = searchParams.get('tab')
-  const activeTab: NarrativeTab = requestedTab === 'characters' || requestedTab === 'maps'
-    ? requestedTab
-    : 'studio'
 
   const loadAssets = useCallback(async () => {
     const [nextCharacters, nextLocations, nextPackages, nextCategories] = await Promise.all([
@@ -70,15 +61,8 @@ export function AdminNarrativePage() {
 
   useEffect(() => { void loadAssets() }, [loadAssets])
 
-  const changeTab = (value: string) => {
-    const next = new URLSearchParams()
-    next.set('tab', value)
-    if (packageId) next.set('packageId', packageId)
-    setSearchParams(next, { replace: true })
-  }
-
   const openPackage = (id: string) => {
-    setSearchParams({ packageId: id, tab: 'studio' })
+    setSearchParams({ packageId: id })
   }
 
   const leavePackage = () => setSearchParams({})
@@ -126,7 +110,7 @@ export function AdminNarrativePage() {
         {!selectedPackage && <Button onClick={() => openPackageDialog()}><Plus className="mr-2 size-4" />新建剧情包</Button>}
       </header>
 
-      {!selectedPackage && activeTab === 'studio' ? (
+      {!selectedPackage ? (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative w-full sm:w-[280px]"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="搜索剧情包..." className="pl-9" /></div>
@@ -140,23 +124,11 @@ export function AdminNarrativePage() {
             </Card>
           ))}</div> : <div className="rounded-xl border border-dashed py-16 text-center"><BookOpen className="mx-auto size-10 text-muted-foreground/25" /><p className="mt-3 text-sm font-medium">{packages.length ? '没有匹配的剧情包' : '还没有剧情包'}</p><p className="mt-1 text-xs text-muted-foreground">{packages.length ? '尝试调整搜索或筛选条件。' : '点击右上角新建第一本剧情包。'}</p></div>}
         </div>
-      ) : <Tabs value={activeTab} onValueChange={changeTab}>
-        <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl bg-muted/55 p-1 sm:w-fit">
-          <TabsTrigger value="studio" className="gap-2 px-4"><BookOpen className="size-4" />章节剧情</TabsTrigger>
-          <TabsTrigger value="characters" className="gap-2 px-4"><UserCircle className="size-4" />角色资产 <span className="text-[10px] opacity-60">{characters.length}</span></TabsTrigger>
-          <TabsTrigger value="maps" className="gap-2 px-4"><Map className="size-4" />地图世界 <span className="text-[10px] opacity-60">{locations.length}</span></TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="studio" className="mt-4">
-          <StoryChapterStudio
-            packageId={selectedPackage?.id ?? ''}
-            locations={locations}
-            characters={characters}
-          />
-        </TabsContent>
-        <TabsContent value="characters" className="mt-4"><CharactersTab onCharactersChange={setCharacters} /></TabsContent>
-        <TabsContent value="maps" className="mt-4"><MapsTab onLocationsChange={setLocations} /></TabsContent>
-      </Tabs>}
+      ) : <StoryChapterStudio
+        packageId={selectedPackage.id}
+        locations={locations}
+        characters={characters}
+      />}
 
       <Dialog open={packageDialogOpen} onOpenChange={setPackageDialogOpen}>
         <DialogContent>

@@ -122,7 +122,6 @@ async function listAllLibraryPatternsForAdmin() {
 const PACKAGE_TYPE_FILTERS: Array<{ id: Scene['packageType']; label: string }> = [
   { id: 'daily', label: '日常' },
   { id: 'exam', label: '考试' },
-  { id: 'story', label: '故事' },
   { id: 'course', label: '课程' },
   { id: 'foundation', label: '零基础' },
 ]
@@ -247,7 +246,6 @@ function SceneDialog({
               <Select value={form.packageType ?? 'daily'} onChange={(e) => setForm({ ...form, packageType: e.target.value })}>
                 <option value="daily">日常练习</option>
                 <option value="exam">考试专项</option>
-                <option value="story">故事剧情</option>
                 <option value="course">付费课程</option>
                 <option value="foundation">零基础</option>
               </Select>
@@ -1535,8 +1533,8 @@ export function AdminScenesPage() {
     setLoading(true)
     try {
       const [cats, scns, chks] = await Promise.all([
-        listSceneCategories(selectedPackageType === 'all' ? undefined : selectedPackageType),
-        listScenes(selectedCat ?? undefined, selectedPackageType === 'all' ? undefined : selectedPackageType),
+        listSceneCategories(selectedPackageType === 'all' ? undefined : selectedPackageType, 'story'),
+        listScenes(selectedCat ?? undefined, selectedPackageType === 'all' ? undefined : selectedPackageType, 'story'),
         listAllChunks(),
       ])
       setCategories(cats); setScenes(scns); setChunks(chks)
@@ -1589,7 +1587,7 @@ export function AdminScenesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">学习包内容管理</h1>
-          <p className="text-sm text-muted-foreground">统一管理日常练习、雅思话题、故事关卡和实战地图入口</p>
+          <p className="text-sm text-muted-foreground">统一管理日常练习、考试、课程和零基础话题内容</p>
         </div>
         <Button onClick={() => { setEditCat(null); setCatDialog(true) }}>
           <Plus className="size-4 mr-1" /> 新增分类

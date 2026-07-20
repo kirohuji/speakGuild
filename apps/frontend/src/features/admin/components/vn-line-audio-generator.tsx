@@ -39,26 +39,21 @@ interface VnLineAudioGeneratorProps {
   text: string
   audioUrl?: string
   speaker?: string
+  characterTtsProvider?: string | null
   characterTtsVoice?: string | null
   characterTtsModel?: string | null
-  characterTtsParams?: Record<string, number> | null
+  characterTtsParams?: Record<string, unknown> | null
   storyKey?: string
   sceneName?: string
   lineIndex?: number
   onChange: (audioUrl: string) => void
 }
 
-function providerFromVoiceId(voiceId?: string | null): TtsProviderKey | null {
-  if (!voiceId) return null
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(voiceId)
-    ? 'cartesia'
-    : 'minimax'
-}
-
 export function VnLineAudioGenerator({
   text,
   audioUrl,
   speaker,
+  characterTtsProvider,
   characterTtsVoice,
   characterTtsModel,
   characterTtsParams,
@@ -83,8 +78,8 @@ export function VnLineAudioGenerator({
   }, [])
 
   useEffect(() => {
-    const characterProvider = providerFromVoiceId(characterTtsVoice)
-    const hasCharacterConfig = Boolean(characterProvider || characterTtsModel || characterTtsParams)
+    const characterProvider = characterTtsProvider as TtsProviderKey | undefined
+    const hasCharacterConfig = Boolean(characterProvider && characterTtsVoice)
 
     const nextProvider = hasCharacterConfig ? (characterProvider ?? ttsBackend.provider) : ttsBackend.provider
     setProvider(nextProvider)
@@ -92,9 +87,10 @@ export function VnLineAudioGenerator({
       ? characterTtsModel || (nextProvider === 'cartesia' ? 'sonic-english' : 'speech-2.8-hd')
       : ttsBackend.model)
     setVoiceId(hasCharacterConfig ? characterTtsVoice || '' : ttsBackend.voiceId ?? '')
-    setParams(hasCharacterConfig ? characterTtsParams ?? {} : ttsBackend.params ?? {})
+    setParams(hasCharacterConfig ? characterTtsParams as ParamValues ?? {} : ttsBackend.params ?? {})
     setError('')
   }, [
+    characterTtsProvider,
     characterTtsModel,
     characterTtsParams,
     characterTtsVoice,

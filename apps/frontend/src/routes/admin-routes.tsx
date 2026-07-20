@@ -16,6 +16,7 @@ import { AdminStoriesPage } from '@/features/admin/pages/admin-stories-page'
 import { AdminMapsPage } from '@/features/admin/pages/admin-maps-page'
 import { AdminNqtrPage } from '@/features/admin/pages/admin-nqtr-page'
 import { AdminNarrativePage } from '@/features/admin/pages/admin-narrative-page'
+import { AdminNarrativeAssetsPage } from '@/features/admin/pages/admin-narrative-assets-page'
 import { AdminThemesPage } from '@/features/admin/theme-manage/pages/theme-list-page'
 import { AdminDailySentencesPage } from '@/features/admin/pages/admin-daily-sentences-page'
 import { AdminMobileBundlesPage } from '@/features/admin/pages/admin-mobile-bundles-page'
@@ -44,6 +45,7 @@ export default function AdminRoutes() {
         <Route path="maps" element={<AdminMapsPage />} />
         <Route path="nqtr" element={<AdminNqtrPage />} />
         <Route path="narrative" element={<AdminNarrativePage />} />
+        <Route path="narrative-assets" element={<AdminNarrativeAssetsPage />} />
         <Route path="script" element={<AdminScriptPage />} />
         <Route path="achievements" element={<AdminAchievementsPage />} />
         <Route path="themes" element={<AdminThemesPage />} />

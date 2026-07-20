@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Slider } from '@/components/ui/slider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -14,7 +13,8 @@ import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import {
   listCharacters, createCharacter, updateCharacter, deleteCharacter,
-  type GameCharacter,
+  listTtsVoices, saveCharacterVoiceBinding, deleteCharacterVoiceBinding,
+  type GameCharacter, type TtsVoiceAsset,
 } from '../api-content-admin'
 import { synthesizeText } from '@/lib/tts-api'
 import type { TtsProviderKey } from '@/lib/tts-api'
@@ -26,6 +26,19 @@ const EXPRESSION_PRESETS = ['default', 'happy', 'sad', 'angry', 'surprised', 'th
 interface ExpressionEntry {
   name: string
   url: string
+}
+
+function buildCharacterKey(displayName: string, existingNames: string[]) {
+  const base = displayName
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '') || `character_${Date.now().toString(36)}`
+  let candidate = base
+  let suffix = 2
+  while (existingNames.includes(candidate)) candidate = `${base}_${suffix++}`
+  return candidate
 }
 
 interface CharactersTabProps {
@@ -48,12 +61,10 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
   const [avatarUrl, setAvatarUrl] = useState('')
   const [expressions, setExpressions] = useState<ExpressionEntry[]>([])
 
-  // Voice config
-  const [ttsVoice, setTtsVoice] = useState('')
-  const [ttsModel, setTtsModel] = useState('speech-2.8-hd')
-  const [ttsSpeed, setTtsSpeed] = useState(1)
-  const [ttsPitch, setTtsPitch] = useState(0)
-  const [ttsVol, setTtsVol] = useState(1)
+  // Voice asset reference
+  const [voiceAssets, setVoiceAssets] = useState<TtsVoiceAsset[]>([])
+  const [voiceAssetId, setVoiceAssetId] = useState('')
+  const [voiceModel, setVoiceModel] = useState('')
 
   // Voice test
   const [testText, setTestText] = useState('')
@@ -65,8 +76,9 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await listCharacters()
+      const [data, voices] = await Promise.all([listCharacters(), listTtsVoices()])
       setItems(data)
+      setVoiceAssets(voices.filter((voice) => voice.isAvailable))
       onCharactersChange?.(data)
     } catch { toast.error('加载角色失败') }
     finally { setLoading(false) }
@@ -79,8 +91,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
     setName(''); setDisplayName(''); setRole(''); setPersonality('')
     setAvatarUrl('')
     setExpressions([{ name: 'default', url: '' }])
-    setTtsVoice(''); setTtsModel('speech-2.8-hd')
-    setTtsSpeed(1); setTtsPitch(0); setTtsVol(1)
+    setVoiceAssetId(''); setVoiceModel('')
     setTestText(''); setAudioUrl(null); setDialogTab('basic')
     setDialogOpen(true)
   }
@@ -104,13 +115,9 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
     }
     setExpressions(exps)
 
-    // Voice config
-    setTtsVoice(item.ttsVoice ?? '')
-    setTtsModel(item.ttsModel ?? 'speech-2.8-hd')
-    const params = item.ttsParams
-    setTtsSpeed(typeof params?.speed === 'number' ? params.speed : 1)
-    setTtsPitch(typeof params?.pitch === 'number' ? params.pitch : 0)
-    setTtsVol(typeof params?.vol === 'number' ? params.vol : 1)
+    const defaultBinding = item.voiceBindings?.find((binding) => binding.isDefault) ?? item.voiceBindings?.[0]
+    setVoiceAssetId(defaultBinding?.voiceAssetId ?? '')
+    setVoiceModel(defaultBinding?.model ?? '')
     setTestText(''); setAudioUrl(null); setDialogTab('basic')
     setDialogOpen(true)
   }
@@ -130,8 +137,8 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
   }
 
   const save = async () => {
-    if (!name || !displayName || !role) {
-      toast.error('名称、显示名和角色描述必填')
+    if (!displayName || !role) {
+      toast.error('显示名称和角色描述必填')
       return
     }
     setSaving(true)
@@ -143,22 +150,23 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
           expressionsObj[exp.name] = exp.url
         }
       }
+      const resolvedName = editItem?.name || name || buildCharacterKey(displayName, items.map((item) => item.name))
       const data = {
-        name, displayName, role, personality, avatarUrl,
+        name: resolvedName, displayName, role, personality, avatarUrl,
         // Keep the legacy field in sync for clients that still use it as a fallback.
         spriteBaseUrl: expressionsObj.default ?? null,
         expressions: expressionsObj,
-        // Voice config
-        ttsVoice: ttsVoice || null,
-        ttsModel: ttsModel || null,
-        ttsParams: { speed: ttsSpeed, pitch: ttsPitch, vol: ttsVol },
       }
+      let savedCharacter: GameCharacter
       if (editItem) {
-        await updateCharacter(editItem.id, data)
+        savedCharacter = await updateCharacter(editItem.id, data)
         toast.success('角色已更新')
       } else {
-        await createCharacter(data)
+        savedCharacter = await createCharacter(data)
         toast.success('角色已创建')
+      }
+      if (voiceAssetId) {
+        await saveCharacterVoiceBinding(savedCharacter.id, { voiceAssetId, model: voiceModel || undefined, isDefault: true })
       }
       setDialogOpen(false)
       load()
@@ -174,12 +182,13 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
     setTesting(true)
     setAudioUrl(null)
     try {
+      const selectedVoice = voiceAssets.find((voice) => voice.id === voiceAssetId)
+      if (!selectedVoice) throw new Error('请先选择音色资产')
       const result = await synthesizeText({
         text: testText.trim(),
-        provider: 'minimax' as TtsProviderKey,
-        model: ttsModel || 'speech-2.8-hd',
-        voiceId: ttsVoice || undefined,
-        params: { speed: ttsSpeed, pitch: ttsPitch, vol: ttsVol },
+        provider: selectedVoice.provider.provider as TtsProviderKey,
+        model: voiceModel || selectedVoice.provider.model,
+        voiceId: selectedVoice.externalVoiceId,
       })
       // Create blob URL from base64
       const byteChars = atob(result.audioBase64)
@@ -204,6 +213,18 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
       audioRef.current.pause()
       audioRef.current.currentTime = 0
     }
+  }
+
+  const removeVoiceBinding = async (bindingId: string) => {
+    if (!editItem) return
+    try {
+      await deleteCharacterVoiceBinding(editItem.id, bindingId)
+      const next = items.find((item) => item.id === editItem.id)?.voiceBindings?.filter((binding) => binding.id !== bindingId) ?? []
+      setEditItem({ ...editItem, voiceBindings: next })
+      if (!next.some((binding) => binding.voiceAssetId === voiceAssetId)) setVoiceAssetId('')
+      await load()
+      toast.success('已解除音色引用')
+    } catch { toast.error('解除音色引用失败') }
   }
 
   const remove = async (item: GameCharacter) => {
@@ -313,15 +334,14 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
 
             {/* Tab: 基本信息 */}
             <TabsContent value="basic" className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>英文名 (key)</Label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="alex" />
-                </div>
-                <div>
-                  <Label>显示名称</Label>
-                  <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Alex" />
-                </div>
+              <div>
+                <Label>显示名称</Label>
+                <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="例如：Alex / 小满" />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">角色 Key（自动生成）</Label>
+                <Input value={editItem?.name || (/[a-z0-9]/i.test(displayName) ? buildCharacterKey(displayName, items.map((item) => item.name)) : 'character_…（保存时生成）')} readOnly className="mt-1 bg-muted/40 font-mono text-xs text-muted-foreground" />
+                <p className="mt-1 text-[11px] text-muted-foreground">创建后保持不变，用于 Ink 角色引用。</p>
               </div>
               <div>
                 <Label>角色描述</Label>
@@ -415,88 +435,14 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
             {/* Tab: 音色配置 */}
             <TabsContent value="voice" className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                为此角色配置 MiniMax TTS 音色，用于故事对话中的语音合成。
+                从全局音色资产库为角色选择音色。Voice ID 与厂商参数由音色资产统一维护。
               </p>
 
-              {/* Voice ID */}
-              <div>
-                <Label className="text-xs font-semibold">音色 ID (Voice ID)</Label>
-                <Input
-                  value={ttsVoice}
-                  onChange={(e) => setTtsVoice(e.target.value)}
-                  placeholder="如 female-chengshu 或 English_Trustworthy_Man"
-                  className="mt-1"
-                  list="minimax-voices"
-                />
-                <datalist id="minimax-voices">
-                  <option value="female-chengshu" >成熟女声 (female-chengshu)</option>
-                  <option value="female-shaonv" >少女 (female-shaonv)</option>
-                  <option value="male-qingse" >青年男声 (male-qingse)</option>
-                  <option value="male-shuoye" >说业男声 (male-shuoye)</option>
-                  <option value="English_Trustworthy_Man" >English Trustworthy Man</option>
-                  <option value="English_Elegant_Woman" >English Elegant Woman</option>
-                  <option value="English_Young_Male" >English Young Male</option>
-                  <option value="English_Young_Female" >English Young Female</option>
-                </datalist>
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  留空则由系统根据文本语言自动选择默认音色
-                </p>
-              </div>
+              {editItem?.voiceBindings?.length ? <div className="space-y-2"><Label className="text-xs font-semibold">已引用音色</Label>{editItem.voiceBindings.map((binding) => <div key={binding.id} className="flex items-center gap-3 rounded-lg border bg-muted/20 p-3"><div className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600"><Volume2 className="size-4" /></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{binding.voiceAsset.displayName}</p><p className="truncate text-[11px] text-muted-foreground">{binding.voiceAsset.provider.label} · {binding.model || binding.voiceAsset.provider.model}</p></div>{binding.isDefault && <Badge variant="secondary">默认</Badge>}<Button type="button" variant="ghost" size="icon" className="size-8" aria-label="解除音色引用" onClick={() => void removeVoiceBinding(binding.id)}><Trash2 className="size-3.5 text-destructive" /></Button></div>)}</div> : null}
 
-              {/* Model */}
-              <div>
-                <Label className="text-xs font-semibold">TTS 模型</Label>
-                <select
-                  value={ttsModel}
-                  onChange={(e) => setTtsModel(e.target.value)}
-                  className="mt-1 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <option value="speech-2.8-hd">speech-2.8-hd (高清)</option>
-                  <option value="speech-2.8-turbo">speech-2.8-turbo (高速)</option>
-                  <option value="speech-02-hd">speech-02-hd (高清 v2)</option>
-                  <option value="speech-02-turbo">speech-02-turbo (高速 v2)</option>
-                  <option value="speech-01-hd">speech-01-hd (高清 v1)</option>
-                  <option value="speech-01-turbo">speech-01-turbo (高速 v1)</option>
-                </select>
-              </div>
-
-              <Separator />
-
-              {/* Params */}
-              <div className="space-y-3">
-                <div>
-                  <Label className="text-xs">语速 (Speed): {ttsSpeed.toFixed(1)}</Label>
-                  <Slider
-                    value={[ttsSpeed]}
-                    onValueChange={([v]) => setTtsSpeed(v)}
-                    min={0.5}
-                    max={2}
-                    step={0.1}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">音高 (Pitch): {ttsPitch.toFixed(1)}</Label>
-                  <Slider
-                    value={[ttsPitch]}
-                    onValueChange={([v]) => setTtsPitch(v)}
-                    min={-12}
-                    max={12}
-                    step={0.5}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">音量 (Volume): {ttsVol.toFixed(1)}</Label>
-                  <Slider
-                    value={[ttsVol]}
-                    onValueChange={([v]) => setTtsVol(v)}
-                    min={0.1}
-                    max={2}
-                    step={0.1}
-                    className="mt-1"
-                  />
-                </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2"><Label>引用音色资产</Label><select value={voiceAssetId} onChange={(e) => { setVoiceAssetId(e.target.value); setVoiceModel('') }} className="mt-1 flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">暂不配置音色</option>{voiceAssets.map((voice) => <option key={voice.id} value={voice.id}>{voice.provider.label} · {voice.displayName}</option>)}</select><p className="mt-1 text-[11px] text-muted-foreground">请先在“剧情共享资产 → 音色资产”添加厂商音色。</p></div>
+                <div className="sm:col-span-2"><Label>模型覆盖（可选）</Label><Input value={voiceModel} onChange={(e) => setVoiceModel(e.target.value)} placeholder={voiceAssets.find((voice) => voice.id === voiceAssetId)?.provider.model || '留空使用厂商默认模型'} /><p className="mt-1 text-[11px] text-muted-foreground">一般保持为空；只有该角色必须使用特定模型时才覆盖。</p></div>
               </div>
 
               <Separator />
@@ -519,7 +465,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                     variant="outline"
                     size="sm"
                     onClick={testVoice}
-                    disabled={testing || !testText.trim()}
+                    disabled={testing || !testText.trim() || !voiceAssetId}
                     className="shrink-0 gap-1.5"
                   >
                     {testing ? (
@@ -527,7 +473,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                     ) : (
                       <Play className="size-4" />
                     )}
-                    {testing ? '合成中...' : '试听'}
+                    {testing ? '合成中…' : '试听'}
                   </Button>
                 </div>
                 {audioUrl && (
@@ -537,6 +483,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                       variant="ghost"
                       size="icon"
                       className="size-8 shrink-0"
+                      aria-label="停止播放"
                       onClick={stopAudio}
                     >
                       <Square className="size-3.5" />

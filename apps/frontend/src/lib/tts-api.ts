@@ -2,7 +2,7 @@ import instance, { get, post } from './request'
 
 // ---------- 类型定义 ----------
 
-export type TtsProviderKey = 'minimax' | 'cartesia'
+export type TtsProviderKey = 'minimax' | 'cartesia' | 'hume' | 'elevenlabs'
 
 export type TtsParamSchemaField = {
   key: string

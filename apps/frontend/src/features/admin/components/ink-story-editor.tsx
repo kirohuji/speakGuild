@@ -252,6 +252,8 @@ export function InkStoryEditor({
       return name === speaker || displayName === speaker
     }) ?? null
   }, [characters, selectedItem])
+  const selectedLineVoice = selectedLineCharacter?.voiceBindings?.find((binding) => binding.isDefault)
+    ?? selectedLineCharacter?.voiceBindings?.[0]
   const defaultCharacter = selectedCharacter || characters[0]
   const previewBackgroundUrl = useMemo(
     () => locations.find((location) => location.id === locationId)?.backgroundUrl,
@@ -978,9 +980,10 @@ export function InkStoryEditor({
                       text={selectedItem.text}
                       audioUrl={selectedItem.audioUrl}
                       speaker={selectedItem.speaker}
-                      characterTtsVoice={selectedLineCharacter?.ttsVoice}
-                      characterTtsModel={selectedLineCharacter?.ttsModel}
-                      characterTtsParams={selectedLineCharacter?.ttsParams}
+                      characterTtsProvider={selectedLineVoice?.voiceAsset.provider.provider}
+                      characterTtsVoice={selectedLineVoice?.voiceAsset.externalVoiceId}
+                      characterTtsModel={selectedLineVoice?.model || selectedLineVoice?.voiceAsset.provider.model}
+                      characterTtsParams={selectedLineVoice?.params}
                       storyKey={key}
                       sceneName={selectedScene?.name}
                       lineIndex={selection.type === 'item' ? selection.itemIndex : undefined}

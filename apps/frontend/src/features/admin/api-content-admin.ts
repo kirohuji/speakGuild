@@ -32,8 +32,11 @@ export interface SceneCategory {
   _count?: { scenes: number }
 }
 
-export async function listSceneCategories(packageType?: Scene['packageType']): Promise<SceneCategory[]> {
-  return get('/admin/content/scene-categories', packageType ? { packageType } : undefined)
+export async function listSceneCategories(packageType?: Scene['packageType'], excludePackageType?: Scene['packageType']): Promise<SceneCategory[]> {
+  return get('/admin/content/scene-categories', {
+    ...(packageType ? { packageType } : {}),
+    ...(excludePackageType ? { excludePackageType } : {}),
+  })
 }
 
 export async function createSceneCategory(data: Partial<SceneCategory>): Promise<SceneCategory> {
@@ -65,10 +68,11 @@ export interface Scene {
   trainingTopics?: TrainingTopic[]
 }
 
-export async function listScenes(categoryId?: string, packageType?: Scene['packageType']): Promise<Scene[]> {
+export async function listScenes(categoryId?: string, packageType?: Scene['packageType'], excludePackageType?: Scene['packageType']): Promise<Scene[]> {
   const params: Record<string, string> = {}
   if (categoryId) params.categoryId = categoryId
   if (packageType) params.packageType = packageType
+  if (excludePackageType) params.excludePackageType = excludePackageType
   return get('/admin/content/scenes', Object.keys(params).length ? params : undefined)
 }
 
@@ -317,10 +321,34 @@ export interface GameCharacter {
   spriteBaseUrl?: string | null
   expressions?: any
   defaultPosition?: string | null
-  ttsVoice?: string | null
-  ttsModel?: string | null
-  ttsParams?: Record<string, number> | null
+  voiceBindings?: CharacterVoiceBinding[]
   roomNpcs?: { room: { id: string; displayName: string; location: { id: string; displayName: string } } }[]
+}
+
+export interface TtsVoiceAsset {
+  id: string
+  providerId: string
+  externalVoiceId: string
+  displayName: string
+  category: string
+  language?: string | null
+  gender?: string | null
+  description?: string | null
+  previewUrl?: string | null
+  metadata?: Record<string, unknown> | null
+  isAvailable: boolean
+  provider: { id: string; provider: string; label: string; model: string; isActive: boolean }
+  _count?: { characterBindings: number }
+}
+
+export interface CharacterVoiceBinding {
+  id: string
+  characterId: string
+  voiceAssetId: string
+  model?: string | null
+  params?: Record<string, unknown> | null
+  isDefault: boolean
+  voiceAsset: TtsVoiceAsset
 }
 
 export async function listCharacters(): Promise<GameCharacter[]> {
@@ -337,6 +365,34 @@ export async function updateCharacter(id: string, data: Partial<GameCharacter>):
 
 export async function deleteCharacter(id: string): Promise<void> {
   return _delete(`/admin/content/characters/${id}`)
+}
+
+export async function listTtsVoices(providerId?: string): Promise<TtsVoiceAsset[]> {
+  return get('/admin/content/tts-voices', providerId ? { providerId } : undefined)
+}
+
+export async function createTtsVoice(data: Partial<TtsVoiceAsset>): Promise<TtsVoiceAsset> {
+  return post('/admin/content/tts-voices', data)
+}
+
+export async function syncTtsVoices(providerId: string): Promise<{ synced: number }> {
+  return post(`/admin/content/tts-voices/sync/${providerId}`, {})
+}
+
+export async function updateTtsVoice(id: string, data: Partial<TtsVoiceAsset>): Promise<TtsVoiceAsset> {
+  return patch(`/admin/content/tts-voices/${id}`, data)
+}
+
+export async function deleteTtsVoice(id: string): Promise<void> {
+  return _delete(`/admin/content/tts-voices/${id}`)
+}
+
+export async function saveCharacterVoiceBinding(characterId: string, data: { voiceAssetId: string; model?: string; params?: Record<string, unknown>; isDefault?: boolean }): Promise<CharacterVoiceBinding> {
+  return post(`/admin/content/characters/${characterId}/voice-bindings`, data)
+}
+
+export async function deleteCharacterVoiceBinding(characterId: string, bindingId: string): Promise<void> {
+  return _delete(`/admin/content/characters/${characterId}/voice-bindings/${bindingId}`)
 }
 
 // ─── Game Maps (地图管理) ─────────────────────────────────────

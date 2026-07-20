@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Patch, Delete,
-  Param, Body, Query, Req, ForbiddenException,
+  Param, Body, Query, Req, ForbiddenException, BadRequestException,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -72,21 +72,24 @@ export class ContentAdminController {
   // ════════════════════════════════════════════════════════════
 
   @Get('scene-categories')
-  async listCategories(@Req() req: Request, @Query('packageType') packageType?: string) {
+  async listCategories(
+    @Req() req: Request,
+    @Query('packageType') packageType?: string,
+    @Query('excludePackageType') excludePackageType?: string,
+  ) {
     await this.requireAdmin(req);
+    const sceneTypeWhere = packageType
+      ? { packageType: packageType as any }
+      : excludePackageType
+        ? { packageType: { not: excludePackageType as any } }
+        : undefined;
     return this.prisma.sceneCategory.findMany({
-      where: packageType
-        ? {
-            scenes: {
-              some: { packageType: packageType as any },
-            },
-          }
-        : undefined,
+      where: sceneTypeWhere ? { scenes: { some: sceneTypeWhere } } : undefined,
       orderBy: { sortOrder: 'asc' },
       include: {
         _count: {
           select: {
-            scenes: packageType ? { where: { packageType: packageType as any } } : true,
+            scenes: sceneTypeWhere ? { where: sceneTypeWhere } : true,
           },
         },
       },
@@ -124,11 +127,13 @@ export class ContentAdminController {
     @Req() req: Request,
     @Query('categoryId') categoryId?: string,
     @Query('packageType') packageType?: string,
+    @Query('excludePackageType') excludePackageType?: string,
   ) {
     await this.requireAdmin(req);
     const where: any = {};
     if (categoryId) where.categoryId = categoryId;
     if (packageType) where.packageType = packageType;
+    else if (excludePackageType) where.packageType = { not: excludePackageType };
     return this.prisma.scene.findMany({
       where,
       orderBy: { createdAt: 'asc' },
@@ -801,7 +806,10 @@ export class ContentAdminController {
     await this.requireAdmin(req);
     return this.prisma.gameCharacter.findMany({
       orderBy: { createdAt: 'asc' },
-      include: { roomNpcs: { include: { room: { select: { id: true, displayName: true, location: { select: { id: true, displayName: true } } } } } } },
+      include: {
+        roomNpcs: { include: { room: { select: { id: true, displayName: true, location: { select: { id: true, displayName: true } } } } } },
+        voiceBindings: { include: { voiceAsset: { include: { provider: { select: { id: true, provider: true, label: true, model: true, isActive: true } } } } } },
+      },
     });
   }
 
@@ -821,6 +829,126 @@ export class ContentAdminController {
   async deleteCharacter(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
     return this.prisma.gameCharacter.delete({ where: { id } });
+  }
+
+  // ─── TTS voice assets + character references ──────────────
+
+  @Get('tts-voices')
+  async listTtsVoices(@Req() req: Request, @Query('providerId') providerId?: string) {
+    await this.requireAdmin(req);
+    return this.prisma.ttsVoiceAsset.findMany({
+      where: providerId ? { providerId } : undefined,
+      orderBy: [{ isAvailable: 'desc' }, { displayName: 'asc' }],
+      include: {
+        provider: { select: { id: true, provider: true, label: true, model: true, isActive: true } },
+        _count: { select: { characterBindings: true } },
+      },
+    });
+  }
+
+  @Post('tts-voices')
+  async createTtsVoice(@Req() req: Request, @Body() dto: any) {
+    await this.requireAdmin(req);
+    return this.prisma.ttsVoiceAsset.create({
+      data: {
+        providerId: dto.providerId,
+        externalVoiceId: String(dto.externalVoiceId || '').trim(),
+        displayName: String(dto.displayName || '').trim(),
+        category: dto.category || 'custom',
+        language: dto.language || null,
+        gender: dto.gender || null,
+        description: dto.description || null,
+        previewUrl: dto.previewUrl || null,
+        metadata: dto.metadata || undefined,
+        isAvailable: dto.isAvailable !== false,
+      },
+      include: { provider: { select: { id: true, provider: true, label: true, model: true, isActive: true } } },
+    });
+  }
+
+  @Post('tts-voices/sync/:providerId')
+  async syncTtsVoices(@Req() req: Request, @Param('providerId') providerId: string) {
+    await this.requireAdmin(req);
+    const provider = await this.prisma.aiProvider.findUnique({ where: { id: providerId } });
+    if (!provider || provider.type !== 'tts') throw new BadRequestException('TTS 厂商不存在');
+    if (!provider.apiKey) throw new BadRequestException('请先在 AI Models 配置厂商 API Key');
+
+    let rows: Array<{ externalVoiceId: string; displayName: string; category: string; language?: string; gender?: string; description?: string; previewUrl?: string; metadata?: any }> = [];
+    if (provider.provider === 'minimax') {
+      const response = await fetch(`${provider.baseUrl || 'https://api.minimax.io'}/v1/get_voice`, {
+        method: 'POST', headers: { Authorization: `Bearer ${provider.apiKey}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ voice_type: 'all' }),
+      });
+      if (!response.ok) throw new BadRequestException(`MiniMax 音色同步失败 (${response.status})`);
+      const payload: any = await response.json();
+      const groups = [['system_voice', 'system'], ['voice_cloning', 'cloned'], ['voice_generation', 'designed']] as const;
+      rows = groups.flatMap(([key, category]) => (payload[key] || payload.data?.[key] || []).map((voice: any) => ({
+        externalVoiceId: voice.voice_id, displayName: voice.voice_name || voice.voice_id, category,
+        description: Array.isArray(voice.description) ? voice.description.join(' ') : voice.description,
+        metadata: voice,
+      })));
+    } else if (provider.provider === 'elevenlabs') {
+      const response = await fetch(`${(provider.baseUrl || 'https://api.elevenlabs.io').replace(/\/$/, '')}/v2/voices?page_size=100`, { headers: { 'xi-api-key': provider.apiKey } });
+      if (!response.ok) throw new BadRequestException(`ElevenLabs 音色同步失败 (${response.status})`);
+      const payload: any = await response.json();
+      rows = (payload.voices || []).map((voice: any) => ({ externalVoiceId: voice.voice_id, displayName: voice.name || voice.voice_id, category: voice.category || 'system', language: voice.labels?.language, gender: voice.labels?.gender, description: voice.description, previewUrl: voice.preview_url, metadata: voice }));
+    } else if (provider.provider === 'cartesia') {
+      const response = await fetch(`${(provider.baseUrl || 'https://api.cartesia.ai').replace(/\/$/, '')}/voices`, { headers: { 'X-API-Key': provider.apiKey, 'Cartesia-Version': '2025-04-16' } });
+      if (!response.ok) throw new BadRequestException(`Cartesia 音色同步失败 (${response.status})`);
+      const payload: any = await response.json();
+      const voices = Array.isArray(payload) ? payload : payload.data || [];
+      rows = voices.map((voice: any) => ({ externalVoiceId: voice.id, displayName: voice.name || voice.id, category: voice.is_owner ? 'custom' : 'system', language: voice.language, description: voice.description, previewUrl: voice.preview_url, metadata: voice }));
+    } else {
+      throw new BadRequestException('该厂商暂不支持自动同步，请手动添加音色资产');
+    }
+
+    const validRows = rows.filter((row) => row.externalVoiceId && row.displayName);
+    await this.prisma.$transaction(validRows.map((row) => this.prisma.ttsVoiceAsset.upsert({
+      where: { providerId_externalVoiceId: { providerId, externalVoiceId: row.externalVoiceId } },
+      create: { providerId, ...row, syncedAt: new Date(), isAvailable: true },
+      update: { ...row, syncedAt: new Date(), isAvailable: true },
+    })));
+    return { synced: validRows.length };
+  }
+
+  @Patch('tts-voices/:id')
+  async updateTtsVoice(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
+    await this.requireAdmin(req);
+    const { provider, characterBindings, _count, ...data } = dto;
+    return this.prisma.ttsVoiceAsset.update({ where: { id }, data });
+  }
+
+  @Delete('tts-voices/:id')
+  async deleteTtsVoice(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    const references = await this.prisma.characterVoiceBinding.count({ where: { voiceAssetId: id } });
+    if (references) throw new ForbiddenException(`该音色仍被 ${references} 个角色引用，请先解除引用`);
+    return this.prisma.ttsVoiceAsset.delete({ where: { id } });
+  }
+
+  @Post('characters/:characterId/voice-bindings')
+  async saveCharacterVoiceBinding(
+    @Req() req: Request,
+    @Param('characterId') characterId: string,
+    @Body() dto: any,
+  ) {
+    await this.requireAdmin(req);
+    const voiceAsset = await this.prisma.ttsVoiceAsset.findUnique({ where: { id: dto.voiceAssetId } });
+    if (!voiceAsset) throw new ForbiddenException('音色资产不存在');
+    if (dto.isDefault) {
+      await this.prisma.characterVoiceBinding.updateMany({ where: { characterId }, data: { isDefault: false } });
+    }
+    return this.prisma.characterVoiceBinding.upsert({
+      where: { characterId_voiceAssetId: { characterId, voiceAssetId: dto.voiceAssetId } },
+      create: { characterId, voiceAssetId: dto.voiceAssetId, model: dto.model || null, params: dto.params || undefined, isDefault: Boolean(dto.isDefault) },
+      update: { model: dto.model || null, params: dto.params || undefined, isDefault: Boolean(dto.isDefault) },
+      include: { voiceAsset: { include: { provider: { select: { id: true, provider: true, label: true, model: true, isActive: true } } } } },
+    });
+  }
+
+  @Delete('characters/:characterId/voice-bindings/:bindingId')
+  async deleteCharacterVoiceBinding(@Req() req: Request, @Param('characterId') characterId: string, @Param('bindingId') bindingId: string) {
+    await this.requireAdmin(req);
+    return this.prisma.characterVoiceBinding.delete({ where: { id: bindingId, characterId } });
   }
 
   // ════════════════════════════════════════════════════════════
@@ -1599,31 +1727,35 @@ ${dialogueTexts}
       const source = story.inkSource;
       if (!source) throw new Error('故事没有 Ink 源文件');
 
-      // 获取所有角色及其 TTS 配置
-      const characters = await this.prisma.gameCharacter.findMany({
-        where: { ttsVoice: { not: null } },
-      });
-
       const activeTtsConfig = await this.aiModelService.getTtsConfig();
       const activeTtsProvider = Object.values(TtsProvider).includes(activeTtsConfig.provider as TtsProvider)
         ? activeTtsConfig.provider as TtsProvider
         : TtsProvider.minimax;
 
-      // 构建角色名 -> TTS 配置的映射
-      // 优先使用 AI Models 里当前激活的 TTS provider；Cartesia UUID 音色保留自动识别。
+      // 只读取当前激活厂商的角色音色引用，不再从角色字段猜测厂商。
+      const characters = await this.prisma.gameCharacter.findMany({
+        where: { voiceBindings: { some: { voiceAsset: { provider: { provider: activeTtsProvider }, isAvailable: true } } } },
+        include: {
+          voiceBindings: {
+            where: { voiceAsset: { provider: { provider: activeTtsProvider }, isAvailable: true } },
+            include: { voiceAsset: true },
+            orderBy: { isDefault: 'desc' },
+          },
+        },
+      });
+
+      // 构建角色名 -> TTS 配置映射。每个角色在当前厂商下优先使用默认绑定。
       const charTtsMap = new Map<string, { voice: string; model: string | null; params: any; provider: TtsProvider }>();
       for (const char of characters) {
-        const c = char as any;
-        const key = c.name.toLowerCase();
-        const displayKey = c.displayName.toLowerCase();
-        const isCartesiaVoice = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c.ttsVoice || '');
-        const provider = isCartesiaVoice ? TtsProvider.cartesia : activeTtsProvider;
-        const model = c.ttsModel || (isCartesiaVoice ? 'sonic-english' : activeTtsConfig.model || 'speech-2.8-hd');
+        const binding = char.voiceBindings[0];
+        if (!binding) continue;
+        const key = char.name.toLowerCase();
+        const displayKey = char.displayName.toLowerCase();
         const config = {
-          voice: c.ttsVoice!,
-          model,
-          params: c.ttsParams || {},
-          provider,
+          voice: binding.voiceAsset.externalVoiceId,
+          model: binding.model || activeTtsConfig.model,
+          params: binding.params || {},
+          provider: activeTtsProvider,
         };
         charTtsMap.set(key, config);
         if (displayKey !== key) {
