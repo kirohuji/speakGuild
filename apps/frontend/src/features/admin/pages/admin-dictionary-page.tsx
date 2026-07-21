@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Search, Plus, Trash2, Eye, Sparkles, Loader2, ChevronLeft, ChevronRight,
+  Search, Plus, Trash2, Eye, Sparkles, Loader2,
   ExternalLink, ShieldCheck, ShieldX, ChevronDown,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -18,6 +18,7 @@ import {
   listDictionary, batchEnrichDictionary, deleteDictionaryEntry,
   type DictionaryEntry, type DictionaryCluster, type DictionarySense,
 } from '@/features/admin/api-dictionary';
+import { AdminPagination } from '@/features/admin/components/admin-pagination';
 
 const POS_COLORS: Record<string, string> = {
   noun: 'bg-blue-100 text-blue-700', verb: 'bg-green-100 text-green-700',
@@ -114,7 +115,7 @@ export function AdminDictionaryPage() {
         </Button>
       </div>
 
-      {/* Search & Pagination */}
+      {/* Search */}
       <div className="flex items-center justify-between gap-4">
         <div className="relative w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -124,32 +125,6 @@ export function AdminDictionaryPage() {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>每页</span>
-          <select
-            className="rounded border bg-background px-2 py-1 text-sm"
-            value={pageSize}
-            onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-          >
-            {PAGE_SIZE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <span>条</span>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-muted-foreground">
-          共 {data?.total ?? 0} 个词条
-        </span>
-        <div className="flex items-center gap-1">
-          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-            <ChevronLeft className="size-4" />
-          </Button>
-          <span className="px-2 text-sm tabular-nums">{page} / {totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
-            <ChevronRight className="size-4" />
-          </Button>
         </div>
       </div>
 
@@ -223,6 +198,14 @@ export function AdminDictionaryPage() {
               )}
             </tbody>
           </table>
+          <AdminPagination
+            total={data?.total ?? 0}
+            page={Math.min(page, totalPages)}
+            pageSize={pageSize}
+            pageSizes={PAGE_SIZE_OPTIONS}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+          />
         </div>
       )}
 

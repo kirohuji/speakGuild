@@ -44,8 +44,9 @@ export function AdminLayout() {
             size="icon"
             className="h-8 w-8"
             onClick={() => setSidebarOpen(true)}
+            aria-label="打开管理菜单"
           >
-            <Menu className="h-5 w-5" />
+            <Menu aria-hidden="true" className="h-5 w-5" />
           </Button>
         )}
         <div className="flex items-center gap-2">
@@ -74,8 +75,8 @@ export function AdminLayout() {
             <AdminSidebar collapsed={collapsed} onToggleCollapse={toggleCollapsed} />
           </aside>
         )}
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto" id="admin-main-content">
+          <div className="admin-workspace p-4 lg:p-6">
             <Outlet />
           </div>
         </main>

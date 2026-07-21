@@ -110,10 +110,10 @@ export function AdminMapsPage() {
     try { await deleteLocation(loc.id); toast.success('已删除'); load() } catch { toast.error('删除失败') }
   }
 
-  if (loading) return <div className="p-6 text-muted-foreground">加载中...</div>
+  if (loading) return <div className="text-sm text-muted-foreground">加载中…</div>
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">地图管理</h1>

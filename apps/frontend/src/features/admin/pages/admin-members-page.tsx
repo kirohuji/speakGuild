@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Users, Search, Crown, Shield, ShieldAlert, ChevronLeft, ChevronRight,
+  Users, Search, Crown, Shield, ShieldAlert,
   Loader2, ArrowLeft, Calendar, Mail, Ban, CreditCard,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Select, SelectItem } from '@/components/ui/select'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
@@ -19,6 +18,7 @@ import {
   type AdminMember, type AdminMemberDetail, type AdminMembersResult,
 } from '@/features/admin/api'
 import { useAuth } from '@/providers/auth-provider'
+import { AdminPagination } from '@/features/admin/components/admin-pagination'
 
 export function AdminMembersPage() {
   const navigate = useNavigate()
@@ -197,28 +197,14 @@ export function AdminMembersPage() {
           )}
 
           {data && data.total > 0 && (
-            <div className="flex items-center justify-between border-t border-border px-4 py-3 gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">每页</span>
-                <Select value={String(pageSize)} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }} className="w-16">
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                </Select>
-                <span className="text-xs text-muted-foreground">条</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground mr-2">
-                  共 {data.total} 条，第 {page}/{totalPages} 页
-                </span>
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            <AdminPagination
+              total={data.total}
+              page={Math.min(page, Math.max(1, totalPages))}
+              pageSize={pageSize}
+              pageSizes={[10, 20, 50]}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+            />
           )}
         </CardContent>
       </Card>

@@ -161,7 +161,7 @@ function ThemeCard({
   const darkBg = theme.darkBackground;
 
   return (
-    <Card className={cn('transition-shadow hover:shadow-md', !theme.isActive && 'opacity-50')}>
+    <Card className={cn('transition-colors hover:bg-muted/20', !theme.isActive && 'opacity-50')}>
       {/* 预览色块 */}
       <div className="flex h-20 overflow-hidden rounded-t-xl">
         <div

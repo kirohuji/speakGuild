@@ -285,7 +285,7 @@ function SentenceCard({
   onDelete: () => void;
 }) {
   return (
-    <Card className={cn('transition-shadow hover:shadow-md', today && 'ring-2 ring-primary/30')}>
+    <Card className={cn('transition-colors hover:bg-muted/20', today && 'bg-primary/5')}>
       {/* 顶部日期栏 */}
       <div className="flex items-center gap-2 rounded-t-xl border-b border-border/40 bg-muted/30 px-4 py-2.5">
         <Calendar className="size-3.5 text-muted-foreground" />

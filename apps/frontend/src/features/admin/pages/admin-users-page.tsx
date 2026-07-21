@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Users, Search, Shield, ShieldAlert, ChevronLeft, ChevronRight,
+  Users, Search, Shield, ShieldAlert,
   Mail, Phone, Calendar, Loader2, ArrowLeft, CheckCircle2, XCircle,
   MessageSquare, Clapperboard, Star, Target, BarChart3, MonitorSmartphone, Link2,
   GitBranch, TestTube2,
@@ -408,43 +408,13 @@ export function AdminUsersPage() {
 
           {/* 分页 */}
           {data && data.total > 0 && (
-            <div className="flex items-center justify-between border-t border-border px-4 py-3 gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground whitespace-nowrap">每页</span>
-                <Select
-                  value={pageSize}
-                  onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }}
-                  className="h-8 w-[72px] text-xs"
-                >
-                  <option value={10}>10</option>
-                  <option value={15}>15</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </Select>
-                <span className="text-xs text-muted-foreground whitespace-nowrap">条</span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                共 {data.total} 条，第 {page}/{totalPages} 页
-              </p>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page <= 1}
-                  onClick={() => setPage((p) => p - 1)}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            <AdminPagination
+              total={data.total}
+              page={Math.min(page, Math.max(1, totalPages))}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+            />
           )}
         </CardContent>
       </Card>

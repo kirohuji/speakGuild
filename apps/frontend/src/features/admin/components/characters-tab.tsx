@@ -265,7 +265,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
-            <Card key={item.id} className="transition-colors hover:border-primary/30">
+            <Card key={item.id} className="transition-colors hover:bg-muted/20">
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">

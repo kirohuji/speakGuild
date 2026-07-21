@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Receipt, Search, ChevronLeft, ChevronRight,
+  Receipt, Search,
   ArrowLeft, TrendingUp, DollarSign, ShoppingCart, CheckCircle2,
   ShieldAlert, FlaskConical, Loader2, Apple, ExternalLink,
 } from 'lucide-react'
@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Select, SelectItem } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import {
@@ -20,6 +19,7 @@ import {
   type RCSubscriber, type RCSubscriberDetail,
 } from '@/features/admin/api'
 import { useAuth } from '@/providers/auth-provider'
+import { AdminPagination } from '@/features/admin/components/admin-pagination'
 
 const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   pending: { label: '待支付', variant: 'secondary' },
@@ -64,7 +64,7 @@ export function AdminBillingPage() {
   const [rcData, setRcData] = useState<{ list: RCSubscriber[]; total: number; message?: string } | null>(null)
   const [rcLoading, setRcLoading] = useState(false)
   const [rcPage, setRcPage] = useState(1)
-  const [rcPageSize] = useState(20)
+  const [rcPageSize, setRcPageSize] = useState(20)
   const [rcDetail, setRcDetail] = useState<RCSubscriberDetail | null>(null)
   const [rcDetailLoading, setRcDetailLoading] = useState(false)
 
@@ -390,26 +390,9 @@ export function AdminBillingPage() {
                 </div>
               )}
               {data && data.total > 0 && (
-                <div className="flex items-center justify-between border-t border-border px-4 py-3 gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">每页</span>
-                    <Select value={String(pageSize)} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }} className="w-16">
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                    </Select>
-                    <span className="text-xs text-muted-foreground">条</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-muted-foreground mr-2">共 {data.total} 条，第 {page}/{totalPages} 页</span>
-                    <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+                <AdminPagination total={data.total} page={Math.min(page, Math.max(1, totalPages))} pageSize={pageSize}
+                  pageSizes={[10, 20, 50]} onPageChange={setPage}
+                  onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />
               )}
             </CardContent>
           </Card>
@@ -501,18 +484,9 @@ export function AdminBillingPage() {
                 </div>
               )}
               {rcData && rcData.total > 0 && (
-                <div className="flex items-center justify-between border-t border-border px-4 py-3 gap-3">
-                  <span className="text-xs text-muted-foreground">共 {rcData.total} 位订阅用户</span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-muted-foreground mr-2">第 {rcPage}/{rcTotalPages} 页</span>
-                    <Button variant="outline" size="sm" disabled={rcPage <= 1} onClick={() => setRcPage((p) => p - 1)}>
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" disabled={rcPage >= rcTotalPages} onClick={() => setRcPage((p) => p + 1)}>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+                <AdminPagination total={rcData.total} page={Math.min(rcPage, Math.max(1, rcTotalPages))} pageSize={rcPageSize}
+                  pageSizes={[10, 20, 50]} onPageChange={setRcPage}
+                  onPageSizeChange={(size) => { setRcPageSize(size); setRcPage(1); }} />
               )}
             </CardContent>
           </Card>

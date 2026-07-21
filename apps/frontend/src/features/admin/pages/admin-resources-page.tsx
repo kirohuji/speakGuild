@@ -754,7 +754,7 @@ export function AdminResourcesPage() {
                         className={cn(
                           'group relative flex flex-col items-center gap-2 rounded-lg border border-border',
                           'p-3 cursor-pointer transition-all',
-                          'hover:border-primary/30 hover:bg-muted/30 hover:shadow-sm',
+                          'hover:border-primary/30 hover:bg-muted/30',
                         )}
                         onClick={() => {
                           if (child.type === 'folder') {

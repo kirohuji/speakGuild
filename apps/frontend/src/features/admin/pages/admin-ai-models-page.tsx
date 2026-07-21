@@ -48,9 +48,9 @@ import {
 } from '@/features/admin/api-ai-models';
 
 const TABS = [
-  { key: 'stt', label: 'Speech to Text', short: 'STT', icon: Mic, accent: 'text-sky-500', ring: 'ring-sky-500/25', tint: 'bg-sky-500/10' },
-  { key: 'tts', label: 'Text to Speech', short: 'TTS', icon: Volume2, accent: 'text-emerald-500', ring: 'ring-emerald-500/25', tint: 'bg-emerald-500/10' },
-  { key: 'llm', label: 'Language Model', short: 'LLM', icon: Brain, accent: 'text-amber-500', ring: 'ring-amber-500/25', tint: 'bg-amber-500/10' },
+  { key: 'stt', label: 'Speech to Text', short: 'STT', icon: Mic, accent: 'text-sky-500', tint: 'bg-sky-500/10' },
+  { key: 'tts', label: 'Text to Speech', short: 'TTS', icon: Volume2, accent: 'text-emerald-500', tint: 'bg-emerald-500/10' },
+  { key: 'llm', label: 'Language Model', short: 'LLM', icon: Brain, accent: 'text-amber-500', tint: 'bg-amber-500/10' },
 ] as const;
 
 const TYPE_LABELS: Record<string, string> = { stt: 'STT', tts: 'TTS', llm: 'LLM' };
@@ -358,7 +358,7 @@ function ProviderCard({
   const configured = Boolean(item.model || item.apiKey || item.baseUrl);
 
   return (
-    <div className={cn('group relative min-w-0 overflow-hidden rounded-md bg-muted/35 p-3 shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/55 hover:shadow-md', item.isActive && 'bg-primary/5 ring-2', item.isActive && tabMeta?.ring)}>
+    <div className={cn('group relative min-w-0 overflow-hidden rounded-md bg-card p-3 transition-colors hover:bg-muted/35', item.isActive && 'bg-primary/5')}>
       <div className="flex min-w-0 items-start gap-3">
         <div className={cn('flex size-10 shrink-0 items-center justify-center rounded-md bg-background/80', item.isActive && tabMeta?.tint)}>
           <Icon className={cn('size-4', tabMeta?.accent)} />

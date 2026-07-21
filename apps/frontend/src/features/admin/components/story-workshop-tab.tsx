@@ -468,8 +468,8 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId, worksp
                       <Card
                         key={story.id}
                         className={cn(
-                          'cursor-pointer transition-all hover:border-primary/40 hover:shadow-sm',
-                          selectedId === story.id && 'border-primary ring-1 ring-primary/20',
+                          'cursor-pointer transition-colors hover:bg-muted/20',
+                          selectedId === story.id && 'bg-primary/5',
                         )}
                         onClick={() => openEditor(story)}
                       >

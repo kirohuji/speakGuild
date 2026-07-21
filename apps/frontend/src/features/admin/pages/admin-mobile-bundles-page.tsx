@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Smartphone, Search, Plus, Trash2, Power, PowerOff,
-  ChevronLeft, ChevronRight, Loader2, ArrowLeft, ShieldAlert,
+  Loader2, ArrowLeft, ShieldAlert,
   Upload, FileArchive, Globe, CheckCircle2, XCircle, RefreshCw,
   Bell, BellOff, GitBranch,
 } from 'lucide-react';
@@ -19,6 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/cn';
 import { useAuth } from '@/providers/auth-provider';
+import { AdminPagination } from '@/features/admin/components/admin-pagination';
 import { get, post, patch, del } from '@/lib/request';
 import { FileUploadField } from '@/features/admin/components/file-upload-field';
 
@@ -381,7 +382,7 @@ export function AdminMobileBundlesPage() {
   const [data, setData] = useState<BundleListResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(20);
   const [platformFilter, setPlatformFilter] = useState('');
   const [channelFilter, setChannelFilter] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -631,30 +632,15 @@ export function AdminMobileBundlesPage() {
               </div>
 
               {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4">
-                  <span className="text-sm text-muted-foreground">
-                    第 {page} / {totalPages} 页
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={page <= 1}
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    >
-                      <ChevronLeft className="h-4 w-4" />上一页
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={page >= totalPages}
-                      onClick={() => setPage((p) => p + 1)}
-                    >
-                      下一页<ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+              {data.total > 0 && (
+                <AdminPagination
+                  total={data.total}
+                  page={Math.min(page, Math.max(1, totalPages))}
+                  pageSize={pageSize}
+                  pageSizes={[10, 20, 50]}
+                  onPageChange={setPage}
+                  onPageSizeChange={(size) => { setPageSize(size); setPage(1); }}
+                />
               )}
             </>
           )}

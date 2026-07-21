@@ -10,6 +10,7 @@ import { getAllFeedbacks, updateFeedback, replyFeedback } from '@/features/feedb
 import type { FeedbackResult } from '@/features/feedback/api'
 import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { cn } from '@/lib/cn'
+import { AdminPagination } from '@/features/admin/components/admin-pagination'
 
 const STATUS_MAP: Record<string, { label: string; variant: 'outline' | 'secondary' | 'default' }> = {
   pending: { label: '待处理', variant: 'secondary' },
@@ -195,27 +196,9 @@ export function AdminFeedbacksPage() {
 
       {/* 分页 */}
       {!loading && total > 0 && (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">每页</span>
-            <Select value={String(pageSize)} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1) }} className="w-16">
-              {PAGE_SIZES.map((s) => (<SelectItem key={s} value={String(s)}>{s}</SelectItem>))}
-            </Select>
-            <span className="text-xs text-muted-foreground">条</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground">
-              共 {total} 条，第 {page}/{Math.ceil(total / pageSize) || 1} 页
-            </span>
-            <div className="flex gap-1">
-              <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                上一页
-              </Button>
-              <Button size="sm" variant="outline" disabled={page >= Math.ceil(total / pageSize)} onClick={() => setPage((p) => p + 1)}>
-                下一页
-              </Button>
-            </div>
-          </div>
+        <div className="overflow-hidden rounded-lg border bg-card">
+          <AdminPagination total={total} page={page} pageSize={pageSize} pageSizes={PAGE_SIZES}
+            onPageChange={setPage} onPageSizeChange={(size) => { setPageSize(size); setPage(1); }} />
         </div>
       )}
 

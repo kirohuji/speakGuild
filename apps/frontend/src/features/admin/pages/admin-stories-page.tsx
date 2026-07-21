@@ -128,7 +128,7 @@ export function AdminStoriesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 p-6">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-foreground">故事管理</h1>
@@ -139,7 +139,7 @@ export function AdminStoriesPage() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         {items.map((item) => (
-          <Card key={item.id} className="transition-colors hover:border-primary/30">
+          <Card key={item.id} className="transition-colors hover:bg-muted/20">
             <CardHeader className="pb-2">
               <div className="flex items-start justify-between">
                 <div>

@@ -892,9 +892,9 @@ export function InkStoryEditor({
                       }}
                       onClick={() => setSelection({ type: 'item', sceneIndex: selection.sceneIndex, itemIndex })}
                       className={cn(
-                        'grid w-full cursor-grab grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-lg border border-border bg-background p-3 text-left shadow-sm transition-all hover:border-primary/40 hover:bg-muted/30 active:cursor-grabbing',
+                        'grid w-full cursor-grab grid-cols-[32px_minmax(0,1fr)] gap-3 rounded-lg border border-border bg-background p-3 text-left transition-colors hover:border-primary/40 hover:bg-muted/30 active:cursor-grabbing',
                         item.type === 'choice' && 'ml-8 w-[calc(100%-2rem)] scale-[0.98] border-primary/25 bg-primary/5',
-                        active && 'border-primary/60 bg-primary/5 shadow-md',
+                        active && 'border-primary/60 bg-primary/5 ring-1 ring-primary/20',
                         draggedItem?.sceneIndex === selection.sceneIndex && draggedItem.itemIndex === itemIndex && 'opacity-45',
                       )}
                     >

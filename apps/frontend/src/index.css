@@ -34,6 +34,7 @@
      ═══════════════════════════════════════════════════════ */
 
   :root {
+    color-scheme: light;
     /* ── 品牌深蓝（Primary Navy）── */
     --brand-navy:       212 100% 18.6%;   /* #002E5F */
     --brand-navy-deep:  210 100% 13.9%;   /* #002247 */
@@ -132,6 +133,7 @@
      关键词：深紫黑夜间底 / 白字 / 暖珊瑚行动点
      ═══════════════════════════════════════════════════════ */
   .dark {
+    color-scheme: dark;
     /* 底色 = 与移动首页一致的夜间底色 */
     --background: 252 43% 5%;
     --foreground: 0 0% 100%;
@@ -425,6 +427,82 @@
   .recording-active {
     background-color: hsl(var(--brand-coral));
     color: white;
+  }
+}
+
+/* 管理后台视觉基线：沿用“大模型管理”的紧凑、主题化信息密度。 */
+.admin-workspace h1 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+.admin-workspace h1 + p {
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  color: hsl(var(--muted-foreground));
+  text-wrap: pretty;
+}
+
+.admin-workspace [data-slot='card'] {
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-ring-offset-shadow: 0 0 #0000;
+  border-width: 0;
+  border-radius: 0.5rem;
+  background: hsl(var(--card));
+  box-shadow: none;
+}
+
+.admin-workspace > div > :first-child:has(h1) {
+  border-bottom: 1px solid hsl(var(--border) / 0.7);
+  padding-bottom: 0.75rem;
+}
+
+.admin-workspace table {
+  width: 100%;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.admin-workspace thead {
+  background: hsl(var(--muted) / 0.3);
+}
+
+.admin-workspace th {
+  height: 2.5rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.7);
+  padding-inline: 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+}
+
+.admin-workspace th:not([class*='text-']) {
+  text-align: left;
+}
+
+.admin-workspace td {
+  padding: 0.75rem 1rem;
+  vertical-align: middle;
+}
+
+.admin-workspace tbody tr {
+  border-bottom: 1px solid hsl(var(--border) / 0.55);
+  transition: background-color 150ms ease;
+}
+
+.admin-workspace tbody tr:last-child {
+  border-bottom: 0;
+}
+
+@media (hover: hover) {
+  .admin-workspace tbody tr:hover {
+    background: hsl(var(--muted) / 0.22);
   }
 }
 
