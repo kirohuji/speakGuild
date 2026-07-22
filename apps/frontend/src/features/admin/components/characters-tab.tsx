@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, Trash2, Edit3, MapPin, Layers3, Volume2, Loader2, Play, Square, UserCircle } from 'lucide-react'
+import { Plus, Trash2, Edit3, MapPin, Layers3, Volume2, Loader2, Play, Square, UserCircle, Eye, GitBranch } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,6 +19,8 @@ import {
 import { synthesizeText } from '@/lib/tts-api'
 import type { TtsProviderKey } from '@/lib/tts-api'
 import { ImageUploadField } from './image-upload-field'
+import { VnPlayer } from '@/features/vn-engine/vn-player'
+import { cn } from '@/lib/cn'
 
 /** 支持的角色状态预设 */
 const EXPRESSION_PRESETS = ['default', 'happy', 'sad', 'angry', 'surprised', 'thinking', 'shy', 'confident']
@@ -72,6 +74,10 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [dialogTab, setDialogTab] = useState('basic')
+  const [previewStateIndex, setPreviewStateIndex] = useState(0)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewBackgroundUrl, setPreviewBackgroundUrl] = useState('')
+  const [previewDialogue, setPreviewDialogue] = useState('你好，很高兴在这里见到你。')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -92,7 +98,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
     setAvatarUrl('')
     setExpressions([{ name: 'default', spriteUrl: '', avatarUrl: '' }])
     setVoiceAssetId(''); setVoiceModel('')
-    setTestText(''); setAudioUrl(null); setDialogTab('basic')
+    setTestText(''); setAudioUrl(null); setDialogTab('basic'); setPreviewStateIndex(0)
     setDialogOpen(true)
   }
 
@@ -122,7 +128,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
     const defaultBinding = item.voiceBindings?.find((binding) => binding.isDefault) ?? item.voiceBindings?.[0]
     setVoiceAssetId(defaultBinding?.voiceAssetId ?? '')
     setVoiceModel(defaultBinding?.model ?? '')
-    setTestText(''); setAudioUrl(null); setDialogTab('basic')
+    setTestText(''); setAudioUrl(null); setDialogTab('basic'); setPreviewStateIndex(0)
     setDialogOpen(true)
   }
 
@@ -132,6 +138,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
 
   const removeExpression = (index: number) => {
     setExpressions(expressions.filter((_, i) => i !== index))
+    setPreviewStateIndex((current) => Math.max(0, Math.min(current, expressions.length - 2)))
   }
 
   const updateExpression = (index: number, field: keyof ExpressionEntry, value: string) => {
@@ -389,7 +396,10 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                   <TabsContent value="expressions" className="m-0 space-y-4">
                     <div className="flex items-start justify-between gap-4">
                       <div><h3 className="text-sm font-semibold">角色状态</h3><p className="mt-1 text-xs text-muted-foreground">每个状态对应一套场景立绘和对话头像，剧情播放时按当前状态切换。</p></div>
-                      <Button type="button" variant="outline" size="sm" className="shrink-0 gap-1.5" onClick={addExpression}><Layers3 className="size-3.5" />添加状态</Button>
+                      <div className="flex shrink-0 gap-2">
+                        <Button type="button" variant="outline" size="sm" className="gap-1.5" disabled={!expressions.length} onClick={() => setPreviewOpen(true)}><Eye className="size-3.5" />预览角色</Button>
+                        <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={addExpression}><Layers3 className="size-3.5" />添加状态</Button>
+                      </div>
                     </div>
                     <div className="rounded-lg bg-muted/30 px-3 py-2 text-xs text-muted-foreground">每个状态可分别配置场景立绘和对话头像；头像未配置时使用角色默认头像。可用预设：{EXPRESSION_PRESETS.join(' · ')}</div>
                     <div>
@@ -401,11 +411,12 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                 ) : (
                   <div className="grid gap-4 lg:grid-cols-2">
                     {expressions.map((exp, i) => (
-                      <div key={i} className="rounded-xl border border-border bg-muted/20 p-3">
+                      <div key={i} className={cn('cursor-pointer rounded-xl border bg-muted/20 p-3 transition-colors', i === previewStateIndex ? 'border-primary/60 ring-1 ring-primary/20' : 'border-border hover:border-primary/30')} onClick={() => setPreviewStateIndex(i)}>
                         <div className="flex items-center gap-2 border-b pb-3">
                             <Input
                               value={exp.name}
                               onChange={(e) => updateExpression(i, 'name', e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
                               placeholder="状态名（如 happy）"
                               className="h-8 min-w-0 flex-1 text-xs"
                               list="expression-presets"
@@ -416,7 +427,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                               ))}
                             </datalist>
                             <code className="hidden rounded bg-muted px-1.5 py-1 text-[10px] text-muted-foreground sm:block">#{exp.name || '?'}</code>
-                            <Button type="button" variant="ghost" size="icon" className="size-8 shrink-0" onClick={() => removeExpression(i)}><Trash2 className="size-3.5 text-destructive" /></Button>
+                            <Button type="button" variant="ghost" size="icon" className="size-8 shrink-0" onClick={(e) => { e.stopPropagation(); removeExpression(i) }}><Trash2 className="size-3.5 text-destructive" /></Button>
                         </div>
                         <div className="mt-3 grid grid-cols-2 gap-3">
                           <div className="min-w-0"><Label className="text-[11px] text-muted-foreground">场景立绘</Label><div className="mt-1"><ImageUploadField value={exp.spriteUrl} onChange={(url) => updateExpression(i, 'spriteUrl', url)} placeholder="上传立绘" previewSize="md" overlayUpload /></div></div>
@@ -494,6 +505,68 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
               <div className="border-t p-4 md:hidden"><Button className="w-full" onClick={save} disabled={saving || !displayName.trim() || !role.trim()}>{saving ? '保存中…' : editItem ? '保存角色修改' : '创建角色'}</Button></div>
             </section>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="h-[86vh] w-[calc(100vw-32px)] max-w-[1120px] overflow-hidden p-0">
+          {expressions.length > 0 && (() => {
+            const activeIndex = Math.min(previewStateIndex, expressions.length - 1)
+            const activeState = expressions[activeIndex]
+            const previewLine = { speaker: displayName || '角色名称', text: previewDialogue || '输入一句预览台词' }
+            return (
+              <div className="grid h-full min-h-0 grid-cols-[280px_minmax(0,1fr)]">
+                <aside className="flex min-h-0 flex-col border-r bg-muted/20">
+                  <div className="border-b px-5 py-4">
+                    <DialogTitle className="text-base">角色状态预览</DialogTitle>
+                    <DialogDescription className="mt-1 text-xs">切换状态，检查立绘与对话头像的组合效果</DialogDescription>
+                  </div>
+                  <div className="border-b px-4 py-3">
+                    <div className="flex items-center gap-2 rounded-lg bg-background px-3 py-2">
+                      <GitBranch className="size-4 text-primary" />
+                      <div className="min-w-0"><p className="text-[10px] uppercase tracking-wider text-muted-foreground">currentState</p><p className="truncate font-mono text-sm font-semibold text-primary">{activeState.name || `state_${activeIndex + 1}`}</p></div>
+                    </div>
+                  </div>
+                  <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+                    <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">状态树</p>
+                    <div className="relative space-y-1.5 before:absolute before:bottom-4 before:left-[15px] before:top-4 before:w-px before:bg-border">
+                      {expressions.map((state, index) => (
+                        <button key={`${state.name}-${index}`} type="button" onClick={() => setPreviewStateIndex(index)} className={cn('relative flex w-full items-center gap-3 rounded-lg border px-2.5 py-2.5 text-left transition-colors', index === activeIndex ? 'border-primary/40 bg-primary/10' : 'border-transparent hover:bg-background')}>
+                          <span className={cn('relative z-10 size-2.5 shrink-0 rounded-full ring-4', index === activeIndex ? 'bg-primary ring-primary/15' : 'bg-muted-foreground/35 ring-muted')} />
+                          <div className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
+                            {state.avatarUrl || state.spriteUrl ? <img src={state.avatarUrl || state.spriteUrl} alt="" className="size-full object-cover" /> : <Layers3 className="size-4 text-muted-foreground/40" />}
+                          </div>
+                          <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{state.name || `状态 ${index + 1}`}</p><p className="mt-0.5 text-[10px] text-muted-foreground">{state.spriteUrl ? '有立绘' : '无立绘'} · {state.avatarUrl ? '有头像' : '默认头像'}</p></div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </aside>
+
+                <section className="flex min-h-0 flex-col bg-background">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4 border-b px-5 py-3">
+                    <div><Label className="text-xs">预览台词</Label><Input className="mt-1" value={previewDialogue} onChange={(e) => setPreviewDialogue(e.target.value)} placeholder="输入角色台词" /></div>
+                    <div><Label className="text-xs">场景背景</Label><div className="mt-1"><ImageUploadField value={previewBackgroundUrl} onChange={setPreviewBackgroundUrl} placeholder="上传背景" previewSize="sm" overlayUpload /></div></div>
+                  </div>
+                  <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-muted/20 p-5">
+                    <VnPlayer
+                      className="aspect-[9/16] h-full max-h-[680px] w-auto max-w-full overflow-hidden shadow-xl"
+                      frameVariant="portrait"
+                      backgroundUrl={previewBackgroundUrl || undefined}
+                      currentLine={previewLine}
+                      history={[previewLine]}
+                      currentSpriteUrl={activeState.spriteUrl || undefined}
+                      spriteAlt={displayName || '角色立绘'}
+                      spritePosition="center"
+                      currentAvatarUrl={activeState.avatarUrl || avatarUrl || undefined}
+                      currentAvatarAlt={displayName || '角色头像'}
+                      showHistoryButton={false}
+                    />
+                  </div>
+                </section>
+              </div>
+            )
+          })()}
         </DialogContent>
       </Dialog>
     </div>
