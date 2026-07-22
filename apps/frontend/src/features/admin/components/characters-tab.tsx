@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, Trash2, Edit3, MapPin, SmilePlus, Volume2, Loader2, Play, Square } from 'lucide-react'
+import { Plus, Trash2, Edit3, MapPin, Layers3, Volume2, Loader2, Play, Square, UserCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
@@ -20,12 +20,13 @@ import { synthesizeText } from '@/lib/tts-api'
 import type { TtsProviderKey } from '@/lib/tts-api'
 import { ImageUploadField } from './image-upload-field'
 
-/** 支持的立绘表情类型 */
+/** 支持的角色状态预设 */
 const EXPRESSION_PRESETS = ['default', 'happy', 'sad', 'angry', 'surprised', 'thinking', 'shy', 'confident']
 
 interface ExpressionEntry {
   name: string
-  url: string
+  spriteUrl: string
+  avatarUrl: string
 }
 
 function buildCharacterKey(displayName: string, existingNames: string[]) {
@@ -57,7 +58,6 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
   const [name, setName] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [role, setRole] = useState('')
-  const [personality, setPersonality] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
   const [expressions, setExpressions] = useState<ExpressionEntry[]>([])
 
@@ -88,9 +88,9 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
 
   const openCreate = () => {
     setEditItem(null)
-    setName(''); setDisplayName(''); setRole(''); setPersonality('')
+    setName(''); setDisplayName(''); setRole('')
     setAvatarUrl('')
-    setExpressions([{ name: 'default', url: '' }])
+    setExpressions([{ name: 'default', spriteUrl: '', avatarUrl: '' }])
     setVoiceAssetId(''); setVoiceModel('')
     setTestText(''); setAudioUrl(null); setDialogTab('basic')
     setDialogOpen(true)
@@ -101,17 +101,21 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
     setName(item.name)
     setDisplayName(item.displayName)
     setRole(item.role)
-    setPersonality(item.personality ?? '')
     setAvatarUrl(item.avatarUrl ?? '')
     // Parse expressions from JSON
     const exps: ExpressionEntry[] = []
     if (item.expressions && typeof item.expressions === 'object') {
-      for (const [k, v] of Object.entries(item.expressions as Record<string, string>)) {
-        exps.push({ name: k, url: v as string })
+      for (const [k, value] of Object.entries(item.expressions as Record<string, unknown>)) {
+        if (typeof value === 'string') {
+          exps.push({ name: k, spriteUrl: value, avatarUrl: '' })
+        } else if (value && typeof value === 'object') {
+          const state = value as { spriteUrl?: string; avatarUrl?: string }
+          exps.push({ name: k, spriteUrl: state.spriteUrl ?? '', avatarUrl: state.avatarUrl ?? '' })
+        }
       }
     }
     if (!exps.some((exp) => exp.name === 'default')) {
-      exps.unshift({ name: 'default', url: item.spriteBaseUrl ?? '' })
+      exps.unshift({ name: 'default', spriteUrl: item.spriteBaseUrl ?? '', avatarUrl: item.avatarUrl ?? '' })
     }
     setExpressions(exps)
 
@@ -123,14 +127,14 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
   }
 
   const addExpression = () => {
-    setExpressions([...expressions, { name: '', url: '' }])
+    setExpressions([...expressions, { name: '', spriteUrl: '', avatarUrl: '' }])
   }
 
   const removeExpression = (index: number) => {
     setExpressions(expressions.filter((_, i) => i !== index))
   }
 
-  const updateExpression = (index: number, field: 'name' | 'url', value: string) => {
+  const updateExpression = (index: number, field: keyof ExpressionEntry, value: string) => {
     const updated = [...expressions]
     updated[index] = { ...updated[index], [field]: value }
     setExpressions(updated)
@@ -144,17 +148,20 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
     setSaving(true)
     try {
       // Convert expressions array to JSON object
-      const expressionsObj: Record<string, string> = {}
+      const expressionsObj: Record<string, { spriteUrl: string; avatarUrl?: string }> = {}
       for (const exp of expressions) {
-        if (exp.name && exp.url) {
-          expressionsObj[exp.name] = exp.url
+        if (exp.name && (exp.spriteUrl || exp.avatarUrl)) {
+          expressionsObj[exp.name] = {
+            spriteUrl: exp.spriteUrl,
+            ...(exp.avatarUrl ? { avatarUrl: exp.avatarUrl } : {}),
+          }
         }
       }
       const resolvedName = editItem?.name || name || buildCharacterKey(displayName, items.map((item) => item.name))
       const data = {
-        name: resolvedName, displayName, role, personality, avatarUrl,
+        name: resolvedName, displayName, role, avatarUrl,
         // Keep the legacy field in sync for clients that still use it as a fallback.
-        spriteBaseUrl: expressionsObj.default ?? null,
+        spriteBaseUrl: expressionsObj.default?.spriteUrl ?? null,
         expressions: expressionsObj,
       }
       let savedCharacter: GameCharacter
@@ -294,13 +301,10 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
               <CardContent>
                 <p className="text-sm text-muted-foreground line-clamp-2">{item.role}</p>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  {item.personality && (
-                    <Badge variant="outline" className="text-[10px]">{item.personality}</Badge>
-                  )}
                   {item.expressions && typeof item.expressions === 'object' && (
                     <Badge variant="outline" className="text-[10px]">
-                      <SmilePlus className="mr-0.5 size-2.5" />
-                      {Object.keys(item.expressions as object).length} 个表情
+                      <Layers3 className="mr-0.5 size-2.5" />
+                      {Object.keys(item.expressions as object).length} 个状态
                     </Badge>
                   )}
                   {item.roomNpcs?.length ? (
@@ -318,86 +322,92 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editItem ? '编辑角色' : '新建角色'}</DialogTitle>
-          </DialogHeader>
-
-          <Tabs value={dialogTab} onValueChange={setDialogTab}>
-            <TabsList className="mb-4 w-full">
-              <TabsTrigger value="basic" className="flex-1">基本信息</TabsTrigger>
-              <TabsTrigger value="voice" className="flex-1 gap-1.5">
-                <Volume2 className="size-3.5" />
-                音色配置
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Tab: 基本信息 */}
-            <TabsContent value="basic" className="space-y-4">
-              <div>
-                <Label>显示名称</Label>
-                <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="例如：Alex / 小满" />
+        <DialogContent className="h-[88vh] w-[calc(100vw-32px)] max-w-[1180px] overflow-hidden p-0">
+          <div className="grid h-full min-h-0 grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)]">
+            <aside className="hidden min-h-0 flex-col border-r bg-muted/20 md:flex">
+              <div className="border-b px-5 py-4">
+                <DialogTitle className="text-base">{editItem ? '编辑角色' : '新建角色'}</DialogTitle>
+                <DialogDescription className="mt-1 text-xs">角色设定、视觉资产与声音配置</DialogDescription>
               </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">角色 Key（自动生成）</Label>
-                <Input value={editItem?.name || (/[a-z0-9]/i.test(displayName) ? buildCharacterKey(displayName, items.map((item) => item.name)) : 'character_…（保存时生成）')} readOnly className="mt-1 bg-muted/40 font-mono text-xs text-muted-foreground" />
-                <p className="mt-1 text-[11px] text-muted-foreground">创建后保持不变，用于 Ink 角色引用。</p>
-              </div>
-              <div>
-                <Label>角色描述</Label>
-                <Input value={role} onChange={(e) => setRole(e.target.value)} placeholder="室友，大一新生，友好健谈" />
-              </div>
-              <div>
-                <Label>性格 (AI prompt 用)</Label>
-                <Input value={personality} onChange={(e) => setPersonality(e.target.value)} placeholder="friendly, curious about your culture" />
-              </div>
-              <Separator />
-
-              {/* Avatar upload */}
-              <div>
-                <Label className="text-xs font-semibold">头像</Label>
-                <ImageUploadField
-                  value={avatarUrl}
-                  onChange={setAvatarUrl}
-                  placeholder="输入头像 URL 或上传"
-                  previewSize="md"
-                  group="avatar"
-                />
-              </div>
-
-              {/* Expression Manager */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="text-xs font-semibold">表情立绘管理</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7 gap-1 text-xs"
-                    onClick={addExpression}
-                  >
-                    <SmilePlus className="size-3" />
-                    添加表情
-                  </Button>
+              <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
+                <div className="flex items-start gap-4">
+                  <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 text-primary">
+                    {avatarUrl ? <img src={avatarUrl} alt="角色头像预览" className="size-full object-cover" /> : <UserCircle className="size-8" />}
+                  </div>
+                  <div className="min-w-0 flex-1 pt-1">
+                    <p className="truncate text-lg font-semibold">{displayName || '未命名角色'}</p>
+                    <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
+                      {editItem?.name || (/[a-z0-9]/i.test(displayName) ? buildCharacterKey(displayName, items.map((item) => item.name)) : '保存时生成 Key')}
+                    </p>
+                    <Badge variant="secondary" className="mt-2 text-[10px]">全局角色资产</Badge>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground mb-3">
-                  在 Ink 脚本中使用 <code className="rounded bg-muted px-1 text-[11px]">#expression:happy</code> 标签切换表情。
-                  预设表情：{EXPRESSION_PRESETS.join(', ')}
-                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-lg bg-background px-3 py-2.5"><p className="text-[11px] text-muted-foreground">角色状态</p><p className="mt-1 text-xl font-bold text-amber-500">{expressions.length}</p></div>
+                  <div className="rounded-lg bg-background px-3 py-2.5"><p className="text-[11px] text-muted-foreground">音色绑定</p><p className="mt-1 text-xl font-bold text-emerald-500">{editItem?.voiceBindings?.length || (voiceAssetId ? 1 : 0)}</p></div>
+                </div>
+                <div className="rounded-lg bg-background px-3 py-3">
+                  <p className="text-xs font-medium">角色定位</p>
+                  <p className="mt-1.5 text-xs leading-5 text-muted-foreground">{role || '还未填写角色描述'}</p>
+                </div>
+                <div className="rounded-lg border border-dashed px-3 py-3 text-xs leading-5 text-muted-foreground">
+                  角色资产可被多个剧情包复用。角色 Key 创建后固定，剧情中可按状态切换对应的立绘和头像。
+                </div>
+              </div>
+              <div className="border-t p-4">
+                <Button className="w-full" onClick={save} disabled={saving || !displayName.trim() || !role.trim()}>
+                  {saving ? '保存中…' : editItem ? '保存角色修改' : '创建角色'}
+                </Button>
+              </div>
+            </aside>
 
+            <section className="flex min-h-0 flex-col">
+              <DialogHeader className="border-b px-5 py-4 md:hidden">
+                <DialogTitle>{editItem ? '编辑角色' : '新建角色'}</DialogTitle>
+                <DialogDescription>角色设定、视觉资产与声音配置</DialogDescription>
+              </DialogHeader>
+              <Tabs value={dialogTab} onValueChange={setDialogTab} className="flex min-h-0 flex-1 flex-col">
+                <div className="border-b px-5 py-3">
+                  <TabsList className="grid w-full max-w-xl grid-cols-3">
+                    <TabsTrigger value="basic">基础设定</TabsTrigger>
+                    <TabsTrigger value="expressions" className="gap-1.5"><Layers3 className="size-3.5" />角色状态</TabsTrigger>
+                    <TabsTrigger value="voice" className="gap-1.5"><Volume2 className="size-3.5" />音色配置</TabsTrigger>
+                  </TabsList>
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+                  <TabsContent value="basic" className="m-0 space-y-5">
+                    <div><h3 className="text-sm font-semibold">角色身份</h3><p className="mt-1 text-xs text-muted-foreground">用于后台识别、剧情引用和 AI 对话生成。</p></div>
+                    <div className="grid gap-4">
+                      <div><Label>显示名称</Label><Input className="mt-1" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="例如：Alex / 小满" /></div>
+                      <div className="sm:col-span-2"><Label>角色描述</Label><Input className="mt-1" value={role} onChange={(e) => setRole(e.target.value)} placeholder="室友，大一新生，友好健谈" /><p className="mt-1 text-[11px] text-muted-foreground">简短说明角色的身份、关系和剧情职能。</p></div>
+                    </div>
+                    <Separator />
+                    <div><h3 className="text-sm font-semibold">头像资产</h3><p className="mt-1 text-xs text-muted-foreground">用于角色列表、对话头像和后台识别。</p></div>
+                    <ImageUploadField value={avatarUrl} onChange={setAvatarUrl} placeholder="输入头像 URL 或上传" previewSize="md" group="avatar" />
+                  </TabsContent>
+
+                  <TabsContent value="expressions" className="m-0 space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div><h3 className="text-sm font-semibold">角色状态</h3><p className="mt-1 text-xs text-muted-foreground">每个状态对应一套场景立绘和对话头像，剧情播放时按当前状态切换。</p></div>
+                      <Button type="button" variant="outline" size="sm" className="shrink-0 gap-1.5" onClick={addExpression}><Layers3 className="size-3.5" />添加状态</Button>
+                    </div>
+                    <div className="rounded-lg bg-muted/30 px-3 py-2 text-xs text-muted-foreground">每个状态可分别配置场景立绘和对话头像；头像未配置时使用角色默认头像。可用预设：{EXPRESSION_PRESETS.join(' · ')}</div>
+                    <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-xs font-semibold">已配置 {expressions.length} 个状态</Label>
+                </div>
                 {expressions.length === 0 ? (
-                  <p className="text-xs text-muted-foreground/60 italic">暂无表情配置，请添加 default 表情作为默认立绘</p>
+                  <div className="rounded-xl border border-dashed py-16 text-center"><Layers3 className="mx-auto size-8 text-muted-foreground/40" /><p className="mt-3 text-sm text-muted-foreground">暂无角色状态</p><p className="mt-1 text-xs text-muted-foreground/60">建议先添加 default 作为默认状态</p></div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid gap-4 lg:grid-cols-2">
                     {expressions.map((exp, i) => (
-                      <div key={i} className="flex items-start gap-3 rounded-lg border border-border bg-muted/20 p-3">
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-2">
+                      <div key={i} className="rounded-xl border border-border bg-muted/20 p-3">
+                        <div className="flex items-center gap-2 border-b pb-3">
                             <Input
                               value={exp.name}
                               onChange={(e) => updateExpression(i, 'name', e.target.value)}
-                              placeholder="表情名 (如 happy)"
-                              className="h-7 text-xs w-28"
+                              placeholder="状态名（如 happy）"
+                              className="h-8 min-w-0 flex-1 text-xs"
                               list="expression-presets"
                             />
                             <datalist id="expression-presets">
@@ -405,35 +415,22 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                                 <option key={p} value={p} />
                               ))}
                             </datalist>
-                            <span className="text-[11px] text-muted-foreground">
-                              Ink 标签: <code className="rounded bg-muted px-1">#expression:{exp.name || '?'}</code>
-                            </span>
-                          </div>
-                          <ImageUploadField
-                            value={exp.url}
-                            onChange={(url) => updateExpression(i, 'url', url)}
-                            placeholder={exp.name === 'default' ? '默认立绘 URL' : `${exp.name || '表情'} 立绘 URL`}
-                            previewSize="md"
-                          />
+                            <code className="hidden rounded bg-muted px-1.5 py-1 text-[10px] text-muted-foreground sm:block">#{exp.name || '?'}</code>
+                            <Button type="button" variant="ghost" size="icon" className="size-8 shrink-0" onClick={() => removeExpression(i)}><Trash2 className="size-3.5 text-destructive" /></Button>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-7 shrink-0 mt-1"
-                          onClick={() => removeExpression(i)}
-                        >
-                          <Trash2 className="size-3.5 text-destructive" />
-                        </Button>
+                        <div className="mt-3 grid grid-cols-2 gap-3">
+                          <div className="min-w-0"><Label className="text-[11px] text-muted-foreground">场景立绘</Label><div className="mt-1"><ImageUploadField value={exp.spriteUrl} onChange={(url) => updateExpression(i, 'spriteUrl', url)} placeholder="上传立绘" previewSize="md" overlayUpload /></div></div>
+                          <div className="min-w-0"><Label className="text-[11px] text-muted-foreground">对话头像（可选）</Label><div className="mt-1"><ImageUploadField value={exp.avatarUrl} onChange={(url) => updateExpression(i, 'avatarUrl', url)} placeholder="上传头像" previewSize="md" group="avatar" overlayUpload /></div></div>
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
-            </TabsContent>
+                  </TabsContent>
 
             {/* Tab: 音色配置 */}
-            <TabsContent value="voice" className="space-y-4">
+            <TabsContent value="voice" className="m-0 space-y-5">
               <p className="text-sm text-muted-foreground">
                 从全局音色资产库为角色选择音色。Voice ID 与厂商参数由音色资产统一维护。
               </p>
@@ -491,13 +488,11 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                   </div>
                 )}
               </div>
-            </TabsContent>
-          </Tabs>
-
-          <div className="pt-2">
-            <Button className="w-full" onClick={save} disabled={saving}>
-              {saving ? '保存中...' : '保存'}
-            </Button>
+                    </TabsContent>
+                </div>
+              </Tabs>
+              <div className="border-t p-4 md:hidden"><Button className="w-full" onClick={save} disabled={saving || !displayName.trim() || !role.trim()}>{saving ? '保存中…' : editItem ? '保存角色修改' : '创建角色'}</Button></div>
+            </section>
           </div>
         </DialogContent>
       </Dialog>

@@ -1196,10 +1196,13 @@ export function PracticeSessionPage() {
       return characterMatchesSpeaker(character, speaker)
     }) || (characters.length === 1 ? characters[0] : undefined)
     const expressionMap = currentCharacter?.expressions && typeof currentCharacter.expressions === 'object'
-      ? currentCharacter.expressions as Record<string, string>
+      ? currentCharacter.expressions as Record<string, string | { spriteUrl?: string; avatarUrl?: string }>
       : {}
+    const currentState = (vnVisual.expression ? expressionMap[vnVisual.expression] : undefined) || expressionMap.default
+    const stateSpriteUrl = typeof currentState === 'string' ? currentState : currentState?.spriteUrl
+    const stateAvatarUrl = typeof currentState === 'object' ? currentState?.avatarUrl : undefined
     const currentSpriteUrl = currentCharacter
-      ? (vnVisual.expression ? expressionMap[vnVisual.expression] : undefined) || expressionMap.default || currentCharacter.spriteBaseUrl || undefined
+      ? stateSpriteUrl || currentCharacter.spriteBaseUrl || undefined
       : undefined
     const spritePosition = vnVisual.position || currentCharacter?.defaultPosition || 'center'
     const inputGuidance = {
@@ -1281,7 +1284,7 @@ export function PracticeSessionPage() {
               currentSpriteUrl={currentSpriteUrl}
               spriteAlt={currentCharacter?.displayName || currentCharacter?.name}
               spritePosition={spritePosition}
-              currentAvatarUrl={currentCharacter?.avatarUrl || undefined}
+              currentAvatarUrl={stateAvatarUrl || currentCharacter?.avatarUrl || undefined}
               currentAvatarAlt={currentCharacter?.displayName || currentCharacter?.name}
               isWaiting={inkWaiting}
               isEnded={inkEnded}

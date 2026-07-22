@@ -76,6 +76,10 @@ function collectUnitAssets(unitDetail: any): AssetRef[] {
       : []
     for (const value of expressions) {
       if (typeof value === 'string') pushUrlAsset(assets, value, 'sprite')
+      else if (value && typeof value === 'object') {
+        pushUrlAsset(assets, (value as any).spriteUrl, 'sprite')
+        pushUrlAsset(assets, (value as any).avatarUrl, 'thumbnail')
+      }
     }
   }
   return assets
@@ -386,6 +390,10 @@ export const learningPackService = {
           ? Object.values(character.expressions) : []
         for (const value of expressions) {
           if (typeof value === 'string') pushUrlAsset(assets, value, 'sprite')
+          else if (value && typeof value === 'object') {
+            pushUrlAsset(assets, (value as any).spriteUrl, 'sprite')
+            pushUrlAsset(assets, (value as any).avatarUrl, 'thumbnail')
+          }
         }
       }
     }

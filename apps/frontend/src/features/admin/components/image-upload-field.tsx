@@ -20,6 +20,8 @@ interface ImageUploadFieldProps {
   disabled?: boolean
   className?: string
   group?: FileAssetGroup
+  /** 将上传操作覆盖在图片中央，已有图片时 hover/focus 显示 */
+  overlayUpload?: boolean
 }
 
 const sizeMap = {
@@ -41,6 +43,7 @@ export function ImageUploadField({
   disabled = false,
   className,
   group = 'library',
+  overlayUpload = false,
 }: ImageUploadFieldProps) {
   const [uploading, setUploading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState(value || '')
@@ -81,6 +84,47 @@ export function ImageUploadField({
   }
 
   const sizeClass = sizeMap[previewSize]
+
+  if (overlayUpload) {
+    return (
+      <div className={cn('inline-flex', className)}>
+        <div
+          className={cn(
+            'group relative flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed bg-muted/30',
+            sizeClass,
+            previewUrl && 'border-transparent',
+          )}
+        >
+          {previewUrl ? (
+            <img src={previewUrl} alt="预览" className="size-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+          ) : (
+            <ImageIcon className="size-6 text-muted-foreground/35" />
+          )}
+          {!disabled && (
+            <>
+              <div className="absolute inset-0 bg-black/45 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100" />
+              <Button
+                type="button"
+                variant={previewUrl ? 'secondary' : 'outline'}
+                size="sm"
+                aria-label={previewUrl ? '更换图片' : placeholder}
+                className="absolute left-1/2 top-1/2 h-8 -translate-x-1/2 -translate-y-1/2 gap-1.5 whitespace-nowrap px-2.5 text-xs opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
+                {uploading ? '上传中…' : previewUrl ? '更换' : '上传'}
+              </Button>
+              {previewUrl && (
+                <button type="button" aria-label="移除图片" onClick={clearImage} className="absolute right-1 top-1 rounded-full bg-background/90 p-1 text-muted-foreground opacity-0 shadow-sm transition-opacity hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100 group-focus-within:opacity-100"><X className="size-3" /></button>
+              )}
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={cn('space-y-2', className)}>

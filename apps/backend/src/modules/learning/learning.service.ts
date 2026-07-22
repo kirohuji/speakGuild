@@ -873,6 +873,10 @@ export class LearningService {
         : [];
       for (const expr of exps) {
         if (typeof expr === 'string') this.pushAsset(assets, expr, 'sprite');
+        else if (expr && typeof expr === 'object') {
+          this.pushAsset(assets, (expr as any).spriteUrl, 'sprite');
+          this.pushAsset(assets, (expr as any).avatarUrl, 'thumbnail');
+        }
       }
     }
 

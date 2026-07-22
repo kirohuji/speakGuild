@@ -131,7 +131,13 @@ function buildCharacterSpriteData(characters: GameCharacter[]): {
   for (const char of characters) {
     const map: CharacterSpriteMap = {}
     if (char.expressions && typeof char.expressions === 'object') {
-      Object.assign(map, char.expressions as Record<string, string>)
+      for (const [name, value] of Object.entries(char.expressions as Record<string, unknown>)) {
+        if (typeof value === 'string') map[name] = value
+        else if (value && typeof value === 'object') {
+          const spriteUrl = (value as { spriteUrl?: unknown }).spriteUrl
+          if (typeof spriteUrl === 'string' && spriteUrl) map[name] = spriteUrl
+        }
+      }
     }
     if (!map.default && char.spriteBaseUrl) map.default = char.spriteBaseUrl
     if (Object.keys(map).length > 0) {

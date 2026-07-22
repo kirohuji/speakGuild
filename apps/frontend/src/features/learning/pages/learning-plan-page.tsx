@@ -655,9 +655,10 @@ function PracticeRecordReadonlyReviewDrawer({
   const passed = score > 70
   const character = topicDetail?.scene.characters?.[0]
   const expressions = character?.expressions && typeof character.expressions === 'object'
-    ? character.expressions as Record<string, string>
+    ? character.expressions as Record<string, string | { spriteUrl?: string }>
     : {}
-  const spriteUrl = expressions.default || character?.spriteBaseUrl || undefined
+  const defaultState = expressions.default
+  const spriteUrl = (typeof defaultState === 'string' ? defaultState : defaultState?.spriteUrl) || character?.spriteBaseUrl || undefined
   const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
 
   return (
