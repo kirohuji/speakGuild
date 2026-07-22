@@ -279,27 +279,35 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => (
-            <Card key={item.id} className="transition-colors hover:bg-muted/20">
+            <Card
+              key={item.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`打开角色 ${item.displayName}`}
+              className="cursor-pointer transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:bg-muted/20 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => openEdit(item)}
+              onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openEdit(item) } }}
+            >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex min-w-0 items-center gap-3">
                     {item.avatarUrl ? (
-                      <img src={item.avatarUrl} alt={item.displayName} className="size-8 rounded-full object-cover" />
+                      <img src={item.avatarUrl} alt={item.displayName} className="size-12 shrink-0 rounded-xl object-cover" />
                     ) : (
-                      <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                      <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-lg font-bold text-primary">
                         {item.displayName.charAt(0)}
                       </div>
                     )}
-                    <div>
-                      <CardTitle className="text-base">{item.displayName}</CardTitle>
-                      <p className="text-xs text-muted-foreground font-mono">{item.name}</p>
+                    <div className="min-w-0">
+                      <CardTitle className="truncate text-base">{item.displayName}</CardTitle>
+                      <p className="truncate font-mono text-xs text-muted-foreground">{item.name}</p>
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="size-7" onClick={() => openEdit(item)}>
+                    <Button variant="ghost" size="icon" className="size-7" aria-label="编辑角色" onClick={(event) => { event.stopPropagation(); openEdit(item) }}>
                       <Edit3 className="size-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="size-7" onClick={() => remove(item)}>
+                    <Button variant="ghost" size="icon" className="size-7" aria-label="删除角色" onClick={(event) => { event.stopPropagation(); void remove(item) }}>
                       <Trash2 className="size-3.5 text-destructive" />
                     </Button>
                   </div>
@@ -314,6 +322,9 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                       {Object.keys(item.expressions as object).length} 个状态
                     </Badge>
                   )}
+                  {item.voiceBindings?.length ? (
+                    <Badge variant="outline" className="text-[10px]"><Volume2 className="mr-0.5 size-2.5" />{item.voiceBindings.length} 个音色</Badge>
+                  ) : null}
                   {item.roomNpcs?.length ? (
                     <Badge variant="outline" className="text-[10px]">
                       <MapPin className="mr-0.5 size-2.5" />
