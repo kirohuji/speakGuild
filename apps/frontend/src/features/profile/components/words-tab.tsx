@@ -597,7 +597,7 @@ export function WordsTab() {
   }, [refreshEntries])
 
   const removeWord = useCallback(async (word: string) => {
-    await learningContentRepository.deleteExpressionByTextAndSync('word', word)
+    await learningContentRepository.deleteExpressionByText('word', word)
     setEntries((current) => current.filter((entry) => entry.word !== word))
   }, [])
 

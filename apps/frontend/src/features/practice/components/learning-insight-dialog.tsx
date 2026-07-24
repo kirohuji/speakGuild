@@ -663,31 +663,7 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
   const dictEntry = dictData !== 'loading' ? dictData : null
 
   const saveWord = async () => {
-    if (!saved) {
-      setSaveDrawerOpen(true)
-      return
-    }
-    setSaving(true)
-    try {
-      if (saved) {
-        await learningContentRepository.deleteExpressionByTextAndSync('word', item.word)
-        setSaved(false)
-      } else {
-        await learningContentRepository.saveExpressionEntryAndSync({
-          kind: 'word',
-          text: item.word,
-          meaning: item.meaning,
-          sceneName: item.sceneName,
-          corrected: item.description,
-          contentSnapshot: item,
-          sourceType: 'learning-library',
-        })
-        setSaved(true)
-        toast.success(t('insight.savedToLibrary'))
-      }
-    } finally {
-      setSaving(false)
-    }
+    setSaveDrawerOpen(true)
   }
 
   const saveWordToNotebooks = async (notebookIds: string[]) => {

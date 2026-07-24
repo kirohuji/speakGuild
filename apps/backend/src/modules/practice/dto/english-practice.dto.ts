@@ -42,28 +42,6 @@ export class SubmitRetellDto {
   targetText: string;
 }
 
-/** 保存到表达库 */
-export class SaveExpressionDto {
-  @IsString()
-  type: 'chunk' | 'error_sentence' | 'upgraded' | 'scene_phrase';
-
-  @IsString()
-  @IsOptional()
-  original?: string;
-
-  @IsString()
-  @IsOptional()
-  corrected?: string;
-
-  @IsString()
-  @IsOptional()
-  chunkText?: string;
-
-  @IsString()
-  @IsOptional()
-  sceneName?: string;
-}
-
 /** 提交练习对话记录 */
 export class SubmitPracticeDialogueDto {
   @IsString()

@@ -147,12 +147,6 @@ export function LearningUnitPage() {
     setPendingSave(null)
   }, [pendingSave, t, unit?.title])
 
-  const handleRemoveExpression = useCallback(async (kind: 'word' | 'chunk' | 'pattern', text: string) => {
-    await learningContentRepository.deleteExpressionByTextAndSync(kind, text)
-    setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
-    toast.success(t('learning.removedFromLibrary'))
-  }, [t])
-
   const vocabDialogItems = useMemo<LearningInsightItem[]>(() =>
     (unit?.vocabularies ?? []).map((v) => ({
       kind: 'word' as const,
@@ -341,7 +335,6 @@ export function LearningUnitPage() {
                     onToggle={() => handleItemClick(vocab.id)}
                     onOpen={() => openDialog('vocab', collapsedSections.has('knowledge') ? unit.vocabularies.indexOf(vocab) : vocabPageItems.startIndex + index)}
                     onCollect={() => handleCollectWord(vocab)}
-                    onRemove={() => handleRemoveExpression('word', vocab.word)}
                     {...(index === 0 ? { 'data-spotlight': 'first-vocab-card' as any } : {})}
                   />
                 ))}
@@ -371,7 +364,6 @@ export function LearningUnitPage() {
                     onToggle={() => handleItemClick(chunk.id)}
                     onOpen={() => openDialog('chunk', collapsedSections.has('knowledge') ? unit.chunks.indexOf(chunk) : chunkPageItems.startIndex + index)}
                     onCollect={() => handleCollectChunk(chunk)}
-                    onRemove={() => handleRemoveExpression('chunk', chunk.text)}
                   />
                 ))}
                 {!collapsedSections.has('knowledge') && (
@@ -403,7 +395,6 @@ export function LearningUnitPage() {
                       onToggle={() => handleItemClick(key)}
                       onOpen={() => openDialog('pattern', absoluteIndex)}
                       onCollect={() => handleCollectPattern(pattern)}
-                      onRemove={() => handleRemoveExpression('pattern', pattern.pattern)}
                     />
                   )
                 })}
@@ -601,7 +592,6 @@ function VocabPrepCard({
   onToggle,
   onOpen,
   onCollect,
-  onRemove,
   ...rest
 }: {
   vocab: VocabItem
@@ -610,13 +600,12 @@ function VocabPrepCard({
   onToggle: () => void
   onOpen: () => void
   onCollect: () => void
-  onRemove: () => void
 } & Record<string, any>) {
   const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const handleClick = () => {
     setSaving(true)
-    const action = collected ? onRemove() : onCollect()
+    const action = onCollect()
     Promise.resolve(action).finally(() => setSaving(false))
   }
 
@@ -666,7 +655,6 @@ function ChunkPrepCard({
   onToggle,
   onOpen,
   onCollect,
-  onRemove,
 }: {
   chunk: ChunkItem
   collected: boolean
@@ -674,13 +662,12 @@ function ChunkPrepCard({
   onToggle: () => void
   onOpen: () => void
   onCollect: () => void
-  onRemove: () => void
 }) {
   const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const handleClick = () => {
     setSaving(true)
-    const action = collected ? onRemove() : onCollect()
+    const action = onCollect()
     Promise.resolve(action).finally(() => setSaving(false))
   }
 
@@ -743,7 +730,6 @@ function PatternPrepCard({
   onToggle,
   onOpen,
   onCollect,
-  onRemove,
 }: {
   pattern: SentencePattern
   collected: boolean
@@ -751,13 +737,12 @@ function PatternPrepCard({
   onToggle: () => void
   onOpen: () => void
   onCollect: () => void
-  onRemove: () => void
 }) {
   const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const handleClick = () => {
     setSaving(true)
-    const action = collected ? onRemove() : onCollect()
+    const action = onCollect()
     Promise.resolve(action).finally(() => setSaving(false))
   }
 

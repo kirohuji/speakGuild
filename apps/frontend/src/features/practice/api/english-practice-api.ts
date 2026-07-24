@@ -306,13 +306,6 @@ export const practiceApi = {
       grammarIssues?: any
     }>>(`/practice/topics/${topicId}/dialogues`),
 
-  saveExpression: (data: {
-    type: string
-    original?: string
-    corrected?: string
-    chunkText?: string
-    sceneName?: string
-  }) => post('/practice/topics/any/save', data),
 }
 
 // ---- AI  ----
@@ -445,11 +438,6 @@ export const expressionApi = {
   }) => get('/expressions', params),
 
   create: (data: any) => post('/expressions', data),
-
-  remove: (id: string) => del(`/expressions/${id}`),
-
-  updateStatus: (id: string, status: MasteryStatus) =>
-    patch(`/expressions/${id}/status`, { status }),
 
   updateNotebookItemStatus: (notebookItemId: string, status: MasteryStatus) =>
     patch(`/expressions/notebook-items/${notebookItemId}/status`, { status }),

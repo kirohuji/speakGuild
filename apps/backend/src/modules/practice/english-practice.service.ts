@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { SaveExpressionDto, SubmitPracticeTurnDto, SubmitRecordingDto } from './dto/english-practice.dto';
+import { SubmitPracticeTurnDto, SubmitRecordingDto } from './dto/english-practice.dto';
 
 @Injectable()
 export class EnglishPracticeService {
@@ -479,20 +479,6 @@ export class EnglishPracticeService {
       },
       update: {
         count: { increment: 1 },
-      },
-    });
-  }
-
-  /** 保存表达 */
-  async saveExpression(userId: string, dto: SaveExpressionDto) {
-    return this.prisma.expressionItem.create({
-      data: {
-        userId,
-        type: dto.type,
-        original: dto.original,
-        corrected: dto.corrected,
-        chunkText: dto.chunkText,
-        sceneName: dto.sceneName,
       },
     });
   }

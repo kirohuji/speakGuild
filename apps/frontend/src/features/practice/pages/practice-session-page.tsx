@@ -16,7 +16,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
-import { practiceApi, practiceAiApi, chunkApi, type TopicDetail } from '../api/english-practice-api'
+import { practiceApi, practiceAiApi, chunkApi, expressionApi, type TopicDetail } from '../api/english-practice-api'
 import { learningContentRepository, practiceRepository } from '@/lib/offline'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { GuidedWarmupPhase } from '../components/guided-warmup-phase'
@@ -90,6 +90,7 @@ export function PracticeSessionPage() {
     | { kind: 'word'; word: string; meaning: string }
     | { kind: 'chunk'; item: TopicDetail['activeChunks'][number] }
     | { kind: 'pattern'; item: { pattern: string; meaning?: string; example?: string; sceneName?: string } }
+    | { kind: 'raw'; item: { type: string; original?: string; corrected?: string; chunkText?: string; sceneName?: string } }
     | null
   >(null)
   const [confirmAbandonOpen, setConfirmAbandonOpen] = useState(false)
@@ -505,7 +506,9 @@ export function PracticeSessionPage() {
       ? pendingSave.word
       : pendingSave.kind === 'chunk'
         ? pendingSave.item.text
-        : pendingSave.item.pattern
+        : pendingSave.kind === 'pattern'
+          ? pendingSave.item.pattern
+          : pendingSave.item.chunkText ?? pendingSave.item.original ?? pendingSave.item.corrected ?? ''
     setSavingTexts((prev) => new Set([...prev, text]))
     try {
       if (pendingSave.kind === 'word') {
@@ -529,7 +532,7 @@ export function PracticeSessionPage() {
         sourceType: 'learning-library',
           notebookIds,
       })
-      } else {
+      } else if (pendingSave.kind === 'chunk') {
       await learningContentRepository.saveExpressionEntryAndSync({
         kind: 'chunk',
           text: pendingSave.item.text,
@@ -539,6 +542,8 @@ export function PracticeSessionPage() {
         sourceType: 'learning-library',
           notebookIds,
       })
+      } else {
+        await expressionApi.create({ ...pendingSave.item, notebookIds })
       }
       setCollectedTexts((prev) => new Set([...prev, text]))
       toast.success(t('learning.addedToLibrary'))
@@ -546,16 +551,6 @@ export function PracticeSessionPage() {
     setSavingTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
     setPendingSave(null)
   }, [detail, pendingSave, t])
-
-  const handleRemoveExpression = useCallback(async (kind: 'word' | 'chunk' | 'pattern', text: string) => {
-    setSavingTexts((prev) => new Set([...prev, text]))
-    try {
-      await learningContentRepository.deleteExpressionByTextAndSync(kind, text)
-      setCollectedTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
-      toast.success(t('learning.removedFromLibrary'))
-    } catch { toast.error(t('learning.removeFailed')) }
-    setSavingTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
-  }, [])
 
   const vocabPageItems = useMemo(
     () => paginateItems(detail?.vocabularies ?? [], prepPage.vocab, PREP_PAGE_SIZE),
@@ -836,10 +831,14 @@ export function PracticeSessionPage() {
     chunkText?: string
     sceneName?: string
   }) => {
-    await practiceApi.saveExpression({
-      ...data,
-      sceneName: data.sceneName || detail?.scene.title,
+    setPendingSave({
+      kind: 'raw',
+      item: {
+        ...data,
+        sceneName: data.sceneName || detail?.scene.title,
+      },
     })
+    setSaveDrawerOpen(true)
   }, [detail?.scene.title])
 
   const resetPractice = () => {
@@ -1041,7 +1040,7 @@ export function PracticeSessionPage() {
                                   <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`word:${v.id}`)}>
                                     <Search className="size-3.5" /> {t('learning.view')}
                                   </Button>
-                                  <Button size="sm" variant={collectedTexts.has(v.word) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(v.word)} onClick={collectedTexts.has(v.word) ? () => handleRemoveExpression('word', v.word) : () => handleCollectWord(v.word, v.meaning)}>
+                                  <Button size="sm" variant={collectedTexts.has(v.word) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(v.word)} onClick={() => handleCollectWord(v.word, v.meaning)}>
                                     <BookmarkPlus className="size-3.5" /> {savingTexts.has(v.word) ? t('learning.processing') : collectedTexts.has(v.word) ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
                                   </Button>
                                 </div>
@@ -1078,7 +1077,7 @@ export function PracticeSessionPage() {
                   onExpand={setExpandedChunkId}
                   onInspect={(chunkId) => openInsight(`chunk:${chunkId}`)}
                   onCollect={handleCollectChunk}
-                  onRemove={(chunk) => handleRemoveExpression('chunk', chunk.text)}
+                  onRemove={(chunk) => handleCollectChunk(chunk)}
                 />
                 {!prepCollapsed && (
                 <div className="mt-2">
@@ -1126,7 +1125,7 @@ export function PracticeSessionPage() {
                                   <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`pattern:${absoluteIndex}`)}>
                                     <Search className="size-3.5" /> {t('learning.view')}
                                   </Button>
-                                  <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(p.pattern)} onClick={collectedTexts.has(p.pattern) ? () => handleRemoveExpression('pattern', p.pattern) : () => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })} data-spotlight="bookmark-btn">
+                                  <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(p.pattern)} onClick={() => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })} data-spotlight="bookmark-btn">
                                     <BookmarkPlus className="size-3.5" /> {savingTexts.has(p.pattern) ? t('learning.processing') : collectedTexts.has(p.pattern) ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
                                   </Button>
                                 </div>

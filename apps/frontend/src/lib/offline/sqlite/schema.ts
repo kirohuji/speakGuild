@@ -20,7 +20,7 @@
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 11
+export const DB_VERSION = 12
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -113,7 +113,6 @@ export const DDL: Record<TableName, string> = {
       remote_id TEXT,
       kind TEXT,
       expression_type TEXT,
-      mastery_status TEXT,
       sync_status TEXT,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -353,7 +352,6 @@ export const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_expression_kind ON expression_entries (kind)`,
   `CREATE INDEX IF NOT EXISTS idx_expression_remote_id ON expression_entries (remote_id)`,
   `CREATE INDEX IF NOT EXISTS idx_expression_type ON expression_entries (expression_type)`,
-  `CREATE INDEX IF NOT EXISTS idx_expression_mastery_status ON expression_entries (mastery_status)`,
   `CREATE INDEX IF NOT EXISTS idx_learning_notebooks_remote_id ON learning_notebooks (remote_id)`,
   `CREATE INDEX IF NOT EXISTS idx_learning_notebooks_kind ON learning_notebooks (notebook_kind)`,
   `CREATE INDEX IF NOT EXISTS idx_learning_notebooks_sort ON learning_notebooks (sort_order)`,

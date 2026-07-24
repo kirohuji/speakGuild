@@ -3,7 +3,6 @@ import type { Request } from 'express';
 import { EnglishPracticeService } from './english-practice.service';
 import {
   CreatePracticeSessionDto,
-  SaveExpressionDto,
   SubmitPracticeDialogueDto,
   SubmitPracticeTurnDto,
   SubmitRecordingDto,
@@ -101,16 +100,6 @@ export class EnglishPracticeController {
   async getTopicDialogues(@Req() req: Request, @Param('id') id: string) {
     const session = await requireAuthSession(req);
     return this.practiceService.getTopicDialogues(id, session.user.id);
-  }
-
-  /** 保存表达到表达库 */
-  @Post('topics/:id/save')
-  async saveExpression(
-    @Req() req: Request,
-    @Body() dto: SaveExpressionDto,
-  ) {
-    const session = await requireAuthSession(req);
-    return this.practiceService.saveExpression(session.user.id, dto);
   }
 
   // ── Warmup Records ──

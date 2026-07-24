@@ -1103,7 +1103,6 @@ ${dialogueText}
           original: issue.original, corrected: issue.correction,
           sourceType: 'PracticeSession', sourceId: sessionId,
           sourceSnapshot: { round: issue.round },
-          masteryStatus: 'learning', nextReviewAt: this.nextDay(),
         })
       }
     }
@@ -1114,7 +1113,6 @@ ${dialogueText}
         await this.createIfNotExist({
           userId, type: 'chunk', chunkText: chunk.chunk, original: chunk.chunk,
           sourceType: 'PracticeSession', sourceId: sessionId,
-          masteryStatus: 'learning', nextReviewAt: this.nextDay(),
         })
       }
     }
@@ -1126,7 +1124,6 @@ ${dialogueText}
         original: analysis.upgradedAnswer.original ?? '',
         corrected: analysis.upgradedAnswer.natural,
         sourceType: 'PracticeSession', sourceId: sessionId,
-        masteryStatus: 'learning', nextReviewAt: this.nextDay(),
       })
     }
 
@@ -1144,8 +1141,6 @@ ${dialogueText}
     sourceType?: string;
     sourceId?: string;
     sourceSnapshot?: any;
-    masteryStatus?: string;
-    nextReviewAt?: Date;
   }) {
     const where: any = {
       userId: data.userId,
@@ -1163,9 +1158,21 @@ ${dialogueText}
     }
 
     const existing = await this.prisma.expressionItem.findFirst({ where, select: { id: true } });
-    if (!existing) {
-      await (this.prisma as any).expressionItem.create({ data });
-    }
+    const expression = existing ?? await (this.prisma as any).expressionItem.create({ data });
+    const notebook = await this.ensureUncategorizedNotebook(data.userId);
+    await this.prisma.learningNotebookItem.upsert({
+      where: {
+        notebookId_expressionItemId: {
+          notebookId: notebook.id,
+          expressionItemId: expression.id,
+        },
+      },
+      create: {
+        notebookId: notebook.id,
+        expressionItemId: expression.id,
+      },
+      update: { deletedAt: null },
+    });
   }
 
   /** 高优先级词汇未使用 → 生成词汇复练卡 */
@@ -1196,8 +1203,6 @@ ${dialogueText}
             original: tv.vocab.word,
             sourceType: 'PracticeSession',
             sourceId: sessionId,
-            masteryStatus: 'learning',
-            nextReviewAt: this.nextDay(),
           });
         }
       }
@@ -1206,11 +1211,20 @@ ${dialogueText}
     }
   }
 
-  private nextDay(): Date {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    d.setHours(10, 0, 0, 0);
-    return d;
+  private async ensureUncategorizedNotebook(userId: string) {
+    const existing = await this.prisma.learningNotebook.findFirst({
+      where: { userId, kind: 'uncategorized', deletedAt: null },
+    });
+    if (existing) return existing;
+    return this.prisma.learningNotebook.create({
+      data: {
+        userId,
+        name: '未分类',
+        kind: 'uncategorized',
+        color: 'slate',
+        sortOrder: -1,
+      },
+    });
   }
 
   /** 批量翻译：单词 + 例句列表 → { wordZh, examplesZh[] } */

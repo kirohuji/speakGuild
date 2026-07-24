@@ -15,5 +15,5 @@ export type {
   LearningPackManifest,
   InstalledLearningPack,
 } from './learning-pack.service'
-export type { ExpressionEntry, ExpressionEntryKind, ExpressionEntryStatus, WordEntry, ChunkEntry, PatternEntry } from './learning-content.repository'
+export type { ExpressionEntry, ExpressionEntryKind, WordEntry, ChunkEntry, PatternEntry } from './learning-content.repository'
 export type { OfflineCacheCategory, OfflineStorageDetails, OfflineStorageStats } from './offline-storage.service'

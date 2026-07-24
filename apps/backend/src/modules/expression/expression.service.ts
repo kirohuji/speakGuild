@@ -166,7 +166,7 @@ export class ExpressionService {
             deletedAt: null,
           },
         });
-        await this.notebooks.setExpressionNotebooks(userId, item.id, notebookIds);
+        await this.notebooks.addExpressionToNotebooks(userId, item.id, notebookIds);
         return item;
       }
     }
@@ -174,7 +174,7 @@ export class ExpressionService {
     const item = await this.prisma.expressionItem.create({
       data: { userId, ...expressionData },
     });
-    await this.notebooks.setExpressionNotebooks(userId, item.id, notebookIds);
+    await this.notebooks.addExpressionToNotebooks(userId, item.id, notebookIds);
     return item;
   }
 

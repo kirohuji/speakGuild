@@ -19,11 +19,6 @@ import { ImmersivePlayerDialog, mapInsightItemsToImmersiveItems, type ImmersiveP
 import { cn } from '@/lib/cn'
 import { extractCoreUsage } from '@/lib/markdown-utils'
 import { isNative } from '@/lib/native'
-import {
-  learningContentRepository,
-  type ExpressionEntry,
-  type ExpressionEntryKind,
-} from '@/lib/offline'
 
 type LibraryTab = 'words' | 'chunk' | 'pattern'
 const LIBRARY_TABS: LibraryTab[] = ['words', 'chunk', 'pattern']
@@ -36,8 +31,6 @@ interface Expression {
   chunkText: string | null; sceneName: string | null; masteryStatus: string
   reviewCount: number; nextReviewAt?: string | null; lastReviewedAt?: string | null
   createdAt: string
-  localKind?: ExpressionEntryKind
-  localEntry?: ExpressionEntry
   vocabulary?: {
     id: string; word: string; meaning: string; partOfSpeech?: string | null;
     phoneticUs?: string | null; phoneticUk?: string | null;
@@ -58,16 +51,6 @@ interface PageResult {
 
 const PAGE_SIZE = 30
 
-function createLocalResult(items: Expression[]): PageResult {
-  return {
-    items,
-    total: items.length,
-    page: 1,
-    pageSize: PAGE_SIZE,
-    totalPages: items.length > 0 ? 1 : 0,
-  }
-}
-
 function normalizePageResult(raw: any): PageResult {
   if (raw && Array.isArray(raw.items)) {
     return raw as PageResult
@@ -79,85 +62,6 @@ function normalizePageResult(raw: any): PageResult {
     return raw.data as PageResult
   }
   return { items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 }
-}
-
-function expressionEntryToExpression(entry: ExpressionEntry): Expression {
-  const snapshot = entry.contentSnapshot ?? {}
-  if (entry.kind === 'word') {
-    const word = snapshot.word ?? entry.original ?? ''
-    console.log(
-      '[expressionEntryToExpression]',
-      `word=${word}`,
-      `hasSnapshot=${!!entry.contentSnapshot}`,
-      `snapDesc=${!!snapshot.description}`,
-      `snapExamples=${Array.isArray(snapshot.examples) ? snapshot.examples.length : 0}`,
-      `snapMeaning=${!!snapshot.meaning}`,
-    )
-    return {
-      id: entry.id,
-      type: 'word',
-      original: word,
-      corrected: snapshot.description ?? entry.corrected ?? null,
-      chunkText: snapshot.meaning ?? entry.chunkText ?? null,
-      sceneName: snapshot.sceneName ?? entry.sceneName ?? null,
-      masteryStatus: entry.masteryStatus,
-      reviewCount: entry.reviewCount ?? 0,
-      lastReviewedAt: entry.lastReviewedAt,
-      nextReviewAt: entry.nextReviewAt,
-      createdAt: entry.createdAt,
-      localKind: entry.kind,
-      localEntry: entry,
-      vocabulary: {
-        id: snapshot.id ?? entry.id,
-        word,
-        meaning: snapshot.meaning ?? entry.chunkText ?? '',
-        partOfSpeech: snapshot.partOfSpeech,
-        phoneticUs: snapshot.phoneticUs,
-        phoneticUk: snapshot.phoneticUk,
-        audioUsUrl: snapshot.audioUsUrl,
-        audioUkUrl: snapshot.audioUkUrl,
-        definitionEn: snapshot.definitionEn,
-        synonyms: snapshot.synonyms,
-        examples: snapshot.examples,
-        description: snapshot.description ?? entry.corrected,
-        difficulty: snapshot.difficulty,
-      },
-    }
-  }
-
-  if (entry.kind === 'pattern') {
-    return {
-      id: entry.id,
-      type: 'scene_phrase',
-      original: snapshot.meaning ?? entry.original ?? null,
-      corrected: snapshot.example ?? entry.corrected ?? entry.chunkText ?? null,
-      chunkText: snapshot.pattern ?? entry.chunkText ?? null,
-      sceneName: snapshot.sceneName ?? entry.sceneName ?? null,
-      masteryStatus: entry.masteryStatus,
-      reviewCount: entry.reviewCount ?? 0,
-      lastReviewedAt: entry.lastReviewedAt,
-      nextReviewAt: entry.nextReviewAt,
-      createdAt: entry.createdAt,
-      localKind: entry.kind,
-      localEntry: entry,
-    }
-  }
-
-  return {
-    id: entry.id,
-    type: 'chunk',
-    original: snapshot.meaning ?? entry.original ?? null,
-    corrected: snapshot.text ?? entry.corrected ?? entry.chunkText ?? null,
-    chunkText: snapshot.text ?? entry.chunkText ?? null,
-    sceneName: snapshot.sceneName ?? entry.sceneName ?? null,
-    masteryStatus: entry.masteryStatus,
-    reviewCount: entry.reviewCount ?? 0,
-    lastReviewedAt: entry.lastReviewedAt,
-    nextReviewAt: entry.nextReviewAt,
-    createdAt: entry.createdAt,
-    localKind: entry.kind,
-    localEntry: entry,
-  }
 }
 
 export function ExpressionLibraryPage() {
@@ -191,45 +95,15 @@ export function ExpressionLibraryPage() {
     setLoading(true)
     try {
       const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
-      const localKind: ExpressionEntryKind = libraryTab === 'words' ? 'word' : libraryTab
-      if (notebookId) {
-        const raw: any = await expressionApi.list({
-          type: apiType,
-          reviewState,
-          notebookId,
-          page: 1,
-          pageSize: PAGE_SIZE,
-        })
-        setResult(normalizePageResult(raw))
-        return
-      }
-      const localItems = (await learningContentRepository.listExpressionEntries(localKind)).map(expressionEntryToExpression)
-      const filteredLocalItems = localItems.filter((item) => item.masteryStatus === reviewState)
-      const cacheLoaded = await learningContentRepository.isExpressionCacheLoaded(localKind, reviewState)
-
-      if (filteredLocalItems.length > 0 || cacheLoaded) {
-        setResult(createLocalResult(filteredLocalItems))
-        return
-      }
-
+      if (!notebookId) throw new Error('Missing notebookId')
       const raw: any = await expressionApi.list({
         type: apiType,
         reviewState,
+        notebookId,
         page: 1,
         pageSize: PAGE_SIZE,
       })
-      const remoteResult = normalizePageResult(raw)
-      const cachedItems = (await Promise.all(
-        remoteResult.items.map((item) => learningContentRepository.saveRemoteExpressionEntry(item)),
-      ))
-        .filter((entry): entry is ExpressionEntry => Boolean(entry))
-        .map(expressionEntryToExpression)
-      await learningContentRepository.markExpressionCacheLoaded(localKind, reviewState)
-
-      setResult({
-        ...remoteResult,
-        items: cachedItems.length > 0 ? cachedItems : remoteResult.items,
-      })
+      setResult(normalizePageResult(raw))
     } catch {
       setResult({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
     } finally {
@@ -350,30 +224,28 @@ export function ExpressionLibraryPage() {
       }
     }
     if (apiType === 'scene_phrase') {
-      const cacheEntry = expr.localEntry?.contentSnapshot
       const remoteData = (expr as any).contentData
       return {
         kind: 'pattern' as const,
         id: expr.id,
         pattern: expr.chunkText ?? expr.corrected ?? '',
         meaning: expr.original ?? '',
-        slots: cacheEntry?.slots ?? remoteData?.slots,
-        example: cacheEntry?.example ?? remoteData?.example,
-        description: cacheEntry?.description ?? remoteData?.description,
-        examples: cacheEntry?.examples ?? remoteData?.examples,
-        difficulty: cacheEntry?.difficulty ?? remoteData?.difficulty,
+        slots: remoteData?.slots,
+        example: remoteData?.example,
+        description: remoteData?.description,
+        examples: remoteData?.examples,
+        difficulty: remoteData?.difficulty,
         sceneName: expr.sceneName ?? undefined,
       }
     }
-    const cacheEntry = expr.localEntry?.contentSnapshot
     const remoteData = (expr as any).contentData
     return {
       kind: 'chunk' as const,
       id: expr.id,
       text: expr.chunkText ?? expr.corrected ?? '',
       meaning: expr.original ?? '',
-      description: cacheEntry?.description ?? remoteData?.description,
-      examples: cacheEntry?.examples ?? remoteData?.examples as any,
+      description: remoteData?.description,
+      examples: remoteData?.examples as any,
       sceneName: expr.sceneName ?? undefined,
       saved: true, // 已在学习库中
     }
@@ -423,27 +295,9 @@ export function ExpressionLibraryPage() {
   // ---- 状态变更 ----
   const handleUpdateStatus = useCallback(async (id: string, status: MasteryStatus) => {
     const target = result.items.find((item) => item.id === id)
-    if (target?.notebookItemId) {
-      try {
-        await expressionApi.updateNotebookItemStatus(target.notebookItemId, status)
-        toast.success(status === 'learning' ? t('expressionLib.movedToLearning') : status === 'reviewing' ? t('expressionLib.movedToReview') : t('expressionLib.movedToMastered'))
-        fetchData()
-      } catch {
-        toast.error(t('expressionLib.operationFailed'))
-      }
-      return
-    }
-    if (target?.localKind) {
-      const text = target.localKind === 'word'
-        ? target.original ?? id
-        : target.chunkText ?? target.corrected ?? id
-      await learningContentRepository.updateExpressionStatusAndSync(target.localKind, text, status)
-      toast.success(status === 'learning' ? t('expressionLib.movedToLearning') : status === 'reviewing' ? t('expressionLib.movedToReview') : t('expressionLib.movedToMastered'))
-      fetchData()
-      return
-    }
+    if (!target?.notebookItemId) return
     try {
-      await expressionApi.updateStatus(id, status)
+      await expressionApi.updateNotebookItemStatus(target.notebookItemId, status)
       toast.success(status === 'learning' ? t('expressionLib.movedToLearning') : status === 'reviewing' ? t('expressionLib.movedToReview') : t('expressionLib.movedToMastered'))
       fetchData()
     } catch {
@@ -455,36 +309,18 @@ export function ExpressionLibraryPage() {
   const handleRemove = useCallback(async (id: string) => {
     const target = result.items.find((item) => item.id === id)
     try {
-      if (target?.notebookItemId) {
-        await expressionApi.removeNotebookItem(target.notebookItemId)
-        setResult((current) => {
-          const nextItems = current.items.filter((item) => item.id !== id)
-          return { ...current, items: nextItems, total: Math.max(0, current.total - 1) }
-        })
-        toast.success(t('expressionLib.removed'))
-        return
-      }
-      if (target?.localKind) {
-        const text = target.localKind === 'word'
-          ? target.original ?? id
-          : target.chunkText ?? target.corrected ?? id
-
-        await learningContentRepository.deleteExpressionByTextAndSync(target.localKind, text)
-        setResult((current) => {
-          const nextItems = current.items.filter((item) => item.id !== id)
-          return createLocalResult(nextItems)
-        })
-        toast.success(t('expressionLib.removed'))
-        return
-      }
-
-      await expressionApi.remove(id)
+      if (!target?.notebookItemId) return
+      await expressionApi.removeNotebookItem(target.notebookItemId)
+      setResult((current) => ({
+        ...current,
+        items: current.items.filter((item) => item.id !== id),
+        total: Math.max(0, current.total - 1),
+      }))
       toast.success(t('expressionLib.removed'))
-      fetchData()
     } catch {
       toast.error(t('expressionLib.removeFailed'))
     }
-  }, [fetchData, result.items, t])
+  }, [result.items, t])
 
   // ---- 二级状态过滤 ----
   const filterPills = [

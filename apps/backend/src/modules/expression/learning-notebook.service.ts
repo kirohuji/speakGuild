@@ -95,6 +95,19 @@ export class LearningNotebookService {
   }
 
   async setExpressionNotebooks(userId: string, expressionItemId: string, notebookIds: string[]) {
+    return this.writeExpressionNotebooks(userId, expressionItemId, notebookIds, true);
+  }
+
+  async addExpressionToNotebooks(userId: string, expressionItemId: string, notebookIds: string[]) {
+    return this.writeExpressionNotebooks(userId, expressionItemId, notebookIds, false);
+  }
+
+  private async writeExpressionNotebooks(
+    userId: string,
+    expressionItemId: string,
+    notebookIds: string[],
+    replace: boolean,
+  ) {
     const expression = await this.prisma.expressionItem.findFirst({
       where: { id: expressionItemId, userId, deletedAt: null },
       select: { id: true },
@@ -116,15 +129,15 @@ export class LearningNotebookService {
     const existingByNotebook = new Map(existing.map((item) => [item.notebookId, item]));
 
     await this.prisma.$transaction([
-      this.prisma.learningNotebookItem.updateMany({
-        where: {
-          expressionItemId,
-          notebook: { userId },
-          notebookId: { notIn: targetIds },
-          deletedAt: null,
-        },
-        data: { deletedAt: new Date() },
-      }),
+      ...(replace ? [this.prisma.learningNotebookItem.updateMany({
+          where: {
+            expressionItemId,
+            notebook: { userId },
+            notebookId: { notIn: targetIds },
+            deletedAt: null,
+          },
+          data: { deletedAt: new Date() },
+        })] : []),
       ...targetIds.map((notebookId) => {
         const previous = existingByNotebook.get(notebookId);
         if (!previous) {

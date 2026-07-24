@@ -337,33 +337,13 @@ async function replayItem(
     const word = payload.word ?? item.entityId
 
     if (item.operation === 'create') {
-      const created = await expressionApi.create({ type: 'word', original: word, chunkText: '' })
+      const created = await expressionApi.create({
+        type: 'word',
+        original: word,
+        chunkText: '',
+        notebookIds: payload.notebookIds,
+      })
       await cacheExpressionItem(expressionCache, created)
-      return true
-    }
-
-    if (item.operation === 'delete') {
-      const items = expressionCache?.items ?? []
-      const match = items.find(
-        (expr: any) => (expr.type === 'word' || !expr.type) && expr.original === word,
-      )
-      if (match?.id) {
-        await expressionApi.remove(match.id)
-        return true
-      }
-      // 服务端没有这条记录，视为已删除
-      return true
-    }
-
-    if (item.operation === 'update') {
-      const items = expressionCache?.items ?? []
-      const match = items.find(
-        (expr: any) => (expr.type === 'word' || !expr.type) && expr.original === word,
-      )
-      if (match?.id && payload.masteryStatus) {
-        const updated = await expressionApi.updateStatus(match.id, payload.masteryStatus)
-        await cacheExpressionItem(expressionCache, updated)
-      }
       return true
     }
   }
@@ -379,32 +359,9 @@ async function replayItem(
         chunkText: text,
         original: payload.original ?? '',
         sceneName: payload.sceneName,
+        notebookIds: payload.notebookIds,
       })
       await cacheExpressionItem(expressionCache, created)
-      return true
-    }
-
-    if (item.operation === 'delete') {
-      const items = expressionCache?.items ?? []
-      const match = items.find(
-        (expr: any) => expr.type === 'chunk' && (expr.chunkText === text || expr.original === text),
-      )
-      if (match?.id) {
-        await expressionApi.remove(match.id)
-        return true
-      }
-      return true
-    }
-
-    if (item.operation === 'update') {
-      const items = expressionCache?.items ?? []
-      const match = items.find(
-        (expr: any) => expr.type === 'chunk' && (expr.chunkText === text || expr.original === text),
-      )
-      if (match?.id && payload.masteryStatus) {
-        const updated = await expressionApi.updateStatus(match.id, payload.masteryStatus)
-        await cacheExpressionItem(expressionCache, updated)
-      }
       return true
     }
   }
@@ -421,32 +378,9 @@ async function replayItem(
         corrected: payload.example ?? pattern,
         original: payload.meaning ?? '',
         sceneName: payload.sceneName,
+        notebookIds: payload.notebookIds,
       })
       await cacheExpressionItem(expressionCache, created)
-      return true
-    }
-
-    if (item.operation === 'delete') {
-      const items = expressionCache?.items ?? []
-      const match = items.find(
-        (expr: any) => expr.type === 'scene_phrase' && expr.chunkText === pattern,
-      )
-      if (match?.id) {
-        await expressionApi.remove(match.id)
-        return true
-      }
-      return true
-    }
-
-    if (item.operation === 'update') {
-      const items = expressionCache?.items ?? []
-      const match = items.find(
-        (expr: any) => expr.type === 'scene_phrase' && expr.chunkText === pattern,
-      )
-      if (match?.id && payload.masteryStatus) {
-        const updated = await expressionApi.updateStatus(match.id, payload.masteryStatus)
-        await cacheExpressionItem(expressionCache, updated)
-      }
       return true
     }
   }

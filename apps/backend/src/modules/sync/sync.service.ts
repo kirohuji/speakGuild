@@ -106,38 +106,10 @@ export class SyncService {
           : await this.prisma.expressionItem.create({
               data: { userId, type: 'word', original: word, chunkText: '' },
             });
+        await this.setExpressionNotebooks(userId, created.id, payload?.notebookIds);
         return { handled: true, remoteId: created.id, remoteItem: created };
       }
-      if (operation === 'delete') {
-        const match = await this.prisma.expressionItem.findFirst({
-          where: { userId, original: word, type: 'word' },
-          select: { id: true },
-        });
-        if (match) {
-          await this.prisma.expressionItem.update({
-            where: { id: match.id },
-            data: { deletedAt: new Date() },
-          });
-        }
-        return { handled: true };
-      }
-      if (operation === 'update') {
-        const updated = await this.prisma.expressionItem.findFirst({
-          where: { userId, original: word, type: 'word' },
-          select: { id: true },
-        });
-        if (!updated) return { handled: true };
-        const remoteItem = await this.prisma.expressionItem.update({
-          where: { id: updated.id },
-          data: {
-            masteryStatus: payload?.masteryStatus,
-            reviewCount: payload?.reviewCount,
-            lastReviewedAt: payload?.lastReviewedAt ? new Date(payload.lastReviewedAt) : undefined,
-            nextReviewAt: payload?.nextReviewAt ? new Date(payload.nextReviewAt) : undefined,
-          },
-        });
-        return { handled: true, remoteId: remoteItem.id, remoteItem };
-      }
+      throw new Error(`Unsupported word_entry operation: ${operation}`);
     }
 
     // ---- 句块 ----
@@ -167,38 +139,10 @@ export class SyncService {
                 sceneName: payload?.sceneName,
               },
             });
+        await this.setExpressionNotebooks(userId, created.id, payload?.notebookIds);
         return { handled: true, remoteId: created.id, remoteItem: created };
       }
-      if (operation === 'delete') {
-        const match = await this.prisma.expressionItem.findFirst({
-          where: { userId, chunkText: text, type: 'chunk' },
-          select: { id: true },
-        });
-        if (match) {
-          await this.prisma.expressionItem.update({
-            where: { id: match.id },
-            data: { deletedAt: new Date() },
-          });
-        }
-        return { handled: true };
-      }
-      if (operation === 'update') {
-        const updated = await this.prisma.expressionItem.findFirst({
-          where: { userId, chunkText: text, type: 'chunk' },
-          select: { id: true },
-        });
-        if (!updated) return { handled: true };
-        const remoteItem = await this.prisma.expressionItem.update({
-          where: { id: updated.id },
-          data: {
-            masteryStatus: payload?.masteryStatus,
-            reviewCount: payload?.reviewCount,
-            lastReviewedAt: payload?.lastReviewedAt ? new Date(payload.lastReviewedAt) : undefined,
-            nextReviewAt: payload?.nextReviewAt ? new Date(payload.nextReviewAt) : undefined,
-          },
-        });
-        return { handled: true, remoteId: remoteItem.id, remoteItem };
-      }
+      throw new Error(`Unsupported chunk_entry operation: ${operation}`);
     }
 
     // ---- 句型 ----
@@ -230,38 +174,10 @@ export class SyncService {
                 sceneName: payload?.sceneName,
               },
             });
+        await this.setExpressionNotebooks(userId, created.id, payload?.notebookIds);
         return { handled: true, remoteId: created.id, remoteItem: created };
       }
-      if (operation === 'delete') {
-        const match = await this.prisma.expressionItem.findFirst({
-          where: { userId, chunkText: pattern, type: 'scene_phrase' },
-          select: { id: true },
-        });
-        if (match) {
-          await this.prisma.expressionItem.update({
-            where: { id: match.id },
-            data: { deletedAt: new Date() },
-          });
-        }
-        return { handled: true };
-      }
-      if (operation === 'update') {
-        const updated = await this.prisma.expressionItem.findFirst({
-          where: { userId, chunkText: pattern, type: 'scene_phrase' },
-          select: { id: true },
-        });
-        if (!updated) return { handled: true };
-        const remoteItem = await this.prisma.expressionItem.update({
-          where: { id: updated.id },
-          data: {
-            masteryStatus: payload?.masteryStatus,
-            reviewCount: payload?.reviewCount,
-            lastReviewedAt: payload?.lastReviewedAt ? new Date(payload.lastReviewedAt) : undefined,
-            nextReviewAt: payload?.nextReviewAt ? new Date(payload.nextReviewAt) : undefined,
-          },
-        });
-        return { handled: true, remoteId: remoteItem.id, remoteItem };
-      }
+      throw new Error(`Unsupported pattern_entry operation: ${operation}`);
     }
 
     // ---- 练习会话 ----
@@ -399,6 +315,43 @@ export class SyncService {
 
     // recording 暂不处理（走客户端单个上传 API）
     return { handled: false };
+  }
+
+  private async setExpressionNotebooks(
+    userId: string,
+    expressionItemId: string,
+    requestedNotebookIds: unknown,
+  ) {
+    if (!Array.isArray(requestedNotebookIds)) {
+      throw new Error('notebookIds is required for expression sync');
+    }
+    let notebookIds = [...new Set(requestedNotebookIds.map(String))];
+    if (notebookIds.length === 0) {
+      let uncategorized = await this.prisma.learningNotebook.findFirst({
+        where: { userId, kind: 'uncategorized', deletedAt: null },
+      });
+      if (!uncategorized) {
+        uncategorized = await this.prisma.learningNotebook.create({
+          data: {
+            userId,
+            name: '未分类',
+            kind: 'uncategorized',
+            color: 'slate',
+            sortOrder: -1,
+          },
+        });
+      }
+      notebookIds = [uncategorized.id];
+    }
+    const owned = await this.prisma.learningNotebook.count({
+      where: { id: { in: notebookIds }, userId, deletedAt: null },
+    });
+    if (owned !== notebookIds.length) throw new Error('Invalid notebookIds');
+    await Promise.all(notebookIds.map((notebookId) => this.prisma.learningNotebookItem.upsert({
+      where: { notebookId_expressionItemId: { notebookId, expressionItemId } },
+      create: { notebookId, expressionItemId },
+      update: { deletedAt: null },
+    })));
   }
 
   // ══════════════════════════════════════════════════

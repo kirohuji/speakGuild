@@ -70,3 +70,12 @@ ALTER TABLE "learning_notebook_item"
 ADD CONSTRAINT "learning_notebook_item_expressionItemId_fkey"
 FOREIGN KEY ("expressionItemId") REFERENCES "expression_item"("id")
 ON DELETE CASCADE ON UPDATE CASCADE;
+
+DROP INDEX IF EXISTS "expression_item_userId_masteryStatus_idx";
+
+ALTER TABLE "expression_item"
+DROP COLUMN IF EXISTS "masteryStatus",
+DROP COLUMN IF EXISTS "reviewCount",
+DROP COLUMN IF EXISTS "easeFactor",
+DROP COLUMN IF EXISTS "lastReviewedAt",
+DROP COLUMN IF EXISTS "nextReviewAt";
