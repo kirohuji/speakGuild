@@ -457,6 +457,22 @@ function shuffleItems<T>(items: T[]) {
   return shuffled
 }
 
+function shuffleWithinTrainingStages<T>(items: T[], getType: (item: T) => string) {
+  const stageOrder: string[] = []
+  const stageItems = new Map<string, T[]>()
+
+  for (const item of items) {
+    const type = getType(item)
+    if (!stageItems.has(type)) {
+      stageOrder.push(type)
+      stageItems.set(type, [])
+    }
+    stageItems.get(type)!.push(item)
+  }
+
+  return stageOrder.flatMap((type) => shuffleItems(stageItems.get(type) ?? []))
+}
+
 export const dailyPracticeRepository = {
   async resolveCandidateUnits(scope: DailyPracticeScope, targetPackId?: string | null): Promise<UnitDetail[]> {
     return loadCandidateUnits(scope, targetPackId)
@@ -471,8 +487,9 @@ export const dailyPracticeRepository = {
     const date = normalizePlanDate(targetDate)
     const preferences = usePreferencesStore.getState()
     const dailyGoal = preferences.dailyGoal
-    const packScope: DailyPracticeScope = preferences.dailyPracticeMixedPacks ? 'mixed' : 'single'
-    const practiceOrderPool = preferences.dailyPracticeRandomOrder ? shuffleItems : <T,>(items: T[]) => items
+    // 新学始终沿当前学习包推进；跨学习包设置只扩大复习候选范围。
+    const packScope: DailyPracticeScope =
+      mode === 'review' && preferences.dailyPracticeMixedPacks ? 'mixed' : 'single'
     const units = await this.resolveCandidateUnits(packScope, targetPackId)
     const candidates = units.flatMap(buildCandidates)
     const itemIds = candidates.map((candidate) => candidate.itemId)
@@ -508,8 +525,22 @@ export const dailyPracticeRepository = {
 
     const overdue = withStatus.filter((x) => x.status === 'overdue')
     const review = withStatus.filter((x) => x.status === 'review')
-    const reviewBacklog = [...overdue, ...review]
-    const practicePool = withStatus.filter((x) => x.status !== 'mastered' && x.status !== 'done')
+    // 复习保持“逾期优先、到期其次”，同一优先级内随机，缓存后当天顺序稳定。
+    const reviewBacklog = [...shuffleItems(overdue), ...shuffleItems(review)]
+    // 新学与复习分流：练习模式只引入从未练过的内容，已进入记忆周期的内容交给复习模式。
+    const practicePool = withStatus.filter((x) => x.progress.status === 'new')
+    // 新学只推进当前包中的一个话题，避免教学上下文在多个话题之间跳转。
+    const currentTopicId = practicePool[0]?.candidate.topicId
+    const currentTopicPool = currentTopicId
+      ? practicePool.filter((x) => x.candidate.topicId === currentTopicId)
+      : []
+    // 随机仅发生在同一话题的同一训练阶段内，不改变阶段的教学顺序。
+    const orderedPracticePool = preferences.dailyPracticeRandomOrder
+      ? shuffleWithinTrainingStages(
+          currentTopicPool,
+          (item: (typeof currentTopicPool)[number]) => item.candidate.type,
+        )
+      : currentTopicPool
     const cachedRun = await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', `daily:${date}`).catch(() => null)
     const candidateById = new Map(withStatus.map((item) => [item.candidate.itemId, item]))
     const canReuseCachedRun = !options.forceNew
@@ -523,7 +554,7 @@ export const dailyPracticeRepository = {
       ? cachedRun.scheduledItemIds!.map((itemId) => candidateById.get(itemId)!)
       : mode === 'review'
       ? reviewBacklog
-      : practiceOrderPool(practicePool).slice(0, dailyGoal)
+      : orderedPracticePool.slice(0, dailyGoal)
     const scheduled = scheduledSource.map(({ candidate, progress, status }) => ({
       ...candidate,
       progress,
