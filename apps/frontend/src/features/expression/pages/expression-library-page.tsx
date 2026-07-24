@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   BookMarked, Search, Trash2, BookOpen,
   BookText, MessageSquareText, ExternalLink, Layers,
   RotateCcw, CheckCheck, ArrowRightFromLine,
+  ArrowLeft,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -12,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { toast } from 'sonner'
-import { expressionApi, type MasteryStatus } from '@/features/practice/api/english-practice-api'
+import { expressionApi, learningNotebookApi, type MasteryStatus } from '@/features/practice/api/english-practice-api'
 import { LearningInsightDialog, type LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
 import { ImmersivePlayerDialog, mapInsightItemsToImmersiveItems, type ImmersivePlayerItem } from '@/features/learning/components/immersive-player'
 import { cn } from '@/lib/cn'
@@ -30,6 +31,8 @@ const TAB_SWIPE_DISTANCE = 70
 
 interface Expression {
   id: string; type: string; original: string | null; corrected: string | null
+  notebookItemId?: string
+  notebookId?: string
   chunkText: string | null; sceneName: string | null; masteryStatus: string
   reviewCount: number; nextReviewAt?: string | null; lastReviewedAt?: string | null
   createdAt: string
@@ -159,7 +162,10 @@ function expressionEntryToExpression(entry: ExpressionEntry): Expression {
 
 export function ExpressionLibraryPage() {
   const { t } = useTranslation()
+  const { notebookId } = useParams<{ notebookId: string }>()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const [notebookName, setNotebookName] = useState('学习本')
   const [libraryTab, setLibraryTab] = useState<LibraryTab>('words')
   const [reviewState, setReviewState] = useState<MasteryStatus>('learning')
 
@@ -186,6 +192,17 @@ export function ExpressionLibraryPage() {
     try {
       const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
       const localKind: ExpressionEntryKind = libraryTab === 'words' ? 'word' : libraryTab
+      if (notebookId) {
+        const raw: any = await expressionApi.list({
+          type: apiType,
+          reviewState,
+          notebookId,
+          page: 1,
+          pageSize: PAGE_SIZE,
+        })
+        setResult(normalizePageResult(raw))
+        return
+      }
       const localItems = (await learningContentRepository.listExpressionEntries(localKind)).map(expressionEntryToExpression)
       const filteredLocalItems = localItems.filter((item) => item.masteryStatus === reviewState)
       const cacheLoaded = await learningContentRepository.isExpressionCacheLoaded(localKind, reviewState)
@@ -218,7 +235,17 @@ export function ExpressionLibraryPage() {
     } finally {
       setLoading(false)
     }
-  }, [libraryTab, reviewState])
+  }, [libraryTab, notebookId, reviewState])
+
+  useEffect(() => {
+    if (!notebookId) return
+    learningNotebookApi.list()
+      .then((data) => {
+        const notebook = data.items.find((item) => item.id === notebookId)
+        if (notebook) setNotebookName(notebook.name)
+      })
+      .catch(() => undefined)
+  }, [notebookId])
 
   const deepLinkKind = searchParams.has('word')
     ? 'word'
@@ -396,6 +423,16 @@ export function ExpressionLibraryPage() {
   // ---- 状态变更 ----
   const handleUpdateStatus = useCallback(async (id: string, status: MasteryStatus) => {
     const target = result.items.find((item) => item.id === id)
+    if (target?.notebookItemId) {
+      try {
+        await expressionApi.updateNotebookItemStatus(target.notebookItemId, status)
+        toast.success(status === 'learning' ? t('expressionLib.movedToLearning') : status === 'reviewing' ? t('expressionLib.movedToReview') : t('expressionLib.movedToMastered'))
+        fetchData()
+      } catch {
+        toast.error(t('expressionLib.operationFailed'))
+      }
+      return
+    }
     if (target?.localKind) {
       const text = target.localKind === 'word'
         ? target.original ?? id
@@ -418,6 +455,15 @@ export function ExpressionLibraryPage() {
   const handleRemove = useCallback(async (id: string) => {
     const target = result.items.find((item) => item.id === id)
     try {
+      if (target?.notebookItemId) {
+        await expressionApi.removeNotebookItem(target.notebookItemId)
+        setResult((current) => {
+          const nextItems = current.items.filter((item) => item.id !== id)
+          return { ...current, items: nextItems, total: Math.max(0, current.total - 1) }
+        })
+        toast.success(t('expressionLib.removed'))
+        return
+      }
       if (target?.localKind) {
         const text = target.localKind === 'word'
           ? target.original ?? id
@@ -628,6 +674,20 @@ export function ExpressionLibraryPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
+      <header className="mb-4 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => navigate('/expressions')}
+          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
+          aria-label="返回学习本"
+        >
+          <ArrowLeft className="size-4" />
+        </button>
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">学习本</p>
+          <h1 className="truncate text-lg font-semibold tracking-tight">{notebookName}</h1>
+        </div>
+      </header>
       <Tabs value={libraryTab} onValueChange={handleLibraryTabChange}>
         <TabsList className="mb-3 w-full rounded-full bg-background/54 backdrop-blur-2xl">
           <TabsTrigger value="words" className="flex-1 rounded-full">{t('expressionLib.words')}</TabsTrigger>

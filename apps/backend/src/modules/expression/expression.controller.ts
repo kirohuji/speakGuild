@@ -13,6 +13,7 @@ export class ExpressionController {
     @Query('type') type?: string,
     @Query('sceneName') sceneName?: string,
     @Query('reviewState') reviewState?: string,
+    @Query('notebookId') notebookId?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
@@ -21,9 +22,35 @@ export class ExpressionController {
       type: type as any,
       sceneName,
       reviewState: reviewState as MasteryStatus,
+      notebookId,
       page: page ? parseInt(page, 10) : undefined,
       pageSize: pageSize ? parseInt(pageSize, 10) : undefined,
     });
+  }
+
+  @Patch('notebook-items/:notebookItemId/status')
+  async updateNotebookItemStatus(
+    @Req() req: Request,
+    @Param('notebookItemId') notebookItemId: string,
+    @Body('status') status: MasteryStatus,
+    @Body('quality') quality?: number,
+  ) {
+    const session = await requireAuthSession(req);
+    return this.expressionService.updateNotebookItemStatus(
+      session.user.id,
+      notebookItemId,
+      status,
+      quality,
+    );
+  }
+
+  @Delete('notebook-items/:notebookItemId')
+  async removeNotebookItem(
+    @Req() req: Request,
+    @Param('notebookItemId') notebookItemId: string,
+  ) {
+    const session = await requireAuthSession(req);
+    return this.expressionService.deleteNotebookItem(session.user.id, notebookItemId);
   }
 
   @Post()
@@ -32,20 +59,4 @@ export class ExpressionController {
     return this.expressionService.createExpression(session.user.id, body);
   }
 
-  @Delete(':id')
-  async remove(@Req() req: Request, @Param('id') id: string) {
-    const session = await requireAuthSession(req);
-    return this.expressionService.deleteExpression(session.user.id, id);
-  }
-
-  @Patch(':id/status')
-  async updateStatus(
-    @Req() req: Request,
-    @Param('id') id: string,
-    @Body('status') status: MasteryStatus,
-    @Body('quality') quality?: number,
-  ) {
-    const session = await requireAuthSession(req);
-    return this.expressionService.updateStatus(session.user.id, id, status, quality);
-  }
 }

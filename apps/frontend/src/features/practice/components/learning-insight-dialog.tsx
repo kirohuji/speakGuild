@@ -35,6 +35,7 @@ import { useAttemptedRequest } from '@/hooks/use-attempted-request'
 import { useCachedAudio } from '@/hooks/use-cached-audio'
 import type { DictionaryCluster, DictionaryEntry, DictionarySense } from '@/features/admin/api-dictionary'
 import { type TopicDetail } from '../api/english-practice-api'
+import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
 
 type VocabularyInsight = {
   kind: 'word'
@@ -603,6 +604,7 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
   const [showUncommon, setShowUncommon] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
   const { play: playAudio } = useCachedAudio()
   const { hasAttempted, resetAttempted, runOnce } = useAttemptedRequest()
 
@@ -661,6 +663,10 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
   const dictEntry = dictData !== 'loading' ? dictData : null
 
   const saveWord = async () => {
+    if (!saved) {
+      setSaveDrawerOpen(true)
+      return
+    }
     setSaving(true)
     try {
       if (saved) {
@@ -679,6 +685,26 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
         setSaved(true)
         toast.success(t('insight.savedToLibrary'))
       }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const saveWordToNotebooks = async (notebookIds: string[]) => {
+    setSaving(true)
+    try {
+      await learningContentRepository.saveExpressionEntryAndSync({
+        kind: 'word',
+        text: item.word,
+        meaning: item.meaning,
+        sceneName: item.sceneName,
+        corrected: item.description,
+        contentSnapshot: item,
+        sourceType: 'learning-library',
+        notebookIds,
+      })
+      setSaved(true)
+      toast.success(t('insight.savedToLibrary'))
     } finally {
       setSaving(false)
     }
@@ -841,6 +867,11 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
           </ScrollArea>
         </TabsContent>
       </div>
+      <SaveToNotebookDrawer
+        open={saveDrawerOpen}
+        onOpenChange={setSaveDrawerOpen}
+        onSave={saveWordToNotebooks}
+      />
     </Tabs>
   )
 }
@@ -1071,13 +1102,17 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
   const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(item.saved ?? false)
+  const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('description')
   const { play: playAudio } = useCachedAudio()
 
   const saveChunk = async () => {
     if (saved) return
+    setSaveDrawerOpen(true)
+  }
+
+  const saveChunkToNotebooks = async (notebookIds: string[]) => {
     setSaving(true)
-    setSaved(true)
     await learningContentRepository.saveExpressionEntryAndSync({
       kind: 'chunk',
       text: item.text,
@@ -1085,7 +1120,9 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
       sceneName: item.sceneName,
       contentSnapshot: item,
       sourceType: 'learning-library',
+      notebookIds,
     })
+    setSaved(true)
     toast.success(t('insight.savedToLibrary'))
     setSaving(false)
   }
@@ -1124,6 +1161,11 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
           </ScrollArea>
         </TabsContent>
       </div>
+      <SaveToNotebookDrawer
+        open={saveDrawerOpen}
+        onOpenChange={setSaveDrawerOpen}
+        onSave={saveChunkToNotebooks}
+      />
     </Tabs>
   )
 }
@@ -1132,6 +1174,7 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
   const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(item.saved ?? false)
+  const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
   const slotText = useMemo(() => item.slots?.filter(Boolean).join(' / '), [item.slots])
   const examples = useMemo(() => normalizeVocabExamples(item.examples), [item.examples])
   const [activeTab, setActiveTab] = useState('structure')
@@ -1139,13 +1182,17 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
 
   const savePattern = async () => {
     if (saved) return
+    setSaveDrawerOpen(true)
+  }
+
+  const savePatternToNotebooks = async (notebookIds: string[]) => {
     setSaving(true)
-    setSaved(true)
     await learningContentRepository.saveExpressionEntryAndSync({
       kind: 'pattern', text: item.pattern, meaning: item.meaning,
       sceneName: item.sceneName, corrected: item.example,
-      contentSnapshot: item, sourceType: 'learning-library',
+      contentSnapshot: item, sourceType: 'learning-library', notebookIds,
     })
+    setSaved(true)
     toast.success(t('insight.savedToLibrary'))
     setSaving(false)
   }
@@ -1202,6 +1249,11 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
           </ScrollArea>
         </TabsContent>
       </div>
+      <SaveToNotebookDrawer
+        open={saveDrawerOpen}
+        onOpenChange={setSaveDrawerOpen}
+        onSave={savePatternToNotebooks}
+      />
     </Tabs>
   )
 }

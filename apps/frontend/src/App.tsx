@@ -33,6 +33,7 @@ import { ForgotPasswordPage } from '@/features/auth/pages/forgot-password-page'
 const AdminRoutes = lazy(() => import('@/routes/admin-routes'))
 const PracticeSessionPage = lazy(() => import('@/features/practice/pages/practice-session-page').then(m => ({ default: m.PracticeSessionPage })))
 const ExpressionLibraryPage = lazy(() => import('@/features/expression/pages/expression-library-page').then(m => ({ default: m.ExpressionLibraryPage })))
+const LearningNotebooksPage = lazy(() => import('@/features/expression/pages/learning-notebooks-page').then(m => ({ default: m.LearningNotebooksPage })))
 const AchievementHallPage = lazy(() => import('@/features/achievement/pages/achievement-hall-page').then(m => ({ default: m.AchievementHallPage })))
 const LeaderboardPage = lazy(() => import('@/features/leaderboard/pages/leaderboard-page').then(m => ({ default: m.LeaderboardPage })))
 const InvitePage = lazy(() => import('@/features/referral/pages/invite-page').then(m => ({ default: m.InvitePage })))
@@ -89,7 +90,8 @@ export default function App() {
 
                 {/* 重页面懒加载 */}
                 <Route path="/practice/session/:topicId" element={<PracticeSessionPage />} />
-                <Route path="/expressions" element={<ExpressionLibraryPage />} />
+                <Route path="/expressions" element={<LearningNotebooksPage />} />
+                <Route path="/expressions/:notebookId" element={<ExpressionLibraryPage />} />
                 <Route path="/growth" element={<AchievementHallPage />} />
                 <Route path="/achievements" element={<AchievementHallPage />} />
                 <Route path="/leaderboard" element={<LeaderboardPage />} />

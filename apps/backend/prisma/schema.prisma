@@ -110,6 +110,7 @@ model User {
   sceneProgresses       UserSceneProgress[]
   chunkProgresses       UserChunkProgress[]
   expressionItems       ExpressionItem[]
+  learningNotebooks     LearningNotebook[]
   storyRecords          StoryRecord[]
   storyTurns            StoryTurn[]
   practiceSessions      PracticeSession[]
@@ -1194,31 +1195,73 @@ model StoryRecord {
 // ──── 表达库 & 复习 ────
 
 model ExpressionItem {
-  id             String         @id @default(cuid())
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String                 @id @default(cuid())
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String
-  type           ExpressionType @default(chunk)
-  original       String?        @db.Text
-  corrected      String?        @db.Text
+  type           ExpressionType         @default(chunk)
+  original       String?                @db.Text
+  corrected      String?                @db.Text
   chunkText      String?
   sceneName      String?
-  masteryStatus  String         @default("learning")
-  reviewCount    Int            @default(0)
-  easeFactor     Float          @default(2.5)
-  lastReviewedAt DateTime?
-  nextReviewAt   DateTime?
   sourceType     String? // Scene|Topic|Script|Manual|QuizFail
   sourceId       String?
   sourceSnapshot Json?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
   deletedAt      DateTime?
+  notebookItems  LearningNotebookItem[]
 
   @@index([userId, type])
-  @@index([userId, masteryStatus])
   @@index([userId, updatedAt])
   @@index([userId, deletedAt])
   @@map("expression_item")
+}
+
+enum LearningNotebookKind {
+  custom
+  uncategorized
+}
+
+model LearningNotebook {
+  id        String                 @id @default(cuid())
+  user      User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  name      String
+  kind      LearningNotebookKind   @default(custom)
+  color     String                 @default("ocean")
+  sortOrder Int                    @default(0)
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  deletedAt DateTime?
+  items     LearningNotebookItem[]
+
+  @@index([userId, sortOrder])
+  @@index([userId, kind])
+  @@index([userId, deletedAt])
+  @@map("learning_notebook")
+}
+
+model LearningNotebookItem {
+  id               String           @id @default(cuid())
+  notebook         LearningNotebook @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  notebookId       String
+  expressionItem   ExpressionItem   @relation(fields: [expressionItemId], references: [id], onDelete: Cascade)
+  expressionItemId String
+  masteryStatus    String           @default("learning")
+  reviewCount      Int              @default(0)
+  easeFactor       Float            @default(2.5)
+  lastReviewedAt   DateTime?
+  nextReviewAt     DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime?
+
+  @@unique([notebookId, expressionItemId])
+  @@index([notebookId, masteryStatus])
+  @@index([expressionItemId])
+  @@index([updatedAt])
+  @@index([deletedAt])
+  @@map("learning_notebook_item")
 }
 
 // ──── 用户场景熟练度 ────

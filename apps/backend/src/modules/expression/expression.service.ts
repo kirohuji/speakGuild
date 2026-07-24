@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ExpressionType, Prisma } from '@prisma/client';
+import { LearningNotebookService } from './learning-notebook.service';
 
 export type MasteryStatus = 'learning' | 'reviewing' | 'mastered';
 
@@ -10,16 +11,31 @@ export interface ListExpressionsParams {
   reviewState?: MasteryStatus;
   page?: number;
   pageSize?: number;
+  notebookId?: string;
 }
 
 @Injectable()
 export class ExpressionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notebooks: LearningNotebookService,
+  ) {}
 
   async listExpressions(userId: string, params?: ListExpressionsParams) {
     const { type, sceneName, reviewState, page = 1, pageSize = 30 } = params ?? {};
+    const notebookId = params?.notebookId;
+    if (!notebookId) throw new BadRequestException('notebookId is required');
+    await this.notebooks.getOwned(userId, notebookId);
 
-    const where: Prisma.ExpressionItemWhereInput = { userId, deletedAt: null };
+    const notebookItemWhere: Prisma.LearningNotebookItemWhereInput = {
+      notebookId,
+      deletedAt: null,
+    };
+    const where: Prisma.ExpressionItemWhereInput = {
+      userId,
+      deletedAt: null,
+      notebookItems: { some: notebookItemWhere },
+    };
 
     if (type) where.type = type;
     if (sceneName) where.sceneName = sceneName;
@@ -27,14 +43,20 @@ export class ExpressionService {
     // 直接按 masteryStatus 过滤
     // 兼容旧数据：'activated' 视为 'learning'
     if (reviewState === 'learning') {
-      where.masteryStatus = { in: ['learning', 'activated'] };
+      notebookItemWhere.masteryStatus = { in: ['learning', 'activated'] };
     } else if (reviewState) {
-      where.masteryStatus = reviewState;
+      notebookItemWhere.masteryStatus = reviewState;
     }
 
     const [items, total] = await Promise.all([
       this.prisma.expressionItem.findMany({
         where,
+        include: {
+          notebookItems: {
+            where: notebookItemWhere,
+            take: 1,
+          },
+        },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -83,7 +105,18 @@ export class ExpressionService {
     const patternByText = new Map<string, typeof patterns[number]>(patterns.map(p => [p.pattern.toLowerCase(), p] as const));
 
     const mergedItems = items.map((item) => {
-      const base = { ...item } as any;
+      const notebookItem = item.notebookItems[0];
+      const base = {
+        ...item,
+        notebookItems: undefined,
+        notebookItemId: notebookItem?.id,
+        notebookId: notebookItem?.notebookId,
+        masteryStatus: notebookItem!.masteryStatus,
+        reviewCount: notebookItem!.reviewCount,
+        easeFactor: notebookItem!.easeFactor,
+        lastReviewedAt: notebookItem!.lastReviewedAt,
+        nextReviewAt: notebookItem!.nextReviewAt,
+      } as any;
       if (item.type === 'word' && item.original) {
         base.vocabulary = vocabularyByWord.get(item.original.trim().toLowerCase()) ?? null;
       } else if (item.type === 'chunk' && item.chunkText) {
@@ -111,7 +144,10 @@ export class ExpressionService {
     corrected?: string;
     chunkText?: string;
     sceneName?: string;
+    notebookIds?: string[];
   }) {
+    const { notebookIds, ...expressionData } = data;
+    if (!notebookIds) throw new BadRequestException('notebookIds is required');
     const uniqueText = data.type === 'word' ? data.original : data.chunkText;
     if (uniqueText) {
       const existing = await this.prisma.expressionItem.findFirst({
@@ -123,54 +159,67 @@ export class ExpressionService {
         select: { id: true },
       });
       if (existing) {
-        return this.prisma.expressionItem.update({
+        const item = await this.prisma.expressionItem.update({
           where: { id: existing.id },
           data: {
-            ...data,
+            ...expressionData,
             deletedAt: null,
-            masteryStatus: 'learning',
           },
         });
+        await this.notebooks.setExpressionNotebooks(userId, item.id, notebookIds);
+        return item;
       }
     }
 
-    return this.prisma.expressionItem.create({
-      data: { userId, ...data, masteryStatus: 'learning' },
+    const item = await this.prisma.expressionItem.create({
+      data: { userId, ...expressionData },
     });
+    await this.notebooks.setExpressionNotebooks(userId, item.id, notebookIds);
+    return item;
   }
 
-  async deleteExpression(userId: string, id: string) {
-    return this.prisma.expressionItem.updateMany({
-      where: { id, userId },
-      data: {
-        deletedAt: new Date(),
+  async updateNotebookItemStatus(
+    userId: string,
+    notebookItemId: string,
+    status: MasteryStatus,
+    quality = 3,
+  ) {
+    const item = await this.prisma.learningNotebookItem.findFirst({
+      where: {
+        id: notebookItemId,
+        deletedAt: null,
+        notebook: { userId, deletedAt: null },
       },
-    });
-  }
-
-  async updateStatus(userId: string, id: string, status: MasteryStatus, quality = 3) {
-    const item = await this.prisma.expressionItem.findFirst({
-      where: { id, userId },
-      select: { reviewCount: true, easeFactor: true },
+      select: { id: true, reviewCount: true, easeFactor: true },
     });
     if (!item) return null;
 
-    // SM-2 spaced repetition
-    const { interval, nextReview, easeFactor, newReviewCount } = calcSm2(
-      item.reviewCount,
-      item.easeFactor,
-      quality,
-    )
-
-    return this.prisma.expressionItem.update({
-      where: { id },
+    const next = calcSm2(item.reviewCount, item.easeFactor, quality);
+    return this.prisma.learningNotebookItem.update({
+      where: { id: item.id },
       data: {
         masteryStatus: status,
-        reviewCount: status === 'reviewing' ? newReviewCount : item.reviewCount,
-        easeFactor,
+        reviewCount: status === 'reviewing' ? next.newReviewCount : item.reviewCount,
+        easeFactor: next.easeFactor,
         lastReviewedAt: new Date(),
-        nextReviewAt: nextReview,
+        nextReviewAt: next.nextReview,
       },
+    });
+  }
+
+  async deleteNotebookItem(userId: string, notebookItemId: string) {
+    const item = await this.prisma.learningNotebookItem.findFirst({
+      where: {
+        id: notebookItemId,
+        deletedAt: null,
+        notebook: { userId, deletedAt: null },
+      },
+      select: { id: true },
+    });
+    if (!item) return null;
+    return this.prisma.learningNotebookItem.update({
+      where: { id: item.id },
+      data: { deletedAt: new Date() },
     });
   }
 }

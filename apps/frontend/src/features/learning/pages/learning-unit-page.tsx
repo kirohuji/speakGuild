@@ -22,6 +22,7 @@ import {
 } from '@/features/practice/components/learning-insight-dialog'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { extractCoreUsage } from '@/lib/markdown-utils'
+import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
 
 const PREP_PAGE_SIZE = 8
 
@@ -46,6 +47,13 @@ export function LearningUnitPage() {
 
   // 展开的列表项（点击高亮 + 展开显示详情）
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
+  const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
+  const [pendingSave, setPendingSave] = useState<
+    | { kind: 'word'; item: VocabItem }
+    | { kind: 'chunk'; item: ChunkItem }
+    | { kind: 'pattern'; item: SentencePattern }
+    | null
+  >(null)
 
   // 知识点区域折叠状态（默认折叠，显示前两行预览）
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set(['prep', 'knowledge']))
@@ -82,49 +90,62 @@ export function LearningUnitPage() {
 
   useEffect(() => { loadCollectedForTab(activeTab) }, [activeTab, loadCollectedForTab])
 
-  const handleCollectChunk = useCallback(async (chunk: ChunkItem) => {
-    const text = chunk.text
-    const meaning = chunk.meaning
-    setCollectedTexts((prev) => new Set([...prev, text]))
-    await learningContentRepository.saveExpressionEntryAndSync({
-      kind: 'chunk',
-      text,
-      meaning,
-      sceneName: unit?.title,
-      contentSnapshot: chunk,
-      sourceType: 'learning-library',
-    })
-    toast.success(t('learning.addedToLibrary'))
-  }, [t, unit?.title])
+  const requestSave = useCallback((value: NonNullable<typeof pendingSave>) => {
+    setPendingSave(value)
+    setSaveDrawerOpen(true)
+  }, [])
 
-  const handleCollectPattern = useCallback(async (pattern: SentencePattern) => {
-    const text = pattern.pattern
-    setCollectedTexts((prev) => new Set([...prev, text]))
-    await learningContentRepository.saveExpressionEntryAndSync({
-      kind: 'pattern',
-      text,
-      meaning: pattern.meaning,
-      sceneName: unit?.title,
-      contentSnapshot: pattern,
-      sourceType: 'learning-library',
-    })
-    toast.success(t('learning.addedToLibrary'))
-  }, [t, unit?.title])
+  const handleCollectChunk = useCallback((chunk: ChunkItem) => {
+    requestSave({ kind: 'chunk', item: chunk })
+  }, [requestSave])
 
-  const handleCollectWord = useCallback(async (vocab: VocabItem) => {
-    const word = vocab.word
-    const meaning = vocab.meaning
-    setCollectedTexts((prev) => new Set([...prev, word]))
-    await learningContentRepository.saveExpressionEntryAndSync({
-      kind: 'word',
-      text: word,
-      meaning,
-      sceneName: unit?.title,
-      contentSnapshot: vocab,
-      sourceType: 'learning-library',
-    })
+  const handleCollectPattern = useCallback((pattern: SentencePattern) => {
+    requestSave({ kind: 'pattern', item: pattern })
+  }, [requestSave])
+
+  const handleCollectWord = useCallback((vocab: VocabItem) => {
+    requestSave({ kind: 'word', item: vocab })
+  }, [requestSave])
+
+  const savePendingToNotebooks = useCallback(async (notebookIds: string[]) => {
+    if (!pendingSave) return
+    if (pendingSave.kind === 'word') {
+      await learningContentRepository.saveExpressionEntryAndSync({
+        kind: 'word',
+        text: pendingSave.item.word,
+        meaning: pendingSave.item.meaning,
+        sceneName: unit?.title,
+        contentSnapshot: pendingSave.item,
+        sourceType: 'learning-library',
+        notebookIds,
+      })
+      setCollectedTexts((prev) => new Set([...prev, pendingSave.item.word]))
+    } else if (pendingSave.kind === 'chunk') {
+      await learningContentRepository.saveExpressionEntryAndSync({
+        kind: 'chunk',
+        text: pendingSave.item.text,
+        meaning: pendingSave.item.meaning,
+        sceneName: unit?.title,
+        contentSnapshot: pendingSave.item,
+        sourceType: 'learning-library',
+        notebookIds,
+      })
+      setCollectedTexts((prev) => new Set([...prev, pendingSave.item.text]))
+    } else {
+      await learningContentRepository.saveExpressionEntryAndSync({
+        kind: 'pattern',
+        text: pendingSave.item.pattern,
+        meaning: pendingSave.item.meaning,
+        sceneName: unit?.title,
+        contentSnapshot: pendingSave.item,
+        sourceType: 'learning-library',
+        notebookIds,
+      })
+      setCollectedTexts((prev) => new Set([...prev, pendingSave.item.pattern]))
+    }
     toast.success(t('learning.addedToLibrary'))
-  }, [t, unit?.title])
+    setPendingSave(null)
+  }, [pendingSave, t, unit?.title])
 
   const handleRemoveExpression = useCallback(async (kind: 'word' | 'chunk' | 'pattern', text: string) => {
     await learningContentRepository.deleteExpressionByTextAndSync(kind, text)
@@ -443,6 +464,11 @@ export function LearningUnitPage() {
         open={dialogOpen}
         onOpenChange={handleDialogClose}
         onIndexChange={setDialogIndex}
+      />
+      <SaveToNotebookDrawer
+        open={saveDrawerOpen}
+        onOpenChange={setSaveDrawerOpen}
+        onSave={savePendingToNotebooks}
       />
     </div>
   )

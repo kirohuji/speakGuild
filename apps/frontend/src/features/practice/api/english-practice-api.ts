@@ -407,11 +407,39 @@ export const practiceAiApi = {
 // ---- 学习库 ----
 export type MasteryStatus = 'learning' | 'reviewing' | 'mastered'
 
+export interface LearningNotebook {
+  id: string
+  name: string
+  kind: 'custom' | 'uncategorized'
+  color: string
+  sortOrder: number
+  counts: {
+    total: number
+    word: number
+    chunk: number
+    pattern: number
+  }
+  createdAt: string
+  updatedAt: string
+}
+
+export const learningNotebookApi = {
+  list: () => get<{ items: LearningNotebook[]; allCounts: LearningNotebook['counts'] }>('/learning-notebooks'),
+  create: (name: string) => post<LearningNotebook>('/learning-notebooks', { name }),
+  rename: (id: string, name: string) => patch<LearningNotebook>(`/learning-notebooks/${id}`, { name }),
+  remove: (id: string) => del(`/learning-notebooks/${id}`),
+  getExpressionNotebooks: (expressionItemId: string) =>
+    get<{ notebookIds: string[] }>(`/learning-notebooks/expressions/${expressionItemId}`),
+  setExpressionNotebooks: (expressionItemId: string, notebookIds: string[]) =>
+    post<{ notebookIds: string[] }>(`/learning-notebooks/expressions/${expressionItemId}`, { notebookIds }),
+}
+
 export const expressionApi = {
   list: (params?: {
     type?: string
     sceneName?: string
     reviewState?: MasteryStatus
+    notebookId?: string
     page?: number
     pageSize?: number
   }) => get('/expressions', params),
@@ -422,6 +450,12 @@ export const expressionApi = {
 
   updateStatus: (id: string, status: MasteryStatus) =>
     patch(`/expressions/${id}/status`, { status }),
+
+  updateNotebookItemStatus: (notebookItemId: string, status: MasteryStatus) =>
+    patch(`/expressions/notebook-items/${notebookItemId}/status`, { status }),
+
+  removeNotebookItem: (notebookItemId: string) =>
+    del(`/expressions/notebook-items/${notebookItemId}`),
 }
 
 // ---- Chunk ----

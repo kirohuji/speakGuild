@@ -490,7 +490,9 @@ export const learningContentRepository = {
     return entry
   },
 
-  async saveExpressionEntryAndSync(input: Parameters<typeof makeEntry>[0]): Promise<ExpressionEntry> {
+  async saveExpressionEntryAndSync(
+    input: Parameters<typeof makeEntry>[0] & { notebookIds?: string[] },
+  ): Promise<ExpressionEntry> {
     const entry = await this.saveExpressionEntry(input)
     const text = expressionText(entry)
     const outboxItem = await syncOutbox.enqueue({
@@ -500,7 +502,10 @@ export const learningContentRepository = {
       payload: createPayload(entry),
     })
     try {
-      const created = await expressionApi.create(createRequest(entry))
+      const created = await expressionApi.create({
+        ...createRequest(entry),
+        notebookIds: input.notebookIds,
+      })
       await this.saveRemoteExpressionEntry(created)
       await syncOutbox.markSynced(outboxItem.id)
     } catch (error) {

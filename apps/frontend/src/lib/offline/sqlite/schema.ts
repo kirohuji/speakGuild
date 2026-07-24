@@ -20,7 +20,7 @@
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 10
+export const DB_VERSION = 11
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -31,6 +31,8 @@ export const TABLE_NAMES = [
   'ink_scripts',
   'dictionary_entries',
   'expression_entries',
+  'learning_notebooks',
+  'learning_notebook_items',
   'offline_vocabularies',
   'offline_chunks',
   'offline_patterns',
@@ -111,6 +113,29 @@ export const DDL: Record<TableName, string> = {
       remote_id TEXT,
       kind TEXT,
       expression_type TEXT,
+      mastery_status TEXT,
+      sync_status TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  learning_notebooks: `
+    CREATE TABLE IF NOT EXISTS learning_notebooks (
+      id TEXT PRIMARY KEY NOT NULL,
+      remote_id TEXT,
+      notebook_kind TEXT,
+      sort_order INTEGER,
+      sync_status TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  learning_notebook_items: `
+    CREATE TABLE IF NOT EXISTS learning_notebook_items (
+      id TEXT PRIMARY KEY NOT NULL,
+      remote_id TEXT,
+      notebook_id TEXT,
+      expression_entry_id TEXT,
       mastery_status TEXT,
       sync_status TEXT,
       data TEXT NOT NULL DEFAULT '{}',
@@ -329,6 +354,13 @@ export const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_expression_remote_id ON expression_entries (remote_id)`,
   `CREATE INDEX IF NOT EXISTS idx_expression_type ON expression_entries (expression_type)`,
   `CREATE INDEX IF NOT EXISTS idx_expression_mastery_status ON expression_entries (mastery_status)`,
+  `CREATE INDEX IF NOT EXISTS idx_learning_notebooks_remote_id ON learning_notebooks (remote_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_learning_notebooks_kind ON learning_notebooks (notebook_kind)`,
+  `CREATE INDEX IF NOT EXISTS idx_learning_notebooks_sort ON learning_notebooks (sort_order)`,
+  `CREATE INDEX IF NOT EXISTS idx_learning_notebook_items_remote_id ON learning_notebook_items (remote_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_learning_notebook_items_notebook ON learning_notebook_items (notebook_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_learning_notebook_items_expression ON learning_notebook_items (expression_entry_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_learning_notebook_items_status ON learning_notebook_items (mastery_status)`,
   `CREATE INDEX IF NOT EXISTS idx_offline_vocab_normalized ON offline_vocabularies (normalized_text)`,
   `CREATE INDEX IF NOT EXISTS idx_offline_chunk_normalized ON offline_chunks (normalized_text)`,
   `CREATE INDEX IF NOT EXISTS idx_offline_pattern_normalized ON offline_patterns (normalized_text)`,

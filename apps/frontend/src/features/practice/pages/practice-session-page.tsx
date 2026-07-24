@@ -23,6 +23,7 @@ import { GuidedWarmupPhase } from '../components/guided-warmup-phase'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { extractCoreUsage } from '@/lib/markdown-utils'
+import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
 
 import { PracticeTurnFeedback } from '../components/practice-turn-feedback'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
@@ -84,6 +85,13 @@ export function PracticeSessionPage() {
   const [fallbackInsightItem, setFallbackInsightItem] = useState<LearningInsightItem | null>(null)
   const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
   const [savingTexts, setSavingTexts] = useState<Set<string>>(new Set())
+  const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
+  const [pendingSave, setPendingSave] = useState<
+    | { kind: 'word'; word: string; meaning: string }
+    | { kind: 'chunk'; item: TopicDetail['activeChunks'][number] }
+    | { kind: 'pattern'; item: { pattern: string; meaning?: string; example?: string; sceneName?: string } }
+    | null
+  >(null)
   const [confirmAbandonOpen, setConfirmAbandonOpen] = useState(false)
 
   // ── Practice (VN) state ──
@@ -476,57 +484,68 @@ export function PracticeSessionPage() {
     setInsightOpen(true)
   }, [insightItems])
 
-  const handleCollectWord = useCallback(async (word: string, meaning: string) => {
-    setSavingTexts((prev) => new Set([...prev, word]))
-    try {
-      const vocab = detail?.vocabularies?.find((item) => item.word.toLowerCase() === word.toLowerCase())
-      await learningContentRepository.saveExpressionEntryAndSync({
-        kind: 'word',
-        text: word,
-        meaning: vocab?.meaning ?? meaning,
-        sceneName: detail?.scene.title,
-        contentSnapshot: vocab ?? { word, meaning },
-        sourceType: 'learning-library',
-      })
-      setCollectedTexts((prev) => new Set([...prev, word]))
-      toast.success(t('learning.addedToLibrary'))
-    } catch { toast.error(t('learning.addFailed')) }
-    setSavingTexts((prev) => { const s = new Set(prev); s.delete(word); return s })
-  }, [detail])
-
-  const handleCollectPattern = useCallback(async (pattern: { pattern: string; meaning?: string; example?: string; sceneName?: string }) => {
-    setSavingTexts((prev) => new Set([...prev, pattern.pattern]))
-    try {
-      await learningContentRepository.saveExpressionEntryAndSync({
-        kind: 'pattern',
-        text: pattern.pattern,
-        meaning: pattern.meaning,
-        sceneName: pattern.sceneName,
-        contentSnapshot: pattern,
-        sourceType: 'learning-library',
-      })
-      setCollectedTexts((prev) => new Set([...prev, pattern.pattern]))
-      toast.success(t('learning.addedToLibrary'))
-    } catch { toast.error(t('learning.addFailed')) }
-    setSavingTexts((prev) => { const s = new Set(prev); s.delete(pattern.pattern); return s })
+  const handleCollectWord = useCallback((word: string, meaning: string) => {
+    setPendingSave({ kind: 'word', word, meaning })
+    setSaveDrawerOpen(true)
   }, [])
 
-  const handleCollectChunk = useCallback(async (chunk: TopicDetail['activeChunks'][number]) => {
-    setSavingTexts((prev) => new Set([...prev, chunk.text]))
+  const handleCollectPattern = useCallback((pattern: { pattern: string; meaning?: string; example?: string; sceneName?: string }) => {
+    setPendingSave({ kind: 'pattern', item: pattern })
+    setSaveDrawerOpen(true)
+  }, [])
+
+  const handleCollectChunk = useCallback((chunk: TopicDetail['activeChunks'][number]) => {
+    setPendingSave({ kind: 'chunk', item: chunk })
+    setSaveDrawerOpen(true)
+  }, [])
+
+  const savePendingToNotebooks = useCallback(async (notebookIds: string[]) => {
+    if (!pendingSave) return
+    const text = pendingSave.kind === 'word'
+      ? pendingSave.word
+      : pendingSave.kind === 'chunk'
+        ? pendingSave.item.text
+        : pendingSave.item.pattern
+    setSavingTexts((prev) => new Set([...prev, text]))
     try {
+      if (pendingSave.kind === 'word') {
+        const vocab = detail?.vocabularies?.find((item) => item.word.toLowerCase() === pendingSave.word.toLowerCase())
+      await learningContentRepository.saveExpressionEntryAndSync({
+        kind: 'word',
+          text: pendingSave.word,
+          meaning: vocab?.meaning ?? pendingSave.meaning,
+        sceneName: detail?.scene.title,
+          contentSnapshot: vocab ?? { word: pendingSave.word, meaning: pendingSave.meaning },
+        sourceType: 'learning-library',
+          notebookIds,
+      })
+      } else if (pendingSave.kind === 'pattern') {
+      await learningContentRepository.saveExpressionEntryAndSync({
+        kind: 'pattern',
+          text: pendingSave.item.pattern,
+          meaning: pendingSave.item.meaning,
+          sceneName: pendingSave.item.sceneName,
+          contentSnapshot: pendingSave.item,
+        sourceType: 'learning-library',
+          notebookIds,
+      })
+      } else {
       await learningContentRepository.saveExpressionEntryAndSync({
         kind: 'chunk',
-        text: chunk.text,
-        meaning: chunk.meaning,
+          text: pendingSave.item.text,
+          meaning: pendingSave.item.meaning,
         sceneName: detail?.scene.title,
-        contentSnapshot: chunk,
+          contentSnapshot: pendingSave.item,
         sourceType: 'learning-library',
+          notebookIds,
       })
-      setCollectedTexts((prev) => new Set([...prev, chunk.text]))
+      }
+      setCollectedTexts((prev) => new Set([...prev, text]))
       toast.success(t('learning.addedToLibrary'))
     } catch { toast.error(t('learning.addFailed')) }
-    setSavingTexts((prev) => { const s = new Set(prev); s.delete(chunk.text); return s })
-  }, [detail])
+    setSavingTexts((prev) => { const s = new Set(prev); s.delete(text); return s })
+    setPendingSave(null)
+  }, [detail, pendingSave, t])
 
   const handleRemoveExpression = useCallback(async (kind: 'word' | 'chunk' | 'pattern', text: string) => {
     setSavingTexts((prev) => new Set([...prev, text]))
@@ -1163,6 +1182,11 @@ export function PracticeSessionPage() {
           open={insightOpen}
           onOpenChange={setInsightOpen}
           onIndexChange={setInsightIndex}
+        />
+        <SaveToNotebookDrawer
+          open={saveDrawerOpen}
+          onOpenChange={setSaveDrawerOpen}
+          onSave={savePendingToNotebooks}
         />
 
         <Dialog open={guidedOpen} onOpenChange={(open) => { setGuidedOpen(open); if (!open) setImmersiveMode(false) }}>
