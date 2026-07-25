@@ -15,6 +15,8 @@ export type OfflineCacheCategory = 'packs' | 'assets' | 'dictionary' | 'expressi
 const USER_SCOPED_TABLES: TableName[] = [
   'my_learning_units',
   'expression_entries',
+  'learning_notebooks',
+  'learning_notebook_items',
   'user_progress',
   'practice_records',
   'warmup_records',

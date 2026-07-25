@@ -65,6 +65,7 @@ type PracticeGroup = {
 }
 
 const TODAY_TASK_MODE_SESSION_KEY = 'manyu-today-task-mode'
+const TODAY_TEACHING_HINT_SEEN_KEY = 'manyu:today-teaching-hint-seen'
 
 function normalizePlanMode(mode: string | null): DailyPracticePlanMode {
   return mode === 'review' || mode === 'practice' ? mode : 'practice'
@@ -195,6 +196,12 @@ export function TodayTaskPage() {
   const [teachingOpen, setTeachingOpen] = useState(false)
   const [teachingMarkdown, setTeachingMarkdown] = useState('')
   const [teachingLoading, setTeachingLoading] = useState(false)
+  const [teachingAvailability, setTeachingAvailability] = useState<Record<string, boolean>>({})
+  const [showAllTeachingTopics, setShowAllTeachingTopics] = useState(false)
+  const [showTeachingHintIntro, setShowTeachingHintIntro] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.localStorage.getItem(TODAY_TEACHING_HINT_SEEN_KEY) !== 'true'
+  })
   const [historicalTodayRecords, setHistoricalTodayRecords] = useState<WarmupRecordEntry[]>([])
   const [autoNextEnabled, setAutoNextEnabled] = useState(false)
   const [reviewRoundStarted, setReviewRoundStarted] = useState(false)
@@ -486,6 +493,52 @@ export function TodayTaskPage() {
   const weakStepIds = useMemo(() => new Set(weakRecords.map((record) => record.stepId)), [weakRecords])
   const needsReviewRound = allDone && weakStepIds.size > 0 && !reviewRoundStarted && !reviewRoundFinished
 
+  const upcomingTopicCandidates = useMemo(() => {
+    if (!plan || allDone) return []
+    const topics = new Map<string, { id: string; title: string }>()
+    for (const step of plan.steps) {
+      if (doneIds.has(step.itemId) || topics.has(step.topicId)) continue
+      topics.set(step.topicId, { id: step.topicId, title: step.topicTitle })
+    }
+    return [...topics.values()]
+  }, [allDone, doneIds, plan])
+
+  useEffect(() => {
+    const missingTopicIds = upcomingTopicCandidates
+      .map((topic) => topic.id)
+      .filter((topicId) => teachingAvailability[topicId] === undefined)
+    if (missingTopicIds.length === 0) return
+    let cancelled = false
+    void Promise.all(missingTopicIds.map(async (topicId) => {
+      const detail = await practiceRepository.getTopicDetail(topicId).catch(() => null)
+      return [topicId, Boolean(detail?.topic?.teachingMarkdown?.trim())] as const
+    })).then((results) => {
+      if (cancelled) return
+      setTeachingAvailability((current) => {
+        const next = { ...current }
+        for (const [topicId, hasTeaching] of results) next[topicId] = hasTeaching
+        return next
+      })
+    })
+    return () => { cancelled = true }
+  }, [teachingAvailability, upcomingTopicCandidates])
+
+  const upcomingTeachingTopics = useMemo(
+    () => upcomingTopicCandidates.filter((topic) => teachingAvailability[topic.id]),
+    [teachingAvailability, upcomingTopicCandidates],
+  )
+
+  const visibleTeachingTopics = showAllTeachingTopics
+    ? upcomingTeachingTopics
+    : upcomingTeachingTopics.slice(0, 3)
+
+  useEffect(() => {
+    if (!showTeachingHintIntro || upcomingTeachingTopics.length === 0) return
+    window.localStorage.setItem(TODAY_TEACHING_HINT_SEEN_KEY, 'true')
+    const timer = window.setTimeout(() => setShowTeachingHintIntro(false), 3600)
+    return () => window.clearTimeout(timer)
+  }, [showTeachingHintIntro, upcomingTeachingTopics.length])
+
   const startWeakReviewRound = useCallback(() => {
     if (weakStepIds.size === 0) return
     setReviewRoundStarted(true)
@@ -506,10 +559,13 @@ export function TodayTaskPage() {
     setTeachingMarkdown('')
     setTeachingLoading(true)
     setTeachingOpen(true)
-    const detail = await practiceRepository.getTopicDetail(topicId)
-    if (teachingRequestIdRef.current !== requestId) return
-    setTeachingMarkdown(detail?.topic?.teachingMarkdown || '')
-    setTeachingLoading(false)
+    try {
+      const detail = await practiceRepository.getTopicDetail(topicId)
+      if (teachingRequestIdRef.current !== requestId) return
+      setTeachingMarkdown(detail?.topic?.teachingMarkdown || '')
+    } finally {
+      if (teachingRequestIdRef.current === requestId) setTeachingLoading(false)
+    }
   }, [])
 
   useEffect(() => {
@@ -819,6 +875,7 @@ export function TodayTaskPage() {
         </div>
         <SegmentedBar segments={topSegments} />
         {plan.mode === 'practice' && (
+          <>
           <button
             type="button"
             disabled={!hasPracticeSteps}
@@ -852,6 +909,7 @@ export function TodayTaskPage() {
               </span>
             )}
           </button>
+          </>
         )}
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
           {plan.mode === 'practice' ? (
@@ -873,6 +931,39 @@ export function TodayTaskPage() {
             <span className="text-muted-foreground/50">{t('todayTask.noPractice')}</span>
           )}
         </div>
+        {plan.mode === 'practice' && upcomingTeachingTopics.length > 0 && (
+          <section className="mt-3 border-t border-border/45 pt-2.5" aria-label="接下来练习关联的教学讲解">
+            <p className="text-[10px] leading-4 text-muted-foreground">
+              {showTeachingHintIntro ? '先看一眼这些教学讲解，练习会更顺。' : '接下来的练习关联这些教学讲解，点击查看。'}
+            </p>
+            <div className="mt-1.5 flex min-w-0 gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+              {visibleTeachingTopics.map((topic, index) => (
+                <button
+                  key={topic.id}
+                  type="button"
+                  onClick={() => { void openTopicTeaching(topic.id) }}
+                  className={cn(
+                    'inline-flex h-8 max-w-[12.5rem] shrink-0 items-center rounded-lg bg-primary/[0.08] px-3 text-[11px] font-medium text-primary transition-colors hover:bg-primary/[0.14] active:scale-[0.98]',
+                    showTeachingHintIntro && index === 0 && 'animate-pulse ring-1 ring-primary/20 motion-reduce:animate-none',
+                  )}
+                  title={topic.title}
+                >
+                  <span className="truncate">{topic.title}</span>
+                </button>
+              ))}
+              {upcomingTeachingTopics.length > 3 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllTeachingTopics((visible) => !visible)}
+                  className="inline-flex h-8 shrink-0 items-center rounded-lg bg-muted/70 px-3 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted active:scale-[0.98]"
+                  title={upcomingTeachingTopics.slice(3).map((topic) => topic.title).join('、')}
+                >
+                  {showAllTeachingTopics ? '收起要点' : `还有 ${upcomingTeachingTopics.length - 3} 个要点`}
+                </button>
+              )}
+            </div>
+          </section>
+        )}
       </div>
 
       {/* ── 练习卡片列表 ── */}
