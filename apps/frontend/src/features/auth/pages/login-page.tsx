@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Gift, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Gift, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -52,6 +52,7 @@ export function LoginPage() {
   const [mode, setMode] = useState<LoginMode>('password')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState('')
   const [phoneOtp, setPhoneOtp] = useState('')
   const [loading, setLoading] = useState(false)
@@ -59,7 +60,7 @@ export function LoginPage() {
   const [otpSent, setOtpSent] = useState(false)
   const [message, setMessage] = useState('')
   const actionRunningRef = useRef(false)
-  const savedPasswordReadRef = useRef(false)
+  const credentialReadInFlightRef = useRef(false)
   const fromPath = (location.state as { from?: string } | null)?.from
   const initialReferralCode = new URLSearchParams(location.search).get('ref')?.trim().toUpperCase() || ''
   const [showReferralInput, setShowReferralInput] = useState(Boolean(initialReferralCode))
@@ -74,15 +75,19 @@ export function LoginPage() {
     navigate(fromPath || '/', { replace: true })
   }
 
-  const handleCredentialInputFocus = () => {
-    if (savedPasswordReadRef.current) return
-    savedPasswordReadRef.current = true
+  const handleEmailFocus = () => {
+    if (credentialReadInFlightRef.current) return
+    credentialReadInFlightRef.current = true
 
-    readSavedPassword().then((credentials) => {
-      if (!credentials) return
-      setEmail((current) => current || credentials.username)
-      setPassword((current) => current || credentials.password)
-    })
+    readSavedPassword()
+      .then((credentials) => {
+        if (!credentials) return
+        setEmail((current) => current || credentials.username)
+        setPassword((current) => current || credentials.password)
+      })
+      .finally(() => {
+        credentialReadInFlightRef.current = false
+      })
   }
 
   const runAction = async (
@@ -132,26 +137,64 @@ export function LoginPage() {
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label className={authLabelClassName}>{t('auth.emailPlaceholder')}</Label>
-              <Input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onFocus={handleCredentialInputFocus}
-                placeholder="you@example.com"
-                className={authInputClassName}
-                autoComplete="email"
-              />
+              <div className="relative">
+                <Input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onFocus={handleEmailFocus}
+                  placeholder="you@example.com"
+                  className={cn(authInputClassName, email && 'pr-10')}
+                  autoComplete="username"
+                  inputMode="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                />
+                {email && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail('')
+                      setPassword('')
+                    }}
+                    className="absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    aria-label="清除账号"
+                  >
+                    <X className="size-4" />
+                  </button>
+                )}
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label className={authLabelClassName}>{t('auth.passwordPlaceholder')}</Label>
-              <Input
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onFocus={handleCredentialInputFocus}
-                type="password"
-                placeholder={t('auth.enterPassword')}
-                className={authInputClassName}
-                autoComplete="current-password"
-              />
+              <div className="relative">
+                <Input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder={t('auth.enterPassword')}
+                  className={cn(authInputClassName, 'pr-20')}
+                  autoComplete="current-password"
+                />
+                {password && (
+                  <button
+                    type="button"
+                    onClick={() => setPassword('')}
+                    className="absolute right-9 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    aria-label="清除密码"
+                  >
+                    <X className="size-4" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-label={showPassword ? '隐藏密码' : '显示密码'}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
             <Button
               size="primary-lg"
