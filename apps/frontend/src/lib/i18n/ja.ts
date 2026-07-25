@@ -808,6 +808,7 @@ const ja = {
       },
     },
     expressionLib: {
+      all: 'すべて',
       words: '単語',
       chunks: '表現',
       review: '復習',

@@ -13,14 +13,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { toast } from 'sonner'
-import { expressionApi, learningNotebookApi, type MasteryStatus } from '@/features/practice/api/english-practice-api'
+import { expressionApi, type MasteryStatus } from '@/features/practice/api/english-practice-api'
 import { LearningInsightDialog, type LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
 import { ImmersivePlayerDialog, mapInsightItemsToImmersiveItems, type ImmersivePlayerItem } from '@/features/learning/components/immersive-player'
 import { cn } from '@/lib/cn'
 import { extractCoreUsage } from '@/lib/markdown-utils'
 import { isNative } from '@/lib/native'
+import { learningNotebookRepository } from '@/lib/offline'
 
 type LibraryTab = 'words' | 'chunk' | 'pattern'
+type LibraryReviewState = MasteryStatus | 'all'
 const LIBRARY_TABS: LibraryTab[] = ['words', 'chunk', 'pattern']
 const TAB_SWIPE_DISTANCE = 70
 
@@ -64,6 +66,11 @@ function normalizePageResult(raw: any): PageResult {
   return { items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 }
 }
 
+function dedupeExpressions(result: PageResult): PageResult {
+  const items = Array.from(new Map(result.items.map((item) => [item.id, item])).values())
+  return { ...result, items, total: Math.max(result.total, items.length) }
+}
+
 export function ExpressionLibraryPage() {
   const { t } = useTranslation()
   const { notebookId } = useParams<{ notebookId: string }>()
@@ -71,7 +78,7 @@ export function ExpressionLibraryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [notebookName, setNotebookName] = useState('学习本')
   const [libraryTab, setLibraryTab] = useState<LibraryTab>('words')
-  const [reviewState, setReviewState] = useState<MasteryStatus>('learning')
+  const [reviewState, setReviewState] = useState<LibraryReviewState>('all')
 
   // 后端分页数据
   const [result, setResult] = useState<PageResult>({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
@@ -92,20 +99,35 @@ export function ExpressionLibraryPage() {
 
   // ---- 核心数据请求：一级 tab + 二级 tab 都作为查询参数传给后端 ----
   const fetchData = useCallback(async () => {
-    setLoading(true)
-    try {
-      const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
-      if (!notebookId) throw new Error('Missing notebookId')
-      const raw: any = await expressionApi.list({
-        type: apiType,
-        reviewState,
-        notebookId,
-        page: 1,
-        pageSize: PAGE_SIZE,
-      })
-      setResult(normalizePageResult(raw))
-    } catch {
+    if (!notebookId) {
       setResult({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
+      setLoading(false)
+      return
+    }
+    const request = {
+      type: libraryTab === 'words' ? 'word' as const : libraryTab === 'pattern' ? 'scene_phrase' as const : 'chunk' as const,
+      reviewState: reviewState === 'all' ? undefined : reviewState,
+      notebookId,
+      page: 1,
+      pageSize: PAGE_SIZE,
+    }
+    const cached = await learningNotebookRepository.getCachedExpressionList(request).catch(() => null)
+    if (cached) {
+      setResult(dedupeExpressions(normalizePageResult(cached)))
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
+    try {
+      const raw = await learningNotebookRepository.refreshExpressionList(request)
+      setResult(dedupeExpressions(normalizePageResult(raw)))
+    } catch (error) {
+      if (!cached) {
+        setResult({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
+        const message = error instanceof Error ? error.message : '未知错误'
+        console.warn('[expression-library] list failed', { request, error })
+        toast.error(`学习本内容加载失败：${message}`)
+      }
     } finally {
       setLoading(false)
     }
@@ -113,7 +135,12 @@ export function ExpressionLibraryPage() {
 
   useEffect(() => {
     if (!notebookId) return
-    learningNotebookApi.list()
+    learningNotebookRepository.getCached(notebookId)
+      .then((notebook) => {
+        if (notebook) setNotebookName(notebook.name)
+      })
+      .catch(() => undefined)
+    learningNotebookRepository.refresh()
       .then((data) => {
         const notebook = data.items.find((item) => item.id === notebookId)
         if (notebook) setNotebookName(notebook.name)
@@ -133,7 +160,7 @@ export function ExpressionLibraryPage() {
   useEffect(() => {
     if (!deepLinkKind || !deepLinkValue) return
     setLibraryTab(deepLinkKind === 'word' ? 'words' : deepLinkKind)
-    setReviewState('learning')
+    setReviewState('all')
     setExpandedItemId(null)
   }, [deepLinkKind, deepLinkValue])
 
@@ -145,7 +172,7 @@ export function ExpressionLibraryPage() {
   // 切换一级 tab 时重置二级 tab
   const handleLibraryTabChange = useCallback((value: string) => {
     setLibraryTab(value as LibraryTab)
-    setReviewState('learning')
+    setReviewState('all')
     setExpandedItemId(null)
     setHandledDeepLink('')
     setSearchParams({})
@@ -324,6 +351,7 @@ export function ExpressionLibraryPage() {
 
   // ---- 二级状态过滤 ----
   const filterPills = [
+    { value: 'all' as const, label: t('expressionLib.all') },
     { value: 'learning' as MasteryStatus, label: t('expressionLib.done') },
     { value: 'reviewing' as MasteryStatus, label: t('expressionLib.reviewing') },
     { value: 'mastered' as MasteryStatus, label: t('expressionLib.mastered') },
@@ -494,12 +522,15 @@ export function ExpressionLibraryPage() {
   }
 
   const emptyHintMap: Record<string, { icon: React.ReactNode; title: string; hint?: string }> = {
+    'words-all': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyWords'), hint: t('expressionLib.hintCollectInUnit') },
     'words-reviewing': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyWords'), hint: t('expressionLib.hintCollectInUnit') },
     'words-learning': { icon: <BookOpen className="size-12" />, title: t('expressionLib.emptyWordsDone') },
     'words-mastered': { icon: <BookOpen className="size-12" />, title: t('expressionLib.emptyWordsDone') },
+    'chunk-all': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyChunks'), hint: t('expressionLib.hintAutoCollect') },
     'chunk-reviewing': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyChunks'), hint: t('expressionLib.hintAutoCollect') },
     'chunk-learning': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyChunksDone') },
     'chunk-mastered': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyChunksMastered') },
+    'pattern-all': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyPatterns'), hint: t('expressionLib.hintCollectPatterns') },
     'pattern-reviewing': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyPatterns'), hint: t('expressionLib.hintCollectPatterns') },
     'pattern-learning': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyPatternsDone') },
     'pattern-mastered': { icon: <BookMarked className="size-12" />, title: t('expressionLib.emptyPatternsMastered') },

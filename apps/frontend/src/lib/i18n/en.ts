@@ -808,6 +808,7 @@ const en = {
       },
     },
     expressionLib: {
+      all: 'All',
       words: 'Words',
       chunks: 'Expressions',
       review: 'Review',

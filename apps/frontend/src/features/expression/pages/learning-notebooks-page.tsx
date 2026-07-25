@@ -45,7 +45,6 @@ function BookCover({ notebook }: { notebook: LearningNotebook }) {
       aria-hidden="true"
     >
       <div className="absolute inset-y-0 left-0 w-2.5 bg-black/15 shadow-[inset_-1px_0_rgba(255,255,255,0.20)]" />
-      <div className="absolute inset-x-3 bottom-1 h-px bg-white/30" />
       <span className="pl-1 text-[11px] font-semibold tracking-wider">{shortName}</span>
     </div>
   )
@@ -104,12 +103,19 @@ export function LearningNotebooksPage() {
   const [submitting, setSubmitting] = useState(false)
 
   const load = useCallback(async () => {
-    setLoading(true)
+    const cached = await learningNotebookRepository.listCached()
+    if (cached.items.length > 0) {
+      setNotebooks(cached.items)
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
+
     try {
-      const result = await learningNotebookRepository.list()
+      const result = await learningNotebookRepository.refresh()
       setNotebooks(result.items)
     } catch {
-      toast.error('学习本加载失败')
+      if (cached.items.length === 0) toast.error('学习本加载失败')
     } finally {
       setLoading(false)
     }
@@ -180,12 +186,8 @@ export function LearningNotebooksPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 px-4 pb-24 pt-5">
-      <header className="flex items-end justify-between">
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">MY STUDY BOOKS</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">我的学习本</h1>
-        </div>
-        <Button type="button" size="icon" className="rounded-full" onClick={openCreate} aria-label="新建学习本">
+      <header className="flex justify-end">
+        <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full bg-muted text-foreground hover:bg-muted/80" onClick={openCreate} aria-label="新建学习本">
           <Plus />
         </Button>
       </header>

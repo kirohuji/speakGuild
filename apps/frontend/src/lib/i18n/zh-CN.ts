@@ -810,6 +810,7 @@ const zhCN = {
       },
     },
     expressionLib: {
+      all: '全部',
       words: '生词',
       chunks: '核心表达',
       review: '复习',
