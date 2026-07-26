@@ -435,12 +435,20 @@ export const expressionApi = {
     notebookId?: string
     page?: number
     pageSize?: number
+    search?: string
+    sort?: 'newest' | 'oldest'
   }) => get('/expressions', params),
 
   create: (data: any) => post('/expressions', data),
 
   updateNotebookItemStatus: (notebookItemId: string, status: MasteryStatus) =>
     patch(`/expressions/notebook-items/${notebookItemId}/status`, { status }),
+
+  updateNotebookItemsStatus: (notebookItemIds: string[], status: MasteryStatus) =>
+    patch('/expressions/notebook-items/batch/status', { notebookItemIds, status }),
+
+  addNotebookItemsToNotebook: (notebookItemIds: string[], notebookId: string) =>
+    post('/expressions/notebook-items/batch/add-to-notebook', { notebookItemIds, notebookId }),
 
   removeNotebookItem: (notebookItemId: string) =>
     del(`/expressions/notebook-items/${notebookItemId}`),

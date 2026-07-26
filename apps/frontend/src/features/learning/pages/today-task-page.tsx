@@ -250,13 +250,17 @@ export function TodayTaskPage() {
       packId: targetPackId ?? plan?.units?.[0]?.id ?? null,
     })
       .then((result) => {
-        if (isAdmin && (result?.computedCount ?? 0) > 0) toast.success(`本地 AI 预加载成功 · ${result?.computedCount ?? references.length} 题`)
+        if (isAdmin && (result?.computedCount ?? 0) > 0) {
+          toast.success(t('todayTask.localAiPreloadSuccess', { count: result?.computedCount ?? references.length }))
+        }
       })
       .catch((error) => {
         console.warn('[warmup-local-judge] preload failed:', error)
-        if (isAdmin) toast.warning(`本地 AI 预加载失败：${error instanceof Error ? error.message : String(error)}`)
+        if (isAdmin) {
+          toast.warning(t('todayTask.localAiPreloadFailed', { error: error instanceof Error ? error.message : String(error) }))
+        }
       })
-  }, [drawerOpen, isAdmin, localAiWarmupJudgeEnabled, plan?.steps, plan?.units, targetPackId])
+  }, [drawerOpen, isAdmin, localAiWarmupJudgeEnabled, plan?.steps, plan?.units, t, targetPackId])
 
   useEffect(() => {
     setDoneIds(new Set(plan?.completedItemIds ?? []))
@@ -869,7 +873,7 @@ export function TodayTaskPage() {
           </Badge>
           {extraTodayRecordCount > 0 && (
             <Badge variant="outline" className="h-6 rounded-full px-2 text-[10px] text-emerald-600">
-              额外 +{extraTodayRecordCount}
+              {t('todayTask.extraPractice', { count: extraTodayRecordCount })}
             </Badge>
           )}
         </div>
@@ -915,7 +919,7 @@ export function TodayTaskPage() {
           {plan.mode === 'practice' ? (
             <>
               {statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />{t('todayTask.done', { count: statusCounts.done })}</span>}
-              {extraTodayRecordCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500/70" />额外练习 {extraTodayRecordCount}</span>}
+              {extraTodayRecordCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500/70" />{t('todayTask.extraPractice', { count: extraTodayRecordCount })}</span>}
               {steps.length - statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />{t('todayTask.pending', { count: steps.length - statusCounts.done })}</span>}
             </>
           ) : (
@@ -924,7 +928,7 @@ export function TodayTaskPage() {
               {statusCounts.review > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-amber-500" />{t('todayTask.review', { count: statusCounts.review })}</span>}
               {statusCounts.new > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />{t('todayTask.newPractice', { count: statusCounts.new })}</span>}
               {statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />{t('todayTask.done', { count: statusCounts.done })}</span>}
-              {extraTodayRecordCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500/70" />额外练习 {extraTodayRecordCount}</span>}
+              {extraTodayRecordCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500/70" />{t('todayTask.extraPractice', { count: extraTodayRecordCount })}</span>}
             </>
           )}
           {statusCounts.overdue === 0 && statusCounts.review === 0 && statusCounts.new === 0 && statusCounts.done === 0 && (
@@ -932,9 +936,9 @@ export function TodayTaskPage() {
           )}
         </div>
         {plan.mode === 'practice' && upcomingTeachingTopics.length > 0 && (
-          <section className="mt-3 border-t border-border/45 pt-2.5" aria-label="接下来练习关联的教学讲解">
+          <section className="mt-3 border-t border-border/45 pt-2.5" aria-label={t('todayTask.teachingSectionAria')}>
             <p className="text-[10px] leading-4 text-muted-foreground">
-              {showTeachingHintIntro ? '先看一眼这些教学讲解，练习会更顺。' : '接下来的练习关联这些教学讲解，点击查看。'}
+              {showTeachingHintIntro ? t('todayTask.teachingHintIntro') : t('todayTask.teachingHint')}
             </p>
             <div className="mt-1.5 flex min-w-0 gap-2 overflow-x-auto pb-0.5 scrollbar-none">
               {visibleTeachingTopics.map((topic, index) => (
@@ -958,7 +962,9 @@ export function TodayTaskPage() {
                   className="inline-flex h-8 shrink-0 items-center rounded-lg bg-muted/70 px-3 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted active:scale-[0.98]"
                   title={upcomingTeachingTopics.slice(3).map((topic) => topic.title).join('、')}
                 >
-                  {showAllTeachingTopics ? '收起要点' : `还有 ${upcomingTeachingTopics.length - 3} 个要点`}
+                  {showAllTeachingTopics
+                    ? t('todayTask.collapseTopics')
+                    : t('todayTask.moreTeachingTopics', { count: upcomingTeachingTopics.length - 3 })}
                 </button>
               )}
             </div>

@@ -12,6 +12,8 @@ export interface ListExpressionsParams {
   page?: number;
   pageSize?: number;
   notebookId?: string;
+  search?: string;
+  sort?: 'newest' | 'oldest';
 }
 
 @Injectable()
@@ -22,7 +24,7 @@ export class ExpressionService {
   ) {}
 
   async listExpressions(userId: string, params?: ListExpressionsParams) {
-    const { type, sceneName, reviewState, page = 1, pageSize = 30 } = params ?? {};
+    const { type, sceneName, reviewState, page = 1, pageSize = 30, search, sort = 'newest' } = params ?? {};
     const notebookId = params?.notebookId;
     if (!notebookId) throw new BadRequestException('notebookId is required');
     await this.notebooks.getOwned(userId, notebookId);
@@ -39,6 +41,15 @@ export class ExpressionService {
 
     if (type) where.type = type;
     if (sceneName) where.sceneName = sceneName;
+    if (search?.trim()) {
+      const keyword = search.trim();
+      where.OR = [
+        { original: { contains: keyword, mode: 'insensitive' } },
+        { corrected: { contains: keyword, mode: 'insensitive' } },
+        { chunkText: { contains: keyword, mode: 'insensitive' } },
+        { sceneName: { contains: keyword, mode: 'insensitive' } },
+      ];
+    }
 
     // 直接按 masteryStatus 过滤
     // 兼容旧数据：'activated' 视为 'learning'
@@ -57,7 +68,7 @@ export class ExpressionService {
             take: 1,
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: sort === 'oldest' ? 'asc' : 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
@@ -221,6 +232,31 @@ export class ExpressionService {
       where: { id: item.id },
       data: { deletedAt: new Date() },
     });
+  }
+
+  async updateNotebookItemsStatus(userId: string, notebookItemIds: string[], status: MasteryStatus) {
+    const ids = [...new Set(notebookItemIds)].filter(Boolean);
+    if (!ids.length) throw new BadRequestException('请选择至少一项内容');
+    if (!['learning', 'reviewing', 'mastered'].includes(status)) {
+      throw new BadRequestException('无效的学习状态');
+    }
+    const result = await this.prisma.learningNotebookItem.updateMany({
+      where: { id: { in: ids }, deletedAt: null, notebook: { userId, deletedAt: null } },
+      data: { masteryStatus: status, lastReviewedAt: new Date() },
+    });
+    return { count: result.count };
+  }
+
+  async addNotebookItemsToNotebook(userId: string, notebookItemIds: string[], notebookId: string) {
+    const ids = [...new Set(notebookItemIds)].filter(Boolean);
+    if (!ids.length) throw new BadRequestException('请选择至少一项内容');
+    await this.notebooks.getOwned(userId, notebookId);
+    const sourceItems = await this.prisma.learningNotebookItem.findMany({
+      where: { id: { in: ids }, deletedAt: null, notebook: { userId, deletedAt: null } },
+      select: { expressionItemId: true },
+    });
+    await Promise.all(sourceItems.map((item) => this.notebooks.addExpressionToNotebooks(userId, item.expressionItemId, [notebookId])));
+    return { count: sourceItems.length };
   }
 }
 

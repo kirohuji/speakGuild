@@ -21,6 +21,8 @@ type ExpressionListRequest = {
   notebookId: string
   type: 'word' | 'chunk' | 'scene_phrase'
   reviewState?: string
+  search?: string
+  sort?: 'newest' | 'oldest'
   page: number
   pageSize: number
 }
@@ -60,7 +62,7 @@ function summarize(notebooks: LearningNotebook[]): NotebookListResult {
 }
 
 function expressionCacheKey(request: ExpressionListRequest) {
-  return `expression-cache:${request.notebookId}:${request.type}:${request.reviewState ?? 'all'}:${request.page}:${request.pageSize}`
+  return `expression-cache:${request.notebookId}:${request.type}:${request.reviewState ?? 'all'}:${request.search ?? ''}:${request.sort ?? 'newest'}:${request.page}:${request.pageSize}`
 }
 
 export const learningNotebookRepository = {

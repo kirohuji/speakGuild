@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BookCopy, ChevronRight, MoreHorizontal, Plus, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -33,8 +34,9 @@ const coverStyles: Record<string, string> = {
 }
 
 function BookCover({ notebook }: { notebook: LearningNotebook }) {
+  const { t } = useTranslation()
   const shortName = notebook.kind === 'uncategorized'
-    ? '待整理'
+    ? t('learningNotebooks.uncategorized')
     : notebook.name.trim().slice(0, 2).toUpperCase()
   return (
     <div
@@ -59,20 +61,25 @@ function NotebookRow({
   onOpen: () => void
   onManage?: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="group relative flex min-h-[88px] w-full items-center gap-4 rounded-2xl border border-border/60 bg-card/72 px-4 py-3 text-left shadow-sm transition-[transform,background-color] active:scale-[0.99]">
       <button type="button" className="absolute inset-0 rounded-2xl" onClick={onOpen}>
-        <span className="sr-only">打开{notebook.name}</span>
+        <span className="sr-only">{t('learningNotebooks.open', { name: notebook.name })}</span>
       </button>
       <BookCover notebook={notebook} />
       <div className="pointer-events-none min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <h2 className="truncate text-[15px] font-semibold tracking-tight">{notebook.name}</h2>
-          {notebook.kind === 'uncategorized' && <Badge variant="secondary">系统</Badge>}
+          {notebook.kind === 'uncategorized' && <Badge variant="secondary">{t('learningNotebooks.system')}</Badge>}
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">{notebook.counts.total} 项内容</p>
+        <p className="mt-1 text-xs text-muted-foreground">{t('learningNotebooks.totalItems', { count: notebook.counts.total })}</p>
         <p className="mt-1 truncate text-[11px] text-muted-foreground/80">
-          {notebook.counts.word} 单词 · {notebook.counts.chunk} 句块 · {notebook.counts.pattern} 句型
+          {t('learningNotebooks.itemBreakdown', {
+            words: notebook.counts.word,
+            chunks: notebook.counts.chunk,
+            patterns: notebook.counts.pattern,
+          })}
         </p>
       </div>
       {onManage ? (
@@ -82,7 +89,7 @@ function NotebookRow({
           size="icon"
           className="relative shrink-0 rounded-full"
           onClick={onManage}
-          aria-label={`管理${notebook.name}`}
+          aria-label={t('learningNotebooks.manage', { name: notebook.name })}
         >
           <MoreHorizontal />
         </Button>
@@ -94,6 +101,7 @@ function NotebookRow({
 }
 
 export function LearningNotebooksPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [notebooks, setNotebooks] = useState<LearningNotebook[]>([])
   const [loading, setLoading] = useState(true)
@@ -115,11 +123,11 @@ export function LearningNotebooksPage() {
       const result = await learningNotebookRepository.refresh()
       setNotebooks(result.items)
     } catch {
-      if (cached.items.length === 0) toast.error('学习本加载失败')
+      if (cached.items.length === 0) toast.error(t('learningNotebooks.loadFailed'))
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     void load()
@@ -148,22 +156,22 @@ export function LearningNotebooksPage() {
   const submitName = async () => {
     const value = name.trim()
     if (!value) {
-      toast.error('请输入学习本名称')
+      toast.error(t('learningNotebooks.nameRequired'))
       return
     }
     setSubmitting(true)
     try {
       if (mode === 'create') {
         await learningNotebookRepository.create(value)
-        toast.success('学习本已创建')
+        toast.success(t('learningNotebooks.created'))
       } else if (mode === 'rename' && selected) {
         await learningNotebookRepository.rename(selected.id, value)
-        toast.success('名称已修改')
+        toast.success(t('learningNotebooks.renamed'))
       }
       setMode(null)
       await load()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '操作失败')
+      toast.error(error instanceof Error ? error.message : t('learningNotebooks.operationFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -174,11 +182,11 @@ export function LearningNotebooksPage() {
     setSubmitting(true)
     try {
       await learningNotebookRepository.remove(selected.id)
-      toast.success('学习本已删除')
+      toast.success(t('learningNotebooks.deleted'))
       setMode(null)
       await load()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '删除失败')
+      toast.error(error instanceof Error ? error.message : t('learningNotebooks.deleteFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -187,7 +195,7 @@ export function LearningNotebooksPage() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 px-4 pb-24 pt-5">
       <header className="flex justify-end">
-        <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full bg-muted text-foreground hover:bg-muted/80" onClick={openCreate} aria-label="新建学习本">
+        <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full bg-muted text-foreground hover:bg-muted/80" onClick={openCreate} aria-label={t('learningNotebooks.createNew')}>
           <Plus />
         </Button>
       </header>
@@ -200,7 +208,7 @@ export function LearningNotebooksPage() {
         <>
           {systemNotebook && (
             <section className="flex flex-col gap-3">
-              <p className="px-1 text-xs font-medium text-muted-foreground">待整理</p>
+              <p className="px-1 text-xs font-medium text-muted-foreground">{t('learningNotebooks.uncategorized')}</p>
               <NotebookRow
                 notebook={systemNotebook}
                 onOpen={() => navigate(`/expressions/${systemNotebook.id}`)}
@@ -210,8 +218,8 @@ export function LearningNotebooksPage() {
 
           <section className="flex flex-col gap-3">
             <div className="flex items-center justify-between px-1">
-              <p className="text-xs font-medium text-muted-foreground">学习本</p>
-              <span className="text-xs text-muted-foreground">{customNotebooks.length} 本</span>
+              <p className="text-xs font-medium text-muted-foreground">{t('learningNotebooks.notebooks')}</p>
+              <span className="text-xs text-muted-foreground">{t('learningNotebooks.notebookCount', { count: customNotebooks.length })}</span>
             </div>
             {customNotebooks.length > 0 ? customNotebooks.map((notebook) => (
               <NotebookRow
@@ -227,8 +235,8 @@ export function LearningNotebooksPage() {
                 className="flex min-h-32 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-muted/20 px-6 text-center"
               >
                 <BookCopy className="size-8 text-muted-foreground" />
-                <span className="text-sm font-medium">创建第一本学习本</span>
-                <span className="text-xs text-muted-foreground">把单词、句块和句型放进同一本里学习</span>
+                <span className="text-sm font-medium">{t('learningNotebooks.createFirst')}</span>
+                <span className="text-xs text-muted-foreground">{t('learningNotebooks.createFirstDesc')}</span>
               </button>
             )}
           </section>
@@ -240,11 +248,11 @@ export function LearningNotebooksPage() {
           {(mode === 'create' || mode === 'rename') && (
             <>
               <DrawerHeader className="text-left">
-                <DrawerTitle>{mode === 'create' ? '新建学习本' : '修改学习本名称'}</DrawerTitle>
-                <DrawerDescription>学习本可以同时收纳单词、句块和句型。</DrawerDescription>
+                <DrawerTitle>{mode === 'create' ? t('learningNotebooks.createNew') : t('learningNotebooks.rename')}</DrawerTitle>
+                <DrawerDescription>{t('learningNotebooks.description')}</DrawerDescription>
               </DrawerHeader>
               <div className="px-4">
-                <Label htmlFor="notebook-name">名称</Label>
+                <Label htmlFor="notebook-name">{t('learningNotebooks.name')}</Label>
                 <Input
                   id="notebook-name"
                   value={name}
@@ -252,7 +260,7 @@ export function LearningNotebooksPage() {
                   maxLength={30}
                   autoFocus
                   className="mt-2"
-                  placeholder="例如：旅行英语"
+                  placeholder={t('learningNotebooks.namePlaceholder')}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') void submitName()
                   }}
@@ -260,9 +268,9 @@ export function LearningNotebooksPage() {
               </div>
               <DrawerFooter className="pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
                 <Button onClick={() => void submitName()} disabled={submitting}>
-                  {mode === 'create' ? '创建' : '保存'}
+                  {mode === 'create' ? t('learningNotebooks.create') : t('learningNotebooks.save')}
                 </Button>
-                <Button variant="outline" onClick={() => setMode(null)}>取消</Button>
+                <Button variant="outline" onClick={() => setMode(null)}>{t('learningNotebooks.cancel')}</Button>
               </DrawerFooter>
             </>
           )}
@@ -270,8 +278,8 @@ export function LearningNotebooksPage() {
           {mode === 'manage' && selected && (
             <>
               <DrawerHeader className="text-left">
-                <DrawerTitle>管理“{selected.name}”</DrawerTitle>
-                <DrawerDescription>{selected.counts.total} 项学习内容</DrawerDescription>
+                <DrawerTitle>{t('learningNotebooks.manageTitle', { name: selected.name })}</DrawerTitle>
+                <DrawerDescription>{t('learningNotebooks.totalItems', { count: selected.counts.total })}</DrawerDescription>
               </DrawerHeader>
               <div className="flex flex-col gap-2 px-4">
                 <Button
@@ -282,15 +290,15 @@ export function LearningNotebooksPage() {
                     setMode('rename')
                   }}
                 >
-                  修改名称
+                  {t('learningNotebooks.renameAction')}
                 </Button>
                 <Button variant="destructive" className="justify-start" onClick={() => setMode('delete')}>
                   <Trash2 data-icon="inline-start" />
-                  删除学习本
+                  {t('learningNotebooks.deleteAction')}
                 </Button>
               </div>
               <DrawerFooter className="pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-                <Button variant="outline" onClick={() => setMode(null)}>取消</Button>
+                <Button variant="outline" onClick={() => setMode(null)}>{t('learningNotebooks.cancel')}</Button>
               </DrawerFooter>
             </>
           )}
@@ -298,16 +306,16 @@ export function LearningNotebooksPage() {
           {mode === 'delete' && selected && (
             <>
               <DrawerHeader className="text-left">
-                <DrawerTitle>删除“{selected.name}”？</DrawerTitle>
+                <DrawerTitle>{t('learningNotebooks.deleteTitle', { name: selected.name })}</DrawerTitle>
                 <DrawerDescription>
-                  该学习本中的独立学习进度会一并删除，相同内容在其他学习本中的进度不受影响。
+                  {t('learningNotebooks.deleteDescription')}
                 </DrawerDescription>
               </DrawerHeader>
               <DrawerFooter className="pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
                 <Button variant="destructive" onClick={() => void removeNotebook()} disabled={submitting}>
-                  删除学习本
+                  {t('learningNotebooks.deleteAction')}
                 </Button>
-                <Button variant="outline" onClick={() => setMode('manage')}>取消</Button>
+                <Button variant="outline" onClick={() => setMode('manage')}>{t('learningNotebooks.cancel')}</Button>
               </DrawerFooter>
             </>
           )}

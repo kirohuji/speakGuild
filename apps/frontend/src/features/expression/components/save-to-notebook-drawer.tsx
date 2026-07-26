@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Check, Plus } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
   Drawer,
@@ -27,6 +28,7 @@ export function SaveToNotebookDrawer({
   onOpenChange: (open: boolean) => void
   onSave: (notebookIds: string[]) => Promise<void>
 }) {
+  const { t } = useTranslation()
   const [notebooks, setNotebooks] = useState<LearningNotebook[]>([])
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [lastNotebookId, setLastNotebookId] = useState<string | null>(null)
@@ -49,8 +51,8 @@ export function SaveToNotebookDrawer({
         setLastNotebookId(preferred?.id ?? null)
         setSelectedIds(initial ? [initial.id] : [])
       })
-      .catch(() => toast.error('学习本加载失败'))
-  }, [open])
+      .catch(() => toast.error(t('learningNotebooks.loadFailed')))
+  }, [open, t])
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
 
@@ -66,7 +68,7 @@ export function SaveToNotebookDrawer({
   const createNotebook = async () => {
     const value = name.trim()
     if (!value) {
-      toast.error('请输入学习本名称')
+      toast.error(t('learningNotebooks.nameRequired'))
       return
     }
     setSubmitting(true)
@@ -79,7 +81,7 @@ export function SaveToNotebookDrawer({
       setCreating(false)
       setName('')
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '创建失败')
+      toast.error(error instanceof Error ? error.message : t('learningNotebooks.createFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -95,7 +97,7 @@ export function SaveToNotebookDrawer({
       if (preferred) window.localStorage.setItem(LAST_NOTEBOOK_KEY, preferred)
       onOpenChange(false)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : '保存失败')
+      toast.error(error instanceof Error ? error.message : t('learningNotebooks.saveFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -105,20 +107,20 @@ export function SaveToNotebookDrawer({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[86svh] rounded-t-[28px]">
         <DrawerHeader className="text-left">
-          <DrawerTitle>{creating ? '新建学习本' : '保存到学习本'}</DrawerTitle>
+          <DrawerTitle>{creating ? t('learningNotebooks.createNew') : t('learningNotebooks.saveTo')}</DrawerTitle>
           <DrawerDescription>
-            {creating ? '学习本可以同时收纳单词、句块和句型。' : '可以选择一本或多本；每本拥有独立学习进度。'}
+            {creating ? t('learningNotebooks.description') : t('learningNotebooks.chooseDescription')}
           </DrawerDescription>
         </DrawerHeader>
 
         {creating ? (
           <div className="px-4">
-            <Label htmlFor="new-learning-notebook">名称</Label>
+            <Label htmlFor="new-learning-notebook">{t('learningNotebooks.name')}</Label>
             <Input
               id="new-learning-notebook"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="例如：旅行英语"
+              placeholder={t('learningNotebooks.namePlaceholder')}
               maxLength={30}
               autoFocus
               className="mt-2"
@@ -149,17 +151,17 @@ export function SaveToNotebookDrawer({
                       <span className="flex items-center gap-2">
                         <span className="truncate text-sm font-medium">{notebook.name}</span>
                         {notebook.id === lastNotebookId && notebook.kind === 'custom' && (
-                          <span className="text-[10px] text-muted-foreground">上次使用</span>
+                          <span className="text-[10px] text-muted-foreground">{t('learningNotebooks.lastUsed')}</span>
                         )}
                       </span>
-                      <span className="text-xs text-muted-foreground">{notebook.counts?.total ?? 0} 项内容</span>
+                      <span className="text-xs text-muted-foreground">{t('learningNotebooks.totalItems', { count: notebook.counts?.total ?? 0 })}</span>
                     </span>
                   </button>
                 )
               })}
               <Button type="button" variant="outline" className="justify-start" onClick={() => setCreating(true)}>
                 <Plus data-icon="inline-start" />
-                新建学习本
+                {t('learningNotebooks.createNew')}
               </Button>
             </div>
           </div>
@@ -168,15 +170,15 @@ export function SaveToNotebookDrawer({
         <DrawerFooter className="pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
           {creating ? (
             <>
-              <Button onClick={() => void createNotebook()} disabled={submitting}>创建并选择</Button>
-              <Button variant="outline" onClick={() => setCreating(false)}>返回</Button>
+              <Button onClick={() => void createNotebook()} disabled={submitting}>{t('learningNotebooks.createAndSelect')}</Button>
+              <Button variant="outline" onClick={() => setCreating(false)}>{t('learningNotebooks.back')}</Button>
             </>
           ) : (
             <>
               <Button onClick={() => void save()} disabled={submitting}>
-                {selectedIds.length === 0 ? '保存到未分类' : '保存'}
+                {selectedIds.length === 0 ? t('learningNotebooks.saveUncategorized') : t('learningNotebooks.save')}
               </Button>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>{t('learningNotebooks.cancel')}</Button>
             </>
           )}
         </DrawerFooter>

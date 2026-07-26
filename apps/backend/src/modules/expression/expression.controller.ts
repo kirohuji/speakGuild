@@ -16,6 +16,8 @@ export class ExpressionController {
     @Query('notebookId') notebookId?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
+    @Query('search') search?: string,
+    @Query('sort') sort?: 'newest' | 'oldest',
   ) {
     const session = await requireAuthSession(req);
     return this.expressionService.listExpressions(session.user.id, {
@@ -25,7 +27,29 @@ export class ExpressionController {
       notebookId,
       page: page ? parseInt(page, 10) : undefined,
       pageSize: pageSize ? parseInt(pageSize, 10) : undefined,
+      search,
+      sort,
     });
+  }
+
+  @Patch('notebook-items/batch/status')
+  async updateNotebookItemsStatus(
+    @Req() req: Request,
+    @Body('notebookItemIds') notebookItemIds: string[],
+    @Body('status') status: MasteryStatus,
+  ) {
+    const session = await requireAuthSession(req);
+    return this.expressionService.updateNotebookItemsStatus(session.user.id, notebookItemIds ?? [], status);
+  }
+
+  @Post('notebook-items/batch/add-to-notebook')
+  async addNotebookItemsToNotebook(
+    @Req() req: Request,
+    @Body('notebookItemIds') notebookItemIds: string[],
+    @Body('notebookId') notebookId: string,
+  ) {
+    const session = await requireAuthSession(req);
+    return this.expressionService.addNotebookItemsToNotebook(session.user.id, notebookItemIds ?? [], notebookId);
   }
 
   @Patch('notebook-items/:notebookItemId/status')
