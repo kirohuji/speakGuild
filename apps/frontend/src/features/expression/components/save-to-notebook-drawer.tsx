@@ -104,9 +104,12 @@ export function SaveToNotebookDrawer({
   }
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[86svh] rounded-t-[28px]">
-        <DrawerHeader className="text-left">
+    <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
+      <DrawerContent
+        overlayClassName="!z-[10001]"
+        className="!z-[10002] flex max-h-[86svh] flex-col rounded-t-[28px] border-border/70 bg-background shadow-[0_-18px_52px_rgba(15,23,42,0.18)] drawer-surface dark:shadow-[0_-20px_56px_rgba(0,0,0,0.46)]"
+      >
+        <DrawerHeader className="shrink-0 px-4 pb-2 pt-2 text-left">
           <DrawerTitle>{creating ? t('learningNotebooks.createNew') : t('learningNotebooks.saveTo')}</DrawerTitle>
           <DrawerDescription>
             {creating ? t('learningNotebooks.description') : t('learningNotebooks.chooseDescription')}
@@ -127,7 +130,7 @@ export function SaveToNotebookDrawer({
             />
           </div>
         ) : (
-          <div className="min-h-0 overflow-y-auto px-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3">
             <div className="flex flex-col gap-2">
               {notebooks.map((notebook) => {
                 const checked = selectedSet.has(notebook.id)
@@ -137,8 +140,8 @@ export function SaveToNotebookDrawer({
                     type="button"
                     onClick={() => toggle(notebook.id)}
                     className={cn(
-                      'flex min-h-14 items-center gap-3 rounded-xl border px-3 text-left transition-colors',
-                      checked ? 'border-primary bg-primary/5' : 'border-border bg-card',
+                      'flex min-h-14 items-center gap-3 rounded-xl border px-3 text-left shadow-sm transition-colors',
+                      checked ? 'border-primary/80 bg-primary/5 shadow-primary/5' : 'border-border/80 bg-background/70',
                     )}
                   >
                     <span className={cn(
@@ -167,7 +170,7 @@ export function SaveToNotebookDrawer({
           </div>
         )}
 
-        <DrawerFooter className="pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+        <DrawerFooter className="shrink-0 border-t border-border/60 bg-background/80 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3">
           {creating ? (
             <>
               <Button onClick={() => void createNotebook()} disabled={submitting}>{t('learningNotebooks.createAndSelect')}</Button>

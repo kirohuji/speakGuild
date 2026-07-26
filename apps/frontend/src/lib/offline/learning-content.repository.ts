@@ -463,6 +463,20 @@ export const learningContentRepository = {
     input: Parameters<typeof makeEntry>[0] & { notebookIds: string[] },
   ): Promise<ExpressionEntry> {
     const entry = await this.saveExpressionEntry(input)
+    await localDb.putMany('learning_notebook_items', input.notebookIds.map((notebookId) => ({
+      id: `local:${notebookId}:${entry.id}`,
+      remoteId: null,
+      notebookId,
+      expressionEntryId: entry.id,
+      masteryStatus: 'learning',
+      reviewCount: 0,
+      easeFactor: null,
+      lastReviewedAt: null,
+      nextReviewAt: null,
+      createdAt: entry.createdAt,
+      updatedAt: entry.updatedAt,
+      syncStatus: entry.syncStatus ?? 'pending',
+    })))
     const text = expressionText(entry)
     const outboxItem = await syncOutbox.enqueue({
       entityType: expressionEntityType(entry.kind),

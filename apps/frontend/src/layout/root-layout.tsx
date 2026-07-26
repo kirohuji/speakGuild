@@ -33,6 +33,7 @@ export function RootLayout() {
   const isLearningSubPage =
     pathname.startsWith('/learning/units/') ||
     pathname.startsWith('/practice/session/')
+  const isExpressionNotebookDetail = /^\/expressions\/[^/]+$/.test(pathname)
   const isLoggedIn = !!session
   const showBottomNav = bottomNavVisible && !immersiveMode && !isLearningSubPage
   const showMobileAvatar = isLoggedIn && isHomePage && !immersiveMode
@@ -60,7 +61,7 @@ export function RootLayout() {
           onProfileOpen={() => setProfileDrawerOpen(true)}
         />
       )}
-      <main className={cn('min-h-0 flex-1 pt-0', isMobile ? 'overflow-y-auto overscroll-contain' : 'overflow-visible', `${
+      <main className={cn('min-h-0 flex-1 pt-0', isMobile ? (isExpressionNotebookDetail ? 'overflow-hidden' : 'overflow-y-auto overscroll-contain') : 'overflow-visible', `${
         immersiveMode
           ? 'pb-0'
           : isAuthPage || !isLoggedIn

@@ -1,9 +1,9 @@
 import {
-  expressionApi,
   learningNotebookApi,
   type LearningNotebook,
 } from '@/features/practice/api/english-practice-api'
 import { localDb } from './unified-storage'
+import type { ExpressionEntry } from './learning-content.repository'
 
 type NotebookCounts = {
   total: number
@@ -17,20 +17,39 @@ type NotebookListResult = {
   allCounts: NotebookCounts
 }
 
-type ExpressionListRequest = {
+type LocalExpressionListRequest = {
   notebookId: string
   type: 'word' | 'chunk' | 'scene_phrase'
   reviewState?: string
   search?: string
   sort?: 'newest' | 'oldest'
-  page: number
-  pageSize: number
 }
 
-type ExpressionListCache = {
+type CachedNotebookItem = {
   id: string
-  value: unknown
-  updatedAt: string
+  remoteId?: string | null
+  notebookId: string
+  expressionEntryId: string
+  masteryStatus: string
+  reviewCount: number
+  easeFactor?: number | null
+  lastReviewedAt?: string | null
+  nextReviewAt?: string | null
+  createdAt?: string | null
+  updatedAt?: string | null
+  syncStatus: 'pending' | 'synced' | 'failed'
+}
+
+export type LocalNotebookExpression = ExpressionEntry & {
+  notebookItemId: string
+  notebookId: string
+  masteryStatus: string
+  reviewCount: number
+  easeFactor?: number | null
+  lastReviewedAt?: string | null
+  nextReviewAt?: string | null
+  vocabulary?: unknown
+  contentData?: unknown
 }
 
 type CachedNotebook = LearningNotebook & {
@@ -61,8 +80,13 @@ function summarize(notebooks: LearningNotebook[]): NotebookListResult {
   }
 }
 
-function expressionCacheKey(request: ExpressionListRequest) {
-  return `expression-cache:${request.notebookId}:${request.type}:${request.reviewState ?? 'all'}:${request.search ?? ''}:${request.sort ?? 'newest'}:${request.page}:${request.pageSize}`
+function matchesLocalExpression(entry: ExpressionEntry, request: LocalExpressionListRequest) {
+  const type = request.type === 'scene_phrase' ? 'scene_phrase' : request.type
+  if (entry.type !== type) return false
+  const query = request.search?.trim().toLocaleLowerCase()
+  if (!query) return true
+  return [entry.original, entry.corrected, entry.chunkText, entry.sceneName]
+    .some((value) => value?.toLocaleLowerCase().includes(query))
 }
 
 export const learningNotebookRepository = {
@@ -86,22 +110,65 @@ export const learningNotebookRepository = {
     return localDb.get<CachedNotebook>('learning_notebooks', id)
   },
 
-  async getCachedExpressionList(request: ExpressionListRequest): Promise<unknown | null> {
-    const cached = await localDb.get<ExpressionListCache>('kv', expressionCacheKey(request))
-    return cached?.value ?? null
+  /**
+   * The notebook detail view is local-first: all collected expression snapshots
+   * and their notebook state live in SQLite. The UI can safely virtualise this
+   * result without keeping thousands of DOM nodes alive.
+   */
+  async listCachedExpressionItems(request: LocalExpressionListRequest): Promise<LocalNotebookExpression[]> {
+    const [entries, notebookItems] = await Promise.all([
+      localDb.list<ExpressionEntry>('expression_entries'),
+      localDb.list<CachedNotebookItem>('learning_notebook_items'),
+    ])
+    const entriesById = new Map(entries.map((entry) => [entry.id, entry]))
+    const status = request.reviewState
+    const rows = notebookItems
+      .filter((item) => item.notebookId === request.notebookId)
+      .filter((item) => {
+        if (!status) return true
+        return status === 'learning'
+          ? item.masteryStatus === 'learning' || item.masteryStatus === 'activated'
+          : item.masteryStatus === status
+      })
+      .map((item) => {
+        const entry = entriesById.get(item.expressionEntryId)
+        if (!entry || !matchesLocalExpression(entry, request)) return null
+        const snapshot = entry.contentSnapshot
+        return {
+          ...entry,
+          id: entry.remoteId ?? entry.id,
+          notebookItemId: item.remoteId ?? item.id,
+          notebookId: item.notebookId,
+          masteryStatus: item.masteryStatus,
+          reviewCount: item.reviewCount,
+          easeFactor: item.easeFactor,
+          lastReviewedAt: item.lastReviewedAt,
+          nextReviewAt: item.nextReviewAt,
+          vocabulary: entry.kind === 'word' ? snapshot : undefined,
+          contentData: entry.kind === 'word' ? undefined : snapshot,
+        } satisfies LocalNotebookExpression
+      })
+      .filter((item): item is LocalNotebookExpression => Boolean(item))
+
+    return rows.sort((a, b) => {
+      const result = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      return request.sort === 'oldest' ? -result : result
+    })
   },
 
-  async refreshExpressionList(request: ExpressionListRequest): Promise<unknown> {
-    const value = await expressionApi.list(request)
-    // 缓存是加速层，不能因为 SQLite 写入失败而把已经拿到的列表结果丢掉。
-    void localDb.put<ExpressionListCache>('kv', {
-      id: expressionCacheKey(request),
-      value,
+  async updateCachedNotebookItemStatus(notebookItemId: string, masteryStatus: string): Promise<void> {
+    const item = await localDb.get<CachedNotebookItem>('learning_notebook_items', notebookItemId)
+    if (!item) return
+    await localDb.put('learning_notebook_items', {
+      ...item,
+      masteryStatus,
       updatedAt: new Date().toISOString(),
-    }).catch((error) => {
-      console.warn('[learning-notebook] expression list cache write failed:', error)
+      syncStatus: item.remoteId ? 'synced' : item.syncStatus,
     })
-    return value
+  },
+
+  async removeCachedNotebookItem(notebookItemId: string): Promise<void> {
+    await localDb.delete('learning_notebook_items', notebookItemId)
   },
 
   async create(name: string) {

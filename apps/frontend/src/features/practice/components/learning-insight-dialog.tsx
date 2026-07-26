@@ -693,16 +693,18 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
 
   return (
     <Tabs value={activeTab} onValueChange={changeTab} className="flex h-full flex-col">
-      <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto px-5 pt-3 md:px-6">
+      <div className="flex shrink-0 items-center gap-2 px-5 pt-3 md:px-6">
+        <div className="scrollbar-hide min-w-0 flex-1 overflow-x-auto">
         <TabsList>
           <TabsTrigger value="meaning">{t('insight.meaning')}</TabsTrigger>
           <TabsTrigger value="description">讲解</TabsTrigger>
           <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
           <TabsTrigger value="dictionary">词典</TabsTrigger>
         </TabsList>
+        </div>
         {!hideSave && (
-          <Button onClick={saveWord} disabled={saving} variant={saved ? 'secondary' : 'default'} size="sm" className="ml-auto h-7 gap-1 px-2 text-[11px]">
-            {saving ? <Loader2 className="size-3 animate-spin" /> : <BookmarkPlus className="size-3" />}
+          <Button onClick={saveWord} disabled={saving} variant={saved ? 'secondary' : 'default'} size="sm" className="h-8 shrink-0 gap-1.5 rounded-lg px-2.5 text-xs">
+            {saving ? <Loader2 className="size-3.5 animate-spin" /> : <BookmarkPlus className="size-3.5" />}
             {saving ? t('learning.processing') : saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
           </Button>
         )}
@@ -1105,14 +1107,16 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full flex-col">
-      <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto px-5 pt-3 md:px-6">
+      <div className="flex shrink-0 items-center gap-2 px-5 pt-3 md:px-6">
+        <div className="scrollbar-hide min-w-0 flex-1 overflow-x-auto">
         <TabsList>
           <TabsTrigger value="description">讲解</TabsTrigger>
           <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
         </TabsList>
+        </div>
         {!hideSave && (
-          <Button onClick={saveChunk} disabled={saving} variant={saved ? 'secondary' : 'default'} size="sm" className="ml-auto h-7 gap-1 px-2 text-[11px]">
-            {saving ? <Loader2 className="size-3 animate-spin" /> : <BookmarkPlus className="size-3" />}
+          <Button onClick={saveChunk} disabled={saving} variant={saved ? 'secondary' : 'default'} size="sm" className="h-8 shrink-0 gap-1.5 rounded-lg px-2.5 text-xs">
+            {saving ? <Loader2 className="size-3.5 animate-spin" /> : <BookmarkPlus className="size-3.5" />}
             {saving ? t('learning.processing') : saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
           </Button>
         )}
@@ -1175,15 +1179,17 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="flex h-full flex-col">
-      <div className="flex shrink-0 items-center gap-1.5 overflow-x-auto px-5 pt-3 md:px-6">
+      <div className="flex shrink-0 items-center gap-2 px-5 pt-3 md:px-6">
+        <div className="scrollbar-hide min-w-0 flex-1 overflow-x-auto">
         <TabsList>
           <TabsTrigger value="structure">结构</TabsTrigger>
           <TabsTrigger value="description">讲解</TabsTrigger>
           <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
         </TabsList>
+        </div>
         {!hideSave && (
-          <Button onClick={savePattern} disabled={saving} variant={saved ? 'secondary' : 'default'} size="sm" className="ml-auto h-7 gap-1 px-2 text-[11px]">
-            {saving ? <Loader2 className="size-3 animate-spin" /> : <BookmarkPlus className="size-3" />}
+          <Button onClick={savePattern} disabled={saving} variant={saved ? 'secondary' : 'default'} size="sm" className="h-8 shrink-0 gap-1.5 rounded-lg px-2.5 text-xs">
+            {saving ? <Loader2 className="size-3.5 animate-spin" /> : <BookmarkPlus className="size-3.5" />}
             {saving ? t('learning.processing') : saved ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
           </Button>
         )}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { forwardRef, useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
@@ -29,6 +29,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { Virtuoso } from 'react-virtuoso'
 import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
 import { Directory, Filesystem } from '@capacitor/filesystem'
@@ -38,6 +39,13 @@ type LibraryTab = 'words' | 'chunk' | 'pattern'
 type LibraryReviewState = MasteryStatus | 'all'
 const LIBRARY_TABS: LibraryTab[] = ['words', 'chunk', 'pattern']
 const TAB_SWIPE_DISTANCE = 70
+
+const VirtualListScroller = forwardRef<HTMLDivElement, React.ComponentPropsWithoutRef<'div'>>(
+  ({ className, ...props }, ref) => (
+    <div ref={ref} {...props} className={cn(className, 'scrollbar-hide')} />
+  ),
+)
+VirtualListScroller.displayName = 'VirtualListScroller'
 
 interface Expression {
   id: string; type: string; original: string | null; corrected: string | null
@@ -100,24 +108,6 @@ function printPracticeSheet(popup: Window, name: string, items: Expression[], mo
   window.setTimeout(() => popup.print(), 250)
 }
 
-function normalizePageResult(raw: any): PageResult {
-  if (raw && Array.isArray(raw.items)) {
-    return raw as PageResult
-  }
-  if (Array.isArray(raw)) {
-    return { items: raw, total: raw.length, page: 1, pageSize: PAGE_SIZE, totalPages: raw.length > 0 ? 1 : 0 }
-  }
-  if (raw?.data && Array.isArray(raw.data.items)) {
-    return raw.data as PageResult
-  }
-  return { items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 }
-}
-
-function dedupeExpressions(result: PageResult): PageResult {
-  const items = Array.from(new Map(result.items.map((item) => [item.id, item])).values())
-  return { ...result, items, total: Math.max(result.total, items.length) }
-}
-
 export function ExpressionLibraryPage() {
   const { t, i18n } = useTranslation()
   const isMobile = useIsMobile()
@@ -165,6 +155,9 @@ export function ExpressionLibraryPage() {
   const [handledDeepLink, setHandledDeepLink] = useState('')
   const tabSwipeRef = useRef({ x: 0, y: 0, blocked: false })
   const exportPageRefs = useRef(new Map<number, HTMLElement>())
+  const listScrollTopRef = useRef(0)
+  const headerScrollIntentRef = useRef({ down: 0, up: 0 })
+  const [headerCondensed, setHeaderCondensed] = useState(false)
   const exportItemsPerPage = exportColumns === 2 ? 40 : 20
   const displayExportItems = useMemo(() => {
     if (!shuffleExport) return exportItems
@@ -184,42 +177,48 @@ export function ExpressionLibraryPage() {
     }
   }, [isMobile, setBottomNavVisible])
 
-  // ---- 核心数据请求：一级 tab + 二级 tab 都作为查询参数传给后端 ----
+  const localListRequest = useMemo(() => ({
+    type: libraryTab === 'words' ? 'word' as const : libraryTab === 'pattern' ? 'scene_phrase' as const : 'chunk' as const,
+    reviewState: reviewState === 'all' ? undefined : reviewState,
+    notebookId: notebookId ?? '',
+    search: search.trim() || undefined,
+    sort: 'newest' as const,
+  }), [libraryTab, notebookId, reviewState, search])
+
+  const refreshLocalList = useCallback(async (remote?: PageResult) => {
+    if (!notebookId) return []
+    const items = await learningNotebookRepository.listCachedExpressionItems(localListRequest)
+    setResult({
+      items: items as Expression[],
+      total: Math.max(remote?.total ?? 0, items.length),
+      page: remote?.page ?? 1,
+      pageSize: remote?.pageSize ?? PAGE_SIZE,
+      totalPages: remote?.totalPages ?? 0,
+    })
+    return items
+  }, [localListRequest, notebookId])
+
+  // ---- The notebook detail is SQLite-only. Sync is handled outside the view. ----
   const fetchData = useCallback(async () => {
     if (!notebookId) {
       setResult({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
       setLoading(false)
       return
     }
-    const request = {
-      type: libraryTab === 'words' ? 'word' as const : libraryTab === 'pattern' ? 'scene_phrase' as const : 'chunk' as const,
-      reviewState: reviewState === 'all' ? undefined : reviewState,
-      notebookId,
-      page: 1,
-      pageSize: PAGE_SIZE,
-      search: search.trim() || undefined,
-    }
-    const cached = await learningNotebookRepository.getCachedExpressionList(request).catch(() => null)
-    if (cached) {
-      setResult(dedupeExpressions(normalizePageResult(cached)))
-      setLoading(false)
-    } else {
-      setLoading(true)
-    }
+    setLoading(true)
+    setHeaderCondensed(false)
+    listScrollTopRef.current = 0
+    headerScrollIntentRef.current = { down: 0, up: 0 }
     try {
-      const raw = await learningNotebookRepository.refreshExpressionList(request)
-      setResult(dedupeExpressions(normalizePageResult(raw)))
+      await refreshLocalList()
     } catch (error) {
-      if (!cached) {
-        setResult({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
-        const message = error instanceof Error ? error.message : t('learningNotebooks.operationFailed')
-        console.warn('[expression-library] list failed', { request, error })
-        toast.error(`${t('learningNotebooks.loadFailed')}: ${message}`)
-      }
+      const message = error instanceof Error ? error.message : t('learningNotebooks.operationFailed')
+      console.warn('[expression-library] local list failed', { notebookId, error })
+      toast.error(`${t('learningNotebooks.loadFailed')}: ${message}`)
     } finally {
       setLoading(false)
     }
-  }, [libraryTab, notebookId, reviewState, search, t])
+  }, [notebookId, refreshLocalList, t])
 
   useEffect(() => {
     if (!notebookId) return
@@ -413,12 +412,13 @@ export function ExpressionLibraryPage() {
     if (!target?.notebookItemId) return
     try {
       await expressionApi.updateNotebookItemStatus(target.notebookItemId, status)
+      await learningNotebookRepository.updateCachedNotebookItemStatus(target.notebookItemId, status)
+      await refreshLocalList()
       toast.success(status === 'learning' ? t('expressionLib.movedToLearning') : status === 'reviewing' ? t('expressionLib.movedToReview') : t('expressionLib.movedToMastered'))
-      fetchData()
     } catch {
       toast.error(t('expressionLib.operationFailed'))
     }
-  }, [fetchData, result.items, t])
+  }, [refreshLocalList, result.items, t])
 
   // ---- 删除操作 ----
   const handleRemove = useCallback(async (id: string) => {
@@ -426,16 +426,13 @@ export function ExpressionLibraryPage() {
     try {
       if (!target?.notebookItemId) return
       await expressionApi.removeNotebookItem(target.notebookItemId)
-      setResult((current) => ({
-        ...current,
-        items: current.items.filter((item) => item.id !== id),
-        total: Math.max(0, current.total - 1),
-      }))
+      await learningNotebookRepository.removeCachedNotebookItem(target.notebookItemId)
+      await refreshLocalList()
       toast.success(t('expressionLib.removed'))
     } catch {
       toast.error(t('expressionLib.removeFailed'))
     }
-  }, [result.items, t])
+  }, [refreshLocalList, result.items, t])
 
   const selectedNotebookItemIds = useMemo(
     () => result.items.filter((item) => selectedIds.has(item.id)).map((item) => item.notebookItemId).filter((id): id is string => Boolean(id)),
@@ -489,6 +486,7 @@ export function ExpressionLibraryPage() {
     try {
       if (batchAction === 'status') {
         await expressionApi.updateNotebookItemsStatus(selectedNotebookItemIds, batchStatus)
+        await Promise.all(selectedNotebookItemIds.map((id) => learningNotebookRepository.updateCachedNotebookItemStatus(id, batchStatus)))
       } else {
         if (!targetNotebookId) {
           toast.error(t('expressionLib.chooseNotebook'))
@@ -500,28 +498,20 @@ export function ExpressionLibraryPage() {
       setBatchOpen(false)
       setSelectionMode(false)
       setSelectedIds(new Set())
-      await fetchData()
+      await refreshLocalList()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('expressionLib.operationFailed'))
     } finally {
       setBatchBusy(false)
     }
-  }, [batchAction, batchStatus, fetchData, selectedNotebookItemIds, t, targetNotebookId])
+  }, [batchAction, batchStatus, refreshLocalList, selectedNotebookItemIds, t, targetNotebookId])
 
   const openExportPreview = useCallback(async () => {
     if (!notebookId) return
     setExportOpen(true)
     setExportLoading(true)
     try {
-      const raw = await expressionApi.list({
-        notebookId,
-        type: libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk',
-        reviewState: reviewState === 'all' ? undefined : reviewState,
-        search: search.trim() || undefined,
-        page: 1,
-        pageSize: 500,
-      })
-      const items = dedupeExpressions(normalizePageResult(raw)).items
+      const items = await learningNotebookRepository.listCachedExpressionItems(localListRequest) as Expression[]
       if (!items.length) {
         setExportOpen(false)
         toast.error(t('expressionLib.nothingToExport'))
@@ -533,7 +523,7 @@ export function ExpressionLibraryPage() {
     } finally {
       setExportLoading(false)
     }
-  }, [libraryTab, notebookId, notebookName, reviewState, search, t])
+  }, [localListRequest, notebookId, t])
 
   const printExportPreview = useCallback(async () => {
     if (!exportPageRefs.current.size || !displayExportItems.length) return
@@ -776,8 +766,11 @@ export function ExpressionLibraryPage() {
 
   const emptyKey = `${libraryTab}-${reviewState}`
   const empty = emptyHintMap[emptyKey]
-  const dateGroups = useMemo(() => {
-    if (!groupByDate) return []
+  const virtualRows = useMemo<Array<
+    | { kind: 'item'; expression: Expression; index: number; id: string }
+    | { kind: 'date'; key: string; label: string; ids: string[] }
+  >>(() => {
+    if (!groupByDate) return result.items.map((expression, index) => ({ kind: 'item', expression, index, id: expression.id }))
     const formatter = new Intl.DateTimeFormat(i18n.language, { year: 'numeric', month: 'long', day: 'numeric' })
     const groups = new Map<string, { label: string; items: Array<{ expression: Expression; index: number }> }>()
     result.items.forEach((expression, index) => {
@@ -788,35 +781,85 @@ export function ExpressionLibraryPage() {
       group.items.push({ expression, index })
       groups.set(key, group)
     })
-    return Array.from(groups.entries()).map(([key, group]) => ({ key, ...group }))
+    return Array.from(groups.entries()).flatMap(([key, group]) => [
+      { kind: 'date' as const, key, label: group.label, ids: group.items.map(({ expression }) => expression.id) },
+      ...group.items.map(({ expression, index }) => ({ kind: 'item' as const, expression, index, id: expression.id })),
+    ])
   }, [groupByDate, i18n.language, result.items, t])
 
-  const renderExpressionList = () => {
-    if (!groupByDate) return <div className="space-y-2">{result.items.map((expr, index) => renderExpressionItem(expr, index))}</div>
-    return <div className="space-y-5">
-      {dateGroups.map((group) => {
-        const groupIds = group.items.map(({ expression }) => expression.id)
-        const groupSelected = groupIds.length > 0 && groupIds.every((id) => selectedIds.has(id))
-        return <section key={group.key} className="space-y-2">
-          <div className="relative flex items-center justify-center py-1">
-            <span className="absolute inset-x-0 h-px bg-border/70" />
-            <span className="app-surface relative px-3 text-xs font-medium text-muted-foreground">{group.label}</span>
-            {selectionMode && <button type="button" className="absolute right-0 pl-3 text-[11px] font-medium text-primary" onClick={() => setSelectedIds((current) => {
-              const next = new Set(current)
-              if (groupSelected) groupIds.forEach((id) => next.delete(id))
-              else groupIds.forEach((id) => next.add(id))
-              return next
-            })}>{groupSelected ? t('expressionLib.clearSelection') : t('expressionLib.selectDateGroup')}</button>}
+  const renderVirtualList = (immersiveClassName: string) => (
+    <Virtuoso
+      data={virtualRows}
+      className="h-full md:h-[calc(100dvh-17rem)]"
+      increaseViewportBy={{ top: 360, bottom: 720 }}
+      onScroll={(event) => {
+        const scroller = event.currentTarget
+        const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
+        const top = Math.min(maxTop, Math.max(0, scroller.scrollTop))
+        const atTop = top <= 2
+        const atBottom = top >= maxTop - 2
+
+        // iOS rubber-band scrolling reports tiny reverse deltas at both edges.
+        // Treat an edge as stable and require deliberate travel before changing chrome.
+        if (atTop) {
+          setHeaderCondensed(false)
+          headerScrollIntentRef.current = { down: 0, up: 0 }
+          listScrollTopRef.current = top
+          return
+        }
+        if (atBottom) {
+          listScrollTopRef.current = top
+          return
+        }
+
+        const delta = top - listScrollTopRef.current
+        if (delta > 0.5) {
+          headerScrollIntentRef.current.down += delta
+          headerScrollIntentRef.current.up = 0
+          if (headerScrollIntentRef.current.down >= 24) setHeaderCondensed(true)
+        } else if (delta < -0.5) {
+          headerScrollIntentRef.current.up -= delta
+          headerScrollIntentRef.current.down = 0
+          if (headerScrollIntentRef.current.up >= 24) setHeaderCondensed(false)
+        }
+        listScrollTopRef.current = top
+      }}
+      components={{
+        Scroller: VirtualListScroller,
+        Header: () => (
+          <div className="mb-2 flex items-center justify-between px-0 pt-0">
+            <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
+            <button onClick={() => openImmersivePlayer(visibleDialogItems, 0)} className={cn('flex items-center gap-1 text-xs', immersiveClassName)}>
+              <ExternalLink className="size-3" /> {t('expressionLib.immersive')}
+            </button>
           </div>
-          <div className="space-y-2">{group.items.map(({ expression, index }) => renderExpressionItem(expression, index))}</div>
-        </section>
-      })}
-    </div>
-  }
+        ),
+        Footer: () => (
+          <div className="py-4 text-center text-xs text-muted-foreground">
+            {t('expressionLib.totalItems', { count: result.total })}
+          </div>
+        ),
+      }}
+      itemContent={(_, row) => {
+        if (row.kind === 'item') return <div className="pb-2">{renderExpressionItem(row.expression, row.index)}</div>
+        const groupSelected = row.ids.length > 0 && row.ids.every((id) => selectedIds.has(id))
+        return <div className="relative flex items-center justify-center py-2">
+          <span className="absolute inset-x-0 h-px bg-border/70" />
+          <span className="app-surface relative px-3 text-xs font-medium text-muted-foreground">{row.label}</span>
+          {selectionMode && <button type="button" className="absolute right-0 pl-3 text-[11px] font-medium text-primary" onClick={() => setSelectedIds((current) => {
+            const next = new Set(current)
+            if (groupSelected) row.ids.forEach((id) => next.delete(id))
+            else row.ids.forEach((id) => next.add(id))
+            return next
+          })}>{groupSelected ? t('expressionLib.clearSelection') : t('expressionLib.selectDateGroup')}</button>}
+        </div>
+      }}
+    />
+  )
 
   return (
-    <div className={cn('mx-auto max-w-2xl px-4 pt-3', selectionMode ? 'pb-28' : 'pb-10')}>
-      <header className="mb-4 flex items-center gap-3">
+    <div className={cn('mx-auto max-w-2xl px-4 pt-3 md:h-auto', isMobile && 'flex h-full min-h-0 flex-col overflow-hidden pb-0', selectionMode ? 'md:pb-28' : 'md:pb-10')}>
+      <header className={cn('mb-4 flex shrink-0 items-center gap-3 transition-[margin] duration-200', headerCondensed && 'mb-2')}>
         <button
           type="button"
           onClick={() => navigate('/expressions')}
@@ -826,7 +869,7 @@ export function ExpressionLibraryPage() {
           <ArrowLeft className="size-4" />
         </button>
         <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
-          <p className="text-xs text-muted-foreground">{t('learningNotebooks.notebooks')}</p>
+          <p className={cn('text-xs text-muted-foreground transition-all duration-200', headerCondensed && 'hidden')}>{t('learningNotebooks.notebooks')}</p>
           <h1 className="truncate text-lg font-semibold tracking-tight">{notebookName}</h1>
         </div>
         <div className="flex shrink-0 items-center gap-1">
@@ -836,14 +879,14 @@ export function ExpressionLibraryPage() {
           <button type="button" onClick={() => { setSelectionMode((value) => !value); setSelectedIds(new Set()) }} className={cn('flex size-10 items-center justify-center rounded-full transition-colors', selectionMode ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')} aria-label={selectionMode ? t('expressionLib.cancelSelection') : t('expressionLib.batchEdit')}><CheckSquare className="size-4" /></button>
         </div>
       </header>
-      <Tabs value={libraryTab} onValueChange={handleLibraryTabChange}>
+      <Tabs value={libraryTab} onValueChange={handleLibraryTabChange} className="flex min-h-0 flex-1 flex-col">
         <TabsList className="mb-3 w-full rounded-full bg-background/54 backdrop-blur-2xl">
           <TabsTrigger value="words" className="flex-1 rounded-full">{t('expressionLib.words')}</TabsTrigger>
           <TabsTrigger value="chunk" className="flex-1 rounded-full">{t('expressionLib.chunks')}</TabsTrigger>
           <TabsTrigger value="pattern" className="flex-1 rounded-full">{t('expressionLib.patterns')}</TabsTrigger>
         </TabsList>
 
-        <div className="mb-3 flex items-center gap-2">
+        <div className={cn('mb-3 flex items-center gap-2 transition-all duration-200', headerCondensed && 'hidden')}>
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 rounded-xl border-border/60 bg-muted/45 pl-9 text-sm shadow-none focus-visible:bg-background" placeholder={t('expressionLib.searchPlaceholder')} />
@@ -855,7 +898,7 @@ export function ExpressionLibraryPage() {
         </div>
 
         {/* ---- 二级状态过滤 ---- */}
-        <div className="mb-4 flex gap-2 overflow-x-auto">
+        <div className={cn('mb-4 flex gap-2 overflow-x-auto transition-all duration-200', headerCondensed && 'mb-2')}>
           {filterPills.map((item) => (
             <button
               key={item.value}
@@ -877,75 +920,33 @@ export function ExpressionLibraryPage() {
         </div>
 
         {/* 两个 TabsContent 共享同一套渲染逻辑 */}
-        <TabsContent value="words" forceMount className="data-[state=inactive]:hidden">
+        <TabsContent value="words" forceMount className="mt-0 min-h-0 flex-1 data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
             emptyState(empty.icon, empty.title, empty.hint)
           ) : (
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
-                <button
-                  onClick={() => openImmersivePlayer(visibleDialogItems, 0)}
-                  className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600"
-                >
-                  <ExternalLink className="size-3" /> {t('expressionLib.immersive')}
-                </button>
-              </div>
-              {renderExpressionList()}
-              <p className="mt-3 text-center text-xs text-muted-foreground">
-                {t('expressionLib.totalItems', { count: result.total })}
-              </p>
-            </div>
+            renderVirtualList('text-blue-500 hover:text-blue-600')
           )}
         </TabsContent>
 
-        <TabsContent value="chunk" forceMount className="data-[state=inactive]:hidden">
+        <TabsContent value="chunk" forceMount className="mt-0 min-h-0 flex-1 data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
             emptyState(empty.icon, empty.title, empty.hint)
           ) : (
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
-                <button
-                  onClick={() => openImmersivePlayer(visibleDialogItems, 0)}
-                  className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-600"
-                >
-                  <ExternalLink className="size-3" /> {t('expressionLib.immersive')}
-                </button>
-              </div>
-              {renderExpressionList()}
-              <p className="mt-3 text-center text-xs text-muted-foreground">
-                {t('expressionLib.totalItems', { count: result.total })}
-              </p>
-            </div>
+            renderVirtualList('text-purple-500 hover:text-purple-600')
           )}
         </TabsContent>
 
-        <TabsContent value="pattern" forceMount className="data-[state=inactive]:hidden">
+        <TabsContent value="pattern" forceMount className="mt-0 min-h-0 flex-1 data-[state=inactive]:hidden">
           {loading ? (
             <MobilePageLoading rows={3} minHeightClassName="min-h-[32vh]" />
           ) : result.items.length === 0 ? (
             emptyState(empty.icon, empty.title, empty.hint)
           ) : (
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
-                <button
-                  onClick={() => openImmersivePlayer(visibleDialogItems, 0)}
-                  className="flex items-center gap-1 text-xs text-violet-500 hover:text-violet-600"
-                >
-                  <ExternalLink className="size-3" /> {t('expressionLib.immersive')}
-                </button>
-              </div>
-              {renderExpressionList()}
-              <p className="mt-3 text-center text-xs text-muted-foreground">
-                {t('expressionLib.totalItems', { count: result.total })}
-              </p>
-            </div>
+            renderVirtualList('text-violet-500 hover:text-violet-600')
           )}
         </TabsContent>
       </Tabs>
