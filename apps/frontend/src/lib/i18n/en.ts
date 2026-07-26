@@ -1149,6 +1149,8 @@ const en = {
       mediaAlbum: 'Immersive Library Playback',
       noPlayableSegments: 'Nothing playable in this item',
       playFailed: 'Playback failed. Segment skipped.',
+      expandInsight: 'Show full explanation',
+      collapseInsight: 'Collapse explanation',
       kind: {
         word: 'Word',
         chunk: 'Chunk',

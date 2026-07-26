@@ -1149,6 +1149,8 @@ const ja = {
       mediaAlbum: 'ライブラリ没入再生',
       noPlayableSegments: '再生できる内容がありません',
       playFailed: '再生に失敗しました。現在の区間をスキップしました。',
+      expandInsight: '解説を展開',
+      collapseInsight: '解説を閉じる',
       kind: {
         word: '単語',
         chunk: 'チャンク',

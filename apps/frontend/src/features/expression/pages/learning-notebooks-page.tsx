@@ -63,7 +63,7 @@ function NotebookRow({
 }) {
   const { t } = useTranslation()
   return (
-    <div className="group relative flex min-h-[88px] w-full items-center gap-4 rounded-2xl border border-border/60 bg-card/72 px-4 py-3 text-left shadow-sm transition-[transform,background-color] active:scale-[0.99]">
+    <div className="group relative flex min-h-[88px] w-full items-center gap-4 rounded-2xl border border-border/60 bg-card/72 px-4 py-3 text-left transition-[transform,background-color] active:scale-[0.99]">
       <button type="button" className="absolute inset-0 rounded-2xl" onClick={onOpen}>
         <span className="sr-only">{t('learningNotebooks.open', { name: notebook.name })}</span>
       </button>

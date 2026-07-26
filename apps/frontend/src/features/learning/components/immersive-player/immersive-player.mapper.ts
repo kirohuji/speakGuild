@@ -29,15 +29,6 @@ function normalizeExamples(value: unknown): Array<{ en: string; zh?: string; aud
     .filter(Boolean) as Array<{ en: string; zh?: string; audioUrl?: string | null }>
 }
 
-function stripMarkdown(text?: string | null) {
-  return (text ?? '')
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/`([^`]+)`/g, '$1')
-    .replace(/^#+\s*/gm, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
 export function mapInsightItemToImmersiveItem(item: LearningInsightItem): ImmersivePlayerItem {
   if (item.kind === 'word') {
     const examples = normalizeExamples(item.examples)
@@ -47,7 +38,8 @@ export function mapInsightItemToImmersiveItem(item: LearningInsightItem): Immers
       kind: 'word',
       title: item.word,
       meaning: item.meaning,
-      insight: stripMarkdown(item.description || item.definitionEn).slice(0, 220),
+      // 保留完整 Markdown；练听力页与 LearningInsightDialog 共用相同的讲解渲染能力。
+      insight: textOrEmpty(item.description) || textOrEmpty(item.definitionEn),
       exampleEn: example?.en,
       exampleZh: example?.zh,
       mainAudioUrl: item.audioUsUrl || item.audioUkUrl,
@@ -64,7 +56,7 @@ export function mapInsightItemToImmersiveItem(item: LearningInsightItem): Immers
       kind: 'chunk',
       title: item.text,
       meaning: item.meaning,
-      insight: stripMarkdown(item.description).slice(0, 220),
+      insight: textOrEmpty(item.description),
       exampleEn: example?.en,
       exampleZh: example?.zh,
       exampleAudioUrl: (example as any)?.audioUrl,
@@ -80,7 +72,7 @@ export function mapInsightItemToImmersiveItem(item: LearningInsightItem): Immers
     kind: 'pattern',
     title: item.pattern,
     meaning: item.meaning,
-    insight: stripMarkdown(item.description).slice(0, 220),
+    insight: textOrEmpty(item.description),
     exampleEn: item.example || example?.en,
     exampleZh: example?.zh,
     exampleAudioUrl: example?.audioUrl,
@@ -148,4 +140,3 @@ export function buildPlaybackSegments(item: ImmersivePlayerItem, settings: Immer
   }
   return repeated
 }
-

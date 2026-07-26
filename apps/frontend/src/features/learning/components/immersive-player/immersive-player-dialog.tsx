@@ -28,6 +28,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
 import { isIOS, isNative } from '@/lib/native'
+import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { buildPlaybackSegments } from './immersive-player.mapper'
 import { immersivePlaybackService } from './immersive-playback.service'
 import { useImmersivePlayerPreferences } from './immersive-player.store'
@@ -75,6 +76,7 @@ export function ImmersivePlayerDialog({
   const [queueOpen, setQueueOpen] = useState(false)
   const [status, setStatus] = useState<ImmersivePlayerStatus>('idle')
   const [segmentRole, setSegmentRole] = useState<PlaybackSegmentRole | null>(null)
+  const [insightExpanded, setInsightExpanded] = useState(false)
   const runRef = useRef(0)
   const sleepTimerRef = useRef<number | null>(null)
   const mediaMetadataLabels = useMemo(() => ({
@@ -192,6 +194,10 @@ export function ImmersivePlayerDialog({
   }, [index, open, stopPlayback])
 
   useEffect(() => {
+    setInsightExpanded(false)
+  }, [current?.id])
+
+  useEffect(() => {
     if (sleepTimerRef.current) window.clearTimeout(sleepTimerRef.current)
     sleepTimerRef.current = null
     if (!open || settings.sleepTimerMinutes === 0 || status !== 'playing') return
@@ -210,6 +216,7 @@ export function ImmersivePlayerDialog({
   const meta = TYPE_META[current.kind]
   const Icon = meta.Icon
   const hiddenText = !settings.textVisible
+  const hasLongInsight = (current.insight?.length ?? 0) > 180
 
   return (
     <>
@@ -287,7 +294,20 @@ export function ImmersivePlayerDialog({
 
                 {!hiddenText && current.insight && (
                   <section className="rounded-lg border border-border/70 bg-muted/25 px-4 py-3">
-                    <p className="text-sm leading-6 text-muted-foreground">{current.insight}</p>
+                    <div className={cn('relative', hasLongInsight && !insightExpanded && 'max-h-28 overflow-hidden')}>
+                      <MarkdownContent content={current.insight} />
+                    </div>
+                    {hasLongInsight && (
+                      <button
+                        type="button"
+                        onClick={() => setInsightExpanded((value) => !value)}
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/80"
+                        aria-expanded={insightExpanded}
+                      >
+                        {insightExpanded ? t('immersivePlayer.collapseInsight') : t('immersivePlayer.expandInsight')}
+                        <ChevronDown className={cn('size-3.5 transition-transform', insightExpanded && 'rotate-180')} />
+                      </button>
+                    )}
                   </section>
                 )}
 

@@ -1201,6 +1201,8 @@ const zhCN = {
       mediaAlbum: '学习库沉浸式播放',
       noPlayableSegments: '当前内容没有可播放的片段',
       playFailed: '播放失败，已跳过当前片段',
+      expandInsight: '展开讲解',
+      collapseInsight: '收起讲解',
       kind: {
         word: '单词',
         chunk: '句块',
