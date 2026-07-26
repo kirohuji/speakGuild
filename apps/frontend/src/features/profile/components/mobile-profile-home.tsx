@@ -141,9 +141,9 @@ export function MobileProfileHome({
         />
         <IosRow
           icon={CircleHelp}
-          iconBg="bg-primary"
-          label={t('settings.faq', { defaultValue: '常见问题' })}
-          subtitle={t('settings.faqSubtitle', { defaultValue: '学习、语音、会员与账号问题' })}
+          iconBg="bg-accent"
+          label={t('settings.faq')}
+          subtitle={t('settings.faqSubtitle')}
           onTap={() => setShowFaqDrawer(true)}
         />
         <IosRow

@@ -1478,6 +1478,8 @@ const zhCN = {
       saveFailed: '保存失败',
     },
     settings: {
+      faq: '常见问题',
+      faqSubtitle: '学习、语音、会员与账号问题',
       mixedPacks: '跨学习包复习',
       mixedPacksOn: '复习任务会加入其他已安装学习包的到期内容',
       mixedPacksOff: '复习任务只安排当前学习包的内容',

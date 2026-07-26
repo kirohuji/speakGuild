@@ -1451,6 +1451,8 @@ const en = {
       exportBlocked: 'Allow the browser to open the print window and try again',
     },
     settings: {
+      faq: 'Frequently Asked Questions',
+      faqSubtitle: 'Learning, speech, membership, and account help',
       mixedPacks: 'Cross-pack Review',
       mixedPacksOn: 'Reviews include due items from other installed learning packs',
       mixedPacksOff: 'Reviews only include items from the current learning pack',

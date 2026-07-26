@@ -1451,6 +1451,8 @@ const ja = {
       exportBlocked: 'ブラウザの印刷ウィンドウを許可して、もう一度お試しください',
     },
     settings: {
+      faq: 'よくある質問',
+      faqSubtitle: '学習、音声、会員、アカウントについて',
       mixedPacks: '教材をまたぐ復習',
       mixedPacksOn: '他のインストール済み教材の復習期限項目も含めます',
       mixedPacksOff: '現在の教材の項目だけを復習します',

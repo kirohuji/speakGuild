@@ -5,7 +5,7 @@ import {
   BookMarked, Search, Trash2, BookOpen,
   BookText, MessageSquareText, ExternalLink, Layers,
   RotateCcw, CheckCheck, ArrowRightFromLine,
-  CalendarDays, Check, CheckSquare, Download, Expand, FileText, Languages, Loader2, Minimize2, Plus,
+  ArrowLeft, CalendarDays, Check, CheckSquare, Download, Expand, FileText, Languages, Loader2, Minimize2, Plus,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -29,7 +29,6 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { MobileBackButton } from '@/components/common/mobile-back-button'
 import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
 import { Directory, Filesystem } from '@capacitor/filesystem'
@@ -818,10 +817,14 @@ export function ExpressionLibraryPage() {
   return (
     <div className={cn('mx-auto max-w-2xl px-4 pt-3', selectionMode ? 'pb-28' : 'pb-10')}>
       <header className="mb-4 flex items-center gap-3">
-        <MobileBackButton
+        <button
+          type="button"
           onClick={() => navigate('/expressions')}
-          label={t('learningNotebooks.notebooks')}
-        />
+          className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
+          aria-label={t('learningNotebooks.notebooks')}
+        >
+          <ArrowLeft className="size-4" />
+        </button>
         <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
           <p className="text-xs text-muted-foreground">{t('learningNotebooks.notebooks')}</p>
           <h1 className="truncate text-lg font-semibold tracking-tight">{notebookName}</h1>
