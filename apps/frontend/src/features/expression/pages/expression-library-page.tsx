@@ -957,15 +957,15 @@ export function ExpressionLibraryPage() {
       </div>}
 
       <Dialog open={exportOpen} onOpenChange={setExportOpen}>
-        <DialogContent className="[&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-white p-0 text-black sm:h-[92svh] sm:max-w-3xl sm:rounded-2xl sm:border sm:border-border/60">
+        <DialogContent className="[&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-background p-0 text-foreground sm:h-[92svh] sm:max-w-3xl sm:rounded-2xl sm:border sm:border-border/60">
           <DialogTitle className="sr-only">{t('expressionLib.exportPdf')}</DialogTitle>
-          <div className="min-h-0 flex-1 overflow-y-auto bg-white px-6 pb-5 pt-[calc(4.5rem+env(safe-area-inset-top,0px))] sm:px-8 sm:pt-5">
-            {exportLoading ? <div className="flex h-full min-h-64 items-center justify-center text-sm text-black/60"><Loader2 className="mr-2 size-4 animate-spin" />{t('expressionLib.loadingPreview')}</div> : (
+          <div className="min-h-0 flex-1 overflow-y-auto bg-muted/25 px-6 pb-5 pt-[calc(4.5rem+env(safe-area-inset-top,0px))] sm:px-8 sm:pt-5">
+            {exportLoading ? <div className="flex h-full min-h-64 items-center justify-center text-sm text-muted-foreground"><Loader2 className="mr-2 size-4 animate-spin" />{t('expressionLib.loadingPreview')}</div> : (
               <div className="mx-auto flex w-full max-w-[500px] flex-col gap-4">
-                <div className="grid grid-cols-3 divide-x divide-black/10 rounded-xl border border-black/10 text-center text-xs text-black">
-                  <div className="py-2"><span className="block text-[10px] text-black/55">{t('expressionLib.pdfPages')}</span><strong>{t('expressionLib.pdfPagesCount', { count: exportPages.length })}</strong></div>
-                  <div className="py-2"><span className="block text-[10px] text-black/55">{t('expressionLib.pdfItems')}</span><strong>{t('expressionLib.practiceSheetCount', { count: displayExportItems.length })}</strong></div>
-                  <div className="py-2"><span className="block text-[10px] text-black/55">{t('expressionLib.pdfWords')}</span><strong>{t('expressionLib.pdfWordsCount', { count: exportWordCount })}</strong></div>
+                <div className="grid grid-cols-3 divide-x divide-border/70 rounded-xl border border-border/70 bg-background text-center text-xs text-foreground">
+                  <div className="py-2"><span className="block text-[10px] text-muted-foreground">{t('expressionLib.pdfPages')}</span><strong>{t('expressionLib.pdfPagesCount', { count: exportPages.length })}</strong></div>
+                  <div className="py-2"><span className="block text-[10px] text-muted-foreground">{t('expressionLib.pdfItems')}</span><strong>{t('expressionLib.practiceSheetCount', { count: displayExportItems.length })}</strong></div>
+                  <div className="py-2"><span className="block text-[10px] text-muted-foreground">{t('expressionLib.pdfWords')}</span><strong>{t('expressionLib.pdfWordsCount', { count: exportWordCount })}</strong></div>
                 </div>
                 {exportPages.map((pageItems, pageIndex) => <div key={pageIndex} className="mx-auto h-[449px] w-[318px] sm:h-[618px] sm:w-[436px]">
                   <article ref={(node) => { if (node) exportPageRefs.current.set(pageIndex, node); else exportPageRefs.current.delete(pageIndex) }} className="h-[297mm] w-[210mm] origin-top-left scale-[0.4] overflow-hidden rounded-xl bg-white px-5 py-5 text-black shadow-[0_8px_22px_rgba(15,23,42,0.05)] sm:scale-[0.55] sm:px-8">
@@ -992,7 +992,7 @@ export function ExpressionLibraryPage() {
               </div>
             )}
           </div>
-          <div className="shrink-0 border-t border-border/60 bg-white px-5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-4">
+          <div className="shrink-0 border-t border-border/60 bg-background px-5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-4">
             <div className="grid grid-cols-3 gap-2">
               {(['zh-to-en', 'en-to-zh', 'bilingual'] as ExportMode[]).map((mode) => <button key={mode} type="button" onClick={() => setExportMode(mode)} className={cn('min-h-[76px] rounded-xl border px-2 py-2 text-left transition-colors', exportMode === mode ? 'border-primary bg-primary/8 text-primary' : 'border-border/70 bg-background text-muted-foreground')}>
                 {mode === 'bilingual' ? <FileText className="size-3.5" /> : <Languages className="size-3.5" />}

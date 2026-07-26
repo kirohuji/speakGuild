@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
-  ChevronLeft, ChevronRight, BookText, MessageSquareText,
+  ArrowLeft, ChevronLeft, ChevronRight, BookText, MessageSquareText,
   Target,
   BookmarkPlus, Search, ChevronDown,
 } from 'lucide-react'
@@ -253,13 +253,28 @@ export function LearningUnitPage() {
   )
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
+    <div className="mx-auto max-w-2xl px-4 pb-24 pt-3 md:pt-4">
       {/* ===== Header ===== */}
       <div className="mb-4">
-        <Link to="/learning" className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="size-4" /> {t('learning.learningPlan')}
-        </Link>
-        <div className="flex items-start justify-between gap-3 px-1">
+        <div className="flex min-h-10 items-center gap-3 md:hidden">
+          <button
+            type="button"
+            onClick={() => navigate('/learning')}
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
+            aria-label={t('learning.learningPlan')}
+          >
+            <ArrowLeft className="size-4" />
+          </button>
+          <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
+            <p className="truncate text-xs text-muted-foreground">{unit.category}</p>
+            <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{unit.title}</h1>
+          </div>
+        </div>
+        <div className="hidden md:block">
+          <Link to="/learning" className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+            <ChevronLeft className="size-4" /> {t('learning.learningPlan')}
+          </Link>
+          <div className="flex items-start justify-between gap-3 px-1">
           <div className="min-w-0">
             <Badge variant="secondary" className="mb-2 rounded-full">{unit.category}</Badge>
             <h1 className="text-xl font-bold leading-tight text-foreground">{unit.title}</h1>
@@ -267,6 +282,7 @@ export function LearningUnitPage() {
           </div>
           <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <Target className="size-5" />
+          </div>
           </div>
         </div>
       </div>

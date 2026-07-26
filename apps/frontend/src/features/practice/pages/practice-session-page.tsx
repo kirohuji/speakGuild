@@ -914,9 +914,24 @@ export function PracticeSessionPage() {
   // ==================== Phase: Prepare ====================
   if (phase === 'prepare') {
     return (
-      <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
+      <div className="mx-auto max-w-2xl px-4 pb-24 pt-3 md:pt-4">
         {/* Header */}
-        <div className="mb-4 flex items-center gap-3">
+        <div className="mb-4 flex min-h-10 items-center gap-3 md:hidden">
+          <button
+            type="button"
+            onClick={goBackToScene}
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
+            aria-label={t('practiceSession.back')}
+          >
+            <ArrowLeft className="size-4" />
+          </button>
+          <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
+            <p className="truncate text-xs text-muted-foreground">{detail.scene.category} · {detail.scene.title}</p>
+            <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{detail.topic.title}</h1>
+          </div>
+          <Badge variant="secondary" className="shrink-0">{detail.topic.difficulty}</Badge>
+        </div>
+        <div className="mb-4 hidden items-center gap-3 md:flex">
           <Button variant="ghost" size="icon" onClick={goBackToScene}>
             <ArrowLeft className="size-5" />
           </Button>
@@ -1382,9 +1397,24 @@ export function PracticeSessionPage() {
   // ==================== Phase: Analysis ====================
   if (phase === 'analysis') {
     return (<>
-      <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
+      <div className="mx-auto max-w-2xl px-4 pb-24 pt-3 md:pt-4">
         {/* Header */}
-        <div className="mb-4 flex items-center gap-3">
+        <div className="mb-4 flex min-h-10 items-center gap-3 md:hidden">
+          <button
+            type="button"
+            onClick={goBackToScene}
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
+            aria-label={t('practiceSession.back')}
+          >
+            <ArrowLeft className="size-4" />
+          </button>
+          <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
+            <p className="truncate text-xs text-muted-foreground">{detail.scene.category} · {detail.scene.title}</p>
+            <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{detail.topic.title}</h1>
+          </div>
+          <Badge variant="secondary" className="shrink-0">{detail.topic.difficulty}</Badge>
+        </div>
+        <div className="mb-4 hidden items-center gap-3 md:flex">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="size-5" />
           </Button>
