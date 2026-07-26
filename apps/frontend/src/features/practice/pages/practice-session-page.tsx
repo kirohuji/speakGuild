@@ -24,6 +24,7 @@ import { LearningInsightDialog, type LearningInsightItem } from '../components/l
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { extractCoreUsage } from '@/lib/markdown-utils'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
+import { MobileBackButton } from '@/components/common/mobile-back-button'
 
 import { PracticeTurnFeedback } from '../components/practice-turn-feedback'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
@@ -914,15 +915,13 @@ export function PracticeSessionPage() {
   // ==================== Phase: Prepare ====================
   if (phase === 'prepare') {
     return (
-      <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
+      <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
         {/* Header */}
-        <div className="mb-4 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={goBackToScene}>
-            <ArrowLeft className="size-5" />
-          </Button>
-          <div className="flex-1">
-            <p className="text-xs text-muted-foreground">{detail.scene.category} · {detail.scene.title}</p>
-            <h1 className="text-lg font-bold text-foreground">{detail.topic.title}</h1>
+        <div className="mb-4 flex min-h-10 items-center gap-3">
+          <MobileBackButton onClick={goBackToScene} label={t('practiceSession.back')} />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs text-muted-foreground">{detail.scene.category} · {detail.scene.title}</p>
+            <h1 className="truncate text-lg font-bold text-foreground">{detail.topic.title}</h1>
           </div>
           <Badge variant="secondary">{detail.topic.difficulty}</Badge>
         </div>
@@ -1382,15 +1381,13 @@ export function PracticeSessionPage() {
   // ==================== Phase: Analysis ====================
   if (phase === 'analysis') {
     return (<>
-      <div className="mx-auto max-w-2xl px-4 pb-24 pt-4">
+      <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
         {/* Header */}
-        <div className="mb-4 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="size-5" />
-          </Button>
-          <div className="flex-1">
-            <p className="text-xs text-muted-foreground">{detail.scene.category} · {detail.scene.title}</p>
-            <h1 className="text-lg font-bold text-foreground">{detail.topic.title}</h1>
+        <div className="mb-4 flex min-h-10 items-center gap-3">
+          <MobileBackButton onClick={goBackToScene} label={t('practiceSession.back')} />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs text-muted-foreground">{detail.scene.category} · {detail.scene.title}</p>
+            <h1 className="truncate text-lg font-bold text-foreground">{detail.topic.title}</h1>
           </div>
           <Badge variant="secondary">{detail.topic.difficulty}</Badge>
         </div>
