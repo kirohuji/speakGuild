@@ -12,6 +12,19 @@ let configured = false
 let htmlAudio: HTMLAudioElement | null = null
 let currentNativeAssetId: string | null = null
 
+export type ImmersivePlaybackVisualState = {
+  state: 'idle' | 'loading' | 'playing' | 'paused'
+  media: HTMLAudioElement | null
+}
+
+let visualState: ImmersivePlaybackVisualState = { state: 'idle', media: null }
+const visualStateListeners = new Set<(state: ImmersivePlaybackVisualState) => void>()
+
+function publishVisualState(state: ImmersivePlaybackVisualState) {
+  visualState = state
+  visualStateListeners.forEach((listener) => listener(state))
+}
+
 type MediaMetadataLabels = {
   artist?: string
   album?: string
@@ -93,6 +106,8 @@ export const immersivePlaybackService = {
         if (event.assetId !== assetId) return
         void handle.remove()
         void NativeAudio.unload({ assetId }).catch(() => undefined)
+        if (currentNativeAssetId === assetId) currentNativeAssetId = null
+        publishVisualState({ state: 'idle', media: null })
       }).catch(() => null)
       const stateHandle = onNativeState
         ? await NativeAudio.addListener('playbackState', onNativeState).catch(() => null)
@@ -110,14 +125,16 @@ export const immersivePlaybackService = {
       })
       await NativeAudio.setRate({ assetId, rate: playbackRate }).catch(() => undefined)
       await NativeAudio.play({ assetId, volume: 1 })
+      publishVisualState({ state: 'playing', media: null })
       onStarted?.()
 
       await new Promise<void>((resolve) => {
         const done = NativeAudio.addListener('complete', (event) => {
-          if (event.assetId !== assetId) return
-          void done.then((listener) => listener.remove())
-          void stateHandle?.remove()
-          resolve()
+        if (event.assetId !== assetId) return
+        void done.then((listener) => listener.remove())
+        void stateHandle?.remove()
+        publishVisualState({ state: 'idle', media: null })
+        resolve()
         })
       })
       void handle?.remove()
@@ -129,9 +146,30 @@ export const immersivePlaybackService = {
       const audio = new Audio(audioUrl)
       htmlAudio = audio
       audio.playbackRate = playbackRate
-      audio.onended = () => resolve()
-      audio.onerror = () => reject(new Error('Audio playback failed'))
-      audio.play().then(() => onStarted?.()).catch(reject)
+      publishVisualState({ state: 'loading', media: audio })
+      audio.onplay = () => {
+        if (htmlAudio !== audio) return
+        publishVisualState({ state: 'playing', media: audio })
+      }
+      audio.onpause = () => {
+        if (htmlAudio !== audio) return
+        if (!audio.ended) publishVisualState({ state: 'paused', media: audio })
+      }
+      audio.onended = () => {
+        if (htmlAudio !== audio) return
+        htmlAudio = null
+        publishVisualState({ state: 'idle', media: null })
+        resolve()
+      }
+      audio.onerror = () => {
+        if (htmlAudio !== audio) return
+        htmlAudio = null
+        publishVisualState({ state: 'idle', media: null })
+        reject(new Error('Audio playback failed'))
+      }
+      audio.play().then(() => {
+        if (htmlAudio === audio) onStarted?.()
+      }).catch(reject)
     })
   },
 
@@ -141,6 +179,7 @@ export const immersivePlaybackService = {
     } else {
       htmlAudio?.pause()
     }
+    publishVisualState({ state: 'paused', media: htmlAudio })
     await MediaSession.setPlaybackState({ playbackState: 'paused' }).catch(() => undefined)
   },
 
@@ -150,6 +189,7 @@ export const immersivePlaybackService = {
     } else {
       await htmlAudio?.play().catch(() => undefined)
     }
+    publishVisualState({ state: 'playing', media: htmlAudio })
     await MediaSession.setPlaybackState({ playbackState: 'playing' }).catch(() => undefined)
   },
 
@@ -162,6 +202,15 @@ export const immersivePlaybackService = {
     }
     htmlAudio?.pause()
     htmlAudio = null
+    publishVisualState({ state: 'idle', media: null })
+  },
+
+  subscribeVisualState(listener: (state: ImmersivePlaybackVisualState) => void) {
+    visualStateListeners.add(listener)
+    listener(visualState)
+    return () => {
+      visualStateListeners.delete(listener)
+    }
   },
 
   isNativeAudioAvailable() {

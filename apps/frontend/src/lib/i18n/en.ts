@@ -1151,6 +1151,7 @@ const en = {
       playFailed: 'Playback failed. Segment skipped.',
       expandInsight: 'Show full explanation',
       collapseInsight: 'Collapse explanation',
+      listeningMode: 'Listening focus',
       kind: {
         word: 'Word',
         chunk: 'Chunk',

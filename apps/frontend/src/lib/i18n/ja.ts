@@ -1151,6 +1151,7 @@ const ja = {
       playFailed: '再生に失敗しました。現在の区間をスキップしました。',
       expandInsight: '解説を展開',
       collapseInsight: '解説を閉じる',
+      listeningMode: 'リスニングに集中',
       kind: {
         word: '単語',
         chunk: 'チャンク',

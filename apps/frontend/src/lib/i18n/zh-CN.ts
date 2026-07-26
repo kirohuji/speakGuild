@@ -1203,6 +1203,7 @@ const zhCN = {
       playFailed: '播放失败，已跳过当前片段',
       expandInsight: '展开讲解',
       collapseInsight: '收起讲解',
+      listeningMode: '专注听力',
       kind: {
         word: '单词',
         chunk: '句块',

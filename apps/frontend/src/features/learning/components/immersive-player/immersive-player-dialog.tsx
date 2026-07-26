@@ -26,11 +26,12 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
+import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '@/lib/cn'
 import { isIOS, isNative } from '@/lib/native'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { buildPlaybackSegments } from './immersive-player.mapper'
-import { immersivePlaybackService } from './immersive-playback.service'
+import { immersivePlaybackService, type ImmersivePlaybackVisualState } from './immersive-playback.service'
 import { useImmersivePlayerPreferences } from './immersive-player.store'
 import type { ImmersivePlaybackSettings, ImmersivePlayerItem, ImmersivePlayerStatus, PlaybackSegmentRole } from './immersive-player.types'
 
@@ -61,6 +62,78 @@ const SEGMENT_LABEL_KEY = {
   exampleTranslation: 'immersivePlayer.segment.exampleTranslation',
 } satisfies Record<PlaybackSegmentRole, string>
 
+const EQUALIZER_BARS = [
+  [0.2, 0.58, 0.88, 0], [0.3, 0.78, 1.05, 0.12], [0.18, 0.5, 0.96, 0.24],
+  [0.34, 0.92, 1.16, 0.05], [0.25, 0.7, 0.9, 0.18], [0.38, 1, 1.08, 0.3],
+  [0.22, 0.64, 0.98, 0.09], [0.3, 0.84, 1.12, 0.28], [0.2, 0.56, 0.92, 0.14],
+  [0.34, 0.9, 1.04, 0.22], [0.24, 0.68, 0.94, 0.03], [0.28, 0.76, 1.1, 0.16],
+] as const
+
+const EQUALIZER_PARTICLES = [
+  [-62, -12, 18, -22, 2.8, 0.1], [-43, 21, -8, -30, 3.4, 0.6], [46, -20, 14, 26, 3.1, 0.35],
+  [67, 12, -14, -20, 3.7, 0.8], [-12, -31, 20, 14, 3.3, 0.22], [21, 30, -18, -16, 2.9, 0.52],
+] as const
+
+function ListeningEqualizer({ active }: { active: boolean }) {
+  const reduceMotion = useReducedMotion()
+  const shouldAnimate = active && !reduceMotion
+
+  return (
+    <div className="relative flex h-32 items-center justify-center" aria-hidden="true">
+      <motion.div
+        className="pointer-events-none absolute size-36 rounded-full bg-primary/20 blur-3xl"
+        animate={shouldAnimate ? { scale: [0.72, 1.18, 0.84], opacity: [0.13, 0.32, 0.16] } : { scale: 0.72, opacity: 0.06 }}
+        transition={shouldAnimate ? { duration: 2.8, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.18, ease: 'easeOut' }}
+      />
+      <motion.div
+        className="pointer-events-none absolute size-20 rounded-full bg-primary/25 blur-2xl"
+        animate={shouldAnimate ? { x: [-9, 12, -9], y: [5, -8, 5], opacity: [0.08, 0.25, 0.08] } : { opacity: 0 }}
+        transition={shouldAnimate ? { duration: 3.6, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.18, ease: 'easeOut' }}
+      />
+      {EQUALIZER_PARTICLES.map(([x, y, driftX, driftY, duration, delay], index) => (
+        <motion.span
+          key={index}
+          className="pointer-events-none absolute size-1 rounded-full bg-primary/55 blur-[1px]"
+          style={{ x, y }}
+          animate={shouldAnimate ? { x: [x, x + driftX, x], y: [y, y + driftY, y], opacity: [0, 0.7, 0] } : { opacity: 0 }}
+          transition={shouldAnimate ? { duration, delay, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.18, ease: 'easeOut' }}
+        />
+      ))}
+      <div className="relative z-10 flex h-28 items-center justify-center gap-2">
+        {EQUALIZER_BARS.map(([min, max, duration, delay], index) => (
+          <motion.span
+            key={index}
+            className="h-full w-2 rounded-full bg-primary/80 shadow-[0_0_14px_hsl(var(--primary)/0.18)]"
+            initial={{ scaleY: 0.2, opacity: 0.38 }}
+            animate={shouldAnimate
+              ? { scaleY: [min, max, Math.max(min, max * 0.62), min], opacity: [0.5, 1, 0.72, 0.5] }
+              : { scaleY: 0.2, opacity: 0.38 }}
+            transition={shouldAnimate ? { duration, delay, repeat: Infinity, ease: [0.45, 0.05, 0.55, 0.95] } : { duration: 0.18, ease: 'easeOut' }}
+            style={{ transformOrigin: 'center' }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ListeningWaveformCard({
+  active,
+  label,
+}: {
+  active: boolean
+  label: string
+}) {
+  return (
+    <section className="w-full max-w-md text-center">
+      {/* <p className="text-base font-medium tracking-wide text-muted-foreground">{label}</p> */}
+      <div className="mb-5">
+        <ListeningEqualizer active={active} />
+      </div>
+    </section>
+  )
+}
+
 export function ImmersivePlayerDialog({
   open,
   onOpenChange,
@@ -77,6 +150,7 @@ export function ImmersivePlayerDialog({
   const [status, setStatus] = useState<ImmersivePlayerStatus>('idle')
   const [segmentRole, setSegmentRole] = useState<PlaybackSegmentRole | null>(null)
   const [insightExpanded, setInsightExpanded] = useState(false)
+  const [visualPlayback, setVisualPlayback] = useState<ImmersivePlaybackVisualState>({ state: 'idle', media: null })
   const runRef = useRef(0)
   const sleepTimerRef = useRef<number | null>(null)
   const mediaMetadataLabels = useMemo(() => ({
@@ -188,6 +262,13 @@ export function ImmersivePlayerDialog({
     }
   }, [gotoNext, gotoPrev, open, stopPlayback, togglePlay])
 
+  useEffect(() => immersivePlaybackService.subscribeVisualState(setVisualPlayback), [])
+
+  useEffect(() => {
+    if (status !== 'ended' && status !== 'idle' && status !== 'error') return
+    setVisualPlayback((current) => current.state === 'idle' ? current : { state: 'idle', media: null })
+  }, [status])
+
   useEffect(() => {
     if (!open) return
     void stopPlayback('idle')
@@ -217,6 +298,7 @@ export function ImmersivePlayerDialog({
   const Icon = meta.Icon
   const hiddenText = !settings.textVisible
   const hasLongInsight = (current.insight?.length ?? 0) > 180
+  const isVisualizerActive = status === 'playing' && visualPlayback.state === 'playing'
 
   return (
     <>
@@ -290,6 +372,13 @@ export function ImmersivePlayerDialog({
                     <p className="mx-auto mt-5 max-w-md break-words text-2xl font-bold leading-snug text-foreground">{current.meaning}</p>
                   )}
                 </div>
+                )}
+
+                {hiddenText && (
+                  <ListeningWaveformCard
+                    active={isVisualizerActive}
+                    label={t('immersivePlayer.listeningMode')}
+                  />
                 )}
 
                 {!hiddenText && current.insight && (
