@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, Pencil, Plus, Search } from 'lucide-react'
+import { ArrowLeft, BookOpen, PackageCheck, Pencil, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -82,20 +82,19 @@ export function AdminNarrativePage() {
     if (!packageForm.title.trim() || !packageForm.categoryId) return
     setPackageSaving(true)
     try {
-      if (editingPackage) {
-        await updateScene(editingPackage.id, packageForm)
-      } else {
-        await createScene({
+      const saved = editingPackage
+        ? await updateScene(editingPackage.id, packageForm)
+        : await createScene({
           ...packageForm,
           packageType: 'story',
           location: `story:${Date.now().toString(36)}`,
           requiredOutputLevel: 'L1',
           requiredUserLevel: 1,
         })
-      }
       toast.success(editingPackage ? '剧情包已更新' : '剧情包已创建')
       setPackageDialogOpen(false)
       await loadAssets()
+      if (!editingPackage) setSearchParams({ packageId: saved.id })
     } catch { toast.error('剧情包保存失败') }
     finally { setPackageSaving(false) }
   }
@@ -107,7 +106,11 @@ export function AdminNarrativePage() {
           {selectedPackage && <Button variant="ghost" size="icon" className="mt-0.5 size-8" onClick={leavePackage}><ArrowLeft className="size-4" /></Button>}
           <div><h1 className="text-2xl font-bold">{selectedPackage?.title ?? '剧情包内容'}</h1><p className="mt-1 text-sm text-muted-foreground">{selectedPackage ? '编辑章节、剧集及沉浸式输出体验。' : '管理沉浸式剧情包、章节与剧集内容。'}</p></div>
         </div>
-        {!selectedPackage && <Button onClick={() => openPackageDialog()}><Plus className="mr-2 size-4" />新建剧情包</Button>}
+        {selectedPackage ? (
+          <Button variant="outline" onClick={() => { window.location.hash = '#/admin/script-packs' }}>
+            <PackageCheck className="mr-2 size-4" />剧本包发布
+          </Button>
+        ) : <Button onClick={() => openPackageDialog()}><Plus className="mr-2 size-4" />新建剧情包</Button>}
       </header>
 
       {!selectedPackage ? (

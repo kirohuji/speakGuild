@@ -20,12 +20,13 @@ export class LearningPackAdminService {
     private readonly fileAssets: FileAssetsService,
   ) {}
 
-  async list(params: { sceneId?: string; packageType?: string; categoryId?: string; status?: string; page?: number; pageSize?: number }) {
+  async list(params: { sceneId?: string; packageType?: string; excludePackageType?: string; categoryId?: string; status?: string; page?: number; pageSize?: number }) {
     const page = Math.max(1, params.page ?? 1);
     const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
     const where: any = {};
     if (params.sceneId) where.sceneId = params.sceneId;
     if (params.packageType) where.type = params.packageType;
+    else if (params.excludePackageType) where.type = { not: params.excludePackageType };
     if (params.categoryId) where.scene = { categoryId: params.categoryId };
     if (params.status) where.status = params.status;
 
@@ -47,9 +48,51 @@ export class LearningPackAdminService {
   }
 
   async listScenes() {
-    return this.prisma.scene.findMany({
+    const scenes = await (this.prisma as any).scene.findMany({
       orderBy: [{ createdAt: 'desc' }],
-      select: { id: true, title: true, location: true, packageType: true },
+      select: {
+        id: true,
+        title: true,
+        location: true,
+        categoryId: true,
+        packageType: true,
+        updatedAt: true,
+        storyEpisodes: { select: { inkScriptId: true, updatedAt: true } },
+      },
+    });
+    const inkScriptIds = Array.from(new Set(
+      scenes.flatMap((scene: any) =>
+        scene.storyEpisodes.map((episode: any) => episode.inkScriptId).filter(Boolean),
+      ),
+    )) as string[];
+    const inkScripts = inkScriptIds.length
+      ? await (this.prisma as any).inkScript.findMany({
+          where: { id: { in: inkScriptIds } },
+          select: { id: true, updatedAt: true },
+        })
+      : [];
+    const inkScriptUpdatedAt = new Map(
+      inkScripts.map((script: any) => [script.id, script.updatedAt] as const),
+    );
+
+    return scenes.map((scene: any) => {
+      const timestamps = [
+        scene.updatedAt,
+        ...scene.storyEpisodes.flatMap((episode: any) => [
+          episode.updatedAt,
+          episode.inkScriptId ? inkScriptUpdatedAt.get(episode.inkScriptId) : undefined,
+        ]),
+      ].filter(Boolean) as Date[];
+      return {
+        id: scene.id,
+        title: scene.title,
+        location: scene.location,
+        categoryId: scene.categoryId,
+        packageType: scene.packageType,
+        episodeCount: scene.storyEpisodes.length,
+        readyEpisodeCount: scene.storyEpisodes.filter((episode: any) => episode.inkScriptId).length,
+        contentUpdatedAt: new Date(Math.max(...timestamps.map((value) => value.getTime()))),
+      };
     });
   }
 

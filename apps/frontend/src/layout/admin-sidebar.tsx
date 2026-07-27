@@ -5,7 +5,7 @@ import {
   Users, Settings, BarChart3, Bell,
   ChevronRight, ChevronDown, CreditCard, Receipt,
   MessageSquare, Award, Palette, Quote,
-  Smartphone, FileText, Wrench, PanelLeftClose, PanelLeftOpen, Library, BookOpen, Archive, Brain, ListChecks, ScrollText, Boxes, Castle,
+  Smartphone, FileText, Wrench, PanelLeftClose, PanelLeftOpen, Library, BookOpen, Archive, Brain, ListChecks, ScrollText, Boxes, Castle, Clapperboard,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -61,6 +61,7 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
     { key: 'narrative-management', label: '剧情管理', icon: Castle, items: [
       { key: 'narrative', label: '剧情包内容', icon: ScrollText, path: '/admin/narrative' },
       { key: 'narrative-assets', label: '剧情共享资产', icon: Boxes, path: '/admin/narrative-assets' },
+      { key: 'script-packs', label: '剧本包发布管理', icon: Clapperboard, path: '/admin/script-packs' },
     ]},
     { key: 'system', label: t('admin.systemSettings', { defaultValue: '系统设置' }), icon: Wrench, items: [
       { key: 'themes', label: t('admin.themeManagement', { defaultValue: '主题管理' }), icon: Palette, path: '/admin/themes' },

@@ -70,14 +70,21 @@ function saveBlob(buffer: ArrayBuffer, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function AdminLearningPacksPage() {
+interface AdminLearningPacksPageProps {
+  mode?: 'learning' | 'script';
+}
+
+export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacksPageProps) {
+  const isScriptMode = mode === 'script';
+  const entityLabel = isScriptMode ? '剧本包' : '学习包';
+  const unitLabel = isScriptMode ? '剧本' : '学习单元';
   const [packs, setPacks] = useState<LearningPackItem[]>([]);
   const [scenes, setScenes] = useState<LearningPackSceneOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [mutatingId, setMutatingId] = useState<string | null>(null);
 
   // ── List filters ──
-  const [packageTypeFilter, setPackageTypeFilter] = useState<string>('all');
+  const [packageTypeFilter, setPackageTypeFilter] = useState<string>(isScriptMode ? 'story' : 'all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [filterOptions, setFilterOptions] = useState<LearningPackFilters>({ packageTypes: [], categories: [] });
   const [categories, setCategories] = useState<SceneCategory[]>([]);
@@ -92,7 +99,7 @@ export function AdminLearningPacksPage() {
   const [createTitle, setCreateTitle] = useState('');
   const [generating, setGenerating] = useState(false);
   // Dialog filters
-  const [dialogPackageType, setDialogPackageType] = useState<string>('daily');
+  const [dialogPackageType, setDialogPackageType] = useState<string>(isScriptMode ? 'story' : 'daily');
   const [dialogCategoryId, setDialogCategoryId] = useState<string>('all');
   const [dialogCategories, setDialogCategories] = useState<SceneCategory[]>([]);
 
@@ -112,6 +119,9 @@ export function AdminLearningPacksPage() {
   // ── Group packs by scene ──
   const groupedPacks = useMemo(() => {
     const map = new Map<string, { scene: LearningPackSceneOption; versions: LearningPackItem[] }>();
+    for (const scene of scenes) {
+      map.set(scene.id, { scene, versions: [] });
+    }
     for (const pack of packs) {
       const sid = pack.sceneId;
       if (!map.has(sid)) {
@@ -127,7 +137,7 @@ export function AdminLearningPacksPage() {
       entry.versions.sort((a, b) => b.version - a.version);
     }
     return Array.from(map.values());
-  }, [packs]);
+  }, [packs, scenes]);
 
   const toggleExpand = (sceneId: string) => {
     setExpandedScenes((prev) => {
@@ -143,7 +153,9 @@ export function AdminLearningPacksPage() {
     setLoading(true);
     try {
       const listParams: any = { pageSize: 200 };
-      if (packageTypeFilter !== 'all') listParams.packageType = packageTypeFilter;
+      if (isScriptMode) listParams.packageType = 'story';
+      else if (packageTypeFilter !== 'all') listParams.packageType = packageTypeFilter;
+      else listParams.excludePackageType = 'story';
       if (categoryFilter !== 'all') listParams.categoryId = categoryFilter;
 
       const [packResult, sceneResult, filterResult] = await Promise.all([
@@ -152,15 +164,24 @@ export function AdminLearningPacksPage() {
         learningPackAdminApi.filters(),
       ]);
       setPacks(packResult.list);
-      setScenes(sceneResult);
-      setFilterOptions(filterResult);
-      if (!uploadSceneId && sceneResult[0]) setUploadSceneId(sceneResult[0].id);
+      const visibleScenes = sceneResult.filter((scene) =>
+        (isScriptMode ? scene.packageType === 'story' : scene.packageType !== 'story')
+        && (categoryFilter === 'all' || scene.categoryId === categoryFilter),
+      );
+      setScenes(visibleScenes);
+      setFilterOptions({
+        ...filterResult,
+        packageTypes: isScriptMode
+          ? filterResult.packageTypes.filter((type) => type === 'story')
+          : filterResult.packageTypes.filter((type) => type !== 'story'),
+      });
+      if (!uploadSceneId && visibleScenes[0]) setUploadSceneId(visibleScenes[0].id);
     } catch {
-      toast.error('加载学习包失败');
+      toast.error(`加载${entityLabel}失败`);
     } finally {
       setLoading(false);
     }
-  }, [uploadSceneId, packageTypeFilter, categoryFilter]);
+  }, [uploadSceneId, packageTypeFilter, categoryFilter, isScriptMode, entityLabel]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -170,15 +191,15 @@ export function AdminLearningPacksPage() {
     const params = new URLSearchParams(hashQuery)
     const pt = params.get('packageType')
     const cid = params.get('categoryId')
-    if (pt) setPackageTypeFilter(pt)
+    if (pt && !isScriptMode && pt !== 'story') setPackageTypeFilter(pt)
     if (cid) setCategoryFilter(cid)
-  }, [])
+  }, [isScriptMode])
 
   // ── Cascading filters ──
   useEffect(() => {
-    listSceneCategories(packageTypeFilter !== 'all' ? packageTypeFilter as any : undefined)
+    listSceneCategories(isScriptMode ? 'story' : packageTypeFilter !== 'all' ? packageTypeFilter as any : undefined)
       .then(setCategories).catch(() => {});
-  }, [packageTypeFilter]);
+  }, [packageTypeFilter, isScriptMode]);
   useEffect(() => { setCategoryFilter('all'); }, [packageTypeFilter]);
   useEffect(() => {
     if (categoryFilter !== 'all' && !categories.some((c) => c.id === categoryFilter))
@@ -187,9 +208,9 @@ export function AdminLearningPacksPage() {
 
   // Dialog cascading
   useEffect(() => {
-    listSceneCategories(dialogPackageType !== 'all' ? dialogPackageType as any : undefined)
+    listSceneCategories(isScriptMode ? 'story' : dialogPackageType !== 'all' ? dialogPackageType as any : undefined)
       .then(setDialogCategories).catch(() => {});
-  }, [dialogPackageType]);
+  }, [dialogPackageType, isScriptMode]);
   useEffect(() => { setDialogCategoryId('all'); }, [dialogPackageType]);
 
   // Filtered scenes for dialog
@@ -208,7 +229,7 @@ export function AdminLearningPacksPage() {
   const openCreateDialog = () => {
     setCreateVersion('');
     setCreateTitle('');
-    setDialogPackageType(packageTypeFilter !== 'all' ? packageTypeFilter : 'daily');
+    setDialogPackageType(isScriptMode ? 'story' : packageTypeFilter !== 'all' ? packageTypeFilter : 'daily');
     // Init first scene
     const filtered = scenes.filter((s) =>
       (packageTypeFilter !== 'all' ? s.packageType === packageTypeFilter : true)
@@ -230,10 +251,10 @@ export function AdminLearningPacksPage() {
       });
       setCreateVersion('');
       setCreateTitle('');
-      toast.success('学习包已生成并发布');
+      toast.success(`${entityLabel}已生成并发布`);
       await load();
     } catch (error: any) {
-      toast.error(error?.message || '生成学习包失败');
+      toast.error(error?.message || `生成${entityLabel}失败`);
     } finally {
       setGenerating(false);
     }
@@ -243,7 +264,7 @@ export function AdminLearningPacksPage() {
     setMutatingId(sceneId);
     try {
       await learningPackAdminApi.generate({ sceneId, publish: true });
-      toast.success('已生成并发布最新版');
+      toast.success(`已生成并发布最新版${entityLabel}`);
       await load();
     } catch (error: any) {
       toast.error(error?.message || '生成失败');
@@ -267,10 +288,10 @@ export function AdminLearningPacksPage() {
       setUploadTitle('');
       setUploadAssetId('');
       setUploadOpen(false);
-      toast.success('学习包已上传并发布');
+      toast.success(`${entityLabel}已上传并发布`);
       await load();
     } catch (error: any) {
-      toast.error(error?.message || '上传学习包失败');
+      toast.error(error?.message || `上传${entityLabel}失败`);
     } finally {
       setUploading(false);
     }
@@ -302,7 +323,7 @@ export function AdminLearningPacksPage() {
   };
 
   const remove = async (pack: LearningPackItem) => {
-    if (!window.confirm(`删除学习包「${pack.title}」？`)) return;
+    if (!window.confirm(`删除${entityLabel}「${pack.title}」？`)) return;
     setMutatingId(pack.id);
     try {
       await learningPackAdminApi.remove(pack.id);
@@ -320,8 +341,10 @@ export function AdminLearningPacksPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">学习包管理</h1>
-          <p className="mt-1 text-sm text-muted-foreground">按学习单元管理离线包版本，支持生成、上传、发布和导出。</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{entityLabel}管理</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            按{unitLabel}管理离线包版本，支持生成、上传、发布和导出。
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="gap-2" onClick={() => setUploadOpen(true)}>
@@ -330,7 +353,7 @@ export function AdminLearningPacksPage() {
           </Button>
           <Button className="gap-2" onClick={openCreateDialog}>
             <PackagePlus className="size-4" />
-            新建学习包
+            新建{entityLabel}
           </Button>
           <Button variant="outline" className="gap-2" onClick={() => void load()} disabled={loading}>
             <RefreshCw className="size-4" />
@@ -341,19 +364,21 @@ export function AdminLearningPacksPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <Select value={packageTypeFilter} onChange={(e) => setPackageTypeFilter((e.target as HTMLSelectElement).value)} className="w-[130px]">
-          <SelectItem value="all">全部一级分类</SelectItem>
-          {filterOptions.packageTypes.map((t) => (
-            <SelectItem key={t} value={t}>{packageTypeLabel(t as LearningPackType)}</SelectItem>
-          ))}
-        </Select>
+        {!isScriptMode && (
+          <Select value={packageTypeFilter} onChange={(e) => setPackageTypeFilter((e.target as HTMLSelectElement).value)} className="w-[130px]">
+            <SelectItem value="all">全部一级分类</SelectItem>
+            {filterOptions.packageTypes.map((t) => (
+              <SelectItem key={t} value={t}>{packageTypeLabel(t as LearningPackType)}</SelectItem>
+            ))}
+          </Select>
+        )}
         <Select value={categoryFilter} onChange={(e) => setCategoryFilter((e.target as HTMLSelectElement).value)} className="w-[150px]">
           <SelectItem value="all">全部二级分类</SelectItem>
           {categories.map((c) => (
             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
           ))}
         </Select>
-        <span className="text-sm text-muted-foreground">共 {groupedPacks.length} 个学习单元</span>
+        <span className="text-sm text-muted-foreground">共 {groupedPacks.length} 个{unitLabel}</span>
       </div>
 
       {/* Table grouped by scene */}
@@ -361,21 +386,23 @@ export function AdminLearningPacksPage() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Archive className="size-4" />
-            学习包列表
+            {entityLabel}列表
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
             <div className="py-16 text-center text-sm text-muted-foreground">加载中...</div>
           ) : groupedPacks.length === 0 ? (
-            <div className="py-16 text-center text-sm text-muted-foreground">暂无学习包，点击「新建学习包」开始。</div>
+            <div className="py-16 text-center text-sm text-muted-foreground">
+              暂无{entityLabel}，点击「新建{entityLabel}」开始。
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="border-b text-left text-xs text-muted-foreground bg-muted/30">
                   <tr>
                     <th className="py-3 pl-4 pr-2 w-8" />
-                    <th className="py-3 pr-4 font-medium">学习单元</th>
+                    <th className="py-3 pr-4 font-medium">{unitLabel}</th>
                     <th className="py-3 pr-4 font-medium">类型</th>
                     <th className="py-3 pr-4 font-medium">最新版本</th>
                     <th className="py-3 pr-4 font-medium">版本数</th>
@@ -387,6 +414,11 @@ export function AdminLearningPacksPage() {
                   {groupedPacks.map(({ scene, versions }) => {
                     const latest = versions[0];
                     const isExpanded = expandedScenes.has(scene.id);
+                    const hasContentUpdate = Boolean(
+                      latest
+                      && scene.contentUpdatedAt
+                      && new Date(scene.contentUpdatedAt).getTime() > new Date(latest.updatedAt).getTime(),
+                    );
                     return (
                       <>
                         {/* Main row */}
@@ -399,8 +431,21 @@ export function AdminLearningPacksPage() {
                             <ChevronRight className={cn('size-4 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
                           </td>
                           <td className="py-3 pr-4">
-                            <div className="font-medium">{scene.title}</div>
-                            <div className="text-xs text-muted-foreground">{scene.location || scene.id}</div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="font-medium">{scene.title}</div>
+                              {!latest ? (
+                                <Badge variant="secondary" className="text-[10px]">尚未生成</Badge>
+                              ) : hasContentUpdate ? (
+                                <Badge variant="outline" className="border-amber-500/40 text-[10px] text-amber-600">内容有更新</Badge>
+                              ) : latest.status === 'published' ? (
+                                <Badge variant="outline" className="text-[10px]">已同步</Badge>
+                              ) : null}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {isScriptMode
+                                ? `${scene.readyEpisodeCount ?? 0}/${scene.episodeCount ?? 0} 个章节已完成剧本`
+                                : scene.location || scene.id}
+                            </div>
                           </td>
                           <td className="py-3 pr-4">
                             <Badge variant="outline" className="text-[10px]">{packageTypeLabel(scene.packageType ?? latest?.type)}</Badge>
@@ -424,7 +469,7 @@ export function AdminLearningPacksPage() {
                                 onClick={() => generateForScene(scene.id)}
                               >
                                 {mutatingId === scene.id ? <Loader2 className="size-3 animate-spin" /> : <PackagePlus className="size-3" />}
-                                生成最新版
+                                {latest ? '生成最新版' : '生成首版'}
                               </Button>
                             </div>
                           </td>
@@ -487,20 +532,22 @@ export function AdminLearningPacksPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>新建学习包</DialogTitle>
-            <DialogDescription>选择一个学习单元，生成并发布离线学习包。</DialogDescription>
+            <DialogTitle>新建{entityLabel}</DialogTitle>
+            <DialogDescription>选择一个{unitLabel}，生成并发布离线{entityLabel}。</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>一级分类</Label>
-                <Select value={dialogPackageType} onChange={(e) => setDialogPackageType((e.target as HTMLSelectElement).value)}>
-                  <SelectItem value="all">全部一级分类</SelectItem>
-                  {filterOptions.packageTypes.map((t) => (
-                    <SelectItem key={t} value={t}>{packageTypeLabel(t as LearningPackType)}</SelectItem>
-                  ))}
-                </Select>
-              </div>
+            <div className={cn('grid gap-3', !isScriptMode && 'grid-cols-2')}>
+              {!isScriptMode && (
+                <div className="space-y-2">
+                  <Label>一级分类</Label>
+                  <Select value={dialogPackageType} onChange={(e) => setDialogPackageType((e.target as HTMLSelectElement).value)}>
+                    <SelectItem value="all">全部一级分类</SelectItem>
+                    {filterOptions.packageTypes.map((t) => (
+                      <SelectItem key={t} value={t}>{packageTypeLabel(t as LearningPackType)}</SelectItem>
+                    ))}
+                  </Select>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>二级分类</Label>
                 <Select value={dialogCategoryId} onChange={(e) => setDialogCategoryId((e.target as HTMLSelectElement).value)}>
@@ -512,7 +559,7 @@ export function AdminLearningPacksPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>学习单元</Label>
+              <Label>{unitLabel}</Label>
               <select
                 value={createSceneId}
                 onChange={(e) => setCreateSceneId(e.target.value)}
@@ -525,7 +572,7 @@ export function AdminLearningPacksPage() {
                 ))}
               </select>
               {dialogScenes.length === 0 && (
-                <p className="text-xs text-muted-foreground">当前筛选条件下没有学习单元。</p>
+                <p className="text-xs text-muted-foreground">当前筛选条件下没有{unitLabel}。</p>
               )}
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -557,12 +604,12 @@ export function AdminLearningPacksPage() {
       <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>上传 zip 新建学习包</DialogTitle>
-            <DialogDescription>上传已打好的学习包 zip，并绑定到一个学习单元版本。</DialogDescription>
+            <DialogTitle>上传 zip 新建{entityLabel}</DialogTitle>
+            <DialogDescription>上传已打好的{entityLabel} zip，并绑定到一个{unitLabel}版本。</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
             <div className="space-y-2">
-              <Label>学习单元</Label>
+              <Label>{unitLabel}</Label>
               <select
                 value={uploadSceneId}
                 onChange={(event) => setUploadSceneId(event.target.value)}
@@ -595,7 +642,7 @@ export function AdminLearningPacksPage() {
                 accept=".zip,application/zip"
                 group="learning_pack"
                 uploadLabel="上传 zip"
-                placeholder="点击上传或拖拽学习包 zip 到这里"
+                placeholder={`点击上传或拖拽${entityLabel} zip 到这里`}
                 onChange={(url) => { if (!url) setUploadAssetId(''); }}
                 onUploaded={(_url, id) => setUploadAssetId(id)}
                 className={uploadAssetId ? 'border-emerald-500/50' : ''}

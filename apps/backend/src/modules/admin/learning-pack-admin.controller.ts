@@ -12,6 +12,7 @@ export class LearningPackAdminController {
     @Req() req: Request,
     @Query('sceneId') sceneId?: string,
     @Query('packageType') packageType?: string,
+    @Query('excludePackageType') excludePackageType?: string,
     @Query('categoryId') categoryId?: string,
     @Query('status') status?: string,
     @Query('page') page?: string,
@@ -21,6 +22,7 @@ export class LearningPackAdminController {
     return this.service.list({
       sceneId,
       packageType,
+      excludePackageType,
       categoryId,
       status,
       page: Number(page || 1),

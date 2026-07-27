@@ -150,7 +150,7 @@ export function StoryChapterStudio({ packageId, characters, locations }: StoryCh
         characterId: data.characterId ?? null,
       }
       const saved = story ? await updateStory(story.id, payload) : await createStory(payload)
-      if (!story) {
+      if (selected.inkScriptId !== saved.id) {
         await updateScriptEpisode(selected.id, { inkScriptId: saved.id })
         setSelected({ ...selected, inkScriptId: saved.id })
       }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   BookOpen,
+  ChevronDown,
   ChevronRight,
   Clapperboard,
   Clock3,
@@ -32,6 +33,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -52,15 +54,6 @@ import {
 } from '@/layout/learning-pack-download-monitor'
 import { useLearningStore } from '@/stores/learning.store'
 import { cn } from '@/lib/cn'
-
-function posterTone(index: number) {
-  const tones = [
-    'from-primary/30 via-primary/10 to-background',
-    'from-foreground/20 via-muted/70 to-background',
-    'from-secondary via-primary/10 to-background',
-  ]
-  return tones[index % tones.length]
-}
 
 export function ScriptCenterPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -288,6 +281,7 @@ export function ScriptCenterPage() {
               units={shopUnits}
               ownedIds={new Set(storyUnits.map((unit) => unit.id))}
               installedIds={installedIds}
+              downloadTasks={downloadTasks}
               loading={shopLoading}
               onRefresh={loadShop}
               onEnroll={enroll}
@@ -367,14 +361,13 @@ function MineScripts({
       {activeUnit && (
         <section className="flex flex-col gap-2">
           <p className="px-1 text-xs font-medium text-muted-foreground">继续演出</p>
-          <Card className="overflow-hidden">
-            <div className="relative min-h-56 bg-gradient-to-br from-primary/30 via-primary/10 to-background p-5">
-              <div className="absolute -right-10 -top-10 size-40 rounded-full bg-background/35 blur-2xl" />
-              <div className="relative flex h-full min-h-46 flex-col justify-between gap-8">
+          <Card className="overflow-hidden border-0 bg-muted/30 shadow-none">
+            <div className="min-h-56 p-5">
+              <div className="flex h-full min-h-46 flex-col justify-between gap-8">
                 <div className="flex items-start justify-between gap-3">
-                  <Badge variant="secondary">
+                  {/* <Badge variant="secondary">
                     {installedIds.has(activeUnit.id) ? '已离线' : '等待下载'}
-                  </Badge>
+                  </Badge> */}
                   <span className="text-xs font-medium text-muted-foreground">
                     {Math.round(activeUnit.completionPercent)}%
                   </span>
@@ -419,7 +412,7 @@ function MineScripts({
         </section>
       )}
 
-      <section className="flex flex-col gap-2">
+      {/* <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between px-1">
           <p className="text-xs font-medium text-muted-foreground">最近练习</p>
           <Button variant="ghost" size="sm" onClick={onOpenRecords}>全部记录</Button>
@@ -438,7 +431,7 @@ function MineScripts({
           </div>
           <ChevronRight className="size-4 text-muted-foreground" />
         </button>
-      </section>
+      </section> */}
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between px-1">
@@ -454,10 +447,10 @@ function MineScripts({
           <Button variant="ghost" size="sm" onClick={onOpenShop}>探索更多</Button>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          {units.map((unit, index) => (
+          {units.map((unit) => (
             <Link key={unit.id} to={`/scripts/packages/${unit.id}`} className="group">
-              <Card className="h-full overflow-hidden transition-transform group-active:scale-[0.98]">
-                <div className={cn('aspect-[4/3] bg-gradient-to-br p-3', posterTone(index))}>
+              <Card className="h-full overflow-hidden border-0 bg-muted/30 shadow-none transition-transform group-active:scale-[0.98]">
+                <div className="aspect-[4/3] bg-muted/50 p-3">
                   <Badge variant="secondary">{unit.scriptCount} 章</Badge>
                 </div>
                 <CardHeader className="p-3">
@@ -770,6 +763,7 @@ function ScriptShop({
   units,
   ownedIds,
   installedIds,
+  downloadTasks,
   loading,
   onRefresh,
   onEnroll,
@@ -779,6 +773,7 @@ function ScriptShop({
   units: LearningUnitSummary[]
   ownedIds: Set<string>
   installedIds: Set<string>
+  downloadTasks: Array<{ packId: string; status: string; progress: number }>
   loading: boolean
   onRefresh: () => Promise<void>
   onEnroll: (unit: LearningUnitSummary) => Promise<void>
@@ -786,6 +781,11 @@ function ScriptShop({
   onNavigate: () => void
 }) {
   const [keyword, setKeyword] = useState('')
+  const [selectedUnit, setSelectedUnit] = useState<LearningUnitSummary | null>(null)
+  const [descExpanded, setDescExpanded] = useState(false)
+  const [chapterPage, setChapterPage] = useState(1)
+  const [acquiringId, setAcquiringId] = useState<string | null>(null)
+  const pageSize = 6
   const filteredUnits = units.filter((unit) => {
     const query = keyword.trim().toLocaleLowerCase()
     if (!query) return true
@@ -835,18 +835,22 @@ function ScriptShop({
     <div className="flex flex-col">
       {search}
       <div className="flex flex-col gap-2">
-        {filteredUnits.map((unit, index) => {
-          const owned = ownedIds.has(unit.id)
+        {filteredUnits.map((unit) => {
           const installed = installedIds.has(unit.id)
+          const task = downloadTasks.find((item) => item.packId === unit.id)
           return (
-          <div key={unit.id} className="rounded-lg bg-muted/30 p-3 transition-colors hover:bg-muted/50">
-            <Link
-              to={unit.isLocked ? '/member' : `/scripts/packages/${unit.id}`}
-              onClick={onNavigate}
-              className="flex gap-3"
+            <button
+              key={unit.id}
+              type="button"
+              onClick={() => {
+                setSelectedUnit(unit)
+                setDescExpanded(false)
+                setChapterPage(1)
+              }}
+              className="flex w-full gap-3 rounded-lg bg-muted/30 p-3 text-left transition-colors hover:bg-muted/50"
             >
-              <div className={cn('flex aspect-square size-[72px] shrink-0 items-end overflow-hidden rounded-md bg-gradient-to-br p-2', posterTone(index))}>
-                <Clapperboard className="size-6 text-primary" />
+              <div className="flex aspect-square size-[72px] shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                <Clapperboard className="size-7" />
               </div>
               <div className="min-w-0 flex-1 py-0.5">
                 <div className="flex items-start gap-2">
@@ -859,41 +863,175 @@ function ScriptShop({
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">{unit.isFree ? '免费' : '会员'}</Badge>
-                  {installed && <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">已离线</Badge>}
+                  {/* {installed && <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">已离线</Badge>} */}
+                  {(task?.status === 'downloading' || task?.status === 'extracting') && (
+                    <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{Math.round(task.progress)}%</Badge>
+                  )}
                   <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">Lv.{unit.requiredUserLevel}</Badge>
                 </div>
               </div>
-            </Link>
-            <div className="mt-3">
-              {!owned ? (
-                unit.isLocked ? (
-                  <Button asChild size="sm" className="w-full rounded-full">
-                    <Link to="/member" onClick={onNavigate}>
-                      <LockKeyhole data-icon="inline-start" />
-                      查看权益
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button size="sm" className="w-full rounded-full" onClick={() => void onEnroll(unit)}>
-                    <Play data-icon="inline-start" />
-                    加入剧本
-                  </Button>
-                )
-              ) : !installed ? (
-                <Button size="sm" variant="outline" className="w-full rounded-full" onClick={() => void onDownload(unit.id)}>
-                  <Download data-icon="inline-start" />
-                  离线下载
-                </Button>
-              ) : (
-                <Button size="sm" variant="outline" className="w-full rounded-full" asChild>
-                  <Link to={`/scripts/packages/${unit.id}`} onClick={onNavigate}>进入剧本</Link>
-                </Button>
-              )}
-            </div>
-          </div>
+            </button>
           )
         })}
       </div>
+
+      {selectedUnit && (
+        <ScriptShopDetail
+          unit={selectedUnit}
+          owned={ownedIds.has(selectedUnit.id)}
+          installed={installedIds.has(selectedUnit.id)}
+          task={downloadTasks.find((item) => item.packId === selectedUnit.id)}
+          descriptionExpanded={descExpanded}
+          chapterPage={chapterPage}
+          pageSize={pageSize}
+          acquiring={acquiringId === selectedUnit.id}
+          onDescriptionToggle={() => setDescExpanded((value) => !value)}
+          onChapterPageChange={setChapterPage}
+          onClose={() => setSelectedUnit(null)}
+          onNavigate={onNavigate}
+          onDownload={onDownload}
+          onEnroll={async () => {
+            setAcquiringId(selectedUnit.id)
+            try { await onEnroll(selectedUnit) } finally { setAcquiringId(null) }
+          }}
+        />
+      )}
     </div>
+  )
+}
+
+function ScriptShopDetail({
+  unit,
+  owned,
+  installed,
+  task,
+  descriptionExpanded,
+  chapterPage,
+  pageSize,
+  acquiring,
+  onDescriptionToggle,
+  onChapterPageChange,
+  onClose,
+  onNavigate,
+  onDownload,
+  onEnroll,
+}: {
+  unit: LearningUnitSummary
+  owned: boolean
+  installed: boolean
+  task?: { status: string; progress: number }
+  descriptionExpanded: boolean
+  chapterPage: number
+  pageSize: number
+  acquiring: boolean
+  onDescriptionToggle: () => void
+  onChapterPageChange: (page: number) => void
+  onClose: () => void
+  onNavigate: () => void
+  onDownload: (id: string) => Promise<void>
+  onEnroll: () => Promise<void>
+}) {
+  const downloading = task?.status === 'downloading' || task?.status === 'extracting'
+  const totalPages = Math.max(1, Math.ceil(unit.topics.length / pageSize))
+  const chapters = unit.topics.slice((chapterPage - 1) * pageSize, chapterPage * pageSize)
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="max-h-[88vh] w-[90vw] overflow-hidden rounded-2xl p-0 sm:max-w-md">
+        <DialogHeader className="sr-only">
+          <DialogTitle>{unit.title}</DialogTitle>
+          <DialogDescription>{unit.location}</DialogDescription>
+        </DialogHeader>
+        <div className="flex max-h-[88vh] flex-col">
+          <div className="flex gap-3 bg-muted/30 p-4">
+            <div className="flex aspect-square size-20 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+              <Clapperboard className="size-8" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <Badge variant="outline" className="rounded-full text-[10px]">{unit.isFree ? '免费' : '会员'}</Badge>
+                {unit.categoryName && <Badge variant="secondary" className="rounded-full text-[10px]">{unit.categoryName}</Badge>}
+                {unit.isLocked && <Badge variant="outline" className="rounded-full text-[10px]">未解锁</Badge>}
+              </div>
+              <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5">{unit.title}</h3>
+              <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{unit.location || '沉浸式英语剧场'}</p>
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                <span>{unit.scriptCount} 个章节</span>
+                <span>{unit.vocabCount} 个单词</span>
+                <span>{unit.chunkCount} 个句块</span>
+              </div>
+            </div>
+          </div>
+
+          {unit.description && (
+            <div className="border-b border-border/50 px-4 py-3">
+              <p className={cn('text-xs leading-5 text-muted-foreground', !descriptionExpanded && 'line-clamp-1')}>{unit.description}</p>
+              {unit.description.length > 40 && (
+                <button type="button" onClick={onDescriptionToggle} className="mt-1 flex items-center gap-0.5 text-[11px] text-muted-foreground/70">
+                  {descriptionExpanded ? '收起' : '展开'}
+                  <ChevronDown className={cn('size-3 transition-transform', descriptionExpanded && 'rotate-180')} />
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="p-4">
+            {downloading ? (
+              <div className="flex items-center gap-3">
+                <Progress value={task.progress} className="h-2 flex-1" />
+                <span className="text-xs tabular-nums text-muted-foreground">{Math.round(task.progress)}%</span>
+              </div>
+            ) : task?.status === 'queued' ? (
+              <Button className="w-full" disabled><Loader2 className="animate-spin" />等待下载</Button>
+            ) : task?.status === 'error' ? (
+              <Button variant="destructive" className="w-full" onClick={() => void onDownload(unit.id)}>下载失败，点击重试</Button>
+            ) : installed ? (
+              <Button variant="outline" className="w-full" asChild>
+                <Link to={`/scripts/packages/${unit.id}`} onClick={onNavigate}>进入剧本</Link>
+              </Button>
+            ) : owned ? (
+              <Button className="w-full" onClick={() => void onDownload(unit.id)}>
+                <Download data-icon="inline-start" />离线下载
+              </Button>
+            ) : unit.isLocked ? (
+              <Button className="w-full" asChild>
+                <Link to="/member" onClick={onNavigate}><LockKeyhole data-icon="inline-start" />查看权益</Link>
+              </Button>
+            ) : (
+              <Button className="w-full" disabled={acquiring} onClick={() => void onEnroll()}>
+                {acquiring ? <Loader2 className="animate-spin" /> : <Play data-icon="inline-start" />}
+                {acquiring ? '加入中…' : '加入剧本'}
+              </Button>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between bg-muted/30 px-4 py-2.5">
+            <p className="text-xs font-medium">章节列表</p>
+            {unit.topics.length > pageSize && (
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                <button type="button" disabled={chapterPage === 1} onClick={() => onChapterPageChange(Math.max(1, chapterPage - 1))} className="disabled:opacity-40">上一页</button>
+                <span>{chapterPage}/{totalPages}</span>
+                <button type="button" disabled={chapterPage === totalPages} onClick={() => onChapterPageChange(Math.min(totalPages, chapterPage + 1))} className="disabled:opacity-40">下一页</button>
+              </div>
+            )}
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2">
+            {chapters.length ? (
+              <div className="space-y-1.5">
+                {chapters.map((chapter, index) => (
+                  <div key={chapter.id} className="flex items-center gap-3 rounded-lg bg-muted/25 px-3 py-3">
+                    <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                      {(chapterPage - 1) * pageSize + index + 1}
+                    </div>
+                    <p className="line-clamp-1 min-w-0 flex-1 text-sm font-medium">{chapter.title}</p>
+                    <Badge variant="outline" className="rounded-full text-[10px]">{chapter.difficulty}</Badge>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="py-8 text-center text-sm text-muted-foreground">暂无章节</p>}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

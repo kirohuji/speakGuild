@@ -10,7 +10,11 @@ export interface LearningPackSceneOption {
   id: string;
   title: string;
   location: string;
+  categoryId?: string;
   packageType?: LearningPackType;
+  episodeCount?: number;
+  readyEpisodeCount?: number;
+  contentUpdatedAt?: string;
 }
 
 export interface LearningPackItem {
@@ -50,7 +54,7 @@ export interface LearningPackFilters {
 }
 
 export const learningPackAdminApi = {
-  list: (params?: { sceneId?: string; packageType?: string; categoryId?: string; status?: string; page?: number; pageSize?: number }) =>
+  list: (params?: { sceneId?: string; packageType?: string; excludePackageType?: string; categoryId?: string; status?: string; page?: number; pageSize?: number }) =>
     get<LearningPackListResult>('/admin/learning-packs', params),
   scenes: () => get<LearningPackSceneOption[]>('/admin/learning-packs/scenes'),
   filters: () => get<LearningPackFilters>('/admin/learning-packs/filters'),

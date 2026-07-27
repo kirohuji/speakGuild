@@ -278,6 +278,10 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId, worksp
 
   if (isCreating || editingStory) {
     const handleGoToLearningPacks = async () => {
+      if (workspace !== 'practice') {
+        window.location.hash = '#/admin/script-packs'
+        return
+      }
       const topicId = editingStory?.trainingTopic?.id
       if (topicId) {
         try {
@@ -313,10 +317,10 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId, worksp
                 : `Key: ${editingStory?.key} · 版本 ${(editingStory?.version ?? 0) + 1}`}
             </p>
           </div>
-          {editingStory?.trainingTopic && (
+          {(workspace !== 'practice' || editingStory?.trainingTopic) && (
             <Button size="sm" variant="outline" className="gap-1" onClick={handleGoToLearningPacks}>
               <PackageOpen className="size-3.5" />
-              学习包管理
+              {workspace === 'practice' ? '学习包管理' : '剧本包管理'}
             </Button>
           )}
         </div>
@@ -381,6 +385,10 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId, worksp
           </Button>
         )}
         <Button size="sm" variant="outline" className="gap-1" onClick={() => {
+          if (workspace !== 'practice') {
+            window.location.hash = '#/admin/script-packs'
+            return
+          }
           const params = new URLSearchParams()
           if (packageTypeFilter !== 'all') params.set('packageType', packageTypeFilter)
           if (categoryFilter !== 'all') params.set('categoryId', categoryFilter)
@@ -388,7 +396,7 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId, worksp
           window.location.hash = '#/admin/learning-packs' + (qs ? '?' + qs : '')
         }}>
           <PackageOpen className="size-3.5" />
-          学习包管理
+          {workspace === 'practice' ? '学习包管理' : '剧本包管理'}
         </Button>
         <Button size="sm" onClick={openCreate}>
           <Plus className="mr-1 size-4" />{workspace === 'practice' ? '新建话题实战' : '新建剧情脚本'}

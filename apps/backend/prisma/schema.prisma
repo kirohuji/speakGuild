@@ -686,6 +686,7 @@ model Scene {
   gameLocations       GameLocation[]
   learningPackages    LearningPackage[]
   createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
 
   @@index([createdAt])
   @@map("scene")
@@ -1117,6 +1118,7 @@ model StoryEpisode {
   works                   ScriptWork[]
   isPreview               Boolean                       @default(false)
   createdAt               DateTime                      @default(now())
+  updatedAt               DateTime                      @updatedAt
 
   @@index([chapterKey, sortOrder], map: "script_episode_chapterId_episodeOrder_idx")
   @@index([createdAt])

@@ -76,59 +76,67 @@ export function ScriptEpisodePage() {
   ].slice(0, 8)
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-5 px-4 pb-10 pt-3">
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate(`/scripts/packages/${detail.id}`)}>
-          <ArrowLeft />
-          <span className="sr-only">返回《{detail.title}》</span>
-        </Button>
-        <div className="flex items-center gap-2">
-          {episode.record?.passed && <Badge><CheckCircle2 className="mr-1 size-3" />已完成</Badge>}
-          <Badge variant="secondary">{episode.requiredOutputLevel}</Badge>
+    <div className="mx-auto max-w-2xl px-4 pb-24 pt-3 md:pt-4">
+      <div className="mb-4">
+        <div className="flex min-h-10 items-center gap-3 md:hidden">
+          <button
+            type="button"
+            onClick={() => navigate(`/scripts/packages/${detail.id}`)}
+            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
+            aria-label={`返回《${detail.title}》`}
+          >
+            <ArrowLeft className="size-4" />
+          </button>
+          <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
+            <p className="truncate text-xs text-muted-foreground">{detail.title} · {episode.chapterName}</p>
+            <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{episode.title}</h1>
+          </div>
+        </div>
+        <div className="hidden md:block">
+          <Link to={`/scripts/packages/${detail.id}`} className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="size-4" /> {detail.title}
+          </Link>
+          <div className="flex items-start justify-between gap-3 px-1">
+            <div className="min-w-0">
+              <div className="mb-2 flex items-center gap-2">
+                <Badge variant="secondary" className="rounded-full">{episode.requiredOutputLevel}</Badge>
+                {episode.record?.passed && <Badge className="rounded-full"><CheckCircle2 className="mr-1 size-3" />已完成</Badge>}
+              </div>
+              <h1 className="text-xl font-bold leading-tight text-foreground">{episode.title}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">{episode.chapterName}</p>
+            </div>
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Clapperboard className="size-5" />
+            </div>
+          </div>
         </div>
       </div>
 
-      <Card className="overflow-hidden">
-        <div className="relative min-h-60 bg-gradient-to-br from-foreground/20 via-primary/15 to-background p-6">
-          <div className="absolute right-5 top-5 flex size-12 items-center justify-center rounded-full bg-background/50 backdrop-blur-xl">
-            <Clapperboard className="size-5 text-primary" />
-          </div>
-          <div className="relative flex min-h-48 max-w-md flex-col justify-end">
-            <p className="text-xs font-medium text-muted-foreground">{detail.title} · {episode.chapterName}</p>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight">{episode.title}</h1>
-            {episode.description && (
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">{episode.description}</p>
-            )}
+      <section className="mb-5">
+        <SectionHeader eyebrow="1" title="章节梗概" />
+        <div className="rounded-lg bg-muted/30 p-4">
+          <p className="text-sm leading-6 text-muted-foreground">
+            {episode.description || '了解本章情境、角色和沟通任务，然后选择练习方式开始演出。'}
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="rounded-lg bg-background/55 p-3">
+              <div className="flex items-center gap-2 text-muted-foreground"><UserRound className="size-4" /><span className="text-xs">本章角色</span></div>
+              <p className="mt-2 text-sm font-semibold">{episode.characterName}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{episode.characterRole}</p>
+            </div>
+            <div className="rounded-lg bg-background/55 p-3">
+              <div className="flex items-center gap-2 text-muted-foreground"><Clock3 className="size-4" /><span className="text-xs">建议体验</span></div>
+              <p className="mt-2 text-sm font-semibold">6～12 分钟</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{episode.objectives.length} 个剧情目标</p>
+            </div>
           </div>
         </div>
-      </Card>
-
-      <section className="grid grid-cols-2 gap-3">
-        <Card>
-          <CardHeader className="p-4">
-            <UserRound className="size-5 text-primary" />
-            <CardDescription className="mt-2 text-xs">本章角色</CardDescription>
-            <CardTitle className="text-sm">{episode.characterName}</CardTitle>
-            <CardDescription className="text-xs">{episode.characterRole}</CardDescription>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="p-4">
-            <Clock3 className="size-5 text-primary" />
-            <CardDescription className="mt-2 text-xs">建议体验</CardDescription>
-            <CardTitle className="text-sm">6～12 分钟</CardTitle>
-            <CardDescription className="text-xs">{episode.objectives.length} 个剧情目标</CardDescription>
-          </CardHeader>
-        </Card>
       </section>
 
       {episode.objectives.length > 0 && (
-        <section className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 px-1">
-            <MessageCircle className="size-4 text-primary" />
-            <h2 className="text-sm font-semibold">本章沟通目标</h2>
-          </div>
-          <Card>
+        <section className="mb-5">
+          <SectionHeader eyebrow="2" title="本章沟通目标" meta={`${episode.objectives.length} 项`} />
+          <Card className="border-0 bg-muted/30 shadow-none">
             <CardContent className="flex flex-col gap-3 p-4">
               {episode.objectives.map((objective, index) => (
                 <div key={`${objective}-${index}`} className="flex items-start gap-3">
@@ -143,12 +151,9 @@ export function ScriptEpisodePage() {
         </section>
       )}
 
-      <section className="flex flex-col gap-2">
-        <div className="flex items-center gap-2 px-1">
-          <Sparkles className="size-4 text-primary" />
-          <h2 className="text-sm font-semibold">开演前看一眼</h2>
-        </div>
-        <Card>
+      <section className="mb-5">
+        <SectionHeader eyebrow="3" title="开演前看一眼" meta={`${keyExpressions.length} 项`} />
+        <Card className="border-0 bg-muted/30 shadow-none">
           <CardContent className="flex flex-col gap-0 p-0">
             {keyExpressions.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-muted-foreground">
@@ -164,7 +169,9 @@ export function ScriptEpisodePage() {
         </Card>
       </section>
 
-      <section className="flex flex-col gap-3">
+      <section className="mb-5">
+        <SectionHeader eyebrow="4" title="选择练习方式" />
+        <div className="flex flex-col gap-2">
         <ModeCard
           icon={Play}
           title="VN 互动模式"
@@ -181,10 +188,11 @@ export function ScriptEpisodePage() {
           to={`/scripts/player/${episode.id}?packageId=${detail.id}&mode=repeat`}
           disabled={!episode.isUnlocked || !episode.inkScriptId}
         />
+        </div>
       </section>
 
       {episode.record && (
-        <Card>
+        <Card className="border-0 bg-muted/30 shadow-none">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">上次演出</CardTitle>
             <CardDescription>章节记录会保留，视频作品将在后续渲染流程中从记录生成。</CardDescription>
@@ -196,6 +204,28 @@ export function ScriptEpisodePage() {
           </CardContent>
         </Card>
       )}
+    </div>
+  )
+}
+
+function SectionHeader({
+  eyebrow,
+  title,
+  meta,
+}: {
+  eyebrow: string
+  title: string
+  meta?: string
+}) {
+  return (
+    <div className="mb-3 flex items-end justify-between gap-3 px-1">
+      <div className="flex items-center gap-2">
+        <span className="flex size-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+          {eyebrow}
+        </span>
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+      </div>
+      {meta && <span className="text-xs text-muted-foreground">{meta}</span>}
     </div>
   )
 }
@@ -216,7 +246,7 @@ function ModeCard({
   disabled: boolean
 }) {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden border-0 bg-muted/30 shadow-none">
       <CardHeader className="flex-row items-start gap-4 p-4 pb-3">
         <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Icon className="size-5" />

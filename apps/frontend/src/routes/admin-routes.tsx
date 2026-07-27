@@ -52,6 +52,7 @@ export default function AdminRoutes() {
         <Route path="daily-sentences" element={<AdminDailySentencesPage />} />
         <Route path="mobile-bundles" element={<AdminMobileBundlesPage />} />
         <Route path="learning-packs" element={<AdminLearningPacksPage />} />
+        <Route path="script-packs" element={<AdminLearningPacksPage mode="script" />} />
         <Route path="content-library" element={<AdminContentLibraryPage />} />
         <Route path="dictionary" element={<AdminDictionaryPage />} />
         <Route path="ai-models" element={<AdminAiModelsPage />} />
