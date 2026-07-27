@@ -33,7 +33,6 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['remote_id', 'remoteId', (value) => value?.remoteId ?? null],
     ['kind', 'kind', (value) => value?.kind ?? null],
     ['expression_type', 'type', (value) => value?.type ?? null],
-    ['mastery_status', 'masteryStatus', (value) => value?.masteryStatus ?? null],
     ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
   ],
   learning_notebooks: [
@@ -46,6 +45,7 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['remote_id', 'remoteId', (value) => value?.remoteId ?? null],
     ['notebook_id', 'notebookId', (value) => value?.notebookId ?? null],
     ['expression_entry_id', 'expressionEntryId', (value) => value?.expressionEntryId ?? null],
+    ['mastery_status', 'masteryStatus', (value) => value?.masteryStatus ?? null],
     ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
   ],
   offline_vocabularies: [

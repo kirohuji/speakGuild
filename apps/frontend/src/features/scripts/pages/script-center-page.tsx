@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { ScreenOrientation } from '@capacitor/screen-orientation'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
   BookOpen,
   CalendarDays,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Clapperboard,
   Clock3,
   Download,
   Film,
   Heart,
+  History,
   Image,
   Loader2,
   Layers3,
@@ -26,7 +30,6 @@ import {
 import { toast } from 'sonner'
 import { Virtuoso } from 'react-virtuoso'
 import Lightbox from 'yet-another-react-lightbox'
-import Fullscreen from 'yet-another-react-lightbox/plugins/fullscreen'
 import Video from 'yet-another-react-lightbox/plugins/video'
 import 'yet-another-react-lightbox/styles.css'
 import { Badge } from '@/components/ui/badge'
@@ -55,6 +58,7 @@ import {
 } from '@/features/learning/api/learning-api'
 import {
   scriptCommunityApi,
+  type ScriptPublishHistoryItem,
   type ScriptPracticeRecord,
   type ScriptWork,
 } from '@/features/scripts/api/script-community-api'
@@ -69,13 +73,48 @@ import { flattenComposerToTimeline } from '@/features/admin/components/vn-mixed-
 import { requestScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
 
+function useVideoFullscreenOrientation() {
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+
+    const lockLandscape = () => {
+      void ScreenOrientation.lock({ orientation: 'landscape' }).catch(() => undefined)
+    }
+    const restoreOrientation = () => {
+      void ScreenOrientation.unlock().catch(() => undefined)
+    }
+    const handleFullscreenChange = () => {
+      const fullscreenElement = document.fullscreenElement
+      if (fullscreenElement?.tagName === 'VIDEO' || fullscreenElement?.querySelector('video')) {
+        lockLandscape()
+      } else {
+        restoreOrientation()
+      }
+    }
+
+    // iOS native video fullscreen does not use the standard Fullscreen API.
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitbeginfullscreen', lockLandscape, true)
+    document.addEventListener('webkitendfullscreen', restoreOrientation, true)
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitbeginfullscreen', lockLandscape, true)
+      document.removeEventListener('webkitendfullscreen', restoreOrientation, true)
+      restoreOrientation()
+    }
+  }, [])
+}
+
 export function ScriptCenterPage() {
+  useVideoFullscreenOrientation()
   const [searchParams, setSearchParams] = useSearchParams()
   const panel = searchParams.get('panel')
   const tab = searchParams.get('tab') === 'square' ? 'square' : 'mine'
   const [shopOpen, setShopOpen] = useState(panel === 'store')
   const [recordsOpen, setRecordsOpen] = useState(panel === 'records')
   const [downloadOpen, setDownloadOpen] = useState(false)
+  const [publishHistoryOpen, setPublishHistoryOpen] = useState(false)
   const [shopUnits, setShopUnits] = useState<LearningUnitSummary[]>([])
   const [shopLoading, setShopLoading] = useState(false)
   const [records, setRecords] = useState<ScriptPracticeRecord[]>([])
@@ -183,6 +222,13 @@ export function ScriptCenterPage() {
     }
   }, [])
 
+  const updateFeedWork = useCallback((
+    workId: string,
+    updater: (work: ScriptWork) => ScriptWork,
+  ) => {
+    setFeed((current) => current.map((work) => work.id === workId ? updater(work) : work))
+  }, [])
+
   useEffect(() => {
     if (shopOpen && shopUnits.length === 0) void loadShop()
   }, [loadShop, shopOpen, shopUnits.length])
@@ -215,6 +261,14 @@ export function ScriptCenterPage() {
         <div />
         <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45">
           <LearningPackDownloadStatusButton onClick={() => setDownloadOpen(true)} embedded />
+          <button
+            type="button"
+            onClick={() => setPublishHistoryOpen(true)}
+            className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
+            aria-label="发布日志"
+          >
+            <History className="size-[18px]" />
+          </button>
           <button
             type="button"
             onClick={() => setPanel('records')}
@@ -270,7 +324,7 @@ export function ScriptCenterPage() {
             works={feed}
             loading={feedLoading}
             onOpenShop={() => setPanel('store')}
-            onChanged={() => loadFeed()}
+            onWorkChanged={updateFeedWork}
             hasMore={Boolean(feedCursor)}
             loadingMore={feedLoadingMore}
             onLoadMore={() => feedCursor ? loadFeed(feedCursor, true) : Promise.resolve()}
@@ -279,6 +333,10 @@ export function ScriptCenterPage() {
       </Tabs>
 
       <LearningPackDownloadDrawer open={downloadOpen} onOpenChange={setDownloadOpen} />
+      <ScriptPublishHistoryDialog
+        open={publishHistoryOpen}
+        onOpenChange={setPublishHistoryOpen}
+      />
 
       <Drawer open={recordsOpen} onOpenChange={(open) => setPanel(open ? 'records' : null)}>
         <DrawerContent className="flex h-[95vh] max-h-[95vh] flex-col rounded-t-[28px] border-border/70 bg-background drawer-surface">
@@ -542,7 +600,6 @@ function MyWorks({
   const togglePublish = async (work: ScriptWork) => {
     try {
       if (work.status === 'published') await scriptCommunityApi.unpublishWork(work.id)
-      else if (work.videoUrl) await scriptCommunityApi.publishWork(work.id)
       else {
         setGenerating((current) => ({ ...current, [work.id]: 1 }))
         await generateAndPublishExistingWork(work, (progress) => {
@@ -617,7 +674,7 @@ function MyWorks({
                   : work.status === 'published'
                     ? '取消发布'
                     : work.videoUrl
-                      ? '发布到广场'
+                      ? '重新生成并发布'
                       : '生成视频并发布'}
               </Button>
               {generating[work.id] && <Progress value={generating[work.id]} className="mt-1.5 h-1" />}
@@ -646,6 +703,7 @@ function WorksLibraryDialog({
   const [sceneId, setSceneId] = useState('all')
   const [groupMode, setGroupMode] = useState<'time' | 'package'>('time')
   const [generating, setGenerating] = useState<Record<string, number>>({})
+  const [historyWork, setHistoryWork] = useState<ScriptWork | null>(null)
 
   const scenes = useMemo(() => Array.from(
     new Map(works.map((work) => [work.episode.scene.id, work.episode.scene])).values(),
@@ -653,7 +711,7 @@ function WorksLibraryDialog({
 
   const filtered = useMemo(() => {
     const keyword = search.trim().toLocaleLowerCase()
-    return [...works]
+    const matches = [...works]
       .filter((work) => sceneId === 'all' || work.episode.scene.id === sceneId)
       .filter((work) => !keyword || [
         work.title,
@@ -663,6 +721,10 @@ function WorksLibraryDialog({
         work.episode.scene.title,
       ].some((value) => value?.toLocaleLowerCase().includes(keyword)))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    return Array.from(matches.reduce((latest, work) => {
+      if (!latest.has(work.episodeId)) latest.set(work.episodeId, work)
+      return latest
+    }, new Map<string, ScriptWork>()).values())
   }, [sceneId, search, works])
 
   const episodeAttempts = useMemo(() => {
@@ -692,7 +754,6 @@ function WorksLibraryDialog({
   const togglePublish = async (work: ScriptWork) => {
     try {
       if (work.status === 'published') await scriptCommunityApi.unpublishWork(work.id)
-      else if (work.videoUrl) await scriptCommunityApi.publishWork(work.id)
       else {
         setGenerating((current) => ({ ...current, [work.id]: 1 }))
         await generateAndPublishExistingWork(work, (progress) => {
@@ -762,13 +823,11 @@ function WorksLibraryDialog({
                   <section key={group.label}>
                     <div className="mb-2 flex items-center justify-between px-1">
                       <h2 className="text-xs font-medium text-muted-foreground">{group.label}</h2>
-                      <span className="text-[11px] text-muted-foreground">{group.works.length} 个作品</span>
+                      <span className="text-[11px] text-muted-foreground">{group.works.length} 个章节</span>
                     </div>
                     <div className="space-y-2">
                       {group.works.map((work) => {
                         const attempts = episodeAttempts.get(work.episodeId) ?? [work]
-                        const attempt = attempts.findIndex((item) => item.id === work.id) + 1
-                        const latest = attempt === attempts.length
                         return (
                           <div key={work.id} className="flex gap-3 rounded-lg bg-muted/30 p-3">
                             <div className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-muted/60">
@@ -778,18 +837,24 @@ function WorksLibraryDialog({
                             <div className="min-w-0 flex-1">
                               <div className="flex items-start gap-2">
                                 <p className="line-clamp-1 flex-1 text-sm font-semibold">{work.title}</p>
-                                {attempts.length > 1 && <Badge variant={latest ? 'default' : 'secondary'} className="h-5 shrink-0 px-2 text-[10px]">{latest ? '最新' : `第 ${attempt} 次`}</Badge>}
+                                {attempts.length > 1 && <Badge variant="secondary" className="h-5 shrink-0 px-2 text-[10px]">{attempts.length} 次练习</Badge>}
                               </div>
                               <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{work.episode.chapterName} · {new Date(work.createdAt).toLocaleString('zh-CN')}</p>
-                              <Button size="sm" variant={work.status === 'published' ? 'outline' : 'default'} className="mt-2 h-7 rounded-full px-3 text-[11px]" disabled={Boolean(generating[work.id])} onClick={() => void togglePublish(work)}>
-                                {generating[work.id]
-                                  ? `生成中 ${generating[work.id]}%`
-                                  : work.status === 'published'
-                                    ? '取消发布'
-                                    : work.videoUrl
-                                      ? '发布到广场'
-                                      : '生成视频并发布'}
-                              </Button>
+                              <div className="mt-2 flex items-center gap-1.5">
+                                <Button size="sm" variant={work.status === 'published' ? 'outline' : 'default'} className="h-7 rounded-full px-3 text-[11px]" disabled={Boolean(generating[work.id])} onClick={() => void togglePublish(work)}>
+                                  {generating[work.id]
+                                    ? `生成中 ${generating[work.id]}%`
+                                    : work.status === 'published'
+                                      ? '取消发布'
+                                      : work.videoUrl
+                                        ? '重新生成并发布'
+                                        : '生成视频并发布'}
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-7 rounded-full px-2.5 text-[11px] text-muted-foreground" onClick={() => setHistoryWork(work)}>
+                                  <History data-icon="inline-start" />
+                                  历史
+                                </Button>
+                              </div>
                               {generating[work.id] && <Progress value={generating[work.id]} className="mt-1.5 h-1 w-32" />}
                             </div>
                           </div>
@@ -802,6 +867,279 @@ function WorksLibraryDialog({
             )}
           </div>
         </div>
+        <EpisodeWorkHistoryDialog
+          open={Boolean(historyWork)}
+          onOpenChange={(nextOpen) => { if (!nextOpen) setHistoryWork(null) }}
+          works={historyWork ? works.filter((work) => work.episodeId === historyWork.episodeId) : []}
+        />
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function EpisodeWorkHistoryDialog({
+  open,
+  onOpenChange,
+  works,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  works: ScriptWork[]
+}) {
+  const [previewWork, setPreviewWork] = useState<ScriptWork | null>(null)
+  const chronological = useMemo(
+    () => [...works].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    [works],
+  )
+  const ordered = useMemo(() => [...chronological].reverse(), [chronological])
+  const episode = ordered[0]?.episode
+
+  return (
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen && previewWork) return
+          onOpenChange(nextOpen)
+        }}
+      >
+        <DialogContent
+          className="flex max-h-[86dvh] w-[calc(100vw-2rem)] max-w-lg flex-col gap-4 overflow-hidden rounded-2xl p-5"
+          onInteractOutside={(event) => {
+            if (previewWork) event.preventDefault()
+          }}
+          onEscapeKeyDown={(event) => {
+            if (previewWork) event.preventDefault()
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>{episode ? `《${episode.chapterName}》练习历史` : '练习历史'}</DialogTitle>
+            <DialogDescription className="text-xs">
+              {episode ? `${episode.scene.title} · ` : ''}共保留 {works.length} 次练习作品
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {ordered.length === 0 ? (
+              <div className="rounded-lg bg-muted/30 py-12 text-center text-sm text-muted-foreground">
+                暂无历史作品
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {ordered.map((work) => {
+                  const attempt = chronological.findIndex((item) => item.id === work.id) + 1
+                  const statusLabel = work.status === 'published'
+                    ? '已发布'
+                    : work.status === 'rendering'
+                      ? '生成中'
+                      : work.status === 'failed'
+                        ? '生成失败'
+                        : '仅自己可见'
+                  return (
+                    <div key={work.id} className="flex gap-3 rounded-lg bg-muted/30 p-3">
+                      <button
+                        type="button"
+                        className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-muted/60 text-left disabled:cursor-default"
+                        disabled={!work.videoUrl}
+                        onClick={() => setPreviewWork(work)}
+                        aria-label={work.videoUrl ? `查看第 ${attempt} 次练习视频` : undefined}
+                      >
+                        {work.coverUrl && <img src={work.coverUrl} alt="" className="size-full object-cover" />}
+                        {work.videoUrl && (
+                          <span className="absolute inset-0 flex items-center justify-center bg-black/5">
+                            <span className="flex size-8 items-center justify-center rounded-full bg-black/55 text-white">
+                              <Play className="ml-0.5 size-3.5 fill-current" />
+                            </span>
+                          </span>
+                        )}
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start gap-2">
+                          <p className="line-clamp-1 flex-1 text-sm font-medium">{work.title}</p>
+                          <Badge variant={attempt === chronological.length ? 'default' : 'secondary'} className="h-5 shrink-0 px-2 text-[10px]">
+                            {attempt === chronological.length ? '最新' : `第 ${attempt} 次`}
+                          </Badge>
+                        </div>
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          {work.kind === 'vn_video' ? 'VN 互动' : work.kind === 'repeat_video' ? '跟读剧场' : '学习进度'}
+                          {' · '}
+                          {new Date(work.createdAt).toLocaleString('zh-CN')}
+                        </p>
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="text-[11px] text-muted-foreground">{statusLabel}</span>
+                          {work.videoUrl && (
+                            <Button size="sm" variant="ghost" className="h-6 rounded-full px-2 text-[10px]" onClick={() => setPreviewWork(work)}>
+                              查看视频
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Lightbox
+        open={Boolean(previewWork?.videoUrl)}
+        close={() => setPreviewWork(null)}
+        slides={previewWork?.videoUrl ? [{
+          type: 'video',
+          sources: [{ src: previewWork.videoUrl, type: previewWork.videoMimeType ?? 'video/mp4' }],
+        }] : []}
+        plugins={[Video]}
+        controller={{ closeOnBackdropClick: true }}
+      />
+    </>
+  )
+}
+
+const publishStatusMeta: Record<
+  ScriptPublishHistoryItem['status'],
+  { label: string; className: string }
+> = {
+  queued: { label: '等待生成', className: 'bg-amber-500/10 text-amber-700 dark:text-amber-300' },
+  running: { label: '生成中', className: 'bg-primary/10 text-primary' },
+  completed: { label: '发布成功', className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' },
+  failed: { label: '生成失败', className: 'bg-destructive/10 text-destructive' },
+  canceled: { label: '已取消', className: 'bg-muted text-muted-foreground' },
+}
+
+function formatPublishTime(value: string | null) {
+  if (!value) return '—'
+  return new Date(value).toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function ScriptPublishHistoryDialog({
+  open,
+  onOpenChange,
+  episodeId,
+  title = '发布日志',
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  episodeId?: string
+  title?: string
+}) {
+  const [items, setItems] = useState<ScriptPublishHistoryItem[]>([])
+  const [loading, setLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
+
+  useEffect(() => {
+    if (!open) return
+    let active = true
+    setLoading(true)
+    void scriptCommunityApi.publishHistory({ episodeId, page, pageSize: 8 })
+      .then((result) => {
+        if (!active) return
+        setItems(result.items)
+        setTotal(result.total)
+        setTotalPages(result.totalPages)
+      })
+      .catch(() => {
+        if (active) toast.error('发布日志加载失败')
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => { active = false }
+  }, [episodeId, open, page])
+
+  useEffect(() => {
+    if (open) setPage(1)
+  }, [episodeId, open])
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl gap-4 rounded-2xl p-5">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription className="text-xs">
+            共 {total} 次提交 · 重新生成会保留旧记录，并取消尚未完成的任务
+          </DialogDescription>
+        </DialogHeader>
+
+        {loading ? (
+          <div className="space-y-2 py-1">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} className="h-12 rounded-lg" />
+            ))}
+          </div>
+        ) : items.length === 0 ? (
+          <div className="rounded-lg bg-muted/30 py-12 text-center">
+            <History className="mx-auto size-8 text-muted-foreground/35" />
+            <p className="mt-3 text-sm text-muted-foreground">暂无发布记录</p>
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-xl bg-muted/25">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] table-fixed text-left">
+                <thead className="text-[11px] text-muted-foreground">
+                  <tr className="border-b border-border/45">
+                    <th className="w-[34%] px-3 py-2 font-medium">作品 / 章节</th>
+                    <th className="w-[19%] px-3 py-2 font-medium">状态</th>
+                    <th className="w-[16%] px-3 py-2 font-medium">进度</th>
+                    <th className="w-[31%] px-3 py-2 font-medium">提交时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item) => {
+                    const meta = publishStatusMeta[item.status]
+                    return (
+                      <tr key={item.id} className="border-b border-border/35 last:border-0">
+                        <td className="px-3 py-2.5">
+                          <p className="truncate text-xs font-medium">{item.work?.title ?? '已删除作品'}</p>
+                          <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                            {item.work ? `${item.work.episode.scene.title} · ${item.work.episode.chapterName}` : item.targetId}
+                          </p>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <Badge className={cn('border-0 text-[10px] shadow-none', meta.className)}>
+                            {meta.label}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-2.5 text-xs tabular-nums text-muted-foreground">
+                          {item.status === 'completed' ? '100%' : `${item.progress}%`}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <p className="text-[11px] tabular-nums text-muted-foreground">
+                            {formatPublishTime(item.createdAt)}
+                          </p>
+                          {item.errorMessage && (
+                            <p className="mt-0.5 truncate text-[10px] text-destructive">{item.errorMessage}</p>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="sm" className="h-8 rounded-full text-xs" disabled={page <= 1 || loading} onClick={() => setPage((current) => current - 1)}>
+              <ChevronLeft data-icon="inline-start" />
+              上一页
+            </Button>
+            <span className="text-xs tabular-nums text-muted-foreground">{page} / {totalPages}</span>
+            <Button variant="ghost" size="sm" className="h-8 rounded-full text-xs" disabled={page >= totalPages || loading} onClick={() => setPage((current) => current + 1)}>
+              下一页
+              <ChevronRight data-icon="inline-end" />
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )
@@ -809,11 +1147,26 @@ function WorksLibraryDialog({
 
 const reactions = ['太棒了', '发音真自然', '剧情感拉满', '我也在练', '继续加油', '学到了']
 
+function updateReactionGroups(
+  groups: ScriptWork['reactionGroups'],
+  previousReaction: string | null,
+  nextReaction: string | null,
+) {
+  const counts = new Map(groups.map((group) => [group.reaction, group.count]))
+  if (previousReaction) {
+    const nextCount = (counts.get(previousReaction) ?? 1) - 1
+    if (nextCount > 0) counts.set(previousReaction, nextCount)
+    else counts.delete(previousReaction)
+  }
+  if (nextReaction) counts.set(nextReaction, (counts.get(nextReaction) ?? 0) + 1)
+  return [...counts].map(([reaction, count]) => ({ reaction, count }))
+}
+
 function SquareFeed({
   works,
   loading,
   onOpenShop,
-  onChanged,
+  onWorkChanged,
   hasMore,
   loadingMore,
   onLoadMore,
@@ -821,23 +1174,75 @@ function SquareFeed({
   works: ScriptWork[]
   loading: boolean
   onOpenShop: () => void
-  onChanged: () => Promise<void>
+  onWorkChanged: (workId: string, updater: (work: ScriptWork) => ScriptWork) => void
   hasMore: boolean
   loadingMore: boolean
   onLoadMore: () => Promise<void>
 }) {
   const [previewWork, setPreviewWork] = useState<ScriptWork | null>(null)
+  const [pendingActions, setPendingActions] = useState<Set<string>>(new Set())
 
   const toggleLike = async (work: ScriptWork) => {
-    if (work.liked) await scriptCommunityApi.unlike(work.id)
-    else await scriptCommunityApi.like(work.id)
-    await onChanged()
+    const actionKey = `${work.id}:like`
+    if (pendingActions.has(actionKey)) return
+    setPendingActions((current) => new Set(current).add(actionKey))
+    onWorkChanged(work.id, (current) => ({
+      ...current,
+      liked: !current.liked,
+      _count: {
+        ...current._count,
+        likes: Math.max(0, current._count.likes + (current.liked ? -1 : 1)),
+      },
+    }))
+    try {
+      if (work.liked) await scriptCommunityApi.unlike(work.id)
+      else await scriptCommunityApi.like(work.id)
+    } catch {
+      onWorkChanged(work.id, (current) => ({
+        ...current,
+        liked: work.liked,
+        _count: { ...current._count, likes: work._count.likes },
+      }))
+      toast.error('点赞失败，请稍后重试')
+    } finally {
+      setPendingActions((current) => {
+        const next = new Set(current)
+        next.delete(actionKey)
+        return next
+      })
+    }
   }
 
   const toggleReaction = async (work: ScriptWork, reaction: string) => {
-    if (work.myReaction === reaction) await scriptCommunityApi.removeReaction(work.id)
-    else await scriptCommunityApi.react(work.id, reaction)
-    await onChanged()
+    const actionKey = `${work.id}:reaction`
+    if (pendingActions.has(actionKey)) return
+    const nextReaction = work.myReaction === reaction ? null : reaction
+    setPendingActions((current) => new Set(current).add(actionKey))
+    onWorkChanged(work.id, (current) => ({
+      ...current,
+      myReaction: nextReaction,
+      reactionGroups: updateReactionGroups(current.reactionGroups, current.myReaction, nextReaction),
+      _count: {
+        ...current._count,
+        reactions: Math.max(
+          0,
+          current._count.reactions + (current.myReaction ? 0 : 1) - (nextReaction ? 0 : 1),
+        ),
+      },
+    }))
+    try {
+      if (work.myReaction === reaction) await scriptCommunityApi.removeReaction(work.id)
+      else await scriptCommunityApi.react(work.id, reaction)
+    } catch {
+      onWorkChanged(work.id, () => work)
+      toast.error('回应失败，请稍后重试')
+    } finally {
+      setPendingActions((current) => {
+        const next = new Set(current)
+        next.delete(actionKey)
+        return next
+      })
+    }
   }
 
   return (
@@ -871,6 +1276,8 @@ function SquareFeed({
                 onOpen={() => setPreviewWork(work)}
                 onLike={() => void toggleLike(work)}
                 onReaction={(reaction) => void toggleReaction(work, reaction)}
+                likePending={pendingActions.has(`${work.id}:like`)}
+                reactionPending={pendingActions.has(`${work.id}:reaction`)}
               />
             </div>
           )}
@@ -886,7 +1293,7 @@ function SquareFeed({
       <Lightbox
         open={Boolean(previewWork?.videoUrl)}
         close={() => setPreviewWork(null)}
-        plugins={[Video, Fullscreen]}
+        plugins={[Video]}
         controller={{ closeOnBackdropClick: true }}
         carousel={{ finite: true }}
         slides={previewWork?.videoUrl ? [{
@@ -908,11 +1315,15 @@ function SquareWorkCard({
   onOpen,
   onLike,
   onReaction,
+  likePending,
+  reactionPending,
 }: {
   work: ScriptWork
   onOpen: () => void
   onLike: () => void
   onReaction: (reaction: string) => void
+  likePending: boolean
+  reactionPending: boolean
 }) {
   const [reactionOpen, setReactionOpen] = useState(false)
 
@@ -986,6 +1397,7 @@ function SquareWorkCard({
             variant={work.liked ? 'secondary' : 'ghost'}
             className="h-8 rounded-full px-2.5"
             onClick={onLike}
+            disabled={likePending}
           >
             <Heart data-icon="inline-start" />
             点赞 {work._count.likes}
@@ -996,9 +1408,10 @@ function SquareWorkCard({
                 size="sm"
                 variant={work.myReaction ? 'secondary' : 'ghost'}
                 className="h-8 rounded-full px-2.5"
+                disabled={reactionPending}
               >
                 <SmilePlus data-icon="inline-start" />
-                {work.myReaction ?? '回应'}
+                回应
               </Button>
             </PopoverTrigger>
             <PopoverContent

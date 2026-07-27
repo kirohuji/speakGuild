@@ -56,6 +56,23 @@ export class ScriptCommunityController {
     return this.service.myWorks(session.user.id, cursor, Number(limit) || 20)
   }
 
+  @Get('publish-history')
+  async publishHistory(
+    @Req() req: Request,
+    @Query('workId') workId?: string,
+    @Query('episodeId') episodeId?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    const session = await requireAuthSession(req)
+    return this.service.publishHistory(session.user.id, {
+      workId,
+      episodeId,
+      page: Number(page) || 1,
+      pageSize: Number(pageSize) || 10,
+    })
+  }
+
   @Patch('works/:id')
   async updateWork(@Req() req: Request, @Param('id') id: string, @Body() body: UpdateScriptWorkDto) {
     const session = await requireAuthSession(req)

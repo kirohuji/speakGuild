@@ -69,6 +69,39 @@ export interface CursorResult<T> {
   nextCursor: string | null
 }
 
+export type ScriptPublishHistoryStatus = 'queued' | 'running' | 'completed' | 'failed' | 'canceled'
+export interface ScriptPublishHistoryItem {
+  id: string
+  targetId: string
+  status: ScriptPublishHistoryStatus
+  progress: number
+  currentStep: string | null
+  errorMessage: string | null
+  summary: { videoAssetId?: string } | null
+  createdAt: string
+  startedAt: string | null
+  finishedAt: string | null
+  work: {
+    id: string
+    title: string
+    kind: ScriptWorkKind
+    episodeId: string
+    episode: {
+      title: string
+      chapterName: string
+      scene: { id: string; title: string }
+    }
+  } | null
+}
+
+export interface ScriptPublishHistoryResult {
+  items: ScriptPublishHistoryItem[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
 export const scriptCommunityApi = {
   completeRecord: (
     episodeId: string,
@@ -100,6 +133,9 @@ export const scriptCommunityApi = {
 
   myWorks: (params?: { cursor?: string; limit?: number }) =>
     get<CursorResult<ScriptWork>>('/scripts/works/mine', params),
+
+  publishHistory: (params?: { workId?: string; episodeId?: string; page?: number; pageSize?: number }) =>
+    get<ScriptPublishHistoryResult>('/scripts/publish-history', params, { dedupe: false }),
 
   updateWork: (id: string, data: { title?: string; caption?: string; videoAssetId?: string; coverAssetId?: string }) =>
     patch<ScriptWork>(`/scripts/works/${id}`, data),

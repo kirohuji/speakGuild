@@ -23,7 +23,7 @@ export async function requestScriptVideoRender({
     if (result.work.status === 'failed' || result.task?.status === 'failed') {
       throw new Error(result.work.renderError || result.task?.errorMessage || '视频生成失败')
     }
-    await wait(1500)
+    await wait(3000)
   }
   throw new Error('视频生成超时，请稍后在任务中心查看')
 }

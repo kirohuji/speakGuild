@@ -230,7 +230,7 @@ importers:
         version: 19.2.3(@types/react@19.2.14)
       '@vitejs/plugin-react':
         specifier: ^4.5.0
-        version: 4.7.0(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2))
+        version: 4.7.0(vite@6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2))
       autoprefixer:
         specifier: ^10.4.27
         version: 10.5.0(postcss@8.5.10)
@@ -245,7 +245,7 @@ importers:
         version: 5.5.4
       vite:
         specifier: ^6.3.0
-        version: 6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2)
+        version: 6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)
 
   apps/frontend:
     dependencies:
@@ -288,6 +288,9 @@ importers:
       '@capacitor/push-notifications':
         specifier: ^8.1.1
         version: 8.1.1(@capacitor/core@8.3.1)
+      '@capacitor/screen-orientation':
+        specifier: 8.0.0
+        version: 8.0.0(@capacitor/core@8.3.1)
       '@capacitor/share':
         specifier: ^8.0.1
         version: 8.0.1(@capacitor/core@8.3.1)
@@ -546,7 +549,7 @@ importers:
         version: 19.2.3(@types/react@19.2.14)
       '@vitejs/plugin-react':
         specifier: ^4.5.0
-        version: 4.7.0(vite@6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2))
+        version: 4.7.0(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2))
       '@vitest/coverage-v8':
         specifier: ^4.1.9
         version: 4.1.9(vitest@4.1.9)
@@ -567,10 +570,10 @@ importers:
         version: 5.5.4
       vite:
         specifier: ^6.3.0
-        version: 6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)
+        version: 6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2)
       vitest:
         specifier: ^4.1.9
-        version: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.19.17)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2))
+        version: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.19.17)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2))
 
 packages:
 
@@ -891,6 +894,11 @@ packages:
 
   '@capacitor/push-notifications@8.1.1':
     resolution: {integrity: sha512-WqzjPKIbYbARMN+GC0XMAJcxJpUUzqgzS/Ny8RODLrro38pQhm3GXYwX2Mwd+LZlLY39rGImkCkrKyQSNfuikA==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@capacitor/screen-orientation@8.0.0':
+    resolution: {integrity: sha512-wjIYtDuNAbbg+rovOQPL9jYXBBNy8YJCKzicAZA9AKfHUubREuxrLmkuE2K95kckFfHuWtZ45wzr0Yapmn2c5A==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
@@ -7455,7 +7463,7 @@ snapshots:
       '@better-fetch/fetch': 1.1.21
       '@opentelemetry/semantic-conventions': 1.40.0
       '@standard-schema/spec': 1.1.0
-      better-call: 1.3.5(zod@4.3.6)
+      better-call: 1.3.5(zod@3.25.76)
       jose: 6.2.3
       kysely: 0.28.16
       nanostores: 1.3.0
@@ -7593,6 +7601,10 @@ snapshots:
       '@capacitor/core': 8.3.1
 
   '@capacitor/push-notifications@8.1.1(@capacitor/core@8.3.1)':
+    dependencies:
+      '@capacitor/core': 8.3.1
+
+  '@capacitor/screen-orientation@8.0.0(@capacitor/core@8.3.1)':
     dependencies:
       '@capacitor/core': 8.3.1
 
@@ -9733,7 +9745,7 @@ snapshots:
       obug: 2.1.3
       std-env: 4.1.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.19.17)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2))
+      vitest: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.19.17)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2))
 
   '@vitest/expect@4.1.9':
     dependencies:
@@ -9744,6 +9756,14 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
+  '@vitest/mocker@4.1.9(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2))':
+    dependencies:
+      '@vitest/spy': 4.1.9
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
+    optionalDependencies:
+      vite: 6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2)
+
   '@vitest/mocker@4.1.9(vite@6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2))':
     dependencies:
       '@vitest/spy': 4.1.9
@@ -9751,6 +9771,7 @@ snapshots:
       magic-string: 0.30.21
     optionalDependencies:
       vite: 6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)
+    optional: true
 
   '@vitest/pretty-format@4.1.9':
     dependencies:
@@ -10099,7 +10120,7 @@ snapshots:
       prisma: 6.19.3(typescript@5.5.4)
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
-      vitest: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.19.17)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2))
+      vitest: 4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.19.17)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2))
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
@@ -10132,6 +10153,15 @@ snapshots:
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
+
+  better-call@1.3.5(zod@3.25.76):
+    dependencies:
+      '@better-auth/utils': 0.4.0
+      '@better-fetch/fetch': 1.1.21
+      rou3: 0.7.12
+      set-cookie-parser: 3.1.0
+    optionalDependencies:
+      zod: 3.25.76
 
   better-call@1.3.5(zod@4.3.6):
     dependencies:
@@ -13708,7 +13738,7 @@ snapshots:
       - encoding
       - supports-color
 
-  terser-webpack-plugin@5.5.0(esbuild@0.28.1)(webpack@5.105.0(esbuild@0.28.1)):
+  terser-webpack-plugin@5.5.0(esbuild@0.28.1)(webpack@5.105.0):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
@@ -14084,6 +14114,36 @@ snapshots:
       jiti: 2.6.1
       terser: 5.46.2
 
+  vitest@4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.19.17)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2)):
+    dependencies:
+      '@vitest/expect': 4.1.9
+      '@vitest/mocker': 4.1.9(vite@6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2))
+      '@vitest/pretty-format': 4.1.9
+      '@vitest/runner': 4.1.9
+      '@vitest/snapshot': 4.1.9
+      '@vitest/spy': 4.1.9
+      '@vitest/utils': 4.1.9
+      es-module-lexer: 2.1.0
+      expect-type: 1.3.0
+      magic-string: 0.30.21
+      obug: 2.1.3
+      pathe: 2.0.3
+      picomatch: 4.0.4
+      std-env: 4.1.0
+      tinybench: 2.9.0
+      tinyexec: 1.1.1
+      tinyglobby: 0.2.16
+      tinyrainbow: 3.1.0
+      vite: 6.4.2(@types/node@22.19.17)(jiti@1.21.7)(terser@5.46.2)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@opentelemetry/api': 1.9.0
+      '@types/node': 22.19.17
+      '@vitest/coverage-v8': 4.1.9(vitest@4.1.9)
+      jsdom: 29.1.1(@noble/hashes@2.2.0)
+    transitivePeerDependencies:
+      - msw
+
   vitest@4.1.9(@opentelemetry/api@1.9.0)(@types/node@22.19.17)(@vitest/coverage-v8@4.1.9)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@6.4.2(@types/node@22.19.17)(jiti@2.6.1)(terser@5.46.2)):
     dependencies:
       '@vitest/expect': 4.1.9
@@ -14113,6 +14173,7 @@ snapshots:
       jsdom: 29.1.1(@noble/hashes@2.2.0)
     transitivePeerDependencies:
       - msw
+    optional: true
 
   void-elements@3.1.0: {}
 
@@ -14167,7 +14228,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 4.3.3
       tapable: 2.3.3
-      terser-webpack-plugin: 5.5.0(esbuild@0.28.1)(webpack@5.105.0(esbuild@0.28.1))
+      terser-webpack-plugin: 5.5.0(esbuild@0.28.1)(webpack@5.105.0)
       watchpack: 2.5.1
       webpack-sources: 3.4.0
     transitivePeerDependencies:

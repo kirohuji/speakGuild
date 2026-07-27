@@ -52,12 +52,30 @@ export class ScriptCommunityService {
     if (!frames.length) throw new BadRequestException('没有可渲染的视频帧')
     const work = await this.prisma.scriptWork.findFirst({ where: { id: workId, userId } })
     if (!work) throw new NotFoundException('作品不存在')
-    const task = await this.adminTasksService.enqueueScriptVideo(workId, userId, frames)
+    await this.adminTasksService.cancelScriptVideoTasks(workId, userId)
     await this.prisma.scriptWork.update({
       where: { id: workId },
-      data: { status: ScriptWorkStatus.rendering, renderError: null },
+      data: {
+        status: ScriptWorkStatus.rendering,
+        videoAssetId: null,
+        publishedAt: null,
+        hiddenAt: null,
+        renderError: null,
+      },
     })
-    return { taskId: task.id, workId }
+    try {
+      const task = await this.adminTasksService.enqueueScriptVideo(workId, userId, frames)
+      return { taskId: task.id, workId }
+    } catch (error) {
+      await this.prisma.scriptWork.update({
+        where: { id: workId },
+        data: {
+          status: ScriptWorkStatus.failed,
+          renderError: error instanceof Error ? error.message : String(error),
+        },
+      })
+      throw error
+    }
   }
 
   async renderStatus(userId: string, workId: string) {
@@ -72,6 +90,76 @@ export class ScriptCommunityService {
       select: { id: true, status: true, progress: true, currentStep: true, errorMessage: true },
     })
     return { work, task }
+  }
+
+  async publishHistory(userId: string, params: {
+    workId?: string
+    episodeId?: string
+    page: number
+    pageSize: number
+  }) {
+    const page = Math.max(1, params.page)
+    const pageSize = Math.min(50, Math.max(1, params.pageSize))
+    const ownedWorks = await this.prisma.scriptWork.findMany({
+      where: {
+        userId,
+        ...(params.workId ? { id: params.workId } : {}),
+        ...(params.episodeId ? { episodeId: params.episodeId } : {}),
+      },
+      select: {
+        id: true,
+        title: true,
+        kind: true,
+        episodeId: true,
+        episode: {
+          select: {
+            title: true,
+            chapterName: true,
+            scene: { select: { id: true, title: true } },
+          },
+        },
+      },
+    })
+    const workIds = ownedWorks.map((work) => work.id)
+    const filteredByWork = Boolean(params.workId || params.episodeId)
+    if (filteredByWork && workIds.length === 0) {
+      return { items: [], total: 0, page, pageSize, totalPages: 0 }
+    }
+    const where: Prisma.AdminTaskWhereInput = {
+      type: 'script-video-render',
+      targetType: 'script_work',
+      createdById: userId,
+      ...(filteredByWork ? { targetId: { in: workIds } } : {}),
+    }
+    const [tasks, total] = await Promise.all([
+      this.prisma.adminTask.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        select: {
+          id: true,
+          targetId: true,
+          status: true,
+          progress: true,
+          currentStep: true,
+          errorMessage: true,
+          summary: true,
+          createdAt: true,
+          startedAt: true,
+          finishedAt: true,
+        },
+      }),
+      this.prisma.adminTask.count({ where }),
+    ])
+    const worksById = new Map(ownedWorks.map((work) => [work.id, work]))
+    return {
+      items: tasks.map((task) => ({ ...task, work: worksById.get(task.targetId ?? '') ?? null })),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    }
   }
 
   private clampLimit(limit: number) {
@@ -300,6 +388,7 @@ export class ScriptCommunityService {
   async unpublishWork(userId: string, id: string) {
     const work = await this.prisma.scriptWork.findFirst({ where: { id, userId } })
     if (!work) throw new NotFoundException('作品不存在')
+    await this.adminTasksService.cancelScriptVideoTasks(id, userId, '用户取消发布', true)
     return this.prisma.scriptWork.update({
       where: { id },
       data: { status: ScriptWorkStatus.ready, publishedAt: null },

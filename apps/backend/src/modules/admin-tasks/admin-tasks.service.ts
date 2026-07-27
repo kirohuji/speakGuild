@@ -36,6 +36,60 @@ export class AdminTasksService {
     return task;
   }
 
+  async cancelScriptVideoTasks(
+    workId: string,
+    userId: string,
+    reason = '已被新的生成任务替代',
+    includeCompleted = true,
+  ) {
+    const tasks = await this.prisma.adminTask.findMany({
+      where: {
+        type: SCRIPT_VIDEO_RENDER_JOB,
+        targetType: 'script_work',
+        targetId: workId,
+        createdById: userId,
+        status: {
+          in: [
+            AdminTaskStatus.queued,
+            AdminTaskStatus.running,
+            ...(includeCompleted ? [AdminTaskStatus.completed] : []),
+          ],
+        },
+      },
+      select: { id: true, bullJobId: true },
+    });
+
+    for (const task of tasks) {
+      if (task.bullJobId) {
+        try {
+          const job = await this.videoQueue.getJob(task.bullJobId);
+          if (job) await job.remove();
+        } catch {
+          // Active BullMQ jobs cannot be removed. The processor checks the
+          // persisted canceled state before uploading or publishing its output.
+        }
+      }
+      await this.prisma.adminTask.update({
+        where: { id: task.id },
+        data: {
+          status: AdminTaskStatus.canceled,
+          currentStep: 'canceled',
+          errorMessage: reason,
+          finishedAt: new Date(),
+        },
+      });
+      await this.log(task.id, 'warn', reason, { step: 'canceled' });
+    }
+  }
+
+  async isCanceled(taskId: string) {
+    const task = await this.prisma.adminTask.findUnique({
+      where: { id: taskId },
+      select: { status: true },
+    });
+    return task?.status === AdminTaskStatus.canceled;
+  }
+
   async enqueueContentPrepare(sceneId: string, createdById?: string, options?: {
     retryOfTaskId?: string;
     retryItems?: {

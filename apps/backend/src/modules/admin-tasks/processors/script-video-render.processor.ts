@@ -1,6 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
-import { FileAssetGroup, ScriptWorkStatus } from '@prisma/client';
+import { AdminTaskStatus, FileAssetGroup, ScriptWorkStatus } from '@prisma/client';
 import { bundle } from '@remotion/bundler';
 import { renderMedia, selectComposition } from '@remotion/renderer';
 import type { Job } from 'bullmq';
@@ -34,12 +34,32 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
     return this.bundleUrl;
   }
 
+  private getBrowserExecutable() {
+    const configuredExecutable = process.env.REMOTION_CHROME_EXECUTABLE?.trim();
+    if (configuredExecutable) return configuredExecutable;
+
+    const executableRelativePath = join(
+      '.cache',
+      'remotion',
+      'chrome-149-win64',
+      'chrome-headless-shell-win64',
+      'chrome-headless-shell.exe',
+    );
+    const localCandidates = [
+      join(process.cwd(), executableRelativePath),
+      join(process.cwd(), '..', '..', executableRelativePath),
+    ];
+
+    return localCandidates.find((candidate) => existsSync(candidate));
+  }
+
   async process(job: Job<any>) {
     if (job.name !== SCRIPT_VIDEO_RENDER_JOB) return null;
     const { taskId, workId, userId, frames } = job.data;
     const output = join(tmpdir(), `script-video-${taskId}.mp4`);
     try {
-      const browserExecutable = process.env.REMOTION_CHROME_EXECUTABLE?.trim() || undefined;
+      if (await this.tasks.isCanceled(taskId)) return { canceled: true };
+      const browserExecutable = this.getBrowserExecutable();
       await this.tasks.markRunning(taskId, 'bundling');
       const serveUrl = await this.getBundle();
       const inputProps = { timeline: { frames, durationInFrames: frames.at(-1)?.endFrame ?? 30, fps: 30 } };
@@ -56,14 +76,18 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
           const value = Math.min(95, Math.round(progress * 95));
           if (value === lastProgress) return;
           lastProgress = value;
-          void this.prisma.adminTask.update({
-            where: { id: taskId },
+          void this.prisma.adminTask.updateMany({
+            where: { id: taskId, status: { not: 'canceled' } },
             data: { progress: value, currentStep: 'rendering', processedItems: value },
           });
           void job.updateProgress(value);
         },
       });
-      await this.prisma.adminTask.update({ where: { id: taskId }, data: { progress: 96, currentStep: 'uploading' } });
+      if (await this.tasks.isCanceled(taskId)) return { canceled: true };
+      await this.prisma.adminTask.updateMany({
+        where: { id: taskId, status: { not: 'canceled' } },
+        data: { progress: 96, currentStep: 'uploading' },
+      });
       const buffer = await readFile(output);
       const asset = await this.files.createAssetFromBuffer({
         buffer,
@@ -72,19 +96,38 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
         group: FileAssetGroup.user_recording,
       });
       await this.files.createReference(userId, { assetId: asset.id, bizType: 'script_work', bizId: workId });
-      await this.prisma.scriptWork.update({
-        where: { id: workId },
-        data: {
-          videoAssetId: asset.id,
-          status: ScriptWorkStatus.published,
-          publishedAt: new Date(),
-          hiddenAt: null,
-          renderError: null,
-        },
+      if (await this.tasks.isCanceled(taskId)) return { canceled: true };
+      const published = await this.prisma.$transaction(async (tx) => {
+        const task = await tx.adminTask.updateMany({
+          where: {
+            id: taskId,
+            status: { in: [AdminTaskStatus.queued, AdminTaskStatus.running] },
+          },
+          data: {
+            status: AdminTaskStatus.completed,
+            progress: 100,
+            currentStep: 'completed',
+            summary: { workId, videoAssetId: asset.id },
+            finishedAt: new Date(),
+          },
+        });
+        if (task.count === 0) return false;
+        await tx.scriptWork.update({
+          where: { id: workId },
+          data: {
+            videoAssetId: asset.id,
+            status: ScriptWorkStatus.published,
+            publishedAt: new Date(),
+            hiddenAt: null,
+            renderError: null,
+          },
+        });
+        return true;
       });
-      await this.tasks.markCompleted(taskId, { workId, videoAssetId: asset.id });
+      if (!published) return { canceled: true };
       return { workId, videoAssetId: asset.id };
     } catch (error) {
+      if (await this.tasks.isCanceled(taskId)) return { canceled: true };
       await this.prisma.scriptWork.updateMany({
         where: { id: workId, userId },
         data: { status: ScriptWorkStatus.failed, renderError: error instanceof Error ? error.message : String(error) },
