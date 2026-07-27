@@ -246,6 +246,8 @@ function ModeCard({
   to: string
   disabled: boolean
 }) {
+  const { t } = useTranslation()
+
   return (
     <Card className="overflow-hidden border-0 bg-muted/30 shadow-none">
       <CardHeader className="flex-row items-start gap-4 p-4 pb-3">

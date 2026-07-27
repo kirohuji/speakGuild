@@ -821,6 +821,9 @@ export function MobileStorageView() {
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0 flex flex-1 items-center gap-2">
                         <p className="min-w-0 truncate text-sm font-medium">{pack.title}</p>
+                        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          {pack.packageType === 'story' ? '剧本包' : '学习包'}
+                        </span>
                         <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
                           v{pack.version}
                         </span>
@@ -835,7 +838,10 @@ export function MobileStorageView() {
                       </button>
                     </div>
                     <p className="mt-0.5 text-[11px] leading-5 text-muted-foreground">
-                      {pack.topicCount} {t('settings.storage.topicsUnit')} · {pack.vocabularyCount} {t('settings.storage.words')} · {pack.chunkCount} {t('settings.storage.chunksUnit')} · {pack.patternCount} {t('settings.storage.patternsUnit')}
+                      {pack.packageType === 'story'
+                        ? `${pack.scriptCount} 个章节`
+                        : `${pack.topicCount} ${t('settings.storage.topicsUnit')}`}
+                      {' · '}{pack.vocabularyCount} {t('settings.storage.words')} · {pack.chunkCount} {t('settings.storage.chunksUnit')} · {pack.patternCount} {t('settings.storage.patternsUnit')}
                     </p>
                     <p className="text-[11px] leading-5 text-muted-foreground">
                       {pack.assetCount} {t('settings.storage.resources')} · {formatBytes(pack.bytes)}

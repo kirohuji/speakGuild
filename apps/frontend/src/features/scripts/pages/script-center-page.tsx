@@ -137,6 +137,7 @@ export function ScriptCenterPage() {
   const refreshMyUnits = useLearningStore((state) => state.refreshMyUnits)
   const fetchDownloadedPacks = useLearningStore((state) => state.fetchDownloadedPacks)
   const downloadUnitPack = useLearningStore((state) => state.downloadUnitPack)
+  const enrollUnit = useLearningStore((state) => state.enrollUnit)
 
   const storyUnits = useMemo(
     () => myUnits.filter((unit) => unit.packageType === 'story'),
@@ -250,11 +251,11 @@ export function ScriptCenterPage() {
 
   const enroll = async (unit: LearningUnitSummary) => {
     try {
-      await learningApi.startUnit(unit.id)
+      await enrollUnit(unit.id, unit.title, unit)
       await refreshMyUnits()
-      toast.success(t('scripts.joinedUnit', { title: unit.title }))
+      toast.success(`《${unit.title}》已加入并开始下载`)
     } catch {
-      toast.error(t('scripts.joinUnitFailed'))
+      toast.error('开始剧本失败')
     }
   }
 
@@ -1823,7 +1824,7 @@ function ScriptShopDetail({
               </Button>
             ) : owned ? (
               <Button className="w-full" onClick={() => void onDownload(unit.id)}>
-                <Download data-icon="inline-start" />离线下载
+                <Download data-icon="inline-start" />重新下载
               </Button>
             ) : unit.isLocked ? (
               <Button className="w-full" asChild>
@@ -1832,7 +1833,7 @@ function ScriptShopDetail({
             ) : (
               <Button className="w-full" disabled={acquiring} onClick={() => void onEnroll()}>
                 {acquiring ? <Loader2 className="animate-spin" /> : <Play data-icon="inline-start" />}
-                {acquiring ? '加入中…' : '加入剧本'}
+                {acquiring ? '正在开始…' : '开始学习'}
               </Button>
             )}
           </div>

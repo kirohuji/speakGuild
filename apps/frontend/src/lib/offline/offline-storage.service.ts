@@ -71,10 +71,12 @@ export interface OfflineStorageDetails {
     version: number
     manifestVersion: number
     status: InstalledLearningPack['status']
+    packageType?: string
     installedAt: string | null
     updatedAt: string
     bytes: number
     topicCount: number
+    scriptCount: number
     vocabularyCount: number
     chunkCount: number
     patternCount: number
@@ -296,6 +298,10 @@ export const offlineStorageService = {
           return id === pack.packId || unitId === pack.packId
         })
         const relatedInkScripts = inkScripts.filter((item) => String(item?.unitId ?? '') === pack.packId)
+        const unitDetail = relatedUnitDetails.find((item) => String(item?.id ?? '') === pack.packId)
+          ?? relatedUnitDetails.find((item) => item?.detail && String(item?.detail?.id ?? '') === pack.packId)
+        const packageType = unitDetail?.packageType ?? unitDetail?.detail?.packageType
+        const storyEpisodes = unitDetail?.storyEpisodes ?? unitDetail?.detail?.storyEpisodes
         const relatedRefs = offlineContentRefs.filter((item) => String(item?.packId ?? '') === pack.packId)
         const vocabIds = new Set(relatedRefs.filter((item) => item.kind === 'vocab').map((item) => String(item.contentId)))
         const chunkIds = new Set(relatedRefs.filter((item) => item.kind === 'chunk').map((item) => String(item.contentId)))
@@ -309,6 +315,7 @@ export const offlineStorageService = {
           version: pack.version,
           manifestVersion: pack.manifest?.version ?? pack.version,
           status: pack.status,
+          packageType,
           installedAt: pack.installedAt,
           updatedAt: pack.updatedAt,
           bytes: sumJsonBytes([
@@ -321,6 +328,9 @@ export const offlineStorageService = {
             ...relatedRefs,
           ]),
           topicCount: pack.manifest?.topics?.length ?? relatedUnitDetails.filter((item) => item?.topicId).length,
+          scriptCount: Array.isArray(storyEpisodes)
+            ? storyEpisodes.length
+            : pack.manifest?.storyEpisodes?.length ?? 0,
           vocabularyCount: vocabIds.size || pack.manifest?.vocabularies?.length || 0,
           chunkCount: chunkIds.size || pack.manifest?.chunks?.length || 0,
           patternCount: patternIds.size || pack.manifest?.sentencePatterns?.length || 0,

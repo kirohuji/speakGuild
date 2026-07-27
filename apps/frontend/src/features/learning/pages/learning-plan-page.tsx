@@ -81,8 +81,9 @@ export function LearningPlanPage() {
     }
   }, [location.key, myUnits.length, refreshMyUnits])
 
-  const inProgress = myUnits.filter((u) => u.completionPercent < 100)
-  const completed = myUnits.filter((u) => u.completionPercent >= 100)
+  const learningUnits = myUnits.filter((unit) => unit.packageType !== 'story')
+  const inProgress = learningUnits.filter((unit) => unit.completionPercent < 100)
+  const completed = learningUnits.filter((unit) => unit.completionPercent >= 100)
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
@@ -105,7 +106,7 @@ export function LearningPlanPage() {
         </div>
 
         <MyLearningView
-          myUnits={myUnits} inProgress={inProgress} completed={completed}
+          myUnits={learningUnits} inProgress={inProgress} completed={completed}
           loading={myLoading}
           onGoToShop={() => { setShopOpen(true); refreshShop(); fetchTags() }}
           onRefresh={refreshMyUnits}

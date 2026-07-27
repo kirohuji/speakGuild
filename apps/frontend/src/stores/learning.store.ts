@@ -102,7 +102,11 @@ interface LearningStore {
   refreshShop: (params?: { tag?: string; packageType?: LearningPackageType; search?: string; page?: number }) => Promise<void>
   loadMoreShop: (params?: { tag?: string; packageType?: LearningPackageType; search?: string }) => Promise<void>
   fetchCheckInCalendar: (startDate: string, endDate: string) => Promise<void>
-  enrollUnit: (unitId: string, title?: string) => Promise<void>
+  enrollUnit: (
+    unitId: string,
+    title?: string,
+    sourceUnit?: LearningUnitSummary | UnitDetail | null,
+  ) => Promise<void>
   quitUnit: (unitId: string) => Promise<void>
   fetchDownloadedPacks: () => Promise<void>
   syncPackStateAfterLocalChange: () => Promise<void>
@@ -303,11 +307,11 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     }
   },
 
-  async enrollUnit(unitId, title) {
+  async enrollUnit(unitId, title, providedUnit) {
     const state = getState()
-    const sourceUnit = state.unitDetail?.id === unitId
+    const sourceUnit = providedUnit ?? (state.unitDetail?.id === unitId
       ? state.unitDetail
-      : state.shopUnits.find((unit) => unit.id === unitId) ?? null
+      : state.shopUnits.find((unit) => unit.id === unitId) ?? null)
     const packTitle = title ?? sourceUnit?.title ?? unitId
 
     try {
