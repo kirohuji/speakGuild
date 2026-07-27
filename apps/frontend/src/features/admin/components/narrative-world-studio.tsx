@@ -1,10 +1,18 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   ArrowLeft,
   BookOpen,
   Box,
   DoorOpen,
   Edit3,
+  Eraser,
   Eye,
   Headphones,
   Languages,
@@ -14,10 +22,12 @@ import {
   Moon,
   Plus,
   Route,
+  RotateCcw,
   Sparkles,
   Sun,
   Sunrise,
   Trash2,
+  Undo2,
   Volume2,
   Wrench,
 } from "lucide-react";
@@ -50,6 +60,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/cn";
+import { post } from "@/lib/request";
 import {
   createLocation,
   createMap,
@@ -72,13 +83,22 @@ import {
   type ExplorationNode,
 } from "./maps/exploration-pixi-canvas";
 import {
+  DEFAULT_LOCATION_VISUAL_STYLE,
   getExplorationObjects,
+  getLocationMask,
+  getLocationOcclusionMask,
+  getLocationVisualStyle,
   getRoomLayout,
   makeExplorationKey,
   removeExplorationObject,
   updateExplorationObjectPosition,
   updateRoomLayout,
+  updateLocationMask,
+  updateLocationOcclusionMask,
+  updateLocationVisualStyle,
   upsertExplorationObject,
+  type ResourceMaskPoint,
+  type LocationVisualStyle,
   type ExplorationObject,
   type ExplorationObjectKind,
 } from "./maps/exploration-map-model";
@@ -86,6 +106,8 @@ import {
 type StudioLevel = "world" | "location" | "room";
 type TimeOfDay = "day" | "golden" | "night";
 type ObjectFilter = "all" | "required" | "undiscovered";
+type MaskTool = "erase" | "restore";
+type MaskLayer = "transparency" | "occlusion";
 
 const EMPTY_OBJECT: Omit<ExplorationObject, "id" | "roomId"> = {
   title: "",
@@ -137,6 +159,12 @@ export function NarrativeWorldStudio({
   const [tourIndex, setTourIndex] = useState(0);
   const [discovered, setDiscovered] = useState<Set<string>>(new Set());
   const [previewId, setPreviewId] = useState("");
+  const [maskEditing, setMaskEditing] = useState(false);
+  const [maskTool, setMaskTool] = useState<MaskTool>("erase");
+  const [maskLayer, setMaskLayer] = useState<MaskLayer>("transparency");
+  const [maskBrushSize, setMaskBrushSize] = useState(8);
+  const [showMaskOverlay, setShowMaskOverlay] = useState(false);
+  const maskDraftRef = useRef<any>(null);
 
   const [mapDialog, setMapDialog] = useState(false);
   const [locationDialog, setLocationDialog] = useState(false);
@@ -236,6 +264,9 @@ export function NarrativeWorldStudio({
         y: location.posY || 50,
         width: Math.max(80, location.iconWidth ?? 150),
         height: Math.max(80, location.iconHeight ?? 120),
+        mask: getLocationMask(selectedMap, location.id),
+        occlusionMask: getLocationOcclusionMask(selectedMap, location.id),
+        visualStyle: getLocationVisualStyle(selectedMap, location.id),
         kind: "location",
         disabled: location.disabled,
         hidden: location.hidden,
@@ -334,7 +365,7 @@ export function NarrativeWorldStudio({
     if (level === "world") setLocationId(id);
     else if (level === "location") setRoomId(id);
     else setObjectId(id);
-    setFocusNodeId(id);
+    if (!editable) setFocusNodeId(id);
   };
 
   const openNode = (id: string) => {
@@ -428,6 +459,142 @@ export function NarrativeWorldStudio({
       toast.error("地点素材大小保存失败");
       await load();
     }
+  };
+
+  const updateSelectedLocationVisual = (style: LocationVisualStyle) => {
+    if (!selectedMap || !selectedLocation) return;
+    const next = updateLocationVisualStyle(
+      selectedMap.editorData,
+      selectedLocation.id,
+      style,
+    );
+    setMaps((items) =>
+      items.map((item) =>
+        item.id === selectedMap.id ? { ...item, editorData: next } : item,
+      ),
+    );
+  };
+
+  const saveSelectedLocationVisual = async (style: LocationVisualStyle) => {
+    if (!selectedMap || !selectedLocation) return;
+    const next = updateLocationVisualStyle(
+      selectedMap.editorData,
+      selectedLocation.id,
+      style,
+    );
+    try {
+      await updateMap(selectedMap.id, { editorData: next });
+    } catch {
+      toast.error("地点调色保存失败");
+      await load();
+    }
+  };
+
+  const autoMatchSelectedLocation = async () => {
+    if (!selectedMap?.backgroundUrl || !selectedLocation?.icon) {
+      toast.error("需要先设置地图底图和地点图片");
+      return;
+    }
+    try {
+      const result = await post<{ style: LocationVisualStyle }>(
+        "/file-assets/sampling/match",
+        {
+          backgroundUrl: selectedMap.backgroundUrl,
+          resourceUrl: selectedLocation.icon,
+          positionX: selectedLocation.posX / 100,
+          positionY: selectedLocation.posY / 100,
+        },
+      );
+      const style = result.style;
+      updateSelectedLocationVisual(style);
+      await saveSelectedLocationVisual(style);
+      toast.success(
+        [
+          "自动匹配完成",
+          `亮度 ${Math.round(style.brightness * 100)}%`,
+          `对比度 ${Math.round(style.contrast * 100)}%`,
+          `饱和度 ${Math.round(style.saturation * 100)}%`,
+          `色相 ${Math.round(style.hue)}°`,
+          `${style.warmth < 0 ? "冷" : "暖"} ${Math.round(Math.abs(style.warmth) * 100)}`,
+          `阴影 ${Math.round(style.shadowOpacity * 100)}%`,
+        ].join(" · "),
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "未知采样错误";
+      console.error("[narrative-map] 自动匹配失败", error);
+      toast.error(`自动匹配失败：${message}`);
+    }
+  };
+
+  const resetSelectedLocationVisual = async () => {
+    const style = { ...DEFAULT_LOCATION_VISUAL_STYLE };
+    updateSelectedLocationVisual(style);
+    await saveSelectedLocationVisual(style);
+    toast.success("已恢复图片原始色彩");
+  };
+
+  const appendLocationMaskPoint = (
+    locationId: string,
+    point: ResourceMaskPoint,
+  ) => {
+    if (!selectedMap) return;
+    const current = maskDraftRef.current ?? selectedMap.editorData;
+    const existing =
+      (maskLayer === "occlusion"
+        ? current?.locationOcclusionMasks?.[locationId]?.points
+        : current?.locationMasks?.[locationId]?.points) ?? [];
+    const points =
+      maskTool === "restore"
+        ? existing.filter((item: ResourceMaskPoint) => {
+            const distance = Math.hypot(item.x - point.x, item.y - point.y);
+            return distance > item.radius + point.radius;
+          })
+        : [...existing, point];
+    const next =
+      maskLayer === "occlusion"
+        ? updateLocationOcclusionMask(current, locationId, { points })
+        : updateLocationMask(current, locationId, { points });
+    maskDraftRef.current = next;
+    setMaps((items) =>
+      items.map((item) =>
+        item.id === selectedMap.id ? { ...item, editorData: next } : item,
+      ),
+    );
+  };
+
+  const saveLocationMask = async () => {
+    if (!selectedMap || !maskDraftRef.current) return;
+    try {
+      await updateMap(selectedMap.id, { editorData: maskDraftRef.current });
+    } catch {
+      toast.error("蒙版保存失败");
+      maskDraftRef.current = null;
+      await load();
+    }
+  };
+
+  const replaceSelectedLocationMask = async (
+    points: ResourceMaskPoint[],
+  ) => {
+    if (!selectedMap || !selectedLocation) return;
+    const next =
+      maskLayer === "occlusion"
+        ? updateLocationOcclusionMask(
+            selectedMap.editorData,
+            selectedLocation.id,
+            { points },
+          )
+        : updateLocationMask(selectedMap.editorData, selectedLocation.id, {
+            points,
+          });
+    maskDraftRef.current = next;
+    setMaps((items) =>
+      items.map((item) =>
+        item.id === selectedMap.id ? { ...item, editorData: next } : item,
+      ),
+    );
+    await saveLocationMask();
   };
 
   useEffect(() => {
@@ -775,6 +942,7 @@ export function NarrativeWorldStudio({
               setEditable(value === "edit");
               setTouring(false);
               setPreviewId("");
+              setFocusNodeId("");
             }}
           >
             <TabsList className="h-9">
@@ -936,9 +1104,20 @@ export function NarrativeWorldStudio({
             worldHeight={worldHeight}
             timeOfDay={timeOfDay}
             mobilePreview={!editable}
+            maskEditingId={
+              editable && maskEditing && level === "world"
+                ? selectedLocation?.id
+                : undefined
+            }
+            maskBrushRadius={maskBrushSize / 100}
+            maskRestoring={maskTool === "restore"}
+            showMaskOverlay={showMaskOverlay}
+            maskKind={maskLayer}
             onSelect={selectNode}
             onOpen={openNode}
             onMove={(id, x, y) => void moveNode(id, x, y)}
+            onMaskPoint={appendLocationMaskPoint}
+            onMaskEnd={() => void saveLocationMask()}
           />
         </main>
 
@@ -970,6 +1149,56 @@ export function NarrativeWorldStudio({
             onLocationScaleCommit={(scale) =>
               void saveSelectedLocationSize(scale)
             }
+            visualStyle={
+              selectedLocation
+                ? getLocationVisualStyle(selectedMap, selectedLocation.id)
+                : null
+            }
+            onVisualStyleChange={updateSelectedLocationVisual}
+            onVisualStyleCommit={(style) =>
+              void saveSelectedLocationVisual(style)
+            }
+            onAutoMatch={() => void autoMatchSelectedLocation()}
+            onVisualStyleReset={() => void resetSelectedLocationVisual()}
+            maskEditing={maskEditing}
+            maskTool={maskTool}
+            maskLayer={maskLayer}
+            maskBrushSize={maskBrushSize}
+            maskPointCount={
+              selectedLocation
+                ? ((maskLayer === "occlusion"
+                    ? getLocationOcclusionMask(selectedMap, selectedLocation.id)
+                    : getLocationMask(selectedMap, selectedLocation.id)
+                  )?.points.length ?? 0)
+                : 0
+            }
+            showMaskOverlay={showMaskOverlay}
+            onMaskEditingChange={(value) => {
+              setMaskEditing(value);
+              maskDraftRef.current = selectedMap?.editorData ?? null;
+            }}
+            onMaskToolChange={(tool) => {
+              setMaskTool(tool);
+              setMaskEditing(true);
+              maskDraftRef.current = selectedMap?.editorData ?? null;
+            }}
+            onMaskLayerChange={(layer) => {
+              setMaskLayer(layer);
+              setMaskEditing(false);
+              maskDraftRef.current = selectedMap?.editorData ?? null;
+            }}
+            onMaskBrushSizeChange={setMaskBrushSize}
+            onShowMaskOverlayChange={setShowMaskOverlay}
+            onMaskUndo={() => {
+              if (!selectedLocation) return;
+              const points =
+                (maskLayer === "occlusion"
+                  ? getLocationOcclusionMask(selectedMap, selectedLocation.id)
+                  : getLocationMask(selectedMap, selectedLocation.id)
+                )?.points ?? [];
+              void replaceSelectedLocationMask(points.slice(0, -1));
+            }}
+            onMaskClear={() => void replaceSelectedLocationMask([])}
             onEnter={() => {
               if (level === "world" && selectedLocation)
                 enterLocation(selectedLocation.id);
@@ -1010,6 +1239,8 @@ export function NarrativeWorldStudio({
                 onChange={(url) => setMapForm({ ...mapForm, backgroundUrl: url })}
                 previewSize="lg"
                 group="library"
+                allowVideo
+                placeholder="上传地图图片或循环视频"
               />
             </Field>
             <div className="grid grid-cols-2 gap-3">
@@ -1494,6 +1725,44 @@ function Field({
   );
 }
 
+function VisualSlider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  format,
+  onChange,
+  onCommit,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  format: (value: number) => string;
+  onChange: (value: number) => void;
+  onCommit: (value: number) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <Label>{label}</Label>
+        <span className="tabular-nums text-muted-foreground">{format(value)}</span>
+      </div>
+      <Slider
+        min={min}
+        max={max}
+        step={step}
+        value={[value]}
+        onValueChange={([next]) => onChange(next ?? value)}
+        onValueCommit={([next]) => onCommit(next ?? value)}
+        aria-label={label}
+      />
+    </div>
+  );
+}
+
 function Inspector({
   level,
   map,
@@ -1505,6 +1774,24 @@ function Inspector({
   locationScale,
   onLocationScaleChange,
   onLocationScaleCommit,
+  visualStyle,
+  onVisualStyleChange,
+  onVisualStyleCommit,
+  onAutoMatch,
+  onVisualStyleReset,
+  maskEditing,
+  maskTool,
+  maskLayer,
+  maskBrushSize,
+  maskPointCount,
+  showMaskOverlay,
+  onMaskEditingChange,
+  onMaskToolChange,
+  onMaskLayerChange,
+  onMaskBrushSizeChange,
+  onShowMaskOverlayChange,
+  onMaskUndo,
+  onMaskClear,
   onEnter,
   onEdit,
   onDelete,
@@ -1519,6 +1806,24 @@ function Inspector({
   locationScale: number;
   onLocationScaleChange: (scale: number) => void;
   onLocationScaleCommit: (scale: number) => void;
+  visualStyle: LocationVisualStyle | null;
+  onVisualStyleChange: (style: LocationVisualStyle) => void;
+  onVisualStyleCommit: (style: LocationVisualStyle) => void;
+  onAutoMatch: () => void;
+  onVisualStyleReset: () => void;
+  maskEditing: boolean;
+  maskTool: MaskTool;
+  maskLayer: MaskLayer;
+  maskBrushSize: number;
+  maskPointCount: number;
+  showMaskOverlay: boolean;
+  onMaskEditingChange: (value: boolean) => void;
+  onMaskToolChange: (tool: MaskTool) => void;
+  onMaskLayerChange: (layer: MaskLayer) => void;
+  onMaskBrushSizeChange: (value: number) => void;
+  onShowMaskOverlayChange: (value: boolean) => void;
+  onMaskUndo: () => void;
+  onMaskClear: () => void;
   onEnter: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -1582,6 +1887,7 @@ function Inspector({
           <>
             <p className="text-xs text-muted-foreground">{roomCount} 个房间</p>
             {location && (
+              <>
               <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3">
                 <div className="flex items-center justify-between gap-3">
                   <Label htmlFor="location-resource-scale">地点素材大小</Label>
@@ -1617,6 +1923,144 @@ function Inspector({
                   <span>5×</span>
                 </div>
               </div>
+              {visualStyle && (
+                <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <Label>色彩融合</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={onVisualStyleReset}
+                      >
+                        <RotateCcw data-icon="inline-start" />
+                        重置
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={onAutoMatch}>
+                        <Sparkles data-icon="inline-start" />
+                        自动匹配
+                      </Button>
+                    </div>
+                  </div>
+                  <VisualSlider label="亮度" value={visualStyle.brightness} min={0.5} max={1.5} step={0.01} format={(v) => `${Math.round(v * 100)}%`} onChange={(value) => onVisualStyleChange({ ...visualStyle, brightness: value })} onCommit={(value) => onVisualStyleCommit({ ...visualStyle, brightness: value })} />
+                  <VisualSlider label="对比度" value={visualStyle.contrast} min={0.5} max={1.5} step={0.01} format={(v) => `${Math.round(v * 100)}%`} onChange={(value) => onVisualStyleChange({ ...visualStyle, contrast: value })} onCommit={(value) => onVisualStyleCommit({ ...visualStyle, contrast: value })} />
+                  <VisualSlider label="饱和度" value={visualStyle.saturation} min={0} max={2} step={0.01} format={(v) => `${Math.round(v * 100)}%`} onChange={(value) => onVisualStyleChange({ ...visualStyle, saturation: value })} onCommit={(value) => onVisualStyleCommit({ ...visualStyle, saturation: value })} />
+                  <VisualSlider label="色相" value={visualStyle.hue} min={-180} max={180} step={1} format={(v) => `${Math.round(v)}°`} onChange={(value) => onVisualStyleChange({ ...visualStyle, hue: value })} onCommit={(value) => onVisualStyleCommit({ ...visualStyle, hue: value })} />
+                  <VisualSlider label="冷暖" value={visualStyle.warmth} min={-1} max={1} step={0.01} format={(v) => v < 0 ? `冷 ${Math.round(-v * 100)}` : `暖 ${Math.round(v * 100)}`} onChange={(value) => onVisualStyleChange({ ...visualStyle, warmth: value })} onCommit={(value) => onVisualStyleCommit({ ...visualStyle, warmth: value })} />
+                  <VisualSlider label="阴影" value={visualStyle.shadowOpacity} min={0} max={0.6} step={0.01} format={(v) => `${Math.round(v * 100)}%`} onChange={(value) => onVisualStyleChange({ ...visualStyle, shadowOpacity: value })} onCommit={(value) => onVisualStyleCommit({ ...visualStyle, shadowOpacity: value })} />
+                </div>
+              )}
+              <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Label>地点蒙版</Label>
+                  <Badge variant="outline">{maskPointCount} 笔</Badge>
+                </div>
+                <ToggleGroup
+                  type="single"
+                  value={maskLayer}
+                  onValueChange={(value) =>
+                    value && onMaskLayerChange(value as MaskLayer)
+                  }
+                  aria-label="蒙版类型"
+                  className="grid grid-cols-2"
+                >
+                  <ToggleGroupItem value="transparency">
+                    透明擦除
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="occlusion">
+                    前景遮挡
+                  </ToggleGroupItem>
+                </ToggleGroup>
+                <p className="text-[11px] leading-5 text-muted-foreground">
+                  {maskLayer === "occlusion"
+                    ? "蓝色区域会作为最上层前景，覆盖移入该区域的其他图片。"
+                    : "红色区域会从当前地点图片中变为透明。"}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant={
+                      maskEditing && maskTool === "erase"
+                        ? "default"
+                        : "outline"
+                    }
+                    onClick={() => onMaskToolChange("erase")}
+                  >
+                    <Eraser data-icon="inline-start" />
+                    擦除
+                  </Button>
+                  <Button
+                    variant={
+                      maskEditing && maskTool === "restore"
+                        ? "default"
+                        : "outline"
+                    }
+                    onClick={() => onMaskToolChange("restore")}
+                  >
+                    <RotateCcw data-icon="inline-start" />
+                    反向恢复
+                  </Button>
+                </div>
+                {maskEditing && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => onMaskEditingChange(false)}
+                  >
+                    退出蒙版编辑
+                  </Button>
+                )}
+                <div className="flex items-center justify-between gap-3 rounded-md border bg-background p-2.5">
+                  <div className="flex flex-col gap-0.5">
+                    <Label htmlFor="show-mask-overlay">
+                      显示{maskLayer === "occlusion" ? "蓝色" : "红色"}蒙版
+                    </Label>
+                    <span className="text-[11px] text-muted-foreground">
+                      关闭后查看实际透明效果
+                    </span>
+                  </div>
+                  <Switch
+                    id="show-mask-overlay"
+                    checked={showMaskOverlay}
+                    onCheckedChange={onShowMaskOverlayChange}
+                    aria-label="显示红色蒙版"
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="location-mask-brush">笔刷大小</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {maskBrushSize}%
+                  </span>
+                </div>
+                <Slider
+                  id="location-mask-brush"
+                  min={3}
+                  max={20}
+                  step={1}
+                  value={[maskBrushSize]}
+                  onValueChange={([value]) =>
+                    onMaskBrushSizeChange(value ?? 8)
+                  }
+                  aria-label="蒙版笔刷大小"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    disabled={!maskPointCount}
+                    onClick={onMaskUndo}
+                  >
+                    <Undo2 data-icon="inline-start" />
+                    撤销一笔
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={!maskPointCount}
+                    onClick={onMaskClear}
+                  >
+                    <Trash2 data-icon="inline-start" />
+                    清空蒙版
+                  </Button>
+                </div>
+              </div>
+              </>
             )}
           </>
         )}

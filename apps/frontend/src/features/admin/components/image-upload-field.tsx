@@ -22,6 +22,8 @@ interface ImageUploadFieldProps {
   group?: FileAssetGroup
   /** 将上传操作覆盖在图片中央，已有图片时 hover/focus 显示 */
   overlayUpload?: boolean
+  /** 是否允许上传视频并使用视频预览 */
+  allowVideo?: boolean
 }
 
 const sizeMap = {
@@ -44,6 +46,7 @@ export function ImageUploadField({
   className,
   group = 'library',
   overlayUpload = false,
+  allowVideo = false,
 }: ImageUploadFieldProps) {
   const [uploading, setUploading] = useState(false)
   const [previewUrl, setPreviewUrl] = useState(value || '')
@@ -54,12 +57,14 @@ export function ImageUploadField({
   }, [value])
 
   const handleUpload = async (file: File) => {
-    if (!file.type.startsWith('image/')) return
+    if (!file.type.startsWith('image/') && !(allowVideo && file.type.startsWith('video/'))) return
     setUploading(true)
     try {
       const asset = await uploadFileToCosAndComplete({ file, group })
       const resolved = await getFileAssetLongLivedUrl(asset.id)
-      const cosUrl = resolved.url
+      const cosUrl = file.type.startsWith('video/')
+        ? `${resolved.url}${resolved.url.includes('#') ? '&' : '#'}media=video`
+        : resolved.url
       setPreviewUrl(cosUrl)
       onUploaded?.(cosUrl, asset.id)
       onChange?.(cosUrl)
@@ -84,6 +89,10 @@ export function ImageUploadField({
   }
 
   const sizeClass = sizeMap[previewSize]
+  const previewIsVideo = allowVideo && (
+    /\.(mp4|webm|ogg|mov|m4v)(?:[?#]|$)/i.test(previewUrl) ||
+    /[#&?]media=video(?:&|$)/i.test(previewUrl)
+  )
 
   if (overlayUpload) {
     return (
@@ -95,7 +104,9 @@ export function ImageUploadField({
             previewUrl && 'border-transparent',
           )}
         >
-          {previewUrl ? (
+          {previewUrl ? previewIsVideo ? (
+            <video src={previewUrl} muted loop autoPlay playsInline className="size-full object-cover" />
+          ) : (
             <img src={previewUrl} alt="预览" className="size-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
           ) : (
             <ImageIcon className="size-6 text-muted-foreground/35" />
@@ -118,7 +129,7 @@ export function ImageUploadField({
               {previewUrl && (
                 <button type="button" aria-label="移除图片" onClick={clearImage} className="absolute right-1 top-1 rounded-full bg-background/90 p-1 text-muted-foreground opacity-0 shadow-sm transition-opacity hover:bg-destructive hover:text-destructive-foreground group-hover:opacity-100 group-focus-within:opacity-100"><X className="size-3" /></button>
               )}
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+              <input ref={fileInputRef} type="file" accept={allowVideo ? "image/*,video/*" : "image/*"} onChange={handleFileSelect} className="hidden" />
             </>
           )}
         </div>
@@ -139,14 +150,18 @@ export function ImageUploadField({
         >
           {previewUrl ? (
             <>
-              <img
-                src={previewUrl}
-                alt="预览"
-                className="h-full w-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none'
-                }}
-              />
+              {previewIsVideo ? (
+                <video src={previewUrl} muted loop autoPlay playsInline className="size-full object-cover" />
+              ) : (
+                <img
+                  src={previewUrl}
+                  alt="预览"
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none'
+                  }}
+                />
+              )}
               {!disabled && (
                 <button
                   type="button"
@@ -179,12 +194,12 @@ export function ImageUploadField({
                 ) : (
                   <Upload className="size-3.5" />
                 )}
-                {uploading ? '上传中...' : '上传图片'}
+                {uploading ? '上传中...' : allowVideo ? '上传图片或视频' : '上传图片'}
               </Button>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept={allowVideo ? "image/*,video/*" : "image/*"}
                 onChange={handleFileSelect}
                 className="hidden"
               />

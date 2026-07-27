@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -9,7 +10,9 @@ import { Application, extend, useTick } from "@pixi/react";
 import {
   Assets,
   Container,
+  ColorMatrixFilter,
   Graphics,
+  Rectangle,
   Sprite,
   Text as PixiText,
   Texture,
@@ -19,6 +22,11 @@ import {
 import { LocateFixed, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type {
+  ResourceMask,
+  ResourceMaskPoint,
+  LocationVisualStyle,
+} from "./exploration-map-model";
 
 extend({ Container, Graphics, Sprite });
 
@@ -37,6 +45,9 @@ export type ExplorationNode = {
   required?: boolean;
   disabled?: boolean;
   hidden?: boolean;
+  mask?: ResourceMask;
+  occlusionMask?: ResourceMask;
+  visualStyle?: LocationVisualStyle;
 };
 
 interface ExplorationPixiCanvasProps {
@@ -50,12 +61,32 @@ interface ExplorationPixiCanvasProps {
   worldHeight?: number;
   timeOfDay?: "day" | "golden" | "night";
   mobilePreview?: boolean;
+  maskEditingId?: string;
+  maskBrushRadius?: number;
+  maskRestoring?: boolean;
+  showMaskOverlay?: boolean;
+  maskKind?: "transparency" | "occlusion";
   onSelect: (id: string) => void;
   onOpen: (id: string) => void;
   onMove: (id: string, x: number, y: number) => void;
+  onMaskPoint?: (id: string, point: ResourceMaskPoint) => void;
+  onMaskEnd?: () => void;
 }
 
 type Camera = { x: number; y: number; zoom: number };
+
+function isVideoSource(url?: string | null) {
+  return (
+    !!url &&
+    (/\.(mp4|webm|ogg|mov|m4v)(?:[?#]|$)/i.test(url) ||
+      /[#&?]media=video(?:&|$)/i.test(url))
+  );
+}
+
+const MASK_BRUSH_CURSOR =
+  'url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2211%22 fill=%22none%22 stroke=%22%23ef4444%22 stroke-width=%222%22/%3E%3Cpath d=%22M16 3v5M16 24v5M3 16h5M24 16h5%22 stroke=%22%23fff%22 stroke-width=%222%22/%3E%3C/svg%3E") 16 16, crosshair';
+const MASK_RESTORE_CURSOR =
+  'url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2211%22 fill=%22none%22 stroke=%22%2322c55e%22 stroke-width=%222%22/%3E%3Cpath d=%22M16 3v5M16 24v5M3 16h5M24 16h5%22 stroke=%22%23fff%22 stroke-width=%222%22/%3E%3C/svg%3E") 16 16, crosshair';
 
 export function ExplorationPixiCanvas({
   worldWidth = 1600,
@@ -186,26 +217,28 @@ export function ExplorationPixiCanvas({
           : "h-[min(760px,74vh)] min-h-[540px] rounded-2xl"
       } ${themeClass}`}
     >
-      <Application
-        resizeTo={hostRef as React.RefObject<HTMLElement>}
-        background={props.timeOfDay === "night" ? 0x07111f : 0x10263a}
-        antialias
-        autoDensity
-        resolution={Math.min(window.devicePixelRatio || 1, 2)}
-      >
-        <ExplorationStage
-          {...props}
-          worldWidth={worldWidth}
-          worldHeight={worldHeight}
-          viewportWidth={size.width}
-          viewportHeight={size.height}
-          fitScale={fitScale}
-          camera={camera}
-          onCameraChange={setCamera}
-        />
-      </Application>
+      <div className="absolute inset-0 z-10">
+        <Application
+          resizeTo={hostRef as React.RefObject<HTMLElement>}
+          background={props.timeOfDay === "night" ? 0x07111f : 0x10263a}
+          antialias
+          autoDensity
+          resolution={Math.min(window.devicePixelRatio || 1, 2)}
+        >
+          <ExplorationStage
+            {...props}
+            worldWidth={worldWidth}
+            worldHeight={worldHeight}
+            viewportWidth={size.width}
+            viewportHeight={size.height}
+            fitScale={fitScale}
+            camera={camera}
+            onCameraChange={setCamera}
+          />
+        </Application>
+      </div>
 
-      <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2">
+      <div className="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2">
         <Badge className="pointer-events-auto" variant="secondary">
           {props.editable ? "编辑视图" : "玩家预览"}
         </Badge>
@@ -214,7 +247,7 @@ export function ExplorationPixiCanvas({
         </Badge>
       </div>
 
-      <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-xl border bg-background/90 p-1 shadow-lg backdrop-blur">
+      <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1 rounded-xl border bg-background/90 p-1 shadow-lg backdrop-blur">
         <Button
           aria-label="缩小地图"
           size="icon"
@@ -241,7 +274,7 @@ export function ExplorationPixiCanvas({
         </Button>
       </div>
 
-      <p className="pointer-events-none absolute bottom-4 left-4 rounded-full bg-background/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur">
+      <p className="pointer-events-none absolute bottom-4 left-4 z-20 rounded-full bg-background/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur">
         拖动空白处平移 · 滚轮缩放
         {props.editable ? " · 拖动物件调整位置" : " · 点击探索"}
       </p>
@@ -265,6 +298,13 @@ function ExplorationStage({
   onSelect,
   onOpen,
   onMove,
+  maskEditingId,
+  maskBrushRadius = 0.08,
+  maskRestoring = false,
+  showMaskOverlay = false,
+  maskKind = "transparency",
+  onMaskPoint,
+  onMaskEnd,
   onCameraChange,
 }: ExplorationPixiCanvasProps & {
   viewportWidth: number;
@@ -276,7 +316,10 @@ function ExplorationStage({
   onCameraChange: React.Dispatch<React.SetStateAction<Camera>>;
 }) {
   const worldRef = useRef<Container>(null);
-  const background = useTexture(backgroundUrl);
+  const videoBackground = isVideoSource(backgroundUrl);
+  const imageBackground = useTexture(videoBackground ? null : backgroundUrl);
+  const videoTexture = useVideoTexture(videoBackground ? backgroundUrl : null);
+  const background = videoTexture ?? imageBackground;
   const draggingWorld = useRef(false);
   const worldStart = useRef({ x: 0, y: 0, cameraX: 0, cameraY: 0 });
   const scale = fitScale * camera.zoom;
@@ -384,6 +427,28 @@ function ExplorationStage({
             onSelect={onSelect}
             onOpen={onOpen}
             onMove={onMove}
+            erasing={editable && maskEditingId === node.id}
+            onMaskPoint={onMaskPoint}
+            maskBrushRadius={maskBrushRadius}
+            maskRestoring={maskRestoring}
+            showMaskOverlay={showMaskOverlay}
+            maskKind={maskKind}
+            onMaskEnd={onMaskEnd}
+          />
+        ))}
+      {nodes
+        .filter(
+          (node) =>
+            !node.hidden &&
+            node.imageUrl &&
+            node.occlusionMask?.points.length,
+        )
+        .map((node) => (
+          <OcclusionNode
+            key={`occlusion-${node.id}`}
+            node={node}
+            worldWidth={worldWidth}
+            worldHeight={worldHeight}
           />
         ))}
     </pixiContainer>
@@ -400,6 +465,13 @@ function HotspotNode({
   onSelect,
   onOpen,
   onMove,
+  erasing,
+  onMaskPoint,
+  maskBrushRadius,
+  maskRestoring,
+  showMaskOverlay,
+  maskKind,
+  onMaskEnd,
 }: {
   node: ExplorationNode;
   selected: boolean;
@@ -410,6 +482,13 @@ function HotspotNode({
   onSelect: (id: string) => void;
   onOpen: (id: string) => void;
   onMove: (id: string, x: number, y: number) => void;
+  erasing: boolean;
+  onMaskPoint?: (id: string, point: ResourceMaskPoint) => void;
+  maskBrushRadius: number;
+  maskRestoring: boolean;
+  showMaskOverlay: boolean;
+  maskKind: "transparency" | "occlusion";
+  onMaskEnd?: () => void;
 }) {
   const ref = useRef<Container>(null);
   const texture = useTexture(node.imageUrl);
@@ -417,6 +496,41 @@ function HotspotNode({
   const dragging = useRef(false);
   const moved = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
+  const erasingPointer = useRef(false);
+  const [maskGraphic, setMaskGraphic] = useState<Graphics | null>(null);
+  const spriteRef = useRef<Sprite>(null);
+  const shadowRef = useRef<Sprite>(null);
+  const editingMask =
+    maskKind === "occlusion" ? node.occlusionMask : node.mask;
+  const colorFilter = useMemo(() => {
+    const style = node.visualStyle;
+    if (!style) return null;
+    const isNeutral =
+      Math.abs(style.brightness - 1) < 0.001 &&
+      Math.abs(style.contrast - 1) < 0.001 &&
+      Math.abs(style.saturation - 1) < 0.001 &&
+      Math.abs(style.hue) < 0.001;
+    if (isNeutral) return null;
+    const filter = new ColorMatrixFilter();
+    filter.resolution = 2;
+    filter.brightness(style.brightness, false);
+    filter.contrast(style.contrast - 1, true);
+    filter.saturate(style.saturation - 1, true);
+    filter.hue(style.hue, true);
+    return filter;
+  }, [node.visualStyle]);
+  const colorTint = useMemo(() => {
+    const warmth = node.visualStyle?.warmth ?? 0;
+    const amount = Math.min(1, Math.abs(warmth));
+    const target = warmth >= 0 ? [255, 210, 160] : [170, 210, 255];
+    const channel = (value: number) =>
+      Math.round(255 + (value - 255) * amount);
+    return (
+      (channel(target[0]) << 16) |
+      (channel(target[1]) << 8) |
+      channel(target[2])
+    );
+  }, [node.visualStyle?.warmth]);
 
   useTick(() => {
     if (!ref.current) return;
@@ -460,6 +574,61 @@ function HotspotNode({
     ],
   );
 
+  const drawMask = useCallback(
+    (g: PixiGraphics) => {
+      g.clear();
+      for (const point of node.mask?.points ?? []) {
+        g.circle(
+          -node.width / 2 + point.x * node.width,
+          -node.height + point.y * node.height,
+          point.radius * Math.max(node.width, node.height),
+        ).fill(0xffffff);
+      }
+    },
+    [node.height, node.mask?.points, node.width],
+  );
+
+  useEffect(() => {
+    const sprite = spriteRef.current;
+    if (!sprite) return;
+    if (maskGraphic) {
+      sprite.setMask({ mask: maskGraphic, inverse: true });
+      shadowRef.current?.setMask({ mask: maskGraphic, inverse: true });
+    } else {
+      sprite.mask = null;
+      if (shadowRef.current) shadowRef.current.mask = null;
+    }
+    return () => {
+      sprite.mask = null;
+      if (shadowRef.current) shadowRef.current.mask = null;
+    };
+  }, [maskGraphic]);
+
+  const drawMaskPreview = useCallback(
+    (g: PixiGraphics) => {
+      g.clear();
+      if (!erasing) return;
+      for (const point of editingMask?.points ?? []) {
+        g.circle(
+          -node.width / 2 + point.x * node.width,
+          -node.height + point.y * node.height,
+          point.radius * Math.max(node.width, node.height),
+        ).fill(0xffffff);
+      }
+    },
+    [editingMask?.points, erasing, node.height, node.width],
+  );
+
+  const addMaskPoint = (event: FederatedPointerEvent) => {
+    if (!erasing || !ref.current || !onMaskPoint) return;
+    const local = ref.current.toLocal(event.global);
+    onMaskPoint(node.id, {
+      x: Math.max(0, Math.min(1, (local.x + node.width / 2) / node.width)),
+      y: Math.max(0, Math.min(1, (local.y + node.height) / node.height)),
+      radius: maskBrushRadius,
+    });
+  };
+
   return (
     <pixiContainer
       ref={ref}
@@ -468,13 +637,27 @@ function HotspotNode({
       zIndex={Math.round((node.y / 100) * worldHeight)}
       alpha={node.disabled ? 0.5 : 1}
       eventMode="static"
-      cursor={editable ? "grab" : "pointer"}
+      hitArea={new Rectangle(-node.width / 2, -node.height, node.width, node.height)}
+      cursor={
+        erasing
+          ? maskRestoring
+            ? MASK_RESTORE_CURSOR
+            : MASK_BRUSH_CURSOR
+          : editable
+            ? "grab"
+            : "pointer"
+      }
       onPointerOver={() => {
         if (!editable) setHovered(true);
       }}
       onPointerOut={() => setHovered(false)}
       onPointerDown={(event: FederatedPointerEvent) => {
         event.stopPropagation();
+        if (erasing) {
+          erasingPointer.current = true;
+          addMaskPoint(event);
+          return;
+        }
         dragging.current = editable;
         moved.current = false;
         if (editable && ref.current) {
@@ -488,6 +671,10 @@ function HotspotNode({
         }
       }}
       onGlobalPointerMove={(event: FederatedPointerEvent) => {
+        if (erasingPointer.current && erasing) {
+          addMaskPoint(event);
+          return;
+        }
         if (!dragging.current || !editable) return;
         const parentPoint = ref.current?.parent?.toLocal(event.global);
         if (!parentPoint || !ref.current) return;
@@ -505,6 +692,11 @@ function HotspotNode({
       }}
       onPointerUp={(event: FederatedPointerEvent) => {
         event.stopPropagation();
+        if (erasingPointer.current) {
+          erasingPointer.current = false;
+          onMaskEnd?.();
+          return;
+        }
         if (dragging.current && moved.current && ref.current) {
           onMove(
             node.id,
@@ -519,20 +711,174 @@ function HotspotNode({
       }}
       onPointerUpOutside={() => {
         dragging.current = false;
+        if (erasingPointer.current) onMaskEnd?.();
+        erasingPointer.current = false;
       }}
     >
       <pixiGraphics draw={drawGlow} />
+      {texture && node.mask?.points.length ? (
+        <pixiGraphics
+          ref={setMaskGraphic}
+          eventMode="none"
+          draw={drawMask}
+        />
+      ) : null}
       {texture && (
         <pixiSprite
+          ref={shadowRef}
           texture={texture}
+          anchor={{ x: 0.5, y: 1 }}
+          width={node.width}
+          height={node.height}
+          x={4}
+          y={7}
+          tint={0x000000}
+          alpha={node.visualStyle?.shadowOpacity ?? 0}
+          eventMode="none"
+        />
+      )}
+      {texture && (
+        <pixiSprite
+          ref={spriteRef}
+          texture={texture}
+          filters={colorFilter ? [colorFilter] : undefined}
+          tint={colorTint}
           anchor={{ x: 0.5, y: 1 }}
           width={node.width}
           height={node.height}
           y={!editable && hovered ? -10 : 0}
         />
       )}
+      {erasing && showMaskOverlay && (
+        <pixiGraphics
+          eventMode="none"
+          alpha={0.36}
+          tint={maskKind === "occlusion" ? 0x3b82f6 : 0xef4444}
+          draw={drawMaskPreview}
+        />
+      )}
     </pixiContainer>
   );
+}
+
+function OcclusionNode({
+  node,
+  worldWidth,
+  worldHeight,
+}: {
+  node: ExplorationNode;
+  worldWidth: number;
+  worldHeight: number;
+}) {
+  const texture = useTexture(node.imageUrl);
+  const spriteRef = useRef<Sprite>(null);
+  const [maskGraphic, setMaskGraphic] = useState<Graphics | null>(null);
+  const colorFilter = useMemo(() => {
+    const style = node.visualStyle;
+    if (!style) return null;
+    const isNeutral =
+      Math.abs(style.brightness - 1) < 0.001 &&
+      Math.abs(style.contrast - 1) < 0.001 &&
+      Math.abs(style.saturation - 1) < 0.001 &&
+      Math.abs(style.hue) < 0.001;
+    if (isNeutral) return null;
+    const filter = new ColorMatrixFilter();
+    filter.resolution = 2;
+    filter.brightness(style.brightness, false);
+    filter.contrast(style.contrast - 1, true);
+    filter.saturate(style.saturation - 1, true);
+    filter.hue(style.hue, true);
+    return filter;
+  }, [node.visualStyle]);
+  const colorTint = useMemo(() => {
+    const warmth = node.visualStyle?.warmth ?? 0;
+    const amount = Math.min(1, Math.abs(warmth));
+    const target = warmth >= 0 ? [255, 210, 160] : [170, 210, 255];
+    const channel = (value: number) =>
+      Math.round(255 + (value - 255) * amount);
+    return (
+      (channel(target[0]) << 16) |
+      (channel(target[1]) << 8) |
+      channel(target[2])
+    );
+  }, [node.visualStyle?.warmth]);
+  const drawMask = useCallback(
+    (g: PixiGraphics) => {
+      g.clear();
+      for (const point of node.occlusionMask?.points ?? []) {
+        g.circle(
+          -node.width / 2 + point.x * node.width,
+          -node.height + point.y * node.height,
+          point.radius * Math.max(node.width, node.height),
+        ).fill(0xffffff);
+      }
+    },
+    [node.height, node.occlusionMask?.points, node.width],
+  );
+  useEffect(() => {
+    if (!spriteRef.current) return;
+    spriteRef.current.mask = maskGraphic;
+    return () => {
+      if (spriteRef.current) spriteRef.current.mask = null;
+    };
+  }, [maskGraphic]);
+  if (!texture) return null;
+  return (
+    <pixiContainer
+      x={(node.x / 100) * worldWidth}
+      y={(node.y / 100) * worldHeight}
+      zIndex={100000}
+      eventMode="none"
+    >
+      <pixiGraphics ref={setMaskGraphic} eventMode="none" draw={drawMask} />
+      <pixiSprite
+        ref={spriteRef}
+        texture={texture}
+        filters={colorFilter ? [colorFilter] : undefined}
+        tint={colorTint}
+        anchor={{ x: 0.5, y: 1 }}
+        width={node.width}
+        height={node.height}
+        eventMode="none"
+      />
+    </pixiContainer>
+  );
+}
+
+function useVideoTexture(url?: string | null) {
+  const [texture, setTexture] = useState<Texture | null>(null);
+  useEffect(() => {
+    if (!url) {
+      setTexture(null);
+      return;
+    }
+    const video = document.createElement("video");
+    video.crossOrigin = "anonymous";
+    video.muted = true;
+    video.loop = true;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    let active = true;
+    let createdTexture: Texture | null = null;
+    const createTexture = () => {
+      if (!active || createdTexture) return;
+      createdTexture = Texture.from(video);
+      createdTexture.source.scaleMode = "linear";
+      setTexture(createdTexture);
+      void video.play().catch(() => undefined);
+    };
+    video.addEventListener("loadeddata", createTexture, { once: true });
+    video.src = url;
+    video.load();
+    return () => {
+      active = false;
+      video.pause();
+      video.removeEventListener("loadeddata", createTexture);
+      createdTexture?.destroy();
+    };
+  }, [url]);
+  return texture;
 }
 
 function useTexture(url?: string | null) {
@@ -545,7 +891,11 @@ function useTexture(url?: string | null) {
     }
     Assets.load(url)
       .then((loaded) => {
-        if (active) setTexture(loaded as Texture);
+        if (active) {
+          const loadedTexture = loaded as Texture;
+          loadedTexture.source.scaleMode = "linear";
+          setTexture(loadedTexture);
+        }
       })
       .catch(() => {
         if (active) setTexture(null);

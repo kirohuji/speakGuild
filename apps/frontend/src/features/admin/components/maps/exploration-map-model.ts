@@ -33,16 +33,133 @@ export type ExplorationObject = {
   hidden: boolean;
 };
 
+export type ResourceMaskPoint = {
+  x: number;
+  y: number;
+  radius: number;
+};
+
+export type ResourceMask = {
+  points: ResourceMaskPoint[];
+};
+
+export type LocationVisualStyle = {
+  version?: 2;
+  brightness: number;
+  contrast: number;
+  saturation: number;
+  hue: number;
+  warmth: number;
+  shadowOpacity: number;
+};
+
+export const DEFAULT_LOCATION_VISUAL_STYLE: LocationVisualStyle = {
+  version: 2,
+  brightness: 1,
+  contrast: 1,
+  saturation: 1,
+  hue: 0,
+  warmth: 0,
+  shadowOpacity: 0,
+};
+
 export type ExplorationEditorData = {
   version: 3;
   explorationScenes?: Record<string, Record<string, RoomLayout>>;
   explorationObjects?: Record<string, ExplorationObject[]>;
+  locationMasks?: Record<string, ResourceMask>;
+  locationOcclusionMasks?: Record<string, ResourceMask>;
+  locationVisualStyles?: Record<string, LocationVisualStyle>;
   preview?: {
     timeOfDay?: "day" | "golden" | "night";
     initialZoom?: number;
   };
   [key: string]: unknown;
 };
+
+export function getLocationVisualStyle(
+  map: GameMapData | null,
+  locationId: string,
+): LocationVisualStyle {
+  const stored = map?.editorData?.locationVisualStyles?.[locationId];
+  return {
+    ...DEFAULT_LOCATION_VISUAL_STYLE,
+    ...(stored ?? {}),
+    version: 2,
+    shadowOpacity:
+      stored?.version === 2
+        ? stored.shadowOpacity
+        : DEFAULT_LOCATION_VISUAL_STYLE.shadowOpacity,
+  };
+}
+
+export function updateLocationVisualStyle(
+  editorData: any,
+  locationId: string,
+  style: LocationVisualStyle,
+): ExplorationEditorData {
+  const current = (editorData ?? {}) as ExplorationEditorData;
+  return {
+    ...current,
+    version: 3,
+    locationVisualStyles: {
+      ...(current.locationVisualStyles ?? {}),
+      [locationId]: style,
+    },
+  };
+}
+
+export function getLocationMask(
+  map: GameMapData | null,
+  locationId: string,
+): ResourceMask | undefined {
+  const mask = map?.editorData?.locationMasks?.[locationId];
+  if (!mask || !Array.isArray(mask.points)) return undefined;
+  return mask;
+}
+
+export function getLocationOcclusionMask(
+  map: GameMapData | null,
+  locationId: string,
+): ResourceMask | undefined {
+  const mask = map?.editorData?.locationOcclusionMasks?.[locationId];
+  if (!mask || !Array.isArray(mask.points)) return undefined;
+  return mask;
+}
+
+export function updateLocationOcclusionMask(
+  editorData: any,
+  locationId: string,
+  mask?: ResourceMask,
+): ExplorationEditorData {
+  const current = (editorData ?? {}) as ExplorationEditorData;
+  const locationOcclusionMasks = {
+    ...(current.locationOcclusionMasks ?? {}),
+  };
+  if (mask?.points.length) locationOcclusionMasks[locationId] = mask;
+  else delete locationOcclusionMasks[locationId];
+  return {
+    ...current,
+    version: 3,
+    locationOcclusionMasks,
+  };
+}
+
+export function updateLocationMask(
+  editorData: any,
+  locationId: string,
+  mask?: ResourceMask,
+): ExplorationEditorData {
+  const current = (editorData ?? {}) as ExplorationEditorData;
+  const locationMasks = { ...(current.locationMasks ?? {}) };
+  if (mask?.points.length) locationMasks[locationId] = mask;
+  else delete locationMasks[locationId];
+  return {
+    ...current,
+    version: 3,
+    locationMasks,
+  };
+}
 
 export function makeExplorationKey(value: string, prefix: string) {
   const key = value

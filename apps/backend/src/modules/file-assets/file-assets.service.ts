@@ -15,6 +15,8 @@ import { CreateCosPolicyDto } from './dto/create-cos-policy.dto';
 import { CreateReferenceDto } from './dto/create-reference.dto';
 import { DeleteReferenceDto } from './dto/delete-reference.dto';
 import { SetCurrentAvatarDto } from './dto/set-current-avatar.dto';
+import { MatchSamplingToneDto } from './dto/match-sampling-tone.dto';
+import sharp = require('sharp');
 
 type IngestBufferInput = {
   buffer: Buffer;
@@ -208,6 +210,168 @@ export class FileAssetsService {
     }
     const url = await this.getSignedDownloadUrl(asset.cosKey, 604800); // 7 天
     return { url, assetId: asset.id };
+  }
+
+  async fetchAssetForSampling(rawUrl: string, range?: string) {
+    let parsed: URL;
+    try {
+      parsed = new URL(rawUrl);
+    } catch {
+      throw new BadRequestException('素材地址无效');
+    }
+    if (parsed.protocol !== 'https:' || parsed.origin !== this.cosHost) {
+      throw new BadRequestException('仅允许读取当前 COS 存储桶素材');
+    }
+    parsed.hash = '';
+    const upstream = await fetch(parsed.toString(), {
+      headers: range ? { Range: range } : undefined,
+    });
+    if (!upstream.ok && upstream.status !== 206) {
+      throw new BadRequestException(`COS 素材读取失败 (${upstream.status})`);
+    }
+    const contentType =
+      upstream.headers.get('content-type') || 'application/octet-stream';
+    if (!contentType.startsWith('image/') && !contentType.startsWith('video/')) {
+      throw new BadRequestException('仅支持图片或视频采样');
+    }
+    return upstream;
+  }
+
+  async matchSamplingTone(dto: MatchSamplingToneDto) {
+    const [background, resource] = await Promise.all([
+      this.readSamplingPixels(dto.backgroundUrl),
+      this.readSamplingPixels(dto.resourceUrl),
+    ]);
+    const backgroundTone = this.measureTone(background, {
+      x: dto.positionX,
+      y: dto.positionY,
+      radius: 14,
+    });
+    const resourceTone = this.measureTone(resource);
+    const clamp = (value: number, min: number, max: number) =>
+      Math.min(max, Math.max(min, value));
+    const style = {
+      version: 2 as const,
+      brightness: clamp(
+        backgroundTone.luminance / Math.max(resourceTone.luminance, 0.08),
+        0.55,
+        1.45,
+      ),
+      contrast: clamp(
+        0.9 + (backgroundTone.contrast - resourceTone.contrast),
+        0.65,
+        1.35,
+      ),
+      saturation: clamp(
+        backgroundTone.saturation / Math.max(resourceTone.saturation, 0.08),
+        0.35,
+        1.65,
+      ),
+      hue: 0,
+      warmth: clamp(
+        backgroundTone.warmth - resourceTone.warmth,
+        -0.65,
+        0.65,
+      ),
+      shadowOpacity: clamp(
+        0.35 - backgroundTone.luminance * 0.2,
+        0.12,
+        0.38,
+      ),
+    };
+    return {
+      style,
+      samples: {
+        background: backgroundTone,
+        resource: resourceTone,
+      },
+    };
+  }
+
+  private async readSamplingPixels(url: string) {
+    const upstream = await this.fetchAssetForSampling(url);
+    const contentType = upstream.headers.get('content-type') || '';
+    if (!contentType.startsWith('image/')) {
+      throw new BadRequestException(
+        '自动色调匹配目前需要图片底图；视频底图请先截取代表帧',
+      );
+    }
+    const contentLength = Number(upstream.headers.get('content-length') || 0);
+    if (contentLength > 30 * 1024 * 1024) {
+      throw new BadRequestException('采样图片不能超过 30MB');
+    }
+    const input = Buffer.from(await upstream.arrayBuffer());
+    try {
+      const { data, info } = await sharp(input)
+        .resize(96, 96, { fit: 'fill' })
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      return {
+        data,
+        width: info.width,
+        height: info.height,
+        channels: info.channels,
+      };
+    } catch {
+      throw new BadRequestException('图片解码失败，无法进行自动色调匹配');
+    }
+  }
+
+  private measureTone(
+    image: {
+      data: Buffer;
+      width: number;
+      height: number;
+      channels: number;
+    },
+    region?: { x: number; y: number; radius: number },
+  ) {
+    const centerX = region ? region.x * image.width : image.width / 2;
+    const centerY = region ? region.y * image.height : image.height / 2;
+    const radius = region ? region.radius : Math.max(image.width, image.height);
+    const minX = Math.max(0, Math.floor(centerX - radius));
+    const maxX = Math.min(image.width, Math.ceil(centerX + radius));
+    const minY = Math.max(0, Math.floor(centerY - radius));
+    const maxY = Math.min(image.height, Math.ceil(centerY + radius));
+    let weightTotal = 0;
+    let luminanceTotal = 0;
+    let luminanceSquaredTotal = 0;
+    let saturationTotal = 0;
+    let warmthTotal = 0;
+    for (let y = minY; y < maxY; y += 1) {
+      for (let x = minX; x < maxX; x += 1) {
+        const offset = (y * image.width + x) * image.channels;
+        const red = image.data[offset] / 255;
+        const green = image.data[offset + 1] / 255;
+        const blue = image.data[offset + 2] / 255;
+        const alpha = image.data[offset + 3] / 255;
+        if (alpha <= 0) continue;
+        const maximum = Math.max(red, green, blue);
+        const minimum = Math.min(red, green, blue);
+        const luminance = red * 0.2126 + green * 0.7152 + blue * 0.0722;
+        weightTotal += alpha;
+        luminanceTotal += luminance * alpha;
+        luminanceSquaredTotal += luminance * luminance * alpha;
+        saturationTotal +=
+          (maximum ? (maximum - minimum) / maximum : 0) * alpha;
+        warmthTotal += (red - blue) * alpha;
+      }
+    }
+    if (weightTotal <= 0) {
+      throw new BadRequestException('采样区域没有可见像素');
+    }
+    const luminance = luminanceTotal / weightTotal;
+    const variance = Math.max(
+      0,
+      luminanceSquaredTotal / weightTotal - luminance * luminance,
+    );
+    return {
+      luminance,
+      contrast: Math.sqrt(variance),
+      saturation: saturationTotal / weightTotal,
+      warmth: warmthTotal / weightTotal,
+    };
   }
 
   async listReferences(assetId: string) {
