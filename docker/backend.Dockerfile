@@ -15,12 +15,17 @@ COPY apps/backend apps/backend
 RUN pnpm --filter @manyu/backend prisma:generate
 RUN pnpm --filter @manyu/backend build
 
-FROM node:22-alpine AS runner
+FROM node:22-bookworm-slim AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 ARG NPM_REGISTRY=https://registry.npmmirror.com
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium ffmpeg fonts-noto-cjk ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+ENV REMOTION_CHROME_EXECUTABLE=/usr/bin/chromium
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/backend/package.json apps/backend/package.json

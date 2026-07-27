@@ -15,14 +15,20 @@ import {
   Loader2,
   Layers3,
   LockKeyhole,
+  Maximize2,
   Play,
   Search,
   ShoppingBag,
+  SmilePlus,
   Sparkles,
   Users,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Virtuoso } from 'react-virtuoso'
+import Lightbox from 'yet-another-react-lightbox'
+import Fullscreen from 'yet-another-react-lightbox/plugins/fullscreen'
+import Video from 'yet-another-react-lightbox/plugins/video'
+import 'yet-another-react-lightbox/styles.css'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -38,6 +44,7 @@ import {
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -57,6 +64,10 @@ import {
 } from '@/layout/learning-pack-download-monitor'
 import { useLearningStore } from '@/stores/learning.store'
 import { cn } from '@/lib/cn'
+import { parseComposer } from '@/features/admin/components/composer-parser'
+import { flattenComposerToTimeline } from '@/features/admin/components/vn-mixed-timeline'
+import { requestScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
+import { useGlobalTaskStore } from '@/stores/global-task.store'
 
 export function ScriptCenterPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -464,16 +475,16 @@ function MineScripts({
           <p className="text-xs font-medium text-muted-foreground">我的剧本</p>
           <Button variant="ghost" size="sm" onClick={onOpenShop}>探索更多</Button>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="-mx-2 flex snap-x gap-2 overflow-x-auto px-2 pb-1">
           {units.map((unit) => (
             <Link key={unit.id} to={`/scripts/packages/${unit.id}`} className="group">
-              <Card className="h-full overflow-hidden border-0 bg-muted/30 shadow-none transition-transform group-active:scale-[0.98]">
-                <div className="aspect-[4/3] bg-muted/50 p-3">
+              <Card className="w-44 shrink-0 snap-start overflow-hidden border-0 bg-muted/30 shadow-none transition-transform group-active:scale-[0.98]">
+                <div className="aspect-video bg-muted/50 p-3">
                   <Badge variant="secondary">{unit.scriptCount} 章</Badge>
                 </div>
-                <CardHeader className="p-3">
-                  <CardTitle className="line-clamp-1 text-sm">{unit.title}</CardTitle>
-                  <CardDescription className="line-clamp-1 text-xs">
+                <CardHeader className="p-2.5 pb-2">
+                  <CardTitle className="truncate text-sm">{unit.title}</CardTitle>
+                  <CardDescription className="truncate text-xs">
                     {unit.location || '沉浸式英语剧场'}
                   </CardDescription>
                 </CardHeader>
@@ -486,6 +497,37 @@ function MineScripts({
   )
 }
 
+async function generateAndPublishExistingWork(
+  work: ScriptWork,
+  onProgress: (progress: number) => void,
+) {
+  const taskId = `script-video:${work.id}`
+  const tasks = useGlobalTaskStore.getState()
+  tasks.startTask({ id: taskId, kind: 'script_video', title: `《${work.episode.title}》演出视频` })
+  try {
+  const player = await learningApi.getStoryEpisodePlayer(work.episodeId)
+  if (!player.inkScript.inkSource) throw new Error('章节脚本内容不完整，暂时无法生成视频')
+  const frames = flattenComposerToTimeline(parseComposer(player.inkScript.inkSource))
+  await requestScriptVideoRender({
+    workId: work.id,
+    frames,
+    onProgress: (progress, step) => {
+      onProgress(progress)
+      useGlobalTaskStore.getState().updateTask(taskId, { progress, stepLabel: step || '服务端 Remotion 渲染中' })
+    },
+  })
+  onProgress(100)
+  useGlobalTaskStore.getState().updateTask(taskId, { progress: 100, status: 'done', stepLabel: '已发布到广场' })
+  } catch (error: any) {
+    useGlobalTaskStore.getState().updateTask(taskId, {
+      status: 'error',
+      stepLabel: '视频生成失败',
+      error: error?.message || '视频生成失败，请重试',
+    })
+    throw error
+  }
+}
+
 function MyWorks({
   works,
   loading,
@@ -495,14 +537,28 @@ function MyWorks({
   loading: boolean
   onChanged: () => Promise<void>
 }) {
+  const [generating, setGenerating] = useState<Record<string, number>>({})
+
   const togglePublish = async (work: ScriptWork) => {
     try {
       if (work.status === 'published') await scriptCommunityApi.unpublishWork(work.id)
-      else await scriptCommunityApi.publishWork(work.id)
+      else if (work.videoUrl) await scriptCommunityApi.publishWork(work.id)
+      else {
+        setGenerating((current) => ({ ...current, [work.id]: 1 }))
+        await generateAndPublishExistingWork(work, (progress) => {
+          setGenerating((current) => ({ ...current, [work.id]: progress }))
+        })
+      }
       toast.success(work.status === 'published' ? '作品已转为仅自己可见' : '作品已发布到广场')
       await onChanged()
     } catch (error: any) {
       toast.error(error?.message || '作品状态更新失败')
+    } finally {
+      setGenerating((current) => {
+        const next = { ...current }
+        delete next[work.id]
+        return next
+      })
     }
   }
 
@@ -548,15 +604,24 @@ function MyWorks({
             <CardDescription className="truncate text-xs">{work.episode.scene.title} · {work.episode.chapterName}</CardDescription>
           </CardHeader>
           <CardFooter className="px-2.5 pb-2.5">
-            <Button
-              size="sm"
-              variant={work.status === 'published' ? 'outline' : 'default'}
-              className="h-8 w-full rounded-full text-xs"
-              disabled={!['ready', 'published'].includes(work.status)}
-              onClick={() => void togglePublish(work)}
-            >
-              {work.status === 'published' ? '取消发布' : work.status === 'ready' ? '发布到广场' : '等待视频'}
-            </Button>
+            <div className="w-full">
+              <Button
+                size="sm"
+                variant={work.status === 'published' ? 'outline' : 'default'}
+                className="h-8 w-full rounded-full text-xs"
+                disabled={Boolean(generating[work.id])}
+                onClick={() => void togglePublish(work)}
+              >
+                {generating[work.id]
+                  ? `生成中 ${generating[work.id]}%`
+                  : work.status === 'published'
+                    ? '取消发布'
+                    : work.videoUrl
+                      ? '发布到广场'
+                      : '生成视频并发布'}
+              </Button>
+              {generating[work.id] && <Progress value={generating[work.id]} className="mt-1.5 h-1" />}
+            </div>
           </CardFooter>
         </Card>
       ))}
@@ -580,6 +645,7 @@ function WorksLibraryDialog({
   const [search, setSearch] = useState('')
   const [sceneId, setSceneId] = useState('all')
   const [groupMode, setGroupMode] = useState<'time' | 'package'>('time')
+  const [generating, setGenerating] = useState<Record<string, number>>({})
 
   const scenes = useMemo(() => Array.from(
     new Map(works.map((work) => [work.episode.scene.id, work.episode.scene])).values(),
@@ -626,10 +692,22 @@ function WorksLibraryDialog({
   const togglePublish = async (work: ScriptWork) => {
     try {
       if (work.status === 'published') await scriptCommunityApi.unpublishWork(work.id)
-      else await scriptCommunityApi.publishWork(work.id)
+      else if (work.videoUrl) await scriptCommunityApi.publishWork(work.id)
+      else {
+        setGenerating((current) => ({ ...current, [work.id]: 1 }))
+        await generateAndPublishExistingWork(work, (progress) => {
+          setGenerating((current) => ({ ...current, [work.id]: progress }))
+        })
+      }
       await onChanged()
     } catch (error: any) {
       toast.error(error?.message || '作品状态更新失败')
+    } finally {
+      setGenerating((current) => {
+        const next = { ...current }
+        delete next[work.id]
+        return next
+      })
     }
   }
 
@@ -703,9 +781,16 @@ function WorksLibraryDialog({
                                 {attempts.length > 1 && <Badge variant={latest ? 'default' : 'secondary'} className="h-5 shrink-0 px-2 text-[10px]">{latest ? '最新' : `第 ${attempt} 次`}</Badge>}
                               </div>
                               <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{work.episode.chapterName} · {new Date(work.createdAt).toLocaleString('zh-CN')}</p>
-                              <Button size="sm" variant={work.status === 'published' ? 'outline' : 'default'} className="mt-2 h-7 rounded-full px-3 text-[11px]" disabled={!['ready', 'published'].includes(work.status)} onClick={() => void togglePublish(work)}>
-                                {work.status === 'published' ? '取消发布' : work.status === 'ready' ? '发布到广场' : '等待视频'}
+                              <Button size="sm" variant={work.status === 'published' ? 'outline' : 'default'} className="mt-2 h-7 rounded-full px-3 text-[11px]" disabled={Boolean(generating[work.id])} onClick={() => void togglePublish(work)}>
+                                {generating[work.id]
+                                  ? `生成中 ${generating[work.id]}%`
+                                  : work.status === 'published'
+                                    ? '取消发布'
+                                    : work.videoUrl
+                                      ? '发布到广场'
+                                      : '生成视频并发布'}
                               </Button>
+                              {generating[work.id] && <Progress value={generating[work.id]} className="mt-1.5 h-1 w-32" />}
                             </div>
                           </div>
                         )
@@ -741,6 +826,8 @@ function SquareFeed({
   loadingMore: boolean
   onLoadMore: () => Promise<void>
 }) {
+  const [previewWork, setPreviewWork] = useState<ScriptWork | null>(null)
+
   const toggleLike = async (work: ScriptWork) => {
     if (work.liked) await scriptCommunityApi.unlike(work.id)
     else await scriptCommunityApi.like(work.id)
@@ -770,8 +857,9 @@ function SquareFeed({
         </div>
       ) : (
         <Virtuoso
-          className="h-[calc(100dvh-13.5rem)]"
           data={works}
+          useWindowScroll
+          computeItemKey={(_index, work) => work.id}
           endReached={() => {
             if (hasMore && !loadingMore) void onLoadMore()
           }}
@@ -780,6 +868,7 @@ function SquareFeed({
             <div className="pb-3">
               <SquareWorkCard
                 work={work}
+                onOpen={() => setPreviewWork(work)}
                 onLike={() => void toggleLike(work)}
                 onReaction={(reaction) => void toggleReaction(work, reaction)}
               />
@@ -794,96 +883,168 @@ function SquareFeed({
           }}
         />
       )}
+      <Lightbox
+        open={Boolean(previewWork?.videoUrl)}
+        close={() => setPreviewWork(null)}
+        plugins={[Video, Fullscreen]}
+        controller={{ closeOnBackdropClick: true }}
+        carousel={{ finite: true }}
+        slides={previewWork?.videoUrl ? [{
+          type: 'video',
+          width: 1280,
+          height: 720,
+          poster: previewWork.coverUrl ?? undefined,
+          sources: [{ src: previewWork.videoUrl, type: previewWork.videoMimeType ?? 'video/mp4' }],
+        }] : []}
+        video={{ controls: true, playsInline: true }}
+        render={{ buttonPrev: () => null, buttonNext: () => null }}
+      />
     </div>
   )
 }
 
 function SquareWorkCard({
   work,
+  onOpen,
   onLike,
   onReaction,
 }: {
   work: ScriptWork
+  onOpen: () => void
   onLike: () => void
   onReaction: (reaction: string) => void
 }) {
+  const [reactionOpen, setReactionOpen] = useState(false)
+
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="flex-row items-center gap-3 p-4">
-        <Avatar className="size-10">
+    <Card className="overflow-hidden border-0 bg-muted/25 shadow-none dark:ring-0">
+      <CardHeader className="flex-row items-center gap-2.5 px-3 pb-2 pt-3">
+        <Avatar className="size-9">
           <AvatarImage src={work.user.image ?? undefined} alt={work.user.name} />
           <AvatarFallback>{work.user.name.slice(0, 1)}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
           <CardTitle className="truncate text-sm">{work.user.name}</CardTitle>
-          <CardDescription className="text-xs">Lv.{work.user.userLevel} · {work.episode.scene.title}</CardDescription>
+          <CardDescription className="truncate text-[11px]">Lv.{work.user.userLevel} · {work.episode.scene.title} · {work.episode.chapterName}</CardDescription>
         </div>
-        <Badge variant="secondary">
+        <Badge variant="secondary" className="h-5 px-2 text-[10px] font-medium">
           {work.kind === 'progress_card' ? '学习进度' : work.kind === 'vn_video' ? 'VN' : '跟读'}
         </Badge>
       </CardHeader>
 
       {work.videoUrl ? (
-        <video
-          src={work.videoUrl}
-          poster={work.coverUrl ?? undefined}
-          controls
-          preload="metadata"
-          playsInline
-          className="aspect-video w-full bg-muted object-cover"
-        />
+        <button
+          type="button"
+          onClick={onOpen}
+          className="group relative mx-3 block w-[calc(100%-1.5rem)] overflow-hidden rounded-xl bg-foreground/90 text-left"
+          aria-label={`全屏查看 ${work.title}`}
+        >
+          {work.coverUrl ? (
+            <img src={work.coverUrl} alt="" className="aspect-[2/1] max-h-52 w-full object-cover" />
+          ) : (
+            <div className="aspect-[2/1] max-h-52 w-full bg-muted-foreground/20" />
+          )}
+          <span className="absolute inset-0 bg-black/10 transition-colors group-active:bg-black/20" />
+          <span className="absolute inset-0 flex items-center justify-center">
+            <span className="flex size-11 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm">
+              <Play className="ml-0.5 size-5 fill-current" />
+            </span>
+          </span>
+          <span className="absolute bottom-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm">
+            <Maximize2 className="size-3.5" />
+          </span>
+        </button>
       ) : (
-        <div className="relative flex aspect-video items-end bg-gradient-to-br from-primary/25 via-muted/60 to-background p-5">
+        <div className="relative mx-3 flex min-h-24 items-end overflow-hidden rounded-xl bg-background/70 p-3">
           {work.coverUrl && <img src={work.coverUrl} alt="" className="absolute inset-0 size-full object-cover" />}
           <div className="relative">
-            <Badge variant="secondary">章节完成</Badge>
-            <p className="mt-2 text-lg font-semibold">{work.episode.title}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{work.episode.chapterName}</p>
+            <Badge variant="secondary" className="h-5 text-[10px]">章节完成</Badge>
+            <p className="mt-1.5 text-sm font-semibold">{work.episode.title}</p>
           </div>
         </div>
       )}
 
-      <CardContent className="flex flex-col gap-3 p-4">
+      <CardContent className="flex flex-col gap-2 px-3 pb-3 pt-2.5">
         <div>
           <p className="text-sm font-semibold">{work.title}</p>
-          {work.caption && <p className="mt-1 text-sm leading-6 text-muted-foreground">{work.caption}</p>}
+          {work.caption && <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-muted-foreground">{work.caption}</p>}
         </div>
         {work.reactionGroups.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {work.reactionGroups.map((group) => (
-              <Badge key={group.reaction} variant="secondary">{group.reaction} {group.count}</Badge>
+          <div className="flex min-w-0 items-center gap-1.5 overflow-hidden text-[11px] text-muted-foreground">
+            {work.reactionGroups.slice(0, 3).map((group, index) => (
+              <span key={group.reaction} className="flex shrink-0 items-center gap-1">
+                {index > 0 && <span className="text-muted-foreground/35">·</span>}
+                <span>{group.reaction}</span>
+                <span>× {group.count}</span>
+              </span>
             ))}
           </div>
         )}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1">
           <Button
             size="sm"
-            variant={work.liked ? 'default' : 'outline'}
-            className="rounded-full"
+            variant={work.liked ? 'secondary' : 'ghost'}
+            className="h-8 rounded-full px-2.5"
             onClick={onLike}
           >
             <Heart data-icon="inline-start" />
-            {work._count.likes}
+            点赞 {work._count.likes}
           </Button>
-          <Button asChild size="sm" variant="outline" className="rounded-full">
+          <Popover open={reactionOpen} onOpenChange={setReactionOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                size="sm"
+                variant={work.myReaction ? 'secondary' : 'ghost'}
+                className="h-8 rounded-full px-2.5"
+              >
+                <SmilePlus data-icon="inline-start" />
+                {work.myReaction ?? '回应'}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              side="top"
+              sideOffset={8}
+              className="w-[min(19rem,calc(100vw-2rem))] rounded-2xl border-0 bg-popover/95 p-2 shadow-xl backdrop-blur-xl"
+            >
+              <p className="px-2 pb-1.5 pt-1 text-[11px] font-medium text-muted-foreground">送上一句回应</p>
+              <div className="grid grid-cols-2 gap-1">
+                {reactions.map((reaction) => (
+                  <button
+                    key={reaction}
+                    type="button"
+                    className={cn(
+                      'rounded-xl px-3 py-2 text-left text-xs transition-colors hover:bg-muted',
+                      work.myReaction === reaction && 'bg-primary text-primary-foreground hover:bg-primary/90',
+                    )}
+                    onClick={() => {
+                      setReactionOpen(false)
+                      onReaction(reaction)
+                    }}
+                  >
+                    {reaction}
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-8 rounded-full px-2.5"
+            disabled={!work.videoUrl}
+            onClick={onOpen}
+          >
+            <Film data-icon="inline-start" />
+            {work.videoUrl ? '查看视频' : '未生成视频'}
+          </Button>
+          <Button asChild size="sm" variant="ghost" className="h-8 rounded-full px-2.5">
             <Link to={`/scripts/packages/${work.episode.scene.id}/episodes/${work.episode.id}`}>
               <Sparkles data-icon="inline-start" />
               练同款
             </Link>
           </Button>
-        </div>
-        <div className="-mx-1 flex gap-1 overflow-x-auto px-1">
-          {reactions.map((reaction) => (
-            <Button
-              key={reaction}
-              size="sm"
-              variant={work.myReaction === reaction ? 'secondary' : 'ghost'}
-              className="shrink-0 rounded-full"
-              onClick={() => onReaction(reaction)}
-            >
-              {reaction}
-            </Button>
-          ))}
         </div>
       </CardContent>
     </Card>

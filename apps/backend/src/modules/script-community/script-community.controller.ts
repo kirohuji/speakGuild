@@ -4,6 +4,7 @@ import { requireAuthSession } from '../auth/session.util'
 import {
   CompleteScriptPracticeDto,
   CreateScriptWorkDto,
+  RenderScriptWorkDto,
   ScriptReactionDto,
   ScriptReportDto,
   UpdateScriptWorkDto,
@@ -65,6 +66,18 @@ export class ScriptCommunityController {
   async publishWork(@Req() req: Request, @Param('id') id: string) {
     const session = await requireAuthSession(req)
     return this.service.publishWork(session.user.id, id)
+  }
+
+  @Post('works/:id/render')
+  async renderWork(@Req() req: Request, @Param('id') id: string, @Body() body: RenderScriptWorkDto) {
+    const session = await requireAuthSession(req)
+    return this.service.requestRender(session.user.id, id, body.frames)
+  }
+
+  @Get('works/:id/render-status')
+  async renderStatus(@Req() req: Request, @Param('id') id: string) {
+    const session = await requireAuthSession(req)
+    return this.service.renderStatus(session.user.id, id)
   }
 
   @Post('works/:id/unpublish')

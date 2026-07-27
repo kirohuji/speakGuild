@@ -108,6 +108,7 @@
     "tailwind-merge": "^3.5.0",
     "vaul": "^1.1.2",
     "wavesurfer.js": "^7.12.6",
+    "yet-another-react-lightbox": "^3.32.1",
     "zod": "^3.24.0",
     "zustand": "^5.0.8"
   },

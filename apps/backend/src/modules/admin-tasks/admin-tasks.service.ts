@@ -3,14 +3,38 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB } from './admin-tasks.constants';
 
 @Injectable()
 export class AdminTasksService {
   constructor(
     private readonly prisma: PrismaService,
     @InjectQueue(ADMIN_CONTENT_QUEUE) private readonly contentQueue: Queue,
+    @InjectQueue(SCRIPT_VIDEO_QUEUE) private readonly videoQueue: Queue,
   ) {}
+
+  async enqueueScriptVideo(workId: string, userId: string, frames: unknown[]) {
+    const work = await this.prisma.scriptWork.findFirst({
+      where: { id: workId, userId },
+      select: { id: true, title: true },
+    });
+    if (!work) throw new NotFoundException('作品不存在');
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: SCRIPT_VIDEO_RENDER_JOB,
+        title: `生成剧本视频：${work.title}`,
+        targetType: 'script_work',
+        targetId: work.id,
+        createdById: userId,
+        totalItems: frames.length,
+        payload: { workId, userId, frames } as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.videoQueue.add(SCRIPT_VIDEO_RENDER_JOB, { taskId: task.id, workId, userId, frames });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', '视频任务已加入 Redis 队列', { step: 'queued' });
+    return task;
+  }
 
   async enqueueContentPrepare(sceneId: string, createdById?: string, options?: {
     retryOfTaskId?: string;
@@ -97,6 +121,10 @@ export class AdminTasksService {
   async retry(id: string, createdById?: string) {
     const task = await this.prisma.adminTask.findUnique({ where: { id } });
     if (!task) throw new NotFoundException('任务不存在');
+    if (task.type === SCRIPT_VIDEO_RENDER_JOB && task.targetId) {
+      const payload = task.payload as any;
+      return this.enqueueScriptVideo(task.targetId, payload?.userId || createdById, payload?.frames || []);
+    }
     if (task.type !== CONTENT_PREPARE_JOB || task.targetType !== 'scene' || !task.targetId) {
       throw new NotFoundException('暂不支持重试该任务');
     }
@@ -117,7 +145,8 @@ export class AdminTasksService {
     // 从 BullMQ 队列中移除任务
     if (task.bullJobId) {
       try {
-        const job = await this.contentQueue.getJob(task.bullJobId);
+        const queue = task.type === SCRIPT_VIDEO_RENDER_JOB ? this.videoQueue : this.contentQueue;
+        const job = await queue.getJob(task.bullJobId);
         if (job) {
           await job.remove();
         }

@@ -39,7 +39,12 @@ export interface ScriptWork {
   publishedAt: string | null
   createdAt: string
   videoUrl: string | null
+  videoMimeType: string | null
   coverUrl: string | null
+  renderPayload?: {
+    mode?: ScriptPracticeMode
+    resultSnapshot?: Record<string, unknown>
+  } | null
   liked: boolean
   myReaction: string | null
   reactionGroups: Array<{ reaction: string; count: number }>
@@ -100,6 +105,13 @@ export const scriptCommunityApi = {
     patch<ScriptWork>(`/scripts/works/${id}`, data),
 
   publishWork: (id: string) => post<ScriptWork>(`/scripts/works/${id}/publish`),
+  renderWork: (id: string, frames: Record<string, unknown>[]) =>
+    post<{ taskId: string; workId: string }>(`/scripts/works/${id}/render`, { frames }),
+  renderStatus: (id: string) =>
+    get<{
+      work: { id: string; status: ScriptWorkStatus; renderError: string | null; videoAssetId: string | null }
+      task: { id: string; status: string; progress: number; currentStep: string | null; errorMessage: string | null } | null
+    }>(`/scripts/works/${id}/render-status`, undefined, { dedupe: false }),
   unpublishWork: (id: string) => post<ScriptWork>(`/scripts/works/${id}/unpublish`),
   deleteWork: (id: string) => del<{ success: true }>(`/scripts/works/${id}`),
 

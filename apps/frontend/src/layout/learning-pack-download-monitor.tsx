@@ -1,11 +1,12 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, ChevronDown, DownloadCloud, Loader2, PackageOpen, RotateCcw, Trash2 } from 'lucide-react'
+import { AlertCircle, ChevronDown, DownloadCloud, Film, ListChecks, Loader2, PackageOpen, RotateCcw, Trash2, X } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
 import { useLearningStore, type DownloadTask } from '@/stores/learning.store'
+import { useGlobalTaskStore } from '@/stores/global-task.store'
 
 function activeTasks(tasks: DownloadTask[]) {
   return tasks.filter((task) => task.status !== 'done')
@@ -32,12 +33,6 @@ function taskPercent(task: DownloadTask) {
   return Math.max(0, Math.min(100, Math.round(task.progress || 0)))
 }
 
-function aggregatePercent(tasks: DownloadTask[]) {
-  const running = tasks.filter((task) => task.status !== 'error')
-  if (running.length === 0) return 0
-  return Math.round(running.reduce((sum, task) => sum + taskPercent(task), 0) / running.length)
-}
-
 function compactPath(value?: string | null) {
   if (!value) return ''
   const clean = value.split('?')[0] ?? value
@@ -58,9 +53,11 @@ export function LearningPackDownloadStatusButton({
 }) {
   const { t } = useTranslation()
   const downloadTasks = useLearningStore((state) => state.downloadTasks)
+  const globalTasks = useGlobalTaskStore((state) => state.tasks)
   const tasks = useMemo(() => activeTasks(downloadTasks), [downloadTasks])
+  const visibleGlobalTasks = useMemo(() => globalTasks.filter((task) => task.status !== 'done'), [globalTasks])
 
-  const running = tasks.some(isRunning)
+  const running = tasks.some(isRunning) || visibleGlobalTasks.some((task) => task.status === 'running')
 
   return (
     <button
@@ -76,8 +73,8 @@ export function LearningPackDownloadStatusButton({
         className,
       )}
     >
-      <DownloadCloud className={cn('shrink-0', mobile || embedded ? 'size-[18px]' : 'size-4')} />
-      {tasks.length > 0 && (
+      <ListChecks className={cn('shrink-0', mobile || embedded ? 'size-[18px]' : 'size-4')} />
+      {(tasks.length > 0 || visibleGlobalTasks.length > 0) && (
         <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border">
           {running ? (
             <Loader2 className="size-3 animate-spin text-primary" />
@@ -99,33 +96,62 @@ export function LearningPackDownloadDrawer({
 }) {
   const { t } = useTranslation()
   const downloadTasks = useLearningStore((state) => state.downloadTasks)
+  const globalTasks = useGlobalTaskStore((state) => state.tasks)
+  const removeGlobalTask = useGlobalTaskStore((state) => state.removeTask)
   const resumePackTask = useLearningStore((state) => state.resumePackTask)
   const downloadUnitPack = useLearningStore((state) => state.downloadUnitPack)
   const tasks = useMemo(() => activeTasks(downloadTasks), [downloadTasks])
-  const runningCount = tasks.filter(isRunning).length
-  const percent = aggregatePercent(tasks)
+  const visibleGlobalTasks = useMemo(() => globalTasks.filter((task) => task.status !== 'done'), [globalTasks])
+  const runningCount = tasks.filter(isRunning).length + visibleGlobalTasks.filter((task) => task.status === 'running').length
+  const totalTaskCount = tasks.length + visibleGlobalTasks.length
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-border/70 bg-background drawer-surface">
         <DrawerHeader className="shrink-0 px-4 pb-1 pt-2 text-left">
           <DrawerTitle className="flex items-center gap-2 text-base font-semibold">
-            <DownloadCloud className="size-4 text-primary" />
-            {t('learning.packTasksTitle')}
+            <ListChecks className="size-4 text-primary" />
+            任务中心
           </DrawerTitle>
           <p className="text-xs text-muted-foreground">
-            {tasks.length > 0 ? t('learning.packTasksSummary', { count: runningCount, percent }) : t('learning.noPackTasks')}
+            {totalTaskCount > 0 ? `${runningCount} 个任务进行中` : '当前没有进行中的任务'}
           </p>
         </DrawerHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-          {tasks.length === 0 ? (
+          {totalTaskCount === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center text-sm text-muted-foreground">
               <PackageOpen className="mb-3 size-8 opacity-45" />
-              {t('learning.noPackTasksEmpty')}
+              暂无下载或视频生成任务
             </div>
           ) : (
             <div className="space-y-2">
+              {visibleGlobalTasks.map((task) => (
+                <div key={task.id} className="rounded-lg bg-muted/30 p-3.5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-[44px] shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                      {task.status === 'error'
+                        ? <AlertCircle className="size-4 text-destructive" />
+                        : <Film className="size-4" />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="truncate text-sm font-medium">{task.title}</p>
+                        <span className="text-xs font-semibold tabular-nums">{Math.round(task.progress)}%</span>
+                      </div>
+                      <p className={cn('mt-1 truncate text-[11px]', task.status === 'error' ? 'text-destructive' : 'text-muted-foreground')}>
+                        视频生成 / {task.error || task.stepLabel}
+                      </p>
+                      <Progress value={task.progress} className="mt-2 h-1" />
+                    </div>
+                    {task.status === 'error' && (
+                      <button type="button" onClick={() => removeGlobalTask(task.id)} className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted" aria-label="移除失败任务">
+                        <X className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
               {tasks.map((task) => (
                 <details
                   key={task.packId}

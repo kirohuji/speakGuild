@@ -3,6 +3,7 @@ import { Link, useSearchParams, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, History, Loader2, RotateCcw, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import { VnPlayer, type VnPlayerHandle, type VnPlayerLine } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { learningApi, type StoryEpisodePlayerData } from '@/features/learning/api/learning-api'
@@ -11,6 +12,8 @@ import { useLayoutStore } from '@/stores/layout.store'
 import { parseComposer } from '@/features/admin/components/composer-parser'
 import { flattenComposerToTimeline } from '@/features/admin/components/vn-mixed-timeline'
 import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
+import { requestScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
+import { useGlobalTaskStore } from '@/stores/global-task.store'
 
 export function ScriptPlayerPage() {
   const { episodeId } = useParams()
@@ -91,6 +94,10 @@ function InkEpisodePlayer({
   const [userTurns, setUserTurns] = useState<VnPlayerLine[]>([])
   const [recordId, setRecordId] = useState<string | null>(null)
   const [publishing, setPublishing] = useState(false)
+  const [publishProgress, setPublishProgress] = useState(0)
+  const [published, setPublished] = useState(false)
+  const startGlobalTask = useGlobalTaskStore((state) => state.startTask)
+  const updateGlobalTask = useGlobalTaskStore((state) => state.updateTask)
   const [repeatSaving, setRepeatSaving] = useState(false)
   const [repeatFrameIndex, setRepeatFrameIndex] = useState(0)
   const [isChatMode, setIsChatMode] = useState(false)
@@ -133,20 +140,43 @@ function InkEpisodePlayer({
     })
   }, [completionSaved, data.episode.objectives.length, data.inkScript.id, data.inkScript.version, episodeId, inkLines.length, mode, story.isEnded, userTurns.length])
 
-  const publishProgress = async () => {
-    if (!recordId || publishing) return
+  const publishVideo = async () => {
+    if (!recordId || publishing || published) return
+    const taskId = `script-video:${recordId}`
     setPublishing(true)
+    setPublishProgress(1)
+    startGlobalTask({
+      id: taskId,
+      kind: 'script_video',
+      title: `《${data.episode.title}》演出视频`,
+    })
     try {
       const work = await scriptCommunityApi.createWork({
         recordId,
-        kind: 'progress_card',
+        kind: mode === 'vn' ? 'vn_video' : 'repeat_video',
         title: `完成《${data.episode.title}》`,
         caption: `${mode === 'vn' ? 'VN 互动' : '跟读剧场'} · ${userTurns.length || inkLines.length} 次开口`,
       })
-      await scriptCommunityApi.publishWork(work.id)
-      toast.success('章节进度已发布到广场')
+      await requestScriptVideoRender({
+        workId: work.id,
+        frames: repeatFrames,
+        onProgress: (progress, step) => {
+          setPublishProgress(progress)
+          updateGlobalTask(taskId, { progress, stepLabel: step || '服务端 Remotion 渲染中' })
+        },
+      })
+      setPublishProgress(100)
+      setPublished(true)
+      updateGlobalTask(taskId, { progress: 100, status: 'done', stepLabel: '已发布到广场' })
+      toast.success('演出视频已发布到广场')
     } catch (error: any) {
-      toast.error(error?.message || '发布失败')
+      setPublishProgress(0)
+      updateGlobalTask(taskId, {
+        status: 'error',
+        stepLabel: '视频生成失败',
+        error: error?.message || '视频生成失败，请重试',
+      })
+      toast.error(error?.message || '视频生成失败，请重试')
     } finally {
       setPublishing(false)
     }
@@ -277,16 +307,42 @@ function InkEpisodePlayer({
               size="sm"
               variant="ghost"
               className="rounded-full"
-              disabled={!recordId || publishing}
-              onClick={() => void publishProgress()}
+              disabled={!recordId || publishing || published}
+              onClick={() => void publishVideo()}
             >
-              {publishing ? '发布中…' : recordId ? '分享本章进度' : '正在保存记录…'}
+              {published
+                ? '已发布到广场'
+                : publishing
+                  ? `正在生成视频 ${publishProgress}%`
+                  : recordId
+                    ? '生成视频并发布'
+                    : '正在保存记录…'}
             </Button>
+            {publishing && (
+              <Progress value={publishProgress} className="h-1.5 w-48" />
+            )}
           </div>
         )}
       />
       )}
       </div>
+      {mode === 'repeat' && recordId && (
+        <div className="absolute inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] z-30 mx-auto flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2 rounded-2xl bg-background/92 p-3 shadow-lg backdrop-blur-xl">
+          <Button
+            size="sm"
+            className="rounded-full"
+            disabled={publishing || published}
+            onClick={() => void publishVideo()}
+          >
+            {published
+              ? '已发布到广场'
+              : publishing
+                ? `正在生成视频 ${publishProgress}%`
+                : '生成视频并发布'}
+          </Button>
+          {publishing && <Progress value={publishProgress} className="h-1.5" />}
+        </div>
+      )}
     </div>
   )
 }

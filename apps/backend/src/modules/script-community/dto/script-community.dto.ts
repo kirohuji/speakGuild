@@ -1,5 +1,7 @@
 import { Type } from 'class-transformer'
 import {
+  ArrayMaxSize,
+  IsArray,
   IsIn,
   IsInt,
   IsOptional,
@@ -110,6 +112,12 @@ export class UpdateScriptWorkDto {
   @IsOptional()
   @IsString()
   coverAssetId?: string
+}
+
+export class RenderScriptWorkDto {
+  @IsArray()
+  @ArrayMaxSize(2000)
+  frames!: Record<string, unknown>[]
 }
 
 export class ScriptReactionDto {

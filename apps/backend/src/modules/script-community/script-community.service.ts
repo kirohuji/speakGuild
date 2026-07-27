@@ -14,6 +14,7 @@ import {
 import { PrismaService } from '../../common/prisma/prisma.service'
 import { FileAssetsService } from '../file-assets/file-assets.service'
 import { LearningService } from '../learning/learning.service'
+import { AdminTasksService } from '../admin-tasks/admin-tasks.service'
 import {
   CompleteScriptPracticeDto,
   CreateScriptWorkDto,
@@ -31,7 +32,7 @@ const feedInclude = {
       scene: { select: { id: true, title: true } },
     },
   },
-  videoAsset: { select: { id: true } },
+  videoAsset: { select: { id: true, mimeType: true } },
   coverAsset: { select: { id: true } },
   _count: { select: { likes: true, reactions: true } },
 } satisfies Prisma.ScriptWorkInclude
@@ -44,7 +45,34 @@ export class ScriptCommunityService {
     private readonly prisma: PrismaService,
     private readonly learningService: LearningService,
     private readonly fileAssetsService: FileAssetsService,
+    private readonly adminTasksService: AdminTasksService,
   ) {}
+
+  async requestRender(userId: string, workId: string, frames: Record<string, unknown>[]) {
+    if (!frames.length) throw new BadRequestException('没有可渲染的视频帧')
+    const work = await this.prisma.scriptWork.findFirst({ where: { id: workId, userId } })
+    if (!work) throw new NotFoundException('作品不存在')
+    const task = await this.adminTasksService.enqueueScriptVideo(workId, userId, frames)
+    await this.prisma.scriptWork.update({
+      where: { id: workId },
+      data: { status: ScriptWorkStatus.rendering, renderError: null },
+    })
+    return { taskId: task.id, workId }
+  }
+
+  async renderStatus(userId: string, workId: string) {
+    const work = await this.prisma.scriptWork.findFirst({
+      where: { id: workId, userId },
+      select: { id: true, status: true, renderError: true, videoAssetId: true },
+    })
+    if (!work) throw new NotFoundException('作品不存在')
+    const task = await this.prisma.adminTask.findFirst({
+      where: { targetType: 'script_work', targetId: workId },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, status: true, progress: true, currentStep: true, errorMessage: true },
+    })
+    return { work, task }
+  }
 
   private clampLimit(limit: number) {
     return Math.min(50, Math.max(1, Math.floor(limit || 20)))
@@ -197,10 +225,9 @@ export class ScriptCommunityService {
         durationSec: record.durationSec,
         videoAssetId: dto.videoAssetId ?? record.videoAssetId,
         coverAssetId: dto.coverAssetId,
-        status:
-          kind === ScriptWorkKind.progress_card || dto.videoAssetId || record.videoAssetId
-            ? ScriptWorkStatus.ready
-            : ScriptWorkStatus.draft,
+        status: dto.videoAssetId || record.videoAssetId
+          ? ScriptWorkStatus.ready
+          : ScriptWorkStatus.draft,
         renderPayload: {
           recordId: record.id,
           mode: record.mode,
@@ -239,10 +266,7 @@ export class ScriptCommunityService {
       this.assertOwnedAsset(userId, dto.coverAssetId),
     ])
     const videoAssetId = dto.videoAssetId ?? work.videoAssetId
-    const nextStatus =
-      work.kind === ScriptWorkKind.progress_card || videoAssetId
-        ? ScriptWorkStatus.ready
-        : work.status
+    const nextStatus = videoAssetId ? ScriptWorkStatus.ready : work.status
     return this.prisma.scriptWork.update({
       where: { id },
       data: {
@@ -260,7 +284,7 @@ export class ScriptCommunityService {
   async publishWork(userId: string, id: string) {
     const work = await this.prisma.scriptWork.findFirst({ where: { id, userId } })
     if (!work) throw new NotFoundException('作品不存在')
-    if (work.kind !== ScriptWorkKind.progress_card && !work.videoAssetId) {
+    if (!work.videoAssetId) {
       throw new BadRequestException('视频尚未生成，暂时不能发布')
     }
     if (work.status !== ScriptWorkStatus.ready && work.status !== ScriptWorkStatus.published) {
@@ -303,6 +327,7 @@ export class ScriptCommunityService {
       where: {
         status: ScriptWorkStatus.published,
         hiddenAt: null,
+        videoAssetId: { not: null },
         ...(kind ? { kind } : {}),
       },
       include: feedInclude,
@@ -384,6 +409,7 @@ export class ScriptCommunityService {
     return {
       ...work,
       videoUrl: video?.url ?? null,
+      videoMimeType: work.videoAsset?.mimeType ?? null,
       coverUrl: cover?.url ?? null,
       liked: Boolean(liked),
       myReaction: myReaction?.reaction ?? null,

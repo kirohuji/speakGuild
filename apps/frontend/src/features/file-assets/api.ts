@@ -1,6 +1,6 @@
 import { del, get, post } from '@/lib/request'
 
-export type FileAssetGroup = 'avatar' | 'library' | 'tts' | 'notification' | 'mobile_bundle' | 'learning_pack'
+export type FileAssetGroup = 'avatar' | 'library' | 'tts' | 'notification' | 'mobile_bundle' | 'learning_pack' | 'user_recording'
 
 export interface CosPolicy {
   exists: boolean
@@ -84,6 +84,11 @@ export function getCurrentAvatar(): Promise<{ url: string } | null> {
 /** 设置当前头像 */
 export function setCurrentAvatar(assetId: string): Promise<{ url: string }> {
   return post('/file-assets/avatar/current', { assetId })
+}
+
+/** 将已上传资产绑定到当前用户的业务记录，供后端执行归属校验。 */
+export function createFileReference(assetId: string, bizType: string, bizId: string): Promise<void> {
+  return post('/file-assets/references', { assetId, bizType, bizId })
 }
 
 /** 删除文件引用 */
