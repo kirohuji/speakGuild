@@ -36,6 +36,24 @@ export class LearningController {
     return this.learningService.getMyLearningUnits(session.user.id);
   }
 
+  /** 获取剧情章节播放器所需的已发布 Ink 内容。 */
+  @Get('episodes/:id/player')
+  async getStoryEpisodePlayer(@Req() req: Request, @Param('id') id: string) {
+    const session = await requireAuthSession(req);
+    return this.learningService.getStoryEpisodePlayer(session.user.id, id);
+  }
+
+  /** 保存一次章节完成记录。视频作品作为记录的派生内容，另行处理。 */
+  @Post('episodes/:id/complete')
+  async completeStoryEpisode(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() body: { turnCount?: number; usedChunkCount?: number; completedObjectiveCount?: number },
+  ) {
+    const session = await requireAuthSession(req);
+    return this.learningService.completeStoryEpisode(session.user.id, id, body);
+  }
+
   /** 获取学习单元详情（顺序学习内容） */
   @Get('units/:id')
   async getUnitDetail(@Req() req: Request, @Param('id') id: string) {

@@ -32,6 +32,7 @@ import { OpsModule } from './common/ops/ops.module';
 import { LlmModule } from './common/llm/llm.module';
 import { AiModelModule } from './modules/ai-model/ai-model.module';
 import { HealthModule } from './modules/health/health.module';
+import { ScriptCommunityModule } from './modules/script-community/script-community.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { HealthModule } from './modules/health/health.module';
     DictionaryModule,
     SyncModule,
     HealthModule,
+    ScriptCommunityModule,
   ],
   providers: [
     {

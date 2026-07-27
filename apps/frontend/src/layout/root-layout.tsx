@@ -32,7 +32,9 @@ export function RootLayout() {
   const isHomePage = pathname === '/'
   const isLearningSubPage =
     pathname.startsWith('/learning/units/') ||
-    pathname.startsWith('/practice/session/')
+    pathname.startsWith('/practice/session/') ||
+    pathname.startsWith('/scripts/packages/') ||
+    pathname.startsWith('/scripts/player/')
   const isExpressionNotebookDetail = /^\/expressions\/[^/]+$/.test(pathname)
   const isLoggedIn = !!session
   const showBottomNav = bottomNavVisible && !immersiveMode && !isLearningSubPage

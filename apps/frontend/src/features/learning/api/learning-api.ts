@@ -137,10 +137,66 @@ export interface UnitDetail {
   sentencePatterns: SentencePattern[]
   trainingTopics: TrainingTopicItem[]
   firstEpisode: { id: string; title: string; chapterTitle: string; episodeOrder: number; description: string | null; requiredOutputLevel: string } | null
+  storyEpisodes?: StoryEpisodeItem[]
   vocabCount: number
   chunkCount: number
   topicCount: number
   scriptCount: number
+}
+
+export interface StoryEpisodeItem {
+  id: string
+  chapterKey: string
+  chapterName: string
+  sortOrder: number
+  title: string
+  description: string | null
+  requiredOutputLevel: string
+  requiredUserLevel: number
+  objectives: string[]
+  characterName: string
+  characterRole: string
+  inkScriptId?: string | null
+  isPreview: boolean
+  prerequisiteEpisodeIds: string[]
+  isUnlocked: boolean
+  vocabularies: Array<Pick<VocabItem, 'id' | 'word' | 'meaning' | 'partOfSpeech'>>
+  chunks: Array<Pick<ChunkItem, 'id' | 'text' | 'meaning'>>
+  sentencePatterns: Array<Pick<SentencePattern, 'pattern' | 'meaning'> & { id: string; example?: string }>
+  record: {
+    id: string
+    passed: boolean
+    completedObjectiveCount: number
+    usedChunkCount: number
+    turnCount: number
+    retellCompleted: boolean
+    xpEarned: number
+    completedAt: string | null
+    createdAt: string
+  } | null
+}
+
+export interface StoryEpisodePlayerData {
+  episode: {
+    id: string
+    sceneId: string
+    sceneTitle: string
+    location: string
+    title: string
+    chapterName: string
+    description: string | null
+    characterName: string
+    characterRole: string
+    objectives: string[]
+    isPreview: boolean
+  }
+  inkScript: {
+    id: string
+    key: string
+    title: string
+    inkJson: Record<string, any>
+    version: number
+  }
 }
 
 /** 用户正在学习的单元（从 my-units 接口返回） */
@@ -246,6 +302,14 @@ export const learningApi = {
 
   /** 获取学习单元详情 */
   getUnitDetail: (unitId: string) => get<UnitDetail>(`/learning/units/${unitId}`),
+
+  getStoryEpisodePlayer: (episodeId: string) =>
+    get<StoryEpisodePlayerData>(`/learning/episodes/${episodeId}/player`),
+
+  completeStoryEpisode: (
+    episodeId: string,
+    data: { turnCount?: number; usedChunkCount?: number; completedObjectiveCount?: number },
+  ) => post(`/learning/episodes/${episodeId}/complete`, data),
 
   getOfflineManifest: (unitId: string) =>
     get<OfflineManifestResult>(`/learning/units/${unitId}/offline-manifest`),

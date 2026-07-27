@@ -50,6 +50,10 @@ const SystemCollectInfoPage = lazy(() => import('@/features/system/pages/system-
 const SystemContactPage = lazy(() => import('@/features/system/pages/system-contact-page').then(m => ({ default: m.SystemContactPage })))
 const SystemPrivacyConcisePage = lazy(() => import('@/features/system/pages/system-privacy-concise-page').then(m => ({ default: m.SystemPrivacyConcisePage })))
 const SystemIcpPage = lazy(() => import('@/features/system/pages/system-icp-page').then(m => ({ default: m.SystemIcpPage })))
+const ScriptCenterPage = lazy(() => import('@/features/scripts/pages/script-center-page').then(m => ({ default: m.ScriptCenterPage })))
+const ScriptPackagePage = lazy(() => import('@/features/scripts/pages/script-package-page').then(m => ({ default: m.ScriptPackagePage })))
+const ScriptEpisodePage = lazy(() => import('@/features/scripts/pages/script-episode-page').then(m => ({ default: m.ScriptEpisodePage })))
+const ScriptPlayerPage = lazy(() => import('@/features/scripts/pages/script-player-page').then(m => ({ default: m.ScriptPlayerPage })))
 
 function PageLoader() {
   return <div className="flex min-h-[100dvh] items-center justify-center bg-background text-sm text-muted-foreground">Loading...</div>
@@ -81,6 +85,10 @@ export default function App() {
                 <Route path="/learning" element={<LearningPlanPage />} />
                 <Route path="/learning/units/:unitId" element={<LearningUnitPage />} />
                 <Route path="/today" element={<TodayTaskPage />} />
+                <Route path="/scripts" element={<ScriptCenterPage />} />
+                <Route path="/scripts/packages/:packageId" element={<ScriptPackagePage />} />
+                <Route path="/scripts/packages/:packageId/episodes/:episodeId" element={<ScriptEpisodePage />} />
+                <Route path="/scripts/player/:episodeId" element={<ScriptPlayerPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/account" element={<AccountPage />} />
                 <Route path="/member" element={<MemberPage />} />

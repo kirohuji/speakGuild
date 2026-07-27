@@ -559,6 +559,110 @@ export class LearningService {
   /**
    * 获取某个学习单元的完整顺序内容
    */
+  async getStoryEpisodePlayer(userId: string, episodeId: string) {
+    const episode = await this.prisma.storyEpisode.findUnique({
+      where: { id: episodeId },
+      select: {
+        id: true,
+        sceneId: true,
+        title: true,
+        chapterName: true,
+        description: true,
+        characterName: true,
+        characterRole: true,
+        objectives: true,
+        inkScriptId: true,
+        isPreview: true,
+        scene: {
+          select: {
+            title: true,
+            location: true,
+            packageType: true,
+          },
+        },
+      },
+    });
+    if (!episode || episode.scene.packageType !== 'story') {
+      throw new NotFoundException('剧情章节不存在');
+    }
+
+    if (!episode.isPreview) {
+      await this.assertLearningPackAccess(userId, episode.sceneId, { allowExistingProgress: true });
+    }
+    if (!episode.inkScriptId) {
+      throw new NotFoundException('章节尚未发布可播放脚本');
+    }
+
+    const inkScript = await this.prisma.inkScript.findUnique({
+      where: { id: episode.inkScriptId },
+      select: {
+        id: true,
+        key: true,
+        title: true,
+        inkJson: true,
+        version: true,
+      },
+    });
+    if (!inkScript?.inkJson) {
+      throw new NotFoundException('章节脚本尚未编译');
+    }
+
+    return {
+      episode: {
+        id: episode.id,
+        sceneId: episode.sceneId,
+        sceneTitle: episode.scene.title,
+        location: episode.scene.location,
+        title: episode.title,
+        chapterName: episode.chapterName,
+        description: episode.description,
+        characterName: episode.characterName,
+        characterRole: episode.characterRole,
+        objectives: episode.objectives,
+        isPreview: episode.isPreview,
+      },
+      inkScript,
+    };
+  }
+
+  async completeStoryEpisode(
+    userId: string,
+    episodeId: string,
+    input: { turnCount?: number; usedChunkCount?: number; completedObjectiveCount?: number },
+  ) {
+    const player = await this.getStoryEpisodePlayer(userId, episodeId);
+    const turnCount = Math.max(0, Math.floor(input.turnCount ?? 0));
+    const usedChunkCount = Math.max(0, Math.floor(input.usedChunkCount ?? 0));
+    const completedObjectiveCount = Math.max(0, Math.floor(input.completedObjectiveCount ?? 0));
+    const now = new Date();
+
+    return this.prisma.storyRecord.upsert({
+      where: { userId_episodeId: { userId, episodeId } },
+      create: {
+        userId,
+        episodeId,
+        passed: true,
+        turnCount,
+        usedChunkCount,
+        completedObjectiveCount,
+        completedAt: now,
+        xpEarned: 10,
+        aiFeedback: {
+          source: 'script-player',
+          sceneId: player.episode.sceneId,
+        },
+      },
+      update: {
+        passed: true,
+        turnCount,
+        usedChunkCount,
+        completedObjectiveCount,
+        completedAt: now,
+        xpEarned: 10,
+      },
+    });
+  }
+
   async getLearningUnitDetail(userId: string, unitId: string) {
     await this.assertLearningPackAccess(userId, unitId, { allowExistingProgress: true });
     const scene = await this.prisma.scene.findUnique({
@@ -587,14 +691,74 @@ export class LearningService {
         },
         storyEpisodes: {
           orderBy: { sortOrder: 'asc' },
-          take: 1,
           select: {
             id: true,
             title: true,
+            chapterKey: true,
             chapterName: true,
             sortOrder: true,
             description: true,
             requiredOutputLevel: true,
+            requiredUserLevel: true,
+            objectives: true,
+            characterName: true,
+            characterRole: true,
+            inkScriptId: true,
+            isPreview: true,
+            prerequisiteEpisodeIds: true,
+            vocabularies: {
+              orderBy: { sortOrder: 'asc' },
+              select: {
+                vocabulary: {
+                  select: {
+                    id: true,
+                    word: true,
+                    meaning: true,
+                    partOfSpeech: true,
+                  },
+                },
+              },
+            },
+            chunks: {
+              orderBy: { sortOrder: 'asc' },
+              select: {
+                chunk: {
+                  select: {
+                    id: true,
+                    text: true,
+                    meaning: true,
+                  },
+                },
+              },
+            },
+            sentencePatterns: {
+              orderBy: { sortOrder: 'asc' },
+              select: {
+                pattern: {
+                  select: {
+                    id: true,
+                    pattern: true,
+                    meaning: true,
+                  },
+                },
+              },
+            },
+            records: {
+              where: { userId },
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+              select: {
+                id: true,
+                passed: true,
+                completedObjectiveCount: true,
+                usedChunkCount: true,
+                turnCount: true,
+                retellCompleted: true,
+                xpEarned: true,
+                completedAt: true,
+                createdAt: true,
+              },
+            },
           },
         },
         prerequisiteScenes: {
@@ -769,6 +933,42 @@ export class LearningService {
             episodeOrder: scene.storyEpisodes[0].sortOrder,
           }
         : null,
+
+      storyEpisodes: scene.storyEpisodes.map((episode, index) => {
+        const record = episode.records[0] ?? null;
+        const prerequisiteSatisfied =
+          episode.prerequisiteEpisodeIds.length === 0 ||
+          episode.prerequisiteEpisodeIds.every((requiredId) =>
+            scene.storyEpisodes.some((candidate) =>
+              candidate.id === requiredId && candidate.records[0]?.passed,
+            ),
+          );
+
+        return {
+          id: episode.id,
+          chapterKey: episode.chapterKey,
+          chapterName: episode.chapterName,
+          sortOrder: episode.sortOrder,
+          title: episode.title,
+          description: episode.description,
+          requiredOutputLevel: episode.requiredOutputLevel,
+          requiredUserLevel: episode.requiredUserLevel,
+          objectives: episode.objectives,
+          characterName: episode.characterName,
+          characterRole: episode.characterRole,
+          inkScriptId: episode.inkScriptId,
+          isPreview: episode.isPreview,
+          prerequisiteEpisodeIds: episode.prerequisiteEpisodeIds,
+          isUnlocked:
+            episode.isPreview ||
+            (index === 0 && episode.prerequisiteEpisodeIds.length === 0) ||
+            prerequisiteSatisfied,
+          vocabularies: episode.vocabularies.map((item) => item.vocabulary),
+          chunks: episode.chunks.map((item) => item.chunk),
+          sentencePatterns: episode.sentencePatterns.map((item) => item.pattern),
+          record,
+        };
+      }),
 
       // 元信息
       vocabCount: vocabularies.length,

@@ -113,6 +113,11 @@ model User {
   learningNotebooks     LearningNotebook[]
   storyRecords          StoryRecord[]
   storyTurns            StoryTurn[]
+  scriptPracticeRecords ScriptPracticeRecord[]
+  scriptWorks           ScriptWork[]
+  scriptWorkLikes       ScriptWorkLike[]
+  scriptWorkReactions   ScriptWorkReaction[]
+  scriptWorkReports     ScriptWorkReport[]
   practiceSessions      PracticeSession[]
   warmupItemProgresses  UserWarmupItemProgress[]
   dailyPracticeRuns     UserDailyPracticeRun[]
@@ -440,6 +445,10 @@ model FileAsset {
   mobileBundles    MobileBundle[]
   learningPackages LearningPackage[]
   deltaPackages    DeltaPackage[]
+  scriptRecordAudioAssets ScriptPracticeRecord[] @relation("ScriptRecordAudio")
+  scriptRecordVideoAssets ScriptPracticeRecord[] @relation("ScriptRecordVideo")
+  scriptWorkVideoAssets   ScriptWork[]           @relation("ScriptWorkVideo")
+  scriptWorkCoverAssets   ScriptWork[]           @relation("ScriptWorkCover")
 
   @@index([group, status, createdAt(sort: Desc)])
   @@index([status, refCount, createdAt])
@@ -1104,6 +1113,8 @@ model StoryEpisode {
   sentencePatterns        StoryEpisodeSentencePattern[]
   turns                   StoryTurn[]
   records                 StoryRecord[]
+  practiceRecords         ScriptPracticeRecord[]
+  works                   ScriptWork[]
   isPreview               Boolean                       @default(false)
   createdAt               DateTime                      @default(now())
 
@@ -1190,6 +1201,138 @@ model StoryRecord {
   @@unique([userId, episodeId])
   @@index([userId, createdAt(sort: Desc)])
   @@map("script_record")
+}
+
+enum ScriptPracticeMode {
+  vn
+  repeat
+}
+
+enum ScriptPracticeStatus {
+  active
+  completed
+  abandoned
+}
+
+enum ScriptWorkStatus {
+  draft
+  rendering
+  ready
+  published
+  failed
+  hidden
+}
+
+enum ScriptWorkKind {
+  vn_video
+  repeat_video
+  progress_card
+}
+
+model ScriptPracticeRecord {
+  id                      String               @id @default(cuid())
+  user                    User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                  String
+  episode                 StoryEpisode         @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  episodeId               String
+  mode                    ScriptPracticeMode
+  status                  ScriptPracticeStatus @default(active)
+  durationSec             Int                  @default(0)
+  turnCount               Int                  @default(0)
+  lineCount               Int                  @default(0)
+  usedChunkCount          Int                  @default(0)
+  completedObjectiveCount Int                  @default(0)
+  score                   Int?
+  resultSnapshot          Json?
+  audioAsset              FileAsset?           @relation("ScriptRecordAudio", fields: [audioAssetId], references: [id])
+  audioAssetId            String?
+  videoAsset              FileAsset?           @relation("ScriptRecordVideo", fields: [videoAssetId], references: [id])
+  videoAssetId            String?
+  completedAt             DateTime?
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  works                   ScriptWork[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, mode, createdAt(sort: Desc)])
+  @@index([episodeId, status])
+  @@map("script_practice_record")
+}
+
+model ScriptWork {
+  id             String           @id @default(cuid())
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  episode        StoryEpisode     @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  episodeId      String
+  record         ScriptPracticeRecord? @relation(fields: [recordId], references: [id], onDelete: SetNull)
+  recordId       String?
+  kind           ScriptWorkKind
+  status         ScriptWorkStatus @default(draft)
+  title          String
+  caption        String?          @db.Text
+  durationSec    Int              @default(0)
+  renderPayload  Json?
+  renderError    String?          @db.Text
+  videoAsset     FileAsset?       @relation("ScriptWorkVideo", fields: [videoAssetId], references: [id])
+  videoAssetId   String?
+  coverAsset     FileAsset?       @relation("ScriptWorkCover", fields: [coverAssetId], references: [id])
+  coverAssetId   String?
+  publishedAt    DateTime?
+  hiddenAt       DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  likes          ScriptWorkLike[]
+  reactions      ScriptWorkReaction[]
+  reports        ScriptWorkReport[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([episodeId, status])
+  @@map("script_work")
+}
+
+model ScriptWorkLike {
+  id        String     @id @default(cuid())
+  work      ScriptWork @relation(fields: [workId], references: [id], onDelete: Cascade)
+  workId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime   @default(now())
+
+  @@unique([workId, userId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("script_work_like")
+}
+
+model ScriptWorkReaction {
+  id        String     @id @default(cuid())
+  work      ScriptWork @relation(fields: [workId], references: [id], onDelete: Cascade)
+  workId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  reaction  String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@unique([workId, userId])
+  @@index([workId, reaction])
+  @@map("script_work_reaction")
+}
+
+model ScriptWorkReport {
+  id        String     @id @default(cuid())
+  work      ScriptWork @relation(fields: [workId], references: [id], onDelete: Cascade)
+  workId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  reason    String
+  detail    String?    @db.Text
+  createdAt DateTime   @default(now())
+
+  @@unique([workId, userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("script_work_report")
 }
 
 // ──── 表达库 & 复习 ────

@@ -13,6 +13,7 @@ const zhCN = {
       profile: '个人中心',
       home: '首页',
       learningPlan: '学习计划',
+      scripts: '剧本',
       todayTask: '今日任务',
       myLibrary: '我的学习库',
       growth: '成长',

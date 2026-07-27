@@ -11,6 +11,7 @@ const en = {
       profile: 'Profile',
       home: 'Home',
       learningPlan: 'Learning Plan',
+      scripts: 'Scripts',
       todayTask: 'Today',
       myLibrary: 'My Library',
       growth: 'Growth',
