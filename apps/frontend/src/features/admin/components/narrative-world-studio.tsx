@@ -1,0 +1,1701 @@
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  ArrowLeft,
+  BookOpen,
+  Box,
+  DoorOpen,
+  Edit3,
+  Eye,
+  Headphones,
+  Languages,
+  Map,
+  MapPin,
+  MessageCircle,
+  Moon,
+  Plus,
+  Route,
+  Sparkles,
+  Sun,
+  Sunrise,
+  Trash2,
+  Volume2,
+  Wrench,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectItem } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/cn";
+import {
+  createLocation,
+  createMap,
+  createRoom,
+  deleteLocation,
+  deleteRoom,
+  listLocations,
+  listMaps,
+  listRooms,
+  updateLocation,
+  updateMap,
+  updateRoom,
+  type GameLocationData,
+  type GameMapData,
+  type GameRoomData,
+} from "../api-content-admin";
+import { ImageUploadField } from "./image-upload-field";
+import {
+  ExplorationPixiCanvas,
+  type ExplorationNode,
+} from "./maps/exploration-pixi-canvas";
+import {
+  getExplorationObjects,
+  getRoomLayout,
+  makeExplorationKey,
+  removeExplorationObject,
+  updateExplorationObjectPosition,
+  updateRoomLayout,
+  upsertExplorationObject,
+  type ExplorationObject,
+  type ExplorationObjectKind,
+} from "./maps/exploration-map-model";
+
+type StudioLevel = "world" | "location" | "room";
+type TimeOfDay = "day" | "golden" | "night";
+type ObjectFilter = "all" | "required" | "undiscovered";
+
+const EMPTY_OBJECT: Omit<ExplorationObject, "id" | "roomId"> = {
+  title: "",
+  english: "",
+  translation: "",
+  pronunciation: "",
+  example: "",
+  prompt: "",
+  imageUrl: "",
+  kind: "vocabulary",
+  x: 50,
+  y: 55,
+  width: 110,
+  height: 110,
+  required: false,
+  hidden: false,
+};
+
+const OBJECT_KIND_LABELS: Record<ExplorationObjectKind, string> = {
+  vocabulary: "词汇物品",
+  reading: "阅读线索",
+  listening: "听力物品",
+  clue: "剧情线索",
+  quest: "任务物品",
+};
+
+const LOCATION_RESOURCE_BASE_SIZE = 80;
+
+export function NarrativeWorldStudio({
+  onLocationsChange,
+}: {
+  onLocationsChange?: (locations: GameLocationData[]) => void;
+}) {
+  const [maps, setMaps] = useState<GameMapData[]>([]);
+  const [locations, setLocations] = useState<GameLocationData[]>([]);
+  const [rooms, setRooms] = useState<GameRoomData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [mapId, setMapId] = useState("");
+  const [locationId, setLocationId] = useState("");
+  const [roomId, setRoomId] = useState("");
+  const [objectId, setObjectId] = useState("");
+  const [level, setLevel] = useState<StudioLevel>("world");
+  const [editable, setEditable] = useState(true);
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("day");
+  const [objectFilter, setObjectFilter] = useState<ObjectFilter>("all");
+  const [focusNodeId, setFocusNodeId] = useState("");
+  const [touring, setTouring] = useState(false);
+  const [tourIndex, setTourIndex] = useState(0);
+  const [discovered, setDiscovered] = useState<Set<string>>(new Set());
+  const [previewId, setPreviewId] = useState("");
+
+  const [mapDialog, setMapDialog] = useState(false);
+  const [locationDialog, setLocationDialog] = useState(false);
+  const [roomDialog, setRoomDialog] = useState(false);
+  const [objectDialog, setObjectDialog] = useState(false);
+  const [editingMap, setEditingMap] = useState<GameMapData | null>(null);
+  const [editingLocation, setEditingLocation] =
+    useState<GameLocationData | null>(null);
+  const [editingRoom, setEditingRoom] = useState<GameRoomData | null>(null);
+  const [editingObject, setEditingObject] =
+    useState<ExplorationObject | null>(null);
+
+  const [mapForm, setMapForm] = useState({
+    displayName: "",
+    backgroundUrl: "",
+    thumbnailUrl: "",
+    width: 1920,
+    height: 1080,
+  });
+  const [locationForm, setLocationForm] = useState({
+    displayName: "",
+    description: "",
+    icon: "",
+    backgroundUrl: "",
+    locationType: "building",
+  });
+  const [roomForm, setRoomForm] = useState({
+    displayName: "",
+    description: "",
+    icon: "",
+    backgroundUrl: "",
+    roomType: "exploration",
+    inkScriptId: "",
+    isEntrance: false,
+  });
+  const [objectForm, setObjectForm] = useState(EMPTY_OBJECT);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [nextMaps, nextLocations, nextRooms] = await Promise.all([
+        listMaps(),
+        listLocations(),
+        listRooms(),
+      ]);
+      setMaps(nextMaps);
+      setLocations(nextLocations);
+      setRooms(nextRooms);
+      onLocationsChange?.(nextLocations);
+      setMapId((current) =>
+        nextMaps.some((item) => item.id === current)
+          ? current
+          : (nextMaps[0]?.id ?? ""),
+      );
+    } catch {
+      toast.error("地图世界加载失败");
+    } finally {
+      setLoading(false);
+    }
+  }, [onLocationsChange]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const selectedMap = maps.find((item) => item.id === mapId) ?? null;
+  const mapLocations = useMemo(
+    () => locations.filter((item) => item.mapId === mapId),
+    [locations, mapId],
+  );
+  const selectedLocation =
+    mapLocations.find((item) => item.id === locationId) ?? null;
+  const locationRooms = useMemo(
+    () => rooms.filter((item) => item.locationId === locationId),
+    [locationId, rooms],
+  );
+  const selectedRoom =
+    locationRooms.find((item) => item.id === roomId) ?? null;
+  const roomObjects = getExplorationObjects(selectedMap, roomId);
+  const selectedObject =
+    roomObjects.find((item) => item.id === objectId) ?? null;
+
+  const visibleObjects = roomObjects.filter((item) => {
+    if (objectFilter === "required") return item.required;
+    if (objectFilter === "undiscovered") return !discovered.has(item.id);
+    return true;
+  });
+
+  const nodes = useMemo<ExplorationNode[]>(() => {
+    if (level === "world") {
+      return mapLocations.map((location) => ({
+        id: location.id,
+        title: location.displayName,
+        subtitle: `${rooms.filter((room) => room.locationId === location.id).length} 个房间`,
+        imageUrl: location.icon,
+        x: location.posX || 50,
+        y: location.posY || 50,
+        width: Math.max(80, location.iconWidth ?? 150),
+        height: Math.max(80, location.iconHeight ?? 120),
+        kind: "location",
+        disabled: location.disabled,
+        hidden: location.hidden,
+      }));
+    }
+    if (level === "location") {
+      return locationRooms.map((room, index) => ({
+        id: room.id,
+        title: room.displayName,
+        subtitle: room.isEntrance ? "入口房间" : room.roomType,
+        imageUrl: room.icon,
+        ...getRoomLayout(selectedMap, locationId, room.id, index),
+        kind: "room",
+        disabled: room.disabled,
+        hidden: room.hidden,
+      }));
+    }
+    return visibleObjects.map((item) => ({
+      id: item.id,
+      title: item.english || item.title,
+      subtitle: item.translation || OBJECT_KIND_LABELS[item.kind],
+      imageUrl: item.imageUrl,
+      x: item.x,
+      y: item.y,
+      width: item.width,
+      height: item.height,
+      kind: "object",
+      required: item.required,
+      hidden: item.hidden,
+    }));
+  }, [
+    level,
+    locationId,
+    locationRooms,
+    mapLocations,
+    rooms,
+    selectedMap,
+    visibleObjects,
+  ]);
+
+  const backgroundUrl =
+    level === "world"
+      ? selectedMap?.backgroundUrl
+      : level === "location"
+        ? selectedLocation?.backgroundUrl
+        : selectedRoom?.backgroundUrl;
+  const worldWidth = level === "world" ? selectedMap?.width ?? 1920 : 1600;
+  const worldHeight = level === "world" ? selectedMap?.height ?? 1080 : 900;
+  const selectedNodeId =
+    level === "world" ? locationId : level === "location" ? roomId : objectId;
+
+  const persistEditorData = async (editorData: unknown) => {
+    if (!selectedMap) return;
+    setMaps((items) =>
+      items.map((item) =>
+        item.id === selectedMap.id ? { ...item, editorData } : item,
+      ),
+    );
+    try {
+      await updateMap(selectedMap.id, { editorData });
+    } catch {
+      toast.error("探索布局保存失败");
+      await load();
+    }
+  };
+
+  const enterLocation = (id: string) => {
+    setLocationId(id);
+    setRoomId("");
+    setObjectId("");
+    setLevel("location");
+    setFocusNodeId("");
+  };
+
+  const enterRoom = (id: string) => {
+    setRoomId(id);
+    setObjectId("");
+    setLevel("room");
+    setFocusNodeId("");
+  };
+
+  const goBack = () => {
+    if (level === "room") {
+      setLevel("location");
+      setObjectId("");
+    } else {
+      setLevel("world");
+      setRoomId("");
+      setLocationId("");
+    }
+    setPreviewId("");
+    setFocusNodeId("");
+  };
+
+  const selectNode = (id: string) => {
+    if (level === "world") setLocationId(id);
+    else if (level === "location") setRoomId(id);
+    else setObjectId(id);
+    setFocusNodeId(id);
+  };
+
+  const openNode = (id: string) => {
+    if (editable) return;
+    setPreviewId(id);
+    setFocusNodeId(id);
+  };
+
+  const moveNode = async (id: string, x: number, y: number) => {
+    if (level === "world") {
+      setLocations((items) =>
+        items.map((item) =>
+          item.id === id ? { ...item, posX: x, posY: y } : item,
+        ),
+      );
+      try {
+        await updateLocation(id, { posX: x, posY: y });
+      } catch {
+        toast.error("地点位置保存失败");
+        await load();
+      }
+      return;
+    }
+    if (!selectedMap) return;
+    if (level === "location") {
+      const index = locationRooms.findIndex((item) => item.id === id);
+      const current = getRoomLayout(
+        selectedMap,
+        locationId,
+        id,
+        Math.max(index, 0),
+      );
+      await persistEditorData(
+        updateRoomLayout(selectedMap.editorData, locationId, id, {
+          ...current,
+          x,
+          y,
+        }),
+      );
+      return;
+    }
+    await persistEditorData(
+      updateExplorationObjectPosition(
+        selectedMap.editorData,
+        roomId,
+        id,
+        x,
+        y,
+      ),
+    );
+  };
+
+  const getLocationSize = (location: GameLocationData, scale: number) => {
+    const currentWidth = Math.max(
+      LOCATION_RESOURCE_BASE_SIZE,
+      location.iconWidth ?? LOCATION_RESOURCE_BASE_SIZE,
+    );
+    const currentHeight = Math.max(
+      LOCATION_RESOURCE_BASE_SIZE,
+      location.iconHeight ?? LOCATION_RESOURCE_BASE_SIZE,
+    );
+    const ratio = currentWidth / Math.max(currentHeight, 1);
+    const longestSide = LOCATION_RESOURCE_BASE_SIZE * scale;
+    return {
+      iconWidth: Math.round(
+        ratio >= 1 ? longestSide : Math.max(1, longestSide * ratio),
+      ),
+      iconHeight: Math.round(
+        ratio >= 1 ? Math.max(1, longestSide / ratio) : longestSide,
+      ),
+    };
+  };
+
+  const resizeSelectedLocation = (scale: number) => {
+    if (!selectedLocation) return;
+    const size = getLocationSize(selectedLocation, scale);
+    setLocations((items) =>
+      items.map((item) =>
+        item.id === selectedLocation.id ? { ...item, ...size } : item,
+      ),
+    );
+  };
+
+  const saveSelectedLocationSize = async (scale: number) => {
+    if (!selectedLocation) return;
+    const size = getLocationSize(selectedLocation, scale);
+    try {
+      await updateLocation(selectedLocation.id, size);
+      toast.success("地点素材大小已保存");
+    } catch {
+      toast.error("地点素材大小保存失败");
+      await load();
+    }
+  };
+
+  useEffect(() => {
+    if (!touring || !nodes.length) return;
+    setFocusNodeId(nodes[0].id);
+    const timer = window.setInterval(() => {
+      setTourIndex((index) => {
+        const next = (index + 1) % nodes.length;
+        setFocusNodeId(nodes[next].id);
+        return next;
+      });
+    }, 2200);
+    return () => window.clearInterval(timer);
+  }, [nodes, touring]);
+
+  const startTour = () => {
+    if (!nodes.length) return;
+    setEditable(false);
+    setTourIndex(0);
+    setTouring(true);
+    setFocusNodeId(nodes[0].id);
+  };
+
+  const openMapForm = (map?: GameMapData) => {
+    setEditingMap(map ?? null);
+    setMapForm({
+      displayName: map?.displayName ?? "",
+      backgroundUrl: map?.backgroundUrl ?? "",
+      thumbnailUrl: map?.thumbnailUrl ?? "",
+      width: map?.width ?? 1920,
+      height: map?.height ?? 1080,
+    });
+    setMapDialog(true);
+  };
+
+  const saveMap = async () => {
+    if (!mapForm.displayName.trim()) return;
+    setSaving(true);
+    try {
+      if (editingMap) await updateMap(editingMap.id, mapForm);
+      else
+        await createMap({
+          ...mapForm,
+          name: makeExplorationKey(mapForm.displayName, "map"),
+          requiredOutputLevel: "L1",
+          editorData: { version: 3, explorationObjects: {} },
+          sortOrder: maps.length,
+        });
+      setMapDialog(false);
+      await load();
+      toast.success("地图已保存");
+    } catch {
+      toast.error("地图保存失败");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openLocationForm = (location?: GameLocationData) => {
+    setEditingLocation(location ?? null);
+    setLocationForm({
+      displayName: location?.displayName ?? "",
+      description: location?.description ?? "",
+      icon: location?.icon ?? "",
+      backgroundUrl: location?.backgroundUrl ?? "",
+      locationType: location?.locationType ?? "building",
+    });
+    setLocationDialog(true);
+  };
+
+  const saveLocation = async () => {
+    if (!selectedMap || !locationForm.displayName.trim()) return;
+    setSaving(true);
+    try {
+      if (editingLocation)
+        await updateLocation(editingLocation.id, locationForm);
+      else
+        await createLocation({
+          ...locationForm,
+          mapId: selectedMap.id,
+          name: makeExplorationKey(locationForm.displayName, "location"),
+          posX: 50,
+          posY: 55,
+          iconWidth: 160,
+          iconHeight: 130,
+          requiredOutputLevel: "L1",
+          sortOrder: mapLocations.length,
+        });
+      setLocationDialog(false);
+      await load();
+      toast.success("地点已保存");
+    } catch {
+      toast.error("地点保存失败");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openRoomForm = (room?: GameRoomData) => {
+    setEditingRoom(room ?? null);
+    setRoomForm({
+      displayName: room?.displayName ?? "",
+      description: room?.description ?? "",
+      icon: room?.icon ?? "",
+      backgroundUrl: room?.backgroundUrl ?? "",
+      roomType: room?.roomType ?? "exploration",
+      inkScriptId: room?.inkScriptId ?? "",
+      isEntrance: room?.isEntrance ?? locationRooms.length === 0,
+    });
+    setRoomDialog(true);
+  };
+
+  const saveRoom = async () => {
+    if (!selectedLocation || !roomForm.displayName.trim()) return;
+    setSaving(true);
+    try {
+      if (editingRoom) await updateRoom(editingRoom.id, roomForm);
+      else
+        await createRoom({
+          ...roomForm,
+          locationId: selectedLocation.id,
+          name: makeExplorationKey(roomForm.displayName, "room"),
+          requiredOutputLevel: "L1",
+          sortOrder: locationRooms.length,
+        });
+      setRoomDialog(false);
+      await load();
+      toast.success("房间已保存");
+    } catch {
+      toast.error("房间保存失败");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openObjectForm = (object?: ExplorationObject) => {
+    setEditingObject(object ?? null);
+    setObjectForm(
+      object
+        ? {
+            title: object.title,
+            english: object.english,
+            translation: object.translation,
+            pronunciation: object.pronunciation ?? "",
+            example: object.example ?? "",
+            prompt: object.prompt ?? "",
+            imageUrl: object.imageUrl ?? "",
+            kind: object.kind,
+            x: object.x,
+            y: object.y,
+            width: object.width,
+            height: object.height,
+            required: object.required,
+            hidden: object.hidden,
+          }
+        : { ...EMPTY_OBJECT },
+    );
+    setObjectDialog(true);
+  };
+
+  const saveObject = async () => {
+    if (!selectedMap || !selectedRoom || !objectForm.title.trim()) return;
+    const object: ExplorationObject = {
+      ...objectForm,
+      id:
+        editingObject?.id ??
+        `${makeExplorationKey(objectForm.english || objectForm.title, "object")}_${Date.now().toString(36)}`,
+      roomId: selectedRoom.id,
+    };
+    setSaving(true);
+    try {
+      await persistEditorData(
+        upsertExplorationObject(
+          selectedMap.editorData,
+          selectedRoom.id,
+          object,
+        ),
+      );
+      setObjectId(object.id);
+      setObjectDialog(false);
+      toast.success("探索物品已保存");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteCurrent = async () => {
+    if (level === "world" && selectedLocation) {
+      if (!window.confirm(`删除地点“${selectedLocation.displayName}”及其房间？`))
+        return;
+      await deleteLocation(selectedLocation.id);
+      setLocationId("");
+      await load();
+    } else if (level === "location" && selectedRoom) {
+      if (!window.confirm(`删除房间“${selectedRoom.displayName}”？`)) return;
+      await deleteRoom(selectedRoom.id);
+      setRoomId("");
+      await load();
+    } else if (level === "room" && selectedObject && selectedMap) {
+      await persistEditorData(
+        removeExplorationObject(
+          selectedMap.editorData,
+          roomId,
+          selectedObject.id,
+        ),
+      );
+      setObjectId("");
+      toast.success("探索物品已删除");
+    }
+  };
+
+  const previewLocation =
+    level === "world"
+      ? mapLocations.find((item) => item.id === previewId)
+      : null;
+  const previewRoom =
+    level === "location"
+      ? locationRooms.find((item) => item.id === previewId)
+      : null;
+  const previewObject =
+    level === "room"
+      ? roomObjects.find((item) => item.id === previewId)
+      : null;
+
+  const pronounce = (text: string) => {
+    if (!text || !("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.rate = 0.86;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-20 text-center text-sm text-muted-foreground">
+          正在装载地图世界与探索资源…
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!maps.length) {
+    return (
+      <Card className="border-dashed">
+        <CardHeader className="items-center text-center">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Map />
+          </div>
+          <CardTitle>创建第一个剧情世界</CardTitle>
+          <CardDescription>
+            上传世界底图，然后逐层放置地点、房间和可学习物品。
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center pb-8">
+          <Button onClick={() => openMapForm()}>
+            <Plus data-icon="inline-start" />
+            新建地图世界
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Card className="overflow-hidden">
+        <CardContent className="flex flex-wrap items-center gap-3 p-3">
+          <Select
+            value={mapId}
+            onChange={(event) => {
+              setMapId(event.target.value);
+              setLevel("world");
+              setLocationId("");
+              setRoomId("");
+              setObjectId("");
+            }}
+            className="w-[220px]"
+          >
+            {maps.map((item) => (
+              <SelectItem key={item.id} value={item.id}>
+                {item.displayName}
+              </SelectItem>
+            ))}
+          </Select>
+          {editable && (
+            <>
+              <Button size="sm" variant="outline" onClick={() => openMapForm()}>
+                <Plus data-icon="inline-start" />
+                新建世界
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => selectedMap && openMapForm(selectedMap)}
+              >
+                <Edit3 data-icon="inline-start" />
+                地图设置
+              </Button>
+            </>
+          )}
+          <Separator orientation="vertical" className="h-7" />
+          {level !== "world" && (
+            <Button size="sm" variant="ghost" onClick={goBack}>
+              <ArrowLeft data-icon="inline-start" />
+              返回上一级
+            </Button>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold">
+              {selectedMap?.displayName}
+              {selectedLocation ? ` / ${selectedLocation.displayName}` : ""}
+              {selectedRoom ? ` / ${selectedRoom.displayName}` : ""}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {level === "world"
+                ? "世界地图：放置剧情地点"
+                : level === "location"
+                  ? "地点场景：放置可进入房间"
+                  : "房间探索：放置英语物品、线索和任务"}
+            </p>
+          </div>
+          {!editable && (
+            <ToggleGroup
+              type="single"
+              value={timeOfDay}
+              onValueChange={(value) => value && setTimeOfDay(value as TimeOfDay)}
+              aria-label="预览光线"
+            >
+              <ToggleGroupItem value="day" aria-label="日间">
+                <Sun />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="golden" aria-label="黄昏">
+                <Sunrise />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="night" aria-label="夜间">
+                <Moon />
+              </ToggleGroupItem>
+            </ToggleGroup>
+          )}
+          <Tabs
+            value={editable ? "edit" : "preview"}
+            onValueChange={(value) => {
+              setEditable(value === "edit");
+              setTouring(false);
+              setPreviewId("");
+            }}
+          >
+            <TabsList className="h-9">
+              <TabsTrigger value="edit" className="h-7 gap-1.5 px-3">
+                <Wrench className="size-3.5" />
+                编辑模式
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="h-7 gap-1.5 px-3">
+                <Eye className="size-3.5" />
+                玩家预览
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!nodes.length}
+            onClick={() => (touring ? setTouring(false) : startTour())}
+          >
+            <Route data-icon="inline-start" />
+            {touring ? "停止导览" : "自动导览"}
+          </Button>
+          {editable && (
+            <Button
+              size="sm"
+              onClick={() =>
+                level === "world"
+                  ? openLocationForm()
+                  : level === "location"
+                    ? openRoomForm()
+                    : openObjectForm()
+              }
+            >
+              <Plus data-icon="inline-start" />
+              {level === "world"
+                ? "添加地点"
+                : level === "location"
+                  ? "添加房间"
+                  : "添加物品"}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {level === "room" && (
+        <div className="flex flex-wrap items-center gap-3">
+          <ToggleGroup
+            type="single"
+            value={objectFilter}
+            onValueChange={(value) =>
+              value && setObjectFilter(value as ObjectFilter)
+            }
+            aria-label="物品筛选"
+          >
+            <ToggleGroupItem value="all">全部</ToggleGroupItem>
+            <ToggleGroupItem value="required">任务物品</ToggleGroupItem>
+            <ToggleGroupItem value="undiscovered">未发现</ToggleGroupItem>
+          </ToggleGroup>
+          <span className="text-xs text-muted-foreground">
+            已发现 {roomObjects.filter((object) => discovered.has(object.id)).length}/
+            {roomObjects.length}
+          </span>
+          <Progress
+            value={
+              roomObjects.length
+                ? (roomObjects.filter((object) => discovered.has(object.id)).length /
+                    roomObjects.length) *
+                  100
+                : 0
+            }
+            className="h-2 w-32"
+          />
+        </div>
+      )}
+
+      <div
+        className={cn(
+          "min-w-0 gap-4",
+          editable
+            ? "grid xl:grid-cols-[230px_minmax(0,1fr)_290px]"
+            : "flex justify-center py-3",
+        )}
+      >
+        {editable && <Card className="min-w-0">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">
+              {level === "world"
+                ? "地点资源"
+                : level === "location"
+                  ? "房间资源"
+                  : "探索物品"}
+            </CardTitle>
+            <CardDescription>
+              单击选择，预览模式下点击画布进入或发现。
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-2 pt-0">
+            <ScrollArea className="h-[590px]">
+              <div className="flex flex-col gap-1 p-1">
+                {nodes.map((node) => (
+                  <button
+                    key={node.id}
+                    type="button"
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
+                      node.id === selectedNodeId
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-muted",
+                    )}
+                    onClick={() => selectNode(node.id)}
+                    onDoubleClick={() => {
+                      if (level === "world") enterLocation(node.id);
+                      else if (level === "location") enterRoom(node.id);
+                    }}
+                  >
+                    {level === "world" ? (
+                      <MapPin className="shrink-0" />
+                    ) : level === "location" ? (
+                      <DoorOpen className="shrink-0" />
+                    ) : (
+                      <Box className="shrink-0" />
+                    )}
+                    <span className="min-w-0 flex-1 truncate">{node.title}</span>
+                    {node.required && <Sparkles className="shrink-0" />}
+                  </button>
+                ))}
+                {!nodes.length && (
+                  <p className="px-3 py-16 text-center text-xs text-muted-foreground">
+                    当前层级还没有内容
+                  </p>
+                )}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>}
+
+        <main
+          className={cn(
+            "min-w-0",
+            !editable &&
+              "w-full max-w-[410px] rounded-[2.35rem] border-[8px] border-slate-950 bg-slate-950 p-1 shadow-2xl ring-1 ring-white/10",
+          )}
+        >
+          <ExplorationPixiCanvas
+            key={editable ? "editor-canvas" : "mobile-preview-canvas"}
+            backgroundUrl={backgroundUrl}
+            nodes={nodes}
+            selectedId={selectedNodeId}
+            focusNodeId={focusNodeId}
+            editable={editable}
+            emptyLabel={
+              level === "world"
+                ? "请上传世界地图底图"
+                : level === "location"
+                  ? "请上传地点场景背景"
+                  : "请上传房间场景背景"
+            }
+            worldWidth={worldWidth}
+            worldHeight={worldHeight}
+            timeOfDay={timeOfDay}
+            mobilePreview={!editable}
+            onSelect={selectNode}
+            onOpen={openNode}
+            onMove={(id, x, y) => void moveNode(id, x, y)}
+          />
+        </main>
+
+        {editable && <aside className="min-w-0">
+          <Inspector
+            level={level}
+            map={selectedMap}
+            location={selectedLocation}
+            room={selectedRoom}
+            object={selectedObject}
+            roomCount={locationRooms.length}
+            objectCount={roomObjects.length}
+            locationScale={
+              selectedLocation
+                ? Math.min(
+                    5,
+                    Math.max(
+                      1,
+                      Math.max(
+                        selectedLocation.iconWidth ?? LOCATION_RESOURCE_BASE_SIZE,
+                        selectedLocation.iconHeight ?? LOCATION_RESOURCE_BASE_SIZE,
+                        LOCATION_RESOURCE_BASE_SIZE,
+                      ) / LOCATION_RESOURCE_BASE_SIZE,
+                    ),
+                  )
+                : 1
+            }
+            onLocationScaleChange={resizeSelectedLocation}
+            onLocationScaleCommit={(scale) =>
+              void saveSelectedLocationSize(scale)
+            }
+            onEnter={() => {
+              if (level === "world" && selectedLocation)
+                enterLocation(selectedLocation.id);
+              else if (level === "location" && selectedRoom)
+                enterRoom(selectedRoom.id);
+            }}
+            onEdit={() => {
+              if (level === "world" && selectedLocation)
+                openLocationForm(selectedLocation);
+              else if (level === "location" && selectedRoom)
+                openRoomForm(selectedRoom);
+              else if (level === "room" && selectedObject)
+                openObjectForm(selectedObject);
+            }}
+            onDelete={() => void deleteCurrent()}
+          />
+        </aside>}
+      </div>
+
+      <Dialog open={mapDialog} onOpenChange={setMapDialog}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingMap ? "编辑地图世界" : "新建地图世界"}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <Field label="地图名称">
+              <Input
+                value={mapForm.displayName}
+                onChange={(event) =>
+                  setMapForm({ ...mapForm, displayName: event.target.value })
+                }
+                placeholder="例如：海港学院"
+              />
+            </Field>
+            <Field label="世界地图底图">
+              <ImageUploadField
+                value={mapForm.backgroundUrl}
+                onChange={(url) => setMapForm({ ...mapForm, backgroundUrl: url })}
+                previewSize="lg"
+                group="library"
+              />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="逻辑宽度">
+                <Input
+                  type="number"
+                  value={mapForm.width}
+                  onChange={(event) =>
+                    setMapForm({ ...mapForm, width: Number(event.target.value) })
+                  }
+                />
+              </Field>
+              <Field label="逻辑高度">
+                <Input
+                  type="number"
+                  value={mapForm.height}
+                  onChange={(event) =>
+                    setMapForm({ ...mapForm, height: Number(event.target.value) })
+                  }
+                />
+              </Field>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMapDialog(false)}>
+              取消
+            </Button>
+            <Button
+              disabled={saving || !mapForm.displayName.trim()}
+              onClick={() => void saveMap()}
+            >
+              保存地图
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={locationDialog} onOpenChange={setLocationDialog}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingLocation ? "编辑地点" : "添加地点"}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <Field label="地点名称">
+              <Input
+                value={locationForm.displayName}
+                onChange={(event) =>
+                  setLocationForm({
+                    ...locationForm,
+                    displayName: event.target.value,
+                  })
+                }
+                placeholder="例如：潮汐图书馆"
+              />
+            </Field>
+            <Field label="地点说明">
+              <Textarea
+                value={locationForm.description}
+                onChange={(event) =>
+                  setLocationForm({
+                    ...locationForm,
+                    description: event.target.value,
+                  })
+                }
+              />
+            </Field>
+            <Field label="地点类型">
+              <Select
+                value={locationForm.locationType}
+                onChange={(event) =>
+                  setLocationForm({
+                    ...locationForm,
+                    locationType: event.target.value,
+                  })
+                }
+              >
+                <SelectItem value="building">建筑</SelectItem>
+                <SelectItem value="outdoor">户外区域</SelectItem>
+                <SelectItem value="district">街区</SelectItem>
+              </Select>
+            </Field>
+            <Field label="地图建筑透明图">
+              <ImageUploadField
+                value={locationForm.icon}
+                onChange={(url) =>
+                  setLocationForm({ ...locationForm, icon: url })
+                }
+                previewSize="md"
+                group="library"
+              />
+            </Field>
+            <Field label="进入地点后的场景背景">
+              <ImageUploadField
+                value={locationForm.backgroundUrl}
+                onChange={(url) =>
+                  setLocationForm({ ...locationForm, backgroundUrl: url })
+                }
+                previewSize="lg"
+                group="library"
+              />
+            </Field>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLocationDialog(false)}>
+              取消
+            </Button>
+            <Button
+              disabled={saving || !locationForm.displayName.trim()}
+              onClick={() => void saveLocation()}
+            >
+              保存地点
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={roomDialog} onOpenChange={setRoomDialog}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingRoom ? "编辑房间" : "添加房间"}</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <Field label="房间名称">
+              <Input
+                value={roomForm.displayName}
+                onChange={(event) =>
+                  setRoomForm({ ...roomForm, displayName: event.target.value })
+                }
+                placeholder="例如：阅览室"
+              />
+            </Field>
+            <Field label="房间说明">
+              <Textarea
+                value={roomForm.description}
+                onChange={(event) =>
+                  setRoomForm({ ...roomForm, description: event.target.value })
+                }
+              />
+            </Field>
+            <Field label="房间类型">
+              <Select
+                value={roomForm.roomType}
+                onChange={(event) =>
+                  setRoomForm({ ...roomForm, roomType: event.target.value })
+                }
+              >
+                <SelectItem value="exploration">探索房间</SelectItem>
+                <SelectItem value="vn_scene">VN 剧情</SelectItem>
+                <SelectItem value="hub">枢纽</SelectItem>
+                <SelectItem value="shop">商店</SelectItem>
+                <SelectItem value="quest">任务点</SelectItem>
+              </Select>
+            </Field>
+            <Field label="地点场景中的房间入口图">
+              <ImageUploadField
+                value={roomForm.icon}
+                onChange={(url) => setRoomForm({ ...roomForm, icon: url })}
+                previewSize="md"
+                group="library"
+              />
+            </Field>
+            <Field label="房间探索背景">
+              <ImageUploadField
+                value={roomForm.backgroundUrl}
+                onChange={(url) =>
+                  setRoomForm({ ...roomForm, backgroundUrl: url })
+                }
+                previewSize="lg"
+                group="library"
+              />
+            </Field>
+            <Field label="关联 Ink 剧情 ID">
+              <Input
+                value={roomForm.inkScriptId}
+                onChange={(event) =>
+                  setRoomForm({ ...roomForm, inkScriptId: event.target.value })
+                }
+                placeholder="可选"
+              />
+            </Field>
+            <label className="flex items-center justify-between rounded-lg border p-3 text-sm">
+              设为地点入口房间
+              <Switch
+                checked={roomForm.isEntrance}
+                onCheckedChange={(checked) =>
+                  setRoomForm({ ...roomForm, isEntrance: checked })
+                }
+              />
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRoomDialog(false)}>
+              取消
+            </Button>
+            <Button
+              disabled={saving || !roomForm.displayName.trim()}
+              onClick={() => void saveRoom()}
+            >
+              保存房间
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={objectDialog} onOpenChange={setObjectDialog}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingObject ? "编辑探索物品" : "添加探索物品"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="后台名称">
+                <Input
+                  value={objectForm.title}
+                  onChange={(event) =>
+                    setObjectForm({ ...objectForm, title: event.target.value })
+                  }
+                  placeholder="咖啡壶"
+                />
+              </Field>
+              <Field label="交互类型">
+                <Select
+                  value={objectForm.kind}
+                  onChange={(event) =>
+                    setObjectForm({
+                      ...objectForm,
+                      kind: event.target.value as ExplorationObjectKind,
+                    })
+                  }
+                >
+                  {Object.entries(OBJECT_KIND_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="英文">
+                <Input
+                  value={objectForm.english}
+                  onChange={(event) =>
+                    setObjectForm({ ...objectForm, english: event.target.value })
+                  }
+                  placeholder="kettle"
+                />
+              </Field>
+              <Field label="中文">
+                <Input
+                  value={objectForm.translation}
+                  onChange={(event) =>
+                    setObjectForm({
+                      ...objectForm,
+                      translation: event.target.value,
+                    })
+                  }
+                  placeholder="水壶"
+                />
+              </Field>
+            </div>
+            <Field label="音标">
+              <Input
+                value={objectForm.pronunciation}
+                onChange={(event) =>
+                  setObjectForm({
+                    ...objectForm,
+                    pronunciation: event.target.value,
+                  })
+                }
+                placeholder="/ˈket.əl/"
+              />
+            </Field>
+            <Field label="剧情例句">
+              <Input
+                value={objectForm.example}
+                onChange={(event) =>
+                  setObjectForm({ ...objectForm, example: event.target.value })
+                }
+                placeholder="The kettle is boiling."
+              />
+            </Field>
+            <Field label="学习提示或剧情线索">
+              <Textarea
+                value={objectForm.prompt}
+                onChange={(event) =>
+                  setObjectForm({ ...objectForm, prompt: event.target.value })
+                }
+                placeholder="点击后告诉学习者该观察什么、说什么。"
+              />
+            </Field>
+            <Field label="物品透明图">
+              <ImageUploadField
+                value={objectForm.imageUrl}
+                onChange={(url) =>
+                  setObjectForm({ ...objectForm, imageUrl: url })
+                }
+                previewSize="md"
+                group="library"
+              />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="显示宽度">
+                <Input
+                  type="number"
+                  value={objectForm.width}
+                  onChange={(event) =>
+                    setObjectForm({
+                      ...objectForm,
+                      width: Number(event.target.value),
+                    })
+                  }
+                />
+              </Field>
+              <Field label="显示高度">
+                <Input
+                  type="number"
+                  value={objectForm.height}
+                  onChange={(event) =>
+                    setObjectForm({
+                      ...objectForm,
+                      height: Number(event.target.value),
+                    })
+                  }
+                />
+              </Field>
+            </div>
+            <label className="flex items-center justify-between rounded-lg border p-3 text-sm">
+              作为当前房间的必做任务物品
+              <Switch
+                checked={objectForm.required}
+                onCheckedChange={(checked) =>
+                  setObjectForm({ ...objectForm, required: checked })
+                }
+              />
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setObjectDialog(false)}>
+              取消
+            </Button>
+            <Button
+              disabled={saving || !objectForm.title.trim()}
+              onClick={() => void saveObject()}
+            >
+              保存物品
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!previewId}
+        onOpenChange={(open) => !open && setPreviewId("")}
+      >
+        <DialogContent className="overflow-hidden p-0 sm:max-w-lg">
+          <DialogHeader className="sr-only">
+            <DialogTitle>玩家探索预览</DialogTitle>
+          </DialogHeader>
+          {previewLocation && (
+            <PreviewPlace
+              image={previewLocation.icon}
+              eyebrow="剧情地点"
+              title={previewLocation.displayName}
+              description={previewLocation.description}
+              stats={`${rooms.filter((item) => item.locationId === previewLocation.id).length} 个可进入房间`}
+              action="进入地点"
+              onAction={() => {
+                setPreviewId("");
+                enterLocation(previewLocation.id);
+              }}
+            />
+          )}
+          {previewRoom && (
+            <PreviewPlace
+              image={previewRoom.icon}
+              eyebrow={previewRoom.isEntrance ? "入口房间" : "探索房间"}
+              title={previewRoom.displayName}
+              description={previewRoom.description}
+              stats={`${getExplorationObjects(selectedMap, previewRoom.id).length} 个可发现物品`}
+              action="进入房间"
+              onAction={() => {
+                setPreviewId("");
+                enterRoom(previewRoom.id);
+              }}
+            />
+          )}
+          {previewObject && (
+            <div className="relative">
+              <div className="h-44 bg-muted">
+                {previewObject.imageUrl ? (
+                  <img
+                    src={previewObject.imageUrl}
+                    alt=""
+                    className="size-full object-contain p-5"
+                  />
+                ) : (
+                  <div className="flex size-full items-center justify-center">
+                    <Box className="size-12 text-muted-foreground/30" />
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-4 p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <Badge variant="secondary">
+                      {OBJECT_KIND_LABELS[previewObject.kind]}
+                    </Badge>
+                    <h2 className="mt-3 text-3xl font-bold tracking-tight">
+                      {previewObject.english || previewObject.title}
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {previewObject.pronunciation}
+                    </p>
+                  </div>
+                  <Button
+                    aria-label="播放英文发音"
+                    size="icon"
+                    variant="outline"
+                    onClick={() =>
+                      pronounce(previewObject.english || previewObject.title)
+                    }
+                  >
+                    <Volume2 />
+                  </Button>
+                </div>
+                <p className="text-lg font-medium">{previewObject.translation}</p>
+                {previewObject.example && (
+                  <button
+                    type="button"
+                    className="rounded-xl border bg-muted/40 p-4 text-left text-sm leading-6 transition-colors hover:bg-muted"
+                    onClick={() => pronounce(previewObject.example ?? "")}
+                  >
+                    <span className="mb-1 flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+                      <Headphones />
+                      点击听剧情例句
+                    </span>
+                    {previewObject.example}
+                  </button>
+                )}
+                {previewObject.prompt && (
+                  <p className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <MessageCircle className="mt-0.5 shrink-0" />
+                    {previewObject.prompt}
+                  </p>
+                )}
+                <Button
+                  onClick={() => {
+                    setDiscovered((items) =>
+                      new Set([...items, previewObject.id]),
+                    );
+                    setPreviewId("");
+                    toast.success(`已发现：${previewObject.english || previewObject.title}`);
+                  }}
+                >
+                  <Languages data-icon="inline-start" />
+                  标记为已发现
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <Label>{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+function Inspector({
+  level,
+  map,
+  location,
+  room,
+  object,
+  roomCount,
+  objectCount,
+  locationScale,
+  onLocationScaleChange,
+  onLocationScaleCommit,
+  onEnter,
+  onEdit,
+  onDelete,
+}: {
+  level: StudioLevel;
+  map: GameMapData | null;
+  location: GameLocationData | null;
+  room: GameRoomData | null;
+  object: ExplorationObject | null;
+  roomCount: number;
+  objectCount: number;
+  locationScale: number;
+  onLocationScaleChange: (scale: number) => void;
+  onLocationScaleCommit: (scale: number) => void;
+  onEnter: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  if (level === "world" && !location) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Map />
+            {map?.displayName}
+          </CardTitle>
+          <CardDescription>
+            选择一座建筑，配置入口图、地点场景和房间。
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+  const title =
+    level === "world"
+      ? location?.displayName
+      : level === "location"
+        ? room?.displayName
+        : object?.title;
+  const description =
+    level === "world"
+      ? location?.description
+      : level === "location"
+        ? room?.description
+        : object?.prompt;
+  const image =
+    level === "world"
+      ? location?.icon
+      : level === "location"
+        ? room?.icon
+        : object?.imageUrl;
+  return (
+    <Card className="overflow-hidden">
+      {image && (
+        <div className="h-36 bg-muted">
+          <img src={image} alt="" className="size-full object-contain p-3" />
+        </div>
+      )}
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary">
+            {level === "world"
+              ? "地点"
+              : level === "location"
+                ? "房间"
+                : "探索物品"}
+          </Badge>
+          {object?.required && <Badge>必做</Badge>}
+        </div>
+        <CardTitle className="text-base">{title}</CardTitle>
+        <CardDescription>{description || "暂无说明"}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        {level === "world" && (
+          <>
+            <p className="text-xs text-muted-foreground">{roomCount} 个房间</p>
+            {location && (
+              <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="location-resource-scale">地点素材大小</Label>
+                  <Badge variant="outline">{locationScale.toFixed(1)}×</Badge>
+                </div>
+                <Slider
+                  id="location-resource-scale"
+                  min={1}
+                  max={5}
+                  step={0.1}
+                  value={[locationScale]}
+                  onValueChange={([value]) =>
+                    onLocationScaleChange(value ?? 1)
+                  }
+                  onValueCommit={([value]) =>
+                    onLocationScaleCommit(value ?? 1)
+                  }
+                  aria-label="地点素材显示倍率"
+                />
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>1×</span>
+                  <span>
+                    {Math.max(
+                      LOCATION_RESOURCE_BASE_SIZE,
+                      location.iconWidth ?? LOCATION_RESOURCE_BASE_SIZE,
+                    )}{" "}
+                    ×{" "}
+                    {Math.max(
+                      LOCATION_RESOURCE_BASE_SIZE,
+                      location.iconHeight ?? LOCATION_RESOURCE_BASE_SIZE,
+                    )}
+                  </span>
+                  <span>5×</span>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+        {level === "location" && (
+          <p className="text-xs text-muted-foreground">{objectCount} 个探索物品</p>
+        )}
+        {level === "room" && object && (
+          <div className="rounded-lg border bg-muted/30 p-3">
+            <p className="text-lg font-semibold">{object.english || "未填写英文"}</p>
+            <p className="text-sm text-muted-foreground">
+              {object.pronunciation} {object.translation}
+            </p>
+          </div>
+        )}
+        {level !== "room" && (
+          <Button onClick={onEnter}>
+            <BookOpen data-icon="inline-start" />
+            进入下一层编辑
+          </Button>
+        )}
+        <Button variant="outline" onClick={onEdit}>
+          <Edit3 data-icon="inline-start" />
+          编辑属性
+        </Button>
+        <Button variant="ghost" onClick={onDelete}>
+          <Trash2 data-icon="inline-start" />
+          删除
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PreviewPlace({
+  image,
+  eyebrow,
+  title,
+  description,
+  stats,
+  action,
+  onAction,
+}: {
+  image?: string | null;
+  eyebrow: string;
+  title: string;
+  description?: string | null;
+  stats: string;
+  action: string;
+  onAction: () => void;
+}) {
+  return (
+    <div>
+      <div className="h-56 bg-muted">
+        {image ? (
+          <img src={image} alt="" className="size-full object-contain p-5" />
+        ) : (
+          <div className="flex size-full items-center justify-center">
+            <MapPin className="size-14 text-muted-foreground/30" />
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col gap-4 p-6">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            {eyebrow}
+          </p>
+          <h2 className="mt-2 text-2xl font-bold">{title}</h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            {description || "这里的故事还没有写下。"}
+          </p>
+        </div>
+        <Badge className="w-fit" variant="outline">
+          {stats}
+        </Badge>
+        <Button onClick={onAction}>
+          <DoorOpen data-icon="inline-start" />
+          {action}
+        </Button>
+      </div>
+    </div>
+  );
+}

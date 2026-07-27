@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Map, UserCircle, Volume2 } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CharactersTab } from '../components/characters-tab'
-import { MapsTab } from '../components/maps-tab'
+import { NarrativeWorldStudio } from '../components/narrative-world-studio'
 import { VoiceAssetsTab } from '../components/voice-assets-tab'
 import type { GameCharacter, GameLocationData } from '../api-content-admin'
 
@@ -39,7 +39,7 @@ export function AdminNarrativeAssetsPage() {
           <CharactersTab onCharactersChange={setCharacters} />
         </TabsContent>
         <TabsContent value="maps" className="mt-4">
-          <MapsTab onLocationsChange={setLocations} />
+          <NarrativeWorldStudio onLocationsChange={setLocations} />
         </TabsContent>
         <TabsContent value="voices" className="mt-4"><VoiceAssetsTab /></TabsContent>
       </Tabs>

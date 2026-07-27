@@ -1173,8 +1173,8 @@ function ScriptPublishHistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl gap-4 rounded-2xl p-5">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[84dvh] w-[calc(100vw-2rem)] max-w-2xl flex-col gap-4 overflow-hidden rounded-2xl p-5 [&>button]:right-4 [&>button]:top-4">
+        <DialogHeader className="shrink-0 pr-8">
           <DialogTitle>{resolvedTitle}</DialogTitle>
           <DialogDescription className="text-xs">
             {t('scripts.publishLogDesc', { total })}
@@ -1193,15 +1193,14 @@ function ScriptPublishHistoryDialog({
             <p className="mt-3 text-sm text-muted-foreground">{t('scripts.noPublishRecords')}</p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl bg-muted/25">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px] table-fixed text-left">
-                <thead className="text-[11px] text-muted-foreground">
+          <div className="min-h-0 overflow-hidden rounded-xl bg-muted/25">
+            <div className="max-h-[55dvh] overflow-y-auto">
+              <table className="w-full table-fixed text-left">
+                <thead className="sticky top-0 z-10 bg-muted/95 text-[11px] text-muted-foreground backdrop-blur">
                   <tr className="border-b border-border/45">
-                    <th className="w-[34%] px-3 py-2 font-medium">{t('scripts.tableWork')}</th>
-                    <th className="w-[19%] px-3 py-2 font-medium">{t('scripts.tableStatus')}</th>
-                    <th className="w-[16%] px-3 py-2 font-medium">{t('scripts.tableProgress')}</th>
-                    <th className="w-[31%] px-3 py-2 font-medium">{t('scripts.tableSubmitTime')}</th>
+                    <th className="w-[46%] px-3 py-2 font-medium">{t('scripts.tableWork')}</th>
+                    <th className="w-[22%] px-2 py-2 font-medium">{t('scripts.tableStatus')}</th>
+                    <th className="w-[32%] px-2 py-2 font-medium">{t('scripts.tableSubmitTime')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1209,26 +1208,26 @@ function ScriptPublishHistoryDialog({
                     const meta = publishStatusMeta[item.status]
                     return (
                       <tr key={item.id} className="border-b border-border/35 last:border-0">
-                        <td className="px-3 py-2.5">
-                          <p className="truncate text-xs font-medium">{item.work?.title ?? t('scripts.deletedWork')}</p>
-                          <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                        <td className="px-3 py-2.5 align-top">
+                          <p className="line-clamp-1 text-xs font-medium">{item.work?.title ?? t('scripts.deletedWork')}</p>
+                          <p className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-muted-foreground">
                             {item.work ? `${item.work.episode.scene.title} · ${item.work.episode.chapterName}` : item.targetId}
                           </p>
                         </td>
-                        <td className="px-3 py-2.5">
+                        <td className="px-2 py-2.5 align-top">
                           <Badge className={cn('border-0 text-[10px] shadow-none', meta.className)}>
                             {meta.label}
                           </Badge>
+                          <p className="mt-1 text-[10px] tabular-nums text-muted-foreground">
+                            {item.status === 'completed' ? '100%' : `${item.progress}%`}
+                          </p>
                         </td>
-                        <td className="px-3 py-2.5 text-xs tabular-nums text-muted-foreground">
-                          {item.status === 'completed' ? '100%' : `${item.progress}%`}
-                        </td>
-                        <td className="px-3 py-2.5">
+                        <td className="px-2 py-2.5 align-top">
                           <p className="text-[11px] tabular-nums text-muted-foreground">
                             {formatPublishTime(item.createdAt)}
                           </p>
                           {item.errorMessage && (
-                            <p className="mt-0.5 truncate text-[10px] text-destructive">{item.errorMessage}</p>
+                            <p className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-destructive">{item.errorMessage}</p>
                           )}
                         </td>
                       </tr>
