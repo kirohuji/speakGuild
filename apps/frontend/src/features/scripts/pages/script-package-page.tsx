@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -35,13 +36,16 @@ import { learningApi, type StoryEpisodeItem, type UnitDetail } from '@/features/
 import { useLearningStore } from '@/stores/learning.store'
 
 export function ScriptPackagePage() {
+  const { t } = useTranslation()
   const { packageId } = useParams()
   const navigate = useNavigate()
   const [detail, setDetail] = useState<UnitDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [packStateLoading, setPackStateLoading] = useState(true)
   const downloadedPacks = useLearningStore((state) => state.downloadedPacks)
   const downloadTasks = useLearningStore((state) => state.downloadTasks)
   const downloadUnitPack = useLearningStore((state) => state.downloadUnitPack)
+  const fetchDownloadedPacks = useLearningStore((state) => state.fetchDownloadedPacks)
 
   useEffect(() => {
     if (!packageId) return
@@ -54,9 +58,16 @@ export function ScriptPackagePage() {
         }
         setDetail(result)
       })
-      .catch(() => toast.error('剧本详情加载失败'))
+      .catch(() => toast.error(t('scripts.packageLoadFailed')))
       .finally(() => setLoading(false))
   }, [packageId])
+
+  useEffect(() => {
+    setPackStateLoading(true)
+    void fetchDownloadedPacks()
+      .catch(() => undefined)
+      .finally(() => setPackStateLoading(false))
+  }, [fetchDownloadedPacks])
 
   const installed = downloadedPacks.some((pack) => pack.packId === packageId && pack.status === 'installed')
   const downloading = downloadTasks.some((task) => task.packId === packageId && task.status !== 'error')
@@ -65,15 +76,15 @@ export function ScriptPackagePage() {
   const progress = episodes.length > 0 ? (completed / episodes.length) * 100 : 0
   const nextEpisode = episodes.find((episode) => episode.isUnlocked && !episode.record?.passed) ?? episodes[0]
 
-  if (loading) return <PackageSkeleton />
+  if (loading || packStateLoading) return <PackageSkeleton />
 
   if (!detail) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 px-4 text-center">
         <Clapperboard className="size-12 text-muted-foreground/40" />
-        <p className="text-muted-foreground">没有找到这个剧本</p>
+        <p className="text-muted-foreground">{t('scripts.packageNotFound')}</p>
         <Button variant="outline" onClick={() => navigate('/scripts')}>
-          返回剧本
+          {t('scripts.backToScripts')}
         </Button>
       </div>
     )
@@ -87,18 +98,18 @@ export function ScriptPackagePage() {
             type="button"
             onClick={() => navigate('/scripts')}
             className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
-            aria-label="返回剧本"
+            aria-label={t('scripts.backToScripts')}
           >
             <ArrowLeft className="size-4" />
           </button>
           <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
-            <p className="truncate text-xs text-muted-foreground">{detail.location || '沉浸式英语剧场'}</p>
+            <p className="truncate text-xs text-muted-foreground">{detail.location || t('scripts.immersiveTheater')}</p>
             <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{detail.title}</h1>
           </div>
         </div>
         <div className="hidden md:block">
           <Link to="/scripts" className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="size-4" /> 剧本
+            <ArrowLeft className="size-4" /> {t('scripts.script')}
           </Link>
           <div className="flex items-start justify-between gap-3 px-1">
             <div className="min-w-0">
@@ -114,11 +125,11 @@ export function ScriptPackagePage() {
       </div>
 
       <section className="mb-5">
-        <SectionHeader eyebrow="1" title="剧情梗概" meta={`${episodes.length} 章`} />
+        <SectionHeader eyebrow="1" title={t('scripts.storySummary')} meta={`${episodes.length} ${t('scripts.chapterUnit')}`} />
         <div className="rounded-lg bg-muted/30 p-4">
           <div className="flex items-start justify-between gap-3">
             <p className="text-sm leading-6 text-muted-foreground">
-              {detail.description || '完成章节练习，在剧情中运用单词、句块和句型。'}
+              {detail.description || t('scripts.defaultDescription')}
             </p>
             {/* <Badge variant="secondary" className="shrink-0">{installed ? '已离线' : '未下载'}</Badge> */}
           </div>
@@ -134,13 +145,13 @@ export function ScriptPackagePage() {
                 onClick={() => packageId && void downloadUnitPack(packageId)}
               >
                 {downloading ? <Loader2 className="animate-spin" data-icon="inline-start" /> : <Download data-icon="inline-start" />}
-                {downloading ? '正在准备离线内容' : '下载剧本'}
+                {downloading ? t('scripts.preparingOffline') : t('scripts.downloadScript')}
               </Button>
             ) : nextEpisode ? (
               <Button asChild className="w-full">
                 <Link to={`/scripts/packages/${detail.id}/episodes/${nextEpisode.id}`}>
                   <Play data-icon="inline-start" />
-                  {nextEpisode.record ? '继续下一章' : '开始剧情'}
+                  {nextEpisode.record ? t('scripts.continueNextChapter') : t('scripts.startStory')}
                 </Link>
               </Button>
             ) : null}
@@ -151,18 +162,18 @@ export function ScriptPackagePage() {
       <section className="mb-5">
         <SectionHeader
           eyebrow="2"
-          title="剧中表达"
-          meta={`${detail.vocabCount + detail.chunkCount + detail.sentencePatterns.length} 项`}
+          title={t('scripts.inStoryExpressions')}
+          meta={`${detail.vocabCount + detail.chunkCount + detail.sentencePatterns.length} ${t('scripts.itemsUnit')}`}
         />
         <Tabs defaultValue="vocab" className="space-y-3">
           <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-            <TabsTrigger value="vocab" className="rounded-md text-xs">单词 {detail.vocabCount}</TabsTrigger>
-            <TabsTrigger value="chunks" className="rounded-md text-xs">句块 {detail.chunkCount}</TabsTrigger>
-            <TabsTrigger value="patterns" className="rounded-md text-xs">句型 {detail.sentencePatterns.length}</TabsTrigger>
+            <TabsTrigger value="vocab" className="rounded-md text-xs">{t('scripts.tabVocab')} {detail.vocabCount}</TabsTrigger>
+            <TabsTrigger value="chunks" className="rounded-md text-xs">{t('scripts.tabChunks')} {detail.chunkCount}</TabsTrigger>
+            <TabsTrigger value="patterns" className="rounded-md text-xs">{t('scripts.tabPatterns')} {detail.sentencePatterns.length}</TabsTrigger>
           </TabsList>
           <TabsContent value="vocab" className="mt-0">
             <ResourceList
-              empty="暂无单词"
+              empty={t('scripts.noVocab')}
               items={detail.vocabularies.slice(0, 12).map((item) => ({
                 primary: item.word,
                 secondary: item.meaning,
@@ -171,7 +182,7 @@ export function ScriptPackagePage() {
           </TabsContent>
           <TabsContent value="chunks" className="mt-0">
             <ResourceList
-              empty="暂无句块"
+              empty={t('scripts.noChunks')}
               items={detail.chunks.slice(0, 12).map((item) => ({
                 primary: item.text,
                 secondary: item.meaning,
@@ -180,7 +191,7 @@ export function ScriptPackagePage() {
           </TabsContent>
           <TabsContent value="patterns" className="mt-0">
             <ResourceList
-              empty="暂无句型"
+              empty={t('scripts.noPatterns')}
               items={detail.sentencePatterns.slice(0, 12).map((item) => ({
                 primary: item.pattern,
                 secondary: item.meaning,
@@ -191,13 +202,13 @@ export function ScriptPackagePage() {
       </section>
 
       <section className="mb-5">
-        <SectionHeader eyebrow="3" title="章节练习" meta={`${completed}/${episodes.length}`} />
+        <SectionHeader eyebrow="3" title={t('scripts.chapterPractice')} meta={`${completed}/${episodes.length}`} />
         <div className="flex flex-col gap-2">
           {episodes.length === 0 ? (
             <div className="flex flex-col items-center rounded-lg bg-muted/30 px-6 py-12 text-center">
               <BookOpen className="size-10 text-muted-foreground/40" />
-              <p className="mt-4 text-sm text-muted-foreground">章节正在编排</p>
-              <p className="mt-1 text-xs text-muted-foreground/60">发布后会显示在这里</p>
+              <p className="mt-4 text-sm text-muted-foreground">{t('scripts.chaptersArranging')}</p>
+              <p className="mt-1 text-xs text-muted-foreground/60">{t('scripts.chaptersArrangingHint')}</p>
             </div>
           ) : episodes.map((episode, index) => (
             <EpisodeRow
@@ -247,6 +258,7 @@ function EpisodeRow({
   packageId: string
   installed: boolean
 }) {
+  const { t } = useTranslation()
   const locked = !episode.isUnlocked || !installed
   const row = (
     <Card className="border-0 bg-muted/30 shadow-none transition-colors hover:bg-muted/50">
@@ -257,12 +269,12 @@ function EpisodeRow({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <CardDescription className="truncate text-xs">{episode.chapterName}</CardDescription>
-            {episode.isPreview && <Badge variant="secondary">试看</Badge>}
+            {episode.isPreview && <Badge variant="secondary">{t('scripts.preview')}</Badge>}
           </div>
           <CardTitle className="mt-1 truncate text-sm">{episode.title}</CardTitle>
           <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
             <span>{episode.characterName}</span>
-            <span>{episode.objectives.length} 个剧情目标</span>
+            <span>{t('scripts.storyObjectives', { count: episode.objectives.length })}</span>
           </div>
         </div>
         {locked ? <LockKeyhole className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />}

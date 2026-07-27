@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from '@/lib/i18n'
 import { Capacitor } from '@capacitor/core'
 import { ScreenOrientation } from '@capacitor/screen-orientation'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -107,6 +109,7 @@ function useVideoFullscreenOrientation() {
 }
 
 export function ScriptCenterPage() {
+  const { t } = useTranslation()
   useVideoFullscreenOrientation()
   const [searchParams, setSearchParams] = useSearchParams()
   const panel = searchParams.get('panel')
@@ -171,7 +174,7 @@ export function ScriptCenterPage() {
       const result = await learningApi.getUnits({ packageType: 'story', page: 1, pageSize: 30 })
       setShopUnits(result.list)
     } catch {
-      toast.error('剧本商店加载失败')
+      toast.error(t('scripts.shopLoadFailed'))
     } finally {
       setShopLoading(false)
     }
@@ -249,9 +252,9 @@ export function ScriptCenterPage() {
     try {
       await learningApi.startUnit(unit.id)
       await refreshMyUnits()
-      toast.success(`《${unit.title}》已加入我的剧本`)
+      toast.success(t('scripts.joinedUnit', { title: unit.title }))
     } catch {
-      toast.error('加入剧本失败')
+      toast.error(t('scripts.joinUnitFailed'))
     }
   }
 
@@ -265,7 +268,7 @@ export function ScriptCenterPage() {
             type="button"
             onClick={() => setPublishHistoryOpen(true)}
             className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
-            aria-label="发布日志"
+            aria-label={t('scripts.publishLog')}
           >
             <History className="size-[18px]" />
           </button>
@@ -273,7 +276,7 @@ export function ScriptCenterPage() {
             type="button"
             onClick={() => setPanel('records')}
             className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
-            aria-label="剧本练习记录"
+            aria-label={t('scripts.practiceRecords')}
           >
             <Clock3 className="size-[18px]" />
           </button>
@@ -281,7 +284,7 @@ export function ScriptCenterPage() {
             type="button"
             onClick={() => setPanel('store')}
             className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
-            aria-label="剧本商店"
+            aria-label={t('scripts.shop')}
           >
             <ShoppingBag className="size-[18px]" />
           </button>
@@ -299,8 +302,8 @@ export function ScriptCenterPage() {
         className="flex flex-col gap-4"
       >
         <TabsList className="grid h-10 w-full grid-cols-2 rounded-xl bg-muted/70 p-1">
-          <TabsTrigger value="mine" className="rounded-lg">我的</TabsTrigger>
-          <TabsTrigger value="square" className="rounded-lg">广场</TabsTrigger>
+          <TabsTrigger value="mine" className="rounded-lg">{t('scripts.mine')}</TabsTrigger>
+          <TabsTrigger value="square" className="rounded-lg">{t('scripts.square')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="mine" className="mt-0">
@@ -341,7 +344,7 @@ export function ScriptCenterPage() {
       <Drawer open={recordsOpen} onOpenChange={(open) => setPanel(open ? 'records' : null)}>
         <DrawerContent className="flex h-[95vh] max-h-[95vh] flex-col rounded-t-[28px] border-border/70 bg-background drawer-surface">
           <DrawerHeader className="px-4 pb-1 pt-2 text-left">
-            <DrawerTitle className="text-base font-semibold">剧本练习记录</DrawerTitle>
+            <DrawerTitle className="text-base font-semibold">{t('scripts.practiceRecords')}</DrawerTitle>
           </DrawerHeader>
           <div className="min-h-0 flex-1 overflow-hidden px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             <RecordList records={records} loading={recordsLoading} />
@@ -352,7 +355,7 @@ export function ScriptCenterPage() {
       <Drawer open={shopOpen} onOpenChange={(open) => setPanel(open ? 'store' : null)}>
         <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-0 bg-background">
           <DrawerHeader className="px-4 pb-1 pt-2 text-left">
-            <DrawerTitle className="text-base font-semibold">剧本商店</DrawerTitle>
+            <DrawerTitle className="text-base font-semibold">{t('scripts.shop')}</DrawerTitle>
           </DrawerHeader>
           <div className="h-[calc(88vh-4rem)] overflow-x-hidden overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             <ScriptShop
@@ -398,6 +401,7 @@ function MineScripts({
   worksLoading: boolean
   onWorksChanged: () => Promise<void>
 }) {
+  const { t } = useTranslation()
   const [worksOpen, setWorksOpen] = useState(false)
 
   if (loading && units.length === 0) {
@@ -408,8 +412,8 @@ function MineScripts({
             <Loader2 className="size-4 animate-spin" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-foreground">正在获取剧本计划</p>
-            <p className="mt-0.5 text-xs leading-5 text-muted-foreground">正在同步你加入的剧本和章节进度</p>
+            <p className="text-sm font-medium text-foreground">{t('scripts.fetchingPlan')}</p>
+            <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{t('scripts.syncingProgress')}</p>
           </div>
         </div>
       </div>
@@ -420,7 +424,7 @@ function MineScripts({
     return (
       <div className="flex flex-col items-center rounded-lg bg-muted/30 px-6 py-14 text-center">
         <Clapperboard className="size-10 text-muted-foreground/40" />
-        <p className="mt-4 text-sm text-muted-foreground">你还没有开始练习剧本</p>
+        <p className="mt-4 text-sm text-muted-foreground">{t('scripts.noScriptsYet')}</p>
         <Button
           variant="outline"
           size="sm"
@@ -430,7 +434,7 @@ function MineScripts({
             onOpenShop()
           }}
         >
-          前往剧本商店
+          {t('scripts.goToShop')}
         </Button>
       </div>
     )
@@ -440,7 +444,7 @@ function MineScripts({
     <div className="flex flex-col gap-6">
       {activeUnit && (
         <section className="flex flex-col gap-2">
-          <p className="px-1 text-xs font-medium text-muted-foreground">继续演出</p>
+          <p className="px-1 text-xs font-medium text-muted-foreground">{t('scripts.continuePerformance')}</p>
           <Card className="overflow-hidden border-0 bg-muted/30 shadow-none">
             <div className="min-h-56 p-5">
               <div className="flex h-full min-h-46 flex-col justify-between gap-8">
@@ -454,7 +458,7 @@ function MineScripts({
                 </div>
                 <div className="flex flex-col gap-3">
                   <div>
-                    <p className="text-xs text-muted-foreground">{activeUnit.location || '口袋剧场'}</p>
+                    <p className="text-xs text-muted-foreground">{activeUnit.location || t('scripts.pocketTheater')}</p>
                     <h1 className="mt-1 text-2xl font-semibold tracking-tight">{activeUnit.title}</h1>
                     {activeUnit.description && (
                       <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
@@ -468,7 +472,7 @@ function MineScripts({
                       <Button asChild className="flex-1 rounded-full">
                         <Link to={`/scripts/packages/${activeUnit.id}`}>
                           <Play data-icon="inline-start" />
-                          继续剧情
+                          {t('scripts.continueStory')}
                         </Link>
                       </Button>
                     ) : (
@@ -478,11 +482,11 @@ function MineScripts({
                         onClick={() => void onDownload(activeUnit.id)}
                       >
                         <Download data-icon="inline-start" />
-                        下载剧本
+                        {t('scripts.downloadScript')}
                       </Button>
                     )}
                     <Button asChild variant="outline" className="rounded-full">
-                      <Link to={`/scripts/packages/${activeUnit.id}`}>章节目录</Link>
+                      <Link to={`/scripts/packages/${activeUnit.id}`}>{t('scripts.chapterList')}</Link>
                     </Button>
                   </div>
                 </div>
@@ -515,8 +519,8 @@ function MineScripts({
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between px-1">
-          <p className="text-xs font-medium text-muted-foreground">我的作品</p>
-          <Button variant="ghost" size="sm" onClick={() => setWorksOpen(true)}>查看更多</Button>
+          <p className="text-xs font-medium text-muted-foreground">{t('scripts.myWorks')}</p>
+          <Button variant="ghost" size="sm" onClick={() => setWorksOpen(true)}>{t('scripts.viewMore')}</Button>
         </div>
         <MyWorks works={works} loading={worksLoading} onChanged={onWorksChanged} />
         <WorksLibraryDialog
@@ -530,20 +534,20 @@ function MineScripts({
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between px-1">
-          <p className="text-xs font-medium text-muted-foreground">我的剧本</p>
-          <Button variant="ghost" size="sm" onClick={onOpenShop}>探索更多</Button>
+          <p className="text-xs font-medium text-muted-foreground">{t('scripts.myScripts')}</p>
+          <Button variant="ghost" size="sm" onClick={onOpenShop}>{t('scripts.exploreMore')}</Button>
         </div>
         <div className="-mx-2 flex snap-x gap-2 overflow-x-auto px-2 pb-1">
           {units.map((unit) => (
             <Link key={unit.id} to={`/scripts/packages/${unit.id}`} className="group">
               <Card className="w-44 shrink-0 snap-start overflow-hidden border-0 bg-muted/30 shadow-none transition-transform group-active:scale-[0.98]">
                 <div className="aspect-video bg-muted/50 p-3">
-                  <Badge variant="secondary">{unit.scriptCount} 章</Badge>
+                  <Badge variant="secondary">{t('scripts.chapters', { count: unit.scriptCount })}</Badge>
                 </div>
                 <CardHeader className="p-2.5 pb-2">
                   <CardTitle className="truncate text-sm">{unit.title}</CardTitle>
                   <CardDescription className="truncate text-xs">
-                    {unit.location || '沉浸式英语剧场'}
+                    {unit.location || t('scripts.immersiveTheater')}
                   </CardDescription>
                 </CardHeader>
               </Card>
@@ -560,27 +564,27 @@ async function generateAndPublishExistingWork(
   onProgress: (progress: number) => void,
 ) {
   const taskId = `script-video:${work.id}`
-  const tasks = useGlobalTaskStore.getState()
-  tasks.startTask({ id: taskId, kind: 'script_video', title: `《${work.episode.title}》演出视频` })
+  const gts = useGlobalTaskStore.getState()
+  gts.startTask({ id: taskId, kind: 'script_video', title: i18n.t('scripts.performanceVideo', { title: work.episode.title }) })
   try {
   const player = await learningApi.getStoryEpisodePlayer(work.episodeId)
-  if (!player.inkScript.inkSource) throw new Error('章节脚本内容不完整，暂时无法生成视频')
+  if (!player.inkScript.inkSource) throw new Error(i18n.t('scripts.scriptIncomplete'))
   const frames = flattenComposerToTimeline(parseComposer(player.inkScript.inkSource))
   await requestScriptVideoRender({
     workId: work.id,
     frames,
     onProgress: (progress, step) => {
       onProgress(progress)
-      useGlobalTaskStore.getState().updateTask(taskId, { progress, stepLabel: step || '服务端 Remotion 渲染中' })
+      useGlobalTaskStore.getState().updateTask(taskId, { progress, stepLabel: step || i18n.t('scripts.renderingOnServer') })
     },
   })
   onProgress(100)
-  useGlobalTaskStore.getState().updateTask(taskId, { progress: 100, status: 'done', stepLabel: '已发布到广场' })
+  useGlobalTaskStore.getState().updateTask(taskId, { progress: 100, status: 'done', stepLabel: i18n.t('scripts.publishedToSquare') })
   } catch (error: any) {
     useGlobalTaskStore.getState().updateTask(taskId, {
       status: 'error',
-      stepLabel: '视频生成失败',
-      error: error?.message || '视频生成失败，请重试',
+      stepLabel: i18n.t('scripts.videoGenerateFailed'),
+      error: error?.message || i18n.t('scripts.videoGenerateFailedRetry'),
     })
     throw error
   }
@@ -595,6 +599,7 @@ function MyWorks({
   loading: boolean
   onChanged: () => Promise<void>
 }) {
+  const { t } = useTranslation()
   const [generating, setGenerating] = useState<Record<string, number>>({})
 
   const togglePublish = async (work: ScriptWork) => {
@@ -606,10 +611,10 @@ function MyWorks({
           setGenerating((current) => ({ ...current, [work.id]: progress }))
         })
       }
-      toast.success(work.status === 'published' ? '作品已转为仅自己可见' : '作品已发布到广场')
+      toast.success(work.status === 'published' ? t('scripts.workPrivateHint') : t('scripts.workPublishedHint'))
       await onChanged()
     } catch (error: any) {
-      toast.error(error?.message || '作品状态更新失败')
+      toast.error(error?.message || t('scripts.workStatusFailed'))
     } finally {
       setGenerating((current) => {
         const next = { ...current }
@@ -627,8 +632,8 @@ function MyWorks({
           <Image className="size-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-foreground">还没有作品</p>
-          <p className="mt-0.5 text-xs leading-5 text-muted-foreground">完成章节后，可以生成并发布学习作品</p>
+          <p className="text-sm font-medium text-foreground">{t('scripts.noWorksYet')}</p>
+          <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{t('scripts.worksHint')}</p>
         </div>
       </div>
     )
@@ -646,7 +651,7 @@ function MyWorks({
           <div className="relative aspect-video bg-muted/50">
             {work.coverUrl && <img src={work.coverUrl} alt="" className="size-full object-cover" />}
             <Badge variant="secondary" className="absolute left-2 top-2 h-5 px-2 text-[10px]">
-              {work.kind === 'progress_card' ? '进度卡' : work.kind === 'vn_video' ? 'VN' : '跟读'}
+              {work.kind === 'progress_card' ? t('scripts.workKindProgressCard') : work.kind === 'vn_video' ? t('scripts.workKindVn') : t('scripts.workKindRepeat')}
             </Badge>
             {work.videoUrl && (
               <div className="absolute inset-0 flex items-center justify-center">
@@ -657,8 +662,12 @@ function MyWorks({
             )}
           </div>
           <CardHeader className="p-2.5 pb-2">
+            <p className="flex items-center gap-1 truncate text-[11px] font-medium text-primary">
+              <BookOpen className="size-3 shrink-0" />
+              <span className="truncate">{t('scripts.scriptLabel', { title: work.episode.scene.title })}</span>
+            </p>
             <CardTitle className="truncate text-sm">{work.title}</CardTitle>
-            <CardDescription className="truncate text-xs">{work.episode.scene.title} · {work.episode.chapterName}</CardDescription>
+            <CardDescription className="truncate text-xs">{t('scripts.chapterLabel', { name: work.episode.chapterName })}</CardDescription>
           </CardHeader>
           <CardFooter className="px-2.5 pb-2.5">
             <div className="w-full">
@@ -670,12 +679,12 @@ function MyWorks({
                 onClick={() => void togglePublish(work)}
               >
                 {generating[work.id]
-                  ? `生成中 ${generating[work.id]}%`
+                  ? t('scripts.generating', { percent: generating[work.id] })
                   : work.status === 'published'
-                    ? '取消发布'
+                    ? t('scripts.unpublish')
                     : work.videoUrl
-                      ? '重新生成并发布'
-                      : '生成视频并发布'}
+                      ? t('scripts.regenerateAndPublish')
+                      : t('scripts.generateVideoAndPublish')}
               </Button>
               {generating[work.id] && <Progress value={generating[work.id]} className="mt-1.5 h-1" />}
             </div>
@@ -699,11 +708,15 @@ function WorksLibraryDialog({
   loading: boolean
   onChanged: () => Promise<void>
 }) {
+  const { t } = useTranslation()
+  const pageSize = 15
   const [search, setSearch] = useState('')
   const [sceneId, setSceneId] = useState('all')
   const [groupMode, setGroupMode] = useState<'time' | 'package'>('time')
+  const [page, setPage] = useState(1)
   const [generating, setGenerating] = useState<Record<string, number>>({})
   const [historyWork, setHistoryWork] = useState<ScriptWork | null>(null)
+  const listScrollRef = useRef<HTMLDivElement>(null)
 
   const scenes = useMemo(() => Array.from(
     new Map(works.map((work) => [work.episode.scene.id, work.episode.scene])).values(),
@@ -727,6 +740,25 @@ function WorksLibraryDialog({
     }, new Map<string, ScriptWork>()).values())
   }, [sceneId, search, works])
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const currentPage = Math.min(page, totalPages)
+  const pagedWorks = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return filtered.slice(start, start + pageSize)
+  }, [currentPage, filtered])
+
+  useEffect(() => {
+    setPage(1)
+  }, [groupMode, sceneId, search])
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages)
+  }, [page, totalPages])
+
+  useEffect(() => {
+    listScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [currentPage])
+
   const episodeAttempts = useMemo(() => {
     const map = new Map<string, ScriptWork[]>()
     works.forEach((work) => map.set(work.episodeId, [...(map.get(work.episodeId) ?? []), work]))
@@ -736,7 +768,7 @@ function WorksLibraryDialog({
 
   const groups = useMemo(() => {
     const map = new Map<string, { label: string; works: ScriptWork[] }>()
-    filtered.forEach((work) => {
+    pagedWorks.forEach((work) => {
       const date = new Date(work.createdAt)
       const key = groupMode === 'package'
         ? work.episode.scene.id
@@ -749,7 +781,7 @@ function WorksLibraryDialog({
       map.set(key, group)
     })
     return Array.from(map.values())
-  }, [filtered, groupMode])
+  }, [groupMode, pagedWorks])
 
   const togglePublish = async (work: ScriptWork) => {
     try {
@@ -762,7 +794,7 @@ function WorksLibraryDialog({
       }
       await onChanged()
     } catch (error: any) {
-      toast.error(error?.message || '作品状态更新失败')
+      toast.error(error?.message || t('scripts.workStatusFailed'))
     } finally {
       setGenerating((current) => {
         const next = { ...current }
@@ -776,18 +808,18 @@ function WorksLibraryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="left-0 top-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden">
         <DialogHeader className="sr-only">
-          <DialogTitle>我的作品</DialogTitle>
-          <DialogDescription>查看全部剧本练习作品</DialogDescription>
+          <DialogTitle>{t('scripts.myWorks')}</DialogTitle>
+          <DialogDescription>{t('scripts.viewAllWorks')}</DialogDescription>
         </DialogHeader>
 
         <div className="mx-auto flex h-full w-full max-w-2xl flex-col px-4 pb-[env(safe-area-inset-bottom,0px)] pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
           <header className="mb-4 flex shrink-0 items-center gap-3">
-            <button type="button" onClick={() => onOpenChange(false)} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground" aria-label="返回">
+            <button type="button" onClick={() => onOpenChange(false)} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground" aria-label={t('scripts.back')}>
               <ArrowLeft className="size-4" />
             </button>
             <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
-              <p className="text-xs text-muted-foreground">剧本</p>
-              <h1 className="truncate text-lg font-semibold tracking-tight">我的作品</h1>
+              <p className="text-xs text-muted-foreground">{t('scripts.script')}</p>
+              <h1 className="truncate text-lg font-semibold tracking-tight">{t('scripts.myWorks')}</h1>
             </div>
             <Badge variant="secondary">{filtered.length}</Badge>
           </header>
@@ -795,35 +827,35 @@ function WorksLibraryDialog({
           <div className="mb-3 flex shrink-0 items-center gap-2">
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 rounded-xl border-border/60 bg-muted/45 pl-9 shadow-none" placeholder="搜索作品、章节或剧本包" />
+              <Input value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 rounded-xl border-border/60 bg-muted/45 pl-9 shadow-none" placeholder={t('scripts.searchWorks')} />
             </div>
-            <button type="button" onClick={() => setGroupMode('time')} className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl border', groupMode === 'time' ? 'border-primary bg-primary/10 text-primary' : 'border-border/60 bg-muted/45 text-muted-foreground')} aria-label="按时间分组">
+            <button type="button" onClick={() => setGroupMode('time')} className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl border', groupMode === 'time' ? 'border-primary bg-primary/10 text-primary' : 'border-border/60 bg-muted/45 text-muted-foreground')} aria-label={t('scripts.groupByTime')}>
               <CalendarDays className="size-4" />
             </button>
-            <button type="button" onClick={() => setGroupMode('package')} className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl border', groupMode === 'package' ? 'border-primary bg-primary/10 text-primary' : 'border-border/60 bg-muted/45 text-muted-foreground')} aria-label="按剧本包分组">
+            <button type="button" onClick={() => setGroupMode('package')} className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl border', groupMode === 'package' ? 'border-primary bg-primary/10 text-primary' : 'border-border/60 bg-muted/45 text-muted-foreground')} aria-label={t('scripts.groupByPackage')}>
               <Layers3 className="size-4" />
             </button>
           </div>
 
           <div className="mb-3 shrink-0 overflow-x-auto">
             <div className="flex gap-2">
-              <button type="button" onClick={() => setSceneId('all')} className={cn('shrink-0 rounded-full px-3 py-1.5 text-xs font-medium', sceneId === 'all' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground')}>全部剧本</button>
+              <button type="button" onClick={() => setSceneId('all')} className={cn('shrink-0 rounded-full px-3 py-1.5 text-xs font-medium', sceneId === 'all' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground')}>{t('scripts.allScripts')}</button>
               {scenes.map((scene) => (
                 <button key={scene.id} type="button" onClick={() => setSceneId(scene.id)} className={cn('shrink-0 rounded-full px-3 py-1.5 text-xs font-medium', sceneId === scene.id ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground')}>{scene.title}</button>
               ))}
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto pb-6">
+          <div ref={listScrollRef} className="min-h-0 flex-1 overflow-y-auto pb-3">
             {loading ? <MobilePageLoading rows={4} minHeightClassName="min-h-[50vh]" /> : groups.length === 0 ? (
-              <div className="py-16 text-center text-sm text-muted-foreground">没有匹配的作品</div>
+              <div className="py-16 text-center text-sm text-muted-foreground">{t('scripts.noMatchingWorks')}</div>
             ) : (
               <div className="space-y-5">
                 {groups.map((group) => (
                   <section key={group.label}>
                     <div className="mb-2 flex items-center justify-between px-1">
                       <h2 className="text-xs font-medium text-muted-foreground">{group.label}</h2>
-                      <span className="text-[11px] text-muted-foreground">{group.works.length} 个章节</span>
+                      <span className="text-[11px] text-muted-foreground">{t('scripts.chaptersCount', { count: group.works.length })}</span>
                     </div>
                     <div className="space-y-2">
                       {group.works.map((work) => {
@@ -835,11 +867,17 @@ function WorksLibraryDialog({
                               {work.videoUrl && <Play className="absolute left-1/2 top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 text-primary" />}
                             </div>
                             <div className="min-w-0 flex-1">
+                              <p className="mb-1 flex items-center gap-1 truncate text-[11px] font-medium text-primary">
+                                <BookOpen className="size-3 shrink-0" />
+                                <span className="truncate">剧本《{work.episode.scene.title}》</span>
+                              </p>
                               <div className="flex items-start gap-2">
                                 <p className="line-clamp-1 flex-1 text-sm font-semibold">{work.title}</p>
-                                {attempts.length > 1 && <Badge variant="secondary" className="h-5 shrink-0 px-2 text-[10px]">{attempts.length} 次练习</Badge>}
+                                {attempts.length > 1 && <Badge variant="secondary" className="h-5 shrink-0 px-2 text-[10px]">{t('scripts.attemptsCount', { count: attempts.length })}</Badge>}
                               </div>
-                              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{work.episode.chapterName} · {new Date(work.createdAt).toLocaleString('zh-CN')}</p>
+                              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                                {t('scripts.chapterLabel', { name: work.episode.chapterName })} · {new Date(work.createdAt).toLocaleString(i18n.language)}
+                              </p>
                               <div className="mt-2 flex items-center gap-1.5">
                                 <Button size="sm" variant={work.status === 'published' ? 'outline' : 'default'} className="h-7 rounded-full px-3 text-[11px]" disabled={Boolean(generating[work.id])} onClick={() => void togglePublish(work)}>
                                   {generating[work.id]
@@ -852,7 +890,7 @@ function WorksLibraryDialog({
                                 </Button>
                                 <Button size="sm" variant="ghost" className="h-7 rounded-full px-2.5 text-[11px] text-muted-foreground" onClick={() => setHistoryWork(work)}>
                                   <History data-icon="inline-start" />
-                                  历史
+                                  {t('scripts.history')}
                                 </Button>
                               </div>
                               {generating[work.id] && <Progress value={generating[work.id]} className="mt-1.5 h-1 w-32" />}
@@ -866,6 +904,38 @@ function WorksLibraryDialog({
               </div>
             )}
           </div>
+          {!loading && filtered.length > pageSize && (
+            <div className="mb-3 flex shrink-0 items-center justify-between rounded-lg bg-muted/35 px-3 py-2">
+              <span className="text-[11px] text-muted-foreground">
+                {t('scripts.chaptersCount', { count: filtered.length })}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage(currentPage - 1)}
+                >
+                  {t('scripts.prevPage')}
+                </Button>
+                <span className="min-w-10 text-center text-[11px] text-muted-foreground">
+                  {currentPage}/{totalPages}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage(currentPage + 1)}
+                >
+                  {t('scripts.nextPage')}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
         <EpisodeWorkHistoryDialog
           open={Boolean(historyWork)}
@@ -886,6 +956,7 @@ function EpisodeWorkHistoryDialog({
   onOpenChange: (open: boolean) => void
   works: ScriptWork[]
 }) {
+  const { t } = useTranslation()
   const [previewWork, setPreviewWork] = useState<ScriptWork | null>(null)
   const chronological = useMemo(
     () => [...works].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
@@ -913,28 +984,28 @@ function EpisodeWorkHistoryDialog({
           }}
         >
           <DialogHeader>
-            <DialogTitle>{episode ? `《${episode.chapterName}》练习历史` : '练习历史'}</DialogTitle>
+            <DialogTitle>{episode ? t('scripts.practiceHistory', { name: episode.chapterName }) : t('scripts.practiceHistoryFallback')}</DialogTitle>
             <DialogDescription className="text-xs">
-              {episode ? `${episode.scene.title} · ` : ''}共保留 {works.length} 次练习作品
+              {episode ? `${episode.scene.title} · ` : ''}{t('scripts.totalAttempts', { count: works.length })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
             {ordered.length === 0 ? (
               <div className="rounded-lg bg-muted/30 py-12 text-center text-sm text-muted-foreground">
-                暂无历史作品
+                {t('scripts.noHistory')}
               </div>
             ) : (
               <div className="space-y-2">
                 {ordered.map((work) => {
                   const attempt = chronological.findIndex((item) => item.id === work.id) + 1
                   const statusLabel = work.status === 'published'
-                    ? '已发布'
+                    ? t('scripts.published')
                     : work.status === 'rendering'
-                      ? '生成中'
+                      ? t('scripts.generatingStatus')
                       : work.status === 'failed'
-                        ? '生成失败'
-                        : '仅自己可见'
+                        ? t('scripts.generateFailed')
+                        : t('scripts.privateOnly')
                   return (
                     <div key={work.id} className="flex gap-3 rounded-lg bg-muted/30 p-3">
                       <button
@@ -942,7 +1013,7 @@ function EpisodeWorkHistoryDialog({
                         className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-muted/60 text-left disabled:cursor-default"
                         disabled={!work.videoUrl}
                         onClick={() => setPreviewWork(work)}
-                        aria-label={work.videoUrl ? `查看第 ${attempt} 次练习视频` : undefined}
+                        aria-label={work.videoUrl ? t('scripts.viewAttemptVideo', { n: attempt }) : undefined}
                       >
                         {work.coverUrl && <img src={work.coverUrl} alt="" className="size-full object-cover" />}
                         {work.videoUrl && (
@@ -957,19 +1028,19 @@ function EpisodeWorkHistoryDialog({
                         <div className="flex items-start gap-2">
                           <p className="line-clamp-1 flex-1 text-sm font-medium">{work.title}</p>
                           <Badge variant={attempt === chronological.length ? 'default' : 'secondary'} className="h-5 shrink-0 px-2 text-[10px]">
-                            {attempt === chronological.length ? '最新' : `第 ${attempt} 次`}
+                            {attempt === chronological.length ? t('scripts.latest') : t('scripts.attemptNumber', { n: attempt })}
                           </Badge>
                         </div>
                         <p className="mt-1 text-[11px] text-muted-foreground">
-                          {work.kind === 'vn_video' ? 'VN 互动' : work.kind === 'repeat_video' ? '跟读剧场' : '学习进度'}
+                          {work.kind === 'vn_video' ? t('scripts.vnInteractive') : work.kind === 'repeat_video' ? t('scripts.repeatTheater') : t('scripts.learningProgress')}
                           {' · '}
-                          {new Date(work.createdAt).toLocaleString('zh-CN')}
+                          {new Date(work.createdAt).toLocaleString(i18n.language)}
                         </p>
                         <div className="mt-2 flex items-center gap-2">
                           <span className="text-[11px] text-muted-foreground">{statusLabel}</span>
                           {work.videoUrl && (
                             <Button size="sm" variant="ghost" className="h-6 rounded-full px-2 text-[10px]" onClick={() => setPreviewWork(work)}>
-                              查看视频
+                              {t('scripts.viewVideo')}
                             </Button>
                           )}
                         </div>
@@ -1000,16 +1071,16 @@ const publishStatusMeta: Record<
   ScriptPublishHistoryItem['status'],
   { label: string; className: string }
 > = {
-  queued: { label: '等待生成', className: 'bg-amber-500/10 text-amber-700 dark:text-amber-300' },
-  running: { label: '生成中', className: 'bg-primary/10 text-primary' },
-  completed: { label: '发布成功', className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' },
-  failed: { label: '生成失败', className: 'bg-destructive/10 text-destructive' },
-  canceled: { label: '已取消', className: 'bg-muted text-muted-foreground' },
+  queued: { label: i18n.t('scripts.queued'), className: 'bg-amber-500/10 text-amber-700 dark:text-amber-300' },
+  running: { label: i18n.t('scripts.running'), className: 'bg-primary/10 text-primary' },
+  completed: { label: i18n.t('scripts.publishCompleted'), className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' },
+  failed: { label: i18n.t('scripts.publishFailed'), className: 'bg-destructive/10 text-destructive' },
+  canceled: { label: i18n.t('scripts.canceled'), className: 'bg-muted text-muted-foreground' },
 }
 
 function formatPublishTime(value: string | null) {
   if (!value) return '—'
-  return new Date(value).toLocaleString('zh-CN', {
+  return new Date(value).toLocaleString(i18n.language, {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -1021,13 +1092,15 @@ function ScriptPublishHistoryDialog({
   open,
   onOpenChange,
   episodeId,
-  title = '发布日志',
+  title,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   episodeId?: string
   title?: string
 }) {
+  const { t } = useTranslation()
+  const resolvedTitle = title ?? t('scripts.publishLog')
   const [items, setItems] = useState<ScriptPublishHistoryItem[]>([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -1046,7 +1119,7 @@ function ScriptPublishHistoryDialog({
         setTotalPages(result.totalPages)
       })
       .catch(() => {
-        if (active) toast.error('发布日志加载失败')
+        if (active) toast.error(t('scripts.publishLogLoadFailed'))
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -1062,9 +1135,9 @@ function ScriptPublishHistoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[calc(100vw-2rem)] max-w-2xl gap-4 rounded-2xl p-5">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>{resolvedTitle}</DialogTitle>
           <DialogDescription className="text-xs">
-            共 {total} 次提交 · 重新生成会保留旧记录，并取消尚未完成的任务
+            {t('scripts.publishLogDesc', { total })}
           </DialogDescription>
         </DialogHeader>
 
@@ -1077,7 +1150,7 @@ function ScriptPublishHistoryDialog({
         ) : items.length === 0 ? (
           <div className="rounded-lg bg-muted/30 py-12 text-center">
             <History className="mx-auto size-8 text-muted-foreground/35" />
-            <p className="mt-3 text-sm text-muted-foreground">暂无发布记录</p>
+            <p className="mt-3 text-sm text-muted-foreground">{t('scripts.noPublishRecords')}</p>
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl bg-muted/25">
@@ -1085,10 +1158,10 @@ function ScriptPublishHistoryDialog({
               <table className="w-full min-w-[560px] table-fixed text-left">
                 <thead className="text-[11px] text-muted-foreground">
                   <tr className="border-b border-border/45">
-                    <th className="w-[34%] px-3 py-2 font-medium">作品 / 章节</th>
-                    <th className="w-[19%] px-3 py-2 font-medium">状态</th>
-                    <th className="w-[16%] px-3 py-2 font-medium">进度</th>
-                    <th className="w-[31%] px-3 py-2 font-medium">提交时间</th>
+                    <th className="w-[34%] px-3 py-2 font-medium">{t('scripts.tableWork')}</th>
+                    <th className="w-[19%] px-3 py-2 font-medium">{t('scripts.tableStatus')}</th>
+                    <th className="w-[16%] px-3 py-2 font-medium">{t('scripts.tableProgress')}</th>
+                    <th className="w-[31%] px-3 py-2 font-medium">{t('scripts.tableSubmitTime')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1097,7 +1170,7 @@ function ScriptPublishHistoryDialog({
                     return (
                       <tr key={item.id} className="border-b border-border/35 last:border-0">
                         <td className="px-3 py-2.5">
-                          <p className="truncate text-xs font-medium">{item.work?.title ?? '已删除作品'}</p>
+                          <p className="truncate text-xs font-medium">{item.work?.title ?? t('scripts.deletedWork')}</p>
                           <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
                             {item.work ? `${item.work.episode.scene.title} · ${item.work.episode.chapterName}` : item.targetId}
                           </p>
@@ -1131,11 +1204,11 @@ function ScriptPublishHistoryDialog({
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="sm" className="h-8 rounded-full text-xs" disabled={page <= 1 || loading} onClick={() => setPage((current) => current - 1)}>
               <ChevronLeft data-icon="inline-start" />
-              上一页
+              {t('scripts.prevPage')}
             </Button>
             <span className="text-xs tabular-nums text-muted-foreground">{page} / {totalPages}</span>
             <Button variant="ghost" size="sm" className="h-8 rounded-full text-xs" disabled={page >= totalPages || loading} onClick={() => setPage((current) => current + 1)}>
-              下一页
+              {t('scripts.nextPage')}
               <ChevronRight data-icon="inline-end" />
             </Button>
           </div>
@@ -1145,7 +1218,9 @@ function ScriptPublishHistoryDialog({
   )
 }
 
-const reactions = ['太棒了', '发音真自然', '剧情感拉满', '我也在练', '继续加油', '学到了']
+function getReactions(): string[] {
+  return i18n.t('scripts.reactions', { returnObjects: true }) as unknown as string[]
+}
 
 function updateReactionGroups(
   groups: ScriptWork['reactionGroups'],
@@ -1179,6 +1254,7 @@ function SquareFeed({
   loadingMore: boolean
   onLoadMore: () => Promise<void>
 }) {
+  const { t } = useTranslation()
   const [previewWork, setPreviewWork] = useState<ScriptWork | null>(null)
   const [pendingActions, setPendingActions] = useState<Set<string>>(new Set())
 
@@ -1203,7 +1279,7 @@ function SquareFeed({
         liked: work.liked,
         _count: { ...current._count, likes: work._count.likes },
       }))
-      toast.error('点赞失败，请稍后重试')
+      toast.error(t('scripts.likeFailed'))
     } finally {
       setPendingActions((current) => {
         const next = new Set(current)
@@ -1235,7 +1311,7 @@ function SquareFeed({
       else await scriptCommunityApi.react(work.id, reaction)
     } catch {
       onWorkChanged(work.id, () => work)
-      toast.error('回应失败，请稍后重试')
+      toast.error(t('scripts.reactionFailed'))
     } finally {
       setPendingActions((current) => {
         const next = new Set(current)
@@ -1255,9 +1331,9 @@ function SquareFeed({
       ) : works.length === 0 ? (
         <div className="flex flex-col items-center rounded-lg bg-muted/30 px-6 py-14 text-center">
           <Users className="size-10 text-muted-foreground/40" />
-          <p className="mt-4 text-sm text-muted-foreground">这里还没有公开作品</p>
+          <p className="mt-4 text-sm text-muted-foreground">{t('scripts.noPublicWorks')}</p>
           <Button variant="outline" size="sm" className="mt-4 rounded-full" onClick={onOpenShop}>
-            前往剧本商店
+            {t('scripts.goToShop')}
           </Button>
         </div>
       ) : (
@@ -1325,6 +1401,7 @@ function SquareWorkCard({
   likePending: boolean
   reactionPending: boolean
 }) {
+  const { t } = useTranslation()
   const [reactionOpen, setReactionOpen] = useState(false)
 
   return (
@@ -1339,7 +1416,7 @@ function SquareWorkCard({
           <CardDescription className="truncate text-[11px]">Lv.{work.user.userLevel} · {work.episode.scene.title} · {work.episode.chapterName}</CardDescription>
         </div>
         <Badge variant="secondary" className="h-5 px-2 text-[10px] font-medium">
-          {work.kind === 'progress_card' ? '学习进度' : work.kind === 'vn_video' ? 'VN' : '跟读'}
+          {work.kind === 'progress_card' ? t('scripts.learningProgress') : work.kind === 'vn_video' ? t('scripts.workKindVn') : t('scripts.workKindRepeat')}
         </Badge>
       </CardHeader>
 
@@ -1348,7 +1425,7 @@ function SquareWorkCard({
           type="button"
           onClick={onOpen}
           className="group relative mx-3 block w-[calc(100%-1.5rem)] overflow-hidden rounded-xl bg-foreground/90 text-left"
-          aria-label={`全屏查看 ${work.title}`}
+          aria-label={t('scripts.fullscreenView', { title: work.title })}
         >
           {work.coverUrl ? (
             <img src={work.coverUrl} alt="" className="aspect-[2/1] max-h-52 w-full object-cover" />
@@ -1369,7 +1446,7 @@ function SquareWorkCard({
         <div className="relative mx-3 flex min-h-24 items-end overflow-hidden rounded-xl bg-background/70 p-3">
           {work.coverUrl && <img src={work.coverUrl} alt="" className="absolute inset-0 size-full object-cover" />}
           <div className="relative">
-            <Badge variant="secondary" className="h-5 text-[10px]">章节完成</Badge>
+            <Badge variant="secondary" className="h-5 text-[10px]">{t('scripts.chapterComplete')}</Badge>
             <p className="mt-1.5 text-sm font-semibold">{work.episode.title}</p>
           </div>
         </div>
@@ -1400,7 +1477,7 @@ function SquareWorkCard({
             disabled={likePending}
           >
             <Heart data-icon="inline-start" />
-            点赞 {work._count.likes}
+            {t('scripts.likeCount', { count: work._count.likes })}
           </Button>
           <Popover open={reactionOpen} onOpenChange={setReactionOpen}>
             <PopoverTrigger asChild>
@@ -1411,7 +1488,7 @@ function SquareWorkCard({
                 disabled={reactionPending}
               >
                 <SmilePlus data-icon="inline-start" />
-                回应
+                {t('scripts.react')}
               </Button>
             </PopoverTrigger>
             <PopoverContent
@@ -1420,9 +1497,9 @@ function SquareWorkCard({
               sideOffset={8}
               className="w-[min(19rem,calc(100vw-2rem))] rounded-2xl border-0 bg-popover/95 p-2 shadow-xl backdrop-blur-xl"
             >
-              <p className="px-2 pb-1.5 pt-1 text-[11px] font-medium text-muted-foreground">送上一句回应</p>
+              <p className="px-2 pb-1.5 pt-1 text-[11px] font-medium text-muted-foreground">{t('scripts.sendReaction')}</p>
               <div className="grid grid-cols-2 gap-1">
-                {reactions.map((reaction) => (
+                {getReactions().map((reaction) => (
                   <button
                     key={reaction}
                     type="button"
@@ -1450,12 +1527,12 @@ function SquareWorkCard({
             onClick={onOpen}
           >
             <Film data-icon="inline-start" />
-            {work.videoUrl ? '查看视频' : '未生成视频'}
+            {work.videoUrl ? t('scripts.viewVideo') : t('scripts.noVideo')}
           </Button>
           <Button asChild size="sm" variant="ghost" className="h-8 rounded-full px-2.5">
             <Link to={`/scripts/packages/${work.episode.scene.id}/episodes/${work.episode.id}`}>
               <Sparkles data-icon="inline-start" />
-              练同款
+              {t('scripts.practiceSame')}
             </Link>
           </Button>
         </div>

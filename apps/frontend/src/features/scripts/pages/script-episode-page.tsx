@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -27,6 +28,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { learningApi, type StoryEpisodeItem, type UnitDetail } from '@/features/learning/api/learning-api'
 
 export function ScriptEpisodePage() {
+  const { t } = useTranslation()
   const { packageId, episodeId } = useParams()
   const navigate = useNavigate()
   const [detail, setDetail] = useState<UnitDetail | null>(null)
@@ -60,9 +62,9 @@ export function ScriptEpisodePage() {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 px-4 text-center">
         <Film className="size-12 text-muted-foreground/40" />
-        <p className="text-muted-foreground">没有找到这个章节</p>
+        <p className="text-muted-foreground">{t('scripts.episodeNotFound')}</p>
         <Button variant="outline" onClick={() => navigate(`/scripts/packages/${packageId}`)}>
-          返回剧本
+          {t('scripts.backToScripts')}
         </Button>
       </div>
     )
@@ -82,7 +84,7 @@ export function ScriptEpisodePage() {
             type="button"
             onClick={() => navigate(`/scripts/packages/${detail.id}`)}
             className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
-            aria-label={`返回《${detail.title}》`}
+            aria-label={t('scripts.backToPackage', { title: detail.title })}
           >
             <ArrowLeft className="size-4" />
           </button>
@@ -99,7 +101,7 @@ export function ScriptEpisodePage() {
             <div className="min-w-0">
               <div className="mb-2 flex items-center gap-2">
                 <Badge variant="secondary" className="rounded-full">{episode.requiredOutputLevel}</Badge>
-                {episode.record?.passed && <Badge className="rounded-full"><CheckCircle2 className="mr-1 size-3" />已完成</Badge>}
+                {episode.record?.passed && <Badge className="rounded-full"><CheckCircle2 className="mr-1 size-3" />{t('scripts.completed')}</Badge>}
               </div>
               <h1 className="text-xl font-bold leading-tight text-foreground">{episode.title}</h1>
               <p className="mt-1 text-sm text-muted-foreground">{episode.chapterName}</p>
@@ -112,21 +114,21 @@ export function ScriptEpisodePage() {
       </div>
 
       <section className="mb-5">
-        <SectionHeader eyebrow="1" title="章节梗概" />
+        <SectionHeader eyebrow="1" title={t('scripts.chapterSummary')} />
         <div className="rounded-lg bg-muted/30 p-4">
           <p className="text-sm leading-6 text-muted-foreground">
-            {episode.description || '了解本章情境、角色和沟通任务，然后选择练习方式开始演出。'}
+            {episode.description || t('scripts.defaultEpisodeDesc')}
           </p>
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-lg bg-background/55 p-3">
-              <div className="flex items-center gap-2 text-muted-foreground"><UserRound className="size-4" /><span className="text-xs">本章角色</span></div>
+              <div className="flex items-center gap-2 text-muted-foreground"><UserRound className="size-4" /><span className="text-xs">{t('scripts.chapterRole')}</span></div>
               <p className="mt-2 text-sm font-semibold">{episode.characterName}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">{episode.characterRole}</p>
             </div>
             <div className="rounded-lg bg-background/55 p-3">
-              <div className="flex items-center gap-2 text-muted-foreground"><Sparkles className="size-4" /><span className="text-xs">本章内容</span></div>
-              <p className="mt-2 text-sm font-semibold">{keyExpressions.length} 个核心表达</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">VN 互动 · 跟读剧场</p>
+              <div className="flex items-center gap-2 text-muted-foreground"><Sparkles className="size-4" /><span className="text-xs">{t('scripts.chapterContent')}</span></div>
+              <p className="mt-2 text-sm font-semibold">{t('scripts.coreExpressionsCount', { count: keyExpressions.length })}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t('scripts.vnAndRepeatHint')}</p>
             </div>
           </div>
         </div>
@@ -134,7 +136,7 @@ export function ScriptEpisodePage() {
 
       {episode.objectives.length > 0 && (
         <section className="mb-5">
-          <SectionHeader eyebrow="2" title="本章沟通目标" meta={`${episode.objectives.length} 项`} />
+          <SectionHeader eyebrow="2" title={t('scripts.chapterObjectives')} meta={`${episode.objectives.length} ${t('scripts.itemsUnit')}`} />
           <Card className="border-0 bg-muted/30 shadow-none">
             <CardContent className="flex flex-col gap-3 p-4">
               {episode.objectives.map((objective, index) => (
@@ -151,12 +153,12 @@ export function ScriptEpisodePage() {
       )}
 
       <section className="mb-5">
-        <SectionHeader eyebrow="3" title="开演前看一眼" meta={`${keyExpressions.length} 项`} />
+        <SectionHeader eyebrow="3" title={t('scripts.prePerformancePreview')} meta={`${keyExpressions.length} ${t('scripts.itemsUnit')}`} />
         <Card className="border-0 bg-muted/30 shadow-none">
           <CardContent className="flex flex-col gap-0 p-0">
             {keyExpressions.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                本章没有额外的表达预习，可以直接进入剧情。
+                {t('scripts.noExtraPreview')}
               </p>
             ) : keyExpressions.map((item, index) => (
               <div key={`${item.primary}-${index}`} className="flex items-start justify-between gap-4 border-b border-border/50 px-4 py-3 last:border-b-0">
@@ -169,21 +171,21 @@ export function ScriptEpisodePage() {
       </section>
 
       <section className="mb-5">
-        <SectionHeader eyebrow="4" title="选择练习方式" />
+        <SectionHeader eyebrow="4" title={t('scripts.choosePracticeMode')} />
         <div className="flex flex-col gap-2">
         <ModeCard
           icon={Play}
-          title="VN 互动模式"
-          description="作为角色主动回答，用自己的表达推动剧情。"
-          meta="训练沟通与临场反应"
+          title={t('scripts.vnModeTitle')}
+          description={t('scripts.vnModeDesc')}
+          meta={t('scripts.vnModeMeta')}
           to={`/scripts/player/${episode.id}?packageId=${detail.id}&mode=vn`}
           disabled={!episode.isUnlocked || !episode.inkScriptId}
         />
         <ModeCard
           icon={Mic2}
-          title="跟读剧场"
-          description="听原声、逐句模仿，再完成一段完整角色演出。"
-          meta="训练发音、节奏与语调"
+          title={t('scripts.repeatModeTitle')}
+          description={t('scripts.repeatModeDesc')}
+          meta={t('scripts.repeatModeMeta')}
           to={`/scripts/player/${episode.id}?packageId=${detail.id}&mode=repeat`}
           disabled={!episode.isUnlocked || !episode.inkScriptId}
         />
@@ -193,13 +195,13 @@ export function ScriptEpisodePage() {
       {episode.record && (
         <Card className="border-0 bg-muted/30 shadow-none">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">上次演出</CardTitle>
-            <CardDescription>章节记录会保留，视频作品将在后续渲染流程中从记录生成。</CardDescription>
+            <CardTitle className="text-sm">{t('scripts.lastPerformance')}</CardTitle>
+            <CardDescription>{t('scripts.lastPerformanceHint')}</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-3 gap-2">
-            <Metric label="开口轮数" value={episode.record.turnCount} />
-            <Metric label="使用表达" value={episode.record.usedChunkCount} />
-            <Metric label="获得 XP" value={episode.record.xpEarned} />
+            <Metric label={t('scripts.turnsSpoken')} value={episode.record.turnCount} />
+            <Metric label={t('scripts.expressionsUsed')} value={episode.record.usedChunkCount} />
+            <Metric label={t('scripts.xpEarned')} value={episode.record.xpEarned} />
           </CardContent>
         </Card>
       )}
@@ -260,13 +262,13 @@ function ModeCard({
         {disabled ? (
           <Button size="sm" variant="secondary" className="rounded-full" disabled>
             <LockKeyhole data-icon="inline-start" />
-            尚未发布
+            {t('scripts.notPublishedYet')}
           </Button>
         ) : (
           <Button asChild size="sm" className="rounded-full">
             <Link to={to}>
               <Headphones data-icon="inline-start" />
-              开始
+              {t('scripts.start')}
             </Link>
           </Button>
         )}

@@ -961,6 +961,7 @@ export class LearningService {
           isPreview: episode.isPreview,
           prerequisiteEpisodeIds: episode.prerequisiteEpisodeIds,
           isUnlocked:
+            Boolean(record?.passed) ||
             episode.isPreview ||
             (index === 0 && episode.prerequisiteEpisodeIds.length === 0) ||
             prerequisiteSatisfied,
