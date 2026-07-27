@@ -66,6 +66,7 @@ type PracticeGroup = {
 
 const TODAY_TASK_MODE_SESSION_KEY = 'manyu-today-task-mode'
 const TODAY_TEACHING_HINT_SEEN_KEY = 'manyu:today-teaching-hint-seen'
+const TOPIC_PAGE_SIZE = 8
 
 function normalizePlanMode(mode: string | null): DailyPracticePlanMode {
   return mode === 'review' || mode === 'practice' ? mode : 'practice'
@@ -198,6 +199,8 @@ export function TodayTaskPage() {
   const [teachingLoading, setTeachingLoading] = useState(false)
   const [teachingAvailability, setTeachingAvailability] = useState<Record<string, boolean>>({})
   const [showAllTeachingTopics, setShowAllTeachingTopics] = useState(false)
+  const [topicsExpanded, setTopicsExpanded] = useState(false)
+  const [topicPage, setTopicPage] = useState(1)
   const [showTeachingHintIntro, setShowTeachingHintIntro] = useState(() => {
     if (typeof window === 'undefined') return false
     return window.localStorage.getItem(TODAY_TEACHING_HINT_SEEN_KEY) !== 'true'
@@ -535,6 +538,27 @@ export function TodayTaskPage() {
   const visibleTeachingTopics = showAllTeachingTopics
     ? upcomingTeachingTopics
     : upcomingTeachingTopics.slice(0, 3)
+
+  const filteredTopics = useMemo(() => {
+    if (!plan) return []
+    return plan.mode === 'review'
+      ? plan.topicStats.filter((topic) => topic.overdueCount > 0 || topic.todayReviewCount > 0)
+      : plan.topicStats
+  }, [plan])
+  const topicPageItems = useMemo(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredTopics.length / TOPIC_PAGE_SIZE))
+    const currentPage = Math.min(topicPage, totalPages)
+    const startIndex = (currentPage - 1) * TOPIC_PAGE_SIZE
+    return {
+      items: filteredTopics.slice(startIndex, startIndex + TOPIC_PAGE_SIZE),
+      startIndex,
+      totalPages,
+    }
+  }, [filteredTopics, topicPage])
+
+  useEffect(() => {
+    setTopicPage(1)
+  }, [plan?.mode, filteredTopics.length])
 
   useEffect(() => {
     if (!showTeachingHintIntro || upcomingTeachingTopics.length === 0) return
@@ -1052,28 +1076,38 @@ export function TodayTaskPage() {
       </div>
 
       {/* ── 今日话题快捷入口（按当前模式过滤）── */}
-      {plan.topicStats.length > 0 && (() => {
+      {filteredTopics.length > 0 && (() => {
         const isReviewMode = plan.mode === 'review'
-        const filteredTopics = isReviewMode
-          ? plan.topicStats.filter((t) => t.overdueCount > 0 || t.todayReviewCount > 0)
-          : plan.topicStats
-
-        if (filteredTopics.length === 0) return null
+        const displayedTopics = topicsExpanded ? topicPageItems.items : filteredTopics.slice(0, 3)
 
         return (
           <>
             <Separator className="my-6" />
             <section>
-              <div className="mb-3 flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-foreground">
-                  {isReviewMode ? t('todayTask.topicsToReview') : t('todayTask.currentTopics')}
-                </h2>
-                <span className="text-xs text-muted-foreground">
-                  {isReviewMode ? t('todayTask.topicsWithReviewItems', { count: filteredTopics.length }) : t('todayTask.topicsCount', { count: filteredTopics.length })}
-                </span>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <h2 className="text-sm font-semibold text-foreground">
+                    {isReviewMode ? t('todayTask.topicsToReview') : t('todayTask.currentTopics')}
+                  </h2>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {isReviewMode ? t('todayTask.topicsWithReviewItems', { count: filteredTopics.length }) : t('todayTask.topicsCount', { count: filteredTopics.length })}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTopicsExpanded((expanded) => !expanded)
+                    setTopicPage(1)
+                  }}
+                  className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted/50 text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
+                  aria-label={topicsExpanded ? t('common.collapse') : t('common.expand')}
+                >
+                  <ChevronDown className={cn('size-4 transition-transform duration-200', !topicsExpanded && '-rotate-90')} />
+                </button>
               </div>
               <div className="space-y-1.5">
-                {filteredTopics.map((topic, index) => {
+                {displayedTopics.map((topic, index) => {
+                  const absoluteIndex = topicsExpanded ? topicPageItems.startIndex + index : index
                   const detail = isReviewMode
                     ? [
                         topic.overdueCount > 0 ? `${t('todayTask.statusOverdue')} ${topic.overdueCount}` : null,
@@ -1102,7 +1136,7 @@ export function TodayTaskPage() {
                         className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 px-3 py-3 active:scale-[0.99]"
                       >
                         <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
-                          {index + 1}
+                          {absoluteIndex + 1}
                         </div>
                         <div className="min-w-0 flex-1">
                         <div className="flex min-w-0 items-center gap-2">
@@ -1147,6 +1181,35 @@ export function TodayTaskPage() {
                   )
                 })}
               </div>
+              {filteredTopics.length > 3 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTopicsExpanded((expanded) => !expanded)
+                    setTopicPage(1)
+                  }}
+                  className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                >
+                  <ChevronDown className={cn('size-3.5 transition-transform duration-200', topicsExpanded && 'rotate-180')} />
+                  {topicsExpanded ? t('common.collapse') : t('common.expand')}
+                </button>
+              )}
+              {topicsExpanded && topicPageItems.totalPages > 1 && (
+                <div className="mt-1 flex items-center justify-between rounded-lg bg-muted/35 px-3 py-2">
+                  <span className="text-[11px] text-muted-foreground">
+                    {t('common.total')} {filteredTopics.length} {t('learning.items')}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" disabled={topicPage <= 1} onClick={() => setTopicPage((page) => page - 1)}>
+                      {t('common.prevPage')}
+                    </Button>
+                    <span className="min-w-10 text-center text-[11px] text-muted-foreground">{topicPage}/{topicPageItems.totalPages}</span>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" disabled={topicPage >= topicPageItems.totalPages} onClick={() => setTopicPage((page) => page + 1)}>
+                      {t('common.nextPage')}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </section>
           </>
         )

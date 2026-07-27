@@ -25,6 +25,7 @@ import { extractCoreUsage } from '@/lib/markdown-utils'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
 
 const PREP_PAGE_SIZE = 8
+const TOPIC_PAGE_SIZE = 8
 
 export function LearningUnitPage() {
   const { t } = useTranslation()
@@ -39,6 +40,7 @@ export function LearningUnitPage() {
 
   const [activeTab, setActiveTab] = useState('vocab')
   const [prepPage, setPrepPage] = useState({ vocab: 1, chunk: 1, pattern: 1 })
+  const [topicPage, setTopicPage] = useState(1)
 
   // Dialog
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -231,10 +233,18 @@ export function LearningUnitPage() {
     () => paginateItems(unit?.sentencePatterns ?? [], prepPage.pattern, PREP_PAGE_SIZE),
     [prepPage.pattern, unit?.sentencePatterns],
   )
+  const topicPageItems = useMemo(
+    () => paginateItems(unit?.trainingTopics ?? [], topicPage, TOPIC_PAGE_SIZE),
+    [topicPage, unit?.trainingTopics],
+  )
 
   const changePrepPage = useCallback((kind: keyof typeof prepPage, page: number) => {
     setPrepPage((current) => ({ ...current, [kind]: page }))
     setExpandedItemId(null)
+  }, [])
+
+  const changeTopicPage = useCallback((page: number) => {
+    setTopicPage(page)
   }, [])
 
   const handleTabChange = useCallback((value: string) => {
@@ -447,20 +457,44 @@ export function LearningUnitPage() {
           <SectionHeader
             eyebrow="3"
             title={t('learning.practiceTitle')}
-            subtitle={t('learning.practiceSubtitle')}
+            subtitle={collapsedSections.has('topics') ? undefined : t('learning.practiceSubtitle')}
             meta={`${unit.trainingTopics.length}${t('learning.questions')}`}
+            collapsible
+            collapsed={collapsedSections.has('topics')}
+            onToggle={() => toggleSection('topics')}
           />
           <div className="space-y-2">
-            {unit.trainingTopics.map((topic, i) => (
+            {(collapsedSections.has('topics') ? unit.trainingTopics.slice(0, 2) : topicPageItems.items).map((topic, i) => {
+              const absoluteIndex = collapsedSections.has('topics') ? i : topicPageItems.startIndex + i
+              return (
               <PracticeTopicCard
                 key={topic.id}
                 topic={topic}
-                index={i}
+                index={absoluteIndex}
                 onStart={() => navigate(`/practice/session/${topic.id}?unitId=${unitId}`)}
-                {...(i === 0 ? { 'data-spotlight': 'start-vn-practice' as any } : {})}
+                {...(absoluteIndex === 0 ? { 'data-spotlight': 'start-vn-practice' as any } : {})}
               />
-            ))}
+              )
+            })}
           </div>
+          {!collapsedSections.has('topics') && (
+            <PrepPager
+              currentPage={topicPage}
+              totalPages={topicPageItems.totalPages}
+              totalItems={unit.trainingTopics.length}
+              onPageChange={changeTopicPage}
+            />
+          )}
+          {collapsedSections.has('topics') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-3 w-full gap-1.5 text-xs text-muted-foreground transition-none hover:!bg-transparent hover:!text-muted-foreground active:!scale-100"
+              onClick={() => toggleSection('topics')}
+            >
+              <ChevronDown className="size-3.5" /> {t('learning.expandAll', { count: unit.trainingTopics.length })}
+            </Button>
+          )}
         </section>
       )}
 

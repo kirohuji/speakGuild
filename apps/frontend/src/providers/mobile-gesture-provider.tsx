@@ -4,7 +4,7 @@ import { isNative } from '@/lib/native'
 
 type SwipeDirection = 'left' | 'right'
 
-const PRIMARY_ROUTES = ['/', '/learning', '/expressions'] as const
+const PRIMARY_ROUTES = ['/', '/today', '/learning', '/expressions'] as const
 const MIN_SWIPE_DISTANCE = 70
 const MAX_VERTICAL_DRIFT = 90
 const EDGE_GUARD = 12
