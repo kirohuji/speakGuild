@@ -591,6 +591,23 @@ async function generateAndPublishExistingWork(
   }
 }
 
+function selectEpisodeRepresentatives(works: ScriptWork[]) {
+  const representatives = new Map<string, ScriptWork>()
+  for (const work of works) {
+    const current = representatives.get(work.episodeId)
+    const workIsPublished = work.status === 'published'
+    const currentIsPublished = current?.status === 'published'
+    if (
+      !current ||
+      (workIsPublished && !currentIsPublished) ||
+      (workIsPublished === currentIsPublished && work.createdAt > current.createdAt)
+    ) {
+      representatives.set(work.episodeId, work)
+    }
+  }
+  return [...representatives.values()]
+}
+
 function MyWorks({
   works,
   loading,
@@ -606,6 +623,7 @@ function MyWorks({
   const togglePublish = async (work: ScriptWork) => {
     try {
       if (work.status === 'published') await scriptCommunityApi.unpublishWork(work.id)
+      else if (work.videoUrl) await scriptCommunityApi.publishWork(work.id)
       else {
         setGenerating((current) => ({ ...current, [work.id]: 1 }))
         await generateAndPublishExistingWork(work, (progress) => {
@@ -640,10 +658,9 @@ function MyWorks({
     )
   }
 
-  const latestByEpisode = Array.from(works.reduce((map, work) => {
-    if (!map.has(work.episodeId)) map.set(work.episodeId, work)
-    return map
-  }, new Map<string, ScriptWork>()).values()).slice(0, 4)
+  const latestByEpisode = selectEpisodeRepresentatives(works)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 4)
 
   return (
     <div className="-mx-2 flex snap-x gap-2 overflow-x-auto px-2 pb-1">
@@ -684,7 +701,7 @@ function MyWorks({
                   : work.status === 'published'
                     ? t('scripts.unpublish')
                     : work.videoUrl
-                      ? t('scripts.regenerateAndPublish')
+                      ? t('scripts.publishExisting')
                       : t('scripts.generateVideoAndPublish')}
               </Button>
               {generating[work.id] && <Progress value={generating[work.id]} className="mt-1.5 h-1" />}
@@ -735,10 +752,8 @@ function WorksLibraryDialog({
         work.episode.scene.title,
       ].some((value) => value?.toLocaleLowerCase().includes(keyword)))
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    return Array.from(matches.reduce((latest, work) => {
-      if (!latest.has(work.episodeId)) latest.set(work.episodeId, work)
-      return latest
-    }, new Map<string, ScriptWork>()).values())
+    return selectEpisodeRepresentatives(matches)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }, [sceneId, search, works])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
@@ -787,6 +802,7 @@ function WorksLibraryDialog({
   const togglePublish = async (work: ScriptWork) => {
     try {
       if (work.status === 'published') await scriptCommunityApi.unpublishWork(work.id)
+      else if (work.videoUrl) await scriptCommunityApi.publishWork(work.id)
       else {
         setGenerating((current) => ({ ...current, [work.id]: 1 }))
         await generateAndPublishExistingWork(work, (progress) => {
@@ -886,7 +902,7 @@ function WorksLibraryDialog({
                                     : work.status === 'published'
                                       ? '取消发布'
                                       : work.videoUrl
-                                        ? '重新生成并发布'
+                                        ? '发布到广场'
                                         : '生成视频并发布'}
                                 </Button>
                                 <Button size="sm" variant="ghost" className="h-7 rounded-full px-2.5 text-[11px] text-muted-foreground" onClick={() => setHistoryWork(work)}>
@@ -942,6 +958,7 @@ function WorksLibraryDialog({
           open={Boolean(historyWork)}
           onOpenChange={(nextOpen) => { if (!nextOpen) setHistoryWork(null) }}
           works={historyWork ? works.filter((work) => work.episodeId === historyWork.episodeId) : []}
+          onPublish={togglePublish}
         />
       </DialogContent>
     </Dialog>
@@ -952,13 +969,16 @@ function EpisodeWorkHistoryDialog({
   open,
   onOpenChange,
   works,
+  onPublish,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   works: ScriptWork[]
+  onPublish: (work: ScriptWork) => Promise<void>
 }) {
   const { t } = useTranslation()
   const [previewWork, setPreviewWork] = useState<ScriptWork | null>(null)
+  const [publishingId, setPublishingId] = useState<string | null>(null)
   const chronological = useMemo(
     () => [...works].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     [works],
@@ -1037,13 +1057,32 @@ function EpisodeWorkHistoryDialog({
                           {' · '}
                           {new Date(work.createdAt).toLocaleString(i18n.language)}
                         </p>
-                        <div className="mt-2 flex items-center gap-2">
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
                           <span className="text-[11px] text-muted-foreground">{statusLabel}</span>
                           {work.videoUrl && (
                             <Button size="sm" variant="ghost" className="h-6 rounded-full px-2 text-[10px]" onClick={() => setPreviewWork(work)}>
                               {t('scripts.viewVideo')}
                             </Button>
                           )}
+                          {work.status === 'published' ? (
+                            <Badge variant="outline" className="h-6 rounded-full px-2 text-[10px]">
+                              {t('scripts.currentPublishVersion')}
+                            </Badge>
+                          ) : work.videoUrl ? (
+                            <Button
+                              size="sm"
+                              className="h-6 rounded-full px-2 text-[10px]"
+                              disabled={Boolean(publishingId)}
+                              onClick={() => {
+                                setPublishingId(work.id)
+                                void onPublish(work).finally(() => setPublishingId(null))
+                              }}
+                            >
+                              {publishingId === work.id
+                                ? t('scripts.switchingVersion')
+                                : t('scripts.setPublishVersion')}
+                            </Button>
+                          ) : null}
                         </div>
                       </div>
                     </div>

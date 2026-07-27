@@ -112,6 +112,23 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
           },
         });
         if (task.count === 0) return false;
+        const targetWork = await tx.scriptWork.findUnique({
+          where: { id: workId },
+          select: { episodeId: true },
+        });
+        if (!targetWork) return false;
+        await tx.scriptWork.updateMany({
+          where: {
+            userId,
+            episodeId: targetWork.episodeId,
+            id: { not: workId },
+            status: ScriptWorkStatus.published,
+          },
+          data: {
+            status: ScriptWorkStatus.ready,
+            publishedAt: null,
+          },
+        });
         await tx.scriptWork.update({
           where: { id: workId },
           data: {

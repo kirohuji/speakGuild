@@ -378,10 +378,21 @@ export class ScriptCommunityService {
     if (work.status !== ScriptWorkStatus.ready && work.status !== ScriptWorkStatus.published) {
       throw new BadRequestException('当前作品状态不能发布')
     }
-    return this.prisma.scriptWork.update({
-      where: { id },
-      data: { status: ScriptWorkStatus.published, publishedAt: new Date(), hiddenAt: null },
-      include: feedInclude,
+    return this.prisma.$transaction(async (tx) => {
+      await tx.scriptWork.updateMany({
+        where: {
+          userId,
+          episodeId: work.episodeId,
+          id: { not: id },
+          status: ScriptWorkStatus.published,
+        },
+        data: { status: ScriptWorkStatus.ready, publishedAt: null },
+      })
+      return tx.scriptWork.update({
+        where: { id },
+        data: { status: ScriptWorkStatus.published, publishedAt: new Date(), hiddenAt: null },
+        include: feedInclude,
+      })
     })
   }
 
