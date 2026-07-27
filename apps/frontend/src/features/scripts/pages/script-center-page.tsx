@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
+  ArrowLeft,
   BookOpen,
+  CalendarDays,
   ChevronDown,
   ChevronRight,
   Clapperboard,
@@ -11,6 +13,7 @@ import {
   Heart,
   Image,
   Loader2,
+  Layers3,
   LockKeyhole,
   Play,
   Search,
@@ -139,8 +142,14 @@ export function ScriptCenterPage() {
   const loadWorks = useCallback(async () => {
     setWorksLoading(true)
     try {
-      const result = await scriptCommunityApi.myWorks({ limit: 10 })
-      setWorks(result.list)
+      const allWorks: ScriptWork[] = []
+      let cursor: string | undefined
+      do {
+        const result = await scriptCommunityApi.myWorks({ limit: 50, cursor })
+        allWorks.push(...result.list)
+        cursor = result.nextCursor ?? undefined
+      } while (cursor)
+      setWorks(allWorks)
     } catch {
       setWorks([])
     } finally {
@@ -320,6 +329,8 @@ function MineScripts({
   worksLoading: boolean
   onWorksChanged: () => Promise<void>
 }) {
+  const [worksOpen, setWorksOpen] = useState(false)
+
   if (loading && units.length === 0) {
     return (
       <div className="rounded-lg bg-muted/30 px-5 py-6">
@@ -436,9 +447,16 @@ function MineScripts({
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between px-1">
           <p className="text-xs font-medium text-muted-foreground">我的作品</p>
-          <Badge variant="secondary">{works.length}</Badge>
+          <Button variant="ghost" size="sm" onClick={() => setWorksOpen(true)}>查看更多</Button>
         </div>
         <MyWorks works={works} loading={worksLoading} onChanged={onWorksChanged} />
+        <WorksLibraryDialog
+          open={worksOpen}
+          onOpenChange={setWorksOpen}
+          works={works}
+          loading={worksLoading}
+          onChanged={onWorksChanged}
+        />
       </section>
 
       <section className="flex flex-col gap-2">
@@ -503,13 +521,18 @@ function MyWorks({
     )
   }
 
+  const latestByEpisode = Array.from(works.reduce((map, work) => {
+    if (!map.has(work.episodeId)) map.set(work.episodeId, work)
+    return map
+  }, new Map<string, ScriptWork>()).values()).slice(0, 4)
+
   return (
-    <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1">
-      {works.map((work) => (
-        <Card key={work.id} className="w-52 shrink-0 snap-start overflow-hidden">
-          <div className="relative aspect-video bg-gradient-to-br from-primary/25 via-muted/60 to-background">
+    <div className="-mx-2 flex snap-x gap-2 overflow-x-auto px-2 pb-1">
+      {latestByEpisode.map((work) => (
+        <Card key={work.id} className="w-44 shrink-0 snap-start overflow-hidden border-0 bg-muted/30 shadow-none">
+          <div className="relative aspect-video bg-muted/50">
             {work.coverUrl && <img src={work.coverUrl} alt="" className="size-full object-cover" />}
-            <Badge variant="secondary" className="absolute left-3 top-3">
+            <Badge variant="secondary" className="absolute left-2 top-2 h-5 px-2 text-[10px]">
               {work.kind === 'progress_card' ? '进度卡' : work.kind === 'vn_video' ? 'VN' : '跟读'}
             </Badge>
             {work.videoUrl && (
@@ -520,15 +543,15 @@ function MyWorks({
               </div>
             )}
           </div>
-          <CardHeader className="p-3 pb-2">
+          <CardHeader className="p-2.5 pb-2">
             <CardTitle className="truncate text-sm">{work.title}</CardTitle>
             <CardDescription className="truncate text-xs">{work.episode.scene.title} · {work.episode.chapterName}</CardDescription>
           </CardHeader>
-          <CardFooter className="px-3 pb-3">
+          <CardFooter className="px-2.5 pb-2.5">
             <Button
               size="sm"
               variant={work.status === 'published' ? 'outline' : 'default'}
-              className="w-full rounded-full"
+              className="h-8 w-full rounded-full text-xs"
               disabled={!['ready', 'published'].includes(work.status)}
               onClick={() => void togglePublish(work)}
             >
@@ -538,6 +561,164 @@ function MyWorks({
         </Card>
       ))}
     </div>
+  )
+}
+
+function WorksLibraryDialog({
+  open,
+  onOpenChange,
+  works,
+  loading,
+  onChanged,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  works: ScriptWork[]
+  loading: boolean
+  onChanged: () => Promise<void>
+}) {
+  const [search, setSearch] = useState('')
+  const [sceneId, setSceneId] = useState('all')
+  const [groupMode, setGroupMode] = useState<'time' | 'package'>('time')
+
+  const scenes = useMemo(() => Array.from(
+    new Map(works.map((work) => [work.episode.scene.id, work.episode.scene])).values(),
+  ), [works])
+
+  const filtered = useMemo(() => {
+    const keyword = search.trim().toLocaleLowerCase()
+    return [...works]
+      .filter((work) => sceneId === 'all' || work.episode.scene.id === sceneId)
+      .filter((work) => !keyword || [
+        work.title,
+        work.caption,
+        work.episode.title,
+        work.episode.chapterName,
+        work.episode.scene.title,
+      ].some((value) => value?.toLocaleLowerCase().includes(keyword)))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }, [sceneId, search, works])
+
+  const episodeAttempts = useMemo(() => {
+    const map = new Map<string, ScriptWork[]>()
+    works.forEach((work) => map.set(work.episodeId, [...(map.get(work.episodeId) ?? []), work]))
+    for (const attempts of map.values()) attempts.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    return map
+  }, [works])
+
+  const groups = useMemo(() => {
+    const map = new Map<string, { label: string; works: ScriptWork[] }>()
+    filtered.forEach((work) => {
+      const date = new Date(work.createdAt)
+      const key = groupMode === 'package'
+        ? work.episode.scene.id
+        : `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+      const label = groupMode === 'package'
+        ? work.episode.scene.title
+        : date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
+      const group = map.get(key) ?? { label, works: [] }
+      group.works.push(work)
+      map.set(key, group)
+    })
+    return Array.from(map.values())
+  }, [filtered, groupMode])
+
+  const togglePublish = async (work: ScriptWork) => {
+    try {
+      if (work.status === 'published') await scriptCommunityApi.unpublishWork(work.id)
+      else await scriptCommunityApi.publishWork(work.id)
+      await onChanged()
+    } catch (error: any) {
+      toast.error(error?.message || '作品状态更新失败')
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="left-0 top-0 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden">
+        <DialogHeader className="sr-only">
+          <DialogTitle>我的作品</DialogTitle>
+          <DialogDescription>查看全部剧本练习作品</DialogDescription>
+        </DialogHeader>
+
+        <div className="mx-auto flex h-full w-full max-w-2xl flex-col px-4 pb-[env(safe-area-inset-bottom,0px)] pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
+          <header className="mb-4 flex shrink-0 items-center gap-3">
+            <button type="button" onClick={() => onOpenChange(false)} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground" aria-label="返回">
+              <ArrowLeft className="size-4" />
+            </button>
+            <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
+              <p className="text-xs text-muted-foreground">剧本</p>
+              <h1 className="truncate text-lg font-semibold tracking-tight">我的作品</h1>
+            </div>
+            <Badge variant="secondary">{filtered.length}</Badge>
+          </header>
+
+          <div className="mb-3 flex shrink-0 items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 rounded-xl border-border/60 bg-muted/45 pl-9 shadow-none" placeholder="搜索作品、章节或剧本包" />
+            </div>
+            <button type="button" onClick={() => setGroupMode('time')} className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl border', groupMode === 'time' ? 'border-primary bg-primary/10 text-primary' : 'border-border/60 bg-muted/45 text-muted-foreground')} aria-label="按时间分组">
+              <CalendarDays className="size-4" />
+            </button>
+            <button type="button" onClick={() => setGroupMode('package')} className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl border', groupMode === 'package' ? 'border-primary bg-primary/10 text-primary' : 'border-border/60 bg-muted/45 text-muted-foreground')} aria-label="按剧本包分组">
+              <Layers3 className="size-4" />
+            </button>
+          </div>
+
+          <div className="mb-3 shrink-0 overflow-x-auto">
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setSceneId('all')} className={cn('shrink-0 rounded-full px-3 py-1.5 text-xs font-medium', sceneId === 'all' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground')}>全部剧本</button>
+              {scenes.map((scene) => (
+                <button key={scene.id} type="button" onClick={() => setSceneId(scene.id)} className={cn('shrink-0 rounded-full px-3 py-1.5 text-xs font-medium', sceneId === scene.id ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground')}>{scene.title}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto pb-6">
+            {loading ? <MobilePageLoading rows={4} minHeightClassName="min-h-[50vh]" /> : groups.length === 0 ? (
+              <div className="py-16 text-center text-sm text-muted-foreground">没有匹配的作品</div>
+            ) : (
+              <div className="space-y-5">
+                {groups.map((group) => (
+                  <section key={group.label}>
+                    <div className="mb-2 flex items-center justify-between px-1">
+                      <h2 className="text-xs font-medium text-muted-foreground">{group.label}</h2>
+                      <span className="text-[11px] text-muted-foreground">{group.works.length} 个作品</span>
+                    </div>
+                    <div className="space-y-2">
+                      {group.works.map((work) => {
+                        const attempts = episodeAttempts.get(work.episodeId) ?? [work]
+                        const attempt = attempts.findIndex((item) => item.id === work.id) + 1
+                        const latest = attempt === attempts.length
+                        return (
+                          <div key={work.id} className="flex gap-3 rounded-lg bg-muted/30 p-3">
+                            <div className="relative aspect-video w-28 shrink-0 overflow-hidden rounded-md bg-muted/60">
+                              {work.coverUrl && <img src={work.coverUrl} alt="" className="size-full object-cover" />}
+                              {work.videoUrl && <Play className="absolute left-1/2 top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 text-primary" />}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start gap-2">
+                                <p className="line-clamp-1 flex-1 text-sm font-semibold">{work.title}</p>
+                                {attempts.length > 1 && <Badge variant={latest ? 'default' : 'secondary'} className="h-5 shrink-0 px-2 text-[10px]">{latest ? '最新' : `第 ${attempt} 次`}</Badge>}
+                              </div>
+                              <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{work.episode.chapterName} · {new Date(work.createdAt).toLocaleString('zh-CN')}</p>
+                              <Button size="sm" variant={work.status === 'published' ? 'outline' : 'default'} className="mt-2 h-7 rounded-full px-3 text-[11px]" disabled={!['ready', 'published'].includes(work.status)} onClick={() => void togglePublish(work)}>
+                                {work.status === 'published' ? '取消发布' : work.status === 'ready' ? '发布到广场' : '等待视频'}
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

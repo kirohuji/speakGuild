@@ -600,6 +600,7 @@ export class LearningService {
         key: true,
         title: true,
         inkJson: true,
+        inkSource: true,
         version: true,
       },
     });

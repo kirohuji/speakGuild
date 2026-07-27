@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams, useParams } from 'react-router-dom'
-import { ArrowLeft, CheckCircle2, Loader2, RotateCcw } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, History, Loader2, RotateCcw, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { VnPlayer, type VnPlayerLine } from '@/features/vn-engine/vn-player'
+import { VnPlayer, type VnPlayerHandle, type VnPlayerLine } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { learningApi, type StoryEpisodePlayerData } from '@/features/learning/api/learning-api'
 import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
 import { useLayoutStore } from '@/stores/layout.store'
+import { parseComposer } from '@/features/admin/components/composer-parser'
+import { flattenComposerToTimeline } from '@/features/admin/components/vn-mixed-timeline'
+import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
 
 export function ScriptPlayerPage() {
   const { episodeId } = useParams()
@@ -88,6 +91,10 @@ function InkEpisodePlayer({
   const [userTurns, setUserTurns] = useState<VnPlayerLine[]>([])
   const [recordId, setRecordId] = useState<string | null>(null)
   const [publishing, setPublishing] = useState(false)
+  const [repeatSaving, setRepeatSaving] = useState(false)
+  const [repeatFrameIndex, setRepeatFrameIndex] = useState(0)
+  const [isChatMode, setIsChatMode] = useState(false)
+  const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
   const startedAt = useRef(Date.now())
   const story = useInkStory(data.inkScript.inkJson)
   const inkLines = useMemo<VnPlayerLine[]>(
@@ -97,6 +104,12 @@ function InkEpisodePlayer({
   const combined = useMemo(() => [...inkLines, ...userTurns], [inkLines, userTurns])
   const currentLine = combined.at(-1) ?? null
   const history = combined.slice(0, -1)
+  const repeatFrames = useMemo(
+    () => data.inkScript.inkSource
+      ? flattenComposerToTimeline(parseComposer(data.inkScript.inkSource))
+      : [],
+    [data.inkScript.inkSource],
+  )
 
   useEffect(() => {
     if (!story.isEnded || completionSaved.current) return
@@ -147,20 +160,92 @@ function InkEpisodePlayer({
     story.advanceStory()
   }
 
+  const completeRepeat = async ({ recordedCount }: { recordedCount: number; totalCount: number }) => {
+    if (repeatSaving || completionSaved.current) return
+    setRepeatSaving(true)
+    completionSaved.current = true
+    try {
+      const record = await scriptCommunityApi.completeRecord(episodeId, {
+        mode: 'repeat',
+        durationSec: Math.max(1, Math.round((Date.now() - startedAt.current) / 1000)),
+        turnCount: 0,
+        lineCount: recordedCount,
+        completedObjectiveCount: data.episode.objectives.length,
+        resultSnapshot: {
+          inkScriptId: data.inkScript.id,
+          inkScriptVersion: data.inkScript.version,
+          mode: 'repeat',
+          recordedLineCount: recordedCount,
+        },
+      })
+      setRecordId(record.id)
+      toast.success('跟读演出已保存')
+    } catch {
+      completionSaved.current = false
+      toast.error('跟读记录保存失败，请重试')
+    } finally {
+      setRepeatSaving(false)
+    }
+  }
+
   return (
-    <div className="relative h-dvh overflow-hidden bg-background">
-      <div className="pointer-events-none absolute left-3 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-20">
-        <Button asChild size="icon" variant="secondary" className="pointer-events-auto rounded-full bg-background/65 backdrop-blur-xl">
+    <div className="relative flex h-dvh flex-col bg-background">
+      <div className="absolute inset-x-0 top-0 z-30 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
+        <div className="flex h-9 w-full max-w-[400px] items-center gap-1 rounded-full border border-border/55 bg-background/90 px-1.5 text-foreground shadow-lg ring-1 ring-primary/[0.08] backdrop-blur-2xl">
+        <Button asChild variant="ghost" size="sm" className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground">
           <Link to={`/scripts/packages/${packageId}/episodes/${episodeId}`}>
-            <ArrowLeft />
-            <span className="sr-only">退出章节</span>
+            <ArrowLeft className="size-3.5" />
+            返回
           </Link>
         </Button>
+        <span className="min-w-0 flex-1 truncate px-2 text-center text-xs font-medium text-foreground/70">
+          {mode === 'repeat' ? '跟读剧场' : 'VN 互动'}
+        </span>
+        {isChatMode && (
+          <>
+            <button
+              type="button"
+              aria-label="对话历史"
+              onClick={() => vnPlayerRef.current?.toggleHistory()}
+              className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-primary/[0.16] hover:text-foreground"
+            >
+              <History className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              aria-label="对话设置"
+              onClick={() => vnPlayerRef.current?.toggleSettings()}
+              className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-primary/[0.16] hover:text-foreground"
+            >
+              <Settings className="size-3.5" />
+            </button>
+          </>
+        )}
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-primary/[0.16] hover:text-foreground"
+          aria-label="重新开始"
+        >
+          <RotateCcw className="size-3.5" />
+        </button>
+        </div>
       </div>
-      <div className="pointer-events-none absolute right-3 top-[calc(0.85rem+env(safe-area-inset-top,0px))] z-20 rounded-full bg-background/65 px-3 py-1.5 text-xs font-medium backdrop-blur-xl">
-        {mode === 'repeat' ? '跟读剧场' : 'VN 互动'}
-      </div>
+      <div className={mode === 'repeat'
+        ? 'min-h-0 flex-1 bg-background pt-[calc(3.5rem+env(safe-area-inset-top,0px))]'
+        : 'min-h-0 flex-1 bg-background'}>
+      {mode === 'repeat' ? (
+        <VnMixedPreviewPlayer
+          frames={repeatFrames}
+          activeIndex={repeatFrameIndex}
+          onJumpTo={setRepeatFrameIndex}
+          practiceMode
+          onComplete={(result) => void completeRepeat(result)}
+          className="h-full max-h-none max-w-none rounded-none border-0 shadow-none"
+        />
+      ) : (
       <VnPlayer
+        ref={vnPlayerRef}
         currentLine={currentLine}
         history={history}
         choices={story.choices}
@@ -169,9 +254,10 @@ function InkEpisodePlayer({
         onAdvance={story.advanceStory}
         onChoice={story.handleChoice}
         onSubmitInput={submitInput}
-        onReset={() => window.location.reload()}
-        className="h-full"
-        stageClassName="h-full"
+        className="h-full max-w-none rounded-none border-none"
+        stageClassName="min-h-0"
+        hideChatTopBar
+        onDisplayModeChange={(displayMode) => setIsChatMode(displayMode === 'chat')}
         endedActions={(
           <div className="flex flex-col items-center gap-3">
             <div className="flex items-center gap-2 text-sm font-semibold">
@@ -199,6 +285,8 @@ function InkEpisodePlayer({
           </div>
         )}
       />
+      )}
+      </div>
     </div>
   )
 }

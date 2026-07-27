@@ -195,6 +195,7 @@ export interface StoryEpisodePlayerData {
     key: string
     title: string
     inkJson: Record<string, any>
+    inkSource: string | null
     version: number
   }
 }

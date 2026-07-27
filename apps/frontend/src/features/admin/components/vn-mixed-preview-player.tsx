@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Infinity, Mic, Pause, Play, RotateCcw, Settings, Square, Volume2 } from 'lucide-react'
+import { CheckCircle2, Infinity, Mic, Pause, Play, RotateCcw, Settings, Square, Volume2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -14,6 +14,8 @@ interface VnMixedPreviewPlayerProps {
   activeIndex: number
   onJumpTo: (index: number) => void
   className?: string
+  practiceMode?: boolean
+  onComplete?: (result: { recordedCount: number; totalCount: number }) => void
 }
 
 export function mixedFrameLabel(frame: MixedTimelineFrame) {
@@ -59,6 +61,8 @@ export function VnMixedPreviewPlayer({
   activeIndex,
   onJumpTo,
   className,
+  practiceMode = false,
+  onComplete,
 }: VnMixedPreviewPlayerProps) {
   const activeFrame = frames[activeIndex] ?? frames[0]
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({})
@@ -192,6 +196,8 @@ export function VnMixedPreviewPlayer({
   }
 
   const canFollow = canFollowFrame(activeFrame)
+  const followableCount = useMemo(() => frames.filter((frame) => canFollowFrame(frame)).length, [frames])
+  const recordedCount = Object.keys(recordingUrls).length
 
   const saveRecordingUrl = useCallback((frameIndex: number, url: string) => {
     setRecordingUrls((prev) => {
@@ -380,6 +386,27 @@ export function VnMixedPreviewPlayer({
         </div>
       </div>
 
+      {practiceMode && (
+        <div className="flex shrink-0 items-center gap-3 border-t border-white/10 bg-[#0d1118] px-3 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]">
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-white/80">跟读进度 {recordedCount}/{followableCount}</p>
+            <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full rounded-full bg-emerald-300 transition-all" style={{ width: `${followableCount ? (recordedCount / followableCount) * 100 : 0}%` }} />
+            </div>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            disabled={recordedCount === 0}
+            onClick={() => onComplete?.({ recordedCount, totalCount: followableCount })}
+            className="h-8 shrink-0 bg-emerald-300 px-3 text-xs text-slate-950 hover:bg-emerald-200"
+          >
+            <CheckCircle2 className="size-3.5" />
+            完成演出
+          </Button>
+        </div>
+      )}
+
       <FollowReadDrawer
         open={followOpen}
         onOpenChange={(open) => {
@@ -420,8 +447,8 @@ export function MixedPlaybackSettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[90vw] max-w-sm rounded-2xl">
         <DialogHeader>
-          <DialogTitle>混合预览设置</DialogTitle>
-          <DialogDescription>控制 mixed 模式里的逐句 TTS 自动播放。</DialogDescription>
+          <DialogTitle>播放设置</DialogTitle>
+          <DialogDescription>控制逐句原声播放的间隔与循环次数。</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">

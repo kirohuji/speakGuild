@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   CheckCircle2,
   Clapperboard,
-  Clock3,
   Film,
   Headphones,
   LockKeyhole,
@@ -125,9 +124,9 @@ export function ScriptEpisodePage() {
               <p className="mt-0.5 text-xs text-muted-foreground">{episode.characterRole}</p>
             </div>
             <div className="rounded-lg bg-background/55 p-3">
-              <div className="flex items-center gap-2 text-muted-foreground"><Clock3 className="size-4" /><span className="text-xs">建议体验</span></div>
-              <p className="mt-2 text-sm font-semibold">6～12 分钟</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{episode.objectives.length} 个剧情目标</p>
+              <div className="flex items-center gap-2 text-muted-foreground"><Sparkles className="size-4" /><span className="text-xs">本章内容</span></div>
+              <p className="mt-2 text-sm font-semibold">{keyExpressions.length} 个核心表达</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">VN 互动 · 跟读剧场</p>
             </div>
           </div>
         </div>
