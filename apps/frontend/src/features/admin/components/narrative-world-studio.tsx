@@ -10,8 +10,10 @@ import {
   ArrowLeft,
   BookOpen,
   Box,
+  Check,
   ChevronDown,
   ChevronUp,
+  ChevronsUpDown,
   DoorOpen,
   Edit3,
   Eraser,
@@ -43,6 +45,14 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -58,6 +68,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectItem } from "@/components/ui/select";
@@ -75,6 +90,7 @@ import {
   createRoom,
   deleteLocation,
   deleteRoom,
+  listStories,
   listLocations,
   listMaps,
   listRooms,
@@ -84,6 +100,7 @@ import {
   type GameLocationData,
   type GameMapData,
   type GameRoomData,
+  type StoryData,
 } from "../api-content-admin";
 import { ImageUploadField } from "./image-upload-field";
 import {
@@ -188,6 +205,9 @@ export function NarrativeWorldStudio({
   const [showMaskOverlay, setShowMaskOverlay] = useState(false);
   const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
   const [activeLayerId, setActiveLayerId] = useState(DEFAULT_CONTENT_LAYER_ID);
+  const [inkStories, setInkStories] = useState<StoryData[]>([]);
+  const [inkStoriesLoading, setInkStoriesLoading] = useState(false);
+  const [inkStoryPickerOpen, setInkStoryPickerOpen] = useState(false);
   const maskDraftRef = useRef<any>(null);
 
   const [mapDialog, setMapDialog] = useState(false);
@@ -253,6 +273,44 @@ export function NarrativeWorldStudio({
   useEffect(() => {
     void load();
   }, [load]);
+
+  const loadInkStories = useCallback(async () => {
+    if (inkStoriesLoading || inkStories.length) return;
+    setInkStoriesLoading(true);
+    try {
+      const firstPage = await listStories({
+        scope: "narrative",
+        page: 1,
+        pageSize: 50,
+      });
+      const remainingPages =
+        firstPage.totalPages > 1
+          ? await Promise.all(
+              Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
+                listStories({
+                  scope: "narrative",
+                  page: index + 2,
+                  pageSize: 50,
+                }),
+              ),
+            )
+          : [];
+      setInkStories([
+        ...firstPage.items,
+        ...remainingPages.flatMap((page) => page.items),
+      ]);
+    } catch {
+      toast.error("Ink 剧情列表加载失败");
+    } finally {
+      setInkStoriesLoading(false);
+    }
+  }, [inkStories.length, inkStoriesLoading]);
+
+  useEffect(() => {
+    if (roomDialog && roomForm.roomType === "vn_scene") {
+      void loadInkStories();
+    }
+  }, [loadInkStories, roomDialog, roomForm.roomType]);
 
   const selectedMap = maps.find((item) => item.id === mapId) ?? null;
   const mapLocations = useMemo(
@@ -407,6 +465,27 @@ export function NarrativeWorldStudio({
     setFocusNodeId("");
   };
 
+  const enterLocationPreview = (id: string) => {
+    const entranceRoom = rooms.find(
+      (room) =>
+        room.locationId === id &&
+        room.isEntrance &&
+        !room.disabled &&
+        !room.hidden,
+    );
+    setPreviewId("");
+    setLocationId(id);
+    setObjectId("");
+    setFocusNodeId("");
+    if (entranceRoom) {
+      setRoomId(entranceRoom.id);
+      setLevel("room");
+      return;
+    }
+    setRoomId("");
+    setLevel("location");
+  };
+
   const enterRoom = (id: string) => {
     setRoomId(id);
     setObjectId("");
@@ -449,6 +528,20 @@ export function NarrativeWorldStudio({
 
   const openNode = (id: string) => {
     if (editable) return;
+    if (level === "world") {
+      const entranceRoom = rooms.find(
+        (room) =>
+          room.locationId === id &&
+          room.isEntrance &&
+          !room.disabled &&
+          !room.hidden,
+      );
+      if (entranceRoom) {
+        setPreviewId("");
+        enterLocationPreview(id);
+        return;
+      }
+    }
     setPreviewId(id);
     setFocusNodeId(id);
   };
@@ -1095,10 +1188,26 @@ export function NarrativeWorldStudio({
     if (!selectedLocation || !roomForm.displayName.trim()) return;
     setSaving(true);
     try {
-      if (editingRoom) await updateRoom(editingRoom.id, roomForm);
+      if (roomForm.isEntrance) {
+        await Promise.all(
+          locationRooms
+            .filter(
+              (room) => room.isEntrance && room.id !== editingRoom?.id,
+            )
+            .map((room) => updateRoom(room.id, { isEntrance: false })),
+        );
+      }
+      const roomPayload = {
+        ...roomForm,
+        inkScriptId:
+          roomForm.roomType === "vn_scene" && roomForm.inkScriptId
+            ? roomForm.inkScriptId
+            : null,
+      };
+      if (editingRoom) await updateRoom(editingRoom.id, roomPayload);
       else
         await createRoom({
-          ...roomForm,
+          ...roomPayload,
           locationId: selectedLocation.id,
           name: makeExplorationKey(roomForm.displayName, "room"),
           requiredOutputLevel: "L1",
@@ -1871,9 +1980,15 @@ export function NarrativeWorldStudio({
             <Field label="房间类型">
               <Select
                 value={roomForm.roomType}
-                onChange={(event) =>
-                  setRoomForm({ ...roomForm, roomType: event.target.value })
-                }
+                onChange={(event) => {
+                  const roomType = event.target.value;
+                  setRoomForm({
+                    ...roomForm,
+                    roomType,
+                    inkScriptId:
+                      roomType === "vn_scene" ? roomForm.inkScriptId : "",
+                  });
+                }}
               >
                 <SelectItem value="exploration">探索房间</SelectItem>
                 <SelectItem value="vn_scene">VN 剧情</SelectItem>
@@ -1890,15 +2005,95 @@ export function NarrativeWorldStudio({
                 group="library"
               />
             </Field>
-            <Field label="关联 Ink 剧情 ID">
-              <Input
-                value={roomForm.inkScriptId}
-                onChange={(event) =>
-                  setRoomForm({ ...roomForm, inkScriptId: event.target.value })
-                }
-                placeholder="可选"
-              />
-            </Field>
+            {roomForm.roomType === "vn_scene" && (
+              <Field label="关联 Ink 剧情">
+                <Popover
+                  open={inkStoryPickerOpen}
+                  onOpenChange={(open) => {
+                    setInkStoryPickerOpen(open);
+                    if (open) void loadInkStories();
+                  }}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={inkStoryPickerOpen}
+                      className="w-full justify-between px-3 font-normal"
+                    >
+                      <span className="min-w-0 truncate">
+                        {inkStories.find(
+                          (story) => story.id === roomForm.inkScriptId,
+                        )?.title ??
+                          roomForm.inkScriptId ??
+                          "搜索并选择 Ink 剧情"}
+                      </span>
+                      <ChevronsUpDown data-icon="inline-end" className="opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="start"
+                    className="w-[var(--radix-popover-trigger-width)] p-0"
+                  >
+                    <Command>
+                      <CommandInput placeholder="搜索标题、Key 或 ID…" />
+                      <CommandList>
+                        <CommandEmpty>
+                          {inkStoriesLoading
+                            ? "正在加载 Ink 剧情…"
+                            : "没有找到匹配的 Ink 剧情"}
+                        </CommandEmpty>
+                        <CommandGroup heading="Ink 剧情">
+                          <CommandItem
+                            value="不关联 none clear"
+                            onSelect={() => {
+                              setRoomForm({ ...roomForm, inkScriptId: "" });
+                              setInkStoryPickerOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "opacity-0",
+                                !roomForm.inkScriptId && "opacity-100",
+                              )}
+                            />
+                            <span>不关联剧情</span>
+                          </CommandItem>
+                          {inkStories.map((story) => (
+                            <CommandItem
+                              key={story.id}
+                              value={`${story.title} ${story.key} ${story.id}`}
+                              onSelect={() => {
+                                setRoomForm({
+                                  ...roomForm,
+                                  inkScriptId: story.id,
+                                });
+                                setInkStoryPickerOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "opacity-0",
+                                  roomForm.inkScriptId === story.id &&
+                                    "opacity-100",
+                                )}
+                              />
+                              <span className="min-w-0 flex-1 truncate">
+                                {story.title}
+                              </span>
+                              <span className="max-w-28 truncate text-[10px] text-muted-foreground">
+                                {story.key}
+                              </span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </Field>
+            )}
             <label className="flex items-center justify-between rounded-lg border p-3 text-sm">
               设为地点入口房间
               <Switch
@@ -2090,7 +2285,7 @@ export function NarrativeWorldStudio({
               action="进入地点"
               onAction={() => {
                 setPreviewId("");
-                enterLocation(previewLocation.id);
+                enterLocationPreview(previewLocation.id);
               }}
             />
           )}
