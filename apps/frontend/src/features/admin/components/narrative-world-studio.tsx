@@ -10,12 +10,16 @@ import {
   ArrowLeft,
   BookOpen,
   Box,
+  ChevronDown,
+  ChevronUp,
   DoorOpen,
   Edit3,
   Eraser,
   Eye,
   Headphones,
   Languages,
+  Layers3,
+  LockKeyhole,
   Map,
   MapPin,
   MessageCircle,
@@ -23,11 +27,13 @@ import {
   Plus,
   Route,
   RotateCcw,
+  Group,
   Sparkles,
   Sun,
   Sunrise,
   Trash2,
   Undo2,
+  Ungroup,
   Volume2,
   Wrench,
 } from "lucide-react";
@@ -83,8 +89,13 @@ import {
   type ExplorationNode,
 } from "./maps/exploration-pixi-canvas";
 import {
+  BACKGROUND_LAYER_ID,
+  DEFAULT_CONTENT_LAYER_ID,
   DEFAULT_LOCATION_VISUAL_STYLE,
   getExplorationObjects,
+  getExplorationLayers,
+  getExplorationNodeGroupId,
+  getExplorationNodeLayerId,
   getLocationMask,
   getLocationOcclusionMask,
   getLocationVisualStyle,
@@ -92,6 +103,9 @@ import {
   makeExplorationKey,
   removeExplorationObject,
   updateExplorationObjectPosition,
+  updateExplorationLayers,
+  updateExplorationNodeGroups,
+  updateExplorationNodeLayers,
   updateRoomLayout,
   updateLocationMask,
   updateLocationOcclusionMask,
@@ -101,6 +115,7 @@ import {
   type LocationVisualStyle,
   type ExplorationObject,
   type ExplorationObjectKind,
+  type ExplorationLayer,
 } from "./maps/exploration-map-model";
 
 type StudioLevel = "world" | "location" | "room";
@@ -164,6 +179,8 @@ export function NarrativeWorldStudio({
   const [maskLayer, setMaskLayer] = useState<MaskLayer>("transparency");
   const [maskBrushSize, setMaskBrushSize] = useState(8);
   const [showMaskOverlay, setShowMaskOverlay] = useState(false);
+  const [selectedNodeIds, setSelectedNodeIds] = useState<string[]>([]);
+  const [activeLayerId, setActiveLayerId] = useState(DEFAULT_CONTENT_LAYER_ID);
   const maskDraftRef = useRef<any>(null);
 
   const [mapDialog, setMapDialog] = useState(false);
@@ -253,9 +270,35 @@ export function NarrativeWorldStudio({
     return true;
   });
 
+  const layerScope =
+    level === "world"
+      ? "world"
+      : level === "location"
+        ? `location:${locationId}`
+        : `room:${roomId}`;
+  const layers = useMemo(
+    () => getExplorationLayers(selectedMap?.editorData, layerScope),
+    [layerScope, selectedMap?.editorData],
+  );
+
+  useEffect(() => {
+    setSelectedNodeIds([]);
+    setActiveLayerId(DEFAULT_CONTENT_LAYER_ID);
+  }, [layerScope]);
+
   const nodes = useMemo<ExplorationNode[]>(() => {
+    const withLayer = <T extends ExplorationNode>(node: T): T => {
+      const layerId = getExplorationNodeLayerId(selectedMap?.editorData, node.id);
+      return {
+        ...node,
+        layerId,
+        layerOrder:
+          layers.find((layer) => layer.id === layerId)?.order ?? 1,
+        groupId: getExplorationNodeGroupId(selectedMap?.editorData, node.id),
+      };
+    };
     if (level === "world") {
-      return mapLocations.map((location) => ({
+      return mapLocations.map((location) => withLayer({
         id: location.id,
         title: location.displayName,
         subtitle: `${rooms.filter((room) => room.locationId === location.id).length} 个房间`,
@@ -273,7 +316,7 @@ export function NarrativeWorldStudio({
       }));
     }
     if (level === "location") {
-      return locationRooms.map((room, index) => ({
+      return locationRooms.map((room, index) => withLayer({
         id: room.id,
         title: room.displayName,
         subtitle: room.isEntrance ? "入口房间" : room.roomType,
@@ -284,7 +327,7 @@ export function NarrativeWorldStudio({
         hidden: room.hidden,
       }));
     }
-    return visibleObjects.map((item) => ({
+    return visibleObjects.map((item) => withLayer({
       id: item.id,
       title: item.english || item.title,
       subtitle: item.translation || OBJECT_KIND_LABELS[item.kind],
@@ -298,6 +341,7 @@ export function NarrativeWorldStudio({
       hidden: item.hidden,
     }));
   }, [
+    layers,
     level,
     locationId,
     locationRooms,
@@ -317,6 +361,11 @@ export function NarrativeWorldStudio({
   const worldHeight = level === "world" ? selectedMap?.height ?? 1080 : 900;
   const selectedNodeId =
     level === "world" ? locationId : level === "location" ? roomId : objectId;
+  const effectiveSelectedNodeIds = selectedNodeIds.length
+    ? selectedNodeIds
+    : selectedNodeId
+      ? [selectedNodeId]
+      : [];
 
   const persistEditorData = async (editorData: unknown) => {
     if (!selectedMap) return;
@@ -361,7 +410,20 @@ export function NarrativeWorldStudio({
     setFocusNodeId("");
   };
 
-  const selectNode = (id: string) => {
+  const selectNode = (id: string, additive = false) => {
+    const node = nodes.find((item) => item.id === id);
+    const relatedIds = node?.groupId
+      ? nodes
+          .filter((item) => item.groupId === node.groupId)
+          .map((item) => item.id)
+      : [id];
+    setSelectedNodeIds((current) => {
+      if (!editable || !additive) return relatedIds;
+      const allSelected = relatedIds.every((item) => current.includes(item));
+      return allSelected
+        ? current.filter((item) => !relatedIds.includes(item))
+        : [...new Set([...current, ...relatedIds])];
+    });
     if (level === "world") setLocationId(id);
     else if (level === "location") setRoomId(id);
     else setObjectId(id);
@@ -375,14 +437,40 @@ export function NarrativeWorldStudio({
   };
 
   const moveNode = async (id: string, x: number, y: number) => {
+    const activeNode = nodes.find((item) => item.id === id);
+    if (!activeNode) return;
+    const movedNodes = activeNode.groupId
+      ? nodes.filter((item) => item.groupId === activeNode.groupId)
+      : [activeNode];
+    const deltaX = x - activeNode.x;
+    const deltaY = y - activeNode.y;
+    const positions = new globalThis.Map(
+      movedNodes.map((node) => [
+        node.id,
+        {
+          x: Math.max(0, Math.min(100, node.x + deltaX)),
+          y: Math.max(0, Math.min(100, node.y + deltaY)),
+        },
+      ]),
+    );
     if (level === "world") {
       setLocations((items) =>
-        items.map((item) =>
-          item.id === id ? { ...item, posX: x, posY: y } : item,
-        ),
+        items.map((item) => {
+          const position = positions.get(item.id);
+          return position
+            ? { ...item, posX: position.x, posY: position.y }
+            : item;
+        }),
       );
       try {
-        await updateLocation(id, { posX: x, posY: y });
+        await Promise.all(
+          [...positions].map(([nodeId, position]) =>
+            updateLocation(nodeId, {
+              posX: position.x,
+              posY: position.y,
+            }),
+          ),
+        );
       } catch {
         toast.error("地点位置保存失败");
         await load();
@@ -391,31 +479,39 @@ export function NarrativeWorldStudio({
     }
     if (!selectedMap) return;
     if (level === "location") {
-      const index = locationRooms.findIndex((item) => item.id === id);
-      const current = getRoomLayout(
-        selectedMap,
-        locationId,
-        id,
-        Math.max(index, 0),
-      );
-      await persistEditorData(
-        updateRoomLayout(selectedMap.editorData, locationId, id, {
+      let nextEditorData = selectedMap.editorData;
+      for (const [nodeId, position] of positions) {
+        const index = locationRooms.findIndex((item) => item.id === nodeId);
+        const current = getRoomLayout(
+          { ...selectedMap, editorData: nextEditorData },
+          locationId,
+          nodeId,
+          Math.max(index, 0),
+        );
+        nextEditorData = updateRoomLayout(
+          nextEditorData,
+          locationId,
+          nodeId,
+          {
           ...current,
-          x,
-          y,
-        }),
-      );
+            ...position,
+          },
+        );
+      }
+      await persistEditorData(nextEditorData);
       return;
     }
-    await persistEditorData(
-      updateExplorationObjectPosition(
-        selectedMap.editorData,
+    let nextEditorData = selectedMap.editorData;
+    for (const [nodeId, position] of positions) {
+      nextEditorData = updateExplorationObjectPosition(
+        nextEditorData,
         roomId,
-        id,
-        x,
-        y,
-      ),
-    );
+        nodeId,
+        position.x,
+        position.y,
+      );
+    }
+    await persistEditorData(nextEditorData);
   };
 
   const getLocationSize = (location: GameLocationData, scale: number) => {
@@ -525,6 +621,141 @@ export function NarrativeWorldStudio({
       console.error("[narrative-map] 自动匹配失败", error);
       toast.error(`自动匹配失败：${message}`);
     }
+  };
+
+  const addLayer = async () => {
+    if (!selectedMap) return;
+    const layer: ExplorationLayer = {
+      id: `layer_${Date.now().toString(36)}`,
+      name: `图层 ${layers.length}`,
+      order: layers.length,
+    };
+    const nextLayers = [...layers, layer];
+    setActiveLayerId(layer.id);
+    await persistEditorData(
+      updateExplorationLayers(selectedMap.editorData, layerScope, nextLayers),
+    );
+  };
+
+  const deleteActiveLayer = async () => {
+    if (
+      !selectedMap ||
+      activeLayerId === BACKGROUND_LAYER_ID ||
+      activeLayerId === DEFAULT_CONTENT_LAYER_ID
+    ) {
+      return;
+    }
+    const nodeIds = nodes
+      .filter((node) => node.layerId === activeLayerId)
+      .map((node) => node.id);
+    let nextEditorData = updateExplorationLayers(
+      selectedMap.editorData,
+      layerScope,
+      layers.filter((layer) => layer.id !== activeLayerId),
+    );
+    if (nodeIds.length) {
+      nextEditorData = updateExplorationNodeLayers(
+        nextEditorData,
+        nodeIds,
+        DEFAULT_CONTENT_LAYER_ID,
+      );
+    }
+    setActiveLayerId(DEFAULT_CONTENT_LAYER_ID);
+    await persistEditorData(nextEditorData);
+    toast.success("图层已删除，原有元素已移至元素层");
+  };
+
+  const reorderActiveLayer = async (direction: "up" | "down") => {
+    if (
+      !selectedMap ||
+      activeLayerId === BACKGROUND_LAYER_ID ||
+      activeLayerId === DEFAULT_CONTENT_LAYER_ID
+    ) {
+      return;
+    }
+    const contentLayers = layers.filter(
+      (layer) => layer.id !== BACKGROUND_LAYER_ID,
+    );
+    const index = contentLayers.findIndex(
+      (layer) => layer.id === activeLayerId,
+    );
+    const target =
+      direction === "up"
+        ? Math.min(contentLayers.length - 1, index + 1)
+        : Math.max(1, index - 1);
+    if (index < 0 || target === index) return;
+    const reordered = [...contentLayers];
+    [reordered[index], reordered[target]] = [
+      reordered[target],
+      reordered[index],
+    ];
+    await persistEditorData(
+      updateExplorationLayers(selectedMap.editorData, layerScope, [
+        layers[0],
+        ...reordered,
+      ]),
+    );
+  };
+
+  const moveSelectionToActiveLayer = async () => {
+    if (
+      !selectedMap ||
+      !effectiveSelectedNodeIds.length ||
+      activeLayerId === BACKGROUND_LAYER_ID
+    ) {
+      return;
+    }
+    await persistEditorData(
+      updateExplorationNodeLayers(
+        selectedMap.editorData,
+        effectiveSelectedNodeIds,
+        activeLayerId,
+      ),
+    );
+    toast.success(`已移入${layers.find((layer) => layer.id === activeLayerId)?.name}`);
+  };
+
+  const groupSelection = async () => {
+    if (!selectedMap || effectiveSelectedNodeIds.length < 2) return;
+    const groupId = `group_${Date.now().toString(36)}`;
+    const layerId =
+      activeLayerId === BACKGROUND_LAYER_ID
+        ? DEFAULT_CONTENT_LAYER_ID
+        : activeLayerId;
+    let nextEditorData = updateExplorationNodeLayers(
+      selectedMap.editorData,
+      effectiveSelectedNodeIds,
+      layerId,
+    );
+    nextEditorData = updateExplorationNodeGroups(
+      nextEditorData,
+      Object.fromEntries(
+        effectiveSelectedNodeIds.map((nodeId) => [nodeId, groupId]),
+      ),
+    );
+    await persistEditorData(nextEditorData);
+    toast.success(`已组合 ${effectiveSelectedNodeIds.length} 个元素`);
+  };
+
+  const ungroupSelection = async () => {
+    if (!selectedMap || !effectiveSelectedNodeIds.length) return;
+    const selectedGroupIds = new Set(
+      effectiveSelectedNodeIds
+        .map((nodeId) =>
+          getExplorationNodeGroupId(selectedMap.editorData, nodeId),
+        )
+        .filter((groupId): groupId is string => !!groupId),
+    );
+    if (!selectedGroupIds.size) return;
+    const assignments = Object.fromEntries(
+      nodes
+        .filter((node) => node.groupId && selectedGroupIds.has(node.groupId))
+        .map((node) => [node.id, undefined]),
+    );
+    await persistEditorData(
+      updateExplorationNodeGroups(selectedMap.editorData, assignments),
+    );
+    toast.success("已取消组合");
   };
 
   const resetSelectedLocationVisual = async () => {
@@ -1022,62 +1253,88 @@ export function NarrativeWorldStudio({
         className={cn(
           "min-w-0 gap-4",
           editable
-            ? "grid xl:grid-cols-[230px_minmax(0,1fr)_290px]"
+            ? "grid xl:grid-cols-[270px_minmax(0,1fr)_290px]"
             : "flex justify-center py-3",
         )}
       >
-        {editable && <Card className="min-w-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">
-              {level === "world"
-                ? "地点资源"
-                : level === "location"
-                  ? "房间资源"
-                  : "探索物品"}
-            </CardTitle>
-            <CardDescription>
-              单击选择，预览模式下点击画布进入或发现。
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-2 pt-0">
-            <ScrollArea className="h-[590px]">
-              <div className="flex flex-col gap-1 p-1">
-                {nodes.map((node) => (
-                  <button
-                    key={node.id}
-                    type="button"
-                    className={cn(
-                      "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
-                      node.id === selectedNodeId
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted",
+        {editable && (
+          <div className="flex min-w-0 flex-col gap-4">
+            <Card className="min-w-0">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">
+                  {level === "world"
+                    ? "地点资源"
+                    : level === "location"
+                      ? "房间资源"
+                      : "探索物品"}
+                </CardTitle>
+                <CardDescription>
+                  单击选择，预览模式下点击画布进入或发现。
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-2 pt-0">
+                <ScrollArea className="h-[280px]">
+                  <div className="flex flex-col gap-1 p-1">
+                    {nodes.map((node) => (
+                      <button
+                        key={node.id}
+                        type="button"
+                        className={cn(
+                          "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
+                          effectiveSelectedNodeIds.includes(node.id)
+                            ? "bg-primary text-primary-foreground"
+                            : "hover:bg-muted",
+                        )}
+                        onClick={(event) =>
+                          selectNode(
+                            node.id,
+                            event.shiftKey || event.ctrlKey || event.metaKey,
+                          )
+                        }
+                        onDoubleClick={() => {
+                          if (level === "world") enterLocation(node.id);
+                          else if (level === "location") enterRoom(node.id);
+                        }}
+                      >
+                        {level === "world" ? (
+                          <MapPin className="shrink-0" />
+                        ) : level === "location" ? (
+                          <DoorOpen className="shrink-0" />
+                        ) : (
+                          <Box className="shrink-0" />
+                        )}
+                        <span className="min-w-0 flex-1 truncate">
+                          {node.title}
+                        </span>
+                        {node.groupId && <Group className="shrink-0" />}
+                        {node.required && <Sparkles className="shrink-0" />}
+                      </button>
+                    ))}
+                    {!nodes.length && (
+                      <p className="px-3 py-16 text-center text-xs text-muted-foreground">
+                        当前层级还没有内容
+                      </p>
                     )}
-                    onClick={() => selectNode(node.id)}
-                    onDoubleClick={() => {
-                      if (level === "world") enterLocation(node.id);
-                      else if (level === "location") enterRoom(node.id);
-                    }}
-                  >
-                    {level === "world" ? (
-                      <MapPin className="shrink-0" />
-                    ) : level === "location" ? (
-                      <DoorOpen className="shrink-0" />
-                    ) : (
-                      <Box className="shrink-0" />
-                    )}
-                    <span className="min-w-0 flex-1 truncate">{node.title}</span>
-                    {node.required && <Sparkles className="shrink-0" />}
-                  </button>
-                ))}
-                {!nodes.length && (
-                  <p className="px-3 py-16 text-center text-xs text-muted-foreground">
-                    当前层级还没有内容
-                  </p>
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+            <LayerPanel
+              layers={layers}
+              nodes={nodes}
+              activeLayerId={activeLayerId}
+              selectedCount={effectiveSelectedNodeIds.length}
+              onSelectLayer={setActiveLayerId}
+              onAdd={() => void addLayer()}
+              onDelete={() => void deleteActiveLayer()}
+              onMoveUp={() => void reorderActiveLayer("up")}
+              onMoveDown={() => void reorderActiveLayer("down")}
+              onAssign={() => void moveSelectionToActiveLayer()}
+              onGroup={() => void groupSelection()}
+              onUngroup={() => void ungroupSelection()}
+            />
+          </div>
+        )}
 
         <main
           className={cn(
@@ -1091,6 +1348,7 @@ export function NarrativeWorldStudio({
             backgroundUrl={backgroundUrl}
             nodes={nodes}
             selectedId={selectedNodeId}
+            selectedIds={editable ? effectiveSelectedNodeIds : [selectedNodeId]}
             focusNodeId={focusNodeId}
             editable={editable}
             emptyLabel={
@@ -1760,6 +2018,154 @@ function VisualSlider({
         aria-label={label}
       />
     </div>
+  );
+}
+
+function LayerPanel({
+  layers,
+  nodes,
+  activeLayerId,
+  selectedCount,
+  onSelectLayer,
+  onAdd,
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+  onAssign,
+  onGroup,
+  onUngroup,
+}: {
+  layers: ExplorationLayer[];
+  nodes: ExplorationNode[];
+  activeLayerId: string;
+  selectedCount: number;
+  onSelectLayer: (id: string) => void;
+  onAdd: () => void;
+  onDelete: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onAssign: () => void;
+  onGroup: () => void;
+  onUngroup: () => void;
+}) {
+  const activeLayer = layers.find((layer) => layer.id === activeLayerId);
+  const activeIndex = layers.findIndex((layer) => layer.id === activeLayerId);
+  const isCustomLayer = !activeLayer?.system;
+  return (
+    <Card className="w-full min-w-0 overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between p-3 pb-2">
+        <div className="flex items-center gap-2">
+          <Layers3 />
+          <CardTitle className="text-sm">图层</CardTitle>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="新增图层"
+            onClick={onAdd}
+          >
+            <Plus />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="删除当前图层"
+            disabled={!isCustomLayer}
+            onClick={onDelete}
+          >
+            <Trash2 />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2 p-3 pt-0">
+        <ScrollArea className="max-h-52">
+          <div className="flex flex-col gap-1 pr-2">
+            {[...layers].reverse().map((layer) => {
+              const count =
+                layer.id === BACKGROUND_LAYER_ID
+                  ? 1
+                  : nodes.filter((node) => node.layerId === layer.id).length;
+              return (
+                <Button
+                  key={layer.id}
+                  variant={
+                    layer.id === activeLayerId ? "secondary" : "ghost"
+                  }
+                  className="w-full justify-start"
+                  onClick={() => onSelectLayer(layer.id)}
+                >
+                  {layer.system === "background" ? (
+                    <LockKeyhole data-icon="inline-start" />
+                  ) : (
+                    <Layers3 data-icon="inline-start" />
+                  )}
+                  <span className="min-w-0 flex-1 truncate text-left">
+                    {layer.name}
+                  </span>
+                  <Badge variant="outline">{count}</Badge>
+                </Button>
+              );
+            })}
+          </div>
+        </ScrollArea>
+        <Separator />
+        <div className="grid grid-cols-2 gap-1.5">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!isCustomLayer || activeIndex >= layers.length - 1}
+            onClick={onMoveUp}
+          >
+            <ChevronUp data-icon="inline-start" />
+            上移
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!isCustomLayer || activeIndex <= 2}
+            onClick={onMoveDown}
+          >
+            <ChevronDown data-icon="inline-start" />
+            下移
+          </Button>
+        </div>
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={
+            !selectedCount || activeLayerId === BACKGROUND_LAYER_ID
+          }
+          onClick={onAssign}
+        >
+          <Layers3 data-icon="inline-start" />
+          将所选放入此层
+        </Button>
+        <div className="grid grid-cols-2 gap-1.5">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={selectedCount < 2}
+            onClick={onGroup}
+          >
+            <Group data-icon="inline-start" />
+            组合
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!selectedCount}
+            onClick={onUngroup}
+          >
+            <Ungroup data-icon="inline-start" />
+            取消组合
+          </Button>
+        </div>
+        <p className="text-[11px] leading-4 text-muted-foreground">
+          Shift/Ctrl 点击可多选；组合后拖动任一元素会整体移动。
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 

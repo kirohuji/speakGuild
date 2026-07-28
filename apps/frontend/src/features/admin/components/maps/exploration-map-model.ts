@@ -63,19 +63,133 @@ export const DEFAULT_LOCATION_VISUAL_STYLE: LocationVisualStyle = {
   shadowOpacity: 0,
 };
 
+export type ExplorationLayer = {
+  id: string;
+  name: string;
+  order: number;
+  system?: "background" | "content";
+};
+
+export const BACKGROUND_LAYER_ID = "__background__";
+export const DEFAULT_CONTENT_LAYER_ID = "__content__";
+
 export type ExplorationEditorData = {
-  version: 3;
+  version: 4;
   explorationScenes?: Record<string, Record<string, RoomLayout>>;
   explorationObjects?: Record<string, ExplorationObject[]>;
   locationMasks?: Record<string, ResourceMask>;
   locationOcclusionMasks?: Record<string, ResourceMask>;
   locationVisualStyles?: Record<string, LocationVisualStyle>;
+  explorationLayers?: Record<string, ExplorationLayer[]>;
+  explorationNodeLayers?: Record<string, string>;
+  explorationNodeGroups?: Record<string, string>;
   preview?: {
     timeOfDay?: "day" | "golden" | "night";
     initialZoom?: number;
   };
   [key: string]: unknown;
 };
+
+export function getExplorationLayers(
+  editorData: any,
+  scope: string,
+): ExplorationLayer[] {
+  const stored = Array.isArray(editorData?.explorationLayers?.[scope])
+    ? (editorData.explorationLayers[scope] as ExplorationLayer[])
+    : [];
+  const content = stored.some((layer) => layer.id === DEFAULT_CONTENT_LAYER_ID)
+    ? stored
+    : [
+        ...stored,
+        {
+          id: DEFAULT_CONTENT_LAYER_ID,
+          name: "元素层",
+          order: 1,
+          system: "content" as const,
+        },
+      ];
+  return [
+    {
+      id: BACKGROUND_LAYER_ID,
+      name: "底图",
+      order: 0,
+      system: "background",
+    },
+    ...content
+      .filter((layer) => layer.id !== BACKGROUND_LAYER_ID)
+      .map((layer, index) => ({
+        ...layer,
+        order: index + 1,
+        system:
+          layer.id === DEFAULT_CONTENT_LAYER_ID ? ("content" as const) : undefined,
+      })),
+  ];
+}
+
+export function updateExplorationLayers(
+  editorData: any,
+  scope: string,
+  layers: ExplorationLayer[],
+): ExplorationEditorData {
+  const current = (editorData ?? {}) as ExplorationEditorData;
+  const contentLayers = layers
+    .filter((layer) => layer.id !== BACKGROUND_LAYER_ID)
+    .map((layer, index) => ({ ...layer, order: index + 1 }));
+  return {
+    ...current,
+    version: 4,
+    explorationLayers: {
+      ...(current.explorationLayers ?? {}),
+      [scope]: contentLayers,
+    },
+  };
+}
+
+export function getExplorationNodeLayerId(editorData: any, nodeId: string) {
+  return (
+    editorData?.explorationNodeLayers?.[nodeId] ?? DEFAULT_CONTENT_LAYER_ID
+  );
+}
+
+export function updateExplorationNodeLayers(
+  editorData: any,
+  nodeIds: string[],
+  layerId: string,
+): ExplorationEditorData {
+  const current = (editorData ?? {}) as ExplorationEditorData;
+  const explorationNodeLayers = {
+    ...(current.explorationNodeLayers ?? {}),
+  };
+  for (const nodeId of nodeIds) explorationNodeLayers[nodeId] = layerId;
+  return {
+    ...current,
+    version: 4,
+    explorationNodeLayers,
+  };
+}
+
+export function getExplorationNodeGroupId(editorData: any, nodeId: string) {
+  return editorData?.explorationNodeGroups?.[nodeId] as string | undefined;
+}
+
+export function updateExplorationNodeGroups(
+  editorData: any,
+  assignments: Record<string, string | undefined>,
+): ExplorationEditorData {
+  const current = (editorData ?? {}) as ExplorationEditorData;
+  const explorationNodeGroups = {
+    ...(current.explorationNodeGroups ?? {}),
+  };
+  for (const [nodeId, groupId] of Object.entries(assignments)) {
+    if (groupId) explorationNodeGroups[nodeId] = groupId;
+    else delete explorationNodeGroups[nodeId];
+  }
+  return {
+    ...current,
+    version: 4,
+    explorationNodeGroups,
+  };
+}
 
 export function getLocationVisualStyle(
   map: GameMapData | null,
@@ -101,7 +215,7 @@ export function updateLocationVisualStyle(
   const current = (editorData ?? {}) as ExplorationEditorData;
   return {
     ...current,
-    version: 3,
+    version: 4,
     locationVisualStyles: {
       ...(current.locationVisualStyles ?? {}),
       [locationId]: style,
@@ -140,7 +254,7 @@ export function updateLocationOcclusionMask(
   else delete locationOcclusionMasks[locationId];
   return {
     ...current,
-    version: 3,
+    version: 4,
     locationOcclusionMasks,
   };
 }
@@ -156,7 +270,7 @@ export function updateLocationMask(
   else delete locationMasks[locationId];
   return {
     ...current,
-    version: 3,
+    version: 4,
     locationMasks,
   };
 }
@@ -202,7 +316,7 @@ export function updateRoomLayout(
   const current = editorData ?? {};
   return {
     ...current,
-    version: Math.max(Number(current.version) || 0, 3),
+    version: Math.max(Number(current.version) || 0, 4),
     explorationScenes: {
       ...(current.explorationScenes ?? {}),
       [locationId]: {
@@ -240,7 +354,7 @@ export function upsertExplorationObject(
   const exists = roomObjects.some((item) => item.id === object.id);
   return {
     ...current,
-    version: 3,
+    version: 4,
     explorationObjects: {
       ...(current.explorationObjects ?? {}),
       [roomId]: exists
@@ -258,7 +372,7 @@ export function removeExplorationObject(
   const current = (editorData ?? {}) as ExplorationEditorData;
   return {
     ...current,
-    version: 3,
+    version: 4,
     explorationObjects: {
       ...(current.explorationObjects ?? {}),
       [roomId]: getRoomObjectsFromEditorData(current, roomId).filter(
@@ -278,7 +392,7 @@ export function updateExplorationObjectPosition(
   const current = (editorData ?? {}) as ExplorationEditorData;
   return {
     ...current,
-    version: 3,
+    version: 4,
     explorationObjects: {
       ...(current.explorationObjects ?? {}),
       [roomId]: getRoomObjectsFromEditorData(current, roomId).map((item) =>

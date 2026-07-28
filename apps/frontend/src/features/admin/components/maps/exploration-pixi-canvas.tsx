@@ -48,12 +48,16 @@ export type ExplorationNode = {
   mask?: ResourceMask;
   occlusionMask?: ResourceMask;
   visualStyle?: LocationVisualStyle;
+  layerId?: string;
+  layerOrder?: number;
+  groupId?: string;
 };
 
 interface ExplorationPixiCanvasProps {
   backgroundUrl?: string | null;
   nodes: ExplorationNode[];
   selectedId?: string;
+  selectedIds?: string[];
   focusNodeId?: string;
   editable: boolean;
   emptyLabel: string;
@@ -66,7 +70,7 @@ interface ExplorationPixiCanvasProps {
   maskRestoring?: boolean;
   showMaskOverlay?: boolean;
   maskKind?: "transparency" | "occlusion";
-  onSelect: (id: string) => void;
+  onSelect: (id: string, additive?: boolean) => void;
   onOpen: (id: string) => void;
   onMove: (id: string, x: number, y: number) => void;
   onMaskPoint?: (id: string, point: ResourceMaskPoint) => void;
@@ -286,6 +290,7 @@ function ExplorationStage({
   backgroundUrl,
   nodes,
   selectedId,
+  selectedIds,
   editable,
   emptyLabel,
   worldWidth,
@@ -321,6 +326,12 @@ function ExplorationStage({
   const videoTexture = useVideoTexture(videoBackground ? backgroundUrl : null);
   const background = videoTexture ?? imageBackground;
   const draggingWorld = useRef(false);
+  const [dragPreview, setDragPreview] = useState<{
+    nodeId: string;
+    groupId?: string;
+    dx: number;
+    dy: number;
+  } | null>(null);
   const worldStart = useRef({ x: 0, y: 0, cameraX: 0, cameraY: 0 });
   const scale = fitScale * camera.zoom;
   const offsetX = (viewportWidth - worldWidth * scale) / 2 + camera.x;
@@ -419,14 +430,37 @@ function ExplorationStage({
           <HotspotNode
             key={node.id}
             node={node}
-            selected={node.id === selectedId}
+            selected={
+              selectedIds?.includes(node.id) ?? node.id === selectedId
+            }
+            dragOffset={
+              dragPreview &&
+              (dragPreview.nodeId === node.id ||
+                (!!dragPreview.groupId &&
+                  dragPreview.groupId === node.groupId))
+                ? { x: dragPreview.dx, y: dragPreview.dy }
+                : undefined
+            }
             editable={editable}
             viewportScale={scale}
             worldWidth={worldWidth}
             worldHeight={worldHeight}
             onSelect={onSelect}
             onOpen={onOpen}
-            onMove={onMove}
+            onDragPreview={(nodeId, dx, dy) => {
+              const activeNode = nodes.find((item) => item.id === nodeId);
+              setDragPreview({
+                nodeId,
+                groupId: activeNode?.groupId,
+                dx,
+                dy,
+              });
+            }}
+            onDragCancel={() => setDragPreview(null)}
+            onDragCommit={(nodeId, x, y) => {
+              setDragPreview(null);
+              onMove(nodeId, x, y);
+            }}
             erasing={editable && maskEditingId === node.id}
             onMaskPoint={onMaskPoint}
             maskBrushRadius={maskBrushRadius}
@@ -458,13 +492,16 @@ function ExplorationStage({
 function HotspotNode({
   node,
   selected,
+  dragOffset: previewDragOffset,
   editable,
   viewportScale,
   worldWidth,
   worldHeight,
   onSelect,
   onOpen,
-  onMove,
+  onDragPreview,
+  onDragCancel,
+  onDragCommit,
   erasing,
   onMaskPoint,
   maskBrushRadius,
@@ -475,13 +512,16 @@ function HotspotNode({
 }: {
   node: ExplorationNode;
   selected: boolean;
+  dragOffset?: { x: number; y: number };
   editable: boolean;
   viewportScale: number;
   worldWidth: number;
   worldHeight: number;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, additive?: boolean) => void;
   onOpen: (id: string) => void;
-  onMove: (id: string, x: number, y: number) => void;
+  onDragPreview: (id: string, dx: number, dy: number) => void;
+  onDragCancel: () => void;
+  onDragCommit: (id: string, x: number, y: number) => void;
   erasing: boolean;
   onMaskPoint?: (id: string, point: ResourceMaskPoint) => void;
   maskBrushRadius: number;
@@ -495,7 +535,8 @@ function HotspotNode({
   const [hovered, setHovered] = useState(false);
   const dragging = useRef(false);
   const moved = useRef(false);
-  const dragOffset = useRef({ x: 0, y: 0 });
+  const dragStart = useRef({ x: 0, y: 0 });
+  const dragDelta = useRef({ x: 0, y: 0 });
   const erasingPointer = useRef(false);
   const [maskGraphic, setMaskGraphic] = useState<Graphics | null>(null);
   const spriteRef = useRef<Sprite>(null);
@@ -632,9 +673,12 @@ function HotspotNode({
   return (
     <pixiContainer
       ref={ref}
-      x={(node.x / 100) * worldWidth}
-      y={(node.y / 100) * worldHeight}
-      zIndex={Math.round((node.y / 100) * worldHeight)}
+      x={(node.x / 100) * worldWidth + (previewDragOffset?.x ?? 0)}
+      y={(node.y / 100) * worldHeight + (previewDragOffset?.y ?? 0)}
+      zIndex={
+        (node.layerOrder ?? 1) * 100000 +
+        Math.round((node.y / 100) * worldHeight)
+      }
       alpha={node.disabled ? 0.5 : 1}
       eventMode="static"
       hitArea={new Rectangle(-node.width / 2, -node.height, node.width, node.height)}
@@ -663,10 +707,8 @@ function HotspotNode({
         if (editable && ref.current) {
           const parentPoint = ref.current.parent?.toLocal(event.global);
           if (parentPoint) {
-            dragOffset.current = {
-              x: ref.current.x - parentPoint.x,
-              y: ref.current.y - parentPoint.y,
-            };
+            dragStart.current = parentPoint;
+            dragDelta.current = { x: 0, y: 0 };
           }
         }
       }}
@@ -677,18 +719,13 @@ function HotspotNode({
         }
         if (!dragging.current || !editable) return;
         const parentPoint = ref.current?.parent?.toLocal(event.global);
-        if (!parentPoint || !ref.current) return;
+        if (!parentPoint) return;
         moved.current = true;
-        ref.current.position.set(
-          Math.max(
-            0,
-            Math.min(worldWidth, parentPoint.x + dragOffset.current.x),
-          ),
-          Math.max(
-            0,
-            Math.min(worldHeight, parentPoint.y + dragOffset.current.y),
-          ),
-        );
+        dragDelta.current = {
+          x: parentPoint.x - dragStart.current.x,
+          y: parentPoint.y - dragStart.current.y,
+        };
+        onDragPreview(node.id, dragDelta.current.x, dragDelta.current.y);
       }}
       onPointerUp={(event: FederatedPointerEvent) => {
         event.stopPropagation();
@@ -697,20 +734,53 @@ function HotspotNode({
           onMaskEnd?.();
           return;
         }
-        if (dragging.current && moved.current && ref.current) {
-          onMove(
+        if (dragging.current && moved.current) {
+          onDragCommit(
             node.id,
-            Math.round((ref.current.x / worldWidth) * 1000) / 10,
-            Math.round((ref.current.y / worldHeight) * 1000) / 10,
+            Math.round(
+              Math.max(
+                0,
+                Math.min(
+                  100,
+                  (((node.x / 100) * worldWidth + dragDelta.current.x) /
+                    worldWidth) *
+                    100,
+                ),
+              ) * 10,
+            ) / 10,
+            Math.round(
+              Math.max(
+                0,
+                Math.min(
+                  100,
+                  (((node.y / 100) * worldHeight + dragDelta.current.y) /
+                    worldHeight) *
+                    100,
+                ),
+              ) * 10,
+            ) / 10,
           );
         } else {
-          onSelect(node.id);
+          const pointerEvent = event as FederatedPointerEvent & {
+            shiftKey?: boolean;
+            ctrlKey?: boolean;
+            metaKey?: boolean;
+          };
+          onSelect(
+            node.id,
+            !!(
+              pointerEvent.shiftKey ||
+              pointerEvent.ctrlKey ||
+              pointerEvent.metaKey
+            ),
+          );
           if (!editable) onOpen(node.id);
         }
         dragging.current = false;
       }}
       onPointerUpOutside={() => {
         dragging.current = false;
+        onDragCancel();
         if (erasingPointer.current) onMaskEnd?.();
         erasingPointer.current = false;
       }}
@@ -827,7 +897,7 @@ function OcclusionNode({
     <pixiContainer
       x={(node.x / 100) * worldWidth}
       y={(node.y / 100) * worldHeight}
-      zIndex={100000}
+      zIndex={(node.layerOrder ?? 1) * 100000 + 99999}
       eventMode="none"
     >
       <pixiGraphics ref={setMaskGraphic} eventMode="none" draw={drawMask} />
