@@ -1245,9 +1245,9 @@ export function NarrativeWorldStudio({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <Card className="overflow-hidden">
-        <CardContent className="flex flex-wrap items-center gap-3 p-3">
+    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
+      <Card className="shrink-0 overflow-hidden border border-border/60 bg-card/95">
+        <CardContent className="flex flex-wrap items-center gap-2 p-2.5">
           <Select
             value={mapId}
             onChange={(event) => {
@@ -1257,7 +1257,7 @@ export function NarrativeWorldStudio({
               setRoomId("");
               setObjectId("");
             }}
-            className="w-[220px]"
+            className="h-9 w-[200px] bg-background"
           >
             {maps.map((item) => (
               <SelectItem key={item.id} value={item.id}>
@@ -1281,20 +1281,20 @@ export function NarrativeWorldStudio({
               </Button>
             </>
           )}
-          <Separator orientation="vertical" className="h-7" />
+          <Separator orientation="vertical" className="mx-0.5 h-7" />
           {level !== "world" && (
             <Button size="sm" variant="ghost" onClick={goBack}>
               <ArrowLeft data-icon="inline-start" />
               返回上一级
             </Button>
           )}
-          <div className="min-w-0 flex-1">
+          <div className="min-w-[180px] flex-1 border-l border-border/60 pl-3">
             <p className="truncate text-sm font-semibold">
               {selectedMap?.displayName}
               {selectedLocation ? ` / ${selectedLocation.displayName}` : ""}
               {selectedRoom ? ` / ${selectedRoom.displayName}` : ""}
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="truncate text-[11px] text-muted-foreground">
               {level === "world"
                 ? "世界地图：放置剧情地点"
                 : level === "location"
@@ -1405,7 +1405,7 @@ export function NarrativeWorldStudio({
       </Card>
 
       {level === "room" && (
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex shrink-0 flex-wrap items-center gap-3 rounded-lg border border-border/60 bg-card px-3 py-2">
           <ToggleGroup
             type="single"
             value={objectFilter}
@@ -1437,33 +1437,17 @@ export function NarrativeWorldStudio({
 
       <div
         className={cn(
-          "min-w-0 gap-4",
+          "min-h-0 min-w-0 flex-1 gap-3 overflow-hidden",
           editable
-            ? "grid xl:grid-cols-[270px_minmax(0,1fr)_290px]"
-            : "flex justify-center py-3",
+            ? "grid grid-cols-[220px_minmax(360px,1fr)_250px] 2xl:grid-cols-[250px_minmax(420px,1fr)_280px]"
+            : "flex justify-center overflow-y-auto py-2",
         )}
       >
         {editable && (
-          <div className="flex min-w-0 flex-col gap-4">
-            <Card className="min-w-0">
-              <CardHeader className="p-3 pb-2">
-                <div className="flex items-center justify-between gap-2">
-                  <CardTitle className="text-sm">当前场景底图</CardTitle>
-                  <Badge variant="outline">
-                    <LockKeyhole data-icon="inline-start" />
-                    底图层
-                  </Badge>
-                </div>
-                <CardDescription>
-                  {level === "world"
-                    ? "世界地图场景"
-                    : level === "location"
-                      ? `${selectedLocation?.displayName ?? "地点"}场景`
-                      : `${selectedRoom?.displayName ?? "房间"}探索场景`}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-3 p-3 pt-0">
-                <div className="flex items-center gap-3">
+          <div className="flex h-full min-w-0 flex-col gap-2 overflow-y-auto pr-1">
+            <Card className="min-w-0 shrink-0 border border-border/60">
+              <CardContent className="grid grid-cols-[96px_minmax(0,1fr)] gap-2 p-2">
+                <div className="flex items-center">
                   <ImageUploadField
                     value={backgroundUrl ?? ""}
                     onChange={(url) => void saveSceneBackground(url)}
@@ -1477,13 +1461,12 @@ export function NarrativeWorldStudio({
                     }
                     placeholder="上传场景底图"
                   />
-                  <p className="text-[11px] leading-5 text-muted-foreground">
-                    支持图片或视频。底图决定场景边界、小地图和玩家相机范围。
-                  </p>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Field label="场景宽度">
+                <div className="grid min-w-0 grid-rows-2 gap-1.5">
+                  <div className="grid grid-cols-[30px_minmax(0,1fr)] items-center gap-1.5">
+                    <Label className="text-[10px] text-muted-foreground">宽度</Label>
                     <Input
+                      className="h-7 px-2 text-xs tabular-nums"
                       type="number"
                       min={320}
                       max={8192}
@@ -1499,9 +1482,11 @@ export function NarrativeWorldStudio({
                         if (event.key === "Enter") event.currentTarget.blur();
                       }}
                     />
-                  </Field>
-                  <Field label="场景高度">
+                  </div>
+                  <div className="grid grid-cols-[30px_minmax(0,1fr)] items-center gap-1.5">
+                    <Label className="text-[10px] text-muted-foreground">高度</Label>
                     <Input
+                      className="h-7 px-2 text-xs tabular-nums"
                       type="number"
                       min={320}
                       max={8192}
@@ -1517,32 +1502,29 @@ export function NarrativeWorldStudio({
                         if (event.key === "Enter") event.currentTarget.blur();
                       }}
                     />
-                  </Field>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="min-w-0">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">
+            <Card className="min-w-0 shrink-0 border border-border/60">
+              <CardHeader className="p-2 pb-1">
+                <CardTitle className="text-xs">
                   {level === "world"
                     ? "地点资源"
                     : level === "location"
                       ? "房间资源"
                       : "探索物品"}
                 </CardTitle>
-                <CardDescription>
-                  单击选择，预览模式下点击画布进入或发现。
-                </CardDescription>
               </CardHeader>
               <CardContent className="p-2 pt-0">
-                <ScrollArea className="h-[200px]">
-                  <div className="flex flex-col gap-1 p-1">
+                <ScrollArea className="h-[132px]">
+                  <div className="flex flex-col gap-0.5 pr-1">
                     {nodes.map((node) => (
                       <button
                         key={node.id}
                         type="button"
                         className={cn(
-                          "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
+                          "flex h-7 w-full items-center gap-1.5 rounded-md px-2 text-left text-xs transition-colors [&_svg]:size-3.5",
                           effectiveSelectedNodeIds.includes(node.id)
                             ? "bg-primary text-primary-foreground"
                             : "hover:bg-muted",
@@ -1573,7 +1555,7 @@ export function NarrativeWorldStudio({
                       </button>
                     ))}
                     {!nodes.length && (
-                      <p className="px-3 py-16 text-center text-xs text-muted-foreground">
+                      <p className="px-2 py-8 text-center text-[11px] text-muted-foreground">
                         当前层级还没有内容
                       </p>
                     )}
@@ -1601,7 +1583,8 @@ export function NarrativeWorldStudio({
 
         <main
           className={cn(
-            "min-w-0",
+            "min-h-0 min-w-0",
+            editable && "h-full rounded-xl border border-border/60 bg-slate-950/95 p-1 shadow-sm",
             !editable &&
               (previewOrientation === "landscape"
                 ? "w-full max-w-[860px] rounded-[1.9rem] border-[7px] border-slate-950 bg-slate-950 p-1 shadow-2xl ring-1 ring-white/10"
@@ -1609,6 +1592,11 @@ export function NarrativeWorldStudio({
           )}
         >
           <ExplorationPixiCanvas
+            className={
+              editable
+                ? "h-full min-h-0 rounded-lg border-white/10 shadow-none"
+                : undefined
+            }
             backgroundUrl={backgroundUrl}
             nodes={nodes}
             selectedId={selectedNodeId}
@@ -1645,7 +1633,7 @@ export function NarrativeWorldStudio({
           />
         </main>
 
-        {editable && <aside className="min-w-0">
+        {editable && <aside className="h-full min-w-0 overflow-y-auto pl-1">
           <Inspector
             level={level}
             map={selectedMap}
@@ -2281,24 +2269,26 @@ function LayerPanel({
   const activeIndex = layers.findIndex((layer) => layer.id === activeLayerId);
   const isCustomLayer = !activeLayer?.system;
   return (
-    <Card className="w-full min-w-0 overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between p-3 pb-2">
-        <div className="flex items-center gap-2">
-          <Layers3 />
-          <CardTitle className="text-sm">图层</CardTitle>
+    <Card className="w-full min-w-0 shrink-0 overflow-hidden border border-border/60">
+      <CardHeader className="flex flex-row items-center justify-between p-2 pb-1">
+        <div className="flex items-center gap-1.5">
+          <Layers3 className="size-3.5" />
+          <CardTitle className="text-xs">图层</CardTitle>
         </div>
         <div className="flex items-center gap-1">
           <Button
-            size="icon"
+            size="icon-sm"
             variant="ghost"
+            className="size-7"
             aria-label="新增图层"
             onClick={onAdd}
           >
             <Plus />
           </Button>
           <Button
-            size="icon"
+            size="icon-sm"
             variant="ghost"
+            className="size-7"
             aria-label="删除当前图层"
             disabled={!isCustomLayer}
             onClick={onDelete}
@@ -2307,9 +2297,9 @@ function LayerPanel({
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-2 p-3 pt-0">
-        <ScrollArea className="max-h-52">
-          <div className="flex flex-col gap-1 pr-2">
+      <CardContent className="flex flex-col gap-1.5 p-2 pt-0">
+        <ScrollArea className="max-h-32">
+          <div className="flex flex-col gap-0.5 pr-1">
             {[...layers].reverse().map((layer) => {
               const count =
                 layer.id === BACKGROUND_LAYER_ID
@@ -2323,7 +2313,7 @@ function LayerPanel({
                   variant={
                     layer.id === activeLayerId ? "secondary" : "ghost"
                   }
-                  className="w-full justify-start"
+                  className="h-7 w-full justify-start gap-1.5 rounded-md px-2 text-xs"
                   onClick={() => onSelectLayer(layer.id)}
                 >
                   {layer.system === "background" ? (
@@ -2345,6 +2335,7 @@ function LayerPanel({
           <Button
             size="sm"
             variant="outline"
+            className="h-7 px-2 text-[11px]"
             disabled={!isCustomLayer || activeIndex >= layers.length - 1}
             onClick={onMoveUp}
           >
@@ -2354,6 +2345,7 @@ function LayerPanel({
           <Button
             size="sm"
             variant="outline"
+            className="h-7 px-2 text-[11px]"
             disabled={!isCustomLayer || activeIndex <= 2}
             onClick={onMoveDown}
           >
@@ -2364,6 +2356,7 @@ function LayerPanel({
         <Button
           size="sm"
           variant="secondary"
+          className="h-7 px-2 text-[11px]"
           disabled={
             !selectedCount || activeLayerId === BACKGROUND_LAYER_ID
           }
@@ -2376,6 +2369,7 @@ function LayerPanel({
           <Button
             size="sm"
             variant="outline"
+            className="h-7 px-2 text-[11px]"
             disabled={selectedCount < 2}
             onClick={onGroup}
           >
@@ -2385,6 +2379,7 @@ function LayerPanel({
           <Button
             size="sm"
             variant="outline"
+            className="h-7 px-2 text-[11px]"
             disabled={!selectedCount}
             onClick={onUngroup}
           >
@@ -2392,9 +2387,6 @@ function LayerPanel({
             取消组合
           </Button>
         </div>
-        <p className="text-[11px] leading-4 text-muted-foreground">
-          Shift/Ctrl 点击可多选；组合后拖动任一元素会整体移动。
-        </p>
       </CardContent>
     </Card>
   );

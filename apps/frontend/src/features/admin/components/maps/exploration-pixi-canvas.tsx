@@ -22,6 +22,7 @@ import {
 import { LocateFixed, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/cn";
 import type {
   ResourceMask,
   ResourceMaskPoint,
@@ -54,6 +55,7 @@ export type ExplorationNode = {
 };
 
 interface ExplorationPixiCanvasProps {
+  className?: string;
   backgroundUrl?: string | null;
   nodes: ExplorationNode[];
   selectedId?: string;
@@ -356,13 +358,16 @@ export function ExplorationPixiCanvas({
   return (
     <div
       ref={hostRef}
-      className={`relative overflow-hidden border shadow-inner ${
+      className={cn(
+        "relative overflow-hidden border shadow-inner",
         props.mobilePreview
           ? props.previewOrientation === "landscape"
             ? "h-[min(480px,70vh)] min-h-[360px] rounded-[1.5rem]"
             : "h-[min(760px,76vh)] min-h-[600px] rounded-[1.75rem]"
-          : "h-[min(760px,74vh)] min-h-[540px] rounded-2xl"
-      } ${themeClass}`}
+          : "h-[min(760px,74vh)] min-h-[540px] rounded-2xl",
+        themeClass,
+        props.className,
+      )}
     >
       <div className="absolute inset-0 z-10">
         <Application
