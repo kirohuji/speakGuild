@@ -161,8 +161,8 @@ export function ExplorationPixiCanvas({
       const rect = host.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
       setSize({
-        width: Math.max(280, Math.round(rect.width)),
-        height: Math.max(420, Math.round(rect.height)),
+        width: Math.max(1, Math.round(rect.width)),
+        height: Math.max(1, Math.round(rect.height)),
       });
     };
     update();
@@ -182,7 +182,7 @@ export function ExplorationPixiCanvas({
       window.cancelAnimationFrame(firstFrame);
       window.cancelAnimationFrame(secondFrame);
     };
-  }, [props.mobilePreview, props.previewOrientation]);
+  }, [props.className, props.mobilePreview, props.previewOrientation]);
 
   const fitScale = props.mobilePreview
     ? Math.max(

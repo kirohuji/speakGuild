@@ -1439,7 +1439,7 @@ export function NarrativeWorldStudio({
         className={cn(
           "min-h-0 min-w-0 flex-1 gap-3 overflow-hidden",
           editable
-            ? "grid grid-cols-[220px_minmax(360px,1fr)_250px] 2xl:grid-cols-[250px_minmax(420px,1fr)_280px]"
+            ? "grid grid-cols-[clamp(180px,17vw,220px)_minmax(0,1fr)_clamp(210px,20vw,250px)] 2xl:grid-cols-[250px_minmax(0,1fr)_280px]"
             : "flex justify-center overflow-y-auto py-2",
         )}
       >
@@ -1583,8 +1583,8 @@ export function NarrativeWorldStudio({
 
         <main
           className={cn(
-            "min-h-0 min-w-0",
-            editable && "h-full rounded-xl border border-border/60 bg-slate-950/95 p-1 shadow-sm",
+            "min-h-0 min-w-0 max-w-full overflow-hidden",
+            editable && "h-full max-h-full rounded-xl border border-border/60 bg-slate-950/95 p-1 shadow-sm",
             !editable &&
               (previewOrientation === "landscape"
                 ? "w-full max-w-[860px] rounded-[1.9rem] border-[7px] border-slate-950 bg-slate-950 p-1 shadow-2xl ring-1 ring-white/10"
@@ -1592,9 +1592,14 @@ export function NarrativeWorldStudio({
           )}
         >
           <ExplorationPixiCanvas
+            key={
+              editable
+                ? `edit-${level}`
+                : `preview-${previewOrientation}-${level}`
+            }
             className={
               editable
-                ? "h-full min-h-0 rounded-lg border-white/10 shadow-none"
+                ? "h-full min-h-0 max-h-full w-full min-w-0 max-w-full rounded-lg border-white/10 shadow-none"
                 : undefined
             }
             backgroundUrl={backgroundUrl}
@@ -2555,7 +2560,6 @@ function Inspector({
               {visualStyle && (
                 <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3">
                   <div className="flex items-center justify-between gap-3">
-                    <Label>色彩融合</Label>
                     <div className="flex items-center gap-1.5">
                       <Button
                         size="sm"
