@@ -80,6 +80,27 @@ interface ExplorationPixiCanvasProps {
 }
 
 type Camera = { x: number; y: number; zoom: number };
+type NodeRefRegistry = Map<string, Container>;
+
+const assetReferenceCounts = new Map<string, number>();
+
+function retainAsset(url: string) {
+  assetReferenceCounts.set(url, (assetReferenceCounts.get(url) ?? 0) + 1);
+}
+
+function releaseAsset(url: string) {
+  const nextCount = Math.max(0, (assetReferenceCounts.get(url) ?? 1) - 1);
+  if (nextCount) {
+    assetReferenceCounts.set(url, nextCount);
+    return;
+  }
+  assetReferenceCounts.delete(url);
+  queueMicrotask(() => {
+    if (!assetReferenceCounts.has(url)) {
+      void Assets.unload(url).catch(() => undefined);
+    }
+  });
+}
 
 function isVideoSource(url?: string | null) {
   return (
@@ -87,74 +108,6 @@ function isVideoSource(url?: string | null) {
     (/\.(mp4|webm|ogg|mov|m4v)(?:[?#]|$)/i.test(url) ||
       /[#&?]media=video(?:&|$)/i.test(url))
   );
-}
-
-function useMediaDimensions(url?: string | null) {
-  const [state, setState] = useState<{
-    dimensions: { width: number; height: number } | null;
-    ready: boolean;
-  }>({ dimensions: null, ready: !url });
-  useEffect(() => {
-    setState({ dimensions: null, ready: !url });
-    if (!url) return;
-    let active = true;
-    const resolve = (width?: number, height?: number) => {
-      if (!active) return;
-      setState({
-        dimensions:
-          width && height ? { width, height } : null,
-        ready: true,
-      });
-    };
-    const timeout = window.setTimeout(() => resolve(), 4000);
-    if (isVideoSource(url)) {
-      const video = document.createElement("video");
-      const onMetadata = () => {
-        window.clearTimeout(timeout);
-        resolve(video.videoWidth, video.videoHeight);
-      };
-      const onError = () => {
-        window.clearTimeout(timeout);
-        resolve();
-      };
-      video.preload = "metadata";
-      video.muted = true;
-      video.playsInline = true;
-      video.addEventListener("loadedmetadata", onMetadata, { once: true });
-      video.addEventListener("error", onError, { once: true });
-      video.src = url;
-      video.load();
-      return () => {
-        active = false;
-        window.clearTimeout(timeout);
-        video.pause();
-        video.removeEventListener("loadedmetadata", onMetadata);
-        video.removeEventListener("error", onError);
-        video.removeAttribute("src");
-        video.load();
-      };
-    }
-    const image = new Image();
-    const onLoad = () => {
-      window.clearTimeout(timeout);
-      resolve(image.naturalWidth, image.naturalHeight);
-    };
-    const onError = () => {
-      window.clearTimeout(timeout);
-      resolve();
-    };
-    image.addEventListener("load", onLoad, { once: true });
-    image.addEventListener("error", onError, { once: true });
-    image.src = url;
-    return () => {
-      active = false;
-      window.clearTimeout(timeout);
-      image.removeEventListener("load", onLoad);
-      image.removeEventListener("error", onError);
-      image.src = "";
-    };
-  }, [url]);
-  return state;
 }
 
 function constrainCamera(
@@ -195,14 +148,9 @@ export function ExplorationPixiCanvas({
   const hostRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 960, height: 620 });
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, zoom: 1 });
-  const media = useMediaDimensions(
-    props.mobilePreview ? props.backgroundUrl : null,
-  );
   const worldWidth = configuredWorldWidth;
   const worldHeight = configuredWorldHeight;
   const renderedNodes = props.nodes;
-  const mediaReady =
-    !props.mobilePreview || !props.backgroundUrl || media.ready;
 
   useLayoutEffect(() => {
     const host = hostRef.current;
@@ -281,9 +229,8 @@ export function ExplorationPixiCanvas({
   );
 
   useEffect(() => {
-    if (!mediaReady) return;
     setCamera((current) => clampCamera(current));
-  }, [clampCamera, mediaReady]);
+  }, [clampCamera]);
 
   const zoomBy = useCallback(
     (factor: number) => {
@@ -339,7 +286,6 @@ export function ExplorationPixiCanvas({
 
   useEffect(() => {
     if (!props.focusNodeId) return;
-    if (!mediaReady) return;
     const node = renderedNodes.find((item) => item.id === props.focusNodeId);
     if (!node) return;
     const targetZoom = props.editable ? 1.35 : 1.8;
@@ -353,7 +299,6 @@ export function ExplorationPixiCanvas({
     });
   }, [
     fitScale,
-    mediaReady,
     props.editable,
     props.focusNodeId,
     renderedNodes,
@@ -420,31 +365,29 @@ export function ExplorationPixiCanvas({
       } ${themeClass}`}
     >
       <div className="absolute inset-0 z-10">
-        {mediaReady ? (
-          <Application
-            resizeTo={hostRef as React.RefObject<HTMLElement>}
-            background={props.timeOfDay === "night" ? 0x07111f : 0x10263a}
-            antialias
-            autoDensity
-            resolution={Math.min(window.devicePixelRatio || 1, 2)}
-          >
-            <ExplorationStage
-              {...props}
-              nodes={renderedNodes}
-              worldWidth={worldWidth}
-              worldHeight={worldHeight}
-              viewportWidth={size.width}
-              viewportHeight={size.height}
-              fitScale={fitScale}
-              camera={camera}
-              onCameraChange={updateCamera}
-            />
-          </Application>
-        ) : (
-          <div className="flex size-full items-center justify-center text-sm text-muted-foreground">
-            正在读取底图尺寸…
-          </div>
-        )}
+        <Application
+          resizeTo={hostRef as React.RefObject<HTMLElement>}
+          background={props.timeOfDay === "night" ? 0x07111f : 0x10263a}
+          antialias
+          autoDensity
+          resolution={Math.min(window.devicePixelRatio || 1, 2)}
+          gcActive
+          gcMaxUnusedTime={60_000}
+          gcFrequency={30_000}
+        >
+          <ExplorationStage
+            {...props}
+            nodes={renderedNodes}
+            worldWidth={worldWidth}
+            worldHeight={worldHeight}
+            viewportWidth={size.width}
+            viewportHeight={size.height}
+            fitScale={fitScale}
+            camera={camera}
+            onCameraChange={updateCamera}
+            constrainCamera={clampCamera}
+          />
+        </Application>
       </div>
 
       <div className="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2">
@@ -468,15 +411,9 @@ export function ExplorationPixiCanvas({
           >
             {props.backgroundUrl &&
               (isVideoSource(props.backgroundUrl) ? (
-                <video
-                  src={props.backgroundUrl}
-                  className="size-full object-fill"
-                  muted
-                  loop
-                  autoPlay
-                  playsInline
-                  aria-hidden
-                />
+                <div className="flex size-full items-center justify-center bg-slate-800 text-[9px] text-slate-300">
+                  动态底图
+                </div>
               ) : (
                 <img
                   src={props.backgroundUrl}
@@ -588,6 +525,7 @@ function ExplorationStage({
   onMaskPoint,
   onMaskEnd,
   onCameraChange,
+  constrainCamera: clampCamera,
 }: ExplorationPixiCanvasProps & {
   viewportWidth: number;
   viewportHeight: number;
@@ -596,6 +534,7 @@ function ExplorationStage({
   fitScale: number;
   camera: Camera;
   onCameraChange: React.Dispatch<React.SetStateAction<Camera>>;
+  constrainCamera: (camera: Camera) => Camera;
 }) {
   const worldRef = useRef<Container>(null);
   const videoBackground = isVideoSource(backgroundUrl);
@@ -603,16 +542,115 @@ function ExplorationStage({
   const videoTexture = useVideoTexture(videoBackground ? backgroundUrl : null);
   const background = videoTexture ?? imageBackground;
   const draggingWorld = useRef(false);
-  const [dragPreview, setDragPreview] = useState<{
-    nodeId: string;
-    groupId?: string;
-    dx: number;
-    dy: number;
+  const worldDragOrigin = useRef<{
+    pointerX: number;
+    pointerY: number;
+    camera: Camera;
   } | null>(null);
-  const worldPointer = useRef({ x: 0, y: 0 });
+  const worldDragPreview = useRef<Camera | null>(null);
+  const nodeRefs = useRef<NodeRefRegistry>(new Map());
+  const hoveredNodeIds = useRef(new Set<string>());
+  const animationElapsed = useRef(0);
   const scale = fitScale * camera.zoom;
   const offsetX = (viewportWidth - worldWidth * scale) / 2 + camera.x;
   const offsetY = (viewportHeight - worldHeight * scale) / 2 + camera.y;
+  const selectedNodeIds = useMemo(
+    () => new Set(selectedIds ?? (selectedId ? [selectedId] : [])),
+    [selectedId, selectedIds],
+  );
+  const contentLayers = useMemo(() => {
+    const grouped = new Map<
+      string,
+      { id: string; order: number; nodes: ExplorationNode[] }
+    >();
+    for (const node of nodes.filter((item) => !item.hidden)) {
+      const layerId = node.layerId ?? "content";
+      const existing = grouped.get(layerId);
+      if (existing) existing.nodes.push(node);
+      else {
+        grouped.set(layerId, {
+          id: layerId,
+          order: node.layerOrder ?? 1,
+          nodes: [node],
+        });
+      }
+    }
+    return [...grouped.values()].sort((a, b) => a.order - b.order);
+  }, [nodes]);
+
+  const registerNodeRef = useCallback(
+    (id: string, instance: Container | null) => {
+      if (instance) nodeRefs.current.set(id, instance);
+      else nodeRefs.current.delete(id);
+    },
+    [],
+  );
+
+  const applyNodeScale = useCallback(
+    (node: ExplorationNode, activeScale: number) => {
+      const instance = nodeRefs.current.get(node.id);
+      if (!instance) return;
+      instance.scale.set(activeScale);
+      instance.y =
+        (node.y / 100) * worldHeight +
+        ((activeScale - 1) * node.height) / 2;
+    },
+    [worldHeight],
+  );
+
+  useTick({
+    isEnabled: !editable && nodeBreathing,
+    callback: (ticker) => {
+      animationElapsed.current += ticker.deltaMS;
+      const activeScale =
+        1.02 + Math.sin(animationElapsed.current / 240) * 0.006;
+      for (const node of nodes) {
+        if (
+          selectedNodeIds.has(node.id) &&
+          !hoveredNodeIds.current.has(node.id)
+        ) {
+          applyNodeScale(node, activeScale);
+        }
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (!editable && nodeBreathing) return;
+    for (const node of nodes) {
+      if (!hoveredNodeIds.current.has(node.id)) applyNodeScale(node, 1);
+    }
+  }, [applyNodeScale, editable, nodeBreathing, nodes]);
+
+  const previewNodeDrag = useCallback(
+    (nodeId: string, dx: number, dy: number) => {
+      const activeNode = nodes.find((item) => item.id === nodeId);
+      if (!activeNode) return;
+      const movedNodes = activeNode.groupId
+        ? nodes.filter((item) => item.groupId === activeNode.groupId)
+        : [activeNode];
+      for (const node of movedNodes) {
+        const instance = nodeRefs.current.get(node.id);
+        if (!instance) continue;
+        instance.position.set(
+          (node.x / 100) * worldWidth + dx,
+          (node.y / 100) * worldHeight + dy,
+        );
+      }
+    },
+    [nodes, worldHeight, worldWidth],
+  );
+
+  const cancelNodeDrag = useCallback(() => {
+    for (const node of nodes) {
+      const instance = nodeRefs.current.get(node.id);
+      if (!instance) continue;
+      instance.position.set(
+        (node.x / 100) * worldWidth,
+        (node.y / 100) * worldHeight,
+      );
+    }
+  }, [nodes, worldHeight, worldWidth]);
 
   const drawFrame = useCallback(
     (g: PixiGraphics) => {
@@ -645,137 +683,220 @@ function ExplorationStage({
   return (
     <pixiContainer
       ref={worldRef}
+      label="camera-world"
       x={offsetX}
       y={offsetY}
       scale={scale}
       sortableChildren
+      isRenderGroup
     >
       <pixiGraphics
+        zIndex={0}
         draw={drawFrame}
         eventMode="static"
         cursor="grab"
         onPointerDown={(event: FederatedPointerEvent) => {
           draggingWorld.current = true;
-          worldPointer.current = {
-            x: event.global.x,
-            y: event.global.y,
+          worldDragOrigin.current = {
+            pointerX: event.global.x,
+            pointerY: event.global.y,
+            camera,
           };
+          worldDragPreview.current = camera;
         }}
         onGlobalPointerMove={(event: FederatedPointerEvent) => {
-          if (!draggingWorld.current) return;
-          const deltaX = event.global.x - worldPointer.current.x;
-          const deltaY = event.global.y - worldPointer.current.y;
-          worldPointer.current = {
-            x: event.global.x,
-            y: event.global.y,
-          };
-          onCameraChange((current) => ({
-            ...current,
-            x: current.x + deltaX,
-            y: current.y + deltaY,
-          }));
+          const origin = worldDragOrigin.current;
+          const world = worldRef.current;
+          if (!draggingWorld.current || !origin || !world) return;
+          const next = clampCamera({
+            ...origin.camera,
+            x: origin.camera.x + event.global.x - origin.pointerX,
+            y: origin.camera.y + event.global.y - origin.pointerY,
+          });
+          worldDragPreview.current = next;
+          const nextScale = fitScale * next.zoom;
+          world.position.set(
+            (viewportWidth - worldWidth * nextScale) / 2 + next.x,
+            (viewportHeight - worldHeight * nextScale) / 2 + next.y,
+          );
         }}
         onPointerUp={() => {
           draggingWorld.current = false;
+          worldDragOrigin.current = null;
+          if (worldDragPreview.current) {
+            onCameraChange(worldDragPreview.current);
+            worldDragPreview.current = null;
+          }
         }}
         onPointerUpOutside={() => {
           draggingWorld.current = false;
+          worldDragOrigin.current = null;
+          if (worldDragPreview.current) {
+            onCameraChange(worldDragPreview.current);
+            worldDragPreview.current = null;
+          }
+        }}
+        onPointerCancel={() => {
+          draggingWorld.current = false;
+          worldDragOrigin.current = null;
+          worldDragPreview.current = null;
+          const world = worldRef.current;
+          if (world) {
+            world.position.set(offsetX, offsetY);
+          }
         }}
       />
-      {background && (
-        <pixiSprite
-          texture={background}
-          width={worldWidth}
-          height={worldHeight}
-          eventMode="none"
-        />
-      )}
-      <pixiGraphics
+      <pixiContainer
+        label="background-layer"
+        zIndex={1}
         eventMode="none"
-        draw={(g: PixiGraphics) => {
-          g.clear();
-          const color =
-            timeOfDay === "night"
-              ? 0x07111f
-              : timeOfDay === "golden"
-                ? 0xff9b42
-                : 0xffffff;
-          const alpha =
-            timeOfDay === "night" ? 0.32 : timeOfDay === "golden" ? 0.12 : 0;
-          g.rect(0, 0, worldWidth, worldHeight).fill({ color, alpha });
-        }}
-      />
-      {nodes
-        .filter((node) => !node.hidden)
-        .map((node) => (
-          <HotspotNode
-            key={node.id}
-            node={node}
-            selected={
-              selectedIds?.includes(node.id) ?? node.id === selectedId
-            }
-            breathing={nodeBreathing}
-            dragOffset={
-              dragPreview &&
-              (dragPreview.nodeId === node.id ||
-                (!!dragPreview.groupId &&
-                  dragPreview.groupId === node.groupId))
-                ? { x: dragPreview.dx, y: dragPreview.dy }
-                : undefined
-            }
-            editable={editable}
-            viewportScale={scale}
-            worldWidth={worldWidth}
-            worldHeight={worldHeight}
-            onSelect={onSelect}
-            onOpen={onOpen}
-            onDragPreview={(nodeId, dx, dy) => {
-              const activeNode = nodes.find((item) => item.id === nodeId);
-              setDragPreview({
-                nodeId,
-                groupId: activeNode?.groupId,
-                dx,
-                dy,
-              });
-            }}
-            onDragCancel={() => setDragPreview(null)}
-            onDragCommit={(nodeId, x, y) => {
-              setDragPreview(null);
-              onMove(nodeId, x, y);
-            }}
-            erasing={editable && maskEditingId === node.id}
-            onMaskPoint={onMaskPoint}
-            maskBrushRadius={maskBrushRadius}
-            maskRestoring={maskRestoring}
-            showMaskOverlay={showMaskOverlay}
-            maskKind={maskKind}
-            onMaskEnd={onMaskEnd}
+        interactiveChildren={false}
+      >
+        {background && (
+          <pixiSprite
+            texture={background}
+            width={worldWidth}
+            height={worldHeight}
+            eventMode="none"
           />
-        ))}
-      {nodes
-        .filter(
-          (node) =>
-            !node.hidden &&
-            node.imageUrl &&
-            node.occlusionMask?.points.length,
-        )
-        .map((node) => (
-          <OcclusionNode
-            key={`occlusion-${node.id}`}
-            node={node}
-            worldWidth={worldWidth}
-            worldHeight={worldHeight}
-          />
-        ))}
+        )}
+        <pixiGraphics
+          eventMode="none"
+          draw={(g: PixiGraphics) => {
+            g.clear();
+            const color =
+              timeOfDay === "night"
+                ? 0x07111f
+                : timeOfDay === "golden"
+                  ? 0xff9b42
+                  : 0xffffff;
+            const alpha =
+              timeOfDay === "night"
+                ? 0.32
+                : timeOfDay === "golden"
+                  ? 0.12
+                  : 0;
+            g.rect(0, 0, worldWidth, worldHeight).fill({ color, alpha });
+          }}
+        />
+      </pixiContainer>
+      {contentLayers.map((layer) => (
+        <pixiContainer
+          key={layer.id}
+          label={`content-layer:${layer.id}`}
+          zIndex={100 + layer.order}
+          sortableChildren
+        >
+          {layer.nodes.map((node) => (
+            <ExplorationNodeEntry
+              key={node.id}
+              node={node}
+              selected={selectedNodeIds.has(node.id)}
+              editable={editable}
+              viewportScale={scale}
+              worldWidth={worldWidth}
+              worldHeight={worldHeight}
+              onSelect={onSelect}
+              onOpen={onOpen}
+              onRegisterRef={registerNodeRef}
+              onHoverChange={(nodeId, hovered) => {
+                if (hovered) hoveredNodeIds.current.add(nodeId);
+                else hoveredNodeIds.current.delete(nodeId);
+              }}
+              onDragPreview={previewNodeDrag}
+              onDragCancel={cancelNodeDrag}
+              onDragCommit={(nodeId, x, y) => {
+                onMove(nodeId, x, y);
+              }}
+              erasing={editable && maskEditingId === node.id}
+              onMaskPoint={onMaskPoint}
+              maskBrushRadius={maskBrushRadius}
+              maskRestoring={maskRestoring}
+              showMaskOverlay={showMaskOverlay}
+              maskKind={maskKind}
+              onMaskEnd={onMaskEnd}
+            />
+          ))}
+        </pixiContainer>
+      ))}
+      <pixiContainer
+        label="foreground-occlusion-layer"
+        zIndex={10_000}
+        sortableChildren
+        eventMode="none"
+      >
+        {nodes
+          .filter(
+            (node) =>
+              !node.hidden &&
+              node.imageUrl &&
+              node.occlusionMask?.points.length,
+          )
+          .map((node) => (
+            <OcclusionNode
+              key={`occlusion-${node.id}`}
+              node={node}
+              worldWidth={worldWidth}
+              worldHeight={worldHeight}
+            />
+          ))}
+      </pixiContainer>
     </pixiContainer>
   );
 }
 
+function useNodeVisualTreatment(style?: LocationVisualStyle) {
+  const colorFilter = useMemo(() => {
+    if (!style) return null;
+    const isNeutral =
+      Math.abs(style.brightness - 1) < 0.001 &&
+      Math.abs(style.contrast - 1) < 0.001 &&
+      Math.abs(style.saturation - 1) < 0.001 &&
+      Math.abs(style.hue) < 0.001;
+    if (isNeutral) return null;
+    const filter = new ColorMatrixFilter({ resolution: 1 });
+    filter.brightness(style.brightness, false);
+    filter.contrast(Math.max(0, Math.min(1, style.contrast / 2)), true);
+    filter.saturate(style.saturation - 1, true);
+    filter.hue(style.hue, true);
+    return filter;
+  }, [style]);
+
+  useEffect(
+    () => () => {
+      colorFilter?.destroy();
+    },
+    [colorFilter],
+  );
+
+  const colorTint = useMemo(() => {
+    const warmth = style?.warmth ?? 0;
+    const amount = Math.min(1, Math.abs(warmth));
+    const target = warmth >= 0 ? [255, 210, 160] : [170, 210, 255];
+    const channel = (value: number) =>
+      Math.round(255 + (value - 255) * amount);
+    return (
+      (channel(target[0]) << 16) |
+      (channel(target[1]) << 8) |
+      channel(target[2])
+    );
+  }, [style?.warmth]);
+
+  return { colorFilter, colorTint };
+}
+
+function ExplorationNodeEntry(
+  props: Omit<
+    React.ComponentProps<typeof HotspotNode>,
+    "colorFilter" | "colorTint"
+  >,
+) {
+  const treatment = useNodeVisualTreatment(props.node.visualStyle);
+  return <HotspotNode {...props} {...treatment} />;
+}
+
 function HotspotNode({
   node,
-  selected,
-  breathing,
-  dragOffset: previewDragOffset,
   editable,
   viewportScale,
   worldWidth,
@@ -792,11 +913,12 @@ function HotspotNode({
   showMaskOverlay,
   maskKind,
   onMaskEnd,
+  onRegisterRef,
+  onHoverChange,
+  colorFilter,
+  colorTint,
 }: {
   node: ExplorationNode;
-  selected: boolean;
-  breathing: boolean;
-  dragOffset?: { x: number; y: number };
   editable: boolean;
   viewportScale: number;
   worldWidth: number;
@@ -813,10 +935,13 @@ function HotspotNode({
   showMaskOverlay: boolean;
   maskKind: "transparency" | "occlusion";
   onMaskEnd?: () => void;
+  onRegisterRef: (id: string, instance: Container | null) => void;
+  onHoverChange: (id: string, hovered: boolean) => void;
+  colorFilter: ColorMatrixFilter | null;
+  colorTint: number;
 }) {
   const ref = useRef<Container>(null);
   const texture = useTexture(node.imageUrl);
-  const [hovered, setHovered] = useState(false);
   const dragging = useRef(false);
   const moved = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -827,50 +952,11 @@ function HotspotNode({
   const shadowRef = useRef<Sprite>(null);
   const editingMask =
     maskKind === "occlusion" ? node.occlusionMask : node.mask;
-  const colorFilter = useMemo(() => {
-    const style = node.visualStyle;
-    if (!style) return null;
-    const isNeutral =
-      Math.abs(style.brightness - 1) < 0.001 &&
-      Math.abs(style.contrast - 1) < 0.001 &&
-      Math.abs(style.saturation - 1) < 0.001 &&
-      Math.abs(style.hue) < 0.001;
-    if (isNeutral) return null;
-    const filter = new ColorMatrixFilter();
-    filter.resolution = 2;
-    filter.brightness(style.brightness, false);
-    filter.contrast(style.contrast - 1, true);
-    filter.saturate(style.saturation - 1, true);
-    filter.hue(style.hue, true);
-    return filter;
-  }, [node.visualStyle]);
-  const colorTint = useMemo(() => {
-    const warmth = node.visualStyle?.warmth ?? 0;
-    const amount = Math.min(1, Math.abs(warmth));
-    const target = warmth >= 0 ? [255, 210, 160] : [170, 210, 255];
-    const channel = (value: number) =>
-      Math.round(255 + (value - 255) * amount);
-    return (
-      (channel(target[0]) << 16) |
-      (channel(target[1]) << 8) |
-      channel(target[2])
-    );
-  }, [node.visualStyle?.warmth]);
-
-  useTick(() => {
-    if (!ref.current) return;
-    const activeScale =
-      !editable && hovered
-        ? 1.2
-        : !editable && breathing && selected
-          ? 1.02 + Math.sin(performance.now() / 240) * 0.006
-          : 1;
-    ref.current.scale.set(activeScale);
-    ref.current.y =
-      (node.y / 100) * worldHeight +
-      (previewDragOffset?.y ?? 0) +
-      ((activeScale - 1) * node.height) / 2;
-  });
+  const hitArea = useMemo(
+    () =>
+      new Rectangle(-node.width / 2, -node.height, node.width, node.height),
+    [node.height, node.width],
+  );
 
   const drawGlow = useCallback(
     (g: PixiGraphics) => {
@@ -962,16 +1048,22 @@ function HotspotNode({
 
   return (
     <pixiContainer
-      ref={ref}
-      x={(node.x / 100) * worldWidth + (previewDragOffset?.x ?? 0)}
-      y={(node.y / 100) * worldHeight + (previewDragOffset?.y ?? 0)}
-      zIndex={
-        (node.layerOrder ?? 1) * 100000 +
-        Math.round((node.y / 100) * worldHeight)
-      }
+      ref={(instance) => {
+        ref.current = instance;
+        onRegisterRef(node.id, instance);
+      }}
+      label={`exploration-node:${node.id}`}
+      x={(node.x / 100) * worldWidth}
+      y={(node.y / 100) * worldHeight}
+      zIndex={Math.round((node.y / 100) * worldHeight)}
       alpha={node.disabled ? 0.5 : 1}
       eventMode="static"
-      hitArea={new Rectangle(-node.width / 2, -node.height, node.width, node.height)}
+      interactiveChildren={false}
+      hitArea={hitArea}
+      accessible={!editable}
+      accessibleTitle={node.title}
+      accessibleHint={node.subtitle || "打开探索内容"}
+      tabIndex={!editable ? 0 : -1}
       cursor={
         erasing
           ? maskRestoring
@@ -982,9 +1074,18 @@ function HotspotNode({
             : "pointer"
       }
       onPointerOver={() => {
-        if (!editable) setHovered(true);
+        if (editable || !ref.current) return;
+        onHoverChange(node.id, true);
+        ref.current.scale.set(1.2);
+        ref.current.y =
+          (node.y / 100) * worldHeight + ((1.2 - 1) * node.height) / 2;
       }}
-      onPointerOut={() => setHovered(false)}
+      onPointerOut={() => {
+        if (editable || !ref.current) return;
+        onHoverChange(node.id, false);
+        ref.current.scale.set(1);
+        ref.current.y = (node.y / 100) * worldHeight;
+      }}
       onPointerDown={(event: FederatedPointerEvent) => {
         event.stopPropagation();
         if (erasing) {
@@ -1050,29 +1151,29 @@ function HotspotNode({
               ) * 10,
             ) / 10,
           );
-        } else {
-          const pointerEvent = event as FederatedPointerEvent & {
-            shiftKey?: boolean;
-            ctrlKey?: boolean;
-            metaKey?: boolean;
-          };
-          onSelect(
-            node.id,
-            !!(
-              pointerEvent.shiftKey ||
-              pointerEvent.ctrlKey ||
-              pointerEvent.metaKey
-            ),
-          );
-          if (!editable) onOpen(node.id);
         }
         dragging.current = false;
+      }}
+      onPointerTap={(event: FederatedPointerEvent) => {
+        event.stopPropagation();
+        if (erasing || moved.current) return;
+        onSelect(
+          node.id,
+          !!(event.shiftKey || event.ctrlKey || event.metaKey),
+        );
+        if (!editable) onOpen(node.id);
       }}
       onPointerUpOutside={() => {
         dragging.current = false;
         onDragCancel();
         if (erasingPointer.current) onMaskEnd?.();
         erasingPointer.current = false;
+      }}
+      onPointerCancel={() => {
+        dragging.current = false;
+        moved.current = false;
+        erasingPointer.current = false;
+        onDragCancel();
       }}
     >
       <pixiGraphics draw={drawGlow} />
@@ -1106,7 +1207,7 @@ function HotspotNode({
           anchor={{ x: 0.5, y: 1 }}
           width={node.width}
           height={node.height}
-          y={!editable && hovered ? -10 : 0}
+          eventMode="none"
         />
       )}
       {erasing && showMaskOverlay && (
@@ -1133,35 +1234,7 @@ function OcclusionNode({
   const texture = useTexture(node.imageUrl);
   const spriteRef = useRef<Sprite>(null);
   const [maskGraphic, setMaskGraphic] = useState<Graphics | null>(null);
-  const colorFilter = useMemo(() => {
-    const style = node.visualStyle;
-    if (!style) return null;
-    const isNeutral =
-      Math.abs(style.brightness - 1) < 0.001 &&
-      Math.abs(style.contrast - 1) < 0.001 &&
-      Math.abs(style.saturation - 1) < 0.001 &&
-      Math.abs(style.hue) < 0.001;
-    if (isNeutral) return null;
-    const filter = new ColorMatrixFilter();
-    filter.resolution = 2;
-    filter.brightness(style.brightness, false);
-    filter.contrast(style.contrast - 1, true);
-    filter.saturate(style.saturation - 1, true);
-    filter.hue(style.hue, true);
-    return filter;
-  }, [node.visualStyle]);
-  const colorTint = useMemo(() => {
-    const warmth = node.visualStyle?.warmth ?? 0;
-    const amount = Math.min(1, Math.abs(warmth));
-    const target = warmth >= 0 ? [255, 210, 160] : [170, 210, 255];
-    const channel = (value: number) =>
-      Math.round(255 + (value - 255) * amount);
-    return (
-      (channel(target[0]) << 16) |
-      (channel(target[1]) << 8) |
-      channel(target[2])
-    );
-  }, [node.visualStyle?.warmth]);
+  const { colorFilter, colorTint } = useNodeVisualTreatment(node.visualStyle);
   const drawMask = useCallback(
     (g: PixiGraphics) => {
       g.clear();
@@ -1187,7 +1260,10 @@ function OcclusionNode({
     <pixiContainer
       x={(node.x / 100) * worldWidth}
       y={(node.y / 100) * worldHeight}
-      zIndex={(node.layerOrder ?? 1) * 100000 + 99999}
+      zIndex={
+        (node.layerOrder ?? 1) * 100_000 +
+        Math.round((node.y / 100) * worldHeight)
+      }
       eventMode="none"
     >
       <pixiGraphics ref={setMaskGraphic} eventMode="none" draw={drawMask} />
@@ -1212,30 +1288,29 @@ function useVideoTexture(url?: string | null) {
       setTexture(null);
       return;
     }
-    const video = document.createElement("video");
-    video.crossOrigin = "anonymous";
-    video.muted = true;
-    video.loop = true;
-    video.autoplay = true;
-    video.playsInline = true;
-    video.preload = "auto";
     let active = true;
-    let createdTexture: Texture | null = null;
-    const createTexture = () => {
-      if (!active || createdTexture) return;
-      createdTexture = Texture.from(video);
-      createdTexture.source.scaleMode = "linear";
-      setTexture(createdTexture);
-      void video.play().catch(() => undefined);
-    };
-    video.addEventListener("loadeddata", createTexture, { once: true });
-    video.src = url;
-    video.load();
+    retainAsset(url);
+    void Assets.load({
+      src: url,
+      parser: "video",
+      data: {
+        autoPlay: true,
+        loop: true,
+        muted: true,
+        playsinline: true,
+        preload: true,
+        scaleMode: "linear",
+      },
+    })
+      .then((loaded) => {
+        if (active) setTexture(loaded as Texture);
+      })
+      .catch(() => {
+        if (active) setTexture(null);
+      });
     return () => {
       active = false;
-      video.pause();
-      video.removeEventListener("loadeddata", createTexture);
-      createdTexture?.destroy();
+      releaseAsset(url);
     };
   }, [url]);
   return texture;
@@ -1249,12 +1324,15 @@ function useTexture(url?: string | null) {
       setTexture(null);
       return;
     }
-    Assets.load(url)
+    retainAsset(url);
+    Assets.load({
+      src: url,
+      parser: "texture",
+      data: { scaleMode: "linear" },
+    })
       .then((loaded) => {
         if (active) {
-          const loadedTexture = loaded as Texture;
-          loadedTexture.source.scaleMode = "linear";
-          setTexture(loadedTexture);
+          setTexture(loaded as Texture);
         }
       })
       .catch(() => {
@@ -1262,6 +1340,7 @@ function useTexture(url?: string | null) {
       });
     return () => {
       active = false;
+      releaseAsset(url);
     };
   }, [url]);
   return texture;

@@ -103,9 +103,13 @@ export function getSceneDimensions(
   fallback: SceneDimensions = { width: 1600, height: 900 },
 ): SceneDimensions {
   const stored = editorData?.sceneDimensions?.[scope];
+  // Use stored values as-is (they may be below 320 during drafting);
+  // fall back only when no stored dimension exists.
+  const storedWidth = stored?.width;
+  const storedHeight = stored?.height;
   return {
-    width: Math.max(320, Number(stored?.width) || fallback.width),
-    height: Math.max(320, Number(stored?.height) || fallback.height),
+    width: storedWidth != null ? Math.max(1, Number(storedWidth)) : fallback.width,
+    height: storedHeight != null ? Math.max(1, Number(storedHeight)) : fallback.height,
   };
 }
 
@@ -121,8 +125,10 @@ export function updateSceneDimensions(
     sceneDimensions: {
       ...(current.sceneDimensions ?? {}),
       [scope]: {
-        width: Math.max(320, Math.round(dimensions.width)),
-        height: Math.max(320, Math.round(dimensions.height)),
+        // Only apply safety bounds here; business validation (min 320)
+        // is handled by the caller (saveSceneDimensions).
+        width: Math.max(1, Math.min(8192, Math.round(dimensions.width))),
+        height: Math.max(1, Math.min(8192, Math.round(dimensions.height))),
       },
     },
   };

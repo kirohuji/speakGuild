@@ -683,9 +683,12 @@ export function NarrativeWorldStudio({
     field: "width" | "height",
     value: number,
   ) => {
+    // Allow free typing without aggressive clamping — only enforce safety bounds.
+    // Business validation (min 320) is applied on blur in saveSceneDimensions.
+    const safeValue = Number.isFinite(value) ? value : sceneDimensions[field];
     const next = {
       ...sceneDimensions,
-      [field]: Math.max(320, Math.min(8192, value || 320)),
+      [field]: Math.max(1, Math.min(8192, safeValue)),
     };
     if (level === "world" && selectedMap) {
       setMaps((items) =>
@@ -714,15 +717,43 @@ export function NarrativeWorldStudio({
 
   const saveSceneDimensions = async () => {
     if (!selectedMap) return;
+    // Apply business validation on save: clamp to 320–8192 and round to integer.
+    const clamped = {
+      width: Math.max(320, Math.min(8192, Math.round(sceneDimensions.width))),
+      height: Math.max(320, Math.min(8192, Math.round(sceneDimensions.height))),
+    };
+    // Push clamped value back to local state so the input reflects the validated number.
+    if (level === "world") {
+      setMaps((items) =>
+        items.map((item) =>
+          item.id === selectedMap.id ? { ...item, ...clamped } : item,
+        ),
+      );
+    } else {
+      setMaps((items) =>
+        items.map((item) =>
+          item.id === selectedMap.id
+            ? {
+                ...item,
+                editorData: updateSceneDimensions(
+                  item.editorData,
+                  layerScope,
+                  clamped,
+                ),
+              }
+            : item,
+        ),
+      );
+    }
     try {
       if (level === "world") {
-        await updateMap(selectedMap.id, sceneDimensions);
+        await updateMap(selectedMap.id, clamped);
       } else {
         await persistEditorData(
           updateSceneDimensions(
             selectedMap.editorData,
             layerScope,
-            sceneDimensions,
+            clamped,
           ),
         );
       }
@@ -1578,11 +1609,6 @@ export function NarrativeWorldStudio({
           )}
         >
           <ExplorationPixiCanvas
-            key={
-              editable
-                ? "editor-canvas"
-                : `mobile-preview-${previewOrientation}`
-            }
             backgroundUrl={backgroundUrl}
             nodes={nodes}
             selectedId={selectedNodeId}
@@ -2692,10 +2718,12 @@ function Inspector({
             进入下一层编辑
           </Button>
         )}
-        <Button variant="outline" onClick={onEdit}>
-          <Edit3 data-icon="inline-start" />
-          编辑属性
-        </Button>
+        {(level !== "room" || object) && (
+          <Button variant="outline" onClick={onEdit}>
+            <Edit3 data-icon="inline-start" />
+            {level === "room" ? "编辑探索物品" : "编辑属性"}
+          </Button>
+        )}
         <Button variant="ghost" onClick={onDelete}>
           <Trash2 data-icon="inline-start" />
           删除
