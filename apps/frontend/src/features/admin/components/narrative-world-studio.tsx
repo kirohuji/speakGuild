@@ -673,6 +673,18 @@ export function NarrativeWorldStudio({
     if (!editable) setFocusNodeId(id);
   };
 
+  const selectSceneRoot = () => {
+    setObjectId("");
+    setSelectedNodeIds([]);
+    setFocusNodeId("");
+    if (level === "world") {
+      setLocationId("");
+      setRoomId("");
+    } else if (level === "location") {
+      setRoomId("");
+    }
+  };
+
   const openNode = (id: string) => {
     if (editable) return;
     const interaction = sceneInteractions.find((item) => item.id === id);
@@ -1939,30 +1951,6 @@ export function NarrativeWorldStudio({
               {level === "world" ? "添加地点" : "添加房间"}
             </Button>
           )}
-          {editable && (
-            <>
-              {selectedAttachmentParent && !selectedObject && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() =>
-                    openObjectForm(undefined, selectedAttachmentParent.id)
-                  }
-                >
-                  <Sparkles data-icon="inline-start" />
-                  给{level === "world" ? "地点" : "房间"}添加互动
-                </Button>
-              )}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => openObjectForm()}
-              >
-                <Plus data-icon="inline-start" />
-                独立互动
-              </Button>
-            </>
-          )}
         </CardContent>
       </Card>
 
@@ -2081,6 +2069,40 @@ export function NarrativeWorldStudio({
               <CardContent className="p-2 pt-0">
                 <ScrollArea className="h-[132px]">
                   <div className="flex flex-col gap-0.5 pr-1">
+                    <button
+                      type="button"
+                      className={cn(
+                        "mb-1 flex h-8 w-full items-center gap-1.5 rounded-md border px-2 text-left text-xs font-medium transition-colors [&_svg]:size-3.5",
+                        !objectId &&
+                          ((level === "world" && !locationId) ||
+                            (level === "location" && !roomId) ||
+                            level === "room")
+                          ? "border-primary/30 bg-primary/10 text-primary"
+                          : "border-border/60 bg-muted/30 hover:bg-muted",
+                      )}
+                      onClick={selectSceneRoot}
+                    >
+                      {level === "world" ? (
+                        <Map className="shrink-0" />
+                      ) : level === "location" ? (
+                        <MapPin className="shrink-0" />
+                      ) : (
+                        <DoorOpen className="shrink-0" />
+                      )}
+                      <span className="min-w-0 flex-1 truncate">
+                        {level === "world"
+                          ? "当前世界场景"
+                          : level === "location"
+                            ? "当前地点场景"
+                            : "当前房间场景"}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className="h-5 rounded-full px-1.5 text-[9px]"
+                      >
+                        场景
+                      </Badge>
+                    </button>
                     {nodes.map((node) => (
                       <button
                         key={node.id}
@@ -2211,6 +2233,16 @@ export function NarrativeWorldStudio({
             object={selectedObject}
             roomCount={locationRooms.length}
             objectCount={sceneInteractions.length}
+            interactionCount={
+              selectedAttachmentParent
+                ? sceneInteractions.filter(
+                    (interaction) =>
+                      interaction.parentNodeId === selectedAttachmentParent.id,
+                  ).length
+                : sceneInteractions.filter(
+                    (interaction) => !interaction.parentNodeId,
+                  ).length
+            }
             locationScale={
               selectedLocation
                 ? Math.min(
@@ -2294,6 +2326,12 @@ export function NarrativeWorldStudio({
                 openRoomForm(selectedRoom);
             }}
             onDelete={() => void deleteCurrent()}
+            onAddInteraction={() =>
+              openObjectForm(
+                undefined,
+                selectedAttachmentParent?.id ?? "",
+              )
+            }
           />
         </aside>}
       </div>
@@ -3487,6 +3525,46 @@ function LayerPanel({
   );
 }
 
+function InteractionPropertyPanel({
+  count,
+  ownerName,
+  onAdd,
+}: {
+  count: number;
+  ownerName?: string;
+  onAdd: () => void;
+}) {
+  return (
+    <div className="rounded-xl border border-border/70 bg-muted/25 p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-3.5 text-amber-500" />
+            <p className="text-xs font-semibold">场景互动</p>
+            <Badge variant="outline" className="h-5 rounded-full px-1.5 text-[10px]">
+              {count}
+            </Badge>
+          </div>
+          <p className="mt-1 text-[11px] leading-4 text-muted-foreground">
+            {ownerName
+              ? `新互动默认附着到“${ownerName}”`
+              : "新互动默认放在当前场景"}
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="h-7 shrink-0 rounded-lg px-2.5 text-[11px]"
+          onClick={onAdd}
+        >
+          <Plus data-icon="inline-start" />
+          添加
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function Inspector({
   level,
   map,
@@ -3495,6 +3573,7 @@ function Inspector({
   object,
   roomCount,
   objectCount,
+  interactionCount,
   locationScale,
   onLocationScaleChange,
   onLocationScaleCommit,
@@ -3519,6 +3598,7 @@ function Inspector({
   onEnter,
   onEdit,
   onDelete,
+  onAddInteraction,
 }: {
   level: StudioLevel;
   map: GameMapData | null;
@@ -3527,6 +3607,7 @@ function Inspector({
   object: ExplorationObject | null;
   roomCount: number;
   objectCount: number;
+  interactionCount: number;
   locationScale: number;
   onLocationScaleChange: (scale: number) => void;
   onLocationScaleCommit: (scale: number) => void;
@@ -3551,6 +3632,7 @@ function Inspector({
   onEnter: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onAddInteraction: () => void;
 }) {
   if (object) {
     const interactionLabel =
@@ -3641,6 +3723,12 @@ function Inspector({
             {objectCount} 个互动热点。可添加角色、学习资源或通往其他房间的出口。
           </CardDescription>
         </CardHeader>
+        <CardContent className="p-3 pt-0">
+          <InteractionPropertyPanel
+            count={interactionCount}
+            onAdd={onAddInteraction}
+          />
+        </CardContent>
       </Card>
     );
   }
@@ -3657,6 +3745,33 @@ function Inspector({
             选择一座建筑，配置入口图、地点场景和房间。
           </CardDescription>
         </CardHeader>
+        <CardContent>
+          <InteractionPropertyPanel
+            count={interactionCount}
+            onAdd={onAddInteraction}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+  if (level === "location" && !room) {
+    return (
+      <Card>
+        <CardHeader className="p-3">
+          <Badge variant="secondary" className="w-fit">
+            地点场景
+          </Badge>
+          <CardTitle className="text-sm">{location?.displayName}</CardTitle>
+          <CardDescription className="text-xs">
+            选择一个房间编辑属性，或在地点场景中添加独立互动。
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-3 pt-0">
+          <InteractionPropertyPanel
+            count={interactionCount}
+            onAdd={onAddInteraction}
+          />
+        </CardContent>
       </Card>
     );
   }
@@ -3703,6 +3818,11 @@ function Inspector({
         {level === "world" && (
           <>
             <p className="text-xs text-muted-foreground">{roomCount} 个房间</p>
+            <InteractionPropertyPanel
+              count={interactionCount}
+              ownerName={location?.displayName}
+              onAdd={onAddInteraction}
+            />
             {location && (
               <>
               <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3">
@@ -3881,9 +4001,16 @@ function Inspector({
           </>
         )}
         {level === "location" && (
-          <p className="text-xs text-muted-foreground">
-            {objectCount} 个场景互动
-          </p>
+          <>
+            <p className="text-xs text-muted-foreground">
+              {objectCount} 个场景互动
+            </p>
+            <InteractionPropertyPanel
+              count={interactionCount}
+              ownerName={room?.displayName}
+              onAdd={onAddInteraction}
+            />
+          </>
         )}
         <Button onClick={onEnter}>
           <BookOpen data-icon="inline-start" />
