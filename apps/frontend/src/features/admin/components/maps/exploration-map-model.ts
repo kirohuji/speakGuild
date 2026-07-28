@@ -9,22 +9,40 @@ export type RoomLayout = {
 
 export type ExplorationObjectKind =
   | "vocabulary"
+  | "phrase"
+  | "pattern"
   | "reading"
   | "listening"
   | "clue"
   | "quest";
 
+export type SceneInteractionType = "learning" | "character" | "exit";
+export type LearningResourceType = "vocabulary" | "chunk" | "pattern";
+export type CharacterInteractionMode = "ink" | "ai";
+
 export type ExplorationObject = {
   id: string;
-  roomId: string;
+  roomId?: string;
+  scopeKey?: string;
+  /** Optional navigation node this interaction belongs to (location or room). */
+  parentNodeId?: string;
+  anchorMode?: "scene" | "attached";
+  interactionType?: SceneInteractionType;
   title: string;
-  english: string;
-  translation: string;
+  english?: string;
+  translation?: string;
   pronunciation?: string;
   example?: string;
   prompt?: string;
   imageUrl?: string;
   kind: ExplorationObjectKind;
+  resourceType?: LearningResourceType;
+  resourceId?: string;
+  characterId?: string;
+  characterMode?: CharacterInteractionMode;
+  inkScriptId?: string;
+  openingLine?: string;
+  targetRoomId?: string;
   x: number;
   y: number;
   width: number;
@@ -79,9 +97,10 @@ export const BACKGROUND_LAYER_ID = "__background__";
 export const DEFAULT_CONTENT_LAYER_ID = "__content__";
 
 export type ExplorationEditorData = {
-  version: 4;
+  version: number;
   explorationScenes?: Record<string, Record<string, RoomLayout>>;
   explorationObjects?: Record<string, ExplorationObject[]>;
+  sceneInteractions?: Record<string, ExplorationObject[]>;
   locationMasks?: Record<string, ResourceMask>;
   locationOcclusionMasks?: Record<string, ResourceMask>;
   locationVisualStyles?: Record<string, LocationVisualStyle>;
@@ -373,9 +392,19 @@ export function updateRoomLayout(
 
 export function getExplorationObjects(
   map: GameMapData | null,
-  roomId: string,
+  scopeKey: string,
 ): ExplorationObject[] {
-  const items = map?.editorData?.explorationObjects?.[roomId];
+  const legacyRoomId = scopeKey.startsWith("room:")
+    ? scopeKey.slice("room:".length)
+    : scopeKey;
+  const normalizedRoomScope = scopeKey.includes(":")
+    ? scopeKey
+    : `room:${scopeKey}`;
+  const items =
+    map?.editorData?.sceneInteractions?.[scopeKey] ??
+    map?.editorData?.sceneInteractions?.[normalizedRoomScope] ??
+    map?.editorData?.sceneInteractions?.[legacyRoomId] ??
+    map?.editorData?.explorationObjects?.[legacyRoomId];
   if (!Array.isArray(items)) return [];
   return items.filter(
     (item): item is ExplorationObject =>
@@ -388,38 +417,54 @@ export function getExplorationObjects(
 
 export function upsertExplorationObject(
   editorData: any,
-  roomId: string,
+  scopeKey: string,
   object: ExplorationObject,
 ): ExplorationEditorData {
   const current = (editorData ?? {}) as ExplorationEditorData;
-  const roomObjects = Array.isArray(current.explorationObjects?.[roomId])
-    ? current.explorationObjects![roomId]
-    : [];
-  const exists = roomObjects.some((item) => item.id === object.id);
+  const legacyRoomId = scopeKey.startsWith("room:")
+    ? scopeKey.slice("room:".length)
+    : scopeKey;
+  const scopedItems = current.sceneInteractions?.[scopeKey];
+  const legacyScopedItems = current.sceneInteractions?.[legacyRoomId];
+  const legacyItems = current.explorationObjects?.[legacyRoomId];
+  const interactions = Array.isArray(scopedItems)
+    ? scopedItems
+    : Array.isArray(legacyScopedItems)
+      ? legacyScopedItems
+      : Array.isArray(legacyItems)
+        ? legacyItems
+        : [];
+  const normalized: ExplorationObject = {
+    ...object,
+    scopeKey,
+    anchorMode: object.parentNodeId ? "attached" : "scene",
+    interactionType: object.interactionType ?? "learning",
+  };
+  const exists = interactions.some((item) => item.id === object.id);
   return {
     ...current,
-    version: 4,
-    explorationObjects: {
-      ...(current.explorationObjects ?? {}),
-      [roomId]: exists
-        ? roomObjects.map((item) => (item.id === object.id ? object : item))
-        : [...roomObjects, object],
+    version: 5,
+    sceneInteractions: {
+      ...(current.sceneInteractions ?? {}),
+      [scopeKey]: exists
+        ? interactions.map((item) => (item.id === object.id ? normalized : item))
+        : [...interactions, normalized],
     },
   };
 }
 
 export function removeExplorationObject(
   editorData: any,
-  roomId: string,
+  scopeKey: string,
   objectId: string,
 ): ExplorationEditorData {
   const current = (editorData ?? {}) as ExplorationEditorData;
   return {
     ...current,
-    version: 4,
-    explorationObjects: {
-      ...(current.explorationObjects ?? {}),
-      [roomId]: getRoomObjectsFromEditorData(current, roomId).filter(
+    version: 5,
+    sceneInteractions: {
+      ...(current.sceneInteractions ?? {}),
+      [scopeKey]: getSceneInteractionsFromEditorData(current, scopeKey).filter(
         (item) => item.id !== objectId,
       ),
     },
@@ -428,7 +473,7 @@ export function removeExplorationObject(
 
 export function updateExplorationObjectPosition(
   editorData: any,
-  roomId: string,
+  scopeKey: string,
   objectId: string,
   x: number,
   y: number,
@@ -436,20 +481,26 @@ export function updateExplorationObjectPosition(
   const current = (editorData ?? {}) as ExplorationEditorData;
   return {
     ...current,
-    version: 4,
-    explorationObjects: {
-      ...(current.explorationObjects ?? {}),
-      [roomId]: getRoomObjectsFromEditorData(current, roomId).map((item) =>
+    version: 5,
+    sceneInteractions: {
+      ...(current.sceneInteractions ?? {}),
+      [scopeKey]: getSceneInteractionsFromEditorData(current, scopeKey).map((item) =>
         item.id === objectId ? { ...item, x, y } : item,
       ),
     },
   };
 }
 
-function getRoomObjectsFromEditorData(
+function getSceneInteractionsFromEditorData(
   editorData: ExplorationEditorData,
-  roomId: string,
+  scopeKey: string,
 ) {
-  const items = editorData.explorationObjects?.[roomId];
+  const legacyRoomId = scopeKey.startsWith("room:")
+    ? scopeKey.slice("room:".length)
+    : scopeKey;
+  const items =
+    editorData.sceneInteractions?.[scopeKey] ??
+    editorData.sceneInteractions?.[legacyRoomId] ??
+    editorData.explorationObjects?.[legacyRoomId];
   return Array.isArray(items) ? items : [];
 }

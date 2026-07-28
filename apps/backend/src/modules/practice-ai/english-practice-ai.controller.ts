@@ -1,7 +1,7 @@
 import { Body, Controller, Param, Post, Req, HttpException } from '@nestjs/common';
 import type { Request } from 'express';
 import { EnglishPracticeAiService } from './english-practice-ai.service';
-import { DialogueTurnJudgeDto, PlacementAssessmentDto, GenerateDrillsDto, GenerateWarmupPipelineDto, WarmupTurnJudgeDto } from './dto/english-feedback.dto';
+import { DialogueTurnJudgeDto, PlacementAssessmentDto, GenerateDrillsDto, GenerateWarmupPipelineDto, SceneRoleplayTurnDto, WarmupTurnJudgeDto } from './dto/english-feedback.dto';
 import { EnglishPracticeService } from '../practice/english-practice.service';
 import { requireAuthSession } from '../auth/session.util';
 import { AiQuotaService } from '../../common/ai-quota/ai-quota.service';
@@ -27,6 +27,20 @@ export class EnglishPracticeAiController {
       );
     }
     return this.service.judgeDialogueTurn(dto, session.user.id);
+  }
+
+  /** 场景角色自由对话：角色持续回应，同时温和引导已有学习资源。 */
+  @Post('scene-roleplay-turn')
+  async sceneRoleplayTurn(@Req() req: Request, @Body() dto: SceneRoleplayTurnDto) {
+    const session = await requireAuthSession(req);
+    const check = await this.quotaService.checkAndDeduct(session.user.id, 'dialogue');
+    if (!check.allowed) {
+      throw new HttpException(
+        { code: 403, message: check.message, data: { canExchange: true, exchangeCost: check.exchangeCost } },
+        403,
+      );
+    }
+    return this.service.generateSceneRoleplayTurn(dto, session.user.id);
   }
 
   /** 知识点热身单题快速判定 */

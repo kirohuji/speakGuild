@@ -70,6 +70,41 @@ export class DialogueTurnJudgeResultDto {
   confidence: number;
 }
 
+export class SceneRoleplayTurnDto {
+  @IsString()
+  characterName: string;
+
+  @IsString()
+  characterRole: string;
+
+  @IsString()
+  @IsOptional()
+  characterPersonality?: string;
+
+  @IsString()
+  sceneTitle: string;
+
+  @IsString()
+  @IsOptional()
+  scenePrompt?: string;
+
+  @IsString()
+  userText: string;
+
+  @IsArray()
+  @IsOptional()
+  history?: Array<{ speaker: 'npc' | 'user'; text: string }>;
+
+  @IsArray()
+  @IsOptional()
+  learningTargets?: Array<{
+    id: string;
+    type: 'vocabulary' | 'chunk' | 'pattern';
+    text: string;
+    meaning?: string;
+  }>;
+}
+
 export class WarmupTurnJudgeDto {
   @IsString()
   stepType:

@@ -9,19 +9,24 @@ import {
 import {
   ArrowLeft,
   BookOpen,
+  Bot,
   Box,
   Check,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   ChevronsUpDown,
+  Compass,
   DoorOpen,
   Edit3,
   Eraser,
   Eye,
+  GraduationCap,
   Headphones,
   Languages,
   Layers3,
   LockKeyhole,
+  Loader2,
   Map,
   MapPin,
   MessageCircle,
@@ -32,12 +37,14 @@ import {
   Group,
   Monitor,
   Smartphone,
+  Send,
   Sparkles,
   Sun,
   Sunrise,
   Trash2,
   Undo2,
   Ungroup,
+  UserRound,
   Volume2,
   Wrench,
 } from "lucide-react";
@@ -90,6 +97,12 @@ import {
   createRoom,
   deleteLocation,
   deleteRoom,
+  generateSceneRoleplayTurn,
+  getStory,
+  listCharacters,
+  listLibraryChunks,
+  listLibraryPatterns,
+  listLibraryVocabularies,
   listStories,
   listLocations,
   listMaps,
@@ -100,9 +113,14 @@ import {
   type GameLocationData,
   type GameMapData,
   type GameRoomData,
+  type ChunkFull,
+  type GameCharacter,
+  type SentencePatternFull,
   type StoryData,
+  type VocabularyFull,
 } from "../api-content-admin";
 import { ImageUploadField } from "./image-upload-field";
+import { VnStoryPreview } from "./vn-story-preview";
 import {
   ExplorationPixiCanvas,
   type ExplorationNode,
@@ -136,6 +154,8 @@ import {
   type LocationVisualStyle,
   type ExplorationObject,
   type ExplorationObjectKind,
+  type LearningResourceType,
+  type SceneInteractionType,
   type ExplorationLayer,
 } from "./maps/exploration-map-model";
 
@@ -147,6 +167,9 @@ type MaskLayer = "transparency" | "occlusion";
 type PreviewOrientation = "portrait" | "landscape";
 
 const EMPTY_OBJECT: Omit<ExplorationObject, "id" | "roomId"> = {
+  parentNodeId: "",
+  anchorMode: "scene",
+  interactionType: "learning",
   title: "",
   english: "",
   translation: "",
@@ -155,6 +178,13 @@ const EMPTY_OBJECT: Omit<ExplorationObject, "id" | "roomId"> = {
   prompt: "",
   imageUrl: "",
   kind: "vocabulary",
+  resourceType: "vocabulary",
+  resourceId: "",
+  characterId: "",
+  characterMode: "ai",
+  inkScriptId: "",
+  openingLine: "",
+  targetRoomId: "",
   x: 50,
   y: 55,
   width: 110,
@@ -165,6 +195,8 @@ const EMPTY_OBJECT: Omit<ExplorationObject, "id" | "roomId"> = {
 
 const OBJECT_KIND_LABELS: Record<ExplorationObjectKind, string> = {
   vocabulary: "词汇物品",
+  phrase: "句块热点",
+  pattern: "句型热点",
   reading: "阅读线索",
   listening: "听力物品",
   clue: "剧情线索",
@@ -208,6 +240,21 @@ export function NarrativeWorldStudio({
   const [inkStories, setInkStories] = useState<StoryData[]>([]);
   const [inkStoriesLoading, setInkStoriesLoading] = useState(false);
   const [inkStoryPickerOpen, setInkStoryPickerOpen] = useState(false);
+  const [characters, setCharacters] = useState<GameCharacter[]>([]);
+  const [vocabularyResources, setVocabularyResources] = useState<VocabularyFull[]>([]);
+  const [chunkResources, setChunkResources] = useState<ChunkFull[]>([]);
+  const [patternResources, setPatternResources] = useState<SentencePatternFull[]>([]);
+  const [interactionResourcesLoading, setInteractionResourcesLoading] =
+    useState(false);
+  const [interactionResourcesLoaded, setInteractionResourcesLoaded] =
+    useState(false);
+  const [previewStory, setPreviewStory] = useState<StoryData | null>(null);
+  const [roleplayHistory, setRoleplayHistory] = useState<
+    Array<{ speaker: "npc" | "user"; text: string }>
+  >([]);
+  const [roleplayInput, setRoleplayInput] = useState("");
+  const [roleplayCoach, setRoleplayCoach] = useState("");
+  const [roleplayLoading, setRoleplayLoading] = useState(false);
   const maskDraftRef = useRef<any>(null);
 
   const [mapDialog, setMapDialog] = useState(false);
@@ -312,6 +359,72 @@ export function NarrativeWorldStudio({
     }
   }, [loadInkStories, roomDialog, roomForm.roomType]);
 
+  const loadInteractionResources = useCallback(async () => {
+    if (interactionResourcesLoading || interactionResourcesLoaded) return;
+    setInteractionResourcesLoading(true);
+    try {
+      const [nextCharacters, vocabPage, chunkPage, patternPage] =
+        await Promise.all([
+          listCharacters(),
+          listLibraryVocabularies({ page: 1, pageSize: 100 }),
+          listLibraryChunks({ page: 1, pageSize: 100 }),
+          listLibraryPatterns({ page: 1, pageSize: 100 }),
+        ]);
+      const [remainingVocabPages, remainingChunkPages, remainingPatternPages] =
+        await Promise.all([
+          Promise.all(
+            Array.from(
+              { length: Math.max(0, vocabPage.totalPages - 1) },
+              (_, index) =>
+                listLibraryVocabularies({
+                  page: index + 2,
+                  pageSize: 100,
+                }),
+            ),
+          ),
+          Promise.all(
+            Array.from(
+              { length: Math.max(0, chunkPage.totalPages - 1) },
+              (_, index) =>
+                listLibraryChunks({ page: index + 2, pageSize: 100 }),
+            ),
+          ),
+          Promise.all(
+            Array.from(
+              { length: Math.max(0, patternPage.totalPages - 1) },
+              (_, index) =>
+                listLibraryPatterns({ page: index + 2, pageSize: 100 }),
+            ),
+          ),
+        ]);
+      setCharacters(nextCharacters);
+      setVocabularyResources([
+        ...vocabPage.items,
+        ...remainingVocabPages.flatMap((page) => page.items),
+      ]);
+      setChunkResources([
+        ...chunkPage.items,
+        ...remainingChunkPages.flatMap((page) => page.items),
+      ]);
+      setPatternResources([
+        ...patternPage.items,
+        ...remainingPatternPages.flatMap((page) => page.items),
+      ]);
+      setInteractionResourcesLoaded(true);
+    } catch {
+      toast.error("互动资源加载失败");
+    } finally {
+      setInteractionResourcesLoading(false);
+    }
+  }, [
+    interactionResourcesLoaded,
+    interactionResourcesLoading,
+  ]);
+
+  useEffect(() => {
+    if (objectDialog) void loadInteractionResources();
+  }, [loadInteractionResources, objectDialog]);
+
   const selectedMap = maps.find((item) => item.id === mapId) ?? null;
   const mapLocations = useMemo(
     () => locations.filter((item) => item.mapId === mapId),
@@ -325,15 +438,12 @@ export function NarrativeWorldStudio({
   );
   const selectedRoom =
     locationRooms.find((item) => item.id === roomId) ?? null;
-  const roomObjects = getExplorationObjects(selectedMap, roomId);
-  const selectedObject =
-    roomObjects.find((item) => item.id === objectId) ?? null;
-
-  const visibleObjects = roomObjects.filter((item) => {
-    if (objectFilter === "required") return item.required;
-    if (objectFilter === "undiscovered") return !discovered.has(item.id);
-    return true;
-  });
+  const selectedAttachmentParent =
+    level === "world"
+      ? selectedLocation
+      : level === "location"
+        ? selectedRoom
+        : null;
 
   const layerScope =
     level === "world"
@@ -341,6 +451,14 @@ export function NarrativeWorldStudio({
       : level === "location"
         ? `location:${locationId}`
         : `room:${roomId}`;
+  const sceneInteractions = getExplorationObjects(selectedMap, layerScope);
+  const selectedObject =
+    sceneInteractions.find((item) => item.id === objectId) ?? null;
+  const visibleObjects = sceneInteractions.filter((item) => {
+    if (objectFilter === "required") return item.required;
+    if (objectFilter === "undiscovered") return !discovered.has(item.id);
+    return true;
+  });
   const layers = useMemo(
     () => getExplorationLayers(selectedMap?.editorData, layerScope),
     [layerScope, selectedMap?.editorData],
@@ -362,8 +480,36 @@ export function NarrativeWorldStudio({
         groupId: getExplorationNodeGroupId(selectedMap?.editorData, node.id),
       };
     };
+    const interactionNodes = visibleObjects.map((item) =>
+      withLayer({
+        id: item.id,
+        title: item.english || item.title,
+        subtitle: `${item.parentNodeId ? "附着 · " : ""}${
+          item.interactionType === "character"
+            ? item.characterMode === "ink"
+              ? "Ink 剧情"
+              : "AI 自由对话"
+            : item.interactionType === "exit"
+              ? `前往${rooms.find((room) => room.id === item.targetRoomId)?.displayName ?? "其他房间"}`
+              : item.translation || OBJECT_KIND_LABELS[item.kind]
+        }`,
+        imageUrl: item.imageUrl,
+        x: item.x,
+        y: item.y,
+        width: item.width,
+        height: item.height,
+        kind:
+          item.interactionType === "character"
+            ? ("character" as const)
+            : item.interactionType === "exit"
+              ? ("exit" as const)
+              : ("learning" as const),
+        required: item.required,
+        hidden: item.hidden,
+      }),
+    );
     if (level === "world") {
-      return mapLocations.map((location) => withLayer({
+      return [...mapLocations.map((location) => withLayer({
         id: location.id,
         title: location.displayName,
         subtitle: `${rooms.filter((room) => room.locationId === location.id).length} 个房间`,
@@ -378,10 +524,10 @@ export function NarrativeWorldStudio({
         kind: "location",
         disabled: location.disabled,
         hidden: location.hidden,
-      }));
+      })), ...interactionNodes];
     }
     if (level === "location") {
-      return locationRooms.map((room, index) => withLayer({
+      return [...locationRooms.map((room, index) => withLayer({
         id: room.id,
         title: room.displayName,
         subtitle: room.isEntrance ? "入口房间" : room.roomType,
@@ -390,21 +536,9 @@ export function NarrativeWorldStudio({
         kind: "room",
         disabled: room.disabled,
         hidden: room.hidden,
-      }));
+      })), ...interactionNodes];
     }
-    return visibleObjects.map((item) => withLayer({
-      id: item.id,
-      title: item.english || item.title,
-      subtitle: item.translation || OBJECT_KIND_LABELS[item.kind],
-      imageUrl: item.imageUrl,
-      x: item.x,
-      y: item.y,
-      width: item.width,
-      height: item.height,
-      kind: "object",
-      required: item.required,
-      hidden: item.hidden,
-    }));
+    return interactionNodes;
   }, [
     layers,
     level,
@@ -432,7 +566,8 @@ export function NarrativeWorldStudio({
   const worldWidth = sceneDimensions.width;
   const worldHeight = sceneDimensions.height;
   const selectedNodeId =
-    level === "world" ? locationId : level === "location" ? roomId : objectId;
+    objectId ||
+    (level === "world" ? locationId : level === "location" ? roomId : "");
   const effectiveSelectedNodeIds = selectedNodeIds.length
     ? selectedNodeIds
     : selectedNodeId
@@ -520,27 +655,67 @@ export function NarrativeWorldStudio({
         ? current.filter((item) => !relatedIds.includes(item))
         : [...new Set([...current, ...relatedIds])];
     });
-    if (level === "world") setLocationId(id);
-    else if (level === "location") setRoomId(id);
-    else setObjectId(id);
+    if (
+      node?.kind === "learning" ||
+      node?.kind === "character" ||
+      node?.kind === "exit" ||
+      node?.kind === "object"
+    ) {
+      setObjectId(id);
+      const interaction = sceneInteractions.find((item) => item.id === id);
+      if (level === "world") setLocationId(interaction?.parentNodeId ?? "");
+      if (level === "location") setRoomId(interaction?.parentNodeId ?? "");
+    } else {
+      setObjectId("");
+      if (level === "world") setLocationId(id);
+      else if (level === "location") setRoomId(id);
+    }
     if (!editable) setFocusNodeId(id);
   };
 
   const openNode = (id: string) => {
     if (editable) return;
-    if (level === "world") {
-      const entranceRoom = rooms.find(
+    const interaction = sceneInteractions.find((item) => item.id === id);
+    if (interaction?.interactionType === "exit" && interaction.targetRoomId) {
+      const targetRoom = rooms.find(
         (room) =>
-          room.locationId === id &&
-          room.isEntrance &&
+          room.id === interaction.targetRoomId &&
           !room.disabled &&
           !room.hidden,
       );
-      if (entranceRoom) {
+      if (targetRoom) {
         setPreviewId("");
-        enterLocationPreview(id);
+        setLocationId(targetRoom.locationId);
+        enterRoom(targetRoom.id);
         return;
       }
+    }
+    if (interaction) {
+      if (interaction.interactionType === "character") {
+        void loadInteractionResources();
+      }
+      setPreviewId(id);
+      setFocusNodeId(id);
+      setRoleplayHistory(
+        interaction.interactionType === "character" &&
+          interaction.openingLine
+          ? [{ speaker: "npc", text: interaction.openingLine }]
+          : [],
+      );
+      setRoleplayCoach("");
+      if (
+        interaction.interactionType === "character" &&
+        interaction.characterMode === "ink" &&
+        interaction.inkScriptId
+      ) {
+        setPreviewStory(null);
+        void getStory(interaction.inkScriptId)
+          .then(setPreviewStory)
+          .catch(() => toast.error("Ink 剧情加载失败"));
+      } else {
+        setPreviewStory(null);
+      }
+      return;
     }
     setPreviewId(id);
     setFocusNodeId(id);
@@ -549,9 +724,22 @@ export function NarrativeWorldStudio({
   const moveNode = async (id: string, x: number, y: number) => {
     const activeNode = nodes.find((item) => item.id === id);
     if (!activeNode) return;
-    const movedNodes = activeNode.groupId
+    const groupedNodes = activeNode.groupId
       ? nodes.filter((item) => item.groupId === activeNode.groupId)
       : [activeNode];
+    const groupedIds = new Set(groupedNodes.map((node) => node.id));
+    const attachedNodes = nodes.filter((node) =>
+      sceneInteractions.some(
+        (interaction) =>
+          interaction.id === node.id &&
+          interaction.parentNodeId &&
+          groupedIds.has(interaction.parentNodeId),
+      ),
+    );
+    const movedNodes = [
+      ...groupedNodes,
+      ...attachedNodes.filter((node) => !groupedIds.has(node.id)),
+    ];
     const deltaX = x - activeNode.x;
     const deltaY = y - activeNode.y;
     const positions = new globalThis.Map(
@@ -562,6 +750,9 @@ export function NarrativeWorldStudio({
           y: Math.max(0, Math.min(100, node.y + deltaY)),
         },
       ]),
+    );
+    const interactionPositions = [...positions].filter(([nodeId]) =>
+      sceneInteractions.some((item) => item.id === nodeId),
     );
     if (level === "world") {
       setLocations((items) =>
@@ -574,13 +765,30 @@ export function NarrativeWorldStudio({
       );
       try {
         await Promise.all(
-          [...positions].map(([nodeId, position]) =>
+          [...positions]
+            .filter(([nodeId]) =>
+              mapLocations.some((location) => location.id === nodeId),
+            )
+            .map(([nodeId, position]) =>
             updateLocation(nodeId, {
               posX: position.x,
               posY: position.y,
             }),
           ),
         );
+        if (selectedMap && interactionPositions.length) {
+          let nextEditorData = selectedMap.editorData;
+          for (const [nodeId, position] of interactionPositions) {
+            nextEditorData = updateExplorationObjectPosition(
+              nextEditorData,
+              layerScope,
+              nodeId,
+              position.x,
+              position.y,
+            );
+          }
+          await persistEditorData(nextEditorData);
+        }
       } catch {
         toast.error("地点位置保存失败");
         await load();
@@ -591,6 +799,16 @@ export function NarrativeWorldStudio({
     if (level === "location") {
       let nextEditorData = selectedMap.editorData;
       for (const [nodeId, position] of positions) {
+        if (sceneInteractions.some((item) => item.id === nodeId)) {
+          nextEditorData = updateExplorationObjectPosition(
+            nextEditorData,
+            layerScope,
+            nodeId,
+            position.x,
+            position.y,
+          );
+          continue;
+        }
         const index = locationRooms.findIndex((item) => item.id === nodeId);
         const current = getRoomLayout(
           { ...selectedMap, editorData: nextEditorData },
@@ -615,7 +833,7 @@ export function NarrativeWorldStudio({
     for (const [nodeId, position] of positions) {
       nextEditorData = updateExplorationObjectPosition(
         nextEditorData,
-        roomId,
+        layerScope,
         nodeId,
         position.x,
         position.y,
@@ -1223,19 +1441,33 @@ export function NarrativeWorldStudio({
     }
   };
 
-  const openObjectForm = (object?: ExplorationObject) => {
+  const openObjectForm = (
+    object?: ExplorationObject,
+    parentNodeId = "",
+  ) => {
+    const parentNode = nodes.find((node) => node.id === parentNodeId);
     setEditingObject(object ?? null);
     setObjectForm(
       object
         ? {
+            parentNodeId: object.parentNodeId ?? "",
+            anchorMode: object.parentNodeId ? "attached" : "scene",
+            interactionType: object.interactionType ?? "learning",
             title: object.title,
-            english: object.english,
-            translation: object.translation,
+            english: object.english ?? "",
+            translation: object.translation ?? "",
             pronunciation: object.pronunciation ?? "",
             example: object.example ?? "",
             prompt: object.prompt ?? "",
             imageUrl: object.imageUrl ?? "",
             kind: object.kind,
+            resourceType: object.resourceType ?? "vocabulary",
+            resourceId: object.resourceId ?? "",
+            characterId: object.characterId ?? "",
+            characterMode: object.characterMode ?? "ai",
+            inkScriptId: object.inkScriptId ?? "",
+            openingLine: object.openingLine ?? "",
+            targetRoomId: object.targetRoomId ?? "",
             x: object.x,
             y: object.y,
             width: object.width,
@@ -1243,74 +1475,214 @@ export function NarrativeWorldStudio({
             required: object.required,
             hidden: object.hidden,
           }
-        : { ...EMPTY_OBJECT },
+        : {
+            ...EMPTY_OBJECT,
+            parentNodeId,
+            anchorMode: parentNodeId ? "attached" : "scene",
+            x: parentNode ? Math.min(94, parentNode.x + 8) : EMPTY_OBJECT.x,
+            y: parentNode ? Math.min(94, parentNode.y + 6) : EMPTY_OBJECT.y,
+          },
     );
     setObjectDialog(true);
   };
 
+  const bindLearningResource = (
+    resourceType: LearningResourceType,
+    resourceId: string,
+  ) => {
+    if (resourceType === "vocabulary") {
+      const resource = vocabularyResources.find((item) => item.id === resourceId);
+      if (!resource) return;
+      const firstExample = Array.isArray(resource.examples)
+        ? resource.examples[0]
+        : undefined;
+      setObjectForm((current) => ({
+        ...current,
+        resourceType,
+        resourceId,
+        kind: "vocabulary",
+        title: resource.word,
+        english: resource.word,
+        translation: resource.meaning,
+        pronunciation: resource.phoneticUs ?? resource.phoneticUk ?? "",
+        example: firstExample?.en ?? "",
+      }));
+      return;
+    }
+    if (resourceType === "chunk") {
+      const resource = chunkResources.find((item) => item.id === resourceId);
+      if (!resource) return;
+      setObjectForm((current) => ({
+        ...current,
+        resourceType,
+        resourceId,
+        kind: "phrase",
+        title: resource.text,
+        english: resource.text,
+        translation: resource.meaning,
+        pronunciation: "",
+        example: resource.examples?.[0]?.en ?? "",
+      }));
+      return;
+    }
+    const resource = patternResources.find((item) => item.id === resourceId);
+    if (!resource) return;
+    const examples = Array.isArray(resource.examples) ? resource.examples : [];
+    setObjectForm((current) => ({
+      ...current,
+      resourceType,
+      resourceId,
+      kind: "pattern",
+      title: resource.pattern,
+      english: resource.pattern,
+      translation: resource.meaning ?? "",
+      pronunciation: "",
+      example: examples[0]?.en ?? examples[0]?.example ?? "",
+    }));
+  };
+
   const saveObject = async () => {
-    if (!selectedMap || !selectedRoom || !objectForm.title.trim()) return;
+    if (!selectedMap || !objectForm.title.trim()) return;
+    if (
+      objectForm.interactionType === "learning" &&
+      !objectForm.resourceId
+    ) {
+      toast.error("请先绑定一个已有的单词、句块或句型");
+      return;
+    }
+    if (
+      objectForm.interactionType === "character" &&
+      !objectForm.characterId
+    ) {
+      toast.error("请先绑定一个角色");
+      return;
+    }
+    if (
+      objectForm.interactionType === "character" &&
+      objectForm.characterMode === "ink" &&
+      !objectForm.inkScriptId
+    ) {
+      toast.error("请先绑定 Ink 剧情");
+      return;
+    }
+    if (
+      objectForm.interactionType === "exit" &&
+      !objectForm.targetRoomId
+    ) {
+      toast.error("请先选择出口要前往的房间");
+      return;
+    }
     const object: ExplorationObject = {
       ...objectForm,
+      parentNodeId: objectForm.parentNodeId || undefined,
+      anchorMode: objectForm.parentNodeId ? "attached" : "scene",
       id:
         editingObject?.id ??
         `${makeExplorationKey(objectForm.english || objectForm.title, "object")}_${Date.now().toString(36)}`,
-      roomId: selectedRoom.id,
+      scopeKey: layerScope,
+      roomId: level === "room" ? selectedRoom?.id : undefined,
     };
     setSaving(true);
     try {
-      await persistEditorData(
-        upsertExplorationObject(
-          selectedMap.editorData,
-          selectedRoom.id,
-          object,
-        ),
+      let nextEditorData = upsertExplorationObject(
+        selectedMap.editorData,
+        layerScope,
+        object,
       );
+      if (!editingObject && object.parentNodeId) {
+        nextEditorData = updateExplorationNodeLayers(
+          nextEditorData,
+          [object.id],
+          getExplorationNodeLayerId(
+            selectedMap.editorData,
+            object.parentNodeId,
+          ),
+        );
+      }
+      await persistEditorData(nextEditorData);
       setObjectId(object.id);
       setObjectDialog(false);
-      toast.success("探索物品已保存");
+      toast.success("互动热点已保存");
     } finally {
       setSaving(false);
     }
   };
 
   const deleteCurrent = async () => {
-    if (level === "world" && selectedLocation) {
+    if (selectedObject && selectedMap) {
+      await persistEditorData(
+        removeExplorationObject(
+          selectedMap.editorData,
+          layerScope,
+          selectedObject.id,
+        ),
+      );
+      setObjectId("");
+      toast.success("互动热点已删除");
+    } else if (level === "world" && selectedLocation) {
       if (!window.confirm(`删除地点“${selectedLocation.displayName}”及其房间？`))
         return;
+      const attachedInteractions = sceneInteractions.filter(
+        (interaction) => interaction.parentNodeId === selectedLocation.id,
+      );
+      if (selectedMap && attachedInteractions.length) {
+        let nextEditorData = selectedMap.editorData;
+        for (const interaction of attachedInteractions) {
+          nextEditorData = removeExplorationObject(
+            nextEditorData,
+            layerScope,
+            interaction.id,
+          );
+        }
+        await persistEditorData(nextEditorData);
+      }
       await deleteLocation(selectedLocation.id);
       setLocationId("");
       await load();
     } else if (level === "location" && selectedRoom) {
       if (!window.confirm(`删除房间“${selectedRoom.displayName}”？`)) return;
+      const attachedInteractions = sceneInteractions.filter(
+        (interaction) => interaction.parentNodeId === selectedRoom.id,
+      );
+      if (selectedMap && attachedInteractions.length) {
+        let nextEditorData = selectedMap.editorData;
+        for (const interaction of attachedInteractions) {
+          nextEditorData = removeExplorationObject(
+            nextEditorData,
+            layerScope,
+            interaction.id,
+          );
+        }
+        await persistEditorData(nextEditorData);
+      }
       await deleteRoom(selectedRoom.id);
       setRoomId("");
       await load();
-    } else if (level === "room" && selectedObject && selectedMap) {
-      await persistEditorData(
-        removeExplorationObject(
-          selectedMap.editorData,
-          roomId,
-          selectedObject.id,
-        ),
-      );
-      setObjectId("");
-      toast.success("探索物品已删除");
     }
   };
 
+  const previewObject =
+    sceneInteractions.find((item) => item.id === previewId) ?? null;
+  const previewParentId = previewObject?.parentNodeId;
   const previewLocation =
     level === "world"
-      ? mapLocations.find((item) => item.id === previewId)
+      ? (mapLocations.find(
+          (item) => item.id === (previewParentId ?? previewId),
+        ) ?? null)
       : null;
   const previewRoom =
     level === "location"
-      ? locationRooms.find((item) => item.id === previewId)
+      ? (locationRooms.find(
+          (item) => item.id === (previewParentId ?? previewId),
+        ) ?? null)
       : null;
-  const previewObject =
-    level === "room"
-      ? roomObjects.find((item) => item.id === previewId)
-      : null;
+  const previewPlaceId = previewLocation?.id ?? previewRoom?.id ?? "";
+  const previewPlaceInteractions = previewPlaceId
+    ? sceneInteractions.filter(
+        (interaction) =>
+          interaction.parentNodeId === previewPlaceId && !interaction.hidden,
+      )
+    : [];
 
   const pronounce = (text: string) => {
     if (!text || !("speechSynthesis" in window)) return;
@@ -1319,6 +1691,69 @@ export function NarrativeWorldStudio({
     utterance.lang = "en-US";
     utterance.rate = 0.86;
     window.speechSynthesis.speak(utterance);
+  };
+
+  const submitRoleplayTurn = async () => {
+    if (
+      !previewObject ||
+      previewObject.interactionType !== "character" ||
+      !roleplayInput.trim() ||
+      roleplayLoading
+    )
+      return;
+    const character = characters.find(
+      (item) => item.id === previewObject.characterId,
+    );
+    if (!character) {
+      toast.error("该热点未绑定有效角色");
+      return;
+    }
+    const userText = roleplayInput.trim();
+    const historyBeforeReply = [
+      ...roleplayHistory,
+      { speaker: "user" as const, text: userText },
+    ];
+    setRoleplayHistory(historyBeforeReply);
+    setRoleplayInput("");
+    setRoleplayLoading(true);
+    try {
+      const result = await generateSceneRoleplayTurn({
+        characterName: character.displayName,
+        characterRole: character.role,
+        characterPersonality: character.personality ?? undefined,
+        sceneTitle:
+          selectedRoom?.displayName ??
+          selectedLocation?.displayName ??
+          selectedMap?.displayName ??
+          "English learning scene",
+        scenePrompt: previewObject.prompt,
+        userText,
+        history: roleplayHistory,
+        learningTargets: sceneInteractions
+          .filter(
+            (item) =>
+              (item.interactionType ?? "learning") === "learning" &&
+              item.resourceId &&
+              item.resourceType,
+          )
+          .map((item) => ({
+            id: item.resourceId!,
+            type: item.resourceType!,
+            text: item.english || item.title,
+            meaning: item.translation,
+          })),
+      });
+      setRoleplayHistory([
+        ...historyBeforeReply,
+        { speaker: "npc", text: result.reply },
+      ]);
+      setRoleplayCoach(result.coach);
+    } catch {
+      setRoleplayHistory(roleplayHistory);
+      toast.error("AI 角色暂时无法回应");
+    } finally {
+      setRoleplayLoading(false);
+    }
   };
 
   if (loading) {
@@ -1491,24 +1926,42 @@ export function NarrativeWorldStudio({
             <Route data-icon="inline-start" />
             {touring ? "停止导览" : "自动导览"}
           </Button>
-          {editable && (
+          {editable && level !== "room" && (
             <Button
               size="sm"
               onClick={() =>
                 level === "world"
                   ? openLocationForm()
-                  : level === "location"
-                    ? openRoomForm()
-                    : openObjectForm()
+                  : openRoomForm()
               }
             >
               <Plus data-icon="inline-start" />
-              {level === "world"
-                ? "添加地点"
-                : level === "location"
-                  ? "添加房间"
-                  : "添加物品"}
+              {level === "world" ? "添加地点" : "添加房间"}
             </Button>
+          )}
+          {editable && (
+            <>
+              {selectedAttachmentParent && !selectedObject && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() =>
+                    openObjectForm(undefined, selectedAttachmentParent.id)
+                  }
+                >
+                  <Sparkles data-icon="inline-start" />
+                  给{level === "world" ? "地点" : "房间"}添加互动
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => openObjectForm()}
+              >
+                <Plus data-icon="inline-start" />
+                独立互动
+              </Button>
+            </>
           )}
         </CardContent>
       </Card>
@@ -1528,14 +1981,14 @@ export function NarrativeWorldStudio({
             <ToggleGroupItem value="undiscovered">未发现</ToggleGroupItem>
           </ToggleGroup>
           <span className="text-xs text-muted-foreground">
-            已发现 {roomObjects.filter((object) => discovered.has(object.id)).length}/
-            {roomObjects.length}
+            已发现 {sceneInteractions.filter((object) => discovered.has(object.id)).length}/
+            {sceneInteractions.length}
           </span>
           <Progress
             value={
-              roomObjects.length
-                ? (roomObjects.filter((object) => discovered.has(object.id)).length /
-                    roomObjects.length) *
+              sceneInteractions.length
+                ? (sceneInteractions.filter((object) => discovered.has(object.id)).length /
+                    sceneInteractions.length) *
                   100
                 : 0
             }
@@ -1619,10 +2072,10 @@ export function NarrativeWorldStudio({
               <CardHeader className="p-2 pb-1">
                 <CardTitle className="text-xs">
                   {level === "world"
-                    ? "地点资源"
+                    ? "世界场景元素"
                     : level === "location"
-                      ? "房间资源"
-                      : "探索物品"}
+                      ? "地点场景元素"
+                      : "房间互动元素"}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-2 pt-0">
@@ -1645,16 +2098,18 @@ export function NarrativeWorldStudio({
                           )
                         }
                         onDoubleClick={() => {
-                          if (level === "world") enterLocation(node.id);
-                          else if (level === "location") enterRoom(node.id);
+                          if (node.kind === "location") enterLocation(node.id);
+                          else if (node.kind === "room") enterRoom(node.id);
                         }}
                       >
-                        {level === "world" ? (
+                        {node.kind === "location" ? (
                           <MapPin className="shrink-0" />
-                        ) : level === "location" ? (
+                        ) : node.kind === "room" || node.kind === "exit" ? (
                           <DoorOpen className="shrink-0" />
+                        ) : node.kind === "character" ? (
+                          <UserRound className="shrink-0" />
                         ) : (
-                          <Box className="shrink-0" />
+                          <GraduationCap className="shrink-0" />
                         )}
                         <span className="min-w-0 flex-1 truncate">
                           {node.title}
@@ -1755,7 +2210,7 @@ export function NarrativeWorldStudio({
             room={selectedRoom}
             object={selectedObject}
             roomCount={locationRooms.length}
-            objectCount={roomObjects.length}
+            objectCount={sceneInteractions.length}
             locationScale={
               selectedLocation
                 ? Math.min(
@@ -1832,12 +2287,11 @@ export function NarrativeWorldStudio({
                 enterRoom(selectedRoom.id);
             }}
             onEdit={() => {
-              if (level === "world" && selectedLocation)
+              if (selectedObject) openObjectForm(selectedObject);
+              else if (level === "world" && selectedLocation)
                 openLocationForm(selectedLocation);
               else if (level === "location" && selectedRoom)
                 openRoomForm(selectedRoom);
-              else if (level === "room" && selectedObject)
-                openObjectForm(selectedObject);
             }}
             onDelete={() => void deleteCurrent()}
           />
@@ -2119,139 +2573,326 @@ export function NarrativeWorldStudio({
       </Dialog>
 
       <Dialog open={objectDialog} onOpenChange={setObjectDialog}>
-        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingObject ? "编辑探索物品" : "添加探索物品"}
+              {editingObject ? "编辑场景互动" : "添加场景互动"}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
+            {level !== "room" && (
+              <div className="rounded-xl border bg-muted/30 p-3">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
+                  <Field
+                    label={`附着到${level === "world" ? "地点" : "房间"}（可选）`}
+                  >
+                    <ResourceCombobox
+                      value={objectForm.parentNodeId ?? ""}
+                      placeholder="不附着，作为场景独立互动"
+                      options={
+                        level === "world"
+                          ? mapLocations.map((location) => ({
+                              id: location.id,
+                              label: location.displayName,
+                              description: "移动地点时会一起移动",
+                            }))
+                          : locationRooms.map((room) => ({
+                              id: room.id,
+                              label: room.displayName,
+                              description: "移动房间时会一起移动",
+                            }))
+                      }
+                      onChange={(parentNodeId) =>
+                        setObjectForm((current) => ({
+                          ...current,
+                          parentNodeId,
+                          anchorMode: "attached",
+                        }))
+                      }
+                    />
+                  </Field>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={!objectForm.parentNodeId}
+                    onClick={() =>
+                      setObjectForm((current) => ({
+                        ...current,
+                        parentNodeId: "",
+                        anchorMode: "scene",
+                      }))
+                    }
+                  >
+                    设为独立
+                  </Button>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  附着互动仍有自己的图层和点击区域，但会跟随所属资源移动，并显示在它的预览卡片中。
+                </p>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
+              <Field label="互动类型">
+                <Select
+                  value={objectForm.interactionType}
+                  onChange={(event) =>
+                    setObjectForm({
+                      ...objectForm,
+                      interactionType: event.target.value as SceneInteractionType,
+                    })
+                  }
+                >
+                  <SelectItem value="learning">学习热点</SelectItem>
+                  <SelectItem value="character">角色互动</SelectItem>
+                  {level === "room" && (
+                    <SelectItem value="exit">房间出口</SelectItem>
+                  )}
+                </Select>
+              </Field>
               <Field label="后台名称">
                 <Input
                   value={objectForm.title}
                   onChange={(event) =>
                     setObjectForm({ ...objectForm, title: event.target.value })
                   }
-                  placeholder="咖啡壶"
-                />
-              </Field>
-              <Field label="交互类型">
-                <Select
-                  value={objectForm.kind}
-                  onChange={(event) =>
-                    setObjectForm({
-                      ...objectForm,
-                      kind: event.target.value as ExplorationObjectKind,
-                    })
-                  }
-                >
-                  {Object.entries(OBJECT_KIND_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </Select>
-              </Field>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="英文">
-                <Input
-                  value={objectForm.english}
-                  onChange={(event) =>
-                    setObjectForm({ ...objectForm, english: event.target.value })
-                  }
-                  placeholder="kettle"
-                />
-              </Field>
-              <Field label="中文">
-                <Input
-                  value={objectForm.translation}
-                  onChange={(event) =>
-                    setObjectForm({
-                      ...objectForm,
-                      translation: event.target.value,
-                    })
-                  }
-                  placeholder="水壶"
+                  placeholder="例如：体温计 / 校医 / 诊疗室的门"
                 />
               </Field>
             </div>
-            <Field label="音标">
-              <Input
-                value={objectForm.pronunciation}
-                onChange={(event) =>
-                  setObjectForm({
-                    ...objectForm,
-                    pronunciation: event.target.value,
-                  })
-                }
-                placeholder="/ˈket.əl/"
-              />
-            </Field>
-            <Field label="剧情例句">
-              <Input
-                value={objectForm.example}
-                onChange={(event) =>
-                  setObjectForm({ ...objectForm, example: event.target.value })
-                }
-                placeholder="The kettle is boiling."
-              />
-            </Field>
-            <Field label="学习提示或剧情线索">
-              <Textarea
-                value={objectForm.prompt}
-                onChange={(event) =>
-                  setObjectForm({ ...objectForm, prompt: event.target.value })
-                }
-                placeholder="点击后告诉学习者该观察什么、说什么。"
-              />
-            </Field>
-            <Field label="物品透明图">
-              <ImageUploadField
-                value={objectForm.imageUrl}
-                onChange={(url) =>
-                  setObjectForm({ ...objectForm, imageUrl: url })
-                }
-                previewSize="md"
-                group="library"
-              />
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="显示宽度">
-                <Input
-                  type="number"
-                  value={objectForm.width}
-                  onChange={(event) =>
+
+            {objectForm.interactionType === "learning" && (
+              <>
+                <div className="grid grid-cols-[160px_minmax(0,1fr)] gap-3">
+                  <Field label="资源类型">
+                    <Select
+                      value={objectForm.resourceType}
+                      onChange={(event) =>
+                        setObjectForm({
+                          ...objectForm,
+                          resourceType: event.target.value as LearningResourceType,
+                          resourceId: "",
+                        })
+                      }
+                    >
+                      <SelectItem value="vocabulary">单词</SelectItem>
+                      <SelectItem value="chunk">句块</SelectItem>
+                      <SelectItem value="pattern">句型</SelectItem>
+                    </Select>
+                  </Field>
+                  <Field label="绑定已有学习资源">
+                    <ResourceCombobox
+                      loading={interactionResourcesLoading}
+                      value={objectForm.resourceId}
+                      placeholder="搜索并选择已有资源"
+                      options={
+                        objectForm.resourceType === "vocabulary"
+                          ? vocabularyResources.map((item) => ({
+                              id: item.id,
+                              label: item.word,
+                              description: item.meaning,
+                            }))
+                          : objectForm.resourceType === "chunk"
+                            ? chunkResources.map((item) => ({
+                                id: item.id,
+                                label: item.text,
+                                description: item.meaning,
+                              }))
+                            : patternResources.map((item) => ({
+                                id: item.id,
+                                label: item.pattern,
+                                description: item.meaning ?? "",
+                              }))
+                      }
+                      onChange={(id) =>
+                        bindLearningResource(
+                          objectForm.resourceType as LearningResourceType,
+                          id,
+                        )
+                      }
+                    />
+                  </Field>
+                </div>
+                {objectForm.resourceId && (
+                  <div className="rounded-lg border bg-muted/30 p-3">
+                    <p className="font-medium">{objectForm.english}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {objectForm.pronunciation} {objectForm.translation}
+                    </p>
+                    {objectForm.example && (
+                      <p className="mt-2 text-xs">{objectForm.example}</p>
+                    )}
+                  </div>
+                )}
+                <Field label="学习提示">
+                  <Textarea
+                    value={objectForm.prompt}
+                    onChange={(event) =>
+                      setObjectForm({ ...objectForm, prompt: event.target.value })
+                    }
+                    placeholder="例如：点击物品后听发音并跟读。"
+                  />
+                </Field>
+              </>
+            )}
+
+            {objectForm.interactionType === "character" && (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="绑定角色">
+                    <ResourceCombobox
+                      loading={interactionResourcesLoading}
+                      value={objectForm.characterId}
+                      placeholder="搜索并选择角色"
+                      options={characters.map((character) => ({
+                        id: character.id,
+                        label: character.displayName,
+                        description: character.role,
+                      }))}
+                      onChange={(id) => {
+                        const character = characters.find((item) => item.id === id);
+                        setObjectForm({
+                          ...objectForm,
+                          characterId: id,
+                          title: character?.displayName ?? objectForm.title,
+                          imageUrl:
+                            character?.spriteBaseUrl ??
+                            character?.avatarUrl ??
+                            objectForm.imageUrl,
+                        });
+                      }}
+                    />
+                  </Field>
+                  <Field label="互动方式">
+                    <Select
+                      value={objectForm.characterMode}
+                      onChange={(event) =>
+                        setObjectForm({
+                          ...objectForm,
+                          characterMode: event.target.value as "ink" | "ai",
+                        })
+                      }
+                    >
+                      <SelectItem value="ai">AI 自由对话</SelectItem>
+                      <SelectItem value="ink">固定 Ink 剧情</SelectItem>
+                    </Select>
+                  </Field>
+                </div>
+                {objectForm.characterMode === "ink" && (
+                  <Field label="Ink 剧情">
+                    <ResourceCombobox
+                      loading={inkStoriesLoading}
+                      value={objectForm.inkScriptId}
+                      placeholder="搜索并选择 Ink 剧情"
+                      options={inkStories.map((story) => ({
+                        id: story.id,
+                        label: story.title,
+                        description: story.key,
+                      }))}
+                      onOpen={() => void loadInkStories()}
+                      onChange={(id) =>
+                        setObjectForm({ ...objectForm, inkScriptId: id })
+                      }
+                    />
+                  </Field>
+                )}
+                <Field label="角色开场白">
+                  <Input
+                    value={objectForm.openingLine}
+                    onChange={(event) =>
+                      setObjectForm({
+                        ...objectForm,
+                        openingLine: event.target.value,
+                      })
+                    }
+                    placeholder="Hi! How can I help you today?"
+                  />
+                </Field>
+                <Field label="AI 场景引导">
+                  <Textarea
+                    value={objectForm.prompt}
+                    onChange={(event) =>
+                      setObjectForm({ ...objectForm, prompt: event.target.value })
+                    }
+                    placeholder="例如：你是校医，引导学习者描述症状并给出简单建议。"
+                  />
+                </Field>
+              </>
+            )}
+
+            {objectForm.interactionType === "exit" && (
+              <Field label="目标房间">
+                <ResourceCombobox
+                  value={objectForm.targetRoomId}
+                  placeholder="搜索并选择目标房间"
+                  options={locationRooms
+                    .filter((room) => room.id !== selectedRoom?.id)
+                    .map((room) => ({
+                      id: room.id,
+                      label: room.displayName,
+                      description: room.roomType,
+                    }))}
+                  onChange={(id) => {
+                    const target = locationRooms.find((room) => room.id === id);
                     setObjectForm({
                       ...objectForm,
-                      width: Number(event.target.value),
-                    })
-                  }
+                      targetRoomId: id,
+                      title: objectForm.title || `前往${target?.displayName ?? ""}`,
+                    });
+                  }}
                 />
               </Field>
-              <Field label="显示高度">
-                <Input
-                  type="number"
-                  value={objectForm.height}
-                  onChange={(event) =>
-                    setObjectForm({
-                      ...objectForm,
-                      height: Number(event.target.value),
-                    })
+            )}
+
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-3">
+              <Field label="热点图片">
+                <ImageUploadField
+                  value={objectForm.imageUrl}
+                  onChange={(url) =>
+                    setObjectForm({ ...objectForm, imageUrl: url })
                   }
+                  previewSize="md"
+                  group="library"
                 />
               </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="显示宽度">
+                  <Input
+                    type="number"
+                    value={objectForm.width}
+                    onChange={(event) =>
+                      setObjectForm({
+                        ...objectForm,
+                        width: Number(event.target.value),
+                      })
+                    }
+                  />
+                </Field>
+                <Field label="显示高度">
+                  <Input
+                    type="number"
+                    value={objectForm.height}
+                    onChange={(event) =>
+                      setObjectForm({
+                        ...objectForm,
+                        height: Number(event.target.value),
+                      })
+                    }
+                  />
+                </Field>
+              </div>
             </div>
-            <label className="flex items-center justify-between rounded-lg border p-3 text-sm">
-              作为当前房间的必做任务物品
-              <Switch
-                checked={objectForm.required}
-                onCheckedChange={(checked) =>
-                  setObjectForm({ ...objectForm, required: checked })
-                }
-              />
-            </label>
+            {objectForm.interactionType === "learning" && (
+              <label className="flex items-center justify-between rounded-lg border p-3 text-sm">
+                作为当前场景的必学热点
+                <Switch
+                  checked={objectForm.required}
+                  onCheckedChange={(checked) =>
+                    setObjectForm({ ...objectForm, required: checked })
+                  }
+                />
+              </label>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setObjectDialog(false)}>
@@ -2261,7 +2902,7 @@ export function NarrativeWorldStudio({
               disabled={saving || !objectForm.title.trim()}
               onClick={() => void saveObject()}
             >
-              保存物品
+              保存互动
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2271,17 +2912,29 @@ export function NarrativeWorldStudio({
         open={!!previewId}
         onOpenChange={(open) => !open && setPreviewId("")}
       >
-        <DialogContent className="overflow-hidden p-0 sm:max-w-lg">
+        <DialogContent
+          className={cn(
+            "max-h-[min(860px,92vh)] overflow-hidden border-0 bg-[#f7f3e9] p-0 shadow-2xl dark:bg-[#161b22]",
+            previewObject?.interactionType === "character" &&
+              previewObject.characterMode === "ink"
+              ? "sm:max-w-4xl"
+              : previewObject?.interactionType === "character"
+                ? "sm:max-w-xl"
+                : "sm:max-w-lg",
+          )}
+        >
           <DialogHeader className="sr-only">
             <DialogTitle>玩家探索预览</DialogTitle>
           </DialogHeader>
-          {previewLocation && (
+          {previewLocation && !previewObject && (
             <PreviewPlace
               image={previewLocation.icon}
               eyebrow="剧情地点"
               title={previewLocation.displayName}
               description={previewLocation.description}
               stats={`${rooms.filter((item) => item.locationId === previewLocation.id).length} 个可进入房间`}
+              interactions={previewPlaceInteractions}
+              onInteraction={openNode}
               action="进入地点"
               onAction={() => {
                 setPreviewId("");
@@ -2289,13 +2942,15 @@ export function NarrativeWorldStudio({
               }}
             />
           )}
-          {previewRoom && (
+          {previewRoom && !previewObject && (
             <PreviewPlace
               image={previewRoom.icon}
               eyebrow={previewRoom.isEntrance ? "入口房间" : "探索房间"}
               title={previewRoom.displayName}
               description={previewRoom.description}
               stats={`${getExplorationObjects(selectedMap, previewRoom.id).length} 个可发现物品`}
+              interactions={previewPlaceInteractions}
+              onInteraction={openNode}
               action="进入房间"
               onAction={() => {
                 setPreviewId("");
@@ -2303,28 +2958,170 @@ export function NarrativeWorldStudio({
               }}
             />
           )}
-          {previewObject && (
-            <div className="relative">
-              <div className="h-44 bg-muted">
-                {previewObject.imageUrl ? (
-                  <img
-                    src={previewObject.imageUrl}
-                    alt=""
-                    className="size-full object-contain p-5"
-                  />
+          {previewObject?.parentNodeId && (previewLocation || previewRoom) && (
+            <div className="flex items-center gap-3 border-b border-black/5 bg-white/55 px-4 py-3 backdrop-blur dark:border-white/10 dark:bg-white/5">
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                className="rounded-full"
+                onClick={() => setPreviewId(previewObject.parentNodeId ?? "")}
+                aria-label="返回地点卡片"
+              >
+                <ArrowLeft />
+              </Button>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">
+                  {previewLocation?.displayName ?? previewRoom?.displayName}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  正在体验附着互动
+                </p>
+              </div>
+              <Badge variant="outline" className="rounded-full bg-background/70">
+                {previewPlaceInteractions.length} 个发现
+              </Badge>
+            </div>
+          )}
+          {previewObject?.interactionType === "character" &&
+            previewObject.characterMode === "ink" &&
+            previewStory && (
+              <div className="h-[min(720px,82vh)]">
+                <VnStoryPreview
+                  inkSource={previewStory.inkSource ?? undefined}
+                  inkJson={previewStory.inkJson}
+                  defaultBackgroundUrl={backgroundUrl ?? undefined}
+                  previewLayout="portrait"
+                  className="h-full"
+                />
+              </div>
+            )}
+          {previewObject?.interactionType === "character" &&
+            previewObject.characterMode === "ink" &&
+            !previewStory && (
+              <div className="flex min-h-64 flex-col items-center justify-center gap-3 p-8 text-center">
+                {previewObject.inkScriptId ? (
+                  <>
+                    <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      正在加载 Ink 剧情…
+                    </p>
+                  </>
                 ) : (
-                  <div className="flex size-full items-center justify-center">
-                    <Box className="size-12 text-muted-foreground/30" />
-                  </div>
+                  <>
+                    <BookOpen className="size-8 text-muted-foreground" />
+                    <p className="font-medium">该角色尚未绑定 Ink 剧情</p>
+                  </>
                 )}
               </div>
-              <div className="flex flex-col gap-4 p-6">
+            )}
+          {previewObject?.interactionType === "character" &&
+            previewObject.characterMode !== "ink" && (
+              <div className="flex h-[min(680px,78vh)] flex-col">
+                <div className="flex items-center gap-3 border-b border-black/5 bg-gradient-to-r from-emerald-100/80 to-cyan-100/60 p-4 dark:border-white/10 dark:from-emerald-950/60 dark:to-cyan-950/40">
+                  <div className="flex size-12 items-center justify-center overflow-hidden rounded-2xl border-2 border-white bg-muted shadow-md dark:border-white/20">
+                    {previewObject.imageUrl ? (
+                      <img
+                        src={previewObject.imageUrl}
+                        alt=""
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <Bot className="size-5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-lg font-bold">{previewObject.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      AI 自由英语对话 · 不怕说错，像真实见面一样聊
+                    </p>
+                  </div>
+                </div>
+                <ScrollArea className="min-h-0 flex-1 p-4">
+                  <div className="flex flex-col gap-3 pr-3">
+                    {!roleplayHistory.length && (
+                      <p className="py-12 text-center text-sm text-muted-foreground">
+                        输入一句英语，开始自由对话
+                      </p>
+                    )}
+                    {roleplayHistory.map((turn, index) => (
+                      <div
+                        key={`${turn.speaker}-${index}`}
+                        className={cn(
+                          "max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-6",
+                          turn.speaker === "user"
+                            ? "ml-auto rounded-br-md bg-emerald-600 text-white shadow-sm"
+                            : "rounded-bl-md bg-white shadow-sm dark:bg-white/10",
+                        )}
+                      >
+                        {turn.text}
+                      </div>
+                    ))}
+                    {roleplayLoading && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="size-4 animate-spin" />
+                        角色正在回应…
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+                {roleplayCoach && (
+                  <p className="border-t bg-muted/30 px-4 py-2 text-xs text-muted-foreground">
+                    {roleplayCoach}
+                  </p>
+                )}
+                <div className="flex gap-2 border-t border-black/5 bg-white/60 p-3 backdrop-blur dark:border-white/10 dark:bg-white/5">
+                  <Input
+                    className="h-11 rounded-xl bg-background"
+                    value={roleplayInput}
+                    onChange={(event) => setRoleplayInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && !event.shiftKey) {
+                        event.preventDefault();
+                        void submitRoleplayTurn();
+                      }
+                    }}
+                    placeholder="用英语回应角色…"
+                    disabled={roleplayLoading}
+                  />
+                  <Button
+                    size="icon"
+                    className="size-11 rounded-xl bg-emerald-600 hover:bg-emerald-700"
+                    disabled={!roleplayInput.trim() || roleplayLoading}
+                    onClick={() => void submitRoleplayTurn()}
+                    aria-label="发送英语回复"
+                  >
+                    <Send />
+                  </Button>
+                </div>
+              </div>
+            )}
+          {previewObject &&
+            (previewObject.interactionType ?? "learning") === "learning" && (
+            <div className="relative overflow-y-auto">
+              <div className="grid gap-4 p-4 sm:grid-cols-[150px_minmax(0,1fr)]">
+                <div className="relative h-36 overflow-hidden rounded-[1.5rem] border border-black/5 bg-gradient-to-br from-amber-100 via-orange-50 to-rose-100 shadow-sm dark:from-amber-950/50 dark:via-slate-900 dark:to-rose-950/40 sm:h-full sm:min-h-48">
+                  {previewObject.imageUrl ? (
+                    <img
+                      src={previewObject.imageUrl}
+                      alt=""
+                      className="size-full object-contain p-5 drop-shadow-lg"
+                    />
+                  ) : (
+                    <div className="flex size-full items-center justify-center">
+                      <Box className="size-12 text-amber-700/40 dark:text-amber-200/40" />
+                    </div>
+                  )}
+                  <Badge className="absolute left-3 top-3 rounded-full bg-white/85 text-foreground shadow-sm backdrop-blur hover:bg-white/85 dark:bg-black/50">
+                    {OBJECT_KIND_LABELS[previewObject.kind]}
+                  </Badge>
+                </div>
+                <div className="flex min-w-0 flex-col justify-center rounded-[1.5rem] bg-white/70 p-5 shadow-sm dark:bg-white/5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <Badge variant="secondary">
-                      {OBJECT_KIND_LABELS[previewObject.kind]}
-                    </Badge>
-                    <h2 className="mt-3 text-3xl font-bold tracking-tight">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700 dark:text-amber-300">
+                      Tap · listen · remember
+                    </p>
+                    <h2 className="mt-2 text-3xl font-black tracking-tight">
                       {previewObject.english || previewObject.title}
                     </h2>
                     <p className="mt-1 text-sm text-muted-foreground">
@@ -2334,7 +3131,7 @@ export function NarrativeWorldStudio({
                   <Button
                     aria-label="播放英文发音"
                     size="icon"
-                    variant="outline"
+                    className="size-11 shrink-0 rounded-full bg-amber-500 text-white shadow-lg shadow-amber-500/20 hover:bg-amber-600"
                     onClick={() =>
                       pronounce(previewObject.english || previewObject.title)
                     }
@@ -2342,11 +3139,13 @@ export function NarrativeWorldStudio({
                     <Volume2 />
                   </Button>
                 </div>
-                <p className="text-lg font-medium">{previewObject.translation}</p>
+                <p className="mt-4 text-lg font-semibold">
+                  {previewObject.translation}
+                </p>
                 {previewObject.example && (
                   <button
                     type="button"
-                    className="rounded-xl border bg-muted/40 p-4 text-left text-sm leading-6 transition-colors hover:bg-muted"
+                    className="mt-4 rounded-2xl border border-amber-900/10 bg-amber-50/80 p-4 text-left text-sm leading-6 transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-amber-100/10 dark:bg-amber-950/30"
                     onClick={() => pronounce(previewObject.example ?? "")}
                   >
                     <span className="mb-1 flex items-center gap-2 text-xs font-semibold text-muted-foreground">
@@ -2357,29 +3156,125 @@ export function NarrativeWorldStudio({
                   </button>
                 )}
                 {previewObject.prompt && (
-                  <p className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <p className="mt-4 flex items-start gap-2 text-sm text-muted-foreground">
                     <MessageCircle className="mt-0.5 shrink-0" />
                     {previewObject.prompt}
                   </p>
                 )}
                 <Button
+                  className="mt-5 h-11 rounded-xl"
                   onClick={() => {
                     setDiscovered((items) =>
                       new Set([...items, previewObject.id]),
                     );
-                    setPreviewId("");
+                    setPreviewId(previewObject.parentNodeId ?? "");
                     toast.success(`已发现：${previewObject.english || previewObject.title}`);
                   }}
                 >
                   <Languages data-icon="inline-start" />
-                  标记为已发现
+                  学会了，继续探索
                 </Button>
+                </div>
               </div>
+            </div>
+          )}
+          {previewObject?.interactionType === "exit" && (
+            <div className="p-6 text-center">
+              <DoorOpen className="mx-auto size-10 text-muted-foreground" />
+              <p className="mt-3 font-medium">目标房间不可进入</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                请检查出口绑定、隐藏或禁用状态。
+              </p>
             </div>
           )}
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function ResourceCombobox({
+  value,
+  options,
+  placeholder,
+  loading = false,
+  onChange,
+  onOpen,
+}: {
+  value: string;
+  options: Array<{ id: string; label: string; description?: string | null }>;
+  placeholder: string;
+  loading?: boolean;
+  onChange: (id: string) => void;
+  onOpen?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((option) => option.id === value);
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (nextOpen) onOpen?.();
+      }}
+    >
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="h-9 w-full justify-between px-3 font-normal"
+        >
+          <span className="min-w-0 truncate">
+            {selected?.label || placeholder}
+          </span>
+          {loading ? (
+            <Loader2 className="size-4 shrink-0 animate-spin opacity-60" />
+          ) : (
+            <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+        <Command>
+          <CommandInput placeholder="输入关键词搜索…" />
+          <CommandList>
+            <CommandEmpty>
+              {loading ? "正在加载资源…" : "没有找到匹配资源"}
+            </CommandEmpty>
+            <CommandGroup>
+              {options.map((option) => (
+                <CommandItem
+                  key={option.id}
+                  value={`${option.label} ${option.description ?? ""} ${option.id}`}
+                  onSelect={() => {
+                    onChange(option.id);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "size-4 shrink-0",
+                      value === option.id ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate">{option.label}</span>
+                    {option.description && (
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {option.description}
+                      </span>
+                    )}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -2657,6 +3552,99 @@ function Inspector({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  if (object) {
+    const interactionLabel =
+      object.interactionType === "character"
+        ? object.characterMode === "ink"
+          ? "角色 · Ink 剧情"
+          : "角色 · AI 对话"
+        : object.interactionType === "exit"
+          ? "房间出口"
+          : object.resourceType === "chunk"
+            ? "句块热点"
+            : object.resourceType === "pattern"
+              ? "句型热点"
+              : "单词热点";
+    return (
+      <Card className="overflow-hidden">
+        {object.imageUrl && (
+          <div className="h-28 bg-muted">
+            <img
+              src={object.imageUrl}
+              alt=""
+              className="size-full object-contain p-3"
+            />
+          </div>
+        )}
+        <CardHeader className="gap-2 p-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="secondary">{interactionLabel}</Badge>
+            {object.parentNodeId && <Badge variant="outline">附着互动</Badge>}
+            {object.required && <Badge>必学</Badge>}
+          </div>
+          <CardTitle className="text-sm">{object.title}</CardTitle>
+          {object.prompt && (
+            <CardDescription className="line-clamp-3 text-xs">
+              {object.prompt}
+            </CardDescription>
+          )}
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2 p-3 pt-0">
+          {object.interactionType === "learning" && (
+            <div className="rounded-md border bg-muted/30 p-2">
+              <p className="font-medium">{object.english || "未绑定资源"}</p>
+              <p className="text-xs text-muted-foreground">
+                {[object.pronunciation, object.translation]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            </div>
+          )}
+          {object.interactionType === "character" && (
+            <p className="text-xs text-muted-foreground">
+              {object.openingLine || "尚未设置角色开场白"}
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            <Button size="sm" variant="outline" onClick={onEdit}>
+              <Edit3 data-icon="inline-start" />
+              编辑
+            </Button>
+            <Button size="sm" variant="ghost" onClick={onDelete}>
+              <Trash2 data-icon="inline-start" />
+              删除
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (level === "room") {
+    return (
+      <Card className="overflow-hidden">
+        {room?.icon && (
+          <div className="h-28 bg-muted">
+            <img
+              src={room.icon}
+              alt=""
+              className="size-full object-contain p-3"
+            />
+          </div>
+        )}
+        <CardHeader className="gap-2 p-3">
+          <Badge variant="secondary" className="w-fit">
+            当前房间
+          </Badge>
+          <CardTitle className="text-sm">{room?.displayName}</CardTitle>
+          <CardDescription className="text-xs">
+            {objectCount} 个互动热点。可添加角色、学习资源或通往其他房间的出口。
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   if (level === "world" && !location) {
     return (
       <Card>
@@ -2893,28 +3881,18 @@ function Inspector({
           </>
         )}
         {level === "location" && (
-          <p className="text-xs text-muted-foreground">{objectCount} 个探索物品</p>
+          <p className="text-xs text-muted-foreground">
+            {objectCount} 个场景互动
+          </p>
         )}
-        {level === "room" && object && (
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <p className="text-lg font-semibold">{object.english || "未填写英文"}</p>
-            <p className="text-sm text-muted-foreground">
-              {object.pronunciation} {object.translation}
-            </p>
-          </div>
-        )}
-        {level !== "room" && (
-          <Button onClick={onEnter}>
-            <BookOpen data-icon="inline-start" />
-            进入下一层编辑
-          </Button>
-        )}
-        {(level !== "room" || object) && (
-          <Button variant="outline" onClick={onEdit}>
-            <Edit3 data-icon="inline-start" />
-            {level === "room" ? "编辑探索物品" : "编辑属性"}
-          </Button>
-        )}
+        <Button onClick={onEnter}>
+          <BookOpen data-icon="inline-start" />
+          进入下一层编辑
+        </Button>
+        <Button variant="outline" onClick={onEdit}>
+          <Edit3 data-icon="inline-start" />
+          编辑属性
+        </Button>
         <Button variant="ghost" onClick={onDelete}>
           <Trash2 data-icon="inline-start" />
           删除
@@ -2930,6 +3908,8 @@ function PreviewPlace({
   title,
   description,
   stats,
+  interactions,
+  onInteraction,
   action,
   onAction,
 }: {
@@ -2938,36 +3918,127 @@ function PreviewPlace({
   title: string;
   description?: string | null;
   stats: string;
+  interactions: ExplorationObject[];
+  onInteraction: (id: string) => void;
   action: string;
   onAction: () => void;
 }) {
   return (
-    <div>
-      <div className="h-56 bg-muted">
+    <div className="max-h-[min(820px,90vh)] overflow-y-auto">
+      <div className="relative h-60 overflow-hidden bg-gradient-to-br from-sky-200 via-amber-100 to-orange-200 dark:from-sky-950 dark:via-slate-900 dark:to-orange-950">
+        <div className="absolute -left-12 -top-16 size-44 rounded-full bg-white/35 blur-2xl" />
+        <div className="absolute -bottom-20 -right-10 size-52 rounded-full bg-orange-400/25 blur-3xl" />
         {image ? (
-          <img src={image} alt="" className="size-full object-contain p-5" />
+          <img
+            src={image}
+            alt=""
+            className="relative z-10 size-full object-contain px-8 pb-5 pt-10 drop-shadow-2xl"
+          />
         ) : (
-          <div className="flex size-full items-center justify-center">
-            <MapPin className="size-14 text-muted-foreground/30" />
+          <div className="relative z-10 flex size-full items-center justify-center">
+            <MapPin className="size-16 text-sky-900/25 dark:text-sky-100/25" />
           </div>
         )}
+        <Badge className="absolute left-4 top-4 z-20 rounded-full border-white/40 bg-white/75 px-3 text-foreground shadow-sm backdrop-blur hover:bg-white/75 dark:bg-black/40">
+          <Compass className="mr-1 size-3.5" />
+          {eyebrow}
+        </Badge>
+        <div className="absolute bottom-3 right-4 z-20 rounded-full bg-black/55 px-3 py-1 text-[11px] font-medium text-white backdrop-blur">
+          {stats}
+        </div>
       </div>
-      <div className="flex flex-col gap-4 p-6">
+      <div className="flex flex-col gap-5 p-5 sm:p-6">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            {eyebrow}
+          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-orange-600 dark:text-orange-300">
+            Explore · Speak · Remember
           </p>
-          <h2 className="mt-2 text-2xl font-bold">{title}</h2>
+          <h2 className="mt-1 text-3xl font-black tracking-tight">{title}</h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {description || "这里的故事还没有写下。"}
           </p>
         </div>
-        <Badge className="w-fit" variant="outline">
-          {stats}
-        </Badge>
-        <Button onClick={onAction}>
+
+        <section className="rounded-[1.5rem] border border-black/5 bg-white/70 p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
+          <div className="flex items-center justify-between px-1 pb-3">
+            <div>
+              <h3 className="text-sm font-bold">在这里可以发现</h3>
+              <p className="text-[11px] text-muted-foreground">
+                先学一点，或者直接进入场景
+              </p>
+            </div>
+            <Badge variant="secondary" className="rounded-full">
+              {interactions.length}
+            </Badge>
+          </div>
+          {interactions.length ? (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {interactions.map((interaction) => {
+                const isCharacter = interaction.interactionType === "character";
+                const isExit = interaction.interactionType === "exit";
+                return (
+                  <button
+                    key={interaction.id}
+                    type="button"
+                    className="group flex min-w-0 items-center gap-3 rounded-2xl border border-black/5 bg-[#fffdf8] p-2.5 text-left transition-all hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:hover:border-orange-500/50"
+                    onClick={() => onInteraction(interaction.id)}
+                  >
+                    <div
+                      className={cn(
+                        "flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl",
+                        isCharacter
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                          : isExit
+                            ? "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300"
+                            : "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
+                      )}
+                    >
+                      {interaction.imageUrl ? (
+                        <img
+                          src={interaction.imageUrl}
+                          alt=""
+                          className="size-full object-contain p-1"
+                        />
+                      ) : isCharacter ? (
+                        <Bot className="size-5" />
+                      ) : isExit ? (
+                        <DoorOpen className="size-5" />
+                      ) : (
+                        <GraduationCap className="size-5" />
+                      )}
+                    </div>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-bold">
+                        {interaction.english || interaction.title}
+                      </span>
+                      <span className="block truncate text-[11px] text-muted-foreground">
+                        {isCharacter
+                          ? interaction.characterMode === "ink"
+                            ? "开始剧情"
+                            : "自由对话"
+                          : isExit
+                            ? "前往其他房间"
+                            : interaction.translation || "点击学习"}
+                      </span>
+                    </span>
+                    <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed p-4 text-center text-xs text-muted-foreground">
+              这里暂时没有额外发现，可以直接进入继续探索。
+            </div>
+          )}
+        </section>
+
+        <Button
+          className="h-12 rounded-2xl bg-slate-950 text-base font-bold text-white shadow-lg shadow-slate-950/15 hover:bg-slate-800 dark:bg-orange-500 dark:text-slate-950 dark:hover:bg-orange-400"
+          onClick={onAction}
+        >
           <DoorOpen data-icon="inline-start" />
           {action}
+          <ChevronRight data-icon="inline-end" />
         </Button>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { generateObject, generateText } from 'ai';
 import { z } from 'zod';
-import { DialogueTurnJudgeDto, WarmupTurnJudgeDto } from './dto/english-feedback.dto';
+import { DialogueTurnJudgeDto, SceneRoleplayTurnDto, WarmupTurnJudgeDto } from './dto/english-feedback.dto';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AiQuotaService } from '../../common/ai-quota/ai-quota.service';
 import { LlmProviderFactory, type LlmConfig } from '../../common/llm/llm-provider.factory';
@@ -1225,6 +1225,76 @@ ${dialogueText}
         sortOrder: -1,
       },
     });
+  }
+
+  async generateSceneRoleplayTurn(dto: SceneRoleplayTurnDto, userId?: string) {
+    const provider = await this.getProvider();
+    const history = (dto.history ?? [])
+      .slice(-10)
+      .map((turn) => `${turn.speaker === 'npc' ? dto.characterName : 'Learner'}: ${String(turn.text).slice(0, 500)}`)
+      .join('\n');
+    const targets = (dto.learningTargets ?? [])
+      .slice(0, 20)
+      .map((target) => `- [${target.type}] ${target.text}${target.meaning ? ` — ${target.meaning}` : ''} (id=${target.id})`)
+      .join('\n');
+
+    const result = await generateText({
+      model: provider(),
+      system: `You are roleplaying as ${dto.characterName}, ${dto.characterRole}.
+Personality: ${dto.characterPersonality || 'friendly, natural, and helpful'}.
+Scene: ${dto.sceneTitle}.
+Scene guidance: ${dto.scenePrompt || 'Have a natural everyday English conversation.'}
+
+Stay in character. Reply in natural, level-friendly English using 1-3 short sentences.
+Do not lecture or explain grammar inside the roleplay reply.
+Gently create opportunities for the learner to use the supplied learning targets, but never force all targets into one turn.
+After the reply, give one very short Chinese coaching note and report which supplied target ids the learner naturally used.
+Return JSON only.`,
+      prompt: `## Recent conversation
+${history || '(conversation just started)'}
+
+## Available learning targets
+${targets || '(none)'}
+
+## Learner says
+${dto.userText.slice(0, 1000)}
+
+Return:
+{
+  "reply": "NPC reply in English",
+  "coach": "一句简短中文反馈",
+  "usedTargetIds": ["exact supplied target id"],
+  "suggestedReplies": ["short natural reply option", "another option"]
+}`,
+      temperature: 0.7,
+      maxOutputTokens: 900,
+    });
+
+    if (userId && result.usage) {
+      this.quotaService.recordTokens(userId, result.usage.totalTokens ?? 0);
+    }
+
+    const jsonText = this.extractJson(result.text);
+    try {
+      const parsed = JSON.parse(jsonText);
+      return {
+        reply: String(parsed.reply || 'Could you tell me a little more?'),
+        coach: String(parsed.coach || ''),
+        usedTargetIds: Array.isArray(parsed.usedTargetIds)
+          ? parsed.usedTargetIds.map(String)
+          : [],
+        suggestedReplies: Array.isArray(parsed.suggestedReplies)
+          ? parsed.suggestedReplies.map(String).slice(0, 3)
+          : [],
+      };
+    } catch {
+      return {
+        reply: result.text.trim() || 'Could you tell me a little more?',
+        coach: '',
+        usedTargetIds: [],
+        suggestedReplies: [],
+      };
+    }
   }
 
   /** 批量翻译：单词 + 例句列表 → { wordZh, examplesZh[] } */

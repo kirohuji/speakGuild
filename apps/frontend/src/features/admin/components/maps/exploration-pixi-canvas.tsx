@@ -31,7 +31,13 @@ import type {
 
 extend({ Container, Graphics, Sprite });
 
-export type ExplorationNodeKind = "location" | "room" | "object";
+export type ExplorationNodeKind =
+  | "location"
+  | "room"
+  | "object"
+  | "learning"
+  | "character"
+  | "exit";
 
 export type ExplorationNode = {
   id: string;
@@ -376,9 +382,6 @@ export function ExplorationPixiCanvas({
           antialias
           autoDensity
           resolution={Math.min(window.devicePixelRatio || 1, 2)}
-          gcActive
-          gcMaxUnusedTime={60_000}
-          gcFrequency={30_000}
         >
           <ExplorationStage
             {...props}
@@ -796,7 +799,6 @@ function ExplorationStage({
             <ExplorationNodeEntry
               key={node.id}
               node={node}
-              selected={selectedNodeIds.has(node.id)}
               editable={editable}
               viewportScale={scale}
               worldWidth={worldWidth}
@@ -967,7 +969,15 @@ function HotspotNode({
     (g: PixiGraphics) => {
       g.clear();
       const accent =
-        node.kind === "object" ? 0x60a5fa : node.kind === "room" ? 0xa78bfa : 0xfbbf24;
+        node.kind === "character"
+          ? 0x34d399
+          : node.kind === "exit"
+            ? 0xf97316
+            : node.kind === "object" || node.kind === "learning"
+              ? 0x60a5fa
+              : node.kind === "room"
+                ? 0xa78bfa
+                : 0xfbbf24;
       if (!texture) {
         g.roundRect(
           -node.width / 2,

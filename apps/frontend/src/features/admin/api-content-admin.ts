@@ -22,6 +22,31 @@ export async function judgePreviewDialogueTurn(data: {
   return post('/admin/content/preview/dialogue-turn', data)
 }
 
+export interface SceneRoleplayTurnResult {
+  reply: string
+  coach: string
+  usedTargetIds: string[]
+  suggestedReplies: string[]
+}
+
+export async function generateSceneRoleplayTurn(data: {
+  characterName: string
+  characterRole: string
+  characterPersonality?: string
+  sceneTitle: string
+  scenePrompt?: string
+  userText: string
+  history?: Array<{ speaker: 'npc' | 'user'; text: string }>
+  learningTargets?: Array<{
+    id: string
+    type: 'vocabulary' | 'chunk' | 'pattern'
+    text: string
+    meaning?: string
+  }>
+}): Promise<SceneRoleplayTurnResult> {
+  return post('/practice-ai/scene-roleplay-turn', data)
+}
+
 // ─── Scene Categories ───────────────────────────────────────
 
 export interface SceneCategory {
