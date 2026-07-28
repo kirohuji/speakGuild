@@ -28,6 +28,8 @@ import {
   Route,
   RotateCcw,
   Group,
+  Monitor,
+  Smartphone,
   Sparkles,
   Sun,
   Sunrise,
@@ -100,6 +102,7 @@ import {
   getLocationOcclusionMask,
   getLocationVisualStyle,
   getRoomLayout,
+  getSceneDimensions,
   makeExplorationKey,
   removeExplorationObject,
   updateExplorationObjectPosition,
@@ -107,6 +110,7 @@ import {
   updateExplorationNodeGroups,
   updateExplorationNodeLayers,
   updateRoomLayout,
+  updateSceneDimensions,
   updateLocationMask,
   updateLocationOcclusionMask,
   updateLocationVisualStyle,
@@ -123,6 +127,7 @@ type TimeOfDay = "day" | "golden" | "night";
 type ObjectFilter = "all" | "required" | "undiscovered";
 type MaskTool = "erase" | "restore";
 type MaskLayer = "transparency" | "occlusion";
+type PreviewOrientation = "portrait" | "landscape";
 
 const EMPTY_OBJECT: Omit<ExplorationObject, "id" | "roomId"> = {
   title: "",
@@ -167,6 +172,8 @@ export function NarrativeWorldStudio({
   const [objectId, setObjectId] = useState("");
   const [level, setLevel] = useState<StudioLevel>("world");
   const [editable, setEditable] = useState(true);
+  const [previewOrientation, setPreviewOrientation] =
+    useState<PreviewOrientation>("portrait");
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>("day");
   const [objectFilter, setObjectFilter] = useState<ObjectFilter>("all");
   const [focusNodeId, setFocusNodeId] = useState("");
@@ -357,8 +364,15 @@ export function NarrativeWorldStudio({
       : level === "location"
         ? selectedLocation?.backgroundUrl
         : selectedRoom?.backgroundUrl;
-  const worldWidth = level === "world" ? selectedMap?.width ?? 1920 : 1600;
-  const worldHeight = level === "world" ? selectedMap?.height ?? 1080 : 900;
+  const sceneDimensions =
+    level === "world"
+      ? {
+          width: selectedMap?.width ?? 1920,
+          height: selectedMap?.height ?? 1080,
+        }
+      : getSceneDimensions(selectedMap?.editorData, layerScope);
+  const worldWidth = sceneDimensions.width;
+  const worldHeight = sceneDimensions.height;
   const selectedNodeId =
     level === "world" ? locationId : level === "location" ? roomId : objectId;
   const effectiveSelectedNodeIds = selectedNodeIds.length
@@ -366,6 +380,9 @@ export function NarrativeWorldStudio({
     : selectedNodeId
       ? [selectedNodeId]
       : [];
+  const nodeBreathing = Boolean(
+    selectedMap?.editorData?.preview?.nodeBreathing,
+  );
 
   const persistEditorData = async (editorData: unknown) => {
     if (!selectedMap) return;
@@ -623,6 +640,111 @@ export function NarrativeWorldStudio({
     }
   };
 
+  const saveSceneBackground = async (url: string) => {
+    try {
+      if (level === "world" && selectedMap) {
+        setMaps((items) =>
+          items.map((item) =>
+            item.id === selectedMap.id
+              ? { ...item, backgroundUrl: url }
+              : item,
+          ),
+        );
+        await updateMap(selectedMap.id, { backgroundUrl: url });
+      } else if (level === "location" && selectedLocation) {
+        setLocations((items) =>
+          items.map((item) =>
+            item.id === selectedLocation.id
+              ? { ...item, backgroundUrl: url }
+              : item,
+          ),
+        );
+        await updateLocation(selectedLocation.id, { backgroundUrl: url });
+      } else if (level === "room" && selectedRoom) {
+        setRooms((items) =>
+          items.map((item) =>
+            item.id === selectedRoom.id
+              ? { ...item, backgroundUrl: url }
+              : item,
+          ),
+        );
+        await updateRoom(selectedRoom.id, { backgroundUrl: url });
+      } else {
+        return;
+      }
+      toast.success(url ? "当前场景底图已更新" : "当前场景底图已移除");
+    } catch {
+      toast.error("场景底图保存失败");
+      await load();
+    }
+  };
+
+  const updateSceneDimensionDraft = (
+    field: "width" | "height",
+    value: number,
+  ) => {
+    const next = {
+      ...sceneDimensions,
+      [field]: Math.max(320, Math.min(8192, value || 320)),
+    };
+    if (level === "world" && selectedMap) {
+      setMaps((items) =>
+        items.map((item) =>
+          item.id === selectedMap.id ? { ...item, ...next } : item,
+        ),
+      );
+      return;
+    }
+    if (!selectedMap) return;
+    setMaps((items) =>
+      items.map((item) =>
+        item.id === selectedMap.id
+          ? {
+              ...item,
+              editorData: updateSceneDimensions(
+                item.editorData,
+                layerScope,
+                next,
+              ),
+            }
+          : item,
+      ),
+    );
+  };
+
+  const saveSceneDimensions = async () => {
+    if (!selectedMap) return;
+    try {
+      if (level === "world") {
+        await updateMap(selectedMap.id, sceneDimensions);
+      } else {
+        await persistEditorData(
+          updateSceneDimensions(
+            selectedMap.editorData,
+            layerScope,
+            sceneDimensions,
+          ),
+        );
+      }
+      toast.success("场景尺寸已保存");
+    } catch {
+      toast.error("场景尺寸保存失败");
+      await load();
+    }
+  };
+
+  const updateNodeBreathing = async (enabled: boolean) => {
+    if (!selectedMap) return;
+    await persistEditorData({
+      ...(selectedMap.editorData ?? {}),
+      version: 4,
+      preview: {
+        ...(selectedMap.editorData?.preview ?? {}),
+        nodeBreathing: enabled,
+      },
+    });
+  };
+
   const addLayer = async () => {
     if (!selectedMap) return;
     const layer: ExplorationLayer = {
@@ -871,7 +993,7 @@ export function NarrativeWorldStudio({
           ...mapForm,
           name: makeExplorationKey(mapForm.displayName, "map"),
           requiredOutputLevel: "L1",
-          editorData: { version: 3, explorationObjects: {} },
+          editorData: { version: 4, explorationObjects: {} },
           sortOrder: maps.length,
         });
       setMapDialog(false);
@@ -1124,7 +1246,7 @@ export function NarrativeWorldStudio({
                 onClick={() => selectedMap && openMapForm(selectedMap)}
               >
                 <Edit3 data-icon="inline-start" />
-                地图设置
+                世界属性
               </Button>
             </>
           )}
@@ -1152,6 +1274,24 @@ export function NarrativeWorldStudio({
           {!editable && (
             <ToggleGroup
               type="single"
+              value={previewOrientation}
+              onValueChange={(value) =>
+                value &&
+                setPreviewOrientation(value as PreviewOrientation)
+              }
+              aria-label="预览屏幕方向"
+            >
+              <ToggleGroupItem value="portrait" aria-label="竖屏预览">
+                <Smartphone />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="landscape" aria-label="横屏预览">
+                <Monitor />
+              </ToggleGroupItem>
+            </ToggleGroup>
+          )}
+          {!editable && (
+            <ToggleGroup
+              type="single"
               value={timeOfDay}
               onValueChange={(value) => value && setTimeOfDay(value as TimeOfDay)}
               aria-label="预览光线"
@@ -1166,6 +1306,21 @@ export function NarrativeWorldStudio({
                 <Moon />
               </ToggleGroupItem>
             </ToggleGroup>
+          )}
+          {editable && selectedMap && (
+            <div className="flex items-center gap-2 rounded-lg border px-2.5 py-1.5">
+              <Label htmlFor="preview-node-breathing" className="text-xs">
+                预览呼吸
+              </Label>
+              <Switch
+                id="preview-node-breathing"
+                checked={nodeBreathing}
+                onCheckedChange={(checked) =>
+                  void updateNodeBreathing(checked)
+                }
+                aria-label="玩家预览自动呼吸缩放"
+              />
+            </div>
           )}
           <Tabs
             value={editable ? "edit" : "preview"}
@@ -1260,6 +1415,82 @@ export function NarrativeWorldStudio({
         {editable && (
           <div className="flex min-w-0 flex-col gap-4">
             <Card className="min-w-0">
+              <CardHeader className="p-3 pb-2">
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-sm">当前场景底图</CardTitle>
+                  <Badge variant="outline">
+                    <LockKeyhole data-icon="inline-start" />
+                    底图层
+                  </Badge>
+                </div>
+                <CardDescription>
+                  {level === "world"
+                    ? "世界地图场景"
+                    : level === "location"
+                      ? `${selectedLocation?.displayName ?? "地点"}场景`
+                      : `${selectedRoom?.displayName ?? "房间"}探索场景`}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3 p-3 pt-0">
+                <div className="flex items-center gap-3">
+                  <ImageUploadField
+                    value={backgroundUrl ?? ""}
+                    onChange={(url) => void saveSceneBackground(url)}
+                    previewSize="md"
+                    overlayUpload
+                    allowVideo
+                    disabled={
+                      !selectedMap ||
+                      (level === "location" && !selectedLocation) ||
+                      (level === "room" && !selectedRoom)
+                    }
+                    placeholder="上传场景底图"
+                  />
+                  <p className="text-[11px] leading-5 text-muted-foreground">
+                    支持图片或视频。底图决定场景边界、小地图和玩家相机范围。
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="场景宽度">
+                    <Input
+                      type="number"
+                      min={320}
+                      max={8192}
+                      value={sceneDimensions.width}
+                      onChange={(event) =>
+                        updateSceneDimensionDraft(
+                          "width",
+                          Number(event.target.value),
+                        )
+                      }
+                      onBlur={() => void saveSceneDimensions()}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") event.currentTarget.blur();
+                      }}
+                    />
+                  </Field>
+                  <Field label="场景高度">
+                    <Input
+                      type="number"
+                      min={320}
+                      max={8192}
+                      value={sceneDimensions.height}
+                      onChange={(event) =>
+                        updateSceneDimensionDraft(
+                          "height",
+                          Number(event.target.value),
+                        )
+                      }
+                      onBlur={() => void saveSceneDimensions()}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") event.currentTarget.blur();
+                      }}
+                    />
+                  </Field>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="min-w-0">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm">
                   {level === "world"
@@ -1273,7 +1504,7 @@ export function NarrativeWorldStudio({
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-2 pt-0">
-                <ScrollArea className="h-[280px]">
+                <ScrollArea className="h-[200px]">
                   <div className="flex flex-col gap-1 p-1">
                     {nodes.map((node) => (
                       <button
@@ -1322,6 +1553,7 @@ export function NarrativeWorldStudio({
             <LayerPanel
               layers={layers}
               nodes={nodes}
+              hasBackground={!!backgroundUrl}
               activeLayerId={activeLayerId}
               selectedCount={effectiveSelectedNodeIds.length}
               onSelectLayer={setActiveLayerId}
@@ -1340,11 +1572,17 @@ export function NarrativeWorldStudio({
           className={cn(
             "min-w-0",
             !editable &&
-              "w-full max-w-[410px] rounded-[2.35rem] border-[8px] border-slate-950 bg-slate-950 p-1 shadow-2xl ring-1 ring-white/10",
+              (previewOrientation === "landscape"
+                ? "w-full max-w-[860px] rounded-[1.9rem] border-[7px] border-slate-950 bg-slate-950 p-1 shadow-2xl ring-1 ring-white/10"
+                : "w-full max-w-[410px] rounded-[2.35rem] border-[8px] border-slate-950 bg-slate-950 p-1 shadow-2xl ring-1 ring-white/10"),
           )}
         >
           <ExplorationPixiCanvas
-            key={editable ? "editor-canvas" : "mobile-preview-canvas"}
+            key={
+              editable
+                ? "editor-canvas"
+                : `mobile-preview-${previewOrientation}`
+            }
             backgroundUrl={backgroundUrl}
             nodes={nodes}
             selectedId={selectedNodeId}
@@ -1361,7 +1599,9 @@ export function NarrativeWorldStudio({
             worldWidth={worldWidth}
             worldHeight={worldHeight}
             timeOfDay={timeOfDay}
+            nodeBreathing={nodeBreathing}
             mobilePreview={!editable}
+            previewOrientation={previewOrientation}
             maskEditingId={
               editable && maskEditing && level === "world"
                 ? selectedLocation?.id
@@ -1479,7 +1719,7 @@ export function NarrativeWorldStudio({
       <Dialog open={mapDialog} onOpenChange={setMapDialog}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingMap ? "编辑地图世界" : "新建地图世界"}</DialogTitle>
+            <DialogTitle>{editingMap ? "编辑世界属性" : "新建地图世界"}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-4">
             <Field label="地图名称">
@@ -1491,36 +1731,17 @@ export function NarrativeWorldStudio({
                 placeholder="例如：海港学院"
               />
             </Field>
-            <Field label="世界地图底图">
+            <Field label="世界缩略图">
               <ImageUploadField
-                value={mapForm.backgroundUrl}
-                onChange={(url) => setMapForm({ ...mapForm, backgroundUrl: url })}
+                value={mapForm.thumbnailUrl}
+                onChange={(url) =>
+                  setMapForm({ ...mapForm, thumbnailUrl: url })
+                }
                 previewSize="lg"
                 group="library"
-                allowVideo
-                placeholder="上传地图图片或循环视频"
+                placeholder="上传世界列表缩略图"
               />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="逻辑宽度">
-                <Input
-                  type="number"
-                  value={mapForm.width}
-                  onChange={(event) =>
-                    setMapForm({ ...mapForm, width: Number(event.target.value) })
-                  }
-                />
-              </Field>
-              <Field label="逻辑高度">
-                <Input
-                  type="number"
-                  value={mapForm.height}
-                  onChange={(event) =>
-                    setMapForm({ ...mapForm, height: Number(event.target.value) })
-                  }
-                />
-              </Field>
-            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setMapDialog(false)}>
@@ -1590,16 +1811,6 @@ export function NarrativeWorldStudio({
                 group="library"
               />
             </Field>
-            <Field label="进入地点后的场景背景">
-              <ImageUploadField
-                value={locationForm.backgroundUrl}
-                onChange={(url) =>
-                  setLocationForm({ ...locationForm, backgroundUrl: url })
-                }
-                previewSize="lg"
-                group="library"
-              />
-            </Field>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setLocationDialog(false)}>
@@ -1657,16 +1868,6 @@ export function NarrativeWorldStudio({
                 value={roomForm.icon}
                 onChange={(url) => setRoomForm({ ...roomForm, icon: url })}
                 previewSize="md"
-                group="library"
-              />
-            </Field>
-            <Field label="房间探索背景">
-              <ImageUploadField
-                value={roomForm.backgroundUrl}
-                onChange={(url) =>
-                  setRoomForm({ ...roomForm, backgroundUrl: url })
-                }
-                previewSize="lg"
                 group="library"
               />
             </Field>
@@ -2024,6 +2225,7 @@ function VisualSlider({
 function LayerPanel({
   layers,
   nodes,
+  hasBackground,
   activeLayerId,
   selectedCount,
   onSelectLayer,
@@ -2037,6 +2239,7 @@ function LayerPanel({
 }: {
   layers: ExplorationLayer[];
   nodes: ExplorationNode[];
+  hasBackground: boolean;
   activeLayerId: string;
   selectedCount: number;
   onSelectLayer: (id: string) => void;
@@ -2084,7 +2287,9 @@ function LayerPanel({
             {[...layers].reverse().map((layer) => {
               const count =
                 layer.id === BACKGROUND_LAYER_ID
-                  ? 1
+                  ? hasBackground
+                    ? 1
+                    : 0
                   : nodes.filter((node) => node.layerId === layer.id).length;
               return (
                 <Button

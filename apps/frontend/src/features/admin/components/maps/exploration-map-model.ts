@@ -70,6 +70,11 @@ export type ExplorationLayer = {
   system?: "background" | "content";
 };
 
+export type SceneDimensions = {
+  width: number;
+  height: number;
+};
+
 export const BACKGROUND_LAYER_ID = "__background__";
 export const DEFAULT_CONTENT_LAYER_ID = "__content__";
 
@@ -83,12 +88,45 @@ export type ExplorationEditorData = {
   explorationLayers?: Record<string, ExplorationLayer[]>;
   explorationNodeLayers?: Record<string, string>;
   explorationNodeGroups?: Record<string, string>;
+  sceneDimensions?: Record<string, SceneDimensions>;
   preview?: {
     timeOfDay?: "day" | "golden" | "night";
     initialZoom?: number;
+    nodeBreathing?: boolean;
   };
   [key: string]: unknown;
 };
+
+export function getSceneDimensions(
+  editorData: any,
+  scope: string,
+  fallback: SceneDimensions = { width: 1600, height: 900 },
+): SceneDimensions {
+  const stored = editorData?.sceneDimensions?.[scope];
+  return {
+    width: Math.max(320, Number(stored?.width) || fallback.width),
+    height: Math.max(320, Number(stored?.height) || fallback.height),
+  };
+}
+
+export function updateSceneDimensions(
+  editorData: any,
+  scope: string,
+  dimensions: SceneDimensions,
+): ExplorationEditorData {
+  const current = (editorData ?? {}) as ExplorationEditorData;
+  return {
+    ...current,
+    version: 4,
+    sceneDimensions: {
+      ...(current.sceneDimensions ?? {}),
+      [scope]: {
+        width: Math.max(320, Math.round(dimensions.width)),
+        height: Math.max(320, Math.round(dimensions.height)),
+      },
+    },
+  };
+}
 
 export function getExplorationLayers(
   editorData: any,
