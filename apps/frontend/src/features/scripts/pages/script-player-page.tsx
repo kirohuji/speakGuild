@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { VnPlayer, type VnPlayerHandle, type VnPlayerLine } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
-import { learningApi, type StoryEpisodePlayerData } from '@/features/learning/api/learning-api'
+import { type StoryEpisodePlayerData } from '@/features/learning/api/learning-api'
+import { learningRepository } from '@/lib/offline'
 import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
 import { useLayoutStore } from '@/stores/layout.store'
 import { parseComposer } from '@/features/admin/components/composer-parser'
@@ -35,7 +36,7 @@ export function ScriptPlayerPage() {
     if (!episodeId) return
     setLoading(true)
     setFailed(false)
-    learningApi.getStoryEpisodePlayer(episodeId)
+    learningRepository.getStoryEpisodePlayer(packageId, episodeId)
       .then(setData)
       .catch(() => setFailed(true))
       .finally(() => setLoading(false))
@@ -109,14 +110,34 @@ function InkEpisodePlayer({
     [story.lines],
   )
   const combined = useMemo(() => [...inkLines, ...userTurns], [inkLines, userTurns])
+  const dialogueSnapshot = useMemo(
+    () => combined.map(({ speaker, text, isUser }) => ({ speaker, text, isUser })),
+    [combined],
+  )
   const currentLine = combined.at(-1) ?? null
   const history = combined.slice(0, -1)
-  const repeatFrames = useMemo(
-    () => data.inkScript.inkSource
-      ? flattenComposerToTimeline(parseComposer(data.inkScript.inkSource))
-      : [],
-    [data.inkScript.inkSource],
-  )
+  const repeatFrames = useMemo(() => {
+    if (!data.inkScript.inkSource) return []
+    const characterSprites: Record<string, Record<string, string>> = {}
+    const characterPositions: Record<string, 'left' | 'center' | 'right'> = {}
+    for (const character of data.scene?.characters ?? []) {
+      const sprites: Record<string, string> = {}
+      if (character.spriteBaseUrl) sprites.default = character.spriteBaseUrl
+      for (const [expression, value] of Object.entries(character.expressions ?? {})) {
+        const url = typeof value === 'string' ? value : (value as { spriteUrl?: string } | null)?.spriteUrl
+        if (url) sprites[expression] = url
+      }
+      for (const name of [character.name, character.displayName].filter(Boolean) as string[]) {
+        characterSprites[name] = sprites
+        characterPositions[name] = character.defaultPosition ?? 'center'
+      }
+    }
+    return flattenComposerToTimeline(parseComposer(data.inkScript.inkSource), {
+      defaultBackgroundUrl: data.scene?.backgroundUrl ?? undefined,
+      characterSprites,
+      characterPositions,
+    })
+  }, [data.inkScript.inkSource, data.scene])
 
   useEffect(() => {
     if (!story.isEnded || completionSaved.current) return
@@ -131,6 +152,7 @@ function InkEpisodePlayer({
         inkScriptId: data.inkScript.id,
         inkScriptVersion: data.inkScript.version,
         mode,
+        dialogue: dialogueSnapshot,
       },
     }).then((record) => {
       setRecordId(record.id)
@@ -138,7 +160,7 @@ function InkEpisodePlayer({
       completionSaved.current = false
       toast.error('章节记录同步失败，稍后会再次尝试')
     })
-  }, [completionSaved, data.episode.objectives.length, data.inkScript.id, data.inkScript.version, episodeId, inkLines.length, mode, story.isEnded, userTurns.length])
+  }, [completionSaved, data.episode.objectives.length, data.inkScript.id, data.inkScript.version, dialogueSnapshot, episodeId, inkLines.length, mode, story.isEnded, userTurns.length])
 
   const publishVideo = async () => {
     if (!recordId || publishing || published) return
@@ -190,8 +212,12 @@ function InkEpisodePlayer({
     story.advanceStory()
   }
 
-  const completeRepeat = async ({ recordedCount }: { recordedCount: number; totalCount: number }) => {
+  const completeRepeat = async ({ recordedCount, totalCount }: { recordedCount: number; totalCount: number }) => {
     if (repeatSaving || completionSaved.current) return
+    if (recordedCount < totalCount) {
+      toast.error('完成全部台词跟读后，才会生成练习记录')
+      return
+    }
     setRepeatSaving(true)
     completionSaved.current = true
     try {
@@ -206,6 +232,11 @@ function InkEpisodePlayer({
           inkScriptVersion: data.inkScript.version,
           mode: 'repeat',
           recordedLineCount: recordedCount,
+          dialogue: repeatFrames.map((frame) => ({
+            speaker: frame.kind === 'choice' || frame.kind === 'userInput' ? '我' : frame.speaker,
+            text: frame.text,
+            isUser: frame.kind === 'choice' || frame.kind === 'userInput',
+          })),
         },
       })
       setRecordId(record.id)

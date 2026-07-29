@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { PixiVnStage } from '@/features/vn-engine/pixi-vn-stage'
 import { type MixedTimelineFrame } from './vn-mixed-timeline'
+import { assetCacheService } from '@/lib/offline'
 
 interface VnMixedPreviewPlayerProps {
   frames: MixedTimelineFrame[]
@@ -19,8 +20,8 @@ interface VnMixedPreviewPlayerProps {
 }
 
 export function mixedFrameLabel(frame: MixedTimelineFrame) {
-  if (frame.kind === 'choice') return '默认分支'
-  if (frame.kind === 'userInput') return 'You'
+  if (frame.kind === 'choice') return '我'
+  if (frame.kind === 'userInput') return '我'
   if (frame.kind === 'missingInput') return '待补充'
   return frame.speaker || '旁白'
 }
@@ -52,8 +53,29 @@ function pickMimeType() {
 }
 
 export function mixedFrameDisplayText(frame: MixedTimelineFrame) {
-  if (frame.kind === 'choice') return frame.choices?.map((choice, index) => `${index === 0 ? '-> ' : '   '}${choice.text}`).join('\n') || frame.text
+  // 跟读剧场只走默认分支（第一个选项），不把未采用的分支暴露给学习者。
+  if (frame.kind === 'choice') return frame.choices?.[0]?.text || frame.text
   return frame.text
+}
+
+function useOfflineAssetUrl(url: string | undefined, role: 'background' | 'sprite') {
+  const [resolvedUrl, setResolvedUrl] = useState(url)
+
+  useEffect(() => {
+    let cancelled = false
+    setResolvedUrl(url)
+    if (!url || url.startsWith('blob:') || url.startsWith('data:')) return
+    void assetCacheService.resolve({ url, role })
+      .then((resolved) => {
+        if (!cancelled) setResolvedUrl(resolved)
+      })
+      .catch(() => {
+        if (!cancelled) setResolvedUrl(url)
+      })
+    return () => { cancelled = true }
+  }, [role, url])
+
+  return resolvedUrl
 }
 
 export function VnMixedPreviewPlayer({
@@ -65,6 +87,10 @@ export function VnMixedPreviewPlayer({
   onComplete,
 }: VnMixedPreviewPlayerProps) {
   const activeFrame = frames[activeIndex] ?? frames[0]
+  // 首帧通常先设置舞台背景再出现台词；没有显式背景的帧沿用本剧本的主题背景。
+  const backgroundUrl = activeFrame?.background.url ?? frames.find((frame) => frame.background.url)?.background.url
+  const cachedBackgroundUrl = useOfflineAssetUrl(backgroundUrl, 'background')
+  const cachedSpriteUrl = useOfflineAssetUrl(activeFrame?.sprite.url, 'sprite')
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({})
   const missingCount = useMemo(() => frames.filter((frame) => frame.kind === 'missingInput').length, [frames])
   const [playing, setPlaying] = useState(false)
@@ -198,6 +224,17 @@ export function VnMixedPreviewPlayer({
   const canFollow = canFollowFrame(activeFrame)
   const followableCount = useMemo(() => frames.filter((frame) => canFollowFrame(frame)).length, [frames])
   const recordedCount = Object.keys(recordingUrls).length
+  // 管理后台保留深色预览台，移动端跟读则融入用户当前主题。
+  const mobileSurface = practiceMode
+  const panelClass = mobileSurface
+    ? 'border-border/60 bg-background/72 text-foreground shadow-none backdrop-blur-xl'
+    : 'border-border bg-[#0b0d12] text-white shadow-sm'
+  const toolbarClass = mobileSurface
+    ? 'border-border/60 bg-card/80'
+    : 'border-white/10 bg-[#0d1118]'
+  const listClass = mobileSurface
+    ? 'bg-background/45'
+    : 'bg-[#10131a]'
 
   const saveRecordingUrl = useCallback((frameIndex: number, url: string) => {
     setRecordingUrls((prev) => {
@@ -239,12 +276,12 @@ export function VnMixedPreviewPlayer({
   }
 
   return (
-    <div className={cn('mx-auto flex h-[78vh] max-h-[760px] w-full max-w-[420px] flex-col overflow-hidden rounded-xl border border-border bg-[#0b0d12] text-white shadow-sm', className)}>
+    <div className={cn('mx-auto flex h-[78vh] max-h-[760px] w-full max-w-[420px] flex-col overflow-hidden rounded-xl border', panelClass, className)}>
       <div className="relative aspect-video shrink-0 overflow-hidden border-b border-white/10 bg-black">
         <PixiVnStage
-          backgroundUrl={activeFrame.background.url}
+          backgroundUrl={cachedBackgroundUrl}
           backgroundFit={activeFrame.background.fit || 'cover'}
-          spriteUrl={activeFrame.kind === 'choice' && activeFrame.hideSpriteForChoices ? undefined : activeFrame.sprite.url}
+          spriteUrl={activeFrame.kind === 'choice' && activeFrame.hideSpriteForChoices ? undefined : cachedSpriteUrl}
           spritePosition={activeFrame.sprite.position}
           stageVariant="mixed"
           dialogueOverlay={false}
@@ -267,14 +304,18 @@ export function VnMixedPreviewPlayer({
         </div>
       </div>
 
-      <div className="border-b border-white/10 bg-[#0d1118] px-2 py-1">
+      <div className={cn('border-b px-2 py-1', toolbarClass)}>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={togglePlaying}
             className={cn(
               'flex size-8 shrink-0 items-center justify-center rounded-md transition-colors',
-              playing ? 'bg-cyan-300 text-slate-950' : 'bg-white/8 text-white/78 hover:bg-white/12 hover:text-white',
+              playing
+                ? 'bg-primary text-primary-foreground'
+                : mobileSurface
+                  ? 'bg-muted text-muted-foreground hover:bg-muted/75 hover:text-foreground'
+                  : 'bg-white/8 text-white/78 hover:bg-white/12 hover:text-white',
             )}
             title={playing ? '暂停' : '播放'}
           >
@@ -282,13 +323,13 @@ export function VnMixedPreviewPlayer({
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[11px] font-medium text-white/62">
+            <p className={cn('truncate text-[11px] font-medium', mobileSurface ? 'text-muted-foreground' : 'text-white/62')}>
               {playing
                 ? activeFrame.audioUrl ? 'TTS 结束后自动推进' : '按文本时长自动推进'
                 : `间隔 ${gapSeconds}s · ${loopMode === 'infinite' ? '无限循环' : `循环 ${loopMode} 次`}`}
             </p>
             {playing && (
-              <p className="mt-0.5 text-[10px] text-white/38">
+              <p className={cn('mt-0.5 text-[10px]', mobileSurface ? 'text-muted-foreground/70' : 'text-white/38')}>
                 {loopMode === 'infinite' ? `第 ${loopIndex} 轮` : `${loopIndex}/${loopMode}`}
               </p>
             )}
@@ -298,7 +339,12 @@ export function VnMixedPreviewPlayer({
             type="button"
             disabled={!canFollow}
             onClick={() => openFollow(activeFrame)}
-            className="flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-emerald-300/12 px-2.5 text-[11px] font-semibold text-emerald-100 ring-1 ring-emerald-300/22 transition-colors hover:bg-emerald-300/18 disabled:cursor-not-allowed disabled:opacity-35"
+            className={cn(
+              'flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-[11px] font-semibold ring-1 transition-colors disabled:cursor-not-allowed disabled:opacity-35',
+              mobileSurface
+                ? 'bg-primary/10 text-primary ring-primary/20 hover:bg-primary/15'
+                : 'bg-emerald-300/12 text-emerald-100 ring-emerald-300/22 hover:bg-emerald-300/18',
+            )}
           >
             <Mic className="size-3.5" />
             跟读
@@ -307,7 +353,12 @@ export function VnMixedPreviewPlayer({
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
-            className="flex size-8 shrink-0 items-center justify-center rounded-md bg-white/8 text-white/70 transition-colors hover:bg-white/12 hover:text-white"
+            className={cn(
+              'flex size-8 shrink-0 items-center justify-center rounded-md transition-colors',
+              mobileSurface
+                ? 'bg-muted text-muted-foreground hover:bg-muted/75 hover:text-foreground'
+                : 'bg-white/8 text-white/70 hover:bg-white/12 hover:text-white',
+            )}
             title="播放设置"
           >
             <Settings className="size-4" />
@@ -315,7 +366,7 @@ export function VnMixedPreviewPlayer({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto bg-[#10131a] px-3 py-3">
+      <div className={cn('min-h-0 flex-1 overflow-y-auto px-3 py-3', listClass)}>
         <div className="space-y-0.5">
           {frames.map((frame) => {
             const active = frame.index === activeIndex
@@ -327,7 +378,7 @@ export function VnMixedPreviewPlayer({
                 ref={(node) => { itemRefs.current[frame.index] = node }}
                 className={cn(
                   'grid w-full grid-cols-[minmax(0,1fr)_32px] items-start gap-2 px-1 py-2 transition-colors',
-                  active && 'text-cyan-100',
+                  active && (mobileSurface ? 'rounded-xl bg-primary/8 px-2 text-primary' : 'text-cyan-100'),
                 )}
               >
                 <button
@@ -336,21 +387,24 @@ export function VnMixedPreviewPlayer({
                   className="min-w-0 text-left"
                 >
                   <span className="flex items-center justify-between gap-2">
-                    <span className={cn('truncate text-[11px] font-semibold', active ? 'text-cyan-100' : 'text-white/42')}>
+                    <span className={cn(
+                      'truncate text-[11px] font-semibold',
+                      active ? (mobileSurface ? 'text-primary' : 'text-cyan-100') : (mobileSurface ? 'text-muted-foreground' : 'text-white/42'),
+                    )}>
                       {mixedFrameLabel(frame)}
                     </span>
-                    {frame.onDefaultBranch && frame.kind !== 'choice' && (
-                      <span className="shrink-0 text-[10px] text-white/30">默认线</span>
-                    )}
                   </span>
                   <span className={cn(
                     'mt-1 block whitespace-pre-wrap text-sm leading-5',
-                    active ? 'font-semibold text-cyan-50' : isMissing ? 'text-amber-100' : 'text-white/70',
+                    active
+                      ? (mobileSurface ? 'font-semibold text-foreground' : 'font-semibold text-cyan-50')
+                      : isMissing ? (mobileSurface ? 'text-amber-700 dark:text-amber-300' : 'text-amber-100')
+                        : (mobileSurface ? 'text-foreground/82' : 'text-white/70'),
                   )}>
                     {mixedFrameDisplayText(frame)}
                   </span>
                   {frame.translation && (
-                    <span className={cn('mt-1 block text-xs leading-5', active ? 'text-cyan-100/55' : 'text-white/35')}>{frame.translation}</span>
+                    <span className={cn('mt-1 block text-xs leading-5', active ? (mobileSurface ? 'text-primary/70' : 'text-cyan-100/55') : (mobileSurface ? 'text-muted-foreground' : 'text-white/35'))}>{frame.translation}</span>
                   )}
                 </button>
                 <div className="flex flex-col items-center gap-1">
@@ -361,9 +415,9 @@ export function VnMixedPreviewPlayer({
                     className={cn(
                       'mt-2 flex size-7 items-center justify-center rounded-full transition-colors',
                       canFollowFrame(frame)
-                        ? 'text-white/34 hover:bg-white/8 hover:text-emerald-100'
-                        : 'cursor-not-allowed text-white/10',
-                      active && canFollowFrame(frame) && 'text-emerald-100',
+                        ? mobileSurface ? 'text-muted-foreground hover:bg-primary/10 hover:text-primary' : 'text-white/34 hover:bg-white/8 hover:text-emerald-100'
+                        : mobileSurface ? 'cursor-not-allowed text-muted-foreground/30' : 'cursor-not-allowed text-white/10',
+                      active && canFollowFrame(frame) && (mobileSurface ? 'text-primary' : 'text-emerald-100'),
                     )}
                     title="跟读"
                   >
@@ -373,7 +427,7 @@ export function VnMixedPreviewPlayer({
                     <button
                       type="button"
                       onClick={() => playRecordedFrame(frame.index, recordedUrl)}
-                      className="flex size-7 items-center justify-center rounded-full text-cyan-100 transition-colors hover:bg-white/8"
+                      className={cn('flex size-7 items-center justify-center rounded-full transition-colors', mobileSurface ? 'text-primary hover:bg-primary/10' : 'text-cyan-100 hover:bg-white/8')}
                       title="回放录音"
                     >
                       {playingRecordingIndex === frame.index ? <Pause className="size-3.5 fill-current" /> : <Play className="ml-0.5 size-3.5 fill-current" />}
@@ -387,19 +441,19 @@ export function VnMixedPreviewPlayer({
       </div>
 
       {practiceMode && (
-        <div className="flex shrink-0 items-center gap-3 border-t border-white/10 bg-[#0d1118] px-3 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]">
+        <div className={cn('flex shrink-0 items-center gap-3 border-t px-3 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]', toolbarClass)}>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-white/80">跟读进度 {recordedCount}/{followableCount}</p>
-            <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full rounded-full bg-emerald-300 transition-all" style={{ width: `${followableCount ? (recordedCount / followableCount) * 100 : 0}%` }} />
+            <p className={cn('text-xs font-medium', mobileSurface ? 'text-foreground' : 'text-white/80')}>跟读进度 {recordedCount}/{followableCount}</p>
+            <div className={cn('mt-1.5 h-1 overflow-hidden rounded-full', mobileSurface ? 'bg-muted' : 'bg-white/10')}>
+              <div className={cn('h-full rounded-full transition-all', mobileSurface ? 'bg-primary' : 'bg-emerald-300')} style={{ width: `${followableCount ? (recordedCount / followableCount) * 100 : 0}%` }} />
             </div>
           </div>
           <Button
             type="button"
             size="sm"
-            disabled={recordedCount === 0}
+            disabled={followableCount === 0 || recordedCount < followableCount}
             onClick={() => onComplete?.({ recordedCount, totalCount: followableCount })}
-            className="h-8 shrink-0 bg-emerald-300 px-3 text-xs text-slate-950 hover:bg-emerald-200"
+            className={cn('h-8 shrink-0 px-3 text-xs', mobileSurface ? '' : 'bg-emerald-300 text-slate-950 hover:bg-emerald-200')}
           >
             <CheckCircle2 className="size-3.5" />
             完成演出

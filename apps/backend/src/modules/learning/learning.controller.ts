@@ -19,6 +19,7 @@ export class LearningController {
     @Req() req: Request,
     @Query('tag') tag?: string,
     @Query('packageType') packageType?: string,
+    @Query('excludePackageType') excludePackageType?: string,
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
@@ -26,7 +27,7 @@ export class LearningController {
     const session = await requireAuthSession(req);
     const pageNum = Math.max(1, parseInt(page || '1', 10) || 1);
     const size = Math.min(50, Math.max(1, parseInt(pageSize || '20', 10) || 20));
-    return this.learningService.getLearningUnits(session.user.id, { tag, packageType, search, page: pageNum, pageSize: size });
+    return this.learningService.getLearningUnits(session.user.id, { tag, packageType, excludePackageType, search, page: pageNum, pageSize: size });
   }
 
   /** 获取用户正在学习的单元（有进度记录的） */

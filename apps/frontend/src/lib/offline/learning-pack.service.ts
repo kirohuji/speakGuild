@@ -411,8 +411,11 @@ export const learningPackService = {
         vocabularies: (unitDetail.vocabularies ?? []).map((item: any) => item.id),
         chunks: (unitDetail.chunks ?? []).map((item: any) => item.id),
         sentencePatterns: (unitDetail.sentencePatterns ?? []).map((item: any) => item.pattern),
-        storyEpisodes: unitDetail.firstEpisode ? [unitDetail.firstEpisode.id] : [],
-        inkScripts: topicDetails.map((detail: any) => detail.inkScript?.id).filter(Boolean),
+        storyEpisodes: (unitDetail.storyEpisodes ?? []).map((episode: any) => episode.id),
+        inkScripts: [
+          ...topicDetails.map((detail: any) => detail.inkScript?.id),
+          ...(unitDetail.offlineStoryEpisodePlayers ?? []).map((item: any) => item.inkScript?.id),
+        ].filter(Boolean),
         assets,
       },
     }

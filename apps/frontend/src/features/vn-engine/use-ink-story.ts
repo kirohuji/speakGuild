@@ -28,6 +28,7 @@ function hasInputTag(tags: string[]): boolean {
 export function useInkStory(json: Record<string, any> | null, options?: UseInkStoryOptions) {
   const engineRef = useRef<InkEngine | null>(null)
   const pendingRef = useRef<InkLine[] | null>(null)
+  const endAfterPendingRef = useRef(false)
   const [lines, setLines] = useState<InkLine[]>([])
   const [choices, setChoices] = useState<InkChoice[]>([])
   const [isEnded, setIsEnded] = useState(false)
@@ -39,6 +40,7 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
     engineRef.current?.destroy()
     engineRef.current = null
     pendingRef.current = null
+    endAfterPendingRef.current = false
     setLines([])
     setChoices([])
     setIsEnded(false)
@@ -67,6 +69,10 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
       const pending = pendingRef.current
       pendingRef.current = null
       setLines((prev) => [...prev, ...pending])
+      if (endAfterPendingRef.current) {
+        endAfterPendingRef.current = false
+        setIsEnded(true)
+      }
       return
     }
 
@@ -86,6 +92,7 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
       if (result.text) {
         pendingRef.current = parseInkLine(result.text, tags)
       }
+      endAfterPendingRef.current = result.isEnded
       return
     }
 
@@ -99,6 +106,7 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
       const parsed = parseInkLine(result.text, tags)
       setLines((prev) => [...prev, ...parsed])
     }
+    if (result.isEnded) setIsEnded(true)
   }, [])
 
   // ── handleChoice ──

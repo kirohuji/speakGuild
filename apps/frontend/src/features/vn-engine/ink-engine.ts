@@ -44,7 +44,7 @@ export class InkEngine {
   }
 
   /** 继续叙事，返回下一段文本 */
-  continue(): { text: string; hasChoices: boolean; choices: { index: number; text: string }[] } | null {
+  continue(): { text: string; hasChoices: boolean; choices: { index: number; text: string }[]; isEnded: boolean } | null {
     if (!this.story) return null
     if (!this.story.canContinue) {
       // Check for choices
@@ -54,6 +54,7 @@ export class InkEngine {
           text: '',
           hasChoices: true,
           choices: inkChoices.map((c) => ({ index: c.index, text: c.text })),
+          isEnded: false,
         }
       }
       return null // Story ended
@@ -66,6 +67,9 @@ export class InkEngine {
       text,
       hasChoices: inkChoices.length > 0,
       choices: inkChoices.map((c) => ({ index: c.index, text: c.text })),
+      // Continue() 已读取最后一句时，Ink 会同时将 canContinue 置为 false。
+      // 这里直接暴露终点，避免要求用户再点一次空白区域才能完成章节。
+      isEnded: !this.story.canContinue && inkChoices.length === 0,
     }
   }
 

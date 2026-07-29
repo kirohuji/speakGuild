@@ -142,6 +142,8 @@ export interface UnitDetail {
   chunkCount: number
   topicCount: number
   scriptCount: number
+  /** 仅存在于下载包中的章节播放数据；线上详情接口不会返回该字段。 */
+  offlineStoryEpisodePlayers?: StoryEpisodePlayerData[]
 }
 
 export interface StoryEpisodeItem {
@@ -197,6 +199,17 @@ export interface StoryEpisodePlayerData {
     inkJson: Record<string, any>
     inkSource: string | null
     version: number
+  }
+  /** 舞台资源随章节包一起下发，供离线剧场直接使用。 */
+  scene?: {
+    backgroundUrl?: string | null
+    characters?: Array<{
+      name: string
+      displayName?: string | null
+      spriteBaseUrl?: string | null
+      expressions?: Record<string, unknown> | null
+      defaultPosition?: 'left' | 'center' | 'right'
+    }>
   }
 }
 
@@ -295,7 +308,7 @@ export const learningApi = {
     get<TagInfo[]>('/learning/tags', packageType ? { packageType } : undefined),
 
   /** 获取教材列表（分页），支持按分类标签过滤和模糊搜索 */
-  getUnits: (params?: { tag?: string; packageType?: LearningPackageType; search?: string; page?: number; pageSize?: number }) =>
+  getUnits: (params?: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string; page?: number; pageSize?: number }) =>
     get<UnitsListResult>('/learning/units', params),
 
   /** 获取用户正在学习的单元 */

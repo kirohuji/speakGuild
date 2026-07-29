@@ -98,9 +98,9 @@ interface LearningStore {
   refreshMyUnits: () => Promise<void>
   fetchTags: (packageType?: LearningPackageType) => Promise<void>
   fetchUnitDetail: (unitId: string) => Promise<void>
-  fetchShop: (params?: { tag?: string; packageType?: LearningPackageType; search?: string; page?: number }) => Promise<void>
-  refreshShop: (params?: { tag?: string; packageType?: LearningPackageType; search?: string; page?: number }) => Promise<void>
-  loadMoreShop: (params?: { tag?: string; packageType?: LearningPackageType; search?: string }) => Promise<void>
+  fetchShop: (params?: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string; page?: number }) => Promise<void>
+  refreshShop: (params?: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string; page?: number }) => Promise<void>
+  loadMoreShop: (params?: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string }) => Promise<void>
   fetchCheckInCalendar: (startDate: string, endDate: string) => Promise<void>
   enrollUnit: (
     unitId: string,

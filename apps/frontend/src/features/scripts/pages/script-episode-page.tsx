@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
@@ -25,29 +25,30 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { learningApi, type StoryEpisodeItem, type UnitDetail } from '@/features/learning/api/learning-api'
+import { type StoryEpisodeItem } from '@/features/learning/api/learning-api'
+import { useLearningStore } from '@/stores/learning.store'
 
 export function ScriptEpisodePage() {
   const { t } = useTranslation()
   const { packageId, episodeId } = useParams()
   const navigate = useNavigate()
-  const [detail, setDetail] = useState<UnitDetail | null>(null)
-  const [loading, setLoading] = useState(true)
+  const storedDetail = useLearningStore((state) => state.unitDetail)
+  const loading = useLearningStore((state) => state.unitDetailLoading)
+  const fetchUnitDetail = useLearningStore((state) => state.fetchUnitDetail)
 
   useEffect(() => {
     if (!packageId) return
-    setLoading(true)
-    learningApi.getUnitDetail(packageId)
-      .then(setDetail)
-      .finally(() => setLoading(false))
-  }, [packageId])
+    void fetchUnitDetail(packageId)
+  }, [fetchUnitDetail, packageId])
+
+  const detail = storedDetail?.id === packageId ? storedDetail : null
 
   const episode = useMemo(
     () => detail?.storyEpisodes?.find((item) => item.id === episodeId) ?? null,
     [detail, episodeId],
   )
 
-  if (loading) {
+  if (loading && !detail) {
     return (
       <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-3">
         <Skeleton className="size-9 rounded-full" />

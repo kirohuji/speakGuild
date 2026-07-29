@@ -16,6 +16,9 @@ export interface ScriptPracticeRecord {
   score: number | null
   completedAt: string | null
   createdAt: string
+  resultSnapshot?: {
+    dialogue?: Array<{ speaker?: string; text: string; isUser?: boolean }>
+  } | null
   episode: {
     id: string
     title: string

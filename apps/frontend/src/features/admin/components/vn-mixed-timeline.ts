@@ -150,7 +150,9 @@ export function flattenComposerToTimeline(scenes: ComposerScene[], options: Flat
         const defaultChoice = choices[0]
         frames.push({
           ...toFrameBase(frames, 'choice', scene.name, itemIndex, ctx, options),
-          speaker: ctx.speaker,
+          // 跟读剧场会自动走默认分支；选择本身应以用户口吻展示，
+          // 与 # wait:input 的默认回答保持一致。
+          speaker: '我',
           text: defaultChoice?.text || '选择',
           source: 'choice',
           choices,

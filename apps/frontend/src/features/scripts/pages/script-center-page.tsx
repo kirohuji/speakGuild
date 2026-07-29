@@ -27,6 +27,7 @@ import {
   ShoppingBag,
   SmilePlus,
   Sparkles,
+  Trash2,
   Users,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -74,6 +75,7 @@ import { parseComposer } from '@/features/admin/components/composer-parser'
 import { flattenComposerToTimeline } from '@/features/admin/components/vn-mixed-timeline'
 import { requestScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
+import { VnPlayer, type VnPlayerLine } from '@/features/vn-engine/vn-player'
 
 function useVideoFullscreenOrientation() {
   useEffect(() => {
@@ -138,6 +140,7 @@ export function ScriptCenterPage() {
   const fetchDownloadedPacks = useLearningStore((state) => state.fetchDownloadedPacks)
   const downloadUnitPack = useLearningStore((state) => state.downloadUnitPack)
   const enrollUnit = useLearningStore((state) => state.enrollUnit)
+  const quitUnit = useLearningStore((state) => state.quitUnit)
 
   const storyUnits = useMemo(
     () => myUnits.filter((unit) => unit.packageType === 'story'),
@@ -317,6 +320,7 @@ export function ScriptCenterPage() {
             onOpenShop={() => setPanel('store')}
             onOpenRecords={() => setPanel('records')}
             onDownload={downloadUnitPack}
+            onQuit={quitUnit}
             works={works}
             worksLoading={worksLoading}
             onWorksChanged={loadWorks}
@@ -386,6 +390,7 @@ function MineScripts({
   onOpenShop,
   onOpenRecords,
   onDownload,
+  onQuit,
   works,
   worksLoading,
   onWorksChanged,
@@ -398,12 +403,26 @@ function MineScripts({
   onOpenShop: () => void
   onOpenRecords: () => void
   onDownload: (id: string) => Promise<void>
+  onQuit: (id: string) => Promise<void>
   works: ScriptWork[]
   worksLoading: boolean
   onWorksChanged: () => Promise<void>
 }) {
   const { t } = useTranslation()
   const [worksOpen, setWorksOpen] = useState(false)
+  const [deletingUnit, setDeletingUnit] = useState<MyUnit | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  const removeScript = async () => {
+    if (!deletingUnit || deleting) return
+    setDeleting(true)
+    try {
+      await onQuit(deletingUnit.id)
+      setDeletingUnit(null)
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   if (loading && units.length === 0) {
     return (
@@ -456,6 +475,14 @@ function MineScripts({
                   <span className="text-xs font-medium text-muted-foreground">
                     {Math.round(activeUnit.completionPercent)}%
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => setDeletingUnit(activeUnit)}
+                    className="-mr-2 -mt-2 flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                    aria-label={`${t('learning.quitUnit')} ${activeUnit.title}`}
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
                 </div>
                 <div className="flex flex-col gap-3">
                   <div>
@@ -540,7 +567,8 @@ function MineScripts({
         </div>
         <div className="-mx-2 flex snap-x gap-2 overflow-x-auto px-2 pb-1">
           {units.map((unit) => (
-            <Link key={unit.id} to={`/scripts/packages/${unit.id}`} className="group">
+            <div key={unit.id} className="group relative w-44 shrink-0 snap-start">
+              <Link to={`/scripts/packages/${unit.id}`}>
               <Card className="w-44 shrink-0 snap-start overflow-hidden border-0 bg-muted/30 shadow-none transition-transform group-active:scale-[0.98]">
                 <div className="aspect-video bg-muted/50 p-3">
                   <Badge variant="secondary">{t('scripts.chapters', { count: unit.scriptCount })}</Badge>
@@ -552,10 +580,34 @@ function MineScripts({
                   </CardDescription>
                 </CardHeader>
               </Card>
-            </Link>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setDeletingUnit(unit)}
+                className="absolute right-1.5 top-1.5 flex size-7 items-center justify-center rounded-full bg-background/85 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                aria-label={`${t('learning.quitUnit')} ${unit.title}`}
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            </div>
           ))}
         </div>
       </section>
+      <Dialog open={Boolean(deletingUnit)} onOpenChange={(open) => { if (!open && !deleting) setDeletingUnit(null) }}>
+        <DialogContent className="w-[90vw] max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>{t('learning.quitConfirmTitle')}</DialogTitle>
+            <DialogDescription>{deletingUnit ? t('learning.quitConfirmDesc', { title: deletingUnit.title }) : ''}</DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" disabled={deleting} onClick={() => setDeletingUnit(null)}>{t('common.cancel')}</Button>
+            <Button variant="destructive" disabled={deleting} onClick={() => void removeScript()}>
+              {deleting && <Loader2 className="animate-spin" />}
+              {t('learning.quitConfirm')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -1173,7 +1225,7 @@ function ScriptPublishHistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[84dvh] w-[calc(100vw-2rem)] max-w-2xl flex-col gap-4 overflow-hidden rounded-2xl p-5 [&>button]:right-4 [&>button]:top-4">
+      <DialogContent className="flex max-h-[84dvh] w-[calc(100vw-2rem)] max-w-2xl flex-col gap-4 overflow-hidden rounded-2xl p-5 [&>button]:right-4 [&>button]:top-4 [&>button]:border-0 [&>button]:bg-transparent [&>button]:shadow-none [&>button]:ring-0 [&>button:hover]:bg-transparent [&>button:focus-visible]:ring-0">
         <DialogHeader className="shrink-0 pr-8">
           <DialogTitle>{resolvedTitle}</DialogTitle>
           <DialogDescription className="text-xs">
@@ -1582,6 +1634,7 @@ function SquareWorkCard({
 
 function RecordList({ records, loading }: { records: ScriptPracticeRecord[]; loading: boolean }) {
   const [mode, setMode] = useState('all')
+  const [replayRecord, setReplayRecord] = useState<ScriptPracticeRecord | null>(null)
   const visible = records.filter((record) => {
     if (mode === 'all') return true
     return record.mode === mode
@@ -1606,7 +1659,7 @@ function RecordList({ records, loading }: { records: ScriptPracticeRecord[]; loa
         ) : (
           <div className="flex flex-col gap-2">
             {visible.map((record) => (
-              <Link key={record.id} to={`/scripts/packages/${record.episode.scene.id}/episodes/${record.episode.id}`}>
+              <button key={record.id} type="button" onClick={() => setReplayRecord(record)} className="w-full text-left">
                 <div className="rounded-lg bg-muted/30 p-3.5 transition-colors hover:bg-muted/50">
                   <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -1621,12 +1674,64 @@ function RecordList({ records, loading }: { records: ScriptPracticeRecord[]; loa
                   <span>{Math.max(0, Math.round(record.durationSec / 60))} 分钟</span>
                   </div>
                 </div>
-              </Link>
+              </button>
             ))}
           </div>
         )}
       </div>
+      <ScriptRecordReplayDialog record={replayRecord} onClose={() => setReplayRecord(null)} />
     </Tabs>
+  )
+}
+
+function ScriptRecordReplayDialog({ record, onClose }: { record: ScriptPracticeRecord | null; onClose: () => void }) {
+  const replayLines = useMemo<VnPlayerLine[]>(
+    () => record?.resultSnapshot?.dialogue?.map((line) => ({
+      speaker: line.speaker,
+      text: line.text,
+      isUser: line.isUser,
+    })) ?? [],
+    [record],
+  )
+  const [lineIndex, setLineIndex] = useState(0)
+
+  useEffect(() => setLineIndex(0), [record?.id])
+
+  if (!record) return null
+  const isEnded = replayLines.length > 0 && lineIndex >= replayLines.length
+  const currentLine = isEnded ? null : replayLines[lineIndex] ?? null
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="left-0 top-0 h-dvh w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden">
+        <DialogHeader className="sr-only"><DialogTitle>剧本练习回放</DialogTitle></DialogHeader>
+        {replayLines.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+            <p className="text-sm text-muted-foreground">这条旧记录未保存对话内容，暂时无法回放。</p>
+            <Button variant="outline" onClick={onClose}>关闭</Button>
+          </div>
+        ) : (
+          <div className="relative h-full bg-background">
+            <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
+              <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full border border-border/55 bg-background/90 px-2 shadow-lg backdrop-blur-2xl">
+                <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>关闭</Button>
+                <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted-foreground">{record.episode.title} · 对话回放</span>
+              </div>
+            </div>
+            <VnPlayer
+              className="h-full max-w-none rounded-none border-none"
+              stageClassName="min-h-0"
+              currentLine={currentLine}
+              history={replayLines.slice(0, Math.min(lineIndex, replayLines.length))}
+              isEnded={isEnded}
+              onAdvance={() => setLineIndex((current) => Math.min(current + 1, replayLines.length))}
+              showHistoryButton={false}
+              endedActions={<Button size="sm" className="rounded-full" onClick={onClose}>完成回放</Button>}
+            />
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   )
 }
 

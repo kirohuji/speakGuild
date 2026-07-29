@@ -19,7 +19,6 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react'
-import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -32,51 +31,45 @@ import {
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { learningApi, type StoryEpisodeItem, type UnitDetail } from '@/features/learning/api/learning-api'
+import { type StoryEpisodeItem } from '@/features/learning/api/learning-api'
 import { useLearningStore } from '@/stores/learning.store'
 
 export function ScriptPackagePage() {
   const { t } = useTranslation()
   const { packageId } = useParams()
   const navigate = useNavigate()
-  const [detail, setDetail] = useState<UnitDetail | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [packStateLoading, setPackStateLoading] = useState(true)
+  const storedDetail = useLearningStore((state) => state.unitDetail)
+  const loading = useLearningStore((state) => state.unitDetailLoading)
+  const fetchUnitDetail = useLearningStore((state) => state.fetchUnitDetail)
   const downloadedPacks = useLearningStore((state) => state.downloadedPacks)
+  const availablePackUpdates = useLearningStore((state) => state.availablePackUpdates)
   const downloadTasks = useLearningStore((state) => state.downloadTasks)
   const downloadUnitPack = useLearningStore((state) => state.downloadUnitPack)
   const fetchDownloadedPacks = useLearningStore((state) => state.fetchDownloadedPacks)
 
   useEffect(() => {
     if (!packageId) return
-    setLoading(true)
-    learningApi.getUnitDetail(packageId)
-      .then((result) => {
-        if (!result || result.packageType !== 'story') {
-          setDetail(null)
-          return
-        }
-        setDetail(result)
-      })
-      .catch(() => toast.error(t('scripts.packageLoadFailed')))
-      .finally(() => setLoading(false))
-  }, [packageId])
+    void fetchUnitDetail(packageId)
+  }, [fetchUnitDetail, packageId])
+
+  const detail = storedDetail?.id === packageId && storedDetail.packageType === 'story'
+    ? storedDetail
+    : null
 
   useEffect(() => {
-    setPackStateLoading(true)
-    void fetchDownloadedPacks()
-      .catch(() => undefined)
-      .finally(() => setPackStateLoading(false))
+    void fetchDownloadedPacks().catch(() => undefined)
   }, [fetchDownloadedPacks])
 
   const installed = downloadedPacks.some((pack) => pack.packId === packageId && pack.status === 'installed')
+  const updateAvailable = availablePackUpdates.some((update) => update.packId === packageId)
   const downloading = downloadTasks.some((task) => task.packId === packageId && task.status !== 'error')
   const episodes = detail?.storyEpisodes ?? []
   const completed = episodes.filter((episode) => episode.record?.passed).length
   const progress = episodes.length > 0 ? (completed / episodes.length) * 100 : 0
   const nextEpisode = episodes.find((episode) => episode.isUnlocked && !episode.record?.passed) ?? episodes[0]
 
-  if (loading || packStateLoading) return <PackageSkeleton />
+  // 与学习计划详情一致：命中同一包的离线缓存时不再闪出加载骨架。
+  if (loading && !detail) return <PackageSkeleton />
 
   if (!detail) {
     return (
@@ -138,14 +131,14 @@ export function ScriptPackagePage() {
             <span className="text-xs tabular-nums text-muted-foreground">{completed}/{episodes.length}</span>
           </div>
           <div className="mt-4">
-            {!installed ? (
+            {!installed || updateAvailable ? (
               <Button
                 className="w-full"
                 disabled={downloading}
                 onClick={() => packageId && void downloadUnitPack(packageId)}
               >
                 {downloading ? <Loader2 className="animate-spin" data-icon="inline-start" /> : <Download data-icon="inline-start" />}
-                {downloading ? t('scripts.preparingOffline') : t('scripts.downloadScript')}
+                {downloading ? t('scripts.preparingOffline') : updateAvailable ? t('learning.packUpdateAvailable') : t('scripts.downloadScript')}
               </Button>
             ) : nextEpisode ? (
               <Button asChild className="w-full">

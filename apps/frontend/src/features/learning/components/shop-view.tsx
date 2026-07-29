@@ -14,8 +14,9 @@ interface Props {
   isOpen?: boolean
   onMemberOpen: () => void
   onEnrollUnit?: (id: string) => Promise<void>
-  onRefreshShop: (params?: { tag?: string; packageType?: LearningPackageType; search?: string; page?: number }) => Promise<void>
-  onLoadMore: (params?: { tag?: string; packageType?: LearningPackageType; search?: string }) => Promise<void>
+  onRefreshShop: (params?: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string; page?: number }) => Promise<void>
+  onLoadMore: (params?: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string }) => Promise<void>
+  excludePackageType?: LearningPackageType
 }
 
 const PACKAGE_TYPE_TABS: Array<{ id: LearningPackageType; label: string }> = [
@@ -28,7 +29,7 @@ const PACKAGE_TYPE_TABS: Array<{ id: LearningPackageType; label: string }> = [
 
 type PackageTypeFilter = LearningPackageType | 'all'
 
-export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore }: Props) {
+export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, onLoadMore, excludePackageType }: Props) {
   const { t } = useTranslation()
   const tags = useLearningStore((s) => s.tags)
   const fetchTags = useLearningStore((s) => s.fetchTags)
@@ -42,12 +43,13 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const doSearch = useCallback((kw: string, tag: string, packageType: PackageTypeFilter) => {
-    const params: { tag?: string; packageType?: LearningPackageType; search?: string } = {}
+    const params: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string } = {}
     if (packageType !== 'all') params.packageType = packageType
+    if (excludePackageType) params.excludePackageType = excludePackageType
     if (tag !== 'all') params.tag = tag
     if (kw.trim()) params.search = kw.trim()
     onRefreshShop(params)
-  }, [onRefreshShop])
+  }, [excludePackageType, onRefreshShop])
 
   useEffect(() => {
     if (!isOpen) return
@@ -86,8 +88,9 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
 
   const handleEndReached = () => {
     if (shopHasMore && !loading) {
-      const params: { tag?: string; packageType?: LearningPackageType; search?: string } = {}
+      const params: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string } = {}
       if (activeType !== 'all') params.packageType = activeType
+      if (excludePackageType) params.excludePackageType = excludePackageType
       if (activeTag !== 'all') params.tag = activeTag
       if (keyword.trim()) params.search = keyword.trim()
       onLoadMore(params)
@@ -118,7 +121,7 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
       </div>
       <div className="scrollbar-hide mx-4 overflow-x-auto">
         <div className="flex w-max gap-2 pb-1">
-          {[{ id: 'all' as const, label: t('learning.all') }, ...PACKAGE_TYPE_TABS].map((tab) => (
+          {[{ id: 'all' as const, label: t('learning.all') }, ...PACKAGE_TYPE_TABS.filter((tab) => tab.id !== excludePackageType)].map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTypeChange(tab.id)}

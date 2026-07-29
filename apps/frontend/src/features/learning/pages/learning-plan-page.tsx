@@ -96,7 +96,7 @@ export function LearningPlanPage() {
               aria-label={t('profile.records')}>
               <ClipboardList className="size-[18px]" />
             </button>
-            <button type="button" onClick={(e) => { e.currentTarget.blur(); setShopOpen(true); refreshShop(); fetchTags() }}
+            <button type="button" onClick={(e) => { e.currentTarget.blur(); setShopOpen(true); refreshShop({ excludePackageType: 'story' }); fetchTags() }}
               className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground lg:hidden"
               aria-label={t('member.title')}
               data-spotlight="open-shop">
@@ -108,7 +108,7 @@ export function LearningPlanPage() {
         <MyLearningView
           myUnits={learningUnits} inProgress={inProgress} completed={completed}
           loading={myLoading}
-          onGoToShop={() => { setShopOpen(true); refreshShop(); fetchTags() }}
+          onGoToShop={() => { setShopOpen(true); refreshShop({ excludePackageType: 'story' }); fetchTags() }}
           onRefresh={refreshMyUnits}
           onQuitUnit={storeQuitUnit}
           downloadedPackIds={downloadedPacks.filter((pack) => pack.status === 'installed').map((pack) => pack.packId)}
@@ -142,6 +142,7 @@ export function LearningPlanPage() {
                 onEnrollUnit={storeEnrollUnit}
                 onRefreshShop={refreshShop}
                 onLoadMore={loadMoreShop}
+                excludePackageType="story"
               />
             </div>
           </DrawerContent>

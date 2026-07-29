@@ -129,6 +129,18 @@ export class LearningService {
     return asset;
   }
 
+  /** 收集编排脚本中直接引用的舞台背景与语音资源。 */
+  private pushInkSourceAssets(assets: any[], source?: string | null) {
+    if (!source) return;
+    const tagPattern = /^#\s*(bg|audio|defaultAnswerAudio)\s*:\s*(.+)$/gim;
+    for (const match of source.matchAll(tagPattern)) {
+      const tag = match[1].toLowerCase();
+      let url = match[2].trim();
+      try { url = decodeURIComponent(url); } catch { /* keep original URL */ }
+      this.pushAsset(assets, url, tag === 'bg' ? 'background' : 'voice');
+    }
+  }
+
   private isPackagedAsset(asset: any) {
     const role = String(asset?.role ?? '').toLowerCase();
     return !['voice', 'audio', 'bgm', 'sfx'].includes(role);
@@ -294,11 +306,12 @@ export class LearningService {
   async getLearningUnits(userId: string, params: {
     tag?: string;
     packageType?: string;
+    excludePackageType?: string;
     search?: string;
     page?: number;
     pageSize?: number;
   } = {}) {
-    const { tag, packageType, search, page = 1, pageSize = 20 } = params;
+    const { tag, packageType, excludePackageType, search, page = 1, pageSize = 20 } = params;
     // 管理员拥有全部权限
     const adminCheck = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -318,6 +331,8 @@ export class LearningService {
     const sceneWhere: any = {};
     if (packageType) {
       sceneWhere.packageType = packageType;
+    } else if (excludePackageType) {
+      sceneWhere.packageType = { not: excludePackageType };
     }
     if (search) {
       sceneWhere.title = { contains: search, mode: 'insensitive' };
@@ -608,6 +623,25 @@ export class LearningService {
       throw new NotFoundException('章节脚本尚未编译');
     }
 
+    const gameLocation = await this.prisma.gameLocation.findFirst({
+      where: { sceneId: episode.sceneId },
+      select: {
+        backgroundUrl: true,
+        rooms: {
+          select: {
+            npcs: {
+              include: {
+                character: {
+                  select: { name: true, displayName: true, spriteBaseUrl: true, expressions: true, defaultPosition: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    const characters = gameLocation?.rooms.flatMap((room) => room.npcs.map((npc) => npc.character)) ?? [];
+
     return {
       episode: {
         id: episode.id,
@@ -623,6 +657,10 @@ export class LearningService {
         isPreview: episode.isPreview,
       },
       inkScript,
+      scene: {
+        backgroundUrl: gameLocation?.backgroundUrl ?? null,
+        characters,
+      },
     };
   }
 
@@ -1003,6 +1041,25 @@ export class LearningService {
       },
     });
 
+    const storyEpisodes = await this.prisma.storyEpisode.findMany({
+      where: { sceneId: unitId },
+      orderBy: { sortOrder: 'asc' },
+      select: {
+        id: true,
+        sceneId: true,
+        title: true,
+        chapterName: true,
+        description: true,
+        characterName: true,
+        characterRole: true,
+        objectives: true,
+        isPreview: true,
+        inkScript: {
+          select: { id: true, key: true, title: true, inkJson: true, inkSource: true, version: true },
+        },
+      },
+    });
+
     // ── Scene visual assets (shared across all topics, store once at unit level) ──
     const gameLocation = await this.prisma.gameLocation.findFirst({
       where: { sceneId: unitId },
@@ -1062,6 +1119,27 @@ export class LearningService {
       })),
     };
 
+    // 与线上播放器相同的数据结构写进离线包，章节可在断网时直接启动。
+    (unitDetail as any).offlineStoryEpisodePlayers = storyEpisodes
+      .filter((episode) => Boolean(episode.inkScript?.inkJson))
+      .map((episode) => ({
+        episode: {
+          id: episode.id,
+          sceneId: episode.sceneId,
+          sceneTitle: unitDetail.title,
+          location: unitDetail.location,
+          title: episode.title,
+          chapterName: episode.chapterName,
+          description: episode.description,
+          characterName: episode.characterName,
+          characterRole: episode.characterRole,
+          objectives: episode.objectives,
+          isPreview: episode.isPreview,
+        },
+        inkScript: episode.inkScript,
+        scene: (unitDetail as any).scene,
+      }));
+
     // ── Collect asset URLs from per-topic data (vocabs audio) + unit-level (scene/characters) ──
     const assets: any[] = [];
     this.pushAsset(assets, gameLocation?.backgroundUrl, 'background');
@@ -1080,6 +1158,9 @@ export class LearningService {
           this.pushAsset(assets, (expr as any).avatarUrl, 'thumbnail');
         }
       }
+    }
+    for (const episode of storyEpisodes) {
+      this.pushInkSourceAssets(assets, episode.inkScript?.inkSource);
     }
 
     const pushWarmupAudioAsset = async (item: any) => {
@@ -1176,6 +1257,7 @@ export class LearningService {
     const totalChunks = topicDetails.reduce((sum, td) => sum + (td.activeChunks?.length ?? 0), 0);
     const versions = [
       ...topics.map((t) => t.inkScript?.version ?? 1),
+      ...storyEpisodes.map((episode) => episode.inkScript?.version ?? 1),
       totalVocabs,
       totalChunks,
       unitDetail.sentencePatterns?.length ?? 0,
@@ -1201,8 +1283,11 @@ export class LearningService {
         vocabularies: [...allVocabIds],
         chunks: [...allChunkIds],
         sentencePatterns: unitDetail.sentencePatterns.map((item: any) => item.pattern),
-        storyEpisodes: unitDetail.firstEpisode ? [unitDetail.firstEpisode.id] : [],
-        inkScripts: topics.map((t) => t.inkScript?.id).filter(Boolean),
+        storyEpisodes: storyEpisodes.map((episode) => episode.id),
+        inkScripts: [
+          ...topics.map((t) => t.inkScript?.id),
+          ...storyEpisodes.map((episode) => episode.inkScript?.id),
+        ].filter(Boolean),
         assets,
       },
       unitDetail: leanUnitDetail,

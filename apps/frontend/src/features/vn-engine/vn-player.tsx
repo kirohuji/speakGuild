@@ -562,6 +562,7 @@ export function VnPlayer({
                   <div className={cn(
                     'min-w-0 space-y-2 pt-2',
                     currentAvatarUrl && !displayLine.isUser ? 'ml-3' : '',
+                    isEnded && 'w-full',
                   )}>
                     <p className="whitespace-pre-wrap font-medium leading-relaxed text-foreground" style={{ fontSize: settings.fontSize }}>
                       <TappableText text={displayedText} onWordDetail={onWordInsight} />
@@ -571,6 +572,12 @@ export function VnPlayer({
                     </p>
                     {settings.bilingual && displayLine.translation && (
                       <p className="text-xs l sm:rounded-2xltext-muted-foreground">{displayedTranslation}</p>
+                    )}
+                    {isEnded && (
+                      <div className="flex w-full flex-col items-center gap-2 pt-4 text-center">
+                        <p className="text-sm text-muted-foreground">{t('vnHistory.storyEnded')}</p>
+                        {endedActions}
+                      </div>
                     )}
                   </div>
                 </div>

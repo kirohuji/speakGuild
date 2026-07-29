@@ -515,7 +515,7 @@ export const offlineSyncService = {
       if (changedIds.size === 0) return []
 
       // 找出哪些已安装学习包的内容发生了变更
-      const packs = await localDb.list<{ packId: string; manifest?: { topics?: string[]; vocabularies?: string[]; chunks?: string[]; sentencePatterns?: string[] } }>('downloaded_packs')
+      const packs = await localDb.list<{ packId: string; manifest?: { topics?: string[]; vocabularies?: string[]; chunks?: string[]; sentencePatterns?: string[]; storyEpisodes?: string[]; inkScripts?: string[] } }>('downloaded_packs')
       const stalePacks = packs
         .filter((pack) => {
           const ids = [
@@ -523,6 +523,8 @@ export const offlineSyncService = {
             ...(pack.manifest?.vocabularies ?? []),
             ...(pack.manifest?.chunks ?? []),
             ...(pack.manifest?.sentencePatterns ?? []),
+            ...(pack.manifest?.storyEpisodes ?? []),
+            ...(pack.manifest?.inkScripts ?? []),
           ]
           return ids.some((id) => changedIds.has(id))
         })
@@ -559,7 +561,7 @@ export const offlineSyncService = {
       return []
     }
 
-    const packs = await localDb.list<{ packId: string; manifest?: { topics?: string[]; vocabularies?: string[]; chunks?: string[]; sentencePatterns?: string[] } }>('downloaded_packs')
+    const packs = await localDb.list<{ packId: string; manifest?: { topics?: string[]; vocabularies?: string[]; chunks?: string[]; sentencePatterns?: string[]; storyEpisodes?: string[]; inkScripts?: string[] } }>('downloaded_packs')
     const stalePacks = packs
       .filter((pack) => {
         const ids = [
@@ -567,6 +569,8 @@ export const offlineSyncService = {
           ...(pack.manifest?.vocabularies ?? []),
           ...(pack.manifest?.chunks ?? []),
           ...(pack.manifest?.sentencePatterns ?? []),
+          ...(pack.manifest?.storyEpisodes ?? []),
+          ...(pack.manifest?.inkScripts ?? []),
         ]
         return ids.some((id) => changedIds.has(id))
       })

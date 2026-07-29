@@ -2,6 +2,7 @@ import {
   learningApi,
   type LearningUnitSummary,
   type MyUnit,
+  type StoryEpisodePlayerData,
   type UnitDetail,
 } from '@/features/learning/api/learning-api'
 import { localDb } from './unified-storage'
@@ -253,6 +254,16 @@ export const learningRepository = {
     if (!await isPackInstalled(unitId)) return null
     const cached = await localDb.get<any>('downloaded_unit_details', unitId)
     return cached ? aggregateUnitContent(cached) : null
+  },
+
+  /** 已安装包优先本地播放；旧包缺章节 Ink 时才回退线上。 */
+  async getStoryEpisodePlayer(packageId: string | null | undefined, episodeId: string): Promise<StoryEpisodePlayerData> {
+    if (packageId && await isPackInstalled(packageId)) {
+      const unit = await this.getCachedUnitDetail(packageId)
+      const localPlayer = unit?.offlineStoryEpisodePlayers?.find((item) => item.episode.id === episodeId)
+      if (localPlayer?.inkScript?.inkJson) return localPlayer
+    }
+    return learningApi.getStoryEpisodePlayer(episodeId)
   },
 
   async enrollUnit(unitId: string, unit?: LearningUnitSummary | UnitDetail | null): Promise<void> {

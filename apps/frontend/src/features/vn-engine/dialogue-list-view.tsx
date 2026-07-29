@@ -364,7 +364,7 @@ export function DialogueListView({
 
   // ── Build display list: history + current line ──
   const displayLines: VnPlayerLine[] = [...history]
-  if (currentLine && !isEnded) {
+  if (currentLine) {
     // If the current line is already the last in history, don't duplicate
     const lastHistoryLine = history[history.length - 1]
     if (!lastHistoryLine || lastHistoryLine.text !== currentLine.text || lastHistoryLine.speaker !== currentLine.speaker) {
