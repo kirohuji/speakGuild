@@ -21,17 +21,20 @@ import {
   Edit3,
   Eraser,
   Eye,
+  EyeOff,
   GraduationCap,
   Headphones,
   Languages,
   Layers3,
   LockKeyhole,
+  LockOpen,
   Loader2,
   Map,
   MapPin,
   MessageCircle,
   Moon,
   Plus,
+  Pencil,
   Route,
   RotateCcw,
   Group,
@@ -120,6 +123,10 @@ import {
   type VocabularyFull,
 } from "../api-content-admin";
 import { ImageUploadField } from "./image-upload-field";
+import {
+  SpritesheetZipUploadField,
+  type SpritesheetImportValue,
+} from "./spritesheet-zip-upload-field";
 import { VnStoryPreview } from "./vn-story-preview";
 import {
   ExplorationPixiCanvas,
@@ -154,6 +161,7 @@ import {
   type LocationVisualStyle,
   type ExplorationObject,
   type ExplorationObjectKind,
+  type ExplorationMediaType,
   type LearningResourceType,
   type SceneInteractionType,
   type ExplorationLayer,
@@ -177,6 +185,12 @@ const EMPTY_OBJECT: Omit<ExplorationObject, "id" | "roomId"> = {
   example: "",
   prompt: "",
   imageUrl: "",
+  mediaType: "image",
+  spritesheetUrl: "",
+  animationName: "",
+  animationNames: [],
+  animationFps: 12,
+  animationLoop: true,
   kind: "vocabulary",
   resourceType: "vocabulary",
   resourceId: "",
@@ -204,6 +218,75 @@ const OBJECT_KIND_LABELS: Record<ExplorationObjectKind, string> = {
 };
 
 const LOCATION_RESOURCE_BASE_SIZE = 80;
+
+function SceneElementIcon({ node }: { node: ExplorationNode }) {
+  if (node.kind === "location") return <MapPin className="shrink-0" />;
+  if (node.kind === "room") return <DoorOpen className="shrink-0" />;
+  if (node.kind === "character") return <UserRound className="shrink-0" />;
+  if (node.kind === "exit") return <Route className="shrink-0" />;
+  if (node.resourceType === "chunk") {
+    return <MessageCircle className="shrink-0" />;
+  }
+  if (node.resourceType === "pattern") {
+    return <GraduationCap className="shrink-0" />;
+  }
+  if (node.objectKind === "reading") {
+    return <BookOpen className="shrink-0" />;
+  }
+  if (node.objectKind === "listening") {
+    return <Headphones className="shrink-0" />;
+  }
+  if (node.objectKind === "clue" || node.objectKind === "quest") {
+    return <Sparkles className="shrink-0" />;
+  }
+  return <Languages className="shrink-0" />;
+}
+
+function ExplorationMediaPreview({
+  object,
+  className,
+}: {
+  object: ExplorationObject;
+  className: string;
+}) {
+  if (!object.imageUrl) return null;
+  return (
+    <MediaUrlPreview
+      url={object.imageUrl}
+      video={object.mediaType === "video"}
+      className={cn(
+        className,
+        object.mediaType === "spritesheet" &&
+          "object-contain [image-rendering:pixelated]",
+      )}
+    />
+  );
+}
+
+function MediaUrlPreview({
+  url,
+  className,
+  video = /\.(mp4|webm|ogg|mov|m4v)(?:[?#]|$)/i.test(url) ||
+    /[#&?]media=video(?:&|$)/i.test(url),
+}: {
+  url: string;
+  className: string;
+  video?: boolean;
+}) {
+  if (video) {
+    return (
+      <video
+        src={url}
+        muted
+        loop
+        autoPlay
+        playsInline
+        className={className}
+      />
+    );
+  }
+  return <img src={url} alt="" className={className} />;
+}
 
 export function NarrativeWorldStudio({
   onLocationsChange,
@@ -261,6 +344,7 @@ export function NarrativeWorldStudio({
   const [locationDialog, setLocationDialog] = useState(false);
   const [roomDialog, setRoomDialog] = useState(false);
   const [objectDialog, setObjectDialog] = useState(false);
+  const [addElementMenuOpen, setAddElementMenuOpen] = useState(false);
   const [editingMap, setEditingMap] = useState<GameMapData | null>(null);
   const [editingLocation, setEditingLocation] =
     useState<GameLocationData | null>(null);
@@ -477,6 +561,10 @@ export function NarrativeWorldStudio({
         layerId,
         layerOrder:
           layers.find((layer) => layer.id === layerId)?.order ?? 1,
+        layerHidden:
+          layers.find((layer) => layer.id === layerId)?.hidden ?? false,
+        layerLocked:
+          layers.find((layer) => layer.id === layerId)?.locked ?? false,
         groupId: getExplorationNodeGroupId(selectedMap?.editorData, node.id),
       };
     };
@@ -506,6 +594,13 @@ export function NarrativeWorldStudio({
               : ("learning" as const),
         required: item.required,
         hidden: item.hidden,
+        resourceType: item.resourceType,
+        objectKind: item.kind,
+        mediaType: item.mediaType ?? "image",
+        spritesheetUrl: item.spritesheetUrl,
+        animationName: item.animationName,
+        animationFps: item.animationFps,
+        animationLoop: item.animationLoop,
       }),
     );
     if (level === "world") {
@@ -576,6 +671,8 @@ export function NarrativeWorldStudio({
   const nodeBreathing = Boolean(
     selectedMap?.editorData?.preview?.nodeBreathing,
   );
+  const backgroundLayerHidden =
+    layers.find((layer) => layer.id === BACKGROUND_LAYER_ID)?.hidden ?? false;
 
   const persistEditorData = async (editorData: unknown) => {
     if (!selectedMap) return;
@@ -735,9 +832,12 @@ export function NarrativeWorldStudio({
 
   const moveNode = async (id: string, x: number, y: number) => {
     const activeNode = nodes.find((item) => item.id === id);
-    if (!activeNode) return;
+    if (!activeNode || activeNode.layerLocked) return;
     const groupedNodes = activeNode.groupId
-      ? nodes.filter((item) => item.groupId === activeNode.groupId)
+      ? nodes.filter(
+          (item) =>
+            item.groupId === activeNode.groupId && !item.layerLocked,
+        )
       : [activeNode];
     const groupedIds = new Set(groupedNodes.map((node) => node.id));
     const attachedNodes = nodes.filter((node) =>
@@ -1113,6 +1213,34 @@ export function NarrativeWorldStudio({
     );
   };
 
+  const updateLayer = async (
+    layerId: string,
+    patch: Partial<Pick<ExplorationLayer, "name" | "hidden" | "locked">>,
+  ) => {
+    if (!selectedMap) return;
+    const target = layers.find((layer) => layer.id === layerId);
+    if (!target) return;
+    const nextLayers = layers.map((layer) =>
+      layer.id === layerId
+        ? {
+            ...layer,
+            ...patch,
+            name:
+              patch.name !== undefined
+                ? patch.name.trim() || layer.name
+                : layer.name,
+            locked:
+              layer.system === "background"
+                ? true
+                : patch.locked ?? layer.locked,
+          }
+        : layer,
+    );
+    await persistEditorData(
+      updateExplorationLayers(selectedMap.editorData, layerScope, nextLayers),
+    );
+  };
+
   const deleteActiveLayer = async () => {
     if (
       !selectedMap ||
@@ -1472,6 +1600,12 @@ export function NarrativeWorldStudio({
             example: object.example ?? "",
             prompt: object.prompt ?? "",
             imageUrl: object.imageUrl ?? "",
+            mediaType: object.mediaType ?? "image",
+            spritesheetUrl: object.spritesheetUrl ?? "",
+            animationName: object.animationName ?? "",
+            animationNames: object.animationNames ?? [],
+            animationFps: object.animationFps ?? 12,
+            animationLoop: object.animationLoop ?? true,
             kind: object.kind,
             resourceType: object.resourceType ?? "vocabulary",
             resourceId: object.resourceId ?? "",
@@ -1929,27 +2063,76 @@ export function NarrativeWorldStudio({
               </TabsTrigger>
             </TabsList>
           </Tabs>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={!nodes.length}
-            onClick={() => (touring ? setTouring(false) : startTour())}
-          >
-            <Route data-icon="inline-start" />
-            {touring ? "停止导览" : "自动导览"}
-          </Button>
-          {editable && level !== "room" && (
+          {!editable && (
             <Button
               size="sm"
-              onClick={() =>
-                level === "world"
-                  ? openLocationForm()
-                  : openRoomForm()
-              }
+              variant="outline"
+              disabled={!nodes.length}
+              onClick={() => (touring ? setTouring(false) : startTour())}
             >
-              <Plus data-icon="inline-start" />
-              {level === "world" ? "添加地点" : "添加房间"}
+              <Route data-icon="inline-start" />
+              {touring ? "停止导览" : "自动导览"}
             </Button>
+          )}
+          {editable && (
+            <Popover
+              open={addElementMenuOpen}
+              onOpenChange={setAddElementMenuOpen}
+            >
+              <PopoverTrigger asChild>
+                <Button size="sm">
+                  <Plus data-icon="inline-start" />
+                  添加元素
+                  <ChevronDown data-icon="inline-end" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-64 p-2">
+                <div className="flex flex-col gap-1">
+                  {level !== "room" && (
+                    <Button
+                      variant="ghost"
+                      className="h-auto justify-start gap-3 px-2.5 py-2 text-left"
+                      onClick={() => {
+                        setAddElementMenuOpen(false);
+                        if (level === "world") openLocationForm();
+                        else openRoomForm();
+                      }}
+                    >
+                      {level === "world" ? <MapPin /> : <DoorOpen />}
+                      <span>
+                        <span className="block text-sm font-medium">
+                          {level === "world" ? "地点元素" : "房间元素"}
+                        </span>
+                        <span className="block text-[11px] font-normal text-muted-foreground">
+                          点击后可进入下一层继续编辑
+                        </span>
+                      </span>
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    className="h-auto justify-start gap-3 px-2.5 py-2 text-left"
+                    onClick={() => {
+                      setAddElementMenuOpen(false);
+                      openObjectForm(
+                        undefined,
+                        selectedAttachmentParent?.id ?? "",
+                      );
+                    }}
+                  >
+                    <Box />
+                    <span>
+                      <span className="block text-sm font-medium">
+                        普通场景元素
+                      </span>
+                      <span className="block text-[11px] font-normal text-muted-foreground">
+                        学习资源、角色、线索或出口
+                      </span>
+                    </span>
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           )}
         </CardContent>
       </Card>
@@ -2112,6 +2295,7 @@ export function NarrativeWorldStudio({
                           effectiveSelectedNodeIds.includes(node.id)
                             ? "bg-primary text-primary-foreground"
                             : "hover:bg-muted",
+                          node.layerHidden && "opacity-45",
                         )}
                         onClick={(event) =>
                           selectNode(
@@ -2124,19 +2308,15 @@ export function NarrativeWorldStudio({
                           else if (node.kind === "room") enterRoom(node.id);
                         }}
                       >
-                        {node.kind === "location" ? (
-                          <MapPin className="shrink-0" />
-                        ) : node.kind === "room" || node.kind === "exit" ? (
-                          <DoorOpen className="shrink-0" />
-                        ) : node.kind === "character" ? (
-                          <UserRound className="shrink-0" />
-                        ) : (
-                          <GraduationCap className="shrink-0" />
-                        )}
+                        <SceneElementIcon node={node} />
                         <span className="min-w-0 flex-1 truncate">
                           {node.title}
                         </span>
                         {node.groupId && <Group className="shrink-0" />}
+                        {node.layerLocked && (
+                          <LockKeyhole className="shrink-0" />
+                        )}
+                        {node.layerHidden && <EyeOff className="shrink-0" />}
                         {node.required && <Sparkles className="shrink-0" />}
                       </button>
                     ))}
@@ -2158,6 +2338,13 @@ export function NarrativeWorldStudio({
               onSelectLayer={setActiveLayerId}
               onAdd={() => void addLayer()}
               onDelete={() => void deleteActiveLayer()}
+              onRename={(id, name) => void updateLayer(id, { name })}
+              onToggleLock={(id, locked) =>
+                void updateLayer(id, { locked })
+              }
+              onToggleVisibility={(id, hidden) =>
+                void updateLayer(id, { hidden })
+              }
               onMoveUp={() => void reorderActiveLayer("up")}
               onMoveDown={() => void reorderActiveLayer("down")}
               onAssign={() => void moveSelectionToActiveLayer()}
@@ -2188,18 +2375,20 @@ export function NarrativeWorldStudio({
                 ? "h-full min-h-0 max-h-full w-full min-w-0 max-w-full rounded-lg border-white/10 shadow-none"
                 : undefined
             }
-            backgroundUrl={backgroundUrl}
+            backgroundUrl={backgroundLayerHidden ? null : backgroundUrl}
             nodes={nodes}
             selectedId={selectedNodeId}
             selectedIds={editable ? effectiveSelectedNodeIds : [selectedNodeId]}
             focusNodeId={focusNodeId}
             editable={editable}
             emptyLabel={
-              level === "world"
-                ? "请上传世界地图底图"
-                : level === "location"
-                  ? "请上传地点场景背景"
-                  : "请上传房间场景背景"
+              backgroundLayerHidden
+                ? "底图图层已隐藏"
+                : level === "world"
+                  ? "请上传世界地图底图"
+                  : level === "location"
+                    ? "请上传地点场景背景"
+                    : "请上传房间场景背景"
             }
             worldWidth={worldWidth}
             worldHeight={worldHeight}
@@ -2429,6 +2618,7 @@ export function NarrativeWorldStudio({
                 }
                 previewSize="md"
                 group="library"
+                allowVideo
               />
             </Field>
           </div>
@@ -2495,6 +2685,7 @@ export function NarrativeWorldStudio({
                 onChange={(url) => setRoomForm({ ...roomForm, icon: url })}
                 previewSize="md"
                 group="library"
+                allowVideo
               />
             </Field>
             {roomForm.roomType === "vn_scene" && (
@@ -2882,17 +3073,149 @@ export function NarrativeWorldStudio({
               </Field>
             )}
 
-            <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-3">
-              <Field label="热点图片">
-                <ImageUploadField
-                  value={objectForm.imageUrl}
-                  onChange={(url) =>
-                    setObjectForm({ ...objectForm, imageUrl: url })
-                  }
-                  previewSize="md"
-                  group="library"
-                />
+            <div className="rounded-lg border bg-muted/20 p-3">
+              <Field label="元素素材">
+                <ToggleGroup
+                  type="single"
+                  value={objectForm.mediaType ?? "image"}
+                  onValueChange={(value) => {
+                    if (!value) return;
+                    setObjectForm({
+                      ...objectForm,
+                      mediaType: value as ExplorationMediaType,
+                      imageUrl: "",
+                      spritesheetUrl: "",
+                      animationName: "",
+                      animationNames: [],
+                    });
+                  }}
+                  className="grid grid-cols-3"
+                  aria-label="元素素材类型"
+                >
+                  <ToggleGroupItem value="image">静态图片</ToggleGroupItem>
+                  <ToggleGroupItem value="video">循环视频</ToggleGroupItem>
+                  <ToggleGroupItem value="spritesheet">
+                    帧动画
+                  </ToggleGroupItem>
+                </ToggleGroup>
               </Field>
+
+              <div className="mt-3">
+                {(objectForm.mediaType ?? "image") === "image" && (
+                  <ImageUploadField
+                    value={objectForm.imageUrl}
+                    onChange={(url) =>
+                      setObjectForm({ ...objectForm, imageUrl: url })
+                    }
+                    previewSize="md"
+                    group="library"
+                    placeholder="上传透明 PNG 或 WebP"
+                  />
+                )}
+                {objectForm.mediaType === "video" && (
+                  <ImageUploadField
+                    value={objectForm.imageUrl}
+                    onChange={(url) =>
+                      setObjectForm({ ...objectForm, imageUrl: url })
+                    }
+                    previewSize="md"
+                    group="library"
+                    allowVideo
+                    videoOnly
+                    placeholder="上传 MP4 或 WebM"
+                  />
+                )}
+                {objectForm.mediaType === "spritesheet" && (
+                  <SpritesheetZipUploadField
+                    value={
+                      objectForm.spritesheetUrl
+                        ? {
+                            imageUrl: objectForm.imageUrl,
+                            spritesheetUrl: objectForm.spritesheetUrl,
+                            animationNames:
+                              objectForm.animationNames ?? [],
+                          }
+                        : null
+                    }
+                    onChange={(value: SpritesheetImportValue | null) =>
+                      setObjectForm({
+                        ...objectForm,
+                        imageUrl: value?.imageUrl ?? "",
+                        spritesheetUrl: value?.spritesheetUrl ?? "",
+                        animationNames: value?.animationNames ?? [],
+                        animationName:
+                          value?.animationNames[0] ?? "",
+                      })
+                    }
+                    disabled={saving}
+                  />
+                )}
+              </div>
+
+              {objectForm.mediaType === "spritesheet" &&
+                !!objectForm.animationNames?.length && (
+                  <div className="mt-3 grid grid-cols-[minmax(0,1fr)_110px] gap-3">
+                    <Field label="默认动画">
+                      <Select
+                        value={
+                          objectForm.animationName ||
+                          objectForm.animationNames[0]
+                        }
+                        onChange={(event) =>
+                          setObjectForm({
+                            ...objectForm,
+                            animationName: event.target.value,
+                          })
+                        }
+                      >
+                        {objectForm.animationNames.map((name) => (
+                          <SelectItem key={name} value={name}>
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </Select>
+                    </Field>
+                    <Field label="播放帧率">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={60}
+                        value={objectForm.animationFps ?? 12}
+                        onChange={(event) =>
+                          setObjectForm({
+                            ...objectForm,
+                            animationFps: Math.max(
+                              1,
+                              Math.min(60, Number(event.target.value) || 12),
+                            ),
+                          })
+                        }
+                      />
+                    </Field>
+                    <label className="col-span-2 flex items-center justify-between rounded-md border bg-background p-2.5 text-sm">
+                      循环播放
+                      <Switch
+                        checked={objectForm.animationLoop ?? true}
+                        onCheckedChange={(checked) =>
+                          setObjectForm({
+                            ...objectForm,
+                            animationLoop: checked,
+                          })
+                        }
+                      />
+                    </label>
+                  </div>
+                )}
+            </div>
+
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-3">
+              <div className="flex size-24 items-center justify-center rounded-lg border bg-muted/20 text-center text-[11px] text-muted-foreground">
+                {objectForm.mediaType === "video"
+                  ? "视频纹理"
+                  : objectForm.mediaType === "spritesheet"
+                    ? "帧动画"
+                    : "静态素材"}
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="显示宽度">
                   <Input
@@ -3058,9 +3381,8 @@ export function NarrativeWorldStudio({
                 <div className="flex items-center gap-3 border-b border-black/5 bg-gradient-to-r from-emerald-100/80 to-cyan-100/60 p-4 dark:border-white/10 dark:from-emerald-950/60 dark:to-cyan-950/40">
                   <div className="flex size-12 items-center justify-center overflow-hidden rounded-2xl border-2 border-white bg-muted shadow-md dark:border-white/20">
                     {previewObject.imageUrl ? (
-                      <img
-                        src={previewObject.imageUrl}
-                        alt=""
+                      <ExplorationMediaPreview
+                        object={previewObject}
                         className="size-full object-cover"
                       />
                     ) : (
@@ -3139,9 +3461,8 @@ export function NarrativeWorldStudio({
               <div className="grid gap-4 p-4 sm:grid-cols-[150px_minmax(0,1fr)]">
                 <div className="relative h-36 overflow-hidden rounded-[1.5rem] border border-black/5 bg-gradient-to-br from-amber-100 via-orange-50 to-rose-100 shadow-sm dark:from-amber-950/50 dark:via-slate-900 dark:to-rose-950/40 sm:h-full sm:min-h-48">
                   {previewObject.imageUrl ? (
-                    <img
-                      src={previewObject.imageUrl}
-                      alt=""
+                    <ExplorationMediaPreview
+                      object={previewObject}
                       className="size-full object-contain p-5 drop-shadow-lg"
                     />
                   ) : (
@@ -3378,6 +3699,9 @@ function LayerPanel({
   onSelectLayer,
   onAdd,
   onDelete,
+  onRename,
+  onToggleLock,
+  onToggleVisibility,
   onMoveUp,
   onMoveDown,
   onAssign,
@@ -3392,15 +3716,27 @@ function LayerPanel({
   onSelectLayer: (id: string) => void;
   onAdd: () => void;
   onDelete: () => void;
+  onRename: (id: string, name: string) => void;
+  onToggleLock: (id: string, locked: boolean) => void;
+  onToggleVisibility: (id: string, hidden: boolean) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onAssign: () => void;
   onGroup: () => void;
   onUngroup: () => void;
 }) {
+  const [editingLayerId, setEditingLayerId] = useState("");
+  const [layerNameDraft, setLayerNameDraft] = useState("");
   const activeLayer = layers.find((layer) => layer.id === activeLayerId);
   const activeIndex = layers.findIndex((layer) => layer.id === activeLayerId);
   const isCustomLayer = !activeLayer?.system;
+  const activeLayerLocked = !!activeLayer?.locked;
+  const finishRename = (layer: ExplorationLayer) => {
+    const nextName = layerNameDraft.trim();
+    if (nextName && nextName !== layer.name) onRename(layer.id, nextName);
+    setEditingLayerId("");
+    setLayerNameDraft("");
+  };
   return (
     <Card className="w-full min-w-0 shrink-0 overflow-hidden border border-border/60">
       <CardHeader className="flex flex-row items-center justify-between p-2 pb-1">
@@ -3423,7 +3759,8 @@ function LayerPanel({
             variant="ghost"
             className="size-7"
             aria-label="删除当前图层"
-            disabled={!isCustomLayer}
+            title="删除当前图层"
+            disabled={!isCustomLayer || activeLayerLocked}
             onClick={onDelete}
           >
             <Trash2 />
@@ -3441,24 +3778,103 @@ function LayerPanel({
                     : 0
                   : nodes.filter((node) => node.layerId === layer.id).length;
               return (
-                <Button
+                <div
                   key={layer.id}
-                  variant={
-                    layer.id === activeLayerId ? "secondary" : "ghost"
-                  }
-                  className="h-7 w-full justify-start gap-1.5 rounded-md px-2 text-xs"
-                  onClick={() => onSelectLayer(layer.id)}
-                >
-                  {layer.system === "background" ? (
-                    <LockKeyhole data-icon="inline-start" />
-                  ) : (
-                    <Layers3 data-icon="inline-start" />
+                  className={cn(
+                    "group flex h-8 items-center gap-0.5 rounded-md px-1 transition-colors",
+                    layer.id === activeLayerId
+                      ? "bg-secondary text-secondary-foreground"
+                      : "hover:bg-muted",
+                    layer.hidden && "text-muted-foreground",
                   )}
-                  <span className="min-w-0 flex-1 truncate text-left">
-                    {layer.name}
-                  </span>
-                  <Badge variant="outline">{count}</Badge>
-                </Button>
+                >
+                  <button
+                    type="button"
+                    className="flex min-w-0 flex-1 items-center gap-1.5 px-1 text-xs"
+                    onClick={() => onSelectLayer(layer.id)}
+                  >
+                    <Layers3 className="size-3.5 shrink-0" />
+                    {editingLayerId === layer.id ? (
+                      <Input
+                        autoFocus
+                        value={layerNameDraft}
+                        className="h-6 min-w-0 px-1.5 text-xs"
+                        onClick={(event) => event.stopPropagation()}
+                        onChange={(event) =>
+                          setLayerNameDraft(event.target.value)
+                        }
+                        onBlur={() => finishRename(layer)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.currentTarget.blur();
+                          }
+                          if (event.key === "Escape") {
+                            setEditingLayerId("");
+                            setLayerNameDraft("");
+                          }
+                        }}
+                        aria-label="图层名称"
+                      />
+                    ) : (
+                      <span className="min-w-0 flex-1 truncate text-left">
+                        {layer.name}
+                      </span>
+                    )}
+                    <Badge variant="outline" className="h-5 px-1.5 text-[9px]">
+                      {count}
+                    </Badge>
+                  </button>
+                  {layer.system !== "background" && (
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      className="size-6 shrink-0"
+                      aria-label={`重命名${layer.name}`}
+                      title="重命名"
+                      onClick={() => {
+                        setEditingLayerId(layer.id);
+                        setLayerNameDraft(layer.name);
+                      }}
+                    >
+                      <Pencil className="size-3" />
+                    </Button>
+                  )}
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    className="size-6 shrink-0"
+                    disabled={layer.system === "background"}
+                    aria-label={
+                      layer.locked ? `解锁${layer.name}` : `锁定${layer.name}`
+                    }
+                    title={layer.locked ? "解锁图层" : "锁定图层"}
+                    onClick={() => onToggleLock(layer.id, !layer.locked)}
+                  >
+                    {layer.locked ? (
+                      <LockKeyhole className="size-3" />
+                    ) : (
+                      <LockOpen className="size-3" />
+                    )}
+                  </Button>
+                  <Button
+                    size="icon-sm"
+                    variant="ghost"
+                    className="size-6 shrink-0"
+                    aria-label={
+                      layer.hidden ? `显示${layer.name}` : `隐藏${layer.name}`
+                    }
+                    title={layer.hidden ? "显示图层" : "隐藏图层"}
+                    onClick={() =>
+                      onToggleVisibility(layer.id, !layer.hidden)
+                    }
+                  >
+                    {layer.hidden ? (
+                      <EyeOff className="size-3" />
+                    ) : (
+                      <Eye className="size-3" />
+                    )}
+                  </Button>
+                </div>
               );
             })}
           </div>
@@ -3469,7 +3885,11 @@ function LayerPanel({
             size="sm"
             variant="outline"
             className="h-7 px-2 text-[11px]"
-            disabled={!isCustomLayer || activeIndex >= layers.length - 1}
+            disabled={
+              !isCustomLayer ||
+              activeLayerLocked ||
+              activeIndex >= layers.length - 1
+            }
             onClick={onMoveUp}
           >
             <ChevronUp data-icon="inline-start" />
@@ -3479,7 +3899,7 @@ function LayerPanel({
             size="sm"
             variant="outline"
             className="h-7 px-2 text-[11px]"
-            disabled={!isCustomLayer || activeIndex <= 2}
+            disabled={!isCustomLayer || activeLayerLocked || activeIndex <= 2}
             onClick={onMoveDown}
           >
             <ChevronDown data-icon="inline-start" />
@@ -3491,7 +3911,9 @@ function LayerPanel({
           variant="secondary"
           className="h-7 px-2 text-[11px]"
           disabled={
-            !selectedCount || activeLayerId === BACKGROUND_LAYER_ID
+            !selectedCount ||
+            activeLayerLocked ||
+            activeLayerId === BACKGROUND_LAYER_ID
           }
           onClick={onAssign}
         >
@@ -3503,7 +3925,7 @@ function LayerPanel({
             size="sm"
             variant="outline"
             className="h-7 px-2 text-[11px]"
-            disabled={selectedCount < 2}
+            disabled={selectedCount < 2 || activeLayerLocked}
             onClick={onGroup}
           >
             <Group data-icon="inline-start" />
@@ -3513,7 +3935,7 @@ function LayerPanel({
             size="sm"
             variant="outline"
             className="h-7 px-2 text-[11px]"
-            disabled={!selectedCount}
+            disabled={!selectedCount || activeLayerLocked}
             onClick={onUngroup}
           >
             <Ungroup data-icon="inline-start" />
@@ -3651,9 +4073,8 @@ function Inspector({
       <Card className="overflow-hidden">
         {object.imageUrl && (
           <div className="h-28 bg-muted">
-            <img
-              src={object.imageUrl}
-              alt=""
+            <ExplorationMediaPreview
+              object={object}
               className="size-full object-contain p-3"
             />
           </div>
@@ -3707,9 +4128,8 @@ function Inspector({
       <Card className="overflow-hidden">
         {room?.icon && (
           <div className="h-28 bg-muted">
-            <img
-              src={room.icon}
-              alt=""
+            <MediaUrlPreview
+              url={room.icon}
               className="size-full object-contain p-3"
             />
           </div>
@@ -3797,7 +4217,10 @@ function Inspector({
     <Card className="overflow-hidden">
       {image && (
         <div className="h-36 bg-muted">
-          <img src={image} alt="" className="size-full object-contain p-3" />
+          <MediaUrlPreview
+            url={image}
+            className="size-full object-contain p-3"
+          />
         </div>
       )}
       <CardHeader>
@@ -4056,9 +4479,8 @@ function PreviewPlace({
         <div className="absolute -left-12 -top-16 size-44 rounded-full bg-white/35 blur-2xl" />
         <div className="absolute -bottom-20 -right-10 size-52 rounded-full bg-orange-400/25 blur-3xl" />
         {image ? (
-          <img
-            src={image}
-            alt=""
+          <MediaUrlPreview
+            url={image}
             className="relative z-10 size-full object-contain px-8 pb-5 pt-10 drop-shadow-2xl"
           />
         ) : (
@@ -4120,9 +4542,8 @@ function PreviewPlace({
                       )}
                     >
                       {interaction.imageUrl ? (
-                        <img
-                          src={interaction.imageUrl}
-                          alt=""
+                        <ExplorationMediaPreview
+                          object={interaction}
                           className="size-full object-contain p-1"
                         />
                       ) : isCharacter ? (

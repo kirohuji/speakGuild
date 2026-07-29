@@ -8,12 +8,14 @@ import {
 } from "react";
 import { Application, extend, useTick } from "@pixi/react";
 import {
+  AnimatedSprite,
   Assets,
   Container,
   ColorMatrixFilter,
   Graphics,
   Rectangle,
   Sprite,
+  Spritesheet,
   Text as PixiText,
   Texture,
   type FederatedPointerEvent,
@@ -29,7 +31,7 @@ import type {
   LocationVisualStyle,
 } from "./exploration-map-model";
 
-extend({ Container, Graphics, Sprite });
+extend({ AnimatedSprite, Container, Graphics, Sprite });
 
 export type ExplorationNodeKind =
   | "location"
@@ -57,7 +59,16 @@ export type ExplorationNode = {
   visualStyle?: LocationVisualStyle;
   layerId?: string;
   layerOrder?: number;
+  layerHidden?: boolean;
+  layerLocked?: boolean;
   groupId?: string;
+  resourceType?: string;
+  objectKind?: string;
+  mediaType?: "image" | "video" | "spritesheet";
+  spritesheetUrl?: string;
+  animationName?: string;
+  animationFps?: number;
+  animationLoop?: boolean;
 };
 
 interface ExplorationPixiCanvasProps {
@@ -571,7 +582,9 @@ function ExplorationStage({
       string,
       { id: string; order: number; nodes: ExplorationNode[] }
     >();
-    for (const node of nodes.filter((item) => !item.hidden)) {
+    for (const node of nodes.filter(
+      (item) => !item.hidden && !item.layerHidden,
+    )) {
       const layerId = node.layerId ?? "content";
       const existing = grouped.get(layerId);
       if (existing) existing.nodes.push(node);
@@ -635,7 +648,10 @@ function ExplorationStage({
       const activeNode = nodes.find((item) => item.id === nodeId);
       if (!activeNode) return;
       const movedNodes = activeNode.groupId
-        ? nodes.filter((item) => item.groupId === activeNode.groupId)
+        ? nodes.filter(
+            (item) =>
+              item.groupId === activeNode.groupId && !item.layerLocked,
+          )
         : [activeNode];
       for (const node of movedNodes) {
         const instance = nodeRefs.current.get(node.id);
@@ -815,7 +831,9 @@ function ExplorationStage({
               onDragCommit={(nodeId, x, y) => {
                 onMove(nodeId, x, y);
               }}
-              erasing={editable && maskEditingId === node.id}
+              erasing={
+                editable && !node.layerLocked && maskEditingId === node.id
+              }
               onMaskPoint={onMaskPoint}
               maskBrushRadius={maskBrushRadius}
               maskRestoring={maskRestoring}
@@ -836,6 +854,7 @@ function ExplorationStage({
           .filter(
             (node) =>
               !node.hidden &&
+              !node.layerHidden &&
               node.imageUrl &&
               node.occlusionMask?.points.length,
           )
@@ -948,7 +967,30 @@ function HotspotNode({
   colorTint: number;
 }) {
   const ref = useRef<Container>(null);
-  const texture = useTexture(node.imageUrl);
+  const mediaType =
+    node.mediaType ?? (isVideoSource(node.imageUrl) ? "video" : "image");
+  const imageTexture = useTexture(
+    mediaType === "image" ? node.imageUrl : null,
+  );
+  const videoTexture = useVideoTexture(
+    mediaType === "video" ? node.imageUrl : null,
+  );
+  const spritesheet = useSpritesheet(
+    mediaType === "spritesheet" ? node.spritesheetUrl : null,
+  );
+  const animationTextures = useMemo(() => {
+    if (!spritesheet) return [];
+    const named = node.animationName
+      ? spritesheet.animations[node.animationName]
+      : undefined;
+    return (
+      named ??
+      Object.values(spritesheet.animations)[0] ??
+      Object.values(spritesheet.textures)
+    );
+  }, [node.animationName, spritesheet]);
+  const texture =
+    imageTexture ?? videoTexture ?? animationTextures[0] ?? null;
   const dragging = useRef(false);
   const moved = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -1085,7 +1127,9 @@ function HotspotNode({
             ? MASK_RESTORE_CURSOR
             : MASK_BRUSH_CURSOR
           : editable
-            ? "grab"
+            ? node.layerLocked
+              ? "default"
+              : "grab"
             : "pointer"
       }
       onPointerOver={() => {
@@ -1108,9 +1152,9 @@ function HotspotNode({
           addMaskPoint(event);
           return;
         }
-        dragging.current = editable;
+        dragging.current = editable && !node.layerLocked;
         moved.current = false;
-        if (editable && ref.current) {
+        if (editable && !node.layerLocked && ref.current) {
           const parentPoint = ref.current.parent?.toLocal(event.global);
           if (parentPoint) {
             dragStart.current = parentPoint;
@@ -1213,7 +1257,27 @@ function HotspotNode({
           eventMode="none"
         />
       )}
-      {texture && (
+      {texture &&
+      mediaType === "spritesheet" &&
+      animationTextures.length > 0 ? (
+        <pixiAnimatedSprite
+          ref={(instance) => {
+            spriteRef.current = instance;
+          }}
+          textures={animationTextures}
+          autoPlay
+          loop={node.animationLoop ?? true}
+          animationSpeed={
+            Math.max(1, Math.min(60, node.animationFps ?? 12)) / 60
+          }
+          filters={colorFilter ? [colorFilter] : undefined}
+          tint={colorTint}
+          anchor={{ x: 0.5, y: 1 }}
+          width={node.width}
+          height={node.height}
+          eventMode="none"
+        />
+      ) : texture ? (
         <pixiSprite
           ref={spriteRef}
           texture={texture}
@@ -1224,7 +1288,7 @@ function HotspotNode({
           height={node.height}
           eventMode="none"
         />
-      )}
+      ) : null}
       {erasing && showMaskOverlay && (
         <pixiGraphics
           eventMode="none"
@@ -1329,6 +1393,37 @@ function useVideoTexture(url?: string | null) {
     };
   }, [url]);
   return texture;
+}
+
+function useSpritesheet(url?: string | null) {
+  const [spritesheet, setSpritesheet] = useState<Spritesheet | null>(null);
+  useEffect(() => {
+    if (!url) {
+      setSpritesheet(null);
+      return;
+    }
+    let active = true;
+    retainAsset(url);
+    void Assets.load({
+      src: url,
+      parser: "spritesheet",
+      data: {
+        cachePrefix: `${url}#`,
+        textureOptions: { scaleMode: "linear" },
+      },
+    })
+      .then((loaded) => {
+        if (active) setSpritesheet(loaded as Spritesheet);
+      })
+      .catch(() => {
+        if (active) setSpritesheet(null);
+      });
+    return () => {
+      active = false;
+      releaseAsset(url);
+    };
+  }, [url]);
+  return spritesheet;
 }
 
 function useTexture(url?: string | null) {

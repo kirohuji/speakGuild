@@ -19,6 +19,7 @@ export type ExplorationObjectKind =
 export type SceneInteractionType = "learning" | "character" | "exit";
 export type LearningResourceType = "vocabulary" | "chunk" | "pattern";
 export type CharacterInteractionMode = "ink" | "ai";
+export type ExplorationMediaType = "image" | "video" | "spritesheet";
 
 export type ExplorationObject = {
   id: string;
@@ -35,6 +36,12 @@ export type ExplorationObject = {
   example?: string;
   prompt?: string;
   imageUrl?: string;
+  mediaType?: ExplorationMediaType;
+  spritesheetUrl?: string;
+  animationName?: string;
+  animationNames?: string[];
+  animationFps?: number;
+  animationLoop?: boolean;
   kind: ExplorationObjectKind;
   resourceType?: LearningResourceType;
   resourceId?: string;
@@ -86,6 +93,9 @@ export type ExplorationLayer = {
   name: string;
   order: number;
   system?: "background" | "content";
+  /** Editor-only presentation state. Kept optional for backward compatibility. */
+  hidden?: boolean;
+  locked?: boolean;
 };
 
 export type SceneDimensions = {
@@ -160,6 +170,9 @@ export function getExplorationLayers(
   const stored = Array.isArray(editorData?.explorationLayers?.[scope])
     ? (editorData.explorationLayers[scope] as ExplorationLayer[])
     : [];
+  const storedBackground = stored.find(
+    (layer) => layer.id === BACKGROUND_LAYER_ID,
+  );
   const content = stored.some((layer) => layer.id === DEFAULT_CONTENT_LAYER_ID)
     ? stored
     : [
@@ -173,10 +186,12 @@ export function getExplorationLayers(
       ];
   return [
     {
+      ...storedBackground,
       id: BACKGROUND_LAYER_ID,
-      name: "底图",
+      name: storedBackground?.name || "底图",
       order: 0,
       system: "background",
+      locked: true,
     },
     ...content
       .filter((layer) => layer.id !== BACKGROUND_LAYER_ID)
@@ -195,15 +210,16 @@ export function updateExplorationLayers(
   layers: ExplorationLayer[],
 ): ExplorationEditorData {
   const current = (editorData ?? {}) as ExplorationEditorData;
-  const contentLayers = layers
-    .filter((layer) => layer.id !== BACKGROUND_LAYER_ID)
-    .map((layer, index) => ({ ...layer, order: index + 1 }));
+  const storedLayers = layers.map((layer, index) => ({
+    ...layer,
+    order: layer.id === BACKGROUND_LAYER_ID ? 0 : index,
+  }));
   return {
     ...current,
     version: 4,
     explorationLayers: {
       ...(current.explorationLayers ?? {}),
-      [scope]: contentLayers,
+      [scope]: storedLayers,
     },
   };
 }
