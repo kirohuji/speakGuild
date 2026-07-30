@@ -1,58 +1,19 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-基础①·自我介绍,我是谁,I am ___.,我是...,Li Ming / a student / from China,I am Li Ming.,L1,0
-基础①·自我介绍,我是谁,I am ___ years old.,我___岁。,18 / 20 / 25 / 30,I am 20 years old.,L1,1
-基础①·自我介绍,我是谁,I am from ___.,我来自...,China / Japan / America,I am from China.,L1,2
-基础①·自我介绍,我是谁,I am not ___. I am ___.,我不是...我是...,a teacher / a student,I am not a teacher. I am a student.,L1,3
-基础①·自我介绍,你是谁,You are very ___.,你很...,kind / smart / funny,You are very kind.,L1,0
-基础①·自我介绍,你是谁,Are you ___? Yes I am.,你是...吗？是的。,a student / ready / sure,Are you a student? Yes I am.,L1,1
-基础①·自我介绍,你是谁,How are you? I am ___.,你好吗？我...,fine / great / tired,How are you? I am fine.,L1,2
-基础①·自我介绍,我的信息,My name is ___. I am from ___.,我的名字是...我来自...,Li Ming / China,My name is Li Ming. I am from China.,L1,0
-基础①·自我介绍,我的信息,I am a ___. I am ___ years old.,我是一名...我___岁。,student / 20,I am a student. I am 20 years old.,L1,1
-基础①·自我介绍,问候与礼貌,Nice to meet you. I am ___.,很高兴认识你。我是...,Li Ming / Tom,Nice to meet you. I am Li Ming.,L1,0
-基础①·自我介绍,问候与礼貌,Thank you for ___.,谢谢你...,your help / coming,Thank you for your help.,L1,1
-基础①·自我介绍,年龄与数字,How old ___ you? I am ___.,你多大？我...,are / 20,How old are you? I am 20.,L1,0
-基础①·描述事物,它是什么,It is ___.,它是...,a book / red / very big,It is a book.,L1,0
-基础①·描述事物,它是什么,What is this? It is ___.,这是什么？它是...,a phone / a pen / a key,What is this? It is a phone.,L1,1
-基础①·描述事物,它是什么,It is not ___. It is ___.,它不是...它是...,a pen / a pencil,It is not a pen. It is a pencil.,L1,2
-基础①·描述事物,颜色与大小,It is ___ and ___.,它又___又___。,big red / small blue,It is big and red.,L1,0
-基础①·描述事物,颜色与大小,The ___ is ___.,这个___是___色的。,apple red / bag blue,The apple is red.,L1,1
-基础①·描述事物,位置与方向,It is ___ the ___.,它在___的___。,on table / in bag,It is on the table.,L1,0
-基础①·描述事物,位置与方向,Where is ___? It is ___.,___在哪里？它在...,the book / on the desk,Where is the book? It is on the desk.,L1,1
-基础①·描述事物,天气描述,It is ___ today.,今天天气___。,sunny / hot / cold,It is sunny today.,L1,0
-基础①·描述事物,天气描述,The weather is ___ today.,今天天气___。,nice / bad / warm,The weather is nice today.,L1,1
-基础①·描述事物,数量表达,There is ___ on the ___.,___上有一个___。,a book table / a pen desk,There is a book on the table.,L1,0
-基础①·描述事物,数量表达,There are ___ ___.,有___个___。,two pens / many books,There are two pens.,L1,1
-基础①·描述他人,他/她是谁,He is ___. His name is ___.,他是...他的名字是...,a doctor Tom,He is a doctor. His name is Tom.,L1,0
-基础①·描述他人,他/她是谁,She is ___. Her name is ___.,她是...她的名字是...,a teacher Mary,She is a teacher. Her name is Mary.,L1,1
-基础①·描述他人,家庭关系,My ___ is a ___.,我的___是一名___。,father doctor / mother teacher,My father is a doctor.,L1,0
-基础①·描述他人,家庭关系,I have ___ ___.,我有___个___。,one brother / two sisters,I have one brother.,L1,1
-基础①·描述他人,职业身份,He is a ___. / She is a ___.,他/她是一名___。,doctor / teacher / nurse,He is a doctor.,L1,0
-基础①·描述他人,职业身份,What does he do? He is ___.,他做什么的？他是...,a teacher / a student,What does he do? He is a teacher.,L1,1
-基础①·描述他人,外表描述,He is ___ and ___.,他又___又___。,tall thin / young pretty,He is tall and thin.,L1,0
-基础①·描述他人,国籍与语言,I am from ___. I speak ___.,我来自___。我说___。,China Chinese / Japan Japanese,I am from China. I speak Chinese.,L1,0
-基础①·日常寒暄,打招呼与告别,___! How are you?,___！你好吗？,Good morning / Hello / Hi,Good morning! How are you?,L1,0
-基础①·日常寒暄,打招呼与告别,See you ___!,___见！,later / tomorrow / soon,See you later!,L1,1
-基础①·日常寒暄,简单闲聊,Where are you from? I am from ___.,你来自哪里？我来自___。,China / Japan / America,Where are you from? I am from China.,L1,0
-基础①·日常寒暄,简单闲聊,What do you do? I am a ___.,你是做什么的？我是一名___。,student / teacher / doctor,What do you do? I am a student.,L1,1
-基础①·日常寒暄,询问近况,How is ___? It is ___.,___怎么样？___。,your day good / everything fine,How is your day? It is good.,L1,0
-基础①·日常寒暄,介绍他人,This is my ___.,这是我的___。,friend / brother / classmate,This is my friend Tom.,L1,0
-基础①·日常寒暄,表达关心,Are you ___? I am ___.,你___吗？我___。,okay fine / tired sorry,Are you okay? I am fine.,L1,0
-基础①·数字与时间,时间表达,What time is it? It is ___.,几点了？___。,three oclock / half past six,What time is it? It is three oclock.,L1,0
-基础①·数字与时间,时间表达,I ___ at ___.,我在___点___。,eat breakfast 7 / go to school 8,I eat breakfast at 7.,L1,1
-基础①·数字与时间,日期与星期,Today is ___.,今天是___。,Monday / Tuesday / Friday,Today is Monday.,L1,0
-基础①·数字与时间,日期与星期,I ___ on ___.,我___在___。,go to school Monday / rest Sunday,I go to school on Monday.,L1,1
-基础①·数字与时间,日常时间词,I ___ every ___.,我每天___。,study English day / eat breakfast morning,I study English every day.,L1,0
-基础①·数字与时间,日常时间词,I will ___ ___.,我___将___。,go tomorrow / call you later,I will go tomorrow.,L1,1
-基础①·数字与时间,频率表达,I ___ ___ ___.,我___ ___。,always eat breakfast / sometimes watch TV,I always eat breakfast.,L1,0
-基础①·数字与时间,频率表达,He ___ ___s ___.,他___ ___。,never eat meat / usually go school,He never eats meat.,L1,1
-基础①·基本需求,我想要...,I want ___.,我想要___。,a coffee / to go home,I want a coffee.,L1,0
-基础①·基本需求,我想要...,I would like ___.,我想要___（礼貌）。,some water / to order,I would like some water.,L1,1
-基础①·基本需求,我想要...,I need ___.,我需要___。,help / to go,I need help.,L1,2
-基础①·基本需求,我能/我会,I can ___.,我会/能___。,speak English / swim,I can speak English.,L1,0
-基础①·基本需求,我能/我会,Can you ___?,你能___吗？,help me / speak slowly,Can you help me?,L1,1
-基础①·基本需求,我喜欢/不喜欢,I like ___.,我喜欢___。,coffee / to read / reading,I like coffee.,L1,0
-基础①·基本需求,我喜欢/不喜欢,I don't like ___.,我不喜欢___。,cold weather / getting up early,I don't like cold weather.,L1,1
-基础①·基本需求,身体感受,I am ___. I want to ___.,我___。我想___。,hungry eat / thirsty drink,I am hungry. I want to eat.,L1,0
-基础①·基本需求,身体感受,I am ___. I need to ___.,我___。我需要___。,tired rest / sleepy sleep,I am tired. I need to rest.,L1,1
-基础①·基本需求,请求帮助,Can you help me ___?,你能帮我___吗？,find this / with this,Can you help me find this?,L1,0
-基础①·基本需求,请求帮助,Excuse me ___?,不好意思___？,where is the bathroom / can I ask,Excuse me where is the bathroom?,L1,1
+见面与寒暄,打招呼,Good ___.,问候句型,morning / afternoon / evening,Good morning.,L1,
+见面与寒暄,询问近况,How are you? — I'm ___.,询问近况,fine / good / okay / great,"I'm fine, thanks.",L1,1
+见面与寒暄,感谢与告别,See you ___.,告别句型,later / tomorrow / soon,See you later.,L1,2
+见面与寒暄,感谢与告别,Have a ___ day/evening.,祝愿句型,nice / good / great,Have a nice day.,L1,3
+介绍自己,姓名,My name is ___.,介绍姓名,Lin / Mia / Alex,My name is Lin.,L1,4
+介绍自己,身份与来源,I'm a/an ___.,说明身份,student / teacher / beginner,I'm a student.,L1,5
+介绍自己,身份与来源,I'm from ___.,说明来源,China / Beijing / this city,I'm from China.,L1,6
+介绍自己,年龄与当前状态,I'm ___ years old.,说明年龄,18 / 20 / 25,I'm twenty years old.,L1,7
+介绍自己,年龄与当前状态,I'm ___. / I'm not ___.,表达状态,ready / new / sure,I'm not ready.,L1,8
+认识新朋友,询问姓名与来源,What's your ___?,询问信息,name,What's your name?,L1,9
+认识新朋友,询问姓名与来源,Where are you from? — I'm from ___.,询问来源,China / a small town,I'm from China.,L1,10
+认识新朋友,确认身份,"Are you ___? — Yes, I am. / No, I'm not.",确认身份,new / ready / a student,Are you new here?,L1,11
+认识新朋友,初次见面回应,This is my ___.,介绍他人,friend / classmate / teacher,This is my friend.,L1,12
+身边的物品,这是什么,What's this/that? — It's a ___.,询问物品,key / phone / book / bag,It's a key.,L1,13
+身边的物品,这是什么,This/That is my ___.,说明物品,phone / book / bag,This is my phone.,L1,14
+身边的物品,谁的东西,Is this/that your ___?,确认归属,bag / key / card,Is this your bag?,L1,15
+身边的物品,谁的东西,"Yes, it is. / No, it isn't.",简短回答,—,"No, it isn't.",L1,16
+身边的物品,特征与判断,It's ___ and ___.,特征描述,small blue / big red / new black,It's small and blue.,L1,17
