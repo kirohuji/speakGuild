@@ -1054,11 +1054,24 @@ export class LearningService {
         characterRole: true,
         objectives: true,
         isPreview: true,
-        inkScript: {
-          select: { id: true, key: true, title: true, inkJson: true, inkSource: true, version: true },
-        },
+        inkScriptId: true,
       },
     });
+    // StoryEpisode 在 schema 中只有 inkScriptId，没有 Prisma relation；批量读取后映射回章节。
+    const episodeInkScriptIds = storyEpisodes
+      .map((episode) => episode.inkScriptId)
+      .filter((id): id is string => Boolean(id));
+    const episodeInkScripts = episodeInkScriptIds.length > 0
+      ? await this.prisma.inkScript.findMany({
+          where: { id: { in: episodeInkScriptIds } },
+          select: { id: true, key: true, title: true, inkJson: true, inkSource: true, version: true },
+        })
+      : [];
+    const episodeInkById = new Map(episodeInkScripts.map((script) => [script.id, script]));
+    const storyEpisodePlayers = storyEpisodes.map((episode) => ({
+      ...episode,
+      inkScript: episode.inkScriptId ? episodeInkById.get(episode.inkScriptId) ?? null : null,
+    }));
 
     // ── Scene visual assets (shared across all topics, store once at unit level) ──
     const gameLocation = await this.prisma.gameLocation.findFirst({
@@ -1120,7 +1133,7 @@ export class LearningService {
     };
 
     // 与线上播放器相同的数据结构写进离线包，章节可在断网时直接启动。
-    (unitDetail as any).offlineStoryEpisodePlayers = storyEpisodes
+    (unitDetail as any).offlineStoryEpisodePlayers = storyEpisodePlayers
       .filter((episode) => Boolean(episode.inkScript?.inkJson))
       .map((episode) => ({
         episode: {
@@ -1159,7 +1172,7 @@ export class LearningService {
         }
       }
     }
-    for (const episode of storyEpisodes) {
+    for (const episode of storyEpisodePlayers) {
       this.pushInkSourceAssets(assets, episode.inkScript?.inkSource);
     }
 
@@ -1257,7 +1270,7 @@ export class LearningService {
     const totalChunks = topicDetails.reduce((sum, td) => sum + (td.activeChunks?.length ?? 0), 0);
     const versions = [
       ...topics.map((t) => t.inkScript?.version ?? 1),
-      ...storyEpisodes.map((episode) => episode.inkScript?.version ?? 1),
+      ...storyEpisodePlayers.map((episode) => episode.inkScript?.version ?? 1),
       totalVocabs,
       totalChunks,
       unitDetail.sentencePatterns?.length ?? 0,
@@ -1286,7 +1299,7 @@ export class LearningService {
         storyEpisodes: storyEpisodes.map((episode) => episode.id),
         inkScripts: [
           ...topics.map((t) => t.inkScript?.id),
-          ...storyEpisodes.map((episode) => episode.inkScript?.id),
+          ...storyEpisodePlayers.map((episode) => episode.inkScript?.id),
         ].filter(Boolean),
         assets,
       },

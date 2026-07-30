@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   Clapperboard,
   Clock3,
   Download,
@@ -263,7 +264,7 @@ export function ScriptCenterPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
+    <div className="mx-auto max-w-2xl px-4 pb-28 pt-3">
       <div className="mb-3 flex items-center justify-between">
         <div />
         <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45">
@@ -282,7 +283,7 @@ export function ScriptCenterPage() {
             className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
             aria-label={t('scripts.practiceRecords')}
           >
-            <Clock3 className="size-[18px]" />
+            <ClipboardList className="size-[18px]" />
           </button>
           <button
             type="button"
@@ -566,21 +567,38 @@ function MineScripts({
           <Button variant="ghost" size="sm" onClick={onOpenShop}>{t('scripts.exploreMore')}</Button>
         </div>
         <div className="-mx-2 flex snap-x gap-2 overflow-x-auto px-2 pb-1">
-          {units.map((unit) => (
-            <div key={unit.id} className="group relative w-44 shrink-0 snap-start">
-              <Link to={`/scripts/packages/${unit.id}`}>
-              <Card className="w-44 shrink-0 snap-start overflow-hidden border-0 bg-muted/30 shadow-none transition-transform group-active:scale-[0.98]">
-                <div className="aspect-video bg-muted/50 p-3">
-                  <Badge variant="secondary">{t('scripts.chapters', { count: unit.scriptCount })}</Badge>
-                </div>
-                <CardHeader className="p-2.5 pb-2">
-                  <CardTitle className="truncate text-sm">{unit.title}</CardTitle>
-                  <CardDescription className="truncate text-xs">
-                    {unit.location || t('scripts.immersiveTheater')}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-              </Link>
+          {units.map((unit) => {
+            const installed = installedIds.has(unit.id)
+            const downloading = downloadTasks.some((task) => task.packId === unit.id && task.status !== 'error')
+
+            return (
+              <div key={unit.id} className="group relative w-44 shrink-0 snap-start">
+                <Card className="w-44 shrink-0 snap-start overflow-hidden border-0 bg-muted/30 shadow-none transition-transform group-active:scale-[0.98]">
+                  <Link to={`/scripts/packages/${unit.id}`} className="block">
+                    <div className="aspect-video bg-muted/50 p-3">
+                      <Badge variant="secondary">{t('scripts.chapters', { count: unit.scriptCount })}</Badge>
+                    </div>
+                    <CardHeader className="p-2.5 pb-2">
+                      <CardTitle className="truncate text-sm">{unit.title}</CardTitle>
+                      <CardDescription className="truncate text-xs">
+                        {unit.location || t('scripts.immersiveTheater')}
+                      </CardDescription>
+                    </CardHeader>
+                  </Link>
+                  {!installed && (
+                    <CardFooter className="p-2.5 pt-0">
+                      <Button
+                        size="sm"
+                        className="h-8 w-full rounded-lg text-xs"
+                        disabled={downloading}
+                        onClick={() => void onDownload(unit.id)}
+                      >
+                        {downloading ? <Loader2 className="animate-spin" /> : <Download data-icon="inline-start" />}
+                        {t('scripts.downloadScript')}
+                      </Button>
+                    </CardFooter>
+                  )}
+                </Card>
               <button
                 type="button"
                 onClick={() => setDeletingUnit(unit)}
@@ -589,19 +607,22 @@ function MineScripts({
               >
                 <Trash2 className="size-3.5" />
               </button>
-            </div>
-          ))}
+              </div>
+            )
+          })}
         </div>
       </section>
       <Dialog open={Boolean(deletingUnit)} onOpenChange={(open) => { if (!open && !deleting) setDeletingUnit(null) }}>
-        <DialogContent className="w-[90vw] max-w-sm rounded-2xl">
-          <DialogHeader>
-            <DialogTitle>{t('learning.quitConfirmTitle')}</DialogTitle>
-            <DialogDescription>{deletingUnit ? t('learning.quitConfirmDesc', { title: deletingUnit.title }) : ''}</DialogDescription>
+        <DialogContent className="w-[90vw] max-w-xs rounded-2xl p-6 sm:mx-auto">
+          <DialogHeader className="p-0">
+            <DialogTitle className="text-base">{t('learning.quitConfirmTitle')}</DialogTitle>
+            <DialogDescription className="mt-2 text-sm leading-5">
+              {deletingUnit ? t('learning.quitConfirmDesc', { title: deletingUnit.title }) : ''}
+            </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" disabled={deleting} onClick={() => setDeletingUnit(null)}>{t('common.cancel')}</Button>
-            <Button variant="destructive" disabled={deleting} onClick={() => void removeScript()}>
+          <div className="mt-5 flex gap-3">
+            <Button variant="outline" className="flex-1 rounded-xl" disabled={deleting} onClick={() => setDeletingUnit(null)}>{t('common.cancel')}</Button>
+            <Button variant="destructive" className="flex-1 rounded-xl" disabled={deleting} onClick={() => void removeScript()}>
               {deleting && <Loader2 className="animate-spin" />}
               {t('learning.quitConfirm')}
             </Button>
@@ -1225,7 +1246,7 @@ function ScriptPublishHistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[84dvh] w-[calc(100vw-2rem)] max-w-2xl flex-col gap-4 overflow-hidden rounded-2xl p-5 [&>button]:right-4 [&>button]:top-4 [&>button]:border-0 [&>button]:bg-transparent [&>button]:shadow-none [&>button]:ring-0 [&>button:hover]:bg-transparent [&>button:focus-visible]:ring-0">
+      <DialogContent className="flex max-h-[84dvh] w-[calc(100vw-2rem)] max-w-2xl flex-col gap-4 overflow-hidden rounded-2xl p-5 [&>button]:right-4 [&>button]:top-4 [&>button]:border-0 [&>button]:bg-transparent [&>button]:shadow-none [&>button]:ring-0 [&>button]:outline-none [&>button:hover]:bg-transparent [&>button:focus]:ring-0 [&>button:focus]:ring-offset-0 [&>button:focus]:outline-none [&>button:focus-visible]:ring-0 [&>button:focus-visible]:ring-offset-0 [&>button:focus-visible]:outline-none [&>button[data-state=open]]:bg-transparent">
         <DialogHeader className="shrink-0 pr-8">
           <DialogTitle>{resolvedTitle}</DialogTitle>
           <DialogDescription className="text-xs">
