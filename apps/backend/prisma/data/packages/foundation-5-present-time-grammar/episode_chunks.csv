@@ -1,39 +1,65 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-ch_prog_01,1,I eat breakfast every day. / Im eating breakfast right now.,0
-ch_prog_01,1,I drink coffee in the morning. / Im drinking coffee right now.,1
-ch_prog_01,1,I read books at night. / Im reading a great book.,2
-ch_prog_01,1,I cook dinner at home. / Im cooking pasta right now.,3
-ch_prog_01,1,I study English every day. / Im studying for a test now.,4
-ch_prog_01,1,It rains a lot in summer. / Its raining outside right now.,5
-ch_prog_01,1,People wait for the bus here. / People are waiting in line.,6
-ch_prog_01,1,I usually watch TV after dinner. / But right now Im watching a movie.,7
-ch_prog_01,2,He works in an office. / Hes working from home today.,0
-ch_prog_01,2,He drives to work every day. / Hes driving to the airport now.,1
-ch_prog_01,2,She teaches English. / Shes teaching a class right now.,2
-ch_prog_01,2,She writes reports at work. / Shes writing an email now.,3
-ch_prog_01,2,The sun rises in the east. / The sun is shining today!,4
-ch_prog_01,2,He looks happy in photos. / Hes looking at his phone.,5
-ch_prog_01,2,She thinks it's a good idea. / She's thinking about the problem.,6
-ch_prog_02,1,I live in Beijing. / Im staying in Shanghai this week.,0
-ch_prog_02,1,I usually take the bus. / Im taking a taxi today.,1
-ch_prog_02,1,We usually eat at home. / Were eating out tonight.,2
-ch_prog_02,1,She wears a uniform at work. / Shes wearing a dress today.,3
-ch_prog_02,1,He usually gets up at 7. / Hes getting up at 5 tomorrow.,4
-ch_prog_02,1,They usually meet on Fridays. / Theyre meeting on Thursday this week.,5
-ch_prog_02,1,I normally walk to school. / Im riding a bike this month.,6
-ch_prog_02,1,"I usually work in Beijing, but this week Im working in Shanghai.",7
-ch_prog_02,2,It rains a lot in spring. / Its raining right now.,0
-ch_prog_02,2,It gets dark early in winter. / Its getting dark. Lets go inside.,1
-ch_prog_02,2,I feel tired after work. / Im feeling really tired now.,2
-ch_prog_02,2,The baby sleeps a lot. / The baby is sleeping now.,3
-ch_prog_02,2,I have a headache sometimes. / I have a headache right now.,4
-ch_prog_02,2,I think she is a good teacher. / Right now Im thinking about the lesson.,5
-ch_prog_02,2,"I usually work in Beijing, but this week Im working in Shanghai.",6
-ch_prog_03,1,I always get up at 7.,0
-ch_prog_03,1,I usually drink coffee in the morning.,1
-ch_prog_03,1,I often read before bed.,2
-ch_prog_03,1,I sometimes watch TV after work.,3
-ch_prog_03,1,I rarely eat junk food.,4
-ch_prog_03,1,I never smoke.,5
-ch_prog_03,1,She is always late for class.,6
-ch_prog_03,1,He is never tired in the morning.,7
+1-1,1,"I always review after class.",0
+1-1,1,"I always write down new phrases.",1
+1-1,1,"I usually practice in the morning.",2
+1-1,1,"I usually study for twenty minutes.",3
+1-1,1,"I often speak with a partner.",4
+1-1,1,"I often use short dialogues.",5
+1-1,1,"The practice is never boring.",6
+1-1,1,"Emma is never late for class.",7
+1-1,1,"How often do you practice speaking?",8
+1-1,1,"How often do you review your notes?",9
+1-1,1,"I practice speaking twice a week.",10
+1-1,1,"I review my notes once a day.",11
+1-1,1,"Emma is always ready for class.",12
+1-1,1,"The weekly meeting is always useful.",13
+1-1,1,"The bus is sometimes late.",14
+1-1,1,"The afternoon class is sometimes noisy.",15
+1-2,2,"I am reading the activity guide.",16
+1-2,2,"I am waiting by the front desk.",17
+1-2,2,"Ben is talking to the teacher.",18
+1-2,2,"Mia is writing down the time.",19
+1-2,2,"We are waiting for the class.",20
+1-2,2,"They are reading the new guide.",21
+1-2,2,"It is raining outside.",22
+1-2,2,"The class is starting now.",23
+1-2,2,"I'm not working at the office today.",24
+1-2,2,"I'm not calling about the meeting.",25
+1-2,2,"Ben isn't working outside.",26
+1-2,2,"Mia isn't cooking right now.",27
+1-2,2,"Are you studying right now?",28
+1-2,2,"Are you calling from home?",29
+1-2,2,"What is Ben doing now?",30
+1-2,2,"What is Mia doing outside?",31
+2-1,1,"I normally take the bus, but right now I'm walking.",32
+2-1,1,"I normally work inside, but right now I'm sitting outside.",33
+2-1,1,"Today, Ben is working at home.",34
+2-1,1,"Today, the bus is running slowly.",35
+2-1,1,"This week, I'm trying a new route.",36
+2-1,1,"This week, I'm leaving home earlier.",37
+2-1,1,"For now, I'm walking to work.",38
+2-1,1,"For now, I'm using a different route.",39
+2-1,1,"I think the activity is useful.",40
+2-1,1,"I'm thinking about joining the group.",41
+2-1,1,"I feel this plan is right.",42
+2-1,1,"I'm feeling tired right now.",43
+2-1,1,"It looks interesting to me.",44
+2-1,1,"Emma is looking at the activity list.",45
+2-1,1,"I know the class starts at two.",46
+2-1,1,"I know this bag belongs to Mia.",47
+2-2,2,"I have a desk by the window.",48
+2-2,2,"I have a headache today.",49
+2-2,2,"The office has a quiet room.",50
+2-2,2,"Mia has two meetings today.",51
+2-2,2,"I'm having lunch in the shared kitchen.",52
+2-2,2,"I'm having a short meeting now.",53
+2-2,2,"We're having a good experience here.",54
+2-2,2,"We're having coffee with the team.",55
+2-2,2,"I get home at six.",56
+2-2,2,"I get useful feedback every day.",57
+2-2,2,"I'm getting better at speaking.",58
+2-2,2,"I'm getting tired after long lessons.",59
+2-2,2,"It's getting easier every day.",60
+2-2,2,"It's getting late, so we need to finish.",61
+2-2,2,"My final view is that the plan works.",62
+2-2,2,"My final view is that short practice is better.",63

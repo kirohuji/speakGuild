@@ -1,9 +1,5 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-ch_prog_01,此刻正在做,1,我正在…,基础⑤·此刻正在做,L1,1,8,15,5,8,"[""学会I'm eating/drinking/reading现在进行时"",""学会与一般现在时对比""]",2,4,2,Tutor,英语导师,true,practice_foundation-present-continuous_此刻正在做_我正在,"{""xp"":10}"
-ch_prog_01,此刻正在做,2,他/她正在…,基础⑤·此刻正在做,L1,1,8,15,4,7,"[""学会He's/She's working/sleeping/teaching"",""学会I think...is...推测表达""]",2,4,2,Tutor,英语导师,false,practice_foundation-present-continuous_此刻正在做_他她正在,"{""xp"":10}"
-ch_prog_02,临时vs习惯,1,平时vs今天,基础⑤·临时vs习惯,L1~L2,1,8,15,4,8,"[""学会usually...but today/I live in...but..."",""学会She wears...but today she's wearing...""]",2,4,2,Tutor,英语导师,false,practice_foundation-present-continuous_临时vs习惯_平时vs今天,"{""xp"":10}"
-ch_prog_02,临时vs习惯,2,此刻状态,基础⑤·临时vs习惯,L1~L2,1,8,15,4,7,"[""学会It's raining/It's getting dark/I'm feeling tired"",""学会现在进行时描述此刻状态对比""]",2,4,2,Tutor,英语导师,false,practice_foundation-present-continuous_临时vs习惯_此刻状态,"{""xp"":10}"
-ch_prog_03,频率副词,1,频率表达,基础⑤·频率副词,L1,1,8,15,4,8,"[""学会always/usually/often/sometimes/rarely/never"",""学会频率副词在be动词后的位置""]",2,4,2,Tutor,英语导师,false,practice_foundation-present-continuous_频率副词_总是通常经常,"{""xp"":10}"
-ch_prog_03,频率副词,2,双时态混合,基础⑤·频率副词,L1~L2,1,8,15,4,6,"[""学会频率+进行时混合"",""学会How often频率问句""]",2,4,2,Tutor,英语导师,false,practice_foundation-present-continuous_频率副词_频率进行时混合,"{""xp"":10}"
-ch_prog_04,have与get,1,have的两种用法,基础⑤·have与get,L1~L2,1,8,15,4,8,"[""掌握have表拥有不可进行时"",""掌握have表吃/经历可进行时""]",2,4,2,Tutor,英语导师,false,practice_foundation-present-continuous_have与get_have状态用法,"{""xp"":10}"
-ch_prog_04,have与get,2,get的日常表达,基础⑤·have与get,L1~L2,1,8,15,4,8,"[""掌握get up/home/to起床到达"",""掌握get tired/dark/angry变得/收到"",""掌握get along短语动词""]",2,4,2,Tutor,英语导师,false,practice_foundation-present-continuous_have与get_get起床到达,"{""xp"":10}"
+1,频率与现在进行时,1,频率副词与问句,频率与现在进行时,L1,beginner,28,40,16,16,"[""描述6种频率并完成频率问句""]",1,12,4,Emma,老师,false,practice_foundation-present_频率_综合,"{""xp"":50}"
+1,频率与现在进行时,2,现在进行时,频率与现在进行时,L1~L2,beginner,28,40,16,16,"[""用进行时描述此刻和问答""]",1,12,4,Ben,同事,false,practice_foundation-present_进行时_综合,"{""xp"":50}"
+2,状态、活动与变化,1,状态动词与have,状态、活动与变化,L1~L2,beginner,28,40,16,16,"[""区分状态动词和have的双重用法""]",1,12,4,Mia,朋友,false,practice_foundation-present_状态_have,"{""xp"":50}"
+2,状态、活动与变化,2,get与综合,状态、活动与变化,L1~L2,beginner,28,40,16,16,"[""掌握get三种含义并完成综合输出""]",1,12,4,Emma,老师,false,practice_foundation-present_get_综合,"{""xp"":80}"

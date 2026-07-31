@@ -1,196 +1,42 @@
 scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key
-基础⑤·此刻正在做,我正在…,Practice present continuous for I am doing actions.,练习现在进行时"I am doing"表达。,35,L1,掌握I'm eating/drinking/reading等现在进行时第一人称表达。,现在进行时 第一人称 I am doing 此刻,"## 现在进行时结构：I am + 动词-ing
-- **I'm eating breakfast right now.** 我正在吃早餐。
-- **I'm drinking coffee right now.** 我正在喝咖啡。
-- **I'm reading a great book.** 我正在读一本好书。
+频率与现在进行时,用频率支持观点,"How often do you do these activities?","你做这些活动的频率如何？",900,L1,"频率副词含义和高低排序","always, usually, often, sometimes, rarely, never","## 频率副词
 
-## 对比：习惯 vs 此刻
-- I eat breakfast every day.（习惯）
-- I'm eating breakfast right now.（此刻）
+always 100% → usually 80-90% → often 60-70% → sometimes 30-50% → rarely 5-10% → never 0%",practice_foundation-present_频率_用频率支持观点
+频率与现在进行时,频率副词的位置与频率问句,"Where do frequency adverbs go in a sentence?","频率副词放在句子的什么位置？",900,L1,"频率副词在一般动词前、be动词后；频率问句","How often, once/twice a..., is always, is sometimes","## 频率位置
 
-## 关键规则
-- be动词(am)绝对不能少：❌ I eating → ✅ I'm eating
-- 动词必须加-ing：❌ I'm eat → ✅ I'm eating",practice_foundation-present-continuous_此刻正在做_我正在
-基础⑤·此刻正在做,他/她正在…,Practice present continuous for He/She is doing actions.,练习现在进行时第三人称"他/她正在"表达。,35,L1,掌握He's/She's working/sleeping/teaching等现在进行时第三人称表达。,现在进行时 第三人称 He is She is 正在,"## 第三人称现在进行时：He/She is + 动词-ing
-- **He's working from home today.** 他今天在家办公。
-- **She's teaching a class right now.** 她正在上课。
-- **He's driving to the airport now.** 他正开往机场。
+一般动词前：I usually practice.
+be动词后：Emma is always ready.
+问句：How often do you...?",practice_foundation-present_频率_位置与问句
+频率与现在进行时,现在进行时肯定句,"What are you doing right now?","你现在正在做什么？",900,L1~L2,"am/is/are + 动词-ing 系统掌握","I am...ing, He/She is...ing, We/They are...ing, It is...ing","## 进行时肯定
 
-## 对比：长期 vs 此刻
-- He works in an office.（长期）
-- He's working from home today.（此刻例外）
+I am reading.
+He is talking.
+They are waiting.
+It is raining.",practice_foundation-present_进行时_肯定句
+频率与现在进行时,现在进行时否定句与疑问句,"What is NOT happening? Are you studying?","什么没在发生？你在学习吗？",900,L1~L2,"否定和疑问的现在进行时","I'm not...ing, isn't...ing, Are you...ing?, What is...doing?","## 进行时否定与疑问
 
-## 常见错误
-- ❌ He working. → ✅ He's working.
-- ❌ She is teach. → ✅ She is teaching.",practice_foundation-present-continuous_此刻正在做_他她正在
-基础⑤·此刻正在做,此刻场景描述,Practice describing scenes happening right now.,练习描述此刻正在发生的场景。,35,L1,掌握It's raining/People are waiting/太阳闪耀等场景描述表达。,现在进行时 场景描述 天气 此刻,"## 场景描述核心句型
-- **It's raining outside right now.** 外面正在下雨。
-- **People are waiting in line.** 人们正在排队。
-- **The sun is shining today!** 今天阳光明媚！
+I'm not working.
+She isn't cooking.
+Are you studying?
+What is Ben doing?",practice_foundation-present_进行时_否定疑问
+状态、活动与变化,区分习惯、此刻和临时变化,"Is this a habit or happening right now?","这是习惯还是正在发生？",900,L1~L2,"一般现在时 vs 现在进行时的对比","一般现在 vs 进行时, right now, today, this week, for now","## 习惯vs此刻
 
-## 观察描述
-Look! / Listen! 开头常暗示进行时。
-- Look! It's raining.
-- Listen! The baby is crying.
+习惯：I take the bus every day.
+此刻：I am walking right now.
+临时：I am working at home this week.",practice_foundation-present_状态_习惯vs此刻
+状态、活动与变化,状态动词与动作动词,"Is this a state or an action?","这是状态还是动作？",900,L1~L2,"区分think/know/look/feel的状态与动作意义","think vs thinking about, feel vs feeling, look vs looking at, know (no -ing)","## 状态vs动作
 
-## 替换练习
-替换天气/动作词。",practice_foundation-present-continuous_此刻正在做_此刻场景描述
-基础⑤·此刻正在做,感官动词对比,Practice look/feel/think vs look at/feel/think about contrast.,练习感官动词两种用法对比：看起来vs正在看、觉得vs正在感受。,40,L1~L2,掌握感官动词状态用法和动作用法的区别。,感官动词 状态 动作 对比 think feel look,"## 感官动词两种用法
-- **He looks happy in photos.** 他照片里看起来开心。(状态)
-- **He's looking at his phone.** 他正在看手机。(动作)
-- **She thinks it's a good idea.** 她觉得是好主意。(状态)
-- **She's thinking about the problem.** 她正在思考问题。(动作)
+I think it is useful. (状态)
+I'm thinking about it. (动作)
+I know the answer. (状态，不用进行时)",practice_foundation-present_状态_状态动词
+状态、活动与变化,用have区分状态与活动,"Do you have something, or are you having an activity?","你拥有某物，还是正在进行活动？",900,L1~L2,"have表示拥有和have表示活动的区分","I have (拥有), I'm having (活动), has, We're having","## have双重用法
 
-## 关键区分
-- look = 看起来(状态) vs look at = 看(动作)
-- think = 认为(状态) vs think about = 思考(动作)
-- feel = 觉得(状态) vs feel = 感受(动作可进行)",practice_foundation-present-continuous_此刻正在做_感官动词对比
-基础⑤·此刻正在做,此刻与习惯对比,Practice switching between habit and right now.,练习在习惯和此刻之间切换时态。,35,L1,掌握I usually...but right now I'm...双时态对比表达。,时态对比 习惯 此刻 usually but now,"## 双时态对比句型
-- **I usually watch TV after dinner, but right now I'm watching a movie.** 我通常晚饭后看电视，但此刻在看电影。
-- **I study English every day, but I'm studying for a test now.** 我每天学英语，但此刻在备考。
+I have a desk. (拥有)
+I'm having lunch. (进行活动)
+❌ I'm having a car.",practice_foundation-present_状态_have区分
+状态、活动与变化,用get描述到达、收到和变得,"How do you use get?","怎么用get？",900,L1~L2,"get + 地点/名词/形容词的三种含义","get + 地点(到达), get + 名词(收到), get + 形容词(变得), be getting + 形容词","## get三种含义
 
-## 对比标志词
-- 习惯：usually / every day / every morning / always
-- 此刻：right now / at the moment / now / today
-
-## 练习技巧
-先快速判断"习惯"还是"此刻"，再选择时态。",practice_foundation-present-continuous_此刻正在做_此刻与习惯对比
-基础⑤·临时vs习惯,平时vs今天,Practice simple present vs present continuous for habits vs today.,练习一般现在时和现在进行时对比：平时习惯 vs 今天例外。,35,L1~L2,掌握usually...but today...对比句式。,平时 今天 对比 习惯 临时 usually but today,"## 核心对比：习惯 vs 临时
-- **I usually take the bus.** 我通常坐公交。
-- **But today I'm taking a taxi.** 但今天我打车。
-
-## 更多对比
-- I live in Beijing. But I'm staying in Shanghai this week.
-- We usually eat at home. But we're eating out tonight.
-
-## 关键词
-习惯词：usually/normally/generally
-临时词：today/tonight/this week/this month
-",practice_foundation-present-continuous_临时vs习惯_平时vs今天
-基础⑤·临时vs习惯,常态vs例外,Practice contrasting normal vs exception with simple present and continuous.,练习常态和例外的时态对比表达。,35,L1~L2,掌握常态vs例外的时态对比句式。,常态 例外 对比 时态 今天 例外,"## 常态 vs 例外核心句型
-- **She wears a uniform at work, but today she's wearing a dress.** 她上班穿制服，但今天穿了裙子。
-- **He usually gets up at 7, but he's getting up at 5 tomorrow.** 他通常7点起，但明天5点起。
-- **They usually meet on Fridays, but this week they're meeting on Thursday.** 他们通常周五见，这周周四见。
-
-## 替换练习
-替换动词和名词，保持对比结构。",practice_foundation-present-continuous_临时vs习惯_常态vs例外
-基础⑤·临时vs习惯,此刻状态,Practice describing current states with present continuous.,练习用现在进行时描述此刻状态。,35,L1,掌握此刻天气/感受/状态的时态表达。,此刻状态 进行时 天气 感受 正在,"## 此刻状态核心句型
-- **It's raining right now.** 现在正在下雨。
-- **It's getting dark. Let's go inside.** 天快黑了，进去吧。
-- **I'm feeling really tired now.** 我现在好累。
-- **The baby is sleeping now.** 宝宝正在睡觉。
-
-## 对比：常态 vs 此刻
-- It rains a lot in spring.（季节特征）
-- It's raining right now.（此刻天气）
-- I feel tired after work.（常态）
-- I'm feeling really tired now.（此刻感受）",practice_foundation-present-continuous_临时vs习惯_此刻状态
-基础⑤·临时vs习惯,近期变化,Practice describing recent changes with continuous.,练习用进行时描述近期变化。,35,L1~L2,掌握进行时描述近期变化和临时情况的表达。,近期变化 进行时 this month 临时,"## 近期变化核心句型
-- **I normally walk to school, but I'm riding a bike this month.** 我平时走路去学校，但这个月骑自行车。
-- **I usually work in Beijing, but this week I'm working in Shanghai.** 我通常在北京工作，但这周在上海。
-
-## 关键点
-进行时描述的是**临时/近期**的变化，不是永久改变。
-- 临时：I'm staying in Shanghai this week.
-- 永久：I live in Shanghai.（一般现在时）",practice_foundation-present-continuous_临时vs习惯_近期变化
-基础⑤·临时vs习惯,双时态叙事,Practice narrating with mixed tenses.,练习双时态叙事：用两种时态交替描述场景。,40,L1~L2,掌握在叙事中自然切换一般现在和现在进行时。,时态混合 叙事 切换 think is doing,"## 双时态叙事核心句型
-- **I think she is a good teacher.** 我觉得她是好老师。(状态)
-- **Right now I'm thinking about the lesson.** 我正在想这节课。(动作)
-- **I think he is sleeping. He usually takes a nap at this time.** 我觉得他在睡觉，他通常这个时间午休。
-
-## 叙事模式
-先描述已知/习惯(一般现在时)，再切换到此刻观察(现在进行时)。",practice_foundation-present-continuous_临时vs习惯_双时态叙事
-基础⑤·频率副词,总是/通常/经常,Practice frequency adverbs: always/usually/often.,练习频率副词：总是/通常/经常。,35,L1,掌握always/usually/often与一般现在时搭配。,频率副词 always usually often 一般现在时,"## 频率副词核心句型
-- **I always get up at 7.** 我总是7点起床。(100%)
-- **I usually drink coffee in the morning.** 我通常早上喝咖啡。(90%)
-- **I often read before bed.** 我经常睡前看书。(70%)
-
-## 位置规则
-频率副词放在**动词前**：
-- ❌ I get up always at 7.
-- ✅ I always get up at 7.
-- ✅ I usually drink coffee.",practice_foundation-present-continuous_频率副词_总是通常经常
-基础⑤·频率副词,有时/很少/从不,Practice sometimes/rarely/never with simple present.,练习频率副词：有时/很少/从不。,35,L1,掌握sometimes/rarely/never与一般现在时搭配。,频率副词 sometimes rarely never 频率,"## 频率副词核心句型
-- **I sometimes watch TV after work.** 我有时下班后看电视。(50%)
-- **I rarely eat junk food.** 我很少吃垃圾食品。(10%)
-- **I never smoke.** 我从不抽烟。(0%)
-
-## 频率光谱
-always(100%) → usually(90%) → often(70%) → sometimes(50%) → rarely(10%) → never(0%)
-
-## 注意
-never = not ever，后面不用再加not。❌ I never don't eat meat。",practice_foundation-present-continuous_频率副词_有时很少从不
-基础⑤·频率副词,频率+进行时混合,Practice mixing frequency with present continuous.,练习频率副词和现在进行时混合表达。,40,L1~L2,掌握频率+进行时混合表达对比。,频率副词 进行时 混合 对比 usually but,"## 混合句型
-- **I usually walk to work, but this month I'm taking the bus.** 我通常走路上班，但这个月坐公交。
-- **I think he is sleeping. He usually takes a nap at this time.** 我觉得他在睡觉，他通常这个时间午休。
-
-## 核心对比
-频率副词 + 一般现在时 = 习惯
-但 + 现在进行时 = 临时例外
-练习先想"这是习惯还是临时"，再选择时态。",practice_foundation-present-continuous_频率副词_频率进行时混合
-基础⑤·频率副词,be+频率副词,Practice frequency adverb position with be verbs.,练习频率副词在be动词后的位置。,35,L1,掌握be动词+频率副词的语序。,频率副词 be动词 位置 always is,"## be+频率副词位置
-频率副词放在be动词**之后**：
-- **She is always late for class.** 她上课总是迟到。
-- **He is never tired in the morning.** 他早上从不疲倦。
-
-## 语法规则
-- 普通动词：频率副词在动词前（I always get up early）
-- be动词：频率副词在be后（She is always happy）
-
-## 替换练习
-is always / is never / are usually / is sometimes + 形容词",practice_foundation-present-continuous_频率副词_be频率副词
-基础⑤·频率副词,频率问句,Practice How often questions.,练习How often频率问句。,35,L1,掌握How often问句和频率回答。,频率问句 How often 频率 回答,"## 频率问句核心句型
-- **How often do you exercise? — I usually go running three times a week.** 你多久运动一次？——我通常每周跑三次。
-
-## 回答方式
-- 频率副词：always / usually / often / sometimes / rarely / never
-- 频率短语：every day / once a week / twice a month / three times a year
-
-## 替换练习
-替换动词和频率表达方式。",practice_foundation-present-continuous_频率副词_频率问句
-基础⑤·have与get,have状态用法,Practice have for possession (stative, no continuous).,练习have表拥有的状态用法（不能用于进行时）。,35,L1~L2,掌握have表示拥有/关系/特征时不可用进行时。,have 拥有 状态 不可进行 语法,"## have 状态用法（不可进行时）
-- **I have a car.** 我有一辆车。(❌ I'm having a car)
-- **I have two brothers.** 我有两个兄弟。(❌ I'm having two brothers)
-- **I have a headache.** 我头疼。(❌ I'm having a headache)
-- **She has blue eyes.** 她有蓝眼睛。(❌ She's having blue eyes)
-
-## 核心规则
-have表示"拥有/关系/特征/状态"时，是**状态动词**，不能用于进行时。
-🚫 绝对不能说：I'm having a car.",practice_foundation-present-continuous_have与get_have状态用法
-基础⑤·have与get,have动作用法,Practice have for actions (eating/experiencing, CAN use continuous).,练习have表吃/经历的动作用法（可以用于进行时）。,35,L1~L2,掌握have表示吃/参加/经历时可以用进行时。,have 动作 吃 经历 可进行 进行时,"## have 动作用法（可进行时）
-- **I have breakfast at 7.** / **I'm having breakfast right now.** 我7点吃早餐。/ 我正在吃早餐。
-- **I have a meeting at 3.** / **I'm having a meeting right now.** 我3点有会。/ 我正在开会。
-- **I have a good time at parties.** / **I'm having a great time!** 我派对上玩得开心。/ 我正玩得很开心！
-
-## 核心区分
-- have + 食物/饮品 = 吃/喝（动作，可进行）
-- have + 活动/经历 = 参加/经历（动作，可进行）
-- have + 物品/关系 = 拥有（状态，不可进行）",practice_foundation-present-continuous_have与get_have动作用法
-基础⑤·have与get,get起床/到达,Practice get for waking up and arriving.,练习get表示起床和到达的用法。,35,L1~L2,掌握get up/get home/get to的时态对比用法。,get up 起床 到达 get to get home,"## get 起床/到达核心句型
-- **I get up at 7 every day.** / **I'm getting up now.** 我每天7点起。/ 我正在起床。
-- **I get home at 6 pm.** / **I'm getting home now.** 我下午6点到家。/ 我快到家了。
-- **I get to work by bus.** / **I'm getting to work by taxi today.** 我坐公交上班。/ 我今天打车到公司。
-
-## get 含义
-get up = 起床 / get home = 到家 / get to = 到达
-每个都有"习惯"和"正在"两个版本。",practice_foundation-present-continuous_have与get_get起床到达
-基础⑤·have与get,get变得/收到,Practice get for becoming and receiving.,练习get表示变得和收到的用法。,35,L1~L2,掌握get+形容词表示变化和get表示收到的表达。,get 变得 收到 变化 进行时,"## get 变得/收到核心句型
-- **I get tired easily.** / **I'm getting tired. Let's rest.** 我容易累。/ 我有点累了，休息吧。
-- **It gets dark early in winter.** / **It's getting dark. Let's go inside.** 冬天黑得早。/ 天快黑了，进去吧。
-- **I get a lot of emails at work.** / **I'm getting a lot of spam these days.** 我上班收很多邮件。/ 我最近收到好多垃圾邮件。
-
-## get + 形容词 = 变得
-表示"慢慢变化"，常用进行时强调变化过程。
-get angry / get cold / get better / get darker",practice_foundation-present-continuous_have与get_get变得收到
-基础⑤·have与get,get短语动词,Practice get phrasal verbs like get along.,练习get短语动词如get along的用法。,35,L1~L2,掌握get along with等短语动词的时态对比用法。,get 短语动词 get along 相处 进行时,"## get 短语动词核心句型
-- **He gets along well with everyone.** / **He's getting along better now.** 他跟谁都处得好。/ 他现在处得更好了。
-
-## 常用get短语动词
-- get along with = 与...相处
-- get through = 度过/接通
-- get over = 克服/恢复
-- get together = 聚在一起
-- get into = 进入/陷入
-
-## 注意
-get短语动词也遵循"习惯用一般现在时，此刻或变化用进行时"的对比。",practice_foundation-present-continuous_have与get_get短语动词
+get home (到达)
+get feedback (收到)
+get easier (变得)
+It's getting late. (正在变)",practice_foundation-present_状态_get

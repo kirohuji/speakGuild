@@ -1,6 +1,6 @@
 category_name,title,location,required_output_level,required_user_level,description,package_type
-基础入门,基础⑥·过去的状态,零基础课堂,L1,1,学习was/were描述过去的状态：我以前是/有、昨天在哪里、过去的感受和外表天气。,foundation
-基础入门,基础⑥·过去的动作,零基础课堂,L1,1,学习一般过去时描述过去的动作：昨天做了什么、不规则动词、规则-ed。,foundation
-基础入门,基础⑥·讲述经历,零基础课堂,L1~L2,1,学习用一般过去时讲述经历：上个周末/去年、ago表达、否定didn't、疑问Did。,foundation
-基础入门,基础⑥·完成时入门,零基础课堂,L1~L2,1,学习现在完成时入门：去过/做过、刚刚/还没、持续多久for/since、ever/never。,foundation
-基础入门,基础⑥·过去与现在对比,零基础课堂,L1~L2,1,学习回忆过去和今昔对比：used to表达、过去vs现在。,foundation
+时态基础,过去的状态,home/classroom,L1,beginner,"was/were 过去式，过去的状态、位置、感受、外表和天气",foundation
+时态基础,过去的动作,home/school,L1,beginner,"不规则动词过去式、规则动词-ed、过去时间表达和过去频率",foundation
+时态进阶,讲述经历,home/office,L1,beginner,"didn't 否定、Did 疑问、ago 表达、in 年份事件",foundation
+时态进阶,完成时入门,home/classroom,L1,beginner,"have been to, ever/never, just/yet, for/since, 最高级+完成时",foundation
+综合对比,过去与现在对比,home/café,L1,beginner,"used to, 回忆过去, 生活变化, 今昔对比",foundation

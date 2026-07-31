@@ -1,70 +1,73 @@
 episode_chapter,episode_order,chunk_text_match,sort_order
-found_foundation_social_express_0,1,I was a student last year.,0
-found_foundation_social_express_0,1,He was very shy before.,1
-found_foundation_social_express_0,1,They were at home yesterday.,2
-found_foundation_social_express_0,1,I had a dog when I was a child.,3
-found_foundation_social_express_0,1,She had long hair last year.,4
-found_foundation_social_express_0,1,It was a nice day yesterday.,5
-found_foundation_social_express_0,1,I was happy with the result.,6
-found_foundation_social_express_0,2,I was at the office all day.,0
-found_foundation_social_express_0,2,Were you at home last night? Yes I was.,1
-found_foundation_social_express_0,2,Was she at the party? No she wasn't,2
-found_foundation_social_express_0,2,How was your weekend? It was great!,3
-found_foundation_social_express_0,2,The movie was really boring.,4
-found_foundation_social_express_0,2,Was it cold yesterday?,5
-found_foundation_social_express_0,2,Where were you last night? I was at home.,6
-found_foundation_social_express_1,1,I got up at 8 yesterday.,0
-found_foundation_social_express_1,1,I went to the supermarket.,1
-found_foundation_social_express_1,1,I ate noodles for lunch.,2
-found_foundation_social_express_1,1,I watched a movie last night.,3
-found_foundation_social_express_1,1,I played basketball with my friends every weekend.,4
-found_foundation_social_express_1,1,I studied for two hours.,5
-found_foundation_social_express_1,1,I cooked dinner for my family.,6
-found_foundation_social_express_1,2,I saw a friend at the mall.,0
-found_foundation_social_express_1,2,She said hello to me.,1
-found_foundation_social_express_1,2,I got a new phone last week.,2
-found_foundation_social_express_1,2,He made a big cake for the party.,3
-found_foundation_social_express_1,2,I did my homework after school.,4
-found_foundation_social_express_1,2,We had a great time at the beach.,5
-found_foundation_social_express_1,2,She took a lot of photos.,6
-found_foundation_social_express_1,2,He came home very late.,7
-found_foundation_social_express_2,1,Last weekend I visited my grandparents.,0
-found_foundation_social_express_2,1,Last year I traveled to Japan.,1
-found_foundation_social_express_2,1,I lived in Shanghai two years ago.,2
-found_foundation_social_express_2,1,I started this job three months ago.,3
-found_foundation_social_express_2,1,We moved to this city in 2018.,4
-found_foundation_social_express_2,1,I met my best friend in college.,5
-found_foundation_social_express_2,1,She started learning English when she was 10.,6
-found_foundation_social_express_2,2,I didn't go to school yesterday I was sick.,0
-found_foundation_social_express_2,2,She didn't like the movie.,1
-found_foundation_social_express_2,2,Did you have a good weekend? Yes I did.,2
-found_foundation_social_express_2,2,Did she call you yesterday? No she didn't.,3
-found_foundation_social_express_2,2,When did you arrive? I arrived at 3 pm.,4
-found_foundation_social_express_2,2,Where did you go last night? I went to a concert.,5
-found_foundation_social_express_2,2,What did you do yesterday? I stayed home.,6
-found_foundation_social_express_3,1,I have been to Beijing.,0
-found_foundation_social_express_3,1,Have you ever been to Shanghai? Yes I have.,1
-found_foundation_social_express_3,1,I have never tried hot pot.,2
-found_foundation_social_express_3,1,She has seen that movie three times.,3
-found_foundation_social_express_3,1,Have you finished your homework? Yes I have.,4
-found_foundation_social_express_3,2,I have lost my keys!,0
-found_foundation_social_express_3,2,She has already left the office.,1
-found_foundation_social_express_3,2,I have just arrived at the station.,2
-found_foundation_social_express_3,2,I haven't eaten lunch yet.,3
-found_foundation_social_express_3,2,Have you eaten yet? No not yet.,4
-found_foundation_social_express_3,2,I have lived here for five years.,5
-found_foundation_social_express_3,2,She has worked here since 2020.,6
-found_foundation_social_express_4,1,I remember when I was a child I played outside every day.,0
-found_foundation_social_express_4,1,Those were the good old days.,1
-found_foundation_social_express_4,1,I used to play the piano but now I don't.,2
-found_foundation_social_express_4,1,She used to have long hair but now she has short hair.,3
-found_foundation_social_express_4,1,I didn't use to like vegetables but now I love them.,4
-found_foundation_social_express_4,1,Did you use to live here? Yes I did.,5
-found_foundation_social_express_4,2,I have changed a lot since then.,0
-found_foundation_social_express_4,2,Things have changed so much in the past ten years.,1
-found_foundation_social_express_4,2,Life was simpler before Now everything is so fast.,2
-found_foundation_social_express_4,2,When I was young I stayed up late Now I go to bed early.,3
-found_foundation_social_express_4,2,I always watched TV after school when I was a kid.,4
-found_foundation_social_express_4,2,There used to be a park here but now it's a shopping mall.,5
-found_foundation_social_express_4,2,I used to think this was difficult but now I know it's easy.,6
-found_foundation_social_express_4,2,Looking back I realize how much I have grown.,7
+1-1,1,"I was a student last year.",0
+1-1,1,"He was very shy before.",1
+1-1,1,"They were at home yesterday.",2
+1-1,1,"I had a dog when I was a child.",3
+1-1,1,"She had long hair last year.",4
+1-1,1,"It was a nice day yesterday.",5
+1-1,1,"I was happy with the result.",6
+1-2,2,"I was at the office all day.",0
+1-2,2,"Were you at home last night? — Yes, I was.",1
+1-2,2,"Was she at the party? — No, she wasn't.",2
+1-2,2,"How was your weekend? — It was great!",3
+1-2,2,"The movie was really boring.",4
+1-2,2,"Was it cold yesterday?",5
+1-2,2,"Where were you last night? — I was at home.",6
+2-1,1,"I got up at 8 yesterday.",0
+2-1,1,"I went to the supermarket.",1
+2-1,1,"I ate noodles for lunch.",2
+2-1,1,"I watched a movie last night.",3
+2-1,1,"I played basketball with my friends.",4
+2-1,1,"I studied for two hours.",5
+2-1,1,"I cooked dinner for my family.",6
+2-1,1,"I saw a friend at the mall.",7
+2-1,1,"She said hello to me.",8
+2-1,1,"I got a new phone last week.",9
+2-1,1,"He made a big cake for the party.",10
+2-1,1,"I did my homework after school.",11
+2-1,1,"We had a great time at the beach.",12
+2-1,1,"She took a lot of photos.",13
+2-1,1,"He came home very late.",14
+3-1,1,"Last weekend I visited my grandparents.",0
+3-1,1,"Last year I traveled to Japan.",1
+3-1,1,"I lived in Shanghai two years ago.",2
+3-1,1,"I started this job three months ago.",3
+3-1,1,"We moved to this city in 2018.",4
+3-1,1,"I met my best friend in college.",5
+3-1,1,"She started learning English when she was 10.",6
+3-2,2,"I didn't go to school yesterday. I was sick.",0
+3-2,2,"She didn't like the movie. She said it was boring.",1
+3-2,2,"Did you have a good weekend? — Yes, I did!",2
+3-2,2,"Did she call you yesterday? — No, she didn't.",3
+3-2,2,"When did you arrive? — I arrived at 3 pm.",4
+3-2,2,"Where did you go last night? — I went to a concert.",5
+3-2,2,"What did you do yesterday? — I stayed home.",6
+4-1,1,"I have been to Beijing.",0
+4-1,1,"Have you ever been to Shanghai? — Yes, I have.",1
+4-1,1,"I have never tried hot pot.",2
+4-1,1,"She has seen that movie three times.",3
+4-1,1,"Have you finished your homework? — Yes, I have.",4
+4-1,1,"I have lost my keys! Do you see them?",5
+4-1,1,"She has already left the office.",6
+4-1,1,"I have just arrived at the station.",7
+4-1,1,"I haven't eaten lunch yet.",8
+4-1,1,"Have you eaten yet? — No, not yet.",9
+4-2,2,"I have lived here for five years.",0
+4-2,2,"She has worked here since 2020.",1
+4-2,2,"How long have you been here? — For about an hour.",2
+4-2,2,"This is the best movie I have ever seen!",3
+4-2,2,"I have been to Japan. I went there last year.",4
+5-1,1,"I remember when I was a child, I played outside every day.",0
+5-1,1,"Those were the good old days.",1
+5-1,1,"I used to play the piano, but now I don't.",2
+5-1,1,"She used to have long hair, but now she has short hair.",3
+5-1,1,"I didn't use to like vegetables, but now I love them.",4
+5-1,1,"Did you use to live here? — Yes, I did.",5
+5-1,1,"Life was simpler before. Now everything is so fast.",6
+5-2,2,"When I was young, I stayed up late. Now I go to bed early.",0
+5-2,2,"I always watched TV after school when I was a kid.",1
+5-2,2,"I have changed a lot since then.",2
+5-2,2,"Things have changed so much in the past ten years.",3
+5-2,2,"There used to be a park here, but now it's a shopping mall.",4
+5-2,2,"I used to think this was difficult, but now I know it's easy.",5
+5-2,2,"Looking back, I realize how much I have grown.",6
