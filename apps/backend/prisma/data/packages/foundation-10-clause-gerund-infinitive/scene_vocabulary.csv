@@ -1,160 +1,70 @@
-scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-基础⑩·表达想法,I think (that)...,I think (that),我认为……,phrase,,,L2,,,0
-基础⑩·表达想法,I think (that)...,I believe (that),我相信……,phrase,,,L2,,,1
-基础⑩·表达想法,I think (that)...,I feel (that),我觉得……,phrase,,,L2,,,2
-基础⑩·表达想法,I think (that)...,I suppose (that),我想；我认为……,phrase,,,L2,,,3
-基础⑩·表达想法,I think (that)...,I guess (that),我猜……,phrase,,,L2,,,4
-基础⑩·表达想法,I think (that)...,I imagine (that),我想象；我认为……,phrase,,,L2,,,5
-基础⑩·表达想法,I know / I'm sure,I know (that),我知道……,phrase,,,L2,,,0
-基础⑩·表达想法,I know / I'm sure,I'm sure (that),我确定……,phrase,,,L2,,,1
-基础⑩·表达想法,I know / I'm sure,I'm certain (that),我确信……,phrase,,,L2,,,2
-基础⑩·表达想法,I know / I'm sure,I'm positive (that),我肯定……,phrase,,,L2,,,3
-基础⑩·表达想法,I know / I'm sure,I'm confident (that),我有信心……,phrase,,,L2,,,4
-基础⑩·表达想法,I know / I'm sure,I realize (that),我意识到……,phrase,,,L2,,,5
-基础⑩·表达想法,I know / I'm sure,I notice (that),我注意到……,phrase,,,L2,,,6
-基础⑩·表达想法,I don't think...,I don't think (that),我认为……不……,phrase,,,L2,,,0
-基础⑩·表达想法,I don't think...,I don't believe (that),我不相信……,phrase,,,L2,,,1
-基础⑩·表达想法,I don't think...,I'm not sure (that),我不确定……,phrase,,,L2,,,2
-基础⑩·表达想法,I don't think...,I'm not certain (that),我不确信……,phrase,,,L2,,,3
-基础⑩·表达想法,I don't think...,I doubt (that),我怀疑……,phrase,,,L2,,,4
-基础⑩·表达想法,I don't think...,I wonder if,我想知道是否……,phrase,,,L2,,,5
-基础⑩·表达想法,He said (that)...,He said (that),他说……,phrase,,,L2,,,0
-基础⑩·表达想法,He said (that)...,She told me (that),她告诉我……,phrase,,,L2,,,1
-基础⑩·表达想法,He said (that)...,I heard (that),我听说……,phrase,,,L2,,,2
-基础⑩·表达想法,He said (that)...,They explained (that),他们解释说……,phrase,,,L2,,,3
-基础⑩·表达想法,He said (that)...,She mentioned (that),她提到……,phrase,,,L2,,,4
-基础⑩·表达想法,He said (that)...,He admitted (that),他承认……,phrase,,,L2,,,5
-基础⑩·表达想法,He said (that)...,They reported (that),他们报告说……,phrase,,,L2,,,6
-基础⑩·表达想法,wh- 宾语从句,I don't know what,我不知道什么……,phrase,,,L2,,,0
-基础⑩·表达想法,wh- 宾语从句,I don't know where,我不知道哪里……,phrase,,,L2,,,1
-基础⑩·表达想法,wh- 宾语从句,I don't know when,我不知道何时……,phrase,,,L2,,,2
-基础⑩·表达想法,wh- 宾语从句,I don't know why,我不知道为什么……,phrase,,,L2,,,3
-基础⑩·表达想法,wh- 宾语从句,I don't know how,我不知道如何……,phrase,,,L2,,,4
-基础⑩·表达想法,wh- 宾语从句,Can you tell me where,你能告诉我哪里……吗,phrase,,,L2,,,5
-基础⑩·表达想法,wh- 宾语从句,I wonder why,我想知道为什么……,phrase,,,L2,,,6
-基础⑩·表达想法,wh- 宾语从句,I understand how,我明白如何……,phrase,,,L2,,,7
-基础⑩·描述人物事物,that 定语从句（物）,the book that I read,the book that I read核心结构,phrase,,,L2,,,0
-基础⑩·描述人物事物,that 定语从句（物）,the movie that I watched,the book that I read核心结构,phrase,,,L2,,,1
-基础⑩·描述人物事物,that 定语从句（物）,the food that I like,the book that I read核心结构,phrase,,,L2,,,2
-基础⑩·描述人物事物,that 定语从句（物）,the song that I heard,the book that I read核心结构,phrase,,,L2,,,3
-基础⑩·描述人物事物,that 定语从句（物）,the place that I visited,the book that I read核心结构,phrase,,,L2,,,4
-基础⑩·描述人物事物,that 定语从句（物）,the one that you showed me,the book that I read核心结构,phrase,,,L2,,,5
-基础⑩·描述人物事物,that 定语从句（物）,the things that I want,the book that I read核心结构,phrase,,,L2,,,6
-基础⑩·描述人物事物,who 定语从句（人）,the person who called,the person who called核心结构,phrase,,,L2,,,0
-基础⑩·描述人物事物,who 定语从句（人）,the friend who helped me,the person who called核心结构,phrase,,,L2,,,1
-基础⑩·描述人物事物,who 定语从句（人）,the teacher who taught me,the person who called核心结构,phrase,,,L2,,,2
-基础⑩·描述人物事物,who 定语从句（人）,the girl who is talking,the person who called核心结构,phrase,,,L2,,,3
-基础⑩·描述人物事物,who 定语从句（人）,the man who lives there,the person who called核心结构,phrase,,,L2,,,4
-基础⑩·描述人物事物,who 定语从句（人）,someone who understands,the person who called核心结构,phrase,,,L2,,,5
-基础⑩·描述人物事物,who 定语从句（人）,people who care about you,the person who called核心结构,phrase,,,L2,,,6
-基础⑩·描述人物事物,where/when/why 定语从句,the restaurant where we met,the place where we met核心结构,phrase,,,L2,,,0
-基础⑩·描述人物事物,where/when/why 定语从句,the place where I grew up,the place where we met核心结构,phrase,,,L2,,,1
-基础⑩·描述人物事物,where/when/why 定语从句,the city where I was born,the place where we met核心结构,phrase,,,L2,,,2
-基础⑩·描述人物事物,where/when/why 定语从句,the company where I work,the place where we met核心结构,phrase,,,L2,,,3
-基础⑩·描述人物事物,where/when/why 定语从句,the reason why I came,the place where we met核心结构,phrase,,,L2,,,4
-基础⑩·描述人物事物,where/when/why 定语从句,the reason why I left,the place where we met核心结构,phrase,,,L2,,,5
-基础⑩·描述人物事物,where/when/why 定语从句,the day when we first met,the place where we met核心结构,phrase,,,L2,,,6
-基础⑩·描述人物事物,偏好描述（定从+最高级）,the book that I like most,the book that I like most核心结构,phrase,,,L2,,,0
-基础⑩·描述人物事物,偏好描述（定从+最高级）,the movie that I enjoy most,the book that I like most核心结构,phrase,,,L2,,,1
-基础⑩·描述人物事物,偏好描述（定从+最高级）,the place that I love most,the book that I like most核心结构,phrase,,,L2,,,2
-基础⑩·描述人物事物,偏好描述（定从+最高级）,the person who inspires me most,the book that I like most核心结构,phrase,,,L2,,,3
-基础⑩·描述人物事物,偏好描述（定从+最高级）,the thing that I value most,the book that I like most核心结构,phrase,,,L2,,,4
-基础⑩·描述人物事物,偏好描述（定从+最高级）,the memory that I cherish most,the book that I like most核心结构,phrase,,,L2,,,5
-基础⑩·描述人物事物,综合定语从句,There are many things that I want to learn,There are many things that...核心结构,phrase,,,L2,,,0
-基础⑩·描述人物事物,综合定语从句,The friend who helped me is someone that I can always trust,There are many things that...核心结构,phrase,,,L2,,,1
-基础⑩·描述人物事物,综合定语从句,everything that I know,There are many things that...核心结构,phrase,,,L2,,,2
-基础⑩·描述人物事物,综合定语从句,nothing that I regret,There are many things that...核心结构,phrase,,,L2,,,3
-基础⑩·描述人物事物,综合定语从句,the best thing that ever happened,There are many things that...核心结构,phrase,,,L2,,,4
-基础⑩·意图与目的,want/hope/would like to,I want to learn,意愿不定式核心结构,phrase,,,L2,,,0
-基础⑩·意图与目的,want/hope/would like to,I hope to see,意愿不定式核心结构,phrase,,,L2,,,1
-基础⑩·意图与目的,want/hope/would like to,I would like to apply,意愿不定式核心结构,phrase,,,L2,,,2
-基础⑩·意图与目的,want/hope/would like to,I wish to travel,意愿不定式核心结构,phrase,,,L2,,,3
-基础⑩·意图与目的,want/hope/would like to,I expect to finish,意愿不定式核心结构,phrase,,,L2,,,4
-基础⑩·意图与目的,want/hope/would like to,I plan to visit,意愿不定式核心结构,phrase,,,L2,,,5
-基础⑩·意图与目的,want/hope/would like to,I intend to stay,意愿不定式核心结构,phrase,,,L2,,,6
-基础⑩·意图与目的,decide/promise/agree to,I decided to go,决定承诺不定式核心结构,phrase,,,L2,,,0
-基础⑩·意图与目的,decide/promise/agree to,I promised to help,决定承诺不定式核心结构,phrase,,,L2,,,1
-基础⑩·意图与目的,decide/promise/agree to,I agreed to come,决定承诺不定式核心结构,phrase,,,L2,,,2
-基础⑩·意图与目的,decide/promise/agree to,I offered to drive,决定承诺不定式核心结构,phrase,,,L2,,,3
-基础⑩·意图与目的,decide/promise/agree to,I refused to leave,决定承诺不定式核心结构,phrase,,,L2,,,4
-基础⑩·意图与目的,decide/promise/agree to,I volunteered to cook,决定承诺不定式核心结构,phrase,,,L2,,,5
-基础⑩·意图与目的,decide/promise/agree to,I attempted to fix it,决定承诺不定式核心结构,phrase,,,L2,,,6
-基础⑩·意图与目的,to 不定式表目的,I came here to study,I came to study / in order to核心结构,phrase,,,L2,,,0
-基础⑩·意图与目的,to 不定式表目的,I went to the store to buy,I came to study / in order to核心结构,phrase,,,L2,,,1
-基础⑩·意图与目的,to 不定式表目的,I called to check,I came to study / in order to核心结构,phrase,,,L2,,,2
-基础⑩·意图与目的,to 不定式表目的,I saved money to travel,I came to study / in order to核心结构,phrase,,,L2,,,3
-基础⑩·意图与目的,to 不定式表目的,I woke up early to exercise,I came to study / in order to核心结构,phrase,,,L2,,,4
-基础⑩·意图与目的,to 不定式表目的,in order to succeed,I came to study / in order to核心结构,phrase,,,L2,,,5
-基础⑩·意图与目的,to 不定式表目的,so as to avoid,I came to study / in order to核心结构,phrase,,,L2,,,6
-基础⑩·意图与目的,It is + adj + to 不定式主语,It's important to practice,It's important to practice核心结构,phrase,,,L2,,,0
-基础⑩·意图与目的,It is + adj + to 不定式主语,It's fun to travel,It's important to practice核心结构,phrase,,,L2,,,1
-基础⑩·意图与目的,It is + adj + to 不定式主语,It's hard to say,It's important to practice核心结构,phrase,,,L2,,,2
-基础⑩·意图与目的,It is + adj + to 不定式主语,It's easy to forget,It's important to practice核心结构,phrase,,,L2,,,3
-基础⑩·意图与目的,It is + adj + to 不定式主语,It's necessary to prepare,It's important to practice核心结构,phrase,,,L2,,,4
-基础⑩·意图与目的,It is + adj + to 不定式主语,It's possible to achieve,It's important to practice核心结构,phrase,,,L2,,,5
-基础⑩·意图与目的,It is + adj + to 不定式主语,It's dangerous to ignore,It's important to practice核心结构,phrase,,,L2,,,6
-基础⑩·意图与目的,have something to 不定式定语,I have something to tell you,I have something to tell you核心结构,phrase,,,L2,,,0
-基础⑩·意图与目的,have something to 不定式定语,I have a lot to learn,I have something to tell you核心结构,phrase,,,L2,,,1
-基础⑩·意图与目的,have something to 不定式定语,I have nothing to say,I have something to tell you核心结构,phrase,,,L2,,,2
-基础⑩·意图与目的,have something to 不定式定语,Give me something to eat,I have something to tell you核心结构,phrase,,,L2,,,3
-基础⑩·意图与目的,have something to 不定式定语,I need someone to help,I have something to tell you核心结构,phrase,,,L2,,,4
-基础⑩·意图与目的,have something to 不定式定语,a place to stay,I have something to tell you核心结构,phrase,,,L2,,,5
-基础⑩·意图与目的,have something to 不定式定语,a book to read,I have something to tell you核心结构,phrase,,,L2,,,6
-基础⑩·喜好与活动,enjoy/like/love + 动名词,I enjoy reading,I enjoy reading核心结构,phrase,,,L2,,,0
-基础⑩·喜好与活动,enjoy/like/love + 动名词,I like swimming,I enjoy reading核心结构,phrase,,,L2,,,1
-基础⑩·喜好与活动,enjoy/like/love + 动名词,I love watching movies,I enjoy reading核心结构,phrase,,,L2,,,2
-基础⑩·喜好与活动,enjoy/like/love + 动名词,I prefer staying home,I enjoy reading核心结构,phrase,,,L2,,,3
-基础⑩·喜好与活动,enjoy/like/love + 动名词,I hate waiting,I enjoy reading核心结构,phrase,,,L2,,,4
-基础⑩·喜好与活动,enjoy/like/love + 动名词,I dislike cooking,I enjoy reading核心结构,phrase,,,L2,,,5
-基础⑩·喜好与活动,enjoy/like/love + 动名词,I don't mind helping,I enjoy reading核心结构,phrase,,,L2,,,6
-基础⑩·喜好与活动,start/finish/keep + 动名词,I started learning,I started learning核心结构,phrase,,,L2,,,0
-基础⑩·喜好与活动,start/finish/keep + 动名词,I finished writing,I started learning核心结构,phrase,,,L2,,,1
-基础⑩·喜好与活动,start/finish/keep + 动名词,I keep trying,I started learning核心结构,phrase,,,L2,,,2
-基础⑩·喜好与活动,start/finish/keep + 动名词,I stopped smoking,I started learning核心结构,phrase,,,L2,,,3
-基础⑩·喜好与活动,start/finish/keep + 动名词,I continued working,I started learning核心结构,phrase,,,L2,,,4
-基础⑩·喜好与活动,start/finish/keep + 动名词,I gave up drinking,I started learning核心结构,phrase,,,L2,,,5
-基础⑩·喜好与活动,start/finish/keep + 动名词,I spend time reading,I started learning核心结构,phrase,,,L2,,,6
-基础⑩·喜好与活动,be good at / interested in + 动名词,I'm good at remembering names,I'm good at remembering核心结构,phrase,,,L2,,,0
-基础⑩·喜好与活动,be good at / interested in + 动名词,I'm interested in learning,I'm good at remembering核心结构,phrase,,,L2,,,1
-基础⑩·喜好与活动,be good at / interested in + 动名词,I'm tired of waiting,I'm good at remembering核心结构,phrase,,,L2,,,2
-基础⑩·喜好与活动,be good at / interested in + 动名词,I'm fond of traveling,I'm good at remembering核心结构,phrase,,,L2,,,3
-基础⑩·喜好与活动,be good at / interested in + 动名词,I'm proud of achieving,I'm good at remembering核心结构,phrase,,,L2,,,4
-基础⑩·喜好与活动,be good at / interested in + 动名词,I'm afraid of failing,I'm good at remembering核心结构,phrase,,,L2,,,5
-基础⑩·喜好与活动,be good at / interested in + 动名词,I'm excited about starting,I'm good at remembering核心结构,phrase,,,L2,,,6
-基础⑩·喜好与活动,动名词作主语,Swimming is fun,Swimming is fun核心结构,phrase,,,L2,,,0
-基础⑩·喜好与活动,动名词作主语,Learning English takes time,Swimming is fun核心结构,phrase,,,L2,,,1
-基础⑩·喜好与活动,动名词作主语,Running is good for health,Swimming is fun核心结构,phrase,,,L2,,,2
-基础⑩·喜好与活动,动名词作主语,Traveling broadens the mind,Swimming is fun核心结构,phrase,,,L2,,,3
-基础⑩·喜好与活动,动名词作主语,Reading improves vocabulary,Swimming is fun核心结构,phrase,,,L2,,,4
-基础⑩·喜好与活动,动名词作主语,Cooking relaxes me,Swimming is fun核心结构,phrase,,,L2,,,5
-基础⑩·喜好与活动,动名词作主语,Waiting is the hardest part,Swimming is fun核心结构,phrase,,,L2,,,6
-基础⑩·喜好与活动,Thank you for / Sorry for + 动名词,Thank you for helping,Thank you for helping核心结构,phrase,,,L2,,,0
-基础⑩·喜好与活动,Thank you for / Sorry for + 动名词,Thank you for coming,Thank you for helping核心结构,phrase,,,L2,,,1
-基础⑩·喜好与活动,Thank you for / Sorry for + 动名词,Thank you for your time,Thank you for helping核心结构,phrase,,,L2,,,2
-基础⑩·喜好与活动,Thank you for / Sorry for + 动名词,I'm sorry for being late,Thank you for helping核心结构,phrase,,,L2,,,3
-基础⑩·喜好与活动,Thank you for / Sorry for + 动名词,I'm sorry for disturbing you,Thank you for helping核心结构,phrase,,,L2,,,4
-基础⑩·喜好与活动,Thank you for / Sorry for + 动名词,I'm sorry for making you wait,Thank you for helping核心结构,phrase,,,L2,,,5
-基础⑩·喜好与活动,Thank you for / Sorry for + 动名词,I apologize for forgetting,Thank you for helping核心结构,phrase,,,L2,,,6
-基础⑩·综合运用,从句 + 不定式混合,I think it's important to practice,I think it's important to...核心结构,phrase,,,L2,,,0
-基础⑩·综合运用,从句 + 不定式混合,I know that he wants to be a doctor,I think it's important to...核心结构,phrase,,,L2,,,1
-基础⑩·综合运用,从句 + 不定式混合,I believe that learning English is fun,I think it's important to...核心结构,phrase,,,L2,,,2
-基础⑩·综合运用,从句 + 不定式混合,She said that she enjoys working here,I think it's important to...核心结构,phrase,,,L2,,,3
-基础⑩·综合运用,定语从句 + 不定式混合,The best thing that you can do is to keep trying,The best thing that you can do is to...核心结构,phrase,,,L2,,,0
-基础⑩·综合运用,定语从句 + 不定式混合,The first thing that I want to do is to sleep,The best thing that you can do is to...核心结构,phrase,,,L2,,,1
-基础⑩·综合运用,定语从句 + 不定式混合,The only way that I know is to practice,The best thing that you can do is to...核心结构,phrase,,,L2,,,2
-基础⑩·综合运用,定语从句 + 不定式混合,the right person to ask,The best thing that you can do is to...核心结构,phrase,,,L2,,,3
-基础⑩·综合运用,动名词 vs 不定式对比,stopped smoking (quit),stop smoking vs stop to smoke核心结构,phrase,,,L2,,,0
-基础⑩·综合运用,动名词 vs 不定式对比,stopped to smoke (paused for a cigarette),stop smoking vs stop to smoke核心结构,phrase,,,L2,,,1
-基础⑩·综合运用,动名词 vs 不定式对比,remember locking (did it),stop smoking vs stop to smoke核心结构,phrase,,,L2,,,2
-基础⑩·综合运用,动名词 vs 不定式对比,remember to lock (must do it),stop smoking vs stop to smoke核心结构,phrase,,,L2,,,3
-基础⑩·综合运用,动名词 vs 不定式对比,forgot meeting (did meet),stop smoking vs stop to smoke核心结构,phrase,,,L2,,,4
-基础⑩·综合运用,动名词 vs 不定式对比,forgot to meet (didn't meet),stop smoking vs stop to smoke核心结构,phrase,,,L2,,,5
-基础⑩·综合运用,复杂观点表达,What I like most about this city is the people,What I like most about...is...核心结构,phrase,,,L2,,,0
-基础⑩·综合运用,复杂观点表达,What I find interesting is that,What I like most about...is...核心结构,phrase,,,L2,,,1
-基础⑩·综合运用,复杂观点表达,The reason why I chose this is because,What I like most about...is...核心结构,phrase,,,L2,,,2
-基础⑩·综合运用,复杂观点表达,What surprises me is how,What I like most about...is...核心结构,phrase,,,L2,,,3
-基础⑩·综合运用,复杂观点表达,The thing that matters most is,What I like most about...is...核心结构,phrase,,,L2,,,4
-基础⑩·综合运用,长篇叙事综合,I decided to learn English because I think it's important for my future,I decided to...because I think...核心结构,phrase,,,L2,,,0
-基础⑩·综合运用,长篇叙事综合,I enjoy traveling because I think it's the best way to learn about different cultures,I decided to...because I think...核心结构,phrase,,,L2,,,1
-基础⑩·综合运用,长篇叙事综合,What I believe is that hard work always pays off,I decided to...because I think...核心结构,phrase,,,L2,,,2
-基础⑩·综合运用,长篇叙事综合,The reason I started this journey is that I wanted to challenge myself,I decided to...because I think...核心结构,phrase,,,L2,,,3
+scene_title,topic_title,word,meaning,part_of_speech,difficulty
+,,that,引导名词从句的that,conjunction,B1
+,,if,是否（引导名词从句）,conjunction,B1
+,,whether,是否（引导名词从句）,conjunction,B1
+,,who,……的人（关系代词）,pronoun,A2
+,,which,……的东西（关系代词）,pronoun,A2
+,,where,……的地方（关系副词）,adverb,A2
+,,when,……的时候（关系副词）,adverb,A2
+,,why,……的原因（关系副词）,adverb,A2
+,,how,如何；多么,adverb,A1
+,,what,什么；所……的（名词从句引导词）,pronoun,A1
+,,to,动词不定式标记,particle,A1
+,,in order to,为了（正式）,phrase,B1
+,,so as to,为了（正式）,phrase,B1
+,,so that,以便；为了,conjunction,B1
+,,enjoy,享受；喜欢,verb,A2
+,,avoid,避免,verb,B1
+,,suggest,建议,verb,B1
+,,recommend,推荐,verb,B1
+,,consider,考虑,verb,B1
+,,finish,完成,verb,A2
+,,practice,练习,verb,A1
+,,imagine,想象,verb,B1
+,,mind,介意,verb,A2
+,,keep,持续；保持,verb,A2
+,,stop,停止,verb,A1
+,,continue,继续,verb,B1
+,,dislike,不喜欢,verb,B1
+,,prefer,更喜欢,verb,A2
+,,hate,讨厌,verb,A2
+,,give up,放弃,phrasal verb,B1
+,,start,开始,verb,A1
+,,spend time,花时间,phrase,A2
+,,be good at,擅长,phrase,A2
+,,be interested in,对……感兴趣,phrase,A2
+,,be tired of,厌倦,phrase,B1
+,,be fond of,喜欢,phrase,B1
+,,be proud of,为……自豪,phrase,B1
+,,be afraid of,害怕,phrase,A2
+,,be excited about,对……兴奋,phrase,A2
+,,want,想要,verb,A1
+,,hope,希望,verb,A2
+,,wish,希望；但愿,verb,A2
+,,expect,预计；期望,verb,B1
+,,plan,计划,verb,A2
+,,intend,打算,verb,B1
+,,decide,决定,verb,A2
+,,promise,承诺,verb,A2
+,,agree,同意,verb,A2
+,,offer,主动提出,verb,B1
+,,refuse,拒绝,verb,B1
+,,volunteer,自愿,verb,B1
+,,attempt,尝试,verb,B1
+,,make,使；让（make sb do）,verb,A2
+,,let,让；允许（let sb do）,verb,A2
+,,have,让；使（have sb do）,verb,B1
+,,help,帮助；有助于,verb,A1
+,,get,让；使（get sb to do）,verb,A2
+,,it,形式主语（It is...to do）,pronoun,A1
+,,What...is...,……的是……（强调句型）,structure,B1
+,,The reason why...,……的原因是……,structure,B1
+,,The thing that...,……的事情是……,structure,B1
+,,swimming,游泳,noun,A1
+,,reading,阅读,noun,A1
+,,writing,写作,noun,A1
+,,learning,学习,noun,A1
+,,traveling,旅行,noun,A2
+,,cooking,烹饪,noun,A2
+,,running,跑步,noun,A1
+,,waiting,等待,noun,A2

@@ -1,109 +1,33 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-基础⑧·并列与转折,and 并列连接,both...and,两者都；既……又……,phrase,,,L2,,,0
-基础⑧·并列与转折,and 并列连接,as well as,以及；也,phrase,,,L2,,,1
-基础⑧·并列与转折,and 并列连接,not only...but also,不仅……而且……,phrase,,,L2,,,2
-基础⑧·并列与转折,or 选择连接,either...or,要么……要么……,phrase,,,L2,,,0
-基础⑧·并列与转折,or 选择连接,neither...nor,既不……也不……,phrase,,,L2,,,1
-基础⑧·并列与转折,or 选择连接,whether...or,无论……还是……,phrase,,,L2,,,2
 基础⑧·并列与转折,or 选择连接,alternatively,或者；作为另一种选择,adv,,,L2,,,3
 基础⑧·并列与转折,but 转折连接,yet,然而；但是,adv,,,L2,,,0
 基础⑧·并列与转折,but 转折连接,nevertheless,尽管如此；然而,adv,,,L2,,,1
 基础⑧·并列与转折,but 转折连接,unlike,不像；与……不同,adv,,,L2,,,2
-基础⑧·并列与转折,however 对比,not just...but,不只是……而且……,phrase,,,L2,,,0
-基础⑧·并列与转折,however 对比,not to mention,更不用说,phrase,,,L2,,,1
-基础⑧·并列与转折,however 对比,in addition to,除……之外还,phrase,,,L2,,,2
-基础⑧·并列与转折,递进表达,on the contrary,恰恰相反,phrase,,,L2,,,0
-基础⑧·并列与转折,递进表达,in contrast,相比之下,phrase,,,L2,,,1
-基础⑧·并列与转折,递进表达,compared to,与……相比,phrase,,,L2,,,2
 基础⑧·因果与条件,because 原因,as,因为；当……时,adv,,,L2,,,0
-基础⑧·因果与条件,because 原因,now that,既然,phrase,,,L2,,,1
-基础⑧·因果与条件,because 原因,due to,由于,phrase,,,L2,,,2
-基础⑧·因果与条件,because 原因,owing to,由于,phrase,,,L2,,,3
-基础⑧·因果与条件,because 原因,thanks to,多亏；由于,phrase,,,L2,,,4
 基础⑧·因果与条件,so 结果,thus,因此,adv,,,L2,,,0
 基础⑧·因果与条件,so 结果,hence,因此；由此,adv,,,L2,,,1
 基础⑧·因果与条件,so 结果,consequently,因此；所以,adv,,,L2,,,2
-基础⑧·因果与条件,so 结果,as a result,因此；结果,phrase,,,L2,,,3
-基础⑧·因果与条件,so 结果,as a consequence,因此；结果,phrase,,,L2,,,4
-基础⑧·因果与条件,if 条件,provided that,只要；如果,phrase,,,L2,,,0
-基础⑧·因果与条件,if 条件,providing that,只要；如果,phrase,,,L2,,,1
-基础⑧·因果与条件,if 条件,on condition that,条件是；只要,phrase,,,L2,,,2
-基础⑧·因果与条件,if 条件,in case,以防；万一,phrase,,,L2,,,3
-基础⑧·因果与条件,if 条件,in the event that,如果；万一,phrase,,,L2,,,4
-基础⑧·因果与条件,unless 除非,or else,否则,phrase,,,L2,,,0
-基础⑧·因果与条件,unless 除非,if not,如果不；不然,phrase,,,L2,,,1
-基础⑧·因果与条件,as long as 只要,as long as,只要,phrase,,,L2,,,0
-基础⑧·因果与条件,as long as 只要,so long as,只要,phrase,,,L2,,,1
-基础⑧·因果与条件,as long as 只要,even if,即使,phrase,,,L2,,,2
-基础⑧·因果与条件,as long as 只要,only if,只有……才,phrase,,,L2,,,3
-基础⑧·因果与条件,as long as 只要,whether...or not,无论是否,phrase,,,L2,,,4
 基础⑧·时间与顺序,when 时间从句,while,当……时；与此同时,adv,,,L2,,,0
-基础⑧·时间与顺序,when 时间从句,just as,正当；正如,phrase,,,L2,,,1
-基础⑧·时间与顺序,when 时间从句,the moment,一……就,phrase,,,L2,,,2
-基础⑧·时间与顺序,when 时间从句,as soon as,一……就,phrase,,,L2,,,3
-基础⑧·时间与顺序,before/after 前后,right before,就在……之前,phrase,,,L2,,,0
-基础⑧·时间与顺序,before/after 前后,right after,就在……之后,phrase,,,L2,,,1
-基础⑧·时间与顺序,before/after 前后,shortly before,在……前不久,phrase,,,L2,,,2
-基础⑧·时间与顺序,before/after 前后,shortly after,在……后不久,phrase,,,L2,,,3
 基础⑧·时间与顺序,while 同时,simultaneously,同时地,adv,,,L2,,,0
 基础⑧·时间与顺序,while 同时,concurrently,同时地,adv,,,L2,,,1
-基础⑧·时间与顺序,while 同时,in the meantime,与此同时,phrase,,,L2,,,2
 基础⑧·时间与顺序,until 直到,firstly,首先,adv,,,L2,,,0
 基础⑧·时间与顺序,until 直到,afterwards,之后,adv,,,L2,,,1
 基础⑧·时间与顺序,until 直到,subsequently,随后,adv,,,L2,,,2
 基础⑧·时间与顺序,until 直到,lastly,最后,adv,,,L2,,,3
 基础⑧·时间与顺序,时间顺序链,including,包括,adv,,,L2,,,0
 基础⑧·时间与顺序,时间顺序链,e.g.,例如,adv,,,L2,,,1
-基础⑧·时间与顺序,时间顺序链,for example,例如,phrase,,,L2,,,2
-基础⑧·时间与顺序,时间顺序链,for instance,例如,phrase,,,L2,,,3
-基础⑧·时间与顺序,时间顺序链,such as,例如；诸如,phrase,,,L2,,,4
 基础⑧·举例与补充,for example 举例,hmm,嗯（思考声）,adv,,,L2,,,0
 基础⑧·举例与补充,for example 举例,um,嗯（停顿声）,adv,,,L2,,,1
 基础⑧·举例与补充,for example 举例,er,呃（停顿声）,adv,,,L2,,,2
-基础⑧·举例与补充,for example 举例,I mean,我的意思是,phrase,,,L2,,,3
-基础⑧·举例与补充,for example 举例,you know,你知道；你也知道,phrase,,,L2,,,4
 基础⑧·举例与补充,also/too 补充,actually,其实；实际上,adv,,,L2,,,0
 基础⑧·举例与补充,also/too 补充,truthfully,说实话,adv,,,L2,,,1
 基础⑧·举例与补充,also/too 补充,seriously,认真地；说真的,adv,,,L2,,,2
-基础⑧·举例与补充,also/too 补充,in fact,事实上,phrase,,,L2,,,3
-基础⑧·举例与补充,also/too 补充,as a matter of fact,事实上,phrase,,,L2,,,4
-基础⑧·举例与补充,also/too 补充,to be honest,说实话,phrase,,,L2,,,5
 基础⑧·举例与补充,besides 递进,anyhow,无论如何,adv,,,L2,,,0
 基础⑧·举例与补充,besides 递进,alright,好吧,adv,,,L2,,,1
-基础⑧·举例与补充,besides 递进,by the way,顺便说一下,phrase,,,L2,,,2
-基础⑧·举例与补充,besides 递进,speaking of which,说到这个,phrase,,,L2,,,3
-基础⑧·举例与补充,besides 递进,moving on,接下来；换个话题,phrase,,,L2,,,4
-基础⑧·举例与补充,besides 递进,on another note,换个话题说,phrase,,,L2,,,5
-基础⑧·举例与补充,对话衔接词,in short,简而言之,phrase,,,L2,,,0
-基础⑧·举例与补充,对话衔接词,to sum up,总而言之,phrase,,,L2,,,1
-基础⑧·举例与补充,对话衔接词,in conclusion,总之,phrase,,,L2,,,2
-基础⑧·举例与补充,对话衔接词,in a word,总之；一句话,phrase,,,L2,,,3
 基础⑧·举例与补充,总结表达,besides,此外；而且,adv,,,L2,,,0
 基础⑧·举例与补充,总结表达,furthermore,此外；而且,adv,,,L2,,,1
 基础⑧·举例与补充,总结表达,moreover,此外；而且,adv,,,L2,,,2
 基础⑧·举例与补充,总结表达,additionally,此外,adv,,,L2,,,3
 基础⑧·举例与补充,总结表达,plus,此外；加上,adv,,,L2,,,4
-基础⑧·举例与补充,总结表达,what's more,而且；更重要的是,phrase,,,L2,,,5
-基础⑧·举例与补充,总结表达,in addition,此外,phrase,,,L2,,,6
-基础⑧·综合叙事,多步骤叙事,to start with,首先,phrase,,,L2,,,0
-基础⑧·综合叙事,多步骤叙事,to begin with,首先,phrase,,,L2,,,1
-基础⑧·综合叙事,多步骤叙事,after that,之后,phrase,,,L2,,,2
-基础⑧·综合叙事,多步骤叙事,following that,在那之后,phrase,,,L2,,,3
-基础⑧·综合叙事,多步骤叙事,in the end,最后,phrase,,,L2,,,4
-基础⑧·综合叙事,多步骤叙事,at last,终于；最后,phrase,,,L2,,,5
-基础⑧·综合叙事,因果链叙事,Since...therefore...,既然……因此……,phrase,,,L2,,,0
-基础⑧·综合叙事,因果链叙事,The reason why...is that...,……的原因是……,phrase,,,L2,,,1
-基础⑧·综合叙事,因果链叙事,This leads to...,这会导致……,phrase,,,L2,,,2
-基础⑧·综合叙事,因果链叙事,This results in...,这会造成……,phrase,,,L2,,,3
-基础⑧·综合叙事,条件链叙事,If...then...,如果……那么……,phrase,,,L2,,,0
-基础⑧·综合叙事,条件链叙事,Unless...otherwise...,除非……否则……,phrase,,,L2,,,1
-基础⑧·综合叙事,条件链叙事,If not...then...,如果不……那么……,phrase,,,L2,,,2
-基础⑧·综合叙事,条件链叙事,If so...,如果是这样……,phrase,,,L2,,,3
-基础⑧·综合叙事,时间链叙事,Initially...Subsequently...Eventually...Finally,起初……随后……最终……最后……,phrase,,,L2,,,0
-基础⑧·综合叙事,时间链叙事,At first...Later on...After a while...In the end,起初……后来……过了一会儿……最后……,phrase,,,L2,,,1
 基础⑧·综合叙事,混合观点表达,personally,就个人而言,adv,,,L2,,,0
 基础⑧·综合叙事,混合观点表达,honestly,坦白地说,adv,,,L2,,,1
-基础⑧·综合叙事,混合观点表达,in my opinion,在我看来,phrase,,,L2,,,2
-基础⑧·综合叙事,混合观点表达,in my view,在我看来,phrase,,,L2,,,3
-基础⑧·综合叙事,混合观点表达,from my perspective,从我的角度看,phrase,,,L2,,,4
-基础⑧·综合叙事,混合观点表达,as far as I'm concerned,就我而言,phrase,,,L2,,,5

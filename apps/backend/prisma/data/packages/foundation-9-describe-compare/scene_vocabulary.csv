@@ -1,17 +1,4 @@
 scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
-基础⑨·比较事物,单音节比较级,high→higher,高的→更高的,phrase,,,L2,,,0
-基础⑨·比较事物,单音节比较级,low→lower,低的→更低的,phrase,,,L2,,,1
-基础⑨·比较事物,单音节比较级,near→nearer,近的→更近的,phrase,,,L2,,,2
-基础⑨·比较事物,单音节比较级,large→larger,大的→更大的,phrase,,,L2,,,3
-基础⑨·比较事物,单音节比较级,wide→wider,宽的→更宽的,phrase,,,L2,,,4
-基础⑨·比较事物,单音节比较级,deep→deeper,深的→更深的,phrase,,,L2,,,5
-基础⑨·比较事物,单音节比较级,cheap→cheaper,便宜的→更便宜的,phrase,,,L2,,,6
-基础⑨·比较事物,y→ier 比较级,easy→easier,容易的→更容易的,phrase,,,L2,,,0
-基础⑨·比较事物,y→ier 比较级,heavy→heavier,重的→更重的,phrase,,,L2,,,1
-基础⑨·比较事物,y→ier 比较级,early→earlier,早的→更早的,phrase,,,L2,,,2
-基础⑨·比较事物,y→ier 比较级,healthy→healthier,健康的→更健康的,phrase,,,L2,,,3
-基础⑨·比较事物,y→ier 比较级,wealthy→wealthier,富有的→更富有的,phrase,,,L2,,,4
-基础⑨·比较事物,y→ier 比较级,thirsty→thirstier,口渴的→更口渴的,phrase,,,L2,,,5
 基础⑨·比较事物,多音节比较级,difficult,困难的,word,,,L2,,,0
 基础⑨·比较事物,多音节比较级,important,重要的,word,,,L2,,,1
 基础⑨·比较事物,多音节比较级,popular,受欢迎的,word,,,L2,,,2
@@ -19,94 +6,9 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 基础⑨·比较事物,多音节比较级,different,不同的,word,,,L2,,,4
 基础⑨·比较事物,多音节比较级,useful,有用的,word,,,L2,,,5
 基础⑨·比较事物,多音节比较级,convenient,方便的,word,,,L2,,,6
-基础⑨·比较事物,不规则比较级,bad→worse,坏的→更差的,phrase,,,L2,,,0
-基础⑨·比较事物,不规则比较级,little→less,少的→更少的,phrase,,,L2,,,1
-基础⑨·比较事物,不规则比较级,far→farther,远的→更远的,phrase,,,L2,,,2
-基础⑨·比较事物,不规则比较级,far→further,远的→更进一步的,phrase,,,L2,,,3
-基础⑨·比较事物,不规则比较级,much→more,许多→更多,phrase,,,L2,,,4
-基础⑨·比较事物,不规则比较级,many→more,许多→更多,phrase,,,L2,,,5
-基础⑨·比较事物,最高级,the highest,最最高的,phrase,,,L2,,,0
-基础⑨·比较事物,最高级,the lowest,最最低的,phrase,,,L2,,,1
-基础⑨·比较事物,最高级,the easiest,最最容易的,phrase,,,L2,,,2
-基础⑨·比较事物,最高级,the heaviest,最最重的,phrase,,,L2,,,3
-基础⑨·比较事物,最高级,the most difficult,最困难的,phrase,,,L2,,,4
-基础⑨·比较事物,最高级,the most important,最重要的,phrase,,,L2,,,5
-基础⑨·比较事物,最高级,the most popular,最受欢迎的,phrase,,,L2,,,6
-基础⑨·比较级进阶,数量比较,more money than,钱比……更多,phrase,,,L2,,,0
-基础⑨·比较级进阶,数量比较,fewer people than,人比……更少,phrase,,,L2,,,1
-基础⑨·比较级进阶,数量比较,less time than,时间比……更少,phrase,,,L2,,,2
-基础⑨·比较级进阶,数量比较,as many books as,书和……一样多,phrase,,,L2,,,3
-基础⑨·比较级进阶,数量比较,as much water as,水和……一样多,phrase,,,L2,,,4
-基础⑨·比较级进阶,数量比较,the most of all,所有之中最多,phrase,,,L2,,,5
-基础⑨·比较级进阶,数量比较,the fewest problems,问题最少,phrase,,,L2,,,6
-基础⑨·比较级进阶,数量比较,the least amount of,……的数量最少,phrase,,,L2,,,7
-基础⑨·比较级进阶,双比较级,the sooner the better,越早越好,phrase,,,L2,,,0
-基础⑨·比较级进阶,双比较级,the more the merrier,越多越热闹,phrase,,,L2,,,1
-基础⑨·比较级进阶,双比较级,the cheaper the better,越便宜越好,phrase,,,L2,,,2
-基础⑨·比较级进阶,双比较级,more and more popular,越来越受欢迎,phrase,,,L2,,,3
-基础⑨·比较级进阶,双比较级,less and less important,越来越不重要,phrase,,,L2,,,4
-基础⑨·比较级进阶,双比较级,better and better,越来越好,phrase,,,L2,,,5
-基础⑨·比较级进阶,双比较级,worse and worse,越来越差,phrase,,,L2,,,6
-基础⑨·比较级进阶,双比较级,the longer you wait the harder it gets,等得越久，事情越难,phrase,,,L2,,,7
 基础⑨·比较级进阶,程度修饰比较,significantly,显著地,word,,,L2,,,0
 基础⑨·比较级进阶,程度修饰比较,considerably,相当地,word,,,L2,,,1
 基础⑨·比较级进阶,程度修饰比较,slightly,稍微地,word,,,L2,,,2
-基础⑨·比较级进阶,程度修饰比较,far better,好得多,phrase,,,L2,,,3
-基础⑨·比较级进阶,程度修饰比较,much worse,差得多,phrase,,,L2,,,4
-基础⑨·比较级进阶,程度修饰比较,a little cheaper,便宜一点,phrase,,,L2,,,5
-基础⑨·比较级进阶,程度修饰比较,a lot easier,容易得多,phrase,,,L2,,,6
-基础⑨·比较级进阶,程度修饰比较,even more difficult,更加困难,phrase,,,L2,,,7
-基础⑨·比较级进阶,程度修饰比较,by far the best,遥遥领先的最好,phrase,,,L2,,,8
-基础⑨·比较级进阶,程度修饰比较,nearly as good as,几乎和……一样好,phrase,,,L2,,,9
-基础⑨·比较级进阶,倍数比较,twice as big as,是……的两倍大,phrase,,,L2,,,0
-基础⑨·比较级进阶,倍数比较,three times as expensive as,价格是……的三倍,phrase,,,L2,,,1
-基础⑨·比较级进阶,倍数比较,half as heavy as,重量是……的一半,phrase,,,L2,,,2
-基础⑨·比较级进阶,倍数比较,double the size of,尺寸是……的两倍,phrase,,,L2,,,3
-基础⑨·比较级进阶,倍数比较,triple the amount of,数量是……的三倍,phrase,,,L2,,,4
-基础⑨·比较级进阶,倍数比较,ten times faster than,比……快十倍,phrase,,,L2,,,5
-基础⑨·比较级进阶,倍数比较,nowhere near as good as,远不如……好,phrase,,,L2,,,6
-基础⑨·比较级进阶,比较级问答,"Which is better, A or B?",A和B哪个更好？,phrase,,,L2,,,0
-基础⑨·比较级进阶,比较级问答,Is this cheaper than that?,这个比那个便宜吗？,phrase,,,L2,,,1
-基础⑨·比较级进阶,比较级问答,Yes much cheaper,是的，便宜得多,phrase,,,L2,,,2
-基础⑨·比较级进阶,比较级问答,Not really they are about the same,不完全是，它们差不多,phrase,,,L2,,,3
-基础⑨·比较级进阶,比较级问答,This one is definitely better,这个肯定更好,phrase,,,L2,,,4
-基础⑨·比较级进阶,比较级问答,There is not much difference between them,它们之间差别不大,phrase,,,L2,,,5
-基础⑨·程度表达,as...as 同级比较,as high as,和……一样高的,phrase,,,L2,,,0
-基础⑨·程度表达,as...as 同级比较,as low as,和……一样低的,phrase,,,L2,,,1
-基础⑨·程度表达,as...as 同级比较,as heavy as,和……一样重的,phrase,,,L2,,,2
-基础⑨·程度表达,as...as 同级比较,as deep as,和……一样深的,phrase,,,L2,,,3
-基础⑨·程度表达,as...as 同级比较,as wide as,和……一样宽的,phrase,,,L2,,,4
-基础⑨·程度表达,as...as 同级比较,as loud as,和……一样响亮的,phrase,,,L2,,,5
-基础⑨·程度表达,as...as 同级比较,as quiet as,和……一样安静的,phrase,,,L2,,,6
-基础⑨·程度表达,as...as 同级比较,as bright as,和……一样明亮的,phrase,,,L2,,,7
-基础⑨·程度表达,as...as 同级比较,as dark as,和……一样黑暗的,phrase,,,L2,,,8
-基础⑨·程度表达,not as...as 不如,not as heavy as,不如……重的,phrase,,,L2,,,0
-基础⑨·程度表达,not as...as 不如,not as deep as,不如……深的,phrase,,,L2,,,1
-基础⑨·程度表达,not as...as 不如,not as loud as,不如……响亮的,phrase,,,L2,,,2
-基础⑨·程度表达,not as...as 不如,not as bright as,不如……明亮的,phrase,,,L2,,,3
-基础⑨·程度表达,not as...as 不如,not as crowded as,不如……拥挤的,phrase,,,L2,,,4
-基础⑨·程度表达,too 太…不能,too heavy,太重的,phrase,,,L2,,,0
-基础⑨·程度表达,too 太…不能,too light,太轻的,phrase,,,L2,,,1
-基础⑨·程度表达,too 太…不能,too high,太高的,phrase,,,L2,,,2
-基础⑨·程度表达,too 太…不能,too low,太低的,phrase,,,L2,,,3
-基础⑨·程度表达,too 太…不能,too far,太远的,phrase,,,L2,,,4
-基础⑨·程度表达,too 太…不能,too close,太近的,phrase,,,L2,,,5
-基础⑨·程度表达,too 太…不能,too dark,太黑暗的,phrase,,,L2,,,6
-基础⑨·程度表达,too 太…不能,too bright,太明亮的,phrase,,,L2,,,7
-基础⑨·程度表达,too 太…不能,too late,太晚的,phrase,,,L2,,,8
-基础⑨·程度表达,too 太…不能,too early,太早的,phrase,,,L2,,,9
-基础⑨·程度表达,too 太…不能,too much,太许多,phrase,,,L2,,,10
-基础⑨·程度表达,too 太…不能,too many,太许多,phrase,,,L2,,,11
-基础⑨·程度表达,enough 足够,wide enough,足够宽的,phrase,,,L2,,,0
-基础⑨·程度表达,enough 足够,deep enough,足够深的,phrase,,,L2,,,1
-基础⑨·程度表达,enough 足够,loud enough,足够响亮的,phrase,,,L2,,,2
-基础⑨·程度表达,enough 足够,bright enough,足够明亮的,phrase,,,L2,,,3
-基础⑨·程度表达,enough 足够,warm enough,足够温暖的,phrase,,,L2,,,4
-基础⑨·程度表达,enough 足够,old enough,足够年长的,phrase,,,L2,,,5
-基础⑨·程度表达,enough 足够,rich enough,足够富有的,phrase,,,L2,,,6
-基础⑨·程度表达,enough 足够,strong enough,足够强壮的,phrase,,,L2,,,7
-基础⑨·程度表达,enough 足够,smart enough,足够聪明的,phrase,,,L2,,,8
-基础⑨·程度表达,enough 足够,brave enough,足够勇敢的,phrase,,,L2,,,9
 基础⑨·程度表达,方式副词,nicely,友好地,word,,,L2,,,0
 基础⑨·程度表达,方式副词,happily,开心地,word,,,L2,,,1
 基础⑨·程度表达,方式副词,sadly,伤心地,word,,,L2,,,2
@@ -118,20 +20,12 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 基础⑨·程度表达,方式副词,warmly,热情地,word,,,L2,,,8
 基础⑨·程度表达,方式副词,coldly,冷淡地,word,,,L2,,,9
 基础⑨·偏好与推荐,偏好表达,favor,偏爱,word,,,L2,,,0
-基础⑨·偏好与推荐,偏好表达,would rather,宁愿,phrase,,,L2,,,1
-基础⑨·偏好与推荐,偏好表达,opt for,选择,phrase,,,L2,,,2
-基础⑨·偏好与推荐,偏好表达,lean towards,倾向于,phrase,,,L2,,,3
-基础⑨·偏好与推荐,偏好表达,be partial to,偏爱,phrase,,,L2,,,4
-基础⑨·偏好与推荐,偏好表达,have a preference for,偏好,phrase,,,L2,,,5
 基础⑨·偏好与推荐,推荐与背书,urge,力荐,word,,,L2,,,0
 基础⑨·偏好与推荐,推荐与背书,endorse,认可；背书,word,,,L2,,,1
 基础⑨·偏好与推荐,推荐与背书,advocate,提倡,word,,,L2,,,2
 基础⑨·偏好与推荐,推荐与背书,promote,推荐；推广,word,,,L2,,,3
 基础⑨·偏好与推荐,推荐与背书,champion,支持；拥护,word,,,L2,,,4
 基础⑨·偏好与推荐,推荐与背书,back,支持,word,,,L2,,,5
-基础⑨·偏好与推荐,推荐与背书,vouch for,为……担保,phrase,,,L2,,,6
-基础⑨·偏好与推荐,推荐与背书,speak highly of,高度评价,phrase,,,L2,,,7
-基础⑨·偏好与推荐,推荐与背书,put in a good word for,为……说好话,phrase,,,L2,,,8
 基础⑨·偏好与推荐,比较与选择名词,selection,选择,word,,,L2,,,0
 基础⑨·偏好与推荐,比较与选择名词,comparison,比较,word,,,L2,,,1
 基础⑨·偏好与推荐,比较与选择名词,difference,差别,word,,,L2,,,2
@@ -159,26 +53,8 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 基础⑨·偏好与推荐,推荐与反馈,perspective,视角,word,,,L2,,,12
 基础⑨·偏好与推荐,推荐与反馈,standpoint,立场,word,,,L2,,,13
 基础⑨·偏好与推荐,二选一比较,even,甚至；更加,word,,,L2,,,0
-基础⑨·偏好与推荐,二选一比较,twice as,两倍……,phrase,,,L2,,,1
-基础⑨·偏好与推荐,二选一比较,three times as,三倍……,phrase,,,L2,,,2
-基础⑨·偏好与推荐,二选一比较,half as,一半……,phrase,,,L2,,,3
-基础⑨·偏好与推荐,二选一比较,not nearly as,远没有……那么,phrase,,,L2,,,4
-基础⑨·偏好与推荐,二选一比较,nowhere near as,远不如……,phrase,,,L2,,,5
-基础⑨·偏好与推荐,二选一比较,just as good as,和……一样好,phrase,,,L2,,,6
-基础⑨·偏好与推荐,二选一比较,almost as good as,几乎和……一样好,phrase,,,L2,,,7
 基础⑨·综合评价,多维度比较,regarding,关于,word,,,L2,,,0
 基础⑨·综合评价,多维度比较,concerning,关于,word,,,L2,,,1
-基础⑨·综合评价,多维度比较,in terms of,就……而言,phrase,,,L2,,,2
-基础⑨·综合评价,多维度比较,when it comes to,说到……,phrase,,,L2,,,3
-基础⑨·综合评价,多维度比较,as far as,就……而言,phrase,,,L2,,,4
-基础⑨·综合评价,多维度比较,with respect to,关于；就……而言,phrase,,,L2,,,5
-基础⑨·综合评价,变化描述,it's getting,正在变得……,phrase,,,L2,,,0
-基础⑨·综合评价,变化描述,it's becoming,正在变成……,phrase,,,L2,,,1
-基础⑨·综合评价,变化描述,it's growing,正在逐渐变得……,phrase,,,L2,,,2
-基础⑨·综合评价,变化描述,compared to before,与以前相比,phrase,,,L2,,,3
-基础⑨·综合评价,变化描述,compared to the past,与过去相比,phrase,,,L2,,,4
-基础⑨·综合评价,变化描述,unlike before,不像以前,phrase,,,L2,,,5
-基础⑨·综合评价,变化描述,different from before,与以前不同,phrase,,,L2,,,6
 基础⑨·综合评价,性价比评价,overpriced,定价过高的,word,,,L2,,,0
 基础⑨·综合评价,性价比评价,underpriced,定价过低的,word,,,L2,,,1
 基础⑨·综合评价,性价比评价,cost-effective,性价比高的,word,,,L2,,,2
@@ -189,21 +65,3 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 基础⑨·综合评价,性价比评价,economical,经济实惠的,word,,,L2,,,7
 基础⑨·综合评价,性价比评价,reasonable,合理的,word,,,L2,,,8
 基础⑨·综合评价,性价比评价,inexpensive,不贵的,word,,,L2,,,9
-基础⑨·综合评价,比较总结,in comparison,相比之下,phrase,,,L2,,,0
-基础⑨·综合评价,比较总结,by contrast,相反；相比之下,phrase,,,L2,,,1
-基础⑨·综合评价,比较总结,on balance,综合权衡,phrase,,,L2,,,2
-基础⑨·综合评价,比较总结,the key difference is,关键区别是,phrase,,,L2,,,3
-基础⑨·综合评价,比较总结,the main advantage is,主要优点是,phrase,,,L2,,,4
-基础⑨·综合评价,比较总结,what sets them apart is,它们的区别在于,phrase,,,L2,,,5
-基础⑨·综合评价,比较总结,when you compare the two,比较两者时,phrase,,,L2,,,6
-基础⑨·综合评价,比较总结,side by side,并排比较,phrase,,,L2,,,7
-基础⑨·综合评价,比较级结论,X proves to be better,事实证明X更好,phrase,,,L2,,,0
-基础⑨·综合评价,比较级结论,between the two,两者之中,phrase,,,L2,,,1
-基础⑨·综合评价,比较级结论,X is clearly better,X明显更好,phrase,,,L2,,,2
-基础⑨·综合评价,比较级结论,X outweighs Y in terms of quality,在质量方面X胜过Y,phrase,,,L2,,,3
-基础⑨·综合评价,比较级结论,X comes out ahead,X最终领先,phrase,,,L2,,,4
-基础⑨·综合评价,比较级结论,the clear winner is X,明显的胜者是X,phrase,,,L2,,,5
-基础⑨·综合评价,比较级结论,no comparison,无法相提并论,phrase,,,L2,,,6
-基础⑨·综合评价,比较级结论,X is far superior,X优越得多,phrase,,,L2,,,7
-基础⑨·综合评价,比较级结论,X edges out Y slightly,X略胜Y一筹,phrase,,,L2,,,8
-基础⑨·综合评价,比较级结论,X and Y are evenly matched,X和Y势均力敌,phrase,,,L2,,,9
