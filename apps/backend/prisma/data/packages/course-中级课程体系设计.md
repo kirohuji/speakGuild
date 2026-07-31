@@ -58,7 +58,7 @@ Course 系列改用任务驱动：
 |:-----|:--------:|:-----|
 | `scenes.csv` | 5 行 | 每个场景承担一种不同的真实任务 |
 | `training_topics.csv` | 20 行 | 每场景 4 个 Topic |
-| `scene_vocabulary.csv` | 约 120—160 行 | 新核心词、搭配与必要复用词 |
+| `scene_vocabulary.csv` | 约 120—160 行 | Topic 词汇分配行；区分 new_core、review_core、extension |
 | `chunks.csv` | 约 80 行 | 每 Topic 至少 4 个主动句块 |
 | `sentence_patterns.csv` | 约 40 行 | 每 Topic 约 2 个可迁移句型 |
 | `script_episodes.csv` | 10 行 | 5 章 × 2 课 |
@@ -95,7 +95,7 @@ required_user_level = 2（正式生成 CSV 时统一确认）
 | Course 新核心词 | 约 25% | 必须进入 chunks、patterns 和对话 |
 | Course 扩展词 | 约 15% | 进入 Warmup 和开放输出 |
 
-每包建议新增约 100—140 个高价值词和搭配。不要通过堆叠低频同义词制造“中级感”；中级感主要来自表达长度、逻辑、语气、互动和任务复杂度。
+每包建议配置约 120—160 个 Topic 词汇分配行，其中约 30—50 个为全系列首次出现的 `new_core`，其余为必须主动调用的 `review_core` 与 `extension`。不要把分配行数误报为唯一新词数，也不要通过堆叠低频同义词制造“中级感”；中级感主要来自表达长度、逻辑、语气、互动和任务复杂度。
 
 ## 七、统一语篇能力
 
