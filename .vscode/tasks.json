@@ -270,6 +270,60 @@
 			"type": "shell",
 			"command": "node -e \"const w=JSON.parse(require('fs').readFileSync('apps/backend/prisma/data/packages/foundation-daily-life/warmup_pipeline.json','utf8')); let singleWords=0,total=0; Object.values(w).forEach(t=>{(t.outputTraining.pipeline||[]).forEach(s=>{(s.items||[]).forEach(it=>{total++; if(it.answer===it.targetWord&&!it.answer.includes(' '))singleWords++;});});}); console.log('单字答案:',singleWords,'/',total,'('+Math.round(singleWords/total*100)+'%)'); const types={}; Object.values(w).forEach(t=>{(t.outputTraining.pipeline||[]).forEach(s=>{types[s.type]=(types[s.type]||0)+1;});}); console.log('题型分布:',JSON.stringify(types));\"",
 			"isBackground": false
+		},
+		{
+			"label": "rewrite-course1",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/rewrite-course1.js",
+			"isBackground": false
+		},
+		{
+			"label": "rewrite-c2-c3",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/rewrite-courses-2-10.js",
+			"isBackground": false
+		},
+		{
+			"label": "rewrite-c3",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/rewrite-courses-3-10.js",
+			"isBackground": false
+		},
+		{
+			"label": "rewrite-c3-full",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/rewrite-c3-full.js",
+			"isBackground": false
+		},
+		{
+			"label": "rewrite-c4",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/rewrite-c4-c6.js",
+			"isBackground": false
+		},
+		{
+			"label": "rewrite-c4",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/rewrite-c4.js",
+			"isBackground": false
+		},
+		{
+			"label": "c4-final",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/rewrite-c4.js",
+			"isBackground": false
+		},
+		{
+			"label": "c5-c6-run",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/rewrite-c5-c6.js",
+			"isBackground": false
+		},
+		{
+			"label": "gen-c5-c6",
+			"type": "shell",
+			"command": "node apps/backend/prisma/scripts/gen-courses.js",
+			"isBackground": false
 		}
 	]
 }
