@@ -21,7 +21,7 @@ ch_clause_02,1,He is the kind of person who never gives up.,5
 ch_clause_02,2,The restaurant where we met is still there.,0
 ch_clause_02,2,That's the place where I grew up.,1
 ch_clause_02,2,This is the reason why I came.,2
-ch_clause_02,2,The movie that I like most is this one.,3
+ch_clause_02,2,The movie that I like most is...,3
 ch_clause_02,2,The friend who helped me is someone that I can always trust.,4
 ch_clause_02,2,There are many things that I want to learn.,5
 ch_clause_03,1,I want to learn Spanish.,0
@@ -39,12 +39,12 @@ ch_clause_03,2,It's fun to travel with friends.,4
 ch_clause_03,2,It's hard to say goodbye.,5
 ch_clause_03,2,I have something to tell you.,6
 ch_clause_04,1,I enjoy reading books in my free time.,0
-ch_clause_04,1,I like swimming but I don't like running.,1
+ch_clause_04,1,"I like swimming, but I don't like running.",1
 ch_clause_04,1,I love watching movies on weekends.,2
 ch_clause_04,1,I hate waiting in long lines.,3
 ch_clause_04,1,I started learning English two years ago.,4
 ch_clause_04,1,I finished writing the report.,5
-ch_clause_04,1,I keep trying even when it's hard.,6
+ch_clause_04,1,"I keep trying, even when it's hard.",6
 ch_clause_04,2,I'm good at remembering names.,0
 ch_clause_04,2,She is interested in learning new things.,1
 ch_clause_04,2,He is tired of waiting.,2

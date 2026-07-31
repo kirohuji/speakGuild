@@ -4,58 +4,58 @@ ch_like_01,1,I prefer noodles.,1
 ch_like_01,1,I don't drink coffee.,2
 ch_like_01,1,I like to read.,3
 ch_like_01,1,I listen to music every day.,4
-ch_like_01,2,I like coffee.,
-ch_like_01,2,I prefer noodles.,1
-ch_like_01,2,I don't drink coffee.,2
-ch_like_01,2,I like to read.,3
-ch_like_01,2,I listen to music every day.,4
+ch_like_01,2,I watch movies on weekends.,
+ch_like_01,2,Do you like spicy food?,1
+ch_like_01,2,"Yes, I do. / No, I don't.",2
+ch_like_01,2,What's your favorite drink?,3
+ch_like_01,2,I like to read.,4
 ch_want_02,1,I want some water.,
 ch_want_02,1,I want a new laptop.,1
 ch_want_02,1,"I want one ticket, please.",2
 ch_want_02,1,I want to go home.,3
 ch_want_02,1,Do you want to come with me?,4
-ch_want_02,2,I want some water.,
-ch_want_02,2,I want a new laptop.,1
-ch_want_02,2,"I want one ticket, please.",2
-ch_want_02,2,I want to go home.,3
-ch_want_02,2,Do you want to come with me?,4
+ch_want_02,2,I need some help.,
+ch_want_02,2,I need some information.,1
+ch_want_02,2,I need a little more time.,2
+ch_want_02,2,I need to leave now.,3
+ch_want_02,2,Do you need anything?,4
 ch_order_03,1,"I'd like a table for two, please.",
 ch_order_03,1,I'd like to order the chicken.,1
 ch_order_03,1,"Can I have the menu, please?",2
 ch_order_03,1,"Would you like some coffee? — Yes, please.",3
 ch_order_03,1,"No, thank you. I'm fine.",4
-ch_order_03,2,"I'd like a table for two, please.",
-ch_order_03,2,I'd like to order the chicken.,1
-ch_order_03,2,"Can I have the menu, please?",2
-ch_order_03,2,"Would you like some coffee? — Yes, please.",3
-ch_order_03,2,"No, thank you. I'm fine.",4
+ch_order_03,2,"Tea or coffee? — Tea, please.",
+ch_order_03,2,Would you like any more?,1
+ch_order_03,2,"That's enough, thank you.",2
+ch_order_03,2,Can I have some more water?,3
+ch_order_03,2,"Can I have the bill, please?",4
 ch_day_04,1,I get up at seven.,
-ch_day_04,1,I don't get up early.,1
-ch_day_04,1,I have breakfast at home.,2
-ch_day_04,1,I leave home at eight.,3
-ch_day_04,1,I go to work by bus.,4
-ch_day_04,2,I get up at seven.,
-ch_day_04,2,I don't get up early.,1
-ch_day_04,2,I have breakfast at home.,2
-ch_day_04,2,I leave home at eight.,3
-ch_day_04,2,I go to work by bus.,4
+ch_day_04,1,I have breakfast at home.,1
+ch_day_04,1,I leave home at eight.,2
+ch_day_04,1,I go to work by bus.,3
+ch_day_04,1,I have lunch at twelve.,4
+ch_day_04,2,I go home after work.,
+ch_day_04,2,I relax at night.,1
+ch_day_04,2,I don't work on weekends.,2
+ch_day_04,2,I visit friends on Saturday.,3
+ch_day_04,2,What do you do after work?,4
 ch_shop_05,1,I have a charger.,
 ch_shop_05,1,Do you have a minute?,1
 ch_shop_05,1,Can I use your charger?,2
-ch_shop_05,1,How much is this?,3
-ch_shop_05,1,Do you have this in green?,4
-ch_shop_05,2,I have a charger.,
-ch_shop_05,2,Do you have a minute?,1
-ch_shop_05,2,Can I use your charger?,2
-ch_shop_05,2,How much is this?,3
-ch_shop_05,2,Do you have this in green?,4
+ch_shop_05,1,Do you have this in green?,3
+ch_shop_05,1,How much is this?,4
+ch_shop_05,2,What colors do you have?,
+ch_shop_05,2,Do you have this size?,1
+ch_shop_05,2,Can I try this on?,2
+ch_shop_05,2,It's too small.,3
+ch_shop_05,2,I like this one. I'll take it.,4
 ch_meetup_06,1,Can I call you back?,
 ch_meetup_06,1,Please send me a message.,1
 ch_meetup_06,1,Please send me the address.,2
 ch_meetup_06,1,Please send me a photo.,3
 ch_meetup_06,1,I'm busy right now.,4
-ch_meetup_06,2,Can I call you back?,
-ch_meetup_06,2,Please send me a message.,1
-ch_meetup_06,2,Please send me the address.,2
-ch_meetup_06,2,Please send me a photo.,3
-ch_meetup_06,2,I'm busy right now.,4
+ch_meetup_06,2,Are you free tonight?,
+ch_meetup_06,2,Do you want to get together for coffee?,1
+ch_meetup_06,2,Let's get together at six.,2
+ch_meetup_06,2,I'm on my way.,3
+ch_meetup_06,2,"Sorry, I'm running late.",4

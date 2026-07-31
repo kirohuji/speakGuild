@@ -6,55 +6,27 @@ episode_chapter,episode_order,chunk_text_match,sort_order
 1-1,1,"I will study harder this year.",4
 1-1,1,"I think I'll stay home today.",5
 1-1,1,"She's going to have a baby.",6
-1-1,1,"It will rain tomorrow.",7
-1-1,1,"It's going to rain. Look at those clouds!",8
-1-1,1,"I will be 25 next month.",9
-1-1,1,"Everything will be okay.",10
-1-1,1,"The meeting will start at 3 pm.",11
-1-1,1,"He will probably be late.",12
-1-1,1,"There will be a lot of people at the concert.",13
-1-2,2,"I'm going to travel next month.",0
-1-2,2,"What are you going to do this weekend? — I'm going to visit my parents.",1
-1-2,2,"Are you going to join us? — Yes, I am.",2
-1-2,2,"I'll call you later.",3
-1-2,2,"I will study harder this year.",4
-1-2,2,"I think I'll stay home today.",5
-1-2,2,"She's going to have a baby.",6
-1-2,2,"It will rain tomorrow.",7
-1-2,2,"It's going to rain. Look at those clouds!",8
-1-2,2,"I will be 25 next month.",9
-1-2,2,"Everything will be okay.",10
-1-2,2,"The meeting will start at 3 pm.",11
-1-2,2,"He will probably be late.",12
-1-2,2,"There will be a lot of people at the concert.",13
+1-2,2,"It will rain tomorrow.",0
+1-2,2,"It's going to rain. Look at those clouds!",1
+1-2,2,"I will be 25 next month.",2
+1-2,2,"Everything will be okay.",3
+1-2,2,"The meeting will start at 3 pm.",4
+1-2,2,"He will probably be late.",5
+1-2,2,"There will be a lot of people at the concert.",6
 2-1,1,"I can swim.",0
 2-1,1,"I can't speak French.",1
 2-1,1,"He can run very fast.",2
 2-1,1,"I can't find my keys.",3
-2-1,1,"Can you help me? — Sure.",4
-2-1,1,"Can I use your phone? — Yes, of course.",5
-2-1,1,"Can I have a glass of water? — Here you go.",6
-2-1,1,"You can do it! I believe in you.",7
-2-1,1,"You can park over there.",8
-2-1,1,"Could you tell me how to get to the museum?",9
-2-1,1,"Could I have the bill, please?",10
-2-1,1,"Could you speak more slowly, please?",11
-2-1,1,"Can I try this on?",12
-2-1,1,"Can I get a receipt, please?",13
-2-2,2,"I can swim.",0
-2-2,2,"I can't speak French.",1
-2-2,2,"He can run very fast.",2
-2-2,2,"I can't find my keys.",3
-2-2,2,"Can you help me? — Sure.",4
-2-2,2,"Can I use your phone? — Yes, of course.",5
-2-2,2,"Can I have a glass of water? — Here you go.",6
-2-2,2,"You can do it! I believe in you.",7
-2-2,2,"You can park over there.",8
-2-2,2,"Could you tell me how to get to the museum?",9
-2-2,2,"Could I have the bill, please?",10
-2-2,2,"Could you speak more slowly, please?",11
-2-2,2,"Can I try this on?",12
-2-2,2,"Can I get a receipt, please?",13
+2-1,1,"You can do it! I believe in you.",4
+2-1,1,"You can park over there.",5
+2-2,2,"Can you help me? — Sure.",0
+2-2,2,"Can I use your phone? — Yes, of course.",1
+2-2,2,"Can I have a glass of water? — Here you go.",2
+2-2,2,"Could you tell me how to get to the museum?",3
+2-2,2,"Could I have the bill, please?",4
+2-2,2,"Could you speak more slowly, please?",5
+2-2,2,"Can I try this on?",6
+2-2,2,"Can I get a receipt, please?",7
 3-1,1,"You should see a doctor.",0
 3-1,1,"You shouldn't eat so much junk food.",1
 3-1,1,"You must wear a seatbelt in the car.",2
@@ -62,27 +34,13 @@ episode_chapter,episode_order,chunk_text_match,sort_order
 3-1,1,"She has to take medicine every day.",4
 3-1,1,"Do I have to bring my passport? — Yes, you do.",5
 3-1,1,"We must be there by 8 o'clock.",6
-3-1,1,"You mustn't park here.",7
-3-1,1,"I don't have to work on Sundays.",8
-3-1,1,"You don't have to pay now. You can pay later.",9
-3-1,1,"You should try this dish. It's really good!",10
-3-1,1,"What should I do? — You should call the police.",11
-3-1,1,"I should go now. It's getting late.",12
-3-1,1,"Should I take a taxi or the subway?",13
-3-2,2,"You should see a doctor.",0
-3-2,2,"You shouldn't eat so much junk food.",1
-3-2,2,"You must wear a seatbelt in the car.",2
-3-2,2,"I have to work tomorrow.",3
-3-2,2,"She has to take medicine every day.",4
-3-2,2,"Do I have to bring my passport? — Yes, you do.",5
-3-2,2,"We must be there by 8 o'clock.",6
-3-2,2,"You mustn't park here.",7
-3-2,2,"I don't have to work on Sundays.",8
-3-2,2,"You don't have to pay now. You can pay later.",9
-3-2,2,"You should try this dish. It's really good!",10
-3-2,2,"What should I do? — You should call the police.",11
-3-2,2,"I should go now. It's getting late.",12
-3-2,2,"Should I take a taxi or the subway?",13
+3-2,2,"You mustn't park here.",0
+3-2,2,"I don't have to work on Sundays.",1
+3-2,2,"You don't have to pay now. You can pay later.",2
+3-2,2,"You should try this dish. It's really good!",3
+3-2,2,"What should I do? — You should call the police.",4
+3-2,2,"I should go now. It's getting late.",5
+3-2,2,"Should I take a taxi or the subway?",6
 4-1,1,"It may rain later. Take an umbrella.",0
 4-1,1,"She might come to the party. I'm not sure.",1
 4-1,1,"May I come in? — Yes, please.",2
@@ -90,54 +48,24 @@ episode_chapter,episode_order,chunk_text_match,sort_order
 4-1,1,"Would you like to join us for dinner? — I'd love to!",4
 4-1,1,"What would you like to drink? — Water, please.",5
 4-1,1,"Will you help me with this? — Sure, no problem.",6
-4-1,1,"Do you think I should go to the doctor?",7
-4-1,1,"Shall I open the window? — Yes, please.",8
-4-1,1,"Let me help you with that.",9
-4-1,1,"Would you like to join us? — I'd love to!",10
-4-1,1,"Would you like some more tea? — Thanks, but I'm full.",11
-4-1,1,"How about going out for a walk? — Sounds great!",12
-4-1,1,"Why don't we try that new restaurant? — Good idea!",13
-4-1,1,"That sounds great! — Thank you for inviting me.",14
-4-1,1,"I'd be happy to help. Just let me know if you need anything.",15
-4-1,1,"Everything will be okay. Don't worry.",16
-4-1,1,"I'm going to travel next month. I will visit Japan.",17
-4-2,2,"It may rain later. Take an umbrella.",0
-4-2,2,"She might come to the party. I'm not sure.",1
-4-2,2,"May I come in? — Yes, please.",2
-4-2,2,"Would you like some coffee? — Yes, please.",3
-4-2,2,"Would you like to join us for dinner? — I'd love to!",4
-4-2,2,"What would you like to drink? — Water, please.",5
-4-2,2,"Will you help me with this? — Sure, no problem.",6
-4-2,2,"Do you think I should go to the doctor?",7
-4-2,2,"Shall I open the window? — Yes, please.",8
-4-2,2,"Let me help you with that.",9
-4-2,2,"Would you like to join us? — I'd love to!",10
-4-2,2,"Would you like some more tea? — Thanks, but I'm full.",11
-4-2,2,"How about going out for a walk? — Sounds great!",12
-4-2,2,"Why don't we try that new restaurant? — Good idea!",13
-4-2,2,"That sounds great! — Thank you for inviting me.",14
-4-2,2,"I'd be happy to help. Just let me know if you need anything.",15
-4-2,2,"Everything will be okay. Don't worry.",16
-4-2,2,"I'm going to travel next month. I will visit Japan.",17
+4-1,1,"Shall I open the window? — Yes, please.",7
+4-1,1,"Do you think I should go to the doctor?",8
+4-2,2,"Let me help you with that.",0
+4-2,2,"Would you like some more tea? — Thanks, but I'm full.",1
+4-2,2,"How about going out for a walk? — Sounds great!",2
+4-2,2,"Why don't we try that new restaurant? — Good idea!",3
+4-2,2,"That sounds great! — Thank you for inviting me.",4
+4-2,2,"I'd be happy to help. Just let me know if you need anything.",5
+4-2,2,"Everything will be okay. Don't worry.",6
+4-2,2,"I'm going to travel next month. I will visit Japan.",7
 5-1,1,"Good luck on your test! You'll do great.",0
 5-1,1,"Have a great trip! I hope you have fun!",1
 5-1,1,"Happy birthday! I hope you have a wonderful day!",2
 5-1,1,"Congratulations on your new job!",3
 5-1,1,"I believe in you. You can do it!",4
 5-1,1,"Keep going! Don't give up!",5
-5-1,1,"I promise I'll be there on time.",6
-5-1,1,"I swear I won't tell anyone.",7
-5-1,1,"I'd be happy to help you with your project.",8
-5-1,1,"I'm willing to try new things.",9
-5-1,1,"Let me know if you need anything.",10
-5-2,2,"Good luck on your test! You'll do great.",0
-5-2,2,"Have a great trip! I hope you have fun!",1
-5-2,2,"Happy birthday! I hope you have a wonderful day!",2
-5-2,2,"Congratulations on your new job!",3
-5-2,2,"I believe in you. You can do it!",4
-5-2,2,"Keep going! Don't give up!",5
-5-2,2,"I promise I'll be there on time.",6
-5-2,2,"I swear I won't tell anyone.",7
-5-2,2,"I'd be happy to help you with your project.",8
-5-2,2,"I'm willing to try new things.",9
-5-2,2,"Let me know if you need anything.",10
+5-2,2,"I promise I'll be there on time.",0
+5-2,2,"I swear I won't tell anyone.",1
+5-2,2,"I'd be happy to help you with your project.",2
+5-2,2,"I'm willing to try new things.",3
+5-2,2,"Let me know if you need anything.",4

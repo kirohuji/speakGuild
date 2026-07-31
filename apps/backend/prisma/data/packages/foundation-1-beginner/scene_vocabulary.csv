@@ -60,7 +60,8 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 认识新朋友,询问姓名与来源,country,国家,n,/ˈkʌntri/,/ˈkʌntri/,L1,扩展词：地点,[],6
 认识新朋友,确认身份,yes,是的,interj,/jes/,/jes/,L1,核心词：简短回答,[],
 认识新朋友,确认身份,no,不,interj,/noʊ/,/nəʊ/,L1,核心词：简短回答,[],1
-认识新朋友,确认身份,here,这里,adv,/hɪr/,/hɪə/,L1,核心词：Are you new here?,[],3
+认识新朋友,确认身份,here,这里,adv,/hɪr/,/hɪə/,L1,核心词：Are you new here?,[],2
+认识新朋友,初次见面回应,nice,好的,adj,/naɪs/,/naɪs/,L1,核心词：Nice to meet you,[],0
 认识新朋友,初次见面回应,meet,遇见,v,/miːt/,/miːt/,L1,核心词：Nice to meet you,[],1
 认识新朋友,初次见面回应,friend,朋友,n,/frend/,/frend/,L1,核心词：This is my friend,[],2
 认识新朋友,初次见面回应,classmate,同学,n,/ˈklæsmeɪt/,/ˈklɑːsmeɪt/,L1,核心词：This is my classmate,[],3
@@ -79,13 +80,13 @@ scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,diff
 身边的物品,这是什么,chair,椅子,n,/tʃer/,/tʃeə/,L1,扩展词：物品,[],8
 身边的物品,谁的东西,mine,我的（东西）,pron,/maɪn/,/maɪn/,L1,核心词：It's mine,[],
 身边的物品,谁的东西,yours,你的（东西）,pron,/jʊrz/,/jɔːz/,L1,核心词：Is it yours?,[],1
-身边的物品,谁的东西,isn't,不是,v,/ˈɪzənt/,/ˈɪzənt/,L1,核心词：It isn't my bag,[],4
-身边的物品,谁的东西,pencil,铅笔,n,/ˈpensl/,/ˈpensl/,L1,扩展词：物品,[],5
-身边的物品,谁的东西,notebook,笔记本,n,/ˈnoʊtbʊk/,/ˈnəʊtbʊk/,L1,扩展词：物品,[],6
-身边的物品,谁的东西,bottle,瓶子,n,/ˈbɑːtl/,/ˈbɒtl/,L1,扩展词：物品,[],7
+身边的物品,谁的东西,isn't,不是,v,/ˈɪzənt/,/ˈɪzənt/,L1,核心词：It isn't my bag,[],2
+身边的物品,谁的东西,pencil,铅笔,n,/ˈpensl/,/ˈpensl/,L1,扩展词：物品,[],3
+身边的物品,谁的东西,notebook,笔记本,n,/ˈnoʊtbʊk/,/ˈnəʊtbʊk/,L1,扩展词：物品,[],4
+身边的物品,谁的东西,bottle,瓶子,n,/ˈbɑːtl/,/ˈbɒtl/,L1,扩展词：物品,[],5
 身边的物品,特征与判断,big,大的,adj,/bɪɡ/,/bɪɡ/,L1,核心词：大小,[],
 身边的物品,特征与判断,small,小的,adj,/smɔːl/,/smɔːl/,L1,核心词：大小,[],1
-身边的物品,特征与判断,red,红色的,adj,/red/,/red/,L1,核心词：颜色,[],3
-身边的物品,特征与判断,blue,蓝色的,adj,/bluː/,/bluː/,L1,核心词：颜色,[],4
-身边的物品,特征与判断,black,黑色的,adj,/blæk/,/blæk/,L1,核心词：颜色,[],5
-身边的物品,特征与判断,white,白色的,adj,/waɪt/,/waɪt/,L1,扩展词：颜色,[],6
+身边的物品,特征与判断,red,红色的,adj,/red/,/red/,L1,核心词：颜色,[],2
+身边的物品,特征与判断,blue,蓝色的,adj,/bluː/,/bluː/,L1,核心词：颜色,[],3
+身边的物品,特征与判断,black,黑色的,adj,/blæk/,/blæk/,L1,核心词：颜色,[],4
+身边的物品,特征与判断,white,白色的,adj,/waɪt/,/waɪt/,L1,扩展词：颜色,[],5

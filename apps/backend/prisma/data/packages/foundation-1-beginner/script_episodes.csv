@@ -1,6 +1,6 @@
 chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
 ch_greet_01,先开口打招呼,1,打招呼与回应,见面与寒暄,L1,1,5,9,3,5,"[""完成4轮见面对话"",""区分不同时间的问候语""]",2,3,2,Emma,课程助教,true,practice_foundation-beginner_打招呼,"{""xp"":10}"
-ch_greet_01,先开口打招呼,2,感谢与告别,见面与寒暄,L1,1,5,9,3,5,"[""完成感谢与回应的对话"",""用不同方式告别""]",2,3,2,Ms. Green,老师,false,practice_foundation-beginner_感谢与告别,"{""xp"":10}"
+ch_greet_01,先开口打招呼,2,感谢与告别,见面与寒暄,L1,1,5,9,3,3,"[""完成感谢与回应的对话"",""用不同方式告别""]",2,3,2,Ms. Green,老师,false,practice_foundation-beginner_感谢与告别,"{""xp"":10}"
 ch_intro_02,介绍我自己,1,姓名与身份,介绍自己,L1,1,5,9,3,5,"[""用两种方式介绍姓名"",""说明身份和来源""]",2,3,2,Mia,签到志愿者,true,practice_foundation-beginner_姓名,"{""xp"":10}"
 ch_intro_02,介绍我自己,2,来源、年龄与状态,介绍自己,L1,1,5,9,3,5,"[""说出年龄"",""表达当前状态ready/new""]",2,3,2,Emma,活动组织者,false,practice_foundation-beginner_年龄与状态,"{""xp"":10}"
 ch_meet_03,认识一个新朋友,1,询问基础信息,认识新朋友,L1,1,5,9,3,5,"[""主动询问姓名和来源"",""回应同样的问题""]",2,3,2,Sofia,新搭档,true,practice_foundation-beginner_询问姓名与来源,"{""xp"":10}"

@@ -4,38 +4,36 @@ ch_greet_01,1,Good morning.,1
 ch_greet_01,1,Good afternoon. / Good evening.,2
 ch_greet_01,1,How are you?,3
 ch_greet_01,1,"I'm fine, thanks.",4
-ch_greet_01,2,Hello! I'm Emma.,
-ch_greet_01,2,Good morning.,1
-ch_greet_01,2,Good afternoon. / Good evening.,2
-ch_greet_01,2,How are you?,3
-ch_greet_01,2,"I'm fine, thanks.",4
+ch_greet_01,2,Thank you. — You're welcome.,
+ch_greet_01,2,Goodbye. See you later.,1
+ch_greet_01,2,Have a nice day.,2
 ch_intro_02,1,My name is Lin.,
 ch_intro_02,1,I'm Lin.,1
 ch_intro_02,1,Is your name Alex?,2
 ch_intro_02,1,I'm a student.,3
 ch_intro_02,1,I'm from China.,4
-ch_intro_02,2,My name is Lin.,
-ch_intro_02,2,I'm Lin.,1
-ch_intro_02,2,Is your name Alex?,2
-ch_intro_02,2,I'm a student.,3
-ch_intro_02,2,I'm from China.,4
+ch_intro_02,2,I'm from China.,
+ch_intro_02,2,I'm not a teacher.,1
+ch_intro_02,2,How old are you?,2
+ch_intro_02,2,I'm twenty years old.,3
+ch_intro_02,2,I'm ready. / I'm not ready.,4
 ch_meet_03,1,What's your name?,
 ch_meet_03,1,Where are you from?,1
 ch_meet_03,1,My name is Sofia. I'm from Spain.,2
 ch_meet_03,1,Are you a student?,3
 ch_meet_03,1,Are you new here?,4
-ch_meet_03,2,What's your name?,
-ch_meet_03,2,Where are you from?,1
-ch_meet_03,2,My name is Sofia. I'm from Spain.,2
-ch_meet_03,2,Are you a student?,3
-ch_meet_03,2,Are you new here?,4
+ch_meet_03,2,Are you a student?,
+ch_meet_03,2,Are you new here?,1
+ch_meet_03,2,"Yes, I am. / No, I'm not.",2
+ch_meet_03,2,"This is my friend, Mia.",3
+ch_meet_03,2,Nice to meet you.,4
 ch_items_04,1,What's this? — It's a key.,
 ch_items_04,1,What's that? — It's a bag.,1
 ch_items_04,1,This is my phone.,2
 ch_items_04,1,Is this your bag?,3
 ch_items_04,1,"Is it yours? — Yes, it's mine.",4
-ch_items_04,2,What's this? — It's a key.,
-ch_items_04,2,What's that? — It's a bag.,1
-ch_items_04,2,This is my phone.,2
-ch_items_04,2,Is this your bag?,3
-ch_items_04,2,"Is it yours? — Yes, it's mine.",4
+ch_items_04,2,Is this your bag?,
+ch_items_04,2,"Is it yours? — Yes, it's mine.",1
+ch_items_04,2,It isn't my bag.,2
+ch_items_04,2,It's small and blue.,3
+ch_items_04,2,"Is it new? — Yes, it is.",4

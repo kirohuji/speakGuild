@@ -27,8 +27,21 @@ episode_chapter,episode_order,chunk_text_match,sort_order
 2-1,1,"I did my homework after school.",11
 2-1,1,"We had a great time at the beach.",12
 2-1,1,"She took a lot of photos.",13
-2-1,1,"He came home very late.",14
-3-1,1,"Last weekend I visited my grandparents.",0
+2-1,1,"He came home very late.",142-2,2,I went shopping and bought a new dress.,0
+2-2,2,She ate breakfast and drank orange juice.,1
+2-2,2,He wrote a long email to his boss.,2
+2-2,2,I spoke to my mother on the phone.,3
+2-2,2,We sang songs at the party.,4
+2-2,2,She read a book and fell asleep.,5
+2-2,2,I thought about it, but forgot to tell you.,6
+2-2,2,He ran to catch the bus, but missed it.,7
+2-2,2,I knew the answer, but didn't say anything.,8
+2-2,2,She gave me a gift and I felt so happy.,9
+2-2,2,We sat down and began to eat.,10
+2-2,2,He drove to work and left his car there.,11
+2-2,2,I heard a strange noise and woke up.,12
+2-2,2,She taught English and wrote many books.,13
+2-2,2,I spent the whole day cleaning the house.,143-1,1,"Last weekend I visited my grandparents.",0
 3-1,1,"Last year I traveled to Japan.",1
 3-1,1,"I lived in Shanghai two years ago.",2
 3-1,1,"I started this job three months ago.",3
