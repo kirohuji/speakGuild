@@ -1,46 +1,33 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-基础③·描述家人,他是谁,He/She is ___.,他/她是...,my father / a doctor / very tall,He is my father.,L1,0
-基础③·描述家人,他是谁,He/She has ___.,他/她有...,a car / a cat / two brothers,She has a cat.,L1,1
-基础③·描述家人,他是谁,He/She doesn't have ___.,他/她没有...,a phone / a car / a bike / a pet,He doesn't have a phone.,L1,2
-基础③·描述家人,他是谁,His/Her name is ___.,他/她的名字是...,Tom / Anna / Jack / Mary,His name is Tom.,L1,3
-基础③·描述家人,他有什么,His/Her ___ is ___.,他/她的...是...,phone new / bag red / car blue,His car is red.,L1,4
-基础③·描述家人,她喜欢什么,He/She likes ___.,他/她喜欢...,music / sports / animals / cooking / dancing,She likes music.,L1,5
-基础③·描述家人,她喜欢什么,He/She likes to ___.,他/她喜欢做...,read / sing / swim / travel / cook,He likes to read.,L1,6
-基础③·描述家人,她不喜欢什么,He/She doesn't like ___.,他/她不喜欢...,cold weather / spiders / getting up early,She doesn't like cold weather.,L1,7
-基础③·描述家人,疑问与回答,Does he/she like ___? Yes he/she does.,他/她喜欢...吗？,music / dogs / sports / traveling,Does she like music? Yes she does.,L1,8
-基础③·描述家人,疑问与回答,What does he/she like? He/She likes ___.,他/她喜欢什么？,music / sports / animals / cooking,What does he like? He likes sports.,L1,9
-基础③·描述家人,家人职业,My ___ is a ___. He/She works in a ___.,我的...是...他/她在...工作。,mother nurse hospital / father doctor hospital / uncle engineer office,My mother is a nurse. She works in a hospital.,L1,10
-基础③·描述家人,家人习惯,My ___ always ___s ___.,我的...总是...,dad gets up early / mom drinks tea / brother plays guitar,My dad always gets up early.,L1,11
-基础③·他/她的日常,他每天做什么,He/She gets up at ___.,他/她...点起床。,6 / 7 / 7:30 / 8,He gets up at 7.,L1,12
-基础③·他/她的日常,他每天做什么,He/She goes to ___ by ___.,他/她乘...去...,school bus / work car / the park bike,She goes to school by bus.,L1,13
-基础③·他/她的日常,他每天做什么,He/She eats ___ at ___.,他/她在...吃...,breakfast at 7 / lunch at school / dinner at home,He eats lunch at school.,L1,14
-基础③·他/她的日常,他每天做什么,He/She drinks ___ after ___.,他/她...后喝...,water exercise / juice breakfast / milk dinner,She drinks water after exercise.,L1,15
-基础③·他/她的日常,他每天做什么,He/She doesn't ___.,他/她不做...,eat junk food / drink soda / smoke / stay up late,He doesn't eat junk food.,L1,16
-基础③·他/她的日常,她几点起床,He/She comes home at ___.,他/她...点到家。,5 / 6 / 6:30 / 8,He comes home at 6.,L1,17
-基础③·他/她的日常,她几点起床,He/She goes to bed at ___.,他/她...点睡觉。,9 / 10 / 11 / midnight,She goes to bed at 10.,L1,18
-基础③·他/她的日常,工作与学习,He/She works in a ___.,他/她在...工作。,hospital / school / office / bank / restaurant,She works in a hospital.,L1,19
-基础③·他/她的日常,工作与学习,He/She studies ___ at ___.,他/她在...学...。,"English university / math school / music a studio",He studies English at university.,L1,20
-基础③·他/她的日常,工作与学习,He/She ___ after ___.,他/她...后做...。,"watches TV dinner / does homework school / reads work",She watches TV after dinner.,L1,21
-基础③·他/她的日常,疑问与回答,Where does he/she ___? He/She ___.,他/她在哪里...？,work works in a hospital / live lives in Beijing,Where does he work? He works in a hospital.,L1,22
-基础③·他/她的日常,疑问与回答,Does he/she ___ on weekends? Yes/No.,他/她周末...吗？,work / study / travel / play sports,Does she work on weekends? No she doesn't.,L1,23
-基础③·对比你我他,我和你vs他/她,I ___ and he/she ___ too.,我...他/她也...。,"like music likes music / eat breakfast eats breakfast",I like music and she likes music too.,L1,24
-基础③·对比你我他,我和你vs他/她,I ___ but he/she ___.,我...但他/她...。,"like coffee likes tea / have a bike has a car",I like coffee but she likes tea.,L1,25
-基础③·对比你我他,我和你vs他/她,I ___ but he/she doesn't ___.,我...但他/她不...。,"like coffee like coffee / have a pet have a pet",I like coffee but she doesn't like coffee.,L1,26
-基础③·对比你我他,我和你vs他/她,I don't ___ but he/she ___.,我不...但他/她...。,"have a pet has a cat / drink coffee drinks tea",I don't have a pet but she has a cat.,L1,27
-基础③·对比你我他,我和你vs他/她,I have ___ and he/she has ___.,我有...他/她有...。,"a brother a sister / a bike a car",I have a brother and he has a sister.,L1,28
-基础③·对比你我他,我和你vs他/她,I ___ at ___ but he/she ___ at ___.,我...点但他/她...点。,"get up 6 gets up 8 / go to bed 10 goes to bed 11",I get up at 6 but he gets up at 8.,L1,29
-基础③·对比你我他,我和你vs他/她,My ___ is ___. His/Her ___ is ___.,我的...是他的/她的...是。,"name Tom name Jack / bag blue bag black",My name is Tom. His name is Jack.,L1,30
-基础③·对比你我他,他们的生活,They ___.,他们...。,"live in Beijing / have a car / like music / speak Chinese",They live in Beijing.,L1,31
-基础③·对比你我他,他们的生活,My parents ___.,我的父母...。,"work hard / live nearby / like traveling / cook well",My parents work very hard.,L1,32
-基础③·对比你我他,他们的生活,The children/students ___.,孩子们/学生们...。,"play in the park / study hard / read books",The children play in the park.,L1,33
-基础③·对比你我他,他们的生活,Their ___ is/are ___.,他们的...。,"house big / car new / parents kind",Their house is very big.,L1,34
-基础③·对比你我他,他们的生活,___'s ___ is a ___.,...的...是...。,"Tom mother nurse / Anna father doctor",Tom's mother is a nurse.,L1,35
-基础③·对比你我他,他们的生活,Everyone ___ him/her.,大家都...他/她。,"likes / knows / loves",Everyone likes him.,L1,36
-基础③·职业与叙事,他做什么工作,He/She is a ___. He/She ___.,他/她是...他/她...。,"firefighter helps people / chef cooks food / pilot flies planes",He is a firefighter. He helps people.,L1,37
-基础③·职业与叙事,工作描述,My ___ works in a ___. He/She ___.,我的...在...工作。他/她...。,"aunt hospital takes care of patients / uncle restaurant cooks food",My aunt works in a hospital. She takes care of patients.,L1,38
-基础③·职业与叙事,工作描述,His/Her job is ___. He/She ___.,他/她的工作...他/她...。,"interesting travels a lot / busy works late / stressful needs a break",His job is very interesting. He travels a lot.,L1,39
-基础③·职业与叙事,工作描述,He/She works from ___. He/She is a ___.,他/她在...工作。他/她是...。,"home writer / a cafe freelancer / an office manager",She works from home. She is a writer.,L1,40
-基础③·职业与叙事,场景描述,Look! The ___ is ___ing ___.,看！...正在...。,"boy running after his dog / girl dancing on stage / cat climbing the tree",Look! The boy is running after his dog.,L1,41
-基础③·职业与叙事,场景描述,In the picture ___ is ___ing ___.,画里...正在...。,"a girl reading under a tree / a boy playing with a ball / a family having a picnic",In the picture a girl is reading under a tree.,L1,42
-基础③·职业与叙事,图片描述,There was a ___ in ___. It was ___.,...里有一个...它很...。,"big dog the park friendly / cat the garden cute",There was a big dog in the park. It was very friendly.,L1,43
-基础③·职业与叙事,简单故事,Suddenly ___.,突然...。,"it started to rain / the phone rang / the car stopped",Suddenly it started to rain.,L1,44
+认识同事与团队,同事与岗位,"He/She is our ___.","他/她是我们的___.","colleague / manager / assistant / designer / receptionist / engineer","She is our designer.",L1,0
+认识同事与团队,同事与岗位,"___ is the ___ for this team.","___ 是这个团队的___.","Mia / Ben / designer / engineer","Mia is the designer for this team.",L1,1
+认识同事与团队,部门与地点,"He/She works in the ___ department.","他/她在___部门工作。","sales / support / design","She works in the sales department.",L1,2
+认识同事与团队,部门与地点,"He/She works at ___ for a ___ company.","他/她在___为一家___公司工作。","the front desk / a branch / small / local","He works at the front desk for a small company.",L1,3
+认识同事与团队,介绍一位同事,"His/Her role is ___; the background is ___.","他/她的角色是___；背景是___.","support / design / technical / creative","Her role is design; the background is creative.",L1,4
+认识同事与团队,介绍一位同事,"Our ___ is ___.","我们的___是___.","colleague / manager / friendly / experienced","Our colleague is friendly.",L1,5
+认识同事与团队,联系信息,"You can reach him/her at ___.","你可以通过___联系他/她。","extension 204 / the front desk","You can reach him at extension 204.",L1,6
+认识同事与团队,联系信息,"His/Her ___ is in the directory.","他/她的___在通讯录里。","contact details / extension / desk","His extension is in the directory.",L1,7
+工作职责与安排,开始一天,"He/She starts by ___ing ___.","他/她从___开始。","checking / opening / the schedule / the calendar","She starts by checking the schedule.",L1,8
+工作职责与安排,开始一天,"He/She opens ___ and logs in at ___.","他/她打开___并在___登录。","the calendar / the system / nine","He opens the calendar and logs in at nine.",L1,9
+工作职责与安排,电话与邮件,"He/She answers ___ and writes ___.","他/她接听___并写___.","the main line / a report","He answers the main line and writes a report.",L1,10
+工作职责与安排,电话与邮件,"He/She forwards ___, attaches ___, and prints ___.","他/她转发___、附加___并打印___.","the report / the document / one copy","She forwards the report and attaches the document.",L1,11
+工作职责与安排,帮助客户,"He/She guides each ___ through the ___.","他/她引导每位___完成___.","customer / guest / question / request","He guides each customer through the request.",L1,12
+工作职责与安排,帮助客户,"He/She explains ___ and solves ___.","他/她解释___并解决___.","the question / the solution / the problem","She explains the solution and solves the problem.",L1,13
+工作职责与安排,完成与跟进,"He/She tries to complete ___ before the ___.","他/她争取在___前完成___.","the task / report / deadline","She tries to complete the task before the deadline.",L1,14
+工作职责与安排,完成与跟进,"He/She finishes ___, follows up, and carries ___.","他/她完成___、跟进并搬运___.","the report / the copies / boxes","He finishes the report and carries the copies.",L1,15
+询问、否定与确认,Does 问答,"Does he/she ___? — Yes, he/she does. / No, he/she doesn't.","他/她___吗？ — 是/不是。","start / answer / print","Does he start at eight?",L1,16
+询问、否定与确认,Does 问答,"Please confirm the correct ___ and ___.","请确认正确的___和___.","shift / duty / schedule","Please confirm the correct shift and duty.",L1,17
+询问、否定与确认,询问具体信息,"When does he/she ___, and what task comes first?","他/她何时___，先做什么任务？","start / finish / return","When does she finish?",L1,18
+询问、否定与确认,询问具体信息,"Who is the right person, and where is the work location?","谁是合适的人，工作地点在哪？","person / detail / department","Who is the right person for this detail?",L1,19
+询问、否定与确认,否定与纠正,"He/She doesn't ___; he/she ___s instead.","他/她不___；而是___.","answer / write / work / print","She doesn't answer; she writes instead.",L1,20
+询问、否定与确认,否定与纠正,"Actually, the ___ is a mistake; this correction is accurate.","实际上，___是错的；这项纠正是准确的。","note / role / fact","Actually, the note is a mistake.",L1,21
+询问、否定与确认,have 与 has,"He/She has ___ and ___.","他/她有___和___.","a meeting / the file / a device / equipment","She has a meeting and the main file.",L1,22
+询问、否定与确认,have 与 has,"Does he/she have the ___ document?","他/她有___文件吗？","meeting / final / printed","Does she have the meeting document?",L1,23
+个人与团队协作,一个人与一组人,"One individual ___s; the group ___.","一个人___；小组___.","writes / write / reviews / review","One individual writes; the group reviews.",L1,24
+个人与团队协作,一个人与一组人,"Several staff members have different ___.","几名员工的___不同。","roles / duties / schedules","Several staff members have different duties.",L1,25
+个人与团队协作,谁负责,"Who handles ___, and who is responsible for ___?","谁处理___，谁负责___？","this task / the document","Who handles this task?",L1,26
+个人与团队协作,谁负责,"He/She assigns ___ to him/her and transfers ___ to them.","他/她把___指派给他/她，并把___转交给他们。","the task / the copies","She assigns the task to him.",L1,27
+个人与团队协作,当前工作状态,"Is he/she available or occupied?","他/她现在有空还是忙于别的事？","now / after lunch","Is she available now?",L1,28
+个人与团队协作,当前工作状态,"The ___ is urgent, so he/she returns after a short delay; ___ is waiting.","___很紧急，所以他/她短暂延迟后返回；___在等。","request / task / Lin","The request is urgent, so she returns after a short delay.",L1,29
+个人与团队协作,同事工作档案,"Let me introduce this profile and describe the main ___.","让我介绍这份档案并描述主要___.","role / routine / strength","Let me introduce this profile.",L1,30
+个人与团队协作,同事工作档案,"Overall, ___; in summary, ___.","总体来说，___；总结来说，___.","she supports the team / the profile is complete","Overall, she supports the team.",L1,31

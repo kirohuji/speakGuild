@@ -1,61 +1,81 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-基础④·出行与交通,问路与位置,Where is the nearest ___?,最近的___在哪里？,"subway station, bus stop, ATM, restroom, pharmacy, hospital",Where is the nearest subway station?,L1,1
-基础④·出行与交通,问路与位置,Where are the ___?,___在哪里？,"restrooms, elevators, stairs, exits, lockers, ticket machines",Where are the restrooms?,L1,2
-基础④·出行与交通,问路与位置,How do I get to ___?,我怎么去___？,"the museum, the airport, the train station, the city center, your hotel",How do I get to the museum?,L1,3
-基础④·出行与交通,问路与位置,Is there a ___ near here?,附近有___吗？,"pharmacy, supermarket, post office, park, bank, coffee shop",Is there a pharmacy near here?,L1,4
-基础④·出行与交通,问路与位置,How far is ___ from here?,___离这里多远？,"the airport, your hotel, the beach, downtown, the hospital",How far is it from here?,L1,5
-基础④·出行与交通,问路与位置,Am I going the right way to ___?,我去___的方向对吗？,"the station, the museum, the park, the library, the stadium",Am I going the right way to the station?,L1,6
-基础④·出行与交通,问时间与交通,What time does ___ open/close?,___几点开/关？,"the museum, the store, the bank, the movie, the meeting",What time does the museum open?,L1,7
-基础④·出行与交通,问时间与交通,What time is ___?,___是几点？,"the next train, the last bus, your flight, the check-in, the show",What time is the next train to Shanghai?,L1,8
-基础④·出行与交通,问时间与交通,Which ___ goes to ___?,哪趟___去___？,"bus / the city center, train / the airport, subway / the stadium",Which bus goes to the city center?,L1,9
-基础④·出行与交通,问时间与交通,How long does it take to ___?,___需要多久？,"get there, walk, drive, fly, get through security, get a taxi",How long does it take to get there?,L1,10
-基础④·出行与交通,问时间与交通,Where do I ___?,我在哪里___？,"buy a ticket, pay, check in, get a taxi, wait for the bus",Where do I buy a ticket?,L1,11
-基础④·出行与交通,问时间与交通,Does this ___ stop at ___?,这趟___在___停吗？,"bus / the museum, train / the airport, line / downtown",Does this bus stop at the museum?,L1,12
-基础④·出行与交通,问时间与交通,How much does it cost to go to ___?,去___多少钱？,"the airport, the station, downtown, this address, the hotel",How much does it cost to go to the airport?,L1,13
-基础④·消费与服务,试穿与尺寸,I want to try ___ on. Where is the fitting room?,我想试穿___。试衣间在哪？,"this jacket, these shoes, that dress, those pants, this hat, the scarf",I want to try this on. Where is the fitting room?,L1,17
-基础④·消费与服务,试穿与尺寸,Do you have other ___?,你们有其他___吗？,"colors, styles, sizes, options, brands, ones",Do you have other colors?,L1,18
-基础④·消费与服务,支付与结账,Do you take ___?,你们收___吗？,"cards, cash, WeChat, Alipay, credit cards, phone payments",Do you take cards?,L1,19
-基础④·消费与服务,购物问询,How much is ___?,___多少钱？,this / that / the red one / this shirt / a cup of coffee / the ticket,How much is this?,L1,20
-基础④·消费与服务,购物问询,How much are ___?,___多少钱？,these shoes / the apples / those flowers / the tickets / the souvenirs,How much are these?,L1,21
-基础④·消费与服务,购物问询,Do you have this in ___?,这个有___吗？,a small size / blue / another color / medium / large / a different style,Do you have this in a small size?,L1,22
-基础④·消费与服务,支付与结账,"I need ___, please.",我需要___。,a receipt / a bag / a refund / an exchange / a discount / your business card,"I need a receipt, please.",L1,23
-基础④·消费与服务,餐厅点餐,"I want to see ___, please.",我想看看___。,the menu / the wine list / the dessert menu / the specials / the room,"I want to see the menu, please.",L1,24
-基础④·消费与服务,餐厅点餐,What do you recommend for ___?,你推荐什么___？,a starter / the main course / dessert / drinks / someone who likes spicy food,What do you recommend?,L1,25
-基础④·消费与服务,餐厅点餐,Does this contain ___?,这个含有___吗？,nuts / dairy / gluten / pork / alcohol / any allergens,Does this dish contain nuts?,L1,26
-基础④·消费与服务,餐厅服务与评价,Is ___ included?,___包含在内吗？,service charge / tax / tip / breakfast / parking / Wi-Fi / the entrance fee,Is service charge included?,L1,27
-基础④·消费与服务,餐厅服务与评价,Do you have any ___ options?,你们有___选项吗？,vegetarian / vegan / gluten-free / halal / kids / non-spicy / local,Do you have any vegetarian options?,L1,28
-基础④·消费与服务,餐厅服务与评价,Is there a table ___?,有___的桌子吗？,by the window / outside / in the corner / at the bar / near the stage,Is there a table by the window?,L1,29
-基础④·社交与寒暄,认识新朋友,What do you do? — I am a ___.,你是做什么的？,student / teacher / designer / doctor / engineer / nurse / waiter,What do you do? — I am a student.,L1,30
-基础④·社交与寒暄,认识新朋友,What do you do? — I work in ___.,你在哪里工作？,a bank / a school / IT / marketing / a hospital / an office,What do you do? — I work in a bank.,L1,31
-基础④·社交与寒暄,认识新朋友,Where are you from? — I am from ___.,你来自哪里？,Chengdu / Beijing / Guangdong / Japan / a small town / the US,Where are you from? — I am from Chengdu.,L1,32
-基础④·社交与寒暄,认识新朋友,How's it going? — ___.,最近怎么样？,Not bad / Great / Can't complain / Same as usual / Busy but good,How's it going? — Pretty good!,L1,33
-基础④·社交与寒暄,认识新朋友,What do you do for ___?,你___做什么？,fun / exercise / relaxation / a living,What do you do for fun?,L1,34
-基础④·社交与寒暄,认识新朋友,What kind of ___ do you like?,你喜欢什么样的___？,music / movies / food / books / sports / games / TV shows / animals,What kind of music do you like?,L1,35
-基础④·社交与寒暄,认识新朋友,Do you like ___?,你喜欢___吗？,traveling / cooking / hiking / reading / watching sports / trying new food,Do you like traveling?,L1,36
-基础④·社交与寒暄,认识新朋友,What ___ do you want to ___?,你想___什么___？,countries / visit / cities / see / food / try / places / go to,What countries do you want to visit?,L1,37
-基础④·社交与寒暄,约见面,Are you free ___?,你___有空吗？,this weekend / tonight / tomorrow / after work / next Friday / on Sunday,Are you free this weekend?,L1,38
-基础④·社交与寒暄,约见面,Do you want to ___?,你想___吗？,grab lunch / get a coffee / go shopping / see a movie / take a walk / hang out,Do you want to grab lunch together?,L1,39
-基础④·社交与寒暄,约见面,What time do you want to ___?,你想几点___？,meet / start / leave / arrive / have dinner / come over,What time do you want to meet?,L1,40
-基础④·社交与寒暄,约见面,Where do you want to ___?,你想在哪里___？,meet / go / eat / sit / wait,Where do you want to meet?,L1,41
-基础④·社交与寒暄,关心与问候,How is ___?,___怎么样？,your day / everything / your work / your family / your new job / life,How is your day?,L1,42
-基础④·社交与寒暄,关心与问候,Is everything ___?,一切都___吗？,okay / alright / going well / ready for tomorrow / clear,Is everything okay?,L1,43
-基础④·社交与寒暄,关心与问候,Do you need ___?,你需要___吗？,help / anything / a hand / some water / a break / directions,Do you need help?,L1,44
-基础④·电话与联络,打电话找人,"Is ___ there, please?",请问___在吗？,Mr Wang / the manager / your parents / the doctor / your colleague,"Is Mr Wang there, please?",L1,45
-基础④·电话与联络,打电话找人,"Who's calling, please? — This is ___.",请问哪位？,your student / Toms friend / the delivery person / the landlord,"Who's calling, please? — This is Toms friend.",L1,46
-基础④·电话与联络,打电话找人,Is ___ available?,___方便接电话吗？,Mr Wang / the doctor / your boss / the technician / customer service,Is Mr Wang available?,L1,47
-基础④·电话与联络,打电话找人,When is ___ back?,___什么时候回来？,he / she / the manager / your colleague / the doctor,When is he back?,L1,48
-基础④·电话与联络,打电话找人,When is a good time to ___?,什么时候___比较方便？,call / reach you / come by / have a meeting / drop in / chat,When is a good time to call back?,L1,49
-基础④·电话与联络,留言与跟进,Please ask him to ___.,请让他___。,call me back / email me / text me / confirm the time,Please ask him to call me back.,L1,50
-基础④·电话与联络,留言与跟进,Please tell him ___.,请告诉他___。,I called / I need to change the time / the meeting is at 3,Please tell him I called.,L1,51
-基础④·电话与联络,留言与跟进,Does ___ know ___?,___知道___吗？,she / I called / the boss / about the meeting / your parents / you are here,Does he know I called?,L1,52
-基础④·电话与联络,留言与跟进,Do I ___ or ___?,我该___还是___？,wait / call again / email / text / come in person / try tomorrow,Do I call back or wait?,L1,53
-基础④·电话与联络,留言与跟进,What's your ___?,你的___是什么？,phone number / email address / WeChat / office number,What's your phone number?,L1,54
-基础④·应急与求助,紧急呼救,Help! Where is the nearest ___?,最近的___在哪里？,hospital / police station / fire station / emergency room / pharmacy / exit,Where is the nearest hospital?,L1,55
-基础④·应急与求助,紧急呼救,How do I ___?,我该怎么___？,call an ambulance / call the police / report a fire / get emergency help / find a doctor,How do I call an ambulance?,L1,56
-基础④·应急与求助,紧急呼救,Is there a ___ here?,这里有___吗？,doctor / nurse / police officer / security guard / translator / someone who speaks Chinese,Is there a doctor here?,L1,57
-基础④·应急与求助,紧急呼救,Is everyone ___?,大家都___吗？,safe / accounted for / out of the building / okay / alright / still inside,Is everyone okay?,L1,58
-基础④·应急与求助,看病问诊,What do I do? I have a ___.,我该怎么办？我___。,headache / fever / stomachache / sore throat / toothache / back pain / cold / cough,What do I do? I have a bad headache.,L1,59
-基础④·应急与求助,看病问诊,Do I need to ___?,我需要___吗？,see a doctor / go to the hospital / take medicine / get an X-ray / call an ambulance / stay overnight,Do I need to see a doctor?,L1,60
-基础④·应急与求助,看病问诊,Is there a ___ open right now?,现在有开着的___吗？,pharmacy / doctors office / clinic / hospital nearby / emergency dentist,Is there a pharmacy open right now?,L1,61
-基础④·应急与求助,语言沟通困难,Do you speak ___?,你说___吗？,Chinese / English / Japanese / Korean / French / Spanish,Do you speak Chinese?,L1,62
-基础④·应急与求助,看病问诊,How much does it cost to ___?,___要多少钱？,see a doctor / get a check-up / stay overnight / get an X-ray / fill this prescription,How much does it cost to see a doctor?,L1,63
+动作、状态与整理,起身与开口,"___ wakes up at ___.","wake up","Lin / Mia / seven / eight","Lin wakes up at seven.",L1,0
+动作、状态与整理,起身与开口,"Please stand up ___.","stand up","here / for a moment / by the desk","Please stand up for a moment.",L1,1
+动作、状态与整理,起身与开口,"Sit up ___.","sit up","straight / in bed / on the sofa","Sit up straight.",L1,2
+动作、状态与整理,起身与开口,"Hurry up. ___ starts at ___.","hurry up","class / work / eight / nine","Hurry up. Class starts at eight.",L1,3
+动作、状态与整理,起身与开口,"Please speak up ___.","speak up","in class / on the phone / a little","Please speak up in class.",L1,4
+动作、状态与整理,整理与完成,"Clean up ___. / Clean ___ up.","clean up","the table / the floor / it","Clean up the table.",L1,5
+动作、状态与整理,整理与完成,"Tidy up ___. / Tidy ___ up.","tidy up","your desk / the room / them","Tidy up your desk.",L1,6
+动作、状态与整理,整理与完成,"Do not use up ___. / Use ___ up first.","use up","all the water / the paper / it","Do not use up all the water.",L1,7
+动作、状态与整理,整理与完成,"Eat up ___. / Eat ___ up.","eat up","your breakfast / the food / it","Eat up your breakfast.",L1,8
+动作、状态与整理,整理与完成,"Cheer up ___. / Cheer ___ up.","cheer up","Mia / your friend / her","Cheer up Mia.",L1,9
+动作、状态与整理,坐下与放慢,"Sit down ___.","sit down","here / by the window / on this chair","Sit down by the window.",L1,10
+动作、状态与整理,坐下与放慢,"Lie down ___.","lie down","on the sofa / in bed / for a moment","Lie down on the sofa.",L1,11
+动作、状态与整理,坐下与放慢,"Slow down ___.","slow down","near the door / on this street / a little","Slow down near the door.",L1,12
+动作、状态与整理,坐下与放慢,"Calm down before ___.","calm down","class / the meeting / you answer","Calm down before class.",L1,13
+动作、状态与整理,坐下与放慢,"Write down ___. / Write ___ down.","write down","the address / these words / it","Write down the address.",L1,14
+动作、状态与整理,降低与停止,"Put down ___. / Put ___ down.","put down","the box / your bag / it","Put down the box.",L1,15
+动作、状态与整理,降低与停止,"Turn down ___. / Turn ___ down.","turn down","the music / the TV / it","Turn down the music.",L1,16
+动作、状态与整理,降低与停止,"Shut down ___. / Shut ___ down.","shut down","the computer / the system / it","Shut down the computer.",L1,17
+动作、状态与整理,降低与停止,"___ needs time to cool down.","cool down","the machine / the room / Ben","The machine needs time to cool down.",L1,18
+动作、状态与整理,降低与停止,"___ breaks down ___.","break down","the printer / the machine / often","The printer breaks down often.",L1,19
+进出、开关与移动,进入与加入,"Come in through ___.","come in","the front door / this entrance","Come in through the front door.",L1,20
+进出、开关与移动,进入与加入,"Go in and ___.","go in","sit down / find Emma / fill in the form","Go in and sit down.",L1,21
+进出、开关与移动,进入与加入,"Get in ___.","get in","the car / through this door / at the front gate","Get in the car.",L1,22
+进出、开关与移动,进入与加入,"Fill in ___. / Fill ___ in.","fill in","this form / the details / it","Fill in this form.",L1,23
+进出、开关与移动,进入与加入,"Join in ___.","join in","the game / the activity / after lunch","Join in the game.",L1,24
+进出、开关与移动,外出与发现,"___ goes out ___.","go out","Lin / Mia / after work / on Friday","Lin goes out after work.",L1,25
+进出、开关与移动,外出与发现,"Get out through ___.","get out","this door / the back entrance","Get out through this door.",L1,26
+进出、开关与移动,外出与发现,"Take out ___. / Take ___ out.","take out","the guide / the box / it","Take out the guide.",L1,27
+进出、开关与移动,外出与发现,"Find out ___. / Find ___ out.","find out","the time / the address / it","Find out the time.",L1,28
+进出、开关与移动,外出与发现,"___ eats out ___.","eat out","Lin / the group / on Friday / near the park","Lin eats out on Friday.",L1,29
+进出、开关与移动,打开与继续,"Turn on ___. / Turn ___ on.","turn on","the light / the TV / it","Turn on the light.",L1,30
+进出、开关与移动,打开与继续,"Put on ___. / Put ___ on.","put on","your coat / the jacket / it","Put on your coat.",L1,31
+进出、开关与移动,打开与继续,"Get on ___ at ___.","get on","the bus / the train / this stop","Get on the bus at this stop.",L1,32
+进出、开关与移动,打开与继续,"Carry on with ___.","carry on","your work / the task / the activity","Carry on with your work.",L1,33
+进出、开关与移动,打开与继续,"Hold on for ___.","hold on","a moment / one minute / Emma","Hold on for a moment.",L1,34
+进出、开关与移动,关闭与离开,"Turn off ___. / Turn ___ off.","turn off","the computer / the light / it","Turn off the computer.",L1,35
+进出、开关与移动,关闭与离开,"Take off ___. / Take ___ off.","take off","your coat / the badge / it","Take off your coat.",L1,36
+进出、开关与移动,关闭与离开,"Get off ___ at ___.","get off","the bus / the train / the station","Get off the bus at the station.",L1,37
+进出、开关与移动,关闭与离开,"Drop off ___ at ___. / Drop ___ off there.","drop off","the box / the file / the desk / it","Drop off the box at the desk.",L1,38
+进出、开关与移动,关闭与离开,"___ sets off at ___.","set off","the group / the bus / three / eight","The group sets off at three.",L1,39
+返回、重新处理与物品操作,返回与归还,"Come back at/before ___.","come back","four / five / lunch","Come back before five.",L1~L2,40
+返回、重新处理与物品操作,返回与归还,"Go back to/for ___.","go back","the desk / the office / the folder","Go back to the desk.",L1~L2,41
+返回、重新处理与物品操作,返回与归还,"___ gets back at ___.","get back","Lin / Mia / four / five","Lin gets back at four.",L1~L2,42
+返回、重新处理与物品操作,返回与归还,"Bring back ___. / Bring ___ back.","bring back","the folder / the book / it","Bring back the folder.",L1~L2,43
+返回、重新处理与物品操作,返回与归还,"Pay back ___. / Pay ___ back.","pay back","Ben / the money / him","Pay back Ben.",L1~L2,44
+返回、重新处理与物品操作,拜访与重新处理,"Come over at/after ___.","come over","two / lunch / work","Come over after lunch.",L1~L2,45
+返回、重新处理与物品操作,拜访与重新处理,"Move over ___.","move over","a little / to the left / on the sofa","Move over a little.",L1~L2,46
+返回、重新处理与物品操作,拜访与重新处理,"Start over with ___.","start over","a clean page / a new plan / Topic 01","Start over with a clean page.",L1~L2,47
+返回、重新处理与物品操作,拜访与重新处理,"Think over ___. / Think ___ over.","think over","the plan / this choice / it","Think over the plan.",L1~L2,48
+返回、重新处理与物品操作,拜访与重新处理,"Go over ___.","go over","the details / the list / it","Go over the details.",L1~L2,49
+返回、重新处理与物品操作,收纳与四处活动,"Put away ___. / Put ___ away.","put away","the chairs / the books / them","Put away the chairs.",L1~L2,50
+返回、重新处理与物品操作,收纳与四处活动,"Throw away ___. / Throw ___ away.","throw away","the cups / this paper / it","Throw away the cups.",L1~L2,51
+返回、重新处理与物品操作,收纳与四处活动,"Move away from ___.","move away","the door / the table / it","Move away from the door.",L1~L2,52
+返回、重新处理与物品操作,收纳与四处活动,"Look around ___.","look around","the room / the store / for more paper","Look around the room.",L1~L2,53
+返回、重新处理与物品操作,收纳与四处活动,"Walk around ___.","walk around","the room / the park / after lunch","Walk around the room.",L1~L2,54
+返回、重新处理与物品操作,拿取与组合,"Pick up ___. / Pick ___ up.","pick up","the box / your bag / it","Pick up the box.",L1~L2,55
+返回、重新处理与物品操作,拿取与组合,"Put back ___. / Put ___ back.","put back","the cable / the book / it","Put back the cable.",L1~L2,56
+返回、重新处理与物品操作,拿取与组合,"Take apart ___. / Take ___ apart.","take apart","the stand / the device / it","Take apart the stand.",L1~L2,57
+返回、重新处理与物品操作,拿取与组合,"Put together ___. / Put ___ together.","put together","the parts / the stand / them","Put together the parts.",L1~L2,58
+返回、重新处理与物品操作,拿取与组合,"Hand over ___ to ___. / Hand ___ over.","hand over","the box / Emma / it","Hand over the box to Emma.",L1~L2,59
+信息、沟通与问题处理,查看与留意,"Look at ___.","look at","this list / the first line / it","Look at this list.",L1~L2,60
+信息、沟通与问题处理,查看与留意,"Look for ___ near ___.","look for","the folder / it / the desk","Look for the folder near the desk.",L1~L2,61
+信息、沟通与问题处理,查看与留意,"Look after ___ for ___.","look after","the bag / it / Mia","Look after the bag for Mia.",L1~L2,62
+信息、沟通与问题处理,查看与留意,"Look through ___ before ___.","look through","the guide / it / class","Look through the guide before class.",L1~L2,63
+信息、沟通与问题处理,查看与留意,"Watch out for ___.","watch out","the wet floor / the step / the bike","Watch out for the wet floor.",L1~L2,64
+信息、沟通与问题处理,日常沟通,"Do not hang up until ___.","hang up","the call ends / Emma answers","Do not hang up until the call ends.",L1~L2,65
+信息、沟通与问题处理,日常沟通,"Talk about ___ with ___.","talk about","the plan / it / Ben","Talk about the plan with Ben.",L1~L2,66
+信息、沟通与问题处理,日常沟通,"Ask for ___ at ___.","ask for","the notes / it / the front desk","Ask for the notes at the front desk.",L1~L2,67
+信息、沟通与问题处理,日常沟通,"Speak to ___ about ___.","speak to","Emma / her / the plan","Speak to Emma about the plan.",L1~L2,68
+信息、沟通与问题处理,日常沟通,"___ hears from ___ every ___.","hear from","Lin / Mia / her / Friday","Lin hears from Mia every Friday.",L1~L2,69
+信息、沟通与问题处理,工作与学习,"Hand in ___. / Hand ___ in.","hand in","the report / the answer / it","Hand in the report.",L1~L2,70
+信息、沟通与问题处理,工作与学习,"Hand out ___. / Hand ___ out.","hand out","the worksheets / the papers / them","Hand out the worksheets.",L1~L2,71
+信息、沟通与问题处理,工作与学习,"Look up ___ in ___. / Look ___ up.","look up","the word / the dictionary / it","Look up the word in the dictionary.",L1~L2,72
+信息、沟通与问题处理,工作与学习,"Read over ___. / Read ___ over.","read over","your answers / the report / it","Read over your answers.",L1~L2,73
+信息、沟通与问题处理,工作与学习,"Figure out ___. / Figure ___ out.","figure out","the question / the problem / it","Figure out the question.",L1~L2,74
+信息、沟通与问题处理,社交与解决问题,"___ gets along with ___.","get along","Lin / Mia / everyone / Ben","Lin gets along with Mia.",L1~L2,75
+信息、沟通与问题处理,社交与解决问题,"Hang out with ___ at ___.","hang out","Mia / friends / the café","Hang out with Mia at the café.",L1~L2,76
+信息、沟通与问题处理,社交与解决问题,"___ shows up at ___.","show up","Ben / everyone / six / the café","Ben shows up at six.",L1~L2,77
+信息、沟通与问题处理,社交与解决问题,"Do not give up ___. / Do not give ___ up.","give up","the task / the plan / it","Do not give up the task.",L1~L2,78
+信息、沟通与问题处理,社交与解决问题,"Work out ___. / Work ___ out.","work out","the problem / the plan / it","Work out the problem.",L1~L2,79

@@ -1,71 +1,161 @@
-episode_chapter,episode_order,chunk_text_match,sort_order,
-ch_q_04,1,Excuse me, where is the nearest subway station? — It's just around the corner.,['0']
-ch_q_04,1,How do I get to the museum? -- Go straight and turn left at the corner.,1,
-ch_q_04,1,"Is there a pharmacy near here? -- Yes, theres one across the street.", there's one across the street.,['2']
-ch_q_04,1,How far is it from here? -- Its about 10 minutes on foot.,3,
-ch_q_04,1,"Am I going the right way to the station? -- Yes, keep going straight.", keep going straight.,['4']
-ch_q_04,1,Do you have a map? -- Sure. Let me show you.,5,
-ch_q_04,1,"Is this seat taken? -- No, go ahead.", go ahead.,['6']
-ch_q_04,2,What time does the museum open? -- It opens at 9 am.,0,
-ch_q_04,2,What time is the next train to Shanghai? -- At 3:15 pm.,1,
-ch_q_04,2,Which bus goes to the city center? -- Bus number 5 goes there.,2,
-ch_q_04,2,How long does it take to get there? -- About 30 minutes by bus.,3,
-ch_q_04,2,Where do I buy a ticket? -- You can buy one at the machine over there.,4,
-ch_q_04,2,"Does this bus stop at the museum? -- Yes, its the third stop.", it's the third stop.,['5']
-ch_q_04,2,How much does it cost to see a doctor here? -- The consultation fee is about 200 yuan.,6,
-ch_q_04_2,1,How much is this? -- Its 120 yuan.,0,
-ch_q_04_2,1,How much are these? -- Theyre 80 yuan each.,1,
-ch_q_04_2,1,"Do you have this in a small size? -- Let me check. Yes, here you are.", here you are.,['2']
-ch_q_04_2,1,"This is a little expensive. Do you have other ones? -- Yes, we have these. Theyre on sale.", we have these. They're on sale.,['3']
-ch_q_04_2,1,"Do you take cards? -- Yes, we take all major cards.", we take all major cards.,['4']
-ch_q_04_2,1,"I need a receipt, please. -- Of course. Here you are.", please. — Of course. Here you are.,['5']
-ch_q_04_2,1,"I want to try this on. Where is the fitting room? -- Over there, on the left.", on the left.,['6']
-ch_q_04_2,2,"I want to see the menu, please. -- Here you go.", please. — Here you go.,['0']
-ch_q_04_2,2,What do you recommend? -- The grilled fish is very popular.,1,
-ch_q_04_2,2,Does this dish contain nuts? — No, it doesn't. It's nut-free.,['2']
-ch_q_04_2,2,I want the bill, please. — Sure. It's 185 yuan in total.,['3']
-ch_q_04_2,2,Is service charge included? — Yes, it's already included.,['4']
-ch_q_04_2,2,Do you have any vegetarian options? — Yes, we have several.,['5']
-ch_q_04_2,2,Is there a table by the window? — Of course. Right this way.,6,
-ch_q_04_3,1,What do you do? -- Im a student. / I work in a hospital.,0,
-ch_q_04_3,1,Where are you from? -- Im from Chengdu. How about you?,1,
-ch_q_04_3,1,How's it going? — Pretty good! And you?,2,
-ch_q_04_3,1,What do you do for fun? -- I like watching movies and hiking.,3,
-ch_q_04_3,1,What kind of music do you like? -- I like pop and a little bit of jazz.,4,
-ch_q_04_3,1,"Do you like traveling? -- Yes, I love it!", I love it!,['5']
-ch_q_04_3,1,What countries do you want to visit? -- I want to go to Japan and France.,6,
-ch_q_04_3,2,"Are you free this weekend? -- Yes, I am. Why?", I am. Why?,['0']
-ch_q_04_3,2,Do you want to grab lunch together? -- Id love to!,1,
-ch_q_04_3,2,What time do you want to meet? -- How about 12:30?,2,
-ch_q_04_3,2,Where do you want to meet? -- Lets meet at the entrance.,3,
-ch_q_04_3,2,"How is your day? -- Its good! A little busy, but good.", but good.,['4']
-ch_q_04_3,2,"Is everything okay? You look tired. -- Yeah, Im fine. Just didnt sleep well.", I'm fine. Just didn't sleep well.,['5']
-ch_q_04_3,2,Do you need help? -- Thats very kind of you. I think Im okay.,6,
-ch_q_04_4,1,Hello, is Mr. Wang there,"[' please? — Speaking. / Just a moment', ' please.', '0']"
-ch_q_04_4,1,Who's calling, please? — This is Li Ming from ABC Company.,['1']
-ch_q_04_4,1,"Is Mr. Wang available? -- Sorry, hes in a meeting right now.", he's in a meeting right now.,['2']
-ch_q_04_4,1,When is he back? -- He is back in about an hour.,3,
-ch_q_04_4,1,I want to call back. When is a good time? — Try after 3 pm. He is free then.,4,
-ch_q_04_4,1,"Do you hear me? The signal is bad here. -- Yes, I hear you.", I hear you.,['5']
-ch_q_04_4,1,Sorry, I think you have the wrong number. — Oh,"["" I'm sorry."", '6']"
-ch_q_04_4,2,I want to leave a message. Is that okay? -- Sure. Go ahead.,0,
-ch_q_04_4,2,Please take a message for me. -- Of course. What do you want me to tell him?,1,
-ch_q_04_4,2,Please ask him to call me back. -- Sure. Whats your name and number?,2,
-ch_q_04_4,2,Please tell him I called. -- I will. Dont worry.,3,
-ch_q_04_4,2,"Does he know I called? -- Yes, he does. He says he calls you tonight.", he does. He says he calls you tonight.,['4']
-ch_q_04_4,2,"Do I call back or wait for his call? -- He says he calls you, so just wait.", so just wait.,['5']
-ch_q_04_4,2,What's your phone number? — It's 138-5555-1234.,6,
-ch_q_04_5,1,Help! Is anyone here? -- I hear you! Whats wrong?,0,
-ch_q_04_5,1,Where is the nearest hospital? -- Its about 3 kilometers from here.,1,
-ch_q_04_5,1,How do I call an ambulance? -- Dial 120. Tell them your location.,2,
-ch_q_04_5,1,Is there a doctor here? -- Im a doctor. What happened?,3,
-ch_q_04_5,1,"Is anyone calling the police? -- Yes, I call them right now.", I call them right now.,['4']
-ch_q_04_5,1,Is everyone okay? -- I think so. One person is a little hurt.,5,
-ch_q_04_5,1,What happened? Tell me what you see. -- A car hits the pole over there.,6,
-ch_q_04_5,2,I don't feel well. Where is the nearest hospital? — It's about 10 minutes by taxi.,0,
-ch_q_04_5,2,What do I do? I have a bad headache. -- You lie down and rest.,1,
-ch_q_04_5,2,"Do I need to see a doctor? -- If it doesnt get better in a day, yes.", yes.,['2']
-ch_q_04_5,2,"Is there a pharmacy open right now? -- Yes, theres a 24-hour pharmacy two blocks away.", there's a 24-hour pharmacy two blocks away.,['3']
-ch_q_04_5,2,Please help me. Im lost. -- Of course. Where do you want to go?,4,
-ch_q_04_5,2,Do you speak Chinese? -- A little. Let me find someone who does.,5,
-ch_q_04_5,2,How much does it cost to see a doctor here? -- The consultation fee is about 200 yuan.,6,
+episode_chapter,episode_order,chunk_text_match,sort_order
+1-1,1,"I wake up at seven every day.",0
+1-1,1,"The alarm is loud. Wake up.",1
+1-1,1,"Please stand up for a moment.",2
+1-1,1,"Emma is at the door. Stand up and greet her.",3
+1-1,1,"Please sit up straight.",4
+1-1,1,"He sits up when the teacher enters.",5
+1-1,1,"Hurry up. The bus is here.",6
+1-1,1,"We start at eight. Please hurry up.",7
+1-1,1,"Please speak up in class.",8
+1-1,1,"I do not hear you well. Speak up, please.",9
+1-1,1,"Please clean up the table.",10
+1-1,1,"The table is dirty. Clean it up.",11
+1-1,1,"She tidies up her desk every day.",12
+1-1,1,"These papers are everywhere. Tidy them up.",13
+1-1,1,"Do not use up all the water.",14
+1-1,1,"This paper is old. Use it up first.",15
+1-1,1,"Please eat up your breakfast.",16
+1-1,1,"The food is still warm. Eat it up.",17
+1-1,1,"Cheer up. You are okay.",18
+1-1,1,"Mia looks sad. Let us cheer her up.",19
+1-2,2,"Please sit down by the window.",20
+1-2,2,"Your chair is ready. Sit down.",21
+1-2,2,"Lie down on the sofa and rest.",22
+1-2,2,"He lies down when his back hurts.",23
+1-2,2,"Please slow down near the door.",24
+1-2,2,"You speak very fast. Slow down.",25
+1-2,2,"Calm down. Everything is okay.",26
+1-2,2,"He takes a minute to calm down.",27
+1-2,2,"Write down these three words.",28
+1-2,2,"This address is important. Write it down.",29
+1-2,2,"Please put down the heavy box.",30
+1-2,2,"The box is too heavy. Put it down.",31
+1-2,2,"Please turn down the music.",32
+1-2,2,"The TV is loud. Turn it down.",33
+1-2,2,"Shut down the computer before you leave.",34
+1-2,2,"The computer is hot. Shut it down.",35
+1-2,2,"The machine needs time to cool down.",36
+1-2,2,"The computer cools down after ten minutes.",37
+1-2,2,"Old printers sometimes break down.",38
+1-2,2,"The machine breaks down every month.",39
+2-1,1,"The door is open. Come in.",40
+2-1,1,"Please come in and sit by the window.",41
+2-1,1,"The room is ready. Please go in.",42
+2-1,1,"They go in through the front door.",43
+2-1,1,"Get in the car at the front gate.",44
+2-1,1,"The door is open. Get in.",45
+2-1,1,"Please fill in this form.",46
+2-1,1,"The form is on the desk. Fill it in.",47
+2-1,1,"The group game starts now. Join in.",48
+2-1,1,"She joins in every class activity.",49
+2-1,1,"We go out after work on Friday.",50
+2-1,1,"The weather is good. Let us go out.",51
+2-1,1,"Please get out through this door.",52
+2-1,1,"The car is at the park. Get out carefully.",53
+2-1,1,"Please take out the city guide.",54
+2-1,1,"The guide is in my bag. I take it out.",55
+2-1,1,"We need to find out the opening time.",56
+2-1,1,"We need the answer. Please find it out.",57
+2-1,1,"We eat out near the park on Friday.",58
+2-1,1,"I do not cook tonight. Let us eat out.",59
+2-2,2,"Please turn on the light.",60
+2-2,2,"The room is dark. Turn it on.",61
+2-2,2,"Put on your coat before you go out.",62
+2-2,2,"It is cold outside. Put it on.",63
+2-2,2,"Get on the bus at this stop.",64
+2-2,2,"The bus is here. Let us get on.",65
+2-2,2,"Please carry on with your work.",66
+2-2,2,"The task is not finished. Carry on.",67
+2-2,2,"Hold on, please.",68
+2-2,2,"Please hold on for a moment.",69
+2-2,2,"Please turn off the computer.",70
+2-2,2,"The screen is bright. Turn it off.",71
+2-2,2,"Take off your coat inside.",72
+2-2,2,"Your coat is wet. Take it off.",73
+2-2,2,"We get off the bus at the station.",74
+2-2,2,"This is our stop. Get off here.",75
+2-2,2,"Please drop off the box at the front desk.",76
+2-2,2,"Emma needs this file. Drop it off today.",77
+2-2,2,"We set off at three.",78
+2-2,2,"Everything is ready. Let us set off.",79
+3-1,1,"Please come back before five.",80
+3-1,1,"She comes back after lunch.",81
+3-1,1,"Go back to the front desk.",82
+3-1,1,"He goes back for the blue folder.",83
+3-1,1,"I get back to the office at four.",84
+3-1,1,"Please get back before the meeting.",85
+3-1,1,"Please bring back the blue folder.",86
+3-1,1,"This book belongs here. Bring it back.",87
+3-1,1,"I need to pay back Ben.",88
+3-1,1,"Ben paid for lunch. I pay him back today.",89
+3-1,1,"Please come over after lunch.",90
+3-1,1,"Mia comes over at two.",91
+3-1,1,"Please move over and make some space.",92
+3-1,1,"The sofa is small. Move over a little.",93
+3-1,1,"The plan is not clear. Start over.",94
+3-1,1,"We start over with a clean page.",95
+3-1,1,"Please think over the new plan.",96
+3-1,1,"This choice is important. Think it over.",97
+3-1,1,"Let us go over the details.",98
+3-1,1,"The final list is ready. Go over it carefully.",99
+3-2,2,"Please put away the chairs.",100
+3-2,2,"The chairs belong by the wall. Put them away.",101
+3-2,2,"Throw away these empty cups.",102
+3-2,2,"This paper is useless. Throw it away.",103
+3-2,2,"Please move away from the door.",104
+3-2,2,"The table is in the way. Move away from it.",105
+3-2,2,"Look around for more paper.",106
+3-2,2,"We look around the room after class.",107
+3-2,2,"Walk around the room one more time.",108
+3-2,2,"They walk around the park after lunch.",109
+3-2,2,"Please pick up the small box.",110
+3-2,2,"The box is on the floor. Pick it up.",111
+3-2,2,"Put back the cable after you use it.",112
+3-2,2,"The cable belongs here. Put it back.",113
+3-2,2,"Take apart this simple stand.",114
+3-2,2,"The stand has two parts. Take it apart.",115
+3-2,2,"Put together the two main parts.",116
+3-2,2,"These parts make one stand. Put them together.",117
+3-2,2,"Please hand over the final box to Emma.",118
+3-2,2,"Emma needs the box. Hand it over.",119
+4-1,1,"Look at this list, please.",120
+4-1,1,"The first line is important. Look at it.",121
+4-1,1,"I am here to look for the blue folder.",122
+4-1,1,"The folder is missing. Look for it near the desk.",123
+4-1,1,"Please look after my bag.",124
+4-1,1,"This is Mia's bag. I look after it for her.",125
+4-1,1,"Please look through the event guide.",126
+4-1,1,"The guide is short. I look through it now.",127
+4-1,1,"Watch out. The floor is wet.",128
+4-1,1,"Watch out for the wet floor.",129
+4-1,1,"Please do not hang up.",130
+4-1,1,"The call is over. I hang up now.",131
+4-1,1,"We need to talk about the activity plan.",132
+4-1,1,"The problem is important. Let us talk about it.",133
+4-1,1,"I want to ask for Ben's notes.",134
+4-1,1,"The form is not here. Ask for it at the desk.",135
+4-1,1,"Please speak to Emma first.",136
+4-1,1,"Emma is in the office. I speak to her there.",137
+4-1,1,"I hear from Mia every Friday.",138
+4-1,1,"Ben is away, but I hear from him online.",139
+4-2,2,"Please hand in your short report.",140
+4-2,2,"The report is ready. Hand it in today.",141
+4-2,2,"Hand out these worksheets to the group.",142
+4-2,2,"Everyone needs one. Hand them out.",143
+4-2,2,"Look up the new words in the dictionary.",144
+4-2,2,"This word is new. Look it up.",145
+4-2,2,"Read over your answers carefully.",146
+4-2,2,"The report is short. Read it over.",147
+4-2,2,"We need to figure out the final question.",148
+4-2,2,"This problem has an answer. Figure it out.",149
+4-2,2,"Lin and Ben get along well.",150
+4-2,2,"She gets along with everyone in the group.",151
+4-2,2,"We hang out after class on Friday.",152
+4-2,2,"Do you want to hang out at the café?",153
+4-2,2,"Ben shows up at six.",154
+4-2,2,"Please show up before the activity starts.",155
+4-2,2,"Do not give up on this task.",156
+4-2,2,"This plan still matters. Do not give it up.",157
+4-2,2,"We work out the problem together.",158
+4-2,2,"The plan is difficult, but we work it out.",159

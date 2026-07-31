@@ -1,54 +1,33 @@
 scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
-基础②·日常习惯,我每天做什么,I ___ every morning/day.,我每天早上/每天...,eat breakfast / drink coffee / go to school,I eat breakfast every morning.,L1,0
-基础②·日常习惯,我每天做什么,I ___ at night.,我晚上...,read books / watch TV / study,I read books at night.,L1,1
-基础②·日常习惯,我每天做什么,I ___ on weekends.,我周末...,play football / relax / go out,I play football on weekends.,L1,2
-基础②·日常习惯,我每天做什么,I don't ___.,我不...,eat meat / drink coffee / smoke,I don't eat meat.,L1,3
-基础②·日常习惯,我的日常动作,I ___ from ___ to ___.,我从...到...做...,work / 9 / 5 / study / 8 / 6,I work from 9 to 5.,L1,4
-基础②·日常习惯,我的日常动作,I do ___ after school.,我放学后...,my homework / housework / exercise,I do my homework after school.,L1,5
-基础②·日常习惯,起床到出门,I ___ in the ___.,我在...做...,take a shower / morning / read / evening,I take a shower in the morning.,L1,7
-基础②·日常习惯,起床到出门,I ___ at ___ o'clock.,我...点...,get up / 7 / go to bed / 11,I get up at 7 o'clock.,L1,8
-基础②·日常习惯,晚上做什么,I ___ after ___.,我...后做...,watch TV / dinner / read books / school,I watch TV after dinner.,L1,9
-基础②·喜好与需求,我喜欢…,I like to ___.,我喜欢做...,read / swim / travel / cook,I like to read.,L1,11
-基础②·喜好与需求,我喜欢…,I love ___.,我热爱...,music / animals / dancing,I love music.,L1,12
-基础②·喜好与需求,我想要…,I want a ___.,我想要一个...,new phone / car / job / pet,I want a new phone.,L1,14
-基础②·喜好与需求,我想要…,I want to ___.,我想做...,learn Spanish / travel / sleep,I want to learn Spanish.,L1,15
-基础②·喜好与需求,我需要…,I need to ___.,我需要做...,go / sleep / study / leave,I need to go.,L1,18
-基础②·喜好与需求,我有什么,I have a ___.,我有一个...,brother / car / dog / question,I have a brother.,L1,19
-基础②·喜好与需求,我有什么,I have ___.,我有...,two cats / many friends / no time,I have two cats.,L1,20
-基础②·喜好与需求,询问拥有,Do you have ___?,你有...吗？,a pen / time / any questions,Do you have a pen?,L1,21
-基础②·喜好与需求,否定拥有,I don't have ___.,我没有...,a car / a phone / siblings / time,I don't have a car.,L1,22
-基础②·喜好与需求,请求许可,Can I ___?,我能...吗？,go now / sit here / ask a question,Can I go now?,L1,24
-基础②·日程安排,交通方式,I go to ___ by ___.,我乘...去...,work / bus / school / bike / the park / subway,I go to work by bus.,L1,26
-基础②·日程安排,交通方式,I take the ___ to ___.,我坐...去...,bus / school / subway / work / train / the airport,I take the bus to work.,L1,27
-基础②·日程安排,早晚行程,I come to ___ ___.,我到......,school early / work on time / home late,I come to school early.,L1,28
-基础②·日程安排,在家休息,I stay at ___ on ___.,我...在...,home / Sundays / the office / weekdays,I stay at home on Sundays.,L1,29
-基础②·日程安排,等待与寻找,I wait for ___ at the ___.,我在...等...,the bus / stop / my friend / station,I wait for the bus at the stop.,L1,30
-基础②·日程安排,等待与寻找,I look for ___.,我找...,my keys / my phone / a job / a place,I look for my keys.,L1,31
-基础②·购物与出行,购物意愿,I want to buy ___.,我想买...,a shirt / shoes / a gift / some food / a book,I want to buy a new shirt.,L1,32
-基础②·购物与出行,问价格,How much is ___?,...多少钱？,this / that / the red one / this bag / the ticket,How much is this? It is 50 yuan.,L1,33
-基础②·购物与出行,问价格,How much are ___?,这些多少钱？,these / those shoes / the apples / these books,How much are these? They are 100 yuan.,L1,34
-基础②·购物与出行,试穿与挑选,Can I try ___ on?,我能试穿...吗？,this jacket / these shoes / that dress / those pants,Can I try this on?,L1,35
-基础②·购物与出行,试穿与挑选,Do you have this in ___?,这个有...的吗？,a smaller size / blue / another color,Do you have this in a smaller size?,L1,36
-基础②·购物与出行,评价与决定,This is too ___.,这个太...,expensive / big / small / tight / long / short,This is too expensive.,L1,37
-基础②·购物与出行,评价与决定,I'll take ___. Here's ___.,我要...。给你...,this one / my card / those / the cash,I'll take this one.,L1,38
-基础②·购物与出行,天气描述,It's ___ today. Let's ___!,今天...。我们...吧！,"sunny / go out, cold / stay in, windy / fly a kite",It's sunny today. Let's go out!,L1,39
-基础②·购物与出行,天气描述,What's the weather like? It's ___.,天气怎么样？...,warm / hot / cold / cool / cloudy / windy,What's the weather like? It's warm and sunny.,L1,40
-基础②·购物与出行,户外活动,I go out for ___ every ___.,我每...出去...,a walk / evening / a run / morning / a coffee / afternoon,I go out for a walk every evening.,L1,41
-基础②·购物与出行,户外活动,Let's go to ___ this ___.,我们这...去...吧。,the park / afternoon / the beach / weekend / the movies / evening,Let's go to the park this afternoon.,L1,42
-基础②·购物与出行,出行方式,I ___ to ___. It's not far.,我...去...。不远。,walk / school / drive / work / ride / the store,I walk to school. It's not far.,L1,43
-基础②·餐饮与社交,点餐,"Can I have ___, please?",请给我...好吗？,the menu / a glass of water / the bill / more rice,Can I have the menu please?,L1,44
-基础②·餐饮与社交,点餐,I'd like to order ___.,我想点...,a pizza / a burger / fried rice / noodles / soup,I'd like to order a pizza and a salad.,L1,45
-基础②·餐饮与社交,推荐与选择,What do you recommend? ___ is very good.,你推荐什么？...,the pasta / the steak / the fish / the dumplings / the hot pot,What do you recommend? The pasta is very good.,L1,46
-基础②·餐饮与社交,评价食物,The ___ is ___!,...很...！,food delicious / soup hot / cake sweet / coffee strong,The food is delicious! I love it.,L1,47
-基础②·餐饮与社交,打电话,I call ___ every ___.,我每...给...打电话。,my mom / day / my friend / weekend / my parents / evening,I call my mom every day.,L1,48
-基础②·餐饮与社交,发消息,I send ___ to ___.,我发...给...,messages / my friends / photos / my family / emails / my boss,I send messages to my friends on WeChat.,L1,49
-基础②·餐饮与社交,约见面,Let's meet at ___ at ___.,我们...在...见面。,the coffee shop / 3 pm / the station / 5 pm / the park / noon,Let's meet at the coffee shop at 3 pm.,L1,50
-基础②·餐饮与社交,在路上,I'm on my way. I'll be there in ___.,我在路上。...后到。,10 minutes / half an hour / a few minutes / about 20 minutes,I'm on my way. I'll be there in 10 minutes.,L1,51
-基础②·餐饮与社交,迟到与道歉,"Sorry, I'm late. ___ was ___.",抱歉迟到。...很...,the traffic bad / the bus late / the alarm broken,"Sorry, I'm late. The traffic was bad.",L1,52
-基础②·祈使句,日常指令,Verb + (object).,动词原形+宾语, Sit down / Open the door / Come here,Sit down please.,L1,53
-基础②·祈使句,日常指令,Please + verb + (object).,请+动词原形+宾语, Please sit down / Please be quiet / Please come in,Please sit down.,L1,54
-基础②·祈使句,提醒,Be + adjective.,请..., careful / quiet / on time / patient / honest,Be careful!,L1,55
-基础②·祈使句,否定祈使句,Don't + verb.,别+动词原形, worry / be late / cry / forget / touch,Don't worry.,L1,56
-基础②·祈使句,否定祈使句,Don't forget to + verb.,别忘了+动词原形, call me / lock the door / do your homework / bring your book,Don't forget to bring your book.,L1,57
-基础②·祈使句,Let's提议,Let's + verb.,让我们+动词, go / eat / start / go home / take a break / watch a movie,Let's go!,L1,58
-基础②·祈使句,Let's提议,Let's not + verb.,我们别+动词, wait / argue / rush / stay too long / waste time,Let's not wait any longer.,L1,59
+喜好与选择,喜欢的吃喝,I like ___.,表达喜好,coffee / noodles / music,I like coffee.,L1,
+喜好与选择,喜欢的活动,I like to ___.,表达活动喜好,read / cook / walk,I like to read.,L1,1
+喜好与选择,喜欢还是不喜欢,I don't like ___. I prefer ___.,否定+偏好,spicy food / noodles,I don't like rice. I prefer noodles.,L1,2
+喜好与选择,喜欢还是不喜欢,Do you like ___?,询问喜好,tea / movies / sports,Do you like tea?,L1,3
+喜好与选择,喜欢还是不喜欢,What's your favorite ___?,询问最爱,drink / food / movie,What's your favorite drink?,L1,4
+想要与需要,我想要什么,I want ___.,表达想要,some water / a new laptop / a camera,I want a new laptop.,L1,5
+想要与需要,我想做什么,I want to ___.,表达想做,go home / eat / rest,I want to go home.,L1,6
+想要与需要,我想做什么,Do you want to ___?,邀请,come with me / get together,Do you want to come?,L1,7
+想要与需要,我真正需要什么,I need ___.,表达需要,help / more time / a break,I need help.,L1,8
+想要与需要,我真正需要什么,I need to ___.,表达必要行动,leave / sleep / study,I need to leave.,L1,9
+想要与需要,我真正需要什么,Do you need ___?,询问需求,help / anything / water,Do you need help?,L1,10
+饮食与点单,礼貌点单,I'd like ___.,礼貌点单,a table for two / a coffee / some water,I'd like a table for two.,L1,11
+饮食与点单,礼貌点单,I'd like to ___.,礼貌表达,order / sit here,I'd like to order.,L1,12
+饮食与点单,接受与拒绝,Would you like ___?,礼貌提供,coffee / some cake,Would you like coffee?,L1,13
+饮食与点单,礼貌点单,"Can I have ___, please?",请求物品,the menu / the bill,Can I have the menu?,L1,14
+饮食与点单,接受与拒绝,"___ or ___? — ___, please.",二选一,tea / coffee / tea,"Tea, please.",L1,15
+我的一天,早晨,I ___ at ___.,时间+动作,get up / seven,I get up at seven.,L1,16
+我的一天,晚上与周末,I ___ in the morning/at night.,时段+动作,work / read / relax,I read at night.,L1,17
+我的一天,白天,I go to ___ by ___.,交通方式,work / bus / school / train,I go to work by bus.,L1,18
+我的一天,白天,I ___ from ___ to ___.,工作时间,work / nine / five,I work from nine to five.,L1,19
+我的一天,晚上与周末,I don't ___ on weekends.,周末否定,work / study / visit friends,I don't work on weekends.,L1,20
+我的一天,白天,What do you do ___?,询问活动,after work / at night,What do you do after work?,L1,21
+日常用品与购物,我有什么,I have ___.,表达拥有,a charger / some time,I have a charger.,L1,22
+日常用品与购物,我有什么,Do you have ___?,询问拥有,a pen / this in blue,Do you have a pen?,L1,23
+日常用品与购物,我有什么,Can I use ___?,请求借用,your charger / these headphones,Can I use your charger?,L1,24
+日常用品与购物,询问商品,How much is ___?,询问价格,this / that / the blue one,How much is this?,L1,25
+日常用品与购物,选择与决定,It's too ___.,评价,small / big / expensive,It's too small.,L1,26
+日常用品与购物,选择与决定,I'll take ___.,决定购买,it / this one / both,I'll take it.,L1,27
+联系与约见,确认时间地点,Are you free ___?,询问空闲,tonight / on Friday,Are you free tonight?,L1,28
+联系与约见,打电话与发消息,Can I call you ___?,请求联系,back / after work / at noon,Can I call you back?,L1,29
+联系与约见,确认时间地点,Let's get together at ___.,提议见面,six / the café / the station,Let's get together at six.,L1,30
+联系与约见,在路上与迟到,Please wait for ___. Almost there.,请求等待,me / us / Alex,Please wait for me. Almost there.,L1,31
