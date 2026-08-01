@@ -69,10 +69,19 @@ export function useInkStory(json: Record<string, any> | null, options?: UseInkSt
       const pending = pendingRef.current
       pendingRef.current = null
       setLines((prev) => [...prev, ...pending])
-      if (endAfterPendingRef.current) {
-        endAfterPendingRef.current = false
-        setIsEnded(true)
+      // 同步更新 currentTags，让消费端获取 flushed 行的 speaker/expression
+      const flushedTags = pending.at(-1)?.tags
+      if (flushedTags && flushedTags.length > 0) {
+        setCurrentTags(flushedTags)
       }
+      // 不在这里 setEnded — 让下一次 advanceStory 自然走到 engine.continue()→null
+      return
+    }
+
+    // 上一轮 pending 刷新后，如果故事已到终点，engine.continue() 返回 null
+    if (endAfterPendingRef.current) {
+      endAfterPendingRef.current = false
+      setIsEnded(true)
       return
     }
 

@@ -357,13 +357,23 @@ export function PracticeSessionPage() {
     const parsed = parseVnTags(tags)
     const latestNpcLine = [...dialogueRounds].reverse().find((line) => line.isNpc && line.speaker)
 
-    setVnVisual((prev) => ({
-      backgroundUrl: parsed.bg || prev.backgroundUrl || detail?.scene.backgroundUrl || undefined,
-      backgroundFit: isBackgroundFit(parsed.bgFit) ? parsed.bgFit : prev.backgroundFit,
-      speaker: parsed.speaker || latestNpcLine?.speaker || prev.speaker,
-      expression: parsed.expression || prev.expression || 'default',
-      position: isSpritePosition(parsed.position) ? parsed.position : prev.position,
-    }))
+    setVnVisual((prev) => {
+      const next = {
+        backgroundUrl: parsed.bg || prev.backgroundUrl || detail?.scene.backgroundUrl || undefined,
+        backgroundFit: isBackgroundFit(parsed.bgFit) ? parsed.bgFit : prev.backgroundFit,
+        speaker: prev.speaker,
+        expression: prev.expression,
+        position: prev.position,
+      }
+      // isWaiting 时 tags 属于 pending 行（用户输入后才显示），
+      // 此时不应更新 speaker/expression/position，避免立绘提前切换
+      if (!inkWaiting) {
+        next.speaker = parsed.speaker || latestNpcLine?.speaker || prev.speaker
+        next.expression = parsed.expression || prev.expression || 'default'
+        next.position = isSpritePosition(parsed.position) ? parsed.position : prev.position
+      }
+      return next
+    })
 
     // Parse #input hint tags for the PracticeVnDrawer
     const hintText = readTagValue(tags, 'hint:')
@@ -381,7 +391,7 @@ export function PracticeSessionPage() {
         return next
       })
     }
-  }, [currentTags, detail?.scene.backgroundUrl, dialogueRounds])
+  }, [currentTags, detail?.scene.backgroundUrl, dialogueRounds, inkWaiting])
 
   // Sync Ink lines to dialogue display
   useEffect(() => {

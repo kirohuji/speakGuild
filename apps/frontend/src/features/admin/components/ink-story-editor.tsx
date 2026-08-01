@@ -43,7 +43,7 @@ import { cn } from '@/lib/cn'
 import { compileInk, defaultInkTemplate, extractInkMeta } from './ink-compiler'
 import { cloneScenes, parseComposer, serializeComposer, serializeSourceForSave, type ComposerItem, type ComposerScene } from './composer-parser'
 import { toast } from 'sonner'
-import { VnStoryPreview, type CharacterSpriteMap, type PreviewAiEvaluation, type PreviewLayout } from './vn-story-preview'
+import { VnStoryPreview, type PreviewAiEvaluation, type PreviewLayout } from './vn-story-preview'
 import { VnLineAudioGenerator } from './vn-line-audio-generator'
 import { type GameCharacter, type GameLocationData, aiGenerateStory, translateStory, generateStoryAudio, generateTeachingMarkdown } from '../api-content-admin'
 import { synthesizeAsset } from '@/lib/tts-api'
@@ -118,47 +118,6 @@ function loadPreviewLayout(): PreviewLayout {
   if (typeof window === 'undefined') return 'portrait'
   const saved = window.localStorage.getItem(PREVIEW_LAYOUT_STORAGE_KEY)
   return saved === 'portrait' || saved === 'landscape' || saved === 'mixed' || saved === 'video' ? saved : 'portrait'
-}
-
-function buildCharacterSpriteData(characters: GameCharacter[]): {
-  sprites: Record<string, CharacterSpriteMap>
-  positions: Record<string, 'left' | 'center' | 'right'>
-  avatars: Record<string, string>
-} {
-  const sprites: Record<string, CharacterSpriteMap> = {}
-  const positions: Record<string, 'left' | 'center' | 'right'> = {}
-  const avatars: Record<string, string> = {}
-
-  for (const char of characters) {
-    const map: CharacterSpriteMap = {}
-    if (char.expressions && typeof char.expressions === 'object') {
-      for (const [name, value] of Object.entries(char.expressions as Record<string, unknown>)) {
-        if (typeof value === 'string') map[name] = value
-        else if (value && typeof value === 'object') {
-          const spriteUrl = (value as { spriteUrl?: unknown }).spriteUrl
-          if (typeof spriteUrl === 'string' && spriteUrl) map[name] = spriteUrl
-        }
-      }
-    }
-    if (!map.default && char.spriteBaseUrl) map.default = char.spriteBaseUrl
-    if (Object.keys(map).length > 0) {
-      sprites[char.name] = map
-      sprites[char.displayName] = map
-    }
-    if (char.avatarUrl) {
-      avatars[char.name] = char.avatarUrl
-      if (char.displayName && char.displayName !== char.name) {
-        avatars[char.displayName] = char.avatarUrl
-      }
-    }
-    const pos = char.defaultPosition as 'left' | 'center' | 'right' | undefined
-    if (pos) {
-      positions[char.name] = pos
-      positions[char.displayName] = pos
-    }
-  }
-
-  return { sprites, positions, avatars }
 }
 
 function itemTitle(item: ComposerItem) {
@@ -267,19 +226,16 @@ export function InkStoryEditor({
     [locationId, locations],
   )
   const defaultSpeaker = defaultCharacter?.name || defaultCharacter?.displayName || 'Alex'
+  /** 表情选项：基于当前选中对白的说话角色，而非全局默认角色 */
   const expressionOptions = useMemo(() => {
     const names = new Set<string>(['default'])
-    const expressions = defaultCharacter?.expressions
+    const character = selectedLineCharacter || defaultCharacter
+    const expressions = character?.expressions
     if (expressions && typeof expressions === 'object') {
       Object.keys(expressions as Record<string, string>).forEach((name) => names.add(name))
     }
     return Array.from(names)
-  }, [defaultCharacter])
-
-  const { sprites: charSprites, positions: charPositions, avatars: charAvatars } = useMemo(
-    () => buildCharacterSpriteData(characters),
-    [characters],
-  )
+  }, [selectedLineCharacter, defaultCharacter])
 
   const sourceWithMeta = useCallback(
     (nextScenes = scenes) => serializeComposer({
@@ -738,12 +694,17 @@ export function InkStoryEditor({
                       disabled={aiGenerating}
                     >
                       <option value="">不限（AI 自行决定）</option>
-                      {characters.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.displayName} ({c.role || 'NPC'})
-                          {c.personality ? ` — ${c.personality}` : ''}
-                        </option>
-                      ))}
+                      {characters.map((c) => {
+                        const exprCount = c.expressions && typeof c.expressions === 'object'
+                          ? Object.keys(c.expressions as object).length
+                          : 0
+                        return (
+                          <option key={c.id} value={c.id}>
+                            {c.displayName} ({c.role || 'NPC'}){exprCount > 0 ? ` · ${exprCount}状态` : ''}
+                            {c.personality ? ` — ${c.personality}` : ''}
+                          </option>
+                        )
+                      })}
                     </select>
                   </div>
 
@@ -953,9 +914,16 @@ export function InkStoryEditor({
                       <Label className="text-xs">角色</Label>
                       <select className="mt-1 h-9 w-full rounded-md border border-border bg-background px-3 text-sm" value={selectedItem.speaker} onChange={(event) => updateSelectedItem({ speaker: event.target.value })} disabled={readOnly}>
                         <option value="">旁白</option>
-                        {characters.map((character) => (
-                          <option key={character.id} value={character.name || character.displayName}>{character.displayName}</option>
-                        ))}
+                        {characters.map((character) => {
+                          const exprCount = character.expressions && typeof character.expressions === 'object'
+                            ? Object.keys(character.expressions as object).length
+                            : 0
+                          return (
+                            <option key={character.id} value={character.name || character.displayName}>
+                              {character.displayName}{exprCount > 0 ? ` · ${exprCount} 状态` : ''}
+                            </option>
+                          )
+                        })}
                       </select>
                     </div>
                     <div>
@@ -963,6 +931,11 @@ export function InkStoryEditor({
                       <select className="mt-1 h-9 w-full rounded-md border border-border bg-background px-3 text-sm" value={selectedItem.expression} onChange={(event) => updateSelectedItem({ expression: event.target.value })} disabled={readOnly}>
                         {expressionOptions.map((expression) => <option key={expression} value={expression}>{expression}</option>)}
                       </select>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        {selectedLineCharacter
+                          ? `「${selectedLineCharacter.displayName}」已配置 ${expressionOptions.length - 1} 个自定义状态`
+                          : '选择角色后显示该角色的表情状态'}
+                      </p>
                     </div>
                     <div>
                       <Label className="text-xs">对白</Label>
@@ -1279,9 +1252,7 @@ export function InkStoryEditor({
               </div>
               <VnStoryPreview
                 inkSource={sourceWithMeta()}
-                characterSprites={charSprites}
-                characterAvatars={charAvatars}
-                characterPositions={charPositions}
+                characters={characters}
                 defaultBackgroundUrl={previewBackgroundUrl}
                 previewLayout={previewLayout}
                 aiEvaluationEnabled={previewAiEnabled}

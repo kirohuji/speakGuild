@@ -3,7 +3,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
 
 @Injectable()
 export class AdminTasksService {
@@ -80,6 +80,41 @@ export class AdminTasksService {
       });
       await this.log(task.id, 'warn', reason, { step: 'canceled' });
     }
+  }
+
+  async enqueueNarrativeVideo(userId: string, frames: unknown[]) {
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: NARRATIVE_VIDEO_RENDER_JOB,
+        title: '生成叙事视频预览',
+        targetType: 'narrative_video',
+        targetId: userId,
+        createdById: userId,
+        totalItems: frames.length,
+        payload: { userId, frames } as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.videoQueue.add(NARRATIVE_VIDEO_RENDER_JOB, { taskId: task.id, userId, frames });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', '叙事视频任务已加入 Redis 队列', { step: 'queued' });
+    return task;
+  }
+
+  async getNarrativeVideoTask(taskId: string) {
+    const task = await this.prisma.adminTask.findUnique({
+      where: { id: taskId },
+      select: {
+        id: true,
+        status: true,
+        progress: true,
+        currentStep: true,
+        errorMessage: true,
+        summary: true,
+        finishedAt: true,
+      },
+    });
+    if (!task) throw new NotFoundException('任务不存在');
+    return task;
   }
 
   async isCanceled(taskId: string) {

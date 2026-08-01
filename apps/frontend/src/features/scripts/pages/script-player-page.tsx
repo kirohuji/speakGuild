@@ -15,6 +15,12 @@ import { flattenComposerToTimeline } from '@/features/admin/components/vn-mixed-
 import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
 import { requestScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
+import {
+  parseVnTags,
+  isBackgroundFit,
+  isSpritePosition,
+  characterMatchesSpeaker,
+} from '@/features/practice/lib/practice-session-utils'
 
 export function ScriptPlayerPage() {
   const { episodeId } = useParams()
@@ -105,17 +111,102 @@ function InkEpisodePlayer({
   const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
   const startedAt = useRef(Date.now())
   const story = useInkStory(data.inkScript.inkJson)
+  const { currentTags } = story
+
+  // 跟踪是否刚提交了用户输入（用于在 currentLine 中优先展示用户输入）
+  const userInputJustSubmittedRef = useRef(false)
+
+  // ── VN 视觉状态（与练习 VN 相同逻辑）──
+  const [vnVisual, setVnVisual] = useState<{
+    backgroundUrl?: string
+    backgroundFit?: 'cover' | 'contain' | 'stretch' | 'repeat'
+    speaker?: string
+    expression?: string
+    position?: 'left' | 'center' | 'right'
+  }>({
+    backgroundUrl: data.scene?.backgroundUrl ?? undefined,
+    backgroundFit: 'cover',
+  })
+
+  useEffect(() => {
+    const tags = currentTags
+    if (tags.length === 0) return
+    const parsed = parseVnTags(tags)
+    setVnVisual((prev) => {
+      const next = {
+        backgroundUrl: parsed.bg || prev.backgroundUrl || (data.scene?.backgroundUrl ?? undefined),
+        backgroundFit: isBackgroundFit(parsed.bgFit) ? parsed.bgFit : prev.backgroundFit,
+        speaker: prev.speaker,
+        expression: prev.expression,
+        position: prev.position,
+      }
+      // isWaiting 时 tags 属于 pending 行，不更新立绘状态
+      if (!story.isWaiting) {
+        next.speaker = parsed.speaker || prev.speaker
+        next.expression = parsed.expression || prev.expression || 'default'
+        next.position = isSpritePosition(parsed.position) ? parsed.position : prev.position
+      }
+      return next
+    })
+  }, [currentTags, data.scene?.backgroundUrl, story.isWaiting])
+
   const inkLines = useMemo<VnPlayerLine[]>(
     () => story.lines.map((line) => ({ speaker: line.speaker, text: line.text })),
     [story.lines],
   )
-  const combined = useMemo(() => [...inkLines, ...userTurns], [inkLines, userTurns])
+
+  // inkLines 变化时（advanceStory 推进了剧情），清除「刚提交」标记
+  useEffect(() => {
+    userInputJustSubmittedRef.current = false
+  }, [inkLines])
+  const combined = useMemo(() => {
+    const result: VnPlayerLine[] = []
+    const maxLen = Math.max(inkLines.length, userTurns.length)
+    for (let i = 0; i < maxLen; i++) {
+      if (i < inkLines.length) result.push(inkLines[i])
+      if (i < userTurns.length) result.push(userTurns[i])
+    }
+    return result
+  }, [inkLines, userTurns])
   const dialogueSnapshot = useMemo(
     () => combined.map(({ speaker, text, isUser }) => ({ speaker, text, isUser })),
     [combined],
   )
-  const currentLine = combined.at(-1) ?? null
-  const history = combined.slice(0, -1)
+  // 刚提交用户输入时，优先展示用户输入；否则展示最后一条 NPC 线
+  const currentLine = useMemo(() => {
+    if (userInputJustSubmittedRef.current) return combined.at(-1) ?? null
+    // 普通模式：找最后一条非用户线
+    for (let i = combined.length - 1; i >= 0; i--) {
+      if (!combined[i].isUser) return combined[i]
+    }
+    return combined.at(-1) ?? null
+  }, [combined])
+  const history = useMemo(
+    () => combined.filter((line) => line !== currentLine),
+    [combined, currentLine],
+  )
+
+  // ── 角色与立绘解析（与练习 VN 相同逻辑）──
+  const characters = useMemo(() => data.scene?.characters ?? [], [data.scene?.characters])
+  const currentCharacter = useMemo(() => {
+    const speaker = vnVisual.speaker || (currentLine?.speaker && !currentLine.isUser ? currentLine.speaker : undefined)
+    return characters.find((c) => characterMatchesSpeaker(c as any, speaker))
+      || (characters.length === 1 ? characters[0] : undefined)
+  }, [characters, vnVisual.speaker, currentLine])
+
+  const expressionMap = useMemo(() => {
+    if (!currentCharacter?.expressions || typeof currentCharacter.expressions !== 'object') return {}
+    return currentCharacter.expressions as Record<string, string | { spriteUrl?: string; avatarUrl?: string }>
+  }, [currentCharacter?.expressions])
+
+  const currentState = vnVisual.expression ? expressionMap[vnVisual.expression] : expressionMap['default']
+  const stateSpriteUrl = typeof currentState === 'string' ? currentState : (currentState as any)?.spriteUrl
+  const stateAvatarUrl = typeof currentState === 'object' ? (currentState as any)?.avatarUrl : undefined
+  const currentSpriteUrl = currentCharacter
+    ? stateSpriteUrl || currentCharacter.spriteBaseUrl || undefined
+    : undefined
+  const spritePosition = (vnVisual.position || currentCharacter?.defaultPosition || 'center') as 'left' | 'center' | 'right'
+
   const repeatFrames = useMemo(() => {
     if (!data.inkScript.inkSource) return []
     const characterSprites: Record<string, Record<string, string>> = {}
@@ -208,8 +299,9 @@ function InkEpisodePlayer({
     const value = text.trim()
     if (!value) return
     setUserTurns((current) => [...current, { speaker: '我', text: value, isUser: true }])
+    userInputJustSubmittedRef.current = true
     story.resumeAfterInput(value)
-    story.advanceStory()
+    // 不调 advanceStory — 让用户点「继续」后再推进，先展示输入内容
   }
 
   const completeRepeat = async ({ recordedCount, totalCount }: { recordedCount: number; totalCount: number }) => {
@@ -318,6 +410,14 @@ function InkEpisodePlayer({
         className="h-full max-w-none rounded-none border-none"
         stageClassName="min-h-0"
         hideChatTopBar
+        showUserInputOverride
+        backgroundUrl={vnVisual.backgroundUrl || (data.scene?.backgroundUrl ?? undefined)}
+        backgroundFit={vnVisual.backgroundFit}
+        currentSpriteUrl={currentSpriteUrl}
+        spriteAlt={currentCharacter?.displayName || currentCharacter?.name}
+        spritePosition={spritePosition}
+        currentAvatarUrl={stateAvatarUrl || (currentCharacter as any)?.avatarUrl || undefined}
+        currentAvatarAlt={currentCharacter?.displayName || currentCharacter?.name}
         onDisplayModeChange={(displayMode) => setIsChatMode(displayMode === 'chat')}
         endedActions={(
           <div className="flex flex-col items-center gap-3">

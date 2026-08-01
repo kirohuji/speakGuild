@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Player, type PlayerRef } from '@remotion/player'
-import html2canvas from 'html2canvas'
 import { Film, Maximize2, Mic, Pause, Play, Settings, ArrowLeft, Clapperboard, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
+import { post, get } from '@/lib/request'
 import {
   FollowReadDrawer,
   mixedFrameDisplayText,
@@ -30,20 +30,8 @@ function canFollowFrame(frame?: MixedTimelineFrame | null) {
   return Boolean(frame && frame.kind !== 'missingInput' && frame.text)
 }
 
-const MP4_MIME_TYPES = [
-  'video/mp4;codecs="avc1.42E01E,mp4a.40.2"',
-  'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
-  'video/mp4',
-]
-
-function pickMp4MimeType() {
-  if (typeof MediaRecorder === 'undefined') return ''
-  return MP4_MIME_TYPES.find((type) => MediaRecorder.isTypeSupported(type)) ?? ''
-}
-
-function wait(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms))
-}
+const POLL_INTERVAL_MS = 3000;
+const POLL_MAX_ATTEMPTS = 1200;
 
 export function NqtrVideoPreviewPlayer({
   frames,
@@ -52,7 +40,6 @@ export function NqtrVideoPreviewPlayer({
   className,
 }: NqtrVideoPreviewPlayerProps) {
   const playerRef = useRef<PlayerRef>(null)
-  const videoSurfaceRef = useRef<HTMLDivElement | null>(null)
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({})
   const recordingAudioRef = useRef<HTMLAudioElement | null>(null)
   const recordingUrlsRef = useRef<Record<number, string>>({})
@@ -76,93 +63,69 @@ export function NqtrVideoPreviewPlayer({
   )
 
   const generateWork = useCallback(async () => {
-    const surface = videoSurfaceRef.current
-    const player = playerRef.current
-    if (!surface || !player) return
-
-    const mimeType = pickMp4MimeType()
-    if (!mimeType) {
-      toast.error('当前浏览器不支持直接导出 MP4，请后续使用服务端 Remotion 导出')
+    if (!timeline.frames.length) {
+      toast.error('没有可导出的帧')
       return
     }
 
     setIsGenerating(true)
-    player.pause()
+    playerRef.current?.pause()
     setPlaying(false)
-    try {
-      const canvas = document.createElement('canvas')
-      canvas.width = timeline.width
-      canvas.height = timeline.height
-      const canvasCtx = canvas.getContext('2d')
-      if (!canvasCtx) throw new Error('Canvas unavailable')
 
-      const audioCtx = new AudioContext()
-      const audioDestination = audioCtx.createMediaStreamDestination()
-      const audioBuffers: Array<{ frame: typeof timeline.frames[number]; buffer: AudioBuffer }> = []
-      const audioFrames = timeline.frames.filter((frame) => frame.resolvedAudioUrl)
-      for (const frame of audioFrames) {
-        if (!frame.resolvedAudioUrl) continue
-        try {
-          const response = await fetch(frame.resolvedAudioUrl)
-          const arrayBuffer = await response.arrayBuffer()
-          const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
-          audioBuffers.push({ frame, buffer: audioBuffer })
-        } catch {
-          console.warn('Failed to load audio for frame', frame.index)
+    try {
+      // 1. 提交后端渲染任务
+      const { taskId } = await post<{ taskId: string }>('/admin/narrative-video/render', {
+        frames: timeline.frames as unknown as Record<string, unknown>[],
+      })
+
+      toast.info('视频渲染任务已提交，正在排队...')
+
+      // 2. 轮询任务状态
+      for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS))
+
+        const result = await get<{
+          taskId: string
+          status: string
+          progress: number
+          currentStep: string | null
+          errorMessage: string | null
+          videoUrl?: string
+        }>(`/admin/narrative-video/render/${taskId}/status`)
+
+        if (result.status === 'completed' && result.videoUrl) {
+          // 3. 下载视频
+          const response = await fetch(result.videoUrl)
+          const blob = await response.blob()
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `narrative-video-${Date.now()}.mp4`
+          a.click()
+          URL.revokeObjectURL(url)
+          toast.success('视频已生成并下载')
+          return
+        }
+
+        if (result.status === 'failed') {
+          throw new Error(result.errorMessage || '视频生成失败')
+        }
+
+        if (result.status === 'canceled') {
+          toast.error('视频生成任务已被取消')
+          return
+        }
+
+        // 更新进度提示
+        if (attempt % 5 === 0 && result.progress > 0) {
+          toast.info(`视频渲染中... ${result.progress}%`, { id: taskId })
         }
       }
 
-      const videoStream = canvas.captureStream(timeline.fps)
-      const stream = new MediaStream([
-        ...videoStream.getVideoTracks(),
-        ...audioDestination.stream.getAudioTracks(),
-      ])
-      const chunks: BlobPart[] = []
-      const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 })
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunks.push(event.data)
-      }
-
-      const stopped = new Promise<void>((resolve, reject) => {
-        recorder.onstop = () => resolve()
-        recorder.onerror = (event) => reject(('error' in event && event.error instanceof Error) ? event.error : new Error('MediaRecorder failed'))
-      })
-
-      recorder.start()
-      const audioStartTime = audioCtx.currentTime
-      for (const item of audioBuffers) {
-        const source = audioCtx.createBufferSource()
-        source.buffer = item.buffer
-        source.connect(audioDestination)
-        source.start(audioStartTime + item.frame.startSeconds)
-      }
-      for (let frame = 0; frame < timeline.durationInFrames; frame += 1) {
-        player.seekTo(frame)
-        await wait(1000 / timeline.fps)
-        const snapshot = await html2canvas(surface, {
-          backgroundColor: '#090b10',
-          scale: 1,
-          useCORS: true,
-          logging: false,
-        })
-        canvasCtx.drawImage(snapshot, 0, 0, canvas.width, canvas.height)
-      }
-      recorder.stop()
-      await stopped
-      stream.getTracks().forEach((track) => track.stop())
-      await audioCtx.close()
-
-      const blob = new Blob(chunks, { type: mimeType })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `nqtr-work-${Date.now()}.mp4`
-      a.click()
-      URL.revokeObjectURL(url)
-      toast.success('MP4 已生成')
+      throw new Error('视频生成超时，请稍后在任务中心查看')
     } catch (err) {
-      console.error('Generate work failed', err)
-      toast.error('生成失败')
+      console.error('Generate narrative video failed', err)
+      toast.error(err instanceof Error ? err.message : '视频生成失败')
     } finally {
       setIsGenerating(false)
     }
@@ -381,7 +344,7 @@ export function NqtrVideoPreviewPlayer({
 
   return (
     <div className={cn('mx-auto flex h-[78vh] max-h-[760px] w-full max-w-[420px] flex-col overflow-hidden rounded-xl border border-border bg-[#080b11] text-white shadow-sm', className)}>
-      <div ref={videoSurfaceRef} className="relative aspect-video shrink-0 overflow-hidden border-b border-white/10 bg-black">
+      <div className="relative aspect-video shrink-0 overflow-hidden border-b border-white/10 bg-black">
         <Player
           ref={playerRef}
           component={NqtrVideoComposition}

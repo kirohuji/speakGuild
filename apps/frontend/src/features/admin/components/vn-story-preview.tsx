@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
-import { InkEngine } from '@/features/vn-engine/ink-engine'
 import { VnPlayer } from '@/features/vn-engine/vn-player'
+import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { Play, AlertTriangle, CheckCircle2, ChevronDown, Lightbulb, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,21 +17,27 @@ import { parseComposer } from './composer-parser'
 import { flattenComposerToTimeline } from './vn-mixed-timeline'
 import { VnMixedPreviewPlayer } from './vn-mixed-preview-player'
 import { NqtrVideoPreviewPlayer } from './nqtr-video-preview-player'
+import {
+  parseVnTags,
+  characterMatchesSpeaker,
+  isBackgroundFit,
+  isSpritePosition,
+  readListTags,
+  readTagValue,
+} from '@/features/practice/lib/practice-session-utils'
+import type { GameCharacter } from '../api-content-admin'
 
-/** 角色立绘数据：expression name → sprite URL */
-export type CharacterSpriteMap = Record<string, string>
 export type PreviewLayout = 'portrait' | 'landscape' | 'mixed' | 'video'
 
+/** 角色立绘数据：expression name → sprite URL（vn-mixed-timeline 使用） */
+export type CharacterSpriteMap = Record<string, string>
+
 interface VnStoryPreviewProps {
-  /** Ink 源码 */
   inkSource?: string
-  /** 预编译的 Ink JSON（优先于 source） */
   inkJson?: Record<string, any>
-  /** 角色名 → 表情立绘映射 */
-  characterSprites?: Record<string, CharacterSpriteMap>
-  /** 角色名 → 头像 URL */
+  characters?: GameCharacter[]
+  characterSprites?: Record<string, Record<string, string>>
   characterAvatars?: Record<string, string>
-  /** 角色名 → 立绘位置 */
   characterPositions?: Record<string, 'left' | 'center' | 'right'>
   defaultBackgroundUrl?: string
   previewLayout?: PreviewLayout
@@ -72,68 +78,46 @@ export interface PreviewAiEvaluation {
   error?: string
 }
 
-function readPreviewTagValue(tags: string[], prefix: string) {
-  const raw = tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length).trim()
-  if (!raw) return ''
-  try {
-    return decodeURIComponent(raw)
-  } catch {
-    return raw
-  }
-}
-
-function readPreviewListTags(tags: string[], prefix: string) {
-  return tags
-    .filter((tag) => tag.startsWith(prefix))
-    .flatMap((tag) => readPreviewTagValue([tag], prefix).split(/[|,;，；]/))
-    .map((item) => item.trim())
-    .filter(Boolean)
-}
-
 function readPreviewInputNodeId(tags: string[]) {
-  const inputTag = readPreviewTagValue(tags, 'input:') || readPreviewTagValue(tags, 'wait:')
+  const inputTag = readTagValue(tags, 'input:') || readTagValue(tags, 'wait:')
   if (inputTag) return inputTag.match(/(?:^|[;,]\s*)id=([^;,]+)/)?.[1]?.trim() || inputTag
   if (tags.includes('input')) return 'input'
   if (tags.includes('wait')) return 'wait'
   return undefined
 }
 
-/**
- * Visual Novel 故事预览 — 使用 inkjs Compiler + InkEngine
- * 编译 Ink 源码 → JSON → InkEngine 驱动 → VN 渲染
- */
 export function VnStoryPreview({
   inkSource,
   inkJson,
-  characterSprites = {},
-  characterAvatars = {},
-  characterPositions = {},
+  characters = [],
+  characterSprites: _legacySprites,
+  characterAvatars: _legacyAvatars,
+  characterPositions: _legacyPositions,
   defaultBackgroundUrl,
   previewLayout = 'portrait',
   aiEvaluationEnabled = false,
   className,
   onDebugChange,
 }: VnStoryPreviewProps) {
-  const engineRef = useRef<InkEngine | null>(null)
-  const pendingRef = useRef<DialogueLine[] | null>(null)
   const [compileResult, setCompileResult] = useState<CompileResult | null>(null)
-  const [history, setHistory] = useState<DialogueLine[]>([])
-  const [choices, setChoices] = useState<{ index: number; text: string }[]>([])
-  const [isEnded, setIsEnded] = useState(false)
-  const [isWaiting, setIsWaiting] = useState(false)
-  const [isReady, setIsReady] = useState(false)
-  const [currentTags, setCurrentTags] = useState<string[]>([])
-  const [activeBackground, setActiveBackground] = useState<{ url?: string; fit?: string }>({
-    url: defaultBackgroundUrl,
-    fit: 'cover',
-  })
-  const [activePortraitScale, setActivePortraitScale] = useState<number | undefined>(undefined)
+  const [userTurns, setUserTurns] = useState<DialogueLine[]>([])
   const [completionOpen, setCompletionOpen] = useState(false)
   const [aiEvaluations, setAiEvaluations] = useState<PreviewAiEvaluation[]>([])
   const [activeEvaluation, setActiveEvaluation] = useState<PreviewAiEvaluation | null>(null)
   const [activeFrameIndex, setActiveFrameIndex] = useState(0)
+  const userInputJustSubmittedRef = useRef(false)
 
-  // Compile Ink source
+  const [vnVisual, setVnVisual] = useState<{
+    backgroundUrl?: string
+    backgroundFit: 'cover' | 'contain' | 'stretch' | 'repeat'
+    speaker?: string
+    expression?: string
+    position?: 'left' | 'center' | 'right'
+  }>({
+    backgroundUrl: defaultBackgroundUrl,
+    backgroundFit: 'cover',
+  })
+
   useEffect(() => {
     if (inkJson) {
       setCompileResult({ success: true, json: inkJson, errors: [], warnings: [], authorMessages: [] })
@@ -147,233 +131,180 @@ export function VnStoryPreview({
     }
   }, [inkSource, inkJson])
 
+  const compiledJson = useMemo(
+    () => (compileResult?.success && compileResult.json) ? compileResult.json : null,
+    [compileResult],
+  )
+  const story = useInkStory(compiledJson)
+
+  useEffect(() => {
+    setUserTurns([])
+    setCompletionOpen(false)
+    setAiEvaluations([])
+    setActiveEvaluation(null)
+    setVnVisual({
+      backgroundUrl: defaultBackgroundUrl,
+      backgroundFit: 'cover',
+    })
+  }, [compiledJson, defaultBackgroundUrl])
+
+  useEffect(() => {
+    const tags = story.currentTags
+    if (tags.length === 0) return
+    const parsed = parseVnTags(tags)
+    setVnVisual((prev) => {
+      const next = {
+        backgroundUrl: parsed.bg || prev.backgroundUrl || defaultBackgroundUrl || undefined,
+        backgroundFit: isBackgroundFit(parsed.bgFit) ? parsed.bgFit : prev.backgroundFit,
+        speaker: prev.speaker,
+        expression: prev.expression,
+        position: prev.position,
+      }
+      // isWaiting 时 tags 属于 pending 行，不更新立绘状态
+      if (!story.isWaiting) {
+        next.speaker = parsed.speaker || prev.speaker
+        next.expression = parsed.expression || prev.expression || 'default'
+        next.position = isSpritePosition(parsed.position) ? parsed.position : prev.position
+      }
+      return next
+    })
+  }, [story.currentTags, story.isWaiting, defaultBackgroundUrl])
+
+  const inkLines: DialogueLine[] = useMemo(
+    () => story.lines.map((line) => ({
+      speaker: line.speaker || '',
+      text: line.text,
+      translation: parseVnTags(line.tags).translation,
+      audioUrl: parseVnTags(line.tags).audio,
+    })),
+    [story.lines],
+  )
+  // 交错排列：NPC1 → 用户1 → NPC2 → 用户2 → ...
+  const history = useMemo(() => {
+    const result: DialogueLine[] = []
+    const maxLen = Math.max(inkLines.length, userTurns.length)
+    for (let i = 0; i < maxLen; i++) {
+      if (i < inkLines.length) result.push(inkLines[i])
+      if (i < userTurns.length) result.push(userTurns[i])
+    }
+    return result
+  }, [inkLines, userTurns])
+  const isEnded = story.isEnded && inkLines.length > 0
+
+  // 当前展示行：刚提交用户输入时优先展示用户输入；否则找最后一条 NPC 线
+  const displayLine = useMemo(() => {
+    if (isEnded) return null
+    const last = history.at(-1)
+    if (userInputJustSubmittedRef.current) return last ?? null
+    if (last && last.speaker !== 'You') return last
+    for (let i = history.length - 2; i >= 0; i--) {
+      if (history[i].speaker !== 'You') return history[i]
+    }
+    return last ?? null
+  }, [history, isEnded])
+
+  // inkLines 变化时（advanceStory 推进了剧情），清除「刚提交」标记
+  useEffect(() => {
+    userInputJustSubmittedRef.current = false
+  }, [story.lines])
+
+  useEffect(() => {
+    if (isEnded && history.length > 0) setCompletionOpen(true)
+  }, [isEnded, history.length])
+
+  const currentCharacter = useMemo(() => {
+    if (characters.length === 0) return undefined
+    const speaker = vnVisual.speaker || (displayLine && displayLine.speaker !== 'You' ? displayLine.speaker : undefined)
+    return characters.find((c) => characterMatchesSpeaker(c as any, speaker))
+      || (characters.length === 1 ? characters[0] : undefined)
+  }, [characters, vnVisual.speaker, displayLine])
+
+  const expressionMap = useMemo(() => {
+    if (!currentCharacter?.expressions || typeof currentCharacter.expressions !== 'object') return {}
+    return currentCharacter.expressions as Record<string, string | { spriteUrl?: string; avatarUrl?: string }>
+  }, [currentCharacter?.expressions])
+
+  const currentState = vnVisual.expression ? expressionMap[vnVisual.expression] : expressionMap['default']
+  const stateSpriteUrl = typeof currentState === 'string' ? currentState : (currentState as any)?.spriteUrl
+  const stateAvatarUrl = typeof currentState === 'object' ? (currentState as any)?.avatarUrl : undefined
+  const currentSpriteUrl = currentCharacter
+    ? stateSpriteUrl || currentCharacter.spriteBaseUrl || undefined
+    : undefined
+  const legacyPosition = currentCharacter?.name
+    ? (_legacyPositions?.[currentCharacter.name] || _legacyPositions?.[currentCharacter.displayName || ''])
+    : undefined
+  const spritePosition = (vnVisual.position || currentCharacter?.defaultPosition || legacyPosition || 'center') as 'left' | 'center' | 'right'
+
   const mixedFrames = useMemo(() => {
     if ((previewLayout !== 'mixed' && previewLayout !== 'video') || !inkSource) return []
+    const sprites: Record<string, Record<string, string>> = _legacySprites || {}
+    const avatars: Record<string, string> = _legacyAvatars || {}
+    const positions: Record<string, 'left' | 'center' | 'right'> = _legacyPositions || {}
+    if (Object.keys(sprites).length === 0 && characters.length > 0) {
+      for (const char of characters) {
+        const map: Record<string, string> = {}
+        if (char.expressions && typeof char.expressions === 'object') {
+          for (const [name, value] of Object.entries(char.expressions as Record<string, unknown>)) {
+            if (typeof value === 'string') map[name] = value
+            else if (value && typeof value === 'object') {
+              const url = (value as { spriteUrl?: unknown }).spriteUrl
+              if (typeof url === 'string' && url) map[name] = url
+            }
+          }
+        }
+        if (!map.default && char.spriteBaseUrl) map.default = char.spriteBaseUrl
+        if (Object.keys(map).length > 0) {
+          sprites[char.name] = map
+          if (char.displayName) sprites[char.displayName] = map
+        }
+        if (char.avatarUrl) {
+          avatars[char.name] = char.avatarUrl
+          if (char.displayName) avatars[char.displayName] = char.avatarUrl
+        }
+        if (char.defaultPosition) {
+          positions[char.name] = char.defaultPosition as 'left' | 'center' | 'right'
+          if (char.displayName) positions[char.displayName] = char.defaultPosition as 'left' | 'center' | 'right'
+        }
+      }
+    }
     return flattenComposerToTimeline(parseComposer(inkSource), {
-      characterSprites,
-      characterAvatars,
-      characterPositions,
+      characterSprites: sprites,
+      characterAvatars: avatars,
+      characterPositions: positions,
       defaultBackgroundUrl,
     })
-  }, [characterAvatars, characterPositions, characterSprites, defaultBackgroundUrl, inkSource, previewLayout])
+  }, [_legacyAvatars, _legacyPositions, _legacySprites, characters, defaultBackgroundUrl, inkSource, previewLayout])
 
   useEffect(() => {
     setActiveFrameIndex(0)
   }, [mixedFrames.length, previewLayout])
 
-  /** 从 tags 中提取 speaker/expression/bg */
-  const parseTags = useCallback((tags: string[]) => {
-    const decodeTagValue = (value?: string) => {
-      if (!value) return value
-      try {
-        return decodeURIComponent(value)
-      } catch {
-        return value
-      }
-    }
-    const speaker = tags.find((t) => t.startsWith('speaker:'))?.replace('speaker:', '').trim()
-    const expression = tags.find((t) => t.startsWith('expression:'))?.replace('expression:', '').trim()
-    const bg = decodeTagValue(tags.find((t) => t.startsWith('bg:'))?.replace('bg:', '').trim())
-    const bgFit = tags.find((t) => t.startsWith('bgFit:'))?.replace('bgFit:', '').trim()
-    const position = tags.find((t) => t.startsWith('position:'))?.replace('position:', '').trim()
-    const choiceCharacter = tags.find((t) => t.startsWith('choiceCharacter:'))?.replace('choiceCharacter:', '').trim()
-    const translation = decodeTagValue(tags.find((t) => t.startsWith('translation:'))?.replace('translation:', '').trim())
-    const audioUrl = decodeTagValue(tags.find((t) => t.startsWith('audio:'))?.replace('audio:', '').trim())
-    const portraitScaleRaw = tags.find((t) => t.startsWith('portraitScale:'))?.replace('portraitScale:', '').trim()
-    const portraitScale = portraitScaleRaw ? parseFloat(portraitScaleRaw) : undefined
-    return { speaker, expression, bg, bgFit, position, choiceCharacter, translation, audioUrl, portraitScale }
-  }, [])
-
-  /** 解析文本行，提取 "Speaker: text" 格式 */
-  const parseTextLines = useCallback((text: string, fallbackSpeaker?: string, fallbackExpression?: string, fallbackTranslation?: string, fallbackAudioUrl?: string): DialogueLine[] => {
-    return text
-      .split('\n')
-      .filter(Boolean)
-      .map((line) => {
-        const match = line.match(/^([^:：]{1,32})[:：]\s*(.+)/)
-        if (match) {
-          return { speaker: match[1], text: match[2], expression: fallbackExpression, translation: fallbackTranslation, audioUrl: fallbackAudioUrl }
-        }
-        return { speaker: fallbackSpeaker || '', text: line, expression: fallbackExpression, translation: fallbackTranslation, audioUrl: fallbackAudioUrl }
-      })
-  }, [])
-
-  const appendResult = useCallback((engine: InkEngine, result: NonNullable<ReturnType<InkEngine['continue']>>) => {
-    const tags = engine.getCurrentTags()
-    setCurrentTags(tags)
-
-    const waiting = tags.some((tag) => {
-      const n = tag.trim()
-      return n === 'input' || n === 'user_input' || n === 'wait:input' || n === 'wait:user_input' || n.startsWith('input:')
-    })
-    setIsWaiting(waiting)
-
-    if (waiting) {
-      // #input tag is on this line — save it for after user responds
-      if (result.text) {
-        const { speaker, expression, translation, audioUrl } = parseTags(tags)
-        pendingRef.current = parseTextLines(result.text, speaker, expression, translation, audioUrl)
-      }
-      return
-    }
-
-    if (result.hasChoices && result.choices.length > 0) {
-      setChoices(result.choices)
-    } else {
-      setChoices([])
-    }
-
-    const { speaker, expression, bg, bgFit, translation, audioUrl, portraitScale: newPortraitScale } = parseTags(tags)
-    if (bg || bgFit) {
-      setActiveBackground((prev) => ({
-        url: bg || prev.url,
-        fit: bgFit || prev.fit || 'cover',
-      }))
-    }
-    if (newPortraitScale !== undefined) {
-      setActivePortraitScale(newPortraitScale)
-    }
-
-    if (result.text) {
-      const lines = parseTextLines(result.text, speaker, expression, translation, audioUrl)
-      if (audioUrl) console.log('[VnPreview] Line with audio:', result.text.slice(0, 50), 'url:', audioUrl.slice(0, 80))
-      setHistory((prev) => [...prev, ...lines])
-    }
-
-    if (!engine.canContinue && result.choices.length === 0) {
-      setIsEnded(true)
-      setCompletionOpen(true)
-    }
-  }, [parseTags, parseTextLines])
-
-  /**
-   * 持续推进引擎直到获得文本内容或选项（跳过纯标签行）。
-   * 修复场景跳转后首行为标签时"看起来没跳"的问题。
-   */
-  const continueUntilContent = useCallback((engine: InkEngine): NonNullable<ReturnType<InkEngine['continue']>> | null => {
-    let result = engine.continue()
-    if (!result) return null
-
-    // 循环跳过只有标签没有文本的行（如进入新场景后遇到的 # speaker: 等标签）
-    let safety = 0
-    while (!result.text && !result.hasChoices && engine.canContinue && safety < 50) {
-      const tags = engine.getCurrentTags()
-      // 仍然处理背景切换标签
-      const { bg, bgFit } = parseTags(tags)
-      if (bg || bgFit) {
-        setActiveBackground((prev) => ({
-          url: bg || prev.url,
-          fit: bgFit || prev.fit || 'cover',
-        }))
-      }
-      result = engine.continue()
-      if (!result) return null
-      safety++
-    }
-    return result
-  }, [parseTags])
-
-  // Initialize engine with compiled JSON
-  useEffect(() => {
-    engineRef.current?.destroy()
-    engineRef.current = null
-    pendingRef.current = null
-    setIsReady(false)
-    setHistory([])
-    setChoices([])
-    setIsEnded(false)
-    setIsWaiting(false)
-    setCompletionOpen(false)
-    setAiEvaluations([])
-    setActiveEvaluation(null)
-    setActiveBackground({ url: defaultBackgroundUrl, fit: 'cover' })
-
-    if (previewLayout === 'mixed' || previewLayout === 'video') {
-      setIsReady(Boolean(compileResult?.success))
-      return
-    }
-
-    if (!compileResult?.success || !compileResult.json) return
-
-    try {
-      const engine = new InkEngine()
-      engine.load(compileResult.json)
-      engineRef.current = engine
-
-      const result = continueUntilContent(engine)
-      if (result) {
-        appendResult(engine, result)
-      } else {
-        setIsEnded(true)
-      }
-      setIsReady(true)
-    } catch (err) {
-      console.warn('[VnPreview] Init failed:', err)
-    }
-  }, [appendResult, compileResult, continueUntilContent, defaultBackgroundUrl, previewLayout])
-
-  const advanceStory = useCallback(() => {
-    const engine = engineRef.current
-    if (!engine) return
-    setActiveEvaluation(null)
-
-    // Flush pending line first (skipped due to #input tag)
-    if (Array.isArray(pendingRef.current) && pendingRef.current.length > 0) {
-      const pending = pendingRef.current
-      pendingRef.current = null
-      setHistory((prev) => [...prev, ...pending])
-      return
-    }
-
-    const result = continueUntilContent(engine)
-    if (!result) { setIsEnded(true); setCompletionOpen(true); return }
-
-    appendResult(engine, result)
-  }, [appendResult, continueUntilContent])
-
-  const handleChoice = useCallback((choiceIndex: number) => {
-    const engine = engineRef.current
-    if (!engine) return
-    setActiveEvaluation(null)
-
-    const selectedChoice = choices.find((choice) => choice.index === choiceIndex)
-    setHistory((prev) => [...prev, { speaker: 'You', text: selectedChoice?.text || '(selected)' }])
-    engine.choose(choiceIndex)
-    setChoices([])
-    setIsWaiting(false)
-
-    const result = continueUntilContent(engine)
-    if (!result) { setIsEnded(true); setCompletionOpen(true); return }
-
-    appendResult(engine, result)
-  }, [appendResult, continueUntilContent, choices])
-
   const handleInput = useCallback(async (text: string) => {
-    const engine = engineRef.current
-    if (!engine) return
-
-    engine.setVariable('user_last_input', text)
+    const value = text.trim()
+    if (!value) return
 
     if (!aiEvaluationEnabled) {
-      setHistory((prev) => [...prev, { speaker: 'You', text }])
-      setIsWaiting(false)
+      setUserTurns((prev) => [...prev, { speaker: 'You', text: value }])
+      userInputJustSubmittedRef.current = true
+      story.resumeAfterInput(value)
+      // 不调 advanceStory — 用户点「继续」后再推进
       return
     }
 
     const id = Date.now()
-    const objective = readPreviewTagValue(currentTags, 'objective:')
-    const targetChunks = readPreviewListTags(currentTags, 'chunks:')
+    const objective = readTagValue(story.currentTags, 'objective:') || ''
+    const targetChunks = readListTags(story.currentTags, 'chunks:')
     const npcText = [...history].reverse().find((line) => line.speaker !== 'You')?.text ?? ''
-    const loadingEvaluation: PreviewAiEvaluation = { id, userText: text, objective, targetChunks, status: 'loading' }
+    const loadingEvaluation: PreviewAiEvaluation = { id, userText: value, objective, targetChunks, status: 'loading' }
     setActiveEvaluation(loadingEvaluation)
     setAiEvaluations((prev) => [...prev, loadingEvaluation])
 
     try {
       const result = await judgePreviewDialogueTurn({
         topicId: 'admin-preview',
-        inputNodeId: readPreviewInputNodeId(currentTags),
+        inputNodeId: readPreviewInputNodeId(story.currentTags),
         npcText,
-        userText: text,
+        userText: value,
         objectives: objective ? [objective] : undefined,
         targetChunks,
       })
@@ -381,9 +312,11 @@ export function VnStoryPreview({
       setActiveEvaluation(evaluation)
       setAiEvaluations((prev) => prev.map((item) => item.id === id ? evaluation : item))
       if (result.passed) {
-        setHistory((prev) => [...prev, { speaker: 'You', text }])
+        setUserTurns((prev) => [...prev, { speaker: 'You', text: value }])
+        userInputJustSubmittedRef.current = true
+        story.resumeAfterInput(value)
+        // 不调 advanceStory — 用户点「继续」后再推进
       }
-      setIsWaiting(!result.passed)
     } catch (error: any) {
       const evaluation: PreviewAiEvaluation = {
         ...loadingEvaluation,
@@ -392,70 +325,29 @@ export function VnStoryPreview({
       }
       setActiveEvaluation(evaluation)
       setAiEvaluations((prev) => prev.map((item) => item.id === id ? evaluation : item))
-      setIsWaiting(true)
     }
-  }, [aiEvaluationEnabled, currentTags, history])
+  }, [aiEvaluationEnabled, history, story])
 
   const continueDespiteEvaluation = useCallback(() => {
     setActiveEvaluation(null)
-    setIsWaiting(false)
   }, [])
 
   const resetPreview = useCallback(() => {
-    if (!compileResult?.json) return
-    engineRef.current?.destroy()
-    engineRef.current = null
-    pendingRef.current = null
-    setHistory([])
-    setChoices([])
-    setIsEnded(false)
-    setIsWaiting(false)
+    setUserTurns([])
     setCompletionOpen(false)
     setAiEvaluations([])
     setActiveEvaluation(null)
-    setActiveBackground({ url: defaultBackgroundUrl, fit: 'cover' })
-    setActivePortraitScale(undefined)
+    setVnVisual({
+      backgroundUrl: defaultBackgroundUrl,
+      backgroundFit: 'cover',
+    })
+  }, [defaultBackgroundUrl])
 
-    try {
-      const engine = new InkEngine()
-      engine.load(compileResult.json)
-      engineRef.current = engine
-      const result = continueUntilContent(engine)
-      if (result) {
-        appendResult(engine, result)
-      }
-      setIsReady(true)
-    } catch { /* ignore */ }
-  }, [appendResult, compileResult, continueUntilContent, defaultBackgroundUrl])
-
-  // ─── Derive display state ──────────────────────────────────
-
-  const { speaker: currentSpeaker, expression: currentExpression, position, choiceCharacter, portraitScale: currentPortraitScale } = parseTags(currentTags)
-  const portraitScale = currentPortraitScale ?? activePortraitScale
-  const backgroundUrl = activeBackground.url || defaultBackgroundUrl
-
-  const lastLine = history[history.length - 1]
-  const isUserTurn = lastLine?.speaker === 'You'
-
-  const speakerSprites = currentSpeaker ? characterSprites[currentSpeaker] : undefined
-  const currentSpriteUrl = currentExpression
-    ? speakerSprites?.[currentExpression] || speakerSprites?.['default']
-    : speakerSprites?.['default']
-  const currentAvatarUrl = isUserTurn ? undefined : (currentSpeaker ? characterAvatars[currentSpeaker] : undefined)
-  const speakerPosition = currentSpeaker
-    ? (position as 'left' | 'center' | 'right') || characterPositions[currentSpeaker] || 'center'
-    : 'center'
-
-  const hideSpriteForChoices = choices.length > 0 && choiceCharacter === 'hide'
-  const inputGuidance = {
-    objective: readPreviewTagValue(currentTags, 'objective:'),
-    hint: readPreviewTagValue(currentTags, 'hint:'),
-  }
   const aiPayload = useMemo(() => ({
     story: {
       ended: isEnded,
-      currentTags,
-      background: activeBackground,
+      currentTags: story.currentTags,
+      background: { url: vnVisual.backgroundUrl, fit: vnVisual.backgroundFit },
     },
     turns: history.map((line, index) => ({
       round: index + 1,
@@ -469,17 +361,17 @@ export function VnStoryPreview({
     userInputs: history
       .filter((line) => line.speaker === 'You')
       .map((line, index) => ({ inputIndex: index + 1, text: line.text })),
-  }), [activeBackground, currentTags, history, isEnded])
+  }), [history, isEnded, story.currentTags, vnVisual.backgroundFit, vnVisual.backgroundUrl])
 
   useEffect(() => {
     onDebugChange?.({
-      isReady,
-      isWaiting,
+      isReady: Boolean(compiledJson),
+      isWaiting: story.isWaiting,
       isEnded,
-      currentTags,
+      currentTags: story.currentTags,
       history,
-      choices,
-      activeBackground,
+      choices: story.choices,
+      activeBackground: { url: vnVisual.backgroundUrl, fit: vnVisual.backgroundFit },
       aiPayload,
       aiEvaluations,
       previewLayout,
@@ -487,9 +379,7 @@ export function VnStoryPreview({
       activeFrameIndex: previewLayout === 'mixed' || previewLayout === 'video' ? activeFrameIndex : undefined,
       missingDefaultAnswerCount: previewLayout === 'mixed' || previewLayout === 'video' ? mixedFrames.filter((frame) => frame.kind === 'missingInput').length : undefined,
     })
-  }, [activeBackground, activeFrameIndex, aiEvaluations, aiPayload, choices, currentTags, history, isEnded, isReady, isWaiting, mixedFrames, onDebugChange, previewLayout])
-
-  // ─── Render ────────────────────────────────────────────────
+  }, [activeFrameIndex, aiEvaluations, aiPayload, compiledJson, history, isEnded, mixedFrames, onDebugChange, previewLayout, story.choices, story.currentTags, story.isWaiting, vnVisual.backgroundFit, vnVisual.backgroundUrl])
 
   if (compileResult && !compileResult.success) {
     return (
@@ -505,7 +395,7 @@ export function VnStoryPreview({
     )
   }
 
-  if (!isReady && !compileResult) {
+  if (!compiledJson) {
     return (
       <div className={cn('flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-muted/20 p-12', className)}>
         <Play className="size-8 text-muted-foreground/40" />
@@ -513,6 +403,13 @@ export function VnStoryPreview({
       </div>
     )
   }
+
+  const inputGuidance = {
+    objective: readTagValue(story.currentTags, 'objective:'),
+    hint: readTagValue(story.currentTags, 'hint:'),
+  }
+  const backgroundUrl = vnVisual.backgroundUrl || defaultBackgroundUrl
+  const backgroundFit = vnVisual.backgroundFit || 'cover'
 
   return (
     <>
@@ -535,21 +432,21 @@ export function VnStoryPreview({
         className={className}
         frameVariant={previewLayout === 'landscape' ? 'landscape' : 'portrait'}
         backgroundUrl={backgroundUrl}
-        backgroundFit={(activeBackground.fit as 'cover' | 'contain' | 'stretch' | 'repeat') || 'cover'}
-        currentLine={!isEnded ? lastLine : null}
-        history={history}
-        choices={choices}
-        currentSpriteUrl={hideSpriteForChoices ? undefined : currentSpriteUrl}
-        spriteAlt={currentSpeaker}
-        spritePosition={speakerPosition}
-        portraitScale={portraitScale}
-        currentAvatarUrl={currentAvatarUrl}
-        currentAvatarAlt={currentSpeaker}
-        isWaiting={isWaiting}
+        backgroundFit={backgroundFit as 'cover' | 'contain' | 'stretch' | 'repeat'}
+        currentLine={displayLine ? { ...displayLine, isUser: displayLine.speaker === 'You' } : null}
+        history={history.map((line) => ({ ...line, isUser: line.speaker === 'You' }))}
+        choices={story.choices}
+        currentSpriteUrl={currentSpriteUrl}
+        spriteAlt={currentCharacter?.displayName || currentCharacter?.name || vnVisual.speaker}
+        spritePosition={spritePosition}
+        currentAvatarUrl={displayLine?.speaker === 'You' ? undefined : (stateAvatarUrl || currentCharacter?.avatarUrl || undefined)}
+        currentAvatarAlt={displayLine?.speaker === 'You' ? undefined : (currentCharacter?.displayName || currentCharacter?.name)}
+        isWaiting={story.isWaiting}
         isEnded={isEnded}
-        onAdvance={advanceStory}
-        onChoice={handleChoice}
+        onAdvance={story.advanceStory}
+        onChoice={story.handleChoice}
         onSubmitInput={handleInput}
+        showUserInputOverride
         inputGuidance={inputGuidance}
         inputFeedback={aiEvaluationEnabled && activeEvaluation ? (
           <PreviewInputFeedback evaluation={activeEvaluation} onContinue={continueDespiteEvaluation} />
