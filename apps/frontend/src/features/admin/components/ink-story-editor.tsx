@@ -33,6 +33,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
@@ -970,6 +971,20 @@ export function InkStoryEditor({
                         <option value="center">中</option>
                         <option value="right">右</option>
                       </select>
+                      <div>
+                        <Label className="text-xs">立绘大小 ({selectedItem.portraitScale ?? 100}%)</Label>
+                        <div className="mt-1 flex items-center gap-2">
+                          <Slider
+                            value={[selectedItem.portraitScale ?? 100]}
+                            min={30}
+                            max={200}
+                            step={5}
+                            disabled={readOnly}
+                            onValueChange={([val]) => updateSelectedItem({ portraitScale: val })}
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
                       <Textarea value={selectedItem.text} onChange={(event) => updateSelectedItem({ text: event.target.value })} disabled={readOnly} className="mt-1 min-h-32 text-sm" />
                     </div>
                     <div>

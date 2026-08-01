@@ -127,6 +127,7 @@ export function VnStoryPreview({
     url: defaultBackgroundUrl,
     fit: 'cover',
   })
+  const [activePortraitScale, setActivePortraitScale] = useState<number | undefined>(undefined)
   const [completionOpen, setCompletionOpen] = useState(false)
   const [aiEvaluations, setAiEvaluations] = useState<PreviewAiEvaluation[]>([])
   const [activeEvaluation, setActiveEvaluation] = useState<PreviewAiEvaluation | null>(null)
@@ -178,7 +179,9 @@ export function VnStoryPreview({
     const choiceCharacter = tags.find((t) => t.startsWith('choiceCharacter:'))?.replace('choiceCharacter:', '').trim()
     const translation = decodeTagValue(tags.find((t) => t.startsWith('translation:'))?.replace('translation:', '').trim())
     const audioUrl = decodeTagValue(tags.find((t) => t.startsWith('audio:'))?.replace('audio:', '').trim())
-    return { speaker, expression, bg, bgFit, position, choiceCharacter, translation, audioUrl }
+    const portraitScaleRaw = tags.find((t) => t.startsWith('portraitScale:'))?.replace('portraitScale:', '').trim()
+    const portraitScale = portraitScaleRaw ? parseFloat(portraitScaleRaw) : undefined
+    return { speaker, expression, bg, bgFit, position, choiceCharacter, translation, audioUrl, portraitScale }
   }, [])
 
   /** 解析文本行，提取 "Speaker: text" 格式 */
@@ -220,12 +223,15 @@ export function VnStoryPreview({
       setChoices([])
     }
 
-    const { speaker, expression, bg, bgFit, translation, audioUrl } = parseTags(tags)
+    const { speaker, expression, bg, bgFit, translation, audioUrl, portraitScale: newPortraitScale } = parseTags(tags)
     if (bg || bgFit) {
       setActiveBackground((prev) => ({
         url: bg || prev.url,
         fit: bgFit || prev.fit || 'cover',
       }))
+    }
+    if (newPortraitScale !== undefined) {
+      setActivePortraitScale(newPortraitScale)
     }
 
     if (result.text) {
@@ -408,6 +414,7 @@ export function VnStoryPreview({
     setAiEvaluations([])
     setActiveEvaluation(null)
     setActiveBackground({ url: defaultBackgroundUrl, fit: 'cover' })
+    setActivePortraitScale(undefined)
 
     try {
       const engine = new InkEngine()
@@ -423,19 +430,22 @@ export function VnStoryPreview({
 
   // ─── Derive display state ──────────────────────────────────
 
-  const { speaker: currentSpeaker, expression: currentExpression, position, choiceCharacter } = parseTags(currentTags)
+  const { speaker: currentSpeaker, expression: currentExpression, position, choiceCharacter, portraitScale: currentPortraitScale } = parseTags(currentTags)
+  const portraitScale = currentPortraitScale ?? activePortraitScale
   const backgroundUrl = activeBackground.url || defaultBackgroundUrl
+
+  const lastLine = history[history.length - 1]
+  const isUserTurn = lastLine?.speaker === 'You'
 
   const speakerSprites = currentSpeaker ? characterSprites[currentSpeaker] : undefined
   const currentSpriteUrl = currentExpression
     ? speakerSprites?.[currentExpression] || speakerSprites?.['default']
     : speakerSprites?.['default']
-  const currentAvatarUrl = currentSpeaker ? characterAvatars[currentSpeaker] : undefined
+  const currentAvatarUrl = isUserTurn ? undefined : (currentSpeaker ? characterAvatars[currentSpeaker] : undefined)
   const speakerPosition = currentSpeaker
     ? (position as 'left' | 'center' | 'right') || characterPositions[currentSpeaker] || 'center'
     : 'center'
 
-  const lastLine = history[history.length - 1]
   const hideSpriteForChoices = choices.length > 0 && choiceCharacter === 'hide'
   const inputGuidance = {
     objective: readPreviewTagValue(currentTags, 'objective:'),
@@ -532,6 +542,7 @@ export function VnStoryPreview({
         currentSpriteUrl={hideSpriteForChoices ? undefined : currentSpriteUrl}
         spriteAlt={currentSpeaker}
         spritePosition={speakerPosition}
+        portraitScale={portraitScale}
         currentAvatarUrl={currentAvatarUrl}
         currentAvatarAlt={currentSpeaker}
         isWaiting={isWaiting}

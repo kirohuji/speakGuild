@@ -31,3 +31,4 @@ etl/
 test-results
 playwright-report
 packages_backup/
+*.zip

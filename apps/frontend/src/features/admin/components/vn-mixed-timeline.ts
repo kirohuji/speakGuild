@@ -27,6 +27,7 @@ export interface MixedTimelineFrame {
     url?: string
     avatarUrl?: string
   }
+  portraitScale?: number
   choices?: { index: number; text: string; target: string }[]
   hideSpriteForChoices?: boolean
   defaultBranchTarget?: string
@@ -134,6 +135,7 @@ export function flattenComposerToTimeline(scenes: ComposerScene[], options: Flat
           audioUrl: item.audioUrl,
           source: 'ink',
           sprite: resolveSprite(speaker, expression, position, options),
+          portraitScale: item.portraitScale,
         })
         itemIndex += 1
         continue

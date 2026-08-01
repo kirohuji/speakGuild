@@ -1,7 +1,7 @@
 import { extractInkMeta } from './ink-compiler'
 
 export type ComposerItem =
-  | { type: 'line'; speaker: string; expression: string; position: 'left' | 'center' | 'right'; text: string; translation?: string; audioUrl?: string }
+  | { type: 'line'; speaker: string; expression: string; position: 'left' | 'center' | 'right'; text: string; translation?: string; audioUrl?: string; portraitScale?: number }
   | { type: 'choice'; text: string; target: string; showCharacter: boolean }
   | { type: 'background'; url: string; fit: 'cover' | 'contain' | 'stretch' | 'repeat' }
   | { type: 'wait'; requiresInput: boolean; objective?: string; hint?: string; chunks?: string[]; defaultAnswer?: string; defaultAnswerAudioUrl?: string }
@@ -45,6 +45,7 @@ export function parseComposer(source: string): ComposerScene[] {
   let pendingPosition: 'left' | 'center' | 'right' = 'center'
   let pendingTranslation = ''
   let pendingAudioUrl = ''
+  let pendingPortraitScale: number | undefined = undefined
   let pendingChoiceShowCharacter = true
 
   const ensureScene = () => {
@@ -68,6 +69,7 @@ export function parseComposer(source: string): ComposerScene[] {
       pendingPosition = 'center'
       pendingTranslation = ''
       pendingAudioUrl = ''
+      pendingPortraitScale = undefined
       continue
     }
 
@@ -87,6 +89,9 @@ export function parseComposer(source: string): ComposerScene[] {
         pendingAudioUrl = safeDecode(tag.replace(/^audio:/, '').trim())
       } else if (tag.startsWith('translation:')) {
         pendingTranslation = safeDecode(tag.replace(/^translation:/, '').trim())
+      } else if (tag.startsWith('portraitScale:')) {
+        const scale = parseFloat(tag.replace(/^portraitScale:/, '').trim())
+        if (!isNaN(scale)) pendingPortraitScale = scale
       } else if (tag.startsWith('choiceCharacter:')) {
         pendingChoiceShowCharacter = tag.replace(/^choiceCharacter:/, '').trim() !== 'hide'
       } else if (tag.startsWith('bg:')) {
@@ -148,12 +153,14 @@ export function parseComposer(source: string): ComposerScene[] {
       text: spoken?.[2]?.trim() ?? line,
       translation: pendingTranslation,
       audioUrl: pendingAudioUrl,
+      portraitScale: pendingPortraitScale,
     })
     pendingSpeaker = ''
     pendingExpression = 'default'
     pendingPosition = 'center'
     pendingTranslation = ''
     pendingAudioUrl = ''
+    pendingPortraitScale = undefined
   }
 
   if (scenes.length === 0) {
@@ -189,6 +196,7 @@ export function serializeComposer(
         if (item.position) lines.push(`# position:${item.position}`)
         if (item.translation) lines.push(`# translation:${encodeURIComponent(item.translation)}`)
         if (item.audioUrl) lines.push(`# audio:${encodeURIComponent(item.audioUrl)}`)
+        if (item.portraitScale !== undefined && item.portraitScale !== 100) lines.push(`# portraitScale:${item.portraitScale}`)
         lines.push(item.speaker ? `${item.speaker}: ${item.text}` : item.text)
       } else if (item.type === 'choice') {
         lines.push(`# choiceCharacter:${item.showCharacter ? 'show' : 'hide'}`)

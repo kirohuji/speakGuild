@@ -14,6 +14,7 @@ interface PixiVnStageProps {
   stageVariant?: StageVariant
   dialogueOverlay?: boolean
   spriteBottomInset?: number
+  portraitScale?: number
 }
 
 function fitBackground(sprite: Sprite | TilingSprite, width: number, height: number, fit: BackgroundFit) {
@@ -54,7 +55,7 @@ function layoutSprite(
   width: number,
   height: number,
   position: 'left' | 'center' | 'right',
-  options: { stageVariant: StageVariant; dialogueOverlay: boolean; spriteBottomInset: number },
+  options: { stageVariant: StageVariant; dialogueOverlay: boolean; spriteBottomInset: number; portraitScale?: number },
 ) {
   const stageTopInset = options.stageVariant === 'mixed' ? 16 : 58
   const dialogueHeight = options.dialogueOverlay ? getDialogueHeight(height, options.stageVariant) : options.spriteBottomInset
@@ -62,7 +63,8 @@ function layoutSprite(
   const availableHeight = Math.max(height - stageTopInset - dialogueHeight + spriteOverlap, height * 0.5)
   const widthRatio = options.stageVariant === 'mixed' ? 0.62 : options.stageVariant === 'landscape' ? 0.58 : 0.82
   const scale = Math.min(availableHeight / (sprite.texture.height || 1), (width * widthRatio) / (sprite.texture.width || 1))
-  sprite.scale.set(scale)
+  const scaleMultiplier = (options.portraitScale ?? 100) / 100
+  sprite.scale.set(scale * scaleMultiplier)
   sprite.anchor.set(0.5, 1)
   sprite.y = height - dialogueHeight + spriteOverlap
   sprite.x = position === 'center' ? width / 2 : position === 'right' ? width * 0.72 : width * 0.28
@@ -83,6 +85,7 @@ function CssFallbackStage({
   stageVariant = 'portrait',
   dialogueOverlay = true,
   spriteBottomInset = 0,
+  portraitScale,
 }: PixiVnStageProps) {
   const { resolvedTheme } = useTheme()
   const bottomInset = dialogueOverlay
@@ -90,6 +93,7 @@ function CssFallbackStage({
     : `${spriteBottomInset}px`
   const topInset = stageVariant === 'mixed' ? '16px' : '58px'
   const maxWidth = stageVariant === 'mixed' ? '62%' : stageVariant === 'landscape' ? '58%' : '82%'
+  const scalePercent = portraitScale ?? 100
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460]">
@@ -111,7 +115,8 @@ function CssFallbackStage({
             style={{
               maxWidth,
               left: spritePosition === 'center' ? '50%' : spritePosition === 'right' ? '72%' : '28%',
-              transform: 'translateX(-50%)',
+              transform: `translateX(-50%) scale(${scalePercent / 100})`,
+              transformOrigin: 'bottom center',
             }}
           />
         </div>
@@ -129,6 +134,7 @@ export function PixiVnStage({
   stageVariant = 'portrait',
   dialogueOverlay = true,
   spriteBottomInset = 0,
+  portraitScale,
 }: PixiVnStageProps) {
   const { resolvedTheme } = useTheme()
   const hostRef = useRef<HTMLDivElement | null>(null)
@@ -141,6 +147,7 @@ export function PixiVnStage({
   const stageVariantRef = useRef(stageVariant)
   const dialogueOverlayRef = useRef(dialogueOverlay)
   const spriteBottomInsetRef = useRef(spriteBottomInset)
+  const portraitScaleRef = useRef(portraitScale)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
   const layoutRafRef = useRef<number | null>(null)
@@ -161,6 +168,7 @@ export function PixiVnStage({
         stageVariant: stageVariantRef.current,
         dialogueOverlay: dialogueOverlayRef.current,
         spriteBottomInset: spriteBottomInsetRef.current,
+        portraitScale: portraitScaleRef.current,
       })
     }
   }
@@ -366,8 +374,9 @@ export function PixiVnStage({
     stageVariantRef.current = stageVariant
     dialogueOverlayRef.current = dialogueOverlay
     spriteBottomInsetRef.current = spriteBottomInset
+    portraitScaleRef.current = portraitScale
     layout()
-  }, [dialogueOverlay, spriteBottomInset, spritePosition, stageVariant])
+  }, [dialogueOverlay, portraitScale, spriteBottomInset, spritePosition, stageVariant])
 
   if (failed) {
     return (

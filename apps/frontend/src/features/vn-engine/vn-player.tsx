@@ -50,6 +50,7 @@ interface VnPlayerProps {
   currentSpriteUrl?: string
   spriteAlt?: string
   spritePosition?: 'left' | 'center' | 'right'
+  portraitScale?: number
   currentAvatarUrl?: string
   currentAvatarAlt?: string
   isWaiting?: boolean
@@ -146,6 +147,7 @@ export function VnPlayer({
   choices = [],
   currentSpriteUrl,
   spritePosition = 'left',
+  portraitScale,
   currentAvatarUrl,
   currentAvatarAlt,
   isWaiting = false,
@@ -429,7 +431,7 @@ export function VnPlayer({
           }
         }}
       >
-        <PixiVnStage backgroundUrl={cachedBackgroundUrl} backgroundFit={backgroundFit} spriteUrl={cachedSpriteUrl} spritePosition={spritePosition} stageVariant={frameVariant} />
+        <PixiVnStage backgroundUrl={cachedBackgroundUrl} backgroundFit={backgroundFit} spriteUrl={cachedSpriteUrl} spritePosition={spritePosition} portraitScale={portraitScale} stageVariant={frameVariant} />
         {onReset && (
           <div className="absolute right-3 top-3 z-30 flex gap-2">
             <span

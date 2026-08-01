@@ -286,6 +286,7 @@ export function VnMixedPreviewPlayer({
           stageVariant="mixed"
           dialogueOverlay={false}
           spriteBottomInset={8}
+          portraitScale={activeFrame.portraitScale}
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/78 via-black/34 to-transparent px-4 pb-3 pt-10">
           <div className="flex items-end justify-between gap-3">
