@@ -341,10 +341,14 @@ export function AdminTasksPage() {
                 <SummaryPanel task={selected} />
 
                 <div className="flex flex-wrap gap-2">
-                  {(selected.status === 'failed' || selectedErrors.length > 0) && (
+                  {(selected.status === 'failed' || selected.status === 'canceled' || selectedErrors.length > 0) && (
                     <Button variant="outline" size="sm" onClick={() => void retry(selected)}>
                       <RotateCcw className="mr-1 size-4" />
-                      {selectedErrors.length > 0 ? '重试失败项' : '重试任务'}
+                      {selected.status === 'canceled'
+                        ? '重新执行'
+                        : selectedErrors.length > 0
+                          ? '重试失败项'
+                          : '重试任务'}
                     </Button>
                   )}
                   {(selected.status === 'queued' || selected.status === 'running') && (

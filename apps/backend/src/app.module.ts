@@ -33,6 +33,7 @@ import { LlmModule } from './common/llm/llm.module';
 import { AiModelModule } from './modules/ai-model/ai-model.module';
 import { HealthModule } from './modules/health/health.module';
 import { ScriptCommunityModule } from './modules/script-community/script-community.module';
+import { AdminTasksModule } from './modules/admin-tasks/admin-tasks.module';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { ScriptCommunityModule } from './modules/script-community/script-communi
     SyncModule,
     HealthModule,
     ScriptCommunityModule,
+    AdminTasksModule,
   ],
   providers: [
     {

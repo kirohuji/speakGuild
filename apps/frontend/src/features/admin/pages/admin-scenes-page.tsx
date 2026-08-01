@@ -1796,7 +1796,7 @@ export function AdminScenesPage() {
                             }}>
                             {exportingId === s.id ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
                           </Button>
-                          <Button size="icon" variant="ghost" className="size-8" title="后台准备内容"
+                          <Button size="icon" variant="ghost" className="size-8" title="发送到任务中心执行内容准备"
                             disabled={updatingId === s.id}
                             onClick={async (e) => {
                               e.stopPropagation()
@@ -1804,7 +1804,9 @@ export function AdminScenesPage() {
                               try {
                                 const result = await packageDataAdminApi.prepareContent(s.id)
                                 notifyContentTask(result.taskId)
-                                navigate('/admin/tasks')
+                                toast.success('已发送到任务中心', {
+                                  action: { label: '查看', onClick: () => navigate('/admin/tasks') },
+                                })
                               } catch (err: any) {
                                 toast.error(err?.response?.data?.message || err?.message || '任务创建失败')
                               } finally {
