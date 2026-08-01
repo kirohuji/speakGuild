@@ -58,15 +58,42 @@ function decodeTagValue(value?: string) {
   }
 }
 
-export function parseVnTags(tags: string[]) {
+export function parseVnTags(tags: string[], assetMap?: Record<string, { fileAssetId?: string; signedUrl?: string | null }>) {
   const speaker = tags.find((t) => t.startsWith('speaker:'))?.replace('speaker:', '').trim()
   const expression = tags.find((t) => t.startsWith('expression:'))?.replace('expression:', '').trim()
-  const audio = decodeTagValue(tags.find((t) => t.startsWith('audio:'))?.replace('audio:', '').trim())
-  const bg = decodeTagValue(tags.find((t) => t.startsWith('bg:'))?.replace('bg:', '').trim())
+  const rawAudio = decodeTagValue(tags.find((t) => t.startsWith('audio:'))?.replace('audio:', '').trim())
+  const rawBg = decodeTagValue(tags.find((t) => t.startsWith('bg:'))?.replace('bg:', '').trim())
   const bgFit = tags.find((t) => t.startsWith('bgFit:'))?.replace('bgFit:', '').trim()
   const position = tags.find((t) => t.startsWith('position:'))?.replace('position:', '').trim()
   const translation = decodeTagValue(tags.find((t) => t.startsWith('translation:'))?.replace('translation:', '').trim())
+
+  // Resolve aliases to signed URLs through assetMap
+  const audio = resolveAssetUrl(rawAudio, assetMap)
+  const bg = resolveAssetUrl(rawBg, assetMap)
+
   return { speaker, expression, audio, bg, bgFit, position, translation }
+}
+
+/**
+ * 如果 value 是别名（非 http/https URL），通过 assetMap 解析为签名 URL。
+ * 如果 assetMap 中没有该别名，返回原始值（fallback，保持旧脚本兼容）。
+ */
+function resolveAssetUrl(
+  value: string | undefined,
+  assetMap?: Record<string, { fileAssetId?: string; signedUrl?: string | null }>,
+): string | undefined {
+  if (!value) return value
+  // 如果已经是完整 URL，直接返回（兼容旧的裸 URL 格式）
+  if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('blob:') || value.startsWith('data:')) {
+    return value
+  }
+  // 尝试从 assetMap 解析别名
+  if (assetMap) {
+    const entry = assetMap[value]
+    if (entry?.signedUrl) return entry.signedUrl
+  }
+  // fallback：返回原始别名（可能在播放端无法使用，但不会崩溃）
+  return value
 }
 
 export function isBackgroundFit(value?: string): value is 'cover' | 'contain' | 'stretch' | 'repeat' {

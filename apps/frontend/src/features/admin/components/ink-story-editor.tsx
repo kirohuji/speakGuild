@@ -45,7 +45,7 @@ import { cloneScenes, parseComposer, serializeComposer, serializeSourceForSave, 
 import { toast } from 'sonner'
 import { VnStoryPreview, type PreviewAiEvaluation, type PreviewLayout } from './vn-story-preview'
 import { VnLineAudioGenerator } from './vn-line-audio-generator'
-import { type GameCharacter, type GameLocationData, aiGenerateStory, translateStory, generateStoryAudio, generateTeachingMarkdown } from '../api-content-admin'
+import { type GameCharacter, type GameLocationData, aiGenerateStory, translateStory, generateStoryAudio, generateTeachingMarkdown, getStoryAssets, addStoryAsset } from '../api-content-admin'
 import { synthesizeAsset } from '@/lib/tts-api'
 
 type Selection =
@@ -178,6 +178,8 @@ export function InkStoryEditor({
   const [autoSaveState, setAutoSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [previewDebug, setPreviewDebug] = useState<VnPreviewDebugState | null>(null)
   const [previewAiEnabled, setPreviewAiEnabled] = useState(false)
+  const [previewAssetMap, setPreviewAssetMap] = useState<Record<string, { fileAssetId?: string; signedUrl?: string | null }>>({})
+  const previewUrlMapRef = useRef<Record<string, string>>({}) // alias → signed URL for inline img preview
   const [previewLayout, setPreviewLayout] = useState<PreviewLayout>(() => loadPreviewLayout())
   const [teachingMarkdown, setTeachingMarkdown] = useState(trainingTopic?.teachingMarkdown ?? '')
   const [teachingSaving, setTeachingSaving] = useState(false)
@@ -197,6 +199,24 @@ export function InkStoryEditor({
   const [title, setTitle] = useState(initialTitle)
   const [locationId, setLocationId] = useState(initialLocationId || '')
   const [characterId, setCharacterId] = useState(initialCharacterId || '')
+
+  // Load assetMap for preview when storyId changes
+  useEffect(() => {
+    if (storyId) {
+      getStoryAssets(storyId)
+        .then((result) => { setPreviewAssetMap(result.assets); previewUrlMapRef.current = {}; for (const [alias, entry] of Object.entries(result.assets)) { if (entry.signedUrl) previewUrlMapRef.current[alias] = entry.signedUrl } })
+        .catch(() => setPreviewAssetMap({}))
+    } else {
+      setPreviewAssetMap({})
+    }
+  }, [storyId])
+
+  /** Resolve alias or URL to a displayable URL for inline img preview */
+  const resolvePreviewUrl = useCallback((value: string | undefined): string | undefined => {
+    if (!value) return value
+    if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('blob:') || value.startsWith('data:')) return value
+    return previewUrlMapRef.current[value] || value
+  }, [])
 
   const scenes = useMemo(() => parseComposer(source), [source])
   const selectedScene = scenes[selection.sceneIndex] ?? scenes[0]
@@ -222,8 +242,8 @@ export function InkStoryEditor({
     ?? selectedLineCharacter?.voiceBindings?.[0]
   const defaultCharacter = selectedCharacter || characters[0]
   const previewBackgroundUrl = useMemo(
-    () => locations.find((location) => location.id === locationId)?.backgroundUrl,
-    [locationId, locations],
+    () => resolvePreviewUrl(locations.find((location) => location.id === locationId)?.backgroundUrl),
+    [locationId, locations, resolvePreviewUrl],
   )
   const defaultSpeaker = defaultCharacter?.name || defaultCharacter?.displayName || 'Alex'
   /** 表情选项：基于当前选中对白的说话角色，而非全局默认角色 */
@@ -339,6 +359,21 @@ export function InkStoryEditor({
       if (item) Object.assign(item, patch)
     })
   }, [selection, updateScenes])
+
+  /** Handle background upload: register in assetMap, use alias in script */
+  const handleBackgroundUploaded = useCallback(async (cosUrl: string, assetId: string) => {
+    if (!storyId) return
+    const alias = `bg_${Date.now().toString(36)}`
+    try {
+      const result = await addStoryAsset(storyId, { alias, fileAssetId: assetId, type: 'image' })
+      const signedUrl = (result.entry as any)?.signedUrl || cosUrl
+      previewUrlMapRef.current[alias] = signedUrl
+      setPreviewAssetMap((prev) => ({ ...prev, [alias]: { fileAssetId: assetId, signedUrl } }))
+      updateSelectedItem({ url: alias })
+    } catch {
+      toast.error('资源注册失败，使用原始 URL')
+    }
+  }, [storyId, updateSelectedItem])
 
   const playDefaultAnswerAudio = useCallback((url?: string) => {
     if (!url) return
@@ -982,6 +1017,17 @@ export function InkStoryEditor({
                       sceneName={selectedScene?.name}
                       lineIndex={selection.type === 'item' ? selection.itemIndex : undefined}
                       onChange={(audioUrl) => updateSelectedItem({ audioUrl })}
+                      onGenerated={async (url, assetId) => {
+                        if (!storyId) return
+                        const alias = `audio_${Date.now().toString(36)}`
+                        try {
+                          const result = await addStoryAsset(storyId, { alias, fileAssetId: assetId, type: 'audio' })
+                          const signedUrl = (result.entry as any)?.signedUrl || url
+                          previewUrlMapRef.current[alias] = signedUrl
+                          setPreviewAssetMap((prev) => ({ ...prev, [alias]: { fileAssetId: assetId, signedUrl } }))
+                          updateSelectedItem({ audioUrl: alias })
+                        } catch { /* keep raw URL */ }
+                      }}
                     />
                   </div>
                 )}
@@ -1031,6 +1077,7 @@ export function InkStoryEditor({
                       <ImageUploadField
                         value={selectedItem.url}
                         onChange={(url) => updateSelectedItem({ url })}
+                        onUploaded={handleBackgroundUploaded}
                         placeholder="点击上传图片到 COS 或粘贴 URL"
                         previewSize="lg"
                         disabled={readOnly}
@@ -1048,7 +1095,7 @@ export function InkStoryEditor({
                     </div>
                     {selectedItem.url && (
                       <div className="aspect-video overflow-hidden rounded-md border border-border bg-muted">
-                        <img src={selectedItem.url} alt="" className="h-full w-full object-cover" />
+                        <img src={resolvePreviewUrl(selectedItem.url)} alt="" className="h-full w-full object-cover" />
                       </div>
                     )}
                   </div>
@@ -1256,6 +1303,7 @@ export function InkStoryEditor({
                 defaultBackgroundUrl={previewBackgroundUrl}
                 previewLayout={previewLayout}
                 aiEvaluationEnabled={previewAiEnabled}
+                assetMap={previewAssetMap}
                 className={cn(
                   'mx-auto',
                   previewLayout === 'landscape'

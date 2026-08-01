@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Patch, Delete,
-  Param, Body, Query, Req, ForbiddenException, BadRequestException,
+  Param, Body, Query, Req, ForbiddenException, BadRequestException, NotFoundException,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -30,6 +30,7 @@ import { TtsService } from '../tts/tts.service';
 import { TtsProvider } from '@prisma/client';
 import { AdminContentAiService } from './admin-content-ai.service';
 import { AiModelService } from '../ai-model/ai-model.service';
+import { FileAssetsService } from '../file-assets/file-assets.service';
 
 @Controller('admin/content')
 export class ContentAdminController {
@@ -40,6 +41,7 @@ export class ContentAdminController {
     private readonly ttsService: TtsService,
     private readonly adminContentAiService: AdminContentAiService,
     private readonly aiModelService: AiModelService,
+    private readonly fileAssetsService: FileAssetsService,
   ) {}
 
   private async requireAdmin(req: Request) {
@@ -1296,6 +1298,116 @@ export class ContentAdminController {
     await this.requireAdmin(req);
     await this.detachInkScript(id);
     return this.prisma.inkScript.delete({ where: { id } });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // STORY ASSET REGISTRY (assetMap CRUD)
+  // ════════════════════════════════════════════════════════════
+
+  /** 获取故事的 assetMap，并附上每个资产的可访问签名 URL */
+  @Get('stories/:id/assets')
+  async getStoryAssets(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    const story = await this.prisma.inkScript.findUnique({
+      where: { id },
+      select: { id: true, assetMap: true },
+    });
+    if (!story) throw new NotFoundException('故事不存在');
+
+    const assetMap = (story.assetMap as Record<string, any>) || {};
+    const resolved: Record<string, any> = {};
+
+    for (const [alias, entry] of Object.entries(assetMap)) {
+      let signedUrl: string | null = null;
+      try {
+        if (entry.fileAssetId) {
+          const result = await this.fileAssetsService.getAssetLongLivedUrl(entry.fileAssetId);
+          signedUrl = result.url;
+        }
+      } catch { /* 签名失败不阻塞 */ }
+      resolved[alias] = { ...entry, signedUrl };
+    }
+
+    return { storyId: id, assets: resolved };
+  }
+
+  /** 添加资产到 assetMap（同时创建 FileReference 增加引用计数） */
+  @Post('stories/:id/assets')
+  async addStoryAsset(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Body() dto: { alias: string; fileAssetId: string; type: 'image' | 'audio' },
+  ) {
+    const session = await this.requireAdmin(req);
+
+    const story = await this.prisma.inkScript.findUnique({
+      where: { id },
+      select: { id: true, assetMap: true },
+    });
+    if (!story) throw new NotFoundException('故事不存在');
+
+    const assetMap = (story.assetMap as Record<string, any>) || {};
+
+    // 如果此别名之前已绑定其他 asset，先清理旧引用
+    const oldEntry = assetMap[dto.alias];
+    if (oldEntry?.fileAssetId && oldEntry.fileAssetId !== dto.fileAssetId) {
+      await this.fileAssetsService.deleteSystemReference(oldEntry.fileAssetId, 'story_asset', `${id}:${dto.alias}`);
+    }
+
+    // 创建新引用
+    await this.fileAssetsService.createSystemReference(dto.fileAssetId, 'story_asset', `${id}:${dto.alias}`);
+
+    // 更新 assetMap
+    const fileAsset = await this.prisma.fileAsset.findUnique({
+      where: { id: dto.fileAssetId },
+      select: { mimeType: true },
+    });
+    assetMap[dto.alias] = {
+      fileAssetId: dto.fileAssetId,
+      type: dto.type,
+      mimeType: fileAsset?.mimeType || 'unknown',
+    };
+
+    await this.prisma.inkScript.update({
+      where: { id },
+      data: { assetMap },
+    });
+
+    return { storyId: id, alias: dto.alias, entry: assetMap[dto.alias] };
+  }
+
+  /** 从 assetMap 移除资产（同时移除 FileReference 减少引用计数） */
+  @Delete('stories/:id/assets/:alias')
+  async removeStoryAsset(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Param('alias') alias: string,
+  ) {
+    await this.requireAdmin(req);
+
+    const story = await this.prisma.inkScript.findUnique({
+      where: { id },
+      select: { id: true, assetMap: true },
+    });
+    if (!story) throw new NotFoundException('故事不存在');
+
+    const assetMap = (story.assetMap as Record<string, any>) || {};
+    const entry = assetMap[alias];
+    if (!entry) throw new NotFoundException(`别名 "${alias}" 不存在`);
+
+    // 移除引用
+    if (entry.fileAssetId) {
+      await this.fileAssetsService.deleteSystemReference(entry.fileAssetId, 'story_asset', `${id}:${alias}`);
+    }
+
+    // 移除 assetMap 条目
+    delete assetMap[alias];
+    await this.prisma.inkScript.update({
+      where: { id },
+      data: { assetMap },
+    });
+
+    return { storyId: id, alias, removed: true };
   }
 
   // ════════════════════════════════════════════════════════════

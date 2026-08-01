@@ -1613,6 +1613,7 @@ model InkScript {
   topicId           String?
   trainingTopic     TrainingTopic? @relation("TopicInkScript")
   declaredVariables Json?
+  assetMap          Json?           /// { [alias]: { fileAssetId, type, mimeType } } — story asset registry
   version           Int            @default(1)
   changelog         String?
   createdAt         DateTime       @default(now())

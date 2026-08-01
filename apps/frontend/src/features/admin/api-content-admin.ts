@@ -820,3 +820,96 @@ export function deleteLibraryPattern(id: string): Promise<void> {
 export function listPatternCategories(): Promise<string[]> {
   return get('/admin/content/library/patterns/categories');
 }
+
+// ═══ File Assets 资源库管理 ═══
+
+export interface FileAssetItem {
+  id: string
+  sha256: string
+  bucket: string
+  region: string
+  cosKey: string
+  group: string
+  size: number
+  mimeType: string
+  filename: string
+  refCount: number
+  status: string
+  lastReferencedAt: string | null
+  createdAt: string
+  previewUrl: string | null
+}
+
+export interface FileAssetDetail extends FileAssetItem {
+  references: {
+    id: string
+    bizType: string
+    bizId: string
+    userId: string
+    createdAt: string
+    user: { id: string; name: string; username: string } | null
+  }[]
+}
+
+export interface FileAssetListResponse {
+  items: FileAssetItem[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+export interface FileAssetGroupStat {
+  group: string
+  count: number
+}
+
+export function listFileAssets(params?: {
+  group?: string
+  search?: string
+  page?: number
+  pageSize?: number
+}): Promise<FileAssetListResponse> {
+  return get('/admin/file-assets', params)
+}
+
+export function getFileAssetDetail(id: string): Promise<FileAssetDetail> {
+  return get(`/admin/file-assets/${id}`)
+}
+
+export function deleteFileAsset(id: string, force?: boolean): Promise<{ success: boolean; id: string }> {
+  return _delete(`/admin/file-assets/${id}${force ? '?force=true' : ''}`)
+}
+
+export function getFileAssetGroupStats(): Promise<FileAssetGroupStat[]> {
+  return get('/admin/file-assets/groups')
+}
+
+// ═══ Story Asset Registry (assetMap) ═══
+
+export interface StoryAssetEntry {
+  fileAssetId: string
+  type: 'image' | 'audio'
+  mimeType: string
+  signedUrl?: string | null
+}
+
+export interface StoryAssetMap {
+  storyId: string
+  assets: Record<string, StoryAssetEntry>
+}
+
+export function getStoryAssets(storyId: string): Promise<StoryAssetMap> {
+  return get(`/admin/content/stories/${storyId}/assets`)
+}
+
+export function addStoryAsset(
+  storyId: string,
+  data: { alias: string; fileAssetId: string; type: 'image' | 'audio' },
+): Promise<{ storyId: string; alias: string; entry: StoryAssetEntry }> {
+  return post(`/admin/content/stories/${storyId}/assets`, data)
+}
+
+export function removeStoryAsset(storyId: string, alias: string): Promise<{ storyId: string; alias: string; removed: boolean }> {
+  return _delete(`/admin/content/stories/${storyId}/assets/${alias}`)
+}

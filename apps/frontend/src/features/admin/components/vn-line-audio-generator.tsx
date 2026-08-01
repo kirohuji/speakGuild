@@ -47,6 +47,8 @@ interface VnLineAudioGeneratorProps {
   sceneName?: string
   lineIndex?: number
   onChange: (audioUrl: string) => void
+  /** Called when audio is generated with (url, assetId) for assetMap registration */
+  onGenerated?: (url: string, assetId: string) => void
 }
 
 export function VnLineAudioGenerator({
@@ -61,6 +63,7 @@ export function VnLineAudioGenerator({
   sceneName,
   lineIndex,
   onChange,
+  onGenerated,
 }: VnLineAudioGeneratorProps) {
   const { ttsBackend, setTtsBackend } = usePreferencesStore()
   const [generating, setGenerating] = useState(false)
@@ -149,6 +152,7 @@ export function VnLineAudioGenerator({
         bizId: [storyKey, sceneName, lineIndex ?? 0, text.trim()].filter(Boolean).join(':'),
       })
       onChange(result.url)
+      onGenerated?.(result.url, result.assetId)
     } catch (err: any) {
       setError(err?.message || '生成音频失败')
     } finally {

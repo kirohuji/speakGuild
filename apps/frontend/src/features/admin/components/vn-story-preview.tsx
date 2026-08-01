@@ -58,6 +58,8 @@ interface VnStoryPreviewProps {
     activeFrameIndex?: number
     missingDefaultAnswerCount?: number
   }) => void
+  /** Story assetMap for resolving bg:/audio: aliases to signed URLs */
+  assetMap?: Record<string, { fileAssetId?: string; signedUrl?: string | null }>
 }
 
 interface DialogueLine {
@@ -98,6 +100,7 @@ export function VnStoryPreview({
   aiEvaluationEnabled = false,
   className,
   onDebugChange,
+  assetMap,
 }: VnStoryPreviewProps) {
   const [compileResult, setCompileResult] = useState<CompileResult | null>(null)
   const [userTurns, setUserTurns] = useState<DialogueLine[]>([])
@@ -151,7 +154,7 @@ export function VnStoryPreview({
   useEffect(() => {
     const tags = story.currentTags
     if (tags.length === 0) return
-    const parsed = parseVnTags(tags)
+    const parsed = parseVnTags(tags, assetMap)
     setVnVisual((prev) => {
       const next = {
         backgroundUrl: parsed.bg || prev.backgroundUrl || defaultBackgroundUrl || undefined,
@@ -174,10 +177,10 @@ export function VnStoryPreview({
     () => story.lines.map((line) => ({
       speaker: line.speaker || '',
       text: line.text,
-      translation: parseVnTags(line.tags).translation,
-      audioUrl: parseVnTags(line.tags).audio,
+      translation: parseVnTags(line.tags, assetMap).translation,
+      audioUrl: parseVnTags(line.tags, assetMap).audio,
     })),
-    [story.lines],
+    [story.lines, assetMap],
   )
   // 交错排列：NPC1 → 用户1 → NPC2 → 用户2 → ...
   const history = useMemo(() => {
