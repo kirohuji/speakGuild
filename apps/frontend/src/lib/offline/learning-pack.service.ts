@@ -65,8 +65,9 @@ function isInstallAsset(asset?: AssetRef | null) {
 
 function collectUnitAssets(unitDetail: any): AssetRef[] {
   const assets: AssetRef[] = []
-  // Scene background
+  // Scene background + cover
   pushUrlAsset(assets, unitDetail?.scene?.backgroundUrl, 'background')
+  pushUrlAsset(assets, unitDetail?.scene?.coverImage, 'cover')
   // Characters (sprites + avatars)
   for (const character of unitDetail?.scene?.characters ?? []) {
     pushUrlAsset(assets, character.avatarUrl, 'thumbnail')

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { cn } from '@/lib/cn'
 import type { LucideIcon } from 'lucide-react'
 import type { LearningUnitSummary } from '../api/learning-api'
@@ -9,6 +10,9 @@ interface Props {
 }
 
 export function UnitCover({ unit, icon: Icon, className }: Props) {
+  const [imgFailed, setImgFailed] = useState(false)
+  const showCover = unit.coverImage && !imgFailed
+
   return (
     <div
       className={cn(
@@ -17,8 +21,20 @@ export function UnitCover({ unit, icon: Icon, className }: Props) {
         className,
       )}
     >
-      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
-      <Icon className="relative size-7" />
+      {showCover ? (
+        <img
+          src={unit.coverImage!}
+          alt={unit.title}
+          className="absolute inset-0 size-full object-cover"
+          loading="lazy"
+          onError={() => setImgFailed(true)}
+        />
+      ) : (
+        <>
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
+          <Icon className="relative size-7" />
+        </>
+      )}
     </div>
   )
 }

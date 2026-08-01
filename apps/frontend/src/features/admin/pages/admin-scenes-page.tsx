@@ -22,6 +22,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { MarkdownEditor } from '@/components/common/markdown-editor'
+import { FileUploadField } from '@/features/admin/components/file-upload-field'
 import {
   lookupWord, getBestPhonetic, getFirstAudio,
   type DictEntry,
@@ -267,6 +268,18 @@ function SceneDialog({
               height={160}
               preview="edit"
               placeholder="这个学习包面向什么任务、用户会遇到什么情境..."
+            />
+          </div>
+          <div>
+            <Label>封面图片</Label>
+            <FileUploadField
+              value={form.coverImage ?? ''}
+              onChange={(url) => setForm({ ...form, coverImage: url })}
+              accept="image/*"
+              uploadLabel="上传封面"
+              placeholder="输入封面图片 URL 或点击上传"
+              previewSize="lg"
+              group="scene_cover"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">

@@ -419,6 +419,7 @@ export class LearningService {
         title: scene.title,
         location: scene.location,
         description: scene.description,
+        coverImage: scene.coverImage,
         categoryId: scene.category.id,
         categoryName: scene.category.name,
         categoryIcon: scene.category.icon,
@@ -542,6 +543,7 @@ export class LearningService {
         title: scene.title,
         location: scene.location,
         description: scene.description,
+        coverImage: scene.coverImage,
         categoryName: scene.category.name,
         topics: scene.trainingTopics.map((t) => ({
           id: t.id,
@@ -888,6 +890,7 @@ export class LearningService {
       title: scene.title,
       location: scene.location,
       description: scene.description,
+      coverImage: scene.coverImage,
       category: scene.category.name,
       requiredOutputLevel: scene.requiredOutputLevel,
       requiredUserLevel: scene.requiredUserLevel,
@@ -1119,6 +1122,7 @@ export class LearningService {
       id: unitDetail.id,
       title: unitDetail.title,
       location: unitDetail.location,
+      coverImage: unitDetail.coverImage,
       category: unitDetail.category,
       backgroundUrl: gameLocation?.backgroundUrl ?? null,
       characters: sceneCharacters.map((c) => ({
@@ -1158,6 +1162,7 @@ export class LearningService {
     this.pushAsset(assets, gameLocation?.backgroundUrl, 'background');
     this.pushAsset(assets, gameLocation?.bgmUrl, 'bgm');
     this.pushAsset(assets, gameLocation?.ambientUrl, 'sfx');
+    this.pushAsset(assets, unitDetail.coverImage, 'cover');
     for (const character of sceneCharacters) {
       this.pushAsset(assets, character.avatarUrl, 'thumbnail');
       this.pushAsset(assets, character.spriteBaseUrl, 'sprite');

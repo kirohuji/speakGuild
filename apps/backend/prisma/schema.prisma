@@ -420,6 +420,7 @@ enum FileAssetGroup {
   learning_pack
   learning_pack_delta
   user_recording
+  scene_cover
 }
 
 enum FileAssetStatus {
@@ -678,6 +679,7 @@ model Scene {
   requiredOutputLevel String              @default("L1")
   requiredUserLevel   Int                 @default(1)
   isFree              Boolean             @default(false) // 免费用户可访问
+  coverImage          String?                                // 学习包封面图 URL
   prerequisiteScenes  ScenePrerequisite[] @relation("Scene")
   prerequisiteFor     ScenePrerequisite[] @relation("Prerequisite")
   trainingTopics      TrainingTopic[]

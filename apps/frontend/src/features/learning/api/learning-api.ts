@@ -19,6 +19,7 @@ export interface LearningUnitSummary {
   title: string
   location: string
   description?: string | null
+  coverImage?: string | null
   categoryId?: string
   categoryName?: string
   categoryIcon?: string | null
@@ -117,6 +118,7 @@ export interface UnitDetail {
   title: string
   location: string
   description: string | null
+  coverImage?: string | null
   category: string
   requiredOutputLevel: string
   requiredUserLevel: number
@@ -220,6 +222,7 @@ export interface MyUnit {
   title: string
   location: string
   description?: string | null
+  coverImage?: string | null
   categoryName: string
   topics: TopicSummary[]
   vocabCount: number

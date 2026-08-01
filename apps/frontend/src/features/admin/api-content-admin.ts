@@ -85,6 +85,7 @@ export interface Scene {
   title: string
   location: string
   description: string | null
+  coverImage?: string | null
   requiredOutputLevel: string
   requiredUserLevel: number
   isFree: boolean

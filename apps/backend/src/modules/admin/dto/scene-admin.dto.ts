@@ -59,6 +59,10 @@ export class CreateSceneDto {
   @IsOptional()
   @IsBoolean()
   isFree?: boolean;
+
+  @IsOptional()
+  @IsString()
+  coverImage?: string;
 }
 
 export class UpdateSceneDto {
@@ -94,6 +98,10 @@ export class UpdateSceneDto {
   @IsOptional()
   @IsBoolean()
   isFree?: boolean;
+
+  @IsOptional()
+  @IsString()
+  coverImage?: string;
 }
 
 export class CreateVocabularyDto {

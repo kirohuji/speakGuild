@@ -140,7 +140,9 @@ function InProgressUnitCard({
   const { t } = useTranslation()
   const [confirmQuit, setConfirmQuit] = useState(false)
   const [quitting, setQuitting] = useState(false)
+  const [imgFailed, setImgFailed] = useState(false)
   const Icon = getCategoryIcon(unit.categoryName)
+  const showCover = unit.coverImage && !imgFailed
   const needsDownload = !isPackDownloaded
   const pct = Math.max(0, Math.min(100, unit.completionPercent ?? 0))
   const completedPracticeCount = unit.progress?.completedPracticeCount ?? 0
@@ -211,8 +213,14 @@ function InProgressUnitCard({
           )}
         >
           <div className="relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
-            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
-            <Icon className="relative size-7" />
+            {showCover ? (
+              <img src={unit.coverImage!} alt={unit.title} className="absolute inset-0 size-full object-cover" loading="lazy" onError={() => setImgFailed(true)} />
+            ) : (
+              <>
+                <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
+                <Icon className="relative size-7" />
+              </>
+            )}
           </div>
 
           <div className="min-w-0 flex-1">
@@ -318,6 +326,8 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
   const Icon = isCompleted ? CheckCircle2 : getCategoryIcon(unit.categoryName)
   const completedPracticeCount = unit.progress?.completedPracticeCount ?? 0
   const totalPracticeCount = unit.progress?.totalPracticeCount ?? unit.topicCount ?? 0
+  const [imgFailed, setImgFailed] = useState(false)
+  const showCover = unit.coverImage && !imgFailed
 
   return (
     <div
@@ -337,8 +347,14 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
           'relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40',
           isCompleted && 'from-slate-100 via-emerald-50 to-slate-100 text-emerald-600 opacity-80 dark:from-slate-900/70 dark:via-emerald-950/30 dark:to-slate-950/40',
         )}>
-          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
-          <Icon className="relative size-7" />
+          {showCover ? (
+            <img src={unit.coverImage!} alt={unit.title} className="absolute inset-0 size-full object-cover" loading="lazy" onError={() => setImgFailed(true)} />
+          ) : (
+            <>
+              <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
+              <Icon className="relative size-7" />
+            </>
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start gap-2">
