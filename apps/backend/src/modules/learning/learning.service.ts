@@ -129,18 +129,6 @@ export class LearningService {
     return asset;
   }
 
-  /** 收集编排脚本中直接引用的舞台背景与语音资源。 */
-  private pushInkSourceAssets(assets: any[], source?: string | null) {
-    if (!source) return;
-    const tagPattern = /^#\s*(bg|audio|defaultAnswerAudio)\s*:\s*(.+)$/gim;
-    for (const match of source.matchAll(tagPattern)) {
-      const tag = match[1].toLowerCase();
-      let url = match[2].trim();
-      try { url = decodeURIComponent(url); } catch { /* keep original URL */ }
-      this.pushAsset(assets, url, tag === 'bg' ? 'background' : 'voice');
-    }
-  }
-
   private isPackagedAsset(asset: any) {
     const role = String(asset?.role ?? '').toLowerCase();
     return !['voice', 'audio', 'bgm', 'sfx'].includes(role);
@@ -618,6 +606,7 @@ export class LearningService {
         title: true,
         inkJson: true,
         inkSource: true,
+        assetMap: true,
         version: true,
       },
     });
@@ -1031,7 +1020,7 @@ export class LearningService {
       orderBy: { sortOrder: 'asc' },
       include: {
         inkScript: {
-          select: { id: true, key: true, title: true, inkJson: true, inkSource: true, version: true, updatedAt: true },
+          select: { id: true, key: true, title: true, inkJson: true, inkSource: true, assetMap: true, version: true, updatedAt: true },
         },
         topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
         topicVocabs: { include: { vocab: true }, orderBy: { sortOrder: 'asc' } },
@@ -1067,7 +1056,7 @@ export class LearningService {
     const episodeInkScripts = episodeInkScriptIds.length > 0
       ? await this.prisma.inkScript.findMany({
           where: { id: { in: episodeInkScriptIds } },
-          select: { id: true, key: true, title: true, inkJson: true, inkSource: true, version: true },
+          select: { id: true, key: true, title: true, inkJson: true, inkSource: true, assetMap: true, version: true },
         })
       : [];
     const episodeInkById = new Map(episodeInkScripts.map((script) => [script.id, script]));
@@ -1177,27 +1166,59 @@ export class LearningService {
         }
       }
     }
+    // ── Resolve story episode assetMap entries to signed URLs (for offline manifest) ──
     for (const episode of storyEpisodePlayers) {
-      this.pushInkSourceAssets(assets, episode.inkScript?.inkSource);
+      const episodeAssetMap = (episode.inkScript?.assetMap as Record<string, any>) || {};
+      for (const [alias, entry] of Object.entries(episodeAssetMap)) {
+        if (entry?.fileAssetId) {
+          try {
+            const result = await this.fileAssets.getAssetLongLivedUrl(entry.fileAssetId);
+            // Embed signed URL so mobile offline can resolve alias → same URL used to download the asset
+            entry.signedUrl = result.url;
+            const role = entry.type === 'image' ? 'background' : 'voice';
+            const asset = this.pushAsset(assets, result.url, role);
+            if (asset) {
+              asset.fileAssetId = entry.fileAssetId;
+              asset.mimeType = entry.mimeType;
+              asset.alias = alias;
+            }
+          } catch { /* skip failed resolution */ }
+        }
+      }
+    }
+
+    // ── Resolve topic inkScript assetMap entries ──
+    for (const topic of topics) {
+      const topicAssetMap = (topic.inkScript?.assetMap as Record<string, any>) || {};
+      for (const [alias, entry] of Object.entries(topicAssetMap)) {
+        if (entry?.fileAssetId) {
+          try {
+            const result = await this.fileAssets.getAssetLongLivedUrl(entry.fileAssetId);
+            entry.signedUrl = result.url;
+            const role = entry.type === 'image' ? 'background' : 'voice';
+            const asset = this.pushAsset(assets, result.url, role);
+            if (asset) {
+              asset.fileAssetId = entry.fileAssetId;
+              asset.mimeType = entry.mimeType;
+              asset.alias = alias;
+            }
+          } catch { /* skip */ }
+        }
+      }
     }
 
     const pushWarmupAudioAsset = async (item: any) => {
       const assetId = typeof item?.audioAssetId === 'string' ? item.audioAssetId.trim() : '';
-      if (assetId) {
-        try {
-          const signed = await this.fileAssets.getPrivateUrlByAssetId(assetId);
-          const asset = this.pushAsset(assets, signed.url, 'warmup_audio');
-          if (asset) {
-            asset.assetId = assetId;
-            asset.mimeType = signed.mimeType ?? asset.mimeType;
-            asset.size = signed.size ?? asset.size;
-          }
-          return;
-        } catch {
-          // Fall through to legacy audioUrl if the asset was removed or is unavailable.
+      if (!assetId) return;
+      try {
+        const signed = await this.fileAssets.getPrivateUrlByAssetId(assetId);
+        const asset = this.pushAsset(assets, signed.url, 'warmup_audio');
+        if (asset) {
+          asset.assetId = assetId;
+          asset.mimeType = signed.mimeType ?? asset.mimeType;
+          asset.size = signed.size ?? asset.size;
         }
-      }
-      if (typeof item?.audioUrl === 'string') this.pushAsset(assets, item.audioUrl, 'warmup_audio');
+      } catch { /* skip unavailable asset */ }
     };
 
     // ── topicDetails: per-topic data (each topic has its own vocabs & activeChunks) ──
@@ -1252,6 +1273,7 @@ export class LearningService {
               title: topic.inkScript.title,
               inkJson: topic.inkScript.inkJson,
               inkSource: topic.inkScript.inkSource,
+              assetMap: topic.inkScript.assetMap,
               version: topic.inkScript.version,
             }
           : null,

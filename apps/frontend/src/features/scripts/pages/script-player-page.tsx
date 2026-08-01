@@ -131,7 +131,7 @@ function InkEpisodePlayer({
   useEffect(() => {
     const tags = currentTags
     if (tags.length === 0) return
-    const parsed = parseVnTags(tags)
+    const parsed = parseVnTags(tags, data.inkScript?.assetMap ?? undefined)
     setVnVisual((prev) => {
       const next = {
         backgroundUrl: parsed.bg || prev.backgroundUrl || (data.scene?.backgroundUrl ?? undefined),
@@ -151,8 +151,16 @@ function InkEpisodePlayer({
   }, [currentTags, data.scene?.backgroundUrl, story.isWaiting])
 
   const inkLines = useMemo<VnPlayerLine[]>(
-    () => story.lines.map((line) => ({ speaker: line.speaker, text: line.text })),
-    [story.lines],
+    () => story.lines.map((line) => {
+      const parsed = parseVnTags(line.tags, data.inkScript?.assetMap ?? undefined)
+      return {
+        speaker: line.speaker,
+        text: line.text,
+        translation: parsed.translation,
+        audioUrl: parsed.audio,
+      }
+    }),
+    [story.lines, data.inkScript?.assetMap],
   )
 
   // inkLines 变化时（advanceStory 推进了剧情），清除「刚提交」标记

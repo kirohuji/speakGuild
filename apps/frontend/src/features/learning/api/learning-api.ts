@@ -200,6 +200,7 @@ export interface StoryEpisodePlayerData {
     title: string
     inkJson: Record<string, any>
     inkSource: string | null
+    assetMap?: Record<string, { fileAssetId?: string; signedUrl?: string | null; type?: string; mimeType?: string }> | null
     version: number
   }
   /** 舞台资源随章节包一起下发，供离线剧场直接使用。 */

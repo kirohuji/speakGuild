@@ -75,24 +75,18 @@ export function parseVnTags(tags: string[], assetMap?: Record<string, { fileAsse
 }
 
 /**
- * 如果 value 是别名（非 http/https URL），通过 assetMap 解析为签名 URL。
- * 如果 assetMap 中没有该别名，返回原始值（fallback，保持旧脚本兼容）。
+ * 通过 assetMap 解析别名 → 签名 URL。
+ * 非别名（URL 等）在 assetMap 中查不到，直接原样返回。
  */
 function resolveAssetUrl(
   value: string | undefined,
   assetMap?: Record<string, { fileAssetId?: string; signedUrl?: string | null }>,
 ): string | undefined {
   if (!value) return value
-  // 如果已经是完整 URL，直接返回（兼容旧的裸 URL 格式）
-  if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('blob:') || value.startsWith('data:')) {
-    return value
-  }
-  // 尝试从 assetMap 解析别名
   if (assetMap) {
     const entry = assetMap[value]
     if (entry?.signedUrl) return entry.signedUrl
   }
-  // fallback：返回原始别名（可能在播放端无法使用，但不会崩溃）
   return value
 }
 

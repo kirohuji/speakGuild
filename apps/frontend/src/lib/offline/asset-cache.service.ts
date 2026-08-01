@@ -159,7 +159,8 @@ export const assetCacheService = {
       })
       const uri = await Filesystem.getUri({ path, directory: Directory.Data })
 
-      await localDb.put<LocalAsset>('local_assets', {
+      const now = new Date().toISOString()
+      const record: LocalAsset = {
         id: key,
         assetId: key,
         remoteUrl: url,
@@ -169,9 +170,13 @@ export const assetCacheService = {
         localPath: path,
         localUri: uri.uri,
         status: 'ready',
-        downloadedAt: new Date().toISOString(),
-        lastAccessedAt: new Date().toISOString(),
-      })
+        downloadedAt: now,
+        lastAccessedAt: now,
+      }
+      await localDb.put<LocalAsset>('local_assets', record)
+      // URL alias: runtime resolve({ url }) finds asset via digest(url)
+      const urlKey = await digest(url)
+      await localDb.put<LocalAsset>('local_assets', { ...record, id: urlKey, assetId: key })
 
       return toLoadableUrl(uri.uri)
     } catch (error) {
@@ -221,7 +226,7 @@ export const assetCacheService = {
 
       const dataUrl = arrayBufferToDataUrl(buffer, ref.mimeType)
       const now = new Date().toISOString()
-      await localDb.put<LocalAsset>('local_assets', {
+      const record: LocalAsset = {
         id: key,
         assetId: key,
         remoteUrl: url,
@@ -233,7 +238,11 @@ export const assetCacheService = {
         status: 'ready',
         downloadedAt: now,
         lastAccessedAt: now,
-      })
+      }
+      await localDb.put<LocalAsset>('local_assets', record)
+      // URL alias: runtime resolve({ url }) can find by digest(url)
+      const urlKey = await digest(url)
+      await localDb.put<LocalAsset>('local_assets', { ...record, id: urlKey, assetId: key })
       const kb = (buffer.byteLength / 1024).toFixed(1)
       console.log(`[asset-cache] 💾 WEB 模式存储: ${ref.path ?? ref.url?.slice(-40)} (${kb}KB) → local_assets/${key}`)
       return dataUrl
@@ -248,7 +257,7 @@ export const assetCacheService = {
     const uri = await Filesystem.getUri({ path, directory: Directory.Data })
     const now = new Date().toISOString()
 
-    await localDb.put<LocalAsset>('local_assets', {
+    const record: LocalAsset = {
       id: key,
       assetId: key,
       remoteUrl: url,
@@ -260,7 +269,11 @@ export const assetCacheService = {
       status: 'ready',
       downloadedAt: now,
       lastAccessedAt: now,
-    })
+    }
+    await localDb.put<LocalAsset>('local_assets', record)
+    // URL alias: runtime resolve({ url }) finds asset via digest(url) → same file
+    const urlKey = await digest(url)
+    await localDb.put<LocalAsset>('local_assets', { ...record, id: urlKey, assetId: key })
 
     return toLoadableUrl(uri.uri)
   },
