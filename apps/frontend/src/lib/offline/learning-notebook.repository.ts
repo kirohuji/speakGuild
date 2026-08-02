@@ -148,7 +148,7 @@ export const learningNotebookRepository = {
           contentData: entry.kind === 'word' ? undefined : snapshot,
         } satisfies LocalNotebookExpression
       })
-      .filter((item): item is LocalNotebookExpression => Boolean(item))
+      .filter(Boolean) as LocalNotebookExpression[]
 
     return rows.sort((a, b) => {
       const result = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

@@ -1,4 +1,4 @@
-import { assetCacheService, type AssetRef } from './asset-cache.service'
+import { assetCacheService, digestSync, type AssetRef } from './asset-cache.service'
 import { learningApi } from '@/features/learning/api/learning-api'
 import { buildAggregatedUnitContent, learningRepository } from './learning.repository'
 import { localDb } from './unified-storage'
@@ -189,36 +189,12 @@ async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
  */
 async function digest(buffer: ArrayBuffer, algorithm = 'SHA-256'): Promise<string> {
   if (!isCryptoSubtleUnavailable) {
-    const hash = await crypto.subtle.digest(algorithm, buffer)
-    return Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, '0')).join('')
+    try {
+      const hash = await crypto.subtle.digest(algorithm, buffer)
+      return Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, '0')).join('')
+    } catch { /* fall through to pure-JS */ }
   }
-
-  // Fallback: 32-bit xorshift + FNV-1a hybrid, good enough for dev integrity checks.
-  // This is NOT cryptographically secure — it only exists so dev:host doesn't crash.
-  const view = new Uint8Array(buffer)
-  let h0 = 0x67452301
-  let h1 = 0xefcdab89
-  let h2 = 0x98badcfe
-  let h3 = 0x10325476
-  let h4 = 0xc3d2e1f0
-  let h5 = 0x1f2e3d4c
-  let h6 = 0x5b6a7f8e
-  let h7 = 0x9d0e1f2a
-
-  for (let i = 0; i < view.length; i++) {
-    const b = view[i]
-    h0 = ((h0 << 5) + h0 + b) | 0
-    h1 = ((h1 << 7) + h1 + b + (i & 0xff)) | 0
-    h2 = ((h2 << 11) + h2 + b + ((i >> 8) & 0xff)) | 0
-    h3 = ((h3 << 13) + h3 + b) | 0
-    h4 = ((h4 << 17) + h4 + b + (i & 0xff)) | 0
-    h5 = ((h5 << 19) + h5 + b + ((i >> 8) & 0xff)) | 0
-    h6 = ((h6 << 23) + h6 + b) | 0
-    h7 = ((h7 << 29) + h7 + b + (i & 0xff)) | 0
-  }
-
-  const toHex = (v: number) => (v >>> 0).toString(16).padStart(8, '0')
-  return toHex(h0) + toHex(h1) + toHex(h2) + toHex(h3) + toHex(h4) + toHex(h5) + toHex(h6) + toHex(h7)
+  return digestSync(buffer)
 }
 
 function normalizeZipPath(path: string) {
@@ -649,7 +625,7 @@ export const learningPackService = {
             try {
               const buffer = await readEntryBuffer(entry!)
               const actualSha256 = await digest(buffer)
-              if (asset.sha256 && actualSha256 !== asset.sha256) {
+              if (!isCryptoSubtleUnavailable && asset.sha256 && actualSha256 !== asset.sha256) {
                 return { ok: false, asset, error: `SHA-256 mismatch: expected ${asset.sha256}, got ${actualSha256}`, index }
               }
               return { ok: true, asset, sha256: actualSha256, buffer, index }
