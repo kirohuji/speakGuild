@@ -317,7 +317,9 @@ export class AdminTasksService {
       try {
         const queue = task.type === SCRIPT_VIDEO_RENDER_JOB || task.type === NARRATIVE_VIDEO_RENDER_JOB
           ? this.videoQueue
-          : this.contentQueue;
+          : task.type === VOCABULARY_CSV_IMPORT_JOB
+            ? this.vocabularyImportQueue
+            : this.contentQueue;
         const job = await queue.getJob(task.bullJobId);
         if (job) {
           await job.remove();

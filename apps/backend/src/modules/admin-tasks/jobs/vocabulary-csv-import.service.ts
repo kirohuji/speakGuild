@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { AdminTasksService } from '../admin-tasks.service';
-import { ContentPrepareService } from './content-prepare.service';
+import { DictionaryService } from '../../dictionary/dictionary.service';
 
 interface CsvImportSummary {
   created: number;
@@ -17,7 +17,7 @@ export class VocabularyCsvImportService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly adminTasksService: AdminTasksService,
-    private readonly contentPrepareService: ContentPrepareService,
+    private readonly dictionaryService: DictionaryService,
   ) {}
 
   async run(taskId: string, words: string[]) {
@@ -58,6 +58,7 @@ export class VocabularyCsvImportService {
 
     // ---- Phase 1: Write ----
     for (const word of uniqueWords) {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
       try {
         const existing = await this.prisma.vocabulary.findUnique({
           where: { word },
@@ -115,18 +116,20 @@ export class VocabularyCsvImportService {
 
       let enrichedCount = 0;
       for (let i = 0; i < vocabulariesToEnrich.length; i++) {
+        if (await this.adminTasksService.isCanceled(taskId)) return;
         const word = vocabulariesToEnrich[i];
         try {
-          // Reuse the exact pipeline used by learning-package preparation so
-          // definitions, AI translations, examples and phonetics stay uniform.
+          // DictionaryService first reads the fully enriched internal dictionary
+          // cache; only a miss triggers the dictionary pipeline. It is the
+          // canonical dictionary-to-vocabulary mapping used by the admin UI.
           const vocab = await this.prisma.vocabulary.findUnique({
             where: { word },
             select: { id: true, word: true },
           });
           if (!vocab) continue;
 
-          const result = await this.contentPrepareService.prepareVocabulary(vocab.id);
-          if (result === 'updated') {
+          const result = await this.dictionaryService.enrichVocabulary(vocab.id);
+          if (result) {
             enrichedCount++;
             summary.enriched++;
           }

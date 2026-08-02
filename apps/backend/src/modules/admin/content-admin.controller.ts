@@ -2320,7 +2320,9 @@ ${parts.join('\n')}
     const firstRowIsHeader = rows[0]?.[0]?.trim().toLowerCase() === 'word';
     const words = rows
       .slice(firstRowIsHeader ? 1 : 0)
-      .map((row) => row[0]?.trim().toLowerCase())
+      // Oxford lists occasional alternatives such as "a, an" in one cell.
+      // They are separate words, never a single dictionary lookup key.
+      .flatMap((row) => row[0]?.split(',').map((word) => word.trim().toLowerCase()) ?? [])
       .filter((word): word is string => Boolean(word));
 
     if (words.length > 20_000) {
