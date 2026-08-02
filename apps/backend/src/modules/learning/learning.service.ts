@@ -1363,6 +1363,7 @@ export class LearningService {
         packId: unitDetail.id,
         version,
         title: unitDetail.title,
+        packageType: unitDetail.packageType,
         updatedAt: new Date().toISOString(),
         units: [unitDetail.id],
         topics: topics.map((t) => t.id),

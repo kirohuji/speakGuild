@@ -373,23 +373,58 @@ async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: stri
 
   const enrolledIds = new Set(myUnits.map((u) => u.id))
 
+  const getPackageType = async (unitId: string, declaredType?: string) => {
+    if (declaredType) return declaredType
+    const installed = packs.find((pack) => pack.packId === unitId)
+    if (installed?.manifest?.packageType) return installed.manifest.packageType
+    const localDetail = await localDb.get<{ packageType?: string }>('downloaded_unit_details', unitId).catch(() => null)
+    return localDetail?.packageType
+  }
+
   if (targetPackId) {
     // 即使通过 URL 指定了 packId，也必须检查当前用户是否已加入并安装了该学习包。
     if (!enrolledIds.has(targetPackId) || !installedIds.has(targetPackId)) return []
+    const unit = myUnits.find((item) => item.id === targetPackId)
+    const packageType = await getPackageType(targetPackId, unit?.packageType)
+    if (packageType === 'story') {
+      console.log('[daily-practice] story package excluded from Today practice', { packId: targetPackId })
+      return []
+    }
     const detail = await learningRepository.getCachedUnitDetail(targetPackId)
     return detail ? [detail] : []
   }
 
   if (enrolledIds.size === 0 || installedIds.size === 0) return []
 
-  // 只选择同时满足"已安装"+"用户已加入"的学习包。
-  const candidateIds = [...enrolledIds].filter((id) => installedIds.has(id))
+  // Story packs contain episodes, not warm-up practice. They must never become
+  // the implicit current pack for Today merely because they sort first.
+  const candidateEntries = await Promise.all(myUnits
+    .filter((unit) => installedIds.has(unit.id))
+    .map(async (unit) => ({
+      id: unit.id,
+      packageType: await getPackageType(unit.id, unit.packageType),
+    })))
+  const excludedStoryPackIds = candidateEntries
+    .filter((entry) => entry.packageType === 'story')
+    .map((entry) => entry.id)
+  const candidateIds = candidateEntries
+    .filter((entry) => entry.packageType !== 'story')
+    .map((entry) => entry.id)
   const unitIds = scope === 'mixed'
     ? candidateIds
     : [candidateIds[0]].filter(Boolean) as string[]
 
   const details = await Promise.all(unitIds.map((id) => learningRepository.getCachedUnitDetail(id)))
-  return details.filter(Boolean) as UnitDetail[]
+  const resolved = details.filter(Boolean) as UnitDetail[]
+  console.log('[daily-practice] candidate units resolved', {
+    scope,
+    targetPackId: targetPackId ?? null,
+    installedPackIds: [...installedIds],
+    selectedPackIds: unitIds,
+    excludedStoryPackIds,
+    units: resolved.map((unit) => ({ id: unit.id, title: unit.title, trainingTopicCount: unit.trainingTopics?.length ?? 0 })),
+  })
+  return resolved
 }
 
 function buildTopicStats(

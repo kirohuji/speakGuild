@@ -12,7 +12,7 @@ import { assetCacheService } from '@/lib/offline/asset-cache.service'
 import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
 import { useLayoutStore } from '@/stores/layout.store'
 import { parseComposer } from '@/features/admin/components/composer-parser'
-import { flattenComposerToTimeline } from '@/features/admin/components/vn-mixed-timeline'
+import { flattenComposerToTimeline, resolveTimelineAssetAliases } from '@/features/admin/components/vn-mixed-timeline'
 import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
 import { requestScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
@@ -272,10 +272,10 @@ function InkEpisodePlayer({
     }
     return combined.at(-1) ?? null
   }, [combined])
-  const history = useMemo(
-    () => combined.filter((line) => line !== currentLine),
-    [combined, currentLine],
-  )
+  // VnPlayer receives the complete chronological timeline, including the
+  // current line, so its shared "previous dialogue" control can step back to
+  // a user's immediately preceding answer instead of skipping it.
+  const history = combined
 
   // ── 角色与立绘解析（与练习 VN 相同逻辑）──
   const characters = useMemo(() => resolvedScene?.characters ?? [], [resolvedScene?.characters])
@@ -315,12 +315,15 @@ function InkEpisodePlayer({
         characterPositions[name] = character.defaultPosition ?? 'center'
       }
     }
-    return flattenComposerToTimeline(parseComposer(data.inkScript.inkSource), {
+    return flattenComposerToTimeline(resolveTimelineAssetAliases(
+      parseComposer(data.inkScript.inkSource),
+      resolvedAssetMap,
+    ), {
       defaultBackgroundUrl: resolvedScene?.backgroundUrl ?? undefined,
       characterSprites,
       characterPositions,
     })
-  }, [data.inkScript.inkSource, resolvedScene])
+  }, [data.inkScript.inkSource, resolvedAssetMap, resolvedScene])
 
   useEffect(() => {
     if (!story.isEnded || completionSaved.current) return

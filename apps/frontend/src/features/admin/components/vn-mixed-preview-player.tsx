@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator'
 import { PixiVnStage } from '@/features/vn-engine/pixi-vn-stage'
 import { type MixedTimelineFrame } from './vn-mixed-timeline'
 import { assetCacheService } from '@/lib/offline'
+import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 
 interface VnMixedPreviewPlayerProps {
   frames: MixedTimelineFrame[]
@@ -52,6 +53,21 @@ function pickMimeType() {
   return ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'].find((type) => MediaRecorder.isTypeSupported(type)) ?? ''
 }
 
+function isObjectUrl(url: string | null | undefined) {
+  return Boolean(url?.startsWith('blob:'))
+}
+
+function getMicStartErrorMessage(error: unknown) {
+  if (typeof window !== 'undefined' && window.isSecureContext === false) {
+    return '当前页面不是安全环境，浏览器会禁止麦克风'
+  }
+  if (!navigator.mediaDevices?.getUserMedia) return '当前 WebView 不支持麦克风录音'
+  if (typeof MediaRecorder === 'undefined') return '当前 WebView 不支持 MediaRecorder 录音'
+  const name = error instanceof DOMException ? error.name : ''
+  if (name === 'NotAllowedError' || name === 'PermissionDeniedError') return '无法访问麦克风，请检查权限设置'
+  return '麦克风启动失败，请稍后重试'
+}
+
 export function mixedFrameDisplayText(frame: MixedTimelineFrame) {
   // 跟读剧场只走默认分支（第一个选项），不把未采用的分支暴露给学习者。
   if (frame.kind === 'choice') return frame.choices?.[0]?.text || frame.text
@@ -88,8 +104,13 @@ export function VnMixedPreviewPlayer({
 }: VnMixedPreviewPlayerProps) {
   const activeFrame = frames[activeIndex] ?? frames[0]
   // 首帧通常先设置舞台背景再出现台词；没有显式背景的帧沿用本剧本的主题背景。
-  const backgroundUrl = activeFrame?.background.url ?? frames.find((frame) => frame.background.url)?.background.url
-  const cachedBackgroundUrl = useOfflineAssetUrl(backgroundUrl, 'background')
+  const activeBackground = useMemo(() => {
+    // Frames normally inherit the background, but this also protects old
+    // manifests whose first dialogue frame did not carry that inherited data.
+    const currentOrPrevious = frames.slice(0, activeIndex + 1).reverse().find((frame) => frame.background.url)
+    return currentOrPrevious?.background ?? frames.find((frame) => frame.background.url)?.background ?? {}
+  }, [activeIndex, frames])
+  const cachedBackgroundUrl = useOfflineAssetUrl(activeBackground.url, 'background')
   const cachedSpriteUrl = useOfflineAssetUrl(activeFrame?.sprite.url, 'sprite')
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({})
   const missingCount = useMemo(() => frames.filter((frame) => frame.kind === 'missingInput').length, [frames])
@@ -106,6 +127,17 @@ export function VnMixedPreviewPlayer({
   const timerRef = useRef<number | null>(null)
   const recordingAudioRef = useRef<HTMLAudioElement | null>(null)
   const recordingUrlsRef = useRef<Record<number, string>>({})
+
+  useEffect(() => {
+    console.log('[repeat-vn] stage resources', {
+      frameIndex: activeFrame?.index,
+      backgroundSource: activeBackground.url,
+      backgroundResolved: cachedBackgroundUrl,
+      spriteSource: activeFrame?.sprite.url,
+      spriteResolved: cachedSpriteUrl,
+      portraitScale: activeFrame?.portraitScale,
+    })
+  }, [activeBackground.url, activeFrame?.index, activeFrame?.sprite.url, cachedBackgroundUrl, cachedSpriteUrl])
 
   const clearPlayback = useCallback(() => {
     if (timerRef.current !== null) {
@@ -280,7 +312,7 @@ export function VnMixedPreviewPlayer({
       <div className="relative aspect-video shrink-0 overflow-hidden border-b border-white/10 bg-black">
         <PixiVnStage
           backgroundUrl={cachedBackgroundUrl}
-          backgroundFit={activeFrame.background.fit || 'cover'}
+          backgroundFit={activeBackground.fit || 'cover'}
           spriteUrl={activeFrame.kind === 'choice' && activeFrame.hideSpriteForChoices ? undefined : cachedSpriteUrl}
           spritePosition={activeFrame.sprite.position}
           stageVariant="mixed"
@@ -575,6 +607,7 @@ export function FollowReadDrawer({
   const [playingRecording, setPlayingRecording] = useState(false)
   const streamRef = useRef<MediaStream | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
+  const nativeSessionRef = useRef<NativeVoiceInputSession | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const recordedUrlRef = useRef<string | null>(null)
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null)
@@ -582,6 +615,8 @@ export function FollowReadDrawer({
   const startedAtRef = useRef(0)
 
   const cleanupRecording = useCallback(() => {
+    nativeSessionRef.current?.cancel().catch(() => undefined)
+    nativeSessionRef.current = null
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null
     recorderRef.current = null
@@ -620,11 +655,27 @@ export function FollowReadDrawer({
   const startRecording = useCallback(async () => {
     setError('')
     cleanupAudio()
-    if (typeof MediaRecorder === 'undefined') {
-      setError('当前浏览器不支持录音')
-      return
-    }
     try {
+      // Match the shared VN input behavior: on Capacitor this asks for the
+      // native record-audio permission and uses the native recorder, instead
+      // of relying on WebView MediaRecorder support.
+      const nativeSession = await startBestNativeVoiceInput({
+        language: 'en-US',
+        useNativeSpeechRecognition: false,
+      })
+      if (nativeSession) {
+        nativeSessionRef.current = nativeSession
+        startedAtRef.current = Date.now()
+        setElapsed(0)
+        setRecording(true)
+        console.log('[repeat-vn] native microphone recording started', { frameIndex: frame?.index })
+        return
+      }
+
+      if (typeof MediaRecorder === 'undefined') {
+        setError('当前浏览器不支持录音')
+        return
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
       const mimeType = pickMimeType()
@@ -645,15 +696,43 @@ export function FollowReadDrawer({
       setElapsed(0)
       setRecording(true)
       recorder.start(200)
-    } catch {
-      setError('无法访问麦克风，请检查权限')
+      console.log('[repeat-vn] web microphone recording started', { frameIndex: frame?.index })
+    } catch (error) {
+      console.warn('[repeat-vn] microphone start failed', { frameIndex: frame?.index, error })
+      setError(getMicStartErrorMessage(error))
     }
   }, [cleanupAudio, cleanupRecording, frame, onRecordingReady])
 
-  const stopRecording = useCallback(() => {
+  const stopRecording = useCallback(async () => {
+    const nativeSession = nativeSessionRef.current
+    if (nativeSession) {
+      nativeSessionRef.current = null
+      setRecording(false)
+      try {
+        if (nativeSession.kind !== 'audio-recorder') {
+          await nativeSession.cancel()
+          throw new Error('Follow practice requires an audio recorder session')
+        }
+        const result = await nativeSession.stop()
+        const url = result.playbackUrl || URL.createObjectURL(result.blob)
+        if (isObjectUrl(recordedUrlRef.current)) URL.revokeObjectURL(recordedUrlRef.current)
+        recordedUrlRef.current = url
+        setRecordedUrl(url)
+        if (frame) onRecordingReady(frame.index, url)
+        console.log('[repeat-vn] native microphone recording stopped', {
+          frameIndex: frame?.index,
+          bytes: result.blob.size,
+          playbackUrl: url,
+        })
+      } catch (error) {
+        console.warn('[repeat-vn] native microphone stop failed', { frameIndex: frame?.index, error })
+        setError('录音保存失败，请重试')
+      }
+      return
+    }
     recorderRef.current?.stop()
     setRecording(false)
-  }, [])
+  }, [frame, onRecordingReady])
 
   const playTts = useCallback(() => {
     if (!frame?.audioUrl) return
@@ -679,6 +758,7 @@ export function FollowReadDrawer({
 
   const resetRecording = useCallback(() => {
     cleanupAudio()
+    if (isObjectUrl(recordedUrlRef.current)) URL.revokeObjectURL(recordedUrlRef.current)
     recordedUrlRef.current = null
     setRecordedUrl(null)
     setElapsed(0)

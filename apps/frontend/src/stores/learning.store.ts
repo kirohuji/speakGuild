@@ -16,6 +16,7 @@ import {
   type InstalledLearningPack,
   type LearningPackInstallProgress,
 } from '@/lib/offline'
+import { localDb } from '@/lib/offline/unified-storage'
 import { isNative } from '@/lib/native/platform'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
@@ -109,7 +110,7 @@ interface LearningStore {
   ) => Promise<void>
   quitUnit: (unitId: string) => Promise<void>
   fetchDownloadedPacks: () => Promise<void>
-  syncPackStateAfterLocalChange: () => Promise<void>
+  syncPackStateAfterLocalChange: (changedPackId?: string) => Promise<void>
   checkPackUpdates: (silent?: boolean) => Promise<void>
   downloadUnitPack: (unitId: string) => Promise<void>
   uninstallUnitPack: (unitId: string) => Promise<void>
@@ -212,15 +213,27 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     }
   },
 
-  async syncPackStateAfterLocalChange() {
+  async syncPackStateAfterLocalChange(changedPackId) {
     const downloadedPacks = await learningPackService.listInstalled()
     set({ downloadedPacks })
-    // Clear an in-memory empty daily plan before any remote refresh.  A user
-    // can open "Today" immediately after the download toast; previously that
-    // page could reuse the old empty plan while refreshMyUnits was still
-    // pending, even though the pack's local content had been installed.
-    useDailyPracticeStore.getState().reset()
-    console.log('[learning-store] pack state changed; daily plan reset', {
+    const changedPack = changedPackId
+      ? downloadedPacks.find((pack) => pack.packId === changedPackId)
+      : null
+    const changedUnit = changedPackId
+      ? getState().myUnits.find((unit) => unit.id === changedPackId)
+      : null
+    const localPackDetail = changedPackId
+      ? await localDb.get<{ packageType?: string }>('downloaded_unit_details', changedPackId).catch(() => null)
+      : null
+    const packageType = changedPack?.manifest?.packageType ?? changedUnit?.packageType ?? localPackDetail?.packageType
+    const affectsTodayPractice = packageType !== 'story'
+    // Story packages are isolated from today's vocabulary/chunk practice. Do
+    // not discard an already-built daily plan when only a story pack changes.
+    if (affectsTodayPractice) useDailyPracticeStore.getState().reset()
+    console.log('[learning-store] pack state changed', {
+      changedPackId: changedPackId ?? null,
+      packageType: packageType ?? 'unknown',
+      dailyPlanReset: affectsTodayPractice,
       installedPackIds: downloadedPacks
         .filter((pack) => pack.status === 'installed')
         .map((pack) => pack.packId),
@@ -383,7 +396,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       updateProgress(100, 'done')
       console.log(`[learning-store] ✅ 下载完成: ${next.title}`)
 
-      await getState().syncPackStateAfterLocalChange()
+      await getState().syncPackStateAfterLocalChange(next.packId)
       set((current) => ({
         availablePackUpdates: current.availablePackUpdates.filter((update) => update.packId !== next.packId),
       }))
@@ -459,7 +472,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       await learningPackService.uninstall(unitId)
       lap('local pack uninstall')
       updateUninstallProgress(82, 'refreshing', packTaskStepLabel('refreshing', 'uninstall'))
-      await getState().syncPackStateAfterLocalChange()
+      await getState().syncPackStateAfterLocalChange(unitId)
       const installedCount = getState().downloadedPacks.length
       lap('sync pack state after uninstall', { installedCount })
       set((current) => ({
@@ -558,7 +571,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
 
   async uninstallUnitPack(unitId) {
     await learningPackService.uninstall(unitId)
-    await getState().syncPackStateAfterLocalChange()
+    await getState().syncPackStateAfterLocalChange(unitId)
     set((state) => ({
       availablePackUpdates: state.availablePackUpdates.filter((update) => update.packId !== unitId),
     }))
@@ -737,7 +750,7 @@ async function processDownloadQueue() {
     }))
 
     const updates = useLearningStore.getState().availablePackUpdates
-    await useLearningStore.getState().syncPackStateAfterLocalChange()
+    await useLearningStore.getState().syncPackStateAfterLocalChange(next.packId)
     useLearningStore.setState({
       availablePackUpdates: updates.filter((u) => u.packId !== next.packId),
     })

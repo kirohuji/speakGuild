@@ -12,6 +12,8 @@ export interface LearningPackManifest {
   packId: string
   version: number
   title: string
+  /** Story packs are playable offline but never supply Today practice items. */
+  packageType?: string
   updatedAt: string
   units: string[]
   topics: string[]

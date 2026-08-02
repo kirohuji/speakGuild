@@ -104,6 +104,13 @@ function canCacheAssetUrl(url?: string | null) {
   return !!url && !url.startsWith('blob:') && !url.startsWith('data:')
 }
 
+function sameDialogueLine(a?: VnPlayerLine | null, b?: VnPlayerLine | null) {
+  return Boolean(a && b
+    && a.text === b.text
+    && a.speaker === b.speaker
+    && Boolean(a.isUser) === Boolean(b.isUser))
+}
+
 function useCachedAssetUrl(url?: string, role?: string, offlineOnly = false) {
   const [cachedUrl, setCachedUrl] = useState(offlineOnly && url?.startsWith('http') ? undefined : url)
 
@@ -197,8 +204,16 @@ export function VnPlayer({
     }
   }, [])
   const autoAdvanceTimerRef = useRef<number | null>(null)
-  const lineIndex = reviewLineIndex ?? Math.max(history.length - 1, 0)
-  const reviewLine = reviewLineIndex !== null ? history[reviewLineIndex] : null
+  // Callers historically disagreed on whether `history` contains currentLine.
+  // Normalize it here so all VN surfaces replay the same complete turn order.
+  const reviewTimeline = currentLine && !sameDialogueLine(history.at(-1), currentLine)
+    ? [...history, currentLine]
+    : history
+  const currentLineIndex = currentLine
+    ? reviewTimeline.findLastIndex((line) => sameDialogueLine(line, currentLine))
+    : Math.max(reviewTimeline.length - 1, 0)
+  const lineIndex = reviewLineIndex ?? Math.max(currentLineIndex, 0)
+  const reviewLine = reviewLineIndex !== null ? reviewTimeline[reviewLineIndex] : null
   const activeLine = reviewLine ?? currentLine
   const displayLine = activeLine?.isUser && reviewLineIndex === null && !showUserInput ? null : activeLine
   const fullText = displayLine?.text ?? ''
@@ -327,8 +342,8 @@ export function VnPlayer({
   }, [canAdvance, displayLine, choices.length, isEnded, onAdvance])
 
   const goToPreviousLine = () => {
-    if (history.length <= 1) return
-    setReviewLineIndex(Math.max(0, lineIndex - 1))
+    if (lineIndex <= 0) return
+    setReviewLineIndex(lineIndex - 1)
   }
 
   // ── Chat list mode ──
@@ -339,7 +354,7 @@ export function VnPlayer({
           backgroundUrl={cachedBackgroundUrl}
           backgroundFit={backgroundFit}
           currentLine={currentLine}
-          history={history}
+          history={reviewTimeline}
           choices={choices}
           currentAvatarUrl={currentAvatarUrl}
           currentAvatarAlt={currentAvatarAlt}
@@ -398,7 +413,7 @@ export function VnPlayer({
           // 回顾模式：每点一次前进一行，走到最新行才退出回顾
           if (reviewLineIndex !== null) {
             const next = reviewLineIndex + 1
-            if (next >= history.length) {
+            if (next >= reviewTimeline.length) {
               setReviewLineIndex(null)
             } else {
               setReviewLineIndex(next)
@@ -421,7 +436,7 @@ export function VnPlayer({
             // 回顾模式：每按一次前进一行，走到最新行才退出回顾
             if (reviewLineIndex !== null) {
               const next = reviewLineIndex + 1
-              if (next >= history.length) {
+              if (next >= reviewTimeline.length) {
                 setReviewLineIndex(null)
               } else {
                 setReviewLineIndex(next)
@@ -466,7 +481,7 @@ export function VnPlayer({
               <div className="flex items-center justify-between border-b border-border px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
                 <div>
                   <p className="text-sm font-semibold text-foreground">{t('vnHistory.title')}</p>
-                  <p className="text-[11px] text-muted-foreground">{t('vnHistory.count', { count: history.length })}</p>
+                  <p className="text-[11px] text-muted-foreground">{t('vnHistory.count', { count: reviewTimeline.length })}</p>
                 </div>
                 <button
                   type="button"
@@ -477,9 +492,9 @@ export function VnPlayer({
                 </button>
               </div>
               <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-4">
-                {history.length === 0 ? (
+                {reviewTimeline.length === 0 ? (
                   <p className="py-10 text-center text-sm text-muted-foreground">{t('vnHistory.empty')}</p>
-                ) : history.map((line, index) => (
+                ) : reviewTimeline.map((line, index) => (
                   <div key={index} className={cn('rounded-lg border px-3 py-2', line.isUser ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted/40')}>
                     {line.speaker && <p className="mb-1 text-xs font-semibold text-muted-foreground">{line.speaker}</p>}
                     <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">{line.text}</p>
@@ -537,7 +552,7 @@ export function VnPlayer({
             )}
             <VnIconButton
               label={t('vnHistory.prevLine')}
-              disabled={history.length <= 1 || lineIndex <= 0}
+              disabled={lineIndex <= 0}
               onClick={goToPreviousLine}
             >
               <SkipBack className="size-3.5" />

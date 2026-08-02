@@ -14,7 +14,7 @@ import { cn } from '@/lib/cn'
 import { compileInk, type CompileResult } from './ink-compiler'
 import { judgePreviewDialogueTurn, type PreviewDialogueTurnResult } from '../api-content-admin'
 import { parseComposer } from './composer-parser'
-import { flattenComposerToTimeline } from './vn-mixed-timeline'
+import { flattenComposerToTimeline, resolveTimelineAssetAliases } from './vn-mixed-timeline'
 import { VnMixedPreviewPlayer } from './vn-mixed-preview-player'
 import { NqtrVideoPreviewPlayer } from './nqtr-video-preview-player'
 import {
@@ -270,13 +270,13 @@ export function VnStoryPreview({
         }
       }
     }
-    return flattenComposerToTimeline(parseComposer(inkSource), {
+    return flattenComposerToTimeline(resolveTimelineAssetAliases(parseComposer(inkSource), assetMap), {
       characterSprites: sprites,
       characterAvatars: avatars,
       characterPositions: positions,
       defaultBackgroundUrl,
     })
-  }, [_legacyAvatars, _legacyPositions, _legacySprites, characters, defaultBackgroundUrl, inkSource, previewLayout])
+  }, [_legacyAvatars, _legacyPositions, _legacySprites, assetMap, characters, defaultBackgroundUrl, inkSource, previewLayout])
 
   useEffect(() => {
     setActiveFrameIndex(0)

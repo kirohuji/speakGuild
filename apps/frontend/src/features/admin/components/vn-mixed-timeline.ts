@@ -48,7 +48,43 @@ interface TimelineContext {
   speaker: string
   expression: string
   position: 'left' | 'center' | 'right'
+  /** The current on-stage NPC scale, also used by user-input frames that keep that NPC visible. */
+  portraitScale: number
   onDefaultBranch: boolean
+}
+
+export type TimelineAssetMap = Record<string, { signedUrl?: string | null }>
+
+/**
+ * Ink source stores media as stable aliases (for example `bg_cafe`), while
+ * Pixi and HTMLAudioElement need an actual URL. The normal VN path already
+ * performs this translation via `parseVnTags`; repeat playback must apply the
+ * exact same contract before it turns the source into timeline frames.
+ */
+export function resolveTimelineAssetAliases(
+  scenes: ComposerScene[],
+  assetMap?: TimelineAssetMap,
+): ComposerScene[] {
+  if (!assetMap || Object.keys(assetMap).length === 0) return scenes
+
+  const resolve = (value?: string) => {
+    if (!value) return value
+    // A known alias without a resolved URL is a cache/package error, not a
+    // relative web path. Returning the alias made Capacitor try `/bg_xxx` and
+    // hid the real diagnostic from the local-only asset resolver.
+    return Object.prototype.hasOwnProperty.call(assetMap, value)
+      ? assetMap[value]?.signedUrl || ''
+      : value
+  }
+  return scenes.map((scene) => ({
+    ...scene,
+    items: scene.items.map((item) => {
+      if (item.type === 'background') return { ...item, url: resolve(item.url) || '' }
+      if (item.type === 'line') return { ...item, audioUrl: resolve(item.audioUrl) }
+      if (item.type === 'wait') return { ...item, defaultAnswerAudioUrl: resolve(item.defaultAnswerAudioUrl) }
+      return { ...item }
+    }),
+  }))
 }
 
 function normalizeTarget(target?: string) {
@@ -93,6 +129,7 @@ function toFrameBase(
     sceneItemIndex,
     background: { ...ctx.background },
     sprite: resolveSprite(ctx.speaker, ctx.expression, ctx.position, options),
+    portraitScale: ctx.portraitScale,
     onDefaultBranch: ctx.onDefaultBranch,
   }
 }
@@ -127,6 +164,10 @@ export function flattenComposerToTimeline(scenes: ComposerScene[], options: Flat
         ctx.speaker = speaker
         ctx.expression = expression
         ctx.position = position
+        // `portraitScale` is authored per dialogue line. Keep the active
+        // value in the stage context so a following # wait:input frame, which
+        // deliberately retains the NPC portrait, cannot jump back to 100%.
+        ctx.portraitScale = item.portraitScale ?? 100
         frames.push({
           ...toFrameBase(frames, 'line', scene.name, itemIndex, ctx, options),
           speaker,
@@ -135,7 +176,7 @@ export function flattenComposerToTimeline(scenes: ComposerScene[], options: Flat
           audioUrl: item.audioUrl,
           source: 'ink',
           sprite: resolveSprite(speaker, expression, position, options),
-          portraitScale: item.portraitScale,
+          portraitScale: ctx.portraitScale,
         })
         itemIndex += 1
         continue
@@ -210,6 +251,7 @@ export function flattenComposerToTimeline(scenes: ComposerScene[], options: Flat
     speaker: '',
     expression: 'default',
     position: 'center',
+    portraitScale: 100,
     onDefaultBranch: false,
   })
 

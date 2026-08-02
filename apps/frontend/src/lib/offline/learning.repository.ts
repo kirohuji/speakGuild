@@ -124,6 +124,7 @@ function summaryToMyUnit(unit: LearningUnitSummary | UnitDetail): MyUnit {
 
   return {
     id: unit.id,
+    packageType: unit.packageType,
     title: unit.title,
     location: unit.location,
     description: unit.description,

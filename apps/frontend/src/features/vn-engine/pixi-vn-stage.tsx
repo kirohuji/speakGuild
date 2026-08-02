@@ -197,7 +197,12 @@ export function PixiVnStage({
       }
 
       const native = isNative()
-      const pixiResolution = native ? 1 : Math.min(window.devicePixelRatio || 1, 2)
+      // `resolution: 1` made the native canvas render at CSS-pixel density,
+      // then iOS/Android upscaled it on retina displays. Keep the same bounded
+      // 2x density as web: sharp portraits without the memory cost of 3x/4x.
+      const devicePixelRatio = window.devicePixelRatio || 1
+      const pixiResolution = Math.min(Math.max(devicePixelRatio, 1), 2)
+      console.log('[vn-stage] renderer density', { native, devicePixelRatio, pixiResolution })
 
       let app: Application
       let initOk = false
@@ -388,6 +393,7 @@ export function PixiVnStage({
         stageVariant={stageVariant}
         dialogueOverlay={dialogueOverlay}
         spriteBottomInset={spriteBottomInset}
+        portraitScale={portraitScale}
       />
     )
   }
