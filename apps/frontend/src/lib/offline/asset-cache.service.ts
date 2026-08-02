@@ -5,12 +5,18 @@ import { localDb } from './unified-storage'
 
 export interface AssetRef {
   assetId?: string
+  /** Stable server-side file asset ID. Unlike a signed URL it survives refreshes. */
+  fileAssetId?: string
+  /** Ink tag alias (e.g. bg_city); another SQLite alias for the same file. */
+  alias?: string
   url: string
   path?: string
   sha256?: string | null
   mimeType?: string | null
   size?: number | null
   role?: 'background' | 'sprite' | 'voice' | 'bgm' | 'sfx' | 'thumbnail' | string
+  /** For an installed package, a cache miss must not silently issue a network request. */
+  offlineOnly?: boolean
 }
 
 export interface LocalAsset {
@@ -31,6 +37,22 @@ export interface LocalAsset {
 function normalizeUrl(url: string) {
   if (url.startsWith('//')) return `https:${url}`
   return url
+}
+
+/** A COS signature changes, but the object pathname is the stable resource identity. */
+function stableRemoteUrl(url: string) {
+  try {
+    const parsed = new URL(url)
+    return `${parsed.origin}${parsed.pathname}`
+  } catch {
+    return url
+  }
+}
+
+function isLoadableLocalUrl(url: string) {
+  return url.startsWith('capacitor://')
+    || url.startsWith('http://localhost/_capacitor_file_')
+    || url.startsWith('https://localhost/_capacitor_file_')
 }
 
 // ── Pure-JS SHA-256 — works everywhere, no crypto.subtle needed ──
@@ -149,7 +171,29 @@ function arrayBufferToDataUrl(buffer: ArrayBuffer, mimeType?: string | null) {
 }
 
 async function assetKey(ref: AssetRef) {
+  // `sha256` is the canonical on-disk key for package assets. A stable file
+  // asset ID is deliberately only an alias: using it as the primary key would
+  // break SHA based cross-package deduplication and uninstall reference counts.
   return ref.assetId || ref.sha256 || await digest(normalizeUrl(ref.url))
+}
+
+async function putAliases(record: LocalAsset, ref: AssetRef, url: string): Promise<void> {
+  // One physical file may have multiple ways to be addressed. Keep aliases in
+  // SQLite, never as extra files. In particular fileAssetId makes an installed
+  // pack work after the server generates a new signed URL for the same asset.
+  const aliases = new Set<string>([
+    await digest(url),
+    await digest(stableRemoteUrl(url)),
+  ])
+  if (ref.assetId) aliases.add(ref.assetId)
+  if (ref.fileAssetId) aliases.add(ref.fileAssetId)
+  if (ref.alias) aliases.add(ref.alias)
+  aliases.delete(record.id)
+  await Promise.all([...aliases].map((id) => localDb.put<LocalAsset>('local_assets', {
+    ...record,
+    id,
+    assetId: record.id,
+  })))
 }
 
 /**
@@ -171,26 +215,96 @@ function toLoadableUrl(fileUri: string): string {
 }
 
 export const assetCacheService = {
+  /** Attach another manifest reference to an already written SHA file. */
+  async addAliases(canonicalId: string, ref: AssetRef): Promise<void> {
+    const record = await localDb.get<LocalAsset>('local_assets', canonicalId)
+    if (!record?.localUri || record.status !== 'ready') return
+    await putAliases(record, ref, normalizeUrl(ref.url))
+  },
+
+  /** Verify that the SQLite metadata still points to an actual local file. */
+  async isReady(assetId: string): Promise<boolean> {
+    const cached = await localDb.get<LocalAsset>('local_assets', assetId)
+    if (cached?.status !== 'ready' || !cached.localUri) return false
+    if (isNative() && cached.localPath) {
+      try {
+        await Filesystem.stat({ path: cached.localPath, directory: Directory.Data })
+      } catch {
+        const canonicalId = cached.assetId || cached.id
+        await localDb.deleteWhere<LocalAsset>('local_assets', (asset) =>
+          asset.id === canonicalId || asset.assetId === canonicalId,
+        )
+        console.warn('[offline-assets] removed stale metadata', { assetId, canonicalId, path: cached.localPath })
+        return false
+      }
+    }
+    return true
+  },
+
   async resolve(ref: AssetRef): Promise<string> {
     const url = normalizeUrl(ref.url)
     if (!url) return url
+    // Never hash, cache, or fetch a URL that already points at Capacitor's
+    // local file handler. Re-processing it used to create a second file.
+    if (isLoadableLocalUrl(url)) return url
 
     const key = await assetKey({ ...ref, url })
-    const cached = await localDb.get<LocalAsset>('local_assets', key)
+    // A previous failed on-demand record may exist under fileAssetId while the
+    // package installer has already saved the exact same resource under its
+    // URL/SHA alias. Probe every stable identity and only treat a *ready* row
+    // as authoritative; failed metadata must never shadow a real local file.
+    const candidateIds = [...new Set([
+      key,
+      await digest(url),
+      await digest(stableRemoteUrl(url)),
+      ref.sha256 ?? '',
+      ref.fileAssetId ?? '',
+    ].filter(Boolean))]
+    let cached: LocalAsset | null = null
+    let matchedKey = key
+    for (const candidateId of candidateIds) {
+      const candidate = await localDb.get<LocalAsset>('local_assets', candidateId)
+      if (candidate?.status === 'ready' && candidate.localUri) {
+        cached = candidate
+        matchedKey = candidateId
+        break
+      }
+    }
     if (cached?.status === 'ready' && cached.localUri) {
       if (isNative() && cached.localPath) {
         try {
           await Filesystem.stat({ path: cached.localPath, directory: Directory.Data })
         } catch {
-          await localDb.delete('local_assets', key)
+          await localDb.delete('local_assets', matchedKey)
+          if (ref.offlineOnly) {
+            console.error('[offline-assets] offline package file is missing; remote request blocked', {
+              key: matchedKey,
+              requestedUrl: url,
+              localPath: cached.localPath,
+            })
+            return ''
+          }
           return this.download({ ...ref, url })
         }
       }
       await localDb.put('local_assets', { ...cached, lastAccessedAt: new Date().toISOString() })
+      console.log('[offline-assets] resolve hit', { key: matchedKey, requestedUrl: url, localPath: cached.localPath })
       return isNative() ? toLoadableUrl(cached.localUri) : cached.localUri
     }
 
     if (!isNative()) return url
+    // Native is intentionally local-only. Package installation is the sole
+    // explicit network-to-disk transition; normal rendering must never turn a
+    // missing cache row into an invisible COS request.
+    if (ref.offlineOnly || isNative()) {
+      console.error('[offline-assets] native resource missing; remote request blocked', {
+        key,
+        requestedUrl: url,
+        assetId: ref.assetId,
+      })
+      return ''
+    }
+    console.warn('[offline-assets] resolve miss; downloading remote fallback', { key, requestedUrl: url, assetId: ref.assetId })
     return this.download({ ...ref, url })
   },
 
@@ -252,9 +366,8 @@ export const assetCacheService = {
         lastAccessedAt: now,
       }
       await localDb.put<LocalAsset>('local_assets', record)
-      // URL alias: runtime resolve({ url }) finds asset via digest(url)
-      const urlKey = await digest(url)
-      await localDb.put<LocalAsset>('local_assets', { ...record, id: urlKey, assetId: key })
+      await putAliases(record, ref, url)
+      console.log('[offline-assets] download saved', { key, bytes: buffer.byteLength, path, fileAssetId: ref.fileAssetId })
 
       return toLoadableUrl(uri.uri)
     } catch (error) {
@@ -285,7 +398,7 @@ export const assetCacheService = {
    * 避免重复哈希计算。传入 null 则内部自动计算。
    *
    * 用于 pack 安装场景：zip 提取循环中已计算过 SHA-256，
-   * 此处直接复用，省去一次 crypto.subtle.digest 调用。
+   * 此处直接复用，省去一次纯 JS 哈希计算。
    */
   async saveFromBufferWithSha256(ref: AssetRef, buffer: ArrayBuffer, precomputedSha256: string | null): Promise<string> {
     const url = normalizeUrl(ref.url)
@@ -318,9 +431,7 @@ export const assetCacheService = {
         lastAccessedAt: now,
       }
       await localDb.put<LocalAsset>('local_assets', record)
-      // URL alias: runtime resolve({ url }) can find by digest(url)
-      const urlKey = await digest(url)
-      await localDb.put<LocalAsset>('local_assets', { ...record, id: urlKey, assetId: key })
+      await putAliases(record, ref, url)
       const kb = (buffer.byteLength / 1024).toFixed(1)
       console.log(`[asset-cache] 💾 WEB 模式存储: ${ref.path ?? ref.url?.slice(-40)} (${kb}KB) → local_assets/${key}`)
       return dataUrl
@@ -349,9 +460,13 @@ export const assetCacheService = {
       lastAccessedAt: now,
     }
     await localDb.put<LocalAsset>('local_assets', record)
-    // URL alias: runtime resolve({ url }) finds asset via digest(url) → same file
-    const urlKey = await digest(url)
-    await localDb.put<LocalAsset>('local_assets', { ...record, id: urlKey, assetId: key })
+    await putAliases(record, ref, url)
+    console.log('[offline-assets] pack file saved', {
+      key,
+      bytes: buffer.byteLength,
+      path,
+      fileAssetId: ref.fileAssetId,
+    })
 
     return toLoadableUrl(uri.uri)
   },
@@ -366,7 +481,13 @@ export const assetCacheService = {
         // Already gone.
       }
     }
-    await localDb.delete('local_assets', assetId)
+    // Delete every alias together; otherwise a later install can see a stale
+    // ready row and incorrectly deduplicate to a file that has been removed.
+    const canonicalId = cached.assetId || cached.id
+    await localDb.deleteWhere<LocalAsset>('local_assets', (asset) =>
+      asset.id === canonicalId || asset.assetId === canonicalId,
+    )
+    console.log('[offline-assets] removed', { requestedId: assetId, canonicalId, path: cached.localPath })
   },
 
   async removeRef(ref: AssetRef): Promise<void> {

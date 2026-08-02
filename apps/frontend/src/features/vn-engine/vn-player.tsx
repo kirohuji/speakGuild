@@ -73,6 +73,8 @@ interface VnPlayerProps {
   hideChatTopBar?: boolean
   onDisplayModeChange?: (displayMode: VnPlayerSettings['displayMode']) => void
   showUserInputOverride?: boolean
+  /** Installed Capacitor package: URLs must already be local; never fetch. */
+  offlineOnly?: boolean
   onWordInsight?: (word: string) => void
 }
 
@@ -102,27 +104,32 @@ function canCacheAssetUrl(url?: string | null) {
   return !!url && !url.startsWith('blob:') && !url.startsWith('data:')
 }
 
-function useCachedAssetUrl(url?: string, role?: string) {
-  const [cachedUrl, setCachedUrl] = useState(url)
+function useCachedAssetUrl(url?: string, role?: string, offlineOnly = false) {
+  const [cachedUrl, setCachedUrl] = useState(offlineOnly && url?.startsWith('http') ? undefined : url)
 
   useEffect(() => {
     let cancelled = false
-    setCachedUrl(url)
+    // Do not ever mount Pixi/CSS with a remote source in package-only mode.
+    if (offlineOnly && url?.startsWith('http')) {
+      setCachedUrl(undefined)
+    } else {
+      setCachedUrl(url)
+    }
     if (!canCacheAssetUrl(url)) return
 
-    assetCacheService.resolve({ url, role }).then((resolved) => {
+    assetCacheService.resolve({ url, role, offlineOnly }).then((resolved) => {
       if (!cancelled) {
         setCachedUrl(resolved)
       }
     }).catch((err) => {
       if (role === 'background' || role === 'sprite') console.warn('[vn-player] ❌ resolve 失败:', role, url, err)
-      if (!cancelled) setCachedUrl(url)
+      if (!cancelled) setCachedUrl(offlineOnly ? undefined : url)
     })
 
     return () => {
       cancelled = true
     }
-  }, [role, url])
+  }, [offlineOnly, role, url])
 
   return cachedUrl
 }
@@ -169,6 +176,7 @@ export function VnPlayer({
   hideChatTopBar = false,
   onDisplayModeChange,
   showUserInputOverride,
+  offlineOnly = false,
   onWordInsight,
   ref,
 }: VnPlayerProps & { ref?: Ref<VnPlayerHandle> }) {
@@ -199,8 +207,8 @@ export function VnPlayer({
     ? fullTranslation.slice(0, Math.ceil((displayedText.length / fullText.length) * fullTranslation.length))
     : fullTranslation
   const audioUrl = displayLine?.audioUrl
-  const cachedBackgroundUrl = useCachedAssetUrl(backgroundUrl, 'background')
-  const cachedSpriteUrl = useCachedAssetUrl(currentSpriteUrl, 'sprite')
+  const cachedBackgroundUrl = useCachedAssetUrl(backgroundUrl, 'background', offlineOnly)
+  const cachedSpriteUrl = useCachedAssetUrl(currentSpriteUrl, 'sprite', offlineOnly)
   // 注意：音频不使用 useCachedAssetUrl，而是直接在 effect 内 resolve，
   // 避免 cached URL 切换触发 effect 重跑导致重复播放/中断。
   const cachedAudioUrl = useCachedAssetUrl(audioUrl, displayLine?.isUser ? 'recording' : 'voice')
@@ -256,7 +264,7 @@ export function VnPlayer({
 
     let cancelled = false
 
-    assetCacheService.resolve({ url: audioUrl, role: 'voice' }).then((resolvedUrl) => {
+    assetCacheService.resolve({ url: audioUrl, role: 'voice', offlineOnly }).then((resolvedUrl) => {
       if (cancelled || !resolvedUrl) return
       const audio = new Audio(resolvedUrl)
       audio.preload = 'auto'
@@ -279,7 +287,7 @@ export function VnPlayer({
         playingAudioRef.current = null
       }
     }
-  }, [audioUrl])
+  }, [audioUrl, offlineOnly])
 
   const toggleHistory = (value: boolean) => {
     setHistoryOpen(value)

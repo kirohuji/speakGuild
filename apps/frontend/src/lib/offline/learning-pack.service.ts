@@ -7,7 +7,6 @@ import { syncOutbox } from './sync-outbox'
 import { BlobReader, BlobWriter, TextWriter, ZipReader, type Entry } from '@zip.js/zip.js'
 import { learningContentRepository } from './learning-content.repository'
 import { Capacitor } from '@capacitor/core'
-import { isCryptoSubtleUnavailable } from '@/lib/dev-host'
 
 export interface LearningPackManifest {
   packId: string
@@ -56,11 +55,6 @@ function pushUrlAsset(assets: AssetRef[], url?: string | null, role?: AssetRef['
   if (!url || url.startsWith('blob:') || url.startsWith('data:')) return
   if (assets.some((asset) => asset.url === url)) return
   assets.push({ url, role })
-}
-
-function isInstallAsset(asset?: AssetRef | null) {
-  const role = String(asset?.role ?? '').toLowerCase()
-  return !['voice', 'audio', 'bgm', 'sfx'].includes(role)
 }
 
 function collectUnitAssets(unitDetail: any): AssetRef[] {
@@ -183,17 +177,11 @@ async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
 /**
  * Compute SHA-256 digest of a buffer.
  *
- * In dev:host live-reload mode the page may be served from a non-secure origin
- * (http://192.168.x.x) where `crypto.subtle` is undefined. We use a pure-JS
- * fallback in that case so that zip verification doesn't crash.
+ * Always use the project's pure-JS implementation. Capacitor live reload can
+ * run from HTTP, where Web Crypto is unavailable; a single implementation also
+ * guarantees identical hashes in development and production.
  */
-async function digest(buffer: ArrayBuffer, algorithm = 'SHA-256'): Promise<string> {
-  if (!isCryptoSubtleUnavailable) {
-    try {
-      const hash = await crypto.subtle.digest(algorithm, buffer)
-      return Array.from(new Uint8Array(hash)).map((byte) => byte.toString(16).padStart(2, '0')).join('')
-    } catch { /* fall through to pure-JS */ }
-  }
+async function digest(buffer: ArrayBuffer): Promise<string> {
   return digestSync(buffer)
 }
 
@@ -242,13 +230,6 @@ async function readJsonEntry<T = any>(entries: Map<string, Entry>, path: string)
 async function verifyEntry(path: string, buffer: ArrayBuffer, checksums?: Record<string, string>) {
   const expected = checksums?.[path]
   if (!expected) return
-
-  // In dev:host the fallback hash won't match the server-generated SHA-256.
-  // Skip verification gracefully — content comes from our own dev server.
-  if (isCryptoSubtleUnavailable) {
-    console.warn('[learning-pack] ⚠️ crypto.subtle unavailable, skipping checksum for', path)
-    return
-  }
 
   const actual = await digest(buffer)
   if (actual.toLowerCase() !== expected.toLowerCase()) {
@@ -585,7 +566,6 @@ export const learningPackService = {
 
       for (let i = 0; i < totalAssets; i++) {
         const asset = manifest.assets![i]
-        if (!isInstallAsset(asset)) continue
         if (!asset.path) continue
         const entry = entries.get(normalizeZipPath(asset.path))
         if (!entry) continue
@@ -625,7 +605,10 @@ export const learningPackService = {
             try {
               const buffer = await readEntryBuffer(entry!)
               const actualSha256 = await digest(buffer)
-              if (!isCryptoSubtleUnavailable && asset.sha256 && actualSha256 !== asset.sha256) {
+              // digest() already falls back to the pure-JS implementation in
+              // live-reload/non-secure contexts. Never turn integrity checking
+              // off there: a bad hash must not become a reusable cache entry.
+              if (asset.sha256 && actualSha256.toLowerCase() !== asset.sha256.toLowerCase()) {
                 return { ok: false, asset, error: `SHA-256 mismatch: expected ${asset.sha256}, got ${actualSha256}`, index }
               }
               return { ok: true, asset, sha256: actualSha256, buffer, index }
@@ -641,6 +624,7 @@ export const learningPackService = {
       // ── 阶段 B：批量写入文件系统 + SQLite ──
       const assetRefsToWrite: any[] = []
       const filesToSave: Array<{ asset: any; sha256: string; buffer: ArrayBuffer }> = []
+      const scheduledAssetShas = new Set<string>()
       let assetOk = 0
       let assetDeduped = 0
       let assetFail = 0
@@ -654,10 +638,23 @@ export const learningPackService = {
 
         const { asset, sha256: actualSha256, buffer } = result
         const existingRef = refsBySha256.get(actualSha256)
-        const alreadyInPool = !!existingRef
+        // asset_refs is metadata, not proof that a file still exists. This
+        // guards clear/interrupted-install recovery: stale refs must not cause
+        // the installer to skip writing a missing local resource.
+        const alreadyInPool = scheduledAssetShas.has(actualSha256)
+          || (Boolean(existingRef) && await assetCacheService.isReady(actualSha256))
+
+        if (existingRef && !alreadyInPool) {
+          console.warn('[learning-pack] stale asset_ref recovered by re-saving file', {
+            packId: manifest.packId,
+            sha256: actualSha256,
+            path: asset.path,
+          })
+        }
 
         if (!alreadyInPool) {
           filesToSave.push({ asset, sha256: actualSha256, buffer })
+          scheduledAssetShas.add(actualSha256)
         } else {
           assetDeduped++
         }
@@ -695,6 +692,16 @@ export const learningPackService = {
           ? localDb.putMany('asset_refs', assetRefsToWrite)
           : Promise.resolve(),
       ])
+
+      // Several semantic references (thumbnail, sprite, Ink alias) can point
+      // at one ZIP entry/SHA. The file is written once above; now persist every
+      // reference alias so runtime lookup never depends on a signed URL.
+      await Promise.all(assetResults
+        .filter((result): result is Extract<AssetResult, { ok: true }> => result.ok)
+        .map((result) => assetCacheService.addAliases(result.sha256, {
+          ...result.asset,
+          sha256: result.sha256,
+        })))
 
       const assetSkip = totalAssets - assetTasks.length
       console.log(`[learning-pack] ✅ ⑨ 资源提取完成: ${assetOk} 成功 (${assetDeduped} 去重复用), ${assetSkip} 跳过, ${assetFail} 失败`)
@@ -890,7 +897,7 @@ export const learningPackService = {
     await localDb.put('downloaded_packs', record)
 
     try {
-      for (const asset of manifest.assets.filter(isInstallAsset)) {
+      for (const asset of manifest.assets) {
         await assetCacheService.download(asset)
       }
       const installed = {

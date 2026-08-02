@@ -77,6 +77,37 @@ import { flattenComposerToTimeline } from '@/features/admin/components/vn-mixed-
 import { requestScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
 import { VnPlayer, type VnPlayerLine } from '@/features/vn-engine/vn-player'
+import { useCachedImage } from '@/hooks/use-cached-image'
+
+/**
+ * The card artwork belongs to the learning package.  A work can additionally
+ * have its own generated/uploaded cover; callers pass that URL first and use
+ * the package cover only as a fallback.
+ */
+function ScriptCover({
+  url,
+  className,
+  iconClassName = 'size-7',
+}: {
+  url?: string | null
+  className: string
+  iconClassName?: string
+}) {
+  const { resolvedUrl } = useCachedImage(url)
+  return resolvedUrl ? (
+    <img src={resolvedUrl} alt="" className={className} />
+  ) : (
+    <span className="flex size-full items-center justify-center text-muted-foreground">
+      <Clapperboard className={iconClassName} />
+    </span>
+  )
+}
+
+function displayScriptLocation(location: string | null | undefined, fallback: string) {
+  const value = location?.trim()
+  // `story:<id>` is an internal package reference, never presentation text.
+  return value && !/^story:[a-z0-9_-]+$/i.test(value) ? value : fallback
+}
 
 function useVideoFullscreenOrientation() {
   useEffect(() => {
@@ -487,7 +518,7 @@ function MineScripts({
                 </div>
                 <div className="flex flex-col gap-3">
                   <div>
-                    <p className="text-xs text-muted-foreground">{activeUnit.location || t('scripts.pocketTheater')}</p>
+                    <p className="text-xs text-muted-foreground">{displayScriptLocation(activeUnit.location, t('scripts.pocketTheater'))}</p>
                     <h1 className="mt-1 text-2xl font-semibold tracking-tight">{activeUnit.title}</h1>
                     {activeUnit.description && (
                       <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
@@ -570,18 +601,26 @@ function MineScripts({
           {units.map((unit) => {
             const installed = installedIds.has(unit.id)
             const downloading = downloadTasks.some((task) => task.packId === unit.id && task.status !== 'error')
+            const location = displayScriptLocation(unit.location, t('scripts.immersiveTheater'))
 
             return (
               <div key={unit.id} className="group relative w-44 shrink-0 snap-start">
                 <Card className="w-44 shrink-0 snap-start overflow-hidden border-0 bg-muted/30 shadow-none transition-transform group-active:scale-[0.98]">
                   <Link to={`/scripts/packages/${unit.id}`} className="block">
-                    <div className="aspect-video bg-muted/50 p-3">
-                      <Badge variant="secondary">{t('scripts.chapters', { count: unit.scriptCount })}</Badge>
+                    <div className="relative aspect-video overflow-hidden bg-muted/50">
+                      <ScriptCover
+                        url={unit.coverImage}
+                        className="size-full object-cover"
+                        iconClassName="size-8 text-muted-foreground"
+                      />
+                      <Badge variant="secondary" className="absolute left-3 top-3">
+                        {t('scripts.chapters', { count: unit.scriptCount })}
+                      </Badge>
                     </div>
                     <CardHeader className="p-2.5 pb-2">
                       <CardTitle className="truncate text-sm">{unit.title}</CardTitle>
                       <CardDescription className="truncate text-xs">
-                        {unit.location || t('scripts.immersiveTheater')}
+                        {location}
                       </CardDescription>
                     </CardHeader>
                   </Link>
@@ -1846,15 +1885,15 @@ function ScriptShop({
               }}
               className="flex w-full gap-3 rounded-lg bg-muted/30 p-3 text-left transition-colors hover:bg-muted/50"
             >
-              <div className="flex aspect-square size-[72px] shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                <Clapperboard className="size-7" />
+              <div className="flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground">
+                <ScriptCover url={unit.coverImage} className="size-full object-cover" />
               </div>
               <div className="min-w-0 flex-1 py-0.5">
                 <div className="flex items-start gap-2">
                   <h3 className="line-clamp-1 flex-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</h3>
                   {unit.isLocked && <LockKeyhole className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />}
                 </div>
-                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location || '沉浸式英语剧场'}</p>
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{displayScriptLocation(unit.location, '沉浸式英语剧场')}</p>
                 <p className="mt-1 line-clamp-1 text-xs leading-5 text-muted-foreground">
                   {unit.scriptCount} 个章节 · {unit.vocabCount} 个单词 · {unit.chunkCount} 个句块
                 </p>
@@ -1937,12 +1976,12 @@ function ScriptShopDetail({
       <DialogContent className="max-h-[88vh] w-[90vw] overflow-hidden rounded-2xl p-0 sm:max-w-md">
         <DialogHeader className="sr-only">
           <DialogTitle>{unit.title}</DialogTitle>
-          <DialogDescription>{unit.location}</DialogDescription>
+          <DialogDescription>{displayScriptLocation(unit.location, '沉浸式英语剧场')}</DialogDescription>
         </DialogHeader>
         <div className="flex max-h-[88vh] flex-col">
           <div className="flex gap-3 bg-muted/30 p-4">
-            <div className="flex aspect-square size-20 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-              <Clapperboard className="size-8" />
+            <div className="flex aspect-square size-20 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground">
+              <ScriptCover url={unit.coverImage} className="size-full object-cover" iconClassName="size-8" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
@@ -1951,7 +1990,7 @@ function ScriptShopDetail({
                 {unit.isLocked && <Badge variant="outline" className="rounded-full text-[10px]">未解锁</Badge>}
               </div>
               <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5">{unit.title}</h3>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{unit.location || '沉浸式英语剧场'}</p>
+              <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{displayScriptLocation(unit.location, '沉浸式英语剧场')}</p>
               <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                 <span>{unit.scriptCount} 个章节</span>
                 <span>{unit.vocabCount} 个单词</span>

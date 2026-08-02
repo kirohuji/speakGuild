@@ -130,8 +130,49 @@ export class LearningService {
   }
 
   private isPackagedAsset(asset: any) {
-    const role = String(asset?.role ?? '').toLowerCase();
-    return !['voice', 'audio', 'bgm', 'sfx'].includes(role);
+    // An offline package must contain every resource used by its player.
+    // Filtering out audio made a successfully installed package still depend
+    // on COS at playback time.
+    return Boolean(asset?.url);
+  }
+
+  /**
+   * Legacy scene fields store a COS URL, while the offline protocol requires a
+   * stable FileAsset identity. Normalize every collected scene/thumbnail URL
+   * back to its FileAsset before emitting the manifest. This is the contract
+   * the Capacitor installer uses to create aliases independent of URL signing.
+   */
+  private async attachFileAssetIdentities(assets: any[]) {
+    const resolved = await Promise.all(assets.map(async (asset) => {
+      if (asset.fileAssetId) {
+        const signed = await this.fileAssets.getAssetLongLivedUrl(asset.fileAssetId);
+        return { ...asset, url: signed.url };
+      }
+
+      let cosKey: string;
+      try {
+        cosKey = decodeURIComponent(new URL(asset.url).pathname.replace(/^\/+/, ''));
+      } catch {
+        throw new Error(`Offline asset has an invalid URL: ${asset.url}`);
+      }
+      const fileAsset = await this.prisma.fileAsset.findUnique({ where: { cosKey } });
+      if (!fileAsset) {
+        throw new Error(`Offline asset is not linked to FileAsset: ${cosKey} (${asset.role ?? 'unknown'})`);
+      }
+      const signed = await this.fileAssets.getAssetLongLivedUrl(fileAsset.id);
+      return {
+        ...asset,
+        url: signed.url,
+        fileAssetId: fileAsset.id,
+        mimeType: asset.mimeType ?? fileAsset.mimeType,
+        size: asset.size ?? fileAsset.size,
+      };
+    }));
+
+    // Keep every semantic reference (especially Ink aliases) in the manifest.
+    // ZIP byte deduplication happens later by SHA-256; removing entries here
+    // would lose the alias needed by the native player.
+    assets.splice(0, assets.length, ...resolved);
   }
 
   private async isLearningPackFreeDownloadsEnabled() {
@@ -1151,7 +1192,10 @@ export class LearningService {
     this.pushAsset(assets, gameLocation?.backgroundUrl, 'background');
     this.pushAsset(assets, gameLocation?.bgmUrl, 'bgm');
     this.pushAsset(assets, gameLocation?.ambientUrl, 'sfx');
-    this.pushAsset(assets, unitDetail.coverImage, 'cover');
+    // This is the package card/detail cover, deliberately separate from Ink
+    // assetMap backgrounds and scene visuals.
+    const packageCover = this.pushAsset(assets, unitDetail.coverImage, 'cover');
+    if (packageCover) packageCover.source = 'package-cover';
     for (const character of sceneCharacters) {
       this.pushAsset(assets, character.avatarUrl, 'thumbnail');
       this.pushAsset(assets, character.spriteBaseUrl, 'sprite');
@@ -1312,6 +1356,8 @@ export class LearningService {
       for (const c of td.activeChunks ?? []) allChunkIds.add(c.id);
     }
 
+    await this.attachFileAssetIdentities(assets);
+
     return {
       manifest: {
         packId: unitDetail.id,
@@ -1394,45 +1440,44 @@ export class LearningService {
 
     for (let i = 0; i < assetList.length; i += CONCURRENCY) {
       const batch = assetList.slice(i, i + CONCURRENCY);
-      const results = await Promise.allSettled(
+      const results = await Promise.all(
         batch.map(async (asset: any) => {
-          const response = await fetch(asset.url);
-          if (!response.ok) {
-            return { asset, ok: false as const, reason: `HTTP ${response.status}` };
-          }
-          const arrayBuffer = await response.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
-          const sha256 = sha256Buffer(buffer);
-          const mimeType = response.headers.get('content-type')?.split(';')[0] ?? asset.mimeType ?? null;
-          const ext = extensionFromUrl(asset.url) ?? extensionFromMime(mimeType) ?? 'bin';
-          const role = safeFilePart(asset.role ?? 'misc');
-          const path = `assets/${role}/${sha256}.${ext}`;
+          try {
+            const response = await fetch(asset.url);
+            if (!response.ok) {
+              return { asset, ok: false as const, reason: `HTTP ${response.status}` };
+            }
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+            const sha256 = sha256Buffer(buffer);
+            const mimeType = response.headers.get('content-type')?.split(';')[0] ?? asset.mimeType ?? null;
+            const ext = extensionFromUrl(asset.url) ?? extensionFromMime(mimeType) ?? 'bin';
+            const role = safeFilePart(asset.role ?? 'misc');
+            const path = `assets/${role}/${sha256}.${ext}`;
 
-          return {
-            asset,
-            ok: true as const,
-            buffer,
-            sha256,
-            mimeType,
-            ext,
-            role,
-            path,
-            size: buffer.byteLength,
-          };
+            return {
+              asset,
+              ok: true as const,
+              buffer,
+              sha256,
+              mimeType,
+              ext,
+              role,
+              path,
+              size: buffer.byteLength,
+            };
+          } catch (error) {
+            return {
+              asset,
+              ok: false as const,
+              reason: error instanceof Error ? error.message : String(error),
+            };
+          }
         }),
       );
 
       for (const result of results) {
-        if (result.status === 'rejected') {
-          const err = result.reason;
-          failedAssets.push({
-            url: '',
-            reason: err instanceof Error ? err.message : String(err),
-          });
-          continue;
-        }
-
-        const r = result.value;
+        const r = result;
         if (!r.ok) {
           failedAssets.push({ url: r.asset.url, reason: r.reason });
           continue;
@@ -1453,6 +1498,17 @@ export class LearningService {
           size: r.size,
         });
       }
+    }
+
+    // Do not publish a deceptively "successful" offline package. One omitted
+    // visual/audio file makes native playback incomplete, so fail generation
+    // with enough identity to repair the underlying FileAsset binding.
+    if (failedAssets.length > 0) {
+      const details = failedAssets
+        .slice(0, 10)
+        .map((item) => `${item.url || '<unknown>'}: ${item.reason}`)
+        .join('; ');
+      throw new Error(`Offline package asset collection failed (${failedAssets.length}/${assetList.length}): ${details}`);
     }
 
     const manifest = {

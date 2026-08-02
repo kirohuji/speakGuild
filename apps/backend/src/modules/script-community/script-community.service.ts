@@ -29,7 +29,7 @@ const feedInclude = {
       id: true,
       title: true,
       chapterName: true,
-      scene: { select: { id: true, title: true } },
+      scene: { select: { id: true, title: true, coverImage: true } },
     },
   },
   videoAsset: { select: { id: true, mimeType: true } },
@@ -510,7 +510,10 @@ export class ScriptCommunityService {
       ...work,
       videoUrl: video?.url ?? null,
       videoMimeType: work.videoAsset?.mimeType ?? null,
-      coverUrl: cover?.url ?? null,
+      // A work-specific cover remains authoritative.  Older works did not
+      // persist coverAssetId, so use their owning learning package's cover
+      // rather than returning a blank card.
+      coverUrl: cover?.url ?? work.episode.scene.coverImage ?? null,
       liked: Boolean(liked),
       myReaction: myReaction?.reaction ?? null,
       reactionGroups: reactionGroups.map((group) => ({

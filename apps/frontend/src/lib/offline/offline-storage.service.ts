@@ -120,7 +120,17 @@ function summarizeAssets(assets: LocalAsset[]) {
     failed: { count: 0, bytes: 0 },
   }
 
+  // local_assets contains lookup aliases (URL / fileAssetId) for one physical
+  // file. Count each canonical asset only once; otherwise a 13.7 MB package is
+  // displayed as roughly 27.4 MB even though it was written once.
+  const physicalAssets = new Map<string, LocalAsset>()
   for (const asset of assets) {
+    const canonicalId = asset.assetId || asset.id
+    const current = physicalAssets.get(canonicalId)
+    if (!current || asset.id === canonicalId) physicalAssets.set(canonicalId, asset)
+  }
+
+  for (const asset of physicalAssets.values()) {
     const bytes = Number(asset.size ?? 0)
     if (asset.status !== 'ready') {
       if (asset.status === 'failed') {
@@ -226,7 +236,6 @@ export const offlineStorageService = {
       return installedPackIds.has(id) || installedPackIds.has(unitId)
     })
     const downloadedInkScripts = inkScripts.filter((item) => installedPackIds.has(String(item?.unitId ?? '')))
-    const readyAssets = assets.filter((asset) => asset.status === 'ready')
     const downloadedContentRefs = offlineContentRefs.filter((item) => installedPackIds.has(String(item?.packId ?? '')))
     const downloadedContentIds = {
       vocab: new Set(downloadedContentRefs.filter((item) => item.kind === 'vocab').map((item) => String(item.contentId))),
@@ -249,14 +258,15 @@ export const offlineStorageService = {
     ])
     const dictionaryBytes = sumJsonBytes(dictionaries)
     const expressionBytes = sumJsonBytes(expressions)
-    const localAssetBytes = readyAssets.reduce((sum, asset) => sum + Number(asset.size ?? 0), 0)
+    const localAssetCount = assetSummary.audio.count + assetSummary.image.count + assetSummary.other.count
+    const localAssetBytes = assetSummary.audio.bytes + assetSummary.image.bytes + assetSummary.other.bytes
 
     return {
       downloadedPackCount: installedPacks.length,
       offlineVocabularyCount: downloadedVocabularies.length,
       offlineChunkCount: downloadedChunks.length,
       offlinePatternCount: downloadedPatterns.length,
-      localAssetCount: readyAssets.length,
+      localAssetCount,
       localAssetBytes,
       audioAssetCount: assetSummary.audio.count,
       audioAssetBytes: assetSummary.audio.bytes,
@@ -390,14 +400,35 @@ export const offlineStorageService = {
     }
 
     if (category === 'packs') {
+      // Do not clear tables directly: uninstall owns the asset reference-count
+      // protocol and removes both asset_refs and unshared physical files.
+      const packs = await localDb.list<InstalledLearningPack>('downloaded_packs')
+      console.log('[offline-storage] clear packs start', { packCount: packs.length })
+      for (const pack of packs) {
+        await learningPackService.uninstall(pack.packId)
+      }
+      // Repair interrupted/legacy installs that left no downloaded_packs row.
+      await localDb.clear('asset_refs')
       await clearTables(['downloaded_packs', 'downloaded_unit_details', 'ink_scripts'])
       await clearTables(['offline_vocabularies', 'offline_chunks', 'offline_patterns', 'offline_content_refs'])
+      console.log('[offline-storage] clear packs complete', {
+        packs: await localDb.count('downloaded_packs'),
+        assetRefs: await localDb.count('asset_refs'),
+      })
       return
     }
 
     if (category === 'assets') {
-      await localDb.clear('local_assets')
       await clearAssetFiles()
+      // A reference without a file is invalid. Keeping it makes the next pack
+      // install deduplicate against a non-existent asset and produce 0 local
+      // resource files.
+      await localDb.clear('local_assets')
+      await localDb.clear('asset_refs')
+      console.log('[offline-storage] clear assets complete', {
+        localAssets: await localDb.count('local_assets'),
+        assetRefs: await localDb.count('asset_refs'),
+      })
       return
     }
 

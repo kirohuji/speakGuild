@@ -24,7 +24,7 @@ export interface ScriptPracticeRecord {
     title: string
     chapterName: string
     characterName: string
-    scene: { id: string; title: string }
+    scene: { id: string; title: string; coverImage?: string | null }
   }
   works?: Array<{ id: string; status: ScriptWorkStatus; kind: ScriptWorkKind }>
 }
@@ -62,7 +62,7 @@ export interface ScriptWork {
     id: string
     title: string
     chapterName: string
-    scene: { id: string; title: string }
+    scene: { id: string; title: string; coverImage?: string | null }
   }
   _count: { likes: number; reactions: number }
 }

@@ -8,6 +8,7 @@ import { VnPlayer, type VnPlayerHandle, type VnPlayerLine } from '@/features/vn-
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { type StoryEpisodePlayerData } from '@/features/learning/api/learning-api'
 import { learningRepository } from '@/lib/offline'
+import { assetCacheService } from '@/lib/offline/asset-cache.service'
 import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
 import { useLayoutStore } from '@/stores/layout.store'
 import { parseComposer } from '@/features/admin/components/composer-parser'
@@ -85,6 +86,35 @@ export function ScriptPlayerPage() {
   )
 }
 
+async function resolveSceneAssets(scene: StoryEpisodePlayerData['scene']) {
+  if (!scene) return scene
+  const resolveUrl = (url?: string | null) => url
+    ? assetCacheService.resolve({ url, role: 'background', offlineOnly: true })
+    : Promise.resolve(url)
+  const characters = await Promise.all((scene.characters ?? []).map(async (character) => {
+    const expressions = character.expressions && typeof character.expressions === 'object'
+      ? await Promise.all(Object.entries(character.expressions).map(async ([name, value]) => {
+        if (typeof value === 'string') return [name, await resolveUrl(value)]
+        if (value && typeof value === 'object') {
+          const entry = value as { spriteUrl?: string | null; avatarUrl?: string | null }
+          return [name, {
+            ...entry,
+            spriteUrl: await resolveUrl(entry.spriteUrl),
+            avatarUrl: await resolveUrl(entry.avatarUrl),
+          }]
+        }
+        return [name, value]
+      }))
+      : []
+    return {
+      ...character,
+      spriteBaseUrl: await resolveUrl(character.spriteBaseUrl),
+      expressions: expressions.length ? Object.fromEntries(expressions) : character.expressions,
+    }
+  }))
+  return { ...scene, backgroundUrl: await resolveUrl(scene.backgroundUrl), characters }
+}
+
 function InkEpisodePlayer({
   data,
   episodeId,
@@ -108,10 +138,63 @@ function InkEpisodePlayer({
   const [repeatSaving, setRepeatSaving] = useState(false)
   const [repeatFrameIndex, setRepeatFrameIndex] = useState(0)
   const [isChatMode, setIsChatMode] = useState(false)
+  const [resolvedAssetMap, setResolvedAssetMap] = useState(data.inkScript.assetMap ?? undefined)
+  const [resolvedScene, setResolvedScene] = useState(data.scene)
+  const [assetMapReady, setAssetMapReady] = useState(false)
+  const [sceneAssetsReady, setSceneAssetsReady] = useState(false)
   const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
   const startedAt = useRef(Date.now())
   const story = useInkStory(data.inkScript.inkJson)
   const { currentTags } = story
+
+  // The package installer stores story resources by immutable SHA-256 and
+  // creates a stable fileAssetId alias. Resolve aliases once here, before Ink
+  // tags are interpreted, so Capacitor never needs a fresh signed API URL for
+  // an already-installed episode.
+  useEffect(() => {
+    let cancelled = false
+    const source = data.inkScript.assetMap ?? {}
+    void Promise.all(Object.entries(source).map(async ([alias, entry]) => {
+      if (!entry.signedUrl) return [alias, entry] as const
+      const localUrl = await assetCacheService.resolve({
+        url: entry.signedUrl,
+        assetId: entry.fileAssetId,
+        fileAssetId: entry.fileAssetId,
+        mimeType: entry.mimeType,
+        role: entry.type === 'audio' ? 'voice' : 'background',
+        offlineOnly: true,
+      })
+      return [alias, { ...entry, signedUrl: localUrl }] as const
+    })).then((resolvedEntries) => {
+      if (cancelled) return
+      const resolved = Object.fromEntries(resolvedEntries)
+      console.log('[script-player] resolved offline asset map', {
+        episodeId,
+        total: resolvedEntries.length,
+        local: resolvedEntries.filter(([, entry]) => Boolean(
+          entry.signedUrl?.startsWith('capacitor://') || entry.signedUrl?.includes('/_capacitor_file_/'),
+        )).length,
+      })
+      setResolvedAssetMap(resolved)
+    }).catch((error) => {
+      // A package player is offline-only: do not retain a remote URL after a
+      // resolver failure, because that would silently defeat offline mode.
+      console.warn('[script-player] offline asset-map resolution failed', { episodeId, error })
+      if (!cancelled) setResolvedAssetMap({})
+    }).finally(() => {
+      if (!cancelled) setAssetMapReady(true)
+    })
+    return () => { cancelled = true }
+  }, [data.inkScript.assetMap, episodeId])
+
+  useEffect(() => {
+    let cancelled = false
+    void resolveSceneAssets(data.scene).then((scene) => {
+      if (!cancelled) setResolvedScene(scene)
+    }).catch((error) => console.warn('[script-player] offline scene resolution failed', { episodeId, error }))
+      .finally(() => { if (!cancelled) setSceneAssetsReady(true) })
+    return () => { cancelled = true }
+  }, [data.scene, episodeId])
 
   // 跟踪是否刚提交了用户输入（用于在 currentLine 中优先展示用户输入）
   const userInputJustSubmittedRef = useRef(false)
@@ -124,17 +207,17 @@ function InkEpisodePlayer({
     expression?: string
     position?: 'left' | 'center' | 'right'
   }>({
-    backgroundUrl: data.scene?.backgroundUrl ?? undefined,
+    backgroundUrl: undefined,
     backgroundFit: 'cover',
   })
 
   useEffect(() => {
     const tags = currentTags
     if (tags.length === 0) return
-    const parsed = parseVnTags(tags, data.inkScript?.assetMap ?? undefined)
+    const parsed = parseVnTags(tags, resolvedAssetMap)
     setVnVisual((prev) => {
       const next = {
-        backgroundUrl: parsed.bg || prev.backgroundUrl || (data.scene?.backgroundUrl ?? undefined),
+        backgroundUrl: parsed.bg || prev.backgroundUrl || (resolvedScene?.backgroundUrl ?? undefined),
         backgroundFit: isBackgroundFit(parsed.bgFit) ? parsed.bgFit : prev.backgroundFit,
         speaker: prev.speaker,
         expression: prev.expression,
@@ -148,11 +231,11 @@ function InkEpisodePlayer({
       }
       return next
     })
-  }, [currentTags, data.scene?.backgroundUrl, story.isWaiting])
+  }, [currentTags, resolvedScene?.backgroundUrl, resolvedAssetMap, story.isWaiting])
 
   const inkLines = useMemo<VnPlayerLine[]>(
     () => story.lines.map((line) => {
-      const parsed = parseVnTags(line.tags, data.inkScript?.assetMap ?? undefined)
+      const parsed = parseVnTags(line.tags, resolvedAssetMap)
       return {
         speaker: line.speaker,
         text: line.text,
@@ -160,7 +243,7 @@ function InkEpisodePlayer({
         audioUrl: parsed.audio,
       }
     }),
-    [story.lines, data.inkScript?.assetMap],
+    [story.lines, resolvedAssetMap],
   )
 
   // inkLines 变化时（advanceStory 推进了剧情），清除「刚提交」标记
@@ -195,7 +278,7 @@ function InkEpisodePlayer({
   )
 
   // ── 角色与立绘解析（与练习 VN 相同逻辑）──
-  const characters = useMemo(() => data.scene?.characters ?? [], [data.scene?.characters])
+  const characters = useMemo(() => resolvedScene?.characters ?? [], [resolvedScene?.characters])
   const currentCharacter = useMemo(() => {
     const speaker = vnVisual.speaker || (currentLine?.speaker && !currentLine.isUser ? currentLine.speaker : undefined)
     return characters.find((c) => characterMatchesSpeaker(c as any, speaker))
@@ -214,12 +297,13 @@ function InkEpisodePlayer({
     ? stateSpriteUrl || currentCharacter.spriteBaseUrl || undefined
     : undefined
   const spritePosition = (vnVisual.position || currentCharacter?.defaultPosition || 'center') as 'left' | 'center' | 'right'
+  const assetsResolving = !assetMapReady || !sceneAssetsReady
 
   const repeatFrames = useMemo(() => {
     if (!data.inkScript.inkSource) return []
     const characterSprites: Record<string, Record<string, string>> = {}
     const characterPositions: Record<string, 'left' | 'center' | 'right'> = {}
-    for (const character of data.scene?.characters ?? []) {
+    for (const character of resolvedScene?.characters ?? []) {
       const sprites: Record<string, string> = {}
       if (character.spriteBaseUrl) sprites.default = character.spriteBaseUrl
       for (const [expression, value] of Object.entries(character.expressions ?? {})) {
@@ -232,11 +316,11 @@ function InkEpisodePlayer({
       }
     }
     return flattenComposerToTimeline(parseComposer(data.inkScript.inkSource), {
-      defaultBackgroundUrl: data.scene?.backgroundUrl ?? undefined,
+      defaultBackgroundUrl: resolvedScene?.backgroundUrl ?? undefined,
       characterSprites,
       characterPositions,
     })
-  }, [data.inkScript.inkSource, data.scene])
+  }, [data.inkScript.inkSource, resolvedScene])
 
   useEffect(() => {
     if (!story.isEnded || completionSaved.current) return
@@ -395,7 +479,11 @@ function InkEpisodePlayer({
       <div className={mode === 'repeat'
         ? 'min-h-0 flex-1 bg-background pt-[calc(3.5rem+env(safe-area-inset-top,0px))]'
         : 'min-h-0 flex-1 bg-background'}>
-      {mode === 'repeat' ? (
+      {assetsResolving ? (
+        <div className="flex h-full items-center justify-center bg-background">
+          <Loader2 className="size-7 animate-spin text-primary" />
+        </div>
+      ) : mode === 'repeat' ? (
         <VnMixedPreviewPlayer
           frames={repeatFrames}
           activeIndex={repeatFrameIndex}
@@ -419,7 +507,8 @@ function InkEpisodePlayer({
         stageClassName="min-h-0"
         hideChatTopBar
         showUserInputOverride
-        backgroundUrl={vnVisual.backgroundUrl || (data.scene?.backgroundUrl ?? undefined)}
+        offlineOnly
+        backgroundUrl={vnVisual.backgroundUrl || (resolvedScene?.backgroundUrl ?? undefined)}
         backgroundFit={vnVisual.backgroundFit}
         currentSpriteUrl={currentSpriteUrl}
         spriteAlt={currentCharacter?.displayName || currentCharacter?.name}
