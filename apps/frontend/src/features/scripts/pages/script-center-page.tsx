@@ -41,6 +41,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
+import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
 import {
   Card,
   CardContent,
@@ -165,7 +166,6 @@ export function ScriptCenterPage() {
   // the theatre must never participate in Vaul's drag-to-dismiss gesture.
   const [replayRecord, setReplayRecord] = useState<ScriptPracticeRecord | null>(null)
   const [generating, setGenerating] = useState<Record<string, number>>({})
-  const [queuedRecordIds, setQueuedRecordIds] = useState<Record<string, true>>({})
   const ignoreReplayDismissOnRecordsDrawer = useRef(false)
   const [works, setWorks] = useState<ScriptWork[]>([])
   const [worksLoading, setWorksLoading] = useState(false)
@@ -241,8 +241,14 @@ export function ScriptCenterPage() {
   const loadRecords = useCallback(async () => {
     setRecordsLoading(true)
     try {
-      const result = await scriptCommunityApi.myRecords({ limit: 50 })
-      setRecords(result.list)
+      const allRecords: ScriptPracticeRecord[] = []
+      let cursor: string | undefined
+      do {
+        const result = await scriptCommunityApi.myRecords({ limit: 50, cursor })
+        allRecords.push(...result.list)
+        cursor = result.nextCursor ?? undefined
+      } while (cursor)
+      setRecords(allRecords)
     } catch {
       setRecords([])
     } finally {
@@ -269,7 +275,7 @@ export function ScriptCenterPage() {
   }, [])
 
   const generateReplayVideo = useCallback(async (record: ScriptPracticeRecord) => {
-    if (generating[record.id] || queuedRecordIds[record.id] || record.works?.some((work) => work.status === 'rendering')) return
+    if (generating[record.id] || record.works?.some((work) => work.status === 'rendering')) return
     setGenerating((current) => ({ ...current, [record.id]: 1 }))
     try {
       const work = await scriptCommunityApi.createWork({
@@ -281,8 +287,10 @@ export function ScriptCenterPage() {
       await generateAndPublishExistingWork(work, (progress) => {
         setGenerating((current) => ({ ...current, [record.id]: progress }))
       })
-      setQueuedRecordIds((current) => ({ ...current, [record.id]: true }))
-      await loadWorks()
+      setReplayRecord((current) => current?.id === record.id
+        ? { ...current, works: [{ id: work.id, status: 'rendering', kind: work.kind }] }
+        : current)
+      await Promise.all([loadWorks(), loadRecords()])
       toast.success('已创建作品并提交后台渲染；完成后会自动发布到广场')
     } catch (error: any) {
       toast.error(error?.message || '视频生成失败，请重试')
@@ -293,7 +301,7 @@ export function ScriptCenterPage() {
         return next
       })
     }
-  }, [generating, loadWorks, queuedRecordIds])
+  }, [generating, loadRecords, loadWorks])
 
   const loadFeed = useCallback(async (cursor?: string, append = false) => {
     if (append) setFeedLoadingMore(true)
@@ -328,6 +336,14 @@ export function ScriptCenterPage() {
   useEffect(() => {
     if (tab === 'mine') void loadWorks()
   }, [loadWorks, tab])
+
+  // Works are cloud records. Refresh only while a render is active so the
+  // current VN/repeat version changes in place without a permanent poller.
+  useEffect(() => {
+    if (tab !== 'mine' || !works.some((work) => work.status === 'rendering')) return
+    const timer = window.setInterval(() => void loadWorks(), 15_000)
+    return () => window.clearInterval(timer)
+  }, [loadWorks, tab, works])
 
   useEffect(() => {
     if (tab === 'square') void loadFeed()
@@ -399,7 +415,6 @@ export function ScriptCenterPage() {
             installedIds={installedIds}
             downloadTasks={downloadTasks}
             onOpenShop={() => setPanel('store')}
-            onOpenRecords={() => setPanel('records')}
             onDownload={downloadUnitPack}
             onQuit={quitUnit}
             works={works}
@@ -452,8 +467,7 @@ export function ScriptCenterPage() {
         onClose={closeReplay}
         generatingProgress={replayRecord ? generating[replayRecord.id] : undefined}
         videoQueued={Boolean(replayRecord && (
-          queuedRecordIds[replayRecord.id]
-          || replayRecord.works?.some((work) => work.status === 'rendering')
+          replayRecord.works?.some((work) => work.status === 'rendering')
         ))}
         onGenerateVideo={generateReplayVideo}
       />
@@ -489,7 +503,6 @@ function MineScripts({
   installedIds,
   downloadTasks,
   onOpenShop,
-  onOpenRecords,
   onDownload,
   onQuit,
   works,
@@ -502,7 +515,6 @@ function MineScripts({
   installedIds: Set<string>
   downloadTasks: Array<{ packId: string; status: string; progress: number }>
   onOpenShop: () => void
-  onOpenRecords: () => void
   onDownload: (id: string) => Promise<void>
   onQuit: (id: string) => Promise<void>
   works: ScriptWork[]
@@ -647,27 +659,6 @@ function MineScripts({
           <ChevronRight className="size-4 text-muted-foreground" />
         </button>
       </section> */}
-
-      <section className="flex flex-col gap-2">
-        <div className="flex items-center justify-between px-1">
-          <p className="text-xs font-medium text-muted-foreground">练习记录</p>
-          <Button variant="ghost" size="sm" onClick={onOpenRecords}>全部记录</Button>
-        </div>
-        <button
-          type="button"
-          onClick={onOpenRecords}
-          className="flex items-center gap-3 rounded-2xl bg-muted/35 p-4 text-left transition-colors hover:bg-muted/55"
-        >
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background text-primary">
-            <ClipboardList className="size-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium">查看 VN 与跟读完成记录</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">记录详情可生成演出视频并发布到我的作品</p>
-          </div>
-          <ChevronRight className="size-4 text-muted-foreground" />
-        </button>
-      </section>
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between px-1">
@@ -824,8 +815,8 @@ function workPrimaryActionLabel(work: ScriptWork) {
   if (work.status === 'rendering') return '取消生成'
   if (work.status === 'published') return '取消发布'
   if (work.videoUrl) return '发布到广场'
-  if (work.status === 'failed') return '重新生成并发布'
-  return '生成视频并发布'
+  if (work.status === 'failed') return '重新生成视频'
+  return '生成视频'
 }
 
 function MyWorks({
@@ -857,7 +848,7 @@ function MyWorks({
             ? t('scripts.workPrivateHint')
             : work.videoUrl
               ? t('scripts.workPublishedHint')
-              : '已提交后台生成，完成后将自动发布到广场',
+              : '已提交后台生成，完成后可手动发布到广场',
       )
       await onChanged()
     } catch (error: any) {
@@ -1205,6 +1196,7 @@ function WorksLibraryDialog({
           open={Boolean(historyWork)}
           onOpenChange={(nextOpen) => { if (!nextOpen) setHistoryWork(null) }}
           works={historyWork ? works.filter((work) => work.episodeId === historyWork.episodeId) : []}
+          initialKind={historyWork?.kind}
           onPublish={togglePublish}
           onDelete={setDeleteTarget}
         />
@@ -1238,21 +1230,31 @@ function EpisodeWorkHistoryDialog({
   open,
   onOpenChange,
   works,
+  initialKind,
   onPublish,
   onDelete,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   works: ScriptWork[]
+  initialKind?: ScriptWorkKind
   onPublish: (work: ScriptWork) => Promise<void>
   onDelete: (work: ScriptWork) => void
 }) {
   const { t } = useTranslation()
   const [previewWork, setPreviewWork] = useState<ScriptWork | null>(null)
   const [publishingId, setPublishingId] = useState<string | null>(null)
+  const [mode, setMode] = useState<'vn' | 'repeat'>('vn')
+  useEffect(() => {
+    if (open) setMode(initialKind === 'repeat_video' ? 'repeat' : 'vn')
+  }, [initialKind, open])
+  const modeWorks = useMemo(
+    () => works.filter((work) => mode === 'vn' ? work.kind === 'vn_video' : work.kind === 'repeat_video'),
+    [mode, works],
+  )
   const chronological = useMemo(
-    () => [...works].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
-    [works],
+    () => [...modeWorks].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    [modeWorks],
   )
   const ordered = useMemo(() => [...chronological].reverse(), [chronological])
   const episode = ordered[0]?.episode
@@ -1281,6 +1283,13 @@ function EpisodeWorkHistoryDialog({
               {episode ? `${episode.scene.title} · ` : ''}{t('scripts.totalAttempts', { count: works.length })}
             </DialogDescription>
           </DialogHeader>
+
+          <Tabs value={mode} onValueChange={(value) => setMode(value as 'vn' | 'repeat')} className="shrink-0">
+            <TabsList className="grid h-9 w-full grid-cols-2 rounded-lg">
+              <TabsTrigger value="vn" className="text-xs">VN 练习历史</TabsTrigger>
+              <TabsTrigger value="repeat" className="text-xs">跟读练习历史</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
             {ordered.length === 0 ? (
@@ -1478,9 +1487,8 @@ function ScriptPublishHistoryDialog({
               <table className="w-full table-fixed text-left">
                 <thead className="sticky top-0 z-10 bg-muted/95 text-[11px] text-muted-foreground backdrop-blur">
                   <tr className="border-b border-border/45">
-                    <th className="w-[46%] px-3 py-2 font-medium">{t('scripts.tableWork')}</th>
-                    <th className="w-[22%] px-2 py-2 font-medium">{t('scripts.tableStatus')}</th>
-                    <th className="w-[32%] px-2 py-2 font-medium">{t('scripts.tableSubmitTime')}</th>
+                    <th className="w-[58%] px-3 py-2 font-medium">{t('scripts.tableWork')}</th>
+                    <th className="w-[42%] px-2 py-2 font-medium">任务状态</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1498,13 +1506,8 @@ function ScriptPublishHistoryDialog({
                           <Badge className={cn('border-0 text-[10px] shadow-none', meta.className)}>
                             {meta.label}
                           </Badge>
-                          <p className="mt-1 text-[10px] tabular-nums text-muted-foreground">
-                            {item.status === 'completed' ? '100%' : `${item.progress}%`}
-                          </p>
-                        </td>
-                        <td className="px-2 py-2.5 align-top">
-                          <p className="text-[11px] tabular-nums text-muted-foreground">
-                            {formatPublishTime(item.createdAt)}
+                          <p className="mt-1 whitespace-nowrap text-[10px] tabular-nums text-muted-foreground">
+                            {item.status === 'completed' ? '100%' : `${item.progress}%`} · {formatPublishTime(item.createdAt)}
                           </p>
                           {item.errorMessage && (
                             <p className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-destructive">{item.errorMessage}</p>
@@ -1775,6 +1778,11 @@ function SquareWorkCard({
         <div>
           <p className="text-sm font-semibold">{work.title}</p>
           {work.caption && <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-muted-foreground">{work.caption}</p>}
+          {work._count.likes > 0 && (
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {t('scripts.likeTotal', { count: work._count.likes })}
+            </p>
+          )}
         </div>
         {work.reactionGroups.length > 0 && (
           <div className="flex min-w-0 items-center gap-1.5 overflow-hidden text-[11px] text-muted-foreground">
@@ -1791,12 +1799,12 @@ function SquareWorkCard({
           <Button
             size="sm"
             variant={work.liked ? 'secondary' : 'ghost'}
-            className="h-8 rounded-full px-2.5"
+            className={cn('h-8 rounded-full px-2.5', work.liked && 'bg-primary/12 text-primary hover:bg-primary/16')}
             onClick={onLike}
             disabled={likePending}
           >
-            <Heart data-icon="inline-start" />
-            {t('scripts.likeCount', { count: work._count.likes })}
+            <Heart data-icon="inline-start" className={cn(work.liked && 'fill-current')} />
+            <span>{work.liked ? t('scripts.liked') : t('scripts.like')}</span>
           </Button>
           <Popover open={reactionOpen} onOpenChange={setReactionOpen}>
             <PopoverTrigger asChild>
@@ -1814,7 +1822,7 @@ function SquareWorkCard({
               align="start"
               side="top"
               sideOffset={8}
-              className="w-[min(19rem,calc(100vw-2rem))] rounded-2xl border-0 bg-popover/95 p-2 shadow-xl backdrop-blur-xl"
+              className="w-[min(19rem,calc(100vw-2rem))] rounded-xl border border-border/70 bg-background p-2 shadow-lg"
             >
               <p className="px-2 pb-1.5 pt-1 text-[11px] font-medium text-muted-foreground">{t('scripts.sendReaction')}</p>
               <div className="grid grid-cols-2 gap-1">
@@ -1837,17 +1845,6 @@ function SquareWorkCard({
               </div>
             </PopoverContent>
           </Popover>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="h-8 rounded-full px-2.5"
-            disabled={!work.videoUrl}
-            onClick={onOpen}
-          >
-            <Film data-icon="inline-start" />
-            {work.videoUrl ? t('scripts.viewVideo') : t('scripts.noVideo')}
-          </Button>
           <Button asChild size="sm" variant="ghost" className="h-8 rounded-full px-2.5">
             <Link to={`/scripts/packages/${work.episode.scene.id}/episodes/${work.episode.id}`}>
               <Sparkles data-icon="inline-start" />
@@ -1870,10 +1867,29 @@ function RecordList({
   onOpenReplay: (record: ScriptPracticeRecord) => void
 }) {
   const [mode, setMode] = useState('all')
+  const [page, setPage] = useState(1)
+  const pageSize = 15
   const visible = records.filter((record) => {
     if (mode === 'all') return true
     return record.mode === mode
   })
+
+  useEffect(() => setPage(1), [mode])
+
+  const columns: ColumnConfig<ScriptPracticeRecord>[] = [
+    {
+      key: 'episode', header: '剧本章节',
+      cell: (_value, record) => <div className="min-w-0"><p className="truncate text-sm font-medium">{record.episode.title}</p><p className="mt-0.5 truncate text-xs text-muted-foreground">{record.episode.scene.title} · {record.episode.chapterName}</p></div>,
+    },
+    {
+      key: 'durationSec', header: '练习', width: 112, align: 'center',
+      cell: (value, record) => <div className="space-y-1"><Badge variant={record.mode === 'vn' ? 'default' : 'secondary'} className="text-[10px]">{record.mode === 'vn' ? 'VN' : '跟读'}</Badge><p className="whitespace-nowrap text-[10px] text-muted-foreground">{record.mode === 'vn' ? record.turnCount : record.lineCount} 次 · {Math.max(0, Math.round(value / 60))} 分</p></div>,
+    },
+    {
+      key: 'createdAt', header: '日期', width: 88, align: 'center',
+      cell: (value) => <span className="whitespace-nowrap text-xs text-muted-foreground">{new Date(value).toLocaleDateString()}</span>,
+    },
+  ]
 
   return (
     <Tabs value={mode} onValueChange={setMode} className="flex h-full min-h-0 flex-col">
@@ -1882,38 +1898,12 @@ function RecordList({
         <TabsTrigger value="vn" className="text-xs">VN</TabsTrigger>
         <TabsTrigger value="repeat" className="text-xs">跟读</TabsTrigger>
       </TabsList>
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        {loading ? (
-          <MobilePageLoading rows={4} minHeightClassName="min-h-[40vh]" />
-        ) : visible.length === 0 ? (
-          <div className="flex flex-col items-center py-16 text-center">
-            <Clock3 className="size-10 text-muted-foreground/30" />
-            <p className="mt-3 text-sm text-muted-foreground">还没有剧本练习记录</p>
-            <p className="text-xs text-muted-foreground/60">完成一个章节后，记录会自动保存在这里</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {visible.map((record) => (
-              <button key={record.id} type="button" onClick={() => onOpenReplay(record)} className="w-full text-left">
-                <div className="rounded-lg bg-muted/30 p-3.5 transition-colors hover:bg-muted/50">
-                  <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <CardDescription className="text-xs">{record.episode.scene.title} · {record.episode.chapterName}</CardDescription>
-                    <CardTitle className="mt-1 truncate text-sm">{record.episode.title}</CardTitle>
-                  </div>
-                  <Badge variant={record.mode === 'vn' ? 'default' : 'secondary'}>{record.mode === 'vn' ? 'VN' : '跟读'}</Badge>
-                  </div>
-                  <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
-                  <span>{record.mode === 'vn' ? record.turnCount : record.lineCount} 次开口</span>
-                  <span>{record.usedChunkCount} 个表达</span>
-                  <span>{Math.max(0, Math.round(record.durationSec / 60))} 分钟</span>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <ConfigDataTable
+        data={visible.slice((page - 1) * pageSize, page * pageSize)} columns={columns}
+        total={visible.length} page={page} pageSize={pageSize} onPageChange={setPage}
+        isLoading={loading} emptyMessage="还没有剧本练习记录" onRowClick={onOpenReplay}
+        className="min-h-0 flex-1 text-xs [&_td]:px-3 [&_td]:py-2 [&_th]:h-9 [&_th]:px-3"
+      />
     </Tabs>
   )
 }
@@ -1945,8 +1935,13 @@ function ScriptRecordReplayDialog({
   useEffect(() => setLineIndex(0), [record?.id])
 
   if (!record) return null
-  const hasExistingVideo = record.works?.some((work) => work.status === 'rendering' || work.status === 'ready' || work.status === 'published') ?? false
+  const publishedWork = record.works?.some((work) => work.status === 'published') ?? false
+  const hasExistingVideo = record.works?.some((work) => work.status === 'rendering' || work.status === 'ready') ?? false
   const requestVideoGeneration = () => {
+    if (publishedWork) {
+      toast.error('该作品正在广场发布中，请先取消发布后再生成新版本')
+      return
+    }
     if (hasExistingVideo && !videoQueued) setOverwriteOpen(true)
     else void onGenerateVideo(record)
   }
@@ -1971,8 +1966,8 @@ function ScriptRecordReplayDialog({
           {overwriteOpen && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/45 px-5 backdrop-blur-sm" onClick={() => setOverwriteOpen(false)}>
               <div role="dialog" aria-modal="true" aria-labelledby="overwrite-video-title" className="w-full max-w-sm rounded-2xl border border-border bg-background p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-                <h2 id="overwrite-video-title" className="text-base font-semibold">覆盖现有演出视频？</h2>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">将重新渲染并替换这条练习记录当前的视频，广场展示会同步为新版本。</p>
+                <h2 id="overwrite-video-title" className="text-base font-semibold">重新生成这个私有作品？</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">将替换当前私有视频。生成完成后需要你手动发布到广场。</p>
                 <div className="mt-5 flex justify-center gap-3">
                   <Button variant="outline" onClick={() => setOverwriteOpen(false)}>取消</Button>
                   <Button onClick={() => { setOverwriteOpen(false); void onGenerateVideo(record) }}>重新生成并覆盖</Button>

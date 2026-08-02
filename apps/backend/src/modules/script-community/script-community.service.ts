@@ -72,9 +72,12 @@ export class ScriptCommunityService {
     if (!frames.length) throw new BadRequestException('没有可渲染的视频帧')
     const work = await this.prisma.scriptWork.findFirst({
       where: { id: workId, userId },
-      select: { id: true, record: { select: { resultSnapshot: true } } },
+      select: { id: true, status: true, record: { select: { resultSnapshot: true } } },
     })
     if (!work) throw new NotFoundException('作品不存在')
+    if (work.status === ScriptWorkStatus.published) {
+      throw new BadRequestException('该作品正在广场发布中，请先取消发布后再生成新版本')
+    }
     const recordSnapshot = (work.record?.resultSnapshot as any) ?? {}
     const recordingAssets = recordSnapshot.recordingAssets
     const recordingsByFrame = recordingAssets && typeof recordingAssets === 'object'

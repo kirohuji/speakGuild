@@ -60,6 +60,9 @@ export function LearningPackDownloadStatusButton({
 
   const running = tasks.some(isRunning) || visibleGlobalTasks.some((task) => task.status === 'running')
 
+  // The header should not reserve an action for an empty task center.
+  if (tasks.length === 0 && visibleGlobalTasks.length === 0) return null
+
   return (
     <button
       type="button"
@@ -106,13 +109,29 @@ export function LearningPackDownloadDrawer({
   const visibleGlobalTasks = useMemo(() => globalTasks.filter((task) => task.status !== 'done'), [globalTasks])
   const runningCount = tasks.filter(isRunning).length + visibleGlobalTasks.filter((task) => task.status === 'running').length
   const totalTaskCount = tasks.length + visibleGlobalTasks.length
+  const runningVideoTaskIds = useMemo(
+    () => globalTasks
+      .filter((task) => task.kind === 'script_video' && task.status === 'running')
+      .map((task) => task.id)
+      .sort()
+      .join(','),
+    [globalTasks],
+  )
+  const runningVideoTasks = useMemo(
+    () => globalTasks
+      .filter((task) => task.kind === 'script_video' && task.status === 'running')
+      .map((task) => ({ id: task.id, progress: task.progress })),
+    // Progress updates must not recreate the poller; task membership is the
+    // only input that matters here.
+    [runningVideoTaskIds],
+  )
 
   // The task center owns video-task polling. Practice pages submit a job once
   // and remain stable; opening this drawer checks backend AdminTask progress
   // every 10 seconds and stops naturally on a terminal status.
   useEffect(() => {
     if (!open) return
-    const videoTasks = globalTasks.filter((task) => task.kind === 'script_video' && task.status === 'running')
+    const videoTasks = runningVideoTasks
     if (videoTasks.length === 0) return
     let alive = true
     const refresh = async () => {
@@ -141,9 +160,12 @@ export function LearningPackDownloadDrawer({
       }))
     }
     void refresh()
-    const timer = window.setInterval(() => void refresh(), 10_000)
+    // Keep exactly one poller while the drawer is visible. Depending on the
+    // full task objects here restarted the effect after every progress update,
+    // producing an immediate request loop that could lock up the drawer.
+    const timer = window.setInterval(() => void refresh(), 15_000)
     return () => { alive = false; window.clearInterval(timer) }
-  }, [globalTasks, open, updateGlobalTask])
+  }, [open, runningVideoTaskIds, runningVideoTasks, updateGlobalTask])
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>

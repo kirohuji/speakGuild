@@ -1,6 +1,6 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AdminTaskLogLevel, AdminTaskStatus, Prisma } from '@prisma/client';
+import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
@@ -184,6 +184,18 @@ export class AdminTasksService {
       where: { id: task.id },
       data: { bullJobId: job.id },
     });
+    // The task center and every work/record view read ScriptWork as their
+    // shared render state. Do not leave a canceled job's work in `rendering`,
+    // otherwise other screens will poll forever and display a stale spinner.
+    if (task.type === SCRIPT_VIDEO_RENDER_JOB && task.targetId) {
+      await this.prisma.scriptWork.updateMany({
+        where: { id: task.targetId, status: ScriptWorkStatus.rendering },
+        data: {
+          status: ScriptWorkStatus.ready,
+          renderError: '视频生成已取消',
+        },
+      });
+    }
     await this.log(task.id, 'info', '任务已加入后台队列', { step: 'queued' });
 
     return { ...task, bullJobId: job.id };

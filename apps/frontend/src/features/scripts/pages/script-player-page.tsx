@@ -367,7 +367,7 @@ function InkEpisodePlayer({
       setVideoCompleted(false)
       setVideoQueued(true)
       updateGlobalTask(taskId, { progress: 1, stepLabel: `已提交后台渲染（任务 ${task.taskId.slice(-6)}）` })
-      toast.success('已创建作品并提交后台渲染；完成后会自动发布到广场，可继续练习')
+      toast.success('已创建作品并提交后台渲染；完成后可在我的作品中手动发布到广场')
     } catch (error: any) {
       if (globalTaskId) {
         updateGlobalTask(globalTaskId, {
@@ -577,7 +577,7 @@ function InkEpisodePlayer({
               onClick={() => void publishVideo()}
             >
               {videoCompleted
-                ? '视频已生成并发布'
+                ? '视频已生成，可前往我的作品发布'
                 : videoQueued
                 ? '已提交后台生成'
                 : publishing
