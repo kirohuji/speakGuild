@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
-import { AdminContentAiService } from '../../admin/admin-content-ai.service';
 import { AdminTasksService } from '../admin-tasks.service';
+import { ContentPrepareService } from './content-prepare.service';
 
 interface CsvImportSummary {
   created: number;
@@ -17,7 +17,7 @@ export class VocabularyCsvImportService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly adminTasksService: AdminTasksService,
-    private readonly adminContentAiService: AdminContentAiService,
+    private readonly contentPrepareService: ContentPrepareService,
   ) {}
 
   async run(taskId: string, words: string[]) {
@@ -117,16 +117,16 @@ export class VocabularyCsvImportService {
       for (let i = 0; i < vocabulariesToEnrich.length; i++) {
         const word = vocabulariesToEnrich[i];
         try {
-          // Look up the vocabulary record first (it has an ID now)
+          // Reuse the exact pipeline used by learning-package preparation so
+          // definitions, AI translations, examples and phonetics stay uniform.
           const vocab = await this.prisma.vocabulary.findUnique({
             where: { word },
             select: { id: true, word: true },
           });
           if (!vocab) continue;
 
-          // Use the content-prepare enrichment pattern (FreeDictionaryAPI + DeepSeek fallback)
-          const enriched = await this.enrichOneVocabulary(vocab.id, vocab.word);
-          if (enriched) {
+          const result = await this.contentPrepareService.prepareVocabulary(vocab.id);
+          if (result === 'updated') {
             enrichedCount++;
             summary.enriched++;
           }
@@ -170,133 +170,4 @@ export class VocabularyCsvImportService {
     });
   }
 
-  /**
-   * Enrich a single vocabulary using FreeDictionaryAPI first,
-   * then DeepSeek AI for additional content if needed.
-   * Follows the same pattern as ContentPrepareService.prepareVocabulary().
-   */
-  private async enrichOneVocabulary(vocabId: string, word: string): Promise<boolean> {
-    const vocab = await this.prisma.vocabulary.findUnique({ where: { id: vocabId } });
-    if (!vocab) return false;
-
-    // Skip if already has rich data
-    if (
-      vocab.definitionEn?.trim() &&
-      vocab.description?.trim() &&
-      Array.isArray(vocab.examples) && vocab.examples.length > 0 &&
-      (vocab.phoneticUs?.trim() || vocab.phoneticUk?.trim())
-    ) {
-      return false;
-    }
-
-    // Step 1: Try FreeDictionaryAPI
-    const entry = await this.lookupFreeDictionaryEntry(word);
-    let phoneticUs = vocab.phoneticUs ?? '';
-    let phoneticUk = vocab.phoneticUk ?? '';
-    let definitionEn = vocab.definitionEn ?? '';
-    let meaning = vocab.meaning ?? '';
-
-    if (entry) {
-      phoneticUs = this.getBestPhonetic(entry) || phoneticUs;
-      definitionEn = this.buildDefinitionEn(entry) || definitionEn;
-      meaning = this.deriveMeaning(definitionEn) || meaning;
-    }
-
-    // Step 2: Try DeepSeek AI enrichment for richer data
-    try {
-      const aiResult = await this.adminContentAiService.enrichVocabulary({
-        word,
-        definitions: definitionEn ? [definitionEn] : [],
-        examples: [],
-        phoneticUs: phoneticUs || undefined,
-        phoneticUk: phoneticUk || undefined,
-      });
-
-      if (aiResult.phoneticUs) phoneticUs = aiResult.phoneticUs;
-      if (aiResult.phoneticUk) phoneticUk = aiResult.phoneticUk;
-      if (aiResult.meaning) meaning = aiResult.meaning;
-      if (aiResult.description) {
-        // Use AI-generated description
-      }
-      // Build examples from AI result
-      const examples = aiResult.generatedExamples?.length
-        ? aiResult.generatedExamples.map(e => ({ en: e.en, zh: e.zh, level: e.level }))
-        : (Array.isArray(vocab.examples) ? vocab.examples : []);
-
-      await this.prisma.vocabulary.update({
-        where: { id: vocabId },
-        data: {
-          phoneticUs: phoneticUs || null,
-          phoneticUk: phoneticUk || null,
-          definitionEn: definitionEn || null,
-          meaning: meaning || null,
-          description: aiResult.description || vocab.description,
-          examples: examples as any,
-          partOfSpeech: definitionEn?.split(';')[0]?.split(':')[0]?.trim() || vocab.partOfSpeech,
-        },
-      });
-
-      return true;
-    } catch (aiError: any) {
-      // If DeepSeek fails, at least save what we got from FreeDictionary
-      if (phoneticUs || phoneticUk || definitionEn || meaning) {
-        await this.prisma.vocabulary.update({
-          where: { id: vocabId },
-          data: {
-            phoneticUs: phoneticUs || null,
-            phoneticUk: phoneticUk || null,
-            definitionEn: definitionEn || null,
-            meaning: meaning || null,
-          },
-        });
-        return true;
-      }
-      return false;
-    }
-  }
-
-  private async lookupFreeDictionaryEntry(word: string): Promise<any | null> {
-    const key = word.toLowerCase().trim();
-    try {
-      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(key)}`);
-      if (!response.ok) return null;
-      const entries = (await response.json()) as any[];
-      return entries?.[0] ?? null;
-    } catch {
-      return null;
-    }
-  }
-
-  private getBestPhonetic(entry: any) {
-    if (entry.phonetic) return entry.phonetic;
-    return entry.phonetics?.find((p: any) => p.text)?.text ?? '';
-  }
-
-  private buildDefinitionEn(entry: any): string {
-    if (!entry.meanings?.length) return '';
-    return entry.meanings
-      .map((m: any) => `${m.partOfSpeech}: ${m.definitions.map((d: any) => d.definition).join('; ')}`)
-      .join('; ');
-  }
-
-  private deriveMeaning(definitionsEn: string): string {
-    if (!definitionsEn?.includes('; ')) return '';
-    const zhByPos: Record<string, string[]> = {};
-    definitionsEn.split('; ').forEach((definition) => {
-      const colonIdx = definition.indexOf(': ');
-      const posRaw = colonIdx > 0 ? definition.slice(0, colonIdx) : '';
-      const pos = posRaw === 'verb' ? 'v.' : posRaw === 'noun' ? 'n.' : posRaw === 'adj' ? 'adj.' : posRaw === 'adv' ? 'adv.' : posRaw;
-      const zhMatch = definition.match(/\s\s\[(.+?)\]$/);
-      if (zhMatch && pos) {
-        if (!zhByPos[pos]) zhByPos[pos] = [];
-        const zhClean = zhMatch[1]
-          .replace(/[（(][^)）]*[)）]/g, '')
-          .replace(/^[。，,、\s]+|[。，,、\s]+$/g, '');
-        if (zhClean && !zhByPos[pos].includes(zhClean)) zhByPos[pos].push(zhClean);
-      }
-    });
-    return Object.entries(zhByPos)
-      .map(([pos, zhs]) => `${pos} ${zhs.join('；')}`)
-      .join(' / ');
-  }
 }

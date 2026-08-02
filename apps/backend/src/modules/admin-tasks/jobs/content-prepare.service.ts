@@ -232,7 +232,8 @@ export class ContentPrepareService {
     return Array.isArray(value) && value.length > 0;
   }
 
-  private async prepareVocabulary(vocabId: string): Promise<'updated' | 'skipped'> {
+  /** Shared vocabulary-enrichment pipeline for package preparation and CSV imports. */
+  async prepareVocabulary(vocabId: string): Promise<'updated' | 'skipped'> {
     const vocab = await this.prisma.vocabulary.findUnique({ where: { id: vocabId } });
     if (!vocab?.word?.trim()) return 'skipped';
     if (
