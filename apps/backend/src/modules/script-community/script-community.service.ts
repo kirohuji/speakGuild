@@ -189,9 +189,11 @@ export class ScriptCommunityService {
 
   async completeRecord(userId: string, episodeId: string, dto: CompleteScriptPracticeDto) {
     const player = await this.learningService.getStoryEpisodePlayer(userId, episodeId)
+    const recordingAssetIds = [...new Set(dto.recordingAssetIds ?? [])]
     await Promise.all([
       this.assertOwnedAsset(userId, dto.audioAssetId),
       this.assertOwnedAsset(userId, dto.videoAssetId),
+      ...recordingAssetIds.map((assetId) => this.assertOwnedAsset(userId, assetId)),
     ])
 
     const now = new Date()
@@ -214,6 +216,42 @@ export class ScriptCommunityService {
           completedAt: now,
         },
       })
+
+      // The browser temporarily owns each uploaded line through the batch
+      // reference. Move that ownership to the durable practice record in the
+      // same transaction, so history playback survives page reloads and the
+      // temporary upload reference does not leak.
+      if (recordingAssetIds.length > 0) {
+        // `skipDuplicates` is not supported by every Prisma provider used by
+        // local development. Use the compound unique key explicitly instead.
+        await Promise.all(recordingAssetIds.map((assetId) => tx.fileReference.upsert({
+          where: {
+            assetId_bizType_bizId_userId: {
+              assetId,
+              userId,
+              bizType: 'script_practice_record',
+              bizId: record.id,
+            },
+          },
+          create: {
+            assetId,
+            userId,
+            bizType: 'script_practice_record',
+            bizId: record.id,
+          },
+          update: {},
+        })))
+        if (dto.recordingBatchId) {
+          await tx.fileReference.deleteMany({
+            where: {
+              userId,
+              bizType: 'script_practice_upload',
+              bizId: dto.recordingBatchId,
+              assetId: { in: recordingAssetIds },
+            },
+          })
+        }
+      }
 
       await tx.storyRecord.upsert({
         where: { userId_episodeId: { userId, episodeId } },

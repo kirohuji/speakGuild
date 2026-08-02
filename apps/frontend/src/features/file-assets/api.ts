@@ -1,4 +1,6 @@
 import { del, get, post } from '@/lib/request'
+import { Capacitor, CapacitorHttp } from '@capacitor/core'
+import { digestSync } from '@/lib/offline/asset-cache.service'
 
 export type FileAssetGroup = 'avatar' | 'library' | 'tts' | 'notification' | 'mobile_bundle' | 'learning_pack' | 'scene_cover' | 'user_recording'
 
@@ -24,9 +26,47 @@ interface CompleteUploadResult {
   asset: CompletedAsset
 }
 
+async function blobToBase64(blob: Blob) {
+  const buffer = new Uint8Array(await blob.arrayBuffer())
+  let binary = ''
+  const chunkSize = 0x8000
+  for (let index = 0; index < buffer.length; index += chunkSize) {
+    binary += String.fromCharCode(...buffer.subarray(index, index + chunkSize))
+  }
+  return btoa(binary)
+}
+
+async function uploadToCos(policy: CosPolicy, file: File) {
+  if (!policy.uploadUrl) throw new Error('上传签名缺少必要信息')
+  if (Capacitor.isNativePlatform()) {
+    // Do not send COS PUTs through the WebView: its CORS preflight can be
+    // rejected even though the signed upload itself is valid. CapacitorHttp
+    // uses NSURLSession/OkHttp and accepts base64 file data in native mode.
+    const response = await CapacitorHttp.put({
+      url: policy.uploadUrl,
+      headers: policy.headers,
+      data: await blobToBase64(file),
+      dataType: 'file',
+      responseType: 'text',
+    })
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(`原生上传失败 (${response.status})`)
+    }
+    return
+  }
+
+  const uploadResponse = await fetch(policy.uploadUrl, {
+    method: policy.method || 'PUT',
+    headers: policy.headers,
+    body: file,
+  })
+  if (!uploadResponse.ok) throw new Error(`上传失败 (${uploadResponse.status})`)
+}
+
 async function sha256(file: File): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer())
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
+  // Capacitor live mode does not consistently expose crypto.subtle. Reuse
+  // the same pure-JS SHA-256 implementation as offline pack verification.
+  return digestSync(await file.arrayBuffer())
 }
 
 /** 前端直传 COS + 后端回调确认（一站式） */
@@ -48,12 +88,7 @@ export async function uploadFileToCosAndComplete({
   if (policy.exists && policy.asset) return policy.asset
   if (!policy.key || !policy.uploadUrl) throw new Error('上传签名缺少必要信息')
 
-  const uploadResponse = await fetch(policy.uploadUrl, {
-    method: policy.method || 'PUT',
-    headers: policy.headers,
-    body: file,
-  })
-  if (!uploadResponse.ok) throw new Error(`上传失败 (${uploadResponse.status})`)
+  await uploadToCos(policy, file)
 
   const result = await post<CompleteUploadResult>('/file-assets/complete', {
     group,

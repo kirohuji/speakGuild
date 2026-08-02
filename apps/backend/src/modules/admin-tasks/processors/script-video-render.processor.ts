@@ -63,7 +63,7 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
     try {
       if (await this.tasks.isCanceled(taskId)) return { canceled: true };
       const browserExecutable = this.getBrowserExecutable();
-      await this.tasks.markRunning(taskId, 'bundling');
+      if (!await this.tasks.markRunning(taskId, 'bundling')) return { canceled: true };
       const serveUrl = await this.getBundle();
       const inputProps = { timeline: { frames, durationInFrames: frames.at(-1)?.endFrame ?? 30, fps: 30 } };
       const composition = await selectComposition({ serveUrl, id: 'ScriptVideo', inputProps, browserExecutable });
@@ -165,7 +165,7 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
     try {
       if (await this.tasks.isCanceled(taskId)) return { canceled: true };
       const browserExecutable = this.getBrowserExecutable();
-      await this.tasks.markRunning(taskId, 'bundling');
+      if (!await this.tasks.markRunning(taskId, 'bundling')) return { canceled: true };
       const serveUrl = await this.getBundle();
       const inputProps = { timeline: { frames, durationInFrames: frames.at(-1)?.endFrame ?? 30, fps: 30 } };
       const composition = await selectComposition({ serveUrl, id: 'ScriptVideo', inputProps, browserExecutable });

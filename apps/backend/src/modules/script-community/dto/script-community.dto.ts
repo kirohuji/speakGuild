@@ -65,6 +65,17 @@ export class CompleteScriptPracticeDto {
   audioAssetId?: string
 
   @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(500)
+  @IsString({ each: true })
+  recordingAssetIds?: string[]
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  recordingBatchId?: string
+
+  @IsOptional()
   @IsString()
   videoAssetId?: string
 }

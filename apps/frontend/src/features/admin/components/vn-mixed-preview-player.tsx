@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CheckCircle2, Infinity, Mic, Pause, Play, RotateCcw, Settings, Square, Volume2 } from 'lucide-react'
+import { CheckCircle2, Film, Infinity, Mic, Pause, Play, RotateCcw, Settings, Square, Volume2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -17,7 +17,15 @@ interface VnMixedPreviewPlayerProps {
   onJumpTo: (index: number) => void
   className?: string
   practiceMode?: boolean
-  onComplete?: (result: { recordedCount: number; totalCount: number }) => void
+  /** Keeps the full theatre and playback controls, but removes recording actions. */
+  readOnly?: boolean
+  onComplete?: (result: { recordedCount: number; totalCount: number; recordings: Record<number, Blob> }) => void
+  /** Persisted recording URLs used by history replay. Keys are timeline frame indexes. */
+  initialRecordingUrls?: Record<number, string>
+  onGenerateVideo?: () => void
+  videoSubmitting?: boolean
+  videoQueued?: boolean
+  videoCompleted?: boolean
 }
 
 export function mixedFrameLabel(frame: MixedTimelineFrame) {
@@ -100,7 +108,13 @@ export function VnMixedPreviewPlayer({
   onJumpTo,
   className,
   practiceMode = false,
+  readOnly = false,
   onComplete,
+  initialRecordingUrls,
+  onGenerateVideo,
+  videoSubmitting = false,
+  videoQueued = false,
+  videoCompleted = false,
 }: VnMixedPreviewPlayerProps) {
   const activeFrame = frames[activeIndex] ?? frames[0]
   // 首帧通常先设置舞台背景再出现台词；没有显式背景的帧沿用本剧本的主题背景。
@@ -120,13 +134,14 @@ export function VnMixedPreviewPlayer({
   const [loopIndex, setLoopIndex] = useState(1)
   const [followOpen, setFollowOpen] = useState(false)
   const [followFrame, setFollowFrame] = useState<MixedTimelineFrame | null>(null)
-  const [recordingUrls, setRecordingUrls] = useState<Record<number, string>>({})
+  const [recordingUrls, setRecordingUrls] = useState<Record<number, string>>(initialRecordingUrls ?? {})
   const [playingRecordingIndex, setPlayingRecordingIndex] = useState<number | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const timerRef = useRef<number | null>(null)
   const recordingAudioRef = useRef<HTMLAudioElement | null>(null)
   const recordingUrlsRef = useRef<Record<number, string>>({})
+  const recordingBlobsRef = useRef<Record<number, Blob>>({})
 
   useEffect(() => {
     console.log('[repeat-vn] stage resources', {
@@ -179,6 +194,10 @@ export function VnMixedPreviewPlayer({
     recordingUrlsRef.current = recordingUrls
   }, [recordingUrls])
 
+  useEffect(() => {
+    if (readOnly) setRecordingUrls(initialRecordingUrls ?? {})
+  }, [initialRecordingUrls, readOnly])
+
   useEffect(() => () => {
     Object.values(recordingUrlsRef.current).forEach((url) => URL.revokeObjectURL(url))
   }, [])
@@ -218,8 +237,12 @@ export function VnMixedPreviewPlayer({
       timerRef.current = window.setTimeout(moveNext, baseDelay + gapSeconds * 1000)
     }
 
-    if (activeFrame.audioUrl) {
-      const audio = new Audio(activeFrame.audioUrl)
+    // A saved follow-reading record should play the learner's own voice from
+    // the main playback button as well as from each individual line. TTS is
+    // only a fallback for legacy/missing recordings.
+    const playbackUrl = readOnly ? recordingUrls[activeFrame.index] || activeFrame.audioUrl : activeFrame.audioUrl
+    if (playbackUrl) {
+      const audio = new Audio(playbackUrl)
       audioRef.current = audio
       audio.onended = () => scheduleNext()
       audio.onerror = () => scheduleNext(estimateMixedFrameDuration(activeFrame))
@@ -229,7 +252,7 @@ export function VnMixedPreviewPlayer({
     }
 
     return () => clearPlayback()
-  }, [activeFrame, activeIndex, clearPlayback, frames.length, gapSeconds, loopIndex, loopMode, onJumpTo, playing])
+  }, [activeFrame, activeIndex, clearPlayback, frames.length, gapSeconds, loopIndex, loopMode, onJumpTo, playing, readOnly, recordingUrls])
 
   const togglePlaying = () => {
     if (playing) {
@@ -268,11 +291,12 @@ export function VnMixedPreviewPlayer({
     ? 'bg-background/45'
     : 'bg-[#10131a]'
 
-  const saveRecordingUrl = useCallback((frameIndex: number, url: string) => {
+  const saveRecordingUrl = useCallback((frameIndex: number, url: string, blob: Blob) => {
     setRecordingUrls((prev) => {
       if (prev[frameIndex]) URL.revokeObjectURL(prev[frameIndex])
       return { ...prev, [frameIndex]: url }
     })
+    recordingBlobsRef.current[frameIndex] = blob
   }, [])
 
   const playRecordedFrame = (frameIndex: number, url: string) => {
@@ -318,6 +342,7 @@ export function VnMixedPreviewPlayer({
           stageVariant="mixed"
           dialogueOverlay={false}
           spriteBottomInset={8}
+          spriteVerticalOffset={practiceMode ? 24 : 0}
           portraitScale={activeFrame.portraitScale}
         />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/78 via-black/34 to-transparent px-4 pb-3 pt-10">
@@ -358,7 +383,7 @@ export function VnMixedPreviewPlayer({
           <div className="min-w-0 flex-1">
             <p className={cn('truncate text-[11px] font-medium', mobileSurface ? 'text-muted-foreground' : 'text-white/62')}>
               {playing
-                ? activeFrame.audioUrl ? 'TTS 结束后自动推进' : '按文本时长自动推进'
+                ? (readOnly && recordingUrls[activeFrame.index] ? '用户录音结束后自动推进' : activeFrame.audioUrl ? 'TTS 结束后自动推进' : '按文本时长自动推进')
                 : `间隔 ${gapSeconds}s · ${loopMode === 'infinite' ? '无限循环' : `循环 ${loopMode} 次`}`}
             </p>
             {playing && (
@@ -368,20 +393,39 @@ export function VnMixedPreviewPlayer({
             )}
           </div>
 
-          <button
-            type="button"
-            disabled={!canFollow}
-            onClick={() => openFollow(activeFrame)}
-            className={cn(
-              'flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-[11px] font-semibold ring-1 transition-colors disabled:cursor-not-allowed disabled:opacity-35',
-              mobileSurface
-                ? 'bg-primary/10 text-primary ring-primary/20 hover:bg-primary/15'
-                : 'bg-emerald-300/12 text-emerald-100 ring-emerald-300/22 hover:bg-emerald-300/18',
-            )}
-          >
-            <Mic className="size-3.5" />
-            跟读
-          </button>
+          {!readOnly && (
+            <button
+              type="button"
+              disabled={!canFollow}
+              onClick={() => openFollow(activeFrame)}
+              className={cn(
+                'flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-[11px] font-semibold ring-1 transition-colors disabled:cursor-not-allowed disabled:opacity-35',
+                mobileSurface
+                  ? 'bg-primary/10 text-primary ring-primary/20 hover:bg-primary/15'
+                  : 'bg-emerald-300/12 text-emerald-100 ring-emerald-300/22 hover:bg-emerald-300/18',
+              )}
+            >
+              <Mic className="size-3.5" />
+              跟读
+            </button>
+          )}
+
+          {practiceMode && onGenerateVideo && (
+            <button
+              type="button"
+              disabled={videoSubmitting || videoQueued || videoCompleted}
+              onClick={onGenerateVideo}
+              className={cn(
+                'flex size-8 shrink-0 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-45',
+                mobileSurface
+                  ? 'bg-muted text-muted-foreground hover:bg-muted/75 hover:text-foreground'
+                  : 'bg-white/8 text-white/70 hover:bg-white/12 hover:text-white',
+              )}
+              title={videoCompleted ? '演出视频已生成并发布' : videoQueued ? '视频已提交后台生成' : videoSubmitting ? '正在提交视频任务' : '生成演出视频'}
+            >
+              {videoCompleted ? <CheckCircle2 className="size-4 text-emerald-500" /> : <Film className={cn('size-4', videoSubmitting && 'animate-pulse')} />}
+            </button>
+          )}
 
           <button
             type="button"
@@ -441,22 +485,24 @@ export function VnMixedPreviewPlayer({
                   )}
                 </button>
                 <div className="flex flex-col items-center gap-1">
-                  <button
-                    type="button"
-                    disabled={!canFollowFrame(frame)}
-                    onClick={() => openFollow(frame)}
-                    className={cn(
-                      'mt-2 flex size-7 items-center justify-center rounded-full transition-colors',
-                      canFollowFrame(frame)
-                        ? mobileSurface ? 'text-muted-foreground hover:bg-primary/10 hover:text-primary' : 'text-white/34 hover:bg-white/8 hover:text-emerald-100'
-                        : mobileSurface ? 'cursor-not-allowed text-muted-foreground/30' : 'cursor-not-allowed text-white/10',
-                      active && canFollowFrame(frame) && (mobileSurface ? 'text-primary' : 'text-emerald-100'),
-                    )}
-                    title="跟读"
-                  >
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      disabled={!canFollowFrame(frame)}
+                      onClick={() => openFollow(frame)}
+                      className={cn(
+                        'mt-2 flex size-7 items-center justify-center rounded-full transition-colors',
+                        canFollowFrame(frame)
+                          ? mobileSurface ? 'text-muted-foreground hover:bg-primary/10 hover:text-primary' : 'text-white/34 hover:bg-white/8 hover:text-emerald-100'
+                          : mobileSurface ? 'cursor-not-allowed text-muted-foreground/30' : 'cursor-not-allowed text-white/10',
+                        active && canFollowFrame(frame) && (mobileSurface ? 'text-primary' : 'text-emerald-100'),
+                      )}
+                      title="跟读"
+                    >
                     <Mic className="size-3.5" />
-                  </button>
-                  {recordedUrl && (
+                    </button>
+                  )}
+                    {recordedUrl && (
                     <button
                       type="button"
                       onClick={() => playRecordedFrame(frame.index, recordedUrl)}
@@ -465,7 +511,7 @@ export function VnMixedPreviewPlayer({
                     >
                       {playingRecordingIndex === frame.index ? <Pause className="size-3.5 fill-current" /> : <Play className="ml-0.5 size-3.5 fill-current" />}
                     </button>
-                  )}
+                    )}
                 </div>
               </div>
             )
@@ -473,7 +519,7 @@ export function VnMixedPreviewPlayer({
         </div>
       </div>
 
-      {practiceMode && (
+      {practiceMode && !readOnly && (
         <div className={cn('flex shrink-0 items-center gap-3 border-t px-3 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]', toolbarClass)}>
           <div className="min-w-0 flex-1">
             <p className={cn('text-xs font-medium', mobileSurface ? 'text-foreground' : 'text-white/80')}>跟读进度 {recordedCount}/{followableCount}</p>
@@ -485,7 +531,7 @@ export function VnMixedPreviewPlayer({
             type="button"
             size="sm"
             disabled={followableCount === 0 || recordedCount < followableCount}
-            onClick={() => onComplete?.({ recordedCount, totalCount: followableCount })}
+            onClick={() => onComplete?.({ recordedCount, totalCount: followableCount, recordings: { ...recordingBlobsRef.current } })}
             className={cn('h-8 shrink-0 px-3 text-xs', mobileSurface ? '' : 'bg-emerald-300 text-slate-950 hover:bg-emerald-200')}
           >
             <CheckCircle2 className="size-3.5" />
@@ -597,7 +643,7 @@ export function FollowReadDrawer({
   open: boolean
   onOpenChange: (open: boolean) => void
   frame: MixedTimelineFrame | null
-  onRecordingReady: (frameIndex: number, url: string) => void
+  onRecordingReady: (frameIndex: number, url: string, blob: Blob) => void
 }) {
   const [recording, setRecording] = useState(false)
   const [elapsed, setElapsed] = useState(0)
@@ -688,7 +734,7 @@ export function FollowReadDrawer({
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || mimeType || 'audio/webm' })
         recordedUrlRef.current = URL.createObjectURL(blob)
         setRecordedUrl(recordedUrlRef.current)
-        if (frame) onRecordingReady(frame.index, recordedUrlRef.current)
+        if (frame) onRecordingReady(frame.index, recordedUrlRef.current, blob)
         cleanupRecording()
       }
       recorderRef.current = recorder
@@ -718,7 +764,7 @@ export function FollowReadDrawer({
         if (isObjectUrl(recordedUrlRef.current)) URL.revokeObjectURL(recordedUrlRef.current)
         recordedUrlRef.current = url
         setRecordedUrl(url)
-        if (frame) onRecordingReady(frame.index, url)
+        if (frame) onRecordingReady(frame.index, url, result.blob)
         console.log('[repeat-vn] native microphone recording stopped', {
           frameIndex: frame?.index,
           bytes: result.blob.size,

@@ -14,6 +14,8 @@ interface PixiVnStageProps {
   stageVariant?: StageVariant
   dialogueOverlay?: boolean
   spriteBottomInset?: number
+  /** Positive moves down; negative moves the portrait up from its stage baseline. */
+  spriteVerticalOffset?: number
   portraitScale?: number
 }
 
@@ -55,7 +57,7 @@ function layoutSprite(
   width: number,
   height: number,
   position: 'left' | 'center' | 'right',
-  options: { stageVariant: StageVariant; dialogueOverlay: boolean; spriteBottomInset: number; portraitScale?: number },
+  options: { stageVariant: StageVariant; dialogueOverlay: boolean; spriteBottomInset: number; spriteVerticalOffset: number; portraitScale?: number },
 ) {
   const stageTopInset = options.stageVariant === 'mixed' ? 16 : 58
   const dialogueHeight = options.dialogueOverlay ? getDialogueHeight(height, options.stageVariant) : options.spriteBottomInset
@@ -66,7 +68,7 @@ function layoutSprite(
   const scaleMultiplier = (options.portraitScale ?? 100) / 100
   sprite.scale.set(scale * scaleMultiplier)
   sprite.anchor.set(0.5, 1)
-  sprite.y = height - dialogueHeight + spriteOverlap
+  sprite.y = height - dialogueHeight + spriteOverlap + options.spriteVerticalOffset
   sprite.x = position === 'center' ? width / 2 : position === 'right' ? width * 0.72 : width * 0.28
 }
 
@@ -85,6 +87,7 @@ function CssFallbackStage({
   stageVariant = 'portrait',
   dialogueOverlay = true,
   spriteBottomInset = 0,
+  spriteVerticalOffset = 0,
   portraitScale,
 }: PixiVnStageProps) {
   const { resolvedTheme } = useTheme()
@@ -107,7 +110,7 @@ function CssFallbackStage({
         }}
       />
       {spriteUrl && (
-        <div className="pointer-events-none absolute inset-x-0" style={{ bottom: bottomInset, top: topInset }}>
+        <div className="pointer-events-none absolute inset-x-0" style={{ bottom: `calc(${bottomInset} - ${spriteVerticalOffset}px)`, top: topInset }}>
           <img
             src={spriteUrl}
             alt=""
@@ -134,6 +137,7 @@ export function PixiVnStage({
   stageVariant = 'portrait',
   dialogueOverlay = true,
   spriteBottomInset = 0,
+  spriteVerticalOffset = 0,
   portraitScale,
 }: PixiVnStageProps) {
   const { resolvedTheme } = useTheme()
@@ -147,6 +151,7 @@ export function PixiVnStage({
   const stageVariantRef = useRef(stageVariant)
   const dialogueOverlayRef = useRef(dialogueOverlay)
   const spriteBottomInsetRef = useRef(spriteBottomInset)
+  const spriteVerticalOffsetRef = useRef(spriteVerticalOffset)
   const portraitScaleRef = useRef(portraitScale)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -168,6 +173,7 @@ export function PixiVnStage({
         stageVariant: stageVariantRef.current,
         dialogueOverlay: dialogueOverlayRef.current,
         spriteBottomInset: spriteBottomInsetRef.current,
+        spriteVerticalOffset: spriteVerticalOffsetRef.current,
         portraitScale: portraitScaleRef.current,
       })
     }
@@ -379,9 +385,10 @@ export function PixiVnStage({
     stageVariantRef.current = stageVariant
     dialogueOverlayRef.current = dialogueOverlay
     spriteBottomInsetRef.current = spriteBottomInset
+    spriteVerticalOffsetRef.current = spriteVerticalOffset
     portraitScaleRef.current = portraitScale
     layout()
-  }, [dialogueOverlay, portraitScale, spriteBottomInset, spritePosition, stageVariant])
+  }, [dialogueOverlay, portraitScale, spriteBottomInset, spritePosition, spriteVerticalOffset, stageVariant])
 
   if (failed) {
     return (
@@ -393,6 +400,7 @@ export function PixiVnStage({
         stageVariant={stageVariant}
         dialogueOverlay={dialogueOverlay}
         spriteBottomInset={spriteBottomInset}
+        spriteVerticalOffset={spriteVerticalOffset}
         portraitScale={portraitScale}
       />
     )

@@ -68,6 +68,13 @@ const config: CapacitorConfig = {
       androidIsEncryption: false,
     },
 
+    // COS direct uploads from a WebView otherwise require the bucket's CORS
+    // preflight to succeed. Native HTTP lets the existing fetch upload path
+    // use NSURLSession/OkHttp instead, which is not subject to WebView CORS.
+    CapacitorHttp: {
+      enabled: true,
+    },
+
     // Keyboard — 键盘行为控制（减少键盘弹出时的卡顿和布局抖动）
     Keyboard: {
       resize: KeyboardResize.None,

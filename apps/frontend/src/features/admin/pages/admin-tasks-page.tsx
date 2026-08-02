@@ -25,6 +25,8 @@ import { adminTasksApi, type AdminTask, type AdminTaskDetail, type AdminTaskStat
 
 const TYPE_LABELS: Record<string, string> = {
   'learning-package-content-prepare': '学习包内容准备',
+  'script-video-render': '剧本演出视频',
+  'narrative-video-render': '叙事视频预览',
 };
 
 const STEP_LABELS: Record<string, string> = {
@@ -35,6 +37,9 @@ const STEP_LABELS: Record<string, string> = {
   completed: '完成',
   failed: '失败',
   canceled: '已取消',
+  bundling: '准备渲染器',
+  rendering: '生成视频',
+  uploading: '上传成片',
 };
 
 const ERROR_TYPE_LABELS: Record<string, string> = {
@@ -100,6 +105,19 @@ function Metric({ label, value, tone }: { label: string; value: number; tone?: '
 
 function SummaryPanel({ task }: { task: AdminTask }) {
   const summary = task.summary as any;
+  if (task.type === 'script-video-render' || task.type === 'narrative-video-render') {
+    return (
+      <div className="rounded-md border border-border bg-muted/20 p-3 text-xs">
+        <p className="font-medium">视频渲染结果</p>
+        <p className="mt-1 text-muted-foreground">
+          {summary?.videoAssetId ? '成片已上传并可播放。' : '视频由后台渲染队列处理，完成后会自动同步到对应作品。'}
+        </p>
+        {summary?.videoAssetId && (
+          <p className="mt-2 break-all font-mono text-[10px] text-muted-foreground">资源：{summary.videoAssetId}</p>
+        )}
+      </div>
+    );
+  }
   if (!summary) {
     return (
       <div className="rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">
@@ -139,6 +157,7 @@ function SummaryPanel({ task }: { task: AdminTask }) {
 
 export function AdminTasksPage() {
   const [status, setStatus] = useState<AdminTaskStatus | 'all'>('all');
+  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'script-video-render' | 'narrative-video-render'>('all');
   const [items, setItems] = useState<AdminTask[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AdminTaskDetail | null>(null);
@@ -155,7 +174,7 @@ export function AdminTasksPage() {
     setLoading(true);
     try {
       const result = await adminTasksApi.list({
-        type: 'learning-package-content-prepare',
+        type: type === 'all' ? undefined : type,
         status,
         pageSize: 50,
       });
@@ -166,7 +185,7 @@ export function AdminTasksPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedId, status]);
+  }, [selectedId, status, type]);
 
   const loadDetail = useCallback(async (id: string) => {
     setDetailLoading(true);
@@ -220,14 +239,25 @@ export function AdminTasksPage() {
     }
   };
 
+  const canRetry = (task: AdminTask) =>
+    task.type === 'learning-package-content-prepare'
+    || task.type === 'script-video-render'
+    || task.type === 'narrative-video-render';
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">任务中心</h1>
-          <p className="text-sm text-muted-foreground">跟踪学习包内容准备进度，定位失败项并按失败项重试。</p>
+          <p className="text-sm text-muted-foreground">统一跟踪学习包准备与后台视频渲染；可在这里查看日志、取消和重试。</p>
         </div>
         <div className="flex items-center gap-2">
+          <Select value={type} onChange={(event) => setType(event.target.value as typeof type)}>
+            <option value="all">全部任务类型</option>
+            <option value="learning-package-content-prepare">学习包内容准备</option>
+            <option value="script-video-render">剧本演出视频</option>
+            <option value="narrative-video-render">叙事视频预览</option>
+          </Select>
           <Select value={status} onChange={(event) => setStatus(event.target.value as AdminTaskStatus | 'all')}>
             <option value="all">全部状态</option>
             <option value="queued">排队中</option>
@@ -248,7 +278,7 @@ export function AdminTasksPage() {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <ListChecks className="size-4" />
-              内容任务
+              后台任务
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -341,7 +371,7 @@ export function AdminTasksPage() {
                 <SummaryPanel task={selected} />
 
                 <div className="flex flex-wrap gap-2">
-                  {(selected.status === 'failed' || selected.status === 'canceled' || selectedErrors.length > 0) && (
+                  {canRetry(selected) && (selected.status === 'failed' || selected.status === 'canceled' || selectedErrors.length > 0) && (
                     <Button variant="outline" size="sm" onClick={() => void retry(selected)}>
                       <RotateCcw className="mr-1 size-4" />
                       {selected.status === 'canceled'

@@ -11,11 +11,11 @@ import { learningRepository } from '@/lib/offline'
 import { assetCacheService } from '@/lib/offline/asset-cache.service'
 import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
 import { useLayoutStore } from '@/stores/layout.store'
-import { parseComposer } from '@/features/admin/components/composer-parser'
-import { flattenComposerToTimeline, resolveTimelineAssetAliases } from '@/features/admin/components/vn-mixed-timeline'
 import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
-import { requestScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
+import { enqueueScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
+import { buildStoryRepeatFrames } from '@/features/scripts/lib/story-repeat-frames'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
+import { createFileReference, uploadFileToCosAndComplete } from '@/features/file-assets/api'
 import {
   parseVnTags,
   isBackgroundFit,
@@ -131,8 +131,9 @@ function InkEpisodePlayer({
   const [userTurns, setUserTurns] = useState<VnPlayerLine[]>([])
   const [recordId, setRecordId] = useState<string | null>(null)
   const [publishing, setPublishing] = useState(false)
-  const [publishProgress, setPublishProgress] = useState(0)
-  const [published, setPublished] = useState(false)
+  const [videoQueued, setVideoQueued] = useState(false)
+  const [videoCompleted, setVideoCompleted] = useState(false)
+  const [renderWorkId, setRenderWorkId] = useState<string | null>(null)
   const startGlobalTask = useGlobalTaskStore((state) => state.startTask)
   const updateGlobalTask = useGlobalTaskStore((state) => state.updateTask)
   const [repeatSaving, setRepeatSaving] = useState(false)
@@ -299,31 +300,12 @@ function InkEpisodePlayer({
   const spritePosition = (vnVisual.position || currentCharacter?.defaultPosition || 'center') as 'left' | 'center' | 'right'
   const assetsResolving = !assetMapReady || !sceneAssetsReady
 
-  const repeatFrames = useMemo(() => {
-    if (!data.inkScript.inkSource) return []
-    const characterSprites: Record<string, Record<string, string>> = {}
-    const characterPositions: Record<string, 'left' | 'center' | 'right'> = {}
-    for (const character of resolvedScene?.characters ?? []) {
-      const sprites: Record<string, string> = {}
-      if (character.spriteBaseUrl) sprites.default = character.spriteBaseUrl
-      for (const [expression, value] of Object.entries(character.expressions ?? {})) {
-        const url = typeof value === 'string' ? value : (value as { spriteUrl?: string } | null)?.spriteUrl
-        if (url) sprites[expression] = url
-      }
-      for (const name of [character.name, character.displayName].filter(Boolean) as string[]) {
-        characterSprites[name] = sprites
-        characterPositions[name] = character.defaultPosition ?? 'center'
-      }
-    }
-    return flattenComposerToTimeline(resolveTimelineAssetAliases(
-      parseComposer(data.inkScript.inkSource),
-      resolvedAssetMap,
-    ), {
-      defaultBackgroundUrl: resolvedScene?.backgroundUrl ?? undefined,
-      characterSprites,
-      characterPositions,
-    })
-  }, [data.inkScript.inkSource, resolvedAssetMap, resolvedScene])
+  const repeatFrames = useMemo(
+    () => buildStoryRepeatFrames(data, { assetMap: resolvedAssetMap, scene: resolvedScene }),
+    [data, resolvedAssetMap, resolvedScene],
+  )
+  // Remotion runs on the server and must never receive Capacitor file URLs.
+  const renderFrames = useMemo(() => buildStoryRepeatFrames(data), [data])
 
   useEffect(() => {
     if (!story.isEnded || completionSaved.current) return
@@ -349,15 +331,9 @@ function InkEpisodePlayer({
   }, [completionSaved, data.episode.objectives.length, data.inkScript.id, data.inkScript.version, dialogueSnapshot, episodeId, inkLines.length, mode, story.isEnded, userTurns.length])
 
   const publishVideo = async () => {
-    if (!recordId || publishing || published) return
-    const taskId = `script-video:${recordId}`
+    if (!recordId || publishing || videoQueued) return
     setPublishing(true)
-    setPublishProgress(1)
-    startGlobalTask({
-      id: taskId,
-      kind: 'script_video',
-      title: `《${data.episode.title}》演出视频`,
-    })
+    let globalTaskId: string | null = null
     try {
       const work = await scriptCommunityApi.createWork({
         recordId,
@@ -365,30 +341,63 @@ function InkEpisodePlayer({
         title: `完成《${data.episode.title}》`,
         caption: `${mode === 'vn' ? 'VN 互动' : '跟读剧场'} · ${userTurns.length || inkLines.length} 次开口`,
       })
-      await requestScriptVideoRender({
+      const taskId = `script-video:${work.id}`
+      globalTaskId = taskId
+      startGlobalTask({ id: taskId, kind: 'script_video', title: `《${data.episode.title}》演出视频` })
+      const task = await enqueueScriptVideoRender({
         workId: work.id,
-        frames: repeatFrames,
-        onProgress: (progress, step) => {
-          setPublishProgress(progress)
-          updateGlobalTask(taskId, { progress, stepLabel: step || '服务端 Remotion 渲染中' })
-        },
+        frames: renderFrames,
       })
-      setPublishProgress(100)
-      setPublished(true)
-      updateGlobalTask(taskId, { progress: 100, status: 'done', stepLabel: '已发布到广场' })
-      toast.success('演出视频已发布到广场')
+      setVideoCompleted(false)
+      setRenderWorkId(work.id)
+      setVideoQueued(true)
+      updateGlobalTask(taskId, { progress: 1, stepLabel: `已提交后台渲染（任务 ${task.taskId.slice(-6)}）` })
+      toast.success('已创建作品并提交后台渲染；完成后会自动发布到广场，可继续练习')
     } catch (error: any) {
-      setPublishProgress(0)
-      updateGlobalTask(taskId, {
-        status: 'error',
-        stepLabel: '视频生成失败',
-        error: error?.message || '视频生成失败，请重试',
-      })
+      if (globalTaskId) {
+        updateGlobalTask(globalTaskId, {
+          status: 'error',
+          stepLabel: '视频生成失败',
+          error: error?.message || '视频生成失败，请重试',
+        })
+      }
       toast.error(error?.message || '视频生成失败，请重试')
     } finally {
       setPublishing(false)
     }
   }
+
+  useEffect(() => {
+    if (!renderWorkId || !videoQueued) return
+    const taskId = `script-video:${renderWorkId}`
+    let alive = true
+    const refresh = async () => {
+      try {
+        const result = await scriptCommunityApi.renderStatus(renderWorkId)
+        if (!alive) return
+        const progress = result.task?.progress ?? 1
+        updateGlobalTask(taskId, { progress, stepLabel: result.task?.currentStep || '后台生成中' })
+        if (result.work.status === 'published' && result.work.videoAssetId) {
+          setVideoQueued(false)
+          setVideoCompleted(true)
+          updateGlobalTask(taskId, { status: 'done', progress: 100, stepLabel: '视频已生成并发布' })
+          toast.success('演出视频已生成并发布到广场')
+        } else if (result.work.status === 'failed' || result.task?.status === 'failed' || result.task?.status === 'canceled') {
+          setVideoQueued(false)
+          updateGlobalTask(taskId, {
+            status: 'error',
+            stepLabel: result.task?.status === 'canceled' ? '视频生成已取消' : '视频生成失败',
+            error: result.work.renderError || result.task?.errorMessage || undefined,
+          })
+        }
+      } catch (error) {
+        console.warn('[script-video] render status refresh failed', { workId: renderWorkId, error })
+      }
+    }
+    void refresh()
+    const timer = window.setInterval(() => void refresh(), 3000)
+    return () => { alive = false; window.clearInterval(timer) }
+  }, [renderWorkId, updateGlobalTask, videoQueued])
 
   const submitInput = async (text: string) => {
     const value = text.trim()
@@ -399,7 +408,15 @@ function InkEpisodePlayer({
     // 不调 advanceStory — 让用户点「继续」后再推进，先展示输入内容
   }
 
-  const completeRepeat = async ({ recordedCount, totalCount }: { recordedCount: number; totalCount: number }) => {
+  const completeRepeat = async ({
+    recordedCount,
+    totalCount,
+    recordings,
+  }: {
+    recordedCount: number
+    totalCount: number
+    recordings: Record<number, Blob>
+  }) => {
     if (repeatSaving || completionSaved.current) return
     if (recordedCount < totalCount) {
       toast.error('完成全部台词跟读后，才会生成练习记录')
@@ -408,6 +425,22 @@ function InkEpisodePlayer({
     setRepeatSaving(true)
     completionSaved.current = true
     try {
+      const recordingBatchId = `repeat-${episodeId}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+      const recordingAssets = Object.fromEntries(await Promise.all(
+        Object.entries(recordings).map(async ([frameIndex, blob]) => {
+          const mimeType = blob.type || 'audio/webm'
+          const extension = mimeType.includes('mp4') || mimeType.includes('m4a') ? 'm4a'
+            : mimeType.includes('ogg') ? 'ogg'
+              : 'webm'
+          const file = new File([blob], `repeat-${episodeId}-${frameIndex}.${extension}`, { type: mimeType })
+          const asset = await uploadFileToCosAndComplete({ file, group: 'user_recording' })
+          // The completion request verifies this temporary user-owned
+          // reference, then atomically transfers it to the record itself.
+          await createFileReference(asset.id, 'script_practice_upload', recordingBatchId)
+          return [frameIndex, asset.id]
+        }),
+      )) as Record<string, string>
+      const recordingAssetIds = [...new Set(Object.values(recordingAssets))]
       const record = await scriptCommunityApi.completeRecord(episodeId, {
         mode: 'repeat',
         durationSec: Math.max(1, Math.round((Date.now() - startedAt.current) / 1000)),
@@ -419,17 +452,27 @@ function InkEpisodePlayer({
           inkScriptVersion: data.inkScript.version,
           mode: 'repeat',
           recordedLineCount: recordedCount,
+          recordingAssets,
           dialogue: repeatFrames.map((frame) => ({
             speaker: frame.kind === 'choice' || frame.kind === 'userInput' ? '我' : frame.speaker,
             text: frame.text,
             isUser: frame.kind === 'choice' || frame.kind === 'userInput',
           })),
         },
+        audioAssetId: recordingAssetIds[0],
+        recordingAssetIds,
+        recordingBatchId,
       })
       setRecordId(record.id)
       toast.success('跟读演出已保存')
-    } catch {
+    } catch (error) {
       completionSaved.current = false
+      console.error('[repeat-vn] practice record save failed', {
+        episodeId,
+        recordedCount,
+        recordingCount: Object.keys(recordings).length,
+        error,
+      })
       toast.error('跟读记录保存失败，请重试')
     } finally {
       setRepeatSaving(false)
@@ -493,6 +536,10 @@ function InkEpisodePlayer({
           onJumpTo={setRepeatFrameIndex}
           practiceMode
           onComplete={(result) => void completeRepeat(result)}
+          onGenerateVideo={recordId ? () => void publishVideo() : undefined}
+          videoSubmitting={publishing}
+          videoQueued={videoQueued}
+          videoCompleted={videoCompleted}
           className="h-full max-h-none max-w-none rounded-none border-0 shadow-none"
         />
       ) : (
@@ -538,42 +585,24 @@ function InkEpisodePlayer({
               size="sm"
               variant="ghost"
               className="rounded-full"
-              disabled={!recordId || publishing || published}
+              disabled={!recordId || publishing || videoQueued || videoCompleted}
               onClick={() => void publishVideo()}
             >
-              {published
-                ? '已发布到广场'
+              {videoCompleted
+                ? '视频已生成并发布'
+                : videoQueued
+                ? '已提交后台生成'
                 : publishing
-                  ? `正在生成视频 ${publishProgress}%`
+                  ? '正在提交视频任务…'
                   : recordId
                     ? '生成视频并发布'
                     : '正在保存记录…'}
             </Button>
-            {publishing && (
-              <Progress value={publishProgress} className="h-1.5 w-48" />
-            )}
           </div>
         )}
       />
       )}
       </div>
-      {mode === 'repeat' && recordId && (
-        <div className="absolute inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] z-30 mx-auto flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2 rounded-2xl bg-background/92 p-3 shadow-lg backdrop-blur-xl">
-          <Button
-            size="sm"
-            className="rounded-full"
-            disabled={publishing || published}
-            onClick={() => void publishVideo()}
-          >
-            {published
-              ? '已发布到广场'
-              : publishing
-                ? `正在生成视频 ${publishProgress}%`
-                : '生成视频并发布'}
-          </Button>
-          {publishing && <Progress value={publishProgress} className="h-1.5" />}
-        </div>
-      )}
     </div>
   )
 }

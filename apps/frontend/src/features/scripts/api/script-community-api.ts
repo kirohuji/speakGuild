@@ -18,6 +18,7 @@ export interface ScriptPracticeRecord {
   createdAt: string
   resultSnapshot?: {
     dialogue?: Array<{ speaker?: string; text: string; isUser?: boolean }>
+    recordingAssets?: Record<string, string>
   } | null
   episode: {
     id: string
@@ -116,8 +117,10 @@ export const scriptCommunityApi = {
       usedChunkCount?: number
       completedObjectiveCount?: number
       score?: number
-      resultSnapshot?: Record<string, unknown>
-      audioAssetId?: string
+    resultSnapshot?: Record<string, unknown>
+    audioAssetId?: string
+    recordingAssetIds?: string[]
+    recordingBatchId?: string
       videoAssetId?: string
     },
   ) => post<ScriptPracticeRecord>(`/scripts/episodes/${episodeId}/records`, data),

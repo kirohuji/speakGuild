@@ -1,5 +1,5 @@
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -19,6 +19,22 @@ export class AdminTasksService {
       select: { id: true, title: true },
     });
     if (!work) throw new NotFoundException('作品不存在');
+    const localVisualFrames = frames.filter((frame: any) => [frame?.background?.url, frame?.sprite?.url].some((url) =>
+      typeof url === 'string' && (url.startsWith('capacitor://') || url.includes('/_capacitor_file_/')),
+    ));
+    if (localVisualFrames.length > 0) {
+      console.error('[script-video] rejected local visual URLs in render payload', {
+        workId,
+        frameIndexes: localVisualFrames.map((frame: any) => frame?.index),
+      });
+      throw new BadRequestException('视频渲染不能使用设备本地资源地址，请重新提交渲染任务');
+    }
+    console.log('[script-video] queued render payload', {
+      workId,
+      frames: frames.length,
+      backgrounds: frames.filter((frame: any) => Boolean(frame?.background?.url)).length,
+      sprites: frames.filter((frame: any) => Boolean(frame?.sprite?.url)).length,
+    });
     const task = await this.prisma.adminTask.create({
       data: {
         type: SCRIPT_VIDEO_RENDER_JOB,
@@ -60,15 +76,10 @@ export class AdminTasksService {
     });
 
     for (const task of tasks) {
-      if (task.bullJobId) {
-        try {
-          const job = await this.videoQueue.getJob(task.bullJobId);
-          if (job) await job.remove();
-        } catch {
-          // Active BullMQ jobs cannot be removed. The processor checks the
-          // persisted canceled state before uploading or publishing its output.
-        }
-      }
+      // Persist cancellation before touching BullMQ. A worker may already have
+      // picked up the job; every worker transition is guarded against this
+      // persisted state, so it can no longer turn a canceled task back into
+      // "running" while job removal is in flight.
       await this.prisma.adminTask.update({
         where: { id: task.id },
         data: {
@@ -78,6 +89,15 @@ export class AdminTasksService {
           finishedAt: new Date(),
         },
       });
+      if (task.bullJobId) {
+        try {
+          const job = await this.videoQueue.getJob(task.bullJobId);
+          if (job) await job.remove();
+        } catch {
+          // Active BullMQ jobs cannot be removed. The processor checks the
+          // persisted canceled state before uploading or publishing its output.
+        }
+      }
       await this.log(task.id, 'warn', reason, { step: 'canceled' });
     }
   }
@@ -214,6 +234,10 @@ export class AdminTasksService {
       const payload = task.payload as any;
       return this.enqueueScriptVideo(task.targetId, payload?.userId || createdById, payload?.frames || []);
     }
+    if (task.type === NARRATIVE_VIDEO_RENDER_JOB) {
+      const payload = task.payload as any;
+      return this.enqueueNarrativeVideo(payload?.userId || createdById, payload?.frames || []);
+    }
     if (task.type !== CONTENT_PREPARE_JOB || task.targetType !== 'scene' || !task.targetId) {
       throw new NotFoundException('暂不支持重试该任务');
     }
@@ -231,10 +255,24 @@ export class AdminTasksService {
       throw new NotFoundException('只能取消排队中或执行中的任务');
     }
 
+    // First make cancellation durable. An active worker may not be removable,
+    // but it must never be able to overwrite this state while removal runs.
+    await this.prisma.adminTask.update({
+      where: { id },
+      data: {
+        status: AdminTaskStatus.canceled,
+        currentStep: 'canceled',
+        finishedAt: new Date(),
+        errorMessage: '任务已被管理员取消',
+      },
+    });
+
     // 从 BullMQ 队列中移除任务
     if (task.bullJobId) {
       try {
-        const queue = task.type === SCRIPT_VIDEO_RENDER_JOB ? this.videoQueue : this.contentQueue;
+        const queue = task.type === SCRIPT_VIDEO_RENDER_JOB || task.type === NARRATIVE_VIDEO_RENDER_JOB
+          ? this.videoQueue
+          : this.contentQueue;
         const job = await queue.getJob(task.bullJobId);
         if (job) {
           await job.remove();
@@ -244,22 +282,14 @@ export class AdminTasksService {
       }
     }
 
-    await this.prisma.adminTask.update({
-      where: { id },
-      data: {
-        status: AdminTaskStatus.canceled,
-        finishedAt: new Date(),
-        errorMessage: '任务已被管理员取消',
-      },
-    });
     await this.log(id, 'warn', '任务已被管理员取消', { step: 'canceled' });
 
     return this.get(id);
   }
 
   async markRunning(taskId: string, currentStep = 'scan') {
-    await this.prisma.adminTask.update({
-      where: { id: taskId },
+    const result = await this.prisma.adminTask.updateMany({
+      where: { id: taskId, status: AdminTaskStatus.queued },
       data: {
         status: AdminTaskStatus.running,
         currentStep,
@@ -267,6 +297,7 @@ export class AdminTasksService {
         errorMessage: null,
       },
     });
+    return result.count > 0;
   }
 
   async setProgress(taskId: string, data: {
@@ -279,8 +310,8 @@ export class AdminTasksService {
     const totalItems = data.totalItems ?? 0;
     const processedItems = data.processedItems ?? 0;
     const progress = totalItems > 0 ? Math.min(99, Math.floor((processedItems / totalItems) * 100)) : 0;
-    await this.prisma.adminTask.update({
-      where: { id: taskId },
+    await this.prisma.adminTask.updateMany({
+      where: { id: taskId, status: { not: AdminTaskStatus.canceled } },
       data: {
         ...data,
         progress,
@@ -289,8 +320,8 @@ export class AdminTasksService {
   }
 
   async markCompleted(taskId: string, summary: unknown) {
-    await this.prisma.adminTask.update({
-      where: { id: taskId },
+    await this.prisma.adminTask.updateMany({
+      where: { id: taskId, status: { not: AdminTaskStatus.canceled } },
       data: {
         status: AdminTaskStatus.completed,
         progress: 100,
@@ -303,8 +334,8 @@ export class AdminTasksService {
 
   async markFailed(taskId: string, error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    await this.prisma.adminTask.update({
-      where: { id: taskId },
+    await this.prisma.adminTask.updateMany({
+      where: { id: taskId, status: { not: AdminTaskStatus.canceled } },
       data: {
         status: AdminTaskStatus.failed,
         errorMessage: message,

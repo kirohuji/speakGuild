@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   BookOpen,
   CalendarDays,
+  CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -59,6 +60,7 @@ import {
   learningApi,
   type LearningUnitSummary,
   type MyUnit,
+  type StoryEpisodePlayerData,
 } from '@/features/learning/api/learning-api'
 import {
   scriptCommunityApi,
@@ -72,11 +74,13 @@ import {
 } from '@/layout/learning-pack-download-monitor'
 import { useLearningStore } from '@/stores/learning.store'
 import { cn } from '@/lib/cn'
-import { parseComposer } from '@/features/admin/components/composer-parser'
-import { flattenComposerToTimeline } from '@/features/admin/components/vn-mixed-timeline'
-import { requestScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
+import { enqueueScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
+import { buildStoryRepeatFrames } from '@/features/scripts/lib/story-repeat-frames'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
 import { VnPlayer, type VnPlayerLine } from '@/features/vn-engine/vn-player'
+import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
+import { learningRepository } from '@/lib/offline'
+import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
 import { useCachedImage } from '@/hooks/use-cached-image'
 
 /**
@@ -280,6 +284,15 @@ export function ScriptCenterPage() {
     if (tab === 'mine') void loadWorks()
   }, [loadWorks, tab])
 
+  // Rendering is intentionally asynchronous. Keep the works list in sync
+  // while a server-side video task is active so cards do not remain stuck on
+  // “generating” after BullMQ has already completed the work.
+  useEffect(() => {
+    if (tab !== 'mine' || !works.some((work) => work.status === 'rendering')) return
+    const timer = window.setInterval(() => void loadWorks(), 5000)
+    return () => window.clearInterval(timer)
+  }, [loadWorks, tab, works])
+
   useEffect(() => {
     if (tab === 'square') void loadFeed()
   }, [loadFeed, tab])
@@ -384,7 +397,7 @@ export function ScriptCenterPage() {
             <DrawerTitle className="text-base font-semibold">{t('scripts.practiceRecords')}</DrawerTitle>
           </DrawerHeader>
           <div className="min-h-0 flex-1 overflow-hidden px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-            <RecordList records={records} loading={recordsLoading} />
+            <RecordList records={records} loading={recordsLoading} onWorkCreated={loadWorks} />
           </div>
         </DrawerContent>
       </Drawer>
@@ -581,6 +594,27 @@ function MineScripts({
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between px-1">
+          <p className="text-xs font-medium text-muted-foreground">练习记录</p>
+          <Button variant="ghost" size="sm" onClick={onOpenRecords}>全部记录</Button>
+        </div>
+        <button
+          type="button"
+          onClick={onOpenRecords}
+          className="flex items-center gap-3 rounded-2xl bg-muted/35 p-4 text-left transition-colors hover:bg-muted/55"
+        >
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background text-primary">
+            <ClipboardList className="size-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">查看 VN 与跟读完成记录</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">记录详情可生成演出视频并发布到我的作品</p>
+          </div>
+          <ChevronRight className="size-4 text-muted-foreground" />
+        </button>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <div className="flex items-center justify-between px-1">
           <p className="text-xs font-medium text-muted-foreground">{t('scripts.myWorks')}</p>
           <Button variant="ghost" size="sm" onClick={() => setWorksOpen(true)}>{t('scripts.viewMore')}</Button>
         </div>
@@ -696,17 +730,13 @@ async function generateAndPublishExistingWork(
   try {
   const player = await learningApi.getStoryEpisodePlayer(work.episodeId)
   if (!player.inkScript.inkSource) throw new Error(i18n.t('scripts.scriptIncomplete'))
-  const frames = flattenComposerToTimeline(parseComposer(player.inkScript.inkSource))
-  await requestScriptVideoRender({
+  const frames = buildStoryRepeatFrames(player)
+  const task = await enqueueScriptVideoRender({
     workId: work.id,
     frames,
-    onProgress: (progress, step) => {
-      onProgress(progress)
-      useGlobalTaskStore.getState().updateTask(taskId, { progress, stepLabel: step || i18n.t('scripts.renderingOnServer') })
-    },
   })
-  onProgress(100)
-  useGlobalTaskStore.getState().updateTask(taskId, { progress: 100, status: 'done', stepLabel: i18n.t('scripts.publishedToSquare') })
+  onProgress(1)
+  useGlobalTaskStore.getState().updateTask(taskId, { progress: 1, stepLabel: `已提交后台渲染（任务 ${task.taskId.slice(-6)}）` })
   } catch (error: any) {
     useGlobalTaskStore.getState().updateTask(taskId, {
       status: 'error',
@@ -734,6 +764,14 @@ function selectEpisodeRepresentatives(works: ScriptWork[]) {
   return [...representatives.values()]
 }
 
+function workPrimaryActionLabel(work: ScriptWork) {
+  if (work.status === 'rendering') return '取消生成'
+  if (work.status === 'published') return '取消发布'
+  if (work.videoUrl) return '发布到广场'
+  if (work.status === 'failed') return '重新生成并发布'
+  return '生成视频并发布'
+}
+
 function MyWorks({
   works,
   loading,
@@ -748,7 +786,7 @@ function MyWorks({
 
   const togglePublish = async (work: ScriptWork) => {
     try {
-      if (work.status === 'published') await scriptCommunityApi.unpublishWork(work.id)
+      if (work.status === 'rendering' || work.status === 'published') await scriptCommunityApi.unpublishWork(work.id)
       else if (work.videoUrl) await scriptCommunityApi.publishWork(work.id)
       else {
         setGenerating((current) => ({ ...current, [work.id]: 1 }))
@@ -756,7 +794,15 @@ function MyWorks({
           setGenerating((current) => ({ ...current, [work.id]: progress }))
         })
       }
-      toast.success(work.status === 'published' ? t('scripts.workPrivateHint') : t('scripts.workPublishedHint'))
+      toast.success(
+        work.status === 'rendering'
+          ? '已取消后台生成，作品已保留，可重新生成'
+          : work.status === 'published'
+            ? t('scripts.workPrivateHint')
+            : work.videoUrl
+              ? t('scripts.workPublishedHint')
+              : '已提交后台生成，完成后将自动发布到广场',
+      )
       await onChanged()
     } catch (error: any) {
       toast.error(error?.message || t('scripts.workStatusFailed'))
@@ -817,18 +863,14 @@ function MyWorks({
             <div className="w-full">
               <Button
                 size="sm"
-                variant={work.status === 'published' ? 'outline' : 'default'}
+                variant={work.status === 'rendering' || work.status === 'published' ? 'outline' : 'default'}
                 className="h-8 w-full rounded-full text-xs"
                 disabled={Boolean(generating[work.id])}
                 onClick={() => void togglePublish(work)}
               >
                 {generating[work.id]
                   ? t('scripts.generating', { percent: generating[work.id] })
-                  : work.status === 'published'
-                    ? t('scripts.unpublish')
-                    : work.videoUrl
-                      ? t('scripts.publishExisting')
-                      : t('scripts.generateVideoAndPublish')}
+                  : workPrimaryActionLabel(work)}
               </Button>
               {generating[work.id] && <Progress value={generating[work.id]} className="mt-1.5 h-1" />}
             </div>
@@ -929,7 +971,7 @@ function WorksLibraryDialog({
 
   const togglePublish = async (work: ScriptWork) => {
     try {
-      if (work.status === 'published') await scriptCommunityApi.unpublishWork(work.id)
+      if (work.status === 'rendering' || work.status === 'published') await scriptCommunityApi.unpublishWork(work.id)
       else if (work.videoUrl) await scriptCommunityApi.publishWork(work.id)
       else {
         setGenerating((current) => ({ ...current, [work.id]: 1 }))
@@ -938,6 +980,7 @@ function WorksLibraryDialog({
         })
       }
       await onChanged()
+      if (work.status === 'rendering') toast.success('已取消后台生成，作品已保留，可重新生成')
     } catch (error: any) {
       toast.error(error?.message || t('scripts.workStatusFailed'))
     } finally {
@@ -1039,14 +1082,10 @@ function WorksLibraryDialog({
                                 {t('scripts.chapterLabel', { name: work.episode.chapterName })} · {new Date(work.createdAt).toLocaleString(i18n.language)}
                               </p>
                               <div className="mt-2 flex items-center gap-1.5">
-                                <Button size="sm" variant={work.status === 'published' ? 'outline' : 'default'} className="h-7 rounded-full px-3 text-[11px]" disabled={Boolean(generating[work.id])} onClick={() => void togglePublish(work)}>
+                                <Button size="sm" variant={work.status === 'rendering' || work.status === 'published' ? 'outline' : 'default'} className="h-7 rounded-full px-3 text-[11px]" disabled={Boolean(generating[work.id])} onClick={() => void togglePublish(work)}>
                                   {generating[work.id]
-                                    ? `生成中 ${generating[work.id]}%`
-                                    : work.status === 'published'
-                                      ? '取消发布'
-                                      : work.videoUrl
-                                        ? '发布到广场'
-                                        : '生成视频并发布'}
+                                    ? '正在提交视频任务…'
+                                    : workPrimaryActionLabel(work)}
                                 </Button>
                                 <Button size="sm" variant="ghost" className="h-7 rounded-full px-2.5 text-[11px] text-muted-foreground" onClick={() => setHistoryWork(work)}>
                                   <History data-icon="inline-start" />
@@ -1765,9 +1804,19 @@ function SquareWorkCard({
   )
 }
 
-function RecordList({ records, loading }: { records: ScriptPracticeRecord[]; loading: boolean }) {
+function RecordList({
+  records,
+  loading,
+  onWorkCreated,
+}: {
+  records: ScriptPracticeRecord[]
+  loading: boolean
+  onWorkCreated: () => Promise<void>
+}) {
   const [mode, setMode] = useState('all')
   const [replayRecord, setReplayRecord] = useState<ScriptPracticeRecord | null>(null)
+  const [generating, setGenerating] = useState<Record<string, number>>({})
+  const [queuedRecordIds, setQueuedRecordIds] = useState<Record<string, true>>({})
   const visible = records.filter((record) => {
     if (mode === 'all') return true
     return record.mode === mode
@@ -1812,12 +1861,58 @@ function RecordList({ records, loading }: { records: ScriptPracticeRecord[]; loa
           </div>
         )}
       </div>
-      <ScriptRecordReplayDialog record={replayRecord} onClose={() => setReplayRecord(null)} />
+      <ScriptRecordReplayDialog
+        record={replayRecord}
+        onClose={() => setReplayRecord(null)}
+        generatingProgress={replayRecord ? generating[replayRecord.id] : undefined}
+        videoQueued={Boolean(replayRecord && (
+          queuedRecordIds[replayRecord.id]
+          || replayRecord.works?.some((work) => work.status === 'rendering' || work.status === 'published')
+        ))}
+        onGenerateVideo={async (record) => {
+          if (generating[record.id] || queuedRecordIds[record.id] || record.works?.some((work) => work.status === 'rendering' || work.status === 'published')) return
+          setGenerating((current) => ({ ...current, [record.id]: 1 }))
+          try {
+            const work = await scriptCommunityApi.createWork({
+              recordId: record.id,
+              kind: record.mode === 'repeat' ? 'repeat_video' : 'vn_video',
+              title: `完成《${record.episode.title}》`,
+              caption: `${record.mode === 'repeat' ? '跟读剧场' : 'VN 互动'} · ${record.mode === 'repeat' ? record.lineCount : record.turnCount} 次开口`,
+            })
+            await generateAndPublishExistingWork(work, (progress) => {
+              setGenerating((current) => ({ ...current, [record.id]: progress }))
+            })
+            setQueuedRecordIds((current) => ({ ...current, [record.id]: true }))
+            await onWorkCreated()
+            toast.success('已创建作品并提交后台渲染；完成后会自动发布到广场')
+          } catch (error: any) {
+            toast.error(error?.message || '视频生成失败，请重试')
+          } finally {
+            setGenerating((current) => {
+              const next = { ...current }
+              delete next[record.id]
+              return next
+            })
+          }
+        }}
+      />
     </Tabs>
   )
 }
 
-function ScriptRecordReplayDialog({ record, onClose }: { record: ScriptPracticeRecord | null; onClose: () => void }) {
+function ScriptRecordReplayDialog({
+  record,
+  onClose,
+  onGenerateVideo,
+  generatingProgress,
+  videoQueued,
+}: {
+  record: ScriptPracticeRecord | null
+  onClose: () => void
+  onGenerateVideo: (record: ScriptPracticeRecord) => Promise<void>
+  generatingProgress?: number
+  videoQueued: boolean
+}) {
   const replayLines = useMemo<VnPlayerLine[]>(
     () => record?.resultSnapshot?.dialogue?.map((line) => ({
       speaker: line.speaker,
@@ -1834,6 +1929,23 @@ function ScriptRecordReplayDialog({ record, onClose }: { record: ScriptPracticeR
   const isEnded = replayLines.length > 0 && lineIndex >= replayLines.length
   const currentLine = isEnded ? null : replayLines[lineIndex] ?? null
 
+  if (record.mode === 'repeat') {
+    return (
+      <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
+        <DialogContent className="left-0 top-0 h-dvh w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden">
+          <DialogHeader className="sr-only"><DialogTitle>跟读练习记录</DialogTitle></DialogHeader>
+          <ReadonlyRepeatRecordTheater
+            record={record}
+            onClose={onClose}
+            onGenerateVideo={() => void onGenerateVideo(record)}
+            videoSubmitting={generatingProgress !== undefined}
+            videoQueued={videoQueued}
+          />
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
       <DialogContent className="left-0 top-0 h-dvh w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden">
@@ -1849,6 +1961,9 @@ function ScriptRecordReplayDialog({ record, onClose }: { record: ScriptPracticeR
               <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full border border-border/55 bg-background/90 px-2 shadow-lg backdrop-blur-2xl">
                 <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>关闭</Button>
                 <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted-foreground">{record.episode.title} · 对话回放</span>
+                <Button variant="ghost" size="sm" className="h-7 rounded-full px-2 text-xs" disabled={generatingProgress !== undefined || videoQueued} onClick={() => void onGenerateVideo(record)}>
+                  {videoQueued ? '已提交' : generatingProgress === undefined ? '生成视频' : '提交中'}
+                </Button>
               </div>
             </div>
             <VnPlayer
@@ -1865,6 +1980,89 @@ function ScriptRecordReplayDialog({ record, onClose }: { record: ScriptPracticeR
         )}
       </DialogContent>
     </Dialog>
+  )
+}
+
+function ReadonlyRepeatRecordTheater({
+  record,
+  onClose,
+  onGenerateVideo,
+  videoSubmitting,
+  videoQueued,
+}: {
+  record: ScriptPracticeRecord
+  onClose: () => void
+  onGenerateVideo: () => void
+  videoSubmitting: boolean
+  videoQueued: boolean
+}) {
+  const [data, setData] = useState<StoryEpisodePlayerData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [recordingUrls, setRecordingUrls] = useState<Record<number, string>>({})
+
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    setFailed(false)
+    setActiveIndex(0)
+    // The repository selects the installed package on Capacitor. It only
+    // uses the network on web, matching the live theatre's data contract.
+    void learningRepository.getStoryEpisodePlayer(record.episode.scene.id, record.episodeId)
+      .then((player) => { if (alive) setData(player) })
+      .catch(() => { if (alive) setFailed(true) })
+      .finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [record.episode.scene.id, record.episodeId])
+
+  useEffect(() => {
+    let alive = true
+    const assets = record.resultSnapshot?.recordingAssets ?? {}
+    void Promise.all(Object.entries(assets).map(async ([frameIndex, assetId]) => {
+      const { url } = await getFileAssetPrivateUrl(assetId)
+      return [Number(frameIndex), url] as const
+    })).then((entries) => {
+      if (alive) setRecordingUrls(Object.fromEntries(entries))
+    }).catch(() => {
+      if (alive) setRecordingUrls({})
+    })
+    return () => { alive = false }
+  }, [record.id, record.resultSnapshot])
+
+  const frames = useMemo(() => data ? buildStoryRepeatFrames(data) : [], [data])
+
+  return (
+    <div className="relative flex h-full flex-col bg-background pt-[calc(3.5rem+env(safe-area-inset-top,0px))]">
+      <div className="absolute inset-x-0 top-0 z-20 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
+        <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full border border-border/55 bg-background/90 px-2 shadow-lg backdrop-blur-2xl">
+          <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>关闭</Button>
+          <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted-foreground">{record.episode.title} · 跟读回放</span>
+          <Badge variant="secondary" className="h-6 text-[10px]">只读</Badge>
+        </div>
+      </div>
+      {loading ? (
+        <div className="flex flex-1 items-center justify-center"><Loader2 className="size-7 animate-spin text-primary" /></div>
+      ) : failed || frames.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
+          <p className="text-sm text-muted-foreground">无法读取这次跟读所需的本地剧场资源。</p>
+          <Button variant="outline" onClick={onClose}>关闭</Button>
+        </div>
+      ) : (
+        <VnMixedPreviewPlayer
+          frames={frames}
+          activeIndex={activeIndex}
+          onJumpTo={setActiveIndex}
+          practiceMode
+          readOnly
+          initialRecordingUrls={recordingUrls}
+          onGenerateVideo={onGenerateVideo}
+          videoSubmitting={videoSubmitting}
+          videoQueued={videoQueued}
+          className="h-full max-h-none max-w-none rounded-none border-0 shadow-none"
+        />
+      )}
+    </div>
   )
 }
 
