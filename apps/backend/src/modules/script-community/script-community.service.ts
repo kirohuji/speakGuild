@@ -408,8 +408,12 @@ export class ScriptCommunityService {
   }
 
   async deleteWork(userId: string, id: string) {
-    const result = await this.prisma.scriptWork.deleteMany({ where: { id, userId } })
-    if (result.count === 0) throw new NotFoundException('作品不存在')
+    const work = await this.prisma.scriptWork.findFirst({ where: { id, userId }, select: { id: true } })
+    if (!work) throw new NotFoundException('作品不存在')
+    // A rendering task may still complete after the work has been removed.
+    // Cancel it first so it cannot write a video back to a deleted work.
+    await this.adminTasksService.cancelScriptVideoTasks(id, userId, '用户删除作品', true)
+    await this.prisma.scriptWork.delete({ where: { id } })
     return { success: true }
   }
 

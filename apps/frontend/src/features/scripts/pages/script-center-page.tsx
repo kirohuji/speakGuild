@@ -472,7 +472,9 @@ function MineScripts({
     )
   }
 
-  if (units.length === 0) {
+  // Works are independent records. Removing the final enrolled script must not
+  // hide previously created works.
+  if (units.length === 0 && works.length === 0 && !worksLoading) {
     return (
       <div className="flex flex-col items-center rounded-lg bg-muted/30 px-6 py-14 text-center">
         <Clapperboard className="size-10 text-muted-foreground/40" />
@@ -597,8 +599,19 @@ function MineScripts({
           <p className="text-xs font-medium text-muted-foreground">{t('scripts.myScripts')}</p>
           <Button variant="ghost" size="sm" onClick={onOpenShop}>{t('scripts.exploreMore')}</Button>
         </div>
-        <div className="-mx-2 flex snap-x gap-2 overflow-x-auto px-2 pb-1">
-          {units.map((unit) => {
+        {units.length === 0 ? (
+          <div className="flex items-center gap-3 rounded-lg bg-muted/30 px-3.5 py-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <Clapperboard className="size-4" />
+            </div>
+            <p className="min-w-0 flex-1 text-xs text-muted-foreground">{t('scripts.noScriptsYet')}</p>
+            <Button variant="outline" size="sm" className="h-8 shrink-0 rounded-full text-xs" onClick={onOpenShop}>
+              {t('scripts.goToShop')}
+            </Button>
+          </div>
+        ) : (
+          <div className="-mx-2 flex snap-x gap-2 overflow-x-auto px-2 pb-1">
+            {units.map((unit) => {
             const installed = installedIds.has(unit.id)
             const downloading = downloadTasks.some((task) => task.packId === unit.id && task.status !== 'error')
             const location = displayScriptLocation(unit.location, t('scripts.immersiveTheater'))
@@ -648,8 +661,9 @@ function MineScripts({
               </button>
               </div>
             )
-          })}
-        </div>
+            })}
+          </div>
+        )}
       </section>
       <Dialog open={Boolean(deletingUnit)} onOpenChange={(open) => { if (!open && !deleting) setDeletingUnit(null) }}>
         <DialogContent className="w-[90vw] max-w-xs rounded-2xl p-6 sm:mx-auto">
@@ -846,6 +860,8 @@ function WorksLibraryDialog({
   const [page, setPage] = useState(1)
   const [generating, setGenerating] = useState<Record<string, number>>({})
   const [historyWork, setHistoryWork] = useState<ScriptWork | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<ScriptWork | null>(null)
+  const [deletingWork, setDeletingWork] = useState(false)
   const listScrollRef = useRef<HTMLDivElement>(null)
 
   const scenes = useMemo(() => Array.from(
@@ -930,6 +946,21 @@ function WorksLibraryDialog({
         delete next[work.id]
         return next
       })
+    }
+  }
+
+  const deleteWork = async () => {
+    if (!deleteTarget || deletingWork) return
+    setDeletingWork(true)
+    try {
+      await scriptCommunityApi.deleteWork(deleteTarget.id)
+      await onChanged()
+      toast.success(t('scripts.deleteWorkSuccess'))
+      setDeleteTarget(null)
+    } catch (error: any) {
+      toast.error(error?.message || t('scripts.deleteWorkFailed'))
+    } finally {
+      setDeletingWork(false)
     }
   }
 
@@ -1021,6 +1052,15 @@ function WorksLibraryDialog({
                                   <History data-icon="inline-start" />
                                   {t('scripts.history')}
                                 </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 rounded-full px-2 text-destructive hover:text-destructive"
+                                  onClick={() => setDeleteTarget(work)}
+                                  aria-label={t('scripts.deleteWork')}
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </Button>
                               </div>
                               {generating[work.id] && <Progress value={generating[work.id]} className="mt-1.5 h-1 w-32" />}
                             </div>
@@ -1071,7 +1111,29 @@ function WorksLibraryDialog({
           onOpenChange={(nextOpen) => { if (!nextOpen) setHistoryWork(null) }}
           works={historyWork ? works.filter((work) => work.episodeId === historyWork.episodeId) : []}
           onPublish={togglePublish}
+          onDelete={setDeleteTarget}
         />
+        <Dialog open={Boolean(deleteTarget)} onOpenChange={(nextOpen) => { if (!nextOpen && !deletingWork) setDeleteTarget(null) }}>
+          <DialogContent className="w-[90vw] max-w-sm rounded-2xl p-6">
+            <DialogHeader>
+              <DialogTitle>{t('scripts.deleteWorkConfirmTitle')}</DialogTitle>
+              <DialogDescription className="mt-2 text-sm leading-5">
+                {deleteTarget?.status === 'published'
+                  ? t('scripts.deletePublishedWorkConfirmDesc')
+                  : t('scripts.deleteWorkConfirmDesc')}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-5 flex gap-3">
+              <Button variant="outline" className="flex-1 rounded-xl" disabled={deletingWork} onClick={() => setDeleteTarget(null)}>
+                {t('common.cancel')}
+              </Button>
+              <Button variant="destructive" className="flex-1 rounded-xl" disabled={deletingWork} onClick={() => void deleteWork()}>
+                {deletingWork && <Loader2 className="animate-spin" />}
+                {t('scripts.deleteWork')}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   )
@@ -1082,11 +1144,13 @@ function EpisodeWorkHistoryDialog({
   onOpenChange,
   works,
   onPublish,
+  onDelete,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   works: ScriptWork[]
   onPublish: (work: ScriptWork) => Promise<void>
+  onDelete: (work: ScriptWork) => void
 }) {
   const { t } = useTranslation()
   const [previewWork, setPreviewWork] = useState<ScriptWork | null>(null)
@@ -1195,6 +1259,15 @@ function EpisodeWorkHistoryDialog({
                                 : t('scripts.setPublishVersion')}
                             </Button>
                           ) : null}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 rounded-full px-2 text-destructive hover:text-destructive"
+                            onClick={() => onDelete(work)}
+                            aria-label={t('scripts.deleteWork')}
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
                         </div>
                       </div>
                     </div>

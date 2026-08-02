@@ -215,8 +215,17 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   async syncPackStateAfterLocalChange() {
     const downloadedPacks = await learningPackService.listInstalled()
     set({ downloadedPacks })
-    await getState().refreshMyUnits()
+    // Clear an in-memory empty daily plan before any remote refresh.  A user
+    // can open "Today" immediately after the download toast; previously that
+    // page could reuse the old empty plan while refreshMyUnits was still
+    // pending, even though the pack's local content had been installed.
     useDailyPracticeStore.getState().reset()
+    console.log('[learning-store] pack state changed; daily plan reset', {
+      installedPackIds: downloadedPacks
+        .filter((pack) => pack.status === 'installed')
+        .map((pack) => pack.packId),
+    })
+    await getState().refreshMyUnits()
   },
 
   async fetchShop(params) {
