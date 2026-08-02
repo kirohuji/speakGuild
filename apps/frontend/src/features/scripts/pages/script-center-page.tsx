@@ -167,6 +167,7 @@ export function ScriptCenterPage() {
   const [replayRecord, setReplayRecord] = useState<ScriptPracticeRecord | null>(null)
   const [generating, setGenerating] = useState<Record<string, number>>({})
   const ignoreReplayDismissOnRecordsDrawer = useRef(false)
+  const observedVideoTaskStates = useRef(new Map<string, 'running' | 'done' | 'error'>())
   const [works, setWorks] = useState<ScriptWork[]>([])
   const [worksLoading, setWorksLoading] = useState(false)
   const [feed, setFeed] = useState<ScriptWork[]>([])
@@ -184,6 +185,7 @@ export function ScriptCenterPage() {
   const downloadUnitPack = useLearningStore((state) => state.downloadUnitPack)
   const enrollUnit = useLearningStore((state) => state.enrollUnit)
   const quitUnit = useLearningStore((state) => state.quitUnit)
+  const globalTasks = useGlobalTaskStore((state) => state.tasks)
 
   const storyUnits = useMemo(
     () => myUnits.filter((unit) => unit.packageType === 'story'),
@@ -256,8 +258,8 @@ export function ScriptCenterPage() {
     }
   }, [])
 
-  const loadWorks = useCallback(async () => {
-    setWorksLoading(true)
+  const loadWorks = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
+    if (!silent) setWorksLoading(true)
     try {
       const allWorks: ScriptWork[] = []
       let cursor: string | undefined
@@ -270,7 +272,7 @@ export function ScriptCenterPage() {
     } catch {
       setWorks([])
     } finally {
-      setWorksLoading(false)
+      if (!silent) setWorksLoading(false)
     }
   }, [])
 
@@ -337,11 +339,23 @@ export function ScriptCenterPage() {
     if (tab === 'mine') void loadWorks()
   }, [loadWorks, tab])
 
-  // Works are cloud records. Refresh only while a render is active so the
-  // current VN/repeat version changes in place without a permanent poller.
+  // Only the task center polls rendering work. When it reports a terminal
+  // state, refresh cloud-backed works and practice records exactly once.
+  useEffect(() => {
+    const videoTasks = globalTasks.filter((task) => task.kind === 'script_video')
+    const settled = videoTasks.filter((task) => (
+      (task.status === 'done' || task.status === 'error')
+      && observedVideoTaskStates.current.get(task.id) === 'running'
+    ))
+    observedVideoTaskStates.current = new Map(videoTasks.map((task) => [task.id, task.status]))
+    if (settled.length > 0) void Promise.all([loadWorks({ silent: true }), loadRecords()])
+  }, [globalTasks, loadRecords, loadWorks])
+
+  // The task drawer may be closed while a render is in progress. Keep a small
+  // fallback refresh for this page so its rendering cards still become ready.
   useEffect(() => {
     if (tab !== 'mine' || !works.some((work) => work.status === 'rendering')) return
-    const timer = window.setInterval(() => void loadWorks(), 15_000)
+    const timer = window.setInterval(() => void loadWorks({ silent: true }), 15_000)
     return () => window.clearInterval(timer)
   }, [loadWorks, tab, works])
 
@@ -890,13 +904,6 @@ function MyWorks({
             <Badge variant="secondary" className="absolute left-2 top-2 h-5 px-2 text-[10px]">
               {work.kind === 'progress_card' ? t('scripts.workKindProgressCard') : work.kind === 'vn_video' ? t('scripts.workKindVn') : t('scripts.workKindRepeat')}
             </Badge>
-            {work.videoUrl && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex size-10 items-center justify-center rounded-full bg-background/70 backdrop-blur-xl">
-                  <Play className="size-4 text-primary" />
-                </div>
-              </div>
-            )}
           </div>
           <CardHeader className="p-2.5 pb-2">
             <p className="flex items-center gap-1 truncate text-[11px] font-medium text-primary">
@@ -1390,7 +1397,14 @@ function EpisodeWorkHistoryDialog({
           sources: [{ src: previewWork.videoUrl, type: previewWork.videoMimeType ?? 'video/mp4' }],
         }] : []}
         plugins={[Video]}
-        controller={{ closeOnBackdropClick: true }}
+        controller={{ closeOnBackdropClick: false, closeOnPullDown: false, closeOnPullUp: false }}
+        styles={{
+          toolbar: {
+            top: 'env(safe-area-inset-top, 0px)',
+            right: 'env(safe-area-inset-right, 0px)',
+            padding: '0.75rem',
+          },
+        }}
       />
     </>
   )
@@ -1692,7 +1706,14 @@ function SquareFeed({
         open={Boolean(previewWork?.videoUrl)}
         close={() => setPreviewWork(null)}
         plugins={[Video]}
-        controller={{ closeOnBackdropClick: true }}
+        controller={{ closeOnBackdropClick: false, closeOnPullDown: false, closeOnPullUp: false }}
+        styles={{
+          toolbar: {
+            top: 'env(safe-area-inset-top, 0px)',
+            right: 'env(safe-area-inset-right, 0px)',
+            padding: '0.75rem',
+          },
+        }}
         carousel={{ finite: true }}
         slides={previewWork?.videoUrl ? [{
           type: 'video',

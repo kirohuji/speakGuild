@@ -726,6 +726,18 @@ export function updateLibraryVocabulary(id: string, data: Partial<VocabularyFull
 export function deleteLibraryVocabulary(id: string): Promise<void> {
   return _delete(`/admin/content/library/vocabularies/${id}`);
 }
+
+/** 上传 CSV 批量导入词汇，返回 { taskId, wordCount }，在任务中心查看进度 */
+export function importVocabularyCsv(file: File): Promise<{ taskId: string; wordCount: number }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  return post('/admin/content/library/vocabularies/import-csv', formData, {
+    // The shared client defaults to application/json; explicitly select the
+    // multipart transformer so the browser sends a boundary and Multer sees it.
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+}
+
 export function enrichVocabulary(id: string): Promise<VocabularyFull> {
   return post(`/admin/content/library/vocabularies/${id}/enrich`);
 }

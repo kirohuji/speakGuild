@@ -214,9 +214,35 @@ function VocabularyTab() {
             {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
           </Select>
         </div>
-        <Button onClick={() => { setEditing(null); setDialogOpen(true) }}>
-          <Plus className="mr-1.5 size-4" />新增词汇
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => { setEditing(null); setDialogOpen(true) }}>
+            <Plus className="mr-1.5 size-4" />新增词汇
+          </Button>
+          <Button variant="outline" onClick={() => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv';
+            input.onchange = async (e) => {
+              const file = (e.target as HTMLInputElement).files?.[0];
+              if (!file) return;
+              try {
+                const result = await (await import('../api-content-admin')).importVocabularyCsv(file);
+                toast.success(`已创建导入任务，${result.wordCount} 个词汇`, {
+                  action: {
+                    label: '查看任务',
+                    onClick: () => window.location.hash = '#/admin/tasks',
+                  },
+                });
+                load();
+              } catch (err: any) {
+                toast.error(err?.message || '导入失败');
+              }
+            };
+            input.click();
+          }}>
+            <Upload className="mr-1.5 size-4" />批量导入
+          </Button>
+        </div>
       </div>
 
       <Card>

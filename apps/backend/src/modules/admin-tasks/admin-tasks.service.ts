@@ -3,13 +3,14 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
 
 @Injectable()
 export class AdminTasksService {
   constructor(
     private readonly prisma: PrismaService,
     @InjectQueue(ADMIN_CONTENT_QUEUE) private readonly contentQueue: Queue,
+    @InjectQueue(VOCABULARY_IMPORT_QUEUE) private readonly vocabularyImportQueue: Queue,
     @InjectQueue(SCRIPT_VIDEO_QUEUE) private readonly videoQueue: Queue,
   ) {}
 
@@ -201,7 +202,39 @@ export class AdminTasksService {
     return { ...task, bullJobId: job.id };
   }
 
+  async enqueueVocabularyCsvImport(words: string[], createdById?: string) {
+    const uniqueWords = [...new Set(words.map(w => w.trim()).filter(Boolean))];
+    if (uniqueWords.length === 0) {
+      throw new BadRequestException('CSV 中没有有效的词汇');
+    }
+
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: VOCABULARY_CSV_IMPORT_JOB,
+        title: `批量导入词汇（${uniqueWords.length} 个）`,
+        targetType: 'vocabulary',
+        createdById,
+        totalItems: uniqueWords.length,
+        payload: { words: uniqueWords } as Prisma.InputJsonValue,
+      },
+    });
+
+    const job = await this.vocabularyImportQueue.add(VOCABULARY_CSV_IMPORT_JOB, {
+      taskId: task.id,
+      words: uniqueWords,
+    });
+
+    await this.prisma.adminTask.update({
+      where: { id: task.id },
+      data: { bullJobId: job.id },
+    });
+
+    await this.log(task.id, 'info', '词汇 CSV 导入任务已加入 Redis 队列', { step: 'queued', meta: { count: uniqueWords.length } });
+    return { ...task, bullJobId: job.id };
+  }
+
   async list(params: {
+
     type?: string;
     status?: AdminTaskStatus;
     page?: number;

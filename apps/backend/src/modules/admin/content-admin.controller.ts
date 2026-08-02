@@ -1,7 +1,10 @@
 import {
   Controller, Get, Post, Patch, Delete,
   Param, Body, Query, Req, ForbiddenException, BadRequestException, NotFoundException,
+  UploadedFile, UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { parse } from 'csv-parse/sync';
 import type { Request } from 'express';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import {
@@ -31,6 +34,7 @@ import { TtsProvider } from '@prisma/client';
 import { AdminContentAiService } from './admin-content-ai.service';
 import { AiModelService } from '../ai-model/ai-model.service';
 import { FileAssetsService } from '../file-assets/file-assets.service';
+import { AdminTasksService } from '../admin-tasks/admin-tasks.service';
 
 @Controller('admin/content')
 export class ContentAdminController {
@@ -42,6 +46,7 @@ export class ContentAdminController {
     private readonly adminContentAiService: AdminContentAiService,
     private readonly aiModelService: AiModelService,
     private readonly fileAssetsService: FileAssetsService,
+    private readonly adminTasksService: AdminTasksService,
   ) {}
 
   private async requireAdmin(req: Request) {
@@ -2288,6 +2293,55 @@ ${parts.join('\n')}
       if (err.code === 'P2002') throw new ForbiddenException(`词汇 "${dto.word}" 已存在，请勿重复添加`);
       throw err;
     }
+  }
+
+  /** CSV 批量导入词汇（异步任务） */
+  @Post('library/vocabularies/import-csv')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024 } }))
+  async importVocabularyCsv(
+    @Req() req: Request,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    await this.requireAdmin(req);
+    if (!file) throw new BadRequestException('上传请求中没有找到 file 文件字段');
+
+    let rows: string[][];
+    try {
+      rows = parse(file.buffer, {
+        bom: true,
+        skip_empty_lines: true,
+        relax_column_count: true,
+        trim: true,
+      }) as string[][];
+    } catch {
+      throw new BadRequestException('CSV 格式无效，请检查引号和分隔符');
+    }
+
+    const firstRowIsHeader = rows[0]?.[0]?.trim().toLowerCase() === 'word';
+    const words = rows
+      .slice(firstRowIsHeader ? 1 : 0)
+      .map((row) => row[0]?.trim().toLowerCase())
+      .filter((word): word is string => Boolean(word));
+
+    if (words.length > 20_000) {
+      throw new BadRequestException('单次最多导入 20,000 个词汇');
+    }
+
+    if (words.length === 0) {
+      throw new BadRequestException('CSV 中没有找到有效的词汇（需要 "word" 列）');
+    }
+
+    const session = await requireAuthSession(req);
+    const task = await this.adminTasksService.enqueueVocabularyCsvImport(
+      words,
+      (session.user as any)?.id,
+    );
+
+    return {
+      code: 200,
+      message: 'success',
+      data: { taskId: task.id, wordCount: words.length },
+    };
   }
 
   @Patch('library/vocabularies/:id')

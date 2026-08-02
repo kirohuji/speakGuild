@@ -25,6 +25,7 @@ import { adminTasksApi, type AdminTask, type AdminTaskDetail, type AdminTaskStat
 
 const TYPE_LABELS: Record<string, string> = {
   'learning-package-content-prepare': '学习包内容准备',
+  'vocabulary-csv-import': '词汇CSV批量导入',
   'script-video-render': '剧本演出视频',
   'narrative-video-render': '叙事视频预览',
 };
@@ -37,6 +38,8 @@ const STEP_LABELS: Record<string, string> = {
   completed: '完成',
   failed: '失败',
   canceled: '已取消',
+  write: '写入词汇',
+  enrich: 'AI富化词汇',
   bundling: '准备渲染器',
   'initializing-renderer': '初始化渲染器',
   rendering: '生成视频',

@@ -142,8 +142,8 @@ export function LearningPackDownloadDrawer({
           const result = await scriptCommunityApi.renderStatus(workId)
           if (!alive) return
           const progress = result.task?.progress ?? task.progress
-          if (result.work.status === 'published') {
-            updateGlobalTask(task.id, { status: 'done', progress: 100, stepLabel: '视频已生成并发布' })
+          if (result.task?.status === 'completed' || (result.work.status === 'ready' && Boolean(result.work.videoUrl))) {
+            updateGlobalTask(task.id, { status: 'done', progress: 100, stepLabel: '视频已生成，可前往我的作品发布' })
           } else if (result.work.status === 'failed' || result.task?.status === 'failed' || result.task?.status === 'canceled') {
             updateGlobalTask(task.id, {
               status: 'error',
