@@ -160,6 +160,13 @@ export function ScriptCenterPage() {
   const [shopLoading, setShopLoading] = useState(false)
   const [records, setRecords] = useState<ScriptPracticeRecord[]>([])
   const [recordsLoading, setRecordsLoading] = useState(false)
+  // Replay deliberately lives at the page level rather than inside the records
+  // drawer.  The drawer and the theatre are two independent layers: dismissing
+  // the theatre must never participate in Vaul's drag-to-dismiss gesture.
+  const [replayRecord, setReplayRecord] = useState<ScriptPracticeRecord | null>(null)
+  const [generating, setGenerating] = useState<Record<string, number>>({})
+  const [queuedRecordIds, setQueuedRecordIds] = useState<Record<string, true>>({})
+  const ignoreReplayDismissOnRecordsDrawer = useRef(false)
   const [works, setWorks] = useState<ScriptWork[]>([])
   const [worksLoading, setWorksLoading] = useState(false)
   const [feed, setFeed] = useState<ScriptWork[]>([])
@@ -208,6 +215,17 @@ export function ScriptCenterPage() {
     setSearchParams(params, { replace: true })
   }, [searchParams, setSearchParams])
 
+  const closeReplay = useCallback(() => {
+    // Vaul listens at the document level. When the full-screen dialog is
+    // removed from a close-button click, the same pointer sequence can finish
+    // as a drawer dismiss. Consume that one synthetic dismissal only.
+    ignoreReplayDismissOnRecordsDrawer.current = true
+    setReplayRecord(null)
+    window.setTimeout(() => {
+      ignoreReplayDismissOnRecordsDrawer.current = false
+    }, 0)
+  }, [])
+
   const loadShop = useCallback(async () => {
     setShopLoading(true)
     try {
@@ -250,6 +268,33 @@ export function ScriptCenterPage() {
     }
   }, [])
 
+  const generateReplayVideo = useCallback(async (record: ScriptPracticeRecord) => {
+    if (generating[record.id] || queuedRecordIds[record.id] || record.works?.some((work) => work.status === 'rendering')) return
+    setGenerating((current) => ({ ...current, [record.id]: 1 }))
+    try {
+      const work = await scriptCommunityApi.createWork({
+        recordId: record.id,
+        kind: record.mode === 'repeat' ? 'repeat_video' : 'vn_video',
+        title: `完成《${record.episode.title}》`,
+        caption: `${record.mode === 'repeat' ? '跟读剧场' : 'VN 互动'} · ${record.mode === 'repeat' ? record.lineCount : record.turnCount} 次开口`,
+      })
+      await generateAndPublishExistingWork(work, (progress) => {
+        setGenerating((current) => ({ ...current, [record.id]: progress }))
+      })
+      setQueuedRecordIds((current) => ({ ...current, [record.id]: true }))
+      await loadWorks()
+      toast.success('已创建作品并提交后台渲染；完成后会自动发布到广场')
+    } catch (error: any) {
+      toast.error(error?.message || '视频生成失败，请重试')
+    } finally {
+      setGenerating((current) => {
+        const next = { ...current }
+        delete next[record.id]
+        return next
+      })
+    }
+  }, [generating, loadWorks, queuedRecordIds])
+
   const loadFeed = useCallback(async (cursor?: string, append = false) => {
     if (append) setFeedLoadingMore(true)
     else setFeedLoading(true)
@@ -283,15 +328,6 @@ export function ScriptCenterPage() {
   useEffect(() => {
     if (tab === 'mine') void loadWorks()
   }, [loadWorks, tab])
-
-  // Rendering is intentionally asynchronous. Keep the works list in sync
-  // while a server-side video task is active so cards do not remain stuck on
-  // “generating” after BullMQ has already completed the work.
-  useEffect(() => {
-    if (tab !== 'mine' || !works.some((work) => work.status === 'rendering')) return
-    const timer = window.setInterval(() => void loadWorks(), 5000)
-    return () => window.clearInterval(timer)
-  }, [loadWorks, tab, works])
 
   useEffect(() => {
     if (tab === 'square') void loadFeed()
@@ -391,16 +427,36 @@ export function ScriptCenterPage() {
         onOpenChange={setPublishHistoryOpen}
       />
 
-      <Drawer open={recordsOpen} onOpenChange={(open) => setPanel(open ? 'records' : null)}>
-        <DrawerContent className="flex h-[95vh] max-h-[95vh] flex-col rounded-t-[28px] border-border/70 bg-background drawer-surface">
-          <DrawerHeader className="px-4 pb-1 pt-2 text-left">
+      <Drawer
+        open={recordsOpen}
+        // A replay is a modal layer, so the underlying sheet must not react to
+        // any of its pointer gestures while it is visible.
+        dismissible={!replayRecord}
+        onOpenChange={(open) => {
+          if (!open && ignoreReplayDismissOnRecordsDrawer.current) return
+          setPanel(open ? 'records' : null)
+        }}
+      >
+        <DrawerContent showHandle={false} className="flex h-[95dvh] max-h-[95dvh] flex-col rounded-t-[28px] border-border/70 bg-background drawer-surface">
+          <DrawerHeader className="shrink-0 px-4 pb-2 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] text-left">
             <DrawerTitle className="text-base font-semibold">{t('scripts.practiceRecords')}</DrawerTitle>
           </DrawerHeader>
           <div className="min-h-0 flex-1 overflow-hidden px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-            <RecordList records={records} loading={recordsLoading} onWorkCreated={loadWorks} />
+            <RecordList records={records} loading={recordsLoading} onOpenReplay={setReplayRecord} />
           </div>
         </DrawerContent>
       </Drawer>
+
+      <ScriptRecordReplayDialog
+        record={replayRecord}
+        onClose={closeReplay}
+        generatingProgress={replayRecord ? generating[replayRecord.id] : undefined}
+        videoQueued={Boolean(replayRecord && (
+          queuedRecordIds[replayRecord.id]
+          || replayRecord.works?.some((work) => work.status === 'rendering')
+        ))}
+        onGenerateVideo={generateReplayVideo}
+      />
 
       <Drawer open={shopOpen} onOpenChange={(open) => setPanel(open ? 'store' : null)}>
         <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-0 bg-background">
@@ -1807,16 +1863,13 @@ function SquareWorkCard({
 function RecordList({
   records,
   loading,
-  onWorkCreated,
+  onOpenReplay,
 }: {
   records: ScriptPracticeRecord[]
   loading: boolean
-  onWorkCreated: () => Promise<void>
+  onOpenReplay: (record: ScriptPracticeRecord) => void
 }) {
   const [mode, setMode] = useState('all')
-  const [replayRecord, setReplayRecord] = useState<ScriptPracticeRecord | null>(null)
-  const [generating, setGenerating] = useState<Record<string, number>>({})
-  const [queuedRecordIds, setQueuedRecordIds] = useState<Record<string, true>>({})
   const visible = records.filter((record) => {
     if (mode === 'all') return true
     return record.mode === mode
@@ -1841,7 +1894,7 @@ function RecordList({
         ) : (
           <div className="flex flex-col gap-2">
             {visible.map((record) => (
-              <button key={record.id} type="button" onClick={() => setReplayRecord(record)} className="w-full text-left">
+              <button key={record.id} type="button" onClick={() => onOpenReplay(record)} className="w-full text-left">
                 <div className="rounded-lg bg-muted/30 p-3.5 transition-colors hover:bg-muted/50">
                   <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -1861,41 +1914,6 @@ function RecordList({
           </div>
         )}
       </div>
-      <ScriptRecordReplayDialog
-        record={replayRecord}
-        onClose={() => setReplayRecord(null)}
-        generatingProgress={replayRecord ? generating[replayRecord.id] : undefined}
-        videoQueued={Boolean(replayRecord && (
-          queuedRecordIds[replayRecord.id]
-          || replayRecord.works?.some((work) => work.status === 'rendering' || work.status === 'published')
-        ))}
-        onGenerateVideo={async (record) => {
-          if (generating[record.id] || queuedRecordIds[record.id] || record.works?.some((work) => work.status === 'rendering' || work.status === 'published')) return
-          setGenerating((current) => ({ ...current, [record.id]: 1 }))
-          try {
-            const work = await scriptCommunityApi.createWork({
-              recordId: record.id,
-              kind: record.mode === 'repeat' ? 'repeat_video' : 'vn_video',
-              title: `完成《${record.episode.title}》`,
-              caption: `${record.mode === 'repeat' ? '跟读剧场' : 'VN 互动'} · ${record.mode === 'repeat' ? record.lineCount : record.turnCount} 次开口`,
-            })
-            await generateAndPublishExistingWork(work, (progress) => {
-              setGenerating((current) => ({ ...current, [record.id]: progress }))
-            })
-            setQueuedRecordIds((current) => ({ ...current, [record.id]: true }))
-            await onWorkCreated()
-            toast.success('已创建作品并提交后台渲染；完成后会自动发布到广场')
-          } catch (error: any) {
-            toast.error(error?.message || '视频生成失败，请重试')
-          } finally {
-            setGenerating((current) => {
-              const next = { ...current }
-              delete next[record.id]
-              return next
-            })
-          }
-        }}
-      />
     </Tabs>
   )
 }
@@ -1922,25 +1940,46 @@ function ScriptRecordReplayDialog({
     [record],
   )
   const [lineIndex, setLineIndex] = useState(0)
+  const [overwriteOpen, setOverwriteOpen] = useState(false)
 
   useEffect(() => setLineIndex(0), [record?.id])
 
   if (!record) return null
+  const hasExistingVideo = record.works?.some((work) => work.status === 'rendering' || work.status === 'ready' || work.status === 'published') ?? false
+  const requestVideoGeneration = () => {
+    if (hasExistingVideo && !videoQueued) setOverwriteOpen(true)
+    else void onGenerateVideo(record)
+  }
   const isEnded = replayLines.length > 0 && lineIndex >= replayLines.length
   const currentLine = isEnded ? null : replayLines[lineIndex] ?? null
 
   if (record.mode === 'repeat') {
     return (
       <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
-        <DialogContent className="left-0 top-0 h-dvh w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden">
+        <DialogContent
+          overlayClassName="z-[70] bg-background"
+          className="left-0 top-0 z-[71] h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden"
+        >
           <DialogHeader className="sr-only"><DialogTitle>跟读练习记录</DialogTitle></DialogHeader>
           <ReadonlyRepeatRecordTheater
             record={record}
             onClose={onClose}
-            onGenerateVideo={() => void onGenerateVideo(record)}
+            onGenerateVideo={requestVideoGeneration}
             videoSubmitting={generatingProgress !== undefined}
             videoQueued={videoQueued}
           />
+          {overwriteOpen && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/45 px-5 backdrop-blur-sm" onClick={() => setOverwriteOpen(false)}>
+              <div role="dialog" aria-modal="true" aria-labelledby="overwrite-video-title" className="w-full max-w-sm rounded-2xl border border-border bg-background p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                <h2 id="overwrite-video-title" className="text-base font-semibold">覆盖现有演出视频？</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">将重新渲染并替换这条练习记录当前的视频，广场展示会同步为新版本。</p>
+                <div className="mt-5 flex justify-center gap-3">
+                  <Button variant="outline" onClick={() => setOverwriteOpen(false)}>取消</Button>
+                  <Button onClick={() => { setOverwriteOpen(false); void onGenerateVideo(record) }}>重新生成并覆盖</Button>
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     )
@@ -1948,7 +1987,7 @@ function ScriptRecordReplayDialog({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="left-0 top-0 h-dvh w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden">
+      <DialogContent overlayClassName="z-[70]" className="left-0 top-0 z-[71] h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden">
         <DialogHeader className="sr-only"><DialogTitle>剧本练习回放</DialogTitle></DialogHeader>
         {replayLines.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
@@ -1961,7 +2000,7 @@ function ScriptRecordReplayDialog({
               <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full border border-border/55 bg-background/90 px-2 shadow-lg backdrop-blur-2xl">
                 <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>关闭</Button>
                 <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted-foreground">{record.episode.title} · 对话回放</span>
-                <Button variant="ghost" size="sm" className="h-7 rounded-full px-2 text-xs" disabled={generatingProgress !== undefined || videoQueued} onClick={() => void onGenerateVideo(record)}>
+                <Button variant="ghost" size="sm" className="h-7 rounded-full px-2 text-xs" disabled={generatingProgress !== undefined || videoQueued} onClick={requestVideoGeneration}>
                   {videoQueued ? '已提交' : generatingProgress === undefined ? '生成视频' : '提交中'}
                 </Button>
               </div>
@@ -1974,6 +2013,7 @@ function ScriptRecordReplayDialog({
               isEnded={isEnded}
               onAdvance={() => setLineIndex((current) => Math.min(current + 1, replayLines.length))}
               showHistoryButton={false}
+              showUserInputOverride
               endedActions={<Button size="sm" className="rounded-full" onClick={onClose}>完成回放</Button>}
             />
           </div>
@@ -2006,12 +2046,19 @@ function ReadonlyRepeatRecordTheater({
     let alive = true
     setLoading(true)
     setFailed(false)
+    setData(null)
     setActiveIndex(0)
     // The repository selects the installed package on Capacitor. It only
     // uses the network on web, matching the live theatre's data contract.
     void learningRepository.getStoryEpisodePlayer(record.episode.scene.id, record.episodeId)
-      .then((player) => { if (alive) setData(player) })
-      .catch(() => { if (alive) setFailed(true) })
+      .then((player) => {
+        console.log('[repeat-record] theatre player loaded', { episodeId: record.episodeId, framesSource: player.inkScript.inkSource ? 'ink-source' : 'missing' })
+        if (alive) setData(player)
+      })
+      .catch((error) => {
+        console.error('[repeat-record] theatre player load failed', { packageId: record.episode.scene.id, episodeId: record.episodeId, error })
+        if (alive) setFailed(true)
+      })
       .finally(() => { if (alive) setLoading(false) })
     return () => { alive = false }
   }, [record.episode.scene.id, record.episodeId])
@@ -2033,7 +2080,7 @@ function ReadonlyRepeatRecordTheater({
   const frames = useMemo(() => data ? buildStoryRepeatFrames(data) : [], [data])
 
   return (
-    <div className="relative flex h-full flex-col bg-background pt-[calc(3.5rem+env(safe-area-inset-top,0px))]">
+    <div className="absolute inset-0 flex min-h-0 flex-col bg-background pt-[calc(3.5rem+env(safe-area-inset-top,0px))]">
       <div className="absolute inset-x-0 top-0 z-20 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
         <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full border border-border/55 bg-background/90 px-2 shadow-lg backdrop-blur-2xl">
           <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>关闭</Button>
@@ -2042,7 +2089,10 @@ function ReadonlyRepeatRecordTheater({
         </div>
       </div>
       {loading ? (
-        <div className="flex flex-1 items-center justify-center"><Loader2 className="size-7 animate-spin text-primary" /></div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
+          <Loader2 className="size-7 animate-spin text-primary" />
+          <p className="text-sm">正在载入跟读剧场…</p>
+        </div>
       ) : failed || frames.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
           <p className="text-sm text-muted-foreground">无法读取这次跟读所需的本地剧场资源。</p>

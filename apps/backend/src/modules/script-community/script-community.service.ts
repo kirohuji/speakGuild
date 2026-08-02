@@ -21,6 +21,7 @@ import {
   ScriptReportDto,
   UpdateScriptWorkDto,
 } from './dto/script-community.dto'
+import { parseMedia } from '@remotion/media-parser'
 
 const feedInclude = {
   user: { select: { id: true, name: true, username: true, image: true, userLevel: true } },
@@ -48,10 +49,99 @@ export class ScriptCommunityService {
     private readonly adminTasksService: AdminTasksService,
   ) {}
 
+  private async getRecordingDurationMs(url: string, assetId: string) {
+    try {
+      const { durationInSeconds } = await parseMedia({
+        src: url,
+        fields: { durationInSeconds: true },
+        acknowledgeRemotionLicense: true,
+      })
+      if (!Number.isFinite(durationInSeconds) || !durationInSeconds || durationInSeconds <= 0) {
+        throw new Error(`invalid duration: ${durationInSeconds}`)
+      }
+      return Math.ceil(durationInSeconds * 1000)
+    } catch (error) {
+      // A guessed duration either truncates a learner's voice or pads every
+      // line arbitrarily. Fail the request instead so the asset problem can be
+      // corrected and the recording is never silently altered.
+      throw new BadRequestException(`无法读取录音时长（素材 ${assetId}），请重新录制后再生成视频`)
+    }
+  }
+
   async requestRender(userId: string, workId: string, frames: Record<string, unknown>[]) {
     if (!frames.length) throw new BadRequestException('没有可渲染的视频帧')
-    const work = await this.prisma.scriptWork.findFirst({ where: { id: workId, userId } })
+    const work = await this.prisma.scriptWork.findFirst({
+      where: { id: workId, userId },
+      select: { id: true, record: { select: { resultSnapshot: true } } },
+    })
     if (!work) throw new NotFoundException('作品不存在')
+    const recordSnapshot = (work.record?.resultSnapshot as any) ?? {}
+    const recordingAssets = recordSnapshot.recordingAssets
+    const recordingsByFrame = recordingAssets && typeof recordingAssets === 'object'
+      ? await Promise.all(Object.entries(recordingAssets as Record<string, unknown>).map(async ([frameIndex, assetId]) => {
+        if (typeof assetId !== 'string' || !assetId) return null
+        let asset: Awaited<ReturnType<FileAssetsService['getPrivateUrlByAssetId']>>
+        try {
+          asset = await this.fileAssetsService.getPrivateUrlByAssetId(assetId)
+        } catch (error) {
+          console.warn('[script-video] saved recording is unavailable; falling back to TTS', { workId, frameIndex, assetId, error })
+          return null
+        }
+        return [Number(frameIndex), {
+          url: asset.url,
+          durationMs: await this.getRecordingDurationMs(asset.url, assetId),
+        }] as const
+      }))
+      : []
+    const recordingUrls = new Map(recordingsByFrame.filter((entry): entry is readonly [number, { url: string; durationMs: number }] => Boolean(entry)))
+    const framesWithRecordingAudio = frames.map((frame: any) => {
+      const recording = recordingUrls.get(Number(frame?.index))
+      return recording
+        ? {
+            ...frame,
+            resolvedAudioUrl: recording.url,
+            audioSource: 'userRecording',
+            recordingDurationMs: recording.durationMs,
+          }
+        : frame
+    })
+    // The client can only estimate TTS duration from text. Recorded speech is
+    // often much longer, so rebuild the sequential timeline after injection
+    // and give the recording its complete duration instead of cutting Audio at
+    // the original text-derived Sequence boundary.
+    let cursor = 0
+    const renderFrames = framesWithRecordingAudio.map((frame: any) => {
+      const recordingFrames = frame.recordingDurationMs
+        ? Math.ceil((frame.recordingDurationMs / 1000) * 30)
+        : 0
+      const durationFrames = Math.max(1, Number(frame.durationFrames) || 1, recordingFrames)
+      const next = {
+        ...frame,
+        startFrame: cursor,
+        durationFrames,
+        endFrame: cursor + durationFrames,
+      }
+      cursor = next.endFrame
+      return next
+    })
+    const missingBackgroundFrames = renderFrames.filter((frame: any) => !frame.background?.url).map((frame: any) => frame.index)
+    const missingSpriteFrames = renderFrames.filter((frame: any) => (
+      frame.kind !== 'choice'
+      && frame.sprite?.speaker
+      && !frame.sprite?.url
+    )).map((frame: any) => frame.index)
+    if (missingBackgroundFrames.length || missingSpriteFrames.length) {
+      throw new BadRequestException(
+        `视频素材不完整：${missingBackgroundFrames.length ? `背景缺失（帧 ${missingBackgroundFrames.join(', ')}）` : ''}`
+        + `${missingBackgroundFrames.length && missingSpriteFrames.length ? '；' : ''}`
+        + `${missingSpriteFrames.length ? `立绘缺失（帧 ${missingSpriteFrames.join(', ')}）` : ''}`,
+      )
+    }
+    console.log('[script-video] resolved user recordings for render', {
+      workId,
+      savedRecordings: recordingUrls.size,
+      injectedFrames: renderFrames.filter((frame: any) => frame.audioSource === 'userRecording').map((frame: any) => frame.index),
+    })
     await this.adminTasksService.cancelScriptVideoTasks(workId, userId)
     await this.prisma.scriptWork.update({
       where: { id: workId },
@@ -64,7 +154,7 @@ export class ScriptCommunityService {
       },
     })
     try {
-      const task = await this.adminTasksService.enqueueScriptVideo(workId, userId, frames)
+      const task = await this.adminTasksService.enqueueScriptVideo(workId, userId, renderFrames)
       return { taskId: task.id, workId }
     } catch (error) {
       await this.prisma.scriptWork.update({
@@ -339,6 +429,16 @@ export class ScriptCommunityService {
     if (kind === ScriptWorkKind.repeat_video && record.mode !== ScriptPracticeMode.repeat) {
       throw new BadRequestException('跟读视频必须来自跟读练习记录')
     }
+
+    // One practice record owns one work per video kind. A later confirmed
+    // render reuses this work and replaces its video instead of creating
+    // duplicate square posts and render tasks.
+    const existing = await this.prisma.scriptWork.findFirst({
+      where: { userId, recordId: record.id, kind, status: { not: ScriptWorkStatus.hidden } },
+      orderBy: { createdAt: 'desc' },
+      include: feedInclude,
+    })
+    if (existing) return existing
 
     return this.prisma.scriptWork.create({
       data: {

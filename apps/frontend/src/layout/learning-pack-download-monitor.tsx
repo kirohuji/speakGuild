@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AlertCircle, ChevronDown, DownloadCloud, Film, ListChecks, Loader2, PackageOpen, RotateCcw, Trash2, X } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
 import { useLearningStore, type DownloadTask } from '@/stores/learning.store'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
+import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
 
 function activeTasks(tasks: DownloadTask[]) {
   return tasks.filter((task) => task.status !== 'done')
@@ -98,12 +99,51 @@ export function LearningPackDownloadDrawer({
   const downloadTasks = useLearningStore((state) => state.downloadTasks)
   const globalTasks = useGlobalTaskStore((state) => state.tasks)
   const removeGlobalTask = useGlobalTaskStore((state) => state.removeTask)
+  const updateGlobalTask = useGlobalTaskStore((state) => state.updateTask)
   const resumePackTask = useLearningStore((state) => state.resumePackTask)
   const downloadUnitPack = useLearningStore((state) => state.downloadUnitPack)
   const tasks = useMemo(() => activeTasks(downloadTasks), [downloadTasks])
   const visibleGlobalTasks = useMemo(() => globalTasks.filter((task) => task.status !== 'done'), [globalTasks])
   const runningCount = tasks.filter(isRunning).length + visibleGlobalTasks.filter((task) => task.status === 'running').length
   const totalTaskCount = tasks.length + visibleGlobalTasks.length
+
+  // The task center owns video-task polling. Practice pages submit a job once
+  // and remain stable; opening this drawer checks backend AdminTask progress
+  // every 10 seconds and stops naturally on a terminal status.
+  useEffect(() => {
+    if (!open) return
+    const videoTasks = globalTasks.filter((task) => task.kind === 'script_video' && task.status === 'running')
+    if (videoTasks.length === 0) return
+    let alive = true
+    const refresh = async () => {
+      await Promise.all(videoTasks.map(async (task) => {
+        const workId = task.id.startsWith('script-video:') ? task.id.slice('script-video:'.length) : ''
+        if (!workId) return
+        try {
+          const result = await scriptCommunityApi.renderStatus(workId)
+          if (!alive) return
+          const progress = result.task?.progress ?? task.progress
+          if (result.work.status === 'published') {
+            updateGlobalTask(task.id, { status: 'done', progress: 100, stepLabel: '视频已生成并发布' })
+          } else if (result.work.status === 'failed' || result.task?.status === 'failed' || result.task?.status === 'canceled') {
+            updateGlobalTask(task.id, {
+              status: 'error',
+              progress,
+              stepLabel: result.task?.status === 'canceled' ? '视频生成已取消' : '视频生成失败',
+              error: result.work.renderError || result.task?.errorMessage || undefined,
+            })
+          } else {
+            updateGlobalTask(task.id, { progress, stepLabel: result.task?.currentStep || '后台生成中' })
+          }
+        } catch (error) {
+          console.warn('[task-center] video task status refresh failed', { workId, error })
+        }
+      }))
+    }
+    void refresh()
+    const timer = window.setInterval(() => void refresh(), 10_000)
+    return () => { alive = false; window.clearInterval(timer) }
+  }, [globalTasks, open, updateGlobalTask])
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>

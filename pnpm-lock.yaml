@@ -67,6 +67,9 @@ importers:
       '@remotion/bundler':
         specifier: 4.0.484
         version: 4.0.484(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@remotion/media-parser':
+        specifier: 4.0.484
+        version: 4.0.484
       '@remotion/renderer':
         specifier: 4.0.484
         version: 4.0.484(react-dom@19.1.0(react@19.1.0))(react@19.1.0)

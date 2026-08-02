@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CheckCircle2, Film, Infinity, Mic, Pause, Play, RotateCcw, Settings, Square, Volume2 } from 'lucide-react'
+import { CheckCircle2, Film, Infinity, Loader2, Mic, Pause, Play, RotateCcw, Settings, Square, Volume2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -20,6 +20,7 @@ interface VnMixedPreviewPlayerProps {
   /** Keeps the full theatre and playback controls, but removes recording actions. */
   readOnly?: boolean
   onComplete?: (result: { recordedCount: number; totalCount: number; recordings: Record<number, Blob> }) => void
+  completionSubmitting?: boolean
   /** Persisted recording URLs used by history replay. Keys are timeline frame indexes. */
   initialRecordingUrls?: Record<number, string>
   onGenerateVideo?: () => void
@@ -110,6 +111,7 @@ export function VnMixedPreviewPlayer({
   practiceMode = false,
   readOnly = false,
   onComplete,
+  completionSubmitting = false,
   initialRecordingUrls,
   onGenerateVideo,
   videoSubmitting = false,
@@ -382,7 +384,13 @@ export function VnMixedPreviewPlayer({
 
           <div className="min-w-0 flex-1">
             <p className={cn('truncate text-[11px] font-medium', mobileSurface ? 'text-muted-foreground' : 'text-white/62')}>
-              {playing
+              {videoSubmitting
+                ? '正在提交视频生成任务…'
+                : videoQueued
+                  ? '视频正在后台生成，完成后会自动更新'
+                  : videoCompleted
+                    ? '演出视频已生成并发布'
+                    : playing
                 ? (readOnly && recordingUrls[activeFrame.index] ? '用户录音结束后自动推进' : activeFrame.audioUrl ? 'TTS 结束后自动推进' : '按文本时长自动推进')
                 : `间隔 ${gapSeconds}s · ${loopMode === 'infinite' ? '无限循环' : `循环 ${loopMode} 次`}`}
             </p>
@@ -530,12 +538,12 @@ export function VnMixedPreviewPlayer({
           <Button
             type="button"
             size="sm"
-            disabled={followableCount === 0 || recordedCount < followableCount}
+            disabled={completionSubmitting || followableCount === 0 || recordedCount < followableCount}
             onClick={() => onComplete?.({ recordedCount, totalCount: followableCount, recordings: { ...recordingBlobsRef.current } })}
             className={cn('h-8 shrink-0 px-3 text-xs', mobileSurface ? '' : 'bg-emerald-300 text-slate-950 hover:bg-emerald-200')}
           >
-            <CheckCircle2 className="size-3.5" />
-            完成演出
+            {completionSubmitting ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}
+            {completionSubmitting ? '正在保存演出…' : '完成演出'}
           </Button>
         </div>
       )}

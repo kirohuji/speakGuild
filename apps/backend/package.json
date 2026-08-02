@@ -26,6 +26,7 @@
     "@nestjs/websockets": "^10.4.22",
     "@prisma/client": "^6.0.0",
     "@remotion/bundler": "4.0.484",
+    "@remotion/media-parser": "4.0.484",
     "@remotion/renderer": "4.0.484",
     "@types/multer": "^2.1.0",
     "@types/ws": "^8.18.1",

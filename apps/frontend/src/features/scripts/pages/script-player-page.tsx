@@ -115,6 +115,23 @@ async function resolveSceneAssets(scene: StoryEpisodePlayerData['scene']) {
   return { ...scene, backgroundUrl: await resolveUrl(scene.backgroundUrl), characters }
 }
 
+function getRecordedAudioDurationMs(blob: Blob) {
+  return new Promise<number>((resolve) => {
+    const url = URL.createObjectURL(blob)
+    const audio = new Audio()
+    const finish = (durationMs = 0) => {
+      URL.revokeObjectURL(url)
+      audio.removeAttribute('src')
+      audio.load()
+      resolve(durationMs)
+    }
+    audio.preload = 'metadata'
+    audio.onloadedmetadata = () => finish(Number.isFinite(audio.duration) ? Math.ceil(audio.duration * 1000) : 0)
+    audio.onerror = () => finish()
+    audio.src = url
+  })
+}
+
 function InkEpisodePlayer({
   data,
   episodeId,
@@ -133,7 +150,6 @@ function InkEpisodePlayer({
   const [publishing, setPublishing] = useState(false)
   const [videoQueued, setVideoQueued] = useState(false)
   const [videoCompleted, setVideoCompleted] = useState(false)
-  const [renderWorkId, setRenderWorkId] = useState<string | null>(null)
   const startGlobalTask = useGlobalTaskStore((state) => state.startTask)
   const updateGlobalTask = useGlobalTaskStore((state) => state.updateTask)
   const [repeatSaving, setRepeatSaving] = useState(false)
@@ -349,7 +365,6 @@ function InkEpisodePlayer({
         frames: renderFrames,
       })
       setVideoCompleted(false)
-      setRenderWorkId(work.id)
       setVideoQueued(true)
       updateGlobalTask(taskId, { progress: 1, stepLabel: `已提交后台渲染（任务 ${task.taskId.slice(-6)}）` })
       toast.success('已创建作品并提交后台渲染；完成后会自动发布到广场，可继续练习')
@@ -366,38 +381,6 @@ function InkEpisodePlayer({
       setPublishing(false)
     }
   }
-
-  useEffect(() => {
-    if (!renderWorkId || !videoQueued) return
-    const taskId = `script-video:${renderWorkId}`
-    let alive = true
-    const refresh = async () => {
-      try {
-        const result = await scriptCommunityApi.renderStatus(renderWorkId)
-        if (!alive) return
-        const progress = result.task?.progress ?? 1
-        updateGlobalTask(taskId, { progress, stepLabel: result.task?.currentStep || '后台生成中' })
-        if (result.work.status === 'published' && result.work.videoAssetId) {
-          setVideoQueued(false)
-          setVideoCompleted(true)
-          updateGlobalTask(taskId, { status: 'done', progress: 100, stepLabel: '视频已生成并发布' })
-          toast.success('演出视频已生成并发布到广场')
-        } else if (result.work.status === 'failed' || result.task?.status === 'failed' || result.task?.status === 'canceled') {
-          setVideoQueued(false)
-          updateGlobalTask(taskId, {
-            status: 'error',
-            stepLabel: result.task?.status === 'canceled' ? '视频生成已取消' : '视频生成失败',
-            error: result.work.renderError || result.task?.errorMessage || undefined,
-          })
-        }
-      } catch (error) {
-        console.warn('[script-video] render status refresh failed', { workId: renderWorkId, error })
-      }
-    }
-    void refresh()
-    const timer = window.setInterval(() => void refresh(), 3000)
-    return () => { alive = false; window.clearInterval(timer) }
-  }, [renderWorkId, updateGlobalTask, videoQueued])
 
   const submitInput = async (text: string) => {
     const value = text.trim()
@@ -440,6 +423,9 @@ function InkEpisodePlayer({
           return [frameIndex, asset.id]
         }),
       )) as Record<string, string>
+      const recordingDurationsMs = Object.fromEntries(await Promise.all(
+        Object.entries(recordings).map(async ([frameIndex, blob]) => [frameIndex, await getRecordedAudioDurationMs(blob)] as const),
+      ))
       const recordingAssetIds = [...new Set(Object.values(recordingAssets))]
       const record = await scriptCommunityApi.completeRecord(episodeId, {
         mode: 'repeat',
@@ -453,6 +439,7 @@ function InkEpisodePlayer({
           mode: 'repeat',
           recordedLineCount: recordedCount,
           recordingAssets,
+          recordingDurationsMs,
           dialogue: repeatFrames.map((frame) => ({
             speaker: frame.kind === 'choice' || frame.kind === 'userInput' ? '我' : frame.speaker,
             text: frame.text,
@@ -536,6 +523,7 @@ function InkEpisodePlayer({
           onJumpTo={setRepeatFrameIndex}
           practiceMode
           onComplete={(result) => void completeRepeat(result)}
+          completionSubmitting={repeatSaving}
           onGenerateVideo={recordId ? () => void publishVideo() : undefined}
           videoSubmitting={publishing}
           videoQueued={videoQueued}

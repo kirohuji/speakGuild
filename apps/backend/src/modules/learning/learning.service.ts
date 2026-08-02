@@ -175,6 +175,29 @@ export class LearningService {
     assets.splice(0, assets.length, ...resolved);
   }
 
+  /**
+   * The interactive player can resolve packaged assets on-device, but Remotion
+   * runs on the server. Convert legacy COS URLs to a signed URL here so the
+   * same episode payload is safe to turn into a render timeline later.
+   */
+  private async resolveRenderableAssetUrl(url?: string | null) {
+    if (!url || url.startsWith('blob:') || url.startsWith('data:')) return url ?? null;
+    try {
+      const cosKey = decodeURIComponent(new URL(url).pathname.replace(/^\/+/, ''));
+      const asset = await this.prisma.fileAsset.findUnique({
+        where: { cosKey },
+        select: { id: true },
+      });
+      if (!asset) return url;
+      return (await this.fileAssets.getAssetLongLivedUrl(asset.id)).url;
+    } catch (error) {
+      // Third-party/public URLs do not have a FileAsset record and may still
+      // be rendered directly. Keep them intact instead of dropping a visual.
+      console.warn('[story-player] unable to resolve renderable asset URL', { url, error });
+      return url;
+    }
+  }
+
   private async isLearningPackFreeDownloadsEnabled() {
     const config = await this.prisma.systemConfig.findUnique({
       where: { key: 'learning_pack_free_downloads_enabled' },
@@ -672,7 +695,46 @@ export class LearningService {
         },
       },
     });
-    const characters = gameLocation?.rooms.flatMap((room) => room.npcs.map((npc) => npc.character)) ?? [];
+    // Legacy story packages may not have a GameLocation row yet. Falling back
+    // to the character registry keeps authored speaker names (for example
+    // `fox`) resolvable for the player and server-side video renderer.
+    const locationCharacters = gameLocation?.rooms.flatMap((room) => room.npcs.map((npc) => npc.character)) ?? [];
+    const characters = locationCharacters.length > 0
+      ? locationCharacters
+      : await this.prisma.gameCharacter.findMany({
+          select: { name: true, displayName: true, spriteBaseUrl: true, expressions: true, defaultPosition: true },
+          orderBy: { name: 'asc' },
+        });
+    const resolvedAssetMap = Object.fromEntries(await Promise.all(
+      Object.entries((inkScript.assetMap ?? {}) as Record<string, any>).map(async ([alias, entry]) => {
+        if (!entry || typeof entry !== 'object' || !entry.fileAssetId) return [alias, entry] as const;
+        try {
+          const signed = await this.fileAssets.getAssetLongLivedUrl(entry.fileAssetId);
+          return [alias, { ...entry, signedUrl: signed.url }] as const;
+        } catch (error) {
+          // Preserve the entry for the interactive player, but make this
+          // visible in server logs rather than silently rendering it blank.
+          console.warn('[story-player] failed to resolve Ink render asset', { episodeId, alias, assetId: entry.fileAssetId, error });
+          return [alias, entry] as const;
+        }
+      }),
+    ));
+    const resolvedCharacters = await Promise.all(characters.map(async (character) => {
+      const expressions = await Promise.all(Object.entries((character.expressions ?? {}) as Record<string, any>).map(async ([name, expression]) => {
+        if (typeof expression === 'string') return [name, await this.resolveRenderableAssetUrl(expression)] as const;
+        if (!expression || typeof expression !== 'object') return [name, expression] as const;
+        return [name, {
+          ...expression,
+          spriteUrl: await this.resolveRenderableAssetUrl(expression.spriteUrl),
+          avatarUrl: await this.resolveRenderableAssetUrl(expression.avatarUrl),
+        }] as const;
+      }));
+      return {
+        ...character,
+        spriteBaseUrl: await this.resolveRenderableAssetUrl(character.spriteBaseUrl),
+        expressions: Object.fromEntries(expressions),
+      };
+    }));
 
     return {
       episode: {
@@ -688,10 +750,10 @@ export class LearningService {
         objectives: episode.objectives,
         isPreview: episode.isPreview,
       },
-      inkScript,
+      inkScript: { ...inkScript, assetMap: resolvedAssetMap },
       scene: {
-        backgroundUrl: gameLocation?.backgroundUrl ?? null,
-        characters,
+        backgroundUrl: await this.resolveRenderableAssetUrl(gameLocation?.backgroundUrl),
+        characters: resolvedCharacters,
       },
     };
   }

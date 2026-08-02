@@ -38,6 +38,7 @@ const STEP_LABELS: Record<string, string> = {
   failed: '失败',
   canceled: '已取消',
   bundling: '准备渲染器',
+  'initializing-renderer': '初始化渲染器',
   rendering: '生成视频',
   uploading: '上传成片',
 };

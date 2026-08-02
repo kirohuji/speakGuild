@@ -64,9 +64,21 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
       if (await this.tasks.isCanceled(taskId)) return { canceled: true };
       const browserExecutable = this.getBrowserExecutable();
       if (!await this.tasks.markRunning(taskId, 'bundling')) return { canceled: true };
+      await this.prisma.adminTask.updateMany({
+        where: { id: taskId, status: { not: 'canceled' } },
+        data: { progress: 2, currentStep: 'bundling' },
+      });
       const serveUrl = await this.getBundle();
+      await this.prisma.adminTask.updateMany({
+        where: { id: taskId, status: { not: 'canceled' } },
+        data: { progress: 6, currentStep: 'initializing-renderer' },
+      });
       const inputProps = { timeline: { frames, durationInFrames: frames.at(-1)?.endFrame ?? 30, fps: 30 } };
       const composition = await selectComposition({ serveUrl, id: 'ScriptVideo', inputProps, browserExecutable });
+      await this.prisma.adminTask.updateMany({
+        where: { id: taskId, status: { not: 'canceled' } },
+        data: { progress: 10, currentStep: 'rendering' },
+      });
       let lastProgress = -1;
       await renderMedia({
         serveUrl,
@@ -76,7 +88,10 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
         inputProps,
         browserExecutable,
         onProgress: ({ progress }) => {
-          const value = Math.min(95, Math.round(progress * 95));
+          // Reserve the first 10% for bundling/browser initialization so a
+          // healthy worker never looks stuck at 0% before renderMedia emits
+          // its first progress callback.
+          const value = Math.min(95, 10 + Math.round(progress * 85));
           if (value === lastProgress) return;
           lastProgress = value;
           void this.prisma.adminTask.updateMany({
