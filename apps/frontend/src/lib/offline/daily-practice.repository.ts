@@ -8,6 +8,7 @@ import { learningRepository } from './learning.repository'
 import { practiceRepository } from './practice.repository'
 import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
+import { scheduleReview, warmupScoreToReviewRating } from '@/lib/spaced-repetition'
 
 export type DailyPracticeStatus = 'new' | 'review' | 'overdue' | 'done' | 'mastered'
 export type DailyPracticeScope = 'single' | 'mixed'
@@ -28,7 +29,7 @@ export interface DailyPracticeProgress {
   lastScoreRank: number
   attempts: number
   correctCount: number
-  streak: number
+  reviewCount: number
   lapseCount: number
   intervalDays: number
   easeFactor: number
@@ -133,12 +134,6 @@ function normalizePlanDate(date?: string | null) {
 
 function practicedAtForDate(date: string) {
   return `${date}T12:00:00.000Z`
-}
-
-function addDays(date: string, days: number) {
-  const d = new Date(`${date}T00:00:00`)
-  d.setDate(d.getDate() + days)
-  return d.toISOString().slice(0, 10)
 }
 
 function scoreRank(score?: string | null) {
@@ -246,7 +241,7 @@ function emptyProgress(candidate: DailyPracticeCandidate, date: string): DailyPr
     lastScoreRank: 0,
     attempts: 0,
     correctCount: 0,
-    streak: 0,
+    reviewCount: 0,
     lapseCount: 0,
     intervalDays: 0,
     easeFactor: 2.5,
@@ -265,19 +260,21 @@ function scheduleStatus(progress: DailyPracticeProgress, date: string): DailyPra
 function nextProgress(progress: DailyPracticeProgress, score: WarmupScore, date: string): DailyPracticeProgress {
   const rank = scoreRank(score)
   const passed = rank >= 2
-  const nextStreak = passed ? progress.streak + 1 : 0
-  const nextLapse = passed ? progress.lapseCount : progress.lapseCount + 1
-  const intervalDays = score === 'strong'
-    ? Math.min(30, progress.intervalDays <= 0 ? 3 : Math.max(progress.intervalDays + 1, Math.round(progress.intervalDays * 2.2)))
-    : score === 'ok'
-      ? Math.min(14, progress.intervalDays <= 0 ? 1 : Math.max(progress.intervalDays, Math.round(progress.intervalDays * 1.4)))
-      : 1
-  const status = nextStreak >= 4 && score === 'strong' ? 'mastered' : passed ? 'review' : 'learning'
+  const schedule = scheduleReview(
+    {
+      reviewCount: progress.reviewCount,
+      intervalDays: progress.intervalDays,
+      easeFactor: progress.easeFactor,
+      lapseCount: progress.lapseCount,
+    },
+    warmupScoreToReviewRating(score),
+    new Date(practicedAtForDate(date)),
+  )
   const bestRank = Math.max(progress.bestScoreRank, rank)
   return {
     ...progress,
-    status,
-    dueDate: addDays(date, intervalDays),
+    status: schedule.status,
+    dueDate: schedule.dueAt.toISOString().slice(0, 10),
     lastPracticedAt: practicedAtForDate(date),
     bestScore: rank >= progress.bestScoreRank ? score : progress.bestScore,
     bestScoreRank: bestRank,
@@ -285,10 +282,10 @@ function nextProgress(progress: DailyPracticeProgress, score: WarmupScore, date:
     lastScoreRank: rank,
     attempts: progress.attempts + 1,
     correctCount: progress.correctCount + (passed ? 1 : 0),
-    streak: nextStreak,
-    lapseCount: nextLapse,
-    intervalDays,
-    easeFactor: Math.max(1.3, Math.min(3.0, progress.easeFactor + (score === 'strong' ? 0.15 : score === 'ok' ? 0.02 : -0.2))),
+    reviewCount: schedule.reviewCount,
+    lapseCount: schedule.lapseCount,
+    intervalDays: schedule.intervalDays,
+    easeFactor: schedule.easeFactor,
     updatedAt: new Date().toISOString(),
   }
 }
@@ -547,7 +544,16 @@ export const dailyPracticeRepository = {
 
     // 后台静默同步进度，不阻塞 UI
     dailyPracticeApi.progress(itemIds)
-      .then(remote => { localDb.putMany('daily_practice_items', remote.items.map((item: any) => ({ ...item, id: item.itemId }))) })
+      .then(async (remote) => {
+        const pendingAttempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
+        const pendingItemIds = new Set(
+          pendingAttempts.filter((attempt) => attempt.syncStatus !== 'synced').map((attempt) => attempt.itemId),
+        )
+        const safeItems = remote.items
+          .filter((item) => !pendingItemIds.has(item.itemId))
+          .map((item) => ({ ...item, id: item.itemId }))
+        if (safeItems.length > 0) await localDb.putMany('daily_practice_items', safeItems)
+      })
       .catch(() => { /* offline: local state is enough */ })
 
     const localProgress = await localDb.list<DailyPracticeProgress>('daily_practice_items')
@@ -728,7 +734,6 @@ export const dailyPracticeRepository = {
         },
       },
       attempts: pending,
-      itemProgresses,
     }
 
     await practiceRepository.markTodayActivity(completedIds.length || params.records.length || 1, date)
@@ -744,6 +749,7 @@ export const dailyPracticeRepository = {
 
     try {
       const result = await dailyPracticeApi.complete(payload)
+      await localDb.putMany('daily_practice_items', result.itemProgresses.map((item) => ({ ...item, id: item.itemId })))
       if (params.localWarmupRecordId && params.records.length > 0) {
         await practiceRepository.markWarmupRecordSynced(params.localWarmupRecordId, result.warmupRecordId)
       }
@@ -787,7 +793,6 @@ export const dailyPracticeRepository = {
         },
       },
       attempts: pending,
-      itemProgresses,
       warmupRecord: records.length > 0 && firstTopic ? {
         topicId: firstTopic.topicId,
         topicTitle: firstTopic.topicTitle,
@@ -810,6 +815,7 @@ export const dailyPracticeRepository = {
 
     try {
       const result = await dailyPracticeApi.complete(payload)
+      await localDb.putMany('daily_practice_items', result.itemProgresses.map((item) => ({ ...item, id: item.itemId })))
       if (localWarmupRecordId && records.length > 0) {
         await practiceRepository.markWarmupRecordSynced(localWarmupRecordId, result.warmupRecordId)
       }

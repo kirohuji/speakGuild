@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ExpressionType, Prisma } from '@prisma/client';
 import { LearningNotebookService } from './learning-notebook.service';
+import { isReviewRating, scheduleReview, type ReviewRating } from '../../common/spaced-repetition';
 
 export type MasteryStatus = 'learning' | 'reviewing' | 'mastered';
 
@@ -124,7 +125,9 @@ export class ExpressionService {
         notebookId: notebookItem?.notebookId,
         masteryStatus: notebookItem!.masteryStatus,
         reviewCount: notebookItem!.reviewCount,
+        intervalDays: notebookItem!.intervalDays,
         easeFactor: notebookItem!.easeFactor,
+        lapseCount: notebookItem!.lapseCount,
         lastReviewedAt: notebookItem!.lastReviewedAt,
         nextReviewAt: notebookItem!.nextReviewAt,
       } as any;
@@ -193,27 +196,60 @@ export class ExpressionService {
     userId: string,
     notebookItemId: string,
     status: MasteryStatus,
-    quality = 3,
   ) {
+    if (!['learning', 'reviewing', 'mastered'].includes(status)) {
+      throw new BadRequestException('无效的学习状态');
+    }
     const item = await this.prisma.learningNotebookItem.findFirst({
       where: {
         id: notebookItemId,
         deletedAt: null,
         notebook: { userId, deletedAt: null },
       },
-      select: { id: true, reviewCount: true, easeFactor: true },
+      select: { id: true },
     });
     if (!item) return null;
 
-    const next = calcSm2(item.reviewCount, item.easeFactor, quality);
+    return this.prisma.learningNotebookItem.update({
+      where: { id: item.id },
+      data: { masteryStatus: status },
+    });
+  }
+
+  async reviewNotebookItem(
+    userId: string,
+    notebookItemId: string,
+    rating: ReviewRating,
+  ) {
+    if (!isReviewRating(rating)) throw new BadRequestException('无效的复习评分');
+    const item = await this.prisma.learningNotebookItem.findFirst({
+      where: {
+        id: notebookItemId,
+        deletedAt: null,
+        notebook: { userId, deletedAt: null },
+      },
+      select: {
+        id: true,
+        reviewCount: true,
+        intervalDays: true,
+        easeFactor: true,
+        lapseCount: true,
+      },
+    });
+    if (!item) return null;
+
+    const reviewedAt = new Date();
+    const next = scheduleReview(item, rating, reviewedAt);
     return this.prisma.learningNotebookItem.update({
       where: { id: item.id },
       data: {
-        masteryStatus: status,
-        reviewCount: status === 'reviewing' ? next.newReviewCount : item.reviewCount,
+        masteryStatus: next.status === 'mastered' ? 'mastered' : 'reviewing',
+        reviewCount: next.reviewCount,
+        intervalDays: next.intervalDays,
         easeFactor: next.easeFactor,
-        lastReviewedAt: new Date(),
-        nextReviewAt: next.nextReview,
+        lapseCount: next.lapseCount,
+        lastReviewedAt: reviewedAt,
+        nextReviewAt: next.dueAt,
       },
     });
   }
@@ -242,7 +278,7 @@ export class ExpressionService {
     }
     const result = await this.prisma.learningNotebookItem.updateMany({
       where: { id: { in: ids }, deletedAt: null, notebook: { userId, deletedAt: null } },
-      data: { masteryStatus: status, lastReviewedAt: new Date() },
+      data: { masteryStatus: status },
     });
     return { count: result.count };
   }
@@ -257,38 +293,5 @@ export class ExpressionService {
     });
     await Promise.all(sourceItems.map((item) => this.notebooks.addExpressionToNotebooks(userId, item.expressionItemId, [notebookId])));
     return { count: sourceItems.length };
-  }
-}
-
-/** SM-2 algorithm: returns new interval (days), next review date, new EF, new count */
-function calcSm2(
-  n: number,
-  ef: number,
-  q: number,
-): { interval: number; nextReview: Date; easeFactor: number; newReviewCount: number } {
-  // Clamp quality
-  q = Math.max(0, Math.min(5, q))
-
-  if (q >= 3) {
-    // Correct response
-    let interval: number
-    if (n === 0) interval = 1
-    else if (n === 1) interval = 6
-    else interval = Math.round((n - 1) * ef)
-
-    // Update ease factor
-    const newEf = ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
-    ef = Math.max(1.3, newEf)
-
-    const nextReview = new Date()
-    nextReview.setDate(nextReview.getDate() + interval)
-
-    return { interval, nextReview, easeFactor: ef, newReviewCount: n + 1 }
-  } else {
-    // Incorrect — reset
-    const nextReview = new Date()
-    nextReview.setDate(nextReview.getDate() + 1)
-
-    return { interval: 1, nextReview, easeFactor: ef, newReviewCount: 0 }
   }
 }

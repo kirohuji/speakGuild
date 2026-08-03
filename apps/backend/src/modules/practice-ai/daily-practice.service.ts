@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { scheduleReview, warmupScoreToReviewRating } from '../../common/spaced-repetition';
 
 type WarmupScore = 'strong' | 'ok' | 'weak' | 'miss';
 
@@ -13,26 +14,6 @@ interface DailyPracticeAttemptInput {
   passed?: boolean;
   payload?: any;
   practicedAt?: string;
-}
-
-interface DailyPracticeProgressInput {
-  itemId: string;
-  packId: string;
-  topicId: string;
-  type: string;
-  status: string;
-  dueDate: string;
-  lastPracticedAt?: string | null;
-  bestScore?: WarmupScore | null;
-  bestScoreRank?: number;
-  lastScore?: WarmupScore | null;
-  lastScoreRank?: number;
-  attempts?: number;
-  correctCount?: number;
-  streak?: number;
-  lapseCount?: number;
-  intervalDays?: number;
-  easeFactor?: number;
 }
 
 interface DailyPracticeRunInput {
@@ -77,12 +58,6 @@ function startOfDate(value: string | Date) {
 
 function toDate(value?: string | null) {
   return value ? new Date(value) : null;
-}
-
-function latestDate(a?: Date | null, b?: Date | null) {
-  if (!a) return b ?? null;
-  if (!b) return a;
-  return a > b ? a : b;
 }
 
 @Injectable()
@@ -140,7 +115,6 @@ export class DailyPracticeService {
   async complete(userId: string, body: {
     run: DailyPracticeRunInput;
     attempts: DailyPracticeAttemptInput[];
-    itemProgresses: DailyPracticeProgressInput[];
     warmupRecord?: { topicId: string; topicTitle?: string; items: any[]; score?: number | null; feedback?: string | null };
   }) {
     const syncedAttempts: string[] = [];
@@ -173,9 +147,14 @@ export class DailyPracticeService {
       },
     });
 
-    for (const attempt of body.attempts ?? []) {
+    const attempts = [...(body.attempts ?? [])].sort((a, b) =>
+      (toDate(a.practicedAt)?.getTime() ?? 0) - (toDate(b.practicedAt)?.getTime() ?? 0),
+    );
+    const affectedItemIds = new Set<string>();
+    for (const attempt of attempts) {
       const practicedAt = toDate(attempt.practicedAt) ?? new Date();
       const rank = warmupScoreRank(attempt.score);
+      affectedItemIds.add(attempt.itemId);
       try {
         await (this.prisma as any).userDailyPracticeAttempt.create({
           data: {
@@ -192,16 +171,23 @@ export class DailyPracticeService {
             practicedAt,
           },
         });
-      } catch {
+      } catch (error) {
         // clientAttemptId is idempotency key; duplicate means already synced.
+        if ((error as any)?.code !== 'P2002') throw error;
       }
       syncedAttempts.push(attempt.clientAttemptId);
     }
 
-    for (const progress of body.itemProgresses ?? []) {
-      await this.mergeItemProgress(userId, progress);
+    for (const itemId of affectedItemIds) {
+      await this.rebuildItemProgress(userId, itemId);
     }
     await this.syncSceneProgressFromWarmup(userId, body.run.packIds ?? []);
+
+    const itemProgresses = affectedItemIds.size > 0
+      ? await (this.prisma as any).userWarmupItemProgress.findMany({
+          where: { userId, itemId: { in: [...affectedItemIds] } },
+        })
+      : [];
 
     let warmupRecord: any = null;
     if (body.warmupRecord?.topicId && body.warmupRecord.items?.length) {
@@ -219,71 +205,57 @@ export class DailyPracticeService {
     return {
       runId: run.id,
       syncedAttempts,
+      itemProgresses,
       warmupRecordId: warmupRecord?.id ?? null,
     };
   }
 
-  private async mergeItemProgress(userId: string, progress: DailyPracticeProgressInput) {
-    const incomingLastAt = toDate(progress.lastPracticedAt);
-    const incomingBestRank = progress.bestScoreRank ?? warmupScoreRank(progress.bestScore);
-    const incomingLastRank = progress.lastScoreRank ?? warmupScoreRank(progress.lastScore);
-    const existing = await (this.prisma as any).userWarmupItemProgress.findUnique({
-      where: { userId_itemId: { userId, itemId: progress.itemId } },
+  private async rebuildItemProgress(userId: string, itemId: string) {
+    const attempts = await (this.prisma as any).userDailyPracticeAttempt.findMany({
+      where: { userId, itemId },
+      orderBy: [{ practicedAt: 'asc' }, { createdAt: 'asc' }],
     });
+    if (attempts.length === 0) return null;
 
-    if (!existing) {
-      return (this.prisma as any).userWarmupItemProgress.create({
-        data: {
-          userId,
-          itemId: progress.itemId,
-          packId: progress.packId,
-          topicId: progress.topicId,
-          type: progress.type,
-          status: progress.status,
-          dueDate: startOfDate(progress.dueDate),
-          lastPracticedAt: incomingLastAt,
-          bestScore: progress.bestScore ?? progress.lastScore ?? null,
-          bestScoreRank: incomingBestRank,
-          lastScore: progress.lastScore ?? null,
-          lastScoreRank: incomingLastRank,
-          attempts: progress.attempts ?? 0,
-          correctCount: progress.correctCount ?? 0,
-          streak: progress.streak ?? 0,
-          lapseCount: progress.lapseCount ?? 0,
-          intervalDays: progress.intervalDays ?? 0,
-          easeFactor: progress.easeFactor ?? 2.5,
-        },
-      });
+    let schedule = scheduleReview(
+      { reviewCount: 0, intervalDays: 0, easeFactor: 2.5, lapseCount: 0 },
+      warmupScoreToReviewRating(attempts[0].score),
+      attempts[0].practicedAt,
+    );
+    let best = attempts[0];
+    for (const attempt of attempts.slice(1)) {
+      schedule = scheduleReview(
+        schedule,
+        warmupScoreToReviewRating(attempt.score),
+        attempt.practicedAt,
+      );
+      if (attempt.scoreRank >= best.scoreRank) best = attempt;
     }
 
-    const latest = latestDate(existing.lastPracticedAt, incomingLastAt);
-    const incomingIsLatest = !!incomingLastAt && (!existing.lastPracticedAt || incomingLastAt >= existing.lastPracticedAt);
-    const bestScoreRank = Math.max(existing.bestScoreRank ?? 0, incomingBestRank);
-    const bestScore =
-      incomingBestRank >= (existing.bestScoreRank ?? 0)
-        ? (progress.bestScore ?? progress.lastScore ?? existing.bestScore)
-        : existing.bestScore;
+    const latest = attempts[attempts.length - 1];
+    const data = {
+      packId: latest.packId,
+      topicId: latest.topicId,
+      type: latest.type,
+      status: schedule.status,
+      dueDate: startOfDate(schedule.dueAt),
+      lastPracticedAt: latest.practicedAt,
+      bestScore: best.score,
+      bestScoreRank: best.scoreRank,
+      lastScore: latest.score,
+      lastScoreRank: latest.scoreRank,
+      attempts: attempts.length,
+      correctCount: attempts.filter((attempt: any) => attempt.scoreRank >= 2).length,
+      reviewCount: schedule.reviewCount,
+      lapseCount: schedule.lapseCount,
+      intervalDays: schedule.intervalDays,
+      easeFactor: schedule.easeFactor,
+    };
 
-    return (this.prisma as any).userWarmupItemProgress.update({
-      where: { userId_itemId: { userId, itemId: progress.itemId } },
-      data: {
-        packId: progress.packId,
-        topicId: progress.topicId,
-        type: progress.type,
-        status: incomingIsLatest ? progress.status : existing.status,
-        dueDate: incomingIsLatest ? startOfDate(progress.dueDate) : existing.dueDate,
-        lastPracticedAt: latest,
-        bestScore,
-        bestScoreRank,
-        lastScore: incomingIsLatest ? (progress.lastScore ?? existing.lastScore) : existing.lastScore,
-        lastScoreRank: incomingIsLatest ? incomingLastRank : existing.lastScoreRank,
-        attempts: Math.max(existing.attempts ?? 0, progress.attempts ?? 0),
-        correctCount: Math.max(existing.correctCount ?? 0, progress.correctCount ?? 0),
-        streak: incomingIsLatest ? (progress.streak ?? existing.streak) : existing.streak,
-        lapseCount: Math.max(existing.lapseCount ?? 0, progress.lapseCount ?? 0),
-        intervalDays: incomingIsLatest ? (progress.intervalDays ?? existing.intervalDays) : existing.intervalDays,
-        easeFactor: incomingIsLatest ? (progress.easeFactor ?? existing.easeFactor) : existing.easeFactor,
-      },
+    return (this.prisma as any).userWarmupItemProgress.upsert({
+      where: { userId_itemId: { userId, itemId } },
+      create: { userId, itemId, ...data },
+      update: data,
     });
   }
 

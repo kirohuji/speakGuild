@@ -321,6 +321,10 @@ async function replayItem(
 
   if (item.entityType === 'daily_practice') {
     const result = await dailyPracticeApi.complete(item.payload)
+    await localDb.putMany(
+      'daily_practice_items',
+      (result.itemProgresses ?? []).map((progress) => ({ ...progress, id: progress.itemId })),
+    )
     const attempts = ((item.payload as any)?.attempts ?? []) as Array<{ id?: string; clientAttemptId?: string }>
     await Promise.all((result.syncedAttempts ?? []).map(async (clientAttemptId: string) => {
       const attempt = attempts.find((entry) => entry.clientAttemptId === clientAttemptId)

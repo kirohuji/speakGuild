@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req } from '@
 import type { Request } from 'express';
 import { ExpressionService, type MasteryStatus } from './expression.service';
 import { requireAuthSession } from '../auth/session.util';
+import type { ReviewRating } from '../../common/spaced-repetition';
 
 @Controller('expressions')
 export class ExpressionController {
@@ -57,15 +58,23 @@ export class ExpressionController {
     @Req() req: Request,
     @Param('notebookItemId') notebookItemId: string,
     @Body('status') status: MasteryStatus,
-    @Body('quality') quality?: number,
   ) {
     const session = await requireAuthSession(req);
     return this.expressionService.updateNotebookItemStatus(
       session.user.id,
       notebookItemId,
       status,
-      quality,
     );
+  }
+
+  @Post('notebook-items/:notebookItemId/review')
+  async reviewNotebookItem(
+    @Req() req: Request,
+    @Param('notebookItemId') notebookItemId: string,
+    @Body('rating') rating: ReviewRating,
+  ) {
+    const session = await requireAuthSession(req);
+    return this.expressionService.reviewNotebookItem(session.user.id, notebookItemId, rating);
   }
 
   @Delete('notebook-items/:notebookItemId')

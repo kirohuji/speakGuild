@@ -32,7 +32,9 @@ type CachedNotebookItem = {
   expressionEntryId: string
   masteryStatus: string
   reviewCount: number
+  intervalDays: number
   easeFactor?: number | null
+  lapseCount: number
   lastReviewedAt?: string | null
   nextReviewAt?: string | null
   createdAt?: string | null
@@ -45,7 +47,9 @@ export type LocalNotebookExpression = ExpressionEntry & {
   notebookId: string
   masteryStatus: string
   reviewCount: number
+  intervalDays: number
   easeFactor?: number | null
+  lapseCount: number
   lastReviewedAt?: string | null
   nextReviewAt?: string | null
   vocabulary?: unknown
@@ -141,7 +145,9 @@ export const learningNotebookRepository = {
           notebookId: item.notebookId,
           masteryStatus: item.masteryStatus,
           reviewCount: item.reviewCount,
+          intervalDays: item.intervalDays,
           easeFactor: item.easeFactor,
+          lapseCount: item.lapseCount,
           lastReviewedAt: item.lastReviewedAt,
           nextReviewAt: item.nextReviewAt,
           vocabulary: entry.kind === 'word' ? snapshot : undefined,

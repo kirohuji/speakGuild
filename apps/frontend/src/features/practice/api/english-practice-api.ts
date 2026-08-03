@@ -399,6 +399,7 @@ export const practiceAiApi = {
 
 // ---- 学习库 ----
 export type MasteryStatus = 'learning' | 'reviewing' | 'mastered'
+export type ReviewRating = 'again' | 'hard' | 'good' | 'easy'
 
 export interface LearningNotebook {
   id: string
@@ -443,6 +444,9 @@ export const expressionApi = {
 
   updateNotebookItemStatus: (notebookItemId: string, status: MasteryStatus) =>
     patch(`/expressions/notebook-items/${notebookItemId}/status`, { status }),
+
+  reviewNotebookItem: (notebookItemId: string, rating: ReviewRating) =>
+    post(`/expressions/notebook-items/${notebookItemId}/review`, { rating }),
 
   updateNotebookItemsStatus: (notebookItemIds: string[], status: MasteryStatus) =>
     patch('/expressions/notebook-items/batch/status', { notebookItemIds, status }),
@@ -498,7 +502,7 @@ export interface RemoteDailyPracticeProgress {
   lastScoreRank?: number
   attempts?: number
   correctCount?: number
-  streak?: number
+  reviewCount?: number
   lapseCount?: number
   intervalDays?: number
   easeFactor?: number
@@ -509,7 +513,7 @@ export const dailyPracticeApi = {
     post<{ items: RemoteDailyPracticeProgress[] }>('/practice/daily-practice/progress', { itemIds }),
 
   complete: (payload: any) =>
-    post<{ runId: string; syncedAttempts: string[]; warmupRecordId: string | null }>('/practice/daily-practice/complete', payload),
+    post<{ runId: string; syncedAttempts: string[]; itemProgresses: RemoteDailyPracticeProgress[]; warmupRecordId: string | null }>('/practice/daily-practice/complete', payload),
 
   recordActivity: (payload: {
     date: string

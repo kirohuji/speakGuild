@@ -152,7 +152,9 @@ export class LearningNotebookService {
                 deletedAt: null,
                 masteryStatus: 'learning',
                 reviewCount: 0,
+                intervalDays: 0,
                 easeFactor: 2.5,
+                lapseCount: 0,
                 lastReviewedAt: null,
                 nextReviewAt: null,
               }

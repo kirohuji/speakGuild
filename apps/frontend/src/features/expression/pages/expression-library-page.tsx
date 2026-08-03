@@ -52,7 +52,7 @@ interface Expression {
   notebookItemId?: string
   notebookId?: string
   chunkText: string | null; sceneName: string | null; masteryStatus: string
-  reviewCount: number; nextReviewAt?: string | null; lastReviewedAt?: string | null
+  reviewCount: number; intervalDays: number; lapseCount: number; nextReviewAt?: string | null; lastReviewedAt?: string | null
   createdAt: string
   vocabulary?: {
     id: string; word: string; meaning: string; partOfSpeech?: string | null;
