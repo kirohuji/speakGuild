@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Headphones, Plus, Trash2, Upload } from 'lucide-react'
+import { Headphones, Loader2, Plus, Sparkles, Trash2, Upload } from 'lucide-react'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { Scene, TrainingTopic } from '../api-content-admin'
+import { contentExperienceAdminApi, type AiWritingTopicDraft } from '../api-content-experiences'
 import { FileUploadField } from './file-upload-field'
 
 type Props = {
@@ -14,20 +16,91 @@ type Props = {
   value: Record<string, any>
   mediaAssetId?: string | null
   transcript?: TrainingTopic['transcript']
+  sceneId: string
+  draftContext?: {
+    title?: string
+    promptEn?: string
+    difficulty?: string
+    vocabulary?: string[]
+    chunks?: string[]
+    sentencePatterns?: string[]
+  }
+  onApplyDraft?: (draft: AiWritingTopicDraft) => void
   onChange: (next: { contentConfig?: Record<string, any>; mediaAssetId?: string | null; transcript?: TrainingTopic['transcript'] }) => void
 }
 
 const lines = (value: string) => value.split('\n').map((item) => item.trim()).filter(Boolean)
 
-export function TopicExperienceFields({ mode, value, mediaAssetId, transcript, onChange }: Props) {
-  if (mode === 'writing') return <WritingFields value={value.writing ?? {}} onChange={(writing) => onChange({ contentConfig: { ...value, writing } })} />
+export function TopicExperienceFields({ mode, value, mediaAssetId, transcript, sceneId, draftContext, onApplyDraft, onChange }: Props) {
+  if (mode === 'writing') return <WritingFields sceneId={sceneId} context={draftContext} value={value.writing ?? {}} onApplyDraft={onApplyDraft} onChange={(writing) => onChange({ contentConfig: { ...value, writing } })} />
   if (mode === 'reading') return <ReadingFields value={value.reading ?? { questions: [] }} onChange={(reading) => onChange({ contentConfig: { ...value, reading } })} />
   return <ListeningFields value={value.listening ?? {}} mediaAssetId={mediaAssetId} transcript={transcript ?? []} onChange={(next) => onChange({ contentConfig: { ...value, listening: next.listening }, mediaAssetId: next.mediaAssetId, transcript: next.transcript })} />
 }
 
-function WritingFields({ value, onChange }: { value: Record<string, any>; onChange: (value: Record<string, any>) => void }) {
+function WritingFields({
+  value,
+  sceneId,
+  context,
+  onApplyDraft,
+  onChange,
+}: {
+  value: Record<string, any>
+  sceneId: string
+  context?: Props['draftContext']
+  onApplyDraft?: (draft: AiWritingTopicDraft) => void
+  onChange: (value: Record<string, any>) => void
+}) {
+  const [instruction, setInstruction] = useState('')
+  const [generating, setGenerating] = useState(false)
+
+  const generateDraft = async () => {
+    if (generating) return
+    setGenerating(true)
+    try {
+      const draft = await contentExperienceAdminApi.generateWritingTopic(sceneId, {
+        instruction: instruction.trim() || undefined,
+        genre: value.genre ?? 'paragraph',
+        minWords: Number(value.minWords) || 80,
+        maxWords: Number(value.maxWords) || 180,
+        difficulty: context?.difficulty,
+        currentTitle: context?.title,
+        currentPromptEn: context?.promptEn,
+        vocabulary: context?.vocabulary,
+        chunks: context?.chunks,
+        sentencePatterns: context?.sentencePatterns,
+      })
+      onApplyDraft?.(draft)
+      toast.success('AI 题目已回填，请检查后保存')
+    } catch (error: any) {
+      toast.error(error?.message || 'AI 写作题生成失败')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   return (
     <div className="space-y-5">
+      <section className="overflow-hidden rounded-2xl border border-amber-300/60 bg-[linear-gradient(135deg,rgba(251,191,36,0.11),rgba(255,255,255,0)_58%)] dark:border-amber-700/50">
+        <div className="grid gap-4 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="grid size-8 place-items-center rounded-lg bg-amber-500 text-white shadow-sm"><Sparkles className="size-4" /></span>
+              <div><p className="text-sm font-semibold">AI 写作题起稿台</p><p className="text-xs text-muted-foreground">会参考学习包和已绑定语言素材，结果仅回填表单，不会自动保存。</p></div>
+            </div>
+            <Textarea
+              value={instruction}
+              onChange={(event) => setInstruction(event.target.value)}
+              className="min-h-24 resize-y bg-background/80"
+              maxLength={2000}
+              placeholder="可选：描述想生成的情境，例如“为准备出国交换的 B1 学生生成一封向房东反馈暖气问题的邮件”。留空则由 AI 根据学习包自行设计。"
+            />
+          </div>
+          <Button type="button" onClick={generateDraft} disabled={generating} className="min-w-36 bg-amber-600 text-white hover:bg-amber-700">
+            {generating ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Sparkles className="mr-2 size-4" />}
+            {generating ? '正在起稿' : 'AI 生成题目'}
+          </Button>
+        </div>
+      </section>
       <div className="grid gap-4 md:grid-cols-3">
         <div><Label>文体</Label><Select value={value.genre ?? 'paragraph'} onChange={(event) => onChange({ ...value, genre: event.target.value })}><option value="journal">日记</option><option value="message">消息</option><option value="email">邮件</option><option value="paragraph">段落</option><option value="essay">文章</option></Select></div>
         <div><Label>最少字数</Label><Input type="number" min={1} value={value.minWords ?? 80} onChange={(event) => onChange({ ...value, minWords: Number(event.target.value) })} /></div>

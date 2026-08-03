@@ -57,6 +57,12 @@ function validateListeningTranscript(value: unknown) {
   }
 }
 
+function normalizeOptionalForeignKey(value: string | null | undefined) {
+  if (value == null) return value;
+  const normalized = value.trim();
+  return normalized || null;
+}
+
 @Controller('admin/content')
 export class ContentAdminController {
   constructor(
@@ -205,12 +211,23 @@ export class ContentAdminController {
   @Patch('scenes/:id')
   async updateScene(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateSceneDto) {
     await this.requireAdmin(req);
-    return this.prisma.scene.update({
-      where: { id },
-      data: {
-        ...dto,
-        ...(dto.packageType === 'story' && !dto.contentMode ? { contentMode: 'story' as const } : {}),
-      },
+    const nextContentMode = dto.contentMode ?? (dto.packageType === 'story' ? 'story' : undefined);
+    return this.prisma.$transaction(async (tx) => {
+      const scene = await tx.scene.update({
+        where: { id },
+        data: {
+          ...dto,
+          ...(nextContentMode ? { contentMode: nextContentMode } : {}),
+        },
+      });
+      if (scene.contentMode !== 'novel') {
+        await Promise.all([
+          tx.sceneVocabulary.deleteMany({ where: { sceneId: id } }),
+          tx.sceneChunk.deleteMany({ where: { sceneId: id } }),
+          tx.sceneSentencePattern.deleteMany({ where: { sceneId: id } }),
+        ]);
+      }
+      return scene;
     });
   }
 
@@ -438,7 +455,14 @@ export class ContentAdminController {
     if (['novel', 'story'].includes(scene.contentMode)) throw new BadRequestException('小说包和剧情包不使用训练话题');
     validateListeningTranscript(data.transcript);
     const activityType = ['writing', 'reading', 'listening'].includes(scene.contentMode) ? scene.contentMode : 'practice';
-    const topic = await this.prisma.trainingTopic.create({ data: { ...data, activityType: activityType as any } });
+    const topic = await this.prisma.trainingTopic.create({
+      data: {
+        ...data,
+        activityType: activityType as any,
+        inkScriptId: activityType === 'practice' ? normalizeOptionalForeignKey(data.inkScriptId) : null,
+        mediaAssetId: normalizeOptionalForeignKey(data.mediaAssetId),
+      },
+    });
     if (chunkIds?.length) {
       await this.prisma.trainingTopicChunk.createMany({
         data: chunkIds.map((chunkId, i) => ({
@@ -509,7 +533,11 @@ export class ContentAdminController {
     if (!scene || ['novel', 'story'].includes(scene.contentMode)) throw new BadRequestException('当前学习包不使用训练话题');
     validateListeningTranscript(data.transcript);
     const activityType = ['writing', 'reading', 'listening'].includes(scene.contentMode) ? scene.contentMode : 'practice';
-    const topic = await this.prisma.trainingTopic.update({ where: { id }, data: { ...data, activityType: activityType as any } });
+    const normalizedData: Record<string, any> = { ...data, activityType };
+    if (activityType !== 'practice') normalizedData.inkScriptId = null;
+    else if (data.inkScriptId !== undefined) normalizedData.inkScriptId = normalizeOptionalForeignKey(data.inkScriptId);
+    if (data.mediaAssetId !== undefined) normalizedData.mediaAssetId = normalizeOptionalForeignKey(data.mediaAssetId);
+    const topic = await this.prisma.trainingTopic.update({ where: { id }, data: normalizedData });
     if (chunkIds) {
       await this.prisma.trainingTopicChunk.deleteMany({ where: { topicId: id } });
       if (chunkIds.length > 0) {

@@ -1,4 +1,5 @@
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsIn,
@@ -7,6 +8,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  MaxLength,
   Max,
   Min,
 } from 'class-validator';
@@ -123,4 +125,63 @@ export class SaveNovelProgressDto {
   @Min(0)
   @Max(1)
   percentage: number;
+}
+
+export class GenerateWritingTopicDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  instruction?: string;
+
+  @IsOptional()
+  @IsIn(['journal', 'message', 'email', 'paragraph', 'essay'])
+  genre?: 'journal' | 'message' | 'email' | 'paragraph' | 'essay';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  difficulty?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(20)
+  @Max(2000)
+  minWords?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(20)
+  @Max(3000)
+  maxWords?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  currentTitle?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  currentPromptEn?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(40)
+  @IsString({ each: true })
+  @MaxLength(200, { each: true })
+  vocabulary?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(30)
+  @IsString({ each: true })
+  @MaxLength(300, { each: true })
+  chunks?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  @MaxLength(300, { each: true })
+  sentencePatterns?: string[];
 }

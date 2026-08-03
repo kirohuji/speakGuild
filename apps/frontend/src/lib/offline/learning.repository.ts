@@ -30,6 +30,17 @@ export function buildAggregatedUnitContent(unitDetail: any, topicDetails: TopicD
   const patternMap = new Map<string, any>()
   const trainingTopics: any[] = []
 
+  // Novel packages deliberately have no TrainingTopic. Their only knowledge
+  // source is the Scene-level list carried by the offline unit detail.
+  if (unitDetail?.contentMode === 'novel') {
+    for (const item of unitDetail.vocabularies ?? []) if (item?.id) vocabMap.set(item.id, item)
+    for (const item of unitDetail.chunks ?? []) if (item?.id) chunkMap.set(item.id, item)
+    for (const item of unitDetail.sentencePatterns ?? []) {
+      const key = item?.id ?? item?.pattern
+      if (key) patternMap.set(key, item)
+    }
+  }
+
   for (const { topicId: fallbackTopicId, detail } of topicDetails) {
     if (!detail) continue
     const topicId = detail.topic?.id ?? fallbackTopicId

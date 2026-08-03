@@ -466,8 +466,10 @@ export class LearningService {
       const prog = progressMap.get(scene.id);
       const vocabIds = new Set<string>();
       const chunkIds = new Set<string>();
-      for (const item of scene.sceneVocabularies) vocabIds.add(item.vocabularyId);
-      for (const item of scene.sceneChunks) chunkIds.add(item.chunkId);
+      if (scene.contentMode === 'novel') {
+        for (const item of scene.sceneVocabularies) vocabIds.add(item.vocabularyId);
+        for (const item of scene.sceneChunks) chunkIds.add(item.chunkId);
+      }
       for (const t of scene.trainingTopics) {
         for (const tv of (t as any).topicVocabs ?? []) {
           if (tv.vocabId) vocabIds.add(tv.vocabId);
@@ -599,8 +601,10 @@ export class LearningService {
       const scene = p.scene;
       const vocabIds = new Set<string>();
       const chunkIds = new Set<string>();
-      for (const item of scene.sceneVocabularies) vocabIds.add(item.vocabularyId);
-      for (const item of scene.sceneChunks) chunkIds.add(item.chunkId);
+      if (scene.contentMode === 'novel') {
+        for (const item of scene.sceneVocabularies) vocabIds.add(item.vocabularyId);
+        for (const item of scene.sceneChunks) chunkIds.add(item.chunkId);
+      }
       for (const t of scene.trainingTopics) {
         for (const tv of (t as any).topicVocabs ?? []) {
           if (tv.vocabId) vocabIds.add(tv.vocabId);
@@ -961,7 +965,7 @@ export class LearningService {
     const chunkMap = new Map<string, any>();
     const sentencePatterns: any[] = [];
 
-    for (const item of scene.sceneVocabularies) {
+    for (const item of scene.contentMode === 'novel' ? scene.sceneVocabularies : []) {
       const v = item.vocabulary;
       vocabMap.set(v.id, {
         id: v.id,
@@ -979,7 +983,7 @@ export class LearningService {
         difficulty: v.difficulty,
       });
     }
-    for (const item of scene.sceneChunks) {
+    for (const item of scene.contentMode === 'novel' ? scene.sceneChunks : []) {
       const c = item.chunk;
       chunkMap.set(c.id, {
         id: c.id,
@@ -991,7 +995,7 @@ export class LearningService {
         examples: c.examples,
       });
     }
-    for (const item of scene.scenePatterns) {
+    for (const item of scene.contentMode === 'novel' ? scene.scenePatterns : []) {
       sentencePatterns.push({ ...item.pattern, topicId: '', topicTitle: scene.title });
     }
 
@@ -1533,8 +1537,12 @@ export class LearningService {
       };
     }
 
-    // Strip derived data from unitDetail — frontend collects from topicDetails
-    const { vocabularies: _v, chunks: _c, sentencePatterns: _sp, trainingTopics: _tt, ...leanUnitDetail } = unitDetail as any;
+    // Topic-based packs rebuild knowledge from topicDetails. Novel packs have no
+    // topics, so their Scene-level knowledge must remain in the offline detail.
+    const { vocabularies: unitVocabs, chunks: unitChunks, sentencePatterns: unitPatterns, trainingTopics: _tt, ...unitBase } = unitDetail as any;
+    const leanUnitDetail = unitDetail.contentMode === 'novel'
+      ? { ...unitBase, vocabularies: unitVocabs, chunks: unitChunks, sentencePatterns: unitPatterns, trainingTopics: [] }
+      : unitBase;
 
     const totalVocabs = topicDetails.reduce((sum, td) => sum + (td.vocabularies?.length ?? 0), 0);
     const totalChunks = topicDetails.reduce((sum, td) => sum + (td.activeChunks?.length ?? 0), 0);
@@ -1553,6 +1561,10 @@ export class LearningService {
     for (const td of topicDetails) {
       for (const v of td.vocabularies ?? []) allVocabIds.add(v.id);
       for (const c of td.activeChunks ?? []) allChunkIds.add(c.id);
+    }
+    if (unitDetail.contentMode === 'novel') {
+      for (const v of unitVocabs ?? []) if (v?.id) allVocabIds.add(v.id);
+      for (const c of unitChunks ?? []) if (c?.id) allChunkIds.add(c.id);
     }
 
     await this.attachFileAssetIdentities(assets);
@@ -1892,8 +1904,8 @@ export class LearningService {
     if (data.completedScript) updateData.completedScriptCount = { increment: 1 };
 
     // Compute vocab/chunk totals from topics
-    let totalVocab = scene._count.sceneVocabularies;
-    let totalChunks = scene._count.sceneChunks;
+    let totalVocab = scene.contentMode === 'novel' ? scene._count.sceneVocabularies : 0;
+    let totalChunks = scene.contentMode === 'novel' ? scene._count.sceneChunks : 0;
     for (const t of scene.trainingTopics) {
       totalVocab += (t as any)._count?.topicVocabs ?? 0;
       totalChunks += (t as any)._count?.activeChunks ?? 0;

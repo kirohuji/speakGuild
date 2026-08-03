@@ -809,6 +809,9 @@ function TrainingTopicDialog({
       const formWithUsage = withRecomputedWarmupUsage(form)
       const payload = { ...formWithUsage }
       delete payload.sentencePatterns // no longer used; patternIds is the new way
+      if (contentMode !== 'practice') delete payload.inkScriptId
+      else if (!payload.inkScriptId?.trim()) payload.inkScriptId = null
+      if (!payload.mediaAssetId?.trim()) payload.mediaAssetId = null
       const saved = edit ? await updateTrainingTopic(edit.id, payload) : await createTrainingTopic(payload)
       setForm((prev: any) => ({
         ...prev,
@@ -996,9 +999,23 @@ function TrainingTopicDialog({
               <TabsContent value="experience" className="mt-0">
                 <TopicExperienceFields
                   mode={contentMode as 'writing' | 'reading' | 'listening'}
+                  sceneId={sceneId}
                   value={form.contentConfig ?? {}}
                   mediaAssetId={form.mediaAssetId}
                   transcript={form.transcript}
+                  draftContext={{
+                    title: form.title,
+                    promptEn: form.promptEn,
+                    difficulty: form.difficulty,
+                    vocabulary: boundVocabs.map((item) => item.word),
+                    chunks: boundChunks.map((item) => item.text),
+                    sentencePatterns: boundPatterns.map((item) => item.pattern),
+                  }}
+                  onApplyDraft={(draft) => setForm((current: any) => ({
+                    ...current,
+                    ...draft,
+                    contentConfig: { ...(current.contentConfig ?? {}), ...(draft.contentConfig ?? {}) },
+                  }))}
                   onChange={(next) => setForm({ ...form, ...next })}
                 />
               </TabsContent>

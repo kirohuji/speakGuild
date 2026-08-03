@@ -17,6 +17,7 @@ import {
   AssignPackageGroupDto,
   AttachEpubDto,
   CreatePackageGroupDto,
+  GenerateWritingTopicDto,
   UpdatePackageGroupDto,
   UpdateSceneKnowledgeDto,
 } from './dto/content-experience.dto';
@@ -88,5 +89,15 @@ export class AdminContentExperienceController {
   ) {
     await this.requireAdmin(req);
     return this.experiences.attachEpub(sceneId, dto.assetId);
+  }
+
+  @Post('scenes/:sceneId/writing-topics/ai-draft')
+  async generateWritingTopic(
+    @Req() req: Request,
+    @Param('sceneId') sceneId: string,
+    @Body() dto: GenerateWritingTopicDto,
+  ) {
+    await this.requireAdmin(req);
+    return this.experiences.generateWritingTopicDraft(sceneId, dto);
   }
 }

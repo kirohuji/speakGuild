@@ -42,6 +42,16 @@ export interface AdminSceneExperience {
   } | null
 }
 
+export interface AiWritingTopicDraft {
+  title: string
+  description: string
+  promptEn: string
+  promptZh: string
+  difficulty: string
+  suggestedDurationSec: number
+  contentConfig: { writing: Record<string, any> }
+}
+
 export const contentExperienceAdminApi = {
   listGroups: () => get<PackageGroup[]>('/admin/content-experiences/groups'),
   createGroup: (data: Partial<PackageGroup>) => post<PackageGroup>('/admin/content-experiences/groups', data),
@@ -54,4 +64,6 @@ export const contentExperienceAdminApi = {
     put<AdminSceneExperience>(`/admin/content-experiences/scenes/${sceneId}/knowledge`, data),
   attachEpub: (sceneId: string, assetId: string) =>
     post(`/admin/content-experiences/scenes/${sceneId}/epub`, { assetId }),
+  generateWritingTopic: (sceneId: string, data: Record<string, unknown>) =>
+    post<AiWritingTopicDraft>(`/admin/content-experiences/scenes/${sceneId}/writing-topics/ai-draft`, data),
 }
