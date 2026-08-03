@@ -2,7 +2,7 @@ import { del, get, post } from '@/lib/request'
 import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import { digestSync } from '@/lib/offline/asset-cache.service'
 
-export type FileAssetGroup = 'avatar' | 'library' | 'tts' | 'notification' | 'mobile_bundle' | 'learning_pack' | 'scene_cover' | 'user_recording'
+export type FileAssetGroup = 'avatar' | 'library' | 'tts' | 'notification' | 'mobile_bundle' | 'learning_pack' | 'scene_cover' | 'user_recording' | 'epub'
 
 export interface CosPolicy {
   exists: boolean

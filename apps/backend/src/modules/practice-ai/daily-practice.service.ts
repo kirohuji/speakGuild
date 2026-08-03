@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { scheduleReview, warmupScoreToReviewRating } from '../../common/spaced-repetition';
 
@@ -117,6 +117,16 @@ export class DailyPracticeService {
     attempts: DailyPracticeAttemptInput[];
     warmupRecord?: { topicId: string; topicTitle?: string; items: any[]; score?: number | null; feedback?: string | null };
   }) {
+    const requestedPackIds = [...new Set(body.run.packIds ?? [])];
+    if (requestedPackIds.length > 0) {
+      const nonPracticePack = await this.prisma.scene.findFirst({
+        where: { id: { in: requestedPackIds }, contentMode: { not: 'practice' } },
+        select: { id: true, title: true },
+      });
+      if (nonPracticePack) {
+        throw new BadRequestException(`“${nonPracticePack.title}”不参与今日任务`);
+      }
+    }
     const syncedAttempts: string[] = [];
 
     const existingRun = await (this.prisma as any).userDailyPracticeRun.findUnique({

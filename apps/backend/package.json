@@ -43,6 +43,7 @@
     "cos-nodejs-sdk-v5": "^2.15.4",
     "csv-parse": "^6.2.1",
     "express": "^4.22.1",
+    "fast-xml-parser": "^5.10.1",
     "helmet": "^8.2.0",
     "hume": "^0.16.0",
     "ioredis": "^5.11.1",

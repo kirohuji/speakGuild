@@ -36,6 +36,27 @@ import { AiModelService } from '../ai-model/ai-model.service';
 import { FileAssetsService } from '../file-assets/file-assets.service';
 import { AdminTasksService } from '../admin-tasks/admin-tasks.service';
 
+function validateListeningTranscript(value: unknown) {
+  if (value == null) return;
+  if (!Array.isArray(value)) throw new BadRequestException('听力字幕必须是数组');
+  let previousStart = -1;
+  for (const segment of value as any[]) {
+    if (typeof segment?.text !== 'string' || !Number.isFinite(segment.startMs) || !Number.isFinite(segment.endMs)) {
+      throw new BadRequestException('每句字幕必须包含 text、startMs 和 endMs');
+    }
+    if (segment.startMs < previousStart || segment.endMs <= segment.startMs) {
+      throw new BadRequestException(`字幕“${segment.text}”时间戳乱序或区间无效`);
+    }
+    previousStart = segment.startMs;
+    for (const word of segment.words ?? []) {
+      if (typeof word?.token !== 'string' || !Number.isFinite(word.startMs) || !Number.isFinite(word.endMs)
+        || word.startMs < segment.startMs || word.endMs > segment.endMs || word.endMs <= word.startMs) {
+        throw new BadRequestException(`字幕“${segment.text}”存在越界或无效的词时间戳`);
+      }
+    }
+  }
+}
+
 @Controller('admin/content')
 export class ContentAdminController {
   constructor(
@@ -173,13 +194,24 @@ export class ContentAdminController {
   @Post('scenes')
   async createScene(@Req() req: Request, @Body() dto: CreateSceneDto) {
     await this.requireAdmin(req);
-    return this.prisma.scene.create({ data: dto });
+    return this.prisma.scene.create({
+      data: {
+        ...dto,
+        contentMode: dto.contentMode ?? (dto.packageType === 'story' ? 'story' : 'practice'),
+      },
+    });
   }
 
   @Patch('scenes/:id')
   async updateScene(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateSceneDto) {
     await this.requireAdmin(req);
-    return this.prisma.scene.update({ where: { id }, data: dto });
+    return this.prisma.scene.update({
+      where: { id },
+      data: {
+        ...dto,
+        ...(dto.packageType === 'story' && !dto.contentMode ? { contentMode: 'story' as const } : {}),
+      },
+    });
   }
 
   @Delete('scenes/:id')
@@ -401,7 +433,12 @@ export class ContentAdminController {
   async createTrainingTopic(@Req() req: Request, @Body() dto: CreateTrainingTopicDto) {
     await this.requireAdmin(req);
     const { chunkIds, vocabIds, patternIds, sentencePatterns, ...data } = dto;
-    const topic = await this.prisma.trainingTopic.create({ data });
+    const scene = await this.prisma.scene.findUnique({ where: { id: dto.sceneId }, select: { contentMode: true } });
+    if (!scene) throw new NotFoundException('学习包不存在');
+    if (['novel', 'story'].includes(scene.contentMode)) throw new BadRequestException('小说包和剧情包不使用训练话题');
+    validateListeningTranscript(data.transcript);
+    const activityType = ['writing', 'reading', 'listening'].includes(scene.contentMode) ? scene.contentMode : 'practice';
+    const topic = await this.prisma.trainingTopic.create({ data: { ...data, activityType: activityType as any } });
     if (chunkIds?.length) {
       await this.prisma.trainingTopicChunk.createMany({
         data: chunkIds.map((chunkId, i) => ({
@@ -466,7 +503,13 @@ export class ContentAdminController {
   async updateTrainingTopic(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateTrainingTopicDto) {
     await this.requireAdmin(req);
     const { chunkIds, vocabIds, patternIds, sentencePatterns, ...data } = dto;
-    const topic = await this.prisma.trainingTopic.update({ where: { id }, data });
+    const current = await this.prisma.trainingTopic.findUnique({ where: { id }, select: { sceneId: true } });
+    if (!current) throw new NotFoundException('学习话题不存在');
+    const scene = await this.prisma.scene.findUnique({ where: { id: data.sceneId ?? current.sceneId }, select: { contentMode: true } });
+    if (!scene || ['novel', 'story'].includes(scene.contentMode)) throw new BadRequestException('当前学习包不使用训练话题');
+    validateListeningTranscript(data.transcript);
+    const activityType = ['writing', 'reading', 'listening'].includes(scene.contentMode) ? scene.contentMode : 'practice';
+    const topic = await this.prisma.trainingTopic.update({ where: { id }, data: { ...data, activityType: activityType as any } });
     if (chunkIds) {
       await this.prisma.trainingTopicChunk.deleteMany({ where: { topicId: id } });
       if (chunkIds.length > 0) {

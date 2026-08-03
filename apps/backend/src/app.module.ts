@@ -34,6 +34,7 @@ import { AiModelModule } from './modules/ai-model/ai-model.module';
 import { HealthModule } from './modules/health/health.module';
 import { ScriptCommunityModule } from './modules/script-community/script-community.module';
 import { AdminTasksModule } from './modules/admin-tasks/admin-tasks.module';
+import { ContentExperienceModule } from './modules/content-experiences/content-experience.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { AdminTasksModule } from './modules/admin-tasks/admin-tasks.module';
     HealthModule,
     ScriptCommunityModule,
     AdminTasksModule,
+    ContentExperienceModule,
   ],
   providers: [
     {

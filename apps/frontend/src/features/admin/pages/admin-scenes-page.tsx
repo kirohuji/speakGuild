@@ -45,6 +45,8 @@ import {
 import { EpisodeEditDialog } from './admin-script-page'
 import { WarmupPipelineTab, buildWarmupMaterialUsage, type WarmupPipelineData } from '../components/warmup-pipeline-tab'
 import { packageDataAdminApi } from '../api-package-data'
+import { ContentExperiencePanel } from '../components/content-experience-panel'
+import { TopicExperienceFields } from '../components/topic-experience-fields'
 
 function packageTypeLabel(type?: Scene['packageType']) {
   if (type === 'exam') return '考试'
@@ -52,6 +54,15 @@ function packageTypeLabel(type?: Scene['packageType']) {
   if (type === 'course') return '课程'
   if (type === 'foundation') return '零基础'
   return '日常'
+}
+
+function contentModeLabel(mode?: Scene['contentMode']) {
+  if (mode === 'writing') return '写作'
+  if (mode === 'reading') return '阅读'
+  if (mode === 'listening') return '听力'
+  if (mode === 'novel') return '小说'
+  if (mode === 'story') return '剧情'
+  return '知识点练习'
 }
 
 function stableStringify(value: unknown): string {
@@ -207,7 +218,7 @@ function SceneDialog({
 
   useEffect(() => {
     if (edit) setForm(edit)
-    else setForm({ categoryId: categories[0]?.id, packageType: 'daily', requiredOutputLevel: 'L1', requiredUserLevel: 1 })
+    else setForm({ categoryId: categories[0]?.id, packageType: 'daily', contentMode: 'practice', requiredOutputLevel: 'L1', requiredUserLevel: 1 })
   }, [edit, open, categories])
 
   const handleSave = async () => {
@@ -251,6 +262,18 @@ function SceneDialog({
                 <option value="foundation">零基础</option>
               </Select>
             </div>
+          </div>
+          <div>
+            <Label>内容体验</Label>
+            <Select value={form.contentMode ?? 'practice'} onChange={(e) => setForm({ ...form, contentMode: e.target.value })}>
+              <option value="practice">知识点练习</option>
+              <option value="writing">写作包</option>
+              <option value="reading">阅读包</option>
+              <option value="listening">听力包</option>
+              <option value="novel">小说包（EPUB）</option>
+              <option value="story">剧情包</option>
+            </Select>
+            <p className="mt-1.5 text-xs text-muted-foreground">决定话题题型和用户端主交互；日常、考试、课程等分类仍保留。</p>
           </div>
           <div>
             <Label>标题</Label>
@@ -542,13 +565,14 @@ function VocabularyLookupPreview({
 // ─── Training Topic Dialog ──────────────────────────────────
 
 function TrainingTopicDialog({
-  open, onClose, edit, sceneId, packageType, chunks, vocabs, patterns, topicIndex, topicTotal, onPrevTopic, onNextTopic, onSaved,
+  open, onClose, edit, sceneId, packageType, contentMode, chunks, vocabs, patterns, topicIndex, topicTotal, onPrevTopic, onNextTopic, onSaved,
 }: {
   open: boolean
   onClose: () => void
   edit: TrainingTopic | null
   sceneId: string
   packageType: Scene['packageType']
+  contentMode: Scene['contentMode']
   chunks: Chunk[]
   vocabs: Vocabulary[]
   patterns: SentencePatternFull[]
@@ -634,6 +658,7 @@ function TrainingTopicDialog({
       const nextForm = {
         sceneId,
         type: packageType === 'exam' ? 'ielts' : 'daily',
+        activityType: ['writing', 'reading', 'listening'].includes(contentMode) ? contentMode : 'practice',
         metadata: {
           ...(packageType === 'exam'
             ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview' }
@@ -661,7 +686,7 @@ function TrainingTopicDialog({
     setActiveTab(nextInitialTabRef.current)
     nextInitialTabRef.current = 'basic'
     setLastInitKey(editKey)
-  }, [open, editKey, sceneId, packageType, lastInitKey])
+  }, [open, editKey, sceneId, packageType, contentMode, lastInitKey])
 
   const saveAndNavigateTopicFromWarmup = async (navigate?: () => void) => {
     if (!navigate || saving) return
@@ -844,12 +869,15 @@ function TrainingTopicDialog({
               <TabsTrigger value="training" className="gap-1.5">
                 <Settings2 className="size-3.5" />练习配置
               </TabsTrigger>
-              <TabsTrigger value="ink" className="gap-1.5">
+              {contentMode !== 'practice' && <TabsTrigger value="experience" className="gap-1.5">
+                <BookOpen className="size-3.5" />{contentModeLabel(contentMode)}题型
+              </TabsTrigger>}
+              {contentMode === 'practice' && <TabsTrigger value="ink" className="gap-1.5">
                 <Link2 className="size-3.5" />Ink 故事
-              </TabsTrigger>
-              <TabsTrigger value="warmup" className="gap-1.5">
+              </TabsTrigger>}
+              {contentMode === 'practice' && <TabsTrigger value="warmup" className="gap-1.5">
                 <Dumbbell className="size-3.5" />知识点练习
-              </TabsTrigger>
+              </TabsTrigger>}
             </TabsList>
           </div>
 
@@ -963,6 +991,18 @@ function TrainingTopicDialog({
                 />
               </div>
             </TabsContent>
+
+            {['writing', 'reading', 'listening'].includes(contentMode) && (
+              <TabsContent value="experience" className="mt-0">
+                <TopicExperienceFields
+                  mode={contentMode as 'writing' | 'reading' | 'listening'}
+                  value={form.contentConfig ?? {}}
+                  mediaAssetId={form.mediaAssetId}
+                  transcript={form.transcript}
+                  onChange={(next) => setForm({ ...form, ...next })}
+                />
+              </TabsContent>
+            )}
 
             <TabsContent value="training" className="mt-0">
               <div className="rounded-lg border border-border/70 bg-muted/20 px-4 py-3">
@@ -1328,8 +1368,10 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
         </div>
       </div>
 
+      <ContentExperiencePanel scene={scene} vocabularies={vocabs} chunks={chunks} patterns={patterns} />
+
       {/* Training Topics — 非 story 类型的学习包 */}
-      {scene.packageType !== 'story' && (
+      {!['story', 'novel'].includes(scene.contentMode) && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -1423,7 +1465,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
       )}
 
       {/* Story Episodes — 仅 story 类型的学习包 */}
-      {scene.packageType === 'story' && (
+      {scene.contentMode === 'story' && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -1501,7 +1543,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
       )}
 
       <TrainingTopicDialog open={topicDialog} onClose={() => setTopicDialog(false)}
-        edit={editTopic} sceneId={sceneId} packageType={scene.packageType} chunks={chunks} vocabs={vocabs} patterns={patterns}
+        edit={editTopic} sceneId={sceneId} packageType={scene.packageType} contentMode={scene.contentMode} chunks={chunks} vocabs={vocabs} patterns={patterns}
         topicIndex={editTopicIndex >= 0 ? editTopicIndex : undefined}
         topicTotal={sortedTopics.length}
         onPrevTopic={editTopicIndex > 0 ? () => openTopicEditor(sortedTopics[editTopicIndex - 1]) : undefined}

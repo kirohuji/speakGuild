@@ -23,6 +23,7 @@ import {
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { extractCoreUsage } from '@/lib/markdown-utils'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
+import { ContentModeExperience } from '../components/content-mode-experience'
 
 const PREP_PAGE_SIZE = 8
 const TOPIC_PAGE_SIZE = 8
@@ -452,7 +453,10 @@ export function LearningUnitPage() {
       </section>
 
       {/* ===== 题目 ===== */}
-      {unit.trainingTopics.length > 0 && (
+      {unit.contentMode && !['practice', 'story'].includes(unit.contentMode) && (
+        <ContentModeExperience unit={unit} />
+      )}
+      {(unit.contentMode ?? (unit.packageType === 'story' ? 'story' : 'practice')) === 'practice' && unit.trainingTopics.length > 0 && (
         <section className="mb-5">
           <SectionHeader
             eyebrow="3"

@@ -37,6 +37,10 @@ export class CreateSceneDto {
   @IsIn(['daily', 'exam', 'story', 'course', 'foundation'])
   packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation';
 
+  @IsOptional()
+  @IsIn(['practice', 'writing', 'reading', 'listening', 'novel', 'story'])
+  contentMode?: 'practice' | 'writing' | 'reading' | 'listening' | 'novel' | 'story';
+
   @IsString()
   title: string;
 
@@ -73,6 +77,10 @@ export class UpdateSceneDto {
   @IsOptional()
   @IsIn(['daily', 'exam', 'story', 'course', 'foundation'])
   packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation';
+
+  @IsOptional()
+  @IsIn(['practice', 'writing', 'reading', 'listening', 'novel', 'story'])
+  contentMode?: 'practice' | 'writing' | 'reading' | 'listening' | 'novel' | 'story';
 
   @IsOptional()
   @IsString()
@@ -149,6 +157,10 @@ export class CreateTrainingTopicDto {
   @IsIn(['daily', 'ielts'])
   type?: 'daily' | 'ielts';
 
+  @IsOptional()
+  @IsIn(['practice', 'writing', 'reading', 'listening'])
+  activityType?: 'practice' | 'writing' | 'reading' | 'listening';
+
   @IsString()
   title: string;
 
@@ -176,6 +188,16 @@ export class CreateTrainingTopicDto {
 
   @IsOptional()
   metadata?: any;
+
+  @IsOptional()
+  contentConfig?: any;
+
+  @IsOptional()
+  @IsString()
+  mediaAssetId?: string;
+
+  @IsOptional()
+  transcript?: any;
 
   @IsOptional()
   @IsArray()
@@ -215,6 +237,10 @@ export class UpdateTrainingTopicDto {
   type?: 'daily' | 'ielts';
 
   @IsOptional()
+  @IsIn(['practice', 'writing', 'reading', 'listening'])
+  activityType?: 'practice' | 'writing' | 'reading' | 'listening';
+
+  @IsOptional()
   @IsString()
   title?: string;
 
@@ -244,6 +270,16 @@ export class UpdateTrainingTopicDto {
 
   @IsOptional()
   metadata?: any;
+
+  @IsOptional()
+  contentConfig?: any;
+
+  @IsOptional()
+  @IsString()
+  mediaAssetId?: string;
+
+  @IsOptional()
+  transcript?: any;
 
   @IsOptional()
   @IsArray()

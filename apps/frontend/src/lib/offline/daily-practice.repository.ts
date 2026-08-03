@@ -370,21 +370,22 @@ async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: stri
 
   const enrolledIds = new Set(myUnits.map((u) => u.id))
 
-  const getPackageType = async (unitId: string, declaredType?: string) => {
-    if (declaredType) return declaredType
+  const getContentMode = async (unitId: string, declaredMode?: string, declaredType?: string) => {
+    if (declaredMode) return declaredMode
     const installed = packs.find((pack) => pack.packId === unitId)
-    if (installed?.manifest?.packageType) return installed.manifest.packageType
-    const localDetail = await localDb.get<{ packageType?: string }>('downloaded_unit_details', unitId).catch(() => null)
-    return localDetail?.packageType
+    if (installed?.manifest?.contentMode) return installed.manifest.contentMode
+    const localDetail = await localDb.get<{ packageType?: string; contentMode?: string }>('downloaded_unit_details', unitId).catch(() => null)
+    const legacyType = declaredType ?? installed?.manifest?.packageType ?? localDetail?.packageType
+    return localDetail?.contentMode ?? (legacyType === 'story' ? 'story' : 'practice')
   }
 
   if (targetPackId) {
     // 即使通过 URL 指定了 packId，也必须检查当前用户是否已加入并安装了该学习包。
     if (!enrolledIds.has(targetPackId) || !installedIds.has(targetPackId)) return []
     const unit = myUnits.find((item) => item.id === targetPackId)
-    const packageType = await getPackageType(targetPackId, unit?.packageType)
-    if (packageType === 'story') {
-      console.log('[daily-practice] story package excluded from Today practice', { packId: targetPackId })
+    const contentMode = await getContentMode(targetPackId, unit?.contentMode, unit?.packageType)
+    if (contentMode !== 'practice') {
+      console.log('[daily-practice] non-practice package excluded from Today practice', { packId: targetPackId, contentMode })
       return []
     }
     const detail = await learningRepository.getCachedUnitDetail(targetPackId)
@@ -399,13 +400,13 @@ async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: stri
     .filter((unit) => installedIds.has(unit.id))
     .map(async (unit) => ({
       id: unit.id,
-      packageType: await getPackageType(unit.id, unit.packageType),
+      contentMode: await getContentMode(unit.id, unit.contentMode, unit.packageType),
     })))
-  const excludedStoryPackIds = candidateEntries
-    .filter((entry) => entry.packageType === 'story')
+  const excludedNonPracticePackIds = candidateEntries
+    .filter((entry) => entry.contentMode !== 'practice')
     .map((entry) => entry.id)
   const candidateIds = candidateEntries
-    .filter((entry) => entry.packageType !== 'story')
+    .filter((entry) => entry.contentMode === 'practice')
     .map((entry) => entry.id)
   const unitIds = scope === 'mixed'
     ? candidateIds
@@ -418,7 +419,7 @@ async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: stri
     targetPackId: targetPackId ?? null,
     installedPackIds: [...installedIds],
     selectedPackIds: unitIds,
-    excludedStoryPackIds,
+    excludedNonPracticePackIds,
     units: resolved.map((unit) => ({ id: unit.id, title: unit.title, trainingTopicCount: unit.trainingTopics?.length ?? 0 })),
   })
   return resolved

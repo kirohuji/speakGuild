@@ -59,6 +59,22 @@ function compactKey(value: any, fallback: string) {
   return String(value).trim() || fallback;
 }
 
+function sanitizeTopicContentConfig(activityType: string, value: any) {
+  if (!value || typeof value !== 'object' || activityType !== 'reading') return value;
+  const reading = value.reading;
+  if (!reading || typeof reading !== 'object' || !Array.isArray(reading.questions)) return value;
+  return {
+    ...value,
+    reading: {
+      ...reading,
+      questions: reading.questions.map((question: any) => {
+        const { answer: _answer, correctAnswer: _correct, acceptedAnswers: _accepted, evidence: _evidence, ...publicQuestion } = question ?? {};
+        return publicQuestion;
+      }),
+    },
+  };
+}
+
 function warmupItemIdentity(item: any) {
   return {
     type: item?.type,
@@ -411,11 +427,14 @@ export class LearningService {
       },
       include: {
         category: { select: { id: true, name: true, icon: true } },
-        _count: { select: { trainingTopics: true, storyEpisodes: true } },
+        _count: { select: { trainingTopics: true, storyEpisodes: true, sceneVocabularies: true, sceneChunks: true } },
+        sceneVocabularies: { select: { vocabularyId: true } },
+        sceneChunks: { select: { chunkId: true } },
         trainingTopics: {
           select: {
             id: true,
             type: true,
+            activityType: true,
             title: true,
             difficulty: true,
             metadata: true,
@@ -447,6 +466,8 @@ export class LearningService {
       const prog = progressMap.get(scene.id);
       const vocabIds = new Set<string>();
       const chunkIds = new Set<string>();
+      for (const item of scene.sceneVocabularies) vocabIds.add(item.vocabularyId);
+      for (const item of scene.sceneChunks) chunkIds.add(item.chunkId);
       for (const t of scene.trainingTopics) {
         for (const tv of (t as any).topicVocabs ?? []) {
           if (tv.vocabId) vocabIds.add(tv.vocabId);
@@ -468,6 +489,7 @@ export class LearningService {
       return {
         id: scene.id,
         packageType: scene.packageType,
+        contentMode: scene.contentMode,
         title: scene.title,
         location: scene.location,
         description: scene.description,
@@ -478,6 +500,7 @@ export class LearningService {
         topics: scene.trainingTopics.map((t: any) => ({
           id: t.id,
           type: t.type,
+          activityType: t.activityType,
           title: t.title,
           difficulty: t.difficulty,
           metadata: t.metadata,
@@ -547,10 +570,13 @@ export class LearningService {
           include: {
             category: { select: { name: true } },
             _count: { select: { trainingTopics: true, storyEpisodes: true } },
+            sceneVocabularies: { select: { vocabularyId: true } },
+            sceneChunks: { select: { chunkId: true } },
             trainingTopics: {
               select: {
                 id: true,
                 type: true,
+                activityType: true,
                 title: true,
                 difficulty: true,
                 metadata: true,
@@ -573,6 +599,8 @@ export class LearningService {
       const scene = p.scene;
       const vocabIds = new Set<string>();
       const chunkIds = new Set<string>();
+      for (const item of scene.sceneVocabularies) vocabIds.add(item.vocabularyId);
+      for (const item of scene.sceneChunks) chunkIds.add(item.chunkId);
       for (const t of scene.trainingTopics) {
         for (const tv of (t as any).topicVocabs ?? []) {
           if (tv.vocabId) vocabIds.add(tv.vocabId);
@@ -592,6 +620,7 @@ export class LearningService {
       return {
         id: scene.id,
         packageType: scene.packageType,
+        contentMode: scene.contentMode,
         title: scene.title,
         location: scene.location,
         description: scene.description,
@@ -600,6 +629,7 @@ export class LearningService {
         topics: scene.trainingTopics.map((t) => ({
           id: t.id,
           type: t.type,
+          activityType: t.activityType,
           title: t.title,
           difficulty: t.difficulty,
           metadata: t.metadata,
@@ -804,6 +834,13 @@ export class LearningService {
         trainingTopics: {
           orderBy: { sortOrder: 'asc' },
           include: {
+            mediaAsset: { select: { id: true, filename: true, mimeType: true, size: true } },
+            submissions: {
+              where: { userId },
+              orderBy: { revision: 'desc' },
+              take: 1,
+              select: { id: true, revision: true, status: true, response: true, feedback: true, updatedAt: true },
+            },
             topicPatterns: {
               include: { pattern: true },
               orderBy: { sortOrder: 'asc' },
@@ -821,6 +858,18 @@ export class LearningService {
               orderBy: { sortOrder: 'asc' },
             },
           },
+        },
+        sceneVocabularies: {
+          orderBy: { sortOrder: 'asc' },
+          include: { vocabulary: true },
+        },
+        sceneChunks: {
+          orderBy: { sortOrder: 'asc' },
+          include: { chunk: { include: { examples: { orderBy: { sortOrder: 'asc' } } } } },
+        },
+        scenePatterns: {
+          orderBy: { sortOrder: 'asc' },
+          include: { pattern: true },
         },
         storyEpisodes: {
           orderBy: { sortOrder: 'asc' },
@@ -912,6 +961,40 @@ export class LearningService {
     const chunkMap = new Map<string, any>();
     const sentencePatterns: any[] = [];
 
+    for (const item of scene.sceneVocabularies) {
+      const v = item.vocabulary;
+      vocabMap.set(v.id, {
+        id: v.id,
+        word: v.word,
+        meaning: v.meaning,
+        partOfSpeech: v.partOfSpeech,
+        phoneticUs: v.phoneticUs,
+        phoneticUk: v.phoneticUk,
+        audioUsUrl: v.audioUsUrl,
+        audioUkUrl: v.audioUkUrl,
+        definitionEn: v.definitionEn,
+        synonyms: v.synonyms,
+        examples: v.examples,
+        description: v.description,
+        difficulty: v.difficulty,
+      });
+    }
+    for (const item of scene.sceneChunks) {
+      const c = item.chunk;
+      chunkMap.set(c.id, {
+        id: c.id,
+        text: c.text,
+        meaning: c.meaning,
+        description: c.description,
+        category: c.category,
+        difficulty: c.difficulty,
+        examples: c.examples,
+      });
+    }
+    for (const item of scene.scenePatterns) {
+      sentencePatterns.push({ ...item.pattern, topicId: '', topicTitle: scene.title });
+    }
+
     for (const topic of scene.trainingTopics) {
       for (const tv of topic.topicVocabs) {
         const v = tv.vocab;
@@ -975,10 +1058,20 @@ export class LearningService {
     const completedWarmupItemIds = completedWarmupItemIdsByScene.get(scene.id) ?? new Set<string>();
     const completedPracticeCount = warmupItemIds.filter((itemId) => completedWarmupItemIds.has(itemId)).length;
     const totalPracticeCount = warmupItemIds.length;
+    const mediaUrls = new Map<string, string>();
+    await Promise.all(scene.trainingTopics.map(async (topic) => {
+      if (!topic.mediaAssetId) return;
+      try {
+        mediaUrls.set(topic.mediaAssetId, (await this.fileAssets.getPrivateUrlByAssetId(topic.mediaAssetId)).url);
+      } catch {
+        // Keep the topic available even when an optional media asset is missing.
+      }
+    }));
 
     return {
       id: scene.id,
       packageType: scene.packageType,
+      contentMode: scene.contentMode,
       title: scene.title,
       location: scene.location,
       description: scene.description,
@@ -1046,11 +1139,18 @@ export class LearningService {
       trainingTopics: scene.trainingTopics.map((t) => ({
         id: t.id,
         type: t.type,
+        activityType: t.activityType,
         title: t.title,
+        description: t.description,
         promptEn: t.promptEn,
         promptZh: t.promptZh,
         difficulty: t.difficulty,
         metadata: t.metadata,
+        contentConfig: sanitizeTopicContentConfig(t.activityType, t.contentConfig),
+        mediaAssetId: t.mediaAssetId,
+        mediaUrl: t.mediaAssetId ? mediaUrls.get(t.mediaAssetId) ?? null : null,
+        transcript: t.transcript,
+        latestSubmission: t.submissions[0] ?? null,
         suggestedDurationSec: t.suggestedDurationSec,
         activeChunks: t.activeChunks.map((ac) => ({
           id: ac.chunk.id,
@@ -1122,6 +1222,7 @@ export class LearningService {
       where: { sceneId: unitId },
       orderBy: { sortOrder: 'asc' },
       include: {
+        mediaAsset: { select: { id: true, filename: true, mimeType: true, size: true } },
         inkScript: {
           select: { id: true, key: true, title: true, inkJson: true, inkSource: true, assetMap: true, version: true, updatedAt: true },
         },
@@ -1134,6 +1235,11 @@ export class LearningService {
           orderBy: { sortOrder: 'asc' },
         },
       },
+    });
+
+    const novelPackage = await this.prisma.novelPackage.findUnique({
+      where: { sceneId: unitId },
+      select: { id: true, epubAssetId: true, metadata: true, toc: true },
     });
 
     const storyEpisodes = await this.prisma.storyEpisode.findMany({
@@ -1329,6 +1435,17 @@ export class LearningService {
 
     // ── topicDetails: per-topic data (each topic has its own vocabs & activeChunks) ──
     const topicDetails = await Promise.all(topics.map(async (topic) => {
+      if (topic.mediaAssetId) {
+        try {
+          const signed = await this.fileAssets.getPrivateUrlByAssetId(topic.mediaAssetId);
+          const asset = this.pushAsset(assets, signed.url, 'topic_media');
+          if (asset) {
+            asset.assetId = topic.mediaAssetId;
+            asset.mimeType = signed.mimeType;
+            asset.size = signed.size;
+          }
+        } catch { /* publish validation reports unavailable assets separately */ }
+      }
       // ── Collect warmup pipeline media assets. Audio is packaged into the offline zip. ──
       const outputTraining = (topic.metadata as any)?.outputTraining;
       if (outputTraining?.pipeline && Array.isArray(outputTraining.pipeline)) {
@@ -1371,6 +1488,10 @@ export class LearningService {
           teachingMarkdown: topic.teachingMarkdown,
           inkScriptId: topic.inkScriptId,
           metadata: topic.metadata,
+          activityType: topic.activityType,
+          contentConfig: sanitizeTopicContentConfig(topic.activityType, topic.contentConfig),
+          mediaAssetId: topic.mediaAssetId,
+          transcript: topic.transcript,
         },
         inkScript: topic.inkScript
           ? {
@@ -1395,6 +1516,22 @@ export class LearningService {
         })),
       };
     }));
+
+    if (novelPackage) {
+      const signed = await this.fileAssets.getPrivateUrlByAssetId(novelPackage.epubAssetId);
+      const asset = this.pushAsset(assets, signed.url, 'epub');
+      if (asset) {
+        asset.assetId = novelPackage.epubAssetId;
+        asset.mimeType = signed.mimeType;
+        asset.size = signed.size;
+      }
+      (unitDetail as any).novelPackage = {
+        id: novelPackage.id,
+        metadata: novelPackage.metadata,
+        toc: novelPackage.toc,
+        epubAssetId: novelPackage.epubAssetId,
+      };
+    }
 
     // Strip derived data from unitDetail — frontend collects from topicDetails
     const { vocabularies: _v, chunks: _c, sentencePatterns: _sp, trainingTopics: _tt, ...leanUnitDetail } = unitDetail as any;
@@ -1426,6 +1563,7 @@ export class LearningService {
         version,
         title: unitDetail.title,
         packageType: unitDetail.packageType,
+        contentMode: unitDetail.contentMode,
         updatedAt: new Date().toISOString(),
         units: [unitDetail.id],
         topics: topics.map((t) => t.id),
@@ -1737,7 +1875,7 @@ export class LearningService {
     const scene = await this.prisma.scene.findUnique({
       where: { id: unitId },
       include: {
-        _count: { select: { trainingTopics: true, storyEpisodes: true } },
+        _count: { select: { trainingTopics: true, storyEpisodes: true, sceneVocabularies: true, sceneChunks: true } },
         trainingTopics: {
           select: {
             _count: { select: { topicVocabs: true, activeChunks: true } },
@@ -1754,8 +1892,8 @@ export class LearningService {
     if (data.completedScript) updateData.completedScriptCount = { increment: 1 };
 
     // Compute vocab/chunk totals from topics
-    let totalVocab = 0;
-    let totalChunks = 0;
+    let totalVocab = scene._count.sceneVocabularies;
+    let totalChunks = scene._count.sceneChunks;
     for (const t of scene.trainingTopics) {
       totalVocab += (t as any)._count?.topicVocabs ?? 0;
       totalChunks += (t as any)._count?.activeChunks ?? 0;
@@ -1807,7 +1945,7 @@ export class LearningService {
     await this.assertLearningPackAccess(userId, unitId, { allowExistingProgress: true });
     const scene = await this.prisma.scene.findUnique({
       where: { id: unitId },
-      select: { id: true },
+      select: { id: true, contentMode: true },
     });
     if (!scene) return null;
 
@@ -1816,6 +1954,7 @@ export class LearningService {
       where: {
         userId,
         mastery: { lt: 100 },
+        scene: { contentMode: 'practice' },
       },
     });
 
@@ -1824,7 +1963,7 @@ export class LearningService {
       where: { userId_sceneId: { userId, sceneId: unitId } },
     });
 
-    if (!existing && existingCount >= this.MAX_CONCURRENT_UNITS) {
+    if (!existing && scene.contentMode === 'practice' && existingCount >= this.MAX_CONCURRENT_UNITS) {
       throw new Error(`最多同时学习 ${this.MAX_CONCURRENT_UNITS} 个单元，请先完成当前单元`);
     }
 

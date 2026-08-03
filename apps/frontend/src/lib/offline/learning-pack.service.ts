@@ -12,8 +12,9 @@ export interface LearningPackManifest {
   packId: string
   version: number
   title: string
-  /** Story packs are playable offline but never supply Today practice items. */
+  /** Only practice-mode packs supply Today practice items. */
   packageType?: string
+  contentMode?: string
   updatedAt: string
   units: string[]
   topics: string[]
@@ -365,6 +366,8 @@ export const learningPackService = {
         packId: unitDetail.id,
         version: Date.now(),
         title: unitDetail.title,
+        packageType: unitDetail.packageType,
+        contentMode: unitDetail.contentMode,
         updatedAt: new Date().toISOString(),
         units: [unitDetail.id],
         topics: (unitDetail.trainingTopics ?? []).map((topic: any) => topic.id),

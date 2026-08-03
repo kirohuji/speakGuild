@@ -2,11 +2,15 @@ import { del, get, post } from '@/lib/request'
 
 const LEARNING_PACK_DOWNLOAD_TIMEOUT_MS = 10 * 60_000
 
+export type ContentMode = 'practice' | 'writing' | 'reading' | 'listening' | 'novel' | 'story'
+export type TopicActivityType = 'practice' | 'writing' | 'reading' | 'listening'
+
 // ---- 类型定义 ----
 
 export interface TopicSummary {
   id: string
   type?: 'daily' | 'ielts'
+  activityType?: TopicActivityType
   title: string
   difficulty: string
   metadata?: any
@@ -16,6 +20,7 @@ export interface TopicSummary {
 export interface LearningUnitSummary {
   id: string
   packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
+  contentMode?: ContentMode
   title: string
   location: string
   description?: string | null
@@ -101,11 +106,18 @@ export interface SentencePattern {
 export interface TrainingTopicItem {
   id: string
   type?: 'daily' | 'ielts'
+  activityType?: TopicActivityType
   title: string
+  description?: string | null
   promptEn: string
   promptZh: string
   difficulty: string
   metadata?: any
+  contentConfig?: Record<string, any> | null
+  mediaAssetId?: string | null
+  mediaUrl?: string | null
+  transcript?: ListeningTranscriptSegment[] | null
+  latestSubmission?: TopicSubmission | null
   suggestedDurationSec: number
   activeChunks: { id: string; text: string; meaning: string }[]
   vocabularies?: VocabItem[]
@@ -115,6 +127,7 @@ export interface TrainingTopicItem {
 export interface UnitDetail {
   id: string
   packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
+  contentMode?: ContentMode
   title: string
   location: string
   description: string | null
@@ -220,6 +233,7 @@ export interface StoryEpisodePlayerData {
 export interface MyUnit {
   id: string
   packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
+  contentMode?: ContentMode
   title: string
   location: string
   description?: string | null
@@ -250,6 +264,60 @@ export interface TagInfo {
 }
 
 export type LearningPackageType = 'daily' | 'exam' | 'story' | 'course' | 'foundation'
+
+export interface ListeningTranscriptWord {
+  token: string
+  startMs: number
+  endMs: number
+}
+
+export interface ListeningTranscriptSegment {
+  id?: string
+  text: string
+  translation?: string
+  speaker?: string
+  startMs: number
+  endMs: number
+  words?: ListeningTranscriptWord[]
+}
+
+export interface TopicSubmission {
+  id: string
+  revision: number
+  status: 'draft' | 'submitted' | 'reviewed' | 'completed'
+  response: Record<string, any>
+  feedback?: Record<string, any> | null
+  updatedAt: string
+}
+
+export interface SceneExperience {
+  id: string
+  contentMode: ContentMode
+  groupItem?: {
+    sortOrder: number
+    volumeLabel?: string | null
+    group: {
+      id: string
+      name: string
+      description?: string | null
+      items: Array<{
+        id: string
+        sceneId: string
+        sortOrder: number
+        volumeLabel?: string | null
+        requiredPrevious: boolean
+        scene: { id: string; title: string; coverImage?: string | null; contentMode: ContentMode }
+      }>
+    }
+  } | null
+  novelPackage?: {
+    id: string
+    metadata: Record<string, any>
+    toc: Array<{ label: string; href: string }>
+    epubUrl: string
+    progress?: { locator: Record<string, any>; percentage: number } | null
+  } | null
+}
 
 export interface OfflineManifestResult {
   manifest: {
@@ -320,6 +388,20 @@ export const learningApi = {
 
   /** 获取学习单元详情 */
   getUnitDetail: (unitId: string) => get<UnitDetail>(`/learning/units/${unitId}`),
+
+  getSceneExperience: (unitId: string) =>
+    get<SceneExperience>(`/learning/experiences/scenes/${unitId}`),
+
+  saveTopicSubmission: (
+    topicId: string,
+    data: { response: Record<string, any>; status?: TopicSubmission['status']; revision?: number },
+  ) => post<TopicSubmission>(`/learning/experiences/topics/${topicId}/submissions`, data),
+
+  reviewTopicSubmission: (topicId: string) =>
+    post<TopicSubmission>(`/learning/experiences/topics/${topicId}/review`, {}),
+
+  saveNovelProgress: (unitId: string, data: { locator: Record<string, any>; percentage: number }) =>
+    post(`/learning/experiences/novels/${unitId}/progress`, data),
 
   getStoryEpisodePlayer: (episodeId: string) =>
     get<StoryEpisodePlayerData>(`/learning/episodes/${episodeId}/player`),

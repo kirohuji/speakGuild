@@ -35,13 +35,20 @@ export function buildAggregatedUnitContent(unitDetail: any, topicDetails: TopicD
     const topicId = detail.topic?.id ?? fallbackTopicId
 
     trainingTopics.push({
+      ...detail.topic,
       id: topicId,
       title: detail.topic?.title,
+      description: detail.topic?.description,
       promptEn: detail.topic?.promptEn,
       promptZh: detail.topic?.promptZh,
       difficulty: detail.topic?.difficulty,
       suggestedDurationSec: detail.topic?.suggestedDurationSec,
       metadata: detail.topic?.metadata,
+      activityType: detail.topic?.activityType,
+      contentConfig: detail.topic?.contentConfig,
+      media: detail.topic?.media,
+      transcript: detail.topic?.transcript,
+      latestSubmission: detail.topic?.latestSubmission,
       vocabularies: detail.vocabularies ?? [],
       activeChunks: detail.activeChunks ?? [],
       sentencePatterns: (detail.sentencePatterns ?? []).map((p: any) => ({
@@ -125,6 +132,7 @@ function summaryToMyUnit(unit: LearningUnitSummary | UnitDetail): MyUnit {
   return {
     id: unit.id,
     packageType: unit.packageType,
+    contentMode: unit.contentMode,
     title: unit.title,
     location: unit.location,
     description: unit.description,

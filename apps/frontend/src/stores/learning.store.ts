@@ -223,16 +223,18 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       ? getState().myUnits.find((unit) => unit.id === changedPackId)
       : null
     const localPackDetail = changedPackId
-      ? await localDb.get<{ packageType?: string }>('downloaded_unit_details', changedPackId).catch(() => null)
+      ? await localDb.get<{ packageType?: string; contentMode?: string }>('downloaded_unit_details', changedPackId).catch(() => null)
       : null
     const packageType = changedPack?.manifest?.packageType ?? changedUnit?.packageType ?? localPackDetail?.packageType
-    const affectsTodayPractice = packageType !== 'story'
-    // Story packages are isolated from today's vocabulary/chunk practice. Do
-    // not discard an already-built daily plan when only a story pack changes.
+    const contentMode = changedPack?.manifest?.contentMode ?? changedUnit?.contentMode ?? localPackDetail?.contentMode
+    const affectsTodayPractice = contentMode ? contentMode === 'practice' : packageType !== 'story'
+    // Only practice-mode packages feed Today. Do not discard an already-built
+    // daily plan when reading, writing, listening, novel or story content changes.
     if (affectsTodayPractice) useDailyPracticeStore.getState().reset()
     console.log('[learning-store] pack state changed', {
       changedPackId: changedPackId ?? null,
       packageType: packageType ?? 'unknown',
+      contentMode: contentMode ?? 'unknown',
       dailyPlanReset: affectsTodayPractice,
       installedPackIds: downloadedPacks
         .filter((pack) => pack.status === 'installed')

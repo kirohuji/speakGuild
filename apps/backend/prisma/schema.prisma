@@ -122,6 +122,8 @@ model User {
   warmupItemProgresses  UserWarmupItemProgress[]
   dailyPracticeRuns     UserDailyPracticeRun[]
   dailyPracticeAttempts UserDailyPracticeAttempt[]
+  trainingTopicSubmissions TrainingTopicSubmission[]
+  novelReadingProgresses NovelReadingProgress[]
   explorationRecords    ExplorationRecord[]
   userAchievementsV2    UserAchievementV2[]
   gameSaves             GameSave[]
@@ -421,6 +423,7 @@ enum FileAssetGroup {
   learning_pack_delta
   user_recording
   scene_cover
+  epub
 }
 
 enum FileAssetStatus {
@@ -450,6 +453,8 @@ model FileAsset {
   scriptRecordVideoAssets ScriptPracticeRecord[] @relation("ScriptRecordVideo")
   scriptWorkVideoAssets   ScriptWork[]           @relation("ScriptWorkVideo")
   scriptWorkCoverAssets   ScriptWork[]           @relation("ScriptWorkCover")
+  trainingTopicMedia      TrainingTopic[]          @relation("TrainingTopicMedia")
+  novelEpubFiles          NovelPackage[]          @relation("NovelEpubAsset")
 
   @@index([group, status, createdAt(sort: Desc)])
   @@index([status, refCount, createdAt])
@@ -673,6 +678,7 @@ model Scene {
   category            SceneCategory       @relation(fields: [categoryId], references: [id])
   categoryId          String
   packageType         LearningPackageType @default(daily)
+  contentMode         ContentMode          @default(practice)
   title               String
   location            String
   description         String?
@@ -687,11 +693,141 @@ model Scene {
   userProgresses      UserSceneProgress[]
   gameLocations       GameLocation[]
   learningPackages    LearningPackage[]
+  novelPackage        NovelPackage?
+  groupItem           PackageGroupItem?
+  sceneVocabularies   SceneVocabulary[]
+  sceneChunks         SceneChunk[]
+  scenePatterns       SceneSentencePattern[]
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 
   @@index([createdAt])
   @@map("scene")
+}
+
+enum ContentMode {
+  practice
+  writing
+  reading
+  listening
+  novel
+  story
+}
+
+enum PackageGroupStatus {
+  draft
+  published
+  archived
+}
+
+model PackageGroup {
+  id          String             @id @default(cuid())
+  slug        String             @unique
+  name        String
+  description String?            @db.Text
+  coverImage  String?
+  contentMode ContentMode?
+  status      PackageGroupStatus @default(draft)
+  items       PackageGroupItem[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([status, createdAt])
+  @@map("package_group")
+}
+
+model PackageGroupItem {
+  id               String       @id @default(cuid())
+  group            PackageGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId          String
+  scene            Scene        @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId          String       @unique
+  sortOrder        Int
+  volumeLabel      String?
+  requiredPrevious Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@unique([groupId, sortOrder])
+  @@index([groupId, sortOrder])
+  @@map("package_group_item")
+}
+
+model SceneVocabulary {
+  id           String     @id @default(cuid())
+  scene        Scene      @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId      String
+  vocabulary   Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+  vocabularyId String
+  sortOrder    Int        @default(0)
+
+  @@unique([sceneId, vocabularyId])
+  @@index([sceneId, sortOrder])
+  @@map("scene_vocabulary")
+}
+
+model SceneChunk {
+  id        String @id @default(cuid())
+  scene     Scene   @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId   String
+  chunk     Chunk   @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+  chunkId   String
+  sortOrder Int     @default(0)
+
+  @@unique([sceneId, chunkId])
+  @@index([sceneId, sortOrder])
+  @@map("scene_chunk")
+}
+
+model SceneSentencePattern {
+  id        String          @id @default(cuid())
+  scene     Scene           @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId   String
+  pattern   SentencePattern @relation(fields: [patternId], references: [id], onDelete: Cascade)
+  patternId String
+  sortOrder Int             @default(0)
+
+  @@unique([sceneId, patternId])
+  @@index([sceneId, sortOrder])
+  @@map("scene_sentence_pattern")
+}
+
+enum TopicSubmissionStatus {
+  draft
+  submitted
+  reviewed
+  completed
+}
+
+model NovelPackage {
+  id          String       @id @default(cuid())
+  scene       Scene        @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId     String       @unique
+  epubAsset   FileAsset    @relation("NovelEpubAsset", fields: [epubAssetId], references: [id], onDelete: Restrict)
+  epubAssetId String
+  metadata    Json?
+  toc         Json
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  progresses  NovelReadingProgress[]
+
+  @@map("novel_package")
+}
+
+model NovelReadingProgress {
+  id             String       @id @default(cuid())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  novelPackage   NovelPackage @relation(fields: [novelPackageId], references: [id], onDelete: Cascade)
+  novelPackageId String
+  locator        Json
+  percentage     Float        @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([userId, novelPackageId])
+  @@index([userId, updatedAt])
+  @@map("novel_reading_progress")
 }
 
 enum LearningPackageStatus {
@@ -783,6 +919,7 @@ model Chunk {
   userProgresses     UserChunkProgress[]
   storyEpisodeChunks StoryEpisodeChunk[]
   topicChunks        TrainingTopicChunk[]
+  sceneChunks        SceneChunk[]
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
 
@@ -813,6 +950,7 @@ model Vocabulary {
   updatedAt                DateTime                 @updatedAt
   storyEpisodeVocabularies StoryEpisodeVocabulary[]
   topicVocabs              TrainingTopicVocab[]
+  sceneVocabularies        SceneVocabulary[]
 
   @@unique([word])
   @@index([updatedAt])
@@ -877,6 +1015,7 @@ model TrainingTopic {
   scene                      Scene                          @relation(fields: [sceneId], references: [id])
   sceneId                    String
   type                       TrainingTopicType              @default(daily)
+  activityType               TopicActivityType              @default(practice)
   title                      String
   description                String?                        @db.Text
   knowledgePoints            String?                        @db.Text
@@ -886,10 +1025,15 @@ model TrainingTopic {
   suggestedDurationSec       Int                            @default(60)
   difficulty                 String                         @default("L2")
   metadata                   Json?
+  contentConfig              Json?
+  mediaAsset                 FileAsset?                     @relation("TrainingTopicMedia", fields: [mediaAssetId], references: [id], onDelete: SetNull)
+  mediaAssetId               String?
+  transcript                 Json?
   activeChunks               TrainingTopicChunk[]
   topicPatterns              TrainingTopicSentencePattern[]
   topicVocabs                TrainingTopicVocab[]
   practiceSessions           PracticeSession[]
+  submissions                TrainingTopicSubmission[]
   sentencePatternsDeprecated Json?                          @map("sentence_patterns")
   inkScriptId                String?                        @unique
   inkScript                  InkScript?                     @relation("TopicInkScript", fields: [inkScriptId], references: [id])
@@ -899,6 +1043,31 @@ model TrainingTopic {
   @@index([sceneId, difficulty])
   @@index([createdAt])
   @@map("training_topic")
+}
+
+enum TopicActivityType {
+  practice
+  writing
+  reading
+  listening
+}
+
+model TrainingTopicSubmission {
+  id        String                @id @default(cuid())
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  topic     TrainingTopic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId   String
+  revision  Int                   @default(1)
+  status    TopicSubmissionStatus @default(draft)
+  response  Json
+  feedback  Json?
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+
+  @@unique([userId, topicId, revision])
+  @@index([userId, updatedAt])
+  @@map("training_topic_submission")
 }
 
 model SentencePattern {
@@ -915,6 +1084,7 @@ model SentencePattern {
 
   topicPatterns        TrainingTopicSentencePattern[]
   storyEpisodePatterns StoryEpisodeSentencePattern[]
+  scenePatterns        SceneSentencePattern[]
 
   @@unique([pattern])
   @@index([updatedAt])

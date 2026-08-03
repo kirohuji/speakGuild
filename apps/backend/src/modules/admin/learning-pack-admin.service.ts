@@ -119,6 +119,7 @@ export class LearningPackAdminService {
       select: { id: true, title: true, packageType: true },
     });
     if (!scene) throw new NotFoundException('学习单元不存在');
+    if (input?.publish !== false) await this.validateExperienceForPublish(sceneId);
 
     const latest = await (this.prisma as any).learningPackage.findFirst({
       where: { sceneId },
@@ -302,6 +303,7 @@ export class LearningPackAdminService {
     const pack = await (this.prisma as any).learningPackage.findUnique({ where: { id } });
     if (!pack) throw new NotFoundException('学习包不存在');
     if (!pack.fileAssetId) throw new BadRequestException('学习包尚未生成 zip，不能发布');
+    await this.validateExperienceForPublish(pack.sceneId);
 
     // V2: 尝试生成 delta（对上一個已发布版本）
     await this.generateDeltaIfPossible(pack).catch((err) => {
@@ -316,6 +318,48 @@ export class LearningPackAdminService {
         fileAsset: { select: { id: true, size: true, sha256: true, filename: true, createdAt: true } },
       },
     });
+  }
+
+  private async validateExperienceForPublish(sceneId: string) {
+    const scene = await this.prisma.scene.findUnique({
+      where: { id: sceneId },
+      select: {
+        title: true,
+        contentMode: true,
+        novelPackage: { select: { id: true, epubAssetId: true, toc: true } },
+        trainingTopics: {
+          orderBy: { sortOrder: 'asc' },
+          select: { title: true, activityType: true, contentConfig: true, mediaAssetId: true, transcript: true },
+        },
+        _count: { select: { storyEpisodes: true } },
+      },
+    });
+    if (!scene) throw new NotFoundException('学习单元不存在');
+    if (scene.contentMode === 'novel') {
+      if (!scene.novelPackage?.epubAssetId || !Array.isArray(scene.novelPackage.toc) || scene.novelPackage.toc.length === 0) {
+        throw new BadRequestException('小说包必须上传可解析目录的 EPUB');
+      }
+      return;
+    }
+    if (scene.contentMode === 'story') {
+      if (scene._count.storyEpisodes === 0) throw new BadRequestException('剧情包至少需要一个章节');
+      return;
+    }
+    if (scene.contentMode === 'practice') return;
+    if (scene.trainingTopics.length === 0) throw new BadRequestException(`${scene.title} 至少需要一个内容话题`);
+    for (const topic of scene.trainingTopics) {
+      if (topic.activityType !== scene.contentMode) {
+        throw new BadRequestException(`话题“${topic.title}”题型与学习包内容体验不一致`);
+      }
+      const config = topic.contentConfig as any;
+      if (scene.contentMode === 'writing' && !config?.writing) throw new BadRequestException(`写作话题“${topic.title}”缺少写作要求`);
+      if (scene.contentMode === 'reading' && !Array.isArray(config?.reading?.questions)) throw new BadRequestException(`阅读话题“${topic.title}”缺少理解题配置`);
+      if (scene.contentMode === 'listening') {
+        if (!topic.mediaAssetId) throw new BadRequestException(`听力话题“${topic.title}”缺少音频`);
+        const transcript = topic.transcript as any;
+        if (!Array.isArray(transcript) || transcript.length === 0) throw new BadRequestException(`听力话题“${topic.title}”缺少逐句时间戳`);
+      }
+    }
   }
 
   /** V2: 为上一個已发布版本生成增量包 */

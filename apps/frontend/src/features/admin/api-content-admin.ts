@@ -82,6 +82,7 @@ export interface Scene {
   id: string
   categoryId: string
   packageType: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
+  contentMode: 'practice' | 'writing' | 'reading' | 'listening' | 'novel' | 'story'
   title: string
   location: string
   description: string | null
@@ -151,6 +152,7 @@ export interface TrainingTopic {
   id: string
   sceneId: string
   type?: 'daily' | 'ielts'
+  activityType?: 'practice' | 'writing' | 'reading' | 'listening'
   title: string
   description?: string | null
   teachingMarkdown?: string | null
@@ -159,6 +161,17 @@ export interface TrainingTopic {
   suggestedDurationSec: number
   difficulty: string
   metadata?: any
+  contentConfig?: Record<string, any> | null
+  mediaAssetId?: string | null
+  transcript?: Array<{
+    id?: string
+    text: string
+    translation?: string
+    speaker?: string
+    startMs: number
+    endMs: number
+    words?: Array<{ token: string; startMs: number; endMs: number }>
+  }> | null
   sentencePatterns: SentencePattern[]  // still sent as sentencePatterns from API for compat
   inkScriptId?: string | null
   sortOrder: number

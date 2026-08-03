@@ -72,6 +72,7 @@ export interface OfflineStorageDetails {
     manifestVersion: number
     status: InstalledLearningPack['status']
     packageType?: string
+    contentMode?: string
     installedAt: string | null
     updatedAt: string
     bytes: number
@@ -311,6 +312,7 @@ export const offlineStorageService = {
         const unitDetail = relatedUnitDetails.find((item) => String(item?.id ?? '') === pack.packId)
           ?? relatedUnitDetails.find((item) => item?.detail && String(item?.detail?.id ?? '') === pack.packId)
         const packageType = unitDetail?.packageType ?? unitDetail?.detail?.packageType
+        const contentMode = pack.manifest?.contentMode ?? unitDetail?.contentMode ?? unitDetail?.detail?.contentMode
         const storyEpisodes = unitDetail?.storyEpisodes ?? unitDetail?.detail?.storyEpisodes
         const relatedRefs = offlineContentRefs.filter((item) => String(item?.packId ?? '') === pack.packId)
         const vocabIds = new Set(relatedRefs.filter((item) => item.kind === 'vocab').map((item) => String(item.contentId)))
@@ -326,6 +328,7 @@ export const offlineStorageService = {
           manifestVersion: pack.manifest?.version ?? pack.version,
           status: pack.status,
           packageType,
+          contentMode,
           installedAt: pack.installedAt,
           updatedAt: pack.updatedAt,
           bytes: sumJsonBytes([
