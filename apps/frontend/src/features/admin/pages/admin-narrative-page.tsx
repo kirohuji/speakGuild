@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, PackageCheck, Pencil, Plus, Search } from 'lucide-react'
+import { ArrowLeft, BookOpen, Loader2, PackageCheck, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -17,6 +17,7 @@ import {
   listScenes,
   listSceneCategories,
   createScene,
+  deleteScene,
   updateScene,
   type GameCharacter,
   type GameLocationData,
@@ -34,6 +35,8 @@ export function AdminNarrativePage() {
   const [packageDialogOpen, setPackageDialogOpen] = useState(false)
   const [editingPackage, setEditingPackage] = useState<Scene | null>(null)
   const [packageSaving, setPackageSaving] = useState(false)
+  const [deletingPackage, setDeletingPackage] = useState<Scene | null>(null)
+  const [packageDeleting, setPackageDeleting] = useState(false)
   const [packageForm, setPackageForm] = useState({ title: '', description: '', categoryId: '', isFree: false, coverImage: '' })
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
@@ -101,6 +104,22 @@ export function AdminNarrativePage() {
     finally { setPackageSaving(false) }
   }
 
+  const confirmDeletePackage = async () => {
+    if (!deletingPackage) return
+    setPackageDeleting(true)
+    try {
+      await deleteScene(deletingPackage.id)
+      if (packageId === deletingPackage.id) leavePackage()
+      setDeletingPackage(null)
+      await loadAssets()
+      toast.success('剧情包及关联章节已删除')
+    } catch (error: any) {
+      toast.error(error?.message || '剧情包删除失败')
+    } finally {
+      setPackageDeleting(false)
+    }
+  }
+
   return (
     <div className="flex min-h-0 flex-col gap-5">
       <header className="flex flex-wrap items-start justify-between gap-3">
@@ -109,9 +128,14 @@ export function AdminNarrativePage() {
           <div><h1 className="text-2xl font-bold">{selectedPackage?.title ?? '剧情包内容'}</h1><p className="mt-1 text-sm text-muted-foreground">{selectedPackage ? '编辑章节、剧集及沉浸式输出体验。' : '管理沉浸式剧情包、章节与剧集内容。'}</p></div>
         </div>
         {selectedPackage ? (
-          <Button variant="outline" onClick={() => { window.location.hash = '#/admin/script-packs' }}>
-            <PackageCheck className="mr-2 size-4" />剧本包发布
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setDeletingPackage(selectedPackage)} className="text-destructive hover:text-destructive">
+              <Trash2 className="mr-2 size-4" />删除剧情包
+            </Button>
+            <Button variant="outline" onClick={() => { window.location.hash = '#/admin/script-packs' }}>
+              <PackageCheck className="mr-2 size-4" />剧本包发布
+            </Button>
+          </div>
         ) : <Button onClick={() => openPackageDialog()}><Plus className="mr-2 size-4" />新建剧情包</Button>}
       </header>
 
@@ -130,7 +154,7 @@ export function AdminNarrativePage() {
                   <img src={item.coverImage} alt={item.title} className="size-full object-cover" />
                 </div>
               ) : null}
-              <CardContent className="p-5"><div className="flex items-start gap-3"><div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600"><BookOpen className="size-5" /></div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h3 className="min-w-0 flex-1 truncate font-semibold">{item.title}</h3><Button variant="ghost" size="icon" className="size-7" onClick={(event) => { event.stopPropagation(); openPackageDialog(item) }}><Pencil className="size-3.5" /></Button></div><p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{item.description || '尚未填写剧情包简介'}</p><p className="mt-3 text-xs text-muted-foreground">{item._count?.storyEpisodes ?? 0} 个剧集 · {item.isFree ? '免费体验' : '会员内容'}</p></div></div><Button size="sm" className="mt-4 w-full">编辑剧情</Button></CardContent>
+              <CardContent className="p-5"><div className="flex items-start gap-3"><div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600"><BookOpen className="size-5" /></div><div className="min-w-0 flex-1"><div className="flex items-center gap-1"><h3 className="min-w-0 flex-1 truncate font-semibold">{item.title}</h3><Button variant="ghost" size="icon" className="size-7" title="编辑剧情包" onClick={(event) => { event.stopPropagation(); openPackageDialog(item) }}><Pencil className="size-3.5" /></Button><Button variant="ghost" size="icon" className="size-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" title="删除剧情包" onClick={(event) => { event.stopPropagation(); setDeletingPackage(item) }}><Trash2 className="size-3.5" /></Button></div><p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{item.description || '尚未填写剧情包简介'}</p><p className="mt-3 text-xs text-muted-foreground">{item._count?.storyEpisodes ?? 0} 个剧集 · {item.isFree ? '免费体验' : '会员内容'}</p></div></div><Button size="sm" className="mt-4 w-full">编辑剧情</Button></CardContent>
             </Card>
           ))}</div> : <div className="rounded-xl border border-dashed py-16 text-center"><BookOpen className="mx-auto size-10 text-muted-foreground/25" /><p className="mt-3 text-sm font-medium">{packages.length ? '没有匹配的剧情包' : '还没有剧情包'}</p><p className="mt-1 text-xs text-muted-foreground">{packages.length ? '尝试调整搜索或筛选条件。' : '点击右上角新建第一本剧情包。'}</p></div>}
         </div>
@@ -162,6 +186,24 @@ export function AdminNarrativePage() {
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={packageForm.isFree} onChange={(event) => setPackageForm({ ...packageForm, isFree: event.target.checked })} />作为免费体验剧情包</label>
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setPackageDialogOpen(false)}>取消</Button><Button onClick={() => void savePackage()} disabled={packageSaving || !packageForm.title.trim() || !packageForm.categoryId}>{packageSaving ? '保存中…' : '保存剧情包'}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(deletingPackage)} onOpenChange={(open) => { if (!open && !packageDeleting) setDeletingPackage(null) }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>删除剧情包“{deletingPackage?.title}”？</DialogTitle>
+            <DialogDescription>
+              将同时删除该剧情包下的 {deletingPackage?._count?.storyEpisodes ?? 0} 个章节，以及关联的剧情脚本、练习记录和作品。共享角色、地图与音色资产不会被删除。此操作无法撤销。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" disabled={packageDeleting} onClick={() => setDeletingPackage(null)}>取消</Button>
+            <Button variant="destructive" disabled={packageDeleting} onClick={() => void confirmDeletePackage()}>
+              {packageDeleting ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Trash2 className="mr-2 size-4" />}
+              {packageDeleting ? '删除中…' : '确认关联删除'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

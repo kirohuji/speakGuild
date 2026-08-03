@@ -4,6 +4,7 @@ import { seedThemes } from './seed-themes';
 import { seedInit } from './seed-init';
 import { seedLearningPackages } from './seed-learning-packages';
 import { seedDailySentences } from './seed-daily-sentences';
+import { seedAiModels } from './seed-ai-models';
 
 const prisma = new PrismaClient();
 
@@ -196,6 +197,8 @@ async function main() {
   console.log('🌱 第一阶段：初始化包\n')
   await seedSystemConfigs()
   console.log('  ✓ 系统配置')
+  await seedAiModels(prisma)
+  console.log('  ✓ AI 模型配置')
   await seedMembershipPlans()
   console.log('  ✓ 会员计划')
   const { adminUser, normalUser } = await seedUsers()

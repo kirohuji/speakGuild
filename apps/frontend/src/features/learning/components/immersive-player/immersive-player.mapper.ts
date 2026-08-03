@@ -118,8 +118,8 @@ export function buildPlaybackSegments(item: ImmersivePlayerItem, settings: Immer
       text: item.exampleEn.trim(),
       lang: 'en',
       audioUrl: item.exampleAudioUrl,
-      title: item.exampleEn.trim(),
-      subtitle: item.title,
+      title: item.title,
+      subtitle: item.exampleEn.trim(),
     })
   }
   if (settings.playExampleTranslation && item.exampleZh?.trim()) {
@@ -129,13 +129,14 @@ export function buildPlaybackSegments(item: ImmersivePlayerItem, settings: Immer
       role: 'exampleTranslation',
       text: item.exampleZh.trim(),
       lang: 'zh',
-      title: item.exampleZh.trim(),
-      subtitle: item.title,
+      title: item.title,
+      subtitle: item.exampleZh.trim(),
     })
   }
 
   const repeated: PlaybackSegment[] = []
-  for (let round = 0; round < settings.repeatPerItem; round += 1) {
+  const repeatCount = settings.repeatPerItem === 'infinite' ? 1 : settings.repeatPerItem
+  for (let round = 0; round < repeatCount; round += 1) {
     repeated.push(...base.map((segment) => ({ ...segment, id: `${segment.id}:${round}` })))
   }
   return repeated

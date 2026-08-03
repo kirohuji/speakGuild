@@ -28,8 +28,6 @@ export const useImmersivePlayerPreferences = create<ImmersivePlayerPreferencesSt
     }),
     {
       name: 'manyu-immersive-player',
-      version: 1,
     },
   ),
 )
-

@@ -126,7 +126,7 @@ function ListeningWaveformCard({
 }) {
   return (
     <section className="w-full max-w-md text-center">
-      {/* <p className="text-base font-medium tracking-wide text-muted-foreground">{label}</p> */}
+      <p className="text-base font-medium tracking-wide text-muted-foreground">{label}</p>
       <div className="mb-5">
         <ListeningEqualizer active={active} />
       </div>
@@ -152,92 +152,155 @@ export function ImmersivePlayerDialog({
   const [insightExpanded, setInsightExpanded] = useState(false)
   const [visualPlayback, setVisualPlayback] = useState<ImmersivePlaybackVisualState>({ state: 'idle', media: null })
   const runRef = useRef(0)
+  const statusRef = useRef<ImmersivePlayerStatus>('idle')
   const sleepTimerRef = useRef<number | null>(null)
+  const continueAfterIndexChangeRef = useRef(false)
+  const playFromCurrentRef = useRef<(() => Promise<void>) | null>(null)
   const mediaMetadataLabels = useMemo(() => ({
     artist: t('app.name'),
     album: t('immersivePlayer.mediaAlbum'),
   }), [t])
+  const setPlaybackStatus = useCallback((nextStatus: ImmersivePlayerStatus) => {
+    statusRef.current = nextStatus
+    setStatus(nextStatus)
+  }, [])
 
   const hasPrev = index > 0
   const hasNext = index < items.length - 1
 
-  const gotoPrev = useCallback(() => {
-    if (hasPrev) onIndexChange(index - 1)
+  const gotoPrev = useCallback((continuePlayback = false) => {
+    if (!hasPrev) return
+    continueAfterIndexChangeRef.current = continuePlayback
+    onIndexChange(index - 1)
   }, [hasPrev, index, onIndexChange])
 
-  const gotoNext = useCallback(() => {
+  const gotoNext = useCallback((continuePlayback = false) => {
+    if (!hasNext && !(settings.loopQueue && items.length > 0)) return
+    continueAfterIndexChangeRef.current = continuePlayback
     if (hasNext) onIndexChange(index + 1)
-    else if (settings.loopQueue && items.length > 0) onIndexChange(0)
+    else onIndexChange(0)
   }, [hasNext, index, items.length, onIndexChange, settings.loopQueue])
 
   const stopPlayback = useCallback(async (nextStatus: ImmersivePlayerStatus = 'idle') => {
     runRef.current += 1
-    setStatus(nextStatus)
+    setPlaybackStatus(nextStatus)
     setSegmentRole(null)
     await immersivePlaybackService.stopCurrent()
-  }, [])
+  }, [setPlaybackStatus])
 
   const playFromCurrent = useCallback(async () => {
     if (!current) return
     const runId = runRef.current + 1
     runRef.current = runId
-    setStatus('loading')
+    setPlaybackStatus('loading')
 
     const segments = buildPlaybackSegments(current, settings)
     if (segments.length === 0) {
-      setStatus('idle')
+      setPlaybackStatus('idle')
       toast.warning(t('immersivePlayer.noPlayableSegments'))
       return
     }
 
     try {
-      for (const segment of segments) {
-        if (runRef.current !== runId) return
-        setSegmentRole(segment.role)
-        setStatus('loading')
-        await immersivePlaybackService.playSegment(
-          segment,
-          settings.playbackRate,
-          (event) => {
-            if (event.reason === 'remotePlay') setStatus('playing')
-            if (event.reason === 'remotePause') setStatus('paused')
-          },
-          () => setStatus('playing'),
-          mediaMetadataLabels,
-        )
-        if (runRef.current !== runId) return
-        setStatus('playing')
-      }
+      do {
+        for (const segment of segments) {
+          if (runRef.current !== runId) return
+          setSegmentRole(segment.role)
+          setPlaybackStatus('loading')
+          await immersivePlaybackService.playSegment(
+            segment,
+            settings.playbackRate,
+            (event) => {
+              if (runRef.current !== runId) return
+              if (event.reason === 'remotePlay') setPlaybackStatus('playing')
+              if (event.reason === 'remotePause') setPlaybackStatus('paused')
+            },
+            () => {
+              if (runRef.current === runId) setPlaybackStatus('playing')
+            },
+            mediaMetadataLabels,
+          )
+          if (runRef.current !== runId) return
+          setPlaybackStatus('playing')
+        }
+      } while (
+        runRef.current === runId
+        && settings.repeatPerItem === 'infinite'
+        && useImmersivePlayerPreferences.getState().settings.repeatPerItem === 'infinite'
+      )
 
       if (runRef.current !== runId) return
       setSegmentRole(null)
-      if (settings.autoNext && (hasNext || settings.loopQueue)) {
-        gotoNext()
+      const latestSettings = useImmersivePlayerPreferences.getState().settings
+      if (latestSettings.autoNext && (hasNext || latestSettings.loopQueue)) {
+        if (!hasNext && latestSettings.loopQueue && items.length === 1) {
+          void playFromCurrentRef.current?.()
+        } else if (hasNext) {
+          continueAfterIndexChangeRef.current = true
+          onIndexChange(index + 1)
+        } else {
+          continueAfterIndexChangeRef.current = true
+          onIndexChange(0)
+        }
       } else {
-        setStatus('ended')
+        setPlaybackStatus('ended')
       }
     } catch (error) {
       console.warn('[immersive-player] playback failed', error)
       if (runRef.current === runId) {
-        setStatus('error')
+        setPlaybackStatus('error')
         toast.error(t('immersivePlayer.playFailed'))
       }
     }
-  }, [current, gotoNext, hasNext, mediaMetadataLabels, settings, t])
+  }, [current, hasNext, index, items.length, mediaMetadataLabels, onIndexChange, setPlaybackStatus, settings, t])
 
   const togglePlay = useCallback(async () => {
     if (status === 'playing') {
-      setStatus('paused')
+      setPlaybackStatus('paused')
       await immersivePlaybackService.pause()
       return
     }
     if (status === 'paused') {
-      setStatus('playing')
+      setPlaybackStatus('playing')
       await immersivePlaybackService.resume()
       return
     }
     await playFromCurrent()
-  }, [playFromCurrent, status])
+  }, [playFromCurrent, setPlaybackStatus, status])
+
+  const handleRemotePlay = useCallback(() => {
+    const currentStatus = statusRef.current
+    if (currentStatus === 'paused') {
+      setPlaybackStatus('playing')
+      void immersivePlaybackService.resume()
+      return
+    }
+    if (currentStatus === 'idle' || currentStatus === 'ended' || currentStatus === 'error') {
+      setPlaybackStatus('loading')
+      void playFromCurrentRef.current?.()
+    }
+  }, [setPlaybackStatus])
+
+  const handleRemotePause = useCallback(() => {
+    if (statusRef.current !== 'playing') return
+    setPlaybackStatus('paused')
+    void immersivePlaybackService.pause()
+  }, [setPlaybackStatus])
+
+  const handleSettingsChange = useCallback((nextSettings: Partial<ImmersivePlaybackSettings>) => {
+    updateSettings(nextSettings)
+    if (nextSettings.playbackRate !== undefined) {
+      void immersivePlaybackService.setPlaybackRate(nextSettings.playbackRate)
+    }
+  }, [updateSettings])
+
+  useEffect(() => {
+    playFromCurrentRef.current = playFromCurrent
+  }, [playFromCurrent])
+
+  useEffect(() => {
+    statusRef.current = status
+  }, [status])
 
   useEffect(() => {
     if (!open) {
@@ -245,10 +308,10 @@ export function ImmersivePlayerDialog({
       return
     }
     void immersivePlaybackService.registerMediaActions({
-      play: () => { void togglePlay() },
-      pause: () => { void togglePlay() },
-      previoustrack: gotoPrev,
-      nexttrack: gotoNext,
+      play: handleRemotePlay,
+      pause: handleRemotePause,
+      previoustrack: () => { gotoPrev(statusRef.current === 'playing' || statusRef.current === 'loading') },
+      nexttrack: () => { gotoNext(statusRef.current === 'playing' || statusRef.current === 'loading') },
       stop: () => { void stopPlayback() },
     })
     return () => {
@@ -260,7 +323,7 @@ export function ImmersivePlayerDialog({
         stop: undefined,
       })
     }
-  }, [gotoNext, gotoPrev, open, stopPlayback, togglePlay])
+  }, [gotoNext, gotoPrev, handleRemotePause, handleRemotePlay, open, stopPlayback])
 
   useEffect(() => immersivePlaybackService.subscribeVisualState(setVisualPlayback), [])
 
@@ -271,17 +334,23 @@ export function ImmersivePlayerDialog({
 
   useEffect(() => {
     if (!open) return
-    void stopPlayback('idle')
+    const continuePlayback = continueAfterIndexChangeRef.current
+    continueAfterIndexChangeRef.current = false
+    void stopPlayback(continuePlayback ? 'loading' : 'idle').then(() => {
+      if (continuePlayback) void playFromCurrentRef.current?.()
+    })
   }, [index, open, stopPlayback])
 
   useEffect(() => {
     setInsightExpanded(false)
   }, [current?.id])
 
+  const sleepTimerActive = status === 'loading' || status === 'playing' || status === 'paused'
+
   useEffect(() => {
     if (sleepTimerRef.current) window.clearTimeout(sleepTimerRef.current)
     sleepTimerRef.current = null
-    if (!open || settings.sleepTimerMinutes === 0 || status !== 'playing') return
+    if (!open || settings.sleepTimerMinutes === 0 || !sleepTimerActive) return
     sleepTimerRef.current = window.setTimeout(() => {
       void stopPlayback('ended')
       onOpenChange(false)
@@ -290,7 +359,7 @@ export function ImmersivePlayerDialog({
       if (sleepTimerRef.current) window.clearTimeout(sleepTimerRef.current)
       sleepTimerRef.current = null
     }
-  }, [onOpenChange, open, settings.sleepTimerMinutes, status, stopPlayback])
+  }, [onOpenChange, open, settings.sleepTimerMinutes, sleepTimerActive, stopPlayback])
 
   if (!current) return null
 
@@ -331,7 +400,7 @@ export function ImmersivePlayerDialog({
                       <button
                         type="button"
                         onClick={() => setSettingsOpen(true)}
-                        className="flex size-8 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                        className="flex size-10 touch-manipulation items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                         aria-label={t('immersivePlayer.settingsTitle')}
                       >
                         <Settings2 className="size-4" />
@@ -339,7 +408,7 @@ export function ImmersivePlayerDialog({
                       <button
                         type="button"
                         onClick={() => onOpenChange(false)}
-                        className="flex size-8 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                        className="flex size-10 touch-manipulation items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                         aria-label={t('immersivePlayer.close')}
                       >
                         <ChevronDown className="size-4" />
@@ -363,7 +432,7 @@ export function ImmersivePlayerDialog({
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 md:px-6">
+            <div className="min-h-0 flex-1 overscroll-contain overflow-y-auto px-5 py-6 md:px-6">
               <div className={cn('mx-auto flex min-h-full max-w-xl flex-col gap-5', hiddenText ? 'items-center justify-center' : 'pt-8 md:pt-10')}>
                 {!hiddenText && (
                 <div className="text-center">
@@ -426,7 +495,7 @@ export function ImmersivePlayerDialog({
               </Button>
 
               <div className="flex items-center justify-center gap-4">
-                <Button variant="outline" size="icon" onClick={gotoPrev} disabled={!hasPrev} className="size-11 rounded-full">
+                <Button variant="outline" size="icon" onClick={() => gotoPrev(status === 'playing' || status === 'loading')} disabled={!hasPrev} aria-label={t('immersivePlayer.previous')} className="size-11 rounded-full">
                   <ChevronLeft className="size-5" />
                 </Button>
                 <Button
@@ -435,10 +504,11 @@ export function ImmersivePlayerDialog({
                   onClick={togglePlay}
                   className="size-12 rounded-full shadow-sm"
                   disabled={status === 'loading'}
+                  aria-label={status === 'playing' ? t('immersivePlayer.pause') : t('immersivePlayer.play')}
                 >
                   {status === 'loading' ? <Loader2 className="size-5 animate-spin" /> : status === 'playing' ? <Pause className="size-5" /> : <Play className="size-5" />}
                 </Button>
-                <Button variant="outline" size="icon" onClick={gotoNext} disabled={!hasNext && !settings.loopQueue} className="size-11 rounded-full">
+                <Button variant="outline" size="icon" onClick={() => gotoNext(status === 'playing' || status === 'loading')} disabled={!hasNext && !settings.loopQueue} aria-label={t('immersivePlayer.next')} className="size-11 rounded-full">
                   <ChevronRight className="size-5" />
                 </Button>
               </div>
@@ -451,13 +521,18 @@ export function ImmersivePlayerDialog({
         </DialogContent>
       </Dialog>
 
-      <ImmersiveSettingsDrawer open={settingsOpen} onOpenChange={setSettingsOpen} settings={settings} onChange={updateSettings} />
+      <ImmersiveSettingsDrawer open={settingsOpen} onOpenChange={setSettingsOpen} settings={settings} onChange={handleSettingsChange} />
       <ImmersiveQueueDrawer
         open={queueOpen}
         onOpenChange={setQueueOpen}
         items={items}
         index={index}
         onSelect={(nextIndex) => {
+          if (nextIndex === index) {
+            setQueueOpen(false)
+            return
+          }
+          continueAfterIndexChangeRef.current = status === 'playing' || status === 'loading'
           onIndexChange(nextIndex)
           setQueueOpen(false)
         }}
@@ -481,7 +556,7 @@ function ImmersiveSettingsDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className={cn('max-h-[88dvh] rounded-t-2xl !z-[10001]', isIOS() && 'pb-safe')} overlayClassName="!z-[10001]">
+      <DrawerContent className={cn('max-h-[88dvh] overscroll-contain rounded-t-2xl !z-[10001]', isIOS() && 'pb-safe')} overlayClassName="!z-[10001]">
         <div className="flex items-center justify-between px-5 py-3">
           <DrawerTitle className="text-base">{t('immersivePlayer.settingsTitle')}</DrawerTitle>
           <button type="button" onClick={() => onOpenChange(false)} aria-label={t('immersivePlayer.close')} className={cn('flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground', isNative() && 'hidden')}>
@@ -500,7 +575,10 @@ function ImmersiveSettingsDrawer({
             <OptionGroup label={t('immersivePlayer.settings.repeatPerItem')}>
               <SegmentedOptions
                 value={settings.repeatPerItem}
-                options={[1, 2, 3, 5].map((value) => ({ value, label: t('immersivePlayer.settings.times', { count: value }) }))}
+                options={[
+                  ...([1, 2, 3] as const).map((value) => ({ value, label: t('immersivePlayer.settings.times', { count: value }) })),
+                  { value: 'infinite' as const, label: t('immersivePlayer.settings.infinite') },
+                ]}
                 onChange={(value) => onChange({ repeatPerItem: value as ImmersivePlaybackSettings['repeatPerItem'] })}
               />
             </OptionGroup>
@@ -541,7 +619,7 @@ function ImmersiveQueueDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]">
+      <DrawerContent className="h-[100dvh] overscroll-contain rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]">
         <div className="flex items-center justify-between px-5 py-3">
           <DrawerTitle className="text-lg">{t('immersivePlayer.queueTitle')}</DrawerTitle>
           <button type="button" onClick={() => onOpenChange(false)} aria-label={t('immersivePlayer.close')} className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -559,7 +637,7 @@ function ImmersiveQueueDrawer({
                   key={item.id}
                   type="button"
                   onClick={() => onSelect(itemIndex)}
-                  className={cn('flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors', active ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted')}
+                  className={cn('flex min-h-11 w-full touch-manipulation items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', active ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted')}
                 >
                   <Icon className="size-4 shrink-0" />
                   <div className="min-w-0 flex-1">
@@ -602,7 +680,8 @@ function SegmentedOptions<T extends string | number>({
           key={String(option.value)}
           type="button"
           onClick={() => onChange(option.value)}
-          className={cn('h-8 rounded-md text-xs font-medium transition-colors', value === option.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground')}
+          aria-pressed={value === option.value}
+          className={cn('h-10 touch-manipulation rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', value === option.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground')}
         >
           {option.label}
         </button>
@@ -615,7 +694,7 @@ function SwitchRow({ label, checked, onChange }: { label: string; checked: boole
   return (
     <div className="flex items-center justify-between rounded-lg bg-muted/35 px-3 py-2.5">
       <span className="text-sm font-medium text-foreground">{label}</span>
-      <Switch checked={checked} onCheckedChange={onChange} />
+      <Switch checked={checked} onCheckedChange={onChange} aria-label={label} />
     </div>
   )
 }

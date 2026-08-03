@@ -414,6 +414,206 @@ export class AdminTasksService {
     };
   }
 
+  async getQueuesStatus() {
+    const queues = [
+      { name: ADMIN_CONTENT_QUEUE, queue: this.contentQueue, label: '学习包内容准备' },
+      { name: VOCABULARY_IMPORT_QUEUE, queue: this.vocabularyImportQueue, label: '词汇CSV导入' },
+      { name: SCRIPT_VIDEO_QUEUE, queue: this.videoQueue, label: '视频渲染' },
+    ];
+
+    const results = await Promise.all(
+      queues.map(async ({ name, queue, label }) => {
+        const [waiting, active, delayed, completed, failed] = await Promise.all([
+          queue.getWaitingCount(),
+          queue.getActiveCount(),
+          queue.getDelayedCount(),
+          queue.getCompletedCount(),
+          queue.getFailedCount(),
+        ]);
+        return { name, label, waiting, active, delayed, completed, failed };
+      }),
+    );
+
+    return {
+      queues: results,
+      totalWaiting: results.reduce((sum, q) => sum + q.waiting, 0),
+      totalActive: results.reduce((sum, q) => sum + q.active, 0),
+      totalDelayed: results.reduce((sum, q) => sum + q.delayed, 0),
+      totalFailed: results.reduce((sum, q) => sum + q.failed, 0),
+    };
+  }
+
+  async getQueueJobs(queueName: string, statuses: string[]) {
+    const queueMap: Record<string, Queue> = {
+      [ADMIN_CONTENT_QUEUE]: this.contentQueue,
+      [VOCABULARY_IMPORT_QUEUE]: this.vocabularyImportQueue,
+      [SCRIPT_VIDEO_QUEUE]: this.videoQueue,
+    };
+    const queue = queueMap[queueName];
+    if (!queue) throw new NotFoundException(`队列 ${queueName} 不存在`);
+
+    const jobs: Array<{
+      id: string;
+      name: string;
+      status: string;
+      progress: number;
+      attemptsMade: number;
+      timestamp: number;
+      processedOn?: number;
+      finishedOn?: number;
+      failedReason?: string;
+      data: any;
+    }> = [];
+
+    for (const status of statuses) {
+      let fetched: Awaited<ReturnType<typeof queue.getJobs>> = [];
+      switch (status) {
+        case 'waiting': fetched = await queue.getJobs(['waiting']); break;
+        case 'active': fetched = await queue.getJobs(['active']); break;
+        case 'delayed': fetched = await queue.getJobs(['delayed']); break;
+        case 'completed': fetched = await queue.getJobs(['completed'], 0, 49); break;
+        case 'failed': fetched = await queue.getJobs(['failed'], 0, 49); break;
+      }
+      for (const job of fetched) {
+        jobs.push({
+          id: job.id || '',
+          name: job.name,
+          status,
+          progress: typeof job.progress === 'number' ? job.progress : 0,
+          attemptsMade: job.attemptsMade,
+          timestamp: job.timestamp || 0,
+          processedOn: job.processedOn,
+          finishedOn: job.finishedOn,
+          failedReason: (job as any).failedReason,
+          data: job.data,
+        });
+      }
+    }
+
+    return { queueName, jobs, total: jobs.length };
+  }
+
+  async prioritizeTask(taskId: string) {
+    const task = await this.prisma.adminTask.findUnique({ where: { id: taskId } });
+    if (!task) throw new NotFoundException('任务不存在');
+    if (task.status !== 'queued') {
+      throw new BadRequestException('只能对排队中的任务进行插队操作');
+    }
+    if (!task.bullJobId) {
+      throw new BadRequestException('该任务尚未进入队列，无法插队');
+    }
+
+    const queue = this.getQueueForTask(task.type);
+    const job = await queue.getJob(task.bullJobId);
+    if (!job) {
+      throw new BadRequestException('任务在队列中已不存在（可能已被处理）');
+    }
+    const jobState = await job.getState();
+    if (jobState === 'delayed') {
+      await job.promote();
+    } else if (jobState !== 'waiting' && jobState !== 'prioritized') {
+      throw new BadRequestException(`任务当前处于 ${jobState} 状态，无法插队`);
+    }
+
+    // BullMQ's default priority is 0 (highest). `lifo` puts this waiting job
+    // at the worker-facing end of the normal wait list.
+    await job.changePriority({ priority: 0, lifo: true });
+    await this.log(taskId, 'info', '任务已被插队到队列最前面', { step: 'prioritized' });
+
+    return this.get(taskId);
+  }
+
+  async forceRunTask(taskId: string, userId: string) {
+    const task = await this.prisma.adminTask.findUnique({ where: { id: taskId } });
+    if (!task) throw new NotFoundException('任务不存在');
+
+    // Allow force-run on queued (stuck) or failed tasks
+    if (task.status !== 'queued' && task.status !== 'failed') {
+      throw new BadRequestException('只能强制执行排队中或失败的任务');
+    }
+
+    // 1. Remove the old job from the queue if still queued
+    if (task.bullJobId && task.status === 'queued') {
+      try {
+        const queue = this.getQueueForTask(task.type);
+        const job = await queue.getJob(task.bullJobId);
+        if (job) await job.remove();
+      } catch {
+        // job may already be gone
+      }
+    }
+
+    // 2. Mark old task as canceled (it will be replaced by a new one)
+    await this.prisma.adminTask.update({
+      where: { id: taskId },
+      data: {
+        status: AdminTaskStatus.canceled,
+        currentStep: 'canceled',
+        finishedAt: new Date(),
+        errorMessage: '已被强制执行替换',
+      },
+    });
+
+    // 3. Create a new task with highest priority and enqueue it
+    const payload = task.payload as any;
+    const newTask = await this.prisma.adminTask.create({
+      data: {
+        type: task.type,
+        title: `${task.title}【强制执行】`,
+        targetType: task.targetType,
+        targetId: task.targetId,
+        createdById: userId,
+        totalItems: task.totalItems,
+        payload: task.payload as Prisma.InputJsonValue,
+      },
+    });
+
+    const queue = this.getQueueForTask(task.type);
+    try {
+      const job = await queue.add(task.type, {
+        taskId: newTask.id,
+        sceneId: task.targetId,
+        workId: task.targetId,
+        userId: payload?.userId || userId,
+        frames: payload?.frames || [],
+        words: payload?.words || [],
+        retryItems: payload?.retryItems,
+      }, {
+        lifo: true,
+      });
+
+      await this.prisma.adminTask.update({
+        where: { id: newTask.id },
+        data: { bullJobId: job.id },
+      });
+    } catch (error) {
+      await this.prisma.adminTask.update({
+        where: { id: newTask.id },
+        data: {
+          status: AdminTaskStatus.failed,
+          currentStep: 'enqueue_failed',
+          errorMessage: error instanceof Error ? error.message : String(error),
+          finishedAt: new Date(),
+        },
+      });
+      throw error;
+    }
+
+    await this.log(newTask.id, 'info', '任务已被强制执行（新任务已插队）', { step: 'force-run' });
+
+    return this.get(newTask.id);
+  }
+
+  private getQueueForTask(type: string): Queue {
+    if (type === SCRIPT_VIDEO_RENDER_JOB || type === NARRATIVE_VIDEO_RENDER_JOB) {
+      return this.videoQueue;
+    }
+    if (type === VOCABULARY_CSV_IMPORT_JOB) {
+      return this.vocabularyImportQueue;
+    }
+    return this.contentQueue;
+  }
+
   async log(
     taskId: string,
     level: AdminTaskLogLevel | `${AdminTaskLogLevel}`,

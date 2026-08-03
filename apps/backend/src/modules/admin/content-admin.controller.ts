@@ -185,6 +185,76 @@ export class ContentAdminController {
   @Delete('scenes/:id')
   async deleteScene(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
+    const scene = await this.prisma.scene.findUnique({
+      where: { id },
+      select: { id: true, packageType: true },
+    });
+    if (!scene) throw new NotFoundException('内容包不存在');
+
+    // A story package owns its episodes and the user data produced from them.
+    // Delete that graph atomically, while only detaching shared map assets.
+    if (scene.packageType === 'story') {
+      const episodes = await this.prisma.storyEpisode.findMany({
+        where: { sceneId: id },
+        select: { id: true },
+      });
+      const episodeIds = episodes.map((episode) => episode.id);
+      const works = episodeIds.length > 0
+        ? await this.prisma.scriptWork.findMany({
+          where: { episodeId: { in: episodeIds } },
+          select: { id: true },
+        })
+        : [];
+      const workIds = works.map((work) => work.id);
+      const relatedTaskWhere = {
+        OR: [
+          { targetType: 'scene', targetId: id },
+          ...(workIds.length > 0
+            ? [{ targetType: 'script_work', targetId: { in: workIds } }]
+            : []),
+        ],
+      };
+
+      // Remove waiting jobs and persist cancellation before deleting their
+      // content. Active workers use this status as their final safety guard.
+      const activeTasks = await this.prisma.adminTask.findMany({
+        where: {
+          ...relatedTaskWhere,
+          status: { in: ['queued', 'running'] },
+        },
+        select: { id: true },
+      });
+      for (const task of activeTasks) {
+        await this.adminTasksService.cancel(task.id);
+      }
+
+      return this.prisma.$transaction(async (tx) => {
+        if (episodeIds.length > 0) {
+          await tx.inkScript.deleteMany({ where: { episodeId: { in: episodeIds } } });
+          await tx.storyTurn.deleteMany({ where: { episodeId: { in: episodeIds } } });
+          await tx.storyRecord.deleteMany({ where: { episodeId: { in: episodeIds } } });
+          await tx.storyEpisodeVocabulary.deleteMany({ where: { episodeId: { in: episodeIds } } });
+          await tx.storyEpisodeChunk.deleteMany({ where: { episodeId: { in: episodeIds } } });
+          await tx.storyEpisodeSentencePattern.deleteMany({ where: { episodeId: { in: episodeIds } } });
+          // ScriptPracticeRecord and ScriptWork cascade from StoryEpisode.
+          await tx.storyEpisode.deleteMany({ where: { id: { in: episodeIds } } });
+        }
+
+        // Keep task logs as an audit trail and keep canceled rows available to
+        // any in-flight worker, but detach them from content being removed.
+        await tx.adminTask.updateMany({
+          where: relatedTaskWhere,
+          data: { targetId: null },
+        });
+        await tx.scenePrerequisite.deleteMany({
+          where: { OR: [{ sceneId: id }, { prerequisiteId: id }] },
+        });
+        await tx.userSceneProgress.deleteMany({ where: { sceneId: id } });
+        await tx.gameLocation.updateMany({ where: { sceneId: id }, data: { sceneId: null } });
+        return tx.scene.delete({ where: { id } });
+      });
+    }
+
     return this.prisma.scene.delete({ where: { id } });
   }
 

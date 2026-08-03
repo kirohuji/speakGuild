@@ -16,6 +16,27 @@ export class AdminTasksController {
     return session;
   }
 
+  /** 队列状态总览 —— 必须在 :id 路由之前定义，避免 "queues" 被当作 task id */
+  @Get('queues/status')
+  async getQueuesStatus(@Req() req: Request) {
+    await this.requireAdmin(req);
+    return this.adminTasksService.getQueuesStatus();
+  }
+
+  /** 查看某个队列中等待/活跃的任务 */
+  @Get('queues/:queueName/jobs')
+  async getQueueJobs(
+    @Req() req: Request,
+    @Param('queueName') queueName: string,
+    @Query('statuses') statuses?: string,
+  ) {
+    await this.requireAdmin(req);
+    const statusList = statuses
+      ? statuses.split(',').map(s => s.trim()).filter(Boolean)
+      : ['waiting', 'active', 'delayed'];
+    return this.adminTasksService.getQueueJobs(queueName, statusList);
+  }
+
   @Get()
   async list(
     @Req() req: Request,
@@ -49,5 +70,19 @@ export class AdminTasksController {
   async cancel(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
     return this.adminTasksService.cancel(id);
+  }
+
+  /** 插队：把排队中的任务提到队列最前面 */
+  @Post(':id/prioritize')
+  async prioritize(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.adminTasksService.prioritizeTask(id);
+  }
+
+  /** 强制执行：立即执行一个排队中或失败的任务（绕过排队） */
+  @Post(':id/force-run')
+  async forceRun(@Req() req: Request, @Param('id') id: string) {
+    const session = await this.requireAdmin(req);
+    return this.adminTasksService.forceRunTask(id, session.user.id);
   }
 }

@@ -22,29 +22,6 @@ function useLearningChartConfig() {
   } satisfies ChartConfig
 }
 
-const weeklyChartMock = [
-  { minutes: 12, questions: 8 },
-  { minutes: 24, questions: 16 },
-  { minutes: 8, questions: 5 },
-  { minutes: 31, questions: 21 },
-  { minutes: 18, questions: 12 },
-  { minutes: 27, questions: 18 },
-  { minutes: 15, questions: 10 },
-]
-
-const yearlyChartMock = [18, 24, 15, 32, 21, 38, 26, 29, 20, 34, 28, 41].map((minutes, index) => ({
-  minutes,
-  questions: [12, 16, 9, 23, 14, 27, 18, 21, 13, 25, 19, 30][index],
-}))
-
-const monthlyChartMock = [
-  [8, 5], [16, 11], [0, 0], [24, 17], [12, 8], [31, 22], [18, 13],
-  [0, 0], [21, 15], [28, 20], [14, 9], [36, 25], [19, 14], [9, 6],
-  [0, 0], [26, 18], [33, 23], [17, 12], [22, 16], [0, 0], [29, 21],
-  [13, 10], [38, 27], [20, 15], [11, 7], [0, 0], [25, 19], [32, 24],
-  [16, 11], [27, 20], [35, 26],
-].map(([minutes, questions]) => ({ minutes, questions }))
-
 function getChartCardPosition(index: number, itemCount: number) {
   const anchor = `${((index + 0.5) / itemCount) * 100}%`
   return {
@@ -331,14 +308,12 @@ function WeeklyActivity({ days, dailyStats, checkedInDates, locale, today, selec
     const stat = dailyStats.get(format(day, 'yyyy-MM-dd'))
     return { day, minutes: Math.ceil((stat?.activeSeconds ?? 0) / 60), questionCount: stat?.questionCount ?? 0 }
   })
-  const hasData = items.some((item) => item.minutes > 0 || item.questionCount > 0)
-  const usingMockData = !hasData && import.meta.env.DEV
-  const chartData = items.map((item, index) => ({
+  const chartData = items.map((item) => ({
     day: format(item.day, 'EEEEE', { locale }),
     dateKey: format(item.day, 'yyyy-MM-dd'),
     date: format(item.day, 'M/d', { locale }),
-    minutes: usingMockData ? weeklyChartMock[index].minutes : item.minutes,
-    questions: usingMockData ? weeklyChartMock[index].questions : item.questionCount,
+    minutes: item.minutes,
+    questions: item.questionCount,
   }))
   const selectedDateKey = selectedDay ? format(selectedDay, 'yyyy-MM-dd') : undefined
   const selectedChartIndex = chartData.findIndex((item) => item.dateKey === selectedDateKey)
@@ -437,7 +412,7 @@ function MonthlyActivityChart({ days, dailyStats, locale, selectedDay, onSelectD
 }) {
   const { t } = useTranslation()
   const chartConfig = useLearningChartConfig()
-  const realChartData = days.map((day) => {
+  const chartData = days.map((day) => {
     const stat = dailyStats.get(format(day, 'yyyy-MM-dd'))
     return {
       dateKey: format(day, 'yyyy-MM-dd'),
@@ -446,11 +421,6 @@ function MonthlyActivityChart({ days, dailyStats, locale, selectedDay, onSelectD
       minutes: Math.ceil((stat?.activeSeconds ?? 0) / 60),
       questions: stat?.questionCount ?? 0,
     }
-  })
-  const usingMockData = !realChartData.some((item) => item.minutes > 0 || item.questions > 0)
-  const chartData = realChartData.map((item) => {
-    const mock = monthlyChartMock[(item.label ? Number(item.label) : 1) - 1] ?? monthlyChartMock[0]
-    return usingMockData ? { ...item, ...mock } : item
   })
   const selectedDateKey = selectedDay ? format(selectedDay, 'yyyy-MM-dd') : undefined
   const selectedChartIndex = chartData.findIndex((item) => item.dateKey === selectedDateKey)
@@ -529,13 +499,7 @@ function YearlyActivity({ year, dailyStats, today, onSelectMonth, onPrevYear, on
       questions: days.reduce((sum, item) => sum + item.questionCount, 0),
     }
   })
-  const hasData = values.some((item) => item.minutes > 0 || item.questions > 0)
-  const usingMockData = !hasData && import.meta.env.DEV
-  const chartData = values.map((item, index) => ({
-    ...item,
-    minutes: usingMockData ? yearlyChartMock[index].minutes : item.minutes,
-    questions: usingMockData ? yearlyChartMock[index].questions : item.questions,
-  }))
+  const chartData = values
   const selectedChartItem = selectedMonthIndex === null ? null : chartData[selectedMonthIndex]
   const chartMaxValue = Math.max(1, ...chartData.flatMap((item) => [item.minutes, item.questions]))
 

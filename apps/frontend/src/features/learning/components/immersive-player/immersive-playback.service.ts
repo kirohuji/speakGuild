@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
 import { NativeAudio, type PlaybackStateEvent } from '@capgo/capacitor-native-audio'
 import { MediaSession, type MediaSessionAction } from '@capgo/capacitor-media-session'
 import { assetCacheService } from '@/lib/offline/asset-cache.service'
@@ -11,6 +11,8 @@ import type { PlaybackSegment } from './immersive-player.types'
 let configured = false
 let htmlAudio: HTMLAudioElement | null = null
 let currentNativeAssetId: string | null = null
+let cancelCurrentPlayback: (() => void) | null = null
+let playbackRequestId = 0
 
 export type ImmersivePlaybackVisualState = {
   state: 'idle' | 'loading' | 'playing' | 'paused'
@@ -23,6 +25,11 @@ const visualStateListeners = new Set<(state: ImmersivePlaybackVisualState) => vo
 function publishVisualState(state: ImmersivePlaybackVisualState) {
   visualState = state
   visualStateListeners.forEach((listener) => listener(state))
+}
+
+async function clearMediaSession() {
+  await MediaSession.setPlaybackState({ playbackState: 'none' }).catch(() => undefined)
+  await MediaSession.setMetadata({}).catch(() => undefined)
 }
 
 type MediaMetadataLabels = {
@@ -73,6 +80,21 @@ async function configureNativeAudio() {
   })
 }
 
+async function stopActivePlayback() {
+  if (isNative() && currentNativeAssetId) {
+    const assetId = currentNativeAssetId
+    currentNativeAssetId = null
+    await NativeAudio.stop({ assetId }).catch(() => undefined)
+    await NativeAudio.unload({ assetId }).catch(() => undefined)
+  }
+  const audio = htmlAudio
+  htmlAudio = null
+  audio?.pause()
+  cancelCurrentPlayback?.()
+  publishVisualState({ state: 'idle', media: null })
+  await clearMediaSession()
+}
+
 export const immersivePlaybackService = {
   async setMediaMetadata(segment: PlaybackSegment, playbackRate: number, state: 'none' | 'paused' | 'playing', labels?: MediaMetadataLabels) {
     await MediaSession.setMetadata({
@@ -92,85 +114,144 @@ export const immersivePlaybackService = {
   },
 
   async playSegment(segment: PlaybackSegment, playbackRate: number, onNativeState?: (event: PlaybackStateEvent) => void, onStarted?: () => void, labels?: MediaMetadataLabels): Promise<void> {
+    const requestId = playbackRequestId + 1
+    playbackRequestId = requestId
     const audioUrl = await resolveAudioUrl(segment)
+    if (requestId !== playbackRequestId) return
     if (!audioUrl) throw new Error('No audio URL available')
 
-    await this.stopCurrent()
+    await stopActivePlayback()
+    if (requestId !== playbackRequestId) return
+    if (isNative()) await configureNativeAudio()
+    if (requestId !== playbackRequestId) return
     await this.setMediaMetadata(segment, playbackRate, 'playing', labels)
+    if (requestId !== playbackRequestId) return
 
     if (isNative()) {
-      await configureNativeAudio()
       const assetId = `immersive-${Date.now()}-${Math.random().toString(36).slice(2)}`
       currentNativeAssetId = assetId
-      const handle = await NativeAudio.addListener('complete', (event) => {
-        if (event.assetId !== assetId) return
-        void handle.remove()
-        void NativeAudio.unload({ assetId }).catch(() => undefined)
-        if (currentNativeAssetId === assetId) currentNativeAssetId = null
-        publishVisualState({ state: 'idle', media: null })
-      }).catch(() => null)
-      const stateHandle = onNativeState
-        ? await NativeAudio.addListener('playbackState', onNativeState).catch(() => null)
-        : null
-
-      await NativeAudio.preload({
-        assetId,
-        assetPath: audioUrl,
-        isUrl: true,
-        notificationMetadata: {
-          title: segment.title,
-          artist: segment.subtitle || labels?.artist || 'ManYu',
-          album: labels?.album || 'Immersive Library Playback',
-        },
+      let settled = false
+      let resolvePlayback: () => void = () => undefined
+      const completion = new Promise<void>((resolve) => {
+        resolvePlayback = resolve
       })
-      await NativeAudio.setRate({ assetId, rate: playbackRate }).catch(() => undefined)
-      await NativeAudio.play({ assetId, volume: 1 })
-      publishVisualState({ state: 'playing', media: null })
-      onStarted?.()
+      const settle = () => {
+        if (settled) return
+        settled = true
+        resolvePlayback()
+      }
+      cancelCurrentPlayback = settle
+      let completeHandle: PluginListenerHandle | null = null
+      let stateHandle: PluginListenerHandle | null = null
 
-      await new Promise<void>((resolve) => {
-        const done = NativeAudio.addListener('complete', (event) => {
-        if (event.assetId !== assetId) return
-        void done.then((listener) => listener.remove())
-        void stateHandle?.remove()
-        publishVisualState({ state: 'idle', media: null })
-        resolve()
+      try {
+        completeHandle = await NativeAudio.addListener('complete', (event) => {
+          if (event.assetId !== assetId) return
+          void (async () => {
+            if (currentNativeAssetId === assetId) currentNativeAssetId = null
+            await NativeAudio.unload({ assetId }).catch(() => undefined)
+            publishVisualState({ state: 'idle', media: null })
+            await clearMediaSession()
+            settle()
+          })()
         })
-      })
-      void handle?.remove()
+        if (settled || requestId !== playbackRequestId || currentNativeAssetId !== assetId) return
+        if (onNativeState) {
+          stateHandle = await NativeAudio.addListener('playbackState', onNativeState)
+        }
+        if (settled || requestId !== playbackRequestId || currentNativeAssetId !== assetId) return
+        await NativeAudio.preload({
+          assetId,
+          assetPath: audioUrl,
+          isUrl: true,
+          notificationMetadata: {
+            title: segment.title,
+            artist: segment.subtitle || labels?.artist || 'ManYu',
+            album: labels?.album || 'Immersive Library Playback',
+          },
+        })
+        if (settled || requestId !== playbackRequestId || currentNativeAssetId !== assetId) return
+        await NativeAudio.setRate({ assetId, rate: playbackRate }).catch(() => undefined)
+        if (settled || requestId !== playbackRequestId || currentNativeAssetId !== assetId) return
+        await NativeAudio.play({ assetId, volume: 1 })
+        if (settled || requestId !== playbackRequestId || currentNativeAssetId !== assetId) return
+        publishVisualState({ state: 'playing', media: null })
+        onStarted?.()
+        await completion
+      } catch (error) {
+        if (currentNativeAssetId === assetId) currentNativeAssetId = null
+        await NativeAudio.stop({ assetId }).catch(() => undefined)
+        await NativeAudio.unload({ assetId }).catch(() => undefined)
+        publishVisualState({ state: 'idle', media: null })
+        await clearMediaSession()
+        settle()
+        throw error
+      } finally {
+        if (cancelCurrentPlayback === settle) cancelCurrentPlayback = null
+        await completeHandle?.remove().catch(() => undefined)
+        await stateHandle?.remove().catch(() => undefined)
+      }
       return
     }
 
-    await new Promise<void>((resolve, reject) => {
-      htmlAudio?.pause()
-      const audio = new Audio(audioUrl)
-      htmlAudio = audio
-      audio.playbackRate = playbackRate
-      publishVisualState({ state: 'loading', media: audio })
-      audio.onplay = () => {
-        if (htmlAudio !== audio) return
-        publishVisualState({ state: 'playing', media: audio })
-      }
-      audio.onpause = () => {
-        if (htmlAudio !== audio) return
-        if (!audio.ended) publishVisualState({ state: 'paused', media: audio })
-      }
-      audio.onended = () => {
-        if (htmlAudio !== audio) return
-        htmlAudio = null
-        publishVisualState({ state: 'idle', media: null })
-        resolve()
-      }
-      audio.onerror = () => {
-        if (htmlAudio !== audio) return
-        htmlAudio = null
-        publishVisualState({ state: 'idle', media: null })
-        reject(new Error('Audio playback failed'))
-      }
-      audio.play().then(() => {
-        if (htmlAudio === audio) onStarted?.()
-      }).catch(reject)
+    const audio = new Audio(audioUrl)
+    htmlAudio = audio
+    audio.playbackRate = playbackRate
+    publishVisualState({ state: 'loading', media: audio })
+
+    let settled = false
+    let resolvePlayback: (error: Error | null) => void = () => undefined
+    const completion = new Promise<Error | null>((resolve) => {
+      resolvePlayback = resolve
     })
+    const settle = (error?: Error) => {
+      if (settled) return
+      settled = true
+      audio.onplay = null
+      audio.onpause = null
+      audio.onended = null
+      audio.onerror = null
+      if (htmlAudio === audio) htmlAudio = null
+      publishVisualState({ state: 'idle', media: null })
+      resolvePlayback(error ?? null)
+    }
+    const cancel = () => settle()
+    cancelCurrentPlayback = cancel
+
+    audio.onplay = () => {
+      if (htmlAudio !== audio) return
+      publishVisualState({ state: 'playing', media: audio })
+    }
+    audio.onpause = () => {
+      if (htmlAudio !== audio) return
+      if (!audio.ended) publishVisualState({ state: 'paused', media: audio })
+    }
+    audio.onended = () => {
+      if (htmlAudio !== audio) return
+      void clearMediaSession()
+      settle()
+    }
+    audio.onerror = () => {
+      if (htmlAudio !== audio) return
+      settle(new Error('Audio playback failed'))
+    }
+
+    try {
+      await audio.play()
+      if (!settled && htmlAudio === audio) onStarted?.()
+      const playbackError = await completion
+      if (playbackError) throw playbackError
+    } catch (error) {
+      settle()
+      await clearMediaSession()
+      throw error
+    } finally {
+      if (cancelCurrentPlayback === cancel) cancelCurrentPlayback = null
+      audio.onplay = null
+      audio.onpause = null
+      audio.onended = null
+      audio.onerror = null
+    }
   },
 
   async pause() {
@@ -193,16 +274,18 @@ export const immersivePlaybackService = {
     await MediaSession.setPlaybackState({ playbackState: 'playing' }).catch(() => undefined)
   },
 
-  async stopCurrent() {
+  async setPlaybackRate(playbackRate: number) {
     if (isNative() && currentNativeAssetId) {
-      const assetId = currentNativeAssetId
-      currentNativeAssetId = null
-      await NativeAudio.stop({ assetId }).catch(() => undefined)
-      await NativeAudio.unload({ assetId }).catch(() => undefined)
+      await NativeAudio.setRate({ assetId: currentNativeAssetId, rate: playbackRate }).catch(() => undefined)
+    } else if (htmlAudio) {
+      htmlAudio.playbackRate = playbackRate
     }
-    htmlAudio?.pause()
-    htmlAudio = null
-    publishVisualState({ state: 'idle', media: null })
+    await MediaSession.setPositionState({ playbackRate }).catch(() => undefined)
+  },
+
+  async stopCurrent() {
+    playbackRequestId += 1
+    await stopActivePlayback()
   },
 
   subscribeVisualState(listener: (state: ImmersivePlaybackVisualState) => void) {

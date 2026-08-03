@@ -31,7 +31,7 @@ export type PlaybackSegment = {
 
 export type ImmersivePlaybackSettings = {
   sleepTimerMinutes: 0 | 15 | 30 | 60
-  repeatPerItem: 1 | 2 | 3 | 5
+  repeatPerItem: 1 | 2 | 3 | 'infinite'
   playbackRate: 0.75 | 1 | 1.25 | 1.5
   playMainText: boolean
   playMeaning: boolean

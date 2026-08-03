@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   BookMarked, Search, Trash2, BookOpen,
-  BookText, MessageSquareText, ExternalLink, Layers,
+  BookText, MessageSquareText, Headphones, Layers,
   RotateCcw, CheckCheck, ArrowRightFromLine,
   ArrowLeft, CalendarDays, Check, CheckSquare, Download, Expand, FileText, Languages, Loader2, Minimize2, Plus,
 } from 'lucide-react'
@@ -829,8 +829,8 @@ export function ExpressionLibraryPage() {
         Header: () => (
           <div className="mb-2 flex items-center justify-between px-0 pt-0">
             <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
-            <button onClick={() => openImmersivePlayer(visibleDialogItems, 0)} className={cn('flex items-center gap-1 text-xs', immersiveClassName)}>
-              <ExternalLink className="size-3" /> {t('expressionLib.immersive')}
+            <button type="button" onClick={() => openImmersivePlayer(visibleDialogItems, 0)} className={cn('flex h-9 touch-manipulation items-center gap-1.5 rounded-full bg-primary/10 px-3 text-xs font-medium transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', immersiveClassName)}>
+              <Headphones className="size-3.5" aria-hidden="true" /> {t('expressionLib.immersive')}
             </button>
           </div>
         ),

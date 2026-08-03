@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Activity,
   AlertTriangle,
+  ArrowUpRight,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock3,
   FileWarning,
   Layers3,
@@ -12,6 +15,7 @@ import {
   RotateCcw,
   Search,
   XCircle,
+  Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +25,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/cn';
-import { adminTasksApi, type AdminTask, type AdminTaskDetail, type AdminTaskStatus } from '../api-admin-tasks';
+import { adminTasksApi, type AdminTask, type AdminTaskDetail, type AdminTaskStatus, type QueuesStatusResult } from '../api-admin-tasks';
 
 const TYPE_LABELS: Record<string, string> = {
   'learning-package-content-prepare': '学习包内容准备',
@@ -167,44 +171,88 @@ export function AdminTasksPage() {
   const [detail, setDetail] = useState<AdminTaskDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Queue status
+  const [queuesStatus, setQueuesStatus] = useState<QueuesStatusResult | null>(null);
+  const [queuesLoading, setQueuesLoading] = useState(false);
+  const listRequestRef = useRef(0);
+  const detailRequestRef = useRef(0);
+  const queuesRequestRef = useRef(0);
 
   const selected = useMemo(
-    () => detail ?? items.find((item) => item.id === selectedId) ?? null,
+    () => (detail?.id === selectedId ? detail : items.find((item) => item.id === selectedId)) ?? null,
     [detail, items, selectedId],
   );
   const selectedErrors = taskErrors(selected);
 
+  const loadQueuesStatus = useCallback(async () => {
+    const requestId = queuesRequestRef.current + 1;
+    queuesRequestRef.current = requestId;
+    setQueuesLoading(true);
+    try {
+      const result = await adminTasksApi.getQueuesStatus();
+      if (requestId === queuesRequestRef.current) setQueuesStatus(result);
+    } catch {
+      // silently fail — queue monitoring is auxiliary
+    } finally {
+      if (requestId === queuesRequestRef.current) setQueuesLoading(false);
+    }
+  }, []);
+
   const load = useCallback(async () => {
+    const requestId = listRequestRef.current + 1;
+    listRequestRef.current = requestId;
     setLoading(true);
     try {
       const result = await adminTasksApi.list({
         type: type === 'all' ? undefined : type,
         status,
-        pageSize: 50,
+        page,
+        pageSize: 12,
       });
+      if (requestId !== listRequestRef.current) return;
       setItems(result.items);
-      if (!selectedId && result.items[0]) setSelectedId(result.items[0].id);
+      setTotal(result.total);
+      setTotalPages(Math.max(1, result.totalPages));
+      if (page > Math.max(1, result.totalPages)) {
+        setPage(Math.max(1, result.totalPages));
+        return;
+      }
+      setSelectedId((currentId) => {
+        if (result.items.some((item) => item.id === currentId)) return currentId;
+        return result.items[0]?.id ?? null;
+      });
     } catch (error: any) {
-      toast.error(error?.message || '任务列表加载失败');
+      if (requestId === listRequestRef.current) toast.error(error?.message || '任务列表加载失败');
     } finally {
-      setLoading(false);
+      if (requestId === listRequestRef.current) setLoading(false);
     }
-  }, [selectedId, status, type]);
+  }, [page, status, type]);
 
   const loadDetail = useCallback(async (id: string) => {
+    const requestId = detailRequestRef.current + 1;
+    detailRequestRef.current = requestId;
     setDetailLoading(true);
     try {
-      setDetail(await adminTasksApi.get(id));
+      const result = await adminTasksApi.get(id);
+      if (requestId === detailRequestRef.current) setDetail(result);
     } catch (error: any) {
-      toast.error(error?.message || '任务详情加载失败');
+      if (requestId === detailRequestRef.current) toast.error(error?.message || '任务详情加载失败');
     } finally {
-      setDetailLoading(false);
+      if (requestId === detailRequestRef.current) setDetailLoading(false);
     }
   }, []);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    void loadQueuesStatus();
+  }, [loadQueuesStatus]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -216,10 +264,11 @@ export function AdminTasksPage() {
     if (!hasActive && selected?.status !== 'running' && selected?.status !== 'queued') return;
     const timer = window.setInterval(() => {
       void load();
+      void loadQueuesStatus();
       if (selectedId) void loadDetail(selectedId);
     }, 5000);
     return () => window.clearInterval(timer);
-  }, [items, load, loadDetail, selected?.status, selectedId]);
+  }, [items, load, loadDetail, loadQueuesStatus, selected?.status, selectedId]);
 
   const retry = async (task: AdminTask) => {
     try {
@@ -237,9 +286,35 @@ export function AdminTasksPage() {
       await adminTasksApi.cancel(task.id);
       toast.success('任务已取消');
       void load();
+      void loadQueuesStatus();
       if (selectedId === task.id) void loadDetail(task.id);
     } catch (error: any) {
       toast.error(error?.message || '取消失败');
+    }
+  };
+
+  const prioritizeTask = async (task: AdminTask) => {
+    try {
+      await adminTasksApi.prioritize(task.id);
+      toast.success('任务已插队到队列最前面');
+      void load();
+      void loadQueuesStatus();
+      if (selectedId === task.id) void loadDetail(task.id);
+    } catch (error: any) {
+      toast.error(error?.message || '插队失败');
+    }
+  };
+
+  const forceRunTask = async (task: AdminTask) => {
+    try {
+      const result = await adminTasksApi.forceRun(task.id);
+      toast.success('任务已强制执行，新任务已插队');
+      setPage(1);
+      setSelectedId(result.id);
+      void load();
+      void loadQueuesStatus();
+    } catch (error: any) {
+      toast.error(error?.message || '强制执行失败');
     }
   };
 
@@ -249,20 +324,20 @@ export function AdminTasksPage() {
     || task.type === 'narrative-video-render';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">任务中心</h1>
           <p className="text-sm text-muted-foreground">统一跟踪学习包准备与后台视频渲染；可在这里查看日志、取消和重试。</p>
         </div>
         <div className="flex items-center gap-2">
-          <Select value={type} onChange={(event) => setType(event.target.value as typeof type)}>
+          <Select value={type} onChange={(event) => { setType(event.target.value as typeof type); setPage(1); }}>
             <option value="all">全部任务类型</option>
             <option value="learning-package-content-prepare">学习包内容准备</option>
             <option value="script-video-render">剧本演出视频</option>
             <option value="narrative-video-render">叙事视频预览</option>
           </Select>
-          <Select value={status} onChange={(event) => setStatus(event.target.value as AdminTaskStatus | 'all')}>
+          <Select value={status} onChange={(event) => { setStatus(event.target.value as AdminTaskStatus | 'all'); setPage(1); }}>
             <option value="all">全部状态</option>
             <option value="queued">排队中</option>
             <option value="running">执行中</option>
@@ -277,9 +352,80 @@ export function AdminTasksPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_460px]">
+      {/* 队列状态面板 —— 全宽 */}
+      <Card>
+        <CardHeader className="px-4 py-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            {queuesLoading ? <Loader2 className="size-4 animate-spin" /> : <Layers3 className="size-4" />}
+            队列状态
+            <Button variant="ghost" size="sm" className="ml-auto h-7 px-2" onClick={() => void loadQueuesStatus()}>
+              <RefreshCw className="size-3.5" />
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 pb-4">
+          {!queuesStatus ? (
+            <p className="py-4 text-center text-xs text-muted-foreground">加载队列状态中...</p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {queuesStatus.queues.map((q) => (
+                <div key={q.name} className="rounded-md border border-border p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-sm font-medium">{q.label}</span>
+                    <span className="text-[10px] text-muted-foreground font-mono">{q.name}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {q.active > 0 && (
+                      <Badge variant="outline" className="border-blue-300 bg-blue-50 text-blue-700 gap-1">
+                        <Loader2 className="size-3 animate-spin" />执行中 {q.active}
+                      </Badge>
+                    )}
+                    {q.waiting > 0 && (
+                      <Badge variant="outline" className="border-slate-300 text-slate-600 gap-1">
+                        <Clock3 className="size-3" />等待 {q.waiting}
+                      </Badge>
+                    )}
+                    {q.delayed > 0 && (
+                      <Badge variant="outline" className="border-amber-300 text-amber-700 gap-1">
+                        <Clock3 className="size-3" />延迟 {q.delayed}
+                      </Badge>
+                    )}
+                    {q.failed > 0 && (
+                      <Badge variant="outline" className="border-red-300 text-red-700 gap-1">
+                        <AlertTriangle className="size-3" />失败 {q.failed}
+                      </Badge>
+                    )}
+                    {q.completed > 0 && (
+                      <Badge variant="outline" className="border-emerald-300 text-emerald-700 gap-1">
+                        <CheckCircle2 className="size-3" />完成 {q.completed}
+                      </Badge>
+                    )}
+                    {q.active === 0 && q.waiting === 0 && q.delayed === 0 && q.failed === 0 && q.completed === 0 && (
+                      <span className="text-xs text-muted-foreground">空闲</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {queuesStatus && (
+            <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+              <span>总计</span>
+              <span className="flex gap-3">
+                <span className="text-blue-600">执行 {queuesStatus.totalActive}</span>
+                <span>等待 {queuesStatus.totalWaiting}</span>
+                {queuesStatus.totalDelayed > 0 && <span className="text-amber-600">延迟 {queuesStatus.totalDelayed}</span>}
+                {queuesStatus.totalFailed > 0 && <span className="text-red-600">失败 {queuesStatus.totalFailed}</span>}
+              </span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_420px]">
+        {/* 任务列表 */}
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="px-4 py-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <ListChecks className="size-4" />
               后台任务
@@ -305,7 +451,7 @@ export function AdminTasksPage() {
                       type="button"
                       onClick={() => setSelectedId(task.id)}
                       className={cn(
-                        'block w-full px-4 py-3 text-left transition-colors hover:bg-muted/50',
+                        'block w-full px-4 py-2 text-left transition-colors hover:bg-muted/50',
                         selectedId === task.id && 'bg-muted',
                       )}
                     >
@@ -326,8 +472,8 @@ export function AdminTasksPage() {
                         </div>
                         <StatusBadge status={task.status} />
                       </div>
-                      <div className="mt-3 flex items-center gap-3">
-                        <Progress value={task.progress} className="h-2 flex-1" />
+                      <div className="mt-2 flex items-center gap-3">
+                        <Progress value={task.progress} className="h-1.5 flex-1" />
                         <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{task.progress}%</span>
                       </div>
                     </button>
@@ -335,17 +481,30 @@ export function AdminTasksPage() {
                 })}
               </div>
             )}
+            {total > 0 && (
+              <div className="flex items-center justify-between border-t px-4 py-2">
+                <span className="text-xs text-muted-foreground">第 {page} / {totalPages} 页 · 每页 12 条</span>
+                <div className="flex gap-1">
+                  <Button variant="outline" size="sm" className="h-7 px-2" disabled={page <= 1 || loading} onClick={() => setPage((value) => Math.max(1, value - 1))}>
+                    <ChevronLeft className="mr-1 size-3.5" />上一页
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-7 px-2" disabled={page >= totalPages || loading} onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>
+                    下一页<ChevronRight className="ml-1 size-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Card className="xl:sticky xl:top-4 xl:self-start">
-          <CardHeader className="pb-2">
+          <CardHeader className="px-4 py-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Activity className="size-4" />
               任务详情
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 pb-4">
             {!selected ? (
               <p className="py-12 text-center text-sm text-muted-foreground">选择一个任务查看详情</p>
             ) : (
@@ -389,6 +548,18 @@ export function AdminTasksPage() {
                     <Button variant="outline" size="sm" onClick={() => void cancelTask(selected)}>
                       <XCircle className="mr-1 size-4" />
                       取消任务
+                    </Button>
+                  )}
+                  {selected.status === 'queued' && (
+                    <Button variant="outline" size="sm" onClick={() => void prioritizeTask(selected)}>
+                      <ArrowUpRight className="mr-1 size-4" />
+                      插队
+                    </Button>
+                  )}
+                  {(selected.status === 'queued' || selected.status === 'failed') && (
+                    <Button variant="default" size="sm" onClick={() => void forceRunTask(selected)}>
+                      <Zap className="mr-1 size-4" />
+                      强制执行
                     </Button>
                   )}
                 </div>
