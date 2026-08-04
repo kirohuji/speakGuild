@@ -4,6 +4,7 @@ import { ArrowLeft, BookOpen, CheckCircle2, ChevronLeft, ChevronRight, FilePenLi
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
@@ -275,13 +276,15 @@ function WritingKnowledgeList({
   return (
     <div className="space-y-2">
       {items.map((item) => (
-        <div key={item.title} className="flex items-center gap-3 rounded-lg bg-muted/30 p-3">
-          <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-md', toneClass)}>{icon}</span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-foreground">{item.title}</p>
-            {item.subtitle && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{item.subtitle}</p>}
-          </div>
-        </div>
+        <Card key={item.title} className="border-0 bg-muted/30 shadow-none">
+          <CardContent className="flex items-center gap-3 p-3">
+            <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-md', toneClass)}>{icon}</span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-foreground">{item.title}</p>
+              {item.subtitle && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{item.subtitle}</p>}
+            </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   )

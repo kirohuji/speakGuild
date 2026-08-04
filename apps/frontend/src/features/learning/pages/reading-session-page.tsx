@@ -6,6 +6,7 @@ import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
@@ -71,7 +72,7 @@ function ReadingPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }: 
       <main className="space-y-5">
         {(topic.description?.trim() || topic.teachingMarkdown?.trim()) && (
           <section className="rounded-lg bg-muted/30 p-4">
-            <div className="mb-2 flex items-center gap-2"><BookOpen className="size-4 text-primary" /><p className="text-sm font-semibold">阅读说明</p></div>
+            <div className="mb-2 flex items-center gap-2"><BookOpen className="size-4 text-primary" /><p className="text-sm font-semibold text-foreground">阅读说明</p></div>
             {topic.description?.trim() && <MarkdownRenderer content={topic.description} className="text-muted-foreground prose-p:my-1" />}
             <Button variant="outline" className="mt-4 min-h-11 w-full" onClick={onOpenGuide}><BookOpen className="size-4" />教学讲解</Button>
           </section>
@@ -91,10 +92,20 @@ function ReadingPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }: 
           </Tabs>
         </section>
 
-        <section className="rounded-lg bg-primary/[0.045] p-4">
-          <div className="flex items-start gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><FileText className="size-5" /></span><div className="min-w-0 flex-1"><h2 className="text-base font-semibold">准备好后开始作答</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">进入后，上方阅读文章，下方逐题作答，可以随时滚动原文检查。</p></div></div>
-          <div className="mt-4 flex flex-wrap gap-2"><Badge variant="outline">{durationMinutes} 分钟</Badge><Badge variant="outline">{questions.length} 题</Badge>{config.wordCount ? <Badge variant="outline">约 {config.wordCount} 词</Badge> : null}</div>
-          <Button size="lg" className="mt-4 w-full" onClick={onStart}>开始作答<ChevronRight className="size-4" /></Button>
+        <section className="rounded-lg bg-accent/[0.06] p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <FileText className="size-4 text-accent" />
+              <p className="text-sm font-semibold text-foreground">阅读练习</p>
+            </div>
+            <span className="text-right text-xs leading-5 text-muted-foreground">
+              {durationMinutes} 分钟 · {questions.length} 题{config.wordCount ? ` · 约 ${config.wordCount} 词` : ''}
+            </span>
+          </div>
+          {topic.promptEn?.trim() && <p className="text-lg font-semibold leading-7 text-foreground">{topic.promptEn}</p>}
+          {topic.promptZh?.trim() && <p className="mt-2 text-sm leading-6 text-muted-foreground">{topic.promptZh}</p>}
+          {!(topic.promptEn?.trim() || topic.promptZh?.trim()) && <p className="text-sm leading-6 text-muted-foreground">进入后，上方阅读文章，下方逐题练习。</p>}
+          <Button size="lg" className="mt-4 w-full bg-accent text-accent-foreground hover:bg-accent/85" onClick={onStart}>开始练习<ChevronRight className="size-4" /></Button>
         </section>
       </main>
     </div>
@@ -102,9 +113,9 @@ function ReadingPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }: 
 }
 
 function ReadingKnowledgeList({ icon, items, tone, emptyText }: { icon: React.ReactNode; items: Array<{ title: string; subtitle?: string | null }>; tone: 'cyan' | 'emerald' | 'violet'; emptyText: string }) {
-  const toneClass = { cyan: 'bg-cyan-500/10 text-cyan-600', emerald: 'bg-emerald-500/10 text-emerald-600', violet: 'bg-violet-500/10 text-violet-600' }[tone]
+  const toneClass = { cyan: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400', emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', violet: 'bg-violet-500/10 text-violet-600 dark:text-violet-400' }[tone]
   if (items.length === 0) return <p className="rounded-lg bg-muted/25 py-8 text-center text-sm text-muted-foreground">{emptyText}</p>
-  return <div className="flex flex-col gap-2">{items.map((item) => <div key={item.title} className="flex items-center gap-3 rounded-lg bg-muted/30 p-3"><span className={cn('flex size-9 shrink-0 items-center justify-center rounded-md', toneClass)}>{icon}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{item.title}</p>{item.subtitle && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{item.subtitle}</p>}</div></div>)}</div>
+  return <div className="flex flex-col gap-2">{items.map((item) => <Card key={item.title} className="border-0 bg-muted/30 shadow-none"><CardContent className="flex items-center gap-3 p-3"><span className={cn('flex size-9 shrink-0 items-center justify-center rounded-md', toneClass)}>{icon}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-foreground">{item.title}</p>{item.subtitle && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{item.subtitle}</p>}</div></CardContent></Card>)}</div>
 }
 
 function ReadingHeader({ topic, unitTitle, onBack }: { topic: TrainingTopicItem; unitTitle: string; onBack: () => void }) {

@@ -34,6 +34,8 @@ const AdminRoutes = lazy(() => import('@/routes/admin-routes'))
 const PracticeSessionPage = lazy(() => import('@/features/practice/pages/practice-session-page').then(m => ({ default: m.PracticeSessionPage })))
 const WritingSessionPage = lazy(() => import('@/features/learning/pages/writing-session-page').then(m => ({ default: m.WritingSessionPage })))
 const ReadingSessionPage = lazy(() => import('@/features/learning/pages/reading-session-page').then(m => ({ default: m.ReadingSessionPage })))
+const ListeningSessionPage = lazy(() => import('@/features/learning/pages/listening-session-page').then(m => ({ default: m.ListeningSessionPage })))
+const LearningReaderPage = lazy(() => import('@/features/learning/pages/learning-reader-page').then(m => ({ default: m.LearningReaderPage })))
 const ExpressionLibraryPage = lazy(() => import('@/features/expression/pages/expression-library-page').then(m => ({ default: m.ExpressionLibraryPage })))
 const LearningNotebooksPage = lazy(() => import('@/features/expression/pages/learning-notebooks-page').then(m => ({ default: m.LearningNotebooksPage })))
 const AchievementHallPage = lazy(() => import('@/features/achievement/pages/achievement-hall-page').then(m => ({ default: m.AchievementHallPage })))
@@ -86,6 +88,7 @@ export default function App() {
                 <Route path="/" element={<EnglishHomePage />} />
                 <Route path="/learning" element={<LearningPlanPage />} />
                 <Route path="/learning/units/:unitId" element={<LearningUnitPage />} />
+                <Route path="/learning/units/:unitId/read" element={<LearningReaderPage />} />
                 <Route path="/today" element={<TodayTaskPage />} />
                 <Route path="/scripts" element={<ScriptCenterPage />} />
                 <Route path="/scripts/packages/:packageId" element={<ScriptPackagePage />} />
@@ -102,6 +105,7 @@ export default function App() {
                 <Route path="/practice/session/:topicId" element={<PracticeSessionPage />} />
                 <Route path="/learning/writing/:topicId" element={<WritingSessionPage />} />
                 <Route path="/learning/reading/:topicId" element={<ReadingSessionPage />} />
+                <Route path="/learning/listening/:topicId" element={<ListeningSessionPage />} />
                 <Route path="/expressions" element={<LearningNotebooksPage />} />
                 <Route path="/expressions/:notebookId" element={<ExpressionLibraryPage />} />
                 <Route path="/growth" element={<AchievementHallPage />} />

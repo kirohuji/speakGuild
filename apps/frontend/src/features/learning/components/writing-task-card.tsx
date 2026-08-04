@@ -1,4 +1,4 @@
-import { FilePenLine, Play } from 'lucide-react'
+import { ChevronRight, FilePenLine } from 'lucide-react'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { Button } from '@/components/ui/button'
 
@@ -29,7 +29,7 @@ export function WritingTaskCard({
 
   return (
     <section className="rounded-lg bg-accent/[0.06] p-4" aria-label="写作题目">
-      <div className="mb-4 flex items-start justify-between gap-3">
+      <div className="mb-3 flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <FilePenLine className="size-4 shrink-0 text-accent" />
           <p className="text-sm font-semibold text-foreground">写作题目</p>
@@ -59,8 +59,8 @@ export function WritingTaskCard({
       )}
 
       {onStart && (
-        <Button className="mt-5 w-full bg-accent text-accent-foreground hover:bg-accent/85" size="lg" onClick={onStart}>
-          <Play className="mr-2 size-5" />{hasDraft ? '继续写作' : '开始写作'}
+        <Button className="mt-4 w-full bg-accent text-accent-foreground hover:bg-accent/85" size="lg" onClick={onStart}>
+          {hasDraft ? '继续写作' : '开始写作'}<ChevronRight className="size-4" />
         </Button>
       )}
     </section>

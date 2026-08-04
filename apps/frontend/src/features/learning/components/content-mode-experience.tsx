@@ -1,21 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
-import { ReactReader } from 'react-reader'
-import { useNavigate } from 'react-router-dom'
-import { BookOpen, CheckCircle2, ChevronRight, FilePenLine, Headphones, Loader2, Pause, Play, Repeat2 } from 'lucide-react'
-import { toast } from 'sonner'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { BookOpen, CheckCircle2, ChevronRight, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Switch } from '@/components/ui/switch'
-import { MarkdownContent } from '@/features/system/components/markdown-content'
-import { cn } from '@/lib/cn'
-import { learningApi, type ListeningTranscriptSegment, type SceneExperience, type TrainingTopicItem, type UnitDetail } from '../api/learning-api'
+import { learningApi, type SceneExperience, type UnitDetail } from '../api/learning-api'
 
 export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
   const navigate = useNavigate()
   const [experience, setExperience] = useState<SceneExperience | null>(null)
-  const [selectedTopic, setSelectedTopic] = useState<TrainingTopicItem | null>(null)
 
   useEffect(() => {
     if (unit.contentMode === 'practice') return
@@ -23,27 +16,29 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
   }, [unit.contentMode, unit.id])
 
   if (unit.contentMode === 'novel') {
-    return <NovelExperience unit={unit} experience={experience} />
+    return <NovelEntryCard unit={unit} experience={experience} />
   }
 
-  const icon = unit.contentMode === 'writing' ? FilePenLine : unit.contentMode === 'reading' ? BookOpen : Headphones
-  const Icon = icon
   const title = unit.contentMode === 'writing' ? '写作任务' : unit.contentMode === 'reading' ? '阅读与理解' : '精听训练'
 
   return (
     <section className="mb-5">
-      <div className="mb-3 flex items-center gap-3 px-1">
-        <span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon className="size-4" /></span>
-        <div><h2 className="text-base font-semibold">{title}</h2><p className="text-xs text-muted-foreground">共 {unit.trainingTopics.length} 个话题，进度独立于今日任务</p></div>
+      <div className="mb-3 flex items-end justify-between gap-3 px-1">
+        <div className="flex min-w-0 items-start gap-2">
+          <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">3</span>
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-foreground">{title}</h2>
+            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">共 {unit.trainingTopics.length} 个话题，进度独立于今日任务</p>
+          </div>
+        </div>
+        <Badge variant="outline" className="shrink-0 rounded-full text-[11px]">{unit.trainingTopics.length} 个话题</Badge>
       </div>
       <div className="space-y-2">
         {unit.trainingTopics.map((topic, index) => (
           <button
             key={topic.id}
             type="button"
-            onClick={() => ['writing', 'reading'].includes(unit.contentMode ?? '')
-              ? navigate(`/learning/${unit.contentMode}/${topic.id}?unitId=${unit.id}`)
-              : setSelectedTopic(topic)}
+            onClick={() => navigate(`/learning/${unit.contentMode}/${topic.id}?unitId=${unit.id}`)}
             className="w-full text-left"
           >
             <Card className="border-0 bg-primary/[0.045] shadow-none transition-transform active:scale-[0.99]">
@@ -58,113 +53,55 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
         ))}
         {unit.trainingTopics.length === 0 && <div className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">后台还没有添加内容话题</div>}
       </div>
-      <Dialog open={Boolean(selectedTopic)} onOpenChange={(open) => { if (!open) setSelectedTopic(null) }}>
-        <DialogContent className="flex max-h-[94dvh] w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
-          {selectedTopic && (
-            <TopicExperienceBody
-              topic={selectedTopic}
-              mode="listening"
-              unitTitle={unit.title}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
     </section>
   )
 }
 
-function TopicExperienceBody({ topic, mode, unitTitle }: { topic: TrainingTopicItem; mode: 'listening'; unitTitle: string }) {
-  return (
-    <>
-      <DialogHeader className="shrink-0 border-b border-border/70 px-5 pb-4 pt-5">
-        <DialogTitle>{topic.title}</DialogTitle>
-        <DialogDescription>{unitTitle} · {topic.difficulty} · 约 {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} 分钟</DialogDescription>
-      </DialogHeader>
-      <div className="min-h-0 flex-1 overflow-y-auto p-5">
-        {topic.teachingMarkdown?.trim() && (
-          <section className="mb-5 overflow-hidden rounded-2xl border border-sky-500/20 bg-sky-500/[0.045]">
-            <div className="border-b border-sky-500/15 bg-sky-500/[0.07] px-4 py-3">
-              <p className="text-sm font-semibold">开始前，先看这份学习指引</p>
-            </div>
-            <div className="p-4 text-sm leading-7"><MarkdownContent content={topic.teachingMarkdown} /></div>
-          </section>
-        )}
-        {mode === 'listening' && <ListeningExperience topic={topic} />}
-      </div>
-    </>
-  )
-}
-
-function ListeningExperience({ topic }: { topic: TrainingTopicItem }) {
-  const audioRef = useRef<HTMLAudioElement>(null)
-  const segments = topic.transcript ?? []
-  const [currentMs, setCurrentMs] = useState(0)
-  const [playing, setPlaying] = useState(false)
-  const [loopIndex, setLoopIndex] = useState<number | null>(null)
-  const [showTranslation, setShowTranslation] = useState(true)
-  const [completing, setCompleting] = useState(false)
-  const activeIndex = Math.max(0, segments.findIndex((segment) => currentMs >= segment.startMs && currentMs < segment.endMs))
-  const active = segments[activeIndex]
-  const seek = (segment: ListeningTranscriptSegment, index: number) => {
-    if (!audioRef.current) return
-    audioRef.current.currentTime = segment.startMs / 1000
-    setCurrentMs(segment.startMs)
-    setLoopIndex(index)
-    void audioRef.current.play()
+function NovelEntryCard({ unit, experience }: { unit: UnitDetail; experience: SceneExperience | null }) {
+  if (!experience) {
+    return (
+      <section className="mb-5 flex h-32 items-center justify-center">
+        <Loader2 className="size-5 animate-spin text-muted-foreground" />
+      </section>
+    )
   }
-  const onTime = () => {
-    const audio = audioRef.current
-    if (!audio) return
-    const nextMs = audio.currentTime * 1000
-    setCurrentMs(nextMs)
-    if (loopIndex != null && segments[loopIndex] && nextMs >= segments[loopIndex].endMs) {
-      audio.currentTime = segments[loopIndex].startMs / 1000
-      void audio.play()
-    }
+  if (!experience.novelPackage) {
+    return (
+      <section className="mb-5 rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+        后台还没有上传 EPUB
+      </section>
+    )
   }
-  return (
-    <div className="space-y-4">
-      {topic.mediaUrl ? <audio ref={audioRef} src={topic.mediaUrl} onTimeUpdate={onTime} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} preload="metadata" /> : <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">音频资产暂不可用</p>}
-      <div className="sticky top-0 z-10 rounded-2xl border border-border/70 bg-background/95 p-4 shadow-sm backdrop-blur">
-        <div className="flex items-center gap-3"><Button size="icon" className="rounded-full" disabled={!topic.mediaUrl} onClick={() => playing ? audioRef.current?.pause() : void audioRef.current?.play()}>{playing ? <Pause className="size-4" /> : <Play className="size-4" />}</Button><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{active?.text ?? topic.title}</p>{showTranslation && <p className="truncate text-xs text-muted-foreground">{active?.translation}</p>}</div><label className="flex items-center gap-2 text-xs text-muted-foreground"><Switch checked={showTranslation} onCheckedChange={setShowTranslation} />译文</label></div>
-        {active?.words?.length ? <p className="mt-3 flex flex-wrap gap-x-1.5 gap-y-1 text-sm leading-7">{active.words.map((word, index) => <span key={`${word.token}-${index}`} className={cn(currentMs >= word.startMs && currentMs < word.endMs && 'rounded bg-primary px-1 text-primary-foreground')}>{word.token}</span>)}</p> : null}
-      </div>
-      <div className="space-y-1.5">{segments.map((segment, index) => <button key={segment.id ?? index} type="button" onClick={() => seek(segment, index)} className={cn('flex w-full gap-3 rounded-xl px-3 py-3 text-left transition-colors', activeIndex === index ? 'bg-primary/10' : 'hover:bg-muted/60')}><span className="w-10 shrink-0 pt-0.5 font-mono text-[11px] text-muted-foreground">{formatTime(segment.startMs)}</span><span className="min-w-0 flex-1"><span className="block text-sm font-medium leading-6">{segment.text}</span>{showTranslation && segment.translation && <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">{segment.translation}</span>}</span>{loopIndex === index && <Repeat2 className="mt-1 size-3.5 shrink-0 text-primary" />}</button>)}</div>
-      {segments.length === 0 && <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">后台还没有配置逐句时间戳</p>}
-      {loopIndex != null && <Button variant="outline" className="w-full" onClick={() => setLoopIndex(null)}><Repeat2 className="mr-1.5 size-4" />取消单句循环</Button>}
-      <Button className="w-full" disabled={completing || segments.length === 0} onClick={async () => { setCompleting(true); try { await learningApi.saveTopicSubmission(topic.id, { response: { listenedAtMs: currentMs }, status: 'completed' }); toast.success('本话题已完成') } catch (error: any) { toast.error(error?.message || '保存失败') } finally { setCompleting(false) } }}>{completing ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : <CheckCircle2 className="mr-1.5 size-4" />}完成本话题</Button>
-    </div>
-  )
-}
 
-function NovelExperience({ unit, experience }: { unit: UnitDetail; experience: SceneExperience | null }) {
-  const [location, setLocation] = useState<string | number>(0)
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const renditionRef = useRef<any>(null)
-  useEffect(() => {
-    const saved = experience?.novelPackage?.progress?.locator?.cfi
-    if (typeof saved === 'string') setLocation(saved)
-  }, [experience?.novelPackage?.progress?.locator])
-  if (!experience) return <div className="mb-5 flex h-32 items-center justify-center"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>
-  if (!experience.novelPackage) return <div className="mb-5 rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">后台还没有上传 EPUB</div>
   const novel = experience.novelPackage
-  const handleLocation = (epubcfi: string) => {
-    setLocation(epubcfi)
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-    const rendition = renditionRef.current
-    const current = rendition?.currentLocation?.()
-    const percentage = Number(current?.start?.percentage ?? rendition?.book?.locations?.percentageFromCfi?.(epubcfi) ?? novel.progress?.percentage ?? 0)
-    saveTimer.current = setTimeout(() => void learningApi.saveNovelProgress(unit.id, { locator: { cfi: epubcfi }, percentage: Number.isFinite(percentage) ? Math.max(0, Math.min(1, percentage)) : 0 }), 800)
-  }
+  const pct = novel.progress?.percentage != null ? Math.round(novel.progress.percentage * 100) : 0
+  const tocCount = novel.toc?.length ?? 0
+
   return (
-    <section className="mb-5 overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
-      {experience.groupItem && <div className="border-b border-border/60 bg-amber-500/[0.07] px-4 py-2 text-xs text-muted-foreground">{experience.groupItem.group.name} · 第 {experience.groupItem.sortOrder + 1}/{experience.groupItem.group.items.length} 册</div>}
-      <div className="h-[72dvh] min-h-[520px] bg-white text-black"><ReactReader url={novel.epubUrl} title={novel.metadata?.title ?? unit.title} location={location} locationChanged={handleLocation} getRendition={(rendition) => { renditionRef.current = rendition; void rendition.book.locations.generate(1600).catch(() => undefined) }} showToc epubInitOptions={{ openAs: 'epub' }} /></div>
+    <section className="mb-5 rounded-lg bg-accent/[0.06] p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <BookOpen className="size-4 text-accent" />
+          <p className="text-sm font-semibold text-foreground">阅读</p>
+        </div>
+        <span className="text-right text-xs leading-5 text-muted-foreground">
+          {tocCount > 0 && `${tocCount} 章`}
+          {tocCount > 0 && pct > 0 && ' · '}
+          {pct > 0 && `已读 ${pct}%`}
+        </span>
+      </div>
+      <p className="text-lg font-semibold leading-7 text-foreground">{novel.metadata?.title ?? unit.title}</p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">沉浸式英文阅读体验</p>
+      {experience.groupItem && (
+        <p className="mt-1 text-xs text-muted-foreground/70">
+          {experience.groupItem.group.name} · 第 {experience.groupItem.sortOrder + 1}/{experience.groupItem.group.items.length} 册
+        </p>
+      )}
+      <Button size="lg" className="mt-4 w-full bg-accent text-accent-foreground hover:bg-accent/85" asChild>
+        <Link to={`/learning/units/${unit.id}/read`}>
+          {pct > 0 ? '继续阅读' : '开始阅读'}<ChevronRight className="size-4" />
+        </Link>
+      </Button>
     </section>
   )
-}
-
-function formatTime(ms: number) {
-  const total = Math.max(0, Math.floor(ms / 1000))
-  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`
 }
