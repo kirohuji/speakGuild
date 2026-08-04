@@ -334,6 +334,60 @@
     overscroll-behavior: contain;
   }
 
+  /* 全屏写作使用原生 overlay 键盘：页面和 header 保持原位，只给纸张编辑区
+     增加键盘等高的可滚动留白，让当前光标可以滚到可见区域。 */
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'] {
+    left: 0 !important;
+    top: 0 !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    transform: none !important;
+    overflow: hidden;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'] [data-writing-scroll-region] {
+    scroll-padding-bottom: 1rem;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'] [data-writing-editor] {
+    min-height: calc(100dvh - var(--keyboard-height) - 7rem) !important;
+    padding-bottom: 1rem;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'] [data-writing-editor] textarea {
+    min-height: calc(100dvh - var(--keyboard-height) - 8rem) !important;
+  }
+
+  [data-writing-editor] textarea {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  [data-writing-editor] textarea:focus,
+  [data-writing-editor] textarea:focus-visible {
+    border: 0 !important;
+    border-radius: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'] [data-writing-footer] {
+    max-height: 0;
+    min-height: 0;
+    overflow: hidden;
+    border-top-width: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: max-height 180ms ease, padding 180ms ease, opacity 120ms ease;
+  }
+
   body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='practice'] {
     left: 0 !important;
     top: 0 !important;
@@ -385,6 +439,14 @@
       top: 50% !important;
       transform: translate(-50%, -50%) translateY(var(--keyboard-offset)) !important;
       transition: height 220ms ease, max-height 220ms ease, transform 220ms ease;
+    }
+
+    body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'] {
+      left: 50% !important;
+      top: 50% !important;
+      height: min(92dvh, var(--keyboard-available-height)) !important;
+      max-height: var(--keyboard-available-height) !important;
+      transform: translate(-50%, -50%) translateY(var(--keyboard-offset)) !important;
     }
   }
 

@@ -1,19 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ReactReader } from 'react-reader'
-import { BookOpen, CheckCircle2, ChevronRight, FilePenLine, Headphones, Loader2, Pause, Play, Repeat2, Save, Sparkles } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { BookOpen, CheckCircle2, ChevronRight, FilePenLine, Headphones, Loader2, Pause, Play, Repeat2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { Textarea } from '@/components/ui/textarea'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { cn } from '@/lib/cn'
 import { learningApi, type ListeningTranscriptSegment, type SceneExperience, type TrainingTopicItem, type UnitDetail } from '../api/learning-api'
 
 export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
+  const navigate = useNavigate()
   const [experience, setExperience] = useState<SceneExperience | null>(null)
   const [selectedTopic, setSelectedTopic] = useState<TrainingTopicItem | null>(null)
 
@@ -38,7 +38,14 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
       </div>
       <div className="space-y-2">
         {unit.trainingTopics.map((topic, index) => (
-          <button key={topic.id} type="button" onClick={() => setSelectedTopic(topic)} className="w-full text-left">
+          <button
+            key={topic.id}
+            type="button"
+            onClick={() => ['writing', 'reading'].includes(unit.contentMode ?? '')
+              ? navigate(`/learning/${unit.contentMode}/${topic.id}?unitId=${unit.id}`)
+              : setSelectedTopic(topic)}
+            className="w-full text-left"
+          >
             <Card className="border-0 bg-primary/[0.045] shadow-none transition-transform active:scale-[0.99]">
               <CardContent className="flex items-center gap-3 p-4">
                 <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-sm font-semibold shadow-sm">{index + 1}</span>
@@ -53,14 +60,20 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
       </div>
       <Dialog open={Boolean(selectedTopic)} onOpenChange={(open) => { if (!open) setSelectedTopic(null) }}>
         <DialogContent className="flex max-h-[94dvh] w-[calc(100vw-1rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
-          {selectedTopic && <TopicExperienceBody topic={selectedTopic} mode={unit.contentMode as 'writing' | 'reading' | 'listening'} unitTitle={unit.title} />}
+          {selectedTopic && (
+            <TopicExperienceBody
+              topic={selectedTopic}
+              mode="listening"
+              unitTitle={unit.title}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </section>
   )
 }
 
-function TopicExperienceBody({ topic, mode, unitTitle }: { topic: TrainingTopicItem; mode: 'writing' | 'reading' | 'listening'; unitTitle: string }) {
+function TopicExperienceBody({ topic, mode, unitTitle }: { topic: TrainingTopicItem; mode: 'listening'; unitTitle: string }) {
   return (
     <>
       <DialogHeader className="shrink-0 border-b border-border/70 px-5 pb-4 pt-5">
@@ -76,70 +89,9 @@ function TopicExperienceBody({ topic, mode, unitTitle }: { topic: TrainingTopicI
             <div className="p-4 text-sm leading-7"><MarkdownContent content={topic.teachingMarkdown} /></div>
           </section>
         )}
-        {mode === 'writing' && <WritingExperience topic={topic} />}
-        {mode === 'reading' && <ReadingExperience topic={topic} />}
         {mode === 'listening' && <ListeningExperience topic={topic} />}
       </div>
     </>
-  )
-}
-
-function WritingExperience({ topic }: { topic: TrainingTopicItem }) {
-  const config = topic.contentConfig?.writing ?? {}
-  const [text, setText] = useState(String(topic.latestSubmission?.response?.text ?? ''))
-  const [submission, setSubmission] = useState(topic.latestSubmission ?? null)
-  const [saving, setSaving] = useState(false)
-  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0
-  const save = async (submit = false) => {
-    setSaving(true)
-    try {
-      let next = await learningApi.saveTopicSubmission(topic.id, { response: { text }, status: submit ? 'submitted' : 'draft' })
-      if (submit) next = await learningApi.reviewTopicSubmission(topic.id)
-      setSubmission(next)
-      toast.success(submit ? 'AI 反馈已生成' : '草稿已保存')
-    } catch (error: any) {
-      toast.error(error?.message || '保存失败')
-    } finally { setSaving(false) }
-  }
-  return (
-    <div className="space-y-5">
-      <div className="rounded-2xl bg-amber-500/[0.08] p-4"><p className="text-sm font-semibold leading-6">{topic.promptZh || topic.promptEn}</p>{topic.promptEn && topic.promptZh && <p className="mt-2 text-xs leading-5 text-muted-foreground">{topic.promptEn}</p>}</div>
-      {(config.requirements ?? []).length > 0 && <div><p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">需要覆盖</p><div className="flex flex-wrap gap-2">{config.requirements.map((item: string) => <Badge key={item} variant="outline">{item}</Badge>)}</div></div>}
-      <div><Textarea value={text} onChange={(event) => setText(event.target.value)} className="min-h-[300px] resize-y rounded-2xl p-4 text-[15px] leading-7" placeholder="先写下你的想法，AI 会在提交后给出有证据的修改建议……" /><div className="mt-2 flex justify-between text-xs text-muted-foreground"><span>{config.genre ? `文体：${config.genre}` : '自由写作'}</span><span className={cn(config.minWords && wordCount < config.minWords && 'text-amber-600')}>{wordCount} 词{config.minWords ? ` / ${config.minWords}–${config.maxWords ?? '∞'}` : ''}</span></div></div>
-      <div className="flex gap-2"><Button variant="outline" className="flex-1" onClick={() => save(false)} disabled={saving || !text.trim()}><Save className="mr-1.5 size-4" />保存草稿</Button><Button className="flex-1" onClick={() => save(true)} disabled={saving || !text.trim()}>{saving ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : <Sparkles className="mr-1.5 size-4" />}提交反馈</Button></div>
-      {submission?.feedback && <FeedbackPanel feedback={submission.feedback} />}
-    </div>
-  )
-}
-
-function ReadingExperience({ topic }: { topic: TrainingTopicItem }) {
-  const config = topic.contentConfig?.reading ?? {}
-  const questions: any[] = config.questions ?? []
-  const [answers, setAnswers] = useState<Record<string, string>>(topic.latestSubmission?.response?.answers ?? {})
-  const [submission, setSubmission] = useState(topic.latestSubmission ?? null)
-  const [saving, setSaving] = useState(false)
-  const submit = async () => {
-    setSaving(true)
-    try {
-      await learningApi.saveTopicSubmission(topic.id, { response: { answers }, status: 'submitted' })
-      const reviewed = await learningApi.reviewTopicSubmission(topic.id)
-      setSubmission(reviewed)
-      toast.success('回答已提交')
-    } catch (error: any) { toast.error(error?.message || '提交失败') } finally { setSaving(false) }
-  }
-  return (
-    <div className="space-y-6">
-      <article className="rounded-2xl border border-border/70 bg-card p-5 text-[15px] leading-8 shadow-sm"><MarkdownContent content={topic.description || topic.promptEn || topic.promptZh} /></article>
-      <div className="space-y-4">
-        {questions.map((question, index) => {
-          const key = String(index)
-          return <div key={key} className="rounded-2xl bg-muted/35 p-4"><p className="mb-3 text-sm font-semibold leading-6"><span className="mr-2 text-primary">{index + 1}.</span>{question.prompt}</p>{question.type === 'choice' ? <div className="grid gap-2">{(question.options ?? []).map((option: string) => <button key={option} type="button" onClick={() => setAnswers({ ...answers, [key]: option })} className={cn('rounded-xl border px-3 py-2.5 text-left text-sm', answers[key] === option ? 'border-primary bg-primary/10' : 'border-border bg-background')}>{option}</button>)}</div> : question.type === 'boolean' ? <div className="flex gap-2">{['正确', '错误'].map((option) => <Button key={option} variant={answers[key] === option ? 'default' : 'outline'} onClick={() => setAnswers({ ...answers, [key]: option })}>{option}</Button>)}</div> : <Textarea value={answers[key] ?? ''} onChange={(event) => setAnswers({ ...answers, [key]: event.target.value })} placeholder="根据文章内容回答" />}</div>
-        })}
-        {questions.length === 0 && <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">这篇阅读暂未配置理解题</p>}
-      </div>
-      {questions.length > 0 && <Button className="w-full" onClick={submit} disabled={saving}>{saving ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : <Sparkles className="mr-1.5 size-4" />}提交并查看证据</Button>}
-      {submission?.feedback && <FeedbackPanel feedback={submission.feedback} />}
-    </div>
   )
 }
 
@@ -210,10 +162,6 @@ function NovelExperience({ unit, experience }: { unit: UnitDetail; experience: S
       <div className="h-[72dvh] min-h-[520px] bg-white text-black"><ReactReader url={novel.epubUrl} title={novel.metadata?.title ?? unit.title} location={location} locationChanged={handleLocation} getRendition={(rendition) => { renditionRef.current = rendition; void rendition.book.locations.generate(1600).catch(() => undefined) }} showToc epubInitOptions={{ openAs: 'epub' }} /></div>
     </section>
   )
-}
-
-function FeedbackPanel({ feedback }: { feedback: Record<string, any> }) {
-  return <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4"><div className="mb-3 flex items-center gap-2"><Sparkles className="size-4 text-emerald-600" /><p className="text-sm font-semibold">AI 学习反馈</p>{feedback.score != null && <Badge className="ml-auto">{feedback.score}</Badge>}</div><p className="text-sm leading-6 text-muted-foreground">{feedback.summary}</p>{(feedback.strengths ?? []).length > 0 && <ul className="mt-3 space-y-1 text-sm">{feedback.strengths.map((item: string) => <li key={item}>✓ {item}</li>)}</ul>}{(feedback.improvements ?? []).length > 0 && <ul className="mt-3 space-y-1 text-sm text-amber-700 dark:text-amber-400">{feedback.improvements.map((item: string) => <li key={item}>→ {item}</li>)}</ul>}{feedback.nextRevisionFocus && <p className="mt-3 rounded-lg bg-background/70 px-3 py-2 text-sm font-medium">下一稿：{feedback.nextRevisionFocus}</p>}</div>
 }
 
 function formatTime(ms: number) {

@@ -444,7 +444,7 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
                             <div className="text-xs text-muted-foreground">
                               {isScriptMode
                                 ? `${scene.readyEpisodeCount ?? 0}/${scene.episodeCount ?? 0} 个章节已完成剧本`
-                                : scene.location || scene.id}
+                                : scene.id}
                             </div>
                           </td>
                           <td className="py-3 pr-4">
@@ -617,7 +617,7 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
               >
                 {scenes.map((scene) => (
                   <option key={scene.id} value={scene.id}>
-                    [{packageTypeLabel(scene.packageType)}] {scene.title} - {scene.location}
+                    [{packageTypeLabel(scene.packageType)}] {scene.title}
                   </option>
                 ))}
               </select>

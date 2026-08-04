@@ -32,6 +32,8 @@ export function RootLayout() {
   const isHomePage = pathname === '/'
   const isLearningSubPage =
     pathname.startsWith('/learning/units/') ||
+    pathname.startsWith('/learning/writing/') ||
+    pathname.startsWith('/learning/reading/') ||
     pathname.startsWith('/practice/session/') ||
     pathname.startsWith('/scripts/packages/') ||
     pathname.startsWith('/scripts/player/')

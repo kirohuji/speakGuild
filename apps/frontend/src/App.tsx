@@ -32,6 +32,8 @@ import { ForgotPasswordPage } from '@/features/auth/pages/forgot-password-page'
 // ── 非首屏页面：懒加载 ──
 const AdminRoutes = lazy(() => import('@/routes/admin-routes'))
 const PracticeSessionPage = lazy(() => import('@/features/practice/pages/practice-session-page').then(m => ({ default: m.PracticeSessionPage })))
+const WritingSessionPage = lazy(() => import('@/features/learning/pages/writing-session-page').then(m => ({ default: m.WritingSessionPage })))
+const ReadingSessionPage = lazy(() => import('@/features/learning/pages/reading-session-page').then(m => ({ default: m.ReadingSessionPage })))
 const ExpressionLibraryPage = lazy(() => import('@/features/expression/pages/expression-library-page').then(m => ({ default: m.ExpressionLibraryPage })))
 const LearningNotebooksPage = lazy(() => import('@/features/expression/pages/learning-notebooks-page').then(m => ({ default: m.LearningNotebooksPage })))
 const AchievementHallPage = lazy(() => import('@/features/achievement/pages/achievement-hall-page').then(m => ({ default: m.AchievementHallPage })))
@@ -98,6 +100,8 @@ export default function App() {
 
                 {/* 重页面懒加载 */}
                 <Route path="/practice/session/:topicId" element={<PracticeSessionPage />} />
+                <Route path="/learning/writing/:topicId" element={<WritingSessionPage />} />
+                <Route path="/learning/reading/:topicId" element={<ReadingSessionPage />} />
                 <Route path="/expressions" element={<LearningNotebooksPage />} />
                 <Route path="/expressions/:notebookId" element={<ExpressionLibraryPage />} />
                 <Route path="/growth" element={<AchievementHallPage />} />

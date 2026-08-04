@@ -75,6 +75,15 @@ function sanitizeTopicContentConfig(activityType: string, value: any) {
   };
 }
 
+function decodeTagValue(value?: string | null) {
+  if (!value) return value ?? undefined;
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 function warmupItemIdentity(item: any) {
   return {
     type: item?.type,
@@ -150,6 +159,73 @@ export class LearningService {
     // Filtering out audio made a successfully installed package still depend
     // on COS at playback time.
     return Boolean(asset?.url);
+  }
+
+  private collectInkAssetAliases(inkScript?: { inkSource?: string | null; inkJson?: any; assetMap?: any } | null) {
+    const assetMap = (inkScript?.assetMap ?? {}) as Record<string, any>;
+    const aliases = new Set<string>();
+    const addTagValue = (value?: string | null) => {
+      const decoded = decodeTagValue(value?.trim());
+      if (decoded && Object.prototype.hasOwnProperty.call(assetMap, decoded)) {
+        aliases.add(decoded);
+      }
+    };
+
+    const source = inkScript?.inkSource;
+    if (typeof source === 'string') {
+      const tagPattern = /^\s*#\s*(?:audio|bg):\s*(.+?)\s*$/gim;
+      let match: RegExpExecArray | null;
+      while ((match = tagPattern.exec(source))) {
+        addTagValue(match[1]);
+      }
+    }
+
+    const visit = (value: any) => {
+      if (typeof value === 'string') {
+        const match = value.match(/^\s*#?\s*(?:audio|bg):\s*(.+?)\s*$/i);
+        if (match) addTagValue(match[1]);
+        return;
+      }
+      if (!value || typeof value !== 'object') return;
+      if (Array.isArray(value)) {
+        for (const item of value) visit(item);
+        return;
+      }
+      for (const item of Object.values(value)) visit(item);
+    };
+    visit(inkScript?.inkJson);
+
+    return aliases;
+  }
+
+  private filterInkAssetMapToUsedAliases<T extends { inkSource?: string | null; inkJson?: any; assetMap?: any } | null>(inkScript: T): Record<string, any> {
+    const assetMap = (inkScript?.assetMap ?? {}) as Record<string, any>;
+    const entries = Object.entries(assetMap);
+    if (!entries.length) return {};
+    const aliases = this.collectInkAssetAliases(inkScript);
+    if (!inkScript?.inkSource && !inkScript?.inkJson) return { ...assetMap };
+    return Object.fromEntries(entries.filter(([alias]) => aliases.has(alias)));
+  }
+
+  private async collectInkAssetMapAssets(inkScript: { inkSource?: string | null; inkJson?: any; assetMap?: any } | null | undefined, assets: any[]) {
+    if (!inkScript) return {};
+    const usedAssetMap = this.filterInkAssetMapToUsedAliases(inkScript);
+    for (const [alias, entry] of Object.entries(usedAssetMap)) {
+      if ((entry as any)?.fileAssetId) {
+        try {
+          const result = await this.fileAssets.getAssetLongLivedUrl((entry as any).fileAssetId);
+          (entry as any).signedUrl = result.url;
+          const role = (entry as any).type === 'image' ? 'background' : 'voice';
+          const asset = this.pushAsset(assets, result.url, role);
+          if (asset) {
+            asset.fileAssetId = (entry as any).fileAssetId;
+            asset.mimeType = (entry as any).mimeType;
+            asset.alias = alias;
+          }
+        } catch { /* skip failed resolution */ }
+      }
+    }
+    return usedAssetMap;
   }
 
   /**
@@ -1161,6 +1237,26 @@ export class LearningService {
         transcript: t.transcript,
         latestSubmission: t.submissions[0] ?? null,
         suggestedDurationSec: t.suggestedDurationSec,
+        vocabularies: t.topicVocabs.map(({ vocab }) => ({
+          id: vocab.id,
+          word: vocab.word,
+          meaning: vocab.meaning,
+          partOfSpeech: vocab.partOfSpeech,
+          phoneticUs: vocab.phoneticUs,
+          phoneticUk: vocab.phoneticUk,
+          audioUsUrl: vocab.audioUsUrl,
+          audioUkUrl: vocab.audioUkUrl,
+          definitionEn: vocab.definitionEn,
+          synonyms: vocab.synonyms,
+          examples: vocab.examples,
+          description: vocab.description,
+          difficulty: vocab.difficulty,
+        })),
+        sentencePatterns: t.topicPatterns.map(({ pattern }) => ({
+          ...pattern,
+          topicId: t.id,
+          topicTitle: t.title,
+        })),
         activeChunks: t.activeChunks.map((ac) => ({
           id: ac.chunk.id,
           text: ac.chunk.text,
@@ -1310,19 +1406,7 @@ export class LearningService {
     });
 
     const allNpcs = gameLocation?.rooms.flatMap((r) => r.npcs) ?? [];
-    const fallbackCharacters = allNpcs.length
-      ? []
-      : await this.prisma.gameCharacter.findMany({
-          select: {
-            id: true, name: true, displayName: true,
-            avatarUrl: true, spriteBaseUrl: true,
-            expressions: true, defaultPosition: true,
-          },
-          orderBy: { name: 'asc' },
-        });
-    const sceneCharacters = allNpcs.length
-      ? allNpcs.map((npc) => npc.character)
-      : fallbackCharacters;
+    const sceneCharacters = allNpcs.map((npc) => npc.character);
 
     // Attach scene to unitDetail (one copy, not repeated per topic)
     (unitDetail as any).scene = {
@@ -1387,44 +1471,17 @@ export class LearningService {
         }
       }
     }
-    // ── Resolve story episode assetMap entries to signed URLs (for offline manifest) ──
+    // ── Resolve only story episode assetMap entries actually referenced by bg:/audio: tags ──
     for (const episode of storyEpisodePlayers) {
-      const episodeAssetMap = (episode.inkScript?.assetMap as Record<string, any>) || {};
-      for (const [alias, entry] of Object.entries(episodeAssetMap)) {
-        if (entry?.fileAssetId) {
-          try {
-            const result = await this.fileAssets.getAssetLongLivedUrl(entry.fileAssetId);
-            // Embed signed URL so mobile offline can resolve alias → same URL used to download the asset
-            entry.signedUrl = result.url;
-            const role = entry.type === 'image' ? 'background' : 'voice';
-            const asset = this.pushAsset(assets, result.url, role);
-            if (asset) {
-              asset.fileAssetId = entry.fileAssetId;
-              asset.mimeType = entry.mimeType;
-              asset.alias = alias;
-            }
-          } catch { /* skip failed resolution */ }
-        }
+      if (episode.inkScript) {
+        episode.inkScript.assetMap = await this.collectInkAssetMapAssets(episode.inkScript, assets);
       }
     }
 
-    // ── Resolve topic inkScript assetMap entries ──
+    // ── Resolve only topic inkScript assetMap entries actually referenced by bg:/audio: tags ──
     for (const topic of topics) {
-      const topicAssetMap = (topic.inkScript?.assetMap as Record<string, any>) || {};
-      for (const [alias, entry] of Object.entries(topicAssetMap)) {
-        if (entry?.fileAssetId) {
-          try {
-            const result = await this.fileAssets.getAssetLongLivedUrl(entry.fileAssetId);
-            entry.signedUrl = result.url;
-            const role = entry.type === 'image' ? 'background' : 'voice';
-            const asset = this.pushAsset(assets, result.url, role);
-            if (asset) {
-              asset.fileAssetId = entry.fileAssetId;
-              asset.mimeType = entry.mimeType;
-              asset.alias = alias;
-            }
-          } catch { /* skip */ }
-        }
+      if (topic.inkScript) {
+        topic.inkScript.assetMap = await this.collectInkAssetMapAssets(topic.inkScript, assets);
       }
     }
 

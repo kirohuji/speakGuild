@@ -165,6 +165,11 @@ export class GenerateWritingTopicDto {
   currentPromptEn?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(12000)
+  currentQuestionMarkdown?: string;
+
+  @IsOptional()
   @IsArray()
   @ArrayMaxSize(40)
   @IsString({ each: true })

@@ -280,10 +280,6 @@ function SceneDialog({
             <Input value={form.title ?? ''} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="宿舍入住" />
           </div>
           <div>
-            <Label>地点</Label>
-            <Input value={form.location ?? ''} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="宿舍前台" />
-          </div>
-          <div>
             <MarkdownEditor
               label="描述"
               value={form.description ?? ''}
@@ -663,7 +659,9 @@ function TrainingTopicDialog({
         activityType: ['writing', 'reading', 'listening'].includes(contentMode) ? contentMode : 'practice',
         metadata: {
           ...(packageType === 'exam'
-            ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview' }
+            ? contentMode === 'writing'
+              ? { exam: 'IELTS', section: 'writing', part: 2, bandTarget: '6.5', questionType: 'task_2_essay' }
+              : { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview' }
             : {}),
           outputTraining: { version: 1, enabled: true, pipeline: [] },
         },
@@ -780,7 +778,7 @@ function TrainingTopicDialog({
       metadata: {
         ...(form.metadata ?? {}),
         ...patch,
-        ...(form.type === 'ielts' ? { exam: 'IELTS', section: 'speaking' } : {}),
+        ...(form.type === 'ielts' ? { exam: 'IELTS', section: contentMode === 'writing' ? 'writing' : 'speaking' } : {}),
       },
     })
   }
@@ -871,7 +869,7 @@ function TrainingTopicDialog({
             <div>
               <p className="text-lg font-semibold leading-none tracking-tight">{edit ? '编辑话题' : '新增话题'}</p>
               <DialogDescription className="mt-1 text-sm text-muted-foreground">
-                组织练习提示、句型 Chunk，并为话题绑定可交互 Ink 故事。
+                {contentMode === 'writing' ? '设计完整写作题面、作答边界和评分标准，并实时检查考生视图。' : '组织练习提示、句型 Chunk，并为话题绑定可交互 Ink 故事。'}
               </DialogDescription>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -924,13 +922,15 @@ function TrainingTopicDialog({
                           ...form,
                           type,
                           metadata: type === 'ielts'
-                            ? { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview', outputTraining: existingWarmup ?? { version: 1, enabled: true, pipeline: [] } }
+                            ? contentMode === 'writing'
+                              ? { exam: 'IELTS', section: 'writing', part: 2, bandTarget: '6.5', questionType: 'task_2_essay', timeLimitMinutes: 40, outputTraining: existingWarmup ?? { version: 1, enabled: true, pipeline: [] } }
+                              : { exam: 'IELTS', section: 'speaking', part: 1, bandTarget: '6.5', questionType: 'interview', outputTraining: existingWarmup ?? { version: 1, enabled: true, pipeline: [] } }
                             : { outputTraining: existingWarmup ?? { version: 1, enabled: true, pipeline: [] } },
                         })
                       }}
                     >
                       <option value="daily">日常话题</option>
-                      <option value="ielts">雅思口语</option>
+                      <option value="ielts">{contentMode === 'writing' ? '雅思写作' : '雅思口语'}</option>
                     </Select>
                   </div>
                   <div className="space-y-1.5">
@@ -957,6 +957,33 @@ function TrainingTopicDialog({
                 </div>
               </div>
               {(form.type ?? (packageType === 'exam' ? 'ielts' : 'daily')) === 'ielts' && (
+                contentMode === 'writing' ? (
+                <div className="grid gap-4 rounded-lg border border-border/70 bg-muted/20 p-4 md:grid-cols-4">
+                  <div className="space-y-1.5">
+                    <Label>Writing Task</Label>
+                    <Select value={String(form.metadata?.part ?? 2)} onChange={(e) => updateMetadata({ part: Number(e.target.value) })}>
+                      <option value="1">Task 1</option>
+                      <option value="2">Task 2</option>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>目标分数</Label>
+                    <Input value={form.metadata?.bandTarget ?? ''} onChange={(e) => updateMetadata({ bandTarget: e.target.value })} placeholder="6.5" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>题型</Label>
+                    <Select value={form.metadata?.questionType ?? 'task_2_essay'} onChange={(e) => updateMetadata({ questionType: e.target.value })}>
+                      <option value="task_1_letter">Task 1 Letter</option>
+                      <option value="task_1_report">Task 1 Report</option>
+                      <option value="task_2_essay">Task 2 Essay</option>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>考试时限（分钟）</Label>
+                    <Input type="number" min={1} value={form.metadata?.timeLimitMinutes ?? 40} onChange={(e) => updateMetadata({ timeLimitMinutes: Number(e.target.value) })} />
+                  </div>
+                </div>
+                ) : (
                 <div className="grid gap-4 rounded-lg border border-border/70 bg-muted/20 p-4 md:grid-cols-5">
                   <div className="space-y-1.5">
                     <Label>Part</Label>
@@ -987,6 +1014,7 @@ function TrainingTopicDialog({
                     <Input type="number" value={form.metadata?.answerSeconds ?? ''} onChange={(e) => updateMetadata({ answerSeconds: e.target.value ? Number(e.target.value) : null })} />
                   </div>
                 </div>
+                )
               )}
               <MarkdownEditor
                 label="话题说明"
@@ -1027,7 +1055,9 @@ function TrainingTopicDialog({
                   draftContext={{
                     title: form.title,
                     promptEn: form.promptEn,
+                    promptZh: form.promptZh,
                     difficulty: form.difficulty,
+                    suggestedDurationSec: form.suggestedDurationSec,
                     vocabulary: boundVocabs.map((item) => item.word),
                     chunks: boundChunks.map((item) => item.text),
                     sentencePatterns: boundPatterns.map((item) => item.pattern),
@@ -1431,7 +1461,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
         <Button variant="ghost" size="icon" onClick={onBack}><ChevronRight className="size-4 rotate-180" /></Button>
         <div>
           <h2 className="text-lg font-bold">{scene.title}</h2>
-          <p className="text-sm text-muted-foreground">{currentPackageTypeLabel} · {scene.location || '未设置地点'} · {scene.requiredOutputLevel}</p>
+          <p className="text-sm text-muted-foreground">{currentPackageTypeLabel} · {contentModeLabel(scene.contentMode)} · {scene.requiredOutputLevel}</p>
         </div>
       </div>
 
@@ -1855,8 +1885,10 @@ export function AdminScenesPage() {
                             <Badge variant="outline" className="text-xs">
                               {packageTypeLabel(s.packageType)}
                             </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {contentModeLabel(s.contentMode)}
+                            </Badge>
                           </div>
-                          <p className="mt-0.5 text-xs text-muted-foreground">{s.location || '未设置地点'}</p>
                         </div>
                       </td>
                       <td className="hidden px-4 py-3 md:table-cell">
