@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, ChevronDown, DownloadCloud, Film, ListChecks, Loader2, PackageOpen, RotateCcw, Trash2, X } from 'lucide-react'
+import { AlertCircle, Ban, ChevronDown, DownloadCloud, Film, ListChecks, Loader2, PackageOpen, Pause, RotateCcw, Trash2, X } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -104,6 +104,8 @@ export function LearningPackDownloadDrawer({
   const removeGlobalTask = useGlobalTaskStore((state) => state.removeTask)
   const updateGlobalTask = useGlobalTaskStore((state) => state.updateTask)
   const resumePackTask = useLearningStore((state) => state.resumePackTask)
+  const pausePackTask = useLearningStore((state) => state.pausePackTask)
+  const cancelPackTask = useLearningStore((state) => state.cancelPackTask)
   const downloadUnitPack = useLearningStore((state) => state.downloadUnitPack)
   const tasks = useMemo(() => activeTasks(downloadTasks), [downloadTasks])
   const visibleGlobalTasks = useMemo(() => globalTasks.filter((task) => task.status !== 'done'), [globalTasks])
@@ -288,6 +290,21 @@ export function LearningPackDownloadDrawer({
                             onClick={() => void resumePackTask(task.packId)}
                           >
                             {task.kind === 'uninstall' ? t('learning.resumeUninstall') : t('learning.resumeDownload')}
+                          </Button>
+                        )}
+                        {task.kind !== 'uninstall' && (task.status === 'queued' || task.status === 'downloading' || task.status === 'extracting') && (
+                          <div className="grid grid-cols-2 gap-2 pt-1">
+                            <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => pausePackTask(task.packId)}>
+                              <Pause className="size-3.5" />暂停
+                            </Button>
+                            <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5 border-destructive/30 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => cancelPackTask(task.packId)}>
+                              <Ban className="size-3.5" />终止下载
+                            </Button>
+                          </div>
+                        )}
+                        {task.kind !== 'uninstall' && task.status === 'paused' && (
+                          <Button type="button" size="sm" variant="ghost" className="h-8 w-full gap-1.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => cancelPackTask(task.packId)}>
+                            <Ban className="size-3.5" />终止下载
                           </Button>
                         )}
                       </div>

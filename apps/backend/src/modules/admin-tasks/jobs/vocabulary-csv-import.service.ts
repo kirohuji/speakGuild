@@ -173,4 +173,98 @@ export class VocabularyCsvImportService {
     });
   }
 
+  /**
+   * 全量检查词汇表。中文释义可能是空字符串，也可能被错误写成纯英文；
+   * 两种情况都视为缺失，避免只凭空值漏掉需要补全的数据。
+   */
+  async runMissingChineseMeaningEnrich(taskId: string) {
+    if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
+
+    const candidates: Array<{ id: string; word: string }> = [];
+    let cursor: string | undefined;
+    let scanned = 0;
+    const totalToScan = await this.prisma.vocabulary.count();
+
+    await this.adminTasksService.log(taskId, 'info', `开始检查全部 ${totalToScan} 个词汇的中文释义`, { step: 'scan' });
+
+    do {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      const rows = await this.prisma.vocabulary.findMany({
+        select: { id: true, word: true, meaning: true },
+        orderBy: { id: 'asc' },
+        take: 500,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      });
+      if (rows.length === 0) break;
+
+      for (const vocabulary of rows) {
+        scanned++;
+        if (!/[\u3400-\u9fff]/.test(vocabulary.meaning ?? '')) {
+          candidates.push({ id: vocabulary.id, word: vocabulary.word });
+        }
+      }
+      cursor = rows.at(-1)?.id;
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: 'scan', totalItems: totalToScan, processedItems: scanned, successItems: scanned,
+      });
+    } while (cursor);
+
+    await this.adminTasksService.log(taskId, 'info', `检查完成：共检查 ${scanned} 个词汇，发现 ${candidates.length} 个缺失中文释义`, {
+      step: 'scan', meta: { scanned, missingChineseMeaning: candidates.length },
+    });
+
+    let enriched = 0;
+    let failed = 0;
+    const errors: Array<{ id: string; word: string; message: string }> = [];
+
+    // Scan-only is a successful no-op, while still leaving a useful audit result.
+    if (candidates.length > 0) {
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: 'enrich', totalItems: candidates.length, processedItems: 0, successItems: 0, failedItems: 0,
+      });
+      await this.adminTasksService.log(taskId, 'info', `开始 AI 富化 ${candidates.length} 个词汇`, {
+        step: 'enrich', meta: { count: candidates.length },
+      });
+
+      for (let index = 0; index < candidates.length; index++) {
+        if (await this.adminTasksService.isCanceled(taskId)) return;
+        const vocabulary = candidates[index];
+        try {
+          const result = await this.dictionaryService.enrichVocabulary(vocabulary.id);
+          if (!result || !/[\u3400-\u9fff]/.test(result.meaning ?? '')) {
+            throw new Error('未能获取中文释义');
+          }
+          enriched++;
+        } catch (error: any) {
+          failed++;
+          const message = error?.message ?? 'unknown error';
+          errors.push({ id: vocabulary.id, word: vocabulary.word, message });
+          await this.adminTasksService.log(taskId, 'error', `词汇 "${vocabulary.word}" AI 富化失败：${message}`, {
+            step: 'enrich', meta: { id: vocabulary.id, word: vocabulary.word },
+          });
+        } finally {
+          const processed = index + 1;
+          if (processed % 10 === 0 || processed === candidates.length) {
+            await this.adminTasksService.setProgress(taskId, {
+              currentStep: 'enrich', totalItems: candidates.length, processedItems: processed,
+              successItems: enriched, failedItems: failed,
+            });
+          }
+        }
+      }
+    }
+
+    const summary = {
+      scanned,
+      missingChineseMeaning: candidates.length,
+      enriched,
+      failed,
+      errors: errors.slice(0, 20),
+    };
+    await this.adminTasksService.markCompleted(taskId, summary);
+    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `检查完成：检查 ${scanned}，需补全 ${candidates.length}，已富化 ${enriched}，失败 ${failed}`, {
+      step: 'completed', meta: summary,
+    });
+  }
+
 }

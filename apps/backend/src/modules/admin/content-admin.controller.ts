@@ -2346,11 +2346,24 @@ ${contextBlock}
         parts.push(exerciseLines.join('\n'));
       }
 
+      const activityType = topic.activityType;
+      const experienceConfig = topic.contentConfig as any;
+      if (activityType === 'writing') {
+        const writing = experienceConfig?.writing ?? {};
+        parts.push('\n## 写作任务配置');
+        if (writing.genre) parts.push(`- 文体: ${writing.genre}`);
+        if (writing.audience) parts.push(`- 受众: ${writing.audience}`);
+        if (writing.purpose) parts.push(`- 目的: ${writing.purpose}`);
+        if (writing.minWords || writing.maxWords) parts.push(`- 字数: ${writing.minWords ?? '不限'}-${writing.maxWords ?? '不限'}`);
+        if (Array.isArray(writing.requirements) && writing.requirements.length) parts.push(`- 必须覆盖: ${writing.requirements.join('；')}`);
+        if (Array.isArray(writing.rubric) && writing.rubric.length) parts.push(`- 评分维度: ${writing.rubric.join('；')}`);
+      }
+
       const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
       const model = client.chat('deepseek-chat');
       const { text } = await generateText({
         model,
-        prompt: `你是一名英语学习教学设计专家。请根据以下话题材料和知识点练习配置，生成一份面向中国英语学习者的课前教学文档。
+        prompt: `你是一名英语学习教学设计专家。请根据以下话题材料和任务配置，生成一份面向中国英语学习者的课前教学文档。
 
 要求：
 1. 全部用中文写，英文例句保留英文。
@@ -2359,12 +2372,16 @@ ${contextBlock}
 4. 使用 Markdown，按下面结构输出。
 5. 内容要贴合当前难度，不要泛泛而谈。
 
+当前任务类型：${activityType}
+
 结构：
 ## 场景目标
 ## 核心表达
 ## 句型提醒
 ## 练习策略
 ## 易错提醒
+
+如果当前任务类型为 writing，请围绕写作受众、目的、文体、结构和评分维度提供具体建议；不要写范文或完整可直接提交的答案。
 
 输入信息：
 
@@ -2485,6 +2502,15 @@ ${parts.join('\n')}
       message: 'success',
       data: { taskId: task.id, wordCount: words.length },
     };
+  }
+
+  /** 检查词汇表中缺失中文释义的记录，并创建后台 AI 富化任务。 */
+  @Post('library/vocabularies/enrich-missing-chinese')
+  async enrichVocabulariesMissingChinese(@Req() req: Request) {
+    await this.requireAdmin(req);
+    const session = await requireAuthSession(req);
+    const task = await this.adminTasksService.enqueueVocabularyMissingMeaningEnrich((session.user as any)?.id);
+    return { code: 200, message: 'success', data: { taskId: task.id } };
   }
 
   @Patch('library/vocabularies/:id')

@@ -215,6 +215,25 @@ function VocabularyTab() {
           </Select>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              try {
+                const result = await api.enrichVocabulariesMissingChinese();
+                toast.success('已创建中文释义检查任务', {
+                  action: {
+                    label: '查看任务',
+                    onClick: () => window.location.hash = '#/admin/tasks',
+                  },
+                });
+                void result;
+              } catch (err: any) {
+                toast.error(err?.message || '创建检查任务失败');
+              }
+            }}
+          >
+            <Sparkles className="mr-1.5 size-4" />检查并 AI 富化中文释义
+          </Button>
           <Button onClick={() => { setEditing(null); setDialogOpen(true) }}>
             <Plus className="mr-1.5 size-4" />新增词汇
           </Button>

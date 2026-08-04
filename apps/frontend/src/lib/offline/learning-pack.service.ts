@@ -54,6 +54,10 @@ export type LearningPackInstallProgressHandler = (
   detail?: LearningPackInstallProgress,
 ) => void
 
+function throwIfAborted(signal?: AbortSignal) {
+  if (signal?.aborted) throw new DOMException('Learning pack download cancelled', 'AbortError')
+}
+
 function pushUrlAsset(assets: AssetRef[], url?: string | null, role?: AssetRef['role']) {
   if (!url || url.startsWith('blob:') || url.startsWith('data:')) return
   if (assets.some((asset) => asset.url === url)) return
@@ -384,28 +388,30 @@ export const learningPackService = {
     }
   },
 
-  async installUnit(unitId: string, onProgress?: LearningPackInstallProgressHandler): Promise<InstalledLearningPack> {
+  async installUnit(unitId: string, onProgress?: LearningPackInstallProgressHandler, signal?: AbortSignal): Promise<InstalledLearningPack> {
     try {
       console.log('[learning-pack] installUnit start zip-only mode', {
         unitId,
         platform: Capacitor.getPlatform(),
         isNative: Capacitor.isNativePlatform(),
       })
-      return await this.installUnitFromZip(unitId, onProgress)
+      return await this.installUnitFromZip(unitId, onProgress, signal)
     } catch (error) {
       console.error('[learning-pack] zip install failed', debugError(error))
       throw error
     }
   },
 
-  async installUnitFromZip(unitId: string, onProgress?: LearningPackInstallProgressHandler): Promise<InstalledLearningPack> {
+  async installUnitFromZip(unitId: string, onProgress?: LearningPackInstallProgressHandler, signal?: AbortSignal): Promise<InstalledLearningPack> {
     const report = (step: string, progress: number, detail?: LearningPackInstallProgress) => {
+      throwIfAborted(signal)
       onProgress?.(step, Math.min(99, Math.round(progress)), detail)
     }
     const startTime = performance.now()
     console.log('[learning-pack] ⏳ ① 下载 zip...')
     report('downloading', 5, { label: '下载学习包' })
-    const zipBuffer = await learningApi.downloadPack(unitId)
+    const zipBuffer = await learningApi.downloadPack(unitId, signal)
+    throwIfAborted(signal)
     const zipSizeMB = (zipBuffer.byteLength / 1024 / 1024).toFixed(1)
     console.log(`[learning-pack] ✅ ① zip 下载完成: ${zipSizeMB} MB (${zipBuffer.byteLength} bytes)`)
     report('parsing', 15, { label: '解析压缩包' })
@@ -414,6 +420,7 @@ export const learningPackService = {
     const reader = new ZipReader(new BlobReader(new Blob([zipBuffer], { type: 'application/zip' })))
     try {
       const entryList = await reader.getEntries()
+      throwIfAborted(signal)
       const entries = new Map<string, Entry>()
       let fileCount = 0
       let dirCount = 0
@@ -469,6 +476,7 @@ export const learningPackService = {
       console.log('[learning-pack] ⏳ ⑤ 读取话题数据...')
       const topicDetails: any[] = []
       for (const [path, entry] of entries) {
+        throwIfAborted(signal)
         if (!path.startsWith('content/topics/') || !path.endsWith('.json')) continue
         try {
           const text = await readEntryText(entry)
@@ -603,6 +611,7 @@ export const learningPackService = {
 
       const assetResults: AssetResult[] = []
       for (let i = 0; i < assetTasks.length; i += ASSET_CONCURRENCY) {
+        throwIfAborted(signal)
         const batch = assetTasks.slice(i, i + ASSET_CONCURRENCY)
         progressForAssetRead(i, '读取资源文件', batch[0]?.asset?.path ?? batch[0]?.asset?.url)
         const batchResults = await Promise.all(
@@ -727,11 +736,12 @@ export const learningPackService = {
   },
 
   /** V2: 安装 delta 增量包 */
-  async installDelta(packId: string, fromVersion: number, toVersion: number): Promise<InstalledLearningPack> {
+  async installDelta(packId: string, fromVersion: number, toVersion: number, signal?: AbortSignal): Promise<InstalledLearningPack> {
     const startTime = performance.now()
     console.log(`[learning-pack] 📦 开始安装增量包 v${fromVersion} → v${toVersion}`, { packId })
 
-    const deltaBuffer = await learningApi.downloadDelta(packId, fromVersion, toVersion)
+    const deltaBuffer = await learningApi.downloadDelta(packId, fromVersion, toVersion, signal)
+    throwIfAborted(signal)
     const deltaSizeMB = (deltaBuffer.byteLength / 1024 / 1024).toFixed(1)
     console.log(`[learning-pack] ✅ delta 下载完成: ${deltaSizeMB} MB`)
 

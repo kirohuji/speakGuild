@@ -30,6 +30,7 @@ import { adminTasksApi, type AdminTask, type AdminTaskDetail, type AdminTaskStat
 const TYPE_LABELS: Record<string, string> = {
   'learning-package-content-prepare': '学习包内容准备',
   'vocabulary-csv-import': '词汇CSV批量导入',
+  'vocabulary-missing-meaning-enrich': '词汇中文释义检查与 AI 富化',
   'script-video-render': '剧本演出视频',
   'narrative-video-render': '叙事视频预览',
 };
@@ -134,6 +135,20 @@ function SummaryPanel({ task }: { task: AdminTask }) {
     );
   }
 
+  if (task.type === 'vocabulary-missing-meaning-enrich') {
+    const errors = taskErrors(task).length || summary.failed || task.failedItems;
+    return (
+      <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
+        <div className="grid grid-cols-3 gap-2">
+          <Metric label="已检查" value={summary.scanned ?? 0} tone="muted" />
+          <Metric label="已富化" value={summary.enriched ?? 0} tone="good" />
+          <Metric label="失败" value={errors} tone={errors ? 'bad' : 'muted'} />
+        </div>
+        <p className="text-xs text-muted-foreground">发现缺失中文释义 {summary.missingChineseMeaning ?? 0} 个。</p>
+      </div>
+    );
+  }
+
   const totalUpdated = (summary.vocabEnriched ?? 0) + (summary.chunkEnriched ?? 0) + (summary.patternEnriched ?? 0);
   const totalSkipped = (summary.vocabSkipped ?? 0) + (summary.chunkSkipped ?? 0) + (summary.patternSkipped ?? 0);
   const errors = taskErrors(task).length || task.failedItems;
@@ -165,7 +180,7 @@ function SummaryPanel({ task }: { task: AdminTask }) {
 
 export function AdminTasksPage() {
   const [status, setStatus] = useState<AdminTaskStatus | 'all'>('all');
-  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'script-video-render' | 'narrative-video-render'>('all');
+  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
   const [items, setItems] = useState<AdminTask[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AdminTaskDetail | null>(null);
@@ -320,6 +335,7 @@ export function AdminTasksPage() {
 
   const canRetry = (task: AdminTask) =>
     task.type === 'learning-package-content-prepare'
+    || task.type === 'vocabulary-missing-meaning-enrich'
     || task.type === 'script-video-render'
     || task.type === 'narrative-video-render';
 
@@ -328,12 +344,14 @@ export function AdminTasksPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">任务中心</h1>
-          <p className="text-sm text-muted-foreground">统一跟踪学习包准备与后台视频渲染；可在这里查看日志、取消和重试。</p>
+          <p className="text-sm text-muted-foreground">统一跟踪内容准备、词汇 AI 富化与后台视频渲染；可在这里查看日志、取消和重试。</p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={type} onChange={(event) => { setType(event.target.value as typeof type); setPage(1); }}>
             <option value="all">全部任务类型</option>
             <option value="learning-package-content-prepare">学习包内容准备</option>
+            <option value="vocabulary-csv-import">词汇 CSV 批量导入</option>
+            <option value="vocabulary-missing-meaning-enrich">词汇中文释义检查与 AI 富化</option>
             <option value="script-video-render">剧本演出视频</option>
             <option value="narrative-video-render">叙事视频预览</option>
           </Select>

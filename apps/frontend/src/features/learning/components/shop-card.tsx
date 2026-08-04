@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Lock, ArrowRight, ChevronDown } from 'lucide-react'
+import { Lock, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
@@ -9,6 +9,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
+import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { toast } from 'sonner'
 import type { LearningUnitSummary } from '../api/learning-api'
 import { getCategoryIcon } from './category-icons'
@@ -45,7 +46,6 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
   const [detailOpen, setDetailOpen] = useState(false)
   const [acquiring, setAcquiring] = useState(false)
   const [topicPage, setTopicPage] = useState(1)
-  const [descExpanded, setDescExpanded] = useState(false)
   const [justEnrolled, setJustEnrolled] = useState(false)
   const pageSize = 6
   const Icon = (unit.isUnlocked && !unit.isLocked) ? getCategoryIcon(unit.categoryName ?? '') : Lock
@@ -88,7 +88,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
         type="button"
         onClick={() => {
           if (!unit.isUnlocked || unit.isLocked) { onMemberOpen(); return }
-          setTopicPage(1); setDescExpanded(false); setDetailOpen(true)
+          setTopicPage(1); setDetailOpen(true)
         }}
         className="flex w-full gap-3 rounded-lg bg-muted/30 p-3 text-left transition-colors hover:bg-muted/50"
         {...rest}
@@ -136,16 +136,16 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
       </button>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-h-[88vh] overflow-hidden rounded-2xl p-0 sm:max-w-md w-[90vw]">
+        <DialogContent className="flex max-h-[88dvh] w-[90vw] min-w-0 flex-col gap-0 overflow-y-auto overscroll-contain rounded-2xl p-0 sm:max-w-md">
           <DialogHeader className="sr-only">
             <DialogTitle>{unit.title}</DialogTitle>
             <DialogDescription>{unit.location}</DialogDescription>
           </DialogHeader>
-          <div className="flex max-h-[88vh] flex-col">
+          <div className="flex min-w-0 flex-col">
             <div className="flex gap-3 bg-muted/30 p-4">
               <UnitCover unit={unit} icon={Icon} className="size-20" />
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <Badge variant="outline" className="rounded-full text-[10px]">{packageTypeLabel(unit.packageType)}</Badge>
                   <Badge variant="secondary" className="rounded-full text-[10px]">{contentModeLabel(unit.contentMode)}</Badge>
                   {unit.categoryName && <Badge variant="secondary" className="rounded-full text-[10px]">{unit.categoryName}</Badge>}
@@ -163,19 +163,11 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
 
             {unit.description && (
               <div className="border-b border-border/50 px-4 py-3">
-                <p className={cn('text-xs leading-5 text-muted-foreground', !descExpanded && 'line-clamp-1')}>
-                  {unit.description}
-                </p>
-                {unit.description.length > 40 && (
-                  <button
-                    type="button"
-                    onClick={() => setDescExpanded((v) => !v)}
-                    className="mt-1 flex items-center gap-0.5 text-[11px] text-muted-foreground/70 transition-colors hover:text-foreground"
-                  >
-                    {descExpanded ? t('common.collapse') : t('common.expand')}
-                    <ChevronDown className={cn('size-3 transition-transform', descExpanded && 'rotate-180')} />
-                  </button>
-                )}
+                <p className="mb-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground">基本介绍</p>
+                <MarkdownRenderer
+                  content={unit.description}
+                  className="text-xs leading-5 text-muted-foreground [&_p]:my-0 [&_ul]:my-1 [&_ol]:my-1 [&_li]:my-0"
+                />
               </div>
             )}
 
@@ -218,34 +210,49 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
             </div>
 
             <div className="bg-muted/30 px-4 py-2.5">
-              <div className="flex items-center justify-between">
+              <div className="flex min-w-0 items-center justify-between gap-2">
                 <p className="text-xs font-medium text-foreground">{t('learning.topicList')}</p>
-                {unit.topics.length > pageSize && (
-                  <div className="flex items-center gap-2">
-                    <button type="button" disabled={topicPage === 1} onClick={() => setTopicPage((p) => Math.max(1, p - 1))} className="rounded-full px-2 py-1 text-[11px] text-muted-foreground disabled:opacity-40">
-                      {t('common.prevPage')}
+                {totalTopicPages > 1 && (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      aria-label="上一页话题"
+                      disabled={topicPage === 1}
+                      onClick={() => setTopicPage((p) => Math.max(1, p - 1))}
+                      className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground disabled:opacity-35"
+                    >
+                      <ChevronLeft className="size-3.5" />
                     </button>
-                    <span className="text-[11px] text-muted-foreground">{topicPage}/{totalTopicPages}</span>
-                    <button type="button" disabled={topicPage === totalTopicPages} onClick={() => setTopicPage((p) => Math.min(totalTopicPages, p + 1))} className="rounded-full px-2 py-1 text-[11px] text-muted-foreground disabled:opacity-40">
-                      {t('common.nextPage')}
+                    <span className="min-w-9 text-center text-[11px] tabular-nums text-muted-foreground">{topicPage}/{totalTopicPages}</span>
+                    <button
+                      type="button"
+                      aria-label="下一页话题"
+                      disabled={topicPage === totalTopicPages}
+                      onClick={() => setTopicPage((p) => Math.min(totalTopicPages, p + 1))}
+                      className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground disabled:opacity-35"
+                    >
+                      <ChevronRight className="size-3.5" />
                     </button>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2">
+            <div className="px-4 py-2 pb-4">
               {pagedTopics.length > 0 ? (
                 <div className="space-y-1.5">
                   {pagedTopics.map((topic, index) => (
-                    <div key={topic.id} className="flex items-center gap-3 rounded-lg bg-muted/25 px-3 py-3">
+                    <div key={topic.id} className="flex min-w-0 items-center gap-3 overflow-hidden rounded-lg bg-muted/25 px-3 py-3">
                       <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
                         {(topicPage - 1) * pageSize + index + 1}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="line-clamp-1 text-sm font-medium text-foreground">{topic.title}</p>
+                        <p className="mt-1 truncate text-[11px] leading-4 text-muted-foreground">
+                          {topic.description?.trim() || '暂无说明'}
+                        </p>
                       </div>
-                      <Badge variant="outline" className="rounded-full text-[10px]">{topic.difficulty}</Badge>
+                      <Badge variant="outline" className="shrink-0 rounded-full text-[10px]">{topic.difficulty}</Badge>
                     </div>
                   ))}
                 </div>

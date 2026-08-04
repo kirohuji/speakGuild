@@ -43,6 +43,7 @@ export interface DownloadTask {
 const MAX_CONCURRENT_DOWNLOADS = 2
 const PACK_TASKS_STORAGE_KEY = 'manyu.learning-pack.tasks.v1'
 const activePackTaskIds = new Set<string>()
+const activePackTaskControllers = new Map<string, AbortController>()
 
 function packTaskStepLabel(step: string, kind: DownloadTask['kind'] = 'download') {
   if (kind === 'uninstall') {
@@ -115,6 +116,8 @@ interface LearningStore {
   downloadUnitPack: (unitId: string) => Promise<void>
   uninstallUnitPack: (unitId: string) => Promise<void>
   pauseActivePackTasks: (reason?: string) => void
+  pausePackTask: (packId: string) => void
+  cancelPackTask: (packId: string) => void
   resumePackTask: (packId: string) => Promise<void>
   resetUserState: () => void
   /** 清除所有离线数据 */
@@ -580,6 +583,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   pauseActivePackTasks(reason = i18n.t('learning.packTaskPausedInBackground')) {
+    for (const controller of activePackTaskControllers.values()) controller.abort()
     set((s) => ({
       downloadTasks: s.downloadTasks.map((task) =>
         task.status === 'queued' || task.status === 'downloading' || task.status === 'extracting' || task.status === 'uninstalling'
@@ -593,6 +597,30 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
           : task,
       ),
     }))
+  },
+
+  pausePackTask(packId) {
+    const task = getState().downloadTasks.find((item) => item.packId === packId)
+    if (!task || task.kind === 'uninstall' || task.status === 'done' || task.status === 'error' || task.status === 'paused') return
+    activePackTaskControllers.get(packId)?.abort()
+    set((s) => ({
+      downloadTasks: s.downloadTasks.map((item) => item.packId === packId
+        ? { ...item, status: 'paused' as const, pausedFrom: item.status, step: 'paused', stepLabel: i18n.t('learning.packTaskPaused') }
+        : item,
+      ),
+      packInstallingIds: s.packInstallingIds.filter((id) => id !== packId),
+    }))
+  },
+
+  cancelPackTask(packId) {
+    const task = getState().downloadTasks.find((item) => item.packId === packId)
+    if (!task || task.kind === 'uninstall') return
+    activePackTaskControllers.get(packId)?.abort()
+    set((s) => ({
+      downloadTasks: s.downloadTasks.filter((item) => item.packId !== packId),
+      packInstallingIds: s.packInstallingIds.filter((id) => id !== packId),
+    }))
+    processDownloadQueue()
   },
 
   async resumePackTask(packId) {
@@ -692,6 +720,8 @@ async function processDownloadQueue() {
 
   try {
     activePackTaskIds.add(next.packId)
+    const controller = new AbortController()
+    activePackTaskControllers.set(next.packId, controller)
     if (!await checkNetworkBeforeDownload()) {
       useLearningStore.setState((s) => ({
         downloadTasks: s.downloadTasks.filter((t) => t.packId !== next.packId),
@@ -727,9 +757,9 @@ async function processDownloadQueue() {
     const update = useLearningStore.getState().availablePackUpdates.find((u) => u.packId === next.packId)
     if (update?.updateType === 'delta' && update.deltaDownloadUrl) {
       console.log(`[learning-store] 🔄 delta 更新: v${update.fromVersion} → v${update.toVersion}`)
-      await learningPackService.installDelta(next.packId, update.fromVersion, update.toVersion)
+      await learningPackService.installDelta(next.packId, update.fromVersion, update.toVersion, controller.signal)
     } else {
-      await learningPackService.installUnit(next.packId, onProgress)
+      await learningPackService.installUnit(next.packId, onProgress, controller.signal)
     }
 
     // 先跳到 100% 进度，短暂停留让用户感知完成
@@ -765,6 +795,8 @@ async function processDownloadQueue() {
       }))
     }, 3000)
   } catch (error: any) {
+    const cancelled = activePackTaskControllers.get(next.packId)?.signal.aborted || error?.name === 'AbortError' || error?.code === 'ERR_CANCELED'
+    if (cancelled) return
     console.error(`[learning-store] ❌ 下载失败: ${next.title}`, error)
     useLearningStore.setState((s) => ({
         downloadTasks: s.downloadTasks.map((t) =>
@@ -777,6 +809,7 @@ async function processDownloadQueue() {
     toast.error(i18n.t('learning.packDownloadFailed'))
   } finally {
     activePackTaskIds.delete(next.packId)
+    activePackTaskControllers.delete(next.packId)
     processDownloadQueue()
   }
 }

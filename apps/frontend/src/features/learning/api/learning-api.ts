@@ -12,6 +12,7 @@ export interface TopicSummary {
   type?: 'daily' | 'ielts'
   activityType?: TopicActivityType
   title: string
+  description?: string | null
   difficulty: string
   metadata?: any
   suggestedDurationSec: number
@@ -109,6 +110,7 @@ export interface TrainingTopicItem {
   activityType?: TopicActivityType
   title: string
   description?: string | null
+  teachingMarkdown?: string | null
   promptEn: string
   promptZh: string
   difficulty: string
@@ -417,22 +419,24 @@ export const learningApi = {
   getPackManifest: (unitId: string) =>
     get<PackManifestPreview>(`/learning/units/${unitId}/pack-manifest`, undefined, { dedupe: false }),
 
-  downloadPack: (unitId: string) =>
+  downloadPack: (unitId: string, signal?: AbortSignal) =>
     get<ArrayBuffer>(`/learning/units/${unitId}/download-pack`, undefined, {
       dedupe: false,
       responseType: 'arraybuffer',
       timeout: LEARNING_PACK_DOWNLOAD_TIMEOUT_MS,
+      signal,
     }),
 
   checkPacks: (installed: Array<{ packId: string; version?: number }>) =>
     post<{ updates: PackUpdateInfo[] }>('/learning/packs/check', { installed }),
 
   /** V2: 下载 delta 增量包 */
-  downloadDelta: (unitId: string, fromVersion: number, toVersion: number) =>
+  downloadDelta: (unitId: string, fromVersion: number, toVersion: number, signal?: AbortSignal) =>
     get<ArrayBuffer>(`/learning/units/${unitId}/download-delta?from=${fromVersion}&to=${toVersion}`, undefined, {
       dedupe: false,
       responseType: 'arraybuffer',
       timeout: LEARNING_PACK_DOWNLOAD_TIMEOUT_MS,
+      signal,
     }),
 
   /** 更新学习单元进度 */

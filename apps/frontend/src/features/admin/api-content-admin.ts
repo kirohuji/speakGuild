@@ -751,6 +751,11 @@ export function importVocabularyCsv(file: File): Promise<{ taskId: string; wordC
   });
 }
 
+/** 创建后台任务：扫描所有词汇并富化缺失的中文释义。 */
+export function enrichVocabulariesMissingChinese(): Promise<{ taskId: string }> {
+  return post('/admin/content/library/vocabularies/enrich-missing-chinese');
+}
+
 export function enrichVocabulary(id: string): Promise<VocabularyFull> {
   return post(`/admin/content/library/vocabularies/${id}/enrich`);
 }

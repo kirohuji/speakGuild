@@ -584,6 +584,8 @@ function TrainingTopicDialog({
 }) {
   const [form, setForm] = useState<any>({})
   const [saving, setSaving] = useState(false)
+  const [teachingGenerating, setTeachingGenerating] = useState(false)
+  const [teachingMode, setTeachingMode] = useState<'edit' | 'preview'>('edit')
   const [activeTab, setActiveTab] = useState('basic')
   const [stories, setStories] = useState<StoryData[]>([])
   const [storiesLoading, setStoriesLoading] = useState(false)
@@ -844,6 +846,22 @@ function TrainingTopicDialog({
     return result.markdown
   }
 
+  const generateTeaching = async () => {
+    if (teachingGenerating) return
+    setTeachingGenerating(true)
+    try {
+      const markdown = await handleGenerateTopicTeaching()
+      if (markdown != null) {
+        setForm((current: any) => ({ ...current, teachingMarkdown: markdown }))
+        toast.success('教学文档已生成，请检查后保存')
+      }
+    } catch (error: any) {
+      toast.error(error?.message || 'AI 生成教学文档失败')
+    } finally {
+      setTeachingGenerating(false)
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="flex max-h-[92vh] w-[calc(100vw-1.5rem)] flex-col gap-0 p-0 sm:max-w-[88rem]">
@@ -874,6 +892,9 @@ function TrainingTopicDialog({
               </TabsTrigger>
               {contentMode !== 'practice' && <TabsTrigger value="experience" className="gap-1.5">
                 <BookOpen className="size-3.5" />{contentModeLabel(contentMode)}题型
+              </TabsTrigger>}
+              {['writing', 'reading', 'listening'].includes(contentMode) && <TabsTrigger value="teaching" className="gap-1.5">
+                <FileText className="size-3.5" />教学文档
               </TabsTrigger>}
               {contentMode === 'practice' && <TabsTrigger value="ink" className="gap-1.5">
                 <Link2 className="size-3.5" />Ink 故事
@@ -1017,6 +1038,35 @@ function TrainingTopicDialog({
                     contentConfig: { ...(current.contentConfig ?? {}), ...(draft.contentConfig ?? {}) },
                   }))}
                   onChange={(next) => setForm({ ...form, ...next })}
+                />
+              </TabsContent>
+            )}
+
+            {['writing', 'reading', 'listening'].includes(contentMode) && (
+              <TabsContent value="teaching" className="mt-0 space-y-4">
+                <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-sky-500/20 bg-sky-500/[0.045] p-4">
+                  <div>
+                    <p className="text-sm font-semibold">课前教学文档</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">学习者开始写作、阅读或听力任务前会先看到这份 Markdown 指导。</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Tabs value={teachingMode} onValueChange={(value) => setTeachingMode(value as 'edit' | 'preview')}>
+                      <TabsList className="h-8 bg-background/80">
+                        <TabsTrigger value="edit" className="h-7 px-3 text-xs">编辑</TabsTrigger>
+                        <TabsTrigger value="preview" className="h-7 px-3 text-xs">预览</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                    <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={generateTeaching} disabled={teachingGenerating}>
+                      {teachingGenerating ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}AI 生成
+                    </Button>
+                  </div>
+                </div>
+                <MarkdownEditor
+                  value={form.teachingMarkdown ?? ''}
+                  onChange={(teachingMarkdown) => setForm({ ...form, teachingMarkdown })}
+                  height={440}
+                  preview={teachingMode}
+                  placeholder="写明任务目标、可直接使用的表达、组织思路和易错提醒……"
                 />
               </TabsContent>
             )}

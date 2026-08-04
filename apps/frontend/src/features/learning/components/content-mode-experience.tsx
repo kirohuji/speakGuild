@@ -68,6 +68,14 @@ function TopicExperienceBody({ topic, mode, unitTitle }: { topic: TrainingTopicI
         <DialogDescription>{unitTitle} · {topic.difficulty} · 约 {Math.max(1, Math.round(topic.suggestedDurationSec / 60))} 分钟</DialogDescription>
       </DialogHeader>
       <div className="min-h-0 flex-1 overflow-y-auto p-5">
+        {topic.teachingMarkdown?.trim() && (
+          <section className="mb-5 overflow-hidden rounded-2xl border border-sky-500/20 bg-sky-500/[0.045]">
+            <div className="border-b border-sky-500/15 bg-sky-500/[0.07] px-4 py-3">
+              <p className="text-sm font-semibold">开始前，先看这份学习指引</p>
+            </div>
+            <div className="p-4 text-sm leading-7"><MarkdownContent content={topic.teachingMarkdown} /></div>
+          </section>
+        )}
         {mode === 'writing' && <WritingExperience topic={topic} />}
         {mode === 'reading' && <ReadingExperience topic={topic} />}
         {mode === 'listening' && <ListeningExperience topic={topic} />}

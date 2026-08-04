@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
 
 @Injectable()
 export class AdminTasksService {
@@ -233,6 +233,24 @@ export class AdminTasksService {
     return { ...task, bullJobId: job.id };
   }
 
+  /** 扫描全部词汇，为缺失中文释义的记录执行与单条富化相同的流程。 */
+  async enqueueVocabularyMissingMeaningEnrich(createdById?: string) {
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: VOCABULARY_MISSING_MEANING_ENRICH_JOB,
+        title: '检查并 AI 富化缺失中文释义的词汇',
+        targetType: 'vocabulary',
+        createdById,
+        payload: {} as Prisma.InputJsonValue,
+      },
+    });
+
+    const job = await this.vocabularyImportQueue.add(VOCABULARY_MISSING_MEANING_ENRICH_JOB, { taskId: task.id });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', '词汇中文释义检查任务已加入 Redis 队列', { step: 'queued' });
+    return { ...task, bullJobId: job.id };
+  }
+
   async list(params: {
 
     type?: string;
@@ -283,6 +301,9 @@ export class AdminTasksService {
       const payload = task.payload as any;
       return this.enqueueNarrativeVideo(payload?.userId || createdById, payload?.frames || []);
     }
+    if (task.type === VOCABULARY_MISSING_MEANING_ENRICH_JOB) {
+      return this.enqueueVocabularyMissingMeaningEnrich(createdById);
+    }
     if (task.type !== CONTENT_PREPARE_JOB || task.targetType !== 'scene' || !task.targetId) {
       throw new NotFoundException('暂不支持重试该任务');
     }
@@ -317,7 +338,7 @@ export class AdminTasksService {
       try {
         const queue = task.type === SCRIPT_VIDEO_RENDER_JOB || task.type === NARRATIVE_VIDEO_RENDER_JOB
           ? this.videoQueue
-          : task.type === VOCABULARY_CSV_IMPORT_JOB
+          : task.type === VOCABULARY_CSV_IMPORT_JOB || task.type === VOCABULARY_MISSING_MEANING_ENRICH_JOB
             ? this.vocabularyImportQueue
             : this.contentQueue;
         const job = await queue.getJob(task.bullJobId);
@@ -608,7 +629,7 @@ export class AdminTasksService {
     if (type === SCRIPT_VIDEO_RENDER_JOB || type === NARRATIVE_VIDEO_RENDER_JOB) {
       return this.videoQueue;
     }
-    if (type === VOCABULARY_CSV_IMPORT_JOB) {
+    if (type === VOCABULARY_CSV_IMPORT_JOB || type === VOCABULARY_MISSING_MEANING_ENRICH_JOB) {
       return this.vocabularyImportQueue;
     }
     return this.contentQueue;
