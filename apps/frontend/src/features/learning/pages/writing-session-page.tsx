@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, CheckCircle2, FilePenLine, Info, Layers, Loader2, Save, Search, Sparkles, Target, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, CheckCircle2, ChevronLeft, ChevronRight, FilePenLine, Info, Layers, Loader2, MessageCircle, Save, Search, Sparkles, Target, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -43,6 +43,11 @@ export function WritingSessionPage() {
     [topicId, unit?.trainingTopics],
   )
 
+  const isDialogue = useMemo(
+    () => topic?.contentConfig?.writing?.genre === 'dialogue',
+    [topic?.contentConfig?.writing?.genre],
+  )
+
   if (loading && (!unit || unit.id !== unitId)) {
     return <MobilePageLoading rows={5} minHeightClassName="min-h-[100dvh]" />
   }
@@ -69,6 +74,13 @@ export function WritingSessionPage() {
           onBack={() => navigate(-1)}
           onOpenGuide={() => setGuideOpen(true)}
           onStart={() => setPhase('write')}
+        />
+      ) : isDialogue ? (
+        <DialogueEditor
+          topic={topic}
+          unitTitle={unit.title}
+          onClose={() => setPhase('prepare')}
+          onOpenGuide={() => setGuideOpen(true)}
         />
       ) : (
         <WritingEditor
@@ -381,6 +393,264 @@ function WritingEditor({
             <Save className="size-4" />保存
           </Button>
           <Button size="sm" onClick={() => save(true)} disabled={saving || !text.trim()} className="shrink-0 gap-1.5 rounded-full px-4">
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}提交反馈
+          </Button>
+        </div>
+      </footer>
+    </div>
+  )
+}
+
+// ─── Dialogue Editor ──────────────────────────────────────
+
+function DialogueEditor({
+  topic,
+  unitTitle,
+  onClose,
+  onOpenGuide,
+}: {
+  topic: TrainingTopicItem
+  unitTitle: string
+  onClose: () => void
+  onOpenGuide: () => void
+}) {
+  const config = topic.contentConfig?.writing ?? {}
+  const turns: Array<{ aText: string; hint: string }> = config.turns ?? []
+  const prevSubmission = topic.latestSubmission?.response as Record<string, any> | undefined
+  const prevTurns: Array<{ userResponse?: string }> = prevSubmission?.turns ?? []
+
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const firstUnanswered = turns.findIndex((_, i) => !prevTurns[i]?.userResponse?.trim())
+    return firstUnanswered >= 0 ? firstUnanswered : 0
+  })
+  const [responses, setResponses] = useState<Record<number, string>>(() => {
+    const init: Record<number, string> = {}
+    prevTurns.forEach((t, i) => { if (t?.userResponse) init[i] = t.userResponse })
+    return init
+  })
+  const [showHint, setShowHint] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [submission, setSubmission] = useState(topic.latestSubmission ?? null)
+
+  const currentTurn = turns[currentIndex]
+  const currentResponse = responses[currentIndex] ?? ''
+  const totalWords = Object.values(responses).join(' ').trim().split(/\s+/).filter(Boolean).length
+  const answeredCount = turns.filter((_, i) => (responses[i] ?? '').trim()).length
+  const allAnswered = answeredCount === turns.length
+
+  const save = async (submit = false) => {
+    setSaving(true)
+    try {
+      const responseTurns = turns.map((turn, i) => ({
+        aText: turn.aText,
+        hint: turn.hint,
+        userResponse: responses[i] ?? '',
+      }))
+      let next = await learningApi.saveTopicSubmission(topic.id, {
+        response: { turns: responseTurns },
+        status: submit ? 'submitted' : 'draft',
+      })
+      if (submit) next = await learningApi.reviewTopicSubmission(topic.id)
+      setSubmission(next)
+      toast.success(submit ? 'AI 反馈已生成' : '草稿已保存')
+    } catch (error: any) {
+      toast.error(error?.message || '保存失败')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const goToTurn = (index: number) => {
+    if (index < 0 || index >= turns.length) return
+    setCurrentIndex(index)
+    setShowHint(false)
+  }
+
+  return (
+    <div
+      data-keyboard-overlay="writing"
+      className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#fffefb] pt-safe dark:bg-background"
+    >
+      {/* Header — unified with WritingEditor style */}
+      <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-4 sm:px-6 sm:pt-6">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <MessageCircle className="size-[18px]" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="mb-1.5 flex items-center gap-2">
+              <Badge variant="secondary">对话写作</Badge>
+              <span className="truncate text-xs text-muted-foreground">{topic.difficulty}</span>
+            </div>
+            <h1 className="break-words text-xl font-bold leading-tight text-foreground">{topic.title}</h1>
+            <p className="mt-1.5 truncate text-sm text-muted-foreground">{unitTitle}</p>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button type="button" variant="ghost" size="icon" className="size-8" onClick={onOpenGuide} title="查看教学指南">
+              <BookOpen className="size-4" />
+            </Button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+              aria-label="退出编辑"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Scrollable content */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-writing-scroll-region>
+        <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col px-5 pb-8 pt-5 sm:px-8 sm:pt-7">
+          {/* Situation banner */}
+          {config.situation && (
+            <div className="mb-5 rounded-lg bg-sky-50/60 px-3 py-2 text-sm leading-relaxed dark:bg-sky-950/20">
+              <span className="font-medium text-sky-600 dark:text-sky-400">📍 </span>
+              {config.situation}
+            </div>
+          )}
+
+          {/* Current turn — conversation style */}
+          {currentTurn && (
+            <div className="flex-1 py-5">
+              {/* A's message bubble */}
+              <div className="flex items-start gap-2.5">
+                <span className="mt-1 shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">A</span>
+                <div className="max-w-[85%] rounded-2xl rounded-tl-md bg-muted/50 px-4 py-3 text-[15px] leading-relaxed">
+                  {currentTurn.aText}
+                </div>
+              </div>
+
+              {/* Collapsible hint */}
+              <div className="ml-9 mt-2">
+                {!showHint ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowHint(true)}
+                    className="flex items-center gap-1.5 rounded-full border border-amber-200/60 bg-amber-50/60 px-3 py-1.5 text-xs text-amber-700 transition-colors hover:bg-amber-100/60 dark:border-amber-800/30 dark:bg-amber-950/20 dark:text-amber-400"
+                  >
+                    <Sparkles className="size-3" />查看提示
+                  </button>
+                ) : (
+                  <div className="rounded-xl border border-amber-200/60 bg-amber-50/60 p-3 dark:border-amber-800/30 dark:bg-amber-950/20">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-medium text-amber-700 dark:text-amber-400">💡 写作提示</p>
+                      <button
+                        type="button"
+                        onClick={() => setShowHint(false)}
+                        className="text-xs text-amber-500 hover:text-amber-700"
+                      >
+                        收起
+                      </button>
+                    </div>
+                    <p className="mt-1.5 text-sm leading-relaxed text-amber-800 dark:text-amber-300">{currentTurn.hint}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* B's response input */}
+              <div className="ml-9 mt-4">
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-1 shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">B</span>
+                  <div className="flex-1">
+                    <textarea
+                      value={currentResponse}
+                      onChange={(event) => setResponses({ ...responses, [currentIndex]: event.target.value })}
+                      className="min-h-[140px] w-full resize-none rounded-2xl rounded-tl-md border-0 bg-muted/40 p-4 text-[16px] leading-7 text-foreground outline-none ring-0 placeholder:text-muted-foreground/45 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                      placeholder="用英语写下 B 的回复…"
+                      autoCapitalize="sentences"
+                      autoCorrect="on"
+                      spellCheck
+                    />
+                    {currentResponse.trim() && (
+                      <p className="mt-1.5 text-right text-xs tabular-nums text-muted-foreground">
+                        {currentResponse.trim().split(/\s+/).length} 词
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Turn progress dots */}
+          {turns.length > 1 && (
+            <div className="mt-4 border-t border-border/50 pt-4">
+              <div className="flex items-center justify-center gap-2">
+                {turns.map((_, i) => {
+                  const isAnswered = (responses[i] ?? '').trim()
+                  const isCurrent = i === currentIndex
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => goToTurn(i)}
+                      className={cn(
+                        'flex size-8 items-center justify-center rounded-full text-xs font-medium transition-colors',
+                        isCurrent && 'bg-primary text-primary-foreground shadow-sm',
+                        !isCurrent && isAnswered && 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
+                        !isCurrent && !isAnswered && 'bg-muted text-muted-foreground hover:bg-muted/70',
+                      )}
+                    >
+                      {i + 1}
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                {answeredCount}/{turns.length} 轮已填写
+              </p>
+            </div>
+          )}
+
+          {/* AI feedback */}
+          {submission?.feedback && (
+            <div className="mt-6">
+              <WritingFeedback feedback={submission.feedback} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Footer — unified with WritingEditor */}
+      <footer className="shrink-0 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-xl pb-safe" data-writing-footer>
+        <div className="mx-auto flex max-w-2xl items-center gap-3">
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              disabled={currentIndex === 0}
+              onClick={() => goToTurn(currentIndex - 1)}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <span className="min-w-[2.5rem] text-center text-xs tabular-nums text-muted-foreground">
+              {currentIndex + 1}/{turns.length}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              disabled={currentIndex >= turns.length - 1}
+              onClick={() => goToTurn(currentIndex + 1)}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs text-muted-foreground">
+              共 {totalWords} 词{config.minWords ? ` · 目标 ${config.minWords}–${config.maxWords ?? '∞'}` : ''}
+            </p>
+          </div>
+
+          <Button variant="ghost" size="sm" onClick={() => save(false)} disabled={saving || answeredCount === 0} className="shrink-0 gap-1.5">
+            <Save className="size-4" />保存
+          </Button>
+          <Button size="sm" onClick={() => save(true)} disabled={saving || !allAnswered} className="shrink-0 gap-1.5 rounded-full px-4">
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}提交反馈
           </Button>
         </div>

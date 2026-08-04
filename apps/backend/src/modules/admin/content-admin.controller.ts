@@ -4,6 +4,7 @@ import {
   UploadedFile, UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { parse } from 'csv-parse/sync';
 import type { Request } from 'express';
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -35,6 +36,8 @@ import { AdminContentAiService } from './admin-content-ai.service';
 import { AiModelService } from '../ai-model/ai-model.service';
 import { FileAssetsService } from '../file-assets/file-assets.service';
 import { AdminTasksService } from '../admin-tasks/admin-tasks.service';
+import { ListeningPipelineTextDto } from './dto/listening-pipeline.dto';
+import { ListeningTranscriptSegment } from '../tts/tts.service';
 
 function validateListeningTranscript(value: unknown) {
   if (value == null) return;
@@ -3021,5 +3024,51 @@ Return exactly a JSON object — no markdown, no code fences:
   async deleteLibraryPattern(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
     return this.prisma.sentencePattern.delete({ where: { id } });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // LISTENING PIPELINE
+  // ════════════════════════════════════════════════════════════
+
+  /**
+   * Flow A: 上传英文文章 → TTS 合成音频 → (无词时间戳时) Whisper 提取 → 句子分段
+   * Returns: COS audio asset + sentence-level transcript
+   */
+  @Post('listening/pipeline/text')
+  async listeningPipelineFromText(@Req() req: Request, @Body() dto: ListeningPipelineTextDto) {
+    await this.requireAdmin(req);
+    const result = await this.ttsService.processListeningFromText({
+      text: dto.text,
+      provider: dto.provider,
+      model: dto.model,
+      voiceId: dto.voiceId,
+      ttsParams: dto.params,
+      forceWhisperTimestamps: dto.forceWhisperTimestamps,
+    });
+    return result;
+  }
+
+  /**
+   * Flow B: 上传音频文件 → Whisper STT → 句子分段
+   * Audio is saved to COS and transcript is returned.
+   */
+  @Post('listening/pipeline/audio')
+  @UseInterceptors(FileInterceptor('audio', {
+    storage: memoryStorage(),
+    limits: { fileSize: 1024 * 1024 * 50 }, // 50 MB
+  }))
+  async listeningPipelineFromAudio(
+    @Req() req: Request,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('language') language?: string,
+  ) {
+    await this.requireAdmin(req);
+    if (!file) throw new BadRequestException('未收到音频文件');
+    const result = await this.ttsService.processListeningFromAudio({
+      audioBuffer: file.buffer,
+      fileName: file.originalname || 'audio.mp3',
+      language,
+    });
+    return result;
   }
 }

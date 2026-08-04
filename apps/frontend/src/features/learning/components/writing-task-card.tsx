@@ -46,14 +46,15 @@ export function WritingTaskCard({
           className="text-[15px] leading-7 prose-headings:mb-3 prose-headings:mt-5 prose-headings:text-foreground prose-p:my-3 prose-p:leading-7 prose-li:my-1 prose-img:my-4 prose-img:w-full prose-img:object-contain"
         />
       ) : (
-        <p className="text-sm leading-6 text-muted-foreground">暂未配置题目正文。</p>
+        promptEn?.trim() || promptZh?.trim() ? null : (
+          <p className="text-sm leading-6 text-muted-foreground">暂未配置题目正文。</p>
+        )
       )}
 
-      {question && (promptEn?.trim() || promptZh?.trim()) && (
-        <div className="mt-4 border-t border-border/50 pt-4">
-          <p className="mb-2 text-xs font-semibold text-muted-foreground">双语提示</p>
-          {promptEn?.trim() && <MarkdownRenderer content={promptEn} className="prose-p:my-1 text-sm leading-6 text-muted-foreground" />}
-          {promptZh?.trim() && <MarkdownRenderer content={promptZh} className="mt-2 prose-p:my-1 text-sm leading-6 text-muted-foreground" />}
+      {(promptEn?.trim() || promptZh?.trim()) && (
+        <div className={question ? 'mt-4 border-t border-border/50 pt-4' : ''}>
+          {promptEn?.trim() && <p className="text-lg font-semibold leading-7 text-foreground">{promptEn}</p>}
+          {promptZh?.trim() && <p className="mt-2 text-sm leading-6 text-muted-foreground">{promptZh}</p>}
         </div>
       )}
 

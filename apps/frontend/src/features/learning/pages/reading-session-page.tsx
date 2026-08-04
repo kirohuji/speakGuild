@@ -133,34 +133,34 @@ function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: 
 
   return (
     <div className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#fffefb] pt-safe dark:bg-background">
-      <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-4 sm:px-6 sm:pt-6">
-        <div className="mx-auto flex max-w-3xl items-start gap-3">
-          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><BookOpen className="size-[18px]" /></span>
-          <div className="min-w-0 flex-1"><div className="mb-1.5 flex items-center gap-2"><Badge variant="secondary">阅读练习</Badge><span className="truncate text-xs text-muted-foreground">{topic.difficulty}</span></div><h1 className="break-words text-xl font-bold leading-tight">{topic.title}</h1><p className="mt-1.5 truncate text-sm text-muted-foreground">{unitTitle}</p></div>
-          <button type="button" onClick={onClose} className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground" aria-label="退出答题"><X className="size-4" /></button>
+      <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
+        <div className="mx-auto flex max-w-3xl items-center gap-3">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><BookOpen className="size-4" /></span>
+          <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Badge variant="secondary" className="text-[10px] h-5 px-1.5">阅读练习</Badge><span className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span></div><h1 className="truncate text-base font-bold leading-snug">{topic.title}</h1><p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p></div>
+          <button type="button" onClick={onClose} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground" aria-label="退出答题"><X className="size-3.5" /></button>
         </div>
       </header>
-      <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(19rem,43dvh)]">
+      <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(15rem,40dvh)]">
         <section className="min-h-0 overflow-y-auto overscroll-contain" aria-label="阅读文章">
-          <article className="mx-auto w-full max-w-3xl px-5 pb-8 pt-5 sm:px-8">
-            <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Reading passage</p><p className="mt-1 text-xs text-muted-foreground">文章区域可独立滚动</p></div><Button variant="ghost" size="sm" onClick={onOpenGuide} className="-mr-2"><BookOpen className="size-4" />指南</Button></div>
+          <article className="mx-auto w-full max-w-3xl px-5 pb-6 pt-4 sm:px-8">
+            <div className="mb-3 flex items-center justify-between gap-3"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Reading passage</p><Button variant="ghost" size="sm" onClick={onOpenGuide} className="-mr-2 h-7 text-xs"><BookOpen className="size-3.5" />指南</Button></div>
             <MarkdownRenderer content={String(config.questionMarkdown ?? '')} className="text-[16px] leading-8 prose-p:my-4 prose-p:leading-8 prose-img:my-5 prose-img:w-full" />
           </article>
         </section>
 
-        <section className="flex min-h-0 flex-col border-t border-border/70 bg-background shadow-[0_-10px_30px_rgba(0,0,0,0.05)]" aria-label="阅读问题">
-          <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-2 overflow-x-auto border-b border-border/50 px-4 py-2.5">
-            <p className="mr-1 shrink-0 text-xs font-medium text-muted-foreground">题目</p>
-            {questions.map((_: any, index: number) => <button key={index} type="button" onClick={() => setCurrentQuestion(index)} className={cn('flex size-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold', currentQuestion === index ? 'border-primary bg-primary text-primary-foreground' : answers[String(index)] ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground')} aria-label={`第 ${index + 1} 题`}>{index + 1}</button>)}
-            <span className="ml-auto shrink-0 text-xs text-muted-foreground">{answeredCount}/{questions.length}</span>
+        <section className="flex min-h-0 flex-col border-t border-border/70 bg-background shadow-[0_-8px_20px_rgba(0,0,0,0.04)]" aria-label="阅读问题">
+          <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-1.5 overflow-x-auto border-b border-border/50 px-4 py-2">
+            <p className="mr-1 shrink-0 text-[11px] font-medium text-muted-foreground">题目</p>
+            {questions.map((_: any, index: number) => <button key={index} type="button" onClick={() => setCurrentQuestion(index)} className={cn('flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold', currentQuestion === index ? 'border-primary bg-primary text-primary-foreground' : answers[String(index)] ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground')} aria-label={`第 ${index + 1} 题`}>{index + 1}</button>)}
+            <span className="ml-auto shrink-0 text-[11px] text-muted-foreground">{answeredCount}/{questions.length}</span>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-            <div className="mx-auto w-full max-w-3xl px-4 py-4">
+            <div className="mx-auto w-full max-w-3xl px-4 py-3">
               {question ? <ReadingQuestion index={currentQuestion} question={question} value={answers[String(currentQuestion)] ?? ''} onChange={(value) => setAnswers((current) => ({ ...current, [String(currentQuestion)]: value }))} /> : <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">暂未配置理解题</p>}
               {submission?.feedback && <div className="mt-4"><ReadingFeedback feedback={submission.feedback} /></div>}
             </div>
           </div>
-          <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-2 border-t border-border/50 px-4 py-2.5 pb-safe">
+          <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-2 border-t border-border/50 px-4 py-2 pb-safe">
             <Button variant="outline" size="sm" disabled={currentQuestion === 0} onClick={() => setCurrentQuestion((index) => Math.max(0, index - 1))}><ChevronLeft className="size-4" />上一题</Button>
             {currentQuestion < questions.length - 1
               ? <Button size="sm" className="ml-auto" onClick={() => setCurrentQuestion((index) => Math.min(questions.length - 1, index + 1))}>下一题<ChevronRight className="size-4" /></Button>

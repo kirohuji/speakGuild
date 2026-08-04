@@ -134,8 +134,8 @@ export class GenerateWritingTopicDto {
   instruction?: string;
 
   @IsOptional()
-  @IsIn(['journal', 'message', 'email', 'paragraph', 'essay'])
-  genre?: 'journal' | 'message' | 'email' | 'paragraph' | 'essay';
+  @IsIn(['journal', 'message', 'email', 'paragraph', 'essay', 'dialogue'])
+  genre?: 'journal' | 'message' | 'email' | 'paragraph' | 'essay' | 'dialogue';
 
   @IsOptional()
   @IsString()

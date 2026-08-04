@@ -862,25 +862,25 @@ function TrainingTopicDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="flex max-h-[92vh] w-[calc(100vw-1.5rem)] flex-col gap-0 p-0 sm:max-w-[88rem]">
-        <DialogHeader className="shrink-0 border-b border-border/70 px-6 pb-4 pt-5">
+      <DialogContent className="flex max-h-[90vh] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[72rem]">
+        <DialogHeader className="shrink-0 border-b px-5 py-4">
           <DialogTitle className="sr-only">{edit ? '编辑话题' : '新增话题'}</DialogTitle>
           <div className="flex flex-wrap items-start justify-between gap-3 pr-8">
             <div>
-              <p className="text-lg font-semibold leading-none tracking-tight">{edit ? '编辑话题' : '新增话题'}</p>
-              <DialogDescription className="mt-1 text-sm text-muted-foreground">
+              <p className="text-base font-semibold leading-none tracking-tight">{edit ? '编辑话题' : '新增话题'}</p>
+              <DialogDescription className="mt-1 text-xs text-muted-foreground">
                 {contentMode === 'writing' ? '设计完整写作题面、作答边界和评分标准，并实时检查考生视图。' : '组织练习提示、句型 Chunk，并为话题绑定可交互 Ink 故事。'}
               </DialogDescription>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline">{form.difficulty ?? 'L2'}</Badge>
-              <Badge variant="secondary">{form.suggestedDurationSec ?? 60}s</Badge>
-              {displayStory && <Badge variant="outline" className="gap-1"><Link2 className="size-3" />已绑定 Ink</Badge>}
+            <div className="flex flex-wrap gap-1.5">
+              <Badge variant="outline" className="text-xs">{form.difficulty ?? 'L2'}</Badge>
+              <Badge variant="secondary" className="text-xs">{form.suggestedDurationSec ?? 60}s</Badge>
+              {displayStory && <Badge variant="outline" className="gap-1 text-xs"><Link2 className="size-3" />已绑定 Ink</Badge>}
             </div>
           </div>
         </DialogHeader>
         <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); if (v === 'ink') loadStoriesIfNeeded() }} className="flex min-h-0 flex-1 flex-col">
-          <div className="shrink-0 border-b border-border/70 bg-muted/20 px-6 py-3">
+          <div className="shrink-0 border-b bg-muted/20 px-5 py-2.5">
             <TabsList className="h-9 w-full justify-start overflow-x-auto bg-background/80">
               <TabsTrigger value="basic" className="gap-1.5">
                 <FileText className="size-3.5" />基础信息
@@ -903,15 +903,15 @@ function TrainingTopicDialog({
             </TabsList>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-            <TabsContent value="basic" className="mt-0 space-y-5">
-              <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
-                <div className="space-y-1.5">
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+            <TabsContent value="basic" className="mt-0 space-y-4">
+              <div className="grid gap-3 lg:grid-cols-[1fr_0.8fr]">
+                <div className="space-y-1">
                   <Label>标题</Label>
                   <Input value={form.title ?? ''} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="自我介绍" />
                 </div>
-                <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-                  <div className="space-y-1.5">
+                <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
+                  <div className="space-y-1">
                     <Label>话题类型</Label>
                     <Select
                       value={form.type ?? (packageType === 'exam' ? 'ielts' : 'daily')}
@@ -933,12 +933,12 @@ function TrainingTopicDialog({
                       <option value="ielts">{contentMode === 'writing' ? '雅思写作' : '雅思口语'}</option>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label>排序</Label>
                     <Input type="number" value={form.sortOrder ?? 0}
                       onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })} />
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label>难度</Label>
                     <Select value={form.difficulty} onChange={(e) => setForm({ ...form, difficulty: e.target.value })}>
                       {['L1', 'L2', 'L3', 'L4', 'L5'].map((l) => (
@@ -946,7 +946,7 @@ function TrainingTopicDialog({
                       ))}
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label>建议时长</Label>
                     <div className="relative">
                       <Clock3 className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -958,19 +958,19 @@ function TrainingTopicDialog({
               </div>
               {(form.type ?? (packageType === 'exam' ? 'ielts' : 'daily')) === 'ielts' && (
                 contentMode === 'writing' ? (
-                <div className="grid gap-4 rounded-lg border border-border/70 bg-muted/20 p-4 md:grid-cols-4">
-                  <div className="space-y-1.5">
+                <div className="grid gap-3 rounded-lg border border-border/70 bg-muted/20 p-3 md:grid-cols-4">
+                  <div className="space-y-1">
                     <Label>Writing Task</Label>
                     <Select value={String(form.metadata?.part ?? 2)} onChange={(e) => updateMetadata({ part: Number(e.target.value) })}>
                       <option value="1">Task 1</option>
                       <option value="2">Task 2</option>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label>目标分数</Label>
                     <Input value={form.metadata?.bandTarget ?? ''} onChange={(e) => updateMetadata({ bandTarget: e.target.value })} placeholder="6.5" />
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label>题型</Label>
                     <Select value={form.metadata?.questionType ?? 'task_2_essay'} onChange={(e) => updateMetadata({ questionType: e.target.value })}>
                       <option value="task_1_letter">Task 1 Letter</option>
@@ -978,14 +978,14 @@ function TrainingTopicDialog({
                       <option value="task_2_essay">Task 2 Essay</option>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label>考试时限（分钟）</Label>
                     <Input type="number" min={1} value={form.metadata?.timeLimitMinutes ?? 40} onChange={(e) => updateMetadata({ timeLimitMinutes: Number(e.target.value) })} />
                   </div>
                 </div>
                 ) : (
-                <div className="grid gap-4 rounded-lg border border-border/70 bg-muted/20 p-4 md:grid-cols-5">
-                  <div className="space-y-1.5">
+                <div className="grid gap-3 rounded-lg border border-border/70 bg-muted/20 p-3 md:grid-cols-5">
+                  <div className="space-y-1">
                     <Label>Part</Label>
                     <Select value={String(form.metadata?.part ?? 1)} onChange={(e) => updateMetadata({ part: Number(e.target.value) })}>
                       <option value="1">Part 1</option>
@@ -993,11 +993,11 @@ function TrainingTopicDialog({
                       <option value="3">Part 3</option>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label>目标分数</Label>
                     <Input value={form.metadata?.bandTarget ?? ''} onChange={(e) => updateMetadata({ bandTarget: e.target.value })} placeholder="6.5" />
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label>题型</Label>
                     <Select value={form.metadata?.questionType ?? 'interview'} onChange={(e) => updateMetadata({ questionType: e.target.value })}>
                       <option value="interview">Interview</option>
@@ -1005,11 +1005,11 @@ function TrainingTopicDialog({
                       <option value="discussion">Discussion</option>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label>准备秒数</Label>
                     <Input type="number" value={form.metadata?.prepSeconds ?? ''} onChange={(e) => updateMetadata({ prepSeconds: e.target.value ? Number(e.target.value) : null })} />
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label>回答秒数</Label>
                     <Input type="number" value={form.metadata?.answerSeconds ?? ''} onChange={(e) => updateMetadata({ answerSeconds: e.target.value ? Number(e.target.value) : null })} />
                   </div>
@@ -1020,16 +1020,16 @@ function TrainingTopicDialog({
                 label="话题说明"
                 value={form.description ?? ''}
                 onChange={(value) => setForm({ ...form, description: value })}
-                height={150}
+                height={130}
                 preview="edit"
                 placeholder="这个话题训练什么能力、回答时要注意什么..."
               />
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-3 lg:grid-cols-2">
                 <MarkdownEditor
                   label="英文提示"
                   value={form.promptEn ?? ''}
                   onChange={(value) => setForm({ ...form, promptEn: value })}
-                  height={190}
+                  height={160}
                   preview="edit"
                   placeholder="Tell me about yourself."
                 />
@@ -1037,7 +1037,7 @@ function TrainingTopicDialog({
                   label="中文提示"
                   value={form.promptZh ?? ''}
                   onChange={(value) => setForm({ ...form, promptZh: value })}
-                  height={190}
+                  height={160}
                   preview="edit"
                   placeholder="请介绍一下你自己。"
                 />
@@ -1074,7 +1074,7 @@ function TrainingTopicDialog({
 
             {['writing', 'reading', 'listening'].includes(contentMode) && (
               <TabsContent value="teaching" className="mt-0 space-y-4">
-                <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-sky-500/20 bg-sky-500/[0.045] p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-sky-500/20 bg-sky-500/[0.045] p-3">
                   <div>
                     <p className="text-sm font-semibold">课前教学文档</p>
                     <p className="mt-1 text-xs leading-5 text-muted-foreground">学习者开始写作、阅读或听力任务前会先看到这份 Markdown 指导。</p>
@@ -1102,11 +1102,11 @@ function TrainingTopicDialog({
             )}
 
             <TabsContent value="training" className="mt-0">
-              <div className="rounded-lg border border-border/70 bg-muted/20 px-4 py-3">
+              <div className="rounded-lg border border-border/70 bg-muted/20 px-3 py-2.5">
                 <p className="text-sm font-medium">语言支架</p>
                 <p className="mt-1 text-xs text-muted-foreground">句型负责表达框架，Chunk 负责可复用表达，词汇夯实基础。</p>
               </div>
-              <Tabs defaultValue="patterns" className="mt-4">
+              <Tabs defaultValue="patterns" className="mt-3">
                 <TabsList className="mb-4 w-full">
                   <TabsTrigger value="patterns" className="gap-1.5">
                     <Code2 className="size-3.5" />句型骨架
@@ -1344,7 +1344,7 @@ function TrainingTopicDialog({
             </TabsContent>
           </div>
         </Tabs>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70 bg-background px-6 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-3">
           <p className="text-xs text-muted-foreground">
             标题和英文提示为必填；Ink 可稍后绑定。
           </p>

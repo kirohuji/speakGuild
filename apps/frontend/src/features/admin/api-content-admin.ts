@@ -943,3 +943,64 @@ export function addStoryAsset(
 export function removeStoryAsset(storyId: string, alias: string): Promise<{ storyId: string; alias: string; removed: boolean }> {
   return _delete(`/admin/content/stories/${storyId}/assets/${alias}`)
 }
+
+// ─── Listening Pipeline ──────────────────────────────────────
+
+/** Transcript segment returned from listening pipeline */
+export interface ListeningTranscriptSegment {
+  text: string
+  translation?: string
+  startMs: number
+  endMs: number
+  words?: Array<{ token: string; startMs: number; endMs: number }>
+}
+
+/** Flow A: Upload article text → TTS → whisper fallback → sentence segmentation */
+export interface ListeningPipelineTextResult {
+  assetId: string
+  url: string
+  mimeType: string
+  transcript: ListeningTranscriptSegment[]
+  provider: string
+  model: string
+  voiceId?: string | null
+}
+
+export function listeningPipelineFromText(data: {
+  text: string
+  provider: string
+  model: string
+  voiceId?: string
+  params?: Record<string, unknown>
+  forceWhisperTimestamps?: boolean
+}): Promise<ListeningPipelineTextResult> {
+  return post('/admin/content/listening/pipeline/text', data)
+}
+
+/** Flow B: Upload audio file → Whisper → sentence segmentation */
+export interface ListeningPipelineAudioResult {
+  assetId: string
+  url: string
+  mimeType: string
+  transcript: ListeningTranscriptSegment[]
+}
+
+/** Flow B: Upload audio file → Whisper → sentence segmentation */
+export interface ListeningPipelineAudioResult {
+  assetId: string
+  url: string
+  mimeType: string
+  transcript: ListeningTranscriptSegment[]
+}
+
+export async function listeningPipelineFromAudio(audioFile: File | Blob, language?: string): Promise<ListeningPipelineAudioResult> {
+  const form = new FormData()
+  form.append('audio', audioFile, (audioFile as File).name || 'audio.mp3')
+  if (language) form.append('language', language)
+  // Use raw axios instance for multipart (Content-Type must not be forced to JSON)
+  const { default: instance } = await import('@/lib/request')
+  return instance.post('/admin/content/listening/pipeline/audio', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 300_000,
+  }) as any
+}

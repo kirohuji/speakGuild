@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import * as path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { FileAssetGroup, TtsProvider } from '@prisma/client';
+import { FileAssetGroup } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { TtsProviderFactory } from './tts-provider.factory';
 import { SttProviderFactory } from './stt/stt-provider.factory';
@@ -10,6 +10,144 @@ import { TTS_PARAMS_SCHEMA, sanitizeTtsParams } from './tts-params.schema';
 import { SynthesizeAssetDto, SynthesizeTextDto } from './dto/synthesize.dto';
 import { FileAssetsService } from '../file-assets/file-assets.service';
 import { AiModelService } from '../ai-model/ai-model.service';
+import { SttWordTimestamp } from './stt/stt.types';
+
+// ─── Sentence Segmentation ───────────────────────────────────
+
+/** Output format: one segment per sentence, all timestamps in milliseconds */
+export interface ListeningTranscriptSegment {
+  text: string;
+  translation?: string;
+  startMs: number;
+  endMs: number;
+  words?: Array<{ token: string; startMs: number; endMs: number }>;
+}
+
+/**
+ * Group word-level timestamps (nanoseconds) into sentence-level segments.
+ * Splits on sentence-ending punctuation: . ! ? 。 ！ ？
+ * Also splits on explicit newline characters in the text.
+ * Converts nanoseconds → milliseconds.
+ *
+ * Words are joined into readable sentences with proper spacing:
+ * - Space between words
+ * - No space before punctuation (. , ! ? ; : etc.)
+ * - Opening quotes/parentheses get space before, no space after
+ */
+export function segmentWordsIntoSentences(
+  wordTimestamps: SttWordTimestamp[],
+): ListeningTranscriptSegment[] {
+  if (!wordTimestamps?.length) return [];
+
+  const NS_TO_MS = 1_000_000;
+  const SENTENCE_END_PUNCT = /[.!?。！？]$/;
+  // Characters that should attach to the previous word (no leading space)
+  const ATTACH_LEFT = /^[.,!?;:)\]}'"%\u3002\uff0c\u3001\uff1b\uff1a\u201d\u2019]$/;
+
+  const segments: ListeningTranscriptSegment[] = [];
+  let currentWords: SttWordTimestamp[] = [];
+
+  const toMs = (ns: number) => Math.floor(ns / NS_TO_MS);
+
+  /**
+   * Join word tokens into a readable English sentence.
+   * Adds spaces between words except before punctuation.
+   */
+  const joinWords = (words: SttWordTimestamp[]): string => {
+    if (words.length === 0) return '';
+    let result = words[0].text;
+    for (let i = 1; i < words.length; i++) {
+      const prev = words[i - 1].text;
+      const curr = words[i].text;
+      // No space if current word is punctuation that attaches left,
+      // or if previous word was an opening quote/paren
+      const prevOpens = /[(\["'\u201c\u2018]$/.test(prev);
+      if (ATTACH_LEFT.test(curr) || prevOpens) {
+        result += curr;
+      } else {
+        result += ' ' + curr;
+      }
+    }
+    return result.trim();
+  };
+
+  const flushSegment = () => {
+    if (currentWords.length === 0) return;
+    const text = joinWords(currentWords);
+    if (!text || !/[a-zA-Z0-9\u4e00-\u9fff]/.test(text)) {
+      currentWords = [];
+      return;
+    }
+    const startNs = currentWords[0].start_time;
+    const lastWord = currentWords[currentWords.length - 1];
+    const endNs = lastWord.end_time ?? lastWord.start_time;
+    const segStartMs = toMs(startNs);
+    const segEndMs = Math.max(toMs(endNs), segStartMs + 1);
+    segments.push({
+      text,
+      startMs: segStartMs,
+      endMs: segEndMs,
+      words: currentWords.map((w) => {
+        const wStart = toMs(w.start_time);
+        const wEndRaw = toMs(w.end_time ?? w.start_time);
+        // Ensure endMs > startMs (minimum 1ms duration) to pass validation
+        const wEnd = Math.max(wEndRaw, wStart + 1);
+        return { token: w.text, startMs: wStart, endMs: wEnd };
+      }),
+    });
+    currentWords = [];
+  };
+
+  for (let i = 0; i < wordTimestamps.length; i++) {
+    const w = wordTimestamps[i];
+    currentWords.push(w);
+
+    const wordText = w.text.trim();
+    if (SENTENCE_END_PUNCT.test(wordText) || wordText === '\n' || wordText === '') {
+      flushSegment();
+    }
+  }
+
+  // Flush remaining words
+  flushSegment();
+
+  // Merge very short segments (single punctuation-only) into previous
+  return segments.filter((s) => s.text.length > 0 && /[a-zA-Z0-9\u4e00-\u9fff]/.test(s.text));
+}
+
+/**
+ * Run word timestamps through whisper, return word-level timestamps in nanosecond precision.
+ */
+async function runWhisperForTimestamps(
+  audioBuffer: Buffer,
+  mimeType: string,
+  fileName: string,
+  sttFactory: SttProviderFactory,
+  language?: string,
+): Promise<SttWordTimestamp[]> {
+  const sttConfig = {
+    provider: 'whisper',
+    temperature: 0.2,
+    enableTimestamps: true,
+    inferenceUrl: process.env.WHISPER_INFERENCE_URL?.trim(),
+    timeoutMs: Number(process.env.WHISPER_TIMEOUT_MS ?? 300_000),
+    tencentSecretId: undefined as string | undefined,
+    tencentSecretKey: undefined as string | undefined,
+    tencentRegion: undefined as string | undefined,
+  };
+  const sttProvider = sttFactory.getProvider('whisper');
+  const result = await sttProvider.transcribe({
+    audioBuffer,
+    mimeType,
+    fileName,
+    language,
+    temperature: sttConfig.temperature,
+    enableTimestamps: true,
+    inferenceUrl: sttConfig.inferenceUrl,
+    timeoutMs: sttConfig.timeoutMs,
+  });
+  return result.wordTimestamps ?? [];
+}
 
 @Injectable()
 export class TtsService {
@@ -165,6 +303,148 @@ export class TtsService {
       model,
       voiceId: dto.voiceId ?? null,
       configHash,
+    };
+  }
+
+  // ─── Listening Pipeline ────────────────────────────────────
+
+  /**
+   * Flow A: Article text → TTS synthesis → (optional whisper fallback) → sentence segmentation.
+   * Returns: COS audio asset + sentence-level transcript.
+   */
+  async processListeningFromText(params: {
+    text: string;
+    provider: string;
+    model: string;
+    voiceId?: string;
+    ttsParams?: Record<string, unknown>;
+    forceWhisperTimestamps?: boolean;
+  }): Promise<{
+    assetId: string;
+    url: string;
+    mimeType: string;
+    transcript: ListeningTranscriptSegment[];
+    provider: string;
+    model: string;
+    voiceId?: string | null;
+  }> {
+    const { text, provider: providerKey, model, voiceId, ttsParams, forceWhisperTimestamps } = params;
+
+    // 1. TTS synthesis via synthesizeAsset (persists to COS)
+    const providerConfig = await this.aiModel.getTtsConfig(providerKey as any);
+    const resolvedModel = model?.trim() || providerConfig.model;
+    const resolvedApiKey = providerConfig.apiKey;
+    const resolvedBaseUrl = providerConfig.baseUrl;
+    const resolvedGroupId = providerConfig.groupId;
+    const sanitizedParams = sanitizeTtsParams(providerKey as any, resolvedModel, ttsParams ?? {});
+    const ttsProvider = this.factory.getProvider(providerKey as any);
+    const configHash = this.buildConfigHash(providerKey, resolvedModel, voiceId, sanitizedParams, text);
+    const generatedId = `listening-article-${configHash}-${randomUUID()}`;
+
+    this.logger.log(`[Listening Pipeline] Synthesizing article (${text.length} chars) with ${providerKey}/${resolvedModel}`);
+
+    const ttsResult = await ttsProvider.generateAudio({
+      id: generatedId,
+      text: text.trim(),
+      model: resolvedModel,
+      voiceId: voiceId ?? undefined,
+      params: sanitizedParams,
+      apiKey: resolvedApiKey,
+      baseUrl: resolvedBaseUrl,
+      groupId: resolvedGroupId,
+    });
+
+    // 2. Save audio to COS
+    const asset = await this.fileAssetsService.createAssetFromBuffer({
+      buffer: ttsResult.audioBuffer,
+      filename: `${generatedId}.${ttsResult.fileExtension}`,
+      mimeType: ttsResult.mimeType,
+      group: FileAssetGroup.tts,
+    });
+    const signed = await this.fileAssetsService.getPrivateUrlByAssetId(asset.id);
+
+    // 3. Get word timestamps
+    let wordTimestamps = ttsResult.wordTimestamps;
+
+    // If TTS didn't return word timestamps (or force enabled), run whisper
+    if ((!wordTimestamps || wordTimestamps.length === 0 || forceWhisperTimestamps) && process.env.WHISPER_INFERENCE_URL?.trim()) {
+      this.logger.log(`[Listening Pipeline] Running Whisper for word timestamps (TTS returned ${wordTimestamps?.length ?? 0} timestamps, forceWhisper=${forceWhisperTimestamps})`);
+      wordTimestamps = await runWhisperForTimestamps(
+        ttsResult.audioBuffer,
+        ttsResult.mimeType,
+        `${generatedId}.${ttsResult.fileExtension}`,
+        this.sttFactory,
+        'en',
+      );
+    }
+
+    // 4. Sentence segmentation
+    const transcript = segmentWordsIntoSentences(wordTimestamps ?? []);
+    this.logger.log(`[Listening Pipeline] Segmented into ${transcript.length} sentences`);
+
+    return {
+      assetId: asset.id,
+      url: (signed as any).url,
+      mimeType: ttsResult.mimeType,
+      transcript,
+      provider: providerKey,
+      model: resolvedModel,
+      voiceId: voiceId ?? null,
+    };
+  }
+
+  /**
+   * Flow B: Uploaded audio file → Whisper STT → sentence segmentation.
+   * Audio is saved to COS and transcript is returned.
+   */
+  async processListeningFromAudio(params: {
+    audioBuffer: Buffer;
+    fileName: string;
+    language?: string;
+  }): Promise<{
+    assetId: string;
+    url: string;
+    mimeType: string;
+    transcript: ListeningTranscriptSegment[];
+  }> {
+    const { audioBuffer, fileName, language } = params;
+
+    const ext = path.extname(fileName).replace('.', '') || 'mp3';
+    const mimeMap: Record<string, string> = {
+      webm: 'audio/webm', mp4: 'audio/mp4', m4a: 'audio/mp4',
+      ogg: 'audio/ogg', wav: 'audio/wav', mp3: 'audio/mpeg',
+    };
+    const mimeType = mimeMap[ext] ?? 'audio/mpeg';
+
+    // 1. Save uploaded audio to COS
+    const asset = await this.fileAssetsService.createAssetFromBuffer({
+      buffer: audioBuffer,
+      filename: fileName,
+      mimeType,
+      group: FileAssetGroup.library,
+    });
+    const signed = await this.fileAssetsService.getPrivateUrlByAssetId(asset.id);
+    this.logger.log(`[Listening Pipeline] Audio saved to COS: ${asset.id}`);
+
+    // 2. Run Whisper for word timestamps
+    this.logger.log(`[Listening Pipeline] Running Whisper on uploaded audio (${audioBuffer.length} bytes)`);
+    const wordTimestamps = await runWhisperForTimestamps(
+      audioBuffer,
+      mimeType,
+      fileName,
+      this.sttFactory,
+      language ?? 'en',
+    );
+
+    // 3. Sentence segmentation
+    const transcript = segmentWordsIntoSentences(wordTimestamps);
+    this.logger.log(`[Listening Pipeline] Segmented into ${transcript.length} sentences from uploaded audio`);
+
+    return {
+      assetId: asset.id,
+      url: (signed as any).url,
+      mimeType,
+      transcript,
     };
   }
 
