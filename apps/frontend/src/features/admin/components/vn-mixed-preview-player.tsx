@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CheckCircle2, Film, Infinity, Loader2, Mic, Pause, Play, RotateCcw, Settings, Square, Volume2 } from 'lucide-react'
+import { CheckCircle2, Film, Loader2, Mic, Pause, Play, RotateCcw, Settings, Square, Volume2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
 import { PixiVnStage } from '@/features/vn-engine/pixi-vn-stage'
+import { MixedPlaybackSettingsDialog, type LoopMode } from '@/components/common/playback-settings-dialog'
 import { type MixedTimelineFrame } from './vn-mixed-timeline'
 import { assetCacheService } from '@/lib/offline'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
+
+// 兼容旧导入：播放设置弹窗已抽为公共组件
+export { MixedPlaybackSettingsDialog }
+export type { LoopMode }
 
 interface VnMixedPreviewPlayerProps {
   frames: MixedTimelineFrame[]
@@ -35,21 +37,6 @@ export function mixedFrameLabel(frame: MixedTimelineFrame) {
   if (frame.kind === 'missingInput') return '待补充'
   return frame.speaker || '旁白'
 }
-
-export type LoopMode = '1' | '2' | 'infinite'
-
-const gapOptions = [
-  { value: 0.5, label: '0.5s' },
-  { value: 1, label: '1s' },
-  { value: 2, label: '2s' },
-  { value: 3, label: '3s' },
-] as const
-
-const loopOptions: Array<{ value: LoopMode; label: string }> = [
-  { value: '1', label: '1次' },
-  { value: '2', label: '2次' },
-  { value: 'infinite', label: '循环' },
-]
 
 export function estimateMixedFrameDuration(frame: MixedTimelineFrame) {
   if (frame.kind === 'choice') return 1000
@@ -566,79 +553,6 @@ export function VnMixedPreviewPlayer({
         onLoopModeChange={(mode) => { setLoopMode(mode); setLoopIndex(1) }}
       />
     </div>
-  )
-}
-
-export function MixedPlaybackSettingsDialog({
-  open,
-  onOpenChange,
-  gapSeconds,
-  onGapSecondsChange,
-  loopMode,
-  onLoopModeChange,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  gapSeconds: number
-  onGapSecondsChange: (value: number) => void
-  loopMode: LoopMode
-  onLoopModeChange: (value: LoopMode) => void
-}) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[90vw] max-w-sm rounded-2xl">
-        <DialogHeader>
-          <DialogTitle>播放设置</DialogTitle>
-          <DialogDescription>控制逐句原声播放的间隔与循环次数。</DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-5">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">句间间隔</Label>
-              <span className="text-xs tabular-nums text-muted-foreground">{gapSeconds.toFixed(1)} 秒</span>
-            </div>
-            <div className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-0.5">
-              {gapOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => onGapSecondsChange(option.value)}
-                  className={cn(
-                    'rounded-md py-2 text-xs font-medium transition-colors',
-                    gapSeconds === option.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">循环次数</Label>
-            <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-0.5">
-              {loopOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => onLoopModeChange(option.value)}
-                  className={cn(
-                    'flex items-center justify-center gap-1 rounded-md py-2 text-xs font-medium transition-colors',
-                    loopMode === option.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {option.value === 'infinite' && <Infinity className="size-3" />}
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   )
 }
 

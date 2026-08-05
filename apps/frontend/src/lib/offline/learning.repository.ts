@@ -57,7 +57,11 @@ export function buildAggregatedUnitContent(unitDetail: any, topicDetails: TopicD
       metadata: detail.topic?.metadata,
       activityType: detail.topic?.activityType,
       contentConfig: detail.topic?.contentConfig,
-      media: detail.topic?.media,
+      // 离线包 topic JSON 只携带稳定的 mediaAssetId；mediaUrl 需由客户端按
+      // assetId 解析成本地可播放地址（见 use-topic-media）。这里同时透传
+      // 线上缓存中可能存在的 mediaUrl，保证 Web 与在线场景可直接播放。
+      mediaUrl: detail.topic?.mediaUrl ?? null,
+      mediaAssetId: detail.topic?.mediaAssetId ?? null,
       transcript: detail.topic?.transcript,
       latestSubmission: detail.topic?.latestSubmission,
       vocabularies: detail.vocabularies ?? [],

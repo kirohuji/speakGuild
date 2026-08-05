@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { useTheme } from 'next-themes'
 import { ReactReader, ReactReaderStyle, type IReactReaderStyle } from 'react-reader'
 import {
   ArrowLeft, BookOpen, Info, List, Loader2, Minus, Plus,
@@ -15,15 +16,21 @@ import { localDb } from '@/lib/offline/unified-storage'
 import { useLearningStore } from '@/stores/learning.store'
 
 const PROGRESS_KEY = (unitId: string) => `manyu:novel-progress:${unitId}`
-const THEME_KEY = 'manyu:reader-theme'
+// 阅读器主题与全局主题统一：
+//  - 深/浅模式跟随全局（next-themes），全局切深色 → 阅读器自动深色
+//  - 浅色模式下可选手纸：白（light）/ 护眼（sepia）
+const LIGHT_PAPER_KEY = 'manyu:reader-light-theme'
+const LEGACY_THEME_KEY = 'manyu:reader-theme'
 const SCROLL_KEY = 'manyu:reader-scroll'
 
 type ReaderTheme = 'light' | 'sepia' | 'dark'
 
+// 仅用于 epub 内容 iframe 的「纸面」颜色（iframe 内无法读取应用 CSS 变量），
+// 深色与全局 --background/--card 对齐；周围 UI 一律使用语义化 token
 const THEME_COLORS: Record<ReaderTheme, { bg: string; text: string; tocBg: string; tocText: string }> = {
-  light: { bg: '#ffffff', text: '#171717', tocBg: '#fafafa', tocText: '#171717' },
+  light: { bg: '#ffffff', text: '#1f2d3d', tocBg: '#f4faf7', tocText: '#1f2d3d' },
   sepia:  { bg: '#fdf6e3', text: '#5c4b3a', tocBg: '#f5ecd7', tocText: '#5c4b3a' },
-  dark:   { bg: '#171717', text: '#e5e5e5', tocBg: '#262626', tocText: '#e5e5e5' },
+  dark:   { bg: '#0a0712', text: '#e6e3eb', tocBg: '#161023', tocText: '#e6e3eb' },
 }
 
 const FONT_SIZES = [14, 16, 18, 20, 22, 24]
@@ -49,9 +56,15 @@ export function LearningReaderPage() {
   const [loading, setLoading] = useState(true)
   const [epubUrl, setEpubUrl] = useState<string>('')
   const [location, setLocation] = useState<string | number>(0)
-  const [theme, setTheme] = useState<ReaderTheme>(() =>
-    (localStorage.getItem(THEME_KEY) as ReaderTheme) || 'light',
-  )
+  const { resolvedTheme, setTheme: setGlobalTheme } = useTheme()
+  // 浅色模式下的「纸面」偏好（白 / 护眼）；深色模式直接跟随全局主题
+  const [lightPaper, setLightPaper] = useState<'light' | 'sepia'>(() => {
+    const legacy = localStorage.getItem(LEGACY_THEME_KEY)
+    if (legacy === 'sepia') return 'sepia'
+    return localStorage.getItem(LIGHT_PAPER_KEY) === 'sepia' ? 'sepia' : 'light'
+  })
+  // 有效主题：全局为深色 → 阅读器深色；全局为浅色 → 用户选择的纸面
+  const theme: ReaderTheme = resolvedTheme === 'dark' ? 'dark' : lightPaper
   const [fontSize, setFontSize] = useState(DEFAULT_FONT_SIZE)
   const [pct, setPct] = useState(0)
   const [infoOpen, setInfoOpen] = useState(false)
@@ -79,7 +92,7 @@ export function LearningReaderPage() {
       .catch(() => setLoading(false))
   }, [unit, unitId])
 
-  useEffect(() => { localStorage.setItem(THEME_KEY, theme) }, [theme])
+  useEffect(() => { localStorage.setItem(LIGHT_PAPER_KEY, lightPaper) }, [lightPaper])
   useEffect(() => { localStorage.setItem(SCROLL_KEY, String(scrollMode)) }, [scrollMode])
 
   // 主题切换时更新 epub.js 内部颜色
@@ -111,6 +124,16 @@ export function LearningReaderPage() {
       localStorage.setItem(PROGRESS_KEY(unitId), JSON.stringify({ cfi: epubcfi, percentage: val, updatedAt: Date.now() }))
     }, 800)
   }, [unitId])
+
+  // 在阅读器内切换主题时同步切换全局主题，保证整站一致
+  const selectTheme = useCallback((t: ReaderTheme) => {
+    if (t === 'dark') {
+      setGlobalTheme('dark')
+    } else {
+      setLightPaper(t)
+      setGlobalTheme('light')
+    }
+  }, [setGlobalTheme])
 
   const c = THEME_COLORS[theme]
   const readerStyles: IReactReaderStyle = {
@@ -176,9 +199,9 @@ export function LearningReaderPage() {
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col" style={{ background: c.bg, color: c.text }}>
+    <div className="flex h-[100dvh] flex-col bg-background text-foreground">
       {/* ── Header ── */}
-      <div className="flex shrink-0 items-center border-b border-border/60 px-2 pt-safe" style={{ background: c.tocBg }}>
+      <div className="flex shrink-0 items-center border-b border-border/60 bg-background px-2 pt-safe">
         {/* 左：返回 + 目录 */}
         <div className="flex items-center gap-1 w-[88px] shrink-0 h-12 ">
           <Button variant="ghost" size="icon" className="size-10" asChild>
@@ -240,10 +263,10 @@ export function LearningReaderPage() {
       </div>
 
       {/* ── 底部进度条 ── */}
-      <div className="shrink-0 border-t border-border/60 px-4 pb-safe" style={{ background: c.tocBg }}>
+      <div className="shrink-0 border-t border-border/60 bg-background px-4 pb-safe">
         <div className="flex items-center gap-3 h-12">
           <span className="text-sm tabular-nums opacity-60 shrink-0">{pct}%</span>
-          <div className="flex-1 h-1.5 overflow-hidden rounded-full" style={{ background: c.tocBg === '#262626' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }}>
+          <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-muted/60">
             <div className="h-full rounded-full bg-accent transition-all duration-500" style={{ width: `${pct}%` }} />
           </div>
         </div>
@@ -251,7 +274,7 @@ export function LearningReaderPage() {
 
       {/* ── 设置 Drawer（底部） ── */}
       <Drawer open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DrawerContent className="mx-auto max-w-md rounded-t-[28px] border-border/70 drawer-surface" style={{ background: c.tocBg, color: c.tocText }}>
+        <DrawerContent className="mx-auto max-w-md rounded-t-[28px] border-border/70 drawer-surface bg-background text-foreground">
           <DrawerHeader className="text-left">
             <DrawerTitle className="text-base font-semibold">阅读设置</DrawerTitle>
           </DrawerHeader>
@@ -277,14 +300,14 @@ export function LearningReaderPage() {
               <p className="mb-3 text-xs font-medium text-muted-foreground">阅读主题</p>
               <div className="grid grid-cols-3 gap-3">
                 {([
-                  { key: 'light' as ReaderTheme, icon: Sun, label: '浅色', desc: '白底黑字', bg: '#fff', text: '#171717' },
+                  { key: 'light' as ReaderTheme, icon: Sun, label: '浅色', desc: '白底黑字', bg: '#ffffff', text: '#1f2d3d' },
                   { key: 'sepia' as ReaderTheme, icon: BookOpen, label: '护眼', desc: '暖黄柔和', bg: '#fdf6e3', text: '#5c4b3a' },
-                  { key: 'dark' as ReaderTheme, icon: Moon, label: '深色', desc: '暗色护眼', bg: '#171717', text: '#e5e5e5' },
+                  { key: 'dark' as ReaderTheme, icon: Moon, label: '深色', desc: '跟随全局深色', bg: '#0a0712', text: '#e6e3eb' },
                 ]).map((t) => (
                   <button
                     key={t.key}
                     type="button"
-                    onClick={() => setTheme(t.key)}
+                    onClick={() => selectTheme(t.key)}
                     className={cn(
                       'flex flex-col items-center gap-2 rounded-xl p-3 transition-all',
                       theme === t.key
@@ -323,7 +346,7 @@ export function LearningReaderPage() {
 
       {/* ── 书籍信息 Sheet（右侧） ── */}
       <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
-        <SheetContent side="right" className="w-[80vw] max-w-sm p-0 border-border/60" style={{ background: c.tocBg, color: c.tocText }}>
+        <SheetContent side="right" className="w-[80vw] max-w-sm border-border/60 bg-background p-0 text-foreground">
           <SheetHeader className="border-b border-border/60 px-5 py-4">
             <SheetTitle className="text-base font-semibold">书籍信息</SheetTitle>
           </SheetHeader>

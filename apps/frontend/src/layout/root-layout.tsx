@@ -34,6 +34,7 @@ export function RootLayout() {
     pathname.startsWith('/learning/units/') ||
     pathname.startsWith('/learning/writing/') ||
     pathname.startsWith('/learning/reading/') ||
+    pathname.startsWith('/learning/listening/') ||
     pathname.startsWith('/practice/session/') ||
     pathname.startsWith('/scripts/packages/') ||
     pathname.startsWith('/scripts/player/')
