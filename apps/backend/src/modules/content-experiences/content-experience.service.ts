@@ -425,6 +425,7 @@ export class ContentExperienceService {
         metadata: scene.novelPackage.metadata,
         toc: scene.novelPackage.toc,
         epubUrl,
+        epubAssetId: scene.novelPackage.epubAssetId,
         progress: scene.novelPackage.progresses[0] ?? null,
       } : null,
     };

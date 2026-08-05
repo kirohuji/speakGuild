@@ -1,4 +1,4 @@
-import { del, get, post } from '@/lib/request'
+import { del, get, post, put } from '@/lib/request'
 
 const LEARNING_PACK_DOWNLOAD_TIMEOUT_MS = 10 * 60_000
 
@@ -161,6 +161,13 @@ export interface UnitDetail {
   scriptCount: number
   /** 仅存在于下载包中的章节播放数据；线上详情接口不会返回该字段。 */
   offlineStoryEpisodePlayers?: StoryEpisodePlayerData[]
+  /** 仅存在于下载包中的小说包数据（metadata/toc/epubAssetId）；线上详情接口不会返回该字段。 */
+  novelPackage?: {
+    id: string
+    metadata: Record<string, any>
+    toc: Array<{ label: string; href: string }>
+    epubAssetId?: string | null
+  } | null
 }
 
 export interface StoryEpisodeItem {
@@ -317,6 +324,7 @@ export interface SceneExperience {
     metadata: Record<string, any>
     toc: Array<{ label: string; href: string }>
     epubUrl: string
+    epubAssetId?: string | null
     progress?: { locator: Record<string, any>; percentage: number } | null
   } | null
 }
@@ -403,7 +411,7 @@ export const learningApi = {
     post<TopicSubmission>(`/learning/experiences/topics/${topicId}/review`, {}),
 
   saveNovelProgress: (unitId: string, data: { locator: Record<string, any>; percentage: number }) =>
-    post(`/learning/experiences/novels/${unitId}/progress`, data),
+    put(`/learning/experiences/novels/${unitId}/progress`, data),
 
   getStoryEpisodePlayer: (episodeId: string) =>
     get<StoryEpisodePlayerData>(`/learning/episodes/${episodeId}/player`),

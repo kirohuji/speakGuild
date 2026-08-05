@@ -1,22 +1,17 @@
-import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { BookOpen, CheckCircle2, ChevronRight, Loader2 } from 'lucide-react'
+import { BookOpen, CheckCircle2, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { learningApi, type SceneExperience, type UnitDetail } from '../api/learning-api'
+import { type UnitDetail } from '../api/learning-api'
+
+const PROGRESS_KEY = (unitId: string) => `manyu:novel-progress:${unitId}`
 
 export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
   const navigate = useNavigate()
-  const [experience, setExperience] = useState<SceneExperience | null>(null)
-
-  useEffect(() => {
-    if (unit.contentMode === 'practice') return
-    learningApi.getSceneExperience(unit.id).then(setExperience).catch(() => setExperience(null))
-  }, [unit.contentMode, unit.id])
 
   if (unit.contentMode === 'novel') {
-    return <NovelEntryCard unit={unit} experience={experience} />
+    return <NovelEntryCard unit={unit} />
   }
 
   const title = unit.contentMode === 'writing' ? '写作任务' : unit.contentMode === 'reading' ? '阅读与理解' : '精听训练'
@@ -57,15 +52,10 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
   )
 }
 
-function NovelEntryCard({ unit, experience }: { unit: UnitDetail; experience: SceneExperience | null }) {
-  if (!experience) {
-    return (
-      <section className="mb-5 flex h-32 items-center justify-center">
-        <Loader2 className="size-5 animate-spin text-muted-foreground" />
-      </section>
-    )
-  }
-  if (!experience.novelPackage) {
+function NovelEntryCard({ unit }: { unit: UnitDetail }) {
+  const novel = unit.novelPackage
+
+  if (!novel) {
     return (
       <section className="mb-5 rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
         后台还没有上传 EPUB
@@ -73,9 +63,14 @@ function NovelEntryCard({ unit, experience }: { unit: UnitDetail; experience: Sc
     )
   }
 
-  const novel = experience.novelPackage
-  const pct = novel.progress?.percentage != null ? Math.round(novel.progress.percentage * 100) : 0
-  const tocCount = novel.toc?.length ?? 0
+  // 从 localStorage 读取阅读进度
+  let pct = 0
+  try {
+    const saved = JSON.parse(localStorage.getItem(PROGRESS_KEY(unit.id)) || '{}')
+    if (saved.percentage != null) pct = Math.round(saved.percentage * 100)
+  } catch { /* ignore */ }
+
+  const tocCount = (novel.toc as any[])?.length ?? 0
 
   return (
     <section className="mb-5 rounded-lg bg-accent/[0.06] p-4">
@@ -92,11 +87,6 @@ function NovelEntryCard({ unit, experience }: { unit: UnitDetail; experience: Sc
       </div>
       <p className="text-lg font-semibold leading-7 text-foreground">{novel.metadata?.title ?? unit.title}</p>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">沉浸式英文阅读体验</p>
-      {experience.groupItem && (
-        <p className="mt-1 text-xs text-muted-foreground/70">
-          {experience.groupItem.group.name} · 第 {experience.groupItem.sortOrder + 1}/{experience.groupItem.group.items.length} 册
-        </p>
-      )}
       <Button size="lg" className="mt-4 w-full bg-accent text-accent-foreground hover:bg-accent/85" asChild>
         <Link to={`/learning/units/${unit.id}/read`}>
           {pct > 0 ? '继续阅读' : '开始阅读'}<ChevronRight className="size-4" />
