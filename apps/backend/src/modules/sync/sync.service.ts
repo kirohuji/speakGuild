@@ -293,25 +293,8 @@ export class SyncService {
       }
     }
 
-    // ---- 热身/今日任务练习明细 ----
-    if (entityType === 'warmup_records') {
-      if (operation === 'create') {
-        const topicId = payload?.topicId;
-        const items = Array.isArray(payload?.items) ? payload.items : [];
-        if (!topicId || items.length === 0) return { handled: false };
-
-        const created = await (this.prisma as any).practiceWarmupRecord.create({
-          data: {
-            userId,
-            topicId,
-            score: typeof payload?.score === 'number' ? payload.score : null,
-            feedback: payload?.feedback ?? null,
-            items,
-          },
-        });
-        return { handled: true, remoteId: created.id, remoteItem: created };
-      }
-    }
+    // warmup_records 已统一走 daily-practice/complete（前端不再通过 /sync/push 推送）。
+    // 旧的 bare push handler 已删除，避免与 complete 路径重复创建 practiceWarmupRecord。
 
     // recording 暂不处理（走客户端单个上传 API）
     return { handled: false };
@@ -360,8 +343,13 @@ export class SyncService {
 
   private static readonly PULL_PAGE_SIZE = 500;
 
-  async pull(userId: string, cursor: string | null) {
-    const since = cursor ? new Date(cursor) : new Date(0);
+  async pull(userId: string, cursors: Record<string, string>) {
+    const sinceExpression = cursors.expressionItems ? new Date(cursors.expressionItems) : new Date(0);
+    const sinceSceneProgress = cursors.sceneProgresses ? new Date(cursors.sceneProgresses) : new Date(0);
+    const sinceChunkProgress = cursors.chunkProgresses ? new Date(cursors.chunkProgresses) : new Date(0);
+    const sincePracticeSession = cursors.practiceSessions ? new Date(cursors.practiceSessions) : new Date(0);
+    const sinceWarmupRecord = cursors.practiceWarmupRecords ? new Date(cursors.practiceWarmupRecords) : new Date(0);
+    const sinceDeletedExpression = cursors.deletedExpressionItems ? new Date(cursors.deletedExpressionItems) : new Date(0);
 
     const [
       expressionItems,
@@ -371,22 +359,22 @@ export class SyncService {
       practiceWarmupRecords,
     ] = await Promise.all([
       this.prisma.expressionItem.findMany({
-        where: { userId, updatedAt: { gt: since }, deletedAt: null },
+        where: { userId, updatedAt: { gt: sinceExpression }, deletedAt: null },
         orderBy: { updatedAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
       }),
       this.prisma.userSceneProgress.findMany({
-        where: { userId, updatedAt: { gt: since } },
+        where: { userId, updatedAt: { gt: sinceSceneProgress } },
         orderBy: { updatedAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
       }),
       this.prisma.userChunkProgress.findMany({
-        where: { userId, updatedAt: { gt: since } },
+        where: { userId, updatedAt: { gt: sinceChunkProgress } },
         orderBy: { updatedAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
       }),
       this.prisma.practiceSession.findMany({
-        where: { userId, updatedAt: { gt: since }, status: 'analyzed' },
+        where: { userId, updatedAt: { gt: sincePracticeSession }, status: 'analyzed' },
         orderBy: { updatedAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
         select: {
@@ -406,7 +394,7 @@ export class SyncService {
         },
       }),
       (this.prisma as any).practiceWarmupRecord.findMany({
-        where: { userId, createdAt: { gt: since } },
+        where: { userId, createdAt: { gt: sinceWarmupRecord } },
         orderBy: { createdAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
         select: {
@@ -428,36 +416,40 @@ export class SyncService {
     // });
 
     const deletedExpressionItems = await this.prisma.expressionItem.findMany({
-      where: { userId, deletedAt: { gt: since } },
+      where: { userId, deletedAt: { gt: sinceDeletedExpression } },
       orderBy: { deletedAt: 'asc' },
       take: SyncService.PULL_PAGE_SIZE,
       select: { id: true, deletedAt: true },
     });
 
-    // 计算下一页 cursor：取所有返回记录中最大的时间戳
-    const timestamps: number[] = [];
-    for (const e of expressionItems) timestamps.push(e.updatedAt.getTime());
-    for (const s of sceneProgresses) timestamps.push(s.updatedAt.getTime());
-    for (const c of chunkProgresses) timestamps.push(c.updatedAt.getTime());
-    for (const s of practiceSessions) timestamps.push(s.updatedAt.getTime());
-    for (const r of practiceWarmupRecords) timestamps.push(r.createdAt.getTime());
-    // for (const t of practiceTurns) timestamps.push(t.createdAt.getTime());
-    for (const e of deletedExpressionItems) {
-      if (e.deletedAt) timestamps.push(e.deletedAt.getTime());
+    // 每种类型独立计算 cursor：取该类型返回记录中最大的时间戳
+    function maxTime(items: any[], field: string): string | null {
+      if (items.length === 0) return null;
+      const max = Math.max(...items.map((i) => i[field]?.getTime?.() ?? 0));
+      return max > 0 ? new Date(max).toISOString() : null;
     }
 
-    const nextCursor = timestamps.length > 0
-      ? new Date(Math.max(...timestamps)).toISOString()
-      : new Date().toISOString();
+    const nextCursors = {
+      expressionItems: maxTime(expressionItems, 'updatedAt') ?? cursors.expressionItems ?? null,
+      sceneProgresses: maxTime(sceneProgresses, 'updatedAt') ?? cursors.sceneProgresses ?? null,
+      chunkProgresses: maxTime(chunkProgresses, 'updatedAt') ?? cursors.chunkProgresses ?? null,
+      practiceSessions: maxTime(practiceSessions, 'updatedAt') ?? cursors.practiceSessions ?? null,
+      practiceWarmupRecords: maxTime(practiceWarmupRecords, 'createdAt') ?? cursors.practiceWarmupRecords ?? null,
+      deletedExpressionItems: maxTime(deletedExpressionItems, 'deletedAt') ?? cursors.deletedExpressionItems ?? null,
+    };
 
-    // 任意一个结果集达到 pageSize 上限，说明还有更多数据
-    const hasMore = [
-      expressionItems, sceneProgresses, chunkProgresses,
-      practiceSessions, practiceWarmupRecords, deletedExpressionItems,
-    ].some((arr) => arr.length >= SyncService.PULL_PAGE_SIZE);
+    // 每种类型独立 hasMore
+    const hasMore = {
+      expressionItems: expressionItems.length >= SyncService.PULL_PAGE_SIZE,
+      sceneProgresses: sceneProgresses.length >= SyncService.PULL_PAGE_SIZE,
+      chunkProgresses: chunkProgresses.length >= SyncService.PULL_PAGE_SIZE,
+      practiceSessions: practiceSessions.length >= SyncService.PULL_PAGE_SIZE,
+      practiceWarmupRecords: practiceWarmupRecords.length >= SyncService.PULL_PAGE_SIZE,
+      deletedExpressionItems: deletedExpressionItems.length >= SyncService.PULL_PAGE_SIZE,
+    };
 
     return {
-      cursor: nextCursor,
+      cursors: nextCursors,
       hasMore,
       changed: {
         expressionItems,

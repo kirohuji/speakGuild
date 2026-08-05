@@ -1,7 +1,6 @@
 import {
   practiceApi,
   practiceAiApi,
-  warmupRecordApi,
   type PracticeSession,
   type TopicDetail,
 } from '@/features/practice/api/english-practice-api'
@@ -10,6 +9,7 @@ import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
 import type { WarmupRecordEntry } from '@/stores/warmup-session.store'
 import { deleteWarmupRecordEntries, upsertWarmupRecordEntries } from './warmup-record-index'
+import { toIsoString, createId, resolveSessionId } from './utils'
 
 export type PracticeTurnPayload = {
   round?: number
@@ -25,11 +25,8 @@ export type PracticeTurnPayload = {
   parentTurnId?: string
 }
 
-function createLocalId(prefix: string) {
-  const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`
-  return `${prefix}_${id}`
+function turnRecordId(sessionId: string, round?: number) {
+  return `turn:${sessionId}:${round ?? createId('round')}`
 }
 
 function sessionRecordId(sessionId: string) {
@@ -38,23 +35,6 @@ function sessionRecordId(sessionId: string) {
 
 const PRACTICE_RECORDS_CACHE_KEY = 'practice-records-cache:loaded'
 const PRACTICE_DATA_RESET_KEY = 'practice-data-reset-at'
-
-function turnRecordId(sessionId: string, round?: number) {
-  return `turn:${sessionId}:${round ?? createLocalId('round')}`
-}
-
-function toIsoString(value: unknown): string | null {
-  if (!value) return null
-  if (value instanceof Date) return value.toISOString()
-  if (typeof value === 'string') return value
-  return null
-}
-
-async function resolveSessionId(sessionId: string): Promise<string> {
-  if (!sessionId.startsWith('local_session_')) return sessionId
-  const mapped = await localDb.get<{ value: string }>('kv', `session-map:${sessionId}`)
-  return mapped?.value ?? sessionId
-}
 
 /**
  * Get cached topic detail. If the cached data is from the old format (no scene/vocabs),
@@ -247,8 +227,19 @@ export const practiceRepository = {
     }
   },
 
+  // ── Practice Session 生命周期 ──
+  //
+  // 以下 createSession / submitTurn / completeSession 采用统一模式：
+  //   ① 先写本地（入队 outbox，保证离线不丢数据）
+  //   ② 立即尝试 HTTP（在线时减少延迟）
+  //   ③ HTTP 成功 → markSynced（标记已完成，不再 replay）
+  //   ④ HTTP 失败 → outbox 保留，等待下次 flush 重试
+  //
+  // 依赖：后端接口必须幂等（upsert 语义），flush replay 不会产生重复数据。
+  // 风险：若 HTTP 成功但 markSynced 写入失败，outbox 会 replay → 依赖后端幂等。
+
   async createSession(topicId: string): Promise<{ id: string }> {
-    const localSessionId = createLocalId('local_session')
+    const localSessionId = createId('local_session')
     try {
       const remote = await practiceApi.createSession(topicId)
       await localDb.put('kv', { id: `session-map:${localSessionId}`, value: remote.id, updatedAt: new Date().toISOString() })
@@ -274,7 +265,11 @@ export const practiceRepository = {
     })
 
     try {
-      const remoteSessionId = await resolveSessionId(sessionId)
+      const remoteSessionId = await resolveSessionId(localDb, sessionId)
+      if (!remoteSessionId) {
+        console.warn(`[repo.submitTurn] ⏸️ session尚未同步，turn留在outbox等待flush | sessionId=${sessionId} | round=${data.round}`)
+        return
+      }
       console.log(`[repo.submitTurn] HTTP发起 | remoteSessionId=${remoteSessionId} | round=${data.round}`)
       await practiceApi.submitTurn(remoteSessionId, data)
       console.log(`[repo.submitTurn] ✅ HTTP成功 | round=${data.round}`)
@@ -287,14 +282,6 @@ export const practiceRepository = {
 
   async completeSession(sessionId: string): Promise<PracticeSession | null> {
     const now = new Date().toISOString()
-    await localDb.put('user_progress', {
-      id: `practice-session:${sessionId}`,
-      sessionId,
-      status: 'completed',
-      completedAt: now,
-      updatedAt: now,
-      syncStatus: 'pending',
-    })
     const outboxItem = await syncOutbox.enqueue({
       entityType: 'practice_session',
       entityId: sessionId,
@@ -303,7 +290,20 @@ export const practiceRepository = {
     })
 
     try {
-      const result = await practiceApi.completeSession(await resolveSessionId(sessionId))
+      const remoteId = await resolveSessionId(localDb, sessionId)
+      if (!remoteId) {
+        await localDb.put('user_progress', {
+          id: `practice-session:${sessionId}`,
+          sessionId,
+          status: 'completed',
+          completedAt: now,
+          updatedAt: now,
+          syncStatus: 'pending',
+        })
+        console.warn(`[repo.completeSession] ⏸️ session尚未同步，留在outbox等待flush | sessionId=${sessionId}`)
+        return null
+      }
+      const result = await practiceApi.completeSession(remoteId)
       await syncOutbox.markSynced(outboxItem.id)
       await localDb.put('user_progress', {
         id: `practice-session:${sessionId}`,
@@ -315,12 +315,24 @@ export const practiceRepository = {
       })
       return result
     } catch {
+      await localDb.put('user_progress', {
+        id: `practice-session:${sessionId}`,
+        sessionId,
+        status: 'completed',
+        completedAt: now,
+        updatedAt: now,
+        syncStatus: 'pending',
+      })
       return null
     }
   },
 
   async analyzeSession(sessionId: string) {
-    const remoteSessionId = await resolveSessionId(sessionId)
+    const remoteSessionId = await resolveSessionId(localDb, sessionId)
+    if (!remoteSessionId) {
+      console.warn(`[repo.analyzeSession] ⏸️ session尚未同步，无法分析 | sessionId=${sessionId}`)
+      throw new Error('练习会话尚未同步到服务端，无法进行AI分析')
+    }
     console.log(`[repo.analyzeSession] 请求后端分析 | sessionId=${sessionId} | remoteId=${remoteSessionId}`)
     const result = await practiceAiApi.analyzeSession(remoteSessionId)
     console.log(`[repo.analyzeSession] 后端分析返回 | hasAnalysis=${!!result?.analysis}`)
@@ -411,58 +423,8 @@ export const practiceRepository = {
   },
 
   // ── Warmup Records (今日任务练习记录) ──
-
-  /**
-   * 保存今日任务的热身练习记录到本地 SQLite，并尝试同步到后端。
-   * 采用 offline-first：先写本地，后异步同步。
-   */
-  async submitWarmupRecords(topicId: string, topicTitle: string, items: WarmupRecordEntry[]) {
-    const recordId = `warmup:${Date.now()}:${topicId}`
-    const now = new Date().toISOString()
-
-    // 1. 本地持久化
-    await localDb.put('warmup_records', {
-      id: recordId,
-      topicId,
-      topicTitle,
-      items,
-      createdAt: now,
-      updatedAt: now,
-      syncStatus: 'pending',
-    })
-    await upsertWarmupRecordEntries({ id: recordId, topicId, topicTitle, items, createdAt: now, updatedAt: now })
-
-    // 2. 后台同步到后端
-    try {
-      await warmupRecordApi.save(topicId, items)
-      await warmupRecordApi.assess(topicId, topicTitle, items)
-      const syncedAt = new Date().toISOString()
-      await localDb.put('warmup_records', {
-        id: recordId,
-        topicId,
-        topicTitle,
-        items,
-        createdAt: now,
-        updatedAt: syncedAt,
-        syncStatus: 'synced',
-      })
-      await upsertWarmupRecordEntries({ id: recordId, topicId, topicTitle, items, createdAt: now, updatedAt: now })
-    } catch (err) {
-      console.warn('[practiceRepo] Warmup sync failed, will retry later:', err)
-      // Outbox retry via sync-outbox
-      await syncOutbox.enqueue({
-        entityType: 'warmup_records',
-        entityId: recordId,
-        operation: 'create',
-        payload: { topicId, topicTitle, items, createdAt: now },
-      })
-    }
-
-    // 3. 标记今日活动
-    await this.markTodayActivity(items.length)
-
-    return { id: recordId, synced: false }
-  },
+  // 统一同步入口：今日任务 → completeRun，引导式 → syncAdHocRun（均走 dailyPracticeApi.complete）。
+  // 旧的 submitWarmupRecords / syncLocalWarmupRecord 已删除（无调用方，且绕过 SM-2 排期）。
 
   async upsertLocalWarmupRecord(params: {
     id: string
@@ -557,15 +519,6 @@ export const practiceRepository = {
     await upsertWarmupRecordEntries({ ...nextRecord, updatedAt: existing.updatedAt ?? existing.createdAt ?? nextRecord.updatedAt })
   },
 
-  async syncLocalWarmupRecord(id: string, topicId: string, topicTitle: string, items: WarmupRecordEntry[]) {
-    await syncOutbox.enqueue({
-      entityType: 'warmup_records',
-      entityId: id,
-      operation: 'create',
-      payload: { topicId, topicTitle, items, createdAt: new Date().toISOString() },
-    })
-  },
-
   async deleteLocalWarmupRecord(id: string) {
     await localDb.delete('warmup_records', id)
     await deleteWarmupRecordEntries(id)
@@ -582,7 +535,7 @@ export const practiceRepository = {
       count: (existing?.count ?? 0) + count,
       updatedAt: new Date().toISOString(),
     })
-    void import('@/lib/native/learning-reminder')
+    import('@/lib/native/learning-reminder')
       .then(({ cancelTodayLearningReminder, rescheduleLearningReminder }) =>
         cancelTodayLearningReminder().then(() => rescheduleLearningReminder()),
       )

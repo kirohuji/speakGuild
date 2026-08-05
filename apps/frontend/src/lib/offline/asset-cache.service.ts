@@ -66,10 +66,8 @@ function sha256Pure(data: ArrayBuffer): Uint8Array {
   const buf = new Uint8Array(totalLen)
   buf.set(msg)
   buf[msg.length] = 0x80
-  new DataView(buf.buffer).setUint32(totalLen - 4, ml >>> 0, false) // message length in bits (big-endian high 32)
-  new DataView(buf.buffer).setUint32(totalLen - 8, (ml / 0x100000000) >>> 0, false) // low 32 (actually high 32 for JS, but sha256 uses 64-bit big-endian)
 
-  // Correct 64-bit big-endian length:
+  // 64-bit big-endian message length (in bits) at the end of the padding
   const dv = new DataView(buf.buffer)
   dv.setUint32(totalLen - 8, Math.floor(ml / 0x100000000), false)
   dv.setUint32(totalLen - 4, ml >>> 0, false)
@@ -158,12 +156,15 @@ function extensionFrom(url: string, mimeType?: string | null) {
 
 function arrayBufferToBase64(buffer: ArrayBuffer) {
   const bytes = new Uint8Array(buffer)
-  let binary = ''
   const chunkSize = 0x8000
+  // 分块 btoa：避免先拼接整个 binary 字符串再编码，降低大文件（音频/图片）峰值内存。
+  // 原实现会同时持有「完整 binary 字符串 + 完整 base64」两份大内存。
+  let result = ''
   for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+    const chunk = bytes.subarray(i, i + chunkSize)
+    result += btoa(String.fromCharCode(...chunk))
   }
-  return btoa(binary)
+  return result
 }
 
 function arrayBufferToDataUrl(buffer: ArrayBuffer, mimeType?: string | null) {
@@ -282,7 +283,7 @@ export const assetCacheService = {
               requestedUrl: url,
               localPath: cached.localPath,
             })
-            return ''
+            return '__offline_resource_missing__'
           }
           return this.download({ ...ref, url })
         }
@@ -302,7 +303,7 @@ export const assetCacheService = {
         requestedUrl: url,
         assetId: ref.assetId,
       })
-      return ''
+      return '__offline_resource_missing__'
     }
     console.warn('[offline-assets] resolve miss; downloading remote fallback', { key, requestedUrl: url, assetId: ref.assetId })
     return this.download({ ...ref, url })

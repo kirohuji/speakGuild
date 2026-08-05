@@ -14,11 +14,14 @@ export class SyncController {
     return this.syncService.push(session.user.id, body.items ?? []);
   }
 
-  /** 增量拉取用户数据（自 cursor 以来） */
+  /** 增量拉取用户数据（按类型独立 cursor） */
   @Get('pull')
-  async pull(@Req() req: Request, @Query('cursor') cursor?: string) {
+  async pull(@Req() req: Request, @Query('cursors') cursorsJson?: string) {
     const session = await requireAuthSession(req);
-    return this.syncService.pull(session.user.id, cursor ?? null);
+    const cursors: Record<string, string> = cursorsJson
+      ? JSON.parse(cursorsJson)
+      : {};
+    return this.syncService.pull(session.user.id, cursors);
   }
 
   /** 公共内容增量 manifest */

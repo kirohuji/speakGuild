@@ -8,25 +8,16 @@ import { learningContentRepository } from './learning-content.repository'
 import { learningPackService } from './learning-pack.service'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { upsertWarmupRecordEntries } from './warmup-record-index'
+import { pullRemoteDailyProgress } from './daily-practice.repository'
+import { toIsoString, errorMessage, resolveSessionId } from './utils'
+import { createLogger } from './logger'
+
+const logger = createLogger('offline-sync')
 
 const USER_SYNC_CURSOR_KEY = 'sync:user:cursor'
 
 function userSyncCursorKey(userId?: string | null) {
   return userId ? `sync:user:${userId}:cursor` : USER_SYNC_CURSOR_KEY
-}
-
-async function resolveSessionId(sessionId: string): Promise<string | null> {
-  if (!sessionId.startsWith('local_session_')) return sessionId
-  const mapped = await localDb.get<{ value: string }>('kv', `session-map:${sessionId}`)
-  return mapped?.value ?? null
-}
-
-function errorMessage(error: unknown): string {
-  if (!error) return ''
-  if (error instanceof Error) return error.message
-  if (typeof error === 'string') return error
-  const maybe = error as any
-  return maybe?.response?.data?.message ?? maybe?.message ?? String(error)
 }
 
 function isPermanentSyncError(error: unknown): boolean {
@@ -54,13 +45,6 @@ async function discardSessionDependents(sessionId: string): Promise<void> {
       await syncOutbox.markDiscarded(item.id)
     }
   }))
-}
-
-function toIsoString(value: unknown): string | null {
-  if (!value) return null
-  if (value instanceof Date) return value.toISOString()
-  if (typeof value === 'string') return value
-  return null
 }
 
 async function applyExpressionItem(item: any): Promise<void> {
@@ -268,7 +252,7 @@ async function replayItem(
       return true
     }
     if (item.operation === 'update' && payload.status === 'completed') {
-      const remoteSessionId = await resolveSessionId(payload.sessionId ?? item.entityId)
+      const remoteSessionId = await resolveSessionId(localDb, payload.sessionId ?? item.entityId)
       if (!remoteSessionId) return false
       const updated = await practiceApi.completeSession(remoteSessionId)
       await applyPracticeSessionItem(updated, payload.sessionId ?? item.entityId)
@@ -278,41 +262,14 @@ async function replayItem(
 
   if (item.entityType === 'practice_turn' && item.operation === 'create') {
     const payload = item.payload as any
-    const remoteSessionId = await resolveSessionId(payload.sessionId)
+    const remoteSessionId = await resolveSessionId(localDb, payload.sessionId)
     if (!remoteSessionId) throw new Error('练习会话尚未同步')
     await practiceApi.submitTurn(remoteSessionId, payload.data)
     return true
   }
 
-  if (item.entityType === 'warmup_records' && item.operation === 'create') {
-    const payload = item.payload as any
-    const { results } = await syncApi.push([{
-      entityType: item.entityType,
-      entityId: item.entityId,
-      operation: item.operation,
-      payload: item.payload,
-      clientMutationId: item.clientMutationId,
-    }])
-    const result = results[0]
-    if (!result || result.status !== 'synced') {
-      throw new Error(result?.error ?? 'warmup record sync failed')
-    }
-    const record = {
-      id: item.entityId,
-      remoteId: result.remoteId,
-      topicId: payload.topicId,
-      topicTitle: payload.topicTitle,
-      score: payload.score ?? result.remoteItem?.score ?? null,
-      feedback: payload.feedback ?? result.remoteItem?.feedback ?? null,
-      items: payload.items ?? [],
-      createdAt: payload.createdAt ?? item.createdAt,
-      updatedAt: new Date().toISOString(),
-      syncStatus: 'synced',
-    }
-    await localDb.put('warmup_records', record)
-    await upsertWarmupRecordEntries({ ...record, updatedAt: record.createdAt })
-    return true
-  }
+  // warmup_records 不再单独入队：统一走 daily_practice → dailyPracticeApi.complete（含 SM-2 排期）。
+  // 旧的 bare push 分支已删除，避免与 complete 路径重复创建 practiceWarmupRecord。
 
   // 学习包：本地概念，不推服务端，直接标记完成
   if (item.entityType === 'learning_pack') {
@@ -320,18 +277,34 @@ async function replayItem(
   }
 
   if (item.entityType === 'daily_practice') {
-    const result = await dailyPracticeApi.complete(item.payload)
+    const payload = item.payload as any
+    const result = await dailyPracticeApi.complete(payload)
     await localDb.putMany(
       'daily_practice_items',
       (result.itemProgresses ?? []).map((progress) => ({ ...progress, id: progress.itemId })),
     )
-    const attempts = ((item.payload as any)?.attempts ?? []) as Array<{ id?: string; clientAttemptId?: string }>
+    const attempts = (payload?.attempts ?? []) as Array<{ id?: string; clientAttemptId?: string }>
     await Promise.all((result.syncedAttempts ?? []).map(async (clientAttemptId: string) => {
       const attempt = attempts.find((entry) => entry.clientAttemptId === clientAttemptId)
       if (attempt?.id) {
         await localDb.put('daily_practice_attempts', { ...attempt, id: attempt.id, syncStatus: 'synced' })
       }
     }))
+    // 回写本地 warmup 记录：离线完成的记录，联网重放成功后标记 synced + remoteId
+    const localRecordId = payload?.localWarmupRecordId
+    if (localRecordId && result.warmupRecordId) {
+      const existing = await localDb.get<any>('warmup_records', localRecordId)
+      if (existing) {
+        const next = {
+          ...existing,
+          remoteId: result.warmupRecordId,
+          updatedAt: new Date().toISOString(),
+          syncStatus: 'synced',
+        }
+        await localDb.put('warmup_records', next)
+        await upsertWarmupRecordEntries({ ...next, updatedAt: existing.updatedAt ?? existing.createdAt ?? next.updatedAt })
+      }
+    }
     return true
   }
 
@@ -393,22 +366,25 @@ async function replayItem(
 }
 
 export const offlineSyncService = {
-  async pull(userId?: string | null): Promise<{ cursor: string | null; changed: number; deleted: number }> {
+  async pull(userId?: string | null): Promise<{ cursors: Record<string, string | null>; changed: number; deleted: number }> {
     const cursorKey = userSyncCursorKey(userId)
     const cursorRecord = await localDb.get<{ value?: string }>('kv', cursorKey)
-    let cursor: string | null = cursorRecord?.value ?? null
+    // cursors 以 JSON 对象存储在 kv 中，每种类型独立
+    let cursors: Record<string, string> = {}
+    try {
+      cursors = cursorRecord?.value ? JSON.parse(cursorRecord.value) : {}
+    } catch { /* 旧格式兼容：忽略 */ }
     let totalChanged = 0
     let totalDeleted = 0
-    let finalCursor: string | null = null
+    let finalCursors: Record<string, string | null> = { ...cursors }
 
-    // 循环分页拉取，直到服务端返回 hasMore: false
-    // ★ 设置最大 5 页上限，防止启动时一次性拉取过多数据导致主线程长时间阻塞
-    const MAX_PULL_PAGES = 5
-    let pages = 0
+    // 循环分页拉取，直到所有类型 hasMore 均为 false。
+    const MAX_PULL_DURATION_MS = 30_000
+    const pullStartedAt = Date.now()
+    let lastCursors = { ...cursors }
 
     while (true) {
-      pages++
-      const result = await syncApi.pull(cursor)
+      const result = await syncApi.pull(cursors)
       await applyUserPullChanges(result.changed, result.deleted)
 
       totalChanged +=
@@ -423,25 +399,31 @@ export const offlineSyncService = {
         (result.deleted.sceneProgresses?.length ?? 0) +
         (result.deleted.chunkProgresses?.length ?? 0)
 
-      finalCursor = result.cursor
+      finalCursors = result.cursors
 
-      if (!result.hasMore) break
-      if (pages >= MAX_PULL_PAGES) {
-        console.warn(`[offline-sync] pull reached max pages (${MAX_PULL_PAGES}), remaining data will be pulled on next sync`)
+      // 检查是否所有类型都已拉完
+      const anyMore = Object.values(result.hasMore).some(Boolean)
+      if (!anyMore) break
+
+      if (Date.now() - pullStartedAt > MAX_PULL_DURATION_MS) {
+        // 超时：回退到上一页 cursors，下次 sync 从断点继续
+        logger.warn(`pull timeout after ${MAX_PULL_DURATION_MS}ms, will resume on next sync`)
+        finalCursors = lastCursors
         break
       }
-      cursor = result.cursor
+      lastCursors = result.cursors
+      cursors = result.cursors
     }
 
-    if (finalCursor) {
+    if (finalCursors) {
       await localDb.put('kv', {
         id: cursorKey,
-        value: finalCursor,
+        value: JSON.stringify(finalCursors),
         updatedAt: new Date().toISOString(),
       })
     }
 
-    return { cursor: finalCursor, changed: totalChanged, deleted: totalDeleted }
+    return { cursors: finalCursors, changed: totalChanged, deleted: totalDeleted }
   },
 
   async sync(userId?: string | null): Promise<{
@@ -476,6 +458,11 @@ export const offlineSyncService = {
         toast.success(`已同步 ${push.synced} 条离线数据`)
       }
       const pull = await this.pull(userId)
+
+      // 拉取今日任务 item 权威进度并收敛到本地（不覆盖有未同步 attempt 的项）
+      const localDailyItems = await localDb.list<{ itemId?: string; id: string }>('daily_practice_items')
+      const dailyItemIds = localDailyItems.map((item) => item.itemId ?? item.id).filter(Boolean)
+      await pullRemoteDailyProgress(dailyItemIds)
 
       const refreshedPacks = await this.refreshContentUpdates()
       if (refreshedPacks.length > 0) {
@@ -536,7 +523,7 @@ export const offlineSyncService = {
 
       return stalePacks
     } catch (error) {
-      console.warn('[offline-sync] content manifest check failed:', error)
+      logger.warn('content manifest check failed:', error)
       return []
     }
   },
@@ -586,7 +573,7 @@ export const offlineSyncService = {
         await learningPackService.installUnit(packId)
         refreshed.push(packId)
       } catch (error) {
-        console.warn('[offline-sync] pack refresh failed:', packId, error)
+        logger.warn('pack refresh failed:', packId, error)
       }
     }
 

@@ -6,8 +6,6 @@ import {
   SubmitPracticeDialogueDto,
   SubmitPracticeTurnDto,
   SubmitRecordingDto,
-  SubmitWarmupRecordDto,
-  AssessWarmupDto,
   GetWarmupRecordsQueryDto,
 } from './dto/english-practice.dto';
 import { requireAuthSession } from '../auth/session.util';
@@ -112,25 +110,5 @@ export class EnglishPracticeController {
   ) {
     const session = await requireAuthSession(req);
     return this.practiceService.getWarmupRecords(session.user.id, query.topicId);
-  }
-
-  /** 保存热身练习记录 */
-  @Post('warmup-records')
-  async saveWarmupRecord(
-    @Req() req: Request,
-    @Body() dto: SubmitWarmupRecordDto,
-  ) {
-    const session = await requireAuthSession(req);
-    return this.practiceService.saveWarmupRecord(session.user.id, dto.topicId, dto.items);
-  }
-
-  /** AI 综合评估热身表现 */
-  @Post('warmup-records/assess')
-  async assessWarmup(
-    @Req() req: Request,
-    @Body() dto: AssessWarmupDto,
-  ) {
-    const session = await requireAuthSession(req);
-    return this.practiceService.assessWarmup(session.user.id, dto.topicId, dto.topicTitle, dto.items);
   }
 }

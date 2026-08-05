@@ -16,7 +16,6 @@ import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { useWarmupSessionStore, type WarmupRecordEntry, type WarmupScore } from '@/stores/warmup-session.store'
 import { toast } from 'sonner'
-import { warmupRecordApi } from '../api/english-practice-api'
 import { ChunkOutputDrillCard } from './chunk-output-drill-card'
 import { PatternDrillCard } from './pattern-drill-card'
 import { SentenceDecompositionCard } from './sentence-decomposition-card'
@@ -504,21 +503,26 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
       const itemIds = flatSteps
         .map((step) => step.candidate?.itemId)
         .filter((itemId): itemId is string => Boolean(itemId))
-      const syncProgress = packId && itemIds.length
-        ? dailyPracticeRepository.syncAdHocRun({ packId, topicId, topicTitle, itemIds, records }).catch(() => undefined)
-        : Promise.resolve()
-      warmupRecordApi.assess(topicId, topicTitle, records)
-        .then((res) => {
-          setLastAssessment(res)
-          void practiceRepository.markWarmupRecordSynced(recordStorageKey, res.id)
-        })
-        .catch(() => {
-          setLastAssessment({ score: 0, feedback: '' })
-          void practiceRepository.syncLocalWarmupRecord(recordStorageKey, topicId, topicTitle, records).catch(() => undefined)
-        })
-        .finally(() => {
-          void syncProgress.finally(() => setAssessing(false))
-        })
+      // 统一 warmup 同步：syncAdHocRun 通过 complete 同时创建 run + attempts + practiceWarmupRecord，
+      // 不再单独调 warmupRecordApi.assess（旧逻辑会重复创建记录且无 SM-2 排期）。
+      const finish = () => {
+        const rankValues = records.map((record) => record.score === 'strong' ? 3 : record.score === 'ok' ? 2 : record.score === 'weak' ? 1 : 0).filter((rank) => rank > 0)
+        const localScore = rankValues.length > 0 ? Math.round(rankValues.reduce((a, b) => a + b, 0) / rankValues.length / 3 * 100) : 0
+        setLastAssessment({ score: localScore, feedback: `已完成"${topicTitle}"的 ${records.length} 道热身练习` })
+        setAssessing(false)
+      }
+      if (packId && itemIds.length) {
+        dailyPracticeRepository.syncAdHocRun({ packId, topicId, topicTitle, itemIds, records })
+          .then((res) => {
+            if (res.warmupRecordId) {
+              practiceRepository.markWarmupRecordSynced(recordStorageKey, res.warmupRecordId).catch(() => undefined)
+            }
+          })
+          .catch(() => { /* offline: syncAdHocRun 已入 daily_practice outbox，等待 flush */ })
+          .finally(finish)
+      } else {
+        finish()
+      }
     }
   }, [allDone, flatSteps, needsReviewRound, packId, recordStorageKey, topicId, topicTitle, assessing, lastAssessment, warmupStore])
 

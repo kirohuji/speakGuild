@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { createId, errorMessage } from '@/lib/offline/utils'
 
 export type OfflineSyncLogStatus = 'success' | 'failed' | 'running'
 
@@ -25,15 +26,7 @@ interface OfflineSyncState {
   reset: () => void
 }
 
-function createId() {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID()
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
-}
-
-function errorMessage(error: unknown) {
-  if (!error) return null
-  return error instanceof Error ? error.message : String(error)
-}
+const MAX_LOG_COUNT = 50
 
 /** 自动清理：保留最近 50 条 + 全部错误日志，其余定期删除 */
 function autoCleanLogs(logs: OfflineSyncLogEntry[]): OfflineSyncLogEntry[] {

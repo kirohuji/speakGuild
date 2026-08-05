@@ -11,8 +11,8 @@ export interface PushResult {
 }
 
 export interface PullResult {
-  cursor: string
-  hasMore?: boolean
+  cursors: Record<string, string | null>
+  hasMore: Record<string, boolean>
   changed: {
     expressionItems: any[]
     sceneProgresses: any[]
@@ -49,9 +49,11 @@ export const syncApi = {
     return instance.post(`${SYNC_BASE}/push`, { items }) as any
   },
 
-  /** 增量拉取用户数据 */
-  async pull(cursor?: string | null): Promise<PullResult> {
-    const params = cursor ? { cursor } : {}
+  /** 增量拉取用户数据（按类型独立 cursor） */
+  async pull(cursors?: Record<string, string> | null): Promise<PullResult> {
+    const params = cursors && Object.keys(cursors).length > 0
+      ? { cursors: JSON.stringify(cursors) }
+      : {}
     return instance.get(`${SYNC_BASE}/pull`, { params }) as any
   },
 

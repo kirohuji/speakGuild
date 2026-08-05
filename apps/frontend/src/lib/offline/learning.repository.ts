@@ -121,7 +121,7 @@ async function aggregateUnitContent(unitDetail: any): Promise<any> {
 
   const aggregated = buildAggregatedUnitContent(unitDetail, topicDetails)
   // 回写聚合结果，下次进入直接命中快速路径
-  void cacheAggregated(unitDetail.id, aggregated)
+  cacheAggregated(unitDetail.id, aggregated).catch(() => {})
   return aggregated
 }
 

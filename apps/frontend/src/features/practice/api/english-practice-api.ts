@@ -480,12 +480,6 @@ export const warmupRecordApi = {
 
   listAll: () =>
     get<WarmupRecord[]>('/practice/warmup-records'),
-
-  save: (topicId: string, items: any[]) =>
-    post<{ id: string }>('/practice/warmup-records', { topicId, items }),
-
-  assess: (topicId: string, topicTitle: string, items: any[]) =>
-    post<{ id: string; score: number; feedback: string }>('/practice/warmup-records/assess', { topicId, topicTitle, items }),
 }
 
 export interface RemoteDailyPracticeProgress {

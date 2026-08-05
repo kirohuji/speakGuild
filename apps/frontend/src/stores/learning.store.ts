@@ -355,79 +355,6 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     processDownloadQueue()
   },
 
-  /** 处理下载队列：最多 2 个并发 */
-  async _processDownloadQueue() {
-    const state = getState()
-    const running = state.downloadTasks.filter((t) => t.status === 'downloading' || t.status === 'extracting').length
-    if (running >= MAX_CONCURRENT_DOWNLOADS) {
-      console.log(`[learning-store] ⏸️ 下载队列已满 (${running}/${MAX_CONCURRENT_DOWNLOADS})，等待中...`)
-      return
-    }
-
-    const next = state.downloadTasks.find((t) => t.status === 'queued')
-    if (!next) return
-
-    // 标记为下载中
-    set((s) => ({
-      downloadTasks: s.downloadTasks.map((t) =>
-        t.packId === next.packId ? { ...t, status: 'downloading' as const, progress: 0 } : t,
-      ),
-    }))
-
-    try {
-      // 网络检查
-      if (!await checkNetworkBeforeDownload()) {
-        set((s) => ({
-          downloadTasks: s.downloadTasks.filter((t) => t.packId !== next.packId),
-        }))
-        processDownloadQueue() // 处理下一个
-        return
-      }
-
-      console.log(`[learning-store] ⏳ 开始下载: ${next.title} (${next.packId})`)
-
-      // 模拟进度：zip 下载占 60%，解压索引占 40%
-      const updateProgress = (progress: number, status: DownloadTask['status']) => {
-        set((s) => ({
-          downloadTasks: s.downloadTasks.map((t) =>
-            t.packId === next.packId ? { ...t, progress: Math.max(t.progress ?? 0, Math.min(99, progress)), status } : t,
-          ),
-        }))
-      }
-      updateProgress(5, 'downloading')
-
-      await learningPackService.installUnit(next.packId)
-
-      updateProgress(100, 'done')
-      console.log(`[learning-store] ✅ 下载完成: ${next.title}`)
-
-      await getState().syncPackStateAfterLocalChange(next.packId)
-      set((current) => ({
-        availablePackUpdates: current.availablePackUpdates.filter((update) => update.packId !== next.packId),
-      }))
-
-      // 3 秒后从队列移除已完成的
-      setTimeout(() => {
-        set((s) => ({
-          downloadTasks: s.downloadTasks.filter((t) => t.packId !== next.packId || t.status !== 'done'),
-        }))
-      }, 3000)
-
-    } catch (error: any) {
-      console.error(`[learning-store] ❌ 下载失败: ${next.title}`, error)
-      set((s) => ({
-        downloadTasks: s.downloadTasks.map((t) =>
-          t.packId === next.packId
-          ? { ...t, status: 'error' as const, error: error?.message ?? i18n.t('learning.packTaskDownloadFailed') }
-          : t,
-      ),
-      }))
-    } finally {
-      // 继续处理队列中的下一个
-      processDownloadQueue()
-    }
-  },
-
   async quitUnit(unitId) {
     if (activePackTaskIds.has(unitId)) return
     const state = getState()
@@ -605,7 +532,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     activePackTaskControllers.get(packId)?.abort()
     set((s) => ({
       downloadTasks: s.downloadTasks.map((item) => item.packId === packId
-        ? { ...item, status: 'paused' as const, pausedFrom: item.status, step: 'paused', stepLabel: i18n.t('learning.packTaskPaused') }
+        ? { ...item, status: 'paused' as const, pausedFrom: item.status as DownloadTask['pausedFrom'], step: 'paused', stepLabel: i18n.t('learning.packTaskPaused') } as DownloadTask
         : item,
       ),
       packInstallingIds: s.packInstallingIds.filter((id) => id !== packId),
@@ -699,16 +626,21 @@ function enqueueDownloadTask(packId: string, title: string) {
   }))
 }
 
+let isProcessingQueue = false
+
 async function processDownloadQueue() {
+  if (isProcessingQueue) return
+  isProcessingQueue = true
   const state = useLearningStore.getState()
   const running = state.downloadTasks.filter(
     (t) => t.status === 'downloading' || t.status === 'extracting',
   ).length
-  if (running >= MAX_CONCURRENT_DOWNLOADS) return
+  if (running >= MAX_CONCURRENT_DOWNLOADS) { isProcessingQueue = false; return }
 
   const next = state.downloadTasks.find((t) => t.status === 'queued' && (t.kind ?? 'download') === 'download')
   if (!next) {
     console.log('[learning-store] 📭 下载队列已清空')
+    isProcessingQueue = false
     return
   }
 
@@ -727,7 +659,6 @@ async function processDownloadQueue() {
         downloadTasks: s.downloadTasks.filter((t) => t.packId !== next.packId),
         packInstallingIds: s.packInstallingIds.filter((id) => id !== next.packId),
       }))
-      processDownloadQueue()
       return
     }
 
@@ -810,6 +741,7 @@ async function processDownloadQueue() {
   } finally {
     activePackTaskIds.delete(next.packId)
     activePackTaskControllers.delete(next.packId)
+    isProcessingQueue = false
     processDownloadQueue()
   }
 }
@@ -830,7 +762,9 @@ function readPersistedPackTasks(): DownloadTask[] {
         step: task.status === 'error' ? task.step : 'paused',
         stepLabel: task.status === 'error' ? task.stepLabel : i18n.t('learning.packTaskPausedFromLastRun'),
       }))
-  } catch {
+  } catch (err) {
+    console.warn('[learning-store] failed to parse persisted pack tasks, clearing', err)
+    try { window.localStorage.removeItem(PACK_TASKS_STORAGE_KEY) } catch { /* ignore */ }
     return []
   }
 }
@@ -849,8 +783,10 @@ function persistPackTasks(tasks: DownloadTask[]) {
   }
 }
 
+let persistTimer: ReturnType<typeof setTimeout> | null = null
 useLearningStore.subscribe((state) => {
-  persistPackTasks(state.downloadTasks)
+  if (persistTimer) clearTimeout(persistTimer)
+  persistTimer = setTimeout(() => persistPackTasks(state.downloadTasks), 500)
 })
 
 /** App 启动/恢复时调用：检查已安装包更新 + 加载本地状态 */

@@ -8,6 +8,7 @@ import { learningRepository } from './learning.repository'
 import { practiceRepository } from './practice.repository'
 import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
+import { createId } from './utils'
 import { scheduleReview, warmupScoreToReviewRating } from '@/lib/spaced-repetition'
 
 export type DailyPracticeStatus = 'new' | 'review' | 'overdue' | 'done' | 'mastered'
@@ -141,11 +142,6 @@ function scoreRank(score?: string | null) {
   if (score === 'ok') return 2
   if (score === 'weak') return 1
   return 0
-}
-
-function createId(prefix: string) {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return `${prefix}:${crypto.randomUUID()}`
-  return `${prefix}:${Date.now()}:${Math.random().toString(36).slice(2)}`
 }
 
 function typeLabel(type: string, item: any) {
@@ -326,20 +322,20 @@ function buildCandidates(unit: UnitDetail): DailyPracticeCandidate[] {
       }
 
       if (type === 'chunk_substitution') {
-        ;((item.items ?? []) as any[]).forEach((prompt, idx) => push(prompt, idx))
+        for (const [idx, prompt] of (item.items ?? []).entries()) push(prompt, idx)
       } else if (type === 'vocab_drill') {
-        ;((item.vocabs ?? []) as any[]).forEach((prompt, idx) => push(prompt, idx))
+        for (const [idx, prompt] of (item.vocabs ?? []).entries()) push(prompt, idx)
       } else if (type === 'vocab_sentence_building') {
-        ;((item.patterns ?? []) as any[]).forEach((pattern, patternIndex) => {
-          ;((pattern.items ?? []) as any[]).forEach((prompt, idx) => push({ ...prompt, pattern }, idx, {
+        for (const [patternIndex, pattern] of (item.patterns ?? []).entries()) {
+          for (const [idx, prompt] of (pattern.items ?? []).entries()) push({ ...prompt, pattern }, idx, {
             pattern,
             patternIndex,
             label: `${item.vocabWord || '词汇'} + ${pattern.chunk || item.vocabWord || ''}`,
             headerContent: item.vocabWord || pattern.chunk || prompt.zh || '',
-          }))
-        })
+          })
+        }
       } else if (type === 'pattern_drill') {
-        ;((item.items ?? []) as any[]).forEach((prompt, idx) => push(prompt, idx))
+        for (const [idx, prompt] of (item.items ?? []).entries()) push(prompt, idx)
       } else if (type === 'sentence_decomposition') {
         push({ levels: item.levels, fullSentence: item.fullSentence }, 0)
       }
@@ -506,6 +502,31 @@ function shuffleWithinTrainingStages<T>(items: T[], getType: (item: T) => string
   return stageOrder.flatMap((type) => shuffleItems(stageItems.get(type) ?? []))
 }
 
+/**
+ * 从服务端拉取今日任务 item 的权威进度并写回本地。
+ *
+ * 规则：不覆盖本地存在未同步 attempt 的 item（pending 优先），避免离线更新的进度被远端旧值覆盖。
+ * 此函数同时被 buildTodayPlan（旁路快速刷新）和 offlineSyncService.sync()（完整同步）调用，
+ * 确保服务端进度最终收敛到本地。
+ */
+export async function pullRemoteDailyProgress(itemIds: string[]): Promise<void> {
+  if (itemIds.length === 0) return
+  try {
+    const remote = await dailyPracticeApi.progress(itemIds)
+    const pendingAttempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
+    const pendingItemIds = new Set(
+      pendingAttempts.filter((attempt) => attempt.syncStatus !== 'synced').map((attempt) => attempt.itemId),
+    )
+    const safeItems = remote.items
+      .filter((item) => !pendingItemIds.has(item.itemId))
+      .map((item) => ({ ...item, id: item.itemId }))
+    if (safeItems.length > 0) await localDb.putMany('daily_practice_items', safeItems)
+  } catch (err) {
+    // 离线或网络错误：保留本地进度，等待下次同步
+    console.debug('[daily-practice] progress sync skipped (offline or error):', (err as Error)?.message ?? err)
+  }
+}
+
 export const dailyPracticeRepository = {
   async resolveCandidateUnits(scope: DailyPracticeScope, targetPackId?: string | null): Promise<UnitDetail[]> {
     return loadCandidateUnits(scope, targetPackId)
@@ -527,7 +548,7 @@ export const dailyPracticeRepository = {
     const candidates = units.flatMap(buildCandidates)
     const itemIds = candidates.map((candidate) => candidate.itemId)
     if (units.length === 0 || candidates.length === 0) {
-      if (date === todayKey()) void setLearningBadgeCount(0)
+      if (date === todayKey()) setLearningBadgeCount(0).catch(() => {})
       return {
         date,
         scope: packScope,
@@ -543,19 +564,8 @@ export const dailyPracticeRepository = {
       }
     }
 
-    // 后台静默同步进度，不阻塞 UI
-    dailyPracticeApi.progress(itemIds)
-      .then(async (remote) => {
-        const pendingAttempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
-        const pendingItemIds = new Set(
-          pendingAttempts.filter((attempt) => attempt.syncStatus !== 'synced').map((attempt) => attempt.itemId),
-        )
-        const safeItems = remote.items
-          .filter((item) => !pendingItemIds.has(item.itemId))
-          .map((item) => ({ ...item, id: item.itemId }))
-        if (safeItems.length > 0) await localDb.putMany('daily_practice_items', safeItems)
-      })
-      .catch(() => { /* offline: local state is enough */ })
+    // 后台静默同步进度，不阻塞 UI（旁路快速刷新；完整收敛由 offlineSyncService.sync 的 pullRemoteDailyProgress 负责）
+    void pullRemoteDailyProgress(itemIds)
 
     const localProgress = await localDb.list<DailyPracticeProgress>('daily_practice_items')
     const progressMap = new Map(localProgress.map((item) => [item.itemId, item]))
@@ -620,7 +630,7 @@ export const dailyPracticeRepository = {
     }
     await localDb.put('daily_practice_runs', run)
     if (date === todayKey()) {
-      void setLearningBadgeCount(Math.max(0, run.scheduledItemIds.length - run.completedItemIds.length))
+      setLearningBadgeCount(Math.max(0, run.scheduledItemIds.length - run.completedItemIds.length)).catch(() => {})
     }
 
     return {
@@ -663,7 +673,7 @@ export const dailyPracticeRepository = {
       if (run) {
         const completedItemIds = Array.from(new Set([...(run.completedItemIds ?? []), step.itemId]))
         await localDb.put('daily_practice_runs', { ...run, completedItemIds })
-        void setLearningBadgeCount(Math.max(0, (run.scheduledItemIds ?? []).length - completedItemIds.length))
+        setLearningBadgeCount(Math.max(0, (run.scheduledItemIds ?? []).length - completedItemIds.length)).catch(() => {})
       }
     }
     return updated
@@ -696,7 +706,7 @@ export const dailyPracticeRepository = {
       if (run?.scheduledItemIds?.includes(candidate.itemId)) {
         const completedItemIds = Array.from(new Set([...(run.completedItemIds ?? []), candidate.itemId]))
         await localDb.put('daily_practice_runs', { ...run, completedItemIds })
-        void setLearningBadgeCount(Math.max(0, (run.scheduledItemIds ?? []).length - completedItemIds.length))
+        setLearningBadgeCount(Math.max(0, (run.scheduledItemIds ?? []).length - completedItemIds.length)).catch(() => {})
       }
     }
 
@@ -721,6 +731,8 @@ export const dailyPracticeRepository = {
     const completedIds = itemProgresses
       .filter((progress) => progress.lastPracticedAt?.slice(0, 10) === date || progress.bestScoreRank >= 2)
       .map((progress) => progress.itemId)
+    const scoreValues = params.records.map((record) => scoreRank(record.score)).filter((rank) => rank > 0)
+    const score = scoreValues.length > 0 ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length / 3 * 100) : null
     const payload = {
       run: {
         date,
@@ -735,6 +747,16 @@ export const dailyPracticeRepository = {
         },
       },
       attempts: pending,
+      // 统一 warmup 记录创建：与 completeRun 对齐，由后端 complete 同时创建 practiceWarmupRecord
+      warmupRecord: params.records.length > 0 ? {
+        topicId: params.topicId,
+        topicTitle: params.topicTitle,
+        items: params.records,
+        score,
+        feedback: null,
+      } : undefined,
+      // 供离线重放时回写本地 warmup 记录（markWarmupRecordSynced）
+      localWarmupRecordId: params.localWarmupRecordId ?? null,
     }
 
     await practiceRepository.markTodayActivity(completedIds.length || params.records.length || 1, date)
@@ -801,6 +823,8 @@ export const dailyPracticeRepository = {
         score,
         feedback: null,
       } : undefined,
+      // 供离线重放时回写本地 warmup 记录（markWarmupRecordSynced）
+      localWarmupRecordId: localWarmupRecordId ?? null,
     }
 
     await practiceRepository.markTodayActivity(completedIds.length || records.length || 1, plan.date)

@@ -7,6 +7,9 @@ import { syncOutbox } from './sync-outbox'
 import { BlobReader, BlobWriter, TextWriter, ZipReader, type Entry } from '@zip.js/zip.js'
 import { learningContentRepository } from './learning-content.repository'
 import { Capacitor } from '@capacitor/core'
+import { createLogger } from './logger'
+
+const logger = createLogger('learning-pack')
 
 export interface LearningPackManifest {
   packId: string
@@ -171,14 +174,14 @@ async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
       updatedAt: new Date().toISOString(),
     })
   }
-  console.log(`[learning-pack]   SQLite: ${topicDetails.length} 个 topic, ${inkCount} 个 ink_script`)
+  logger.info(`  SQLite: ${topicDetails.length} 个 topic, ${inkCount} 个 ink_script`)
   const aggregatedUnitDetail = buildAggregatedUnitContent(unitDetail, mergedTopicDetails)
   await localDb.put('downloaded_unit_details', {
     id: unitDetail.id,
     ...aggregatedUnitDetail,
     downloadedAt: new Date().toISOString(),
   })
-  console.log(`[learning-pack]   SQLite: downloaded_unit_details/${unitDetail.id} (unit view)`)
+  logger.info(`  SQLite: downloaded_unit_details/${unitDetail.id} (unit view)`)
 }
 
 /**
@@ -292,7 +295,7 @@ async function persistInstalledRecord(manifest: LearningPackManifest): Promise<I
     installedAt: now,
     updatedAt: now,
   }
-  console.log('[learning-pack] persist installed downloaded_packs input', {
+  logger.info('persist installed downloaded_packs input', {
     packId: installed.packId,
     version: installed.version,
     manifestVersion: installed.manifest?.version,
@@ -302,7 +305,7 @@ async function persistInstalledRecord(manifest: LearningPackManifest): Promise<I
   })
   await localDb.put('downloaded_packs', installed)
   const saved = await localDb.get<InstalledLearningPack>('downloaded_packs', manifest.packId)
-  console.log('[learning-pack] persist installed downloaded_packs saved', {
+  logger.info('persist installed downloaded_packs saved', {
     packId: saved?.packId,
     version: saved?.version,
     manifestVersion: saved?.manifest?.version,
@@ -319,6 +322,30 @@ async function persistInstalledRecord(manifest: LearningPackManifest): Promise<I
   })
   await syncOutbox.markSynced(outboxItem.id)
   return installed
+}
+
+/**
+ * 从内容派生稳定版本号（djb2 哈希）。
+ * 用于 getOfflineManifest 不可用时的降级路径：避免 Date.now() 每次调用都生成“新版本”，
+ * 导致客户端无法判断是否需要更新。内容不变则版本不变。
+ */
+function stableContentVersion(unitDetail: any, topicDetails: any[]): number {
+  const input = JSON.stringify({
+    id: unitDetail.id,
+    title: unitDetail.title,
+    updatedAt: unitDetail.updatedAt ?? null,
+    topics: (unitDetail.trainingTopics ?? []).map((t: any) => t.id),
+    vocabs: (unitDetail.vocabularies ?? []).map((v: any) => v.id),
+    chunks: (unitDetail.chunks ?? []).map((c: any) => c.id),
+    patterns: (unitDetail.sentencePatterns ?? []).map((p: any) => p.pattern ?? p.id),
+    storyEpisodes: (unitDetail.storyEpisodes ?? []).map((e: any) => e.id),
+    topicCount: topicDetails.length,
+  })
+  let hash = 5381
+  for (let i = 0; i < input.length; i += 1) {
+    hash = ((hash << 5) + hash) ^ input.charCodeAt(i)
+  }
+  return hash >>> 0
 }
 
 export const learningPackService = {
@@ -368,7 +395,7 @@ export const learningPackService = {
       topicDetails,
       manifest: {
         packId: unitDetail.id,
-        version: Date.now(),
+        version: stableContentVersion(unitDetail, topicDetails),
         title: unitDetail.title,
         packageType: unitDetail.packageType,
         contentMode: unitDetail.contentMode,
@@ -389,17 +416,64 @@ export const learningPackService = {
   },
 
   async installUnit(unitId: string, onProgress?: LearningPackInstallProgressHandler, signal?: AbortSignal): Promise<InstalledLearningPack> {
+    logger.info('installUnit start zip-only mode', {
+      unitId,
+      platform: Capacitor.getPlatform(),
+      isNative: Capacitor.isNativePlatform(),
+    })
     try {
-      console.log('[learning-pack] installUnit start zip-only mode', {
-        unitId,
-        platform: Capacitor.getPlatform(),
-        isNative: Capacitor.isNativePlatform(),
-      })
       return await this.installUnitFromZip(unitId, onProgress, signal)
     } catch (error) {
-      console.error('[learning-pack] zip install failed', debugError(error))
+      logger.error('install failed, rolling back partial data', { unitId, error: debugError(error) })
+      await this.rollbackInstall(unitId)
       throw error
     }
+  },
+
+  /** 清理安装失败残留的 SQLite 数据，避免下次重试被误判为"已存在" */
+  async rollbackInstall(packId: string): Promise<void> {
+    try {
+      await learningContentRepository.removePackContentIndex(packId)
+      await localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId)
+      await localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId)
+      await localDb.delete('downloaded_unit_details', packId)
+      await localDb.delete('downloaded_packs', packId)
+      // 清理本次安装写入的 asset_refs（不去重计数，简单全部清除）
+      await localDb.deleteWhere<any>('asset_refs', (ref) => ref.packId === packId)
+      logger.info(`🧹 已回滚残留数据: ${packId}`)
+    } catch (rollbackErr) {
+      logger.warn(`回滚清理异常: ${packId}`, rollbackErr)
+    }
+  },
+
+  /**
+   * 从已解析的 zip entries 读取并校验 pack-manifest / checksums / scene / topics。
+   * 纯读取，无副作用；供全量安装复用，独立可测。
+   */
+  async parsePackContent(
+    entries: Map<string, Entry>,
+    checksums: Record<string, string>,
+    signal?: AbortSignal,
+  ): Promise<{ unitDetail: any; topicDetails: any[] }> {
+    // ④ 场景数据
+    const sceneEntry = entries.get('content/scene.json')
+    if (!sceneEntry) {
+      throw new Error('Pack is missing content/scene.json')
+    }
+    const sceneText = await readEntryText(sceneEntry)
+    await verifyEntry('content/scene.json', new TextEncoder().encode(sceneText).buffer, checksums)
+    const unitDetail = JSON.parse(sceneText)
+
+    // ⑤ 话题数据
+    const topicDetails: any[] = []
+    for (const [path, entry] of entries) {
+      throwIfAborted(signal)
+      if (!path.startsWith('content/topics/') || !path.endsWith('.json')) continue
+      const text = await readEntryText(entry)
+      await verifyEntry(path, new TextEncoder().encode(text).buffer, checksums)
+      topicDetails.push(JSON.parse(text))
+    }
+    return { unitDetail, topicDetails }
   },
 
   async installUnitFromZip(unitId: string, onProgress?: LearningPackInstallProgressHandler, signal?: AbortSignal): Promise<InstalledLearningPack> {
@@ -408,15 +482,15 @@ export const learningPackService = {
       onProgress?.(step, Math.min(99, Math.round(progress)), detail)
     }
     const startTime = performance.now()
-    console.log('[learning-pack] ⏳ ① 下载 zip...')
+    logger.info('⏳ ① 下载 zip...')
     report('downloading', 5, { label: '下载学习包' })
     const zipBuffer = await learningApi.downloadPack(unitId, signal)
     throwIfAborted(signal)
     const zipSizeMB = (zipBuffer.byteLength / 1024 / 1024).toFixed(1)
-    console.log(`[learning-pack] ✅ ① zip 下载完成: ${zipSizeMB} MB (${zipBuffer.byteLength} bytes)`)
+    logger.info(`✅ ① zip 下载完成: ${zipSizeMB} MB (${zipBuffer.byteLength} bytes)`)
     report('parsing', 15, { label: '解析压缩包' })
 
-    console.log('[learning-pack] ⏳ ② 解析 zip 条目...')
+    logger.info('⏳ ② 解析 zip 条目...')
     const reader = new ZipReader(new BlobReader(new Blob([zipBuffer], { type: 'application/zip' })))
     try {
       const entryList = await reader.getEntries()
@@ -429,14 +503,14 @@ export const learningPackService = {
         fileCount++
         entries.set(normalizeZipPath(entry.filename), entry)
       }
-      console.log(`[learning-pack] ✅ ② zip 解析完成: ${fileCount} 个文件, ${dirCount} 个目录`)
-      console.log('[learning-pack] zip entries summary', summarizeZipEntries(entries))
+      logger.info(`✅ ② zip 解析完成: ${fileCount} 个文件, ${dirCount} 个目录`)
+      logger.info('zip entries summary', summarizeZipEntries(entries))
       report('reading_manifest', 20, { label: '读取清单' })
 
-      console.log('[learning-pack] ⏳ ③ 读取 manifest + checksums...')
+      logger.info('⏳ ③ 读取 manifest + checksums...')
       const manifest = await readJsonEntry<LearningPackManifest>(entries, 'pack-manifest.json')
       const checksums = await readJsonEntry<Record<string, string>>(entries, 'checksums.json').catch(() => manifest.files ?? {})
-      console.log('[learning-pack] zip pack-manifest.json parsed', {
+      logger.info('zip pack-manifest.json parsed', {
         packId: manifest.packId,
         version: manifest.version,
         title: manifest.title,
@@ -446,59 +520,14 @@ export const learningPackService = {
         checksumCount: Object.keys(checksums).length,
       })
 
-      console.log('[learning-pack] ⏳ ④ 读取场景数据...')
-      const sceneEntry = entries.get('content/scene.json')
-      if (!sceneEntry) {
-        console.error('[learning-pack] missing content/scene.json', summarizeZipEntries(entries))
-        throw new Error('Pack is missing content/scene.json')
-      }
-      let sceneText = ''
-      let unitDetail: any
-      try {
-        sceneText = await readEntryText(sceneEntry)
-        console.log('[learning-pack] scene entry read', { chars: sceneText.length })
-        await verifyEntry('content/scene.json', new TextEncoder().encode(sceneText).buffer, checksums)
-        console.log('[learning-pack] scene checksum ok')
-        unitDetail = JSON.parse(sceneText)
-        console.log('[learning-pack] scene json parsed', {
-          id: unitDetail?.id,
-          title: unitDetail?.title,
-          topicCount: unitDetail?.trainingTopics?.length,
-          vocabularyCount: unitDetail?.vocabularies?.length,
-        })
-      } catch (error) {
-        console.error('[learning-pack] scene read/verify/parse failed', debugError(error))
-        throw error
-      }
-      console.log(`[learning-pack] ✅ ④ scene.json: ${sceneText.length} 字符, SHA256 校验通过`)
+      // ④⑤ 读取并校验 scene + topics（独立 helper，便于测试）
       report('reading_topics', 25, { label: '读取话题内容' })
-
-      console.log('[learning-pack] ⏳ ⑤ 读取话题数据...')
-      const topicDetails: any[] = []
-      for (const [path, entry] of entries) {
-        throwIfAborted(signal)
-        if (!path.startsWith('content/topics/') || !path.endsWith('.json')) continue
-        try {
-          const text = await readEntryText(entry)
-          await verifyEntry(path, new TextEncoder().encode(text).buffer, checksums)
-          const detail = JSON.parse(text)
-          topicDetails.push(detail)
-          console.log('[learning-pack] topic json parsed', {
-            path,
-            topicId: detail?.topic?.id,
-            title: detail?.topic?.title,
-            chars: text.length,
-          })
-        } catch (error) {
-          console.error('[learning-pack] topic read/verify/parse failed', { path, error: debugError(error) })
-          throw error
-        }
-      }
-      console.log(`[learning-pack] ✅ ⑤ 话题: ${topicDetails.length} 个`)
+      const { unitDetail, topicDetails } = await this.parsePackContent(entries, checksums, signal)
+      logger.info(`✅ ④⑤ scene + ${topicDetails.length} 个话题读取完成`)
       report('persisting_content', 30, { label: '写入学习内容' })
 
       const now = new Date().toISOString()
-      console.log('[learning-pack] ⏳ ⑥ 写入 downloaded_packs 记录...')
+      logger.info('⏳ ⑥ 写入 downloaded_packs 记录...')
       const installingRecord: InstalledLearningPack = {
         id: manifest.packId,
         packId: manifest.packId,
@@ -509,7 +538,7 @@ export const learningPackService = {
         installedAt: null,
         updatedAt: now,
       }
-      console.log('[learning-pack] persist installing downloaded_packs input', {
+      logger.info('persist installing downloaded_packs input', {
         packId: installingRecord.packId,
         version: installingRecord.version,
         manifestVersion: installingRecord.manifest?.version,
@@ -519,7 +548,7 @@ export const learningPackService = {
       })
       await localDb.put<InstalledLearningPack>('downloaded_packs', installingRecord)
       const savedInstalling = await localDb.get<InstalledLearningPack>('downloaded_packs', manifest.packId)
-      console.log('[learning-pack] persist installing downloaded_packs saved', {
+      logger.info('persist installing downloaded_packs saved', {
         packId: savedInstalling?.packId,
         version: savedInstalling?.version,
         manifestVersion: savedInstalling?.manifest?.version,
@@ -529,25 +558,25 @@ export const learningPackService = {
         updatedAt: savedInstalling?.updatedAt,
       })
 
-      console.log('[learning-pack] ⏳ ⑦ 持久化单元内容到 SQLite...')
+      logger.info('⏳ ⑦ 持久化单元内容到 SQLite...')
       try {
         await persistUnitContent(unitDetail, topicDetails)
       } catch (error) {
-        console.error('[learning-pack] persist unit content failed', {
+        logger.error('persist unit content failed', {
           unitId: unitDetail?.id,
           topicCount: topicDetails.length,
           error: debugError(error),
         })
         throw error
       }
-      console.log('[learning-pack] ✅ ⑦ 单元内容写入完成')
+      logger.info('✅ ⑦ 单元内容写入完成')
       report('indexing', 35, { label: '建立内容索引' })
 
-      console.log('[learning-pack] ⏳ ⑧ 写入内容索引表...')
+      logger.info('⏳ ⑧ 写入内容索引表...')
       try {
         await learningContentRepository.savePackContentIndex(manifest.packId, unitDetail.id ?? unitId, unitDetail, topicDetails)
       } catch (error) {
-        console.error('[learning-pack] save content index failed', {
+        logger.error('save content index failed', {
           packId: manifest.packId,
           unitId: unitDetail?.id ?? unitId,
           topicCount: topicDetails.length,
@@ -555,10 +584,10 @@ export const learningPackService = {
         })
         throw error
       }
-      console.log('[learning-pack] ✅ ⑧ 索引表写入完成')
+      logger.info('✅ ⑧ 索引表写入完成')
       report('extracting_assets', 40, { label: '提取离线资源', current: 0, total: manifest.assets?.length ?? 0 })
 
-      console.log(`[learning-pack] ⏳ ⑨ 提取资源文件 (${manifest.assets?.length ?? 0} 个)...`)
+      logger.info(`⏳ ⑨ 提取资源文件 (${manifest.assets?.length ?? 0} 个)...`)
       const totalAssets = manifest.assets?.length ?? 0
 
       // 一次性加载所有 asset_refs 到内存 Map，避免每个资产全表扫描
@@ -567,7 +596,7 @@ export const learningPackService = {
       for (const ref of allRefsList) {
         if (ref.sha256) refsBySha256.set(ref.sha256, ref)
       }
-      console.log(`[learning-pack] asset_refs 预加载: ${refsBySha256.size} 条`)
+      logger.info(`asset_refs 预加载: ${refsBySha256.size} 条`)
 
       // ── 阶段 A：并行读取 ZIP + 计算 SHA-256（CPU 密集型，可并行）──
       const ASSET_CONCURRENCY = 8
@@ -646,7 +675,7 @@ export const learningPackService = {
       for (const result of assetResults) {
         if (result.ok === false) {
           assetFail++
-          console.warn('[learning-pack] asset extract failed', { path: result.asset.path, error: result.error })
+          logger.warn('asset extract failed', { path: result.asset.path, error: result.error })
           continue
         }
 
@@ -659,7 +688,7 @@ export const learningPackService = {
           || (Boolean(existingRef) && await assetCacheService.isReady(actualSha256))
 
         if (existingRef && !alreadyInPool) {
-          console.warn('[learning-pack] stale asset_ref recovered by re-saving file', {
+          logger.warn('stale asset_ref recovered by re-saving file', {
             packId: manifest.packId,
             sha256: actualSha256,
             path: asset.path,
@@ -718,12 +747,12 @@ export const learningPackService = {
         })))
 
       const assetSkip = totalAssets - assetTasks.length
-      console.log(`[learning-pack] ✅ ⑨ 资源提取完成: ${assetOk} 成功 (${assetDeduped} 去重复用), ${assetSkip} 跳过, ${assetFail} 失败`)
+      logger.info(`✅ ⑨ 资源提取完成: ${assetOk} 成功 (${assetDeduped} 去重复用), ${assetSkip} 跳过, ${assetFail} 失败`)
       report('finishing', 99, { label: '完成安装' })
 
       const result = await persistInstalledRecord(manifest)
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(1)
-      console.log(`[learning-pack] 🎉 安装完成! 耗时 ${elapsed}s`, {
+      logger.info(`🎉 安装完成! 耗时 ${elapsed}s`, {
         packId: manifest.packId,
         version: manifest.version,
         topics: topicDetails.length,
@@ -738,12 +767,12 @@ export const learningPackService = {
   /** V2: 安装 delta 增量包 */
   async installDelta(packId: string, fromVersion: number, toVersion: number, signal?: AbortSignal): Promise<InstalledLearningPack> {
     const startTime = performance.now()
-    console.log(`[learning-pack] 📦 开始安装增量包 v${fromVersion} → v${toVersion}`, { packId })
+    logger.info(`📦 开始安装增量包 v${fromVersion} → v${toVersion}`, { packId })
 
     const deltaBuffer = await learningApi.downloadDelta(packId, fromVersion, toVersion, signal)
     throwIfAborted(signal)
     const deltaSizeMB = (deltaBuffer.byteLength / 1024 / 1024).toFixed(1)
-    console.log(`[learning-pack] ✅ delta 下载完成: ${deltaSizeMB} MB`)
+    logger.info(`✅ delta 下载完成: ${deltaSizeMB} MB`)
 
     const reader = new ZipReader(new BlobReader(new Blob([deltaBuffer], { type: 'application/zip' })))
     try {
@@ -761,7 +790,7 @@ export const learningPackService = {
       if (Number(deltaManifest.fromVersion) !== fromVersion || Number(deltaManifest.toVersion) !== toVersion) {
         throw new Error(`Delta version mismatch: ${deltaManifest.fromVersion}→${deltaManifest.toVersion}`)
       }
-      console.log(`[learning-pack] delta manifest: +${deltaManifest.added?.length ?? 0} / ~${deltaManifest.modified?.length ?? 0} / -${deltaManifest.removed?.length ?? 0}`)
+      logger.info(`delta manifest: +${deltaManifest.added?.length ?? 0} / ~${deltaManifest.modified?.length ?? 0} / -${deltaManifest.removed?.length ?? 0}`)
 
       const targetManifest = entries.has('pack-manifest.json')
         ? await readJsonEntry<LearningPackManifest>(entries, 'pack-manifest.json')
@@ -785,7 +814,7 @@ export const learningPackService = {
         await learningContentRepository.removePackContentIndex(packId)
         await persistUnitContent(unitDetail, topicDetails)
         await learningContentRepository.savePackContentIndex(packId, unitDetail.id ?? packId, unitDetail, topicDetails)
-        console.log(`[learning-pack]   content: ${topicDetails.length} topics re-indexed`)
+        logger.info(`  content: ${topicDetails.length} topics re-indexed`)
       }
 
       // 2. 应用 added asset 文件
@@ -797,8 +826,7 @@ export const learningPackService = {
         await verifyEntry(normalizeZipPath(path), buffer, checksums)
         const sha256 = await digest(buffer)
 
-        const allAssetRefs = await localDb.list<any>('asset_refs')
-        const existingRefs = allAssetRefs.filter((r: any) => r.sha256 === sha256)
+        const existingRefs = await localDb.findByIndex<any>('asset_refs', 'sha256', sha256)
         if (existingRefs.length === 0) {
           const assetRef = {
             url: `cos://${sha256}`,
@@ -820,7 +848,7 @@ export const learningPackService = {
           data: '{}',
         })
       }
-      console.log(`[learning-pack]   added: ${deltaManifest.added?.length ?? 0}`)
+      logger.info(`  added: ${deltaManifest.added?.length ?? 0}`)
 
       // 3. 应用 modified asset 文件（替换旧 SHA256 → 新 SHA256）
       for (const path of deltaManifest.modified ?? []) {
@@ -831,19 +859,19 @@ export const learningPackService = {
         await verifyEntry(normalizeZipPath(path), buffer, checksums)
         const newSha256 = await digest(buffer)
 
-        // 删除旧引用（同一 packId + logicalPath 的旧记录）
-        const allAssetRefs = await localDb.list<any>('asset_refs')
-        const oldRefs = allAssetRefs.filter((r: any) => r.packId === packId && r.logicalPath === path)
+        // 删除旧引用（同一 packId + logicalPath 的旧记录，走 pack_id 索引）
+        const packRefs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
+        const oldRefs = packRefs.filter((r: any) => r.logicalPath === path)
         for (const oldRef of oldRefs) {
           await localDb.delete('asset_refs', oldRef.id)
           // 检查是否还有其他包引用旧 SHA256
-          const remaining = (await localDb.list<any>('asset_refs')).filter((r: any) => r.sha256 === oldRef.sha256)
+          const remaining = await localDb.findByIndex<any>('asset_refs', 'sha256', oldRef.sha256)
           if (remaining.length === 0) {
             await assetCacheService.remove(oldRef.sha256)
           }
         }
 
-        const existingRefs = allAssetRefs.filter((r: any) => r.sha256 === newSha256)
+        const existingRefs = await localDb.findByIndex<any>('asset_refs', 'sha256', newSha256)
         if (existingRefs.length === 0) {
           await assetCacheService.saveFromBuffer({ url: `cos://${newSha256}`, path, sha256: newSha256, mimeType: null }, buffer)
         }
@@ -858,22 +886,22 @@ export const learningPackService = {
           data: '{}',
         })
       }
-      console.log(`[learning-pack]   modified: ${deltaManifest.modified?.length ?? 0}`)
+      logger.info(`  modified: ${deltaManifest.modified?.length ?? 0}`)
 
       // 4. 应用 removed asset 文件
       for (const path of deltaManifest.removed ?? []) {
         if (!isAssetPath(path)) continue
-        const allAssetRefs = await localDb.list<any>('asset_refs')
-        const oldRefs = allAssetRefs.filter((r: any) => r.packId === packId && r.logicalPath === path)
+        const packRefs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
+        const oldRefs = packRefs.filter((r: any) => r.logicalPath === path)
         for (const oldRef of oldRefs) {
           await localDb.delete('asset_refs', oldRef.id)
-          const remaining = (await localDb.list<any>('asset_refs')).filter((r: any) => r.sha256 === oldRef.sha256)
+          const remaining = await localDb.findByIndex<any>('asset_refs', 'sha256', oldRef.sha256)
           if (remaining.length === 0) {
             await assetCacheService.remove(oldRef.sha256)
           }
         }
       }
-      console.log(`[learning-pack]   removed: ${deltaManifest.removed?.length ?? 0}`)
+      logger.info(`  removed: ${deltaManifest.removed?.length ?? 0}`)
 
       // 5. 更新 pack 记录
       const pack = await localDb.get<InstalledLearningPack>('downloaded_packs', packId)
@@ -890,61 +918,16 @@ export const learningPackService = {
       }
 
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(1)
-      console.log(`[learning-pack] 🎉 增量安装完成! 耗时 ${elapsed}s`)
+      logger.info(`🎉 增量安装完成! 耗时 ${elapsed}s`)
       return (await localDb.get<InstalledLearningPack>('downloaded_packs', packId))!
     } finally {
       await reader.close()
     }
   },
 
-  async install(manifest: LearningPackManifest): Promise<InstalledLearningPack> {
-    const now = new Date().toISOString()
-    const record: InstalledLearningPack = {
-      id: manifest.packId,
-      packId: manifest.packId,
-      version: manifest.version,
-      title: manifest.title,
-      manifest,
-      status: 'installing',
-      installedAt: null,
-      updatedAt: now,
-    }
-    await localDb.put('downloaded_packs', record)
-
-    try {
-      for (const asset of manifest.assets) {
-        await assetCacheService.download(asset)
-      }
-      const installed = {
-        ...record,
-        status: 'installed' as const,
-        installedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-      await localDb.put('downloaded_packs', installed)
-      const outboxItem = await syncOutbox.enqueue({
-        entityType: 'learning_pack',
-        entityId: manifest.packId,
-        operation: 'create',
-        payload: { packId: manifest.packId, version: manifest.version },
-      })
-      await syncOutbox.markSynced(outboxItem.id)
-      return installed
-    } catch (error) {
-      const failed = {
-        ...record,
-        status: 'failed' as const,
-        updatedAt: new Date().toISOString(),
-        lastError: error instanceof Error ? error.message : String(error),
-      }
-      await localDb.put('downloaded_packs', failed)
-      return failed
-    }
-  },
-
   async uninstall(packId: string): Promise<void> {
     const timer = createTimer(`learning-pack:uninstall:${packId}`)
-    console.log(`[learning-pack:uninstall:${packId}] start`)
+    logger.info(`[uninstall:${packId}] start`)
     const pack = await localDb.get<InstalledLearningPack>('downloaded_packs', packId)
     timer.lap('load pack record', { found: Boolean(pack) })
     if (!pack) return
@@ -986,7 +969,7 @@ export const learningPackService = {
       await localDb.deleteWhere<any>('local_assets', (asset) => removeSet.has(String(asset.id)))
     }
     timer.lap('delete asset files', { deletedFiles, keptFiles })
-    console.log(`[learning-pack] 🗑️ 资产清理: ${deletedFiles} 个文件删除, ${keptFiles} 个文件被其他包保留`)
+    logger.info(`🗑️ 资产清理: ${deletedFiles} 个文件删除, ${keptFiles} 个文件被其他包保留`)
 
     // Keep SQLite cleanup sequential. The web adapter is much happier when
     // large deletes do not compete on the same connection.
@@ -1002,10 +985,10 @@ export const learningPackService = {
       await localDb.delete('downloaded_packs', packId)
       timer.lap('delete downloaded pack record')
     } catch (error) {
-      console.warn(`[learning-pack] ⚠️ 关联数据清理异常: ${packId}`, error)
+      logger.warn(`关联数据清理异常: ${packId}`, error)
     }
 
-    console.log(`[learning-pack] 🗑️ 已卸载: ${packId} (${pack.title} v${pack.version})`)
+    logger.info(`🗑️ 已卸载: ${packId} (${pack.title} v${pack.version})`)
     try {
       const outboxItem = await syncOutbox.enqueue({
         entityType: 'learning_pack',
@@ -1017,7 +1000,7 @@ export const learningPackService = {
       await syncOutbox.markSynced(outboxItem.id)
       timer.lap('mark uninstall sync synced')
     } catch (error) {
-      console.warn(`[learning-pack] ⚠️ 同步出队异常: ${packId}`, error)
+      logger.warn(`同步出队异常: ${packId}`, error)
     }
     timer.done({ packId, title: pack.title, version: pack.version })
   },
