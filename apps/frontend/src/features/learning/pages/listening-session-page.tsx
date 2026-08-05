@@ -209,10 +209,16 @@ function ListeningPlayerPage({ topic, unitId, unitTitle, onClose }: { topic: Tra
   }, [])
 
   // 由 currentMs 推导当前句子索引
+  // 注意：currentMs 落在句间间隙（endMs~下一个 startMs 之间）或 seek 落点偏差时，
+  // 不能回退到 0（会误跳回第一句），而是回退到“最后一个已开始”的句子。
   const activeIndex = useMemo(() => {
     if (segments.length === 0) return 0
     const idx = segments.findIndex((s) => currentMs >= s.startMs && currentMs < s.endMs)
-    return idx >= 0 ? idx : 0
+    if (idx >= 0) return idx
+    for (let i = segments.length - 1; i >= 0; i--) {
+      if (segments[i].startMs <= currentMs) return i
+    }
+    return 0
   }, [currentMs, segments])
 
   const activeSegment = segments[activeIndex]
@@ -289,29 +295,32 @@ function ListeningPlayerPage({ topic, unitId, unitTitle, onClose }: { topic: Tra
   const goToPrev = useCallback(() => {
     const audio = audioRef.current
     if (!audio || activeIndex <= 0) return
+    cancelGap()
     const prev = segments[activeIndex - 1]
     audio.currentTime = prev.startMs / 1000
     setCurrentMs(prev.startMs)
     if (!playing) void audio.play()
-  }, [activeIndex, playing, segments])
+  }, [activeIndex, cancelGap, playing, segments])
 
   const goToNext = useCallback(() => {
     const audio = audioRef.current
     if (!audio || activeIndex >= segments.length - 1) return
+    cancelGap()
     const next = segments[activeIndex + 1]
     audio.currentTime = next.startMs / 1000
     setCurrentMs(next.startMs)
     if (!playing) void audio.play()
-  }, [activeIndex, playing, segments])
+  }, [activeIndex, cancelGap, playing, segments])
 
   // 点击某句跳转
   const seekTo = useCallback((index: number) => {
     const audio = audioRef.current
     if (!audio || index < 0 || index >= segments.length) return
+    cancelGap()
     audio.currentTime = segments[index].startMs / 1000
     setCurrentMs(segments[index].startMs)
     void audio.play()
-  }, [segments])
+  }, [cancelGap, segments])
 
   // 进度条拖拽
   const handleSeek = useCallback((value: number[]) => {
@@ -336,7 +345,7 @@ function ListeningPlayerPage({ topic, unitId, unitTitle, onClose }: { topic: Tra
   }, [currentMs, topic.id])
 
   return (
-    <div className="flex h-dvh flex-col bg-background">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       {/* 隐藏的 audio 元素 */}
       {mediaUrl && (
         <audio
@@ -347,16 +356,17 @@ function ListeningPlayerPage({ topic, unitId, unitTitle, onClose }: { topic: Tra
           onPause={onPause}
           onEnded={() => setPlaying(false)}
           preload="metadata"
+          hidden
         />
       )}
 
-      {/* 顶部栏 */}
-      <div className="shrink-0 px-4 pt-3">
+      {/* 顶部栏（含 iOS 安全区） */}
+      <div className="shrink-0 px-4 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
         <ListeningHeader topic={topic} unitTitle={unitTitle} onBack={onClose} onSettingsOpen={() => setSettingsOpen(true)} />
       </div>
 
-      {/* 内容区 */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-4">
+      {/* 内容区（独立滚动） */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4">
         {resolving ? (
           <p className="flex items-center justify-center gap-2 rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />

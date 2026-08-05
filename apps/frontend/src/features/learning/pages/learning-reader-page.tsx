@@ -200,8 +200,8 @@ export function LearningReaderPage() {
 
   return (
     <div className="flex h-[100dvh] flex-col bg-background text-foreground">
-      {/* ── Header ── */}
-      <div className="flex shrink-0 items-center border-b border-border/60 bg-background px-2 pt-safe">
+      {/* ── Header（安全区 padding 已由根布局 main 提供，这里不再重复加 pt-safe）── */}
+      <div className="flex shrink-0 items-center border-b border-border/60 bg-background px-2 pt-2">
         {/* 左：返回 + 目录 */}
         <div className="flex items-center gap-1 w-[88px] shrink-0 h-12 ">
           <Button variant="ghost" size="icon" className="size-10" asChild>

@@ -102,8 +102,10 @@ export function PracticeVnDrawer({
                 </p>
               </div>
             ) : teachingMarkdown ? (
-              <section className="px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4">
-                <MarkdownRenderer content={teachingMarkdown} variant="teaching" />
+              <section className="px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4">
+                <div className="rounded-2xl border border-border/55 bg-muted/25 p-4">
+                  <MarkdownRenderer content={teachingMarkdown} variant="teaching" />
+                </div>
               </section>
             ) : (
               <div className="flex h-full items-center justify-center px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4">

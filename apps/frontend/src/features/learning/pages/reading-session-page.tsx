@@ -160,22 +160,24 @@ function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: 
         </section>
 
         <section className="flex min-h-0 flex-col border-t border-border/70 bg-background shadow-[0_-8px_20px_rgba(0,0,0,0.04)]" aria-label="阅读问题">
-          <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-1.5 overflow-x-auto border-b border-border/50 px-4 py-2">
-            <p className="mr-1 shrink-0 text-[11px] font-medium text-muted-foreground">题目</p>
-            {questions.map((_: any, index: number) => <button key={index} type="button" onClick={() => setCurrentQuestion(index)} className={cn('flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold', currentQuestion === index ? 'border-primary bg-primary text-primary-foreground' : answers[String(index)] ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground')} aria-label={`第 ${index + 1} 题`}>{index + 1}</button>)}
-            <span className="ml-auto shrink-0 text-[11px] text-muted-foreground">{answeredCount}/{questions.length}</span>
+          <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-2 border-b border-border/50 px-4 py-2">
+            <p className="shrink-0 text-[11px] font-medium text-muted-foreground">题目</p>
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
+              {questions.map((_: any, index: number) => <button key={index} type="button" onClick={() => setCurrentQuestion(index)} className={cn('flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold', currentQuestion === index ? 'border-primary bg-primary text-primary-foreground' : answers[String(index)] ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground')} aria-label={`第 ${index + 1} 题`}>{index + 1}</button>)}
+            </div>
+            <span className="shrink-0 text-[11px] text-muted-foreground">{answeredCount}/{questions.length}</span>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Button variant="outline" size="sm" className="h-8 px-2.5" disabled={currentQuestion === 0} onClick={() => setCurrentQuestion((index) => Math.max(0, index - 1))}><ChevronLeft className="size-4" />上一题</Button>
+              {currentQuestion < questions.length - 1
+                ? <Button size="sm" className="h-8 px-3" onClick={() => setCurrentQuestion((index) => Math.min(questions.length - 1, index + 1))}>下一题<ChevronRight className="size-4" /></Button>
+                : <Button size="sm" className="h-8 px-3" onClick={submit} disabled={saving || answeredCount < questions.length || questions.length === 0}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}提交答案</Button>}
+            </div>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-            <div className="mx-auto w-full max-w-3xl px-4 py-3">
+            <div className="mx-auto w-full max-w-3xl px-4 py-3 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
               {question ? <ReadingQuestion index={currentQuestion} question={question} value={answers[String(currentQuestion)] ?? ''} onChange={(value) => setAnswers((current) => ({ ...current, [String(currentQuestion)]: value }))} /> : <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">暂未配置理解题</p>}
               {submission?.feedback && <div className="mt-4"><ReadingFeedback feedback={submission.feedback} /></div>}
             </div>
-          </div>
-          <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-2 border-t border-border/50 px-4 py-2 pb-safe">
-            <Button variant="outline" size="sm" disabled={currentQuestion === 0} onClick={() => setCurrentQuestion((index) => Math.max(0, index - 1))}><ChevronLeft className="size-4" />上一题</Button>
-            {currentQuestion < questions.length - 1
-              ? <Button size="sm" className="ml-auto" onClick={() => setCurrentQuestion((index) => Math.min(questions.length - 1, index + 1))}>下一题<ChevronRight className="size-4" /></Button>
-              : <Button size="sm" className="ml-auto" onClick={submit} disabled={saving || answeredCount < questions.length || questions.length === 0}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}提交答案</Button>}
           </div>
         </section>
       </main>

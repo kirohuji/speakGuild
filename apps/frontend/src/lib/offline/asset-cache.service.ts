@@ -2,6 +2,7 @@ import { Directory, Filesystem } from '@capacitor/filesystem'
 import { Capacitor } from '@capacitor/core'
 import { isNative } from '@/lib/native'
 import { localDb } from './unified-storage'
+import write_blob from 'capacitor-blob-writer'
 
 export interface AssetRef {
   assetId?: string
@@ -154,15 +155,51 @@ function extensionFrom(url: string, mimeType?: string | null) {
   return 'bin'
 }
 
+/**
+ * 使用 capacitor-blob-writer 将 ArrayBuffer 写入原生文件系统。
+ *
+ * capacitor-blob-writer 在 App 内启动 localhost HTTP 服务器，
+ * 通过 fetch PUT 以二进制流方式直传数据，完全绕过 Capacitor bridge，
+ * 无 base64 编码、无消息大小限制。失败时自动 fallback 到分块 appendFile。
+ */
+async function nativeWriteBuffer(
+  path: string,
+  directory: Directory,
+  buffer: ArrayBuffer,
+): Promise<void> {
+  const blob = new Blob([buffer])
+  await write_blob({
+    path,
+    directory,
+    blob,
+    recursive: true,
+    on_fallback: (error: Error) => {
+      console.warn('[offline-assets] blob-writer fallback engaged', {
+        path,
+        bytes: buffer.byteLength,
+        error: error instanceof Error ? error.message : String(error),
+      })
+    },
+  })
+}
+
 function arrayBufferToBase64(buffer: ArrayBuffer) {
   const bytes = new Uint8Array(buffer)
-  const chunkSize = 0x8000
   // 分块 btoa：避免先拼接整个 binary 字符串再编码，降低大文件（音频/图片）峰值内存。
-  // 原实现会同时持有「完整 binary 字符串 + 完整 base64」两份大内存。
+  // ⚠️ chunk 大小必须是 3 的倍数！base64 每 3 字节一组，若块大小非 3 的倍数，
+  // 每块的 btoa 输出会以 '=' 结尾，拼接后 '=' 出现在中间，解码器会在那里截断，
+  // 导致 data URL 内容被截断（EPUB 加载失败）。
+  const chunkSize = 32766 // 3 × 10922，紧贴原 0x8000，保持同量级内存
   let result = ''
   for (let i = 0; i < bytes.length; i += chunkSize) {
     const chunk = bytes.subarray(i, i + chunkSize)
     result += btoa(String.fromCharCode(...chunk))
+  }
+  // 防御性校验：正确 base64 长度必为 ceil(字节数/3)*4。若分块编码产生中间 padding
+  // 或截断，长度必然不符，立刻抛错而不是把坏数据写进缓存。
+  const expectedLength = Math.ceil(bytes.length / 3) * 4
+  if (result.length !== expectedLength) {
+    throw new Error(`base64 encode length mismatch: got ${result.length}, expected ${expectedLength}`)
   }
   return result
 }
@@ -344,12 +381,7 @@ export const assetCacheService = {
         }
       }
 
-      await Filesystem.writeFile({
-        path,
-        data: arrayBufferToBase64(buffer),
-        directory: Directory.Data,
-        recursive: true,
-      })
+      await nativeWriteBuffer(path, Directory.Data, buffer)
       const uri = await Filesystem.getUri({ path, directory: Directory.Data })
 
       const now = new Date().toISOString()
@@ -368,7 +400,7 @@ export const assetCacheService = {
       }
       await localDb.put<LocalAsset>('local_assets', record)
       await putAliases(record, ref, url)
-      console.log('[offline-assets] download saved', { key, bytes: buffer.byteLength, path, fileAssetId: ref.fileAssetId })
+      console.log('[offline-assets] download saved (blob-writer)', { key, bytes: buffer.byteLength, path, fileAssetId: ref.fileAssetId })
 
       return toLoadableUrl(uri.uri)
     } catch (error) {
@@ -438,12 +470,7 @@ export const assetCacheService = {
       return dataUrl
     }
 
-    await Filesystem.writeFile({
-      path,
-      data: arrayBufferToBase64(buffer),
-      directory: Directory.Data,
-      recursive: true,
-    })
+    await nativeWriteBuffer(path, Directory.Data, buffer)
     const uri = await Filesystem.getUri({ path, directory: Directory.Data })
     const now = new Date().toISOString()
 
@@ -462,7 +489,7 @@ export const assetCacheService = {
     }
     await localDb.put<LocalAsset>('local_assets', record)
     await putAliases(record, ref, url)
-    console.log('[offline-assets] pack file saved', {
+    console.log('[offline-assets] pack file saved (blob-writer)', {
       key,
       bytes: buffer.byteLength,
       path,
