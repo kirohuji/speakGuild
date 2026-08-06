@@ -126,6 +126,20 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['topic_id', 'topicId', (value) => value?.topicId ?? null],
     ['last_used_at', 'lastUsedAt', (value) => value?.lastUsedAt ?? null],
   ],
+  topic_sessions: [
+    ['remote_id', 'remoteId', (value) => value?.remoteId ?? null],
+    ['topic_id', 'topicId', (value) => value?.topicId ?? null],
+    ['scene_id', 'sceneId', (value) => value?.sceneId ?? null],
+    ['status', 'status', (value) => value?.status ?? null],
+    ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
+  ],
+  topic_submissions: [
+    ['remote_id', 'remoteId', (value) => value?.remoteId ?? null],
+    ['session_id', 'sessionId', (value) => value?.sessionId ?? null],
+    ['revision', 'revision', (value) => typeof value?.revision === 'number' ? value.revision : null],
+    ['status', 'status', (value) => value?.status ?? null],
+    ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
+  ],
   local_assets: [
     ['asset_id', 'assetId', (value) => value?.assetId ?? value?.id ?? null],
     ['remote_url', 'remoteUrl', (value) => value?.remoteUrl ?? null],

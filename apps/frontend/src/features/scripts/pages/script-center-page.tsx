@@ -68,6 +68,7 @@ import {
   type ScriptPublishHistoryItem,
   type ScriptPracticeRecord,
   type ScriptWork,
+  type ScriptWorkKind,
 } from '@/features/scripts/api/script-community-api'
 import {
   LearningPackDownloadDrawer,

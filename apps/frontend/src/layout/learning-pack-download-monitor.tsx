@@ -144,7 +144,7 @@ export function LearningPackDownloadDrawer({
           const result = await scriptCommunityApi.renderStatus(workId)
           if (!alive) return
           const progress = result.task?.progress ?? task.progress
-          if (result.task?.status === 'completed' || (result.work.status === 'ready' && Boolean(result.work.videoUrl))) {
+          if (result.task?.status === 'completed' || (result.work.status === 'ready' && Boolean(result.work.videoAssetId))) {
             updateGlobalTask(task.id, { status: 'done', progress: 100, stepLabel: t('learning.videoTaskReady') })
           } else if (result.work.status === 'failed' || result.task?.status === 'failed' || result.task?.status === 'canceled') {
             updateGlobalTask(task.id, {

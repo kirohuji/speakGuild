@@ -40,6 +40,10 @@ const feedInclude = {
 
 type FeedWork = Prisma.ScriptWorkGetPayload<{ include: typeof feedInclude }>
 
+// 作品列表（feed / myWorks）在端上会停留较久（预览、播放、二次进入），
+// 签名 URL 用 7 天档，与 FileAssetsService.getAssetLongLivedUrl 一致，避免隔天打开时 403。
+const SCRIPT_ASSET_URL_EXPIRES_SECONDS = 7 * 24 * 3600
+
 @Injectable()
 export class ScriptCommunityService {
   constructor(
@@ -479,7 +483,7 @@ export class ScriptCommunityService {
     const hasMore = items.length > take
     const list = hasMore ? items.slice(0, take) : items
     return {
-      list: await Promise.all(list.map((work) => this.serializeWork(work, userId))),
+      list: await this.serializeWorks(list, userId),
       nextCursor: hasMore ? list.at(-1)?.id ?? null : null,
     }
   }
@@ -583,7 +587,7 @@ export class ScriptCommunityService {
     const hasMore = items.length > take
     const list = hasMore ? items.slice(0, take) : items
     return {
-      list: await Promise.all(list.map((work) => this.serializeWork(work, userId))),
+      list: await this.serializeWorks(list, userId),
       nextCursor: hasMore ? list.at(-1)?.id ?? null : null,
     }
   }
@@ -627,44 +631,52 @@ export class ScriptCommunityService {
     return { success: true }
   }
 
-  private async serializeWork(work: FeedWork, currentUserId: string) {
-    const [video, cover, liked, myReaction, reactionGroups] = await Promise.all([
-      work.videoAssetId
-        ? this.fileAssetsService.getPrivateUrlByAssetId(work.videoAssetId).catch(() => null)
-        : null,
-      work.coverAssetId
-        ? this.fileAssetsService.getPrivateUrlByAssetId(work.coverAssetId).catch(() => null)
-        : null,
-      this.prisma.scriptWorkLike.findUnique({
-        where: { workId_userId: { workId: work.id, userId: currentUserId } },
-        select: { id: true },
+  /**
+   * 批量序列化作品列表：资产 URL、点赞、我的表情、表情分组全部批量查询，
+   * 避免每项一次 DB 查询的 N+1（原来 20 条列表 ≈ 100 次查询，现在固定 4 次）。
+   */
+  private async serializeWorks(works: FeedWork[], currentUserId: string) {
+    if (works.length === 0) return []
+    const workIds = works.map((work) => work.id)
+    const assetIds = works.flatMap((work) => [work.videoAssetId, work.coverAssetId])
+    const [urlByAsset, likedRows, myReactionRows, reactionGroupRows] = await Promise.all([
+      this.fileAssetsService.getPrivateUrlsByAssetIds(assetIds, SCRIPT_ASSET_URL_EXPIRES_SECONDS),
+      this.prisma.scriptWorkLike.findMany({
+        where: { workId: { in: workIds }, userId: currentUserId },
+        select: { workId: true },
       }),
-      this.prisma.scriptWorkReaction.findUnique({
-        where: { workId_userId: { workId: work.id, userId: currentUserId } },
-        select: { reaction: true },
+      this.prisma.scriptWorkReaction.findMany({
+        where: { workId: { in: workIds }, userId: currentUserId },
+        select: { workId: true, reaction: true },
       }),
       this.prisma.scriptWorkReaction.groupBy({
-        by: ['reaction'],
-        where: { workId: work.id },
+        by: ['workId', 'reaction'],
+        where: { workId: { in: workIds } },
         _count: { reaction: true },
-        orderBy: { _count: { reaction: 'desc' } },
       }),
     ])
+    const likedByWork = new Set(likedRows.map((row) => row.workId))
+    const reactionByWork = new Map(myReactionRows.map((row) => [row.workId, row.reaction]))
+    const groupsByWork = new Map<string, { reaction: string; count: number }[]>()
+    for (const row of reactionGroupRows) {
+      const groups = groupsByWork.get(row.workId) ?? []
+      groups.push({ reaction: row.reaction, count: row._count.reaction })
+      groupsByWork.set(row.workId, groups)
+    }
 
-    return {
+    return works.map((work) => ({
       ...work,
-      videoUrl: video?.url ?? null,
+      videoUrl: work.videoAssetId ? (urlByAsset.get(work.videoAssetId) ?? null) : null,
       videoMimeType: work.videoAsset?.mimeType ?? null,
       // A work-specific cover remains authoritative.  Older works did not
       // persist coverAssetId, so use their owning learning package's cover
       // rather than returning a blank card.
-      coverUrl: cover?.url ?? work.episode.scene.coverImage ?? null,
-      liked: Boolean(liked),
-      myReaction: myReaction?.reaction ?? null,
-      reactionGroups: reactionGroups.map((group) => ({
-        reaction: group.reaction,
-        count: group._count.reaction,
-      })),
-    }
+      coverUrl: (work.coverAssetId ? urlByAsset.get(work.coverAssetId) : null)
+        ?? work.episode.scene.coverImage
+        ?? null,
+      liked: likedByWork.has(work.id),
+      myReaction: reactionByWork.get(work.id) ?? null,
+      reactionGroups: (groupsByWork.get(work.id) ?? []).sort((a, b) => b.count - a.count),
+    }))
   }
 }

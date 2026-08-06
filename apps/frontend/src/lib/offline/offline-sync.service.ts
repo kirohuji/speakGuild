@@ -632,7 +632,7 @@ export const offlineSyncService = {
         await learningPackService.installUnit(packId)
         refreshed.push(packId)
       } catch (error) {
-        logger.warn('pack refresh failed:', packId, error)
+        logger.warn('pack refresh failed', { packId, error: errorMessage(error) })
       }
     }
 

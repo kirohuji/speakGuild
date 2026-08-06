@@ -202,6 +202,29 @@ export class FileAssetsService {
     return { ...asset, url, expiresInSeconds: this.privateUrlExpiresSeconds };
   }
 
+  /**
+   * 批量解析多个资产的可播放签名 URL（一次 DB 查询 + 逐资产签名）。
+   * 列表序列化（feed / myWorks）用它避免每项一次 findUnique 的 N+1 查询。
+   */
+  async getPrivateUrlsByAssetIds(
+    assetIds: string[],
+    expiresSeconds: number = this.privateUrlExpiresSeconds,
+  ): Promise<Map<string, string>> {
+    const ids = [...new Set(assetIds.filter(Boolean))];
+    if (ids.length === 0) return new Map();
+    const assets = await this.prisma.fileAsset.findMany({
+      where: { id: { in: ids }, status: FileAssetStatus.active },
+      select: { id: true, cosKey: true },
+    });
+    const entries = await Promise.all(
+      assets.map(async (asset) => {
+        const url = await this.getSignedDownloadUrl(asset.cosKey, expiresSeconds);
+        return [asset.id, url] as const;
+      }),
+    );
+    return new Map(entries);
+  }
+
   /** 获取资产的长效签名 URL（用于嵌入内容，7 天有效） */
   async getAssetLongLivedUrl(assetId: string) {
     const asset = await this.prisma.fileAsset.findUnique({ where: { id: assetId } });
