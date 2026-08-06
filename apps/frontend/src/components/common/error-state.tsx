@@ -1,4 +1,5 @@
 import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { cn } from '@/lib/cn'
@@ -11,11 +12,12 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({
-  title = '加载失败',
-  description = '请检查网络连接后重试',
+  title,
+  description,
   onRetry,
   className,
 }: ErrorStateProps) {
+  const { t } = useTranslation()
   return (
     <div className={cn('flex items-center justify-center p-8', className)}>
       <Card className="w-full max-w-sm text-center">
@@ -23,14 +25,14 @@ export function ErrorState({
           <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-destructive/10">
             <AlertTriangle className="size-6 text-destructive" data-icon="inline-start" />
           </div>
-          <CardTitle className="text-lg">{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
+          <CardTitle className="text-lg">{title ?? t('common.loadFailed')}</CardTitle>
+          <CardDescription>{description ?? t('common.networkRetryHint')}</CardDescription>
         </CardHeader>
         {onRetry && (
           <CardContent>
             <Button variant="outline" onClick={onRetry}>
               <RefreshCw className="mr-2 size-4" data-icon="inline-start" />
-              重试
+              {t('common.retry')}
             </Button>
           </CardContent>
         )}

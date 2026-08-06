@@ -98,7 +98,7 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps, onRepla
                             {record.practiceCount && record.practiceCount > 1 && (
                               <>
                                 <span>·</span>
-                                <span>练习 {record.practiceCount} 次</span>
+                                <span>{t('todayTask.practiceTimes', { count: record.practiceCount })}</span>
                               </>
                             )}
                           </div>

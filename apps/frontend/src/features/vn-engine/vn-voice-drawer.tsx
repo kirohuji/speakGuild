@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Drawer,
   DrawerContent,
@@ -65,6 +66,7 @@ type VoiceState =
 // Component
 // ---------------------------------------------------------------------------
 export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerProps) {
+  const { t } = useTranslation()
   const [voiceState, setVoiceState] = useState<VoiceState>({ status: 'idle' })
   const [lastAudioUrl, setLastAudioUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -181,11 +183,11 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
             setLastAudioUrl(result.audioUrl ?? null)
             setVoiceState({ status: 'done', text: transcribed })
           } else {
-            setError('未识别到语音内容，请重试')
+            setError(t('profile.placement.voiceNoContent'))
             setVoiceState({ status: 'idle' })
           }
         } catch {
-          setError('语音识别失败，请重试')
+          setError(t('profile.placement.voiceFailed'))
           setVoiceState({ status: 'idle' })
         }
       }
@@ -194,9 +196,9 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
       mr.start(200)
       setVoiceState({ status: 'recording', startedAt: Date.now() })
     } catch {
-      setError('无法访问麦克风，请检查权限设置')
+      setError(t('profile.placement.micDenied'))
     }
-  }, [cleanup])
+  }, [cleanup, t])
 
   const stopRecording = useCallback(() => {
     mediaRecorderRef.current?.stop()
@@ -237,17 +239,17 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
         setLastAudioUrl(result.audioUrl ?? null)
         setVoiceState({ status: 'done', text: transcribed })
       } else {
-        setError('未识别到语音内容')
+        setError(t('vnSettings.noVoiceDetected'))
         setVoiceState({ status: 'idle' })
       }
     } catch {
-      setError('语音识别失败')
+      setError(t('vnSettings.voiceRecognitionFailed'))
       setVoiceState({ status: 'idle' })
     }
 
     // 重置 input 以允许重复选同一个文件
     if (fileInputRef.current) fileInputRef.current.value = ''
-  }, [cleanup])
+  }, [cleanup, t])
 
   // ---- 确认使用 ----
   const confirmText = () => {
@@ -281,9 +283,9 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
         <DrawerHeader className="px-4 pb-2 pt-2 text-left">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <DrawerTitle className="text-sm font-semibold tracking-normal">语音输入</DrawerTitle>
+              <DrawerTitle className="text-sm font-semibold tracking-normal">{t('vnSettings.voiceInput')}</DrawerTitle>
               <p className="sr-only">
-                {isRecording ? '正在收音，讲完后点停止' : isDone ? '检查识别内容后发送' : '录音后自动转写成文字'}
+                {isRecording ? t('vnSettings.recordingHint') : isDone ? t('vnSettings.checkResultHint') : t('vnSettings.autoTranscribeHint')}
               </p>
             </div>
             <div className={cn(
@@ -296,7 +298,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
                 'size-1.5 rounded-full',
                 isRecording ? 'animate-pulse bg-rose-500' : isProcessing ? 'bg-primary' : isDone ? 'bg-emerald-500' : 'bg-muted-foreground/50',
               )} />
-              {isRecording ? fmt(elapsed) : isProcessing ? '识别中' : isDone ? '已识别' : '待录音'}
+              {isRecording ? fmt(elapsed) : isProcessing ? t('vnSettings.recognizing') : isDone ? t('vnSettings.recognized') : t('vnSettings.waitingRecord')}
             </div>
           </div>
         </DrawerHeader>
@@ -309,7 +311,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
             {isProcessing ? (
               <div className="flex h-9 items-center justify-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="size-4 animate-spin text-primary" />
-                正在识别语音…
+                {t('vnSettings.recognizingVoice')}
               </div>
             ) : isDone ? (
               <p className="text-sm font-medium leading-6 text-foreground">
@@ -318,10 +320,10 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
             ) : (
               <div className="flex h-9 flex-col items-center justify-center text-center">
                 <p className="text-sm font-medium text-foreground">
-                  {isRecording ? '正在聆听…' : '准备好后开始录音'}
+                  {isRecording ? t('vnSettings.listening') : t('vnSettings.readyToRecord')}
                 </p>
                 <p className="sr-only">
-                  {isRecording ? '声音会被保留用于回放' : '支持直接录音，也可以上传音频测试识别'}
+                  {isRecording ? t('vnSettings.soundKeptHint') : t('vnSettings.recordOrUploadHint')}
                 </p>
               </div>
             )}
@@ -342,8 +344,8 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
               {hasRecording && !isRecording && (
                 <button
                   type="button"
-                  aria-label={isPlaying ? '暂停回放' : '回放录音'}
-                  title={isPlaying ? '暂停回放' : '回放录音'}
+                  aria-label={isPlaying ? t('vnSettings.pausePlayback') : t('vnSettings.playbackRecording')}
+                  title={isPlaying ? t('vnSettings.pausePlayback') : t('vnSettings.playbackRecording')}
                   onClick={togglePlayback}
                   className={cn(
                     'flex size-9 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground ring-1 ring-border/45 transition-all hover:bg-muted hover:text-foreground active:scale-95',
@@ -395,8 +397,8 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
                   />
                   <button
                     type="button"
-                    aria-label="上传音频测试"
-                    title="上传音频文件测试 STT"
+                    aria-label={t('vnSettings.uploadAudioTest')}
+                    title={t('vnSettings.uploadAudioFileStt')}
                     disabled={isProcessing}
                     onClick={() => fileInputRef.current?.click()}
                     className="flex size-9 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground ring-1 ring-border/45 transition-all hover:bg-muted hover:text-primary active:scale-95 disabled:opacity-30"
@@ -417,7 +419,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
                 size="lg"
               >
                 <Send className="size-4" />
-                使用这段文字
+                {t('vnSettings.useThisText')}
               </Button>
             )}
           </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Bell, CheckCheck, MailOpen, Mail, Inbox, Clock, ArrowRight, ArrowLeft, User, Volume2, CheckCircle2 } from 'lucide-react'
 import { Virtuoso } from 'react-virtuoso'
 import { Button } from '@/components/ui/button'
@@ -18,13 +19,13 @@ import { useIsMobile } from '@/hooks/use-mobile'
 
 type TabValue = 'all' | 'unread' | 'read'
 
-const tabConfig: { value: TabValue; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { value: 'all', label: '全部', icon: Inbox },
-  { value: 'unread', label: '未读', icon: Mail },
-  { value: 'read', label: '已读', icon: MailOpen },
+const TAB_CONFIG: { value: TabValue; labelKey: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { value: 'all', labelKey: 'notification.tabAll', icon: Inbox },
+  { value: 'unread', labelKey: 'notification.tabUnread', icon: Mail },
+  { value: 'read', labelKey: 'notification.tabRead', icon: MailOpen },
 ]
 
-function formatRelativeTime(dateStr: string): string {
+function formatRelativeTime(dateStr: string, t: (key: string, opts?: Record<string, unknown>) => string, locale: string): string {
   const now = Date.now()
   const date = new Date(dateStr).getTime()
   const diffMs = now - date
@@ -32,11 +33,11 @@ function formatRelativeTime(dateStr: string): string {
   const diffHour = Math.floor(diffMs / 3600000)
   const diffDay = Math.floor(diffMs / 86400000)
 
-  if (diffMin < 1) return '刚刚'
-  if (diffMin < 60) return `${diffMin}分钟前`
-  if (diffHour < 24) return `${diffHour}小时前`
-  if (diffDay < 7) return `${diffDay}天前`
-  return new Date(dateStr).toLocaleDateString('zh-CN', {
+  if (diffMin < 1) return t('notification.justNow')
+  if (diffMin < 60) return t('notification.minutesAgo', { count: diffMin })
+  if (diffHour < 24) return t('notification.hoursAgo', { count: diffHour })
+  if (diffDay < 7) return t('notification.daysAgo', { count: diffDay })
+  return new Date(dateStr).toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
   })
@@ -45,9 +46,13 @@ function formatRelativeTime(dateStr: string): string {
 function NotificationItemRow({
   item,
   onClick,
+  t,
+  locale,
 }: {
   item: NotificationItem
   onClick: () => void
+  t: (key: string, opts?: Record<string, unknown>) => string
+  locale: string
 }) {
   return (
     <button
@@ -96,7 +101,7 @@ function NotificationItemRow({
             {item.title}
           </p>
           <span className="flex-shrink-0 text-[10px] text-muted-foreground/50">
-            {formatRelativeTime(item.createdAt)}
+            {formatRelativeTime(item.createdAt, t, locale)}
           </span>
         </div>
         <p className="mt-1 text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed">
@@ -115,6 +120,7 @@ function NotificationList({
   tab: TabValue
   onOpenDetail: (item: NotificationItem) => void
 }) {
+  const { t, i18n } = useTranslation()
   const [list, setList] = useState<NotificationItem[]>([])
   const [loading, setLoading] = useState(true)
   const [hasMore, setHasMore] = useState(true)
@@ -225,23 +231,23 @@ function NotificationList({
             )}
           </div>
           <p className="text-sm font-medium text-muted-foreground">
-            {tab === 'unread' ? '暂无未读通知' : tab === 'read' ? '暂无已读通知' : '暂无通知'}
+            {tab === 'unread' ? t('notification.emptyUnread') : tab === 'read' ? t('notification.emptyRead') : t('notification.empty')}
           </p>
           <p className="mt-1 text-xs text-muted-foreground/50">
-            {tab === 'unread' ? '新通知会在这里显示' : '通知会出现在这里'}
+            {tab === 'unread' ? t('notification.emptyUnreadDesc') : t('notification.emptyAllDesc')}
           </p>
         </div>
       )
     }
     return null
-  }, [loading, list.length, tab])
+  }, [loading, list.length, tab, t])
 
   return (
     <div className="flex flex-col h-full">
       {tab !== 'read' && hasUnread && (
         <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-b border-border/30">
           <span className="text-xs text-muted-foreground">
-            {list.filter((n) => !n.isRead).length} 条未读
+            {t('notification.unreadCount', { count: list.filter((n) => !n.isRead).length })}
           </span>
           <Button
             variant="ghost"
@@ -250,7 +256,7 @@ function NotificationList({
             onClick={handleMarkAll}
           >
             <CheckCheck className="h-3.5 w-3.5" />
-            全部已读
+            {t('notification.markAllRead')}
           </Button>
         </div>
       )}
@@ -272,6 +278,8 @@ function NotificationList({
               <NotificationItemRow
                 item={list[index]}
                 onClick={() => onOpenDetail(list[index])}
+                t={t}
+                locale={i18n.language}
               />
             </div>
           )}
@@ -291,9 +299,10 @@ function NotificationDetailDialog({
   open: boolean
   onClose: () => void
 }) {
+  const { t, i18n } = useTranslation()
   if (!item) return null
 
-  const formattedDate = new Date(item.createdAt).toLocaleString('zh-CN', {
+  const formattedDate = new Date(item.createdAt).toLocaleString(i18n.language, {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -305,7 +314,7 @@ function NotificationDetailDialog({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-5xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="flex-shrink-0 px-5 pt-4 pb-0">
-          <DialogTitle className="sr-only">通知详情</DialogTitle>
+          <DialogTitle className="sr-only">{t('notification.detailTitle')}</DialogTitle>
           <DialogDescription className="sr-only">{item.title}</DialogDescription>
         </DialogHeader>
 
@@ -326,7 +335,7 @@ function NotificationDetailDialog({
                   ) : (
                     <User className="h-3 w-3" />
                   )}
-                  {item.type === 'broadcast' ? '系统广播' : '定向通知'}
+                  {item.type === 'broadcast' ? t('notification.typeBroadcast') : t('notification.typeDirect')}
                 </Badge>
                 <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground/60">
                   <Clock className="h-3 w-3" />
@@ -335,7 +344,7 @@ function NotificationDetailDialog({
                 {item.isRead && (
                   <span className="inline-flex items-center gap-1 text-[11px] text-primary/70">
                     <CheckCircle2 className="h-3 w-3" />
-                    已读
+                    {t('notification.read')}
                   </span>
                 )}
               </div>
@@ -352,10 +361,10 @@ function NotificationDetailDialog({
             <div className="mt-4 flex items-center gap-2 rounded-lg bg-primary/[0.03] px-3 py-2.5">
               <CheckCircle2 className="h-4 w-4 text-primary/60" />
               <span className="text-xs text-muted-foreground/70">
-                已于 {new Date(item.readAt).toLocaleTimeString('zh-CN', {
+                {t('notification.readAt', { time: new Date(item.readAt).toLocaleTimeString(i18n.language, {
                   hour: '2-digit',
                   minute: '2-digit',
-                })} 阅读
+                }) })}
               </span>
             </div>
           )}
@@ -366,6 +375,7 @@ function NotificationDetailDialog({
 }
 
 export function NotificationBell({ className }: { className?: string } = {}) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<TabValue>('all')
   const [detailItem, setDetailItem] = useState<NotificationItem | null>(null)
@@ -412,11 +422,11 @@ export function NotificationBell({ className }: { className?: string } = {}) {
         >
           <DialogHeader className="flex-shrink-0 px-5 pt-4 pb-0">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-base font-semibold">通知中心</DialogTitle>
+              <DialogTitle className="text-base font-semibold">{t('notification.title')}</DialogTitle>
               {unreadCount > 0 && (
                 <Badge variant="secondary" className="h-5 gap-1 px-2 text-[10px] font-normal">
                   <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
-                  {unreadCount} 条未读
+                  {t('notification.unreadCount', { count: unreadCount })}
                 </Badge>
               )}
             </div>
@@ -429,20 +439,20 @@ export function NotificationBell({ className }: { className?: string } = {}) {
           >
             <div className="flex-shrink-0 px-5 pt-3 pb-2">
               <TabsList className="h-9 w-full bg-muted/60 p-0.5">
-                {tabConfig.map(({ value, label, icon: Icon }) => (
+                {TAB_CONFIG.map(({ value, labelKey, icon: Icon }) => (
                   <TabsTrigger
                     key={value}
                     value={value}
                     className="flex-1 gap-1.5 text-xs data-[state=active]:shadow-sm"
                   >
                     <Icon className="h-3.5 w-3.5" />
-                    {label}
+                    {t(labelKey)}
                   </TabsTrigger>
                 ))}
               </TabsList>
             </div>
 
-            {tabConfig.map(({ value }) => (
+            {TAB_CONFIG.map(({ value }) => (
               <TabsContent key={value} value={value} className="flex-1 overflow-hidden mt-0 data-[state=active]:flex data-[state=active]:flex-col">
                 <NotificationList
                   tab={value}

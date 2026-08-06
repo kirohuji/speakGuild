@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
@@ -27,6 +28,7 @@ function toNotificationItem(item: SpecialNotification | null): NotificationItem 
 }
 
 export function SpecialBanner() {
+  const { t } = useTranslation()
   // 数据来源：home.store（首页统一管理）
   const storeNotifs = useHomeStore((s) => s.specialNotifications)
   const fetchUnreadCount = useNotificationStore((state) => state.fetchUnreadCount)
@@ -157,7 +159,7 @@ export function SpecialBanner() {
               type="button"
               onClick={dismissAndMarkRead}
               className="flex size-7 items-center justify-center rounded-full bg-white text-muted-foreground/60 shadow-sm transition-colors hover:bg-gray-100"
-              aria-label="关闭"
+              aria-label={t('common.close')}
             >
               <X className="size-4" />
             </button>

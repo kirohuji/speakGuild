@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { authClient, clearBearerToken } from '@/features/auth/client'
 import { revokeOtherSessions } from '@/features/auth/api'
 import { useConfigStore } from '@/stores/config.store'
@@ -179,6 +180,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation()
   const cachedSessionRef = useRef<SessionPayload>(readCachedSession())
   const [session, setSession] = useState<Session | null>(() => cachedSessionRef.current)
   const [isLoading, setIsLoading] = useState(() => !cachedSessionRef.current)
@@ -303,10 +305,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await authClient.signIn.email({ email, password })
       const nextSession = await refreshSession({ revokeOtherSessions: true, allowCacheFallback: false })
       if (!nextSession?.user?.id) {
-        throw new Error('登录失败，请检查账号或密码')
+        throw new Error(t('auth.loginFailedCheckCredentials'))
       }
     } catch (err: any) {
-      const msg = err?.data?.message || err?.message || '登录失败，请稍后重试'
+      const msg = err?.data?.message || err?.message || t('auth.loginFailed')
       setIsLoading(false)
       throw new Error(msg)
     }
@@ -318,7 +320,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await authClient.signUp.email({ email, password, name })
       await refreshSession({ allowCacheFallback: false })
     } catch (err: any) {
-      const msg = err?.data?.message || err?.message || '注册失败，请稍后重试'
+      const msg = err?.data?.message || err?.message || t('auth.registerFailedRetry')
       setIsLoading(false)
       throw new Error(msg)
     }

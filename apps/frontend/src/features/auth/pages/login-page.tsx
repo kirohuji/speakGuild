@@ -158,7 +158,7 @@ export function LoginPage() {
                       setPassword('')
                     }}
                     className="absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    aria-label="清除账号"
+                    aria-label={t('auth.clearAccount')}
                   >
                     <X className="size-4" />
                   </button>
@@ -181,7 +181,7 @@ export function LoginPage() {
                     type="button"
                     onClick={() => setPassword('')}
                     className="absolute right-9 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    aria-label="清除密码"
+                    aria-label={t('auth.clearPassword')}
                   >
                     <X className="size-4" />
                   </button>
@@ -190,7 +190,7 @@ export function LoginPage() {
                   type="button"
                   onClick={() => setShowPassword((current) => !current)}
                   className="absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  aria-label={showPassword ? '隐藏密码' : '显示密码'}
+                  aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                 >
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>

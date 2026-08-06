@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -43,12 +44,13 @@ export function ConfigForm({
   schema,
   defaultValues,
   onSubmit,
-  submitLabel = '提交',
+  submitLabel,
   isLoading = false,
   className,
   onCancel,
-  cancelLabel = '取消',
+  cancelLabel,
 }: ConfigFormProps) {
+  const { t } = useTranslation()
   const {
     register,
     handleSubmit,
@@ -94,7 +96,7 @@ export function ConfigForm({
                   disabled={field.disabled || isLoading}
                 >
                   <SelectItem value="" disabled>
-                    {field.placeholder || `请选择${field.label}`}
+                    {field.placeholder || t('common.selectLabel', { label: field.label })}
                   </SelectItem>
                   {field.options?.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
@@ -136,7 +138,7 @@ export function ConfigForm({
 
           {errors[field.name] && (
             <p className="text-xs text-destructive">
-              {(errors[field.name] as any)?.message || '该字段无效'}
+              {(errors[field.name] as any)?.message || t('common.invalidField')}
             </p>
           )}
         </div>
@@ -145,11 +147,11 @@ export function ConfigForm({
       <div className="flex gap-2 pt-2">
         {onCancel && (
           <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading} className="flex-1">
-            {cancelLabel}
+            {cancelLabel ?? t('common.cancel')}
           </Button>
         )}
         <Button type="submit" disabled={isLoading} className={onCancel ? 'flex-1' : 'w-full'}>
-          {isLoading ? '处理中...' : submitLabel}
+          {isLoading ? t('common.processing') : (submitLabel ?? t('common.submit'))}
         </Button>
       </div>
     </form>

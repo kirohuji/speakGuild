@@ -16,21 +16,21 @@ import { getCategoryIcon } from './category-icons'
 import { UnitCover } from './unit-cover'
 import { useLearningStore } from '@/stores/learning.store'
 
-function packageTypeLabel(type?: LearningUnitSummary['packageType']) {
-  if (type === 'exam') return '考试'
-  if (type === 'story') return '故事'
-  if (type === 'course') return '课程'
-  if (type === 'foundation') return '零基础'
-  return '日常'
+function packageTypeLabel(t: (key: string) => string, type?: LearningUnitSummary['packageType']) {
+  if (type === 'exam') return t('learning.packageTypeExam')
+  if (type === 'story') return t('learning.packageTypeStory')
+  if (type === 'course') return t('learning.packageTypeCourse')
+  if (type === 'foundation') return t('learning.packageTypeFoundation')
+  return t('learning.packageTypeDaily')
 }
 
-function contentModeLabel(mode?: LearningUnitSummary['contentMode']) {
-  if (mode === 'writing') return '写作'
-  if (mode === 'reading') return '阅读'
-  if (mode === 'listening') return '听力'
-  if (mode === 'novel') return '小说'
-  if (mode === 'story') return '剧情'
-  return '练习'
+function contentModeLabel(t: (key: string) => string, mode?: LearningUnitSummary['contentMode']) {
+  if (mode === 'writing') return t('learning.contentModeWriting')
+  if (mode === 'reading') return t('learning.contentModeReading')
+  if (mode === 'listening') return t('learning.contentModeListening')
+  if (mode === 'novel') return t('learning.contentModeNovel')
+  if (mode === 'story') return t('learning.contentModeStory')
+  return t('learning.contentModePractice')
 }
 
 interface Props {
@@ -104,8 +104,8 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
             {unit.topicCount}{t('learning.topics')} · {unit.vocabCount}{t('learning.vocab')} · {unit.chunkCount}{t('learning.chunks')}
           </p>
           <div className="mt-2 flex items-center gap-1.5">
-            <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">{packageTypeLabel(unit.packageType)}</Badge>
-            <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{contentModeLabel(unit.contentMode)}</Badge>
+            <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">{packageTypeLabel(t, unit.packageType)}</Badge>
+            <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{contentModeLabel(t, unit.contentMode)}</Badge>
             {unit.categoryName && <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{unit.categoryName}</Badge>}
             {isJoined && (
               <Badge variant="outline" className="h-5 rounded-full border-emerald-400/50 px-2 text-[10px] text-emerald-600 dark:text-emerald-400">
@@ -146,8 +146,8 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
               <UnitCover unit={unit} icon={Icon} className="size-20" />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Badge variant="outline" className="rounded-full text-[10px]">{packageTypeLabel(unit.packageType)}</Badge>
-                  <Badge variant="secondary" className="rounded-full text-[10px]">{contentModeLabel(unit.contentMode)}</Badge>
+                  <Badge variant="outline" className="rounded-full text-[10px]">{packageTypeLabel(t, unit.packageType)}</Badge>
+                  <Badge variant="secondary" className="rounded-full text-[10px]">{contentModeLabel(t, unit.contentMode)}</Badge>
                   {unit.categoryName && <Badge variant="secondary" className="rounded-full text-[10px]">{unit.categoryName}</Badge>}
                   {(!unit.isUnlocked || unit.isLocked) && <Badge variant="outline" className="rounded-full text-[10px]">{t('learning.locked')}</Badge>}
                 </div>

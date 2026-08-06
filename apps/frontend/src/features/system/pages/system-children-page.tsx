@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import ChildrenPrivacyContent from '../content/privacy-children.md?raw'
 import { MarkdownContent } from '../components/markdown-content'
 import { SystemContentLayout } from '../components/system-content-layout'
@@ -6,6 +7,7 @@ import { useLayoutStore } from '@/stores/layout.store'
 import { useIsMobile } from '@/hooks/use-mobile'
 
 export function SystemChildrenPrivacyPage() {
+  const { t } = useTranslation()
   const isMobile = useIsMobile()
   const setBottomNavVisible = useLayoutStore((s) => s.setBottomNavVisible)
 
@@ -17,7 +19,7 @@ export function SystemChildrenPrivacyPage() {
   }, [isMobile, setBottomNavVisible])
 
   return (
-    <SystemContentLayout title="儿童个人信息保护规则">
+    <SystemContentLayout title={t('system.children')}>
       <MarkdownContent content={ChildrenPrivacyContent} />
     </SystemContentLayout>
   )

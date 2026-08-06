@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlarmClock, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,11 +18,11 @@ function formatTime(hour: number, minute: number) {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
 }
 
-function meridiemLabel(hour: number) {
-  if (hour < 6) return '凌晨'
-  if (hour < 12) return '上午'
-  if (hour < 18) return '下午'
-  return '晚上'
+function meridiemLabel(t: (key: string) => string, hour: number) {
+  if (hour < 6) return t('profile.timeEarlyMorning')
+  if (hour < 12) return t('profile.timeMorning')
+  if (hour < 18) return t('profile.timeAfternoon')
+  return t('profile.timeEvening')
 }
 
 function minuteOptions(selectedMinute: number) {
@@ -82,6 +83,7 @@ export function AlarmTimePicker({
   onChange: (value: string) => void
   disabled?: boolean
 }) {
+  const { t } = useTranslation()
   const parsed = useMemo(() => parseTime(value), [value])
   const [open, setOpen] = useState(false)
   const [draftHour, setDraftHour] = useState(parsed.hour)
@@ -108,7 +110,7 @@ export function AlarmTimePicker({
         disabled={disabled}
         onClick={openPicker}
         className="inline-flex h-9 min-w-28 items-center justify-center gap-2 rounded-full bg-muted px-3 text-sm font-semibold tabular-nums text-foreground transition-colors active:bg-muted/70 disabled:opacity-50"
-        aria-label="设置学习提醒时间"
+        aria-label={t('profile.reminderTimeAria')}
       >
         <AlarmClock className="size-4 text-muted-foreground" />
         {display}
@@ -117,9 +119,9 @@ export function AlarmTimePicker({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="w-[90vw] max-w-xs rounded-2xl p-5">
           <DialogHeader className="pr-8 text-left">
-            <DialogTitle className="text-base">学习提醒时间</DialogTitle>
+            <DialogTitle className="text-base">{t('profile.reminderTime')}</DialogTitle>
             <DialogDescription>
-              {meridiemLabel(draftHour)} {formatTime(draftHour, draftMinute)} 提醒未完成学习
+              {t('profile.reminderTimeDesc', { meridiem: meridiemLabel(t, draftHour), time: formatTime(draftHour, draftMinute) })}
             </DialogDescription>
           </DialogHeader>
 
@@ -129,14 +131,14 @@ export function AlarmTimePicker({
             </div>
             <div className="flex gap-3">
               <TimeColumn
-                label="小时"
+                label={t('profile.hourLabel')}
                 values={Array.from({ length: 24 }, (_, index) => index)}
                 value={draftHour}
                 format={(option) => String(option).padStart(2, '0')}
                 onChange={setDraftHour}
               />
               <TimeColumn
-                label="分钟"
+                label={t('profile.minuteLabel')}
                 values={minutes}
                 value={draftMinute}
                 format={(option) => String(option).padStart(2, '0')}
@@ -147,11 +149,11 @@ export function AlarmTimePicker({
 
           <DialogFooter className="flex-row justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-              取消
+              {t('common.cancel')}
             </Button>
             <Button type="button" onClick={commit}>
               <Check data-icon="inline-start" />
-              完成
+              {t('common.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -19,12 +19,12 @@ interface Props {
   excludePackageType?: LearningPackageType
 }
 
-const PACKAGE_TYPE_TABS: Array<{ id: LearningPackageType; label: string }> = [
-  { id: 'daily', label: '日常' },
-  { id: 'exam', label: '考试' },
-  { id: 'story', label: '故事' },
-  { id: 'course', label: '课程' },
-  { id: 'foundation', label: '零基础' },
+const PACKAGE_TYPE_TABS: Array<{ id: LearningPackageType; labelKey: string }> = [
+  { id: 'daily', labelKey: 'learning.packageTypeDaily' },
+  { id: 'exam', labelKey: 'learning.packageTypeExam' },
+  { id: 'story', labelKey: 'learning.packageTypeStory' },
+  { id: 'course', labelKey: 'learning.packageTypeCourse' },
+  { id: 'foundation', labelKey: 'learning.packageTypeFoundation' },
 ]
 
 type PackageTypeFilter = LearningPackageType | 'all'
@@ -121,7 +121,7 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
       </div>
       <div className="scrollbar-hide mx-4 overflow-x-auto">
         <div className="flex w-max gap-2 pb-1">
-          {[{ id: 'all' as const, label: t('learning.all') }, ...PACKAGE_TYPE_TABS.filter((tab) => tab.id !== excludePackageType)].map((tab) => (
+          {[{ id: 'all' as const, labelKey: 'learning.all' }, ...PACKAGE_TYPE_TABS.filter((tab) => tab.id !== excludePackageType)].map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTypeChange(tab.id)}
@@ -132,7 +132,7 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
                   : 'bg-muted text-muted-foreground',
               )}
             >
-              {tab.label}
+              {t(tab.labelKey)}
             </button>
           ))}
         </div>

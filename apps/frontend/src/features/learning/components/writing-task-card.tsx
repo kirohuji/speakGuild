@@ -1,4 +1,5 @@
 import { ChevronRight, FilePenLine } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { Button } from '@/components/ui/button'
 
@@ -25,18 +26,19 @@ export function WritingTaskCard({
   hasDraft = false,
   onStart,
 }: Props) {
+  const { t } = useTranslation()
   const question = questionMarkdown?.trim()
 
   return (
-    <section className="rounded-lg bg-accent/[0.06] p-4" aria-label="写作题目">
+    <section className="rounded-lg bg-accent/[0.06] p-4" aria-label={t('learning.writingTaskTitle')}>
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <FilePenLine className="size-4 shrink-0 text-accent" />
-          <p className="text-sm font-semibold text-foreground">写作题目</p>
+          <p className="text-sm font-semibold text-foreground">{t('learning.writingTaskTitle')}</p>
         </div>
         <span className="text-right text-xs leading-5 text-muted-foreground">
-          {durationMinutes ? `${durationMinutes} 分钟 · ` : ''}{genre || '自由写作'}
-          {minWords ? ` · ${minWords}–${maxWords ?? '∞'} 词` : ''}
+          {durationMinutes ? `${t('learning.minutesWithCount', { count: durationMinutes })} · ` : ''}{genre || t('learning.freeWriting')}
+          {minWords ? ` · ${t('learning.wordRange', { min: minWords, max: maxWords ?? '∞' })}` : ''}
         </span>
       </div>
 
@@ -47,7 +49,7 @@ export function WritingTaskCard({
         />
       ) : (
         promptEn?.trim() || promptZh?.trim() ? null : (
-          <p className="text-sm leading-6 text-muted-foreground">暂未配置题目正文。</p>
+          <p className="text-sm leading-6 text-muted-foreground">{t('learning.noWritingQuestion')}</p>
         )
       )}
 
@@ -60,7 +62,7 @@ export function WritingTaskCard({
 
       {onStart && (
         <Button className="mt-4 w-full bg-accent text-accent-foreground hover:bg-accent/85" size="lg" onClick={onStart}>
-          {hasDraft ? '继续写作' : '开始写作'}<ChevronRight className="size-4" />
+          {hasDraft ? t('learning.continueWriting') : t('learning.startWriting')}<ChevronRight className="size-4" />
         </Button>
       )}
     </section>

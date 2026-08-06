@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { FileAudio, Keyboard, Loader2, Mic, Send, Square } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { transcribeVoiceInput } from '@/lib/local-stt/local-stt.service'
@@ -18,21 +19,21 @@ function pickMimeType() {
   )
 }
 
-function getMicStartErrorMessage(error: unknown) {
+function getMicStartErrorMessage(error: unknown, t: (key: string) => string) {
   if (typeof window !== 'undefined' && window.isSecureContext === false) {
-    return '当前页面不是安全环境，浏览器会禁止麦克风'
+    return t('vnSettings.micInsecureContext')
   }
   if (!navigator.mediaDevices?.getUserMedia) {
-    return '当前 WebView 不支持麦克风录音'
+    return t('vnSettings.micUnavailable')
   }
   if (typeof MediaRecorder === 'undefined') {
-    return '当前 WebView 不支持 MediaRecorder 录音'
+    return t('vnSettings.micRecorderUnavailable')
   }
   const name = error instanceof DOMException ? error.name : ''
   if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-    return '无法访问麦克风，请检查权限设置'
+    return t('profile.placement.micDenied')
   }
-  return '麦克风启动失败，请稍后重试'
+  return t('vnSettings.micStartFailed')
 }
 
 function formatElapsed(ms: number) {
@@ -58,10 +59,11 @@ interface VnInputPanelProps {
 
 export function VnInputPanel({
   disabled,
-  placeholder = '输入文字...',
+  placeholder,
   onSubmit,
   variant = 'default',
 }: VnInputPanelProps) {
+  const { t } = useTranslation()
   // ── 模式 ──
   const [mode, setMode] = useState<InputMode>('voice')
 
@@ -92,6 +94,7 @@ export function VnInputPanel({
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const isDisabled = disabled || submitting
+  const placeholderText = placeholder ?? t('vnSettings.inputPlaceholder')
 
   // ── 清理录音资源 ──
   const cleanupRecording = useCallback(() => {
@@ -118,14 +121,14 @@ export function VnInputPanel({
         setRecordedAudioUrl(result.audioUrl ?? fallbackAudioUrl)
         setVoiceStatus('done')
       } else {
-        setVoiceError('未识别到语音内容，请重试')
+        setVoiceError(t('profile.placement.voiceNoContent'))
         setVoiceStatus('idle')
       }
     } catch {
-      setVoiceError('语音识别失败，请重试')
+      setVoiceError(t('profile.placement.voiceFailed'))
       setVoiceStatus('idle')
     }
-  }, [])
+  }, [t])
 
   // 卸载清理
   useEffect(() => () => cleanupRecording(), [cleanupRecording])
@@ -214,9 +217,9 @@ export function VnInputPanel({
       setVoiceStatus('recording')
     } catch (error) {
       console.warn('[VN voice] microphone start failed:', error)
-      setVoiceError(getMicStartErrorMessage(error))
+      setVoiceError(getMicStartErrorMessage(error, t))
     }
-  }, [cleanupRecording, localSttEnabled, nativeSpeechRecognitionEnabled, processAudioBlob])
+  }, [cleanupRecording, localSttEnabled, nativeSpeechRecognitionEnabled, processAudioBlob, t])
 
   // ── 停止录音 ──
   const stopRecording = useCallback(async () => {
@@ -234,7 +237,7 @@ export function VnInputPanel({
             setRecordedAudioUrl(null)
             setVoiceStatus('done')
           } else {
-            setVoiceError('未识别到语音内容，请重试')
+            setVoiceError(t('profile.placement.voiceNoContent'))
             setVoiceStatus('idle')
           }
           return
@@ -247,7 +250,7 @@ export function VnInputPanel({
         localAudioUrlRef.current = result.playbackUrl
         await processAudioBlob(result.blob, result.filename, result.playbackUrl)
       } catch {
-        setVoiceError('语音识别失败，请重试')
+        setVoiceError(t('profile.placement.voiceFailed'))
         setVoiceStatus('idle')
       }
       return
@@ -257,7 +260,7 @@ export function VnInputPanel({
       mediaRecorderRef.current.stop()
       mediaRecorderRef.current = null
     }
-  }, [processAudioBlob])
+  }, [processAudioBlob, t])
 
   // ── 重置语音状态 ──
   const resetVoice = useCallback(() => {
@@ -361,17 +364,17 @@ export function VnInputPanel({
         setRecordedAudioUrl(result.audioUrl ?? localAudioUrlRef.current)
         setVoiceStatus('done')
       } else {
-        setVoiceError('未识别到语音内容')
+        setVoiceError(t('vnSettings.noVoiceDetected'))
         setVoiceStatus('idle')
       }
     } catch {
-      setVoiceError('语音识别失败')
+      setVoiceError(t('vnSettings.voiceRecognitionFailed'))
       setVoiceStatus('idle')
     }
 
     // 重置 input 以允许重复选同一个文件
     if (fileInputRef.current) fileInputRef.current.value = ''
-  }, [cleanupRecording])
+  }, [cleanupRecording, t])
 
   // ── 切换模式时重置语音 ──
   const switchToText = useCallback(() => {
@@ -416,7 +419,7 @@ export function VnInputPanel({
                   disabled={isDisabled}
                   onClick={(e) => { e.stopPropagation(); switchToText() }}
                   className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
-                  aria-label="切换到文字输入"
+                  aria-label={t('vnSettings.switchToText')}
                 >
                   <Keyboard className="size-4" />
                 </button>
@@ -443,7 +446,7 @@ export function VnInputPanel({
                 >
                   <Mic className="size-5" />
                   <span className="text-sm font-medium">
-                    {voiceError || '点击录音'}
+                    {voiceError || t('vnSettings.tapToRecord')}
                   </span>
                 </button>
 
@@ -452,8 +455,8 @@ export function VnInputPanel({
                   disabled={isDisabled}
                   onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click() }}
                   className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
-                  aria-label="上传音频测试"
-                  title="上传音频测试 STT（临时）"
+                  aria-label={t('vnSettings.uploadAudioTest')}
+                  title={t('vnSettings.uploadAudioTestTitle')}
                 >
                   <FileAudio className="size-4" />
                 </button>
@@ -486,7 +489,7 @@ export function VnInputPanel({
                     type="button"
                     onClick={handleStopRecording}
                     className="flex size-8 shrink-0 items-center justify-center rounded-full bg-rose-500 text-white transition-transform active:scale-90"
-                    aria-label="停止录音"
+                    aria-label={t('voice.stopRecording')}
                   >
                     <Square className="size-3.5 fill-current" />
                   </button>
@@ -506,7 +509,7 @@ export function VnInputPanel({
                 </button>
                 <div className="flex h-full flex-1 items-center justify-center gap-2 rounded-xl bg-muted/75 ring-1 ring-border/45">
                   <Loader2 className="size-4 animate-spin text-primary" />
-                  <span className="text-sm text-muted-foreground">识别中…</span>
+                  <span className="text-sm text-muted-foreground">{t('vnSettings.recognizingPending')}</span>
                 </div>
               </>
             )}
@@ -519,7 +522,7 @@ export function VnInputPanel({
                   disabled={isDisabled}
                   onClick={(e) => { e.stopPropagation(); switchToText() }}
                   className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
-                  aria-label="切换到文字输入"
+                  aria-label={t('vnSettings.switchToText')}
                 >
                   <Keyboard className="size-4" />
                 </button>
@@ -529,7 +532,7 @@ export function VnInputPanel({
                   disabled={isDisabled}
                   onClick={(e) => { e.stopPropagation(); startRecording() }}
                   className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
-                  aria-label="重新录音"
+                  aria-label={t('voice.recordAgain')}
                 >
                   <Mic className="size-4" />
                 </button>
@@ -545,7 +548,7 @@ export function VnInputPanel({
                     style={{ height: TEXTAREA_MIN_HEIGHT }}
                     value={text}
                     disabled={isDisabled}
-                    placeholder="识别结果…"
+                    placeholder={t('vnSettings.recognitionResult')}
                     onChange={(event) => setText(event.target.value)}
                     onClick={(event) => event.stopPropagation()}
                     onKeyDown={(event) => {
@@ -579,7 +582,7 @@ export function VnInputPanel({
                   disabled={isDisabled || !text.trim()}
                   onClick={(e) => { e.stopPropagation(); submit() }}
                   className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-all hover:bg-primary/85 active:scale-95 disabled:bg-muted disabled:text-muted-foreground/50"
-                  aria-label="发送"
+                  aria-label={t('vnSettings.send')}
                 >
                   <Send className="size-4" />
                 </button>
@@ -596,7 +599,7 @@ export function VnInputPanel({
               disabled={isDisabled}
               onClick={(e) => { e.stopPropagation(); switchToVoice() }}
               className="flex size-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
-              aria-label="切换到语音输入"
+              aria-label={t('vnSettings.switchToVoice')}
             >
               <Mic className="size-4" />
             </button>
@@ -612,7 +615,7 @@ export function VnInputPanel({
                 style={{ height: TEXTAREA_MIN_HEIGHT }}
                 value={text}
                 disabled={isDisabled}
-                placeholder={placeholder}
+                placeholder={placeholderText}
                 onChange={(event) => setText(event.target.value)}
                 onClick={(event) => event.stopPropagation()}
                 onKeyDown={(event) => {
@@ -631,7 +634,7 @@ export function VnInputPanel({
               disabled={isDisabled || !text.trim()}
               onClick={(e) => { e.stopPropagation(); submit() }}
               className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-all hover:bg-primary/85 active:scale-95 disabled:bg-muted disabled:text-muted-foreground/50"
-              aria-label="发送"
+              aria-label={t('vnSettings.send')}
             >
               <Send className="size-4" />
             </button>

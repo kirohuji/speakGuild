@@ -1,4 +1,5 @@
 import { Component, type ReactNode, type ErrorInfo } from 'react'
+import i18n from '@/lib/i18n'
 import { ErrorState } from '@/components/common/error-state'
 
 interface ErrorBoundaryProps {
@@ -35,8 +36,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
       return (
         <ErrorState
-          title="页面出错了"
-          description={this.state.error?.message || '发生了未知错误，请重试'}
+          title={i18n.t('common.pageError')}
+          description={this.state.error?.message || i18n.t('common.unknownError')}
           onRetry={this.handleRetry}
           className="min-h-[60dvh]"
         />

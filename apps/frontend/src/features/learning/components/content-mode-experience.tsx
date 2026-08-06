@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { BookOpen, CheckCircle2, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -8,13 +9,14 @@ import { type UnitDetail } from '../api/learning-api'
 const PROGRESS_KEY = (unitId: string) => `manyu:novel-progress:${unitId}`
 
 export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   if (unit.contentMode === 'novel') {
     return <NovelEntryCard unit={unit} />
   }
 
-  const title = unit.contentMode === 'writing' ? '写作任务' : unit.contentMode === 'reading' ? '阅读与理解' : '精听训练'
+  const title = unit.contentMode === 'writing' ? t('learning.contentModeWritingTask') : unit.contentMode === 'reading' ? t('learning.contentModeReadingTask') : t('learning.contentModeListeningTask')
 
   return (
     <section className="mb-5">
@@ -23,10 +25,10 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
           <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">3</span>
           <div className="min-w-0">
             <h2 className="text-base font-semibold text-foreground">{title}</h2>
-            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">共 {unit.trainingTopics.length} 个话题，进度独立于今日任务</p>
+            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{t('learning.topicCountHint', { count: unit.trainingTopics.length })}</p>
           </div>
         </div>
-        <Badge variant="outline" className="shrink-0 rounded-full text-[11px]">{unit.trainingTopics.length} 个话题</Badge>
+        <Badge variant="outline" className="shrink-0 rounded-full text-[11px]">{t('learning.topicCount', { count: unit.trainingTopics.length })}</Badge>
       </div>
       <div className="space-y-2">
         {unit.trainingTopics.map((topic, index) => (
@@ -46,19 +48,20 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
             </Card>
           </button>
         ))}
-        {unit.trainingTopics.length === 0 && <div className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">后台还没有添加内容话题</div>}
+        {unit.trainingTopics.length === 0 && <div className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">{t('learning.noContentTopics')}</div>}
       </div>
     </section>
   )
 }
 
 function NovelEntryCard({ unit }: { unit: UnitDetail }) {
+  const { t } = useTranslation()
   const novel = unit.novelPackage
 
   if (!novel) {
     return (
       <section className="mb-5 rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-        后台还没有上传 EPUB
+        {t('learning.noEpub')}
       </section>
     )
   }
@@ -77,19 +80,19 @@ function NovelEntryCard({ unit }: { unit: UnitDetail }) {
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <BookOpen className="size-4 text-accent" />
-          <p className="text-sm font-semibold text-foreground">阅读</p>
+          <p className="text-sm font-semibold text-foreground">{t('learning.reading')}</p>
         </div>
         <span className="text-right text-xs leading-5 text-muted-foreground">
-          {tocCount > 0 && `${tocCount} 章`}
+          {tocCount > 0 && t('learning.chapterCount', { count: tocCount })}
           {tocCount > 0 && pct > 0 && ' · '}
-          {pct > 0 && `已读 ${pct}%`}
+          {pct > 0 && t('learning.readProgress', { pct })}
         </span>
       </div>
       <p className="text-lg font-semibold leading-7 text-foreground">{novel.metadata?.title ?? unit.title}</p>
-      <p className="mt-2 text-sm leading-6 text-muted-foreground">沉浸式英文阅读体验</p>
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('learning.immersiveReadingDesc')}</p>
       <Button size="lg" className="mt-4 w-full bg-accent text-accent-foreground hover:bg-accent/85" asChild>
         <Link to={`/learning/units/${unit.id}/read`}>
-          {pct > 0 ? '继续阅读' : '开始阅读'}<ChevronRight className="size-4" />
+          {pct > 0 ? t('learning.continueReading') : t('learning.startReading')}<ChevronRight className="size-4" />
         </Link>
       </Button>
     </section>

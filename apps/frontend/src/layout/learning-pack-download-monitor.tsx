@@ -145,16 +145,16 @@ export function LearningPackDownloadDrawer({
           if (!alive) return
           const progress = result.task?.progress ?? task.progress
           if (result.task?.status === 'completed' || (result.work.status === 'ready' && Boolean(result.work.videoUrl))) {
-            updateGlobalTask(task.id, { status: 'done', progress: 100, stepLabel: '视频已生成，可前往我的作品发布' })
+            updateGlobalTask(task.id, { status: 'done', progress: 100, stepLabel: t('learning.videoTaskReady') })
           } else if (result.work.status === 'failed' || result.task?.status === 'failed' || result.task?.status === 'canceled') {
             updateGlobalTask(task.id, {
               status: 'error',
               progress,
-              stepLabel: result.task?.status === 'canceled' ? '视频生成已取消' : '视频生成失败',
+              stepLabel: result.task?.status === 'canceled' ? t('learning.videoTaskCanceled') : t('scripts.videoGenerateFailed'),
               error: result.work.renderError || result.task?.errorMessage || undefined,
             })
           } else {
-            updateGlobalTask(task.id, { progress, stepLabel: result.task?.currentStep || '后台生成中' })
+            updateGlobalTask(task.id, { progress, stepLabel: result.task?.currentStep || t('learning.videoTaskGenerating') })
           }
         } catch (error) {
           console.warn('[task-center] video task status refresh failed', { workId, error })
@@ -167,7 +167,7 @@ export function LearningPackDownloadDrawer({
     // producing an immediate request loop that could lock up the drawer.
     const timer = window.setInterval(() => void refresh(), 15_000)
     return () => { alive = false; window.clearInterval(timer) }
-  }, [open, runningVideoTaskIds, runningVideoTasks, updateGlobalTask])
+  }, [open, runningVideoTaskIds, runningVideoTasks, updateGlobalTask, t])
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -175,10 +175,10 @@ export function LearningPackDownloadDrawer({
         <DrawerHeader className="shrink-0 px-4 pb-1 pt-2 text-left">
           <DrawerTitle className="flex items-center gap-2 text-base font-semibold">
             <ListChecks className="size-4 text-primary" />
-            任务中心
+            {t('learning.taskCenter')}
           </DrawerTitle>
           <p className="text-xs text-muted-foreground">
-            {totalTaskCount > 0 ? `${runningCount} 个任务进行中` : '当前没有进行中的任务'}
+            {totalTaskCount > 0 ? t('learning.tasksRunningCount', { count: runningCount }) : t('learning.noRunningTasks')}
           </p>
         </DrawerHeader>
 
@@ -186,7 +186,7 @@ export function LearningPackDownloadDrawer({
           {totalTaskCount === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center text-sm text-muted-foreground">
               <PackageOpen className="mb-3 size-8 opacity-45" />
-              暂无下载或视频生成任务
+              {t('learning.noDownloadOrVideoTasks')}
             </div>
           ) : (
             <div className="space-y-2">
@@ -204,12 +204,12 @@ export function LearningPackDownloadDrawer({
                         <span className="text-xs font-semibold tabular-nums">{Math.round(task.progress)}%</span>
                       </div>
                       <p className={cn('mt-1 truncate text-[11px]', task.status === 'error' ? 'text-destructive' : 'text-muted-foreground')}>
-                        视频生成 / {task.error || task.stepLabel}
+                        {t('learning.videoGeneration')} / {task.error || task.stepLabel}
                       </p>
                       <Progress value={task.progress} className="mt-2 h-1" />
                     </div>
                     {task.status === 'error' && (
-                      <button type="button" onClick={() => removeGlobalTask(task.id)} className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted" aria-label="移除失败任务">
+                      <button type="button" onClick={() => removeGlobalTask(task.id)} className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted" aria-label={t('learning.removeFailedTask')}>
                         <X className="size-3.5" />
                       </button>
                     )}
@@ -295,16 +295,16 @@ export function LearningPackDownloadDrawer({
                         {task.kind !== 'uninstall' && (task.status === 'queued' || task.status === 'downloading' || task.status === 'extracting') && (
                           <div className="grid grid-cols-2 gap-2 pt-1">
                             <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => pausePackTask(task.packId)}>
-                              <Pause className="size-3.5" />暂停
+                              <Pause className="size-3.5" />{t('learning.pause')}
                             </Button>
                             <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5 border-destructive/30 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => cancelPackTask(task.packId)}>
-                              <Ban className="size-3.5" />终止下载
+                              <Ban className="size-3.5" />{t('learning.terminateDownload')}
                             </Button>
                           </div>
                         )}
                         {task.kind !== 'uninstall' && task.status === 'paused' && (
                           <Button type="button" size="sm" variant="ghost" className="h-8 w-full gap-1.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => cancelPackTask(task.packId)}>
-                            <Ban className="size-3.5" />终止下载
+                            <Ban className="size-3.5" />{t('learning.terminateDownload')}
                           </Button>
                         )}
                       </div>

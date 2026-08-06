@@ -650,7 +650,7 @@ export function ExpressionLibraryPage() {
               )}
               {isWord && expr.createdAt && (
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {t('expressionLib.collectedAt', { date: new Date(expr.createdAt).toLocaleDateString('zh-CN') })}
+                  {t('expressionLib.collectedAt', { date: new Date(expr.createdAt).toLocaleDateString(i18n.language) })}
                 </p>
               )}
             </div>

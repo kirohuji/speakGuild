@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { motion, useInView } from 'motion/react'
 import {
@@ -14,44 +15,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useAuth } from '@/providers/auth-provider'
 import { FeedbackDialog } from '@/features/feedback/components/feedback-dialog'
-
-/* ═══════════════════════════════════════════════════════════════
-   数据
-   ═══════════════════════════════════════════════════════════════ */
-
-const whatWeHave = [
-  { icon: Mic, title: 'AI 口语纠错', desc: 'AI 实时分析语法、搭配与自然度，精准到词级反馈' },
-  { icon: BookOpen, title: 'Chunk 学习法', desc: '可迁移表达块，从「看得懂」到「说得出」的关键一步' },
-  { icon: Play, title: '剧本模式', desc: '在剧情任务中实战，用英语推动故事，而非机械练习' },
-]
-
-const features = [
-  { icon: Mic, title: 'AI 口语纠错', desc: 'AI 实时分析语法、搭配、自然度，精准定位每个可改进之处' },
-  { icon: BookOpen, title: 'Chunk 学习法', desc: '学习可迁移表达块，从"I\'m here to check in"到即学即用' },
-  { icon: Play, title: '剧本模式', desc: '在剧情任务中实战英语，入境、入住、认识室友——用英语推动故事' },
-  { icon: Globe, title: '沉浸探索', desc: '小地图自由选择地点和 NPC，像在国外生活一样进行英语互动' },
-  { icon: TrendingUp, title: '输出等级追踪', desc: '可视化你的口语进步曲线，清楚看到每个阶段的成长' },
-  { icon: Star, title: '表达库收藏', desc: '把 AI 纠错后的地道表达一键收藏，随时复习巩固' },
-]
-
-const steps = [
-  { num: '01', title: '选场景', desc: '从留学生活、日常社交、职场交流中选择你最需要的场景' },
-  { num: '02', title: '学 Chunk', desc: '掌握 5~8 个高频表达块，理解结构，触类旁通' },
-  { num: '03', title: '开口说', desc: '录音回答，AI 实时转写并给出精准的纠错反馈' },
-  { num: '04', title: '复述升级', desc: '用更地道的表达重新说一遍，保存进步，进入剧本实战' },
-]
-
-const audience = [
-  { icon: GraduationCap, title: '准备留学', desc: '雅思/托福备考中，想提前适应国外真实生活场景' },
-  { icon: Globe, title: '旅行爱好者', desc: '不想再依赖翻译软件，自信应对各种旅行场景' },
-  { icon: MessageSquare, title: '职场人士', desc: '工作中需要用英语交流，提升口语的自然度和流利度' },
-  { icon: Star, title: '英语学习者', desc: '学了多年但不敢开口，突破心理障碍真正开始说' },
-]
-
-const platforms = [
-  { icon: Smartphone, label: 'iOS' },
-  { icon: Smartphone, label: 'Android' },
-]
 
 /* ═══════════════════════════════════════════════════════════════
    动画工具
@@ -101,10 +64,45 @@ function HeroBg() {
    ═══════════════════════════════════════════════════════════════ */
 
 export function PortalPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { session } = useAuth()
   const isLoggedIn = !!session
   const [feedbackOpen, setFeedbackOpen] = useState(false)
+
+  const whatWeHave = [
+    { icon: Mic, title: t('portal.whatWeHave1Title'), desc: t('portal.whatWeHave1Desc') },
+    { icon: BookOpen, title: t('portal.whatWeHave2Title'), desc: t('portal.whatWeHave2Desc') },
+    { icon: Play, title: t('portal.whatWeHave3Title'), desc: t('portal.whatWeHave3Desc') },
+  ]
+
+  const features = [
+    { icon: Mic, title: t('portal.feature1Title'), desc: t('portal.feature1Desc') },
+    { icon: BookOpen, title: t('portal.feature2Title'), desc: t('portal.feature2Desc') },
+    { icon: Play, title: t('portal.feature3Title'), desc: t('portal.feature3Desc') },
+    { icon: Globe, title: t('portal.feature4Title'), desc: t('portal.feature4Desc') },
+    { icon: TrendingUp, title: t('portal.feature5Title'), desc: t('portal.feature5Desc') },
+    { icon: Star, title: t('portal.feature6Title'), desc: t('portal.feature6Desc') },
+  ]
+
+  const steps = [
+    { num: '01', title: t('portal.step1Title'), desc: t('portal.step1Desc') },
+    { num: '02', title: t('portal.step2Title'), desc: t('portal.step2Desc') },
+    { num: '03', title: t('portal.step3Title'), desc: t('portal.step3Desc') },
+    { num: '04', title: t('portal.step4Title'), desc: t('portal.step4Desc') },
+  ]
+
+  const audience = [
+    { icon: GraduationCap, title: t('portal.audience1Title'), desc: t('portal.audience1Desc') },
+    { icon: Globe, title: t('portal.audience2Title'), desc: t('portal.audience2Desc') },
+    { icon: MessageSquare, title: t('portal.audience3Title'), desc: t('portal.audience3Desc') },
+    { icon: Star, title: t('portal.audience4Title'), desc: t('portal.audience4Desc') },
+  ]
+
+  const platforms = [
+    { icon: Smartphone, label: 'iOS' },
+    { icon: Smartphone, label: 'Android' },
+  ]
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-background">
@@ -130,7 +128,7 @@ export function PortalPage() {
                 transition={{ duration: 0.6 }}
               >
                 <Badge variant="secondary" className="mb-6 text-[11px] font-medium tracking-wide uppercase">
-                  沉浸式英语输出训练
+                  {t('portal.heroBadge')}
                 </Badge>
 
                 {/* Logo */}
@@ -141,14 +139,14 @@ export function PortalPage() {
                 />
 
                 <h1 className="text-[2.5rem] sm:text-5xl lg:text-6xl font-extrabold leading-[1.06] tracking-tight text-foreground">
-                  英语，
+                  {t('portal.heroTitle1')}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">
-                    真正说出口
+                    {t('portal.heroTitle2')}
                   </span>
                 </h1>
 
                 <p className="mt-6 max-w-lg text-base sm:text-lg text-muted-foreground leading-relaxed">
-                  场景 + Chunk + AI 纠错 + 剧本。不是背单词、不是做选择题——从「看得懂」练到「说得出」。
+                  {t('portal.heroDesc')}
                 </p>
               </motion.div>
 
@@ -164,7 +162,7 @@ export function PortalPage() {
                   className="shadow-[0_4px_24px_rgba(0,46,95,0.16)]"
                   onClick={() => navigate(isLoggedIn ? '/' : '/auth/login')}
                 >
-                  {isLoggedIn ? '开始练习' : '免费体验'}
+                  {isLoggedIn ? t('portal.startPractice') : t('portal.startFree')}
                   <ArrowRight className="size-5" />
                 </Button>
                 <Button
@@ -173,7 +171,7 @@ export function PortalPage() {
                   onClick={() => navigate(isLoggedIn ? '/script' : '/auth/register')}
                 >
                   <Play className="size-5" />
-                  体验剧本模式
+                  {t('portal.tryScript')}
                 </Button>
               </motion.div>
 
@@ -185,7 +183,7 @@ export function PortalPage() {
                 className="mt-12"
               >
                 <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                  随时随地可用
+                  {t('portal.availableLabel')}
                 </p>
                 <div className="flex items-center gap-5">
                   {platforms.map(({ icon: Icon, label }) => (
@@ -214,8 +212,8 @@ export function PortalPage() {
                         <Mic className="size-6 text-primary" />
                       </div>
                       <div>
-                        <div className="text-sm font-bold text-foreground">场景口语练习</div>
-                        <div className="text-xs text-muted-foreground">AI 实时纠错反馈</div>
+                        <div className="text-sm font-bold text-foreground">{t('portal.scenePractice')}</div>
+                        <div className="text-xs text-muted-foreground">{t('portal.aiFeedback')}</div>
                       </div>
                     </div>
 
@@ -242,7 +240,7 @@ export function PortalPage() {
                   <div className="size-8 rounded-full bg-emerald-100 flex items-center justify-center">
                     <CheckCircle className="size-4 text-emerald-600" />
                   </div>
-                  <div className="text-xs font-medium text-foreground">AI 评分 92/100</div>
+                  <div className="text-xs font-medium text-foreground">{t('portal.scoreCard')}</div>
                 </div>
               </div>
             </motion.div>
@@ -263,11 +261,11 @@ export function PortalPage() {
             <Reveal>
               <div>
                 <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                  核心能力
+                  {t('portal.coreCapabilities')}
                 </p>
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight mb-10">
-                  What's in
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"> 漫语町</span>
+                  {t('portal.whatsInTitle1')}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"> {t('portal.whatsInTitle2')}</span>
                 </h2>
 
                 <div className="space-y-4">
@@ -297,13 +295,13 @@ export function PortalPage() {
             <Reveal delay={0.15}>
               <div className="hidden lg:block relative">
                 <div className="rounded-2xl border border-border/60 bg-card p-10 shadow-[0_4px_32px_rgba(0,0,0,0.04)]">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-8">学习数据</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-8">{t('portal.learningData')}</p>
                   <div className="space-y-8">
                     {[
-                      { label: '场景覆盖', value: '50+', pct: '100%' },
-                      { label: '核心 Chunk', value: '300+', pct: '100%' },
-                      { label: '学习等级', value: '6', pct: '100%' },
-                      { label: '月活用户', value: '10,000+', pct: '100%' },
+                      { label: t('portal.statScenes'), value: '50+', pct: '100%' },
+                      { label: t('portal.statChunks'), value: '300+', pct: '100%' },
+                      { label: t('portal.statLevels'), value: '6', pct: '100%' },
+                      { label: t('portal.statUsers'), value: '10,000+', pct: '100%' },
                     ].map((stat) => (
                       <div key={stat.label}>
                         <div className="flex items-center justify-between mb-1.5">
@@ -327,7 +325,7 @@ export function PortalPage() {
                 {/* 浮动小卡片 */}
                 <div className="absolute -bottom-3 -left-3 rounded-xl border border-border bg-card shadow-lg px-4 py-3 flex items-center gap-3">
                   <TrendingUp className="size-4 text-emerald-500" />
-                  <span className="text-xs font-medium text-foreground">学习进度 +24% 本周</span>
+                  <span className="text-xs font-medium text-foreground">{t('portal.progressFloat')}</span>
                 </div>
               </div>
             </Reveal>
@@ -342,14 +340,14 @@ export function PortalPage() {
         <div className="max-w-6xl mx-auto">
           <Reveal className="text-center mb-14 lg:mb-20">
             <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
-              App Features
+              {t('portal.featuresLabel')}
             </p>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
-              Highlight
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"> features</span>
+              {t('portal.featuresTitle1')}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"> {t('portal.featuresTitle2')}</span>
             </h2>
             <p className="mt-4 max-w-xl mx-auto text-muted-foreground">
-              从场景激活到 AI 纠错，覆盖英语输出训练的每一个环节
+              {t('portal.featuresDesc')}
             </p>
           </Reveal>
 
@@ -382,11 +380,11 @@ export function PortalPage() {
         <div className="relative max-w-6xl mx-auto">
           <Reveal className="text-center mb-14 lg:mb-20">
             <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
-              四步上手
+              {t('portal.stepsLabel')}
             </p>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight">
-              从开口到
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"> 通关</span>
+              {t('portal.stepsTitle1')}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"> {t('portal.stepsTitle2')}</span>
             </h2>
           </Reveal>
 
@@ -419,14 +417,14 @@ export function PortalPage() {
             <Reveal>
               <div>
                 <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                  适合你吗
+                  {t('portal.audienceLabel')}
                 </p>
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-foreground tracking-tight mb-6">
-                  无论你在哪个阶段，
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"> 都能进步</span>
+                  {t('portal.audienceTitle1')}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent"> {t('portal.audienceTitle2')}</span>
                 </h2>
                 <p className="text-muted-foreground leading-relaxed max-w-md">
-                  从零基础到高级学习者，系统根据你的输出能力等级推荐合适的场景和 Chunk，循序渐进提升口语。
+                  {t('portal.audienceDesc')}
                 </p>
 
                 <Button
@@ -435,7 +433,7 @@ export function PortalPage() {
                   className="mt-8"
                   onClick={() => navigate(isLoggedIn ? '/' : '/auth/login')}
                 >
-                  看看你适合从哪里开始
+                  {t('portal.startWhere')}
                   <ArrowRight className="size-4" />
                 </Button>
               </div>
@@ -473,19 +471,19 @@ export function PortalPage() {
                 <img src="/logo.png" alt="漫语町" className="size-8 dark:invert" />
                 <span className="font-extrabold text-foreground">漫语町</span>
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">沉浸式英语输出训练 App</p>
+              <p className="mt-2 text-xs text-muted-foreground">{t('portal.footerDesc')}</p>
             </div>
 
             {/* Links */}
             <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-muted-foreground">
               <button onClick={() => navigate('/system/terms')} className="hover:text-foreground transition-colors">
-                服务条款
+                {t('portal.terms')}
               </button>
               <button onClick={() => navigate('/system/privacy')} className="hover:text-foreground transition-colors">
-                隐私政策
+                {t('portal.privacy')}
               </button>
               <button onClick={() => setFeedbackOpen(true)} className="hover:text-foreground transition-colors">
-                意见反馈
+                {t('portal.feedback')}
               </button>
             </div>
           </div>

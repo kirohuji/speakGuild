@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Ear, Headphones, Info, Layers, Loader2, Mic, Pause, Play, RotateCcw, Search, Settings, Square, Target } from 'lucide-react'
 import { toast } from 'sonner'
@@ -22,6 +23,7 @@ import { learningApi, type ListeningTranscriptSegment, type TrainingTopicItem } 
 type ListeningPhase = 'prepare' | 'listen'
 
 export function ListeningSessionPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { topicId } = useParams<{ topicId: string }>()
   const [searchParams] = useSearchParams()
@@ -52,10 +54,10 @@ export function ListeningSessionPage() {
       <div className="flex min-h-[70dvh] flex-col items-center justify-center gap-4 px-8 text-center">
         <Headphones className="size-10 text-muted-foreground/35" />
         <div>
-          <p className="font-medium text-foreground">没有找到这个听力话题</p>
-          <p className="mt-1 text-sm text-muted-foreground">返回学习包后重新选择一个话题。</p>
+          <p className="font-medium text-foreground">{t('learning.listeningNotFound')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('learning.backToPackHint')}</p>
         </div>
-        <Button variant="outline" onClick={() => navigate(-1)}>返回学习包</Button>
+        <Button variant="outline" onClick={() => navigate(-1)}>{t('learning.backToPack')}</Button>
       </div>
     )
   }
@@ -71,9 +73,10 @@ export function ListeningSessionPage() {
 }
 
 function ListeningHeader({ topic, unitTitle, onBack, onSettingsOpen }: { topic: TrainingTopicItem; unitTitle: string; onBack: () => void; onSettingsOpen?: () => void }) {
+  const { t } = useTranslation()
   return (
     <header className="mb-4 flex min-h-10 items-center gap-3">
-      <button type="button" onClick={onBack} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted" aria-label="返回学习包">
+      <button type="button" onClick={onBack} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted" aria-label={t('learning.backToPack')}>
         <ArrowLeft className="size-4" />
       </button>
       <div className="min-w-0 flex-1">
@@ -85,7 +88,7 @@ function ListeningHeader({ topic, unitTitle, onBack, onSettingsOpen }: { topic: 
         <button
           type="button"
           onClick={onSettingsOpen}
-          aria-label="播放设置"
+          aria-label={t('learning.playbackSettings')}
           className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/75 hover:text-foreground"
         >
           <Settings className="size-4" />
@@ -102,6 +105,7 @@ function ListeningKnowledgeList({ icon, items, tone, emptyText }: { icon: React.
 }
 
 function ListeningPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }: { topic: TrainingTopicItem; unitTitle: string; onBack: () => void; onOpenGuide: () => void; onStart: () => void }) {
+  const { t } = useTranslation()
   const supportCount = (topic.vocabularies?.length ?? 0) + (topic.activeChunks?.length ?? 0) + (topic.sentencePatterns?.length ?? 0)
   const durationMinutes = Math.max(1, Math.round(topic.suggestedDurationSec / 60))
   const visibleVocabularies = topic.vocabularies ?? []
@@ -114,29 +118,29 @@ function ListeningPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }
       <main className="space-y-5">
         {(topic.description?.trim() || topic.teachingMarkdown?.trim()) && (
           <section className="rounded-lg bg-muted/30 p-4">
-            <div className="mb-2 flex items-center gap-2"><Info className="size-4 text-primary" /><p className="text-sm font-semibold text-foreground">话题说明</p></div>
+            <div className="mb-2 flex items-center gap-2"><Info className="size-4 text-primary" /><p className="text-sm font-semibold text-foreground">{t('learning.topicDescription')}</p></div>
             {topic.description?.trim() && <MarkdownRenderer content={topic.description} className="text-muted-foreground prose-p:my-1" />}
-            <Button variant="outline" className="mt-4 min-h-11 w-full" size="default" onClick={onOpenGuide}><Headphones className="size-4" />教学讲解</Button>
+            <Button variant="outline" className="mt-4 min-h-11 w-full" size="default" onClick={onOpenGuide}><Headphones className="size-4" />{t('learning.teachingGuide')}</Button>
           </section>
         )}
 
         <section>
           <div className="mb-3 flex items-end justify-between gap-3 px-1">
             <div>
-              <h2 className="text-base font-semibold text-foreground">听力准备</h2>
-              <p className="mt-0.5 text-xs text-muted-foreground">开始前可复习关联的词汇、句块与句型</p>
+              <h2 className="text-base font-semibold text-foreground">{t('learning.listeningPrep')}</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t('learning.listeningPrepHint')}</p>
             </div>
-            <Badge variant="outline" className="rounded-full text-[11px]">{supportCount} 项</Badge>
+            <Badge variant="outline" className="rounded-full text-[11px]">{t('learning.supportCount', { count: supportCount })}</Badge>
           </div>
           <Tabs defaultValue={visibleVocabularies.length > 0 ? 'vocab' : visibleChunks.length > 0 ? 'chunk' : 'pattern'} className="w-full" data-mobile-route-swipe>
             <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-              <TabsTrigger value="vocab" className="rounded-md text-xs">词汇 ({visibleVocabularies.length})</TabsTrigger>
-              <TabsTrigger value="chunk" className="rounded-md text-xs">核心句块 ({visibleChunks.length})</TabsTrigger>
-              <TabsTrigger value="pattern" className="rounded-md text-xs">句型 ({visiblePatterns.length})</TabsTrigger>
+              <TabsTrigger value="vocab" className="rounded-md text-xs">{t('learning.vocab')} ({visibleVocabularies.length})</TabsTrigger>
+              <TabsTrigger value="chunk" className="rounded-md text-xs">{t('learning.coreChunks')} ({visibleChunks.length})</TabsTrigger>
+              <TabsTrigger value="pattern" className="rounded-md text-xs">{t('learning.patterns')} ({visiblePatterns.length})</TabsTrigger>
             </TabsList>
-            <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<Search className="size-4" />} items={visibleVocabularies.map((item) => ({ title: item.word, subtitle: item.meaning }))} tone="cyan" emptyText="这个话题暂未配置词汇" /></TabsContent>
-            <TabsContent value="chunk" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<Layers className="size-4" />} items={visibleChunks.map((item) => ({ title: item.text, subtitle: item.meaning }))} tone="emerald" emptyText="这个话题暂未配置核心句块" /></TabsContent>
-            <TabsContent value="pattern" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<Target className="size-4" />} items={visiblePatterns.map((item) => ({ title: item.pattern, subtitle: item.meaning }))} tone="violet" emptyText="这个话题暂未配置句型" /></TabsContent>
+            <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<Search className="size-4" />} items={visibleVocabularies.map((item) => ({ title: item.word, subtitle: item.meaning }))} tone="cyan" emptyText={t('learning.noTopicVocab')} /></TabsContent>
+            <TabsContent value="chunk" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<Layers className="size-4" />} items={visibleChunks.map((item) => ({ title: item.text, subtitle: item.meaning }))} tone="emerald" emptyText={t('learning.noTopicChunks')} /></TabsContent>
+            <TabsContent value="pattern" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<Target className="size-4" />} items={visiblePatterns.map((item) => ({ title: item.pattern, subtitle: item.meaning }))} tone="violet" emptyText={t('learning.noTopicPatterns')} /></TabsContent>
           </Tabs>
         </section>
 
@@ -144,16 +148,16 @@ function ListeningPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Headphones className="size-4 text-accent" />
-              <p className="text-sm font-semibold text-foreground">听力练习</p>
+              <p className="text-sm font-semibold text-foreground">{t('learning.listeningPractice')}</p>
             </div>
             <span className="text-right text-xs leading-5 text-muted-foreground">
-              {durationMinutes} 分钟 · {topic.transcript?.length ?? 0} 句
+              {t('learning.minutesWithCount', { count: durationMinutes })} · {t('learning.sentenceCount', { count: topic.transcript?.length ?? 0 })}
             </span>
           </div>
           {topic.promptEn?.trim() && <p className="text-lg font-semibold leading-7 text-foreground">{topic.promptEn}</p>}
           {topic.promptZh?.trim() && <p className="mt-2 text-sm leading-6 text-muted-foreground">{topic.promptZh}</p>}
-          {!(topic.promptEn?.trim() || topic.promptZh?.trim()) && <p className="text-sm leading-6 text-muted-foreground">进入后，逐句精听，可以单句循环，随时查看译文。</p>}
-          <Button size="lg" className="mt-4 w-full bg-accent text-accent-foreground hover:bg-accent/85" onClick={onStart}>开始练习<ChevronRight className="size-4" /></Button>
+          {!(topic.promptEn?.trim() || topic.promptZh?.trim()) && <p className="text-sm leading-6 text-muted-foreground">{t('learning.listeningIntro')}</p>}
+          <Button size="lg" className="mt-4 w-full bg-accent text-accent-foreground hover:bg-accent/85" onClick={onStart}>{t('learning.startPractice')}<ChevronRight className="size-4" /></Button>
         </section>
       </main>
     </div>
@@ -170,6 +174,7 @@ function formatSpeed(rate: number) {
 // ── 听力学练播放页 ──────────────────────────────────────────────────────────
 
 function ListeningPlayerPage({ topic, unitId, unitTitle, onClose }: { topic: TrainingTopicItem; unitId?: string | null; unitTitle: string; onClose: () => void }) {
+  const { t } = useTranslation()
   const audioRef = useRef<HTMLAudioElement>(null)
   const segments = topic.transcript ?? []
   const totalDurationMs = segments.length > 0 ? segments[segments.length - 1].endMs : 0
@@ -336,9 +341,9 @@ function ListeningPlayerPage({ topic, unitId, unitTitle, onClose }: { topic: Tra
     setCompleting(true)
     try {
       await learningApi.saveTopicSubmission(topic.id, { response: { listenedAtMs: currentMs }, status: 'completed' })
-      toast.success('本话题已完成')
+      toast.success(t('learning.topicCompleted'))
     } catch (error: any) {
-      toast.error(error?.message || '保存失败')
+      toast.error(error?.message || t('learning.saveFailed'))
     } finally {
       setCompleting(false)
     }
@@ -370,12 +375,12 @@ function ListeningPlayerPage({ topic, unitId, unitTitle, onClose }: { topic: Tra
         {resolving ? (
           <p className="flex items-center justify-center gap-2 rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
-            正在加载音频…
+            {t('learning.loadingAudio')}
           </p>
         ) : !mediaUrl ? (
-          <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">音频资产暂不可用</p>
+          <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">{t('learning.audioUnavailable')}</p>
         ) : segments.length === 0 ? (
-          <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">后台还没有配置逐句时间戳</p>
+          <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">{t('learning.noTimestamps')}</p>
         ) : intensiveMode ? (
           /* 精听模式：仅展示当前句 */
           <div className="flex h-full flex-col items-center justify-center px-2 text-center">
@@ -408,7 +413,7 @@ function ListeningPlayerPage({ topic, unitId, unitTitle, onClose }: { topic: Tra
               onClick={handleComplete}
             >
               {completing ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : <CheckCircle2 className="mr-1.5 size-4" />}
-              完成本话题
+              {t('learning.completeTopic')}
             </Button>
           </div>
         ) : (
@@ -591,6 +596,7 @@ function ListeningFooter({
   playbackRate: number
   disabled: boolean
 }) {
+  const { t } = useTranslation()
   return (
     <div className="shrink-0 border-t border-border/60 bg-muted/10 px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
       <div className="grid grid-cols-[4.5rem_1fr_3.5rem] items-center gap-3">
@@ -601,7 +607,7 @@ function ListeningFooter({
             size="icon"
             onClick={onIntensiveToggle}
             disabled={disabled}
-            aria-label="精听"
+            aria-label={t('learning.intensiveListening')}
             className="size-11 rounded-full"
           >
             <Ear className="size-5" />
@@ -611,7 +617,7 @@ function ListeningFooter({
             size="icon"
             onClick={onShadowOpen}
             disabled={disabled}
-            aria-label="跟读"
+            aria-label={t('learning.followRead')}
             className="size-11 rounded-full"
           >
             <Mic className="size-5" />
@@ -625,7 +631,7 @@ function ListeningFooter({
             size="icon"
             onClick={onPrev}
             disabled={disabled || !hasPrev}
-            aria-label="上一句"
+            aria-label={t('learning.prevSentence')}
             className="size-11 rounded-full"
           >
             <ChevronLeft className="size-5" />
@@ -636,7 +642,7 @@ function ListeningFooter({
             onClick={onPlayToggle}
             disabled={disabled}
             className="size-12 rounded-full shadow-sm"
-            aria-label={playing ? '暂停' : '播放'}
+            aria-label={playing ? t('learning.pause') : t('learning.play')}
           >
             {playing ? <Pause className="size-5" /> : <Play className="size-5" />}
           </Button>
@@ -645,7 +651,7 @@ function ListeningFooter({
             size="icon"
             onClick={onNext}
             disabled={disabled || !hasNext}
-            aria-label="下一句"
+            aria-label={t('learning.nextSentence')}
             className="size-11 rounded-full"
           >
             <ChevronRight className="size-5" />

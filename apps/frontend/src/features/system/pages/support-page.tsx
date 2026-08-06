@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
 import {
   ArrowRight,
@@ -13,51 +14,19 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
-const supportItems = [
-  {
-    icon: MessageSquareText,
-    title: '使用问题',
-    body: '账号登录、会员权益、学习包下载、离线练习、AI 纠错结果等使用问题，都可以通过邮件或 App 内反馈提交。',
-  },
-  {
-    icon: ShieldCheck,
-    title: '隐私与安全',
-    body: '你可以查看隐私政策、权限说明、个人信息收集清单和第三方 SDK 目录，了解数据如何被使用和保护。',
-  },
-  {
-    icon: Clock,
-    title: '响应时间',
-    body: '我们通常会在 3 个工作日内回复。涉及订单、会员或账号安全的问题会优先处理。',
-  },
-]
-
-const faqs = [
-  {
-    q: '学习包下载失败怎么办？',
-    a: '请先确认网络连接稳定，并在 WiFi 环境下重试。如果仍然失败，请在邮件中附上设备型号、系统版本、失败时间和页面截图。',
-  },
-  {
-    q: 'AI 纠错结果不准确怎么办？',
-    a: '你可以重新录音，或通过 App 内反馈提交原句、转写文本和纠错结果。我们会持续优化识别和反馈质量。',
-  },
-  {
-    q: '会员权益没有生效怎么办？',
-    a: '请确认 App Store 或应用商店订单已完成支付，并尝试重新打开 App。仍未恢复时，请邮件附上订单截图。',
-  },
-]
-
 function SupportHeader() {
+  const { t } = useTranslation()
   return (
     <header className="sticky top-0 z-40 border-b border-border/50 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/50">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/marketing" className="flex items-center gap-2">
-          <img src="/logo.png" alt="漫语町" className="h-7 w-auto dark:invert" />
-          <span className="hidden text-sm font-extrabold tracking-tight text-foreground sm:inline">漫语町</span>
+          <img src="/logo.png" alt={t('app.name')} className="h-7 w-auto dark:invert" />
+          <span className="hidden text-sm font-extrabold tracking-tight text-foreground sm:inline">{t('app.name')}</span>
         </Link>
         <nav className="flex items-center gap-5 text-xs text-muted-foreground sm:text-sm">
-          <Link to="/marketing" className="transition-colors hover:text-foreground">产品介绍</Link>
-          <Link to="/system/privacy" className="transition-colors hover:text-foreground">隐私政策</Link>
-          <Link to="/system/terms" className="transition-colors hover:text-foreground">服务条款</Link>
+          <Link to="/marketing" className="transition-colors hover:text-foreground">{t('support.productIntro')}</Link>
+          <Link to="/system/privacy" className="transition-colors hover:text-foreground">{t('system.privacy')}</Link>
+          <Link to="/system/terms" className="transition-colors hover:text-foreground">{t('system.terms')}</Link>
         </nav>
       </div>
     </header>
@@ -65,8 +34,42 @@ function SupportHeader() {
 }
 
 export function SupportPage() {
+  const { t } = useTranslation()
   const { pathname } = useLocation()
   const showStandaloneHeader = pathname === '/support'
+
+  const supportItems = [
+    {
+      icon: MessageSquareText,
+      title: t('support.usage'),
+      body: t('support.usageBody'),
+    },
+    {
+      icon: ShieldCheck,
+      title: t('support.privacy'),
+      body: t('support.privacyBody'),
+    },
+    {
+      icon: Clock,
+      title: t('support.responseTime'),
+      body: t('support.responseTimeBody'),
+    },
+  ]
+
+  const faqs = [
+    {
+      q: t('support.faqDownload'),
+      a: t('support.faqDownloadAnswer'),
+    },
+    {
+      q: t('support.faqAiAccuracy'),
+      a: t('support.faqAiAccuracyAnswer'),
+    },
+    {
+      q: t('support.faqMember'),
+      a: t('support.faqMemberAnswer'),
+    },
+  ]
 
   return (
     <div className={`relative min-h-screen overflow-x-hidden text-foreground ${showStandaloneHeader ? 'app-surface' : 'bg-transparent'}`}>
@@ -77,24 +80,24 @@ export function SupportPage() {
           <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1fr_0.86fr] lg:items-end">
             <div>
               <Badge variant="secondary" className="mb-6 text-[11px] font-medium uppercase tracking-wide">
-                Support URL
+                {t('support.badge')}
               </Badge>
               <h1 className="max-w-3xl text-[2.5rem] font-extrabold leading-[1.06] tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-                漫语町支持中心
+                {t('support.title')}
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                遇到账号、学习、会员、下载或隐私相关问题时，可以在这里找到帮助入口。我们会认真阅读每一条反馈，并在工作时间内尽快回复。
+                {t('support.subtitle')}
               </p>
               <div className="mt-10 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="primary-lg" className="shadow-[0_4px_24px_rgba(0,46,95,0.16)]">
                   <a href="mailto:z1309014381@gmail.com">
                     <Mail className="size-4" />
-                    邮件联系支持
+                    {t('support.emailSupport')}
                   </a>
                 </Button>
                 <Button asChild variant="outline" size="lg">
                   <Link to="/feedback">
-                    App 内反馈
+                    {t('support.inAppFeedback')}
                     <ArrowRight className="size-4" />
                   </Link>
                 </Button>
@@ -110,9 +113,9 @@ export function SupportPage() {
                     <div>
                       <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1 text-[11px] font-medium text-muted-foreground shadow-sm backdrop-blur">
                         <span className="size-1.5 rounded-full bg-success" />
-                        工作日处理中
+                        {t('support.workingInProgress')}
                       </div>
-                      <p className="text-sm font-medium text-muted-foreground">官方支持邮箱</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('support.officialEmail')}</p>
                       <a
                         href="mailto:z1309014381@gmail.com"
                         className="mt-2 block break-all text-xl font-extrabold tracking-tight text-foreground transition-colors hover:text-primary sm:text-2xl"
@@ -127,7 +130,7 @@ export function SupportPage() {
                   <Button asChild variant="outline-primary" size="sm" className="relative mt-6 bg-background/70">
                     <a href="mailto:z1309014381@gmail.com">
                       <Send className="size-3.5" />
-                      发送邮件
+                      {t('support.sendEmail')}
                     </a>
                   </Button>
                 </div>
@@ -135,23 +138,23 @@ export function SupportPage() {
                   <div className="rounded-xl border border-border/55 bg-muted/25 p-4">
                     <dt className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                       <Clock className="size-3.5" />
-                      工作时间
+                      {t('support.workHours')}
                     </dt>
-                    <dd className="mt-2 font-semibold leading-snug text-foreground">周一至周五<br />9:00 - 21:00</dd>
+                    <dd className="mt-2 whitespace-pre-line font-semibold leading-snug text-foreground">{t('support.workHoursValue')}</dd>
                   </div>
                   <div className="rounded-xl border border-border/55 bg-muted/25 p-4">
                     <dt className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                       <HelpCircle className="size-3.5" />
-                      预计回复
+                      {t('support.estimatedReply')}
                     </dt>
-                    <dd className="mt-2 font-semibold leading-snug text-foreground">3 个工作日内</dd>
+                    <dd className="mt-2 font-semibold leading-snug text-foreground">{t('support.estimatedReplyValue')}</dd>
                   </div>
                   <div className="rounded-xl border border-border/55 bg-muted/25 p-4">
                     <dt className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                       <ShieldCheck className="size-3.5" />
-                      服务主体
+                      {t('support.serviceEntity')}
                     </dt>
-                    <dd className="mt-2 font-semibold leading-snug text-foreground">上海影与达科技有限公司</dd>
+                    <dd className="mt-2 font-semibold leading-snug text-foreground">{t('support.serviceEntityValue')}</dd>
                   </div>
                 </dl>
               </CardContent>
@@ -176,10 +179,10 @@ export function SupportPage() {
         <section className="pb-16 sm:pb-20">
           <div className="mx-auto max-w-6xl">
             <div className="mb-10 text-center">
-              <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">FAQ</p>
+              <p className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{t('support.faq')}</p>
               <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-                常见
-                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"> 问题</span>
+                {t('support.faqTitlePrefix')}
+                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"> {t('support.faqTitleSuffix')}</span>
               </h2>
             </div>
             <div className="grid gap-4 lg:grid-cols-3">
@@ -201,20 +204,20 @@ export function SupportPage() {
               <div className="flex flex-col items-center justify-between gap-8 sm:flex-row">
                 <div>
                   <div className="flex items-center gap-2">
-                    <img src="/logo.png" alt="漫语町" className="size-8 dark:invert" />
-                    <span className="font-extrabold text-foreground">漫语町</span>
+                    <img src="/logo.png" alt={t('app.name')} className="size-8 dark:invert" />
+                    <span className="font-extrabold text-foreground">{t('app.name')}</span>
                   </div>
-                  <p className="mt-2 text-xs text-muted-foreground">沉浸式英语输出训练 App</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{t('support.tagline')}</p>
                 </div>
                 <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-muted-foreground">
-                  <Link to="/system/terms" className="transition-colors hover:text-foreground">服务条款</Link>
-                  <Link to="/system/privacy" className="transition-colors hover:text-foreground">隐私政策</Link>
-                  <Link to="/marketing" className="transition-colors hover:text-foreground">产品介绍</Link>
+                  <Link to="/system/terms" className="transition-colors hover:text-foreground">{t('system.terms')}</Link>
+                  <Link to="/system/privacy" className="transition-colors hover:text-foreground">{t('system.privacy')}</Link>
+                  <Link to="/marketing" className="transition-colors hover:text-foreground">{t('support.productIntro')}</Link>
                 </div>
               </div>
               <Separator className="my-6" />
               <p className="text-center text-[11px] text-muted-foreground/50">
-                &copy; {new Date().getFullYear()} 漫语町 ManYu. All rights reserved.
+                {t('support.copyright', { year: new Date().getFullYear() })}
               </p>
             </div>
           </footer>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/cn'
 import { Play, Square } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,6 +26,7 @@ export function InteractiveSpeechBlock({
   className,
   showPlayButton = true,
 }: InteractiveSpeechBlockProps) {
+  const { t } = useTranslation()
   const { tts } = usePreferencesStore()
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentWordIndex, setCurrentWordIndex] = useState(-1)
@@ -141,12 +143,12 @@ export function InteractiveSpeechBlock({
           {actualIsPlaying ? (
             <>
               <Square className="h-3.5 w-3.5" />
-              停止
+              {t('audio.stop')}
             </>
           ) : (
             <>
               <Play className="h-3.5 w-3.5" />
-              播放
+              {t('audio.play')}
             </>
           )}
         </Button>

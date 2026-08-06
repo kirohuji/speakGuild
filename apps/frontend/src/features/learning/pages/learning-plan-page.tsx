@@ -207,14 +207,14 @@ function warmupRecordKeys(record: WarmupRecord) {
   return [...keys]
 }
 
-function warmupRecordDisplayTitle(record: WarmupRecord, fallback: string) {
+function warmupRecordDisplayTitle(record: WarmupRecord, fallback: string, t: (key: string, opts?: Record<string, unknown>) => string) {
   const items = Array.isArray(record.items) ? record.items : []
   const first = items[0] as any
   if (!first) return record.topicTitle || fallback
   const title = first.groupTitle || first.displayLabel || record.topicTitle || fallback
   const prompt = first.zh || first.promptZh || first.answer || first.suggestedAnswer
   if (items.length === 1 && prompt && prompt !== title) return `${title} · ${String(prompt).slice(0, 28)}`
-  return items.length > 1 ? `${title} · ${items.length} 题` : title
+  return items.length > 1 ? `${title} · ${t('learning.questionCountLabel', { count: items.length })}` : title
 }
 
 function warmupRecordPracticeCount(record: WarmupRecord) {
@@ -281,9 +281,9 @@ function WarmupRecordsContent() {
         return (
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
-              <span className="text-sm font-medium">{warmupRecordDisplayTitle(row, t('learning.warmupPractice'))}</span>
+              <span className="text-sm font-medium">{warmupRecordDisplayTitle(row, t('learning.warmupPractice'), t)}</span>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {passedItems}/{totalItems} {t('learning.passedSuffix')} · 练习 {practiceCount} 次
+                {passedItems}/{totalItems} {t('learning.passedSuffix')} · {t('todayTask.practiceTimes', { count: practiceCount })}
               </p>
               {v && (
                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/70">{v}</p>
@@ -498,7 +498,7 @@ function WarmupRecordDetailDrawer({
             </Button>
             <span className="text-xs text-muted-foreground tabular-nums">
               {currentIdx + 1} / {total}
-              {current?.practiceCount && current.practiceCount > 1 ? ` · 练习 ${current.practiceCount} 次` : ''}
+              {current?.practiceCount && current.practiceCount > 1 ? ` · ${t('todayTask.practiceTimes', { count: current.practiceCount })}` : ''}
             </span>
             <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
               <span className="mr-1">{t('todayTask.nextQuestion')}</span>

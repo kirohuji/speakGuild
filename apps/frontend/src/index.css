@@ -349,6 +349,15 @@
     scroll-padding-bottom: 1rem;
   }
 
+  /* 对话写作：键盘弹出时把编辑区缩到键盘上方（--keyboard-available-height
+     由 KeyboardProvider 计算，兼容 iOS/Android 的 dvh 差异），
+     输入框自然落在键盘上方；内容溢出时再由聚焦滚动兜底。 */
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'][data-writing-dialogue] {
+    height: var(--keyboard-available-height, 100dvh) !important;
+    max-height: var(--keyboard-available-height, 100dvh) !important;
+    transition: height 220ms ease, max-height 220ms ease;
+  }
+
   body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'] [data-writing-editor] {
     min-height: calc(100dvh - var(--keyboard-height) - 7rem) !important;
     padding-bottom: 1rem;

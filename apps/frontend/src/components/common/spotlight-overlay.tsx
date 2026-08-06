@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronRight, ChevronLeft, X, FlaskConical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -75,6 +76,7 @@ export function SpotlightOverlay({
   onPrev,
   onSkip,
 }: SpotlightOverlayProps) {
+  const { t } = useTranslation()
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
   const [placement, setPlacement] = useState<'bottom' | 'top'>('bottom')
   const [tooltipStyle, setTooltipStyle] = useState<Record<string, string | number>>({})
@@ -195,18 +197,18 @@ export function SpotlightOverlay({
             </div>
             {isTestMode && (
               <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600">
-                <FlaskConical className="size-3" /> 测试模式
+                <FlaskConical className="size-3" /> {t('common.testMode')}
               </div>
             )}
             <h3 className="text-[15px] font-semibold leading-snug text-foreground">
               {step.title}
             </h3>
             <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
-              这个入口暂时不可见，可能是数据还没准备好或当前账号状态不同。可以先跳过这一步继续。
+              {t('common.spotlightTargetMissing')}
             </p>
             <div className="mt-4 flex justify-end">
               <Button size="sm" onClick={() => onNext(false)}>
-                {stepIndex >= totalSteps - 1 ? '完成' : '跳过这一步'}
+                {stepIndex >= totalSteps - 1 ? t('common.done') : t('common.skipStep')}
                 {stepIndex < totalSteps - 1 && <ChevronRight className="ml-1 size-3.5" />}
               </Button>
             </div>
@@ -217,12 +219,12 @@ export function SpotlightOverlay({
                 overlayClassName="!z-[10000]"
               >
                 <DialogHeader>
-                  <DialogTitle>退出新手引导？</DialogTitle>
-                  <DialogDescription>你可以之后在设置中重新开启引导。</DialogDescription>
+                  <DialogTitle>{t('common.exitOnboardingTitle')}</DialogTitle>
+                  <DialogDescription>{t('common.exitOnboardingDesc')}</DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="!flex-row justify-center gap-2">
-                  <Button variant="outline" onClick={() => setShowExitConfirm(false)}>继续引导</Button>
-                  <Button onClick={() => { setShowExitConfirm(false); onSkip() }}>退出</Button>
+                  <Button variant="outline" onClick={() => setShowExitConfirm(false)}>{t('common.continueOnboarding')}</Button>
+                  <Button onClick={() => { setShowExitConfirm(false); onSkip() }}>{t('common.exitOnboarding')}</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -338,7 +340,7 @@ export function SpotlightOverlay({
             {/* 标题 & 描述 */}
             {isTestMode && (
               <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600">
-                <FlaskConical className="size-3" /> 测试模式
+                <FlaskConical className="size-3" /> {t('common.testMode')}
               </div>
             )}
             <h3 className="text-[15px] font-semibold leading-snug text-foreground">
@@ -350,7 +352,7 @@ export function SpotlightOverlay({
             {!step.clickToAdvance && (
               <div className="mt-4 flex justify-end">
                 <Button size="sm" onClick={() => onNext(false)}>
-                  {stepIndex >= totalSteps - 1 ? '完成' : '知道了'}
+                  {stepIndex >= totalSteps - 1 ? t('common.done') : t('common.gotIt')}
                   {stepIndex < totalSteps - 1 && <ChevronRight className="ml-1 size-3.5" />}
                 </Button>
               </div>
@@ -366,12 +368,12 @@ export function SpotlightOverlay({
           overlayClassName="!z-[10000]"
         >
           <DialogHeader>
-            <DialogTitle>退出新手引导？</DialogTitle>
-            <DialogDescription>你可以之后在设置中重新开启引导。</DialogDescription>
+            <DialogTitle>{t('common.exitOnboardingTitle')}</DialogTitle>
+            <DialogDescription>{t('common.exitOnboardingDesc')}</DialogDescription>
           </DialogHeader>
           <DialogFooter className="!flex-row justify-center gap-2">
-            <Button variant="outline" onClick={() => setShowExitConfirm(false)}>继续引导</Button>
-            <Button onClick={() => { setShowExitConfirm(false); onSkip() }}>退出</Button>
+            <Button variant="outline" onClick={() => setShowExitConfirm(false)}>{t('common.continueOnboarding')}</Button>
+            <Button onClick={() => { setShowExitConfirm(false); onSkip() }}>{t('common.exitOnboarding')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

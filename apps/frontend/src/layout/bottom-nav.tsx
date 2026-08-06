@@ -52,7 +52,7 @@ export function BottomNav() {
               )}
             >
               <Icon className={cn('h-[21px] w-[21px]', active && 'stroke-[2.35] text-primary')} />
-              <span className="text-[11.5px] font-medium leading-4">{label}</span>
+              <span className="max-w-full truncate text-[11.5px] font-medium leading-4">{label}</span>
             </Link>
           )
         })}

@@ -32,7 +32,7 @@ export function Header() {
   const openUpdateDialog = useAppUpdateStore((s) => s.openDialog)
   const isAdmin = session?.user?.role === 'admin'
   const user = session?.user
-  const fallback = (user?.name || user?.email || '我').slice(0, 1).toUpperCase()
+  const fallback = (user?.name || user?.email || t('common.me')).slice(0, 1).toUpperCase()
 
   const showBackgroundUpdate =
     updateStatus === 'downloading' &&
@@ -84,7 +84,7 @@ export function Header() {
         <Link to="/portal" className="mr-8 hidden lg:flex items-center gap-2 shrink-0">
           <img
             src="/logo.png"
-            alt="漫语町"
+            alt={t('app.name')}
             className="h-7 w-auto dark:invert"
           />
         </Link>
@@ -115,7 +115,7 @@ export function Header() {
               <Link to="/admin/users">
                 <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
                   <Shield className="h-3.5 w-3.5" />
-                  后台管理
+                  {t('common.adminPanel')}
                 </Button>
               </Link>
             )}
@@ -168,12 +168,12 @@ export function Header() {
             {user && (
               <Link
                 to="/account"
-                aria-label={lastSyncLog ? `Account, ${lastSyncLog.summary}` : 'Account'}
+                aria-label={t('profile.account') + (lastSyncLog ? `, ${lastSyncLog.summary}` : '')}
                 title={lastSyncLog?.summary ?? undefined}
                 className="relative block rounded-full p-0.5 transition-colors hover:bg-muted"
               >
                 <Avatar className="size-8">
-                  <AvatarImage src={avatarUrl || user.image} alt={user.name || 'Account'} />
+                  <AvatarImage src={avatarUrl || user.image} alt={user.name || t('profile.account')} />
                   <AvatarFallback className="bg-muted text-xs font-semibold text-foreground">
                     {fallback}
                   </AvatarFallback>
@@ -186,7 +186,7 @@ export function Header() {
                 {isDevHost && (
                   <span
                     className="absolute -left-1 -bottom-1 flex size-4 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm ring-1 ring-amber-600"
-                    title="dev:host 模式"
+                    title={t('common.devHostMode')}
                   >
                     <Wrench className="size-2.5" />
                   </span>

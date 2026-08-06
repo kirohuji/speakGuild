@@ -238,7 +238,7 @@ export function ScriptCenterPage() {
     } finally {
       setShopLoading(false)
     }
-  }, [])
+  }, [t])
 
   const loadRecords = useCallback(async () => {
     setRecordsLoading(true)
@@ -283,8 +283,8 @@ export function ScriptCenterPage() {
       const work = await scriptCommunityApi.createWork({
         recordId: record.id,
         kind: record.mode === 'repeat' ? 'repeat_video' : 'vn_video',
-        title: `完成《${record.episode.title}》`,
-        caption: `${record.mode === 'repeat' ? '跟读剧场' : 'VN 互动'} · ${record.mode === 'repeat' ? record.lineCount : record.turnCount} 次开口`,
+        title: t('scripts.workCompletedTitle', { title: record.episode.title }),
+        caption: `${record.mode === 'repeat' ? t('scripts.repeatTheater') : t('scripts.vnInteractive')} · ${t('scripts.timesSpoken', { count: record.mode === 'repeat' ? record.lineCount : record.turnCount })}`,
       })
       await generateAndPublishExistingWork(work, (progress) => {
         setGenerating((current) => ({ ...current, [record.id]: progress }))
@@ -293,9 +293,9 @@ export function ScriptCenterPage() {
         ? { ...current, works: [{ id: work.id, status: 'rendering', kind: work.kind }] }
         : current)
       await Promise.all([loadWorks(), loadRecords()])
-      toast.success('已创建作品并提交后台渲染；完成后会自动发布到广场')
+      toast.success(t('scripts.createdSubmittedRendering'))
     } catch (error: any) {
-      toast.error(error?.message || '视频生成失败，请重试')
+      toast.error(error?.message || t('scripts.videoGenerateFailedRetry'))
     } finally {
       setGenerating((current) => {
         const next = { ...current }
@@ -303,7 +303,7 @@ export function ScriptCenterPage() {
         return next
       })
     }
-  }, [generating, loadRecords, loadWorks])
+  }, [generating, loadRecords, loadWorks, t])
 
   const loadFeed = useCallback(async (cursor?: string, append = false) => {
     if (append) setFeedLoadingMore(true)
@@ -367,9 +367,9 @@ export function ScriptCenterPage() {
     try {
       await enrollUnit(unit.id, unit.title, unit)
       await refreshMyUnits()
-      toast.success(`《${unit.title}》已加入并开始下载`)
+      toast.success(t('scripts.joinDownloadStarted', { title: unit.title }))
     } catch {
-      toast.error('开始剧本失败')
+      toast.error(t('scripts.joinScriptFailed'))
     }
   }
 
@@ -797,7 +797,7 @@ async function generateAndPublishExistingWork(
     frames,
   })
   onProgress(1)
-  useGlobalTaskStore.getState().updateTask(taskId, { progress: 1, stepLabel: `已提交后台渲染（任务 ${task.taskId.slice(-6)}）` })
+  useGlobalTaskStore.getState().updateTask(taskId, { progress: 1, stepLabel: i18n.t('scripts.submittedRenderingTask', { taskId: task.taskId.slice(-6) }) })
   } catch (error: any) {
     useGlobalTaskStore.getState().updateTask(taskId, {
       status: 'error',
@@ -825,12 +825,12 @@ function selectEpisodeRepresentatives(works: ScriptWork[]) {
   return [...representatives.values()]
 }
 
-function workPrimaryActionLabel(work: ScriptWork) {
-  if (work.status === 'rendering') return '取消生成'
-  if (work.status === 'published') return '取消发布'
-  if (work.videoUrl) return '发布到广场'
-  if (work.status === 'failed') return '重新生成视频'
-  return '生成视频'
+function workPrimaryActionLabel(work: ScriptWork, t: (key: string, opts?: Record<string, unknown>) => string) {
+  if (work.status === 'rendering') return t('scripts.cancelGeneration')
+  if (work.status === 'published') return t('scripts.unpublish')
+  if (work.videoUrl) return t('scripts.publishExisting')
+  if (work.status === 'failed') return t('scripts.regenerateVideo')
+  return t('scripts.generateVideo')
 }
 
 function MyWorks({
@@ -857,12 +857,12 @@ function MyWorks({
       }
       toast.success(
         work.status === 'rendering'
-          ? '已取消后台生成，作品已保留，可重新生成'
+          ? t('scripts.canceledGenerationKept')
           : work.status === 'published'
             ? t('scripts.workPrivateHint')
             : work.videoUrl
               ? t('scripts.workPublishedHint')
-              : '已提交后台生成，完成后可手动发布到广场',
+              : t('scripts.submittedGenerationHint'),
       )
       await onChanged()
     } catch (error: any) {
@@ -924,7 +924,7 @@ function MyWorks({
               >
                 {generating[work.id]
                   ? t('scripts.generating', { percent: generating[work.id] })
-                  : workPrimaryActionLabel(work)}
+                  : workPrimaryActionLabel(work, t)}
               </Button>
               {generating[work.id] && <Progress value={generating[work.id]} className="mt-1.5 h-1" />}
             </div>
@@ -1034,7 +1034,7 @@ function WorksLibraryDialog({
         })
       }
       await onChanged()
-      if (work.status === 'rendering') toast.success('已取消后台生成，作品已保留，可重新生成')
+      if (work.status === 'rendering') toast.success(t('scripts.canceledGenerationKept'))
     } catch (error: any) {
       toast.error(error?.message || t('scripts.workStatusFailed'))
     } finally {
@@ -1126,7 +1126,7 @@ function WorksLibraryDialog({
                             <div className="min-w-0 flex-1">
                               <p className="mb-1 flex items-center gap-1 truncate text-[11px] font-medium text-primary">
                                 <BookOpen className="size-3 shrink-0" />
-                                <span className="truncate">剧本《{work.episode.scene.title}》</span>
+                                <span className="truncate">{t('scripts.scriptLabel', { title: work.episode.scene.title })}</span>
                               </p>
                               <div className="flex items-start gap-2">
                                 <p className="line-clamp-1 flex-1 text-sm font-semibold">{work.title}</p>
@@ -1138,8 +1138,8 @@ function WorksLibraryDialog({
                               <div className="mt-2 flex items-center gap-1.5">
                                 <Button size="sm" variant={work.status === 'rendering' || work.status === 'published' ? 'outline' : 'default'} className="h-7 rounded-full px-3 text-[11px]" disabled={Boolean(generating[work.id])} onClick={() => void togglePublish(work)}>
                                   {generating[work.id]
-                                    ? '正在提交视频任务…'
-                                    : workPrimaryActionLabel(work)}
+                                    ? t('scripts.submittingVideoTask')
+                                    : workPrimaryActionLabel(work, t)}
                                 </Button>
                                 <Button size="sm" variant="ghost" className="h-7 rounded-full px-2.5 text-[11px] text-muted-foreground" onClick={() => setHistoryWork(work)}>
                                   <History data-icon="inline-start" />
@@ -1293,8 +1293,8 @@ function EpisodeWorkHistoryDialog({
 
           <Tabs value={mode} onValueChange={(value) => setMode(value as 'vn' | 'repeat')} className="shrink-0">
             <TabsList className="grid h-9 w-full grid-cols-2 rounded-lg">
-              <TabsTrigger value="vn" className="text-xs">VN 练习历史</TabsTrigger>
-              <TabsTrigger value="repeat" className="text-xs">跟读练习历史</TabsTrigger>
+              <TabsTrigger value="vn" className="text-xs">{t('scripts.vnHistoryTab')}</TabsTrigger>
+              <TabsTrigger value="repeat" className="text-xs">{t('scripts.repeatHistoryTab')}</TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -1468,7 +1468,7 @@ function ScriptPublishHistoryDialog({
         if (active) setLoading(false)
       })
     return () => { active = false }
-  }, [episodeId, open, page])
+  }, [episodeId, open, page, t])
 
   useEffect(() => {
     if (open) setPage(1)
@@ -1502,7 +1502,7 @@ function ScriptPublishHistoryDialog({
                 <thead className="sticky top-0 z-10 bg-muted/95 text-[11px] text-muted-foreground backdrop-blur">
                   <tr className="border-b border-border/45">
                     <th className="w-[58%] px-3 py-2 font-medium">{t('scripts.tableWork')}</th>
-                    <th className="w-[42%] px-2 py-2 font-medium">任务状态</th>
+                    <th className="w-[42%] px-2 py-2 font-medium">{t('scripts.taskStatusHeader')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1887,6 +1887,7 @@ function RecordList({
   loading: boolean
   onOpenReplay: (record: ScriptPracticeRecord) => void
 }) {
+  const { t } = useTranslation()
   const [mode, setMode] = useState('all')
   const [page, setPage] = useState(1)
   const pageSize = 15
@@ -1899,15 +1900,15 @@ function RecordList({
 
   const columns: ColumnConfig<ScriptPracticeRecord>[] = [
     {
-      key: 'episode', header: '剧本章节',
+      key: 'episode', header: t('scripts.episodeHeader'),
       cell: (_value, record) => <div className="min-w-0"><p className="truncate text-sm font-medium">{record.episode.title}</p><p className="mt-0.5 truncate text-xs text-muted-foreground">{record.episode.scene.title} · {record.episode.chapterName}</p></div>,
     },
     {
-      key: 'durationSec', header: '练习', width: 112, align: 'center',
-      cell: (value, record) => <div className="space-y-1"><Badge variant={record.mode === 'vn' ? 'default' : 'secondary'} className="text-[10px]">{record.mode === 'vn' ? 'VN' : '跟读'}</Badge><p className="whitespace-nowrap text-[10px] text-muted-foreground">{record.mode === 'vn' ? record.turnCount : record.lineCount} 次 · {Math.max(0, Math.round(value / 60))} 分</p></div>,
+      key: 'durationSec', header: t('scripts.practiceHeader'), width: 112, align: 'center',
+      cell: (value, record) => <div className="space-y-1"><Badge variant={record.mode === 'vn' ? 'default' : 'secondary'} className="text-[10px]">{record.mode === 'vn' ? t('scripts.workKindVn') : t('scripts.workKindRepeat')}</Badge><p className="whitespace-nowrap text-[10px] text-muted-foreground">{t('scripts.timesCount', { count: record.mode === 'vn' ? record.turnCount : record.lineCount })} · {t('scripts.minutesCount', { count: Math.max(0, Math.round(value / 60)) })}</p></div>,
     },
     {
-      key: 'createdAt', header: '日期', width: 88, align: 'center',
+      key: 'createdAt', header: t('scripts.dateHeader'), width: 88, align: 'center',
       cell: (value) => <span className="whitespace-nowrap text-xs text-muted-foreground">{new Date(value).toLocaleDateString()}</span>,
     },
   ]
@@ -1915,14 +1916,14 @@ function RecordList({
   return (
     <Tabs value={mode} onValueChange={setMode} className="flex h-full min-h-0 flex-col">
       <TabsList className="mb-3 grid w-full shrink-0 grid-cols-3">
-        <TabsTrigger value="all" className="text-xs">全部</TabsTrigger>
+        <TabsTrigger value="all" className="text-xs">{t('scripts.allTab')}</TabsTrigger>
         <TabsTrigger value="vn" className="text-xs">VN</TabsTrigger>
-        <TabsTrigger value="repeat" className="text-xs">跟读</TabsTrigger>
+        <TabsTrigger value="repeat" className="text-xs">{t('scripts.repeatTab')}</TabsTrigger>
       </TabsList>
       <ConfigDataTable
         data={visible.slice((page - 1) * pageSize, page * pageSize)} columns={columns}
         total={visible.length} page={page} pageSize={pageSize} onPageChange={setPage}
-        isLoading={loading} emptyMessage="还没有剧本练习记录" onRowClick={onOpenReplay}
+        isLoading={loading} emptyMessage={t('scripts.noPracticeRecords')} onRowClick={onOpenReplay}
         className="min-h-0 flex-1 text-xs [&_td]:px-3 [&_td]:py-2 [&_th]:h-9 [&_th]:px-3"
       />
     </Tabs>
@@ -1942,6 +1943,7 @@ function ScriptRecordReplayDialog({
   generatingProgress?: number
   videoQueued: boolean
 }) {
+  const { t } = useTranslation()
   const replayLines = useMemo<VnPlayerLine[]>(
     () => record?.resultSnapshot?.dialogue?.map((line) => ({
       speaker: line.speaker,
@@ -1960,7 +1962,7 @@ function ScriptRecordReplayDialog({
   const hasExistingVideo = record.works?.some((work) => work.status === 'rendering' || work.status === 'ready') ?? false
   const requestVideoGeneration = () => {
     if (publishedWork) {
-      toast.error('该作品正在广场发布中，请先取消发布后再生成新版本')
+      toast.error(t('scripts.publishedBlockRegenerate'))
       return
     }
     if (hasExistingVideo && !videoQueued) setOverwriteOpen(true)
@@ -1976,7 +1978,7 @@ function ScriptRecordReplayDialog({
           overlayClassName="z-[70] bg-background"
           className="left-0 top-0 z-[71] h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden"
         >
-          <DialogHeader className="sr-only"><DialogTitle>跟读练习记录</DialogTitle></DialogHeader>
+          <DialogHeader className="sr-only"><DialogTitle>{t('scripts.repeatRecordTitle')}</DialogTitle></DialogHeader>
           <ReadonlyRepeatRecordTheater
             record={record}
             onClose={onClose}
@@ -1987,11 +1989,11 @@ function ScriptRecordReplayDialog({
           {overwriteOpen && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/45 px-5 backdrop-blur-sm" onClick={() => setOverwriteOpen(false)}>
               <div role="dialog" aria-modal="true" aria-labelledby="overwrite-video-title" className="w-full max-w-sm rounded-2xl border border-border bg-background p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-                <h2 id="overwrite-video-title" className="text-base font-semibold">重新生成这个私有作品？</h2>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">将替换当前私有视频。生成完成后需要你手动发布到广场。</p>
+                <h2 id="overwrite-video-title" className="text-base font-semibold">{t('scripts.overwritePrivateTitle')}</h2>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('scripts.overwritePrivateDesc')}</p>
                 <div className="mt-5 flex justify-center gap-3">
-                  <Button variant="outline" onClick={() => setOverwriteOpen(false)}>取消</Button>
-                  <Button onClick={() => { setOverwriteOpen(false); void onGenerateVideo(record) }}>重新生成并覆盖</Button>
+                  <Button variant="outline" onClick={() => setOverwriteOpen(false)}>{t('common.cancel')}</Button>
+                  <Button onClick={() => { setOverwriteOpen(false); void onGenerateVideo(record) }}>{t('scripts.regenerateOverwrite')}</Button>
                 </div>
               </div>
             </div>
@@ -2004,20 +2006,20 @@ function ScriptRecordReplayDialog({
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
       <DialogContent overlayClassName="z-[70]" className="left-0 top-0 z-[71] h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden">
-        <DialogHeader className="sr-only"><DialogTitle>剧本练习回放</DialogTitle></DialogHeader>
+        <DialogHeader className="sr-only"><DialogTitle>{t('scripts.replayDialogTitle')}</DialogTitle></DialogHeader>
         {replayLines.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
-            <p className="text-sm text-muted-foreground">这条旧记录未保存对话内容，暂时无法回放。</p>
-            <Button variant="outline" onClick={onClose}>关闭</Button>
+            <p className="text-sm text-muted-foreground">{t('scripts.playbackUnavailable')}</p>
+            <Button variant="outline" onClick={onClose}>{t('common.close')}</Button>
           </div>
         ) : (
           <div className="relative h-full bg-background">
             <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
               <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full border border-border/55 bg-background/90 px-2 shadow-lg backdrop-blur-2xl">
-                <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>关闭</Button>
-                <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted-foreground">{record.episode.title} · 对话回放</span>
+                <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>{t('common.close')}</Button>
+                <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted-foreground">{record.episode.title} · {t('scripts.dialogueReplay')}</span>
                 <Button variant="ghost" size="sm" className="h-7 rounded-full px-2 text-xs" disabled={generatingProgress !== undefined || videoQueued} onClick={requestVideoGeneration}>
-                  {videoQueued ? '已提交' : generatingProgress === undefined ? '生成视频' : '提交中'}
+                  {videoQueued ? t('scripts.submitted') : generatingProgress === undefined ? t('scripts.generatingVideo') : t('scripts.submitting')}
                 </Button>
               </div>
             </div>
@@ -2030,7 +2032,7 @@ function ScriptRecordReplayDialog({
               onAdvance={() => setLineIndex((current) => Math.min(current + 1, replayLines.length))}
               showHistoryButton={false}
               showUserInputOverride
-              endedActions={<Button size="sm" className="rounded-full" onClick={onClose}>完成回放</Button>}
+              endedActions={<Button size="sm" className="rounded-full" onClick={onClose}>{t('scripts.finishReplay')}</Button>}
             />
           </div>
         )}
@@ -2052,6 +2054,7 @@ function ReadonlyRepeatRecordTheater({
   videoSubmitting: boolean
   videoQueued: boolean
 }) {
+  const { t } = useTranslation()
   const [data, setData] = useState<StoryEpisodePlayerData | null>(null)
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
@@ -2099,20 +2102,20 @@ function ReadonlyRepeatRecordTheater({
     <div className="absolute inset-0 flex min-h-0 flex-col bg-background pt-[calc(3.5rem+env(safe-area-inset-top,0px))]">
       <div className="absolute inset-x-0 top-0 z-20 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
         <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full border border-border/55 bg-background/90 px-2 shadow-lg backdrop-blur-2xl">
-          <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>关闭</Button>
-          <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted-foreground">{record.episode.title} · 跟读回放</span>
-          <Badge variant="secondary" className="h-6 text-[10px]">只读</Badge>
+          <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>{t('common.close')}</Button>
+          <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted-foreground">{record.episode.title} · {t('scripts.repeatReplay')}</span>
+          <Badge variant="secondary" className="h-6 text-[10px]">{t('scripts.readOnly')}</Badge>
         </div>
       </div>
       {loading ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
           <Loader2 className="size-7 animate-spin text-primary" />
-          <p className="text-sm">正在载入跟读剧场…</p>
+          <p className="text-sm">{t('scripts.loadingRepeatTheater')}</p>
         </div>
       ) : failed || frames.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
-          <p className="text-sm text-muted-foreground">无法读取这次跟读所需的本地剧场资源。</p>
-          <Button variant="outline" onClick={onClose}>关闭</Button>
+          <p className="text-sm text-muted-foreground">{t('scripts.repeatAssetsUnavailable')}</p>
+          <Button variant="outline" onClick={onClose}>{t('common.close')}</Button>
         </div>
       ) : (
         <VnMixedPreviewPlayer
@@ -2153,6 +2156,7 @@ function ScriptShop({
   onDownload: (id: string) => Promise<void>
   onNavigate: () => void
 }) {
+  const { t } = useTranslation()
   const [keyword, setKeyword] = useState('')
   const [selectedUnit, setSelectedUnit] = useState<LearningUnitSummary | null>(null)
   const [descExpanded, setDescExpanded] = useState(false)
@@ -2172,7 +2176,7 @@ function ScriptShop({
       <Input
         value={keyword}
         onChange={(event) => setKeyword(event.target.value)}
-        placeholder="搜索剧本"
+        placeholder={t('scripts.searchScript')}
         className="h-11 rounded-full border-0 bg-muted/70 pl-9 text-sm"
       />
     </div>
@@ -2193,10 +2197,10 @@ function ScriptShop({
         {search}
         <div className="flex flex-col items-center py-16 text-center">
           <BookOpen className="size-12 text-muted-foreground/40" />
-          <p className="mt-4 text-muted-foreground">{keyword.trim() ? '没有匹配的剧本' : '暂无可用剧本'}</p>
+          <p className="mt-4 text-muted-foreground">{keyword.trim() ? t('scripts.noMatchingScript') : t('scripts.noScriptAvailable')}</p>
           {!keyword.trim() && (
             <Button variant="outline" size="sm" className="mt-4 rounded-full" onClick={() => void onRefresh()}>
-              重新加载
+              {t('scripts.reload')}
             </Button>
           )}
         </div>
@@ -2230,12 +2234,12 @@ function ScriptShop({
                   <h3 className="line-clamp-1 flex-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</h3>
                   {unit.isLocked && <LockKeyhole className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />}
                 </div>
-                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{displayScriptLocation(unit.location, '沉浸式英语剧场')}</p>
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{displayScriptLocation(unit.location, t('scripts.immersiveTheater'))}</p>
                 <p className="mt-1 line-clamp-1 text-xs leading-5 text-muted-foreground">
-                  {unit.scriptCount} 个章节 · {unit.vocabCount} 个单词 · {unit.chunkCount} 个句块
+                  {t('scripts.unitMeta', { chapters: unit.scriptCount, words: unit.vocabCount, chunks: unit.chunkCount })}
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">{unit.isFree ? '免费' : '会员'}</Badge>
+                  <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">{unit.isFree ? t('scripts.free') : t('scripts.member')}</Badge>
                   {/* {installed && <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">已离线</Badge>} */}
                   {(task?.status === 'downloading' || task?.status === 'extracting') && (
                     <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{Math.round(task.progress)}%</Badge>
@@ -2304,6 +2308,7 @@ function ScriptShopDetail({
   onDownload: (id: string) => Promise<void>
   onEnroll: () => Promise<void>
 }) {
+  const { t } = useTranslation()
   const downloading = task?.status === 'downloading' || task?.status === 'extracting'
   const totalPages = Math.max(1, Math.ceil(unit.topics.length / pageSize))
   const chapters = unit.topics.slice((chapterPage - 1) * pageSize, chapterPage * pageSize)
@@ -2313,7 +2318,7 @@ function ScriptShopDetail({
       <DialogContent className="max-h-[88vh] w-[90vw] overflow-hidden rounded-2xl p-0 sm:max-w-md">
         <DialogHeader className="sr-only">
           <DialogTitle>{unit.title}</DialogTitle>
-          <DialogDescription>{displayScriptLocation(unit.location, '沉浸式英语剧场')}</DialogDescription>
+          <DialogDescription>{displayScriptLocation(unit.location, t('scripts.immersiveTheater'))}</DialogDescription>
         </DialogHeader>
         <div className="flex max-h-[88vh] flex-col">
           <div className="flex gap-3 bg-muted/30 p-4">
@@ -2322,16 +2327,16 @@ function ScriptShopDetail({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <Badge variant="outline" className="rounded-full text-[10px]">{unit.isFree ? '免费' : '会员'}</Badge>
+                <Badge variant="outline" className="rounded-full text-[10px]">{unit.isFree ? t('scripts.free') : t('scripts.member')}</Badge>
                 {unit.categoryName && <Badge variant="secondary" className="rounded-full text-[10px]">{unit.categoryName}</Badge>}
-                {unit.isLocked && <Badge variant="outline" className="rounded-full text-[10px]">未解锁</Badge>}
+                {unit.isLocked && <Badge variant="outline" className="rounded-full text-[10px]">{t('scripts.locked')}</Badge>}
               </div>
               <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5">{unit.title}</h3>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{displayScriptLocation(unit.location, '沉浸式英语剧场')}</p>
+              <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{displayScriptLocation(unit.location, t('scripts.immersiveTheater'))}</p>
               <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                <span>{unit.scriptCount} 个章节</span>
-                <span>{unit.vocabCount} 个单词</span>
-                <span>{unit.chunkCount} 个句块</span>
+                <span>{t('scripts.chaptersUnit', { count: unit.scriptCount })}</span>
+                <span>{t('scripts.wordsUnit', { count: unit.vocabCount })}</span>
+                <span>{t('scripts.chunksUnit', { count: unit.chunkCount })}</span>
               </div>
             </div>
           </div>
@@ -2341,7 +2346,7 @@ function ScriptShopDetail({
               <p className={cn('text-xs leading-5 text-muted-foreground', !descriptionExpanded && 'line-clamp-1')}>{unit.description}</p>
               {unit.description.length > 40 && (
                 <button type="button" onClick={onDescriptionToggle} className="mt-1 flex items-center gap-0.5 text-[11px] text-muted-foreground/70">
-                  {descriptionExpanded ? '收起' : '展开'}
+                  {descriptionExpanded ? t('scripts.collapse') : t('scripts.expand')}
                   <ChevronDown className={cn('size-3 transition-transform', descriptionExpanded && 'rotate-180')} />
                 </button>
               )}
@@ -2355,36 +2360,36 @@ function ScriptShopDetail({
                 <span className="text-xs tabular-nums text-muted-foreground">{Math.round(task.progress)}%</span>
               </div>
             ) : task?.status === 'queued' ? (
-              <Button className="w-full" disabled><Loader2 className="animate-spin" />等待下载</Button>
+              <Button className="w-full" disabled><Loader2 className="animate-spin" />{t('scripts.waitingDownload')}</Button>
             ) : task?.status === 'error' ? (
-              <Button variant="destructive" className="w-full" onClick={() => void onDownload(unit.id)}>下载失败，点击重试</Button>
+              <Button variant="destructive" className="w-full" onClick={() => void onDownload(unit.id)}>{t('scripts.downloadFailedRetry')}</Button>
             ) : installed ? (
               <Button variant="outline" className="w-full" asChild>
-                <Link to={`/scripts/packages/${unit.id}`} onClick={onNavigate}>进入剧本</Link>
+                <Link to={`/scripts/packages/${unit.id}`} onClick={onNavigate}>{t('scripts.enterScript')}</Link>
               </Button>
             ) : owned ? (
               <Button className="w-full" onClick={() => void onDownload(unit.id)}>
-                <Download data-icon="inline-start" />重新下载
+                <Download data-icon="inline-start" />{t('scripts.redownload')}
               </Button>
             ) : unit.isLocked ? (
               <Button className="w-full" asChild>
-                <Link to="/member" onClick={onNavigate}><LockKeyhole data-icon="inline-start" />查看权益</Link>
+                <Link to="/member" onClick={onNavigate}><LockKeyhole data-icon="inline-start" />{t('scripts.viewBenefits')}</Link>
               </Button>
             ) : (
               <Button className="w-full" disabled={acquiring} onClick={() => void onEnroll()}>
                 {acquiring ? <Loader2 className="animate-spin" /> : <Play data-icon="inline-start" />}
-                {acquiring ? '正在开始…' : '开始学习'}
+                {acquiring ? t('scripts.starting') : t('scripts.startLearning')}
               </Button>
             )}
           </div>
 
           <div className="flex items-center justify-between bg-muted/30 px-4 py-2.5">
-            <p className="text-xs font-medium">章节列表</p>
+            <p className="text-xs font-medium">{t('scripts.chapterListHeader')}</p>
             {unit.topics.length > pageSize && (
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                <button type="button" disabled={chapterPage === 1} onClick={() => onChapterPageChange(Math.max(1, chapterPage - 1))} className="disabled:opacity-40">上一页</button>
+                <button type="button" disabled={chapterPage === 1} onClick={() => onChapterPageChange(Math.max(1, chapterPage - 1))} className="disabled:opacity-40">{t('scripts.prevPage')}</button>
                 <span>{chapterPage}/{totalPages}</span>
-                <button type="button" disabled={chapterPage === totalPages} onClick={() => onChapterPageChange(Math.min(totalPages, chapterPage + 1))} className="disabled:opacity-40">下一页</button>
+                <button type="button" disabled={chapterPage === totalPages} onClick={() => onChapterPageChange(Math.min(totalPages, chapterPage + 1))} className="disabled:opacity-40">{t('scripts.nextPage')}</button>
               </div>
             )}
           </div>
@@ -2401,7 +2406,7 @@ function ScriptShopDetail({
                   </div>
                 ))}
               </div>
-            ) : <p className="py-8 text-center text-sm text-muted-foreground">暂无章节</p>}
+            ) : <p className="py-8 text-center text-sm text-muted-foreground">{t('scripts.noChapters')}</p>}
           </div>
         </div>
       </DialogContent>

@@ -24,16 +24,16 @@ export function Footer() {
             <Link to="/system/privacy-concise" className="hover:text-foreground transition-colors">{t('footer.privacyConcise')}</Link>
             <Link to="/system/terms" className="hover:text-foreground transition-colors">{t('footer.terms')}</Link>
             <Link to="/system/permissions" className="hover:text-foreground transition-colors">{t('footer.permissions')}</Link>
-            <Link to="/system/sdk-list" className="hover:text-foreground transition-colors">SDK目录</Link>
-            <Link to="/system/collect-info" className="hover:text-foreground transition-colors">信息收集清单</Link>
-            <Link to="/system/icp" className="hover:text-foreground transition-colors">ICP备案</Link>
-            <Link to="/marketing" className="hover:text-foreground transition-colors">产品介绍</Link>
-            <Link to="/support" className="hover:text-foreground transition-colors">支持中心</Link>
-            <Link to="/system/contact" className="hover:text-foreground transition-colors">联系我们</Link>
+            <Link to="/system/sdk-list" className="hover:text-foreground transition-colors">{t('footer.sdkList')}</Link>
+            <Link to="/system/collect-info" className="hover:text-foreground transition-colors">{t('footer.collectInfo')}</Link>
+            <Link to="/system/icp" className="hover:text-foreground transition-colors">{t('footer.icp')}</Link>
+            <Link to="/marketing" className="hover:text-foreground transition-colors">{t('footer.productIntro')}</Link>
+            <Link to="/support" className="hover:text-foreground transition-colors">{t('footer.supportCenter')}</Link>
+            <Link to="/system/contact" className="hover:text-foreground transition-colors">{t('footer.contactUs')}</Link>
           </div>
         </div>
         <div className="mt-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} 漫语町. All rights reserved.
+          {t('footer.copyright', { year: new Date().getFullYear() })}
         </div>
       </div>
     </footer>

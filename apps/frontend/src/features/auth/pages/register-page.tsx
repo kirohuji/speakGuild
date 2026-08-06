@@ -27,13 +27,14 @@ export function RegisterPage() {
   const [referralInput, setReferralInput] = useState(initialReferralCode)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [success, setSuccess] = useState(false)
   const referralCode = referralInput.trim().toUpperCase()
 
   const validate = () => {
-    if (!name.trim()) { setMessage(t('auth.enterName')); return false }
-    if (!email.trim()) { setMessage(t('auth.enterEmail')); return false }
-    if (password.length < 8) { setMessage(t('auth.passwordMinLength')); return false }
-    if (password !== confirmPassword) { setMessage(t('auth.passwordMismatch')); return false }
+    if (!name.trim()) { setSuccess(false); setMessage(t('auth.enterName')); return false }
+    if (!email.trim()) { setSuccess(false); setMessage(t('auth.enterEmail')); return false }
+    if (password.length < 8) { setSuccess(false); setMessage(t('auth.passwordMinLength')); return false }
+    if (password !== confirmPassword) { setSuccess(false); setMessage(t('auth.passwordMismatch')); return false }
     return true
   }
 
@@ -52,8 +53,10 @@ export function RegisterPage() {
         await applyReferral(referralCode).catch(() => null)
       }
       setMessage(grants.length > 0 ? t('auth.registerSuccessWithGrant', { grants: grants.join('、') }) : t('auth.registerSuccess'))
+      setSuccess(true)
       setTimeout(() => navigate('/profile'), 1200)
     } catch (error: any) {
+      setSuccess(false)
       setMessage(error?.response?.data?.message || error?.message || t('auth.registerFailed'))
     } finally {
       setLoading(false)
@@ -188,7 +191,7 @@ export function RegisterPage() {
             {message && (
               <p className={cn(
                 'rounded-xl px-4 py-3 text-center text-sm',
-                message.includes('成功') ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
+                success ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
               )}>
                 {message}
               </p>

@@ -248,7 +248,7 @@ function ChangePasswordDrawer({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="rounded-t-3xl">
         <DrawerHeader>
-          <DrawerTitle className="text-base">{t('profile.changePassword')}</DrawerTitle>
+          <DrawerTitle className="text-base">{t('profile.auth.changePassword')}</DrawerTitle>
         </DrawerHeader>
         <div className="px-4 space-y-3 pb-4">
           <div className="space-y-1.5">
@@ -284,7 +284,7 @@ function ChangePasswordDrawer({
           {message && (
             <p className={cn(
               'text-sm text-center rounded-lg px-3 py-2',
-              message.includes('成功') ? 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400' : 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400',
+              success ? 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400' : 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400',
             )}>
               {message}
             </p>
@@ -640,8 +640,8 @@ export function AccountPage() {
         <IosRow
           icon={KeyRound}
           iconBg="bg-amber-500"
-          label="修改密码"
-          subtitle="定期更换密码保障账户安全"
+          label={t('profile.auth.changePassword')}
+          subtitle={t('profile.changePasswordSecurityHint')}
           onTap={() => setPasswordDrawerOpen(true)}
           last
         />

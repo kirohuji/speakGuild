@@ -1,4 +1,5 @@
 import { Infinity } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
@@ -18,17 +19,17 @@ const gapOptions = [
   { value: 3, label: '3s' },
 ] as const
 
-const loopOptions: Array<{ value: LoopMode; label: string }> = [
-  { value: '1', label: '1次' },
-  { value: '2', label: '2次' },
-  { value: 'infinite', label: '循环' },
+const loopOptions: Array<{ value: LoopMode; labelKey: string }> = [
+  { value: '1', labelKey: 'audio.loopTimes1' },
+  { value: '2', labelKey: 'audio.loopTimes2' },
+  { value: 'infinite', labelKey: 'audio.loopInfinite' },
 ]
 
-const displayModeOptions: Array<{ value: DisplayMode; label: string }> = [
-  { value: 'original', label: '原文' },
-  { value: 'translation', label: '译文' },
-  { value: 'bilingual', label: '双语' },
-  { value: 'none', label: '不显示' },
+const displayModeOptions: Array<{ value: DisplayMode; labelKey: string }> = [
+  { value: 'original', labelKey: 'audio.displayOriginal' },
+  { value: 'translation', labelKey: 'audio.displayTranslation' },
+  { value: 'bilingual', labelKey: 'audio.displayBilingual' },
+  { value: 'none', labelKey: 'audio.displayNone' },
 ]
 
 /**
@@ -62,19 +63,20 @@ export function MixedPlaybackSettingsDialog({
   showCurrentTranslation?: boolean
   onShowCurrentTranslationChange?: (checked: boolean) => void
 }) {
+  const { t } = useTranslation()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[90vw] max-w-sm rounded-2xl">
         <DialogHeader>
-          <DialogTitle>播放设置</DialogTitle>
-          <DialogDescription>控制逐句原声播放的间隔与循环次数。</DialogDescription>
+          <DialogTitle>{t('audio.playbackSettings')}</DialogTitle>
+          <DialogDescription>{t('audio.playbackSettingsDesc')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">句间间隔</Label>
-              <span className="text-xs tabular-nums text-muted-foreground">{gapSeconds.toFixed(1)} 秒</span>
+              <Label className="text-sm font-medium">{t('audio.gapBetween')}</Label>
+              <span className="text-xs tabular-nums text-muted-foreground">{t('audio.secondsValue', { seconds: gapSeconds.toFixed(1) })}</span>
             </div>
             <div className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-0.5">
               {gapOptions.map((option) => (
@@ -96,7 +98,7 @@ export function MixedPlaybackSettingsDialog({
           <Separator />
 
           <div className="space-y-3">
-            <Label className="text-sm font-medium">循环次数</Label>
+            <Label className="text-sm font-medium">{t('audio.loopCount')}</Label>
             <div className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-0.5">
               {loopOptions.map((option) => (
                 <button
@@ -109,7 +111,7 @@ export function MixedPlaybackSettingsDialog({
                   )}
                 >
                   {option.value === 'infinite' && <Infinity className="size-3" />}
-                  {option.label}
+                  {t(option.labelKey)}
                 </button>
               ))}
             </div>
@@ -120,7 +122,7 @@ export function MixedPlaybackSettingsDialog({
               <Separator />
 
               <div className="space-y-3">
-                <Label className="text-sm font-medium">显示模式</Label>
+                <Label className="text-sm font-medium">{t('audio.displayMode')}</Label>
                 <div className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-0.5">
                   {displayModeOptions.map((option) => (
                     <button
@@ -132,14 +134,14 @@ export function MixedPlaybackSettingsDialog({
                         displayMode === option.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
                       )}
                     >
-                      {option.label}
+                      {t(option.labelKey)}
                     </button>
                   ))}
                 </div>
 
                 {displayMode === 'original' && showCurrentTranslation !== undefined && onShowCurrentTranslationChange && (
                   <div className="flex items-center justify-between gap-4 rounded-lg bg-muted/40 px-3 py-2.5 transition-colors hover:bg-muted/60">
-                    <Label className="cursor-pointer text-sm font-normal">当前句显示译文</Label>
+                    <Label className="cursor-pointer text-sm font-normal">{t('audio.showCurrentTranslation')}</Label>
                     <Switch checked={showCurrentTranslation} onCheckedChange={onShowCurrentTranslationChange} />
                   </div>
                 )}

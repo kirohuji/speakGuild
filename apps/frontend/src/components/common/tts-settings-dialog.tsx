@@ -268,7 +268,7 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
             )}
 
             {/* Preview */}
-            <Section label="试听">
+            <Section label={t('tts.preview')}>
               <div className="rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground italic">
                 "{PREVIEW_TEXT}"
               </div>
@@ -281,13 +281,13 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
                   className="gap-1.5"
                 >
                   {previewing
-                    ? <><Loader2 className="size-3.5 animate-spin" />停止</>
-                    : <><Play className="size-3.5" />试听</>
+                    ? <><Loader2 className="size-3.5 animate-spin" />{t('tts.stop')}</>
+                    : <><Play className="size-3.5" />{t('tts.preview')}</>
                   }
                 </Button>
                 {previewDone && !previewError && (
                   <span className="flex items-center gap-1 text-xs text-success">
-                    <CheckCircle2 className="size-3.5" />播放完毕
+                    <CheckCircle2 className="size-3.5" />{t('tts.playbackDone')}
                   </span>
                 )}
                 {previewError && (
@@ -302,11 +302,11 @@ export function TtsSettingsDialog({ open, onOpenChange }: TtsSettingsDialogProps
 
         <DialogFooter>
           <Button variant="outline" onClick={() => { stopPreview(); onOpenChange(false) }}>
-            取消
+            {t('common.cancel')}
           </Button>
           <Button onClick={handleSave} disabled={!!(currentModelSchema?.requiresVoiceId && !voiceId)}>
             <Volume2 className="mr-1.5 size-4" />
-            保存设置
+            {t('tts.saveSettings')}
           </Button>
         </DialogFooter>
       </DialogContent>

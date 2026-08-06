@@ -131,7 +131,7 @@ function MobileTopBar({
   const openUpdateDialog = useAppUpdateStore((s) => s.openDialog)
   const isOnline = useOnlineStatus()
   const user = session?.user
-  const fallback = (user?.name || user?.email || '我').slice(0, 1).toUpperCase()
+  const fallback = (user?.name || user?.email || t('common.me')).slice(0, 1).toUpperCase()
   const profileActive = pathname.startsWith('/profile') || pathname.startsWith('/account')
   const showBackgroundUpdate =
     updateStatus === 'downloading' &&
@@ -191,7 +191,7 @@ function MobileTopBar({
         {isDevHost && (
           <span
             className="absolute  flex size-4 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm ring-1 ring-amber-600"
-            title="dev:host 模式"
+            title={t('common.devHostMode')}
             style={{ bottom: 0 }}
           >
             <Wrench className="size-2.5" />
@@ -200,7 +200,7 @@ function MobileTopBar({
         {!isOnline && (
           <span
             className="absolute flex size-4 items-center justify-center rounded-full bg-muted-foreground/70 text-background shadow-sm ring-1 ring-border"
-            title="离线"
+            title={t('common.offline')}
             style={{ bottom: 0 }}
           >
             <WifiOff className="size-2.5" />

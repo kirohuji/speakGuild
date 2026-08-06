@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams, Link } from 'react-router-dom'
 import { useTheme } from 'next-themes'
 import { ReactReader, ReactReaderStyle, type IReactReaderStyle } from 'react-reader'
@@ -50,6 +51,7 @@ async function resolveEpubUrl(assetId: string): Promise<string> {
 }
 
 export function LearningReaderPage() {
+  const { t } = useTranslation()
   const { unitId } = useParams<{ unitId: string }>()
   const unit = useLearningStore((s) => s.unitDetail)
   const fetchUnitDetail = useLearningStore((s) => s.fetchUnitDetail)
@@ -166,7 +168,7 @@ export function LearningReaderPage() {
   }
 
   const novelMeta = unit?.novelPackage?.metadata
-  const title = novelMeta?.title ?? unit?.title ?? '阅读'
+  const title = novelMeta?.title ?? unit?.title ?? t('learning.reading')
 
   // epubOptions：滚动模式 vs 翻页模式
   const epubOptions = scrollMode
@@ -177,7 +179,7 @@ export function LearningReaderPage() {
     return (
       <div className="flex h-[100dvh] flex-col items-center justify-center bg-background gap-4">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">加载中...</p>
+        <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
       </div>
     )
   }
@@ -189,10 +191,10 @@ export function LearningReaderPage() {
           <Button variant="ghost" size="icon" className="size-10" asChild>
             <Link to={`/learning/units/${unitId}`}><ArrowLeft className="size-6" /></Link>
           </Button>
-          <span className="text-sm font-semibold">阅读</span>
+          <span className="text-sm font-semibold">{t('learning.reading')}</span>
         </div>
         <div className="flex flex-1 items-center justify-center p-10 text-center text-sm text-muted-foreground">
-          <div><BookOpen className="mx-auto mb-3 size-10 text-muted-foreground/40" /><p>后台还没有上传 EPUB</p></div>
+          <div><BookOpen className="mx-auto mb-3 size-10 text-muted-foreground/40" /><p>{t('learning.noEpub')}</p></div>
         </div>
       </div>
     )
@@ -276,12 +278,12 @@ export function LearningReaderPage() {
       <Drawer open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DrawerContent className="mx-auto max-w-md rounded-t-[28px] border-border/70 drawer-surface bg-background text-foreground">
           <DrawerHeader className="text-left">
-            <DrawerTitle className="text-base font-semibold">阅读设置</DrawerTitle>
+            <DrawerTitle className="text-base font-semibold">{t('learning.readerSettings')}</DrawerTitle>
           </DrawerHeader>
           <div className="px-5 pb-8 space-y-6">
             {/* 字号 */}
             <div>
-              <p className="mb-3 text-xs font-medium text-muted-foreground">字号</p>
+              <p className="mb-3 text-xs font-medium text-muted-foreground">{t('learning.fontSize')}</p>
               <div className="flex items-center justify-center gap-4">
                 <Button variant="outline" size="icon" className="size-10 rounded-full" disabled={fontSize <= FONT_SIZES[0]}
                   onClick={() => setFontSize((s) => { const i = FONT_SIZES.indexOf(s); return i > 0 ? FONT_SIZES[i-1] : s })}>
@@ -297,33 +299,33 @@ export function LearningReaderPage() {
 
             {/* 主题预设 */}
             <div>
-              <p className="mb-3 text-xs font-medium text-muted-foreground">阅读主题</p>
+              <p className="mb-3 text-xs font-medium text-muted-foreground">{t('learning.readerTheme')}</p>
               <div className="grid grid-cols-3 gap-3">
                 {([
-                  { key: 'light' as ReaderTheme, icon: Sun, label: '浅色', desc: '白底黑字', bg: '#ffffff', text: '#1f2d3d' },
-                  { key: 'sepia' as ReaderTheme, icon: BookOpen, label: '护眼', desc: '暖黄柔和', bg: '#fdf6e3', text: '#5c4b3a' },
-                  { key: 'dark' as ReaderTheme, icon: Moon, label: '深色', desc: '跟随全局深色', bg: '#0a0712', text: '#e6e3eb' },
-                ]).map((t) => (
+                  { key: 'light' as ReaderTheme, icon: Sun, labelKey: 'learning.themeLight', descKey: 'learning.themeLightDesc', bg: '#ffffff', text: '#1f2d3d' },
+                  { key: 'sepia' as ReaderTheme, icon: BookOpen, labelKey: 'learning.themeSepia', descKey: 'learning.themeSepiaDesc', bg: '#fdf6e3', text: '#5c4b3a' },
+                  { key: 'dark' as ReaderTheme, icon: Moon, labelKey: 'learning.themeDark', descKey: 'learning.themeDarkDesc', bg: '#0a0712', text: '#e6e3eb' },
+                ]).map((t2) => (
                   <button
-                    key={t.key}
+                    key={t2.key}
                     type="button"
-                    onClick={() => selectTheme(t.key)}
+                    onClick={() => selectTheme(t2.key)}
                     className={cn(
                       'flex flex-col items-center gap-2 rounded-xl p-3 transition-all',
-                      theme === t.key
+                      theme === t2.key
                         ? 'bg-accent/10 ring-2 ring-accent'
                         : 'bg-muted/40 hover:bg-muted/60',
                     )}
                   >
                     <div
                       className="flex size-10 items-center justify-center rounded-full border-none shadow-none"
-                      style={{ background: t.bg, color: t.text }}
+                      style={{ background: t2.bg, color: t2.text }}
                     >
-                      <t.icon className="size-5" />
+                      <t2.icon className="size-5" />
                     </div>
                     <div className="text-center">
-                      <p className="text-xs font-semibold">{t.label}</p>
-                      <p className="text-[10px] text-muted-foreground">{t.desc}</p>
+                      <p className="text-xs font-semibold">{t(t2.labelKey)}</p>
+                      <p className="text-[10px] text-muted-foreground">{t(t2.descKey)}</p>
                     </div>
                   </button>
                 ))}
@@ -335,8 +337,8 @@ export function LearningReaderPage() {
             {/* 滚动模式 */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold">上下滚动阅读</p>
-                <p className="text-xs text-muted-foreground">关闭则为左右翻页模式</p>
+                <p className="text-sm font-semibold">{t('learning.scrollReading')}</p>
+                <p className="text-xs text-muted-foreground">{t('learning.scrollReadingDesc')}</p>
               </div>
               <Switch checked={scrollMode} onCheckedChange={setScrollMode} />
             </div>
@@ -348,7 +350,7 @@ export function LearningReaderPage() {
       <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
         <SheetContent side="right" className="w-[80vw] max-w-sm border-border/60 bg-background p-0 text-foreground">
           <SheetHeader className="border-b border-border/60 px-5 py-4">
-            <SheetTitle className="text-base font-semibold">书籍信息</SheetTitle>
+            <SheetTitle className="text-base font-semibold">{t('learning.bookInfo')}</SheetTitle>
           </SheetHeader>
           <div className="space-y-4 overflow-y-auto px-5 py-4">
             {unit?.coverImage && (
@@ -357,12 +359,12 @@ export function LearningReaderPage() {
               </div>
             )}
             <div className="space-y-2.5 text-sm">
-              <InfoRow label="书名" value={novelMeta?.title ?? title} bold />
-              {novelMeta?.author && <InfoRow label="作者" value={novelMeta.author} />}
-              {novelMeta?.publisher && <InfoRow label="出版社" value={novelMeta.publisher} />}
+              <InfoRow label={t('learning.bookTitle')} value={novelMeta?.title ?? title} bold />
+              {novelMeta?.author && <InfoRow label={t('learning.bookAuthor')} value={novelMeta.author} />}
+              {novelMeta?.publisher && <InfoRow label={t('learning.bookPublisher')} value={novelMeta.publisher} />}
               <Separator />
-              <InfoRow label="阅读进度" value={`${pct}%`} bold />
-              <InfoRow label="章节数" value={`${(unit?.novelPackage?.toc as any[])?.length ?? '—'} 章`} />
+              <InfoRow label={t('learning.readProgressLabel')} value={`${pct}%`} bold />
+              <InfoRow label={t('learning.chapterCountLabel')} value={(unit?.novelPackage?.toc as any[])?.length ? t('learning.chapterCount', { count: (unit?.novelPackage?.toc as any[])?.length ?? 0 }) : '—'} />
             </div>
           </div>
         </SheetContent>

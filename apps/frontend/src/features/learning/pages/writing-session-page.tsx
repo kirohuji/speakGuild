@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, BookOpen, CheckCircle2, FilePenLine, Info, Layers, Loader2, MessageCircle, Save, Search, Sparkles, Target, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -18,6 +19,7 @@ import { WritingTaskCard } from '../components/writing-task-card'
 type WritingPhase = 'prepare' | 'write'
 
 export function WritingSessionPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { topicId } = useParams<{ topicId: string }>()
   const [searchParams] = useSearchParams()
@@ -58,10 +60,10 @@ export function WritingSessionPage() {
       <div className="flex min-h-[70dvh] flex-col items-center justify-center gap-4 px-8 text-center">
         <FilePenLine className="size-10 text-muted-foreground/35" />
         <div>
-          <p className="font-medium text-foreground">没有找到这个写作话题</p>
-          <p className="mt-1 text-sm text-muted-foreground">返回学习包后重新选择一个话题。</p>
+          <p className="font-medium text-foreground">{t('learning.writingNotFound')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t('learning.backToPackHint')}</p>
         </div>
-        <Button variant="outline" onClick={() => navigate(-1)}>返回学习包</Button>
+        <Button variant="outline" onClick={() => navigate(-1)}>{t('learning.backToPack')}</Button>
       </div>
     )
   }
@@ -110,6 +112,7 @@ function WritingPreparePage({
   onOpenGuide: () => void
   onStart: () => void
 }) {
+  const { t } = useTranslation()
   const config = topic.contentConfig?.writing ?? {}
   const requirements: string[] = config.requirements ?? []
   const durationMinutes = Math.max(1, Math.round(topic.suggestedDurationSec / 60))
@@ -125,7 +128,7 @@ function WritingPreparePage({
           type="button"
           onClick={onBack}
           className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
-          aria-label="返回学习包"
+          aria-label={t('learning.backToPack')}
         >
           <ArrowLeft className="size-4" />
         </button>
@@ -151,7 +154,7 @@ function WritingPreparePage({
           <section className="rounded-lg bg-muted/30 p-4">
             <div className="mb-3 flex items-center gap-2">
               <Info className="size-4 text-primary" />
-              <p className="text-sm font-semibold text-foreground">话题说明</p>
+              <p className="text-sm font-semibold text-foreground">{t('learning.topicDescription')}</p>
             </div>
             {topic.description?.trim() ? (
               <MarkdownRenderer
@@ -159,10 +162,10 @@ function WritingPreparePage({
                 className="text-muted-foreground prose-p:my-0 prose-ul:my-1 prose-ol:my-1"
               />
             ) : (
-              <p className="text-sm leading-6 text-muted-foreground">先阅读教学文档，再进入写作任务。</p>
+              <p className="text-sm leading-6 text-muted-foreground">{t('learning.readGuideFirst')}</p>
             )}
             <Button variant="outline" className="mt-4 min-h-11 w-full" size="default" onClick={onOpenGuide}>
-              <BookOpen className="size-4" />教学讲解
+              <BookOpen className="size-4" />{t('learning.teachingGuide')}
             </Button>
           </section>
         )}
@@ -170,26 +173,26 @@ function WritingPreparePage({
         <section>
           <div className="mb-3 flex items-end justify-between gap-3 px-1">
             <div>
-              <h2 className="text-base font-semibold text-foreground">写作准备</h2>
-              <p className="mt-0.5 text-xs text-muted-foreground">写作时可以使用的词汇、句块与句型</p>
+              <h2 className="text-base font-semibold text-foreground">{t('learning.writingPrep')}</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t('learning.writingPrepHint')}</p>
             </div>
             <Badge variant="outline" className="rounded-full text-[11px]">
-              {visibleVocabularies.length + visibleChunks.length + visiblePatterns.length} 项
+              {t('learning.supportCount', { count: visibleVocabularies.length + visibleChunks.length + visiblePatterns.length })}
             </Badge>
           </div>
 
           <Tabs defaultValue={visibleVocabularies.length > 0 ? 'vocab' : visibleChunks.length > 0 ? 'chunk' : 'pattern'} className="w-full" data-mobile-route-swipe>
             <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-              <TabsTrigger value="vocab" className="rounded-md text-xs">词汇 ({visibleVocabularies.length})</TabsTrigger>
-              <TabsTrigger value="chunk" className="rounded-md text-xs">核心句块 ({visibleChunks.length})</TabsTrigger>
-              <TabsTrigger value="pattern" className="rounded-md text-xs">句型 ({visiblePatterns.length})</TabsTrigger>
+              <TabsTrigger value="vocab" className="rounded-md text-xs">{t('learning.vocab')} ({visibleVocabularies.length})</TabsTrigger>
+              <TabsTrigger value="chunk" className="rounded-md text-xs">{t('learning.coreChunks')} ({visibleChunks.length})</TabsTrigger>
+              <TabsTrigger value="pattern" className="rounded-md text-xs">{t('learning.patterns')} ({visiblePatterns.length})</TabsTrigger>
             </TabsList>
             <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow>
               <WritingKnowledgeList
                 icon={<Search className="size-4" />}
                 items={visibleVocabularies.map((item) => ({ title: item.word, subtitle: item.meaning }))}
                 tone="cyan"
-                emptyText="这个话题暂未配置词汇"
+                emptyText={t('learning.noTopicVocab')}
               />
             </TabsContent>
             <TabsContent value="chunk" className="mt-3" data-mobile-gesture-allow>
@@ -197,7 +200,7 @@ function WritingPreparePage({
                 icon={<Layers className="size-4" />}
                 items={visibleChunks.map((item) => ({ title: item.text, subtitle: item.meaning }))}
                 tone="emerald"
-                emptyText="这个话题暂未配置核心句块"
+                emptyText={t('learning.noTopicChunks')}
               />
             </TabsContent>
             <TabsContent value="pattern" className="mt-3" data-mobile-gesture-allow>
@@ -205,7 +208,7 @@ function WritingPreparePage({
                 icon={<Target className="size-4" />}
                 items={visiblePatterns.map((item) => ({ title: item.pattern, subtitle: item.meaning }))}
                 tone="violet"
-                emptyText="这个话题暂未配置句型"
+                emptyText={t('learning.noTopicPatterns')}
               />
             </TabsContent>
           </Tabs>
@@ -215,10 +218,10 @@ function WritingPreparePage({
           <section>
             <div className="mb-3 flex items-end justify-between gap-3 px-1">
               <div>
-                <h2 className="text-base font-semibold text-foreground">写作要求</h2>
-                <p className="mt-0.5 text-xs text-muted-foreground">提交前确认已经覆盖这些内容</p>
+                <h2 className="text-base font-semibold text-foreground">{t('learning.writingRequirements')}</h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">{t('learning.requirementsHint')}</p>
               </div>
-              <Badge variant="outline" className="rounded-full text-[11px]">{requirements.length} 项</Badge>
+              <Badge variant="outline" className="rounded-full text-[11px]">{t('learning.supportCount', { count: requirements.length })}</Badge>
             </div>
             <div className="space-y-2">
               {requirements.map((item, index) => (
@@ -227,7 +230,7 @@ function WritingPreparePage({
                     <CheckCircle2 className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] text-muted-foreground">要求 {index + 1}</p>
+                    <p className="text-[11px] text-muted-foreground">{t('learning.requirementNumber', { number: index + 1 })}</p>
                     <p className="mt-0.5 text-sm font-medium leading-5 text-foreground">{item}</p>
                   </div>
                 </div>
@@ -301,6 +304,7 @@ function WritingEditor({
   onClose: () => void
   onOpenGuide: () => void
 }) {
+  const { t } = useTranslation()
   const config = topic.contentConfig?.writing ?? {}
   const editorPrompt = String(config.questionMarkdown ?? '').trim()
   const [text, setText] = useState('')
@@ -342,12 +346,12 @@ function WritingEditor({
         const result = await learningApi.analyzeTopicSession(topic.id, sessionId)
         setAnalysisResult(result.analysis ?? null)
         setSubmitted(true)
-        toast.success('AI 评估完成')
+        toast.success(t('learning.aiEvaluationDone'))
       } else {
         // 仅保存草稿到本地
-        toast.success('草稿已保存')
+        toast.success(t('learning.draftSaved'))
       }
-    } catch (error: any) { toast.error(error?.message || '保存失败') } finally { setSaving(false) }
+    } catch (error: any) { toast.error(error?.message || t('learning.saveFailed')) } finally { setSaving(false) }
   }
 
   const focusEditor = () => {
@@ -364,7 +368,7 @@ function WritingEditor({
           <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><FilePenLine className="size-[18px]" /></span>
           <div className="min-w-0 flex-1">
             <div className="mb-1.5 flex items-center gap-2">
-              <Badge variant="secondary">写作练习</Badge>
+              <Badge variant="secondary">{t('learning.writingPractice')}</Badge>
               <span className="truncate text-xs text-muted-foreground">{topic.difficulty}</span>
             </div>
             <h1 className="break-words text-xl font-bold leading-tight text-foreground">{topic.title}</h1>
@@ -444,6 +448,7 @@ function DialogueEditor({
   onClose: () => void
   onOpenGuide: () => void
 }) {
+  const { t } = useTranslation()
   const config = topic.contentConfig?.writing ?? {}
   const turns: Array<{ aText: string; hint: string }> = config.turns ?? []
 
@@ -454,6 +459,27 @@ function DialogueEditor({
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [analysisResult, setAnalysisResult] = useState<Record<string, any> | null>(null)
   const [submitted, setSubmitted] = useState(false)
+
+  // B 输入框聚焦时滚到可视区：底部对齐到键盘上方（而非居中，
+  // 因为软键盘在部分浏览器不压缩布局，居中的输入框会落在键盘后面）
+  const inputWrapRef = useRef<HTMLDivElement>(null)
+  const focusInput = () => {
+    window.setTimeout(() => {
+      const wrap = inputWrapRef.current
+      const scrollRegion = wrap?.closest<HTMLElement>('[data-writing-scroll-region]')
+      if (!wrap || !scrollRegion) return
+      // --keyboard-height 由 KeyboardProvider 写入（原生 Capacitor / Web visualViewport）
+      const keyboardHeight =
+        Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--keyboard-height')) || 0
+      const regionRect = scrollRegion.getBoundingClientRect()
+      const wrapRect = wrap.getBoundingClientRect()
+      // 可视区底部 = 滚动区底部与「键盘上方」取较小者，再留 16px 呼吸
+      const safeBottom = Math.min(regionRect.bottom, window.innerHeight - keyboardHeight) - 16
+      if (wrapRect.bottom > safeBottom) {
+        scrollRegion.scrollBy({ top: wrapRect.bottom - safeBottom, behavior: 'smooth' })
+      }
+    }, 300)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -501,11 +527,11 @@ function DialogueEditor({
         const result = await learningApi.analyzeTopicSession(topic.id, sessionId)
         setAnalysisResult(result.analysis ?? null)
         setSubmitted(true)
-        toast.success('AI 评估完成')
+        toast.success(t('learning.aiEvaluationDone'))
       } else {
-        toast.success('草稿已保存')
+        toast.success(t('learning.draftSaved'))
       }
-    } catch (error: any) { toast.error(error?.message || '保存失败') } finally { setSaving(false) }
+    } catch (error: any) { toast.error(error?.message || t('learning.saveFailed')) } finally { setSaving(false) }
   }
 
   const goToTurn = (index: number) => {
@@ -517,6 +543,7 @@ function DialogueEditor({
   return (
     <div
       data-keyboard-overlay="writing"
+      data-writing-dialogue
       className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#fffefb] pt-safe dark:bg-background"
     >
       {/* Header — unified with WritingEditor style */}
@@ -527,14 +554,14 @@ function DialogueEditor({
           </span>
           <div className="min-w-0 flex-1">
             <div className="mb-1.5 flex items-center gap-2">
-              <Badge variant="secondary">对话写作</Badge>
+              <Badge variant="secondary">{t('learning.conversationWriting')}</Badge>
               <span className="truncate text-xs text-muted-foreground">{topic.difficulty}</span>
             </div>
             <h1 className="break-words text-xl font-bold leading-tight text-foreground">{topic.title}</h1>
             <p className="mt-1.5 truncate text-sm text-muted-foreground">{unitTitle}</p>
           </div>
           <div className="flex items-center gap-1">
-            <Button type="button" variant="ghost" size="icon" className="size-8" onClick={onOpenGuide} title="查看教学指南">
+            <Button type="button" variant="ghost" size="icon" className="size-8" onClick={onOpenGuide} title={t('learning.viewGuide')}>
               <BookOpen className="size-4" />
             </Button>
             <button
@@ -599,13 +626,14 @@ function DialogueEditor({
               </div>
 
               {/* B's response input */}
-              <div className="ml-9 mt-4">
+              <div ref={inputWrapRef} className="ml-9 mt-4">
                 <div className="flex items-start gap-2.5">
                   <span className="mt-1 shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">B</span>
                   <div className="flex-1">
                     <textarea
                       value={currentResponse}
                       onChange={(event) => setResponses({ ...responses, [currentIndex]: event.target.value })}
+                      onFocus={focusInput}
                       className="min-h-[140px] w-full resize-none rounded-2xl rounded-tl-md border-0 bg-muted/40 p-4 text-[16px] leading-7 text-foreground outline-none ring-0 placeholder:text-muted-foreground/45 focus:bg-background focus:ring-2 focus:ring-primary/20"
                       placeholder="用英语写下 B 的回复…"
                       autoCapitalize="sentences"

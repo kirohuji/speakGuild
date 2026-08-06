@@ -42,6 +42,14 @@ const FALLBACK_BENEFITS: MemberBenefit[] = [
 
 export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const { t } = useTranslation()
+  const fallbackBenefits: MemberBenefit[] = [
+    { benefitId: '1', name: t('member.fallbackBenefit1'), freeSupport: t('member.fallbackFree1'), standardSupport: t('member.moreQuota'), advancedSupport: t('member.moreQuota') },
+    { benefitId: '2', name: t('member.fallbackBenefit2'), freeSupport: t('member.fallbackFree2'), standardSupport: t('member.moreQuota'), advancedSupport: t('member.moreQuota') },
+    { benefitId: '3', name: t('member.fallbackBenefit3'), freeSupport: t('member.fallbackFree3'), standardSupport: t('member.fullAccess'), advancedSupport: t('member.fullAccess') },
+    { benefitId: '4', name: t('member.fallbackBenefit4'), freeSupport: t('member.fallbackFree4'), standardSupport: t('member.moreTopics'), advancedSupport: t('member.moreTopics') },
+    { benefitId: '5', name: t('member.fallbackBenefit5'), freeSupport: false, standardSupport: true, advancedSupport: true },
+    { benefitId: '6', name: t('member.fallbackBenefit6'), freeSupport: t('member.fallbackFree6'), standardSupport: t('member.moreStorage'), advancedSupport: t('member.moreStorage') },
+  ]
   const navigate = useNavigate()
   const [plans, setPlans] = useState<MemberPlan[]>([])
   const [current, setCurrent] = useState<CurrentMembership | null>(null)
@@ -90,7 +98,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         if (benRes.status === 'fulfilled' && benRes.value.length > 0) {
           setBenefits(benRes.value)
         } else {
-          setBenefits(FALLBACK_BENEFITS)
+          setBenefits(fallbackBenefits)
         }
         setIsLoading(false)
       }
@@ -284,7 +292,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       {!compact && <div className="relative flex items-center justify-center lg:hidden">
         <button
           type="button"
-          aria-label="返回"
+          aria-label={t('common.back')}
           onClick={() => navigate(-1)}
           className="absolute left-0 inline-flex size-10 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
         >

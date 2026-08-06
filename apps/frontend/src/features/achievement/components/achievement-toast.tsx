@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Award, X } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import type { AchievementItem } from '../api/achievement-api'
@@ -10,6 +11,7 @@ interface AchievementToastProps {
 
 /** 成就解锁 Toast 动画 — 底部弹出，3 秒后自动消失 */
 export function AchievementToast({ achievement, onClose }: AchievementToastProps) {
+  const { t } = useTranslation()
   const [visible, setVisible] = useState(false)
   const [exiting, setExiting] = useState(false)
 
@@ -37,7 +39,7 @@ export function AchievementToast({ achievement, onClose }: AchievementToastProps
           <Award className="size-6 text-amber-500" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-foreground">🎉 成就解锁!</p>
+          <p className="text-sm font-bold text-foreground">🎉 {t('achievementHall.unlocked')}!</p>
           <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">{achievement.title}</p>
           <p className="text-xs text-muted-foreground">{achievement.description}</p>
         </div>

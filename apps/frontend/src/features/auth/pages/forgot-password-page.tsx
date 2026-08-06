@@ -22,9 +22,11 @@ export function ForgotPasswordPage() {
   const [otp, setOtp] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [message, setMessage] = useState('')
+  const [success, setSuccess] = useState(false)
 
   const handleSendOtp = async () => {
     if (!email.trim()) {
+      setSuccess(false)
       setMessage(t('auth.enterEmailFirst'))
       return
     }
@@ -33,8 +35,10 @@ export function ForgotPasswordPage() {
       setMessage('')
       await sendForgotPasswordOtp(email)
       setSent(true)
+      setSuccess(true)
       setMessage(t('auth.otpSent'))
     } catch (error: any) {
+      setSuccess(false)
       setMessage(error?.response?.data?.message || error?.message || t('auth.sendFailed'))
     } finally {
       setLoading(false)
@@ -43,10 +47,12 @@ export function ForgotPasswordPage() {
 
   const handleReset = async () => {
     if (!otp.trim() || otp.length !== 6) {
+      setSuccess(false)
       setMessage(t('auth.otpLengthHint'))
       return
     }
     if (newPassword.length < 8) {
+      setSuccess(false)
       setMessage(t('auth.passwordMinLengthHint'))
       return
     }
@@ -56,9 +62,11 @@ export function ForgotPasswordPage() {
       setMessage('')
       const { resetPasswordByOtp: resetApi } = await import('@/features/auth/api')
       await resetApi(email, otp, newPassword)
+      setSuccess(true)
       setMessage(t('auth.resetSuccess'))
       setTimeout(() => navigate('/auth/login'), 1500)
     } catch (error: any) {
+      setSuccess(false)
       setMessage(error?.response?.data?.message || error?.message || t('auth.resetFailed'))
     } finally {
       setLoading(false)
@@ -128,7 +136,7 @@ export function ForgotPasswordPage() {
               {message && (
                 <p className={cn(
                   'rounded-xl px-4 py-3 text-center text-sm',
-                  message.includes('成功') ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
+                  success ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
                 )}>
                   {message}
                 </p>
@@ -177,7 +185,7 @@ export function ForgotPasswordPage() {
             {message && (
               <p className={cn(
                 'rounded-xl px-4 py-3 text-center text-sm',
-                message.includes('发送') || message.includes('成功') ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
+                success ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
               )}>
                 {message}
               </p>

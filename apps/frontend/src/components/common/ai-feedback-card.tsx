@@ -1,5 +1,6 @@
 import { CheckCircle2, ChevronDown, ChevronUp, Lightbulb, Mic2, ThumbsDown, ThumbsUp, Trophy, Pencil } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/cn'
 
 type AiFeedback = {
@@ -39,6 +40,7 @@ const SCORE_RING = (s: number) =>
   : 'ring-red-200 dark:ring-red-700'
 
 export function AiFeedbackCard({ feedback, className }: AiFeedbackCardProps) {
+  const { t } = useTranslation()
   const [showRevised, setShowRevised] = useState(false)
 
   return (
@@ -63,7 +65,7 @@ export function AiFeedbackCard({ feedback, className }: AiFeedbackCardProps) {
       {/* Keywords */}
       {(feedback.keywordsUsed.length > 0 || feedback.keywordsMissed.length > 0) && (
         <div className="rounded-2xl bg-card p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.06)] dark:shadow-none dark:ring-1 dark:ring-white/[0.07]">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">关键词覆盖</p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('practice.feedbackKeywordCoverage')}</p>
           <div className="flex flex-wrap gap-1.5">
             {feedback.keywordsUsed.map((k) => (
               <span key={k} className="flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
@@ -83,7 +85,7 @@ export function AiFeedbackCard({ feedback, className }: AiFeedbackCardProps) {
       {feedback.strengths.length > 0 && (
         <FeedbackSection
           icon={<ThumbsUp className="size-4 text-emerald-600" />}
-          title="做得好"
+          title={t('practice.feedbackStrengths')}
           items={feedback.strengths}
           itemClass="text-foreground/80"
           dotClass="bg-emerald-500"
@@ -94,7 +96,7 @@ export function AiFeedbackCard({ feedback, className }: AiFeedbackCardProps) {
       {feedback.improvements.length > 0 && (
         <FeedbackSection
           icon={<ThumbsDown className="size-4 text-amber-600" />}
-          title="可以改进"
+          title={t('practice.feedbackImprovements')}
           items={feedback.improvements}
           itemClass="text-foreground/80"
           dotClass="bg-amber-500"
@@ -105,7 +107,7 @@ export function AiFeedbackCard({ feedback, className }: AiFeedbackCardProps) {
       {feedback.languageNotes.length > 0 && (
         <FeedbackSection
           icon={<Lightbulb className="size-4 text-blue-600" />}
-          title="语言建议"
+          title={t('practice.feedbackLanguageNotes')}
           items={feedback.languageNotes}
           itemClass="text-foreground/80"
           dotClass="bg-blue-500"
@@ -116,7 +118,7 @@ export function AiFeedbackCard({ feedback, className }: AiFeedbackCardProps) {
       {feedback.pronunciationNotes && feedback.pronunciationNotes.length > 0 && (
         <FeedbackSection
           icon={<Mic2 className="size-4 text-purple-600" />}
-          title="发音建议"
+          title={t('practice.feedbackPronunciationNotes')}
           items={feedback.pronunciationNotes}
           itemClass="text-foreground/80"
           dotClass="bg-purple-500"
@@ -133,7 +135,7 @@ export function AiFeedbackCard({ feedback, className }: AiFeedbackCardProps) {
           >
             <div className="flex items-center gap-2">
               <Pencil className="size-4 text-primary" />
-              <span className="text-sm font-semibold">参考改进版本</span>
+              <span className="text-sm font-semibold">{t('practice.feedbackRevisedAnswer')}</span>
             </div>
             {showRevised
               ? <ChevronUp className="size-4 text-muted-foreground" />

@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,6 +12,7 @@ interface SystemContentLayoutProps {
 }
 
 export function SystemContentLayout({ title, children, backPath }: SystemContentLayoutProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const isMobile = useIsMobile()
 
@@ -32,7 +34,7 @@ export function SystemContentLayout({ title, children, backPath }: SystemContent
             type="button"
             onClick={handleBack}
             className="inline-flex size-10 items-center justify-center rounded-full hover:bg-muted/60 active:bg-muted"
-            aria-label="返回"
+            aria-label={t('common.back')}
           >
             <ChevronLeft className="h-[22px] w-[22px]" />
           </button>
@@ -57,7 +59,7 @@ export function SystemContentLayout({ title, children, backPath }: SystemContent
           className="mb-4 gap-1.5 text-muted-foreground hover:text-foreground -ml-2"
         >
           <ChevronLeft className="h-4 w-4" />
-          返回
+          {t('common.back')}
         </Button>
         <h1 className="font-display text-2xl font-bold tracking-tight lg:text-3xl">{title}</h1>
       </div>

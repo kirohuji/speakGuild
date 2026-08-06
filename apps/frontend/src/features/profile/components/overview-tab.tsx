@@ -205,7 +205,7 @@ function YearlyTrend({ days }: { days: ActivityDay[] }) {
     const prefix = `${new Date(days[0]?.date ?? Date.now()).getFullYear()}-${String(index + 1).padStart(2, '0')}`
     const monthDays = days.filter((day) => day.date.startsWith(prefix))
     return {
-      label: `${index + 1}月`,
+      label: t('profile.monthLabel', { month: index + 1 }),
       minutes: Math.ceil(monthDays.reduce((sum, day) => sum + (day.activeSeconds ?? 0), 0) / 60),
       questions: monthDays.reduce((sum, day) => sum + (day.questionCount ?? day.count), 0),
     }
@@ -224,7 +224,7 @@ function YearlyTrend({ days }: { days: ActivityDay[] }) {
         <p className="text-sm font-medium">{t('profile.yearlyTrend', { defaultValue: '全年学习趋势' })}</p>
         <p className="text-[10px] text-muted-foreground">{t('profile.yearlyTrendHint', { defaultValue: '柱：分钟 · 线：题数' })}</p>
       </div>
-      <svg viewBox={`0 0 ${width} ${height}`} className="mt-2 h-[116px] w-full" role="img" aria-label="全年练习分钟和完成题数趋势">
+      <svg viewBox={`0 0 ${width} ${height}`} className="mt-2 h-[116px] w-full" role="img" aria-label={t('profile.yearlyTrendAria')}>
         {values.map((item, index) => {
           const barHeight = item.minutes ? Math.max(4, item.minutes / maxMinutes * plotHeight) : 0
           return <rect key={item.label} x={step * index + step * .28} y={inset + plotHeight - barHeight} width={step * .44} height={barHeight} rx="3" fill="hsl(var(--primary) / .22)" />

@@ -37,6 +37,7 @@ function WordPopover({
   onViewDetail?: (word: string) => void
   onDismiss?: () => void
 }) {
+  const { t } = useTranslation()
   const [entry, setEntry] = useState<DictionaryEntry | null | 'loading'>('loading')
 
   useEffect(() => {
@@ -62,12 +63,12 @@ function WordPopover({
       {entry === 'loading' ? (
         <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
           <Loader2 className="size-3 animate-spin" />
-          查询中...
+          {t('vnSettings.lookupLoading')}
         </div>
       ) : zh ? (
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{zh}</p>
       ) : (
-        <p className="mt-1 text-xs text-muted-foreground">暂无释义</p>
+        <p className="mt-1 text-xs text-muted-foreground">{t('expressionLib.noMeaning')}</p>
       )}
       {onViewDetail && (
         <button
@@ -80,7 +81,7 @@ function WordPopover({
           }}
         >
           <ExternalLink className="size-3" />
-          查看详情
+          {t('expressionLib.viewDetail')}
         </button>
       )}
     </PopoverContent>
@@ -434,7 +435,7 @@ export function DialogueListView({
         ref={scrollRef}
         role="button"
         tabIndex={canInteract ? 0 : -1}
-        aria-label="推进对话"
+        aria-label={t('vnSettings.advanceDialogue')}
         className={cn(
           'relative z-10 min-h-0 flex-1 overflow-y-auto px-3.5 outline-none',
           hideTopBar && 'pt-[calc(3.25rem+env(safe-area-inset-top,0px))]',
@@ -596,6 +597,7 @@ function ChatBubble({
   typewriter?: boolean
   onWordDetail?: (word: string) => void
 }) {
+  const { t } = useTranslation()
   // User input should appear immediately. Typewriter is reserved for new NPC replies.
   const hasTypewriter = typewriter !== false && isLast && !isUser && !!line.speaker
   const [displayedText, setDisplayedText] = useState(hasTypewriter ? '' : line.text)
@@ -712,8 +714,8 @@ function ChatBubble({
           {line.audioUrl && (
             <button
               type="button"
-              aria-label="回放录音"
-              title="回放录音"
+              aria-label={t('vnSettings.playbackRecording')}
+              title={t('vnSettings.playbackRecording')}
               onClick={(event) => {
                 event.stopPropagation()
                 handlePlayAudio()

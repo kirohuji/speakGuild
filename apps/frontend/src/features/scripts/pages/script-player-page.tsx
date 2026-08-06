@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft, CheckCircle2, History, Loader2, RotateCcw, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,7 @@ import {
 } from '@/features/practice/lib/practice-session-utils'
 
 export function ScriptPlayerPage() {
+  const { t } = useTranslation()
   const { episodeId } = useParams()
   const [searchParams] = useSearchParams()
   const packageId = searchParams.get('packageId') ?? ''
@@ -60,14 +62,14 @@ export function ScriptPlayerPage() {
   if (failed || !data) {
     return (
       <div className="flex h-dvh flex-col items-center justify-center gap-4 bg-background px-6 text-center">
-        <p className="text-lg font-semibold">章节脚本暂时无法播放</p>
+        <p className="text-lg font-semibold">{t('scripts.episodePlayFailed')}</p>
         <p className="max-w-sm text-sm leading-6 text-muted-foreground">
-          请确认剧本包已经下载，并且后台已经编译发布本章 Ink 脚本。
+          {t('scripts.episodePlayFailedDesc')}
         </p>
         <Button asChild variant="outline" className="rounded-full">
           <Link to={`/scripts/packages/${packageId}/episodes/${episodeId}`}>
             <ArrowLeft data-icon="inline-start" />
-            返回章节
+            {t('scripts.backToEpisode')}
           </Link>
         </Button>
       </div>
@@ -145,6 +147,7 @@ function InkEpisodePlayer({
   mode: 'vn' | 'repeat'
   completionSaved: React.MutableRefObject<boolean>
 }) {
+  const { t } = useTranslation()
   const [userTurns, setUserTurns] = useState<VnPlayerLine[]>([])
   const [recordId, setRecordId] = useState<string | null>(null)
   const [publishing, setPublishing] = useState(false)
@@ -342,9 +345,9 @@ function InkEpisodePlayer({
       setRecordId(record.id)
     }).catch(() => {
       completionSaved.current = false
-      toast.error('章节记录同步失败，稍后会再次尝试')
+      toast.error(t('scripts.recordSyncFailed'))
     })
-  }, [completionSaved, data.episode.objectives.length, data.inkScript.id, data.inkScript.version, dialogueSnapshot, episodeId, inkLines.length, mode, story.isEnded, userTurns.length])
+  }, [completionSaved, data.episode.objectives.length, data.inkScript.id, data.inkScript.version, dialogueSnapshot, episodeId, inkLines.length, mode, story.isEnded, t, userTurns.length])
 
   const publishVideo = async () => {
     if (!recordId || publishing || videoQueued) return
@@ -354,29 +357,29 @@ function InkEpisodePlayer({
       const work = await scriptCommunityApi.createWork({
         recordId,
         kind: mode === 'vn' ? 'vn_video' : 'repeat_video',
-        title: `完成《${data.episode.title}》`,
-        caption: `${mode === 'vn' ? 'VN 互动' : '跟读剧场'} · ${userTurns.length || inkLines.length} 次开口`,
+        title: t('scripts.workTitleComplete', { title: data.episode.title }),
+        caption: `${mode === 'vn' ? t('scripts.vnInteractive') : t('scripts.repeatTheater')} · ${t('scripts.speakingCount', { count: userTurns.length || inkLines.length })}`,
       })
       const taskId = `script-video:${work.id}`
       globalTaskId = taskId
-      startGlobalTask({ id: taskId, kind: 'script_video', title: `《${data.episode.title}》演出视频` })
+      startGlobalTask({ id: taskId, kind: 'script_video', title: t('scripts.performanceVideo', { title: data.episode.title }) })
       const task = await enqueueScriptVideoRender({
         workId: work.id,
         frames: renderFrames,
       })
       setVideoCompleted(false)
       setVideoQueued(true)
-      updateGlobalTask(taskId, { progress: 1, stepLabel: `已提交后台渲染（任务 ${task.taskId.slice(-6)}）` })
-      toast.success('已创建作品并提交后台渲染；完成后可在我的作品中手动发布到广场')
+      updateGlobalTask(taskId, { progress: 1, stepLabel: t('scripts.renderSubmitted', { taskId: task.taskId.slice(-6) }) })
+      toast.success(t('scripts.renderSubmittedHint'))
     } catch (error: any) {
       if (globalTaskId) {
         updateGlobalTask(globalTaskId, {
           status: 'error',
-          stepLabel: '视频生成失败',
-          error: error?.message || '视频生成失败，请重试',
+          stepLabel: t('scripts.videoGenerateFailed'),
+          error: error?.message || t('scripts.videoGenerateFailedRetry'),
         })
       }
-      toast.error(error?.message || '视频生成失败，请重试')
+      toast.error(error?.message || t('scripts.videoGenerateFailedRetry'))
     } finally {
       setPublishing(false)
     }
@@ -385,7 +388,7 @@ function InkEpisodePlayer({
   const submitInput = async (text: string) => {
     const value = text.trim()
     if (!value) return
-    setUserTurns((current) => [...current, { speaker: '我', text: value, isUser: true }])
+    setUserTurns((current) => [...current, { speaker: t('learning.speakerMe'), text: value, isUser: true }])
     userInputJustSubmittedRef.current = true
     story.resumeAfterInput(value)
     // 不调 advanceStory — 让用户点「继续」后再推进，先展示输入内容
@@ -402,7 +405,7 @@ function InkEpisodePlayer({
   }) => {
     if (repeatSaving || completionSaved.current) return
     if (recordedCount < totalCount) {
-      toast.error('完成全部台词跟读后，才会生成练习记录')
+      toast.error(t('scripts.repeatAllLinesRequired'))
       return
     }
     setRepeatSaving(true)
@@ -441,7 +444,7 @@ function InkEpisodePlayer({
           recordingAssets,
           recordingDurationsMs,
           dialogue: repeatFrames.map((frame) => ({
-            speaker: frame.kind === 'choice' || frame.kind === 'userInput' ? '我' : frame.speaker,
+            speaker: frame.kind === 'choice' || frame.kind === 'userInput' ? t('learning.speakerMe') : frame.speaker,
             text: frame.text,
             isUser: frame.kind === 'choice' || frame.kind === 'userInput',
           })),
@@ -451,7 +454,7 @@ function InkEpisodePlayer({
         recordingBatchId,
       })
       setRecordId(record.id)
-      toast.success('跟读演出已保存')
+      toast.success(t('scripts.repeatSaved'))
     } catch (error) {
       completionSaved.current = false
       console.error('[repeat-vn] practice record save failed', {
@@ -460,7 +463,7 @@ function InkEpisodePlayer({
         recordingCount: Object.keys(recordings).length,
         error,
       })
-      toast.error('跟读记录保存失败，请重试')
+      toast.error(t('scripts.repeatSaveFailed'))
     } finally {
       setRepeatSaving(false)
     }
@@ -473,17 +476,17 @@ function InkEpisodePlayer({
         <Button asChild variant="ghost" size="sm" className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground">
           <Link to={`/scripts/packages/${packageId}/episodes/${episodeId}`}>
             <ArrowLeft className="size-3.5" />
-            返回
+            {t('common.back')}
           </Link>
         </Button>
         <span className="min-w-0 flex-1 truncate px-2 text-center text-xs font-medium text-foreground/70">
-          {mode === 'repeat' ? '跟读剧场' : 'VN 互动'}
+          {mode === 'repeat' ? t('scripts.repeatTheater') : t('scripts.vnInteractive')}
         </span>
         {isChatMode && (
           <>
             <button
               type="button"
-              aria-label="对话历史"
+              aria-label={t('vnHistory.title')}
               onClick={() => vnPlayerRef.current?.toggleHistory()}
               className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-primary/[0.16] hover:text-foreground"
             >
@@ -491,7 +494,7 @@ function InkEpisodePlayer({
             </button>
             <button
               type="button"
-              aria-label="对话设置"
+              aria-label={t('vnSettings.title')}
               onClick={() => vnPlayerRef.current?.toggleSettings()}
               className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-primary/[0.16] hover:text-foreground"
             >
@@ -503,7 +506,7 @@ function InkEpisodePlayer({
           type="button"
           onClick={() => window.location.reload()}
           className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-primary/[0.16] hover:text-foreground"
-          aria-label="重新开始"
+          aria-label={t('scripts.restart')}
         >
           <RotateCcw className="size-3.5" />
         </button>
@@ -558,15 +561,15 @@ function InkEpisodePlayer({
           <div className="flex flex-col items-center gap-3">
             <div className="flex items-center gap-2 text-sm font-semibold">
               <CheckCircle2 className="size-4 text-primary" />
-              本章演出完成
+              {t('scripts.chapterComplete')}
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" className="rounded-full" onClick={() => window.location.reload()}>
                 <RotateCcw data-icon="inline-start" />
-                再演一次
+                {t('scripts.performAgain')}
               </Button>
               <Button asChild size="sm" className="rounded-full">
-                <Link to={`/scripts/packages/${packageId}`}>返回章节目录</Link>
+                <Link to={`/scripts/packages/${packageId}`}>{t('scripts.backToChapterList')}</Link>
               </Button>
             </div>
             <Button
@@ -577,14 +580,14 @@ function InkEpisodePlayer({
               onClick={() => void publishVideo()}
             >
               {videoCompleted
-                ? '视频已生成，可前往我的作品发布'
+                ? t('scripts.videoReadyToPublish')
                 : videoQueued
-                ? '已提交后台生成'
+                ? t('scripts.renderQueued')
                 : publishing
-                  ? '正在提交视频任务…'
+                  ? t('scripts.submittingVideoTask')
                   : recordId
-                    ? '生成视频并发布'
-                    : '正在保存记录…'}
+                    ? t('scripts.generateVideoAndPublish')
+                    : t('scripts.savingRecord')}
             </Button>
           </div>
         )}

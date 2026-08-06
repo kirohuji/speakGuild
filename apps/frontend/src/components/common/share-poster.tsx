@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Share2, Download, Copy, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -15,6 +16,7 @@ interface SharePosterProps {
 }
 
 export function SharePoster({ data }: SharePosterProps) {
+  const { t } = useTranslation()
   const isMobile = useIsMobile()
   const posterRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
@@ -45,12 +47,12 @@ export function SharePoster({ data }: SharePosterProps) {
   }, [data, isMobile])
 
   const handleCopy = useCallback(() => {
-    const text = `${data.title}${data.score ? ` - 得分：${data.score}分` : ''}${data.days ? ` - 连续打卡：${data.days}天` : ''}`
+    const text = `${data.title}${data.score ? ` - ${t('share.score', { score: data.score })}` : ''}${data.days ? ` - ${t('share.streak', { days: data.days })}` : ''}`
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })
-  }, [data])
+  }, [data, t])
 
   return (
     <div className="space-y-4">
@@ -62,14 +64,14 @@ export function SharePoster({ data }: SharePosterProps) {
           <h3 className="text-lg font-bold">{data.title}</h3>
           {data.score !== undefined && (
             <div>
-              <p className="text-[10px] opacity-80 uppercase tracking-wider">模考成绩</p>
-              <p className="text-4xl font-black">{data.score}<span className="text-lg font-normal"> 分</span></p>
+              <p className="text-[10px] opacity-80 uppercase tracking-wider">{t('share.examScore')}</p>
+              <p className="text-4xl font-black">{data.score}<span className="text-lg font-normal"> {t('share.points')}</span></p>
             </div>
           )}
           {data.days !== undefined && (
             <div>
-              <p className="text-[10px] opacity-80 uppercase tracking-wider">连续打卡</p>
-              <p className="text-4xl font-black">{data.days}<span className="text-lg font-normal"> 天</span></p>
+              <p className="text-[10px] opacity-80 uppercase tracking-wider">{t('share.streakLabel')}</p>
+              <p className="text-4xl font-black">{data.days}<span className="text-lg font-normal"> {t('share.days')}</span></p>
             </div>
           )}
           {data.subtitle && <p className="text-xs opacity-80">{data.subtitle}</p>}
@@ -81,11 +83,11 @@ export function SharePoster({ data }: SharePosterProps) {
       <div className="flex items-center justify-center gap-3">
         <Button onClick={handleShare} className="gap-2">
           <Share2 className="h-4 w-4" />
-          {isMobile ? '分享' : '下载图片'}
+          {isMobile ? t('share.share') : t('share.downloadImage')}
         </Button>
         <Button onClick={handleCopy} variant="outline" className="gap-2">
           {copied ? <CheckCircle2 className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
-          {copied ? '已复制' : '复制文字'}
+          {copied ? t('share.copied') : t('share.copyText')}
         </Button>
       </div>
     </div>

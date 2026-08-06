@@ -402,7 +402,7 @@ export function VnPlayer({
       <div
         role="button"
         tabIndex={canInteract || reviewLineIndex !== null ? 0 : -1}
-        aria-label="推进对话"
+        aria-label={t('vnSettings.advanceDialogue')}
         className={cn(
           'relative flex-1 overflow-hidden text-left outline-none',
           frameVariant === 'landscape' ? 'min-h-0' : 'min-h-[620px]',
@@ -541,7 +541,7 @@ export function VnPlayer({
           <div className="absolute right-4 top-0 z-10 flex h-8 -translate-y-1/2 items-center gap-0.5 rounded-full border border-primary/20 bg-background/90 px-1 shadow-[0_6px_22px_rgba(15,23,42,.09)] ring-1 ring-primary/[0.08] backdrop-blur-2xl">
             {displayLine?.isUser && cachedAudioUrl && (
               <VnIconButton
-                label="回放录音"
+                label={t('vnSettings.playbackRecording')}
                 onClick={() => {
                   const audio = new Audio(cachedAudioUrl)
                   audio.play().catch(() => {})
@@ -776,7 +776,7 @@ function VnSettingsDialog({
           {/* Display Options */}
           <div className="space-y-4">
             <SettingSwitch
-              label="打字机效果"
+              label={t('vnSettings.typewriter')}
               checked={settings.typewriter}
               onCheckedChange={(typewriter) => update({ typewriter })}
             />

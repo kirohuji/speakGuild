@@ -1,19 +1,21 @@
 import { useEffect, useRef, type ReactElement } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/providers/auth-provider'
 import { splashScreen } from '@/lib/native/splash-screen'
 import { isNative } from '@/lib/native/platform'
 
 function GuardLoading() {
+  const { t } = useTranslation()
   return (
     <div
       className="flex min-h-[100dvh] items-center justify-center bg-background text-foreground"
       role="status"
       aria-live="polite"
-      aria-label="正在检查登录状态"
+      aria-label={t('auth.checkingLoginStatus')}
     >
       <img src="/logo.png" alt="" className="size-16 object-contain dark:invert" />
-      <span className="sr-only">正在检查登录状态...</span>
+      <span className="sr-only">{`${t('auth.checkingLoginStatus')}...`}</span>
     </div>
   )
 }

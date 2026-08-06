@@ -9,14 +9,14 @@ import { submitFeedback, getMyFeedbacks, type FeedbackResult } from '@/features/
 import { FeedbackTypePicker, FEEDBACK_TYPE_OPTIONS } from '@/features/feedback/components/feedback-type-picker'
 import { useTranslation } from 'react-i18next'
 
-const STATUS_MAP: Record<string, { label: string; variant: 'outline' | 'secondary' | 'default'; labelKey: string }> = {
-  pending: { label: '处理中', variant: 'secondary', labelKey: 'feedback.statusPending' },
-  resolved: { label: '已解决', variant: 'default', labelKey: 'feedback.statusResolved' },
-  closed: { label: '已关闭', variant: 'outline', labelKey: 'feedback.statusClosed' },
+const STATUS_MAP: Record<string, { variant: 'outline' | 'secondary' | 'default'; labelKey: string }> = {
+  pending: { variant: 'secondary', labelKey: 'feedback.statusPending' },
+  resolved: { variant: 'default', labelKey: 'feedback.statusResolved' },
+  closed: { variant: 'outline', labelKey: 'feedback.statusClosed' },
 }
 
 export function FeedbackPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [type, setType] = useState('bug')
   const [content, setContent] = useState('')
@@ -138,7 +138,7 @@ export function FeedbackPage() {
                     </p>
                   )}
                   <p className="text-[10px] text-muted-foreground/60">
-                    {new Date(fb.createdAt).toLocaleString('zh-CN')}
+                    {new Date(fb.createdAt).toLocaleString(i18n.language)}
                   </p>
                 </div>
               ))}

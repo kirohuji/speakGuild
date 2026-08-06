@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import IcpContent from '../content/legal-icp.md?raw'
 import { MarkdownContent } from '../components/markdown-content'
 import { SystemContentLayout } from '../components/system-content-layout'
@@ -6,6 +7,7 @@ import { useLayoutStore } from '@/stores/layout.store'
 import { useIsMobile } from '@/hooks/use-mobile'
 
 export function SystemIcpPage() {
+  const { t } = useTranslation()
   const isMobile = useIsMobile()
   const setBottomNavVisible = useLayoutStore((s) => s.setBottomNavVisible)
 
@@ -17,7 +19,7 @@ export function SystemIcpPage() {
   }, [isMobile, setBottomNavVisible])
 
   return (
-    <SystemContentLayout title="ICP备案信息">
+    <SystemContentLayout title={t('system.icp')}>
       <MarkdownContent content={IcpContent} />
     </SystemContentLayout>
   )

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -9,9 +10,9 @@ import { cn } from '@/lib/cn'
 
 const PAGE_SIZE = 5
 
-function formatTime(value?: string) {
+function formatTime(value: string | undefined, locale: string) {
   if (!value) return ''
-  return new Date(value).toLocaleString('zh-CN', {
+  return new Date(value).toLocaleString(locale, {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -19,7 +20,7 @@ function formatTime(value?: string) {
   })
 }
 
-function formatDetail(log: OfflineSyncLogEntry) {
+function formatDetail(log: OfflineSyncLogEntry, t: (key: string, opts?: Record<string, unknown>) => string) {
   const detail = log.detail as {
     push?: { synced?: number; failed?: number; skipped?: number; operations?: Record<string, number> }
     pull?: { changed?: number; deleted?: number } | null
@@ -29,13 +30,13 @@ function formatDetail(log: OfflineSyncLogEntry) {
   const parts: string[] = []
   if (detail.push) {
     const { synced = 0, failed = 0, skipped = 0 } = detail.push
-    parts.push(`上传 ${synced}，失败 ${failed}，跳过 ${skipped}`)
+    parts.push(t('settings.syncPushDetail', { synced, failed, skipped }))
   }
   if (detail.pull) {
-    parts.push(`拉取 ${(detail.pull.changed ?? 0) + (detail.pull.deleted ?? 0)}`)
+    parts.push(t('settings.syncPullDetail', { count: (detail.pull.changed ?? 0) + (detail.pull.deleted ?? 0) }))
   }
   if (detail.refreshedPacks?.length) {
-    parts.push(`学习包更新 ${detail.refreshedPacks.length}`)
+    parts.push(t('settings.syncPackUpdateDetail', { count: detail.refreshedPacks.length }))
   }
   return parts.length > 0 ? parts.join(' · ') : null
 }
@@ -46,6 +47,7 @@ interface SyncLogDialogProps {
 }
 
 export function SyncLogDialog({ open, onOpenChange }: SyncLogDialogProps) {
+  const { t, i18n } = useTranslation()
   const { logs, clearLogs } = useOfflineSyncStore()
   const [page, setPage] = useState(1)
   const totalPages = Math.max(1, Math.ceil(logs.length / PAGE_SIZE))
@@ -59,9 +61,9 @@ export function SyncLogDialog({ open, onOpenChange }: SyncLogDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[90vw] max-w-md gap-4 rounded-2xl p-5">
         <DialogHeader>
-          <DialogTitle>同步操作日志</DialogTitle>
+          <DialogTitle>{t('settings.syncLogTitle')}</DialogTitle>
           <DialogDescription className="text-xs">
-            共 {logs.length} 条 · 错误日志始终保留，普通日志最多 50 条
+            {t('settings.syncLogCountHint', { count: logs.length })}
           </DialogDescription>
         </DialogHeader>
 
@@ -74,7 +76,7 @@ export function SyncLogDialog({ open, onOpenChange }: SyncLogDialogProps) {
                 : log.status === 'failed' || log.error
                   ? 'bg-destructive/10 text-destructive'
                   : 'bg-emerald-500/10 text-emerald-600'
-              const detail = formatDetail(log)
+              const detail = formatDetail(log, t)
               return (
                 <div key={log.id} className="flex items-start gap-2 rounded-lg bg-muted/40 px-2.5 py-2">
                   <div className={cn('mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md', tone)}>
@@ -83,10 +85,10 @@ export function SyncLogDialog({ open, onOpenChange }: SyncLogDialogProps) {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <p className="truncate text-xs font-medium">
-                        {log.status === 'running' ? '同步进行中…' : log.summary}
+                        {log.status === 'running' ? t('settings.syncRunning') : log.summary}
                       </p>
                       <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground/60">
-                        {formatTime(log.finishedAt ?? log.startedAt)}
+                        {formatTime(log.finishedAt ?? log.startedAt, i18n.language)}
                       </span>
                     </div>
                     {(log.error || detail) && (
@@ -108,7 +110,7 @@ export function SyncLogDialog({ open, onOpenChange }: SyncLogDialogProps) {
                   disabled={page <= 1}
                   onClick={() => setPage((p) => p - 1)}
                 >
-                  <ChevronLeft className="size-3.5" /> 上一页
+                  <ChevronLeft className="size-3.5" /> {t('common.prevPage')}
                 </Button>
                 <span className="text-xs text-muted-foreground">{page} / {totalPages}</span>
                 <Button
@@ -118,13 +120,13 @@ export function SyncLogDialog({ open, onOpenChange }: SyncLogDialogProps) {
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => p + 1)}
                 >
-                  下一页 <ChevronRight className="size-3.5" />
+                  {t('common.nextPage')} <ChevronRight className="size-3.5" />
                 </Button>
               </div>
             )}
           </div>
         ) : (
-          <p className="py-10 text-center text-sm text-muted-foreground">暂无同步操作日志</p>
+          <p className="py-10 text-center text-sm text-muted-foreground">{t('settings.syncEmpty')}</p>
         )}
 
         <DialogFooter className="sm:justify-start">
@@ -135,7 +137,7 @@ export function SyncLogDialog({ open, onOpenChange }: SyncLogDialogProps) {
             onClick={() => { clearLogs(); onOpenChange(false) }}
             disabled={logs.length === 0}
           >
-            <Trash2 className="size-3.5" /> 清空全部日志
+            <Trash2 className="size-3.5" /> {t('settings.clearAllLogs')}
           </Button>
         </DialogFooter>
       </DialogContent>
