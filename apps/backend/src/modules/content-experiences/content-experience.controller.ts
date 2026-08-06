@@ -24,10 +24,47 @@ export class ContentExperienceController {
     return this.experiences.saveTopicSubmission(session.user.id, topicId, dto);
   }
 
-  @Post('topics/:topicId/review')
-  async reviewSubmission(@Req() req: Request, @Param('topicId') topicId: string) {
+  // POST /topics/:topicId/review 已移除。
+  // 旧路径逐条 AI 反馈 → 新路径走 TopicSession.analyzeTopicSession（统一综合评估）。
+
+  // ═══ TopicSession 路由 ═══
+
+  @Post('topics/:topicId/sessions/start')
+  async startSession(@Req() req: Request, @Param('topicId') topicId: string) {
     const session = await requireAuthSession(req);
-    return this.experiences.reviewLatestSubmission(session.user.id, topicId);
+    return this.experiences.startTopicSession(session.user.id, topicId);
+  }
+
+  @Post('topics/:topicId/sessions/:id/complete')
+  async completeSession(
+    @Req() req: Request,
+    @Param('topicId') topicId: string,
+    @Param('id') id: string,
+  ) {
+    const session = await requireAuthSession(req);
+    return this.experiences.completeTopicSession(session.user.id, id);
+  }
+
+  @Get('topics/:topicId/sessions')
+  async listSessions(@Req() req: Request, @Param('topicId') topicId: string) {
+    const session = await requireAuthSession(req);
+    return this.experiences.listTopicSessions(session.user.id, topicId);
+  }
+
+  @Get('topics/:topicId/sessions/latest')
+  async latestSession(@Req() req: Request, @Param('topicId') topicId: string) {
+    const session = await requireAuthSession(req);
+    return this.experiences.getLatestTopicSession(session.user.id, topicId);
+  }
+
+  @Post('topics/:topicId/sessions/:id/analyze')
+  async analyzeSession(
+    @Req() req: Request,
+    @Param('topicId') topicId: string,
+    @Param('id') id: string,
+  ) {
+    const session = await requireAuthSession(req);
+    return this.experiences.analyzeTopicSession(session.user.id, id);
   }
 
   @Put('novels/:sceneId/progress')

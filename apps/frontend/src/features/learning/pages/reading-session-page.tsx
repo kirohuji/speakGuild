@@ -125,22 +125,51 @@ function ReadingHeader({ topic, unitTitle, onBack }: { topic: TrainingTopicItem;
 function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: TrainingTopicItem; unitTitle: string; onClose: () => void; onOpenGuide: () => void }) {
   const config = topic.contentConfig?.reading ?? {}
   const questions: any[] = config.questions ?? []
-  const [answers, setAnswers] = useState<Record<string, string>>(topic.latestSubmission?.response?.answers ?? {})
-  const [submission, setSubmission] = useState(topic.latestSubmission ?? null)
+  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<Record<string, any> | null>(null)
   const [saving, setSaving] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const answeredCount = questions.filter((_: any, index: number) => String(answers[String(index)] ?? '').trim()).length
   const question = questions[currentQuestion]
 
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const latest = await learningApi.getLatestTopicSession(topic.id)
+        if (cancelled) return
+        if (latest?.status === 'active') {
+          setSessionId(latest.id)
+          if (latest.submissions?.[0]?.response?.answers) setAnswers(latest.submissions[0].response.answers)
+        } else if (latest?.status === 'analyzed') {
+          setAnalysisResult(latest.analysisResult ?? null)
+          const created = await learningApi.startTopicSession(topic.id)
+          if (!cancelled) setSessionId(created.id)
+        } else {
+          const created = await learningApi.startTopicSession(topic.id)
+          if (!cancelled) setSessionId(created.id)
+        }
+      } catch { /* 离线 */ }
+    })()
+    return () => { cancelled = true }
+  }, [topic.id])
+
   const submit = async () => {
+    if (!sessionId || saving) return
     setSaving(true)
     try {
       await learningApi.saveTopicSubmission(topic.id, { response: { answers }, status: 'submitted' })
-      const reviewed = await learningApi.reviewTopicSubmission(topic.id)
-      setSubmission(reviewed)
-      toast.success('回答已提交')
+      await learningApi.completeTopicSession(topic.id, sessionId)
+      const result = await learningApi.analyzeTopicSession(topic.id, sessionId)
+      setAnalysisResult(result.analysis ?? null)
+      setSubmitted(true)
+      toast.success('AI 评估完成')
     } catch (error: any) { toast.error(error?.message || '提交失败') } finally { setSaving(false) }
   }
+
+  const showAnalysis = submitted || analysisResult
 
   return (
     <div className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#fffefb] pt-safe dark:bg-background">
@@ -151,36 +180,39 @@ function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: 
           <button type="button" onClick={onClose} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground" aria-label="退出答题"><X className="size-3.5" /></button>
         </div>
       </header>
-      <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(15rem,40dvh)]">
-        <section className="min-h-0 overflow-y-auto overscroll-contain" aria-label="阅读文章">
-          <article className="mx-auto w-full max-w-3xl px-5 pb-6 pt-4 sm:px-8">
-            <div className="mb-3 flex items-center justify-between gap-3"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Reading passage</p><Button variant="ghost" size="sm" onClick={onOpenGuide} className="-mr-2 h-7 text-xs"><BookOpen className="size-3.5" />指南</Button></div>
-            <MarkdownRenderer content={String(config.questionMarkdown ?? '')} className="text-[16px] leading-8 prose-p:my-4 prose-p:leading-8 prose-img:my-5 prose-img:w-full" />
-          </article>
-        </section>
+      {showAnalysis ? (
+        <ReadingAnalysisPanel analysis={analysisResult} onClose={onClose} />
+      ) : (
+        <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(15rem,40dvh)]">
+          <section className="min-h-0 overflow-y-auto overscroll-contain" aria-label="阅读文章">
+            <article className="mx-auto w-full max-w-3xl px-5 pb-6 pt-4 sm:px-8">
+              <div className="mb-3 flex items-center justify-between gap-3"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Reading passage</p><Button variant="ghost" size="sm" onClick={onOpenGuide} className="-mr-2 h-7 text-xs"><BookOpen className="size-3.5" />指南</Button></div>
+              <MarkdownRenderer content={String(config.questionMarkdown ?? '')} className="text-[16px] leading-8 prose-p:my-4 prose-p:leading-8 prose-img:my-5 prose-img:w-full" />
+            </article>
+          </section>
 
-        <section className="flex min-h-0 flex-col border-t border-border/70 bg-background shadow-[0_-8px_20px_rgba(0,0,0,0.04)]" aria-label="阅读问题">
-          <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-2 border-b border-border/50 px-4 py-2">
-            <p className="shrink-0 text-[11px] font-medium text-muted-foreground">题目</p>
-            <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
-              {questions.map((_: any, index: number) => <button key={index} type="button" onClick={() => setCurrentQuestion(index)} className={cn('flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold', currentQuestion === index ? 'border-primary bg-primary text-primary-foreground' : answers[String(index)] ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground')} aria-label={`第 ${index + 1} 题`}>{index + 1}</button>)}
+          <section className="flex min-h-0 flex-col border-t border-border/70 bg-background shadow-[0_-8px_20px_rgba(0,0,0,0.04)]" aria-label="阅读问题">
+            <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-2 border-b border-border/50 px-4 py-2">
+              <p className="shrink-0 text-[11px] font-medium text-muted-foreground">题目</p>
+              <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
+                {questions.map((_: any, index: number) => <button key={index} type="button" onClick={() => setCurrentQuestion(index)} className={cn('flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold', currentQuestion === index ? 'border-primary bg-primary text-primary-foreground' : answers[String(index)] ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground')} aria-label={`第 ${index + 1} 题`}>{index + 1}</button>)}
+              </div>
+              <span className="shrink-0 text-[11px] text-muted-foreground">{answeredCount}/{questions.length}</span>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <Button variant="outline" size="sm" className="h-8 px-2.5" disabled={currentQuestion === 0} onClick={() => setCurrentQuestion((index) => Math.max(0, index - 1))}><ChevronLeft className="size-4" />上一题</Button>
+                {currentQuestion < questions.length - 1
+                  ? <Button size="sm" className="h-8 px-3" onClick={() => setCurrentQuestion((index) => Math.min(questions.length - 1, index + 1))}>下一题<ChevronRight className="size-4" /></Button>
+                  : <Button size="sm" className="h-8 px-3" onClick={submit} disabled={saving || answeredCount < questions.length || questions.length === 0 || !sessionId}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}提交评估</Button>}
+              </div>
             </div>
-            <span className="shrink-0 text-[11px] text-muted-foreground">{answeredCount}/{questions.length}</span>
-            <div className="flex shrink-0 items-center gap-1.5">
-              <Button variant="outline" size="sm" className="h-8 px-2.5" disabled={currentQuestion === 0} onClick={() => setCurrentQuestion((index) => Math.max(0, index - 1))}><ChevronLeft className="size-4" />上一题</Button>
-              {currentQuestion < questions.length - 1
-                ? <Button size="sm" className="h-8 px-3" onClick={() => setCurrentQuestion((index) => Math.min(questions.length - 1, index + 1))}>下一题<ChevronRight className="size-4" /></Button>
-                : <Button size="sm" className="h-8 px-3" onClick={submit} disabled={saving || answeredCount < questions.length || questions.length === 0}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}提交答案</Button>}
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              <div className="mx-auto w-full max-w-3xl px-4 py-3 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+                {question ? <ReadingQuestion index={currentQuestion} question={question} value={answers[String(currentQuestion)] ?? ''} onChange={(value) => setAnswers((current) => ({ ...current, [String(currentQuestion)]: value }))} /> : <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">暂未配置理解题</p>}
+              </div>
             </div>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-            <div className="mx-auto w-full max-w-3xl px-4 py-3 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
-              {question ? <ReadingQuestion index={currentQuestion} question={question} value={answers[String(currentQuestion)] ?? ''} onChange={(value) => setAnswers((current) => ({ ...current, [String(currentQuestion)]: value }))} /> : <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">暂未配置理解题</p>}
-              {submission?.feedback && <div className="mt-4"><ReadingFeedback feedback={submission.feedback} /></div>}
-            </div>
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
+      )}
     </div>
   )
 }
@@ -195,6 +227,73 @@ function ReadingQuestion({ index, question, value, onChange }: { index: number; 
   )
 }
 
-function ReadingFeedback({ feedback }: { feedback: Record<string, any> }) {
-  return <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4"><div className="mb-3 flex items-center gap-2"><CheckCircle2 className="size-4 text-emerald-600" /><p className="text-sm font-semibold">阅读反馈</p>{feedback.score != null && <Badge className="ml-auto">{feedback.score}</Badge>}</div><p className="text-sm leading-6 text-muted-foreground">{feedback.summary}</p>{(feedback.improvements ?? []).length > 0 && <ul className="mt-3 space-y-1 text-sm">{feedback.improvements.map((item: string) => <li key={item}>→ {item}</li>)}</ul>}</div>
+function ReadingAnalysisPanel({ analysis, onClose }: { analysis: Record<string, any> | null; onClose: () => void }) {
+  if (!analysis) {
+    return (
+      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">AI 正在评估你的回答...</p>
+      </main>
+    )
+  }
+  const score = analysis.overallScore ?? 0
+  const qByQ = (analysis.questionByQuestion ?? []) as any[]
+  const strengths = (analysis.strengths ?? []) as string[]
+  const improvements = (analysis.improvements ?? []) as string[]
+
+  return (
+    <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <div className="mx-auto max-w-2xl space-y-4 px-4 py-5 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
+        <div className="flex items-center gap-4 rounded-xl bg-muted/30 p-5">
+          <div className={cn('flex size-[72px] shrink-0 flex-col items-center justify-center rounded-xl bg-background/70', score >= 80 ? 'text-green-600' : score >= 60 ? 'text-amber-600' : 'text-destructive')}>
+            <span className="text-3xl font-bold leading-none">{score}</span>
+            <span className="mt-1 text-[10px] font-medium">总分</span>
+          </div>
+          <div className="min-w-0">
+            {analysis.summary && <p className="text-sm leading-6 text-foreground">{analysis.summary}</p>}
+          </div>
+        </div>
+        {qByQ.length > 0 && (
+          <div className="rounded-xl bg-muted/30 p-4">
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><Sparkles className="size-4 text-primary" />逐题分析</h3>
+            <div className="space-y-3">
+              {qByQ.map((item: any) => (
+                <div key={item.index} className="rounded-lg bg-background/60 p-3">
+                  <div className="flex items-start gap-2">
+                    {item.isCorrect ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-green-500" /> : <X className="mt-0.5 size-4 shrink-0 text-destructive" />}
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-foreground">第 {item.index} 题</p>
+                      {item.comment && <p className="mt-1 text-xs text-muted-foreground">{item.comment}</p>}
+                      {item.evidenceMatch && <p className="mt-0.5 text-[11px] text-muted-foreground/70">{item.evidenceMatch}</p>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className="rounded-xl bg-muted/30 p-4">
+          {strengths.length > 0 && (
+            <div className="mb-3">
+              <h3 className="mb-2 text-sm font-semibold text-green-700 dark:text-green-400">做得好的地方</h3>
+              <ul className="space-y-1">{strengths.map((s: string) => <li key={s} className="text-xs text-muted-foreground">→ {s}</li>)}</ul>
+            </div>
+          )}
+          {improvements.length > 0 && (
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-amber-700 dark:text-amber-400">可以改进</h3>
+              <ul className="space-y-1">{improvements.map((s: string) => <li key={s} className="text-xs text-muted-foreground">→ {s}</li>)}</ul>
+            </div>
+          )}
+        </div>
+        {analysis.nextStepSuggestion && (
+          <div className="rounded-xl border border-primary/10 bg-primary/[0.04] p-4">
+            <h3 className="mb-1 text-sm font-semibold text-primary">下一步建议</h3>
+            <p className="text-sm leading-6 text-muted-foreground">{analysis.nextStepSuggestion}</p>
+          </div>
+        )}
+        <Button variant="outline" className="w-full" onClick={onClose}>返回学习包</Button>
+      </div>
+    </main>
+  )
 }

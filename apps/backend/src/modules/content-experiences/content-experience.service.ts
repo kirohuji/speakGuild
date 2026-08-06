@@ -431,6 +431,220 @@ export class ContentExperienceService {
     };
   }
 
+  // ═══ TopicSession: 练习完成记录（对齐 PracticeSession） ═══
+
+  async startTopicSession(userId: string, topicId: string) {
+    const topic = await this.prisma.trainingTopic.findUnique({
+      where: { id: topicId },
+      select: { id: true, sceneId: true, activityType: true },
+    });
+    if (!topic) throw new NotFoundException('学习话题不存在');
+    await this.learning.assertLearningPackAccess(userId, topic.sceneId, { allowExistingProgress: true });
+    return this.prisma.topicSession.create({
+      data: { userId, topicId, sceneId: topic.sceneId },
+    });
+  }
+
+  async completeTopicSession(userId: string, sessionId: string) {
+    const session = await this.prisma.topicSession.findFirst({
+      where: { id: sessionId, userId },
+    });
+    if (!session) throw new NotFoundException('练习记录不存在');
+    if (session.status !== 'active') throw new BadRequestException('该练习已完成或已分析');
+    return this.prisma.topicSession.update({
+      where: { id: sessionId },
+      data: { status: 'completed', completedAt: new Date() },
+    });
+  }
+
+  async listTopicSessions(userId: string, topicId: string) {
+    return this.prisma.topicSession.findMany({
+      where: { userId, topicId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true, status: true, analysisResult: true,
+        startedAt: true, completedAt: true, analyzedAt: true, createdAt: true,
+        submissions: { select: { id: true, revision: true, response: true } },
+      },
+    });
+  }
+
+  async getLatestTopicSession(userId: string, topicId: string) {
+    return this.prisma.topicSession.findFirst({
+      where: { userId, topicId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true, status: true, analysisResult: true,
+        startedAt: true, completedAt: true, analyzedAt: true, createdAt: true,
+        submissions: { orderBy: { revision: 'desc' }, take: 1, select: { id: true, revision: true, response: true } },
+      },
+    });
+  }
+
+  // ═══ AI 综合评估 ═══
+
+  async analyzeTopicSession(userId: string, sessionId: string) {
+    const session = await this.prisma.topicSession.findFirst({
+      where: { id: sessionId, userId },
+      include: {
+        topic: { select: { activityType: true, contentConfig: true, title: true, promptEn: true, promptZh: true } },
+        submissions: { orderBy: { revision: 'desc' }, take: 1 },
+      },
+    });
+    if (!session) throw new NotFoundException('练习记录不存在');
+    if (session.status !== 'completed') throw new BadRequestException('请先完成练习再申请评估');
+    if (!session.submissions.length) throw new BadRequestException('未找到提交内容');
+
+    const submission = session.submissions[0];
+    const { activityType, contentConfig, title, promptEn, promptZh } = session.topic;
+
+    let analysis: any = null;
+    let raw: string | null = null;
+    let error: string | null = null;
+
+    try {
+      const config = await this.aiModels.getLlmConfig();
+      if (!config.apiKey) throw new Error('LLM API key is not configured');
+      const model = this.llmFactory.create(config);
+
+      if (activityType === 'reading') {
+        const result = await this.analyzeReading(session, submission, contentConfig, { title, promptEn, promptZh }, model, config);
+        analysis = result.analysis;
+        raw = result.raw;
+      } else if (activityType === 'writing') {
+        const result = await this.analyzeWriting(session, submission, contentConfig, { title, promptEn, promptZh }, model, config);
+        analysis = result.analysis;
+        raw = result.raw;
+      } else {
+        throw new BadRequestException('不支持该类型的 AI 评估');
+      }
+    } catch (err: any) {
+      error = err?.message ?? 'AI 评估失败';
+    }
+
+    await this.prisma.topicSession.update({
+      where: { id: sessionId },
+      data: {
+        status: 'analyzed',
+        analyzedAt: new Date(),
+        analysisResult: analysis ? (analysis as any) : undefined,
+        analysisRaw: raw,
+        analysisError: error,
+      },
+    });
+
+    // 标记关联的 submission 为 completed
+    if (analysis && submission.status !== 'completed') {
+      await this.prisma.trainingTopicSubmission.update({
+        where: { id: submission.id },
+        data: { status: 'completed' },
+      });
+    }
+
+    await this.updateTopicExperienceProgress(userId, session.sceneId);
+    return { analysis, raw, error };
+  }
+
+  private async analyzeReading(
+    _session: any,
+    submission: any,
+    contentConfig: any,
+    topicInfo: { title: string; promptEn: string; promptZh: string },
+    model: any,
+    _llmConfig: any,
+  ) {
+    const reading = (contentConfig as any)?.reading ?? {};
+    const questions: any[] = reading.questions ?? [];
+    const passage = reading.questionMarkdown ?? '';
+
+    const questionDetails = questions.map((q: any, idx: number) => ({
+      index: idx + 1,
+      type: q.type ?? 'open',
+      prompt: q.prompt ?? '',
+      userAnswer: ((submission.response as any)?.answers ?? {})[String(idx)] ?? '',
+      referenceAnswer: q.answer ?? '',
+      acceptedAnswers: q.acceptedAnswers ?? [],
+      evidence: q.evidence ?? '',
+    }));
+
+    const prompt = JSON.stringify({
+      topic: { title: topicInfo.title, promptEn: topicInfo.promptEn, promptZh: topicInfo.promptZh },
+      passage: passage.slice(0, 8000),
+      questions: questionDetails,
+    });
+
+    const { text } = await generateText({
+      model,
+      system: `You are an ESL reading coach evaluating a learner's comprehension answers. Return one valid JSON object only. Required shape:
+{
+  "overallScore": 0-100,
+  "summary": "Chinese summary of overall performance",
+  "questionByQuestion": [{
+    "index": number,
+    "isCorrect": boolean,
+    "comment": "Chinese feedback for this answer",
+    "evidenceMatch": "Chinese note on whether the learner used the correct evidence"
+  }],
+  "strengths": ["Chinese strength 1", ...],
+  "improvements": ["Chinese improvement 1", ...],
+  "nextStepSuggestion": "Chinese suggestion for next study focus"
+}
+Compare the learner's answer to the referenceAnswer and acceptedAnswers. Ground every claim in the supplied content. Be encouraging but honest.`,
+      prompt,
+      temperature: 0.35,
+      maxOutputTokens: 2000,
+    });
+
+    return { analysis: parseJsonResponse(text), raw: text };
+  }
+
+  private async analyzeWriting(
+    _session: any,
+    submission: any,
+    contentConfig: any,
+    topicInfo: { title: string; promptEn: string; promptZh: string },
+    model: any,
+    _llmConfig: any,
+  ) {
+    const writing = (contentConfig as any)?.writing ?? {};
+    const userText = String((submission.response as any)?.text ?? '');
+
+    if (!userText.trim()) throw new BadRequestException('写作内容为空');
+
+    const prompt = JSON.stringify({
+      topic: { title: topicInfo.title, promptEn: topicInfo.promptEn, promptZh: topicInfo.promptZh },
+      requirements: {
+        genre: writing.genre ?? 'essay',
+        minWords: writing.minWords,
+        maxWords: writing.maxWords,
+        candidateRole: writing.candidateRole,
+        audience: writing.audience,
+        purpose: writing.purpose,
+        requirements: writing.requirements,
+        rubric: writing.rubric,
+      },
+      learnerText: userText.slice(0, 12000),
+    });
+
+    const { text } = await generateText({
+      model,
+      system: `You are an ESL writing coach evaluating a learner's composition. Return one valid JSON object only. Required shape:
+{
+  "overallScore": 0-100,
+  "summary": "Chinese summary of overall writing quality",
+  "strengths": ["Chinese strength 1", ...],
+  "improvements": ["Chinese improvement with specific evidence from the text", ...],
+  "nextStepSuggestion": "Chinese suggestion for next writing focus"
+}
+Evaluate task completion, clarity, and language accuracy. Quote specific parts of the learner's text as evidence for each improvement. Be encouraging but specific. Do NOT write a full model answer — only point out what to improve.`,
+      prompt,
+      temperature: 0.35,
+      maxOutputTokens: 1800,
+    });
+
+    return { analysis: parseJsonResponse(text), raw: text };
+  }
+
   async saveTopicSubmission(userId: string, topicId: string, dto: SaveTopicSubmissionDto) {
     const topic = await this.prisma.trainingTopic.findUnique({
       where: { id: topicId },
@@ -452,47 +666,16 @@ export class ContentExperienceService {
       });
     } else {
       const revision = dto.revision ?? (latest?.revision ?? 0) + 1;
-      saved = await this.prisma.trainingTopicSubmission.upsert({
-        where: { userId_topicId_revision: { userId, topicId, revision } },
-        create: { userId, topicId, revision, status, response: toJson(dto.response) },
-        update: { status, response: toJson(dto.response) },
+      saved = await this.prisma.trainingTopicSubmission.create({
+        data: { userId, topicId, revision, status, response: toJson(dto.response) },
       });
     }
     if (saved.status === 'completed') await this.updateTopicExperienceProgress(userId, topic.sceneId);
     return saved;
   }
 
-  async reviewLatestSubmission(userId: string, topicId: string) {
-    const topic = await this.prisma.trainingTopic.findUnique({
-      where: { id: topicId },
-      include: { scene: { select: { id: true, title: true } } },
-    });
-    if (!topic) throw new NotFoundException('学习话题不存在');
-    if (!['writing', 'reading'].includes(topic.activityType)) {
-      throw new BadRequestException('只有写作和阅读回答需要 AI 反馈');
-    }
-    await this.learning.assertLearningPackAccess(userId, topic.sceneId, { allowExistingProgress: true });
-    const submission = await this.prisma.trainingTopicSubmission.findFirst({
-      where: { userId, topicId },
-      orderBy: { revision: 'desc' },
-    });
-    if (!submission) throw new BadRequestException('请先提交内容');
-
-    const feedback = await this.generateFeedback(topic.activityType, {
-      packageTitle: topic.scene.title,
-      topicTitle: topic.title,
-      promptEn: topic.promptEn,
-      promptZh: topic.promptZh,
-      config: topic.contentConfig,
-      response: submission.response,
-    });
-    const reviewed = await this.prisma.trainingTopicSubmission.update({
-      where: { id: submission.id },
-      data: { status: 'reviewed', feedback: toJson(feedback) },
-    });
-    await this.updateTopicExperienceProgress(userId, topic.sceneId);
-    return reviewed;
-  }
+  // reviewLatestSubmission + generateFeedback 已移除。
+  // 旧路径逐条 AI 反馈 → 新路径走 TopicSession.analyzeTopicSession（步骤 4）。
 
   async saveNovelProgress(userId: string, sceneId: string, dto: SaveNovelProgressDto) {
     await this.learning.assertLearningPackAccess(userId, sceneId, { allowExistingProgress: true });
@@ -523,7 +706,7 @@ export class ContentExperienceService {
         where: {
           sceneId,
           activityType: { not: 'practice' },
-          submissions: { some: { userId, status: { in: ['reviewed', 'completed'] } } },
+          submissions: { some: { userId, status: 'completed' } },
         },
       }),
     ]);
@@ -533,41 +716,5 @@ export class ContentExperienceService {
       create: { userId, sceneId, completedPracticeCount: completed, readiness: mastery, mastery },
       update: { completedPracticeCount: completed, readiness: mastery, mastery },
     });
-  }
-
-  private async generateFeedback(activityType: TopicActivityType, context: Record<string, unknown>) {
-    const rawResponse = JSON.stringify(context.response);
-    if (rawResponse.length > 20_000) throw new BadRequestException('提交内容过长');
-    const fallback = activityType === 'writing'
-      ? {
-          score: null,
-          summary: '内容已保存，但 AI 反馈暂时不可用。你可以先检查题目要求、段落结构和关键表达。',
-          strengths: [],
-          improvements: ['确认是否覆盖全部写作要点', '检查每段是否只有一个清晰中心'],
-          evidence: [],
-          nextRevisionFocus: '先完成一次自我修订',
-        }
-      : {
-          score: null,
-          summary: '回答已保存，但 AI 反馈暂时不可用。请回到原文核对每个答案的证据。',
-          strengths: [],
-          improvements: ['为每个答案找到对应原文依据'],
-          evidence: [],
-          nextRevisionFocus: '补充原文证据',
-        };
-    try {
-      const config = await this.aiModels.getLlmConfig();
-      const model = this.llmFactory.create(config);
-      const { text } = await generateText({
-        model,
-        system: `You are an ESL ${activityType} coach. Evaluate the learner's own work, never replace it with a full model answer. Return JSON only with: score (0-100), summary (Chinese), strengths (Chinese string[]), improvements (Chinese string[]), evidence ({quote,comment}[] using exact short excerpts from the learner or reading passage), nextRevisionFocus (Chinese). Ground every claim in supplied content.`,
-        prompt: JSON.stringify(context),
-        temperature: 0.3,
-        maxOutputTokens: 1200,
-      });
-      return parseJsonResponse(text);
-    } catch {
-      return fallback;
-    }
   }
 }

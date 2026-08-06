@@ -199,6 +199,36 @@ async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
     await applyWarmupRecordItem(item)
   }
 
+  for (const session of changed?.topicSessions ?? []) {
+    if (!session?.id) continue
+    await localDb.put('topic_sessions', {
+      id: `session:${session.id}`,
+      remoteId: session.id,
+      topicId: session.topicId,
+      sceneId: session.sceneId,
+      status: session.status,
+      analysisResult: session.analysisResult,
+      startedAt: toIsoString(session.startedAt),
+      completedAt: toIsoString(session.completedAt),
+      analyzedAt: toIsoString(session.analyzedAt),
+      submissions: session.submissions ?? [],
+      updatedAt: toIsoString(session.updatedAt) ?? new Date().toISOString(),
+      syncStatus: 'synced',
+    })
+    for (const sub of session.submissions ?? []) {
+      if (!sub?.id) continue
+      await localDb.put('topic_submissions', {
+        id: `sub:${sub.id}`,
+        remoteId: sub.id,
+        sessionId: session.id,
+        revision: sub.revision,
+        status: sub.status,
+        response: sub.response,
+        syncStatus: 'synced',
+      })
+    }
+  }
+
   for (const id of deleted?.expressionItems ?? []) {
     await deleteExpressionItem(id)
   }
@@ -358,6 +388,35 @@ async function replayItem(
         notebookIds: payload.notebookIds,
       })
       await cacheExpressionItem(expressionCache, created)
+      return true
+    }
+  }
+
+  // ---- 阅读/写作 TopicSession + Submission ----
+  if (item.entityType === 'topic_session') {
+    const payload = item.payload as any
+    if (item.operation === 'create') {
+      const created = await learningApi.startTopicSession(payload.topicId)
+      return true
+    }
+    if (item.operation === 'complete') {
+      const remoteId = await resolveSessionId(localDb, item.entityId)
+      if (!remoteId) return false
+      await learningApi.completeTopicSession(payload.topicId, remoteId)
+      return true
+    }
+  }
+
+  if (item.entityType === 'topic_submission') {
+    const payload = item.payload as any
+    if (item.operation === 'create') {
+      const remoteSessionId = await resolveSessionId(localDb, payload.sessionId)
+      if (!remoteSessionId) throw new Error('练习会话尚未同步')
+      await learningApi.saveTopicSubmission(payload.topicId, {
+        response: payload.response,
+        status: payload.status ?? 'submitted',
+        revision: payload.revision,
+      })
       return true
     }
   }

@@ -923,7 +923,7 @@ export class LearningService {
               where: { userId },
               orderBy: { revision: 'desc' },
               take: 1,
-              select: { id: true, revision: true, status: true, response: true, feedback: true, updatedAt: true },
+              select: { id: true, revision: true, status: true, response: true, updatedAt: true },
             },
             topicPatterns: {
               include: { pattern: true },

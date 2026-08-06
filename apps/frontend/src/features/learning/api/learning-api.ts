@@ -299,6 +299,17 @@ export interface TopicSubmission {
   updatedAt: string
 }
 
+export interface TopicSession {
+  id: string
+  status: 'active' | 'completed' | 'analyzed'
+  analysisResult?: Record<string, any> | null
+  startedAt: string
+  completedAt?: string | null
+  analyzedAt?: string | null
+  createdAt: string
+  submissions?: TopicSubmission[]
+}
+
 export interface SceneExperience {
   id: string
   contentMode: ContentMode
@@ -407,8 +418,22 @@ export const learningApi = {
     data: { response: Record<string, any>; status?: TopicSubmission['status']; revision?: number },
   ) => post<TopicSubmission>(`/learning/experiences/topics/${topicId}/submissions`, data),
 
-  reviewTopicSubmission: (topicId: string) =>
-    post<TopicSubmission>(`/learning/experiences/topics/${topicId}/review`, {}),
+  // ═══ TopicSession ═══
+
+  startTopicSession: (topicId: string) =>
+    post<TopicSession>(`/learning/experiences/topics/${topicId}/sessions/start`, {}),
+
+  completeTopicSession: (topicId: string, sessionId: string) =>
+    post<TopicSession>(`/learning/experiences/topics/${topicId}/sessions/${sessionId}/complete`, {}),
+
+  analyzeTopicSession: (topicId: string, sessionId: string) =>
+    post<{ analysis: any; raw?: string; error?: string }>(`/learning/experiences/topics/${topicId}/sessions/${sessionId}/analyze`, {}),
+
+  listTopicSessions: (topicId: string) =>
+    get<TopicSession[]>(`/learning/experiences/topics/${topicId}/sessions`),
+
+  getLatestTopicSession: (topicId: string) =>
+    get<TopicSession | null>(`/learning/experiences/topics/${topicId}/sessions/latest`),
 
   saveNovelProgress: (unitId: string, data: { locator: Record<string, any>; percentage: number }) =>
     put(`/learning/experiences/novels/${unitId}/progress`, data),

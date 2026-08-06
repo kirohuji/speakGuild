@@ -296,6 +296,66 @@ export class SyncService {
     // warmup_records 已统一走 daily-practice/complete（前端不再通过 /sync/push 推送）。
     // 旧的 bare push handler 已删除，避免与 complete 路径重复创建 practiceWarmupRecord。
 
+    // ---- 阅读/写作提交（TopicSession + TrainingTopicSubmission） ----
+    if (entityType === 'topic_submission') {
+      if (operation === 'create') {
+        const data = payload as any;
+        const sessionId = data?.sessionId;
+        if (!sessionId) return { handled: false };
+
+        // verify session belongs to user
+        const session = await this.prisma.topicSession.findFirst({
+          where: { id: sessionId, userId },
+          select: { id: true, topicId: true },
+        });
+        if (!session) return { handled: false };
+
+        const created = await (this.prisma as any).trainingTopicSubmission.create({
+          data: {
+            userId,
+            topicId: session.topicId,
+            sessionId,
+            revision: data?.revision ?? 1,
+            status: data?.status ?? 'submitted',
+            response: data?.response ?? {},
+          },
+          select: { id: true },
+        });
+        return { handled: true, remoteId: created.id };
+      }
+    }
+
+    if (entityType === 'topic_session') {
+      if (operation === 'create') {
+        const data = payload as any;
+        const topic = await this.prisma.trainingTopic.findUnique({
+          where: { id: data?.topicId ?? entityId },
+          select: { id: true, sceneId: true },
+        });
+        if (!topic) return { handled: false };
+
+        const created = await this.prisma.topicSession.create({
+          data: {
+            userId,
+            topicId: topic.id,
+            sceneId: topic.sceneId,
+            status: data?.status ?? 'active',
+            startedAt: data?.startedAt ? new Date(data.startedAt) : undefined,
+            completedAt: data?.completedAt ? new Date(data.completedAt) : undefined,
+          },
+          select: { id: true },
+        });
+        return { handled: true, remoteId: created.id };
+      }
+      if (operation === 'complete') {
+        await this.prisma.topicSession.updateMany({
+          where: { id: entityId, userId },
+          data: { status: 'completed', completedAt: new Date() },
+        });
+        return { handled: true };
+      }
+    }
+
     // recording 暂不处理（走客户端单个上传 API）
     return { handled: false };
   }
@@ -349,6 +409,7 @@ export class SyncService {
     const sinceChunkProgress = cursors.chunkProgresses ? new Date(cursors.chunkProgresses) : new Date(0);
     const sincePracticeSession = cursors.practiceSessions ? new Date(cursors.practiceSessions) : new Date(0);
     const sinceWarmupRecord = cursors.practiceWarmupRecords ? new Date(cursors.practiceWarmupRecords) : new Date(0);
+    const sinceTopicSession = cursors.topicSessions ? new Date(cursors.topicSessions) : new Date(0);
     const sinceDeletedExpression = cursors.deletedExpressionItems ? new Date(cursors.deletedExpressionItems) : new Date(0);
 
     const [
@@ -357,6 +418,7 @@ export class SyncService {
       chunkProgresses,
       practiceSessions,
       practiceWarmupRecords,
+      topicSessions,
     ] = await Promise.all([
       this.prisma.expressionItem.findMany({
         where: { userId, updatedAt: { gt: sinceExpression }, deletedAt: null },
@@ -406,6 +468,27 @@ export class SyncService {
           createdAt: true,
         },
       }),
+      this.prisma.topicSession.findMany({
+        where: { userId, updatedAt: { gt: sinceTopicSession }, status: 'analyzed' },
+        orderBy: { updatedAt: 'asc' },
+        take: SyncService.PULL_PAGE_SIZE,
+        select: {
+          id: true,
+          topicId: true,
+          sceneId: true,
+          status: true,
+          analysisResult: true,
+          analysisRaw: true,
+          analysisError: true,
+          startedAt: true,
+          completedAt: true,
+          analyzedAt: true,
+          updatedAt: true,
+          submissions: {
+            select: { id: true, revision: true, status: true, response: true },
+          },
+        },
+      }),
     ]);
 
     // PracticeTurn 没有直接 userId，通过 session 关联
@@ -435,6 +518,7 @@ export class SyncService {
       chunkProgresses: maxTime(chunkProgresses, 'updatedAt') ?? cursors.chunkProgresses ?? null,
       practiceSessions: maxTime(practiceSessions, 'updatedAt') ?? cursors.practiceSessions ?? null,
       practiceWarmupRecords: maxTime(practiceWarmupRecords, 'createdAt') ?? cursors.practiceWarmupRecords ?? null,
+      topicSessions: maxTime(topicSessions, 'updatedAt') ?? cursors.topicSessions ?? null,
       deletedExpressionItems: maxTime(deletedExpressionItems, 'deletedAt') ?? cursors.deletedExpressionItems ?? null,
     };
 
@@ -445,6 +529,7 @@ export class SyncService {
       chunkProgresses: chunkProgresses.length >= SyncService.PULL_PAGE_SIZE,
       practiceSessions: practiceSessions.length >= SyncService.PULL_PAGE_SIZE,
       practiceWarmupRecords: practiceWarmupRecords.length >= SyncService.PULL_PAGE_SIZE,
+      topicSessions: topicSessions.length >= SyncService.PULL_PAGE_SIZE,
       deletedExpressionItems: deletedExpressionItems.length >= SyncService.PULL_PAGE_SIZE,
     };
 
@@ -457,6 +542,7 @@ export class SyncService {
         chunkProgresses,
         practiceSessions,
         practiceWarmupRecords,
+        topicSessions,
         // practiceTurns,
       },
       deleted: {

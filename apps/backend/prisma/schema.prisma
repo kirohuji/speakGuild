@@ -123,6 +123,7 @@ model User {
   dailyPracticeRuns     UserDailyPracticeRun[]
   dailyPracticeAttempts UserDailyPracticeAttempt[]
   trainingTopicSubmissions TrainingTopicSubmission[]
+  topicSessions          TopicSession[]
   novelReadingProgresses NovelReadingProgress[]
   explorationRecords    ExplorationRecord[]
   userAchievementsV2    UserAchievementV2[]
@@ -830,6 +831,30 @@ model NovelReadingProgress {
   @@map("novel_reading_progress")
 }
 
+model TopicSession {
+  id             String    @id @default(cuid())
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  topic          TrainingTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId        String
+  sceneId        String
+  status         String    @default("active")  // active | completed | analyzed
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  analyzedAt     DateTime?
+  analysisResult Json?
+  analysisRaw    String?   @db.Text
+  analysisError  String?   @db.Text
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  submissions  TrainingTopicSubmission[]
+
+  @@index([userId, topicId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("topic_session")
+}
+
 enum LearningPackageStatus {
   draft
   building
@@ -1033,6 +1058,7 @@ model TrainingTopic {
   topicPatterns              TrainingTopicSentencePattern[]
   topicVocabs                TrainingTopicVocab[]
   practiceSessions           PracticeSession[]
+  sessions                   TopicSession[]
   submissions                TrainingTopicSubmission[]
   sentencePatternsDeprecated Json?                          @map("sentence_patterns")
   inkScriptId                String?                        @unique
@@ -1058,14 +1084,15 @@ model TrainingTopicSubmission {
   userId    String
   topic     TrainingTopic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
   topicId   String
+  session   TopicSession?         @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  sessionId String?
   revision  Int                   @default(1)
   status    TopicSubmissionStatus @default(draft)
   response  Json
-  feedback  Json?
   createdAt DateTime              @default(now())
   updatedAt DateTime              @updatedAt
 
-  @@unique([userId, topicId, revision])
+  @@unique([userId, sessionId, revision])
   @@index([userId, updatedAt])
   @@map("training_topic_submission")
 }

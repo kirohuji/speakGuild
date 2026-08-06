@@ -351,13 +351,13 @@ export class PackageDataController {
       // 7. 创建场景
       const scene = await this.prisma.scene.create({
         data: {
-          categoryId: category.id,
+          category: { connect: { id: category.id } },
           packageType: packageType as any,
           title: sceneTitle,
           location: sceneRows[0]?.location || '',
           description: sceneRows[0]?.description || null,
           requiredOutputLevel: sceneRows[0]?.required_output_level || 'L1',
-          requiredUserLevel: parseInt(sceneRows[0]?.required_user_level || '1'),
+          requiredUserLevel: parseInt(sceneRows[0]?.required_user_level || '1') || 1,
           isFree: false,
         },
       });
@@ -518,7 +518,7 @@ export class PackageDataController {
             sortOrder: parseInt(row.episode_order || '1'),
             title: row.title,
             requiredOutputLevel: row.required_output_level || 'L1',
-            requiredUserLevel: parseInt(row.required_user_level || '1'),
+            requiredUserLevel: parseInt(row.required_user_level || '1') || 1,
             requiredVocabularyCount: parseInt(row.vocab_required_count || '6'),
             totalVocabularyCount: parseInt(row.vocab_total_count || '10'),
             requiredChunkCount: parseInt(row.chunk_required_count || '6'),
@@ -1033,13 +1033,13 @@ export class PackageDataController {
 
     const scene = await this.prisma.scene.create({
       data: {
-        categoryId: category.id,
+        category: { connect: { id: category.id } },
         packageType: packageType as any,
         title: sceneTitle,
         location: sceneRows[0]?.location || '',
         description: sceneRows[0]?.description || null,
         requiredOutputLevel: sceneRows[0]?.required_output_level || 'L1',
-        requiredUserLevel: parseInt(sceneRows[0]?.required_user_level || '1'),
+        requiredUserLevel: parseInt(sceneRows[0]?.required_user_level || '1') || 1,
         isFree: false,
       },
     });
@@ -1179,7 +1179,7 @@ export class PackageDataController {
         data: {
           sceneId: scene.id, chapterKey: row.chapter_id || 'default', chapterName: row.chapter_title || 'Default',
           sortOrder: parseInt(row.episode_order || '1'), title: row.title,
-          requiredOutputLevel: row.required_output_level || 'L1', requiredUserLevel: parseInt(row.required_user_level || '1'),
+          requiredOutputLevel: row.required_output_level || 'L1', requiredUserLevel: parseInt(row.required_user_level || '1') || 1,
           requiredVocabularyCount: parseInt(row.vocab_required_count || '6'), totalVocabularyCount: parseInt(row.vocab_total_count || '10'),
           requiredChunkCount: parseInt(row.chunk_required_count || '6'), totalChunkCount: parseInt(row.chunk_total_count || '10'),
           objectives: this.parseObjectives(row.objectives_json),

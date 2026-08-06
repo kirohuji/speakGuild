@@ -303,24 +303,51 @@ function WritingEditor({
 }) {
   const config = topic.contentConfig?.writing ?? {}
   const editorPrompt = String(config.questionMarkdown ?? '').trim()
-  const [text, setText] = useState(String(topic.latestSubmission?.response?.text ?? ''))
-  const [submission, setSubmission] = useState(topic.latestSubmission ?? null)
+  const [text, setText] = useState('')
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<Record<string, any> | null>(null)
+  const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0
 
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const latest = await learningApi.getLatestTopicSession(topic.id)
+        if (cancelled) return
+        if (latest?.status === 'active') {
+          setSessionId(latest.id)
+          if (latest.submissions?.[0]?.response?.text) setText(latest.submissions[0].response.text)
+        } else if (latest?.status === 'analyzed') {
+          setAnalysisResult(latest.analysisResult ?? null)
+          const created = await learningApi.startTopicSession(topic.id)
+          if (!cancelled) setSessionId(created.id)
+        } else {
+          const created = await learningApi.startTopicSession(topic.id)
+          if (!cancelled) setSessionId(created.id)
+        }
+      } catch { /* 离线 */ }
+    })()
+    return () => { cancelled = true }
+  }, [topic.id])
+
   const save = async (submit = false) => {
     setSaving(true)
     try {
-      let next = await learningApi.saveTopicSubmission(topic.id, { response: { text }, status: submit ? 'submitted' : 'draft' })
-      if (submit) next = await learningApi.reviewTopicSubmission(topic.id)
-      setSubmission(next)
-      toast.success(submit ? 'AI 反馈已生成' : '草稿已保存')
-    } catch (error: any) {
-      toast.error(error?.message || '保存失败')
-    } finally {
-      setSaving(false)
-    }
+      if (submit && sessionId) {
+        await learningApi.saveTopicSubmission(topic.id, { response: { text }, status: 'submitted' })
+        await learningApi.completeTopicSession(topic.id, sessionId)
+        const result = await learningApi.analyzeTopicSession(topic.id, sessionId)
+        setAnalysisResult(result.analysis ?? null)
+        setSubmitted(true)
+        toast.success('AI 评估完成')
+      } else {
+        // 仅保存草稿到本地
+        toast.success('草稿已保存')
+      }
+    } catch (error: any) { toast.error(error?.message || '保存失败') } finally { setSaving(false) }
   }
 
   const focusEditor = () => {
@@ -379,7 +406,7 @@ function WritingEditor({
               autoCorrect="on"
               spellCheck
             />
-            {submission?.feedback && <div className="mt-6"><WritingFeedback feedback={submission.feedback} /></div>}
+            {analysisResult && <div className="mt-6"><WritingAnalysisPanel analysis={analysisResult} /></div>}
           </div>
         </div>
       </div>
@@ -419,21 +446,41 @@ function DialogueEditor({
 }) {
   const config = topic.contentConfig?.writing ?? {}
   const turns: Array<{ aText: string; hint: string }> = config.turns ?? []
-  const prevSubmission = topic.latestSubmission?.response as Record<string, any> | undefined
-  const prevTurns: Array<{ userResponse?: string }> = prevSubmission?.turns ?? []
 
-  const [currentIndex, setCurrentIndex] = useState(() => {
-    const firstUnanswered = turns.findIndex((_, i) => !prevTurns[i]?.userResponse?.trim())
-    return firstUnanswered >= 0 ? firstUnanswered : 0
-  })
-  const [responses, setResponses] = useState<Record<number, string>>(() => {
-    const init: Record<number, string> = {}
-    prevTurns.forEach((t, i) => { if (t?.userResponse) init[i] = t.userResponse })
-    return init
-  })
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [responses, setResponses] = useState<Record<number, string>>({})
   const [showHint, setShowHint] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [submission, setSubmission] = useState(topic.latestSubmission ?? null)
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<Record<string, any> | null>(null)
+  const [submitted, setSubmitted] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const latest = await learningApi.getLatestTopicSession(topic.id)
+        if (cancelled) return
+        if (latest?.status === 'active') {
+          setSessionId(latest.id)
+          if (latest.submissions?.[0]?.response?.turns) {
+            const prevTurns = latest.submissions[0].response.turns as any[]
+            const init: Record<number, string> = {}
+            prevTurns.forEach((t: any, i: number) => { if (t?.userResponse) init[i] = t.userResponse })
+            setResponses(init)
+          }
+        } else if (latest?.status === 'analyzed') {
+          setAnalysisResult(latest.analysisResult ?? null)
+          const created = await learningApi.startTopicSession(topic.id)
+          if (!cancelled) setSessionId(created.id)
+        } else {
+          const created = await learningApi.startTopicSession(topic.id)
+          if (!cancelled) setSessionId(created.id)
+        }
+      } catch { /* 离线 */ }
+    })()
+    return () => { cancelled = true }
+  }, [topic.id])
 
   const currentTurn = turns[currentIndex]
   const currentResponse = responses[currentIndex] ?? ''
@@ -449,18 +496,17 @@ function DialogueEditor({
         hint: turn.hint,
         userResponse: responses[i] ?? '',
       }))
-      let next = await learningApi.saveTopicSubmission(topic.id, {
-        response: { turns: responseTurns },
-        status: submit ? 'submitted' : 'draft',
-      })
-      if (submit) next = await learningApi.reviewTopicSubmission(topic.id)
-      setSubmission(next)
-      toast.success(submit ? 'AI 反馈已生成' : '草稿已保存')
-    } catch (error: any) {
-      toast.error(error?.message || '保存失败')
-    } finally {
-      setSaving(false)
-    }
+      if (submit && sessionId) {
+        await learningApi.saveTopicSubmission(topic.id, { response: { turns: responseTurns }, status: 'submitted' })
+        await learningApi.completeTopicSession(topic.id, sessionId)
+        const result = await learningApi.analyzeTopicSession(topic.id, sessionId)
+        setAnalysisResult(result.analysis ?? null)
+        setSubmitted(true)
+        toast.success('AI 评估完成')
+      } else {
+        toast.success('草稿已保存')
+      }
+    } catch (error: any) { toast.error(error?.message || '保存失败') } finally { setSaving(false) }
   }
 
   const goToTurn = (index: number) => {
@@ -609,9 +655,9 @@ function DialogueEditor({
           )}
 
           {/* AI feedback */}
-          {submission?.feedback && (
+          {submitted && analysisResult && (
             <div className="mt-6">
-              <WritingFeedback feedback={submission.feedback} />
+              <WritingAnalysisPanel analysis={analysisResult} />
             </div>
           )}
         </div>
@@ -673,14 +719,18 @@ function WritingGuide({ open, onOpenChange, topic }: { open: boolean; onOpenChan
   )
 }
 
-function WritingFeedback({ feedback }: { feedback: Record<string, any> }) {
+function WritingAnalysisPanel({ analysis }: { analysis: Record<string, any> | null }) {
+  if (!analysis) return null
+  const score = analysis.overallScore ?? 0
+  const strengths = (analysis.strengths ?? []) as string[]
+  const improvements = (analysis.improvements ?? []) as string[]
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4">
-      <div className="mb-3 flex items-center gap-2"><Sparkles className="size-4 text-emerald-600" /><p className="text-sm font-semibold">AI 学习反馈</p>{feedback.score != null && <Badge className="ml-auto">{feedback.score}</Badge>}</div>
-      <p className="text-sm leading-6 text-muted-foreground">{feedback.summary}</p>
-      {(feedback.strengths ?? []).length > 0 && <ul className="mt-3 space-y-1 text-sm">{feedback.strengths.map((item: string) => <li key={item} className="flex gap-2"><CheckCircle2 className="mt-1 size-3.5 shrink-0 text-emerald-600" />{item}</li>)}</ul>}
-      {(feedback.improvements ?? []).length > 0 && <ul className="mt-3 space-y-1 text-sm text-amber-700 dark:text-amber-400">{feedback.improvements.map((item: string) => <li key={item}>→ {item}</li>)}</ul>}
-      {feedback.nextRevisionFocus && <p className="mt-3 rounded-lg bg-background/70 px-3 py-2 text-sm font-medium">下一稿：{feedback.nextRevisionFocus}</p>}
+    <div className="rounded-2xl border border-primary/10 bg-primary/[0.04] p-4">
+      <div className="mb-3 flex items-center gap-2"><Sparkles className="size-4 text-primary" /><p className="text-sm font-semibold">AI 写作评估</p>{score > 0 && <Badge className="ml-auto">{score}</Badge>}</div>
+      {analysis.summary && <p className="text-sm leading-6 text-muted-foreground">{analysis.summary}</p>}
+      {strengths.length > 0 && <ul className="mt-3 space-y-1 text-sm">{strengths.map((item: string) => <li key={item} className="flex gap-2"><CheckCircle2 className="mt-1 size-3.5 shrink-0 text-emerald-600" />{item}</li>)}</ul>}
+      {improvements.length > 0 && <ul className="mt-3 space-y-1 text-sm text-amber-700 dark:text-amber-400">{improvements.map((item: string) => <li key={item}>→ {item}</li>)}</ul>}
+      {analysis.nextStepSuggestion && <p className="mt-3 rounded-lg bg-background/70 px-3 py-2 text-sm font-medium">下一步：{analysis.nextStepSuggestion}</p>}
     </div>
   )
 }
