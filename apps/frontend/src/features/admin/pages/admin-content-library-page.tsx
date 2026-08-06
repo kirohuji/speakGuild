@@ -358,9 +358,25 @@ function ChunkTab() {
             {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
           </Select>
         </div>
-        <Button onClick={() => { setEditing(null); setDialogOpen(true) }}>
-          <Plus className="mr-1.5 size-4" />新增句块
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              try {
+                const result = await api.enrichChunksMissingChinese();
+                toast.success('已创建句块中文释义检查任务', {
+                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+                });
+                void result;
+              } catch (err: any) { toast.error(err?.message || '创建检查任务失败'); }
+            }}
+          >
+            <Sparkles className="mr-1.5 size-4" />检查并 AI 富化中文释义
+          </Button>
+          <Button onClick={() => { setEditing(null); setDialogOpen(true) }}>
+            <Plus className="mr-1.5 size-4" />新增句块
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -452,9 +468,25 @@ function PatternTab() {
             {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
           </Select>
         </div>
-        <Button onClick={() => { setEditing(null); setDialogOpen(true) }}>
-          <Plus className="mr-1.5 size-4" />新增句式
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              try {
+                const result = await api.enrichPatternsMissingChinese();
+                toast.success('已创建句型中文释义检查任务', {
+                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+                });
+                void result;
+              } catch (err: any) { toast.error(err?.message || '创建检查任务失败'); }
+            }}
+          >
+            <Sparkles className="mr-1.5 size-4" />检查并 AI 富化中文释义
+          </Button>
+          <Button onClick={() => { setEditing(null); setDialogOpen(true) }}>
+            <Plus className="mr-1.5 size-4" />新增句式
+          </Button>
+        </div>
       </div>
 
       <Card>

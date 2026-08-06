@@ -2771,6 +2771,15 @@ Return exactly a JSON object — no markdown, no code fences:
     }
   }
 
+  /** 检查句块表中缺失中文释义的记录，并创建后台 AI 富化任务。 */
+  @Post('library/chunks/enrich-missing-chinese')
+  async enrichChunksMissingChinese(@Req() req: Request) {
+    await this.requireAdmin(req);
+    const session = await requireAuthSession(req);
+    const task = await this.adminTasksService.enqueueChunkMissingMeaningEnrich((session.user as any)?.id);
+    return { code: 200, message: 'success', data: { taskId: task.id } };
+  }
+
   /** AI 增强句式：DeepSeek 例句生成 + 讲解 */
   @Post('library/patterns/ai-enrich')
   async aiEnrichPattern(@Req() req: Request, @Body() dto: {
@@ -2956,6 +2965,15 @@ Return exactly a JSON object — no markdown, no code fences:
   // ════════════════════════════════════════════════════════════
   // CONTENT LIBRARY: Sentence Pattern Management
   // ════════════════════════════════════════════════════════════
+
+  /** 检查句型表中缺失中文释义的记录，并创建后台 AI 富化任务。 */
+  @Post('library/patterns/enrich-missing-chinese')
+  async enrichPatternsMissingChinese(@Req() req: Request) {
+    await this.requireAdmin(req);
+    const session = await requireAuthSession(req);
+    const task = await this.adminTasksService.enqueuePatternMissingMeaningEnrich((session.user as any)?.id);
+    return { code: 200, message: 'success', data: { taskId: task.id } };
+  }
 
   @Get('library/patterns')
   async listLibraryPatterns(

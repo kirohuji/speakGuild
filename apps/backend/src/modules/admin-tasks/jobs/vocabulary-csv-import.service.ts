@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { AdminTasksService } from '../admin-tasks.service';
 import { DictionaryService } from '../../dictionary/dictionary.service';
+import { AdminContentAiService } from '../../admin/admin-content-ai.service';
 
 interface CsvImportSummary {
   created: number;
@@ -18,6 +19,7 @@ export class VocabularyCsvImportService {
     private readonly prisma: PrismaService,
     private readonly adminTasksService: AdminTasksService,
     private readonly dictionaryService: DictionaryService,
+    private readonly adminContentAiService: AdminContentAiService,
   ) {}
 
   async run(taskId: string, words: string[]) {
@@ -265,6 +267,164 @@ export class VocabularyCsvImportService {
     await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `检查完成：检查 ${scanned}，需补全 ${candidates.length}，已富化 ${enriched}，失败 ${failed}`, {
       step: 'completed', meta: summary,
     });
+  }
+
+  /** 扫描全部句块，为缺失中文释义的记录调用 AI 富化。 */
+  async runChunkMissingMeaningEnrich(taskId: string) {
+    if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
+
+    const candidates: Array<{ id: string; text: string }> = [];
+    let cursor: string | undefined;
+    let scanned = 0;
+    const totalToScan = await this.prisma.chunk.count();
+
+    await this.adminTasksService.log(taskId, 'info', `开始检查全部 ${totalToScan} 个句块的中文释义`, { step: 'scan' });
+
+    do {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      const rows = await this.prisma.chunk.findMany({
+        select: { id: true, text: true, meaning: true },
+        orderBy: { id: 'asc' },
+        take: 500,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      });
+      if (rows.length === 0) break;
+
+      for (const chunk of rows) {
+        scanned++;
+        if (!/[\u3400-\u9fff]/.test(chunk.meaning ?? '')) {
+          candidates.push({ id: chunk.id, text: chunk.text });
+        }
+      }
+      cursor = rows.at(-1)?.id;
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: 'scan', totalItems: totalToScan, processedItems: scanned, successItems: scanned,
+      });
+    } while (cursor);
+
+    await this.adminTasksService.log(taskId, 'info', `检查完成：共检查 ${scanned} 个句块，发现 ${candidates.length} 个缺失中文释义`, {
+      step: 'scan', meta: { scanned, missingChineseMeaning: candidates.length },
+    });
+
+    let enriched = 0;
+    let failed = 0;
+    const errors: Array<{ id: string; text: string; message: string }> = [];
+
+    if (candidates.length > 0) {
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: 'enrich', totalItems: candidates.length, processedItems: 0, successItems: 0, failedItems: 0,
+      });
+
+      for (let index = 0; index < candidates.length; index++) {
+        if (await this.adminTasksService.isCanceled(taskId)) return;
+        const chunk = candidates[index];
+        try {
+          const record = await this.prisma.chunk.findUnique({ where: { id: chunk.id }, select: { text: true, meaning: true } });
+          if (!record) { failed++; continue; }
+          const result = await this.adminContentAiService.enrichChunk({ text: record.text, meaning: record.meaning ?? '' });
+          if (result?.description && /[\u3400-\u9fff]/.test(result.description)) {
+            await this.prisma.chunk.update({
+              where: { id: chunk.id },
+              data: { meaning: result.description },
+            });
+          }
+          enriched++;
+        } catch (error: any) {
+          failed++;
+          errors.push({ id: chunk.id, text: chunk.text, message: error?.message ?? 'unknown error' });
+        } finally {
+          const processed = index + 1;
+          if (processed % 10 === 0 || processed === candidates.length) {
+            await this.adminTasksService.setProgress(taskId, {
+              currentStep: 'enrich', totalItems: candidates.length, processedItems: processed,
+              successItems: enriched, failedItems: failed,
+            });
+          }
+        }
+      }
+    }
+
+    const summary = { scanned, missingChineseMeaning: candidates.length, enriched, failed, errors };
+    await this.adminTasksService.markComplete(taskId, summary);
+  }
+
+  /** 扫描全部句型，为缺失中文释义的记录调用 AI 富化。 */
+  async runPatternMissingMeaningEnrich(taskId: string) {
+    if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
+
+    const candidates: Array<{ id: string; pattern: string }> = [];
+    let cursor: string | undefined;
+    let scanned = 0;
+    const totalToScan = await this.prisma.sentencePattern.count();
+
+    await this.adminTasksService.log(taskId, 'info', `开始检查全部 ${totalToScan} 个句型的中文释义`, { step: 'scan' });
+
+    do {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      const rows = await this.prisma.sentencePattern.findMany({
+        select: { id: true, pattern: true, meaning: true },
+        orderBy: { id: 'asc' },
+        take: 500,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      });
+      if (rows.length === 0) break;
+
+      for (const sp of rows) {
+        scanned++;
+        if (!/[\u3400-\u9fff]/.test(sp.meaning ?? '')) {
+          candidates.push({ id: sp.id, pattern: sp.pattern });
+        }
+      }
+      cursor = rows.at(-1)?.id;
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: 'scan', totalItems: totalToScan, processedItems: scanned, successItems: scanned,
+      });
+    } while (cursor);
+
+    await this.adminTasksService.log(taskId, 'info', `检查完成：共检查 ${scanned} 个句型，发现 ${candidates.length} 个缺失中文释义`, {
+      step: 'scan', meta: { scanned, missingChineseMeaning: candidates.length },
+    });
+
+    let enriched = 0;
+    let failed = 0;
+    const errors: Array<{ id: string; pattern: string; message: string }> = [];
+
+    if (candidates.length > 0) {
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: 'enrich', totalItems: candidates.length, processedItems: 0, successItems: 0, failedItems: 0,
+      });
+
+      for (let index = 0; index < candidates.length; index++) {
+        if (await this.adminTasksService.isCanceled(taskId)) return;
+        const sp = candidates[index];
+        try {
+          const record = await this.prisma.sentencePattern.findUnique({ where: { id: sp.id }, select: { pattern: true, meaning: true } });
+          if (!record) { failed++; continue; }
+          const result = await this.adminContentAiService.enrichPattern({ pattern: record.pattern, meaning: record.meaning ?? '' });
+          if (result?.description && /[\u3400-\u9fff]/.test(result.description)) {
+            await this.prisma.sentencePattern.update({
+              where: { id: sp.id },
+              data: { meaning: result.description },
+            });
+          }
+          enriched++;
+        } catch (error: any) {
+          failed++;
+          errors.push({ id: sp.id, pattern: sp.pattern, message: error?.message ?? 'unknown error' });
+        } finally {
+          const processed = index + 1;
+          if (processed % 10 === 0 || processed === candidates.length) {
+            await this.adminTasksService.setProgress(taskId, {
+              currentStep: 'enrich', totalItems: candidates.length, processedItems: processed,
+              successItems: enriched, failedItems: failed,
+            });
+          }
+        }
+      }
+    }
+
+    const summary = { scanned, missingChineseMeaning: candidates.length, enriched, failed, errors };
+    await this.adminTasksService.markComplete(taskId, summary);
   }
 
 }

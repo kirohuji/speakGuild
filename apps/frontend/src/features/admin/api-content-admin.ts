@@ -756,6 +756,14 @@ export function enrichVocabulariesMissingChinese(): Promise<{ taskId: string }> 
   return post('/admin/content/library/vocabularies/enrich-missing-chinese');
 }
 
+export function enrichChunksMissingChinese(): Promise<{ taskId: string }> {
+  return post('/admin/content/library/chunks/enrich-missing-chinese');
+}
+
+export function enrichPatternsMissingChinese(): Promise<{ taskId: string }> {
+  return post('/admin/content/library/patterns/enrich-missing-chinese');
+}
+
 export function enrichVocabulary(id: string): Promise<VocabularyFull> {
   return post(`/admin/content/library/vocabularies/${id}/enrich`);
 }

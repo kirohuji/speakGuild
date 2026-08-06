@@ -1,6 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB } from '../admin-tasks.constants';
+import { VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB } from '../admin-tasks.constants';
 import { AdminTasksService } from '../admin-tasks.service';
 import { VocabularyCsvImportService } from '../jobs/vocabulary-csv-import.service';
 
@@ -23,6 +23,12 @@ export class VocabularyCsvImportProcessor extends WorkerHost {
       }
       if (job.name === VOCABULARY_MISSING_MEANING_ENRICH_JOB) {
         return await this.vocabularyCsvImportService.runMissingChineseMeaningEnrich(job.data.taskId);
+      }
+      if (job.name === CHUNK_MISSING_MEANING_ENRICH_JOB) {
+        return await this.vocabularyCsvImportService.runChunkMissingMeaningEnrich(job.data.taskId);
+      }
+      if (job.name === PATTERN_MISSING_MEANING_ENRICH_JOB) {
+        return await this.vocabularyCsvImportService.runPatternMissingMeaningEnrich(job.data.taskId);
       }
       return null;
     } catch (error) {

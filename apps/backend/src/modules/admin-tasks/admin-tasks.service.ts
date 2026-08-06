@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
 
 @Injectable()
 export class AdminTasksService {
@@ -251,6 +251,40 @@ export class AdminTasksService {
     return { ...task, bullJobId: job.id };
   }
 
+  /** 扫描全部句块，为缺失中文释义的记录创建 AI 富化任务。 */
+  async enqueueChunkMissingMeaningEnrich(createdById?: string) {
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: CHUNK_MISSING_MEANING_ENRICH_JOB,
+        title: '检查并 AI 富化缺失中文释义的句块',
+        targetType: 'chunk',
+        createdById,
+        payload: {} as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.vocabularyImportQueue.add(CHUNK_MISSING_MEANING_ENRICH_JOB, { taskId: task.id });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', '句块中文释义检查任务已加入 Redis 队列', { step: 'queued' });
+    return { ...task, bullJobId: job.id };
+  }
+
+  /** 扫描全部句型，为缺失中文释义的记录创建 AI 富化任务。 */
+  async enqueuePatternMissingMeaningEnrich(createdById?: string) {
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: PATTERN_MISSING_MEANING_ENRICH_JOB,
+        title: '检查并 AI 富化缺失中文释义的句型',
+        targetType: 'sentence_pattern',
+        createdById,
+        payload: {} as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.vocabularyImportQueue.add(PATTERN_MISSING_MEANING_ENRICH_JOB, { taskId: task.id });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', '句型中文释义检查任务已加入 Redis 队列', { step: 'queued' });
+    return { ...task, bullJobId: job.id };
+  }
+
   async list(params: {
 
     type?: string;
@@ -304,6 +338,12 @@ export class AdminTasksService {
     if (task.type === VOCABULARY_MISSING_MEANING_ENRICH_JOB) {
       return this.enqueueVocabularyMissingMeaningEnrich(createdById);
     }
+    if (task.type === CHUNK_MISSING_MEANING_ENRICH_JOB) {
+      return this.enqueueChunkMissingMeaningEnrich(createdById);
+    }
+    if (task.type === PATTERN_MISSING_MEANING_ENRICH_JOB) {
+      return this.enqueuePatternMissingMeaningEnrich(createdById);
+    }
     if (task.type !== CONTENT_PREPARE_JOB || task.targetType !== 'scene' || !task.targetId) {
       throw new NotFoundException('暂不支持重试该任务');
     }
@@ -338,7 +378,7 @@ export class AdminTasksService {
       try {
         const queue = task.type === SCRIPT_VIDEO_RENDER_JOB || task.type === NARRATIVE_VIDEO_RENDER_JOB
           ? this.videoQueue
-          : task.type === VOCABULARY_CSV_IMPORT_JOB || task.type === VOCABULARY_MISSING_MEANING_ENRICH_JOB
+          : task.type === VOCABULARY_CSV_IMPORT_JOB || task.type === VOCABULARY_MISSING_MEANING_ENRICH_JOB || task.type === CHUNK_MISSING_MEANING_ENRICH_JOB || task.type === PATTERN_MISSING_MEANING_ENRICH_JOB
             ? this.vocabularyImportQueue
             : this.contentQueue;
         const job = await queue.getJob(task.bullJobId);
@@ -629,7 +669,7 @@ export class AdminTasksService {
     if (type === SCRIPT_VIDEO_RENDER_JOB || type === NARRATIVE_VIDEO_RENDER_JOB) {
       return this.videoQueue;
     }
-    if (type === VOCABULARY_CSV_IMPORT_JOB || type === VOCABULARY_MISSING_MEANING_ENRICH_JOB) {
+    if (type === VOCABULARY_CSV_IMPORT_JOB || type === VOCABULARY_MISSING_MEANING_ENRICH_JOB || type === CHUNK_MISSING_MEANING_ENRICH_JOB || type === PATTERN_MISSING_MEANING_ENRICH_JOB) {
       return this.vocabularyImportQueue;
     }
     return this.contentQueue;
