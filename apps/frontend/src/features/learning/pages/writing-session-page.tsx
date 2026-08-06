@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, CheckCircle2, ChevronLeft, ChevronRight, FilePenLine, Info, Layers, Loader2, MessageCircle, Save, Search, Sparkles, Target, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, CheckCircle2, FilePenLine, Info, Layers, Loader2, MessageCircle, Save, Search, Sparkles, Target, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -484,7 +484,6 @@ function DialogueEditor({
 
   const currentTurn = turns[currentIndex]
   const currentResponse = responses[currentIndex] ?? ''
-  const totalWords = Object.values(responses).join(' ').trim().split(/\s+/).filter(Boolean).length
   const answeredCount = turns.filter((_, i) => (responses[i] ?? '').trim()).length
   const allAnswered = answeredCount === turns.length
 
@@ -663,43 +662,10 @@ function DialogueEditor({
         </div>
       </div>
 
-      {/* Footer — unified with WritingEditor */}
+      {/* Footer — submit feedback only */}
       <footer className="shrink-0 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-xl pb-safe" data-writing-footer>
         <div className="mx-auto flex max-w-2xl items-center gap-3">
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
-              disabled={currentIndex === 0}
-              onClick={() => goToTurn(currentIndex - 1)}
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
-            <span className="min-w-[2.5rem] text-center text-xs tabular-nums text-muted-foreground">
-              {currentIndex + 1}/{turns.length}
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8"
-              disabled={currentIndex >= turns.length - 1}
-              onClick={() => goToTurn(currentIndex + 1)}
-            >
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs text-muted-foreground">
-              共 {totalWords} 词{config.minWords ? ` · 目标 ${config.minWords}–${config.maxWords ?? '∞'}` : ''}
-            </p>
-          </div>
-
-          <Button variant="ghost" size="sm" onClick={() => save(false)} disabled={saving || answeredCount === 0} className="shrink-0 gap-1.5">
-            <Save className="size-4" />保存
-          </Button>
-          <Button size="sm" onClick={() => save(true)} disabled={saving || !allAnswered} className="shrink-0 gap-1.5 rounded-full px-4">
+          <Button size="lg" onClick={() => save(true)} disabled={saving || !allAnswered} className="w-full gap-1.5 rounded-full">
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}提交反馈
           </Button>
         </div>

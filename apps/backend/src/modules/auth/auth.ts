@@ -49,6 +49,9 @@ export const auth: any = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  advanced: {
+    disableCSRFCheck: true, // 原生 App 无 Origin 头，关闭 CSRF 校验（移动端无浏览器 CSRF 威胁）
+  },
   databaseHooks: {
     session: {
       create: {

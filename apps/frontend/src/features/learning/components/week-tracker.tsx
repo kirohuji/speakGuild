@@ -425,7 +425,8 @@ function MonthlyActivityChart({ days, dailyStats, locale, selectedDay, onSelectD
   const selectedDateKey = selectedDay ? format(selectedDay, 'yyyy-MM-dd') : undefined
   const selectedChartIndex = chartData.findIndex((item) => item.dateKey === selectedDateKey)
   const selectedChartItem = selectedChartIndex >= 0 ? chartData[selectedChartIndex] : null
-  const chartMaxValue = Math.max(1, ...chartData.flatMap((item) => [item.minutes, item.questions]))
+  // Y 轴设置下限（60 分钟）：数据较少时柱子按绝对值比例显示，避免小数据被归一化顶满整图
+  const chartMaxValue = Math.max(60, ...chartData.flatMap((item) => [item.minutes, item.questions]))
   return (
     <section className="shrink-0 px-3 pt-2">
       <div className="mb-1 flex items-center justify-between">
@@ -446,7 +447,7 @@ function MonthlyActivityChart({ days, dailyStats, locale, selectedDay, onSelectD
           >
             <CartesianGrid vertical={false} />
             <XAxis dataKey="dateKey" axisLine={false} tickLine={false} interval={4} tick={{ fontSize: 9 }} tickFormatter={(value) => String(value).slice(-2).replace(/^0/, '')} />
-            <YAxis hide yAxisId="metric" />
+            <YAxis hide yAxisId="metric" domain={[0, chartMaxValue]} />
             {selectedDateKey && <ReferenceLine x={selectedDateKey} yAxisId="metric" stroke="hsl(var(--accent))" strokeOpacity={0.75} strokeWidth={1.5} />}
             <Bar dataKey="minutes" yAxisId="metric" barSize={5} fill="var(--color-minutes)" radius={[2, 2, 0, 0]} isAnimationActive={false}>
               {chartData.map((item) => {
@@ -501,7 +502,8 @@ function YearlyActivity({ year, dailyStats, today, onSelectMonth, onPrevYear, on
   })
   const chartData = values
   const selectedChartItem = selectedMonthIndex === null ? null : chartData[selectedMonthIndex]
-  const chartMaxValue = Math.max(1, ...chartData.flatMap((item) => [item.minutes, item.questions]))
+  // Y 轴设置下限（60 分钟）：数据较少时柱子按绝对值比例显示，避免小数据被归一化顶满整图
+  const chartMaxValue = Math.max(60, ...chartData.flatMap((item) => [item.minutes, item.questions]))
 
   return (
     <div className="flex h-[440px] flex-none flex-col overflow-hidden rounded-2xl bg-background">

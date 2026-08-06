@@ -345,7 +345,7 @@ export class VocabularyCsvImportService {
     }
 
     const summary = { scanned, missingChineseMeaning: candidates.length, enriched, failed, errors };
-    await this.adminTasksService.markComplete(taskId, summary);
+    await this.adminTasksService.markCompleted(taskId, summary);
   }
 
   /** 扫描全部句型，为缺失中文释义的记录调用 AI 富化。 */
@@ -424,7 +424,7 @@ export class VocabularyCsvImportService {
     }
 
     const summary = { scanned, missingChineseMeaning: candidates.length, enriched, failed, errors };
-    await this.adminTasksService.markComplete(taskId, summary);
+    await this.adminTasksService.markCompleted(taskId, summary);
   }
 
 }

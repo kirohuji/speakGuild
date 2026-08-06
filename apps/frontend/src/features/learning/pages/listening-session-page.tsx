@@ -516,24 +516,28 @@ function SpeedPanel({
 }) {
   return (
     <div className="shrink-0 border-t border-border/60 bg-muted/10 px-5 py-3">
-      {/* 第一行：倍速选项 */}
-      <div className="grid grid-cols-8 gap-1 rounded-lg bg-muted p-1">
-        {SPEED_OPTIONS.map((option) => (
-          <button
-            key={option}
-            type="button"
-            onClick={() => onRateChange(option)}
-            aria-pressed={rate === option}
-            className={cn(
-              'rounded-md py-1.5 text-xs font-medium transition-colors',
-              rate === option
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {formatSpeed(option)}
-          </button>
-        ))}
+      {/* 第一行：倍速选项（隔一个选项显示居中圆点） */}
+      <div className="flex items-center justify-between rounded-lg bg-muted px-2 py-1.5">
+        {SPEED_OPTIONS.map((option, index) =>
+          index % 2 === 1 ? (
+            <span key={option} aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-muted-foreground/40" />
+          ) : (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onRateChange(option)}
+              aria-pressed={rate === option}
+              className={cn(
+                'rounded-md px-1.5 py-1 text-xs font-medium transition-colors',
+                rate === option
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {formatSpeed(option)}
+            </button>
+          ),
+        )}
       </div>
 
       {/* 第二行：进度条 + 时间 */}

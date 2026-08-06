@@ -81,7 +81,8 @@ export function LearningPlanPage() {
     }
   }, [location.key, myUnits.length, refreshMyUnits])
 
-  const learningUnits = myUnits.filter((unit) => (unit.contentMode ?? (unit.packageType === 'story' ? 'story' : 'practice')) !== 'story')
+  // 学习页不显示剧情包（story）
+  const learningUnits = myUnits.filter((unit) => unit.packageType !== 'story')
   const inProgress = learningUnits.filter((unit) => unit.completionPercent < 100)
   const completed = learningUnits.filter((unit) => unit.completionPercent >= 100)
 
