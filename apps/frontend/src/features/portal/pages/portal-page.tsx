@@ -251,7 +251,7 @@ export function PortalPage() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          WHAT'S IN MANYU — minimals "What's in Minimal" 风格
+          WHAT'S IN MANYUDING — minimals "What's in Minimal" 风格
           ═══════════════════════════════════════════════════════ */}
       <section className="px-4 sm:px-6 lg:px-8 pb-20 sm:pb-28 lg:pb-36">
         <div className="max-w-6xl mx-auto">
@@ -491,7 +491,7 @@ export function PortalPage() {
           <Separator className="my-6" />
 
           <p className="text-center text-[11px] text-muted-foreground/50">
-            &copy; {new Date().getFullYear()} 漫语町 ManYu. All rights reserved.
+            &copy; {new Date().getFullYear()} 漫语町 ManYuDing. All rights reserved.
           </p>
         </div>
       </footer>

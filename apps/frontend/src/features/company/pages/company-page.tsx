@@ -160,7 +160,7 @@ export function CompanyPage() {
                       <img src="/logo.png" alt="漫语町" className="size-8 dark:invert" />
                     </div>
                     <div>
-                      <div className="text-base font-bold text-foreground">漫语町 ManYu</div>
+                      <div className="text-base font-bold text-foreground">漫语町 ManYuDing</div>
                       <div className="text-xs text-muted-foreground">{t('company.manYuDesc')}</div>
                     </div>
                   </div>

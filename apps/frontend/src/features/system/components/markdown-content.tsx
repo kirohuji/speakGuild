@@ -15,7 +15,9 @@ export function MarkdownContent({ content }: { content: string }) {
       [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-3
       [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-3
       [&_li]:mb-1 [&_li]:leading-relaxed
-      [&_br]:hidden
+
+      /* 权限表格：第一列英文 key 小字徽章独占一行（居中），中文注释自动换行到下一行（居中） */
+      [&_th:first-child]:text-center [&_td:first-child]:text-center [&_td:first-child>code]:block [&_td:first-child>code]:mx-auto [&_td:first-child>code]:w-fit [&_td:first-child>code]:mb-0.5 [&_td:first-child>code]:text-[9px] [&_td:first-child>code]:leading-tight
 
       [&_blockquote]:border-l-[3px] [&_blockquote]:border-l-primary [&_blockquote]:bg-muted/30 [&_blockquote]:py-2 [&_blockquote]:px-4 [&_blockquote]:rounded-r-lg [&_blockquote]:mb-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground
 
@@ -31,12 +33,10 @@ export function MarkdownContent({ content }: { content: string }) {
 
       [&_th]:border [&_th]:border-solid [&_th]:border-border [&_th]:bg-muted/50 [&_th]:px-3 [&_th]:py-2.5 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:text-foreground [&_th]:whitespace-nowrap
 
-      [&_td]:border [&_td]:border-solid [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:text-sm [&_td]:text-foreground/85
+      [&_td]:border [&_td]:border-solid [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:text-xs [&_td]:text-foreground/85
 
       [&_tr:hover]:bg-muted/30
       [&_tr]:transition-colors
-
-      [&_small]:text-xs [&_small]:text-muted-foreground [&_small]:leading-relaxed
     ">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}

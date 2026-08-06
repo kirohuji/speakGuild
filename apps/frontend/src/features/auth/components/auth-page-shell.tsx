@@ -33,7 +33,7 @@ export function AuthPageShell({
         ) : null}
 
         <div className="mb-4 text-center">
-          <img src="/logo.png" alt="ManYu" className="mx-auto h-16 w-auto dark:invert" />
+          <img src="/logo.png" alt="ManYuDing" className="mx-auto h-16 w-auto dark:invert" />
           {description ? (
             <p className="mx-auto mt-3 max-w-xs text-xs leading-5 text-muted-foreground">{description}</p>
           ) : null}

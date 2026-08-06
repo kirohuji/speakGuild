@@ -1,7 +1,7 @@
 const ja = {
   translation: {
     app: {
-      name: 'ManYu',
+      name: 'ManYuDing',
       tagline: '専門ガイド外国語試験対策プラットフォーム',
     },
     nav: {
@@ -2345,7 +2345,7 @@ const ja = {
       icp: 'ICP 備案情報',
       marketing: {
         badge: 'Marketing URL',
-        brand: '漫语町 ManYu',
+        brand: '漫语町 ManYuDing',
         feedbackAddedToLibrary: '表現ライブラリに追加しました',
         feedbackOptimizable: '改善できる表現を 2 件発見',
         feedbackTranscribed: '音声の文字起こしが完了しました',
@@ -2383,7 +2383,7 @@ const ja = {
     },
     support: {
       badge: 'Support URL',
-      copyright: '© {{year}} 漫语町 ManYu. All rights reserved.',
+      copyright: '© {{year}} 漫语町 ManYuDing. All rights reserved.',
       emailSupport: 'メールでサポートに連絡',
       estimatedReply: '返信目安',
       estimatedReplyValue: '3 営業日以内',

@@ -99,7 +99,7 @@ export const immersivePlaybackService = {
   async setMediaMetadata(segment: PlaybackSegment, playbackRate: number, state: 'none' | 'paused' | 'playing', labels?: MediaMetadataLabels) {
     await MediaSession.setMetadata({
       title: segment.title,
-      artist: segment.subtitle || labels?.artist || 'ManYu',
+      artist: segment.subtitle || labels?.artist || 'ManYuDing',
       album: labels?.album || 'Immersive Library Playback',
     }).catch(() => undefined)
     await MediaSession.setPlaybackState({ playbackState: state }).catch(() => undefined)
@@ -166,7 +166,7 @@ export const immersivePlaybackService = {
           isUrl: true,
           notificationMetadata: {
             title: segment.title,
-            artist: segment.subtitle || labels?.artist || 'ManYu',
+            artist: segment.subtitle || labels?.artist || 'ManYuDing',
             album: labels?.album || 'Immersive Library Playback',
           },
         })

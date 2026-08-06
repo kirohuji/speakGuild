@@ -60,13 +60,7 @@ export class EnglishPracticeAiController {
   @Post('placement-assessment')
   async placementAssessment(@Req() req: Request, @Body() dto: PlacementAssessmentDto) {
     const session = await requireAuthSession(req);
-    const check = await this.quotaService.checkAndDeduct(session.user.id, 'summary');
-    if (!check.allowed) {
-      throw new HttpException(
-        { code: 403, message: check.message, data: { canExchange: true, exchangeCost: check.exchangeCost } },
-        403,
-      );
-    }
+    // 能力测评属于入门诊断流程，与用户 AI 额度解耦：不扣减、不被额度拦截
     return this.service.assessPlacement(dto, session.user.id);
   }
 
