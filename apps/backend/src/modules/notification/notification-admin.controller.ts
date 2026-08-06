@@ -8,6 +8,7 @@ import type { Request } from 'express';
 import { NotificationService } from './notification.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
+import { AiWriteNotificationDto } from './dto/ai-write-notification.dto';
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { requireAuthSession } from '../auth/session.util';
 
@@ -38,6 +39,12 @@ export class NotificationAdminController {
   async create(@Req() req: Request, @Body() dto: CreateNotificationDto) {
     const session = await this.requireAdmin(req);
     return this.notificationService.createNotification(session.user.id, dto);
+  }
+
+  @Post('ai-write')
+  async aiWrite(@Req() req: Request, @Body() dto: AiWriteNotificationDto) {
+    await this.requireAdmin(req);
+    return this.notificationService.aiWriteNotification(dto);
   }
 
   @Get('search-users')

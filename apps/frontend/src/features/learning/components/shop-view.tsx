@@ -7,6 +7,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { cn } from '@/lib/cn'
 import { useLearningStore } from '@/stores/learning.store'
+import { useOnboardingStore } from '@/stores/onboarding.store'
 import { ShopCard } from './shop-card'
 import type { LearningPackageType } from '../api/learning-api'
 
@@ -57,6 +58,13 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
     setActiveTag('all')
     setKeyword('')
   }, [isOpen])
+
+  // 商店打开且商品加载完成时触发「学习包分类」引导（条件式分段，仅首次）
+  useEffect(() => {
+    if (isOpen && !loading && units.length > 0) {
+      useOnboardingStore.getState().tryStartSegment('shop-categories')
+    }
+  }, [isOpen, loading, units.length])
 
   useEffect(() => {
     fetchTags(activeType === 'all' ? undefined : activeType)
@@ -119,7 +127,7 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
           className="h-11 rounded-full border-0 bg-muted/70 pl-9 text-sm"
         />
       </div>
-      <div className="scrollbar-hide mx-4 overflow-x-auto">
+      <div className="scrollbar-hide mx-4 overflow-x-auto" data-spotlight="shop-category-tabs">
         <div className="flex w-max gap-2 pb-1">
           {[{ id: 'all' as const, labelKey: 'learning.all' }, ...PACKAGE_TYPE_TABS.filter((tab) => tab.id !== excludePackageType)].map((tab) => (
             <button

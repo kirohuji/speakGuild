@@ -79,6 +79,7 @@ import { cn } from '@/lib/cn'
 import { enqueueScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
 import { buildStoryRepeatFrames } from '@/features/scripts/lib/story-repeat-frames'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
+import { useOnboardingStore } from '@/stores/onboarding.store'
 import { VnPlayer, type VnPlayerLine } from '@/features/vn-engine/vn-player'
 import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
 import { learningRepository } from '@/lib/offline'
@@ -192,6 +193,13 @@ export function ScriptCenterPage() {
     () => myUnits.filter((unit) => unit.packageType === 'story'),
     [myUnits],
   )
+
+  // 有剧本数据时触发「剧本中心」引导（条件式分段，仅首次）
+  useEffect(() => {
+    if (storyUnits.length > 0 || works.length > 0 || feed.length > 0) {
+      useOnboardingStore.getState().tryStartSegment('scripts')
+    }
+  }, [storyUnits.length, works.length, feed.length])
   const installedIds = useMemo(
     () => new Set(downloadedPacks.filter((pack) => pack.status === 'installed').map((pack) => pack.packId)),
     [downloadedPacks],
@@ -591,7 +599,7 @@ function MineScripts({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6" data-spotlight="first-script-card">
       {activeUnit && (
         <section className="flex flex-col gap-2">
           <p className="px-1 text-xs font-medium text-muted-foreground">{t('scripts.continuePerformance')}</p>

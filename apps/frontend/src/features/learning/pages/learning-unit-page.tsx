@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type UnitDetail, type VocabItem } from '../api/learning-api'
 import { useLearningStore } from '@/stores/learning.store'
+import { useOnboardingStore } from '@/stores/onboarding.store'
 import { learningContentRepository } from '@/lib/offline'
 import {
   LearningInsightDialog,
@@ -92,6 +93,18 @@ export function LearningUnitPage() {
   }, [])
 
   useEffect(() => { loadCollectedForTab(activeTab) }, [activeTab, loadCollectedForTab])
+
+  // 知识点数据就绪时触发「加入学习库」引导（条件式分段，仅首次）
+  useEffect(() => {
+    if (!unit) return
+    const hasKnowledge =
+      unit.vocabularies.length > 0 ||
+      unit.chunks.length > 0 ||
+      (unit.sentencePatterns?.length ?? 0) > 0
+    if (hasKnowledge) {
+      useOnboardingStore.getState().tryStartSegment('unit-save-to-library')
+    }
+  }, [unit])
 
   const requestSave = useCallback((value: NonNullable<typeof pendingSave>) => {
     setPendingSave(value)

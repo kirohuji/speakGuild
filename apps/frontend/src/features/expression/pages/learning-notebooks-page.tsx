@@ -21,6 +21,7 @@ import {
 } from '@/features/practice/api/english-practice-api'
 import { cn } from '@/lib/cn'
 import { learningNotebookRepository } from '@/lib/offline'
+import { useOnboardingStore } from '@/stores/onboarding.store'
 
 type EditorMode = 'create' | 'manage' | 'rename' | 'delete' | null
 
@@ -56,14 +57,20 @@ function NotebookRow({
   notebook,
   onOpen,
   onManage,
+  spotlight,
 }: {
   notebook: LearningNotebook
   onOpen: () => void
   onManage?: () => void
+  /** 引导高亮标记 */
+  spotlight?: string
 }) {
   const { t } = useTranslation()
   return (
-    <div className="group relative flex min-h-[88px] w-full items-center gap-4 rounded-2xl border border-border/60 bg-card/72 px-4 py-3 text-left transition-[transform,background-color] active:scale-[0.99]">
+    <div
+      className="group relative flex min-h-[88px] w-full items-center gap-4 rounded-2xl border border-border/60 bg-card/72 px-4 py-3 text-left transition-[transform,background-color] active:scale-[0.99]"
+      {...(spotlight ? { 'data-spotlight': spotlight } : {})}
+    >
       <button type="button" className="absolute inset-0 rounded-2xl" onClick={onOpen}>
         <span className="sr-only">{t('learningNotebooks.open', { name: notebook.name })}</span>
       </button>
@@ -132,6 +139,13 @@ export function LearningNotebooksPage() {
   useEffect(() => {
     void load()
   }, [load])
+
+  // 有学习本数据时触发「学习本」引导（条件式分段，仅首次）
+  useEffect(() => {
+    if (!loading && notebooks.length > 0) {
+      useOnboardingStore.getState().tryStartSegment('notebooks')
+    }
+  }, [loading, notebooks.length])
 
   const systemNotebook = useMemo(
     () => notebooks.find((item) => item.kind === 'uncategorized') ?? null,
@@ -212,6 +226,7 @@ export function LearningNotebooksPage() {
               <NotebookRow
                 notebook={systemNotebook}
                 onOpen={() => navigate(`/expressions/${systemNotebook.id}`)}
+                {...(customNotebooks.length === 0 ? { spotlight: 'first-notebook-row' } : {})}
               />
             </section>
           )}
@@ -221,12 +236,13 @@ export function LearningNotebooksPage() {
               <p className="text-xs font-medium text-muted-foreground">{t('learningNotebooks.notebooks')}</p>
               <span className="text-xs text-muted-foreground">{t('learningNotebooks.notebookCount', { count: customNotebooks.length })}</span>
             </div>
-            {customNotebooks.length > 0 ? customNotebooks.map((notebook) => (
+            {customNotebooks.length > 0 ? customNotebooks.map((notebook, index) => (
               <NotebookRow
                 key={notebook.id}
                 notebook={notebook}
                 onOpen={() => navigate(`/expressions/${notebook.id}`)}
                 onManage={() => openManage(notebook)}
+                {...(index === 0 && !systemNotebook ? { spotlight: 'first-notebook-row' } : {})}
               />
             )) : (
               <button

@@ -30,6 +30,7 @@ import { toast } from 'sonner'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { useAuth } from '@/providers/auth-provider'
 import { AdminPagination } from '@/features/admin/components/admin-pagination'
+import { NotificationAiWriter } from '@/features/admin/components/notification-ai-writer'
 
 const noRingInput = 'focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none'
 
@@ -238,6 +239,7 @@ function EditNotificationDialog({
           <DialogDescription>修改通知的标题、内容和发送范围</DialogDescription>
         </DialogHeader>
         <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
+          <NotificationAiWriter onGenerated={(title, content) => { setTitle(title); setContent(content) }} />
           <div className="space-y-1.5">
             <label className="text-xs font-medium">标题</label>
             <Input placeholder="通知标题" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} className={noRingInput} />
@@ -796,6 +798,7 @@ export function AdminNotificationsPage() {
             <DialogDescription>向用户发送系统通知，支持 Markdown 与图片嵌入</DialogDescription>
           </DialogHeader>
           <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
+            <NotificationAiWriter isSpecial={formIsSpecial} onGenerated={(title, content) => { setFormTitle(title); setFormContent(content) }} />
             <div className="space-y-1.5">
               <label className="text-xs font-medium">标题</label>
               <Input placeholder="通知标题" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} maxLength={100} className={noRingInput} />

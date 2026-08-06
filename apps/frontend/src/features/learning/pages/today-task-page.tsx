@@ -27,6 +27,7 @@ import type { DailyPracticePlanMode, DailyPracticeStatus } from '@/lib/offline/d
 import { TodayRecordsDrawer } from '../components/today-records-drawer'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
 import { usePreferencesStore } from '@/stores/preferences.store'
+import { useOnboardingStore } from '@/stores/onboarding.store'
 import { preloadWarmupLocalJudge, type WarmupReferencePreloadInput } from '@/lib/local-ai/warmup-local-judge'
 import { useAuth } from '@/providers/auth-provider'
 import { toast } from 'sonner'
@@ -238,6 +239,13 @@ export function TodayTaskPage() {
     setReviewRunNonce(0)
     loadToday(targetPackId, targetDate, planMode, planRunSeed > 0)
   }, [currentPlanReusable, loadToday, targetPackId, targetDate, planMode, planRunSeed])
+
+  // 今日计划就绪时触发「每日练习」引导（条件式分段，仅首次）
+  useEffect(() => {
+    if (plan && plan.steps.length > 0) {
+      useOnboardingStore.getState().tryStartSegment('today-practice')
+    }
+  }, [plan])
 
   useEffect(() => {
     if (!localAiWarmupJudgeEnabled) return

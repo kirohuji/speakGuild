@@ -1,5 +1,14 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { generateObject } from 'ai';
+import { z } from 'zod';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { LlmProviderFactory } from '../../common/llm/llm-provider.factory';
+import { AiModelService } from '../ai-model/ai-model.service';
+import {
+  NOTIFICATION_AI_SYSTEM_PROMPT,
+  buildNotificationAiPrompt,
+} from './notification-ai.prompt';
+import { AiWriteNotificationDto } from './dto/ai-write-notification.dto';
 import { PaginationDto, toPageResult } from '../../common/dto/pagination.dto';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
@@ -14,7 +23,44 @@ export class NotificationService {
     private readonly prisma: PrismaService,
     private readonly gateway: NotificationGateway,
     private readonly fileAssets: FileAssetsService,
+    private readonly aiModel: AiModelService,
+    private readonly llmFactory: LlmProviderFactory,
   ) {}
+
+  /** AI 通知草稿输出结构 */
+  private notificationDraftSchema = z.object({
+    title: z.string(),
+    content: z.string(),
+  });
+
+  /** 管理员：AI 撰写通知草稿 */
+  async aiWriteNotification(dto: AiWriteNotificationDto) {
+    const config = await this.aiModel.getLlmConfig();
+    const model = this.llmFactory.create(config);
+
+    try {
+      const result = await generateObject({
+        model,
+        schema: this.notificationDraftSchema as any,
+        system: NOTIFICATION_AI_SYSTEM_PROMPT,
+        prompt: buildNotificationAiPrompt({
+          scene: dto.type,
+          details: dto.details,
+          isSpecial: dto.isSpecial,
+        }),
+        temperature: 0.85,
+        maxOutputTokens: 1200,
+      });
+
+      const draft = result.object as { title: string; content: string };
+      return {
+        title: draft.title.trim(),
+        content: draft.content.trim(),
+      };
+    } catch (error) {
+      throw new ServiceUnavailableException('AI 生成失败，请稍后重试');
+    }
+  }
 
   /** 管理员：创建并发送通知 */
   async createNotification(adminUserId: string, dto: CreateNotificationDto) {

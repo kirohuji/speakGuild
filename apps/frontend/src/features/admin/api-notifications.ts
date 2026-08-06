@@ -116,3 +116,18 @@ export async function updateNotification(
 export async function deleteNotification(id: string) {
   return del(`/admin/notifications/${id}`);
 }
+
+export type NotificationAiScene = 'versionUpdate' | 'learningPack' | 'discount' | 'maintenance' | 'greeting' | 'custom'
+
+export interface AiWriteNotificationResult {
+  title: string
+  content: string
+}
+
+export async function aiWriteNotification(data: {
+  type: NotificationAiScene
+  details?: string
+  isSpecial?: boolean
+}) {
+  return post<AiWriteNotificationResult>('/admin/notifications/ai-write', data)
+}

@@ -1,9 +1,10 @@
 /**
  * 首次用户引导流程 E2E 测试
  *
- * 模拟移动端新用户首次登录后的完整流程：
- *   1. 能力测评弹窗 (LearningAssessmentDialog)
- *   2. Spotlight 引导 (SpotlightOverlay)
+ * 两套引导模式（单 store 双模式）：
+ *   1. 能力测评弹窗 (LearningAssessmentDialog) — test=2 强制触发
+ *   2. 完整引导 (Tour) — 完成测评后启动，新用户首次走一遍核心闭环
+ *   3. 分段引导 (Segment) — 日常使用中各页面按条件触发
  *
  * ★ 使用 ?test=2 参数强制触发测评流程
  * ★ test=2 模式下不会把 hasCompletedOnboarding 写回 DB
@@ -64,22 +65,24 @@ test.describe('首次用户引导 - 能力测评 + Spotlight', () => {
     }
   })
 
-  test('Spotlight 引导第一步出现', async ({ page }) => {
+  test('关闭测评弹窗后不出现引导', async ({ page }) => {
     if (page.url().includes('/auth/login')) {
       test.skip(true, '需要后端运行')
       return
     }
 
-    // 测评完成后 → 自动进入 Spotlight 引导
-    // 第一个步骤 target: a[href="#/learning"]
-    // Spotlight 高亮叠加层应有对应元素
-    const spotlight = page.locator('[data-spotlight], .spotlight-overlay').first()
     // 如果测评弹窗还在，先关闭
     const closeBtn = page.locator('[role="dialog"] [aria-label="Close"], [role="dialog"] button:has-text("跳过")').first()
     if (await closeBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await tap(closeBtn)
       await page.waitForTimeout(2000)
     }
+
+    // 直接关闭弹窗不会触发「完成测评」，因此不会进入完整引导（Tour）
+    // 完整引导（Tour）仅在完成测评后启动：首页出现 spotlight，随后按步骤走核心闭环
+    // 分段式引导（Segment）则在日常使用中各页面按条件触发
+    const tooltip = page.locator('[data-spotlight-tooltip]')
+    await expect(tooltip).toHaveCount(0)
   })
 })
 

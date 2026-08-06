@@ -30,5 +30,6 @@ etl/
 .venv/
 test-results
 playwright-report
+.playwright-mcp
 packages_backup/
 *.zip

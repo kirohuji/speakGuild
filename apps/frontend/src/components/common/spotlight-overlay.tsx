@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
-import { ChevronRight, ChevronLeft, X, FlaskConical } from 'lucide-react'
+import { ChevronRight, X, FlaskConical } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -172,7 +172,7 @@ export function SpotlightOverlay({
     if (targetMissing) {
       return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 px-6">
-          <div className="w-full max-w-[280px] rounded-2xl bg-card p-4 text-card-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.06)] dark:shadow-none dark:ring-1 dark:ring-white/[0.07]">
+          <div className="w-full max-w-[280px] rounded-2xl bg-card p-4 text-card-foreground">
             <div className="mb-3 flex items-center justify-end">
               <div className="flex gap-1.5">
                 {Array.from({ length: totalSteps }).map((_, i) => (
@@ -201,16 +201,20 @@ export function SpotlightOverlay({
               </div>
             )}
             <h3 className="text-[15px] font-semibold leading-snug text-foreground">
-              {step.title}
+              {step.titleKey ? t(step.titleKey) : step.title}
             </h3>
             <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
               {t('common.spotlightTargetMissing')}
             </p>
             <div className="mt-4 flex justify-end">
-              <Button size="sm" onClick={() => onNext(false)}>
+              <button
+                type="button"
+                onClick={() => onNext(false)}
+                className="inline-flex h-8 items-center gap-1 rounded-full bg-primary/[0.08] px-3.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/[0.14] active:scale-[0.98]"
+              >
                 {stepIndex >= totalSteps - 1 ? t('common.done') : t('common.skipStep')}
-                {stepIndex < totalSteps - 1 && <ChevronRight className="ml-1 size-3.5" />}
-              </Button>
+                {stepIndex < totalSteps - 1 && <ChevronRight className="size-3.5" />}
+              </button>
             </div>
 
             <Dialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
@@ -312,7 +316,7 @@ export function SpotlightOverlay({
             ...tooltipStyle,
           }}
         >
-          <div data-spotlight-tooltip className="rounded-2xl bg-card p-4 text-card-foreground shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.06)] dark:shadow-none dark:ring-1 dark:ring-white/[0.07]">
+          <div data-spotlight-tooltip className="rounded-2xl bg-card p-4 text-card-foreground">
             {/* 跳过按钮 */}
             <div className="mb-3 flex items-center justify-end">
               <div className="flex gap-1.5">
@@ -344,17 +348,21 @@ export function SpotlightOverlay({
               </div>
             )}
             <h3 className="text-[15px] font-semibold leading-snug text-foreground">
-              {step.title}
+              {step.titleKey ? t(step.titleKey) : step.title}
             </h3>
             <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
-              {step.description}
+              {step.descKey ? t(step.descKey) : step.description}
             </p>
             {!step.clickToAdvance && (
               <div className="mt-4 flex justify-end">
-                <Button size="sm" onClick={() => onNext(false)}>
+                <button
+                  type="button"
+                  onClick={() => onNext(false)}
+                  className="inline-flex h-8 items-center gap-1 rounded-full bg-primary/[0.08] px-3.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/[0.14] active:scale-[0.98]"
+                >
                   {stepIndex >= totalSteps - 1 ? t('common.done') : t('common.gotIt')}
-                  {stepIndex < totalSteps - 1 && <ChevronRight className="ml-1 size-3.5" />}
-                </Button>
+                  {stepIndex < totalSteps - 1 && <ChevronRight className="size-3.5" />}
+                </button>
               </div>
             )}
           </div>
