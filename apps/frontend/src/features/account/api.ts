@@ -14,6 +14,11 @@ export interface LinkedAccount {
 
 export async function listLinkedAccounts(): Promise<LinkedAccount[]> {
   const res = await authClient.listAccounts()
+  // better-auth 请求失败不抛异常，而是返回 { data: null, error }；
+  // 这里必须把失败转成抛错，否则调用方会把绑定列表静默覆盖成空数组（UI 显示错误的「未绑定」）
+  if (res?.error) {
+    throw new Error(res.error.message || '获取绑定账号失败')
+  }
   return res?.data ?? []
 }
 

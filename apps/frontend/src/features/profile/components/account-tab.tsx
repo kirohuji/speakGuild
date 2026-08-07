@@ -18,8 +18,8 @@ import { useAuth } from '@/providers/auth-provider'
 import { useUserStore } from '@/stores/user.store'
 import { NicknameEditDialog } from '@/features/profile/components/nickname-edit-dialog'
 import { UserAvatar } from '@/components/common/user-avatar'
+import { useAccountBindingActions } from '@/features/account/use-account-binding-actions'
 import { changePassword, sendEmailOtp, verifyEmailOtp, sendBindPhoneOtp, bindPhoneNumber } from '@/features/auth/api'
-import type { LinkedAccount } from '@/features/account/api'
 import { useCountdown } from '@/hooks/use-countdown'
 import { Select, SelectItem } from '@/components/ui/select'
 
@@ -57,8 +57,7 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
   const refreshLinkedAccounts = useUserStore((s) => s.refreshLinkedAccounts)
   const patchCachedProfile = useUserStore((s) => s.patchProfile)
   const uploadAvatar = useUserStore((s) => s.uploadAvatar)
-  const linkSocial = useUserStore((s) => s.linkSocial)
-  const unlinkSocial = useUserStore((s) => s.unlinkSocial)
+  const { handleLinkSocial, handleUnlink } = useAccountBindingActions()
   const [nicknameDialogOpen, setNicknameDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(!hydrated)
   const [sendingVerification, setSendingVerification] = useState(false)
@@ -121,26 +120,6 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
       toast.success(t('profile.avatarUpdated', { defaultValue: '头像已更新' }))
     } catch (error: any) {
       toast.error(error?.response?.data?.message || error?.message || t('profile.auth.loadFailed'))
-    }
-  }
-
-  const handleLinkSocial = async (provider: 'wechat' | 'apple') => {
-    try {
-      await linkSocial(provider)
-      // 绑定可能同步了微信头像，后台刷新用户信息（不再 refreshSession，避免整个界面重建关闭抽屉）
-      void ensureLoaded(sessionUser?.id, { force: true })
-      toast.success(t('account.linkSuccess', { defaultValue: '绑定成功' }))
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || t('account.linkFailed', { defaultValue: '绑定失败，请重试' }))
-    }
-  }
-
-  const handleUnlink = async (account: LinkedAccount) => {
-    try {
-      await unlinkSocial(account)
-      toast.success(t('account.unlinkSuccess', { defaultValue: '解绑成功' }))
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || t('account.unlinkFailed', { defaultValue: '解绑失败，请重试' }))
     }
   }
 

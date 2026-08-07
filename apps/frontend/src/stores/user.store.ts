@@ -232,8 +232,20 @@ export const useUserStore = create<UserStoreState>()((set, get) => ({
     set({ linkingProvider: provider })
     try {
       await linkSocialAccount(provider)
-      const accounts = await listLinkedAccounts()
-      set({ linkedAccounts: accounts })
+      // 绑定成功后统一刷新绑定列表与头像（微信绑定可能补 user.image，同步显示）
+      // 失败仅记录日志，保留现有状态，避免把已绑定状态覆盖成「未绑定」
+      try {
+        const accounts = await listLinkedAccounts()
+        set({ linkedAccounts: accounts })
+      } catch (error) {
+        console.warn('[user-store] refresh linked accounts after link failed:', error)
+      }
+      try {
+        const avatar = await getCurrentAvatar()
+        set({ avatarUrl: avatar?.url ?? null })
+      } catch (error) {
+        console.warn('[user-store] refresh avatar after link failed:', error)
+      }
       persistSnapshot()
     } catch (error) {
       // 抛给 UI 层提示（如「该微信已绑定其他账号」）

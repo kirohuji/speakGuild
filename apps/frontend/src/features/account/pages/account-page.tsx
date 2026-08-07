@@ -19,9 +19,8 @@ import { useLayoutStore } from '@/stores/layout.store'
 import { useUserStore } from '@/stores/user.store'
 import { useLearningStore } from '@/stores/learning.store'
 import { UserAvatar } from '@/components/common/user-avatar'
-import type { LinkedAccount } from '@/features/account/api'
+import { useAccountBindingActions } from '@/features/account/use-account-binding-actions'
 import { changePassword, sendEmailOtp } from '@/features/auth/api'
-import { toast } from 'sonner'
 
 // ─── 第三方登录图标（与登录页一致）────────────────────────────────────────
 
@@ -323,8 +322,7 @@ export function AccountPage() {
   const storeUpdateProfile = useUserStore((s) => s.updateProfile)
   const uploadAvatar = useUserStore((s) => s.uploadAvatar)
   const refreshLinkedAccounts = useUserStore((s) => s.refreshLinkedAccounts)
-  const linkSocial = useUserStore((s) => s.linkSocial)
-  const unlinkSocial = useUserStore((s) => s.unlinkSocial)
+  const { handleLinkSocial, handleUnlink } = useAccountBindingActions()
   const isLoading = loading || !hydrated
 
   // UI-only state
@@ -378,27 +376,6 @@ export function AccountPage() {
     if (!file.type.startsWith('image/')) return
     if (file.size > 5 * 1024 * 1024) return
     await uploadAvatar(file)
-  }
-
-  // ── 绑定操作 ──
-  const handleLinkSocial = async (provider: 'wechat' | 'apple') => {
-    try {
-      await linkSocial(provider)
-      // 绑定可能同步了微信头像，后台刷新用户信息（不再 refreshSession，避免整个界面重建关闭抽屉）
-      void ensureLoaded(sessionUser?.id, { force: true })
-      toast.success(t('account.linkSuccess', { defaultValue: '绑定成功' }))
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || t('account.linkFailed', { defaultValue: '绑定失败，请重试' }))
-    }
-  }
-
-  const handleUnlink = async (account: LinkedAccount) => {
-    try {
-      await unlinkSocial(account)
-      toast.success(t('account.unlinkSuccess', { defaultValue: '解绑成功' }))
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || error?.message || t('account.unlinkFailed', { defaultValue: '解绑失败，请重试' }))
-    }
   }
 
   const handleNicknameSaved = (name: string) => {
