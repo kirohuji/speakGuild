@@ -7,6 +7,9 @@ import { useUserStore } from '@/stores/user.store'
 import { LearningAssessmentDialog } from '@/features/profile/components/placement-assessment-dialog'
 import { SpotlightOverlay } from '@/components/common/spotlight-overlay'
 
+// 分段引导触发后延迟显示：等页面渲染稳定、用户看清当前内容后再出现，避免"页面一闪就被遮罩"
+const SEGMENT_SHOW_DELAY_MS = 1000
+
 interface OnboardingProviderProps {
   children: ReactNode
 }
@@ -27,6 +30,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const setCachedProfile = useUserStore((s) => s.setProfile)
   const [placementOpen, setPlacementOpen] = useState(false)
   const [placementProfile, setPlacementProfile] = useState<UserProfile | null>(null)
+  const [overlayVisible, setOverlayVisible] = useState(false)
   const initializedRef = useRef(false)
 
   // 🧪 检测 test=2（兼容 HashRouter 下 query 在 hash 中的情况）
@@ -89,6 +93,17 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     setPlacementOpen(false)
     startGuidance()
   }, [startGuidance])
+
+  // ---- 分段引导延迟显示：tour 即时出现；segment 等页面稳定后再出现 ----
+  useEffect(() => {
+    if (storeMode === 'segment') {
+      setOverlayVisible(false)
+      const timer = window.setTimeout(() => setOverlayVisible(true), SEGMENT_SHOW_DELAY_MS)
+      return () => window.clearTimeout(timer)
+    }
+    // tour：测评完成后立即进入引导（用户有预期）；null：无引导
+    setOverlayVisible(storeMode === 'tour')
+  }, [storeMode])
 
   // ---- 完成当前引导：仅 Tour 完成时写后端标记 ----
   const handleFinish = useCallback(async () => {
@@ -154,7 +169,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         onCompleted={handlePlacementCompleted}
       />
 
-      {storeMode && currentStep && (
+      {storeMode && overlayVisible && currentStep && (
         <SpotlightOverlay
           key={currentStep.id}
           step={currentStep}
