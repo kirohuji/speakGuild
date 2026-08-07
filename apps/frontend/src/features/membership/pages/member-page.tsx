@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Check, X, Crown, Star, Zap, Shield, ChevronLeft, Sparkles, Loader2, QrCode, ExternalLink, Monitor, Gift, RefreshCw, Settings } from 'lucide-react'
+import { Check, X, Crown, Star, Zap, Shield, ChevronLeft, Sparkles, Loader2, QrCode, ExternalLink, Monitor, /* Gift */ RefreshCw, Settings } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -20,11 +20,11 @@ import {
   type MemberBenefit,
   type OrderResult,
 } from '@/features/membership/api'
-import { pointsApi } from '@/features/points/api'
+// import { pointsApi } from '@/features/points/api' // 积分抵扣（暂时停用），恢复时取消注释
 import { cn } from '@/lib/cn'
 import { isNative, revenueCat } from '@/lib/native'
 import { useRevenueCat } from '@/hooks/use-revenuecat'
-import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
+import { useUserStore } from '@/stores/user.store'
 
 const planIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   free: Star,
@@ -57,7 +57,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const [isLoading, setIsLoading] = useState(true)
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
   const [subscriptionAction, setSubscriptionAction] = useState<'restore' | 'manage' | null>(null)
-  const setCachedMembership = useProfileCacheStore((s) => s.setMembership)
+  const setCachedMembership = useUserStore((s) => s.setMembership)
   const revenueCatState = useRevenueCat()
 
   const isNativeApp = isNative()
@@ -71,14 +71,16 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const [payResult, setPayResult] = useState<OrderResult | null>(null)
   const [payLoading, setPayLoading] = useState(false)
   const [payError, setPayError] = useState<string | null>(null)
-  const [pointsBalance, setPointsBalance] = useState(0)
-  const [usePoints, setUsePoints] = useState(false)
+  // ── 积分抵扣（暂时停用）──
+  // const [pointsBalance, setPointsBalance] = useState(0)
+  // const [usePoints, setUsePoints] = useState(false)
   const selectedPayPrice = payPlan
     ? billingCycle === 'yearly' && payPlan.yearlyPrice
       ? payPlan.yearlyPrice
       : payPlan.price
     : 0
-  const appliedPoints = usePoints ? Math.min(pointsBalance, selectedPayPrice) : 0
+  // 积分抵扣（暂时停用）：usePoints ? Math.min(pointsBalance, selectedPayPrice) : 0
+  const appliedPoints = 0
   const checkoutAmount = selectedPayPrice - appliedPoints
   const yearlyOriginalPrice = payPlan ? payPlan.price * 12 : 0
   const yearlySaving = billingCycle === 'yearly' ? Math.max(0, yearlyOriginalPrice - selectedPayPrice) : 0
@@ -87,14 +89,19 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     : '10.0'
 
   useEffect(() => {
-    Promise.allSettled([getMemberPlans(), getCurrentMembership(), getMemberBenefits(), pointsApi.getBalance()]).then(
-      ([plansRes, curRes, benRes, ptsRes]) => {
+    Promise.allSettled([
+      getMemberPlans(),
+      getCurrentMembership(),
+      getMemberBenefits(),
+      // pointsApi.getBalance(), // 积分抵扣（暂时停用）
+    ]).then(
+      ([plansRes, curRes, benRes]) => {
         if (plansRes.status === 'fulfilled') setPlans(plansRes.value)
         if (curRes.status === 'fulfilled') {
           setCurrent(curRes.value)
           setCachedMembership(curRes.value)
         }
-        if (ptsRes.status === 'fulfilled') setPointsBalance(ptsRes.value.points)
+        // if (ptsRes.status === 'fulfilled') setPointsBalance(ptsRes.value.points) // 积分抵扣（暂时停用）
         if (benRes.status === 'fulfilled' && benRes.value.length > 0) {
           setBenefits(benRes.value)
         } else {
@@ -176,7 +183,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         planId: payPlan.planId,
         paymentMethod: method,
         billingCycle,
-        usePoints: usePoints ? pointsBalance : 0,
+        // usePoints: usePoints ? pointsBalance : 0, // 积分抵扣（暂时停用）
       } as any)
       setPayResult(result)
 
@@ -771,7 +778,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
               )}
             </div>
 
-            {/* 积分抵扣 */}
+            {/* 积分抵扣（暂时停用）
             {pointsBalance > 0 && (
               <div className="flex items-center justify-between rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3">
                 <div className="flex items-center gap-2">
@@ -793,6 +800,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                 </Button>
               </div>
             )}
+            */}
 
             {/* 支付结果 - QR 码 */}
             {payResult?.qrCode && (

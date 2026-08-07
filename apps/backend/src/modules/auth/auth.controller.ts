@@ -73,6 +73,13 @@ export class AuthController {
     );
   }
 
+  /** 已登录用户绑定微信（移动端 native SDK 拿 code 后换取 openid 绑定） */
+  @Post('wechat/native/bind')
+  async bindNativeWechat(@Req() req: Request, @Body() dto: NativeWechatSignInDto) {
+    const session = await requireAuthSession(req);
+    return this.nativeWechatAuthService.bind(session.user.id, dto.code);
+  }
+
   private extractBearerSessionToken(req: Request) {
     const authorization = req.headers.authorization;
     if (!authorization?.startsWith('Bearer ')) return null;

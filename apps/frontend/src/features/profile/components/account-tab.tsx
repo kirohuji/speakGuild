@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
-  User, Camera, Loader2, PencilLine, Mail, Phone, ExternalLink,
+  Camera, Loader2, PencilLine, Mail, Phone, ExternalLink,
   KeyRound, ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,18 +11,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { MobileListSkeleton } from '@/components/common/mobile-page-loading'
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
-import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
-import { updateUserProfile } from '@/features/profile/api'
+import { useUserStore } from '@/stores/user.store'
 import { NicknameEditDialog } from '@/features/profile/components/nickname-edit-dialog'
-import { getCurrentAvatar, uploadFileToCosAndComplete, setCurrentAvatar } from '@/features/file-assets/api'
-import { linkSocialAccount, unlinkAccount, type LinkedAccount } from '@/features/account/api'
+import { UserAvatar } from '@/components/common/user-avatar'
 import { changePassword, sendEmailOtp, verifyEmailOtp, sendBindPhoneOtp, bindPhoneNumber } from '@/features/auth/api'
+import type { LinkedAccount } from '@/features/account/api'
 import { useCountdown } from '@/hooks/use-countdown'
 import { Select, SelectItem } from '@/components/ui/select'
 
@@ -49,20 +47,21 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
   const navigate = useNavigate()
   const { session, refreshSession } = useAuth()
   const sessionUser = session?.user ?? null
-  const profile = useProfileCacheStore((s) => s.profile)
-  const avatarUrl = useProfileCacheStore((s) => s.avatarUrl)
-  const linkedAccounts = useProfileCacheStore((s) => s.linkedAccounts)
-  const accountLoaded = useProfileCacheStore((s) => s.profileLoaded && s.avatarLoaded && s.linkedAccountsLoaded)
-  const loadAccount = useProfileCacheStore((s) => s.loadAccount)
-  const refreshLinkedAccounts = useProfileCacheStore((s) => s.refreshLinkedAccounts)
-  const patchCachedProfile = useProfileCacheStore((s) => s.patchProfile)
-  const setCachedAvatarUrl = useProfileCacheStore((s) => s.setAvatarUrl)
-  const setCachedLinkedAccounts = useProfileCacheStore((s) => s.setLinkedAccounts)
-  const [avatarUploading, setAvatarUploading] = useState(false)
+  const profile = useUserStore((s) => s.profile)
+  const linkedAccounts = useUserStore((s) => s.linkedAccounts)
+  const hydrated = useUserStore((s) => s.hydrated)
+  const loading = useUserStore((s) => s.loading)
+  const avatarUploading = useUserStore((s) => s.avatarUploading)
+  const linkingProvider = useUserStore((s) => s.linkingProvider)
+  const unlinkingId = useUserStore((s) => s.unlinkingId)
+  const ensureLoaded = useUserStore((s) => s.ensureLoaded)
+  const refreshLinkedAccounts = useUserStore((s) => s.refreshLinkedAccounts)
+  const patchCachedProfile = useUserStore((s) => s.patchProfile)
+  const uploadAvatar = useUserStore((s) => s.uploadAvatar)
+  const linkSocial = useUserStore((s) => s.linkSocial)
+  const unlinkSocial = useUserStore((s) => s.unlinkSocial)
   const [nicknameDialogOpen, setNicknameDialogOpen] = useState(false)
-  const [linkingProvider, setLinkingProvider] = useState<string | null>(null)
-  const [unlinkingId, setUnlinkingId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(!accountLoaded)
+  const [isLoading, setIsLoading] = useState(!hydrated)
   const [sendingVerification, setSendingVerification] = useState(false)
   const [verificationSent, setVerificationSent] = useState(false)
   const [verificationDialogOpen, setVerificationDialogOpen] = useState(false)
@@ -85,15 +84,15 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
   const avatarInputRef = useRef<HTMLInputElement | null>(null)
 
   const loadData = useCallback(async () => {
-    if (!accountLoaded) setIsLoading(true)
-    await loadAccount()
+    if (!hydrated) setIsLoading(true)
+    await ensureLoaded(sessionUser?.id)
     setIsLoading(false)
-  }, [accountLoaded, loadAccount])
+  }, [hydrated, ensureLoaded, sessionUser?.id])
 
-  useEffect(() => { loadData() }, [loadData])
+  useEffect(() => { void loadData() }, [loadData])
   useEffect(() => {
-    if (accountLoaded) setIsLoading(false)
-  }, [accountLoaded])
+    if (hydrated && !loading) setIsLoading(false)
+  }, [hydrated, loading])
 
   useEffect(() => {
     const handleFocus = () => {
@@ -118,41 +117,27 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
       return
     }
 
-    setAvatarUploading(true)
     try {
-      const asset = await uploadFileToCosAndComplete({ file, group: 'avatar' })
-      const current = await setCurrentAvatar(asset.id)
-      if (!current?.url) throw new Error(t('profile.auth.loadFailed'))
-      setCachedAvatarUrl(current.url)
-      await loadAccount(true)
+      await uploadAvatar(file)
       toast.success(t('profile.avatarUpdated', { defaultValue: '头像已更新' }))
     } catch (error: any) {
       toast.error(error?.response?.data?.message || error?.message || t('profile.auth.loadFailed'))
-    } finally {
-      setAvatarUploading(false)
     }
   }
 
   const handleLinkSocial = async (provider: 'wechat' | 'apple') => {
     try {
-      setLinkingProvider(provider)
-      await linkSocialAccount(provider)
-    } catch {
-      setLinkingProvider(null)
+      await linkSocial(provider)
+      // 绑定可能同步了微信头像，刷新 session 让 user.image 生效
+      await refreshSession()
+      toast.success(t('account.linkSuccess', { defaultValue: '绑定成功' }))
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || t('account.linkFailed', { defaultValue: '绑定失败，请重试' }))
     }
   }
 
   const handleUnlink = async (account: LinkedAccount) => {
-    if (unlinkingId) return
-    setUnlinkingId(account.id)
-    try {
-      await unlinkAccount(account)
-      setCachedLinkedAccounts(linkedAccounts.filter((a) => a.id !== account.id))
-    } catch {
-      // ignore
-    } finally {
-      setUnlinkingId(null)
-    }
+    await unlinkSocial(account)
   }
 
   const handleNicknameSaved = (name: string) => {
@@ -285,12 +270,10 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
             tabIndex={-1}
             className="group relative flex-shrink-0"
           >
-            <Avatar className="size-16 ring-2 ring-border ring-offset-2 ring-offset-background transition-shadow group-hover:ring-primary/50">
-              <AvatarImage src={avatarUrl || undefined} alt="avatar" />
-              <AvatarFallback className="bg-primary/10">
-                <User className="size-8 text-primary" />
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              className="size-16 ring-2 ring-border ring-offset-2 ring-offset-background transition-shadow group-hover:ring-primary/50"
+              fallbackClassName="bg-primary/10 text-primary"
+            />
             <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
               {avatarUploading ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -548,7 +531,7 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
                     phoneNumber: boundPhoneNumber,
                     phoneNumberVerified: true,
                   })
-                  await loadAccount(true)
+                  void ensureLoaded(sessionUser?.id)
                   setPhoneBindOpen(false)
                   toast.success(t('profile.bindPhoneSuccess'))
                 } catch (e: any) {

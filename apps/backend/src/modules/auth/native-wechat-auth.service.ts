@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  ConflictException,
   Injectable,
   ServiceUnavailableException,
   UnauthorizedException,
@@ -127,6 +128,63 @@ export class NativeWechatAuthService {
       token: this.signBearerToken(sessionToken, authSecret),
       user,
       expiresAt,
+    };
+  }
+
+  async bind(userId: string, code: string) {
+    const appId = process.env.WECHAT_NATIVE_APP_ID || process.env.WECHAT_CLIENT_ID;
+    const appSecret = process.env.WECHAT_NATIVE_APP_SECRET || process.env.WECHAT_CLIENT_SECRET;
+
+    if (!appId || !appSecret) {
+      throw new ServiceUnavailableException('Native WeChat binding is not configured');
+    }
+
+    const token = await this.exchangeCode(appId, appSecret, code);
+    const profile = await this.fetchUserInfo(token.access_token!, token.openid!);
+    const accountId = token.openid!;
+
+    const existingAccount = await this.prisma.account.findFirst({
+      where: { providerId: 'wechat', accountId },
+    });
+
+    if (existingAccount) {
+      if (existingAccount.userId === userId) {
+        // 已绑定当前账号：幂等返回
+        return { bound: true, alreadyBound: true };
+      }
+      throw new ConflictException('该微信已绑定其他账号');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.account.create({
+        data: {
+          id: randomUUID(),
+          accountId,
+          providerId: 'wechat',
+          userId,
+          accessToken: token.access_token,
+          refreshToken: token.refresh_token,
+          accessTokenExpiresAt: new Date(Date.now() + (token.expires_in || 7200) * 1000),
+          scope: token.scope || 'snsapi_userinfo',
+        },
+      });
+      // 用户没有自定义头像时，补上微信头像（不覆盖用户已设置的昵称）
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { image: true },
+      });
+      if (!user?.image && profile.headimgurl) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { image: profile.headimgurl },
+        });
+      }
+    });
+
+    return {
+      bound: true,
+      alreadyBound: false,
+      image: profile.headimgurl || null,
     };
   }
 

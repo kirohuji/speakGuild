@@ -525,7 +525,14 @@ export class FileAssetsService {
       },
       orderBy: { createdAt: 'desc' },
     });
-    if (!ref) return null;
+    if (!ref) {
+      // 用户未在 App 内上传过头像时，回退到第三方登录（微信/Apple）提供的头像
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { image: true },
+      });
+      return user?.image ? { url: user.image } : null;
+    }
     const asset = await this.prisma.fileAsset.findUnique({ where: { id: ref.assetId } });
     if (!asset || asset.status !== FileAssetStatus.active) return null;
     const url = await this.getSignedDownloadUrl(asset.cosKey);

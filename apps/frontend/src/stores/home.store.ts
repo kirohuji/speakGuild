@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { get } from '@/lib/request'
 import { pointsApi, type CheckInStatus } from '@/features/points/api'
 import { getSpecialNotifications, type SpecialNotification } from '@/features/notification/api'
+import { useUserStore } from '@/stores/user.store'
 
 // ---- 每日句子 ----
 
@@ -107,6 +108,10 @@ export const useHomeStore = create<HomeStore>()((set, getState) => ({
       // 签到后刷新状态
       const status = await pointsApi.getCheckInStatus()
       set({ checkInStatus: status, checkInLoading: false })
+      // 同步统一用户 store 的积分余额（points 为签到后的总余额）
+      if (typeof result.points === 'number') {
+        useUserStore.getState().setPointsBalance(result.points)
+      }
       return result.message
     } catch (e) {
       set({ checkInLoading: false })

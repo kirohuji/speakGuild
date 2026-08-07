@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  LayoutDashboard, ClipboardList, BookMarked, IdCard, Settings, User,
+  LayoutDashboard, ClipboardList, BookMarked, IdCard, Settings,
   ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
-import { getUserProfile, type UserProfile } from '@/features/profile/api'
+import { UserAvatar } from '@/components/common/user-avatar'
 import { AppearanceContent } from '@/features/profile/components/appearance-drawer'
 import { useLayoutStore } from '@/stores/layout.store'
+import { useUserStore } from '@/stores/user.store'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { cn } from '@/lib/cn'
-import { getCurrentAvatar } from '@/features/file-assets/api'
+import { useAuth } from '@/providers/auth-provider'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { MobileProfileDetail } from '@/features/profile/components/mobile-profile-detail'
 import type { MobileView } from '@/features/profile/components/mobile-profile-home'
@@ -54,10 +54,12 @@ interface ProfilePageProps {
 export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
+  const { session } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [mobileView, setMobileView] = useState<MobileView>('home')
   const [prevView, setPrevView] = useState<MobileView | null>(null)
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  const userProfile = useUserStore((s) => s.profile)
+  const ensureUserLoaded = useUserStore((s) => s.ensureLoaded)
 
   const goTo = (view: MobileView) => {
     setPrevView(mobileView)
@@ -67,14 +69,14 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
     setMobileView(prevView || 'home')
     setPrevView(null)
   }
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const setBottomNavVisible = useLayoutStore((s) => s.setBottomNavVisible)
 
   useEffect(() => {
     if (isMobile) return
-    getUserProfile().then(setUserProfile).catch(() => {})
-    getCurrentAvatar().then((res) => setAvatarUrl(res?.url ?? null)).catch(() => {})
-  }, [isMobile])
+    if (session?.user?.id) {
+      void ensureUserLoaded(session.user.id)
+    }
+  }, [isMobile, session?.user?.id, ensureUserLoaded])
 
   useEffect(() => {
     setBottomNavVisible(mobileView === 'home')
@@ -116,12 +118,7 @@ export function ProfilePage({ onFeedbackOpen }: ProfilePageProps = {}) {
             <Card>
               <CardContent className="p-4">
                 <div className="mb-4 flex flex-col items-center gap-2 text-center">
-                  <Avatar className="h-16 w-16 ring-2 ring-border ring-offset-2 ring-offset-background">
-                    <AvatarImage src={avatarUrl || undefined} alt="avatar" />
-                    <AvatarFallback className="bg-primary/10">
-                      <User className="h-8 w-8 text-primary" />
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar className="h-16 w-16 ring-2 ring-border ring-offset-2 ring-offset-background" fallbackClassName="bg-primary/10 text-primary" />
                   <p className="font-semibold">{nickname}</p>
                   <Badge variant="secondary" className="text-xs">{t('member.freeUser')}</Badge>
                 </div>

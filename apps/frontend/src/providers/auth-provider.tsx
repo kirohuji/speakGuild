@@ -5,7 +5,7 @@ import { revokeOtherSessions } from '@/features/auth/api'
 import { useConfigStore } from '@/stores/config.store'
 import { useFeatureFlagsStore } from '@/stores/feature-flags.store'
 import { useNotificationStore } from '@/features/notification/store'
-import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
+import { useUserStore } from '@/stores/user.store'
 import { offlineStorageService, offlineSyncService } from '@/lib/offline'
 import { refreshLearningBadgeFromTodayRun, registerLearningReminderActions, rescheduleLearningReminder } from '@/lib/native/learning-reminder'
 import { isNative, revenueCat } from '@/lib/native'
@@ -193,6 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       writeCachedSession(null)
       localStorage.removeItem(OTA_USER_ID_KEY)
       setSession(null)
+      useUserStore.getState().reset()
       void clearUserScopedClientData()
     }
     window.addEventListener('auth:unauthorized', handleUnauthorized)
@@ -218,9 +219,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (nextSession?.user?.id) {
         localStorage.setItem(OTA_USER_ID_KEY, nextSession.user.id)
+        // 用户信息：先本地快照回显，再后台拉远程覆盖（离线时静默失败）
+        void useUserStore.getState().ensureLoaded(nextSession.user.id)
       } else {
         localStorage.removeItem(OTA_USER_ID_KEY)
-        useProfileCacheStore.getState().reset()
+        useUserStore.getState().reset()
       }
 
       return nextSession
@@ -230,6 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCurrentSessionSnapshot(cached)
         setSession(cached)
         localStorage.setItem(OTA_USER_ID_KEY, cached.user.id)
+        void useUserStore.getState().ensureLoaded(cached.user.id)
         console.warn('[auth] session refresh failed; using cached session:', error)
         return cached
       }
@@ -239,7 +243,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(null)
       localStorage.removeItem(OTA_USER_ID_KEY)
       useConfigStore.getState().clearConfig()
-      useProfileCacheStore.getState().reset()
+      useUserStore.getState().reset()
       return null
     } finally {
       setIsLoading(false)
@@ -337,7 +341,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     await clearUserScopedClientData()
     clearBearerToken()
-    useProfileCacheStore.getState().reset()
+    useUserStore.getState().reset()
     localStorage.removeItem(OTA_USER_ID_KEY)
     writeCachedSession(null)
     setSession(null)

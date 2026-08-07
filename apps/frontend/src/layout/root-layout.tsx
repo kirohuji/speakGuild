@@ -7,12 +7,12 @@ import { Footer } from './footer'
 import { BottomNav } from './bottom-nav'
 import { AppUpdateDialog } from '@/components/common/app-update-dialog'
 import { useAuth } from '@/providers/auth-provider'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/common/user-avatar'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { useNotificationStore } from '@/features/notification/store'
 import { ProfilePage } from '@/features/profile/pages/profile-page'
 import { NotificationListPage } from '@/features/notification/pages/notification-list-page'
-import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
+import { useUserStore } from '@/stores/user.store'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { useAppUpdateStore } from '@/stores/app-update.store'
@@ -119,9 +119,7 @@ function MobileTopBar({
   const { pathname } = useLocation()
   const { session } = useAuth()
   const unreadCount = useNotificationStore((s) => s.unreadCount)
-  const avatarUrl = useProfileCacheStore((s) => s.avatarUrl)
-  const avatarLoaded = useProfileCacheStore((s) => s.avatarLoaded)
-  const loadProfileHome = useProfileCacheStore((s) => s.loadProfileHome)
+  const ensureUserLoaded = useUserStore((s) => s.ensureLoaded)
   const isSyncing = useOfflineSyncStore((s) => s.isSyncing)
   const updateStatus = useAppUpdateStore((s) => s.status)
   const updateDialogOpen = useAppUpdateStore((s) => s.dialogOpen)
@@ -131,7 +129,6 @@ function MobileTopBar({
   const openUpdateDialog = useAppUpdateStore((s) => s.openDialog)
   const isOnline = useOnlineStatus()
   const user = session?.user
-  const fallback = (user?.name || user?.email || t('common.me')).slice(0, 1).toUpperCase()
   const profileActive = pathname.startsWith('/profile') || pathname.startsWith('/account')
   const showBackgroundUpdate =
     updateStatus === 'downloading' &&
@@ -140,10 +137,10 @@ function MobileTopBar({
     (updateShouldNotify || updateIsMandatory)
 
   React.useEffect(() => {
-    if (user?.id && !avatarLoaded) {
-      void loadProfileHome()
+    if (user?.id) {
+      void ensureUserLoaded(user.id)
     }
-  }, [avatarLoaded, loadProfileHome, user?.id])
+  }, [ensureUserLoaded, user?.id])
 
   return (
     <header className="fixed right-4 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-40 flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45">
@@ -177,12 +174,7 @@ function MobileTopBar({
           profileActive ? 'bg-background/45' : 'hover:bg-background/45',
         )}
       >
-        <Avatar className="size-8">
-          <AvatarImage src={avatarUrl || user?.image} alt={user?.name || t('nav.profile')} />
-          <AvatarFallback className="bg-muted text-xs font-semibold text-foreground">
-            {fallback}
-          </AvatarFallback>
-        </Avatar>
+        <UserAvatar className="size-8" fallbackClassName="bg-muted text-xs font-semibold text-foreground" />
         {isSyncing && (
           <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border">
             <Loader2 className="size-3 animate-spin text-primary" />

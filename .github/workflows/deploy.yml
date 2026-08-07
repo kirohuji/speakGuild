@@ -50,6 +50,12 @@ jobs:
           echo "WECHAT_CLIENT_SECRET=${{ secrets.WECHAT_CLIENT_SECRET }}" >> /tmp/deploy.env
           echo "WECHAT_NATIVE_APP_ID=${{ secrets.WECHAT_NATIVE_APP_ID }}" >> /tmp/deploy.env
           echo "WECHAT_NATIVE_APP_SECRET=${{ secrets.WECHAT_NATIVE_APP_SECRET }}" >> /tmp/deploy.env
+          echo "APPLE_CLIENT_ID=${{ secrets.APPLE_CLIENT_ID }}" >> /tmp/deploy.env
+          echo "APPLE_TEAM_ID=${{ secrets.APPLE_TEAM_ID }}" >> /tmp/deploy.env
+          echo "APPLE_KEY_ID=${{ secrets.APPLE_KEY_ID }}" >> /tmp/deploy.env
+          echo "APPLE_PRIVATE_KEY=${{ secrets.APPLE_PRIVATE_KEY }}" >> /tmp/deploy.env
+          echo "APPLE_APP_BUNDLE_IDENTIFIER=${{ secrets.APPLE_APP_BUNDLE_IDENTIFIER }}" >> /tmp/deploy.env
+          echo "VITE_APPLE_CLIENT_ID=${{ secrets.VITE_APPLE_CLIENT_ID }}" >> /tmp/deploy.env
           echo "CARTESIA_API_KEY=${{ secrets.CARTESIA_API_KEY }}" >> /tmp/deploy.env
           echo "WHISPER_INFERENCE_URL=${{ secrets.WHISPER_INFERENCE_URL }}" >> /tmp/deploy.env
           echo "ALIPAY_APP_ID=${{ secrets.ALIPAY_APP_ID }}" >> /tmp/deploy.env

@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/providers/auth-provider'
 import { useOnboardingStore, ONBOARDING_SEGMENTS } from '@/stores/onboarding.store'
 import { getUserProfile, updateUserProfile, type UserProfile } from '@/features/profile/api'
-import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
+import { useUserStore } from '@/stores/user.store'
 import { LearningAssessmentDialog } from '@/features/profile/components/placement-assessment-dialog'
 import { SpotlightOverlay } from '@/components/common/spotlight-overlay'
 
@@ -24,7 +24,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
   const storeFinish = useOnboardingStore((s) => s.finish)
   const storeCancel = useOnboardingStore((s) => s.cancelSegment)
   const storeStartTour = useOnboardingStore((s) => s.startTour)
-  const setCachedProfile = useProfileCacheStore((s) => s.setProfile)
+  const setCachedProfile = useUserStore((s) => s.setProfile)
   const [placementOpen, setPlacementOpen] = useState(false)
   const [placementProfile, setPlacementProfile] = useState<UserProfile | null>(null)
   const initializedRef = useRef(false)

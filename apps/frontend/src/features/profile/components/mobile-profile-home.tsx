@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
 import {
-  User, Settings, Camera, Gift, GraduationCap, IdCard, Crown, MessageSquare, CircleHelp,
+  Settings, Camera, Gift, GraduationCap, IdCard, Crown, MessageSquare, CircleHelp,
   CheckCircle2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +12,9 @@ import {
 import { cn } from '@/lib/cn'
 import i18n from '@/lib/i18n'
 import { usePreferencesStore } from '@/stores/preferences.store'
-import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
+import { useUserStore } from '@/stores/user.store'
+import { useAuth } from '@/providers/auth-provider'
+import { UserAvatar } from '@/components/common/user-avatar'
 import { IosRow, IosSection } from '@/features/profile/components/ios-components'
 import { LearningAssessmentDialog, goalLabelMap, normalizeLearningGoals } from '@/features/profile/components/placement-assessment-dialog'
 import { FeedbackDialog } from '@/features/feedback/components/feedback-dialog'
@@ -30,12 +32,12 @@ export function MobileProfileHome({
 }) {
   const { t } = useTranslation()
   const { theme } = useTheme()
+  const { session } = useAuth()
   const { language, setLanguage } = usePreferencesStore()
-  const userProfile = useProfileCacheStore((s) => s.profile)
-  const avatarUrl = useProfileCacheStore((s) => s.avatarUrl)
-  const membership = useProfileCacheStore((s) => s.membership)
-  const pointsBalance = useProfileCacheStore((s) => s.pointsBalance)
-  const loadProfileHome = useProfileCacheStore((s) => s.loadProfileHome)
+  const userProfile = useUserStore((s) => s.profile)
+  const membership = useUserStore((s) => s.membership)
+  const pointsBalance = useUserStore((s) => s.pointsBalance)
+  const ensureUserLoaded = useUserStore((s) => s.ensureLoaded)
   const [showLanguageDialog, setShowLanguageDialog] = useState(false)
   const [showFeedbackDrawer, setShowFeedbackDrawer] = useState(false)
   const [showFaqDrawer, setShowFaqDrawer] = useState(false)
@@ -43,8 +45,10 @@ export function MobileProfileHome({
   const [showAssessmentDialog, setShowAssessmentDialog] = useState(false)
 
   useEffect(() => {
-    loadProfileHome(true)
-  }, [loadProfileHome])
+    if (session?.user?.id) {
+      void ensureUserLoaded(session.user.id)
+    }
+  }, [ensureUserLoaded, session?.user?.id])
 
   const themeLabel: Record<string, string> = { light: t('profile.themeLight'), dark: t('profile.themeDark'), system: t('profile.themeSystem') }
   const langLabel: Record<string, string> = { 'zh-CN': t('profile.langZh'), en: t('profile.langEn'), ja: t('profile.langJa') }
@@ -85,11 +89,7 @@ export function MobileProfileHome({
             className="group relative shrink-0"
           >
             <div className="flex size-16 items-center justify-center overflow-hidden rounded-full bg-primary/15 ring-2 ring-background ring-offset-1 ring-offset-primary/5">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="avatar" className="h-full w-full object-cover" />
-              ) : (
-                <User className="size-8 text-primary/60" />
-              )}
+              <UserAvatar className="size-16" fallbackClassName="bg-primary/15 text-primary" />
             </div>
             <span className="absolute bottom-0 right-0 flex size-5 items-center justify-center rounded-full bg-foreground/90 text-background shadow-sm">
               <Camera className="size-2.5" />

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import {
-  ChevronLeft, ChevronRight, Camera, User, Loader2,
+  ChevronLeft, ChevronRight, Camera, Loader2,
   Phone, ExternalLink, KeyRound, CheckCircle2, Mail,
   Trash2, HardDrive,
 } from 'lucide-react'
@@ -16,8 +16,9 @@ import {
 } from '@/components/ui/drawer'
 import { useAuth } from '@/providers/auth-provider'
 import { useLayoutStore } from '@/stores/layout.store'
-import { useAccountStore } from '@/stores/account.store'
+import { useUserStore } from '@/stores/user.store'
 import { useLearningStore } from '@/stores/learning.store'
+import { UserAvatar } from '@/components/common/user-avatar'
 import type { LinkedAccount } from '@/features/account/api'
 import { changePassword, sendEmailOtp } from '@/features/auth/api'
 import { toast } from 'sonner'
@@ -307,23 +308,24 @@ function ChangePasswordDrawer({
 export function AccountPage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const { session } = useAuth()
+  const { session, refreshSession } = useAuth()
   const setBottomNavVisible = useLayoutStore((s) => s.setBottomNavVisible)
 
-  // 数据：来自 store
-  const profile = useAccountStore((s) => s.profile)
-  const avatarUrl = useAccountStore((s) => s.avatarUrl)
-  const linkedAccounts = useAccountStore((s) => s.linkedAccounts)
-  const isLoading = useAccountStore((s) => s.isLoading)
-  const avatarUploading = useAccountStore((s) => s.avatarUploading)
-  const linkingProvider = useAccountStore((s) => s.linkingProvider)
-  const unlinkingId = useAccountStore((s) => s.unlinkingId)
-  const fetchAll = useAccountStore((s) => s.fetchAll)
-  const storeUpdateProfile = useAccountStore((s) => s.updateProfile)
-  const uploadAvatar = useAccountStore((s) => s.uploadAvatar)
-  const fetchLinkedAccounts = useAccountStore((s) => s.fetchLinkedAccounts)
-  const linkSocial = useAccountStore((s) => s.linkSocial)
-  const unlinkSocial = useAccountStore((s) => s.unlinkSocial)
+  // 数据：来自统一用户 store
+  const profile = useUserStore((s) => s.profile)
+  const linkedAccounts = useUserStore((s) => s.linkedAccounts)
+  const hydrated = useUserStore((s) => s.hydrated)
+  const loading = useUserStore((s) => s.loading)
+  const avatarUploading = useUserStore((s) => s.avatarUploading)
+  const linkingProvider = useUserStore((s) => s.linkingProvider)
+  const unlinkingId = useUserStore((s) => s.unlinkingId)
+  const ensureLoaded = useUserStore((s) => s.ensureLoaded)
+  const storeUpdateProfile = useUserStore((s) => s.updateProfile)
+  const uploadAvatar = useUserStore((s) => s.uploadAvatar)
+  const refreshLinkedAccounts = useUserStore((s) => s.refreshLinkedAccounts)
+  const linkSocial = useUserStore((s) => s.linkSocial)
+  const unlinkSocial = useUserStore((s) => s.unlinkSocial)
+  const isLoading = loading || !hydrated
 
   // UI-only state
   const [nicknameDrawerOpen, setNicknameDrawerOpen] = useState(false)
@@ -349,8 +351,8 @@ export function AccountPage() {
   const sessionUser = session?.user ?? null
 
   useEffect(() => {
-    fetchAll()
-  }, [fetchAll])
+    void ensureLoaded(sessionUser?.id)
+  }, [ensureLoaded, sessionUser?.id])
 
   useEffect(() => {
     setBottomNavVisible(false)
@@ -359,10 +361,10 @@ export function AccountPage() {
 
   // OAuth 回调后通过 window focus 刷新绑定列表
   useEffect(() => {
-    const handleFocus = () => { fetchLinkedAccounts() }
+    const handleFocus = () => { void refreshLinkedAccounts() }
     window.addEventListener('focus', handleFocus)
     return () => window.removeEventListener('focus', handleFocus)
-  }, [fetchLinkedAccounts])
+  }, [refreshLinkedAccounts])
 
   // ── 头像操作 ──
   const onPickAvatar = () => {
@@ -379,8 +381,15 @@ export function AccountPage() {
   }
 
   // ── 绑定操作 ──
-  const handleLinkSocial = (provider: 'wechat' | 'apple') => {
-    linkSocial(provider)
+  const handleLinkSocial = async (provider: 'wechat' | 'apple') => {
+    try {
+      await linkSocial(provider)
+      // 绑定可能同步了微信头像，刷新 session 让 user.image 生效
+      await refreshSession()
+      toast.success(t('account.linkSuccess', { defaultValue: '绑定成功' }))
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || t('account.linkFailed', { defaultValue: '绑定失败，请重试' }))
+    }
   }
 
   const handleUnlink = (account: LinkedAccount) => {
@@ -433,13 +442,9 @@ export function AccountPage() {
               type="button"
               disabled={avatarUploading}
               onClick={onPickAvatar}
-              className="group relative flex h-[60px] w-[60px] flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 ring-2 ring-primary/15"
+              className="group relative flex h-[60px] w-[60px] flex-shrink-0 items-center justify-center overflow-hidden rounded-full ring-2 ring-primary/15"
             >
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="avatar" className="h-full w-full object-cover" />
-              ) : (
-                <User className="h-7 w-7 text-primary" />
-              )}
+              <UserAvatar className="size-full" fallbackClassName="bg-primary/10 text-primary" />
               <span className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-0.5 bg-black/50 py-0.5 text-[9px] text-white opacity-0 transition-opacity group-hover:opacity-100">
                 <Camera className="h-3 w-3" />
                 {avatarUploading ? t('common.uploading') : t('profile.changeAvatar')}

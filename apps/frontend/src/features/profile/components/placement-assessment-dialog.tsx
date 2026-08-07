@@ -21,7 +21,7 @@ import {
 } from '@/features/profile/api'
 import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
-import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
+import { useUserStore } from '@/stores/user.store'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 import { transcribeVoiceInput } from '@/lib/local-stt/local-stt.service'
 import {
@@ -434,7 +434,7 @@ export function LearningAssessmentDialog({
 }) {
   const { t } = useTranslation()
   const { session } = useAuth()
-  const patchCachedProfile = useProfileCacheStore((s) => s.patchProfile)
+  const patchCachedProfile = useUserStore((s) => s.patchProfile)
   const [step, setStep] = useState(0)
   const [selectedGoals, setSelectedGoals] = useState<string[]>(() => normalizeLearningGoals(profile?.learningGoals))
   const [answers, setAnswers] = useState<Record<string, string>>({})

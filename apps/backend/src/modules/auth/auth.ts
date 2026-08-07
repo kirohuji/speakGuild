@@ -89,16 +89,28 @@ export const auth: any = betterAuth({
       clientSecret: process.env.WECHAT_CLIENT_SECRET || process.env.WECHAT_NATIVE_APP_SECRET || '',
       lang: 'cn',
     },
-    // apple: async () => ({
-    //   clientId: process.env.APPLE_CLIENT_ID || '',
-    //   clientSecret: await generateAppleClientSecret(
-    //     process.env.APPLE_CLIENT_ID || '',
-    //     process.env.APPLE_TEAM_ID || '',
-    //     process.env.APPLE_KEY_ID || '',
-    //     process.env.APPLE_PRIVATE_KEY || '',
-    //   ),
-    //   appBundleIdentifier: process.env.APPLE_APP_BUNDLE_IDENTIFIER || '',
-    // }),
+    // Apple：native 端用 idToken 登录/绑定（verifyIdToken 只需 clientId，不需要 clientSecret）；
+    // clientSecret 仅在 Web OAuth 授权码流程需要，未配置 APPLE_PRIVATE_KEY 时留空，避免误用 Web 流程。
+    apple: async () => ({
+      clientId: process.env.APPLE_CLIENT_ID || '',
+      clientSecret: process.env.APPLE_PRIVATE_KEY
+        ? await generateAppleClientSecret(
+            process.env.APPLE_CLIENT_ID || '',
+            process.env.APPLE_TEAM_ID || '',
+            process.env.APPLE_KEY_ID || '',
+            process.env.APPLE_PRIVATE_KEY,
+          )
+        : '',
+      appBundleIdentifier: process.env.APPLE_APP_BUNDLE_IDENTIFIER || '',
+    }),
+  },
+  account: {
+    accountLinking: {
+      // Apple 登录的 email 默认未验证，标记为可信 provider，允许显式绑定（linkSocial）
+      trustedProviders: ['apple'],
+      // 微信用户 email 为 xxx@wechat.local，与 Apple 邮箱不同，允许不同 email 显式绑定
+      allowDifferentEmails: true,
+    },
   },
   plugins: [
     bearer(),

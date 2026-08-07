@@ -34,6 +34,14 @@ const USER_SCOPED_KV_KEYS = new Set([
   'practice-data-reset-at',
 ])
 
+/** kv 表中按前缀归属当前用户的 key */
+const USER_SCOPED_KV_PREFIXES = [
+  'session-map:',
+  'expression-cache:',
+  'sync:user:',
+  'user_profile:',
+]
+
 export interface OfflineStorageStats {
   downloadedPackCount: number
   downloadedPackBytes: number
@@ -193,9 +201,7 @@ export const offlineStorageService = {
     await localDb.deleteWhere<any>('kv', (item) => {
       const id = String(item.id ?? '')
       return USER_SCOPED_KV_KEYS.has(id)
-        || id.startsWith('session-map:')
-        || id.startsWith('expression-cache:')
-        || id.startsWith('sync:user:')
+        || USER_SCOPED_KV_PREFIXES.some((prefix) => id.startsWith(prefix))
     })
     clearUserScopedLocalStorageKeys()
   },

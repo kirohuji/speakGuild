@@ -4,10 +4,10 @@ import { Link, useLocation } from 'react-router-dom'
 import { useTheme } from 'next-themes'
 import { Loader2, Monitor, Moon, Shield, Sun, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { UserAvatar } from '@/components/common/user-avatar'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
-import { useProfileCacheStore } from '@/features/profile/profile-cache.store'
+import { useUserStore } from '@/stores/user.store'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { useAppUpdateStore } from '@/stores/app-update.store'
 import { isDevHost } from '@/lib/dev-host'
@@ -19,9 +19,7 @@ export function Header() {
   const [themeMenuOpen, setThemeMenuOpen] = useState(false)
   const themeMenuRef = useRef<HTMLDivElement>(null)
   const { session } = useAuth()
-  const avatarUrl = useProfileCacheStore((s) => s.avatarUrl)
-  const avatarLoaded = useProfileCacheStore((s) => s.avatarLoaded)
-  const loadProfileHome = useProfileCacheStore((s) => s.loadProfileHome)
+  const ensureUserLoaded = useUserStore((s) => s.ensureLoaded)
   const isSyncing = useOfflineSyncStore((s) => s.isSyncing)
   const lastSyncLog = useOfflineSyncStore((s) => s.logs[0])
   const updateStatus = useAppUpdateStore((s) => s.status)
@@ -32,7 +30,6 @@ export function Header() {
   const openUpdateDialog = useAppUpdateStore((s) => s.openDialog)
   const isAdmin = session?.user?.role === 'admin'
   const user = session?.user
-  const fallback = (user?.name || user?.email || t('common.me')).slice(0, 1).toUpperCase()
 
   const showBackgroundUpdate =
     updateStatus === 'downloading' &&
@@ -72,10 +69,10 @@ export function Header() {
   }, [themeMenuOpen])
 
   useEffect(() => {
-    if (session?.user?.id && !avatarLoaded) {
-      void loadProfileHome()
+    if (session?.user?.id) {
+      void ensureUserLoaded(session.user.id)
     }
-  }, [avatarLoaded, loadProfileHome, session?.user?.id])
+  }, [ensureUserLoaded, session?.user?.id])
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 border-b border-border/50 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/50 pt-[env(safe-area-inset-top,0px)]">
@@ -172,12 +169,7 @@ export function Header() {
                 title={lastSyncLog?.summary ?? undefined}
                 className="relative block rounded-full p-0.5 transition-colors hover:bg-muted"
               >
-                <Avatar className="size-8">
-                  <AvatarImage src={avatarUrl || user.image} alt={user.name || t('profile.account')} />
-                  <AvatarFallback className="bg-muted text-xs font-semibold text-foreground">
-                    {fallback}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar className="size-8" fallbackClassName="bg-muted text-xs font-semibold text-foreground" />
                 {isSyncing && (
                   <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border">
                     <Loader2 className="size-3 animate-spin text-primary" />
