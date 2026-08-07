@@ -9,7 +9,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
 import { MobileListSkeleton } from '@/components/common/mobile-page-loading'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -45,7 +44,7 @@ function AppleIcon({ className }: { className?: string }) {
 export function AccountTab({ desktop = false }: { desktop?: boolean }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { session, refreshSession } = useAuth()
+  const { session } = useAuth()
   const sessionUser = session?.user ?? null
   const profile = useUserStore((s) => s.profile)
   const linkedAccounts = useUserStore((s) => s.linkedAccounts)
@@ -128,8 +127,8 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
   const handleLinkSocial = async (provider: 'wechat' | 'apple') => {
     try {
       await linkSocial(provider)
-      // 绑定可能同步了微信头像，刷新 session 让 user.image 生效
-      await refreshSession()
+      // 绑定可能同步了微信头像，后台刷新用户信息（不再 refreshSession，避免整个界面重建关闭抽屉）
+      void ensureLoaded(sessionUser?.id, { force: true })
       toast.success(t('account.linkSuccess', { defaultValue: '绑定成功' }))
     } catch (error: any) {
       toast.error(error?.response?.data?.message || error?.message || t('account.linkFailed', { defaultValue: '绑定失败，请重试' }))
@@ -184,7 +183,8 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
     setVerificationError('')
     try {
       await verifyEmailOtp(email, verificationOtp)
-      await refreshSession()
+      // 后台刷新用户信息（避免 refreshSession 导致整个界面重建）
+      void ensureLoaded(sessionUser?.id, { force: true })
       patchCachedProfile({ emailVerified: true })
       setVerificationDialogOpen(false)
     } catch (error: any) {
@@ -358,9 +358,15 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
               </div>
             </div>
             {phoneNumber ? (
-              <Badge variant="outline" className="text-xs">
-                {t('profile.boundPrefix')}
-              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled
+                title={t('profile.phoneUnlinkUnsupported', { defaultValue: '暂不支持解绑手机号' })}
+                className="cursor-not-allowed text-destructive hover:text-destructive"
+              >
+                {t('profile.unbind')}
+              </Button>
             ) : (
               <Button variant="outline" size="sm" className="border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10" onClick={() => setPhoneBindOpen(true)}>
                 <ExternalLink className="mr-1 size-3" />
@@ -531,12 +537,12 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
                 try {
                   const result = await bindPhoneNumber(normalizedBindPhone, bindOtp)
                   const boundPhoneNumber = result?.user?.phoneNumber?.replace(/\s+/g, '') || normalizedBindPhone
-                  await refreshSession()
+                  // 后台刷新用户信息（避免 refreshSession 导致整个界面重建关闭抽屉）
+                  void ensureLoaded(sessionUser?.id, { force: true })
                   patchCachedProfile({
                     phoneNumber: boundPhoneNumber,
                     phoneNumberVerified: true,
                   })
-                  void ensureLoaded(sessionUser?.id)
                   setPhoneBindOpen(false)
                   toast.success(t('profile.bindPhoneSuccess'))
                 } catch (e: any) {

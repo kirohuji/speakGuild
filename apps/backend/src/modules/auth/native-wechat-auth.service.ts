@@ -65,13 +65,16 @@ export class NativeWechatAuthService {
           data: accountData,
         });
 
-        return tx.user.update({
-          where: { id: existingAccount.userId },
-          data: {
-            name: profile.nickname || existingAccount.user.name,
-            image: profile.headimgurl || existingAccount.user.image,
-          },
-        });
+        // 已有账号：不覆盖用户已设置的信息（昵称/头像），
+        // 仅在用户没有头像时补充微信头像
+        if (!existingAccount.user.image && profile.headimgurl) {
+          await tx.user.update({
+            where: { id: existingAccount.userId },
+            data: { image: profile.headimgurl },
+          });
+        }
+
+        return tx.user.findUnique({ where: { id: existingAccount.userId } });
       }
 
       const createdUser = await tx.user.create({

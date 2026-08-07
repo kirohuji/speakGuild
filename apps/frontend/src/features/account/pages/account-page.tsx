@@ -308,7 +308,7 @@ function ChangePasswordDrawer({
 export function AccountPage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const { session, refreshSession } = useAuth()
+  const { session } = useAuth()
   const setBottomNavVisible = useLayoutStore((s) => s.setBottomNavVisible)
 
   // 数据：来自统一用户 store
@@ -384,8 +384,8 @@ export function AccountPage() {
   const handleLinkSocial = async (provider: 'wechat' | 'apple') => {
     try {
       await linkSocial(provider)
-      // 绑定可能同步了微信头像，刷新 session 让 user.image 生效
-      await refreshSession()
+      // 绑定可能同步了微信头像，后台刷新用户信息（不再 refreshSession，避免整个界面重建关闭抽屉）
+      void ensureLoaded(sessionUser?.id, { force: true })
       toast.success(t('account.linkSuccess', { defaultValue: '绑定成功' }))
     } catch (error: any) {
       toast.error(error?.response?.data?.message || error?.message || t('account.linkFailed', { defaultValue: '绑定失败，请重试' }))
@@ -517,6 +517,16 @@ export function AccountPage() {
               label={t('profile.phone')}
               value={phoneNumber || t('profile.notBound')}
               subtitle={phoneNumber ? (profile?.phoneNumberVerified ? t('profile.verified') : t('profile.unverified')) : undefined}
+              right={phoneNumber ? (
+                <button
+                  type="button"
+                  disabled
+                  title={t('profile.phoneUnlinkUnsupported', { defaultValue: '暂不支持解绑手机号' })}
+                  className="cursor-not-allowed text-xs text-muted-foreground/50"
+                >
+                  {t('profile.unbind')}
+                </button>
+              ) : undefined}
               last
             />
           </>
