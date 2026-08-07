@@ -392,8 +392,13 @@ export function AccountPage() {
     }
   }
 
-  const handleUnlink = (account: LinkedAccount) => {
-    unlinkSocial(account)
+  const handleUnlink = async (account: LinkedAccount) => {
+    try {
+      await unlinkSocial(account)
+      toast.success(t('account.unlinkSuccess', { defaultValue: '解绑成功' }))
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || t('account.unlinkFailed', { defaultValue: '解绑失败，请重试' }))
+    }
   }
 
   const handleNicknameSaved = (name: string) => {

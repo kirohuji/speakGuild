@@ -251,10 +251,12 @@ export const useUserStore = create<UserStoreState>()((set, get) => ({
       await unlinkAccount(account)
       set((s) => ({
         linkedAccounts: s.linkedAccounts.filter((a) => a.id !== account.id),
-        unlinkingId: null,
       }))
       persistSnapshot()
-    } catch {
+    } catch (error) {
+      // 抛给 UI 层提示（如「无法解绑最后一个登录账号」）
+      throw error
+    } finally {
       set({ unlinkingId: null })
     }
   },

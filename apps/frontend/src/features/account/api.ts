@@ -28,24 +28,41 @@ export async function linkSocialAccount(provider: 'wechat' | 'apple') {
   }
   if (provider === 'apple' && isNative() && isIOS()) {
     const result = await requestNativeAppleSignIn()
-    return authClient.linkSocial({
+    const res = await authClient.linkSocial({
       provider: 'apple',
       callbackURL: window.location.href,
       idToken: {
         token: result.idToken,
       },
     })
+    if (res?.error) {
+      throw new Error(res.error.message || 'Apple 绑定失败')
+    }
+    return res
   }
 
-  return authClient.linkSocial({
+  const res = await authClient.linkSocial({
     provider,
     callbackURL: window.location.href,
   })
+  if (res?.error) {
+    throw new Error(res.error.message || '绑定失败')
+  }
+  return res
 }
 
 export async function unlinkAccount(account: Pick<LinkedAccount, 'providerId' | 'accountId'>) {
-  return authClient.unlinkAccount({
+  const result = await authClient.unlinkAccount({
     providerId: account.providerId,
     accountId: account.accountId,
   })
+  if (result?.error) {
+    const message = result.error.message || '解绑失败'
+    // better-auth 的英文提示翻译成用户可读的中文
+    if (result.error.code === 'FAILED_TO_UNLINK_LAST_ACCOUNT' || /last account/i.test(message)) {
+      throw new Error('至少需要保留一种登录方式，不能解绑最后一个登录账号')
+    }
+    throw new Error(message)
+  }
+  return result
 }

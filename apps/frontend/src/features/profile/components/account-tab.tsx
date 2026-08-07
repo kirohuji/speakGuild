@@ -137,7 +137,12 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
   }
 
   const handleUnlink = async (account: LinkedAccount) => {
-    await unlinkSocial(account)
+    try {
+      await unlinkSocial(account)
+      toast.success(t('account.unlinkSuccess', { defaultValue: '解绑成功' }))
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || error?.message || t('account.unlinkFailed', { defaultValue: '解绑失败，请重试' }))
+    }
   }
 
   const handleNicknameSaved = (name: string) => {
