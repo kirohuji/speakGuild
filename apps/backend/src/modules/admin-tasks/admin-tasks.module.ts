@@ -1,7 +1,6 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../common/prisma/prisma.module';
-import { DictionaryModule } from '../dictionary/dictionary.module';
 import { AdminTasksController } from './admin-tasks.controller';
 import { AdminTasksService } from './admin-tasks.service';
 import { ADMIN_CONTENT_QUEUE, SCRIPT_VIDEO_QUEUE, VOCABULARY_IMPORT_QUEUE } from './admin-tasks.constants';
@@ -10,6 +9,7 @@ import { ContentPrepareProcessor } from './processors/content-prepare.processor'
 import { AdminContentAiService } from '../admin/admin-content-ai.service';
 import { getRedisConnectionOptions } from '../../common/redis/redis-connection';
 import { FileAssetsModule } from '../file-assets/file-assets.module';
+import { DictionaryModule } from '../dictionary/dictionary.module';
 import { ScriptVideoRenderProcessor } from './processors/script-video-render.processor';
 import { VocabularyCsvImportService } from './jobs/vocabulary-csv-import.service';
 import { VocabularyCsvImportProcessor } from './processors/vocabulary-csv-import.processor';
@@ -17,8 +17,8 @@ import { VocabularyCsvImportProcessor } from './processors/vocabulary-csv-import
 @Module({
   imports: [
     PrismaModule,
-    DictionaryModule,
     FileAssetsModule,
+    DictionaryModule,
     BullModule.forRoot({
       connection: getRedisConnectionOptions(),
     }),
@@ -62,6 +62,6 @@ import { VocabularyCsvImportProcessor } from './processors/vocabulary-csv-import
     VocabularyCsvImportService,
     VocabularyCsvImportProcessor,
   ],
-  exports: [AdminTasksService, AdminContentAiService],
+  exports: [AdminTasksService, AdminContentAiService, ContentPrepareService],
 })
 export class AdminTasksModule {}

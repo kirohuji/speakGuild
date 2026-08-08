@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
 
 @Injectable()
 export class AdminTasksService {
@@ -233,12 +233,12 @@ export class AdminTasksService {
     return { ...task, bullJobId: job.id };
   }
 
-  /** 扫描全部词汇，为缺失中文释义的记录执行与单条富化相同的流程。 */
+  /** 扫描全部词汇，为缺失讲解/描述或例句的记录创建 AI 富化任务。 */
   async enqueueVocabularyMissingMeaningEnrich(createdById?: string) {
     const task = await this.prisma.adminTask.create({
       data: {
         type: VOCABULARY_MISSING_MEANING_ENRICH_JOB,
-        title: '检查并 AI 富化缺失中文释义的词汇',
+        title: '检查并 AI 富化词汇讲解/描述与例句',
         targetType: 'vocabulary',
         createdById,
         payload: {} as Prisma.InputJsonValue,
@@ -247,16 +247,34 @@ export class AdminTasksService {
 
     const job = await this.vocabularyImportQueue.add(VOCABULARY_MISSING_MEANING_ENRICH_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', '词汇中文释义检查任务已加入 Redis 队列', { step: 'queued' });
+    await this.log(task.id, 'info', '词汇讲解/描述与例句检查任务已加入 Redis 队列', { step: 'queued' });
     return { ...task, bullJobId: job.id };
   }
 
-  /** 扫描全部句块，为缺失中文释义的记录创建 AI 富化任务。 */
+  /** 扫描全部词汇，为例句缺中文翻译 / 释义过长的记录创建轻量修补任务。 */
+  async enqueueVocabularyPolish(createdById?: string) {
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: VOCABULARY_POLISH_JOB,
+        title: '词汇例句翻译补全与释义精简',
+        targetType: 'vocabulary',
+        createdById,
+        payload: {} as Prisma.InputJsonValue,
+      },
+    });
+
+    const job = await this.vocabularyImportQueue.add(VOCABULARY_POLISH_JOB, { taskId: task.id });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', '词汇例句翻译补全与释义精简任务已加入 Redis 队列', { step: 'queued' });
+    return { ...task, bullJobId: job.id };
+  }
+
+  /** 扫描全部句块，为缺失中文释义、讲解/描述或例句的记录创建 AI 富化任务。 */
   async enqueueChunkMissingMeaningEnrich(createdById?: string) {
     const task = await this.prisma.adminTask.create({
       data: {
         type: CHUNK_MISSING_MEANING_ENRICH_JOB,
-        title: '检查并 AI 富化缺失中文释义的句块',
+        title: '检查并 AI 富化句块中文释义、讲解与例句',
         targetType: 'chunk',
         createdById,
         payload: {} as Prisma.InputJsonValue,
@@ -264,16 +282,16 @@ export class AdminTasksService {
     });
     const job = await this.vocabularyImportQueue.add(CHUNK_MISSING_MEANING_ENRICH_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', '句块中文释义检查任务已加入 Redis 队列', { step: 'queued' });
+    await this.log(task.id, 'info', '句块中文释义、讲解与例句检查任务已加入 Redis 队列', { step: 'queued' });
     return { ...task, bullJobId: job.id };
   }
 
-  /** 扫描全部句型，为缺失中文释义的记录创建 AI 富化任务。 */
+  /** 扫描全部句型，为缺失中文释义、讲解/描述或例句的记录创建 AI 富化任务。 */
   async enqueuePatternMissingMeaningEnrich(createdById?: string) {
     const task = await this.prisma.adminTask.create({
       data: {
         type: PATTERN_MISSING_MEANING_ENRICH_JOB,
-        title: '检查并 AI 富化缺失中文释义的句型',
+        title: '检查并 AI 富化句型中文释义、讲解与例句',
         targetType: 'sentence_pattern',
         createdById,
         payload: {} as Prisma.InputJsonValue,
@@ -281,7 +299,7 @@ export class AdminTasksService {
     });
     const job = await this.vocabularyImportQueue.add(PATTERN_MISSING_MEANING_ENRICH_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', '句型中文释义检查任务已加入 Redis 队列', { step: 'queued' });
+    await this.log(task.id, 'info', '句型中文释义、讲解与例句检查任务已加入 Redis 队列', { step: 'queued' });
     return { ...task, bullJobId: job.id };
   }
 
@@ -321,6 +339,21 @@ export class AdminTasksService {
       },
     });
     if (!task) throw new NotFoundException('任务不存在');
+
+    // 任务完成时会写入 summary.usage；取消/中断的任务缺失，
+    // 从最近一条 ai-usage 日志补齐（日志为累计值）。
+    const summary = (task.summary ?? {}) as Record<string, any>;
+    if (!summary.usage || (!summary.usage.calls && !summary.usage.totalTokens)) {
+      const latestUsage = await this.prisma.adminTaskLog.findFirst({
+        where: { taskId: id, step: 'ai-usage' },
+        orderBy: { createdAt: 'desc' },
+        select: { meta: true },
+      });
+      if (latestUsage?.meta) {
+        summary.usage = latestUsage.meta as Prisma.InputJsonValue;
+        task.summary = summary as Prisma.JsonValue;
+      }
+    }
     return task;
   }
 
@@ -337,6 +370,9 @@ export class AdminTasksService {
     }
     if (task.type === VOCABULARY_MISSING_MEANING_ENRICH_JOB) {
       return this.enqueueVocabularyMissingMeaningEnrich(createdById);
+    }
+    if (task.type === VOCABULARY_POLISH_JOB) {
+      return this.enqueueVocabularyPolish(createdById);
     }
     if (task.type === CHUNK_MISSING_MEANING_ENRICH_JOB) {
       return this.enqueueChunkMissingMeaningEnrich(createdById);
@@ -378,7 +414,7 @@ export class AdminTasksService {
       try {
         const queue = task.type === SCRIPT_VIDEO_RENDER_JOB || task.type === NARRATIVE_VIDEO_RENDER_JOB
           ? this.videoQueue
-          : task.type === VOCABULARY_CSV_IMPORT_JOB || task.type === VOCABULARY_MISSING_MEANING_ENRICH_JOB || task.type === CHUNK_MISSING_MEANING_ENRICH_JOB || task.type === PATTERN_MISSING_MEANING_ENRICH_JOB
+          : task.type === VOCABULARY_CSV_IMPORT_JOB || task.type === VOCABULARY_MISSING_MEANING_ENRICH_JOB || task.type === VOCABULARY_POLISH_JOB || task.type === CHUNK_MISSING_MEANING_ENRICH_JOB || task.type === PATTERN_MISSING_MEANING_ENRICH_JOB
             ? this.vocabularyImportQueue
             : this.contentQueue;
         const job = await queue.getJob(task.bullJobId);
@@ -669,7 +705,7 @@ export class AdminTasksService {
     if (type === SCRIPT_VIDEO_RENDER_JOB || type === NARRATIVE_VIDEO_RENDER_JOB) {
       return this.videoQueue;
     }
-    if (type === VOCABULARY_CSV_IMPORT_JOB || type === VOCABULARY_MISSING_MEANING_ENRICH_JOB || type === CHUNK_MISSING_MEANING_ENRICH_JOB || type === PATTERN_MISSING_MEANING_ENRICH_JOB) {
+    if (type === VOCABULARY_CSV_IMPORT_JOB || type === VOCABULARY_MISSING_MEANING_ENRICH_JOB || type === VOCABULARY_POLISH_JOB || type === CHUNK_MISSING_MEANING_ENRICH_JOB || type === PATTERN_MISSING_MEANING_ENRICH_JOB) {
       return this.vocabularyImportQueue;
     }
     return this.contentQueue;

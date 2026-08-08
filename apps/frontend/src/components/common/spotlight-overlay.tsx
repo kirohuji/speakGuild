@@ -171,7 +171,9 @@ export function SpotlightOverlay({
   if (!targetRect) {
     if (targetMissing) {
       return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 px-6">
+        // onPointerDownCapture：拦截 pointerdown 冒泡到 document，避免 vaul/radix
+        // 的"点击外部关闭"判定把下层 Drawer 误关（引导属于模态层，不应触发）
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/60 px-6" onPointerDownCapture={(e) => e.stopPropagation()}>
           <div className="w-full max-w-[280px] rounded-2xl bg-card p-4 text-card-foreground">
             <div className="mb-3 flex items-center justify-end">
               <div className="flex gap-1.5">
@@ -221,6 +223,7 @@ export function SpotlightOverlay({
               <DialogContent
                 className="max-w-sm rounded-2xl w-[90vw] !z-[10000]"
                 overlayClassName="!z-[10000]"
+                onPointerDownCapture={(e) => e.stopPropagation()}
               >
                 <DialogHeader>
                   <DialogTitle>{t('common.exitOnboardingTitle')}</DialogTitle>
@@ -315,6 +318,9 @@ export function SpotlightOverlay({
             pointerEvents: 'auto',
             ...tooltipStyle,
           }}
+          // 拦截 pointerdown 冒泡到 document：vaul/radix 在 document 冒泡阶段判定
+          // "点击外部"来关闭 Drawer，点击引导卡片不能让下层 Drawer 被误关
+          onPointerDownCapture={(e) => e.stopPropagation()}
         >
           <div data-spotlight-tooltip className="rounded-2xl bg-card p-4 text-card-foreground">
             {/* 跳过按钮 */}
@@ -374,6 +380,7 @@ export function SpotlightOverlay({
         <DialogContent
           className="max-w-sm rounded-2xl w-[90vw] !z-[10000]"
           overlayClassName="!z-[10000]"
+          onPointerDownCapture={(e) => e.stopPropagation()}
         >
           <DialogHeader>
             <DialogTitle>{t('common.exitOnboardingTitle')}</DialogTitle>

@@ -726,7 +726,7 @@ export interface PaginatedResult<T> {
 // ─── Vocabulary ──────────────────────────────────────────────
 
 export function listLibraryVocabularies(params?: {
-  search?: string; difficulty?: string; page?: number; pageSize?: number
+  search?: string; matchType?: 'fuzzy' | 'exact'; difficulty?: string; page?: number; pageSize?: number
 }): Promise<PaginatedResult<VocabularyFull>> {
   return get('/admin/content/library/vocabularies', params);
 }
@@ -756,6 +756,11 @@ export function enrichVocabulariesMissingChinese(): Promise<{ taskId: string }> 
   return post('/admin/content/library/vocabularies/enrich-missing-chinese');
 }
 
+/** 创建后台任务：例句缺中文翻译补翻译 + 中文释义过长精简。 */
+export function polishVocabularies(): Promise<{ taskId: string }> {
+  return post('/admin/content/library/vocabularies/polish');
+}
+
 export function enrichChunksMissingChinese(): Promise<{ taskId: string }> {
   return post('/admin/content/library/chunks/enrich-missing-chinese');
 }
@@ -775,6 +780,7 @@ export interface AiEnrichResult {
   generatedExamples: { en: string; zh: string; level: string }[];
   meaning: string;
   description: string;
+  difficulty: string;
 }
 
 export function aiEnrichVocabulary(data: {

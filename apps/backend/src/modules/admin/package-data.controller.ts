@@ -22,6 +22,7 @@ import {
   existsSync, mkdirSync, readdirSync, readFileSync,
   rmSync, createWriteStream,
 } from 'fs';
+import type { Dirent } from 'fs';
 import { resolve as pathResolve, join as pathJoin } from 'path';
 import * as AdmZip from 'adm-zip';
 import { Readable } from 'stream';
@@ -103,6 +104,57 @@ export class PackageDataController {
       trim: true,
       relax_column_count: true,
     }) as CsvRow[];
+  }
+
+  /**
+   * 在解压目录中定位包目录：优先「同名目录」，其次查找真正包含 scenes.csv 的目录。
+   * 兼容用户常见的几种压缩方式：
+   *  - 压缩包目录文件夹本身（同名目录，标准结构）
+   *  - 压缩了文件夹内的文件（CSV 直接位于 zip 根目录）
+   *  - 压缩了外层父目录 / 双层同名嵌套
+   *  - zip 文件名与内部目录名不一致（重命名等）
+   */
+  private resolvePackageDir(tmpDir: string, packageDirName: string): string {
+    const name = packageDirName.trim();
+    const hasScenesCsv = (dir: string) => existsSync(join(dir, 'scenes.csv'));
+
+    // 1. 同名目录（标准结构）
+    const direct = join(tmpDir, name);
+    if (hasScenesCsv(direct)) return direct;
+
+    // 2. CSV 直接压缩在 zip 根目录（用户压缩了文件夹内容而非文件夹本身）
+    if (hasScenesCsv(tmpDir)) return tmpDir;
+
+    // 3. 递归查找包含 scenes.csv 的目录（最多 3 层，兼容父目录包裹 / 双层嵌套）
+    const search = (dir: string, depth: number): string | null => {
+      if (depth > 3) return null;
+      let entries: Dirent[] = [];
+      try {
+        entries = readdirSync(dir, { withFileTypes: true });
+      } catch {
+        return null;
+      }
+      const subDirs = entries.filter(d => d.isDirectory() && !d.name.startsWith('__MACOSX') && d.name !== '.git');
+      for (const sub of subDirs) {
+        const subPath = join(dir, sub.name);
+        if (hasScenesCsv(subPath)) return subPath;
+      }
+      for (const sub of subDirs) {
+        const found = search(join(dir, sub.name), depth + 1);
+        if (found) return found;
+      }
+      return null;
+    };
+    const found = search(tmpDir, 0);
+    if (found) return found;
+
+    // 4. 兜底：找不到含 scenes.csv 的目录时回退到旧逻辑（同名目录或唯一顶级目录），
+    //    让后续「未找到有效的 scenes.csv」错误信息更明确。
+    if (existsSync(direct)) return direct;
+    const dirs = readdirSync(tmpDir, { withFileTypes: true })
+      .filter(d => d.isDirectory() && !d.name.startsWith('__MACOSX'));
+    if (dirs.length === 1) return join(tmpDir, dirs[0].name);
+    return direct;
   }
 
   private async findPackageInkScriptIds(sceneId: string) {
@@ -257,22 +309,17 @@ export class PackageDataController {
       const zip = new AdmZip(zipPath);
       zip.extractAllTo(tmpDir, true);
 
-      // 2. 定位包目录
-      let pkgDir = join(tmpDir, packageDirName.trim());
-      if (!existsSync(pkgDir)) {
-        // 尝试在 ZIP 根目录找同名目录
-        const dirs = readdirSync(tmpDir, { withFileTypes: true }).filter(d => d.isDirectory());
-        const match = dirs.find(d => d.name === packageDirName.trim());
-        if (match) pkgDir = join(tmpDir, match.name);
-        else {
-          // 如果只有一个顶级目录，尝试使用它
-          const topDirs = dirs.filter(d => !d.name.startsWith('__MACOSX'));
-          if (topDirs.length === 1) pkgDir = join(tmpDir, topDirs[0].name);
-          else throw new ForbiddenException(`ZIP 中未找到包目录 "${packageDirName}"，找到的目录: ${dirs.map(d=>d.name).join(', ')}`);
-        }
-      }
+      // 2. 定位包目录（兼容：同名目录、CSV 在 zip 根、父目录包裹、双层嵌套等结构）
+      const pkgDir = this.resolvePackageDir(tmpDir, packageDirName);
 
       const sceneRows = this.readCsvFile(pkgDir, 'scenes.csv');
+      if (sceneRows.length === 0) {
+        throw new ForbiddenException(
+          `ZIP 中未找到有效的 scenes.csv（${join(pkgDir, 'scenes.csv')} 不存在或为空）。` +
+          '请将「包目录文件夹」整体压缩为 zip（zip 内应包含 scenes.csv、chunks.csv 等文件），' +
+          '而不是压缩文件夹内的文件。'
+        );
+      }
       const vocabRows = this.readCsvFile(pkgDir, 'scene_vocabulary.csv');
       const chunkRows = this.readCsvFile(pkgDir, 'chunks.csv');
       const topicRows = this.readCsvFile(pkgDir, 'training_topics.csv');

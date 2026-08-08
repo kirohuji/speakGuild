@@ -88,6 +88,7 @@ services:
       TENCENT_SMS_SIGN_NAME: ${TENCENT_SMS_SIGN_NAME:-}
       TENCENT_SMS_TEMPLATE_ID: ${TENCENT_SMS_TEMPLATE_ID:-}
       STT_PROVIDER: ${STT_PROVIDER:-whisper}
+      AI_ENRICH_CONCURRENCY: ${AI_ENRICH_CONCURRENCY:-10}
     depends_on:
       db:
         condition: service_healthy

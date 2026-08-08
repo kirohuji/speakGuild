@@ -100,6 +100,13 @@ function normalizePOS(rawPOS: string): NormalizedPOS {
 
 const ACADEMIC_JARGON = /\b(thesis|dissertation|monograph|treatise|corpus|lexicography|philology|etymology|morphology|phonology|syntax|semantics|pragmatics)\b/i;
 
+/** 单次 LLM 调用的 token 用量（与 AdminContentAiService.AiUsage 结构一致） */
+export interface LlmUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+
 @Injectable()
 export class DictionaryPipelineService {
   private readonly logger = new Logger(DictionaryPipelineService.name);
@@ -417,6 +424,7 @@ export class DictionaryPipelineService {
 
   async translateToChinese(
     clusters: SenseCluster[],
+    onUsage?: (usage: LlmUsage) => void,
   ): Promise<void> {
     const allSenses = clusters.flatMap((c) => c.senses);
     if (allSenses.length === 0) return;
@@ -432,7 +440,7 @@ export class DictionaryPipelineService {
 
       try {
         const provider = this.getDeepSeekProvider();
-        const { text } = await generateText({
+        const { text, usage } = await generateText({
           model: provider('deepseek-chat'),
           prompt: `Translate the following English dictionary senses and examples to Simplified Chinese (zh-CN).
 
@@ -448,6 +456,8 @@ Return ONLY a JSON object (no markdown):
           temperature: 0,
           maxOutputTokens: 2000,
         });
+
+        if (usage) onUsage?.({ promptTokens: usage.inputTokens ?? 0, completionTokens: usage.outputTokens ?? 0, totalTokens: usage.totalTokens ?? 0 });
 
         const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         const parsed = JSON.parse(cleaned);
@@ -491,6 +501,7 @@ Return ONLY a JSON object (no markdown):
   async aiReview(
     clusters: SenseCluster[],
     sourceUrl: string,
+    onUsage?: (usage: LlmUsage) => void,
   ): Promise<{ clusters: SenseCluster[]; meta: AiReviewMeta }> {
     const provider = this.getDeepSeekProvider();
 
@@ -538,7 +549,7 @@ Return ONLY a JSON object (no markdown):
 }`;
 
     try {
-      const { text } = await generateText({
+      const { text, usage } = await generateText({
         model: provider('deepseek-chat'),
         prompt,
         temperature: 0.1,
@@ -548,6 +559,7 @@ Return ONLY a JSON object (no markdown):
       const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       const patch: AiReviewPatch & { issuesFound?: number } = JSON.parse(cleaned);
 
+      if (usage) onUsage?.({ promptTokens: usage.inputTokens ?? 0, completionTokens: usage.outputTokens ?? 0, totalTokens: usage.totalTokens ?? 0 });
       const fixesApplied = this.applyAiPatch(clusters, patch);
 
       return {

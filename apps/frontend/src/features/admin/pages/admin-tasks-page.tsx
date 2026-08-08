@@ -14,6 +14,7 @@ import {
   RefreshCw,
   RotateCcw,
   Search,
+  Sparkles,
   XCircle,
   Zap,
 } from 'lucide-react';
@@ -30,7 +31,10 @@ import { adminTasksApi, type AdminTask, type AdminTaskDetail, type AdminTaskStat
 const TYPE_LABELS: Record<string, string> = {
   'learning-package-content-prepare': '学习包内容准备',
   'vocabulary-csv-import': '词汇CSV批量导入',
-  'vocabulary-missing-meaning-enrich': '词汇中文释义检查与 AI 富化',
+  'vocabulary-missing-meaning-enrich': '词汇字段检查与 AI 补全（词典+AI）',
+  'vocabulary-polish': '词汇例句翻译补全与释义精简',
+  'chunk-missing-meaning-enrich': '句块字段检查与 AI 补全',
+  'pattern-missing-meaning-enrich': '句型字段检查与 AI 补全',
   'script-video-render': '剧本演出视频',
   'narrative-video-render': '叙事视频预览',
 };
@@ -77,6 +81,12 @@ function fmtDate(value?: string | null) {
 
 function fmtStep(step?: string | null) {
   if (!step) return '-';
+  // 支持 "phase:当前处理项" 格式（如 enrich:hello (1/3000)）
+  const colon = step.indexOf(':');
+  if (colon > 0) {
+    const phase = STEP_LABELS[step.slice(0, colon)] ?? step.slice(0, colon);
+    return `${phase}：${step.slice(colon + 1)}`;
+  }
   return STEP_LABELS[step] ?? step;
 }
 
@@ -112,6 +122,75 @@ function Metric({ label, value, tone }: { label: string; value: number; tone?: '
   );
 }
 
+// ──── AI 用量（真实 token 统计）────
+
+interface AiUsageData {
+  calls?: number;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+}
+
+/** 优先取任务 summary.usage（已完成/后端已补齐），否则取日志中最近一条 ai-usage（日志按时间倒序返回） */
+function getAiUsage(task: AdminTask | AdminTaskDetail | null): AiUsageData | null {
+  if (!task) return null;
+  const fromSummary = (task.summary as any)?.usage;
+  if (fromSummary && (fromSummary.calls || fromSummary.totalTokens)) return fromSummary;
+  const logs = (task as AdminTaskDetail).logs;
+  if (Array.isArray(logs)) {
+    for (let i = 0; i < logs.length; i++) {
+      const meta = logs[i].meta as any;
+      if (logs[i].step === 'ai-usage' && meta?.totalTokens) return meta;
+    }
+  }
+  return null;
+}
+
+/** 按 deepseek-chat 约 1 元/百万输入 token、2 元/百万输出 token 估算 */
+function estimateCost(usage: AiUsageData) {
+  const input = usage.promptTokens ?? 0;
+  const output = usage.completionTokens ?? 0;
+  return (input / 1e6) * 1 + (output / 1e6) * 2;
+}
+
+function fmtTokens(n: number) {
+  if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}k`;
+  return String(n);
+}
+
+function AiUsageCard({ task }: { task: AdminTask | AdminTaskDetail }) {
+  const usage = getAiUsage(task);
+  if (!usage) return null;
+  const cost = estimateCost(usage);
+  const items = [
+    { label: '调用次数', value: String(usage.calls ?? 0) },
+    { label: '输入 tokens', value: fmtTokens(usage.promptTokens ?? 0) },
+    { label: '输出 tokens', value: fmtTokens(usage.completionTokens ?? 0) },
+  ];
+  return (
+    <div className="rounded-md border border-border bg-muted/20 p-3">
+      <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        <Sparkles className="size-3.5" />
+        AI 用量
+        {task.status === 'running' && <span className="text-[10px] text-muted-foreground/70">（实时累计，约每 50~100 项刷新一次）</span>}
+      </p>
+      <div className="grid grid-cols-3 gap-2">
+        {items.map((item) => (
+          <div key={item.label} className="rounded-md bg-background/70 p-2">
+            <p className="text-base font-semibold leading-none">{item.value}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">{item.label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex items-center justify-between border-t border-border/60 pt-2 text-xs">
+        <span className="text-muted-foreground">合计 {fmtTokens(usage.totalTokens ?? 0)} tokens</span>
+        <span className="font-medium text-amber-600">≈ ¥{cost.toFixed(2)}</span>
+      </div>
+    </div>
+  );
+}
+
 function SummaryPanel({ task }: { task: AdminTask }) {
   const summary = task.summary as any;
   if (task.type === 'script-video-render' || task.type === 'narrative-video-render') {
@@ -135,6 +214,20 @@ function SummaryPanel({ task }: { task: AdminTask }) {
     );
   }
 
+  if (task.type === 'vocabulary-polish') {
+    const errors = taskErrors(task).length || summary.failed || task.failedItems;
+    return (
+      <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
+        <div className="grid grid-cols-3 gap-2">
+          <Metric label="已检查" value={summary.scanned ?? 0} tone="muted" />
+          <Metric label="已修补" value={summary.enriched ?? 0} tone="good" />
+          <Metric label="失败" value={errors} tone={errors ? 'bad' : 'muted'} />
+        </div>
+        <p className="text-xs text-muted-foreground">发现例句缺中文翻译或释义过长 {summary.missingEnrich ?? 0} 个。</p>
+      </div>
+    );
+  }
+
   if (task.type === 'vocabulary-missing-meaning-enrich') {
     const errors = taskErrors(task).length || summary.failed || task.failedItems;
     return (
@@ -144,7 +237,21 @@ function SummaryPanel({ task }: { task: AdminTask }) {
           <Metric label="已富化" value={summary.enriched ?? 0} tone="good" />
           <Metric label="失败" value={errors} tone={errors ? 'bad' : 'muted'} />
         </div>
-        <p className="text-xs text-muted-foreground">发现缺失中文释义 {summary.missingChineseMeaning ?? 0} 个。</p>
+        <p className="text-xs text-muted-foreground">发现缺失中文释义、讲解/描述或例句 {summary.missingEnrich ?? 0} 个。</p>
+      </div>
+    );
+  }
+
+  if (task.type === 'chunk-missing-meaning-enrich' || task.type === 'pattern-missing-meaning-enrich') {
+    const errors = taskErrors(task).length || summary.failed || task.failedItems;
+    return (
+      <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
+        <div className="grid grid-cols-3 gap-2">
+          <Metric label="已检查" value={summary.scanned ?? 0} tone="muted" />
+          <Metric label="已富化" value={summary.enriched ?? 0} tone="good" />
+          <Metric label="失败" value={errors} tone={errors ? 'bad' : 'muted'} />
+        </div>
+        <p className="text-xs text-muted-foreground">发现缺失中文释义、讲解/描述或例句 {summary.missingEnrich ?? 0} 个。</p>
       </div>
     );
   }
@@ -180,7 +287,7 @@ function SummaryPanel({ task }: { task: AdminTask }) {
 
 export function AdminTasksPage() {
   const [status, setStatus] = useState<AdminTaskStatus | 'all'>('all');
-  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
+  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'vocabulary-polish' | 'chunk-missing-meaning-enrich' | 'pattern-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
   const [items, setItems] = useState<AdminTask[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AdminTaskDetail | null>(null);
@@ -336,6 +443,9 @@ export function AdminTasksPage() {
   const canRetry = (task: AdminTask) =>
     task.type === 'learning-package-content-prepare'
     || task.type === 'vocabulary-missing-meaning-enrich'
+    || task.type === 'vocabulary-polish'
+    || task.type === 'chunk-missing-meaning-enrich'
+    || task.type === 'pattern-missing-meaning-enrich'
     || task.type === 'script-video-render'
     || task.type === 'narrative-video-render';
 
@@ -351,7 +461,10 @@ export function AdminTasksPage() {
             <option value="all">全部任务类型</option>
             <option value="learning-package-content-prepare">学习包内容准备</option>
             <option value="vocabulary-csv-import">词汇 CSV 批量导入</option>
-            <option value="vocabulary-missing-meaning-enrich">词汇中文释义检查与 AI 富化</option>
+            <option value="vocabulary-polish">词汇例句翻译补全与释义精简</option>
+            <option value="vocabulary-missing-meaning-enrich">词汇字段检查与 AI 补全（词典+AI）</option>
+            <option value="chunk-missing-meaning-enrich">句块字段检查与 AI 补全</option>
+            <option value="pattern-missing-meaning-enrich">句型字段检查与 AI 补全</option>
             <option value="script-video-render">剧本演出视频</option>
             <option value="narrative-video-render">叙事视频预览</option>
           </Select>
@@ -440,7 +553,7 @@ export function AdminTasksPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid gap-3 xl:grid-cols-[340px_minmax(0,1fr)]">
         {/* 任务列表 */}
         <Card>
           <CardHeader className="px-4 py-3">
@@ -527,19 +640,72 @@ export function AdminTasksPage() {
               <p className="py-12 text-center text-sm text-muted-foreground">选择一个任务查看详情</p>
             ) : (
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <h2 className="text-sm font-semibold leading-6">{selected.title}</h2>
-                    <StatusBadge status={selected.status} />
+                {/* 概览头部 */}
+                <div className="overflow-hidden rounded-md border border-border">
+                  <div className="border-b border-border/60 px-4 py-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h2 className="truncate text-sm font-semibold leading-6">{selected.title}</h2>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {TYPE_LABELS[selected.type] ?? selected.type} · 创建于 {fmtDate(selected.createdAt)}
+                        </p>
+                      </div>
+                      <StatusBadge status={selected.status} />
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {canRetry(selected) && (selected.status === 'failed' || selected.status === 'canceled' || selectedErrors.length > 0) && (
+                        <Button variant="outline" size="sm" onClick={() => void retry(selected)}>
+                          <RotateCcw className="mr-1 size-4" />
+                          {selected.status === 'canceled'
+                            ? '重新执行'
+                            : selectedErrors.length > 0
+                              ? '重试失败项'
+                              : '重试任务'}
+                        </Button>
+                      )}
+                      {(selected.status === 'queued' || selected.status === 'running') && (
+                        <Button variant="outline" size="sm" onClick={() => void cancelTask(selected)}>
+                          <XCircle className="mr-1 size-4" />
+                          取消任务
+                        </Button>
+                      )}
+                      {selected.status === 'queued' && (
+                        <Button variant="outline" size="sm" onClick={() => void prioritizeTask(selected)}>
+                          <ArrowUpRight className="mr-1 size-4" />
+                          插队
+                        </Button>
+                      )}
+                      {(selected.status === 'queued' || selected.status === 'failed') && (
+                        <Button variant="default" size="sm" onClick={() => void forceRunTask(selected)}>
+                          <Zap className="mr-1 size-4" />
+                          强制执行
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <Progress value={selected.progress} className="h-2" />
-                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                    <span>阶段：{fmtStep(selected.currentStep)}</span>
-                    <span>进度：{selected.processedItems}/{selected.totalItems}</span>
-                    <span>成功：{selected.successItems}</span>
-                    <span>失败：{selected.failedItems}</span>
-                    <span>开始：{fmtDate(selected.startedAt)}</span>
-                    <span>结束：{fmtDate(selected.finishedAt)}</span>
+                  <div className="space-y-3 p-4">
+                    {/* 当前处理项 */}
+                    <div className="flex items-center gap-2 text-xs">
+                      <Loader2 className={cn('size-3.5 shrink-0', selected.status === 'running' ? 'animate-spin text-primary' : 'text-muted-foreground')} />
+                      <span className="shrink-0 text-muted-foreground">当前处理</span>
+                      <span className="truncate font-medium">{fmtStep(selected.currentStep)}</span>
+                    </div>
+                    <div>
+                      <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{selected.processedItems}/{selected.totalItems}</span>
+                        <span>{selected.progress}%</span>
+                      </div>
+                      <Progress value={selected.progress} className="h-2" />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Metric label="成功" value={selected.successItems} tone="good" />
+                      <Metric label="失败" value={selected.failedItems} tone={selected.failedItems ? 'bad' : 'muted'} />
+                      <Metric label="AI 调用" value={getAiUsage(selected)?.calls ?? 0} tone="muted" />
+                    </div>
+                    <div className="flex items-center justify-between border-t border-border/60 pt-2 text-xs text-muted-foreground">
+                      <span>开始 {fmtDate(selected.startedAt)}</span>
+                      <span>结束 {fmtDate(selected.finishedAt)}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -549,38 +715,9 @@ export function AdminTasksPage() {
                   </div>
                 )}
 
-                <SummaryPanel task={selected} />
+                <AiUsageCard task={selected} />
 
-                <div className="flex flex-wrap gap-2">
-                  {canRetry(selected) && (selected.status === 'failed' || selected.status === 'canceled' || selectedErrors.length > 0) && (
-                    <Button variant="outline" size="sm" onClick={() => void retry(selected)}>
-                      <RotateCcw className="mr-1 size-4" />
-                      {selected.status === 'canceled'
-                        ? '重新执行'
-                        : selectedErrors.length > 0
-                          ? '重试失败项'
-                          : '重试任务'}
-                    </Button>
-                  )}
-                  {(selected.status === 'queued' || selected.status === 'running') && (
-                    <Button variant="outline" size="sm" onClick={() => void cancelTask(selected)}>
-                      <XCircle className="mr-1 size-4" />
-                      取消任务
-                    </Button>
-                  )}
-                  {selected.status === 'queued' && (
-                    <Button variant="outline" size="sm" onClick={() => void prioritizeTask(selected)}>
-                      <ArrowUpRight className="mr-1 size-4" />
-                      插队
-                    </Button>
-                  )}
-                  {(selected.status === 'queued' || selected.status === 'failed') && (
-                    <Button variant="default" size="sm" onClick={() => void forceRunTask(selected)}>
-                      <Zap className="mr-1 size-4" />
-                      强制执行
-                    </Button>
-                  )}
-                </div>
+                <SummaryPanel task={selected} />
 
                 {selectedErrors.length > 0 && (
                   <div className="space-y-2">

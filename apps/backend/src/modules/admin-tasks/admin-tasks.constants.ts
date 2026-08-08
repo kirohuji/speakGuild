@@ -2,6 +2,7 @@ export const ADMIN_CONTENT_QUEUE = 'admin-content';
 export const VOCABULARY_IMPORT_QUEUE = 'vocabulary-csv-import';
 export const VOCABULARY_CSV_IMPORT_JOB = 'vocabulary-csv-import';
 export const VOCABULARY_MISSING_MEANING_ENRICH_JOB = 'vocabulary-missing-meaning-enrich';
+export const VOCABULARY_POLISH_JOB = 'vocabulary-polish';
 export const CHUNK_MISSING_MEANING_ENRICH_JOB = 'chunk-missing-meaning-enrich';
 export const PATTERN_MISSING_MEANING_ENRICH_JOB = 'pattern-missing-meaning-enrich';
 export const CONTENT_PREPARE_JOB = 'learning-package-content-prepare';

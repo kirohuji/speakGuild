@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Search, Plus, Trash2, Edit3, BookOpen, Sparkles, Loader2,
-  Type, Code2, ChevronLeft, ChevronRight, Play, Pause, Upload, Globe, Volume2,
+  Type, Code2, ChevronLeft, ChevronRight, Play, Pause, Upload, Globe, Volume2, Languages,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
 import {
@@ -183,6 +184,7 @@ function VocabularyTab() {
   const [data, setData] = useState<api.PaginatedResult<api.VocabularyFull> | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [matchType, setMatchType] = useState<'fuzzy' | 'exact'>('fuzzy')
   const [difficulty, setDifficulty] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
@@ -191,10 +193,10 @@ function VocabularyTab() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    try { setData(await api.listLibraryVocabularies({ search, difficulty, page, pageSize })) }
+    try { setData(await api.listLibraryVocabularies({ search, matchType, difficulty, page, pageSize })) }
     catch { setData(null) }
     finally { setLoading(false) }
-  }, [search, difficulty, page, pageSize])
+  }, [search, matchType, difficulty, page, pageSize])
 
   useEffect(() => { load() }, [load])
 
@@ -209,6 +211,11 @@ function VocabularyTab() {
             <Input className="pl-9" placeholder="搜索词汇..." value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
           </div>
+          <ToggleGroup type="single" size="sm" variant="outline" value={matchType}
+            onValueChange={(v) => { if (v) { setMatchType(v as 'fuzzy' | 'exact'); setPage(1) } }}>
+            <ToggleGroupItem value="fuzzy" title="包含关键字即命中">模糊</ToggleGroupItem>
+            <ToggleGroupItem value="exact" title="单词或释义完全一致才命中">精确</ToggleGroupItem>
+          </ToggleGroup>
           <Select value={difficulty} onChange={(e) => { setDifficulty(e.target.value); setPage(1) }} className="w-28">
             <option value="">全部等级</option>
             {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
@@ -219,8 +226,27 @@ function VocabularyTab() {
             variant="outline"
             onClick={async () => {
               try {
+                const result = await api.polishVocabularies();
+                toast.success('已创建词汇修补任务（例句缺中文翻译补翻译 / 释义过长精简）', {
+                  action: {
+                    label: '查看任务',
+                    onClick: () => window.location.hash = '#/admin/tasks',
+                  },
+                });
+                void result;
+              } catch (err: any) {
+                toast.error(err?.message || '创建修补任务失败');
+              }
+            }}
+          >
+            <Languages className="mr-1.5 size-4" />修补例句翻译/精简释义
+          </Button>
+          <Button
+            variant="outline"
+            onClick={async () => {
+              try {
                 const result = await api.enrichVocabulariesMissingChinese();
-                toast.success('已创建中文释义检查任务', {
+                toast.success('已创建词汇字段检查任务（词典管道补全：中文释义/讲解/例句/音标/难度）', {
                   action: {
                     label: '查看任务',
                     onClick: () => window.location.hash = '#/admin/tasks',
@@ -232,7 +258,7 @@ function VocabularyTab() {
               }
             }}
           >
-            <Sparkles className="mr-1.5 size-4" />检查并 AI 富化中文释义
+            <Sparkles className="mr-1.5 size-4" />检查并补全词汇字段（词典+AI）
           </Button>
           <Button onClick={() => { setEditing(null); setDialogOpen(true) }}>
             <Plus className="mr-1.5 size-4" />新增词汇
@@ -364,14 +390,14 @@ function ChunkTab() {
             onClick={async () => {
               try {
                 const result = await api.enrichChunksMissingChinese();
-                toast.success('已创建句块中文释义检查任务', {
+                toast.success('已创建句块中文释义、讲解与例句检查任务', {
                   action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
                 });
                 void result;
               } catch (err: any) { toast.error(err?.message || '创建检查任务失败'); }
             }}
           >
-            <Sparkles className="mr-1.5 size-4" />检查并 AI 富化中文释义
+            <Sparkles className="mr-1.5 size-4" />检查并 AI 富化中文释义、讲解与例句
           </Button>
           <Button onClick={() => { setEditing(null); setDialogOpen(true) }}>
             <Plus className="mr-1.5 size-4" />新增句块
@@ -474,14 +500,14 @@ function PatternTab() {
             onClick={async () => {
               try {
                 const result = await api.enrichPatternsMissingChinese();
-                toast.success('已创建句型中文释义检查任务', {
+                toast.success('已创建句型中文释义、讲解与例句检查任务', {
                   action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
                 });
                 void result;
               } catch (err: any) { toast.error(err?.message || '创建检查任务失败'); }
             }}
           >
-            <Sparkles className="mr-1.5 size-4" />检查并 AI 富化中文释义
+            <Sparkles className="mr-1.5 size-4" />检查并 AI 富化中文释义、讲解与例句
           </Button>
           <Button onClick={() => { setEditing(null); setDialogOpen(true) }}>
             <Plus className="mr-1.5 size-4" />新增句式
@@ -551,9 +577,6 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
   const [saving, setSaving] = useState(false)
   const [enriching, setEnriching] = useState(false)
   const [dictLoading, setDictLoading] = useState(false)
-  const [xfdLoading, setXfdLoading] = useState(false)
-  const [wikiLoading, setWikiLoading] = useState(false)
-  const [mwLoading, setMwLoading] = useState(false)
   const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
   const [currentIdx, setCurrentIdx] = useState(0)
   const [usAudioPlaying, setUsAudioPlaying] = useState(false)
@@ -674,175 +697,70 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
     finally { setSaving(false) }
   }
 
-  // Step 1: 查词典 + AI 翻译（合并执行）
+  // 统一富化：词典条目（dictionary_entry，缓存 miss 时后台自动跑流水线生成）+ AI 补全
   const handleDictionaryLookup = async () => {
     if (!form.word?.trim()) return
     setDictLoading(true)
     try {
-      const { lookupWord, getBestPhonetic } = await import('@/lib/dictionary-api')
-      const entries = await lookupWord(form.word)
-      if (!entries?.length) { toast.info('词典未收录该词'); setDictLoading(false); return }
+      const entry = await getDictionaryEntry(form.word.trim())
+      if (!entry?.word) { toast.info('词典未收录该词'); setDictLoading(false); return }
 
-      const entry = entries[0]
-      const phonetic = getBestPhonetic(entry) || ''
+      // 音标/音频：以词典为准（isPreferred 优先）
+      const us = entry.pronunciations?.find((p) => p.type === 'us' && p.isPreferred) ?? entry.pronunciations?.find((p) => p.type === 'us')
+      const uk = entry.pronunciations?.find((p) => p.type === 'uk' && p.isPreferred) ?? entry.pronunciations?.find((p) => p.type === 'uk')
 
-      // 分离美式/英式发音，规范化 URL（处理 // 协议相对路径）
-      const normalizeAudio = (url: string) => {
-        if (!url) return ''
-        if (url.startsWith('//')) return `https:${url}`
-        return url
-      }
-      const phoneticsWithAudio = entry.phonetics?.filter((p: any) => p.audio) || []
-      const usAudio = normalizeAudio(phoneticsWithAudio[0]?.audio || '')
-      const ukAudio = normalizeAudio(phoneticsWithAudio[1]?.audio || '')
+      // 释义（词典流水线已含中文翻译，格式：POS: definition  [中文]）
+      const senses = (entry.senseClusters ?? []).flatMap((c) => c.senses)
+      const defs = senses.map((s) => `${s.partOfSpeech}: ${s.definition}${s.translations?.zh ? `  [${s.translations.zh}]` : ''}`)
+      const pos = entry.senseClusters?.find((c) => c.rank === 1)?.posBucket ?? senses[0]?.partOfSpeech ?? ''
 
-      const meanings = entry.meanings?.flatMap(m =>
-        m.definitions.map(d => `${m.partOfSpeech}: ${d.definition}`)
-      ).join('; ') || ''
-      const pos = entry.meanings?.[0]?.partOfSpeech || ''
-
-      // 提取例句
+      // 例句：词典中英对照例句（去重，取前 5）
       const dictExamples: any[] = []
       const seenEx = new Set<string>()
-      entry.meanings?.forEach(m =>
-        m.definitions.forEach(d => {
-          if (d.example && !seenEx.has(d.example)) {
-            seenEx.add(d.example)
-            dictExamples.push({ en: d.example, zh: '', level: 'intermediate' })
-          }
-        })
+      ;(entry.senseClusters ?? []).forEach((c) =>
+        c.senses.forEach((s) =>
+          (s.examples ?? []).forEach((e: any) => {
+            if (e.en && !seenEx.has(e.en.toLowerCase())) {
+              seenEx.add(e.en.toLowerCase())
+              dictExamples.push({ en: e.en, zh: e.zh ?? '', level: 'intermediate' })
+            }
+          }),
+        ),
       )
       const examples = dictExamples.slice(0, 5)
 
-      // 提取纯英文释义（不含中文），用于 AI 翻译
-      const defs = entry.meanings?.flatMap(m =>
-        m.definitions.map(d => `${m.partOfSpeech}: ${d.definition}`)
-      ) || []
-      const exsForAi = examples.map((e: any) => ({ en: e.en }))
-
-      // 词典音标先写入表单（即时反馈），AI 随后校核覆盖
-      const dictPhoneticUk = entry.phonetics?.[1]?.text ?? entry.phonetics?.[0]?.text ?? '';
-      setForm((prev: any) => ({
-        ...prev,
-        phoneticUs: phonetic || prev.phoneticUs || '',
-        phoneticUk: dictPhoneticUk || prev.phoneticUk || '',
-      }))
-
-      // 并行调用 AI 翻译 + 音标校核
+      // AI 补全：中文释义 / 讲解 / 难度 / 例句缺口
       let aiResult: any = null
       try {
         const { aiEnrichVocabulary } = await import('../api-content-admin')
         aiResult = await aiEnrichVocabulary({
           word: form.word.trim(),
           definitions: defs,
-          examples: exsForAi,
-          phoneticUs: phonetic || undefined,
-          phoneticUk: (entry.phonetics?.length > 1 ? entry.phonetics[1]?.text : undefined) || undefined,
+          examples: examples.map((e: any) => ({ en: e.en })),
+          phoneticUs: us?.ipa,
+          phoneticUk: uk?.ipa,
         })
-      } catch { /* AI 翻译失败不影响词典结果 */ }
-
-      // AI 音标覆盖词典音标（AI 校核后更准确的欧路词典 IPA 风格）
-      if (aiResult?.phoneticUs || aiResult?.phoneticUk) {
-        setForm((prev: any) => ({
-          ...prev,
-          phoneticUs: aiResult.phoneticUs || prev.phoneticUs,
-          phoneticUk: aiResult.phoneticUk || prev.phoneticUk,
-        }))
-      }
-
-      // 合并词典 + AI 翻译
-      const defsWithZh = defs.map((d, i) => {
-        const zh = aiResult?.definitionTranslations?.[i] ?? ''
-        return zh ? `${d}  [${zh}]` : d
-      }).join('; ')
-
-      // AI 生成的新例句（替换词典例句，不是合并）
-      const generatedExs = aiResult?.generatedExamples?.length
-        ? aiResult.generatedExamples
-        : examples  // AI 失败时兜底用词典例句
+      } catch { /* AI 失败不影响词典字段 */ }
 
       const diffFields: Record<string, any> = {
-        audioUsUrl: usAudio,
-        audioUkUrl: ukAudio,
-        definitionEn: defsWithZh,
+        phoneticUs: us?.ipa,
+        phoneticUk: uk?.ipa,
+        audioUsUrl: us?.audioUrl,
+        audioUkUrl: uk?.audioUrl,
+        definitionEn: defs.join('; '),
         partOfSpeech: pos,
-        examples: generatedExs,
+        examples: aiResult?.generatedExamples?.length ? aiResult.generatedExamples : examples,
       }
       if (aiResult?.description) diffFields.description = aiResult.description
-      // 优先 AI 生成的简洁中文释义，兜底推导
-      diffFields.meaning = aiResult?.meaning || deriveMeaning(defsWithZh)
+      diffFields.meaning = aiResult?.meaning || deriveMeaning(defs.join('; '))
+      if (aiResult?.difficulty) diffFields.difficulty = aiResult.difficulty
 
       showDiff('词典+AI', diffFields)
     } catch { toast.error('词典查询失败') }
     finally { setDictLoading(false) }
   }
 
-  // Step 2: XF 词典 (xfd.plus — 英英，含美/英音频分离)
-  const handleXfdLookup = async () => {
-    if (!form.word?.trim()) return
-    setXfdLoading(true)
-    try {
-      const { lookupXfdWord } = await import('@/lib/xfd-dict-api')
-      const result = await lookupXfdWord(form.word)
-      if (!result) { toast.info('XF 词典未收录或未配置 API Key'); return }
-
-      showDiff('XF 词典', {
-        phoneticUs: result.phonetic,
-        phoneticUk: result.phoneticUk,
-        definitionEn: result.meanings?.map((m: any) => `${m.partOfSpeech}: ${m.definition}`).join('; '),
-        partOfSpeech: result.meanings?.[0]?.partOfSpeech,
-        examples: result.examples?.length
-          ? result.examples.map((e: any) => ({ en: e.en, zh: e.zh || '', level: e.level || 'intermediate' }))
-          : undefined,
-      })
-    } catch { toast.error('XF 词典查询失败') }
-    finally { setXfdLoading(false) }
-  }
-
-  // Step 3: Wiktionary (免费，无 API Key)
-  const handleWiktionaryLookup = async () => {
-    if (!form.word?.trim()) return
-    setWikiLoading(true)
-    try {
-      const { lookupWiktionary } = await import('@/lib/wiktionary-api')
-      const result = await lookupWiktionary(form.word)
-      if (!result) { toast.info('Wiktionary 未收录该词'); return }
-
-      showDiff('Wiktionary', {
-        partOfSpeech: result.partOfSpeech,
-        audioUsUrl: result.audioUsUrl,
-        audioUkUrl: result.audioUkUrl,
-        definitionEn: result.definitions.map(d =>
-          `${result.partOfSpeech || ''}: ${d.definition}${d.examples.length ? ` (e.g. ${d.examples[0]})` : ''}`
-        ).join('; '),
-        examples: result.definitions.flatMap(d =>
-          d.examples.map(ex => ({ en: ex, zh: '', level: 'intermediate' as const }))
-        ).slice(0, 5),
-      })
-    } catch { toast.error('Wiktionary 查询失败') }
-    finally { setWikiLoading(false) }
-  }
-
-  // Step 4: Merriam-Webster (需 API Key)
-  const handleMwLookup = async () => {
-    if (!form.word?.trim()) return
-    setMwLoading(true)
-    try {
-      const { lookupMwWord } = await import('@/lib/merriam-webster-api')
-      const result = await lookupMwWord(form.word)
-      if (!result) { toast.info('MW 词典未收录或未配置 API Key'); return }
-
-      showDiff('Merriam-Webster', {
-        partOfSpeech: result.partOfSpeech,
-        phoneticUs: result.phonetic,
-        audioUsUrl: result.audioUrl,
-        definitionEn: result.definitions.map(d => `${result.partOfSpeech || ''}: ${d.definition}`).join('; '),
-      })
-    } catch { toast.error('MW 词典查询失败') }
-    finally { setMwLoading(false) }
-  }
-
-  // Step 5: AI 翻译 + 讲解 (DeepSeek) — 独立补全按钮
+  // AI 补全：中文释义 / 讲解 / 难度（基于已有词典字段）
   const handleAiEnrich = async () => {
     if (!form.word?.trim()) return
     setEnriching(true)
@@ -863,15 +781,6 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
         phoneticUk: form.phoneticUk || undefined,
       })
 
-      // AI 音标直接应用到表单（无需 diff 审核）
-      if (result.phoneticUs || result.phoneticUk) {
-        setForm((prev: any) => ({
-          ...prev,
-          ...(result.phoneticUs ? { phoneticUs: result.phoneticUs } : {}),
-          ...(result.phoneticUk ? { phoneticUk: result.phoneticUk } : {}),
-        }))
-      }
-
       // Merge definition translations back (format: "POS: def  [zh]")
       const defsWithZh = defs.map((d, i) => {
         const zh = result.definitionTranslations[i] ?? ''
@@ -889,13 +798,14 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
         examples: newExamples,
         meaning: result.meaning || deriveMeaning(defsWithZh),
       }
+      if (result.difficulty) diffFields.difficulty = result.difficulty
 
-      showDiff('AI 翻译', diffFields)
-    } catch { toast.error('AI 翻译失败') }
+      showDiff('AI 补全', diffFields)
+    } catch { toast.error('AI 补全失败') }
     finally { setEnriching(false) }
   }
 
-  // Audio playback — XF 音频需要 RapidAPI 认证，先 fetch 为 blob 再播放
+  // Audio playback
   const toggleAudio = async (url: string | undefined, setPlaying: (v: boolean) => void, ref: React.MutableRefObject<HTMLAudioElement | null>) => {
     if (!url) return
     setPlaying(true)
@@ -913,23 +823,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
       // 停止旧音频
       if (ref.current) { ref.current.pause(); ref.current.src = '' }
 
-      // XF (RapidAPI) 音频需要认证头，先下载为 blob
-      const key = (import.meta as any).env?.VITE_XFD_API_KEY || ''
-      const isXfdAudio = url.includes('rapidapi.com')
-      let playableUrl = url
-      if (isXfdAudio && key) {
-        const res = await fetch(url, {
-          headers: {
-            'X-RapidAPI-Key': key,
-            'X-RapidAPI-Host': 'xf-english-dictionary1.p.rapidapi.com',
-          },
-        })
-        if (!res.ok) throw new Error('Failed to fetch audio')
-        const blob = await res.blob()
-        playableUrl = URL.createObjectURL(blob)
-      }
-
-      const audio = new Audio(playableUrl)
+      const audio = new Audio(url)
       audio.onended = () => setPlaying(false)
       audio.onerror = () => { setPlaying(false); toast.error('音频播放失败') }
       ref.current = audio
@@ -996,7 +890,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? `编辑词汇 (${currentIdx + 1}/${items.length})` : '新增词汇'}</DialogTitle>
-          <DialogDescription>词典+AI（一键查词+翻译）| XF · Wiki · MW 补充查询</DialogDescription>
+          <DialogDescription>统一词典数据流：词典条目（音标/释义/例句）+ AI 补全（中文释义/讲解/难度）</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           {/* Word + Meaning */}
@@ -1279,7 +1173,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
               </div>
               {Object.entries(pendingDiff.fields).map(([key, val]: [string, any]) => {
                 const label: Record<string, string> = {
-                  meaning: '中文释义', phoneticUs: '美式音标', phoneticUk: '英式音标',
+                  meaning: '中文释义', phoneticUs: '美式音标', phoneticUk: '英式音标', difficulty: '难度',
                   audioUsUrl: '美式音频', audioUkUrl: '英式音频',
                   definitionEn: '英文释义', partOfSpeech: '词性', description: '讲解', examples: '例句',
                 }
@@ -1318,37 +1212,17 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                 onClick={() => navigate(1)}>
                 <ChevronRight className="size-4" />
               </Button>
-              {/* Manual step buttons */}
+              {/* 富化按钮：词典+AI 一键，AI 补全 */}
               <Button variant="outline" size="sm" onClick={handleDictionaryLookup}
                 disabled={dictLoading || !form.word?.trim()}>
                 {dictLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Globe className="mr-1 size-3.5" />}
-                {dictLoading ? '翻译中...' : '查词典+AI'}
+                {dictLoading ? '处理中...' : '词典+AI 富化'}
               </Button>
               <Button variant="outline" size="sm"
                 disabled={enriching || !form.word?.trim() || !form.definitionEn?.trim()}
                 onClick={handleAiEnrich}>
                 {enriching ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Sparkles className="mr-1 size-3.5" />}
-                AI 翻译补全
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleXfdLookup}
-                disabled={xfdLoading || !form.word?.trim()}>
-                {xfdLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <BookOpen className="mr-1 size-3.5" />}
-                XF 词典
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleWiktionaryLookup}
-                disabled={wikiLoading || !form.word?.trim()}>
-                {wikiLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Globe className="mr-1 size-3.5" />}
-                Wiki
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleMwLookup}
-                disabled={mwLoading || !form.word?.trim()}>
-                {mwLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <BookOpen className="mr-1 size-3.5" />}
-                MW
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleAiEnrich}
-                disabled={enriching || !form.word?.trim()}>
-                {enriching ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Sparkles className="mr-1 size-3.5" />}
-                翻译
+                AI 补全
               </Button>
             </div>
             {/* Right: cancel + save */}

@@ -1,17 +1,39 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../common/prisma/prisma.service';
-import { AdminContentAiService } from '../../admin/admin-content-ai.service';
+import { AdminContentAiService, VocabularyAiEnrichResult } from '../../admin/admin-content-ai.service';
+import { DictionaryService } from '../../dictionary/dictionary.service';
 import { AdminTasksService } from '../admin-tasks.service';
 
-interface FreeDictionaryEntry {
+/** 词典条目（dictionary_entry）中与语料库词汇映射相关的字段 */
+interface DictionaryEntryData {
   word: string;
-  phonetic?: string;
-  phonetics?: { text?: string; audio?: string }[];
-  meanings?: {
+  pronunciations?: Array<{
+    type: 'uk' | 'us';
+    ipa: string;
+    audioUrl?: string;
+    isPreferred: boolean;
+  }>;
+  senseClusters?: Array<{
+    id: string;
+    label: string;
+    posBucket: string;
+    rank: number;
+    senses: Array<{
+      id: string;
+      definition: string;
+      partOfSpeech: string;
+      translations?: { zh?: string };
+      examples?: Array<{ en: string; zh?: string; source?: string; relevance?: string }>;
+      frequency?: string;
+    }>;
+  }>;
+  senses?: Array<{
+    definition: string;
     partOfSpeech: string;
-    definitions: { definition: string; example?: string }[];
-  }[];
+    translations?: { zh?: string };
+  }>;
+  entrySynonyms?: string[];
 }
 
 interface PrepareSummary {
@@ -33,12 +55,58 @@ interface RetryItems {
   pattern?: string[];
 }
 
+/** AI 富化并发度（环境变量可调，默认 10） */
+export const AI_ENRICH_CONCURRENCY = (() => {
+  const n = Number(process.env.AI_ENRICH_CONCURRENCY ?? '10');
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 10;
+})();
+
+/** 固定 worker 池并发执行：空闲 worker 立即取下一个任务，单个任务异常不拖垮整批 */
+export async function runConcurrent<T>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T, index: number) => Promise<void>,
+): Promise<void> {
+  let next = 0;
+  const limit = Math.min(Math.max(1, concurrency), items.length);
+  await Promise.allSettled(
+    Array.from({ length: limit }, async () => {
+      while (next < items.length) {
+        const index = next++;
+        await worker(items[index], index);
+      }
+    }),
+  );
+}
+
+/** AI 调用累计统计（任务级） */
+export interface AiUsageStats {
+  calls: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+}
+
+export function createUsageStats(): AiUsageStats {
+  return { calls: 0, promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+}
+
+export function usageCallback(stats: AiUsageStats) {
+  return (usage: { promptTokens?: number; completionTokens?: number; totalTokens?: number }) => {
+    stats.calls++;
+    stats.promptTokens += usage.promptTokens ?? 0;
+    stats.completionTokens += usage.completionTokens ?? 0;
+    stats.totalTokens += usage.totalTokens ?? 0;
+  };
+}
+
 @Injectable()
 export class ContentPrepareService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly adminTasksService: AdminTasksService,
     private readonly adminContentAiService: AdminContentAiService,
+    private readonly dictionaryService: DictionaryService,
   ) {}
 
   async run(taskId: string, sceneId: string, options?: {
@@ -50,7 +118,7 @@ export class ContentPrepareService {
 
     const collected = await this.collectSceneContent(sceneId);
     const { vocabs, chunks, patterns } = this.applyRetryFilter(collected, options?.retryItems);
-    const totalItems = vocabs.length + chunks.length + patterns.length;
+    const totalItems = vocabs.length * 2 + chunks.length + patterns.length;
     const summary: PrepareSummary = {
       vocabChecked: 0,
       vocabEnriched: 0,
@@ -67,6 +135,7 @@ export class ContentPrepareService {
     let processedItems = 0;
     let successItems = 0;
     let failedItems = 0;
+    const usageStats = createUsageStats();
 
     const updateProgress = async (currentStep: string) => {
       await this.adminTasksService.setProgress(taskId, {
@@ -92,10 +161,43 @@ export class ContentPrepareService {
       },
     });
 
-    for (const vocab of vocabs) {
+    // ── 阶段一：词典字段填充（并发 AI_ENRICH_CONCURRENCY） ──
+    await runConcurrent(vocabs, AI_ENRICH_CONCURRENCY, async (vocab) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
       summary.vocabChecked++;
       try {
-        const result = await this.prepareVocabulary(vocab.id);
+        const result = await this.prepareVocabularyDictionary(vocab.id, usageStats);
+        if (result !== 'updated') summary.vocabSkipped++;
+        await this.adminTasksService.log(taskId, 'info', `词汇 "${vocab.word}" 词典字段已填充`, {
+          step: 'vocabulary-dictionary',
+          meta: { vocabId: vocab.id, word: vocab.word, result },
+        });
+        successItems++;
+      } catch (error: any) {
+        failedItems++;
+        const message = error?.message ?? 'unknown error';
+        summary.errors.push({ type: 'vocabulary', id: vocab.id, key: vocab.word ?? vocab.id, message });
+        await this.adminTasksService.log(taskId, 'error', `词汇 "${vocab.word}" 词典填充失败，已跳过：${message}`, {
+          step: 'vocabulary-dictionary',
+          meta: { vocabId: vocab.id, word: vocab.word },
+        });
+      } finally {
+        processedItems++;
+        await updateProgress('vocabulary-dictionary');
+        if (processedItems % 50 === 0) {
+          await this.adminTasksService.log(taskId, 'info', `AI 用量（处理 ${processedItems} 项）：${usageStats.calls} 次调用，输入 ${usageStats.promptTokens} / 输出 ${usageStats.completionTokens} / 合计 ${usageStats.totalTokens} tokens`, {
+            step: 'ai-usage',
+            meta: { ...usageStats, processedItems },
+          });
+        }
+      }
+    });
+
+    // ── 阶段二：AI 富化补漏（并发 AI_ENRICH_CONCURRENCY） ──
+    await runConcurrent(vocabs, AI_ENRICH_CONCURRENCY, async (vocab) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      try {
+        const result = await this.prepareVocabularyAi(vocab.id, usageStats);
         if (result === 'updated') {
           summary.vocabEnriched++;
           await this.adminTasksService.log(taskId, 'info', `词汇 "${vocab.word}" 已补全`, {
@@ -110,20 +212,26 @@ export class ContentPrepareService {
         failedItems++;
         const message = error?.message ?? 'unknown error';
         summary.errors.push({ type: 'vocabulary', id: vocab.id, key: vocab.word ?? vocab.id, message });
-        await this.adminTasksService.log(taskId, 'error', `词汇 "${vocab.word}" 准备失败，已跳过：${message}`, {
+        await this.adminTasksService.log(taskId, 'error', `词汇 "${vocab.word}" 富化失败，已跳过：${message}`, {
           step: 'vocabulary',
           meta: { vocabId: vocab.id, word: vocab.word },
         });
       } finally {
         processedItems++;
-        await updateProgress('vocabulary');
+        await updateProgress('vocabulary-ai');
+        if (processedItems % 50 === 0) {
+          await this.adminTasksService.log(taskId, 'info', `AI 用量（处理 ${processedItems} 项）：${usageStats.calls} 次调用，输入 ${usageStats.promptTokens} / 输出 ${usageStats.completionTokens} / 合计 ${usageStats.totalTokens} tokens`, {
+            step: 'ai-usage',
+            meta: { ...usageStats, processedItems },
+          });
+        }
       }
-    }
+    });
 
     for (const chunk of chunks) {
       summary.chunkChecked++;
       try {
-        const result = await this.prepareChunk(chunk.id);
+        const result = await this.prepareChunk(chunk.id, usageStats);
         if (result === 'updated') {
           summary.chunkEnriched++;
           await this.adminTasksService.log(taskId, 'info', `句块 "${chunk.text}" 已补全`, {
@@ -151,7 +259,7 @@ export class ContentPrepareService {
     for (const pattern of patterns) {
       summary.patternChecked++;
       try {
-        const result = await this.preparePattern(pattern.id);
+        const result = await this.preparePattern(pattern.id, usageStats);
         if (result === 'updated') {
           summary.patternEnriched++;
           await this.adminTasksService.log(taskId, 'info', `句型 "${pattern.pattern}" 已补全`, {
@@ -180,7 +288,7 @@ export class ContentPrepareService {
       step: 'completed',
       meta: summary,
     });
-    await this.adminTasksService.markCompleted(taskId, summary);
+    await this.adminTasksService.markCompleted(taskId, { ...summary, usage: usageStats });
     await options?.reportProgress?.(100);
     return summary;
   }
@@ -232,133 +340,212 @@ export class ContentPrepareService {
     return Array.isArray(value) && value.length > 0;
   }
 
-  /** Shared vocabulary-enrichment pipeline for package preparation and CSV imports. */
-  async prepareVocabulary(vocabId: string): Promise<'updated' | 'skipped'> {
+  private hasChinese(value?: string | null) {
+    return /[\u3400-\u9fff]/.test(value ?? '');
+  }
+
+  private static readonly VALID_DIFFICULTIES = ['L1', 'L2', 'L3', 'L4', 'L5'];
+
+  /**
+   * 阶段一：词典字段填充。以词典（dictionary_entry）为唯一数据源，
+   * 词典缺失时先跑词典流水线生成。落库：音标/音频/词性/英文释义/同义词/词典例句/中文释义（词典翻译）。
+   * 返回 'missing' 表示词典未收录，不进入 AI 富化阶段。
+   */
+  async prepareVocabularyDictionary(
+    vocabId: string,
+    usageStats?: AiUsageStats,
+  ): Promise<'updated' | 'skipped' | 'missing'> {
     const vocab = await this.prisma.vocabulary.findUnique({ where: { id: vocabId } });
-    if (!vocab?.word?.trim()) return 'skipped';
-    if (
-      vocab.definitionEn?.trim() &&
-      vocab.description?.trim() &&
-      this.hasExamples(vocab.examples) &&
-      (vocab.phoneticUs?.trim() || vocab.phoneticUk?.trim()) &&
-      (vocab.audioUsUrl?.trim() || vocab.audioUkUrl?.trim())
-    ) {
-      return 'skipped';
+    const word = vocab?.word?.trim();
+    if (!word) return 'skipped';
+    const key = word.toLowerCase().trim();
+
+    // 1) 统一数据源：dictionary_entry（缓存 miss 则跑完整流水线生成）
+    let entry = (await this.prisma.dictionaryEntry.findUnique({
+      where: { word: key },
+    })) as unknown as DictionaryEntryData | null;
+    if (!entry) {
+      entry = (await this.dictionaryService.runFullPipeline(key, usageStats ? usageCallback(usageStats) : undefined)) as unknown as DictionaryEntryData | null;
     }
+    if (!entry) return 'missing'; // 词典未收录该词
 
-    const entry = await this.lookupFreeDictionaryEntry(vocab.word);
-    if (!entry) return 'skipped';
+    const pronunciations = entry.pronunciations ?? [];
+    const clusters = entry.senseClusters ?? [];
+    const allSenses = clusters.flatMap((c) => c.senses);
+    const primaryCluster = clusters.find((c) => c.rank === 1) ?? clusters[0];
 
-    const fields = await this.buildVocabularyFields(vocab.word.trim(), entry);
+    // 2) 音标/音频：以词典为准（isPreferred 优先）
+    const us = pronunciations.find((p) => p.type === 'us' && p.isPreferred) ?? pronunciations.find((p) => p.type === 'us');
+    const uk = pronunciations.find((p) => p.type === 'uk' && p.isPreferred) ?? pronunciations.find((p) => p.type === 'uk');
+    const phoneticUs = us?.ipa ?? '';
+    const phoneticUk = uk?.ipa ?? '';
+    const audioUsUrl = us?.audioUrl ?? '';
+    const audioUkUrl = uk?.audioUrl ?? '';
+
+    // 3) 英文释义（含词典流水线翻译的中文，格式与语料库既有规范一致）
+    const partOfSpeech = primaryCluster?.posBucket ?? allSenses[0]?.partOfSpeech ?? '';
+    const definitionEn = allSenses
+      .map((s) => `${s.partOfSpeech}: ${s.definition}${s.translations?.zh ? `  [${s.translations.zh}]` : ''}`)
+      .join('; ');
+
+    // 4) 例句：优先词典中英对照例句（按簇 rank 顺序，取前 5）
+    const dictExamples: { en: string; zh: string; level: string; source: string }[] = [];
+    const seenExamples = new Set<string>();
+    for (const cluster of clusters) {
+      for (const sense of cluster.senses) {
+        for (const example of sense.examples ?? []) {
+          const en = example.en?.trim();
+          if (!en || seenExamples.has(en.toLowerCase())) continue;
+          seenExamples.add(en.toLowerCase());
+          dictExamples.push({
+            en,
+            zh: example.zh ?? '',
+            level: 'intermediate',
+            source: example.source ?? 'dictionary',
+          });
+        }
+      }
+    }
+    const examples = dictExamples.slice(0, 5);
+    const entrySynonyms = entry.entrySynonyms ?? [];
+
+    // 5) 词典字段落库（AI 部分由 prepareVocabularyAi 补漏）
+    // 例句：词典例句仅在已有例句为空时写入，避免重跑任务时覆盖 AI 阶段生成的例句
+    const existingExamples = Array.isArray(vocab.examples) ? (vocab.examples as any[]) : [];
+    const examplesForStore = existingExamples.length > 0 ? existingExamples : examples;
     await this.prisma.vocabulary.update({
       where: { id: vocabId },
       data: {
-        ...fields,
-        examples: fields.examples as Prisma.InputJsonValue,
+        phoneticUs: phoneticUs || (vocab.phoneticUs ?? ''),
+        phoneticUk: phoneticUk || (vocab.phoneticUk ?? ''),
+        audioUsUrl: audioUsUrl || (vocab.audioUsUrl ?? ''),
+        audioUkUrl: audioUkUrl || (vocab.audioUkUrl ?? ''),
+        partOfSpeech: partOfSpeech || (vocab.partOfSpeech ?? ''),
+        definitionEn: definitionEn || vocab.definitionEn || '',
+        synonyms: entrySynonyms.length ? entrySynonyms : (vocab.synonyms ?? []),
+        examples: examplesForStore as Prisma.InputJsonValue,
+        // 中文释义：词典翻译按词性分组拼接优先，AI 兜底在阶段二
+        meaning: this.buildMeaningFromClusters(clusters) || vocab.meaning || '',
       },
     });
     return 'updated';
   }
 
-  private async lookupFreeDictionaryEntry(word: string): Promise<FreeDictionaryEntry | null> {
-    const key = word.toLowerCase().trim();
-    const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(key)}`);
-    if (!response.ok) return null;
-    const entries = (await response.json()) as FreeDictionaryEntry[];
-    return entries?.[0] ?? null;
+  /**
+   * 单次完整富化（词典字段 + AI 补漏），供管理后台"富化"按钮使用。
+   */
+  async prepareVocabularyFull(
+    vocabId: string,
+    usageStats?: AiUsageStats,
+  ): Promise<'updated' | 'skipped'> {
+    const dict = await this.prepareVocabularyDictionary(vocabId, usageStats);
+    if (dict === 'missing') return 'skipped';
+    return this.prepareVocabularyAi(vocabId, usageStats);
   }
 
-  private getBestPhonetic(entry: FreeDictionaryEntry) {
-    if (entry.phonetic) return entry.phonetic;
-    return entry.phonetics?.find((p) => p.text)?.text ?? '';
+  /**
+   * 阶段二：AI 富化补漏。基于已落库的词典字段，补全：讲解（description）、
+   * 例句不足 3 条时用 AI 原创例句、难度、音标缺失，中文释义 AI 兜底。
+   * 词典未收录（definitionEn 为空）直接跳过。
+   */
+  async prepareVocabularyAi(
+    vocabId: string,
+    usageStats?: AiUsageStats,
+  ): Promise<'updated' | 'skipped'> {
+    const vocab = await this.prisma.vocabulary.findUnique({ where: { id: vocabId } });
+    const word = vocab?.word?.trim();
+    if (!word) return 'skipped';
+    if (!vocab.definitionEn?.trim()) return 'skipped'; // 词典未收录，无基础数据
+
+    // 从落库的 definitionEn 解析英文释义（保留末尾的中文翻译 [xxx]，避免 AI 重复翻译）
+    const defs = (vocab.definitionEn ?? '')
+      .split('; ')
+      .map((d) => d.trim())
+      .filter(Boolean);
+    const examples: { en: string }[] = ((vocab.examples as any[]) ?? []).map((e: any) => ({ en: e.en })).filter((e) => e.en);
+
+    // 字段完整性检查：中文释义 / 讲解 / 例句不足 3 条 / 音标缺失 / 难度无效 → 触发 AI 补漏
+    const validDifficulty = ContentPrepareService.VALID_DIFFICULTIES.includes(vocab.difficulty ?? '');
+    const needsAi =
+      !this.hasChinese(vocab.meaning) ||
+      !vocab.description?.trim() ||
+      examples.length < 3 ||
+      !vocab.phoneticUs ||
+      !vocab.phoneticUk ||
+      !validDifficulty;
+
+    let aiResult: VocabularyAiEnrichResult | null = null;
+    if (needsAi) {
+      try {
+        aiResult = await this.adminContentAiService.enrichVocabulary(
+          {
+            word,
+            definitions: defs,
+            examples,
+            phoneticUs: vocab.phoneticUs || undefined,
+            phoneticUk: vocab.phoneticUk || undefined,
+            meaningExists: this.hasChinese(vocab.meaning),
+            descriptionExists: !!vocab.description?.trim(),
+            difficultyExists: validDifficulty,
+          },
+          usageStats ? usageCallback(usageStats) : undefined,
+        );
+      } catch {
+        // AI 失败不阻塞词典字段落库
+      }
+    }
+
+    // 例句：词典例句不足 3 条时用 AI 生成的原创例句补齐
+    const examplesForStore = examples.length >= 3
+      ? (vocab.examples as Prisma.InputJsonValue)
+      : (aiResult?.generatedExamples?.length ? aiResult.generatedExamples as Prisma.InputJsonValue : (vocab.examples as Prisma.InputJsonValue));
+
+    await this.prisma.vocabulary.update({
+      where: { id: vocabId },
+      data: {
+        phoneticUs: vocab.phoneticUs || aiResult?.phoneticUs || '',
+        phoneticUk: vocab.phoneticUk || aiResult?.phoneticUk || '',
+        examples: examplesForStore,
+        meaning: this.hasChinese(vocab.meaning) ? vocab.meaning : (aiResult?.meaning || vocab.meaning || ''),
+        description: aiResult?.description || vocab.description || '',
+        // 难度：已有有效值保留；缺失/无效时用 AI 判定值补齐
+        difficulty: validDifficulty ? (vocab.difficulty ?? 'L3') : (aiResult?.difficulty || vocab.difficulty || 'L3'),
+      },
+    });
+    return 'updated';
   }
 
-  private normalizeAudio(url?: string) {
-    if (!url) return '';
-    if (url.startsWith('//')) return `https:${url}`;
-    return url;
-  }
-
-  private deriveMeaning(definitionsEn: string): string {
-    if (!definitionsEn?.includes('; ')) return '';
+  /** 从词典义项的中文翻译按词性分组拼接出简洁中文释义（n. 接收；接待 / v. 介绍） */
+  private buildMeaningFromClusters(clusters: DictionaryEntryData['senseClusters']): string {
     const zhByPos: Record<string, string[]> = {};
-    definitionsEn.split('; ').forEach((definition) => {
-      const colonIdx = definition.indexOf(': ');
-      const posRaw = colonIdx > 0 ? definition.slice(0, colonIdx) : '';
-      const pos = posRaw === 'verb' ? 'v.' : posRaw === 'noun' ? 'n.' : posRaw === 'adj' ? 'adj.' : posRaw === 'adv' ? 'adv.' : posRaw;
-      const zhMatch = definition.match(/\s\s\[(.+?)\]$/);
-      if (zhMatch && pos) {
-        if (!zhByPos[pos]) zhByPos[pos] = [];
-        const zhClean = zhMatch[1]
+    for (const cluster of clusters ?? []) {
+      for (const sense of cluster.senses) {
+        const zh = sense.translations?.zh?.trim();
+        if (!zh) continue;
+        const posKey =
+          sense.partOfSpeech === 'noun' ? 'n.' :
+          sense.partOfSpeech === 'verb' ? 'v.' :
+          sense.partOfSpeech === 'adj' ? 'adj.' :
+          sense.partOfSpeech === 'adv' ? 'adv.' :
+          sense.partOfSpeech;
+        if (!posKey) continue;
+        if (!zhByPos[posKey]) zhByPos[posKey] = [];
+        const clean = zh
           .replace(/[（(][^)）]*[)）]/g, '')
           .replace(/^[。，,、\s]+|[。，,、\s]+$/g, '');
-        if (zhClean && !zhByPos[pos].includes(zhClean)) zhByPos[pos].push(zhClean);
+        if (clean && !zhByPos[posKey].includes(clean)) zhByPos[posKey].push(clean);
       }
-    });
+    }
+    if (Object.keys(zhByPos).length === 0) return '';
     return Object.entries(zhByPos)
       .map(([pos, zhs]) => `${pos} ${zhs.join('；')}`)
       .join(' / ');
   }
 
-  private async buildVocabularyFields(word: string, entry: FreeDictionaryEntry) {
-    const phonetic = this.getBestPhonetic(entry);
-    const phoneticsWithAudio = entry.phonetics?.filter((p) => p.audio) ?? [];
-    const usAudio = this.normalizeAudio(phoneticsWithAudio[0]?.audio);
-    const ukAudio = this.normalizeAudio(phoneticsWithAudio[1]?.audio);
-    const pos = entry.meanings?.[0]?.partOfSpeech || '';
-    const definitions = entry.meanings?.flatMap((meaning) =>
-      meaning.definitions.map((definition) => `${meaning.partOfSpeech}: ${definition.definition}`),
-    ) ?? [];
-
-    const dictExamples: { en: string; zh: string; level: string }[] = [];
-    const seenExamples = new Set<string>();
-    entry.meanings?.forEach((meaning) => {
-      meaning.definitions.forEach((definition) => {
-        if (definition.example && !seenExamples.has(definition.example)) {
-          seenExamples.add(definition.example);
-          dictExamples.push({ en: definition.example, zh: '', level: 'intermediate' });
-        }
-      });
-    });
-    const examples = dictExamples.slice(0, 5);
-
-    let aiResult: Awaited<ReturnType<AdminContentAiService['enrichVocabulary']>> | null = null;
-    try {
-      aiResult = await this.adminContentAiService.enrichVocabulary({
-        word,
-        definitions,
-        examples: examples.map((example) => ({ en: example.en })),
-        phoneticUs: phonetic || undefined,
-        phoneticUk: (entry.phonetics?.length && entry.phonetics.length > 1 ? entry.phonetics[1]?.text : undefined) || undefined,
-      });
-    } catch (error: any) {
-      // AI failure should not discard dictionary fields.
-    }
-
-    const defsWithZh = definitions.map((definition, index) => {
-      const zh = aiResult?.definitionTranslations?.[index] ?? '';
-      return zh ? `${definition}  [${zh}]` : definition;
-    }).join('; ');
-
-    const generatedExamples = aiResult?.generatedExamples?.length
-      ? aiResult.generatedExamples
-      : examples;
-    const dictPhoneticUk = entry.phonetics?.[1]?.text ?? entry.phonetics?.[0]?.text ?? '';
-
-    return {
-      audioUsUrl: usAudio,
-      audioUkUrl: ukAudio,
-      phoneticUs: aiResult?.phoneticUs || phonetic || '',
-      phoneticUk: aiResult?.phoneticUk || dictPhoneticUk || '',
-      definitionEn: defsWithZh,
-      partOfSpeech: pos,
-      examples: generatedExamples,
-      description: aiResult?.description || undefined,
-      meaning: aiResult?.meaning || this.deriveMeaning(defsWithZh),
-    };
-  }
-
-  private async prepareChunk(chunkId: string): Promise<'updated' | 'skipped'> {
+  private async prepareChunk(
+    chunkId: string,
+    usageStats?: AiUsageStats,
+  ): Promise<'updated' | 'skipped'> {
     const chunk = await this.prisma.chunk.findUnique({
       where: { id: chunkId },
       include: { examples: true },
@@ -366,10 +553,13 @@ export class ContentPrepareService {
     if (!chunk) return 'skipped';
     if (chunk.description?.trim() && chunk.examples.length > 0) return 'skipped';
 
-    const generated = await this.adminContentAiService.enrichChunk({
-      text: chunk.text,
-      meaning: chunk.meaning ?? '',
-    });
+    const generated = await this.adminContentAiService.enrichChunk(
+      {
+        text: chunk.text,
+        meaning: chunk.meaning ?? '',
+      },
+      usageStats ? usageCallback(usageStats) : undefined,
+    );
 
     await this.prisma.$transaction(async (tx) => {
       await tx.chunkExample.deleteMany({ where: { chunkId } });
@@ -386,15 +576,21 @@ export class ContentPrepareService {
     return 'updated';
   }
 
-  private async preparePattern(patternId: string): Promise<'updated' | 'skipped'> {
+  private async preparePattern(
+    patternId: string,
+    usageStats?: AiUsageStats,
+  ): Promise<'updated' | 'skipped'> {
     const pattern = await this.prisma.sentencePattern.findUnique({ where: { id: patternId } });
     if (!pattern) return 'skipped';
     if (pattern.description?.trim() && this.hasExamples(pattern.examples)) return 'skipped';
 
-    const generated = await this.adminContentAiService.enrichPattern({
-      pattern: pattern.pattern,
-      meaning: pattern.meaning ?? '',
-    });
+    const generated = await this.adminContentAiService.enrichPattern(
+      {
+        pattern: pattern.pattern,
+        meaning: pattern.meaning ?? '',
+      },
+      usageStats ? usageCallback(usageStats) : undefined,
+    );
 
     await this.prisma.sentencePattern.update({
       where: { id: patternId },

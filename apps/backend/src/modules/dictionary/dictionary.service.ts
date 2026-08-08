@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { DictionaryPipelineService } from './dictionary-pipeline.service';
 import { DictionaryClusteringService } from './dictionary-clustering.service';
-import type { SenseCluster, CleanedPronunciation } from './dictionary.types';
+import type { SenseCluster } from './dictionary.types';
 
 @Injectable()
 export class DictionaryService {
@@ -47,7 +47,7 @@ export class DictionaryService {
   // Full Pipeline Orchestrator
   // ════════════════════════════════════════════════════════════
 
-  async runFullPipeline(word: string) {
+  async runFullPipeline(word: string, onUsage?: (usage: any) => void) {
     const key = word.toLowerCase().trim();
     this.logger.log(`Starting pipeline for "${key}"`);
 
@@ -85,10 +85,10 @@ export class DictionaryService {
     let clusters = this.clustering.labelAndRank(refinedClusters, buckets, embeddingMap);
 
     // ── Stage 8: Translate ──
-    await this.pipeline.translateToChinese(clusters);
+    await this.pipeline.translateToChinese(clusters, onUsage);
 
     // ── Stage 9: AI Review ──
-    const reviewResult = await this.pipeline.aiReview(clusters, sourceUrl);
+    const reviewResult = await this.pipeline.aiReview(clusters, sourceUrl, onUsage);
     clusters = reviewResult.clusters;
 
     // Flatten senses from clusters for the `senses` column
@@ -222,48 +222,6 @@ export class DictionaryService {
         primaryPOS: primaryCluster?.posBucket ?? 'other',
         clusterCount: clusters.length,
       };
-    });
-  }
-
-  // ════════════════════════════════════════════════════════════
-  // Integration: Enrich existing Vocabulary record
-  // ════════════════════════════════════════════════════════════
-
-  async enrichVocabulary(vocabId: string) {
-    const vocab = await this.prisma.vocabulary.findUnique({ where: { id: vocabId } });
-    if (!vocab) return null;
-
-    const entry = await this.lookupWord(vocab.word);
-    if (!entry) return null;
-
-    const clusters = entry.senseClusters as unknown as SenseCluster[];
-    const primaryCluster = clusters.find((c) => c.rank === 1);
-    const pronunciations = entry.pronunciations as unknown as CleanedPronunciation[];
-
-    const uk =
-      pronunciations.find((p) => p.type === 'uk' && p.isPreferred) ??
-      pronunciations.find((p) => p.type === 'uk');
-    const us =
-      pronunciations.find((p) => p.type === 'us' && p.isPreferred) ??
-      pronunciations.find((p) => p.type === 'us');
-
-    const allSenses = clusters.flatMap((c) => c.senses);
-    const primarySense = primaryCluster?.senses[0];
-
-    return this.prisma.vocabulary.update({
-      where: { id: vocabId },
-      data: {
-        meaning: primarySense?.translations?.zh || vocab.meaning,
-        phoneticUk: uk?.ipa ?? vocab.phoneticUk,
-        phoneticUs: us?.ipa ?? vocab.phoneticUs,
-        audioUsUrl: us?.audioUrl ?? vocab.audioUsUrl,
-        audioUkUrl: uk?.audioUrl ?? vocab.audioUkUrl,
-        definitionEn: primarySense?.definition ?? vocab.definitionEn,
-        synonyms: primarySense?.synonyms ?? vocab.synonyms,
-        examples: allSenses.flatMap((s) =>
-          s.examples.map((e) => ({ en: e.en, zh: e.zh, level: e.relevance })),
-        ) as any,
-      },
     });
   }
 }
