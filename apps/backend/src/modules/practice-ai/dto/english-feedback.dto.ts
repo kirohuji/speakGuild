@@ -266,6 +266,20 @@ export class GenerateWarmupPipelineDto {
     totalItems?: number;
   };
 
+  /**
+   * 学习包组顺序约束（M2）：
+   * 后端优先根据 sceneId 查引用表计算整组上下文；
+   * excludedMaterialIds / reviewMaterialIds 作为显式兜底。
+   */
+  @IsObject()
+  @IsOptional()
+  constraints?: {
+    sceneId?: string;
+    excludedMaterialIds?: string[];
+    reviewMaterialIds?: string[];
+    difficulty?: string;
+  };
+
   @IsArray()
   @IsOptional()
   previousPipeline?: Array<Record<string, unknown>>;

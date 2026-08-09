@@ -426,6 +426,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
                         displayMeaning={local.vocabMeaning}
                         promptZh={getPromptText(item)}
                         answer={getAnswerText(item)}
+                        hint={item.hint}
                         imageUrl={item.imageUrl}
                         direction={local.direction}
                       />

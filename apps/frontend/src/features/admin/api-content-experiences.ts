@@ -52,6 +52,35 @@ export interface AiWritingTopicDraft {
   contentConfig: { writing: Record<string, any> }
 }
 
+/** 组内重排后的引用冲突（规则 C：允许重排，但必须展示） */
+export interface GroupReorderConflict {
+  sceneId: string
+  sceneTitle: string
+  sortOrder: number
+  conflicts: Array<{
+    kind: 'vocab' | 'chunk' | 'pattern'
+    materialId: string
+    text: string
+    source: string
+    sourceSortOrder: number
+  }>
+}
+
+export interface AssignGroupResult {
+  experience: AdminSceneExperience
+  reorderConflicts: GroupReorderConflict[]
+}
+
+/** 包级知识保存结果：正常返回 experience；引用冲突时返回 { conflicts } */
+export type UpdateKnowledgeResult = AdminSceneExperience | { conflicts: Array<{
+  kind: 'vocab' | 'chunk' | 'pattern'
+  materialId: string
+  text: string
+  sourceType: 'pack' | 'topic'
+  source: string
+  sourceSortOrder: number
+}> }
+
 export const contentExperienceAdminApi = {
   listGroups: () => get<PackageGroup[]>('/admin/content-experiences/groups'),
   createGroup: (data: Partial<PackageGroup>) => post<PackageGroup>('/admin/content-experiences/groups', data),
@@ -59,9 +88,9 @@ export const contentExperienceAdminApi = {
   deleteGroup: (id: string) => del(`/admin/content-experiences/groups/${id}`),
   getScene: (sceneId: string) => get<AdminSceneExperience>(`/admin/content-experiences/scenes/${sceneId}`),
   assignGroup: (sceneId: string, data: { groupId?: string | null; sortOrder?: number; volumeLabel?: string; requiredPrevious?: boolean }) =>
-    put<AdminSceneExperience>(`/admin/content-experiences/scenes/${sceneId}/group`, data),
-  updateKnowledge: (sceneId: string, data: { vocabularyIds: string[]; chunkIds: string[]; patternIds: string[] }) =>
-    put<AdminSceneExperience>(`/admin/content-experiences/scenes/${sceneId}/knowledge`, data),
+    put<AssignGroupResult>(`/admin/content-experiences/scenes/${sceneId}/group`, data),
+  updateKnowledge: (sceneId: string, data: { vocabularyIds: string[]; chunkIds: string[]; patternIds: string[]; forceReview?: boolean }) =>
+    put<UpdateKnowledgeResult>(`/admin/content-experiences/scenes/${sceneId}/knowledge`, data),
   attachEpub: (sceneId: string, assetId: string) =>
     post(`/admin/content-experiences/scenes/${sceneId}/epub`, { assetId }),
   generateWritingTopic: (sceneId: string, data: Record<string, unknown>) =>

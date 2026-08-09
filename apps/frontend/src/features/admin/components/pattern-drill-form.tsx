@@ -374,6 +374,7 @@ export function PatternDrillForm({ value, onChange, onDelete, patterns = [], gen
                     displayMeaning={local.patternMeaning}
                     promptZh={getPromptText(item)}
                     answer={getAnswerText(item)}
+                    hint={item.hint}
                     imageUrl={item.imageUrl}
                     direction={local.direction}
                   />

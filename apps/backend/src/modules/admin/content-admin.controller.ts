@@ -39,6 +39,8 @@ import { AdminTasksService } from '../admin-tasks/admin-tasks.service';
 import { ContentPrepareService } from '../admin-tasks/jobs/content-prepare.service';
 import { ListeningPipelineTextDto } from './dto/listening-pipeline.dto';
 import { ListeningTranscriptSegment } from '../tts/tts.service';
+import { MaterialConstraintService, type MaterialKind, type GroupSceneInfo } from '../content-experiences/material-constraint.service';
+import { SuggestTopicVocabsDto } from './dto/scene-admin.dto';
 
 function validateListeningTranscript(value: unknown) {
   if (value == null) return;
@@ -67,6 +69,19 @@ function normalizeOptionalForeignKey(value: string | null | undefined) {
   return normalized || null;
 }
 
+/** 从 AI 输出中提取 JSON 对象（容忍代码围栏与前后缀文本） */
+function extractJsonObject(text: string): any {
+  const cleaned = text.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start < 0 || end <= start) return null;
+  try {
+    return JSON.parse(cleaned.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+}
+
 @Controller('admin/content')
 export class ContentAdminController {
   constructor(
@@ -79,6 +94,7 @@ export class ContentAdminController {
     private readonly fileAssetsService: FileAssetsService,
     private readonly adminTasksService: AdminTasksService,
     private readonly contentPrepareService: ContentPrepareService,
+    private readonly materialConstraints: MaterialConstraintService,
   ) {}
 
   private async requireAdmin(req: Request) {
@@ -190,16 +206,45 @@ export class ContentAdminController {
       where: { id },
       include: {
         category: true,
-        trainingTopics: {
-          orderBy: { sortOrder: 'asc' },
-          include: {
-            topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
-            topicVocabs: { include: { vocab: true }, orderBy: { sortOrder: 'asc' } },
-            _count: { select: { activeChunks: true } },
-          },
-        },
+        group: { select: { id: true, name: true } },
+        // 话题列表由 GET /training-topics?sceneId= 分页提供，这里不再全量展开（避免每次进详情页拉取全部话题+材料）
+        _count: { select: { trainingTopics: true, storyEpisodes: true } },
       },
     });
+  }
+
+  /**
+   * 学习包材料引用上下文：当前包在组内的顺序、前序包/后序包及其认领材料。
+   * 前端用于材料池展示（已排除/可复习）、词汇推荐与冲突提示。
+   */
+  @Get('scenes/:id/material-context')
+  async getSceneMaterialContext(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    const context = await this.materialConstraints.getGroupContext(id);
+    const allClaims = [...context.earlierScenes, ...context.laterScenes].flatMap((scene) => scene.claims);
+    const texts = await this.materialConstraints.resolveMaterialTexts(
+      allClaims.map((claim) => ({ kind: claim.kind, materialId: claim.materialId })),
+    );
+    const decorate = (scenes: GroupSceneInfo[]) =>
+      scenes.map((scene) => ({
+        sceneId: scene.sceneId,
+        title: scene.title,
+        sortOrder: scene.sortOrder,
+        claims: scene.claims.map((claim) => ({
+          kind: claim.kind,
+          materialId: claim.materialId,
+          role: claim.role,
+          topicId: claim.topicId,
+          text: texts.get(`${claim.kind}:${claim.materialId}`) ?? '',
+        })),
+      }));
+    return {
+      groupId: context.groupId,
+      groupName: context.groupName,
+      sortOrder: context.sortOrder,
+      earlierScenes: decorate(context.earlierScenes),
+      laterScenes: decorate(context.laterScenes),
+    };
   }
 
   @Post('scenes')
@@ -230,6 +275,8 @@ export class ContentAdminController {
           tx.sceneVocabulary.deleteMany({ where: { sceneId: id } }),
           tx.sceneChunk.deleteMany({ where: { sceneId: id } }),
           tx.sceneSentencePattern.deleteMany({ where: { sceneId: id } }),
+          // 包级材料认领一并释放（话题级引用保留）
+          tx.sceneMaterialReference.deleteMany({ where: { sceneId: id, topicId: null } }),
         ]);
       }
       return scene;
@@ -317,10 +364,30 @@ export class ContentAdminController {
   // ════════════════════════════════════════════════════════════
 
   @Get('vocabularies')
-  async listVocabularies(@Req() req: Request) {
+  async listVocabularies(@Req() req: Request, @Query('search') search?: string) {
     await this.requireAdmin(req);
+    // 轻量字段 + 搜索 + 上限：词汇库上万条，全量返回（含 examples/collocations 等大字段）
+    // 会产生 40MB+ 响应导致话题编辑器卡顿。选择器改为服务端搜索，按需拉取。
+    const keyword = search?.trim();
     return this.prisma.vocabulary.findMany({
+      where: keyword
+        ? {
+            OR: [
+              { word: { contains: keyword, mode: 'insensitive' } },
+              { meaning: { contains: keyword, mode: 'insensitive' } },
+            ],
+          }
+        : undefined,
       orderBy: { sortOrder: 'asc' },
+      take: 100,
+      select: {
+        id: true,
+        word: true,
+        meaning: true,
+        description: true,
+        difficulty: true,
+        sortOrder: true,
+      },
     });
   }
 
@@ -451,52 +518,171 @@ export class ContentAdminController {
     });
   }
 
+  /**
+   * 根据已绑句型/句块推荐搭配词汇（M3）
+   * 规则预筛（引用表约束 + 难度 + 搭配启发式）→ AI 排序并给出推荐理由。
+   */
+  @Post('training-topics/:id/suggest-vocabs')
+  async suggestTopicVocabs(@Req() req: Request, @Param('id') id: string, @Body() dto: SuggestTopicVocabsDto) {
+    await this.requireAdmin(req);
+
+    const topic = await this.prisma.trainingTopic.findUnique({
+      where: { id },
+      include: {
+        scene: { select: { id: true, requiredOutputLevel: true } },
+        topicPatterns: { include: { pattern: true } },
+        activeChunks: { include: { chunk: { include: { examples: { select: { en: true } } } } } },
+        topicVocabs: { include: { vocab: true } },
+      },
+    });
+    if (!topic) throw new NotFoundException('学习话题不存在');
+
+    const patternIds = dto.patternIds ?? topic.topicPatterns.map((tp) => tp.pattern.id);
+    const chunkIds = dto.chunkIds ?? topic.activeChunks.map((ac) => ac.chunk.id);
+    const difficulty = dto.difficulty ?? topic.difficulty ?? topic.scene.requiredOutputLevel;
+    const count = Math.min(Math.max(dto.count ?? 8, 1), 20);
+
+    const [patterns, chunks] = await Promise.all([
+      patternIds.length ? this.prisma.sentencePattern.findMany({ where: { id: { in: patternIds } } }) : [],
+      chunkIds.length
+        ? this.prisma.chunk.findMany({ where: { id: { in: chunkIds } }, include: { examples: { select: { en: true } } } })
+        : [],
+    ]);
+
+    // ── 引用表约束 ──
+    // excluded：后序包 learn 认领 + 本包其他话题已认领（learn）
+    // earlier：前序包认领（learn + review），可作复习候选（带标记）
+    const context = await this.materialConstraints.getGroupContext(topic.sceneId);
+    const laterClaimed = new Set<string>();
+    const earlierClaimed = new Set<string>();
+    for (const scene of context.laterScenes) {
+      for (const claim of scene.claims) {
+        if (claim.role === 'learn') laterClaimed.add(`${claim.kind}:${claim.materialId}`);
+      }
+    }
+    for (const scene of context.earlierScenes) {
+      for (const claim of scene.claims) earlierClaimed.add(`${claim.kind}:${claim.materialId}`);
+    }
+    const packRefs = await this.prisma.sceneMaterialReference.findMany({
+      where: { sceneId: topic.sceneId, topicId: { not: null }, role: 'learn' },
+      select: { materialType: true, materialId: true },
+    });
+    for (const ref of packRefs) laterClaimed.add(`${ref.materialType}:${ref.materialId}`);
+    const boundIds = new Set(topic.topicVocabs.map((tv) => tv.vocab.id));
+
+    // ── 难度过滤：目标 L(n)，候选限 L(n-1)..L(n+1)（clamp 到 L1-L5） ──
+    const targetLevel = /^L([1-9])$/i.test(difficulty) ? Number(difficulty.slice(1)) : null;
+    const levelOf = (value?: string | null) => (/^L([1-9])$/i.test(value ?? '') ? Number((value ?? '').slice(1)) : null);
+
+    // ── 搭配启发式打分 ──
+    const posHints = new Set<string>();
+    for (const p of patterns) {
+      const text = `${p.pattern} ${p.meaning ?? ''}`.toLowerCase();
+      if (/\bverb\b|\bdo\b|\bdoes\b|\bcan\b|\bwill\b|\bshould\b|\bwould\b|\bplease\b|\blet\b|动词/.test(text)) posHints.add('verb');
+      if (/\badj\b|\badjective\b|形容词/.test(text)) posHints.add('adj');
+      if (/\bnoun\b|名词/.test(text)) posHints.add('noun');
+    }
+    const chunkExamples = chunks.flatMap((c) => c.examples.map((e) => e.en.toLowerCase()));
+    const patternTexts = patterns.map((p) => `${p.pattern} ${p.meaning ?? ''}`.toLowerCase());
+    const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+    const library = await this.prisma.vocabulary.findMany({
+      orderBy: [{ outputPriority: 'desc' }, { sortOrder: 'asc' }],
+    });
+    const scored: Array<{ vocabulary: (typeof library)[number]; score: number }> = [];
+    for (const vocabulary of library) {
+      if (boundIds.has(vocabulary.id)) continue;
+      if (laterClaimed.has(`vocab:${vocabulary.id}`)) continue;
+      if (targetLevel != null) {
+        const level = levelOf(vocabulary.difficulty);
+        if (level != null && Math.abs(level - targetLevel) > 1) continue;
+      }
+      let score = 0;
+      const word = vocabulary.word.toLowerCase();
+      const pos = (vocabulary.partOfSpeech ?? '').toLowerCase();
+      if (posHints.has(pos)) score += 2;
+      const wordPattern = new RegExp(`(^|[^a-z])${escapeRegExp(word)}([^a-z]|$)`);
+      if (chunkExamples.some((example) => wordPattern.test(example))) score += 3;
+      if (patternTexts.some((text) => text.includes(word))) score += 2;
+      const level = levelOf(vocabulary.difficulty);
+      if (targetLevel != null && level != null) score += Math.max(0, 3 - Math.abs(level - targetLevel));
+      if (vocabulary.outputPriority === 'high') score += 1;
+      scored.push({ vocabulary, score });
+    }
+    scored.sort((a, b) => b.score - a.score);
+    const candidates = scored.slice(0, 60);
+
+    // ── AI 排序与推荐理由（失败时回退到规则排序） ──
+    let ranked = candidates.slice(0, count);
+    const reasons = new Map<string, string>();
+    try {
+      const llmConfig = await this.aiModelService.getLlmConfig();
+      if (llmConfig.apiKey && candidates.length) {
+        const client = createOpenAI({ apiKey: llmConfig.apiKey, baseURL: llmConfig.baseUrl });
+        const model = client.chat(llmConfig.model);
+        const candidateLines = candidates
+          .map(({ vocabulary }) => `- ${vocabulary.id} | ${vocabulary.word} | ${vocabulary.meaning} | ${vocabulary.partOfSpeech ?? ''} | ${vocabulary.difficulty}`)
+          .join('\n');
+        const patternLines = patterns.map((p) => `- ${p.pattern}${p.meaning ? ` — ${p.meaning}` : ''}`).join('\n') || '- (无)';
+        const chunkLines = chunks.map((c) => `- ${c.text}${c.meaning ? ` — ${c.meaning}` : ''}`).join('\n') || '- (无)';
+        const teaching = (dto.teachingMarkdown ?? '').slice(0, 1500);
+        const { text } = await generateText({
+          model,
+          prompt: `你是英语教学设计助手，为话题挑选最合适的练习词汇。\n\n话题目标难度：${difficulty}\n\n已绑定句型：\n${patternLines}\n\n已绑定句块：\n${chunkLines}\n\n教学文档（参考）：\n${teaching || '(无)'}\n\n候选词（id | 单词 | 中文释义 | 词性 | 难度）：\n${candidateLines}\n\n请从中选出最适合本话题练习的 ${count} 个单词：\n1. 语义/搭配与已绑句型、句块自然契合；\n2. 难度符合目标难度；\n3. 与话题场景相关优先。\n\n只输出 JSON：{"items":[{"vocabularyId":"候选词id","reason":"一句话中文理由（说明与哪个句型/句块搭配，为什么适合）"}]}，不要输出其他内容。`,
+          temperature: 0.4,
+          maxOutputTokens: 2000,
+        });
+        const parsed = extractJsonObject(text);
+        if (Array.isArray(parsed?.items) && parsed.items.length) {
+          const byId = new Map(candidates.map((item) => [item.vocabulary.id, item]));
+          const selected = parsed.items
+            .map((item: any) => byId.get(String(item?.vocabularyId)))
+            .filter((item): item is (typeof candidates)[number] => Boolean(item))
+            .slice(0, count);
+          if (selected.length) {
+            ranked = selected;
+            for (const item of parsed.items) {
+              reasons.set(String(item?.vocabularyId), String(item?.reason ?? ''));
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      console.warn(`[suggest-vocabs] AI 排序失败，回退规则排序: ${error.message}`);
+    }
+
+    return {
+      code: 200,
+      message: 'success',
+      data: {
+        items: ranked.map(({ vocabulary, score }) => ({
+          vocabularyId: vocabulary.id,
+          word: vocabulary.word,
+          meaning: vocabulary.meaning,
+          partOfSpeech: vocabulary.partOfSpeech ?? '',
+          difficulty: vocabulary.difficulty,
+          status: earlierClaimed.has(`vocab:${vocabulary.id}`) ? 'earlier' : 'available',
+          reason: reasons.get(vocabulary.id) ?? (score > 0 ? '与已绑句型/句块搭配度高' : '难度匹配'),
+          score,
+        })),
+      },
+    };
+  }
+
   @Post('training-topics')
   async createTrainingTopic(@Req() req: Request, @Body() dto: CreateTrainingTopicDto) {
     await this.requireAdmin(req);
-    const { chunkIds, vocabIds, patternIds, sentencePatterns, ...data } = dto;
+    const { chunkIds, vocabIds, patternIds, sentencePatterns, forceReview, ...data } = dto;
     const scene = await this.prisma.scene.findUnique({ where: { id: dto.sceneId }, select: { contentMode: true } });
     if (!scene) throw new NotFoundException('学习包不存在');
     if (['novel', 'story'].includes(scene.contentMode)) throw new BadRequestException('小说包和剧情包不使用训练话题');
     validateListeningTranscript(data.transcript);
     const activityType = ['writing', 'reading', 'listening'].includes(scene.contentMode) ? scene.contentMode : 'practice';
-    const topic = await this.prisma.trainingTopic.create({
-      data: {
-        ...data,
-        activityType: activityType as any,
-        inkScriptId: activityType === 'practice' ? normalizeOptionalForeignKey(data.inkScriptId) : null,
-        mediaAssetId: normalizeOptionalForeignKey(data.mediaAssetId),
-      },
-    });
-    if (chunkIds?.length) {
-      await this.prisma.trainingTopicChunk.createMany({
-        data: chunkIds.map((chunkId, i) => ({
-          topicId: topic.id,
-          chunkId,
-          sortOrder: i,
-        })),
-      });
-    }
-    if (vocabIds?.length) {
-      await this.prisma.trainingTopicVocab.createMany({
-        data: vocabIds.map((vocabId, i) => ({
-          topicId: topic.id,
-          vocabId,
-          sortOrder: i,
-        })),
-      });
-    }
-    // Prefer patternIds (multi-select); fall back to inline sentencePatterns
-    if (patternIds?.length) {
-      await this.prisma.trainingTopicSentencePattern.createMany({
-        data: patternIds.map((patternId, i) => ({
-          topicId: topic.id,
-          patternId,
-          sortOrder: i,
-        })),
-      });
-    } else if (sentencePatterns?.length) {
-      // Upsert each pattern into SentencePattern, then create join records
+
+    // 行内 sentencePatterns 优先入库为共享句型（即使后续因冲突中止，句型库本身可复用）
+    let resolvedPatternIds = patternIds ?? [];
+    if (!patternIds && sentencePatterns?.length) {
+      resolvedPatternIds = [];
       for (const sp of sentencePatterns) {
         const patternRecord = await this.prisma.sentencePattern.upsert({
           where: { pattern: sp.pattern },
@@ -509,15 +695,52 @@ export class ContentAdminController {
           },
           update: {},
         });
-        await this.prisma.trainingTopicSentencePattern.create({
-          data: {
-            topicId: topic.id,
-            patternId: patternRecord.id,
-            sortOrder: sp.sortOrder ?? 0,
-          },
-        });
+        resolvedPatternIds.push(patternRecord.id);
       }
     }
+
+    // 顺序约束校验（层 1 前序包 + 层 2 前序话题）
+    const claims = { vocabIds, chunkIds, patternIds: resolvedPatternIds };
+    const conflicts = await this.materialConstraints.computeTopicClaimConflicts({
+      sceneId: dto.sceneId,
+      topicId: null,
+      topicSortOrder: data.sortOrder ?? 0,
+      claims,
+    });
+    if (conflicts.length && !forceReview) {
+      return { code: 409, message: '存在材料引用冲突：部分单词/句块/句型已被前序内容认领', data: { conflicts } } as any;
+    }
+    const conflictMaterialIds = conflicts.map((conflict) => conflict.materialId);
+
+    const topic = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.trainingTopic.create({
+        data: {
+          ...data,
+          activityType: activityType as any,
+          inkScriptId: activityType === 'practice' ? normalizeOptionalForeignKey(data.inkScriptId) : null,
+          mediaAssetId: normalizeOptionalForeignKey(data.mediaAssetId),
+        },
+      });
+      if (chunkIds?.length) {
+        await tx.trainingTopicChunk.createMany({
+          data: chunkIds.map((chunkId, i) => ({ topicId: created.id, chunkId, sortOrder: i })),
+        });
+      }
+      if (vocabIds?.length) {
+        await tx.trainingTopicVocab.createMany({
+          data: vocabIds.map((vocabId, i) => ({ topicId: created.id, vocabId, sortOrder: i })),
+        });
+      }
+      if (resolvedPatternIds.length) {
+        await tx.trainingTopicSentencePattern.createMany({
+          data: resolvedPatternIds.map((patternId, i) => ({ topicId: created.id, patternId, sortOrder: i })),
+        });
+      }
+      // 引用表同步：冲突材料降级为 review（复习复用），其余为 learn（新学）
+      await this.materialConstraints.syncTopicReferences(tx, dto.sceneId, created.id, claims, conflictMaterialIds);
+      return created;
+    });
+
     return this.prisma.trainingTopic.findUnique({
       where: { id: topic.id },
       include: {
@@ -531,10 +754,11 @@ export class ContentAdminController {
   @Patch('training-topics/:id')
   async updateTrainingTopic(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateTrainingTopicDto) {
     await this.requireAdmin(req);
-    const { chunkIds, vocabIds, patternIds, sentencePatterns, ...data } = dto;
-    const current = await this.prisma.trainingTopic.findUnique({ where: { id }, select: { sceneId: true } });
+    const { chunkIds, vocabIds, patternIds, sentencePatterns, forceReview, ...data } = dto;
+    const current = await this.prisma.trainingTopic.findUnique({ where: { id }, select: { sceneId: true, sortOrder: true } });
     if (!current) throw new NotFoundException('学习话题不存在');
-    const scene = await this.prisma.scene.findUnique({ where: { id: data.sceneId ?? current.sceneId }, select: { contentMode: true } });
+    const sceneId = data.sceneId ?? current.sceneId;
+    const scene = await this.prisma.scene.findUnique({ where: { id: sceneId }, select: { contentMode: true } });
     if (!scene || ['novel', 'story'].includes(scene.contentMode)) throw new BadRequestException('当前学习包不使用训练话题');
     validateListeningTranscript(data.transcript);
     const activityType = ['writing', 'reading', 'listening'].includes(scene.contentMode) ? scene.contentMode : 'practice';
@@ -542,68 +766,80 @@ export class ContentAdminController {
     if (activityType !== 'practice') normalizedData.inkScriptId = null;
     else if (data.inkScriptId !== undefined) normalizedData.inkScriptId = normalizeOptionalForeignKey(data.inkScriptId);
     if (data.mediaAssetId !== undefined) normalizedData.mediaAssetId = normalizeOptionalForeignKey(data.mediaAssetId);
-    const topic = await this.prisma.trainingTopic.update({ where: { id }, data: normalizedData });
-    if (chunkIds) {
-      await this.prisma.trainingTopicChunk.deleteMany({ where: { topicId: id } });
-      if (chunkIds.length > 0) {
-        await this.prisma.trainingTopicChunk.createMany({
-          data: chunkIds.map((chunkId, i) => ({
-            topicId: id,
-            chunkId,
-            sortOrder: i,
-          })),
+
+    // 行内 sentencePatterns 优先入库为共享句型
+    let resolvedPatternIds = patternIds;
+    if (patternIds === undefined && sentencePatterns) {
+      resolvedPatternIds = [];
+      for (const sp of sentencePatterns) {
+        const patternRecord = await this.prisma.sentencePattern.upsert({
+          where: { pattern: sp.pattern },
+          create: {
+            pattern: sp.pattern,
+            meaning: sp.meaning || null,
+            slots: sp.slots || undefined,
+            examples: undefined,
+            difficulty: sp.difficulty || 'L1',
+          },
+          update: {},
         });
+        resolvedPatternIds.push(patternRecord.id);
       }
     }
-    if (vocabIds) {
-      await this.prisma.trainingTopicVocab.deleteMany({ where: { topicId: id } });
-      if (vocabIds.length > 0) {
-        await this.prisma.trainingTopicVocab.createMany({
-          data: vocabIds.map((vocabId, i) => ({
-            topicId: id,
-            vocabId,
-            sortOrder: i,
-          })),
-        });
-      }
+
+    // 只有本次请求真正修改了材料绑定（chunkIds/vocabIds/patternIds/sentencePatterns）才做约束校验与引用同步；
+    // 纯字段更新（如只保存 teachingMarkdown）不应触碰引用表。
+    const bindingChanged = chunkIds !== undefined || vocabIds !== undefined || patternIds !== undefined || sentencePatterns !== undefined;
+
+    // 顺序约束校验（层 1 前序包 + 层 2 前序话题），排除自身引用
+    const claims: { vocabIds?: string[]; chunkIds?: string[]; patternIds?: string[] } = {};
+    if (vocabIds !== undefined) claims.vocabIds = vocabIds;
+    if (chunkIds !== undefined) claims.chunkIds = chunkIds;
+    if (resolvedPatternIds !== undefined) claims.patternIds = resolvedPatternIds;
+    const conflicts = bindingChanged
+      ? await this.materialConstraints.computeTopicClaimConflicts({
+          sceneId,
+          topicId: id,
+          topicSortOrder: data.sortOrder ?? current.sortOrder,
+          claims,
+        })
+      : [];
+    if (conflicts.length && !forceReview) {
+      return { code: 409, message: '存在材料引用冲突：部分单词/句块/句型已被前序内容认领', data: { conflicts } } as any;
     }
-    // Prefer patternIds (multi-select); fall back to inline sentencePatterns
-    if (patternIds) {
-      await this.prisma.trainingTopicSentencePattern.deleteMany({ where: { topicId: id } });
-      if (patternIds.length > 0) {
-        await this.prisma.trainingTopicSentencePattern.createMany({
-          data: patternIds.map((patternId, i) => ({
-            topicId: id,
-            patternId,
-            sortOrder: i,
-          })),
-        });
-      }
-    } else if (sentencePatterns) {
-      await this.prisma.trainingTopicSentencePattern.deleteMany({ where: { topicId: id } });
-      if (sentencePatterns.length > 0) {
-        for (const sp of sentencePatterns) {
-          const patternRecord = await this.prisma.sentencePattern.upsert({
-            where: { pattern: sp.pattern },
-            create: {
-              pattern: sp.pattern,
-              meaning: sp.meaning || null,
-              slots: sp.slots || undefined,
-              examples: undefined,
-              difficulty: sp.difficulty || 'L1',
-            },
-            update: {},
-          });
-          await this.prisma.trainingTopicSentencePattern.create({
-            data: {
-              topicId: id,
-              patternId: patternRecord.id,
-              sortOrder: sp.sortOrder ?? 0,
-            },
+    const conflictMaterialIds = conflicts.map((conflict) => conflict.materialId);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.trainingTopic.update({ where: { id }, data: normalizedData });
+      if (chunkIds) {
+        await tx.trainingTopicChunk.deleteMany({ where: { topicId: id } });
+        if (chunkIds.length > 0) {
+          await tx.trainingTopicChunk.createMany({
+            data: chunkIds.map((chunkId, i) => ({ topicId: id, chunkId, sortOrder: i })),
           });
         }
       }
-    }
+      if (vocabIds) {
+        await tx.trainingTopicVocab.deleteMany({ where: { topicId: id } });
+        if (vocabIds.length > 0) {
+          await tx.trainingTopicVocab.createMany({
+            data: vocabIds.map((vocabId, i) => ({ topicId: id, vocabId, sortOrder: i })),
+          });
+        }
+      }
+      if (resolvedPatternIds !== undefined) {
+        await tx.trainingTopicSentencePattern.deleteMany({ where: { topicId: id } });
+        if (resolvedPatternIds.length > 0) {
+          await tx.trainingTopicSentencePattern.createMany({
+            data: resolvedPatternIds.map((patternId, i) => ({ topicId: id, patternId, sortOrder: i })),
+          });
+        }
+      }
+      // 引用表同步：冲突材料降级为 review，其余为 learn
+      if (bindingChanged) {
+        await this.materialConstraints.syncTopicReferences(tx, sceneId, id, claims, conflictMaterialIds);
+      }
+    });
     return this.prisma.trainingTopic.findUnique({
       where: { id },
       include: {
@@ -626,6 +862,7 @@ export class ContentAdminController {
       await tx.trainingTopicChunk.deleteMany({ where: { topicId: id } });
       await tx.trainingTopicVocab.deleteMany({ where: { topicId: id } });
       await tx.trainingTopicSentencePattern.deleteMany({ where: { topicId: id } });
+      await tx.sceneMaterialReference.deleteMany({ where: { topicId: id } }); // 释放材料认领
       return tx.trainingTopic.delete({ where: { id } });
     });
   }
@@ -2281,11 +2518,147 @@ ${contextBlock}
   /**
    * AI 生成话题教学文档（Markdown）
    * 用于「学习内容 / 编辑话题 / 知识点练习」中的话题级教学说明。
+   * 遵守学习包组顺序约束：不得出现后序包知识点，难度与话题/学习包对齐。
    */
   @Post('training-topics/:id/generate-teaching')
   async generateTopicTeachingMarkdown(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
 
+    try {
+      const llmConfig = await this.aiModelService.getLlmConfig();
+      if (!llmConfig.apiKey) throw new Error('LLM API Key 未配置');
+
+      const topic = await this.prisma.trainingTopic.findUnique({
+        where: { id },
+        include: {
+          scene: { select: { id: true, title: true, requiredOutputLevel: true } },
+          topicPatterns: { include: { pattern: true } },
+          topicVocabs: { include: { vocab: true } },
+          activeChunks: { include: { chunk: { include: { examples: { take: 2, orderBy: { sortOrder: 'asc' } } } } } },
+        },
+      });
+      if (!topic) throw new Error('学习话题不存在');
+
+      const difficulty = topic.difficulty || topic.scene.requiredOutputLevel || 'L2';
+
+      // ── 组约束上下文：后序包认领材料禁止出现，前序包材料可作为复习提及 ──
+      const context = await this.materialConstraints.getGroupContext(topic.sceneId);
+      const forbiddenRefs = context.laterScenes.flatMap((scene) => scene.claims.filter((claim) => claim.role === 'learn'));
+      const reviewRefs = context.earlierScenes.flatMap((scene) => scene.claims);
+      const texts = await this.materialConstraints.resolveMaterialTexts(
+        [...forbiddenRefs, ...reviewRefs].map((claim) => ({ kind: claim.kind, materialId: claim.materialId })),
+      );
+      const forbiddenLines = forbiddenRefs
+        .map((claim) => texts.get(`${claim.kind}:${claim.materialId}`))
+        .filter((text): text is string => Boolean(text));
+      const reviewLines = reviewRefs
+        .map((claim) => texts.get(`${claim.kind}:${claim.materialId}`))
+        .filter((text): text is string => Boolean(text));
+
+      const parts: string[] = [];
+      parts.push(`## 话题信息`);
+      parts.push(`- 学习包: ${topic.scene.title}`);
+      parts.push(`- 标题: ${topic.title}`);
+      parts.push(`- 难度: ${difficulty}`);
+      if (topic.description) parts.push(`- 描述: ${topic.description}`);
+      if (topic.promptZh) parts.push(`- 训练目标: ${topic.promptZh}`);
+      if (topic.promptEn) parts.push(`- 训练目标（英文）: ${topic.promptEn}`);
+
+      if (topic.activeChunks?.length) {
+        parts.push(`\n## 句块（实用表达）`);
+        for (const tc of topic.activeChunks) {
+          parts.push(`- **${tc.chunk.text}** — ${tc.chunk.meaning}`);
+          for (const ex of tc.chunk.examples ?? []) parts.push(`  - 例: ${ex.en} → ${ex.zh || ''}`);
+        }
+      }
+      if (topic.topicVocabs?.length) {
+        parts.push(`\n## 核心词汇`);
+        for (const tv of topic.topicVocabs) parts.push(`- **${tv.vocab.word}** — ${tv.vocab.meaning || ''}`);
+      }
+      if (topic.topicPatterns?.length) {
+        parts.push(`\n## 句式`);
+        for (const tp of topic.topicPatterns) parts.push(`- \`${tp.pattern.pattern}\` — ${tp.pattern.meaning || ''}`);
+      }
+      if (forbiddenLines.length) {
+        parts.push(`\n## 禁用知识点（后续学习包内容，绝对不能出现）`);
+        parts.push(forbiddenLines.join('、'));
+      }
+      if (reviewLines.length) {
+        parts.push(`\n## 前序复习材料（可提及，但不要作为新知识点展开）`);
+        parts.push(reviewLines.join('、'));
+      }
+
+      const contextBlock = parts.join('\n');
+
+      const client = createOpenAI({ apiKey: llmConfig.apiKey, baseURL: llmConfig.baseUrl });
+      const model = client.chat(llmConfig.model);
+
+      const { text } = await generateText({
+        model,
+        prompt: `你是一名英语学习教学设计专家。请根据以下话题信息，生成一份面向中国英语学习者的**练习助手教学文档**（Markdown 格式）。
+
+这份文档会在用户正式开始练习前展示在练习页顶部，帮助学习者快速把握要点。
+
+## 写作要求
+
+1. 语言：**全部用中文写**（仅英文例句保留英文）
+2. 语气：亲切、鼓励，像老师在课前做 briefing
+3. 长度：300-600 字
+4. 排版：规范的 Markdown，用 ## 分节，用 - 列表，英文用反引号或加粗
+5. 目标难度：${difficulty}，词汇与表达控制在对应等级
+
+## 文档结构（请严格按此顺序）
+
+### 🎯 本话题目标
+用 2-3 句话说明这次练习要达成什么、难度等级是什么。
+
+### 📖 场景/情境简介
+用 2-3 句话概括话题设定（谁、在哪、什么场景）。
+
+### 🧩 核心词汇
+列出 3-6 个最重要的词汇，每个格式：\`word\` — 中文释义（简短的记忆提示）
+
+### 💬 实用表达
+列出 3-5 个最常用的句块/表达，每个格式：**表达** — 中文释义 — 使用场景说明
+
+### 🔤 句型框架
+列出本话题的句型，每个格式：\`pattern\` — 含义 — 怎么用
+
+### ✨ 学习提示
+2-3 条实用建议，帮助用户更好地完成练习。
+
+## 硬性约束（必须遵守）
+
+- 禁止出现任何「禁用知识点」中的内容（它们是后续学习包的知识点，出现即算泄露）。
+- 「前序复习材料」只允许作为例句或复习提示轻量带过，不要当作新知识点展开讲解。
+
+---
+
+## 输入信息
+
+${contextBlock}
+
+## 输出
+
+直接输出 Markdown 文档，不要任何额外说明。`,
+        temperature: 0.5,
+        maxOutputTokens: 3000,
+      });
+
+      let md = text
+        .replace(/```markdown\s*/gi, '')
+        .replace(/```md\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+
+      return {
+        code: 200,
+        message: 'success',
+        data: { markdown: md },
+      };
+    } catch (err: any) {
+      return { code: 500, message: err.message, data: null };
+    }
   }
 
   // ════════════════════════════════════════════════════════════

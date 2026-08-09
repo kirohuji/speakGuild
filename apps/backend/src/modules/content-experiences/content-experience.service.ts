@@ -16,6 +16,7 @@ import {
   UpdateSceneKnowledgeDto,
 } from './dto/content-experience.dto';
 import { EpubAnalysisService } from './epub-analysis.service';
+import { MaterialConstraintService } from './material-constraint.service';
 
 function toJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
@@ -58,6 +59,7 @@ export class ContentExperienceService {
     private readonly learning: LearningService,
     private readonly llmFactory: LlmProviderFactory,
     private readonly aiModels: AiModelService,
+    private readonly materialConstraints: MaterialConstraintService,
   ) {}
 
   listGroups() {
@@ -271,8 +273,12 @@ export class ContentExperienceService {
     });
     if (!scene) throw new NotFoundException('学习包不存在');
     if (!dto.groupId) {
-      await this.prisma.packageGroupItem.deleteMany({ where: { sceneId } });
-      return { groupItem: null };
+      await this.prisma.$transaction(async (tx) => {
+        await tx.packageGroupItem.deleteMany({ where: { sceneId } });
+        // 同步约束字段：退出系列后不再受组内顺序约束
+        await tx.scene.update({ where: { id: sceneId }, data: { groupId: null } });
+      });
+      return { experience: await this.getSceneExperienceAdmin(sceneId), reorderConflicts: [] };
     }
     const group = await this.prisma.packageGroup.findUnique({
       where: { id: dto.groupId },
@@ -295,6 +301,8 @@ export class ContentExperienceService {
       });
       for (let index = 0; index < orderedSceneIds.length; index += 1) {
         const memberSceneId = orderedSceneIds[index];
+        // 同步顺序约束字段（Scene.groupId / Scene.sortOrder，层 1 顺序的事实源）
+        await tx.scene.update({ where: { id: memberSceneId }, data: { groupId: group.id, sortOrder: index } });
         if (memberSceneId === sceneId) {
           await tx.packageGroupItem.create({
             data: {
@@ -313,7 +321,9 @@ export class ContentExperienceService {
         }
       }
     });
-    return this.getSceneExperienceAdmin(sceneId);
+    // 重排后扫描组内引用冲突，供前端展示警告（规则 C：允许重排，但不静默）
+    const reorderConflicts = await this.materialConstraints.scanGroupConflicts(group.id);
+    return { experience: await this.getSceneExperienceAdmin(sceneId), reorderConflicts };
   }
 
   async updateSceneKnowledge(sceneId: string, dto: UpdateSceneKnowledgeDto) {
@@ -325,6 +335,20 @@ export class ContentExperienceService {
     const vocabularyIds = [...new Set(dto.vocabularyIds)];
     const chunkIds = [...new Set(dto.chunkIds)];
     const patternIds = [...new Set(dto.patternIds)];
+
+    // 顺序约束校验（层 1：组内前序包认领）
+    const claims = { vocabIds: vocabularyIds, chunkIds, patternIds };
+    const conflicts = await this.materialConstraints.computeTopicClaimConflicts({
+      sceneId,
+      topicId: null,
+      topicSortOrder: 0,
+      claims,
+    });
+    if (conflicts.length && !dto.forceReview) {
+      return { code: 409, message: '存在材料引用冲突：部分单词/句块/句型已被前序包认领', data: { conflicts } } as any;
+    }
+    const conflictMaterialIds = conflicts.map((conflict) => conflict.materialId);
+
     await this.prisma.$transaction(async (tx) => {
       await Promise.all([
         tx.sceneVocabulary.deleteMany({ where: { sceneId } }),
@@ -340,6 +364,8 @@ export class ContentExperienceService {
       if (patternIds.length) await tx.sceneSentencePattern.createMany({
         data: patternIds.map((patternId, sortOrder) => ({ sceneId, patternId, sortOrder })),
       });
+      // 引用表同步：冲突材料降级为 review，其余为 learn（包级，topicId = null）
+      await this.materialConstraints.syncSceneLevelReferences(tx, sceneId, claims, conflictMaterialIds);
     });
     return this.getSceneExperienceAdmin(sceneId);
   }

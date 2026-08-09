@@ -18,13 +18,14 @@ import { FileAssetsModule } from '../file-assets/file-assets.module';
 import { LearningModule } from '../learning/learning.module';
 import { NotificationModule } from '../notification/notification.module';
 import { AdminTasksModule } from '../admin-tasks/admin-tasks.module';
+import { ContentExperienceModule } from '../content-experiences/content-experience.module';
 import { AdminContentAiService } from './admin-content-ai.service';
 import { AiModelModule } from '../ai-model/ai-model.module';
 import { NarrativeVideoController } from './narrative-video.controller';
 import { AdminFileAssetsController } from './admin-file-assets.controller';
 
 @Module({
-  imports: [PayModule, PracticeAiModule, DictionaryModule, ThemeManageModule, DailySentenceModule, TtsModule, FileAssetsModule, LearningModule, NotificationModule, AdminTasksModule, AiModelModule],
+  imports: [PayModule, PracticeAiModule, DictionaryModule, ThemeManageModule, DailySentenceModule, TtsModule, FileAssetsModule, LearningModule, NotificationModule, AdminTasksModule, AiModelModule, ContentExperienceModule],
   controllers: [AdminController, ContentAdminController, SystemConfigController, PublicSystemConfigController, LearningPackAdminController, PackageDataController, NarrativeVideoController, AdminFileAssetsController],
   providers: [AdminService, AdminStatsService, SystemConfigService, LearningPackAdminService, AdminContentAiService],
   exports: [SystemConfigService],

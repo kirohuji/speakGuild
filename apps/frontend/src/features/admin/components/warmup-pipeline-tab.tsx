@@ -32,6 +32,7 @@ import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
 import { synthesizeAdminAudio } from '@/lib/admin-tts-helpers'
+import { getSceneMaterialContext, type SceneMaterialContext } from '@/features/admin/api-content-admin'
 
 import {
   ChunkSubstitutionForm,
@@ -84,6 +85,8 @@ export interface WarmupMaterialUsage {
 interface Props {
   value: WarmupPipelineData
   onChange: (value: WarmupPipelineData) => void
+  /** 学习包 id：用于后端按引用表计算组顺序约束（后序包知识点排除 / 前序包复习） */
+  sceneId?: string
   vocabs?: { id: string; word: string; meaning: string; tier?: 'core' | 'ext' | 'carry' }[]
   chunks?: { id: string; text: string; meaning: string }[]
   patterns?: { id: string; pattern: string; meaning?: string }[]
@@ -550,6 +553,7 @@ export function buildWarmupMaterialUsage(
 export function WarmupPipelineTab({
   value,
   onChange,
+  sceneId,
   vocabs = [],
   chunks = [],
   patterns = [],
@@ -571,7 +575,22 @@ export function WarmupPipelineTab({
   const [compacting, setCompacting] = useState(false)
   const [teachingGenerating, setTeachingGenerating] = useState(false)
   const [teachingMode, setTeachingMode] = useState<'edit' | 'preview'>('edit')
+  const [materialContext, setMaterialContext] = useState<SceneMaterialContext | null>(null)
   const prevIdsRef = useRef<string>('')
+
+  // 组顺序约束上下文（前序/后序包知识点），用于材料池展示
+  useEffect(() => {
+    let cancelled = false
+    if (!sceneId) {
+      setMaterialContext(null)
+      return
+    }
+    setMaterialContext(null)
+    getSceneMaterialContext(sceneId)
+      .then((context) => { if (!cancelled) setMaterialContext(context) })
+      .catch(() => { /* 非关键信息，失败静默 */ })
+    return () => { cancelled = true }
+  }, [sceneId])
 
   useEffect(() => {
     setLocal(value)
@@ -948,6 +967,11 @@ export function WarmupPipelineTab({
           chunks: materialUsageStats.totals.chunks,
           patterns: materialUsageStats.totals.patterns,
         },
+        // 学习包组顺序约束：后端按 sceneId 查引用表，排除后序包知识点、标记前序复习词
+        constraints: {
+          ...(sceneId ? { sceneId } : {}),
+          difficulty,
+        },
         structure: {
           zhToEnItems: currentZhItems,
           enToZhItems: currentEnItems,
@@ -1271,6 +1295,17 @@ export function WarmupPipelineTab({
           <p className="text-xs font-semibold">当前材料池与使用次数</p>
           <Badge variant="outline" className="text-[10px]">{difficulty || 'L2'}</Badge>
         </div>
+        {materialContext?.groupId && (
+          <div className="mb-3 space-y-1 rounded-lg border border-border/70 bg-muted/20 p-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[11px] font-semibold">组约束 · {materialContext.groupName || '未命名系列'}</p>
+              <span className="text-[10px] text-muted-foreground">本包顺序 {materialContext.sortOrder + 1}</span>
+            </div>
+            <p className="text-[10px] leading-4 text-muted-foreground">
+              AI 生成会<b>排除后序包知识点</b>（防超纲），并允许复用前序包知识点作复习。
+            </p>
+          </div>
+        )}
         <div className="space-y-3">
           {materialGroups.map((group) => (
             <div key={group.label} className="space-y-1.5">

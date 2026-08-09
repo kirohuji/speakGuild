@@ -7,41 +7,22 @@
  * 前端收集材料缺口后调用 POST /practice-ai/generate-warmup-pipeline，
  * 后端 english-practice-ai.service.ts 使用此 prompt 调用 DeepSeek API 一次性生成补齐所有题组。
  *
- * ─── 待优化项 ───────────────────────────────────────────────────────────
+ * ─── Prompt 结构约定 ───────────────────────────────────────────────────────
  *
- * 1. sentence_decomposition 的 5 级递进分解目前是硬编码的：
- *    L1 核心骨架 → L2 加宾语 → L3 加程度 → L4 加时间/地点 → L5 完整句
- *    需要改为更灵活的策略——
- *    根据句子的实际语法结构，AI 自行决定每一层"加什么"。
- *    比如有些句子核心是「主语+不及物动词」，加了地点就已经完整了，
- *    不需要机械地凑 5 层；有些句子更适合先加方式、再加原因、
- *    最后加时间。层数也可以 3-5 层自适应，不强制 5 层。
- *    但核心约束不变：每层都是同一句子的渐进式展开（L1 ⊂ L2 ⊂ L3...）。
+ * 此文件包含两部分，职责严格分离：
+ *   PART A — System Prompt（全局不变规则：角色、题型定义、质量基准、输出约束）
+ *   PART B — User Prompt（本轮动态数据：话题/难度/已有内容摘要/材料缺口/当前结构状态）
  *
- * 2. 单词分为「核心词 (Core)」和「扩展词 (Extension)」两层：
- *    - 核心词：与话题标题直接语义相关（60~70%）
- *    - 扩展词：不直接相关，但能高效练习本话题的句块/句型（30~40%）
- *    核心词必须优先被覆盖，扩展词可以在核心词都已覆盖后再补充。
- *    此外，学习包采用累加式设计（Cumulative Design）——
- *    后面的话题可以复用前面的核心词作为扩展词。
- *    因此 AI 生成练习题时应该：
- *    a) 优先保证本话题的「核心词」被覆盖
- *    b) 其次覆盖本话题的「扩展词」
- *    c) 如果还有余力，可以顺带回顾前面话题的核心词（本包内），
- *       把它们当作扩展词来用，以增加复现率
- *    需要在 materials 中区分核心词/扩展词/前序复用词的标签，
- *    prompt 中给出优先级指导。
- *
- * ─── 模板变量说明 ───────────────────────────────────────────────────────
- *
- * 此文件包含两部分：
- *   PART A — System Prompt（角色设定 + 题型定义 + 全局规则）
- *   PART B — User Prompt 模板（动态数据：话题/材料/结构缺口/已有内容）
- *
- * User Prompt 中的 {{...}} 占位符由 english-practice-ai.service.ts 在运行时替换。
+ * 原则：
+ *   - System Prompt 只写"永远成立"的规则，不出现任何一次性的数据。
+ *   - User Prompt 只写"这一轮"的数据，不重复 System 中的规则。
+ *   - 结构目标（静态基准）在 System；当前达成状态（差额计算）在 User。
+ *   - 提示（hint）写作规则与单题「生成提示」共用 drill-hints.prompt.ts，保证风格一致。
  *
  * =============================================================================
  */
+
+import { DRILL_HINT_WRITING_RULES } from './drill-hints.prompt';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PART A: System Prompt
@@ -119,6 +100,14 @@ When you see [carry] words in the material pool, they are from earlier topics in
 - Using [carry] words increases repetition which aids long-term retention.
 - But NEVER use a [carry] word at the expense of a missing [core] word.
 
+## ══ LEARNING PACK SEQUENCE CONSTRAINTS (CRITICAL) ══
+
+This exercise belongs to a learning pack inside an ordered pack group. Later packs in the group contain knowledge points the learner has NOT studied yet:
+
+- **FORBIDDEN MATERIALS (MUST NOT appear anywhere)**: Never use these words/chunks/patterns in any exercise, example sentence, prompt, hint, or answer. They belong to LATER learning packs — using them leaks future knowledge points and breaks the learning sequence.
+- **REVIEW MATERIALS (nice-to-have)**: These are knowledge points from EARLIER packs. You MAY reuse them in example sentences as spaced repetition, but do NOT treat them as new teaching targets.
+- Difficulty: generate exercises at the stated target difficulty level. Choose vocabulary and sentence complexity accordingly.
+
 ## ══ SENTENCE PATTERN DRIVEN WORD ALLOCATION ══
 
 Each sentence pattern has "slots" that certain word types can fill:
@@ -159,13 +148,8 @@ Rules:
   * Then pattern_drill or vocab_sentence_building groups for deeper practice.
   * Sentence decomposition (if any) goes last as the consolidation exercise.
   * Do NOT put en_to_zh or decomposition before zh_to_en. The order is: output activation → input check → structure drill → consolidation.
-- HINT WRITING RULES (critical — every item MUST have a specific, helpful hint):
-  * chunk_substitution: Guide how to use the target word/chunk naturally. Point to sentence structure or collocation. Example for "I'm late": "想想'迟到'用英语怎么说？主语是 I，后面跟什么？" — NOT "用目标词造句".
-  * pattern_drill: Guide how to fill the pattern slot. Point to which Chinese part maps to the slot. Example for "I'd like to [verb]": "先确定'想要做'对应句型哪部分，再把'点一杯咖啡'放进去。"
-  * vocab_sentence_building: Suggest which collocation fits this item. Point to the relationship between vocab and pattern chunk. Example for "check in" with "I'd like to...": "用酒店前台场景，想想办理入住第一句话怎么说。"
-  * sentence_decomposition: Each level's hint builds on the previous — guide what to ADD at this specific step. The hint must reference the actual element being added (object, time, place, manner, reason, etc.), not give generic advice. Example: L1 "先说出主语和核心动词" → L2 "加上宾语，说明做了什么" → L3 "加上目的，为什么做这件事" → L4 "加上时间/地点，形成完整场景". Adjust hint content to match the actual decomposition path.
-  * NEVER use generic hints like "用目标词造句", "注意语法", "参考句型", "按照提示完成句子". Each hint MUST reference the SPECIFIC word/chunk and context.
-  * Hints in Chinese, 10-25 characters, actionable.
+${DRILL_HINT_WRITING_RULES}
+- PIPELINE ORDERING (the pipeline array is an ordered sequence — position matters):
 - For en_to_zh, put English prompt in "en" and Chinese answer in "answer". Do NOT include a "zh" field on en_to_zh items.
 - For zh_to_en, put Chinese prompt in "zh" and English answer in "answer". Do NOT include an "en" field on zh_to_en items.
 - CRITICAL: Every item in a group must follow the group's direction. If direction="zh_to_en", ALL items use {zh, answer} — never mix {en, answer} items into a zh_to_en group, and never include both zh and en on the same item. Direction mixing within one group is invalid.
@@ -173,87 +157,13 @@ Rules:
 - IMPORTANT: Review the PREVIOUSLY GENERATED ITEMS section below. Do NOT generate the same exercises again. Instead, fix gaps: if previous items were too short, make them richer; if they were too similar, vary the scenarios; if a material was covered poorly, cover it better this time.`;
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PART B: User Prompt Template
+// PART B: User Prompt（由 buildWarmupPipelineUserPrompt 在运行时构建）
 // ═══════════════════════════════════════════════════════════════════════════
 //
-// 模板变量（运行时替换）:
-//   {{topicTitle}}         — 话题标题
-//   {{difficulty}}         — 难度等级 (L1-L9)
-//   {{previousSummary}}    — 已有 pipeline 的压缩摘要（避免重复生成）
-//   {{totalMissing}}       — 未覆盖材料总数
-//   {{totalItems}}         — 当前已有练习条目总数
-//   {{steps}}              — 当前已有步骤（组）数
-//   {{zhToEnItems}}        — 当前中→英替换题数
-//   {{enToZhItems}}        — 当前英→中理解题数
-//   {{patternItems}}       — 当前句型操练题数
-//   {{expansionUnits}}     — 当前拓展单元数
-//   {{missingVocabLines}}  — 缺失单词列表（带 tier 标签: [core]/[ext]/[carry]）
-//   {{missingChunkLines}}  — 缺失句块列表
-//   {{missingPatternLines}}— 缺失句型列表
-//   {{vocabPoolSummary}}   — 完整单词池（带 [used]/[missing] + tier 标签）
-//   {{chunkPoolSummary}}   — 完整句块池
-//   {{patternPoolSummary}} — 完整句型池
+// User Prompt 只承载本轮动态数据（话题/难度/已有内容摘要/材料缺口/当前结构状态），
+// 不再重复 System Prompt 中的规则。结构目标（静态基准）在 System，当前达成状态在 User。
 //
 // =============================================================================
-
-export const WARMUP_PIPELINE_USER_PROMPT_TEMPLATE = `
-Topic: {{topicTitle}}
-Difficulty: {{difficulty}}
-{{previousSummary}}
-You need to generate exercises to cover {{totalMissing}} missing materials.
-Generate enough groups — do NOT stop at just one group per type.
-
-## ══ Structure Targets ══
-
-Aim for the ideal range (not just the minimum):
-
-- Total practice items: target 8-15 (currently have {{totalItems}}, need at least {{minItemsNeeded}} more to pass minimum 6)
-- Total groups/steps: target 3-5 (currently have {{steps}}, need at least {{minStepsNeeded}} more)
-- zh_to_en output items: at least 3 total (currently {{zhToEnItems}}) — MUST be the FIRST groups in pipeline (warmup opener, 中译英替换输出激活)
-- en_to_zh comprehension items: at least 2 total (currently {{enToZhItems}}) — follow zh_to_en, confirm understanding
-- pattern_drill items: at least 2 total (currently {{patternItems}}) — structural output training
-- expansion groups: at least 1 (currently {{expansionUnits}}) — sentence_decomposition or vocab_sentence_building, place last
-- Every group MUST have ≥2 items — zero single-item groups tolerated
-
-IMPORTANT: If {{totalMissing}} materials are missing, generate MORE groups than the minimum to cover them. Do not stop at just meeting the floor.
-
-## ══ Coverage Priority ══
-
-Follow this priority when choosing which words to cover:
-1. [core] words with count=0 (MUST cover)
-2. [ext] words with count=0 (cover after core)
-3. [core] words with count<2 (enrich)
-4. [carry] words with count=0 (nice-to-have, only if 1-3 are done)
-5. [ext] words with count<2 (enrich)
-
-## ══ Missing Materials (count=0, MUST cover) ══
-
-### Core Words [core] — must cover first:
-{{missingCoreVocabLines}}
-
-### Extension Words [ext] — cover after core:
-{{missingExtVocabLines}}
-
-### Carry-over Words [carry] — nice-to-have (earlier topics in same package):
-{{missingCarryVocabLines}}
-
-### Missing Chunks:
-{{missingChunkLines}}
-
-### Missing Sentence Patterns:
-{{missingPatternLines}}
-
-## ══ Full Material Pool (for context) ══
-
-### Vocabulary (with tier tags):
-{{vocabPoolSummary}}
-
-### Chunks:
-{{chunkPoolSummary}}
-
-### Sentence Patterns:
-{{patternPoolSummary}}
-`;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Helper: Build the user prompt from the template (used in the service)
@@ -264,6 +174,10 @@ export interface WarmupPipelinePromptInput {
   difficulty: string;
   previousSummary: string;
   totalMissing: number;
+  /** 后序包知识点（禁止出现在任何题目/例句/提示中） */
+  forbiddenMaterials: string[];
+  /** 前序包知识点（仅允许作为复习复现） */
+  reviewMaterials: string[];
   structure: {
     totalItems: number;
     steps: number;
@@ -303,53 +217,69 @@ export function buildWarmupPipelineUserPrompt(input: WarmupPipelinePromptInput):
       ? list.map((v) => `- ${v.word}${v.meaning ? `: ${v.meaning}` : ''}`).join('\n')
       : '- (none — all covered!)';
 
+  const forbiddenBlock = input.forbiddenMaterials.length
+    ? [
+        '',
+        '## ══ FORBIDDEN MATERIALS (MUST NOT appear anywhere) ══',
+        'These knowledge points belong to LATER learning packs. NEVER use them in any exercise, example sentence, prompt, hint, or answer:',
+        input.forbiddenMaterials.map((text) => `- ${text}`).join('\n'),
+        '',
+      ].join('\n')
+    : '';
+
+  const reviewBlock = input.reviewMaterials.length
+    ? [
+        '',
+        '## ══ REVIEW MATERIALS (earlier packs, nice-to-have) ══',
+        'You MAY reuse these as spaced repetition in example sentences, but do NOT make them new teaching targets:',
+        input.reviewMaterials.map((text) => `- ${text}`).join('\n'),
+        '',
+      ].join('\n')
+    : '';
+
+  const difficultyLine = `Target difficulty: ${difficulty}. Match vocabulary and sentence complexity to this level.`;
+
   return [
     `Topic: ${topicTitle}`,
-    `Difficulty: ${difficulty}`,
+    difficultyLine,
     previousSummary,
+    forbiddenBlock,
+    reviewBlock,
     `You need to generate exercises to cover ${totalMissing} missing materials.`,
     'Generate enough groups — do NOT stop at just one group per type.',
     '',
-    '## ══ Structure Targets ══',
+    '## ══ Current State (already generated; targets per System rules) ══',
     '',
-    'Aim for the ideal range (not just the minimum):',
-    '',
-    `- Total practice items: target 8-15 (currently have ${structure.totalItems}, need at least ${minItemsNeeded} more to pass minimum 6)`,
-    `- Total groups/steps: target 3-5 (currently have ${structure.steps}, need at least ${minStepsNeeded} more)`,
-    `- zh_to_en output items: at least 3 total (currently ${structure.zhToEnItems}) — MUST be the FIRST groups in pipeline (warmup opener, 中译英替换输出激活)`,
-    `- en_to_zh comprehension items: at least 2 total (currently ${structure.enToZhItems}) — follow zh_to_en, confirm understanding`,
-    `- pattern_drill items: at least 2 total (currently ${structure.patternItems}) — structural output training`,
-    `- expansion groups: at least 1 (currently ${structure.expansionUnits}) — sentence_decomposition or vocab_sentence_building, place last`,
-    `- Every group MUST have ≥2 items — zero single-item groups tolerated`,
+    `- Practice items so far: ${structure.totalItems} (need at least ${minItemsNeeded} more to pass the minimum)`,
+    `- Groups/steps so far: ${structure.steps} (need at least ${minStepsNeeded} more)`,
+    `- zh_to_en output items so far: ${structure.zhToEnItems}`,
+    `- en_to_zh comprehension items so far: ${structure.enToZhItems}`,
+    `- pattern_drill items so far: ${structure.patternItems}`,
+    `- expansion groups so far: ${structure.expansionUnits}`,
     '',
     `IMPORTANT: If ${totalMissing} materials are missing, generate MORE groups than the minimum to cover them. Do not stop at just meeting the floor.`,
     '',
-    '## ══ Coverage Priority ══',
+    '## ══ Materials ══',
     '',
-    'Follow this priority when choosing which words to cover:',
-    '1. [core] words with count=0 (MUST cover)',
-    '2. [ext] words with count=0 (cover after core)',
-    '3. [core] words with count<2 (enrich)',
-    '4. [carry] words with count=0 (nice-to-have, only if 1-3 are done)',
-    '5. [ext] words with count<2 (enrich)',
+    'Select materials following the coverage priority defined in the System rules ([core] count=0 → [ext] count=0 → under-covered → [carry]).',
     '',
-    '## ══ Missing Materials (count=0, MUST cover) ══',
+    '### Missing Materials (count=0, MUST cover):',
     '',
-    '### Core Words [core] — must cover first:',
+    '#### Core Words [core] — must cover first:',
     fmtVocabs(materials.missingCoreVocabs),
     '',
-    '### Extension Words [ext] — cover after core:',
+    '#### Extension Words [ext] — cover after core:',
     fmtVocabs(materials.missingExtVocabs),
     '',
-    '### Carry-over Words [carry] — nice-to-have (earlier topics in same package):',
+    '#### Carry-over Words [carry] — nice-to-have (earlier topics in same package):',
     fmtVocabs(materials.missingCarryVocabs),
     '',
-    '### Missing Chunks:',
+    '#### Missing Chunks:',
     materials.missingChunks.length
       ? materials.missingChunks.map((c) => `- ${c.text}${c.meaning ? `: ${c.meaning}` : ''}`).join('\n')
       : '- (none — all covered!)',
     '',
-    '### Missing Sentence Patterns:',
+    '#### Missing Sentence Patterns:',
     materials.missingPatterns.length
       ? materials.missingPatterns.map((p) => `- ${p.pattern}${p.meaning ? `: ${p.meaning}` : ''}`).join('\n')
       : '- (none — all covered!)',

@@ -101,6 +101,11 @@ export class UpdateSceneKnowledgeDto {
   @IsArray()
   @IsString({ each: true })
   patternIds: string[];
+
+  /** 存在引用冲突时仍保存：冲突材料降级为 review（复习复用），不作为新学目标 */
+  @IsOptional()
+  @IsBoolean()
+  forceReview?: boolean;
 }
 
 export class SaveTopicSubmissionDto {

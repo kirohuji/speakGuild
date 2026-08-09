@@ -91,8 +91,74 @@ export interface Scene {
   requiredUserLevel: number
   isFree: boolean
   category?: { id: string; name: string }
+  /** 所属学习包组与组内顺序（层 1 顺序约束字段） */
+  groupId?: string | null
+  sortOrder?: number
+  group?: { id: string; name: string } | null
   _count?: { trainingTopics: number; storyEpisodes?: number }
   trainingTopics?: TrainingTopic[]
+}
+
+// ─── 学习包组顺序约束（引用表上下文） ───────────────────────
+
+export type MaterialKind = 'vocab' | 'chunk' | 'pattern'
+
+export interface MaterialClaimInfo {
+  kind: MaterialKind
+  materialId: string
+  role: 'learn' | 'review'
+  topicId: string | null
+  text: string
+}
+
+export interface GroupSceneInfo {
+  sceneId: string
+  title: string
+  sortOrder: number
+  claims: MaterialClaimInfo[]
+}
+
+export interface SceneMaterialContext {
+  groupId: string | null
+  groupName: string | null
+  sortOrder: number
+  /** 组内前序包（含认领材料，learn + review） */
+  earlierScenes: GroupSceneInfo[]
+  /** 组内后序包（含认领材料，仅 learn 为禁止项） */
+  laterScenes: GroupSceneInfo[]
+}
+
+export interface TopicClaimConflict {
+  kind: MaterialKind
+  materialId: string
+  text: string
+  sourceType: 'pack' | 'topic'
+  source: string
+  sourceSortOrder: number
+}
+
+export type TopicSaveResult = TrainingTopic | { conflicts: TopicClaimConflict[] }
+
+export async function getSceneMaterialContext(sceneId: string): Promise<SceneMaterialContext> {
+  return get(`/admin/content/scenes/${sceneId}/material-context`)
+}
+
+export interface SuggestedVocabItem {
+  vocabularyId: string
+  word: string
+  meaning: string
+  partOfSpeech: string
+  difficulty: string
+  status: 'available' | 'earlier'
+  reason: string
+  score: number
+}
+
+export async function suggestTopicVocabs(
+  topicId: string,
+  data: { patternIds?: string[]; chunkIds?: string[]; difficulty?: string; teachingMarkdown?: string; count?: number },
+): Promise<{ items: SuggestedVocabItem[] }> {
+  return post(`/admin/content/training-topics/${topicId}/suggest-vocabs`, data)
 }
 
 export async function listScenes(categoryId?: string, packageType?: Scene['packageType'], excludePackageType?: Scene['packageType']): Promise<Scene[]> {
@@ -130,8 +196,8 @@ export interface Vocabulary {
   tier?: 'core' | 'ext' | 'carry'
 }
 
-export async function listVocabularies(): Promise<Vocabulary[]> {
-  return get('/admin/content/vocabularies')
+export async function listVocabularies(search?: string): Promise<Vocabulary[]> {
+  return get(`/admin/content/vocabularies${search ? `?search=${encodeURIComponent(search)}` : ''}`)
 }
 
 export async function createVocabulary(data: Partial<Vocabulary>): Promise<Vocabulary> {
@@ -195,11 +261,11 @@ export async function listTrainingTopics(
   })
 }
 
-export async function createTrainingTopic(data: any): Promise<TrainingTopic> {
+export async function createTrainingTopic(data: any): Promise<TopicSaveResult> {
   return post('/admin/content/training-topics', data)
 }
 
-export async function updateTrainingTopic(id: string, data: any): Promise<TrainingTopic> {
+export async function updateTrainingTopic(id: string, data: any): Promise<TopicSaveResult> {
   return patch(`/admin/content/training-topics/${id}`, data)
 }
 

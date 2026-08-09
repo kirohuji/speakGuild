@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/cn'
 import type { Chunk, Scene, SentencePatternFull, Vocabulary } from '../api-content-admin'
-import { contentExperienceAdminApi, type AdminSceneExperience, type PackageGroup } from '../api-content-experiences'
+import { contentExperienceAdminApi, type AdminSceneExperience, type PackageGroup, type UpdateKnowledgeResult } from '../api-content-experiences'
 import { FileUploadField } from './file-upload-field'
 
 function modeName(mode: Scene['contentMode']) {
@@ -97,6 +97,8 @@ export function ContentExperiencePanel({
   const [seriesDialog, setSeriesDialog] = useState(false)
   const [groupDialog, setGroupDialog] = useState(false)
   const [groupForm, setGroupForm] = useState({ name: '', slug: '', description: '' })
+  // 包级知识引用冲突（小说包）：确认后降级为复习保存
+  const [knowledgeConflicts, setKnowledgeConflicts] = useState<UpdateKnowledgeResult & { __payload?: { vocabularyIds: string[]; chunkIds: string[]; patternIds: string[] } } | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -126,13 +128,18 @@ export function ContentExperiencePanel({
   const saveGroupSettings = async () => {
     setSaving(true)
     try {
-      await contentExperienceAdminApi.assignGroup(scene.id, {
+      const result = await contentExperienceAdminApi.assignGroup(scene.id, {
         groupId: groupId || null,
         sortOrder,
         volumeLabel,
         requiredPrevious,
       })
       toast.success('系列设置已保存')
+      if (result.reorderConflicts?.length) {
+        const total = result.reorderConflicts.reduce((sum, item) => sum + item.conflicts.length, 0)
+        toast.warning(`重排后 ${result.reorderConflicts.length} 个学习包存在 ${total} 处材料引用冲突（后包使用了前包已学知识点），建议调整顺序或改用复习`) 
+      }
+      setExperience(result.experience)
       setSeriesDialog(false)
       await load()
     } catch (error: any) {
@@ -142,10 +149,20 @@ export function ContentExperiencePanel({
     }
   }
 
-  const saveNovelKnowledge = async () => {
+  const saveNovelKnowledge = async (opts?: { forceReview?: boolean }) => {
     setSaving(true)
     try {
-      await contentExperienceAdminApi.updateKnowledge(scene.id, { vocabularyIds, chunkIds, patternIds })
+      const result = await contentExperienceAdminApi.updateKnowledge(scene.id, {
+        vocabularyIds,
+        chunkIds,
+        patternIds,
+        ...(opts?.forceReview ? { forceReview: true } : {}),
+      })
+      if (!('sceneVocabularies' in result)) {
+        // 引用冲突：弹窗让管理员决定
+        setKnowledgeConflicts(result as any)
+        return
+      }
       toast.success('小说知识已保存')
       await load()
     } catch (error: any) {
@@ -210,7 +227,7 @@ export function ContentExperiencePanel({
         {scene.contentMode === 'novel' && <CardContent className="space-y-4 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div><p className="text-sm font-semibold">整本小说知识</p><p className="text-xs text-muted-foreground">小说没有训练话题，因此在这里维护整书的单词、句块和句型。</p></div>
-            <Button size="sm" onClick={saveNovelKnowledge} disabled={saving}>{saving ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <Save className="mr-1.5 size-3.5" />}保存小说知识</Button>
+            <Button size="sm" onClick={() => saveNovelKnowledge()} disabled={saving}>{saving ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <Save className="mr-1.5 size-3.5" />}保存小说知识</Button>
           </div>
           <Tabs defaultValue="vocabulary">
             <TabsList>
@@ -306,6 +323,44 @@ export function ContentExperiencePanel({
             <div><Label>唯一标识</Label><Input value={groupForm.slug} onChange={(event) => setGroupForm({ ...groupForm, slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })} placeholder="business-listening" /></div>
             <div><Label>说明</Label><Textarea value={groupForm.description} onChange={(event) => setGroupForm({ ...groupForm, description: event.target.value })} /></div>
             <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setGroupDialog(false)}>取消</Button><Button onClick={createGroup}><Link2 className="mr-1.5 size-3.5" />创建</Button></div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 包级知识引用冲突（小说包）：按顺序约束阻止保存，可降级为复习保存 */}
+      <Dialog open={knowledgeConflicts !== null} onOpenChange={(open) => { if (!open) setKnowledgeConflicts(null) }}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>材料引用冲突</DialogTitle>
+            <DialogDescription className="sr-only">部分材料已被前序学习包认领</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              以下材料已被<b>前序学习包</b>作为新学知识点使用，按顺序约束不能再作为本包的新学目标：
+            </p>
+            <div className="max-h-56 space-y-1.5 overflow-y-auto rounded-lg border border-border/70 bg-muted/20 p-3">
+              {(knowledgeConflicts as any)?.conflicts?.map((conflict: any, index: number) => (
+                <div key={index} className="flex items-start justify-between gap-2 text-sm">
+                  <span className="min-w-0">
+                    <span className="font-medium">{conflict.text}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      {conflict.kind === 'vocab' ? '单词' : conflict.kind === 'chunk' ? '句块' : '句型'}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    已用于「{conflict.source}」（第 {conflict.sourceSortOrder + 1} 包）
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">选择「改为复习并保存」后，这些材料仅作为复习复用，不作为新学知识点。</p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setKnowledgeConflicts(null)}>返回修改</Button>
+            <Button onClick={() => { setKnowledgeConflicts(null); saveNovelKnowledge({ forceReview: true }) }} disabled={saving}>
+              {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
+              改为复习并保存
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

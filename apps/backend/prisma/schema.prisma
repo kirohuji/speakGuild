@@ -687,6 +687,9 @@ model Scene {
   requiredUserLevel   Int                 @default(1)
   isFree              Boolean             @default(false) // 免费用户可访问
   coverImage          String?                                // 学习包封面图 URL
+  groupId             String?                                // 所属学习包组（null = 未入组，无顺序约束）
+  group               PackageGroup?       @relation(fields: [groupId], references: [id])
+  sortOrder           Int                 @default(0)        // 组内学习顺序，从 0 开始
   prerequisiteScenes  ScenePrerequisite[] @relation("Scene")
   prerequisiteFor     ScenePrerequisite[] @relation("Prerequisite")
   trainingTopics      TrainingTopic[]
@@ -699,10 +702,12 @@ model Scene {
   sceneVocabularies   SceneVocabulary[]
   sceneChunks         SceneChunk[]
   scenePatterns       SceneSentencePattern[]
+  materialReferences  SceneMaterialReference[]
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
 
   @@index([createdAt])
+  @@index([groupId, sortOrder])
   @@map("scene")
 }
 
@@ -730,6 +735,7 @@ model PackageGroup {
   contentMode ContentMode?
   status      PackageGroupStatus @default(draft)
   items       PackageGroupItem[]
+  scenes      Scene[]
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 
@@ -752,6 +758,40 @@ model PackageGroupItem {
   @@unique([groupId, sortOrder])
   @@index([groupId, sortOrder])
   @@map("package_group_item")
+}
+
+// ──── 材料引用表（学习包顺序约束） ────
+
+enum MaterialType {
+  vocab
+  chunk
+  pattern
+}
+
+enum MaterialClaimRole {
+  learn // 新学目标（认领）
+  review // 复习复用（前序包/前序话题的材料，出现在本包练习题中）
+}
+
+/**
+ * 学习包材料引用表：记录每个学习包"认领"（新学）或"复用"（复习）的
+ * 单词/句块/句型。后序包不得把前序包已认领的材料当作新学知识点。
+ */
+model SceneMaterialReference {
+  id           String            @id @default(cuid())
+  sceneId      String
+  scene        Scene             @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  materialType MaterialType
+  materialId   String // 指向 vocabulary.id / chunk.id / sentence_pattern.id（不建物理外键，材料库全局共享）
+  topicId      String? // 认领来源话题；null = 包级认领
+  role         MaterialClaimRole @default(learn)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@unique([sceneId, materialType, materialId])
+  @@index([materialType, materialId])
+  @@index([sceneId, topicId])
+  @@map("scene_material_reference")
 }
 
 model SceneVocabulary {

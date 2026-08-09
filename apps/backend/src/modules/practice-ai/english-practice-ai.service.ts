@@ -6,10 +6,15 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AiQuotaService } from '../../common/ai-quota/ai-quota.service';
 import { LlmProviderFactory, type LlmConfig } from '../../common/llm/llm-provider.factory';
 import { AiModelService } from '../ai-model/ai-model.service';
+import { MaterialConstraintService } from '../content-experiences/material-constraint.service';
 import {
   WARMUP_PIPELINE_SYSTEM_PROMPT,
   buildWarmupPipelineUserPrompt,
 } from './prompts/warmup-pipeline.prompt';
+import {
+  DRILL_HINT_OUTPUT_REQUIREMENT,
+  buildDrillHintsSystemPrompt,
+} from './prompts/drill-hints.prompt';
 
 const PLACEMENT_GOAL_PACKAGE_TYPES: Record<string, string> = {
   foundation_start: 'foundation',
@@ -73,6 +78,13 @@ type WarmupPipelineGenerationDto = {
   };
   /** 之前已生成的 pipeline 内容，供 AI 参考避免重复并改进质量 */
   previousPipeline?: Array<Record<string, unknown>>;
+  /** 学习包组顺序约束：excluded（后序包知识点，禁止出现）/ review（前序包知识点，仅复习）/ 目标难度 */
+  constraints?: {
+    sceneId?: string;
+    excludedMaterialIds?: string[];
+    reviewMaterialIds?: string[];
+    difficulty?: string;
+  };
 };
 
 @Injectable()
@@ -84,6 +96,7 @@ export class EnglishPracticeAiService {
     private readonly quotaService: AiQuotaService,
     private readonly llmFactory: LlmProviderFactory,
     private readonly aiModel: AiModelService,
+    private readonly materialConstraints: MaterialConstraintService,
   ) {}
 
   private async getLlmConfigOrThrow() {
@@ -1475,17 +1488,77 @@ Rules:
     }
   }
 
+  /** 解析无类型信息的材料 id（显式约束兜底）：在三种材料表中查找归属类型 */
+  private async resolveMaterialTextsForIds(ids: string[]): Promise<Array<{ kind: 'vocab' | 'chunk' | 'pattern'; materialId: string }>> {
+    const uniqueIds = [...new Set(ids)];
+    if (!uniqueIds.length) return [];
+    const [vocabs, chunks, patterns] = await Promise.all([
+      this.prisma.vocabulary.findMany({ where: { id: { in: uniqueIds } }, select: { id: true } }),
+      this.prisma.chunk.findMany({ where: { id: { in: uniqueIds } }, select: { id: true } }),
+      this.prisma.sentencePattern.findMany({ where: { id: { in: uniqueIds } }, select: { id: true } }),
+    ]);
+    return [
+      ...vocabs.map((v) => ({ kind: 'vocab' as const, materialId: v.id })),
+      ...chunks.map((c) => ({ kind: 'chunk' as const, materialId: c.id })),
+      ...patterns.map((p) => ({ kind: 'pattern' as const, materialId: p.id })),
+    ];
+  }
+
   /** 一次性生成知识点练习补齐题组：同时考虑结构要求和材料覆盖 */
   async generateWarmupPipeline(dto: WarmupPipelineGenerationDto) {
     const provider = await this.getProvider();
     const vocabs = dto.materials?.vocabs ?? [];
     const chunks = dto.materials?.chunks ?? [];
     const patterns = dto.materials?.patterns ?? [];
-    const missingVocabs = vocabs.filter((item) => (item.count ?? 0) === 0);
-    const missingChunks = chunks.filter((item) => (item.count ?? 0) === 0);
-    const missingPatterns = patterns.filter((item) => (item.count ?? 0) === 0);
+
+    // ── 学习包组顺序约束（M2） ──
+    // excluded：组内后序包认领（learn）→ 禁止出现在任何题目/例句/提示中
+    // review：组内前序包认领（learn + review）→ 仅允许作为复习复现（carry）
+    const constraints = dto.constraints;
+    let excludedClaims: Array<{ kind: 'vocab' | 'chunk' | 'pattern'; materialId: string }> = [];
+    let reviewClaims: Array<{ kind: 'vocab' | 'chunk' | 'pattern'; materialId: string }> = [];
+    let difficulty = dto.difficulty || constraints?.difficulty || 'L2';
+    if (constraints?.sceneId) {
+      try {
+        const context = await this.materialConstraints.getGroupContext(constraints.sceneId);
+        excludedClaims = context.laterScenes
+          .flatMap((scene) => scene.claims)
+          .filter((claim) => claim.role === 'learn')
+          .map((claim) => ({ kind: claim.kind, materialId: claim.materialId }));
+        reviewClaims = context.earlierScenes
+          .flatMap((scene) => scene.claims)
+          .map((claim) => ({ kind: claim.kind, materialId: claim.materialId }));
+        if (constraints.difficulty) difficulty = constraints.difficulty;
+      } catch (error: any) {
+        this.logger.warn(`[generate-warmup-pipeline] 读取组上下文失败，退回显式约束: ${error.message}`);
+      }
+    }
+    // 显式兜底：id 无类型信息，尝试三种材料表解析
+    if (constraints?.excludedMaterialIds?.length) {
+      const found = await this.resolveMaterialTextsForIds(constraints.excludedMaterialIds);
+      for (const claim of found) if (!excludedClaims.some((c) => c.materialId === claim.materialId)) excludedClaims.push(claim);
+    }
+    if (constraints?.reviewMaterialIds?.length) {
+      const found = await this.resolveMaterialTextsForIds(constraints.reviewMaterialIds);
+      for (const claim of found) if (!reviewClaims.some((c) => c.materialId === claim.materialId)) reviewClaims.push(claim);
+    }
+    const excludedSet = new Set(excludedClaims.map((claim) => claim.materialId));
+    const reviewSet = new Set(reviewClaims.map((claim) => claim.materialId));
+
+    // 过滤：被后序包认领的材料不出现在材料池与缺口列表中（后端强制，不信任前端）
+    const filterVocabs = vocabs.filter((v) => !excludedSet.has(v.id ?? ''));
+    const filterChunks = chunks.filter((c) => !excludedSet.has(c.id ?? ''));
+    const filterPatterns = patterns.filter((p) => !excludedSet.has(p.id ?? ''));
+    const missingVocabs = filterVocabs.filter((item) => (item.count ?? 0) === 0);
+    const missingChunks = filterChunks.filter((item) => (item.count ?? 0) === 0);
+    const missingPatterns = filterPatterns.filter((item) => (item.count ?? 0) === 0);
     const structure = dto.structure ?? {};
     const previousPipeline = dto.previousPipeline ?? [];
+
+    // 前序包知识点：作为 carry 复习候选，标注 tier=carry（若原本是 core/ext 且未覆盖）
+    const reviewVocabs = vocabs
+      .filter((v) => reviewSet.has(v.id ?? '') && !excludedSet.has(v.id ?? ''))
+      .map((v) => ({ ...v, tier: 'carry' as const, count: v.count ?? 0 }));
 
     /** 把已有的 pipeline item 压缩成一行摘要（去掉 id/audio 等冗余字段） */
     const summarizePreviousItem = (item: Record<string, unknown>): string => {
@@ -1568,31 +1641,60 @@ Rules:
       if (t === 'ext' || t === 'carry') return t;
       return 'core'; // default
     };
-    const missingCoreVocabs = missingVocabs.filter((v) => tier(v.tier) === 'core');
-    const missingExtVocabs = missingVocabs.filter((v) => tier(v.tier) === 'ext');
-    const missingCarryVocabs = missingVocabs.filter((v) => tier(v.tier) === 'carry');
-    const totalMissing = missingVocabs.length + missingChunks.length + missingPatterns.length;
+    // 前序包复习词从 core/ext 缺口移除，仅作为 carry 复习候选
+    const isReview = (v: { id?: string }) => reviewSet.has(v.id ?? '');
+    const missingCoreVocabs = missingVocabs.filter((v) => !isReview(v) && tier(v.tier) === 'core');
+    const missingExtVocabs = missingVocabs.filter((v) => !isReview(v) && tier(v.tier) === 'ext');
+    const missingCarryVocabs = [
+      ...missingVocabs.filter((v) => !isReview(v) && tier(v.tier) === 'carry'),
+      ...reviewVocabs.filter((v) => (v.count ?? 0) === 0),
+    ];
+    const totalMissing = missingCoreVocabs.length + missingExtVocabs.length + missingCarryVocabs.length
+      + missingChunks.length + missingPatterns.length;
 
-    const vocabPoolSummary = vocabs.length
-      ? vocabs.map((v) => {
+    const vocabPoolSummary = filterVocabs.length
+      ? filterVocabs.map((v) => {
           const status = (v.count ?? 0) > 0 ? 'used' : 'missing';
-          return `${v.word} [${tier(v.tier)}] [${status}]`;
+          const tag = reviewSet.has(v.id ?? '') ? 'carry' : tier(v.tier);
+          return `${v.word} [${tag}] [${status}]`;
         }).join(', ')
       : 'none';
 
-    const chunkPoolSummary = chunks.length
-      ? chunks.map((c) => `${c.text}${(c.count ?? 0) > 0 ? ' [used]' : ' [missing]'}`).join(' | ')
+    const chunkPoolSummary = filterChunks.length
+      ? filterChunks.map((c) => `${c.text}${(c.count ?? 0) > 0 ? ' [used]' : ' [missing]'}`).join(' | ')
       : 'none';
 
-    const patternPoolSummary = patterns.length
-      ? patterns.map((p) => `${p.pattern}${(p.count ?? 0) > 0 ? ' [used]' : ' [missing]'}`).join(' | ')
+    const patternPoolSummary = filterPatterns.length
+      ? filterPatterns.map((p) => `${p.pattern}${(p.count ?? 0) > 0 ? ' [used]' : ' [missing]'}`).join(' | ')
       : 'none';
+
+    // 后序包知识点文本（禁止出现），用于 prompt 的 Forbidden 清单
+    let forbiddenMaterialTexts: string[] = [];
+    if (excludedClaims.length) {
+      try {
+        const texts = await this.materialConstraints.resolveMaterialTexts(excludedClaims);
+        forbiddenMaterialTexts = [...texts.values()].filter(Boolean);
+      } catch {
+        forbiddenMaterialTexts = [];
+      }
+    }
+    let reviewMaterialTexts: string[] = [];
+    if (reviewClaims.length) {
+      try {
+        const texts = await this.materialConstraints.resolveMaterialTexts(reviewClaims);
+        reviewMaterialTexts = [...texts.values()].filter(Boolean);
+      } catch {
+        reviewMaterialTexts = [];
+      }
+    }
 
     const prompt = buildWarmupPipelineUserPrompt({
       topicTitle: dto.topicTitle || 'Untitled topic',
-      difficulty: dto.difficulty || 'L2',
+      difficulty,
       previousSummary,
       totalMissing,
+      forbiddenMaterials: forbiddenMaterialTexts,
+      reviewMaterials: reviewMaterialTexts,
       structure: {
         totalItems: structure.totalItems ?? 0,
         steps: structure.steps ?? 0,
@@ -1640,21 +1742,7 @@ Rules:
 
     // ── Generate per-item teaching hints ──
     if (dto.generateHints && dto.items?.length) {
-      const system = `You are an ESL teaching assistant for Chinese learners of English.
-For each exercise item below, write one short, helpful teaching hint in Chinese.
-Each hint should guide the learner on how to construct the answer without giving it away completely.
-
-Tailor hints to the exercise type:
-- chunk_substitution: hint about how to use the target chunk naturally in a sentence
-- pattern_drill: hint about how to fill the pattern's slot with the right words
-- vocab_sentence_building: hint about which sentence pattern or collocation to use for this specific item
-
-Return exactly ${dto.items.length} hints.
-Return ONLY valid JSON. Do not return markdown, code fences, comments, or extra text.
-The JSON schema is exactly:
-{ "hints": ["提示1", "提示2"] }
-
-The word JSON must appear in your response only as part of the valid JSON object.`;
+      const system = buildDrillHintsSystemPrompt(dto.type, dto.items.length, dto.keyword);
 
       const isEnToZh = dto.direction === 'en_to_zh';
       const promptLabel = isEnToZh ? 'English prompt' : 'Chinese prompt';
@@ -1740,7 +1828,7 @@ Rules:
 - If direction is "en_to_zh", swap: the prompt is the English sentence and answer is the Chinese translation.
 - Keep sentences natural, practical, and at an intermediate level.
 - Vary the sentence contexts (different situations, verb tenses, subjects).
-- Add a short Chinese "hint" for every item.
+- ${DRILL_HINT_OUTPUT_REQUIREMENT}
 - Use the topic material pool below. Prefer unused vocabulary/chunks when they fit.
 
 Return ONLY a JSON object (no markdown):
@@ -1776,7 +1864,7 @@ For each pattern:
 - "chunk" is a sentence starter or collocation frame using the target word (e.g., "She easily...", "I find it easy to...")
 - Each pattern has 2-3 "items" with zh (Chinese prompt) and answer (English full sentence using the chunk)
 - Vary the patterns to show different uses of the word
-- Add a short Chinese "hint" for every item.
+- ${DRILL_HINT_OUTPUT_REQUIREMENT}
 - Use the topic material pool below. Prefer unused sentence patterns/chunks when they fit.
 
 ${availableChunks ? `You may use these available chunks as inspiration: ${availableChunks}` : ''}
@@ -1849,22 +1937,21 @@ Return ONLY a JSON object (no markdown):
       const fullSentence = dto.sentence ?? dto.keyword;
       const fullZh = dto.zh ?? '';
       const system = `You are an ESL exercise generator.
-Decompose a long English sentence into 5 progressive levels, from simple to complex.
+Decompose a long English sentence into 3-5 progressive levels, from simple to complete.
+Adapt the level count to the sentence's actual grammar structure — a simple sentence may need only 3 well-chosen levels; never force 5.
 
-Each level builds on the previous, adding one new element (object, adverb, frequency, reason, etc.).
-- level 1: core sentence (subject + verb, simplest form)
-- level 2: add object or basic modifier
-- level 3: add adverb or degree
-- level 4: add frequency or time
-- level 5: full complex sentence (the original)
+Each level builds on the previous, adding one new element (object, adverb, degree, time, place, reason, manner, etc.).
+- level 1: core sentence (subject + verb + essential complement, simplest grammatically complete form)
+- intermediate levels: add ONE element per level, innermost modifier first
+- last level: full complex sentence (the original)
 
 Each level needs:
-- "level": number 1-5
-- "label": short Chinese description of what was added (e.g., "加对象", "加程度")
+- "level": number 1-N
+- "label": short Chinese description of what was added (e.g., "加对象", "加程度", "加时间", "加地点", "加原因", "完整句")
 - "en": English sentence at this level
-- "zh": Chinese translation
-- "highlight": the newly added part (text that differentiates from previous level)
-- "hint": Chinese hint for the learner (e.g., "试着加入地点")
+- "zh": Chinese translation of THIS level (progressive, not the same every level)
+- "highlight": the exact newly added part (text that differentiates from previous level)
+- "hint": Chinese hint (10-25 chars) guiding what to ADD at THIS step, referencing the specific element being added — never generic advice like "试着补充更多细节"
 
 Return ONLY a JSON object (no markdown):
 { "levels": [{ "level": 1, "label": "...", "en": "...", "zh": "...", "highlight": "...", "hint": "..." }, ...] }`;
@@ -1898,7 +1985,7 @@ Rules:
 - If direction is "en_to_zh", swap: the prompt is the English sentence using the pattern, and answer is Chinese.
 - Vary the slot fillers to show different real-world uses of the same pattern.
 - Keep sentences practical and at an intermediate level.
-- Add a short Chinese "hint" for every item.
+- ${DRILL_HINT_OUTPUT_REQUIREMENT}
 - Use the topic material pool below. Prefer unused vocabulary/chunks when they fit.
 
 Return ONLY a JSON object (no markdown):

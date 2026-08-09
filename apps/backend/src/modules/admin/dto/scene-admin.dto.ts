@@ -225,6 +225,11 @@ export class CreateTrainingTopicDto {
   @IsOptional()
   @IsString()
   inkScriptId?: string;
+
+  /** 存在引用冲突时仍保存：冲突材料降级为 review（复习复用），不作为新学目标 */
+  @IsOptional()
+  @IsBoolean()
+  forceReview?: boolean;
 }
 
 export class UpdateTrainingTopicDto {
@@ -307,4 +312,36 @@ export class UpdateTrainingTopicDto {
   @IsOptional()
   @IsString()
   inkScriptId?: string;
+
+  /** 存在引用冲突时仍保存：冲突材料降级为 review（复习复用），不作为新学目标 */
+  @IsOptional()
+  @IsBoolean()
+  forceReview?: boolean;
+}
+
+/** 根据已绑句型/句块推荐搭配词汇 */
+export class SuggestTopicVocabsDto {
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  patternIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  chunkIds?: string[];
+
+  @IsOptional()
+  @IsString()
+  difficulty?: string;
+
+  @IsOptional()
+  @IsString()
+  teachingMarkdown?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  count?: number;
 }

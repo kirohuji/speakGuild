@@ -419,6 +419,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
                     displayMeaning={local.chunkMeaning}
                     promptZh={getPromptText(item)}
                     answer={getAnswerText(item)}
+                    hint={item.hint}
                     imageUrl={item.imageUrl}
                     direction={local.direction}
                     kind={local.kind}

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { PracticeModule } from '../practice/practice.module';
 import { AiModelModule } from '../ai-model/ai-model.module';
+import { ContentExperienceModule } from '../content-experiences/content-experience.module';
 import { EnglishPracticeAiController } from './english-practice-ai.controller';
 import { EnglishPracticeAiService } from './english-practice-ai.service';
 import { WarmupRecordController } from './warmup-record.controller';
@@ -10,7 +11,7 @@ import { DailyPracticeController } from './daily-practice.controller';
 import { DailyPracticeService } from './daily-practice.service';
 
 @Module({
-  imports: [PrismaModule, PracticeModule, AiModelModule],
+  imports: [PrismaModule, PracticeModule, AiModelModule, ContentExperienceModule],
   controllers: [EnglishPracticeAiController, WarmupRecordController, DailyPracticeController],
   providers: [EnglishPracticeAiService, WarmupRecordService, DailyPracticeService],
   exports: [EnglishPracticeAiService],

@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { synthesizeAdminAudio, playAudioUrl } from '@/lib/admin-tts-helpers'
 import { deleteFileReference } from '@/features/file-assets/api'
+import { WarmupItemPreview } from './warmup-item-preview'
 
 export interface SentenceDecompositionItem {
   id: string
@@ -175,11 +176,21 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
   return (
     <div className="space-y-3">
       {/* Auto-generated title */}
-      <div className="space-y-1.5">
-        <Label className="text-xs">练习名称</Label>
-        <div className="h-8 flex items-center text-xs text-muted-foreground bg-muted/50 rounded-md px-3 truncate">
-          {local.title || '输入完整长句后自动生成'}
+      <div className="flex items-end justify-between gap-2">
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <Label className="text-xs">练习名称</Label>
+          <div className="h-8 flex items-center text-xs text-muted-foreground bg-muted/50 rounded-md px-3 truncate">
+            {local.title || '输入完整长句后自动生成'}
+          </div>
         </div>
+        <WarmupItemPreview
+          type="sentence_decomposition"
+          displayText={local.fullSentence}
+          displayMeaning={local.fullSentenceZh}
+          promptZh={local.fullSentenceZh}
+          title={local.title}
+          levels={local.levels}
+        />
       </div>
 
       {/* Source chunk — select from available chunks/patterns, or type manually */}

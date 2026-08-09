@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Plus, Trash2, Edit3, Search, Layers, MapPin,
@@ -40,13 +40,16 @@ import {
   listTrainingTopics, createTrainingTopic, updateTrainingTopic, deleteTrainingTopic,
   getTrainingTopic, listAllChunks, listStories, getStory, listScriptEpisodes, deleteScriptEpisode,
   listLibraryPatterns, generateTopicTeachingMarkdown,
+  suggestTopicVocabs,
   type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData, type SentencePatternFull, type StoryEpisode,
+  type TopicClaimConflict, type SuggestedVocabItem,
 } from '../api-content-admin'
 import { EpisodeEditDialog } from './admin-script-page'
 import { WarmupPipelineTab, buildWarmupMaterialUsage, type WarmupPipelineData } from '../components/warmup-pipeline-tab'
 import { packageDataAdminApi } from '../api-package-data'
 import { ContentExperiencePanel } from '../components/content-experience-panel'
 import { TopicExperienceFields } from '../components/topic-experience-fields'
+import { contentExperienceAdminApi, type PackageGroup } from '../api-content-experiences'
 
 function packageTypeLabel(type?: Scene['packageType']) {
   if (type === 'exam') return '考试'
@@ -54,6 +57,12 @@ function packageTypeLabel(type?: Scene['packageType']) {
   if (type === 'course') return '课程'
   if (type === 'foundation') return '零基础'
   return '日常'
+}
+
+function kindLabel(kind: TopicClaimConflict['kind']) {
+  if (kind === 'vocab') return '单词'
+  if (kind === 'chunk') return '句块'
+  return '句型'
 }
 
 function contentModeLabel(mode?: Scene['contentMode']) {
@@ -561,7 +570,7 @@ function VocabularyLookupPreview({
 // ─── Training Topic Dialog ──────────────────────────────────
 
 function TrainingTopicDialog({
-  open, onClose, edit, sceneId, packageType, contentMode, chunks, vocabs, patterns, topicIndex, topicTotal, onPrevTopic, onNextTopic, onSaved,
+  open, onClose, edit, sceneId, packageType, contentMode, chunks, patterns, topicIndex, topicTotal, onPrevTopic, onNextTopic, onSaved,
 }: {
   open: boolean
   onClose: () => void
@@ -570,7 +579,6 @@ function TrainingTopicDialog({
   packageType: Scene['packageType']
   contentMode: Scene['contentMode']
   chunks: Chunk[]
-  vocabs: Vocabulary[]
   patterns: SentencePatternFull[]
   topicIndex?: number
   topicTotal?: number
@@ -583,6 +591,12 @@ function TrainingTopicDialog({
   const [teachingGenerating, setTeachingGenerating] = useState(false)
   const [teachingMode, setTeachingMode] = useState<'edit' | 'preview'>('edit')
   const [activeTab, setActiveTab] = useState('basic')
+  // 引用冲突：保存被拦截时记录冲突与待保存 payload，供“改为复习并保存”重试
+  const [claimConflicts, setClaimConflicts] = useState<TopicClaimConflict[] | null>(null)
+  const [conflictPayload, setConflictPayload] = useState<any>(null)
+  // 关联词汇推荐（根据句型和句块）
+  const [suggesting, setSuggesting] = useState(false)
+  const [suggestions, setSuggestions] = useState<SuggestedVocabItem[] | null>(null)
   const [stories, setStories] = useState<StoryData[]>([])
   const [storiesLoading, setStoriesLoading] = useState(false)
   const [storySearch, setStorySearch] = useState('')
@@ -608,9 +622,26 @@ function TrainingTopicDialog({
     () => mergeById(patterns, topicBoundPatterns),
     [patterns, topicBoundPatterns],
   )
+  // 词汇远程搜索池：打开时预拉前 100 条 + 话题绑定词条，搜索时按需补充（不加载全量词汇库）
+  const [vocabPool, setVocabPool] = useState<Vocabulary[]>([])
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    const bound = (edit?.topicVocabs ?? []).map((tv: any) => tv.vocab).filter(Boolean) as Vocabulary[]
+    setVocabPool(bound)
+    listVocabularies()
+      .then((items) => { if (!cancelled) setVocabPool(mergeById(bound, items)) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [open, editKey])
+  const remoteVocabSearch = useCallback(async (query: string) => {
+    const items = await listVocabularies(query)
+    setVocabPool((prev) => mergeById(prev, items))
+    return items
+  }, [])
   const selectableVocabs = useMemo(
-    () => mergeById(vocabs, (edit?.topicVocabs ?? []).map((tv: any) => tv.vocab).filter(Boolean)),
-    [vocabs, edit?.topicVocabs],
+    () => mergeById(vocabPool, (edit?.topicVocabs ?? []).map((tv: any) => tv.vocab).filter(Boolean)),
+    [vocabPool, edit?.topicVocabs],
   )
   const selectableChunks = useMemo(
     () => mergeById(chunks, (edit?.activeChunks ?? []).map((ac: any) => ac.chunk).filter(Boolean)),
@@ -799,7 +830,7 @@ function TrainingTopicDialog({
     }
   }
 
-  const saveTopic = async () => {
+  const saveTopic = async (opts?: { forceReview?: boolean }) => {
     if (!form.title?.trim() || !form.promptEn?.trim()) {
       toast.error('请先填写标题和英文提示')
       return null
@@ -812,7 +843,14 @@ function TrainingTopicDialog({
       if (contentMode !== 'practice') delete payload.inkScriptId
       else if (!payload.inkScriptId?.trim()) payload.inkScriptId = null
       if (!payload.mediaAssetId?.trim()) payload.mediaAssetId = null
+      if (opts?.forceReview) payload.forceReview = true
       const saved = edit ? await updateTrainingTopic(edit.id, payload) : await createTrainingTopic(payload)
+      // 材料引用冲突：返回 { conflicts }（不落库），弹窗让管理员选择处理方式
+      if (!('id' in saved)) {
+        setClaimConflicts(saved.conflicts ?? [])
+        setConflictPayload(payload)
+        return null
+      }
       setForm((prev: any) => ({
         ...prev,
         metadata: formWithUsage.metadata,
@@ -836,12 +874,69 @@ function TrainingTopicDialog({
     await saveTopic()
   }
 
+  const saveAsReview = async () => {
+    const payload = conflictPayload
+    setClaimConflicts(null)
+    setConflictPayload(null)
+    if (!payload) return
+    await saveTopic({ forceReview: true })
+  }
+
   const handleGenerateTopicTeaching = async () => {
     const topicId = form.id ?? edit?.id
     const topic = topicId ? { id: topicId } : await saveTopic()
     if (!topic?.id) return null
     const result = await generateTopicTeachingMarkdown(topic.id)
     return result.markdown
+  }
+
+  const runSuggestVocabs = async () => {
+    if (suggesting) return
+    let topicId = form.id ?? edit?.id
+    if (!topicId) {
+      const saved = await saveTopic()
+      topicId = saved?.id
+      if (!topicId) return
+    }
+    const patternIds = form.patternIds ?? []
+    const chunkIds = form.chunkIds ?? []
+    if (!patternIds.length && !chunkIds.length) {
+      toast.error('请先绑定句型或句块，再推荐搭配词汇')
+      return
+    }
+    setSuggesting(true)
+    try {
+      const result = await suggestTopicVocabs(topicId, {
+        patternIds,
+        chunkIds,
+        difficulty: form.difficulty ?? 'L2',
+        teachingMarkdown: form.teachingMarkdown ?? '',
+      })
+      setSuggestions(result.items)
+      if (!result.items.length) toast.info('未找到合适的搭配词汇，可调整句型/句块后重试')
+    } catch (error: any) {
+      toast.error(error?.message || '词汇推荐失败')
+    } finally {
+      setSuggesting(false)
+    }
+  }
+
+  const addSuggestedVocab = (vocabularyId: string) => {
+    const ids = form.vocabIds ?? []
+    if (ids.includes(vocabularyId)) return
+    // 推荐词条并入词汇池，保证 boundVocabs 统计不遗漏
+    const suggestion = suggestions?.find((s) => s.vocabularyId === vocabularyId)
+    if (suggestion) {
+      setVocabPool((prev) => mergeById(prev, [{
+        id: vocabularyId,
+        word: suggestion.word,
+        meaning: suggestion.meaning ?? '',
+        description: null,
+        sortOrder: 0,
+      } as Vocabulary]))
+    }
+    setForm({ ...form, vocabIds: [...ids, vocabularyId] })
+    toast.success('已加入关联词汇')
   }
 
   const generateTeaching = async () => {
@@ -1164,6 +1259,43 @@ function TrainingTopicDialog({
                 </TabsContent>
 
                 <TabsContent value="vocabs" className="mt-0">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-muted-foreground">从词汇库挑选本话题的新学词汇；可让 AI 根据已绑句型/句块推荐搭配词（自动排除后序包知识点）。</p>
+                    <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5" onClick={runSuggestVocabs} disabled={suggesting}>
+                      {suggesting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                      根据句型和句块推荐
+                    </Button>
+                  </div>
+                  {suggestions && (
+                    <div className="mb-3 overflow-hidden rounded-lg border border-border/70 bg-background">
+                      <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
+                        <p className="text-xs font-semibold">推荐搭配词汇（{suggestions.length}）</p>
+                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] text-muted-foreground" onClick={() => setSuggestions(null)}>收起</Button>
+                      </div>
+                      <div className="max-h-56 divide-y divide-border/60 overflow-y-auto">
+                        {suggestions.map((item) => {
+                          const added = (form.vocabIds ?? []).includes(item.vocabularyId)
+                          return (
+                            <div key={item.vocabularyId} className="flex items-center gap-3 px-3 py-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <span className="text-sm font-medium">{item.word}</span>
+                                  <Badge variant="outline" className="text-[10px]">{item.difficulty}</Badge>
+                                  {item.partOfSpeech && <Badge variant="secondary" className="text-[10px]">{item.partOfSpeech}</Badge>}
+                                  {item.status === 'earlier' && <Badge variant="secondary" className="text-[10px]">前序已学·仅复习</Badge>}
+                                </div>
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.reason}</p>
+                              </div>
+                              <Button type="button" size="sm" variant={added ? 'ghost' : 'outline'} className="h-7 shrink-0 text-xs"
+                                disabled={added} onClick={() => addSuggestedVocab(item.vocabularyId)}>
+                                {added ? '已加入' : '加入'}
+                              </Button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                   <SearchSelectTable
                     items={selectableVocabs}
                     selectedIds={form.vocabIds ?? []}
@@ -1175,6 +1307,7 @@ function TrainingTopicDialog({
                     searchFn={(item, q) =>
                       item.word.toLowerCase().includes(q) || item.meaning.includes(q)
                     }
+                    remoteSearch={remoteVocabSearch}
                     emptyText="没有匹配的词汇"
                     getBadgeLabel={(item) => item.word}
                     columns={[
@@ -1328,6 +1461,7 @@ function TrainingTopicDialog({
               <WarmupPipelineTab
                 value={form.metadata?.outputTraining ?? { version: 1, enabled: true, pipeline: [] }}
                 onChange={(v) => setForm({ ...form, metadata: { ...(form.metadata ?? {}), outputTraining: v } })}
+                sceneId={sceneId}
                 vocabs={boundVocabs}
                 chunks={boundChunks}
                 patterns={boundPatterns}
@@ -1356,6 +1490,44 @@ function TrainingTopicDialog({
           </div>
         </div>
       </DialogContent>
+
+      {/* 材料引用冲突：按顺序约束阻止保存，可选择降级为复习保存 */}
+      <Dialog open={claimConflicts !== null} onOpenChange={(open) => { if (!open) { setClaimConflicts(null); setConflictPayload(null) } }}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>材料引用冲突</DialogTitle>
+            <DialogDescription className="sr-only">部分材料已被前序学习内容认领</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              以下材料已被<b>前序学习包或本包前序话题</b>作为新学知识点使用，按顺序约束不能再作为本话题的新学目标：
+            </p>
+            <div className="max-h-64 space-y-1.5 overflow-y-auto rounded-lg border border-border/70 bg-muted/20 p-3">
+              {(claimConflicts ?? []).map((conflict, index) => (
+                <div key={`${conflict.materialId}-${index}`} className="flex items-start justify-between gap-2 text-sm">
+                  <span className="min-w-0">
+                    <span className="font-medium">{conflict.text}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{kindLabel(conflict.kind)}</span>
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    已用于「{conflict.source}」{conflict.sourceType === 'pack' ? `（第 ${conflict.sourceSortOrder + 1} 包）` : '（本包前序话题）'}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              选择「改为复习并保存」后，这些材料仍可出现在本话题的例句/练习题中，但不再作为新学知识点（不会占用后续学习名额）。
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => { setClaimConflicts(null); setConflictPayload(null) }}>返回修改</Button>
+            <Button onClick={saveAsReview} disabled={saving}>
+              {saving ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}
+              改为复习并保存
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }
@@ -1380,30 +1552,49 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   const [editStoryEpisode, setEditStoryEpisode] = useState<StoryEpisode | null>(null)
   const [topicPage, setTopicPage] = useState(1)
   const [topicPageSize, setTopicPageSize] = useState(10)
+  const [materialsLoading, setMaterialsLoading] = useState(false)
+  const materialsLoadedRef = useRef(false)
 
-  const load = async (
-    nextTopicPage = topicPage,
-    nextTopicPageSize = topicPageSize,
-    options: { showLoading?: boolean } = {},
-  ) => {
-    if (options.showLoading ?? true) setLoading(true)
+  // 词汇/句型库只在打开话题编辑器时按需加载（词汇库上万条，进详情页不预拉）
+  // needVocabs=false 时只拉句型（话题编辑器词汇改为远程搜索）；小说包知识选择器才拉全量词汇
+  const ensureMaterialsLoaded = useCallback(async (needVocabs = false) => {
+    if (materialsLoadedRef.current) return
+    materialsLoadedRef.current = true
+    setMaterialsLoading(true)
     try {
-      const [s, v, topicResult, p, e] = await Promise.all([
-        getScene(sceneId), listVocabularies(), listTrainingTopics(sceneId, { page: nextTopicPage, pageSize: nextTopicPageSize }),
-        listAllLibraryPatternsForAdmin(),
-        listScriptEpisodes(sceneId),
-      ])
-      setScene(s); setVocabs(v); setTopics(topicResult.items); setTopicTotal(topicResult.total); setPatterns(p); setStoryEpisodes(e)
-    } catch {}
-    finally {
-      if (options.showLoading ?? true) setLoading(false)
+      const jobs: Promise<unknown>[] = [listAllLibraryPatternsForAdmin().then(setPatterns)]
+      if (needVocabs) jobs.push(listVocabularies().then(setVocabs))
+      await Promise.all(jobs)
+    } catch {
+      materialsLoadedRef.current = false // 失败允许重试
+    } finally {
+      setMaterialsLoading(false)
     }
+  }, [])
+
+  const loadScene = async () => {
+    setLoading(true)
+    try {
+      const [s, e] = await Promise.all([getScene(sceneId), listScriptEpisodes(sceneId)])
+      setScene(s)
+      setStoryEpisodes(e)
+      // 小说包需要包级知识选择器，提前加载材料库（含全量词汇）
+      if (s?.contentMode === 'novel') void ensureMaterialsLoaded(true)
+    } catch {}
+    finally { setLoading(false) }
   }
 
-  useEffect(() => { load() }, [sceneId, topicPage, topicPageSize])
-  useEffect(() => {
-    setTopicPage(1)
-  }, [sceneId])
+  const loadTopics = async (nextTopicPage = topicPage, nextTopicPageSize = topicPageSize) => {
+    try {
+      const topicResult = await listTrainingTopics(sceneId, { page: nextTopicPage, pageSize: nextTopicPageSize })
+      setTopics(topicResult.items)
+      setTopicTotal(topicResult.total)
+    } catch {}
+  }
+
+  useEffect(() => { void loadScene() }, [sceneId])
+  useEffect(() => { setTopicPage(1) }, [sceneId])
+  useEffect(() => { void loadTopics() }, [sceneId, topicPage, topicPageSize])
 
   const topicTotalPages = getTotalPages(topicTotal, topicPageSize)
   const topicItems = topics
@@ -1415,7 +1606,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   const currentPackageTypeLabel = packageTypeLabel(scene?.packageType)
 
   const handleTopicSaved = (saved: TrainingTopic) => {
-    void load(topicPage, topicPageSize, { showLoading: false })
+    void loadTopics(topicPage, topicPageSize)
     setTopics((prev) => {
       const existingIndex = prev.findIndex((topic) => topic.id === saved.id)
       if (existingIndex >= 0) {
@@ -1430,6 +1621,8 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   }
 
   const openTopicEditor = async (topic: TrainingTopic | null) => {
+    // 打开编辑器前确保句型库已就绪（词汇选择器为远程搜索，无需全量加载）
+    await ensureMaterialsLoaded(false)
     if (!topic) {
       setEditTopic(null)
       setTopicDialog(true)
@@ -1474,8 +1667,8 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
             <CardTitle className="text-base flex items-center gap-2">
               <Layers className="size-4" /> 训练话题 ({topicTotal})
             </CardTitle>
-            <Button size="sm" variant="outline" onClick={() => openTopicEditor(null)}>
-              <Plus className="size-3.5 mr-1" /> 添加
+            <Button size="sm" variant="outline" onClick={() => openTopicEditor(null)} disabled={materialsLoading}>
+              {materialsLoading ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <Plus className="size-3.5 mr-1" />} 添加
             </Button>
           </CardHeader>
           <CardContent className="p-0">
@@ -1539,7 +1732,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
                               {openingTopicId === t.id ? <Loader2 className="size-3.5 animate-spin" /> : <Edit3 className="size-3.5" />}
                             </Button>
                             <Button size="icon" variant="ghost" className="size-8 text-destructive"
-                              onClick={async (e) => { e.stopPropagation(); await deleteTrainingTopic(t.id); load() }}>
+                              onClick={async (e) => { e.stopPropagation(); await deleteTrainingTopic(t.id); loadTopics() }}>
                               <Trash2 className="size-3.5" />
                             </Button>
                           </div>
@@ -1623,7 +1816,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
                               size="icon"
                               variant="ghost"
                               className="size-8 text-destructive"
-                              onClick={async () => { if (confirm('确认删除这个故事关卡？')) { await deleteScriptEpisode(episode.id); load() } }}
+                              onClick={async () => { if (confirm('确认删除这个故事关卡？')) { await deleteScriptEpisode(episode.id); loadScene() } }}
                             >
                               <Trash2 className="size-3.5" />
                             </Button>
@@ -1640,7 +1833,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
       )}
 
       <TrainingTopicDialog open={topicDialog} onClose={() => setTopicDialog(false)}
-        edit={editTopic} sceneId={sceneId} packageType={scene.packageType} contentMode={scene.contentMode} chunks={chunks} vocabs={vocabs} patterns={patterns}
+        edit={editTopic} sceneId={sceneId} packageType={scene.packageType} contentMode={scene.contentMode} chunks={chunks} patterns={patterns}
         topicIndex={editTopicIndex >= 0 ? editTopicIndex : undefined}
         topicTotal={sortedTopics.length}
         onPrevTopic={editTopicIndex > 0 ? () => openTopicEditor(sortedTopics[editTopicIndex - 1]) : undefined}
@@ -1651,7 +1844,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
         onClose={() => setStoryDialog(false)}
         edit={editStoryEpisode}
         defaultSceneId={sceneId}
-        onSaved={load}
+        onSaved={loadScene}
       />
     </div>
   )
@@ -1664,6 +1857,7 @@ export function AdminScenesPage() {
   const [categories, setCategories] = useState<SceneCategory[]>([])
   const [scenes, setScenes] = useState<Scene[]>([])
   const [chunks, setChunks] = useState<Chunk[]>([])
+  const [groups, setGroups] = useState<PackageGroup[]>([])
   // 数据包导入/导出
   const uploadRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
@@ -1672,9 +1866,10 @@ export function AdminScenesPage() {
   const [loading, setLoading] = useState(true)
   const [selectedCat, setSelectedCat] = useState<string | null>(null)
   const [selectedPackageType, setSelectedPackageType] = useState<PackageTypeFilter>('all')
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
   const [detailSceneId, setDetailSceneId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(20)
 
   const [catDialog, setCatDialog] = useState(false)
   const [editCat, setEditCat] = useState<SceneCategory | null>(null)
@@ -1684,15 +1879,20 @@ export function AdminScenesPage() {
   const load = async () => {
     setLoading(true)
     try {
-      const [cats, scns, chks] = await Promise.all([
+      const [cats, scns] = await Promise.all([
         listSceneCategories(selectedPackageType === 'all' ? undefined : selectedPackageType, 'story'),
         listScenes(selectedCat ?? undefined, selectedPackageType === 'all' ? undefined : selectedPackageType, 'story'),
-        listAllChunks(),
       ])
-      setCategories(cats); setScenes(scns); setChunks(chks)
+      setCategories(cats); setScenes(scns)
     } catch {}
     finally { setLoading(false) }
   }
+
+  // 句块库（含例句）与系列列表只加载一次，切换筛选不重复拉取
+  useEffect(() => {
+    listAllChunks().then(setChunks).catch(() => {})
+    contentExperienceAdminApi.listGroups().then(setGroups).catch(() => {})
+  }, [])
 
   const notifyContentTask = (taskId?: string) => {
     if (!taskId) return
@@ -1716,15 +1916,26 @@ export function AdminScenesPage() {
   }
 
   useEffect(() => { load() }, [selectedCat, selectedPackageType])
-  useEffect(() => { setPage(1) }, [selectedCat, selectedPackageType])
+  useEffect(() => { setPage(1) }, [selectedCat, selectedPackageType, selectedGroup])
   useEffect(() => {
     if (selectedCat && !categories.some((category) => category.id === selectedCat)) {
       setSelectedCat(null)
     }
   }, [categories, selectedCat])
 
-  const totalPages = getTotalPages(scenes.length, pageSize)
-  const pageItems = getPageItems(scenes, Math.min(page, totalPages), pageSize)
+  // 按所属系列过滤：只显示选中组的包，过滤掉其他
+  const filteredScenes = useMemo(
+    () => (selectedGroup ? scenes.filter((scene) => scene.groupId === selectedGroup) : scenes),
+    [scenes, selectedGroup],
+  )
+  const groupNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    groups.forEach((group) => map.set(group.id, group.name))
+    return map
+  }, [groups])
+
+  const totalPages = getTotalPages(filteredScenes.length, pageSize)
+  const pageItems = getPageItems(filteredScenes, Math.min(page, totalPages), pageSize)
 
   if (detailSceneId) {
     return (
@@ -1797,6 +2008,25 @@ export function AdminScenesPage() {
               </div>
             </div>
           )}
+          {groups.length > 0 && (
+            <div>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">所属系列</p>
+              <div className="flex flex-wrap gap-2">
+                <Badge variant={!selectedGroup ? 'default' : 'outline'}
+                  className="cursor-pointer" onClick={() => setSelectedGroup(null)}>
+                  全部
+                </Badge>
+                {groups.map((group) => (
+                  <Badge key={group.id} variant={selectedGroup === group.id ? 'default' : 'outline'}
+                    className="cursor-pointer flex items-center gap-1"
+                    onClick={() => setSelectedGroup(group.id)}>
+                    {group.name}
+                    <span className="text-xs opacity-60">({group.items?.length ?? 0})</span>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -1804,7 +2034,7 @@ export function AdminScenesPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <MapPin className="size-4" /> 学习包列表 ({scenes.length})
+            <MapPin className="size-4" /> 学习包列表 ({filteredScenes.length})
           </CardTitle>
           <div className="flex items-center gap-2">
             <input
@@ -1852,7 +2082,7 @@ export function AdminScenesPage() {
                 <Skeleton key={i} className="h-14 w-full" />
               ))}
             </div>
-          ) : scenes.length === 0 ? (
+          ) : filteredScenes.length === 0 ? (
             <div className="flex flex-col items-center py-16 text-center">
               <MapPin className="h-12 w-12 text-muted-foreground/30" />
               <p className="mt-4 text-sm font-medium text-muted-foreground">暂无学习包</p>
@@ -1888,6 +2118,11 @@ export function AdminScenesPage() {
                             <Badge variant="outline" className="text-xs">
                               {contentModeLabel(s.contentMode)}
                             </Badge>
+                            {s.groupId && (
+                              <Badge variant="outline" className="text-xs text-muted-foreground">
+                                {groupNameById.get(s.groupId) ?? '未命名系列'} · 第 {(s.sortOrder ?? 0) + 1} 包
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -2001,7 +2236,7 @@ export function AdminScenesPage() {
             </div>
           )}
           <AdminPagination
-            total={scenes.length}
+            total={filteredScenes.length}
             page={Math.min(page, totalPages)}
             pageSize={pageSize}
             onPageChange={setPage}

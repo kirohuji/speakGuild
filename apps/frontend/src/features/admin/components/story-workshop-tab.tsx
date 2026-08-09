@@ -187,6 +187,7 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId, worksp
     if (!topic) throw new Error('当前故事尚未绑定训练话题')
     try {
       const updated = await updateTrainingTopic(topic.id, { teachingMarkdown })
+      if (!('id' in updated)) throw new Error('保存被引用校验拦截')
       setEditingStory((current) => current ? {
         ...current,
         trainingTopic: { ...topic, teachingMarkdown: updated.teachingMarkdown ?? teachingMarkdown },

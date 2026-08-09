@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, Search, Trash2, X, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -148,6 +148,7 @@ export function SearchSelectTable<T extends { id: string }>({
   pageSize = 10,
   getBadgeLabel,
   getBadgeVariant,
+  remoteSearch,
 }: {
   items: T[]
   selectedIds: string[]
@@ -159,15 +160,58 @@ export function SearchSelectTable<T extends { id: string }>({
   pageSize?: number
   getBadgeLabel: (item: T) => string
   getBadgeVariant?: (item: T) => 'default' | 'secondary' | 'outline'
+  /** 远程搜索模式：关键词变化时调用（300ms 防抖），服务端返回候选；不再本地过滤全量 items */
+  remoteSearch?: (query: string) => Promise<T[]>
 }) {
   const [keyword, setKeyword] = useState('')
   const [page, setPage] = useState(1)
+  // 远程搜索缓存：null 表示未搜索，展示 props items
+  const [remoteItems, setRemoteItems] = useState<T[] | null>(null)
+  const [remoteLoading, setRemoteLoading] = useState(false)
+  const remoteSeqRef = useRef(0)
+
+  // 已选中项始终保留在候选中（远程结果通常不包含它们）
+  const selectedItems = items.filter((item) => selectedIds.includes(item.id))
+
+  const effectiveItems = useMemo(() => {
+    if (!remoteSearch || !remoteItems) return items
+    const map = new Map<string, T>()
+    ;[...remoteItems, ...selectedItems].forEach((item) => {
+      if (item && !map.has(item.id)) map.set(item.id, item)
+    })
+    return [...map.values()]
+  }, [remoteSearch, remoteItems, items, selectedItems])
+
+  // 远程搜索防抖
+  useEffect(() => {
+    if (!remoteSearch) return
+    const q = keyword.trim()
+    if (!q) {
+      setRemoteItems(null)
+      setRemoteLoading(false)
+      return
+    }
+    setRemoteLoading(true)
+    const seq = ++remoteSeqRef.current
+    const timer = setTimeout(() => {
+      remoteSearch(q)
+        .then((result) => {
+          if (seq === remoteSeqRef.current) setRemoteItems(result)
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (seq === remoteSeqRef.current) setRemoteLoading(false)
+        })
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [keyword, remoteSearch])
 
   const filtered = useMemo(() => {
+    if (remoteSearch) return effectiveItems
     const q = keyword.trim().toLowerCase()
     if (!q) return items
     return items.filter((item) => searchFn(item, q))
-  }, [items, keyword, searchFn])
+  }, [remoteSearch, effectiveItems, keyword, items, searchFn])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const safePage = Math.min(page, totalPages)
@@ -178,7 +222,6 @@ export function SearchSelectTable<T extends { id: string }>({
     setPage(1)
   }
 
-  const selectedItems = items.filter((item) => selectedIds.includes(item.id))
   const isSelected = (id: string) => selectedIds.includes(id)
 
   return (
@@ -210,6 +253,9 @@ export function SearchSelectTable<T extends { id: string }>({
           className="pl-9"
           placeholder={searchPlaceholder}
         />
+        {remoteLoading && (
+          <span className="absolute right-3 top-1/2 size-3 -translate-y-1/2 animate-spin rounded-full border-2 border-border border-t-primary" />
+        )}
       </div>
 
       {/* Table */}
