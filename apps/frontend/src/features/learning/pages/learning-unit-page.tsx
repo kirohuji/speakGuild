@@ -198,11 +198,15 @@ export function LearningUnitPage() {
   const patternDialogItems = useMemo<LearningInsightItem[]>(() =>
     (unit?.sentencePatterns ?? []).map((p, index) => ({
       kind: 'pattern' as const,
-      id: `${p.topicId}-${index}`,
+      // 句型库对象本身有稳定 id；旧下载包没有时才回退到 topic/index。
+      id: p.id ?? `${p.topicId}-${index}`,
       pattern: p.pattern,
       meaning: p.meaning,
       slots: p.slots,
       example: p.example,
+      // 这里此前遗漏，导致下载包虽保存了讲解/例句，Dialog 却永远拿不到。
+      description: p.description,
+      examples: p.examples,
       difficulty: p.difficulty,
       sceneName: unit?.title,
     })), [unit])

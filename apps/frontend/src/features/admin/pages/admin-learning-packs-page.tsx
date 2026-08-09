@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FileUploadField } from '@/features/admin/components/file-upload-field';
+import { AdminPagination, getPageItems } from '@/features/admin/components/admin-pagination';
 import {
   learningPackAdminApi,
   type LearningPackFilters,
@@ -25,6 +26,7 @@ import {
   type LearningPackType,
 } from '../api-learning-packs';
 import { listSceneCategories, type SceneCategory } from '../api-content-admin';
+import { contentExperienceAdminApi, type PackageGroup } from '../api-content-experiences';
 import { cn } from '@/lib/cn';
 
 function fmtSize(bytes?: number | null) {
@@ -86,8 +88,15 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
   // ── List filters ──
   const [packageTypeFilter, setPackageTypeFilter] = useState<string>(isScriptMode ? 'story' : 'all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  // 所属系列（学习包分组）过滤
+  const [groups, setGroups] = useState<PackageGroup[]>([]);
+  const [groupFilter, setGroupFilter] = useState<string>('all');
   const [filterOptions, setFilterOptions] = useState<LearningPackFilters>({ packageTypes: [], categories: [] });
   const [categories, setCategories] = useState<SceneCategory[]>([]);
+
+  // ── Pagination (场景组列表分页) ──
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
 
   // ── Expand/collapse ──
   const [expandedScenes, setExpandedScenes] = useState<Set<string>>(new Set());
@@ -139,6 +148,20 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
     return Array.from(map.values());
   }, [packs, scenes]);
 
+  // 按所属系列过滤场景组
+  const filteredGroupedPacks = useMemo(() => {
+    if (groupFilter === 'all') return groupedPacks;
+    const memberIds = new Set(
+      (groups.find((g) => g.id === groupFilter)?.items ?? []).map((item) => item.sceneId),
+    );
+    return groupedPacks.filter((entry) => memberIds.has(entry.scene.id));
+  }, [groupedPacks, groups, groupFilter]);
+
+  const pageItems = useMemo(
+    () => getPageItems(filteredGroupedPacks, page, pageSize),
+    [filteredGroupedPacks, page, pageSize],
+  );
+
   const toggleExpand = (sceneId: string) => {
     setExpandedScenes((prev) => {
       const next = new Set(prev);
@@ -158,12 +181,14 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
       else listParams.excludePackageType = 'story';
       if (categoryFilter !== 'all') listParams.categoryId = categoryFilter;
 
-      const [packResult, sceneResult, filterResult] = await Promise.all([
+      const [packResult, sceneResult, filterResult, groupResult] = await Promise.all([
         learningPackAdminApi.list(listParams),
         learningPackAdminApi.scenes(),
         learningPackAdminApi.filters(),
+        contentExperienceAdminApi.listGroups().catch(() => [] as PackageGroup[]),
       ]);
       setPacks(packResult.list);
+      setGroups(groupResult);
       const visibleScenes = sceneResult.filter((scene) =>
         (isScriptMode ? scene.packageType === 'story' : scene.packageType !== 'story')
         && (categoryFilter === 'all' || scene.categoryId === categoryFilter),
@@ -184,6 +209,9 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
   }, [uploadSceneId, packageTypeFilter, categoryFilter, isScriptMode, entityLabel]);
 
   useEffect(() => { void load(); }, [load]);
+
+  // 筛选条件变化时回到第一页
+  useEffect(() => { setPage(1); }, [packageTypeFilter, categoryFilter, groupFilter]);
 
   // ── Read URL params on mount for cross-page navigation (parse from hash for HashRouter) ──
   useEffect(() => {
@@ -378,7 +406,15 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
           ))}
         </Select>
-        <span className="text-sm text-muted-foreground">共 {groupedPacks.length} 个{unitLabel}</span>
+        {groups.length > 0 && (
+          <Select value={groupFilter} onChange={(e) => setGroupFilter((e.target as HTMLSelectElement).value)} className="w-[160px]">
+            <SelectItem value="all">全部所属系列</SelectItem>
+            {groups.map((g) => (
+              <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+            ))}
+          </Select>
+        )}
+        <span className="text-sm text-muted-foreground">共 {filteredGroupedPacks.length} 个{unitLabel}</span>
       </div>
 
       {/* Table grouped by scene */}
@@ -396,6 +432,10 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
             <div className="py-16 text-center text-sm text-muted-foreground">
               暂无{entityLabel}，点击「新建{entityLabel}」开始。
             </div>
+          ) : pageItems.length === 0 ? (
+            <div className="py-16 text-center text-sm text-muted-foreground">
+              当前筛选条件下没有{unitLabel}。
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -411,7 +451,7 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
                   </tr>
                 </thead>
                 <tbody>
-                  {groupedPacks.map(({ scene, versions }) => {
+                  {pageItems.map(({ scene, versions }) => {
                     const latest = versions[0];
                     const isExpanded = expandedScenes.has(scene.id);
                     const hasContentUpdate = Boolean(
@@ -524,6 +564,15 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
                 </tbody>
               </table>
             </div>
+          )}
+          {filteredGroupedPacks.length > 0 && (
+            <AdminPagination
+              total={filteredGroupedPacks.length}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+            />
           )}
         </CardContent>
       </Card>

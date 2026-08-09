@@ -95,10 +95,15 @@ export interface ChunkItem {
 }
 
 export interface SentencePattern {
+  id?: string
   pattern: string
   meaning: string
   slots: string[]
   example: string
+  /** 富文本讲解；离线包与在线详情都会携带。 */
+  description?: string | null
+  /** 标准例句数组，格式与词汇例句一致。 */
+  examples?: unknown
   difficulty: string
   topicId: string
   topicTitle: string

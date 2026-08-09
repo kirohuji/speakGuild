@@ -87,6 +87,9 @@ type WarmupPipelineGenerationDto = {
   };
 };
 
+const WARMUP_PIPELINE_MAX_OUTPUT_TOKENS = 24_000;
+const WARMUP_PIPELINE_MAX_PREVIOUS_ITEMS = 40;
+
 @Injectable()
 export class EnglishPracticeAiService {
   private readonly logger = new Logger(EnglishPracticeAiService.name);
@@ -131,6 +134,67 @@ export class EnglishPracticeAiService {
     return normalized.endsWith('/chat/completions')
       ? normalized
       : `${normalized}/chat/completions`;
+  }
+
+  /**
+   * DeepSeek 的普通文本模式不能保证可被 JSON.parse。热身流水线是嵌套长 JSON，
+   * 直接使用其 JSON Output，并保留 finish_reason 以便区分截断和格式错误。
+   */
+  private async generateDeepSeekWarmupPipeline(config: LlmConfig, system: string, prompt: string) {
+    let lastError: unknown = null;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const response = await fetch(this.buildChatCompletionsUrl(config.baseUrl), {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${config.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: config.model,
+            messages: [
+              { role: 'system', content: system },
+              {
+                role: 'user',
+                content: `${prompt}\n\nReturn one complete JSON object only: {"pipeline":[...]}. Do not truncate any string or array.`,
+              },
+            ],
+            response_format: { type: 'json_object' },
+            // JSON 生成不需要思维链，避免其占用输出预算并降低格式稳定性。
+            thinking: 'disabled',
+            temperature: attempt === 0 ? 0.35 : 0,
+            max_tokens: WARMUP_PIPELINE_MAX_OUTPUT_TOKENS,
+          }),
+        });
+        const payload = await response.json().catch(() => null) as any;
+        if (!response.ok) {
+          throw new Error(payload?.error?.message || payload?.message || `DeepSeek JSON output failed (${response.status})`);
+        }
+
+        const choice = payload?.choices?.[0];
+        const finishReason = String(choice?.finish_reason ?? 'unknown');
+        const content = String(choice?.message?.content ?? '').trim();
+        if (!content) throw new Error(`DeepSeek JSON output was empty; finish_reason=${finishReason}`);
+        if (finishReason === 'length') {
+          throw new Error(`DeepSeek JSON output was truncated; finish_reason=length, chars=${content.length}`);
+        }
+
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(this.extractJson(content).trim());
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          throw new Error(`DeepSeek JSON output was invalid; finish_reason=${finishReason}, chars=${content.length}, error=${message}`);
+        }
+        if (!parsed || typeof parsed !== 'object' || !Array.isArray((parsed as { pipeline?: unknown }).pipeline)) {
+          throw new Error(`DeepSeek JSON output schema mismatch; expected pipeline array, finish_reason=${finishReason}`);
+        }
+        return (parsed as { pipeline: Array<Record<string, unknown>> }).pipeline;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error(String(lastError));
   }
 
   private normalizeLearningGoals(goals?: string[]) {
@@ -1506,7 +1570,8 @@ Rules:
 
   /** 一次性生成知识点练习补齐题组：同时考虑结构要求和材料覆盖 */
   async generateWarmupPipeline(dto: WarmupPipelineGenerationDto) {
-    const provider = await this.getProvider();
+    const runtime = await this.getLlmRuntime();
+    const provider = runtime.provider;
     const vocabs = dto.materials?.vocabs ?? [];
     const chunks = dto.materials?.chunks ?? [];
     const patterns = dto.materials?.patterns ?? [];
@@ -1626,11 +1691,14 @@ Rules:
       return base;
     };
 
+    // 历史题组只用于去重。限制摘要数量，避免在材料较多、反复补齐时无限膨胀请求。
     const previousSummary = previousPipeline.length
       ? [
           '',
           '=== PREVIOUSLY GENERATED ITEMS (DO NOT duplicate; improve upon these) ===',
-          ...previousPipeline.map((item, i) => `  ${i + 1}. ${summarizePreviousItem(item)}`),
+          ...previousPipeline
+            .slice(-WARMUP_PIPELINE_MAX_PREVIOUS_ITEMS)
+            .map((item, i) => `  ${i + 1}. ${summarizePreviousItem(item)}`),
           '=== END PREVIOUS ITEMS ===',
           '',
         ].join('\n')
@@ -1716,12 +1784,23 @@ Rules:
     });
 
     try {
+      const providerName = runtime.config.provider.trim().toLowerCase();
+      if (providerName === 'deepseek') {
+        return {
+          pipeline: await this.generateDeepSeekWarmupPipeline(
+            runtime.config,
+            WARMUP_PIPELINE_SYSTEM_PROMPT,
+            prompt,
+          ),
+        };
+      }
+
       const { text } = await generateText({
         model: provider(),
         system: WARMUP_PIPELINE_SYSTEM_PROMPT,
         prompt,
-        temperature: 0.65,
-        maxOutputTokens: 16000,
+        temperature: 0.35,
+        maxOutputTokens: WARMUP_PIPELINE_MAX_OUTPUT_TOKENS,
       });
       const parsed = JSON.parse(this.extractJson(text).trim());
       return { pipeline: Array.isArray(parsed.pipeline) ? parsed.pipeline : [] };

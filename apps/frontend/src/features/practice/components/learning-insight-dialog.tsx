@@ -1157,7 +1157,10 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
   const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
   const slotText = useMemo(() => item.slots?.filter(Boolean).join(' / '), [item.slots])
   const examples = useMemo(() => normalizeVocabExamples(item.examples), [item.examples])
-  const [activeTab, setActiveTab] = useState('structure')
+  // 新版 SentencePattern 用 examples 保存例句；example 仅兼容旧数据。
+  const primaryExample = item.example || examples[0]?.en
+  const primaryExampleZh = examples[0]?.zh ?? item.meaning ?? ''
+  const [activeTab, setActiveTab] = useState('description')
   const { play: playAudio } = useCachedAudio()
 
   const savePattern = async () => {
@@ -1182,7 +1185,7 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
       <div className="flex shrink-0 items-center gap-2 px-5 pt-3 md:px-6">
         <div className="scrollbar-hide min-w-0 flex-1 overflow-x-auto">
         <TabsList>
-          <TabsTrigger value="structure">结构</TabsTrigger>
+          {/* <TabsTrigger value="structure">结构</TabsTrigger> */}
           <TabsTrigger value="description">讲解</TabsTrigger>
           <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
         </TabsList>
@@ -1198,15 +1201,15 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
         <TabsContent value="structure" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
             <div className="space-y-4 py-4">
-              <section className="rounded-xl border border-border p-4">
+              {/* <section className="rounded-xl border border-border p-4">
                 <p className="font-mono text-sm leading-relaxed text-foreground">{item.pattern}</p>
                 {slotText && <p className="mt-2 text-xs text-muted-foreground">可替换部分：{slotText}</p>}
                 {item.meaning && <p className="mt-1.5 text-sm text-muted-foreground">{item.meaning}</p>}
-              </section>
-              {item.example && (
+              </section> */}
+              {primaryExample && (
                 <section className="space-y-3">
                   <h3 className="text-sm font-semibold text-foreground">{t('insight.exampleSentence')}</h3>
-                  <ExampleBlock en={item.example} zh={item.meaning ?? ''} level={item.difficulty} />
+                  <ExampleBlock en={primaryExample} zh={primaryExampleZh} level={item.difficulty} />
                 </section>
               )}
             </div>

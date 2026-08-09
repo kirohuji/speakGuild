@@ -949,7 +949,7 @@ const zhCN = {
       usageGuide: '用法讲解',
       structure: '结构',
       replaceableSlots: '可替换位置：',
-      exampleSentence: '套用示例',
+      exampleSentence: '示例',
       noExamplesConfig: '后台还没有配置示例句。',
       phonetic: '音标',
       prev: '上一个',
