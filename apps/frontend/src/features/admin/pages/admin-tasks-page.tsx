@@ -29,6 +29,7 @@ import { cn } from '@/lib/cn';
 import { adminTasksApi, type AdminTask, type AdminTaskDetail, type AdminTaskStatus, type QueuesStatusResult } from '../api-admin-tasks';
 
 const TYPE_LABELS: Record<string, string> = {
+  'warmup-pipeline-generate': '知识点练习 AI 生成',
   'learning-package-content-prepare': '学习包内容准备',
   'vocabulary-csv-import': '词汇CSV批量导入',
   'vocabulary-missing-meaning-enrich': '词汇字段检查与 AI 补全（词典+AI）',
@@ -40,6 +41,9 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const STEP_LABELS: Record<string, string> = {
+  'loading-topic': '读取话题内容',
+  'generating-warmup': 'AI 生成练习',
+  'saving-warmup': '写入练习结果',
   scan: '扫描内容',
   vocabulary: '补全词汇',
   chunk: '补全句块',
@@ -193,6 +197,24 @@ function AiUsageCard({ task }: { task: AdminTask | AdminTaskDetail }) {
 
 function SummaryPanel({ task }: { task: AdminTask }) {
   const summary = task.summary as any;
+  if (task.type === 'warmup-pipeline-generate' && summary) {
+    return (
+      <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
+        <div className="grid grid-cols-3 gap-2">
+          <Metric label="新增题组" value={summary.generatedGroups ?? 0} tone="good" />
+          <Metric label="题组总数" value={summary.afterGroups ?? 0} tone="muted" />
+          <Metric label="题目总数" value={summary.afterItems ?? 0} tone="muted" />
+        </div>
+        <p className="text-xs text-muted-foreground">生成结果已自动写入话题，原有 {summary.beforeGroups ?? 0} 个题组 / {summary.beforeItems ?? 0} 道题。</p>
+        {summary.actionUrl && (
+          <Button size="sm" variant="outline" onClick={() => { window.location.hash = `#${summary.actionUrl}` }}>
+            打开对应话题
+            <ArrowUpRight className="ml-1 size-3.5" />
+          </Button>
+        )}
+      </div>
+    );
+  }
   if (task.type === 'script-video-render' || task.type === 'narrative-video-render') {
     return (
       <div className="rounded-md border border-border bg-muted/20 p-3 text-xs">
@@ -287,7 +309,7 @@ function SummaryPanel({ task }: { task: AdminTask }) {
 
 export function AdminTasksPage() {
   const [status, setStatus] = useState<AdminTaskStatus | 'all'>('all');
-  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'vocabulary-polish' | 'chunk-missing-meaning-enrich' | 'pattern-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
+  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'warmup-pipeline-generate' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'vocabulary-polish' | 'chunk-missing-meaning-enrich' | 'pattern-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
   const [items, setItems] = useState<AdminTask[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AdminTaskDetail | null>(null);
@@ -442,6 +464,7 @@ export function AdminTasksPage() {
 
   const canRetry = (task: AdminTask) =>
     task.type === 'learning-package-content-prepare'
+    || task.type === 'warmup-pipeline-generate'
     || task.type === 'vocabulary-missing-meaning-enrich'
     || task.type === 'vocabulary-polish'
     || task.type === 'chunk-missing-meaning-enrich'
@@ -467,6 +490,7 @@ export function AdminTasksPage() {
             <option value="pattern-missing-meaning-enrich">句型字段检查与 AI 补全</option>
             <option value="script-video-render">剧本演出视频</option>
             <option value="narrative-video-render">叙事视频预览</option>
+            <option value="warmup-pipeline-generate">知识点练习 AI 生成</option>
           </Select>
           <Select value={status} onChange={(event) => { setStatus(event.target.value as AdminTaskStatus | 'all'); setPage(1); }}>
             <option value="all">全部状态</option>

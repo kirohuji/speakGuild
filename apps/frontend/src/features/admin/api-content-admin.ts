@@ -152,6 +152,7 @@ export interface SuggestedVocabItem {
   status: 'available' | 'earlier'
   reason: string
   score: number
+  group: 'core' | 'extension'
 }
 
 export async function suggestTopicVocabs(
@@ -757,6 +758,10 @@ export async function generateTeachingMarkdown(id: string): Promise<GenerateTeac
 
 export async function generateTopicTeachingMarkdown(id: string): Promise<GenerateTeachingMarkdownResult> {
   return post(`/admin/content/training-topics/${id}/generate-teaching`)
+}
+
+export async function enqueueWarmupPipelineGeneration(id: string): Promise<{ id: string; bullJobId?: string; reused?: boolean }> {
+  return post(`/admin/content/training-topics/${id}/generate-warmup-task`)
 }
 
 // ═══ Content Library: Vocabulary, Chunk, Sentence Pattern ═══

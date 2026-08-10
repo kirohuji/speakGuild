@@ -6,6 +6,7 @@ export const VOCABULARY_POLISH_JOB = 'vocabulary-polish';
 export const CHUNK_MISSING_MEANING_ENRICH_JOB = 'chunk-missing-meaning-enrich';
 export const PATTERN_MISSING_MEANING_ENRICH_JOB = 'pattern-missing-meaning-enrich';
 export const CONTENT_PREPARE_JOB = 'learning-package-content-prepare';
+export const WARMUP_PIPELINE_GENERATE_JOB = 'warmup-pipeline-generate';
 export const SCRIPT_VIDEO_QUEUE = 'script-video-render';
 export const SCRIPT_VIDEO_RENDER_JOB = 'script-video-render';
 export const NARRATIVE_VIDEO_RENDER_JOB = 'narrative-video-render';

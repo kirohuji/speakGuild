@@ -42,6 +42,48 @@ import { ListeningTranscriptSegment } from '../tts/tts.service';
 import { MaterialConstraintService, type MaterialKind, type GroupSceneInfo } from '../content-experiences/material-constraint.service';
 import { SuggestTopicVocabsDto } from './dto/scene-admin.dto';
 
+/** 语法功能词（代词/介词/冠词/连词/助动词/虚副词/限定词等），无实际学习价值，不进入推荐 */
+const FUNCTION_WORDS = new Set([
+  // 代词
+  'i','me','my','mine','myself','you','your','yours','yourself','yourselves',
+  'he','him','his','himself','she','her','hers','herself','it','its','itself',
+  'we','us','our','ours','ourselves','they','them','their','theirs','themselves',
+  'this','that','these','those','who','whom','whose','which','what','whoever','whatever',
+  // 冠词
+  'a','an','the',
+  // 介词
+  'at','on','in','to','for','with','by','of','from','about','into','onto','over','under',
+  'up','down','out','off','through','during','before','after','between','among','against',
+  'across','along','around','behind','below','beneath','beside','beyond','inside','outside',
+  'near','past','since','till','until','upon','within','without','per','via','towards','toward',
+  'throughout','despite',
+  // 连词
+  'and','or','but','so','because','if','unless','though','although','while','than','whether','nor','yet',
+  // 疑问词
+  'when','where','why','how',
+  // be / 助动词 / 情态动词
+  'be','am','is','are','was','were','been','being',
+  'do','does','did','doing','done','have','has','had','having',
+  'can','could','may','might','must','shall','should','will','would','ought',
+  // 否定 / 应答
+  'not','no','yes',
+  // 虚副词（无实义的程度/时间副词）
+  'very','too','also','just','only','even','still','already','yet','now','then','here','there',
+  'again','always','never','often','sometimes','usually','really','quite','almost','soon','ago',
+  'ever','once','twice',
+  // 限定词
+  'some','any','all','both','each','every','either','neither','other','another','few','little',
+  'many','much','more','most','several','such','same','own','enough','none',
+]);
+
+/** 词性黑名单：词库标注为这些词性的一律视为功能词 */
+const FUNCTION_POS_RE = /^(pronoun|prep(osition)?|conj(unction)?|article|det(erminer)?|aux(iliary)?|interjection)$/i;
+
+function isFunctionWord(word: string, partOfSpeech?: string | null): boolean {
+  return FUNCTION_WORDS.has(word.toLowerCase().trim())
+    || (!!partOfSpeech && FUNCTION_POS_RE.test(partOfSpeech.trim()));
+}
+
 function validateListeningTranscript(value: unknown) {
   if (value == null) return;
   if (!Array.isArray(value)) throw new BadRequestException('听力字幕必须是数组');
@@ -540,7 +582,8 @@ export class ContentAdminController {
     const patternIds = dto.patternIds ?? topic.topicPatterns.map((tp) => tp.pattern.id);
     const chunkIds = dto.chunkIds ?? topic.activeChunks.map((ac) => ac.chunk.id);
     const difficulty = dto.difficulty ?? topic.difficulty ?? topic.scene.requiredOutputLevel;
-    const count = Math.min(Math.max(dto.count ?? 8, 1), 20);
+    const count = Math.min(Math.max(dto.count ?? 12, 1), 20);
+    const extensionCount = Math.min(Math.max(dto.extensionCount ?? 6, 0), 20);
 
     const [patterns, chunks] = await Promise.all([
       patternIds.length ? this.prisma.sentencePattern.findMany({ where: { id: { in: patternIds } } }) : [],
@@ -592,6 +635,7 @@ export class ContentAdminController {
     const scored: Array<{ vocabulary: (typeof library)[number]; score: number }> = [];
     for (const vocabulary of library) {
       if (boundIds.has(vocabulary.id)) continue;
+      if (isFunctionWord(vocabulary.word, vocabulary.partOfSpeech)) continue;
       if (laterClaimed.has(`vocab:${vocabulary.id}`)) continue;
       if (targetLevel != null) {
         const level = levelOf(vocabulary.difficulty);
@@ -610,10 +654,11 @@ export class ContentAdminController {
       scored.push({ vocabulary, score });
     }
     scored.sort((a, b) => b.score - a.score);
-    const candidates = scored.slice(0, 60);
+    const candidates = scored.slice(0, 100);
 
     // ── AI 排序与推荐理由（失败时回退到规则排序） ──
     let ranked = candidates.slice(0, count);
+    let extended = candidates.slice(count, count + extensionCount).filter((c) => c.score > 0);
     const reasons = new Map<string, string>();
     try {
       const llmConfig = await this.aiModelService.getLlmConfig();
@@ -628,22 +673,25 @@ export class ContentAdminController {
         const teaching = (dto.teachingMarkdown ?? '').slice(0, 1500);
         const { text } = await generateText({
           model,
-          prompt: `你是英语教学设计助手，为话题挑选最合适的练习词汇。\n\n话题目标难度：${difficulty}\n\n已绑定句型：\n${patternLines}\n\n已绑定句块：\n${chunkLines}\n\n教学文档（参考）：\n${teaching || '(无)'}\n\n候选词（id | 单词 | 中文释义 | 词性 | 难度）：\n${candidateLines}\n\n请从中选出最适合本话题练习的 ${count} 个单词：\n1. 语义/搭配与已绑句型、句块自然契合；\n2. 难度符合目标难度；\n3. 与话题场景相关优先。\n\n只输出 JSON：{"items":[{"vocabularyId":"候选词id","reason":"一句话中文理由（说明与哪个句型/句块搭配，为什么适合）"}]}，不要输出其他内容。`,
+          prompt: `你是英语教学设计助手，为话题挑选最合适的练习词汇。\n\n话题目标难度：${difficulty}\n\n已绑定句型：\n${patternLines}\n\n已绑定句块：\n${chunkLines}\n\n教学文档（参考）：\n${teaching || '(无)'}\n\n候选词（id | 单词 | 中文释义 | 词性 | 难度）：\n${candidateLines}\n\n请从中选出最适合本话题练习的 ${count} 个核心词和 ${extensionCount} 个扩展词（扩展词不足可少于 ${extensionCount} 个，但不能与核心词重复）：\n1. 语义/搭配与已绑句型、句块自然契合；\n2. 难度符合目标难度；核心词优先选搭配度最高的，扩展词可略高一级、作为进阶拓展；\n3. 与话题场景相关优先；\n4. 只选有实际学习价值的实义词（名词/动词/形容词/副词/短语），绝不选择代词、介词、冠词、助动词、连词等语法功能词（如 you、at、I、what、on）。\n\n只输出 JSON：{"core":[{"vocabularyId":"候选词id","reason":"一句话中文理由（说明与哪个句型/句块搭配，为什么适合）"}],"extension":[{"vocabularyId":"候选词id","reason":"一句话中文理由"}]}，不要输出其他内容。`,
           temperature: 0.4,
-          maxOutputTokens: 2000,
+          maxOutputTokens: 2400,
         });
         const parsed = extractJsonObject(text);
-        if (Array.isArray(parsed?.items) && parsed.items.length) {
-          const byId = new Map(candidates.map((item) => [item.vocabulary.id, item]));
-          const selected = parsed.items
+        const byId = new Map(candidates.map((item) => [item.vocabulary.id, item]));
+        const resolveGroup = (items: any): typeof ranked => {
+          if (!Array.isArray(items)) return [];
+          return items
             .map((item: any) => byId.get(String(item?.vocabularyId)))
-            .filter((item): item is (typeof candidates)[number] => Boolean(item))
-            .slice(0, count);
-          if (selected.length) {
-            ranked = selected;
-            for (const item of parsed.items) {
-              reasons.set(String(item?.vocabularyId), String(item?.reason ?? ''));
-            }
+            .filter((item): item is (typeof candidates)[number] => Boolean(item));
+        };
+        const coreSelected = resolveGroup(parsed?.core).slice(0, count);
+        const extSelected = resolveGroup(parsed?.extension).slice(0, extensionCount);
+        if (coreSelected.length) {
+          ranked = coreSelected;
+          extended = extSelected;
+          for (const item of [...(parsed?.core ?? []), ...(parsed?.extension ?? [])]) {
+            reasons.set(String(item?.vocabularyId), String(item?.reason ?? ''));
           }
         }
       }
@@ -651,20 +699,26 @@ export class ContentAdminController {
       console.warn(`[suggest-vocabs] AI 排序失败，回退规则排序: ${error.message}`);
     }
 
+    const toItem = (entry: { vocabulary: (typeof library)[number]; score: number }, group: 'core' | 'extension') => ({
+      vocabularyId: entry.vocabulary.id,
+      word: entry.vocabulary.word,
+      meaning: entry.vocabulary.meaning,
+      partOfSpeech: entry.vocabulary.partOfSpeech ?? '',
+      difficulty: entry.vocabulary.difficulty,
+      status: earlierClaimed.has(`vocab:${entry.vocabulary.id}`) ? 'earlier' : 'available',
+      reason: reasons.get(entry.vocabulary.id) ?? (entry.score > 0 ? '与已绑句型/句块搭配度高' : '难度匹配'),
+      score: entry.score,
+      group,
+    });
+
     return {
       code: 200,
       message: 'success',
       data: {
-        items: ranked.map(({ vocabulary, score }) => ({
-          vocabularyId: vocabulary.id,
-          word: vocabulary.word,
-          meaning: vocabulary.meaning,
-          partOfSpeech: vocabulary.partOfSpeech ?? '',
-          difficulty: vocabulary.difficulty,
-          status: earlierClaimed.has(`vocab:${vocabulary.id}`) ? 'earlier' : 'available',
-          reason: reasons.get(vocabulary.id) ?? (score > 0 ? '与已绑句型/句块搭配度高' : '难度匹配'),
-          score,
-        })),
+        items: [
+          ...ranked.map((entry) => toItem(entry, 'core')),
+          ...extended.map((entry) => toItem(entry, 'extension')),
+        ],
       },
     };
   }
@@ -2520,6 +2574,12 @@ ${contextBlock}
    * 用于「学习内容 / 编辑话题 / 知识点练习」中的话题级教学说明。
    * 遵守学习包组顺序约束：不得出现后序包知识点，难度与话题/学习包对齐。
    */
+  @Post('training-topics/:id/generate-warmup-task')
+  async generateWarmupPipelineTask(@Req() req: Request, @Param('id') id: string) {
+    const session = await this.requireAdmin(req);
+    return this.adminTasksService.enqueueWarmupPipelineGenerate(id, session.user.id);
+  }
+
   @Post('training-topics/:id/generate-teaching')
   async generateTopicTeachingMarkdown(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);

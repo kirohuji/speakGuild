@@ -89,6 +89,8 @@ type WarmupPipelineGenerationDto = {
 
 const WARMUP_PIPELINE_MAX_OUTPUT_TOKENS = 24_000;
 const WARMUP_PIPELINE_MAX_PREVIOUS_ITEMS = 40;
+const WARMUP_PIPELINE_MAX_ITEMS = 48; // 单轮生成题目硬上限（整组截断，极端失控兑底）
+const WARMUP_PIPELINE_MAX_GROUPS = 12; // 单轮生成题组硬上限
 
 @Injectable()
 export class EnglishPracticeAiService {
@@ -1568,6 +1570,35 @@ Rules:
     ];
   }
 
+  /** 题量兜底：AI 生成结果超过上限时按整组截断（优先保留首个 en_to_zh 与 pattern_drill 组） */
+  private capWarmupPipeline(pipeline: any[]): any[] {
+    if (!Array.isArray(pipeline)) return [];
+    const countItems = (item: any): number => {
+      if (!item || typeof item !== 'object') return 0;
+      if (item.type === 'sentence_decomposition') return Array.isArray(item.levels) ? item.levels.length : 0;
+      if (item.type === 'vocab_sentence_building') {
+        return (Array.isArray(item.patterns) ? item.patterns : [])
+          .reduce((sum, p) => sum + (Array.isArray(p?.items) ? p.items.length : 0), 0);
+      }
+      return Array.isArray(item.items) ? item.items.length : 0;
+    };
+    const isEnToZh = (item: any) => item?.type === 'chunk_substitution' && item?.direction === 'en_to_zh';
+    const isPatternDrill = (item: any) => item?.type === 'pattern_drill';
+    const capped: any[] = [];
+    let total = 0;
+    for (const item of pipeline) {
+      const n = countItems(item);
+      // 关键类型（首个 en_to_zh / pattern_drill）即使超限也保留，保证题型多样性
+      const critical = (!capped.some(isEnToZh) && isEnToZh(item)) || (!capped.some(isPatternDrill) && isPatternDrill(item));
+      if (!critical && (total + n > WARMUP_PIPELINE_MAX_ITEMS || capped.length >= WARMUP_PIPELINE_MAX_GROUPS)) break;
+      capped.push(item);
+      total += n;
+    }
+    if (capped.length === pipeline.length) return pipeline;
+    this.logger.warn(`[generate-warmup-pipeline] 超出单轮上限，截断 ${pipeline.length - capped.length} 个题组（${pipeline.length} → ${capped.length}）`);
+    return capped;
+  }
+
   /** 一次性生成知识点练习补齐题组：同时考虑结构要求和材料覆盖 */
   async generateWarmupPipeline(dto: WarmupPipelineGenerationDto) {
     const runtime = await this.getLlmRuntime();
@@ -1787,11 +1818,11 @@ Rules:
       const providerName = runtime.config.provider.trim().toLowerCase();
       if (providerName === 'deepseek') {
         return {
-          pipeline: await this.generateDeepSeekWarmupPipeline(
+          pipeline: this.capWarmupPipeline(await this.generateDeepSeekWarmupPipeline(
             runtime.config,
             WARMUP_PIPELINE_SYSTEM_PROMPT,
             prompt,
-          ),
+          )),
         };
       }
 
@@ -1803,7 +1834,7 @@ Rules:
         maxOutputTokens: WARMUP_PIPELINE_MAX_OUTPUT_TOKENS,
       });
       const parsed = JSON.parse(this.extractJson(text).trim());
-      return { pipeline: Array.isArray(parsed.pipeline) ? parsed.pipeline : [] };
+      return { pipeline: Array.isArray(parsed.pipeline) ? this.capWarmupPipeline(parsed.pipeline) : [] };
     } catch (error) {
       this.logger.warn(`Warmup pipeline generation failed: ${error instanceof Error ? error.message : String(error)}`);
       return { pipeline: [] };

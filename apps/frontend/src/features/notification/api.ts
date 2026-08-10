@@ -6,11 +6,17 @@ export interface NotificationItem {
   content: string;
   type: 'broadcast' | 'targeted';
   imageUrl?: string;
+  actionUrl?: string;
   sentById: string;
   createdAt: string;
   updatedAt: string;
   isRead: boolean;
   readAt: string | null;
+}
+
+export function getNotificationActionUrl(item: NotificationItem): string | undefined {
+  if (item.actionUrl?.startsWith('/')) return item.actionUrl
+  return item.content.match(/\]\((\/admin\/learning-content[^)]+)\)/)?.[1]
 }
 
 export interface NotificationListResult {

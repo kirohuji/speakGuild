@@ -10,12 +10,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import {
-  getUserNotifications, markAsRead, markAllAsRead,
+  getUserNotifications, markAsRead, markAllAsRead, getNotificationActionUrl,
   type NotificationItem,
 } from '@/features/notification/api'
 import { useNotificationStore } from '@/features/notification/store'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useNavigate } from 'react-router-dom'
 
 type TabValue = 'all' | 'unread' | 'read'
 
@@ -376,6 +377,7 @@ function NotificationDetailDialog({
 
 export function NotificationBell({ className }: { className?: string } = {}) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<TabValue>('all')
   const [detailItem, setDetailItem] = useState<NotificationItem | null>(null)
@@ -385,13 +387,19 @@ export function NotificationBell({ className }: { className?: string } = {}) {
   const unreadCount = useNotificationStore((s) => s.unreadCount)
 
   const handleOpenDetail = (item: NotificationItem) => {
-    setDetailItem(item)
-    setDetailOpen(true)
     if (!item.isRead) {
       markAsRead(item.id).then(() => {
         useNotificationStore.getState().fetchUnreadCount()
       }).catch(() => {})
     }
+    const actionUrl = getNotificationActionUrl(item)
+    if (actionUrl) {
+      setOpen(false)
+      navigate(actionUrl)
+      return
+    }
+    setDetailItem(item)
+    setDetailOpen(true)
   }
 
   return (

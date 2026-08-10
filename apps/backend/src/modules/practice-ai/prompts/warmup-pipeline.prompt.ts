@@ -86,9 +86,9 @@ The material pool labels each vocabulary word with its tier:
 Priority order when choosing which words to cover:
   1. [core] words with count=0 (missing, highest priority)
   2. [ext] words with count=0 (missing)
-  3. [core] words with count<2 (under-covered)
-  4. [carry] words with count=0 (missing, nice-to-have)
-  5. [ext] words with count<2 (under-covered)
+  3. [carry] words with count=0 (missing, nice-to-have)
+
+Each word only needs ONE exercise to be considered covered. Never add extra exercises just to give a word a second or third pass — one solid, varied exercise per word is enough. Use the freed capacity to vary scenarios and combine with sentence patterns instead.
 
 A word is "covered" when it appears as the target word (chunk/vocabWord/pattern) in at least one exercise group.
 
@@ -107,6 +107,15 @@ This exercise belongs to a learning pack inside an ordered pack group. Later pac
 - **FORBIDDEN MATERIALS (MUST NOT appear anywhere)**: Never use these words/chunks/patterns in any exercise, example sentence, prompt, hint, or answer. They belong to LATER learning packs — using them leaks future knowledge points and breaks the learning sequence.
 - **REVIEW MATERIALS (nice-to-have)**: These are knowledge points from EARLIER packs. You MAY reuse them in example sentences as spaced repetition, but do NOT treat them as new teaching targets.
 - Difficulty: generate exercises at the stated target difficulty level. Choose vocabulary and sentence complexity accordingly.
+
+## ══ COMBINATION DESIGN (单词 × 句型 组合练习, 反同质化) ══
+
+Train vocabulary and sentence patterns TOGETHER, never in isolation:
+- A missing word should usually appear inside a sentence that follows one of the bound sentence patterns — the same exercise then covers BOTH the word and the pattern.
+- A pattern may be drilled with several different words, but each exercise must be clearly different from every other: different scenario (shopping / school / family / travel / ordering food / clinic / weather / hobbies...), different tone, or different added detail.
+- NEVER just swap the subject or object word and keep the rest of the sentence identical — that is mechanical substitution, not practice.
+- Chinese prompts must be visibly distinct; avoid chains like "我想买…" repeated across many items.
+- When both words and patterns are missing, prefer vocab_sentence_building (一词多句: one word across several patterns) and pattern_drill (one pattern with several words) — these combine both by design.
 
 ## ══ SENTENCE PATTERN DRIVEN WORD ALLOCATION ══
 
@@ -127,7 +136,7 @@ When assigning words to patterns, match the word's semantic category to the patt
 Rules:
 - Return ONLY valid JSON: { "pipeline": [...] }
 - Do not include ids; frontend will assign ids.
-- Generate MULTIPLE groups of the same type when there are many missing materials — do NOT stop at the minimum. For example, if 5 vocab words are missing, generate 2-3 separate chunk_substitution groups (each targeting different words), not just one.
+- Cover EVERY missing material at least once across the pipeline — one exercise per word/chunk/pattern is enough, do NOT force second passes. When there are many missing materials, that is fine: keep each exercise distinct (see COMBINATION DESIGN) and stay within the hard caps below.
 - Each group should target a DIFFERENT material (word/chunk/pattern). Do not put all missing materials into one giant group.
 - Use missing materials preferentially, but choose exercise types naturally and vary them.
 - Mix types: do not generate only chunk_substitution groups. Include at least one pattern_drill, one vocab_sentence_building, and varied combinations.
@@ -136,8 +145,8 @@ Rules:
 - Keep each group compact: 2-4 translation items per group, 2-3 pattern groups for vocab_sentence_building, 3-5 progressive levels for sentence_decomposition (L1 ⊂ L2 ⊂ ... ⊂ LN, same sentence, incremental, N adapts to sentence complexity).
 - CRITICAL: Every group MUST have at least 2 items — never generate a group with only 1 item (that creates a "single-item section" which is invalid). If you can only fill 1 item for a material, combine it with another material in the same group.
 - STRUCTURE TARGETS (aim for these, not just the minimum):
-  * Total practice items: 8-15 (ideal range). Below 6 is a hard failure.
-  * Total groups (steps): 3-5 (ideal range). More than 5 is acceptable only if all materials are covered.
+  * Total practice items: 8-25 is ideal; more is acceptable if every exercise stays distinct. HARD MAXIMUM: 48 items per round.
+  * Total groups (steps): 4-8 is ideal. HARD MAXIMUM: 12 groups per round.
   * zh_to_en output items: at least 3 (output activation, step 1 priority).
   * en_to_zh comprehension items: at least 2 (input check — confirms reading/listening understanding).
   * pattern_drill items: at least 2 (structural output training — ensures learner can use sentence patterns flexibly).
@@ -245,8 +254,8 @@ export function buildWarmupPipelineUserPrompt(input: WarmupPipelinePromptInput):
     previousSummary,
     forbiddenBlock,
     reviewBlock,
-    `You need to generate exercises to cover ${totalMissing} missing materials.`,
-    'Generate enough groups — do NOT stop at just one group per type.',
+    `There are ${totalMissing} missing materials. Cover each of them at least once across the pipeline — one exercise per word/chunk/pattern is enough, do NOT force second passes.`,
+    'Generate enough groups to cover them, but keep every exercise distinct and stay within the hard caps.',
     '',
     '## ══ Current State (already generated; targets per System rules) ══',
     '',
@@ -257,7 +266,7 @@ export function buildWarmupPipelineUserPrompt(input: WarmupPipelinePromptInput):
     `- pattern_drill items so far: ${structure.patternItems}`,
     `- expansion groups so far: ${structure.expansionUnits}`,
     '',
-    `IMPORTANT: If ${totalMissing} materials are missing, generate MORE groups than the minimum to cover them. Do not stop at just meeting the floor.`,
+    `IMPORTANT: Stay within the hard caps (48 items / 12 groups). The more materials you cover, the more you must fight homogeneity: vary scenarios, tones and details between every exercise. Combine words with sentence patterns (see COMBINATION DESIGN) instead of churning out same-structure substitutions. Quality over mechanical coverage.`,
     '',
     '## ══ Materials ══',
     '',

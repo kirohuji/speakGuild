@@ -99,6 +99,7 @@ interface Props {
   teachingMarkdown?: string | null
   onTeachingMarkdownChange?: (value: string) => void
   onGenerateTeaching?: () => Promise<string | null>
+  onGenerateInBackground?: () => Promise<void>
 }
 
 let _idCounter = Date.now()
@@ -566,6 +567,7 @@ export function WarmupPipelineTab({
   teachingMarkdown,
   onTeachingMarkdownChange,
   onGenerateTeaching,
+  onGenerateInBackground,
 }: Props) {
   const [local, setLocal] = useState<WarmupPipelineData>(value)
   const [selectedItemId, setSelectedItemId] = useState<string | null>(value.pipeline[0]?.id ?? null)
@@ -812,6 +814,17 @@ export function WarmupPipelineTab({
   }
 
   const generateMissingPracticeItems = async () => {
+    if (onGenerateInBackground) {
+      setAiGeneratingMissing(true)
+      try {
+        await onGenerateInBackground()
+      } catch (err: any) {
+        toast.error(err?.message || '后台生成任务创建失败')
+      } finally {
+        setAiGeneratingMissing(false)
+      }
+      return
+    }
     const currentZhItems = local.pipeline
       .filter((item): item is ChunkSubstitutionItem => item.type === 'chunk_substitution' && item.direction === 'zh_to_en')
       .reduce((sum, item) => sum + item.items.length, 0)
@@ -1428,7 +1441,7 @@ export function WarmupPipelineTab({
             type="button"
             size="sm"
             className="h-8 gap-1.5"
-            disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll || missingMaterialCount === 0}
+            disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll}
             onClick={generateMissingPracticeItems}
           >
             {aiGeneratingMissing ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}

@@ -6,11 +6,12 @@ import { MobileListSkeleton } from '@/components/common/mobile-page-loading'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/cn'
 import {
-  markAsRead, markAllAsRead,
+  markAsRead, markAllAsRead, getNotificationActionUrl,
   type NotificationItem,
 } from '@/features/notification/api'
 import { useNotificationStore } from '@/features/notification/store'
 import { NotificationDetailSheet } from '../components/notification-detail-sheet'
+import { useNavigate } from 'react-router-dom'
 
 type TabValue = 'all' | 'unread' | 'read'
 
@@ -118,6 +119,7 @@ function NotificationCard({ item, onClick, formatRelativeTime, compact = false }
 
 function NotificationTabContent({ tab, formatRelativeTime, compact = false }: { tab: TabValue; formatRelativeTime: (s: string) => string; compact?: boolean }) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const tabLists = useNotificationStore((s) => s.tabLists)
   const tabLoading = useNotificationStore((s) => s.tabLoading)
   const fetchTabList = useNotificationStore((s) => s.fetchTabList)
@@ -157,14 +159,19 @@ function NotificationTabContent({ tab, formatRelativeTime, compact = false }: { 
   }, [hasMore, loading, page, tab, fetchTabList])
 
   const handleClickItem = (item: NotificationItem) => {
-    setDetailItem(item)
-    setDetailOpen(true)
     if (!item.isRead) {
       markAsRead(item.id).then(() => {
         markItemReadInStore(item.id)
         fetchUnreadCount()
       }).catch(() => {})
     }
+    const actionUrl = getNotificationActionUrl(item)
+    if (actionUrl) {
+      navigate(actionUrl)
+      return
+    }
+    setDetailItem(item)
+    setDetailOpen(true)
   }
 
   const handleMarkAll = async () => {

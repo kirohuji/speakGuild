@@ -13,12 +13,17 @@ import { DictionaryModule } from '../dictionary/dictionary.module';
 import { ScriptVideoRenderProcessor } from './processors/script-video-render.processor';
 import { VocabularyCsvImportService } from './jobs/vocabulary-csv-import.service';
 import { VocabularyCsvImportProcessor } from './processors/vocabulary-csv-import.processor';
+import { PracticeAiModule } from '../practice-ai/practice-ai.module';
+import { NotificationModule } from '../notification/notification.module';
+import { WarmupPipelineGenerateService } from './jobs/warmup-pipeline-generate.service';
 
 @Module({
   imports: [
     PrismaModule,
     FileAssetsModule,
     DictionaryModule,
+    PracticeAiModule,
+    NotificationModule,
     BullModule.forRoot({
       connection: getRedisConnectionOptions(),
     }),
@@ -61,6 +66,7 @@ import { VocabularyCsvImportProcessor } from './processors/vocabulary-csv-import
     ScriptVideoRenderProcessor,
     VocabularyCsvImportService,
     VocabularyCsvImportProcessor,
+    WarmupPipelineGenerateService,
   ],
   exports: [AdminTasksService, AdminContentAiService, ContentPrepareService],
 })

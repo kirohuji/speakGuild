@@ -344,4 +344,10 @@ export class SuggestTopicVocabsDto {
   @Min(1)
   @Max(20)
   count?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(20)
+  extensionCount?: number;
 }

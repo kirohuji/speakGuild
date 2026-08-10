@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
 
 @Injectable()
 export class AdminTasksService {
@@ -202,6 +202,46 @@ export class AdminTasksService {
     return { ...task, bullJobId: job.id };
   }
 
+  async enqueueWarmupPipelineGenerate(topicId: string, createdById: string) {
+    const topic = await this.prisma.trainingTopic.findUnique({
+      where: { id: topicId },
+      select: { id: true, title: true, sceneId: true, scene: { select: { title: true } } },
+    });
+    if (!topic) throw new NotFoundException('学习话题不存在');
+
+    const existing = await this.prisma.adminTask.findFirst({
+      where: {
+        type: WARMUP_PIPELINE_GENERATE_JOB,
+        targetType: 'training_topic',
+        targetId: topic.id,
+        status: { in: [AdminTaskStatus.queued, AdminTaskStatus.running] },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (existing) return { ...existing, reused: true };
+
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: WARMUP_PIPELINE_GENERATE_JOB,
+        title: `生成知识点练习：${topic.title}`,
+        targetType: 'training_topic',
+        targetId: topic.id,
+        createdById,
+        totalItems: 3,
+        payload: { topicId: topic.id, sceneId: topic.sceneId, createdById } as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.contentQueue.add(WARMUP_PIPELINE_GENERATE_JOB, {
+      taskId: task.id,
+      topicId: topic.id,
+      sceneId: topic.sceneId,
+      createdById,
+    });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', `「${topic.scene.title} / ${topic.title}」知识点练习已加入后台队列`, { step: 'queued' });
+    return { ...task, bullJobId: job.id, reused: false };
+  }
+
   async enqueueVocabularyCsvImport(words: string[], createdById?: string) {
     const uniqueWords = [...new Set(words.map(w => w.trim()).filter(Boolean))];
     if (uniqueWords.length === 0) {
@@ -367,6 +407,9 @@ export class AdminTasksService {
     if (task.type === NARRATIVE_VIDEO_RENDER_JOB) {
       const payload = task.payload as any;
       return this.enqueueNarrativeVideo(payload?.userId || createdById, payload?.frames || []);
+    }
+    if (task.type === WARMUP_PIPELINE_GENERATE_JOB && task.targetId && createdById) {
+      return this.enqueueWarmupPipelineGenerate(task.targetId, createdById);
     }
     if (task.type === VOCABULARY_MISSING_MEANING_ENRICH_JOB) {
       return this.enqueueVocabularyMissingMeaningEnrich(createdById);
@@ -675,6 +718,8 @@ export class AdminTasksService {
         frames: payload?.frames || [],
         words: payload?.words || [],
         retryItems: payload?.retryItems,
+        topicId: payload?.topicId,
+        createdById: payload?.createdById || userId,
       }, {
         lifo: true,
       });

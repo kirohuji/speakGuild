@@ -102,11 +102,12 @@ export class NotificationService {
     targetUserId: string,
     title: string,
     content: string,
+    actionUrl?: string,
   ) {
     const notification = await this.prisma.notification.create({
       data: {
         title,
-        content,
+        content: actionUrl ? `${content}\n\n[打开对应话题](${actionUrl})` : content,
         type: 'targeted',
         sentById: senderUserId,
         targets: {
