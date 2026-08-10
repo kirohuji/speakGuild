@@ -241,15 +241,9 @@ export class LearningService {
         return { ...asset, url: signed.url };
       }
 
-      let cosKey: string;
-      try {
-        cosKey = decodeURIComponent(new URL(asset.url).pathname.replace(/^\/+/, ''));
-      } catch {
-        throw new Error(`Offline asset has an invalid URL: ${asset.url}`);
-      }
-      const fileAsset = await this.prisma.fileAsset.findUnique({ where: { cosKey } });
+      const fileAsset = await this.fileAssets.findAssetByPersistentUrl(asset.url);
       if (!fileAsset) {
-        throw new Error(`Offline asset is not linked to FileAsset: ${cosKey} (${asset.role ?? 'unknown'})`);
+        throw new Error(`Offline asset is not linked to FileAsset: ${asset.url} (${asset.role ?? 'unknown'})`);
       }
       const signed = await this.fileAssets.getAssetLongLivedUrl(fileAsset.id);
       return {
@@ -275,11 +269,7 @@ export class LearningService {
   private async resolveRenderableAssetUrl(url?: string | null) {
     if (!url || url.startsWith('blob:') || url.startsWith('data:')) return url ?? null;
     try {
-      const cosKey = decodeURIComponent(new URL(url).pathname.replace(/^\/+/, ''));
-      const asset = await this.prisma.fileAsset.findUnique({
-        where: { cosKey },
-        select: { id: true },
-      });
+      const asset = await this.fileAssets.findAssetByPersistentUrl(url);
       if (!asset) return url;
       return (await this.fileAssets.getAssetLongLivedUrl(asset.id)).url;
     } catch (error) {

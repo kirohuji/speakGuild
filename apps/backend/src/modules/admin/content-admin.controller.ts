@@ -1279,20 +1279,39 @@ export class ContentAdminController {
 
   @Post('characters')
   async createCharacter(@Req() req: Request, @Body() dto: any) {
-    await this.requireAdmin(req);
-    return this.prisma.gameCharacter.create({ data: dto });
+    const session = await this.requireAdmin(req);
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    return this.prisma.$transaction(async (tx) => {
+      const character = await tx.gameCharacter.create({ data });
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'game_character_asset', character.id, character,
+      );
+      return character;
+    });
   }
 
   @Patch('characters/:id')
   async updateCharacter(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
-    await this.requireAdmin(req);
-    return this.prisma.gameCharacter.update({ where: { id }, data: dto });
+    const session = await this.requireAdmin(req);
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    return this.prisma.$transaction(async (tx) => {
+      const character = await tx.gameCharacter.update({ where: { id }, data });
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'game_character_asset', id, character,
+      );
+      return character;
+    });
   }
 
   @Delete('characters/:id')
   async deleteCharacter(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
-    return this.prisma.gameCharacter.delete({ where: { id } });
+    const session = await this.requireAdmin(req);
+    return this.prisma.$transaction(async (tx) => {
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'game_character_asset', id, null,
+      );
+      return tx.gameCharacter.delete({ where: { id } });
+    });
   }
 
   // ─── TTS voice assets + character references ──────────────
@@ -1442,20 +1461,39 @@ export class ContentAdminController {
 
   @Post('maps')
   async createMap(@Req() req: Request, @Body() dto: any) {
-    await this.requireAdmin(req);
-    return this.prisma.gameMap.create({ data: dto });
+    const session = await this.requireAdmin(req);
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    return this.prisma.$transaction(async (tx) => {
+      const map = await tx.gameMap.create({ data });
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'game_map_asset', map.id, map,
+      );
+      return map;
+    });
   }
 
   @Patch('maps/:id')
   async updateMap(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
-    await this.requireAdmin(req);
-    return this.prisma.gameMap.update({ where: { id }, data: dto });
+    const session = await this.requireAdmin(req);
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    return this.prisma.$transaction(async (tx) => {
+      const map = await tx.gameMap.update({ where: { id }, data });
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'game_map_asset', id, map,
+      );
+      return map;
+    });
   }
 
   @Delete('maps/:id')
   async deleteMap(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
-    return this.prisma.gameMap.delete({ where: { id } });
+    const session = await this.requireAdmin(req);
+    return this.prisma.$transaction(async (tx) => {
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'game_map_asset', id, null,
+      );
+      return tx.gameMap.delete({ where: { id } });
+    });
   }
 
   @Get('locations')
@@ -1480,20 +1518,39 @@ export class ContentAdminController {
 
   @Post('locations')
   async createLocation(@Req() req: Request, @Body() dto: any) {
-    await this.requireAdmin(req);
-    return this.prisma.gameLocation.create({ data: dto });
+    const session = await this.requireAdmin(req);
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    return this.prisma.$transaction(async (tx) => {
+      const location = await tx.gameLocation.create({ data });
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'game_location_asset', location.id, location,
+      );
+      return location;
+    });
   }
 
   @Patch('locations/:id')
   async updateLocation(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
-    await this.requireAdmin(req);
-    return this.prisma.gameLocation.update({ where: { id }, data: dto });
+    const session = await this.requireAdmin(req);
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    return this.prisma.$transaction(async (tx) => {
+      const location = await tx.gameLocation.update({ where: { id }, data });
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'game_location_asset', id, location,
+      );
+      return location;
+    });
   }
 
   @Delete('locations/:id')
   async deleteLocation(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
-    return this.prisma.gameLocation.delete({ where: { id } });
+    const session = await this.requireAdmin(req);
+    return this.prisma.$transaction(async (tx) => {
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'game_location_asset', id, null,
+      );
+      return tx.gameLocation.delete({ where: { id } });
+    });
   }
 
   // ─── Rooms CRUD ─────────────────────────────────────────────
@@ -1515,20 +1572,39 @@ export class ContentAdminController {
 
   @Post('rooms')
   async createRoom(@Req() req: Request, @Body() dto: any) {
-    await this.requireAdmin(req);
-    return this.prisma.gameRoom.create({ data: dto });
+    const session = await this.requireAdmin(req);
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    return this.prisma.$transaction(async (tx) => {
+      const room = await tx.gameRoom.create({ data });
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'game_room_asset', room.id, room,
+      );
+      return room;
+    });
   }
 
   @Patch('rooms/:id')
   async updateRoom(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
-    await this.requireAdmin(req);
-    return this.prisma.gameRoom.update({ where: { id }, data: dto });
+    const session = await this.requireAdmin(req);
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    return this.prisma.$transaction(async (tx) => {
+      const room = await tx.gameRoom.update({ where: { id }, data });
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'game_room_asset', id, room,
+      );
+      return room;
+    });
   }
 
   @Delete('rooms/:id')
   async deleteRoom(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
-    return this.prisma.gameRoom.delete({ where: { id } });
+    const session = await this.requireAdmin(req);
+    return this.prisma.$transaction(async (tx) => {
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'game_room_asset', id, null,
+      );
+      return tx.gameRoom.delete({ where: { id } });
+    });
   }
 
   // ─── Room NPCs ──────────────────────────────────────────────

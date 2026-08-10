@@ -8,7 +8,7 @@ import {
 import { createHash, randomUUID } from 'node:crypto';
 import { basename, extname } from 'node:path';
 import COS = require('cos-nodejs-sdk-v5');
-import { FileAsset, FileAssetGroup, FileAssetStatus } from '@prisma/client';
+import { FileAsset, FileAssetGroup, FileAssetStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CompleteUploadDto } from './dto/complete-upload.dto';
 import { CreateCosPolicyDto } from './dto/create-cos-policy.dto';
@@ -58,6 +58,162 @@ export class FileAssetsService {
       SecretId: secretId,
       SecretKey: secretKey,
     });
+  }
+
+  /** Stable application URL persisted by business records. */
+  getStableContentPath(assetId: string) {
+    return `/api/v1/manyu/file-assets/${encodeURIComponent(assetId)}/content`;
+  }
+
+  private getStableAssetId(rawUrl: string) {
+    try {
+      const parsed = new URL(rawUrl, 'http://manyu.local');
+      const match = parsed.pathname.match(/\/file-assets\/([^/]+)\/content\/?$/);
+      return match?.[1] ? decodeURIComponent(match[1]) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private getOwnCosKey(rawUrl: string) {
+    try {
+      const parsed = new URL(rawUrl);
+      if (parsed.origin !== this.cosHost) return null;
+      return decodeURIComponent(parsed.pathname.replace(/^\/+/, ''));
+    } catch {
+      return null;
+    }
+  }
+
+  /** Resolve either a stable application URL or a legacy COS URL to FileAsset. */
+  async findAssetByPersistentUrl(rawUrl: string) {
+    const stableAssetId = this.getStableAssetId(rawUrl);
+    if (stableAssetId) {
+      return this.prisma.fileAsset.findFirst({
+        where: { id: stableAssetId, status: FileAssetStatus.active },
+      });
+    }
+
+    const cosKey = this.getOwnCosKey(rawUrl);
+    if (!cosKey) return null;
+    return this.prisma.fileAsset.findFirst({
+      where: { cosKey, status: FileAssetStatus.active },
+    });
+  }
+
+  /**
+   * Convert legacy COS URLs anywhere in a DTO/JSON document to stable
+   * application URLs. External URLs remain untouched.
+   */
+  async normalizePersistentAssetUrls<T>(value: T): Promise<T> {
+    const cache = new Map<string, Promise<FileAsset | null>>();
+    const findCached = (url: string) => {
+      let pending = cache.get(url);
+      if (!pending) {
+        pending = this.findAssetByPersistentUrl(url);
+        cache.set(url, pending);
+      }
+      return pending;
+    };
+
+    const visit = async (current: unknown): Promise<unknown> => {
+      if (typeof current === 'string') {
+        const stableAssetId = this.getStableAssetId(current);
+        const cosKey = this.getOwnCosKey(current);
+        if (!stableAssetId && !cosKey) return current;
+
+        const asset = await findCached(current);
+        if (!asset) {
+          throw new BadRequestException(
+            `内部文件资源不存在或已删除: ${cosKey ?? stableAssetId}`,
+          );
+        }
+        // Keep an already stable absolute URL intact (important for native
+        // clients whose document origin is capacitor://localhost).
+        if (stableAssetId) return current;
+        return this.getStableContentPath(asset.id);
+      }
+      if (Array.isArray(current)) {
+        return Promise.all(current.map((item) => visit(item)));
+      }
+      if (current && typeof current === 'object' && !(current instanceof Date)) {
+        const entries = await Promise.all(
+          Object.entries(current).map(async ([key, item]) => [key, await visit(item)] as const),
+        );
+        return Object.fromEntries(entries);
+      }
+      return current;
+    };
+
+    return (await visit(value)) as T;
+  }
+
+  private collectStableAssetIds(value: unknown, ids = new Set<string>()) {
+    if (typeof value === 'string') {
+      const assetId = this.getStableAssetId(value);
+      if (assetId) ids.add(assetId);
+      return ids;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((item) => this.collectStableAssetIds(item, ids));
+      return ids;
+    }
+    if (value && typeof value === 'object') {
+      Object.values(value).forEach((item) => this.collectStableAssetIds(item, ids));
+    }
+    return ids;
+  }
+
+  /** Keep cleanup protection in the same transaction as the business write. */
+  async syncPersistentAssetReferences(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    bizType: string,
+    bizId: string,
+    persistedValue: unknown,
+  ) {
+    const desiredIds = this.collectStableAssetIds(persistedValue);
+    const activeAssets = desiredIds.size
+      ? await tx.fileAsset.findMany({
+          where: { id: { in: [...desiredIds] }, status: FileAssetStatus.active },
+          select: { id: true },
+        })
+      : [];
+    if (activeAssets.length !== desiredIds.size) {
+      throw new BadRequestException('业务数据引用了不存在或已删除的文件资源');
+    }
+
+    const existing = await tx.fileReference.findMany({
+      where: { bizType, bizId },
+      select: { assetId: true },
+    });
+    if (existing.length) {
+      await tx.fileReference.deleteMany({ where: { bizType, bizId } });
+      const counts = new Map<string, number>();
+      existing.forEach((ref) => counts.set(ref.assetId, (counts.get(ref.assetId) ?? 0) + 1));
+      await Promise.all(
+        [...counts].map(([assetId, count]) =>
+          tx.fileAsset.update({
+            where: { id: assetId },
+            data: { refCount: { decrement: count } },
+          }),
+        ),
+      );
+    }
+
+    if (desiredIds.size) {
+      await tx.fileReference.createMany({
+        data: [...desiredIds].map((assetId) => ({ assetId, bizType, bizId, userId })),
+      });
+      await Promise.all(
+        [...desiredIds].map((assetId) =>
+          tx.fileAsset.update({
+            where: { id: assetId },
+            data: { refCount: { increment: 1 }, lastReferencedAt: new Date() },
+          }),
+        ),
+      );
+    }
   }
 
   async createCosPolicy(dto: CreateCosPolicyDto) {
@@ -236,17 +392,24 @@ export class FileAssetsService {
   }
 
   async fetchAssetForSampling(rawUrl: string, range?: string) {
-    let parsed: URL;
-    try {
-      parsed = new URL(rawUrl);
-    } catch {
-      throw new BadRequestException('素材地址无效');
+    const asset = await this.findAssetByPersistentUrl(rawUrl);
+    let fetchUrl = rawUrl;
+    if (asset) {
+      fetchUrl = await this.getSignedDownloadUrl(asset.cosKey);
+    } else {
+      let parsed: URL;
+      try {
+        parsed = new URL(rawUrl);
+      } catch {
+        throw new BadRequestException('素材地址无效');
+      }
+      if (parsed.protocol !== 'https:' || parsed.origin !== this.cosHost) {
+        throw new BadRequestException('仅允许读取当前 COS 存储桶素材');
+      }
+      parsed.hash = '';
+      fetchUrl = parsed.toString();
     }
-    if (parsed.protocol !== 'https:' || parsed.origin !== this.cosHost) {
-      throw new BadRequestException('仅允许读取当前 COS 存储桶素材');
-    }
-    parsed.hash = '';
-    const upstream = await fetch(parsed.toString(), {
+    const upstream = await fetch(fetchUrl, {
       headers: range ? { Range: range } : undefined,
     });
     if (!upstream.ok && upstream.status !== 206) {

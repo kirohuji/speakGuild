@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { Upload, X, ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
-import { getFileAssetLongLivedUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
+import { getFileAssetContentUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
 import type { FileAssetGroup } from '@/features/file-assets/api'
 
 interface ImageUploadFieldProps {
@@ -68,10 +68,10 @@ export function ImageUploadField({
     setUploading(true)
     try {
       const asset = await uploadFileToCosAndComplete({ file, group })
-      const resolved = await getFileAssetLongLivedUrl(asset.id)
+      const stableUrl = getFileAssetContentUrl(asset.id)
       const cosUrl = file.type.startsWith('video/')
-        ? `${resolved.url}${resolved.url.includes('#') ? '&' : '#'}media=video`
-        : resolved.url
+        ? `${stableUrl}#media=video`
+        : stableUrl
       setPreviewUrl(cosUrl)
       onUploaded?.(cosUrl, asset.id)
       onChange?.(cosUrl)

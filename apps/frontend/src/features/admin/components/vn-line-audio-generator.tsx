@@ -11,6 +11,7 @@ import {
   type TtsProviderKey,
   type TtsSchema,
 } from '@/lib/tts-api'
+import { getFileAssetContentUrl } from '@/features/file-assets/api'
 import { usePreferencesStore } from '@/stores/preferences.store'
 
 const CARTESIA_VOICES: Array<{ id: string; label: string }> = [
@@ -151,8 +152,9 @@ export function VnLineAudioGenerator({
         bizType: 'tts_story_line',
         bizId: [storyKey, sceneName, lineIndex ?? 0, text.trim()].filter(Boolean).join(':'),
       })
-      onChange(result.url)
-      onGenerated?.(result.url, result.assetId)
+      const stableUrl = getFileAssetContentUrl(result.assetId)
+      onChange(stableUrl)
+      onGenerated?.(stableUrl, result.assetId)
     } catch (err: any) {
       setError(err?.message || '生成音频失败')
     } finally {

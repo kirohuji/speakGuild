@@ -22,6 +22,16 @@ export interface CompletedAsset {
   url?: string
 }
 
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu').replace(/\/$/, '')
+
+/** Permanent application URL. The backend refreshes the COS signature per request. */
+export function getFileAssetContentUrl(assetId: string): string {
+  const path = `${apiBaseUrl}/file-assets/${encodeURIComponent(assetId)}/content`
+  if (/^https?:\/\//i.test(path)) return path
+  if (typeof window !== 'undefined') return new URL(path, window.location.origin).toString()
+  return path
+}
+
 interface CompleteUploadResult {
   asset: CompletedAsset
 }
@@ -101,9 +111,9 @@ export async function uploadFileToCosAndComplete({
   return result.asset
 }
 
-/** 获取文件长期访问 URL */
+/** @deprecated Use getFileAssetContentUrl. Kept so older forms persist stable URLs. */
 export function getFileAssetLongLivedUrl(assetId: string): Promise<{ url: string }> {
-  return get(`/file-assets/${assetId}/long-lived-url`)
+  return Promise.resolve({ url: getFileAssetContentUrl(assetId) })
 }
 
 /** 获取文件当前可播放/下载 URL。URL 会过期，不要长期保存；长期保存 assetId。 */

@@ -67,6 +67,21 @@ export class FileAssetsController {
     return this.fileAssetsService.matchSamplingTone(dto);
   }
 
+  /**
+   * Permanent application URL for browser/media elements. Never cache the
+   * redirect itself because its COS Location contains an expiring signature.
+   */
+  @Get(':id/content')
+  async getStableContent(
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    const asset = await this.fileAssetsService.getPrivateUrlByAssetId(id);
+    res.setHeader('Cache-Control', 'private, no-store, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    return res.redirect(302, asset.url);
+  }
+
   @Get(':id/private-url')
   getPrivateUrl(@Param('id') id: string) {
     return this.fileAssetsService.getPrivateUrlByAssetId(id);
