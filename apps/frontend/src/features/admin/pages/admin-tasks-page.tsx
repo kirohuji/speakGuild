@@ -30,6 +30,7 @@ import { adminTasksApi, type AdminTask, type AdminTaskDetail, type AdminTaskStat
 
 const TYPE_LABELS: Record<string, string> = {
   'warmup-pipeline-generate': '知识点练习 AI 生成',
+  'scene-topic-batch-generate': '学习包批量生成（教学文档+知识点训练）',
   'learning-package-content-prepare': '学习包内容准备',
   'vocabulary-csv-import': '词汇CSV批量导入',
   'vocabulary-missing-meaning-enrich': '词汇字段检查与 AI 补全（词典+AI）',
@@ -197,6 +198,38 @@ function AiUsageCard({ task }: { task: AdminTask | AdminTaskDetail }) {
 
 function SummaryPanel({ task }: { task: AdminTask }) {
   const summary = task.summary as any;
+  if (task.type === 'scene-topic-batch-generate' && summary) {
+    const errors = (Array.isArray(summary.errors) ? summary.errors : []);
+    return (
+      <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
+        <div className="grid grid-cols-4 gap-2">
+          <Metric label="话题数" value={summary.topicCount ?? 0} tone="muted" />
+          <Metric label="教学文档生成" value={summary.teachingGenerated ?? 0} tone="good" />
+          <Metric label="知识点训练生成" value={summary.warmupGenerated ?? 0} tone="good" />
+          <Metric label="失败" value={errors.length} tone={errors.length ? 'bad' : 'muted'} />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          教学文档 {summary.teachingSkipped ?? 0} 篇已达标跳过；知识点训练 {summary.warmupSkipped ?? 0} 组已有跳过。
+        </p>
+        {errors.length > 0 && (
+          <div className="space-y-1 rounded-md bg-destructive/10 p-2">
+            {errors.slice(0, 5).map((err: any, index: number) => (
+              <p key={index} className="text-xs text-destructive">
+                {err.topicTitle} · {err.item}：{err.message}
+              </p>
+            ))}
+            {errors.length > 5 && <p className="text-xs text-destructive">等 {errors.length} 项失败</p>}
+          </div>
+        )}
+        {summary.actionUrl && (
+          <Button size="sm" variant="outline" onClick={() => { window.location.hash = `#${summary.actionUrl}` }}>
+            打开学习包
+            <ArrowUpRight className="ml-1 size-3.5" />
+          </Button>
+        )}
+      </div>
+    );
+  }
   if (task.type === 'warmup-pipeline-generate' && summary) {
     return (
       <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
@@ -309,7 +342,7 @@ function SummaryPanel({ task }: { task: AdminTask }) {
 
 export function AdminTasksPage() {
   const [status, setStatus] = useState<AdminTaskStatus | 'all'>('all');
-  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'warmup-pipeline-generate' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'vocabulary-polish' | 'chunk-missing-meaning-enrich' | 'pattern-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
+  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'warmup-pipeline-generate' | 'scene-topic-batch-generate' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'vocabulary-polish' | 'chunk-missing-meaning-enrich' | 'pattern-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
   const [items, setItems] = useState<AdminTask[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AdminTaskDetail | null>(null);
@@ -465,6 +498,7 @@ export function AdminTasksPage() {
   const canRetry = (task: AdminTask) =>
     task.type === 'learning-package-content-prepare'
     || task.type === 'warmup-pipeline-generate'
+    || task.type === 'scene-topic-batch-generate'
     || task.type === 'vocabulary-missing-meaning-enrich'
     || task.type === 'vocabulary-polish'
     || task.type === 'chunk-missing-meaning-enrich'
@@ -482,6 +516,7 @@ export function AdminTasksPage() {
         <div className="flex items-center gap-2">
           <Select value={type} onChange={(event) => { setType(event.target.value as typeof type); setPage(1); }}>
             <option value="all">全部任务类型</option>
+            <option value="scene-topic-batch-generate">学习包批量生成（教学文档+知识点训练）</option>
             <option value="learning-package-content-prepare">学习包内容准备</option>
             <option value="vocabulary-csv-import">词汇 CSV 批量导入</option>
             <option value="vocabulary-polish">词汇例句翻译补全与释义精简</option>

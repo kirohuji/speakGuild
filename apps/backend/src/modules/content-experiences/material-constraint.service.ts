@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
@@ -137,9 +137,9 @@ export class MaterialConstraintService {
   }
 
   /**
-   * 计算"新增/更新话题"时的认领冲突：
-   *  - 组内前序包（learn + review）+ 本包前序话题（learn）中已出现的材料，
-   *    若被当前话题作为新学目标（learn）绑定，则产生冲突。
+   * 计算"新增/更新话题/包级知识"时的认领冲突：
+   *  - 层 1：组内前序包（learn + review）已出现的材料，被当前包作为新学目标（learn）绑定时冲突（可降级 review）；
+   *  - 层 2：同一包内其他话题/包级已认领的材料（唯一约束 (sceneId, materialType, materialId) 限制，不可降级）。
    */
   async computeTopicClaimConflicts(params: {
     sceneId: string;
@@ -147,7 +147,7 @@ export class MaterialConstraintService {
     topicSortOrder: number;
     claims: SceneClaimInput;
   }): Promise<ClaimConflict[]> {
-    const { sceneId, topicId, topicSortOrder, claims } = params;
+    const { sceneId, topicId, claims } = params;
     const blocked = new Map<string, { sourceType: 'pack' | 'topic'; source: string; sourceSortOrder: number }>();
 
     // 层 1：组内前序包认领（learn + review 都算，防止任何重复学习）
@@ -161,24 +161,39 @@ export class MaterialConstraintService {
       }
     }
 
-    // 层 2：本包前序话题认领（learn）
-    if (topicId || topicSortOrder > 0) {
-      const earlierTopics = await this.prisma.trainingTopic.findMany({
-        where: { sceneId, sortOrder: { lt: topicSortOrder }, ...(topicId ? { id: { not: topicId } } : {}) },
-        select: { id: true, title: true, sortOrder: true },
+    // 层 2：同场景内其他话题认领（learn + review）+ 包级认领（topicId = null）
+    // 唯一约束 (sceneId, materialType, materialId) 要求同一包内一个材料只能被认领一次，
+    // 因此同包内任何已存在的认领（无论先后、无论角色）都会阻塞本次绑定。
+    const otherTopics = await this.prisma.trainingTopic.findMany({
+      where: { sceneId, ...(topicId ? { id: { not: topicId } } : {}) },
+      select: { id: true, title: true, sortOrder: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+    if (otherTopics.length) {
+      const topicRefs = await this.prisma.sceneMaterialReference.findMany({
+        where: { sceneId, topicId: { in: otherTopics.map((item) => item.id) } },
+        select: { materialType: true, materialId: true, topicId: true },
       });
-      if (earlierTopics.length) {
-        const topicRefs = await this.prisma.sceneMaterialReference.findMany({
-          where: { sceneId, topicId: { in: earlierTopics.map((item) => item.id) }, role: 'learn' },
-          select: { materialType: true, materialId: true, topicId: true },
-        });
-        const topicById = new Map(earlierTopics.map((item) => [item.id, item]));
-        for (const ref of topicRefs) {
-          const topic = ref.topicId ? topicById.get(ref.topicId) : undefined;
-          const key = `${ref.materialType}:${ref.materialId}`;
-          if (!blocked.has(key) && topic) {
-            blocked.set(key, { sourceType: 'topic', source: topic.title, sourceSortOrder: topic.sortOrder });
-          }
+      const topicById = new Map(otherTopics.map((item) => [item.id, item]));
+      for (const ref of topicRefs) {
+        const topic = ref.topicId ? topicById.get(ref.topicId) : undefined;
+        const key = `${ref.materialType}:${ref.materialId}`;
+        if (!blocked.has(key) && topic) {
+          blocked.set(key, { sourceType: 'topic', source: topic.title, sourceSortOrder: topic.sortOrder });
+        }
+      }
+    }
+    // 包级认领（小说包包级知识）：话题保存时被包级认领的材料同样不可重复绑定。
+    // 包级保存（topicId = null）会整体重建包级引用，无需自查自身旧引用。
+    if (topicId) {
+      const packRefs = await this.prisma.sceneMaterialReference.findMany({
+        where: { sceneId, topicId: null },
+        select: { materialType: true, materialId: true },
+      });
+      for (const ref of packRefs) {
+        const key = `${ref.materialType}:${ref.materialId}`;
+        if (!blocked.has(key)) {
+          blocked.set(key, { sourceType: 'pack', source: '本包包级知识', sourceSortOrder: -1 });
         }
       }
     }
@@ -189,7 +204,21 @@ export class MaterialConstraintService {
       ...(claims.patternIds ?? []).map((materialId) => ({ kind: 'pattern' as MaterialKind, materialId })),
     ];
 
-    const conflicting = requested.filter((item) => blocked.has(`${item.kind}:${item.materialId}`));
+    // 当前话题已以 review（复习复用）认领的材料：此前已确认过降级，不再视为新冲突，
+    // 否则「复习并保存」成功后再次保存（如 AI 生成流程）会反复弹冲突。
+    let ownReviewKeys = new Set<string>();
+    if (topicId && requested.length) {
+      const ownRefs = await this.prisma.sceneMaterialReference.findMany({
+        where: { sceneId, topicId, role: 'review' },
+        select: { materialType: true, materialId: true },
+      });
+      ownReviewKeys = new Set(ownRefs.map((ref) => `${ref.materialType}:${ref.materialId}`));
+    }
+
+    const conflicting = requested.filter((item) => {
+      const key = `${item.kind}:${item.materialId}`;
+      return blocked.has(key) && !ownReviewKeys.has(key);
+    });
     if (!conflicting.length) return [];
 
     const texts = await this.resolveMaterialTexts(conflicting);
@@ -215,23 +244,47 @@ export class MaterialConstraintService {
     claims: SceneClaimInput,
     conflictMaterialIds: string[] = [],
   ) {
+    // 先读旧引用：已被 review 认领的材料即使本次不报冲突，也要保持复习角色，避免降级为 learn
+    const oldRefs = await tx.sceneMaterialReference.findMany({
+      where: { topicId },
+      select: { materialType: true, materialId: true, role: true },
+    });
+    const oldReviewKeys = new Set(
+      oldRefs.filter((ref) => ref.role === 'review').map((ref) => `${ref.materialType}:${ref.materialId}`),
+    );
     // 话题归属单一学习包，直接按 topicId 清理，避免话题换包后残留旧引用
     await tx.sceneMaterialReference.deleteMany({ where: { topicId } });
     const conflictSet = new Set(conflictMaterialIds);
     const rows: Prisma.SceneMaterialReferenceCreateManyInput[] = [];
+    const seen = new Set<string>();
     const push = (kind: MaterialKind, materialId: string) => {
+      const key = `${kind}:${materialId}`;
+      if (seen.has(key)) return; // 请求内重复 id 去重，避免单批 createMany 撞唯一约束
+      seen.add(key);
       rows.push({
         sceneId,
         topicId,
         materialType: kind,
         materialId,
-        role: conflictSet.has(materialId) ? 'review' : 'learn',
+        role: conflictSet.has(materialId) || oldReviewKeys.has(`${kind}:${materialId}`) ? 'review' : 'learn',
       });
     };
     (claims.vocabIds ?? []).forEach((id) => push('vocab', id));
     (claims.chunkIds ?? []).forEach((id) => push('chunk', id));
     (claims.patternIds ?? []).forEach((id) => push('pattern', id));
-    if (rows.length) await tx.sceneMaterialReference.createMany({ data: rows });
+    if (rows.length) {
+      // 兑底：同包内材料已被其他话题/包级认领（并发或预检之外的场景），给出明确冲突错误而非裸唯一约束报错
+      const existing = await tx.sceneMaterialReference.findMany({
+        where: { sceneId, topicId: { not: topicId } },
+        select: { materialType: true, materialId: true },
+      });
+      const existingKeys = new Set(existing.map((ref) => `${ref.materialType}:${ref.materialId}`));
+      const dup = rows.find((row) => existingKeys.has(`${row.materialType}:${row.materialId}`));
+      if (dup) {
+        throw new ConflictException(`材料引用冲突：${dup.materialType}(${dup.materialId}) 已被本包其他内容认领，请先移除重复材料后重试`);
+      }
+      await tx.sceneMaterialReference.createMany({ data: rows });
+    }
   }
 
   /**
@@ -247,13 +300,29 @@ export class MaterialConstraintService {
     await tx.sceneMaterialReference.deleteMany({ where: { sceneId, topicId: null } });
     const conflictSet = new Set(conflictMaterialIds);
     const rows: Prisma.SceneMaterialReferenceCreateManyInput[] = [];
+    const seen = new Set<string>();
     const push = (kind: MaterialKind, materialId: string) => {
+      const key = `${kind}:${materialId}`;
+      if (seen.has(key)) return; // 请求内重复 id 去重
+      seen.add(key);
       rows.push({ sceneId, topicId: null, materialType: kind, materialId, role: conflictSet.has(materialId) ? 'review' : 'learn' });
     };
     (claims.vocabIds ?? []).forEach((id) => push('vocab', id));
     (claims.chunkIds ?? []).forEach((id) => push('chunk', id));
     (claims.patternIds ?? []).forEach((id) => push('pattern', id));
-    if (rows.length) await tx.sceneMaterialReference.createMany({ data: rows });
+    if (rows.length) {
+      // 兑底：包级认领与同场景话题认领互斥，命中时给出明确冲突错误而非裸唯一约束报错
+      const existing = await tx.sceneMaterialReference.findMany({
+        where: { sceneId, topicId: { not: null } },
+        select: { materialType: true, materialId: true },
+      });
+      const existingKeys = new Set(existing.map((ref) => `${ref.materialType}:${ref.materialId}`));
+      const dup = rows.find((row) => existingKeys.has(`${row.materialType}:${row.materialId}`));
+      if (dup) {
+        throw new ConflictException(`材料引用冲突：${dup.materialType}(${dup.materialId}) 已被本包话题认领，请先移除重复材料后重试`);
+      }
+      await tx.sceneMaterialReference.createMany({ data: rows });
+    }
   }
 
   /**

@@ -33,7 +33,35 @@ export class WarmupPipelineGenerateService {
       });
     }
     await this.tasks.setProgress(taskId, { currentStep: 'loading-topic', totalItems: 3, processedItems: 0 });
+    await this.tasks.setProgress(taskId, { currentStep: 'generating-warmup', totalItems: 3, processedItems: 1 });
 
+    const summary = await this.generateAndSaveForTopic(topicId, () => this.tasks.isCanceled(taskId));
+    if (!summary) return { canceled: true };
+
+    await this.tasks.setProgress(taskId, { currentStep: 'saving-warmup', totalItems: 3, processedItems: 3 });
+    await this.tasks.markCompleted(taskId, summary);
+
+    if (createdById) {
+      try {
+        await this.notifications.createSystemTargetedNotification(
+          createdById,
+          createdById,
+          `知识点练习已生成：${summary.topicTitle}`,
+          `已为「${summary.sceneTitle} / ${summary.topicTitle}」补齐 ${summary.generatedGroups} 个练习题组，点击可直接检查结果。`,
+          summary.actionUrl,
+        );
+      } catch (error) {
+        this.logger.warn(`生成成功但通知发送失败: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    return summary;
+  }
+
+  /**
+   * 生成并保存话题知识点练习（不管理任务状态、不发通知）。
+   * 供单话题任务与场景批量生成复用。返回 summary 供上层记录/通知。
+   */
+  async generateAndSaveForTopic(topicId: string, shouldCancel?: () => Promise<boolean>) {
     const topic = await this.prisma.trainingTopic.findUnique({
       where: { id: topicId },
       include: {
@@ -57,7 +85,6 @@ export class WarmupPipelineGenerateService {
     const chunkCounts = countMap(totals.chunks);
     const patternCounts = countMap(totals.patterns);
 
-    await this.tasks.setProgress(taskId, { currentStep: 'generating-warmup', totalItems: 3, processedItems: 1 });
     const result = await this.practiceAi.generateWarmupPipeline({
       topicTitle: topic.title,
       difficulty: topic.difficulty,
@@ -76,7 +103,7 @@ export class WarmupPipelineGenerateService {
       .filter((item): item is JsonRecord => Boolean(item));
     if (!generated.length) throw new Error('AI 没有生成可用题目，请稍后重试');
 
-    if (await this.tasks.isCanceled(taskId)) return { canceled: true };
+    if (shouldCancel && (await shouldCancel())) return null;
 
     // Generation can take a while. Re-read metadata before writing so edits made
     // while the task was running are preserved and newly added exercises are merged.
@@ -95,8 +122,6 @@ export class WarmupPipelineGenerateService {
     };
     delete nextOutputTraining.materialUsage;
 
-    await this.tasks.setProgress(taskId, { currentStep: 'saving-warmup', totalItems: 3, processedItems: 2 });
-    if (await this.tasks.isCanceled(taskId)) return { canceled: true };
     await this.prisma.trainingTopic.update({
       where: { id: topic.id },
       data: {
@@ -108,9 +133,11 @@ export class WarmupPipelineGenerateService {
     });
 
     const actionUrl = `/admin/learning-content?sceneId=${encodeURIComponent(topic.sceneId)}&topicId=${encodeURIComponent(topic.id)}&dialog=topic&tab=warmup`;
-    const summary = {
+    return {
       sceneId: topic.sceneId,
+      sceneTitle: topic.scene.title,
       topicId: topic.id,
+      topicTitle: topic.title,
       actionUrl,
       generatedGroups: generated.length,
       beforeGroups: latestPipeline.length,
@@ -118,22 +145,6 @@ export class WarmupPipelineGenerateService {
       beforeItems,
       afterItems: this.countPracticeItems(nextPipeline),
     };
-    await this.tasks.markCompleted(taskId, summary);
-
-    if (createdById) {
-      try {
-        await this.notifications.createSystemTargetedNotification(
-          createdById,
-          createdById,
-          `知识点练习已生成：${topic.title}`,
-          `已为「${topic.scene.title} / ${topic.title}」补齐 ${generated.length} 个练习题组，点击可直接检查结果。`,
-          actionUrl,
-        );
-      } catch (error) {
-        this.logger.warn(`生成成功但通知发送失败: ${error instanceof Error ? error.message : String(error)}`);
-      }
-    }
-    return summary;
   }
 
   private asRecord(value: unknown): JsonRecord {

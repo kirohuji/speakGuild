@@ -16,6 +16,10 @@ import { VocabularyCsvImportProcessor } from './processors/vocabulary-csv-import
 import { PracticeAiModule } from '../practice-ai/practice-ai.module';
 import { NotificationModule } from '../notification/notification.module';
 import { WarmupPipelineGenerateService } from './jobs/warmup-pipeline-generate.service';
+import { TopicTeachingGenerateService } from './jobs/topic-teaching-generate.service';
+import { SceneTopicBatchGenerateService } from './jobs/scene-topic-batch-generate.service';
+import { AiModelModule } from '../ai-model/ai-model.module';
+import { ContentExperienceModule } from '../content-experiences/content-experience.module';
 
 @Module({
   imports: [
@@ -24,6 +28,8 @@ import { WarmupPipelineGenerateService } from './jobs/warmup-pipeline-generate.s
     DictionaryModule,
     PracticeAiModule,
     NotificationModule,
+    AiModelModule,
+    ContentExperienceModule,
     BullModule.forRoot({
       connection: getRedisConnectionOptions(),
     }),
@@ -67,7 +73,9 @@ import { WarmupPipelineGenerateService } from './jobs/warmup-pipeline-generate.s
     VocabularyCsvImportService,
     VocabularyCsvImportProcessor,
     WarmupPipelineGenerateService,
+    TopicTeachingGenerateService,
+    SceneTopicBatchGenerateService,
   ],
-  exports: [AdminTasksService, AdminContentAiService, ContentPrepareService],
+  exports: [AdminTasksService, AdminContentAiService, ContentPrepareService, TopicTeachingGenerateService],
 })
 export class AdminTasksModule {}

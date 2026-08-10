@@ -336,7 +336,7 @@ export class ContentExperienceService {
     const chunkIds = [...new Set(dto.chunkIds)];
     const patternIds = [...new Set(dto.patternIds)];
 
-    // 顺序约束校验（层 1：组内前序包认领）
+    // 顺序约束校验（层 1：组内前序包认领 + 层 2：同场景话题认领）
     const claims = { vocabIds: vocabularyIds, chunkIds, patternIds };
     const conflicts = await this.materialConstraints.computeTopicClaimConflicts({
       sceneId,
@@ -346,6 +346,15 @@ export class ContentExperienceService {
     });
     if (conflicts.length && !dto.forceReview) {
       return { code: 409, message: '存在材料引用冲突：部分单词/句块/句型已被前序包认领', data: { conflicts } } as any;
+    }
+    // 同场景话题认领无法降级：唯一约束限制同一包内一个材料只能被认领一次，forceReview 只对跨包（前序包）冲突生效
+    const topicConflicts = conflicts.filter((conflict) => conflict.sourceType === 'topic');
+    if (topicConflicts.length) {
+      return {
+        code: 409,
+        message: '存在材料引用冲突：部分单词/句块/句型已被本包话题认领，同一包内不可重复绑定',
+        data: { conflicts: topicConflicts },
+      } as any;
     }
     const conflictMaterialIds = conflicts.map((conflict) => conflict.materialId);
 

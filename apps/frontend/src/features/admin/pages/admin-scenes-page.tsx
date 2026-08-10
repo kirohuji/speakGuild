@@ -42,6 +42,7 @@ import {
   listLibraryPatterns, generateTopicTeachingMarkdown,
   suggestTopicVocabs,
   enqueueWarmupPipelineGeneration,
+  enqueueSceneTopicBatchGeneration,
   type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData, type SentencePatternFull, type StoryEpisode,
   type TopicClaimConflict, type SuggestedVocabItem,
 } from '../api-content-admin'
@@ -1587,6 +1588,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   const [topicPageSize, setTopicPageSize] = useState(10)
   const [materialsLoading, setMaterialsLoading] = useState(false)
   const [qualityDialog, setQualityDialog] = useState(false)
+  const [batchGenerating, setBatchGenerating] = useState(false)
   const materialsLoadedRef = useRef(false)
 
   // 词汇/句型库只在打开话题编辑器时按需加载（词汇库上万条，进详情页不预拉）
@@ -1652,6 +1654,22 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
     })
     if (!topics.some((topic) => topic.id === saved.id)) setTopicTotal((total) => total + 1)
     setEditTopic(saved)
+  }
+
+  /** 批量生成：为该场景所有话题补齐教学文档 + 知识点训练（后台任务） */
+  const handleBatchGenerate = async () => {
+    if (batchGenerating) return
+    setBatchGenerating(true)
+    try {
+      const task = await enqueueSceneTopicBatchGeneration(sceneId)
+      toast.success(task.reused ? '该学习包已有批量生成任务正在执行' : '批量生成任务已发送到任务中心', {
+        action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+      })
+    } catch (error: any) {
+      toast.error(error?.message || '批量生成任务创建失败')
+    } finally {
+      setBatchGenerating(false)
+    }
   }
 
   const syncTopicLink = (topicId?: string, tab: string = 'basic') => {
@@ -1730,10 +1748,16 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
           </div>
         </div>
         {!['story', 'novel'].includes(scene.contentMode) && (
-          <Button variant="outline" onClick={() => setQualityDialog(true)}>
-            <ClipboardCheck data-icon="inline-start" />
-            质量审查
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" onClick={() => setQualityDialog(true)}>
+              <ClipboardCheck data-icon="inline-start" />
+              质量审查
+            </Button>
+            <Button variant="outline" onClick={() => void handleBatchGenerate()} disabled={batchGenerating || !topicTotal}>
+              {batchGenerating ? <Loader2 className="size-4 animate-spin" data-icon="inline-start" /> : <Sparkles data-icon="inline-start" />}
+              批量生成
+            </Button>
+          </div>
         )}
       </div>
 

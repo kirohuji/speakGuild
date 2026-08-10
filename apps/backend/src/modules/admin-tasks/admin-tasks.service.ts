@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
 
 @Injectable()
 export class AdminTasksService {
@@ -242,6 +242,49 @@ export class AdminTasksService {
     return { ...task, bullJobId: job.id, reused: false };
   }
 
+  /**
+   * 场景批量生成：为该场景下所有话题执行「教学文档 + 知识点训练」补齐任务。
+   * 每个话题两项子任务，总计 totalItems = 话题数 × 2。
+   */
+  async enqueueSceneTopicBatchGenerate(sceneId: string, createdById?: string) {
+    const scene = await this.prisma.scene.findUnique({ where: { id: sceneId }, select: { id: true, title: true } });
+    if (!scene) throw new NotFoundException('学习包不存在');
+
+    const topicCount = await this.prisma.trainingTopic.count({ where: { sceneId } });
+    if (!topicCount) throw new BadRequestException('学习包下没有训练话题');
+
+    const existing = await this.prisma.adminTask.findFirst({
+      where: {
+        type: SCENE_TOPIC_BATCH_GENERATE_JOB,
+        targetType: 'scene',
+        targetId: scene.id,
+        status: { in: [AdminTaskStatus.queued, AdminTaskStatus.running] },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (existing) return { ...existing, reused: true };
+
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: SCENE_TOPIC_BATCH_GENERATE_JOB,
+        title: `批量生成学习包内容：${scene.title}`,
+        targetType: 'scene',
+        targetId: scene.id,
+        createdById,
+        totalItems: topicCount * 2,
+        payload: { sceneId: scene.id, createdById } as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.contentQueue.add(SCENE_TOPIC_BATCH_GENERATE_JOB, {
+      taskId: task.id,
+      sceneId: scene.id,
+      createdById,
+    });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', `「${scene.title}」批量生成任务已加入后台队列（${topicCount} 个话题）`, { step: 'queued' });
+    return { ...task, bullJobId: job.id, reused: false };
+  }
+
   async enqueueVocabularyCsvImport(words: string[], createdById?: string) {
     const uniqueWords = [...new Set(words.map(w => w.trim()).filter(Boolean))];
     if (uniqueWords.length === 0) {
@@ -410,6 +453,9 @@ export class AdminTasksService {
     }
     if (task.type === WARMUP_PIPELINE_GENERATE_JOB && task.targetId && createdById) {
       return this.enqueueWarmupPipelineGenerate(task.targetId, createdById);
+    }
+    if (task.type === SCENE_TOPIC_BATCH_GENERATE_JOB && task.targetId && createdById) {
+      return this.enqueueSceneTopicBatchGenerate(task.targetId, createdById);
     }
     if (task.type === VOCABULARY_MISSING_MEANING_ENRICH_JOB) {
       return this.enqueueVocabularyMissingMeaningEnrich(createdById);
