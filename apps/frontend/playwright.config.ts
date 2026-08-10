@@ -102,6 +102,33 @@ export default defineConfig({
       },
       dependencies: ['setup'],
     },
+    /* ── iPad Pro：移动端体验在大画布上的纵横屏回归 ── */
+    {
+      name: 'iPadPro129Portrait',
+      use: {
+        browserName: 'chromium',
+        viewport: { width: 1024, height: 1366 },
+        deviceScaleFactor: 2,
+        isMobile: true,
+        hasTouch: true,
+        userAgent: 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+        storageState: 'e2e/.auth/state.json',
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'iPadPro129Landscape',
+      use: {
+        browserName: 'chromium',
+        viewport: { width: 1366, height: 1024 },
+        deviceScaleFactor: 2,
+        isMobile: true,
+        hasTouch: true,
+        userAgent: 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+        storageState: 'e2e/.auth/state.json',
+      },
+      dependencies: ['setup'],
+    },
 
     /* ── 桌面端 Chromium（用于管理员后台测试）── */
     {

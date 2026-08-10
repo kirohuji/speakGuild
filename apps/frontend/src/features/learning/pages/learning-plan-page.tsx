@@ -29,10 +29,12 @@ import { useLearningStore } from '@/stores/learning.store'
 import { MyLearningView } from '../components/my-learning-view'
 import { ShopView } from '../components/shop-view'
 import { LearningPackDownloadDrawer, LearningPackDownloadStatusButton } from '@/layout/learning-pack-download-monitor'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 export function LearningPlanPage() {
   const { t } = useTranslation()
   const location = useLocation()
+  const isMobile = useIsMobile()
   const [shopOpen, setShopOpen] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
   const [memberOpen, setMemberOpen] = useState(false)
@@ -92,17 +94,21 @@ export function LearningPlanPage() {
           <div />
           <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45">
             <LearningPackDownloadStatusButton onClick={() => setDownloadDrawerOpen(true)} embedded />
-            <button type="button" onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
-              className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground lg:hidden"
-              aria-label={t('profile.records')}>
-              <ClipboardList className="size-[18px]" />
-            </button>
-            <button type="button" onClick={(e) => { e.currentTarget.blur(); setShopOpen(true); refreshShop({ excludePackageType: 'story' }); fetchTags() }}
-              className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground lg:hidden"
-              aria-label={t('member.title')}
-              data-spotlight="open-shop">
-              <ShoppingBag className="size-[18px]" />
-            </button>
+            {isMobile && (
+              <>
+                <button type="button" onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
+                  className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
+                  aria-label={t('profile.records')}>
+                  <ClipboardList className="size-[18px]" />
+                </button>
+                <button type="button" onClick={(e) => { e.currentTarget.blur(); setShopOpen(true); refreshShop({ excludePackageType: 'story' }); fetchTags() }}
+                  className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
+                  aria-label={t('member.title')}
+                  data-spotlight="open-shop">
+                  <ShoppingBag className="size-[18px]" />
+                </button>
+              </>
+            )}
           </div>
         </div>
 

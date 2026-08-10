@@ -32,7 +32,7 @@ export function BottomNav() {
   if (!visible || !isLoggedIn || !isMobile) return null
 
   return (
-    <nav className="mobile-bottom-nav fixed inset-x-4 z-40 rounded-full border border-white/45 bg-background/48 shadow-[0_12px_34px_rgba(15,23,42,0.10)] backdrop-blur-2xl"
+    <nav className="mobile-bottom-nav fixed inset-x-4 z-40 rounded-full border border-white/45 bg-background/48 shadow-[0_12px_34px_rgba(15,23,42,0.10)] backdrop-blur-2xl md:left-1/2 md:right-auto md:w-[min(calc(100%-2rem),42rem)] md:-translate-x-1/2"
          style={{ bottom: `calc(0.75rem + env(safe-area-inset-bottom, 0px))` }}>
       <div className="flex h-16 items-center justify-around px-1.5">
         {navItems.map(({ label, path, icon: Icon }) => {

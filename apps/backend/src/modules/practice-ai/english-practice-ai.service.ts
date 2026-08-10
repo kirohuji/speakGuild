@@ -161,7 +161,7 @@ export class EnglishPracticeAiService {
             ],
             response_format: { type: 'json_object' },
             // JSON 生成不需要思维链，避免其占用输出预算并降低格式稳定性。
-            thinking: 'disabled',
+            // thinking: 'disabled',
             temperature: attempt === 0 ? 0.35 : 0,
             max_tokens: WARMUP_PIPELINE_MAX_OUTPUT_TOKENS,
           }),

@@ -14,6 +14,7 @@ import { ImmersiveBackground } from '@/components/common/immersive-background'
 import { SpecialBanner } from '@/features/notification/components/special-banner'
 import { useHomeStore } from '@/stores/home.store'
 import { toast } from 'sonner'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 function useClock() {
   const { t } = useTranslation()
@@ -38,6 +39,7 @@ export function EnglishHomePage() {
   const location = useLocation()
   const clock = useClock()
   const isDark = resolvedTheme === 'dark' || theme === 'dark'
+  const isMobile = useIsMobile()
 
   // 首页 store：每日句子 & 签到状态（同一天缓存，不重复请求）
   const dailySentence = useHomeStore((s) => s.dailySentence)
@@ -87,16 +89,20 @@ export function EnglishHomePage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl overflow-hidden">
+    <div className={cn(isMobile ? 'w-full max-w-none overflow-hidden' : 'mx-auto max-w-2xl overflow-hidden')}>
       <motion.section
-        className="relative flex h-[100svh] flex-col items-center justify-center gap-5 overflow-hidden px-6 pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] pt-[calc(3.5rem+env(safe-area-inset-top,0px))] text-foreground"
+        className={cn(
+          'relative flex h-[100svh] flex-col items-center justify-center gap-5 overflow-hidden px-6 pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] pt-[calc(3.5rem+env(safe-area-inset-top,0px))] text-foreground',
+          // Keep the scene full-bleed on iPad; only the foreground cards are width constrained.
+          isMobile && 'md:gap-7 md:px-12 md:pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] md:pt-[calc(4.5rem+env(safe-area-inset-top,0px))]',
+        )}
       >
         <ImmersiveBackground />
 
         {/* 时钟 */}
         <motion.div
           className={cn(
-            'relative z-10 flex items-baseline gap-1.5 rounded-[28px] border px-5 py-3 backdrop-blur-2xl',
+            'relative z-10 flex items-baseline gap-1.5 rounded-[28px] border px-5 py-3 backdrop-blur-2xl md:px-6 md:py-3.5',
             isDark
               ? 'border-white/20 bg-white/[0.12] shadow-[0_24px_70px_rgba(0,0,0,.42)]'
               : 'border-white/45 bg-white/28 shadow-[0_18px_55px_rgba(42,105,96,.16)]',
@@ -106,20 +112,20 @@ export function EnglishHomePage() {
           transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
         >
           <span
-            className={cn('text-[28px] font-semibold', isDark ? 'text-white' : 'text-slate-700')}
+            className={cn('text-[28px] font-semibold md:text-[32px]', isDark ? 'text-white' : 'text-slate-700')}
             style={{ fontVariantNumeric: 'tabular-nums' }}
           >
             {clock.hours}
           </span>
           <motion.span
-            className={cn('text-[24px] font-light', isDark ? 'text-rose-100/70' : 'text-teal-600/45')}
+            className={cn('text-[24px] font-light md:text-[28px]', isDark ? 'text-rose-100/70' : 'text-teal-600/45')}
             animate={{ opacity: [0.28, 1, 0.28] }}
             transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
           >
             :
           </motion.span>
           <span
-            className={cn('text-[28px] font-semibold', isDark ? 'text-white' : 'text-slate-700')}
+            className={cn('text-[28px] font-semibold md:text-[32px]', isDark ? 'text-white' : 'text-slate-700')}
             style={{ fontVariantNumeric: 'tabular-nums' }}
           >
             {clock.minutes}
@@ -129,7 +135,7 @@ export function EnglishHomePage() {
 
         <motion.div
           className={cn(
-            'relative z-10 w-full max-w-[330px] rounded-[24px] border px-5 py-5 text-center backdrop-blur-xl',
+            'relative z-10 w-full max-w-[330px] rounded-[24px] border px-5 py-5 text-center backdrop-blur-xl md:max-w-[460px] md:px-7 md:py-6',
             isDark
               ? 'border-white/12 bg-white/[0.06] shadow-[0_20px_60px_rgba(0,0,0,.35)]'
               : 'border-white/20 bg-white/15 shadow-[0_16px_48px_rgba(42,105,96,.14)]',
@@ -147,10 +153,10 @@ export function EnglishHomePage() {
             </>
           ) : (
             <>
-              <p className={cn('text-[18px] font-semibold leading-7', isDark ? 'text-white' : 'text-slate-800')}>
+              <p className={cn('text-[18px] font-semibold leading-7 md:text-[21px] md:leading-8', isDark ? 'text-white' : 'text-slate-800')}>
                 “{dailySentence.quote}”
               </p>
-              <p className={cn('mx-auto mt-3 max-w-[250px] text-[13px] leading-5', isDark ? 'text-white/82' : 'text-slate-600')}>
+              <p className={cn('mx-auto mt-3 max-w-[330px] text-[13px] leading-5 md:text-sm md:leading-6', isDark ? 'text-white/82' : 'text-slate-600')}>
                 {dailySentence.translation}
               </p>
               <div className={cn('mx-auto mt-4 h-px w-10', isDark ? 'bg-rose-100/28' : 'bg-slate-400/30')} />

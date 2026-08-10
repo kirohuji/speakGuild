@@ -33,6 +33,7 @@ import { useAuth } from '@/providers/auth-provider'
 import { toast } from 'sonner'
 import { practiceRepository } from '@/lib/offline'
 import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 // ── 类型 ──
 type SimplePromptItem = { zh?: string; en?: string; answer?: string; hint?: string; imageUrl?: string; audioUrl?: string; audioAssetId?: string }
@@ -171,6 +172,7 @@ function useTypeMeta(t: (key: string) => string): Record<string, { label: string
 export function TodayTaskPage() {
   const { t } = useTranslation()
   const { session } = useAuth()
+  const isMobile = useIsMobile()
   const isAdmin = session?.user?.role === 'admin'
   const TYPE_META = useTypeMeta(t)
   const warmupStore = useWarmupSessionStore()
@@ -835,17 +837,19 @@ export function TodayTaskPage() {
             </Link>
           )}
         </div>
-        <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45 lg:hidden">
-          {/* 换一批：暂时隐藏，随机逻辑后续统一在 buildTodayPlan 内调整 */}
-          <button
-            type="button"
-            onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
-            className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
-            aria-label={t('todayTask.practiceRecords')}
-          >
-            <ClipboardList className="size-[18px]" />
-          </button>
-        </div>
+        {isMobile && (
+          <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45">
+            {/* 换一批：暂时隐藏，随机逻辑后续统一在 buildTodayPlan 内调整 */}
+            <button
+              type="button"
+              onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
+              className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
+              aria-label={t('todayTask.practiceRecords')}
+            >
+              <ClipboardList className="size-[18px]" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── 进度条 ── */}
