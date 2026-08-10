@@ -79,6 +79,10 @@ export class FileAssetsController {
     const asset = await this.fileAssetsService.getPrivateUrlByAssetId(id);
     res.setHeader('Cache-Control', 'private, no-store, max-age=0');
     res.setHeader('Pragma', 'no-cache');
+    // Helmet defaults to same-origin, but the frontend and API use different
+    // origins in development and may also do so in native/production builds.
+    // This response only redirects to an already-authorized COS object.
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     return res.redirect(302, asset.url);
   }
 

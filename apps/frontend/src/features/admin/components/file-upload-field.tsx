@@ -33,6 +33,26 @@ const sizeMap = {
   lg: 'h-32 w-32',
 }
 
+function inferFileType(
+  url: string,
+  accept?: string,
+  group?: FileAssetGroup,
+): 'image' | 'audio' | 'other' {
+  const pathname = url.split(/[?#]/)[0]
+  const ext = pathname.split('.').pop()?.toLowerCase()
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext ?? '')) return 'image'
+  if (['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac', 'opus'].includes(ext ?? '')) return 'audio'
+
+  // Stable FileAsset URLs intentionally have no filename extension. Infer
+  // their preview type from the field contract instead of the URL suffix.
+  if (/\/file-assets\/[^/]+\/content\/?$/i.test(pathname)) {
+    if (accept?.includes('image/')) return 'image'
+    if (accept?.includes('audio/')) return 'audio'
+    if (group === 'avatar' || group === 'scene_cover') return 'image'
+  }
+  return 'other'
+}
+
 /**
  * 通用文件上传字段
  * 支持：粘贴 URL / 点击上传到 COS
@@ -57,22 +77,8 @@ export function FileUploadField({
 
   useEffect(() => {
     setPreviewUrl(value || '')
-    if (value) {
-      detectFileType(value)
-    }
-  }, [value])
-
-  /** 根据 URL 后缀判断文件类型 */
-  const detectFileType = (url: string) => {
-    const ext = url.split('?')[0].split('.').pop()?.toLowerCase()
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext ?? '')) {
-      setFileType('image')
-    } else if (['mp3', 'wav', 'ogg', 'aac', 'm4a', 'flac', 'opus'].includes(ext ?? '')) {
-      setFileType('audio')
-    } else {
-      setFileType('other')
-    }
-  }
+    setFileType(value ? inferFileType(value, accept, group) : 'other')
+  }, [value, accept, group])
 
   const handleUpload = async (file: File) => {
     setUploading(true)
