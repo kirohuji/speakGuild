@@ -1867,6 +1867,9 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
     [topics],
   )
   const editTopicIndex = editTopic ? sortedTopics.findIndex((topic) => topic.id === editTopic.id) : -1
+  const editTopicGlobalIndex = editTopicIndex >= 0
+    ? (topicPage - 1) * topicPageSize + editTopicIndex
+    : -1
   const currentPackageTypeLabel = packageTypeLabel(scene?.packageType)
 
   const handleTopicSaved = (saved: TrainingTopic) => {
@@ -1943,6 +1946,30 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
       toast.error(error?.message || '话题详情加载失败')
     } finally {
       setOpeningTopicId(null)
+    }
+  }
+
+  const openAdjacentWarmupTopic = async (direction: -1 | 1) => {
+    if (editTopicIndex < 0) return
+    const adjacentIndex = editTopicIndex + direction
+    if (adjacentIndex >= 0 && adjacentIndex < sortedTopics.length) {
+      await openTopicEditor(sortedTopics[adjacentIndex], 'warmup')
+      return
+    }
+
+    const targetPage = topicPage + direction
+    if (targetPage < 1 || targetPage > topicTotalPages) return
+    try {
+      const result = await listTrainingTopics(sceneId, { page: targetPage, pageSize: topicPageSize })
+      const targetPageTopics = [...result.items].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+      const target = direction > 0 ? targetPageTopics[0] : targetPageTopics[targetPageTopics.length - 1]
+      if (!target) return
+      setTopicPage(targetPage)
+      setTopics(result.items)
+      setTopicTotal(result.total)
+      await openTopicEditor(target, 'warmup')
+    } catch (error: any) {
+      toast.error(error?.message || '相邻话题加载失败')
     }
   }
 
@@ -2167,10 +2194,10 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
         edit={editTopic} sceneId={sceneId} packageType={scene.packageType} contentMode={scene.contentMode} chunks={chunks} patterns={patterns}
         initialTab={topicInitialTab}
         onTabChange={(tab) => { if (editTopic?.id) syncTopicLink(editTopic.id, tab) }}
-        topicIndex={editTopicIndex >= 0 ? editTopicIndex : undefined}
-        topicTotal={sortedTopics.length}
-        onPrevTopic={editTopicIndex > 0 ? () => openTopicEditor(sortedTopics[editTopicIndex - 1], 'warmup') : undefined}
-        onNextTopic={editTopicIndex >= 0 && editTopicIndex < sortedTopics.length - 1 ? () => openTopicEditor(sortedTopics[editTopicIndex + 1], 'warmup') : undefined}
+        topicIndex={editTopicGlobalIndex >= 0 ? editTopicGlobalIndex : undefined}
+        topicTotal={topicTotal}
+        onPrevTopic={editTopicGlobalIndex > 0 ? () => void openAdjacentWarmupTopic(-1) : undefined}
+        onNextTopic={editTopicGlobalIndex >= 0 && editTopicGlobalIndex < topicTotal - 1 ? () => void openAdjacentWarmupTopic(1) : undefined}
         onSaved={handleTopicSaved} />
       <EpisodeEditDialog
         open={storyDialog}
