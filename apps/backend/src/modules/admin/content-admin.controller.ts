@@ -57,7 +57,7 @@ import { TopicTeachingGenerateService } from '../admin-tasks/jobs/topic-teaching
 import { ListeningPipelineTextDto } from './dto/listening-pipeline.dto';
 import { ListeningTranscriptSegment } from '../tts/tts.service';
 import { MaterialConstraintService, type MaterialKind, type GroupSceneInfo } from '../content-experiences/material-constraint.service';
-import { SuggestTopicVocabsDto } from './dto/scene-admin.dto';
+import { SuggestTopicSupportsDto, SuggestTopicVocabsDto } from './dto/scene-admin.dto';
 
 /** 语法功能词（代词/介词/冠词/连词/助动词/虚副词/限定词等），无实际学习价值，不进入推荐 */
 const FUNCTION_WORDS = new Set([
@@ -730,11 +730,23 @@ export class ContentAdminController {
       scored.push({ vocabulary, score });
     }
     scored.sort((a, b) => b.score - a.score);
-    const candidates = scored.slice(0, 100);
+    // 新词与前序复习词分池，避免后期话题中高分复习词挤占整个候选窗口。
+    const freshPool = scored.filter((entry) => !earlierClaimed.has(`vocab:${entry.vocabulary.id}`));
+    const reviewPool = scored.filter((entry) => earlierClaimed.has(`vocab:${entry.vocabulary.id}`));
+    const candidates = [
+      ...freshPool.slice(0, 80),
+      ...reviewPool.slice(0, 20),
+    ];
+    const minimumFreshCore = Math.min(10, count, freshPool.length);
 
     // ── AI 排序与推荐理由（失败时回退到规则排序） ──
-    let ranked = candidates.slice(0, count);
-    let extended = candidates.slice(count, count + extensionCount).filter((c) => c.score > 0);
+    let ranked = [
+      ...freshPool.slice(0, count),
+      ...reviewPool.slice(0, Math.max(0, count - freshPool.length)),
+    ].slice(0, count);
+    let extended = [...freshPool, ...reviewPool]
+      .filter((entry) => !ranked.some((core) => core.vocabulary.id === entry.vocabulary.id) && entry.score > 0)
+      .slice(0, extensionCount);
     const reasons = new Map<string, string>();
     try {
       const llmConfig = await this.aiModelService.getLlmConfig();
@@ -742,16 +754,17 @@ export class ContentAdminController {
         const client = createOpenAI({ apiKey: llmConfig.apiKey, baseURL: llmConfig.baseUrl });
         const model = client.chat(llmConfig.model);
         const candidateLines = candidates
-          .map(({ vocabulary }) => `- ${vocabulary.id} | ${vocabulary.word} | ${vocabulary.meaning} | ${vocabulary.partOfSpeech ?? ''} | ${vocabulary.difficulty}`)
+          .map(({ vocabulary }) => `- ${vocabulary.id} | ${vocabulary.word} | ${vocabulary.meaning} | ${vocabulary.partOfSpeech ?? ''} | ${vocabulary.difficulty} | ${earlierClaimed.has(`vocab:${vocabulary.id}`) ? 'review（前序已学）' : 'fresh（未学）'}`)
           .join('\n');
         const patternLines = patterns.map((p) => `- ${p.pattern}${p.meaning ? ` — ${p.meaning}` : ''}`).join('\n') || '- (无)';
         const chunkLines = chunks.map((c) => `- ${c.text}${c.meaning ? ` — ${c.meaning}` : ''}`).join('\n') || '- (无)';
         const teaching = (dto.teachingMarkdown ?? '').slice(0, 1500);
         const { text } = await generateText({
           model,
-          prompt: `你是英语教学设计助手，为话题挑选最合适的练习词汇。\n\n话题目标难度：${difficulty}\n\n已绑定句型：\n${patternLines}\n\n已绑定句块：\n${chunkLines}\n\n教学文档（参考）：\n${teaching || '(无)'}\n\n候选词（id | 单词 | 中文释义 | 词性 | 难度）：\n${candidateLines}\n\n请从中选出最适合本话题练习的 ${count} 个核心词和 ${extensionCount} 个扩展词（扩展词不足可少于 ${extensionCount} 个，但不能与核心词重复）：\n1. 语义/搭配与已绑句型、句块自然契合；\n2. 难度符合目标难度；核心词优先选搭配度最高的，扩展词可略高一级、作为进阶拓展；\n3. 与话题场景相关优先；\n4. 只选有实际学习价值的实义词（名词/动词/形容词/副词/短语），绝不选择代词、介词、冠词、助动词、连词等语法功能词（如 you、at、I、what、on）。\n\n只输出 JSON：{"core":[{"vocabularyId":"候选词id","reason":"一句话中文理由（说明与哪个句型/句块搭配，为什么适合）"}],"extension":[{"vocabularyId":"候选词id","reason":"一句话中文理由"}]}，不要输出其他内容。`,
+          prompt: `你是英语教学设计助手，为话题挑选最合适的练习词汇。\n\n话题目标难度：${difficulty}\n\n已绑定句型：\n${patternLines}\n\n已绑定句块：\n${chunkLines}\n\n教学文档（参考）：\n${teaching || '(无)'}\n\n候选词（id | 单词 | 中文释义 | 词性 | 难度 | 学习状态）：\n${candidateLines}\n\n请从中选出最适合本话题练习的 ${count} 个核心词和 ${extensionCount} 个扩展词（扩展词不足可少于 ${extensionCount} 个，但不能与核心词重复）：\n1. 核心词中至少选择 ${minimumFreshCore} 个标记为 fresh（未学）的词；review 只能用于必要复习和补位，不能挤占新词配额。\n2. 语义/搭配与已绑句型、句块自然契合。\n3. 难度符合目标难度；核心词优先选搭配度最高的，扩展词可略高一级、作为进阶拓展。\n4. 与话题场景相关优先。\n5. 只选有实际学习价值的实义词（名词/动词/形容词/副词/短语），绝不选择代词、介词、冠词、助动词、连词等语法功能词（如 you、at、I、what、on）。\n\n只输出 JSON：{"core":[{"vocabularyId":"候选词id","reason":"一句话中文理由（说明与哪个句型/句块搭配，为什么适合）"}],"extension":[{"vocabularyId":"候选词id","reason":"一句话中文理由"}]}，不要输出其他内容。`,
           temperature: 0.4,
           maxOutputTokens: 2400,
+          abortSignal: AbortSignal.timeout(230_000),
         });
         const parsed = extractJsonObject(text);
         const byId = new Map(candidates.map((item) => [item.vocabulary.id, item]));
@@ -775,6 +788,46 @@ export class ContentAdminController {
       console.warn(`[suggest-vocabs] AI 排序失败，回退规则排序: ${error.message}`);
     }
 
+    // 不信任模型完全遵守配额：回收结果时再次强制补足 fresh，并优先替换 review。
+    ranked = ranked.filter((entry, index, items) =>
+      items.findIndex((candidate) => candidate.vocabulary.id === entry.vocabulary.id) === index,
+    ).slice(0, count);
+    const coreIds = new Set(ranked.map((entry) => entry.vocabulary.id));
+    let freshCoreCount = ranked.filter((entry) => !earlierClaimed.has(`vocab:${entry.vocabulary.id}`)).length;
+    for (const fresh of freshPool) {
+      if (freshCoreCount >= minimumFreshCore) break;
+      if (coreIds.has(fresh.vocabulary.id)) continue;
+      if (ranked.length < count) {
+        ranked.push(fresh);
+      } else {
+        let reviewIndex = -1;
+        for (let index = ranked.length - 1; index >= 0; index -= 1) {
+          if (earlierClaimed.has(`vocab:${ranked[index].vocabulary.id}`)) {
+            reviewIndex = index;
+            break;
+          }
+        }
+        if (reviewIndex < 0) break;
+        coreIds.delete(ranked[reviewIndex].vocabulary.id);
+        ranked[reviewIndex] = fresh;
+      }
+      coreIds.add(fresh.vocabulary.id);
+      freshCoreCount += 1;
+    }
+    for (const entry of [...freshPool, ...reviewPool]) {
+      if (ranked.length >= count) break;
+      if (coreIds.has(entry.vocabulary.id)) continue;
+      ranked.push(entry);
+      coreIds.add(entry.vocabulary.id);
+    }
+    const extensionIds = new Set<string>();
+    extended = extended.filter((entry) => {
+      const id = entry.vocabulary.id;
+      if (coreIds.has(id) || extensionIds.has(id)) return false;
+      extensionIds.add(id);
+      return true;
+    }).slice(0, extensionCount);
+
     const toItem = (entry: { vocabulary: (typeof library)[number]; score: number }, group: 'core' | 'extension') => ({
       vocabularyId: entry.vocabulary.id,
       word: entry.vocabulary.word,
@@ -795,6 +848,277 @@ export class ContentAdminController {
           ...ranked.map((entry) => toItem(entry, 'core')),
           ...extended.map((entry) => toItem(entry, 'extension')),
         ],
+      },
+    };
+  }
+
+  /**
+   * 根据教学文档、当前已选材料和未选材料库，判断是否需要补充句型或 Chunk。
+   * 仅返回尚未选择且不与后序/同包其他话题认领冲突的候选。
+   */
+  @Post('training-topics/:id/suggest-supports')
+  async suggestTopicSupports(@Req() req: Request, @Param('id') id: string, @Body() dto: SuggestTopicSupportsDto) {
+    await this.requireAdmin(req);
+
+    const topic = await this.prisma.trainingTopic.findUnique({
+      where: { id },
+      include: {
+        scene: { select: { id: true, title: true, requiredOutputLevel: true } },
+        topicPatterns: { include: { pattern: true } },
+        activeChunks: { include: { chunk: { include: { examples: { select: { en: true } } } } } },
+        topicVocabs: { include: { vocab: true } },
+      },
+    });
+    if (!topic) throw new NotFoundException('学习话题不存在');
+
+    const patternIds = dto.patternIds ?? topic.topicPatterns.map((item) => item.pattern.id);
+    const chunkIds = dto.chunkIds ?? topic.activeChunks.map((item) => item.chunk.id);
+    const vocabIds = dto.vocabIds ?? topic.topicVocabs.map((item) => item.vocab.id);
+    const difficulty = dto.difficulty ?? topic.difficulty ?? topic.scene.requiredOutputLevel;
+    const count = Math.min(Math.max(dto.count ?? 6, 1), 12);
+    const selectedIds = new Set(dto.kind === 'pattern' ? patternIds : chunkIds);
+
+    const [selectedPatterns, selectedChunks, selectedVocabs] = await Promise.all([
+      patternIds.length
+        ? this.prisma.sentencePattern.findMany({ where: { id: { in: patternIds } } })
+        : [],
+      chunkIds.length
+        ? this.prisma.chunk.findMany({
+            where: { id: { in: chunkIds } },
+            include: { examples: { select: { en: true }, take: 3, orderBy: { sortOrder: 'asc' } } },
+          })
+        : [],
+      vocabIds.length
+        ? this.prisma.vocabulary.findMany({ where: { id: { in: vocabIds } } })
+        : [],
+    ]);
+
+    const context = await this.materialConstraints.getGroupContext(topic.sceneId);
+    const blocked = new Set<string>();
+    const earlier = new Set<string>();
+    for (const scene of context.laterScenes) {
+      for (const claim of scene.claims) {
+        if (claim.role === 'learn') blocked.add(`${claim.kind}:${claim.materialId}`);
+      }
+    }
+    for (const scene of context.earlierScenes) {
+      for (const claim of scene.claims) earlier.add(`${claim.kind}:${claim.materialId}`);
+    }
+    const currentPackClaims = await this.prisma.sceneMaterialReference.findMany({
+      where: {
+        sceneId: topic.sceneId,
+        role: 'learn',
+        OR: [{ topicId: null }, { topicId: { not: id } }],
+      },
+      select: { materialType: true, materialId: true },
+    });
+    for (const claim of currentPackClaims) blocked.add(`${claim.materialType}:${claim.materialId}`);
+
+    type SupportCandidate = {
+      id: string;
+      text: string;
+      meaning: string;
+      description: string;
+      category: string;
+      difficulty: string;
+      examples: string;
+      score: number;
+    };
+    const library: SupportCandidate[] = dto.kind === 'pattern'
+      ? (await this.prisma.sentencePattern.findMany({ orderBy: { updatedAt: 'desc' } })).map((item) => ({
+          id: item.id,
+          text: item.pattern,
+          meaning: item.meaning ?? '',
+          description: item.description ?? '',
+          category: item.category ?? '',
+          difficulty: item.difficulty,
+          examples: JSON.stringify(item.examples ?? []),
+          score: 0,
+        }))
+      : (await this.prisma.chunk.findMany({
+          include: { examples: { select: { en: true }, take: 3, orderBy: { sortOrder: 'asc' } } },
+          orderBy: { updatedAt: 'desc' },
+        })).map((item) => ({
+          id: item.id,
+          text: item.text,
+          meaning: item.meaning,
+          description: item.description ?? '',
+          category: item.category ?? '',
+          difficulty: item.difficulty,
+          examples: item.examples.map((example) => example.en).join(' | '),
+          score: 0,
+        }));
+
+    const contextText = [
+      topic.scene.title,
+      topic.title,
+      topic.description ?? '',
+      topic.promptEn,
+      topic.promptZh,
+      (dto.teachingMarkdown ?? topic.teachingMarkdown ?? '').slice(0, 6000),
+      ...selectedPatterns.flatMap((item) => [item.pattern, item.meaning ?? '', item.description ?? '', JSON.stringify(item.examples ?? [])]),
+      ...selectedChunks.flatMap((item) => [item.text, item.meaning, item.description ?? '', ...item.examples.map((example) => example.en)]),
+      ...selectedVocabs.flatMap((item) => [item.word, item.meaning, item.definitionEn ?? '', item.description ?? '']),
+    ].join('\n').toLowerCase();
+    const tokensOf = (value: string) => new Set(value.toLowerCase().match(/[a-z][a-z'-]{2,}|[\u4e00-\u9fff]{2,}/gu) ?? []);
+    const contextTokens = tokensOf(contextText);
+    const levelOf = (value?: string | null) => (/^L([1-9])$/i.test(value ?? '') ? Number((value ?? '').slice(1)) : null);
+    const targetLevel = levelOf(difficulty);
+    const kindKey = dto.kind;
+
+    const candidates = library
+      .filter((item) => !selectedIds.has(item.id) && !blocked.has(`${kindKey}:${item.id}`))
+      .filter((item) => {
+        const level = levelOf(item.difficulty);
+        return targetLevel == null || level == null || Math.abs(level - targetLevel) <= 1;
+      })
+      .map((item) => {
+        const candidateText = `${item.text} ${item.meaning} ${item.description} ${item.category} ${item.examples}`.toLowerCase();
+        const overlap = [...tokensOf(candidateText)].filter((token) => contextTokens.has(token)).length;
+        const level = levelOf(item.difficulty);
+        const exactMention = contextText.includes(item.text.toLowerCase()) ? 5 : 0;
+        const categoryMatch = item.category && contextText.includes(item.category.toLowerCase()) ? 2 : 0;
+        const difficultyScore = targetLevel != null && level != null ? Math.max(0, 3 - Math.abs(level - targetLevel)) : 1;
+        return { ...item, score: exactMention + categoryMatch + difficultyScore + Math.min(overlap, 6) };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 100);
+
+    let ranked = candidates.filter((item) => item.score >= 3).slice(0, count);
+    let summary = ranked.length
+      ? `规则检查发现 ${ranked.length} 个可补充的${dto.kind === 'pattern' ? '句型' : 'Chunk'}`
+      : `当前材料已基本覆盖教学目标，暂不需要补充${dto.kind === 'pattern' ? '句型' : 'Chunk'}`;
+    const reasons = new Map<string, string>();
+    const newSuggestions: Array<{
+      materialId: string;
+      text: string;
+      meaning: string;
+      description: string;
+      category: string;
+      difficulty: string;
+      examples: Array<{ en: string; zh: string }>;
+      reason: string;
+    }> = [];
+
+    try {
+      const llmConfig = await this.aiModelService.getLlmConfig();
+      if (llmConfig.apiKey) {
+        const client = createOpenAI({ apiKey: llmConfig.apiKey, baseURL: llmConfig.baseUrl });
+        const model = client.chat(llmConfig.model);
+        const selectedPatternLines = selectedPatterns.map((item) => `- ${item.pattern} — ${item.meaning ?? ''}`).join('\n') || '- (无)';
+        const selectedChunkLines = selectedChunks.map((item) => `- ${item.text} — ${item.meaning}`).join('\n') || '- (无)';
+        const selectedVocabLines = selectedVocabs.map((item) => `- ${item.word} — ${item.meaning}`).join('\n') || '- (无)';
+        const candidateLines = candidates.map((item) =>
+          `- ${item.id} | ${item.text} | ${item.meaning} | ${item.category} | ${item.difficulty} | ${item.description.slice(0, 160)}`,
+        ).join('\n') || '- (候选库中没有合适项目，可建议新建)';
+        const kindLabel = dto.kind === 'pattern' ? '句型骨架' : 'Chunk';
+        const { text } = await generateText({
+          model,
+          prompt: `你是英语课程教学设计审查员。请判断当前话题的${kindLabel}是否足够；只有确实能补足教学目标、表达功能或练习覆盖时才推荐，可以推荐 0 个，最多 ${count} 个。优先复用候选库；如果教学文档明确需要某个表达、候选库确实没有对应或近义互补项，则建议新建。
+
+话题：${topic.title}
+场景：${topic.scene.title}
+目标难度：${difficulty}
+英文任务：${topic.promptEn}
+中文任务：${topic.promptZh}
+
+教学文档：
+${(dto.teachingMarkdown ?? topic.teachingMarkdown ?? '').slice(0, 6000) || '(无)'}
+
+已经添加的句型：
+${selectedPatternLines}
+
+已经添加的 Chunk：
+${selectedChunkLines}
+
+已经添加的词汇：
+${selectedVocabLines}
+
+尚未添加且允许推荐的${kindLabel}候选（id | 内容 | 含义 | 分类 | 难度 | 说明）：
+${candidateLines}
+
+要求：
+1. 先评估已添加材料是否已覆盖教学文档；足够时不要为了凑数量推荐。
+2. 推荐项必须与当前材料互补，避免语义和表达功能重复。
+3. 难度要匹配。优先选择 action="existing" 并填写候选 materialId；只有候选库无合适项目时才用 action="create"。
+4. reason 用一句中文明确说明补足了教学文档中的哪个目标，以及与现有哪项材料互补。
+5. create 项必须给出可直接入库的 text、meaning、category、difficulty、description 和 1-3 个中英例句；不要创建与现有材料同文或仅有大小写/标点差异的项目。
+6. ${dto.kind === 'pattern' ? '句型骨架应体现可替换结构，不能只写一个孤立短语。' : 'Chunk 应是可直接复用的固定或半固定表达，不要伪装成抽象句型。'}
+7. 只输出 JSON：{"summary":"中文审查结论","items":[{"action":"existing","materialId":"候选id","reason":"中文理由"},{"action":"create","text":"内容","meaning":"中文含义","category":"分类","difficulty":"L2","description":"中文说明","examples":[{"en":"英文例句","zh":"中文例句"}],"reason":"中文理由"}]}。`,
+          temperature: 0.25,
+          maxOutputTokens: 1800,
+        });
+        const parsed = extractJsonObject(text);
+        if (parsed && Array.isArray(parsed.items)) {
+          const byId = new Map(candidates.map((item) => [item.id, item]));
+          const selected: SupportCandidate[] = [];
+          for (const item of parsed.items) {
+            const candidate = byId.get(String(item?.materialId));
+            if (candidate) {
+              if (selected.some((entry) => entry.id === candidate.id)) continue;
+              selected.push(candidate);
+              reasons.set(candidate.id, String(item?.reason ?? '').slice(0, 240));
+            } else if (String(item?.action).toLowerCase() === 'create') {
+              const text = String(item?.text ?? '').trim().slice(0, 240);
+              const meaning = String(item?.meaning ?? '').trim().slice(0, 240);
+              const normalizeText = (value: string) => value.toLowerCase().replace(/[\s\p{P}\p{S}]+/gu, '');
+              const normalizedText = normalizeText(text);
+              const duplicate = !normalizedText
+                || library.some((entry) => normalizeText(entry.text) === normalizedText)
+                || newSuggestions.some((entry) => normalizeText(entry.text) === normalizedText);
+              if (!meaning || duplicate) continue;
+              const examples = Array.isArray(item?.examples)
+                ? item.examples.slice(0, 3).map((example: any) => ({
+                    en: String(example?.en ?? '').trim().slice(0, 500),
+                    zh: String(example?.zh ?? '').trim().slice(0, 500),
+                  })).filter((example: { en: string; zh: string }) => example.en && example.zh)
+                : [];
+              const suggestedDifficulty = /^L[1-5]$/i.test(String(item?.difficulty ?? ''))
+                ? String(item.difficulty).toUpperCase()
+                : difficulty;
+              newSuggestions.push({
+                materialId: `new:${dto.kind}:${newSuggestions.length + 1}`,
+                text,
+                meaning,
+                category: String(item?.category ?? 'general').trim().slice(0, 80) || 'general',
+                difficulty: suggestedDifficulty,
+                description: String(item?.description ?? '').trim().slice(0, 500),
+                examples,
+                reason: String(item?.reason ?? '').trim().slice(0, 240),
+              });
+            }
+            if (selected.length + newSuggestions.length >= count) break;
+          }
+          ranked = selected;
+          summary = String(parsed.summary ?? summary).slice(0, 300);
+        }
+      }
+    } catch (error: any) {
+      console.warn(`[suggest-supports] AI 审查失败，回退规则推荐: ${error.message}`);
+    }
+
+    return {
+      code: 200,
+      message: 'success',
+      data: {
+        kind: dto.kind,
+        summary,
+        items: [...ranked.map((item) => ({
+          materialId: item.id,
+          text: item.text,
+          meaning: item.meaning,
+          category: item.category,
+          difficulty: item.difficulty,
+          status: earlier.has(`${kindKey}:${item.id}`) ? 'earlier' : 'available',
+          reason: reasons.get(item.id) || '与教学目标相关，并可补充当前语言支架',
+          score: item.score,
+          source: 'library' as const,
+        })), ...newSuggestions.map((item) => ({
+          ...item,
+          status: 'new' as const,
+          score: 0,
+          source: 'generated' as const,
+        }))],
       },
     };
   }

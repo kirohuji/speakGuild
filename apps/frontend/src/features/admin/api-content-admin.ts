@@ -160,7 +160,38 @@ export async function suggestTopicVocabs(
   topicId: string,
   data: { patternIds?: string[]; chunkIds?: string[]; difficulty?: string; teachingMarkdown?: string; count?: number },
 ): Promise<{ items: SuggestedVocabItem[] }> {
-  return post(`/admin/content/training-topics/${topicId}/suggest-vocabs`, data)
+  return post(`/admin/content/training-topics/${topicId}/suggest-vocabs`, data, { timeout: 240_000 })
+}
+
+export type TopicSupportKind = 'pattern' | 'chunk'
+
+export interface SuggestedTopicSupportItem {
+  materialId: string
+  text: string
+  meaning: string
+  description?: string
+  category: string
+  difficulty: string
+  status: 'available' | 'earlier' | 'new'
+  source: 'library' | 'generated'
+  examples?: Array<{ en: string; zh: string }>
+  reason: string
+  score: number
+}
+
+export async function suggestTopicSupports(
+  topicId: string,
+  data: {
+    kind: TopicSupportKind
+    patternIds?: string[]
+    chunkIds?: string[]
+    vocabIds?: string[]
+    difficulty?: string
+    teachingMarkdown?: string
+    count?: number
+  },
+): Promise<{ kind: TopicSupportKind; summary: string; items: SuggestedTopicSupportItem[] }> {
+  return post(`/admin/content/training-topics/${topicId}/suggest-supports`, data)
 }
 
 export async function listScenes(categoryId?: string, packageType?: Scene['packageType'], excludePackageType?: Scene['packageType']): Promise<Scene[]> {
@@ -890,10 +921,14 @@ export function listLibraryChunks(params?: {
 }): Promise<PaginatedResult<ChunkFull>> {
   return get('/admin/content/library/chunks', params);
 }
-export function createLibraryChunk(data: Partial<ChunkFull> & { examples?: any[] }): Promise<ChunkFull> {
+type LibraryChunkWriteData = Omit<Partial<ChunkFull>, 'examples'> & {
+  examples?: Array<{ en: string; zh: string; note?: string | null; level?: string; sortOrder?: number }>
+}
+
+export function createLibraryChunk(data: LibraryChunkWriteData): Promise<ChunkFull> {
   return post('/admin/content/library/chunks', data);
 }
-export function updateLibraryChunk(id: string, data: Partial<ChunkFull> & { examples?: any[] }): Promise<ChunkFull> {
+export function updateLibraryChunk(id: string, data: LibraryChunkWriteData): Promise<ChunkFull> {
   return patch(`/admin/content/library/chunks/${id}`, data);
 }
 export function deleteLibraryChunk(id: string): Promise<void> {

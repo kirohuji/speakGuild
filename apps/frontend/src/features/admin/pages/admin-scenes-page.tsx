@@ -18,6 +18,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/cn'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
@@ -39,12 +40,12 @@ import {
   listVocabularies, createVocabulary, updateVocabulary, deleteVocabulary,
   listTrainingTopics, createTrainingTopic, updateTrainingTopic, deleteTrainingTopic,
   getTrainingTopic, listAllChunks, listStories, getStory, listScriptEpisodes, deleteScriptEpisode,
-  listLibraryPatterns, generateTopicTeachingMarkdown,
-  suggestTopicVocabs,
+  listLibraryPatterns, createLibraryPattern, createLibraryChunk, generateTopicTeachingMarkdown,
+  suggestTopicSupports, suggestTopicVocabs,
   enqueueWarmupPipelineGeneration,
   enqueueSceneTopicBatchGeneration,
   type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData, type SentencePatternFull, type StoryEpisode,
-  type TopicClaimConflict, type SuggestedVocabItem,
+  type TopicClaimConflict, type SuggestedTopicSupportItem, type SuggestedVocabItem, type TopicSupportKind,
 } from '../api-content-admin'
 import { EpisodeEditDialog } from './admin-script-page'
 import { WarmupPipelineTab, buildWarmupMaterialUsage, type WarmupPipelineData } from '../components/warmup-pipeline-tab'
@@ -572,6 +573,74 @@ function VocabularyLookupPreview({
 
 // ─── Training Topic Dialog ──────────────────────────────────
 
+function TopicSupportSuggestionPanel({
+  kind,
+  summary,
+  items,
+  selectedIds,
+  addingId,
+  onAdd,
+  onClose,
+}: {
+  kind: TopicSupportKind
+  summary: string
+  items: SuggestedTopicSupportItem[]
+  selectedIds: string[]
+  addingId: string | null
+  onAdd: (item: SuggestedTopicSupportItem) => void
+  onClose: () => void
+}) {
+  const label = kind === 'pattern' ? '句型' : 'Chunk'
+  return (
+    <div className="mb-3 overflow-hidden rounded-lg border border-border/70 bg-background">
+      <div className="flex items-start justify-between gap-3 border-b border-border/70 px-3 py-2">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold">教学支架审查 · {label}</p>
+          <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{summary}</p>
+        </div>
+        <Button type="button" variant="ghost" size="sm" className="h-6 shrink-0 text-[10px] text-muted-foreground" onClick={onClose}>收起</Button>
+      </div>
+      {items.length ? (
+        <div className="max-h-56 divide-y divide-border/60 overflow-y-auto">
+          {items.map((item) => {
+            const added = selectedIds.includes(item.materialId)
+            return (
+              <div key={item.materialId} className="flex items-center gap-3 px-3 py-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className={cn('text-sm font-medium', kind === 'pattern' ? 'font-mono' : 'font-english')}>{item.text}</span>
+                    <Badge variant="outline" className="text-[10px]">{item.difficulty}</Badge>
+                    {item.category && <Badge variant="secondary" className="text-[10px]">{item.category}</Badge>}
+                    {item.status === 'earlier' && <Badge variant="secondary" className="text-[10px]">前序已学·仅复习</Badge>}
+                    {item.status === 'new' && <Badge className="text-[10px]">建议新建</Badge>}
+                  </div>
+                  {item.meaning && <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.meaning}</p>}
+                  <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{item.reason}</p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={added ? 'ghost' : 'outline'}
+                  className="h-7 shrink-0 text-xs"
+                  disabled={added || addingId !== null}
+                  onClick={() => onAdd(item)}
+                >
+                  {addingId === item.materialId && <Loader2 data-icon="inline-start" className="animate-spin" />}
+                  {added ? '已加入' : item.status === 'new' ? '新建并加入' : '加入'}
+                </Button>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 px-3 py-3 text-xs text-muted-foreground">
+          <CheckCircle2 className="size-4 text-primary" />当前已选材料无需补充
+        </div>
+      )}
+    </div>
+  )
+}
+
 function TrainingTopicDialog({
   open, onClose, edit, sceneId, packageType, contentMode, chunks, patterns, topicIndex, topicTotal, onPrevTopic, onNextTopic, onSaved, initialTab = 'basic', onTabChange,
 }: {
@@ -602,6 +671,12 @@ function TrainingTopicDialog({
   // 关联词汇推荐（根据句型和句块）
   const [suggesting, setSuggesting] = useState(false)
   const [suggestions, setSuggestions] = useState<SuggestedVocabItem[] | null>(null)
+  const [supportSuggesting, setSupportSuggesting] = useState<TopicSupportKind | null>(null)
+  const [supportAdding, setSupportAdding] = useState<string | null>(null)
+  const [supportSuggestions, setSupportSuggestions] = useState<Record<TopicSupportKind, { summary: string; items: SuggestedTopicSupportItem[] } | null>>({
+    pattern: null,
+    chunk: null,
+  })
   const groupedSuggestions = useMemo(() => {
     if (!suggestions?.length) return []
     const core = suggestions.filter((item) => item.group !== 'extension')
@@ -626,6 +701,8 @@ function TrainingTopicDialog({
   // Stable key to only re-init form when a different topic is opened, not on prop reference change
   const editKey = edit?.id ?? '__new__'
   const [lastInitKey, setLastInitKey] = useState<string | null>(null)
+  const [createdPatterns, setCreatedPatterns] = useState<SentencePatternFull[]>([])
+  const [createdChunks, setCreatedChunks] = useState<Chunk[]>([])
 
   // 过滤为当前话题绑定的材料（而非全系统材料），供 AI 生成使用
   const topicBoundPatterns = useMemo(
@@ -633,8 +710,8 @@ function TrainingTopicDialog({
     [edit?.topicPatterns],
   )
   const selectablePatterns = useMemo(
-    () => mergeById(patterns, topicBoundPatterns),
-    [patterns, topicBoundPatterns],
+    () => mergeById(patterns, topicBoundPatterns, createdPatterns),
+    [patterns, topicBoundPatterns, createdPatterns],
   )
   // 词汇远程搜索池：打开时预拉前 100 条 + 话题绑定词条，搜索时按需补充（不加载全量词汇库）
   const [vocabPool, setVocabPool] = useState<Vocabulary[]>([])
@@ -658,8 +735,8 @@ function TrainingTopicDialog({
     [vocabPool, edit?.topicVocabs],
   )
   const selectableChunks = useMemo(
-    () => mergeById(chunks, (edit?.activeChunks ?? []).map((ac: any) => ac.chunk).filter(Boolean)),
-    [chunks, edit?.activeChunks],
+    () => mergeById(chunks, (edit?.activeChunks ?? []).map((ac: any) => ac.chunk).filter(Boolean), createdChunks),
+    [chunks, edit?.activeChunks, createdChunks],
   )
   const boundVocabs = useMemo(
     () => selectableVocabs.filter(v => (form.vocabIds ?? []).includes(v.id)),
@@ -728,6 +805,8 @@ function TrainingTopicDialog({
     }
     setStorySearch('')
     setStoryType('all')
+    setSuggestions(null)
+    setSupportSuggestions({ pattern: null, chunk: null })
     setActiveTab(initialTab === 'warmup' ? 'warmup' : nextInitialTabRef.current)
     nextInitialTabRef.current = 'basic'
     setLastInitKey(editKey)
@@ -951,6 +1030,97 @@ function TrainingTopicDialog({
     }
     setForm({ ...form, vocabIds: [...ids, vocabularyId] })
     toast.success('已加入关联词汇')
+  }
+
+  const runSuggestSupports = async (kind: TopicSupportKind) => {
+    if (supportSuggesting) return
+    if (!(form.teachingMarkdown ?? '').trim()) {
+      toast.error('请先填写或生成教学文档，再检查语言支架')
+      return
+    }
+    let topicId = form.id ?? edit?.id
+    if (!topicId) {
+      const saved = await saveTopic()
+      topicId = saved?.id
+      if (!topicId) return
+    }
+    setSupportSuggesting(kind)
+    try {
+      const result = await suggestTopicSupports(topicId, {
+        kind,
+        patternIds: form.patternIds ?? [],
+        chunkIds: form.chunkIds ?? [],
+        vocabIds: form.vocabIds ?? [],
+        difficulty: form.difficulty ?? 'L2',
+        teachingMarkdown: form.teachingMarkdown ?? '',
+        count: 6,
+      })
+      setSupportSuggestions((current) => ({
+        ...current,
+        [kind]: { summary: result.summary, items: result.items },
+      }))
+      if (!result.items.length) toast.info(result.summary || '当前语言支架已足够，无需补充')
+    } catch (error: any) {
+      toast.error(error?.message || `${kind === 'pattern' ? '句型' : 'Chunk'}推荐失败`)
+    } finally {
+      setSupportSuggesting(null)
+    }
+  }
+
+  const addSuggestedSupport = async (kind: TopicSupportKind, item: SuggestedTopicSupportItem) => {
+    if (supportAdding) return
+    setSupportAdding(item.materialId)
+    try {
+      let materialId = item.materialId
+      if (item.status === 'new') {
+        if (kind === 'pattern') {
+          const created = await createLibraryPattern({
+            pattern: item.text,
+            meaning: item.meaning,
+            description: item.description || item.reason,
+            category: item.category,
+            difficulty: item.difficulty,
+            examples: item.examples ?? [],
+          })
+          materialId = created.id
+          setCreatedPatterns((current) => mergeById(current, [created]))
+        } else {
+          const created = await createLibraryChunk({
+            text: item.text,
+            meaning: item.meaning,
+            description: item.description || item.reason,
+            category: item.category,
+            difficulty: item.difficulty,
+            examples: (item.examples ?? []).map((example) => ({ ...example, level: 'basic' })),
+          })
+          materialId = created.id
+          setCreatedChunks((current) => mergeById(current, [created as Chunk]))
+        }
+        setSupportSuggestions((current) => ({
+          ...current,
+          [kind]: current[kind]
+            ? {
+                ...current[kind]!,
+                items: current[kind]!.items.map((entry) => entry.materialId === item.materialId
+                  ? { ...entry, materialId, status: 'available', source: 'library' }
+                  : entry),
+              }
+            : null,
+        }))
+      }
+      const field = kind === 'pattern' ? 'patternIds' : 'chunkIds'
+      setForm((current: any) => {
+        const ids = current[field] ?? []
+        return ids.includes(materialId) ? current : { ...current, [field]: [...ids, materialId] }
+      })
+      toast.success(item.status === 'new'
+        ? `已新建并加入关联${kind === 'pattern' ? '句型' : ' Chunk'}`
+        : `已加入关联${kind === 'pattern' ? '句型' : ' Chunk'}`)
+    } catch (error: any) {
+      toast.error(error?.message || `新增${kind === 'pattern' ? '句型' : ' Chunk'}失败`)
+    } finally {
+      setSupportAdding(null)
+    }
   }
 
   const generateTeaching = async () => {
@@ -1229,6 +1399,33 @@ function TrainingTopicDialog({
                 </TabsList>
 
                 <TabsContent value="patterns" className="mt-0">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-muted-foreground">结合教学文档、已选句型、Chunk 和词汇，检查是否还缺少表达骨架。</p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      onClick={() => void runSuggestSupports('pattern')}
+                      disabled={supportSuggesting !== null}
+                    >
+                      {supportSuggesting === 'pattern'
+                        ? <Loader2 data-icon="inline-start" className="animate-spin" />
+                        : <Sparkles data-icon="inline-start" />}
+                      检查是否需要补充
+                    </Button>
+                  </div>
+                  {supportSuggestions.pattern && (
+                    <TopicSupportSuggestionPanel
+                      kind="pattern"
+                      summary={supportSuggestions.pattern.summary}
+                      items={supportSuggestions.pattern.items}
+                      selectedIds={form.patternIds ?? []}
+                      addingId={supportAdding}
+                      onAdd={(item) => void addSuggestedSupport('pattern', item)}
+                      onClose={() => setSupportSuggestions((current) => ({ ...current, pattern: null }))}
+                    />
+                  )}
                   <SearchSelectTable
                     items={selectablePatterns}
                     selectedIds={form.patternIds ?? []}
@@ -1251,6 +1448,33 @@ function TrainingTopicDialog({
                 </TabsContent>
 
                 <TabsContent value="chunks" className="mt-0">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-muted-foreground">结合教学文档和现有语言支架，检查是否还需要补充可直接复用的表达块。</p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      onClick={() => void runSuggestSupports('chunk')}
+                      disabled={supportSuggesting !== null}
+                    >
+                      {supportSuggesting === 'chunk'
+                        ? <Loader2 data-icon="inline-start" className="animate-spin" />
+                        : <Sparkles data-icon="inline-start" />}
+                      检查是否需要补充
+                    </Button>
+                  </div>
+                  {supportSuggestions.chunk && (
+                    <TopicSupportSuggestionPanel
+                      kind="chunk"
+                      summary={supportSuggestions.chunk.summary}
+                      items={supportSuggestions.chunk.items}
+                      selectedIds={form.chunkIds ?? []}
+                      addingId={supportAdding}
+                      onAdd={(item) => void addSuggestedSupport('chunk', item)}
+                      onClose={() => setSupportSuggestions((current) => ({ ...current, chunk: null }))}
+                    />
+                  )}
                   <SearchSelectTable
                     items={selectableChunks}
                     selectedIds={form.chunkIds ?? []}
@@ -1283,7 +1507,11 @@ function TrainingTopicDialog({
                   {suggestions && (
                     <div className="mb-3 overflow-hidden rounded-lg border border-border/70 bg-background">
                       <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
-                        <p className="text-xs font-semibold">推荐搭配词汇（{suggestions.length}）</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-xs font-semibold">推荐搭配词汇（{suggestions.length}）</p>
+                          <Badge variant="outline" className="text-[10px]">新词 {suggestions.filter((item) => item.status === 'available').length}</Badge>
+                          <Badge variant="secondary" className="text-[10px]">复习 {suggestions.filter((item) => item.status === 'earlier').length}</Badge>
+                        </div>
                         <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] text-muted-foreground" onClick={() => setSuggestions(null)}>收起</Button>
                       </div>
                       <div className="max-h-56 divide-y divide-border/60 overflow-y-auto">

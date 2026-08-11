@@ -351,3 +351,38 @@ export class SuggestTopicVocabsDto {
   @Max(20)
   extensionCount?: number;
 }
+
+/** 根据教学文档和当前已选材料，判断是否需要补充句型或 Chunk */
+export class SuggestTopicSupportsDto {
+  @IsIn(['pattern', 'chunk'])
+  kind: 'pattern' | 'chunk';
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  patternIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  chunkIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  vocabIds?: string[];
+
+  @IsOptional()
+  @IsString()
+  difficulty?: string;
+
+  @IsOptional()
+  @IsString()
+  teachingMarkdown?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  count?: number;
+}
