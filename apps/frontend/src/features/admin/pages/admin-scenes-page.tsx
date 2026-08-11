@@ -49,6 +49,7 @@ import {
 } from '../api-content-admin'
 import { EpisodeEditDialog } from './admin-script-page'
 import { WarmupPipelineTab, buildWarmupMaterialUsage, type WarmupPipelineData } from '../components/warmup-pipeline-tab'
+import { TopicTeachingWorkspace } from '../components/topic-teaching-workspace'
 import { packageDataAdminApi } from '../api-package-data'
 import { ContentExperiencePanel } from '../components/content-experience-panel'
 import { TopicExperienceFields } from '../components/topic-experience-fields'
@@ -642,7 +643,7 @@ function TopicSupportSuggestionPanel({
 }
 
 function TrainingTopicDialog({
-  open, onClose, edit, sceneId, packageType, contentMode, chunks, patterns, topicIndex, topicTotal, onPrevTopic, onNextTopic, onSaved, initialTab = 'basic', onTabChange,
+  open, onClose, edit, sceneId, packageType, contentMode, chunks, patterns, topicIndex, topicTotal, onPrevTopic, onNextTopic, onOpenTopic, onSaved, initialTab = 'basic', onTabChange,
 }: {
   open: boolean
   onClose: () => void
@@ -656,14 +657,14 @@ function TrainingTopicDialog({
   topicTotal?: number
   onPrevTopic?: () => void
   onNextTopic?: () => void
+  onOpenTopic?: (topicId: string, tab: 'teaching' | 'warmup') => void
   onSaved: (topic: TrainingTopic) => void
-  initialTab?: 'basic' | 'warmup'
+  initialTab?: 'basic' | 'teaching' | 'warmup'
   onTabChange?: (tab: string) => void
 }) {
   const [form, setForm] = useState<any>({})
   const [saving, setSaving] = useState(false)
   const [teachingGenerating, setTeachingGenerating] = useState(false)
-  const [teachingMode, setTeachingMode] = useState<'edit' | 'preview'>('edit')
   const [activeTab, setActiveTab] = useState('basic')
   // 引用冲突：保存被拦截时记录冲突与待保存 payload，供“改为复习并保存”重试
   const [claimConflicts, setClaimConflicts] = useState<TopicClaimConflict[] | null>(null)
@@ -694,7 +695,7 @@ function TrainingTopicDialog({
   const [storyPageSize, setStoryPageSize] = useState(20)
   const [storyTotal, setStoryTotal] = useState(0)
   const storiesLoadedRef = useRef(false)
-  const nextInitialTabRef = useRef<'basic' | 'warmup'>('basic')
+  const nextInitialTabRef = useRef<'basic' | 'teaching' | 'warmup'>('basic')
   const savedFormSnapshotRef = useRef('')
   // Fetch the bound story individually (bypasses pagination)
   const [boundStory, setBoundStory] = useState<StoryData | null>(null)
@@ -807,7 +808,7 @@ function TrainingTopicDialog({
     setStoryType('all')
     setSuggestions(null)
     setSupportSuggestions({ pattern: null, chunk: null })
-    setActiveTab(initialTab === 'warmup' ? 'warmup' : nextInitialTabRef.current)
+    setActiveTab(initialTab === 'basic' ? nextInitialTabRef.current : initialTab)
     nextInitialTabRef.current = 'basic'
     setLastInitKey(editKey)
   }, [open, editKey, sceneId, packageType, contentMode, lastInitKey, initialTab])
@@ -816,6 +817,23 @@ function TrainingTopicDialog({
     if (!navigate || saving) return
     nextInitialTabRef.current = 'warmup'
     setActiveTab('warmup')
+    if (serializeTrainingTopicForm(form) === savedFormSnapshotRef.current) {
+      navigate()
+      return
+    }
+    const saved = await saveTopic()
+    if (!saved) {
+      nextInitialTabRef.current = 'basic'
+      return
+    }
+    navigate()
+  }
+
+  const openTeachingDocument = async (topicId: string) => {
+    if (!onOpenTopic || topicId === (form.id ?? edit?.id) || saving) return
+    const navigate = () => onOpenTopic(topicId, 'teaching')
+    nextInitialTabRef.current = 'teaching'
+    setActiveTab('teaching')
     if (serializeTrainingTopicForm(form) === savedFormSnapshotRef.current) {
       navigate()
       return
@@ -1141,8 +1159,13 @@ function TrainingTopicDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="flex max-h-[90vh] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[72rem]">
-        <DialogHeader className="shrink-0 border-b px-5 py-4">
+      <DialogContent className={cn(
+        'flex flex-col gap-0 overflow-hidden p-0',
+        activeTab === 'teaching'
+          ? 'max-h-[97vh] w-[calc(100vw-0.5rem)] sm:max-w-[100rem]'
+          : 'max-h-[94vh] w-[calc(100vw-2rem)] sm:max-w-[88rem]',
+      )}>
+        <DialogHeader className={cn('shrink-0 border-b px-5', activeTab === 'teaching' ? 'py-2.5' : 'py-4')}>
           <DialogTitle className="sr-only">{edit ? '编辑话题' : '新增话题'}</DialogTitle>
           <div className="flex flex-wrap items-start justify-between gap-3 pr-8">
             <div>
@@ -1159,19 +1182,19 @@ function TrainingTopicDialog({
           </div>
         </DialogHeader>
         <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); onTabChange?.(v); if (v === 'ink') loadStoriesIfNeeded() }} className="flex min-h-0 flex-1 flex-col">
-          <div className="shrink-0 border-b bg-muted/20 px-5 py-2.5">
+          <div className={cn('shrink-0 border-b bg-muted/20 px-5', activeTab === 'teaching' ? 'py-1.5' : 'py-2.5')}>
             <TabsList className="h-9 w-full justify-start overflow-x-auto bg-background/80">
               <TabsTrigger value="basic" className="gap-1.5">
                 <FileText className="size-3.5" />基础信息
               </TabsTrigger>
+              <TabsTrigger value="teaching" className="gap-1.5">
+                <BookOpen className="size-3.5" />教学文档
+              </TabsTrigger>
               <TabsTrigger value="training" className="gap-1.5">
-                <Settings2 className="size-3.5" />练习配置
+                <Settings2 className="size-3.5" />语言支架
               </TabsTrigger>
               {contentMode !== 'practice' && <TabsTrigger value="experience" className="gap-1.5">
                 <BookOpen className="size-3.5" />{contentModeLabel(contentMode)}题型
-              </TabsTrigger>}
-              {['writing', 'reading', 'listening'].includes(contentMode) && <TabsTrigger value="teaching" className="gap-1.5">
-                <FileText className="size-3.5" />教学文档
               </TabsTrigger>}
               {contentMode === 'practice' && <TabsTrigger value="ink" className="gap-1.5">
                 <Link2 className="size-3.5" />Ink 故事
@@ -1182,7 +1205,7 @@ function TrainingTopicDialog({
             </TabsList>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+          <div className={cn('min-h-0 flex-1 overflow-y-auto', activeTab === 'teaching' ? 'p-1.5' : 'px-5 py-4')}>
             <TabsContent value="basic" className="mt-0 space-y-4">
               <div className="grid gap-3 lg:grid-cols-[1fr_0.8fr]">
                 <div className="space-y-1">
@@ -1351,34 +1374,21 @@ function TrainingTopicDialog({
               </TabsContent>
             )}
 
-            {['writing', 'reading', 'listening'].includes(contentMode) && (
-              <TabsContent value="teaching" className="mt-0 space-y-4">
-                <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-sky-500/20 bg-sky-500/[0.045] p-3">
-                  <div>
-                    <p className="text-sm font-semibold">课前教学文档</p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">学习者开始写作、阅读或听力任务前会先看到这份 Markdown 指导。</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Tabs value={teachingMode} onValueChange={(value) => setTeachingMode(value as 'edit' | 'preview')}>
-                      <TabsList className="h-8 bg-background/80">
-                        <TabsTrigger value="edit" className="h-7 px-3 text-xs">编辑</TabsTrigger>
-                        <TabsTrigger value="preview" className="h-7 px-3 text-xs">预览</TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                    <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={generateTeaching} disabled={teachingGenerating}>
-                      {teachingGenerating ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}AI 生成
-                    </Button>
-                  </div>
-                </div>
-                <MarkdownEditor
-                  value={form.teachingMarkdown ?? ''}
-                  onChange={(teachingMarkdown) => setForm({ ...form, teachingMarkdown })}
-                  height={440}
-                  preview={teachingMode}
-                  placeholder="写明任务目标、可直接使用的表达、组织思路和易错提醒……"
-                />
-              </TabsContent>
-            )}
+            <TabsContent value="teaching" className="mt-0">
+              <TopicTeachingWorkspace
+                sceneId={sceneId}
+                currentTopicId={form.id ?? edit?.id}
+                currentTitle={form.title ?? edit?.title ?? ''}
+                currentDifficulty={form.difficulty ?? edit?.difficulty ?? 'L2'}
+                value={form.teachingMarkdown ?? ''}
+                onChange={(teachingMarkdown) => setForm({ ...form, teachingMarkdown })}
+                onGenerate={() => void generateTeaching()}
+                generating={teachingGenerating}
+                practiceMode={contentMode === 'practice'}
+                onOpenDocument={(topicId) => void openTeachingDocument(topicId)}
+                onNavigate={(tab) => setActiveTab(tab)}
+              />
+            </TabsContent>
 
             <TabsContent value="training" className="mt-0">
               <div className="rounded-lg border border-border/70 bg-muted/20 px-3 py-2.5">
@@ -1718,9 +1728,6 @@ function TrainingTopicDialog({
                 patterns={boundPatterns}
                 topicTitle={form.title || edit?.title || ''}
                 difficulty={form.difficulty ?? edit?.difficulty ?? 'L2'}
-                teachingMarkdown={form.teachingMarkdown ?? ''}
-                onTeachingMarkdownChange={(teachingMarkdown) => setForm({ ...form, teachingMarkdown })}
-                onGenerateTeaching={handleGenerateTopicTeaching}
                 onGenerateInBackground={async () => {
                   const saved = await saveTopic()
                   if (!saved) throw new Error('请先保存完整的话题信息')
@@ -1737,7 +1744,7 @@ function TrainingTopicDialog({
             </TabsContent>
           </div>
         </Tabs>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-3">
+        <div className={cn('flex flex-wrap items-center justify-between gap-3 border-t px-5', activeTab === 'teaching' ? 'py-2' : 'py-3')}>
           <p className="text-xs text-muted-foreground">
             标题和英文提示为必填；Ink 可稍后绑定。
           </p>
@@ -1808,7 +1815,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   const [topicDialog, setTopicDialog] = useState(false)
   const [editTopic, setEditTopic] = useState<TrainingTopic | null>(null)
   const [openingTopicId, setOpeningTopicId] = useState<string | null>(null)
-  const [topicInitialTab, setTopicInitialTab] = useState<'basic' | 'warmup'>('basic')
+  const [topicInitialTab, setTopicInitialTab] = useState<'basic' | 'teaching' | 'warmup'>('basic')
   const openedDeepLinkRef = useRef<string | null>(null)
   const [storyDialog, setStoryDialog] = useState(false)
   const [editStoryEpisode, setEditStoryEpisode] = useState<StoryEpisode | null>(null)
@@ -1907,10 +1914,11 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
     const next = new URLSearchParams(searchParams)
     next.set('sceneId', sceneId)
     if (topicId) {
-      openedDeepLinkRef.current = `${topicId}:${tab === 'warmup' ? 'warmup' : 'basic'}`
+      const linkedTab = tab === 'warmup' || tab === 'teaching' ? tab : 'basic'
+      openedDeepLinkRef.current = `${topicId}:${linkedTab}`
       next.set('topicId', topicId)
       next.set('dialog', 'topic')
-      next.set('tab', tab)
+      next.set('tab', linkedTab)
     } else {
       next.delete('topicId')
       next.delete('dialog')
@@ -1925,7 +1933,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
     syncTopicLink()
   }
 
-  const openTopicEditor = async (topic: TrainingTopic | null, initialTab: 'basic' | 'warmup' = 'basic') => {
+  const openTopicEditor = async (topic: TrainingTopic | null, initialTab: 'basic' | 'teaching' | 'warmup' = 'basic') => {
     // 打开编辑器前确保句型库已就绪（词汇选择器为远程搜索，无需全量加载）
     await ensureMaterialsLoaded(false)
     if (!topic) {
@@ -1976,7 +1984,8 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   useEffect(() => {
     const linkedTopicId = searchParams.get('topicId')
     if (searchParams.get('sceneId') !== sceneId || searchParams.get('dialog') !== 'topic' || !linkedTopicId) return
-    const tab = searchParams.get('tab') === 'warmup' ? 'warmup' : 'basic'
+    const requestedTab = searchParams.get('tab')
+    const tab = requestedTab === 'warmup' || requestedTab === 'teaching' ? requestedTab : 'basic'
     const key = `${linkedTopicId}:${tab}`
     if (openedDeepLinkRef.current === key) return
     openedDeepLinkRef.current = key
@@ -2198,6 +2207,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
         topicTotal={topicTotal}
         onPrevTopic={editTopicGlobalIndex > 0 ? () => void openAdjacentWarmupTopic(-1) : undefined}
         onNextTopic={editTopicGlobalIndex >= 0 && editTopicGlobalIndex < topicTotal - 1 ? () => void openAdjacentWarmupTopic(1) : undefined}
+        onOpenTopic={(topicId, tab) => void openTopicEditor({ id: topicId } as TrainingTopic, tab)}
         onSaved={handleTopicSaved} />
       <EpisodeEditDialog
         open={storyDialog}

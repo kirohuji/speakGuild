@@ -619,6 +619,24 @@ export class ContentAdminController {
     return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
   }
 
+  @Get('training-topics/teaching-documents')
+  async listTopicTeachingDocuments(@Req() req: Request, @Query('sceneId') sceneId?: string) {
+    await this.requireAdmin(req);
+    if (!sceneId) throw new BadRequestException('sceneId 不能为空');
+    return this.prisma.trainingTopic.findMany({
+      where: { sceneId },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+      select: {
+        id: true,
+        title: true,
+        difficulty: true,
+        sortOrder: true,
+        teachingMarkdown: true,
+        createdAt: true,
+      },
+    });
+  }
+
   @Get('training-topics/:id')
   async getTrainingTopic(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);

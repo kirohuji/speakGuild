@@ -294,6 +294,19 @@ export async function listTrainingTopics(
   })
 }
 
+export interface TopicTeachingDocument {
+  id: string
+  title: string
+  difficulty: string
+  sortOrder: number
+  teachingMarkdown?: string | null
+  createdAt: string
+}
+
+export function listTopicTeachingDocuments(sceneId: string): Promise<TopicTeachingDocument[]> {
+  return get('/admin/content/training-topics/teaching-documents', { sceneId })
+}
+
 export async function createTrainingTopic(data: any): Promise<TopicSaveResult> {
   return post('/admin/content/training-topics', data)
 }

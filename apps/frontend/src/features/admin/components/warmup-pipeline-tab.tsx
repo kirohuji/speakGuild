@@ -27,8 +27,6 @@ import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
 import { synthesizeAdminAudio } from '@/lib/admin-tts-helpers'
@@ -96,9 +94,6 @@ interface Props {
   onPrevTopic?: () => void
   onNextTopic?: () => void
   difficulty?: string
-  teachingMarkdown?: string | null
-  onTeachingMarkdownChange?: (value: string) => void
-  onGenerateTeaching?: () => Promise<string | null>
   onGenerateInBackground?: () => Promise<void>
 }
 
@@ -564,9 +559,6 @@ export function WarmupPipelineTab({
   onPrevTopic,
   onNextTopic,
   difficulty,
-  teachingMarkdown,
-  onTeachingMarkdownChange,
-  onGenerateTeaching,
   onGenerateInBackground,
 }: Props) {
   const [local, setLocal] = useState<WarmupPipelineData>(value)
@@ -575,8 +567,6 @@ export function WarmupPipelineTab({
   const [aiHintingAll, setAiHintingAll] = useState(false)
   const [aiAudioAll, setAiAudioAll] = useState(false)
   const [compacting, setCompacting] = useState(false)
-  const [teachingGenerating, setTeachingGenerating] = useState(false)
-  const [teachingMode, setTeachingMode] = useState<'edit' | 'preview'>('edit')
   const [materialContext, setMaterialContext] = useState<SceneMaterialContext | null>(null)
   const prevIdsRef = useRef<string>('')
 
@@ -1101,22 +1091,6 @@ export function WarmupPipelineTab({
       toast.error(err?.message || '批量生成英文音频失败')
     } finally {
       setAiAudioAll(false)
-    }
-  }
-
-  const generateTeaching = async () => {
-    if (!onGenerateTeaching) return
-    setTeachingGenerating(true)
-    try {
-      const markdown = await onGenerateTeaching()
-      if (markdown != null) {
-        onTeachingMarkdownChange?.(markdown)
-        toast.success('教学文档已生成')
-      }
-    } catch (err: any) {
-      toast.error(err?.message || 'AI 生成教学文档失败')
-    } finally {
-      setTeachingGenerating(false)
     }
   }
 
@@ -1684,7 +1658,7 @@ export function WarmupPipelineTab({
       </aside>
 
       <section className="min-h-0 min-w-0">
-        <Tabs defaultValue="exercise" className="flex h-full min-h-0 flex-col rounded-lg border border-border/70 bg-background">
+        <div className="flex h-full min-h-0 flex-col rounded-lg border border-border/70 bg-background">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 px-4 py-3">
             <div className="min-w-0">
               <p className="text-sm font-semibold">{selectedItem ? selectedItem.title || '未命名练习' : '知识点练习'}</p>
@@ -1692,18 +1666,10 @@ export function WarmupPipelineTab({
                 {selectedItem ? `${typeLabel(selectedItem)} · ${itemCountLabel(selectedItem)}` : '添加或选择一个练习组后在这里编辑。'}
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              {selectedItem && (
-                <Badge variant="outline" className="text-[10px]">第 {selectedIndex + 1} 步</Badge>
-              )}
-              <TabsList className="h-8 bg-muted/50">
-                <TabsTrigger value="exercise" className="h-7 px-3 text-xs">题目编辑</TabsTrigger>
-                <TabsTrigger value="teaching" className="h-7 px-3 text-xs">教学文档</TabsTrigger>
-              </TabsList>
-            </div>
+            {selectedItem && <Badge variant="outline" className="text-[10px]">第 {selectedIndex + 1} 步</Badge>}
           </div>
 
-          <TabsContent value="exercise" className="m-0 min-h-0 flex-1 overflow-y-auto p-4">
+          <div className="min-h-0 flex-1 overflow-y-auto p-4">
             {selectedItem ? (
               renderItemForm(selectedItem, selectedIndex)
             ) : (
@@ -1712,43 +1678,8 @@ export function WarmupPipelineTab({
                 <p className="mt-1 text-xs text-muted-foreground">从左侧添加题型开始配置。</p>
               </div>
             )}
-          </TabsContent>
-
-          <TabsContent value="teaching" className="m-0 min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <p className="text-sm font-semibold">教学文档</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">保存话题后，学习端会读取这份 Markdown。</p>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Tabs value={teachingMode} onValueChange={(value) => setTeachingMode(value as 'edit' | 'preview')}>
-                  <TabsList className="h-8 bg-muted/50">
-                    <TabsTrigger value="edit" className="h-7 px-3 text-xs">编辑</TabsTrigger>
-                    <TabsTrigger value="preview" className="h-7 px-3 text-xs">预览</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="h-8 gap-1.5"
-                  disabled={!onGenerateTeaching || teachingGenerating}
-                  onClick={generateTeaching}
-                >
-                  {teachingGenerating ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
-                  AI 生成
-                </Button>
-              </div>
-            </div>
-            <MarkdownEditor
-              value={teachingMarkdown ?? ''}
-              onChange={onTeachingMarkdownChange}
-              height={360}
-              preview={teachingMode}
-              placeholder="这里可以维护话题级教学说明。"
-            />
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </section>
       </div>
     </div>
