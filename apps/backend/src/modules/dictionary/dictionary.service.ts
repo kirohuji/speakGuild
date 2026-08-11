@@ -4,13 +4,12 @@ import { DictionaryPipelineService } from './dictionary-pipeline.service';
 import { DictionaryClusteringService } from './dictionary-clustering.service';
 import type { CleanedPronunciation, SenseCluster } from './dictionary.types';
 import type { PronunciationProvider, PronunciationScope } from './dto/pronunciation-audit.dto';
+import { isStandardBroadIpa } from './dictionary-ipa.util';
 
 const PRONUNCIATION_AUDIT_PAGE_SIZE = 100;
 
 function isStandardIpa(value?: string): boolean {
-  if (!value || !value.startsWith('/') || !value.endsWith('/') || /[\[\]]/.test(value)) return false;
-  const inner = value.slice(1, -1);
-  return !!inner && /^[\p{Ll}\p{M}\u02b0-\u02ff.()‿ -]+$/u.test(inner);
+  return isStandardBroadIpa(value);
 }
 
 @Injectable()

@@ -16,6 +16,7 @@ import type {
 } from './dictionary.types';
 import type { PronunciationProvider, PronunciationScope } from './dto/pronunciation-audit.dto';
 import { DictionaryPronunciationProviderService } from './dictionary-pronunciation-provider.service';
+import { normalizeBroadIpa } from './dictionary-ipa.util';
 
 // ──── Utility ────
 
@@ -631,11 +632,7 @@ Example shape:
   }
 
   private normalizeBroadIpa(value: string): string | null {
-    const trimmed = value.trim();
-    if (!trimmed || trimmed.startsWith('[') || trimmed.endsWith(']') || /[\[\]]/.test(trimmed)) return null;
-    const inner = trimmed.replace(/^\//, '').replace(/\/$/, '').replace(/\s+/g, ' ');
-    if (!inner || !/^[\p{Ll}\p{M}\u02b0-\u02ff.()‿ -]+$/u.test(inner)) return null;
-    return `/${inner}/`;
+    return normalizeBroadIpa(value);
   }
 
   private normalizeExternalAudioUrl(value?: string): string | undefined {

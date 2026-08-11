@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { CleanedPronunciation } from './dictionary.types';
+import { normalizeBroadIpa } from './dictionary-ipa.util';
 
 const WIKTIONARY_API = 'https://en.wiktionary.org/w/api.php';
 const DATAMUSE_API = 'https://api.datamuse.com/words';
@@ -179,11 +180,7 @@ export class DictionaryPronunciationProviderService {
   }
 
   private normalizeBroadIpa(value: string): string | null {
-    const trimmed = value.trim();
-    if (!trimmed || trimmed.startsWith('[') || trimmed.endsWith(']') || /[\[\]]/.test(trimmed)) return null;
-    const inner = trimmed.replace(/^\//, '').replace(/\/$/, '').replace(/\s+/g, ' ');
-    if (!inner || !/^[\p{Ll}\p{M}\u02b0-\u02ff.()‿ -]+$/u.test(inner)) return null;
-    return `/${inner}/`;
+    return normalizeBroadIpa(value);
   }
 
   private commonsAudioUrl(fileName: string): string {
