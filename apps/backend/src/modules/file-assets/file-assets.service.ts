@@ -8,12 +8,11 @@ import {
 import { createHash, randomUUID } from 'node:crypto';
 import { basename, extname } from 'node:path';
 import COS = require('cos-nodejs-sdk-v5');
-import { FileAsset, FileAssetGroup, FileAssetStatus, Prisma } from '@prisma/client';
+import { FileAsset, FileAssetGroup, Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CompleteUploadDto } from './dto/complete-upload.dto';
 import { CreateCosPolicyDto } from './dto/create-cos-policy.dto';
 import { CreateReferenceDto } from './dto/create-reference.dto';
-import { DeleteReferenceDto } from './dto/delete-reference.dto';
 import { SetCurrentAvatarDto } from './dto/set-current-avatar.dto';
 import { MatchSamplingToneDto } from './dto/match-sampling-tone.dto';
 import sharp = require('sharp');
@@ -60,19 +59,44 @@ export class FileAssetsService {
     });
   }
 
-  /** Stable application URL persisted by business records. */
-  getStableContentPath(assetId: string) {
-    return `/api/v1/manyu/file-assets/${encodeURIComponent(assetId)}/content`;
+  /** The only internal file identifier allowed in persisted business data. */
+  getAssetReference(assetId: string, suffix = '') {
+    return `asset://${encodeURIComponent(assetId)}${suffix}`;
   }
 
-  private getStableAssetId(rawUrl: string) {
+  private getAssetReferenceParts(rawValue: string) {
+    if (!rawValue.startsWith('asset://')) return null;
+    const raw = rawValue.slice('asset://'.length);
+    const suffixIndex = raw.search(/[?#]/);
+    const encodedId = suffixIndex >= 0 ? raw.slice(0, suffixIndex) : raw;
+    if (!encodedId || encodedId.includes('/')) return null;
     try {
-      const parsed = new URL(rawUrl, 'http://manyu.local');
-      const match = parsed.pathname.match(/\/file-assets\/([^/]+)\/content\/?$/);
-      return match?.[1] ? decodeURIComponent(match[1]) : null;
+      return {
+        assetId: decodeURIComponent(encodedId),
+        suffix: suffixIndex >= 0 ? raw.slice(suffixIndex) : '',
+      };
     } catch {
       return null;
     }
+  }
+
+  private getContentUrlParts(rawUrl: string) {
+    try {
+      const parsed = new URL(rawUrl, 'http://manyu.local');
+      const match = parsed.pathname.match(/\/file-assets\/([^/]+)\/content\/?$/);
+      return match?.[1]
+        ? {
+            assetId: decodeURIComponent(match[1]),
+            suffix: `${parsed.search}${parsed.hash}`,
+          }
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private getPersistentAssetParts(rawValue: string) {
+    return this.getAssetReferenceParts(rawValue) ?? this.getContentUrlParts(rawValue);
   }
 
   private getOwnCosKey(rawUrl: string) {
@@ -85,25 +109,26 @@ export class FileAssetsService {
     }
   }
 
-  /** Resolve either a stable application URL or a legacy COS URL to FileAsset. */
+  /** Resolve a persistent reference (or a transient own-COS URL used by server jobs). */
   async findAssetByPersistentUrl(rawUrl: string) {
-    const stableAssetId = this.getStableAssetId(rawUrl);
-    if (stableAssetId) {
+    const reference = this.getPersistentAssetParts(rawUrl);
+    if (reference) {
       return this.prisma.fileAsset.findFirst({
-        where: { id: stableAssetId, status: FileAssetStatus.active },
+        where: { id: reference.assetId },
       });
     }
 
     const cosKey = this.getOwnCosKey(rawUrl);
     if (!cosKey) return null;
     return this.prisma.fileAsset.findFirst({
-      where: { cosKey, status: FileAssetStatus.active },
+      where: { cosKey },
     });
   }
 
   /**
-   * Convert legacy COS URLs anywhere in a DTO/JSON document to stable
-   * application URLs. External URLs remain untouched.
+   * Validate and canonicalize internal asset references anywhere in a DTO/JSON
+   * document. Direct COS URLs are transient credentials and are never allowed
+   * in persistent business data. External URLs remain untouched.
    */
   async normalizePersistentAssetUrls<T>(value: T): Promise<T> {
     const cache = new Map<string, Promise<FileAsset | null>>();
@@ -118,20 +143,22 @@ export class FileAssetsService {
 
     const visit = async (current: unknown): Promise<unknown> => {
       if (typeof current === 'string') {
-        const stableAssetId = this.getStableAssetId(current);
+        const reference = this.getPersistentAssetParts(current);
         const cosKey = this.getOwnCosKey(current);
-        if (!stableAssetId && !cosKey) return current;
+        if (cosKey) {
+          throw new BadRequestException(
+            'Direct COS URLs cannot be persisted; save the FileAsset reference instead',
+          );
+        }
+        if (!reference) return current;
 
         const asset = await findCached(current);
         if (!asset) {
           throw new BadRequestException(
-            `内部文件资源不存在或已删除: ${cosKey ?? stableAssetId}`,
+            `File asset does not exist or is inactive: ${reference.assetId}`,
           );
         }
-        // Keep an already stable absolute URL intact (important for native
-        // clients whose document origin is capacitor://localhost).
-        if (stableAssetId) return current;
-        return this.getStableContentPath(asset.id);
+        return this.getAssetReference(asset.id, reference.suffix);
       }
       if (Array.isArray(current)) {
         return Promise.all(current.map((item) => visit(item)));
@@ -150,8 +177,8 @@ export class FileAssetsService {
 
   private collectStableAssetIds(value: unknown, ids = new Set<string>()) {
     if (typeof value === 'string') {
-      const assetId = this.getStableAssetId(value);
-      if (assetId) ids.add(assetId);
+      const reference = this.getPersistentAssetParts(value);
+      if (reference) ids.add(reference.assetId);
       return ids;
     }
     if (Array.isArray(value)) {
@@ -167,52 +194,28 @@ export class FileAssetsService {
   /** Keep cleanup protection in the same transaction as the business write. */
   async syncPersistentAssetReferences(
     tx: Prisma.TransactionClient,
-    userId: string,
+    createdById: string,
     bizType: string,
     bizId: string,
     persistedValue: unknown,
   ) {
     const desiredIds = this.collectStableAssetIds(persistedValue);
-    const activeAssets = desiredIds.size
+    const assets = desiredIds.size
       ? await tx.fileAsset.findMany({
-          where: { id: { in: [...desiredIds] }, status: FileAssetStatus.active },
+          where: { id: { in: [...desiredIds] } },
           select: { id: true },
         })
       : [];
-    if (activeAssets.length !== desiredIds.size) {
+    if (assets.length !== desiredIds.size) {
       throw new BadRequestException('业务数据引用了不存在或已删除的文件资源');
     }
 
-    const existing = await tx.fileReference.findMany({
-      where: { bizType, bizId },
-      select: { assetId: true },
-    });
-    if (existing.length) {
-      await tx.fileReference.deleteMany({ where: { bizType, bizId } });
-      const counts = new Map<string, number>();
-      existing.forEach((ref) => counts.set(ref.assetId, (counts.get(ref.assetId) ?? 0) + 1));
-      await Promise.all(
-        [...counts].map(([assetId, count]) =>
-          tx.fileAsset.update({
-            where: { id: assetId },
-            data: { refCount: { decrement: count } },
-          }),
-        ),
-      );
-    }
+    await tx.fileReference.deleteMany({ where: { bizType, bizId } });
 
     if (desiredIds.size) {
       await tx.fileReference.createMany({
-        data: [...desiredIds].map((assetId) => ({ assetId, bizType, bizId, userId })),
+        data: [...desiredIds].map((assetId) => ({ assetId, bizType, bizId, createdById })),
       });
-      await Promise.all(
-        [...desiredIds].map((assetId) =>
-          tx.fileAsset.update({
-            where: { id: assetId },
-            data: { refCount: { increment: 1 }, lastReferencedAt: new Date() },
-          }),
-        ),
-      );
     }
   }
 
@@ -223,7 +226,7 @@ export class FileAssetsService {
       const existing = await this.prisma.fileAsset.findUnique({
         where: { sha256: dto.sha256.toLowerCase() },
       });
-      if (existing && existing.status === FileAssetStatus.active) {
+      if (existing) {
         return {
           exists: true,
           asset: existing,
@@ -262,96 +265,80 @@ export class FileAssetsService {
     const sha256 = dto.sha256.toLowerCase();
 
     const dedupHit = await this.prisma.fileAsset.findUnique({ where: { sha256 } });
-    if (dedupHit && dedupHit.status === FileAssetStatus.active) {
+    if (dedupHit) {
       return { deduped: true, asset: dedupHit };
     }
 
     await this.headObjectOrThrow(key);
 
-    const created = await this.prisma.fileAsset.upsert({
-      where: { sha256 },
-      create: {
-        sha256,
-        bucket: this.bucket,
-        region: this.region,
-        cosKey: key,
-        group: dto.group,
-        size: dto.size,
-        mimeType: dto.mimeType || 'application/octet-stream',
-        filename: this.sanitizeFilename(dto.filename),
-      },
-      update: {
-        status: FileAssetStatus.active,
-      },
-    });
+    let created: FileAsset;
+    try {
+      created = await this.prisma.fileAsset.upsert({
+        where: { sha256 },
+        create: {
+          sha256,
+          bucket: this.bucket,
+          region: this.region,
+          cosKey: key,
+          group: dto.group,
+          size: dto.size,
+          mimeType: dto.mimeType || 'application/octet-stream',
+          filename: this.sanitizeFilename(dto.filename),
+        },
+        update: {},
+      });
+    } catch (error) {
+      await this.deleteOrQueueOrphan(key, sha256);
+      throw error;
+    }
 
-    return { deduped: false, asset: created };
+    const deduped = created.cosKey !== key;
+    if (deduped) {
+      await this.deleteOrQueueOrphan(key, sha256);
+    }
+    return { deduped, asset: created };
   }
 
-  async createReference(userId: string, dto: CreateReferenceDto) {
+  async createReference(createdById: string, dto: CreateReferenceDto) {
     await this.ensureAssetExists(dto.assetId);
-
-    const existing = await this.prisma.fileReference.findUnique({
+    return this.prisma.fileReference.upsert({
       where: {
-        assetId_bizType_bizId_userId: {
+        assetId_bizType_bizId: {
           assetId: dto.assetId,
           bizType: dto.bizType,
           bizId: dto.bizId,
-          userId,
         },
       },
-    });
-    if (existing) return existing;
-
-    return this.prisma.$transaction(async (tx) => {
-      const reference = await tx.fileReference.create({
-        data: {
-          assetId: dto.assetId,
-          bizType: dto.bizType,
-          bizId: dto.bizId,
-          userId,
-        },
-      });
-
-      await tx.fileAsset.update({
-        where: { id: dto.assetId },
-        data: {
-          refCount: { increment: 1 },
-          lastReferencedAt: new Date(),
-        },
-      });
-
-      return reference;
+      create: {
+        assetId: dto.assetId,
+        bizType: dto.bizType,
+        bizId: dto.bizId,
+        createdById,
+      },
+      update: { createdById },
     });
   }
 
-  async deleteReference(userId: string, dto: DeleteReferenceDto) {
+  private async deleteReference(assetId: string, bizType: string, bizId: string) {
     const existing = await this.prisma.fileReference.findUnique({
       where: {
-        assetId_bizType_bizId_userId: {
-          assetId: dto.assetId,
-          bizType: dto.bizType,
-          bizId: dto.bizId,
-          userId,
+        assetId_bizType_bizId: {
+          assetId,
+          bizType,
+          bizId,
         },
       },
     });
     if (!existing) return { success: true, removed: false };
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.fileReference.delete({ where: { id: existing.id } });
-      await tx.fileAsset.update({
-        where: { id: dto.assetId },
-        data: { refCount: { decrement: 1 } },
-      });
-    });
+    await this.prisma.fileReference.delete({ where: { id: existing.id } });
 
     return { success: true, removed: true };
   }
 
   async getPrivateUrlByAssetId(assetId: string) {
     const asset = await this.prisma.fileAsset.findUnique({ where: { id: assetId } });
-    if (!asset || asset.status !== FileAssetStatus.active) {
+    if (!asset) {
       throw new NotFoundException('文件不存在');
     }
     const url = await this.getSignedDownloadUrl(asset.cosKey);
@@ -369,7 +356,7 @@ export class FileAssetsService {
     const ids = [...new Set(assetIds.filter(Boolean))];
     if (ids.length === 0) return new Map();
     const assets = await this.prisma.fileAsset.findMany({
-      where: { id: { in: ids }, status: FileAssetStatus.active },
+      where: { id: { in: ids } },
       select: { id: true, cosKey: true },
     });
     const entries = await Promise.all(
@@ -384,7 +371,7 @@ export class FileAssetsService {
   /** 获取资产的长效签名 URL（用于嵌入内容，7 天有效） */
   async getAssetLongLivedUrl(assetId: string) {
     const asset = await this.prisma.fileAsset.findUnique({ where: { id: assetId } });
-    if (!asset || asset.status !== FileAssetStatus.active) {
+    if (!asset) {
       throw new NotFoundException('文件不存在');
     }
     const url = await this.getSignedDownloadUrl(asset.cosKey, 604800); // 7 天
@@ -560,14 +547,6 @@ export class FileAssetsService {
     };
   }
 
-  async listReferences(assetId: string) {
-    await this.ensureAssetExists(assetId);
-    return this.prisma.fileReference.findMany({
-      where: { assetId },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
   /** 按分组列出文件资产（带分页），返回带签名的可访问 URL（24h 有效） */
   async listByGroup(
     group: FileAssetGroup,
@@ -579,13 +558,13 @@ export class FileAssetsService {
 
     const [list, total] = await this.prisma.$transaction([
       this.prisma.fileAsset.findMany({
-        where: { group, status: FileAssetStatus.active },
+        where: { group },
         orderBy: { createdAt: 'desc' },
         skip,
         take: pageSize,
       }),
       this.prisma.fileAsset.count({
-        where: { group, status: FileAssetStatus.active },
+        where: { group },
       }),
     ]);
 
@@ -619,61 +598,18 @@ export class FileAssetsService {
       throw new BadRequestException('仅支持设置图片文件为头像');
     }
 
-    const currentRefs = await this.prisma.fileReference.findMany({
-      where: {
-        bizType: 'avatar',
-        bizId: userId,
-        userId,
-      },
-    });
-
     await this.prisma.$transaction(async (tx) => {
-      if (currentRefs.length) {
-        await tx.fileReference.deleteMany({
-          where: {
-            bizType: 'avatar',
-            bizId: userId,
-            userId,
-          },
-        });
-        await Promise.all(
-          currentRefs.map((ref) =>
-            tx.fileAsset.update({
-              where: { id: ref.assetId },
-              data: { refCount: { decrement: 1 } },
-            }),
-          ),
-        );
-      }
-
-      const alreadyBound = await tx.fileReference.findUnique({
-        where: {
-          assetId_bizType_bizId_userId: {
-            assetId: dto.assetId,
-            bizType: 'avatar',
-            bizId: userId,
-            userId,
-          },
+      await tx.fileReference.deleteMany({
+        where: { bizType: 'avatar', bizId: userId },
+      });
+      await tx.fileReference.create({
+        data: {
+          assetId: dto.assetId,
+          bizType: 'avatar',
+          bizId: userId,
+          createdById: userId,
         },
       });
-
-      if (!alreadyBound) {
-        await tx.fileReference.create({
-          data: {
-            assetId: dto.assetId,
-            bizType: 'avatar',
-            bizId: userId,
-            userId,
-          },
-        });
-        await tx.fileAsset.update({
-          where: { id: dto.assetId },
-          data: {
-            refCount: { increment: 1 },
-            lastReferencedAt: new Date(),
-          },
-        });
-      }
     });
 
     return this.getCurrentAvatar(userId);
@@ -684,7 +620,6 @@ export class FileAssetsService {
       where: {
         bizType: 'avatar',
         bizId: userId,
-        userId,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -697,7 +632,7 @@ export class FileAssetsService {
       return user?.image ? { url: user.image } : null;
     }
     const asset = await this.prisma.fileAsset.findUnique({ where: { id: ref.assetId } });
-    if (!asset || asset.status !== FileAssetStatus.active) return null;
+    if (!asset) return null;
     const url = await this.getSignedDownloadUrl(asset.cosKey);
     return {
       assetId: asset.id,
@@ -711,7 +646,7 @@ export class FileAssetsService {
 
     const sha256 = createHash('sha256').update(input.buffer).digest('hex');
     const existing = await this.prisma.fileAsset.findUnique({ where: { sha256 } });
-    if (existing && existing.status === FileAssetStatus.active) return existing;
+    if (existing) return existing;
 
     const safeName = this.sanitizeFilename(input.filename);
     const key = this.buildObjectKey(input.group, `${sha256}-${safeName}`);
@@ -732,22 +667,30 @@ export class FileAssetsService {
       );
     });
 
-    return this.prisma.fileAsset.upsert({
-      where: { sha256 },
-      create: {
-        sha256,
-        bucket: this.bucket,
-        region: this.region,
-        cosKey: key,
-        group: input.group,
-        size: input.buffer.length,
-        mimeType: input.mimeType || 'application/octet-stream',
-        filename: safeName,
-      },
-      update: {
-        status: FileAssetStatus.active,
-      },
-    });
+    let asset: FileAsset;
+    try {
+      asset = await this.prisma.fileAsset.upsert({
+        where: { sha256 },
+        create: {
+          sha256,
+          bucket: this.bucket,
+          region: this.region,
+          cosKey: key,
+          group: input.group,
+          size: input.buffer.length,
+          mimeType: input.mimeType || 'application/octet-stream',
+          filename: safeName,
+        },
+        update: {},
+      });
+    } catch (error) {
+      await this.deleteOrQueueOrphan(key, sha256);
+      throw error;
+    }
+    if (asset.cosKey !== key) {
+      await this.deleteOrQueueOrphan(key, sha256);
+    }
+    return asset;
   }
 
   async createSystemReference(assetId: string, bizType: string, bizId: string) {
@@ -755,41 +698,7 @@ export class FileAssetsService {
   }
 
   async deleteSystemReference(assetId: string, bizType: string, bizId: string) {
-    return this.deleteReference('system', { assetId, bizType, bizId });
-  }
-
-  async cleanupUnreferencedAssets(days: number, dryRun = false) {
-    const before = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    const candidates = await this.prisma.fileAsset.findMany({
-      where: {
-        status: FileAssetStatus.active,
-        refCount: { lte: 0 },
-        createdAt: { lt: before },
-      },
-      orderBy: { createdAt: 'asc' },
-      take: 200,
-    });
-
-    if (!candidates.length) {
-      return { scanned: 0, deleted: 0 };
-    }
-
-    if (dryRun) {
-      this.logger.log(`[dry-run] cleanup candidates=${candidates.length}`);
-      return { scanned: candidates.length, deleted: 0 };
-    }
-
-    let deleted = 0;
-    for (const asset of candidates) {
-      try {
-        await this.deleteCosObject(asset.cosKey);
-        await this.prisma.fileAsset.delete({ where: { id: asset.id } });
-        deleted += 1;
-      } catch (error) {
-        this.logger.warn(`删除资产失败 assetId=${asset.id} err=${String(error)}`);
-      }
-    }
-    return { scanned: candidates.length, deleted };
+    return this.deleteReference(assetId, bizType, bizId);
   }
 
   private async headObjectOrThrow(key: string) {
@@ -810,12 +719,12 @@ export class FileAssetsService {
     });
   }
 
-  private async deleteCosObject(key: string) {
+  async deleteStoredObject(key: string, bucket = this.bucket, region = this.region) {
     await new Promise<void>((resolve, reject) => {
       this.cosClient.deleteObject(
         {
-          Bucket: this.bucket,
-          Region: this.region,
+          Bucket: bucket,
+          Region: region,
           Key: key,
         },
         (err) => {
@@ -824,6 +733,34 @@ export class FileAssetsService {
         },
       );
     });
+  }
+
+  private async deleteOrQueueOrphan(key: string, sha256: string) {
+    try {
+      await this.deleteStoredObject(key);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`failed to remove orphan object key=${key} err=${message}`);
+      await this.prisma.fileAssetPurge.upsert({
+        where: { cosKey: key },
+        create: {
+          assetId: null,
+          bucket: this.bucket,
+          region: this.region,
+          cosKey: key,
+          sha256,
+          status: 'failed',
+          attempts: 1,
+          lastError: message,
+        },
+        update: {
+          status: 'failed',
+          attempts: { increment: 1 },
+          lastError: message,
+          completedAt: null,
+        },
+      });
+    }
   }
 
   private async getSignedDownloadUrl(key: string, expires?: number) {
@@ -846,7 +783,7 @@ export class FileAssetsService {
 
   private async ensureAssetExists(assetId: string) {
     const asset = await this.prisma.fileAsset.findUnique({ where: { id: assetId } });
-    if (!asset || asset.status !== FileAssetStatus.active) {
+    if (!asset) {
       throw new NotFoundException('文件资产不存在');
     }
     return asset;

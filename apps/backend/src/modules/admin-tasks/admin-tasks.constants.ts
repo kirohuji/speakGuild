@@ -11,3 +11,5 @@ export const SCENE_TOPIC_BATCH_GENERATE_JOB = 'scene-topic-batch-generate';
 export const SCRIPT_VIDEO_QUEUE = 'script-video-render';
 export const SCRIPT_VIDEO_RENDER_JOB = 'script-video-render';
 export const NARRATIVE_VIDEO_RENDER_JOB = 'narrative-video-render';
+export const FILE_ASSET_INSPECT_JOB = 'file-asset-inspect';
+export const FILE_ASSET_CLEANUP_JOB = 'file-asset-cleanup';

@@ -5,7 +5,6 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import {
-  FileAssetStatus,
   Prisma,
   ScriptPracticeMode,
   ScriptWorkKind,
@@ -267,9 +266,8 @@ export class ScriptCommunityService {
     if (!assetId) return
     const reference = await this.prisma.fileReference.findFirst({
       where: {
-        userId,
+        createdById: userId,
         assetId,
-        asset: { status: FileAssetStatus.active },
       },
       select: { id: true },
     })
@@ -323,16 +321,15 @@ export class ScriptCommunityService {
         // local development. Use the compound unique key explicitly instead.
         await Promise.all(recordingAssetIds.map((assetId) => tx.fileReference.upsert({
           where: {
-            assetId_bizType_bizId_userId: {
+            assetId_bizType_bizId: {
               assetId,
-              userId,
               bizType: 'script_practice_record',
               bizId: record.id,
             },
           },
           create: {
             assetId,
-            userId,
+            createdById: userId,
             bizType: 'script_practice_record',
             bizId: record.id,
           },
@@ -341,7 +338,7 @@ export class ScriptCommunityService {
         if (dto.recordingBatchId) {
           await tx.fileReference.deleteMany({
             where: {
-              userId,
+              createdById: userId,
               bizType: 'script_practice_upload',
               bizId: dto.recordingBatchId,
               assetId: { in: recordingAssetIds },

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { Upload, X, ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
-import { getFileAssetContentUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
+import { createFileAssetReference, resolveFileAssetUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
 import type { FileAssetGroup } from '@/features/file-assets/api'
 
 interface ImageUploadFieldProps {
@@ -11,7 +11,7 @@ interface ImageUploadFieldProps {
   /** URL 变更回调（用于直接输入 URL） */
   onChange?: (url: string) => void
   /** 上传完成回调（返回 COS URL 和 assetId） */
-  onUploaded?: (cosUrl: string, assetId: string) => void
+  onUploaded?: (assetRef: string, assetId: string) => void
   /** 占位文本 */
   placeholder?: string
   /** 预览尺寸 */
@@ -56,7 +56,7 @@ export function ImageUploadField({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    setPreviewUrl(value || '')
+    setPreviewUrl(resolveFileAssetUrl(value))
   }, [value])
 
   const handleUpload = async (file: File) => {
@@ -68,13 +68,13 @@ export function ImageUploadField({
     setUploading(true)
     try {
       const asset = await uploadFileToCosAndComplete({ file, group })
-      const stableUrl = getFileAssetContentUrl(asset.id)
-      const cosUrl = file.type.startsWith('video/')
-        ? `${stableUrl}#media=video`
-        : stableUrl
-      setPreviewUrl(cosUrl)
-      onUploaded?.(cosUrl, asset.id)
-      onChange?.(cosUrl)
+      const assetRef = createFileAssetReference(
+        asset.id,
+        file.type.startsWith('video/') ? '#media=video' : '',
+      )
+      setPreviewUrl(resolveFileAssetUrl(assetRef))
+      onUploaded?.(assetRef, asset.id)
+      onChange?.(assetRef)
     } catch (err) {
       console.warn('Upload failed, falling back to URL input:', err)
       // Don't clear — user can still enter URL manually

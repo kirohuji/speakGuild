@@ -29,6 +29,7 @@ export class AdminContentExperienceController {
   private async requireAdmin(req: Request) {
     const session = await requireAuthSession(req);
     if ((session.user as any)?.role !== 'admin') throw new ForbiddenException('需要管理员权限');
+    return session;
   }
 
   @Get('groups')
@@ -39,20 +40,20 @@ export class AdminContentExperienceController {
 
   @Post('groups')
   async createGroup(@Req() req: Request, @Body() dto: CreatePackageGroupDto) {
-    await this.requireAdmin(req);
-    return this.experiences.createGroup(dto);
+    const session = await this.requireAdmin(req);
+    return this.experiences.createGroup(session.user.id, dto);
   }
 
   @Patch('groups/:id')
   async updateGroup(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdatePackageGroupDto) {
-    await this.requireAdmin(req);
-    return this.experiences.updateGroup(id, dto);
+    const session = await this.requireAdmin(req);
+    return this.experiences.updateGroup(session.user.id, id, dto);
   }
 
   @Delete('groups/:id')
   async deleteGroup(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
-    return this.experiences.deleteGroup(id);
+    const session = await this.requireAdmin(req);
+    return this.experiences.deleteGroup(session.user.id, id);
   }
 
   @Get('scenes/:sceneId')

@@ -88,7 +88,6 @@ model User {
   accounts               Account[]
   dailyActivities        DailyActivity[]
   userPreference         UserPreference?
-  fileReferences         FileReference[]
   notificationReads      NotificationRead[]
   notificationTargets    NotificationTarget[]
   sentNotifications      Notification[]
@@ -427,11 +426,6 @@ enum FileAssetGroup {
   epub
 }
 
-enum FileAssetStatus {
-  active
-  deleted
-}
-
 model FileAsset {
   id               String            @id @default(cuid())
   sha256           String            @unique
@@ -442,9 +436,6 @@ model FileAsset {
   size             Int
   mimeType         String
   filename         String
-  status           FileAssetStatus   @default(active)
-  refCount         Int               @default(0)
-  lastReferencedAt DateTime?
   createdAt        DateTime          @default(now())
   references       FileReference[]
   mobileBundles    MobileBundle[]
@@ -457,24 +448,42 @@ model FileAsset {
   trainingTopicMedia      TrainingTopic[]          @relation("TrainingTopicMedia")
   novelEpubFiles          NovelPackage[]          @relation("NovelEpubAsset")
 
-  @@index([group, status, createdAt(sort: Desc)])
-  @@index([status, refCount, createdAt])
+  @@index([group, createdAt(sort: Desc)])
+  @@index([createdAt])
   @@map("file_asset")
 }
 
 model FileReference {
   id        String    @id @default(cuid())
-  asset     FileAsset @relation(fields: [assetId], references: [id])
+  asset     FileAsset @relation(fields: [assetId], references: [id], onDelete: Restrict)
   assetId   String
   bizType   String
   bizId     String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
+  createdById String?
   createdAt DateTime  @default(now())
 
-  @@unique([assetId, bizType, bizId, userId])
-  @@index([bizType, bizId, userId])
+  @@unique([assetId, bizType, bizId])
+  @@index([bizType, bizId])
   @@map("file_reference")
+}
+
+/// Durable outbox for loss-safe physical deletion. The FileAsset row is
+/// removed first; COS deletion is retried from this snapshot afterwards.
+model FileAssetPurge {
+  id          String   @id @default(cuid())
+  assetId     String?
+  bucket      String
+  region      String
+  cosKey      String   @unique
+  sha256      String
+  status      String   @default("pending")
+  attempts    Int      @default(0)
+  lastError   String?
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+
+  @@index([status, createdAt])
+  @@map("file_asset_purge")
 }
 
 // ---- 消息通知域 ----
@@ -923,7 +932,7 @@ model LearningPackage {
   title            String
   type             LearningPackageType   @default(daily)
   status           LearningPackageStatus @default(draft)
-  fileAsset        FileAsset?            @relation(fields: [fileAssetId], references: [id])
+  fileAsset        FileAsset?            @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
   fileAssetId      String?
   zipChecksum      String?
   zipSize          Int?
@@ -945,7 +954,7 @@ model DeltaPackage {
   packId        String
   fromVersion   Int
   toVersion     Int
-  fileAsset     FileAsset       @relation(fields: [fileAssetId], references: [id])
+  fileAsset     FileAsset       @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
   fileAssetId   String
   deltaChecksum String
   deltaSize     Int
@@ -1091,7 +1100,7 @@ model TrainingTopic {
   difficulty                 String                         @default("L2")
   metadata                   Json?
   contentConfig              Json?
-  mediaAsset                 FileAsset?                     @relation("TrainingTopicMedia", fields: [mediaAssetId], references: [id], onDelete: SetNull)
+  mediaAsset                 FileAsset?                     @relation("TrainingTopicMedia", fields: [mediaAssetId], references: [id], onDelete: Restrict)
   mediaAssetId               String?
   transcript                 Json?
   activeChunks               TrainingTopicChunk[]
@@ -1485,9 +1494,9 @@ model ScriptPracticeRecord {
   completedObjectiveCount Int                  @default(0)
   score                   Int?
   resultSnapshot          Json?
-  audioAsset              FileAsset?           @relation("ScriptRecordAudio", fields: [audioAssetId], references: [id])
+  audioAsset              FileAsset?           @relation("ScriptRecordAudio", fields: [audioAssetId], references: [id], onDelete: Restrict)
   audioAssetId            String?
-  videoAsset              FileAsset?           @relation("ScriptRecordVideo", fields: [videoAssetId], references: [id])
+  videoAsset              FileAsset?           @relation("ScriptRecordVideo", fields: [videoAssetId], references: [id], onDelete: Restrict)
   videoAssetId            String?
   completedAt             DateTime?
   createdAt               DateTime             @default(now())
@@ -1515,9 +1524,9 @@ model ScriptWork {
   durationSec    Int              @default(0)
   renderPayload  Json?
   renderError    String?          @db.Text
-  videoAsset     FileAsset?       @relation("ScriptWorkVideo", fields: [videoAssetId], references: [id])
+  videoAsset     FileAsset?       @relation("ScriptWorkVideo", fields: [videoAssetId], references: [id], onDelete: Restrict)
   videoAssetId   String?
-  coverAsset     FileAsset?       @relation("ScriptWorkCover", fields: [coverAssetId], references: [id])
+  coverAsset     FileAsset?       @relation("ScriptWorkCover", fields: [coverAssetId], references: [id], onDelete: Restrict)
   coverAssetId   String?
   publishedAt    DateTime?
   hiddenAt       DateTime?
@@ -2007,7 +2016,7 @@ model MobileBundle {
   notifyPolicy      String    @default("auto") // auto | silent | force
   allowMajorUpgrade Boolean   @default(false)
   assetId           String // 关联 FileAsset（COS 上的 zip 文件）
-  asset             FileAsset @relation(fields: [assetId], references: [id])
+  asset             FileAsset @relation(fields: [assetId], references: [id], onDelete: Restrict)
   checksum          String // SHA256 校验值
   minNativeVersion  String? // 最低原生版本要求
   rolloutPercent    Int       @default(100) // 灰度比例 0-100

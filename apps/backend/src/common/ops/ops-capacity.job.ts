@@ -37,7 +37,6 @@ export class OpsCapacityJob {
 
     if (fileAssetMaxBytes > 0) {
       const result = await this.prisma.fileAsset.aggregate({
-        where: { status: 'active' },
         _sum: { size: true },
       });
       const fileAssetBytes = result._sum.size ?? 0;

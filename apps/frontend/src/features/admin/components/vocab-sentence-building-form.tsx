@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { synthesizeAdminAudio, playAudioUrl } from '@/lib/admin-tts-helpers'
-import { deleteFileReference, getFileAssetLongLivedUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
+import { createFileAssetReference, uploadFileToCosAndComplete } from '@/features/file-assets/api'
 import { WarmupItemPreview } from './warmup-item-preview'
 
 export interface VocabSentenceBuildingItem {
@@ -143,10 +143,9 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
     setImageUploading(key)
     try {
       const asset = await uploadFileToCosAndComplete({ file, group: 'library' })
-      const resolved = await getFileAssetLongLivedUrl(asset.id)
       const next = [...local.patterns]
       const items = [...next[pIdx].items]
-      items[iIdx] = { ...items[iIdx], imageUrl: resolved.url }
+      items[iIdx] = { ...items[iIdx], imageUrl: createFileAssetReference(asset.id) }
       next[pIdx] = { ...next[pIdx], items }
       commit({ patterns: next })
     } catch (err: any) {
@@ -185,11 +184,7 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
     }
   }
 
-  const removeItemAudio = async (pIdx: number, iIdx: number) => {
-    const item = local.patterns[pIdx]?.items[iIdx]
-    if (item?.audioAssetId) {
-      await deleteFileReference(item.audioAssetId, 'warmup_vocab_build', `${local.id}-${pIdx}-${iIdx}`).catch(() => undefined)
-    }
+  const removeItemAudio = (pIdx: number, iIdx: number) => {
     const next = [...local.patterns]
     const items = [...next[pIdx].items]
     items[iIdx] = { ...items[iIdx], audioUrl: undefined, audioAssetId: undefined }

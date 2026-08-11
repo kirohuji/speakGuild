@@ -74,18 +74,37 @@ export class ContentExperienceService {
     });
   }
 
-  createGroup(dto: CreatePackageGroupDto) {
-    return this.prisma.packageGroup.create({ data: dto });
+  async createGroup(userId: string, dto: CreatePackageGroupDto) {
+    const data = await this.fileAssets.normalizePersistentAssetUrls(dto);
+    return this.prisma.$transaction(async (tx) => {
+      const group = await tx.packageGroup.create({ data });
+      await this.fileAssets.syncPersistentAssetReferences(
+        tx, userId, 'package_group_asset', group.id, group,
+      );
+      return group;
+    });
   }
 
-  updateGroup(id: string, dto: UpdatePackageGroupDto) {
-    return this.prisma.packageGroup.update({ where: { id }, data: dto });
+  async updateGroup(userId: string, id: string, dto: UpdatePackageGroupDto) {
+    const data = await this.fileAssets.normalizePersistentAssetUrls(dto);
+    return this.prisma.$transaction(async (tx) => {
+      const group = await tx.packageGroup.update({ where: { id }, data });
+      await this.fileAssets.syncPersistentAssetReferences(
+        tx, userId, 'package_group_asset', id, group,
+      );
+      return group;
+    });
   }
 
-  async deleteGroup(id: string) {
+  async deleteGroup(userId: string, id: string) {
     const group = await this.prisma.packageGroup.findUnique({ where: { id }, select: { id: true } });
     if (!group) throw new NotFoundException('内容系列不存在');
-    return this.prisma.packageGroup.delete({ where: { id } });
+    return this.prisma.$transaction(async (tx) => {
+      await this.fileAssets.syncPersistentAssetReferences(
+        tx, userId, 'package_group_asset', id, null,
+      );
+      return tx.packageGroup.delete({ where: { id } });
+    });
   }
 
   async generateWritingTopicDraft(sceneId: string, dto: GenerateWritingTopicDto) {

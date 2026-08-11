@@ -952,9 +952,7 @@ export interface FileAssetItem {
   size: number
   mimeType: string
   filename: string
-  refCount: number
-  status: string
-  lastReferencedAt: string | null
+  referenceCount: number
   createdAt: string
   previewUrl: string | null
 }
@@ -964,9 +962,8 @@ export interface FileAssetDetail extends FileAssetItem {
     id: string
     bizType: string
     bizId: string
-    userId: string
+    createdById: string | null
     createdAt: string
-    user: { id: string; name: string; username: string } | null
   }[]
 }
 
@@ -996,12 +993,16 @@ export function getFileAssetDetail(id: string): Promise<FileAssetDetail> {
   return get(`/admin/file-assets/${id}`)
 }
 
-export function deleteFileAsset(id: string, force?: boolean): Promise<{ success: boolean; id: string }> {
-  return _delete(`/admin/file-assets/${id}${force ? '?force=true' : ''}`)
-}
-
 export function getFileAssetGroupStats(): Promise<FileAssetGroupStat[]> {
   return get('/admin/file-assets/groups')
+}
+
+export function inspectUnusedFileAssets(minAgeDays = 7): Promise<{ id: string }> {
+  return post('/admin/file-assets/maintenance/inspect', { minAgeDays })
+}
+
+export function cleanupInspectedFileAssets(inspectionTaskId: string): Promise<{ id: string }> {
+  return post('/admin/file-assets/maintenance/cleanup', { inspectionTaskId })
 }
 
 // ═══ Story Asset Registry (assetMap) ═══

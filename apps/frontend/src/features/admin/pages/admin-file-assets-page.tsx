@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Search, Trash2, Copy, Check, Loader2,
+  Search, Copy, Check, Loader2, ShieldCheck,
   Image, FileAudio, FileVideo, File, HardDrive,
   LayoutGrid, Rows3,
 } from 'lucide-react'
@@ -10,16 +10,18 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectItem } from '@/components/ui/select'
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/cn'
 import {
-  listFileAssets, getFileAssetDetail, deleteFileAsset, getFileAssetGroupStats,
+  listFileAssets, getFileAssetDetail, getFileAssetGroupStats,
+  inspectUnusedFileAssets, cleanupInspectedFileAssets,
   type FileAssetItem, type FileAssetDetail, type FileAssetGroupStat,
 } from '../api-content-admin'
 import { AdminPagination } from '../components/admin-pagination'
+import { adminTasksApi, type AdminTaskDetail } from '../api-admin-tasks'
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50]
 
@@ -82,9 +84,8 @@ export function AdminFileAssetsPage() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailAsset, setDetailAsset] = useState<FileAssetDetail | null>(null)
 
-  // Delete confirm
-  const [deleteTarget, setDeleteTarget] = useState<FileAssetItem | null>(null)
-  const [deleting, setDeleting] = useState(false)
+  const [maintenanceTask, setMaintenanceTask] = useState<AdminTaskDetail | null>(null)
+  const [maintenanceBusy, setMaintenanceBusy] = useState(false)
 
   // Copy feedback
   const [copiedId, setCopiedId] = useState<string | null>(null)
@@ -128,18 +129,49 @@ export function AdminFileAssetsPage() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return
-    setDeleting(true)
+  const waitForTask = async (taskId: string) => {
+    for (let attempt = 0; attempt < 250; attempt += 1) {
+      const task = await adminTasksApi.get(taskId)
+      setMaintenanceTask(task)
+      if (['completed', 'failed', 'canceled'].includes(task.status)) return task
+      await new Promise((resolve) => setTimeout(resolve, 1200))
+    }
+    throw new Error('任务仍在后台执行，请前往任务中心查看')
+  }
+
+  const handleInspect = async () => {
+    setMaintenanceBusy(true)
     try {
-      await deleteFileAsset(deleteTarget.id)
-      toast.success(`已删除 "${deleteTarget.filename}"`)
-      setDeleteTarget(null)
-      load()
+      const task = await inspectUnusedFileAssets(7)
+      const completed = await waitForTask(task.id)
+      if (completed.status === 'completed') {
+        toast.success(`检查完成：发现 ${completed.summary?.candidateCount ?? 0} 个未使用资源`)
+      } else {
+        toast.error(completed.errorMessage || '资源检查失败')
+      }
     } catch (err: any) {
-      toast.error(err?.message || '删除失败')
+      toast.error(err?.message || '资源检查失败')
     } finally {
-      setDeleting(false)
+      setMaintenanceBusy(false)
+    }
+  }
+
+  const handleCleanup = async () => {
+    if (!maintenanceTask || maintenanceTask.type !== 'file-asset-inspect') return
+    setMaintenanceBusy(true)
+    try {
+      const task = await cleanupInspectedFileAssets(maintenanceTask.id)
+      const completed = await waitForTask(task.id)
+      if (completed.status === 'completed') {
+        toast.success(`清理完成：删除 ${completed.summary?.purged ?? 0} 个资源`)
+        await load()
+      } else {
+        toast.error(completed.errorMessage || '资源清理失败')
+      }
+    } catch (err: any) {
+      toast.error(err?.message || '资源清理失败')
+    } finally {
+      setMaintenanceBusy(false)
     }
   }
 
@@ -151,11 +183,6 @@ export function AdminFileAssetsPage() {
     }).catch(() => toast.error('复制失败'))
   }
 
-  const handleDeleteClick = (item: FileAssetItem, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setDeleteTarget(item)
-  }
-
   const totalPages = data?.totalPages ?? 1
 
   return (
@@ -165,8 +192,21 @@ export function AdminFileAssetsPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">资源库管理</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            统一管理所有上传到 COS 的文件资产，支持按分组筛选、搜索、预览和删除
+            统一管理所有上传到 COS 的文件资产；清理必须先检查，再由任务中心安全执行
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleInspect} disabled={maintenanceBusy}>
+            {maintenanceBusy ? <Loader2 className="mr-2 size-4 animate-spin" /> : <ShieldCheck className="mr-2 size-4" />}
+            检查未使用资源
+          </Button>
+          {maintenanceTask?.type === 'file-asset-inspect'
+            && maintenanceTask.status === 'completed'
+            && Number(maintenanceTask.summary?.candidateCount ?? 0) > 0 && (
+            <Button variant="destructive" onClick={handleCleanup} disabled={maintenanceBusy}>
+              清理 {maintenanceTask.summary.candidateCount} 项（{formatSize(maintenanceTask.summary.candidateBytes ?? 0)}）
+            </Button>
+          )}
         </div>
       </div>
 
@@ -251,7 +291,6 @@ export function AdminFileAssetsPage() {
                 <th className="px-4 py-3 text-right font-medium">大小</th>
                 <th className="px-4 py-3 text-center font-medium">引用</th>
                 <th className="px-4 py-3 text-right font-medium">上传时间</th>
-                <th className="px-4 py-3 text-right font-medium">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -298,9 +337,9 @@ export function AdminFileAssetsPage() {
                     <td className="px-4 py-3 text-center tabular-nums">
                       <span className={cn(
                         'font-medium',
-                        item.refCount > 0 ? 'text-emerald-600' : 'text-muted-foreground',
+                        item.referenceCount > 0 ? 'text-emerald-600' : 'text-muted-foreground',
                       )}>
-                        {item.refCount}
+                        {item.referenceCount}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right text-xs text-muted-foreground whitespace-nowrap">
@@ -308,35 +347,12 @@ export function AdminFileAssetsPage() {
                         month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
                       })}
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {item.refCount > 0 ? (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled
-                            title={`有 ${item.refCount} 个引用，无法删除`}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => handleDeleteClick(item, e)}
-                          >
-                            <Trash2 className="size-4 text-destructive" />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
                   </tr>
                 )
               })}
               {data?.items.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                    <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                     暂无文件资产
                   </td>
                 </tr>
@@ -406,8 +422,8 @@ export function AdminFileAssetsPage() {
                       <span>·</span>
                       <span>{formatSize(item.size)}</span>
                       <span>·</span>
-                      <span className={item.refCount > 0 ? 'text-emerald-600' : ''}>
-                        {item.refCount} 引用
+                      <span className={item.referenceCount > 0 ? 'text-emerald-600' : ''}>
+                        {item.referenceCount} 引用
                       </span>
                     </div>
 
@@ -423,29 +439,6 @@ export function AdminFileAssetsPage() {
                           month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
                         })}
                       </span>
-                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {item.refCount > 0 ? (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-7"
-                            disabled
-                            title={`有 ${item.refCount} 个引用，无法删除`}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-7"
-                            onClick={(e) => handleDeleteClick(item, e)}
-                          >
-                            <Trash2 className="size-3.5 text-destructive" />
-                          </Button>
-                        )}
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -549,23 +542,14 @@ export function AdminFileAssetsPage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">引用数</span>
-                  <p className={detailAsset.refCount > 0 ? 'text-emerald-600 font-medium' : 'text-muted-foreground'}>
-                    {detailAsset.refCount}
+                  <p className={detailAsset.referenceCount > 0 ? 'text-emerald-600 font-medium' : 'text-muted-foreground'}>
+                    {detailAsset.referenceCount}
                   </p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">上传时间</span>
                   <p className="text-xs">
                     {new Date(detailAsset.createdAt).toLocaleString('zh-CN')}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">最后引用</span>
-                  <p className="text-xs">
-                    {detailAsset.lastReferencedAt
-                      ? new Date(detailAsset.lastReferencedAt).toLocaleString('zh-CN')
-                      : '—'
-                    }
                   </p>
                 </div>
               </div>
@@ -596,7 +580,7 @@ export function AdminFileAssetsPage() {
                                 {ref.bizId}
                               </td>
                               <td className="px-3 py-2">
-                                {ref.user?.name || ref.user?.username || ref.userId}
+                                {ref.createdById || 'system'}
                               </td>
                               <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
                                 {new Date(ref.createdAt).toLocaleString('zh-CN', {
@@ -616,25 +600,6 @@ export function AdminFileAssetsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirm Dialog */}
-      <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>确认删除</DialogTitle>
-            <DialogDescription>
-              确定要删除文件 <strong>"{deleteTarget?.filename}"</strong> 吗？
-              此操作将标记该资产为已删除状态，COS 上的文件将在后续清理任务中处理。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>取消</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting && <Loader2 className="mr-1.5 size-4 animate-spin" />}
-              {deleting ? '删除中...' : '删除'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

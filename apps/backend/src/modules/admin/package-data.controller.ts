@@ -645,7 +645,6 @@ export class PackageDataController {
                 // 如果记录已存在（by sha256），确保 cosKey 等字段同步
                 cosKey: rec.cosKey,
                 group: rec.group as FileAssetGroup,
-                status: 'active',
               },
             });
             audioIdMap.set(rec.id, created.id);

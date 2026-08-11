@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { synthesizeAdminAudio, playAudioUrl } from '@/lib/admin-tts-helpers'
-import { deleteFileReference } from '@/features/file-assets/api'
 import { WarmupItemPreview } from './warmup-item-preview'
 
 export interface SentenceDecompositionItem {
@@ -117,11 +116,7 @@ export function SentenceDecompositionForm({ value, onChange, onDelete, chunks = 
     }
   }
 
-  const removeLevelAudio = async (idx: number) => {
-    const level = local.levels[idx]
-    if (level?.audioAssetId) {
-      await deleteFileReference(level.audioAssetId, 'warmup_sent_decomp', `${local.id}-${idx}`).catch(() => undefined)
-    }
+  const removeLevelAudio = (idx: number) => {
     const next = [...local.levels]
     next[idx] = { ...next[idx], audioUrl: undefined, audioAssetId: undefined }
     commit({ levels: next })

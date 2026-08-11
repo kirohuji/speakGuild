@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { synthesizeAdminAudio, playAudioUrl } from '@/lib/admin-tts-helpers'
-import { deleteFileReference, getFileAssetLongLivedUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
+import { createFileAssetReference, uploadFileToCosAndComplete } from '@/features/file-assets/api'
 import { WarmupItemPreview } from './warmup-item-preview'
 
 export interface ChunkSubstitutionItem {
@@ -120,9 +120,8 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
     setImageUploading(key)
     try {
       const asset = await uploadFileToCosAndComplete({ file, group: 'library' })
-      const resolved = await getFileAssetLongLivedUrl(asset.id)
       const next = [...local.items]
-      next[idx] = { ...next[idx], imageUrl: resolved.url }
+      next[idx] = { ...next[idx], imageUrl: createFileAssetReference(asset.id) }
       commit({ items: next })
     } catch (err: any) {
       toast.error(err?.message || '图片上传失败')
@@ -156,11 +155,7 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
     }
   }
 
-  const removeItemAudio = async (idx: number) => {
-    const item = local.items[idx]
-    if (item.audioAssetId) {
-      await deleteFileReference(item.audioAssetId, 'warmup_chunk_sub', `${local.id}-${idx}`).catch(() => undefined)
-    }
+  const removeItemAudio = (idx: number) => {
     const next = [...local.items]
     next[idx] = { ...next[idx], audioUrl: undefined, audioAssetId: undefined }
     commit({ items: next })

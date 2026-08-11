@@ -608,9 +608,9 @@ export const learningPackService = {
 
       for (let i = 0; i < totalAssets; i++) {
         const asset = manifest.assets![i]
-        if (!asset.path) continue
+        if (!asset.path) throw new Error(`Pack asset is missing path at index ${i}`)
         const entry = entries.get(normalizeZipPath(asset.path))
-        if (!entry) continue
+        if (!entry) throw new Error(`Pack asset file is missing: ${asset.path}`)
         assetTasks.push({ asset, entry, index: i })
       }
       const progressForAssetRead = (done: number, label: string, currentItem?: string) => {
@@ -662,6 +662,11 @@ export const learningPackService = {
         )
         assetResults.push(...batchResults)
         progressForAssetRead(assetResults.length, '校验资源文件', batch[batch.length - 1]?.asset?.path ?? batch[batch.length - 1]?.asset?.url)
+      }
+
+      const failedAssets = assetResults.filter((result): result is Extract<AssetResult, { ok: false }> => !result.ok)
+      if (failedAssets.length > 0) {
+        throw new Error(`Pack asset validation failed: ${failedAssets.map((item) => `${item.asset.path}: ${item.error}`).join('; ')}`)
       }
 
       // ── 阶段 B：批量写入文件系统 + SQLite ──
@@ -723,18 +728,18 @@ export const learningPackService = {
       // 并行写文件 + 批量写 SQLite 引用
       let savedFiles = 0
       progressForAssetWrite(0, filesToSave.length, filesToSave[0]?.asset?.path ?? filesToSave[0]?.asset?.url)
-      await Promise.all([
-        ...filesToSave.map(async ({ asset, sha256, buffer }) => {
+      await Promise.all(
+        filesToSave.map(async ({ asset, sha256, buffer }) => {
           progressForAssetWrite(savedFiles, filesToSave.length, asset.path ?? asset.url)
           const saved = await assetCacheService.saveFromBufferWithSha256({ ...asset, sha256 }, buffer, sha256)
           savedFiles++
           progressForAssetWrite(savedFiles, filesToSave.length, asset.path ?? asset.url)
           return saved
         }),
-        assetRefsToWrite.length > 0
-          ? localDb.putMany('asset_refs', assetRefsToWrite)
-          : Promise.resolve(),
-      ])
+      )
+      if (assetRefsToWrite.length > 0) {
+        await localDb.putMany('asset_refs', assetRefsToWrite)
+      }
 
       // Several semantic references (thumbnail, sprite, Ink alias) can point
       // at one ZIP entry/SHA. The file is written once above; now persist every
@@ -802,6 +807,7 @@ export const learningPackService = {
       const checksums = entries.has('checksums.json')
         ? await readJsonEntry<Record<string, string>>(entries, 'checksums.json')
         : (deltaManifest.targetFiles ?? targetManifest.files ?? {})
+      const obsoleteAssetRefs: any[] = []
 
       // 1. 应用 content 文件，重建本地详情和索引
       const hasContentChanges = [...(deltaManifest.added ?? []), ...(deltaManifest.modified ?? []), ...(deltaManifest.removed ?? [])]
@@ -821,7 +827,7 @@ export const learningPackService = {
       for (const path of deltaManifest.added ?? []) {
         if (!isAssetPath(path)) continue
         const entry = entries.get(normalizeZipPath(path))
-        if (!entry) continue
+        if (!entry) throw new Error(`Delta asset file is missing: ${path}`)
         const buffer = await readEntryBuffer(entry)
         await verifyEntry(normalizeZipPath(path), buffer, checksums)
         const sha256 = await digest(buffer)
@@ -854,22 +860,16 @@ export const learningPackService = {
       for (const path of deltaManifest.modified ?? []) {
         if (!isAssetPath(path)) continue
         const entry = entries.get(normalizeZipPath(path))
-        if (!entry) continue
+        if (!entry) throw new Error(`Delta asset file is missing: ${path}`)
         const buffer = await readEntryBuffer(entry)
         await verifyEntry(normalizeZipPath(path), buffer, checksums)
         const newSha256 = await digest(buffer)
 
-        // 删除旧引用（同一 packId + logicalPath 的旧记录，走 pack_id 索引）
+        // Keep the previous file until the new resource and pack version are
+        // both durable. Interrupted updates may leak cache, but never break the
+        // currently installed generation.
         const packRefs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
         const oldRefs = packRefs.filter((r: any) => r.logicalPath === path)
-        for (const oldRef of oldRefs) {
-          await localDb.delete('asset_refs', oldRef.id)
-          // 检查是否还有其他包引用旧 SHA256
-          const remaining = await localDb.findByIndex<any>('asset_refs', 'sha256', oldRef.sha256)
-          if (remaining.length === 0) {
-            await assetCacheService.remove(oldRef.sha256)
-          }
-        }
 
         const existingRefs = await localDb.findByIndex<any>('asset_refs', 'sha256', newSha256)
         if (existingRefs.length === 0) {
@@ -885,6 +885,7 @@ export const learningPackService = {
           updatedAt: new Date().toISOString(),
           data: '{}',
         })
+        obsoleteAssetRefs.push(...oldRefs.filter((ref: any) => ref.sha256 !== newSha256))
       }
       logger.info(`  modified: ${deltaManifest.modified?.length ?? 0}`)
 
@@ -893,13 +894,7 @@ export const learningPackService = {
         if (!isAssetPath(path)) continue
         const packRefs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
         const oldRefs = packRefs.filter((r: any) => r.logicalPath === path)
-        for (const oldRef of oldRefs) {
-          await localDb.delete('asset_refs', oldRef.id)
-          const remaining = await localDb.findByIndex<any>('asset_refs', 'sha256', oldRef.sha256)
-          if (remaining.length === 0) {
-            await assetCacheService.remove(oldRef.sha256)
-          }
-        }
+        obsoleteAssetRefs.push(...oldRefs)
       }
       logger.info(`  removed: ${deltaManifest.removed?.length ?? 0}`)
 
@@ -915,6 +910,16 @@ export const learningPackService = {
           installedAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         })
+      }
+
+      // Garbage collection is intentionally last. A failure here only leaves
+      // extra cache files and can be retried; it cannot corrupt the new pack.
+      for (const oldRef of obsoleteAssetRefs) {
+        await localDb.delete('asset_refs', oldRef.id)
+        const remaining = await localDb.findByIndex<any>('asset_refs', 'sha256', oldRef.sha256)
+        if (remaining.length === 0) {
+          await assetCacheService.remove(oldRef.sha256)
+        }
       }
 
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(1)

@@ -1,19 +1,17 @@
-import {
-  Controller, Get, Delete,
-  Param, Query, Req, ForbiddenException, NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, ForbiddenException, NotFoundException } from '@nestjs/common';
 import type { Request } from 'express';
-import { FileAssetGroup, FileAssetStatus } from '@prisma/client';
+import { FileAssetGroup } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { FileAssetsService } from '../file-assets/file-assets.service';
 import { requireAuthSession } from '../auth/session.util';
+import { AdminTasksService } from '../admin-tasks/admin-tasks.service';
 
 @Controller('admin/file-assets')
 export class AdminFileAssetsController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly fileAssetsService: FileAssetsService,
+    private readonly adminTasks: AdminTasksService,
   ) {}
 
   private async requireAdmin(req: Request) {
@@ -33,7 +31,7 @@ export class AdminFileAssetsController {
     const counts = await Promise.all(
       groups.map(async (group) => {
         const count = await this.prisma.fileAsset.count({
-          where: { group, status: FileAssetStatus.active },
+          where: { group },
         });
         return { group, count };
       }),
@@ -57,7 +55,7 @@ export class AdminFileAssetsController {
     const ps = Math.min(100, Math.max(1, parseInt(pageSize || '20')));
     const skip = (p - 1) * ps;
 
-    const where: any = { status: FileAssetStatus.active };
+    const where: any = {};
 
     if (group && Object.values(FileAssetGroup).includes(group as FileAssetGroup)) {
       where.group = group;
@@ -77,6 +75,12 @@ export class AdminFileAssetsController {
         orderBy: { createdAt: 'desc' },
         skip,
         take: ps,
+        include: { _count: { select: {
+          references: true, mobileBundles: true, learningPackages: true, deltaPackages: true,
+          scriptRecordAudioAssets: true, scriptRecordVideoAssets: true,
+          scriptWorkVideoAssets: true, scriptWorkCoverAssets: true,
+          trainingTopicMedia: true, novelEpubFiles: true,
+        } } },
       }),
       this.prisma.fileAsset.count({ where }),
     ]);
@@ -101,9 +105,7 @@ export class AdminFileAssetsController {
           size: asset.size,
           mimeType: asset.mimeType,
           filename: asset.filename,
-          refCount: asset.refCount,
-          status: asset.status,
-          lastReferencedAt: asset.lastReferencedAt,
+          referenceCount: Object.values(asset._count).reduce((sum, count) => sum + count, 0),
           createdAt: asset.createdAt,
           previewUrl,
         };
@@ -124,7 +126,15 @@ export class AdminFileAssetsController {
   async getFileAsset(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
 
-    const asset = await this.prisma.fileAsset.findUnique({ where: { id } });
+    const asset = await this.prisma.fileAsset.findUnique({
+      where: { id },
+      include: { _count: { select: {
+        references: true, mobileBundles: true, learningPackages: true, deltaPackages: true,
+        scriptRecordAudioAssets: true, scriptRecordVideoAssets: true,
+        scriptWorkVideoAssets: true, scriptWorkCoverAssets: true,
+        trainingTopicMedia: true, novelEpubFiles: true,
+      } } },
+    });
     if (!asset) throw new NotFoundException('文件资产不存在');
 
     let previewUrl: string | null = null;
@@ -144,44 +154,29 @@ export class AdminFileAssetsController {
         id: true,
         bizType: true,
         bizId: true,
-        userId: true,
+        createdById: true,
         createdAt: true,
-        user: { select: { id: true, name: true, username: true } },
       },
     });
 
-    return { ...asset, previewUrl, references };
+    const { _count, ...item } = asset;
+    return {
+      ...item,
+      referenceCount: Object.values(_count).reduce((sum, count) => sum + count, 0),
+      previewUrl,
+      references,
+    };
   }
 
-  /** 删除资产（refCount > 0 时拒绝，传 force=true 可强制删除） */
-  @Delete(':id')
-  async deleteFileAsset(
-    @Req() req: Request,
-    @Param('id') id: string,
-    @Query('force') force?: string,
-  ) {
-    await this.requireAdmin(req);
+  @Post('maintenance/inspect')
+  async inspectUnused(@Req() req: Request, @Body() body: { minAgeDays?: number }) {
+    const session = await this.requireAdmin(req);
+    return this.adminTasks.enqueueFileAssetInspection(session.user.id, Number(body?.minAgeDays ?? 7));
+  }
 
-    const asset = await this.prisma.fileAsset.findUnique({ where: { id } });
-    if (!asset) throw new NotFoundException('文件资产不存在');
-
-    if (asset.refCount > 0 && force !== 'true') {
-      throw new BadRequestException(
-        `该文件有 ${asset.refCount} 个引用，无法删除。如需强制删除请传 force=true`,
-      );
-    }
-
-    // 清理引用记录
-    if (asset.refCount > 0) {
-      await this.prisma.fileReference.deleteMany({ where: { assetId: id } });
-    }
-
-    // 标记为已删除（软删除，COS 对象保留由定时清理任务处理）
-    await this.prisma.fileAsset.update({
-      where: { id },
-      data: { status: FileAssetStatus.deleted },
-    });
-
-    return { success: true, id };
+  @Post('maintenance/cleanup')
+  async cleanupUnused(@Req() req: Request, @Body() body?: { inspectionTaskId?: string }) {
+    const session = await this.requireAdmin(req);
+    return this.adminTasks.enqueueFileAssetCleanup(session.user.id, body?.inspectionTaskId ?? '');
   }
 }

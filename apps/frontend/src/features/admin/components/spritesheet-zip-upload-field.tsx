@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  getFileAssetLongLivedUrl,
+  createFileAssetReference,
   uploadFileToCosAndComplete,
 } from "@/features/file-assets/api";
 
@@ -169,7 +169,7 @@ export function SpritesheetZipUploadField({
         file: new File([imageBlob], imageName, { type: imageBlob.type }),
         group: "library",
       });
-      const imageUrl = (await getFileAssetLongLivedUrl(imageAsset.id)).url;
+      const imageUrl = createFileAssetReference(imageAsset.id);
 
       atlas.meta.image = imageUrl;
       const atlasName = `${basename(jsonEntry.filename).replace(/\.json$/i, "")}-pixi.json`;
@@ -182,9 +182,7 @@ export function SpritesheetZipUploadField({
         file: atlasFile,
         group: "library",
       });
-      const spritesheetUrl = (
-        await getFileAssetLongLivedUrl(atlasAsset.id)
-      ).url;
+      const spritesheetUrl = createFileAssetReference(atlasAsset.id);
       const animationNames = Object.keys(atlas.animations);
       onChange({ imageUrl, spritesheetUrl, animationNames });
       toast.success(`Spritesheet 已导入：${animationNames.length} 个动画`);

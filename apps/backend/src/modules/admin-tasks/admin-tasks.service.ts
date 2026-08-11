@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB } from './admin-tasks.constants';
 
 @Injectable()
 export class AdminTasksService {
@@ -386,6 +386,63 @@ export class AdminTasksService {
     return { ...task, bullJobId: job.id };
   }
 
+  async enqueueFileAssetInspection(createdById: string, minAgeDays = 7) {
+    const safeDays = Number.isFinite(minAgeDays)
+      ? Math.min(Math.max(Math.floor(minAgeDays), 1), 365)
+      : 7;
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: FILE_ASSET_INSPECT_JOB,
+        title: '检查未使用的文件资源',
+        targetType: 'file_asset',
+        createdById,
+        payload: { minAgeDays: safeDays } as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.contentQueue.add(FILE_ASSET_INSPECT_JOB, {
+      taskId: task.id,
+      minAgeDays: safeDays,
+    });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', '资源检查任务已加入队列', { step: 'queued' });
+    return { ...task, bullJobId: job.id };
+  }
+
+  async enqueueFileAssetCleanup(createdById: string, inspectionTaskId: string) {
+    if (typeof inspectionTaskId !== 'string' || !inspectionTaskId.trim()) {
+      throw new BadRequestException('inspectionTaskId 不能为空');
+    }
+    const inspection = await this.prisma.adminTask.findFirst({
+      where: {
+        id: inspectionTaskId,
+        type: FILE_ASSET_INSPECT_JOB,
+        status: AdminTaskStatus.completed,
+      },
+    });
+    const candidateIds = (inspection?.summary as any)?.candidateIds;
+    if (!inspection || !Array.isArray(candidateIds)) {
+      throw new BadRequestException('请先完成一次资源检查，再清理该次检查结果');
+    }
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: FILE_ASSET_CLEANUP_JOB,
+        title: `清理未使用的文件资源（${candidateIds.length} 项）`,
+        targetType: 'file_asset',
+        targetId: inspection.id,
+        createdById,
+        totalItems: candidateIds.length,
+        payload: { inspectionTaskId: inspection.id, candidateIds } as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.contentQueue.add(FILE_ASSET_CLEANUP_JOB, {
+      taskId: task.id,
+      candidateIds,
+    });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', '资源清理任务已加入队列；执行时会逐项重新检查引用', { step: 'queued' });
+    return { ...task, bullJobId: job.id };
+  }
+
   async list(params: {
 
     type?: string;
@@ -468,6 +525,12 @@ export class AdminTasksService {
     }
     if (task.type === PATTERN_MISSING_MEANING_ENRICH_JOB) {
       return this.enqueuePatternMissingMeaningEnrich(createdById);
+    }
+    if (task.type === FILE_ASSET_INSPECT_JOB && createdById) {
+      return this.enqueueFileAssetInspection(createdById, Number((task.payload as any)?.minAgeDays ?? 7));
+    }
+    if (task.type === FILE_ASSET_CLEANUP_JOB && task.targetId && createdById) {
+      return this.enqueueFileAssetCleanup(createdById, task.targetId);
     }
     if (task.type !== CONTENT_PREPARE_JOB || task.targetType !== 'scene' || !task.targetId) {
       throw new NotFoundException('暂不支持重试该任务');

@@ -293,26 +293,32 @@ export class ContentAdminController {
 
   @Post('scenes')
   async createScene(@Req() req: Request, @Body() dto: CreateSceneDto) {
-    await this.requireAdmin(req);
-    return this.prisma.scene.create({
-      data: {
+    const session = await this.requireAdmin(req);
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls({
         ...dto,
         contentMode: dto.contentMode ?? (dto.packageType === 'story' ? 'story' : 'practice'),
-      },
+    });
+    return this.prisma.$transaction(async (tx) => {
+      const scene = await tx.scene.create({ data });
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'scene_asset', scene.id, scene,
+      );
+      return scene;
     });
   }
 
   @Patch('scenes/:id')
   async updateScene(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateSceneDto) {
-    await this.requireAdmin(req);
+    const session = await this.requireAdmin(req);
     const nextContentMode = dto.contentMode ?? (dto.packageType === 'story' ? 'story' : undefined);
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls({
+      ...dto,
+      ...(nextContentMode ? { contentMode: nextContentMode } : {}),
+    });
     return this.prisma.$transaction(async (tx) => {
       const scene = await tx.scene.update({
         where: { id },
-        data: {
-          ...dto,
-          ...(nextContentMode ? { contentMode: nextContentMode } : {}),
-        },
+        data,
       });
       if (scene.contentMode !== 'novel') {
         await Promise.all([
@@ -323,13 +329,16 @@ export class ContentAdminController {
           tx.sceneMaterialReference.deleteMany({ where: { sceneId: id, topicId: null } }),
         ]);
       }
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'scene_asset', id, scene,
+      );
       return scene;
     });
   }
 
   @Delete('scenes/:id')
   async deleteScene(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireAdmin(req);
     const scene = await this.prisma.scene.findUnique({
       where: { id },
       select: { id: true, packageType: true },
@@ -374,6 +383,9 @@ export class ContentAdminController {
       }
 
       return this.prisma.$transaction(async (tx) => {
+        await this.fileAssetsService.syncPersistentAssetReferences(
+          tx, session.user.id, 'scene_asset', id, null,
+        );
         if (episodeIds.length > 0) {
           await tx.inkScript.deleteMany({ where: { episodeId: { in: episodeIds } } });
           await tx.storyTurn.deleteMany({ where: { episodeId: { in: episodeIds } } });
@@ -400,7 +412,12 @@ export class ContentAdminController {
       });
     }
 
-    return this.prisma.scene.delete({ where: { id } });
+    return this.prisma.$transaction(async (tx) => {
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'scene_asset', id, null,
+      );
+      return tx.scene.delete({ where: { id } });
+    });
   }
 
   // ════════════════════════════════════════════════════════════
@@ -1757,10 +1774,15 @@ export class ContentAdminController {
 
   @Post('stories')
   async createStory(@Req() req: Request, @Body() dto: any) {
-    await this.requireAdmin(req);
-    return this.prisma.inkScript.create({
-      data: dto,
-      include: {
+    const session = await this.requireAdmin(req);
+    if (dto?.assetMap !== undefined) {
+      throw new BadRequestException('assetMap 必须通过故事资源接口维护');
+    }
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    return this.prisma.$transaction(async (tx) => {
+      const story = await tx.inkScript.create({
+        data,
+        include: {
         trainingTopic: {
           select: {
             id: true,
@@ -1776,17 +1798,27 @@ export class ContentAdminController {
             },
           },
         },
-      },
+        },
+      });
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'story_content_asset', story.id, story,
+      );
+      return story;
     });
   }
 
   @Patch('stories/:id')
   async updateStory(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
-    await this.requireAdmin(req);
-    return this.prisma.inkScript.update({
-      where: { id },
-      data: dto,
-      include: {
+    const session = await this.requireAdmin(req);
+    if (dto?.assetMap !== undefined) {
+      throw new BadRequestException('assetMap 必须通过故事资源接口维护');
+    }
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    return this.prisma.$transaction(async (tx) => {
+      const story = await tx.inkScript.update({
+        where: { id },
+        data,
+        include: {
         trainingTopic: {
           select: {
             id: true,
@@ -1802,7 +1834,12 @@ export class ContentAdminController {
             },
           },
         },
-      },
+        },
+      });
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'story_content_asset', id, story,
+      );
+      return story;
     });
   }
 
@@ -1827,15 +1864,31 @@ export class ContentAdminController {
       where: { inkScriptId: { in: inkIds } },
       data: { inkScriptId: null },
     });
-    await this.prisma.inkScript.deleteMany({ where: { id: { in: inkIds } } });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.fileReference.deleteMany({
+        where: {
+          OR: [
+            { bizType: 'story_content_asset', bizId: { in: inkIds } },
+            { bizType: 'story_asset', OR: inkIds.map((id) => ({ bizId: { startsWith: `${id}:` } })) },
+          ],
+        },
+      });
+      await tx.inkScript.deleteMany({ where: { id: { in: inkIds } } });
+    });
     return { success: true, count: inkIds.length };
   }
 
   @Delete('stories/:id')
   async deleteStory(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireAdmin(req);
     await this.detachInkScript(id);
-    return this.prisma.inkScript.delete({ where: { id } });
+    return this.prisma.$transaction(async (tx) => {
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'story_content_asset', id, null,
+      );
+      await tx.fileReference.deleteMany({ where: { bizType: 'story_asset', bizId: { startsWith: `${id}:` } } });
+      return tx.inkScript.delete({ where: { id } });
+    });
   }
 
   // ════════════════════════════════════════════════════════════
@@ -1869,7 +1922,7 @@ export class ContentAdminController {
     return { storyId: id, assets: resolved };
   }
 
-  /** 添加资产到 assetMap（同时创建 FileReference 增加引用计数） */
+  /** 添加资产到 assetMap，并在同一事务中登记资源引用。 */
   @Post('stories/:id/assets')
   async addStoryAsset(
     @Req() req: Request,
@@ -1886,35 +1939,36 @@ export class ContentAdminController {
 
     const assetMap = (story.assetMap as Record<string, any>) || {};
 
-    // 如果此别名之前已绑定其他 asset，先清理旧引用
-    const oldEntry = assetMap[dto.alias];
-    if (oldEntry?.fileAssetId && oldEntry.fileAssetId !== dto.fileAssetId) {
-      await this.fileAssetsService.deleteSystemReference(oldEntry.fileAssetId, 'story_asset', `${id}:${dto.alias}`);
-    }
-
-    // 创建新引用
-    await this.fileAssetsService.createSystemReference(dto.fileAssetId, 'story_asset', `${id}:${dto.alias}`);
-
-    // 更新 assetMap
     const fileAsset = await this.prisma.fileAsset.findUnique({
       where: { id: dto.fileAssetId },
       select: { mimeType: true },
     });
+    if (!fileAsset) throw new NotFoundException('文件资源不存在');
     assetMap[dto.alias] = {
       fileAssetId: dto.fileAssetId,
       type: dto.type,
-      mimeType: fileAsset?.mimeType || 'unknown',
+      mimeType: fileAsset.mimeType,
     };
 
-    await this.prisma.inkScript.update({
-      where: { id },
-      data: { assetMap },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.fileReference.deleteMany({
+        where: { bizType: 'story_asset', bizId: `${id}:${dto.alias}` },
+      });
+      await tx.fileReference.create({
+        data: {
+          assetId: dto.fileAssetId,
+          bizType: 'story_asset',
+          bizId: `${id}:${dto.alias}`,
+          createdById: session.user.id,
+        },
+      });
+      await tx.inkScript.update({ where: { id }, data: { assetMap } });
     });
 
     return { storyId: id, alias: dto.alias, entry: assetMap[dto.alias] };
   }
 
-  /** 从 assetMap 移除资产（同时移除 FileReference 减少引用计数） */
+  /** 从 assetMap 移除资产，并在同一事务中移除资源引用。 */
   @Delete('stories/:id/assets/:alias')
   async removeStoryAsset(
     @Req() req: Request,
@@ -1933,16 +1987,12 @@ export class ContentAdminController {
     const entry = assetMap[alias];
     if (!entry) throw new NotFoundException(`别名 "${alias}" 不存在`);
 
-    // 移除引用
-    if (entry.fileAssetId) {
-      await this.fileAssetsService.deleteSystemReference(entry.fileAssetId, 'story_asset', `${id}:${alias}`);
-    }
-
-    // 移除 assetMap 条目
     delete assetMap[alias];
-    await this.prisma.inkScript.update({
-      where: { id },
-      data: { assetMap },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.inkScript.update({ where: { id }, data: { assetMap } });
+      await tx.fileReference.deleteMany({
+        where: { bizType: 'story_asset', bizId: `${id}:${alias}` },
+      });
     });
 
     return { storyId: id, alias, removed: true };
@@ -2758,9 +2808,18 @@ ${contextBlock}
 
   @Post('library/vocabularies')
   async createLibraryVocabulary(@Req() req: Request, @Body() dto: CreateFullVocabularyDto) {
-    await this.requireAdmin(req);
+    const session = await this.requireAdmin(req);
+    const normalized = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
     try {
-      return await this.prisma.vocabulary.create({ data: { ...dto, examples: dto.examples as any } });
+      return await this.prisma.$transaction(async (tx) => {
+        const vocabulary = await tx.vocabulary.create({
+          data: { ...normalized, examples: normalized.examples as any },
+        });
+        await this.fileAssetsService.syncPersistentAssetReferences(
+          tx, session.user.id, 'vocabulary_asset', vocabulary.id, vocabulary,
+        );
+        return vocabulary;
+      });
     } catch (err: any) {
       if (err.code === 'P2002') throw new ForbiddenException(`词汇 "${dto.word}" 已存在，请勿重复添加`);
       throw err;
@@ -2838,14 +2897,29 @@ ${contextBlock}
 
   @Patch('library/vocabularies/:id')
   async updateLibraryVocabulary(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateFullVocabularyDto) {
-    await this.requireAdmin(req);
-    return this.prisma.vocabulary.update({ where: { id }, data: { ...dto, examples: dto.examples as any } });
+    const session = await this.requireAdmin(req);
+    const normalized = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    return this.prisma.$transaction(async (tx) => {
+      const vocabulary = await tx.vocabulary.update({
+        where: { id },
+        data: { ...normalized, examples: normalized.examples as any },
+      });
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'vocabulary_asset', id, vocabulary,
+      );
+      return vocabulary;
+    });
   }
 
   @Delete('library/vocabularies/:id')
   async deleteLibraryVocabulary(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
-    return this.prisma.vocabulary.delete({ where: { id } });
+    const session = await this.requireAdmin(req);
+    return this.prisma.$transaction(async (tx) => {
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'vocabulary_asset', id, null,
+      );
+      return tx.vocabulary.delete({ where: { id } });
+    });
   }
 
   /** AI 增强词汇：DeepSeek 翻译 + 例句生成 + 音标校核 + 讲解 */
@@ -2974,16 +3048,23 @@ ${contextBlock}
 
   @Post('library/chunks')
   async createLibraryChunk(@Req() req: Request, @Body() dto: CreateFullChunkDto) {
-    await this.requireAdmin(req);
-    const { examples, ...data } = dto;
+    const session = await this.requireAdmin(req);
+    const normalized = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    const { examples, ...data } = normalized;
     const payload: any = { ...data, category: data.category || 'general' };
     if (examples?.length) {
       payload.examples = { create: examples.map((ex, i) => ({ ...ex, sortOrder: i })) };
     }
     try {
-      return await this.prisma.chunk.create({
-        data: payload,
-        include: { examples: { orderBy: { sortOrder: 'asc' } } },
+      return await this.prisma.$transaction(async (tx) => {
+        const chunk = await tx.chunk.create({
+          data: payload,
+          include: { examples: { orderBy: { sortOrder: 'asc' } } },
+        });
+        await this.fileAssetsService.syncPersistentAssetReferences(
+          tx, session.user.id, 'chunk_asset', chunk.id, chunk,
+        );
+        return chunk;
       });
     } catch (err: any) {
       if (err.code === 'P2002') throw new ForbiddenException(`句块 "${dto.text}" 已存在，请勿重复添加`);
@@ -2993,25 +3074,39 @@ ${contextBlock}
 
   @Patch('library/chunks/:id')
   async updateLibraryChunk(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateFullChunkDto) {
-    await this.requireAdmin(req);
-    const { examples, ...data } = dto;
+    const session = await this.requireAdmin(req);
+    const normalized = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    const { examples, ...data } = normalized;
     const payload: any = { ...data };
     if (examples !== undefined) {
-      await this.prisma.chunkExample.deleteMany({ where: { chunkId: id } });
       payload.examples = { create: examples.map((ex, i) => ({ ...ex, sortOrder: i })) };
     }
-    return this.prisma.chunk.update({
-      where: { id },
-      data: payload,
-      include: { examples: { orderBy: { sortOrder: 'asc' } } },
+    return this.prisma.$transaction(async (tx) => {
+      if (examples !== undefined) {
+        await tx.chunkExample.deleteMany({ where: { chunkId: id } });
+      }
+      const chunk = await tx.chunk.update({
+        where: { id },
+        data: payload,
+        include: { examples: { orderBy: { sortOrder: 'asc' } } },
+      });
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'chunk_asset', id, chunk,
+      );
+      return chunk;
     });
   }
 
   @Delete('library/chunks/:id')
   async deleteLibraryChunk(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
-    await this.prisma.chunkExample.deleteMany({ where: { chunkId: id } });
-    return this.prisma.chunk.delete({ where: { id } });
+    const session = await this.requireAdmin(req);
+    return this.prisma.$transaction(async (tx) => {
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'chunk_asset', id, null,
+      );
+      await tx.chunkExample.deleteMany({ where: { chunkId: id } });
+      return tx.chunk.delete({ where: { id } });
+    });
   }
 
   // ════════════════════════════════════════════════════════════
@@ -3075,9 +3170,16 @@ ${contextBlock}
 
   @Post('library/patterns')
   async createLibraryPattern(@Req() req: Request, @Body() dto: CreateSentencePatternDto) {
-    await this.requireAdmin(req);
+    const session = await this.requireAdmin(req);
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
     try {
-      return await this.prisma.sentencePattern.create({ data: dto });
+      return await this.prisma.$transaction(async (tx) => {
+        const pattern = await tx.sentencePattern.create({ data });
+        await this.fileAssetsService.syncPersistentAssetReferences(
+          tx, session.user.id, 'sentence_pattern_asset', pattern.id, pattern,
+        );
+        return pattern;
+      });
     } catch (err: any) {
       if (err.code === 'P2002') throw new ForbiddenException(`句式 "${dto.pattern}" 已存在，请勿重复添加`);
       throw err;
@@ -3086,14 +3188,26 @@ ${contextBlock}
 
   @Patch('library/patterns/:id')
   async updateLibraryPattern(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateSentencePatternDto) {
-    await this.requireAdmin(req);
-    return this.prisma.sentencePattern.update({ where: { id }, data: dto });
+    const session = await this.requireAdmin(req);
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    return this.prisma.$transaction(async (tx) => {
+      const pattern = await tx.sentencePattern.update({ where: { id }, data });
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'sentence_pattern_asset', id, pattern,
+      );
+      return pattern;
+    });
   }
 
   @Delete('library/patterns/:id')
   async deleteLibraryPattern(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
-    return this.prisma.sentencePattern.delete({ where: { id } });
+    const session = await this.requireAdmin(req);
+    return this.prisma.$transaction(async (tx) => {
+      await this.fileAssetsService.syncPersistentAssetReferences(
+        tx, session.user.id, 'sentence_pattern_asset', id, null,
+      );
+      return tx.sentencePattern.delete({ where: { id } });
+    });
   }
 
   // ════════════════════════════════════════════════════════════

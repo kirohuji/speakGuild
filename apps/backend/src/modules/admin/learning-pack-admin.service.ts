@@ -208,7 +208,7 @@ export class LearningPackAdminService {
     if (!scene) throw new NotFoundException('学习单元不存在');
 
     const asset = await this.prisma.fileAsset.findUnique({ where: { id: input.assetId } });
-    if (!asset || asset.status !== 'active') throw new NotFoundException('上传文件不存在');
+    if (!asset) throw new NotFoundException('上传文件不存在');
     if (asset.group !== ('learning_pack' as FileAssetGroup)) {
       throw new BadRequestException('请先把 zip 上传到 learning_pack 分组');
     }

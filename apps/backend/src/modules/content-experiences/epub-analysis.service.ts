@@ -54,7 +54,7 @@ export class EpubAnalysisService {
 
   async analyzeAsset(assetId: string) {
     const asset = await this.prisma.fileAsset.findUnique({ where: { id: assetId } });
-    if (!asset || asset.status !== 'active') throw new BadRequestException('EPUB 文件不存在');
+    if (!asset) throw new BadRequestException('EPUB 文件不存在');
     if (!asset.filename.toLowerCase().endsWith('.epub') && !asset.mimeType.includes('epub')) {
       throw new BadRequestException('仅支持 .epub 文件');
     }

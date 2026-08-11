@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { Upload, X, ImageIcon, Music, FileText, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
-import { getFileAssetContentUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
+import { createFileAssetReference, resolveFileAssetUrl, uploadFileToCosAndComplete } from '@/features/file-assets/api'
 import type { FileAssetGroup } from '@/features/file-assets/api'
 
 interface FileUploadFieldProps {
@@ -11,7 +11,7 @@ interface FileUploadFieldProps {
   /** URL 变更回调 */
   onChange?: (url: string) => void
   /** 上传完成回调（返回 COS URL 和 assetId） */
-  onUploaded?: (cosUrl: string, assetId: string) => void
+  onUploaded?: (assetRef: string, assetId: string) => void
   /** 占位文本 */
   placeholder?: string
   /** 接受的 MIME 类型，如 "image/*" "audio/*" ".mp3,.ogg" 等 */
@@ -45,7 +45,7 @@ function inferFileType(
 
   // Stable FileAsset URLs intentionally have no filename extension. Infer
   // their preview type from the field contract instead of the URL suffix.
-  if (/\/file-assets\/[^/]+\/content\/?$/i.test(pathname)) {
+  if (url.startsWith('asset://') || /\/file-assets\/[^/]+\/content\/?$/i.test(pathname)) {
     if (accept?.includes('image/')) return 'image'
     if (accept?.includes('audio/')) return 'audio'
     if (group === 'avatar' || group === 'scene_cover') return 'image'
@@ -76,7 +76,7 @@ export function FileUploadField({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    setPreviewUrl(value || '')
+    setPreviewUrl(resolveFileAssetUrl(value))
     setFileType(value ? inferFileType(value, accept, group) : 'other')
   }, [value, accept, group])
 
@@ -89,10 +89,10 @@ export function FileUploadField({
       else setFileType('other')
 
       const asset = await uploadFileToCosAndComplete({ file, group })
-      const cosUrl = getFileAssetContentUrl(asset.id)
-      setPreviewUrl(cosUrl)
-      onUploaded?.(cosUrl, asset.id)
-      onChange?.(cosUrl)
+      const assetRef = createFileAssetReference(asset.id)
+      setPreviewUrl(resolveFileAssetUrl(assetRef))
+      onUploaded?.(assetRef, asset.id)
+      onChange?.(assetRef)
     } catch (err) {
       console.warn('Upload failed:', err)
     } finally {

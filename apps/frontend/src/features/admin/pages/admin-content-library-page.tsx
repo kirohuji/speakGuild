@@ -836,11 +836,10 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
 
   // Upload audio handler
   const handleAudioUpload = async (side: 'us' | 'uk', file: File) => {
-    const { uploadFileToCosAndComplete } = await import('@/features/file-assets/api')
+    const { createFileAssetReference, uploadFileToCosAndComplete } = await import('@/features/file-assets/api')
     try {
       const asset = await uploadFileToCosAndComplete({ file, group: 'library' })
-      const { getFileAssetLongLivedUrl } = await import('@/features/file-assets/api')
-      const { url } = await getFileAssetLongLivedUrl(asset.id)
+      const url = createFileAssetReference(asset.id)
       setForm((prev: any) => ({ ...prev, [side === 'us' ? 'audioUsUrl' : 'audioUkUrl']: url }))
       toast.success(`${side === 'us' ? '美式' : '英式'}音频已上传`)
     } catch { toast.error('上传失败') }

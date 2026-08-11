@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Post,
@@ -14,7 +13,6 @@ import { Readable } from 'node:stream';
 import { CompleteUploadDto } from './dto/complete-upload.dto';
 import { CreateCosPolicyDto } from './dto/create-cos-policy.dto';
 import { CreateReferenceDto } from './dto/create-reference.dto';
-import { DeleteReferenceDto } from './dto/delete-reference.dto';
 import { FileAssetsService } from './file-assets.service';
 import { SetCurrentAvatarDto } from './dto/set-current-avatar.dto';
 import { MatchSamplingToneDto } from './dto/match-sampling-tone.dto';
@@ -25,12 +23,14 @@ export class FileAssetsController {
   constructor(private readonly fileAssetsService: FileAssetsService) {}
 
   @Post('cos-policy')
-  createCosPolicy(@Body() dto: CreateCosPolicyDto) {
+  async createCosPolicy(@Req() req: Request, @Body() dto: CreateCosPolicyDto) {
+    await requireAuthSession(req);
     return this.fileAssetsService.createCosPolicy(dto);
   }
 
   @Post('complete')
-  completeUpload(@Body() dto: CompleteUploadDto) {
+  async completeUpload(@Req() req: Request, @Body() dto: CompleteUploadDto) {
+    await requireAuthSession(req);
     return this.fileAssetsService.completeUpload(dto);
   }
 
@@ -38,12 +38,6 @@ export class FileAssetsController {
   async createReference(@Req() req: Request, @Body() dto: CreateReferenceDto) {
     const session = await requireAuthSession(req);
     return this.fileAssetsService.createReference(session.user.id, dto);
-  }
-
-  @Delete('references')
-  async deleteReference(@Req() req: Request, @Body() dto: DeleteReferenceDto) {
-    const session = await requireAuthSession(req);
-    return this.fileAssetsService.deleteReference(session.user.id, dto);
   }
 
   @Get('avatar/current')
@@ -87,13 +81,9 @@ export class FileAssetsController {
   }
 
   @Get(':id/private-url')
-  getPrivateUrl(@Param('id') id: string) {
+  async getPrivateUrl(@Req() req: Request, @Param('id') id: string) {
+    await requireAuthSession(req);
     return this.fileAssetsService.getPrivateUrlByAssetId(id);
-  }
-
-  @Get(':id/long-lived-url')
-  getLongLivedUrl(@Param('id') id: string) {
-    return this.fileAssetsService.getAssetLongLivedUrl(id);
   }
 
   @Get('sampling/proxy')
@@ -122,8 +112,4 @@ export class FileAssetsController {
     Readable.fromWeb(upstream.body as any).pipe(res);
   }
 
-  @Get(':id/references')
-  listReferences(@Param('id') id: string) {
-    return this.fileAssetsService.listReferences(id);
-  }
 }

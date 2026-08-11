@@ -39,6 +39,8 @@ const TYPE_LABELS: Record<string, string> = {
   'pattern-missing-meaning-enrich': '句型字段检查与 AI 补全',
   'script-video-render': '剧本演出视频',
   'narrative-video-render': '叙事视频预览',
+  'file-asset-inspect': '检查未使用资源',
+  'file-asset-cleanup': '清理未使用资源',
 };
 
 const STEP_LABELS: Record<string, string> = {
@@ -58,6 +60,8 @@ const STEP_LABELS: Record<string, string> = {
   'initializing-renderer': '初始化渲染器',
   rendering: '生成视频',
   uploading: '上传成片',
+  inspect: '检查资源引用',
+  'recheck-and-clean': '复查并清理资源',
 };
 
 const ERROR_TYPE_LABELS: Record<string, string> = {
@@ -82,6 +86,13 @@ function fmtDate(value?: string | null) {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function formatBytes(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  return `${(bytes / 1024 ** index).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
 }
 
 function fmtStep(step?: string | null) {
@@ -111,7 +122,7 @@ function StatusBadge({ status }: { status: AdminTaskStatus }) {
   );
 }
 
-function Metric({ label, value, tone }: { label: string; value: number; tone?: 'good' | 'bad' | 'muted' }) {
+function Metric({ label, value, tone }: { label: string; value: number | string; tone?: 'good' | 'bad' | 'muted' }) {
   return (
     <div className="rounded-md border border-border/70 bg-muted/25 px-3 py-2">
       <p className={cn(
@@ -257,6 +268,38 @@ function SummaryPanel({ task }: { task: AdminTask }) {
         </p>
         {summary?.videoAssetId && (
           <p className="mt-2 break-all font-mono text-[10px] text-muted-foreground">资源：{summary.videoAssetId}</p>
+        )}
+      </div>
+    );
+  }
+  if (task.type === 'file-asset-inspect' && summary) {
+    return (
+      <div className="space-y-2 rounded-md border border-border bg-muted/20 p-3">
+        <div className="grid grid-cols-3 gap-2">
+          <Metric label="已检查" value={summary.scanned ?? 0} tone="muted" />
+          <Metric label="可清理" value={summary.candidateCount ?? 0} tone={summary.candidateCount ? 'bad' : 'good'} />
+          <Metric label="预计释放" value={formatBytes(summary.candidateBytes ?? 0)} tone="muted" />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          仅包含创建超过 {summary.minAgeDays ?? 7} 天，且执行时未发现数据库或内容引用的资源。
+        </p>
+      </div>
+    );
+  }
+  if (task.type === 'file-asset-cleanup' && summary) {
+    const pending = summary.pendingPurges ?? {};
+    return (
+      <div className="space-y-2 rounded-md border border-border bg-muted/20 p-3">
+        <div className="grid grid-cols-4 gap-2">
+          <Metric label="已清理" value={summary.purged ?? 0} tone="good" />
+          <Metric label="重新检查后保留" value={summary.blocked ?? 0} tone="muted" />
+          <Metric label="失败" value={summary.failed ?? 0} tone={summary.failed ? 'bad' : 'muted'} />
+          <Metric label="已释放" value={formatBytes(summary.reclaimedBytes ?? 0)} tone="good" />
+        </div>
+        {pending.processed > 0 && (
+          <p className="text-xs text-muted-foreground">
+            同时重试历史物理删除 {pending.processed} 项：成功 {pending.completed ?? 0}，失败 {pending.failed ?? 0}。
+          </p>
         )}
       </div>
     );

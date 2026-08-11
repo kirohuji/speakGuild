@@ -1,6 +1,7 @@
 import axios, { type AxiosRequestConfig, type Method } from 'axios'
 import { clearBearerToken, getBearerToken } from '@/features/auth/client'
 import { reportClientError } from '@/lib/monitoring'
+import { resolveFileAssetReferences, serializeFileAssetReferences } from '@/lib/file-asset-reference'
 
 if (typeof window !== 'undefined') {
   try {
@@ -96,6 +97,8 @@ instance.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  config.data = serializeFileAssetReferences(config.data)
+  config.params = serializeFileAssetReferences(config.params)
   return config
 })
 
@@ -103,9 +106,9 @@ instance.interceptors.response.use(
   (response) => {
     const data = response.data
     if (data && typeof data === 'object' && 'data' in data) {
-      return data.data
+      return resolveFileAssetReferences(data.data)
     }
-    return data
+    return resolveFileAssetReferences(data)
   },
   (error) => {
     if (error?.response?.status === 401) {
