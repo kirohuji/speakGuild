@@ -85,12 +85,26 @@ export default {
   				'-apple-system',
   				'sans-serif'
   			],
-  			mono: [
-  				'JetBrains Mono',
-  				'ui-monospace',
-  				'SFMono-Regular',
-  				'monospace'
-  			]
+			mono: [
+				'JetBrains Mono',
+				'ui-monospace',
+				'SFMono-Regular',
+				'monospace'
+			],
+			ipa: [
+				'Noto Sans',
+				'Segoe UI',
+				'Helvetica Neue',
+				'Arial',
+				'sans-serif'
+			],
+			english: [
+				'Noto Sans',
+				'Segoe UI',
+				'Helvetica Neue',
+				'Arial',
+				'sans-serif'
+			]
   		}
   	}
   },

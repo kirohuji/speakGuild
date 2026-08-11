@@ -164,7 +164,7 @@ export function AdminDictionaryPage() {
                 const primarySense = primaryCluster?.senses?.[0];
                 return (
                   <tr key={entry.word} className="border-t hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-medium">{entry.word}</td>
+                    <td className="px-4 py-3 font-english font-medium">{entry.word}</td>
                     <td className="px-4 py-3">
                       {primaryCluster && (
                         <Badge className={cn('text-xs', POS_COLORS[primaryCluster.posBucket] ?? POS_COLORS.other)}>
@@ -172,7 +172,7 @@ export function AdminDictionaryPage() {
                         </Badge>
                       )}
                     </td>
-                    <td className="px-4 py-3 max-w-xs truncate text-muted-foreground">
+                    <td className={cn('max-w-xs truncate px-4 py-3 text-muted-foreground', !primarySense?.translations?.zh && 'font-english')}>
                       {primarySense?.translations?.zh || primarySense?.definition || '—'}
                     </td>
                     <td className="px-4 py-3 text-center tabular-nums">{clusters.length}</td>
@@ -357,8 +357,8 @@ function DictionaryPreview({ entry }: { entry: DictionaryEntry }) {
       {/* ── Header ── */}
       <div className="px-5 py-4">
         <div className="flex items-baseline gap-2 flex-wrap">
-          <h2 className="text-2xl font-bold tracking-tight">{entry.word}</h2>
-          <span className="text-sm text-muted-foreground font-mono">
+          <h2 className="font-english text-2xl font-bold tracking-tight">{entry.word}</h2>
+          <span className="font-ipa text-sm text-muted-foreground">
             {[ukPron?.ipa, usPron?.ipa].filter(Boolean).join('  ')}
           </span>
           {/* Global toggles */}
@@ -417,7 +417,7 @@ function DictionaryPreview({ entry }: { entry: DictionaryEntry }) {
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               {entry.wordForms.map((f) => (
                 <span key={f.word} className="inline-flex items-baseline gap-1.5">
-                  <span className="text-sm font-semibold text-foreground/80">{f.word}</span>
+                  <span className="font-english text-sm font-semibold text-foreground/80">{f.word}</span>
                   {f.tags?.length > 0 && (
                     <span className="text-[11px] text-muted-foreground/45">{f.tags.join(', ')}</span>
                   )}
@@ -431,7 +431,7 @@ function DictionaryPreview({ entry }: { entry: DictionaryEntry }) {
         {entry.entrySynonyms?.length > 0 && (
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-xs font-medium text-muted-foreground/50 shrink-0">近义</span>
-            <p className="text-[13px] text-foreground/65 leading-relaxed">
+            <p className="font-english text-[13px] leading-relaxed text-foreground/65">
               {entry.entrySynonyms.slice(0, 20).join(', ')}
               {entry.entrySynonyms.length > 20 && (
                 <span className="text-muted-foreground/30"> +{entry.entrySynonyms.length - 20}</span>
@@ -558,7 +558,7 @@ function SenseItem({ sense, index, word, showEn, onToggleEn, showDetails, onTogg
         <span className="flex-1 min-w-0 inline-flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
           {showEn && hasEn ? (
             <>
-              <span className="text-sm text-muted-foreground leading-snug">{cleanEn}</span>
+              <span className="font-english text-sm leading-snug text-muted-foreground">{cleanEn}</span>
               {enQuals.length > 0 && enQuals.map((q) => (
                 <span key={q} className="inline-block text-[10px] px-1 py-0 rounded border border-border/60 text-muted-foreground/70 font-normal leading-tight">
                   {q}
@@ -567,7 +567,7 @@ function SenseItem({ sense, index, word, showEn, onToggleEn, showDetails, onTogg
             </>
           ) : (
             <>
-              <span className="text-sm font-medium text-foreground leading-snug">
+              <span className={cn('text-sm font-medium leading-snug text-foreground', !cleanZh && 'font-english')}>
                 {cleanZh || sense.definition.substring(0, 60)}
               </span>
               {zhQuals.length > 0 && zhQuals.map((q) => (
@@ -634,7 +634,7 @@ function SenseItem({ sense, index, word, showEn, onToggleEn, showDetails, onTogg
                     {ei + 1}
                   </span>
                   <div className="min-w-0">
-                    <p className="text-sm text-muted-foreground/70 italic leading-relaxed">
+                    <p className="font-english text-sm italic leading-relaxed text-muted-foreground/70">
                       {highlightWord(ex.en, word)}
                     </p>
                     {ex.zh && (
@@ -649,7 +649,7 @@ function SenseItem({ sense, index, word, showEn, onToggleEn, showDetails, onTogg
           )}
 
           {(sense.synonyms.length > 0 || sense.antonyms.length > 0) && (
-            <div className="mt-2 mb-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground/45">
+            <div className="mb-1 mt-2 flex flex-wrap gap-x-4 gap-y-0.5 font-english text-xs text-muted-foreground/45">
               {sense.synonyms.length > 0 && (
                 <span>
                   <span className="font-medium">近</span>{' '}

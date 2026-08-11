@@ -26,6 +26,7 @@ const buttonVariants = cva(
         default: "h-9 px-5 py-2",
         sm: "h-8 px-4 py-1.5 text-xs rounded-lg",
         lg: "h-11 px-8 py-2.5 rounded-xl",
+        "icon-xs": "size-6 rounded-md [&_svg]:size-3",
         "icon-sm": "h-8 w-8 rounded-lg",
         "icon": "h-10 w-10 rounded-lg",
         // 新增：修长但不扁的主按钮

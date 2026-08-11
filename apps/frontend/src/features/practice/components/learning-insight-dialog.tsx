@@ -509,7 +509,7 @@ export function LearningInsightDialog({
                   >
                     <Icon className="size-4 shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{title}</p>
+                      <p className="truncate font-english text-sm font-medium">{title}</p>
                       {item.meaning && (
                         <p className="truncate text-xs text-muted-foreground">{item.meaning}</p>
                       )}
@@ -550,7 +550,7 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
         </div>
         <div className="min-w-0 flex-1">
           <Badge variant="secondary" className="mb-1.5">{label}</Badge>
-          <h2 className="break-words text-xl font-bold leading-tight text-foreground">{title}</h2>
+          <h2 className="break-words font-english text-xl font-bold leading-tight text-foreground">{title}</h2>
           {subtitle && <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>}
           {/* 音标：切换按钮在左，音标在右 */}
           {isWord && (item.phoneticUs || item.phoneticUk) && (
@@ -732,14 +732,14 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
                                   {qualifiers.length > 0 && qualifiers.map((q) => (
                                     <span key={q} className="mr-1.5 inline-flex items-center rounded border border-border/50 bg-muted/50 px-1 py-px text-[11px] leading-none text-muted-foreground">{q}</span>
                                   ))}
-                                  <span className="text-sm font-medium leading-6 text-foreground">{zhText || definition.definition}</span>
+                                  <span className={cn('text-sm font-medium leading-6 text-foreground', !zhText && 'font-english')}>{zhText || definition.definition}</span>
                                 </span>
                                 {definition.label && (
                                   <span className="shrink-0 text-xs text-muted-foreground/50">{definition.label}</span>
                                 )}
                               </div>
                               {definition.definition && definition.chineseGloss && (
-                                <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{definition.definition}</p>
+                                <p className="mt-0.5 font-english text-xs leading-5 text-muted-foreground">{definition.definition}</p>
                               )}
                             </div>
                           </div>
@@ -866,7 +866,7 @@ function PhoneticPill({
   onPlay: (url: string) => void
 }) {
   return (
-    <span className="inline-flex h-7 items-center gap-1 rounded-md bg-muted px-2 font-mono text-[11px] text-muted-foreground">
+    <span className="inline-flex h-7 items-center gap-1 rounded-md bg-muted px-2 font-ipa text-[11px] text-muted-foreground">
       <span className="font-sans text-[10px] font-semibold text-foreground/70">{label}</span>
       <span>{value}</span>
       {audioUrl && (
@@ -915,7 +915,7 @@ function ManagedDictionaryView({
     <div className="overflow-hidden rounded-md border border-border/70 bg-background">
       <section className="space-y-3 px-4 py-4">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-xl font-bold leading-tight text-foreground">{entry.word}</h3>
+          <h3 className="font-english text-xl font-bold leading-tight text-foreground">{entry.word}</h3>
           {uncommonCount > 0 && (
             <button
               type="button"
@@ -938,7 +938,7 @@ function ManagedDictionaryView({
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
               {entry.wordForms.slice(0, 10).map((form) => (
                 <span key={`${form.word}-${form.tags.join('-')}`} className="inline-flex items-baseline gap-1.5">
-                  <span className="text-sm font-semibold text-foreground/85">{form.word}</span>
+                  <span className="font-english text-sm font-semibold text-foreground/85">{form.word}</span>
                   {form.tags?.length > 0 && <span className="text-[11px] text-muted-foreground/55">{form.tags.join(', ')}</span>}
                 </span>
               ))}
@@ -949,7 +949,7 @@ function ManagedDictionaryView({
         {entry.entrySynonyms?.length > 0 && (
           <div className="flex items-baseline gap-2">
             <span className="shrink-0 text-xs font-medium text-muted-foreground/60">近义</span>
-            <p className="text-[13px] leading-5 text-foreground/70">
+            <p className="font-english text-[13px] leading-5 text-foreground/70">
               {entry.entrySynonyms.slice(0, 16).join(', ')}
               {entry.entrySynonyms.length > 16 && <span className="text-muted-foreground/45"> +{entry.entrySynonyms.length - 16}</span>}
             </p>
@@ -973,7 +973,7 @@ function ManagedDictionaryView({
           <div className="space-y-3">
             {dictionaryExamples.slice(0, 6).map((example, index) => (
               <div key={`${example.en}-${index}`} className="rounded-md bg-muted/45 p-3">
-                <p className="text-xs italic leading-5 text-muted-foreground/85">{highlightWord(example.en, entry.word)}</p>
+                <p className="font-english text-xs italic leading-5 text-muted-foreground/85">{highlightWord(example.en, entry.word)}</p>
                 {example.zh && <p className="mt-1 text-[11px] leading-4 text-muted-foreground/70">{highlightWord(example.zh, entry.word)}</p>}
               </div>
             ))}
@@ -1043,7 +1043,7 @@ function DictionarySenseRow({ sense, index }: { sense: DictionarySense; index: n
         <span className="mt-0.5 min-w-5 text-right text-xs tabular-nums text-muted-foreground/45">{index}.</span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            <p className="text-sm font-medium leading-6 text-foreground">{cleanZh || sense.definition.substring(0, 80)}</p>
+            <p className={cn('text-sm font-medium leading-6 text-foreground', !cleanZh && 'font-english')}>{cleanZh || sense.definition.substring(0, 80)}</p>
             {zhQuals.map((qualifier) => (
               <span key={qualifier} className="rounded border border-border/60 px-1 py-0 text-[10px] leading-4 text-muted-foreground">
                 {qualifier}
@@ -1055,7 +1055,7 @@ function DictionarySenseRow({ sense, index }: { sense: DictionarySense; index: n
           </div>
           {sense.definition && (
             <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
-              <p className="text-xs leading-5 text-muted-foreground">{cleanEn}</p>
+              <p className="font-english text-xs leading-5 text-muted-foreground">{cleanEn}</p>
               {enQuals.map((qualifier) => (
                 <span key={qualifier} className="rounded border border-border/60 px-1 py-0 text-[10px] leading-4 text-muted-foreground">
                   {qualifier}
@@ -1254,7 +1254,7 @@ function ExampleBlock({ en, zh, note, level, audioUrl, onPlayAudio }: {
   return (
     <div className="rounded-md bg-muted/60 p-3">
       <div className="flex items-start gap-2">
-        <p className="min-w-0 flex-1 text-sm font-medium leading-relaxed text-foreground">{en}</p>
+        <p className="min-w-0 flex-1 font-english text-sm font-medium leading-relaxed text-foreground">{en}</p>
         {audioUrl && onPlayAudio && (
           <button
             type="button"

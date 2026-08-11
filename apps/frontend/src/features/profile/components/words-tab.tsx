@@ -344,7 +344,7 @@ function WordDetailDialog({
               <div className="flex flex-wrap items-center gap-3">
                 {phonetics.length > 0 ? phonetics.map((p, i) => (
                   <div key={i} className="flex items-center gap-1.5">
-                    {p.text && <span className="font-mono text-sm text-muted-foreground bg-muted px-2 py-0.5 rounded-md">{p.text}</span>}
+                    {p.text && <span className="rounded-md bg-muted px-2 py-0.5 font-ipa text-sm text-muted-foreground">{p.text}</span>}
                     {p.audio && (
                       <button type="button" onClick={() => playAudio(p.audio!)}
                         className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary hover:bg-primary/20 transition-colors">
@@ -353,7 +353,7 @@ function WordDetailDialog({
                     )}
                   </div>
                 )) : phonetic ? (
-                  <span className="font-mono text-sm text-muted-foreground">{phonetic}</span>
+                  <span className="font-ipa text-sm text-muted-foreground">{phonetic}</span>
                 ) : null}
                 {audioUrl && !phonetics.some(p => p.audio) && (
                   <button type="button" onClick={() => playAudio(audioUrl)}
@@ -547,7 +547,7 @@ function WordCard({
         <div className="flex items-start justify-between gap-1">
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold">{entry.word}</p>
-            {phonetic && <p className="text-[10px] text-muted-foreground font-mono">{phonetic}</p>}
+            {phonetic && <p className="font-ipa text-[10px] text-muted-foreground">{phonetic}</p>}
           </div>
           {multiSelect && (
             <button

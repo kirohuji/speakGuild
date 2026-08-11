@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp,
-  ClipboardCheck, Database, Headphones, Loader2, RefreshCw, Search, Trash2, Volume2,
+  ClipboardCheck, Database, Headphones, Loader2, PenLine, RefreshCw, Save, Search, SpellCheck2, Trash2, Volume2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -16,9 +16,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/cn';
 import {
   clearDictionaryPronunciation, getPronunciationAudit, refreshDictionaryPronunciation,
+  normalizeDictionaryPronunciation, saveManualDictionaryPronunciation,
   type PronunciationAuditAccent, type PronunciationAuditItem,
   type PronunciationAuditResult, type PronunciationProvider, type PronunciationScope,
 } from '@/features/admin/api-dictionary';
@@ -47,15 +49,58 @@ function summarizePage(items: PronunciationAuditItem[]): PronunciationAuditResul
   };
 }
 
-function AccentIpa({ label, accent }: { label: 'UK' | 'US'; accent: PronunciationAuditAccent }) {
+function AccentIpa({
+  label,
+  accent,
+  disabled,
+  normalizing,
+  onManualEdit,
+  onNormalize,
+}: {
+  label: 'UK' | 'US';
+  accent: PronunciationAuditAccent;
+  disabled: boolean;
+  normalizing: boolean;
+  onManualEdit: () => void;
+  onNormalize: () => void;
+}) {
   const invalid = !accent.ipa || !accent.isIpa;
+  const canNormalize = !!accent.ipa
+    && !!accent.normalizedIpa
+    && accent.ipa !== accent.normalizedIpa;
   return (
     <div className="grid grid-cols-[34px_minmax(0,1fr)] items-start gap-2">
       <Badge variant={invalid ? 'destructive' : 'outline'}>{label}</Badge>
       <div className="min-w-0">
-        <p className={cn('font-mono text-sm leading-6', invalid && 'font-semibold text-destructive')}>
-          {accent.ipa ?? '缺失'}
-        </p>
+        <div className="flex min-w-0 items-center gap-2">
+          <p className={cn('min-w-0 font-ipa text-sm leading-6', invalid && 'font-semibold text-destructive')}>
+            {accent.ipa ?? '缺失'}
+          </p>
+          {canNormalize && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={onNormalize}
+                  disabled={disabled}
+                  aria-label={`应用 ${label} IPA 规范写法 ${accent.normalizedIpa}`}
+                >
+                  {normalizing ? <Loader2 className="animate-spin" /> : <SpellCheck2 />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                应用规范写法：<span className="font-ipa">{accent.normalizedIpa}</span>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {invalid && (
+            <Button type="button" variant="outline" size="sm" onClick={onManualEdit} disabled={disabled}>
+              <PenLine data-icon="inline-start" />手动填写
+            </Button>
+          )}
+        </div>
         {accent.issues.length > 0 && (
           <p className={cn('mt-0.5 text-[11px] leading-4', invalid ? 'text-destructive' : 'text-muted-foreground')}>
             {accent.issues.join('；')}
@@ -129,7 +174,9 @@ export function DictionaryPronunciationAuditDialog({
   const [search, setSearch] = useState('');
   const [providers, setProviders] = useState<Record<string, PronunciationProvider>>({});
   const [scopes, setScopes] = useState<Record<string, PronunciationScope>>({});
-  const [processingActions, setProcessingActions] = useState<Record<string, 'update' | 'clear'>>({});
+  const [processingActions, setProcessingActions] = useState<Record<string, 'update' | 'clear' | 'manual' | 'normalize-uk' | 'normalize-us'>>({});
+  const [manualEditor, setManualEditor] = useState<{ word: string; type: 'uk' | 'us' } | null>(null);
+  const [manualValue, setManualValue] = useState('');
 
   const load = useCallback(async () => {
     if (!open) return;
@@ -144,6 +191,7 @@ export function DictionaryPronunciationAuditDialog({
   }, [open, page, search]);
 
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => { if (!open) setManualEditor(null); }, [open]);
 
   const visibleRange = useMemo(() => {
     if (!data?.total) return '0';
@@ -199,15 +247,71 @@ export function DictionaryPronunciationAuditDialog({
     }
   };
 
+  const normalizeAccent = async (word: string, type: 'uk' | 'us') => {
+    if (processingActions[word]) return;
+    setProcessingActions((current) => ({ ...current, [word]: `normalize-${type}` }));
+    try {
+      const updatedItem = await normalizeDictionaryPronunciation(word, type);
+      setData((current) => {
+        if (!current) return current;
+        const items = current.items.map((item) => item.word === word ? updatedItem : item);
+        return { ...current, items, pageStats: summarizePage(items) };
+      });
+      toast.success(`${word} 的 ${type.toUpperCase()} IPA 已规范化`);
+    } catch (error: any) {
+      toast.error(error?.message || `${word} 的 ${type.toUpperCase()} IPA 规范化失败`);
+    } finally {
+      setProcessingActions((current) => {
+        const next = { ...current };
+        delete next[word];
+        return next;
+      });
+    }
+  };
+
+  const openManualEditor = (item: PronunciationAuditItem, type: 'uk' | 'us') => {
+    const current = item[type].ipa ?? '';
+    setManualValue(current.replace(/^\//, '').replace(/\/$/, ''));
+    setManualEditor({ word: item.word, type });
+  };
+
+  const saveManual = async () => {
+    if (!manualEditor || processingActions[manualEditor.word] || !manualValue.trim()) return;
+    const { word, type } = manualEditor;
+    setProcessingActions((current) => ({ ...current, [word]: 'manual' }));
+    try {
+      const updatedItem = await saveManualDictionaryPronunciation(word, type, manualValue);
+      setData((current) => {
+        if (!current) return current;
+        const items = current.items.map((item) => item.word === word ? updatedItem : item);
+        return { ...current, items, pageStats: summarizePage(items) };
+      });
+      setManualEditor(null);
+      setManualValue('');
+      toast.success(`${word} 的 ${type.toUpperCase()} IPA 已手动保存`);
+    } catch (error: any) {
+      toast.error(error?.message || `${word} 手动保存失败`);
+    } finally {
+      setProcessingActions((current) => {
+        const next = { ...current };
+        delete next[word];
+        return next;
+      });
+    }
+  };
+
   const runSearch = () => {
     setPage(1);
     setSearch(searchDraft.trim());
   };
 
   const stats = data?.pageStats ?? { passed: 0, attention: 0, missing: 0, withAudio: 0 };
+  const manualBody = manualValue.trim().replace(/^\/+/, '').replace(/\/+$/, '');
+  const manualSaving = !!manualEditor && processingActions[manualEditor.word] === 'manual';
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <TooltipProvider delayDuration={200}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="h-[92vh] w-[calc(100vw-32px)] max-w-[1500px] overflow-hidden p-0">
         <DialogHeader className="sr-only">
           <DialogTitle>音标质量审查</DialogTitle>
@@ -329,7 +433,7 @@ export function DictionaryPronunciationAuditDialog({
                           <TableRow key={item.word} className={cn((!item.uk.isIpa || !item.us.isIpa) && 'bg-destructive/5')}>
                             <TableCell className="pl-6 align-top">
                               <div className="flex items-center gap-2">
-                                <span className="font-semibold">{item.word}</span>
+                                <span className="font-english font-semibold">{item.word}</span>
                                 {item.status === 'passed'
                                   ? <CheckCircle2 className="size-4 text-primary" />
                                   : <AlertCircle className="size-4 text-destructive" />}
@@ -337,8 +441,22 @@ export function DictionaryPronunciationAuditDialog({
                             </TableCell>
                             <TableCell className="align-top">
                               <div className="flex flex-col gap-3">
-                                <AccentIpa label="UK" accent={item.uk} />
-                                <AccentIpa label="US" accent={item.us} />
+                                <AccentIpa
+                                  label="UK"
+                                  accent={item.uk}
+                                  disabled={isProcessing}
+                                  normalizing={processingAction === 'normalize-uk'}
+                                  onManualEdit={() => openManualEditor(item, 'uk')}
+                                  onNormalize={() => void normalizeAccent(item.word, 'uk')}
+                                />
+                                <AccentIpa
+                                  label="US"
+                                  accent={item.us}
+                                  disabled={isProcessing}
+                                  normalizing={processingAction === 'normalize-us'}
+                                  onManualEdit={() => openManualEditor(item, 'us')}
+                                  onNormalize={() => void normalizeAccent(item.word, 'us')}
+                                />
                               </div>
                             </TableCell>
                             <TableCell className="align-top"><SourcePair item={item} /></TableCell>
@@ -437,6 +555,72 @@ export function DictionaryPronunciationAuditDialog({
           </section>
         </div>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+
+      <Dialog
+        open={!!manualEditor}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen && !manualSaving) {
+            setManualEditor(null);
+            setManualValue('');
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              手动填写 {manualEditor?.type.toUpperCase()} 音标
+            </DialogTitle>
+            <DialogDescription>
+              为 <span className="font-english font-medium text-foreground">{manualEditor?.word}</span> 保存人工确认的宽式 IPA。
+              可以只输入音标内容，系统会自动补齐两侧斜杠。
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveManual();
+            }}
+          >
+            <Input
+              autoFocus
+              value={manualValue}
+              onChange={(event) => setManualValue(event.target.value)}
+              placeholder="例如：əˈbɒl.ɪʃ.mənt"
+              aria-label={`${manualEditor?.word ?? ''} ${manualEditor?.type.toUpperCase() ?? ''} 手动 IPA`}
+              disabled={manualSaving}
+              className="font-ipa"
+            />
+
+            <div className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
+              <span className="text-muted-foreground">保存预览：</span>{' '}
+              <code className="font-ipa text-foreground">{manualBody ? `/${manualBody}/` : '/.../'}</code>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setManualEditor(null);
+                  setManualValue('');
+                }}
+                disabled={manualSaving}
+              >
+                取消
+              </Button>
+              <Button type="submit" disabled={!manualBody || manualSaving}>
+                {manualSaving
+                  ? <Loader2 data-icon="inline-start" className="animate-spin" />
+                  : <Save data-icon="inline-start" />}
+                保存音标
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </TooltipProvider>
   );
 }

@@ -512,7 +512,7 @@ function VocabularyLookupPreview({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold">{mainEntry?.word}</span>
-          {phonetic && <span className="rounded-md bg-background px-2 py-0.5 font-mono text-xs text-muted-foreground">{phonetic}</span>}
+          {phonetic && <span className="rounded-md bg-background px-2 py-0.5 font-ipa text-xs text-muted-foreground">{phonetic}</span>}
           {firstMeaning && <Badge variant="outline" className="text-[10px]">{firstMeaning.partOfSpeech}</Badge>}
         </div>
         {audioUrl && (

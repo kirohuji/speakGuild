@@ -307,9 +307,9 @@ function VocabularyTab() {
               <tbody>
                 {data.items.map(v => (
                   <tr key={v.id} className="border-b border-border/40 last:border-0 hover:bg-muted/30">
-                    <td className="py-2.5 px-4 font-medium">{v.word}</td>
+                    <td className="py-2.5 px-4 font-english font-medium">{v.word}</td>
                     <td className="py-2.5 px-4 text-muted-foreground truncate max-w-[200px]">{v.meaning}</td>
-                    <td className="py-2.5 px-4 text-muted-foreground text-xs font-mono hidden md:table-cell">{v.phoneticUs || '-'}</td>
+                    <td className="hidden px-4 py-2.5 font-ipa text-xs text-muted-foreground md:table-cell">{v.phoneticUs || '-'}</td>
                     <td className="py-2.5 px-4 hidden lg:table-cell">
                       <Badge className={DIFFICULTY_COLORS[v.difficulty] ?? 'bg-muted text-muted-foreground'}>{v.difficulty}</Badge>
                     </td>
@@ -896,7 +896,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
           <div className="flex gap-2">
             <div className="flex-1">
               <Label htmlFor="v-word">单词 *</Label>
-              <Input id="v-word" value={form.word ?? ''} onChange={e => setForm({ ...form, word: e.target.value })} placeholder="dormitory" />
+              <Input id="v-word" value={form.word ?? ''} onChange={e => setForm({ ...form, word: e.target.value })} placeholder="dormitory" className="font-english" />
             </div>
             <div className="flex-1">
               <Label htmlFor="v-meaning">中文释义 *</Label>
@@ -906,8 +906,8 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
 
           {/* Phonetic US + Phonetic UK */}
           <div className="grid grid-cols-2 gap-3">
-            <div><Label htmlFor="v-phus">美式音标</Label><Input id="v-phus" value={form.phoneticUs ?? ''} onChange={e => setForm({ ...form, phoneticUs: e.target.value })} placeholder="/ˈdɔːrməˌtɔri/" /></div>
-            <div><Label htmlFor="v-phuk">英式音标</Label><Input id="v-phuk" value={form.phoneticUk ?? ''} onChange={e => setForm({ ...form, phoneticUk: e.target.value })} placeholder="/ˈdɔːmɪtri/" /></div>
+            <div><Label htmlFor="v-phus">美式音标</Label><Input id="v-phus" value={form.phoneticUs ?? ''} onChange={e => setForm({ ...form, phoneticUs: e.target.value })} placeholder="/ˈdɔːrməˌtɔri/" className="font-ipa" /></div>
+            <div><Label htmlFor="v-phuk">英式音标</Label><Input id="v-phuk" value={form.phoneticUk ?? ''} onChange={e => setForm({ ...form, phoneticUk: e.target.value })} placeholder="/ˈdɔːmɪtri/" className="font-ipa" /></div>
           </div>
 
           {/* US Audio + UK Audio */}
@@ -1033,9 +1033,9 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                           </span>
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm leading-relaxed">{d.def}</p>
+                          <p className="font-english text-sm leading-relaxed">{d.def}</p>
                           {d.inlineEg && (
-                            <p className="text-xs text-muted-foreground/50 italic mt-0.5 ml-0">
+                            <p className="ml-0 mt-0.5 font-english text-xs italic text-muted-foreground/50">
                               <span className="text-[10px] text-muted-foreground/30 not-italic mr-1">例</span>
                               {d.inlineEg}
                             </p>
@@ -1070,7 +1070,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                 );
               })()
             ) : (
-              <Textarea id="v-defen" value={form.definitionEn ?? ''} onChange={e => setForm({ ...form, definitionEn: e.target.value })} placeholder="A large bedroom for a number of people..." rows={2} />
+              <Textarea id="v-defen" value={form.definitionEn ?? ''} onChange={e => setForm({ ...form, definitionEn: e.target.value })} placeholder="A large bedroom for a number of people..." rows={2} className="font-english" />
             )}
           </div>
           <div>

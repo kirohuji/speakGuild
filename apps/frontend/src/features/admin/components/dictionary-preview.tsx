@@ -108,8 +108,8 @@ export function DictionaryPreview({ entry }: { entry: DictionaryEntry }) {
     <div className="divide-y">
       <div className="px-5 py-4">
         <div className="flex items-baseline gap-2 flex-wrap">
-          <h2 className="text-2xl font-bold tracking-tight">{entry.word}</h2>
-          <span className="text-sm text-muted-foreground font-mono">
+          <h2 className="font-english text-2xl font-bold tracking-tight">{entry.word}</h2>
+          <span className="font-ipa text-sm text-muted-foreground">
             {[ukPron?.ipa, usPron?.ipa].filter(Boolean).join('  ')}
           </span>
           <div className="flex items-center gap-1.5 ml-2">
@@ -125,14 +125,14 @@ export function DictionaryPreview({ entry }: { entry: DictionaryEntry }) {
           <div className="mt-2.5 flex items-baseline gap-2">
             <span className="text-xs font-medium text-muted-foreground/50 shrink-0">变形</span>
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              {entry.wordForms.map((f) => (<span key={f.word} className="inline-flex items-baseline gap-1.5"><span className="text-sm font-semibold text-foreground/80">{f.word}</span>{f.tags?.length > 0 && <span className="text-[11px] text-muted-foreground/45">{f.tags.join(', ')}</span>}</span>))}
+              {entry.wordForms.map((f) => (<span key={f.word} className="inline-flex items-baseline gap-1.5"><span className="font-english text-sm font-semibold text-foreground/80">{f.word}</span>{f.tags?.length > 0 && <span className="text-[11px] text-muted-foreground/45">{f.tags.join(', ')}</span>}</span>))}
             </div>
           </div>
         )}
         {entry.entrySynonyms?.length > 0 && (
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-xs font-medium text-muted-foreground/50 shrink-0">近义</span>
-            <p className="text-[13px] text-foreground/65 leading-relaxed">{entry.entrySynonyms.slice(0, 20).join(', ')}{entry.entrySynonyms.length > 20 && <span className="text-muted-foreground/30"> +{entry.entrySynonyms.length - 20}</span>}</p>
+            <p className="font-english text-[13px] leading-relaxed text-foreground/65">{entry.entrySynonyms.slice(0, 20).join(', ')}{entry.entrySynonyms.length > 20 && <span className="text-muted-foreground/30"> +{entry.entrySynonyms.length - 20}</span>}</p>
           </div>
         )}
       </div>
@@ -180,7 +180,7 @@ function SenseItem({ sense, index, word, showEn, onToggleEn, showDetails, onTogg
       <div className="flex items-start gap-2 py-1.5 -mx-1 px-1 rounded transition-colors hover:bg-muted/30">
         <span className="text-xs text-muted-foreground/40 tabular-nums min-w-[1.25rem] text-right select-none pt-0.5">{index}.</span>
         <span className="flex-1 min-w-0 inline-flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
-          {showEn && hasEn ? (<><span className="text-sm text-muted-foreground leading-snug">{cleanEn}</span>{enQuals.length > 0 && enQuals.map((q) => (<span key={q} className="inline-block text-[10px] px-1 py-0 rounded border border-border/60 text-muted-foreground/70 font-normal leading-tight">{q}</span>))}</>) : (<><span className="text-sm font-medium text-foreground leading-snug">{cleanZh || sense.definition.substring(0, 60)}</span>{zhQuals.length > 0 && zhQuals.map((q) => (<span key={q} className="inline-block text-[10px] px-1 py-0 rounded border border-border/60 text-muted-foreground/70 font-normal leading-tight">{q}</span>))}</>)}
+          {showEn && hasEn ? (<><span className="font-english text-sm leading-snug text-muted-foreground">{cleanEn}</span>{enQuals.length > 0 && enQuals.map((q) => (<span key={q} className="inline-block text-[10px] px-1 py-0 rounded border border-border/60 text-muted-foreground/70 font-normal leading-tight">{q}</span>))}</>) : (<><span className={cn('text-sm font-medium leading-snug text-foreground', !cleanZh && 'font-english')}>{cleanZh || sense.definition.substring(0, 60)}</span>{zhQuals.length > 0 && zhQuals.map((q) => (<span key={q} className="inline-block text-[10px] px-1 py-0 rounded border border-border/60 text-muted-foreground/70 font-normal leading-tight">{q}</span>))}</>)}
           {sense.frequency === 'uncommon' && (<span className="inline-block text-[10px] px-1 py-0 rounded bg-muted text-muted-foreground/50 font-normal leading-tight">不常用</span>)}
           {hasEn && (<button onClick={(e) => { e.stopPropagation(); onToggleEn(); }} className={cn('p-0.5 rounded transition-colors -my-0.5', showEn ? 'text-primary bg-primary/10' : 'text-muted-foreground/20 hover:text-muted-foreground/50')} title={showEn ? '看中文' : '看英文'}><Eye className="size-3.5" /></button>)}
           {hasDetails && (<button onClick={(e) => { e.stopPropagation(); onToggleDetails(); }} className={cn('p-0.5 rounded transition-colors -my-0.5', showDetails ? 'text-primary bg-primary/10' : 'text-muted-foreground/20 hover:text-muted-foreground/50')} title={showDetails ? '收起详情' : '展开详情'}><ChevronDown className={cn('size-3.5 transition-transform', showDetails && 'rotate-180')} /></button>)}
@@ -189,8 +189,8 @@ function SenseItem({ sense, index, word, showEn, onToggleEn, showDetails, onTogg
       </div>
       {hasDetails && showDetails && (
         <div className="ml-[2.25rem] mb-1.5 pl-4 border-l-2 border-border/30">
-          {sense.examples.length > 0 && (<div className="space-y-2">{sense.examples.map((ex, ei) => (<div key={ei} className="flex gap-2 items-start"><span className="text-[10px] text-muted-foreground/25 tabular-nums min-w-[1rem] text-right pt-0.5 select-none">{ei + 1}</span><div className="min-w-0"><p className="text-sm text-muted-foreground/70 italic leading-relaxed">{highlightWord(ex.en, word)}</p>{ex.zh && <p className="text-xs text-muted-foreground/60 mt-0.5">{highlightWord(ex.zh, word)}</p>}</div></div>))}</div>)}
-          {(sense.synonyms.length > 0 || sense.antonyms.length > 0) && (<div className="mt-2 mb-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground/45">{sense.synonyms.length > 0 && (<span><span className="font-medium">近</span> {sense.synonyms.slice(0, 5).join(' · ')}{sense.synonyms.length > 5 && <span className="text-muted-foreground/25"> +{sense.synonyms.length - 5}</span>}</span>)}{sense.antonyms.length > 0 && (<span><span className="font-medium">反</span> {sense.antonyms.slice(0, 5).join(' · ')}{sense.antonyms.length > 5 && <span className="text-muted-foreground/25"> +{sense.antonyms.length - 5}</span>}</span>)}</div>)}
+          {sense.examples.length > 0 && (<div className="space-y-2">{sense.examples.map((ex, ei) => (<div key={ei} className="flex gap-2 items-start"><span className="text-[10px] text-muted-foreground/25 tabular-nums min-w-[1rem] text-right pt-0.5 select-none">{ei + 1}</span><div className="min-w-0"><p className="font-english text-sm italic leading-relaxed text-muted-foreground/70">{highlightWord(ex.en, word)}</p>{ex.zh && <p className="text-xs text-muted-foreground/60 mt-0.5">{highlightWord(ex.zh, word)}</p>}</div></div>))}</div>)}
+          {(sense.synonyms.length > 0 || sense.antonyms.length > 0) && (<div className="mb-1 mt-2 flex flex-wrap gap-x-4 gap-y-0.5 font-english text-xs text-muted-foreground/45">{sense.synonyms.length > 0 && (<span><span className="font-medium">近</span> {sense.synonyms.slice(0, 5).join(' · ')}{sense.synonyms.length > 5 && <span className="text-muted-foreground/25"> +{sense.synonyms.length - 5}</span>}</span>)}{sense.antonyms.length > 0 && (<span><span className="font-medium">反</span> {sense.antonyms.slice(0, 5).join(' · ')}{sense.antonyms.length > 5 && <span className="text-muted-foreground/25"> +{sense.antonyms.length - 5}</span>}</span>)}</div>)}
         </div>
       )}
     </div>

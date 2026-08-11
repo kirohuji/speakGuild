@@ -36,6 +36,21 @@ export class RefreshPronunciationDto {
   scope: PronunciationScope = 'all';
 }
 
+export class ManualPronunciationDto {
+  @IsIn(['uk', 'us'])
+  type!: 'uk' | 'us';
+
+  @IsString()
+  @MaxLength(200)
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  ipa!: string;
+}
+
+export class NormalizePronunciationDto {
+  @IsIn(['uk', 'us'])
+  type!: 'uk' | 'us';
+}
+
 export class ClearPronunciationQueryDto {
   @IsIn(PRONUNCIATION_SCOPES)
   scope: PronunciationScope = 'all';

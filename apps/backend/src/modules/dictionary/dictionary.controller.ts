@@ -1,9 +1,11 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { DictionaryService } from './dictionary.service';
 import { requireAuthSession } from '../auth/session.util';
 import {
   ClearPronunciationQueryDto,
+  ManualPronunciationDto,
+  NormalizePronunciationDto,
   PronunciationAuditQueryDto,
   RefreshPronunciationDto,
 } from './dto/pronunciation-audit.dto';
@@ -55,6 +57,36 @@ export class DictionaryController {
       return { code: 403, message: 'Admin only', data: null };
     }
     const result = await this.dictionaryService.refreshPronunciation(word, dto.provider, dto.scope);
+    return { code: 200, message: 'success', data: result };
+  }
+
+  /** Admin: manually replace one accent's IPA while preserving its audio. */
+  @Put(':word/pronunciation/manual')
+  async saveManualPronunciation(
+    @Req() req: Request,
+    @Param('word') word: string,
+    @Body() dto: ManualPronunciationDto,
+  ) {
+    const session = await requireAuthSession(req);
+    if (session.user.role !== 'admin') {
+      return { code: 403, message: 'Admin only', data: null };
+    }
+    const result = await this.dictionaryService.saveManualPronunciation(word, dto.type, dto.ipa);
+    return { code: 200, message: 'success', data: result };
+  }
+
+  /** Admin: apply canonical broad-IPA formatting to one accent only. */
+  @Put(':word/pronunciation/normalize')
+  async normalizePronunciation(
+    @Req() req: Request,
+    @Param('word') word: string,
+    @Body() dto: NormalizePronunciationDto,
+  ) {
+    const session = await requireAuthSession(req);
+    if (session.user.role !== 'admin') {
+      return { code: 403, message: 'Admin only', data: null };
+    }
+    const result = await this.dictionaryService.normalizePronunciation(word, dto.type);
     return { code: 200, message: 'success', data: result };
   }
 

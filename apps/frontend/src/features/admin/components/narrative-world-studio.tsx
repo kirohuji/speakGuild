@@ -2944,9 +2944,9 @@ export function NarrativeWorldStudio({
                 </div>
                 {objectForm.resourceId && (
                   <div className="rounded-lg border bg-muted/30 p-3">
-                    <p className="font-medium">{objectForm.english}</p>
+                    <p className="font-english font-medium">{objectForm.english}</p>
                     <p className="text-sm text-muted-foreground">
-                      {objectForm.pronunciation} {objectForm.translation}
+                      <span className="font-ipa">{objectForm.pronunciation}</span>{' '}{objectForm.translation}
                     </p>
                     {objectForm.example && (
                       <p className="mt-2 text-xs">{objectForm.example}</p>
@@ -3480,10 +3480,10 @@ export function NarrativeWorldStudio({
                     <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700 dark:text-amber-300">
                       Tap · listen · remember
                     </p>
-                    <h2 className="mt-2 text-3xl font-black tracking-tight">
+                    <h2 className="mt-2 font-english text-3xl font-black tracking-tight">
                       {previewObject.english || previewObject.title}
                     </h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-1 font-ipa text-sm text-muted-foreground">
                       {previewObject.pronunciation}
                     </p>
                   </div>
@@ -4095,11 +4095,11 @@ function Inspector({
         <CardContent className="flex flex-col gap-2 p-3 pt-0">
           {object.interactionType === "learning" && (
             <div className="rounded-md border bg-muted/30 p-2">
-              <p className="font-medium">{object.english || "未绑定资源"}</p>
+              <p className="font-english font-medium">{object.english || "未绑定资源"}</p>
               <p className="text-xs text-muted-foreground">
-                {[object.pronunciation, object.translation]
-                  .filter(Boolean)
-                  .join(" · ")}
+                {object.pronunciation && <span className="font-ipa">{object.pronunciation}</span>}
+                {object.pronunciation && object.translation ? ' · ' : ''}
+                {object.translation}
               </p>
             </div>
           )}

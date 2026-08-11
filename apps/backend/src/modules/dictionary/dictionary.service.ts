@@ -4,7 +4,7 @@ import { DictionaryPipelineService } from './dictionary-pipeline.service';
 import { DictionaryClusteringService } from './dictionary-clustering.service';
 import type { CleanedPronunciation, SenseCluster } from './dictionary.types';
 import type { PronunciationProvider, PronunciationScope } from './dto/pronunciation-audit.dto';
-import { isStandardBroadIpa } from './dictionary-ipa.util';
+import { isCanonicalBroadIpa, isStandardBroadIpa, normalizeBroadIpa } from './dictionary-ipa.util';
 
 const PRONUNCIATION_AUDIT_PAGE_SIZE = 100;
 
@@ -274,6 +274,73 @@ export class DictionaryService {
     return this.toPronunciationAuditItem(updated);
   }
 
+  async saveManualPronunciation(word: string, type: 'uk' | 'us', value: string) {
+    const key = word.toLowerCase().trim();
+    const ipa = normalizeBroadIpa(value);
+    if (!ipa) throw new BadRequestException('请输入有效的宽式 IPA 音标');
+
+    const exists = await this.prisma.dictionaryEntry.findUnique({
+      where: { word: key },
+      select: { word: true, pronunciations: true },
+    });
+    if (!exists) throw new NotFoundException(`Word "${key}" not found`);
+
+    const existingPronunciations = Array.isArray(exists.pronunciations)
+      ? exists.pronunciations as unknown as CleanedPronunciation[]
+      : [];
+    const existingAccent = existingPronunciations.find((item) => item.type === type && item.isPreferred)
+      ?? existingPronunciations.find((item) => item.type === type);
+    const pronunciations: CleanedPronunciation[] = [
+      ...existingPronunciations.filter((item) => item.type !== type),
+      {
+        type,
+        ipa,
+        audioUrl: existingAccent?.audioUrl,
+        isPreferred: true,
+        notation: 'IPA',
+        source: '人工录入',
+      },
+    ];
+
+    const updated = await this.prisma.dictionaryEntry.update({
+      where: { word: key },
+      data: { pronunciations: pronunciations as any },
+      select: { word: true, sourceUrl: true, pronunciations: true },
+    });
+    return this.toPronunciationAuditItem(updated);
+  }
+
+  async normalizePronunciation(word: string, type: 'uk' | 'us') {
+    const key = word.toLowerCase().trim();
+    const exists = await this.prisma.dictionaryEntry.findUnique({
+      where: { word: key },
+      select: { word: true, sourceUrl: true, pronunciations: true },
+    });
+    if (!exists) throw new NotFoundException(`Word "${key}" not found`);
+
+    const existingPronunciations = Array.isArray(exists.pronunciations)
+      ? exists.pronunciations as unknown as CleanedPronunciation[]
+      : [];
+    const selected = existingPronunciations.find((item) => item.type === type && item.isPreferred)
+      ?? existingPronunciations.find((item) => item.type === type);
+    if (!selected) throw new BadRequestException(`该单词暂无 ${type.toUpperCase()} 音标`);
+    if (!normalizeBroadIpa(selected.ipa)) {
+      throw new BadRequestException(`该 ${type.toUpperCase()} 音标无法安全规范化，请手动填写`);
+    }
+
+    const pronunciations = existingPronunciations.map((item) => {
+      if (item.type !== type) return item;
+      const ipa = normalizeBroadIpa(item.ipa);
+      return ipa ? { ...item, ipa } : item;
+    });
+    const updated = await this.prisma.dictionaryEntry.update({
+      where: { word: key },
+      data: { pronunciations: pronunciations as any },
+      select: { word: true, sourceUrl: true, pronunciations: true },
+    });
+    return this.toPronunciationAuditItem(updated);
+  }
+
   private toPronunciationAuditItem(entry: {
     word: string;
     sourceUrl: string | null;
@@ -288,6 +355,7 @@ export class DictionaryService {
       if (!pronunciation) {
         return {
           ipa: null,
+          normalizedIpa: null,
           source: '—',
           audioUrl: null,
           hasAudio: false,
@@ -299,20 +367,25 @@ export class DictionaryService {
         };
       }
       const isIpa = isStandardIpa(pronunciation.ipa);
+      const isCanonical = isCanonicalBroadIpa(pronunciation.ipa);
       const hasPreferred = variants.some((item) => item.isPreferred);
       const source = pronunciation.source
         ?? (!hasPreferred ? '系统推导（旧数据）' : 'FreeDictionaryAPI / Wiktionary');
       const issues: string[] = [];
       if (!isIpa) issues.push('不是统一的 /.../ IPA 格式');
+      if (isIpa && !isCanonical) {
+        issues.push(`IPA 写法尚未规范化，可统一为 ${normalizeBroadIpa(pronunciation.ipa)}`);
+      }
       if (!hasPreferred) issues.push('缺少可验证的首选发音，疑似旧版推导');
       if (pronunciation.needsReview) issues.push('该来源可能包含算法估读，建议人工复核');
       return {
         ipa: pronunciation.ipa,
+        normalizedIpa: isIpa ? normalizeBroadIpa(pronunciation.ipa) : null,
         source,
         audioUrl: pronunciation.audioUrl ?? null,
         hasAudio: !!pronunciation.audioUrl,
         isIpa,
-        isTrusted: isIpa && hasPreferred && !pronunciation.needsReview,
+        isTrusted: isIpa && isCanonical && hasPreferred && !pronunciation.needsReview,
         aiConfidence: pronunciation.aiConfidence ?? null,
         aiReason: pronunciation.aiReason ?? null,
         issues,

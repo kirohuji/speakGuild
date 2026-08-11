@@ -1,4 +1,4 @@
-import { get, post } from '@/lib/request';
+import { get, post, put } from '@/lib/request';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -90,6 +90,7 @@ export type PronunciationScope = 'all' | 'uk' | 'us';
 
 export interface PronunciationAuditAccent {
   ipa: string | null;
+  normalizedIpa: string | null;
   source: string;
   audioUrl: string | null;
   hasAudio: boolean;
@@ -173,6 +174,23 @@ export async function refreshDictionaryPronunciation(
   scope: PronunciationScope,
 ): Promise<PronunciationAuditItem> {
   return post(`/dictionary/${encodeURIComponent(word)}/pronunciation/refresh`, { provider, scope });
+}
+
+/** Manually replace one accent's IPA. Slashes are optional. */
+export async function saveManualDictionaryPronunciation(
+  word: string,
+  type: 'uk' | 'us',
+  ipa: string,
+): Promise<PronunciationAuditItem> {
+  return put(`/dictionary/${encodeURIComponent(word)}/pronunciation/manual`, { type, ipa });
+}
+
+/** Apply canonical broad-IPA formatting to one accent without changing its source metadata. */
+export async function normalizeDictionaryPronunciation(
+  word: string,
+  type: 'uk' | 'us',
+): Promise<PronunciationAuditItem> {
+  return put(`/dictionary/${encodeURIComponent(word)}/pronunciation/normalize`, { type });
 }
 
 /** Clear only one word's pronunciation data. */
