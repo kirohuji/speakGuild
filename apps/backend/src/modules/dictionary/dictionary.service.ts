@@ -10,7 +10,7 @@ const PRONUNCIATION_AUDIT_PAGE_SIZE = 100;
 function isStandardIpa(value?: string): boolean {
   if (!value || !value.startsWith('/') || !value.endsWith('/') || /[\[\]]/.test(value)) return false;
   const inner = value.slice(1, -1);
-  return !!inner && /^[\p{Ll}\p{M}\u02b0-\u02ff.()‿-]+$/u.test(inner);
+  return !!inner && /^[\p{Ll}\p{M}\u02b0-\u02ff.()‿ -]+$/u.test(inner);
 }
 
 @Injectable()

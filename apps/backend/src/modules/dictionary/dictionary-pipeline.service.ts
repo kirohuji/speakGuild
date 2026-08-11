@@ -435,7 +435,10 @@ export class DictionaryPipelineService {
     preloadedSupporting?: CleanedPronunciation[],
     scope: PronunciationScope = 'all',
   ): Promise<CleanedPronunciation[]> {
-    const evidence = await this.pronunciationProviders.fetchWiktionaryEvidence(word);
+    const [evidence, phraseCandidates] = await Promise.all([
+      this.pronunciationProviders.fetchWiktionaryEvidence(word),
+      this.buildPhrasePronunciationCandidates(word),
+    ]);
     let supporting = preloadedSupporting;
     if (!supporting) {
       const supportingProviders: Array<Exclude<PronunciationProvider, 'auto' | 'ai_verify' | 'wiktionary'>> = [
@@ -450,6 +453,7 @@ export class DictionaryPipelineService {
         (response) => response.status === 'fulfilled' ? response.value : [],
       );
     }
+    supporting = [...supporting, ...phraseCandidates];
     const candidates: Array<{
       id: string;
       ipa: string;
@@ -461,12 +465,19 @@ export class DictionaryPipelineService {
       audioUrls: Partial<Record<'uk' | 'us', string>>;
       unlabelled: boolean;
     }> = [];
-    const seenCandidates = new Set<string>();
+    const candidatesByKey = new Map<string, (typeof candidates)[number]>();
     const addCandidate = (candidate: Omit<(typeof candidates)[number], 'id'>) => {
       const key = `${candidate.ipa}|${candidate.eligibleTypes.join(',')}|${candidate.source}`;
-      if (seenCandidates.has(key)) return;
-      seenCandidates.add(key);
-      candidates.push({ id: `c${candidates.length + 1}`, ...candidate });
+      const existing = candidatesByKey.get(key);
+      if (existing) {
+        existing.declaredTypes = [...new Set([...existing.declaredTypes, ...candidate.declaredTypes])];
+        existing.audioUrls = { ...existing.audioUrls, ...candidate.audioUrls };
+        existing.reliability = Math.max(existing.reliability, candidate.reliability);
+        return;
+      }
+      const added = { id: `c${candidates.length + 1}`, ...candidate };
+      candidates.push(added);
+      candidatesByKey.set(key, added);
     };
 
     for (const item of [...evidence.pronunciations, ...supporting]) {
@@ -559,6 +570,7 @@ Example shape:
   }
 
   private pronunciationSourceReliability(item: CleanedPronunciation): number {
+    if (item.source === 'Token-level Wiktionary composition') return 80;
     if (item.needsReview) return 50;
     if (item.source === 'Wiktionary Action API') return 100;
     if (item.source === 'FreeDictionaryAPI / Wiktionary') return 90;
@@ -567,17 +579,62 @@ Example shape:
   }
 
   private pronunciationSourceFamily(source?: string): string {
+    if (source === 'Token-level Wiktionary composition') return 'wiktionary';
     if (source?.includes('Wiktionary')) return 'wiktionary';
     if (source === 'dictionaryapi.dev') return 'dictionaryapi.dev';
     if (source === 'Datamuse / CMUdict') return 'cmudict';
     return source ?? 'unknown';
   }
 
+  private async buildPhrasePronunciationCandidates(word: string): Promise<CleanedPronunciation[]> {
+    const tokens = word.trim().split(/\s+/).filter(Boolean);
+    if (tokens.length < 2 || tokens.length > 5) return [];
+    if (!tokens.every((token) => /^[a-z]+(?:['’-][a-z]+)?$/i.test(token))) return [];
+
+    const responses = await Promise.allSettled(
+      tokens.map((token) => this.pronunciationProviders.fetchWiktionaryEvidence(token)),
+    );
+    if (responses.some((response) => response.status === 'rejected')) return [];
+    const tokenEvidence = responses.map(
+      (response) => (response as PromiseFulfilledResult<
+        Awaited<ReturnType<DictionaryPronunciationProviderService['fetchWiktionaryEvidence']>>
+      >).value,
+    );
+
+    const result: CleanedPronunciation[] = [];
+    for (const type of ['uk', 'us'] as const) {
+      const parts: string[] = [];
+      for (const evidence of tokenEvidence) {
+        const explicit = evidence.pronunciations.find((item) => item.type === type && item.isPreferred)
+          ?? evidence.pronunciations.find((item) => item.type === type);
+        const shared = evidence.ambiguousIpas.length === 1 ? evidence.ambiguousIpas[0] : undefined;
+        const ipa = explicit?.ipa ?? shared;
+        if (!ipa) {
+          parts.length = 0;
+          break;
+        }
+        parts.push(ipa.slice(1, -1));
+      }
+      if (parts.length !== tokens.length) continue;
+      const ipa = this.normalizeBroadIpa(`/${parts.join(' ')}/`);
+      if (!ipa) continue;
+      result.push({
+        type,
+        ipa,
+        isPreferred: true,
+        notation: 'IPA',
+        source: 'Token-level Wiktionary composition',
+        needsReview: true,
+      });
+    }
+    return result;
+  }
+
   private normalizeBroadIpa(value: string): string | null {
     const trimmed = value.trim();
     if (!trimmed || trimmed.startsWith('[') || trimmed.endsWith(']') || /[\[\]]/.test(trimmed)) return null;
-    const inner = trimmed.replace(/^\//, '').replace(/\/$/, '').replace(/\s+/g, '');
-    if (!inner || !/^[\p{Ll}\p{M}\u02b0-\u02ff.()‿-]+$/u.test(inner)) return null;
+    const inner = trimmed.replace(/^\//, '').replace(/\/$/, '').replace(/\s+/g, ' ');
+    if (!inner || !/^[\p{Ll}\p{M}\u02b0-\u02ff.()‿ -]+$/u.test(inner)) return null;
     return `/${inner}/`;
   }
 
