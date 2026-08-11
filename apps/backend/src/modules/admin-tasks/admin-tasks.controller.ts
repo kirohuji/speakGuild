@@ -42,6 +42,7 @@ export class AdminTasksController {
     @Req() req: Request,
     @Query('type') type?: string,
     @Query('status') status?: AdminTaskStatus,
+    @Query('statuses') statuses?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
@@ -49,6 +50,9 @@ export class AdminTasksController {
     return this.adminTasksService.list({
       type,
       status,
+      statuses: statuses
+        ? (statuses.split(',').map((s) => s.trim()).filter(Boolean) as AdminTaskStatus[])
+        : undefined,
       page: page ? Number(page) : 1,
       pageSize: pageSize ? Number(pageSize) : 20,
     });

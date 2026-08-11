@@ -86,10 +86,11 @@ export interface QueueJobsResult {
 }
 
 export const adminTasksApi = {
-  list: (params?: { type?: string; status?: AdminTaskStatus | 'all'; page?: number; pageSize?: number }) =>
+  list: (params?: { type?: string; status?: AdminTaskStatus | 'all' | 'active'; page?: number; pageSize?: number }) =>
     get<AdminTaskListResult>('/admin/tasks', {
       ...params,
-      status: params?.status === 'all' ? undefined : params?.status,
+      status: params?.status === 'all' || params?.status === 'active' ? undefined : params?.status,
+      statuses: params?.status === 'active' ? 'queued,running' : undefined,
     }),
 
   get: (id: string) => get<AdminTaskDetail>(`/admin/tasks/${id}`, undefined, { dedupe: false }),

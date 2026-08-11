@@ -963,6 +963,7 @@ export interface FileAssetDetail extends FileAssetItem {
     bizType: string
     bizId: string
     createdById: string | null
+    createdByName: string | null
     createdAt: string
   }[]
 }

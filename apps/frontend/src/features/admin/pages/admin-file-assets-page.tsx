@@ -463,7 +463,7 @@ export function AdminFileAssetsPage() {
 
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <HardDrive className="size-5" />
@@ -474,127 +474,139 @@ export function AdminFileAssetsPage() {
             </DialogDescription>
           </DialogHeader>
           {detailLoading ? (
-            <div className="space-y-3 py-4">
-              <Skeleton className="h-48 w-full" />
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-6 w-1/2" />
+            <div className="grid gap-5 lg:grid-cols-5">
+              <Skeleton className="h-64 lg:col-span-2" />
+              <div className="space-y-3 lg:col-span-3">
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-6 w-1/2" />
+                <Skeleton className="h-6 w-2/3" />
+                <Skeleton className="h-40 w-full" />
+              </div>
             </div>
           ) : detailAsset ? (
-            <div className="space-y-5">
-              {/* Preview */}
-              {detailAsset.previewUrl && (
-                <div className="rounded-lg border bg-muted/20 overflow-hidden">
-                  {detailAsset.mimeType.startsWith('image/') && (
-                    <img
-                      src={detailAsset.previewUrl}
-                      alt={detailAsset.filename}
-                      className="w-full max-h-64 object-contain"
-                    />
-                  )}
-                  {detailAsset.mimeType.startsWith('audio/') && (
-                    <div className="p-4">
-                      <audio controls className="w-full">
+            <div className="grid gap-5 lg:grid-cols-5">
+              {/* Left: preview */}
+              <div className="lg:col-span-2">
+                {detailAsset.previewUrl ? (
+                  <div className="overflow-hidden rounded-lg border bg-muted/20">
+                    {detailAsset.mimeType.startsWith('image/') && (
+                      <img
+                        src={detailAsset.previewUrl}
+                        alt={detailAsset.filename}
+                        className="w-full object-contain"
+                      />
+                    )}
+                    {detailAsset.mimeType.startsWith('audio/') && (
+                      <div className="flex min-h-40 items-center p-4">
+                        <audio controls className="w-full">
+                          <source src={detailAsset.previewUrl} type={detailAsset.mimeType} />
+                        </audio>
+                      </div>
+                    )}
+                    {detailAsset.mimeType.startsWith('video/') && (
+                      <video controls className="w-full">
                         <source src={detailAsset.previewUrl} type={detailAsset.mimeType} />
-                      </audio>
-                    </div>
-                  )}
-                  {detailAsset.mimeType.startsWith('video/') && (
-                    <video controls className="w-full max-h-64">
-                      <source src={detailAsset.previewUrl} type={detailAsset.mimeType} />
-                    </video>
-                  )}
-                </div>
-              )}
+                      </video>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex h-64 items-center justify-center rounded-lg border bg-muted/20">
+                    {(() => {
+                      const Icon = mimeIcon(detailAsset.mimeType)
+                      return <Icon className="size-14 text-muted-foreground/40" />
+                    })()}
+                  </div>
+                )}
+              </div>
 
-              {/* Info Grid */}
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              {/* Right: info + references */}
+              <div className="min-w-0 space-y-5 lg:col-span-3">
+                {/* Filename + group */}
                 <div>
-                  <span className="text-muted-foreground">文件名</span>
-                  <p className="font-medium truncate" title={detailAsset.filename}>{detailAsset.filename}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">分组</span>
-                  <p>
+                  <p className="truncate text-lg font-semibold" title={detailAsset.filename}>{detailAsset.filename}</p>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
                     <Badge className={cn('text-xs', GROUP_COLORS[detailAsset.group] || 'bg-slate-100 text-slate-700')}>
                       {GROUP_LABELS[detailAsset.group] || detailAsset.group}
                     </Badge>
-                  </p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">MIME 类型</span>
-                  <p className="font-mono text-xs">{detailAsset.mimeType}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">文件大小</span>
-                  <p>{formatSize(detailAsset.size)}</p>
-                </div>
-                <div className="col-span-2">
-                  <span className="text-muted-foreground">SHA256</span>
-                  <p className="font-mono text-xs break-all">{detailAsset.sha256}</p>
-                </div>
-                <div className="col-span-2">
-                  <span className="text-muted-foreground">COS Key</span>
-                  <p className="font-mono text-xs break-all text-muted-foreground">{detailAsset.cosKey}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">存储桶</span>
-                  <p className="text-xs">{detailAsset.bucket} · {detailAsset.region}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">引用数</span>
-                  <p className={detailAsset.referenceCount > 0 ? 'text-emerald-600 font-medium' : 'text-muted-foreground'}>
-                    {detailAsset.referenceCount}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">上传时间</span>
-                  <p className="text-xs">
-                    {new Date(detailAsset.createdAt).toLocaleString('zh-CN')}
-                  </p>
-                </div>
-              </div>
-
-              {/* References */}
-              {detailAsset.references.length > 0 && (
-                <>
-                  <Separator />
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">
-                      引用记录 ({detailAsset.references.length})
-                    </h4>
-                    <div className="max-h-40 overflow-y-auto rounded-md border">
-                      <table className="w-full text-xs">
-                        <thead className="bg-muted/30 sticky top-0">
-                          <tr>
-                            <th className="px-3 py-2 text-left font-medium">业务类型</th>
-                            <th className="px-3 py-2 text-left font-medium">业务 ID</th>
-                            <th className="px-3 py-2 text-left font-medium">用户</th>
-                            <th className="px-3 py-2 text-left font-medium">时间</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {detailAsset.references.map((ref) => (
-                            <tr key={ref.id} className="border-t">
-                              <td className="px-3 py-2 font-mono">{ref.bizType}</td>
-                              <td className="px-3 py-2 font-mono text-muted-foreground truncate max-w-[120px]" title={ref.bizId}>
-                                {ref.bizId}
-                              </td>
-                              <td className="px-3 py-2">
-                                {ref.createdById || 'system'}
-                              </td>
-                              <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
-                                {new Date(ref.createdAt).toLocaleString('zh-CN', {
-                                  month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
-                                })}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    <span className="font-mono text-xs text-muted-foreground">{detailAsset.mimeType}</span>
                   </div>
-                </>
-              )}
+                </div>
+
+                {/* Info Grid */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">文件大小</span>
+                    <p>{formatSize(detailAsset.size)}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">引用数</span>
+                    <p className={detailAsset.referenceCount > 0 ? 'font-medium text-emerald-600' : 'text-muted-foreground'}>
+                      {detailAsset.referenceCount}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">上传时间</span>
+                    <p className="text-xs">
+                      {new Date(detailAsset.createdAt).toLocaleString('zh-CN')}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">存储桶</span>
+                    <p className="text-xs">{detailAsset.bucket} · {detailAsset.region}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground">SHA256</span>
+                    <p className="break-all font-mono text-xs">{detailAsset.sha256}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground">COS Key</span>
+                    <p className="break-all font-mono text-xs text-muted-foreground">{detailAsset.cosKey}</p>
+                  </div>
+                </div>
+
+                {/* References */}
+                {detailAsset.references.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h4 className="mb-2 text-sm font-medium">
+                        引用记录 ({detailAsset.references.length})
+                      </h4>
+                      <div className="max-h-40 overflow-y-auto rounded-md border">
+                        <table className="w-full text-xs">
+                          <thead className="sticky top-0 bg-muted/30">
+                            <tr>
+                              <th className="px-3 py-2 text-left font-medium">业务</th>
+                              <th className="px-3 py-2 text-left font-medium">用户</th>
+                              <th className="px-3 py-2 text-left font-medium">时间</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {detailAsset.references.map((ref) => (
+                              <tr key={ref.id} className="border-t">
+                                <td className="px-3 py-2">
+                                  <p className="font-mono">{ref.bizType}</p>
+                                  <p className="max-w-[200px] truncate font-mono text-[10px] text-muted-foreground" title={ref.bizId}>
+                                    {ref.bizId}
+                                  </p>
+                                </td>
+                                <td className="px-3 py-2">
+                                  {ref.createdByName || ref.createdById || 'system'}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-2 text-muted-foreground">
+                                  {new Date(ref.createdAt).toLocaleString('zh-CN', {
+                                    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+                                  })}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           ) : null}
         </DialogContent>

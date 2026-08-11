@@ -3,14 +3,14 @@ import {
   Settings, Loader2, CheckCircle2, AlertCircle,
   ToggleLeft, Sliders, TrendingUp, Gauge,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/cn';
 import {
   getAllConfigs, bulkUpdateConfig,
@@ -80,8 +80,8 @@ function ConfigField({
         id={item.key}
         value={value}
         onChange={(e) => onChange(item.key, e.target.value)}
-        rows={t === 'json' ? 8 : 4}
-        className="min-h-[100px] font-mono text-sm"
+        rows={t === 'json' ? 5 : 3}
+        className="min-h-[80px] font-mono text-sm"
       />
     );
   }
@@ -174,7 +174,6 @@ export function AdminSettingsPage() {
   }
 
   const activeGroups = groups.filter((g) => grouped[g.key]?.length > 0);
-  const defaultTab = activeGroups[0]?.key || 'feature';
 
   return (
     <div className="space-y-6">
@@ -225,58 +224,73 @@ export function AdminSettingsPage() {
         </div>
       )}
 
-      {/* Tabs */}
-      <Tabs defaultValue={defaultTab}>
+      {/* 配置字典表格 —— 单 Tab，按分组分区 */}
+      <Tabs defaultValue="all">
         <TabsList className="w-full justify-start overflow-x-auto">
-          {activeGroups.map((g) => {
-            const Icon = g.icon;
-            return (
-              <TabsTrigger key={g.key} value={g.key} className="gap-1.5">
-                <Icon className="h-3.5 w-3.5" />
-                {g.label}
-              </TabsTrigger>
-            );
-          })}
+          <TabsTrigger value="all" className="gap-1.5">
+            <Settings className="h-3.5 w-3.5" />
+            全部配置
+          </TabsTrigger>
         </TabsList>
 
-        {activeGroups.map((g) => (
-          <TabsContent key={g.key} value={g.key} className="mt-4">
-            <Card className="shadow-none">
-              <CardHeader>
-                <CardTitle className="text-base">{g.label}</CardTitle>
-                <CardDescription>{g.desc}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-5">
-                {grouped[g.key]?.map((item, idx) => (
-                  <div key={item.key}>
-                    {idx > 0 && <Separator className="mb-5" />}
-                    <div className="space-y-2">
-                      <label
-                        htmlFor={item.key}
-                        className="block text-sm font-medium"
-                      >
-                        {item.label || item.key}
-                      </label>
-                      {item.description && (
-                        <p className="text-xs text-muted-foreground">{item.description}</p>
-                      )}
-                      <ConfigField
-                        item={item}
-                        value={getValue(item)}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-                ))}
-                {(!grouped[g.key] || grouped[g.key].length === 0) && (
-                  <p className="py-8 text-center text-sm text-muted-foreground">
-                    暂无配置项
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
+        <TabsContent value="all" className="mt-4">
+          <Card className="shadow-none">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-[240px] pl-4">配置项</TableHead>
+                    <TableHead>说明</TableHead>
+                    <TableHead className="w-[300px] pr-4">值</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activeGroups.map((g) => {
+                    const Icon = g.icon;
+                    const items = grouped[g.key] ?? [];
+                    return (
+                      <React.Fragment key={g.key}>
+                        {/* 分组标题行 */}
+                        <TableRow className="bg-muted/30 hover:bg-muted/30">
+                          <TableCell colSpan={3} className="px-4 py-2.5">
+                            <div className="flex items-center gap-2">
+                              <Icon className="size-4 shrink-0 text-muted-foreground" />
+                              <span className="text-sm font-medium">{g.label}</span>
+                              <span className="truncate text-xs text-muted-foreground">{g.desc}</span>
+                              <span className="ml-auto shrink-0 text-xs text-muted-foreground">{items.length} 项</span>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                        {items.length === 0 ? (
+                          <TableRow className="hover:bg-transparent">
+                            <TableCell colSpan={3} className="py-6 text-center text-sm text-muted-foreground">
+                              暂无配置项
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          items.map((item) => (
+                            <TableRow key={item.key}>
+                              <TableCell className="align-top pl-4">
+                                <p className="text-sm font-medium">{item.label || item.key}</p>
+                                <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{item.key}</p>
+                              </TableCell>
+                              <TableCell className="align-top">
+                                <p className="text-xs leading-5 text-muted-foreground">{item.description}</p>
+                              </TableCell>
+                              <TableCell className="align-top pr-4">
+                                <ConfigField item={item} value={getValue(item)} onChange={handleChange} />
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );

@@ -384,7 +384,7 @@ function SummaryPanel({ task }: { task: AdminTask }) {
 }
 
 export function AdminTasksPage() {
-  const [status, setStatus] = useState<AdminTaskStatus | 'all'>('all');
+  const [status, setStatus] = useState<AdminTaskStatus | 'all' | 'active'>('active');
   const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'warmup-pipeline-generate' | 'scene-topic-batch-generate' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'vocabulary-polish' | 'chunk-missing-meaning-enrich' | 'pattern-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
   const [items, setItems] = useState<AdminTask[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -554,7 +554,7 @@ export function AdminTasksPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">任务中心</h1>
-          <p className="text-sm text-muted-foreground">统一跟踪内容准备、词汇 AI 富化与后台视频渲染；可在这里查看日志、取消和重试。</p>
+          <p className="text-sm text-muted-foreground">跟踪内容准备、AI 富化与视频渲染任务，支持查看日志、取消与重试。</p>
         </div>
         <div className="flex items-center gap-2">
           <Select value={type} onChange={(event) => { setType(event.target.value as typeof type); setPage(1); }}>
@@ -570,16 +570,17 @@ export function AdminTasksPage() {
             <option value="narrative-video-render">叙事视频预览</option>
             <option value="warmup-pipeline-generate">知识点练习 AI 生成</option>
           </Select>
-          <Select value={status} onChange={(event) => { setStatus(event.target.value as AdminTaskStatus | 'all'); setPage(1); }}>
-            <option value="all">全部状态</option>
+          <Select value={status} onChange={(event) => { setStatus(event.target.value as AdminTaskStatus | 'all' | 'active'); setPage(1); }}>
+            <option value="active">进行中（执行中 + 排队中）</option>
+            <option value="all">全部历史记录</option>
             <option value="queued">排队中</option>
             <option value="running">执行中</option>
-            <option value="completed">已完成</option>
             <option value="failed">失败</option>
+            <option value="completed">已完成</option>
             <option value="canceled">已取消</option>
           </Select>
-          <Button variant="outline" onClick={() => void load()} disabled={loading}>
-            {loading ? <Loader2 className="mr-1 size-4 animate-spin" /> : <RefreshCw className="mr-1 size-4" />}
+          <Button variant="outline" onClick={() => { void load(); void loadQueuesStatus(); }} disabled={loading || queuesLoading}>
+            {loading || queuesLoading ? <Loader2 className="mr-1 size-4 animate-spin" /> : <RefreshCw className="mr-1 size-4" />}
             刷新
           </Button>
         </div>
@@ -591,63 +592,62 @@ export function AdminTasksPage() {
           <CardTitle className="flex items-center gap-2 text-base">
             {queuesLoading ? <Loader2 className="size-4 animate-spin" /> : <Layers3 className="size-4" />}
             队列状态
-            <Button variant="ghost" size="sm" className="ml-auto h-7 px-2" onClick={() => void loadQueuesStatus()}>
-              <RefreshCw className="size-3.5" />
-            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-4">
           {!queuesStatus ? (
             <p className="py-4 text-center text-xs text-muted-foreground">加载队列状态中...</p>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {queuesStatus.queues.map((q) => (
-                <div key={q.name} className="rounded-md border border-border p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-sm font-medium">{q.label}</span>
-                    <span className="text-[10px] text-muted-foreground font-mono">{q.name}</span>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {queuesStatus.queues.map((q) => {
+                const idle = q.active === 0 && q.waiting === 0 && q.delayed === 0 && q.failed === 0 && q.completed === 0;
+                return (
+                  <div key={q.name} className="rounded-md border border-border px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate text-sm font-medium">{q.label}</span>
+                      {idle ? (
+                        <span className="shrink-0 text-xs text-muted-foreground">空闲</span>
+                      ) : (
+                        <span className="flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs">
+                          {q.active > 0 && (
+                            <span className="flex items-center gap-1 text-blue-700">
+                              <Loader2 className="size-3 animate-spin" />执行 {q.active}
+                            </span>
+                          )}
+                          {q.waiting > 0 && (
+                            <span className="flex items-center gap-1 text-slate-600">
+                              <Clock3 className="size-3" />等待 {q.waiting}
+                            </span>
+                          )}
+                          {q.delayed > 0 && (
+                            <span className="flex items-center gap-1 text-amber-700">
+                              <Clock3 className="size-3" />延迟 {q.delayed}
+                            </span>
+                          )}
+                          {q.failed > 0 && (
+                            <span className="flex items-center gap-1 text-red-700">
+                              <AlertTriangle className="size-3" />失败 {q.failed}
+                            </span>
+                          )}
+                          {q.completed > 0 && (
+                            <span className="flex items-center gap-1 text-emerald-700">
+                              <CheckCircle2 className="size-3" />完成 {q.completed}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {q.active > 0 && (
-                      <Badge variant="outline" className="border-blue-300 bg-blue-50 text-blue-700 gap-1">
-                        <Loader2 className="size-3 animate-spin" />执行中 {q.active}
-                      </Badge>
-                    )}
-                    {q.waiting > 0 && (
-                      <Badge variant="outline" className="border-slate-300 text-slate-600 gap-1">
-                        <Clock3 className="size-3" />等待 {q.waiting}
-                      </Badge>
-                    )}
-                    {q.delayed > 0 && (
-                      <Badge variant="outline" className="border-amber-300 text-amber-700 gap-1">
-                        <Clock3 className="size-3" />延迟 {q.delayed}
-                      </Badge>
-                    )}
-                    {q.failed > 0 && (
-                      <Badge variant="outline" className="border-red-300 text-red-700 gap-1">
-                        <AlertTriangle className="size-3" />失败 {q.failed}
-                      </Badge>
-                    )}
-                    {q.completed > 0 && (
-                      <Badge variant="outline" className="border-emerald-300 text-emerald-700 gap-1">
-                        <CheckCircle2 className="size-3" />完成 {q.completed}
-                      </Badge>
-                    )}
-                    {q.active === 0 && q.waiting === 0 && q.delayed === 0 && q.failed === 0 && q.completed === 0 && (
-                      <span className="text-xs text-muted-foreground">空闲</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
           {queuesStatus && (
-            <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-              <span>总计</span>
+            <div className="mt-2 flex items-center justify-between border-t border-border/60 pt-2 text-xs text-muted-foreground">
+              <span>共 {queuesStatus.queues.length} 个队列</span>
               <span className="flex gap-3">
                 <span className="text-blue-600">执行 {queuesStatus.totalActive}</span>
                 <span>等待 {queuesStatus.totalWaiting}</span>
-                {queuesStatus.totalDelayed > 0 && <span className="text-amber-600">延迟 {queuesStatus.totalDelayed}</span>}
                 {queuesStatus.totalFailed > 0 && <span className="text-red-600">失败 {queuesStatus.totalFailed}</span>}
               </span>
             </div>
@@ -655,7 +655,7 @@ export function AdminTasksPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-3 xl:grid-cols-[340px_minmax(0,1fr)]">
+      <div className="grid gap-3 xl:grid-cols-[380px_minmax(0,1fr)]">
         {/* 任务列表 */}
         <Card>
           <CardHeader className="px-4 py-3">
@@ -672,7 +672,8 @@ export function AdminTasksPage() {
             ) : items.length === 0 ? (
               <div className="flex flex-col items-center py-16 text-center text-muted-foreground">
                 <Search className="mb-3 size-10 opacity-40" />
-                <p className="text-sm">暂无任务</p>
+                <p className="text-sm">{status === 'active' ? '暂无进行中的任务' : '暂无任务'}</p>
+                {status === 'active' && <p className="mt-1 text-xs text-muted-foreground/70">可在右上角切换到「全部历史记录」查看</p>}
               </div>
             ) : (
               <div className="divide-y divide-border">
@@ -684,31 +685,26 @@ export function AdminTasksPage() {
                       type="button"
                       onClick={() => setSelectedId(task.id)}
                       className={cn(
-                        'block w-full px-4 py-2 text-left transition-colors hover:bg-muted/50',
+                        'flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50',
                         selectedId === task.id && 'bg-muted',
                       )}
                     >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="truncate text-sm font-medium">{task.title}</span>
-                            <Badge variant="secondary" className="text-[10px]">{TYPE_LABELS[task.type] ?? task.type}</Badge>
-                            {errors.length > 0 && (
-                              <Badge variant="outline" className="border-red-300 text-[10px] text-red-700">
-                                {errors.length} 个失败项
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {fmtStep(task.currentStep)} · {task.processedItems}/{task.totalItems} · {fmtDate(task.createdAt)}
-                          </p>
+                      {/* 左栏：标题 + 类型 + 进度 */}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{task.title}</p>
+                        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                          {TYPE_LABELS[task.type] ?? task.type}
+                          {errors.length > 0 && <span className="ml-1.5 text-red-600">{errors.length} 个失败项</span>}
+                        </p>
+                        <div className="mt-2 flex items-center gap-2">
+                          <Progress value={task.progress} className="h-1.5 flex-1" />
+                          <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                            {task.processedItems}/{task.totalItems}
+                          </span>
                         </div>
-                        <StatusBadge status={task.status} />
                       </div>
-                      <div className="mt-2 flex items-center gap-3">
-                        <Progress value={task.progress} className="h-1.5 flex-1" />
-                        <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">{task.progress}%</span>
-                      </div>
+                      {/* 右栏：状态独立展示 */}
+                      <StatusBadge status={task.status} />
                     </button>
                   );
                 })}
@@ -799,10 +795,9 @@ export function AdminTasksPage() {
                       </div>
                       <Progress value={selected.progress} className="h-2" />
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <Metric label="成功" value={selected.successItems} tone="good" />
                       <Metric label="失败" value={selected.failedItems} tone={selected.failedItems ? 'bad' : 'muted'} />
-                      <Metric label="AI 调用" value={getAiUsage(selected)?.calls ?? 0} tone="muted" />
                     </div>
                     <div className="flex items-center justify-between border-t border-border/60 pt-2 text-xs text-muted-foreground">
                       <span>开始 {fmtDate(selected.startedAt)}</span>

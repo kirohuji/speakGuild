@@ -619,7 +619,7 @@ export function LearningPackageQualityDialog({ open, scene, onOpenChange, onAppl
           </div>
         ) : (
           <div className="grid h-full min-h-0 grid-cols-[300px_minmax(0,1fr)]">
-            <aside className="flex min-h-0 flex-col border-r bg-muted/20">
+            <aside className="flex min-h-0 min-w-0 flex-col border-r bg-muted/20">
               <div className="border-b px-5 py-4">
                 <div className="flex items-start gap-3">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -636,7 +636,7 @@ export function LearningPackageQualityDialog({ open, scene, onOpenChange, onAppl
                 <div className="flex flex-col gap-5 p-5">
                   <div className="rounded-xl border bg-background p-4">
                     <div className="flex items-end justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-xs text-muted-foreground">综合质量评分</p>
                         <p className="mt-1 text-4xl font-semibold tracking-tight">{scopedScore}<span className="text-base text-muted-foreground">/100</span></p>
                       </div>
@@ -705,8 +705,9 @@ export function LearningPackageQualityDialog({ open, scene, onOpenChange, onAppl
               </div>
             </aside>
 
-            <section className="flex min-h-0 flex-col">
-              <div className="flex items-center justify-between gap-4 border-b px-6 py-4">
+            <section className="flex min-h-0 min-w-0 flex-col">
+              {/* pr-14 为右上角 Dialog 关闭按钮让位，避免与操作按钮重叠 */}
+              <div className="flex items-center justify-between gap-4 border-b py-4 pl-6 pr-14">
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-lg font-semibold">质量审查报告</h3>
@@ -715,7 +716,7 @@ export function LearningPackageQualityDialog({ open, scene, onOpenChange, onAppl
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">只会应用已勾选且有明确前后差异的修改，跨话题复习不会被自动删除。</p>
                 </div>
-                <Button onClick={applySelected} disabled={applying || selectedProposals.size === 0}>
+                <Button onClick={applySelected} disabled={applying || selectedProposals.size === 0} className="shrink-0">
                   {applying ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <WandSparkles data-icon="inline-start" />}
                   应用所选修改 ({selectedProposals.size})
                 </Button>

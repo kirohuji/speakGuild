@@ -447,14 +447,18 @@ export class AdminTasksService {
 
     type?: string;
     status?: AdminTaskStatus;
+    statuses?: AdminTaskStatus[];
     page?: number;
     pageSize?: number;
   }) {
     const page = Math.max(1, params.page ?? 1);
     const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
+    const statusFilter = params.statuses?.length
+      ? { status: { in: params.statuses } }
+      : (params.status ? { status: params.status } : {});
     const where: Prisma.AdminTaskWhereInput = {
       ...(params.type ? { type: params.type } : {}),
-      ...(params.status ? { status: params.status } : {}),
+      ...statusFilter,
     };
     const [items, total] = await Promise.all([
       this.prisma.adminTask.findMany({

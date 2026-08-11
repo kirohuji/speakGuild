@@ -1979,7 +1979,6 @@ export function AdminScenesPage() {
   const [selectedCat, setSelectedCat] = useState<string | null>(null)
   const [selectedPackageType, setSelectedPackageType] = useState<PackageTypeFilter>('all')
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
-  const [detailSceneId, setDetailSceneId] = useState<string | null>(() => searchParams.get('sceneId'))
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
 
@@ -2028,10 +2027,8 @@ export function AdminScenesPage() {
   }
 
   useEffect(() => { load() }, [selectedCat, selectedPackageType])
-  useEffect(() => {
-    const linkedSceneId = searchParams.get('sceneId')
-    if (linkedSceneId && linkedSceneId !== detailSceneId) setDetailSceneId(linkedSceneId)
-  }, [searchParams, detailSceneId])
+  // 详情视图以 URL 的 sceneId 为唯一数据源，避免 state 与 URL 异步竞争导致返回后页面不切换
+  const detailSceneId = searchParams.get('sceneId')
   useEffect(() => { setPage(1) }, [selectedCat, selectedPackageType, selectedGroup])
   useEffect(() => {
     if (selectedCat && !categories.some((category) => category.id === selectedCat)) {
@@ -2057,7 +2054,6 @@ export function AdminScenesPage() {
     return (
       <div className="space-y-4">
         <SceneDetailView sceneId={detailSceneId} onBack={() => {
-          setDetailSceneId(null)
           const next = new URLSearchParams(searchParams)
           for (const key of ['sceneId', 'topicId', 'dialog', 'tab']) next.delete(key)
           setSearchParams(next, { replace: true })
@@ -2227,7 +2223,6 @@ export function AdminScenesPage() {
                       key={s.id}
                       className="cursor-pointer transition-colors hover:bg-muted/30"
                       onClick={() => {
-                        setDetailSceneId(s.id)
                         const next = new URLSearchParams(searchParams)
                         next.set('sceneId', s.id)
                         for (const key of ['topicId', 'dialog', 'tab']) next.delete(key)

@@ -159,12 +159,28 @@ export class AdminFileAssetsController {
       },
     });
 
+    // 批量查询创建者用户名（FileReference 未关联 User 表，按 id 补充）
+    const creatorIds = [...new Set(references.map((ref) => ref.createdById).filter((v): v is string => Boolean(v)))];
+    const creators = creatorIds.length
+      ? await this.prisma.user.findMany({
+          where: { id: { in: creatorIds } },
+          select: { id: true, name: true, username: true },
+        })
+      : [];
+    const creatorMap = new Map(creators.map((user) => [user.id, user]));
+
     const { _count, ...item } = asset;
     return {
       ...item,
       referenceCount: Object.values(_count).reduce((sum, count) => sum + count, 0),
       previewUrl,
-      references,
+      references: references.map((ref) => {
+        const creator = ref.createdById ? creatorMap.get(ref.createdById) : undefined;
+        return {
+          ...ref,
+          createdByName: creator ? creator.name || creator.username || null : null,
+        };
+      }),
     };
   }
 
