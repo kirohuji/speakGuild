@@ -37,9 +37,6 @@ jobs:
           echo "WHISPER_TIMEOUT_MS=${{ vars.WHISPER_TIMEOUT_MS || '300000' }}" >> /tmp/deploy.env
           echo "COS_REGION=${{ vars.COS_REGION || 'ap-shanghai' }}" >> /tmp/deploy.env
           echo "COS_PRIVATE_URL_EXPIRES_SECONDS=${{ vars.COS_PRIVATE_URL_EXPIRES_SECONDS || '3600' }}" >> /tmp/deploy.env
-          echo "FILE_CLEANUP_CRON=${{ vars.FILE_CLEANUP_CRON || '0 30 3 * * *' }}" >> /tmp/deploy.env
-          echo "FILE_CLEANUP_DAYS=${{ vars.FILE_CLEANUP_DAYS || '7' }}" >> /tmp/deploy.env
-          echo "FILE_CLEANUP_DRY_RUN=${{ vars.FILE_CLEANUP_DRY_RUN || 'false' }}" >> /tmp/deploy.env
           echo "ALIPAY_GATEWAY=${{ vars.ALIPAY_GATEWAY || 'https://openapi.alipay.com/gateway.do' }}" >> /tmp/deploy.env
           echo "ALIPAY_SIGN_TYPE=${{ vars.ALIPAY_SIGN_TYPE || 'RSA2' }}" >> /tmp/deploy.env
           echo "ALIPAY_KEY_TYPE=${{ vars.ALIPAY_KEY_TYPE || 'PKCS8' }}" >> /tmp/deploy.env
