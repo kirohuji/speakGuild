@@ -2,6 +2,11 @@ import { Body, Controller, Delete, Get, Param, Post, Query, Req } from '@nestjs/
 import type { Request } from 'express';
 import { DictionaryService } from './dictionary.service';
 import { requireAuthSession } from '../auth/session.util';
+import {
+  ClearPronunciationQueryDto,
+  PronunciationAuditQueryDto,
+  RefreshPronunciationDto,
+} from './dto/pronunciation-audit.dto';
 
 @Controller('dictionary')
 export class DictionaryController {
@@ -24,6 +29,47 @@ export class DictionaryController {
       page: page ? parseInt(page, 10) : 1,
       pageSize: pageSize ? parseInt(pageSize, 10) : 20,
     });
+    return { code: 200, message: 'success', data: result };
+  }
+
+  /** Admin: inspect 100 dictionary pronunciations at a time. */
+  @Get('pronunciation-audit')
+  async pronunciationAudit(@Req() req: Request, @Query() query: PronunciationAuditQueryDto) {
+    const session = await requireAuthSession(req);
+    if (session.user.role !== 'admin') {
+      return { code: 403, message: 'Admin only', data: null };
+    }
+    const result = await this.dictionaryService.pronunciationAudit(query);
+    return { code: 200, message: 'success', data: result };
+  }
+
+  /** Admin: replace a word's pronunciation data with one audited provider response. */
+  @Post(':word/pronunciation/refresh')
+  async refreshPronunciation(
+    @Req() req: Request,
+    @Param('word') word: string,
+    @Body() dto: RefreshPronunciationDto,
+  ) {
+    const session = await requireAuthSession(req);
+    if (session.user.role !== 'admin') {
+      return { code: 403, message: 'Admin only', data: null };
+    }
+    const result = await this.dictionaryService.refreshPronunciation(word, dto.provider, dto.scope);
+    return { code: 200, message: 'success', data: result };
+  }
+
+  /** Admin: clear only one word's pronunciation data. */
+  @Delete(':word/pronunciation')
+  async clearPronunciation(
+    @Req() req: Request,
+    @Param('word') word: string,
+    @Query() query: ClearPronunciationQueryDto,
+  ) {
+    const session = await requireAuthSession(req);
+    if (session.user.role !== 'admin') {
+      return { code: 403, message: 'Admin only', data: null };
+    }
+    const result = await this.dictionaryService.clearPronunciation(word, query.scope);
     return { code: 200, message: 'success', data: result };
   }
 

@@ -7,7 +7,7 @@ import { WarmupPipelineGenerateService } from '../jobs/warmup-pipeline-generate.
 import { SceneTopicBatchGenerateService } from '../jobs/scene-topic-batch-generate.service';
 import { FileAssetMaintenanceService } from '../../file-assets/file-asset-maintenance.service';
 
-@Processor(ADMIN_CONTENT_QUEUE, { concurrency: 1 })
+@Processor(ADMIN_CONTENT_QUEUE, { concurrency: 3 })
 export class ContentPrepareProcessor extends WorkerHost {
   constructor(
     private readonly contentPrepareService: ContentPrepareService,

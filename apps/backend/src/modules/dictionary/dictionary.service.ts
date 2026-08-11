@@ -1,8 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { DictionaryPipelineService } from './dictionary-pipeline.service';
 import { DictionaryClusteringService } from './dictionary-clustering.service';
-import type { SenseCluster } from './dictionary.types';
+import type { CleanedPronunciation, SenseCluster } from './dictionary.types';
+import type { PronunciationProvider, PronunciationScope } from './dto/pronunciation-audit.dto';
+
+const PRONUNCIATION_AUDIT_PAGE_SIZE = 100;
+
+function isStandardIpa(value?: string): boolean {
+  if (!value || !value.startsWith('/') || !value.endsWith('/') || /[\[\]]/.test(value)) return false;
+  const inner = value.slice(1, -1);
+  return !!inner && /^[\p{Ll}\p{M}\u02b0-\u02ff.()‿-]+$/u.test(inner);
+}
 
 @Injectable()
 export class DictionaryService {
@@ -169,6 +178,152 @@ export class DictionaryService {
       this.prisma.dictionaryEntry.count({ where }),
     ]);
     return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+  }
+
+  async pronunciationAudit(params?: { search?: string; page?: number }) {
+    const { search, page = 1 } = params ?? {};
+    const safePage = Math.max(1, page);
+    const where = search
+      ? { word: { contains: search.toLowerCase().trim(), mode: 'insensitive' as const } }
+      : {};
+    const [entries, total] = await Promise.all([
+      this.prisma.dictionaryEntry.findMany({
+        where,
+        select: { word: true, sourceUrl: true, pronunciations: true },
+        skip: (safePage - 1) * PRONUNCIATION_AUDIT_PAGE_SIZE,
+        take: PRONUNCIATION_AUDIT_PAGE_SIZE,
+        orderBy: { word: 'asc' },
+      }),
+      this.prisma.dictionaryEntry.count({ where }),
+    ]);
+    const items = entries.map((entry) => this.toPronunciationAuditItem(entry));
+    return {
+      items,
+      total,
+      page: safePage,
+      pageSize: PRONUNCIATION_AUDIT_PAGE_SIZE,
+      totalPages: Math.ceil(total / PRONUNCIATION_AUDIT_PAGE_SIZE),
+      pageStats: {
+        passed: items.filter((item) => item.status === 'passed').length,
+        attention: items.filter((item) => item.status === 'attention').length,
+        missing: items.filter((item) => item.status === 'missing').length,
+        withAudio: items.filter((item) => item.uk.hasAudio || item.us.hasAudio).length,
+      },
+    };
+  }
+
+  async refreshPronunciation(
+    word: string,
+    provider: PronunciationProvider,
+    scope: PronunciationScope = 'all',
+  ) {
+    const key = word.toLowerCase().trim();
+    const exists = await this.prisma.dictionaryEntry.findUnique({
+      where: { word: key },
+      select: { word: true, pronunciations: true },
+    });
+    if (!exists) throw new NotFoundException(`Word "${key}" not found`);
+
+    const fetchedPronunciations = await this.pipeline.fetchPronunciationsFromProvider(key, provider, scope);
+    const pronunciations = scope === 'all'
+      ? fetchedPronunciations
+      : fetchedPronunciations.filter((item) => item.type === scope);
+    if (pronunciations.length === 0) {
+      const scopeLabel = scope === 'all' ? 'UK 或 US' : scope.toUpperCase();
+      throw new BadRequestException(`${provider} 没有返回可确认的 ${scopeLabel} 标准 IPA 数据`);
+    }
+
+    const refreshedTypes = scope === 'all'
+      ? new Set<CleanedPronunciation['type']>(['uk', 'us'])
+      : new Set(pronunciations.map((item) => item.type));
+    const existingPronunciations = Array.isArray(exists.pronunciations)
+      ? exists.pronunciations as unknown as CleanedPronunciation[]
+      : [];
+    const mergedPronunciations = [
+      ...existingPronunciations.filter((item) => !refreshedTypes.has(item.type)),
+      ...pronunciations,
+    ];
+
+    const updated = await this.prisma.dictionaryEntry.update({
+      where: { word: key },
+      data: { pronunciations: mergedPronunciations as any },
+      select: { word: true, sourceUrl: true, pronunciations: true },
+    });
+    return this.toPronunciationAuditItem(updated);
+  }
+
+  async clearPronunciation(word: string, scope: PronunciationScope = 'all') {
+    const key = word.toLowerCase().trim();
+    const exists = await this.prisma.dictionaryEntry.findUnique({
+      where: { word: key },
+      select: { word: true, pronunciations: true },
+    });
+    if (!exists) throw new NotFoundException(`Word "${key}" not found`);
+
+    const existingPronunciations = Array.isArray(exists.pronunciations)
+      ? exists.pronunciations as unknown as CleanedPronunciation[]
+      : [];
+    const pronunciations = scope === 'all'
+      ? []
+      : existingPronunciations.filter((item) => item.type !== scope);
+
+    const updated = await this.prisma.dictionaryEntry.update({
+      where: { word: key },
+      data: { pronunciations: pronunciations as any },
+      select: { word: true, sourceUrl: true, pronunciations: true },
+    });
+    return this.toPronunciationAuditItem(updated);
+  }
+
+  private toPronunciationAuditItem(entry: {
+    word: string;
+    sourceUrl: string | null;
+    pronunciations: unknown;
+  }) {
+    const pronunciations = Array.isArray(entry.pronunciations)
+      ? entry.pronunciations as unknown as CleanedPronunciation[]
+      : [];
+    const buildAccent = (type: 'uk' | 'us') => {
+      const variants = pronunciations.filter((item) => item?.type === type);
+      const pronunciation = variants.find((item) => item.isPreferred) ?? variants[0];
+      if (!pronunciation) {
+        return {
+          ipa: null,
+          source: '—',
+          audioUrl: null,
+          hasAudio: false,
+          isIpa: false,
+          isTrusted: false,
+          aiConfidence: null,
+          aiReason: null,
+          issues: ['暂无该地区音标'],
+        };
+      }
+      const isIpa = isStandardIpa(pronunciation.ipa);
+      const hasPreferred = variants.some((item) => item.isPreferred);
+      const source = pronunciation.source
+        ?? (!hasPreferred ? '系统推导（旧数据）' : 'FreeDictionaryAPI / Wiktionary');
+      const issues: string[] = [];
+      if (!isIpa) issues.push('不是统一的 /.../ IPA 格式');
+      if (!hasPreferred) issues.push('缺少可验证的首选发音，疑似旧版推导');
+      if (pronunciation.needsReview) issues.push('该来源可能包含算法估读，建议人工复核');
+      return {
+        ipa: pronunciation.ipa,
+        source,
+        audioUrl: pronunciation.audioUrl ?? null,
+        hasAudio: !!pronunciation.audioUrl,
+        isIpa,
+        isTrusted: isIpa && hasPreferred && !pronunciation.needsReview,
+        aiConfidence: pronunciation.aiConfidence ?? null,
+        aiReason: pronunciation.aiReason ?? null,
+        issues,
+      };
+    };
+    const uk = buildAccent('uk');
+    const us = buildAccent('us');
+    const missing = !uk.ipa || !us.ipa;
+    const status = missing ? 'missing' : uk.isTrusted && us.isTrusted ? 'passed' : 'attention';
+    return { word: entry.word, sourceUrl: entry.sourceUrl, uk, us, status };
   }
 
   // ════════════════════════════════════════════════════════════

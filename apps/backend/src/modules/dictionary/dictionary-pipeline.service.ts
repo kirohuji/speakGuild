@@ -14,6 +14,8 @@ import type {
   AiReviewMeta,
   NormalizedPOS,
 } from './dictionary.types';
+import type { PronunciationProvider, PronunciationScope } from './dto/pronunciation-audit.dto';
+import { DictionaryPronunciationProviderService } from './dictionary-pronunciation-provider.service';
 
 // ──── Utility ────
 
@@ -43,6 +45,8 @@ const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // ──── Constants ────
 
 const FREEDICT_BASE = 'https://freedictionaryapi.com/api/v1/entries';
+const DICTIONARY_API_DEV_BASE = 'https://api.dictionaryapi.dev/api/v2/entries/en';
+const AI_PRONUNCIATION_MIN_CONFIDENCE = 0.85;
 const MAX_SENSES = 20;
 const MAX_EXAMPLES_PER_SENSE = 3;
 const EXAMPLE_MAX_LENGTH = 200;
@@ -111,7 +115,10 @@ export interface LlmUsage {
 export class DictionaryPipelineService {
   private readonly logger = new Logger(DictionaryPipelineService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly pronunciationProviders: DictionaryPronunciationProviderService,
+  ) {}
 
   // ════════════════════════════════════════════════════════════
   // Stage 0: Fetch
@@ -268,48 +275,30 @@ export class DictionaryPipelineService {
 
     for (const entry of raw.entries) {
       for (const p of entry.pronunciations ?? []) {
-        if (!p.text) continue;
-        // Classify UK/US — check tags first (FreeDictionaryAPI uses tags for region)
-        let type: 'uk' | 'us' = 'us';
+        if (!p.text || p.type?.toLowerCase() !== 'ipa') continue;
         const tagsLower = (p.tags ?? []).map((t) => t.toLowerCase());
-        const allText = [...tagsLower, (p.type ?? '').toLowerCase()].join(' ');
+        const hasNonStandardRegion = tagsLower.some((tag) =>
+          /scotland|wales|austral|new zealand|canada|south africa|southern us|northumbria/.test(tag),
+        );
+        const type: 'uk' | 'us' | null = hasNonStandardRegion
+          ? null
+          : tagsLower.some((tag) => tag === 'received pronunciation' || tag === 'rp' || tag === 'standard british')
+            ? 'uk'
+            : tagsLower.some((tag) => tag === 'general american' || tag === 'ga' || tag === 'us')
+              ? 'us'
+              : null;
+        if (!type) continue;
 
-        // Tag-based: "Received Pronunciation" / "RP" → UK, "General American" / "GA" → US
-        if (
-          allText.includes('received pronunciation') ||
-          allText.includes(' rp ') ||
-          allText.includes('uk') ||
-          allText.includes('gb') ||
-          allText.includes('british')
-        ) {
-          type = 'uk';
-        } else if (
-          allText.includes('general american') ||
-          allText.includes(' ga ') ||
-          allText.includes('us') ||
-          allText.includes('american')
-        ) {
-          type = 'us';
-        } else {
-          // Fallback: IPA pattern heuristics
-          if (p.text.includes('ɑː') || p.text.includes('ɒ') || p.text.includes('əʊ')) {
-            type = 'uk';
-          } else if (p.text.includes('ɝ') || p.text.includes('ɚ')) {
-            type = 'us';
-          }
-        }
+        const ipa = this.normalizeBroadIpa(p.text);
+        if (!ipa) continue;
 
-        // Normalize IPA
-        let ipa = p.text.replace(/\s+/g, '').replace(/\/$/, '').replace(/^\//, '');
-        // Convert /r/ to /ɹ/ for consistency
-        ipa = ipa.replace(/\/r\//g, '/ɹ/').replace(/(?<![ɹ])r(?![a-z])/g, 'ɹ');
-
-        // Extract audio URL from tags (some providers put audio URLs in tags)
-        let audioUrl: string | undefined;
-        const audioTag = p.tags?.find((t) => t.startsWith('http') && t.includes('audio'));
-        if (audioTag) audioUrl = audioTag;
-
-        all.push({ type, ipa: `/${ipa}/`, audioUrl, isPreferred: false });
+        all.push({
+          type,
+          ipa,
+          isPreferred: false,
+          notation: 'IPA',
+          source: 'FreeDictionaryAPI / Wiktionary',
+        });
       }
     }
 
@@ -340,17 +329,269 @@ export class DictionaryPipelineService {
       }
     }
 
-    // Fill missing: if UK missing but US present, derive from US
-    if (uk.length === 0 && us.length > 0) {
-      const usIPA = us[0].ipa.replace(/ɝ/g, 'ɜː').replace(/ɚ/g, 'ə');
-      result.push({ type: 'uk', ipa: usIPA, audioUrl: us[0].audioUrl, isPreferred: false });
+    return result;
+  }
+
+  async fetchPronunciationsFromProvider(
+    word: string,
+    provider: PronunciationProvider,
+    scope: PronunciationScope = 'all',
+  ): Promise<CleanedPronunciation[]> {
+    if (provider === 'auto') {
+      const orderedProviders: Exclude<PronunciationProvider, 'auto'>[] = [
+        'wiktionary',
+        'freedictionaryapi',
+        'dictionaryapi.dev',
+        'datamuse',
+      ];
+      const responses = await Promise.allSettled(
+        orderedProviders.map((item) => this.fetchPronunciationsFromProvider(word, item)),
+      );
+      const combined = responses.flatMap((response, index) => {
+        if (response.status === 'fulfilled') return response.value;
+        this.logger.warn(`${orderedProviders[index]} pronunciation lookup failed: ${response.reason}`);
+        return [];
+      });
+      if (scope === 'all') {
+        return this.fetchAiEvaluatedPronunciations(word, combined, scope);
+      }
+
+      const selected = this.selectPreferredPronunciations(combined);
+      if (selected.some((item) => item.type === scope)) return selected;
+
+      try {
+        const aiConfirmed = await this.fetchAiEvaluatedPronunciations(word, combined, scope);
+        return this.selectPreferredPronunciations([...selected, ...aiConfirmed]);
+      } catch (error: any) {
+        this.logger.warn(`AI pronunciation verification failed: ${error.message}`);
+        return selected;
+      }
     }
-    if (us.length === 0 && uk.length > 0) {
-      const ukIPA = uk[0].ipa.replace(/ɑː/g, 'æ').replace(/ɒ/g, 'ɑ');
-      result.push({ type: 'us', ipa: ukIPA, audioUrl: uk[0].audioUrl, isPreferred: false });
+
+    if (provider === 'wiktionary') {
+      return this.pronunciationProviders.fetchWiktionary(word);
+    }
+
+    if (provider === 'datamuse') {
+      return this.pronunciationProviders.fetchDatamuse(word);
+    }
+
+    if (provider === 'ai_verify') {
+      return this.fetchAiEvaluatedPronunciations(word, undefined, scope);
+    }
+
+    if (provider === 'freedictionaryapi') {
+      const raw = await this.fetchRawEntry(word);
+      return raw ? this.normalizePronunciations(raw) : [];
+    }
+
+    const response = await fetch(`${DICTIONARY_API_DEV_BASE}/${encodeURIComponent(word.toLowerCase().trim())}`);
+    if (response.status === 404) return [];
+    if (!response.ok) throw new Error(`dictionaryapi.dev returned ${response.status}`);
+
+    const entries = await response.json() as Array<{
+      phonetics?: Array<{ text?: string; audio?: string }>;
+    }>;
+    const collected: CleanedPronunciation[] = [];
+
+    for (const entry of entries) {
+      for (const pronunciation of entry.phonetics ?? []) {
+        const ipa = this.normalizeBroadIpa(pronunciation.text ?? '');
+        const audioUrl = this.normalizeExternalAudioUrl(pronunciation.audio);
+        const type = this.detectDictionaryApiDevRegion(audioUrl);
+        if (!ipa || !type) continue;
+        collected.push({
+          type,
+          ipa,
+          audioUrl,
+          isPreferred: false,
+          notation: 'IPA',
+          source: 'dictionaryapi.dev',
+        });
+      }
+    }
+
+    return this.selectPreferredPronunciations(collected);
+  }
+
+  private selectPreferredPronunciations(collected: CleanedPronunciation[]): CleanedPronunciation[] {
+    const result: CleanedPronunciation[] = [];
+    for (const type of ['uk', 'us'] as const) {
+      const variants = collected.filter((item) => item.type === type);
+      const preferred = variants.find((item) => item.audioUrl) ?? variants[0];
+      if (!preferred) continue;
+      result.push({ ...preferred, isPreferred: true });
+      for (const variant of variants) {
+        if (variant !== preferred && !result.some((item) => item.type === type && item.ipa === variant.ipa)) {
+          result.push({ ...variant, isPreferred: false });
+        }
+      }
+    }
+    return result;
+  }
+
+  private async fetchAiEvaluatedPronunciations(
+    word: string,
+    preloadedSupporting?: CleanedPronunciation[],
+    scope: PronunciationScope = 'all',
+  ): Promise<CleanedPronunciation[]> {
+    const evidence = await this.pronunciationProviders.fetchWiktionaryEvidence(word);
+    let supporting = preloadedSupporting;
+    if (!supporting) {
+      const supportingProviders: Array<Exclude<PronunciationProvider, 'auto' | 'ai_verify' | 'wiktionary'>> = [
+        'freedictionaryapi',
+        'dictionaryapi.dev',
+        'datamuse',
+      ];
+      const supportingResponses = await Promise.allSettled(
+        supportingProviders.map((provider) => this.fetchPronunciationsFromProvider(word, provider)),
+      );
+      supporting = supportingResponses.flatMap(
+        (response) => response.status === 'fulfilled' ? response.value : [],
+      );
+    }
+    const candidates: Array<{
+      id: string;
+      ipa: string;
+      eligibleTypes: Array<'uk' | 'us'>;
+      declaredTypes: Array<'uk' | 'us'>;
+      source: string;
+      sourceFamily: string;
+      reliability: number;
+      audioUrls: Partial<Record<'uk' | 'us', string>>;
+      unlabelled: boolean;
+    }> = [];
+    const seenCandidates = new Set<string>();
+    const addCandidate = (candidate: Omit<(typeof candidates)[number], 'id'>) => {
+      const key = `${candidate.ipa}|${candidate.eligibleTypes.join(',')}|${candidate.source}`;
+      if (seenCandidates.has(key)) return;
+      seenCandidates.add(key);
+      candidates.push({ id: `c${candidates.length + 1}`, ...candidate });
+    };
+
+    for (const item of [...evidence.pronunciations, ...supporting]) {
+      addCandidate({
+        ipa: item.ipa,
+        eligibleTypes: ['uk', 'us'],
+        declaredTypes: [item.type],
+        source: item.source ?? 'unknown',
+        sourceFamily: this.pronunciationSourceFamily(item.source),
+        reliability: this.pronunciationSourceReliability(item),
+        audioUrls: item.source === 'Wiktionary Action API'
+          ? { ...evidence.audioUrls, ...(item.audioUrl ? { [item.type]: item.audioUrl } : {}) }
+          : item.audioUrl ? { [item.type]: item.audioUrl } : {},
+        unlabelled: false,
+      });
+    }
+    for (const ipa of evidence.ambiguousIpas) {
+      addCandidate({
+        ipa,
+        eligibleTypes: ['uk', 'us'],
+        declaredTypes: [],
+        source: 'Wiktionary unlabelled IPA',
+        sourceFamily: 'wiktionary',
+        reliability: 70,
+        audioUrls: evidence.audioUrls,
+        unlabelled: true,
+      });
+    }
+    if (candidates.length === 0) return [];
+
+    const provider = this.getDeepSeekProvider();
+    const { text } = await generateText({
+      model: provider('deepseek-chat'),
+      prompt: `You are a conservative English pronunciation evidence evaluator.
+
+Select the best existing candidate separately for standard British English (UK/RP) and standard American English (US/General American).
+
+Rules:
+1. Return candidate IDs only. Never generate, rewrite, or normalize IPA.
+2. A candidate may be selected only for a type listed in eligibleTypes. declaredTypes records which accents the source explicitly labels; it is evidence, not a hard restriction.
+3. Use both the supplied evidence and your established lexical knowledge of standard UK/RP and US/General American pronunciation.
+4. A region-labelled IPA may also be selected for the other accent only when you independently know that exact broad transcription is standard for both accents. An unlabelled Wiktionary IPA may likewise be selected for UK, US, or both. Missing region labels are absence of metadata, not negative evidence. Many words legitimately have identical UK and US broad IPA.
+5. An audio accent label alone does not prove the IPA accent, but it is supporting evidence. Do not lower confidence solely because Wiktionary stores one shared IPA instead of separate UK/US records.
+6. Prefer explicit region labels, agreement between independent sourceFamily values, standard broad IPA, reliable lexical sources, and well-established lexical knowledge. Multiple records from the same sourceFamily are not independent confirmation. reliability is a prior score, not proof.
+7. Datamuse may be algorithmically estimated and requires corroboration.
+8. Exclude non-standard regional varieties. If genuinely uncertain, return null for that accent. Never guess.
+
+Evidence:
+${JSON.stringify({ word, requestedScope: scope, candidates })}
+
+Return ONLY JSON. Each accent must be either null or an object with candidateId, confidence, and reason.
+Example shape:
+{"uk":null,"us":{"candidateId":"c2","confidence":0.95,"reason":"short explanation"}}`,
+      temperature: 0,
+      maxOutputTokens: 300,
+    });
+
+    const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    this.logger.debug(`AI pronunciation evaluation for "${word}": ${cleaned}`);
+    const parsed = JSON.parse(cleaned) as Partial<Record<'uk' | 'us', {
+      candidateId?: string | null;
+      confidence?: number;
+      reason?: string;
+    } | null>>;
+    const requestedTypes: Array<'uk' | 'us'> = scope === 'all' ? ['uk', 'us'] : [scope];
+    const result: CleanedPronunciation[] = [];
+
+    for (const type of requestedTypes) {
+      const choice = parsed[type];
+      if (!choice?.candidateId || Number(choice.confidence) < AI_PRONUNCIATION_MIN_CONFIDENCE) continue;
+      const candidate = candidates.find((item) => item.id === choice.candidateId);
+      if (!candidate || !candidate.eligibleTypes.includes(type)) continue;
+      const ipa = this.normalizeBroadIpa(candidate.ipa);
+      if (!ipa || ipa !== candidate.ipa) continue;
+      const matchingAudio = candidate.audioUrls[type]
+        ?? candidates.find((item) => item.ipa === ipa && item.audioUrls[type])?.audioUrls[type];
+      result.push({
+        type,
+        ipa,
+        audioUrl: matchingAudio,
+        isPreferred: true,
+        notation: 'IPA',
+        source: `AI selected / ${candidate.source}`,
+        aiConfidence: Number(choice.confidence),
+        aiReason: typeof choice.reason === 'string' ? choice.reason.slice(0, 200) : undefined,
+      });
     }
 
     return result;
+  }
+
+  private pronunciationSourceReliability(item: CleanedPronunciation): number {
+    if (item.needsReview) return 50;
+    if (item.source === 'Wiktionary Action API') return 100;
+    if (item.source === 'FreeDictionaryAPI / Wiktionary') return 90;
+    if (item.source === 'dictionaryapi.dev') return 75;
+    return 60;
+  }
+
+  private pronunciationSourceFamily(source?: string): string {
+    if (source?.includes('Wiktionary')) return 'wiktionary';
+    if (source === 'dictionaryapi.dev') return 'dictionaryapi.dev';
+    if (source === 'Datamuse / CMUdict') return 'cmudict';
+    return source ?? 'unknown';
+  }
+
+  private normalizeBroadIpa(value: string): string | null {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.startsWith('[') || trimmed.endsWith(']') || /[\[\]]/.test(trimmed)) return null;
+    const inner = trimmed.replace(/^\//, '').replace(/\/$/, '').replace(/\s+/g, '');
+    if (!inner || !/^[\p{Ll}\p{M}\u02b0-\u02ff.()‿-]+$/u.test(inner)) return null;
+    return `/${inner}/`;
+  }
+
+  private normalizeExternalAudioUrl(value?: string): string | undefined {
+    if (!value) return undefined;
+    return value.startsWith('//') ? `https:${value}` : value;
+  }
+
+  private detectDictionaryApiDevRegion(audioUrl?: string): 'uk' | 'us' | null {
+    if (!audioUrl) return null;
+    const url = audioUrl.toLowerCase();
+    if (/_gb_|[-_/]gb[-_/.]|[-_/]uk[-_/.]/.test(url)) return 'uk';
+    if (/_us_|[-_/]us[-_/.]/.test(url)) return 'us';
+    return null;
   }
 
   // ════════════════════════════════════════════════════════════

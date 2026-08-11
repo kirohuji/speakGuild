@@ -25,6 +25,22 @@ import {
   CreateSentencePatternDto, UpdateSentencePatternDto,
 } from './dto/content-library.dto';
 import { requireAuthSession } from '../auth/session.util';
+
+/** 统计训练话题 pipeline 中的练习题数（与 warmup-pipeline-generate.service 口径一致） */
+function countPipelineExercises(pipeline: any[] | undefined): number {
+  if (!Array.isArray(pipeline)) return 0;
+  return pipeline.reduce((sum, item: any) => {
+    if (item?.type === 'sentence_decomposition') {
+      return sum + (Array.isArray(item.levels) ? item.levels.length : 0);
+    }
+    if (item?.type === 'vocab_sentence_building') {
+      return sum + (Array.isArray(item.patterns)
+        ? item.patterns.reduce((inner: number, pattern: any) => inner + (Array.isArray(pattern?.items) ? pattern.items.length : 0), 0)
+        : 0);
+    }
+    return sum + (Array.isArray(item?.items) ? item.items.length : 0);
+  }, 0);
+}
 import { EnglishPracticeAiService } from '../practice-ai/english-practice-ai.service';
 import { DialogueTurnJudgeDto } from '../practice-ai/dto/english-feedback.dto';
 import { DictionaryService } from '../dictionary/dictionary.service';
@@ -233,13 +249,54 @@ export class ContentAdminController {
     if (categoryId) where.categoryId = categoryId;
     if (packageType) where.packageType = packageType;
     else if (excludePackageType) where.packageType = { not: excludePackageType };
-    return this.prisma.scene.findMany({
+    const scenes = await this.prisma.scene.findMany({
       where,
       orderBy: { createdAt: 'asc' },
       include: {
         category: { select: { id: true, name: true } },
         _count: { select: { trainingTopics: true, storyEpisodes: true } },
       },
+    });
+    if (scenes.length === 0) return scenes;
+
+    // 内容量统计：词汇/句块/句型按包内去重，练习题数按 pipeline 口径（与 warmup-pipeline-generate 一致）
+    const topicRows = await this.prisma.trainingTopic.findMany({
+      where: { sceneId: { in: scenes.map((s) => s.id) } },
+      select: {
+        sceneId: true,
+        metadata: true,
+        topicVocabs: { select: { vocabId: true } },
+        activeChunks: { select: { chunkId: true } },
+        topicPatterns: { select: { patternId: true } },
+      },
+    });
+
+    const statsMap = new Map<string, { vocabs: Set<string>; chunks: Set<string>; patterns: Set<string>; exercises: number }>();
+    for (const row of topicRows) {
+      let entry = statsMap.get(row.sceneId);
+      if (!entry) {
+        entry = { vocabs: new Set(), chunks: new Set(), patterns: new Set(), exercises: 0 };
+        statsMap.set(row.sceneId, entry);
+      }
+      for (const v of row.topicVocabs) entry.vocabs.add(v.vocabId);
+      for (const c of row.activeChunks) entry.chunks.add(c.chunkId);
+      for (const p of row.topicPatterns) entry.patterns.add(p.patternId);
+      entry.exercises += countPipelineExercises((row.metadata as any)?.outputTraining?.pipeline);
+    }
+
+    return scenes.map((scene) => {
+      const entry = statsMap.get(scene.id);
+      return {
+        ...scene,
+        contentStats: entry
+          ? {
+              vocabCount: entry.vocabs.size,
+              chunkCount: entry.chunks.size,
+              patternCount: entry.patterns.size,
+              exerciseCount: entry.exercises,
+            }
+          : { vocabCount: 0, chunkCount: 0, patternCount: 0, exerciseCount: 0 },
+      };
     });
   }
 

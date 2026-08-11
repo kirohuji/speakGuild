@@ -7,6 +7,11 @@ export interface DictionaryPronunciation {
   ipa: string;
   audioUrl?: string;
   isPreferred: boolean;
+  notation?: 'IPA';
+  source?: string;
+  needsReview?: boolean;
+  aiConfidence?: number;
+  aiReason?: string;
 }
 
 export interface DictionaryExample {
@@ -80,6 +85,43 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
+export type PronunciationProvider = 'auto' | 'wiktionary' | 'freedictionaryapi' | 'dictionaryapi.dev' | 'datamuse' | 'ai_verify';
+export type PronunciationScope = 'all' | 'uk' | 'us';
+
+export interface PronunciationAuditAccent {
+  ipa: string | null;
+  source: string;
+  audioUrl: string | null;
+  hasAudio: boolean;
+  isIpa: boolean;
+  isTrusted: boolean;
+  aiConfidence: number | null;
+  aiReason: string | null;
+  issues: string[];
+}
+
+export interface PronunciationAuditItem {
+  word: string;
+  sourceUrl: string | null;
+  uk: PronunciationAuditAccent;
+  us: PronunciationAuditAccent;
+  status: 'passed' | 'attention' | 'missing';
+}
+
+export interface PronunciationAuditResult {
+  items: PronunciationAuditItem[];
+  total: number;
+  page: number;
+  pageSize: 100;
+  totalPages: number;
+  pageStats: {
+    passed: number;
+    attention: number;
+    missing: number;
+    withAudio: number;
+  };
+}
+
 // ─── API ─────────────────────────────────────────────────────
 
 /** Search dictionary entries (prefix) */
@@ -114,4 +156,31 @@ export async function batchEnrichDictionary(words: string[]): Promise<{
 /** Delete a dictionary entry */
 export async function deleteDictionaryEntry(word: string): Promise<void> {
   return (await import('@/lib/request')).del(`/dictionary/${encodeURIComponent(word)}`);
+}
+
+/** Audit dictionary pronunciations in fixed batches of 100. */
+export async function getPronunciationAudit(params?: {
+  search?: string;
+  page?: number;
+}): Promise<PronunciationAuditResult> {
+  return get('/dictionary/pronunciation-audit', params);
+}
+
+/** Replace one word's pronunciation data from a selected provider. */
+export async function refreshDictionaryPronunciation(
+  word: string,
+  provider: PronunciationProvider,
+  scope: PronunciationScope,
+): Promise<PronunciationAuditItem> {
+  return post(`/dictionary/${encodeURIComponent(word)}/pronunciation/refresh`, { provider, scope });
+}
+
+/** Clear only one word's pronunciation data. */
+export async function clearDictionaryPronunciation(
+  word: string,
+  scope: PronunciationScope,
+): Promise<PronunciationAuditItem> {
+  return (await import('@/lib/request')).del(
+    `/dictionary/${encodeURIComponent(word)}/pronunciation?scope=${scope}`,
+  );
 }

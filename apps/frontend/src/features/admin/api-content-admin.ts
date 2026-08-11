@@ -96,6 +96,7 @@ export interface Scene {
   sortOrder?: number
   group?: { id: string; name: string } | null
   _count?: { trainingTopics: number; storyEpisodes?: number }
+  contentStats?: { vocabCount: number; chunkCount: number; patternCount: number; exerciseCount: number }
   trainingTopics?: TrainingTopic[]
 }
 

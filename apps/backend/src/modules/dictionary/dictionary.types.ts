@@ -104,6 +104,11 @@ export interface CleanedPronunciation {
   ipa: string;
   audioUrl?: string;
   isPreferred: boolean;
+  notation?: 'IPA';
+  source?: string;
+  needsReview?: boolean;
+  aiConfidence?: number;
+  aiReason?: string;
 }
 
 export interface CleanedSense {

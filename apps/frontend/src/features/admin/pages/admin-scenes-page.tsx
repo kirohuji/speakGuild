@@ -2230,18 +2230,20 @@ export function AdminScenesPage() {
                       }}
                     >
                       <td className="px-4 py-3">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm font-medium">{s.title}</span>
-                            {s.category && <Badge variant="secondary" className="text-xs">{s.category.name}</Badge>}
-                            <Badge variant="outline" className="text-xs">
+                        <div className="flex min-w-0 flex-col gap-1.5">
+                          <span className="truncate text-sm font-medium" title={s.title}>{s.title}</span>
+                          <div className="flex flex-wrap items-center gap-1">
+                            {s.category && (
+                              <Badge className="bg-purple-100 text-[11px] text-purple-700">{s.category.name}</Badge>
+                            )}
+                            <Badge className="bg-blue-100 text-[11px] text-blue-700">
                               {packageTypeLabel(s.packageType)}
                             </Badge>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge className="bg-emerald-100 text-[11px] text-emerald-700">
                               {contentModeLabel(s.contentMode)}
                             </Badge>
                             {s.groupId && (
-                              <Badge variant="outline" className="text-xs text-muted-foreground">
+                              <Badge variant="outline" className="text-[11px] text-muted-foreground">
                                 {groupNameById.get(s.groupId) ?? '未命名系列'} · 第 {(s.sortOrder ?? 0) + 1} 包
                               </Badge>
                             )}
@@ -2249,23 +2251,33 @@ export function AdminScenesPage() {
                         </div>
                       </td>
                       <td className="hidden px-4 py-3 md:table-cell">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">{s.requiredOutputLevel}</Badge>
-                          <span className="text-xs text-muted-foreground">Lv.{s.requiredUserLevel}</span>
-                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {s.requiredOutputLevel} · 用户 Lv.{s.requiredUserLevel}
+                        </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <div onClick={(e) => e.stopPropagation()}>
                           <Switch
                             checked={!s.isFree}
                             disabled={updatingId === s.id}
                             onCheckedChange={(checked) => handlePaidChange(s, checked)}
+                            aria-label={s.isFree ? '设为付费' : '设为免费'}
+                            title={s.isFree ? '点击设为付费' : '点击设为免费'}
                           />
-                          <span className="text-xs text-muted-foreground">{s.isFree ? '免费' : '付费'}</span>
                         </div>
                       </td>
-                      <td className="hidden px-4 py-3 text-sm text-muted-foreground lg:table-cell">
-                        话题 {s._count?.trainingTopics ?? 0} · 故事 {s._count?.storyEpisodes ?? 0}
+                      <td className="hidden px-4 py-3 lg:table-cell">
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex flex-wrap items-center gap-1">
+                            <Badge variant="outline" className="text-[11px] font-normal">词 {s.contentStats?.vocabCount ?? 0}</Badge>
+                            <Badge variant="outline" className="text-[11px] font-normal">句块 {s.contentStats?.chunkCount ?? 0}</Badge>
+                            <Badge variant="outline" className="text-[11px] font-normal">句型 {s.contentStats?.patternCount ?? 0}</Badge>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            话题 {s._count?.trainingTopics ?? 0} · 练习 {s.contentStats?.exerciseCount ?? 0} 题
+                            {s._count?.storyEpisodes ? ` · 故事 ${s._count.storyEpisodes}` : ''}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-1">

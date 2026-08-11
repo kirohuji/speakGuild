@@ -6,6 +6,7 @@
  * With --full:    stages 0-9 (embedding, clustering, translation, AI review, store)
  */
 import { DictionaryPipelineService } from '../src/modules/dictionary/dictionary-pipeline.service';
+import { DictionaryPronunciationProviderService } from '../src/modules/dictionary/dictionary-pronunciation-provider.service';
 import { DictionaryClusteringService } from '../src/modules/dictionary/dictionary-clustering.service';
 import { PrismaService } from '../src/common/prisma/prisma.service';
 import * as fs from 'fs';
@@ -14,7 +15,7 @@ async function main() {
   const prisma = new PrismaService();
   await prisma.$connect();
 
-  const pipeline = new DictionaryPipelineService(prisma);
+  const pipeline = new DictionaryPipelineService(prisma, new DictionaryPronunciationProviderService());
   const clustering = new DictionaryClusteringService();
 
   const word = process.argv[2] || 'hello';

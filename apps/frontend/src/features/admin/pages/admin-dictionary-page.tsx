@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Search, Plus, Trash2, Eye, Sparkles, Loader2,
-  ExternalLink, ShieldCheck, ShieldX, ChevronDown,
+  ExternalLink, ShieldCheck, ShieldX, ChevronDown, ClipboardCheck,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import {
   type DictionaryEntry, type DictionaryCluster, type DictionarySense,
 } from '@/features/admin/api-dictionary';
 import { AdminPagination } from '@/features/admin/components/admin-pagination';
+import { DictionaryPronunciationAuditDialog } from '@/features/admin/components/dictionary-pronunciation-audit-dialog';
 
 const POS_COLORS: Record<string, string> = {
   noun: 'bg-blue-100 text-blue-700', verb: 'bg-green-100 text-green-700',
@@ -37,6 +38,7 @@ export function AdminDictionaryPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [pronunciationAuditOpen, setPronunciationAuditOpen] = useState(false);
 
   // Add word dialog
   const [addOpen, setAddOpen] = useState(false);
@@ -109,10 +111,16 @@ export function AdminDictionaryPage() {
             管理 FreeDictionaryAPI 清洗后的词典数据，支持搜索、批量富化、查看详情
           </p>
         </div>
-        <Button onClick={() => setAddOpen(true)}>
-          <Plus className="mr-1.5 size-4" />
-          新增单词
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setPronunciationAuditOpen(true)}>
+            <ClipboardCheck data-icon="inline-start" />
+            音标质量审查
+          </Button>
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus data-icon="inline-start" />
+            新增单词
+          </Button>
+        </div>
       </div>
 
       {/* Search */}
@@ -237,6 +245,14 @@ export function AdminDictionaryPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DictionaryPronunciationAuditDialog
+        open={pronunciationAuditOpen}
+        onOpenChange={(nextOpen) => {
+          setPronunciationAuditOpen(nextOpen);
+          if (!nextOpen) void load();
+        }}
+      />
 
       {/* Detail Dialog — Dictionary-style preview */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
