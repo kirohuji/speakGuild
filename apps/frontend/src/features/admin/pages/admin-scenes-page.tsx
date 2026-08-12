@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/cn'
@@ -40,7 +40,7 @@ import {
   listVocabularies, createVocabulary, updateVocabulary, deleteVocabulary,
   listTrainingTopics, createTrainingTopic, updateTrainingTopic, deleteTrainingTopic,
   getTrainingTopic, listAllChunks, listStories, getStory, listScriptEpisodes, deleteScriptEpisode,
-  listLibraryPatterns, createLibraryPattern, createLibraryChunk, generateTopicTeachingMarkdown,
+  listLibraryPatterns, createLibraryVocabulary, createLibraryPattern, createLibraryChunk, generateTopicTeachingMarkdown,
   suggestTopicSupports, suggestTopicVocabs,
   enqueueWarmupPipelineGeneration,
   enqueueSceneTopicBatchGeneration,
@@ -704,6 +704,9 @@ function TrainingTopicDialog({
   const [lastInitKey, setLastInitKey] = useState<string | null>(null)
   const [createdPatterns, setCreatedPatterns] = useState<SentencePatternFull[]>([])
   const [createdChunks, setCreatedChunks] = useState<Chunk[]>([])
+  const [quickCreateKind, setQuickCreateKind] = useState<TopicSupportKind | 'vocab' | null>(null)
+  const [quickCreateDraft, setQuickCreateDraft] = useState({ text: '', meaning: '' })
+  const [quickCreateSaving, setQuickCreateSaving] = useState(false)
 
   // 过滤为当前话题绑定的材料（而非全系统材料），供 AI 生成使用
   const topicBoundPatterns = useMemo(
@@ -998,7 +1001,7 @@ function TrainingTopicDialog({
     const topic = topicId ? { id: topicId } : await saveTopic()
     if (!topic?.id) return null
     const result = await generateTopicTeachingMarkdown(topic.id)
-    return result.markdown
+    return result
   }
 
   const runSuggestVocabs = async () => {
@@ -1141,17 +1144,79 @@ function TrainingTopicDialog({
     }
   }
 
+  const openQuickCreate = (kind: TopicSupportKind | 'vocab') => {
+    setQuickCreateDraft({ text: '', meaning: '' })
+    setQuickCreateKind(kind)
+  }
+
+  const saveQuickCreate = async () => {
+    const text = quickCreateDraft.text.trim()
+    const meaning = quickCreateDraft.meaning.trim()
+    if (!quickCreateKind || !text || quickCreateSaving) return
+
+    setQuickCreateSaving(true)
+    try {
+      if (quickCreateKind === 'pattern') {
+        const created = await createLibraryPattern({
+          pattern: text,
+          meaning,
+          difficulty: form.difficulty ?? 'L2',
+        })
+        setCreatedPatterns((current) => mergeById(current, [created]))
+        setForm((current: any) => ({
+          ...current,
+          patternIds: [...new Set([...(current.patternIds ?? []), created.id])],
+        }))
+      } else if (quickCreateKind === 'chunk') {
+        const created = await createLibraryChunk({
+          text,
+          meaning,
+          category: 'general',
+          difficulty: form.difficulty ?? 'L2',
+          examples: [],
+        })
+        setCreatedChunks((current) => mergeById(current, [created as Chunk]))
+        setForm((current: any) => ({
+          ...current,
+          chunkIds: [...new Set([...(current.chunkIds ?? []), created.id])],
+        }))
+      } else {
+        const created = await createLibraryVocabulary({
+          word: text,
+          meaning,
+          difficulty: form.difficulty ?? 'L2',
+          sortOrder: 0,
+        })
+        setVocabPool((current) => mergeById(current, [created as Vocabulary]))
+        setForm((current: any) => ({
+          ...current,
+          vocabIds: [...new Set([...(current.vocabIds ?? []), created.id])],
+        }))
+      }
+      const label = quickCreateKind === 'pattern' ? '句型' : quickCreateKind === 'chunk' ? 'Chunk' : '词汇'
+      toast.success(`${label}已建档并关联，可稍后到内容库完善`)
+      setQuickCreateKind(null)
+    } catch (error: any) {
+      toast.error(error?.message || '快速新建失败')
+    } finally {
+      setQuickCreateSaving(false)
+    }
+  }
+
   const generateTeaching = async () => {
     if (teachingGenerating) return
     setTeachingGenerating(true)
     try {
-      const markdown = await handleGenerateTopicTeaching()
-      if (markdown != null) {
-        setForm((current: any) => ({ ...current, teachingMarkdown: markdown }))
-        toast.success('教学文档已生成，请检查后保存')
+      const result = await handleGenerateTopicTeaching()
+      if (result?.markdown != null) {
+        setForm((current: any) => ({ ...current, teachingMarkdown: result.markdown }))
+        const changeCount = result.changes?.length ?? 0
+        toast.success(changeCount > 0
+          ? `教学文档已润色（${changeCount} 处改动），请检查后保存`
+          : '教学文档已润色，未发现需要修改的地方')
       }
     } catch (error: any) {
-      toast.error(error?.message || 'AI 生成教学文档失败')
+      toast.error(error?.message || 'AI 润色教学文档失败')
     } finally {
       setTeachingGenerating(false)
     }
@@ -1411,19 +1476,24 @@ function TrainingTopicDialog({
                 <TabsContent value="patterns" className="mt-0">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <p className="text-xs text-muted-foreground">结合教学文档、已选句型、Chunk 和词汇，检查是否还缺少表达骨架。</p>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-8"
-                      onClick={() => void runSuggestSupports('pattern')}
-                      disabled={supportSuggesting !== null}
-                    >
-                      {supportSuggesting === 'pattern'
-                        ? <Loader2 data-icon="inline-start" className="animate-spin" />
-                        : <Sparkles data-icon="inline-start" />}
-                      检查是否需要补充
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => openQuickCreate('pattern')}>
+                        <Plus data-icon="inline-start" />新建句型
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8"
+                        onClick={() => void runSuggestSupports('pattern')}
+                        disabled={supportSuggesting !== null}
+                      >
+                        {supportSuggesting === 'pattern'
+                          ? <Loader2 data-icon="inline-start" className="animate-spin" />
+                          : <Sparkles data-icon="inline-start" />}
+                        检查是否需要补充
+                      </Button>
+                    </div>
                   </div>
                   {supportSuggestions.pattern && (
                     <TopicSupportSuggestionPanel
@@ -1460,19 +1530,24 @@ function TrainingTopicDialog({
                 <TabsContent value="chunks" className="mt-0">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <p className="text-xs text-muted-foreground">结合教学文档和现有语言支架，检查是否还需要补充可直接复用的表达块。</p>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-8"
-                      onClick={() => void runSuggestSupports('chunk')}
-                      disabled={supportSuggesting !== null}
-                    >
-                      {supportSuggesting === 'chunk'
-                        ? <Loader2 data-icon="inline-start" className="animate-spin" />
-                        : <Sparkles data-icon="inline-start" />}
-                      检查是否需要补充
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => openQuickCreate('chunk')}>
+                        <Plus data-icon="inline-start" />新建 Chunk
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8"
+                        onClick={() => void runSuggestSupports('chunk')}
+                        disabled={supportSuggesting !== null}
+                      >
+                        {supportSuggesting === 'chunk'
+                          ? <Loader2 data-icon="inline-start" className="animate-spin" />
+                          : <Sparkles data-icon="inline-start" />}
+                        检查是否需要补充
+                      </Button>
+                    </div>
                   </div>
                   {supportSuggestions.chunk && (
                     <TopicSupportSuggestionPanel
@@ -1509,10 +1584,17 @@ function TrainingTopicDialog({
                 <TabsContent value="vocabs" className="mt-0">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <p className="text-xs text-muted-foreground">从词汇库挑选本话题的新学词汇；可让 AI 根据已绑句型/句块推荐搭配词（自动排除后序包知识点与语法功能词）。</p>
-                    <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5" onClick={runSuggestVocabs} disabled={suggesting}>
-                      {suggesting ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
-                      根据句型和句块推荐
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => openQuickCreate('vocab')}>
+                        <Plus data-icon="inline-start" />新建词汇
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" className="h-8" onClick={runSuggestVocabs} disabled={suggesting}>
+                        {suggesting
+                          ? <Loader2 data-icon="inline-start" className="animate-spin" />
+                          : <Sparkles data-icon="inline-start" />}
+                        根据句型和句块推荐
+                      </Button>
+                    </div>
                   </div>
                   {suggestions && (
                     <div className="mb-3 overflow-hidden rounded-lg border border-border/70 bg-background">
@@ -1756,6 +1838,63 @@ function TrainingTopicDialog({
           </div>
         </div>
       </DialogContent>
+
+      {/* 资源库没有目标内容时，先快速建档并关联，详细资料可稍后完善 */}
+      <Dialog
+        open={quickCreateKind !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen && !quickCreateSaving) setQuickCreateKind(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              快速新建{quickCreateKind === 'pattern' ? '句型' : quickCreateKind === 'chunk' ? ' Chunk' : '词汇'}
+            </DialogTitle>
+            <DialogDescription>
+              新建后会自动关联当前话题。这里只需先建档，其他内容可稍后到内容库完善。
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-2">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="quick-create-text">
+                {quickCreateKind === 'pattern' ? '句型骨架' : quickCreateKind === 'chunk' ? 'Chunk 英文' : '英文词汇'}
+              </Label>
+              <Input
+                id="quick-create-text"
+                autoFocus
+                value={quickCreateDraft.text}
+                onChange={(event) => setQuickCreateDraft((current) => ({ ...current, text: event.target.value }))}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && quickCreateDraft.text.trim()) void saveQuickCreate()
+                }}
+                placeholder={quickCreateKind === 'pattern' ? 'I would like to + verb' : quickCreateKind === 'chunk' ? 'Could you tell me more about ...?' : 'collaborate'}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="quick-create-meaning">中文释义（可稍后补）</Label>
+              <Input
+                id="quick-create-meaning"
+                value={quickCreateDraft.meaning}
+                onChange={(event) => setQuickCreateDraft((current) => ({ ...current, meaning: event.target.value }))}
+                placeholder="暂时留空也可以"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              将使用当前话题难度 {form.difficulty ?? 'L2'} 建档，并立即加入已选列表。
+            </p>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setQuickCreateKind(null)} disabled={quickCreateSaving}>
+              取消
+            </Button>
+            <Button type="button" onClick={() => void saveQuickCreate()} disabled={quickCreateSaving || !quickCreateDraft.text.trim()}>
+              {quickCreateSaving && <Loader2 data-icon="inline-start" className="animate-spin" />}
+              建档并关联
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 材料引用冲突：按顺序约束阻止保存，可选择降级为复习保存 */}
       <Dialog open={claimConflicts !== null} onOpenChange={(open) => { if (!open) { setClaimConflicts(null); setConflictPayload(null) } }}>

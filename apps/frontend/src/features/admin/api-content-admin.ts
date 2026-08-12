@@ -793,8 +793,15 @@ export async function generateStoryAudio(id: string): Promise<GenerateStoryAudio
   return post(`/admin/content/stories/${id}/generate-audio`)
 }
 
+export interface PolishChange {
+  before: string
+  after: string
+  reason: string
+}
+
 export interface GenerateTeachingMarkdownResult {
   markdown: string
+  changes: PolishChange[]
 }
 
 export async function generateTeachingMarkdown(id: string): Promise<GenerateTeachingMarkdownResult> {

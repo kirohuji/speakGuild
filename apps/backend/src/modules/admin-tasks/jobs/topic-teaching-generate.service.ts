@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { AiModelService } from '../../ai-model/ai-model.service';
-import { buildTopicTeachingDocumentPrompt } from '../prompts/topic-teaching.prompt';
+import { buildTopicTeachingPolishPrompt, type PolishChange } from '../prompts/topic-teaching.prompt';
 
 type TeachingMaterial = {
   id: string;
@@ -31,12 +31,19 @@ const stripFences = (value: string): string => value
   .replace(/```\s*/g, '')
   .trim();
 
+export type PolishResult = {
+  markdown: string;
+  changes: PolishChange[];
+};
+
 /**
- * 话题教学文档生成（Markdown）
- * 供单话题「AI 生成」与场景批量生成共用，保证两者产出一致。
- * 完整文档直接由 AI 生成，结构自由、以老师讲课的口吻展开；
- * 服务端只负责整理已批准材料并调用模型，失败直接抛错，不做二次拼接。
- * 遵守学习包组顺序约束：不得出现后序包知识点，难度与话题/学习包对齐。
+ * 话题教学文档润色服务
+ * 管理员在后台编写教学文档初稿并保存到 trainingTopic.teachingMarkdown，
+ * 然后调用本服务的润色接口，AI 会润色语言并返回结构化改动说明。
+ *
+ * 与旧版 generateForTopic 的区别：
+ * - 旧版：从材料全量生成，质量不稳定
+ * - 新版：基于管理员初稿润色，只做语言优化和硬伤修正，不改结构
  */
 @Injectable()
 export class TopicTeachingGenerateService {
@@ -45,8 +52,8 @@ export class TopicTeachingGenerateService {
     private readonly aiModelService: AiModelService,
   ) {}
 
-  /** 为话题生成教学文档，返回 Markdown（失败抛错） */
-  async generateForTopic(topicId: string): Promise<string> {
+  /** 润色话题教学文档，返回润色后 Markdown + 改动列表（失败抛错） */
+  async polishForTopic(topicId: string): Promise<PolishResult> {
     const llmConfig = await this.aiModelService.getLlmConfig();
     if (!llmConfig.apiKey) throw new Error('LLM API Key 未配置');
 
@@ -61,14 +68,16 @@ export class TopicTeachingGenerateService {
     });
     if (!topic) throw new Error('学习话题不存在');
 
-    const materials = this.collectMaterials(topic);
-    if (!materials.chunks.length && !materials.patterns.length) {
-      throw new Error('当前话题没有可用的句块或句型，无法生成教学文档');
+    const draftMarkdown = (topic.teachingMarkdown ?? '').trim();
+    if (!draftMarkdown) {
+      throw new Error('当前话题还没有教学文档初稿，请先在编辑器中编写并保存');
     }
-    return this.generateFullDocument(topic, llmConfig, materials);
+
+    const materials = this.collectMaterials(topic);
+    return this.callPolishApi(topic, llmConfig, materials, draftMarkdown);
   }
 
-  /** 从数据库资产整理本课材料 */
+  /** 从数据库资产整理本课材料（供 AI 润色时参考约束） */
   private collectMaterials(topic: any): Materials {
     const chunks: TeachingMaterial[] = (topic.activeChunks ?? [])
       .map((row: any) => ({
@@ -98,20 +107,26 @@ export class TopicTeachingGenerateService {
   }
 
   /**
-   * 完整文档由 AI 一次生成；失败直接抛错，不重试、不回退。
+   * 调用 AI 润色接口，解析分隔标记格式的响应。
    * deepseek-v4-flash 默认开启 thinking 模式，会把全部输出预算花在推理上导致正文为空，
    * 因此这里直接调用 OpenAI 兼容接口并显式关闭 thinking。
    */
-  private async generateFullDocument(topic: any, llmConfig: any, materials: Materials): Promise<string> {
-    const prompt = buildTopicTeachingDocumentPrompt({
+  private async callPolishApi(
+    topic: any,
+    llmConfig: any,
+    materials: Materials,
+    draftMarkdown: string,
+  ): Promise<PolishResult> {
+    const prompt = buildTopicTeachingPolishPrompt({
       topicTitle: topic.title,
       sceneTitle: topic.scene.title,
-      objective: topic.promptZh,
+      objective: topic.promptZh ?? '',
+      draftMarkdown,
       chunks: materials.chunks.map((item) => this.formatMaterial(item)),
       patterns: materials.patterns.map((item) => this.formatMaterial(item)),
       vocabulary: materials.vocabs.map((item) => this.formatMaterial(item)),
     });
-    console.log(`[topic-teaching] generate topic=${topic.title} model=${llmConfig.model} baseUrl=${llmConfig.baseUrl} promptChars=${prompt.length}`);
+    console.log(`[topic-teaching-polish] topic=${topic.title} model=${llmConfig.model} baseUrl=${llmConfig.baseUrl} draftChars=${draftMarkdown.length} promptChars=${prompt.length}`);
 
     const endpoint = `${llmConfig.baseUrl.replace(/\/$/, '')}/chat/completions`;
     const response = await fetch(endpoint, {
@@ -123,23 +138,61 @@ export class TopicTeachingGenerateService {
       body: JSON.stringify({
         model: llmConfig.model,
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.55,
+        temperature: 0.45,
         max_tokens: 6000,
         thinking: { type: 'disabled' },
       }),
     });
     const data: any = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(`AI 调用失败（HTTP ${response.status}）：${JSON.stringify(data).slice(0, 500)}`);
+      throw new Error(`AI 润色调用失败（HTTP ${response.status}）：${JSON.stringify(data).slice(0, 500)}`);
     }
     const raw = String(data?.choices?.[0]?.message?.content ?? '');
-    const markdown = stripFences(raw);
-    console.log(`[topic-teaching] AI raw: textChars=${raw.length} strippedChars=${markdown.length} finish=${data?.choices?.[0]?.finish_reason ?? 'n/a'}`);
-    if (!markdown) {
-      console.error(`[topic-teaching] AI 返回内容为空，原始响应：${JSON.stringify(data).slice(0, 2000)}`);
-      throw new Error('AI 返回内容为空');
+    console.log(`[topic-teaching-polish] AI raw: textChars=${raw.length} finish=${data?.choices?.[0]?.finish_reason ?? 'n/a'}`);
+
+    const result = this.parsePolishResponse(raw);
+    if (!result.markdown) {
+      console.error(`[topic-teaching-polish] AI 返回内容为空，原始响应：${JSON.stringify(data).slice(0, 2000)}`);
+      throw new Error('AI 润色返回内容为空');
     }
-    return markdown;
+    console.log(`[topic-teaching-polish] polishedChars=${result.markdown.length} changes=${result.changes.length}`);
+    return result;
+  }
+
+  /** 解析 AI 返回的分隔标记格式：===POLISHED_START=== / ===POLISHED_END=== / ===CHANGES_START=== / ===CHANGES_END=== */
+  private parsePolishResponse(raw: string): PolishResult {
+    const polishedMatch = raw.match(/===POLISHED_START===\s*([\s\S]*?)===POLISHED_END===/);
+    const changesMatch = raw.match(/===CHANGES_START===\s*([\s\S]*?)===CHANGES_END===/);
+
+    let markdown = '';
+    if (polishedMatch?.[1]) {
+      markdown = stripFences(polishedMatch[1].trim());
+    }
+    // 兼容：如果 AI 没按格式输出，把整个响应当润色结果
+    if (!markdown) {
+      markdown = stripFences(raw);
+    }
+
+    let changes: PolishChange[] = [];
+    if (changesMatch?.[1]) {
+      try {
+        const parsed = JSON.parse(changesMatch[1].trim());
+        if (Array.isArray(parsed)) {
+          changes = parsed.filter(
+            (c: any) =>
+              typeof c?.before === 'string' &&
+              typeof c?.after === 'string' &&
+              typeof c?.reason === 'string' &&
+              c.before.trim() &&
+              c.after.trim(),
+          );
+        }
+      } catch {
+        console.warn('[topic-teaching-polish] 无法解析 changes JSON，将返回空数组');
+      }
+    }
+
+    return { markdown, changes };
   }
 
   /** 把一条材料整理成 prompt 中的一行：英文 + 释义 + 例句 */
@@ -148,5 +201,4 @@ export class TopicTeachingGenerateService {
     if (!item.examples.length) return head;
     return `${head}\n  例句：${item.examples.map((example) => `\`${example}\``).join('；')}`;
   }
-
 }

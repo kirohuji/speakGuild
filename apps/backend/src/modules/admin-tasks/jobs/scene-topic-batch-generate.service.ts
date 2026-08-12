@@ -60,18 +60,18 @@ export class SceneTopicBatchGenerateService {
     const errors: Array<{ topicId: string; topicTitle: string; item: string; message: string }> = [];
 
     for (const topic of topics) {
-      // ── 1. 教学文档：为空或字数 < 100 时重新生成 ──
+      // ── 1. 教学文档：有初稿（≥100字）时 AI 润色，无初稿则跳过 ──
       const teachingText = (topic.teachingMarkdown ?? '').trim();
-      if (teachingText.length < TEACHING_MIN_CHARS) {
+      if (teachingText.length >= TEACHING_MIN_CHARS) {
         try {
-          await this.tasks.log(taskId, 'info', `正在生成教学文档：${topic.title}`, { step: 'generating-teaching', meta: { topicId: topic.id } });
-          const markdown = await this.teachingGenerate.generateForTopic(topic.id);
-          await this.prisma.trainingTopic.update({ where: { id: topic.id }, data: { teachingMarkdown: markdown } });
+          await this.tasks.log(taskId, 'info', `正在润色教学文档：${topic.title}`, { step: 'polishing-teaching', meta: { topicId: topic.id } });
+          const result = await this.teachingGenerate.polishForTopic(topic.id);
+          await this.prisma.trainingTopic.update({ where: { id: topic.id }, data: { teachingMarkdown: result.markdown } });
           teachingGenerated += 1;
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           errors.push({ topicId: topic.id, topicTitle: topic.title, item: '教学文档', message });
-          await this.tasks.log(taskId, 'error', `教学文档生成失败：${topic.title}（${message}）`, { step: 'generating-teaching', meta: { topicId: topic.id } });
+          await this.tasks.log(taskId, 'error', `教学文档润色失败：${topic.title}（${message}）`, { step: 'polishing-teaching', meta: { topicId: topic.id } });
         }
       } else {
         teachingSkipped += 1;

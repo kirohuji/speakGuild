@@ -3194,16 +3194,21 @@ ${contextBlock}
     return this.adminTasksService.enqueueSceneTopicBatchGenerate(id, session.user.id);
   }
 
+  /**
+   * AI 润色话题教学文档
+   * 管理员先编写初稿保存到 teachingMarkdown，再调用此接口润色。
+   * 返回润色后的 Markdown 及每处改动的 before/after/reason。
+   */
   @Post('training-topics/:id/generate-teaching')
   async generateTopicTeachingMarkdown(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
 
     try {
-      const markdown = await this.topicTeachingGenerateService.generateForTopic(id);
+      const result = await this.topicTeachingGenerateService.polishForTopic(id);
       return {
         code: 200,
         message: 'success',
-        data: { markdown },
+        data: { markdown: result.markdown, changes: result.changes },
       };
     } catch (err: any) {
       return { code: 500, message: err.message, data: null };
