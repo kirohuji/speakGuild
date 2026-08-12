@@ -673,8 +673,10 @@ export class ContentAdminController {
     });
     if (!topic) throw new NotFoundException('学习话题不存在');
 
-    const patternIds = dto.patternIds ?? topic.topicPatterns.map((tp) => tp.pattern.id);
-    const chunkIds = dto.chunkIds ?? topic.activeChunks.map((ac) => ac.chunk.id);
+    const currentPatternIds = new Set(topic.topicPatterns.map((tp) => tp.pattern.id));
+    const currentChunkIds = new Set(topic.activeChunks.map((ac) => ac.chunk.id));
+    const patternIds = (dto.patternIds ?? [...currentPatternIds]).filter((value) => currentPatternIds.has(value));
+    const chunkIds = (dto.chunkIds ?? [...currentChunkIds]).filter((value) => currentChunkIds.has(value));
     const difficulty = dto.difficulty ?? topic.difficulty ?? topic.scene.requiredOutputLevel;
     const count = Math.min(Math.max(dto.count ?? 12, 1), 20);
     const extensionCount = Math.min(Math.max(dto.extensionCount ?? 6, 0), 20);
@@ -705,6 +707,13 @@ export class ContentAdminController {
       select: { materialType: true, materialId: true },
     });
     for (const ref of packRefs) laterClaimed.add(`${ref.materialType}:${ref.materialId}`);
+    const laterTopics = await this.prisma.trainingTopic.findMany({
+      where: { sceneId: topic.sceneId, sortOrder: { gt: topic.sortOrder } },
+      select: { topicVocabs: { select: { vocabId: true } } },
+    });
+    for (const laterTopic of laterTopics) {
+      for (const vocab of laterTopic.topicVocabs) laterClaimed.add(`vocab:${vocab.vocabId}`);
+    }
     const boundIds = new Set(topic.topicVocabs.map((tv) => tv.vocab.id));
 
     // ── 难度过滤：目标 L(n)，候选限 L(n-1)..L(n+1)（clamp 到 L1-L5） ──
@@ -723,9 +732,22 @@ export class ContentAdminController {
     const patternTexts = patterns.map((p) => `${p.pattern} ${p.meaning ?? ''}`.toLowerCase());
     const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-    const library = await this.prisma.vocabulary.findMany({
-      orderBy: [{ outputPriority: 'desc' }, { sortOrder: 'asc' }],
+    // 推荐词必须属于当前学习包的词汇资产。此前这里直接扫全局 vocabulary 表，
+    // 所以会把别的学习包甚至更高等级的词带进来。
+    const packageVocabularyRefs = await this.prisma.sceneVocabulary.findMany({
+      where: { sceneId: topic.sceneId },
+      select: { vocabularyId: true },
     });
+    const packageVocabularyIds = new Set([
+      ...packageVocabularyRefs.map((item) => item.vocabularyId),
+      ...topic.topicVocabs.map((item) => item.vocab.id),
+    ]);
+    const library = packageVocabularyIds.size
+      ? await this.prisma.vocabulary.findMany({
+          where: { id: { in: [...packageVocabularyIds] } },
+          orderBy: [{ outputPriority: 'desc' }, { sortOrder: 'asc' }],
+        })
+      : [];
     const scored: Array<{ vocabulary: (typeof library)[number]; score: number }> = [];
     for (const vocabulary of library) {
       if (boundIds.has(vocabulary.id)) continue;
@@ -733,15 +755,20 @@ export class ContentAdminController {
       if (laterClaimed.has(`vocab:${vocabulary.id}`)) continue;
       if (targetLevel != null) {
         const level = levelOf(vocabulary.difficulty);
-        if (level != null && Math.abs(level - targetLevel) > 1) continue;
+        // 这是“当前包 + 当前难度”的推荐，不再用 ±1 放宽到相邻等级。
+        if (level == null || level !== targetLevel) continue;
       }
       let score = 0;
       const word = vocabulary.word.toLowerCase();
       const pos = (vocabulary.partOfSpeech ?? '').toLowerCase();
       if (posHints.has(pos)) score += 2;
       const wordPattern = new RegExp(`(^|[^a-z])${escapeRegExp(word)}([^a-z]|$)`);
-      if (chunkExamples.some((example) => wordPattern.test(example))) score += 3;
-      if (patternTexts.some((text) => text.includes(word))) score += 2;
+      const chunkRelated = chunkExamples.some((example) => wordPattern.test(example));
+      const patternRelated = patternTexts.some((text) => text.includes(word));
+      if (chunkRelated) score += 3;
+      if (patternRelated) score += 2;
+      // 难度匹配本身不是“搭配关系”。没有句型/句块证据的词不能进入候选池。
+      if (!chunkRelated && !patternRelated) continue;
       const level = levelOf(vocabulary.difficulty);
       if (targetLevel != null && level != null) score += Math.max(0, 3 - Math.abs(level - targetLevel));
       if (vocabulary.outputPriority === 'high') score += 1;
@@ -889,9 +916,12 @@ export class ContentAdminController {
     });
     if (!topic) throw new NotFoundException('学习话题不存在');
 
-    const patternIds = dto.patternIds ?? topic.topicPatterns.map((item) => item.pattern.id);
-    const chunkIds = dto.chunkIds ?? topic.activeChunks.map((item) => item.chunk.id);
-    const vocabIds = dto.vocabIds ?? topic.topicVocabs.map((item) => item.vocab.id);
+    const currentPatternIds = new Set(topic.topicPatterns.map((item) => item.pattern.id));
+    const currentChunkIds = new Set(topic.activeChunks.map((item) => item.chunk.id));
+    const currentVocabIds = new Set(topic.topicVocabs.map((item) => item.vocab.id));
+    const patternIds = (dto.patternIds ?? [...currentPatternIds]).filter((value) => currentPatternIds.has(value));
+    const chunkIds = (dto.chunkIds ?? [...currentChunkIds]).filter((value) => currentChunkIds.has(value));
+    const vocabIds = (dto.vocabIds ?? [...currentVocabIds]).filter((value) => currentVocabIds.has(value));
     const difficulty = dto.difficulty ?? topic.difficulty ?? topic.scene.requiredOutputLevel;
     const count = Math.min(Math.max(dto.count ?? 6, 1), 12);
     const selectedIds = new Set(dto.kind === 'pattern' ? patternIds : chunkIds);
@@ -931,6 +961,17 @@ export class ContentAdminController {
       select: { materialType: true, materialId: true },
     });
     for (const claim of currentPackClaims) blocked.add(`${claim.materialType}:${claim.materialId}`);
+    const laterTopics = await this.prisma.trainingTopic.findMany({
+      where: { sceneId: topic.sceneId, sortOrder: { gt: topic.sortOrder } },
+      select: {
+        topicPatterns: { select: { patternId: true } },
+        activeChunks: { select: { chunkId: true } },
+      },
+    });
+    for (const laterTopic of laterTopics) {
+      for (const pattern of laterTopic.topicPatterns) blocked.add(`pattern:${pattern.patternId}`);
+      for (const chunk of laterTopic.activeChunks) blocked.add(`chunk:${chunk.chunkId}`);
+    }
 
     type SupportCandidate = {
       id: string;
@@ -984,11 +1025,21 @@ export class ContentAdminController {
     const targetLevel = levelOf(difficulty);
     const kindKey = dto.kind;
 
+    // 候选只来自当前学习包已经配置的材料资产；全局材料库中的相似项不能冒充本包内容。
+    const packageSupportRows = dto.kind === 'pattern'
+      ? await this.prisma.sceneSentencePattern.findMany({ where: { sceneId: topic.sceneId }, select: { patternId: true } })
+      : await this.prisma.sceneChunk.findMany({ where: { sceneId: topic.sceneId }, select: { chunkId: true } });
+    const packageSupportIds = new Set([
+      ...packageSupportRows.map((item) => 'patternId' in item ? item.patternId : item.chunkId),
+      ...(dto.kind === 'pattern' ? patternIds : chunkIds),
+    ]);
+
     const candidates = library
+      .filter((item) => packageSupportIds.has(item.id))
       .filter((item) => !selectedIds.has(item.id) && !blocked.has(`${kindKey}:${item.id}`))
       .filter((item) => {
         const level = levelOf(item.difficulty);
-        return targetLevel == null || level == null || Math.abs(level - targetLevel) <= 1;
+        return targetLevel == null || level === targetLevel;
       })
       .map((item) => {
         const candidateText = `${item.text} ${item.meaning} ${item.description} ${item.category} ${item.examples}`.toLowerCase();
@@ -999,10 +1050,12 @@ export class ContentAdminController {
         const difficultyScore = targetLevel != null && level != null ? Math.max(0, 3 - Math.abs(level - targetLevel)) : 1;
         return { ...item, score: exactMention + categoryMatch + difficultyScore + Math.min(overlap, 6) };
       })
+      .filter((item) => item.score >= 5)
       .sort((a, b) => b.score - a.score)
       .slice(0, 100);
 
-    let ranked = candidates.filter((item) => item.score >= 3).slice(0, count);
+    // 至少要有一个与当前教学上下文的实际词汇重叠/命中，难度分本身不算“关联”。
+    let ranked = candidates.filter((item) => item.score >= 5).slice(0, count);
     let summary = ranked.length
       ? `规则检查发现 ${ranked.length} 个可补充的${dto.kind === 'pattern' ? '句型' : 'Chunk'}`
       : `当前材料已基本覆盖教学目标，暂不需要补充${dto.kind === 'pattern' ? '句型' : 'Chunk'}`;
@@ -1032,7 +1085,7 @@ export class ContentAdminController {
         const kindLabel = dto.kind === 'pattern' ? '句型骨架' : 'Chunk';
         const { text } = await generateText({
           model,
-          prompt: `你是英语课程教学设计审查员。请判断当前话题的${kindLabel}是否足够；只有确实能补足教学目标、表达功能或练习覆盖时才推荐，可以推荐 0 个，最多 ${count} 个。优先复用候选库；如果教学文档明确需要某个表达、候选库确实没有对应或近义互补项，则建议新建。
+          prompt: `你是英语课程教学设计审查员。请判断当前话题的${kindLabel}是否足够；只有确实能补足教学目标、表达功能或练习覆盖时才推荐，可以推荐 0 个，最多 ${count} 个。只能复用当前学习包候选库，不能新建包外材料。
 
 话题：${topic.title}
 场景：${topic.scene.title}
@@ -1058,11 +1111,11 @@ ${candidateLines}
 要求：
 1. 先评估已添加材料是否已覆盖教学文档；足够时不要为了凑数量推荐。
 2. 推荐项必须与当前材料互补，避免语义和表达功能重复。
-3. 难度要匹配。优先选择 action="existing" 并填写候选 materialId；只有候选库无合适项目时才用 action="create"。
+3. 难度必须与目标难度完全一致，只能选择 action="existing" 并填写候选 materialId；候选不足时返回空 items。
 4. reason 用一句中文明确说明补足了教学文档中的哪个目标，以及与现有哪项材料互补。
-5. create 项必须给出可直接入库的 text、meaning、category、difficulty、description 和 1-3 个中英例句；不要创建与现有材料同文或仅有大小写/标点差异的项目。
+5. 不得创建新材料；推荐项必须来自候选列表，且能说明补足了教学文档的哪个目标。
 6. ${dto.kind === 'pattern' ? '句型骨架应体现可替换结构，不能只写一个孤立短语。' : 'Chunk 应是可直接复用的固定或半固定表达，不要伪装成抽象句型。'}
-7. 只输出 JSON：{"summary":"中文审查结论","items":[{"action":"existing","materialId":"候选id","reason":"中文理由"},{"action":"create","text":"内容","meaning":"中文含义","category":"分类","difficulty":"L2","description":"中文说明","examples":[{"en":"英文例句","zh":"中文例句"}],"reason":"中文理由"}]}。`,
+7. 只输出 JSON：{"summary":"中文审查结论","items":[{"action":"existing","materialId":"候选id","reason":"中文理由"}]}。`,
           temperature: 0.25,
           maxOutputTokens: 1800,
         });
@@ -1076,7 +1129,7 @@ ${candidateLines}
               if (selected.some((entry) => entry.id === candidate.id)) continue;
               selected.push(candidate);
               reasons.set(candidate.id, String(item?.reason ?? '').slice(0, 240));
-            } else if (String(item?.action).toLowerCase() === 'create') {
+            } else if (String(item?.action).toLowerCase() === 'create' && packageSupportIds.has(String(item?.materialId))) {
               const text = String(item?.text ?? '').trim().slice(0, 240);
               const meaning = String(item?.meaning ?? '').trim().slice(0, 240);
               const normalizeText = (value: string) => value.toLowerCase().replace(/[\s\p{P}\p{S}]+/gu, '');
