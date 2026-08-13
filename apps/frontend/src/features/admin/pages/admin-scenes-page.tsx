@@ -119,10 +119,10 @@ function mergeById<T extends { id: string }>(...groups: Array<Array<T | null | u
 
 function GroupMaterialUsageCell({ usages }: { usages: GroupMaterialUsageEntry[] }) {
   const detail = usages.map((usage) =>
-    `${usage.sceneTitle} / ${usage.topicTitle ?? '包级'}${usage.role === 'review' ? '（复习）' : ''}`,
+    `${usage.sceneTitle} / ${usage.topicTitle ?? '包级'}（${usage.role === 'review' ? '复习' : '新学'}）`,
   ).join('；')
   return (
-    <div className="flex min-w-0 items-center gap-1.5" title={detail || '当前组内暂无引用'}>
+    <div className="flex min-w-0 items-center gap-1.5">
       <Badge variant={usages.length ? 'secondary' : 'outline'} className="shrink-0 text-[10px]">
         {usages.length} 次
       </Badge>
@@ -628,22 +628,23 @@ function TopicSupportSuggestionPanel({
                     <span className={cn('text-sm font-medium', kind === 'pattern' ? 'font-mono' : 'font-english')}>{item.text}</span>
                     <Badge variant="outline" className="text-[10px]">{item.difficulty}</Badge>
                     {item.category && <Badge variant="secondary" className="text-[10px]">{item.category}</Badge>}
-                    {item.status === 'earlier' && <Badge variant="secondary" className="text-[10px]">前序已学·仅复习</Badge>}
+                    {item.status === 'referenced' && <Badge variant="secondary" className="text-[10px]">组内已引用</Badge>}
                     {item.status === 'new' && <Badge className="text-[10px]">建议新建</Badge>}
                   </div>
                   {item.meaning && <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.meaning}</p>}
                   <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{item.reason}</p>
+                  {item.references?.length ? <div className="mt-1"><GroupMaterialUsageCell usages={item.references} /></div> : null}
                 </div>
                 <Button
                   type="button"
                   size="sm"
                   variant={added ? 'ghost' : 'outline'}
                   className="h-7 shrink-0 text-xs"
-                  disabled={added || addingId !== null}
+                  disabled={added || item.status === 'referenced' || addingId !== null}
                   onClick={() => onAdd(item)}
                 >
                   {addingId === item.materialId && <Loader2 data-icon="inline-start" className="animate-spin" />}
-                  {added ? '已加入' : item.status === 'new' ? '新建并加入' : '加入'}
+                  {added ? '已加入' : item.status === 'referenced' ? '已被引用' : item.status === 'new' ? '新建并加入' : '加入'}
                 </Button>
               </div>
             )
@@ -689,6 +690,7 @@ function TrainingTopicDialog({
   // 关联词汇推荐（根据句型和句块）
   const [suggesting, setSuggesting] = useState(false)
   const [suggestions, setSuggestions] = useState<SuggestedVocabItem[] | null>(null)
+  const [vocabSuggestionSummary, setVocabSuggestionSummary] = useState('')
   const [supportSuggesting, setSupportSuggesting] = useState<TopicSupportKind | null>(null)
   const [supportAdding, setSupportAdding] = useState<string | null>(null)
   const [supportSuggestions, setSupportSuggestions] = useState<Record<TopicSupportKind, { summary: string; items: SuggestedTopicSupportItem[] } | null>>({
@@ -1063,8 +1065,8 @@ function TrainingTopicDialog({
     }
     const patternIds = form.patternIds ?? []
     const chunkIds = form.chunkIds ?? []
-    if (!patternIds.length && !chunkIds.length) {
-      toast.error('请先绑定句型或句块，再推荐搭配词汇')
+    if (!(form.teachingMarkdown ?? '').trim()) {
+      toast.error('请先填写教学文档，再检查关联词汇')
       return
     }
     setSuggesting(true)
@@ -1076,7 +1078,8 @@ function TrainingTopicDialog({
         teachingMarkdown: form.teachingMarkdown ?? '',
       })
       setSuggestions(result.items)
-      if (!result.items.length) toast.info('未找到合适的搭配词汇，可调整句型/句块后重试')
+      setVocabSuggestionSummary(result.summary)
+      if (!result.items.length) toast.info('AI 检查后未发现需要补充的关联词汇')
     } catch (error: any) {
       toast.error(error?.message || '词汇推荐失败')
     } finally {
@@ -1089,6 +1092,7 @@ function TrainingTopicDialog({
     if (ids.includes(vocabularyId)) return
     // 推荐词条并入词汇池，保证 boundVocabs 统计不遗漏
     const suggestion = suggestions?.find((s) => s.vocabularyId === vocabularyId)
+    if (suggestion?.status === 'referenced') return
     if (suggestion) {
       setVocabPool((prev) => mergeById(prev, [{
         id: vocabularyId,
@@ -1138,7 +1142,7 @@ function TrainingTopicDialog({
   }
 
   const addSuggestedSupport = async (kind: TopicSupportKind, item: SuggestedTopicSupportItem) => {
-    if (supportAdding) return
+    if (supportAdding || item.status === 'referenced') return
     setSupportAdding(item.materialId)
     try {
       let materialId = item.materialId
@@ -1626,7 +1630,7 @@ function TrainingTopicDialog({
 
                 <TabsContent value="vocabs" className="mt-0">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-muted-foreground">从词汇库挑选本话题的新学词汇；可让 AI 根据已绑句型/句块推荐搭配词（自动排除后序包知识点与语法功能词）。</p>
+                    <p className="text-xs text-muted-foreground">AI 先检查教学文档，再按组内引用区分可加入词汇与已引用词汇。</p>
                     <div className="flex flex-wrap gap-2">
                       <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => openQuickCreate('vocab')}>
                         <Plus data-icon="inline-start" />新建词汇
@@ -1635,17 +1639,20 @@ function TrainingTopicDialog({
                         {suggesting
                           ? <Loader2 data-icon="inline-start" className="animate-spin" />
                           : <Sparkles data-icon="inline-start" />}
-                        根据句型和句块推荐
+                        检查是否需要补充
                       </Button>
                     </div>
                   </div>
                   {suggestions && (
                     <div className="mb-3 overflow-hidden rounded-lg border border-border/70 bg-background">
                       <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-xs font-semibold">推荐搭配词汇（{suggestions.length}）</p>
-                          <Badge variant="outline" className="text-[10px]">新词 {suggestions.filter((item) => item.status === 'available').length}</Badge>
-                          <Badge variant="secondary" className="text-[10px]">复习 {suggestions.filter((item) => item.status === 'earlier').length}</Badge>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-xs font-semibold">教学文档审查 · 词汇（{suggestions.length}）</p>
+                            <Badge variant="outline" className="text-[10px]">可加入 {suggestions.filter((item) => item.status === 'available').length}</Badge>
+                            <Badge variant="secondary" className="text-[10px]">已引用 {suggestions.filter((item) => item.status === 'referenced').length}</Badge>
+                          </div>
+                          {vocabSuggestionSummary && <p className="mt-1 text-xs text-muted-foreground">{vocabSuggestionSummary}</p>}
                         </div>
                         <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] text-muted-foreground" onClick={() => setSuggestions(null)}>收起</Button>
                       </div>
@@ -1666,13 +1673,14 @@ function TrainingTopicDialog({
                                       <Badge variant="outline" className="text-[10px]">{item.difficulty}</Badge>
                                       {item.partOfSpeech && <Badge variant="secondary" className="text-[10px]">{item.partOfSpeech}</Badge>}
                                       {item.group === 'extension' && <Badge variant="secondary" className="text-[10px]">扩展</Badge>}
-                                      {item.status === 'earlier' && <Badge variant="secondary" className="text-[10px]">前序已学·仅复习</Badge>}
+                                      {item.status === 'referenced' && <Badge variant="secondary" className="text-[10px]">组内已引用</Badge>}
                                     </div>
                                     <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.reason}</p>
+                                    {item.references.length ? <div className="mt-1"><GroupMaterialUsageCell usages={item.references} /></div> : null}
                                   </div>
                                   <Button type="button" size="sm" variant={added ? 'ghost' : 'outline'} className="h-7 shrink-0 text-xs"
-                                    disabled={added} onClick={() => addSuggestedVocab(item.vocabularyId)}>
-                                    {added ? '已加入' : '加入'}
+                                    disabled={added || item.status === 'referenced'} onClick={() => addSuggestedVocab(item.vocabularyId)}>
+                                    {added ? '已加入' : item.status === 'referenced' ? '已被引用' : '加入'}
                                   </Button>
                                 </div>
                               )

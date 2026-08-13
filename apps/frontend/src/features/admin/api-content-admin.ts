@@ -169,7 +169,8 @@ export interface SuggestedVocabItem {
   meaning: string
   partOfSpeech: string
   difficulty: string
-  status: 'available' | 'earlier'
+  status: 'available' | 'referenced'
+  references: GroupMaterialUsageEntry[]
   reason: string
   score: number
   group: 'core' | 'extension'
@@ -178,7 +179,7 @@ export interface SuggestedVocabItem {
 export async function suggestTopicVocabs(
   topicId: string,
   data: { patternIds?: string[]; chunkIds?: string[]; difficulty?: string; teachingMarkdown?: string; count?: number },
-): Promise<{ items: SuggestedVocabItem[] }> {
+): Promise<{ summary: string; items: SuggestedVocabItem[] }> {
   return post(`/admin/content/training-topics/${topicId}/suggest-vocabs`, data, { timeout: 240_000 })
 }
 
@@ -191,7 +192,8 @@ export interface SuggestedTopicSupportItem {
   description?: string
   category: string
   difficulty: string
-  status: 'available' | 'earlier' | 'new'
+  status: 'available' | 'referenced' | 'new'
+  references?: GroupMaterialUsageEntry[]
   source: 'library' | 'generated'
   examples?: Array<{ en: string; zh: string }>
   reason: string

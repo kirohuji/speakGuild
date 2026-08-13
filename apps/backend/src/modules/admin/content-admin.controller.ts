@@ -663,7 +663,7 @@ export class ContentAdminController {
 
   /**
    * 根据已绑句型/句块推荐搭配词汇（M3）
-   * 规则预筛（引用表约束 + 难度 + 搭配启发式）→ AI 排序并给出推荐理由。
+   * 先按教学文档与语言支架做 AI 审查，再以组内引用数据标记是否可加入。
    */
   @Post('training-topics/:id/suggest-vocabs')
   async suggestTopicVocabs(@Req() req: Request, @Param('id') id: string, @Body() dto: SuggestTopicVocabsDto) {
@@ -682,8 +682,8 @@ export class ContentAdminController {
 
     const currentPatternIds = new Set(topic.topicPatterns.map((tp) => tp.pattern.id));
     const currentChunkIds = new Set(topic.activeChunks.map((ac) => ac.chunk.id));
-    const patternIds = (dto.patternIds ?? [...currentPatternIds]).filter((value) => currentPatternIds.has(value));
-    const chunkIds = (dto.chunkIds ?? [...currentChunkIds]).filter((value) => currentChunkIds.has(value));
+    const patternIds = [...new Set(dto.patternIds ?? [...currentPatternIds])];
+    const chunkIds = [...new Set(dto.chunkIds ?? [...currentChunkIds])];
     const difficulty = dto.difficulty ?? topic.difficulty ?? topic.scene.requiredOutputLevel;
     const count = Math.min(Math.max(dto.count ?? 12, 1), 20);
     const extensionCount = Math.min(Math.max(dto.extensionCount ?? 6, 0), 20);
@@ -695,32 +695,6 @@ export class ContentAdminController {
         : [],
     ]);
 
-    // ── 引用表约束 ──
-    // excluded：后序包 learn 认领 + 本包其他话题已认领（learn）
-    // earlier：前序包认领（learn + review），可作复习候选（带标记）
-    const context = await this.materialConstraints.getGroupContext(topic.sceneId);
-    const laterClaimed = new Set<string>();
-    const earlierClaimed = new Set<string>();
-    for (const scene of context.laterScenes) {
-      for (const claim of scene.claims) {
-        if (claim.role === 'learn') laterClaimed.add(`${claim.kind}:${claim.materialId}`);
-      }
-    }
-    for (const scene of context.earlierScenes) {
-      for (const claim of scene.claims) earlierClaimed.add(`${claim.kind}:${claim.materialId}`);
-    }
-    const packRefs = await this.prisma.sceneMaterialReference.findMany({
-      where: { sceneId: topic.sceneId, topicId: { not: null }, role: 'learn' },
-      select: { materialType: true, materialId: true },
-    });
-    for (const ref of packRefs) laterClaimed.add(`${ref.materialType}:${ref.materialId}`);
-    const laterTopics = await this.prisma.trainingTopic.findMany({
-      where: { sceneId: topic.sceneId, sortOrder: { gt: topic.sortOrder } },
-      select: { topicVocabs: { select: { vocabId: true } } },
-    });
-    for (const laterTopic of laterTopics) {
-      for (const vocab of laterTopic.topicVocabs) laterClaimed.add(`vocab:${vocab.vocabId}`);
-    }
     const boundIds = new Set(topic.topicVocabs.map((tv) => tv.vocab.id));
 
     // ── 难度过滤：目标 L(n)，候选限 L(n-1)..L(n+1)（clamp 到 L1-L5） ──
@@ -737,6 +711,7 @@ export class ContentAdminController {
     }
     const chunkExamples = chunks.flatMap((c) => c.examples.map((e) => e.en.toLowerCase()));
     const patternTexts = patterns.map((p) => `${p.pattern} ${p.meaning ?? ''}`.toLowerCase());
+    const teachingText = (dto.teachingMarkdown ?? topic.teachingMarkdown ?? '').slice(0, 6000).toLowerCase();
     const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     // 推荐词必须属于当前学习包的词汇资产。此前这里直接扫全局 vocabulary 表，
@@ -759,7 +734,6 @@ export class ContentAdminController {
     for (const vocabulary of library) {
       if (boundIds.has(vocabulary.id)) continue;
       if (isFunctionWord(vocabulary.word, vocabulary.partOfSpeech)) continue;
-      if (laterClaimed.has(`vocab:${vocabulary.id}`)) continue;
       if (targetLevel != null) {
         const level = levelOf(vocabulary.difficulty);
         // 这是“当前包 + 当前难度”的推荐，不再用 ±1 放宽到相邻等级。
@@ -772,31 +746,24 @@ export class ContentAdminController {
       const wordPattern = new RegExp(`(^|[^a-z])${escapeRegExp(word)}([^a-z]|$)`);
       const chunkRelated = chunkExamples.some((example) => wordPattern.test(example));
       const patternRelated = patternTexts.some((text) => text.includes(word));
+      const teachingRelated = wordPattern.test(teachingText);
       if (chunkRelated) score += 3;
       if (patternRelated) score += 2;
-      // 难度匹配本身不是“搭配关系”。没有句型/句块证据的词不能进入候选池。
-      if (!chunkRelated && !patternRelated) continue;
+      if (teachingRelated) score += 5;
+      // 难度匹配本身不是“教学关联”。教学文档、句型和 Chunk 都没有命中时不进入候选池。
+      if (!chunkRelated && !patternRelated && !teachingRelated) continue;
       const level = levelOf(vocabulary.difficulty);
       if (targetLevel != null && level != null) score += Math.max(0, 3 - Math.abs(level - targetLevel));
       if (vocabulary.outputPriority === 'high') score += 1;
       scored.push({ vocabulary, score });
     }
     scored.sort((a, b) => b.score - a.score);
-    // 新词与前序复习词分池，避免后期话题中高分复习词挤占整个候选窗口。
-    const freshPool = scored.filter((entry) => !earlierClaimed.has(`vocab:${entry.vocabulary.id}`));
-    const reviewPool = scored.filter((entry) => earlierClaimed.has(`vocab:${entry.vocabulary.id}`));
-    const candidates = [
-      ...freshPool.slice(0, 80),
-      ...reviewPool.slice(0, 20),
-    ];
-    const minimumFreshCore = Math.min(10, count, freshPool.length);
+    // 此处不读取组内引用，避免引用状态影响 AI 对教学文档的判断；引用统一在 AI 结果产生后标注。
+    const candidates = scored.slice(0, 100);
 
     // ── AI 排序与推荐理由（失败时回退到规则排序） ──
-    let ranked = [
-      ...freshPool.slice(0, count),
-      ...reviewPool.slice(0, Math.max(0, count - freshPool.length)),
-    ].slice(0, count);
-    let extended = [...freshPool, ...reviewPool]
+    let ranked = scored.slice(0, count);
+    let extended = scored
       .filter((entry) => !ranked.some((core) => core.vocabulary.id === entry.vocabulary.id) && entry.score > 0)
       .slice(0, extensionCount);
     const reasons = new Map<string, string>();
@@ -806,14 +773,14 @@ export class ContentAdminController {
         const client = createOpenAI({ apiKey: llmConfig.apiKey, baseURL: llmConfig.baseUrl });
         const model = client.chat(llmConfig.model);
         const candidateLines = candidates
-          .map(({ vocabulary }) => `- ${vocabulary.id} | ${vocabulary.word} | ${vocabulary.meaning} | ${vocabulary.partOfSpeech ?? ''} | ${vocabulary.difficulty} | ${earlierClaimed.has(`vocab:${vocabulary.id}`) ? 'review（前序已学）' : 'fresh（未学）'}`)
+          .map(({ vocabulary }) => `- ${vocabulary.id} | ${vocabulary.word} | ${vocabulary.meaning} | ${vocabulary.partOfSpeech ?? ''} | ${vocabulary.difficulty}`)
           .join('\n');
         const patternLines = patterns.map((p) => `- ${p.pattern}${p.meaning ? ` — ${p.meaning}` : ''}`).join('\n') || '- (无)';
         const chunkLines = chunks.map((c) => `- ${c.text}${c.meaning ? ` — ${c.meaning}` : ''}`).join('\n') || '- (无)';
-        const teaching = (dto.teachingMarkdown ?? '').slice(0, 1500);
+        const teaching = (dto.teachingMarkdown ?? topic.teachingMarkdown ?? '').slice(0, 6000);
         const { text } = await generateText({
           model,
-          prompt: `你是英语教学设计助手，为话题挑选最合适的练习词汇。\n\n话题目标难度：${difficulty}\n\n已绑定句型：\n${patternLines}\n\n已绑定句块：\n${chunkLines}\n\n教学文档（参考）：\n${teaching || '(无)'}\n\n候选词（id | 单词 | 中文释义 | 词性 | 难度 | 学习状态）：\n${candidateLines}\n\n请从中选出最适合本话题练习的 ${count} 个核心词和 ${extensionCount} 个扩展词（扩展词不足可少于 ${extensionCount} 个，但不能与核心词重复）：\n1. 核心词中至少选择 ${minimumFreshCore} 个标记为 fresh（未学）的词；review 只能用于必要复习和补位，不能挤占新词配额。\n2. 语义/搭配与已绑句型、句块自然契合。\n3. 难度符合目标难度；核心词优先选搭配度最高的，扩展词可略高一级、作为进阶拓展。\n4. 与话题场景相关优先。\n5. 只选有实际学习价值的实义词（名词/动词/形容词/副词/短语），绝不选择代词、介词、冠词、助动词、连词等语法功能词（如 you、at、I、what、on）。\n\n只输出 JSON：{"core":[{"vocabularyId":"候选词id","reason":"一句话中文理由（说明与哪个句型/句块搭配，为什么适合）"}],"extension":[{"vocabularyId":"候选词id","reason":"一句话中文理由"}]}，不要输出其他内容。`,
+          prompt: `你是英语教学设计助手。请先检查教学文档，再从候选库挑选文档明确需要、但当前语言支架尚未覆盖的词汇。\n\n话题目标难度：${difficulty}\n\n已绑定句型：\n${patternLines}\n\n已绑定句块：\n${chunkLines}\n\n教学文档：\n${teaching || '(无)'}\n\n候选词（id | 单词 | 中文释义 | 词性 | 难度）：\n${candidateLines}\n\n请选出最多 ${count} 个核心词和 ${extensionCount} 个扩展词：\n1. 先判断教学文档中的表达目标、示例和练习需要哪些词，不要为了凑数推荐。\n2. 推荐词应补足当前已绑定句型和 Chunk 尚未覆盖的内容。\n3. 难度必须符合目标难度；只选择候选库中的词。\n4. 只选有实际学习价值的实义词，不选代词、介词、冠词、助动词或连词。\n5. 不要考虑材料是否在组内被引用；系统会在 AI 审查完成后单独过滤。\n\n只输出 JSON：{"core":[{"vocabularyId":"候选词id","reason":"一句话说明补足教学文档中的哪个内容"}],"extension":[{"vocabularyId":"候选词id","reason":"一句话中文理由"}]}，不要输出其他内容。`,
           temperature: 0.4,
           maxOutputTokens: 2400,
           abortSignal: AbortSignal.timeout(230_000),
@@ -828,7 +795,7 @@ export class ContentAdminController {
         };
         const coreSelected = resolveGroup(parsed?.core).slice(0, count);
         const extSelected = resolveGroup(parsed?.extension).slice(0, extensionCount);
-        if (coreSelected.length) {
+        if (parsed && (Array.isArray(parsed.core) || Array.isArray(parsed.extension))) {
           ranked = coreSelected;
           extended = extSelected;
           for (const item of [...(parsed?.core ?? []), ...(parsed?.extension ?? [])]) {
@@ -840,33 +807,12 @@ export class ContentAdminController {
       console.warn(`[suggest-vocabs] AI 排序失败，回退规则排序: ${error.message}`);
     }
 
-    // 不信任模型完全遵守配额：回收结果时再次强制补足 fresh，并优先替换 review。
+    // 不信任模型完全遵守数量与去重要求，回收结果时再次约束。
     ranked = ranked.filter((entry, index, items) =>
       items.findIndex((candidate) => candidate.vocabulary.id === entry.vocabulary.id) === index,
     ).slice(0, count);
     const coreIds = new Set(ranked.map((entry) => entry.vocabulary.id));
-    let freshCoreCount = ranked.filter((entry) => !earlierClaimed.has(`vocab:${entry.vocabulary.id}`)).length;
-    for (const fresh of freshPool) {
-      if (freshCoreCount >= minimumFreshCore) break;
-      if (coreIds.has(fresh.vocabulary.id)) continue;
-      if (ranked.length < count) {
-        ranked.push(fresh);
-      } else {
-        let reviewIndex = -1;
-        for (let index = ranked.length - 1; index >= 0; index -= 1) {
-          if (earlierClaimed.has(`vocab:${ranked[index].vocabulary.id}`)) {
-            reviewIndex = index;
-            break;
-          }
-        }
-        if (reviewIndex < 0) break;
-        coreIds.delete(ranked[reviewIndex].vocabulary.id);
-        ranked[reviewIndex] = fresh;
-      }
-      coreIds.add(fresh.vocabulary.id);
-      freshCoreCount += 1;
-    }
-    for (const entry of [...freshPool, ...reviewPool]) {
+    for (const entry of scored) {
       if (ranked.length >= count) break;
       if (coreIds.has(entry.vocabulary.id)) continue;
       ranked.push(entry);
@@ -880,33 +826,43 @@ export class ContentAdminController {
       return true;
     }).slice(0, extensionCount);
 
-    const toItem = (entry: { vocabulary: (typeof library)[number]; score: number }, group: 'core' | 'extension') => ({
+    const materialUsage = await this.materialConstraints.getGroupMaterialUsage(topic.sceneId);
+    const toItem = (entry: { vocabulary: (typeof library)[number]; score: number }, group: 'core' | 'extension') => {
+      const references = materialUsage?.materials[`vocab:${entry.vocabulary.id}`] ?? [];
+      return ({
       vocabularyId: entry.vocabulary.id,
       word: entry.vocabulary.word,
       meaning: entry.vocabulary.meaning,
       partOfSpeech: entry.vocabulary.partOfSpeech ?? '',
       difficulty: entry.vocabulary.difficulty,
-      status: earlierClaimed.has(`vocab:${entry.vocabulary.id}`) ? 'earlier' : 'available',
-      reason: reasons.get(entry.vocabulary.id) ?? (entry.score > 0 ? '与已绑句型/句块搭配度高' : '难度匹配'),
+      status: references.length ? 'referenced' : 'available',
+      references,
+      reason: reasons.get(entry.vocabulary.id) ?? (entry.score > 0 ? '教学文档或现有语言支架中存在明确关联' : '难度匹配'),
       score: entry.score,
       group,
-    });
+      });
+    };
+
+    const items = [
+      ...ranked.map((entry) => toItem(entry, 'core')),
+      ...extended.map((entry) => toItem(entry, 'extension')),
+    ].sort((a, b) => Number(a.status === 'referenced') - Number(b.status === 'referenced'));
+    const availableCount = items.filter((item) => item.status === 'available').length;
+    const referencedCount = items.length - availableCount;
 
     return {
       code: 200,
       message: 'success',
       data: {
-        items: [
-          ...ranked.map((entry) => toItem(entry, 'core')),
-          ...extended.map((entry) => toItem(entry, 'extension')),
-        ],
+        summary: `AI 根据教学文档找到 ${items.length} 个候选：${availableCount} 个组内未引用，可直接加入；${referencedCount} 个已有引用，仅作说明。`,
+        items,
       },
     };
   }
 
   /**
    * 根据教学文档、当前已选材料和未选材料库，判断是否需要补充句型或 Chunk。
-   * 仅返回尚未选择且不与后序/同包其他话题认领冲突的候选。
+   * AI 先独立审查教学文档；审查结束后再标记组内引用，已引用项保留作说明但不可加入。
    */
   @Post('training-topics/:id/suggest-supports')
   async suggestTopicSupports(@Req() req: Request, @Param('id') id: string, @Body() dto: SuggestTopicSupportsDto) {
@@ -926,9 +882,9 @@ export class ContentAdminController {
     const currentPatternIds = new Set(topic.topicPatterns.map((item) => item.pattern.id));
     const currentChunkIds = new Set(topic.activeChunks.map((item) => item.chunk.id));
     const currentVocabIds = new Set(topic.topicVocabs.map((item) => item.vocab.id));
-    const patternIds = (dto.patternIds ?? [...currentPatternIds]).filter((value) => currentPatternIds.has(value));
-    const chunkIds = (dto.chunkIds ?? [...currentChunkIds]).filter((value) => currentChunkIds.has(value));
-    const vocabIds = (dto.vocabIds ?? [...currentVocabIds]).filter((value) => currentVocabIds.has(value));
+    const patternIds = [...new Set(dto.patternIds ?? [...currentPatternIds])];
+    const chunkIds = [...new Set(dto.chunkIds ?? [...currentChunkIds])];
+    const vocabIds = [...new Set(dto.vocabIds ?? [...currentVocabIds])];
     const difficulty = dto.difficulty ?? topic.difficulty ?? topic.scene.requiredOutputLevel;
     const count = Math.min(Math.max(dto.count ?? 6, 1), 12);
     const selectedIds = new Set(dto.kind === 'pattern' ? patternIds : chunkIds);
@@ -947,38 +903,6 @@ export class ContentAdminController {
         ? this.prisma.vocabulary.findMany({ where: { id: { in: vocabIds } } })
         : [],
     ]);
-
-    const context = await this.materialConstraints.getGroupContext(topic.sceneId);
-    const blocked = new Set<string>();
-    const earlier = new Set<string>();
-    for (const scene of context.laterScenes) {
-      for (const claim of scene.claims) {
-        if (claim.role === 'learn') blocked.add(`${claim.kind}:${claim.materialId}`);
-      }
-    }
-    for (const scene of context.earlierScenes) {
-      for (const claim of scene.claims) earlier.add(`${claim.kind}:${claim.materialId}`);
-    }
-    const currentPackClaims = await this.prisma.sceneMaterialReference.findMany({
-      where: {
-        sceneId: topic.sceneId,
-        role: 'learn',
-        OR: [{ topicId: null }, { topicId: { not: id } }],
-      },
-      select: { materialType: true, materialId: true },
-    });
-    for (const claim of currentPackClaims) blocked.add(`${claim.materialType}:${claim.materialId}`);
-    const laterTopics = await this.prisma.trainingTopic.findMany({
-      where: { sceneId: topic.sceneId, sortOrder: { gt: topic.sortOrder } },
-      select: {
-        topicPatterns: { select: { patternId: true } },
-        activeChunks: { select: { chunkId: true } },
-      },
-    });
-    for (const laterTopic of laterTopics) {
-      for (const pattern of laterTopic.topicPatterns) blocked.add(`pattern:${pattern.patternId}`);
-      for (const chunk of laterTopic.activeChunks) blocked.add(`chunk:${chunk.chunkId}`);
-    }
 
     type SupportCandidate = {
       id: string;
@@ -1043,7 +967,7 @@ export class ContentAdminController {
 
     const candidates = library
       .filter((item) => packageSupportIds.has(item.id))
-      .filter((item) => !selectedIds.has(item.id) && !blocked.has(`${kindKey}:${item.id}`))
+      .filter((item) => !selectedIds.has(item.id))
       .filter((item) => {
         const level = levelOf(item.difficulty);
         return targetLevel == null || level === targetLevel;
@@ -1112,7 +1036,7 @@ ${selectedChunkLines}
 已经添加的词汇：
 ${selectedVocabLines}
 
-尚未添加且允许推荐的${kindLabel}候选（id | 内容 | 含义 | 分类 | 难度 | 说明）：
+尚未添加的${kindLabel}候选（引用状态将在 AI 审查后由系统判断；id | 内容 | 含义 | 分类 | 难度 | 说明）：
 ${candidateLines}
 
 要求：
@@ -1122,7 +1046,8 @@ ${candidateLines}
 4. reason 用一句中文明确说明补足了教学文档中的哪个目标，以及与现有哪项材料互补。
 5. 不得创建新材料；推荐项必须来自候选列表，且能说明补足了教学文档的哪个目标。
 6. ${dto.kind === 'pattern' ? '句型骨架应体现可替换结构，不能只写一个孤立短语。' : 'Chunk 应是可直接复用的固定或半固定表达，不要伪装成抽象句型。'}
-7. 只输出 JSON：{"summary":"中文审查结论","items":[{"action":"existing","materialId":"候选id","reason":"中文理由"}]}。`,
+7. 不要考虑候选是否已在组内引用，系统会在 AI 返回结果后统一过滤并说明。
+8. 只输出 JSON：{"summary":"中文审查结论","items":[{"action":"existing","materialId":"候选id","reason":"中文理由"}]}。`,
           temperature: 0.25,
           maxOutputTokens: 16000,
         });
@@ -1175,23 +1100,34 @@ ${candidateLines}
       console.warn(`[suggest-supports] AI 审查失败，回退规则推荐: ${error.message}`);
     }
 
+    const materialUsage = await this.materialConstraints.getGroupMaterialUsage(topic.sceneId);
+    const items = ranked.map((item) => {
+      const references = materialUsage?.materials[`${kindKey}:${item.id}`] ?? [];
+      return {
+        materialId: item.id,
+        text: item.text,
+        meaning: item.meaning,
+        category: item.category,
+        difficulty: item.difficulty,
+        status: references.length ? 'referenced' as const : 'available' as const,
+        references,
+        reason: reasons.get(item.id) || '与教学目标相关，并可补充当前语言支架',
+        score: item.score,
+        source: 'library' as const,
+      };
+    }).sort((a, b) => Number(a.status === 'referenced') - Number(b.status === 'referenced'));
+    const availableCount = items.filter((item) => item.status === 'available').length;
+    const referencedCount = items.length - availableCount;
+
     return {
       code: 200,
       message: 'success',
       data: {
         kind: dto.kind,
-        summary,
-        items: [...ranked.map((item) => ({
-          materialId: item.id,
-          text: item.text,
-          meaning: item.meaning,
-          category: item.category,
-          difficulty: item.difficulty,
-          status: earlier.has(`${kindKey}:${item.id}`) ? 'earlier' : 'available',
-          reason: reasons.get(item.id) || '与教学目标相关，并可补充当前语言支架',
-          score: item.score,
-          source: 'library' as const,
-        })), ...newSuggestions.map((item) => ({
+        summary: items.length
+          ? `${summary}；过滤组内引用后，${availableCount} 个可直接加入，${referencedCount} 个已有引用。`
+          : summary,
+        items: [...items, ...newSuggestions.map((item) => ({
           ...item,
           status: 'new' as const,
           score: 0,
