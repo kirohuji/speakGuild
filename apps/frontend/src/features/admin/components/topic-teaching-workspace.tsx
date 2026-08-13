@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, BookOpen, Check, GitCompareArrows, Link2, Loader2, PanelLeftClose, PanelLeftOpen, Plus, Search, X } from 'lucide-react'
+import { ArrowRight, BookOpen, Check, Download, GitCompareArrows, Link2, Loader2, PanelLeftClose, PanelLeftOpen, Plus, Search, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -135,6 +135,10 @@ function formatCreatedAt(value?: string) {
   return new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(date)
 }
 
+function safeFilename(value: string) {
+  return value.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_').replace(/[. ]+$/g, '').trim() || '未命名话题'
+}
+
 export function TopicTeachingWorkspace({
   sceneId,
   currentTopicId,
@@ -159,6 +163,9 @@ export function TopicTeachingWorkspace({
   const [mode, setMode] = useState<WorkspaceMode>('edit')
   const [compareMode, setCompareMode] = useState(false)
   const [compareIds, setCompareIds] = useState<string[]>([])
+  const [exportMode, setExportMode] = useState(false)
+  const [exportIds, setExportIds] = useState<string[]>([])
+  const [exporting, setExporting] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [materialQueries, setMaterialQueries] = useState<Record<MaterialKind, string>>({ pattern: '', chunk: '', vocab: '' })
   const [savedMaterialUsage, setSavedMaterialUsage] = useState<Record<string, GroupMaterialUsageEntry[]>>({})
@@ -316,10 +323,57 @@ export function TopicTeachingWorkspace({
   }
 
   const enterCompare = () => {
+    setExportMode(false)
+    setExportIds([])
     setCompareMode(true)
     setCompareIds([])
     setMode('preview')
     setSidebarOpen(true)
+  }
+
+  const exitExport = () => {
+    setExportMode(false)
+    setExportIds([])
+  }
+
+  const enterExport = () => {
+    setCompareMode(false)
+    setCompareIds([])
+    setMode('edit')
+    setExportMode(true)
+    setExportIds([])
+  }
+
+  const toggleExport = (id: string) => {
+    setExportIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
+  }
+
+  const exportSelectedDocuments = async () => {
+    if (!exportIds.length || exporting) return
+    setExporting(true)
+    try {
+      const { BlobWriter, TextReader, ZipWriter } = await import('@zip.js/zip.js')
+      const zipWriter = new ZipWriter(new BlobWriter('application/zip'))
+      const usedNames = new Set<string>()
+      for (const document of mergedDocuments.filter((item) => exportIds.includes(item.id))) {
+        const base = safeFilename(document.title)
+        let filename = `${base}.md`
+        let suffix = 2
+        while (usedNames.has(filename.toLowerCase())) filename = `${base}_${suffix++}.md`
+        usedNames.add(filename.toLowerCase())
+        await zipWriter.add(filename, new TextReader(document.teachingMarkdown ?? ''))
+      }
+      const blob = await zipWriter.close()
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `${safeFilename(currentSceneTitle)}_教学文档.zip`
+      anchor.click()
+      URL.revokeObjectURL(url)
+      exitExport()
+    } finally {
+      setExporting(false)
+    }
   }
 
   return (
@@ -330,79 +384,105 @@ export function TopicTeachingWorkspace({
         : 'lg:grid-cols-[minmax(0,1fr)_22rem]',
     )}>
       <aside className={cn('min-h-0 flex-col border-b border-border/70 bg-muted/20 lg:border-b-0 lg:border-r', sidebarOpen ? 'flex' : 'hidden')}>
-        <div className="border-b border-border/70 px-2.5 py-2.5">
-          <div className="flex items-center justify-between gap-2">
+        <div className="border-b border-border/70 px-2 py-2">
+          <div className="flex items-center justify-between gap-1.5">
             <div>
-              <p className="text-sm font-semibold">教学文档库</p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">已完成 {completedCount}/{mergedDocuments.length}</p>
+              <p className="text-xs font-semibold">教学文档库</p>
+              <p className="mt-0.5 text-[9px] text-muted-foreground">已完成 {completedCount}/{mergedDocuments.length}</p>
             </div>
             {compareMode ? (
-              <Button type="button" size="sm" variant="secondary" className="h-7 gap-1 px-2 text-[10px]" onClick={exitCompare}>
+              <Button type="button" size="sm" variant="secondary" className="h-6 gap-1 px-1.5 text-[9px]" onClick={exitCompare}>
                 <X className="size-3" />退出对比
               </Button>
-            ) : (
-              <Button type="button" size="sm" variant="outline" className="h-7 gap-1 px-2 text-[10px]" onClick={enterCompare}>
-                <GitCompareArrows className="size-3" />对比模式
+            ) : exportMode ? (
+              <Button type="button" size="sm" variant="secondary" className="h-6 gap-1 px-1.5 text-[9px]" onClick={exitExport}>
+                <X className="size-3" />退出导出
               </Button>
+            ) : (
+              <div className="flex items-center gap-1">
+                <Button type="button" size="sm" variant="outline" className="h-6 gap-1 px-1.5 text-[9px]" onClick={enterCompare}>
+                  <GitCompareArrows className="size-3" />对比
+                </Button>
+                <Button type="button" size="sm" variant="outline" className="h-6 gap-1 px-1.5 text-[9px]" onClick={enterExport}>
+                  <Download className="size-3" />导出
+                </Button>
+              </div>
             )}
           </div>
-          <div className="relative mt-2">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(event) => setSearch(event.target.value)} className="h-8 pl-8 text-xs" placeholder="搜索话题或文档内容" />
+          <div className="relative mt-1.5">
+            <Search className="pointer-events-none absolute left-2 top-1/2 size-3 -translate-y-1/2 text-muted-foreground" />
+            <Input value={search} onChange={(event) => setSearch(event.target.value)} className="h-6 pl-6 text-[10px]" placeholder="搜索文档" />
           </div>
-          <p className="mt-1.5 text-[10px] leading-4 text-muted-foreground">
-            {compareMode ? `对比模式：请选择两份文档（${compareIds.length}/2）。` : '点击卡片切换当前编辑文档；需要比较时再开启对比模式。'}
+          <p className="mt-1 text-[8px] leading-3 text-muted-foreground">
+            {compareMode
+              ? `请选择两份文档（${compareIds.length}/2）`
+              : exportMode
+                ? `选择要导出的文档（已选 ${exportIds.length}）`
+                : '点击切换文档'}
           </p>
+          {exportMode && (
+            <Button type="button" size="sm" className="mt-1 h-6 w-full text-[9px]" disabled={!exportIds.length || exporting} onClick={() => void exportSelectedDocuments()}>
+              {exporting ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <Download data-icon="inline-start" />}
+              导出所选 {exportIds.length ? `(${exportIds.length})` : ''}
+            </Button>
+          )}
         </div>
 
-        <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain p-2">
+        <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain p-1.5">
           {loading && (
             <div className="flex items-center justify-center gap-2 py-10 text-xs text-muted-foreground">
               <Loader2 className="size-3.5 animate-spin" />加载文档列表…
             </div>
           )}
-          {!loading && visibleDocuments.map((document, index) => {
+          {!loading && visibleDocuments.map((document) => {
             const selectedIndex = compareIds.indexOf(document.id)
+            const exportSelected = exportIds.includes(document.id)
             const current = document.id === currentId
             const hasContent = Boolean(document.teachingMarkdown?.trim())
             return (
               <button
                 key={document.id}
                 type="button"
-                aria-pressed={selectedIndex >= 0}
-                onClick={() => compareMode ? toggleCompare(document.id) : (!current && onOpenDocument?.(document.id))}
+                aria-pressed={compareMode ? selectedIndex >= 0 : exportMode ? exportSelected : current}
+                onClick={() => compareMode
+                  ? toggleCompare(document.id)
+                  : exportMode
+                    ? toggleExport(document.id)
+                    : (!current && onOpenDocument?.(document.id))}
                 className={cn(
-                  'group w-full rounded-lg border px-2.5 py-2 text-left transition-colors',
-                  selectedIndex >= 0 ? 'border-primary/50 bg-primary/[0.06]' : 'border-border/70 bg-background hover:border-primary/30 hover:bg-muted/30',
+                  'group w-full rounded-md border px-2 py-1.5 text-left transition-colors',
+                  selectedIndex >= 0 || exportSelected ? 'border-primary/50 bg-primary/[0.06]' : 'border-border/70 bg-background hover:border-primary/30 hover:bg-muted/30',
                   current && 'ring-1 ring-inset ring-primary/20',
                 )}
               >
-                <div className="flex items-start gap-2.5">
-                  <span className={cn(
-                    'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded border text-[10px] font-semibold',
-                    compareMode && selectedIndex >= 0 ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground',
-                  )}>
-                    {compareMode && selectedIndex >= 0 ? selectedIndex + 1 : index + 1}
-                  </span>
+                <div className="flex items-start gap-1.5">
+                  {(compareMode || exportMode) && (
+                    <span className={cn(
+                      'mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border text-[8px] font-semibold',
+                      selectedIndex >= 0 || exportSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground',
+                    )}>
+                      {compareMode ? (selectedIndex >= 0 ? selectedIndex + 1 : '·') : (exportSelected ? <Check className="size-2.5" /> : '·')}
+                    </span>
+                  )}
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <p className="truncate text-xs font-semibold">{document.title}</p>
-                      {current && <Badge variant="secondary" className="shrink-0 text-[9px]">当前</Badge>}
+                    <div className="flex items-center gap-1">
+                      <p className="truncate text-[10px] font-semibold">{document.title}</p>
+                      {current && <Badge variant="secondary" className="h-4 shrink-0 px-1 text-[8px]">当前</Badge>}
                     </div>
-                    <div className="mt-1.5 flex items-center gap-1.5">
-                      <Badge variant="outline" className="text-[9px]">{document.difficulty}</Badge>
-                      <span className={cn('text-[10px]', hasContent ? 'text-emerald-600' : 'text-amber-600')}>
+                    <div className="mt-1 flex items-center gap-1">
+                      <Badge variant="outline" className="h-4 px-1 text-[8px]">{document.difficulty}</Badge>
+                      <span className={cn('text-[8px]', hasContent ? 'text-emerald-600' : 'text-amber-600')}>
                         {hasContent ? `${document.teachingMarkdown!.length} 字符` : '待编写'}
                       </span>
                     </div>
-                    <p className="mt-1.5 text-[10px] text-muted-foreground">{document.createdAt ? `创建于 ${formatCreatedAt(document.createdAt)}` : '尚未保存'}</p>
+                    <p className="mt-1 text-[8px] text-muted-foreground">{document.createdAt ? formatCreatedAt(document.createdAt) : '尚未保存'}</p>
                   </div>
                   {compareMode ? (
-                    <span className={cn('mt-0.5 flex size-4 items-center justify-center rounded-full border', selectedIndex >= 0 ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-transparent')}>
-                      <Check className="size-2.5" />
+                    <span className={cn('mt-0.5 flex size-3.5 items-center justify-center rounded-full border', selectedIndex >= 0 ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-transparent')}>
+                      <Check className="size-2" />
                     </span>
-                  ) : (
-                    <ArrowRight className={cn('mt-0.5 size-3.5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5', current && 'opacity-0')} />
+                  ) : exportMode ? null : (
+                    <ArrowRight className={cn('mt-0.5 size-3 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5', current && 'opacity-0')} />
                   )}
                 </div>
               </button>

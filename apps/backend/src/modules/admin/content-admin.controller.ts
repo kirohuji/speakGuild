@@ -3670,6 +3670,12 @@ ${contextBlock}
       await this.fileAssetsService.syncPersistentAssetReferences(
         tx, session.user.id, 'sentence_pattern_asset', id, null,
       );
+      // SentencePattern 被话题、故事关卡和场景语言支架直接引用，部分外键未设置级联删除。
+      // 同时清除无物理外键的学习包组材料认领，避免删除后残留不可见的引用记录。
+      await tx.trainingTopicSentencePattern.deleteMany({ where: { patternId: id } });
+      await tx.storyEpisodeSentencePattern.deleteMany({ where: { patternId: id } });
+      await tx.sceneSentencePattern.deleteMany({ where: { patternId: id } });
+      await tx.sceneMaterialReference.deleteMany({ where: { materialType: 'pattern', materialId: id } });
       return tx.sentencePattern.delete({ where: { id } });
     });
   }
