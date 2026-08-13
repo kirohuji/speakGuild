@@ -31,6 +31,21 @@ export interface GroupContext {
   laterScenes: GroupSceneInfo[];
 }
 
+export interface GroupMaterialUsageEntry {
+  sceneId: string;
+  sceneTitle: string;
+  topicId: string | null;
+  topicTitle: string | null;
+  role: 'learn' | 'review';
+}
+
+export interface GroupMaterialUsage {
+  groupId: string | null;
+  groupName: string | null;
+  currentScene: { id: string; title: string };
+  materials: Record<string, GroupMaterialUsageEntry[]>;
+}
+
 export interface ClaimConflict {
   kind: MaterialKind;
   materialId: string;
@@ -137,6 +152,58 @@ export class MaterialConstraintService {
   }
 
   /**
+   * 返回材料在当前学习包组内的引用位置。未入组时仅统计当前包，避免泄露无关组的引用。
+   * key 格式为 `${kind}:${materialId}`，便于三类语言支架共用一次查询结果。
+   */
+  async getGroupMaterialUsage(sceneId: string): Promise<GroupMaterialUsage | null> {
+    const scene = await this.prisma.scene.findUnique({
+      where: { id: sceneId },
+      select: {
+        id: true,
+        title: true,
+        groupId: true,
+        group: { select: { name: true, scenes: { select: { id: true, title: true } } } },
+      },
+    });
+    if (!scene) return null;
+
+    const groupScenes = scene.group?.scenes?.length
+      ? scene.group.scenes
+      : [{ id: scene.id, title: scene.title }];
+    const sceneIds = groupScenes.map((item) => item.id);
+    const [references, topics] = await Promise.all([
+      this.prisma.sceneMaterialReference.findMany({
+        where: { sceneId: { in: sceneIds } },
+        select: { sceneId: true, materialType: true, materialId: true, topicId: true, role: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+      this.prisma.trainingTopic.findMany({
+        where: { sceneId: { in: sceneIds } },
+        select: { id: true, title: true },
+      }),
+    ]);
+    const sceneTitles = new Map(groupScenes.map((item) => [item.id, item.title]));
+    const topicTitles = new Map(topics.map((item) => [item.id, item.title]));
+    const materials: Record<string, GroupMaterialUsageEntry[]> = {};
+    for (const reference of references) {
+      const key = `${reference.materialType}:${reference.materialId}`;
+      (materials[key] ??= []).push({
+        sceneId: reference.sceneId,
+        sceneTitle: sceneTitles.get(reference.sceneId) ?? '',
+        topicId: reference.topicId,
+        topicTitle: reference.topicId ? topicTitles.get(reference.topicId) ?? null : null,
+        role: reference.role,
+      });
+    }
+    return {
+      groupId: scene.groupId,
+      groupName: scene.group?.name ?? null,
+      currentScene: { id: scene.id, title: scene.title },
+      materials,
+    };
+  }
+
+  /**
    * 计算"新增/更新话题/包级知识"时的认领冲突：
    *  - 层 1：组内前序包（learn + review）已出现的材料，被当前包作为新学目标（learn）绑定时冲突（可降级 review）；
    *  - 层 2：同一包内其他话题/包级已认领的材料（唯一约束 (sceneId, materialType, materialId) 限制，不可降级）。
@@ -231,6 +298,58 @@ export class MaterialConstraintService {
         ...source,
       };
     });
+  }
+
+  /**
+   * 将冲突材料的认领权转移给当前话题前，清理当前组内会阻挡它的前序业务关联。
+   * 只处理前序包及当前包的其他话题，不删除材料本体，也不触碰后序包或其他组。
+   */
+  async removeOverriddenTopicClaims(
+    tx: Prisma.TransactionClient,
+    sceneId: string,
+    topicId: string | null,
+    conflicts: ClaimConflict[],
+  ) {
+    if (!conflicts.length) return;
+    const currentScene = await tx.scene.findUnique({
+      where: { id: sceneId },
+      select: { groupId: true, sortOrder: true },
+    });
+    if (!currentScene) return;
+
+    const scopedScenes = currentScene.groupId
+      ? await tx.scene.findMany({
+          where: { groupId: currentScene.groupId, sortOrder: { lte: currentScene.sortOrder } },
+          select: { id: true },
+        })
+      : [{ id: sceneId }];
+    const references = await tx.sceneMaterialReference.findMany({
+      where: {
+        sceneId: { in: scopedScenes.map((scene) => scene.id) },
+        OR: conflicts.map((conflict) => ({
+          materialType: conflict.kind,
+          materialId: conflict.materialId,
+        })),
+        ...(topicId ? { NOT: { topicId } } : {}),
+      },
+      select: { id: true, sceneId: true, topicId: true, materialType: true, materialId: true },
+    });
+    if (!references.length) return;
+
+    const topicChunks = references.filter((ref) => ref.topicId && ref.materialType === 'chunk');
+    const topicVocabs = references.filter((ref) => ref.topicId && ref.materialType === 'vocab');
+    const topicPatterns = references.filter((ref) => ref.topicId && ref.materialType === 'pattern');
+    const sceneChunks = references.filter((ref) => !ref.topicId && ref.materialType === 'chunk');
+    const sceneVocabs = references.filter((ref) => !ref.topicId && ref.materialType === 'vocab');
+    const scenePatterns = references.filter((ref) => !ref.topicId && ref.materialType === 'pattern');
+
+    if (topicChunks.length) await tx.trainingTopicChunk.deleteMany({ where: { OR: topicChunks.map((ref) => ({ topicId: ref.topicId!, chunkId: ref.materialId })) } });
+    if (topicVocabs.length) await tx.trainingTopicVocab.deleteMany({ where: { OR: topicVocabs.map((ref) => ({ topicId: ref.topicId!, vocabId: ref.materialId })) } });
+    if (topicPatterns.length) await tx.trainingTopicSentencePattern.deleteMany({ where: { OR: topicPatterns.map((ref) => ({ topicId: ref.topicId!, patternId: ref.materialId })) } });
+    if (sceneChunks.length) await tx.sceneChunk.deleteMany({ where: { OR: sceneChunks.map((ref) => ({ sceneId: ref.sceneId, chunkId: ref.materialId })) } });
+    if (sceneVocabs.length) await tx.sceneVocabulary.deleteMany({ where: { OR: sceneVocabs.map((ref) => ({ sceneId: ref.sceneId, vocabularyId: ref.materialId })) } });
+    if (scenePatterns.length) await tx.sceneSentencePattern.deleteMany({ where: { OR: scenePatterns.map((ref) => ({ sceneId: ref.sceneId, patternId: ref.materialId })) } });
+    await tx.sceneMaterialReference.deleteMany({ where: { id: { in: references.map((ref) => ref.id) } } });
   }
 
   /**

@@ -35,17 +35,17 @@ import {
   type SearchSelectColumn,
 } from '../components/content-authoring-fields'
 import {
-  listSceneCategories, createSceneCategory, updateSceneCategory, deleteSceneCategory,
+  listSceneCategories, createSceneCategory, updateSceneCategory, deleteSceneCategory, getSceneMaterialUsage,
   listScenes, getScene, createScene, updateScene, deleteScene,
   listVocabularies, createVocabulary, updateVocabulary, deleteVocabulary,
   listTrainingTopics, createTrainingTopic, updateTrainingTopic, deleteTrainingTopic,
   getTrainingTopic, listAllChunks, listStories, getStory, listScriptEpisodes, deleteScriptEpisode,
-  listLibraryPatterns, createLibraryVocabulary, createLibraryPattern, createLibraryChunk, generateTopicTeachingMarkdown,
+  listLibraryPatterns, createLibraryVocabulary, createLibraryPattern, createLibraryChunk,
   suggestTopicSupports, suggestTopicVocabs,
   enqueueWarmupPipelineGeneration,
   enqueueSceneTopicBatchGeneration,
   type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData, type SentencePatternFull, type StoryEpisode,
-  type TopicClaimConflict, type SuggestedTopicSupportItem, type SuggestedVocabItem, type TopicSupportKind,
+  type TopicClaimConflict, type SuggestedTopicSupportItem, type SuggestedVocabItem, type TopicSupportKind, type GroupMaterialUsageEntry,
 } from '../api-content-admin'
 import { EpisodeEditDialog } from './admin-script-page'
 import { WarmupPipelineTab, buildWarmupMaterialUsage, type WarmupPipelineData } from '../components/warmup-pipeline-tab'
@@ -115,6 +115,22 @@ function mergeById<T extends { id: string }>(...groups: Array<Array<T | null | u
     if (item?.id && !map.has(item.id)) map.set(item.id, item)
   })
   return [...map.values()]
+}
+
+function GroupMaterialUsageCell({ usages }: { usages: GroupMaterialUsageEntry[] }) {
+  const detail = usages.map((usage) =>
+    `${usage.sceneTitle} / ${usage.topicTitle ?? '包级'}${usage.role === 'review' ? '（复习）' : ''}`,
+  ).join('；')
+  return (
+    <div className="flex min-w-0 items-center gap-1.5" title={detail || '当前组内暂无引用'}>
+      <Badge variant={usages.length ? 'secondary' : 'outline'} className="shrink-0 text-[10px]">
+        {usages.length} 次
+      </Badge>
+      <span className="max-w-[22rem] truncate text-[10px] text-muted-foreground">
+        {detail || '当前组内暂无引用'}
+      </span>
+    </div>
+  )
 }
 
 function normalizeTopicPattern(item: any): SentencePatternFull | null {
@@ -664,8 +680,9 @@ function TrainingTopicDialog({
 }) {
   const [form, setForm] = useState<any>({})
   const [saving, setSaving] = useState(false)
-  const [teachingGenerating, setTeachingGenerating] = useState(false)
   const [activeTab, setActiveTab] = useState('basic')
+  const [savedGroupMaterialUsage, setSavedGroupMaterialUsage] = useState<Record<string, GroupMaterialUsageEntry[]>>({})
+  const [usageSceneTitle, setUsageSceneTitle] = useState('当前学习包')
   // 引用冲突：保存被拦截时记录冲突与待保存 payload，供“改为复习并保存”重试
   const [claimConflicts, setClaimConflicts] = useState<TopicClaimConflict[] | null>(null)
   const [conflictPayload, setConflictPayload] = useState<any>(null)
@@ -742,6 +759,37 @@ function TrainingTopicDialog({
     () => mergeById(chunks, (edit?.activeChunks ?? []).map((ac: any) => ac.chunk).filter(Boolean), createdChunks),
     [chunks, edit?.activeChunks, createdChunks],
   )
+
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    getSceneMaterialUsage(sceneId)
+      .then((usage) => {
+        if (cancelled) return
+        setSavedGroupMaterialUsage(usage.materials)
+        setUsageSceneTitle(usage.currentScene.title)
+      })
+      .catch(() => {
+        if (!cancelled) setSavedGroupMaterialUsage({})
+      })
+    return () => { cancelled = true }
+  }, [open, sceneId])
+
+  const getMaterialUsage = (kind: 'pattern' | 'chunk' | 'vocab', materialId: string): GroupMaterialUsageEntry[] => {
+    const topicId = form.id ?? edit?.id
+    const saved = savedGroupMaterialUsage[`${kind}:${materialId}`] ?? []
+    const otherUsages = topicId ? saved.filter((usage) => usage.topicId !== topicId) : saved
+    const field = kind === 'pattern' ? 'patternIds' : kind === 'chunk' ? 'chunkIds' : 'vocabIds'
+    if (!(form[field] ?? []).includes(materialId)) return otherUsages
+    const savedRole = topicId ? saved.find((usage) => usage.topicId === topicId)?.role : undefined
+    return [...otherUsages, {
+      sceneId,
+      sceneTitle: usageSceneTitle,
+      topicId: topicId ?? null,
+      topicTitle: form.title || edit?.title || '当前话题',
+      role: savedRole ?? 'learn',
+    }]
+  }
   const boundVocabs = useMemo(
     () => selectableVocabs.filter(v => (form.vocabIds ?? []).includes(v.id)),
     [selectableVocabs, form.vocabIds],
@@ -944,7 +992,7 @@ function TrainingTopicDialog({
     }
   }
 
-  const saveTopic = async (opts?: { forceReview?: boolean }) => {
+  const saveTopic = async (opts?: { forceReview?: boolean; forceOverride?: boolean }) => {
     if (!form.title?.trim() || !form.promptEn?.trim()) {
       toast.error('请先填写标题和英文提示')
       return null
@@ -958,6 +1006,7 @@ function TrainingTopicDialog({
       else if (!payload.inkScriptId?.trim()) payload.inkScriptId = null
       if (!payload.mediaAssetId?.trim()) payload.mediaAssetId = null
       if (opts?.forceReview) payload.forceReview = true
+      if (opts?.forceOverride) payload.forceOverride = true
       const saved = edit ? await updateTrainingTopic(edit.id, payload) : await createTrainingTopic(payload)
       // 材料引用冲突：返回 { conflicts }（不落库），弹窗让管理员选择处理方式
       if (!('id' in saved)) {
@@ -996,12 +1045,12 @@ function TrainingTopicDialog({
     await saveTopic({ forceReview: true })
   }
 
-  const handleGenerateTopicTeaching = async () => {
-    const topicId = form.id ?? edit?.id
-    const topic = topicId ? { id: topicId } : await saveTopic()
-    if (!topic?.id) return null
-    const result = await generateTopicTeachingMarkdown(topic.id)
-    return result
+  const saveAsOverride = async () => {
+    const payload = conflictPayload
+    setClaimConflicts(null)
+    setConflictPayload(null)
+    if (!payload) return
+    await saveTopic({ forceOverride: true })
   }
 
   const runSuggestVocabs = async () => {
@@ -1200,25 +1249,6 @@ function TrainingTopicDialog({
       toast.error(error?.message || '快速新建失败')
     } finally {
       setQuickCreateSaving(false)
-    }
-  }
-
-  const generateTeaching = async () => {
-    if (teachingGenerating) return
-    setTeachingGenerating(true)
-    try {
-      const result = await handleGenerateTopicTeaching()
-      if (result?.markdown != null) {
-        setForm((current: any) => ({ ...current, teachingMarkdown: result.markdown }))
-        const changeCount = result.changes?.length ?? 0
-        toast.success(changeCount > 0
-          ? `教学文档已润色（${changeCount} 处改动），请检查后保存`
-          : '教学文档已润色，未发现需要修改的地方')
-      }
-    } catch (error: any) {
-      toast.error(error?.message || 'AI 润色教学文档失败')
-    } finally {
-      setTeachingGenerating(false)
     }
   }
 
@@ -1447,11 +1477,22 @@ function TrainingTopicDialog({
                 currentDifficulty={form.difficulty ?? edit?.difficulty ?? 'L2'}
                 value={form.teachingMarkdown ?? ''}
                 onChange={(teachingMarkdown) => setForm({ ...form, teachingMarkdown })}
-                onGenerate={() => void generateTeaching()}
-                generating={teachingGenerating}
-                practiceMode={contentMode === 'practice'}
                 onOpenDocument={(topicId) => void openTeachingDocument(topicId)}
-                onNavigate={(tab) => setActiveTab(tab)}
+                patterns={selectablePatterns}
+                chunks={selectableChunks}
+                vocabs={selectableVocabs}
+                selectedPatternIds={form.patternIds ?? []}
+                selectedChunkIds={form.chunkIds ?? []}
+                selectedVocabIds={form.vocabIds ?? []}
+                onToggleMaterial={(kind, id) => {
+                  const field = kind === 'pattern' ? 'patternIds' : kind === 'chunk' ? 'chunkIds' : 'vocabIds'
+                  setForm((current: any) => {
+                    const ids = current[field] ?? []
+                    return { ...current, [field]: ids.includes(id) ? ids.filter((item: string) => item !== id) : [...ids, id] }
+                  })
+                }}
+                onCreateMaterial={openQuickCreate}
+                onSearchVocabs={remoteVocabSearch}
               />
             </TabsContent>
 
@@ -1523,6 +1564,7 @@ function TrainingTopicDialog({
                       { key: 'pattern', header: '句型', className: 'font-mono text-sm font-medium', render: (p) => p.pattern },
                       { key: 'meaning', header: '含义', className: 'text-xs text-muted-foreground max-w-[200px] truncate', render: (p) => p.meaning || '-' },
                       { key: 'difficulty', header: '等级', className: 'hidden md:table-cell', render: (p) => <Badge variant="outline" className="text-[10px]">{p.difficulty}</Badge> },
+                      { key: 'usage', header: '组内引用', className: 'min-w-[18rem]', render: (p) => <GroupMaterialUsageCell usages={getMaterialUsage('pattern', p.id)} /> },
                     ]}
                   />
                 </TabsContent>
@@ -1577,6 +1619,7 @@ function TrainingTopicDialog({
                       { key: 'text', header: '句块', className: 'text-sm font-medium', render: (c) => c.text },
                       { key: 'meaning', header: '含义', className: 'text-xs text-muted-foreground max-w-[200px] truncate', render: (c) => c.meaning },
                       { key: 'difficulty', header: '等级', className: 'hidden md:table-cell', render: (c) => <Badge variant="outline" className="text-[10px]">{c.difficulty}</Badge> },
+                      { key: 'usage', header: '组内引用', className: 'min-w-[18rem]', render: (c) => <GroupMaterialUsageCell usages={getMaterialUsage('chunk', c.id)} /> },
                     ]}
                   />
                 </TabsContent>
@@ -1656,6 +1699,7 @@ function TrainingTopicDialog({
                     columns={[
                       { key: 'word', header: '词汇', className: 'text-sm font-medium', render: (v) => v.word },
                       { key: 'meaning', header: '含义', className: 'text-xs text-muted-foreground max-w-[200px] truncate', render: (v) => v.meaning },
+                      { key: 'usage', header: '组内引用', className: 'min-w-[18rem]', render: (v) => <GroupMaterialUsageCell usages={getMaterialUsage('vocab', v.id)} /> },
                     ]}
                   />
                 </TabsContent>
@@ -1923,12 +1967,19 @@ function TrainingTopicDialog({
             <p className="text-xs text-muted-foreground">
               选择「改为复习并保存」后，这些材料仍可出现在本话题的例句/练习题中，但不再作为新学知识点（不会占用后续学习名额）。
             </p>
+            <p className="text-xs text-destructive">
+              选择「覆盖并保存」会从上述原学习包或话题中移除这些材料，并改由当前话题作为新学知识点认领。
+            </p>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => { setClaimConflicts(null); setConflictPayload(null) }}>返回修改</Button>
             <Button onClick={saveAsReview} disabled={saving}>
               {saving ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}
               改为复习并保存
+            </Button>
+            <Button variant="destructive" onClick={saveAsOverride} disabled={saving}>
+              {saving ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <RefreshCw data-icon="inline-start" />}
+              覆盖并保存
             </Button>
           </div>
         </DialogContent>

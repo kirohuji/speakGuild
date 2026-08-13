@@ -435,7 +435,7 @@ function ChunkTab() {
                           <Edit3 className="size-3.5" />
                         </Button>
                         <Button size="icon" variant="ghost" className="size-8 text-destructive"
-                          onClick={async () => { if (confirm(`删除 "${c.text}"？`)) { await api.deleteLibraryChunk(c.id); load() } }}>
+                          onClick={async () => { if (confirm(`删除“${c.text}”？相关话题、学习包、剧情和用户学习进度中的关联也会一并删除。`)) { await api.deleteLibraryChunk(c.id); load() } }}>
                           <Trash2 className="size-3.5" />
                         </Button>
                       </div>

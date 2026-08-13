@@ -53,7 +53,6 @@ import { AiModelService } from '../ai-model/ai-model.service';
 import { FileAssetsService } from '../file-assets/file-assets.service';
 import { AdminTasksService } from '../admin-tasks/admin-tasks.service';
 import { ContentPrepareService } from '../admin-tasks/jobs/content-prepare.service';
-import { TopicTeachingGenerateService } from '../admin-tasks/jobs/topic-teaching-generate.service';
 import { ListeningPipelineTextDto } from './dto/listening-pipeline.dto';
 import { ListeningTranscriptSegment } from '../tts/tts.service';
 import { MaterialConstraintService, type MaterialKind, type GroupSceneInfo } from '../content-experiences/material-constraint.service';
@@ -154,7 +153,6 @@ export class ContentAdminController {
     private readonly adminTasksService: AdminTasksService,
     private readonly contentPrepareService: ContentPrepareService,
     private readonly materialConstraints: MaterialConstraintService,
-    private readonly topicTeachingGenerateService: TopicTeachingGenerateService,
   ) {}
 
   private async requireAdmin(req: Request) {
@@ -346,6 +344,15 @@ export class ContentAdminController {
       earlierScenes: decorate(context.earlierScenes),
       laterScenes: decorate(context.laterScenes),
     };
+  }
+
+  /** 当前学习包组内，单词/句块/句型分别被哪些包和话题引用。 */
+  @Get('scenes/:id/material-usage')
+  async getSceneMaterialUsage(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    const usage = await this.materialConstraints.getGroupMaterialUsage(id);
+    if (!usage) throw new NotFoundException('学习包不存在');
+    return usage;
   }
 
   @Post('scenes')
@@ -1117,7 +1124,7 @@ ${candidateLines}
 6. ${dto.kind === 'pattern' ? '句型骨架应体现可替换结构，不能只写一个孤立短语。' : 'Chunk 应是可直接复用的固定或半固定表达，不要伪装成抽象句型。'}
 7. 只输出 JSON：{"summary":"中文审查结论","items":[{"action":"existing","materialId":"候选id","reason":"中文理由"}]}。`,
           temperature: 0.25,
-          maxOutputTokens: 1800,
+          maxOutputTokens: 16000,
         });
         const parsed = extractJsonObject(text);
         if (parsed && Array.isArray(parsed.items)) {
@@ -1197,7 +1204,7 @@ ${candidateLines}
   @Post('training-topics')
   async createTrainingTopic(@Req() req: Request, @Body() dto: CreateTrainingTopicDto) {
     await this.requireAdmin(req);
-    const { chunkIds, vocabIds, patternIds, sentencePatterns, forceReview, ...data } = dto;
+    const { chunkIds, vocabIds, patternIds, sentencePatterns, forceReview, forceOverride, ...data } = dto;
     const scene = await this.prisma.scene.findUnique({ where: { id: dto.sceneId }, select: { contentMode: true } });
     if (!scene) throw new NotFoundException('学习包不存在');
     if (['novel', 'story'].includes(scene.contentMode)) throw new BadRequestException('小说包和剧情包不使用训练话题');
@@ -1232,21 +1239,24 @@ ${candidateLines}
       topicSortOrder: data.sortOrder ?? 0,
       claims,
     });
-    if (conflicts.length && !forceReview) {
+    if (conflicts.length && !forceReview && !forceOverride) {
       return { code: 409, message: '存在材料引用冲突：部分单词/句块/句型已被前序内容认领', data: { conflicts } } as any;
     }
     // 同包话题冲突无法降级：唯一约束限制同一包内一个材料只能被认领一次，forceReview 只对跨包（前序包）冲突生效
     const topicConflicts = conflicts.filter((conflict) => conflict.sourceType === 'topic');
-    if (topicConflicts.length) {
+    if (topicConflicts.length && !forceOverride) {
       return {
         code: 409,
         message: '存在材料引用冲突：部分单词/句块/句型已被本包其他话题认领，同一包内不可重复绑定',
         data: { conflicts: topicConflicts },
       } as any;
     }
-    const conflictMaterialIds = conflicts.map((conflict) => conflict.materialId);
+    const conflictMaterialIds = forceReview ? conflicts.map((conflict) => conflict.materialId) : [];
 
     const topic = await this.prisma.$transaction(async (tx) => {
+      if (forceOverride) {
+        await this.materialConstraints.removeOverriddenTopicClaims(tx, dto.sceneId, null, conflicts);
+      }
       const created = await tx.trainingTopic.create({
         data: {
           ...data,
@@ -1273,7 +1283,7 @@ ${candidateLines}
       // 引用表同步：冲突材料降级为 review（复习复用），其余为 learn（新学）
       await this.materialConstraints.syncTopicReferences(tx, dto.sceneId, created.id, claims, conflictMaterialIds);
       return created;
-    });
+    }, { maxWait: 5_000, timeout: 20_000 });
 
     return this.prisma.trainingTopic.findUnique({
       where: { id: topic.id },
@@ -1288,7 +1298,7 @@ ${candidateLines}
   @Patch('training-topics/:id')
   async updateTrainingTopic(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateTrainingTopicDto) {
     await this.requireAdmin(req);
-    const { chunkIds, vocabIds, patternIds, sentencePatterns, forceReview, ...data } = dto;
+    const { chunkIds, vocabIds, patternIds, sentencePatterns, forceReview, forceOverride, ...data } = dto;
     const current = await this.prisma.trainingTopic.findUnique({ where: { id }, select: { sceneId: true, sortOrder: true } });
     if (!current) throw new NotFoundException('学习话题不存在');
     const sceneId = data.sceneId ?? current.sceneId;
@@ -1338,21 +1348,24 @@ ${candidateLines}
           claims,
         })
       : [];
-    if (conflicts.length && !forceReview) {
+    if (conflicts.length && !forceReview && !forceOverride) {
       return { code: 409, message: '存在材料引用冲突：部分单词/句块/句型已被前序内容认领', data: { conflicts } } as any;
     }
     // 同包话题冲突无法降级：唯一约束限制同一包内一个材料只能被认领一次，forceReview 只对跨包（前序包）冲突生效
     const topicConflicts = conflicts.filter((conflict) => conflict.sourceType === 'topic');
-    if (topicConflicts.length) {
+    if (topicConflicts.length && !forceOverride) {
       return {
         code: 409,
         message: '存在材料引用冲突：部分单词/句块/句型已被本包其他话题认领，同一包内不可重复绑定',
         data: { conflicts: topicConflicts },
       } as any;
     }
-    const conflictMaterialIds = conflicts.map((conflict) => conflict.materialId);
+    const conflictMaterialIds = forceReview ? conflicts.map((conflict) => conflict.materialId) : [];
 
     await this.prisma.$transaction(async (tx) => {
+      if (forceOverride) {
+        await this.materialConstraints.removeOverriddenTopicClaims(tx, sceneId, id, conflicts);
+      }
       await tx.trainingTopic.update({ where: { id }, data: normalizedData });
       if (chunkIds) {
         await tx.trainingTopicChunk.deleteMany({ where: { topicId: id } });
@@ -1382,7 +1395,7 @@ ${candidateLines}
       if (bindingChanged) {
         await this.materialConstraints.syncTopicReferences(tx, sceneId, id, claims, conflictMaterialIds);
       }
-    });
+    }, { maxWait: 5_000, timeout: 20_000 });
     return this.prisma.trainingTopic.findUnique({
       where: { id },
       include: {
@@ -1495,7 +1508,15 @@ ${candidateLines}
   @Delete('chunks/:id')
   async deleteChunk(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
-    return this.prisma.chunk.delete({ where: { id } });
+    return this.prisma.$transaction(async (tx) => {
+      await tx.userChunkProgress.deleteMany({ where: { chunkId: id } });
+      await tx.trainingTopicChunk.deleteMany({ where: { chunkId: id } });
+      await tx.storyEpisodeChunk.deleteMany({ where: { chunkId: id } });
+      await tx.sceneChunk.deleteMany({ where: { chunkId: id } });
+      await tx.sceneMaterialReference.deleteMany({ where: { materialType: 'chunk', materialId: id } });
+      await tx.chunkExample.deleteMany({ where: { chunkId: id } });
+      return tx.chunk.delete({ where: { id } });
+    });
   }
 
   // ════════════════════════════════════════════════════════════
@@ -3194,27 +3215,6 @@ ${contextBlock}
     return this.adminTasksService.enqueueSceneTopicBatchGenerate(id, session.user.id);
   }
 
-  /**
-   * AI 润色话题教学文档
-   * 管理员先编写初稿保存到 teachingMarkdown，再调用此接口润色。
-   * 返回润色后的 Markdown 及每处改动的 before/after/reason。
-   */
-  @Post('training-topics/:id/generate-teaching')
-  async generateTopicTeachingMarkdown(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
-
-    try {
-      const result = await this.topicTeachingGenerateService.polishForTopic(id);
-      return {
-        code: 200,
-        message: 'success',
-        data: { markdown: result.markdown, changes: result.changes },
-      };
-    } catch (err: any) {
-      return { code: 500, message: err.message, data: null };
-    }
-  }
-
   // ════════════════════════════════════════════════════════════
   // CONTENT LIBRARY: Full Vocabulary Management
   // ════════════════════════════════════════════════════════════
@@ -3561,6 +3561,13 @@ ${contextBlock}
       await this.fileAssetsService.syncPersistentAssetReferences(
         tx, session.user.id, 'chunk_asset', id, null,
       );
+      // Chunk 被多个业务表直接引用，且部分外键未配置级联删除；统一在同一事务内清理，
+      // 同时移除无物理外键的学习包组材料认领，避免留下幽灵引用。
+      await tx.userChunkProgress.deleteMany({ where: { chunkId: id } });
+      await tx.trainingTopicChunk.deleteMany({ where: { chunkId: id } });
+      await tx.storyEpisodeChunk.deleteMany({ where: { chunkId: id } });
+      await tx.sceneChunk.deleteMany({ where: { chunkId: id } });
+      await tx.sceneMaterialReference.deleteMany({ where: { materialType: 'chunk', materialId: id } });
       await tx.chunkExample.deleteMany({ where: { chunkId: id } });
       return tx.chunk.delete({ where: { id } });
     });

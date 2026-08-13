@@ -129,6 +129,21 @@ export interface SceneMaterialContext {
   laterScenes: GroupSceneInfo[]
 }
 
+export interface GroupMaterialUsageEntry {
+  sceneId: string
+  sceneTitle: string
+  topicId: string | null
+  topicTitle: string | null
+  role: 'learn' | 'review'
+}
+
+export interface GroupMaterialUsage {
+  groupId: string | null
+  groupName: string | null
+  currentScene: { id: string; title: string }
+  materials: Record<string, GroupMaterialUsageEntry[]>
+}
+
 export interface TopicClaimConflict {
   kind: MaterialKind
   materialId: string
@@ -142,6 +157,10 @@ export type TopicSaveResult = TrainingTopic | { conflicts: TopicClaimConflict[] 
 
 export async function getSceneMaterialContext(sceneId: string): Promise<SceneMaterialContext> {
   return get(`/admin/content/scenes/${sceneId}/material-context`)
+}
+
+export async function getSceneMaterialUsage(sceneId: string): Promise<GroupMaterialUsage> {
+  return get(`/admin/content/scenes/${sceneId}/material-usage`)
 }
 
 export interface SuggestedVocabItem {
@@ -806,10 +825,6 @@ export interface GenerateTeachingMarkdownResult {
 
 export async function generateTeachingMarkdown(id: string): Promise<GenerateTeachingMarkdownResult> {
   return post(`/admin/content/stories/${id}/generate-teaching`, undefined, { timeout: 300_000 })
-}
-
-export async function generateTopicTeachingMarkdown(id: string): Promise<GenerateTeachingMarkdownResult> {
-  return post(`/admin/content/training-topics/${id}/generate-teaching`, undefined, { timeout: 300_000 })
 }
 
 export async function enqueueWarmupPipelineGeneration(id: string): Promise<{ id: string; bullJobId?: string; reused?: boolean }> {

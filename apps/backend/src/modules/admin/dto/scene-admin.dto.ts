@@ -230,6 +230,11 @@ export class CreateTrainingTopicDto {
   @IsOptional()
   @IsBoolean()
   forceReview?: boolean;
+
+  /** 覆盖冲突认领：移除当前组内原包/话题的材料关联，改由当前话题作为新学目标认领 */
+  @IsOptional()
+  @IsBoolean()
+  forceOverride?: boolean;
 }
 
 export class UpdateTrainingTopicDto {
@@ -317,6 +322,11 @@ export class UpdateTrainingTopicDto {
   @IsOptional()
   @IsBoolean()
   forceReview?: boolean;
+
+  /** 覆盖冲突认领：移除当前组内原包/话题的材料关联，改由当前话题作为新学目标认领 */
+  @IsOptional()
+  @IsBoolean()
+  forceOverride?: boolean;
 }
 
 /** 根据已绑句型/句块推荐搭配词汇 */

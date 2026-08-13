@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, BookOpen, Check, GitCompareArrows, Loader2, PanelLeftClose, PanelLeftOpen, Search, Sparkles, X } from 'lucide-react'
+import { ArrowRight, BookOpen, Check, GitCompareArrows, Link2, Loader2, PanelLeftClose, PanelLeftOpen, Plus, Search, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { cn } from '@/lib/cn'
 import {
+  getSceneMaterialUsage,
+  type GroupMaterialUsageEntry,
   listTopicTeachingDocuments,
   type TopicTeachingDocument,
 } from '@/features/admin/api-content-admin'
@@ -19,11 +22,108 @@ interface TopicTeachingWorkspaceProps {
   currentDifficulty: string
   value: string
   onChange: (value: string) => void
-  onGenerate: () => void
-  generating: boolean
-  practiceMode: boolean
   onOpenDocument?: (topicId: string) => void
-  onNavigate?: (tab: 'training' | 'warmup' | 'experience') => void
+  patterns: Array<{ id: string; pattern: string; meaning?: string | null }>
+  chunks: Array<{ id: string; text: string; meaning?: string | null }>
+  vocabs: Array<{ id: string; word: string; meaning?: string | null }>
+  selectedPatternIds: string[]
+  selectedChunkIds: string[]
+  selectedVocabIds: string[]
+  onToggleMaterial: (kind: MaterialKind, id: string) => void
+  onCreateMaterial: (kind: MaterialKind) => void
+  onSearchVocabs?: (query: string) => Promise<unknown>
+}
+
+type MaterialKind = 'pattern' | 'chunk' | 'vocab'
+
+interface MaterialShelfProps {
+  title: string
+  count: number
+  query: string
+  onQueryChange: (value: string) => void
+  items: Array<{ id: string; primary: string; secondary?: string | null; selected: boolean; usages: GroupMaterialUsageEntry[] }>
+  onToggle: (id: string) => void
+  onCreate: () => void
+}
+
+function formatMaterialLocations(usages: GroupMaterialUsageEntry[]) {
+  if (!usages.length) return '未引用'
+  return usages.map((usage) =>
+    `${usage.sceneTitle} / ${usage.topicTitle ?? '包级'}${usage.role === 'review' ? ' · 复' : ''}`,
+  ).join('；')
+}
+
+function MaterialShelf({ title, count, query, onQueryChange, items, onToggle, onCreate }: MaterialShelfProps) {
+  return (
+    <section className="flex min-h-0 flex-1 flex-col">
+      <div className="flex items-center justify-between gap-1.5 px-2 py-1.5">
+        <div className="flex min-w-0 items-center gap-1">
+          <p className="truncate text-[11px] font-semibold">{title}</p>
+          <Badge variant="secondary" className="h-4 shrink-0 px-1 text-[8px]">{count}</Badge>
+        </div>
+        <Button type="button" size="sm" variant="ghost" className="h-6 px-1.5 text-[9px]" onClick={onCreate}>
+          <Plus data-icon="inline-start" />新建
+        </Button>
+      </div>
+      <div className="px-1.5 pb-1.5">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2 top-1/2 size-3 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            className="h-6 px-6 text-[10px]"
+            placeholder={`查询并添加${title}`}
+          />
+          {query && (
+            <button type="button" aria-label={`清除${title}查询`} onClick={() => onQueryChange('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <X className="size-3" />
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1.5 pb-1.5">
+        <div className="flex flex-col gap-0.5">
+          {items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onToggle(item.id)}
+              className={cn(
+                'group flex w-full items-start gap-1.5 rounded-md border px-1.5 py-1 text-left transition-colors',
+                item.selected ? 'border-primary/25 bg-primary/[0.05]' : 'border-border/60 bg-background hover:border-primary/30 hover:bg-muted/40',
+              )}
+            >
+              <span className={cn(
+                'mt-0.5 flex size-3.5 shrink-0 items-center justify-center rounded-full border',
+                item.selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground',
+              )}>
+                {item.selected ? <Check className="size-2" /> : <Plus className="size-2" />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[10px] font-medium leading-[0.875rem]">{item.primary}</span>
+                {item.secondary && <span className="block truncate text-[9px] leading-[0.875rem] text-muted-foreground">{item.secondary}</span>}
+              </span>
+              <span className="flex max-w-[11.5rem] shrink-0 self-end items-center justify-end gap-1">
+                <span className="text-right text-[7px] leading-[0.625rem] text-muted-foreground">
+                  {formatMaterialLocations(item.usages)}
+                </span>
+                <Badge
+                  variant={item.usages.length ? 'secondary' : 'outline'}
+                  className="h-3.5 shrink-0 gap-0.5 px-1 text-[7px] [&_svg]:size-2"
+                  aria-label={`组内引用 ${item.usages.length} 次`}
+                >
+                  <Link2 data-icon="inline-start" />{item.usages.length}
+                </Badge>
+              </span>
+            </button>
+          ))}
+          {!items.length && (
+            <p className="py-4 text-center text-[9px] text-muted-foreground">{query ? '没有匹配项' : `暂未添加${title}`}</p>
+          )}
+        </div>
+      </div>
+    </section>
+  )
 }
 
 const draftId = '__current_draft__'
@@ -42,11 +142,16 @@ export function TopicTeachingWorkspace({
   currentDifficulty,
   value,
   onChange,
-  onGenerate,
-  generating,
-  practiceMode,
   onOpenDocument,
-  onNavigate,
+  patterns,
+  chunks,
+  vocabs,
+  selectedPatternIds,
+  selectedChunkIds,
+  selectedVocabIds,
+  onToggleMaterial,
+  onCreateMaterial,
+  onSearchVocabs,
 }: TopicTeachingWorkspaceProps) {
   const [documents, setDocuments] = useState<TopicTeachingDocument[]>([])
   const [loading, setLoading] = useState(true)
@@ -55,6 +160,30 @@ export function TopicTeachingWorkspace({
   const [compareMode, setCompareMode] = useState(false)
   const [compareIds, setCompareIds] = useState<string[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [materialQueries, setMaterialQueries] = useState<Record<MaterialKind, string>>({ pattern: '', chunk: '', vocab: '' })
+  const [savedMaterialUsage, setSavedMaterialUsage] = useState<Record<string, GroupMaterialUsageEntry[]>>({})
+  const [currentSceneTitle, setCurrentSceneTitle] = useState('当前学习包')
+
+  useEffect(() => {
+    let cancelled = false
+    getSceneMaterialUsage(sceneId)
+      .then((usage) => {
+        if (cancelled) return
+        setSavedMaterialUsage(usage.materials)
+        setCurrentSceneTitle(usage.currentScene.title)
+      })
+      .catch(() => {
+        if (!cancelled) setSavedMaterialUsage({})
+      })
+    return () => { cancelled = true }
+  }, [sceneId])
+
+  useEffect(() => {
+    const query = materialQueries.vocab.trim()
+    if (!query || !onSearchVocabs) return
+    const timer = window.setTimeout(() => { void onSearchVocabs(query) }, 300)
+    return () => window.clearTimeout(timer)
+  }, [materialQueries.vocab, onSearchVocabs])
 
   useEffect(() => {
     let cancelled = false
@@ -121,6 +250,48 @@ export function TopicTeachingWorkspace({
 
   const completedCount = mergedDocuments.filter((item) => (item.teachingMarkdown ?? '').trim()).length
 
+  const materialUsage = useMemo(() => {
+    const next = Object.fromEntries(Object.entries(savedMaterialUsage).map(([key, usages]) => [
+      key,
+      currentTopicId ? usages.filter((usage) => usage.topicId !== currentTopicId) : usages,
+    ])) as Record<string, GroupMaterialUsageEntry[]>
+    const addCurrent = (kind: MaterialKind, ids: string[]) => ids.forEach((id) => {
+      const key = `${kind}:${id}`
+      const savedRole = currentTopicId
+        ? savedMaterialUsage[key]?.find((usage) => usage.topicId === currentTopicId)?.role
+        : undefined
+      next[key] = [...(next[key] ?? []), {
+        sceneId,
+        sceneTitle: currentSceneTitle,
+        topicId: currentTopicId ?? null,
+        topicTitle: currentTitle || '当前话题',
+        role: savedRole ?? 'learn',
+      }]
+    })
+    addCurrent('pattern', selectedPatternIds)
+    addCurrent('chunk', selectedChunkIds)
+    addCurrent('vocab', selectedVocabIds)
+    return next
+  }, [currentSceneTitle, currentTitle, currentTopicId, savedMaterialUsage, sceneId, selectedChunkIds, selectedPatternIds, selectedVocabIds])
+
+  const materialShelves = useMemo(() => {
+    const filter = <T extends { id: string }>(items: T[], query: string, label: (item: T) => string, selectedIds: string[]) => {
+      const keyword = query.trim().toLowerCase()
+      const visible = keyword
+        ? items.filter((item) => label(item).toLowerCase().includes(keyword))
+        : items.filter((item) => selectedIds.includes(item.id))
+      return visible.slice(0, keyword ? 30 : undefined)
+    }
+    return {
+      pattern: filter(patterns, materialQueries.pattern, (item) => `${item.pattern} ${item.meaning ?? ''}`, selectedPatternIds)
+        .map((item) => ({ id: item.id, primary: item.pattern, secondary: item.meaning, selected: selectedPatternIds.includes(item.id), usages: materialUsage[`pattern:${item.id}`] ?? [] })),
+      chunk: filter(chunks, materialQueries.chunk, (item) => `${item.text} ${item.meaning ?? ''}`, selectedChunkIds)
+        .map((item) => ({ id: item.id, primary: item.text, secondary: item.meaning, selected: selectedChunkIds.includes(item.id), usages: materialUsage[`chunk:${item.id}`] ?? [] })),
+      vocab: filter(vocabs, materialQueries.vocab, (item) => `${item.word} ${item.meaning ?? ''}`, selectedVocabIds)
+        .map((item) => ({ id: item.id, primary: item.word, secondary: item.meaning, selected: selectedVocabIds.includes(item.id), usages: materialUsage[`vocab:${item.id}`] ?? [] })),
+    }
+  }, [chunks, materialQueries, materialUsage, patterns, selectedChunkIds, selectedPatternIds, selectedVocabIds, vocabs])
+
   const toggleCompare = (id: string) => {
     setCompareIds((current) => {
       if (current.includes(id)) {
@@ -154,7 +325,9 @@ export function TopicTeachingWorkspace({
   return (
     <div className={cn(
       'grid h-[calc(97vh-10.5rem)] min-h-[32rem] overflow-hidden rounded-xl border border-border/70 bg-background',
-      sidebarOpen ? 'lg:grid-cols-[16rem_minmax(0,1fr)]' : 'grid-cols-1',
+      sidebarOpen
+        ? 'lg:grid-cols-[12rem_minmax(0,1fr)_22rem]'
+        : 'lg:grid-cols-[minmax(0,1fr)_22rem]',
     )}>
       <aside className={cn('min-h-0 flex-col border-b border-border/70 bg-muted/20 lg:border-b-0 lg:border-r', sidebarOpen ? 'flex' : 'hidden')}>
         <div className="border-b border-border/70 px-2.5 py-2.5">
@@ -267,26 +440,9 @@ export function TopicTeachingWorkspace({
                     <Button type="button" size="sm" variant={mode === 'edit' ? 'secondary' : 'ghost'} className="h-7 px-3 text-xs" onClick={() => setMode('edit')}>编辑</Button>
                     <Button type="button" size="sm" variant={mode === 'preview' ? 'secondary' : 'ghost'} className="h-7 px-3 text-xs" onClick={() => setMode('preview')}>预览</Button>
                   </div>
-                  <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5" onClick={onGenerate} disabled={generating}>
-                    {generating ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}AI 生成
-                  </Button>
                 </>
               )}
             </div>
-          </div>
-
-          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px]">
-            <span className="rounded-md bg-sky-600 px-2 py-1 font-medium text-white">01 教学文档</span>
-            <ArrowRight className="size-3 text-muted-foreground" />
-            <button type="button" className="rounded-md border border-border/70 bg-background px-2 py-1 text-muted-foreground hover:text-foreground" onClick={() => onNavigate?.('training')}>02 句型 · 句块 · 单词</button>
-            <ArrowRight className="size-3 text-muted-foreground" />
-            <button
-              type="button"
-              className="rounded-md border border-border/70 bg-background px-2 py-1 text-muted-foreground hover:text-foreground"
-              onClick={() => onNavigate?.(practiceMode ? 'warmup' : 'experience')}
-            >
-              03 {practiceMode ? '知识点练习' : '题型设计'}
-            </button>
           </div>
         </div>
 
@@ -319,6 +475,59 @@ export function TopicTeachingWorkspace({
           )}
         </div>
       </section>
+
+      <aside className="flex min-h-0 flex-col border-t border-border/70 bg-muted/10 lg:border-l lg:border-t-0">
+        <div className="shrink-0 border-b border-border/70 px-2 py-2">
+          <p className="text-xs font-semibold">当前语言材料</p>
+          <p className="mt-0.5 text-[9px] leading-[0.875rem] text-muted-foreground">搜索库中内容即可添加；点击已选内容可移除。</p>
+        </div>
+        <Tabs defaultValue="pattern" className="flex min-h-0 flex-1 flex-col">
+          <TabsList className="grid h-8 w-full shrink-0 grid-cols-3 rounded-none border-b border-border/70 bg-muted/30 p-0.5">
+            <TabsTrigger value="pattern" className="h-7 gap-1 px-1 text-[10px]">
+              句型 <Badge variant="secondary" className="h-4 px-1 text-[8px]">{selectedPatternIds.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="chunk" className="h-7 gap-1 px-1 text-[10px]">
+              句块 <Badge variant="secondary" className="h-4 px-1 text-[8px]">{selectedChunkIds.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="vocab" className="h-7 gap-1 px-1 text-[10px]">
+              单词 <Badge variant="secondary" className="h-4 px-1 text-[8px]">{selectedVocabIds.length}</Badge>
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="pattern" className="mt-0 min-h-0 flex-1 data-[state=active]:flex">
+            <MaterialShelf
+              title="句型"
+              count={selectedPatternIds.length}
+              query={materialQueries.pattern}
+              onQueryChange={(query) => setMaterialQueries((current) => ({ ...current, pattern: query }))}
+              items={materialShelves.pattern}
+              onToggle={(id) => onToggleMaterial('pattern', id)}
+              onCreate={() => onCreateMaterial('pattern')}
+            />
+          </TabsContent>
+          <TabsContent value="chunk" className="mt-0 min-h-0 flex-1 data-[state=active]:flex">
+            <MaterialShelf
+              title="句块"
+              count={selectedChunkIds.length}
+              query={materialQueries.chunk}
+              onQueryChange={(query) => setMaterialQueries((current) => ({ ...current, chunk: query }))}
+              items={materialShelves.chunk}
+              onToggle={(id) => onToggleMaterial('chunk', id)}
+              onCreate={() => onCreateMaterial('chunk')}
+            />
+          </TabsContent>
+          <TabsContent value="vocab" className="mt-0 min-h-0 flex-1 data-[state=active]:flex">
+            <MaterialShelf
+              title="单词"
+              count={selectedVocabIds.length}
+              query={materialQueries.vocab}
+              onQueryChange={(query) => setMaterialQueries((current) => ({ ...current, vocab: query }))}
+              items={materialShelves.vocab}
+              onToggle={(id) => onToggleMaterial('vocab', id)}
+              onCreate={() => onCreateMaterial('vocab')}
+            />
+          </TabsContent>
+        </Tabs>
+      </aside>
     </div>
   )
 }
