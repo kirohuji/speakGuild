@@ -1,5 +1,0 @@
-chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-1,频率与现在进行时,1,频率副词与问句,频率与现在进行时,L1,beginner,28,40,16,16,"[""描述6种频率并完成频率问句""]",1,12,4,Emma,老师,false,practice_foundation-present_频率_综合,"{""xp"":50}"
-1,频率与现在进行时,2,现在进行时,频率与现在进行时,L1~L2,beginner,28,40,16,16,"[""用进行时描述此刻和问答""]",1,12,4,Ben,同事,false,practice_foundation-present_进行时_综合,"{""xp"":50}"
-2,状态、活动与变化,1,状态动词与have,状态、活动与变化,L1~L2,beginner,28,40,16,16,"[""区分状态动词和have的双重用法""]",1,12,4,Mia,朋友,false,practice_foundation-present_状态_have,"{""xp"":50}"
-2,状态、活动与变化,2,get与综合,状态、活动与变化,L1~L2,beginner,28,40,16,16,"[""掌握get三种含义并完成综合输出""]",1,12,4,Emma,老师,false,practice_foundation-present_get_综合,"{""xp"":80}"

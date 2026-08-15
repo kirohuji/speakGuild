@@ -1,9 +1,0 @@
-chapter_id,chapter_title,episode_order,title,scene_title,required_output_level,required_user_level,vocab_required_count,vocab_total_count,chunk_required_count,chunk_total_count,objectives_json,pass_objective_count,pass_chunk_count,pass_min_dialogues,npc_name,npc_role,is_preview,ink_script_key,rewards_json
-1,认识团队,1,同事、岗位与部门,认识同事与团队,L1,beginner,20,40,8,16,"[""介绍两位同事的岗位和部门""]",1,6,4,Emma,团队经理,false,practice_foundation-daily-work_基础_办公室日常_认识团队,"{""xp"":50,""gems"":5}"
-1,认识团队,2,介绍与联系信息,认识同事与团队,L1,beginner,20,40,8,16,"[""介绍同事背景并说明联系方式""]",1,6,4,Mia,设计师,false,practice_foundation-daily-work_基础_办公室日常_联系信息,"{""xp"":50,""gems"":5}"
-2,他/她负责什么,1,日常职责与通讯,工作职责与安排,L1,beginner,20,40,8,16,"[""描述5项同事的工作职责""]",1,6,4,Emma,团队经理,false,practice_foundation-daily-work_基础_办公室日常_工作职责,"{""xp"":50,""gems"":5}"
-2,他/她负责什么,2,帮助客户与收尾,工作职责与安排,L1,beginner,20,40,8,16,"[""描述客户服务和任务跟进""]",1,6,4,Ben,前台助理,false,practice_foundation-daily-work_基础_办公室日常_客户服务,"{""xp"":50,""gems"":5}"
-3,询问和确认,1,Does 问答与信息确认,询问、否定与确认,L1,beginner,20,40,8,16,"[""完成8轮 Does 信息问答""]",1,6,4,Emma,团队经理,false,practice_foundation-daily-work_基础_办公室日常_询问确认,"{""xp"":50,""gems"":5}"
-3,询问和确认,2,否定纠正与 has,询问、否定与确认,L1,beginner,20,40,8,16,"[""完成3组否定纠正和 has 转换""]",1,6,4,Mia,设计师,false,practice_foundation-daily-work_基础_办公室日常_否定与has,"{""xp"":50,""gems"":5}"
-4,个人与团队,1,单复数和负责人,个人与团队协作,L1,beginner,20,40,8,16,"[""对比个人与团队并完成工作指派""]",1,6,4,Emma,团队经理,false,practice_foundation-daily-work_基础_办公室日常_单人与团队,"{""xp"":50,""gems"":5}"
-4,个人与团队,2,状态与同事档案,个人与团队协作,L1,beginner,20,40,8,16,"[""完成8-10句同事工作档案""]",1,6,4,Mia,设计师,false,practice_foundation-daily-work_基础_办公室日常_同事档案,"{""xp"":80,""gems"":10}"
