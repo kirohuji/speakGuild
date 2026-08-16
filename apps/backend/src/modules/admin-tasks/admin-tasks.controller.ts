@@ -23,6 +23,20 @@ export class AdminTasksController {
     return this.adminTasksService.getQueuesStatus();
   }
 
+  /** 从音标审查页创建当前 100 个单词的后台更新任务。 */
+  @Post('dictionary-pronunciations/refresh-current-page')
+  async refreshDictionaryPronunciations(
+    @Req() req: Request,
+    @Query('page') page?: string,
+    @Query('search') search?: string,
+  ) {
+    const session = await this.requireAdmin(req);
+    return this.adminTasksService.enqueueDictionaryPronunciationBatchRefresh(session.user.id, {
+      page: page ? Number(page) : 1,
+      search,
+    });
+  }
+
   /** 查看某个队列中等待/活跃的任务 */
   @Get('queues/:queueName/jobs')
   async getQueueJobs(

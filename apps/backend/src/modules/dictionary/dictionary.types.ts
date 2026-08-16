@@ -109,6 +109,8 @@ export interface CleanedPronunciation {
   needsReview?: boolean;
   aiConfidence?: number;
   aiReason?: string;
+  /** 人工确认该词的音标无误后锁定，批量检查会跳过。 */
+  locked?: boolean;
 }
 
 export interface CleanedSense {

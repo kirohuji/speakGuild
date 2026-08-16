@@ -337,6 +337,7 @@ export class DictionaryPipelineService {
     word: string,
     provider: PronunciationProvider,
     scope: PronunciationScope = 'all',
+    options?: { surfaceProviderRateLimit?: boolean },
   ): Promise<CleanedPronunciation[]> {
     if (provider === 'auto') {
       const orderedProviders: Exclude<PronunciationProvider, 'auto'>[] = [
@@ -346,10 +347,13 @@ export class DictionaryPipelineService {
         'datamuse',
       ];
       const responses = await Promise.allSettled(
-        orderedProviders.map((item) => this.fetchPronunciationsFromProvider(word, item)),
+        orderedProviders.map((item) => this.fetchPronunciationsFromProvider(word, item, scope, options)),
       );
       const combined = responses.flatMap((response, index) => {
         if (response.status === 'fulfilled') return response.value;
+        if (options?.surfaceProviderRateLimit && /(?:^|\D)(?:423|429)(?:\D|$)/.test(String(response.reason?.message ?? response.reason))) {
+          throw response.reason;
+        }
         this.logger.warn(`${orderedProviders[index]} pronunciation lookup failed: ${response.reason}`);
         return [];
       });

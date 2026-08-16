@@ -41,6 +41,7 @@ const TYPE_LABELS: Record<string, string> = {
   'narrative-video-render': '叙事视频预览',
   'file-asset-inspect': '检查未使用资源',
   'file-asset-cleanup': '清理未使用资源',
+  'dictionary-pronunciation-batch-refresh': '词典音标批量检查',
 };
 
 const STEP_LABELS: Record<string, string> = {
@@ -62,6 +63,8 @@ const STEP_LABELS: Record<string, string> = {
   uploading: '上传成片',
   inspect: '检查资源引用',
   'recheck-and-clean': '复查并清理资源',
+  refresh: '更新音标',
+  throttled: '等待限流解除',
 };
 
 const ERROR_TYPE_LABELS: Record<string, string> = {
@@ -547,7 +550,8 @@ export function AdminTasksPage() {
     || task.type === 'chunk-missing-meaning-enrich'
     || task.type === 'pattern-missing-meaning-enrich'
     || task.type === 'script-video-render'
-    || task.type === 'narrative-video-render';
+    || task.type === 'narrative-video-render'
+    || task.type === 'dictionary-pronunciation-batch-refresh';
 
   return (
     <div className="space-y-4">
@@ -568,6 +572,7 @@ export function AdminTasksPage() {
             <option value="pattern-missing-meaning-enrich">句型字段检查与 AI 补全</option>
             <option value="script-video-render">剧本演出视频</option>
             <option value="narrative-video-render">叙事视频预览</option>
+            <option value="dictionary-pronunciation-batch-refresh">词典音标批量检查</option>
             <option value="warmup-pipeline-generate">知识点练习 AI 生成</option>
           </Select>
           <Select value={status} onChange={(event) => { setStatus(event.target.value as AdminTaskStatus | 'all' | 'active'); setPage(1); }}>

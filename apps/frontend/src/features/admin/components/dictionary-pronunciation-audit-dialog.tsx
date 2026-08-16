@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp,
-  ClipboardCheck, Database, Headphones, Loader2, PenLine, RefreshCw, Save, Search, SpellCheck2, Trash2, Volume2,
+  ClipboardCheck, Database, Headphones, ListChecks, LockKeyhole, LockKeyholeOpen, Loader2, PenLine, RefreshCw, Save, Search, SpellCheck2, Trash2, Volume2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,8 @@ import { cn } from '@/lib/cn';
 import {
   clearDictionaryPronunciation, getPronunciationAudit, refreshDictionaryPronunciation,
   normalizeDictionaryPronunciation, saveManualDictionaryPronunciation,
+  enqueuePronunciationRefreshCurrentPage,
+  setDictionaryPronunciationLocked,
   type PronunciationAuditAccent, type PronunciationAuditItem,
   type PronunciationAuditResult, type PronunciationProvider, type PronunciationScope,
 } from '@/features/admin/api-dictionary';
@@ -174,9 +176,10 @@ export function DictionaryPronunciationAuditDialog({
   const [search, setSearch] = useState('');
   const [providers, setProviders] = useState<Record<string, PronunciationProvider>>({});
   const [scopes, setScopes] = useState<Record<string, PronunciationScope>>({});
-  const [processingActions, setProcessingActions] = useState<Record<string, 'update' | 'clear' | 'manual' | 'normalize-uk' | 'normalize-us'>>({});
+  const [processingActions, setProcessingActions] = useState<Record<string, 'update' | 'clear' | 'manual' | 'normalize-uk' | 'normalize-us' | 'lock'>>({});
   const [manualEditor, setManualEditor] = useState<{ word: string; type: 'uk' | 'us' } | null>(null);
   const [manualValue, setManualValue] = useState('');
+  const [batchSubmitting, setBatchSubmitting] = useState(false);
 
   const load = useCallback(async () => {
     if (!open) return;
@@ -215,6 +218,27 @@ export function DictionaryPronunciationAuditDialog({
       toast.success(`${word} 的${SCOPE_LABELS[scope]} IPA 已从 ${PROVIDER_LABELS[provider]} 更新`);
     } catch (error: any) {
       toast.error(error?.message || `${word} 更新失败`);
+    } finally {
+      setProcessingActions((current) => {
+        const next = { ...current };
+        delete next[word];
+        return next;
+      });
+    }
+  };
+
+  const setWordLocked = async (word: string, locked: boolean) => {
+    if (processingActions[word]) return;
+    setProcessingActions((current) => ({ ...current, [word]: 'lock' }));
+    try {
+      const updatedItem = await setDictionaryPronunciationLocked(word, locked);
+      setData((current) => {
+        if (!current) return current;
+        return { ...current, items: current.items.map((item) => item.word === word ? updatedItem : item) };
+      });
+      toast.success(locked ? `${word} 已确认无误并锁定，批量检查将跳过它` : `${word} 已解除锁定，会参与后续批量检查`);
+    } catch (error: any) {
+      toast.error(error?.message || `${word} 锁定状态更新失败`);
     } finally {
       setProcessingActions((current) => {
         const next = { ...current };
@@ -305,6 +329,19 @@ export function DictionaryPronunciationAuditDialog({
     setSearch(searchDraft.trim());
   };
 
+  const refreshCurrentPageInTaskCenter = async () => {
+    if (!data || batchSubmitting) return;
+    setBatchSubmitting(true);
+    try {
+      await enqueuePronunciationRefreshCurrentPage({ page: data.page, search: search || undefined });
+      toast.success(`已创建本页 ${data.items.length} 个单词的音标检查任务，可在任务中心查看进度`);
+    } catch (error: any) {
+      toast.error(error?.message || '创建音标检查任务失败');
+    } finally {
+      setBatchSubmitting(false);
+    }
+  };
+
   const stats = data?.pageStats ?? { passed: 0, attention: 0, missing: 0, withAudio: 0 };
   const manualBody = manualValue.trim().replace(/^\/+/, '').replace(/\/+$/, '');
   const manualSaving = !!manualEditor && processingActions[manualEditor.word] === 'manual';
@@ -390,6 +427,15 @@ export function DictionaryPronunciationAuditDialog({
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">更新与清空均按所选 UK / US 范围执行，不改释义、例句和词形。</p>
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void refreshCurrentPageInTaskCenter()}
+                disabled={loading || !data?.items.length || batchSubmitting}
+              >
+                {batchSubmitting ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <ListChecks data-icon="inline-start" />}
+                一键检查本页音标
+              </Button>
               <form
                 className="flex w-full max-w-md gap-2"
                 onSubmit={(event) => { event.preventDefault(); runSearch(); }}
@@ -434,6 +480,14 @@ export function DictionaryPronunciationAuditDialog({
                             <TableCell className="pl-6 align-top">
                               <div className="flex items-center gap-2">
                                 <span className="font-english font-semibold">{item.word}</span>
+                                {item.locked && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <LockKeyhole className="size-4 shrink-0 text-emerald-600" aria-label="音标已确认并锁定" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>已确认并锁定</TooltipContent>
+                                  </Tooltip>
+                                )}
                                 {item.status === 'passed'
                                   ? <CheckCircle2 className="size-4 text-primary" />
                                   : <AlertCircle className="size-4 text-destructive" />}
@@ -492,23 +546,49 @@ export function DictionaryPronunciationAuditDialog({
                                       <option key={value} value={value}>{label}</option>
                                     ))}
                                   </Select>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => void clearWord(item.word)}
-                                    disabled={isProcessing}
-                                  >
-                                    {processingAction === 'clear'
-                                      ? <Loader2 data-icon="inline-start" className="animate-spin" />
-                                      : <Trash2 data-icon="inline-start" />}
-                                    清空
-                                  </Button>
-                                  <Button size="sm" onClick={() => void updateWord(item.word)} disabled={isProcessing}>
-                                    {processingAction === 'update'
-                                      ? <Loader2 data-icon="inline-start" className="animate-spin" />
-                                      : <Database data-icon="inline-start" />}
-                                    更新
-                                  </Button>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => void clearWord(item.word)}
+                                        disabled={isProcessing}
+                                        aria-label={`清空 ${item.word} 的音标和发音`}
+                                      >
+                                        {processingAction === 'clear' ? <Loader2 className="animate-spin" /> : <Trash2 />}
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>清空音标和发音</TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="icon"
+                                        onClick={() => void updateWord(item.word)}
+                                        disabled={isProcessing}
+                                        aria-label={`更新 ${item.word} 的音标`}
+                                      >
+                                        {processingAction === 'update' ? <Loader2 className="animate-spin" /> : <Database />}
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>更新音标</TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant={item.locked ? 'outline' : 'secondary'}
+                                        size="icon"
+                                        onClick={() => void setWordLocked(item.word, !item.locked)}
+                                        disabled={isProcessing}
+                                        aria-label={item.locked ? `解除 ${item.word} 的音标锁定` : `确认 ${item.word} 的音标无误并锁定`}
+                                      >
+                                        {processingAction === 'lock'
+                                          ? <Loader2 className="animate-spin" />
+                                          : item.locked ? <LockKeyholeOpen /> : <LockKeyhole />}
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{item.locked ? '解除锁定' : '确认无误并锁定'}</TooltipContent>
+                                  </Tooltip>
                                 </div>
                               </div>
                             </TableCell>

@@ -107,6 +107,7 @@ export interface PronunciationAuditItem {
   uk: PronunciationAuditAccent;
   us: PronunciationAuditAccent;
   status: 'passed' | 'attention' | 'missing';
+  locked: boolean;
 }
 
 export interface PronunciationAuditResult {
@@ -176,6 +177,11 @@ export async function refreshDictionaryPronunciation(
   return post(`/dictionary/${encodeURIComponent(word)}/pronunciation/refresh`, { provider, scope });
 }
 
+/** 人工确认整词 UK / US 音标无误，并控制是否跳过后续批量检查。 */
+export async function setDictionaryPronunciationLocked(word: string, locked: boolean): Promise<PronunciationAuditItem> {
+  return post(`/dictionary/${encodeURIComponent(word)}/pronunciation/lock`, { locked });
+}
+
 /** Manually replace one accent's IPA. Slashes are optional. */
 export async function saveManualDictionaryPronunciation(
   word: string,
@@ -201,4 +207,9 @@ export async function clearDictionaryPronunciation(
   return (await import('@/lib/request')).del(
     `/dictionary/${encodeURIComponent(word)}/pronunciation?scope=${scope}`,
   );
+}
+
+/** 将音标审查页当前的最多 100 个单词交由任务中心自动更新。 */
+export async function enqueuePronunciationRefreshCurrentPage(params: { page: number; search?: string }): Promise<{ id: string }> {
+  return post('/admin/tasks/dictionary-pronunciations/refresh-current-page', undefined, params);
 }

@@ -60,6 +60,15 @@ export class DictionaryController {
     return { code: 200, message: 'success', data: result };
   }
 
+  /** Admin: 人工确认当前音标无误后锁定；锁定词不会参与一键批量检查。 */
+  @Post(':word/pronunciation/lock')
+  async lockPronunciation(@Req() req: Request, @Param('word') word: string, @Body() dto: { locked?: boolean }) {
+    const session = await requireAuthSession(req);
+    if (session.user.role !== 'admin') return { code: 403, message: 'Admin only', data: null };
+    const result = await this.dictionaryService.setPronunciationLocked(word, dto.locked !== false);
+    return { code: 200, message: 'success', data: result };
+  }
+
   /** Admin: manually replace one accent's IPA while preserving its audio. */
   @Put(':word/pronunciation/manual')
   async saveManualPronunciation(

@@ -215,6 +215,7 @@ export class DictionaryService {
     word: string,
     provider: PronunciationProvider,
     scope: PronunciationScope = 'all',
+    options?: { surfaceProviderRateLimit?: boolean },
   ) {
     const key = word.toLowerCase().trim();
     const exists = await this.prisma.dictionaryEntry.findUnique({
@@ -223,7 +224,7 @@ export class DictionaryService {
     });
     if (!exists) throw new NotFoundException(`Word "${key}" not found`);
 
-    const fetchedPronunciations = await this.pipeline.fetchPronunciationsFromProvider(key, provider, scope);
+    const fetchedPronunciations = await this.pipeline.fetchPronunciationsFromProvider(key, provider, scope, options);
     const pronunciations = scope === 'all'
       ? fetchedPronunciations
       : fetchedPronunciations.filter((item) => item.type === scope);
@@ -249,6 +250,33 @@ export class DictionaryService {
       select: { word: true, sourceUrl: true, pronunciations: true },
     });
     return this.toPronunciationAuditItem(updated);
+  }
+
+  async setPronunciationLocked(word: string, locked: boolean) {
+    const key = word.toLowerCase().trim();
+    const exists = await this.prisma.dictionaryEntry.findUnique({
+      where: { word: key },
+      select: { word: true, sourceUrl: true, pronunciations: true },
+    });
+    if (!exists) throw new NotFoundException(`Word "${key}" not found`);
+    const pronunciations = Array.isArray(exists.pronunciations)
+      ? exists.pronunciations as unknown as CleanedPronunciation[]
+      : [];
+    const updated = await this.prisma.dictionaryEntry.update({
+      where: { word: key },
+      data: { pronunciations: pronunciations.map((item) => ({ ...item, locked })) as any },
+      select: { word: true, sourceUrl: true, pronunciations: true },
+    });
+    return this.toPronunciationAuditItem(updated);
+  }
+
+  async isPronunciationLocked(word: string) {
+    const entry = await this.prisma.dictionaryEntry.findUnique({
+      where: { word: word.toLowerCase().trim() },
+      select: { pronunciations: true },
+    });
+    return Array.isArray(entry?.pronunciations)
+      && (entry.pronunciations as unknown as CleanedPronunciation[]).some((item) => item?.locked);
   }
 
   async clearPronunciation(word: string, scope: PronunciationScope = 'all') {
@@ -393,9 +421,10 @@ export class DictionaryService {
     };
     const uk = buildAccent('uk');
     const us = buildAccent('us');
+    const locked = pronunciations.some((item) => item?.locked);
     const missing = !uk.ipa || !us.ipa;
     const status = missing ? 'missing' : uk.isTrusted && us.isTrusted ? 'passed' : 'attention';
-    return { word: entry.word, sourceUrl: entry.sourceUrl, uk, us, status };
+    return { word: entry.word, sourceUrl: entry.sourceUrl, uk, us, status, locked };
   }
 
   // ════════════════════════════════════════════════════════════

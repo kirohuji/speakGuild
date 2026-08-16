@@ -3,7 +3,8 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB } from './admin-tasks.constants';
+import { DictionaryService } from '../dictionary/dictionary.service';
 
 @Injectable()
 export class AdminTasksService {
@@ -12,7 +13,31 @@ export class AdminTasksService {
     @InjectQueue(ADMIN_CONTENT_QUEUE) private readonly contentQueue: Queue,
     @InjectQueue(VOCABULARY_IMPORT_QUEUE) private readonly vocabularyImportQueue: Queue,
     @InjectQueue(SCRIPT_VIDEO_QUEUE) private readonly videoQueue: Queue,
+    private readonly dictionaryService: DictionaryService,
   ) {}
+
+  /** 将音标审查页当前的最多 100 个词作为一个可追踪的后台刷新任务。 */
+  async enqueueDictionaryPronunciationBatchRefresh(createdById: string, params?: { search?: string; page?: number }) {
+    const audit = await this.dictionaryService.pronunciationAudit(params);
+    const words = audit.items.filter((item: any) => !item.locked).map((item) => item.word);
+    if (!words.length) throw new BadRequestException('当前审查页的单词均已确认并锁定，无需检查');
+
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB,
+        title: `批量检查音标：第 ${audit.page} 页（${words.length} 个单词）`,
+        targetType: 'dictionary_pronunciation_audit',
+        targetId: String(audit.page),
+        createdById,
+        totalItems: words.length,
+        payload: { words, page: audit.page, search: params?.search?.trim() || undefined } as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.contentQueue.add(DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, { taskId: task.id, words });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', `已加入队列：自动更新本页 ${words.length} 个单词的 UK + US 音标`, { step: 'queued' });
+    return { ...task, bullJobId: job.id };
+  }
 
   async enqueueScriptVideo(workId: string, userId: string, frames: unknown[]) {
     const work = await this.prisma.scriptWork.findFirst({
@@ -535,6 +560,10 @@ export class AdminTasksService {
     }
     if (task.type === FILE_ASSET_CLEANUP_JOB && task.targetId && createdById) {
       return this.enqueueFileAssetCleanup(createdById, task.targetId);
+    }
+    if (task.type === DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB && createdById) {
+      const payload = task.payload as any;
+      return this.enqueueDictionaryPronunciationBatchRefresh(createdById, { page: payload?.page, search: payload?.search });
     }
     if (task.type !== CONTENT_PREPARE_JOB || task.targetType !== 'scene' || !task.targetId) {
       throw new NotFoundException('暂不支持重试该任务');
