@@ -895,7 +895,6 @@ export function MobileStorageView() {
         <IosRow
           label={t('profile.expressionCache', { defaultValue: '学习库缓存' })}
           subtitle={`${stats?.expressionEntryCount ?? 0} ${t('profile.recordCount', { defaultValue: '条记录' })} · ${formatBytes(stats?.expressionBytes)}`}
-          right={<ClearButton category="expressions" />}
           last
         />
       </IosSection>
@@ -949,7 +948,7 @@ export function MobileStorageView() {
           icon={Trash2}
           iconBg="bg-red-500"
           label={clearing === 'all' ? t('common.clearing', { defaultValue: '清除中...' }) : t('profile.clearAll', { defaultValue: '全部清除' })}
-          subtitle={t('profile.clearAllHint', { defaultValue: '清除学习包、资源文件、词典缓存和学习库缓存' })}
+          subtitle={t('profile.clearAllHint', { defaultValue: '清除学习包、资源文件、词典缓存和本地模型；不会删除学习记录或学习库数据' })}
           last
           onTap={clearing ? undefined : () => handleClear('all')}
         />

@@ -349,6 +349,9 @@ async function replayItem(
         original: word,
         chunkText: '',
         notebookIds: payload.notebookIds,
+        sourceType: payload.sourceType,
+        sourceId: payload.sourceId,
+        sourceSnapshot: payload.sourceSnapshot,
       })
       await cacheExpressionItem(expressionCache, created)
       return true
@@ -367,6 +370,9 @@ async function replayItem(
         original: payload.original ?? '',
         sceneName: payload.sceneName,
         notebookIds: payload.notebookIds,
+        sourceType: payload.sourceType,
+        sourceId: payload.sourceId,
+        sourceSnapshot: payload.sourceSnapshot,
       })
       await cacheExpressionItem(expressionCache, created)
       return true
@@ -386,6 +392,9 @@ async function replayItem(
         original: payload.meaning ?? '',
         sceneName: payload.sceneName,
         notebookIds: payload.notebookIds,
+        sourceType: payload.sourceType,
+        sourceId: payload.sourceId,
+        sourceSnapshot: payload.sourceSnapshot,
       })
       await cacheExpressionItem(expressionCache, created)
       return true

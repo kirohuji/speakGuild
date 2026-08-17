@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { BookOpen, ClipboardCheck, Eye, FilePenLine, Headphones, Loader2, Plus, Sparkles, Target, Trash2, Upload, UserRound, Play, Pause, Clock, Music, FileAudio, GripVertical, Volume2, Split } from 'lucide-react'
+import { BookOpen, ClipboardCheck, Eye, FilePenLine, Headphones, Languages, Loader2, Plus, Sparkles, Target, Trash2, Upload, UserRound, Play, Pause, Clock, Music, FileAudio, GripVertical, Volume2, Split } from 'lucide-react'
 import { toast } from 'sonner'
 import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { Badge } from '@/components/ui/badge'
@@ -67,6 +67,7 @@ function WritingFields({
   const [instruction, setInstruction] = useState('')
   const [generating, setGenerating] = useState(false)
   const isDialogue = value.genre === 'dialogue'
+  const isTranslation = value.genre === 'translation'
   const isFormal = value.genre === 'essay' || value.genre === 'email'
 
   const generateDraft = async () => {
@@ -76,12 +77,14 @@ function WritingFields({
       const draft = await contentExperienceAdminApi.generateWritingTopic(sceneId, {
         instruction: instruction.trim() || undefined,
         genre: value.genre ?? 'paragraph',
-        minWords: Number(value.minWords) || (isDialogue ? 40 : 80),
-        maxWords: Number(value.maxWords) || (isDialogue ? 120 : 180),
+        translationDirection: value.direction ?? 'zh_to_en',
+        translationScope: value.scope ?? 'sentence',
+        minWords: isTranslation ? undefined : Number(value.minWords) || (isDialogue ? 40 : 80),
+        maxWords: isTranslation ? undefined : Number(value.maxWords) || (isDialogue ? 120 : 180),
         difficulty: context?.difficulty,
         currentTitle: context?.title,
         currentPromptEn: context?.promptEn,
-        currentQuestionMarkdown: isDialogue ? undefined : value.questionMarkdown,
+        currentQuestionMarkdown: isDialogue || isTranslation ? undefined : value.questionMarkdown,
         vocabulary: context?.vocabulary,
         chunks: context?.chunks,
         sentencePatterns: context?.sentencePatterns,
@@ -106,14 +109,16 @@ function WritingFields({
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2">
               <span className="grid size-7 place-items-center rounded-lg bg-primary text-primary-foreground"><Sparkles className="size-3.5" /></span>
-              <div><p className="text-sm font-semibold">AI 命题助手</p><p className="text-xs text-muted-foreground">{isDialogue ? '描述对话场景和角色关系，AI 生成对话轮次和提示。' : '描述考试场景和能力目标，AI 会生成完整题干与评分要点；生成后仍需人工审题。'}</p></div>
+              <div><p className="text-sm font-semibold">AI 命题助手</p><p className="text-xs text-muted-foreground">{isTranslation ? '描述主题、难度和翻译方向，AI 会生成可逐段审核的原文、参考译文与提示。' : isDialogue ? '描述对话场景和角色关系，AI 生成对话轮次和提示。' : '描述考试场景和能力目标，AI 会生成完整题干与评分要点；生成后仍需人工审题。'}</p></div>
             </div>
             <Textarea
               value={instruction}
               onChange={(event) => setInstruction(event.target.value)}
               className="min-h-16 resize-y bg-background"
               maxLength={2000}
-              placeholder={isDialogue
+              placeholder={isTranslation
+                ? '例如：B1 难度，中译英篇章，主题是第一次租房时与房东沟通水电和入住时间。每段给出提示但不要泄露完整译文。'
+                : isDialogue
                 ? '例如：两个学生在食堂讨论周末计划，A 邀请 B 去爬山，B 有事但想改天。'
                 : '例如：B1 学生收到学校社团延期通知，需要给组织者写一封邮件，说明影响、提出两个问题并建议新的时间。'}
             />
@@ -137,7 +142,23 @@ function WritingFields({
                 const nextGenre = event.target.value
                 // 切换文体时清空不兼容字段
                 const reset: Record<string, any> = { genre: nextGenre }
-                if (nextGenre === 'dialogue') {
+                if (nextGenre === 'translation') {
+                  reset.questionMarkdown = undefined
+                  reset.candidateRole = undefined
+                  reset.audience = undefined
+                  reset.purpose = undefined
+                  reset.requirements = undefined
+                  reset.rubric = undefined
+                  reset.turns = undefined
+                  reset.situation = undefined
+                  reset.direction = 'zh_to_en'
+                  reset.scope = 'sentence'
+                  reset.sourceTitle = ''
+                  reset.sourceText = ''
+                  reset.segments = [{ id: 's1', source: '', reference: '', hint: '' }]
+                  reset.minWords = 0
+                  reset.maxWords = 300
+                } else if (nextGenre === 'dialogue') {
                   reset.questionMarkdown = undefined
                   reset.candidateRole = undefined
                   reset.audience = undefined
@@ -146,9 +167,14 @@ function WritingFields({
                   reset.rubric = undefined
                   reset.minWords = 40
                   reset.maxWords = 120
-                } else if (value.genre === 'dialogue') {
+                } else if (value.genre === 'dialogue' || value.genre === 'translation') {
                   reset.turns = undefined
                   reset.situation = undefined
+                  reset.direction = undefined
+                  reset.scope = undefined
+                  reset.sourceTitle = undefined
+                  reset.sourceText = undefined
+                  reset.segments = undefined
                   reset.questionMarkdown = ''
                   reset.minWords = 80
                   reset.maxWords = 180
@@ -156,6 +182,7 @@ function WritingFields({
                 onChange({ ...value, ...reset })
               }}
             >
+              <option value="translation">🌐 中英互译 — 原文在上，逐句/段填写译文</option>
               <option value="dialogue">🗣️ 对话 — 日常社交对话，A说B填</option>
               <option value="message">💬 消息 — 简短留言、短信、聊天</option>
               <option value="journal">📓 日记 — 第一人称记录与反思</option>
@@ -164,6 +191,7 @@ function WritingFields({
               <option value="essay">📄 议论文 — 正式议论型写作</option>
             </Select>
             <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+              {value.genre === 'translation' && '中英互译，支持单句或篇章；学习者在原文下方填写目标语言译文，AI 会逐段反馈。'}
               {value.genre === 'dialogue' && 'A↔B 对话，学习者填写 B 的台词。像 VN 练习一样，每轮给出中文提示引导回答方向。'}
               {value.genre === 'message' && '简短社交消息，如短信、微信聊天。直接、口语化，通常 30-80 词。'}
               {value.genre === 'journal' && '个人日记或周记，第一人称记录经历、感受和反思。语气自由。'}
@@ -172,19 +200,27 @@ function WritingFields({
               {value.genre === 'essay' && '正式议论文，需明确观点、论据支撑和逻辑结构。适合考试准备。'}
             </p>
           </div>
-          <div className="flex flex-col gap-1">
-            <Label>最少词数</Label>
-            <Input type="number" min={20} value={value.minWords ?? (isDialogue ? 40 : 80)} onChange={(event) => onChange({ ...value, minWords: Number(event.target.value) })} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <Label>最多词数</Label>
-            <Input type="number" min={20} value={value.maxWords ?? (isDialogue ? 120 : 180)} onChange={(event) => onChange({ ...value, maxWords: Number(event.target.value) })} />
-          </div>
+          {isTranslation ? (
+            <div className="col-span-2 flex flex-col justify-end rounded-lg border border-dashed border-border bg-muted/20 px-3 py-2.5 text-xs leading-5 text-muted-foreground">
+              翻译题按原文分段作答，不设总词数门槛；篇章题通过完成全部段落后提交。
+            </div>
+          ) : <>
+            <div className="flex flex-col gap-1">
+              <Label>最少词数</Label>
+              <Input type="number" min={20} value={value.minWords ?? (isDialogue ? 40 : 80)} onChange={(event) => onChange({ ...value, minWords: Number(event.target.value) })} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label>最多词数</Label>
+              <Input type="number" min={20} value={value.maxWords ?? (isDialogue ? 120 : 180)} onChange={(event) => onChange({ ...value, maxWords: Number(event.target.value) })} />
+            </div>
+          </>}
         </div>
       </section>
 
       {/* ====== 对话模式专属 UI ====== */}
-      {isDialogue ? (
+      {isTranslation ? (
+        <TranslationFields value={value} onChange={onChange} />
+      ) : isDialogue ? (
         <>
           {/* 对话情境 */}
           <section className="flex flex-col gap-3">
@@ -331,7 +367,9 @@ function WritingFields({
             <p className="text-xs text-muted-foreground">移动端写作页</p>
             <h3 className="mt-1 text-base font-semibold leading-6">{context?.title || '未命名写作题'}</h3>
           </div>
-          {isDialogue ? (
+          {isTranslation ? (
+            <TranslationLearnerPreview value={value} />
+          ) : isDialogue ? (
             <div className="space-y-3">
               {value.situation && (
                 <div className="rounded-lg border border-sky-200 bg-sky-50/50 p-2.5 text-sm leading-relaxed dark:border-sky-800 dark:bg-sky-950/30">
@@ -370,6 +408,58 @@ function WritingFields({
       </aside>
     </div>
   )
+}
+
+type TranslationSegment = { id: string; source: string; reference: string; hint?: string }
+
+function TranslationFields({ value, onChange }: { value: Record<string, any>; onChange: (value: Record<string, any>) => void }) {
+  const scope = value.scope === 'article' ? 'article' : 'sentence'
+  const direction = value.direction === 'en_to_zh' ? 'en_to_zh' : 'zh_to_en'
+  const segments: TranslationSegment[] = Array.isArray(value.segments) && value.segments.length
+    ? value.segments
+    : [{ id: 's1', source: '', reference: '', hint: '' }]
+  const updateSegment = (index: number, patch: Partial<TranslationSegment>) => {
+    const next = segments.map((segment, itemIndex) => itemIndex === index ? { ...segment, ...patch } : segment)
+    onChange({ ...value, segments: next, sourceText: next.map((segment) => segment.source).filter(Boolean).join('\n\n') })
+  }
+  const setScope = (nextScope: 'sentence' | 'article') => {
+    const nextSegments = nextScope === 'sentence' ? [segments[0] ?? { id: 's1', source: '', reference: '', hint: '' }] : segments
+    onChange({ ...value, scope: nextScope, segments: nextSegments, sourceText: nextSegments.map((segment) => segment.source).filter(Boolean).join('\n\n') })
+  }
+  const sourceLabel = direction === 'zh_to_en' ? '中文原文' : '英文原文'
+  const referenceLabel = direction === 'zh_to_en' ? '英文参考译文' : '中文参考译文'
+
+  return (
+    <div className="space-y-6">
+      <section className="space-y-3">
+        <SectionHeading icon={Languages} step="02" title="翻译方式" description="学习者阅读上层原文，并在下层横线式输入区写出目标语言译文。参考译文只发送给 AI 评估，不会在作答前显示。" />
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="space-y-1"><Label>翻译方向</Label><Select value={direction} onChange={(event) => onChange({ ...value, direction: event.target.value })}><option value="zh_to_en">中文 → 英文</option><option value="en_to_zh">英文 → 中文</option></Select></div>
+          <div className="space-y-1"><Label>练习范围</Label><Select value={scope} onChange={(event) => setScope(event.target.value as 'sentence' | 'article')}><option value="sentence">单个句子</option><option value="article">一篇文章（逐段）</option></Select></div>
+          <div className="space-y-1"><Label>来源标题（选填）</Label><Input value={value.sourceTitle ?? ''} onChange={(event) => onChange({ ...value, sourceTitle: event.target.value })} placeholder="如：租房沟通" /></div>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-start justify-between gap-3"><SectionHeading icon={FilePenLine} step="03" title={scope === 'article' ? '原文与逐段译文' : '原文与参考译文'} description={scope === 'article' ? '每一项在学习端对应一段原文和一条下划线输入区。篇章建议 2–8 段，每段语义完整。' : '单句题只有一项。提示可以给关键词或语法策略，但不要写出完整译文。'} />{scope === 'article' && <Button type="button" size="sm" variant="outline" className="shrink-0" onClick={() => onChange({ ...value, segments: [...segments, { id: `s${segments.length + 1}`, source: '', reference: '', hint: '' }] })}><Plus className="mr-1 size-3.5" />添加段落</Button>}</div>
+        <div className="space-y-3">
+          {segments.map((segment, index) => (
+            <div key={`${segment.id}-${index}`} className="rounded-xl border border-border/70 bg-muted/20 p-4">
+              <div className="mb-3 flex items-center gap-2"><Badge variant="secondary">{scope === 'article' ? `第 ${index + 1} 段` : '翻译句'}</Badge>{scope === 'article' && <Button type="button" size="icon" variant="ghost" className="ml-auto size-8 text-muted-foreground hover:text-destructive" onClick={() => { const next = segments.filter((_, itemIndex) => itemIndex !== index); const fallback = next.length ? next : [{ id: 's1', source: '', reference: '', hint: '' }]; onChange({ ...value, segments: fallback, sourceText: next.map((item) => item.source).filter(Boolean).join('\n\n') }) }}><Trash2 className="size-3.5" /></Button>}</div>
+              <div className="grid gap-3 md:grid-cols-2"><div className="space-y-1.5"><Label>{sourceLabel}</Label><Textarea value={segment.source} onChange={(event) => updateSegment(index, { source: event.target.value })} className="min-h-24" placeholder={direction === 'zh_to_en' ? '请输入学习者需要翻译的中文原文' : 'Enter the English source text learners need to translate'} /></div><div className="space-y-1.5"><Label>{referenceLabel} <span className="text-muted-foreground">（仅 AI 可见）</span></Label><Textarea value={segment.reference} onChange={(event) => updateSegment(index, { reference: event.target.value })} className="min-h-24" placeholder={direction === 'zh_to_en' ? '输入自然的英文参考译文' : '输入自然的中文参考译文'} /></div></div>
+              <div className="mt-3 space-y-1.5"><Label>AI 提示（选填）</Label><Input value={segment.hint ?? ''} onChange={(event) => updateSegment(index, { hint: event.target.value })} placeholder="例如：先找主语和谓语；注意过去完成时，不要直接给出完整译文。" /></div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function TranslationLearnerPreview({ value }: { value: Record<string, any> }) {
+  const direction = value.direction === 'en_to_zh' ? '英译中' : '中译英'
+  const segments: TranslationSegment[] = Array.isArray(value.segments) ? value.segments : []
+  return <div className="space-y-3"><div className="flex items-center justify-between"><Badge variant="secondary">{direction} · {value.scope === 'article' ? '篇章' : '单句'}</Badge>{value.sourceTitle && <span className="text-xs text-muted-foreground">{value.sourceTitle}</span>}</div>{segments.slice(0, 3).map((segment, index) => <div key={`${segment.id}-${index}`} className="rounded-lg bg-muted/35 p-3"><p className="text-sm leading-6 text-foreground">{segment.source || '（原文会显示在这里）'}</p><div className="mt-3 border-b-2 border-dashed border-primary/35 pb-2 text-sm text-muted-foreground">在这里填写译文</div></div>)}{segments.length > 3 && <p className="text-center text-xs text-muted-foreground">… 共 {segments.length} 段 …</p>}</div>
 }
 
 function SectionHeading({ icon: Icon, step, title, description }: { icon: typeof FilePenLine; step: string; title: string; description: string }) {

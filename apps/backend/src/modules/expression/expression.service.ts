@@ -158,6 +158,9 @@ export class ExpressionService {
     corrected?: string;
     chunkText?: string;
     sceneName?: string;
+    sourceType?: string;
+    sourceId?: string;
+    sourceSnapshot?: Prisma.InputJsonValue;
     notebookIds?: string[];
   }) {
     const { notebookIds, ...expressionData } = data;

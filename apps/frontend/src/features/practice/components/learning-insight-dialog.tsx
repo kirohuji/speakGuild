@@ -676,7 +676,8 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
         sceneName: item.sceneName,
         corrected: item.description,
         contentSnapshot: item,
-        sourceType: 'learning-library',
+        sourceType: 'vocabulary',
+        sourceId: item.id,
         notebookIds,
       })
       setSaved(true)
@@ -1097,7 +1098,8 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
       meaning: item.meaning,
       sceneName: item.sceneName,
       contentSnapshot: item,
-      sourceType: 'learning-library',
+      sourceType: 'chunk',
+      sourceId: item.id,
       notebookIds,
     })
     setSaved(true)
@@ -1173,7 +1175,7 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
     await learningContentRepository.saveExpressionEntryAndSync({
       kind: 'pattern', text: item.pattern, meaning: item.meaning,
       sceneName: item.sceneName, corrected: item.example,
-      contentSnapshot: item, sourceType: 'learning-library', notebookIds,
+      contentSnapshot: item, sourceType: 'sentence_pattern', sourceId: item.id, notebookIds,
     })
     setSaved(true)
     toast.success(t('insight.savedToLibrary'))

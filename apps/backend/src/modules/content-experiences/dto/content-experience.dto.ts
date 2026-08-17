@@ -116,6 +116,11 @@ export class SaveTopicSubmissionDto {
   @IsIn(['draft', 'submitted', 'reviewed', 'completed'])
   status?: 'draft' | 'submitted' | 'reviewed' | 'completed';
 
+  /** 关联当前 TopicSession，供统一 AI 评估精确读取本次提交。 */
+  @IsOptional()
+  @IsString()
+  sessionId?: string;
+
   @IsOptional()
   @IsInt()
   @Min(1)
@@ -139,8 +144,16 @@ export class GenerateWritingTopicDto {
   instruction?: string;
 
   @IsOptional()
-  @IsIn(['journal', 'message', 'email', 'paragraph', 'essay', 'dialogue'])
-  genre?: 'journal' | 'message' | 'email' | 'paragraph' | 'essay' | 'dialogue';
+  @IsIn(['journal', 'message', 'email', 'paragraph', 'essay', 'dialogue', 'translation'])
+  genre?: 'journal' | 'message' | 'email' | 'paragraph' | 'essay' | 'dialogue' | 'translation';
+
+  @IsOptional()
+  @IsIn(['zh_to_en', 'en_to_zh'])
+  translationDirection?: 'zh_to_en' | 'en_to_zh';
+
+  @IsOptional()
+  @IsIn(['sentence', 'article'])
+  translationScope?: 'sentence' | 'article';
 
   @IsOptional()
   @IsString()

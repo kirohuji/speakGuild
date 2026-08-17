@@ -5,12 +5,11 @@ import type { InstalledLearningPack } from './learning-pack.service'
 import { learningPackService } from './learning-pack.service'
 import type { LocalAsset } from './asset-cache.service'
 import type { TableName } from './sqlite/schema'
-import { learningContentRepository } from './learning-content.repository'
 import { practiceRepository } from './practice.repository'
 import type { SyncOutboxItem } from './sync-outbox'
 import { warmupEmbeddingCacheRepository } from '@/lib/local-ai/warmup-embedding-cache.repository'
 
-export type OfflineCacheCategory = 'packs' | 'assets' | 'dictionary' | 'expressions' | 'practice' | 'all'
+export type OfflineCacheCategory = 'packs' | 'assets' | 'dictionary' | 'practice' | 'all'
 
 const USER_SCOPED_TABLES: TableName[] = [
   'my_learning_units',
@@ -374,13 +373,10 @@ export const offlineStorageService = {
 
   async clearCategory(category: OfflineCacheCategory): Promise<void> {
     if (category === 'all') {
-      await this.clearCategory('practice')
       await this.clearCategory('packs')
       await this.clearCategory('assets')
       await this.clearCategory('dictionary')
-      await this.clearCategory('expressions')
       await warmupEmbeddingCacheRepository.clear()
-      await practiceRepository.clearPracticeRecordsCache()
       return
     }
 
@@ -446,10 +442,6 @@ export const offlineStorageService = {
       return
     }
 
-    if (category === 'expressions') {
-      await localDb.clear('expression_entries')
-      await learningContentRepository.clearExpressionCacheMarkers()
-    }
   },
 
   async clearCache(): Promise<void> {

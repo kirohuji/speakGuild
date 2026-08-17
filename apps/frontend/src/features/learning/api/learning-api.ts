@@ -126,7 +126,10 @@ export interface TrainingTopicItem {
   transcript?: ListeningTranscriptSegment[] | null
   latestSubmission?: TopicSubmission | null
   suggestedDurationSec: number
-  activeChunks: { id: string; text: string; meaning: string }[]
+  activeChunks: Array<
+    Pick<ChunkItem, 'id' | 'text' | 'meaning'>
+    & Partial<Pick<ChunkItem, 'description' | 'category' | 'difficulty' | 'examples'>>
+  >
   vocabularies?: VocabItem[]
   sentencePatterns?: SentencePattern[]
 }
@@ -420,7 +423,7 @@ export const learningApi = {
 
   saveTopicSubmission: (
     topicId: string,
-    data: { response: Record<string, any>; status?: TopicSubmission['status']; revision?: number },
+    data: { response: Record<string, any>; status?: TopicSubmission['status']; revision?: number; sessionId?: string },
   ) => post<TopicSubmission>(`/learning/experiences/topics/${topicId}/submissions`, data),
 
   // ═══ TopicSession ═══

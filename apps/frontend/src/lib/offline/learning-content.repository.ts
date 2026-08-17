@@ -102,7 +102,7 @@ function makeEntry(input: {
     sceneName: input.sceneName ?? null,
     sourceType: input.sourceType ?? null,
     sourceId: input.sourceId ?? null,
-    sourceSnapshot: input.sourceSnapshot,
+    sourceSnapshot: input.sourceSnapshot ?? input.contentSnapshot,
     contentSnapshot: input.contentSnapshot,
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
@@ -146,8 +146,8 @@ function remoteExpressionToEntry(item: any): ExpressionEntry | null {
     : String(item.chunkText ?? item.pattern ?? item.original ?? '').trim()
   if (!text) return null
 
-  // 保留远程返回的完整内容数据：word→vocabulary, chunk→contentData, pattern→contentData
-  const vocabSnapshot = item.vocabulary ?? item.contentData ?? item.contentSnapshot
+  // 保留远程返回的完整内容数据：word→vocabulary, chunk→contentData, pattern→contentData。
+  const vocabSnapshot = item.vocabulary ?? item.contentData ?? item.sourceSnapshot
 
   const entry = makeEntry({
     kind,
@@ -180,8 +180,13 @@ function remoteExpressionToEntry(item: any): ExpressionEntry | null {
 }
 
 function createPayload(entry: ExpressionEntry) {
+  const source = {
+    sourceType: entry.sourceType,
+    sourceId: entry.sourceId,
+    sourceSnapshot: entry.sourceSnapshot,
+  }
   if (entry.kind === 'word') {
-    return { word: entry.original ?? '', addedAt: new Date().toISOString() }
+    return { word: entry.original ?? '', addedAt: new Date().toISOString(), ...source }
   }
   if (entry.kind === 'pattern') {
     return {
@@ -189,22 +194,30 @@ function createPayload(entry: ExpressionEntry) {
       meaning: entry.original,
       example: entry.corrected,
       sceneName: entry.sceneName,
+      ...source,
     }
   }
   return {
     chunkText: entry.chunkText ?? '',
     original: entry.original,
     sceneName: entry.sceneName,
+    ...source,
   }
 }
 
 function createRequest(entry: ExpressionEntry) {
+  const source = {
+    sourceType: entry.sourceType,
+    sourceId: entry.sourceId,
+    sourceSnapshot: entry.sourceSnapshot,
+  }
   if (entry.kind === 'word') {
     return {
       type: 'word' as const,
       chunkText: entry.chunkText ?? '',
       original: entry.original ?? '',
       sceneName: entry.sceneName ?? undefined,
+      ...source,
     }
   }
   if (entry.kind === 'pattern') {
@@ -214,6 +227,7 @@ function createRequest(entry: ExpressionEntry) {
       corrected: entry.corrected ?? entry.chunkText ?? '',
       original: entry.original ?? '',
       sceneName: entry.sceneName ?? undefined,
+      ...source,
     }
   }
   return {
@@ -222,6 +236,7 @@ function createRequest(entry: ExpressionEntry) {
     corrected: entry.corrected ?? entry.chunkText ?? '',
     original: entry.original ?? '',
     sceneName: entry.sceneName ?? undefined,
+    ...source,
   }
 }
 
@@ -306,6 +321,25 @@ export const learningContentRepository = {
 
     await localDb.putMany('offline_content_refs', refs)
     console.log(`[content-index] ✅ offline_content_refs: ${refs.length} 条`)
+
+    // 收藏按稳定的内容 ID 跟随已安装学习包的新版内容。
+    const sourceItems = new Map<string, any>()
+    for (const item of vocabById.values()) sourceItems.set(`word:${item.id}`, item)
+    for (const item of chunkById.values()) sourceItems.set(`chunk:${item.id}`, item)
+    for (const item of patternById.values()) sourceItems.set(`pattern:${item.id}`, item)
+    const entries = await localDb.list<ExpressionEntry>('expression_entries')
+    const refreshed = entries
+      .map((entry) => {
+        const snapshot = sourceItems.get(`${entry.kind}:${entry.sourceId}`)
+        return snapshot
+          ? { ...entry, contentSnapshot: snapshot, sourceSnapshot: snapshot, updatedAt: now }
+          : null
+      })
+      .filter(Boolean) as ExpressionEntry[]
+    if (refreshed.length > 0) {
+      await localDb.putMany('expression_entries', refreshed)
+      console.log(`[content-index] 🔄 已更新 ${refreshed.length} 条收藏快照`)
+    }
   },
 
   async removePackContentIndex(packId: string): Promise<void> {

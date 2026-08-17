@@ -132,7 +132,8 @@ export function LearningUnitPage() {
         meaning: pendingSave.item.meaning,
         sceneName: unit?.title,
         contentSnapshot: pendingSave.item,
-        sourceType: 'learning-library',
+        sourceType: 'vocabulary',
+        sourceId: pendingSave.item.id,
         notebookIds,
       })
       setCollectedTexts((prev) => new Set([...prev, pendingSave.item.word]))
@@ -143,7 +144,8 @@ export function LearningUnitPage() {
         meaning: pendingSave.item.meaning,
         sceneName: unit?.title,
         contentSnapshot: pendingSave.item,
-        sourceType: 'learning-library',
+        sourceType: 'chunk',
+        sourceId: pendingSave.item.id,
         notebookIds,
       })
       setCollectedTexts((prev) => new Set([...prev, pendingSave.item.text]))
@@ -154,7 +156,8 @@ export function LearningUnitPage() {
         meaning: pendingSave.item.meaning,
         sceneName: unit?.title,
         contentSnapshot: pendingSave.item,
-        sourceType: 'learning-library',
+        sourceType: 'sentence_pattern',
+        sourceId: pendingSave.item.id,
         notebookIds,
       })
       setCollectedTexts((prev) => new Set([...prev, pendingSave.item.pattern]))

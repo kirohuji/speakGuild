@@ -14,6 +14,14 @@ interface OutboxItem {
 export class SyncService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private expressionSourceFields(payload: any) {
+    return {
+      ...(payload?.sourceType !== undefined ? { sourceType: payload.sourceType || null } : {}),
+      ...(payload?.sourceId !== undefined ? { sourceId: payload.sourceId || null } : {}),
+      ...(payload?.sourceSnapshot !== undefined ? { sourceSnapshot: payload.sourceSnapshot } : {}),
+    };
+  }
+
   // ══════════════════════════════════════════════════
   // PUSH: 批量处理客户端离线变更
   // ══════════════════════════════════════════════════
@@ -101,10 +109,10 @@ export class SyncService {
         const created = existing
           ? await this.prisma.expressionItem.update({
               where: { id: existing.id },
-              data: { deletedAt: null },
+              data: { deletedAt: null, ...this.expressionSourceFields(payload) },
             })
           : await this.prisma.expressionItem.create({
-              data: { userId, type: 'word', original: word, chunkText: '' },
+              data: { userId, type: 'word', original: word, chunkText: '', ...this.expressionSourceFields(payload) },
             });
         await this.setExpressionNotebooks(userId, created.id, payload?.notebookIds);
         return { handled: true, remoteId: created.id, remoteItem: created };
@@ -128,6 +136,7 @@ export class SyncService {
                 deletedAt: null,
                 original: payload?.original ?? '',
                 sceneName: payload?.sceneName,
+                ...this.expressionSourceFields(payload),
               },
             })
           : await this.prisma.expressionItem.create({
@@ -137,6 +146,7 @@ export class SyncService {
                 original: payload?.original ?? '',
                 chunkText: text,
                 sceneName: payload?.sceneName,
+                ...this.expressionSourceFields(payload),
               },
             });
         await this.setExpressionNotebooks(userId, created.id, payload?.notebookIds);
@@ -162,6 +172,7 @@ export class SyncService {
                 original: payload?.meaning ?? '',
                 corrected: payload?.example ?? pattern,
                 sceneName: payload?.sceneName,
+                ...this.expressionSourceFields(payload),
               },
             })
           : await this.prisma.expressionItem.create({
@@ -172,6 +183,7 @@ export class SyncService {
                 chunkText: pattern,
                 corrected: payload?.example ?? pattern,
                 sceneName: payload?.sceneName,
+                ...this.expressionSourceFields(payload),
               },
             });
         await this.setExpressionNotebooks(userId, created.id, payload?.notebookIds);

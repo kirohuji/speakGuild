@@ -1,19 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, CheckCircle2, FilePenLine, Info, Layers, Loader2, MessageCircle, Save, Search, Sparkles, Target, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, ListMusic, Loader2, MessageCircle, MessageSquareText, Save, Search, Sparkles, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
+import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { cn } from '@/lib/cn'
+import { extractCoreUsage } from '@/lib/markdown-utils'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useLearningStore } from '@/stores/learning.store'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
-import { learningApi, type TrainingTopicItem } from '../api/learning-api'
+import { LearningInsightDialog, type LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
+import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
+import { learningContentRepository } from '@/lib/offline'
+import { learningApi, type ChunkItem, type SentencePattern, type TrainingTopicItem, type VocabItem } from '../api/learning-api'
 import { WritingTaskCard } from '../components/writing-task-card'
 
 type WritingPhase = 'prepare' | 'write'
@@ -50,6 +56,10 @@ export function WritingSessionPage() {
     () => topic?.contentConfig?.writing?.genre === 'dialogue',
     [topic?.contentConfig?.writing?.genre],
   )
+  const isTranslation = useMemo(
+    () => topic?.contentConfig?.writing?.genre === 'translation',
+    [topic?.contentConfig?.writing?.genre],
+  )
 
   if (loading && (!unit || unit.id !== unitId)) {
     return <MobilePageLoading rows={5} minHeightClassName="min-h-[100dvh]" />
@@ -80,6 +90,13 @@ export function WritingSessionPage() {
         />
       ) : isDialogue ? (
         <DialogueEditor
+          topic={topic}
+          unitTitle={unit.title}
+          onClose={() => setPhase('prepare')}
+          onOpenGuide={() => setGuideOpen(true)}
+        />
+      ) : isTranslation ? (
+        <TranslationEditor
           topic={topic}
           unitTitle={unit.title}
           onClose={() => setPhase('prepare')}
@@ -120,6 +137,66 @@ function WritingPreparePage({
   const visibleVocabularies = topic.vocabularies ?? []
   const visibleChunks = topic.activeChunks ?? []
   const visiblePatterns = topic.sentencePatterns ?? []
+  const [insightOpen, setInsightOpen] = useState(false)
+  const [insightKind, setInsightKind] = useState<WritingKnowledgeItem['kind']>('vocab')
+  const [insightIndex, setInsightIndex] = useState(0)
+  const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
+  const [pendingSave, setPendingSave] = useState<WritingKnowledgeItem | null>(null)
+  const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    let cancelled = false
+    void Promise.all([
+      learningContentRepository.listExpressionTexts('word'),
+      learningContentRepository.listExpressionTexts('chunk'),
+      learningContentRepository.listExpressionTexts('pattern'),
+    ]).then((groups) => {
+      if (!cancelled) setCollectedTexts(new Set(groups.flat()))
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  const insightItems = useMemo<Record<WritingKnowledgeItem['kind'], LearningInsightItem[]>>(() => ({
+    vocab: visibleVocabularies.map((item) => ({ ...item, kind: 'word' as const, sceneName: unitTitle })),
+    chunk: visibleChunks.map((item) => ({ ...item, kind: 'chunk' as const, sceneName: unitTitle })),
+    pattern: visiblePatterns.map((item, index) => ({
+      ...item,
+      id: item.id ?? `pattern-${index}`,
+      kind: 'pattern' as const,
+      sceneName: unitTitle,
+    })),
+  }), [unitTitle, visibleChunks, visiblePatterns, visibleVocabularies])
+
+  const openInsight = (item: WritingKnowledgeItem) => {
+    const items = insightItems[item.kind]
+    setInsightKind(item.kind)
+    setInsightIndex(Math.max(0, items.findIndex((candidate) => candidate.id === item.id)))
+    setInsightOpen(true)
+  }
+
+  const requestSave = (item: WritingKnowledgeItem) => {
+    setPendingSave(item)
+    setSaveDrawerOpen(true)
+  }
+
+  const savePendingToNotebooks = async (notebookIds: string[]) => {
+    if (!pendingSave) return
+    const isVocab = pendingSave.kind === 'vocab'
+    const text = isVocab ? pendingSave.word : pendingSave.kind === 'chunk' ? pendingSave.text : pendingSave.pattern
+    await learningContentRepository.saveExpressionEntryAndSync({
+      kind: isVocab ? 'word' : pendingSave.kind,
+      text,
+      meaning: pendingSave.meaning,
+      sceneName: unitTitle,
+      contentSnapshot: pendingSave,
+      sourceType: isVocab ? 'vocabulary' : pendingSave.kind === 'chunk' ? 'chunk' : 'sentence_pattern',
+      sourceId: pendingSave.id,
+      notebookIds,
+    })
+    setCollectedTexts((current) => new Set([...current, text]))
+    setPendingSave(null)
+    toast.success(t('learning.addedToLibrary'))
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-3 md:pt-4">
@@ -189,26 +266,29 @@ function WritingPreparePage({
             </TabsList>
             <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow>
               <WritingKnowledgeList
-                icon={<Search className="size-4" />}
-                items={visibleVocabularies.map((item) => ({ title: item.word, subtitle: item.meaning }))}
-                tone="cyan"
+                items={visibleVocabularies.map((item) => ({ ...item, kind: 'vocab' as const, title: item.word, subtitle: item.meaning }))}
                 emptyText={t('learning.noTopicVocab')}
+                collectedTexts={collectedTexts}
+                onInspect={openInsight}
+                onCollect={requestSave}
               />
             </TabsContent>
             <TabsContent value="chunk" className="mt-3" data-mobile-gesture-allow>
               <WritingKnowledgeList
-                icon={<Layers className="size-4" />}
-                items={visibleChunks.map((item) => ({ title: item.text, subtitle: item.meaning }))}
-                tone="emerald"
+                items={visibleChunks.map((item) => ({ ...item, kind: 'chunk' as const, title: item.text, subtitle: item.meaning }))}
                 emptyText={t('learning.noTopicChunks')}
+                collectedTexts={collectedTexts}
+                onInspect={openInsight}
+                onCollect={requestSave}
               />
             </TabsContent>
             <TabsContent value="pattern" className="mt-3" data-mobile-gesture-allow>
               <WritingKnowledgeList
-                icon={<Target className="size-4" />}
-                items={visiblePatterns.map((item) => ({ title: item.pattern, subtitle: item.meaning }))}
-                tone="violet"
+                items={visiblePatterns.map((item, index) => ({ ...item, kind: 'pattern' as const, id: item.id ?? `pattern-${index}`, title: item.pattern, subtitle: item.meaning }))}
                 emptyText={t('learning.noTopicPatterns')}
+                collectedTexts={collectedTexts}
+                onInspect={openInsight}
+                onCollect={requestSave}
               />
             </TabsContent>
           </Tabs>
@@ -240,7 +320,7 @@ function WritingPreparePage({
         )}
 
         <WritingTaskCard
-          questionMarkdown={config.questionMarkdown}
+          questionMarkdown={config.genre === 'translation' ? config.sourceText : config.questionMarkdown}
           promptEn={topic.promptEn}
           promptZh={topic.promptZh}
           genre={config.genre}
@@ -251,26 +331,41 @@ function WritingPreparePage({
           onStart={onStart}
         />
       </main>
+      <LearningInsightDialog
+        items={insightItems[insightKind]}
+        index={Math.min(insightIndex, Math.max(insightItems[insightKind].length - 1, 0))}
+        open={insightOpen}
+        onOpenChange={setInsightOpen}
+        onIndexChange={setInsightIndex}
+      />
+      <SaveToNotebookDrawer
+        open={saveDrawerOpen}
+        onOpenChange={setSaveDrawerOpen}
+        onSave={savePendingToNotebooks}
+      />
     </div>
   )
 }
 
+type WritingKnowledgeItem =
+  | (NonNullable<TrainingTopicItem['vocabularies']>[number] & { kind: 'vocab'; title: string; subtitle: string })
+  | (TrainingTopicItem['activeChunks'][number] & { kind: 'chunk'; title: string; subtitle: string })
+  | (NonNullable<TrainingTopicItem['sentencePatterns']>[number] & { kind: 'pattern'; id: string; title: string; subtitle: string })
+
 function WritingKnowledgeList({
-  icon,
   items,
-  tone,
   emptyText,
+  collectedTexts,
+  onInspect,
+  onCollect,
 }: {
-  icon: React.ReactNode
-  items: Array<{ title: string; subtitle?: string | null }>
-  tone: 'cyan' | 'emerald' | 'violet'
+  items: WritingKnowledgeItem[]
   emptyText: string
+  collectedTexts: Set<string>
+  onInspect: (item: WritingKnowledgeItem) => void
+  onCollect: (item: WritingKnowledgeItem) => void
 }) {
-  const toneClass = {
-    cyan: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
-    emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-    violet: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
-  }[tone]
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   if (items.length === 0) {
     return <p className="rounded-lg bg-muted/25 py-8 text-center text-sm text-muted-foreground">{emptyText}</p>
@@ -279,16 +374,123 @@ function WritingKnowledgeList({
   return (
     <div className="space-y-2">
       {items.map((item) => (
-        <Card key={item.title} className="border-0 bg-muted/30 shadow-none">
-          <CardContent className="flex items-center gap-3 p-3">
-            <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-md', toneClass)}>{icon}</span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-foreground">{item.title}</p>
-              {item.subtitle && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{item.subtitle}</p>}
-            </div>
+        <Card key={item.id} className={cn('border-0 bg-muted/30 shadow-none transition-colors', expandedId === item.id && 'bg-primary/[0.06]')}>
+          <CardContent className="p-0">
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 p-3 text-left"
+              onClick={() => setExpandedId((current) => current === item.id ? null : item.id)}
+              aria-expanded={expandedId === item.id}
+            >
+              <WritingKnowledgeIcon kind={item.kind} />
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 items-center gap-2">
+                  <p className="truncate text-sm font-semibold text-foreground">{item.title}</p>
+                  {item.kind === 'vocab' && item.partOfSpeech && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{item.partOfSpeech}</Badge>}
+                  {item.kind === 'pattern' && item.difficulty && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{item.difficulty}</Badge>}
+                </div>
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{item.subtitle}</p>
+              </div>
+              <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expandedId === item.id && 'rotate-90')} />
+            </button>
+            {expandedId === item.id && (
+              <WritingKnowledgeDetail
+                item={item}
+                collected={collectedTexts.has(item.kind === 'vocab' ? item.word : item.kind === 'chunk' ? item.text : item.pattern)}
+                onInspect={() => onInspect(item)}
+                onCollect={() => onCollect(item)}
+              />
+            )}
           </CardContent>
         </Card>
       ))}
+    </div>
+  )
+}
+
+function WritingKnowledgeIcon({ kind }: { kind: WritingKnowledgeItem['kind'] }) {
+  const styles = {
+    vocab: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
+    chunk: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    pattern: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
+  }[kind]
+  const Icon = kind === 'vocab' ? BookText : kind === 'chunk' ? MessageSquareText : Search
+  return <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-md', styles)}><Icon className="size-4" /></span>
+}
+
+function WritingKnowledgeDetail({
+  item,
+  collected,
+  onInspect,
+  onCollect,
+}: {
+  item: WritingKnowledgeItem
+  collected: boolean
+  onInspect: () => void
+  onCollect: () => void
+}) {
+  if (item.kind === 'pattern') {
+    return (
+      <div className="px-3 pb-3 pt-2">
+        {item.example && (
+          <div className="mb-3 rounded-md bg-muted/45 p-2.5">
+            <p className="text-xs font-medium leading-5 text-foreground">{item.example}</p>
+            {item.topicTitle && <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{item.topicTitle}</p>}
+          </div>
+        )}
+        {item.slots.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {item.slots.map((slot) => <Badge key={slot} variant="secondary" className="rounded-full px-2 text-[10px]">{slot}</Badge>)}
+          </div>
+        )}
+        <WritingKnowledgeActions collected={collected} onInspect={onInspect} onCollect={onCollect} />
+      </div>
+    )
+  }
+
+  const description = item.description?.trim()
+  const fallbackUsage = item.kind === 'vocab' ? item.definitionEn?.trim() : null
+  const example = item.examples?.[0]
+
+  return (
+    <div className="px-3 pb-3 pt-2">
+      {description ? (
+        <div className="mb-3 line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
+          <MarkdownContent content={extractCoreUsage(description)} />
+        </div>
+      ) : fallbackUsage ? (
+        <p className="mb-3 text-xs leading-5 text-muted-foreground">{fallbackUsage}</p>
+      ) : null}
+      {example && (
+        <div className="mb-3 rounded-md bg-muted/45 p-2.5">
+          <p className="text-xs font-medium leading-5 text-foreground">{example.en}</p>
+          {example.zh && <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{example.zh}</p>}
+          {example.note && <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{example.note}</p>}
+        </div>
+      )}
+      <WritingKnowledgeActions collected={collected} onInspect={onInspect} onCollect={onCollect} />
+    </div>
+  )
+}
+
+function WritingKnowledgeActions({
+  collected,
+  onInspect,
+  onCollect,
+}: {
+  collected: boolean
+  onInspect: () => void
+  onCollect: () => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex gap-2">
+      <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onInspect}>
+        <Search className="size-3.5" /> {t('learning.view')}
+      </Button>
+      <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" onClick={onCollect}>
+        <BookmarkPlus className="size-3.5" /> {collected ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
+      </Button>
     </div>
   )
 }
@@ -361,7 +563,7 @@ function WritingEditor({
   return (
     <div
       data-keyboard-overlay="writing"
-      className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#fffefb] pt-safe dark:bg-background"
+      className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pt-safe"
     >
       <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-4 sm:px-6 sm:pt-6">
         <div className="flex items-start gap-3">
@@ -431,6 +633,143 @@ function WritingEditor({
           </Button>
         </div>
       </footer>
+    </div>
+  )
+}
+
+// ─── Translation Editor ───────────────────────────────────
+
+type TranslationSegment = { id: string; source: string; reference?: string; hint?: string }
+
+function TranslationEditor({
+  topic,
+  unitTitle,
+  onClose,
+  onOpenGuide,
+}: {
+  topic: TrainingTopicItem
+  unitTitle: string
+  onClose: () => void
+  onOpenGuide: () => void
+}) {
+  const { t } = useTranslation()
+  const config = topic.contentConfig?.writing ?? {}
+  const direction = config.direction === 'en_to_zh' ? 'en_to_zh' : 'zh_to_en'
+  const scope = config.scope === 'article' ? 'article' : 'sentence'
+  const segments: TranslationSegment[] = useMemo(() => {
+    const configured = Array.isArray(config.segments) ? config.segments : []
+    if (configured.length) return configured.map((segment: any, index: number) => ({ id: String(segment.id || `s${index + 1}`), source: String(segment.source ?? ''), reference: String(segment.reference ?? ''), hint: String(segment.hint ?? '') }))
+    const source = String(config.sourceText ?? '').trim()
+    return source ? [{ id: 's1', source, reference: '', hint: '' }] : []
+  }, [config.segments, config.sourceText])
+  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [hintOpen, setHintOpen] = useState(false)
+  const [listOpen, setListOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<Record<string, any> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const latest = await learningApi.getLatestTopicSession(topic.id)
+        if (cancelled) return
+        if (latest?.status === 'active') {
+          setSessionId(latest.id)
+          const saved = latest.submissions?.[0]?.response?.answers
+          if (Array.isArray(saved)) setAnswers(Object.fromEntries(saved.map((item: any) => [String(item.segmentId), String(item.text ?? '')])))
+        } else if (latest?.status === 'analyzed') {
+          setAnalysisResult(latest.analysisResult ?? null)
+          const created = await learningApi.startTopicSession(topic.id)
+          if (!cancelled) setSessionId(created.id)
+        } else {
+          const created = await learningApi.startTopicSession(topic.id)
+          if (!cancelled) setSessionId(created.id)
+        }
+      } catch { /* keep the editor usable while offline */ }
+    })()
+    return () => { cancelled = true }
+  }, [topic.id])
+
+  const answeredCount = segments.filter((segment) => (answers[segment.id] ?? '').trim()).length
+  const active = segments[activeIndex]
+  const save = async (submit = false) => {
+    const response = {
+      direction,
+      scope,
+      answers: segments.map((segment) => ({ segmentId: segment.id, text: answers[segment.id] ?? '' })),
+    }
+    if (!submit && !answeredCount) return
+    setSaving(true)
+    try {
+      if (!submit) {
+        if (!sessionId) throw new Error('练习会话尚未准备好，请稍后重试')
+        await learningApi.saveTopicSubmission(topic.id, { response, status: 'draft', sessionId })
+        toast.success(t('learning.draftSaved'))
+        return
+      }
+      if (!sessionId) throw new Error('练习会话尚未准备好，请稍后重试')
+      await learningApi.saveTopicSubmission(topic.id, { response, status: 'submitted', sessionId })
+      await learningApi.completeTopicSession(topic.id, sessionId)
+      const result = await learningApi.analyzeTopicSession(topic.id, sessionId)
+      setAnalysisResult(result.analysis ?? null)
+      toast.success(t('learning.aiEvaluationDone'))
+    } catch (error: any) {
+      toast.error(error?.message || t('learning.saveFailed'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const selectSegment = (index: number) => {
+    setActiveIndex(index)
+    setHintOpen(false)
+    setListOpen(false)
+  }
+
+  const sourceLanguage = direction === 'zh_to_en' ? '中文原文' : 'English source'
+  const answerLanguage = direction === 'zh_to_en' ? 'Write in English' : '用中文翻译'
+
+  return (
+    <div data-keyboard-overlay="writing" className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pt-safe">
+      <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
+        <div className="mx-auto flex max-w-3xl items-center gap-3">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Languages className="size-4" /></span>
+          <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{direction === 'zh_to_en' ? '中译英' : '英译中'}</Badge><span className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span></div><h1 className="truncate text-base font-bold leading-snug text-foreground">{config.sourceTitle || topic.title}</h1><p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p></div>
+          <div className="flex items-center gap-1"><Button type="button" variant="ghost" size="icon-sm" onClick={onOpenGuide} title={t('learning.viewGuide')}><BookOpen className="size-4" /></Button><button type="button" onClick={onClose} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground" aria-label="退出翻译"><X className="size-3.5" /></button></div>
+        </div>
+      </header>
+
+      {analysisResult ? (
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto max-w-3xl px-4 py-5 pb-safe"><WritingAnalysisPanel analysis={analysisResult} /><Button variant="outline" className="mt-5 w-full" onClick={onClose}>返回学习包</Button></div></main>
+      ) : (
+        <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(15rem,40dvh)]" data-writing-scroll-region>
+          <section className="min-h-0 overflow-y-auto overscroll-contain" aria-label={sourceLanguage}>
+            <article className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center px-5 py-6 sm:px-8">
+              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{sourceLanguage}</p>
+              <p className="text-[16px] leading-8 text-foreground">{active?.source || '暂无原文内容'}</p>
+            </article>
+          </section>
+
+          <section className="flex min-h-0 flex-col border-t border-border/70 bg-background shadow-[0_-8px_20px_rgba(0,0,0,0.04)]" aria-label={answerLanguage}>
+            <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-2 border-b border-border/50 px-4 py-2">
+              <Button variant="outline" size="sm" className="h-8 px-2.5" disabled={activeIndex === 0} onClick={() => selectSegment(activeIndex - 1)}><ChevronLeft className="size-4" />上一{scope === 'article' ? '段' : '句'}</Button>
+              <span className="min-w-0 flex-1 truncate text-center text-xs tabular-nums text-muted-foreground">{answeredCount}/{segments.length} 已完成</span>
+              <div className="flex shrink-0 items-center gap-1.5">
+                {activeIndex < segments.length - 1 ? <Button variant="outline" size="sm" className="h-8 px-2.5" onClick={() => selectSegment(activeIndex + 1)}>下一{scope === 'article' ? '段' : '句'}<ChevronRight className="size-4" /></Button> : <Button size="sm" className="h-8 px-3" onClick={() => save(true)} disabled={saving || !sessionId || answeredCount !== segments.length || !segments.length}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}提交</Button>}
+                <Button variant="ghost" size="icon" className="size-8" onClick={() => setListOpen(true)} title="段落列表"><ListMusic className="size-4" /></Button>
+              </div>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto w-full max-w-3xl px-5 py-4 sm:px-8"><div className="mb-3 flex items-center justify-between gap-3"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{answerLanguage}</p>{active?.hint && <Button type="button" size="sm" variant="ghost" onClick={() => setHintOpen((current) => !current)} className="shrink-0 gap-1.5 px-2 text-primary"><Sparkles className="size-3.5" />提示</Button>}</div>{hintOpen && active?.hint && <div className="mb-3 rounded-lg bg-muted/60 px-3 py-2.5 text-sm leading-6 text-muted-foreground">{active.hint}</div>}<textarea value={active ? answers[active.id] ?? '' : ''} onChange={(event) => active && setAnswers((current) => ({ ...current, [active.id]: event.target.value }))} className="min-h-[132px] w-full resize-y bg-transparent p-0 text-[16px] leading-8 text-foreground outline-none placeholder:text-muted-foreground/45 focus:ring-0" placeholder={direction === 'zh_to_en' ? 'Write your English translation here…' : '在这里写下中文译文…'} autoCapitalize="sentences" autoCorrect="on" spellCheck={direction === 'zh_to_en'} /></div></div>
+          </section>
+        </main>
+      )}
+
+      <Drawer open={listOpen} onOpenChange={setListOpen}>
+        <DrawerContent className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]"><div className="flex items-center justify-between px-5 py-3"><DrawerTitle className="text-lg">{scope === 'article' ? '段落列表' : '句子列表'}</DrawerTitle><button type="button" onClick={() => setListOpen(false)} className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground"><ChevronDown className="size-5" /></button></div><div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8"><div className="space-y-1">{segments.map((segment, index) => <button key={segment.id} type="button" onClick={() => selectSegment(index)} className={cn('flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors', activeIndex === index ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted')}><span className={cn('flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold', activeIndex === index ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>{index + 1}</span><p className="line-clamp-2 min-w-0 flex-1 text-sm leading-5">{segment.source}</p>{(answers[segment.id] ?? '').trim() && <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />}</button>)}</div></div></DrawerContent>
+      </Drawer>
     </div>
   )
 }
@@ -544,7 +883,7 @@ function DialogueEditor({
     <div
       data-keyboard-overlay="writing"
       data-writing-dialogue
-      className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#fffefb] pt-safe dark:bg-background"
+      className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pt-safe"
     >
       {/* Header — unified with WritingEditor style */}
       <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-4 sm:px-6 sm:pt-6">
@@ -718,10 +1057,12 @@ function WritingAnalysisPanel({ analysis }: { analysis: Record<string, any> | nu
   const score = analysis.overallScore ?? 0
   const strengths = (analysis.strengths ?? []) as string[]
   const improvements = (analysis.improvements ?? []) as string[]
+  const segmentFeedback = (analysis.segmentFeedback ?? []) as Array<{ segmentId?: string; score?: number; comment?: string; suggestion?: string; acceptableExpression?: string }>
   return (
     <div className="rounded-2xl border border-primary/10 bg-primary/[0.04] p-4">
       <div className="mb-3 flex items-center gap-2"><Sparkles className="size-4 text-primary" /><p className="text-sm font-semibold">AI 写作评估</p>{score > 0 && <Badge className="ml-auto">{score}</Badge>}</div>
       {analysis.summary && <p className="text-sm leading-6 text-muted-foreground">{analysis.summary}</p>}
+      {segmentFeedback.length > 0 && <div className="mt-4 space-y-2">{segmentFeedback.map((item, index) => <div key={item.segmentId ?? index} className="rounded-xl bg-background/70 p-3"><div className="flex items-center gap-2"><span className="text-xs font-semibold text-foreground">第 {index + 1} 段</span>{typeof item.score === 'number' && <Badge variant="secondary" className="text-[10px]">{item.score}</Badge>}</div>{item.comment && <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{item.comment}</p>}{item.suggestion && <p className="mt-1 text-xs leading-5 text-amber-700 dark:text-amber-400">建议：{item.suggestion}</p>}{item.acceptableExpression && <p className="mt-1 text-xs leading-5 text-primary">可参考：{item.acceptableExpression}</p>}</div>)}</div>}
       {strengths.length > 0 && <ul className="mt-3 space-y-1 text-sm">{strengths.map((item: string) => <li key={item} className="flex gap-2"><CheckCircle2 className="mt-1 size-3.5 shrink-0 text-emerald-600" />{item}</li>)}</ul>}
       {improvements.length > 0 && <ul className="mt-3 space-y-1 text-sm text-amber-700 dark:text-amber-400">{improvements.map((item: string) => <li key={item}>→ {item}</li>)}</ul>}
       {analysis.nextStepSuggestion && <p className="mt-3 rounded-lg bg-background/70 px-3 py-2 text-sm font-medium">下一步：{analysis.nextStepSuggestion}</p>}

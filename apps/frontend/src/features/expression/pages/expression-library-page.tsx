@@ -5,7 +5,7 @@ import {
   BookMarked, Search, Trash2, BookOpen,
   BookText, MessageSquareText, Headphones, Layers,
   RotateCcw, CheckCheck, ArrowRightFromLine,
-  ArrowLeft, CalendarDays, Check, CheckSquare, Download, Expand, FileText, Languages, Loader2, Minimize2, Plus,
+  ArrowLeft, CalendarDays, Check, CheckSquare, Download, Expand, FileText, Languages, Loader2, Minimize2, Plus, RefreshCw,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -19,7 +19,8 @@ import { ImmersivePlayerDialog, mapInsightItemsToImmersiveItems, type ImmersiveP
 import { cn } from '@/lib/cn'
 import { extractCoreUsage } from '@/lib/markdown-utils'
 import { isNative } from '@/lib/native'
-import { learningNotebookRepository } from '@/lib/offline'
+import { learningNotebookRepository, offlineSyncService } from '@/lib/offline'
+import { useAuth } from '@/providers/auth-provider'
 import type { LearningNotebook } from '@/features/practice/api/english-practice-api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -110,6 +111,7 @@ function printPracticeSheet(popup: Window, name: string, items: Expression[], mo
 
 export function ExpressionLibraryPage() {
   const { t, i18n } = useTranslation()
+  const { session } = useAuth()
   const isMobile = useIsMobile()
   const setBottomNavVisible = useLayoutStore((state) => state.setBottomNavVisible)
   const { notebookId } = useParams<{ notebookId: string }>()
@@ -124,6 +126,7 @@ export function ExpressionLibraryPage() {
   // 后端分页数据
   const [result, setResult] = useState<PageResult>({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
   const [loading, setLoading] = useState(true)
+  const [notebookSyncing, setNotebookSyncing] = useState(false)
 
   // Dialog
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -198,7 +201,22 @@ export function ExpressionLibraryPage() {
     return items
   }, [localListRequest, notebookId])
 
-  // ---- The notebook detail is SQLite-only. Sync is handled outside the view. ----
+  const syncThisNotebook = useCallback(async () => {
+    if (!notebookId || !session?.user?.id || notebookSyncing) return
+    setNotebookSyncing(true)
+    try {
+      await offlineSyncService.sync(session.user.id)
+      const result = await learningNotebookRepository.syncNotebookReplica(notebookId)
+      await refreshLocalList()
+      toast.success(`已同步 ${result.restored} 条学习库数据`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : '学习本同步失败，请稍后重试')
+    } finally {
+      setNotebookSyncing(false)
+    }
+  }, [notebookId, notebookSyncing, refreshLocalList, session?.user?.id])
+
+  // ---- The notebook detail renders from SQLite first; its header can manually restore this notebook. ----
   const fetchData = useCallback(async () => {
     if (!notebookId) {
       setResult({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
@@ -873,6 +891,9 @@ export function ExpressionLibraryPage() {
           <h1 className="truncate text-lg font-semibold tracking-tight">{notebookName}</h1>
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          <button type="button" onClick={() => void syncThisNotebook()} disabled={notebookSyncing} className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors disabled:opacity-50" aria-label="同步此学习本" title="同步此学习本">
+            <RefreshCw className={cn('size-4', notebookSyncing && 'animate-spin')} />
+          </button>
           <button type="button" onClick={() => setExpandedItemIds(allExpanded ? new Set() : new Set(result.items.map((item) => item.type === 'word' ? (item.original ?? item.id) : item.id)))} className={cn('flex size-10 items-center justify-center rounded-full transition-colors', allExpanded ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground')} aria-label={allExpanded ? t('expressionLib.collapseAll') : t('expressionLib.expandAll')}>
             {allExpanded ? <Minimize2 className="size-4" /> : <Expand className="size-4" />}
           </button>

@@ -1,9 +1,10 @@
 import {
+  expressionApi,
   learningNotebookApi,
   type LearningNotebook,
 } from '@/features/practice/api/english-practice-api'
 import { localDb } from './unified-storage'
-import type { ExpressionEntry } from './learning-content.repository'
+import { learningContentRepository, type ExpressionEntry } from './learning-content.repository'
 
 type NotebookCounts = {
   total: number
@@ -94,6 +95,54 @@ function matchesLocalExpression(entry: ExpressionEntry, request: LocalExpression
 }
 
 export const learningNotebookRepository = {
+  /** Rebuild one notebook's local replica from the server without touching other notebooks. */
+  async syncNotebookReplica(
+    notebookId: string,
+    onProgress?: (progress: { completed: number; total: number }) => void,
+  ) {
+    const notebooks = await learningNotebookApi.list()
+    await localDb.putMany('learning_notebooks', notebooks.items.map(toCached))
+    const notebook = notebooks.items.find((item) => item.id === notebookId)
+    if (!notebook) throw new Error('学习本不存在或已被删除')
+
+    const total = notebook.counts?.total ?? 0
+    let completed = 0
+    let restored = 0
+    for (const type of ['word', 'chunk', 'scene_phrase'] as const) {
+      let page = 1
+      let totalPages = 1
+      while (page <= totalPages) {
+        const result = await expressionApi.list({ notebookId, type, page, pageSize: 100 }) as { items: any[]; totalPages?: number }
+        totalPages = Math.max(1, Number(result.totalPages ?? 1))
+        for (const item of result.items ?? []) {
+          const entry = await learningContentRepository.saveRemoteExpressionEntry(item)
+          if (!entry || !item.notebookItemId) continue
+          await localDb.put('learning_notebook_items', {
+            id: String(item.notebookItemId),
+            remoteId: String(item.notebookItemId),
+            notebookId,
+            expressionEntryId: entry.id,
+            masteryStatus: item.masteryStatus ?? 'learning',
+            reviewCount: item.reviewCount ?? 0,
+            intervalDays: item.intervalDays ?? 0,
+            easeFactor: item.easeFactor ?? 2.5,
+            lapseCount: item.lapseCount ?? 0,
+            lastReviewedAt: item.lastReviewedAt ?? null,
+            nextReviewAt: item.nextReviewAt ?? null,
+            createdAt: item.createdAt ?? null,
+            updatedAt: item.updatedAt ?? null,
+            syncStatus: 'synced',
+          })
+          restored += 1
+        }
+        completed += (result.items ?? []).length
+        onProgress?.({ completed, total })
+        page += 1
+      }
+    }
+    return { restored, total }
+  },
+
   async listCached(): Promise<NotebookListResult> {
     return summarize(await localDb.list<CachedNotebook>('learning_notebooks'))
   },

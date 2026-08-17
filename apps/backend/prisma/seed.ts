@@ -5,6 +5,7 @@ import { seedInit } from './seed-init';
 import { seedLearningPackages } from './seed-learning-packages';
 import { seedDailySentences } from './seed-daily-sentences';
 import { seedAiModels } from './seed-ai-models';
+import { seedTestCoverage } from './seed-test-coverage';
 
 const prisma = new PrismaClient();
 
@@ -217,14 +218,15 @@ async function main() {
   await seedInit(prisma)
 
   // ══════════════════════════════════════════════════════
-  // 第三阶段：学习包（已改为后台管理页面上传 ZIP 导入）
+  // 第三阶段：全模式测试学习包
   // ══════════════════════════════════════════════════════
   // ⚠️ 以下代码已注释，改用后台 UI：
   //    http://localhost:5173/#/admin/learning-content → 上传数据包
   //    导出后修改 CSV → 再上传即可覆盖
   //   如需命令行导入单个包，仍可使用 SEED_PACKAGE 环境变量
-  console.log('\n🌱 第三阶段：学习包（跳过，请通过后台管理页面上传 ZIP 导入）')
+  console.log('\n🌱 第三阶段：全模式测试学习包')
   // await seedLearningPackages(prisma, targetPackage)
+  await seedTestCoverage(prisma)
 
 
   console.log('\n🎉 Seed complete!')

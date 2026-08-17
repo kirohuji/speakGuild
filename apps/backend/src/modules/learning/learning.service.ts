@@ -1251,6 +1251,15 @@ export class LearningService {
           id: ac.chunk.id,
           text: ac.chunk.text,
           meaning: ac.chunk.meaning,
+          description: ac.chunk.description,
+          category: ac.chunk.category,
+          difficulty: ac.chunk.difficulty,
+          examples: ac.chunk.examples.map((example) => ({
+            en: example.en,
+            zh: example.zh,
+            note: example.note,
+            level: example.level,
+          })),
         })),
       })),
 

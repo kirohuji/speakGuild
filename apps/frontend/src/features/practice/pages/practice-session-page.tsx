@@ -529,7 +529,8 @@ export function PracticeSessionPage() {
           meaning: vocab?.meaning ?? pendingSave.meaning,
         sceneName: detail?.scene.title,
           contentSnapshot: vocab ?? { word: pendingSave.word, meaning: pendingSave.meaning },
-        sourceType: 'learning-library',
+        sourceType: 'vocabulary',
+          sourceId: vocab?.id,
           notebookIds,
       })
       } else if (pendingSave.kind === 'pattern') {
@@ -539,7 +540,8 @@ export function PracticeSessionPage() {
           meaning: pendingSave.item.meaning,
           sceneName: pendingSave.item.sceneName,
           contentSnapshot: pendingSave.item,
-        sourceType: 'learning-library',
+        sourceType: 'sentence_pattern',
+          sourceId: (pendingSave.item as any).id,
           notebookIds,
       })
       } else if (pendingSave.kind === 'chunk') {
@@ -549,7 +551,8 @@ export function PracticeSessionPage() {
           meaning: pendingSave.item.meaning,
         sceneName: detail?.scene.title,
           contentSnapshot: pendingSave.item,
-        sourceType: 'learning-library',
+        sourceType: 'chunk',
+          sourceId: pendingSave.item.id,
           notebookIds,
       })
       } else {
