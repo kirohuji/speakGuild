@@ -25,6 +25,7 @@ import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { extractCoreUsage } from '@/lib/markdown-utils'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
 import { ContentModeExperience } from '../components/content-mode-experience'
+import { CurrentTabExpandButton } from '../components/current-tab-expand-button'
 
 const PREP_PAGE_SIZE = 8
 const TOPIC_PAGE_SIZE = 8
@@ -255,6 +256,11 @@ export function LearningUnitPage() {
     () => paginateItems(unit?.sentencePatterns ?? [], prepPage.pattern, PREP_PAGE_SIZE),
     [prepPage.pattern, unit?.sentencePatterns],
   )
+  const currentKnowledgeTabCount = activeTab === 'vocab'
+    ? (unit?.vocabularies.length ?? 0)
+    : activeTab === 'chunk'
+      ? (unit?.chunks.length ?? 0)
+      : (unit?.sentencePatterns?.length ?? 0)
   const topicPageItems = useMemo(
     () => paginateItems(unit?.trainingTopics ?? [], topicPage, TOPIC_PAGE_SIZE),
     [topicPage, unit?.trainingTopics],
@@ -462,14 +468,10 @@ export function LearningUnitPage() {
         </Tabs>
 
         {collapsedSections.has('knowledge') && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mt-3 w-full gap-1.5 text-xs text-muted-foreground transition-none hover:!bg-transparent hover:!text-muted-foreground active:!scale-100"
-          onClick={() => toggleSection('knowledge')}
-        >
-          <ChevronDown className="size-3.5" /> {t('learning.expandAll', { count: allVocabCount + allChunkCount + patternDialogItems.length })}
-        </Button>
+          <CurrentTabExpandButton
+            itemCount={currentKnowledgeTabCount}
+            onExpand={() => toggleSection('knowledge')}
+          />
         )}
       </section>
 

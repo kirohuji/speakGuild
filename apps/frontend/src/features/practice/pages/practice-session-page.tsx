@@ -24,6 +24,7 @@ import { LearningInsightDialog, type LearningInsightItem } from '../components/l
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { extractCoreUsage } from '@/lib/markdown-utils'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
+import { CurrentTabExpandButton } from '@/features/learning/components/current-tab-expand-button'
 
 import { PracticeTurnFeedback } from '../components/practice-turn-feedback'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
@@ -577,6 +578,11 @@ export function PracticeSessionPage() {
     () => paginateItems(detail?.sentencePatterns ?? [], prepPage.pattern, PREP_PAGE_SIZE),
     [detail?.sentencePatterns, prepPage.pattern],
   )
+  const currentPrepTabCount = prepTab === 'vocab'
+    ? (detail?.vocabularies.length ?? 0)
+    : prepTab === 'chunk'
+      ? (detail?.activeChunks.length ?? 0)
+      : (detail?.sentencePatterns?.length ?? 0)
 
   const changePrepPage = useCallback((kind: keyof typeof prepPage, page: number) => {
     setPrepPage((current) => ({ ...current, [kind]: page }))
@@ -1179,14 +1185,10 @@ export function PracticeSessionPage() {
             </Tabs>
 
             {prepCollapsed && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mt-3 w-full gap-1.5 text-xs text-muted-foreground transition-none hover:!bg-transparent hover:!text-muted-foreground active:!scale-100"
-              onClick={() => setPrepCollapsed(false)}
-            >
-              <ChevronDown className="size-3.5" /> {t('learning.expandAll', { count: detail.vocabularies.length + detail.activeChunks.length + (detail.sentencePatterns?.length ?? 0) })}
-            </Button>
+              <CurrentTabExpandButton
+                itemCount={currentPrepTabCount}
+                onExpand={() => setPrepCollapsed(false)}
+              />
             )}
           </section>
 

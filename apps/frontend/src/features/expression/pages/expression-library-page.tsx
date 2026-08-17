@@ -894,9 +894,11 @@ export function ExpressionLibraryPage() {
           <button type="button" onClick={() => void syncThisNotebook()} disabled={notebookSyncing} className="flex size-10 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors disabled:opacity-50" aria-label="同步此学习本" title="同步此学习本">
             <RefreshCw className={cn('size-4', notebookSyncing && 'animate-spin')} />
           </button>
-          <button type="button" onClick={() => setExpandedItemIds(allExpanded ? new Set() : new Set(result.items.map((item) => item.type === 'word' ? (item.original ?? item.id) : item.id)))} className={cn('flex size-10 items-center justify-center rounded-full transition-colors', allExpanded ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground')} aria-label={allExpanded ? t('expressionLib.collapseAll') : t('expressionLib.expandAll')}>
-            {allExpanded ? <Minimize2 className="size-4" /> : <Expand className="size-4" />}
-          </button>
+          {result.items.length > 0 && (
+            <button type="button" onClick={() => setExpandedItemIds(allExpanded ? new Set() : new Set(result.items.map((item) => item.type === 'word' ? (item.original ?? item.id) : item.id)))} className={cn('flex size-10 items-center justify-center rounded-full transition-colors', allExpanded ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground')} aria-label={allExpanded ? t('expressionLib.collapseAll') : t('expressionLib.expandAll')}>
+              {allExpanded ? <Minimize2 className="size-4" /> : <Expand className="size-4" />}
+            </button>
+          )}
           <button type="button" onClick={() => { setSelectionMode((value) => !value); setSelectedIds(new Set()) }} className={cn('flex size-10 items-center justify-center rounded-full transition-colors', selectionMode ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')} aria-label={selectionMode ? t('expressionLib.cancelSelection') : t('expressionLib.batchEdit')}><CheckSquare className="size-4" /></button>
         </div>
       </header>
