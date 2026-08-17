@@ -13,6 +13,9 @@ const FIXTURE_KEY_PREFIX = 'fixtures/test-all-modes/'
 
 const packageDefinitions = [
   { key: 'practice', mode: 'practice', type: 'daily', title: `${TEST_PREFIX}口语输出训练`, location: '语言练习室', description: '覆盖所有输出训练题型的可重复测试包。' },
+  { key: 'warmup-cafe', mode: 'practice', type: 'daily', title: `${TEST_PREFIX}知识点练习：咖啡店点单`, location: '街角咖啡店', description: '测试礼貌点单、数量表达与补充请求的知识点练习包。' },
+  { key: 'warmup-hotel', mode: 'practice', type: 'foundation', title: `${TEST_PREFIX}知识点练习：酒店入住`, location: '酒店前台', description: '测试入住登记、确认预订与提出需求的知识点练习包。' },
+  { key: 'warmup-travel', mode: 'practice', type: 'exam', title: `${TEST_PREFIX}知识点练习：行程变更`, location: '机场服务台', description: '测试说明变更、礼貌请求与条件句的知识点练习包。' },
   { key: 'writing', mode: 'writing', type: 'course', title: `${TEST_PREFIX}写作七文体`, location: '写作工坊', description: '每一种写作文体各有一道独立测试题。' },
   { key: 'reading', mode: 'reading', type: 'exam', title: `${TEST_PREFIX}阅读四题型`, location: '阅读中心', description: '单选、判断、简答、开放回答一次覆盖。' },
   { key: 'listening', mode: 'listening', type: 'foundation', title: `${TEST_PREFIX}听力精听`, location: '听力实验室', description: '带逐句时间戳的听力内容测试包。' },
@@ -178,7 +181,7 @@ export async function seedTestCoverage(prisma: PrismaClient) {
   const practiceScene = scenes.get('practice')!
   const practiceTopic = await prisma.trainingTopic.create({
     data: {
-      sceneId: practiceScene.id, type: 'daily', activityType: 'practice', title: '[TEST] 输出训练：全部题型', description: '句块替换、一词多句、句子拆解、句型操练与兼容旧题型。', promptEn: 'Practice every available output drill type.', promptZh: '依次完成全部输出训练题型。', suggestedDurationSec: 600, difficulty: 'L2', sortOrder: 0,
+      sceneId: practiceScene.id, type: 'daily', activityType: 'practice', title: '[TEST] 输出训练：全部题型', description: '句块替换、一词多句、句子拆解、句型操练与兼容旧题型。', knowledgePoints: '礼貌请求；改期与确认；条件句；需求与原因；正式请求', teachingMarkdown: '## 输出训练：车站行程变更\n\n这组练习把一个真实的出行情境拆成可复用的表达。先用 **Could you …?** 发出礼貌请求，再用 **I need to … because …** 说明自己的需求与原因。\n\n### 关键句型\n\n- **Could you [verb] [object]?**：礼貌地请对方协助。\n- **If [condition], I will [result].**：说明条件与下一步安排。\n- **I need to [action] because [reason].**：解释你为什么需要做某事。\n- **Would it be possible to [action]?**：更正式、委婉地提出请求。\n\n### 使用建议\n\n先完成中译英替换，确认核心句块；再练一词多句与句型操练；最后通过句子拆解，把短句自然组合成完整表达。', promptEn: 'Practice every available output drill type.', promptZh: '依次完成全部输出训练题型。', suggestedDurationSec: 600, difficulty: 'L2', sortOrder: 0,
       metadata: { outputTraining: { version: 1, enabled: true, pipeline: [
         { id: 'test-chunk-zh-en', type: 'chunk_substitution', title: '句块替换（中译英）', chunk: chunks[0].text, chunkMeaning: chunks[0].meaning, direction: 'zh_to_en', kind: 'chunk', items: [{ zh: '请你再说一遍好吗？', answer: 'Could you say that again, please?', hint: '使用礼貌请求。' }] },
         { id: 'test-chunk-en-zh', type: 'chunk_substitution', title: '句块替换（英译中）', chunk: chunks[1].text, chunkMeaning: chunks[1].meaning, direction: 'en_to_zh', kind: 'chunk', items: [{ zh: '我想更改我的预订。', answer: 'I would like to change my reservation.', hint: '理解 change my reservation。' }] },
@@ -191,6 +194,73 @@ export async function seedTestCoverage(prisma: PrismaClient) {
     },
   })
   await attachTopicCorpus(practiceTopic.id)
+
+  const knowledgePointFixtures = [
+    {
+      sceneKey: 'warmup-cafe',
+      title: '[TEST] 知识点：礼貌点单',
+      description: '在咖啡店用 Can I have、I’d like 和 anything else 完成一轮点单。',
+      knowledgePoints: 'Can I have…?；I’d like…；Anything else?；数量 + 单位',
+      teachingMarkdown: '## 礼貌点单\n\n用 **Can I have …?** 或 **I’d like …** 点单；说明数量时把数字放在饮品或食物前。需要补充时可说 **Anything else?**。',
+      promptEn: 'Order a drink and a snack politely at a café.',
+      promptZh: '在咖啡店礼貌地点一杯饮料和一份点心。',
+      pipeline: [
+        { id: 'cafe-order', type: 'chunk_substitution', title: '中译英：礼貌点单', chunk: 'Can I have [item], please?', chunkMeaning: '我可以要……吗？', direction: 'zh_to_en', kind: 'chunk', items: [{ zh: '我可以要一杯拿铁吗？', answer: 'Can I have a latte, please?', hint: '用 Can I have 开头。' }, { zh: '我可以要两块饼干吗？', answer: 'Can I have two cookies, please?', hint: '数量放在名词前。' }] },
+        { id: 'cafe-preference', type: 'pattern_drill', title: '句型操练：表达偏好', pattern: 'I’d like [item], please.', patternMeaning: '我想要……，谢谢。', direction: 'zh_to_en', items: [{ zh: '我想要一杯冰美式，谢谢。', answer: 'I’d like an iced Americano, please.', hint: 'I’d like 后直接接物品。' }] },
+        { id: 'cafe-follow-up', type: 'sentence_decomposition', title: '句子拆解：补充点单', fullSentence: 'I’d like a latte, and can I have a cookie as well?', fullSentenceZh: '我想要一杯拿铁，还可以要一块饼干吗？', levels: [{ level: 1, label: '核心', en: 'I’d like a latte.', zh: '我想要一杯拿铁。' }, { level: 2, label: '补充', en: 'Can I have a cookie as well?', zh: '我还可以要一块饼干吗？' }, { level: 3, label: '完整', en: 'I’d like a latte, and can I have a cookie as well?', zh: '我想要一杯拿铁，还可以要一块饼干吗？' }] },
+      ],
+    },
+    {
+      sceneKey: 'warmup-hotel',
+      title: '[TEST] 知识点：酒店入住',
+      description: '在酒店前台说明预订信息，并礼貌地提出入住需求。',
+      knowledgePoints: 'I have a reservation；under + 姓名；Could I…?；check in',
+      teachingMarkdown: '## 酒店入住\n\n报到时说 **I have a reservation under [name]**。提出请求可用 **Could I …?**，例如提前入住或确认早餐时间。',
+      promptEn: 'Check in at a hotel and confirm your reservation.',
+      promptZh: '在酒店办理入住并确认你的预订。',
+      pipeline: [
+        { id: 'hotel-reservation', type: 'chunk_substitution', title: '中译英：确认预订', chunk: 'I have a reservation under [name].', chunkMeaning: '我以……的名字预订了房间。', direction: 'zh_to_en', kind: 'chunk', items: [{ zh: '我以王女士的名字预订了房间。', answer: 'I have a reservation under Ms. Wang.', hint: '用 under 表示预订登记的姓名。' }] },
+        { id: 'hotel-request', type: 'pattern_drill', title: '句型操练：提出入住需求', pattern: 'Could I [request]?', patternMeaning: '我可以……吗？', direction: 'zh_to_en', items: [{ zh: '我可以早点办理入住吗？', answer: 'Could I check in early?', hint: 'check in 表示办理入住。' }, { zh: '我可以确认早餐时间吗？', answer: 'Could I confirm the breakfast time?', hint: 'confirm 表示确认。' }] },
+        { id: 'hotel-vocab', type: 'vocab_sentence_building', title: '一词多句：reservation', vocabWord: 'reservation', vocabMeaning: '预订', direction: 'zh_to_en', patterns: [{ chunk: 'I have a [word] under [name].', items: [{ zh: '我以李先生的名字有一份预订。', answer: 'I have a reservation under Mr. Li.', hint: '替换 word。' }] }] },
+      ],
+    },
+    {
+      sceneKey: 'warmup-travel',
+      title: '[TEST] 知识点：行程变更',
+      description: '说明航班或列车变更，并用正式表达请求协助。',
+      knowledgePoints: 'has been delayed；Would it be possible to…?；If …, I will …；reschedule',
+      teachingMarkdown: '## 行程变更\n\n说明状态用 **has been delayed**；正式请求用 **Would it be possible to …?**。当结果取决于条件时，用 **If …, I will …**。',
+      promptEn: 'Explain a travel delay and ask to change your booking.',
+      promptZh: '说明行程延误，并请求变更你的预订。',
+      pipeline: [
+        { id: 'travel-delay', type: 'chunk_substitution', title: '中译英：说明延误', chunk: 'My flight has been delayed.', chunkMeaning: '我的航班延误了。', direction: 'zh_to_en', kind: 'chunk', items: [{ zh: '我的火车已经晚点了。', answer: 'My train has been delayed.', hint: '用 has been delayed。' }] },
+        { id: 'travel-formal-request', type: 'pattern_drill', title: '句型操练：正式请求', pattern: 'Would it be possible to [action]?', patternMeaning: '是否可以……？', direction: 'zh_to_en', items: [{ zh: '是否可以更改我的预订？', answer: 'Would it be possible to change my reservation?', hint: '用正式请求开头。' }] },
+        { id: 'travel-condition', type: 'sentence_decomposition', title: '句子拆解：延误后的安排', fullSentence: 'If the flight is delayed, I will reschedule my hotel booking.', fullSentenceZh: '如果航班延误，我会重新安排酒店预订。', levels: [{ level: 1, label: '状态', en: 'The flight is delayed.', zh: '航班延误。' }, { level: 2, label: '计划', en: 'I will reschedule my hotel booking.', zh: '我会重新安排酒店预订。' }, { level: 3, label: '完整', en: 'If the flight is delayed, I will reschedule my hotel booking.', zh: '如果航班延误，我会重新安排酒店预订。' }] },
+      ],
+    },
+  ] as const
+
+  for (const [sortOrder, fixture] of knowledgePointFixtures.entries()) {
+    const scene = scenes.get(fixture.sceneKey)!
+    const topic = await prisma.trainingTopic.create({
+      data: {
+        sceneId: scene.id,
+        type: 'daily',
+        activityType: 'practice',
+        title: fixture.title,
+        description: fixture.description,
+        knowledgePoints: fixture.knowledgePoints,
+        teachingMarkdown: fixture.teachingMarkdown,
+        promptEn: fixture.promptEn,
+        promptZh: fixture.promptZh,
+        suggestedDurationSec: 360,
+        difficulty: sortOrder === 0 ? 'L1' : 'L2',
+        sortOrder: 0,
+        metadata: { outputTraining: { version: 1, enabled: true, pipeline: fixture.pipeline } },
+      },
+    })
+    await attachTopicCorpus(topic.id)
+  }
 
   const writingScene = scenes.get('writing')!
   const writingGenres = ['journal', 'message', 'email', 'paragraph', 'essay', 'dialogue', 'translation'] as const
@@ -237,6 +307,7 @@ export async function seedTestCoverage(prisma: PrismaClient) {
   }
 
   console.log(`  ✓ ${packageDefinitions.length} 个学习包（6 内容模式 / 5 包类型）`)
+  console.log(`  ✓ ${knowledgePointFixtures.length} 个知识点练习测试包（每包 3 组可执行练习）`)
   console.log('  ✓ 阅读 4 题型、写作 7 文体、输出训练题型、剧情 VN / 跟读记录')
   console.log('  ⚠️ 听力与 EPUB 使用占位资产；若要真实播放/阅读，请在后台上传真实音频和 EPUB 后替换。')
 }

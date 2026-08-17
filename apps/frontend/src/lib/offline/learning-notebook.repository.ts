@@ -108,6 +108,7 @@ export const learningNotebookRepository = {
     const total = notebook.counts?.total ?? 0
     let completed = 0
     let restored = 0
+    const replicaItems: CachedNotebookItem[] = []
     for (const type of ['word', 'chunk', 'scene_phrase'] as const) {
       let page = 1
       let totalPages = 1
@@ -117,7 +118,7 @@ export const learningNotebookRepository = {
         for (const item of result.items ?? []) {
           const entry = await learningContentRepository.saveRemoteExpressionEntry(item)
           if (!entry || !item.notebookItemId) continue
-          await localDb.put('learning_notebook_items', {
+          replicaItems.push({
             id: String(item.notebookItemId),
             remoteId: String(item.notebookItemId),
             notebookId,
@@ -140,6 +141,11 @@ export const learningNotebookRepository = {
         page += 1
       }
     }
+    // 服务器列表已完整拉取成功后才替换本学习本的本地副本。
+    // 本地收藏刚创建时使用 local:<notebook>:<entry> 临时 ID；若只追加
+    // 服务端 ID，同一条内容会保留两份关联，造成“列表重复、统计一个”。
+    await localDb.deleteWhere<CachedNotebookItem>('learning_notebook_items', (item) => item.notebookId === notebookId)
+    if (replicaItems.length > 0) await localDb.putMany('learning_notebook_items', replicaItems)
     return { restored, total }
   },
 
@@ -223,7 +229,24 @@ export const learningNotebookRepository = {
   },
 
   async removeCachedNotebookItem(notebookItemId: string): Promise<void> {
-    await localDb.delete('learning_notebook_items', notebookItemId)
+    const items = await localDb.list<CachedNotebookItem>('learning_notebook_items')
+    const target = items.find((item) => item.id === notebookItemId)
+    if (!target) return
+
+    // 同一内容可能遗留一个 local: 临时副本。删除服务器条目时把当前学习本中
+    // 所有同内容副本一并移除，避免删除后本地仍显示“已加入”。
+    await localDb.deleteWhere<CachedNotebookItem>('learning_notebook_items', (item) =>
+      item.notebookId === target.notebookId && item.expressionEntryId === target.expressionEntryId,
+    )
+
+    const belongsToAnotherNotebook = items.some((item) =>
+      item.notebookId !== target.notebookId && item.expressionEntryId === target.expressionEntryId,
+    )
+    // 收藏状态的唯一依据是“至少存在一个学习本关联”。最后一个关联删除后，
+    // 同步移除表达式索引，让所有来源页立即重新显示“加入学习库”。
+    if (!belongsToAnotherNotebook) {
+      await localDb.delete('expression_entries', target.expressionEntryId)
+    }
   },
 
   async create(name: string) {

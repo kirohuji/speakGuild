@@ -619,7 +619,7 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
 
   useEffect(() => {
     if (hideSave) return
-    learningContentRepository.getExpressionByText('word', item.word).then((entry) => setSaved(Boolean(entry)))
+    learningContentRepository.isExpressionSaved('word', item.word).then(setSaved)
   }, [hideSave, item.word])
 
   useEffect(() => {
@@ -1085,6 +1085,11 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
   const [activeTab, setActiveTab] = useState('description')
   const { play: playAudio } = useCachedAudio()
 
+  useEffect(() => {
+    if (hideSave) return
+    learningContentRepository.isExpressionSaved('chunk', item.text).then(setSaved)
+  }, [hideSave, item.text])
+
   const saveChunk = async () => {
     if (saved) return
     setSaveDrawerOpen(true)
@@ -1164,6 +1169,11 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
   const primaryExampleZh = examples[0]?.zh ?? item.meaning ?? ''
   const [activeTab, setActiveTab] = useState('description')
   const { play: playAudio } = useCachedAudio()
+
+  useEffect(() => {
+    if (hideSave) return
+    learningContentRepository.isExpressionSaved('pattern', item.pattern).then(setSaved)
+  }, [hideSave, item.pattern])
 
   const savePattern = async () => {
     if (saved) return

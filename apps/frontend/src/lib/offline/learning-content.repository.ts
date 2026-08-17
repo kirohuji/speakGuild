@@ -569,8 +569,22 @@ export const learningContentRepository = {
   },
 
   async listExpressionTexts(kind: ExpressionEntryKind): Promise<string[]> {
-    const entries = await this.listExpressionEntries(kind)
-    return entries.map(expressionText).filter(Boolean)
+    const [entries, notebookItems] = await Promise.all([
+      this.listExpressionEntries(kind),
+      localDb.list<{ expressionEntryId: string }>('learning_notebook_items'),
+    ])
+    const savedEntryIds = new Set(notebookItems.map((item) => item.expressionEntryId))
+    return entries
+      .filter((entry) => savedEntryIds.has(entry.id))
+      .map(expressionText)
+      .filter(Boolean)
+  },
+
+  async isExpressionSaved(kind: ExpressionEntryKind, text: string): Promise<boolean> {
+    const entry = await this.getExpressionByText(kind, text)
+    if (!entry) return false
+    const notebookItems = await localDb.list<{ expressionEntryId: string }>('learning_notebook_items')
+    return notebookItems.some((item) => item.expressionEntryId === entry.id)
   },
 
   async getExpressionByText(kind: ExpressionEntryKind, text: string): Promise<ExpressionEntry | null> {
