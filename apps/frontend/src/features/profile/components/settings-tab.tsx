@@ -20,6 +20,8 @@ import { isNativeSpeechRecognitionAvailable } from '@/lib/native/vn-voice-input'
 import { isNative } from '@/lib/native'
 import { AlarmTimePicker } from '@/features/profile/components/alarm-time-picker'
 import { useAuth } from '@/providers/auth-provider'
+import { useOnboardingStore } from '@/stores/onboarding.store'
+import { toast } from 'sonner'
 
 export function SettingsTab() {
   const { t } = useTranslation()
@@ -61,6 +63,11 @@ export function SettingsTab() {
   const handleLanguageChange = (lang: string) => {
     setLanguage(lang)
     i18n.changeLanguage(lang)
+  }
+
+  const handleResetOnboardingSegments = () => {
+    useOnboardingStore.getState().resetCompletedSegments()
+    toast.success(t('profile.onboardingSegmentsReset'))
   }
 
   const refreshLearningReminder = async () => {
@@ -332,6 +339,21 @@ export function SettingsTab() {
               <SelectItem value="ja">{t('profile.langJa')}</SelectItem>
             </Select>
           </div>
+
+          {isAdmin && (
+            <>
+              <Separator />
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <Label>{t('profile.resetOnboardingSegments')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('profile.resetOnboardingSegmentsDesc')}</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleResetOnboardingSegments}>
+                  {t('profile.resetOnboardingSegmentsAction')}
+                </Button>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

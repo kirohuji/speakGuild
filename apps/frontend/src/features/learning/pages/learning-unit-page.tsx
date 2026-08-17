@@ -52,6 +52,7 @@ export function LearningUnitPage() {
   // 展开的列表项（点击高亮 + 展开显示详情）
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
   const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
+  const onboardingCompletedSegments = useOnboardingStore((state) => state.completedSegments)
   const [pendingSave, setPendingSave] = useState<
     | { kind: 'word'; item: VocabItem }
     | { kind: 'chunk'; item: ChunkItem }
@@ -104,7 +105,7 @@ export function LearningUnitPage() {
     if (hasKnowledge) {
       useOnboardingStore.getState().tryStartSegment('unit-save-to-library')
     }
-  }, [unit])
+  }, [unit, onboardingCompletedSegments])
 
   const requestSave = useCallback((value: NonNullable<typeof pendingSave>) => {
     setPendingSave(value)

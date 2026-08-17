@@ -173,6 +173,7 @@ export function TodayTaskPage() {
   const { t } = useTranslation()
   const { session } = useAuth()
   const isMobile = useIsMobile()
+  const onboardingCompletedSegments = useOnboardingStore((state) => state.completedSegments)
   const isAdmin = session?.user?.role === 'admin'
   const TYPE_META = useTypeMeta(t)
   const warmupStore = useWarmupSessionStore()
@@ -247,7 +248,7 @@ export function TodayTaskPage() {
     if (plan && plan.steps.length > 0) {
       useOnboardingStore.getState().tryStartSegment('today-practice')
     }
-  }, [plan])
+  }, [plan, onboardingCompletedSegments])
 
   useEffect(() => {
     if (!localAiWarmupJudgeEnabled) return

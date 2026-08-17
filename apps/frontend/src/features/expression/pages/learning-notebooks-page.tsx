@@ -116,6 +116,7 @@ export function LearningNotebooksPage() {
   const [selected, setSelected] = useState<LearningNotebook | null>(null)
   const [name, setName] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const onboardingCompletedSegments = useOnboardingStore((state) => state.completedSegments)
 
   const load = useCallback(async () => {
     const cached = await learningNotebookRepository.listCached()
@@ -145,7 +146,7 @@ export function LearningNotebooksPage() {
     if (!loading && notebooks.length > 0) {
       useOnboardingStore.getState().tryStartSegment('notebooks')
     }
-  }, [loading, notebooks.length])
+  }, [loading, notebooks.length, onboardingCompletedSegments])
 
   const systemNotebook = useMemo(
     () => notebooks.find((item) => item.kind === 'uncategorized') ?? null,
@@ -226,7 +227,7 @@ export function LearningNotebooksPage() {
               <NotebookRow
                 notebook={systemNotebook}
                 onOpen={() => navigate(`/expressions/${systemNotebook.id}`)}
-                {...(customNotebooks.length === 0 ? { spotlight: 'first-notebook-row' } : {})}
+                spotlight="first-notebook-row"
               />
             </section>
           )}

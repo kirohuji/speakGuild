@@ -124,7 +124,7 @@ export const ONBOARDING_SEGMENTS: OnboardingSegment[] = [
       {
         id: 'scripts',
         route: '/scripts',
-        targetSelector: '[data-spotlight="first-script-card"]',
+        targetSelector: '[data-spotlight="scripts-shop-button"]',
         titleKey: 'onboarding.scriptsTitle',
         descKey: 'onboarding.scriptsDesc',
         clickToAdvance: false,
@@ -177,6 +177,8 @@ interface OnboardingStore {
   prev: () => void
   /** 完成当前模式：segment 标记完成；tour 由 Provider 写后端 */
   finish: () => void
+  /** 仅供管理员测试：清空本机已完成的分段引导记录 */
+  resetCompletedSegments: () => void
 }
 
 export const useOnboardingStore = create<OnboardingStore>()((set, get) => ({
@@ -231,5 +233,14 @@ export const useOnboardingStore = create<OnboardingStore>()((set, get) => ({
       set({ completedSegments: next })
     }
     set({ mode: null, activeSegmentId: null, currentIndex: 0, steps: [] })
+  },
+
+  resetCompletedSegments: () => {
+    try {
+      window.localStorage.removeItem(STORAGE_KEY)
+    } catch {
+      // 存储不可用时仍重置当前会话内的状态
+    }
+    set({ completedSegments: {} })
   },
 }))

@@ -38,6 +38,7 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
   const loading = useLearningStore((s) => s.shopLoading)
   const shopTotal = useLearningStore((s) => s.shopTotal)
   const shopHasMore = useLearningStore((s) => s.shopHasMore)
+  const onboardingCompletedSegments = useOnboardingStore((s) => s.completedSegments)
   const [activeType, setActiveType] = useState<PackageTypeFilter>('all')
   const [activeTag, setActiveTag] = useState('all')
   const [keyword, setKeyword] = useState('')
@@ -64,7 +65,7 @@ export function ShopView({ isOpen, onMemberOpen, onEnrollUnit, onRefreshShop, on
     if (isOpen && !loading && units.length > 0) {
       useOnboardingStore.getState().tryStartSegment('shop-categories')
     }
-  }, [isOpen, loading, units.length])
+  }, [isOpen, loading, units.length, onboardingCompletedSegments])
 
   useEffect(() => {
     fetchTags(activeType === 'all' ? undefined : activeType)

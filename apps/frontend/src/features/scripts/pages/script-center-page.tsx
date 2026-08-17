@@ -188,18 +188,19 @@ export function ScriptCenterPage() {
   const enrollUnit = useLearningStore((state) => state.enrollUnit)
   const quitUnit = useLearningStore((state) => state.quitUnit)
   const globalTasks = useGlobalTaskStore((state) => state.tasks)
+  const onboardingCompletedSegments = useOnboardingStore((state) => state.completedSegments)
 
   const storyUnits = useMemo(
     () => myUnits.filter((unit) => unit.packageType === 'story'),
     [myUnits],
   )
 
-  // 有剧本数据时触发「剧本中心」引导（条件式分段，仅首次）
+  // 剧本页加载完成即触发，目标是始终存在的“剧本商店”入口；无剧本数据时也能看到引导。
   useEffect(() => {
-    if (storyUnits.length > 0 || works.length > 0 || feed.length > 0) {
+    if (!myLoading) {
       useOnboardingStore.getState().tryStartSegment('scripts')
     }
-  }, [storyUnits.length, works.length, feed.length])
+  }, [myLoading, onboardingCompletedSegments])
   const installedIds = useMemo(
     () => new Set(downloadedPacks.filter((pack) => pack.status === 'installed').map((pack) => pack.packId)),
     [downloadedPacks],
@@ -406,6 +407,7 @@ export function ScriptCenterPage() {
           </button>
           <button
             type="button"
+            data-spotlight="scripts-shop-button"
             onClick={() => setPanel('store')}
             className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
             aria-label={t('scripts.shop')}

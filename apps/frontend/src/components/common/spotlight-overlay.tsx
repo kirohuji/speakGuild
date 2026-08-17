@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, type PointerEvent as ReactPointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronRight, X, FlaskConical } from 'lucide-react'
@@ -11,7 +11,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
-import type { OnboardingStep } from '@/stores/onboarding.store'
+import type { OnboardingMode, OnboardingStep } from '@/stores/onboarding.store'
 
 // ---- 洞口外扩像素 ----
 const HOLE_PADDING = 8
@@ -24,6 +24,7 @@ interface SpotlightOverlayProps {
   step: OnboardingStep
   stepIndex: number
   totalSteps: number
+  mode: OnboardingMode
   isTestMode?: boolean
   onNext: (fromClickAdvance?: boolean) => void
   onPrev: () => void
@@ -71,6 +72,7 @@ export function SpotlightOverlay({
   step,
   stepIndex,
   totalSteps,
+  mode,
   isTestMode,
   onNext,
   onPrev,
@@ -83,6 +85,37 @@ export function SpotlightOverlay({
   const rafRef = useRef<number>(0)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [targetMissing, setTargetMissing] = useState(false)
+  const isSingleUseGuide = mode === 'segment'
+
+  // 分段提示是一次性的上下文说明：关闭即标记为已看，不应弹出“退出新手引导”。
+  // 只有完整、多步骤的新手 Tour 才需要确认是否中途退出。
+  const handleClose = () => {
+    if (isSingleUseGuide) {
+      onSkip()
+      return
+    }
+    setShowExitConfirm(true)
+  }
+
+  const closeButton = isSingleUseGuide ? (
+    <button
+      type="button"
+      onClick={handleClose}
+      className="ml-auto inline-flex h-7 items-center gap-1 rounded-full px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    >
+      <X className="size-3.5" aria-hidden="true" />
+      {t('common.close')}
+    </button>
+  ) : (
+    <button
+      type="button"
+      aria-label={t('common.close')}
+      onClick={handleClose}
+      className="ml-auto flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    >
+      <X className="size-3.5" aria-hidden="true" />
+    </button>
+  )
 
   // 步骤切换时重置 targetRect，避免旧步骤的高亮位置残留
   useEffect(() => {
@@ -158,7 +191,7 @@ export function SpotlightOverlay({
       const match = target.closest(step.targetSelector)
       if (match) {
         // clickToAdvance: 传 true 告知 provider 跳过路由导航
-        setTimeout(() => onNext(true), 300)
+        setTimeout(() => onNext(true), 100)
       }
     }
 
@@ -190,12 +223,7 @@ export function SpotlightOverlay({
                   />
                 ))}
               </div>
-              <button
-                onClick={() => setShowExitConfirm(true)}
-                className="ml-auto flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <X className="size-3.5" />
-              </button>
+              {closeButton}
             </div>
             {isTestMode && (
               <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600">
@@ -219,7 +247,7 @@ export function SpotlightOverlay({
               </button>
             </div>
 
-            <Dialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+            {!isSingleUseGuide && <Dialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
               <DialogContent
                 className="max-w-sm rounded-2xl w-[90vw] !z-[10000]"
                 overlayClassName="!z-[10000]"
@@ -234,7 +262,7 @@ export function SpotlightOverlay({
                   <Button onClick={() => { setShowExitConfirm(false); onSkip() }}>{t('common.exitOnboarding')}</Button>
                 </DialogFooter>
               </DialogContent>
-            </Dialog>
+            </Dialog>}
           </div>
         </div>
       )
@@ -247,9 +275,27 @@ export function SpotlightOverlay({
   const holeW = targetRect.width + HOLE_PADDING * 2
   const holeH = targetRect.height + HOLE_PADDING * 2
   const holeRx = 14
+  const handleMaskPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement
+    // 卡片内的“完成 / 关闭”等控件正常响应；其余区域由蒙版接管，绝不穿透到底层页面。
+    if (target.closest('[data-spotlight-tooltip]')) return
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    const inHighlight = event.clientX >= holeX
+      && event.clientX <= holeX + holeW
+      && event.clientY >= holeY
+      && event.clientY <= holeY + holeH
+    // 完整 Tour 点击高亮处仍可推进，但不会触发下方真实按钮/链接。
+    if (inHighlight && step.clickToAdvance) onNext(false)
+  }
 
   return (
-    <div className="fixed inset-0 z-[9999] select-none" style={{ pointerEvents: 'none' }}>
+    <div
+      className="fixed inset-0 z-[9999] select-none"
+      onPointerDown={handleMaskPointerDown}
+    >
       {/* ====== SVG 蒙版层 ====== */}
       <svg
         width="100%"
@@ -339,12 +385,7 @@ export function SpotlightOverlay({
                   />
                 ))}
               </div>
-              <button
-                onClick={() => setShowExitConfirm(true)}
-                className="ml-auto flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <X className="size-3.5" />
-              </button>
+              {closeButton}
             </div>
 
             {/* 标题 & 描述 */}
@@ -359,12 +400,13 @@ export function SpotlightOverlay({
             <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
               {step.descKey ? t(step.descKey) : step.description}
             </p>
-            {!step.clickToAdvance && (
+            {/* 单次提示始终提供明确的完成按钮；clickToAdvance 只是额外的快捷完成方式。 */}
+            {(!step.clickToAdvance || isSingleUseGuide) && (
               <div className="mt-4 flex justify-end">
                 <button
                   type="button"
                   onClick={() => onNext(false)}
-                  className="inline-flex h-8 items-center gap-1 rounded-full bg-primary/[0.08] px-3.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/[0.14] active:scale-[0.98]"
+                  className="inline-flex h-8 items-center gap-1 rounded-full bg-primary/[0.08] px-3.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/[0.14] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   {stepIndex >= totalSteps - 1 ? t('common.done') : t('common.gotIt')}
                   {stepIndex < totalSteps - 1 && <ChevronRight className="size-3.5" />}
@@ -376,7 +418,7 @@ export function SpotlightOverlay({
       </AnimatePresence>
 
       {/* 退出引导确认弹窗 */}
-      <Dialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+      {!isSingleUseGuide && <Dialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
         <DialogContent
           className="max-w-sm rounded-2xl w-[90vw] !z-[10000]"
           overlayClassName="!z-[10000]"
@@ -391,7 +433,7 @@ export function SpotlightOverlay({
             <Button onClick={() => { setShowExitConfirm(false); onSkip() }}>{t('common.exitOnboarding')}</Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog>}
     </div>
   )
 }

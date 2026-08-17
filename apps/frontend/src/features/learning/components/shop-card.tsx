@@ -106,7 +106,6 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
           <div className="mt-2 flex items-center gap-1.5">
             <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">{packageTypeLabel(t, unit.packageType)}</Badge>
             <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{contentModeLabel(t, unit.contentMode)}</Badge>
-            {unit.categoryName && <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{unit.categoryName}</Badge>}
             {isJoined && (
               <Badge variant="outline" className="h-5 rounded-full border-emerald-400/50 px-2 text-[10px] text-emerald-600 dark:text-emerald-400">
                 {unit.completionPercent}%
@@ -148,7 +147,6 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
                 <div className="flex flex-wrap items-center gap-1.5">
                   <Badge variant="outline" className="rounded-full text-[10px]">{packageTypeLabel(t, unit.packageType)}</Badge>
                   <Badge variant="secondary" className="rounded-full text-[10px]">{contentModeLabel(t, unit.contentMode)}</Badge>
-                  {unit.categoryName && <Badge variant="secondary" className="rounded-full text-[10px]">{unit.categoryName}</Badge>}
                   {(!unit.isUnlocked || unit.isLocked) && <Badge variant="outline" className="rounded-full text-[10px]">{t('learning.locked')}</Badge>}
                 </div>
                 <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5 text-foreground">{unit.title}</h3>

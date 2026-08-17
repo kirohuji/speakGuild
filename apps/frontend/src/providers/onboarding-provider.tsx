@@ -175,6 +175,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
           step={currentStep}
           stepIndex={storeCurrentIndex}
           totalSteps={storeSteps.length}
+          mode={storeMode}
           isTestMode={isTestMode}
           onNext={handleNext}
           onPrev={handlePrev}

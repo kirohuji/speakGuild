@@ -20,6 +20,8 @@ import { LearningAssessmentDialog, goalLabelMap, normalizeLearningGoals } from '
 import { FeedbackDialog } from '@/features/feedback/components/feedback-dialog'
 import { MobileInviteDrawer } from '@/features/referral/components/mobile-invite-drawer'
 import { MobileFaqDrawer } from '@/features/profile/components/mobile-faq-drawer'
+import { useOnboardingStore } from '@/stores/onboarding.store'
+import { toast } from 'sonner'
 
 export type MobileView = 'overview' | 'records' | 'words' | 'account' | 'settings' | 'home' | 'appearance' | 'member' | 'storage'
 
@@ -66,12 +68,18 @@ export function MobileProfileHome({
       ? membership?.planName || t('member.badgeActive')
       : t('member.freeUser')
   const outputLevel = userProfile?.outputLevel || 'L1'
+  const isAdmin = session?.user?.role === 'admin'
   const goalLabels = normalizeLearningGoals(userProfile?.learningGoals)
     .map((goal) => t(`profile.placement.goals.${goal}.label`, { defaultValue: goalLabelMap[goal] ?? goal }))
     .filter(Boolean)
   const goalSummary = goalLabels.length > 0
     ? `${outputLevel} · ${goalLabels.join(t('profile.placement.goalSeparator'))}`
     : t('profile.placement.homeSubtitle')
+
+  const handleResetOnboardingSegments = () => {
+    useOnboardingStore.getState().resetCompletedSegments()
+    toast.success(t('profile.onboardingSegmentsReset'))
+  }
 
   return (
     <div className="space-y-3">
@@ -165,9 +173,18 @@ export function MobileProfileHome({
         <IosRow
           label={t('profile.language')}
           value={langLabel[language] ?? t('profile.langZh')}
-          last
+          last={!isAdmin}
           onTap={() => setShowLanguageDialog(true)}
         />
+        {isAdmin && (
+          <IosRow
+            label={t('profile.resetOnboardingSegments')}
+            subtitle={t('profile.resetOnboardingSegmentsDesc')}
+            last
+            onTap={handleResetOnboardingSegments}
+            right={<span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">{t('profile.resetOnboardingSegmentsAction')}</span>}
+          />
+        )}
       </IosSection>
 
       <Drawer open={showLanguageDialog} onOpenChange={setShowLanguageDialog}>
