@@ -254,20 +254,33 @@ export function LearningPackDownloadDrawer({
 
                   <div className="border-t border-border/40 px-3.5 py-3 text-xs">
                     {task.status === 'error' ? (
-                      <div className="flex items-center gap-2 rounded-md bg-destructive/10 px-2 py-1.5 text-destructive">
-                        <p className="min-w-0 flex-1 truncate">
+                      <div className="space-y-2 rounded-md bg-destructive/10 p-2 text-destructive">
+                        <p className="truncate px-0.5">
                           {task.error ?? (task.kind === 'uninstall' ? t('learning.packTaskUninstallFailedRetry') : t('learning.packTaskDownloadFailedRetry'))}
                         </p>
                         {task.kind !== 'uninstall' && (
-                          <button
-                            type="button"
-                            className="flex size-7 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-destructive/10 active:bg-destructive/15"
-                            onClick={() => void downloadUnitPack(task.packId)}
-                            aria-label={t('learning.downloadFailedRetry')}
-                            title={t('learning.downloadFailedRetry')}
-                          >
-                            <RotateCcw className="size-3.5" />
-                          </button>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-8 gap-1.5 text-xs"
+                              onClick={() => void downloadUnitPack(task.packId)}
+                            >
+                              <RotateCcw className="size-3.5" />
+                              {t('common.retry', { defaultValue: '重试' })}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="h-8 gap-1.5 border-destructive/30 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => cancelPackTask(task.packId)}
+                            >
+                              <Trash2 className="size-3.5" />
+                              {t('learning.removeFailedTask')}
+                            </Button>
+                          </div>
                         )}
                       </div>
                     ) : (
