@@ -14,7 +14,7 @@ import type { LearningPackageType } from '../api/learning-api'
 interface Props {
   isOpen?: boolean
   onMemberOpen: () => void
-  onEnrollUnit?: (id: string) => Promise<void>
+  onEnrollUnit?: (id: string) => Promise<boolean>
   onRefreshShop: (params?: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string; page?: number }) => Promise<void>
   onLoadMore: (params?: { tag?: string; packageType?: LearningPackageType; excludePackageType?: LearningPackageType; search?: string }) => Promise<void>
   excludePackageType?: LearningPackageType

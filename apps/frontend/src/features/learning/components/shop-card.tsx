@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
-import { toast } from 'sonner'
 import type { LearningUnitSummary } from '../api/learning-api'
 import { getCategoryIcon } from './category-icons'
 import { UnitCover } from './unit-cover'
@@ -36,7 +35,7 @@ function contentModeLabel(t: (key: string) => string, mode?: LearningUnitSummary
 interface Props {
   unit: LearningUnitSummary & { categoryName?: string }
   onMemberOpen: () => void
-  onEnroll?: (id: string) => Promise<void>
+  onEnroll?: (id: string) => Promise<boolean>
   [key: `data-${string}`]: string | undefined
 }
 
@@ -69,14 +68,10 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
     if (acquiring || !unit.isUnlocked || unit.isLocked) return
     setAcquiring(true)
     try {
-      await onEnroll?.(unit.id)
-      setJustEnrolled(true)
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || ''
-      if (msg.includes('最多同时')) {
-        toast.error(msg)
-      }
-      // 其他错误也静默处理，让用户可以在 dialog 中重试
+      const enrolled = await onEnroll?.(unit.id)
+      if (enrolled) setJustEnrolled(true)
+    } catch {
+      // 学习计划 store 已展示具体错误；保留这里以防调用方异常中断卡片状态。
     } finally {
       setAcquiring(false)
     }

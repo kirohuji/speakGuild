@@ -22,6 +22,7 @@ import { usePreferencesStore } from '@/stores/preferences.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { toast } from 'sonner'
 import i18n from '@/lib/i18n'
+import { ApiRequestError } from '@/lib/request'
 
 /** 下载任务状态 */
 export interface DownloadTask {
@@ -108,7 +109,7 @@ interface LearningStore {
     unitId: string,
     title?: string,
     sourceUnit?: LearningUnitSummary | UnitDetail | null,
-  ) => Promise<void>
+  ) => Promise<boolean>
   quitUnit: (unitId: string) => Promise<void>
   fetchDownloadedPacks: () => Promise<void>
   syncPackStateAfterLocalChange: (changedPackId?: string) => Promise<void>
@@ -343,8 +344,17 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
 
     try {
       await learningRepository.enrollUnit(unitId, sourceUnit)
-    } catch {
-      // enroll 可能已经做过了，忽略错误继续
+    } catch (error) {
+      const message = error instanceof ApiRequestError && error.apiCode === 'LEARNING_UNIT_LIMIT_REACHED'
+        ? i18n.t('learning.concurrentUnitLimit')
+        : error instanceof Error ? error.message : i18n.t('learning.enrollFailed')
+      // 清理同一包可能遗留的下载任务，避免被服务端拒绝后仍显示下载或继续安装。
+      set((current) => ({
+        downloadTasks: current.downloadTasks.filter((task) => task.packId !== unitId),
+        packInstallingIds: current.packInstallingIds.filter((id) => id !== unitId),
+      }))
+      toast.error(message)
+      return false
     }
 
     // 加入下载队列
@@ -353,6 +363,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
 
     // 触发队列处理（异步，不 await）
     processDownloadQueue()
+    return true
   },
 
   async quitUnit(unitId) {
@@ -490,6 +501,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     const state = getState()
     if (state.packInstallingIds.includes(unitId)) return
     if (state.downloadTasks.some((task) => task.packId === unitId && task.status !== 'error')) return
+    if (!state.myUnits.some((unit) => unit.id === unitId)) {
+      toast.error(i18n.t('learning.downloadRequiresEnrollment'))
+      return
+    }
 
     const unitTitle =
       state.myUnits.find((unit) => unit.id === unitId)?.title ??
@@ -641,6 +656,18 @@ async function processDownloadQueue() {
   if (!next) {
     console.log('[learning-store] 📭 下载队列已清空')
     isProcessingQueue = false
+    return
+  }
+
+  const enrolled = (await learningRepository.getCachedMyUnits()).some((unit) => unit.id === next.packId)
+  if (!enrolled) {
+    console.warn('[learning-store] dropping download task for a unit that is not in the learning plan', { packId: next.packId })
+    useLearningStore.setState((s) => ({
+      downloadTasks: s.downloadTasks.filter((task) => task.packId !== next.packId),
+      packInstallingIds: s.packInstallingIds.filter((id) => id !== next.packId),
+    }))
+    isProcessingQueue = false
+    processDownloadQueue()
     return
   }
 

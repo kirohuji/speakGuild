@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import AdmZip = require('adm-zip');
 import { createHash } from 'crypto';
@@ -2037,7 +2037,10 @@ export class LearningService {
     });
 
     if (!existing && scene.contentMode === 'practice' && existingCount >= this.MAX_CONCURRENT_UNITS) {
-      throw new Error(`最多同时学习 ${this.MAX_CONCURRENT_UNITS} 个单元，请先完成当前单元`);
+      throw new ConflictException({
+        code: 'LEARNING_UNIT_LIMIT_REACHED',
+        message: `最多同时学习 ${this.MAX_CONCURRENT_UNITS} 个单元，请先完成当前单元`,
+      });
     }
 
     const record = await this.prisma.userSceneProgress.upsert({

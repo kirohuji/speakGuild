@@ -25,7 +25,11 @@ import { MemberPage } from '@/features/membership/pages/member-page'
 import { cn } from '@/lib/cn'
 import { isIOS } from '@/lib/native'
 import { practiceRepository } from '@/lib/offline'
+import { dailyPracticeRepository } from '@/lib/offline/daily-practice.repository'
 import { useLearningStore } from '@/stores/learning.store'
+import { useDailyPracticeStore } from '@/stores/daily-practice.store'
+import { usePreferencesStore } from '@/stores/preferences.store'
+import { toast } from 'sonner'
 import { MyLearningView } from '../components/my-learning-view'
 import { ShopView } from '../components/shop-view'
 import { LearningPackDownloadDrawer, LearningPackDownloadStatusButton } from '@/layout/learning-pack-download-monitor'
@@ -39,6 +43,7 @@ export function LearningPlanPage() {
   const [recordsOpen, setRecordsOpen] = useState(false)
   const [memberOpen, setMemberOpen] = useState(false)
   const [downloadDrawerOpen, setDownloadDrawerOpen] = useState(false)
+  const [activePracticePackId, setActivePracticePackId] = useState<string | null>(null)
 
   const myUnits = useLearningStore((s) => s.myUnits)
   const myLoading = useLearningStore((s) => s.myLoading)
@@ -61,6 +66,18 @@ export function LearningPlanPage() {
     }
     fetchDownloadedPacks()
   }, [fetchMyLearning, fetchDownloadedPacks, myUnits.length])
+
+  useEffect(() => {
+    void dailyPracticeRepository.getActivePracticePackId().then(setActivePracticePackId)
+  }, [downloadedPacks])
+
+  const handleSetActivePracticePack = async (unit: typeof myUnits[number]) => {
+    await dailyPracticeRepository.setActivePracticePackId(unit.id)
+    const mode = usePreferencesStore.getState().dailyPracticeLastMode === 'review' ? 'review' : 'practice'
+    await useDailyPracticeStore.getState().loadToday(null, null, mode, true)
+    setActivePracticePackId(unit.id)
+    toast.success(t('learning.currentPracticePackSet', { title: unit.title }))
+  }
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -122,6 +139,8 @@ export function LearningPlanPage() {
           updatePackIds={availablePackUpdates.map((update) => update.packId)}
           installingPackIds={packInstallingIds}
           onDownloadUnitPack={downloadUnitPack}
+          activePracticePackId={activePracticePackId}
+          onSetActivePracticePack={handleSetActivePracticePack}
         />
 
         <Drawer open={recordsOpen} onOpenChange={setRecordsOpen}>

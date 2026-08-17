@@ -27,6 +27,8 @@ interface Props {
   updatePackIds?: string[]
   installingPackIds?: string[]
   onDownloadUnitPack?: (id: string) => Promise<void>
+  activePracticePackId?: string | null
+  onSetActivePracticePack?: (unit: MyUnit) => Promise<void>
 }
 
 export function MyLearningView({
@@ -41,6 +43,8 @@ export function MyLearningView({
   updatePackIds = [],
   installingPackIds = [],
   onDownloadUnitPack,
+  activePracticePackId = null,
+  onSetActivePracticePack,
 }: Props) {
   const { t } = useTranslation()
   const downloadedPackIdSet = useMemo(() => new Set(downloadedPackIds), [downloadedPackIds])
@@ -102,6 +106,8 @@ export function MyLearningView({
                 isPackInstalling={installingPackIdSet.has(unit.id)}
                 onDownloadPack={() => onDownloadUnitPack?.(unit.id)}
                 onQuit={() => onQuitUnit?.(unit.id)}
+                isActivePracticePack={activePracticePackId === unit.id}
+                onSetActivePracticePack={() => onSetActivePracticePack?.(unit)}
               />
             ))}
           </div>
@@ -129,6 +135,8 @@ function InProgressUnitCard({
   isPackInstalling,
   onDownloadPack,
   onQuit,
+  isActivePracticePack,
+  onSetActivePracticePack,
 }: {
   unit: MyUnit
   isPackDownloaded: boolean
@@ -136,10 +144,13 @@ function InProgressUnitCard({
   isPackInstalling: boolean
   onDownloadPack?: () => Promise<void>
   onQuit?: () => Promise<void>
+  isActivePracticePack: boolean
+  onSetActivePracticePack?: () => Promise<void>
 }) {
   const { t } = useTranslation()
   const [confirmQuit, setConfirmQuit] = useState(false)
   const [quitting, setQuitting] = useState(false)
+  const [switchingPractice, setSwitchingPractice] = useState(false)
   const [imgFailed, setImgFailed] = useState(false)
   const Icon = getCategoryIcon(unit.categoryName)
   const showCover = unit.coverImage && !imgFailed
@@ -198,6 +209,18 @@ function InProgressUnitCard({
     }
   }, [downloadTask, resumePackTask, t, unit.id])
 
+  const handleSetActivePracticePack = useCallback(async () => {
+    if (!onSetActivePracticePack || isActivePracticePack || switchingPractice) return
+    setSwitchingPractice(true)
+    try {
+      await onSetActivePracticePack()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('learning.setCurrentPracticeFailed'))
+    } finally {
+      setSwitchingPractice(false)
+    }
+  }, [isActivePracticePack, onSetActivePracticePack, switchingPractice, t])
+
   return (
     <div className="overflow-hidden rounded-lg bg-muted/30">
       <div className="p-3.5">
@@ -227,6 +250,28 @@ function InProgressUnitCard({
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
                 <h3 className="line-clamp-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</h3>
+                {isPackDownloaded && totalPracticeCount > 0 && (
+                  isActivePracticePack ? (
+                    <span className="mt-1 inline-flex h-4 items-center gap-1 rounded-full border border-border/60 bg-background/85 px-1.5 text-[9px] font-medium leading-none text-muted-foreground">
+                      <CheckCircle2 className="size-2.5 text-primary" />
+                      {t('learning.currentPracticePack')}
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isPackBusy || switchingPractice}
+                      onClick={(event) => {
+                        event.preventDefault()
+                        event.stopPropagation()
+                        void handleSetActivePracticePack()
+                      }}
+                      className="mt-1 inline-flex h-4 items-center gap-1 rounded-full border border-border/60 bg-background/85 px-1.5 text-[9px] font-medium leading-none text-muted-foreground transition-colors hover:bg-background hover:text-primary disabled:opacity-50"
+                    >
+                      {switchingPractice ? <Loader2 className="size-2.5 animate-spin" /> : <BookOpen className="size-2.5" />}
+                      {t('learning.setCurrentPracticePack')}
+                    </button>
+                  )
+                )}
               </div>
               <button type="button" disabled={isPackBusy} onClick={(e) => { e.preventDefault(); if (!isPackBusy) setConfirmQuit(true) }}
                 className={cn(

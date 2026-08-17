@@ -120,6 +120,29 @@ type StoredDailyPracticeRun = {
   stats?: Record<string, unknown>
 }
 
+type StoredActiveDailyPracticePack = {
+  id: 'daily:active-pack'
+  packId: string
+  updatedAt: string
+}
+
+const ACTIVE_DAILY_PRACTICE_PACK_ID = 'daily:active-pack'
+
+async function getActivePracticePackId() {
+  const activePack = await localDb
+    .get<StoredActiveDailyPracticePack>('daily_practice_runs', ACTIVE_DAILY_PRACTICE_PACK_ID)
+    .catch(() => null)
+  return activePack?.packId ?? null
+}
+
+async function setActivePracticePackId(packId: string) {
+  await localDb.put('daily_practice_runs', {
+    id: ACTIVE_DAILY_PRACTICE_PACK_ID,
+    packId,
+    updatedAt: new Date().toISOString(),
+  } satisfies StoredActiveDailyPracticePack)
+}
+
 function todayKey() {
   const now = new Date()
   const year = now.getFullYear()
@@ -404,17 +427,37 @@ async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: stri
   const candidateIds = candidateEntries
     .filter((entry) => entry.contentMode === 'practice')
     .map((entry) => entry.id)
-  const unitIds = scope === 'mixed'
-    ? candidateIds
-    : [candidateIds[0]].filter(Boolean) as string[]
+  const detailsById = new Map<string, UnitDetail>()
+  await Promise.all(candidateIds.map(async (id) => {
+    const detail = await learningRepository.getCachedUnitDetail(id)
+    if (detail) detailsById.set(id, detail)
+  }))
 
-  const details = await Promise.all(unitIds.map((id) => learningRepository.getCachedUnitDetail(id)))
-  const resolved = details.filter(Boolean) as UnitDetail[]
+  // 当前练习包必须有实际可执行的知识点题目。没有 pipeline 的 practice 包
+  // 仍可下载和学习，但不能抢占或清空 Today 的练习上下文。
+  const practiceCandidateIds = candidateIds.filter((id) => {
+    const detail = detailsById.get(id)
+    return detail ? buildCandidates(detail).length > 0 : false
+  })
+  const activePackId = await getActivePracticePackId()
+  const selectedPackIds = scope === 'mixed'
+    ? practiceCandidateIds
+    : [practiceCandidateIds.includes(activePackId ?? '') ? activePackId! : practiceCandidateIds[0]].filter(Boolean)
+
+  if (scope === 'single' && selectedPackIds[0] && selectedPackIds[0] !== activePackId) {
+    await setActivePracticePackId(selectedPackIds[0])
+  }
+
+  const resolved = selectedPackIds
+    .map((id) => detailsById.get(id))
+    .filter(Boolean) as UnitDetail[]
   console.log('[daily-practice] candidate units resolved', {
     scope,
     targetPackId: targetPackId ?? null,
     installedPackIds: [...installedIds],
-    selectedPackIds: unitIds,
+    activePackId: activePackId ?? null,
+    selectedPackIds,
+    practiceCandidateIds,
     excludedNonPracticePackIds,
     units: resolved.map((unit) => ({ id: unit.id, title: unit.title, trainingTopicCount: unit.trainingTopics?.length ?? 0 })),
   })
@@ -528,6 +571,18 @@ export async function pullRemoteDailyProgress(itemIds: string[]): Promise<void> 
 }
 
 export const dailyPracticeRepository = {
+  async getActivePracticePackId() {
+    return getActivePracticePackId()
+  },
+
+  async setActivePracticePackId(packId: string) {
+    const detail = await learningRepository.getCachedUnitDetail(packId)
+    if (!detail || buildCandidates(detail).length === 0) {
+      throw new Error('当前学习包没有可执行的知识点练习')
+    }
+    await setActivePracticePackId(packId)
+  },
+
   async resolveCandidateUnits(scope: DailyPracticeScope, targetPackId?: string | null): Promise<UnitDetail[]> {
     return loadCandidateUnits(scope, targetPackId)
   },

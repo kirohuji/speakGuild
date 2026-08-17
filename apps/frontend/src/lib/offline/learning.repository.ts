@@ -7,6 +7,7 @@ import {
 } from '@/features/learning/api/learning-api'
 import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
+import { ApiRequestError } from '@/lib/request'
 
 type LocalDailyPracticeProgress = {
   itemId: string
@@ -306,6 +307,13 @@ export const learningRepository = {
       await localDb.clear('my_learning_units')
       await localDb.putMany('my_learning_units', remote)
     } catch (error) {
+      // 4xx 表示服务端已明确拒绝本次加入（例如学习包数量上限），
+      // 不能作为离线任务继续重试，更不能继续下载一个未加入学习计划的包。
+      if (error instanceof ApiRequestError && error.status && error.status >= 400 && error.status < 500) {
+        await localDb.delete('my_learning_units', unitId)
+        await syncOutbox.markDiscarded(outboxItem.id)
+        throw error
+      }
       await syncOutbox.markFailed(outboxItem.id, error)
     }
   },

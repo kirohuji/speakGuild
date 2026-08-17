@@ -16,13 +16,15 @@ export type ApiErrorKind = 'offline' | 'cooldown' | 'unauthorized' | 'timeout' |
 export class ApiRequestError extends Error {
   kind: ApiErrorKind
   status?: number
+  apiCode?: string
   original?: unknown
 
-  constructor(kind: ApiErrorKind, message: string, options?: { status?: number; original?: unknown }) {
+  constructor(kind: ApiErrorKind, message: string, options?: { status?: number; apiCode?: string; original?: unknown }) {
     super(message)
     this.name = 'ApiRequestError'
     this.kind = kind
     this.status = options?.status
+    this.apiCode = options?.apiCode
     this.original = options?.original
   }
 }
@@ -76,16 +78,17 @@ function normalizeError(error: any): ApiRequestError {
   if (error instanceof ApiRequestError) return error
 
   const status = error?.response?.status
+  const apiCode = typeof error?.response?.data?.code === 'string' ? error.response.data.code : undefined
   const message =
     error?.response?.data?.message ||
     error?.response?.data?.error ||
     error?.message ||
     '请求失败'
 
-  if (status === 401) return new ApiRequestError('unauthorized', message, { status, original: error })
-  if (error?.code === 'ECONNABORTED') return new ApiRequestError('timeout', message, { status, original: error })
-  if (!error?.response) return new ApiRequestError('network', message, { status, original: error })
-  return new ApiRequestError('server', message, { status, original: error })
+  if (status === 401) return new ApiRequestError('unauthorized', message, { status, apiCode, original: error })
+  if (error?.code === 'ECONNABORTED') return new ApiRequestError('timeout', message, { status, apiCode, original: error })
+  if (!error?.response) return new ApiRequestError('network', message, { status, apiCode, original: error })
+  return new ApiRequestError('server', message, { status, apiCode, original: error })
 }
 
 instance.interceptors.request.use((config) => {
