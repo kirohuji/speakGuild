@@ -236,12 +236,19 @@ export class DictionaryService {
     const refreshedTypes = scope === 'all'
       ? new Set<CleanedPronunciation['type']>(['uk', 'us'])
       : new Set(pronunciations.map((item) => item.type));
-    const existingPronunciations = Array.isArray(exists.pronunciations)
-      ? exists.pronunciations as unknown as CleanedPronunciation[]
+    // Fetching remote providers can take a few seconds. Re-read immediately before
+    // saving so a lock set while the request was in flight is never overwritten.
+    const latest = await this.prisma.dictionaryEntry.findUnique({
+      where: { word: key },
+      select: { pronunciations: true },
+    });
+    const existingPronunciations = Array.isArray(latest?.pronunciations)
+      ? latest.pronunciations as unknown as CleanedPronunciation[]
       : [];
+    const isLocked = existingPronunciations.some((item) => item?.locked);
     const mergedPronunciations = [
       ...existingPronunciations.filter((item) => !refreshedTypes.has(item.type)),
-      ...pronunciations,
+      ...pronunciations.map((item) => isLocked ? { ...item, locked: true } : item),
     ];
 
     const updated = await this.prisma.dictionaryEntry.update({

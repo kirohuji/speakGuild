@@ -211,5 +211,5 @@ export async function clearDictionaryPronunciation(
 
 /** 将音标审查页当前的最多 100 个单词交由任务中心自动更新。 */
 export async function enqueuePronunciationRefreshCurrentPage(params: { page: number; search?: string }): Promise<{ id: string }> {
-  return post('/admin/tasks/dictionary-pronunciations/refresh-current-page', undefined, params);
+  return post('/admin/tasks/dictionary-pronunciations/refresh-current-page', undefined, { params });
 }
