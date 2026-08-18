@@ -42,7 +42,7 @@ const DrawerContent = React.forwardRef<
       ref={ref}
       data-keyboard-overlay="bottom"
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background app-surface",
+        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background app-surface outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0",
         className
       )}
       {...props}

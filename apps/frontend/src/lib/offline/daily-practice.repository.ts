@@ -113,6 +113,7 @@ type StoredDailyPracticeRun = {
   date: string
   scope: DailyPracticeScope
   mode: DailyPracticePlanMode
+  dailyGoal?: number
   packIds?: string[]
   packIdsKey?: string
   scheduledItemIds?: string[]
@@ -654,6 +655,7 @@ export const dailyPracticeRepository = {
       && cachedRun?.date === date
       && cachedRun.mode === mode
       && cachedRun.scope === packScope
+      && cachedRun.dailyGoal === dailyGoal
       && cachedRun.packIdsKey === units.map((unit) => unit.id).join(',')
       && (cachedRun.scheduledItemIds?.length ?? 0) > 0
       && cachedRun.scheduledItemIds?.every((itemId) => candidateById.has(itemId))
@@ -673,6 +675,7 @@ export const dailyPracticeRepository = {
       date,
       scope: packScope,
       mode,
+      dailyGoal,
       packIds: units.map((unit) => unit.id),
       packIdsKey: units.map((unit) => unit.id).join(','),
       scheduledItemIds: scheduled.map((step) => step.itemId),

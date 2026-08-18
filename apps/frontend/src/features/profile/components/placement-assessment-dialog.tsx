@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
   ChevronLeft, Loader2, BarChart2, Compass, BookOpen, CheckCircle2,
-  Mic, Play, Square, ClipboardList, GraduationCap, ChevronRight, Upload,
+  Mic, Play, Pause, Square, ClipboardList, GraduationCap, ChevronRight, Upload,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -392,8 +392,8 @@ function AssessmentAnswerInput({
               onClick={handlePlayback}
               className="h-9 shrink-0 rounded-full px-3"
             >
-              <Play className="mr-1.5 size-4" />
-              回放
+              {isPlaying ? <Pause className="mr-1.5 size-4" /> : <Play className="mr-1.5 size-4" />}
+              {isPlaying ? '暂停' : '回放'}
             </Button>
           )}
           <Button

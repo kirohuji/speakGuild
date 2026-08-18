@@ -156,19 +156,19 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
   // 延迟导入 MD 内容（避免重复加载）
   const [mdContents, setMdContents] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    let cancelled = false
-    isNativeSpeechRecognitionAvailable('en-US')
-      .then((available) => {
-        if (!cancelled) setNativeSpeechRecognitionAvailable(available)
-      })
-      .catch(() => {
-        if (!cancelled) setNativeSpeechRecognitionAvailable(false)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  // useEffect(() => {
+  //   let cancelled = false
+  //   isNativeSpeechRecognitionAvailable('en-US')
+  //     .then((available) => {
+  //       if (!cancelled) setNativeSpeechRecognitionAvailable(available)
+  //     })
+  //     .catch(() => {
+  //       if (!cancelled) setNativeSpeechRecognitionAvailable(false)
+  //     })
+  //   return () => {
+  //     cancelled = true
+  //   }
+  // }, [])
 
   const handleRequestReview = async () => {
     try {
@@ -389,7 +389,7 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
             /> */}
           </>
         )}
-        {nativeSpeechRecognitionAvailable && (
+        {/* {nativeSpeechRecognitionAvailable && (
           <IosRow
             label={t('profile.nativeSpeechRecognition')}
             subtitle={t('profile.nativeSpeechRecognitionSubtitle')}
@@ -400,7 +400,7 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
               />
             }
           />
-        )}
+        )} */}
         <IosRow
           label={t('settings.localStt', { defaultValue: '使用本地语音识别' })}
           subtitle={localSttEnabled

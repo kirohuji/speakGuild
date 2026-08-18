@@ -187,6 +187,7 @@ export function TodayTaskPage() {
   const loadToday = useDailyPracticeStore((s) => s.loadToday)
   const completeStep = useDailyPracticeStore((s) => s.completeStep)
   const submitToday = useDailyPracticeStore((s) => s.submitToday)
+  const dailyGoal = usePreferencesStore((s) => s.dailyGoal)
   const dailyPracticeRandomOrder = usePreferencesStore((s) => s.dailyPracticeRandomOrder)
   const localAiWarmupJudgeEnabled = usePreferencesStore((s) => s.localAiWarmupJudgeEnabled)
 
@@ -228,6 +229,7 @@ export function TodayTaskPage() {
   const currentPlanReusable = Boolean(
     plan &&
     planRunSeed === 0 &&
+    plan.dailyGoal === dailyGoal &&
     plan.mode === planMode &&
     (!targetDate || plan.date === targetDate) &&
     (!targetPackId || plan.units.some((unit) => unit.id === targetPackId)),
