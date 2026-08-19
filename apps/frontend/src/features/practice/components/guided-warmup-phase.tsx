@@ -87,6 +87,9 @@ export function GuidedWarmupPhase({
   const [reviewRoundStarted, setReviewRoundStarted] = useState(false)
   const [reviewRoundFinished, setReviewRoundFinished] = useState(false)
   const [reviewRunNonce, setReviewRunNonce] = useState(0)
+  // 重练轮实时标记（用 ref 避免重建 flatSteps 触发重排）
+  const reviewActiveRef = useRef(false)
+  reviewActiveRef.current = reviewRoundStarted && !reviewRoundFinished
   const localAiPreloadKeyRef = useRef<string | null>(null)
   const warmupSessionSkipSaveRef = useRef<string | null>(null)
 
@@ -245,7 +248,8 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
                 direction={item.direction ?? 'zh_to_en'}
                 kind={item.kind ?? 'chunk'}
                 groupTitle={item.title}
-                onComplete={(_subIdx, _passed, score) => markDone(stepId, score)}
+                disableSkip={reviewActiveRef.current}
+                onComplete={(_subIdx, passed, score) => { if (reviewActiveRef.current && !passed) return; markDone(stepId, score, passed) }}
               />
             ),
           })
@@ -266,7 +270,8 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
                 stepId={stepId}
                 direction={item.direction ?? 'zh_to_en'}
                 vocabs={[v]}
-                onComplete={(_idx, _passed, score) => markDone(stepId, score)}
+                disableSkip={reviewActiveRef.current}
+                onComplete={(_idx, passed, score) => { if (reviewActiveRef.current && !passed) return; markDone(stepId, score, passed) }}
               />
             ),
           })
@@ -294,7 +299,8 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
                   direction={item.direction ?? 'zh_to_en'}
                   kind="word"
                   groupTitle={item.vocabWord}
-                  onComplete={(_subIdx, _passed, score) => markDone(flatId, score)}
+                  disableSkip={reviewActiveRef.current}
+                  onComplete={(_subIdx, passed, score) => { if (reviewActiveRef.current && !passed) return; markDone(flatId, score, passed) }}
                 />
               ),
             })
@@ -339,7 +345,8 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
                 stepId={stepId}
                 direction={item.direction ?? 'zh_to_en'}
                 groupTitle={item.title}
-                onComplete={(_subIdx, _passed, score) => markDone(stepId, score)}
+                disableSkip={reviewActiveRef.current}
+                onComplete={(_subIdx, passed, score) => { if (reviewActiveRef.current && !passed) return; markDone(stepId, score, passed) }}
               />
             ),
           })
@@ -430,9 +437,10 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
     try { localStorage.setItem(storageKey, JSON.stringify([...ids])) } catch {}
   }, [storageKey])
 
-  const markDone = useCallback((stepId: string, score: WarmupScore = 'strong') => {
+  const markDone = useCallback((stepId: string, score: WarmupScore = 'strong', passed = true) => {
     const candidate = flatSteps.find((step) => step.id === stepId)?.candidate
-    if (candidate) void dailyPracticeRepository.completeAdHocItem(candidate, score)
+    // 只有通过才写 SM-2 进度（不会/答错不消耗新题池）
+    if (candidate && passed) void dailyPracticeRepository.completeAdHocItem(candidate, score)
     setDoneIds(prev => {
       const next = new Set(prev)
       next.add(stepId)

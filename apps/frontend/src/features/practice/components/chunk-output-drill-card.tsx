@@ -23,6 +23,8 @@ interface ChunkOutputDrillCardProps {
   direction?: DrillDirection
   kind?: 'chunk' | 'word'
   onComplete?: (itemIndex: number, passed: boolean, score: WarmupScore) => void
+  /** 重练轮次隐藏「我不会」按钮 */
+  disableSkip?: boolean
   /** 只读回顾模式：传入已保存的练习数�?*/
   reviewData?: {
     userAnswer: string
@@ -67,6 +69,7 @@ export function ChunkOutputDrillCard({
   direction = 'zh_to_en',
   kind = 'chunk',
   onComplete,
+  disableSkip,
   reviewData,
 }: ChunkOutputDrillCardProps) {
   // ── 只读回顾模式：走完全相同的渲染路径，仅初始化状�?+ 禁用交互 ──
@@ -78,6 +81,7 @@ export function ChunkOutputDrillCard({
   const [currentIdx, setCurrentIdx] = useState(0)
   const [userInput, setUserInput] = useState(isReview ? (reviewData?.userAnswer ?? '') : (saved?.userAnswer ?? ''))
   const [status, setStatus] = useState<DrillStatus>(isReview ? (reviewData?.passed ? 'passed' : 'failed') : (saved?.status ?? 'idle'))
+  const [skipped, setSkipped] = useState(isReview ? false : (saved?.skipped ?? false))
   const [feedback, setFeedback] = useState(isReview ? (reviewData?.feedback ?? '') : (saved?.feedback ?? ''))
   const [correction, setCorrection] = useState(isReview ? (reviewData?.correction ?? '') : (saved?.correction ?? ''))
   const [hintLevel, setHintLevel] = useState<HintLevel>(isReview ? 'answer' : (saved?.hintLevel ?? 'none'))
@@ -116,11 +120,12 @@ export function ChunkOutputDrillCard({
     if (!current || status === 'judging' || status === 'passed') return
     const correctionText = expectedAnswer || ''
     setStatus('failed')
+    setSkipped(true)
     setHintLevel('answer')
     setFeedback(t('practiceSession.warmupDrill.skippedHint'))
     setCorrection(correctionText)
     onComplete?.(currentIdx, false, 'miss')
-    store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
+    store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss', skipped: true })
     store.recordEntry({ stepId, stepType, zh: promptText, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, displayLabel: typeLabel, score: 'miss', usedHintLevel: 3, correction: correctionText })
   }, [current, currentIdx, expectedAnswer, groupTitle, onComplete, promptText, status, stepId, stepType, store, t, typeLabel, userInput])
 
@@ -128,6 +133,7 @@ export function ChunkOutputDrillCard({
     if (isReview || status === 'judging') return
     setUserInput('')
     setStatus('idle')
+    setSkipped(false)
     setFeedback('')
     setCorrection('')
     setHintLevel('none')
@@ -252,6 +258,7 @@ export function ChunkOutputDrillCard({
             {hintLevel === 'answer' ? <Eye className="size-3.5" /> : <Lightbulb className="size-3.5" />}
             {hintLevel === 'none' ? t('practiceSession.warmupDrill.hint') : hintLevel === 'hint' ? t('practiceSession.showAnswer') : t('practiceSession.warmupDrill.hideAnswer')}
           </Button>
+          {!disableSkip && !skipped && (
           <button
             type="button"
             onClick={skip}
@@ -260,6 +267,7 @@ export function ChunkOutputDrillCard({
           >
             {t('practiceSession.warmupDrill.dontKnow')}
           </button>
+          )}
         </div>
 
         {/* Hint panel */}
@@ -303,9 +311,9 @@ export function ChunkOutputDrillCard({
       {/* Input area �?persist on success; 回顾模式 disabled */}
       <PracticeAnswerInput
         value={userInput}
-        onChange={(nextValue) => { if (status !== 'passed') { setUserInput(nextValue); setStatus('idle'); setFeedback('') } }}
+        onChange={(nextValue) => { if (status !== 'passed' && !skipped) { setUserInput(nextValue); setStatus('idle'); setFeedback('') } }}
         placeholder={isZhToEn ? t('practiceSession.warmupDrill.inputPlaceholderEn', { chunk: chunk.text }) : t('practiceSession.warmupDrill.inputPlaceholderZh')}
-        disabled={isReview || status === 'judging' || status === 'passed'}
+        disabled={isReview || skipped || status === 'judging' || status === 'passed'}
         onEnter={isReview ? undefined : submit}
         onAudioChange={isReview ? undefined : setAudioUrl}
         lang={isZhToEn ? 'en-US' : 'zh-CN'}
@@ -356,7 +364,7 @@ export function ChunkOutputDrillCard({
           <Button
             className="min-h-11 w-full rounded-xl"
             onClick={submit}
-            disabled={status === 'judging' || !userInput.trim()}
+            disabled={status === 'judging' || !userInput.trim() || skipped}
           >
             {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
             {status === 'judging' ? t('practiceSession.warmupDrill.judging') : t('practiceSession.submit')}

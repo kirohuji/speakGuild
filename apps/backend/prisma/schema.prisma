@@ -1304,6 +1304,7 @@ model UserDailyPracticeAttempt {
   itemId          String
   packId          String
   topicId         String
+  type            String   @default("")
   runId           String?
   score           String
   scoreRank       Int

@@ -173,6 +173,7 @@ export class DailyPracticeService {
             itemId: attempt.itemId,
             packId: attempt.packId,
             topicId: attempt.topicId,
+            type: attempt.type ?? '',
             runId: run.id,
             score: attempt.score,
             scoreRank: rank,
@@ -243,10 +244,12 @@ export class DailyPracticeService {
     }
 
     const latest = attempts[attempts.length - 1];
+    // 旧 attempt 可能没有 type，从 itemId 推导（packId:topicId:itemKey:type:p-...:i-...）
+    const typeFromItemId = (itemId: string) => itemId.split(':')[3] ?? '';
     const data = {
       packId: latest.packId,
       topicId: latest.topicId,
-      type: latest.type,
+      type: latest.type || typeFromItemId(itemId),
       status: schedule.status,
       dueDate: startOfDate(schedule.dueAt),
       lastPracticedAt: latest.practicedAt,

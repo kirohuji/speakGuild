@@ -441,6 +441,7 @@ export const practiceRepository = {
       topicId: params.topicId,
       topicTitle: params.topicTitle ?? existing?.topicTitle ?? '',
       items: params.items,
+      remoteId: existing?.remoteId ?? null,
       createdAt: existing?.createdAt ?? params.createdAt ?? now,
       updatedAt: now,
       syncStatus: params.syncStatus ?? existing?.syncStatus ?? 'pending',

@@ -12,6 +12,8 @@ export interface WarmupStepState {
   correction: string
   score: WarmupScore
   retryCount: number
+  /** 用户点了「我不会」：输入框禁用、不可提交，重新打开本卡也要保持 */
+  skipped?: boolean
 }
 
 export interface WarmupRecordEntry {
@@ -48,11 +50,14 @@ interface WarmupSessionState {
     hintLevel?: WarmupHintLevel
     score?: WarmupScore
     audioUrl?: string | null
+    skipped?: boolean
   }) => void
   /** Record a full entry for final assessment */
   recordEntry: (entry: WarmupRecordEntry) => void
   /** Reset selected step UI states for a focused re-practice round */
   resetSteps: (stepIds: string[]) => void
+  /** Clear only step UI states, keep records (used by review round) */
+  resetStepStates: (stepIds: string[]) => void
   /** Restore a previous in-progress or completed warmup session */
   hydrateSession: (records: WarmupRecordEntry[]) => void
   /** Restore previous answers as display-only step state without adding current records */
@@ -79,6 +84,7 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
           feedback: data.feedback,
           correction: data.correction || '',
           score: data.score ?? (data.passed ? 'strong' : 'miss'),
+          skipped: data.passed ? false : (data.skipped ?? prev.stepStates[stepId]?.skipped ?? false),
           retryCount: (prev.stepStates[stepId]?.retryCount ?? 0) + (data.passed ? 0 : 1),
         },
       },
@@ -107,6 +113,15 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
     }))
   },
 
+  resetStepStates: (stepIds) => {
+    const resetIds = new Set(stepIds)
+    set((prev) => ({
+      stepStates: Object.fromEntries(
+        Object.entries(prev.stepStates).filter(([stepId]) => !resetIds.has(stepId)),
+      ),
+    }))
+  },
+
   hydrateSession: (records) => {
     const stepStates: Record<string, WarmupStepState> = {}
     for (const record of records) {
@@ -119,6 +134,7 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
         feedback: record.feedback,
         correction: record.correction || '',
         score: record.score ?? (record.passed ? 'strong' : 'miss'),
+        skipped: record.feedback === '我不会/跳过',
         retryCount: record.retryCount ?? (record.passed ? 0 : 1),
       }
     }
@@ -131,16 +147,19 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
       for (const record of records) {
         if (prev.records.some((current) => current.stepId === record.stepId)) continue
         if (stepStates[record.stepId]) continue
+        // 仅恢复已通过的记录；历史错题不恢复 failed 状态（避免误显示「已加入本轮错题」，本轮错题池只由本轮 records 派生）
+        if (!record.passed) continue
         const usedHintLevel = record.usedHintLevel ?? 0
         stepStates[record.stepId] = {
           userAnswer: record.userAnswer,
           audioUrl: record.audioUrl ?? null,
-          status: record.passed ? 'passed' : 'failed',
+          status: 'passed',
           hintLevel: usedHintLevel >= 3 ? 'answer' : usedHintLevel > 0 ? 'hint' : 'none',
           feedback: record.feedback,
           correction: record.correction || '',
-          score: record.score ?? (record.passed ? 'strong' : 'miss'),
-          retryCount: record.retryCount ?? (record.passed ? 0 : 1),
+          score: record.score ?? 'strong',
+          skipped: false,
+          retryCount: record.retryCount ?? 0,
         }
       }
       return { stepStates }

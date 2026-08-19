@@ -76,6 +76,8 @@ export interface TopicDailyPracticeStats {
   doneTodayCount: number
   scheduledTodayCount: number
   masteredCount: number
+  /** 累计已练：曾通过（bestScoreRank >= 2）的题数，与学习计划同口径 */
+  practicedCount: number
   topicWarmupProgress: number
   status: DailyPracticeStatus
 }
@@ -482,6 +484,7 @@ function buildTopicStats(
     const progresses = topicCandidates.map((candidate) => progressMap.get(candidate.itemId) ?? emptyProgress(candidate, date))
     const doneTodayCount = progresses.filter((p) => p.lastPracticedAt?.slice(0, 10) === date).length
     const masteredCount = progresses.filter((p) => p.status === 'mastered').length
+    const practicedCount = progresses.filter((p) => (p.bestScoreRank ?? 0) >= 2).length
     const scheduledSteps = scheduledByTopic.get(topic.id) ?? []
     const overdueCount = scheduledSteps.filter((s) => s.scheduleStatus === 'overdue').length
     const todayReviewCount = scheduledSteps.filter((s) => s.scheduleStatus === 'review').length
@@ -515,7 +518,8 @@ function buildTopicStats(
       doneTodayCount,
       scheduledTodayCount: scheduledSteps.length,
       masteredCount,
-      topicWarmupProgress: total > 0 ? Math.round(((doneTodayCount + masteredCount) / total) * 100) : 0,
+      practicedCount,
+      topicWarmupProgress: total > 0 ? Math.min(100, Math.round((practicedCount / total) * 100)) : 0,
       status,
     }
   }))

@@ -22,6 +22,8 @@ interface PatternDrillCardProps {
   groupTitle?: string
   direction?: DrillDirection
   onComplete?: (itemIndex: number, passed: boolean, score: WarmupScore) => void
+  /** 重练轮次隐藏「我不会」按钮 */
+  disableSkip?: boolean
   /** Dialog 已提供题型标签时，隐藏内�?header badge */
   hideHeader?: boolean
   /** 只读回顾模式：传入已保存的练习数�?*/
@@ -69,6 +71,7 @@ export function PatternDrillCard({
   groupTitle,
   direction = 'zh_to_en',
   onComplete,
+  disableSkip,
   hideHeader = false,
   reviewData,
 }: PatternDrillCardProps) {
@@ -81,6 +84,7 @@ export function PatternDrillCard({
   const [currentIdx, setCurrentIdx] = useState(0)
   const [userInput, setUserInput] = useState(isReview ? (reviewData?.userAnswer ?? '') : (saved?.userAnswer ?? ''))
   const [status, setStatus] = useState<DrillStatus>(isReview ? (reviewData?.passed ? 'passed' : 'failed') : (saved?.status ?? 'idle'))
+  const [skipped, setSkipped] = useState(isReview ? false : (saved?.skipped ?? false))
   const [feedback, setFeedback] = useState(isReview ? (reviewData?.feedback ?? '') : (saved?.feedback ?? ''))
   const [correction, setCorrection] = useState(isReview ? (reviewData?.correction ?? '') : (saved?.correction ?? ''))
   const [hintLevel, setHintLevel] = useState<HintLevel>(isReview ? 'answer' : (saved?.hintLevel ?? 'none'))
@@ -109,21 +113,23 @@ export function PatternDrillCard({
   }, [current?.hint, pattern, patternMeaning, t])
 
   const skip = useCallback(() => {
-    if (!current || status === 'judging' || status === 'passed') return
+    if (!current || status === 'judging' || status === 'passed' || skipped) return
     const correctionText = expectedAnswer || ''
     setStatus('failed')
+    setSkipped(true)
     setHintLevel('answer')
     setFeedback(t('practiceSession.warmupDrill.skippedHint'))
     setCorrection(correctionText)
     onComplete?.(currentIdx, false, 'miss')
-    store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
+    store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss', skipped: true })
     store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, displayLabel: t('todayTask.patternDrill'), score: 'miss', usedHintLevel: 3, correction: correctionText })
-  }, [current, currentIdx, expectedAnswer, groupTitle, onComplete, promptText, status, stepId, store, t, userInput])
+  }, [current, currentIdx, expectedAnswer, groupTitle, onComplete, promptText, skipped, status, stepId, store, t, userInput])
 
   const retryCurrent = useCallback(() => {
     if (isReview || status === 'judging') return
     setUserInput('')
     setStatus('idle')
+    setSkipped(false)
     setFeedback('')
     setCorrection('')
     setHintLevel('none')
@@ -132,7 +138,7 @@ export function PatternDrillCard({
   }, [isReview, status, stepId, store])
 
   const submit = useCallback(async () => {
-    if (!userInput.trim() || !current || status === 'judging') return
+    if (!userInput.trim() || !current || status === 'judging' || skipped) return
     setStatus('judging')
     setFeedback('')
     try {
@@ -165,7 +171,7 @@ export function PatternDrillCard({
       setStatus('failed')
       setFeedback(err?.message || t('practiceSession.warmupDrill.feedbackUnavailable'))
     }
-  }, [userInput, current, status, currentIdx, pattern, onComplete, stepId, store, groupTitle, hintLevel, direction, promptText, expectedAnswer, patternMeaning, t])
+  }, [userInput, current, status, currentIdx, pattern, onComplete, stepId, store, groupTitle, hintLevel, direction, promptText, expectedAnswer, patternMeaning, skipped, t])
 
 
   if (!current) return null
@@ -239,6 +245,7 @@ export function PatternDrillCard({
             {hintLevel === 'answer' ? <Eye className="size-3.5" /> : <Lightbulb className="size-3.5" />}
             {hintLevel === 'none' ? t('practiceSession.warmupDrill.hint') : hintLevel === 'hint' ? t('practiceSession.showAnswer') : t('practiceSession.warmupDrill.hideAnswer')}
           </Button>
+          {!disableSkip && !skipped && (
           <button
             type="button"
             onClick={skip}
@@ -247,6 +254,7 @@ export function PatternDrillCard({
           >
             {t('practiceSession.warmupDrill.dontKnow')}
           </button>
+          )}
         </div>
 
         {hintLevel !== 'none' && (
@@ -283,9 +291,9 @@ export function PatternDrillCard({
       {/* Input area �?persist on success; 回顾模式 disabled */}
       <PracticeAnswerInput
         value={userInput}
-        onChange={(nextValue) => { if (status !== 'passed') { setUserInput(nextValue); setStatus('idle'); setFeedback('') } }}
+        onChange={(nextValue) => { if (status !== 'passed' && !skipped) { setUserInput(nextValue); setStatus('idle'); setFeedback('') } }}
         placeholder={isZhToEn ? t('practiceSession.warmupDrill.inputPlaceholderEn', { chunk: pattern }) : t('practiceSession.warmupDrill.inputPlaceholderZh')}
-        disabled={isReview || status === 'judging' || status === 'passed'}
+        disabled={isReview || skipped || status === 'judging' || status === 'passed'}
         onEnter={isReview ? undefined : submit}
         onAudioChange={isReview ? undefined : setAudioUrl}
         lang={isZhToEn ? 'en-US' : 'zh-CN'}
@@ -334,7 +342,7 @@ export function PatternDrillCard({
           <Button
             className="min-h-11 w-full rounded-xl"
             onClick={submit}
-            disabled={status === 'judging' || !userInput.trim()}
+            disabled={status === 'judging' || !userInput.trim() || skipped}
           >
             {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
             {status === 'judging' ? t('practiceSession.warmupDrill.judging') : t('practiceSession.submit')}

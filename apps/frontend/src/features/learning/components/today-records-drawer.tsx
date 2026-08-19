@@ -34,7 +34,7 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps, onRepla
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
-        className="!z-[10001] flex h-[95dvh] max-h-[95dvh] w-full max-w-full flex-col overflow-hidden rounded-t-[28px] border-border/70 bg-background p-0 drawer-surface"
+        className="!z-[10001] flex h-[95dvh] max-h-[95dvh] w-full max-w-full flex-col overflow-hidden bg-background p-0"
         overlayClassName="!z-[10001]"
       >
         <DrawerTitle className="sr-only">{t('todayTask.todayPracticeRecords')}</DrawerTitle>
@@ -58,13 +58,12 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps, onRepla
                 <p className="text-xs text-muted-foreground/60">{t('todayTask.todayPracticeRecordsEmptyHint')}</p>
               </div>
             ) : (
-              <div className="space-y-2 pt-4">
+              <div className="pt-1">
                 {records.map((record, idx) => {
                   const step = steps.find((s) => s.id === record.stepId)
                   const stepIndex = steps.findIndex((s) => s.id === record.stepId)
                   return (
-                    <div key={`${record.stepId || 'record'}-${idx}`} className="rounded-lg border bg-card p-3">
-                      <div className="flex items-start gap-3">
+                    <div key={`${record.stepId || 'record'}-${idx}`} className="flex items-start gap-3 border-b border-border/50 px-1 py-2.5 last:border-b-0">
                         <div className={cn(
                           'flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold',
                           record.passed
@@ -113,7 +112,6 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps, onRepla
                             <ChevronRight className="size-4" />
                           </button>
                         )}
-                      </div>
                     </div>
                   )
                 })}

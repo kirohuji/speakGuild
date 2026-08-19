@@ -23,6 +23,8 @@ interface VocabOutputCardProps {
   stepId: string
   direction?: DrillDirection
   onComplete?: (index: number, passed: boolean, score: WarmupScore) => void
+  /** 重练轮次隐藏「我不会」按钮 */
+  disableSkip?: boolean
   /** Dialog 已提供题型标签时，隐藏内�?header badge */
   hideHeader?: boolean
   /** 只读回顾模式：传入已保存的练习数�?*/
@@ -71,6 +73,7 @@ export function VocabOutputCard({
   stepId,
   direction = 'zh_to_en',
   onComplete,
+  disableSkip,
   hideHeader = false,
   reviewData,
 }: VocabOutputCardProps) {
@@ -83,6 +86,7 @@ export function VocabOutputCard({
   const [currentIdx, setCurrentIdx] = useState(0)
   const [userInput, setUserInput] = useState(isReview ? (reviewData?.userAnswer ?? '') : (saved?.userAnswer ?? ''))
   const [judging, setJudging] = useState(false)
+  const [skipped, setSkipped] = useState(isReview ? false : (saved?.skipped ?? false))
   const [result, setResult] = useState<{ passed: boolean; feedback: string; correction?: string } | null>(
     isReview ? { passed: reviewData?.passed ?? false, feedback: reviewData?.feedback ?? '', correction: reviewData?.correction } : (saved ? { passed: saved.status === 'passed', feedback: saved.feedback, correction: saved.correction } : null)
   )
@@ -103,18 +107,20 @@ export function VocabOutputCard({
   }, [current?.hint, current?.targetWords, t])
 
   const skip = useCallback(() => {
-    if (!current || judging || result?.passed) return
+    if (!current || judging || result?.passed || skipped) return
     const correctionText = current.suggestedAnswer || ''
+    setSkipped(true)
     setHintLevel('answer')
     setResult({ passed: false, feedback: t('practiceSession.warmupDrill.skippedHint'), correction: correctionText })
     onComplete?.(currentIdx, false, 'miss')
-    store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss' })
+    store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss', skipped: true })
     store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle: title, displayLabel: t('todayTask.vocabDrill'), score: 'miss', usedHintLevel: 3, correction: correctionText })
   }, [current, currentIdx, judging, onComplete, result?.passed, stepId, store, t, title, userInput])
 
   const retryCurrent = useCallback(() => {
     if (isReview || judging) return
     setUserInput('')
+    setSkipped(false)
     setResult(null)
     setHintLevel('none')
     setAudioUrl(null)
@@ -122,7 +128,7 @@ export function VocabOutputCard({
   }, [isReview, judging, stepId, store])
 
   const submit = useCallback(async () => {
-    if (!userInput.trim() || !current || judging) return
+    if (!userInput.trim() || !current || judging || skipped) return
     setJudging(true)
     setResult(null)
     try {
@@ -152,7 +158,7 @@ export function VocabOutputCard({
     } finally {
       setJudging(false)
     }
-  }, [userInput, current, judging, currentIdx, isZhToEn, onComplete, stepId, store, t, title, hintLevel])
+  }, [userInput, current, judging, currentIdx, isZhToEn, onComplete, stepId, store, t, title, hintLevel, skipped])
 
   const advance = useCallback(() => {
     setResult(null)
@@ -215,6 +221,7 @@ export function VocabOutputCard({
             {hintLevel === 'answer' ? <Eye className="size-3.5" /> : <Lightbulb className="size-3.5" />}
             {hintLevel === 'none' ? t('practiceSession.warmupDrill.hint') : hintLevel === 'hint' ? t('practiceSession.showAnswer') : t('practiceSession.warmupDrill.hideAnswer')}
           </Button>
+          {!disableSkip && !skipped && (
           <button
             type="button"
             onClick={skip}
@@ -223,6 +230,7 @@ export function VocabOutputCard({
           >
             {t('practiceSession.warmupDrill.dontKnow')}
           </button>
+          )}
         </div>
 
         {hintLevel !== 'none' && (
@@ -270,9 +278,9 @@ export function VocabOutputCard({
       {/* Input �?persist on success; 回顾模式 disabled */}
       <PracticeAnswerInput
         value={userInput}
-        onChange={(nextValue) => { if (!result?.passed) { setUserInput(nextValue); setResult(null) } }}
+        onChange={(nextValue) => { if (!result?.passed && !skipped) { setUserInput(nextValue); setResult(null) } }}
         placeholder={isZhToEn ? t('practiceSession.warmupDrill.vocabPlaceholder') : t('practiceSession.warmupDrill.inputPlaceholderZh')}
-        disabled={isReview || judging || !!result?.passed}
+        disabled={isReview || judging || skipped || !!result?.passed}
         onEnter={isReview ? undefined : submit}
         onAudioChange={isReview ? undefined : setAudioUrl}
         lang={isZhToEn ? 'en-US' : 'zh-CN'}
@@ -323,7 +331,7 @@ export function VocabOutputCard({
           <Button
             className="min-h-11 w-full rounded-xl"
             onClick={submit}
-            disabled={judging || !userInput.trim()}
+            disabled={judging || !userInput.trim() || skipped}
           >
             {judging ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
             {judging ? t('practiceSession.warmupDrill.judging') : t('practiceSession.submit')}

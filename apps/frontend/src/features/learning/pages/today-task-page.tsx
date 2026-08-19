@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback, useReducer } from 'react'
 import type React from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -167,6 +167,93 @@ function useTypeMeta(t: (key: string) => string): Record<string, { label: string
   }), [t])
 }
 
+// ── round 状态机（主轮 + 重练轮）──
+type RoundKind = 'main' | 'review'
+
+interface RoundState {
+  kind: RoundKind
+  /** 主轮：已练集合（含错题，用于轮次完成判定与重访恢复） */
+  attemptedIds: Set<string>
+  /** 重练轮：待重练的 id 集合（kind=review 时有效） */
+  reviewPendingIds: Set<string>
+  /** 重练轮：已通过的 id 集合 */
+  reviewDoneIds: Set<string>
+  /** 轮次序号：决定 warmupRecordId；「下一组/重新练习/模式切换」+1 */
+  roundNonce: number
+  /** 错题弹窗「稍后再练」标记 */
+  reviewDismissed: boolean
+}
+
+type RoundAction =
+  | { type: 'initMain'; attemptedIds: string[] }
+  | { type: 'completeStep'; stepId: string; passed: boolean }
+  | { type: 'startReview'; weakIds: string[] }
+  | { type: 'finishReview' }
+  | { type: 'dismissReview' }
+  | { type: 'resetRound'; roundNonce: number }
+
+const initialRound: RoundState = {
+  kind: 'main',
+  attemptedIds: new Set(),
+  reviewPendingIds: new Set(),
+  reviewDoneIds: new Set(),
+  roundNonce: 0,
+  reviewDismissed: false,
+}
+
+function roundReducer(state: RoundState, action: RoundAction): RoundState {
+  switch (action.type) {
+    case 'initMain':
+      return {
+        ...state,
+        kind: 'main',
+        attemptedIds: new Set(action.attemptedIds),
+        reviewPendingIds: new Set(),
+        reviewDoneIds: new Set(),
+        reviewDismissed: false,
+      }
+    case 'completeStep': {
+      if (state.kind === 'review') {
+        // 重练轮：答对才计入完成
+        if (!action.passed) return state
+        const reviewDoneIds = new Set(state.reviewDoneIds)
+        reviewDoneIds.add(action.stepId)
+        return { ...state, reviewDoneIds }
+      }
+      // 主轮：答对/答错/我不会都算已练（保证轮次可完成），通过与否由 records 派生
+      const attemptedIds = new Set(state.attemptedIds)
+      attemptedIds.add(action.stepId)
+      return { ...state, attemptedIds }
+    }
+    case 'startReview':
+      return {
+        ...state,
+        kind: 'review',
+        reviewPendingIds: new Set(action.weakIds),
+        reviewDoneIds: new Set(),
+        reviewDismissed: false,
+      }
+    case 'finishReview':
+      return {
+        ...state,
+        kind: 'main',
+        reviewPendingIds: new Set(),
+        reviewDoneIds: new Set(),
+        reviewDismissed: true,
+      }
+    case 'dismissReview':
+      return { ...state, reviewDismissed: true }
+    case 'resetRound':
+      return {
+        kind: 'main',
+        attemptedIds: new Set(),
+        reviewPendingIds: new Set(),
+        reviewDoneIds: new Set(),
+        roundNonce: action.roundNonce,
+        reviewDismissed: false,
+      }
+  }
+}
 
 // ── 组件 ──
 export function TodayTaskPage() {
@@ -195,7 +282,6 @@ export function TodayTaskPage() {
   const hydrateWarmupSession = useWarmupSessionStore((s) => s.hydrateSession)
   const hydrateHistoricalStepStates = useWarmupSessionStore((s) => s.hydrateHistoricalStepStates)
   const [currentIdx, setCurrentIdx] = useState(0)
-  const [doneIds, setDoneIds] = useState<Set<string>>(new Set())
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
@@ -212,9 +298,16 @@ export function TodayTaskPage() {
   })
   const [historicalTodayRecords, setHistoricalTodayRecords] = useState<WarmupRecordEntry[]>([])
   const [autoNextEnabled, setAutoNextEnabled] = useState(false)
-  const [reviewRoundStarted, setReviewRoundStarted] = useState(false)
-  const [reviewRoundFinished, setReviewRoundFinished] = useState(false)
+  const [round, dispatchRound] = useReducer(roundReducer, initialRound)
   const [reviewRunNonce, setReviewRunNonce] = useState(0)
+  const [sessionHydrated, setSessionHydrated] = useState(false)
+  const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
+  const reviewRoundActive = round.kind === 'review'
+  const attemptedIds = round.attemptedIds
+  const reviewPendingIds = round.reviewPendingIds
+  const reviewDoneIds = round.reviewDoneIds
+  const roundNonce = round.roundNonce
+  const reviewDismissed = round.reviewDismissed
   const localAiPreloadKeyRef = useRef<string | null>(null)
   const warmupSessionHydratedKeyRef = useRef<string | null>(null)
   const teachingRequestIdRef = useRef(0)
@@ -224,7 +317,7 @@ export function TodayTaskPage() {
     enabled: drawerOpen && Boolean(plan?.date),
     sourceId: plan?.date ? `daily:${plan.date}` : null,
     scope: 'daily',
-    questionCount: doneIds.size,
+    questionCount: attemptedIds.size,
   })
   const currentPlanReusable = Boolean(
     plan &&
@@ -239,11 +332,20 @@ export function TodayTaskPage() {
     if (currentPlanReusable) return
     warmupStore.clearSession()
     setHasSubmittedToday(false)
-    setReviewRoundStarted(false)
-    setReviewRoundFinished(false)
+    setSessionHydrated(false)
     setReviewRunNonce(0)
+    let cancelled = false
     loadToday(targetPackId, targetDate, planMode, planRunSeed > 0)
-  }, [currentPlanReusable, loadToday, targetPackId, targetDate, planMode, planRunSeed])
+      .then(() => {
+        if (cancelled) return
+        // 用 store 最新 plan 初始化主轮已练集合（闭包里的 plan 是旧的）
+        dispatchRound({
+          type: 'initMain',
+          attemptedIds: useDailyPracticeStore.getState().plan?.completedItemIds ?? [],
+        })
+      })
+    return () => { cancelled = true }
+  }, [currentPlanReusable, dispatchRound, loadToday, targetPackId, targetDate, planMode, planRunSeed])
 
   // 今日计划就绪时触发「每日练习」引导（条件式分段，仅首次）
   useEffect(() => {
@@ -278,22 +380,14 @@ export function TodayTaskPage() {
       })
   }, [drawerOpen, isAdmin, localAiWarmupJudgeEnabled, plan?.steps, plan?.units, t, targetPackId])
 
-  useEffect(() => {
-    setDoneIds(new Set(plan?.completedItemIds ?? []))
-  }, [plan?.completedItemIds])
-
-  const markDone = useCallback(async (stepId: string, score: WarmupScore = 'strong') => {
-    const source = plan?.steps.find((step) => step.itemId === stepId)
-    if (source) await completeStep(source, score)
-    setDoneIds((prev) => {
-      const next = new Set(prev)
-      next.add(stepId)
-      return next
-    })
-  }, [completeStep, plan?.steps])
-
-  // ── 自动提交状态（effect 移至 doneCount/steps 声明之后）──
-  const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
+  const markDone = useCallback(async (stepId: string, score: WarmupScore = 'strong', passed = true) => {
+    // 只有通过（strong/ok/weak）才写 SM-2 进度；答错/我不会不消耗新题池（重新练习会再遇到）
+    if (passed) {
+      const source = plan?.steps.find((step) => step.itemId === stepId)
+      if (source) await completeStep(source, score)
+    }
+    dispatchRound({ type: 'completeStep', stepId, passed })
+  }, [completeStep, dispatchRound, plan?.steps])
 
   const switchPlanMode = useCallback((nextMode: DailyPracticePlanMode) => {
     if (nextMode === plan?.mode) return
@@ -303,32 +397,42 @@ export function TodayTaskPage() {
       next.set('mode', nextMode)
       return next
     })
+    dispatchRound({ type: 'resetRound', roundNonce: roundNonce + 1 })
     setPlanRunSeed(0)
     setCurrentIdx(0)
-    setDoneIds(new Set())
+    setSessionHydrated(false)
     setDrawerOpen(false)
     setPlaylistOpen(false)
     setRecordsOpen(false)
-    setReviewRoundStarted(false)
-    setReviewRoundFinished(false)
     setReviewRunNonce(0)
     setHasSubmittedToday(false)
     warmupStore.clearSession()
-  }, [plan?.mode, setSearchParams, warmupStore])
+  }, [dispatchRound, plan?.mode, roundNonce, setSearchParams, warmupStore])
 
   const startNewPracticeSet = useCallback(() => {
+    dispatchRound({ type: 'resetRound', roundNonce: roundNonce + 1 })
     setPlanRunSeed(Date.now())
     setCurrentIdx(0)
-    setDoneIds(new Set())
+    setSessionHydrated(false)
     setDrawerOpen(false)
     setPlaylistOpen(false)
     setRecordsOpen(false)
-    setReviewRoundStarted(false)
-    setReviewRoundFinished(false)
     setReviewRunNonce(0)
     setHasSubmittedToday(false)
     warmupStore.clearSession()
-  }, [warmupStore])
+  }, [dispatchRound, roundNonce, warmupStore])
+
+  const startRePractice = useCallback(() => {
+    dispatchRound({ type: 'resetRound', roundNonce: roundNonce + 1 })
+    setCurrentIdx(0)
+    setSessionHydrated(false)
+    setDrawerOpen(false)
+    setPlaylistOpen(false)
+    setRecordsOpen(false)
+    setReviewRunNonce(0)
+    setHasSubmittedToday(false)
+    warmupStore.clearSession()
+  }, [dispatchRound, roundNonce, warmupStore])
 
   // ── 构建练习列表 ──
   const steps = useMemo<PracticeItem[]>(() => {
@@ -359,7 +463,8 @@ export function TodayTaskPage() {
                 direction={item.direction ?? 'zh_to_en'}
                 kind={item.kind ?? 'chunk'}
                 groupTitle={item.title}
-                onComplete={(_idx, _passed, score) => { void markDone(sid, score) }}
+                disableSkip={reviewRoundActive}
+                onComplete={(_idx, passed, score) => { if (reviewRoundActive && !passed) return; void markDone(sid, score, passed) }}
               />
             ),
           }
@@ -374,7 +479,8 @@ export function TodayTaskPage() {
                 stepId={sid}
                 direction={item.direction ?? 'zh_to_en'}
                 vocabs={[prompt as VocabPromptItem]}
-                onComplete={(_idx, _passed, score) => { void markDone(sid, score) }}
+                disableSkip={reviewRoundActive}
+                onComplete={(_idx, passed, score) => { if (reviewRoundActive && !passed) return; void markDone(sid, score, passed) }}
                 hideHeader
               />
             ),
@@ -398,7 +504,8 @@ export function TodayTaskPage() {
                 direction={item.direction ?? 'zh_to_en'}
                 kind="word"
                 groupTitle={`${vocabWord || t('todayTask.vocabSentenceBuilding')} · ${patternChunk}`}
-                onComplete={(_idx, _passed, score) => { void markDone(sid, score) }}
+                disableSkip={reviewRoundActive}
+                onComplete={(_idx, passed, score) => { if (reviewRoundActive && !passed) return; void markDone(sid, score, passed) }}
               />
             ),
           }
@@ -415,7 +522,8 @@ export function TodayTaskPage() {
                 stepId={sid}
                 direction={item.direction ?? 'zh_to_en'}
                 groupTitle={item.title}
-                onComplete={(_idx, _passed, score) => { void markDone(sid, score) }}
+                disableSkip={reviewRoundActive}
+                onComplete={(_idx, passed, score) => { if (reviewRoundActive && !passed) return; void markDone(sid, score, passed) }}
                 hideHeader
               />
             ),
@@ -435,21 +543,51 @@ export function TodayTaskPage() {
             ),
         }
       })
-  }, [markDone, plan?.steps])
+  }, [markDone, plan?.steps, reviewRoundActive])
+
+  // 重练轮由待重练 id 集合派生（保证 render 闭包基于最新 reviewRoundActive）
+  const reviewSteps = useMemo<PracticeItem[] | null>(() => {
+    if (!reviewRoundActive || reviewPendingIds.size === 0) return null
+    return steps.filter((step) => reviewPendingIds.has(step.id))
+  }, [reviewPendingIds, reviewRoundActive, steps])
+  // 通过集合（绿）由 records 派生；待练（红）与未练（灰）同理
+  const passedStepIds = useMemo(() => {
+    const set = new Set<string>()
+    for (const record of warmupStore.records) if (record.passed) set.add(record.stepId)
+    return set
+  }, [warmupStore.records])
+  // 错题池（我不会/答错）：records 中 score 为 weak/miss
+  const weakRecords = useMemo(
+    () => warmupStore.records.filter((record) => record.score === 'weak' || record.score === 'miss'),
+    [warmupStore.records],
+  )
+  const weakStepIds = useMemo(() => new Set(weakRecords.map((record) => record.stepId)), [weakRecords])
+  // 主轮「继续练习」队列：排除错题（错题只通过「练习错题」重练）
+  const mainQueue = useMemo(() => steps.filter((s) => !weakStepIds.has(s.id)), [steps, weakStepIds])
+  const activeSteps = reviewRoundActive && reviewSteps ? reviewSteps : mainQueue
+  const activeDoneIds = reviewRoundActive ? reviewDoneIds : passedStepIds
+  // 续练定位：主轮用「已练」（含错题，下一个未练开始），重练轮用 reviewDoneIds
+  const resumeDoneIds = reviewRoundActive ? reviewDoneIds : attemptedIds
 
   const warmupRecordId = useMemo(() => {
     if (!plan || plan.scheduledItemIds.length === 0) return null
     const scope = plan.units.map((unit) => unit.id).join(',') || 'mixed'
-    return `today-warmup:${plan.date}:${plan.mode}:${scope}:${planRunSeed || 'current'}:${plan.scheduledItemIds.join('|')}`
-  }, [plan, planRunSeed])
+    return `today-warmup:${plan.date}:${plan.mode}:${scope}:${roundNonce || 'current'}:${plan.scheduledItemIds.join('|')}`
+  }, [plan, roundNonce])
 
   useEffect(() => {
     if (!warmupRecordId || steps.length === 0) return
     if (warmupSessionHydratedKeyRef.current === warmupRecordId) return
     warmupSessionHydratedKeyRef.current = warmupRecordId
     let cancelled = false
+    const markHydrated = () => { if (!cancelled) setSessionHydrated(true) }
     void practiceRepository.getLocalWarmupRecord(warmupRecordId).then((record) => {
       if (cancelled) return
+      // 已提交过的轮次：重访不重复提交（防后端重复建 practiceWarmupRecord + 打卡翻倍）
+      const stored = record as ({ items?: WarmupRecordEntry[]; syncStatus?: string } | null)
+      if (stored?.syncStatus === 'synced' && Array.isArray(stored?.items) && (stored.items?.length ?? 0) > 0) {
+        setHasSubmittedToday(true)
+      }
       const rawRecords = record?.items ?? []
       const stepIds = new Set(steps.map((step) => step.id))
       const currentRecords = Array.isArray(rawRecords) ? (rawRecords as WarmupRecordEntry[])
@@ -459,11 +597,12 @@ export function TodayTaskPage() {
       const missingStepIds = steps
         .map((step) => step.id)
         .filter((stepId) => !currentRecords.some((record) => record.stepId === stepId))
-      if (missingStepIds.length === 0) return
+      if (missingStepIds.length === 0) { markHydrated(); return }
       void practiceRepository.getLatestWarmupEntriesByStepIds(missingStepIds, warmupRecordId).then((records) => {
         if (!cancelled && records.length > 0) hydrateHistoricalStepStates(records)
+        markHydrated()
       })
-    }).catch(() => undefined)
+    }).catch(() => markHydrated())
     return () => { cancelled = true }
   }, [hydrateHistoricalStepStates, hydrateWarmupSession, steps, warmupRecordId])
 
@@ -481,6 +620,8 @@ export function TodayTaskPage() {
 
   useEffect(() => {
     if (!warmupRecordId || !plan || enrichedWarmupRecords.length === 0) return
+    // 已提交且不在重练中 → 不再把 synced 改回 pending
+    if (hasSubmittedToday && !reviewRoundActive) return
     const firstTopic = plan.topicStats.find((topic) => topic.scheduledTodayCount > 0) ?? plan.topicStats[0]
     if (!firstTopic) return
     void practiceRepository.upsertLocalWarmupRecord({
@@ -490,7 +631,7 @@ export function TodayTaskPage() {
       items: enrichedWarmupRecords,
       syncStatus: 'pending',
     }).catch(() => undefined)
-  }, [enrichedWarmupRecords, plan, warmupRecordId])
+  }, [enrichedWarmupRecords, hasSubmittedToday, plan, reviewRoundActive, warmupRecordId])
 
   useEffect(() => {
     if (!recordsOpen || !plan?.date) return
@@ -502,26 +643,26 @@ export function TodayTaskPage() {
   }, [recordsOpen, plan?.date, warmupStore.records])
 
   // ── 进度统计 ──
-  const doneCount = steps.filter((s) => doneIds.has(s.id)).length
-  const donePercent = steps.length > 0 ? (doneCount / steps.length) * 100 : 0
+  const attemptedCount = steps.filter((s) => attemptedIds.has(s.id)).length
   const hasPracticeSteps = steps.length > 0
-  const allDone = steps.length > 0 && doneCount >= steps.length
-  const weakRecords = useMemo(
-    () => warmupStore.records.filter((record) => record.score === 'weak' || record.score === 'miss'),
-    [warmupStore.records],
-  )
-  const weakStepIds = useMemo(() => new Set(weakRecords.map((record) => record.stepId)), [weakRecords])
-  const needsReviewRound = allDone && weakStepIds.size > 0 && !reviewRoundStarted && !reviewRoundFinished
+  const allDone = steps.length > 0 && attemptedCount >= steps.length
+  const activeDoneCount = activeSteps.filter((s) => activeDoneIds.has(s.id)).length
+  const activeTotal = activeSteps.length
+  const reviewAllDone = reviewRoundActive && activeTotal > 0 && activeSteps.every((s) => reviewDoneIds.has(s.id))
+  const passedCount = steps.filter((s) => passedStepIds.has(s.id)).length
+  const weakCount = steps.filter((s) => weakStepIds.has(s.id)).length
+  const unattemptedCount = steps.length - passedCount - weakCount
+  const needsReviewRound = allDone && weakStepIds.size > 0 && !reviewRoundActive && !reviewDismissed
 
   const upcomingTopicCandidates = useMemo(() => {
     if (!plan || allDone) return []
     const topics = new Map<string, { id: string; title: string }>()
     for (const step of plan.steps) {
-      if (doneIds.has(step.itemId) || topics.has(step.topicId)) continue
+      if (attemptedIds.has(step.itemId) || topics.has(step.topicId)) continue
       topics.set(step.topicId, { id: step.topicId, title: step.topicTitle })
     }
     return [...topics.values()]
-  }, [allDone, doneIds, plan])
+  }, [allDone, attemptedIds, plan])
 
   useEffect(() => {
     const missingTopicIds = upcomingTopicCandidates
@@ -582,17 +723,18 @@ export function TodayTaskPage() {
 
   const startWeakReviewRound = useCallback(() => {
     if (weakStepIds.size === 0) return
-    setReviewRoundStarted(true)
-    setReviewRoundFinished(false)
+    dispatchRound({ type: 'startReview', weakIds: [...weakStepIds] })
     setReviewRunNonce((value) => value + 1)
-    setDoneIds((prev) => new Set([...prev].filter((id) => !weakStepIds.has(id))))
-    warmupStore.resetSteps([...weakStepIds])
-    const firstWeakIndex = steps.findIndex((step) => weakStepIds.has(step.id))
-    if (firstWeakIndex >= 0) {
-      setCurrentIdx(firstWeakIndex)
-      setDrawerOpen(true)
-    }
-  }, [steps, warmupStore, weakStepIds])
+    warmupStore.resetStepStates([...weakStepIds])
+    setCurrentIdx(0)
+    setDrawerOpen(true)
+  }, [dispatchRound, weakStepIds, warmupStore])
+
+  /** 关闭练习抽屉：若正处在重练轮则取消重练并回到主轮（错题池保留），避免卡在 review 状态 */
+  const closePracticeDrawer = useCallback(() => {
+    setDrawerOpen(false)
+    if (reviewRoundActive) dispatchRound({ type: 'finishReview' })
+  }, [dispatchRound, reviewRoundActive])
 
   const openTopicTeaching = useCallback(async (topicId: string) => {
     const requestId = teachingRequestIdRef.current + 1
@@ -609,23 +751,17 @@ export function TodayTaskPage() {
     }
   }, [])
 
-  useEffect(() => {
-    if (allDone && reviewRoundStarted && !reviewRoundFinished) {
-      setReviewRoundFinished(true)
-    }
-  }, [allDone, reviewRoundFinished, reviewRoundStarted])
-
   // ── 按状态分组统计（用于分段进度条）──
   const statusCounts = useMemo(() => {
     const counts = { overdue: 0, review: 0, new: 0, done: 0 }
     for (const s of steps) {
-      if (doneIds.has(s.id)) { counts.done++ }
+      if (passedStepIds.has(s.id)) { counts.done++ }
       else if (s.scheduleStatus === 'overdue') { counts.overdue++ }
       else if (s.scheduleStatus === 'review') { counts.review++ }
       else { counts.new++ }
     }
     return counts
-  }, [steps, doneIds])
+  }, [passedStepIds, steps])
 
   // ── 分段进度条颜色配置 ──
   const SEGMENT_COLORS: Record<string, string> = {
@@ -653,10 +789,17 @@ export function TodayTaskPage() {
 
   const topSegments = useMemo(() => {
     if (plan?.mode === 'practice') {
-      const pending = steps.length - statusCounts.done
+      if (reviewRoundActive) {
+        const pending = activeTotal - activeDoneCount
+        return [
+          { key: 'done', count: activeDoneCount, color: 'bg-emerald-500' },
+          { key: 'pending', count: pending, color: 'bg-muted-foreground/30' },
+        ]
+      }
       return [
-        { key: 'done', count: statusCounts.done, color: 'bg-emerald-500' },
-        { key: 'pending', count: pending, color: 'bg-muted-foreground/30' },
+        { key: 'done', count: passedCount, color: 'bg-emerald-500' },
+        { key: 'weak', count: weakCount, color: 'bg-red-500/70' },
+        { key: 'pending', count: unattemptedCount, color: 'bg-muted-foreground/30' },
       ]
     }
     return [
@@ -665,28 +808,34 @@ export function TodayTaskPage() {
       { key: 'new', count: statusCounts.new, color: SEGMENT_COLORS.new },
       { key: 'done', count: statusCounts.done, color: SEGMENT_COLORS.done },
     ]
-  }, [statusCounts, steps.length, plan?.mode])
+  }, [activeDoneCount, activeTotal, passedCount, plan?.mode, reviewRoundActive, statusCounts, unattemptedCount, weakCount])
   const practiceOrderLabel = dailyPracticeRandomOrder ? t('todayTask.randomPick') : t('todayTask.sequentialPick')
   const activeModeLabel = plan?.mode === 'review' ? t('todayTask.reviewList') : t('todayTask.practiceGroup')
 
-  // ── 自动提交：全部完成时持久化记录到本地 + 同步后端 ──
+  // ── 自动提交：当前轮全部完成时持久化记录到本地 + 同步后端 ──
   useEffect(() => {
-    if (hasSubmittedToday || steps.length === 0) return
-    if (!allDone || needsReviewRound) return
+    if (hasSubmittedToday || submitting || !sessionHydrated || steps.length === 0) return
+    const roundDone = reviewRoundActive ? reviewAllDone : (allDone && !needsReviewRound)
+    if (!roundDone) return
 
     const submit = async () => {
       try {
         await submitToday(enrichedWarmupRecords, warmupRecordId)
-        console.log('[today-task] ✅ 本组练习已提交 |', doneCount, '题')
+        console.log('[today-task] ✅ 本组练习已提交 |', activeDoneCount, '题')
+        setHasSubmittedToday(true)
+        // 重练完成 → 回到主视图完成态（仍有错题则「练习错题 N」按钮保留）
+        if (reviewRoundActive) {
+          dispatchRound({ type: 'finishReview' })
+          setCurrentIdx(0)
+          setDrawerOpen(false)
+        }
       } catch (err) {
         console.warn('[today-task] ⚠️ 提交失败，下次刷新后重试:', err)
-      } finally {
-        setHasSubmittedToday(true)
       }
     }
 
     submit()
-  }, [allDone, enrichedWarmupRecords, needsReviewRound, steps.length, hasSubmittedToday, warmupRecordId, submitToday])
+  }, [activeDoneCount, allDone, dispatchRound, enrichedWarmupRecords, hasSubmittedToday, needsReviewRound, reviewAllDone, reviewRoundActive, sessionHydrated, steps.length, submitting, warmupRecordId, submitToday])
 
   const groupedSteps = useMemo<PracticeGroup[]>(() => {
     const order = new Map<string, PracticeGroup>()
@@ -705,14 +854,40 @@ export function TodayTaskPage() {
       }
       group.steps.push({ step, index })
       group.totalCount += 1
+      if (passedStepIds.has(step.id)) group.doneCount += 1
+      order.set(step.type, group)
+    })
+    return Array.from(order.values())
+  }, [passedStepIds, steps])
+
+  const playlistGroups = useMemo<PracticeGroup[]>(() => {
+    // 主轮：与「继续练习」队列一致（排除错题，错题只通过「练习错题」重练）
+    const sourceSteps = reviewRoundActive && reviewSteps ? reviewSteps : mainQueue
+    const doneIds = reviewRoundActive ? reviewDoneIds : passedStepIds
+    const order = new Map<string, PracticeGroup>()
+    sourceSteps.forEach((step, index) => {
+      const meta = TYPE_META[step.type] ?? {
+        label: step.displayLabel || t('todayTask.knowledgePoint'),
+        icon: PenLine,
+        color: 'bg-primary/10 text-primary',
+      }
+      const group = order.get(step.type) ?? {
+        type: step.type,
+        meta,
+        steps: [],
+        doneCount: 0,
+        totalCount: 0,
+      }
+      group.steps.push({ step, index })
+      group.totalCount += 1
       if (doneIds.has(step.id)) group.doneCount += 1
       order.set(step.type, group)
     })
     return Array.from(order.values())
-  }, [doneIds, steps])
+  }, [mainQueue, passedStepIds, reviewDoneIds, reviewRoundActive, reviewSteps, t])
 
   const openStepAt = useCallback((index: number) => {
-    const step = steps[index]
+    const step = activeSteps[index]
     if (!step) return
     setCurrentIdx(index)
     if (step.id.startsWith('placeholder:')) {
@@ -720,30 +895,36 @@ export function TodayTaskPage() {
     } else {
       setDrawerOpen(true)
     }
-  }, [markDone, steps])
+  }, [activeSteps, markDone])
 
   const openGroup = useCallback((group: PracticeGroup) => {
-    const target = group.steps.find(({ step }) => !doneIds.has(step.id)) ?? group.steps[0]
-    if (target) openStepAt(target.index)
-  }, [doneIds, openStepAt])
+    const target = group.steps.find(({ step }) => !resumeDoneIds.has(step.id)) ?? group.steps[0]
+    if (!target) return
+    // 组内索引基于全量 steps，需映射到当前练习队列（主轮已排除错题）
+    const targetIdx = activeSteps.findIndex((s) => s.id === target.step.id)
+    if (targetIdx < 0) return
+    setCurrentIdx(targetIdx)
+    const step = activeSteps[targetIdx]
+    if (step?.id.startsWith('placeholder:')) markDone(step.id, 'ok')
+    else setDrawerOpen(true)
+  }, [activeSteps, markDone, resumeDoneIds])
 
   const continueCurrentPractice = useCallback(() => {
+    if (reviewRoundActive) {
+      const firstPendingIndex = (reviewSteps ?? []).findIndex((step) => !reviewDoneIds.has(step.id))
+      if (firstPendingIndex >= 0) {
+        setCurrentIdx(firstPendingIndex)
+        setDrawerOpen(true)
+      }
+      return
+    }
     if (needsReviewRound) {
       startWeakReviewRound()
       return
     }
-    const firstPendingIndex = steps.findIndex((step) => !doneIds.has(step.id))
+    const firstPendingIndex = activeSteps.findIndex((step) => !resumeDoneIds.has(step.id))
     openStepAt(firstPendingIndex >= 0 ? firstPendingIndex : 0)
-  }, [doneIds, needsReviewRound, openStepAt, startWeakReviewRound, steps])
-
-  const handlePracticeRoundAction = useCallback(() => {
-    if (!hasPracticeSteps) return
-    if (allDone && !needsReviewRound) {
-      startNewPracticeSet()
-      return
-    }
-    continueCurrentPractice()
-  }, [allDone, continueCurrentPractice, hasPracticeSteps, needsReviewRound, startNewPracticeSet])
+  }, [activeSteps, needsReviewRound, openStepAt, resumeDoneIds, reviewDoneIds, reviewRoundActive, reviewSteps, startWeakReviewRound])
 
   // ── 今日练习记录 ──
   const todayRecords = useMemo(() => {
@@ -760,20 +941,27 @@ export function TodayTaskPage() {
   }, [steps, todayRecords])
 
   // ── 导航 ──
-  const currentStep = steps[currentIdx]
+  const currentStep = activeSteps[currentIdx]
   const hasPrev = currentIdx > 0
-  const hasNext = currentIdx < steps.length - 1
-  const currentStepDone = currentStep ? doneIds.has(currentStep.id) : false
+  const hasNext = currentIdx < activeSteps.length - 1
+  const currentStepDone = currentStep ? activeDoneIds.has(currentStep.id) : false
   const gotoPrev = useCallback(() => setCurrentIdx((p) => Math.max(0, p - 1)), [])
-  const gotoNext = useCallback(() => setCurrentIdx((p) => Math.min(steps.length - 1, p + 1)), [steps.length])
+  const gotoNext = useCallback(() => setCurrentIdx((p) => Math.min(activeSteps.length - 1, p + 1)), [activeSteps.length])
+
+  // 队列收缩（题被标记为错题移出「继续练习」）时修正越界索引
+  useEffect(() => {
+    if (activeSteps.length > 0 && currentIdx >= activeSteps.length) {
+      setCurrentIdx(activeSteps.length - 1)
+    }
+  }, [activeSteps.length, currentIdx])
 
   useEffect(() => {
     if (!drawerOpen || !autoNextEnabled || !hasNext || !currentStepDone) return
     const timer = window.setTimeout(() => {
-      setCurrentIdx((prev) => Math.min(steps.length - 1, prev + 1))
+      setCurrentIdx((prev) => Math.min(activeSteps.length - 1, prev + 1))
     }, 2000)
     return () => window.clearTimeout(timer)
-  }, [autoNextEnabled, currentIdx, currentStepDone, drawerOpen, hasNext, steps.length])
+  }, [activeSteps.length, autoNextEnabled, currentIdx, currentStepDone, drawerOpen, hasNext])
 
   // ── 加载态：仅在无缓存数据时展示 ──
   if (loading && !plan) {
@@ -891,7 +1079,7 @@ export function TodayTaskPage() {
           <div className="flex items-center gap-2">
             <ListChecks className="size-4 text-primary" />
             <p className="text-sm font-semibold text-foreground">{activeModeLabel}{t('todayTask.progress')}</p>
-            {hasSubmittedToday && donePercent >= 100 && (
+            {hasSubmittedToday && allDone && (
               <Badge variant="default" className="h-5 rounded-full px-2 text-[10px] bg-green-500/15 text-green-600">
                 <CheckCircle2 className="mr-0.5 size-3" /> {t('todayTask.completed')}
               </Badge>
@@ -908,7 +1096,7 @@ export function TodayTaskPage() {
             )}
           </div>
           <Badge variant="secondary" className="h-6 rounded-full px-2 text-[10px]">
-            {doneCount}/{steps.length} {t('todayTask.questions')}
+            {activeDoneCount}/{activeTotal} {t('todayTask.questions')}
           </Badge>
           {extraTodayRecordCount > 0 && (
             <Badge variant="outline" className="h-6 rounded-full px-2 text-[10px] text-emerald-600">
@@ -919,47 +1107,91 @@ export function TodayTaskPage() {
         <SegmentedBar segments={topSegments} />
         {plan.mode === 'practice' && (
           <>
-          <button
-            type="button"
-            disabled={!hasPracticeSteps}
-            onClick={handlePracticeRoundAction}
-            className={cn(
-              'mt-3 flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left transition-colors active:scale-[0.99]',
-              !hasPracticeSteps
-                ? 'cursor-not-allowed border-muted-foreground/20 bg-muted/25 text-muted-foreground'
-                : (!allDone || needsReviewRound)
-                ? 'border-primary/20 bg-primary/[0.06] text-primary hover:bg-primary/[0.08]'
-                : 'border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-700 hover:bg-emerald-500/[0.08] dark:text-emerald-300',
-            )}
-          >
-            <span className="min-w-0 flex-1 truncate text-xs font-medium">
-              {!hasPracticeSteps
-                ? t('todayTask.noPractice')
-                : allDone && !needsReviewRound
-                ? (dailyPracticeRandomOrder ? t('todayTask.randomAgain') : t('todayTask.practiceAgain'))
-                : t('todayTask.continuePractice')}
-            </span>
-            {hasPracticeSteps && (
-              <span
-                className={cn(
-                  'inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-semibold transition-colors',
-                  (!allDone || needsReviewRound)
-                    ? 'text-primary hover:bg-primary/10'
-                    : 'text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-300',
-                )}
+          <div className="mt-3 flex items-stretch gap-2">
+            {!hasPracticeSteps ? (
+              <button
+                type="button"
+                disabled
+                className="flex w-full cursor-not-allowed items-center justify-between gap-3 rounded-md bg-muted/40 px-3 py-2 text-left text-muted-foreground"
               >
-                {allDone && !needsReviewRound ? <CheckCircle2 className="size-4" /> : <ArrowRight className="size-4" />}
-              </span>
+                <span className="min-w-0 flex-1 truncate text-xs font-medium">{t('todayTask.noPractice')}</span>
+              </button>
+            ) : (
+              <>
+                {/* 重练进行中：继续重练 */}
+                {reviewRoundActive && (
+                  <button
+                    type="button"
+                    onClick={continueCurrentPractice}
+                    className="flex w-full items-center justify-between gap-3 rounded-md bg-primary/[0.06] px-3 py-2 text-left text-primary transition-colors active:scale-[0.99] hover:bg-primary/[0.1]"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{t('todayTask.continuePractice')}</span>
+                    <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-semibold text-primary hover:bg-primary/10">
+                      <ArrowRight className="size-4" />
+                    </span>
+                  </button>
+                )}
+                {/* 主轮未完成：继续练习 */}
+                {!reviewRoundActive && !allDone && (
+                  <button
+                    type="button"
+                    onClick={continueCurrentPractice}
+                    className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md bg-primary/[0.06] px-3 py-2 text-left text-primary transition-colors active:scale-[0.99] hover:bg-primary/[0.1]"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{t('todayTask.continuePractice')}</span>
+                    <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-semibold text-primary hover:bg-primary/10">
+                      <ArrowRight className="size-4" />
+                    </span>
+                  </button>
+                )}
+                {/* 全完成无错题：重新练习 */}
+                {!reviewRoundActive && allDone && weakStepIds.size === 0 && (
+                  <button
+                    type="button"
+                    onClick={startRePractice}
+                    className="flex w-full items-center justify-between gap-3 rounded-md bg-emerald-500/[0.08] px-3 py-2 text-left text-emerald-700 transition-colors active:scale-[0.99] hover:bg-emerald-500/[0.12] dark:text-emerald-300"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{t('todayTask.rePractice')}</span>
+                    <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-300">
+                      <CheckCircle2 className="size-4" />
+                    </span>
+                  </button>
+                )}
+                {/* 有错题：练习错题（未完成时与继续练习各半，全完成时占满） */}
+                {!reviewRoundActive && weakStepIds.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={startWeakReviewRound}
+                    className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md bg-red-500/[0.08] px-3 py-2 text-left text-red-600 transition-colors active:scale-[0.99] hover:bg-red-500/[0.12] dark:text-red-400"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{t('todayTask.practiceWrong', { count: weakStepIds.size })}</span>
+                    <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-semibold text-red-600 hover:bg-red-500/10 dark:text-red-400">
+                      <ArrowRight className="size-4" />
+                    </span>
+                  </button>
+                )}
+              </>
             )}
-          </button>
+          </div>
+          {allDone && weakStepIds.size === 0 && !reviewRoundActive && (
+            <button
+              type="button"
+              onClick={startNewPracticeSet}
+              className="mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-border/60 px-3 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted/40 active:scale-[0.99]"
+            >
+              {dailyPracticeRandomOrder ? t('todayTask.randomAgain') : t('todayTask.practiceAgain')}
+              <ArrowRight className="size-3.5" />
+            </button>
+          )}
           </>
         )}
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
           {plan.mode === 'practice' ? (
             <>
-              {statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />{t('todayTask.done', { count: statusCounts.done })}</span>}
+              {passedCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />{t('todayTask.done', { count: passedCount })}</span>}
+              {weakCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-red-500/70" />{t('todayTask.toPractice', { count: weakCount })}</span>}
               {extraTodayRecordCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500/70" />{t('todayTask.extraPractice', { count: extraTodayRecordCount })}</span>}
-              {steps.length - statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />{t('todayTask.pending', { count: steps.length - statusCounts.done })}</span>}
+              {unattemptedCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />{t('todayTask.unattempted', { count: unattemptedCount })}</span>}
             </>
           ) : (
             <>
@@ -1067,8 +1299,10 @@ export function TodayTaskPage() {
                           key={step.id}
                           className={cn(
                             'rounded-full px-2 py-0.5 text-[10px]',
-                            doneIds.has(step.id)
+                            passedStepIds.has(step.id)
                               ? 'bg-green-500/10 text-green-600 dark:text-green-300'
+                              : weakStepIds.has(step.id)
+                              ? 'bg-red-500/10 text-red-500'
                               : 'bg-background/70 text-muted-foreground',
                           )}
                         >
@@ -1130,7 +1364,7 @@ export function TodayTaskPage() {
                         topic.todayNewCount > 0 ? `${t('todayTask.statusNew')} ${topic.todayNewCount}` : null,
                       ].filter(Boolean).join(' · ')
                     : null
-                  const unPracticed = topic.totalCount - topic.doneTodayCount - topic.masteredCount
+                  const unPracticed = topic.totalCount - topic.practicedCount
                   const assetSummary = [
                     topic.vocabCount > 0 ? `${topic.vocabCount} ${t('learning.vocab')}` : null,
                     topic.chunkCount > 0 ? `${topic.chunkCount} ${t('learning.chunks')}` : null,
@@ -1170,7 +1404,7 @@ export function TodayTaskPage() {
                                   { key: 'done', count: topic.doneTodayCount, color: SEGMENT_COLORS.done },
                                 ]
                               : [
-                                  { key: 'done', count: topic.doneTodayCount + topic.masteredCount, color: 'bg-emerald-500' },
+                                  { key: 'done', count: topic.practicedCount, color: 'bg-emerald-500' },
                                   { key: 'pending', count: unPracticed, color: 'bg-muted-foreground/30' },
                                 ]
                             }
@@ -1178,7 +1412,7 @@ export function TodayTaskPage() {
                           <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
                             {isReviewMode
                               ? t('todayTask.notReviewed', { count: topic.overdueCount + topic.todayReviewCount })
-                              : t('todayTask.practiced', { done: topic.doneTodayCount + topic.masteredCount, total: topic.totalCount })
+                              : t('todayTask.practiced', { done: topic.practicedCount, total: topic.totalCount })
                             }
                           </span>
                         </div>
@@ -1239,7 +1473,10 @@ export function TodayTaskPage() {
         hideToggles
       />
 
-      <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
+      <Dialog
+        open={drawerOpen}
+        onOpenChange={(open) => { if (!open) closePracticeDrawer() }}
+      >
         <DialogContent
           data-keyboard-overlay="practice"
           className="left-0 top-0 !z-[10000] flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0 pt-safe md:left-[50%] md:top-[50%] md:h-[88vh] md:max-w-3xl md:translate-x-[-50%] md:translate-y-[-50%] md:rounded-2xl md:pt-0 [&>button]:hidden"
@@ -1267,13 +1504,13 @@ export function TodayTaskPage() {
                         <Switch
                           checked={autoNextEnabled}
                           onCheckedChange={setAutoNextEnabled}
-                          disabled={steps.length <= 1}
+                          disabled={activeTotal <= 1}
                           className="origin-right scale-90"
                         />
                       </label>
                       <button
                         type="button"
-                        onClick={() => setDrawerOpen(false)}
+                        onClick={closePracticeDrawer}
                         className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
                       >
                         <ChevronDown className="size-4" />
@@ -1306,7 +1543,7 @@ export function TodayTaskPage() {
                 <span className="ml-1">{t('todayTask.prevQuestion')}</span>
               </Button>
               <span className="text-xs text-muted-foreground tabular-nums">
-                {currentIdx + 1} / {steps.length}
+                {currentIdx + 1} / {activeTotal}
               </span>
               <div className="flex items-center gap-1.5">
                 <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
@@ -1345,7 +1582,7 @@ export function TodayTaskPage() {
           </div>
           <ScrollArea className="min-h-0 flex-1 px-4 pb-8">
             <div className="space-y-1">
-              {groupedSteps.map((group) => {
+              {playlistGroups.map((group) => {
                 const isActive = group.steps.some(({ index }) => index === currentIdx)
                 const isDone = group.doneCount === group.totalCount
                 const Icon = group.meta.icon
@@ -1378,7 +1615,7 @@ export function TodayTaskPage() {
       <Dialog
         open={needsReviewRound}
         onOpenChange={(open) => {
-          if (!open) startWeakReviewRound()
+          if (!open) dispatchRound({ type: 'dismissReview' })
         }}
       >
         <DialogContent className="!z-[10002] w-[calc(100vw-2rem)] max-w-sm rounded-2xl p-5">
@@ -1390,7 +1627,7 @@ export function TodayTaskPage() {
             {weakRecords.slice(0, 5).map((record) => {
               const step = steps.find((item) => item.id === record.stepId)
               return (
-                <div key={record.stepId} className="rounded-lg bg-background px-3 py-2">
+                <div key={record.stepId} className="border-b border-border/50 px-1 py-2.5 last:border-b-0">
                   <div className="flex items-center gap-2">
                     <Badge variant={record.score === 'miss' ? 'destructive' : 'secondary'} className="shrink-0 text-[10px]">
                       {record.score === 'miss' ? t('todayTask.unknownWord') : t('todayTask.pendingStable')}
@@ -1407,9 +1644,14 @@ export function TodayTaskPage() {
               <p className="px-1 text-[11px] text-muted-foreground">{t('todayTask.willReviewTogether', { count: weakRecords.length - 5 })}</p>
             )}
           </div>
-          <Button className="w-full" onClick={startWeakReviewRound}>
-            {t('todayTask.startWrongReview')}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => dispatchRound({ type: 'dismissReview' })}>
+              {t('todayTask.later')}
+            </Button>
+            <Button className="flex-1" onClick={startWeakReviewRound}>
+              {t('todayTask.startWrongReview')}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

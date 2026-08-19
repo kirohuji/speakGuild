@@ -172,6 +172,7 @@ export function DictionaryPronunciationAuditDialog({
   const [data, setData] = useState<PronunciationAuditResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
+  const [jumpDraft, setJumpDraft] = useState('');
   const [searchDraft, setSearchDraft] = useState('');
   const [search, setSearch] = useState('');
   const [providers, setProviders] = useState<Record<string, PronunciationProvider>>({});
@@ -613,23 +614,52 @@ export function DictionaryPronunciationAuditDialog({
                 <Headphones className="size-4" />
                 第 {data?.page ?? page} / {Math.max(1, data?.totalPages ?? 1)} 页 · 每页固定 100 个
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page <= 1 || loading}
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+              <div className="flex items-center gap-3">
+                <form
+                  className="flex items-center gap-1.5"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const target = Number.parseInt(jumpDraft, 10);
+                    const totalPages = Math.max(1, data?.totalPages ?? 1);
+                    if (Number.isNaN(target)) return;
+                    setPage(Math.min(totalPages, Math.max(1, target)));
+                    setJumpDraft('');
+                  }}
                 >
-                  <ChevronLeft data-icon="inline-start" />上一组
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= (data?.totalPages ?? 1) || loading}
-                  onClick={() => setPage((current) => current + 1)}
-                >
-                  下一组<ChevronRight data-icon="inline-end" />
-                </Button>
+                  <span className="text-xs text-muted-foreground">跳转到</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={Math.max(1, data?.totalPages ?? 1)}
+                    value={jumpDraft}
+                    onChange={(event) => setJumpDraft(event.target.value)}
+                    placeholder={`1-${Math.max(1, data?.totalPages ?? 1)}`}
+                    aria-label="跳转到第几页"
+                    className="h-8 w-20"
+                  />
+                  <span className="text-xs text-muted-foreground">页</span>
+                  <Button type="submit" variant="outline" size="sm" disabled={loading}>
+                    跳转
+                  </Button>
+                </form>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1 || loading}
+                    onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  >
+                    <ChevronLeft data-icon="inline-start" />上一组
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= (data?.totalPages ?? 1) || loading}
+                    onClick={() => setPage((current) => current + 1)}
+                  >
+                    下一组<ChevronRight data-icon="inline-end" />
+                  </Button>
+                </div>
               </div>
             </div>
           </section>

@@ -7,6 +7,13 @@ import {
 } from '@/lib/offline/daily-practice.repository'
 import type { WarmupRecordEntry, WarmupScore } from '@/stores/warmup-session.store'
 
+function scoreRankOf(score: WarmupScore) {
+  if (score === 'strong') return 3
+  if (score === 'ok') return 2
+  if (score === 'weak') return 1
+  return 0
+}
+
 interface DailyPracticeState {
   plan: DailyPracticePlan | null
   loading: boolean
@@ -54,11 +61,17 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
             const doneTodayCount = alreadyCompleted ? topic.doneTodayCount : topic.doneTodayCount + 1
             const scheduledTodayCount = Math.max(topic.scheduledTodayCount, 1)
             const allDone = doneTodayCount >= scheduledTodayCount
+            // 累计已练：旧 progress 未通过（bestScoreRank < 2）且本次通过 → +1
+            const wasPracticed = (step.progress?.bestScoreRank ?? 0) >= 2
+            const practicedCount = (!wasPracticed && scoreRankOf(score) >= 2)
+              ? topic.practicedCount + 1
+              : topic.practicedCount
             return {
               ...topic,
               doneTodayCount,
+              practicedCount,
               topicWarmupProgress: topic.totalCount > 0
-                ? Math.min(100, Math.round(((doneTodayCount + topic.masteredCount) / topic.totalCount) * 100))
+                ? Math.min(100, Math.round((practicedCount / topic.totalCount) * 100))
                 : 0,
               status: allDone ? 'done' : topic.status,
             }
