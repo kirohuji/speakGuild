@@ -30,6 +30,7 @@ interface DailyPracticeState {
   startMistakeRetry: () => void
   setCurrentStep: (stepId: string | null) => void
   closeSession: () => void
+  syncRunSnapshot: (records?: WarmupRecordEntry[], localWarmupRecordId?: string | null) => Promise<void>
   submitToday: (records: WarmupRecordEntry[], localWarmupRecordId?: string | null) => Promise<void>
   reshuffle: (targetPackId?: string | null, targetDate?: string | null, mode?: DailyPracticePlanMode) => Promise<void>
   reset: () => void
@@ -131,6 +132,8 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
           },
         }) : state)
       }
+      // Keep the server copy resumable even before the final submission.
+      await get().syncRunSnapshot().catch(() => undefined)
     })
     return attemptChain
   },
@@ -163,6 +166,12 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
   closeSession() {
     useTodayPracticeStore.getState().dispatch({ type: 'SESSION_CLOSED' })
     void persistCurrentFacts().catch(() => undefined)
+  },
+
+  async syncRunSnapshot(records = [], localWarmupRecordId?: string | null) {
+    const plan = get().plan
+    if (!plan) return
+    await dailyPracticeRepository.syncRunSnapshot(plan, records, localWarmupRecordId)
   },
 
   async submitToday(records, localWarmupRecordId) {

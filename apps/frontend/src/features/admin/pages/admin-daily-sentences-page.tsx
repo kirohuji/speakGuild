@@ -14,24 +14,18 @@ import {
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/cn';
+import { localDateKey, utcDateKey } from '@/lib/date/calendar-date';
 import {
   getAllDailySentences, createDailySentence, updateDailySentence, deleteDailySentence,
   type DailySentence, type CreateDailySentenceInput,
 } from '@/features/admin/api-daily-sentences';
 
 function formatDate(dateStr: string) {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return utcDateKey(dateStr);
 }
 
 function isToday(dateStr: string) {
-  const today = new Date();
-  const d = new Date(dateStr);
-  return (
-    d.getFullYear() === today.getFullYear() &&
-    d.getMonth() === today.getMonth() &&
-    d.getDate() === today.getDate()
-  );
+  return formatDate(dateStr) === localDateKey();
 }
 
 export function AdminDailySentencesPage() {
@@ -73,8 +67,7 @@ export function AdminDailySentencesPage() {
     setEditingItem(null);
     resetForm();
     // 默认填入今天日期
-    const today = new Date();
-    setFormDate(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`);
+    setFormDate(localDateKey());
     setEditorOpen(true);
   };
 

@@ -421,6 +421,7 @@ export class SyncService {
     const sinceChunkProgress = cursors.chunkProgresses ? new Date(cursors.chunkProgresses) : new Date(0);
     const sincePracticeSession = cursors.practiceSessions ? new Date(cursors.practiceSessions) : new Date(0);
     const sinceWarmupRecord = cursors.practiceWarmupRecords ? new Date(cursors.practiceWarmupRecords) : new Date(0);
+    const sinceDailyPracticeRun = cursors.dailyPracticeRuns ? new Date(cursors.dailyPracticeRuns) : new Date(0);
     const sinceTopicSession = cursors.topicSessions ? new Date(cursors.topicSessions) : new Date(0);
     const sinceDeletedExpression = cursors.deletedExpressionItems ? new Date(cursors.deletedExpressionItems) : new Date(0);
 
@@ -430,6 +431,7 @@ export class SyncService {
       chunkProgresses,
       practiceSessions,
       practiceWarmupRecords,
+      dailyPracticeRuns,
       topicSessions,
     ] = await Promise.all([
       this.prisma.expressionItem.findMany({
@@ -478,6 +480,30 @@ export class SyncService {
           feedback: true,
           items: true,
           createdAt: true,
+        },
+      }),
+      (this.prisma as any).userDailyPracticeRun.findMany({
+        where: { userId, updatedAt: { gt: sinceDailyPracticeRun } },
+        orderBy: { updatedAt: 'asc' },
+        take: SyncService.PULL_PAGE_SIZE,
+        select: {
+          clientRunId: true,
+          date: true,
+          mode: true,
+          scope: true,
+          packIds: true,
+          scheduledItemIds: true,
+          completedItemIds: true,
+          attemptedItemIds: true,
+          unresolvedItemIds: true,
+          srsAppliedItemIds: true,
+          initialRecallResults: true,
+          continuationResults: true,
+          remediationResults: true,
+          submissionStatus: true,
+          stats: true,
+          createdAt: true,
+          updatedAt: true,
         },
       }),
       this.prisma.topicSession.findMany({
@@ -530,6 +556,7 @@ export class SyncService {
       chunkProgresses: maxTime(chunkProgresses, 'updatedAt') ?? cursors.chunkProgresses ?? null,
       practiceSessions: maxTime(practiceSessions, 'updatedAt') ?? cursors.practiceSessions ?? null,
       practiceWarmupRecords: maxTime(practiceWarmupRecords, 'createdAt') ?? cursors.practiceWarmupRecords ?? null,
+      dailyPracticeRuns: maxTime(dailyPracticeRuns, 'updatedAt') ?? cursors.dailyPracticeRuns ?? null,
       topicSessions: maxTime(topicSessions, 'updatedAt') ?? cursors.topicSessions ?? null,
       deletedExpressionItems: maxTime(deletedExpressionItems, 'deletedAt') ?? cursors.deletedExpressionItems ?? null,
     };
@@ -541,6 +568,7 @@ export class SyncService {
       chunkProgresses: chunkProgresses.length >= SyncService.PULL_PAGE_SIZE,
       practiceSessions: practiceSessions.length >= SyncService.PULL_PAGE_SIZE,
       practiceWarmupRecords: practiceWarmupRecords.length >= SyncService.PULL_PAGE_SIZE,
+      dailyPracticeRuns: dailyPracticeRuns.length >= SyncService.PULL_PAGE_SIZE,
       topicSessions: topicSessions.length >= SyncService.PULL_PAGE_SIZE,
       deletedExpressionItems: deletedExpressionItems.length >= SyncService.PULL_PAGE_SIZE,
     };
@@ -554,6 +582,7 @@ export class SyncService {
         chunkProgresses,
         practiceSessions,
         practiceWarmupRecords,
+        dailyPracticeRuns,
         topicSessions,
         // practiceTurns,
       },

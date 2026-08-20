@@ -1,4 +1,5 @@
 import { get, patch, post } from '@/lib/request'
+import { isCalendarDate, utcDateKey } from '@/lib/date/calendar-date'
 
 export interface ProfileOverview {
   userId: string
@@ -110,7 +111,7 @@ export const getActivityHeatmap = async (year?: number): Promise<ActivityDay[]> 
     const raw = Array.isArray(res) ? res : res?.activities ?? []
     const max = Math.max(1, ...raw.map((a) => a.count))
     return raw.map((a) => ({
-      date: typeof a.date === 'string' ? a.date : new Date(a.date).toISOString().slice(0, 10),
+      date: isCalendarDate(a.date) ? a.date : utcDateKey(a.date),
       count: a.count,
       level: (Math.min(4, Math.ceil((a.count / max) * 4)) as ActivityDay['level']),
       questionCount: a.questionCount ?? a.count,

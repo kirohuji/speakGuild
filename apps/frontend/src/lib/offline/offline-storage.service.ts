@@ -5,7 +5,6 @@ import type { InstalledLearningPack } from './learning-pack.service'
 import { learningPackService } from './learning-pack.service'
 import type { LocalAsset } from './asset-cache.service'
 import type { TableName } from './sqlite/schema'
-import { practiceRepository } from './practice.repository'
 import type { SyncOutboxItem } from './sync-outbox'
 import { warmupEmbeddingCacheRepository } from '@/lib/local-ai/warmup-embedding-cache.repository'
 
@@ -381,25 +380,13 @@ export const offlineStorageService = {
     }
 
     if (category === 'practice') {
-      await clearTables([
-        'user_progress',
-        'practice_records',
-        'warmup_records',
-        'warmup_record_entries',
-        'daily_activity',
-        'daily_progress',
-        'daily_practice_items',
-        'daily_practice_runs',
-        'daily_practice_attempts',
-      ])
-      await localDb.deleteWhere<SyncOutboxItem>('outbox', (item) => [
-        'practice_session',
-        'practice_turn',
-        'warmup_records',
-        'daily_practice',
-      ].includes(item.entityType))
-      await localDb.deleteWhere<any>('kv', (item) => String(item.id).startsWith('session-map:'))
-      await practiceRepository.markPracticeDataReset()
+      // Learning progress, Today runs, attempts, and records are user data—not cache.
+      // Never remove them from a storage-management action; doing so makes an
+      // in-progress 1/10 run depend on a fragile remote restore path.
+      await localDb.deleteWhere<any>('kv', (item) => {
+        const id = String(item.id)
+        return id.startsWith('session-map:')
+      })
       clearPracticeLocalStorageKeys()
       return
     }

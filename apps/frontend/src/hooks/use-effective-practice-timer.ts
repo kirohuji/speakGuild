@@ -1,14 +1,10 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { dailyPracticeApi } from '@/features/practice/api/english-practice-api'
 import { usePracticeActivityStore, type PracticeActivityScope } from '@/stores/practice-activity.store'
+import { localDateKey } from '@/lib/date/calendar-date'
 
 const IDLE_PAUSE_MS = 60_000
 const FLUSH_INTERVAL_MS = 30_000
-
-function localDateKey() {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-}
 
 /**
  * 只累计用户在前台且持续操作中的练习时间：无交互 60 秒或切到后台即暂停。

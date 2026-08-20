@@ -20,6 +20,7 @@ export interface PullResult {
     practiceSessions: any[]
     practiceTurns: any[]
     practiceWarmupRecords: any[]
+    dailyPracticeRuns: any[]
   }
   deleted: {
     expressionItems: string[]

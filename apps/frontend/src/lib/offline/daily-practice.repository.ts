@@ -8,7 +8,8 @@ import { learningRepository } from './learning.repository'
 import { practiceRepository } from './practice.repository'
 import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
-import { createId } from './utils'
+import { createId, toIsoString } from './utils'
+import { localDateKey, normalizeCalendarDate, utcDateKey } from '@/lib/date/calendar-date'
 import { scheduleReview, warmupScoreToReviewRating } from '@/lib/spaced-repetition'
 import type {
   AttemptHistoryEntry,
@@ -158,6 +159,11 @@ export type StoredDailyPracticeRun = {
   stats?: Record<string, unknown>
 }
 
+export type DailyPracticeRunSummary = {
+  attemptedCount: number
+  totalCount: number
+}
+
 type StoredActiveRunPointer = {
   id: string
   runId: string
@@ -188,16 +194,11 @@ async function setActivePracticePackId(packId: string) {
 }
 
 function todayKey() {
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = String(now.getMonth() + 1).padStart(2, '0')
-  const day = String(now.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+  return localDateKey()
 }
 
 function normalizePlanDate(date?: string | null) {
-  if (!date) return todayKey()
-  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : todayKey()
+  return normalizeCalendarDate(date, todayKey())
 }
 
 function practicedAtForDate(date: string) {
@@ -214,6 +215,65 @@ function activeRunPointerId(date: string, mode: DailyPracticePlanMode, scope: Da
 
 function runMatchesScope(run: StoredDailyPracticeRun, scope: DailyPracticeScope, ids: string[]) {
   return run.scope === scope && run.packIdsKey === packKey(ids)
+}
+
+/** Write one server run into the local shape used by the Today state machine. */
+export async function restoreRemoteDailyPracticeRun(item: any): Promise<void> {
+  const runId = typeof item?.clientRunId === 'string' ? item.clientRunId : ''
+  if (!runId || runId.startsWith('activity:')) return
+  const remoteUpdatedAt = toIsoString(item.updatedAt) ?? new Date().toISOString()
+  const local = await localDb.get<Partial<StoredDailyPracticeRun>>('daily_practice_runs', runId)
+  if (local?.updatedAt && local.updatedAt > remoteUpdatedAt && local.submissionStatus !== 'synced') return
+
+  const scheduledItemIds = Array.isArray(item.scheduledItemIds) ? item.scheduledItemIds : []
+  const packIds = Array.isArray(item.packIds) ? item.packIds : []
+  const date = toIsoString(item.date)?.slice(0, 10) ?? local?.date
+  if (!date) return
+  const mode: DailyPracticePlanMode = item.mode === 'review' ? 'review' : 'practice'
+  const scope: DailyPracticeScope = item.scope === 'mixed' ? 'mixed' : 'single'
+  const packIdsKey = packKey(packIds)
+  await localDb.put('daily_practice_runs', {
+    ...local,
+    id: runId,
+    date,
+    mode,
+    scope,
+    packIds,
+    packIdsKey,
+    scheduledItemIds,
+    completedItemIds: Array.isArray(item.completedItemIds) ? item.completedItemIds : [],
+    attemptedItemIds: Array.isArray(item.attemptedItemIds) ? item.attemptedItemIds : [],
+    unresolvedItemIds: Array.isArray(item.unresolvedItemIds) ? item.unresolvedItemIds : [],
+    srsAppliedItemIds: Array.isArray(item.srsAppliedItemIds) ? item.srsAppliedItemIds : [],
+    initialRecallResults: item.initialRecallResults ?? {},
+    continuationResults: item.continuationResults ?? {},
+    remediationResults: item.remediationResults ?? {},
+    attemptHistory: local?.attemptHistory ?? [],
+    dailyPracticeGoal: local?.dailyPracticeGoal ?? scheduledItemIds.length,
+    reviewBatchSize: local?.reviewBatchSize ?? scheduledItemIds.length,
+    configFingerprint: local?.configFingerprint ?? `remote:${runId}`,
+    createdAt: toIsoString(item.createdAt) ?? remoteUpdatedAt,
+    updatedAt: remoteUpdatedAt,
+    syncStatus: 'synced',
+    submissionStatus: item.submissionStatus ?? 'synced',
+    activityMarked: local?.activityMarked ?? false,
+    stats: item.stats ?? local?.stats ?? {},
+  } satisfies StoredDailyPracticeRun)
+
+  if (date && packIds.length > 0) {
+    if (scope === 'single' && packIds.length === 1) {
+      await localDb.put('daily_practice_runs', {
+        id: ACTIVE_DAILY_PRACTICE_PACK_ID,
+        packId: packIds[0],
+        updatedAt: remoteUpdatedAt,
+      } satisfies StoredActiveDailyPracticePack)
+    }
+    await localDb.put('daily_practice_runs', {
+      id: activeRunPointerId(date, mode, scope, packIds),
+      runId,
+      updatedAt: remoteUpdatedAt,
+    } satisfies StoredActiveRunPointer)
+  }
 }
 
 
@@ -351,7 +411,7 @@ function nextProgressForRating(progress: DailyPracticeProgress, rating: SrsRatin
   return {
     ...progress,
     status: schedule.status,
-    dueDate: schedule.dueAt.toISOString().slice(0, 10),
+    dueDate: utcDateKey(schedule.dueAt),
     lastPracticedAt: practicedAtForDate(date),
     bestScore: rank >= progress.bestScoreRank ? score : progress.bestScore,
     bestScoreRank: bestRank,
@@ -616,8 +676,7 @@ function shuffleWithinTrainingStages<T>(items: T[], getType: (item: T) => string
  * 此函数同时被 buildTodayPlan（旁路快速刷新）和 offlineSyncService.sync()（完整同步）调用，
  * 确保服务端进度最终收敛到本地。
  */
-export async function pullRemoteDailyProgress(itemIds: string[]): Promise<void> {
-  if (itemIds.length === 0) return
+export async function pullRemoteDailyProgress(itemIds?: string[]): Promise<void> {
   try {
     const remote = await dailyPracticeApi.progress(itemIds)
     const pendingAttempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
@@ -637,6 +696,26 @@ export async function pullRemoteDailyProgress(itemIds: string[]): Promise<void> 
 export const dailyPracticeRepository = {
   async getActivePracticePackId() {
     return getActivePracticePackId()
+  },
+
+  /**
+   * Read a mode-specific tab summary without rebuilding or switching the
+   * active plan. The Today page keeps one active plan at a time, so its tabs
+   * must never borrow counts from that active plan for the other mode.
+   */
+  async getRunSummary(date: string, mode: DailyPracticePlanMode): Promise<DailyPracticeRunSummary | null> {
+    const run = (await localDb.list<StoredDailyPracticeRun>('daily_practice_runs'))
+      .filter((item) => item.id !== ACTIVE_DAILY_PRACTICE_PACK_ID
+        && item.date === date
+        && item.mode === mode
+        && Array.isArray(item.scheduledItemIds)
+        && item.scheduledItemIds.length > 0)
+      .sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt))[0]
+    if (!run) return null
+    return {
+      attemptedCount: new Set(run.attemptedItemIds ?? []).size,
+      totalCount: run.scheduledItemIds.length,
+    }
   },
 
   async setActivePracticePackId(packId: string) {
@@ -664,7 +743,56 @@ export const dailyPracticeRepository = {
     // 新学始终沿当前学习包推进；跨学习包设置只扩大复习候选范围。
     const packScope: DailyPracticeScope =
       mode === 'review' && preferences.dailyPracticeMixedPacks ? 'mixed' : 'single'
-    const units = await this.resolveCandidateUnits(packScope, targetPackId)
+    let serverRunId: string | null = null
+    // Login recovery has a dedicated authoritative read.  It must run before
+    // plan generation: generic incremental sync is deliberately cache/cursor
+    // based and cannot be the only source after logout clears local storage.
+    if (!options.forceNew) {
+      try {
+        const response = await dailyPracticeApi.currentRun({
+          date,
+          mode,
+          scope: packScope,
+          packId: targetPackId,
+        })
+        if (response.run) {
+          await restoreRemoteDailyPracticeRun(response.run)
+          serverRunId = typeof response.run.clientRunId === 'string' ? response.run.clientRunId : null
+        }
+      } catch (error) {
+        // Offline is still supported: retain any locally persisted run and
+        // let the outbox reconcile it at the next successful sync.
+        console.debug('[daily-practice] current run recovery skipped:', (error as Error)?.message ?? error)
+      }
+    }
+    // A logout clears the local active-pack pointer. Recover the pack choice
+    // from today's unfinished run before resolving candidates; otherwise the
+    // default pack can create a fresh 0/N plan even though the server run was
+    // already restored locally.
+    const storedRuns = (await localDb.list<StoredDailyPracticeRun>('daily_practice_runs'))
+      .filter((run) => run.id !== ACTIVE_DAILY_PRACTICE_PACK_ID && Array.isArray(run.scheduledItemIds))
+    // The response from /daily-practice/run is the server's explicit answer to
+    // “which Today run is active”.  Prefer it over any local active pointer or
+    // historical run; those are only offline fallbacks.
+    const serverRun = serverRunId
+      ? storedRuns.find((run) => run.id === serverRunId) ?? null
+      : null
+    const resumableStoredRun = !options.forceNew && !targetPackId
+      ? storedRuns
+        .filter((run) => run.date === date
+          && run.mode === mode
+          && run.scope === packScope
+          && run.scheduledItemIds.length > 0
+          && (run.submissionStatus !== 'synced'
+            || run.attemptedItemIds.length < run.scheduledItemIds.length
+            || run.unresolvedItemIds.length > 0))
+        .sort((a, b) => (b.updatedAt ?? b.createdAt ?? b.date).localeCompare(a.updatedAt ?? a.createdAt ?? a.date))[0] ?? null
+      : null
+    const recoveredRun = serverRun ?? resumableStoredRun
+    const recoveredPackId = packScope === 'single' && recoveredRun?.packIds.length === 1
+      ? recoveredRun.packIds[0]
+      : null
+    const units = await this.resolveCandidateUnits(packScope, targetPackId ?? recoveredPackId)
     const candidates = units.flatMap(buildCandidates)
     const itemIds = candidates.map((candidate) => candidate.itemId)
     const packIds = units.map((unit) => unit.id)
@@ -708,8 +836,7 @@ export const dailyPracticeRepository = {
       return { candidate, progress, status: scheduleStatus(progress, date) }
     })
 
-    const allRuns = (await localDb.list<StoredDailyPracticeRun>('daily_practice_runs'))
-      .filter((run) => run.id !== ACTIVE_DAILY_PRACTICE_PACK_ID && Array.isArray(run.scheduledItemIds))
+    const allRuns = storedRuns
     const reviewAppliedToday = new Set(allRuns
       .filter((run) => run.mode === 'review' && run.date === date && runMatchesScope(run, packScope, packIds))
       .flatMap((run) => run.srsAppliedItemIds ?? []))
@@ -771,7 +898,11 @@ export const dailyPracticeRepository = {
           && run.scheduledItemIds.every((itemId) => candidateById.has(itemId)))
         .sort((a, b) => (b.updatedAt ?? b.createdAt ?? b.date).localeCompare(a.updatedAt ?? a.createdAt ?? a.date))[0] ?? null
       : null
-    const cachedRun = pointedRun?.scheduledItemIds.length ? pointedRun : fallbackRun
+    const cachedRun = serverRun?.scheduledItemIds.length
+      ? serverRun
+      : pointedRun?.scheduledItemIds.length
+        ? pointedRun
+        : fallbackRun
     // Active configuration is frozen. A settings change never invalidates the active run.
     const canReuseCachedRun = Boolean(cachedRun
       && cachedRun.date === date
@@ -1050,13 +1181,72 @@ export const dailyPracticeRepository = {
     }
   },
 
+  /**
+   * Persist an in-progress Today run without marking it complete. This makes
+   * logout, reinstall, and cache rebuild recoverable even before the final
+   * practice record is generated.
+   */
+  async syncRunSnapshot(plan: DailyPracticePlan, records: WarmupRecordEntry[] = [], localWarmupRecordId?: string | null) {
+    const run = await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', plan.runId)
+    if (!run) return
+    const unresolved = new Set(run.unresolvedItemIds)
+    const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
+    const pendingAttempts = attempts.filter((attempt) =>
+      attempt.runId === plan.runId
+      && attempt.syncStatus !== 'synced'
+      && attempt.applyStatus === 'applied',
+    )
+    const firstTopic = plan.topicStats.find((topic) => topic.scheduledTodayCount > 0) ?? plan.topicStats[0]
+    const scoreValues = records.map((record) => scoreRank(record.score)).filter((rank) => rank > 0)
+    const score = scoreValues.length > 0 ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length / 3 * 100) : null
+    const payload = {
+      run: {
+        id: plan.runId,
+        clientRunId: plan.runId,
+        date: plan.date,
+        mode: plan.mode,
+        scope: plan.scope,
+        packIds: plan.units.map((unit) => unit.id),
+        scheduledItemIds: plan.scheduledItemIds,
+        completedItemIds: run.attemptedItemIds.filter((id) => !unresolved.has(id)),
+        attemptedItemIds: run.attemptedItemIds,
+        unresolvedItemIds: run.unresolvedItemIds,
+        srsAppliedItemIds: run.srsAppliedItemIds,
+        initialRecallResults: run.initialRecallResults,
+        continuationResults: run.continuationResults,
+        remediationResults: run.remediationResults,
+        submissionStatus: run.submissionStatus,
+        stats: run.stats ?? {},
+      },
+      attempts: pendingAttempts,
+      // A partial run must retain its visible record too. Otherwise logout clears
+      // the local record while only the progress facts are recoverable remotely.
+      warmupRecord: records.length > 0 && firstTopic ? {
+        topicId: firstTopic.topicId,
+        topicTitle: firstTopic.topicTitle,
+        items: records,
+        score,
+        feedback: null,
+      } : undefined,
+      localWarmupRecordId: localWarmupRecordId ?? null,
+    }
+    // Today runs have exactly one transport: the per-run outbox entry.  Do not
+    // also send a direct request here.  The former dual path could submit two
+    // snapshots concurrently, and logout could race either request with local
+    // cleanup.  `enqueue` coalesces every newer snapshot for this run.
+    await syncOutbox.enqueue({
+      entityType: 'daily_practice',
+      entityId: plan.runId,
+      operation: 'update',
+      payload,
+    })
+  },
+
   async completeRun(plan: DailyPracticePlan, records: WarmupRecordEntry[], localWarmupRecordId?: string | null) {
     let run = await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', plan.runId)
     if (!run) throw new Error(`Today run not found: ${plan.runId}`)
     const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
     const pending = attempts.filter((attempt) => attempt.syncStatus !== 'synced' && attempt.runId === plan.runId && attempt.applyStatus === 'applied')
-    const progresses = await localDb.list<DailyPracticeProgress>('daily_practice_items')
-    const itemProgresses = progresses.filter((progress) => plan.scheduledItemIds.includes(progress.itemId))
     const unresolved = new Set(run.unresolvedItemIds)
     const completedIds = run.attemptedItemIds.filter((id) => !unresolved.has(id))
     const firstTopic = plan.topicStats.find((topic) => topic.scheduledTodayCount > 0) ?? plan.topicStats[0]
@@ -1117,31 +1307,20 @@ export const dailyPracticeRepository = {
       })
     }
 
-    try {
-      const result = await dailyPracticeApi.complete(payload)
-      await localDb.putMany('daily_practice_items', result.itemProgresses.map((item) => ({ ...item, id: item.itemId })))
-      if (localWarmupRecordId && records.length > 0) {
-        await practiceRepository.markWarmupRecordSynced(localWarmupRecordId, result.warmupRecordId)
-      }
-      await Promise.all(result.syncedAttempts.map(async (clientAttemptId) => {
-        const attempt = pending.find((item) => item.clientAttemptId === clientAttemptId)
-        if (attempt) await localDb.put('daily_practice_attempts', { ...attempt, syncStatus: 'synced' as const })
-      }))
-      await localDb.put('daily_practice_runs', {
-        ...run,
-        syncStatus: 'synced' as const,
-        submissionStatus: 'synced' as const,
-        updatedAt: new Date().toISOString(),
-      })
-      return result
-    } catch (error) {
-      await syncOutbox.enqueue({
-        entityType: 'daily_practice',
-        entityId: plan.runId,
-        operation: 'update',
-        payload,
-      })
-      throw error
-    }
+    // Completion is an optimistic local state transition.  It shares the same
+    // coalesced entry as in-progress snapshots, so the server always receives
+    // one newest version of the run and sign-out can wait for that one entry.
+    await syncOutbox.enqueue({
+      entityType: 'daily_practice',
+      entityId: plan.runId,
+      operation: 'update',
+      payload,
+    })
+    await localDb.put('daily_practice_runs', {
+      ...run,
+      syncStatus: 'pending' as const,
+      submissionStatus: 'synced' as const,
+      updatedAt: new Date().toISOString(),
+    })
   },
 }

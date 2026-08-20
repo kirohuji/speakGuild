@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
+import { localDateKey } from '@/lib/date/calendar-date'
 import { ActivityCalendar } from 'react-activity-calendar'
 import 'react-activity-calendar/tooltips.css'
 import {
@@ -152,7 +153,7 @@ function ActivityCalendarSection({
       const result: ActivityDay[] = []
       const date = new Date(year, 0, 1)
       while (date.getFullYear() === year) {
-        const d = date.toISOString().slice(0, 10)
+        const d = localDateKey(date)
         result.push({ date: d, count: 0, level: 0 })
         date.setDate(date.getDate() + 1)
       }

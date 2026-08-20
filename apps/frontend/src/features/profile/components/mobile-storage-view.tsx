@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
 import { IosRow, IosSection } from '@/features/profile/components/ios-components'
-import { offlineStorageService, type OfflineCacheCategory, type OfflineStorageDetails, type OfflineStorageStats } from '@/lib/offline'
+import { offlineStorageService, offlineSyncService, type OfflineCacheCategory, type OfflineStorageDetails, type OfflineStorageStats } from '@/lib/offline'
 import { useAuth } from '@/providers/auth-provider'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { isNative } from '@/lib/native'
@@ -136,7 +136,18 @@ export function MobileStorageView() {
   const handleClear = useCallback(async (category: OfflineCacheCategory) => {
     setClearing(category)
     try {
+      // Practice data is user history, not disposable cache. Push it before a local
+      // reset, then immediately rebuild the local projection from the server.
+      if (category === 'practice' && session?.user.id) {
+        const syncResult = await offlineSyncService.sync(session.user.id)
+        if (syncResult.push.failed > 0) {
+          throw new Error('仍有练习数据未同步，暂不能清理本地练习缓存')
+        }
+      }
       await offlineStorageService.clearCategory(category)
+      if (category === 'practice' && session?.user.id) {
+        await offlineSyncService.sync(session.user.id)
+      }
       if (category === 'packs' || category === 'all') {
         await syncPackStateAfterLocalChange()
       }
@@ -147,7 +158,7 @@ export function MobileStorageView() {
     } finally {
       setClearing(null)
     }
-  }, [refresh, syncPackStateAfterLocalChange, t])
+  }, [refresh, session?.user.id, syncPackStateAfterLocalChange, t])
 
   const handleClearPack = useCallback(async (packId: string) => {
     setDeletingPackId(packId)

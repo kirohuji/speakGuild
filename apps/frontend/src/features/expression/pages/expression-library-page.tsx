@@ -1,5 +1,6 @@
 import { forwardRef, useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { localDateKey } from '@/lib/date/calendar-date'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   BookMarked, Search, Trash2, BookOpen,
@@ -153,7 +154,7 @@ export function ExpressionLibraryPage() {
   const [exportItems, setExportItems] = useState<Expression[]>([])
   const [exportLoading, setExportLoading] = useState(false)
   const [shuffleExport, setShuffleExport] = useState(false)
-  const [exportDate, setExportDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [exportDate, setExportDate] = useState(() => localDateKey())
   const [exportColumns, setExportColumns] = useState<1 | 2>(2)
   const [handledDeepLink, setHandledDeepLink] = useState('')
   const tabSwipeRef = useRef({ x: 0, y: 0, blocked: false })
@@ -793,7 +794,7 @@ export function ExpressionLibraryPage() {
     const groups = new Map<string, { label: string; items: Array<{ expression: Expression; index: number }> }>()
     result.items.forEach((expression, index) => {
       const date = new Date(expression.createdAt)
-      const key = Number.isNaN(date.getTime()) ? 'unknown' : date.toISOString().slice(0, 10)
+      const key = Number.isNaN(date.getTime()) ? 'unknown' : localDateKey(date)
       const label = Number.isNaN(date.getTime()) ? t('expressionLib.unknownDate') : formatter.format(date)
       const group = groups.get(key) ?? { label, items: [] }
       group.items.push({ expression, index })

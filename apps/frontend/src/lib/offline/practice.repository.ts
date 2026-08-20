@@ -6,6 +6,7 @@ import {
 } from '@/features/practice/api/english-practice-api'
 import { getPracticeRecords, type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
 import { localDb } from './unified-storage'
+import { localDateKey, normalizeCalendarDate } from '@/lib/date/calendar-date'
 import { syncOutbox } from './sync-outbox'
 import type { WarmupRecordEntry } from '@/stores/warmup-session.store'
 import { deleteWarmupRecordEntries, upsertWarmupRecordEntries } from './warmup-record-index'
@@ -527,7 +528,7 @@ export const practiceRepository = {
 
   /** 标记今日练习活跃（用于打卡统计） */
   async markTodayActivity(count: number = 1, date?: string, sourceId?: string): Promise<void> {
-    const day = /^\d{4}-\d{2}-\d{2}$/.test(date ?? '') ? date! : new Date().toISOString().slice(0, 10)
+    const day = normalizeCalendarDate(date, localDateKey())
     const id = `daily:${day}`
     const existing = await localDb.get<{ count: number; legacyCount?: number; sources?: Record<string, number> }>('daily_activity', id)
     const sources = { ...(existing?.sources ?? {}) }
@@ -560,7 +561,7 @@ export const practiceRepository = {
 
   /** 获取今日练习进度（已完成步骤 ID 集合） */
   async getTodayProgress(): Promise<{ date: string; packId: string | null; doneIds: string[] } | null> {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = localDateKey()
     const record = await localDb.get<any>('daily_progress', `daily:${today}`)
     if (!record || record.date !== today) return null
     // doneIds 可能以 JSON 字符串形式存储
@@ -575,7 +576,7 @@ export const practiceRepository = {
 
   /** 保存今日练习进度 */
   async saveTodayProgress(packId: string | null, doneIds: string[]): Promise<void> {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = localDateKey()
     await localDb.put('daily_progress', {
       id: `daily:${today}`,
       date: today,

@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import type { CreateDailySentenceDto, UpdateDailySentenceDto } from './dto/daily-sentence.dto';
+import { addDateKeyDays, parseDateKey, todayDateKey, DEFAULT_CLIENT_TIME_ZONE } from '../../../common/calendar-date';
 
 @Injectable()
 export class DailySentenceService {
@@ -22,10 +23,8 @@ export class DailySentenceService {
 
   /** 获取今日句子 */
   async findToday() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const today = parseDateKey(todayDateKey(DEFAULT_CLIENT_TIME_ZONE))!;
+    const tomorrow = addDateKeyDays(today, 1);
 
     const item = await this.prisma.dailySentence.findFirst({
       where: {
@@ -48,10 +47,9 @@ export class DailySentenceService {
 
   /** 获取指定日期的句子 */
   async findByDate(dateStr: string) {
-    const date = new Date(dateStr);
-    date.setHours(0, 0, 0, 0);
-    const nextDay = new Date(date);
-    nextDay.setDate(nextDay.getDate() + 1);
+    const date = parseDateKey(dateStr);
+    if (!date) throw new BadRequestException('日期格式无效');
+    const nextDay = addDateKeyDays(date, 1);
 
     const item = await this.prisma.dailySentence.findFirst({
       where: {
@@ -66,8 +64,8 @@ export class DailySentenceService {
 
   /** 创建句子 */
   async create(dto: CreateDailySentenceDto) {
-    const date = new Date(dto.date);
-    date.setHours(0, 0, 0, 0);
+    const date = parseDateKey(dto.date);
+    if (!date) throw new BadRequestException('日期格式无效');
 
     return this.prisma.dailySentence.create({
       data: {
@@ -86,8 +84,9 @@ export class DailySentenceService {
 
     const data: any = { ...dto };
     if (dto.date) {
-      data.date = new Date(dto.date);
-      data.date.setHours(0, 0, 0, 0);
+      const date = parseDateKey(dto.date);
+      if (!date) throw new BadRequestException('日期格式无效');
+      data.date = date;
     }
 
     return this.prisma.dailySentence.update({

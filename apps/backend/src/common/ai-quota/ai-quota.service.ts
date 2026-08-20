@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { parseDateKey, todayDateKey, DEFAULT_CLIENT_TIME_ZONE } from '../calendar-date';
 
 interface QuotaCheckResult {
   allowed: boolean;
@@ -74,8 +75,7 @@ export class AiQuotaService {
     const quota = await this.getFreeQuota(type);
 
     // 4. 查今日用量
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = parseDateKey(todayDateKey(DEFAULT_CLIENT_TIME_ZONE))!;
 
     const usage = await this.prisma.aiUsageDaily.upsert({
       where: { userId_date: { userId, date: today } },
@@ -131,8 +131,7 @@ export class AiQuotaService {
     }
 
     // 扣积分 + 追加配额
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = parseDateKey(todayDateKey(DEFAULT_CLIENT_TIME_ZONE))!;
 
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
@@ -194,8 +193,7 @@ export class AiQuotaService {
       membership?.status === 'active' && membership.expiredAt > new Date();
     const effectiveLevel = isActive ? level : 'free';
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = parseDateKey(todayDateKey(DEFAULT_CLIENT_TIME_ZONE))!;
 
     const usage = await this.prisma.aiUsageDaily.findUnique({
       where: { userId_date: { userId, date: today } },
@@ -244,8 +242,7 @@ export class AiQuotaService {
   async recordTokens(userId: string, tokenCount: number) {
     if (!tokenCount || tokenCount <= 0) return
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const today = parseDateKey(todayDateKey(DEFAULT_CLIENT_TIME_ZONE))!
 
     try {
       await this.prisma.aiUsageDaily.upsert({

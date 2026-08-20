@@ -8,13 +8,23 @@ import { learningContentRepository } from './learning-content.repository'
 import { learningPackService } from './learning-pack.service'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { upsertWarmupRecordEntries } from './warmup-record-index'
-import { pullRemoteDailyProgress } from './daily-practice.repository'
+import { pullRemoteDailyProgress, restoreRemoteDailyPracticeRun } from './daily-practice.repository'
 import { toIsoString, errorMessage, resolveSessionId } from './utils'
 import { createLogger } from './logger'
 
 const logger = createLogger('offline-sync')
 
 const USER_SYNC_CURSOR_KEY = 'sync:user:cursor'
+
+export interface OfflineSyncResult {
+  push: { synced: number; failed: number; skipped: number; operations?: Record<string, number> }
+  pull: { cursor: string | null; changed: number; deleted: number } | null
+  refreshedPacks: string[]
+}
+
+// All callers must share one real sync promise. In particular, logout must wait
+// for an already-running foreground sync instead of treating it as a no-op.
+let activeSyncPromise: Promise<OfflineSyncResult> | null = null
 
 function userSyncCursorKey(userId?: string | null) {
   return userId ? `sync:user:${userId}:cursor` : USER_SYNC_CURSOR_KEY
@@ -199,6 +209,10 @@ async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
     await applyWarmupRecordItem(item)
   }
 
+  for (const item of changed?.dailyPracticeRuns ?? []) {
+    await restoreRemoteDailyPracticeRun(item)
+  }
+
   for (const session of changed?.topicSessions ?? []) {
     if (!session?.id) continue
     await localDb.put('topic_sessions', {
@@ -341,7 +355,8 @@ async function replayItem(
       await localDb.put('daily_practice_runs', {
         ...localRun,
         syncStatus: 'synced',
-        submissionStatus: 'synced',
+        // Snapshot replay acknowledges persistence, not completion.
+        submissionStatus: payload?.run?.submissionStatus === 'synced' ? 'synced' : localRun.submissionStatus,
         updatedAt: new Date().toISOString(),
       })
     }
@@ -471,7 +486,8 @@ export const offlineSyncService = {
         (result.changed.chunkProgresses?.length ?? 0) +
         (result.changed.practiceSessions?.length ?? 0) +
         (result.changed.practiceTurns?.length ?? 0) +
-        (result.changed.practiceWarmupRecords?.length ?? 0)
+        (result.changed.practiceWarmupRecords?.length ?? 0) +
+        (result.changed.dailyPracticeRuns?.length ?? 0)
       totalDeleted +=
         (result.deleted.expressionItems?.length ?? 0) +
         (result.deleted.sceneProgresses?.length ?? 0) +
@@ -504,63 +520,67 @@ export const offlineSyncService = {
     return { cursors: finalCursors, changed: totalChanged, deleted: totalDeleted }
   },
 
-  async sync(userId?: string | null): Promise<{
-    push: { synced: number; failed: number; skipped: number; operations?: Record<string, number> }
-    pull: { cursor: string | null; changed: number; deleted: number } | null
-    refreshedPacks: string[]
-  }> {
-    const syncStore = useOfflineSyncStore.getState()
-    if (syncStore.isSyncing) {
-      return {
-        push: { synced: 0, failed: 0, skipped: 0 },
-        pull: null,
-        refreshedPacks: [],
-      }
+  async sync(userId?: string | null): Promise<OfflineSyncResult> {
+    // A snapshot can be enqueued while a foreground sync is already pulling.
+    // Callers that need a durability barrier (notably sign-out) must therefore
+    // start a fresh pass after the in-flight pass completes, rather than merely
+    // sharing a promise whose flush phase may already have finished.
+    if (activeSyncPromise) {
+      await activeSyncPromise
+      return this.sync(userId)
     }
-
+    const syncStore = useOfflineSyncStore.getState()
     const logId = syncStore.begin('开始同步')
-    try {
-      const push = await this.flush()
-      if (push.failed > 0) {
-        const detail = { push, pull: null, refreshedPacks: [] as string[] }
-        toast.error(`同步失败：${push.failed} 条数据未上传，将在下次打开时重试`)
+    const running = (async (): Promise<OfflineSyncResult> => {
+      try {
+        const push = await this.flush()
+        if (push.failed > 0) {
+          const detail = { push, pull: null, refreshedPacks: [] as string[] }
+          toast.error(`同步失败：${push.failed} 条数据未上传，将在下次打开时重试`)
+          useOfflineSyncStore.getState().finish(logId, {
+            status: 'failed',
+            summary: `同步失败：${push.failed} 条未上传`,
+            detail,
+            error: `${push.failed} 条待同步操作上传失败，请展开存储管理查看具体队列项。`,
+          })
+          return detail
+        }
+        if (push.synced > 0) {
+          toast.success(`已同步 ${push.synced} 条离线数据`)
+        }
+        const pull = await this.pull(userId)
+
+        // 拉取今日任务 item 权威进度并收敛到本地（不覆盖有未同步 attempt 的项）
+        const localDailyItems = await localDb.list<{ itemId?: string; id: string }>('daily_practice_items')
+        const dailyItemIds = localDailyItems.map((item) => item.itemId ?? item.id).filter(Boolean)
+        await pullRemoteDailyProgress(dailyItemIds)
+
+        const refreshedPacks = await this.refreshContentUpdates()
+        if (refreshedPacks.length > 0) {
+          toast.success(`已更新 ${refreshedPacks.length} 个离线学习包`)
+        }
+
+        const result = { push, pull, refreshedPacks }
+        useOfflineSyncStore.getState().finish(logId, {
+          status: 'success',
+          summary: `同步完成：上传 ${push.synced}，拉取 ${pull.changed + pull.deleted}，更新学习包 ${refreshedPacks.length}`,
+          detail: result,
+        })
+        return result
+      } catch (error) {
         useOfflineSyncStore.getState().finish(logId, {
           status: 'failed',
-          summary: `同步失败：${push.failed} 条未上传`,
-          detail,
-          error: `${push.failed} 条待同步操作上传失败，请展开存储管理查看具体队列项。`,
+          summary: '同步失败',
+          error,
         })
-        return detail
+        throw error
       }
-      if (push.synced > 0) {
-        toast.success(`已同步 ${push.synced} 条离线数据`)
-      }
-      const pull = await this.pull(userId)
-
-      // 拉取今日任务 item 权威进度并收敛到本地（不覆盖有未同步 attempt 的项）
-      const localDailyItems = await localDb.list<{ itemId?: string; id: string }>('daily_practice_items')
-      const dailyItemIds = localDailyItems.map((item) => item.itemId ?? item.id).filter(Boolean)
-      await pullRemoteDailyProgress(dailyItemIds)
-
-      const refreshedPacks = await this.refreshContentUpdates()
-      if (refreshedPacks.length > 0) {
-        toast.success(`已更新 ${refreshedPacks.length} 个离线学习包`)
-      }
-
-      const result = { push, pull, refreshedPacks }
-      useOfflineSyncStore.getState().finish(logId, {
-        status: 'success',
-        summary: `同步完成：上传 ${push.synced}，拉取 ${pull.changed + pull.deleted}，更新学习包 ${refreshedPacks.length}`,
-        detail: result,
-      })
-      return result
-    } catch (error) {
-      useOfflineSyncStore.getState().finish(logId, {
-        status: 'failed',
-        summary: '同步失败',
-        error,
-      })
-      throw error
+    })()
+    activeSyncPromise = running
+    try {
+      return await running
+    } finally {
+      if (activeSyncPromise === running) activeSyncPromise = null
     }
   },
 

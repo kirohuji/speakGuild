@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { scheduleReview, warmupScoreToReviewRating } from '../../common/spaced-repetition';
+import { formatDateKey, parseDateKey } from '../../common/calendar-date';
 
 type WarmupScore = 'strong' | 'ok' | 'weak' | 'miss';
 
@@ -60,9 +61,15 @@ export function warmupScoreRank(score?: string | null) {
 }
 
 function startOfDate(value: string | Date) {
+  // Daily task dates are calendar keys supplied by the client (YYYY-MM-DD),
+  // not instants. Parsing them in the server timezone can shift the stored
+  // @db.Date backwards by one day, making a restored run disagree with its
+  // attempts and item progress. Keep date-only values in UTC end-to-end.
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return parseDateKey(value)!;
+  }
   const d = value instanceof Date ? new Date(value) : new Date(value);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
 function toDate(value?: string | null) {
@@ -72,6 +79,46 @@ function toDate(value?: string | null) {
 @Injectable()
 export class DailyPracticeService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getCurrentRun(userId: string, params: {
+    date: string;
+    mode?: 'practice' | 'review';
+    scope?: 'single' | 'mixed';
+    packId?: string;
+  }) {
+    const packId = String(params.packId ?? '').trim();
+    const run = await (this.prisma as any).userDailyPracticeRun.findFirst({
+      where: {
+        userId,
+        date: startOfDate(params.date),
+        mode: params.mode === 'review' ? 'review' : 'practice',
+        scope: params.scope === 'mixed' ? 'mixed' : 'single',
+        ...(packId ? { packIds: { has: packId } } : {}),
+        clientRunId: { not: { startsWith: 'activity:' } },
+      },
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        clientRunId: true,
+        date: true,
+        mode: true,
+        scope: true,
+        packIds: true,
+        scheduledItemIds: true,
+        completedItemIds: true,
+        attemptedItemIds: true,
+        unresolvedItemIds: true,
+        srsAppliedItemIds: true,
+        initialRecallResults: true,
+        continuationResults: true,
+        remediationResults: true,
+        submissionStatus: true,
+        stats: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    return { run };
+  }
 
   async getProgress(userId: string, itemIds?: string[]) {
     const where: any = { userId };
@@ -118,7 +165,7 @@ export class DailyPracticeService {
       await (this.prisma as any).userDailyPracticeRun.update({ where: { id: first.id }, data: { stats: { ...currentStats, activity } } });
     } else {
       await (this.prisma as any).userDailyPracticeRun.create({
-        data: { userId, date, clientRunId: `activity:${date.toISOString().slice(0, 10)}`, mode: 'practice', scope, packIds: [], scheduledItemIds: [], completedItemIds: [], stats: { ...currentStats, activity } },
+        data: { userId, date, clientRunId: `activity:${formatDateKey(date)}`, mode: 'practice', scope, packIds: [], scheduledItemIds: [], completedItemIds: [], stats: { ...currentStats, activity } },
       });
     }
     return { accepted: true };
@@ -152,27 +199,29 @@ export class DailyPracticeService {
       ...(body.run.stats ?? {}),
     };
     const runData = {
-        userId,
-        clientRunId,
-        date: startOfDate(body.run.date),
-        mode: body.run.mode ?? 'practice',
-        scope: body.run.scope,
-        packIds: body.run.packIds ?? [],
-        scheduledItemIds: body.run.scheduledItemIds ?? [],
-        completedItemIds: body.run.completedItemIds ?? [],
-        attemptedItemIds: body.run.attemptedItemIds ?? [],
-        unresolvedItemIds: body.run.unresolvedItemIds ?? [],
-        srsAppliedItemIds: body.run.srsAppliedItemIds ?? [],
-        initialRecallResults: body.run.initialRecallResults ?? {},
-        continuationResults: body.run.continuationResults ?? {},
-        remediationResults: body.run.remediationResults ?? {},
-        submissionStatus: body.run.submissionStatus ?? 'synced',
-        stats: mergedStats,
+      date: startOfDate(body.run.date),
+      mode: body.run.mode ?? 'practice',
+      scope: body.run.scope,
+      packIds: body.run.packIds ?? [],
+      scheduledItemIds: body.run.scheduledItemIds ?? [],
+      completedItemIds: body.run.completedItemIds ?? [],
+      attemptedItemIds: body.run.attemptedItemIds ?? [],
+      unresolvedItemIds: body.run.unresolvedItemIds ?? [],
+      srsAppliedItemIds: body.run.srsAppliedItemIds ?? [],
+      initialRecallResults: body.run.initialRecallResults ?? {},
+      continuationResults: body.run.continuationResults ?? {},
+      remediationResults: body.run.remediationResults ?? {},
+      submissionStatus: body.run.submissionStatus ?? 'synced',
+      stats: mergedStats,
     };
-    const existingLogicalRun = await (this.prisma as any).userDailyPracticeRun.findFirst({ where: { userId, clientRunId }, select: { id: true } });
-    const run = existingLogicalRun
-      ? await (this.prisma as any).userDailyPracticeRun.update({ where: { id: existingLogicalRun.id }, data: runData })
-      : await (this.prisma as any).userDailyPracticeRun.create({ data: runData });
+    // Snapshots can be emitted concurrently (attempt persistence + record
+    // persistence). A find-then-create sequence races here and loses the run.
+    // The composite unique key makes Prisma's upsert one atomic database action.
+    const run = await (this.prisma as any).userDailyPracticeRun.upsert({
+      where: { userId_clientRunId: { userId, clientRunId } },
+      create: { userId, clientRunId, ...runData },
+      update: runData,
+    });
 
     const attempts = [...(body.attempts ?? [])].sort((a, b) =>
       (toDate(a.practicedAt)?.getTime() ?? 0) - (toDate(b.practicedAt)?.getTime() ?? 0),
@@ -227,10 +276,12 @@ export class DailyPracticeService {
           feedback: body.warmupRecord.feedback ?? null,
           items: body.warmupRecord.items,
         };
-      const existingWarmup = await (this.prisma as any).practiceWarmupRecord.findUnique({ where: { clientRunId } });
-      warmupRecord = existingWarmup
-        ? await (this.prisma as any).practiceWarmupRecord.update({ where: { clientRunId }, data: warmupData })
-        : await (this.prisma as any).practiceWarmupRecord.create({ data: warmupData });
+      // Same idempotency rule as the run: parallel snapshots update one record.
+      warmupRecord = await (this.prisma as any).practiceWarmupRecord.upsert({
+        where: { clientRunId },
+        create: warmupData,
+        update: warmupData,
+      });
     }
 
     return {

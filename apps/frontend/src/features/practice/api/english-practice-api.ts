@@ -503,7 +503,10 @@ export interface RemoteDailyPracticeProgress {
 }
 
 export const dailyPracticeApi = {
-  progress: (itemIds: string[]) =>
+  currentRun: (params: { date: string; mode: 'practice' | 'review'; scope: 'single' | 'mixed'; packId?: string | null }) =>
+    get<{ run: any | null }>('/practice/daily-practice/run', params),
+
+  progress: (itemIds?: string[]) =>
     post<{ items: RemoteDailyPracticeProgress[] }>('/practice/daily-practice/progress', { itemIds }),
 
   complete: (payload: any) =>

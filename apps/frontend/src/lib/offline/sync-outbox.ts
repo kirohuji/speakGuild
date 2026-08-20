@@ -13,7 +13,7 @@ export type SyncEntityType =
   | 'topic_session'
   | 'topic_submission'
 
-export type SyncOperation = 'create' | 'update' | 'delete' | 'complete'
+export type SyncOperation = 'create' | 'update' | 'delete' | 'complete' | 'snapshot'
 
 export interface SyncOutboxItem<TPayload = unknown> {
   id: string

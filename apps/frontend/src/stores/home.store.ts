@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { localDateKey } from '@/lib/date/calendar-date'
 import { get } from '@/lib/request'
 import { pointsApi, type CheckInStatus } from '@/features/points/api'
 import { getSpecialNotifications, type SpecialNotification } from '@/features/notification/api'
@@ -20,8 +21,7 @@ const FALLBACK_SENTENCE: DailySentence = {
 
 /** 获取今天的日期字符串 YYYY-MM-DD，用于判断缓存是否过期 */
 function todayKey(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return localDateKey()
 }
 
 // ---- Store ----

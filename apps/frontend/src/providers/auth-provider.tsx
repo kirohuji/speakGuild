@@ -16,6 +16,7 @@ import { useLearningStore } from '@/stores/learning.store'
 
 const OTA_USER_ID_KEY = 'manyu-ota-user-id'
 const AUTH_SESSION_CACHE_KEY = 'manyu-auth-session-cache'
+const OFFLINE_DATA_OWNER_KEY = 'manyu-offline-data-owner'
 
 /**
  * App 前台同步 Hook
@@ -136,16 +137,42 @@ function setCurrentSessionSnapshot(session: SessionPayload) {
   currentSessionSnapshot = session
 }
 
-async function clearUserScopedClientData() {
+function getOfflineDataOwner() {
+  try {
+    return localStorage.getItem(OFFLINE_DATA_OWNER_KEY)
+  } catch {
+    return null
+  }
+}
+
+function setOfflineDataOwner(userId: string | null) {
+  try {
+    if (userId) localStorage.setItem(OFFLINE_DATA_OWNER_KEY, userId)
+    else localStorage.removeItem(OFFLINE_DATA_OWNER_KEY)
+  } catch {
+    // Private mode/storage errors must not interrupt authentication.
+  }
+}
+
+async function clearUserScopedClientData(options: { preservePersistentData?: boolean } = {}) {
   useDailyPracticeStore.getState().reset()
   useLearningStore.getState().resetUserState()
-  try {
-    await offlineStorageService.clearUserData()
-  } catch (error) {
-    console.warn('[auth] clear user offline data failed:', error)
+  if (!options.preservePersistentData) {
+    try {
+      await offlineStorageService.clearUserData()
+    } catch (error) {
+      console.warn('[auth] clear user offline data failed:', error)
+    }
   }
   useOfflineSyncStore.getState().reset()
   useSearchStore.getState().clearHistory()
+}
+
+async function prepareOfflineDataForUser(userId: string) {
+  const ownerId = getOfflineDataOwner()
+  // Data retained after an expired session may only be reused by the same account.
+  if (ownerId && ownerId !== userId) await clearUserScopedClientData()
+  setOfflineDataOwner(userId)
 }
 
 function normalizeSessionResponse(raw: unknown): SessionPayload {
@@ -189,12 +216,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // so we can clear session and let AuthRouteGate redirect to login
   useEffect(() => {
     const handleUnauthorized = () => {
+      const ownerId = session?.user.id ?? getOfflineDataOwner()
+      if (ownerId) setOfflineDataOwner(ownerId)
       setCurrentSessionSnapshot(null)
       writeCachedSession(null)
       localStorage.removeItem(OTA_USER_ID_KEY)
       setSession(null)
       useUserStore.getState().reset()
-      void clearUserScopedClientData()
+      // The token is no longer usable, so an upload cannot be guaranteed here.
+      // Keep the user-owned local journal for the same account to resume
+      // after re-authentication; a different account clears it before loading.
+      void clearUserScopedClientData({ preservePersistentData: true })
     }
     window.addEventListener('auth:unauthorized', handleUnauthorized)
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized)
@@ -213,6 +245,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const raw = await authClient.getSession()
       const nextSession = normalizeSessionResponse(raw)
+      if (nextSession?.user?.id) {
+        await prepareOfflineDataForUser(nextSession.user.id)
+        // Restore the server copy before exposing an authenticated session. Without
+        // this barrier, TodayTaskPage can create a new empty 10-item run before
+        // the interrupted run from the previous login has been pulled.
+        await offlineSyncService.sync(nextSession.user.id).catch((error) => {
+          console.warn('[auth] initial offline restore failed; retained local data:', error)
+        })
+      }
       setCurrentSessionSnapshot(nextSession)
       setSession(nextSession)
       writeCachedSession(nextSession)
@@ -230,6 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       const cached = options.allowCacheFallback === false ? null : readCachedSession()
       if (cached?.user?.id) {
+        await prepareOfflineDataForUser(cached.user.id)
         setCurrentSessionSnapshot(cached)
         setSession(cached)
         localStorage.setItem(OTA_USER_ID_KEY, cached.user.id)
@@ -331,6 +373,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    // User-scoped local storage is removed on logout. Do not make logout a
+    // destructive path for an interrupted Today run or any queued practice data.
+    if (session?.user.id) {
+      const syncResult = await offlineSyncService.sync(session.user.id)
+      if (syncResult.push.failed > 0) {
+        throw new Error('练习数据尚未同步，请联网后再退出登录')
+      }
+    }
     await authClient.signOut().catch((error) => {
       console.warn('[auth] signOut request failed, clearing local session anyway:', error)
     })
@@ -340,6 +390,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
     }
     await clearUserScopedClientData()
+    setOfflineDataOwner(null)
     clearBearerToken()
     useUserStore.getState().reset()
     localStorage.removeItem(OTA_USER_ID_KEY)

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { PaginationDto, toPageResult } from '../../common/dto/pagination.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
+import { addDateKeyDays, formatDateKey, parseDateKey, todayDateKey, DEFAULT_CLIENT_TIME_ZONE } from '../../common/calendar-date';
 
 @Injectable()
 export class ProfileService {
@@ -137,25 +138,14 @@ export class ProfileService {
   private calculateStreak(activities: { date: Date; count: number }[]): number {
     if (activities.length === 0) return 0;
 
-    const dates = activities.map((a) => {
-      const d = new Date(a.date);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    });
-
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const dates = new Set(activities.map((activity) => formatDateKey(activity.date)));
 
     let streak = 0;
-    let currentDate = new Date(today);
+    let currentDate = parseDateKey(todayDateKey(DEFAULT_CLIENT_TIME_ZONE))!;
 
-    while (true) {
-      const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
-      if (dates.includes(dateStr)) {
+    while (dates.has(formatDateKey(currentDate))) {
         streak++;
-        currentDate.setDate(currentDate.getDate() - 1);
-      } else {
-        break;
-      }
+        currentDate = addDateKeyDays(currentDate, -1);
     }
 
     return streak;
@@ -165,8 +155,8 @@ export class ProfileService {
     const targetYear = Number.isInteger(year) && year! >= 2020 && year! <= new Date().getFullYear()
       ? year!
       : new Date().getFullYear();
-    const start = new Date(targetYear, 0, 1);
-    const end = new Date(targetYear + 1, 0, 1);
+    const start = parseDateKey(`${targetYear}-01-01`)!;
+    const end = parseDateKey(`${targetYear + 1}-01-01`)!;
     const [activities, runs] = await Promise.all([
       this.prisma.dailyActivity.findMany({
       where: {
@@ -183,11 +173,11 @@ export class ProfileService {
 
     const byDate = new Map<string, { count: number; questionCount: number; activeSeconds: number }>();
     for (const activity of activities) {
-      const key = activity.date.toISOString().slice(0, 10);
+      const key = formatDateKey(activity.date);
       byDate.set(key, { count: activity.count, questionCount: activity.count, activeSeconds: 0 });
     }
     for (const run of runs) {
-      const key = run.date.toISOString().slice(0, 10);
+      const key = formatDateKey(run.date);
       const stats = run.stats && typeof run.stats === 'object' && !Array.isArray(run.stats) ? run.stats : {};
       const sources = stats.activity && typeof stats.activity === 'object' && !Array.isArray(stats.activity) ? Object.values(stats.activity) as any[] : [];
       const dialogueQuestions = sources.filter((item) => item?.scope === 'dialogue').reduce((total, item) => total + Math.max(0, Number(item?.questionCount) || 0), 0);
