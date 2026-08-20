@@ -37,9 +37,23 @@ export interface WarmupRecordEntry {
   usedHintLevel?: 0 | 1 | 2 | 3
   retryCount?: number
   correction?: string
+  /** Whether the learner explicitly chose “我不会”. */
+  skipped?: boolean
   initialRecallResult?: InitialRecallResult
   continuationResult?: ContinuationResult
   remediationResult?: RemediationResult
+}
+
+/** One canonical projection for every read-only rendering of a saved answer. */
+export function toWarmupReviewData(record: Partial<Pick<WarmupRecordEntry, 'userAnswer' | 'passed' | 'feedback' | 'correction' | 'audioUrl' | 'skipped'>>) {
+  return {
+    userAnswer: record.userAnswer || '',
+    passed: Boolean(record.passed),
+    feedback: record.feedback || '',
+    correction: record.correction,
+    audioUrl: record.audioUrl,
+    skipped: record.skipped === true || record.feedback === '我不会/跳过',
+  }
 }
 
 interface WarmupSessionState {
@@ -161,7 +175,7 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
         feedback: record.feedback,
         correction: record.correction || '',
         score: record.score ?? (record.passed ? 'strong' : 'miss'),
-        skipped: record.feedback === '我不会/跳过',
+        skipped: record.skipped === true || record.feedback === '我不会/跳过',
         retrievalFailed: !record.passed,
         answerRevealed: usedHintLevel >= 3,
         retryCount: record.retryCount ?? (record.passed ? 0 : 1),

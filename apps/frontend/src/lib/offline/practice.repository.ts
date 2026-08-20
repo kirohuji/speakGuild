@@ -433,6 +433,7 @@ export const practiceRepository = {
     topicTitle?: string | null
     items: WarmupRecordEntry[]
     createdAt?: string
+    practicedDate?: string
     syncStatus?: 'pending' | 'synced'
   }) {
     const existing = await localDb.get<any>('warmup_records', params.id).catch(() => null)
@@ -445,6 +446,7 @@ export const practiceRepository = {
       remoteId: existing?.remoteId ?? null,
       createdAt: existing?.createdAt ?? params.createdAt ?? now,
       updatedAt: now,
+      practicedDate: normalizeCalendarDate(params.practicedDate, existing?.practicedDate ?? localDateKey()),
       syncStatus: params.syncStatus ?? existing?.syncStatus ?? 'pending',
     }
     await localDb.put('warmup_records', nextRecord)
@@ -485,9 +487,32 @@ export const practiceRepository = {
 
   async getWarmupEntriesByDate(date: string): Promise<WarmupRecordEntry[]> {
     const entries = await localDb.findByIndex<any>('warmup_record_entries', 'practiced_date', date)
-    return entries
-      .sort((a, b) => String(a.recordUpdatedAt ?? '').localeCompare(String(b.recordUpdatedAt ?? '')))
-      .map((entry) => entry.record as WarmupRecordEntry)
+    if (entries.length > 0) {
+      return entries
+        .sort((a, b) => String(a.recordUpdatedAt ?? '').localeCompare(String(b.recordUpdatedAt ?? '')))
+        .map((entry) => entry.record as WarmupRecordEntry)
+    }
+
+    // Repair existing indexes created with the old UTC-slice rule on first
+    // read. This makes records already on a user's device available without
+    // requiring a cache rebuild.
+    const legacyRecords = await localDb.list<any>('warmup_records')
+    const matchingRecords = legacyRecords.filter((record) => {
+      if (!Array.isArray(record?.items) || record.items.length === 0) return false
+      const recordDate = normalizeCalendarDate(
+        record.practicedDate,
+        localDateKey(new Date(record.updatedAt ?? record.createdAt ?? Date.now())),
+      )
+      return recordDate === date
+    })
+    if (matchingRecords.length === 0) return []
+    await Promise.all(matchingRecords.map((record) => upsertWarmupRecordEntries({
+      ...record,
+      practicedDate: date,
+    })))
+    return matchingRecords
+      .sort((a, b) => String(a.updatedAt ?? a.createdAt ?? '').localeCompare(String(b.updatedAt ?? b.createdAt ?? '')))
+      .flatMap((record) => record.items as WarmupRecordEntry[])
   },
 
   async getLatestWarmupEntriesByStepIds(stepIds: string[], excludeRecordId?: string | null): Promise<WarmupRecordEntry[]> {

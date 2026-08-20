@@ -26,7 +26,7 @@ interface DailyPracticeState {
   loadToday: (targetPackId?: string | null, targetDate?: string | null, mode?: DailyPracticePlanMode, forceNew?: boolean) => Promise<void>
   recordAttempt: (step: ScheduledDailyPracticeItem, outcome: AttemptOutcome, assistance: AssistanceLevel) => Promise<void>
   recordRehearsalAttempt: (stepId: string, outcome: AttemptOutcome, assistance: AssistanceLevel) => Promise<void>
-  openMainSession: (startStepId?: string | null) => void
+  openMainSession: (startStepId?: string | null, options?: { stepIds?: string[]; includeAttempted?: boolean }) => void
   startMistakeRetry: () => void
   setCurrentStep: (stepId: string | null) => void
   closeSession: () => void
@@ -74,6 +74,12 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
       let plan = await dailyPracticeRepository.buildTodayPlan(targetPackId, targetDate, mode, { forceNew })
       const facts = await dailyPracticeRepository.getRunFacts(plan.runId).catch(() => null)
       useTodayPracticeStore.getState().dispatch({ type: 'RUN_LOADED', run: facts ?? emptyFacts(plan) })
+      // Server recovery can restore an in-progress run from an earlier app
+      // version where only the run snapshot existed. Re-enqueueing here makes
+      // its derived per-question record durable as well.
+      if (facts?.attemptedItemIds.length) {
+        await dailyPracticeRepository.syncRunSnapshot(plan)
+      }
       for (const step of plan.steps) {
         const machine = useTodayPracticeStore.getState()
         if (machine.srsAppliedIds.has(step.itemId)) continue
@@ -133,7 +139,11 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
         }) : state)
       }
       // Keep the server copy resumable even before the final submission.
-      await get().syncRunSnapshot().catch(() => undefined)
+      const activePlan = get().plan
+      await get().syncRunSnapshot(
+        useWarmupSessionStore.getState().records,
+        activePlan ? `today-warmup:${activePlan.runId}` : null,
+      ).catch(() => undefined)
     })
     return attemptChain
   },
@@ -143,10 +153,11 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
     await persistCurrentFacts().catch(() => undefined)
   },
 
-  openMainSession(startStepId) {
+  openMainSession(startStepId, options) {
     const state = useTodayPracticeStore.getState()
-    const candidates = state.roundStepIds.filter((id) => !state.attemptedIds.has(id))
-    const stepIds = candidates.length > 0 ? candidates : [...state.roundStepIds]
+    const scopedIds = options?.stepIds ?? state.roundStepIds
+    const candidates = scopedIds.filter((id) => !state.attemptedIds.has(id))
+    const stepIds = options?.includeAttempted ? [...scopedIds] : (candidates.length > 0 ? candidates : [...scopedIds])
     const first = startStepId && stepIds.includes(startStepId) ? startStepId : (stepIds[0] ?? null)
     state.dispatch({ type: 'MAIN_SESSION_OPENED', stepIds, startStepId: first })
     void persistCurrentFacts().catch(() => undefined)

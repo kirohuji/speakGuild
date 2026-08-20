@@ -1,4 +1,5 @@
 import type { WarmupRecordEntry } from '@/stores/warmup-session.store'
+import { localDateKey, normalizeCalendarDate } from '@/lib/date/calendar-date'
 import { localDb } from './unified-storage'
 
 interface WarmupRecordForIndex {
@@ -8,6 +9,8 @@ interface WarmupRecordForIndex {
   items?: WarmupRecordEntry[]
   createdAt?: string | null
   updatedAt?: string | null
+  /** Business date for a scheduled Today run; never infer it from UTC. */
+  practicedDate?: string | null
 }
 
 function safeEntryId(recordId: string, stepId: string, index: number) {
@@ -20,7 +23,12 @@ export async function upsertWarmupRecordEntries(record: WarmupRecordForIndex): P
   if (items.length === 0) return
 
   const recordUpdatedAt = record.updatedAt ?? record.createdAt ?? new Date().toISOString()
-  const practicedDate = recordUpdatedAt.slice(0, 10)
+  // `updatedAt` is an ISO/UTC timestamp.  Slicing it shifts records created
+  // after midnight in Asia/Shanghai into the previous business day.
+  const practicedDate = normalizeCalendarDate(
+    record.practicedDate,
+    localDateKey(new Date(recordUpdatedAt)),
+  )
   await localDb.putMany('warmup_record_entries', items.map((item, index) => ({
     id: safeEntryId(record.id, item.stepId, index),
     recordId: record.id,

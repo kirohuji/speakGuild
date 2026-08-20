@@ -431,6 +431,92 @@ function nextProgress(progress: DailyPracticeProgress, score: WarmupScore, date:
   return nextProgressForRating(progress, warmupScoreToReviewRating(score) as SrsRating, date)
 }
 
+function averageWarmupScore(records: WarmupRecordEntry[]): number | null {
+  const values = records.map((record) => scoreRank(record.score)).filter((rank) => rank > 0)
+  return values.length > 0
+    ? Math.round(values.reduce((sum, rank) => sum + rank, 0) / values.length / 3 * 100)
+    : null
+}
+
+/**
+ * The run is the source of truth for a submitted answer. UI cards also write
+ * a richer warmup record, but that write happens after an attempt callback and
+ * may lose a race with logout. Build a recoverable display record directly
+ * from the run whenever the richer record has not arrived yet.
+ */
+function fallbackWarmupRecords(plan: DailyPracticePlan, run: StoredDailyPracticeRun): WarmupRecordEntry[] {
+  const attempted = new Set(run.attemptedItemIds)
+  const unresolved = new Set(run.unresolvedItemIds)
+  return plan.steps.flatMap((step) => {
+    if (!attempted.has(step.itemId)) return []
+    const initial = run.initialRecallResults[step.itemId]
+    const prompt = step.prompt ?? {}
+    const item = step.item ?? {}
+    const passed = !unresolved.has(step.itemId)
+    return [{
+      stepId: step.itemId,
+      stepType: step.type,
+      zh: prompt.zh ?? prompt.promptZh ?? prompt.en ?? step.headerContent ?? step.label,
+      answer: prompt.answer ?? prompt.suggestedAnswer ?? item.fullSentence ?? '',
+      userAnswer: '',
+      passed,
+      feedback: passed ? '' : '答错，待重练',
+      groupTitle: step.label,
+      displayLabel: step.displayLabel,
+      topicTitle: step.topicTitle,
+      score: initial?.score ?? (passed ? 'ok' : 'miss'),
+    } satisfies WarmupRecordEntry]
+  })
+}
+
+/** Build the one payload shape used for both partial snapshots and completion. */
+function createTodayRunSyncPayload(params: {
+  plan: DailyPracticePlan
+  run: StoredDailyPracticeRun
+  attempts: DailyPracticeAttempt[]
+  records: WarmupRecordEntry[]
+  localWarmupRecordId?: string | null
+  submissionStatus: SubmissionStatus
+  stats: Record<string, unknown>
+}) {
+  const unresolved = new Set(params.run.unresolvedItemIds)
+  const completedItemIds = params.run.attemptedItemIds.filter((id) => !unresolved.has(id))
+  const recordsByStepId = new Map(fallbackWarmupRecords(params.plan, params.run).map((record) => [record.stepId, record]))
+  for (const record of params.records) recordsByStepId.set(record.stepId, record)
+  const records = [...recordsByStepId.values()]
+  const firstTopic = params.plan.topicStats.find((topic) => topic.scheduledTodayCount > 0) ?? params.plan.topicStats[0]
+  const score = averageWarmupScore(records)
+  return {
+    run: {
+      id: params.plan.runId,
+      clientRunId: params.plan.runId,
+      date: params.plan.date,
+      mode: params.plan.mode,
+      scope: params.plan.scope,
+      packIds: params.plan.units.map((unit) => unit.id),
+      scheduledItemIds: params.plan.scheduledItemIds,
+      completedItemIds,
+      attemptedItemIds: params.run.attemptedItemIds,
+      unresolvedItemIds: params.run.unresolvedItemIds,
+      srsAppliedItemIds: params.run.srsAppliedItemIds,
+      initialRecallResults: params.run.initialRecallResults,
+      continuationResults: params.run.continuationResults,
+      remediationResults: params.run.remediationResults,
+      submissionStatus: params.submissionStatus,
+      stats: params.stats,
+    },
+    attempts: params.attempts,
+    warmupRecord: records.length > 0 && firstTopic ? {
+      topicId: firstTopic.topicId,
+      topicTitle: firstTopic.topicTitle,
+      items: records,
+      score,
+      feedback: null,
+    } : undefined,
+    localWarmupRecordId: params.localWarmupRecordId ?? null,
+  }
+}
+
 function buildCandidates(unit: UnitDetail): DailyPracticeCandidate[] {
   const candidates: DailyPracticeCandidate[] = []
   for (const topic of unit.trainingTopics ?? []) {
@@ -1189,46 +1275,28 @@ export const dailyPracticeRepository = {
   async syncRunSnapshot(plan: DailyPracticePlan, records: WarmupRecordEntry[] = [], localWarmupRecordId?: string | null) {
     const run = await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', plan.runId)
     if (!run) return
-    const unresolved = new Set(run.unresolvedItemIds)
+    // A record must travel with the very same snapshot that preserves the
+    // answer.  Waiting for the Today page's render effect leaves a window in
+    // which sign-out can upload the run but clear the local display record.
+    const resolvedLocalWarmupRecordId = localWarmupRecordId ?? `today-warmup:${plan.runId}`
     const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
     const pendingAttempts = attempts.filter((attempt) =>
       attempt.runId === plan.runId
       && attempt.syncStatus !== 'synced'
       && attempt.applyStatus === 'applied',
     )
-    const firstTopic = plan.topicStats.find((topic) => topic.scheduledTodayCount > 0) ?? plan.topicStats[0]
-    const scoreValues = records.map((record) => scoreRank(record.score)).filter((rank) => rank > 0)
-    const score = scoreValues.length > 0 ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length / 3 * 100) : null
-    const payload = {
-      run: {
-        id: plan.runId,
-        clientRunId: plan.runId,
-        date: plan.date,
-        mode: plan.mode,
-        scope: plan.scope,
-        packIds: plan.units.map((unit) => unit.id),
-        scheduledItemIds: plan.scheduledItemIds,
-        completedItemIds: run.attemptedItemIds.filter((id) => !unresolved.has(id)),
-        attemptedItemIds: run.attemptedItemIds,
-        unresolvedItemIds: run.unresolvedItemIds,
-        srsAppliedItemIds: run.srsAppliedItemIds,
-        initialRecallResults: run.initialRecallResults,
-        continuationResults: run.continuationResults,
-        remediationResults: run.remediationResults,
-        submissionStatus: run.submissionStatus,
-        stats: run.stats ?? {},
-      },
-      attempts: pendingAttempts,
-      // A partial run must retain its visible record too. Otherwise logout clears
-      // the local record while only the progress facts are recoverable remotely.
-      warmupRecord: records.length > 0 && firstTopic ? {
-        topicId: firstTopic.topicId,
-        topicTitle: firstTopic.topicTitle,
-        items: records,
-        score,
-        feedback: null,
-      } : undefined,
-      localWarmupRecordId: localWarmupRecordId ?? null,
+    const payload = createTodayRunSyncPayload({
+      plan, run, attempts: pendingAttempts, records, localWarmupRecordId: resolvedLocalWarmupRecordId,
+      submissionStatus: run.submissionStatus, stats: run.stats ?? {},
+    })
+    if (payload.warmupRecord) {
+      await practiceRepository.upsertLocalWarmupRecord({
+        id: resolvedLocalWarmupRecordId,
+        topicId: payload.warmupRecord.topicId,
+        topicTitle: payload.warmupRecord.topicTitle,
+        items: payload.warmupRecord.items,
+        syncStatus: 'pending',
+      })
     }
     // Today runs have exactly one transport: the per-run outbox entry.  Do not
     // also send a direct request here.  The former dual path could submit two
@@ -1247,56 +1315,28 @@ export const dailyPracticeRepository = {
     if (!run) throw new Error(`Today run not found: ${plan.runId}`)
     const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
     const pending = attempts.filter((attempt) => attempt.syncStatus !== 'synced' && attempt.runId === plan.runId && attempt.applyStatus === 'applied')
-    const unresolved = new Set(run.unresolvedItemIds)
-    const completedIds = run.attemptedItemIds.filter((id) => !unresolved.has(id))
-    const firstTopic = plan.topicStats.find((topic) => topic.scheduledTodayCount > 0) ?? plan.topicStats[0]
-    const scoreValues = records.map((record) => scoreRank(record.score)).filter((rank) => rank > 0)
-    const score = scoreValues.length > 0 ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length / 3 * 100) : null
-    const payload = {
-      run: {
-        id: plan.runId,
-        clientRunId: plan.runId,
-        date: plan.date,
-        mode: plan.mode,
-        scope: plan.scope,
-        packIds: plan.units.map((unit) => unit.id),
-        scheduledItemIds: plan.scheduledItemIds,
-        completedItemIds: completedIds,
+    const completedIds = run.attemptedItemIds.filter((id) => !run.unresolvedItemIds.includes(id))
+    const payload = createTodayRunSyncPayload({
+      plan, run, attempts: pending, records, localWarmupRecordId,
+      submissionStatus: 'synced',
+      stats: {
+        records: records.length,
+        completed: completedIds.length,
         attemptedItemIds: run.attemptedItemIds,
         unresolvedItemIds: run.unresolvedItemIds,
         srsAppliedItemIds: run.srsAppliedItemIds,
         initialRecallResults: run.initialRecallResults,
         continuationResults: run.continuationResults,
         remediationResults: run.remediationResults,
-        submissionStatus: 'synced',
-        stats: {
-          records: records.length,
-          completed: completedIds.length,
-          attemptedItemIds: run.attemptedItemIds,
-          unresolvedItemIds: run.unresolvedItemIds,
-          srsAppliedItemIds: run.srsAppliedItemIds,
-          initialRecallResults: run.initialRecallResults,
-          continuationResults: run.continuationResults,
-          remediationResults: run.remediationResults,
-        },
       },
-      attempts: pending,
-      warmupRecord: records.length > 0 && firstTopic ? {
-        topicId: firstTopic.topicId,
-        topicTitle: firstTopic.topicTitle,
-        items: records,
-        score,
-        feedback: null,
-      } : undefined,
-      // 供离线重放时回写本地 warmup 记录（markWarmupRecordSynced）
-      localWarmupRecordId: localWarmupRecordId ?? null,
-    }
+    })
 
     if (!run.activityMarked) {
       await practiceRepository.markTodayActivity(completedIds.length || records.length || 1, plan.date, plan.runId)
       run = { ...run, activityMarked: true, updatedAt: new Date().toISOString() }
       await localDb.put('daily_practice_runs', run)
     }
+    const firstTopic = plan.topicStats.find((topic) => topic.scheduledTodayCount > 0) ?? plan.topicStats[0]
     if (localWarmupRecordId && records.length > 0 && firstTopic) {
       await practiceRepository.upsertLocalWarmupRecord({
         id: localWarmupRecordId,

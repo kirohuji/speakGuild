@@ -35,6 +35,7 @@ interface PatternDrillCardProps {
     feedback: string
     correction?: string
     audioUrl?: string | null
+    skipped?: boolean
   } | null
 }
 
@@ -125,9 +126,9 @@ export function PatternDrillCard({
     setFeedback(t('practiceSession.warmupDrill.skippedHint'))
     setCorrection(correctionText)
     onComplete?.(currentIdx, false, 'miss')
+    store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: t('practiceSession.warmupDrill.skippedHint'), correction: correctionText, hintLevel: 'answer', score: 'miss', skipped: true })
+    store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: t('practiceSession.warmupDrill.skippedHint'), groupTitle, displayLabel: t('todayTask.patternDrill'), score: 'miss', usedHintLevel: 3, correction: correctionText, skipped: true })
     onAttempt?.({ stepId, outcome: 'dontKnow', assistance: hintLevel === 'none' ? 'none' : 'hint', purpose: rehearsalRef.current ? 'rehearsal' : 'scheduled' })
-    store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss', skipped: true })
-    store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, displayLabel: t('todayTask.patternDrill'), score: 'miss', usedHintLevel: 3, correction: correctionText })
   }, [current, currentIdx, expectedAnswer, groupTitle, hintLevel, onAttempt, onComplete, promptText, skipped, status, stepId, store, t, userInput])
 
   const retryCurrent = useCallback(() => {
@@ -163,17 +164,17 @@ export function PatternDrillCard({
         setFeedback(judgement.feedback || t('practiceSession.warmupDrill.correct'))
         setHintLevel('answer')
         onComplete?.(currentIdx, true, score)
+        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || t('practiceSession.warmupDrill.correct'), hintLevel, score })
+        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || t('practiceSession.warmupDrill.correct'), groupTitle, displayLabel: t('todayTask.patternDrill'), score, usedHintLevel: hintLevelValue(hintLevel) })
         onAttempt?.({ stepId, outcome: 'correct', assistance: hintLevel === 'none' ? 'none' : 'hint', purpose: rehearsalRef.current ? 'rehearsal' : 'scheduled' })
-        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', hintLevel, score })
-        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle, displayLabel: t('todayTask.patternDrill'), score, usedHintLevel: hintLevelValue(hintLevel) })
       } else {
         setStatus('failed')
         setFeedback(t('practiceSession.tryAgain'))
         setCorrection(judgement.correction || expectedAnswer || '')
         onComplete?.(currentIdx, false, 'miss')
-        onAttempt?.({ stepId, outcome: 'incorrect', assistance: hintLevel === 'none' ? 'none' : 'hint', purpose: rehearsalRef.current ? 'rehearsal' : 'scheduled' })
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: t('practiceSession.tryAgain'), correction: judgement.correction || expectedAnswer || '', hintLevel, score: 'miss' })
-        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle, displayLabel: t('todayTask.patternDrill'), score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || expectedAnswer || '' })
+        store.recordEntry({ stepId, stepType: 'pattern_drill', zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: t('practiceSession.tryAgain'), groupTitle, displayLabel: t('todayTask.patternDrill'), score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || expectedAnswer || '' })
+        onAttempt?.({ stepId, outcome: 'incorrect', assistance: hintLevel === 'none' ? 'none' : 'hint', purpose: rehearsalRef.current ? 'rehearsal' : 'scheduled' })
       }
     } catch (err: any) {
       setStatus('failed')
@@ -186,6 +187,9 @@ export function PatternDrillCard({
 
   const promptLabel = isZhToEn ? t('practiceSession.warmupDrill.sayInEnglish') : t('practiceSession.warmupDrill.sayInChinese')
   const displayText = promptText
+  const displayFeedback = isReview && !reviewData?.passed
+    ? (reviewData.skipped ? t('practiceSession.warmupDrill.skippedHint') : t('practiceSession.tryAgain'))
+    : feedback
 
   return (
     <div className="space-y-2.5">
@@ -333,9 +337,12 @@ export function PatternDrillCard({
             {status === 'passed' ? <CheckCircle2 className="size-3.5 text-green-500" /> : null}
             <p className="text-xs font-medium">{status === 'passed' ? t('practiceSession.warmupDrill.correct') : t('practiceSession.tryAgain')}</p>
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground">{feedback}</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">{displayFeedback}</p>
           {correction && (status === 'passed' || skipped || isReview) && <p className="mt-1 text-[11px] text-blue-600 dark:text-blue-400">{highlightPattern(correction, pattern)}</p>}
         </div>
+      )}
+      {status === 'failed' && (
+        <p className="text-center text-[11px] text-muted-foreground">{t('practiceSession.warmupDrill.failedHint')}</p>
       )}
 
       {/* Submit �?回顾模式隐藏 */}
@@ -355,9 +362,6 @@ export function PatternDrillCard({
             {status === 'judging' ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : null}
             {status === 'judging' ? t('practiceSession.warmupDrill.judging') : t('practiceSession.submit')}
           </Button>
-        )}
-        {status === 'failed' && (
-          <p className="text-center text-[11px] text-muted-foreground">{t('practiceSession.warmupDrill.failedHint')}</p>
         )}
       </div>
       )}

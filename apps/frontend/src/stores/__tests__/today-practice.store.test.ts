@@ -86,6 +86,30 @@ describe('today practice V2.5.1 state machine', () => {
     expect(derived.attemptedCount).toBe(1)
   })
 
+  it('never counts “don\'t know” answers as completed', () => {
+    const scheduledItemIds = Array.from({ length: 10 }, (_, index) => `step-${index + 1}`)
+    let state = todayPracticeReducer(initialTodayPracticeState, {
+      type: 'RUN_LOADED',
+      run: { ...run(), scheduledItemIds },
+    })
+    for (const stepId of scheduledItemIds) {
+      state = todayPracticeReducer(state, {
+        type: 'INITIAL_RECALL_ATTEMPT',
+        stepId,
+        outcome: 'dontKnow',
+        assistance: 'none',
+      })
+    }
+
+    const derived = deriveTodayPractice(state)
+    expect(derived.attemptedCount).toBe(10)
+    expect(derived.greenCount).toBe(0)
+    expect(derived.redCount).toBe(10)
+    expect(derived.grayCount).toBe(0)
+    expect(derived.allAttempted).toBe(true)
+    expect(derived.allResolved).toBe(false)
+  })
+
   it('keeps a completed item in the current daily target after reloading the run', () => {
     let state = todayPracticeReducer(initialTodayPracticeState, { type: 'RUN_LOADED', run: run() })
     state = todayPracticeReducer(state, { type: 'INITIAL_RECALL_ATTEMPT', stepId: 'a', outcome: 'correct', assistance: 'none' })

@@ -21,7 +21,7 @@ import { ChunkOutputDrillCard } from '@/features/practice/components/chunk-outpu
 import { VocabOutputCard } from '@/features/practice/components/vocab-output-card'
 import { PatternDrillCard } from '@/features/practice/components/pattern-drill-card'
 import { SentenceDecompositionCard } from '@/features/practice/components/sentence-decomposition-card'
-import { useWarmupSessionStore, type WarmupRecordEntry } from '@/stores/warmup-session.store'
+import { toWarmupReviewData, useWarmupSessionStore, type WarmupRecordEntry } from '@/stores/warmup-session.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { deriveTodayPractice, useTodayPracticeStore, type TodayCardAttempt } from '@/stores/today-practice.store'
 import { dailyPracticeRepository, type DailyPracticePlanMode, type DailyPracticeStatus } from '@/lib/offline/daily-practice.repository'
@@ -51,6 +51,7 @@ export type PracticeItem = {
   id: string
   type: string
   label: string
+  topicId: string
   topicTitle: string
   scheduleStatus?: DailyPracticeStatus
   /** 准确描述练习内容的标签，用于卡片和抽屉标题 */
@@ -85,6 +86,15 @@ function wasTodayReviewDismissed(runId: string) {
   if (typeof window === 'undefined') return false
   try {
     return window.sessionStorage.getItem(`${TODAY_REVIEW_DISMISSED_SESSION_KEY_PREFIX}${runId}`) === 'true'
+  } catch {
+    return false
+  }
+}
+
+function wasTodayPracticeRetryPromptDismissed(date: string) {
+  if (typeof window === 'undefined') return false
+  try {
+    return window.sessionStorage.getItem(`${TODAY_REVIEW_DISMISSED_SESSION_KEY_PREFIX}practice:${date}`) === 'true'
   } catch {
     return false
   }
@@ -215,6 +225,7 @@ export function TodayTaskPage() {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [playlistOpen, setPlaylistOpen] = useState(false)
+  const [typeGroupViewing, setTypeGroupViewing] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
   const [teachingOpen, setTeachingOpen] = useState(false)
   const [teachingMarkdown, setTeachingMarkdown] = useState('')
@@ -245,7 +256,9 @@ export function TodayTaskPage() {
   // Read the persisted value immediately as well, so a route remount cannot flash the dialog
   // before the hydration effect below has run.
   const reviewDismissed = plan?.runId
-    ? (reviewDismissal.runId === plan.runId ? reviewDismissal.dismissed : wasTodayReviewDismissed(plan.runId))
+    ? ((reviewDismissal.runId === plan.runId && reviewDismissal.dismissed)
+      || wasTodayReviewDismissed(plan.runId)
+      || wasTodayPracticeRetryPromptDismissed(plan.date))
     : false
   const localAiPreloadKeyRef = useRef<string | null>(null)
   const warmupSessionHydratedKeyRef = useRef<string | null>(null)
@@ -309,8 +322,12 @@ export function TodayTaskPage() {
   // 「稍后再练」只应在当前练习 run 内隐藏提示；路由切换后也要保持这一选择。
   useEffect(() => {
     const runId = plan?.runId ?? null
-    setReviewDismissal({ runId, dismissed: runId ? wasTodayReviewDismissed(runId) : false })
-  }, [plan?.runId])
+    setReviewDismissal({
+      runId,
+      dismissed: Boolean(runId && (wasTodayReviewDismissed(runId)
+        || wasTodayPracticeRetryPromptDismissed(plan?.date ?? ''))),
+    })
+  }, [plan?.date, plan?.runId])
 
   const dismissReviewRound = useCallback(() => {
     const runId = plan?.runId ?? null
@@ -318,10 +335,17 @@ export function TodayTaskPage() {
     if (!runId || typeof window === 'undefined') return
     try {
       window.sessionStorage.setItem(`${TODAY_REVIEW_DISMISSED_SESSION_KEY_PREFIX}${runId}`, 'true')
+      // A tab switch can temporarily replace the active plan and, in recovery
+      // cases, restore the same daily practice under a new client run id.
+      // The user's "later" choice belongs to this calendar day's practice,
+      // not to that incidental identifier.
+      if (plan?.mode === 'practice' && plan.date) {
+        window.sessionStorage.setItem(`${TODAY_REVIEW_DISMISSED_SESSION_KEY_PREFIX}practice:${plan.date}`, 'true')
+      }
     } catch {
       // Private browsing or an unavailable WebView storage must not block closing the dialog.
     }
-  }, [plan?.runId])
+  }, [plan?.date, plan?.mode, plan?.runId])
 
   // 今日计划就绪时触发「每日练习」引导（条件式分段，仅首次）
   useEffect(() => {
@@ -399,6 +423,10 @@ export function TodayTaskPage() {
       // Rebuild from the server-authoritative current run after pull. This is
       // deliberately an explicit user action for diagnosing recovery issues.
       await loadToday(targetPackId, targetDate, planMode)
+      // Loading a recovered run may enqueue a missing per-question record.
+      // Flush once more so the button is a real end-to-end sync boundary.
+      const followUp = await offlineSyncService.sync(userId)
+      if (followUp.push.failed > 0) throw new Error(`${followUp.push.failed} 条数据未同步`)
       toast.success('今日任务已同步')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '今日任务同步失败')
@@ -444,9 +472,22 @@ export function TodayTaskPage() {
         label: source.label,
         displayLabel: source.displayLabel,
         headerContent: source.headerContent,
+        topicId: source.topicId,
         topicTitle: source.topicTitle,
         scheduleStatus: source.scheduleStatus,
       }
+      // Type cards include answered questions for inspection. They are
+      // read-only there; the dedicated mistake-retry flow is the only way to
+      // answer an incorrect item again.
+      const initialResult = todayState.initialRecallResults[sid]
+      const savedRecord = warmupRecords.find((record) => record.stepId === sid)
+      const historicalReview = typeGroupViewing && !reviewRoundActive && initialResult
+        ? toWarmupReviewData(savedRecord ?? {
+            userAnswer: '',
+            passed: !unresolvedIds.has(sid),
+            feedback: '',
+          })
+        : null
 
       if (source.type === 'chunk_substitution') {
           const isWord = (item.kind ?? 'chunk') === 'word'
@@ -462,6 +503,7 @@ export function TodayTaskPage() {
                 kind={item.kind ?? 'chunk'}
                 groupTitle={item.title}
                 onAttempt={(attempt) => { void handleAttempt(attempt) }}
+                reviewData={historicalReview}
               />
             ),
           }
@@ -478,6 +520,7 @@ export function TodayTaskPage() {
                 vocabs={[prompt as VocabPromptItem]}
                 onAttempt={(attempt) => { void handleAttempt(attempt) }}
                 hideHeader
+                reviewData={historicalReview}
               />
             ),
           }
@@ -501,6 +544,7 @@ export function TodayTaskPage() {
                 kind="word"
                 groupTitle={`${vocabWord || t('todayTask.vocabSentenceBuilding')} · ${patternChunk}`}
                 onAttempt={(attempt) => { void handleAttempt(attempt) }}
+                reviewData={historicalReview}
               />
             ),
           }
@@ -519,6 +563,7 @@ export function TodayTaskPage() {
                 groupTitle={item.title}
                 onAttempt={(attempt) => { void handleAttempt(attempt) }}
                 hideHeader
+                reviewData={historicalReview}
               />
             ),
           }
@@ -533,11 +578,12 @@ export function TodayTaskPage() {
                 stepId={sid}
                 onAttempt={(attempt) => { void handleAttempt(attempt) }}
                 hideHeader
+                reviewData={historicalReview ? { levelAudios: null } : null}
               />
             ),
         }
       })
-  }, [handleAttempt, plan?.steps, t])
+  }, [handleAttempt, plan?.steps, reviewRoundActive, t, todayState.initialRecallResults, typeGroupViewing, unresolvedIds, warmupRecords])
 
   // 重练轮由待重练 id 集合派生（保证 render 闭包基于最新 reviewRoundActive）
   const reviewSteps = useMemo<PracticeItem[] | null>(() => {
@@ -545,7 +591,10 @@ export function TodayTaskPage() {
     const snapshot = new Set(todayState.sessionStepIds)
     return steps.filter((step) => snapshot.has(step.id))
   }, [reviewRoundActive, steps, todayState.sessionStepIds])
-  const passedStepIds = reviewDoneIds
+  // Every progress view derives from this one canonical result. A "don't
+  // know" answer is attempted + unresolved (red), never completed.
+  const derivedToday = deriveTodayPractice(todayState)
+  const passedStepIds = new Set(derivedToday.greenStepIds)
   const weakStepIds = unresolvedIds
   const weakRecords = useMemo(() => warmupRecords.filter((record) => weakStepIds.has(record.stepId)), [warmupRecords, weakStepIds])
   // Session is a stable snapshot. Incorrect answers never remove a card from it.
@@ -608,23 +657,30 @@ export function TodayTaskPage() {
         topicId: firstTopic.topicId,
         topicTitle: firstTopic.topicTitle,
         items: enrichedWarmupRecords,
+        practicedDate: plan.date,
         syncStatus: 'pending',
       })
       await syncRunSnapshot(enrichedWarmupRecords, warmupRecordId)
     })().catch(() => undefined)
   }, [enrichedWarmupRecords, hasSubmittedToday, plan, reviewRoundActive, syncRunSnapshot, warmupRecordId])
 
+  // The record drawer is a view of durable, date-scoped data — not of the
+  // currently active tab's warmup store. A mode switch resets that transient
+  // store, so loading only while the drawer was open made records disappear
+  // until this page remounted.
   useEffect(() => {
-    if (!recordsOpen || !plan?.date) return
+    if (!plan?.date) {
+      setHistoricalTodayRecords([])
+      return
+    }
     let cancelled = false
     void practiceRepository.getWarmupEntriesByDate(plan.date).then((records) => {
       if (!cancelled) setHistoricalTodayRecords(records)
     }).catch(() => undefined)
     return () => { cancelled = true }
-  }, [recordsOpen, plan?.date, warmupRecords])
+  }, [plan?.date, warmupRecordId])
 
   // ── 进度统计 ──
-  const derivedToday = deriveTodayPractice(todayState)
   const attemptedCount = derivedToday.attemptedCount
   const practiceTabAttemptedCount = plan?.mode === 'practice'
     ? attemptedCount
@@ -633,11 +689,16 @@ export function TodayTaskPage() {
     ? (plan?.scheduledItemIds.length ?? 0)
     : (practiceTabSummary?.totalCount ?? plan?.dailyGoal ?? 0)
   const hasPracticeSteps = steps.length > 0
+  const isReviewMode = plan?.mode === 'review'
+  const mainActionLabel = isReviewMode
+    ? (attemptedCount > 0 ? t('todayTask.continueReview') : t('todayTask.startReview'))
+    : t('todayTask.continuePractice')
   const allDone = derivedToday.allAttempted
+  const allResolved = derivedToday.allResolved
   const activeDoneCount = activeSteps.filter((s) => activeDoneIds.has(s.id)).length
   const activeTotal = activeSteps.length
   const reviewAllDone = reviewRoundActive && activeTotal > 0 && todayState.retryQueueIds.length === 0
-  const passedCount = derivedToday.greenCount
+  const passedCount = passedStepIds.size
   const weakCount = derivedToday.redCount
   const unattemptedCount = derivedToday.grayCount
   const needsReviewRound = allDone && weakStepIds.size > 0 && !reviewRoundActive && !reviewDismissed
@@ -714,6 +775,7 @@ export function TodayTaskPage() {
     dismissReviewRound()
     startMistakeRetry()
     setRehearsalAll(false)
+    setTypeGroupViewing(false)
     setReviewRunNonce((value) => value + 1)
     for (const stepId of weakStepIds) resetRetryCycleUi(stepId)
     setCurrentIdx(0)
@@ -724,6 +786,7 @@ export function TodayTaskPage() {
   const closePracticeDrawer = useCallback(() => {
     setDrawerOpen(false)
     setRehearsalAll(false)
+    setTypeGroupViewing(false)
     closeSession()
   }, [closeSession])
 
@@ -876,7 +939,7 @@ export function TodayTaskPage() {
     setCurrentIdx(index)
     if (!reviewRoundActive) setRehearsalAll(false)
     if (reviewRoundActive) setMachineCurrentStep(step.id)
-    else openMainSession(step.id)
+    else openMainSession(step.id, { stepIds: activeSteps.map((item) => item.id), includeAttempted: true })
     if (step.id.startsWith('placeholder:')) {
       return
     } else {
@@ -884,7 +947,46 @@ export function TodayTaskPage() {
     }
   }, [activeSteps, openMainSession, reviewRoundActive, setMachineCurrentStep])
 
+  /** Open the first unfinished card from a type or topic without relying on a stale list index. */
+  const openPendingSteps = useCallback((candidateStepIds: string[]) => {
+    const candidateIds = new Set(candidateStepIds)
+    if (reviewRoundActive) {
+      const nextIndex = activeSteps.findIndex((step) => candidateIds.has(step.id) && !reviewDoneIds.has(step.id))
+      if (nextIndex < 0) return
+      setCurrentIdx(nextIndex)
+      setMachineCurrentStep(activeSteps[nextIndex].id)
+      setDrawerOpen(true)
+      return
+    }
+
+    const nextStep = steps.find((step) => candidateIds.has(step.id) && !attemptedIds.has(step.id))
+    if (!nextStep) return
+    const pendingIndex = steps.filter((step) => !attemptedIds.has(step.id)).findIndex((step) => step.id === nextStep.id)
+    setRehearsalAll(false)
+    openMainSession(nextStep.id)
+    setCurrentIdx(Math.max(0, pendingIndex))
+    setDrawerOpen(true)
+  }, [activeSteps, attemptedIds, openMainSession, reviewDoneIds, reviewRoundActive, setMachineCurrentStep, steps])
+
+  const openGroup = useCallback((group: PracticeGroup) => {
+    const stepIds = group.steps.map(({ step }) => step.id)
+    if (stepIds.length === 0) return
+    // Enter the practice dialog with this complete type group. Answered cards
+    // stay in the session so its question list can show their results too.
+    setRehearsalAll(false)
+    setTypeGroupViewing(true)
+    openMainSession(stepIds[0], { stepIds, includeAttempted: true })
+    setCurrentIdx(0)
+    setDrawerOpen(true)
+  }, [openMainSession])
+
+  const openTopicPractice = useCallback((topicId: string) => {
+    setTypeGroupViewing(false)
+    openPendingSteps(steps.filter((step) => step.topicId === topicId).map((step) => step.id))
+  }, [openPendingSteps, steps])
+
   const continueCurrentPractice = useCallback(() => {
+    setTypeGroupViewing(false)
     if (reviewRoundActive) {
       const firstPendingIndex = (reviewSteps ?? []).findIndex((step) => !reviewDoneIds.has(step.id))
       if (firstPendingIndex >= 0) {
@@ -1089,7 +1191,7 @@ export function TodayTaskPage() {
           <div className="flex min-w-0 items-center gap-2">
             <ListChecks className="size-4 text-primary" />
             <p className="text-sm font-semibold text-foreground">{activeModeLabel}{t('todayTask.progress')}</p>
-            {hasSubmittedToday && allDone && (
+            {hasSubmittedToday && allResolved && (
               <Badge variant="default" className="h-5 rounded-full px-2 text-[10px] bg-green-500/15 text-green-600">
                 <CheckCircle2 className="mr-0.5 size-3" /> {t('todayTask.completed')}
               </Badge>
@@ -1110,8 +1212,6 @@ export function TodayTaskPage() {
           </Badge>
         </div>
         <SegmentedBar segments={topSegments} />
-        {plan.mode === 'practice' && (
-          <>
           <div className="mt-3 flex items-stretch gap-2">
             {!hasPracticeSteps ? (
               <button
@@ -1119,7 +1219,7 @@ export function TodayTaskPage() {
                 disabled
                 className="flex w-full cursor-not-allowed items-center justify-between gap-3 rounded-md bg-muted/40 px-3 py-2 text-left text-muted-foreground"
               >
-                <span className="min-w-0 flex-1 truncate text-xs font-medium">{t('todayTask.noPractice')}</span>
+                <span className="min-w-0 flex-1 truncate text-xs font-medium">{isReviewMode ? t('todayTask.noReviewToday') : t('todayTask.noPractice')}</span>
               </button>
             ) : (
               <>
@@ -1130,7 +1230,7 @@ export function TodayTaskPage() {
                     onClick={continueCurrentPractice}
                     className="flex w-full items-center justify-between gap-3 rounded-md bg-primary/[0.06] px-3 py-2 text-left text-primary transition-colors active:scale-[0.99] hover:bg-primary/[0.1]"
                   >
-                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{t('todayTask.continuePractice')}</span>
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{isReviewMode ? t('todayTask.continueReview') : t('todayTask.continuePractice')}</span>
                     <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-semibold text-primary hover:bg-primary/10">
                       <ArrowRight className="size-4" />
                     </span>
@@ -1143,7 +1243,7 @@ export function TodayTaskPage() {
                     onClick={continueCurrentPractice}
                     className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md bg-primary/[0.06] px-3 py-2 text-left text-primary transition-colors active:scale-[0.99] hover:bg-primary/[0.1]"
                   >
-                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{t('todayTask.continuePractice')}</span>
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{mainActionLabel}</span>
                     <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-semibold text-primary hover:bg-primary/10">
                       <ArrowRight className="size-4" />
                     </span>
@@ -1156,7 +1256,7 @@ export function TodayTaskPage() {
                     onClick={startRePractice}
                     className="flex w-full items-center justify-between gap-3 rounded-md bg-emerald-500/[0.08] px-3 py-2 text-left text-emerald-700 transition-colors active:scale-[0.99] hover:bg-emerald-500/[0.12] dark:text-emerald-300"
                   >
-                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{t('todayTask.rePractice')}</span>
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{isReviewMode ? t('todayTask.reviewAgain') : t('todayTask.rePractice')}</span>
                     <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-300">
                       <CheckCircle2 className="size-4" />
                     </span>
@@ -1169,7 +1269,7 @@ export function TodayTaskPage() {
                     onClick={startWeakReviewRound}
                     className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md bg-red-500/[0.08] px-3 py-2 text-left text-red-600 transition-colors active:scale-[0.99] hover:bg-red-500/[0.12] dark:text-red-400"
                   >
-                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{t('todayTask.practiceWrong', { count: weakStepIds.size })}</span>
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{isReviewMode ? t('todayTask.reviewWrong', { count: weakStepIds.size }) : t('todayTask.practiceWrong', { count: weakStepIds.size })}</span>
                     <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full px-2 text-[11px] font-semibold text-red-600 hover:bg-red-500/10 dark:text-red-400">
                       <ArrowRight className="size-4" />
                     </span>
@@ -1178,7 +1278,7 @@ export function TodayTaskPage() {
               </>
             )}
           </div>
-          {allDone && weakStepIds.size === 0 && !reviewRoundActive && (
+          {!isReviewMode && allDone && weakStepIds.size === 0 && !reviewRoundActive && (
             <button
               type="button"
               onClick={startNewPracticeSet}
@@ -1188,8 +1288,6 @@ export function TodayTaskPage() {
               <ArrowRight className="size-3.5" />
             </button>
           )}
-          </>
-        )}
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
           {plan.mode === 'review' ? (
             <>
@@ -1424,14 +1522,14 @@ export function TodayTaskPage() {
                         </div>
                         </div>
                       </div>
-                      <Link
-                        to={`/practice/session/${topic.topicId}?mode=${plan.mode}`}
-                        onClick={(event) => event.stopPropagation()}
+                      <button
+                        type="button"
+                        onClick={() => openTopicPractice(topic.topicId)}
                         className="flex w-10 shrink-0 items-center justify-center text-muted-foreground/60 transition-colors hover:text-foreground"
                         aria-label={`${topic.topicTitle} ${t('todayTask.practice')}`}
                       >
                         <ChevronRight className="size-4" />
-                      </Link>
+                      </button>
                     </div>
                   )
                 })}

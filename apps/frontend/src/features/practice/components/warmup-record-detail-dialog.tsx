@@ -9,6 +9,7 @@ import { SentenceDecompositionCard } from '@/features/practice/components/senten
 import { VocabOutputCard } from '@/features/practice/components/vocab-output-card'
 import { cn } from '@/lib/cn'
 import { isIOS } from '@/lib/native'
+import { toWarmupReviewData } from '@/stores/warmup-session.store'
 
 export interface WarmupReviewItem {
   stepId?: string
@@ -65,13 +66,7 @@ export function WarmupRecordDetailDialog({
 
   const renderCard = () => {
     if (!current) return null
-    const reviewData = {
-      userAnswer: current.userAnswer || '',
-      passed: Boolean(current.passed),
-      feedback: current.feedback || '',
-      correction: current.correction,
-      audioUrl: current.audioUrl,
-    }
+    const reviewData = toWarmupReviewData(current)
     const prompt = current.zh || current.promptZh || ''
     const answer = current.answer || current.suggestedAnswer || ''
     const stepId = current.stepId || String(currentIdx)

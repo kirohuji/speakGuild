@@ -66,9 +66,12 @@ function startOfDate(value: string | Date) {
   // @db.Date backwards by one day, making a restored run disagree with its
   // attempts and item progress. Keep date-only values in UTC end-to-end.
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return parseDateKey(value)!;
+    const date = parseDateKey(value);
+    if (!date) throw new BadRequestException('Invalid calendar date');
+    return date;
   }
   const d = value instanceof Date ? new Date(value) : new Date(value);
+  if (Number.isNaN(d.getTime())) throw new BadRequestException('Invalid date');
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
@@ -145,8 +148,11 @@ export class DailyPracticeService {
       return { accepted: false };
     }
 
-    const existing = await (this.prisma as any).userDailyPracticeRun.findFirst({
-      where: { userId, date },
+    // Keep activity separate from practice/review snapshots. The prior
+    // find-first/update path could attach a timer update to an arbitrary run.
+    const clientRunId = `activity:${formatDateKey(date)}`;
+    const existing = await (this.prisma as any).userDailyPracticeRun.findUnique({
+      where: { userId_clientRunId: { userId, clientRunId } },
       select: { stats: true },
     });
     const activity = toActivityStats(existing?.stats);
@@ -160,14 +166,11 @@ export class DailyPracticeService {
       ? existing.stats as Record<string, unknown>
       : {};
 
-    if (existing) {
-      const first = await (this.prisma as any).userDailyPracticeRun.findFirst({ where: { userId, date }, select: { id: true } });
-      await (this.prisma as any).userDailyPracticeRun.update({ where: { id: first.id }, data: { stats: { ...currentStats, activity } } });
-    } else {
-      await (this.prisma as any).userDailyPracticeRun.create({
-        data: { userId, date, clientRunId: `activity:${formatDateKey(date)}`, mode: 'practice', scope, packIds: [], scheduledItemIds: [], completedItemIds: [], stats: { ...currentStats, activity } },
-      });
-    }
+    await (this.prisma as any).userDailyPracticeRun.upsert({
+      where: { userId_clientRunId: { userId, clientRunId } },
+      create: { userId, date, clientRunId, mode: 'practice', scope, packIds: [], scheduledItemIds: [], completedItemIds: [], stats: { ...currentStats, activity } },
+      update: { stats: { ...currentStats, activity } },
+    });
     return { accepted: true };
   }
 
@@ -255,9 +258,7 @@ export class DailyPracticeService {
       syncedAttempts.push(attempt.clientAttemptId);
     }
 
-    for (const itemId of affectedItemIds) {
-      await this.rebuildItemProgress(userId, itemId);
-    }
+    await Promise.all([...affectedItemIds].map((itemId) => this.rebuildItemProgress(userId, itemId)));
     await this.syncSceneProgressFromWarmup(userId, body.run.packIds ?? []);
 
     const itemProgresses = affectedItemIds.size > 0
