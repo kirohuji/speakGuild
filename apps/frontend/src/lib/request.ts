@@ -100,6 +100,12 @@ instance.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  try {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (timeZone) config.headers['X-Client-Time-Zone'] = timeZone
+  } catch {
+    /* The backend has a stable fallback for runtimes without Intl timezone data. */
+  }
   config.data = serializeFileAssetReferences(config.data)
   config.params = serializeFileAssetReferences(config.params)
   return config

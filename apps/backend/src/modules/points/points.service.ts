@@ -1,5 +1,12 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import {
+  addDateKeyDays,
+  dateKeyInTimeZone,
+  formatDateKey,
+  parseDateKey,
+  todayDateKey,
+} from '../../common/calendar-date';
 
 const CHECK_IN_BASE_POINTS = 10;
 const STREAK_BONUS_CAP = 5; // max bonus per day from streak
@@ -11,13 +18,8 @@ function parseCalendarDate(value: string) {
     throw new BadRequestException('日期格式应为 YYYY-MM-DD');
   }
 
-  const [year, month, day] = value.split('-').map(Number);
-  const date = new Date(year, month - 1, day);
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
+  const date = parseDateKey(value);
+  if (!date) {
     throw new BadRequestException('日期无效');
   }
 
@@ -25,10 +27,7 @@ function parseCalendarDate(value: string) {
 }
 
 function formatCalendarDate(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return formatDateKey(date);
 }
 
 @Injectable()
@@ -45,25 +44,30 @@ export class PointsService {
   }
 
   /** Get today's check-in status */
-  async getCheckInStatus(userId: string) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const existing = await this.prisma.userCheckIn.findUnique({
+  private async findCheckInByUserDate(userId: string, dateKey: string, timeZone: string) {
+    const date = parseCalendarDate(dateKey);
+    const candidates = await this.prisma.userCheckIn.findMany({
       where: {
-        userId_date: { userId, date: today },
+        userId,
+        date: { gte: addDateKeyDays(date, -1), lte: addDateKeyDays(date, 1) },
       },
+      orderBy: { createdAt: 'desc' },
     });
+
+    // createdAt is authoritative for legacy rows that were saved one day early.
+    return candidates.find((item) => dateKeyInTimeZone(item.createdAt, timeZone) === dateKey)
+      ?? candidates.find((item) => formatCalendarDate(item.date) === dateKey)
+      ?? null;
+  }
+
+  async getCheckInStatus(userId: string, timeZone: string) {
+    const todayKey = todayDateKey(timeZone);
+    const today = parseCalendarDate(todayKey);
+    const existing = await this.findCheckInByUserDate(userId, todayKey, timeZone);
 
     // Get yesterday's check-in for streak info
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const yesterdayCheckIn = await this.prisma.userCheckIn.findUnique({
-      where: {
-        userId_date: { userId, date: yesterday },
-      },
-    });
+    const yesterdayKey = formatCalendarDate(addDateKeyDays(today, -1));
+    const yesterdayCheckIn = await this.findCheckInByUserDate(userId, yesterdayKey, timeZone);
 
     return {
       checkedIn: !!existing,
@@ -73,7 +77,7 @@ export class PointsService {
   }
 
   /** Get check-in dates for the calendar */
-  async getCheckInCalendar(userId: string, startDate?: string, endDate?: string) {
+  async getCheckInCalendar(userId: string, startDate?: string, endDate?: string, timeZone = 'Asia/Shanghai') {
     if (!startDate || !endDate) {
       throw new BadRequestException('请提供日历查询范围');
     }
@@ -92,13 +96,14 @@ export class PointsService {
       this.prisma.userCheckIn.findMany({
         where: {
           userId,
-          date: { gte: rangeStart, lte: rangeEnd },
+          // Include a one-day buffer for legacy rows written from local midnight.
+          date: { gte: addDateKeyDays(rangeStart, -1), lte: addDateKeyDays(rangeEnd, 1) },
         },
         orderBy: { date: 'asc' },
-        select: { date: true },
+        select: { date: true, createdAt: true },
       }),
       this.prisma.userCheckIn.count({ where: { userId } }),
-      this.getCheckInStatus(userId),
+      this.getCheckInStatus(userId, timeZone),
       (this.prisma as any).userDailyPracticeRun.findMany({
         where: { userId, date: { gte: rangeStart, lte: rangeEnd } },
         select: { date: true, completedItemIds: true, stats: true },
@@ -120,7 +125,9 @@ export class PointsService {
     });
 
     return {
-      dates: checkIns.map((item) => formatCalendarDate(item.date)),
+      dates: [...new Set(checkIns
+        .map((item) => dateKeyInTimeZone(item.createdAt, timeZone))
+        .filter((date) => date >= startDate && date <= endDate))].sort(),
       totalCheckIns,
       currentStreak: status.currentStreak,
       dailyStats,
@@ -128,30 +135,20 @@ export class PointsService {
   }
 
   /** Perform daily check-in */
-  async checkIn(userId: string) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  async checkIn(userId: string, timeZone: string) {
+    const todayKey = todayDateKey(timeZone);
+    const today = parseCalendarDate(todayKey);
 
     // Check if already checked in today
-    const existing = await this.prisma.userCheckIn.findUnique({
-      where: {
-        userId_date: { userId, date: today },
-      },
-    });
+    const existing = await this.findCheckInByUserDate(userId, todayKey, timeZone);
 
     if (existing) {
       throw new BadRequestException('今天已经签到过了');
     }
 
     // Calculate streak
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    const yesterdayCheckIn = await this.prisma.userCheckIn.findUnique({
-      where: {
-        userId_date: { userId, date: yesterday },
-      },
-    });
+    const yesterdayKey = formatCalendarDate(addDateKeyDays(today, -1));
+    const yesterdayCheckIn = await this.findCheckInByUserDate(userId, yesterdayKey, timeZone);
 
     const streak = (yesterdayCheckIn?.streak ?? 0) + 1;
     const streakBonus = Math.min(streak - 1, STREAK_BONUS_CAP);

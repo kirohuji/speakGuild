@@ -2,6 +2,12 @@ import { Controller, Get, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { PointsService } from './points.service';
 import { requireAuthSession } from '../auth/session.util';
+import { normalizeTimeZone } from '../../common/calendar-date';
+
+function requestTimeZone(req: Request) {
+  const value = req.headers['x-client-time-zone'];
+  return normalizeTimeZone(Array.isArray(value) ? value[0] : value);
+}
 
 @Controller('points')
 export class PointsController {
@@ -18,7 +24,7 @@ export class PointsController {
   @Get('check-in/status')
   async getCheckInStatus(@Req() req: Request) {
     const session = await requireAuthSession(req);
-    return this.pointsService.getCheckInStatus(session.user.id);
+    return this.pointsService.getCheckInStatus(session.user.id, requestTimeZone(req));
   }
 
   /** 获取签到日历 */
@@ -29,14 +35,14 @@ export class PointsController {
     @Query('endDate') endDate?: string,
   ) {
     const session = await requireAuthSession(req);
-    return this.pointsService.getCheckInCalendar(session.user.id, startDate, endDate);
+    return this.pointsService.getCheckInCalendar(session.user.id, startDate, endDate, requestTimeZone(req));
   }
 
   /** 每日签到 */
   @Post('check-in')
   async checkIn(@Req() req: Request) {
     const session = await requireAuthSession(req);
-    return this.pointsService.checkIn(session.user.id);
+    return this.pointsService.checkIn(session.user.id, requestTimeZone(req));
   }
 
   /** 积分流水 */
