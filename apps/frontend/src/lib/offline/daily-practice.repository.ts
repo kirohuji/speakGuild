@@ -753,9 +753,25 @@ export const dailyPracticeRepository = {
     const pointer = !options.forceNew
       ? await localDb.get<StoredActiveRunPointer>('daily_practice_runs', pointerId).catch(() => null)
       : null
-    const cachedRun = pointer?.runId
+    const pointedRun = pointer?.runId
       ? await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', pointer.runId).catch(() => null)
       : null
+    // Older pack-switch behavior could force-create an empty run and overwrite the
+    // active pointer. Recover the most recent valid run for this exact context so
+    // affected users do not need to clear local storage.
+    const fallbackRun = !options.forceNew && (!pointedRun || pointedRun.scheduledItemIds.length === 0)
+      ? allRuns
+        .filter((run) => run.date === date
+          && run.mode === mode
+          && runMatchesScope(run, packScope, packIds)
+          && run.scheduledItemIds.length > 0
+          && (run.submissionStatus !== 'synced'
+            || run.attemptedItemIds.length < run.scheduledItemIds.length
+            || run.unresolvedItemIds.length > 0)
+          && run.scheduledItemIds.every((itemId) => candidateById.has(itemId)))
+        .sort((a, b) => (b.updatedAt ?? b.createdAt ?? b.date).localeCompare(a.updatedAt ?? a.createdAt ?? a.date))[0] ?? null
+      : null
+    const cachedRun = pointedRun?.scheduledItemIds.length ? pointedRun : fallbackRun
     // Active configuration is frozen. A settings change never invalidates the active run.
     const canReuseCachedRun = Boolean(cachedRun
       && cachedRun.date === date
@@ -792,6 +808,8 @@ export const dailyPracticeRepository = {
     }
     if (!canReuseCachedRun) {
       await localDb.put('daily_practice_runs', run)
+      await localDb.put('daily_practice_runs', { id: pointerId, runId: run.id, updatedAt: now } satisfies StoredActiveRunPointer)
+    } else if (pointer?.runId !== run.id) {
       await localDb.put('daily_practice_runs', { id: pointerId, runId: run.id, updatedAt: now } satisfies StoredActiveRunPointer)
     }
     if (date === todayKey()) {

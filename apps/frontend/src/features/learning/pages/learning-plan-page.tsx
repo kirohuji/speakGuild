@@ -74,7 +74,7 @@ export function LearningPlanPage() {
   const handleSetActivePracticePack = async (unit: typeof myUnits[number]) => {
     await dailyPracticeRepository.setActivePracticePackId(unit.id)
     const mode = usePreferencesStore.getState().dailyPracticeLastMode === 'review' ? 'review' : 'practice'
-    await useDailyPracticeStore.getState().loadToday(null, null, mode, true)
+    await useDailyPracticeStore.getState().loadToday(null, null, mode)
     setActivePracticePackId(unit.id)
     toast.success(t('learning.currentPracticePackSet', { title: unit.title }))
   }
