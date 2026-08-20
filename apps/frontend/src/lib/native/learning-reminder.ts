@@ -134,11 +134,14 @@ export async function setLearningBadgeCount(count: number): Promise<boolean> {
 export async function refreshLearningBadgeFromTodayRun(): Promise<boolean> {
   if (!isNativeRuntime()) return false
   const today = dateKey(new Date())
-  const run = await localDb.get<{ scheduledItemIds?: string[]; completedItemIds?: string[] }>('daily_practice_runs', `daily:${today}`)
-  if (!run) return false
-  const scheduled = new Set(run.scheduledItemIds ?? [])
-  const completed = new Set(run.completedItemIds ?? [])
-  return setLearningBadgeCount(Math.max(0, scheduled.size - completed.size))
+  const runs = await localDb.list<{ date?: string; mode?: string; scheduledItemIds?: string[]; attemptedItemIds?: string[] }>('daily_practice_runs')
+  const remaining = runs
+    .filter((run) => run.date === today && (run.mode === 'practice' || run.mode === 'review'))
+    .reduce((total, run) => {
+      const attempted = new Set(run.attemptedItemIds ?? [])
+      return total + (run.scheduledItemIds ?? []).filter((id) => !attempted.has(id)).length
+    }, 0)
+  return setLearningBadgeCount(remaining)
 }
 
 export async function scheduleLearningReminderTestNotification(delaySeconds = 5): Promise<LearningReminderTestResult> {

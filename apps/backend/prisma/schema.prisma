@@ -1241,6 +1241,7 @@ model PracticeWarmupRecord {
   feedback  String?  @db.Text
   items     Json
   createdAt DateTime @default(now())
+  clientRunId String? @unique
 
   @@index([userId, topicId])
   @@index([userId, createdAt])
@@ -1283,15 +1284,24 @@ model UserDailyPracticeRun {
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId           String
   date             DateTime @db.Date
+  clientRunId      String?
+  mode             String   @default("practice")
   scope            String   @default("single")
   packIds          String[] @default([])
   scheduledItemIds String[] @default([])
   completedItemIds String[] @default([])
+  attemptedItemIds String[] @default([])
+  unresolvedItemIds String[] @default([])
+  srsAppliedItemIds String[] @default([])
+  initialRecallResults Json?
+  continuationResults Json?
+  remediationResults Json?
+  submissionStatus String @default("idle")
   stats            Json?
   updatedAt        DateTime @updatedAt
   createdAt        DateTime @default(now())
 
-  @@unique([userId, date])
+  @@unique([userId, clientRunId])
   @@index([userId, date])
   @@map("user_daily_practice_run")
 }

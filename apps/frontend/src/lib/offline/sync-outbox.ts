@@ -38,6 +38,23 @@ export const syncOutbox = {
     payload: TPayload
   }): Promise<SyncOutboxItem<TPayload>> {
     const now = new Date().toISOString()
+    const existing = (await localDb.list<SyncOutboxItem<TPayload>>('outbox')).find((item) =>
+      item.entityType === input.entityType
+      && item.entityId === input.entityId
+      && item.operation === input.operation
+      && (item.status === 'pending' || item.status === 'failed'),
+    )
+    if (existing) {
+      const merged: SyncOutboxItem<TPayload> = {
+        ...existing,
+        payload: input.payload,
+        updatedAt: now,
+        status: 'pending',
+        lastError: undefined,
+      }
+      await localDb.put('outbox', merged)
+      return merged
+    }
     const item: SyncOutboxItem<TPayload> = {
       id: createId(),
       entityType: input.entityType,

@@ -36,8 +36,10 @@ export function SettingsTab() {
     setLanguage,
     nativeSpeechRecognitionEnabled,
     setNativeSpeechRecognitionEnabled,
-    dailyGoal,
-    setDailyGoal,
+    dailyPracticeGoal,
+    setDailyPracticeGoal,
+    reviewBatchSize,
+    setReviewBatchSize,
     dailyPracticeMixedPacks,
     setDailyPracticeMixedPacks,
     dailyPracticeRandomOrder,
@@ -238,13 +240,22 @@ export function SettingsTab() {
           <div className="space-y-2">
             <Label>{t('profile.dailyGoal')}</Label>
             <Select
-              value={dailyGoal}
-              onChange={(e) => setDailyGoal(Number(e.target.value))}
+              value={dailyPracticeGoal}
+              onChange={(e) => setDailyPracticeGoal(Number(e.target.value))}
               className="w-48"
             >
               <SelectItem value={10}>{t('profile.dailyGoal10')}</SelectItem>
               <SelectItem value={20}>{t('profile.dailyGoal20')}</SelectItem>
               <SelectItem value={30}>{t('profile.dailyGoal30')}</SelectItem>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>{t('profile.reviewBatchSize')}</Label>
+            <Select value={reviewBatchSize} onChange={(e) => setReviewBatchSize(Number(e.target.value))} className="w-48">
+              <SelectItem value={10}>{t('profile.reviewBatchSizeValue', { count: 10 })}</SelectItem>
+              <SelectItem value={20}>{t('profile.reviewBatchSizeValue', { count: 20 })}</SelectItem>
+              <SelectItem value={30}>{t('profile.reviewBatchSizeValue', { count: 30 })}</SelectItem>
             </Select>
           </div>
 

@@ -335,6 +335,16 @@ async function replayItem(
         await upsertWarmupRecordEntries({ ...next, updatedAt: existing.updatedAt ?? existing.createdAt ?? next.updatedAt })
       }
     }
+    const clientRunId = payload?.run?.clientRunId ?? item.entityId
+    const localRun = await localDb.get<any>('daily_practice_runs', clientRunId)
+    if (localRun) {
+      await localDb.put('daily_practice_runs', {
+        ...localRun,
+        syncStatus: 'synced',
+        submissionStatus: 'synced',
+        updatedAt: new Date().toISOString(),
+      })
+    }
     return true
   }
 

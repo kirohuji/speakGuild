@@ -10,6 +10,17 @@ import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
 import { createId } from './utils'
 import { scheduleReview, warmupScoreToReviewRating } from '@/lib/spaced-repetition'
+import type {
+  AttemptHistoryEntry,
+  ContinuationResult,
+  InitialRecallResult,
+  RemediationResult,
+  SrsRating,
+  StoredTodayRunFacts,
+  SubmissionStatus,
+} from '@/stores/today-practice.store'
+import { compareReviewDebt, deriveTodayScheduledPracticeIds, selectPracticeBatch, selectReviewBatch } from './daily-practice.planner'
+export { compareReviewDebt, deriveTodayScheduledPracticeIds, selectPracticeBatch, selectReviewBatch } from './daily-practice.planner'
 
 export type DailyPracticeStatus = 'new' | 'review' | 'overdue' | 'done' | 'mastered'
 export type DailyPracticeScope = 'single' | 'mixed'
@@ -83,17 +94,19 @@ export interface TopicDailyPracticeStats {
 }
 
 export interface DailyPracticePlan {
+  runId: string
   date: string
   scope: DailyPracticeScope
   mode: DailyPracticePlanMode
   dailyGoal: number
+  reviewBatchSize: number
+  configFingerprint: string
   availableReviewCount: number
   practicePoolCount: number
   units: UnitDetail[]
   steps: ScheduledDailyPracticeItem[]
   topicStats: TopicDailyPracticeStats[]
   scheduledItemIds: string[]
-  completedItemIds: string[]
 }
 
 export interface DailyPracticeAttempt {
@@ -108,19 +121,47 @@ export interface DailyPracticeAttempt {
   payload?: any
   practicedAt: string
   syncStatus: 'pending' | 'synced'
+  runId?: string
+  rating?: SrsRating
+  applyStatus?: 'applying' | 'applied'
+  progressAfter?: DailyPracticeProgress
 }
 
-type StoredDailyPracticeRun = {
+export type StoredDailyPracticeRun = {
   id: string
   date: string
   scope: DailyPracticeScope
   mode: DailyPracticePlanMode
-  dailyGoal?: number
-  packIds?: string[]
-  packIdsKey?: string
-  scheduledItemIds?: string[]
+  dailyPracticeGoal: number
+  reviewBatchSize: number
+  configFingerprint: string
+  packIds: string[]
+  packIdsKey: string
+  scheduledItemIds: string[]
+  attemptedItemIds: string[]
+  unresolvedItemIds: string[]
+  srsAppliedItemIds: string[]
+  initialRecallResults: Record<string, InitialRecallResult>
+  continuationResults: Record<string, ContinuationResult | undefined>
+  remediationResults: Record<string, RemediationResult | undefined>
+  attemptHistory: AttemptHistoryEntry[]
+  createdAt: string
+  updatedAt: string
+  syncStatus: 'pending' | 'synced'
+  submissionStatus: SubmissionStatus
+  roundKind?: 'main' | 'mistakeRetry'
+  sessionStepIds?: string[]
+  currentStepId?: string | null
+  activityMarked: boolean
+  // Legacy-only migration input. Never used as the V2.5.1 truth source.
   completedItemIds?: string[]
   stats?: Record<string, unknown>
+}
+
+type StoredActiveRunPointer = {
+  id: string
+  runId: string
+  updatedAt: string
 }
 
 type StoredActiveDailyPracticePack = {
@@ -162,6 +203,19 @@ function normalizePlanDate(date?: string | null) {
 function practicedAtForDate(date: string) {
   return `${date}T12:00:00.000Z`
 }
+
+function packKey(packIds: string[]) {
+  return [...packIds].sort().join(',') || 'none'
+}
+
+function activeRunPointerId(date: string, mode: DailyPracticePlanMode, scope: DailyPracticeScope, ids: string[]) {
+  return `daily-active:${date}:${mode}:${scope}:${packKey(ids)}`
+}
+
+function runMatchesScope(run: StoredDailyPracticeRun, scope: DailyPracticeScope, ids: string[]) {
+  return run.scope === scope && run.packIdsKey === packKey(ids)
+}
+
 
 function scoreRank(score?: string | null) {
   if (score === 'strong') return 3
@@ -279,7 +333,8 @@ function scheduleStatus(progress: DailyPracticeProgress, date: string): DailyPra
   return 'new'
 }
 
-function nextProgress(progress: DailyPracticeProgress, score: WarmupScore, date: string): DailyPracticeProgress {
+function nextProgressForRating(progress: DailyPracticeProgress, rating: SrsRating, date: string): DailyPracticeProgress {
+  const score: WarmupScore = rating === 'easy' ? 'strong' : rating === 'good' ? 'ok' : 'miss'
   const rank = scoreRank(score)
   const passed = rank >= 2
   const schedule = scheduleReview(
@@ -289,7 +344,7 @@ function nextProgress(progress: DailyPracticeProgress, score: WarmupScore, date:
       easeFactor: progress.easeFactor,
       lapseCount: progress.lapseCount,
     },
-    warmupScoreToReviewRating(score),
+    rating,
     new Date(practicedAtForDate(date)),
   )
   const bestRank = Math.max(progress.bestScoreRank, rank)
@@ -310,6 +365,10 @@ function nextProgress(progress: DailyPracticeProgress, score: WarmupScore, date:
     easeFactor: schedule.easeFactor,
     updatedAt: new Date().toISOString(),
   }
+}
+
+function nextProgress(progress: DailyPracticeProgress, score: WarmupScore, date: string): DailyPracticeProgress {
+  return nextProgressForRating(progress, warmupScoreToReviewRating(score) as SrsRating, date)
 }
 
 function buildCandidates(unit: UnitDetail): DailyPracticeCandidate[] {
@@ -600,27 +659,41 @@ export const dailyPracticeRepository = {
   ): Promise<DailyPracticePlan> {
     const date = normalizePlanDate(targetDate)
     const preferences = usePreferencesStore.getState()
-    const dailyGoal = preferences.dailyGoal
+    const dailyGoal = preferences.dailyPracticeGoal
+    const reviewBatchSize = preferences.reviewBatchSize
     // 新学始终沿当前学习包推进；跨学习包设置只扩大复习候选范围。
     const packScope: DailyPracticeScope =
       mode === 'review' && preferences.dailyPracticeMixedPacks ? 'mixed' : 'single'
     const units = await this.resolveCandidateUnits(packScope, targetPackId)
     const candidates = units.flatMap(buildCandidates)
     const itemIds = candidates.map((candidate) => candidate.itemId)
+    const packIds = units.map((unit) => unit.id)
+    const packIdsKey = packKey(packIds)
+    const configFingerprint = stableHash({
+      mode,
+      scope: packScope,
+      packIds: [...packIds].sort(),
+      dailyPracticeGoal: dailyGoal,
+      reviewBatchSize,
+      random: preferences.dailyPracticeRandomOrder,
+      mixed: preferences.dailyPracticeMixedPacks,
+    })
     if (units.length === 0 || candidates.length === 0) {
       if (date === todayKey()) setLearningBadgeCount(0).catch(() => {})
       return {
+        runId: createId('today_run'),
         date,
         scope: packScope,
         mode,
         dailyGoal,
+        reviewBatchSize,
+        configFingerprint,
         availableReviewCount: 0,
         practicePoolCount: 0,
         units,
         steps: [],
         topicStats: [],
         scheduledItemIds: [],
-        completedItemIds: [],
       }
     }
 
@@ -635,12 +708,35 @@ export const dailyPracticeRepository = {
       return { candidate, progress, status: scheduleStatus(progress, date) }
     })
 
-    const overdue = withStatus.filter((x) => x.status === 'overdue')
-    const review = withStatus.filter((x) => x.status === 'review')
-    // 复习保持“逾期优先、到期其次”，同一优先级内随机，缓存后当天顺序稳定。
-    const reviewBacklog = [...shuffleItems(overdue), ...shuffleItems(review)]
-    // 新学与复习分流：练习模式只引入从未练过的内容，已进入记忆周期的内容交给复习模式。
-    const practicePool = withStatus.filter((x) => x.progress.status === 'new')
+    const allRuns = (await localDb.list<StoredDailyPracticeRun>('daily_practice_runs'))
+      .filter((run) => run.id !== ACTIVE_DAILY_PRACTICE_PACK_ID && Array.isArray(run.scheduledItemIds))
+    const reviewAppliedToday = new Set(allRuns
+      .filter((run) => run.mode === 'review' && run.date === date && runMatchesScope(run, packScope, packIds))
+      .flatMap((run) => run.srsAppliedItemIds ?? []))
+    const reviewBacklog = withStatus
+      .filter((x) => x.progress.attempts > 0 && x.progress.dueDate <= date && !reviewAppliedToday.has(x.candidate.itemId))
+      .sort(compareReviewDebt)
+
+    const previousPracticeRuns = allRuns
+      .filter((run) => run.mode === 'practice' && run.date < date && runMatchesScope(run, packScope, packIds))
+      .sort((a, b) => (a.updatedAt ?? a.createdAt ?? a.date).localeCompare(b.updatedAt ?? b.createdAt ?? b.date))
+    const latestHistoricalState = new Map<string, { attempted: boolean; unresolved: boolean }>()
+    for (const run of previousPracticeRuns) {
+      const attempted = new Set(run.attemptedItemIds ?? [])
+      const unresolved = new Set(run.unresolvedItemIds ?? [])
+      for (const id of run.scheduledItemIds) latestHistoricalState.set(id, { attempted: attempted.has(id), unresolved: unresolved.has(id) })
+    }
+    const candidateById = new Map(withStatus.map((item) => [item.candidate.itemId, item]))
+    const carryoverUnresolved = [...latestHistoricalState]
+      .filter(([, value]) => value.attempted && value.unresolved)
+      .map(([id]) => candidateById.get(id))
+      .filter(Boolean) as typeof withStatus
+    const carryoverUnattempted = [...latestHistoricalState]
+      .filter(([, value]) => !value.attempted)
+      .map(([id]) => candidateById.get(id))
+      .filter(Boolean) as typeof withStatus
+    const todayScheduledPracticeIds = deriveTodayScheduledPracticeIds(allRuns, date, packScope, packIds)
+    const practicePool = withStatus.filter((x) => x.progress.status === 'new' && !latestHistoricalState.has(x.candidate.itemId))
     // 新学只推进当前包中的一个话题，避免教学上下文在多个话题之间跳转。
     const currentTopicId = practicePool[0]?.candidate.topicId
     const currentTopicPool = currentTopicId
@@ -653,92 +749,179 @@ export const dailyPracticeRepository = {
           (item: (typeof currentTopicPool)[number]) => item.candidate.type,
         )
       : currentTopicPool
-    const cachedRun = await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', `daily:${date}`).catch(() => null)
-    const candidateById = new Map(withStatus.map((item) => [item.candidate.itemId, item]))
-    const canReuseCachedRun = !options.forceNew
-      && cachedRun?.date === date
+    const pointerId = activeRunPointerId(date, mode, packScope, packIds)
+    const pointer = !options.forceNew
+      ? await localDb.get<StoredActiveRunPointer>('daily_practice_runs', pointerId).catch(() => null)
+      : null
+    const cachedRun = pointer?.runId
+      ? await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', pointer.runId).catch(() => null)
+      : null
+    // Active configuration is frozen. A settings change never invalidates the active run.
+    const canReuseCachedRun = Boolean(cachedRun
+      && cachedRun.date === date
       && cachedRun.mode === mode
-      && cachedRun.scope === packScope
-      && cachedRun.dailyGoal === dailyGoal
-      && cachedRun.packIdsKey === units.map((unit) => unit.id).join(',')
-      && (cachedRun.scheduledItemIds?.length ?? 0) > 0
-      && cachedRun.scheduledItemIds?.every((itemId) => candidateById.has(itemId))
+      && runMatchesScope(cachedRun, packScope, packIds)
+      && cachedRun.scheduledItemIds.every((itemId) => candidateById.has(itemId)))
     const scheduledSource = canReuseCachedRun
-      ? cachedRun.scheduledItemIds!.map((itemId) => candidateById.get(itemId)!)
+      ? cachedRun!.scheduledItemIds.map((itemId) => candidateById.get(itemId)!)
       : mode === 'review'
-      ? reviewBacklog
-      : orderedPracticePool.slice(0, dailyGoal)
+        ? selectReviewBatch(reviewBacklog, reviewBatchSize)
+        : selectPracticeBatch<(typeof withStatus)[number]>({
+          carryoverUnresolved,
+          carryoverUnattempted,
+          fresh: orderedPracticePool,
+          todayScheduledIds: todayScheduledPracticeIds,
+          goal: dailyGoal,
+          getId: (item) => item.candidate.itemId,
+        })
     const scheduled = scheduledSource.map(({ candidate, progress, status }) => ({
       ...candidate,
       progress,
       scheduleStatus: status,
     }))
 
-    const run = {
-      id: `daily:${date}`,
-      date,
-      scope: packScope,
-      mode,
-      dailyGoal,
-      packIds: units.map((unit) => unit.id),
-      packIdsKey: units.map((unit) => unit.id).join(','),
-      scheduledItemIds: scheduled.map((step) => step.itemId),
-      completedItemIds: scheduled.filter((step) => step.scheduleStatus === 'done').map((step) => step.itemId),
-      stats: {
-        overdue: overdue.length,
-        review: review.length,
-        new: scheduled.filter((step) => step.scheduleStatus === 'new').length,
-      },
+    const now = new Date().toISOString()
+    const run: StoredDailyPracticeRun = canReuseCachedRun ? cachedRun! : {
+      id: createId('today_run'), date, scope: packScope, mode,
+      dailyPracticeGoal: dailyGoal, reviewBatchSize, configFingerprint,
+      packIds, packIdsKey, scheduledItemIds: scheduled.map((step) => step.itemId),
+      attemptedItemIds: [], unresolvedItemIds: [], srsAppliedItemIds: [],
+      initialRecallResults: {}, continuationResults: {}, remediationResults: {}, attemptHistory: [],
+      createdAt: now, updatedAt: now, syncStatus: 'pending', submissionStatus: 'idle', activityMarked: false,
+      stats: { reviewDebt: reviewBacklog.length, carryover: carryoverUnresolved.length + carryoverUnattempted.length },
     }
-    await localDb.put('daily_practice_runs', run)
+    if (!canReuseCachedRun) {
+      await localDb.put('daily_practice_runs', run)
+      await localDb.put('daily_practice_runs', { id: pointerId, runId: run.id, updatedAt: now } satisfies StoredActiveRunPointer)
+    }
     if (date === todayKey()) {
-      setLearningBadgeCount(Math.max(0, run.scheduledItemIds.length - run.completedItemIds.length)).catch(() => {})
+      setLearningBadgeCount(Math.max(0, run.scheduledItemIds.length - run.attemptedItemIds.length)).catch(() => {})
     }
 
     return {
+      runId: run.id,
       date,
       scope: packScope,
       mode,
-      dailyGoal,
+      dailyGoal: run.dailyPracticeGoal,
+      reviewBatchSize: run.reviewBatchSize,
+      configFingerprint: run.configFingerprint,
       availableReviewCount: reviewBacklog.length,
       practicePoolCount: practicePool.length,
       units,
       steps: scheduled,
       topicStats: buildTopicStats(units, candidates, progressMap, scheduled, date),
       scheduledItemIds: run.scheduledItemIds,
-      completedItemIds: run.completedItemIds,
     }
   },
 
-  async completeItem(step: ScheduledDailyPracticeItem, score: WarmupScore, targetDate?: string | null): Promise<DailyPracticeProgress> {
-    const date = normalizePlanDate(targetDate)
-    const practicedAt = practicedAtForDate(date)
-    const updated = nextProgress(step.progress, score, date)
-    await localDb.put('daily_practice_items', updated)
+  async getRunFacts(runId: string): Promise<StoredTodayRunFacts | null> {
+    const run = await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', runId)
+    if (!run) return null
+    const applied = new Set(run.srsAppliedItemIds ?? [])
+    for (const stepId of run.scheduledItemIds ?? []) {
+      const journal = await localDb.get<DailyPracticeAttempt>('daily_practice_attempts', `today-srs:${runId}:${stepId}`)
+      if (journal?.applyStatus === 'applied') applied.add(stepId)
+    }
+    if (applied.size !== (run.srsAppliedItemIds ?? []).length) {
+      run.srsAppliedItemIds = [...applied]
+      run.updatedAt = new Date().toISOString()
+      await localDb.put('daily_practice_runs', run)
+    }
+    return {
+      id: run.id,
+      mode: run.mode,
+      scheduledItemIds: [...run.scheduledItemIds],
+      attemptedItemIds: [...(run.attemptedItemIds ?? [])],
+      unresolvedItemIds: [...(run.unresolvedItemIds ?? [])],
+      srsAppliedItemIds: [...applied],
+      initialRecallResults: { ...(run.initialRecallResults ?? {}) },
+      continuationResults: { ...(run.continuationResults ?? {}) },
+      remediationResults: { ...(run.remediationResults ?? {}) },
+      attemptHistory: [...(run.attemptHistory ?? [])],
+      submissionStatus: run.submissionStatus ?? 'idle',
+      roundKind: run.roundKind ?? 'main',
+      sessionStepIds: [...(run.sessionStepIds ?? [])],
+      currentStepId: run.currentStepId ?? null,
+    }
+  },
 
-    const attempt: DailyPracticeAttempt = {
-      id: createId('attempt'),
-      clientAttemptId: createId('client_attempt'),
-      itemId: step.itemId,
-      packId: step.packId,
-      topicId: step.topicId,
-      type: step.type,
-      score,
-      passed: scoreRank(score) >= 2,
-      payload: { label: step.label, displayLabel: step.displayLabel },
-      practicedAt,
-      syncStatus: 'pending',
-    }
-    await localDb.put('daily_practice_attempts', attempt)
-    if (date === todayKey()) {
-      const run = await localDb.get<{ id: string; scheduledItemIds?: string[]; completedItemIds?: string[] }>('daily_practice_runs', `daily:${date}`)
-      if (run) {
-        const completedItemIds = Array.from(new Set([...(run.completedItemIds ?? []), step.itemId]))
-        await localDb.put('daily_practice_runs', { ...run, completedItemIds })
-        setLearningBadgeCount(Math.max(0, (run.scheduledItemIds ?? []).length - completedItemIds.length)).catch(() => {})
+  async persistRunFacts(facts: StoredTodayRunFacts): Promise<void> {
+    const run = await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', facts.id)
+    if (!run) throw new Error(`Today run not found: ${facts.id}`)
+    await localDb.put('daily_practice_runs', {
+      ...run,
+      attemptedItemIds: [...facts.attemptedItemIds],
+      unresolvedItemIds: facts.unresolvedItemIds.filter((id) => facts.attemptedItemIds.includes(id)),
+      srsAppliedItemIds: [...facts.srsAppliedItemIds],
+      initialRecallResults: { ...facts.initialRecallResults },
+      continuationResults: { ...facts.continuationResults },
+      remediationResults: { ...facts.remediationResults },
+      attemptHistory: [...(facts.attemptHistory ?? [])],
+      submissionStatus: facts.submissionStatus,
+      roundKind: facts.roundKind,
+      sessionStepIds: [...(facts.sessionStepIds ?? [])],
+      currentStepId: facts.currentStepId ?? null,
+      syncStatus: facts.submissionStatus === 'synced' ? 'synced' : 'pending',
+      updatedAt: new Date().toISOString(),
+    })
+  },
+
+  async applySrsRatingOnce(params: {
+    runId: string
+    step: ScheduledDailyPracticeItem
+    rating: SrsRating
+    targetDate?: string | null
+  }): Promise<{ applied: boolean; progress: DailyPracticeProgress }> {
+    const run = await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', params.runId)
+    if (!run) throw new Error(`Today run not found: ${params.runId}`)
+    const journalId = `today-srs:${params.runId}:${params.step.itemId}`
+    const existingJournal = await localDb.get<DailyPracticeAttempt>('daily_practice_attempts', journalId)
+    if (run.srsAppliedItemIds.includes(params.step.itemId) || existingJournal?.applyStatus === 'applied') {
+      const progress = existingJournal?.progressAfter
+        ?? await localDb.get<DailyPracticeProgress>('daily_practice_items', params.step.itemId)
+        ?? params.step.progress
+      if (!run.srsAppliedItemIds.includes(params.step.itemId)) {
+        await localDb.put('daily_practice_runs', {
+          ...run,
+          srsAppliedItemIds: [...run.srsAppliedItemIds, params.step.itemId],
+          updatedAt: new Date().toISOString(),
+        })
       }
+      return { applied: false, progress }
     }
-    return updated
+
+    const date = normalizePlanDate(params.targetDate)
+    const current = await localDb.get<DailyPracticeProgress>('daily_practice_items', params.step.itemId) ?? params.step.progress
+    const progressAfter = existingJournal?.progressAfter ?? nextProgressForRating(current, params.rating, date)
+    const score: WarmupScore = params.rating === 'easy' ? 'strong' : params.rating === 'good' ? 'ok' : 'miss'
+    const journal: DailyPracticeAttempt = existingJournal ?? {
+      id: journalId,
+      clientAttemptId: journalId,
+      itemId: params.step.itemId,
+      packId: params.step.packId,
+      topicId: params.step.topicId,
+      type: params.step.type,
+      score,
+      passed: params.rating !== 'again',
+      payload: { label: params.step.label, displayLabel: params.step.displayLabel },
+      practicedAt: practicedAtForDate(date),
+      syncStatus: 'pending',
+      runId: params.runId,
+      rating: params.rating,
+      applyStatus: 'applying',
+      progressAfter,
+    }
+    // Recoverable journal: replaying an interrupted write installs the same exact progress snapshot.
+    await localDb.put('daily_practice_attempts', { ...journal, applyStatus: 'applying', progressAfter })
+    await localDb.put('daily_practice_items', progressAfter)
+    await localDb.put('daily_practice_attempts', { ...journal, applyStatus: 'applied', progressAfter })
+    await localDb.put('daily_practice_runs', {
+      ...run,
+      srsAppliedItemIds: [...run.srsAppliedItemIds, params.step.itemId],
+      updatedAt: new Date().toISOString(),
+    })
+    return { applied: true, progress: progressAfter }
   },
 
   async completeAdHocItem(candidate: DailyPracticeCandidate, score: WarmupScore, targetDate?: string | null): Promise<DailyPracticeProgress> {
@@ -763,15 +946,6 @@ export const dailyPracticeRepository = {
     }
     await localDb.put('daily_practice_attempts', attempt)
 
-    if (date === todayKey()) {
-      const run = await localDb.get<{ id: string; scheduledItemIds?: string[]; completedItemIds?: string[] }>('daily_practice_runs', `daily:${date}`)
-      if (run?.scheduledItemIds?.includes(candidate.itemId)) {
-        const completedItemIds = Array.from(new Set([...(run.completedItemIds ?? []), candidate.itemId]))
-        await localDb.put('daily_practice_runs', { ...run, completedItemIds })
-        setLearningBadgeCount(Math.max(0, (run.scheduledItemIds ?? []).length - completedItemIds.length)).catch(() => {})
-      }
-    }
-
     return updated
   },
 
@@ -795,9 +969,13 @@ export const dailyPracticeRepository = {
       .map((progress) => progress.itemId)
     const scoreValues = params.records.map((record) => scoreRank(record.score)).filter((rank) => rank > 0)
     const score = scoreValues.length > 0 ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length / 3 * 100) : null
+    const clientRunId = `guided:${params.topicId}:${date}`
     const payload = {
       run: {
+        id: clientRunId,
+        clientRunId,
         date,
+        mode: 'practice',
         scope: 'single',
         packIds: [params.packId],
         scheduledItemIds: params.itemIds,
@@ -855,26 +1033,43 @@ export const dailyPracticeRepository = {
   },
 
   async completeRun(plan: DailyPracticePlan, records: WarmupRecordEntry[], localWarmupRecordId?: string | null) {
+    let run = await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', plan.runId)
+    if (!run) throw new Error(`Today run not found: ${plan.runId}`)
     const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
-    const pending = attempts.filter((attempt) => attempt.syncStatus !== 'synced' && plan.scheduledItemIds.includes(attempt.itemId))
+    const pending = attempts.filter((attempt) => attempt.syncStatus !== 'synced' && attempt.runId === plan.runId && attempt.applyStatus === 'applied')
     const progresses = await localDb.list<DailyPracticeProgress>('daily_practice_items')
     const itemProgresses = progresses.filter((progress) => plan.scheduledItemIds.includes(progress.itemId))
-    const completedIds = itemProgresses
-      .filter((progress) => progress.lastPracticedAt?.slice(0, 10) === plan.date)
-      .map((progress) => progress.itemId)
+    const unresolved = new Set(run.unresolvedItemIds)
+    const completedIds = run.attemptedItemIds.filter((id) => !unresolved.has(id))
     const firstTopic = plan.topicStats.find((topic) => topic.scheduledTodayCount > 0) ?? plan.topicStats[0]
     const scoreValues = records.map((record) => scoreRank(record.score)).filter((rank) => rank > 0)
     const score = scoreValues.length > 0 ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length / 3 * 100) : null
     const payload = {
       run: {
+        id: plan.runId,
+        clientRunId: plan.runId,
         date: plan.date,
+        mode: plan.mode,
         scope: plan.scope,
         packIds: plan.units.map((unit) => unit.id),
         scheduledItemIds: plan.scheduledItemIds,
         completedItemIds: completedIds,
+        attemptedItemIds: run.attemptedItemIds,
+        unresolvedItemIds: run.unresolvedItemIds,
+        srsAppliedItemIds: run.srsAppliedItemIds,
+        initialRecallResults: run.initialRecallResults,
+        continuationResults: run.continuationResults,
+        remediationResults: run.remediationResults,
+        submissionStatus: 'synced',
         stats: {
           records: records.length,
           completed: completedIds.length,
+          attemptedItemIds: run.attemptedItemIds,
+          unresolvedItemIds: run.unresolvedItemIds,
+          srsAppliedItemIds: run.srsAppliedItemIds,
+          initialRecallResults: run.initialRecallResults,
+          continuationResults: run.continuationResults,
+          remediationResults: run.remediationResults,
         },
       },
       attempts: pending,
@@ -889,7 +1084,11 @@ export const dailyPracticeRepository = {
       localWarmupRecordId: localWarmupRecordId ?? null,
     }
 
-    await practiceRepository.markTodayActivity(completedIds.length || records.length || 1, plan.date)
+    if (!run.activityMarked) {
+      await practiceRepository.markTodayActivity(completedIds.length || records.length || 1, plan.date, plan.runId)
+      run = { ...run, activityMarked: true, updatedAt: new Date().toISOString() }
+      await localDb.put('daily_practice_runs', run)
+    }
     if (localWarmupRecordId && records.length > 0 && firstTopic) {
       await practiceRepository.upsertLocalWarmupRecord({
         id: localWarmupRecordId,
@@ -910,12 +1109,18 @@ export const dailyPracticeRepository = {
         const attempt = pending.find((item) => item.clientAttemptId === clientAttemptId)
         if (attempt) await localDb.put('daily_practice_attempts', { ...attempt, syncStatus: 'synced' as const })
       }))
+      await localDb.put('daily_practice_runs', {
+        ...run,
+        syncStatus: 'synced' as const,
+        submissionStatus: 'synced' as const,
+        updatedAt: new Date().toISOString(),
+      })
       return result
     } catch (error) {
       await syncOutbox.enqueue({
         entityType: 'daily_practice',
-        entityId: `daily:${plan.date}`,
-        operation: 'create',
+        entityId: plan.runId,
+        operation: 'update',
         payload,
       })
       throw error

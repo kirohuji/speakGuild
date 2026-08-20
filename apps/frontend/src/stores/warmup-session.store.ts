@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { ContinuationResult, InitialRecallResult, RemediationResult } from './today-practice.store'
 
 export type WarmupScore = 'strong' | 'ok' | 'weak' | 'miss'
 export type WarmupHintLevel = 'none' | 'hint' | 'answer'
@@ -14,6 +15,8 @@ export interface WarmupStepState {
   retryCount: number
   /** 用户点了「我不会」：输入框禁用、不可提交，重新打开本卡也要保持 */
   skipped?: boolean
+  retrievalFailed: boolean
+  answerRevealed: boolean
 }
 
 export interface WarmupRecordEntry {
@@ -34,6 +37,9 @@ export interface WarmupRecordEntry {
   usedHintLevel?: 0 | 1 | 2 | 3
   retryCount?: number
   correction?: string
+  initialRecallResult?: InitialRecallResult
+  continuationResult?: ContinuationResult
+  remediationResult?: RemediationResult
 }
 
 interface WarmupSessionState {
@@ -41,6 +47,8 @@ interface WarmupSessionState {
   stepStates: Record<string, WarmupStepState>
   /** Accumulated records for final AI assessment */
   records: WarmupRecordEntry[]
+  /** Append-only UI/assessment history. Today domain truth lives in today-practice.store. */
+  attemptHistory: WarmupRecordEntry[]
   /** Mark a step's state after submit */
   recordStep: (stepId: string, data: {
     userAnswer: string
@@ -58,6 +66,9 @@ interface WarmupSessionState {
   resetSteps: (stepIds: string[]) => void
   /** Clear only step UI states, keep records (used by review round) */
   resetStepStates: (stepIds: string[]) => void
+  resetStepUi: (stepId: string) => void
+  resetRetryCycleUi: (stepId: string) => void
+  clearSessionUi: () => void
   /** Restore a previous in-progress or completed warmup session */
   hydrateSession: (records: WarmupRecordEntry[]) => void
   /** Restore previous answers as display-only step state without adding current records */
@@ -71,6 +82,7 @@ interface WarmupSessionState {
 export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
   stepStates: {},
   records: [],
+  attemptHistory: [],
 
   recordStep: (stepId, data) => {
     set((prev) => ({
@@ -85,6 +97,8 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
           correction: data.correction || '',
           score: data.score ?? (data.passed ? 'strong' : 'miss'),
           skipped: data.passed ? false : (data.skipped ?? prev.stepStates[stepId]?.skipped ?? false),
+          retrievalFailed: !data.passed || (prev.stepStates[stepId]?.retrievalFailed ?? false),
+          answerRevealed: (data.hintLevel === 'answer') && (!data.passed || Boolean(data.skipped)),
           retryCount: (prev.stepStates[stepId]?.retryCount ?? 0) + (data.passed ? 0 : 1),
         },
       },
@@ -100,6 +114,7 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
           practiceCount: (prev.records.find((record) => record.stepId === entry.stepId)?.practiceCount ?? 0) + 1,
         },
       ],
+      attemptHistory: [...prev.attemptHistory, entry],
     }))
   },
 
@@ -109,7 +124,7 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
       stepStates: Object.fromEntries(
         Object.entries(prev.stepStates).filter(([stepId]) => !resetIds.has(stepId)),
       ),
-      records: prev.records.filter((record) => !resetIds.has(record.stepId)),
+      // Business/assessment records are append-only; this API now only resets card UI.
     }))
   },
 
@@ -121,6 +136,18 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
       ),
     }))
   },
+
+  resetStepUi: (stepId) => set((prev) => {
+    const { [stepId]: _removed, ...stepStates } = prev.stepStates
+    return { stepStates }
+  }),
+
+  resetRetryCycleUi: (stepId) => set((prev) => {
+    const { [stepId]: _removed, ...stepStates } = prev.stepStates
+    return { stepStates }
+  }),
+
+  clearSessionUi: () => set({ stepStates: {} }),
 
   hydrateSession: (records) => {
     const stepStates: Record<string, WarmupStepState> = {}
@@ -135,10 +162,12 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
         correction: record.correction || '',
         score: record.score ?? (record.passed ? 'strong' : 'miss'),
         skipped: record.feedback === '我不会/跳过',
+        retrievalFailed: !record.passed,
+        answerRevealed: usedHintLevel >= 3,
         retryCount: record.retryCount ?? (record.passed ? 0 : 1),
       }
     }
-    set({ records, stepStates })
+    set({ records, stepStates, attemptHistory: [...records] })
   },
 
   hydrateHistoricalStepStates: (records) => {
@@ -159,6 +188,8 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
           correction: record.correction || '',
           score: record.score ?? 'strong',
           skipped: false,
+          retrievalFailed: false,
+          answerRevealed: true,
           retryCount: record.retryCount ?? 0,
         }
       }
@@ -166,7 +197,7 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
     })
   },
 
-  clearSession: () => set({ stepStates: {}, records: [] }),
+  clearSession: () => set({ stepStates: {}, records: [], attemptHistory: [] }),
 
   getAssessmentRecords: () => get().records,
 }))

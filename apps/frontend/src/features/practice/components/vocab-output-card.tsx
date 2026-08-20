@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import { practiceAiApi, type DrillDirection } from '../api/english-practice-api'
 import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
+import type { TodayCardAttempt } from '@/stores/today-practice.store'
 import { PracticeAnswerInput } from './practice-answer-input'
 
 interface VocabDrillSubItem {
@@ -23,6 +24,7 @@ interface VocabOutputCardProps {
   stepId: string
   direction?: DrillDirection
   onComplete?: (index: number, passed: boolean, score: WarmupScore) => void
+  onAttempt?: (attempt: TodayCardAttempt) => void
   /** 重练轮次隐藏「我不会」按钮 */
   disableSkip?: boolean
   /** Dialog 已提供题型标签时，隐藏内�?header badge */
@@ -73,6 +75,7 @@ export function VocabOutputCard({
   stepId,
   direction = 'zh_to_en',
   onComplete,
+  onAttempt,
   disableSkip,
   hideHeader = false,
   reviewData,
@@ -94,6 +97,7 @@ export function VocabOutputCard({
   const [audioUrl, setAudioUrl] = useState<string | null>(isReview ? (reviewData?.audioUrl ?? null) : (saved?.audioUrl ?? null))
   const [playing, setPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const rehearsalRef = useRef(false)
 
   const current = vocabs[currentIdx]
   const totalItems = vocabs.length
@@ -113,9 +117,10 @@ export function VocabOutputCard({
     setHintLevel('answer')
     setResult({ passed: false, feedback: t('practiceSession.warmupDrill.skippedHint'), correction: correctionText })
     onComplete?.(currentIdx, false, 'miss')
+    onAttempt?.({ stepId, outcome: 'dontKnow', assistance: hintLevel === 'none' ? 'none' : 'hint', purpose: rehearsalRef.current ? 'rehearsal' : 'scheduled' })
     store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss', skipped: true })
     store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle: title, displayLabel: t('todayTask.vocabDrill'), score: 'miss', usedHintLevel: 3, correction: correctionText })
-  }, [current, currentIdx, judging, onComplete, result?.passed, stepId, store, t, title, userInput])
+  }, [current, currentIdx, hintLevel, judging, onAttempt, onComplete, result?.passed, stepId, store, t, title, userInput])
 
   const retryCurrent = useCallback(() => {
     if (isReview || judging) return
@@ -125,6 +130,7 @@ export function VocabOutputCard({
     setHintLevel('none')
     setAudioUrl(null)
     store.resetSteps([stepId])
+    rehearsalRef.current = true
   }, [isReview, judging, stepId, store])
 
   const submit = useCallback(async () => {
@@ -145,12 +151,14 @@ export function VocabOutputCard({
         setResult({ passed: true, feedback: judgement.feedback || t('practiceSession.warmupDrill.correct') })
         setHintLevel('answer')
         onComplete?.(currentIdx, true, score)
+        onAttempt?.({ stepId, outcome: 'correct', assistance: hintLevel === 'none' ? 'none' : 'hint', purpose: rehearsalRef.current ? 'rehearsal' : 'scheduled' })
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', hintLevel, score })
         store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle: title, displayLabel: t('todayTask.vocabDrill'), score, usedHintLevel: hintLevelValue(hintLevel) })
       } else {
-        setResult({ passed: false, feedback: judgement.feedback || t('practiceSession.tryAgain'), correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '' })
+        setResult({ passed: false, feedback: t('practiceSession.tryAgain'), correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '' })
         onComplete?.(currentIdx, false, 'miss')
-        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '', hintLevel, score: 'miss' })
+        onAttempt?.({ stepId, outcome: 'incorrect', assistance: hintLevel === 'none' ? 'none' : 'hint', purpose: rehearsalRef.current ? 'rehearsal' : 'scheduled' })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: t('practiceSession.tryAgain'), correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '', hintLevel, score: 'miss' })
         store.recordEntry({ stepId, stepType: 'vocab_drill', zh: current.promptZh, answer: current.suggestedAnswer || '', userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle: title, displayLabel: t('todayTask.vocabDrill'), score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || (isZhToEn ? current.suggestedAnswer : current.promptZh) || '' })
       }
     } catch (err: any) {
@@ -158,7 +166,7 @@ export function VocabOutputCard({
     } finally {
       setJudging(false)
     }
-  }, [userInput, current, judging, currentIdx, isZhToEn, onComplete, stepId, store, t, title, hintLevel, skipped])
+  }, [userInput, current, judging, currentIdx, isZhToEn, onAttempt, onComplete, stepId, store, t, title, hintLevel, skipped])
 
   const advance = useCallback(() => {
     setResult(null)
@@ -215,11 +223,11 @@ export function VocabOutputCard({
             size="sm"
             variant="ghost"
             className="h-8 gap-1.5 rounded-full px-3 text-xs"
-            onClick={() => setHintLevel(hintLevel === 'none' ? 'hint' : hintLevel === 'hint' ? 'answer' : 'none')}
+            onClick={() => setHintLevel(hintLevel === 'none' ? 'hint' : 'none')}
             disabled={judging || !!result?.passed}
           >
-            {hintLevel === 'answer' ? <Eye className="size-3.5" /> : <Lightbulb className="size-3.5" />}
-            {hintLevel === 'none' ? t('practiceSession.warmupDrill.hint') : hintLevel === 'hint' ? t('practiceSession.showAnswer') : t('practiceSession.warmupDrill.hideAnswer')}
+            <Lightbulb className="size-3.5" />
+            {hintLevel === 'none' ? t('practiceSession.warmupDrill.hint') : t('practiceSession.warmupDrill.hideAnswer')}
           </Button>
           {!disableSkip && !skipped && (
           <button
@@ -313,7 +321,7 @@ export function VocabOutputCard({
             <p className="text-xs font-medium">{result.passed ? t('practiceSession.warmupDrill.correct') : t('practiceSession.tryAgain')}</p>
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground">{result.feedback}</p>
-          {result.correction && !result.passed && (
+          {result.correction && (result.passed || skipped || isReview) && (
             <p className="mt-1 text-[11px] text-blue-600 dark:text-blue-400">{highlightWords(result.correction, current.targetWords ?? [])}</p>
           )}
         </div>

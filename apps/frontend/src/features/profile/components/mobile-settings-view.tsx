@@ -36,8 +36,10 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
     setWifiOnlyMedia,
     nativeSpeechRecognitionEnabled,
     setNativeSpeechRecognitionEnabled,
-    dailyGoal,
-    setDailyGoal,
+    dailyPracticeGoal,
+    setDailyPracticeGoal,
+    reviewBatchSize,
+    setReviewBatchSize,
     dailyPracticeMixedPacks,
     setDailyPracticeMixedPacks,
     dailyPracticeRandomOrder,
@@ -298,24 +300,61 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
     }
   }
 
+  const notifyTodayRunSettingSaved = () => {
+    toast.success(t('profile.todayRunSettingNextRun'))
+  }
+
+  const handleDailyPracticeGoalChange = (value: number) => {
+    if (value === dailyPracticeGoal) return
+    setDailyPracticeGoal(value)
+    notifyTodayRunSettingSaved()
+  }
+
+  const handleReviewBatchSizeChange = (value: number) => {
+    if (value === reviewBatchSize) return
+    setReviewBatchSize(value)
+    notifyTodayRunSettingSaved()
+  }
+
   return (
     <div className="space-y-5">
       <IosSection>
         <IosRow
           label={t('profile.dailyGoal')}
-          subtitle={t(`profile.dailyGoal${dailyGoal}`)}
+          subtitle={t(`profile.dailyGoal${dailyPracticeGoal}`)}
           right={
             <div className="flex rounded-full bg-muted p-0.5">
               {[10, 20, 30].map((value) => (
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setDailyGoal(value)}
+                  onClick={() => handleDailyPracticeGoalChange(value)}
                   className={cn(
                     'h-7 min-w-9 rounded-full px-2 text-xs font-medium transition-colors',
-                    dailyGoal === value
+                    dailyPracticeGoal === value
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+          }
+        />
+        <IosRow
+          label={t('profile.reviewBatchSize')}
+          subtitle={t('profile.reviewBatchSizeValue', { count: reviewBatchSize })}
+          right={
+            <div className="flex rounded-full bg-muted p-0.5">
+              {[10, 20, 30].map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => handleReviewBatchSizeChange(value)}
+                  className={cn(
+                    'h-7 min-w-9 rounded-full px-2 text-xs font-medium transition-colors',
+                    reviewBatchSize === value ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
                   {value}

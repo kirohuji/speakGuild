@@ -34,6 +34,8 @@ interface Preferences {
   localSttModelVariant: LocalSttModelVariantId
   localSttFallbackToCloud: boolean
   dailyGoal: number
+  dailyPracticeGoal: number
+  reviewBatchSize: number
   dailyPracticeMixedPacks: boolean
   dailyPracticeRandomOrder: boolean
   dailyPracticeLastMode: string
@@ -57,6 +59,8 @@ interface PreferencesStore extends Preferences {
   setLocalSttModelVariant: (value: LocalSttModelVariantId) => void
   setLocalSttFallbackToCloud: (value: boolean) => void
   setDailyGoal: (value: number) => void
+  setDailyPracticeGoal: (value: number) => void
+  setReviewBatchSize: (value: number) => void
   setDailyPracticeMixedPacks: (value: boolean) => void
   setDailyPracticeRandomOrder: (value: boolean) => void
   setDailyPracticeLastMode: (value: string) => void
@@ -94,6 +98,8 @@ const DEFAULT_PREFERENCES: Preferences = {
   localSttModelVariant: 'tiny-en-q8',
   localSttFallbackToCloud: true,
   dailyGoal: 20,
+  dailyPracticeGoal: 20,
+  reviewBatchSize: 20,
   dailyPracticeMixedPacks: false,
   dailyPracticeRandomOrder: true,
   dailyPracticeLastMode: 'practice',
@@ -124,7 +130,10 @@ export const usePreferencesStore = create<PreferencesStore>()(
       setLocalSttEnabled: (value) => set({ localSttEnabled: value }),
       setLocalSttModelVariant: (value) => set({ localSttModelVariant: value }),
       setLocalSttFallbackToCloud: (value) => set({ localSttFallbackToCloud: value }),
-      setDailyGoal: (value) => set({ dailyGoal: value }),
+      // dailyGoal is retained as a persisted compatibility alias for older settings screens.
+      setDailyGoal: (value) => set({ dailyGoal: value, dailyPracticeGoal: value }),
+      setDailyPracticeGoal: (value) => set({ dailyGoal: value, dailyPracticeGoal: value }),
+      setReviewBatchSize: (value) => set({ reviewBatchSize: value }),
       setDailyPracticeMixedPacks: (value) => set({ dailyPracticeMixedPacks: value }),
       setDailyPracticeRandomOrder: (value) => set({ dailyPracticeRandomOrder: value }),
       setDailyPracticeLastMode: (value) => set({ dailyPracticeLastMode: value }),
@@ -135,13 +144,15 @@ export const usePreferencesStore = create<PreferencesStore>()(
     }),
     {
       name: 'manyu-preferences',
-      version: 1,
+      version: 2,
       migrate: (persistedState, version) => {
         const state = persistedState as Partial<PreferencesStore>
-        if (version >= 1) return state
+        if (version >= 2) return state
         return {
           ...state,
           dailyGoal: state.dailyGoal ?? DEFAULT_PREFERENCES.dailyGoal,
+          dailyPracticeGoal: state.dailyPracticeGoal ?? state.dailyGoal ?? DEFAULT_PREFERENCES.dailyPracticeGoal,
+          reviewBatchSize: state.reviewBatchSize ?? DEFAULT_PREFERENCES.reviewBatchSize,
           dailyPracticeRandomOrder: state.dailyPracticeRandomOrder ?? DEFAULT_PREFERENCES.dailyPracticeRandomOrder,
           localSttEnabled: state.localSttEnabled ?? DEFAULT_PREFERENCES.localSttEnabled,
           localSttModelVariant: state.localSttModelVariant ?? DEFAULT_PREFERENCES.localSttModelVariant,

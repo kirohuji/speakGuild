@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import { practiceAiApi, type DrillDirection } from '../api/english-practice-api'
 import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
+import type { TodayCardAttempt } from '@/stores/today-practice.store'
 import { PracticeAnswerInput } from './practice-answer-input'
 import { useCachedImage } from '@/hooks/use-cached-image'
 import { useCachedAudio } from '@/hooks/use-cached-audio'
@@ -23,7 +24,8 @@ interface ChunkOutputDrillCardProps {
   direction?: DrillDirection
   kind?: 'chunk' | 'word'
   onComplete?: (itemIndex: number, passed: boolean, score: WarmupScore) => void
-  /** 重练轮次隐藏「我不会」按钮 */
+  onAttempt?: (attempt: TodayCardAttempt) => void
+  /** @deprecated V2.5.1 retry 允许「我还是不会」；仅非 Today 场景保留。 */
   disableSkip?: boolean
   /** 只读回顾模式：传入已保存的练习数�?*/
   reviewData?: {
@@ -69,6 +71,7 @@ export function ChunkOutputDrillCard({
   direction = 'zh_to_en',
   kind = 'chunk',
   onComplete,
+  onAttempt,
   disableSkip,
   reviewData,
 }: ChunkOutputDrillCardProps) {
@@ -88,6 +91,7 @@ export function ChunkOutputDrillCard({
   const [audioUrl, setAudioUrl] = useState<string | null>(isReview ? (reviewData?.audioUrl ?? null) : (saved?.audioUrl ?? null))
   const [playing, setPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const rehearsalRef = useRef(false)
 
   const current = items[currentIdx]
   const { resolvedUrl: cachedImageUrl } = useCachedImage(current.imageUrl)
@@ -125,9 +129,10 @@ export function ChunkOutputDrillCard({
     setFeedback(t('practiceSession.warmupDrill.skippedHint'))
     setCorrection(correctionText)
     onComplete?.(currentIdx, false, 'miss')
+    onAttempt?.({ stepId, outcome: 'dontKnow', assistance: hintLevel === 'none' ? 'none' : 'hint', purpose: rehearsalRef.current ? 'rehearsal' : 'scheduled' })
     store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', correction: correctionText, hintLevel: 'answer', score: 'miss', skipped: true })
     store.recordEntry({ stepId, stepType, zh: promptText, answer: correctionText, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: '我不会/跳过', groupTitle, displayLabel: typeLabel, score: 'miss', usedHintLevel: 3, correction: correctionText })
-  }, [current, currentIdx, expectedAnswer, groupTitle, onComplete, promptText, status, stepId, stepType, store, t, typeLabel, userInput])
+  }, [current, currentIdx, expectedAnswer, groupTitle, hintLevel, onAttempt, onComplete, promptText, status, stepId, stepType, store, t, typeLabel, userInput])
 
   const retryCurrent = useCallback(() => {
     if (isReview || status === 'judging') return
@@ -139,6 +144,7 @@ export function ChunkOutputDrillCard({
     setHintLevel('none')
     setAudioUrl(null)
     store.resetSteps([stepId])
+    rehearsalRef.current = true
   }, [isReview, status, stepId, store])
 
   // ── 提交判断 ──
@@ -162,21 +168,23 @@ export function ChunkOutputDrillCard({
         setFeedback(judgement.feedback || t('practiceSession.warmupDrill.correct'))
         setHintLevel('answer') // 自动显示答案
         onComplete?.(currentIdx, true, score)
+        onAttempt?.({ stepId, outcome: 'correct', assistance: hintLevel === 'none' ? 'none' : 'hint', purpose: rehearsalRef.current ? 'rehearsal' : 'scheduled' })
         store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', hintLevel, score })
         store.recordEntry({ stepId, stepType, zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: true, feedback: judgement.feedback || '', groupTitle, displayLabel: typeLabel, score, usedHintLevel: hintLevelValue(hintLevel) })
       } else {
         setStatus('failed')
-        setFeedback(judgement.feedback || t('practiceSession.tryAgain'))
+        setFeedback(t('practiceSession.tryAgain'))
         setCorrection(judgement.correction || expectedAnswer || '')
         onComplete?.(currentIdx, false, 'miss')
-        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', correction: judgement.correction || expectedAnswer || '', hintLevel, score: 'miss' })
+        onAttempt?.({ stepId, outcome: 'incorrect', assistance: hintLevel === 'none' ? 'none' : 'hint', purpose: rehearsalRef.current ? 'rehearsal' : 'scheduled' })
+        store.recordStep(stepId, { userAnswer: userInput.trim(), audioUrl, passed: false, feedback: t('practiceSession.tryAgain'), correction: judgement.correction || expectedAnswer || '', hintLevel, score: 'miss' })
         store.recordEntry({ stepId, stepType, zh: promptText, answer: expectedAnswer, userAnswer: userInput.trim(), audioUrl, passed: false, feedback: judgement.feedback || '', groupTitle, displayLabel: typeLabel, score: 'miss', usedHintLevel: hintLevelValue(hintLevel), correction: judgement.correction || expectedAnswer || '' })
       }
     } catch (err: any) {
       setStatus('failed')
       setFeedback(err?.message || t('practiceSession.warmupDrill.feedbackUnavailable'))
     }
-  }, [userInput, current, status, currentIdx, isZhToEn, onComplete, stepId, stepType, store, groupTitle, hintLevel, direction, promptText, expectedAnswer, chunk.text, chunk.meaning, typeLabel, t])
+  }, [userInput, current, status, currentIdx, isZhToEn, onAttempt, onComplete, stepId, stepType, store, groupTitle, hintLevel, direction, promptText, expectedAnswer, chunk.text, chunk.meaning, typeLabel, t])
 
 
   if (!current) return null
@@ -252,11 +260,11 @@ export function ChunkOutputDrillCard({
             size="sm"
             variant="ghost"
             className="h-8 gap-1.5 rounded-full px-3 text-xs"
-            onClick={() => setHintLevel(hintLevel === 'none' ? 'hint' : hintLevel === 'hint' ? 'answer' : 'none')}
+            onClick={() => setHintLevel(hintLevel === 'none' ? 'hint' : 'none')}
             disabled={status === 'judging' || status === 'passed'}
           >
-            {hintLevel === 'answer' ? <Eye className="size-3.5" /> : <Lightbulb className="size-3.5" />}
-            {hintLevel === 'none' ? t('practiceSession.warmupDrill.hint') : hintLevel === 'hint' ? t('practiceSession.showAnswer') : t('practiceSession.warmupDrill.hideAnswer')}
+            <Lightbulb className="size-3.5" />
+            {hintLevel === 'none' ? t('practiceSession.warmupDrill.hint') : t('practiceSession.warmupDrill.hideAnswer')}
           </Button>
           {!disableSkip && !skipped && (
           <button
@@ -346,7 +354,7 @@ export function ChunkOutputDrillCard({
             <p className="text-xs font-medium">{status === 'passed' ? t('practiceSession.warmupDrill.correct') : t('practiceSession.tryAgain')}</p>
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground">{feedback}</p>
-          {correction && (
+          {correction && (status === 'passed' || skipped || isReview) && (
             <p className="mt-1 text-[11px] text-blue-600 dark:text-blue-400">{highlightChunk(correction, chunk.text)}</p>
           )}
         </div>

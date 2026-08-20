@@ -18,11 +18,20 @@ interface DailyPracticeAttemptInput {
 
 interface DailyPracticeRunInput {
   id?: string;
+  clientRunId?: string;
   date: string;
+  mode?: 'practice' | 'review';
   scope: string;
   packIds: string[];
   scheduledItemIds: string[];
   completedItemIds: string[];
+  attemptedItemIds?: string[];
+  unresolvedItemIds?: string[];
+  srsAppliedItemIds?: string[];
+  initialRecallResults?: any;
+  continuationResults?: any;
+  remediationResults?: any;
+  submissionStatus?: string;
   stats?: any;
 }
 
@@ -89,8 +98,8 @@ export class DailyPracticeService {
       return { accepted: false };
     }
 
-    const existing = await (this.prisma as any).userDailyPracticeRun.findUnique({
-      where: { userId_date: { userId, date } },
+    const existing = await (this.prisma as any).userDailyPracticeRun.findFirst({
+      where: { userId, date },
       select: { stats: true },
     });
     const activity = toActivityStats(existing?.stats);
@@ -104,11 +113,14 @@ export class DailyPracticeService {
       ? existing.stats as Record<string, unknown>
       : {};
 
-    await (this.prisma as any).userDailyPracticeRun.upsert({
-      where: { userId_date: { userId, date } },
-      create: { userId, date, scope, packIds: [], scheduledItemIds: [], completedItemIds: [], stats: { ...currentStats, activity } },
-      update: { stats: { ...currentStats, activity } },
-    });
+    if (existing) {
+      const first = await (this.prisma as any).userDailyPracticeRun.findFirst({ where: { userId, date }, select: { id: true } });
+      await (this.prisma as any).userDailyPracticeRun.update({ where: { id: first.id }, data: { stats: { ...currentStats, activity } } });
+    } else {
+      await (this.prisma as any).userDailyPracticeRun.create({
+        data: { userId, date, clientRunId: `activity:${date.toISOString().slice(0, 10)}`, mode: 'practice', scope, packIds: [], scheduledItemIds: [], completedItemIds: [], stats: { ...currentStats, activity } },
+      });
+    }
     return { accepted: true };
   }
 
@@ -129,33 +141,38 @@ export class DailyPracticeService {
     }
     const syncedAttempts: string[] = [];
 
-    const existingRun = await (this.prisma as any).userDailyPracticeRun.findUnique({
-      where: { userId_date: { userId, date: startOfDate(body.run.date) } },
+    const clientRunId = String(body.run.clientRunId ?? body.run.id ?? '').trim();
+    if (!clientRunId) throw new BadRequestException('clientRunId is required');
+    const existingRun = await (this.prisma as any).userDailyPracticeRun.findFirst({
+      where: { userId, clientRunId },
       select: { stats: true },
     });
     const mergedStats = {
       ...(existingRun?.stats && typeof existingRun.stats === 'object' && !Array.isArray(existingRun.stats) ? existingRun.stats : {}),
       ...(body.run.stats ?? {}),
     };
-    const run = await (this.prisma as any).userDailyPracticeRun.upsert({
-      where: { userId_date: { userId, date: startOfDate(body.run.date) } },
-      create: {
+    const runData = {
         userId,
+        clientRunId,
         date: startOfDate(body.run.date),
+        mode: body.run.mode ?? 'practice',
         scope: body.run.scope,
         packIds: body.run.packIds ?? [],
         scheduledItemIds: body.run.scheduledItemIds ?? [],
         completedItemIds: body.run.completedItemIds ?? [],
+        attemptedItemIds: body.run.attemptedItemIds ?? [],
+        unresolvedItemIds: body.run.unresolvedItemIds ?? [],
+        srsAppliedItemIds: body.run.srsAppliedItemIds ?? [],
+        initialRecallResults: body.run.initialRecallResults ?? {},
+        continuationResults: body.run.continuationResults ?? {},
+        remediationResults: body.run.remediationResults ?? {},
+        submissionStatus: body.run.submissionStatus ?? 'synced',
         stats: mergedStats,
-      },
-      update: {
-        scope: body.run.scope,
-        packIds: body.run.packIds ?? [],
-        scheduledItemIds: body.run.scheduledItemIds ?? [],
-        completedItemIds: body.run.completedItemIds ?? [],
-        stats: mergedStats,
-      },
-    });
+    };
+    const existingLogicalRun = await (this.prisma as any).userDailyPracticeRun.findFirst({ where: { userId, clientRunId }, select: { id: true } });
+    const run = existingLogicalRun
+      ? await (this.prisma as any).userDailyPracticeRun.update({ where: { id: existingLogicalRun.id }, data: runData })
+      : await (this.prisma as any).userDailyPracticeRun.create({ data: runData });
 
     const attempts = [...(body.attempts ?? [])].sort((a, b) =>
       (toDate(a.practicedAt)?.getTime() ?? 0) - (toDate(b.practicedAt)?.getTime() ?? 0),
@@ -202,15 +219,18 @@ export class DailyPracticeService {
 
     let warmupRecord: any = null;
     if (body.warmupRecord?.topicId && body.warmupRecord.items?.length) {
-      warmupRecord = await (this.prisma as any).practiceWarmupRecord.create({
-        data: {
+      const warmupData = {
           userId,
+          clientRunId,
           topicId: body.warmupRecord.topicId,
           score: body.warmupRecord.score ?? null,
           feedback: body.warmupRecord.feedback ?? null,
           items: body.warmupRecord.items,
-        },
-      });
+        };
+      const existingWarmup = await (this.prisma as any).practiceWarmupRecord.findUnique({ where: { clientRunId } });
+      warmupRecord = existingWarmup
+        ? await (this.prisma as any).practiceWarmupRecord.update({ where: { clientRunId }, data: warmupData })
+        : await (this.prisma as any).practiceWarmupRecord.create({ data: warmupData });
     }
 
     return {

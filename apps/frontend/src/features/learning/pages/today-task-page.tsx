@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback, useReducer } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import type React from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -21,8 +21,9 @@ import { ChunkOutputDrillCard } from '@/features/practice/components/chunk-outpu
 import { VocabOutputCard } from '@/features/practice/components/vocab-output-card'
 import { PatternDrillCard } from '@/features/practice/components/pattern-drill-card'
 import { SentenceDecompositionCard } from '@/features/practice/components/sentence-decomposition-card'
-import { useWarmupSessionStore, type WarmupRecordEntry, type WarmupScore } from '@/stores/warmup-session.store'
+import { useWarmupSessionStore, type WarmupRecordEntry } from '@/stores/warmup-session.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
+import { deriveTodayPractice, useTodayPracticeStore, type TodayCardAttempt } from '@/stores/today-practice.store'
 import type { DailyPracticePlanMode, DailyPracticeStatus } from '@/lib/offline/daily-practice.repository'
 import { TodayRecordsDrawer } from '../components/today-records-drawer'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
@@ -74,9 +75,9 @@ function normalizePlanMode(mode: string | null): DailyPracticePlanMode {
   return mode === 'review' || mode === 'practice' ? mode : 'practice'
 }
 
-function getSessionPlanMode(): DailyPracticePlanMode {
-  if (typeof window === 'undefined') return 'practice'
-  return normalizePlanMode(window.sessionStorage.getItem(TODAY_TASK_MODE_SESSION_KEY))
+function localTodayKey() {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 }
 
 function buildTodayReferencePreloads(steps: NonNullable<ReturnType<typeof useDailyPracticeStore.getState>['plan']>['steps']): WarmupReferencePreloadInput[] {
@@ -167,94 +168,6 @@ function useTypeMeta(t: (key: string) => string): Record<string, { label: string
   }), [t])
 }
 
-// ── round 状态机（主轮 + 重练轮）──
-type RoundKind = 'main' | 'review'
-
-interface RoundState {
-  kind: RoundKind
-  /** 主轮：已练集合（含错题，用于轮次完成判定与重访恢复） */
-  attemptedIds: Set<string>
-  /** 重练轮：待重练的 id 集合（kind=review 时有效） */
-  reviewPendingIds: Set<string>
-  /** 重练轮：已通过的 id 集合 */
-  reviewDoneIds: Set<string>
-  /** 轮次序号：决定 warmupRecordId；「下一组/重新练习/模式切换」+1 */
-  roundNonce: number
-  /** 错题弹窗「稍后再练」标记 */
-  reviewDismissed: boolean
-}
-
-type RoundAction =
-  | { type: 'initMain'; attemptedIds: string[] }
-  | { type: 'completeStep'; stepId: string; passed: boolean }
-  | { type: 'startReview'; weakIds: string[] }
-  | { type: 'finishReview' }
-  | { type: 'dismissReview' }
-  | { type: 'resetRound'; roundNonce: number }
-
-const initialRound: RoundState = {
-  kind: 'main',
-  attemptedIds: new Set(),
-  reviewPendingIds: new Set(),
-  reviewDoneIds: new Set(),
-  roundNonce: 0,
-  reviewDismissed: false,
-}
-
-function roundReducer(state: RoundState, action: RoundAction): RoundState {
-  switch (action.type) {
-    case 'initMain':
-      return {
-        ...state,
-        kind: 'main',
-        attemptedIds: new Set(action.attemptedIds),
-        reviewPendingIds: new Set(),
-        reviewDoneIds: new Set(),
-        reviewDismissed: false,
-      }
-    case 'completeStep': {
-      if (state.kind === 'review') {
-        // 重练轮：答对才计入完成
-        if (!action.passed) return state
-        const reviewDoneIds = new Set(state.reviewDoneIds)
-        reviewDoneIds.add(action.stepId)
-        return { ...state, reviewDoneIds }
-      }
-      // 主轮：答对/答错/我不会都算已练（保证轮次可完成），通过与否由 records 派生
-      const attemptedIds = new Set(state.attemptedIds)
-      attemptedIds.add(action.stepId)
-      return { ...state, attemptedIds }
-    }
-    case 'startReview':
-      return {
-        ...state,
-        kind: 'review',
-        reviewPendingIds: new Set(action.weakIds),
-        reviewDoneIds: new Set(),
-        reviewDismissed: false,
-      }
-    case 'finishReview':
-      return {
-        ...state,
-        kind: 'main',
-        reviewPendingIds: new Set(),
-        reviewDoneIds: new Set(),
-        reviewDismissed: true,
-      }
-    case 'dismissReview':
-      return { ...state, reviewDismissed: true }
-    case 'resetRound':
-      return {
-        kind: 'main',
-        attemptedIds: new Set(),
-        reviewPendingIds: new Set(),
-        reviewDoneIds: new Set(),
-        roundNonce: action.roundNonce,
-        reviewDismissed: false,
-      }
-  }
-}
-
 // ── 组件 ──
 export function TodayTaskPage() {
   const { t } = useTranslation()
@@ -263,7 +176,9 @@ export function TodayTaskPage() {
   const onboardingCompletedSegments = useOnboardingStore((state) => state.completedSegments)
   const isAdmin = session?.user?.role === 'admin'
   const TYPE_META = useTypeMeta(t)
-  const warmupStore = useWarmupSessionStore()
+  const warmupRecords = useWarmupSessionStore((s) => s.records)
+  const clearWarmupSession = useWarmupSessionStore((s) => s.clearSession)
+  const resetRetryCycleUi = useWarmupSessionStore((s) => s.resetRetryCycleUi)
   const [searchParams, setSearchParams] = useSearchParams()
   const targetPackId = searchParams.get('packId') || null
   const targetDate = searchParams.get('date') || null
@@ -272,15 +187,20 @@ export function TodayTaskPage() {
   const error = useDailyPracticeStore((s) => s.error)
   const submitting = useDailyPracticeStore((s) => s.submitting)
   const loadToday = useDailyPracticeStore((s) => s.loadToday)
-  const completeStep = useDailyPracticeStore((s) => s.completeStep)
+  const recordAttempt = useDailyPracticeStore((s) => s.recordAttempt)
+  const recordRehearsalAttempt = useDailyPracticeStore((s) => s.recordRehearsalAttempt)
+  const openMainSession = useDailyPracticeStore((s) => s.openMainSession)
+  const startMistakeRetry = useDailyPracticeStore((s) => s.startMistakeRetry)
+  const setMachineCurrentStep = useDailyPracticeStore((s) => s.setCurrentStep)
+  const closeSession = useDailyPracticeStore((s) => s.closeSession)
   const submitToday = useDailyPracticeStore((s) => s.submitToday)
-  const dailyGoal = usePreferencesStore((s) => s.dailyGoal)
   const dailyPracticeRandomOrder = usePreferencesStore((s) => s.dailyPracticeRandomOrder)
+  const dailyPracticeLastMode = usePreferencesStore((s) => s.dailyPracticeLastMode)
+  const setDailyPracticeLastMode = usePreferencesStore((s) => s.setDailyPracticeLastMode)
   const localAiWarmupJudgeEnabled = usePreferencesStore((s) => s.localAiWarmupJudgeEnabled)
 
   // 练习状态
   const hydrateWarmupSession = useWarmupSessionStore((s) => s.hydrateSession)
-  const hydrateHistoricalStepStates = useWarmupSessionStore((s) => s.hydrateHistoricalStepStates)
   const [currentIdx, setCurrentIdx] = useState(0)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [playlistOpen, setPlaylistOpen] = useState(false)
@@ -298,54 +218,60 @@ export function TodayTaskPage() {
   })
   const [historicalTodayRecords, setHistoricalTodayRecords] = useState<WarmupRecordEntry[]>([])
   const [autoNextEnabled, setAutoNextEnabled] = useState(false)
-  const [round, dispatchRound] = useReducer(roundReducer, initialRound)
   const [reviewRunNonce, setReviewRunNonce] = useState(0)
-  const [sessionHydrated, setSessionHydrated] = useState(false)
-  const [hasSubmittedToday, setHasSubmittedToday] = useState(false)
-  const reviewRoundActive = round.kind === 'review'
-  const attemptedIds = round.attemptedIds
-  const reviewPendingIds = round.reviewPendingIds
-  const reviewDoneIds = round.reviewDoneIds
-  const roundNonce = round.roundNonce
-  const reviewDismissed = round.reviewDismissed
+  const [reviewDismissed, setReviewDismissed] = useState(false)
+  const [rehearsalAll, setRehearsalAll] = useState(false)
+  const todayState = useTodayPracticeStore()
+  const reviewRoundActive = todayState.roundKind === 'mistakeRetry'
+  const attemptedIds = todayState.attemptedIds
+  const unresolvedIds = todayState.unresolvedIds
+  const reviewPendingIds = unresolvedIds
+  const reviewDoneIds = useMemo(() => new Set(todayState.roundStepIds.filter((id) => attemptedIds.has(id) && !unresolvedIds.has(id))), [attemptedIds, todayState.roundStepIds, unresolvedIds])
+  const sessionHydrated = todayState.sessionHydrated
+  const hasSubmittedToday = todayState.submissionStatus === 'synced'
   const localAiPreloadKeyRef = useRef<string | null>(null)
   const warmupSessionHydratedKeyRef = useRef<string | null>(null)
   const teachingRequestIdRef = useRef(0)
-  const planMode = searchParams.has('mode') ? normalizePlanMode(searchParams.get('mode')) : getSessionPlanMode()
+  const planMode = searchParams.has('mode')
+    ? normalizePlanMode(searchParams.get('mode'))
+    : normalizePlanMode(typeof window === 'undefined' ? dailyPracticeLastMode : (window.sessionStorage.getItem(TODAY_TASK_MODE_SESSION_KEY) ?? dailyPracticeLastMode))
   const [planRunSeed, setPlanRunSeed] = useState(0)
+  const [observedToday, setObservedToday] = useState(localTodayKey)
+  useEffect(() => {
+    const checkDate = () => {
+      if (!drawerOpen) setObservedToday(localTodayKey())
+    }
+    document.addEventListener('visibilitychange', checkDate)
+    const timer = window.setInterval(checkDate, 60_000)
+    checkDate()
+    return () => {
+      document.removeEventListener('visibilitychange', checkDate)
+      window.clearInterval(timer)
+    }
+  }, [drawerOpen])
   useEffectivePracticeTimer({
     enabled: drawerOpen && Boolean(plan?.date),
-    sourceId: plan?.date ? `daily:${plan.date}` : null,
+    sourceId: plan?.runId ?? null,
     scope: 'daily',
     questionCount: attemptedIds.size,
   })
   const currentPlanReusable = Boolean(
     plan &&
     planRunSeed === 0 &&
-    plan.dailyGoal === dailyGoal &&
     plan.mode === planMode &&
-    (!targetDate || plan.date === targetDate) &&
+    plan.date === (targetDate || observedToday) &&
     (!targetPackId || plan.units.some((unit) => unit.id === targetPackId)),
   )
 
   useEffect(() => {
     if (currentPlanReusable) return
-    warmupStore.clearSession()
-    setHasSubmittedToday(false)
-    setSessionHydrated(false)
+    clearWarmupSession()
     setReviewRunNonce(0)
     let cancelled = false
     loadToday(targetPackId, targetDate, planMode, planRunSeed > 0)
-      .then(() => {
-        if (cancelled) return
-        // 用 store 最新 plan 初始化主轮已练集合（闭包里的 plan 是旧的）
-        dispatchRound({
-          type: 'initMain',
-          attemptedIds: useDailyPracticeStore.getState().plan?.completedItemIds ?? [],
-        })
-      })
+      .then(() => { if (cancelled) return })
     return () => { cancelled = true }
-  }, [currentPlanReusable, dispatchRound, loadToday, targetPackId, targetDate, planMode, planRunSeed])
+  }, [clearWarmupSession, currentPlanReusable, loadToday, targetPackId, targetDate, planMode, planRunSeed])
 
   // 今日计划就绪时触发「每日练习」引导（条件式分段，仅首次）
   useEffect(() => {
@@ -380,59 +306,63 @@ export function TodayTaskPage() {
       })
   }, [drawerOpen, isAdmin, localAiWarmupJudgeEnabled, plan?.steps, plan?.units, t, targetPackId])
 
-  const markDone = useCallback(async (stepId: string, score: WarmupScore = 'strong', passed = true) => {
-    // 只有通过（strong/ok/weak）才写 SM-2 进度；答错/我不会不消耗新题池（重新练习会再遇到）
-    if (passed) {
-      const source = plan?.steps.find((step) => step.itemId === stepId)
-      if (source) await completeStep(source, score)
+  const handleAttempt = useCallback(async (attempt: TodayCardAttempt) => {
+    try {
+      if (attempt.purpose === 'rehearsal' || rehearsalAll) {
+        await recordRehearsalAttempt(attempt.stepId, attempt.outcome, attempt.assistance)
+        return
+      }
+      const source = plan?.steps.find((step) => step.itemId === attempt.stepId)
+      if (source) await recordAttempt(source, attempt.outcome, attempt.assistance)
+    } catch (error) {
+      console.error('[today-task] failed to persist attempt:', error)
+      toast.error(error instanceof Error ? error.message : t('common.error'))
     }
-    dispatchRound({ type: 'completeStep', stepId, passed })
-  }, [completeStep, dispatchRound, plan?.steps])
+  }, [plan?.steps, recordAttempt, recordRehearsalAttempt, rehearsalAll, t])
 
   const switchPlanMode = useCallback((nextMode: DailyPracticePlanMode) => {
     if (nextMode === plan?.mode) return
     window.sessionStorage.setItem(TODAY_TASK_MODE_SESSION_KEY, nextMode)
+    setDailyPracticeLastMode(nextMode)
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
       next.set('mode', nextMode)
       return next
     })
-    dispatchRound({ type: 'resetRound', roundNonce: roundNonce + 1 })
+    setRehearsalAll(false)
     setPlanRunSeed(0)
     setCurrentIdx(0)
-    setSessionHydrated(false)
     setDrawerOpen(false)
     setPlaylistOpen(false)
     setRecordsOpen(false)
     setReviewRunNonce(0)
-    setHasSubmittedToday(false)
-    warmupStore.clearSession()
-  }, [dispatchRound, plan?.mode, roundNonce, setSearchParams, warmupStore])
+    clearWarmupSession()
+  }, [clearWarmupSession, plan?.mode, setDailyPracticeLastMode, setSearchParams])
 
   const startNewPracticeSet = useCallback(() => {
-    dispatchRound({ type: 'resetRound', roundNonce: roundNonce + 1 })
+    closeSession()
+    setRehearsalAll(false)
     setPlanRunSeed(Date.now())
     setCurrentIdx(0)
-    setSessionHydrated(false)
     setDrawerOpen(false)
     setPlaylistOpen(false)
     setRecordsOpen(false)
     setReviewRunNonce(0)
-    setHasSubmittedToday(false)
-    warmupStore.clearSession()
-  }, [dispatchRound, roundNonce, warmupStore])
+    clearWarmupSession()
+  }, [clearWarmupSession, closeSession])
 
   const startRePractice = useCallback(() => {
-    dispatchRound({ type: 'resetRound', roundNonce: roundNonce + 1 })
+    closeSession()
+    setRehearsalAll(true)
     setCurrentIdx(0)
-    setSessionHydrated(false)
     setDrawerOpen(false)
     setPlaylistOpen(false)
     setRecordsOpen(false)
     setReviewRunNonce(0)
-    setHasSubmittedToday(false)
-    warmupStore.clearSession()
-  }, [dispatchRound, roundNonce, warmupStore])
+    clearWarmupSession()
+    openMainSession()
+    setDrawerOpen(true)
+  }, [clearWarmupSession, closeSession, openMainSession])
 
   // ── 构建练习列表 ──
   const steps = useMemo<PracticeItem[]>(() => {
@@ -463,8 +393,7 @@ export function TodayTaskPage() {
                 direction={item.direction ?? 'zh_to_en'}
                 kind={item.kind ?? 'chunk'}
                 groupTitle={item.title}
-                disableSkip={reviewRoundActive}
-                onComplete={(_idx, passed, score) => { if (reviewRoundActive && !passed) return; void markDone(sid, score, passed) }}
+                onAttempt={(attempt) => { void handleAttempt(attempt) }}
               />
             ),
           }
@@ -479,8 +408,7 @@ export function TodayTaskPage() {
                 stepId={sid}
                 direction={item.direction ?? 'zh_to_en'}
                 vocabs={[prompt as VocabPromptItem]}
-                disableSkip={reviewRoundActive}
-                onComplete={(_idx, passed, score) => { if (reviewRoundActive && !passed) return; void markDone(sid, score, passed) }}
+                onAttempt={(attempt) => { void handleAttempt(attempt) }}
                 hideHeader
               />
             ),
@@ -504,8 +432,7 @@ export function TodayTaskPage() {
                 direction={item.direction ?? 'zh_to_en'}
                 kind="word"
                 groupTitle={`${vocabWord || t('todayTask.vocabSentenceBuilding')} · ${patternChunk}`}
-                disableSkip={reviewRoundActive}
-                onComplete={(_idx, passed, score) => { if (reviewRoundActive && !passed) return; void markDone(sid, score, passed) }}
+                onAttempt={(attempt) => { void handleAttempt(attempt) }}
               />
             ),
           }
@@ -522,8 +449,7 @@ export function TodayTaskPage() {
                 stepId={sid}
                 direction={item.direction ?? 'zh_to_en'}
                 groupTitle={item.title}
-                disableSkip={reviewRoundActive}
-                onComplete={(_idx, passed, score) => { if (reviewRoundActive && !passed) return; void markDone(sid, score, passed) }}
+                onAttempt={(attempt) => { void handleAttempt(attempt) }}
                 hideHeader
               />
             ),
@@ -537,86 +463,70 @@ export function TodayTaskPage() {
                 title={item.title || t('todayTask.longSentenceDecomposition')}
                 levels={item.levels}
                 stepId={sid}
-                onComplete={(_passed, score) => { void markDone(sid, score) }}
+                onAttempt={(attempt) => { void handleAttempt(attempt) }}
                 hideHeader
               />
             ),
         }
       })
-  }, [markDone, plan?.steps, reviewRoundActive])
+  }, [handleAttempt, plan?.steps, t])
 
   // 重练轮由待重练 id 集合派生（保证 render 闭包基于最新 reviewRoundActive）
   const reviewSteps = useMemo<PracticeItem[] | null>(() => {
-    if (!reviewRoundActive || reviewPendingIds.size === 0) return null
-    return steps.filter((step) => reviewPendingIds.has(step.id))
-  }, [reviewPendingIds, reviewRoundActive, steps])
-  // 通过集合（绿）由 records 派生；待练（红）与未练（灰）同理
-  const passedStepIds = useMemo(() => {
-    const set = new Set<string>()
-    for (const record of warmupStore.records) if (record.passed) set.add(record.stepId)
-    return set
-  }, [warmupStore.records])
-  // 错题池（我不会/答错）：records 中 score 为 weak/miss
-  const weakRecords = useMemo(
-    () => warmupStore.records.filter((record) => record.score === 'weak' || record.score === 'miss'),
-    [warmupStore.records],
-  )
-  const weakStepIds = useMemo(() => new Set(weakRecords.map((record) => record.stepId)), [weakRecords])
-  // 主轮「继续练习」队列：排除错题（错题只通过「练习错题」重练）
-  const mainQueue = useMemo(() => steps.filter((s) => !weakStepIds.has(s.id)), [steps, weakStepIds])
-  const activeSteps = reviewRoundActive && reviewSteps ? reviewSteps : mainQueue
+    if (!reviewRoundActive || todayState.sessionStepIds.length === 0) return null
+    const snapshot = new Set(todayState.sessionStepIds)
+    return steps.filter((step) => snapshot.has(step.id))
+  }, [reviewRoundActive, steps, todayState.sessionStepIds])
+  const passedStepIds = reviewDoneIds
+  const weakStepIds = unresolvedIds
+  const weakRecords = useMemo(() => warmupRecords.filter((record) => weakStepIds.has(record.stepId)), [warmupRecords, weakStepIds])
+  // Session is a stable snapshot. Incorrect answers never remove a card from it.
+  const mainQueue = steps
+  const mainSessionSteps = todayState.sessionStepIds.length > 0 && !reviewRoundActive
+    ? steps.filter((step) => todayState.sessionStepIds.includes(step.id))
+    : mainQueue
+  const activeSteps = reviewRoundActive && reviewSteps ? reviewSteps : mainSessionSteps
   const activeDoneIds = reviewRoundActive ? reviewDoneIds : passedStepIds
   // 续练定位：主轮用「已练」（含错题，下一个未练开始），重练轮用 reviewDoneIds
   const resumeDoneIds = reviewRoundActive ? reviewDoneIds : attemptedIds
 
   const warmupRecordId = useMemo(() => {
     if (!plan || plan.scheduledItemIds.length === 0) return null
-    const scope = plan.units.map((unit) => unit.id).join(',') || 'mixed'
-    return `today-warmup:${plan.date}:${plan.mode}:${scope}:${roundNonce || 'current'}:${plan.scheduledItemIds.join('|')}`
-  }, [plan, roundNonce])
+    return `today-warmup:${plan.runId}`
+  }, [plan])
 
   useEffect(() => {
     if (!warmupRecordId || steps.length === 0) return
     if (warmupSessionHydratedKeyRef.current === warmupRecordId) return
     warmupSessionHydratedKeyRef.current = warmupRecordId
     let cancelled = false
-    const markHydrated = () => { if (!cancelled) setSessionHydrated(true) }
     void practiceRepository.getLocalWarmupRecord(warmupRecordId).then((record) => {
       if (cancelled) return
-      // 已提交过的轮次：重访不重复提交（防后端重复建 practiceWarmupRecord + 打卡翻倍）
-      const stored = record as ({ items?: WarmupRecordEntry[]; syncStatus?: string } | null)
-      if (stored?.syncStatus === 'synced' && Array.isArray(stored?.items) && (stored.items?.length ?? 0) > 0) {
-        setHasSubmittedToday(true)
-      }
       const rawRecords = record?.items ?? []
       const stepIds = new Set(steps.map((step) => step.id))
       const currentRecords = Array.isArray(rawRecords) ? (rawRecords as WarmupRecordEntry[])
         .filter((record) => stepIds.has(record.stepId))
         : []
-      if (currentRecords.length > 0) hydrateWarmupSession(currentRecords)
-      const missingStepIds = steps
-        .map((step) => step.id)
-        .filter((stepId) => !currentRecords.some((record) => record.stepId === stepId))
-      if (missingStepIds.length === 0) { markHydrated(); return }
-      void practiceRepository.getLatestWarmupEntriesByStepIds(missingStepIds, warmupRecordId).then((records) => {
-        if (!cancelled && records.length > 0) hydrateHistoricalStepStates(records)
-        markHydrated()
-      })
-    }).catch(() => markHydrated())
+      if (currentRecords.length > 0 && !reviewRoundActive) hydrateWarmupSession(currentRecords)
+      // Historical answers are intentionally not hydrated into an active retrieval.
+    }).catch(() => undefined)
     return () => { cancelled = true }
-  }, [hydrateHistoricalStepStates, hydrateWarmupSession, steps, warmupRecordId])
+  }, [hydrateWarmupSession, reviewRoundActive, steps, warmupRecordId])
 
   const enrichedWarmupRecords = useMemo(() => {
     const stepById = new Map(steps.map((step) => [step.id, step]))
-    return warmupStore.records.map((record) => {
+    return warmupRecords.map((record) => {
       const step = stepById.get(record.stepId)
       return {
         ...record,
         displayLabel: record.displayLabel ?? step?.displayLabel,
         topicTitle: record.topicTitle ?? step?.topicTitle,
+        initialRecallResult: todayState.initialRecallResults[record.stepId],
+        continuationResult: todayState.continuationResults[record.stepId],
+        remediationResult: todayState.remediationResults[record.stepId],
       }
     })
-  }, [steps, warmupStore.records])
+  }, [steps, todayState.continuationResults, todayState.initialRecallResults, todayState.remediationResults, warmupRecords])
 
   useEffect(() => {
     if (!warmupRecordId || !plan || enrichedWarmupRecords.length === 0) return
@@ -640,18 +550,19 @@ export function TodayTaskPage() {
       if (!cancelled) setHistoricalTodayRecords(records)
     }).catch(() => undefined)
     return () => { cancelled = true }
-  }, [recordsOpen, plan?.date, warmupStore.records])
+  }, [recordsOpen, plan?.date, warmupRecords])
 
   // ── 进度统计 ──
-  const attemptedCount = steps.filter((s) => attemptedIds.has(s.id)).length
+  const derivedToday = deriveTodayPractice(todayState)
+  const attemptedCount = derivedToday.attemptedCount
   const hasPracticeSteps = steps.length > 0
-  const allDone = steps.length > 0 && attemptedCount >= steps.length
+  const allDone = derivedToday.allAttempted
   const activeDoneCount = activeSteps.filter((s) => activeDoneIds.has(s.id)).length
   const activeTotal = activeSteps.length
-  const reviewAllDone = reviewRoundActive && activeTotal > 0 && activeSteps.every((s) => reviewDoneIds.has(s.id))
-  const passedCount = steps.filter((s) => passedStepIds.has(s.id)).length
-  const weakCount = steps.filter((s) => weakStepIds.has(s.id)).length
-  const unattemptedCount = steps.length - passedCount - weakCount
+  const reviewAllDone = reviewRoundActive && activeTotal > 0 && todayState.retryQueueIds.length === 0
+  const passedCount = derivedToday.greenCount
+  const weakCount = derivedToday.redCount
+  const unattemptedCount = derivedToday.grayCount
   const needsReviewRound = allDone && weakStepIds.size > 0 && !reviewRoundActive && !reviewDismissed
 
   const upcomingTopicCandidates = useMemo(() => {
@@ -723,18 +634,20 @@ export function TodayTaskPage() {
 
   const startWeakReviewRound = useCallback(() => {
     if (weakStepIds.size === 0) return
-    dispatchRound({ type: 'startReview', weakIds: [...weakStepIds] })
+    startMistakeRetry()
+    setRehearsalAll(false)
     setReviewRunNonce((value) => value + 1)
-    warmupStore.resetStepStates([...weakStepIds])
+    for (const stepId of weakStepIds) resetRetryCycleUi(stepId)
     setCurrentIdx(0)
     setDrawerOpen(true)
-  }, [dispatchRound, weakStepIds, warmupStore])
+  }, [resetRetryCycleUi, startMistakeRetry, weakStepIds])
 
   /** 关闭练习抽屉：若正处在重练轮则取消重练并回到主轮（错题池保留），避免卡在 review 状态 */
   const closePracticeDrawer = useCallback(() => {
     setDrawerOpen(false)
-    if (reviewRoundActive) dispatchRound({ type: 'finishReview' })
-  }, [dispatchRound, reviewRoundActive])
+    setRehearsalAll(false)
+    closeSession()
+  }, [closeSession])
 
   const openTopicTeaching = useCallback(async (topicId: string) => {
     const requestId = teachingRequestIdRef.current + 1
@@ -788,27 +701,12 @@ export function TodayTaskPage() {
   }
 
   const topSegments = useMemo(() => {
-    if (plan?.mode === 'practice') {
-      if (reviewRoundActive) {
-        const pending = activeTotal - activeDoneCount
-        return [
-          { key: 'done', count: activeDoneCount, color: 'bg-emerald-500' },
-          { key: 'pending', count: pending, color: 'bg-muted-foreground/30' },
-        ]
-      }
-      return [
-        { key: 'done', count: passedCount, color: 'bg-emerald-500' },
-        { key: 'weak', count: weakCount, color: 'bg-red-500/70' },
-        { key: 'pending', count: unattemptedCount, color: 'bg-muted-foreground/30' },
-      ]
-    }
     return [
-      { key: 'overdue', count: statusCounts.overdue, color: SEGMENT_COLORS.overdue },
-      { key: 'review', count: statusCounts.review, color: SEGMENT_COLORS.review },
-      { key: 'new', count: statusCounts.new, color: SEGMENT_COLORS.new },
-      { key: 'done', count: statusCounts.done, color: SEGMENT_COLORS.done },
+      { key: 'done', count: passedCount, color: 'bg-emerald-500' },
+      { key: 'weak', count: weakCount, color: 'bg-red-500/70' },
+      { key: 'pending', count: unattemptedCount, color: 'bg-muted-foreground/30' },
     ]
-  }, [activeDoneCount, activeTotal, passedCount, plan?.mode, reviewRoundActive, statusCounts, unattemptedCount, weakCount])
+  }, [passedCount, unattemptedCount, weakCount])
   const practiceOrderLabel = dailyPracticeRandomOrder ? t('todayTask.randomPick') : t('todayTask.sequentialPick')
   const activeModeLabel = plan?.mode === 'review' ? t('todayTask.reviewList') : t('todayTask.practiceGroup')
 
@@ -822,10 +720,9 @@ export function TodayTaskPage() {
       try {
         await submitToday(enrichedWarmupRecords, warmupRecordId)
         console.log('[today-task] ✅ 本组练习已提交 |', activeDoneCount, '题')
-        setHasSubmittedToday(true)
         // 重练完成 → 回到主视图完成态（仍有错题则「练习错题 N」按钮保留）
         if (reviewRoundActive) {
-          dispatchRound({ type: 'finishReview' })
+          closeSession()
           setCurrentIdx(0)
           setDrawerOpen(false)
         }
@@ -835,7 +732,7 @@ export function TodayTaskPage() {
     }
 
     submit()
-  }, [activeDoneCount, allDone, dispatchRound, enrichedWarmupRecords, hasSubmittedToday, needsReviewRound, reviewAllDone, reviewRoundActive, sessionHydrated, steps.length, submitting, warmupRecordId, submitToday])
+  }, [activeDoneCount, allDone, closeSession, enrichedWarmupRecords, hasSubmittedToday, needsReviewRound, reviewAllDone, reviewRoundActive, sessionHydrated, steps.length, submitting, warmupRecordId, submitToday])
 
   const groupedSteps = useMemo<PracticeGroup[]>(() => {
     const order = new Map<string, PracticeGroup>()
@@ -862,7 +759,7 @@ export function TodayTaskPage() {
 
   const playlistGroups = useMemo<PracticeGroup[]>(() => {
     // 主轮：与「继续练习」队列一致（排除错题，错题只通过「练习错题」重练）
-    const sourceSteps = reviewRoundActive && reviewSteps ? reviewSteps : mainQueue
+    const sourceSteps = activeSteps
     const doneIds = reviewRoundActive ? reviewDoneIds : passedStepIds
     const order = new Map<string, PracticeGroup>()
     sourceSteps.forEach((step, index) => {
@@ -884,18 +781,21 @@ export function TodayTaskPage() {
       order.set(step.type, group)
     })
     return Array.from(order.values())
-  }, [mainQueue, passedStepIds, reviewDoneIds, reviewRoundActive, reviewSteps, t])
+  }, [activeSteps, passedStepIds, reviewDoneIds, reviewRoundActive, t])
 
   const openStepAt = useCallback((index: number) => {
     const step = activeSteps[index]
     if (!step) return
     setCurrentIdx(index)
+    if (!reviewRoundActive) setRehearsalAll(false)
+    if (reviewRoundActive) setMachineCurrentStep(step.id)
+    else openMainSession(step.id)
     if (step.id.startsWith('placeholder:')) {
-      markDone(step.id, 'ok')
+      return
     } else {
       setDrawerOpen(true)
     }
-  }, [activeSteps, markDone])
+  }, [activeSteps, openMainSession, reviewRoundActive, setMachineCurrentStep])
 
   const openGroup = useCallback((group: PracticeGroup) => {
     const target = group.steps.find(({ step }) => !resumeDoneIds.has(step.id)) ?? group.steps[0]
@@ -904,10 +804,13 @@ export function TodayTaskPage() {
     const targetIdx = activeSteps.findIndex((s) => s.id === target.step.id)
     if (targetIdx < 0) return
     setCurrentIdx(targetIdx)
+    if (!reviewRoundActive) setRehearsalAll(false)
     const step = activeSteps[targetIdx]
-    if (step?.id.startsWith('placeholder:')) markDone(step.id, 'ok')
-    else setDrawerOpen(true)
-  }, [activeSteps, markDone, resumeDoneIds])
+    if (!step || step.id.startsWith('placeholder:')) return
+    if (reviewRoundActive) setMachineCurrentStep(step.id)
+    else openMainSession(step.id)
+    setDrawerOpen(true)
+  }, [activeSteps, openMainSession, resumeDoneIds, reviewRoundActive, setMachineCurrentStep])
 
   const continueCurrentPractice = useCallback(() => {
     if (reviewRoundActive) {
@@ -945,8 +848,22 @@ export function TodayTaskPage() {
   const hasPrev = currentIdx > 0
   const hasNext = currentIdx < activeSteps.length - 1
   const currentStepDone = currentStep ? activeDoneIds.has(currentStep.id) : false
-  const gotoPrev = useCallback(() => setCurrentIdx((p) => Math.max(0, p - 1)), [])
-  const gotoNext = useCallback(() => setCurrentIdx((p) => Math.min(activeSteps.length - 1, p + 1)), [activeSteps.length])
+  const gotoPrev = useCallback(() => setCurrentIdx((p) => {
+    const next = Math.max(0, p - 1)
+    setMachineCurrentStep(activeSteps[next]?.id ?? null)
+    return next
+  }), [activeSteps, setMachineCurrentStep])
+  const gotoNext = useCallback(() => setCurrentIdx((p) => {
+    const next = Math.min(activeSteps.length - 1, p + 1)
+    setMachineCurrentStep(activeSteps[next]?.id ?? null)
+    return next
+  }), [activeSteps, setMachineCurrentStep])
+
+  useEffect(() => {
+    if (!todayState.currentStepId) return
+    const index = activeSteps.findIndex((step) => step.id === todayState.currentStepId)
+    if (index >= 0) setCurrentIdx(index)
+  }, [activeSteps, todayState.currentStepId])
 
   // 队列收缩（题被标记为错题移出「继续练习」）时修正越界索引
   useEffect(() => {
@@ -958,10 +875,14 @@ export function TodayTaskPage() {
   useEffect(() => {
     if (!drawerOpen || !autoNextEnabled || !hasNext || !currentStepDone) return
     const timer = window.setTimeout(() => {
-      setCurrentIdx((prev) => Math.min(activeSteps.length - 1, prev + 1))
+      setCurrentIdx((prev) => {
+        const next = Math.min(activeSteps.length - 1, prev + 1)
+        setMachineCurrentStep(activeSteps[next]?.id ?? null)
+        return next
+      })
     }, 2000)
     return () => window.clearTimeout(timer)
-  }, [activeSteps.length, autoNextEnabled, currentIdx, currentStepDone, drawerOpen, hasNext])
+  }, [activeSteps, autoNextEnabled, currentIdx, currentStepDone, drawerOpen, hasNext, setMachineCurrentStep])
 
   // ── 加载态：仅在无缓存数据时展示 ──
   if (loading && !plan) {
@@ -1070,7 +991,10 @@ export function TodayTaskPage() {
           )}
         >
           <span className="block text-sm font-semibold">{t('todayTask.todayPractice')}</span>
-          <span className="mt-0.5 block text-[11px]">{practiceOrderLabel} {Math.min(plan.dailyGoal, plan.practicePoolCount)} / {plan.practicePoolCount}</span>
+          <span className="mt-0.5 block text-[11px]">
+            {practiceOrderLabel}
+            {plan.mode === 'practice' ? ` ${attemptedCount}/${plan.scheduledItemIds.length}` : ''}
+          </span>
         </button>
       </div>
 
@@ -1096,7 +1020,7 @@ export function TodayTaskPage() {
             )}
           </div>
           <Badge variant="secondary" className="h-6 rounded-full px-2 text-[10px]">
-            {activeDoneCount}/{activeTotal} {t('todayTask.questions')}
+            {attemptedCount}/{plan.scheduledItemIds.length} {t('todayTask.questions')}
           </Badge>
           {extraTodayRecordCount > 0 && (
             <Badge variant="outline" className="h-6 rounded-full px-2 text-[10px] text-emerald-600">
@@ -1186,23 +1110,11 @@ export function TodayTaskPage() {
           </>
         )}
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
-          {plan.mode === 'practice' ? (
-            <>
-              {passedCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />{t('todayTask.done', { count: passedCount })}</span>}
-              {weakCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-red-500/70" />{t('todayTask.toPractice', { count: weakCount })}</span>}
-              {extraTodayRecordCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500/70" />{t('todayTask.extraPractice', { count: extraTodayRecordCount })}</span>}
-              {unattemptedCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />{t('todayTask.unattempted', { count: unattemptedCount })}</span>}
-            </>
-          ) : (
-            <>
-              {statusCounts.overdue > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-red-500" />{t('todayTask.overdue', { count: statusCounts.overdue })}</span>}
-              {statusCounts.review > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-amber-500" />{t('todayTask.review', { count: statusCounts.review })}</span>}
-              {statusCounts.new > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />{t('todayTask.newPractice', { count: statusCounts.new })}</span>}
-              {statusCounts.done > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />{t('todayTask.done', { count: statusCounts.done })}</span>}
-              {extraTodayRecordCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500/70" />{t('todayTask.extraPractice', { count: extraTodayRecordCount })}</span>}
-            </>
-          )}
-          {statusCounts.overdue === 0 && statusCounts.review === 0 && statusCounts.new === 0 && statusCounts.done === 0 && (
+          {passedCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500" />{t('todayTask.done', { count: passedCount })}</span>}
+          {weakCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-red-500/70" />{t('todayTask.toPractice', { count: weakCount })}</span>}
+          {extraTodayRecordCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-emerald-500/70" />{t('todayTask.extraPractice', { count: extraTodayRecordCount })}</span>}
+          {unattemptedCount > 0 && <span className="inline-flex items-center gap-1"><span className="inline-block size-1.5 rounded-full bg-muted-foreground/45" />{t('todayTask.unattempted', { count: unattemptedCount })}</span>}
+          {passedCount === 0 && weakCount === 0 && unattemptedCount === 0 && (
             <span className="text-muted-foreground/50">{t('todayTask.noPractice')}</span>
           )}
         </div>
@@ -1531,7 +1443,7 @@ export function TodayTaskPage() {
 
             {/* Body */}
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-4 md:px-6">
-              <div key={`${currentStep?.id}:${reviewRunNonce}`}>
+              <div key={`${currentStep?.id}:${reviewRunNonce}:${currentStep ? (todayState.retryCycles[currentStep.id]?.cycle ?? 0) : 0}`}>
                 {currentStep?.render()}
               </div>
             </div>
@@ -1615,7 +1527,7 @@ export function TodayTaskPage() {
       <Dialog
         open={needsReviewRound}
         onOpenChange={(open) => {
-          if (!open) dispatchRound({ type: 'dismissReview' })
+          if (!open) setReviewDismissed(true)
         }}
       >
         <DialogContent className="!z-[10002] w-[calc(100vw-2rem)] max-w-sm rounded-2xl p-5">
@@ -1645,7 +1557,7 @@ export function TodayTaskPage() {
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => dispatchRound({ type: 'dismissReview' })}>
+            <Button variant="outline" className="flex-1" onClick={() => setReviewDismissed(true)}>
               {t('todayTask.later')}
             </Button>
             <Button className="flex-1" onClick={startWeakReviewRound}>
@@ -1660,7 +1572,6 @@ export function TodayTaskPage() {
         onOpenChange={setRecordsOpen}
         records={todayRecords}
         steps={steps}
-        onReplay={(idx) => { setCurrentIdx(idx); setRecordsOpen(false); setDrawerOpen(true) }}
       />
     </div>
   )

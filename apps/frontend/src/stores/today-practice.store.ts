@@ -1,235 +1,336 @@
 import { create } from 'zustand'
-import type React from 'react'
-import type { DailyPracticeStatus } from '@/lib/offline/daily-practice.repository'
-import type { WarmupRecordEntry } from './warmup-session.store'
 
-// ── 类型（从 today-task-page 抽出，供 store 与页面共用）──
-export type PracticeItem = {
+export type AttemptOutcome = 'correct' | 'incorrect' | 'dontKnow'
+export type AssistanceLevel = 'none' | 'hint'
+export type InitialRecallScore = 'strong' | 'ok' | 'miss'
+export type TodayMode = 'practice' | 'review'
+export type RoundKind = 'main' | 'mistakeRetry'
+export type PracticePurpose = 'scheduled' | 'mistakeRetry' | 'rehearsal'
+export type SubmissionStatus = 'idle' | 'dirty' | 'submitting' | 'synced' | 'failed'
+export type SrsRating = 'easy' | 'good' | 'again'
+export interface TodayCardAttempt {
+  stepId: string
+  outcome: AttemptOutcome
+  assistance: AssistanceLevel
+  purpose?: 'scheduled' | 'rehearsal'
+}
+
+export interface InitialRecallResult {
+  stepId: string
+  outcome: AttemptOutcome
+  assistance: AssistanceLevel
+  score: InitialRecallScore
+  srsRating?: SrsRating
+}
+
+export interface ContinuationResult {
+  stepId: string
+  latestScore: 'weak' | 'miss'
+  attemptCount: number
+}
+
+export interface RemediationResult {
+  stepId: string
+  score: 'strong' | 'ok'
+  resolved: true
+  cycle: number
+}
+
+export interface RetryCycleState {
+  stepId: string
+  cycle: number
+  retrievalFailed: boolean
+  answerRevealed: boolean
+}
+
+export interface AttemptHistoryEntry {
   id: string
-  type: string
-  label: string
-  topicTitle: string
-  scheduleStatus?: DailyPracticeStatus
-  /** 准确描述练习内容的标签，用于卡片和抽屉标题 */
-  displayLabel: string
-  /** Dialog header 大字展示的原始练习数据（单词/句型/句块） */
-  headerContent: string
-  render: () => React.ReactNode
+  stepId: string
+  purpose: PracticePurpose
+  outcome: AttemptOutcome
+  assistance: AssistanceLevel
+  score: InitialRecallScore | 'weak'
+  cycle?: number
+  createdAt: string
 }
 
-export type PracticeGroup = {
-  type: string
-  meta: { label: string; icon: React.ComponentType<{ className?: string }>; color: string }
-  steps: Array<{ step: PracticeItem; index: number }>
-  doneCount: number
-  totalCount: number
+export interface StoredTodayRunFacts {
+  id: string
+  mode: TodayMode
+  scheduledItemIds: string[]
+  attemptedItemIds: string[]
+  unresolvedItemIds: string[]
+  srsAppliedItemIds: string[]
+  initialRecallResults: Record<string, InitialRecallResult>
+  continuationResults: Record<string, ContinuationResult | undefined>
+  remediationResults: Record<string, RemediationResult | undefined>
+  attemptHistory?: AttemptHistoryEntry[]
+  submissionStatus: SubmissionStatus
+  roundKind?: RoundKind
+  sessionStepIds?: string[]
+  currentStepId?: string | null
 }
 
-export type RoundKind = 'main' | 'review'
-
-/**
- * 今日练习数据流状态机
- *
- * 职责：集中管理「主轮 + 错题重练轮」的轮次状态、练习进度、导航位置与会话标记。
- * 派生统计（队列/进度/定位）不存副本，由 `deriveTodayPractice` 统一计算。
- */
-interface TodayPracticeState {
-  kind: RoundKind
-  /** 主轮已练 id（含错题，用于轮次完成判定与重访定位） */
+export interface TodayPracticeState {
+  runId: string | null
+  mode: TodayMode
+  roundKind: RoundKind
+  roundStepIds: string[]
   attemptedIds: Set<string>
-  /** 重练轮待重练 id 集合（kind=review 时有效） */
-  reviewPendingIds: Set<string>
-  /** 重练轮已通过 id 集合 */
-  reviewDoneIds: Set<string>
-  /** 轮次序号：决定 warmupRecordId；「下一组/重新练习/模式切换」+1 */
-  roundNonce: number
-  /** 错题弹窗「稍后再练」标记 */
-  reviewDismissed: boolean
-  /** 当前练习索引（基于 activeSteps） */
-  currentIdx: number
+  unresolvedIds: Set<string>
+  srsAppliedIds: Set<string>
+  initialRecallResults: Record<string, InitialRecallResult>
+  continuationResults: Record<string, ContinuationResult | undefined>
+  remediationResults: Record<string, RemediationResult | undefined>
+  attemptHistory: AttemptHistoryEntry[]
+  sessionStepIds: string[]
+  currentStepId: string | null
+  retryQueueIds: string[]
+  retryCycles: Record<string, RetryCycleState>
   sessionHydrated: boolean
-  hasSubmittedToday: boolean
-
-  initMain: (attemptedIds: string[]) => void
-  completeStep: (stepId: string, passed: boolean) => void
-  startReview: (weakIds: string[]) => void
-  finishReview: () => void
-  dismissReview: () => void
-  resetRound: (roundNonce: number) => void
-  setCurrentIdx: (idx: number | ((prev: number) => number)) => void
-  setSessionHydrated: (v: boolean) => void
-  setHasSubmittedToday: (v: boolean) => void
+  submissionStatus: SubmissionStatus
 }
 
-export const useTodayPracticeStore = create<TodayPracticeState>((set) => ({
-  kind: 'main',
+export type TodayPracticeEvent =
+  | { type: 'RUN_LOADED'; run: StoredTodayRunFacts }
+  | { type: 'MAIN_SESSION_OPENED'; stepIds: string[]; startStepId: string | null }
+  | { type: 'INITIAL_RECALL_ATTEMPT'; stepId: string; outcome: AttemptOutcome; assistance: AssistanceLevel; now?: string }
+  | { type: 'CONTINUATION_ATTEMPT'; stepId: string; outcome: AttemptOutcome; assistance: AssistanceLevel; now?: string }
+  | { type: 'MISTAKE_RETRY_STARTED'; stepIds?: string[] }
+  | { type: 'RETRY_CYCLE_ATTEMPT'; stepId: string; outcome: AttemptOutcome; assistance: AssistanceLevel; now?: string }
+  | { type: 'REHEARSAL_ATTEMPT'; stepId: string; outcome: AttemptOutcome; assistance: AssistanceLevel; now?: string }
+  | { type: 'CURRENT_STEP_SET'; stepId: string | null }
+  | { type: 'SESSION_CLOSED' }
+  | { type: 'SRS_APPLIED'; stepId: string }
+  | { type: 'SUBMISSION_STARTED' }
+  | { type: 'SUBMISSION_SYNCED' }
+  | { type: 'SUBMISSION_FAILED' }
+
+export const initialTodayPracticeState: TodayPracticeState = {
+  runId: null,
+  mode: 'practice',
+  roundKind: 'main',
+  roundStepIds: [],
   attemptedIds: new Set(),
-  reviewPendingIds: new Set(),
-  reviewDoneIds: new Set(),
-  roundNonce: 0,
-  reviewDismissed: false,
-  currentIdx: 0,
+  unresolvedIds: new Set(),
+  srsAppliedIds: new Set(),
+  initialRecallResults: {},
+  continuationResults: {},
+  remediationResults: {},
+  attemptHistory: [],
+  sessionStepIds: [],
+  currentStepId: null,
+  retryQueueIds: [],
+  retryCycles: {},
   sessionHydrated: false,
-  hasSubmittedToday: false,
+  submissionStatus: 'idle',
+}
 
-  initMain: (attemptedIds) => set({
-    kind: 'main',
-    attemptedIds: new Set(attemptedIds),
-    reviewPendingIds: new Set(),
-    reviewDoneIds: new Set(),
-    reviewDismissed: false,
-  }),
+export function initialRecallScore(outcome: AttemptOutcome, assistance: AssistanceLevel): InitialRecallScore {
+  if (outcome !== 'correct') return 'miss'
+  return assistance === 'hint' ? 'ok' : 'strong'
+}
 
-  completeStep: (stepId, passed) => set((state) => {
-    if (state.kind === 'review') {
-      // 重练轮：答对才计入完成（答错/我不会不推进）
-      if (!passed) return state
-      const reviewDoneIds = new Set(state.reviewDoneIds)
-      reviewDoneIds.add(stepId)
-      return { reviewDoneIds }
+export function toInitialSrsRating(mode: TodayMode, result: InitialRecallResult): SrsRating | null {
+  if (result.score === 'strong') return 'easy'
+  if (result.score === 'ok') return 'good'
+  return mode === 'review' ? 'again' : null
+}
+
+export function toPracticeRemediationSrsRating(result: RemediationResult): 'easy' | 'good' {
+  return result.score === 'strong' ? 'easy' : 'good'
+}
+
+function appendHistory(state: TodayPracticeState, input: Omit<AttemptHistoryEntry, 'id' | 'createdAt'> & { now?: string }) {
+  const createdAt = input.now ?? new Date().toISOString()
+  const { now: _now, ...entry } = input
+  return [...state.attemptHistory, { ...entry, id: `${state.runId}:${entry.stepId}:${state.attemptHistory.length + 1}`, createdAt }]
+}
+
+function dirty(state: TodayPracticeState): TodayPracticeState {
+  return { ...state, submissionStatus: 'dirty' }
+}
+
+function nextRetryCycle(state: TodayPracticeState, stepId: string): RetryCycleState {
+  const previous = state.retryCycles[stepId]?.cycle ?? 0
+  return { stepId, cycle: previous + 1, retrievalFailed: false, answerRevealed: false }
+}
+
+export function todayPracticeReducer(state: TodayPracticeState, event: TodayPracticeEvent): TodayPracticeState {
+  switch (event.type) {
+    case 'RUN_LOADED': {
+      const run = event.run
+      const retryQueueIds = run.roundKind === 'mistakeRetry'
+        ? run.scheduledItemIds.filter((id) => run.unresolvedItemIds.includes(id))
+        : []
+      const restoredSessionIds = run.roundKind === 'mistakeRetry'
+        ? [...retryQueueIds]
+        : (run.sessionStepIds ?? []).filter((id) => run.scheduledItemIds.includes(id))
+      const restoredCurrentId = run.roundKind === 'mistakeRetry'
+        ? (retryQueueIds[0] ?? null)
+        : (run.currentStepId && restoredSessionIds.includes(run.currentStepId) ? run.currentStepId : (restoredSessionIds[0] ?? null))
+      return {
+        ...initialTodayPracticeState,
+        runId: run.id,
+        mode: run.mode,
+        roundStepIds: [...run.scheduledItemIds],
+        attemptedIds: new Set(run.attemptedItemIds.filter((id) => run.scheduledItemIds.includes(id))),
+        unresolvedIds: new Set(run.unresolvedItemIds.filter((id) => run.scheduledItemIds.includes(id) && run.attemptedItemIds.includes(id))),
+        srsAppliedIds: new Set(run.srsAppliedItemIds.filter((id) => run.scheduledItemIds.includes(id))),
+        initialRecallResults: { ...run.initialRecallResults },
+        continuationResults: { ...run.continuationResults },
+        remediationResults: { ...run.remediationResults },
+        attemptHistory: [...(run.attemptHistory ?? [])],
+        sessionHydrated: true,
+        submissionStatus: run.submissionStatus,
+        roundKind: run.roundKind ?? 'main',
+        retryQueueIds,
+        sessionStepIds: restoredSessionIds,
+        currentStepId: restoredCurrentId,
+        retryCycles: run.roundKind === 'mistakeRetry' && restoredCurrentId
+          ? { [restoredCurrentId]: { stepId: restoredCurrentId, cycle: 1, retrievalFailed: false, answerRevealed: false } }
+          : {},
+      }
     }
-    // 主轮：答对/答错/我不会都算已练（保证轮次可完成），通过与否由 records 派生
-    const attemptedIds = new Set(state.attemptedIds)
-    attemptedIds.add(stepId)
-    return { attemptedIds }
-  }),
+    case 'MAIN_SESSION_OPENED':
+      return { ...state, roundKind: 'main', sessionStepIds: [...event.stepIds], currentStepId: event.startStepId, retryQueueIds: [], retryCycles: {} }
+    case 'INITIAL_RECALL_ATTEMPT': {
+      if (!state.roundStepIds.includes(event.stepId) || state.initialRecallResults[event.stepId]) return state
+      const score = initialRecallScore(event.outcome, event.assistance)
+      const baseResult: InitialRecallResult = { stepId: event.stepId, outcome: event.outcome, assistance: event.assistance, score }
+      const rating = toInitialSrsRating(state.mode, baseResult)
+      const result = rating ? { ...baseResult, srsRating: rating } : baseResult
+      const attemptedIds = new Set(state.attemptedIds).add(event.stepId)
+      const unresolvedIds = new Set(state.unresolvedIds)
+      if (score === 'miss') unresolvedIds.add(event.stepId)
+      else unresolvedIds.delete(event.stepId)
+      return dirty({
+        ...state,
+        attemptedIds,
+        unresolvedIds,
+        initialRecallResults: { ...state.initialRecallResults, [event.stepId]: result },
+        attemptHistory: appendHistory(state, { stepId: event.stepId, purpose: 'scheduled', outcome: event.outcome, assistance: event.assistance, score, now: event.now }),
+      })
+    }
+    case 'CONTINUATION_ATTEMPT': {
+      const initial = state.initialRecallResults[event.stepId]
+      if (!initial || initial.score !== 'miss') return state
+      const previous = state.continuationResults[event.stepId]
+      const latestScore = event.outcome === 'correct' ? 'weak' : 'miss'
+      return dirty({
+        ...state,
+        continuationResults: { ...state.continuationResults, [event.stepId]: { stepId: event.stepId, latestScore, attemptCount: (previous?.attemptCount ?? 0) + 1 } },
+        attemptHistory: appendHistory(state, { stepId: event.stepId, purpose: 'scheduled', outcome: event.outcome, assistance: event.assistance, score: latestScore, now: event.now }),
+      })
+    }
+    case 'MISTAKE_RETRY_STARTED': {
+      const requested = new Set(event.stepIds ?? state.roundStepIds)
+      const retryQueueIds = state.roundStepIds.filter((id) => requested.has(id) && state.unresolvedIds.has(id))
+      const first = retryQueueIds[0] ?? null
+      return { ...state, roundKind: 'mistakeRetry', retryQueueIds, sessionStepIds: [...retryQueueIds], currentStepId: first, retryCycles: first ? { [first]: nextRetryCycle(state, first) } : {} }
+    }
+    case 'RETRY_CYCLE_ATTEMPT': {
+      if (state.roundKind !== 'mistakeRetry' || state.currentStepId !== event.stepId) return state
+      const cycle = state.retryCycles[event.stepId] ?? nextRetryCycle(state, event.stepId)
+      const score = initialRecallScore(event.outcome, event.assistance)
+      const history = appendHistory(state, { stepId: event.stepId, purpose: 'mistakeRetry', outcome: event.outcome, assistance: event.assistance, score, cycle: cycle.cycle, now: event.now })
+      if (score === 'strong' || score === 'ok') {
+        const unresolvedIds = new Set(state.unresolvedIds)
+        unresolvedIds.delete(event.stepId)
+        const retryQueueIds = state.retryQueueIds.filter((id) => id !== event.stepId)
+        const nextId = retryQueueIds[0] ?? null
+        return dirty({
+          ...state,
+          unresolvedIds,
+          remediationResults: { ...state.remediationResults, [event.stepId]: { stepId: event.stepId, score, resolved: true, cycle: cycle.cycle } },
+          attemptHistory: history,
+          retryQueueIds,
+          currentStepId: nextId,
+          retryCycles: nextId ? { ...state.retryCycles, [nextId]: nextRetryCycle(state, nextId) } : state.retryCycles,
+        })
+      }
+      const retryQueueIds = [...state.retryQueueIds.filter((id) => id !== event.stepId), event.stepId]
+      const nextId = retryQueueIds[0] ?? null
+      return dirty({
+        ...state,
+        attemptHistory: history,
+        retryQueueIds,
+        currentStepId: nextId,
+        retryCycles: nextId ? { ...state.retryCycles, [event.stepId]: { ...cycle, retrievalFailed: true, answerRevealed: event.outcome === 'dontKnow' }, [nextId]: nextRetryCycle(state, nextId) } : state.retryCycles,
+      })
+    }
+    case 'REHEARSAL_ATTEMPT': {
+      const score = initialRecallScore(event.outcome, event.assistance)
+      return { ...state, attemptHistory: appendHistory(state, { stepId: event.stepId, purpose: 'rehearsal', outcome: event.outcome, assistance: event.assistance, score, now: event.now }) }
+    }
+    case 'CURRENT_STEP_SET':
+      return event.stepId === null || state.sessionStepIds.includes(event.stepId) ? { ...state, currentStepId: event.stepId } : state
+    case 'SESSION_CLOSED':
+      return { ...state, sessionStepIds: [], currentStepId: null, roundKind: 'main', retryQueueIds: [], retryCycles: {} }
+    case 'SRS_APPLIED':
+      return dirty({ ...state, srsAppliedIds: new Set(state.srsAppliedIds).add(event.stepId) })
+    case 'SUBMISSION_STARTED': return { ...state, submissionStatus: 'submitting' }
+    case 'SUBMISSION_SYNCED': return { ...state, submissionStatus: 'synced' }
+    case 'SUBMISSION_FAILED': return { ...state, submissionStatus: 'failed' }
+  }
+}
 
-  startReview: (weakIds) => set({
-    kind: 'review',
-    reviewPendingIds: new Set(weakIds),
-    reviewDoneIds: new Set(),
-    reviewDismissed: false,
-  }),
-
-  finishReview: () => set({
-    kind: 'main',
-    reviewPendingIds: new Set(),
-    reviewDoneIds: new Set(),
-    reviewDismissed: true,
-  }),
-
-  dismissReview: () => set({ reviewDismissed: true }),
-
-  resetRound: (roundNonce) => set({
-    kind: 'main',
-    attemptedIds: new Set(),
-    reviewPendingIds: new Set(),
-    reviewDoneIds: new Set(),
-    roundNonce,
-    reviewDismissed: false,
-    currentIdx: 0,
-  }),
-
-  setCurrentIdx: (currentIdx) => set((state) => ({
-    currentIdx: typeof currentIdx === 'function' ? currentIdx(state.currentIdx) : currentIdx,
-  })),
-
-  setSessionHydrated: (sessionHydrated) => set({ sessionHydrated }),
-  setHasSubmittedToday: (hasSubmittedToday) => set({ hasSubmittedToday }),
-}))
-
-// ── 派生统计（集中数据流计算）──
 export interface TodayPracticeDerived {
-  reviewRoundActive: boolean
-  attemptedIds: Set<string>
-  reviewPendingIds: Set<string>
-  reviewDoneIds: Set<string>
-  roundNonce: number
-  reviewDismissed: boolean
-  currentIdx: number
-  sessionHydrated: boolean
-  hasSubmittedToday: boolean
-  /** 通过集合（绿）由 records 派生；重练轮则为 reviewDoneIds */
-  passedStepIds: Set<string>
-  /** 错题池（我不会/答错）：records 中 score 为 weak/miss */
-  weakStepIds: Set<string>
-  /** 重练轮待重练步骤（kind=review 时非空） */
-  reviewSteps: PracticeItem[] | null
-  /** 主轮「继续练习」队列：排除错题（错题只通过「练习错题」重练） */
-  mainQueue: PracticeItem[]
-  activeSteps: PracticeItem[]
-  activeDoneIds: Set<string>
-  /** 续练定位：主轮用「已练」（含错题，下一个未练开始），重练轮用 reviewDoneIds */
-  resumeDoneIds: Set<string>
+  greenStepIds: string[]
+  redStepIds: string[]
+  grayStepIds: string[]
+  greenCount: number
+  redCount: number
+  grayCount: number
   attemptedCount: number
-  hasPracticeSteps: boolean
-  allDone: boolean
-  activeDoneCount: number
-  activeTotal: number
-  reviewAllDone: boolean
-  passedCount: number
-  weakCount: number
-  unattemptedCount: number
-  needsReviewRound: boolean
+  unresolvedCount: number
+  allAttempted: boolean
+  allResolved: boolean
+  retryPendingCount: number
 }
 
-export function deriveTodayPractice(
-  state: TodayPracticeState,
-  steps: PracticeItem[],
-  records: WarmupRecordEntry[],
-): TodayPracticeDerived {
-  const reviewRoundActive = state.kind === 'review'
-  const attemptedIds = state.attemptedIds
-  const reviewPendingIds = state.reviewPendingIds
-  const reviewDoneIds = state.reviewDoneIds
-  const roundNonce = state.roundNonce
-  const reviewDismissed = state.reviewDismissed
-  const currentIdx = state.currentIdx
-  const sessionHydrated = state.sessionHydrated
-  const hasSubmittedToday = state.hasSubmittedToday
-
-  const passedStepIds = new Set<string>()
-  const weakStepIds = new Set<string>()
-  for (const record of records) {
-    if (record.passed) passedStepIds.add(record.stepId)
-    if (record.score === 'weak' || record.score === 'miss') weakStepIds.add(record.stepId)
-  }
-
-  const reviewSteps = reviewRoundActive && reviewPendingIds.size > 0
-    ? steps.filter((step) => reviewPendingIds.has(step.id))
-    : null
-  const mainQueue = steps.filter((s) => !weakStepIds.has(s.id))
-  const activeSteps = reviewRoundActive && reviewSteps ? reviewSteps : mainQueue
-  const activeDoneIds = reviewRoundActive ? reviewDoneIds : passedStepIds
-  const resumeDoneIds = reviewRoundActive ? reviewDoneIds : attemptedIds
-
-  const attemptedCount = steps.filter((s) => attemptedIds.has(s.id)).length
-  const hasPracticeSteps = steps.length > 0
-  const allDone = steps.length > 0 && attemptedCount >= steps.length
-  const activeDoneCount = activeSteps.filter((s) => activeDoneIds.has(s.id)).length
-  const activeTotal = activeSteps.length
-  const reviewAllDone = reviewRoundActive && activeTotal > 0 && activeSteps.every((s) => reviewDoneIds.has(s.id))
-  const passedCount = steps.filter((s) => passedStepIds.has(s.id)).length
-  const weakCount = steps.filter((s) => weakStepIds.has(s.id)).length
-  const unattemptedCount = steps.length - passedCount - weakCount
-  const needsReviewRound = allDone && weakStepIds.size > 0 && !reviewRoundActive && !reviewDismissed
-
+export function deriveTodayPractice(state: Pick<TodayPracticeState, 'roundStepIds' | 'attemptedIds' | 'unresolvedIds' | 'retryQueueIds'>): TodayPracticeDerived {
+  const grayStepIds = state.roundStepIds.filter((id) => !state.attemptedIds.has(id))
+  const redStepIds = state.roundStepIds.filter((id) => state.attemptedIds.has(id) && state.unresolvedIds.has(id))
+  const greenStepIds = state.roundStepIds.filter((id) => state.attemptedIds.has(id) && !state.unresolvedIds.has(id))
+  const allAttempted = grayStepIds.length === 0 && state.roundStepIds.length > 0
   return {
-    reviewRoundActive,
-    attemptedIds,
-    reviewPendingIds,
-    reviewDoneIds,
-    roundNonce,
-    reviewDismissed,
-    currentIdx,
-    sessionHydrated,
-    hasSubmittedToday,
-    passedStepIds,
-    weakStepIds,
-    reviewSteps,
-    mainQueue,
-    activeSteps,
-    activeDoneIds,
-    resumeDoneIds,
-    attemptedCount,
-    hasPracticeSteps,
-    allDone,
-    activeDoneCount,
-    activeTotal,
-    reviewAllDone,
-    passedCount,
-    weakCount,
-    unattemptedCount,
-    needsReviewRound,
+    greenStepIds, redStepIds, grayStepIds,
+    greenCount: greenStepIds.length, redCount: redStepIds.length, grayCount: grayStepIds.length,
+    attemptedCount: state.roundStepIds.filter((id) => state.attemptedIds.has(id)).length,
+    unresolvedCount: redStepIds.length,
+    allAttempted, allResolved: allAttempted && redStepIds.length === 0,
+    retryPendingCount: state.retryQueueIds.length,
   }
 }
+
+export function serializeTodayRunFacts(state: TodayPracticeState): StoredTodayRunFacts | null {
+  if (!state.runId) return null
+  return {
+    id: state.runId,
+    mode: state.mode,
+    scheduledItemIds: [...state.roundStepIds],
+    attemptedItemIds: [...state.attemptedIds],
+    unresolvedItemIds: [...state.unresolvedIds],
+    srsAppliedItemIds: [...state.srsAppliedIds],
+    initialRecallResults: { ...state.initialRecallResults },
+    continuationResults: { ...state.continuationResults },
+    remediationResults: { ...state.remediationResults },
+    attemptHistory: [...state.attemptHistory],
+    submissionStatus: state.submissionStatus,
+    roundKind: state.roundKind,
+    sessionStepIds: [...state.sessionStepIds],
+    currentStepId: state.currentStepId,
+  }
+}
+
+interface TodayPracticeActions {
+  dispatch: (event: TodayPracticeEvent) => void
+  reset: () => void
+}
+
+export const useTodayPracticeStore = create<TodayPracticeState & TodayPracticeActions>((set) => ({
+  ...initialTodayPracticeState,
+  dispatch: (event) => set((state) => todayPracticeReducer(state, event)),
+  reset: () => set(initialTodayPracticeState),
+}))

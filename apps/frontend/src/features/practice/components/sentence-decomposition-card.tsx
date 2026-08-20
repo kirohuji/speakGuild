@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/cn'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 import { useWarmupSessionStore, type WarmupScore } from '@/stores/warmup-session.store'
+import type { TodayCardAttempt } from '@/stores/today-practice.store'
 import { useCachedAudio } from '@/hooks/use-cached-audio'
 
 interface DecompositionLevel {
@@ -26,6 +27,7 @@ interface SentenceDecompositionCardProps {
   levels: DecompositionLevel[]
   stepId: string
   onComplete?: (passed: boolean, score: WarmupScore) => void
+  onAttempt?: (attempt: TodayCardAttempt) => void
   /** Dialog 已提供题型标签时，隐藏内部 header badge */
   hideHeader?: boolean
   /** 只读回顾模式 */
@@ -41,6 +43,7 @@ export function SentenceDecompositionCard({
   levels,
   stepId,
   onComplete,
+  onAttempt,
   hideHeader = false,
   reviewData,
 }: SentenceDecompositionCardProps) {
@@ -92,8 +95,9 @@ export function SentenceDecompositionCard({
         store.recordEntry({ stepId, stepType: 'sentence_decomposition', zh: title, answer: finalSentence, userAnswer: JSON.stringify(levelAudioObj), passed: true, feedback: '', displayLabel: '句子拆解', score: 'strong', correction: levelsData })
       }
       onComplete?.(true, 'strong')
+      onAttempt?.({ stepId, outcome: 'correct', assistance: 'none' })
     }
-  }, [currentIdx, totalLevels, onComplete, isReview, store, stepId, title, levels, levelRecordings])
+  }, [currentIdx, totalLevels, onAttempt, onComplete, isReview, store, stepId, title, levels, levelRecordings])
 
   const goBack = useCallback(() => {
     if (currentIdx > 0) {

@@ -13,6 +13,6 @@ export class AiModelModule implements OnModuleInit {
   constructor(private readonly aiModelService: AiModelService) {}
 
   async onModuleInit() {
-    await this.aiModelService.seedDefaults();
+    // await this.aiModelService.seedDefaults();
   }
 }
