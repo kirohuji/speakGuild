@@ -487,32 +487,8 @@ export const practiceRepository = {
 
   async getWarmupEntriesByDate(date: string): Promise<WarmupRecordEntry[]> {
     const entries = await localDb.findByIndex<any>('warmup_record_entries', 'practiced_date', date)
-    if (entries.length > 0) {
-      return entries
-        .sort((a, b) => String(a.recordUpdatedAt ?? '').localeCompare(String(b.recordUpdatedAt ?? '')))
-        .map((entry) => entry.record as WarmupRecordEntry)
-    }
-
-    // Repair existing indexes created with the old UTC-slice rule on first
-    // read. This makes records already on a user's device available without
-    // requiring a cache rebuild.
-    const legacyRecords = await localDb.list<any>('warmup_records')
-    const matchingRecords = legacyRecords.filter((record) => {
-      if (!Array.isArray(record?.items) || record.items.length === 0) return false
-      const recordDate = normalizeCalendarDate(
-        record.practicedDate,
-        localDateKey(new Date(record.updatedAt ?? record.createdAt ?? Date.now())),
-      )
-      return recordDate === date
-    })
-    if (matchingRecords.length === 0) return []
-    await Promise.all(matchingRecords.map((record) => upsertWarmupRecordEntries({
-      ...record,
-      practicedDate: date,
-    })))
-    return matchingRecords
-      .sort((a, b) => String(a.updatedAt ?? a.createdAt ?? '').localeCompare(String(b.updatedAt ?? b.createdAt ?? '')))
-      .flatMap((record) => record.items as WarmupRecordEntry[])
+    // findByIndex 已按 updated_at 降序返回（最新在前），无需再排序。
+    return entries.map((entry) => entry.record as WarmupRecordEntry)
   },
 
   async getLatestWarmupEntriesByStepIds(stepIds: string[], excludeRecordId?: string | null): Promise<WarmupRecordEntry[]> {

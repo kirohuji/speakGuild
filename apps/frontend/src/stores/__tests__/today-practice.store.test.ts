@@ -47,20 +47,20 @@ describe('today practice V2.5.1 state machine', () => {
     expect(state.srsAppliedIds.has('a')).toBe(false)
   })
 
-  it('ends a failed retry cycle, rotates the queue, and starts a clean cycle', () => {
+  it('keeps retry feedback on the current card and leaves navigation to the learner', () => {
     const loaded = { ...run(), attemptedItemIds: ['a', 'b'], unresolvedItemIds: ['a', 'b'] }
     let state = todayPracticeReducer(initialTodayPracticeState, { type: 'RUN_LOADED', run: loaded })
     state = todayPracticeReducer(state, { type: 'MISTAKE_RETRY_STARTED' })
     state = todayPracticeReducer(state, { type: 'RETRY_CYCLE_ATTEMPT', stepId: 'a', outcome: 'dontKnow', assistance: 'none' })
 
     expect(state.retryQueueIds).toEqual(['b', 'a'])
-    expect(state.currentStepId).toBe('b')
-    expect(state.retryCycles.b).toMatchObject({ cycle: 1, retrievalFailed: false, answerRevealed: false })
+    expect(state.currentStepId).toBe('a')
+    expect(state.retryCycles.a).toMatchObject({ cycle: 1, retrievalFailed: true, answerRevealed: true })
 
+    state = todayPracticeReducer(state, { type: 'CURRENT_STEP_SET', stepId: 'b' })
     state = todayPracticeReducer(state, { type: 'RETRY_CYCLE_ATTEMPT', stepId: 'b', outcome: 'correct', assistance: 'hint' })
     expect(state.remediationResults.b).toMatchObject({ score: 'ok', resolved: true })
-    expect(state.currentStepId).toBe('a')
-    expect(state.retryCycles.a).toMatchObject({ cycle: 2, retrievalFailed: false, answerRevealed: false })
+    expect(state.currentStepId).toBe('b')
   })
 
   it('does not classify unattempted steps as unresolved or resolved', () => {

@@ -238,25 +238,26 @@ export function todayPracticeReducer(state: TodayPracticeState, event: TodayPrac
         const unresolvedIds = new Set(state.unresolvedIds)
         unresolvedIds.delete(event.stepId)
         const retryQueueIds = state.retryQueueIds.filter((id) => id !== event.stepId)
-        const nextId = retryQueueIds[0] ?? null
         return dirty({
           ...state,
           unresolvedIds,
           remediationResults: { ...state.remediationResults, [event.stepId]: { stepId: event.stepId, score, resolved: true, cycle: cycle.cycle } },
           attemptHistory: history,
           retryQueueIds,
-          currentStepId: nextId,
-          retryCycles: nextId ? { ...state.retryCycles, [nextId]: nextRetryCycle(state, nextId) } : state.retryCycles,
+          // Keep the scored card in place.  Main practice lets the learner
+          // read the feedback and use the shared navigator; mistake retry
+          // must follow that same interaction instead of jumping away.
+          currentStepId: event.stepId,
+          retryCycles: state.retryCycles,
         })
       }
       const retryQueueIds = [...state.retryQueueIds.filter((id) => id !== event.stepId), event.stepId]
-      const nextId = retryQueueIds[0] ?? null
       return dirty({
         ...state,
         attemptHistory: history,
         retryQueueIds,
-        currentStepId: nextId,
-        retryCycles: nextId ? { ...state.retryCycles, [event.stepId]: { ...cycle, retrievalFailed: true, answerRevealed: event.outcome === 'dontKnow' }, [nextId]: nextRetryCycle(state, nextId) } : state.retryCycles,
+        currentStepId: event.stepId,
+        retryCycles: { ...state.retryCycles, [event.stepId]: { ...cycle, retrievalFailed: true, answerRevealed: event.outcome === 'dontKnow' } },
       })
     }
     case 'REHEARSAL_ATTEMPT': {

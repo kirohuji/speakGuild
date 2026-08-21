@@ -1237,6 +1237,8 @@ model PracticeWarmupRecord {
   id        String   @id @default(cuid())
   userId    String
   topicId   String
+  // 归属学习包：练习记录必须能溯源到学习包
+  packId    String?
   score     Int?
   feedback  String?  @db.Text
   items     Json
@@ -1244,6 +1246,7 @@ model PracticeWarmupRecord {
   clientRunId String? @unique
 
   @@index([userId, topicId])
+  @@index([userId, packId])
   @@index([userId, createdAt])
   @@map("practice_warmup_record")
 }

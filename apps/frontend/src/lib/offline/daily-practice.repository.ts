@@ -223,7 +223,13 @@ export async function restoreRemoteDailyPracticeRun(item: any): Promise<void> {
   if (!runId || runId.startsWith('activity:')) return
   const remoteUpdatedAt = toIsoString(item.updatedAt) ?? new Date().toISOString()
   const local = await localDb.get<Partial<StoredDailyPracticeRun>>('daily_practice_runs', runId)
-  if (local?.updatedAt && local.updatedAt > remoteUpdatedAt && local.submissionStatus !== 'synced') return
+  // A newer local run means this device made changes the outbox has not pushed
+  // yet.  That includes retries answered after the run was already submitted:
+  // such runs keep submissionStatus 'synced' locally while the retry answers
+  // still sit in a pending outbox snapshot.  A stale remote copy (e.g. the
+  // mode-switch currentRun fetch before the outbox flush) must never wipe the
+  // newer local answer state — the outbox reconciles it on the next sync.
+  if (local?.updatedAt && local.updatedAt > remoteUpdatedAt) return
 
   const scheduledItemIds = Array.isArray(item.scheduledItemIds) ? item.scheduledItemIds : []
   const packIds = Array.isArray(item.packIds) ? item.packIds : []
@@ -463,6 +469,8 @@ function fallbackWarmupRecords(plan: DailyPracticePlan, run: StoredDailyPractice
       feedback: passed ? '' : '答错，待重练',
       groupTitle: step.label,
       displayLabel: step.displayLabel,
+      packId: step.packId,
+      packTitle: step.packTitle,
       topicTitle: step.topicTitle,
       score: initial?.score ?? (passed ? 'ok' : 'miss'),
     } satisfies WarmupRecordEntry]
@@ -481,8 +489,14 @@ function createTodayRunSyncPayload(params: {
 }) {
   const unresolved = new Set(params.run.unresolvedItemIds)
   const completedItemIds = params.run.attemptedItemIds.filter((id) => !unresolved.has(id))
-  const recordsByStepId = new Map(fallbackWarmupRecords(params.plan, params.run).map((record) => [record.stepId, record]))
+  // 真实作答优先：params.records 由 recordEntry 维护为「最新在前」，直接沿用
+  // 该顺序；fallback（run 派生的空 userAnswer 占位）只补缺失项，避免覆盖
+  // 真实作答顺序。这样后端 items 与前端展示顺序一致（最新在前）。
+  const recordsByStepId = new Map<string, WarmupRecordEntry>()
   for (const record of params.records) recordsByStepId.set(record.stepId, record)
+  for (const record of fallbackWarmupRecords(params.plan, params.run)) {
+    if (!recordsByStepId.has(record.stepId)) recordsByStepId.set(record.stepId, record)
+  }
   const records = [...recordsByStepId.values()]
   const firstTopic = params.plan.topicStats.find((topic) => topic.scheduledTodayCount > 0) ?? params.plan.topicStats[0]
   const score = averageWarmupScore(records)
@@ -503,12 +517,17 @@ function createTodayRunSyncPayload(params: {
       continuationResults: params.run.continuationResults,
       remediationResults: params.run.remediationResults,
       submissionStatus: params.submissionStatus,
+      // Outbox coalescing uses this local revision to reject a slower stale
+      // snapshot for the same run (for example the original all-wrong submit).
+      clientUpdatedAt: params.run.updatedAt,
       stats: params.stats,
     },
     attempts: params.attempts,
     warmupRecord: records.length > 0 && firstTopic ? {
       topicId: firstTopic.topicId,
       topicTitle: firstTopic.topicTitle,
+      // 归属学习包：每条 item 已带 packId，取首条即可（同一记录通常同包）。
+      packId: records[0]?.packId ?? null,
       items: records,
       score,
       feedback: null,
@@ -875,9 +894,14 @@ export const dailyPracticeRepository = {
         .sort((a, b) => (b.updatedAt ?? b.createdAt ?? b.date).localeCompare(a.updatedAt ?? a.createdAt ?? a.date))[0] ?? null
       : null
     const recoveredRun = serverRun ?? resumableStoredRun
-    const recoveredPackId = packScope === 'single' && recoveredRun?.packIds.length === 1
-      ? recoveredRun.packIds[0]
-      : null
+    // 选包优先级：显式 targetPackId > 当前激活学习包（用户主动切换的包必须
+    // 生效）> 进行中的 run 恢复（仅当 active 指针为空，例如 logout 清库）。
+    // 之前只从 run 恢复，导致切换学习包后仍构建旧包的今日计划。
+    const activePackId = packScope === 'single' ? await getActivePracticePackId() : null
+    const recoveredPackId = activePackId
+      ?? (packScope === 'single' && recoveredRun?.packIds.length === 1
+        ? recoveredRun.packIds[0]
+        : null)
     const units = await this.resolveCandidateUnits(packScope, targetPackId ?? recoveredPackId)
     const candidates = units.flatMap(buildCandidates)
     const itemIds = candidates.map((candidate) => candidate.itemId)
@@ -1279,6 +1303,27 @@ export const dailyPracticeRepository = {
     // answer.  Waiting for the Today page's render effect leaves a window in
     // which sign-out can upload the run but clear the local display record.
     const resolvedLocalWarmupRecordId = localWarmupRecordId ?? `today-warmup:${plan.runId}`
+    // Recovery re-enqueues (e.g. loadToday after a mode switch or the manual
+    // sync reload) pass no in-memory records.  The persisted warmup record
+    // holds the learner's real answers — including retry-round answers — and
+    // must travel with the snapshot.  Without this, the payload falls back to
+    // run-derived placeholders whose userAnswer is empty, and the next outbox
+    // flush would overwrite the server record with blank answers.
+    let resolvedRecords = records
+    if (resolvedRecords.length === 0) {
+      const persisted = await practiceRepository.getLocalWarmupRecord(resolvedLocalWarmupRecordId).catch(() => null)
+      resolvedRecords = Array.isArray(persisted?.items) ? (persisted as any).items : []
+    }
+    if (resolvedRecords.length === 0) {
+      // No real answers are available at all.  If a snapshot for this run is
+      // already pending, it carries the learner's produced records — never let
+      // an empty placeholder snapshot replace it (or clobber the local record
+      // via the upsert below).
+      const pending = await syncOutbox.listPending()
+      const hasPendingSnapshot = pending.some((entry) =>
+        entry.entityType === 'daily_practice' && entry.entityId === plan.runId)
+      if (hasPendingSnapshot) return
+    }
     const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
     const pendingAttempts = attempts.filter((attempt) =>
       attempt.runId === plan.runId
@@ -1286,7 +1331,7 @@ export const dailyPracticeRepository = {
       && attempt.applyStatus === 'applied',
     )
     const payload = createTodayRunSyncPayload({
-      plan, run, attempts: pendingAttempts, records, localWarmupRecordId: resolvedLocalWarmupRecordId,
+      plan, run, attempts: pendingAttempts, records: resolvedRecords, localWarmupRecordId: resolvedLocalWarmupRecordId,
       submissionStatus: run.submissionStatus, stats: run.stats ?? {},
     })
     if (payload.warmupRecord) {

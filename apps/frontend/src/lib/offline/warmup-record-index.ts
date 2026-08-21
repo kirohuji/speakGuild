@@ -34,6 +34,7 @@ export async function upsertWarmupRecordEntries(record: WarmupRecordForIndex): P
     recordId: record.id,
     stepId: item.stepId,
     topicId: record.topicId ?? null,
+    packId: item.packId ?? null,
     topicTitle: item.topicTitle ?? record.topicTitle ?? '',
     practicedDate,
     recordUpdatedAt,

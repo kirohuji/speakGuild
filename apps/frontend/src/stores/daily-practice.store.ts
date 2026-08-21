@@ -7,6 +7,7 @@ import {
 } from '@/lib/offline/daily-practice.repository'
 import { useWarmupSessionStore, type WarmupRecordEntry } from '@/stores/warmup-session.store'
 import { refreshLearningBadgeFromTodayRun } from '@/lib/native/learning-reminder'
+import { offlineSyncService } from '@/lib/offline'
 import {
   deriveTodayPractice,
   serializeTodayRunFacts,
@@ -20,6 +21,8 @@ import {
 
 interface DailyPracticeState {
   plan: DailyPracticePlan | null
+  /** 每个模式（今日复习/今日练习）已构建的计划缓存，切换时直接复用，避免重复构建 */
+  plansByMode: Record<string, DailyPracticePlan>
   loading: boolean
   error: string | null
   submitting: boolean
@@ -62,8 +65,40 @@ async function persistCurrentFacts() {
   if (facts) await dailyPracticeRepository.persistRunFacts(facts)
 }
 
+function planCacheKey(mode: DailyPracticePlanMode, targetDate?: string | null, targetPackId?: string | null) {
+  return `${mode}:${targetDate ?? ''}:${targetPackId ?? ''}`
+}
+
+/** 把 plan + 本地 run facts 装载进今日状态机，并刷新 SRS 进度到最新。 */
+async function hydratePlanIntoStore(plan: DailyPracticePlan) {
+  const facts = await dailyPracticeRepository.getRunFacts(plan.runId).catch(() => null)
+  useTodayPracticeStore.getState().dispatch({ type: 'RUN_LOADED', run: facts ?? emptyFacts(plan) })
+  // Server recovery can restore an in-progress run from an earlier app
+  // version where only the run snapshot existed. Re-enqueueing here makes
+  // its derived per-question record durable as well.
+  if (facts?.attemptedItemIds.length) {
+    await dailyPracticeRepository.syncRunSnapshot(plan)
+  }
+  let hydrated = plan
+  for (const step of plan.steps) {
+    const machine = useTodayPracticeStore.getState()
+    if (machine.srsAppliedIds.has(step.itemId)) continue
+    const initial = machine.initialRecallResults[step.itemId]
+    const remediation = machine.remediationResults[step.itemId]
+    const rating = initial ? toInitialSrsRating(machine.mode, initial) : null
+    const recoverableRating = rating ?? (machine.mode === 'practice' && remediation?.resolved ? toPracticeRemediationSrsRating(remediation) : null)
+    if (!recoverableRating) continue
+    const recovered = await dailyPracticeRepository.applySrsRatingOnce({ runId: plan.runId, step, rating: recoverableRating, targetDate: plan.date })
+    hydrated = { ...hydrated, steps: hydrated.steps.map((item) => item.itemId === step.itemId ? { ...item, progress: recovered.progress } : item) }
+    machine.dispatch({ type: 'SRS_APPLIED', stepId: step.itemId })
+    await persistCurrentFacts()
+  }
+  return hydrated
+}
+
 export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
   plan: null,
+  plansByMode: {},
   loading: false,
   error: null,
   submitting: false,
@@ -71,52 +106,62 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
   async loadToday(targetPackId, targetDate, mode = 'practice', forceNew = false) {
     set({ loading: true, error: null })
     try {
-      let plan = await dailyPracticeRepository.buildTodayPlan(targetPackId, targetDate, mode, { forceNew })
-      const facts = await dailyPracticeRepository.getRunFacts(plan.runId).catch(() => null)
-      useTodayPracticeStore.getState().dispatch({ type: 'RUN_LOADED', run: facts ?? emptyFacts(plan) })
-      // Server recovery can restore an in-progress run from an earlier app
-      // version where only the run snapshot existed. Re-enqueueing here makes
-      // its derived per-question record durable as well.
-      if (facts?.attemptedItemIds.length) {
-        await dailyPracticeRepository.syncRunSnapshot(plan)
+      // 未显式指定学习包时，由“当前激活学习包”决定构建内容 → 把它纳入缓存
+      // 维度。这样在学习计划页切换学习包后，下次 loadToday 的缓存 key 自然
+      // 变化并重建，而不是复用旧学习包的计划；切 Tab（同包）仍命中缓存。
+      const resolvedPackId = targetPackId
+        ?? await dailyPracticeRepository.getActivePracticePackId().catch(() => null)
+      const cacheKey = planCacheKey(mode, targetDate, resolvedPackId)
+      const cachedPlan = get().plansByMode[cacheKey]
+      // 切换「今日复习 ↔ 今日练习」时，目标模式的 plan 通常已经构建过。只要
+      // 本地 run 还在，就直接复用缓存：完全跳过 buildTodayPlan（不再请求
+      // 服务端、也就没有旧快照覆盖本地数据的风险），从本地 facts 恢复进度。
+      if (cachedPlan && !forceNew) {
+        const cachedFacts = await dailyPracticeRepository.getRunFacts(cachedPlan.runId).catch(() => null)
+        if (cachedFacts) {
+          const hydrated = await hydratePlanIntoStore(cachedPlan)
+          set({ plan: hydrated, plansByMode: { ...get().plansByMode, [cacheKey]: hydrated }, loading: false })
+          return
+        }
       }
-      for (const step of plan.steps) {
-        const machine = useTodayPracticeStore.getState()
-        if (machine.srsAppliedIds.has(step.itemId)) continue
-        const initial = machine.initialRecallResults[step.itemId]
-        const remediation = machine.remediationResults[step.itemId]
-        const rating = initial ? toInitialSrsRating(machine.mode, initial) : null
-        const recoverableRating = rating ?? (machine.mode === 'practice' && remediation?.resolved ? toPracticeRemediationSrsRating(remediation) : null)
-        if (!recoverableRating) continue
-        const recovered = await dailyPracticeRepository.applySrsRatingOnce({ runId: plan.runId, step, rating: recoverableRating, targetDate: plan.date })
-        plan = { ...plan, steps: plan.steps.map((item) => item.itemId === step.itemId ? { ...item, progress: recovered.progress } : item) }
-        machine.dispatch({ type: 'SRS_APPLIED', stepId: step.itemId })
-        await persistCurrentFacts()
+      // buildTodayPlan 会先向后端拉取“当前 run”来恢复进度。这里先提交本地
+      // 待同步的改动（错题重练回答等还躺在 outbox 里），确保服务端拉回来的
+      // 是最新状态，而不是旧快照反过来覆盖本地。pending 为空时 flush 是纯
+      // 本地操作、无网络开销；离线失败也不阻塞，restore 守卫仍会保护本地。
+      if (!forceNew) {
+        await offlineSyncService.flush().catch(() => undefined)
       }
-      set({ plan, loading: false })
+      const plan = await dailyPracticeRepository.buildTodayPlan(targetPackId, targetDate, mode, { forceNew })
+      const hydrated = await hydratePlanIntoStore(plan)
+      set({ plan: hydrated, plansByMode: { ...get().plansByMode, [cacheKey]: hydrated }, loading: false })
     } catch (error: any) {
       set({ error: error?.message || '加载失败', loading: false, plan: null })
     }
   },
 
   async recordAttempt(step, outcome, assistance) {
-    attemptChain = attemptChain.then(async () => {
-      const before = useTodayPracticeStore.getState()
-      if (!before.runId) return
-      const dispatch = before.dispatch
-      if (before.roundKind === 'mistakeRetry') {
-        dispatch({ type: 'RETRY_CYCLE_ATTEMPT', stepId: step.itemId, outcome, assistance })
-      } else if (before.initialRecallResults[step.itemId]) {
-        dispatch({ type: 'CONTINUATION_ATTEMPT', stepId: step.itemId, outcome, assistance })
-      } else {
-        dispatch({ type: 'INITIAL_RECALL_ATTEMPT', stepId: step.itemId, outcome, assistance })
-      }
+    // Capture and transition synchronously.  The card callback may be followed
+    // immediately by a tab switch, which replaces the global Today store with
+    // the other mode's run.  Queuing the transition itself made a successful
+    // mistake retry look green briefly but persist to no run at all.
+    const planAtAttempt = get().plan
+    const before = useTodayPracticeStore.getState()
+    if (!planAtAttempt || !before.runId || before.runId !== planAtAttempt.runId) return
+    const dispatch = before.dispatch
+    if (before.roundKind === 'mistakeRetry') {
+      dispatch({ type: 'RETRY_CYCLE_ATTEMPT', stepId: step.itemId, outcome, assistance })
+    } else if (before.initialRecallResults[step.itemId]) {
+      dispatch({ type: 'CONTINUATION_ATTEMPT', stepId: step.itemId, outcome, assistance })
+    } else {
+      dispatch({ type: 'INITIAL_RECALL_ATTEMPT', stepId: step.itemId, outcome, assistance })
+    }
 
-      let after = useTodayPracticeStore.getState()
-      if (before.roundKind === 'mistakeRetry' && after.currentStepId) {
-        useWarmupSessionStore.getState().resetRetryCycleUi(after.currentStepId)
-      }
-      await persistCurrentFacts()
+    let after = useTodayPracticeStore.getState()
+    const factsAtAttempt = serializeTodayRunFacts(after)
+    const recordsAtAttempt = useWarmupSessionStore.getState().records
+    if (!factsAtAttempt || factsAtAttempt.id !== planAtAttempt.runId) return
+    attemptChain = attemptChain.catch(() => undefined).then(async () => {
+      await dailyPracticeRepository.persistRunFacts(factsAtAttempt)
       void refreshLearningBadgeFromTodayRun().catch(() => undefined)
 
       const initial = after.initialRecallResults[step.itemId]
@@ -126,23 +171,32 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
 
       if (recoverableRating && !after.srsAppliedIds.has(step.itemId)) {
         const result = await dailyPracticeRepository.applySrsRatingOnce({
-          runId: after.runId!, step, rating: recoverableRating, targetDate: get().plan?.date,
+          runId: planAtAttempt.runId, step, rating: recoverableRating, targetDate: planAtAttempt.date,
         })
-        dispatch({ type: 'SRS_APPLIED', stepId: step.itemId })
-        after = useTodayPracticeStore.getState()
-        await persistCurrentFacts()
-        set((state) => state.plan ? ({
+        const persistedAfterSrs = {
+          ...factsAtAttempt,
+          srsAppliedItemIds: [...new Set([...factsAtAttempt.srsAppliedItemIds, step.itemId])],
+        }
+        await dailyPracticeRepository.persistRunFacts(persistedAfterSrs)
+
+        // Only update the visible state when this exact run is still active.
+        if (useTodayPracticeStore.getState().runId === planAtAttempt.runId) {
+          dispatch({ type: 'SRS_APPLIED', stepId: step.itemId })
+          after = useTodayPracticeStore.getState()
+        }
+        set((state) => state.plan?.runId === planAtAttempt.runId ? ({
           plan: {
             ...state.plan,
             steps: state.plan.steps.map((item) => item.itemId === step.itemId ? { ...item, progress: result.progress } : item),
           },
         }) : state)
       }
-      // Keep the server copy resumable even before the final submission.
-      const activePlan = get().plan
-      await get().syncRunSnapshot(
-        useWarmupSessionStore.getState().records,
-        activePlan ? `today-warmup:${activePlan.runId}` : null,
+      // Keep the server copy resumable even before the final submission, using
+      // the captured plan and rich record rather than whichever tab is active.
+      await dailyPracticeRepository.syncRunSnapshot(
+        planAtAttempt,
+        recordsAtAttempt,
+        `today-warmup:${planAtAttempt.runId}`,
       ).catch(() => undefined)
     })
     return attemptChain
@@ -212,6 +266,6 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
 
   reset() {
     useTodayPracticeStore.getState().reset()
-    set({ plan: null, loading: false, error: null, submitting: false })
+    set({ plan: null, plansByMode: {}, loading: false, error: null, submitting: false })
   },
 }))

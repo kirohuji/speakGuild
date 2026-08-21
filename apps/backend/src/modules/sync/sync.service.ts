@@ -475,7 +475,12 @@ export class SyncService {
         take: SyncService.PULL_PAGE_SIZE,
         select: {
           id: true,
+          // 供前端把记录落回与 run 一致的本地 key（today-warmup:<clientRunId>），
+          // 否则恢复后读不到完整作答，会用空占位快照覆盖服务端记录。
+          clientRunId: true,
           topicId: true,
+          // 归属学习包：练习记录能溯源到学习包。
+          packId: true,
           score: true,
           feedback: true,
           items: true,

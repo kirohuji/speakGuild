@@ -273,6 +273,7 @@ export class DailyPracticeService {
           userId,
           clientRunId,
           topicId: body.warmupRecord.topicId,
+          packId: body.warmupRecord.packId ?? null,
           score: body.warmupRecord.score ?? null,
           feedback: body.warmupRecord.feedback ?? null,
           items: body.warmupRecord.items,

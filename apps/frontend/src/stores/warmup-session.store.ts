@@ -30,6 +30,9 @@ export interface WarmupRecordEntry {
   feedback: string
   groupTitle?: string
   displayLabel?: string
+  /** 所属学习包（数据归属：练习记录必须能溯源到学习包） */
+  packId?: string
+  packTitle?: string
   topicTitle?: string
   recordId?: string
   practiceCount?: number
@@ -121,12 +124,13 @@ export const useWarmupSessionStore = create<WarmupSessionState>((set, get) => ({
 
   recordEntry: (entry) => {
     set((prev) => ({
+      // 最新作答置顶：records 整体按「最新在前」排列，存储/上传/展示直接沿用。
       records: [
-        ...prev.records.filter((record) => record.stepId !== entry.stepId),
         {
           ...entry,
           practiceCount: (prev.records.find((record) => record.stepId === entry.stepId)?.practiceCount ?? 0) + 1,
         },
+        ...prev.records.filter((record) => record.stepId !== entry.stepId),
       ],
       attemptHistory: [...prev.attemptHistory, entry],
     }))

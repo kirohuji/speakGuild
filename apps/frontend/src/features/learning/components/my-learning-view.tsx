@@ -150,6 +150,7 @@ function InProgressUnitCard({
   const { t } = useTranslation()
   const [confirmQuit, setConfirmQuit] = useState(false)
   const [quitting, setQuitting] = useState(false)
+  const [confirmSwitch, setConfirmSwitch] = useState(false)
   const [switchingPractice, setSwitchingPractice] = useState(false)
   const [imgFailed, setImgFailed] = useState(false)
   const Icon = getCategoryIcon(unit.categoryName)
@@ -211,6 +212,7 @@ function InProgressUnitCard({
 
   const handleSetActivePracticePack = useCallback(async () => {
     if (!onSetActivePracticePack || isActivePracticePack || switchingPractice) return
+    setConfirmSwitch(false)
     setSwitchingPractice(true)
     try {
       await onSetActivePracticePack()
@@ -263,7 +265,7 @@ function InProgressUnitCard({
                       onClick={(event) => {
                         event.preventDefault()
                         event.stopPropagation()
-                        void handleSetActivePracticePack()
+                        setConfirmSwitch(true)
                       }}
                       className="mt-1 inline-flex h-4 items-center gap-1 rounded-full border border-border/60 bg-background/85 px-1.5 text-[9px] font-medium leading-none text-muted-foreground transition-colors hover:bg-background hover:text-primary disabled:opacity-50"
                     >
@@ -340,6 +342,25 @@ function InProgressUnitCard({
             </Button>
           </div>
         )}
+
+        <Dialog open={confirmSwitch} onOpenChange={setConfirmSwitch}>
+          <DialogContent className="rounded-2xl p-6 sm:mx-auto sm:max-w-xs w-[90vw]">
+            <DialogHeader className="p-0">
+              <DialogTitle className="text-base">{t('learning.confirmSwitchPracticePackTitle')}</DialogTitle>
+              <DialogDescription className="mt-2 text-sm leading-5">
+                {t('learning.confirmSwitchPracticePackDesc', { title: unit.title })}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-5 flex gap-3">
+              <Button variant="outline" className="flex-1 rounded-xl" disabled={switchingPractice} onClick={() => setConfirmSwitch(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button className="flex-1 rounded-xl" disabled={switchingPractice} onClick={handleSetActivePracticePack}>
+                {switchingPractice ? <Loader2 className="size-4 animate-spin" /> : t('learning.confirmSwitch')}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={confirmQuit} onOpenChange={setConfirmQuit}>
           <DialogContent className="rounded-2xl p-6 sm:mx-auto sm:max-w-xs w-[90vw]">

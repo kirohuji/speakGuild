@@ -141,16 +141,28 @@ async function applyPracticeSessionItem(item: any, localSessionId?: string | nul
 
 async function applyWarmupRecordItem(item: any): Promise<void> {
   if (!item?.id || !Array.isArray(item.items) || item.items.length === 0) return
+  // 今日任务记录由 complete 按 clientRunId 关联 run。pull 时落回本地
+  // `today-warmup:<clientRunId>`，与本地作答使用同一 key —— loadToday 恢复
+  // 时才能读到完整作答（含 userAnswer），而不是用空占位快照覆盖服务端。
+  const clientRunId = typeof item.clientRunId === 'string' && item.clientRunId && !item.clientRunId.startsWith('activity:')
+    ? item.clientRunId
+    : null
+  const localId = clientRunId ? `today-warmup:${clientRunId}` : `remote-warmup:${item.id}`
+  const existing = await localDb.get<any>('warmup_records', localId).catch(() => null)
+  // 本地还有未同步的新作答（离线/错题重练刚答）时，服务端旧快照不得覆盖。
+  if (existing?.syncStatus === 'pending') return
+  const createdAt = toIsoString(item.createdAt) ?? new Date().toISOString()
   const record = {
-    id: `remote-warmup:${item.id}`,
+    id: localId,
     remoteId: item.id,
+    packId: item.packId ?? null,
     topicId: item.topicId,
     topicTitle: item.topicTitle ?? '',
     score: item.score ?? null,
     feedback: item.feedback ?? null,
     items: item.items,
-    createdAt: toIsoString(item.createdAt) ?? new Date().toISOString(),
-    updatedAt: toIsoString(item.createdAt) ?? new Date().toISOString(),
+    createdAt,
+    updatedAt: createdAt,
     syncStatus: 'synced',
   }
   await localDb.put('warmup_records', record)
@@ -520,14 +532,14 @@ export const offlineSyncService = {
     return { cursors: finalCursors, changed: totalChanged, deleted: totalDeleted }
   },
 
-  async sync(userId?: string | null): Promise<OfflineSyncResult> {
+  async sync(userId?: string | null, options?: { quiet?: boolean }): Promise<OfflineSyncResult> {
     // A snapshot can be enqueued while a foreground sync is already pulling.
     // Callers that need a durability barrier (notably sign-out) must therefore
     // start a fresh pass after the in-flight pass completes, rather than merely
     // sharing a promise whose flush phase may already have finished.
     if (activeSyncPromise) {
       await activeSyncPromise
-      return this.sync(userId)
+      return this.sync(userId, options)
     }
     const syncStore = useOfflineSyncStore.getState()
     const logId = syncStore.begin('开始同步')
@@ -545,7 +557,7 @@ export const offlineSyncService = {
           })
           return detail
         }
-        if (push.synced > 0) {
+        if (push.synced > 0 && !options?.quiet) {
           toast.success(`已同步 ${push.synced} 条离线数据`)
         }
         const pull = await this.pull(userId)
@@ -556,7 +568,7 @@ export const offlineSyncService = {
         await pullRemoteDailyProgress(dailyItemIds)
 
         const refreshedPacks = await this.refreshContentUpdates()
-        if (refreshedPacks.length > 0) {
+        if (refreshedPacks.length > 0 && !options?.quiet) {
           toast.success(`已更新 ${refreshedPacks.length} 个离线学习包`)
         }
 

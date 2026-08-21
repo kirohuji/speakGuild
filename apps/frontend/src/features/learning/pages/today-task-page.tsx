@@ -382,7 +382,11 @@ export function TodayTaskPage() {
 
   const handleAttempt = useCallback(async (attempt: TodayCardAttempt) => {
     try {
-      if (attempt.purpose === 'rehearsal' || rehearsalAll) {
+      // A retry card may expose its generic “try again” affordance.  That
+      // component marks the next answer as rehearsal for normal practice, but
+      // inside the dedicated mistake round it is a formal remediation attempt
+      // and must resolve (or retain) the daily-task mistake on the server.
+      if (!reviewRoundActive && (attempt.purpose === 'rehearsal' || rehearsalAll)) {
         await recordRehearsalAttempt(attempt.stepId, attempt.outcome, attempt.assistance)
         return
       }
@@ -392,7 +396,7 @@ export function TodayTaskPage() {
       console.error('[today-task] failed to persist attempt:', error)
       toast.error(error instanceof Error ? error.message : t('common.error'))
     }
-  }, [plan?.steps, recordAttempt, recordRehearsalAttempt, rehearsalAll, t])
+  }, [plan?.steps, recordAttempt, recordRehearsalAttempt, rehearsalAll, reviewRoundActive, t])
 
   const switchPlanMode = useCallback((nextMode: DailyPracticePlanMode) => {
     if (nextMode === plan?.mode) return
@@ -418,14 +422,16 @@ export function TodayTaskPage() {
     if (!userId || manualSyncing) return
     setManualSyncing(true)
     try {
-      const result = await offlineSyncService.sync(userId)
+      // Quiet passes so the button reports a single end-to-end result instead
+      // of stacking the service's internal per-phase toasts several times.
+      const result = await offlineSyncService.sync(userId, { quiet: true })
       if (result.push.failed > 0) throw new Error(`${result.push.failed} 条数据未同步`)
       // Rebuild from the server-authoritative current run after pull. This is
       // deliberately an explicit user action for diagnosing recovery issues.
       await loadToday(targetPackId, targetDate, planMode)
       // Loading a recovered run may enqueue a missing per-question record.
       // Flush once more so the button is a real end-to-end sync boundary.
-      const followUp = await offlineSyncService.sync(userId)
+      const followUp = await offlineSyncService.sync(userId, { quiet: true })
       if (followUp.push.failed > 0) throw new Error(`${followUp.push.failed} 条数据未同步`)
       toast.success('今日任务已同步')
     } catch (error) {
@@ -629,11 +635,15 @@ export function TodayTaskPage() {
   }, [hydrateWarmupSession, reviewRoundActive, steps, warmupRecordId])
 
   const enrichedWarmupRecords = useMemo(() => {
-    const stepById = new Map(steps.map((step) => [step.id, step]))
+    // 用 plan.steps（ScheduledDailyPracticeItem）补全学习包归属，保证练习记录
+    // 能溯源到 packId/packTitle。
+    const stepById = new Map((plan?.steps ?? []).map((step) => [step.itemId, step]))
     return warmupRecords.map((record) => {
       const step = stepById.get(record.stepId)
       return {
         ...record,
+        packId: record.packId ?? step?.packId,
+        packTitle: record.packTitle ?? step?.packTitle,
         displayLabel: record.displayLabel ?? step?.displayLabel,
         topicTitle: record.topicTitle ?? step?.topicTitle,
         initialRecallResult: todayState.initialRecallResults[record.stepId],
@@ -641,7 +651,7 @@ export function TodayTaskPage() {
         remediationResult: todayState.remediationResults[record.stepId],
       }
     })
-  }, [steps, todayState.continuationResults, todayState.initialRecallResults, todayState.remediationResults, warmupRecords])
+  }, [plan?.steps, todayState.continuationResults, todayState.initialRecallResults, todayState.remediationResults, warmupRecords])
 
   useEffect(() => {
     if (!warmupRecordId || !plan || enrichedWarmupRecords.length === 0) return
@@ -703,18 +713,18 @@ export function TodayTaskPage() {
   const unattemptedCount = derivedToday.grayCount
   const needsReviewRound = allDone && weakStepIds.size > 0 && !reviewRoundActive && !reviewDismissed
 
-  const upcomingTopicCandidates = useMemo(() => {
-    if (!plan || allDone) return []
+  const practiceTeachingTopicCandidates = useMemo(() => {
+    if (!plan || plan.mode !== 'practice') return []
     const topics = new Map<string, { id: string; title: string }>()
     for (const step of plan.steps) {
-      if (attemptedIds.has(step.itemId) || topics.has(step.topicId)) continue
+      if (topics.has(step.topicId)) continue
       topics.set(step.topicId, { id: step.topicId, title: step.topicTitle })
     }
     return [...topics.values()]
-  }, [allDone, attemptedIds, plan])
+  }, [plan])
 
   useEffect(() => {
-    const missingTopicIds = upcomingTopicCandidates
+    const missingTopicIds = practiceTeachingTopicCandidates
       .map((topic) => topic.id)
       .filter((topicId) => teachingAvailability[topicId] === undefined)
     if (missingTopicIds.length === 0) return
@@ -731,16 +741,16 @@ export function TodayTaskPage() {
       })
     })
     return () => { cancelled = true }
-  }, [teachingAvailability, upcomingTopicCandidates])
+  }, [practiceTeachingTopicCandidates, teachingAvailability])
 
-  const upcomingTeachingTopics = useMemo(
-    () => upcomingTopicCandidates.filter((topic) => teachingAvailability[topic.id]),
-    [teachingAvailability, upcomingTopicCandidates],
+  const practiceTeachingTopics = useMemo(
+    () => practiceTeachingTopicCandidates.filter((topic) => teachingAvailability[topic.id]),
+    [practiceTeachingTopicCandidates, teachingAvailability],
   )
 
   const visibleTeachingTopics = showAllTeachingTopics
-    ? upcomingTeachingTopics
-    : upcomingTeachingTopics.slice(0, 3)
+    ? practiceTeachingTopics
+    : practiceTeachingTopics.slice(0, 3)
 
   const filteredTopics = useMemo(() => {
     if (!plan) return []
@@ -764,11 +774,11 @@ export function TodayTaskPage() {
   }, [plan?.mode, filteredTopics.length])
 
   useEffect(() => {
-    if (!showTeachingHintIntro || upcomingTeachingTopics.length === 0) return
+    if (!showTeachingHintIntro || practiceTeachingTopics.length === 0) return
     window.localStorage.setItem(TODAY_TEACHING_HINT_SEEN_KEY, 'true')
     const timer = window.setTimeout(() => setShowTeachingHintIntro(false), 3600)
     return () => window.clearTimeout(timer)
-  }, [showTeachingHintIntro, upcomingTeachingTopics.length])
+  }, [practiceTeachingTopics.length, showTeachingHintIntro])
 
   const startWeakReviewRound = useCallback(() => {
     if (weakStepIds.size === 0) return
@@ -870,19 +880,15 @@ export function TodayTaskPage() {
       try {
         await submitToday(enrichedWarmupRecords, warmupRecordId)
         console.log('[today-task] ✅ 本组练习已提交 |', activeDoneCount, '题')
-        // 重练完成 → 回到主视图完成态（仍有错题则「练习错题 N」按钮保留）
-        if (reviewRoundActive) {
-          closeSession()
-          setCurrentIdx(0)
-          setDrawerOpen(false)
-        }
+        // Preserve the final feedback card, matching the main-practice flow.
+        // The learner can close the drawer after reading it.
       } catch (err) {
         console.warn('[today-task] ⚠️ 提交失败，下次刷新后重试:', err)
       }
     }
 
     submit()
-  }, [activeDoneCount, allDone, closeSession, enrichedWarmupRecords, hasSubmittedToday, needsReviewRound, reviewAllDone, reviewRoundActive, sessionHydrated, steps.length, submitting, warmupRecordId, submitToday])
+  }, [activeDoneCount, allDone, enrichedWarmupRecords, hasSubmittedToday, needsReviewRound, reviewAllDone, reviewRoundActive, sessionHydrated, steps.length, submitting, warmupRecordId, submitToday])
 
   const groupedSteps = useMemo<PracticeGroup[]>(() => {
     const order = new Map<string, PracticeGroup>()
@@ -1011,10 +1017,11 @@ export function TodayTaskPage() {
     setDrawerOpen(true)
   }, [attemptedIds, needsReviewRound, openMainSession, reviewDoneIds, reviewRoundActive, reviewSteps, startWeakReviewRound, steps])
 
-  // ── 今日练习记录 ──
+  // ── 今日练习记录：recordEntry 置顶（最新在前），历史索引按 updated_at
+  // 降序，此处仅去重合并，不再重复排序。
   const todayRecords = useMemo(() => {
     const latestByStep = new Map<string, WarmupRecordEntry>()
-    for (const record of [...historicalTodayRecords, ...enrichedWarmupRecords]) {
+    for (const record of [...enrichedWarmupRecords, ...historicalTodayRecords]) {
       const key = record.stepId || `${record.zh}|${record.answer}`
       latestByStep.set(key, record)
     }
@@ -1310,7 +1317,7 @@ export function TodayTaskPage() {
             </>
           )}
         </div>
-        {plan.mode === 'practice' && upcomingTeachingTopics.length > 0 && (
+        {plan.mode === 'practice' && practiceTeachingTopics.length > 0 && (
           <section className="mt-3 border-t border-border/45 pt-2.5" aria-label={t('todayTask.teachingSectionAria')}>
             <p className="text-[10px] leading-4 text-muted-foreground">
               {showTeachingHintIntro ? t('todayTask.teachingHintIntro') : t('todayTask.teachingHint')}
@@ -1330,16 +1337,16 @@ export function TodayTaskPage() {
                   <span className="truncate">{topic.title}</span>
                 </button>
               ))}
-              {upcomingTeachingTopics.length > 3 && (
+              {practiceTeachingTopics.length > 3 && (
                 <button
                   type="button"
                   onClick={() => setShowAllTeachingTopics((visible) => !visible)}
                   className="inline-flex h-8 shrink-0 items-center rounded-lg bg-muted/70 px-3 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted active:scale-[0.98]"
-                  title={upcomingTeachingTopics.slice(3).map((topic) => topic.title).join('、')}
+                  title={practiceTeachingTopics.slice(3).map((topic) => topic.title).join('、')}
                 >
                   {showAllTeachingTopics
                     ? t('todayTask.collapseTopics')
-                    : t('todayTask.moreTeachingTopics', { count: upcomingTeachingTopics.length - 3 })}
+                    : t('todayTask.moreTeachingTopics', { count: practiceTeachingTopics.length - 3 })}
                 </button>
               )}
             </div>

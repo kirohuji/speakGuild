@@ -45,6 +45,17 @@ export const syncOutbox = {
       && (item.status === 'pending' || item.status === 'failed'),
     )
     if (existing) {
+      const existingRevision = input.entityType === 'daily_practice'
+        ? String((existing.payload as any)?.run?.clientUpdatedAt ?? '')
+        : ''
+      const incomingRevision = input.entityType === 'daily_practice'
+        ? String((input.payload as any)?.run?.clientUpdatedAt ?? '')
+        : ''
+      // A delayed completion snapshot must never replace a newer retry
+      // snapshot merely because it reaches the outbox later.
+      if (existingRevision && incomingRevision && existingRevision > incomingRevision) {
+        return existing
+      }
       const merged: SyncOutboxItem<TPayload> = {
         ...existing,
         payload: input.payload,
