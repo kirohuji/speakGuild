@@ -404,11 +404,19 @@ export function TodayTaskPage() {
       })
   }, [drawerOpen, isAdmin, localAiWarmupJudgeEnabled, plan?.steps, plan?.units, t, targetPackId])
 
-  // 今日任务相关（daily_practice）outbox 是否存在未同步改动 → 同步按钮角标。
+  // 今日任务相关（daily_practice）outbox 是否需要同步按钮显示感叹号角标。
+  // 只在「真正需要用户关注」时亮：同步失败，或存在超过 1 小时仍未上传的
+  // pending（在线时会被检查点同步自动冲掉，基本不会触发；离线时才是提醒）。
+  // 普通 pending（刚答完题、等待下次同步）不亮灯，避免离线优先设计下常态噪音。
   const refreshPendingSyncBadge = useCallback(async () => {
     try {
       const pending = await syncOutbox.listPending()
-      setHasPendingSync(pending.some((item) => item.entityType === 'daily_practice'))
+      const oneHourAgo = Date.now() - 60 * 60 * 1000
+      setHasPendingSync(pending.some((item) => {
+        if (item.entityType !== 'daily_practice') return false
+        if (item.status === 'failed') return true
+        return item.status === 'pending' && new Date(item.createdAt).getTime() <= oneHourAgo
+      }))
     } catch {
       setHasPendingSync(false)
     }
@@ -418,6 +426,12 @@ export function TodayTaskPage() {
   useEffect(() => {
     void refreshPendingSyncBadge()
   }, [lastSyncedAt, refreshPendingSyncBadge])
+
+  // 页面停留期间周期性刷新角标，让「长期未上传」（>1h）阈值在离线场景下也能按时生效。
+  useEffect(() => {
+    const timer = window.setInterval(() => { void refreshPendingSyncBadge() }, 60_000)
+    return () => window.clearInterval(timer)
+  }, [refreshPendingSyncBadge])
 
   // 同步完成后：本地 run 若被服务端改写（与页面当前状态不一致）→ 弹窗询问。
   useEffect(() => {

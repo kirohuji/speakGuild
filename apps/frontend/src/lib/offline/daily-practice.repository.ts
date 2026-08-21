@@ -1321,6 +1321,20 @@ export const dailyPracticeRepository = {
       && attempt.syncStatus !== 'synced'
       && attempt.applyStatus === 'applied',
     )
+    // 无真实增量时跳过入队：恢复/hydrate 路径（未显式传入 records）只在存在
+    // 新的未同步作答、或本地 warmup 记录尚未同步时才重新入队，避免每次页面
+    // 挂载都凭空造一条 pending（同步按钮出现“假感叹号”）。作答路径（显式
+    // 传入 records）始终入队，不受影响；服务端恢复的旧 run（无本地 warmup
+    // 记录）也会照常入队以补全逐题记录。
+    if (records.length === 0) {
+      const persistedWarmup = await practiceRepository
+        .getLocalWarmupRecord(resolvedLocalWarmupRecordId)
+        .catch(() => null)
+      const warmupSynced = (persistedWarmup as { syncStatus?: string } | null)?.syncStatus === 'synced'
+      if (pendingAttempts.length === 0 && warmupSynced) {
+        return
+      }
+    }
     const payload = createTodayRunSyncPayload({
       plan, run, attempts: pendingAttempts, records: resolvedRecords, localWarmupRecordId: resolvedLocalWarmupRecordId,
       submissionStatus: run.submissionStatus, stats: run.stats ?? {},
