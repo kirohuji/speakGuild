@@ -415,7 +415,9 @@ export class SyncService {
 
   private static readonly PULL_PAGE_SIZE = 500;
 
-  async pull(userId: string, cursors: Record<string, string>) {
+  async pull(userId: string, cursors: Record<string, string>, types?: string[]) {
+    // types 为空 = 拉取全部类型；否则只拉取指定的类型（如生词本/今日任务各自的同步按钮）
+    const want = (t: string) => !types || types.length === 0 || types.includes(t);
     const sinceExpression = cursors.expressionItems ? new Date(cursors.expressionItems) : new Date(0);
     const sinceSceneProgress = cursors.sceneProgresses ? new Date(cursors.sceneProgresses) : new Date(0);
     const sinceChunkProgress = cursors.chunkProgresses ? new Date(cursors.chunkProgresses) : new Date(0);
@@ -434,22 +436,22 @@ export class SyncService {
       dailyPracticeRuns,
       topicSessions,
     ] = await Promise.all([
-      this.prisma.expressionItem.findMany({
+      want('expressionItems') ? this.prisma.expressionItem.findMany({
         where: { userId, updatedAt: { gt: sinceExpression }, deletedAt: null },
         orderBy: { updatedAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
-      }),
-      this.prisma.userSceneProgress.findMany({
+      }) : Promise.resolve([]),
+      want('sceneProgresses') ? this.prisma.userSceneProgress.findMany({
         where: { userId, updatedAt: { gt: sinceSceneProgress } },
         orderBy: { updatedAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
-      }),
-      this.prisma.userChunkProgress.findMany({
+      }) : Promise.resolve([]),
+      want('chunkProgresses') ? this.prisma.userChunkProgress.findMany({
         where: { userId, updatedAt: { gt: sinceChunkProgress } },
         orderBy: { updatedAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
-      }),
-      this.prisma.practiceSession.findMany({
+      }) : Promise.resolve([]),
+      want('practiceSessions') ? this.prisma.practiceSession.findMany({
         where: { userId, updatedAt: { gt: sincePracticeSession }, status: 'analyzed' },
         orderBy: { updatedAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
@@ -468,8 +470,8 @@ export class SyncService {
           analyzedAt: true,
           updatedAt: true,
         },
-      }),
-      (this.prisma as any).practiceWarmupRecord.findMany({
+      }) : Promise.resolve([]),
+      want('practiceWarmupRecords') ? (this.prisma as any).practiceWarmupRecord.findMany({
         where: { userId, createdAt: { gt: sinceWarmupRecord } },
         orderBy: { createdAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
@@ -486,8 +488,8 @@ export class SyncService {
           items: true,
           createdAt: true,
         },
-      }),
-      (this.prisma as any).userDailyPracticeRun.findMany({
+      }) : Promise.resolve([]),
+      want('dailyPracticeRuns') ? (this.prisma as any).userDailyPracticeRun.findMany({
         where: { userId, updatedAt: { gt: sinceDailyPracticeRun } },
         orderBy: { updatedAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
@@ -510,8 +512,8 @@ export class SyncService {
           createdAt: true,
           updatedAt: true,
         },
-      }),
-      this.prisma.topicSession.findMany({
+      }) : Promise.resolve([]),
+      want('topicSessions') ? this.prisma.topicSession.findMany({
         where: { userId, updatedAt: { gt: sinceTopicSession }, status: 'analyzed' },
         orderBy: { updatedAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
@@ -531,7 +533,7 @@ export class SyncService {
             select: { id: true, revision: true, status: true, response: true },
           },
         },
-      }),
+      }) : Promise.resolve([]),
     ]);
 
     // PracticeTurn 没有直接 userId，通过 session 关联
@@ -541,12 +543,14 @@ export class SyncService {
     //   take: SyncService.PULL_PAGE_SIZE,
     // });
 
-    const deletedExpressionItems = await this.prisma.expressionItem.findMany({
-      where: { userId, deletedAt: { gt: sinceDeletedExpression } },
-      orderBy: { deletedAt: 'asc' },
-      take: SyncService.PULL_PAGE_SIZE,
-      select: { id: true, deletedAt: true },
-    });
+    const deletedExpressionItems = want('expressionItems')
+      ? await this.prisma.expressionItem.findMany({
+          where: { userId, deletedAt: { gt: sinceDeletedExpression } },
+          orderBy: { deletedAt: 'asc' },
+          take: SyncService.PULL_PAGE_SIZE,
+          select: { id: true, deletedAt: true },
+        })
+      : [];
 
     // 每种类型独立计算 cursor：取该类型返回记录中最大的时间戳
     function maxTime(items: any[], field: string): string | null {
@@ -555,44 +559,45 @@ export class SyncService {
       return max > 0 ? new Date(max).toISOString() : null;
     }
 
+    // 未参与本次拉取的类型保持原 cursor 不变，避免跳过其增量。
     const nextCursors = {
-      expressionItems: maxTime(expressionItems, 'updatedAt') ?? cursors.expressionItems ?? null,
-      sceneProgresses: maxTime(sceneProgresses, 'updatedAt') ?? cursors.sceneProgresses ?? null,
-      chunkProgresses: maxTime(chunkProgresses, 'updatedAt') ?? cursors.chunkProgresses ?? null,
-      practiceSessions: maxTime(practiceSessions, 'updatedAt') ?? cursors.practiceSessions ?? null,
-      practiceWarmupRecords: maxTime(practiceWarmupRecords, 'createdAt') ?? cursors.practiceWarmupRecords ?? null,
-      dailyPracticeRuns: maxTime(dailyPracticeRuns, 'updatedAt') ?? cursors.dailyPracticeRuns ?? null,
-      topicSessions: maxTime(topicSessions, 'updatedAt') ?? cursors.topicSessions ?? null,
-      deletedExpressionItems: maxTime(deletedExpressionItems, 'deletedAt') ?? cursors.deletedExpressionItems ?? null,
+      expressionItems: want('expressionItems') ? (maxTime(expressionItems, 'updatedAt') ?? cursors.expressionItems ?? null) : (cursors.expressionItems ?? null),
+      sceneProgresses: want('sceneProgresses') ? (maxTime(sceneProgresses, 'updatedAt') ?? cursors.sceneProgresses ?? null) : (cursors.sceneProgresses ?? null),
+      chunkProgresses: want('chunkProgresses') ? (maxTime(chunkProgresses, 'updatedAt') ?? cursors.chunkProgresses ?? null) : (cursors.chunkProgresses ?? null),
+      practiceSessions: want('practiceSessions') ? (maxTime(practiceSessions, 'updatedAt') ?? cursors.practiceSessions ?? null) : (cursors.practiceSessions ?? null),
+      practiceWarmupRecords: want('practiceWarmupRecords') ? (maxTime(practiceWarmupRecords, 'createdAt') ?? cursors.practiceWarmupRecords ?? null) : (cursors.practiceWarmupRecords ?? null),
+      dailyPracticeRuns: want('dailyPracticeRuns') ? (maxTime(dailyPracticeRuns, 'updatedAt') ?? cursors.dailyPracticeRuns ?? null) : (cursors.dailyPracticeRuns ?? null),
+      topicSessions: want('topicSessions') ? (maxTime(topicSessions, 'updatedAt') ?? cursors.topicSessions ?? null) : (cursors.topicSessions ?? null),
+      deletedExpressionItems: want('expressionItems') ? (maxTime(deletedExpressionItems, 'deletedAt') ?? cursors.deletedExpressionItems ?? null) : (cursors.deletedExpressionItems ?? null),
     };
 
-    // 每种类型独立 hasMore
+    // 每种类型独立 hasMore；未参与的类型不触发分页
     const hasMore = {
-      expressionItems: expressionItems.length >= SyncService.PULL_PAGE_SIZE,
-      sceneProgresses: sceneProgresses.length >= SyncService.PULL_PAGE_SIZE,
-      chunkProgresses: chunkProgresses.length >= SyncService.PULL_PAGE_SIZE,
-      practiceSessions: practiceSessions.length >= SyncService.PULL_PAGE_SIZE,
-      practiceWarmupRecords: practiceWarmupRecords.length >= SyncService.PULL_PAGE_SIZE,
-      dailyPracticeRuns: dailyPracticeRuns.length >= SyncService.PULL_PAGE_SIZE,
-      topicSessions: topicSessions.length >= SyncService.PULL_PAGE_SIZE,
-      deletedExpressionItems: deletedExpressionItems.length >= SyncService.PULL_PAGE_SIZE,
+      expressionItems: want('expressionItems') && expressionItems.length >= SyncService.PULL_PAGE_SIZE,
+      sceneProgresses: want('sceneProgresses') && sceneProgresses.length >= SyncService.PULL_PAGE_SIZE,
+      chunkProgresses: want('chunkProgresses') && chunkProgresses.length >= SyncService.PULL_PAGE_SIZE,
+      practiceSessions: want('practiceSessions') && practiceSessions.length >= SyncService.PULL_PAGE_SIZE,
+      practiceWarmupRecords: want('practiceWarmupRecords') && practiceWarmupRecords.length >= SyncService.PULL_PAGE_SIZE,
+      dailyPracticeRuns: want('dailyPracticeRuns') && dailyPracticeRuns.length >= SyncService.PULL_PAGE_SIZE,
+      topicSessions: want('topicSessions') && topicSessions.length >= SyncService.PULL_PAGE_SIZE,
+      deletedExpressionItems: want('expressionItems') && deletedExpressionItems.length >= SyncService.PULL_PAGE_SIZE,
     };
 
     return {
       cursors: nextCursors,
       hasMore,
       changed: {
-        expressionItems,
-        sceneProgresses,
-        chunkProgresses,
-        practiceSessions,
-        practiceWarmupRecords,
-        dailyPracticeRuns,
-        topicSessions,
+        expressionItems: want('expressionItems') ? expressionItems : [],
+        sceneProgresses: want('sceneProgresses') ? sceneProgresses : [],
+        chunkProgresses: want('chunkProgresses') ? chunkProgresses : [],
+        practiceSessions: want('practiceSessions') ? practiceSessions : [],
+        practiceWarmupRecords: want('practiceWarmupRecords') ? practiceWarmupRecords : [],
+        dailyPracticeRuns: want('dailyPracticeRuns') ? dailyPracticeRuns : [],
+        topicSessions: want('topicSessions') ? topicSessions : [],
         // practiceTurns,
       },
       deleted: {
-        expressionItems: deletedExpressionItems.map((item) => item.id),
+        expressionItems: want('expressionItems') ? deletedExpressionItems.map((item) => item.id) : [],
         sceneProgresses: [] as string[],
         chunkProgresses: [] as string[],
       },

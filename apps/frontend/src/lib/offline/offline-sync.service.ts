@@ -3,7 +3,7 @@ import { practiceApi, expressionApi, dailyPracticeApi } from '@/features/practic
 import { toast } from 'sonner'
 import { syncApi } from './sync-api'
 import { localDb } from './unified-storage'
-import { syncOutbox, type SyncOutboxItem } from './sync-outbox'
+import { syncOutbox, type SyncEntityType, type SyncOutboxItem } from './sync-outbox'
 import { learningContentRepository } from './learning-content.repository'
 import { learningPackService } from './learning-pack.service'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
@@ -470,8 +470,23 @@ async function replayItem(
   return false
 }
 
+/**
+ * 局部同步范围：只同步各自页面相关的数据，避免「生词本同步顺带拉今日任务」等
+ * 跨页面副作用。'all'（默认）表示完整同步全部类型。
+ */
+export type SyncScope = 'all' | 'today' | 'notebook'
+
+const SCOPE_OUTBOX_TYPES: Record<Exclude<SyncScope, 'all'>, ReadonlySet<SyncEntityType>> = {
+  today: new Set<SyncEntityType>(['daily_practice']),
+  notebook: new Set<SyncEntityType>(['word_entry', 'chunk_entry', 'pattern_entry']),
+}
+const SCOPE_PULL_TYPES: Record<Exclude<SyncScope, 'all'>, string[]> = {
+  today: ['dailyPracticeRuns', 'practiceWarmupRecords'],
+  notebook: ['expressionItems'],
+}
+
 export const offlineSyncService = {
-  async pull(userId?: string | null): Promise<{ cursors: Record<string, string | null>; changed: number; deleted: number }> {
+  async pull(userId?: string | null, types?: string[]): Promise<{ cursors: Record<string, string | null>; changed: number; deleted: number }> {
     const cursorKey = userSyncCursorKey(userId)
     const cursorRecord = await localDb.get<{ value?: string }>('kv', cursorKey)
     // cursors 以 JSON 对象存储在 kv 中，每种类型独立
@@ -489,7 +504,7 @@ export const offlineSyncService = {
     let lastCursors = { ...cursors }
 
     while (true) {
-      const result = await syncApi.pull(cursors)
+      const result = await syncApi.pull(cursors, types)
       await applyUserPullChanges(result.changed, result.deleted)
 
       totalChanged +=
@@ -532,7 +547,10 @@ export const offlineSyncService = {
     return { cursors: finalCursors, changed: totalChanged, deleted: totalDeleted }
   },
 
-  async sync(userId?: string | null, options?: { quiet?: boolean }): Promise<OfflineSyncResult> {
+  async sync(userId?: string | null, options?: { quiet?: boolean; scope?: SyncScope }): Promise<OfflineSyncResult> {
+    // 局部同步：只上传/拉取该范围对应的类型；'all'/不传 = 完整同步。
+    const outboxTypes = options?.scope && options.scope !== 'all' ? SCOPE_OUTBOX_TYPES[options.scope] : undefined
+    const pullTypes = options?.scope && options.scope !== 'all' ? SCOPE_PULL_TYPES[options.scope] : undefined
     // A snapshot can be enqueued while a foreground sync is already pulling.
     // Callers that need a durability barrier (notably sign-out) must therefore
     // start a fresh pass after the in-flight pass completes, rather than merely
@@ -545,7 +563,7 @@ export const offlineSyncService = {
     const logId = syncStore.begin('开始同步')
     const running = (async (): Promise<OfflineSyncResult> => {
       try {
-        const push = await this.flush()
+        const push = await this.flush(outboxTypes)
         if (push.failed > 0) {
           const detail = { push, pull: null, refreshedPacks: [] as string[] }
           toast.error(`同步失败：${push.failed} 条数据未上传，将在下次打开时重试`)
@@ -560,14 +578,19 @@ export const offlineSyncService = {
         if (push.synced > 0 && !options?.quiet) {
           toast.success(`已同步 ${push.synced} 条离线数据`)
         }
-        const pull = await this.pull(userId)
+        const pull = await this.pull(userId, pullTypes)
 
-        // 拉取今日任务 item 权威进度并收敛到本地（不覆盖有未同步 attempt 的项）
-        const localDailyItems = await localDb.list<{ itemId?: string; id: string }>('daily_practice_items')
-        const dailyItemIds = localDailyItems.map((item) => item.itemId ?? item.id).filter(Boolean)
-        await pullRemoteDailyProgress(dailyItemIds)
+        // 今日任务 item 进度：全量或今日范围同步时拉取
+        if (!options?.scope || options.scope === 'all' || options.scope === 'today') {
+          const localDailyItems = await localDb.list<{ itemId?: string; id: string }>('daily_practice_items')
+          const dailyItemIds = localDailyItems.map((item) => item.itemId ?? item.id).filter(Boolean)
+          await pullRemoteDailyProgress(dailyItemIds)
+        }
 
-        const refreshedPacks = await this.refreshContentUpdates()
+        // 学习包内容更新：仅全量同步时检查（局部同步不刷新内容）
+        const refreshedPacks = (!options?.scope || options.scope === 'all')
+          ? await this.refreshContentUpdates()
+          : []
         if (refreshedPacks.length > 0 && !options?.quiet) {
           toast.success(`已更新 ${refreshedPacks.length} 个离线学习包`)
         }
@@ -698,12 +721,13 @@ export const offlineSyncService = {
     return refreshed
   },
 
-  async flush(): Promise<{ synced: number; failed: number; skipped: number; operations: Record<string, number> }> {
+  async flush(outboxTypes?: ReadonlySet<SyncEntityType>): Promise<{ synced: number; failed: number; skipped: number; operations: Record<string, number> }> {
     let synced = 0
     let failed = 0
     let skipped = 0
 
-    const items = await syncOutbox.listPending()
+    let items = await syncOutbox.listPending()
+    if (outboxTypes) items = items.filter((item) => outboxTypes.has(item.entityType))
     const operations = items.reduce<Record<string, number>>((acc, item) => {
       const key = `${item.entityType}:${item.operation}`
       acc[key] = (acc[key] ?? 0) + 1

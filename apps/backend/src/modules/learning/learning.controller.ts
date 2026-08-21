@@ -196,4 +196,11 @@ export class LearningController {
     const session = await requireAuthSession(req);
     return this.learningService.quitUnit(session.user.id, id);
   }
+
+  /** 重新学习：清空该单元的学习进度，回到未完成状态 */
+  @Post('units/:id/restart')
+  async restartUnit(@Req() req: Request, @Param('id') id: string) {
+    const session = await requireAuthSession(req);
+    return this.learningService.restartUnit(session.user.id, id);
+  }
 }

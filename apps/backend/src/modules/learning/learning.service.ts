@@ -2071,6 +2071,39 @@ export class LearningService {
     return { success: true };
   }
 
+  /**
+   * 重新学习——清空该学习包的学习/练习/复习进度，回到未完成状态。
+   * 与 quitUnit 不同：保留学习关系并重建初始进度记录，而不是删除。
+   */
+  async restartUnit(userId: string, unitId: string) {
+    await this.assertLearningPackAccess(userId, unitId, { allowExistingProgress: true });
+    const scene = await this.prisma.scene.findUnique({
+      where: { id: unitId },
+      select: { id: true },
+    });
+    if (!scene) throw new NotFoundException('学习包不存在');
+
+    // 清空该学习包的所有进度，避免旧 SRS 到期题 / 旧 run 残留
+    await this.prisma.userSceneProgress.deleteMany({ where: { userId, sceneId: unitId } });
+    await (this.prisma as any).userWarmupItemProgress.deleteMany({ where: { userId, packId: unitId } });
+    await (this.prisma as any).userDailyPracticeAttempt.deleteMany({ where: { userId, packId: unitId } });
+    await (this.prisma as any).userDailyPracticeRun.deleteMany({ where: { userId, packIds: { has: unitId } } });
+
+    // 重建初始进度，回到「未完成」
+    return this.prisma.userSceneProgress.create({
+      data: {
+        userId,
+        sceneId: unitId,
+        vocabLearned: 0,
+        chunkMastered: 0,
+        completedPracticeCount: 0,
+        completedScriptCount: 0,
+        readiness: 0,
+        mastery: 0,
+      },
+    });
+  }
+
   private async getCurrentVocabLearned(userId: string, sceneId: string): Promise<number> {
     const progress = await this.prisma.userSceneProgress.findUnique({
       where: { userId_sceneId: { userId, sceneId } },

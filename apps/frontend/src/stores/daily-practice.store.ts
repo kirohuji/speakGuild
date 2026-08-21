@@ -7,7 +7,6 @@ import {
 } from '@/lib/offline/daily-practice.repository'
 import { useWarmupSessionStore, type WarmupRecordEntry } from '@/stores/warmup-session.store'
 import { refreshLearningBadgeFromTodayRun } from '@/lib/native/learning-reminder'
-import { offlineSyncService } from '@/lib/offline'
 import {
   deriveTodayPractice,
   serializeTodayRunFacts,
@@ -36,6 +35,10 @@ interface DailyPracticeState {
   syncRunSnapshot: (records?: WarmupRecordEntry[], localWarmupRecordId?: string | null) => Promise<void>
   submitToday: (records: WarmupRecordEntry[], localWarmupRecordId?: string | null) => Promise<void>
   reshuffle: (targetPackId?: string | null, targetDate?: string | null, mode?: DailyPracticePlanMode) => Promise<void>
+  /** 清空计划缓存，下次 loadToday 会基于最新本地数据重建。 */
+  invalidatePlans: () => void
+  /** 本地 run 是否已被服务端同步改写（与当前页面状态不一致）。 */
+  checkRunChangedLocally: () => Promise<boolean>
   reset: () => void
 }
 
@@ -124,13 +127,8 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
           return
         }
       }
-      // buildTodayPlan 会先向后端拉取“当前 run”来恢复进度。这里先提交本地
-      // 待同步的改动（错题重练回答等还躺在 outbox 里），确保服务端拉回来的
-      // 是最新状态，而不是旧快照反过来覆盖本地。pending 为空时 flush 是纯
-      // 本地操作、无网络开销；离线失败也不阻塞，restore 守卫仍会保护本地。
-      if (!forceNew) {
-        await offlineSyncService.flush().catch(() => undefined)
-      }
+      // 离线优先：构建计划纯本地；本地上传 / 服务端拉取统一由同步机制
+      // （手动同步按钮 / 自动同步 / 登录同步）负责。
       const plan = await dailyPracticeRepository.buildTodayPlan(targetPackId, targetDate, mode, { forceNew })
       const hydrated = await hydratePlanIntoStore(plan)
       set({ plan: hydrated, plansByMode: { ...get().plansByMode, [cacheKey]: hydrated }, loading: false })
@@ -262,6 +260,29 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
 
   async reshuffle(targetPackId, targetDate, mode) {
     await get().loadToday(targetPackId, targetDate, mode, true)
+  },
+
+  invalidatePlans() {
+    set({ plansByMode: {} })
+  },
+
+  async checkRunChangedLocally() {
+    const plan = get().plan
+    if (!plan) return false
+    const local = await dailyPracticeRepository.getRunFacts(plan.runId).catch(() => null)
+    const current = serializeTodayRunFacts(useTodayPracticeStore.getState())
+    if (!local || !current || local.id !== current.id) return false
+    const sameArray = (a: string[] = [], b: string[] = []) =>
+      a.length === b.length && a.every((item, index) => item === b[index])
+    // 本地答题会同时更新 store 与本地 run（一致）；同步 pull 只改写本地 run
+    // （restoreRemoteDailyPracticeRun），两者不一致即说明服务端带来了更新。
+    return !(
+      sameArray(local.attemptedItemIds, current.attemptedItemIds)
+      && sameArray(local.unresolvedItemIds, current.unresolvedItemIds)
+      && local.submissionStatus === current.submissionStatus
+      && JSON.stringify(local.initialRecallResults) === JSON.stringify(current.initialRecallResults)
+      && JSON.stringify(local.remediationResults) === JSON.stringify(current.remediationResults)
+    )
   },
 
   reset() {

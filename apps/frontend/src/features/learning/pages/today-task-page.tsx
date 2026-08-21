@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import {
   ArrowRight, Blocks, Braces, ChevronDown, ChevronLeft, ChevronRight,
   ClipboardList, ListChecks, ListMusic, PenLine, Replace, Split, Target,
-  CheckCircle2, Loader2, RefreshCw,
+  AlertCircle, CheckCircle2, Loader2, RefreshCw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -33,8 +33,10 @@ import { preloadWarmupLocalJudge, type WarmupReferencePreloadInput } from '@/lib
 import { useAuth } from '@/providers/auth-provider'
 import { toast } from 'sonner'
 import { offlineSyncService, practiceRepository } from '@/lib/offline'
+import { syncOutbox } from '@/lib/offline/sync-outbox'
 import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { localDateKey } from '@/lib/date/calendar-date'
 
 // ── 类型 ──
@@ -245,6 +247,13 @@ export function TodayTaskPage() {
   const [rehearsalAll, setRehearsalAll] = useState(false)
   const [manualSyncing, setManualSyncing] = useState(false)
   const [practiceTabSummary, setPracticeTabSummary] = useState<{ attemptedCount: number; totalCount: number } | null>(null)
+  const [reviewDebtCount, setReviewDebtCount] = useState<number | null>(null)
+  // 今日任务相关 outbox 存在未同步改动时，同步按钮显示感叹号角标。
+  const [hasPendingSync, setHasPendingSync] = useState(false)
+  // 同步发现今日任务有更新时，询问用户是否立即刷新。
+  const [showTodayUpdateDialog, setShowTodayUpdateDialog] = useState(false)
+  // 任意一次同步完成（登录 / 自动 / 手动 / 其他页面）都会更新该时间戳。
+  const lastSyncedAt = useOfflineSyncStore((s) => s.lastSyncedAt)
   const todayState = useTodayPracticeStore()
   const reviewRoundActive = todayState.roundKind === 'mistakeRetry'
   const attemptedIds = todayState.attemptedIds
@@ -308,6 +317,21 @@ export function TodayTaskPage() {
     })
     return () => { cancelled = true }
   }, [plan?.date, plan?.runId])
+
+  // 「今日复习」卡片待办数：按复习真实范围（跨包/当前包）独立计算，
+  // 不随当前激活 Tab 的 plan 变化，保证两个 Tab 下显示一致；
+  // 同步完成后本地进度可能变化，一并刷新。
+  useEffect(() => {
+    if (!plan?.date) {
+      setReviewDebtCount(null)
+      return
+    }
+    let cancelled = false
+    void dailyPracticeRepository.getReviewDebtCount(plan.date).then((count) => {
+      if (!cancelled) setReviewDebtCount(count)
+    })
+    return () => { cancelled = true }
+  }, [lastSyncedAt, plan?.date])
 
   useEffect(() => {
     if (currentPlanReusable) return
@@ -380,6 +404,37 @@ export function TodayTaskPage() {
       })
   }, [drawerOpen, isAdmin, localAiWarmupJudgeEnabled, plan?.steps, plan?.units, t, targetPackId])
 
+  // 今日任务相关（daily_practice）outbox 是否存在未同步改动 → 同步按钮角标。
+  const refreshPendingSyncBadge = useCallback(async () => {
+    try {
+      const pending = await syncOutbox.listPending()
+      setHasPendingSync(pending.some((item) => item.entityType === 'daily_practice'))
+    } catch {
+      setHasPendingSync(false)
+    }
+  }, [])
+
+  // 挂载时 + 任意同步完成后刷新角标（自动同步上传了本地改动后感叹号应消失）。
+  useEffect(() => {
+    void refreshPendingSyncBadge()
+  }, [lastSyncedAt, refreshPendingSyncBadge])
+
+  // 同步完成后：本地 run 若被服务端改写（与页面当前状态不一致）→ 弹窗询问。
+  useEffect(() => {
+    if (!lastSyncedAt) return
+    let cancelled = false
+    void useDailyPracticeStore.getState().checkRunChangedLocally().then((changed) => {
+      if (!cancelled && changed) setShowTodayUpdateDialog(true)
+    })
+    return () => { cancelled = true }
+  }, [lastSyncedAt])
+
+  const applyTodayUpdate = useCallback(async () => {
+    setShowTodayUpdateDialog(false)
+    useDailyPracticeStore.getState().invalidatePlans()
+    await loadToday(targetPackId, targetDate, planMode)
+  }, [loadToday, planMode, targetDate, targetPackId])
+
   const handleAttempt = useCallback(async (attempt: TodayCardAttempt) => {
     try {
       // A retry card may expose its generic “try again” affordance.  That
@@ -395,8 +450,11 @@ export function TodayTaskPage() {
     } catch (error) {
       console.error('[today-task] failed to persist attempt:', error)
       toast.error(error instanceof Error ? error.message : t('common.error'))
+    } finally {
+      // 作答会写入 outbox（待同步快照），同步后刷新角标。
+      void refreshPendingSyncBadge()
     }
-  }, [plan?.steps, recordAttempt, recordRehearsalAttempt, rehearsalAll, reviewRoundActive, t])
+  }, [plan?.steps, recordAttempt, recordRehearsalAttempt, refreshPendingSyncBadge, rehearsalAll, reviewRoundActive, t])
 
   const switchPlanMode = useCallback((nextMode: DailyPracticePlanMode) => {
     if (nextMode === plan?.mode) return
@@ -422,24 +480,25 @@ export function TodayTaskPage() {
     if (!userId || manualSyncing) return
     setManualSyncing(true)
     try {
-      // Quiet passes so the button reports a single end-to-end result instead
-      // of stacking the service's internal per-phase toasts several times.
-      const result = await offlineSyncService.sync(userId, { quiet: true })
+      // 只同步今日任务相关数据（daily_practice run/记录/进度），不拉其他页面类型；
+      // quiet 让按钮只报一条端到端结果，不叠加内部多次 toast。
+      const result = await offlineSyncService.sync(userId, { quiet: true, scope: 'today' })
       if (result.push.failed > 0) throw new Error(`${result.push.failed} 条数据未同步`)
       // Rebuild from the server-authoritative current run after pull. This is
       // deliberately an explicit user action for diagnosing recovery issues.
       await loadToday(targetPackId, targetDate, planMode)
       // Loading a recovered run may enqueue a missing per-question record.
       // Flush once more so the button is a real end-to-end sync boundary.
-      const followUp = await offlineSyncService.sync(userId, { quiet: true })
+      const followUp = await offlineSyncService.sync(userId, { quiet: true, scope: 'today' })
       if (followUp.push.failed > 0) throw new Error(`${followUp.push.failed} 条数据未同步`)
       toast.success('今日任务已同步')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '今日任务同步失败')
     } finally {
       setManualSyncing(false)
+      void refreshPendingSyncBadge()
     }
-  }, [loadToday, manualSyncing, planMode, session?.user?.id, targetDate, targetPackId])
+  }, [loadToday, manualSyncing, planMode, refreshPendingSyncBadge, session?.user?.id, targetDate, targetPackId])
 
   const startNewPracticeSet = useCallback(() => {
     closeSession()
@@ -1140,11 +1199,16 @@ export function TodayTaskPage() {
               type="button"
               onClick={(e) => { e.currentTarget.blur(); void syncTodayTask() }}
               disabled={manualSyncing}
-              className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              className="relative flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="同步今日任务"
               title="同步今日任务"
             >
               <RefreshCw className={cn('size-[17px]', manualSyncing && 'animate-spin')} />
+              {hasPendingSync && !manualSyncing && (
+                <span className="absolute -right-0.5 -top-0.5">
+                  <AlertCircle className="size-3.5 text-amber-500" />
+                </span>
+              )}
             </button>
             <button
               type="button"
@@ -1172,7 +1236,7 @@ export function TodayTaskPage() {
         >
           <span className="block text-sm font-semibold">{t('todayTask.todayReview')}</span>
           <span className="mt-0.5 block text-[11px]">
-            {t('todayTask.expireOverdue', { count: plan.availableReviewCount })}
+            {t('todayTask.expireOverdue', { count: reviewDebtCount ?? plan.availableReviewCount })}
           </span>
         </button>
         <button
@@ -1791,6 +1855,24 @@ export function TodayTaskPage() {
             </Button>
             <Button className="flex-1" onClick={startWeakReviewRound}>
               {t('todayTask.startWrongReview')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── 同步发现今日任务更新 → 询问是否立即刷新 ── */}
+      <Dialog open={showTodayUpdateDialog} onOpenChange={setShowTodayUpdateDialog}>
+        <DialogContent className="!z-[10002] w-[calc(100vw-2rem)] max-w-sm rounded-2xl p-5">
+          <DialogTitle className="text-base">{t('todayTask.todayUpdateTitle')}</DialogTitle>
+          <DialogDescription className="mt-1 text-sm leading-5">
+            {t('todayTask.todayUpdateDesc')}
+          </DialogDescription>
+          <div className="flex gap-2 pt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setShowTodayUpdateDialog(false)}>
+              {t('todayTask.todayUpdateLater')}
+            </Button>
+            <Button className="flex-1" onClick={applyTodayUpdate}>
+              {t('todayTask.todayUpdateNow')}
             </Button>
           </div>
         </DialogContent>

@@ -804,6 +804,29 @@ export const dailyPracticeRepository = {
   },
 
   /**
+   * 复习模式全局待办数量（逾期 + 今天到期），与当前 Tab/plan 无关。
+   * 纯本地轻量计算：只读 daily_practice_items 与 review run，不加载学习包
+   * 内容、不发起网络请求，避免挂载/切换卡顿。
+   * 范围：开跨学习包复习 → 所有包；否则 → 当前激活学习包。
+   */
+  async getReviewDebtCount(targetDate?: string | null): Promise<number> {
+    const date = normalizePlanDate(targetDate)
+    const preferences = usePreferencesStore.getState()
+    const mixed = preferences.dailyPracticeMixedPacks
+    const activePackId = mixed ? null : await getActivePracticePackId()
+    const progresses = await localDb.list<DailyPracticeProgress>('daily_practice_items')
+    const storedRuns = (await localDb.list<StoredDailyPracticeRun>('daily_practice_runs'))
+      .filter((run) => run.id !== ACTIVE_DAILY_PRACTICE_PACK_ID && run.mode === 'review' && run.date === date)
+    const appliedToday = new Set(storedRuns.flatMap((run) => run.srsAppliedItemIds ?? []))
+    return progresses.filter((p) =>
+      (mixed || p.packId === activePackId)
+      && (p.attempts ?? 0) > 0
+      && (p.dueDate ?? '') <= date
+      && !appliedToday.has(p.itemId)
+    ).length
+  },
+
+  /**
    * Read a mode-specific tab summary without rebuilding or switching the
    * active plan. The Today page keeps one active plan at a time, so its tabs
    * must never borrow counts from that active plan for the other mode.
@@ -848,40 +871,12 @@ export const dailyPracticeRepository = {
     // 新学始终沿当前学习包推进；跨学习包设置只扩大复习候选范围。
     const packScope: DailyPracticeScope =
       mode === 'review' && preferences.dailyPracticeMixedPacks ? 'mixed' : 'single'
-    let serverRunId: string | null = null
-    // Login recovery has a dedicated authoritative read.  It must run before
-    // plan generation: generic incremental sync is deliberately cache/cursor
-    // based and cannot be the only source after logout clears local storage.
-    if (!options.forceNew) {
-      try {
-        const response = await dailyPracticeApi.currentRun({
-          date,
-          mode,
-          scope: packScope,
-          packId: targetPackId,
-        })
-        if (response.run) {
-          await restoreRemoteDailyPracticeRun(response.run)
-          serverRunId = typeof response.run.clientRunId === 'string' ? response.run.clientRunId : null
-        }
-      } catch (error) {
-        // Offline is still supported: retain any locally persisted run and
-        // let the outbox reconcile it at the next successful sync.
-        console.debug('[daily-practice] current run recovery skipped:', (error as Error)?.message ?? error)
-      }
-    }
-    // A logout clears the local active-pack pointer. Recover the pack choice
-    // from today's unfinished run before resolving candidates; otherwise the
-    // default pack can create a fresh 0/N plan even though the server run was
-    // already restored locally.
+    // 离线优先：构建计划只读本地。服务端 run / item 进度的恢复统一由
+    // offlineSyncService.sync（登录、自动、手动同步）的 pull 承担
+    // （dailyPracticeRuns → restoreRemoteDailyPracticeRun，progress →
+    // pullRemoteDailyProgress），不再在每次构建时请求网络。
     const storedRuns = (await localDb.list<StoredDailyPracticeRun>('daily_practice_runs'))
       .filter((run) => run.id !== ACTIVE_DAILY_PRACTICE_PACK_ID && Array.isArray(run.scheduledItemIds))
-    // The response from /daily-practice/run is the server's explicit answer to
-    // “which Today run is active”.  Prefer it over any local active pointer or
-    // historical run; those are only offline fallbacks.
-    const serverRun = serverRunId
-      ? storedRuns.find((run) => run.id === serverRunId) ?? null
-      : null
     const resumableStoredRun = !options.forceNew && !targetPackId
       ? storedRuns
         .filter((run) => run.date === date
@@ -893,7 +888,7 @@ export const dailyPracticeRepository = {
             || run.unresolvedItemIds.length > 0))
         .sort((a, b) => (b.updatedAt ?? b.createdAt ?? b.date).localeCompare(a.updatedAt ?? a.createdAt ?? a.date))[0] ?? null
       : null
-    const recoveredRun = serverRun ?? resumableStoredRun
+    const recoveredRun = resumableStoredRun
     // 选包优先级：显式 targetPackId > 当前激活学习包（用户主动切换的包必须
     // 生效）> 进行中的 run 恢复（仅当 active 指针为空，例如 logout 清库）。
     // 之前只从 run 恢复，导致切换学习包后仍构建旧包的今日计划。
@@ -904,7 +899,6 @@ export const dailyPracticeRepository = {
         : null)
     const units = await this.resolveCandidateUnits(packScope, targetPackId ?? recoveredPackId)
     const candidates = units.flatMap(buildCandidates)
-    const itemIds = candidates.map((candidate) => candidate.itemId)
     const packIds = units.map((unit) => unit.id)
     const packIdsKey = packKey(packIds)
     const configFingerprint = stableHash({
@@ -934,9 +928,6 @@ export const dailyPracticeRepository = {
         scheduledItemIds: [],
       }
     }
-
-    // 后台静默同步进度，不阻塞 UI（旁路快速刷新；完整收敛由 offlineSyncService.sync 的 pullRemoteDailyProgress 负责）
-    void pullRemoteDailyProgress(itemIds)
 
     const localProgress = await localDb.list<DailyPracticeProgress>('daily_practice_items')
     const progressMap = new Map(localProgress.map((item) => [item.itemId, item]))
@@ -1008,11 +999,9 @@ export const dailyPracticeRepository = {
           && run.scheduledItemIds.every((itemId) => candidateById.has(itemId)))
         .sort((a, b) => (b.updatedAt ?? b.createdAt ?? b.date).localeCompare(a.updatedAt ?? a.createdAt ?? a.date))[0] ?? null
       : null
-    const cachedRun = serverRun?.scheduledItemIds.length
-      ? serverRun
-      : pointedRun?.scheduledItemIds.length
-        ? pointedRun
-        : fallbackRun
+    const cachedRun = pointedRun?.scheduledItemIds.length
+      ? pointedRun
+      : fallbackRun
     // Active configuration is frozen. A settings change never invalidates the active run.
     const canReuseCachedRun = Boolean(cachedRun
       && cachedRun.date === date
@@ -1253,6 +1242,8 @@ export const dailyPracticeRepository = {
         items: params.records,
         score,
         feedback: null,
+        // 归属学习包：与 completeRun 一致，记录这条记录所属的学习包。
+        packId: params.packId,
       } : undefined,
       // 供离线重放时回写本地 warmup 记录（markWarmupRecordSynced）
       localWarmupRecordId: params.localWarmupRecordId ?? null,

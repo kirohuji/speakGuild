@@ -493,4 +493,7 @@ export const learningApi = {
 
   /** 退出学习一个单元 */
   quitUnit: (unitId: string) => del(`/learning/units/${unitId}`),
+
+  /** 重新学习：清空该单元的学习进度，回到未完成状态 */
+  restartUnit: (unitId: string) => post(`/learning/units/${unitId}/restart`),
 }

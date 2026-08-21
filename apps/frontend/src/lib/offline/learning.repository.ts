@@ -318,6 +318,14 @@ export const learningRepository = {
     }
   },
 
+  /** 清空某学习包在前端本地的练习/复习进度（重新学习时调用，与服务端 restart 对齐）。 */
+  async clearPackPracticeProgress(packId: string) {
+    await localDb.deleteWhere<any>('daily_practice_items', (item) => item.packId === packId)
+    await localDb.deleteWhere<any>('daily_practice_attempts', (item) => item.packId === packId)
+    await localDb.deleteWhere<any>('daily_practice_runs', (item) =>
+      Array.isArray((item as any).packIds) && (item as any).packIds.includes(packId))
+  },
+
   async quitUnit(unitId: string): Promise<void> {
     await localDb.delete('my_learning_units', unitId)
     const outboxItem = await syncOutbox.enqueue({

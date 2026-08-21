@@ -206,7 +206,8 @@ export function ExpressionLibraryPage() {
     if (!notebookId || !session?.user?.id || notebookSyncing) return
     setNotebookSyncing(true)
     try {
-      await offlineSyncService.sync(session.user.id)
+      // 只同步生词本/学习库相关数据（expression 条目），不拉其他页面类型。
+      await offlineSyncService.sync(session.user.id, { scope: 'notebook' })
       const result = await learningNotebookRepository.syncNotebookReplica(notebookId)
       await refreshLocalList()
       toast.success(`已同步 ${result.restored} 条学习库数据`)

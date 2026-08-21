@@ -10,7 +10,8 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
-import type { MyUnit } from '../api/learning-api'
+import { learningApi, type MyUnit } from '../api/learning-api'
+import { learningRepository } from '@/lib/offline'
 import { getCategoryIcon } from './category-icons'
 import { LearningWeekTracker } from './week-tracker'
 import { useLearningStore } from '@/stores/learning.store'
@@ -393,7 +394,27 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
   const completedPracticeCount = unit.progress?.completedPracticeCount ?? 0
   const totalPracticeCount = unit.progress?.totalPracticeCount ?? unit.topicCount ?? 0
   const [imgFailed, setImgFailed] = useState(false)
+  const [confirmRestart, setConfirmRestart] = useState(false)
+  const [restarting, setRestarting] = useState(false)
   const showCover = unit.coverImage && !imgFailed
+
+  const handleRestart = useCallback(async () => {
+    if (restarting) return
+    setRestarting(true)
+    setConfirmRestart(false)
+    try {
+      await learningApi.restartUnit(unit.id)
+      // 服务端 restart 已清空进度，这里同步清空前端本地进度，
+      // 否则 mergeLocalPracticeProgress 会用本地旧数据把完成度顶回 100%。
+      await learningRepository.clearPackPracticeProgress(unit.id)
+      await useLearningStore.getState().refreshMyUnits()
+      toast.success(t('learning.learnAgainDone', { title: unit.title }))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('learning.learnAgainFailed'))
+    } finally {
+      setRestarting(false)
+    }
+  }, [restarting, t, unit.id, unit.title])
 
   return (
     <div
@@ -450,16 +471,37 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
         </div>
       </Link>
       {isCompleted ? (
-        <Link
-          to={`/learning/units/${unit.id}`}
-          className="absolute bottom-2.5 right-2.5 inline-flex h-7 items-center gap-1 rounded-full border border-border/70 bg-background/85 px-2.5 text-[11px] font-medium text-foreground shadow-sm backdrop-blur active:bg-muted"
+        <button
+          type="button"
+          disabled={restarting}
+          onClick={() => setConfirmRestart(true)}
+          className="absolute bottom-2.5 right-2.5 inline-flex h-7 items-center gap-1 rounded-full border border-border/70 bg-background/85 px-2.5 text-[11px] font-medium text-foreground shadow-sm backdrop-blur active:bg-muted disabled:opacity-50"
         >
-          <RotateCcw className="size-3" />
+          {restarting ? <Loader2 className="size-3 animate-spin" /> : <RotateCcw className="size-3" />}
           {t('learning.learnAgain')}
-        </Link>
+        </button>
       ) : (
         <ChevronRight className="size-4 shrink-0 text-muted-foreground/70" />
       )}
+
+      <Dialog open={confirmRestart} onOpenChange={setConfirmRestart}>
+        <DialogContent className="rounded-2xl p-6 sm:mx-auto sm:max-w-xs w-[90vw]">
+          <DialogHeader className="p-0">
+            <DialogTitle className="text-base">{t('learning.restartConfirmTitle')}</DialogTitle>
+            <DialogDescription className="mt-2 text-sm leading-5">
+              {t('learning.restartConfirmDesc', { title: unit.title })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-5 flex gap-3">
+            <Button variant="outline" className="flex-1 rounded-xl" disabled={restarting} onClick={() => setConfirmRestart(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button className="flex-1 rounded-xl" disabled={restarting} onClick={handleRestart}>
+              {restarting ? <Loader2 className="size-4 animate-spin" /> : t('learning.restartConfirm')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

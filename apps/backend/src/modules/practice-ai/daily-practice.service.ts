@@ -177,7 +177,7 @@ export class DailyPracticeService {
   async complete(userId: string, body: {
     run: DailyPracticeRunInput;
     attempts: DailyPracticeAttemptInput[];
-    warmupRecord?: { topicId: string; topicTitle?: string; items: any[]; score?: number | null; feedback?: string | null };
+    warmupRecord?: { topicId: string; topicTitle?: string; items: any[]; score?: number | null; feedback?: string | null; packId?: string | null };
   }) {
     const requestedPackIds = [...new Set(body.run.packIds ?? [])];
     if (requestedPackIds.length > 0) {
