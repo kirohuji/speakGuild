@@ -827,6 +827,28 @@ export const dailyPracticeRepository = {
   },
 
   /**
+   * Recompute every display field of an existing plan from the local SRS source
+   * of truth. This never creates a run or changes its queue; it only keeps UI
+   * projections (steps, topic cards, review debt) current after an answer.
+   */
+  async refreshPlanProgress(plan: DailyPracticePlan): Promise<DailyPracticePlan> {
+    const [progresses, reviewDebt] = await Promise.all([
+      localDb.list<DailyPracticeProgress>('daily_practice_items'),
+      this.getReviewDebtCount(plan.date),
+    ])
+    const candidates = plan.units.flatMap(buildCandidates)
+    const candidateById = new Map(candidates.map((candidate) => [candidate.itemId, candidate]))
+    const progressById = new Map(progresses.map((progress) => [progress.itemId, progress]))
+    const steps = plan.steps.map((previous) => {
+      const candidate = candidateById.get(previous.itemId) ?? previous
+      const progress = progressById.get(previous.itemId) ?? previous.progress
+      return { ...candidate, progress, scheduleStatus: scheduleStatus(progress, plan.date) }
+    })
+    const topicStats = buildTopicStats(plan.units, candidates, progressById, steps, plan.date)
+    return { ...plan, steps, topicStats, availableReviewCount: reviewDebt }
+  },
+
+  /**
    * Read a mode-specific tab summary without rebuilding or switching the
    * active plan. The Today page keeps one active plan at a time, so its tabs
    * must never borrow counts from that active plan for the other mode.
@@ -1071,11 +1093,6 @@ export const dailyPracticeRepository = {
       const journal = await localDb.get<DailyPracticeAttempt>('daily_practice_attempts', `today-srs:${runId}:${stepId}`)
       if (journal?.applyStatus === 'applied') applied.add(stepId)
     }
-    if (applied.size !== (run.srsAppliedItemIds ?? []).length) {
-      run.srsAppliedItemIds = [...applied]
-      run.updatedAt = new Date().toISOString()
-      await localDb.put('daily_practice_runs', run)
-    }
     return {
       id: run.id,
       mode: run.mode,
@@ -1110,7 +1127,9 @@ export const dailyPracticeRepository = {
       roundKind: facts.roundKind,
       sessionStepIds: [...(facts.sessionStepIds ?? [])],
       currentStepId: facts.currentStepId ?? null,
-      syncStatus: facts.submissionStatus === 'synced' ? 'synced' : 'pending',
+      // Completion and transport are independent: an offline-completed run
+      // remains pending until replayItem receives the server acknowledgement.
+      syncStatus: run.syncStatus,
       updatedAt: new Date().toISOString(),
     })
   },

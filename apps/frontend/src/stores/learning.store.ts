@@ -97,7 +97,7 @@ interface LearningStore {
   downloadTasks: DownloadTask[]
 
   // Actions
-  fetchMyLearning: () => Promise<void>
+  fetchMyLearning: (silent?: boolean) => Promise<void>
   refreshMyUnits: () => Promise<void>
   fetchTags: (packageType?: LearningPackageType) => Promise<void>
   fetchUnitDetail: (unitId: string) => Promise<void>
@@ -197,8 +197,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   downloadTasks: readPersistedPackTasks(),
 
   /** 首次加载：我的学习 + 商店 */
-  async fetchMyLearning() {
-    set({ myLoading: true })
+  async fetchMyLearning(silent = false) {
+    // silent 模式用于页面重新进入时的后台刷新：不把 myLoading 翻回 true，
+    // 避免“loading → 空状态”来回闪烁（例如每次进入剧本页都闪一下）。
+    if (!silent) set({ myLoading: true })
     try {
       const units = await learningRepository.getMyUnits().catch(() => [] as MyUnit[])
       set({ myUnits: units, myLoading: false })

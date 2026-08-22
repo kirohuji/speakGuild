@@ -169,9 +169,65 @@ async function applyWarmupRecordItem(item: any): Promise<void> {
   await upsertWarmupRecordEntries(record)
 }
 
+async function refreshLocalNotebookCounts(): Promise<void> {
+  const [notebooks, notebookItems, expressionEntries] = await Promise.all([
+    localDb.list<any>('learning_notebooks'),
+    localDb.list<any>('learning_notebook_items'),
+    localDb.list<any>('expression_entries'),
+  ])
+  const typeByEntryId = new Map(expressionEntries.map((entry) => [entry.id, entry.type]))
+  const countsByNotebookId = new Map<string, { total: number; word: number; chunk: number; pattern: number }>()
+
+  for (const item of notebookItems) {
+    const counts = countsByNotebookId.get(item.notebookId) ?? { total: 0, word: 0, chunk: 0, pattern: 0 }
+    counts.total += 1
+    const type = typeByEntryId.get(item.expressionEntryId)
+    if (type === 'word') counts.word += 1
+    else if (type === 'chunk') counts.chunk += 1
+    else if (type === 'scene_phrase') counts.pattern += 1
+    countsByNotebookId.set(item.notebookId, counts)
+  }
+
+  await Promise.all(notebooks.map((notebook) => localDb.put('learning_notebooks', {
+    ...notebook,
+    counts: countsByNotebookId.get(notebook.id) ?? { total: 0, word: 0, chunk: 0, pattern: 0 },
+  })))
+}
+
 async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
   for (const item of changed?.expressionItems ?? []) {
     await applyExpressionItem(item)
+  }
+
+  for (const notebook of changed?.learningNotebooks ?? []) {
+    if (!notebook?.id) continue
+    await localDb.put('learning_notebooks', {
+      ...notebook,
+      remoteId: notebook.id,
+      syncStatus: 'synced',
+    })
+  }
+
+  for (const item of changed?.learningNotebookItems ?? []) {
+    if (!item?.id || !item?.expressionItem) continue
+    const expression = await learningContentRepository.saveRemoteExpressionEntry(item.expressionItem)
+    if (!expression) continue
+    await localDb.put('learning_notebook_items', {
+      id: item.id,
+      remoteId: item.id,
+      notebookId: item.notebookId,
+      expressionEntryId: expression.id,
+      masteryStatus: item.masteryStatus ?? 'learning',
+      reviewCount: item.reviewCount ?? 0,
+      intervalDays: item.intervalDays ?? 0,
+      easeFactor: item.easeFactor ?? 2.5,
+      lapseCount: item.lapseCount ?? 0,
+      lastReviewedAt: toIsoString(item.lastReviewedAt),
+      nextReviewAt: toIsoString(item.nextReviewAt),
+      createdAt: toIsoString(item.createdAt),
+      updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
+      syncStatus: 'synced',
+    })
   }
 
   for (const item of changed?.sceneProgresses ?? []) {
@@ -257,6 +313,23 @@ async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
 
   for (const id of deleted?.expressionItems ?? []) {
     await deleteExpressionItem(id)
+  }
+
+  for (const id of deleted?.learningNotebookItems ?? []) {
+    await localDb.delete('learning_notebook_items', id)
+  }
+  for (const id of deleted?.learningNotebooks ?? []) {
+    await localDb.delete('learning_notebooks', id)
+    await localDb.deleteWhere<any>('learning_notebook_items', (item) => item.notebookId === id)
+  }
+
+  if (
+    (changed?.learningNotebooks?.length ?? 0) > 0 ||
+    (changed?.learningNotebookItems?.length ?? 0) > 0 ||
+    (deleted?.learningNotebooks?.length ?? 0) > 0 ||
+    (deleted?.learningNotebookItems?.length ?? 0) > 0
+  ) {
+    await refreshLocalNotebookCounts()
   }
 
   // 批量删除 user_progress：一次 scan 替代逐条 list()
@@ -482,7 +555,7 @@ const SCOPE_OUTBOX_TYPES: Record<Exclude<SyncScope, 'all'>, ReadonlySet<SyncEnti
 }
 const SCOPE_PULL_TYPES: Record<Exclude<SyncScope, 'all'>, string[]> = {
   today: ['dailyPracticeRuns', 'practiceWarmupRecords'],
-  notebook: ['expressionItems'],
+  notebook: ['expressionItems', 'learningNotebooks', 'learningNotebookItems'],
 }
 
 export const offlineSyncService = {
@@ -515,10 +588,14 @@ export const offlineSyncService = {
         (result.changed.practiceTurns?.length ?? 0) +
         (result.changed.practiceWarmupRecords?.length ?? 0) +
         (result.changed.dailyPracticeRuns?.length ?? 0)
+        + (result.changed.learningNotebooks?.length ?? 0)
+        + (result.changed.learningNotebookItems?.length ?? 0)
       totalDeleted +=
         (result.deleted.expressionItems?.length ?? 0) +
         (result.deleted.sceneProgresses?.length ?? 0) +
         (result.deleted.chunkProgresses?.length ?? 0)
+        + (result.deleted.learningNotebooks?.length ?? 0)
+        + (result.deleted.learningNotebookItems?.length ?? 0)
 
       finalCursors = result.cursors
 

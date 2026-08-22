@@ -39,6 +39,8 @@ interface DailyPracticeState {
   invalidatePlans: () => void
   /** 本地 run 是否已被服务端同步改写（与当前页面状态不一致）。 */
   checkRunChangedLocally: () => Promise<boolean>
+  /** 等待当前答题落库与 outbox 快照完成，供手动同步建立单次传输边界。 */
+  waitForPendingWrites: () => Promise<void>
   reset: () => void
 }
 
@@ -72,31 +74,11 @@ function planCacheKey(mode: DailyPracticePlanMode, targetDate?: string | null, t
   return `${mode}:${targetDate ?? ''}:${targetPackId ?? ''}`
 }
 
-/** 把 plan + 本地 run facts 装载进今日状态机，并刷新 SRS 进度到最新。 */
+/** 将已持久化的 plan + run facts 装载进今日状态机；该过程必须只读。 */
 async function hydratePlanIntoStore(plan: DailyPracticePlan) {
   const facts = await dailyPracticeRepository.getRunFacts(plan.runId).catch(() => null)
   useTodayPracticeStore.getState().dispatch({ type: 'RUN_LOADED', run: facts ?? emptyFacts(plan) })
-  // Server recovery can restore an in-progress run from an earlier app
-  // version where only the run snapshot existed. Re-enqueueing here makes
-  // its derived per-question record durable as well.
-  if (facts?.attemptedItemIds.length) {
-    await dailyPracticeRepository.syncRunSnapshot(plan)
-  }
-  let hydrated = plan
-  for (const step of plan.steps) {
-    const machine = useTodayPracticeStore.getState()
-    if (machine.srsAppliedIds.has(step.itemId)) continue
-    const initial = machine.initialRecallResults[step.itemId]
-    const remediation = machine.remediationResults[step.itemId]
-    const rating = initial ? toInitialSrsRating(machine.mode, initial) : null
-    const recoverableRating = rating ?? (machine.mode === 'practice' && remediation?.resolved ? toPracticeRemediationSrsRating(remediation) : null)
-    if (!recoverableRating) continue
-    const recovered = await dailyPracticeRepository.applySrsRatingOnce({ runId: plan.runId, step, rating: recoverableRating, targetDate: plan.date })
-    hydrated = { ...hydrated, steps: hydrated.steps.map((item) => item.itemId === step.itemId ? { ...item, progress: recovered.progress } : item) }
-    machine.dispatch({ type: 'SRS_APPLIED', stepId: step.itemId })
-    await persistCurrentFacts()
-  }
-  return hydrated
+  return plan
 }
 
 export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
@@ -168,7 +150,7 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
       const recoverableRating = rating ?? (after.mode === 'practice' && remediation?.resolved ? toPracticeRemediationSrsRating(remediation) : null)
 
       if (recoverableRating && !after.srsAppliedIds.has(step.itemId)) {
-        const result = await dailyPracticeRepository.applySrsRatingOnce({
+        await dailyPracticeRepository.applySrsRatingOnce({
           runId: planAtAttempt.runId, step, rating: recoverableRating, targetDate: planAtAttempt.date,
         })
         const persistedAfterSrs = {
@@ -182,12 +164,21 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
           dispatch({ type: 'SRS_APPLIED', stepId: step.itemId })
           after = useTodayPracticeStore.getState()
         }
-        set((state) => state.plan?.runId === planAtAttempt.runId ? ({
-          plan: {
-            ...state.plan,
-            steps: state.plan.steps.map((item) => item.itemId === step.itemId ? { ...item, progress: result.progress } : item),
-          },
-        }) : state)
+        const refreshedPlan = await dailyPracticeRepository.refreshPlanProgress(planAtAttempt)
+        set((state) => {
+          if (state.plan?.runId !== planAtAttempt.runId) return state
+          const plansByMode = Object.fromEntries(
+            Object.entries(state.plansByMode).map(([key, cached]) => [
+              key,
+              cached.runId === planAtAttempt.runId ? refreshedPlan : cached,
+            ]),
+          )
+          return { plan: refreshedPlan, plansByMode }
+        })
+        // My Learning reads the same SQLite progress projection. Refresh its
+        // Zustand cache immediately without making a network request.
+        const { useLearningStore } = await import('./learning.store')
+        await useLearningStore.getState().fetchMyLearning(true)
       }
       // Keep the server copy resumable even before the final submission, using
       // the captured plan and rich record rather than whichever tab is active.
@@ -283,6 +274,10 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
       && JSON.stringify(local.initialRecallResults) === JSON.stringify(current.initialRecallResults)
       && JSON.stringify(local.remediationResults) === JSON.stringify(current.remediationResults)
     )
+  },
+
+  async waitForPendingWrites() {
+    await attemptChain
   },
 
   reset() {

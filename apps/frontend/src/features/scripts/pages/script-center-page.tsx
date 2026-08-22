@@ -171,7 +171,9 @@ export function ScriptCenterPage() {
   const ignoreReplayDismissOnRecordsDrawer = useRef(false)
   const observedVideoTaskStates = useRef(new Map<string, 'running' | 'done' | 'error'>())
   const [works, setWorks] = useState<ScriptWork[]>([])
-  const [worksLoading, setWorksLoading] = useState(false)
+  // 进入“我的”Tab 必定会加载作品，初始即为 true，避免作品加载时
+  // “还没有作品”空状态与骨架屏来回闪烁。
+  const [worksLoading, setWorksLoading] = useState(true)
   const [feed, setFeed] = useState<ScriptWork[]>([])
   const [feedLoading, setFeedLoading] = useState(false)
   const [feedLoadingMore, setFeedLoadingMore] = useState(false)
@@ -211,7 +213,9 @@ export function ScriptCenterPage() {
   )
 
   useEffect(() => {
-    void fetchMyLearning()
+    // 数据在启动时已加载过；再次进入时静默后台刷新（不翻转 myLoading），
+    // 避免每次切到剧本页都闪现 loading 再回到空状态。
+    void fetchMyLearning(true)
     void fetchDownloadedPacks()
   }, [fetchDownloadedPacks, fetchMyLearning])
 
@@ -578,28 +582,8 @@ function MineScripts({
     )
   }
 
-  // Works are independent records. Removing the final enrolled script must not
-  // hide previously created works.
-  if (units.length === 0 && works.length === 0 && !worksLoading) {
-    return (
-      <div className="flex flex-col items-center rounded-lg bg-muted/30 px-6 py-14 text-center">
-        <Clapperboard className="size-10 text-muted-foreground/40" />
-        <p className="mt-4 text-sm text-muted-foreground">{t('scripts.noScriptsYet')}</p>
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-4 rounded-full"
-          onClick={(event) => {
-            event.currentTarget.blur()
-            onOpenShop()
-          }}
-        >
-          {t('scripts.goToShop')}
-        </Button>
-      </div>
-    )
-  }
-
+  // “你没有开始练习剧本”的空状态只放在“我的剧本”区块内展示，
+  // 不再整页返回，避免隐藏“我的作品”等独立数据，也避免空状态与内容来回切换闪烁。
   return (
     <div className="flex flex-col gap-6" data-spotlight="first-script-card">
       {activeUnit && (
@@ -706,14 +690,21 @@ function MineScripts({
           <Button variant="ghost" size="sm" onClick={onOpenShop}>{t('scripts.exploreMore')}</Button>
         </div>
         {units.length === 0 ? (
-          <div className="flex items-center gap-3 rounded-lg bg-muted/30 px-3.5 py-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-              <Clapperboard className="size-4" />
+          <div className="rounded-lg bg-muted/30 p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Clapperboard className="size-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground">{t('scripts.noScriptsYet')}</p>
+                <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{t('scripts.scriptsHint')}</p>
+              </div>
             </div>
-            <p className="min-w-0 flex-1 text-xs text-muted-foreground">{t('scripts.noScriptsYet')}</p>
-            <Button variant="outline" size="sm" className="h-8 shrink-0 rounded-full text-xs" onClick={onOpenShop}>
-              {t('scripts.goToShop')}
-            </Button>
+            <div className="mt-4 flex justify-center">
+              <Button variant="outline" size="sm" className="h-9 rounded-full px-5 text-xs" onClick={onOpenShop}>
+                {t('scripts.goToShop')}
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="-mx-2 flex snap-x gap-2 overflow-x-auto px-2 pb-1">

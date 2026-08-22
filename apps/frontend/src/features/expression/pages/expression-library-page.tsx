@@ -206,11 +206,12 @@ export function ExpressionLibraryPage() {
     if (!notebookId || !session?.user?.id || notebookSyncing) return
     setNotebookSyncing(true)
     try {
-      // 只同步生词本/学习库相关数据（expression 条目），不拉其他页面类型。
-      await offlineSyncService.sync(session.user.id, { scope: 'notebook' })
-      const result = await learningNotebookRepository.syncNotebookReplica(notebookId)
+      // 同步学习本及其条目的增量；不再整本下载并覆盖本地副本。
+      const result = await offlineSyncService.sync(session.user.id, { quiet: true, scope: 'notebook' })
       await refreshLocalList()
-      toast.success(`已同步 ${result.restored} 条学习库数据`)
+      const pulled = (result.pull?.changed ?? 0) + (result.pull?.deleted ?? 0)
+      if (result.push.synced === 0 && pulled === 0) toast.success('学习本已是最新')
+      else toast.success(`学习本同步完成：上传 ${result.push.synced}，下载 ${pulled}`)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '学习本同步失败，请稍后重试')
     } finally {

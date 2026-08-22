@@ -21,11 +21,15 @@ export interface PullResult {
     practiceTurns: any[]
     practiceWarmupRecords: any[]
     dailyPracticeRuns: any[]
+    learningNotebooks: any[]
+    learningNotebookItems: any[]
   }
   deleted: {
     expressionItems: string[]
     sceneProgresses: string[]
     chunkProgresses: string[]
+    learningNotebooks: string[]
+    learningNotebookItems: string[]
   }
 }
 

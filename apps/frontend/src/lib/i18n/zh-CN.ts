@@ -2163,6 +2163,7 @@ const zhCN = {
       fetchingPlan: '正在获取剧本计划',
       syncingProgress: '正在同步你加入的剧本和章节进度',
       noScriptsYet: '你还没有开始练习剧本',
+      scriptsHint: '去剧本商店，选一个剧本开始练习',
       goToShop: '前往剧本商店',
       continuePerformance: '继续演出',
       pocketTheater: '口袋剧场',

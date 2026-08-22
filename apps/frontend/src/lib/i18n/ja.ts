@@ -2161,6 +2161,7 @@ const ja = {
       fetchingPlan: '脚本プランを取得中',
       syncingProgress: '加入した脚本とチャプターの進捗を同期中',
       noScriptsYet: 'まだ脚本の練習を始めていません',
+      scriptsHint: '脚本ショップで脚本を選んで練習を始めましょう',
       goToShop: '脚本ショップへ',
       continuePerformance: '公演を続ける',
       pocketTheater: 'ポケット劇場',

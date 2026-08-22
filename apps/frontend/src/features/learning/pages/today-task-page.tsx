@@ -209,6 +209,7 @@ export function TodayTaskPage() {
   const error = useDailyPracticeStore((s) => s.error)
   const submitting = useDailyPracticeStore((s) => s.submitting)
   const loadToday = useDailyPracticeStore((s) => s.loadToday)
+  const waitForPendingWrites = useDailyPracticeStore((s) => s.waitForPendingWrites)
   const recordAttempt = useDailyPracticeStore((s) => s.recordAttempt)
   const recordRehearsalAttempt = useDailyPracticeStore((s) => s.recordRehearsalAttempt)
   const openMainSession = useDailyPracticeStore((s) => s.openMainSession)
@@ -226,6 +227,8 @@ export function TodayTaskPage() {
   const hydrateWarmupSession = useWarmupSessionStore((s) => s.hydrateSession)
   const [currentIdx, setCurrentIdx] = useState(0)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  /** 错题重练弹窗：独立 state 控制，只在主轮刚完成的当次会话中弹出 */
+  const [weakReviewPromptOpen, setWeakReviewPromptOpen] = useState(false)
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const [typeGroupViewing, setTypeGroupViewing] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
@@ -331,7 +334,7 @@ export function TodayTaskPage() {
       if (!cancelled) setReviewDebtCount(count)
     })
     return () => { cancelled = true }
-  }, [lastSyncedAt, plan?.date])
+  }, [lastSyncedAt, plan?.availableReviewCount, plan?.date])
 
   useEffect(() => {
     if (currentPlanReusable) return
@@ -483,6 +486,7 @@ export function TodayTaskPage() {
     setPlanRunSeed(0)
     setCurrentIdx(0)
     setDrawerOpen(false)
+    setWeakReviewPromptOpen(false)
     setPlaylistOpen(false)
     setRecordsOpen(false)
     setReviewRunNonce(0)
@@ -494,17 +498,14 @@ export function TodayTaskPage() {
     if (!userId || manualSyncing) return
     setManualSyncing(true)
     try {
+      // 答题写入（facts、SRS、outbox）必须先完成，随后只做一次网络同步。
+      await waitForPendingWrites()
       // 只同步今日任务相关数据（daily_practice run/记录/进度），不拉其他页面类型；
       // quiet 让按钮只报一条端到端结果，不叠加内部多次 toast。
       const result = await offlineSyncService.sync(userId, { quiet: true, scope: 'today' })
       if (result.push.failed > 0) throw new Error(`${result.push.failed} 条数据未同步`)
-      // Rebuild from the server-authoritative current run after pull. This is
-      // deliberately an explicit user action for diagnosing recovery issues.
+      // pull 完成后仅以本地已更新的数据重建页面；loadToday 不产生 outbox。
       await loadToday(targetPackId, targetDate, planMode)
-      // Loading a recovered run may enqueue a missing per-question record.
-      // Flush once more so the button is a real end-to-end sync boundary.
-      const followUp = await offlineSyncService.sync(userId, { quiet: true, scope: 'today' })
-      if (followUp.push.failed > 0) throw new Error(`${followUp.push.failed} 条数据未同步`)
       toast.success('今日任务已同步')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '今日任务同步失败')
@@ -512,7 +513,7 @@ export function TodayTaskPage() {
       setManualSyncing(false)
       void refreshPendingSyncBadge()
     }
-  }, [loadToday, manualSyncing, planMode, refreshPendingSyncBadge, session?.user?.id, targetDate, targetPackId])
+  }, [loadToday, manualSyncing, planMode, refreshPendingSyncBadge, session?.user?.id, targetDate, targetPackId, waitForPendingWrites])
 
   const startNewPracticeSet = useCallback(() => {
     closeSession()
@@ -520,6 +521,7 @@ export function TodayTaskPage() {
     setPlanRunSeed(Date.now())
     setCurrentIdx(0)
     setDrawerOpen(false)
+    setWeakReviewPromptOpen(false)
     setPlaylistOpen(false)
     setRecordsOpen(false)
     setReviewRunNonce(0)
@@ -531,6 +533,7 @@ export function TodayTaskPage() {
     setRehearsalAll(true)
     setCurrentIdx(0)
     setDrawerOpen(false)
+    setWeakReviewPromptOpen(false)
     setPlaylistOpen(false)
     setRecordsOpen(false)
     setReviewRunNonce(0)
@@ -786,6 +789,43 @@ export function TodayTaskPage() {
   const unattemptedCount = derivedToday.grayCount
   const needsReviewRound = allDone && weakStepIds.size > 0 && !reviewRoundActive && !reviewDismissed
 
+  // ── 错题重练弹窗：由「一轮练习刚结束」的边沿事件驱动，不再依赖历史状态派生 ──
+  // 触发时机与主轮一致，覆盖两种情况：
+  //   1) 主轮全部答完（allDone 由 false → true）
+  //   2) 退出错题重练轮（roundKind 由 mistakeRetry → main，即关闭练习 dialog）
+  // 两者只要还有未掌握的错题就弹出同一个错题重练提示。
+  // 重启 / 刷新 / 切换 Tab / 切换模式后不会自动弹出；错题仍可通过页面「练习错题」按钮进入重练。
+  const prevAllDoneRef = useRef(allDone)
+  const prevRoundKindRef = useRef(todayState.roundKind)
+  const lastSeenRunIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    const runId = plan?.runId ?? null
+    const runChanged = runId !== lastSeenRunIdRef.current
+    lastSeenRunIdRef.current = runId
+    if (runChanged) {
+      // 进入新的 run（首次加载 / 重启 / 切模式）：关闭弹窗并重置基线，
+      // 绝不把「恢复的历史完成状态」当作本轮刚完成。
+      setWeakReviewPromptOpen(false)
+      prevAllDoneRef.current = allDone
+      prevRoundKindRef.current = todayState.roundKind
+      return
+    }
+    // 主轮刚完成：本 run 内 allDone 由 false → true
+    const mainJustFinished = allDone && !prevAllDoneRef.current
+    prevAllDoneRef.current = allDone
+    // 退出错题重练轮：关闭练习 dialog 会使 roundKind 由 mistakeRetry → main。
+    // 此时若仍有未掌握的错题，同样弹出提示，与主轮完成的交互保持一致。
+    const retryRoundClosed = prevRoundKindRef.current === 'mistakeRetry' && todayState.roundKind === 'main'
+    prevRoundKindRef.current = todayState.roundKind
+
+    if (weakStepIds.size === 0) return
+    // 用户已明确「稍后再练」：本轮不再自动弹错题提示（仍可手动从页面进入重练）
+    if (reviewDismissed) return
+    if (mainJustFinished || retryRoundClosed) {
+      setWeakReviewPromptOpen(true)
+    }
+  }, [allDone, plan?.runId, reviewDismissed, todayState.roundKind, weakStepIds.size])
+
   const practiceTeachingTopicCandidates = useMemo(() => {
     if (!plan || plan.mode !== 'practice') return []
     const topics = new Map<string, { id: string; title: string }>()
@@ -828,7 +868,9 @@ export function TodayTaskPage() {
   const filteredTopics = useMemo(() => {
     if (!plan) return []
     return plan.mode === 'review'
-      ? plan.topicStats.filter((topic) => topic.overdueCount > 0 || topic.todayReviewCount > 0)
+      // 完成后仍保留本轮涉及的话题，让学习者能看到“已完成”的进度，
+      // 而不是在最后一道题后把整个区块直接隐藏。
+      ? plan.topicStats.filter((topic) => topic.scheduledTodayCount > 0)
       : plan.topicStats
   }, [plan])
   const topicPageItems = useMemo(() => {
@@ -855,15 +897,21 @@ export function TodayTaskPage() {
 
   const startWeakReviewRound = useCallback(() => {
     if (weakStepIds.size === 0) return
-    dismissReviewRound()
-    startMistakeRetry()
-    setRehearsalAll(false)
-    setTypeGroupViewing(false)
-    setReviewRunNonce((value) => value + 1)
-    for (const stepId of weakStepIds) resetRetryCycleUi(stepId)
-    setCurrentIdx(0)
+    // 先关弹窗、先打开练习 dialog，保证「开始错题再练」必定进入练习界面；
+    // 其余状态变更用 try/catch 保护，任何异常都不能阻断练习 dialog 打开。
+    setWeakReviewPromptOpen(false)
     setDrawerOpen(true)
-  }, [dismissReviewRound, resetRetryCycleUi, startMistakeRetry, weakStepIds])
+    try {
+      startMistakeRetry()
+      setRehearsalAll(false)
+      setTypeGroupViewing(false)
+      setReviewRunNonce((value) => value + 1)
+      for (const stepId of weakStepIds) resetRetryCycleUi(stepId)
+      setCurrentIdx(0)
+    } catch (error) {
+      console.error('[today-task] 启动错题重练失败：', error)
+    }
+  }, [resetRetryCycleUi, startMistakeRetry, weakStepIds])
 
   /** 关闭练习抽屉：若正处在重练轮则取消重练并回到主轮（错题池保留），避免卡在 review 状态 */
   const closePracticeDrawer = useCallback(() => {
@@ -1832,9 +1880,9 @@ export function TodayTaskPage() {
 
       {/* ── 练习记录 Drawer ── */}
       <Dialog
-        open={needsReviewRound}
+        open={weakReviewPromptOpen}
         onOpenChange={(open) => {
-          if (!open) dismissReviewRound()
+          if (!open) setWeakReviewPromptOpen(false)
         }}
       >
         <DialogContent className="!z-[10002] w-[calc(100vw-2rem)] max-w-sm rounded-2xl p-5">
@@ -1864,7 +1912,16 @@ export function TodayTaskPage() {
             )}
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={dismissReviewRound}>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                // 「稍后再练」：关闭弹窗并标记 dismiss，让本轮主轮记录得以提交；
+                // 错题保留，随时可从页面「练习错题」按钮进入重练。
+                setWeakReviewPromptOpen(false)
+                dismissReviewRound()
+              }}
+            >
               {t('todayTask.later')}
             </Button>
             <Button className="flex-1" onClick={startWeakReviewRound}>

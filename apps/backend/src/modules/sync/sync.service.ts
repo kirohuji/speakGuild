@@ -426,6 +426,10 @@ export class SyncService {
     const sinceDailyPracticeRun = cursors.dailyPracticeRuns ? new Date(cursors.dailyPracticeRuns) : new Date(0);
     const sinceTopicSession = cursors.topicSessions ? new Date(cursors.topicSessions) : new Date(0);
     const sinceDeletedExpression = cursors.deletedExpressionItems ? new Date(cursors.deletedExpressionItems) : new Date(0);
+    const sinceNotebook = cursors.learningNotebooks ? new Date(cursors.learningNotebooks) : new Date(0);
+    const sinceNotebookItem = cursors.learningNotebookItems ? new Date(cursors.learningNotebookItems) : new Date(0);
+    const sinceDeletedNotebook = cursors.deletedLearningNotebooks ? new Date(cursors.deletedLearningNotebooks) : new Date(0);
+    const sinceDeletedNotebookItem = cursors.deletedLearningNotebookItems ? new Date(cursors.deletedLearningNotebookItems) : new Date(0);
 
     const [
       expressionItems,
@@ -435,6 +439,8 @@ export class SyncService {
       practiceWarmupRecords,
       dailyPracticeRuns,
       topicSessions,
+      learningNotebooks,
+      learningNotebookItems,
     ] = await Promise.all([
       want('expressionItems') ? this.prisma.expressionItem.findMany({
         where: { userId, updatedAt: { gt: sinceExpression }, deletedAt: null },
@@ -534,6 +540,21 @@ export class SyncService {
           },
         },
       }) : Promise.resolve([]),
+      want('learningNotebooks') ? this.prisma.learningNotebook.findMany({
+        where: { userId, updatedAt: { gt: sinceNotebook }, deletedAt: null },
+        orderBy: { updatedAt: 'asc' },
+        take: SyncService.PULL_PAGE_SIZE,
+      }) : Promise.resolve([]),
+      want('learningNotebookItems') ? this.prisma.learningNotebookItem.findMany({
+        where: {
+          notebook: { userId },
+          updatedAt: { gt: sinceNotebookItem },
+          deletedAt: null,
+        },
+        orderBy: { updatedAt: 'asc' },
+        take: SyncService.PULL_PAGE_SIZE,
+        include: { expressionItem: true },
+      }) : Promise.resolve([]),
     ]);
 
     // PracticeTurn 没有直接 userId，通过 session 关联
@@ -546,6 +567,22 @@ export class SyncService {
     const deletedExpressionItems = want('expressionItems')
       ? await this.prisma.expressionItem.findMany({
           where: { userId, deletedAt: { gt: sinceDeletedExpression } },
+          orderBy: { deletedAt: 'asc' },
+          take: SyncService.PULL_PAGE_SIZE,
+          select: { id: true, deletedAt: true },
+        })
+      : [];
+    const deletedLearningNotebooks = want('learningNotebooks')
+      ? await this.prisma.learningNotebook.findMany({
+          where: { userId, deletedAt: { gt: sinceDeletedNotebook } },
+          orderBy: { deletedAt: 'asc' },
+          take: SyncService.PULL_PAGE_SIZE,
+          select: { id: true, deletedAt: true },
+        })
+      : [];
+    const deletedLearningNotebookItems = want('learningNotebookItems')
+      ? await this.prisma.learningNotebookItem.findMany({
+          where: { notebook: { userId }, deletedAt: { gt: sinceDeletedNotebookItem } },
           orderBy: { deletedAt: 'asc' },
           take: SyncService.PULL_PAGE_SIZE,
           select: { id: true, deletedAt: true },
@@ -569,6 +606,10 @@ export class SyncService {
       dailyPracticeRuns: want('dailyPracticeRuns') ? (maxTime(dailyPracticeRuns, 'updatedAt') ?? cursors.dailyPracticeRuns ?? null) : (cursors.dailyPracticeRuns ?? null),
       topicSessions: want('topicSessions') ? (maxTime(topicSessions, 'updatedAt') ?? cursors.topicSessions ?? null) : (cursors.topicSessions ?? null),
       deletedExpressionItems: want('expressionItems') ? (maxTime(deletedExpressionItems, 'deletedAt') ?? cursors.deletedExpressionItems ?? null) : (cursors.deletedExpressionItems ?? null),
+      learningNotebooks: want('learningNotebooks') ? (maxTime(learningNotebooks, 'updatedAt') ?? cursors.learningNotebooks ?? null) : (cursors.learningNotebooks ?? null),
+      learningNotebookItems: want('learningNotebookItems') ? (maxTime(learningNotebookItems, 'updatedAt') ?? cursors.learningNotebookItems ?? null) : (cursors.learningNotebookItems ?? null),
+      deletedLearningNotebooks: want('learningNotebooks') ? (maxTime(deletedLearningNotebooks, 'deletedAt') ?? cursors.deletedLearningNotebooks ?? null) : (cursors.deletedLearningNotebooks ?? null),
+      deletedLearningNotebookItems: want('learningNotebookItems') ? (maxTime(deletedLearningNotebookItems, 'deletedAt') ?? cursors.deletedLearningNotebookItems ?? null) : (cursors.deletedLearningNotebookItems ?? null),
     };
 
     // 每种类型独立 hasMore；未参与的类型不触发分页
@@ -581,6 +622,10 @@ export class SyncService {
       dailyPracticeRuns: want('dailyPracticeRuns') && dailyPracticeRuns.length >= SyncService.PULL_PAGE_SIZE,
       topicSessions: want('topicSessions') && topicSessions.length >= SyncService.PULL_PAGE_SIZE,
       deletedExpressionItems: want('expressionItems') && deletedExpressionItems.length >= SyncService.PULL_PAGE_SIZE,
+      learningNotebooks: want('learningNotebooks') && learningNotebooks.length >= SyncService.PULL_PAGE_SIZE,
+      learningNotebookItems: want('learningNotebookItems') && learningNotebookItems.length >= SyncService.PULL_PAGE_SIZE,
+      deletedLearningNotebooks: want('learningNotebooks') && deletedLearningNotebooks.length >= SyncService.PULL_PAGE_SIZE,
+      deletedLearningNotebookItems: want('learningNotebookItems') && deletedLearningNotebookItems.length >= SyncService.PULL_PAGE_SIZE,
     };
 
     return {
@@ -594,12 +639,16 @@ export class SyncService {
         practiceWarmupRecords: want('practiceWarmupRecords') ? practiceWarmupRecords : [],
         dailyPracticeRuns: want('dailyPracticeRuns') ? dailyPracticeRuns : [],
         topicSessions: want('topicSessions') ? topicSessions : [],
+        learningNotebooks: want('learningNotebooks') ? learningNotebooks : [],
+        learningNotebookItems: want('learningNotebookItems') ? learningNotebookItems : [],
         // practiceTurns,
       },
       deleted: {
         expressionItems: want('expressionItems') ? deletedExpressionItems.map((item) => item.id) : [],
         sceneProgresses: [] as string[],
         chunkProgresses: [] as string[],
+        learningNotebooks: want('learningNotebooks') ? deletedLearningNotebooks.map((item) => item.id) : [],
+        learningNotebookItems: want('learningNotebookItems') ? deletedLearningNotebookItems.map((item) => item.id) : [],
       },
     };
   }

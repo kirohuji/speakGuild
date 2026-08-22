@@ -2161,6 +2161,7 @@ const en = {
       fetchingPlan: 'Fetching script plan',
       syncingProgress: 'Syncing your scripts and chapter progress',
       noScriptsYet: 'You haven\'t started practicing scripts yet',
+      scriptsHint: 'Pick a script in the shop to start practicing',
       goToShop: 'Go to Script Shop',
       continuePerformance: 'Continue Performance',
       pocketTheater: 'Pocket Theater',
