@@ -330,11 +330,18 @@ export function TodayTaskPage() {
       return
     }
     let cancelled = false
-    void dailyPracticeRepository.getReviewDebtCount(plan.date).then((count) => {
+    const context = plan.mode === 'review'
+      ? { scope: plan.scope, packIds: plan.units.map((unit) => unit.id) }
+      : undefined
+    void dailyPracticeRepository.getReviewDebtCount(plan.date, context).then((count) => {
       if (!cancelled) setReviewDebtCount(count)
     })
     return () => { cancelled = true }
-  }, [lastSyncedAt, plan?.availableReviewCount, plan?.date])
+  }, [lastSyncedAt, plan])
+
+  const displayedReviewDebtCount = plan?.mode === 'review'
+    ? plan.availableReviewCount
+    : (reviewDebtCount ?? plan?.availableReviewCount ?? 0)
 
   useEffect(() => {
     if (currentPlanReusable) return
@@ -826,8 +833,8 @@ export function TodayTaskPage() {
     }
   }, [allDone, plan?.runId, reviewDismissed, todayState.roundKind, weakStepIds.size])
 
-  const practiceTeachingTopicCandidates = useMemo(() => {
-    if (!plan || plan.mode !== 'practice') return []
+  const teachingTopicCandidates = useMemo(() => {
+    if (!plan) return []
     const topics = new Map<string, { id: string; title: string }>()
     for (const step of plan.steps) {
       if (topics.has(step.topicId)) continue
@@ -837,7 +844,7 @@ export function TodayTaskPage() {
   }, [plan])
 
   useEffect(() => {
-    const missingTopicIds = practiceTeachingTopicCandidates
+    const missingTopicIds = teachingTopicCandidates
       .map((topic) => topic.id)
       .filter((topicId) => teachingAvailability[topicId] === undefined)
     if (missingTopicIds.length === 0) return
@@ -854,16 +861,16 @@ export function TodayTaskPage() {
       })
     })
     return () => { cancelled = true }
-  }, [practiceTeachingTopicCandidates, teachingAvailability])
+  }, [teachingTopicCandidates, teachingAvailability])
 
-  const practiceTeachingTopics = useMemo(
-    () => practiceTeachingTopicCandidates.filter((topic) => teachingAvailability[topic.id]),
-    [practiceTeachingTopicCandidates, teachingAvailability],
+  const teachingTopics = useMemo(
+    () => teachingTopicCandidates.filter((topic) => teachingAvailability[topic.id]),
+    [teachingTopicCandidates, teachingAvailability],
   )
 
   const visibleTeachingTopics = showAllTeachingTopics
-    ? practiceTeachingTopics
-    : practiceTeachingTopics.slice(0, 3)
+    ? teachingTopics
+    : teachingTopics.slice(0, 3)
 
   const filteredTopics = useMemo(() => {
     if (!plan) return []
@@ -889,11 +896,11 @@ export function TodayTaskPage() {
   }, [plan?.mode, filteredTopics.length])
 
   useEffect(() => {
-    if (!showTeachingHintIntro || practiceTeachingTopics.length === 0) return
+    if (!showTeachingHintIntro || teachingTopics.length === 0) return
     window.localStorage.setItem(TODAY_TEACHING_HINT_SEEN_KEY, 'true')
     const timer = window.setTimeout(() => setShowTeachingHintIntro(false), 3600)
     return () => window.clearTimeout(timer)
-  }, [practiceTeachingTopics.length, showTeachingHintIntro])
+  }, [teachingTopics.length, showTeachingHintIntro])
 
   const startWeakReviewRound = useCallback(() => {
     if (weakStepIds.size === 0) return
@@ -1298,7 +1305,7 @@ export function TodayTaskPage() {
         >
           <span className="block text-sm font-semibold">{t('todayTask.todayReview')}</span>
           <span className="mt-0.5 block text-[11px]">
-            {t('todayTask.expireOverdue', { count: reviewDebtCount ?? plan.availableReviewCount })}
+            {t('todayTask.expireOverdue', { count: displayedReviewDebtCount })}
           </span>
         </button>
         <button
@@ -1443,7 +1450,7 @@ export function TodayTaskPage() {
             </>
           )}
         </div>
-        {plan.mode === 'practice' && practiceTeachingTopics.length > 0 && (
+        {teachingTopics.length > 0 && (
           <section className="mt-3 border-t border-border/45 pt-2.5" aria-label={t('todayTask.teachingSectionAria')}>
             <p className="text-[10px] leading-4 text-muted-foreground">
               {showTeachingHintIntro ? t('todayTask.teachingHintIntro') : t('todayTask.teachingHint')}
@@ -1463,16 +1470,16 @@ export function TodayTaskPage() {
                   <span className="truncate">{topic.title}</span>
                 </button>
               ))}
-              {practiceTeachingTopics.length > 3 && (
+              {teachingTopics.length > 3 && (
                 <button
                   type="button"
                   onClick={() => setShowAllTeachingTopics((visible) => !visible)}
                   className="inline-flex h-8 shrink-0 items-center rounded-lg bg-muted/70 px-3 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted active:scale-[0.98]"
-                  title={practiceTeachingTopics.slice(3).map((topic) => topic.title).join('、')}
+                  title={teachingTopics.slice(3).map((topic) => topic.title).join('、')}
                 >
                   {showAllTeachingTopics
                     ? t('todayTask.collapseTopics')
-                    : t('todayTask.moreTeachingTopics', { count: practiceTeachingTopics.length - 3 })}
+                    : t('todayTask.moreTeachingTopics', { count: teachingTopics.length - 3 })}
                 </button>
               )}
             </div>

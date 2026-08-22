@@ -217,6 +217,23 @@ function runMatchesScope(run: StoredDailyPracticeRun, scope: DailyPracticeScope,
   return run.scope === scope && run.packIdsKey === packKey(ids)
 }
 
+async function appliedReviewItemIds(runs: StoredDailyPracticeRun[]): Promise<Set<string>> {
+  const runIds = new Set(runs.map((run) => run.id))
+  const applied = new Set(runs.flatMap((run) => run.srsAppliedItemIds ?? []))
+  if (runIds.size === 0) return applied
+
+  // The journal is the durable SRS fact. A run snapshot can lag behind it
+  // briefly while an answer is being persisted, so both projections must use
+  // this union rather than disagreeing about what was already reviewed.
+  const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
+  for (const attempt of attempts) {
+    if (attempt.runId && runIds.has(attempt.runId) && attempt.applyStatus === 'applied') {
+      applied.add(attempt.itemId)
+    }
+  }
+  return applied
+}
+
 /** Write one server run into the local shape used by the Today state machine. */
 export async function restoreRemoteDailyPracticeRun(item: any): Promise<void> {
   const runId = typeof item?.clientRunId === 'string' ? item.clientRunId : ''
@@ -809,17 +826,28 @@ export const dailyPracticeRepository = {
    * 内容、不发起网络请求，避免挂载/切换卡顿。
    * 范围：开跨学习包复习 → 所有包；否则 → 当前激活学习包。
    */
-  async getReviewDebtCount(targetDate?: string | null): Promise<number> {
+  async getReviewDebtCount(
+    targetDate?: string | null,
+    context?: { scope: DailyPracticeScope; packIds: string[] },
+  ): Promise<number> {
     const date = normalizePlanDate(targetDate)
     const preferences = usePreferencesStore.getState()
-    const mixed = preferences.dailyPracticeMixedPacks
-    const activePackId = mixed ? null : await getActivePracticePackId()
-    const progresses = await localDb.list<DailyPracticeProgress>('daily_practice_items')
-    const storedRuns = (await localDb.list<StoredDailyPracticeRun>('daily_practice_runs'))
-      .filter((run) => run.id !== ACTIVE_DAILY_PRACTICE_PACK_ID && run.mode === 'review' && run.date === date)
-    const appliedToday = new Set(storedRuns.flatMap((run) => run.srsAppliedItemIds ?? []))
+    const mixed = context?.scope === 'mixed' || (!context && preferences.dailyPracticeMixedPacks)
+    const activePackId = mixed || context ? null : await getActivePracticePackId()
+    const allowedPackIds = context ? new Set(context.packIds) : null
+    const [progresses, runs] = await Promise.all([
+      localDb.list<DailyPracticeProgress>('daily_practice_items'),
+      localDb.list<StoredDailyPracticeRun>('daily_practice_runs'),
+    ])
+    const reviewRuns = runs.filter((run) =>
+      run.id !== ACTIVE_DAILY_PRACTICE_PACK_ID
+      && run.mode === 'review'
+      && run.date === date
+      && (!context || runMatchesScope(run, context.scope, context.packIds)),
+    )
+    const appliedToday = await appliedReviewItemIds(reviewRuns)
     return progresses.filter((p) =>
-      (mixed || p.packId === activePackId)
+      (mixed || (allowedPackIds ? allowedPackIds.has(p.packId) : p.packId === activePackId))
       && (p.attempts ?? 0) > 0
       && (p.dueDate ?? '') <= date
       && !appliedToday.has(p.itemId)
@@ -834,7 +862,7 @@ export const dailyPracticeRepository = {
   async refreshPlanProgress(plan: DailyPracticePlan): Promise<DailyPracticePlan> {
     const [progresses, reviewDebt] = await Promise.all([
       localDb.list<DailyPracticeProgress>('daily_practice_items'),
-      this.getReviewDebtCount(plan.date),
+      this.getReviewDebtCount(plan.date, { scope: plan.scope, packIds: plan.units.map((unit) => unit.id) }),
     ])
     const candidates = plan.units.flatMap(buildCandidates)
     const candidateById = new Map(candidates.map((candidate) => [candidate.itemId, candidate]))
@@ -960,9 +988,8 @@ export const dailyPracticeRepository = {
     })
 
     const allRuns = storedRuns
-    const reviewAppliedToday = new Set(allRuns
-      .filter((run) => run.mode === 'review' && run.date === date && runMatchesScope(run, packScope, packIds))
-      .flatMap((run) => run.srsAppliedItemIds ?? []))
+    const reviewAppliedToday = await appliedReviewItemIds(allRuns
+      .filter((run) => run.mode === 'review' && run.date === date && runMatchesScope(run, packScope, packIds)))
     const reviewBacklog = withStatus
       .filter((x) => x.progress.attempts > 0 && x.progress.dueDate <= date && !reviewAppliedToday.has(x.candidate.itemId))
       .sort(compareReviewDebt)
