@@ -148,24 +148,8 @@ export async function transcribeVoiceInput(
   }
 
   try {
-    const decodeStart = performance.now()
     const audio = await decodeAudioBlobToMono16k(audioBlob)
-    const decodeMs = performance.now() - decodeStart
-    const audioDurationSec = audio.length / 16_000
-
-    const transcribeStart = performance.now()
     const response = await requestWorker({ type: 'transcribe', config, audio, language })
-    const transcribeMs = performance.now() - transcribeStart
-    const totalMs = decodeMs + transcribeMs
-
-    console.log(
-      `[local-stt] perf: audio=${audioDurationSec.toFixed(1)}s ` +
-      `decode=${decodeMs.toFixed(0)}ms transcribe=${transcribeMs.toFixed(0)}ms ` +
-      `total=${totalMs.toFixed(0)}ms ` +
-      `rtf=${(transcribeMs / 1000 / Math.max(0.1, audioDurationSec)).toFixed(2)}x ` +
-      `${response.warm ? 'warm' : 'COLD'} ` +
-      `model=${config.modelId}`,
-    )
     if (!response.ok) throw new Error(response.error || 'local stt failed')
     const text = (response.text ?? '').trim()
     if (!text) throw new Error('local stt empty result')

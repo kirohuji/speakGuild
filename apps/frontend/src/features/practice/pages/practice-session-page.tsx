@@ -174,7 +174,6 @@ export function PracticeSessionPage() {
     if (!topicId) return
     try {
       const session = await practiceRepository.createSession(topicId)
-      console.log('[practice-session] 🆕 创建练习会话:', session.id)
       setPracticeSessionId(session.id)
     } catch (err) {
       console.error('[practice-session] ❌ 创建会话失败:', err)
@@ -195,7 +194,6 @@ export function PracticeSessionPage() {
     if (!topicId) return
     try {
       const session = await practiceRepository.createSession(topicId)
-      console.log('[practice-session] 🆕 创建练习会话:', session.id)
       setPracticeSessionId(session.id)
     } catch (err) {
       console.error('[practice-session] ❌ 创建会话失败:', err)
@@ -706,7 +704,6 @@ export function PracticeSessionPage() {
       }
 
       if (practiceSessionId) {
-        console.log(`[practice-session] 📤 submitTurn Ink路径 | round=${round} | sessionId=${practiceSessionId} | passed=${passed} | userText="${userMsg.slice(0, 40)}..."`)
         practiceRepository.submitTurn(practiceSessionId, {
           round,
           npcText,
@@ -719,8 +716,6 @@ export function PracticeSessionPage() {
           chunksUsed: chunksUsedForRound,
           isRetry: retryState === 'retrying',
           parentTurnId: retryState === 'retrying' ? String(parentRoundRef.current) : undefined,
-        }).then(() => {
-          console.log(`[practice-session] ✅ submitTurn 成功 | round=${round}`)
         }).catch((err) => {
           console.error(`[practice-session] ❌ submitTurn 失败 | round=${round}:`, err)
         })
@@ -758,7 +753,6 @@ export function PracticeSessionPage() {
     const fallbackNpcText = npcResponses[fallbackRound % npcResponses.length]
 
     if (practiceSessionId) {
-      console.log(`[practice-session] 📤 submitTurn Fallback路径 | round=${round} | sessionId=${practiceSessionId} | userText="${userMsg.slice(0, 40)}..."`)
       practiceRepository.submitTurn(practiceSessionId, {
         round,
         npcText,
@@ -766,8 +760,6 @@ export function PracticeSessionPage() {
         userAudioUrl: audioUrl,
         objectivesCompleted: [...completedObjectives],
         chunksUsed: [...usedChunks],
-      }).then(() => {
-        console.log(`[practice-session] ✅ submitTurn 成功 | round=${round}`)
       }).catch((err) => {
         console.error(`[practice-session] ❌ submitTurn 失败 | round=${round}:`, err)
       })
@@ -832,9 +824,7 @@ export function PracticeSessionPage() {
         setAnalysisLoading(false)
         return
       }
-      console.log(`[practice-session] 🔍 开始复盘分析 | practiceSessionId=${practiceSessionId}`)
       const res = await practiceRepository.completeSession(practiceSessionId).then(() => practiceRepository.analyzeSession(practiceSessionId))
-      console.log(`[practice-session] 🔍 分析返回:`, res?.analysis ? `有结果 (summary=${res.analysis.summary?.slice(0, 50)}...)` : '无结果')
       setAnalysisResult(res.analysis ?? res)
     } catch (e: any) {
       setAnalysisResult({ summary: `${t('practiceSession.analysisFailedMsg')}: ${e.message}` })

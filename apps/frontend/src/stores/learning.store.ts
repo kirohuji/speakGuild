@@ -237,15 +237,6 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     // Only practice-mode packages feed Today. Do not discard an already-built
     // daily plan when reading, writing, listening, novel or story content changes.
     if (affectsTodayPractice) useDailyPracticeStore.getState().reset()
-    console.log('[learning-store] pack state changed', {
-      changedPackId: changedPackId ?? null,
-      packageType: packageType ?? 'unknown',
-      contentMode: contentMode ?? 'unknown',
-      dailyPlanReset: affectsTodayPractice,
-      installedPackIds: downloadedPacks
-        .filter((pack) => pack.status === 'installed')
-        .map((pack) => pack.packId),
-    })
     await getState().refreshMyUnits()
   },
 
@@ -361,7 +352,6 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
 
     // 加入下载队列
     enqueueDownloadTask(unitId, packTitle)
-    console.log(`[learning-store] 📥 加入下载队列: ${packTitle} (${unitId}), 队列长度: ${getState().downloadTasks.length}`)
 
     // 触发队列处理（异步，不 await）
     processDownloadQueue()
@@ -375,14 +365,6 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       state.myUnits.find((unit) => unit.id === unitId)?.title ??
       state.downloadedPacks.find((pack) => pack.packId === unitId)?.title ??
       unitId
-    const startedAt = performance.now()
-    let lastAt = startedAt
-    const lap = (label: string, extra?: Record<string, unknown>) => {
-      const now = performance.now()
-      console.log(`[learning-store:quit:${unitId}] ${label}: ${(now - lastAt).toFixed(1)}ms (total ${(now - startedAt).toFixed(1)}ms)`, extra ?? '')
-      lastAt = now
-    }
-    console.log(`[learning-store:quit:${unitId}] start`)
     activePackTaskIds.add(unitId)
     set((s) => ({
       downloadTasks: [
@@ -412,14 +394,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     }
     try {
       await learningRepository.quitUnit(unitId)
-      lap('remote/local learning repository quit')
       updateUninstallProgress(35, 'removing_assets', packTaskStepLabel('removing_assets', 'uninstall'))
       await learningPackService.uninstall(unitId)
-      lap('local pack uninstall')
       updateUninstallProgress(82, 'refreshing', packTaskStepLabel('refreshing', 'uninstall'))
       await getState().syncPackStateAfterLocalChange(unitId)
-      const installedCount = getState().downloadedPacks.length
-      lap('sync pack state after uninstall', { installedCount })
       set((current) => ({
         availablePackUpdates: current.availablePackUpdates.filter((update) => update.packId !== unitId),
       }))
@@ -442,9 +420,8 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
           ),
         }))
       }, 3000)
-      console.log(`[learning-store:quit:${unitId}] done: ${(performance.now() - startedAt).toFixed(1)}ms`)
     } catch (error) {
-      console.warn(`[learning-store:quit:${unitId}] failed after ${(performance.now() - startedAt).toFixed(1)}ms`, error)
+      console.warn('[learning-store] uninstall failed', { unitId, error })
       set((s) => ({
         downloadTasks: s.downloadTasks.map((task) =>
           task.packId === unitId
@@ -465,12 +442,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async checkPackUpdates(silent = true) {
-    console.log('[learning-store] 🔍 检查学习包更新...', silent ? '(静默)' : '(用户触发)')
     const downloadedPacks = await learningPackService.listInstalled()
     const installed = downloadedPacks
       .filter((pack) => pack.status === 'installed')
       .map((pack) => ({ packId: pack.packId, version: pack.version }))
-    console.log(`[learning-store]   已安装: ${installed.length} 个包`)
     if (installed.length === 0) {
       set({ downloadedPacks, availablePackUpdates: [] })
       return
@@ -479,14 +454,6 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     try {
       const result = await learningApi.checkPacks(installed)
       set({ downloadedPacks, availablePackUpdates: result.updates })
-      console.log(`[learning-store]   → ${result.updates.length} 个包有更新`)
-      for (const u of result.updates) {
-        if (u.updateType === 'delta') {
-          console.log(`[learning-store]     📦 ${u.packId?.slice(-8)}: DELTA v${u.fromVersion}→v${u.toVersion}, ${u.deltaSizeHuman}, 节省 ${u.savingPercent}%`)
-        } else {
-          console.log(`[learning-store]     📦 ${u.packId?.slice(-8)}: FULL v${u.fromVersion}→v${u.toVersion}, ${u.fullSizeHuman}${u.fallbackReason ? ' (' + u.fallbackReason + ')' : ''}`)
-        }
-      }
       if (!silent && result.updates.length > 0) {
         toast.info(i18n.t('learning.packUpdatesAvailable'))
       }
@@ -613,7 +580,6 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async clearAllOfflineData() {
-    console.log('[learning-store] 🧹 清除所有离线数据...')
     const packs = await learningPackService.listInstalled()
     for (const pack of packs) {
       await learningPackService.uninstall(pack.packId)
@@ -624,7 +590,6 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       downloadTasks: [],
       packInstallingIds: [],
     })
-    console.log('[learning-store] ✅ 离线数据已清除')
     toast.success(i18n.t('profile.offlineDataCleared'))
   },
 }))
@@ -656,7 +621,6 @@ async function processDownloadQueue() {
 
   const next = state.downloadTasks.find((t) => t.status === 'queued' && (t.kind ?? 'download') === 'download')
   if (!next) {
-    console.log('[learning-store] 📭 下载队列已清空')
     isProcessingQueue = false
     return
   }
@@ -691,8 +655,6 @@ async function processDownloadQueue() {
       return
     }
 
-    console.log(`[learning-store] ⏳ 开始下载: ${next.title}`)
-
     // 真实进度回调：安装流程每步上报
     const onProgress = (step: string, progress: number, detail?: LearningPackInstallProgress) => {
       const status: DownloadTask['status'] = step === 'extracting_assets' ? 'extracting' : 'downloading'
@@ -716,7 +678,6 @@ async function processDownloadQueue() {
 
     const update = useLearningStore.getState().availablePackUpdates.find((u) => u.packId === next.packId)
     if (update?.updateType === 'delta' && update.deltaDownloadUrl) {
-      console.log(`[learning-store] 🔄 delta 更新: v${update.fromVersion} → v${update.toVersion}`)
       await learningPackService.installDelta(next.packId, update.fromVersion, update.toVersion, controller.signal)
     } else {
       await learningPackService.installUnit(next.packId, onProgress, controller.signal)
@@ -736,7 +697,6 @@ async function processDownloadQueue() {
       ),
       packInstallingIds: s.packInstallingIds.filter((id) => id !== next.packId),
     }))
-    console.log(`[learning-store] ✅ 下载完成: ${next.title}`)
     toast.success(i18n.t('learning.packDownloadSuccess', {
       title: next.title,
     }))
@@ -820,9 +780,7 @@ useLearningStore.subscribe((state) => {
 
 /** App 启动/恢复时调用：检查已安装包更新 + 加载本地状态 */
 export async function startupPackSync() {
-  console.log('[learning-store] 🚀 启动学习包同步...')
   const store = useLearningStore.getState()
   await store.fetchDownloadedPacks()
   await store.checkPackUpdates(true)
-  console.log('[learning-store] ✅ 启动同步完成')
 }

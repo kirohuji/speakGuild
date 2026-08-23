@@ -395,7 +395,6 @@ export const offlineStorageService = {
       // Do not clear tables directly: uninstall owns the asset reference-count
       // protocol and removes both asset_refs and unshared physical files.
       const packs = await localDb.list<InstalledLearningPack>('downloaded_packs')
-      console.log('[offline-storage] clear packs start', { packCount: packs.length })
       for (const pack of packs) {
         await learningPackService.uninstall(pack.packId)
       }
@@ -403,10 +402,6 @@ export const offlineStorageService = {
       await localDb.clear('asset_refs')
       await clearTables(['downloaded_packs', 'downloaded_unit_details', 'ink_scripts'])
       await clearTables(['offline_vocabularies', 'offline_chunks', 'offline_patterns', 'offline_content_refs'])
-      console.log('[offline-storage] clear packs complete', {
-        packs: await localDb.count('downloaded_packs'),
-        assetRefs: await localDb.count('asset_refs'),
-      })
       return
     }
 
@@ -417,10 +412,6 @@ export const offlineStorageService = {
       // resource files.
       await localDb.clear('local_assets')
       await localDb.clear('asset_refs')
-      console.log('[offline-storage] clear assets complete', {
-        localAssets: await localDb.count('local_assets'),
-        assetRefs: await localDb.count('asset_refs'),
-      })
       return
     }
 

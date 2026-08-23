@@ -36,9 +36,13 @@ const coverStyles: Record<string, string> = {
 
 function BookCover({ notebook }: { notebook: LearningNotebook }) {
   const { t } = useTranslation()
-  const shortName = notebook.kind === 'uncategorized'
+  const coverName = notebook.kind === 'uncategorized'
     ? t('learningNotebooks.uncategorized')
-    : notebook.name.trim().slice(0, 2).toUpperCase()
+    : notebook.name
+  const words = coverName.trim().split(/\s+/).filter(Boolean)
+  const shortName = words.length > 1
+    ? words.slice(0, 2).map((word) => word[0]).join('').toUpperCase()
+    : Array.from(coverName.trim()).slice(0, 2).join('').toUpperCase()
   return (
     <div
       className={cn(
@@ -66,18 +70,21 @@ function NotebookRow({
   spotlight?: string
 }) {
   const { t } = useTranslation()
+  const notebookName = notebook.kind === 'uncategorized'
+    ? t('learningNotebooks.uncategorized')
+    : notebook.name
   return (
     <div
       className="group relative flex min-h-[88px] w-full items-center gap-4 rounded-2xl border border-border/60 bg-card/72 px-4 py-3 text-left transition-[transform,background-color] active:scale-[0.99]"
       {...(spotlight ? { 'data-spotlight': spotlight } : {})}
     >
       <button type="button" className="absolute inset-0 rounded-2xl" onClick={onOpen}>
-        <span className="sr-only">{t('learningNotebooks.open', { name: notebook.name })}</span>
+        <span className="sr-only">{t('learningNotebooks.open', { name: notebookName })}</span>
       </button>
       <BookCover notebook={notebook} />
       <div className="pointer-events-none min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <h2 className="truncate text-[15px] font-semibold tracking-tight">{notebook.name}</h2>
+          <h2 className="truncate text-[15px] font-semibold tracking-tight">{notebookName}</h2>
           {notebook.kind === 'uncategorized' && <Badge variant="secondary">{t('learningNotebooks.system')}</Badge>}
         </div>
         <p className="mt-1 text-xs text-muted-foreground">{t('learningNotebooks.totalItems', { count: notebook.counts.total })}</p>

@@ -1946,7 +1946,7 @@ const en = {
       localAiPreloadFailed: 'Local AI preload failed: {{error}}',
     },
     learningNotebooks: {
-      uncategorized: 'To Organize',
+      uncategorized: 'Unsorted',
       open: 'Open {{name}}',
       system: 'System',
       totalItems: '{{count}} items',

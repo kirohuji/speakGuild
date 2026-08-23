@@ -43,7 +43,6 @@ const PRACTICE_DATA_RESET_KEY = 'practice-data-reset-at'
  */
 async function getCachedTopicDetail(topicId: string): Promise<TopicDetail | null> {
   const cached = await localDb.get<{ detail: any; unitId?: string }>('downloaded_unit_details', `topic:${topicId}`)
-  console.log('[practiceRepo] 🗄️ getCachedTopicDetail | topicId=', topicId, '| found=', !!cached?.detail)
   if (!cached?.detail) return null
 
   // Check pack installed status
@@ -57,18 +56,10 @@ async function getCachedTopicDetail(topicId: string): Promise<TopicDetail | null
   // Backward compat: if old-format cache (missing scene), merge from unit record
   const needsMerge = !detail.scene?.characters?.length
   if (needsMerge && cached.unitId) {
-    console.log('[practiceRepo] ⚠️ 旧格式缓存，从unit记录合并scene')
     const unitRecord = await localDb.get<any>('downloaded_unit_details', cached.unitId)
     if (unitRecord?.scene) {
       detail = { ...detail, scene: unitRecord.scene }
     }
-  }
-
-  if (detail.scene) {
-    console.log('[practiceRepo]   scene.title=', detail.scene.title, '| characters.length=', detail.scene.characters?.length ?? 0)
-    detail.scene.characters?.forEach((c: any, i: number) => {
-      console.log(`[practiceRepo]   Char[${i}]: name=${c.name} avatarUrl=${c.avatarUrl || '(none)'} spriteBaseUrl=${c.spriteBaseUrl || '(none)'}`)
-    })
   }
 
   return detail as TopicDetail
@@ -257,7 +248,6 @@ export const practiceRepository = {
   },
 
   async submitTurn(sessionId: string, data: PracticeTurnPayload): Promise<void> {
-    console.log(`[repo.submitTurn] 入队 | sessionId=${sessionId} | round=${data.round} | userText="${data.userText?.slice(0, 40)}..."`)
     const outboxItem = await syncOutbox.enqueue({
       entityType: 'practice_turn',
       entityId: turnRecordId(sessionId, data.round),
@@ -271,9 +261,7 @@ export const practiceRepository = {
         console.warn(`[repo.submitTurn] ⏸️ session尚未同步，turn留在outbox等待flush | sessionId=${sessionId} | round=${data.round}`)
         return
       }
-      console.log(`[repo.submitTurn] HTTP发起 | remoteSessionId=${remoteSessionId} | round=${data.round}`)
       await practiceApi.submitTurn(remoteSessionId, data)
-      console.log(`[repo.submitTurn] ✅ HTTP成功 | round=${data.round}`)
       await syncOutbox.markSynced(outboxItem.id)
     } catch (err) {
       console.error(`[repo.submitTurn] ❌ HTTP失败 | round=${data.round}:`, err)
@@ -334,12 +322,9 @@ export const practiceRepository = {
       console.warn(`[repo.analyzeSession] ⏸️ session尚未同步，无法分析 | sessionId=${sessionId}`)
       throw new Error('练习会话尚未同步到服务端，无法进行AI分析')
     }
-    console.log(`[repo.analyzeSession] 请求后端分析 | sessionId=${sessionId} | remoteId=${remoteSessionId}`)
     const result = await practiceAiApi.analyzeSession(remoteSessionId)
-    console.log(`[repo.analyzeSession] 后端分析返回 | hasAnalysis=${!!result?.analysis}`)
     try {
       const session = await practiceApi.getSession(remoteSessionId)
-      console.log(`[repo.analyzeSession] 获取session详情 | turnCount=${session?.turnCount} | turns数组长度=${session?.turns?.length} | status=${session?.status}`)
       if (hasFinalAnalysis(session)) {
         await putPracticeHistoryRecord({
           record: practiceRecordFromSession(session),

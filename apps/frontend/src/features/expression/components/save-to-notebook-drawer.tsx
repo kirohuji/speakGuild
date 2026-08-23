@@ -152,7 +152,7 @@ export function SaveToNotebookDrawer({
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2">
-                        <span className="truncate text-sm font-medium">{notebook.name}</span>
+                        <span className="truncate text-sm font-medium">{notebook.kind === 'uncategorized' ? t('learningNotebooks.uncategorized') : notebook.name}</span>
                         {notebook.id === lastNotebookId && notebook.kind === 'custom' && (
                           <span className="text-[10px] text-muted-foreground">{t('learningNotebooks.lastUsed')}</span>
                         )}

@@ -117,21 +117,10 @@ function debugErrorMessage(error: unknown) {
   return typeof detail === 'string' ? detail : JSON.stringify(detail)
 }
 
-function createTimer(scope: string) {
-  const startedAt = performance.now()
-  let lastAt = startedAt
+function createTimer(_scope?: string) {
   return {
-    lap(label: string, extra?: Record<string, unknown>) {
-      const now = performance.now()
-      const elapsed = now - lastAt
-      const total = now - startedAt
-      lastAt = now
-      console.log(`[${scope}] ${label}: ${elapsed.toFixed(1)}ms (total ${total.toFixed(1)}ms)`, extra ?? '')
-    },
-    done(extra?: Record<string, unknown>) {
-      const total = performance.now() - startedAt
-      console.log(`[${scope}] done: ${total.toFixed(1)}ms`, extra ?? '')
-    },
+    lap(_label: string, _extra?: Record<string, unknown>) {},
+    done(_extra?: Record<string, unknown>) {},
   }
 }
 

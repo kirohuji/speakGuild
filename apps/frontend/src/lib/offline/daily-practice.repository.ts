@@ -648,7 +648,6 @@ async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: stri
     const unit = myUnits.find((item) => item.id === targetPackId)
     const contentMode = await getContentMode(targetPackId, unit?.contentMode, unit?.packageType)
     if (contentMode !== 'practice') {
-      console.log('[daily-practice] non-practice package excluded from Today practice', { packId: targetPackId, contentMode })
       return []
     }
     const detail = await learningRepository.getCachedUnitDetail(targetPackId)
@@ -665,9 +664,6 @@ async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: stri
       id: unit.id,
       contentMode: await getContentMode(unit.id, unit.contentMode, unit.packageType),
     })))
-  const excludedNonPracticePackIds = candidateEntries
-    .filter((entry) => entry.contentMode !== 'practice')
-    .map((entry) => entry.id)
   const candidateIds = candidateEntries
     .filter((entry) => entry.contentMode === 'practice')
     .map((entry) => entry.id)
@@ -695,16 +691,6 @@ async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: stri
   const resolved = selectedPackIds
     .map((id) => detailsById.get(id))
     .filter(Boolean) as UnitDetail[]
-  console.log('[daily-practice] candidate units resolved', {
-    scope,
-    targetPackId: targetPackId ?? null,
-    installedPackIds: [...installedIds],
-    activePackId: activePackId ?? null,
-    selectedPackIds,
-    practiceCandidateIds,
-    excludedNonPracticePackIds,
-    units: resolved.map((unit) => ({ id: unit.id, title: unit.title, trainingTopicCount: unit.trainingTopics?.length ?? 0 })),
-  })
   return resolved
 }
 
@@ -809,9 +795,8 @@ export async function pullRemoteDailyProgress(itemIds?: string[]): Promise<void>
       .filter((item) => !pendingItemIds.has(item.itemId))
       .map((item) => ({ ...item, id: item.itemId }))
     if (safeItems.length > 0) await localDb.putMany('daily_practice_items', safeItems)
-  } catch (err) {
+  } catch {
     // 离线或网络错误：保留本地进度，等待下次同步
-    console.debug('[daily-practice] progress sync skipped (offline or error):', (err as Error)?.message ?? err)
   }
 }
 

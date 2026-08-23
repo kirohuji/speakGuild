@@ -326,7 +326,6 @@ export const assetCacheService = {
         }
       }
       await localDb.put('local_assets', { ...cached, lastAccessedAt: new Date().toISOString() })
-      console.log('[offline-assets] resolve hit', { key: matchedKey, requestedUrl: url, localPath: cached.localPath })
       return isNative() ? toLoadableUrl(cached.localUri) : cached.localUri
     }
 
@@ -400,7 +399,6 @@ export const assetCacheService = {
       }
       await localDb.put<LocalAsset>('local_assets', record)
       await putAliases(record, ref, url)
-      console.log('[offline-assets] download saved (blob-writer)', { key, bytes: buffer.byteLength, path, fileAssetId: ref.fileAssetId })
 
       return toLoadableUrl(uri.uri)
     } catch (error) {
@@ -465,8 +463,6 @@ export const assetCacheService = {
       }
       await localDb.put<LocalAsset>('local_assets', record)
       await putAliases(record, ref, url)
-      const kb = (buffer.byteLength / 1024).toFixed(1)
-      console.log(`[asset-cache] 💾 WEB 模式存储: ${ref.path ?? ref.url?.slice(-40)} (${kb}KB) → local_assets/${key}`)
       return dataUrl
     }
 
@@ -489,12 +485,6 @@ export const assetCacheService = {
     }
     await localDb.put<LocalAsset>('local_assets', record)
     await putAliases(record, ref, url)
-    console.log('[offline-assets] pack file saved (blob-writer)', {
-      key,
-      bytes: buffer.byteLength,
-      path,
-      fileAssetId: ref.fileAssetId,
-    })
 
     return toLoadableUrl(uri.uri)
   },
@@ -515,7 +505,6 @@ export const assetCacheService = {
     await localDb.deleteWhere<LocalAsset>('local_assets', (asset) =>
       asset.id === canonicalId || asset.assetId === canonicalId,
     )
-    console.log('[offline-assets] removed', { requestedId: assetId, canonicalId, path: cached.localPath })
   },
 
   async removeRef(ref: AssetRef): Promise<void> {

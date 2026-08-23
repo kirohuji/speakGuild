@@ -245,16 +245,16 @@ export function ExpressionLibraryPage() {
     if (!notebookId) return
     learningNotebookRepository.getCached(notebookId)
       .then((notebook) => {
-        if (notebook) setNotebookName(notebook.name)
+        if (notebook) setNotebookName(notebook.kind === 'uncategorized' ? t('learningNotebooks.uncategorized') : notebook.name)
       })
       .catch(() => undefined)
     learningNotebookRepository.refresh()
       .then((data) => {
         const notebook = data.items.find((item) => item.id === notebookId)
-        if (notebook) setNotebookName(notebook.name)
+        if (notebook) setNotebookName(notebook.kind === 'uncategorized' ? t('learningNotebooks.uncategorized') : notebook.name)
       })
       .catch(() => undefined)
-  }, [notebookId])
+  }, [notebookId, t])
 
   const deepLinkKind = searchParams.has('word')
     ? 'word'
@@ -1067,7 +1067,7 @@ export function ExpressionLibraryPage() {
                       {checked && <Check className="size-3.5" />}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="truncate text-sm font-medium">{notebook.name}</span>
+                      <span className="truncate text-sm font-medium">{notebook.kind === 'uncategorized' ? t('learningNotebooks.uncategorized') : notebook.name}</span>
                       <span className="mt-0.5 block text-xs text-muted-foreground">{t('learningNotebooks.totalItems', { count: notebook.counts?.total ?? 0 })}</span>
                     </span>
                   </button>
