@@ -62,8 +62,9 @@ export class ContentExperienceService {
     private readonly materialConstraints: MaterialConstraintService,
   ) {}
 
-  listGroups() {
+  listGroups(ownerId?: string) {
     return this.prisma.packageGroup.findMany({
+      where: ownerId ? { ownerId } : undefined,
       orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
       include: {
         items: {
@@ -75,7 +76,7 @@ export class ContentExperienceService {
   }
 
   async createGroup(userId: string, dto: CreatePackageGroupDto) {
-    const data = await this.fileAssets.normalizePersistentAssetUrls(dto);
+    const data = await this.fileAssets.normalizePersistentAssetUrls({ ...dto, ownerId: userId });
     return this.prisma.$transaction(async (tx) => {
       const group = await tx.packageGroup.create({ data });
       await this.fileAssets.syncPersistentAssetReferences(
@@ -85,7 +86,9 @@ export class ContentExperienceService {
     });
   }
 
-  async updateGroup(userId: string, id: string, dto: UpdatePackageGroupDto) {
+  async updateGroup(userId: string, id: string, dto: UpdatePackageGroupDto, ownerId?: string) {
+    const existing = await this.prisma.packageGroup.findFirst({ where: { id, ...(ownerId ? { ownerId } : {}) }, select: { id: true } });
+    if (!existing) throw new NotFoundException('内容系列不存在');
     const data = await this.fileAssets.normalizePersistentAssetUrls(dto);
     return this.prisma.$transaction(async (tx) => {
       const group = await tx.packageGroup.update({ where: { id }, data });
@@ -96,8 +99,8 @@ export class ContentExperienceService {
     });
   }
 
-  async deleteGroup(userId: string, id: string) {
-    const group = await this.prisma.packageGroup.findUnique({ where: { id }, select: { id: true } });
+  async deleteGroup(userId: string, id: string, ownerId?: string) {
+    const group = await this.prisma.packageGroup.findFirst({ where: { id, ...(ownerId ? { ownerId } : {}) }, select: { id: true } });
     if (!group) throw new NotFoundException('内容系列不存在');
     return this.prisma.$transaction(async (tx) => {
       await this.fileAssets.syncPersistentAssetReferences(
@@ -348,7 +351,13 @@ export class ContentExperienceService {
     }
   }
 
-  async assignSceneGroup(sceneId: string, dto: AssignPackageGroupDto) {
+  async assignSceneGroup(sceneId: string, dto: AssignPackageGroupDto, ownerId?: string) {
+    const ownedScene = await this.prisma.scene.findFirst({ where: { id: sceneId, ...(ownerId ? { ownerId } : {}) }, select: { id: true } });
+    if (!ownedScene) throw new NotFoundException('学习包不存在');
+    if (dto.groupId) {
+      const group = await this.prisma.packageGroup.findFirst({ where: { id: dto.groupId, ...(ownerId ? { ownerId } : {}) }, select: { id: true } });
+      if (!group) throw new NotFoundException('内容系列不存在');
+    }
     const scene = await this.prisma.scene.findUnique({
       where: { id: sceneId },
       select: { id: true, contentMode: true, groupItem: { select: { groupId: true } } },
@@ -360,7 +369,7 @@ export class ContentExperienceService {
         // 同步约束字段：退出系列后不再受组内顺序约束
         await tx.scene.update({ where: { id: sceneId }, data: { groupId: null } });
       });
-      return { experience: await this.getSceneExperienceAdmin(sceneId), reorderConflicts: [] };
+      return { experience: await this.getSceneExperienceAdmin(sceneId, ownerId), reorderConflicts: [] };
     }
     const group = await this.prisma.packageGroup.findUnique({
       where: { id: dto.groupId },
@@ -405,10 +414,12 @@ export class ContentExperienceService {
     });
     // 重排后扫描组内引用冲突，供前端展示警告（规则 C：允许重排，但不静默）
     const reorderConflicts = await this.materialConstraints.scanGroupConflicts(group.id);
-    return { experience: await this.getSceneExperienceAdmin(sceneId), reorderConflicts };
+    return { experience: await this.getSceneExperienceAdmin(sceneId, ownerId), reorderConflicts };
   }
 
-  async updateSceneKnowledge(sceneId: string, dto: UpdateSceneKnowledgeDto) {
+  async updateSceneKnowledge(sceneId: string, dto: UpdateSceneKnowledgeDto, ownerId?: string) {
+    const ownedScene = await this.prisma.scene.findFirst({ where: { id: sceneId, ...(ownerId ? { ownerId } : {}) }, select: { id: true } });
+    if (!ownedScene) throw new NotFoundException('学习包不存在');
     const scene = await this.prisma.scene.findUnique({ where: { id: sceneId }, select: { id: true, contentMode: true } });
     if (!scene) throw new NotFoundException('学习包不存在');
     if (scene.contentMode !== 'novel') {
@@ -458,11 +469,11 @@ export class ContentExperienceService {
       // 引用表同步：冲突材料降级为 review，其余为 learn（包级，topicId = null）
       await this.materialConstraints.syncSceneLevelReferences(tx, sceneId, claims, conflictMaterialIds);
     });
-    return this.getSceneExperienceAdmin(sceneId);
+    return this.getSceneExperienceAdmin(sceneId, ownerId);
   }
 
-  async attachEpub(sceneId: string, assetId: string) {
-    const scene = await this.prisma.scene.findUnique({ where: { id: sceneId }, select: { id: true } });
+  async attachEpub(sceneId: string, assetId: string, ownerId?: string) {
+    const scene = await this.prisma.scene.findFirst({ where: { id: sceneId, ...(ownerId ? { ownerId } : {}) }, select: { id: true } });
     if (!scene) throw new NotFoundException('学习包不存在');
     const analysis = await this.epubAnalysis.analyzeAsset(assetId);
     const novel = await this.prisma.$transaction(async (tx) => {
@@ -485,9 +496,9 @@ export class ContentExperienceService {
     return { ...novel, analysis };
   }
 
-  async getSceneExperienceAdmin(sceneId: string) {
-    const scene = await this.prisma.scene.findUnique({
-      where: { id: sceneId },
+  async getSceneExperienceAdmin(sceneId: string, ownerId?: string) {
+    const scene = await this.prisma.scene.findFirst({
+      where: { id: sceneId, ...(ownerId ? { ownerId } : {}) },
       select: {
         id: true,
         contentMode: true,

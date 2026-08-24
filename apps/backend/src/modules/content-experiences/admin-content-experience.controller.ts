@@ -32,34 +32,45 @@ export class AdminContentExperienceController {
     return session;
   }
 
+  private async requireManager(req: Request) {
+    const session = await requireAuthSession(req);
+    const role = (session.user as any)?.role;
+    if (role !== 'admin' && role !== 'creator') throw new ForbiddenException('需要创作者或管理员权限');
+    return session;
+  }
+
+  private ownerId(session: any) {
+    return session.user.role === 'admin' ? undefined : session.user.id;
+  }
+
   @Get('groups')
   async listGroups(@Req() req: Request) {
-    await this.requireAdmin(req);
-    return this.experiences.listGroups();
+    const session = await this.requireManager(req);
+    return this.experiences.listGroups(this.ownerId(session));
   }
 
   @Post('groups')
   async createGroup(@Req() req: Request, @Body() dto: CreatePackageGroupDto) {
-    const session = await this.requireAdmin(req);
+    const session = await this.requireManager(req);
     return this.experiences.createGroup(session.user.id, dto);
   }
 
   @Patch('groups/:id')
   async updateGroup(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdatePackageGroupDto) {
-    const session = await this.requireAdmin(req);
-    return this.experiences.updateGroup(session.user.id, id, dto);
+    const session = await this.requireManager(req);
+    return this.experiences.updateGroup(session.user.id, id, dto, this.ownerId(session));
   }
 
   @Delete('groups/:id')
   async deleteGroup(@Req() req: Request, @Param('id') id: string) {
-    const session = await this.requireAdmin(req);
-    return this.experiences.deleteGroup(session.user.id, id);
+    const session = await this.requireManager(req);
+    return this.experiences.deleteGroup(session.user.id, id, this.ownerId(session));
   }
 
   @Get('scenes/:sceneId')
   async getScene(@Req() req: Request, @Param('sceneId') sceneId: string) {
-    await this.requireAdmin(req);
-    return this.experiences.getSceneExperienceAdmin(sceneId);
+    const session = await this.requireManager(req);
+    return this.experiences.getSceneExperienceAdmin(sceneId, this.ownerId(session));
   }
 
   @Put('scenes/:sceneId/group')
@@ -68,8 +79,8 @@ export class AdminContentExperienceController {
     @Param('sceneId') sceneId: string,
     @Body() dto: AssignPackageGroupDto,
   ) {
-    await this.requireAdmin(req);
-    return this.experiences.assignSceneGroup(sceneId, dto);
+    const session = await this.requireManager(req);
+    return this.experiences.assignSceneGroup(sceneId, dto, this.ownerId(session));
   }
 
   @Put('scenes/:sceneId/knowledge')
@@ -78,8 +89,8 @@ export class AdminContentExperienceController {
     @Param('sceneId') sceneId: string,
     @Body() dto: UpdateSceneKnowledgeDto,
   ) {
-    await this.requireAdmin(req);
-    return this.experiences.updateSceneKnowledge(sceneId, dto);
+    const session = await this.requireManager(req);
+    return this.experiences.updateSceneKnowledge(sceneId, dto, this.ownerId(session));
   }
 
   @Post('scenes/:sceneId/epub')
@@ -88,8 +99,8 @@ export class AdminContentExperienceController {
     @Param('sceneId') sceneId: string,
     @Body() dto: AttachEpubDto,
   ) {
-    await this.requireAdmin(req);
-    return this.experiences.attachEpub(sceneId, dto.assetId);
+    const session = await this.requireManager(req);
+    return this.experiences.attachEpub(sceneId, dto.assetId, this.ownerId(session));
   }
 
   @Post('scenes/:sceneId/writing-topics/ai-draft')

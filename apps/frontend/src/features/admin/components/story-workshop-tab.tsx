@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   Plus, Trash2, Edit3, MapPin, Users, BookOpen, Play,
-  ChevronRight, ScrollText, X, Search, ChevronLeft, PackageOpen, Layers3,
+  ChevronRight, ScrollText, X, Search, PackageOpen, Layers3,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -18,8 +18,10 @@ import {
 } from '../api-content-admin'
 import { InkStoryEditor } from './ink-story-editor'
 import { cn } from '@/lib/cn'
+import { AdminPagination } from './admin-pagination'
+import { useAuth } from '@/providers/auth-provider'
 
-const PAGE_SIZE = 50
+const PAGE_SIZE = 20
 
 interface StoryWorkshopTabProps {
   locations: GameLocationData[]
@@ -29,9 +31,10 @@ interface StoryWorkshopTabProps {
 }
 
 export function StoryWorkshopTab({ locations, characters, initialStoryId, workspace = 'practice' }: StoryWorkshopTabProps) {
+  const { session } = useAuth()
+  const isAdmin = session?.user?.role === 'admin'
   const [stories, setStories] = useState<StoryData[]>([])
   const [total, setTotal] = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editingStory, setEditingStory] = useState<StoryData | null>(null)
@@ -43,6 +46,7 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId, worksp
   const [packageTypeFilter, setPackageTypeFilter] = useState<string>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(PAGE_SIZE)
   const [filters, setFilters] = useState<StoryFilters>({ scriptTypes: [], packageTypes: [], categories: [] })
   // 二级分类 — 按一级分类过滤（与学习包内容管理一致，使用 listSceneCategories）
   const [categories, setCategories] = useState<SceneCategory[]>([])
@@ -51,17 +55,16 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId, worksp
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const params: any = { page, pageSize: PAGE_SIZE, scope: workspace }
+      const params: any = { page, pageSize, scope: workspace }
       if (search) params.search = search
       if (packageTypeFilter !== 'all') params.packageType = packageTypeFilter
       if (categoryFilter !== 'all') params.categoryId = categoryFilter
       const data = await listStories(params)
       setStories(data.items)
       setTotal(data.total)
-      setTotalPages(data.totalPages)
     } catch { toast.error('加载故事列表失败') }
     finally { setLoading(false) }
-  }, [page, search, packageTypeFilter, categoryFilter, workspace])
+  }, [page, pageSize, search, packageTypeFilter, categoryFilter, workspace])
 
   useEffect(() => { load() }, [load])
 
@@ -491,6 +494,7 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId, worksp
                               <div className="min-w-0">
                                 <CardTitle className="truncate text-base">{story.title}</CardTitle>
                                 <p className="truncate font-mono text-xs text-muted-foreground">{story.key}</p>
+                                {isAdmin && story.owner && <p className="truncate text-[11px] text-muted-foreground">创作者：{story.owner.name || story.owner.email}</p>}
                               </div>
                             </div>
                             <Button
@@ -542,29 +546,13 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId, worksp
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                <ChevronLeft className="size-4" />
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {page} / {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                <ChevronLeft className="size-4 rotate-180" />
-              </Button>
-            </div>
-          )}
+          <AdminPagination
+            total={total}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+          />
         </>
       )}
 

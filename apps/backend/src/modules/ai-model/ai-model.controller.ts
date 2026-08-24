@@ -29,6 +29,30 @@ export class AiModelController {
     return this.aiModelService.create(dto);
   }
 
+  private async requireManager(req: Request) {
+    const session = await requireAuthSession(req);
+    if (!['admin', 'creator'].includes((session.user as any)?.role)) {
+      throw new ForbiddenException('需要创作管理权限');
+    }
+    return session;
+  }
+
+  /** 创作者仅可读取音色选择所需的公开字段，绝不返回密钥与连接配置。 */
+  @Get('tts-catalog')
+  async listTtsCatalog(@Req() req: Request) {
+    await this.requireManager(req);
+    const grouped = await this.aiModelService.listGrouped();
+    return (grouped.tts ?? []).map((item) => ({
+      id: item.id,
+      type: item.type,
+      provider: item.provider,
+      label: item.label,
+      model: item.model,
+      isActive: item.isActive,
+      sortOrder: item.sortOrder,
+    }));
+  }
+
   @Put(':id')
   async update(
     @Req() req: Request,

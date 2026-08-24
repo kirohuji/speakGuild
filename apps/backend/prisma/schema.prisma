@@ -9,7 +9,26 @@ datasource db {
 
 enum UserRole {
   user
+  creator
   admin
+}
+
+enum ContentReviewKind {
+  learning_package
+  narrative_package
+}
+
+enum ContentReviewStatus {
+  pending
+  approved
+  rejected
+  canceled
+  superseded
+}
+
+enum ContentAssetVisibility {
+  private
+  system_shared
 }
 
 enum AdminTaskStatus {
@@ -70,66 +89,73 @@ model AdminTaskLog {
 }
 
 model User {
-  id                     String               @id
-  name                   String
-  email                  String
-  emailVerified          Boolean              @default(false)
-  image                  String?
-  username               String?              @unique
-  phoneNumber            String?              @unique
-  phoneNumberVerified    Boolean              @default(false)
-  role                   UserRole             @default(user)
-  createdAt              DateTime             @default(now())
-  updatedAt              DateTime             @updatedAt
-  deletionRequestedAt    DateTime?
-  deletionScheduledAt    DateTime?
-  hasCompletedOnboarding Boolean              @default(false)
-  sessions               Session[]
-  accounts               Account[]
-  dailyActivities        DailyActivity[]
-  userPreference         UserPreference?
-  notificationReads      NotificationRead[]
-  notificationTargets    NotificationTarget[]
-  sentNotifications      Notification[]
-  orders                 Order[]
-  membership             UserMembership?
-  referralCode           ReferralCode?
-  referredBy             Referral?
-  feedbacks              Feedback[]
-  mobileOtaTester        MobileOtaTester?
-  loginLogs              UserLoginLog[]
+  id                      String                 @id
+  name                    String
+  email                   String
+  emailVerified           Boolean                @default(false)
+  image                   String?
+  username                String?                @unique
+  phoneNumber             String?                @unique
+  phoneNumberVerified     Boolean                @default(false)
+  role                    UserRole               @default(user)
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  deletionRequestedAt     DateTime?
+  deletionScheduledAt     DateTime?
+  hasCompletedOnboarding  Boolean                @default(false)
+  sessions                Session[]
+  accounts                Account[]
+  dailyActivities         DailyActivity[]
+  userPreference          UserPreference?
+  notificationReads       NotificationRead[]
+  notificationTargets     NotificationTarget[]
+  sentNotifications       Notification[]
+  orders                  Order[]
+  membership              UserMembership?
+  referralCode            ReferralCode?
+  referredBy              Referral?
+  feedbacks               Feedback[]
+  mobileOtaTester         MobileOtaTester?
+  loginLogs               UserLoginLog[]
+  ownedScenes             Scene[]                @relation("SceneOwner")
+  ownedPackageGroups      PackageGroup[]         @relation("PackageGroupOwner")
+  ownedInkScripts         InkScript[]            @relation("InkScriptOwner")
+  ownedGameCharacters     GameCharacter[]        @relation("GameCharacterOwner")
+  ownedTtsVoiceAssets     TtsVoiceAsset[]        @relation("TtsVoiceAssetOwner")
+  contentReviewRequests   ContentReviewRequest[] @relation("ContentReviewOwner")
+  reviewedContentRequests ContentReviewRequest[] @relation("ContentReviewReviewer")
 
   // --- English Output Training: 用户画像扩展 ---
-  learningGoals         String[]                   @default([])
-  outputLevel           String                     @default("L1")
-  outputLevelDetail     Json?
-  totalXp               Int                        @default(0)
-  points                Int                        @default(0)
-  userLevel             Int                        @default(1)
-  sceneProgresses       UserSceneProgress[]
-  chunkProgresses       UserChunkProgress[]
-  expressionItems       ExpressionItem[]
-  learningNotebooks     LearningNotebook[]
-  storyRecords          StoryRecord[]
-  storyTurns            StoryTurn[]
-  scriptPracticeRecords ScriptPracticeRecord[]
-  scriptWorks           ScriptWork[]
-  scriptWorkLikes       ScriptWorkLike[]
-  scriptWorkReactions   ScriptWorkReaction[]
-  scriptWorkReports     ScriptWorkReport[]
-  practiceSessions      PracticeSession[]
-  warmupItemProgresses  UserWarmupItemProgress[]
-  dailyPracticeRuns     UserDailyPracticeRun[]
-  dailyPracticeAttempts UserDailyPracticeAttempt[]
+  learningGoals            String[]                   @default([])
+  outputLevel              String                     @default("L1")
+  outputLevelDetail        Json?
+  totalXp                  Int                        @default(0)
+  points                   Int                        @default(0)
+  userLevel                Int                        @default(1)
+  sceneProgresses          UserSceneProgress[]
+  chunkProgresses          UserChunkProgress[]
+  expressionItems          ExpressionItem[]
+  learningNotebooks        LearningNotebook[]
+  storyRecords             StoryRecord[]
+  storyTurns               StoryTurn[]
+  scriptPracticeRecords    ScriptPracticeRecord[]
+  scriptWorks              ScriptWork[]
+  scriptWorkLikes          ScriptWorkLike[]
+  scriptWorkReactions      ScriptWorkReaction[]
+  scriptWorkReports        ScriptWorkReport[]
+  practiceSessions         PracticeSession[]
+  warmupItemProgresses     UserWarmupItemProgress[]
+  dailyPracticeRuns        UserDailyPracticeRun[]
+  dailyPracticeAttempts    UserDailyPracticeAttempt[]
   trainingTopicSubmissions TrainingTopicSubmission[]
-  topicSessions          TopicSession[]
-  novelReadingProgresses NovelReadingProgress[]
-  explorationRecords    ExplorationRecord[]
-  userAchievementsV2    UserAchievementV2[]
-  gameSaves             GameSave[]
-  checkIns              UserCheckIn[]
-  pointTransactions     PointTransaction[]
-  aiUsages              AiUsageDaily[]
+  topicSessions            TopicSession[]
+  novelReadingProgresses   NovelReadingProgress[]
+  explorationRecords       ExplorationRecord[]
+  userAchievementsV2       UserAchievementV2[]
+  gameSaves                GameSave[]
+  checkIns                 UserCheckIn[]
+  pointTransactions        PointTransaction[]
+  aiUsages                 AiUsageDaily[]
 
   @@unique([email])
   @@index([deletionScheduledAt])
@@ -427,26 +453,26 @@ enum FileAssetGroup {
 }
 
 model FileAsset {
-  id               String            @id @default(cuid())
-  sha256           String            @unique
-  bucket           String
-  region           String
-  cosKey           String            @unique
-  group            FileAssetGroup
-  size             Int
-  mimeType         String
-  filename         String
-  createdAt        DateTime          @default(now())
-  references       FileReference[]
-  mobileBundles    MobileBundle[]
-  learningPackages LearningPackage[]
-  deltaPackages    DeltaPackage[]
+  id                      String                 @id @default(cuid())
+  sha256                  String                 @unique
+  bucket                  String
+  region                  String
+  cosKey                  String                 @unique
+  group                   FileAssetGroup
+  size                    Int
+  mimeType                String
+  filename                String
+  createdAt               DateTime               @default(now())
+  references              FileReference[]
+  mobileBundles           MobileBundle[]
+  learningPackages        LearningPackage[]
+  deltaPackages           DeltaPackage[]
   scriptRecordAudioAssets ScriptPracticeRecord[] @relation("ScriptRecordAudio")
   scriptRecordVideoAssets ScriptPracticeRecord[] @relation("ScriptRecordVideo")
   scriptWorkVideoAssets   ScriptWork[]           @relation("ScriptWorkVideo")
   scriptWorkCoverAssets   ScriptWork[]           @relation("ScriptWorkCover")
-  trainingTopicMedia      TrainingTopic[]          @relation("TrainingTopicMedia")
-  novelEpubFiles          NovelPackage[]          @relation("NovelEpubAsset")
+  trainingTopicMedia      TrainingTopic[]        @relation("TrainingTopicMedia")
+  novelEpubFiles          NovelPackage[]         @relation("NovelEpubAsset")
 
   @@index([group, createdAt(sort: Desc)])
   @@index([createdAt])
@@ -454,13 +480,13 @@ model FileAsset {
 }
 
 model FileReference {
-  id        String    @id @default(cuid())
-  asset     FileAsset @relation(fields: [assetId], references: [id], onDelete: Restrict)
-  assetId   String
-  bizType   String
-  bizId     String
+  id          String    @id @default(cuid())
+  asset       FileAsset @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  assetId     String
+  bizType     String
+  bizId       String
   createdById String?
-  createdAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
 
   @@unique([assetId, bizType, bizId])
   @@index([bizType, bizId])
@@ -470,16 +496,16 @@ model FileReference {
 /// Durable outbox for loss-safe physical deletion. The FileAsset row is
 /// removed first; COS deletion is retried from this snapshot afterwards.
 model FileAssetPurge {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   assetId     String?
   bucket      String
   region      String
-  cosKey      String   @unique
+  cosKey      String    @unique
   sha256      String
-  status      String   @default("pending")
-  attempts    Int      @default(0)
+  status      String    @default("pending")
+  attempts    Int       @default(0)
   lastError   String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
   completedAt DateTime?
 
   @@index([status, createdAt])
@@ -684,23 +710,23 @@ model SceneCategory {
 }
 
 model Scene {
-  id                  String              @id @default(cuid())
-  category            SceneCategory       @relation(fields: [categoryId], references: [id])
+  id                  String                   @id @default(cuid())
+  category            SceneCategory            @relation(fields: [categoryId], references: [id])
   categoryId          String
-  packageType         LearningPackageType @default(daily)
-  contentMode         ContentMode          @default(practice)
+  packageType         LearningPackageType      @default(daily)
+  contentMode         ContentMode              @default(practice)
   title               String
   location            String
   description         String?
-  requiredOutputLevel String              @default("L1")
-  requiredUserLevel   Int                 @default(1)
-  isFree              Boolean             @default(false) // 免费用户可访问
-  coverImage          String?                                // 学习包封面图 URL
-  groupId             String?                                // 所属学习包组（null = 未入组，无顺序约束）
-  group               PackageGroup?       @relation(fields: [groupId], references: [id])
-  sortOrder           Int                 @default(0)        // 组内学习顺序，从 0 开始
-  prerequisiteScenes  ScenePrerequisite[] @relation("Scene")
-  prerequisiteFor     ScenePrerequisite[] @relation("Prerequisite")
+  requiredOutputLevel String                   @default("L1")
+  requiredUserLevel   Int                      @default(1)
+  isFree              Boolean                  @default(false) // 免费用户可访问
+  coverImage          String? // 学习包封面图 URL
+  groupId             String? // 所属学习包组（null = 未入组，无顺序约束）
+  group               PackageGroup?            @relation(fields: [groupId], references: [id])
+  sortOrder           Int                      @default(0) // 组内学习顺序，从 0 开始
+  prerequisiteScenes  ScenePrerequisite[]      @relation("Scene")
+  prerequisiteFor     ScenePrerequisite[]      @relation("Prerequisite")
   trainingTopics      TrainingTopic[]
   storyEpisodes       StoryEpisode[]
   userProgresses      UserSceneProgress[]
@@ -712,10 +738,14 @@ model Scene {
   sceneChunks         SceneChunk[]
   scenePatterns       SceneSentencePattern[]
   materialReferences  SceneMaterialReference[]
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
+  owner               User?                    @relation("SceneOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  ownerId             String?
+  reviewRequests      ContentReviewRequest[]
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
 
   @@index([createdAt])
+  @@index([ownerId, updatedAt])
   @@index([groupId, sortOrder])
   @@map("scene")
 }
@@ -745,10 +775,13 @@ model PackageGroup {
   status      PackageGroupStatus @default(draft)
   items       PackageGroupItem[]
   scenes      Scene[]
+  owner       User?              @relation("PackageGroupOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  ownerId     String?
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 
   @@index([status, createdAt])
+  @@index([ownerId, updatedAt])
   @@map("package_group")
 }
 
@@ -818,11 +851,11 @@ model SceneVocabulary {
 
 model SceneChunk {
   id        String @id @default(cuid())
-  scene     Scene   @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  scene     Scene  @relation(fields: [sceneId], references: [id], onDelete: Cascade)
   sceneId   String
-  chunk     Chunk   @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+  chunk     Chunk  @relation(fields: [chunkId], references: [id], onDelete: Cascade)
   chunkId   String
-  sortOrder Int     @default(0)
+  sortOrder Int    @default(0)
 
   @@unique([sceneId, chunkId])
   @@index([sceneId, sortOrder])
@@ -850,15 +883,15 @@ enum TopicSubmissionStatus {
 }
 
 model NovelPackage {
-  id          String       @id @default(cuid())
-  scene       Scene        @relation(fields: [sceneId], references: [id], onDelete: Cascade)
-  sceneId     String       @unique
-  epubAsset   FileAsset    @relation("NovelEpubAsset", fields: [epubAssetId], references: [id], onDelete: Restrict)
+  id          String                 @id @default(cuid())
+  scene       Scene                  @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId     String                 @unique
+  epubAsset   FileAsset              @relation("NovelEpubAsset", fields: [epubAssetId], references: [id], onDelete: Restrict)
   epubAssetId String
   metadata    Json?
   toc         Json
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
   progresses  NovelReadingProgress[]
 
   @@map("novel_package")
@@ -881,23 +914,23 @@ model NovelReadingProgress {
 }
 
 model TopicSession {
-  id             String    @id @default(cuid())
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String        @id @default(cuid())
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String
   topic          TrainingTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
   topicId        String
   sceneId        String
-  status         String    @default("active")  // active | completed | analyzed
-  startedAt      DateTime  @default(now())
+  status         String        @default("active") // active | completed | analyzed
+  startedAt      DateTime      @default(now())
   completedAt    DateTime?
   analyzedAt     DateTime?
   analysisResult Json?
-  analysisRaw    String?   @db.Text
-  analysisError  String?   @db.Text
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  analysisRaw    String?       @db.Text
+  analysisError  String?       @db.Text
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
-  submissions  TrainingTopicSubmission[]
+  submissions TrainingTopicSubmission[]
 
   @@index([userId, topicId])
   @@index([userId, createdAt(sort: Desc)])
@@ -925,23 +958,24 @@ enum TrainingTopicType {
 }
 
 model LearningPackage {
-  id               String                @id @default(cuid())
-  scene            Scene                 @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  id               String                 @id @default(cuid())
+  scene            Scene                  @relation(fields: [sceneId], references: [id], onDelete: Cascade)
   sceneId          String
   version          Int
   title            String
-  type             LearningPackageType   @default(daily)
-  status           LearningPackageStatus @default(draft)
-  fileAsset        FileAsset?            @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
+  type             LearningPackageType    @default(daily)
+  status           LearningPackageStatus  @default(draft)
+  fileAsset        FileAsset?             @relation(fields: [fileAssetId], references: [id], onDelete: Restrict)
   fileAssetId      String?
   zipChecksum      String?
   zipSize          Int?
   manifestSnapshot Json?
   buildLog         String?
   publishedAt      DateTime?
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
   deltaPackages    DeltaPackage[]
+  reviewRequests   ContentReviewRequest[]
 
   @@unique([sceneId, version])
   @@index([sceneId, status, version])
@@ -1234,16 +1268,16 @@ model PracticeTurn {
 }
 
 model PracticeWarmupRecord {
-  id        String   @id @default(cuid())
-  userId    String
-  topicId   String
+  id          String   @id @default(cuid())
+  userId      String
+  topicId     String
   // 归属学习包：练习记录必须能溯源到学习包
-  packId    String?
-  score     Int?
-  feedback  String?  @db.Text
-  items     Json
-  createdAt DateTime @default(now())
-  clientRunId String? @unique
+  packId      String?
+  score       Int?
+  feedback    String?  @db.Text
+  items       Json
+  createdAt   DateTime @default(now())
+  clientRunId String?  @unique
 
   @@index([userId, topicId])
   @@index([userId, packId])
@@ -1283,26 +1317,26 @@ model UserWarmupItemProgress {
 }
 
 model UserDailyPracticeRun {
-  id               String   @id @default(cuid())
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId           String
-  date             DateTime @db.Date
-  clientRunId      String?
-  mode             String   @default("practice")
-  scope            String   @default("single")
-  packIds          String[] @default([])
-  scheduledItemIds String[] @default([])
-  completedItemIds String[] @default([])
-  attemptedItemIds String[] @default([])
-  unresolvedItemIds String[] @default([])
-  srsAppliedItemIds String[] @default([])
+  id                   String   @id @default(cuid())
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId               String
+  date                 DateTime @db.Date
+  clientRunId          String?
+  mode                 String   @default("practice")
+  scope                String   @default("single")
+  packIds              String[] @default([])
+  scheduledItemIds     String[] @default([])
+  completedItemIds     String[] @default([])
+  attemptedItemIds     String[] @default([])
+  unresolvedItemIds    String[] @default([])
+  srsAppliedItemIds    String[] @default([])
   initialRecallResults Json?
-  continuationResults Json?
-  remediationResults Json?
-  submissionStatus String @default("idle")
-  stats            Json?
-  updatedAt        DateTime @updatedAt
-  createdAt        DateTime @default(now())
+  continuationResults  Json?
+  remediationResults   Json?
+  submissionStatus     String   @default("idle")
+  stats                Json?
+  updatedAt            DateTime @updatedAt
+  createdAt            DateTime @default(now())
 
   @@unique([userId, clientRunId])
   @@index([userId, date])
@@ -1524,31 +1558,31 @@ model ScriptPracticeRecord {
 }
 
 model ScriptWork {
-  id             String           @id @default(cuid())
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String
-  episode        StoryEpisode     @relation(fields: [episodeId], references: [id], onDelete: Cascade)
-  episodeId      String
-  record         ScriptPracticeRecord? @relation(fields: [recordId], references: [id], onDelete: SetNull)
-  recordId       String?
-  kind           ScriptWorkKind
-  status         ScriptWorkStatus @default(draft)
-  title          String
-  caption        String?          @db.Text
-  durationSec    Int              @default(0)
-  renderPayload  Json?
-  renderError    String?          @db.Text
-  videoAsset     FileAsset?       @relation("ScriptWorkVideo", fields: [videoAssetId], references: [id], onDelete: Restrict)
-  videoAssetId   String?
-  coverAsset     FileAsset?       @relation("ScriptWorkCover", fields: [coverAssetId], references: [id], onDelete: Restrict)
-  coverAssetId   String?
-  publishedAt    DateTime?
-  hiddenAt       DateTime?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  likes          ScriptWorkLike[]
-  reactions      ScriptWorkReaction[]
-  reports        ScriptWorkReport[]
+  id            String                @id @default(cuid())
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  episode       StoryEpisode          @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  episodeId     String
+  record        ScriptPracticeRecord? @relation(fields: [recordId], references: [id], onDelete: SetNull)
+  recordId      String?
+  kind          ScriptWorkKind
+  status        ScriptWorkStatus      @default(draft)
+  title         String
+  caption       String?               @db.Text
+  durationSec   Int                   @default(0)
+  renderPayload Json?
+  renderError   String?               @db.Text
+  videoAsset    FileAsset?            @relation("ScriptWorkVideo", fields: [videoAssetId], references: [id], onDelete: Restrict)
+  videoAssetId  String?
+  coverAsset    FileAsset?            @relation("ScriptWorkCover", fields: [coverAssetId], references: [id], onDelete: Restrict)
+  coverAssetId  String?
+  publishedAt   DateTime?
+  hiddenAt      DateTime?
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  likes         ScriptWorkLike[]
+  reactions     ScriptWorkReaction[]
+  reports       ScriptWorkReport[]
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([status, publishedAt(sort: Desc)])
@@ -1712,8 +1746,11 @@ model GameCharacter {
   roomNpcs           GameRoomNpc[]
   explorationRecords ExplorationRecord[]
   voiceBindings      CharacterVoiceBinding[]
+  owner              User?                   @relation("GameCharacterOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  ownerId            String?
   createdAt          DateTime                @default(now())
 
+  @@index([ownerId, createdAt])
   @@map("game_character")
 }
 
@@ -1735,9 +1772,13 @@ model TtsVoiceAsset {
   updatedAt         DateTime                @updatedAt
   provider          AiProvider              @relation(fields: [providerId], references: [id], onDelete: Cascade)
   characterBindings CharacterVoiceBinding[]
+  owner             User?                   @relation("TtsVoiceAssetOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  ownerId           String?
+  visibility        ContentAssetVisibility  @default(private)
 
   @@unique([providerId, externalVoiceId])
   @@index([providerId, isAvailable])
+  @@index([ownerId, updatedAt])
   @@map("tts_voice_asset")
 }
 
@@ -1875,9 +1916,11 @@ model InkScript {
   topicId           String?
   trainingTopic     TrainingTopic? @relation("TopicInkScript")
   declaredVariables Json?
-  assetMap          Json?           /// { [alias]: { fileAssetId, type, mimeType } } — story asset registry
+  assetMap          Json? /// { [alias]: { fileAssetId, type, mimeType } } — story asset registry
   version           Int            @default(1)
   changelog         String?
+  owner             User?          @relation("InkScriptOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  ownerId           String?
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 
@@ -1885,7 +1928,35 @@ model InkScript {
   @@index([episodeId])
   @@index([locationId])
   @@index([roomId])
+  @@index([ownerId, updatedAt])
   @@map("ink_script")
+}
+
+model ContentReviewRequest {
+  id                 String              @id @default(cuid())
+  kind               ContentReviewKind
+  status             ContentReviewStatus @default(pending)
+  scene              Scene               @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId            String
+  owner              User                @relation("ContentReviewOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  ownerId            String
+  requestedVersion   Int
+  sourceRevision     String
+  snapshot           Json
+  reviewNote         String?             @db.Text
+  reviewer           User?               @relation("ContentReviewReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedById       String?
+  reviewedAt         DateTime?
+  generatedPackage   LearningPackage?    @relation(fields: [generatedPackageId], references: [id], onDelete: SetNull)
+  generatedPackageId String?
+  submittedAt        DateTime            @default(now())
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([status, submittedAt(sort: Desc)])
+  @@index([ownerId, submittedAt(sort: Desc)])
+  @@index([sceneId, kind, requestedVersion])
+  @@map("content_review_request")
 }
 
 model GameSave {

@@ -5,11 +5,14 @@ import { CharactersTab } from '../components/characters-tab'
 import { NarrativeWorldStudio } from '../components/narrative-world-studio'
 import { VoiceAssetsTab } from '../components/voice-assets-tab'
 import type { GameCharacter, GameLocationData } from '../api-content-admin'
+import { useAuth } from '@/providers/auth-provider'
 
 type AssetTab = 'characters' | 'voices' | 'maps'
 
 /** 剧情系统的全局共享资产；剧情包和章节只保存对这些资产的引用。 */
 export function AdminNarrativeAssetsPage() {
+  const { session } = useAuth()
+  const isCreator = session?.user?.role === 'creator'
   const [characters, setCharacters] = useState<GameCharacter[]>([])
   const [locations, setLocations] = useState<GameLocationData[]>([])
   const [activeTab, setActiveTab] = useState<AssetTab>('characters')
@@ -63,7 +66,7 @@ export function AdminNarrativeAssetsPage() {
             <Volume2 className="size-4" />
             音色资产
           </TabsTrigger>
-          <TabsTrigger value="maps" className="h-8 gap-2 rounded-md px-4">
+          {!isCreator && <TabsTrigger value="maps" className="h-8 gap-2 rounded-md px-4">
             <Map className="size-4" />
             地图世界
             {locations.length > 0 && (
@@ -71,15 +74,15 @@ export function AdminNarrativeAssetsPage() {
                 {locations.length}
               </span>
             )}
-          </TabsTrigger>
+          </TabsTrigger>}
         </TabsList>
 
         <TabsContent value="characters" className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
           <CharactersTab onCharactersChange={setCharacters} />
         </TabsContent>
-        <TabsContent value="maps" className="mt-3 min-h-0 flex-1 overflow-hidden">
+        {!isCreator && <TabsContent value="maps" className="mt-3 min-h-0 flex-1 overflow-hidden">
           <NarrativeWorldStudio onLocationsChange={setLocations} />
-        </TabsContent>
+        </TabsContent>}
         <TabsContent value="voices" className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
           <VoiceAssetsTab />
         </TabsContent>

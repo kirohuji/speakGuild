@@ -15,6 +15,7 @@ export interface LearningPackSceneOption {
   episodeCount?: number;
   readyEpisodeCount?: number;
   contentUpdatedAt?: string;
+  owner?: { id: string; name: string; email: string } | null;
 }
 
 export interface LearningPackItem {

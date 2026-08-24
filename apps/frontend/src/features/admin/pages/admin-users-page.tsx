@@ -475,7 +475,7 @@ function UserRow({
 }) {
   const [detailOpen, setDetailOpen] = useState(false);
   const [roleConfirmOpen, setRoleConfirmOpen] = useState(false);
-  const [newRole, setNewRole] = useState<'user' | 'admin'>(user.role);
+  const [newRole, setNewRole] = useState<'user' | 'creator' | 'admin'>(user.role);
   const [updating, setUpdating] = useState(false);
   const [detail, setDetail] = useState<AdminUserDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -614,7 +614,7 @@ function UserRow({
               user.role === 'admin' && 'bg-amber-500/15 text-amber-700 hover:bg-amber-500/15'
             )}
           >
-            {user.role === 'admin' ? '管理员' : '用户'}
+            {user.role === 'admin' ? '管理员' : user.role === 'creator' ? '创作者' : '用户'}
           </Badge>
         </td>
         <td className="hidden px-4 py-3 md:table-cell">
@@ -705,7 +705,7 @@ function UserRow({
                           variant={detail.role === 'admin' ? 'default' : 'secondary'}
                           className={cn('shrink-0 text-xs', detail.role === 'admin' && 'bg-amber-500/15 text-amber-700 hover:bg-amber-500/15')}
                         >
-                          {detail.role === 'admin' ? '管理员' : '用户'}
+                          {detail.role === 'admin' ? '管理员' : detail.role === 'creator' ? '创作者' : '用户'}
                         </Badge>
                       </div>
                       {detail.username && <p className="truncate text-sm text-muted-foreground">@{detail.username}</p>}
@@ -718,7 +718,7 @@ function UserRow({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     <div className="rounded-lg bg-background px-3 py-2">
                       <p className="text-[11px] text-muted-foreground">输出等级</p>
                       <p className="mt-1 text-xl font-bold text-primary">{detail.outputLevel || 'L1'}</p>
@@ -793,6 +793,13 @@ function UserRow({
                       onClick={() => { setNewRole('user'); setRoleConfirmOpen(true); }}
                     >
                       普通用户
+                    </Button>
+                    <Button
+                      variant={detail.role === 'creator' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => { setNewRole('creator'); setRoleConfirmOpen(true); }}
+                    >
+                      创作者
                     </Button>
                     <Button
                       variant={detail.role === 'admin' ? 'default' : 'outline'}

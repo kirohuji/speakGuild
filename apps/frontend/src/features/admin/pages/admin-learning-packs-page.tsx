@@ -28,6 +28,8 @@ import {
 import { listSceneCategories, type SceneCategory } from '../api-content-admin';
 import { contentExperienceAdminApi, type PackageGroup } from '../api-content-experiences';
 import { cn } from '@/lib/cn';
+import { useAuth } from '@/providers/auth-provider';
+import { contentReviewApi } from '../api-content-reviews';
 
 function fmtSize(bytes?: number | null) {
   if (!bytes) return '-';
@@ -77,6 +79,9 @@ interface AdminLearningPacksPageProps {
 }
 
 export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacksPageProps) {
+  const { session } = useAuth();
+  const isCreator = session?.user?.role === 'creator';
+  const isAdmin = session?.user?.role === 'admin';
   const isScriptMode = mode === 'script';
   const entityLabel = isScriptMode ? '剧本包' : '学习包';
   const unitLabel = isScriptMode ? '剧本' : '学习单元';
@@ -84,6 +89,7 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
   const [scenes, setScenes] = useState<LearningPackSceneOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [mutatingId, setMutatingId] = useState<string | null>(null);
+  const [pendingReviewSceneIds, setPendingReviewSceneIds] = useState<Set<string>>(new Set());
 
   // ── List filters ──
   const [packageTypeFilter, setPackageTypeFilter] = useState<string>(isScriptMode ? 'story' : 'all');
@@ -187,6 +193,10 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
         learningPackAdminApi.filters(),
         contentExperienceAdminApi.listGroups().catch(() => [] as PackageGroup[]),
       ]);
+      if (isCreator) {
+        const reviews = await contentReviewApi.list({ status: 'pending', page: 1, pageSize: 100 }).catch(() => null);
+        setPendingReviewSceneIds(new Set(reviews?.items.map((item) => item.sceneId) ?? []));
+      }
       setPacks(packResult.list);
       setGroups(groupResult);
       const visibleScenes = sceneResult.filter((scene) =>
@@ -206,7 +216,7 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
     } finally {
       setLoading(false);
     }
-  }, [uploadSceneId, packageTypeFilter, categoryFilter, isScriptMode, entityLabel]);
+  }, [uploadSceneId, packageTypeFilter, categoryFilter, isScriptMode, entityLabel, isCreator]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -291,8 +301,16 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
   const generateForScene = async (sceneId: string) => {
     setMutatingId(sceneId);
     try {
-      await learningPackAdminApi.generate({ sceneId, publish: true });
-      toast.success(`已生成并发布最新版${entityLabel}`);
+      if (isCreator) {
+        await contentReviewApi.submit({
+          sceneId,
+          kind: isScriptMode ? 'narrative_package' : 'learning_package',
+        });
+        toast.success('已提交管理员审核');
+      } else {
+        await learningPackAdminApi.generate({ sceneId, publish: true });
+        toast.success(`已生成并发布最新版${entityLabel}`);
+      }
       await load();
     } catch (error: any) {
       toast.error(error?.message || '生成失败');
@@ -375,14 +393,14 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2" onClick={() => setUploadOpen(true)}>
+          {!isCreator && <Button variant="outline" className="gap-2" onClick={() => setUploadOpen(true)}>
             <Upload className="size-4" />
             上传 zip
-          </Button>
-          <Button className="gap-2" onClick={openCreateDialog}>
+          </Button>}
+          {!isCreator && <Button className="gap-2" onClick={openCreateDialog}>
             <PackagePlus className="size-4" />
             新建{entityLabel}
-          </Button>
+          </Button>}
           <Button variant="outline" className="gap-2" onClick={() => void load()} disabled={loading}>
             <RefreshCw className="size-4" />
             刷新
@@ -481,6 +499,7 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
                                 <Badge variant="outline" className="text-[10px]">已同步</Badge>
                               ) : null}
                             </div>
+                            {isAdmin && scene.owner && <div className="text-xs text-muted-foreground">创作者：{scene.owner.name || scene.owner.email}</div>}
                             <div className="text-xs text-muted-foreground">
                               {isScriptMode
                                 ? `${scene.readyEpisodeCount ?? 0}/${scene.episodeCount ?? 0} 个章节已完成剧本`
@@ -505,11 +524,15 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
                                 size="sm"
                                 variant="outline"
                                 className="gap-1 h-7 text-[11px]"
-                                disabled={mutatingId === scene.id}
+                                disabled={mutatingId === scene.id || pendingReviewSceneIds.has(scene.id)}
                                 onClick={() => generateForScene(scene.id)}
                               >
                                 {mutatingId === scene.id ? <Loader2 className="size-3 animate-spin" /> : <PackagePlus className="size-3" />}
-                                {latest ? '生成最新版' : '生成首版'}
+                                {pendingReviewSceneIds.has(scene.id)
+                                  ? '审核中'
+                                  : isCreator
+                                    ? (latest ? '提交新版审核' : '提交首版审核')
+                                    : (latest ? '生成最新版' : '生成首版')}
                               </Button>
                             </div>
                           </td>
@@ -544,16 +567,16 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
                                 >
                                   <Download className="size-2.5" />导出
                                 </Button>
-                                {pack.status !== 'published' && (
+                                {!isCreator && pack.status !== 'published' && (
                                   <Button size="sm" variant="outline" className="h-6 text-[10px] gap-0.5"
                                     disabled={mutatingId === pack.id} onClick={() => void publish(pack)}>
                                     <Send className="size-2.5" />发布
                                   </Button>
                                 )}
-                                <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-0.5 text-destructive hover:text-destructive"
+                                {!isCreator && <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-0.5 text-destructive hover:text-destructive"
                                   disabled={mutatingId === pack.id} onClick={() => void remove(pack)}>
                                   <Trash2 className="size-2.5" />删除
-                                </Button>
+                                </Button>}
                               </div>
                             </td>
                           </tr>

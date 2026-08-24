@@ -17,7 +17,7 @@ export function AdminNqtrPage() {
   useEffect(() => {
     let cancelled = false
     Promise.all([
-      listCharacters().catch(() => []),
+      listCharacters({ page: 1, pageSize: 100 }).then((result) => result.items).catch(() => []),
       listLocations().catch(() => []),
     ]).then(([nextCharacters, nextLocations]) => {
       if (cancelled) return

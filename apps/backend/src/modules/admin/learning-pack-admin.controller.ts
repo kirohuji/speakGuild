@@ -2,10 +2,14 @@ import { Body, Controller, Delete, Get, Param, Post, Query, Req, Res } from '@ne
 import type { Request, Response } from 'express';
 import { requireAdmin } from '../auth/admin.util';
 import { LearningPackAdminService } from './learning-pack-admin.service';
+import { ContentAccessService } from './content-access.service';
 
 @Controller('admin/learning-packs')
 export class LearningPackAdminController {
-  constructor(private readonly service: LearningPackAdminService) {}
+  constructor(
+    private readonly service: LearningPackAdminService,
+    private readonly access: ContentAccessService,
+  ) {}
 
   @Get()
   async list(
@@ -18,7 +22,7 @@ export class LearningPackAdminController {
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
-    await requireAdmin(req);
+    const session = await this.access.requireManager(req);
     return this.service.list({
       sceneId,
       packageType,
@@ -27,19 +31,20 @@ export class LearningPackAdminController {
       status,
       page: Number(page || 1),
       pageSize: Number(pageSize || 20),
+      ownerId: this.access.isAdmin(session) ? undefined : session.user.id,
     });
   }
 
   @Get('scenes')
   async scenes(@Req() req: Request) {
-    await requireAdmin(req);
-    return this.service.listScenes();
+    const session = await this.access.requireManager(req);
+    return this.service.listScenes(this.access.isAdmin(session) ? undefined : session.user.id);
   }
 
   @Get('filters')
   async filters(@Req() req: Request) {
-    await requireAdmin(req);
-    return this.service.listFilters();
+    const session = await this.access.requireManager(req);
+    return this.service.listFilters(this.access.isAdmin(session) ? undefined : session.user.id);
   }
 
   @Post('generate')
@@ -62,8 +67,8 @@ export class LearningPackAdminController {
 
   @Get(':id/download')
   async download(@Req() req: Request, @Param('id') id: string, @Res() res: Response) {
-    await requireAdmin(req);
-    const pack = await this.service.download(id);
+    const session = await this.access.requireManager(req);
+    const pack = await this.service.download(id, this.access.isAdmin(session) ? undefined : session.user.id);
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename="${pack.filename}"`);
     res.setHeader('Content-Length', String(pack.buffer.byteLength));

@@ -20,21 +20,22 @@ export class LearningPackAdminService {
     private readonly fileAssets: FileAssetsService,
   ) {}
 
-  async list(params: { sceneId?: string; packageType?: string; excludePackageType?: string; categoryId?: string; status?: string; page?: number; pageSize?: number }) {
+  async list(params: { sceneId?: string; packageType?: string; excludePackageType?: string; categoryId?: string; status?: string; page?: number; pageSize?: number; ownerId?: string }) {
     const page = Math.max(1, params.page ?? 1);
     const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
     const where: any = {};
+    if (params.ownerId) where.scene = { ownerId: params.ownerId };
     if (params.sceneId) where.sceneId = params.sceneId;
     if (params.packageType) where.type = params.packageType;
     else if (params.excludePackageType) where.type = { not: params.excludePackageType };
-    if (params.categoryId) where.scene = { categoryId: params.categoryId };
+    if (params.categoryId) where.scene = { ...(where.scene ?? {}), categoryId: params.categoryId };
     if (params.status) where.status = params.status;
 
     const [list, total] = await this.prisma.$transaction([
       (this.prisma as any).learningPackage.findMany({
         where,
         include: {
-          scene: { select: { id: true, title: true, location: true, packageType: true } },
+          scene: { select: { id: true, title: true, location: true, packageType: true, owner: { select: { id: true, name: true, email: true } } } },
           fileAsset: { select: { id: true, size: true, sha256: true, filename: true, createdAt: true } },
         },
         orderBy: [{ updatedAt: 'desc' }],
@@ -47,8 +48,9 @@ export class LearningPackAdminService {
     return { list, total, page, pageSize };
   }
 
-  async listScenes() {
+  async listScenes(ownerId?: string) {
     const scenes = await (this.prisma as any).scene.findMany({
+      where: ownerId ? { ownerId } : undefined,
       orderBy: [{ createdAt: 'desc' }],
       select: {
         id: true,
@@ -57,6 +59,7 @@ export class LearningPackAdminService {
         categoryId: true,
         packageType: true,
         updatedAt: true,
+        owner: { select: { id: true, name: true, email: true } },
         storyEpisodes: { select: { inkScriptId: true, updatedAt: true } },
       },
     });
@@ -92,13 +95,15 @@ export class LearningPackAdminService {
         episodeCount: scene.storyEpisodes.length,
         readyEpisodeCount: scene.storyEpisodes.filter((episode: any) => episode.inkScriptId).length,
         contentUpdatedAt: new Date(Math.max(...timestamps.map((value) => value.getTime()))),
+        owner: scene.owner,
       };
     });
   }
 
-  async listFilters() {
+  async listFilters(ownerId?: string) {
     const [packageTypes, categories] = await Promise.all([
       (this.prisma as any).learningPackage.findMany({
+        where: ownerId ? { scene: { ownerId } } : undefined,
         select: { type: true },
         distinct: ['type'],
       }),
@@ -284,12 +289,13 @@ export class LearningPackAdminService {
     return result;
   }
 
-  async download(id: string) {
+  async download(id: string, ownerId?: string) {
     const pack = await (this.prisma as any).learningPackage.findUnique({
       where: { id },
-      include: { fileAsset: true },
+      include: { fileAsset: true, scene: { select: { ownerId: true } } },
     });
     if (!pack) throw new NotFoundException('学习包不存在');
+    if (ownerId && pack.scene?.ownerId !== ownerId) throw new NotFoundException('学习包不存在');
     if (!pack.fileAssetId) throw new BadRequestException('学习包尚未绑定 zip 文件');
     const { buffer, filename } = await this.readAssetBuffer(pack.fileAssetId);
     return {

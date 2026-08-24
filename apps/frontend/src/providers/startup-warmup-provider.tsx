@@ -3,6 +3,7 @@ import { useAuth } from '@/providers/auth-provider'
 import { useLearningStore } from '@/stores/learning.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { localDb } from '@/lib/offline/unified-storage'
+import { useManagementHashRoute } from '@/hooks/use-management-route'
 
 function scheduleIdleWork(task: () => void, timeout = 2_000) {
   if (typeof requestIdleCallback !== 'undefined') {
@@ -14,6 +15,7 @@ function scheduleIdleWork(task: () => void, timeout = 2_000) {
 
 export function StartupWarmupProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth()
+  const managementRoute = useManagementHashRoute()
   const warmedUserIdRef = useRef<string | null>(null)
   const sessionUserIdRef = useRef<string | undefined>(session?.user?.id)
 
@@ -23,7 +25,7 @@ export function StartupWarmupProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const userId = session?.user?.id
-    if (!userId || warmedUserIdRef.current === userId) return
+    if (!userId || managementRoute || warmedUserIdRef.current === userId) return
     warmedUserIdRef.current = userId
 
     scheduleIdleWork(() => {
@@ -61,7 +63,7 @@ export function StartupWarmupProvider({ children }: { children: ReactNode }) {
         }
       })()
     }, 1_000)
-  }, [session?.user?.id])
+  }, [managementRoute, session?.user?.id])
 
   return <>{children}</>
 }

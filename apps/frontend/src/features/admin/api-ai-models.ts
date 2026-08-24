@@ -37,6 +37,11 @@ export async function listAiProviders(): Promise<Record<string, AiProviderItem[]
   return get('/admin/ai-models');
 }
 
+/** 创作管理中的安全音色厂商目录，不包含 API Key、Base URL 或私有配置。 */
+export async function listTtsProviderCatalog(): Promise<AiProviderItem[]> {
+  return get('/admin/ai-models/tts-catalog');
+}
+
 /** 更新供应商配置 */
 export async function updateAiProvider(id: string, dto: UpdateAiProviderDto): Promise<AiProviderItem> {
   return put(`/admin/ai-models/${id}`, dto);

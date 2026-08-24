@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Outlet, Link } from 'react-router-dom'
+import { Navigate, Outlet, Link, useLocation } from 'react-router-dom'
 import { Menu, ArrowLeft, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
@@ -7,10 +7,14 @@ import { AdminSidebar } from './admin-sidebar'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/cn'
+import { useAuth } from '@/providers/auth-provider'
+import { canAccessManagementPath, managementHome } from '@/features/admin/management-access'
 
 const COLLAPSED_KEY = 'admin-sidebar-collapsed'
 
 export function AdminLayout() {
+  const location = useLocation()
+  const { session, isLoading } = useAuth()
   const isMobile = useIsMobile()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(() => {
@@ -26,6 +30,15 @@ export function AdminLayout() {
     setBottomNavVisible(false)
     return () => setBottomNavVisible(true)
   }, [setBottomNavVisible])
+
+  if (isLoading) return null
+  const role = session?.user?.role
+  if (!canAccessManagementPath(role, location.pathname)) {
+    if (role === 'creator' && location.pathname !== managementHome(role)) {
+      return <Navigate to={managementHome(role)} replace />
+    }
+    return <Navigate to="/" replace />
+  }
 
   const toggleCollapsed = () => {
     setCollapsed((prev) => {
@@ -53,7 +66,7 @@ export function AdminLayout() {
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
             <LayoutDashboard className="h-3.5 w-3.5 text-primary-foreground" />
           </div>
-          <span className="text-sm font-semibold tracking-tight">管理后台</span>
+          <span className="text-sm font-semibold tracking-tight">{role === 'creator' ? '创作管理' : '管理后台'}</span>
         </div>
         <div className="flex-1" />
         <Link to="/">

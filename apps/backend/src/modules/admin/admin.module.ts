@@ -23,11 +23,14 @@ import { AdminContentAiService } from './admin-content-ai.service';
 import { AiModelModule } from '../ai-model/ai-model.module';
 import { NarrativeVideoController } from './narrative-video.controller';
 import { AdminFileAssetsController } from './admin-file-assets.controller';
+import { ContentAccessService } from './content-access.service';
+import { ContentReviewController } from './content-review.controller';
+import { ContentReviewService } from './content-review.service';
 
 @Module({
   imports: [PayModule, PracticeAiModule, DictionaryModule, ThemeManageModule, DailySentenceModule, TtsModule, FileAssetsModule, LearningModule, NotificationModule, AdminTasksModule, AiModelModule, ContentExperienceModule],
-  controllers: [AdminController, ContentAdminController, SystemConfigController, PublicSystemConfigController, LearningPackAdminController, PackageDataController, NarrativeVideoController, AdminFileAssetsController],
-  providers: [AdminService, AdminStatsService, SystemConfigService, LearningPackAdminService, AdminContentAiService],
+  controllers: [AdminController, ContentAdminController, SystemConfigController, PublicSystemConfigController, LearningPackAdminController, PackageDataController, NarrativeVideoController, AdminFileAssetsController, ContentReviewController],
+  providers: [AdminService, AdminStatsService, SystemConfigService, LearningPackAdminService, AdminContentAiService, ContentAccessService, ContentReviewService],
   exports: [SystemConfigService],
 })
 export class AdminModule {}

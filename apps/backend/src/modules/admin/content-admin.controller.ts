@@ -25,6 +25,7 @@ import {
   CreateSentencePatternDto, UpdateSentencePatternDto,
 } from './dto/content-library.dto';
 import { requireAuthSession } from '../auth/session.util';
+import { ContentAccessService } from './content-access.service';
 
 /** 统计训练话题 pipeline 中的练习题数（与 warmup-pipeline-generate.service 口径一致） */
 function countPipelineExercises(pipeline: any[] | undefined): number {
@@ -153,6 +154,7 @@ export class ContentAdminController {
     private readonly adminTasksService: AdminTasksService,
     private readonly contentPrepareService: ContentPrepareService,
     private readonly materialConstraints: MaterialConstraintService,
+    private readonly contentAccess: ContentAccessService,
   ) {}
 
   private async requireAdmin(req: Request) {
@@ -161,6 +163,10 @@ export class ContentAdminController {
       throw new ForbiddenException('需要管理员权限');
     }
     return session;
+  }
+
+  private requireManager(req: Request) {
+    return this.contentAccess.requireManager(req);
   }
 
   private async detachInkScript(id: string) {
@@ -190,19 +196,21 @@ export class ContentAdminController {
     @Query('packageType') packageType?: string,
     @Query('excludePackageType') excludePackageType?: string,
   ) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
     const sceneTypeWhere = packageType
       ? { packageType: packageType as any }
       : excludePackageType
         ? { packageType: { not: excludePackageType as any } }
         : undefined;
+    const restrictByOwner = !this.contentAccess.isAdmin(session);
+    const visibleSceneWhere = { ...(sceneTypeWhere ?? {}), ...this.contentAccess.ownerWhere(session) };
     return this.prisma.sceneCategory.findMany({
-      where: sceneTypeWhere ? { scenes: { some: sceneTypeWhere } } : undefined,
+      where: sceneTypeWhere || restrictByOwner ? { scenes: { some: visibleSceneWhere } } : undefined,
       orderBy: { sortOrder: 'asc' },
       include: {
         _count: {
           select: {
-            scenes: sceneTypeWhere ? { where: sceneTypeWhere } : true,
+            scenes: sceneTypeWhere || restrictByOwner ? { where: visibleSceneWhere } : true,
           },
         },
       },
@@ -242,8 +250,9 @@ export class ContentAdminController {
     @Query('packageType') packageType?: string,
     @Query('excludePackageType') excludePackageType?: string,
   ) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
     const where: any = {};
+    Object.assign(where, this.contentAccess.ownerWhere(session));
     if (categoryId) where.categoryId = categoryId;
     if (packageType) where.packageType = packageType;
     else if (excludePackageType) where.packageType = { not: excludePackageType };
@@ -252,6 +261,7 @@ export class ContentAdminController {
       orderBy: { createdAt: 'asc' },
       include: {
         category: { select: { id: true, name: true } },
+        owner: { select: { id: true, name: true, email: true } },
         _count: { select: { trainingTopics: true, storyEpisodes: true } },
       },
     });
@@ -300,12 +310,13 @@ export class ContentAdminController {
 
   @Get('scenes/:id')
   async getScene(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
-    return this.prisma.scene.findUnique({
-      where: { id },
+    const session = await this.requireManager(req);
+    return this.prisma.scene.findFirst({
+      where: { id, ...this.contentAccess.ownerWhere(session) },
       include: {
         category: true,
         group: { select: { id: true, name: true } },
+        owner: { select: { id: true, name: true, email: true } },
         // 话题列表由 GET /training-topics?sceneId= 分页提供，这里不再全量展开（避免每次进详情页拉取全部话题+材料）
         _count: { select: { trainingTopics: true, storyEpisodes: true } },
       },
@@ -318,7 +329,8 @@ export class ContentAdminController {
    */
   @Get('scenes/:id/material-context')
   async getSceneMaterialContext(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertSceneAccess(session, id);
     const context = await this.materialConstraints.getGroupContext(id);
     const allClaims = [...context.earlierScenes, ...context.laterScenes].flatMap((scene) => scene.claims);
     const texts = await this.materialConstraints.resolveMaterialTexts(
@@ -349,7 +361,8 @@ export class ContentAdminController {
   /** 当前学习包组内，单词/句块/句型分别被哪些包和话题引用。 */
   @Get('scenes/:id/material-usage')
   async getSceneMaterialUsage(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertSceneAccess(session, id);
     const usage = await this.materialConstraints.getGroupMaterialUsage(id);
     if (!usage) throw new NotFoundException('学习包不存在');
     return usage;
@@ -357,10 +370,11 @@ export class ContentAdminController {
 
   @Post('scenes')
   async createScene(@Req() req: Request, @Body() dto: CreateSceneDto) {
-    const session = await this.requireAdmin(req);
+    const session = await this.requireManager(req);
     const data = await this.fileAssetsService.normalizePersistentAssetUrls({
         ...dto,
         contentMode: dto.contentMode ?? (dto.packageType === 'story' ? 'story' : 'practice'),
+        ownerId: session.user.id,
     });
     return this.prisma.$transaction(async (tx) => {
       const scene = await tx.scene.create({ data });
@@ -373,7 +387,8 @@ export class ContentAdminController {
 
   @Patch('scenes/:id')
   async updateScene(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateSceneDto) {
-    const session = await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertSceneAccess(session, id);
     const nextContentMode = dto.contentMode ?? (dto.packageType === 'story' ? 'story' : undefined);
     const data = await this.fileAssetsService.normalizePersistentAssetUrls({
       ...dto,
@@ -402,9 +417,9 @@ export class ContentAdminController {
 
   @Delete('scenes/:id')
   async deleteScene(@Req() req: Request, @Param('id') id: string) {
-    const session = await this.requireAdmin(req);
-    const scene = await this.prisma.scene.findUnique({
-      where: { id },
+    const session = await this.requireManager(req);
+    const scene = await this.prisma.scene.findFirst({
+      where: { id, ...this.contentAccess.ownerWhere(session) },
       select: { id: true, packageType: true },
     });
     if (!scene) throw new NotFoundException('内容包不存在');
@@ -490,7 +505,7 @@ export class ContentAdminController {
 
   @Get('vocabularies')
   async listVocabularies(@Req() req: Request, @Query('search') search?: string) {
-    await this.requireAdmin(req);
+    await this.requireManager(req);
     // 轻量字段 + 搜索 + 上限：词汇库上万条，全量返回（含 examples/collocations 等大字段）
     // 会产生 40MB+ 响应导致话题编辑器卡顿。选择器改为服务端搜索，按需拉取。
     const keyword = search?.trim();
@@ -546,8 +561,8 @@ export class ContentAdminController {
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
-    await this.requireAdmin(req);
-    const where: any = {};
+    const session = await this.requireManager(req);
+    const where: any = { ...this.contentAccess.sceneWhere(session) };
     if (sceneId) where.sceneId = sceneId;
     const hasPagination = page !== undefined || pageSize !== undefined;
     const p = Math.max(1, parseInt(page || '1'));
@@ -628,8 +643,9 @@ export class ContentAdminController {
 
   @Get('training-topics/teaching-documents')
   async listTopicTeachingDocuments(@Req() req: Request, @Query('sceneId') sceneId?: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
     if (!sceneId) throw new BadRequestException('sceneId 不能为空');
+    await this.contentAccess.assertSceneAccess(session, sceneId);
     return this.prisma.trainingTopic.findMany({
       where: { sceneId },
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
@@ -646,7 +662,8 @@ export class ContentAdminController {
 
   @Get('training-topics/:id')
   async getTrainingTopic(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertTopicAccess(session, id);
     return this.prisma.trainingTopic.findUnique({
       where: { id },
       include: {
@@ -1139,7 +1156,8 @@ ${candidateLines}
 
   @Post('training-topics')
   async createTrainingTopic(@Req() req: Request, @Body() dto: CreateTrainingTopicDto) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertSceneAccess(session, dto.sceneId);
     const { chunkIds, vocabIds, patternIds, sentencePatterns, forceReview, forceOverride, ...data } = dto;
     const scene = await this.prisma.scene.findUnique({ where: { id: dto.sceneId }, select: { contentMode: true } });
     if (!scene) throw new NotFoundException('学习包不存在');
@@ -1233,11 +1251,13 @@ ${candidateLines}
 
   @Patch('training-topics/:id')
   async updateTrainingTopic(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateTrainingTopicDto) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertTopicAccess(session, id);
     const { chunkIds, vocabIds, patternIds, sentencePatterns, forceReview, forceOverride, ...data } = dto;
     const current = await this.prisma.trainingTopic.findUnique({ where: { id }, select: { sceneId: true, sortOrder: true } });
     if (!current) throw new NotFoundException('学习话题不存在');
     const sceneId = data.sceneId ?? current.sceneId;
+    await this.contentAccess.assertSceneAccess(session, sceneId);
     const scene = await this.prisma.scene.findUnique({ where: { id: sceneId }, select: { contentMode: true } });
     if (!scene || ['novel', 'story'].includes(scene.contentMode)) throw new BadRequestException('当前学习包不使用训练话题');
     validateListeningTranscript(data.transcript);
@@ -1344,7 +1364,8 @@ ${candidateLines}
 
   @Delete('training-topics/:id')
   async deleteTrainingTopic(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertTopicAccess(session, id);
     return this.prisma.$transaction(async (tx) => {
       await tx.inkScript.updateMany({ where: { topicId: id }, data: { topicId: null } });
       await tx.practiceWarmupRecord.deleteMany({ where: { topicId: id } });
@@ -1365,7 +1386,7 @@ ${candidateLines}
 
   @Get('chunks')
   async listChunks(@Req() req: Request) {
-    await this.requireAdmin(req);
+    await this.requireManager(req);
     return this.prisma.chunk.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
@@ -1461,9 +1482,13 @@ ${candidateLines}
 
   @Get('script-episodes')
   async listScriptEpisodes(@Req() req: Request, @Query('sceneId') sceneId?: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    if (sceneId) await this.contentAccess.assertSceneAccess(session, sceneId);
     const episodes = await this.prisma.storyEpisode.findMany({
-      where: sceneId ? { sceneId } : undefined,
+      where: {
+        ...(sceneId ? { sceneId } : {}),
+        ...(this.contentAccess.isAdmin(session) ? {} : { scene: { ownerId: session.user.id } }),
+      },
       orderBy: [{ chapterKey: 'asc' }, { sortOrder: 'asc' }],
       include: {
         scene: { select: { id: true, title: true } },
@@ -1493,7 +1518,7 @@ ${candidateLines}
 
   @Get('script-episodes/:id')
   async getScriptEpisode(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
     const episode = await this.prisma.storyEpisode.findUnique({
       where: { id },
       include: {
@@ -1503,6 +1528,7 @@ ${candidateLines}
       },
     });
     if (!episode) return null;
+    await this.contentAccess.assertSceneAccess(session, episode.sceneId);
     return {
       ...episode,
       chapterId: episode.chapterKey,
@@ -1527,8 +1553,9 @@ ${candidateLines}
 
   @Post('script-episodes')
   async createScriptEpisode(@Req() req: Request, @Body() dto: CreateScriptEpisodeDto) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
     const { vocabIds, chunkIds, ...rest } = dto;
+    await this.contentAccess.assertSceneAccess(session, rest.sceneId);
     const episode = await this.prisma.storyEpisode.create({
       data: {
         chapterKey: rest.chapterId,
@@ -1572,8 +1599,11 @@ ${candidateLines}
 
   @Patch('script-episodes/:id')
   async updateScriptEpisode(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateScriptEpisodeDto) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    const current = await this.prisma.storyEpisode.findUniqueOrThrow({ where: { id }, select: { sceneId: true } });
+    await this.contentAccess.assertSceneAccess(session, current.sceneId);
     const { vocabIds, chunkIds, ...rest } = dto;
+    if (rest.sceneId !== undefined) await this.contentAccess.assertSceneAccess(session, rest.sceneId);
     const data: any = {};
     if (rest.chapterId !== undefined) data.chapterKey = rest.chapterId;
     if (rest.chapterTitle !== undefined) data.chapterName = rest.chapterTitle;
@@ -1621,7 +1651,9 @@ ${candidateLines}
 
   @Delete('script-episodes/:id')
   async deleteScriptEpisode(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    const episode = await this.prisma.storyEpisode.findUniqueOrThrow({ where: { id }, select: { sceneId: true } });
+    await this.contentAccess.assertSceneAccess(session, episode.sceneId);
     return this.prisma.storyEpisode.delete({ where: { id } });
   }
 
@@ -1692,21 +1724,45 @@ ${candidateLines}
   // ════════════════════════════════════════════════════════════
 
   @Get('characters')
-  async listCharacters(@Req() req: Request) {
-    await this.requireAdmin(req);
-    return this.prisma.gameCharacter.findMany({
+  async listCharacters(
+    @Req() req: Request,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    const session = await this.requireManager(req);
+    const where: any = {
+      ...this.contentAccess.ownerWhere(session),
+      ...(search ? { OR: [
+        { name: { contains: search, mode: 'insensitive' } },
+        { displayName: { contains: search, mode: 'insensitive' } },
+      ] } : {}),
+    };
+    const hasPagination = page !== undefined || pageSize !== undefined;
+    const p = Math.max(1, Number(page || 1));
+    const ps = Math.min(100, Math.max(1, Number(pageSize || 20)));
+    const query: any = {
+      where,
       orderBy: { createdAt: 'asc' },
       include: {
+        owner: { select: { id: true, name: true, email: true } },
         roomNpcs: { include: { room: { select: { id: true, displayName: true, location: { select: { id: true, displayName: true } } } } } },
         voiceBindings: { include: { voiceAsset: { include: { provider: { select: { id: true, provider: true, label: true, model: true, isActive: true } } } } } },
       },
-    });
+      ...(hasPagination ? { skip: (p - 1) * ps, take: ps } : {}),
+    } as any;
+    if (!hasPagination) return this.prisma.gameCharacter.findMany(query);
+    const [items, total] = await Promise.all([
+      this.prisma.gameCharacter.findMany(query),
+      this.prisma.gameCharacter.count({ where }),
+    ]);
+    return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
   }
 
   @Post('characters')
   async createCharacter(@Req() req: Request, @Body() dto: any) {
-    const session = await this.requireAdmin(req);
-    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    const session = await this.requireManager(req);
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls({ ...dto, ownerId: session.user.id });
     return this.prisma.$transaction(async (tx) => {
       const character = await tx.gameCharacter.create({ data });
       await this.fileAssetsService.syncPersistentAssetReferences(
@@ -1718,8 +1774,10 @@ ${candidateLines}
 
   @Patch('characters/:id')
   async updateCharacter(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
-    const session = await this.requireAdmin(req);
-    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertCharacterAccess(session, id);
+    const { ownerId: _ownerId, owner: _owner, ...safeDto } = dto;
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls(safeDto);
     return this.prisma.$transaction(async (tx) => {
       const character = await tx.gameCharacter.update({ where: { id }, data });
       await this.fileAssetsService.syncPersistentAssetReferences(
@@ -1731,7 +1789,8 @@ ${candidateLines}
 
   @Delete('characters/:id')
   async deleteCharacter(@Req() req: Request, @Param('id') id: string) {
-    const session = await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertCharacterAccess(session, id);
     return this.prisma.$transaction(async (tx) => {
       await this.fileAssetsService.syncPersistentAssetReferences(
         tx, session.user.id, 'game_character_asset', id, null,
@@ -1743,21 +1802,43 @@ ${candidateLines}
   // ─── TTS voice assets + character references ──────────────
 
   @Get('tts-voices')
-  async listTtsVoices(@Req() req: Request, @Query('providerId') providerId?: string) {
-    await this.requireAdmin(req);
-    return this.prisma.ttsVoiceAsset.findMany({
-      where: providerId ? { providerId } : undefined,
+  async listTtsVoices(
+    @Req() req: Request,
+    @Query('providerId') providerId?: string,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    const session = await this.requireManager(req);
+    const where: any = {
+      ...(providerId ? { providerId } : {}),
+      ...(!this.contentAccess.isAdmin(session) ? { OR: [{ ownerId: session.user.id }, { visibility: 'system_shared' }] } : {}),
+      ...(search ? { displayName: { contains: search, mode: 'insensitive' } } : {}),
+    };
+    const hasPagination = page !== undefined || pageSize !== undefined;
+    const p = Math.max(1, Number(page || 1));
+    const ps = Math.min(100, Math.max(1, Number(pageSize || 20)));
+    const query: any = {
+      where,
       orderBy: [{ isAvailable: 'desc' }, { displayName: 'asc' }],
       include: {
+        owner: { select: { id: true, name: true, email: true } },
         provider: { select: { id: true, provider: true, label: true, model: true, isActive: true } },
         _count: { select: { characterBindings: true } },
       },
-    });
+      ...(hasPagination ? { skip: (p - 1) * ps, take: ps } : {}),
+    };
+    if (!hasPagination) return this.prisma.ttsVoiceAsset.findMany(query);
+    const [items, total] = await Promise.all([
+      this.prisma.ttsVoiceAsset.findMany(query),
+      this.prisma.ttsVoiceAsset.count({ where }),
+    ]);
+    return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
   }
 
   @Post('tts-voices')
   async createTtsVoice(@Req() req: Request, @Body() dto: any) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
     return this.prisma.ttsVoiceAsset.create({
       data: {
         providerId: dto.providerId,
@@ -1770,6 +1851,8 @@ ${candidateLines}
         previewUrl: dto.previewUrl || null,
         metadata: dto.metadata || undefined,
         isAvailable: dto.isAvailable !== false,
+        ownerId: session.user.id,
+        visibility: this.contentAccess.isAdmin(session) && dto.visibility === 'system_shared' ? 'system_shared' : 'private',
       },
       include: { provider: { select: { id: true, provider: true, label: true, model: true, isActive: true } } },
     });
@@ -1821,14 +1904,19 @@ ${candidateLines}
 
   @Patch('tts-voices/:id')
   async updateTtsVoice(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
-    await this.requireAdmin(req);
-    const { provider, characterBindings, _count, ...data } = dto;
+    const session = await this.requireManager(req);
+    const voice = await this.contentAccess.assertVoiceAccess(session, id);
+    if (!this.contentAccess.isAdmin(session) && voice.ownerId !== session.user.id) throw new NotFoundException('音色不存在');
+    const { provider, characterBindings, _count, owner, ownerId, ...data } = dto;
+    if (!this.contentAccess.isAdmin(session)) delete data.visibility;
     return this.prisma.ttsVoiceAsset.update({ where: { id }, data });
   }
 
   @Delete('tts-voices/:id')
   async deleteTtsVoice(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    const voice = await this.contentAccess.assertVoiceAccess(session, id);
+    if (!this.contentAccess.isAdmin(session) && voice.ownerId !== session.user.id) throw new NotFoundException('音色不存在');
     const references = await this.prisma.characterVoiceBinding.count({ where: { voiceAssetId: id } });
     if (references) throw new ForbiddenException(`该音色仍被 ${references} 个角色引用，请先解除引用`);
     return this.prisma.ttsVoiceAsset.delete({ where: { id } });
@@ -1840,9 +1928,9 @@ ${candidateLines}
     @Param('characterId') characterId: string,
     @Body() dto: any,
   ) {
-    await this.requireAdmin(req);
-    const voiceAsset = await this.prisma.ttsVoiceAsset.findUnique({ where: { id: dto.voiceAssetId } });
-    if (!voiceAsset) throw new ForbiddenException('音色资产不存在');
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertCharacterAccess(session, characterId);
+    await this.contentAccess.assertVoiceAccess(session, dto.voiceAssetId);
     if (dto.isDefault) {
       await this.prisma.characterVoiceBinding.updateMany({ where: { characterId }, data: { isDefault: false } });
     }
@@ -1856,7 +1944,8 @@ ${candidateLines}
 
   @Delete('characters/:characterId/voice-bindings/:bindingId')
   async deleteCharacterVoiceBinding(@Req() req: Request, @Param('characterId') characterId: string, @Param('bindingId') bindingId: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertCharacterAccess(session, characterId);
     return this.prisma.characterVoiceBinding.delete({ where: { id: bindingId, characterId } });
   }
 
@@ -2062,8 +2151,8 @@ ${candidateLines}
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
-    await this.requireAdmin(req);
-    const where: any = {}
+    const session = await this.requireManager(req);
+    const where: any = { ...this.contentAccess.ownerWhere(session) }
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
@@ -2095,6 +2184,7 @@ ${candidateLines}
           id: true, key: true, title: true, scriptType: true,
           episodeId: true, locationId: true, topicId: true,
           version: true, createdAt: true, updatedAt: true,
+          owner: { select: { id: true, name: true, email: true } },
           trainingTopic: {
             select: {
               id: true,
@@ -2119,9 +2209,10 @@ ${candidateLines}
 
   @Get('stories/filters')
   async getStoryFilters(@Req() req: Request) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
     const [scriptTypes, categories] = await Promise.all([
       this.prisma.inkScript.findMany({
+        where: this.contentAccess.ownerWhere(session),
         select: { scriptType: true },
         distinct: ['scriptType'],
       }),
@@ -2140,10 +2231,11 @@ ${candidateLines}
 
   @Get('stories/:id')
   async getStory(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
-    const story = await this.prisma.inkScript.findUnique({
-      where: { id },
+    const session = await this.requireManager(req);
+    const story = await this.prisma.inkScript.findFirst({
+      where: { id, ...this.contentAccess.ownerWhere(session) },
       include: {
+        owner: { select: { id: true, name: true, email: true } },
         trainingTopic: {
           select: {
             id: true,
@@ -2183,11 +2275,12 @@ ${candidateLines}
 
   @Post('stories')
   async createStory(@Req() req: Request, @Body() dto: any) {
-    const session = await this.requireAdmin(req);
+    const session = await this.requireManager(req);
     if (dto?.assetMap !== undefined) {
       throw new BadRequestException('assetMap 必须通过故事资源接口维护');
     }
-    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    if (dto.topicId) await this.contentAccess.assertTopicAccess(session, dto.topicId);
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls({ ...dto, ownerId: session.user.id });
     return this.prisma.$transaction(async (tx) => {
       const story = await tx.inkScript.create({
         data,
@@ -2218,11 +2311,14 @@ ${candidateLines}
 
   @Patch('stories/:id')
   async updateStory(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
-    const session = await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertStoryAccess(session, id);
     if (dto?.assetMap !== undefined) {
       throw new BadRequestException('assetMap 必须通过故事资源接口维护');
     }
-    const data = await this.fileAssetsService.normalizePersistentAssetUrls(dto);
+    if (dto.topicId) await this.contentAccess.assertTopicAccess(session, dto.topicId);
+    const { ownerId: _ownerId, owner: _owner, ...safeDto } = dto;
+    const data = await this.fileAssetsService.normalizePersistentAssetUrls(safeDto);
     return this.prisma.$transaction(async (tx) => {
       const story = await tx.inkScript.update({
         where: { id },
@@ -2254,7 +2350,8 @@ ${candidateLines}
 
   @Delete('stories/by-scene/:sceneId')
   async deleteStoriesByScene(@Req() req: Request, @Param('sceneId') sceneId: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertSceneAccess(session, sceneId);
     const topics = await this.prisma.trainingTopic.findMany({
       where: { sceneId },
       select: { id: true, inkScriptId: true },
@@ -2289,7 +2386,8 @@ ${candidateLines}
 
   @Delete('stories/:id')
   async deleteStory(@Req() req: Request, @Param('id') id: string) {
-    const session = await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertStoryAccess(session, id);
     await this.detachInkScript(id);
     return this.prisma.$transaction(async (tx) => {
       await this.fileAssetsService.syncPersistentAssetReferences(
@@ -2307,7 +2405,8 @@ ${candidateLines}
   /** 获取故事的 assetMap，并附上每个资产的可访问签名 URL */
   @Get('stories/:id/assets')
   async getStoryAssets(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertStoryAccess(session, id);
     const story = await this.prisma.inkScript.findUnique({
       where: { id },
       select: { id: true, assetMap: true },
@@ -2384,7 +2483,8 @@ ${candidateLines}
     @Param('id') id: string,
     @Param('alias') alias: string,
   ) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertStoryAccess(session, id);
 
     const story = await this.prisma.inkScript.findUnique({
       where: { id },
@@ -2440,7 +2540,8 @@ ${candidateLines}
       locationBackgroundUrl?: string;
     },
   ) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertTopicAccess(session, dto.topicId);
 
     try {
       const llmConfig = await this.aiModelService.getLlmConfig();
@@ -2677,7 +2778,8 @@ Alex: 更多英文对白
    */
   @Post('stories/:id/translate')
   async translateStory(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertStoryAccess(session, id);
 
     try {
       const story = await this.prisma.inkScript.findUnique({ where: { id } });
@@ -2822,7 +2924,8 @@ ${dialogueTexts}
    */
   @Post('stories/:id/generate-audio')
   async generateStoryAudio(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertStoryAccess(session, id);
 
     try {
       const story = await this.prisma.inkScript.findUnique({
@@ -2977,7 +3080,8 @@ ${dialogueTexts}
    */
   @Post('stories/:id/generate-teaching')
   async generateTeachingMarkdown(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertStoryAccess(session, id);
 
     try {
       const llmConfig = await this.aiModelService.getLlmConfig();
@@ -3137,7 +3241,8 @@ ${contextBlock}
    */
   @Post('training-topics/:id/generate-warmup-task')
   async generateWarmupPipelineTask(@Req() req: Request, @Param('id') id: string) {
-    const session = await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertTopicAccess(session, id);
     return this.adminTasksService.enqueueWarmupPipelineGenerate(id, session.user.id);
   }
 
@@ -3147,7 +3252,8 @@ ${contextBlock}
    */
   @Post('scenes/:id/generate-topic-batch')
   async generateSceneTopicBatch(@Req() req: Request, @Param('id') id: string) {
-    const session = await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertSceneAccess(session, id);
     return this.adminTasksService.enqueueSceneTopicBatchGenerate(id, session.user.id);
   }
 
@@ -3400,7 +3506,7 @@ ${contextBlock}
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
-    await this.requireAdmin(req);
+    await this.requireManager(req);
     const where: any = {};
     if (search) {
       where.OR = [
@@ -3430,7 +3536,7 @@ ${contextBlock}
   /** 获取所有已有的句块分类（去重） */
   @Get('library/chunks/categories')
   async listChunkCategories(@Req() req: Request) {
-    await this.requireAdmin(req);
+    await this.requireManager(req);
     const rows = await this.prisma.chunk.findMany({
       select: { category: true },
       distinct: ['category'],
@@ -3530,7 +3636,7 @@ ${contextBlock}
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
-    await this.requireAdmin(req);
+    await this.requireManager(req);
     const where: any = {};
     if (search) {
       where.OR = [
@@ -3559,7 +3665,7 @@ ${contextBlock}
   /** 获取所有已有的句式分类（去重） */
   @Get('library/patterns/categories')
   async listPatternCategories(@Req() req: Request) {
-    await this.requireAdmin(req);
+    await this.requireManager(req);
     const rows = await this.prisma.sentencePattern.findMany({
       select: { category: true },
       distinct: ['category'],
@@ -3601,7 +3707,8 @@ ${contextBlock}
 
   @Delete('library/patterns/:id')
   async deleteLibraryPattern(@Req() req: Request, @Param('id') id: string) {
-    const session = await this.requireAdmin(req);
+    const session = await this.requireManager(req);
+    await this.contentAccess.assertStoryAccess(session, id);
     return this.prisma.$transaction(async (tx) => {
       await this.fileAssetsService.syncPersistentAssetReferences(
         tx, session.user.id, 'sentence_pattern_asset', id, null,
@@ -3652,7 +3759,7 @@ ${contextBlock}
     @UploadedFile() file: Express.Multer.File,
     @Body('language') language?: string,
   ) {
-    await this.requireAdmin(req);
+    await this.requireManager(req);
     if (!file) throw new BadRequestException('未收到音频文件');
     const result = await this.ttsService.processListeningFromAudio({
       audioBuffer: file.buffer,

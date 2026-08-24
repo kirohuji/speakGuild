@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { HashRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Navigate, Routes, Route, useLocation } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from '@/providers/theme-provider'
@@ -63,6 +63,18 @@ function PageLoader() {
   return <div className="flex min-h-[100dvh] items-center justify-center bg-background text-sm text-muted-foreground">Loading...</div>
 }
 
+function LearningClientProviders({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
+  if (location.pathname.startsWith('/admin')) return <>{children}</>
+  return (
+    <StartupWarmupProvider>
+      <MobileGestureProvider>
+        <OnboardingProvider>{children}</OnboardingProvider>
+      </MobileGestureProvider>
+    </StartupWarmupProvider>
+  )
+}
+
 export default function App() {
   return (
     <HelmetProvider>
@@ -70,12 +82,10 @@ export default function App() {
         <NativeBridgeProvider>
           <KeyboardProvider>
           <AuthProvider>
-            <StartupWarmupProvider>
             <ThemePresetProvider>
             <HashRouter>
+            <LearningClientProviders>
             <AuthRouteGate>
-              <MobileGestureProvider>
-              <OnboardingProvider>
               <Suspense fallback={<PageLoader />}>
               <ErrorBoundary>
               <Routes>
@@ -95,7 +105,7 @@ export default function App() {
                 <Route path="/scripts/packages/:packageId/episodes/:episodeId" element={<ScriptEpisodePage />} />
                 <Route path="/scripts/player/:episodeId" element={<ScriptPlayerPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/account" element={<AccountPage />} />
+                <Route path="/account" element={isNative() ? <AccountPage /> : <Navigate to="/" replace />} />
                 <Route path="/member" element={<MemberPage />} />
                 <Route path="/notifications" element={<NotificationListPage />} />
                 <Route path="/notifications/:id" element={<NotificationDetailPage />} />
@@ -139,9 +149,8 @@ export default function App() {
             </Routes>
             </ErrorBoundary>
             </Suspense>
-            </OnboardingProvider>
-            </MobileGestureProvider>
           </AuthRouteGate>
+          </LearningClientProviders>
         </HashRouter>
           <Toaster
             position="top-center"
@@ -166,7 +175,6 @@ export default function App() {
             }}
           />
           </ThemePresetProvider>
-          </StartupWarmupProvider>
       </AuthProvider>
       </KeyboardProvider>
       </NativeBridgeProvider>

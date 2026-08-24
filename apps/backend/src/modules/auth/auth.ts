@@ -150,9 +150,10 @@ export const auth: any = betterAuth({
         defaultValue: false,
       },
       role: {
-        type: 'string',
+        type: ['user', 'creator', 'admin'],
         required: false,
         defaultValue: 'user',
+        input: false,
       },
     },
   },

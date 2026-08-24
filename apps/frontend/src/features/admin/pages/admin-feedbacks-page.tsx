@@ -11,6 +11,7 @@ import type { FeedbackResult } from '@/features/feedback/api'
 import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { cn } from '@/lib/cn'
 import { AdminPagination } from '@/features/admin/components/admin-pagination'
+import { contentReviewApi, type ContentReviewRequest } from '../api-content-reviews'
 
 const STATUS_MAP: Record<string, { label: string; variant: 'outline' | 'secondary' | 'default' }> = {
   pending: { label: '待处理', variant: 'secondary' },
@@ -41,6 +42,8 @@ export function AdminFeedbacksPage() {
   const [replyText, setReplyText] = useState('')
   const [replying, setReplying] = useState(false)
   const [replySent, setReplySent] = useState(false)
+  const [reviews, setReviews] = useState<ContentReviewRequest[]>([])
+  const [reviewingId, setReviewingId] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
     const data = await getAllFeedbacks({ status: filter || undefined, page, pageSize })
@@ -50,6 +53,35 @@ export function AdminFeedbacksPage() {
   }, [filter, page, pageSize])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  const fetchReviews = useCallback(async () => {
+    const data = await contentReviewApi.list({ status: 'pending', page: 1, pageSize: 20 })
+    setReviews(data.items)
+  }, [])
+
+  useEffect(() => { void fetchReviews() }, [fetchReviews])
+
+  const approveReview = async (review: ContentReviewRequest) => {
+    setReviewingId(review.id)
+    try {
+      await contentReviewApi.approve(review.id)
+      await fetchReviews()
+    } finally {
+      setReviewingId(null)
+    }
+  }
+
+  const rejectReview = async (review: ContentReviewRequest) => {
+    const note = window.prompt('请输入驳回原因')?.trim()
+    if (!note) return
+    setReviewingId(review.id)
+    try {
+      await contentReviewApi.reject(review.id, note)
+      await fetchReviews()
+    } finally {
+      setReviewingId(null)
+    }
+  }
 
   const handleStatusChange = async (id: string, status: string) => {
     await updateFeedback(id, { status })
@@ -89,8 +121,42 @@ export function AdminFeedbacksPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-lg font-bold">反馈管理</h1>
-        <p className="text-xs text-muted-foreground">查看和处理用户反馈</p>
+        <p className="text-xs text-muted-foreground">查看用户反馈并审核创作者提交的内容版本</p>
       </div>
+
+      <Card>
+        <CardContent className="flex flex-col gap-3 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">内容审核</p>
+              <p className="text-xs text-muted-foreground">审核通过后将立即生成并发布对应版本</p>
+            </div>
+            <Badge variant={reviews.length > 0 ? 'secondary' : 'outline'}>{reviews.length} 条待审核</Badge>
+          </div>
+          {reviews.length === 0 ? (
+            <p className="rounded-lg bg-muted/30 px-3 py-4 text-center text-xs text-muted-foreground">暂无待审核内容</p>
+          ) : reviews.map((review) => (
+            <div key={review.id} className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="truncate text-sm font-medium">{review.scene.title}</p>
+                  <Badge variant="outline">{review.kind === 'narrative_package' ? '剧情包' : '学习包'} v{review.requestedVersion}</Badge>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {review.owner.name || review.owner.email} · {new Date(review.submittedAt).toLocaleString('zh-CN')}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled={reviewingId === review.id} onClick={() => void rejectReview(review)}>驳回</Button>
+                <Button size="sm" disabled={reviewingId === review.id} onClick={() => void approveReview(review)}>
+                  {reviewingId === review.id && <Loader2 data-icon="inline-start" className="animate-spin" />}
+                  通过并生成
+                </Button>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       <div className="flex gap-2">
         <Select value={filter} onChange={(e) => { setFilter(e.target.value); setPage(1) }} className="w-40">

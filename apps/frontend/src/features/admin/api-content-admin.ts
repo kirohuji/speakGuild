@@ -495,6 +495,7 @@ export interface GameCharacter {
   defaultPosition?: string | null
   voiceBindings?: CharacterVoiceBinding[]
   roomNpcs?: { room: { id: string; displayName: string; location: { id: string; displayName: string } } }[]
+  owner?: { id: string; name: string; email: string } | null
 }
 
 export interface TtsVoiceAsset {
@@ -511,6 +512,7 @@ export interface TtsVoiceAsset {
   isAvailable: boolean
   provider: { id: string; provider: string; label: string; model: string; isActive: boolean }
   _count?: { characterBindings: number }
+  owner?: { id: string; name: string; email: string } | null
 }
 
 export interface CharacterVoiceBinding {
@@ -523,8 +525,10 @@ export interface CharacterVoiceBinding {
   voiceAsset: TtsVoiceAsset
 }
 
-export async function listCharacters(): Promise<GameCharacter[]> {
-  return get('/admin/content/characters')
+export function listCharacters(): Promise<GameCharacter[]>
+export function listCharacters(params: { search?: string; page: number; pageSize: number }): Promise<PaginatedResult<GameCharacter>>
+export async function listCharacters(params?: { search?: string; page: number; pageSize: number }): Promise<GameCharacter[] | PaginatedResult<GameCharacter>> {
+  return get('/admin/content/characters', params)
 }
 
 export async function createCharacter(data: Partial<GameCharacter>): Promise<GameCharacter> {
@@ -539,8 +543,10 @@ export async function deleteCharacter(id: string): Promise<void> {
   return _delete(`/admin/content/characters/${id}`)
 }
 
-export async function listTtsVoices(providerId?: string): Promise<TtsVoiceAsset[]> {
-  return get('/admin/content/tts-voices', providerId ? { providerId } : undefined)
+export function listTtsVoices(providerId?: string): Promise<TtsVoiceAsset[]>
+export function listTtsVoices(params: { providerId?: string; search?: string; page: number; pageSize: number }): Promise<PaginatedResult<TtsVoiceAsset>>
+export async function listTtsVoices(input?: string | { providerId?: string; search?: string; page: number; pageSize: number }): Promise<TtsVoiceAsset[] | PaginatedResult<TtsVoiceAsset>> {
+  return get('/admin/content/tts-voices', typeof input === 'string' ? { providerId: input } : input)
 }
 
 export async function createTtsVoice(data: Partial<TtsVoiceAsset>): Promise<TtsVoiceAsset> {
@@ -708,6 +714,7 @@ export interface StoryData {
   version: number
   createdAt: string
   updatedAt: string
+  owner?: { id: string; name: string; email: string } | null
   trainingTopic?: {
     id: string
     title: string

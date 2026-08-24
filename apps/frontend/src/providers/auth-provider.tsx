@@ -13,6 +13,7 @@ import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { useSearchStore } from '@/stores/search.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { useLearningStore } from '@/stores/learning.store'
+import { isManagementHashRoute, useManagementHashRoute } from '@/hooks/use-management-route'
 
 const OTA_USER_ID_KEY = 'manyu-ota-user-id'
 const AUTH_SESSION_CACHE_KEY = 'manyu-auth-session-cache'
@@ -27,12 +28,12 @@ const OFFLINE_DATA_OWNER_KEY = 'manyu-offline-data-owner'
  *   - visibility 切回前台时至少间隔 30 秒才再次同步
  *   - 学习包更新检查由 NativeBridgeProvider 统一管理，此处不再重复触发
  */
-function useAppForegroundSync(userId: string | undefined) {
+function useAppForegroundSync(userId: string | undefined, enabled: boolean) {
   const lastSyncRef = useRef(0)
   const initialSyncDoneRef = useRef(false)
 
   useEffect(() => {
-    if (!userId) return
+    if (!userId || !enabled) return
 
     void registerLearningReminderActions().catch((error) => {
       console.warn('[learning-reminder] action listener failed:', error)
@@ -78,7 +79,7 @@ function useAppForegroundSync(userId: string | undefined) {
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
-  }, [userId])
+  }, [enabled, userId])
 }
 
 interface SessionUser {
@@ -90,7 +91,7 @@ interface SessionUser {
   phoneNumber?: string
   phoneNumberVerified?: boolean
   emailVerified?: boolean
-  role?: 'user' | 'admin'
+  role?: 'user' | 'creator' | 'admin'
 }
 
 interface Session {
@@ -211,6 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const cachedSessionRef = useRef<SessionPayload>(readCachedSession())
   const [session, setSession] = useState<Session | null>(() => cachedSessionRef.current)
   const [isLoading, setIsLoading] = useState(() => !cachedSessionRef.current)
+  const managementRoute = useManagementHashRoute()
 
   // Listen for 401 events from request interceptor (token expired/invalid)
   // so we can clear session and let AuthRouteGate redirect to login
@@ -239,13 +241,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  useAppForegroundSync(session?.user?.id)
+  useAppForegroundSync(session?.user?.id, !managementRoute)
 
   const fetchSession = async (options: { allowCacheFallback?: boolean } = {}): Promise<Session | null> => {
     try {
       const raw = await authClient.getSession()
       const nextSession = normalizeSessionResponse(raw)
-      if (nextSession?.user?.id) {
+      if (nextSession?.user?.id && !isManagementHashRoute()) {
         await prepareOfflineDataForUser(nextSession.user.id)
         // Restore the server copy before exposing an authenticated session. Without
         // this barrier, TodayTaskPage can create a new empty 10-item run before
@@ -261,7 +263,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (nextSession?.user?.id) {
         localStorage.setItem(OTA_USER_ID_KEY, nextSession.user.id)
         // 用户信息：先本地快照回显，再后台拉远程覆盖（离线时静默失败）
-        void useUserStore.getState().ensureLoaded(nextSession.user.id)
+        if (!isManagementHashRoute()) void useUserStore.getState().ensureLoaded(nextSession.user.id)
       } else {
         localStorage.removeItem(OTA_USER_ID_KEY)
         useUserStore.getState().reset()
@@ -271,11 +273,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       const cached = options.allowCacheFallback === false ? null : readCachedSession()
       if (cached?.user?.id) {
-        await prepareOfflineDataForUser(cached.user.id)
+        if (!isManagementHashRoute()) await prepareOfflineDataForUser(cached.user.id)
         setCurrentSessionSnapshot(cached)
         setSession(cached)
         localStorage.setItem(OTA_USER_ID_KEY, cached.user.id)
-        void useUserStore.getState().ensureLoaded(cached.user.id)
+        if (!isManagementHashRoute()) void useUserStore.getState().ensureLoaded(cached.user.id)
         console.warn('[auth] session refresh failed; using cached session:', error)
         return cached
       }
@@ -375,7 +377,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     // User-scoped local storage is removed on logout. Do not make logout a
     // destructive path for an interrupted Today run or any queued practice data.
-    if (session?.user.id) {
+    if (session?.user.id && !managementRoute) {
       const syncResult = await offlineSyncService.sync(session.user.id)
       if (syncResult.push.failed > 0) {
         throw new Error('练习数据尚未同步，请联网后再退出登录')
@@ -389,7 +391,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn('[RevenueCat] logout reset failed:', error)
       })
     }
-    await clearUserScopedClientData()
+    await clearUserScopedClientData({ preservePersistentData: managementRoute })
     setOfflineDataOwner(null)
     clearBearerToken()
     useUserStore.getState().reset()

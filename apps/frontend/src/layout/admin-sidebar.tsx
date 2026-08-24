@@ -8,6 +8,8 @@ import {
   Smartphone, FileText, Wrench, PanelLeftClose, PanelLeftOpen, Library, BookOpen, Archive, Brain, ListChecks, ScrollText, Boxes, Castle, Clapperboard, HardDrive,
 } from 'lucide-react'
 import { cn } from '@/lib/cn'
+import { useAuth } from '@/providers/auth-provider'
+import { CREATOR_MENU_KEYS } from '@/features/admin/management-access'
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -40,8 +42,10 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
   const { t } = useTranslation()
   const location = useLocation()
   const currentPath = location.pathname
+  const { session } = useAuth()
+  const isCreator = session?.user?.role === 'creator'
 
-  const menuGroups: MenuGroup[] = [
+  const allMenuGroups: MenuGroup[] = [
     { key: 'users', label: t('admin.usersAndOps', { defaultValue: '用户与运营' }), icon: Users, items: [
       { key: 'users', label: t('admin.userManagement', { defaultValue: '用户管理' }), icon: Users, path: '/admin/users' },
       { key: 'members', label: t('admin.memberManagement', { defaultValue: '会员管理' }), icon: CreditCard, path: '/admin/members' },
@@ -61,7 +65,7 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
     { key: 'narrative-management', label: '剧情管理', icon: Castle, items: [
       { key: 'narrative', label: '剧情包内容', icon: ScrollText, path: '/admin/narrative' },
       { key: 'narrative-assets', label: '剧情共享资产', icon: Boxes, path: '/admin/narrative-assets' },
-      { key: 'script-packs', label: '剧本包发布管理', icon: Clapperboard, path: '/admin/script-packs' },
+      { key: 'script-packs', label: '剧情包发布管理', icon: Clapperboard, path: '/admin/script-packs' },
     ]},
     { key: 'system', label: t('admin.systemSettings', { defaultValue: '系统设置' }), icon: Wrench, items: [
       { key: 'themes', label: t('admin.themeManagement', { defaultValue: '主题管理' }), icon: Palette, path: '/admin/themes' },
@@ -73,6 +77,11 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
       { key: 'file-assets', label: '资源库管理', icon: HardDrive, path: '/admin/file-assets' },
     ]},
   ]
+  const menuGroups = isCreator
+    ? allMenuGroups
+        .filter((group) => group.key === 'content' || group.key === 'narrative-management')
+        .map((group) => ({ ...group, items: group.items.filter((item) => CREATOR_MENU_KEYS.has(item.key)) }))
+    : allMenuGroups
 
   // 根据当前路由自动展开所属分组
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {

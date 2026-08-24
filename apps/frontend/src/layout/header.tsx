@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTheme } from 'next-themes'
-import { Loader2, Monitor, Moon, Shield, Sun, Wrench } from 'lucide-react'
+import { Loader2, LogOut, Monitor, Moon, Shield, Sun, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { UserAvatar } from '@/components/common/user-avatar'
 import { cn } from '@/lib/cn'
@@ -11,14 +11,17 @@ import { useUserStore } from '@/stores/user.store'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { useAppUpdateStore } from '@/stores/app-update.store'
 import { isDevHost } from '@/lib/dev-host'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { managementHome } from '@/features/admin/management-access'
 
 export function Header() {
   const { t } = useTranslation()
   const location = useLocation()
+  const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
   const [themeMenuOpen, setThemeMenuOpen] = useState(false)
   const themeMenuRef = useRef<HTMLDivElement>(null)
-  const { session } = useAuth()
+  const { session, signOut } = useAuth()
   const ensureUserLoaded = useUserStore((s) => s.ensureLoaded)
   const isSyncing = useOfflineSyncStore((s) => s.isSyncing)
   const lastSyncLog = useOfflineSyncStore((s) => s.logs[0])
@@ -29,6 +32,7 @@ export function Header() {
   const updateIsMandatory = useAppUpdateStore((s) => s.isMandatory)
   const openUpdateDialog = useAppUpdateStore((s) => s.openDialog)
   const isAdmin = session?.user?.role === 'admin'
+  const isCreator = session?.user?.role === 'creator'
   const user = session?.user
 
   const showBackgroundUpdate =
@@ -108,11 +112,11 @@ export function Header() {
         <div className="flex items-center gap-1.5 lg:gap-2 ml-auto">
           {/* 桌面端：后台管理 + 主题切换 */}
           <div className="hidden lg:flex items-center gap-2">
-            {isAdmin && (
-              <Link to="/admin/users">
+            {(isAdmin || isCreator) && (
+              <Link to={managementHome(session?.user?.role)}>
                 <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
                   <Shield className="h-3.5 w-3.5" />
-                  {t('common.adminPanel')}
+                  {isCreator ? '创作管理' : t('common.adminPanel')}
                 </Button>
               </Link>
             )}
@@ -163,27 +167,41 @@ export function Header() {
             )}
 
             {user && (
-              <Link
-                to="/account"
-                aria-label={t('profile.account') + (lastSyncLog ? `, ${lastSyncLog.summary}` : '')}
-                title={lastSyncLog?.summary ?? undefined}
-                className="relative block rounded-full p-0.5 transition-colors hover:bg-muted"
-              >
-                <UserAvatar className="size-8" fallbackClassName="bg-muted text-xs font-semibold text-foreground" />
-                {isSyncing && (
-                  <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border">
-                    <Loader2 className="size-3 animate-spin text-primary" />
-                  </span>
-                )}
-                {isDevHost && (
-                  <span
-                    className="absolute -left-1 -bottom-1 flex size-4 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm ring-1 ring-amber-600"
-                    title={t('common.devHostMode')}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="打开账号菜单"
+                    className="relative block rounded-full p-0.5 transition-colors hover:bg-muted"
                   >
-                    <Wrench className="size-2.5" />
-                  </span>
-                )}
-              </Link>
+                    <UserAvatar className="size-8" fallbackClassName="bg-muted text-xs font-semibold text-foreground" />
+                    {isSyncing && (
+                      <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border">
+                        <Loader2 className="size-3 animate-spin text-primary" />
+                      </span>
+                    )}
+                    {isDevHost && (
+                      <span className="absolute -left-1 -bottom-1 flex size-4 items-center justify-center rounded-full bg-amber-500 text-white shadow-sm ring-1 ring-amber-600">
+                        <Wrench className="size-2.5" />
+                      </span>
+                    )}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-64 p-2">
+                  <div className="px-2 py-2">
+                    <p className="truncate text-sm font-medium">{user.name || '用户'}</p>
+                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => void signOut().then(() => navigate('/auth/login'))}
+                  >
+                    <LogOut data-icon="inline-start" />
+                    退出登录
+                  </Button>
+                </PopoverContent>
+              </Popover>
             )}
           </div>
         </div>

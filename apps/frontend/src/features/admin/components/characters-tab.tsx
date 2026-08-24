@@ -21,6 +21,8 @@ import type { TtsProviderKey } from '@/lib/tts-api'
 import { ImageUploadField } from './image-upload-field'
 import { VnPlayer } from '@/features/vn-engine/vn-player'
 import { cn } from '@/lib/cn'
+import { AdminPagination } from './admin-pagination'
+import { useAuth } from '@/providers/auth-provider'
 
 /** 支持的角色状态预设 */
 const EXPRESSION_PRESETS = ['default', 'happy', 'sad', 'angry', 'surprised', 'thinking', 'shy', 'confident']
@@ -50,11 +52,16 @@ interface CharactersTabProps {
 }
 
 export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
+  const { session } = useAuth()
+  const isAdmin = session?.user?.role === 'admin'
   const [items, setItems] = useState<GameCharacter[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editItem, setEditItem] = useState<GameCharacter | null>(null)
   const [saving, setSaving] = useState(false)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const [total, setTotal] = useState(0)
 
   // Form
   const [name, setName] = useState('')
@@ -82,13 +89,14 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [data, voices] = await Promise.all([listCharacters(), listTtsVoices()])
-      setItems(data)
+      const [data, voices] = await Promise.all([listCharacters({ page, pageSize }), listTtsVoices()])
+      setItems(data.items)
+      setTotal(data.total)
       setVoiceAssets(voices.filter((voice) => voice.isAvailable))
-      onCharactersChange?.(data)
+      onCharactersChange?.(data.items)
     } catch { toast.error('加载角色失败') }
     finally { setLoading(false) }
-  }, [onCharactersChange])
+  }, [onCharactersChange, page, pageSize])
 
   useEffect(() => { load() }, [load])
 
@@ -263,7 +271,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-muted-foreground">
-            管理 NPC 角色，每个角色可在故事对话中使用。共 {items.length} 个角色。
+            管理 NPC 角色，每个角色可在故事对话中使用。共 {total} 个角色。
           </p>
         </div>
         <Button size="sm" onClick={openCreate}>
@@ -301,6 +309,7 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                     <div className="min-w-0">
                       <CardTitle className="truncate text-base">{item.displayName}</CardTitle>
                       <p className="truncate font-mono text-xs text-muted-foreground">{item.name}</p>
+                      {isAdmin && item.owner && <p className="truncate text-[11px] text-muted-foreground">创作者：{item.owner.name || item.owner.email}</p>}
                     </div>
                   </div>
                   <div className="flex gap-1">
@@ -337,6 +346,14 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
           ))}
         </div>
       )}
+
+      <AdminPagination
+        total={total}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
+      />
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

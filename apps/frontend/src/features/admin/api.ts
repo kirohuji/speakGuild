@@ -6,7 +6,7 @@ export interface AdminUser {
   name: string;
   username: string | null;
   image: string | null;
-  role: 'user' | 'admin';
+  role: 'user' | 'creator' | 'admin';
   emailVerified: boolean;
   phoneNumber: string | null;
   phoneNumberVerified: boolean;
@@ -234,7 +234,7 @@ export async function getUserLearningOverview(id: string) {
   return get<AdminUserLearningOverview>(`/admin/users/${id}/learning-overview`);
 }
 
-export async function updateUserRole(id: string, role: 'user' | 'admin') {
+export async function updateUserRole(id: string, role: 'user' | 'creator' | 'admin') {
   return patch<AdminUser>(`/admin/users/${id}/role`, { role });
 }
 
