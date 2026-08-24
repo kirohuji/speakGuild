@@ -31,6 +31,7 @@ interface TopicTeachingWorkspaceProps {
   selectedVocabIds: string[]
   onToggleMaterial: (kind: MaterialKind, id: string) => void
   onCreateMaterial: (kind: MaterialKind) => void
+  onSearchPatterns?: (query: string) => Promise<unknown>
   onSearchVocabs?: (query: string) => Promise<unknown>
 }
 
@@ -155,6 +156,7 @@ export function TopicTeachingWorkspace({
   selectedVocabIds,
   onToggleMaterial,
   onCreateMaterial,
+  onSearchPatterns,
   onSearchVocabs,
 }: TopicTeachingWorkspaceProps) {
   const [documents, setDocuments] = useState<TopicTeachingDocument[]>([])
@@ -184,6 +186,13 @@ export function TopicTeachingWorkspace({
       })
     return () => { cancelled = true }
   }, [sceneId])
+
+  useEffect(() => {
+    const query = materialQueries.pattern.trim()
+    if (!query || !onSearchPatterns) return
+    const timer = window.setTimeout(() => { void onSearchPatterns(query) }, 300)
+    return () => window.clearTimeout(timer)
+  }, [materialQueries.pattern, onSearchPatterns])
 
   useEffect(() => {
     const query = materialQueries.vocab.trim()

@@ -1,5 +1,5 @@
 import { InjectQueue } from '@nestjs/bullmq';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
@@ -7,7 +7,9 @@ import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB,
 import { DictionaryService } from '../dictionary/dictionary.service';
 
 @Injectable()
-export class AdminTasksService {
+export class AdminTasksService implements OnModuleInit {
+  private readonly logger = new Logger(AdminTasksService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     @InjectQueue(ADMIN_CONTENT_QUEUE) private readonly contentQueue: Queue,
@@ -15,6 +17,66 @@ export class AdminTasksService {
     @InjectQueue(SCRIPT_VIDEO_QUEUE) private readonly videoQueue: Queue,
     private readonly dictionaryService: DictionaryService,
   ) {}
+
+  async onModuleInit() {
+    await this.recoverInterruptedDictionaryPronunciationTasks();
+  }
+
+  /**
+   * Redis normally moves an interrupted active job back to waiting. Older
+   * workers, however, exited immediately because the database row was already
+   * `running`, leaving the row stuck forever. Reconcile missing/finished queue
+   * jobs on startup and preserve the database progress checkpoint.
+   */
+  private async recoverInterruptedDictionaryPronunciationTasks() {
+    const tasks = await this.prisma.adminTask.findMany({
+      where: {
+        type: DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB,
+        status: { in: [AdminTaskStatus.queued, AdminTaskStatus.running] },
+      },
+      select: { id: true, status: true, bullJobId: true, payload: true, processedItems: true, totalItems: true },
+    });
+
+    for (const task of tasks) {
+      const words = Array.isArray((task.payload as any)?.words)
+        ? (task.payload as any).words.filter((word: unknown): word is string => typeof word === 'string')
+        : [];
+      if (!words.length) continue;
+
+      try {
+        const existingJob = task.bullJobId ? await this.contentQueue.getJob(task.bullJobId) : null;
+        const existingState = existingJob ? await existingJob.getState() : null;
+        if (existingJob && ['active', 'waiting', 'prioritized', 'delayed', 'waiting-children'].includes(existingState)) {
+          continue;
+        }
+        if (existingJob) await existingJob.remove().catch(() => undefined);
+
+        const recoveryJobId = `resume-${task.id}`;
+        const previousRecoveryJob = await this.contentQueue.getJob(recoveryJobId);
+        if (previousRecoveryJob) {
+          const state = await previousRecoveryJob.getState();
+          if (['completed', 'failed'].includes(state)) await previousRecoveryJob.remove().catch(() => undefined);
+        }
+        const job = await this.contentQueue.add(
+          DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB,
+          { taskId: task.id, words },
+          { jobId: recoveryJobId },
+        );
+        await this.prisma.adminTask.update({
+          where: { id: task.id },
+          data: { bullJobId: job.id, currentStep: `resume:${task.processedItems}/${task.totalItems}` },
+        });
+        await this.log(
+          task.id,
+          'warn',
+          `后端重启后已从 ${task.processedItems}/${task.totalItems} 的检查点重新入队`,
+          { step: 'resumed', meta: { processedItems: task.processedItems, totalItems: task.totalItems } },
+        );
+      } catch (error) {
+        this.logger.error(`Failed to recover admin task ${task.id}`, error instanceof Error ? error.stack : String(error));
+      }
+    }
+  }
 
   /** 将音标审查页当前的最多 100 个词作为一个可追踪的后台刷新任务。 */
   async enqueueDictionaryPronunciationBatchRefresh(createdById: string, params?: { search?: string; page?: number }) {
@@ -627,6 +689,46 @@ export class AdminTasksService {
       },
     });
     return result.count > 0;
+  }
+
+  /**
+   * Claim a queued task or resume a task whose worker was interrupted.
+   * The returned counters are the durable checkpoint used by resumable jobs.
+   */
+  async beginOrResume(taskId: string, currentStep = 'scan') {
+    const task = await this.prisma.adminTask.findUnique({
+      where: { id: taskId },
+      select: {
+        id: true,
+        status: true,
+        totalItems: true,
+        processedItems: true,
+        successItems: true,
+        failedItems: true,
+        startedAt: true,
+      },
+    });
+    if (!task || (task.status !== AdminTaskStatus.queued && task.status !== AdminTaskStatus.running)) return null;
+
+    if (task.status === AdminTaskStatus.queued) {
+      const claimed = await this.prisma.adminTask.updateMany({
+        where: { id: taskId, status: AdminTaskStatus.queued },
+        data: {
+          status: AdminTaskStatus.running,
+          currentStep,
+          startedAt: task.startedAt ?? new Date(),
+          errorMessage: null,
+        },
+      });
+      if (!claimed.count) return null;
+    } else {
+      await this.prisma.adminTask.update({
+        where: { id: taskId },
+        data: { currentStep, errorMessage: null },
+      });
+    }
+
+    return task;
   }
 
   async setProgress(taskId: string, data: {

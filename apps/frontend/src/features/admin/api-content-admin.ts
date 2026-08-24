@@ -301,15 +301,16 @@ export interface TrainingTopic {
   topicVocabs?: { id: string; vocab: Vocabulary; sortOrder: number }[]
 }
 
-export function listTrainingTopics(sceneId?: string, options?: { detail?: 'summary' | 'full' }): Promise<TrainingTopic[]>
-export function listTrainingTopics(sceneId: string | undefined, options: { detail?: 'summary' | 'full'; page: number; pageSize: number }): Promise<PaginatedResult<TrainingTopic>>
+export function listTrainingTopics(sceneId?: string, options?: { detail?: 'summary' | 'full'; search?: string }): Promise<TrainingTopic[]>
+export function listTrainingTopics(sceneId: string | undefined, options: { detail?: 'summary' | 'full'; search?: string; page: number; pageSize: number }): Promise<PaginatedResult<TrainingTopic>>
 export async function listTrainingTopics(
   sceneId?: string,
-  options?: { detail?: 'summary' | 'full'; page?: number; pageSize?: number },
+  options?: { detail?: 'summary' | 'full'; search?: string; page?: number; pageSize?: number },
 ): Promise<TrainingTopic[] | PaginatedResult<TrainingTopic>> {
   return get('/admin/content/training-topics', {
     ...(sceneId ? { sceneId } : {}),
     ...(options?.detail === 'full' ? { detail: 'full' } : {}),
+    ...(options?.search?.trim() ? { search: options.search.trim() } : {}),
     ...(options?.page ? { page: options.page } : {}),
     ...(options?.pageSize ? { pageSize: options.pageSize } : {}),
   })
@@ -342,6 +343,17 @@ export async function deleteTrainingTopic(id: string): Promise<void> {
 
 export async function getTrainingTopic(id: string): Promise<TrainingTopic> {
   return get(`/admin/content/training-topics/${id}`)
+}
+
+export interface TrainingTopicNavigation {
+  index: number
+  total: number
+  previousId: string | null
+  nextId: string | null
+}
+
+export async function getTrainingTopicNavigation(id: string): Promise<TrainingTopicNavigation> {
+  return get(`/admin/content/training-topics/${id}/navigation`)
 }
 
 // ─── Chunks ──────────────────────────────────────────────────

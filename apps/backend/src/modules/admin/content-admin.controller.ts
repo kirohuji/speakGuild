@@ -558,12 +558,21 @@ export class ContentAdminController {
     @Req() req: Request,
     @Query('sceneId') sceneId?: string,
     @Query('detail') detail?: string,
+    @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
     const session = await this.requireManager(req);
     const where: any = { ...this.contentAccess.sceneWhere(session) };
     if (sceneId) where.sceneId = sceneId;
+    if (search?.trim()) {
+      const keyword = search.trim();
+      where.OR = [
+        { title: { contains: keyword, mode: 'insensitive' } },
+        { promptEn: { contains: keyword, mode: 'insensitive' } },
+        { promptZh: { contains: keyword, mode: 'insensitive' } },
+      ];
+    }
     const hasPagination = page !== undefined || pageSize !== undefined;
     const p = Math.max(1, parseInt(page || '1'));
     const ps = Math.min(100, Math.max(1, parseInt(pageSize || '20')));
@@ -571,7 +580,7 @@ export class ContentAdminController {
     if (detail === 'full') {
       const query = {
         where,
-        orderBy: { sortOrder: 'asc' as const },
+        orderBy: [{ sortOrder: 'asc' as const }, { createdAt: 'asc' as const }],
         include: {
           scene: { select: { id: true, title: true } },
           topicPatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' as const } },
@@ -593,7 +602,7 @@ export class ContentAdminController {
 
     const query = {
       where,
-      orderBy: { sortOrder: 'asc' as const },
+      orderBy: [{ sortOrder: 'asc' as const }, { createdAt: 'asc' as const }],
       select: {
         id: true,
         sceneId: true,
@@ -658,6 +667,25 @@ export class ContentAdminController {
         createdAt: true,
       },
     });
+  }
+
+  @Get('training-topics/:id/navigation')
+  async getTrainingTopicNavigation(@Req() req: Request, @Param('id') id: string) {
+    const session = await this.requireManager(req);
+    const current = await this.contentAccess.assertTopicAccess(session, id);
+    const topics = await this.prisma.trainingTopic.findMany({
+      where: { sceneId: current.sceneId },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+      select: { id: true },
+    });
+    const index = topics.findIndex((topic) => topic.id === id);
+    if (index < 0) throw new NotFoundException('话题不存在');
+    return {
+      index,
+      total: topics.length,
+      previousId: topics[index - 1]?.id ?? null,
+      nextId: topics[index + 1]?.id ?? null,
+    };
   }
 
   @Get('training-topics/:id')

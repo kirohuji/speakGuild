@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Plus, Trash2, Edit3, Search, Layers, MapPin,
-  ChevronRight, X, Code2, Type, BookOpen,
+  ChevronLeft, ChevronRight, ChevronsUpDown, X, Code2, Type, BookOpen,
   Volume2, Sparkles, ExternalLink, Loader2,
   CheckCircle2, Link2, Clock3, FileText, Settings2,
   Film, Target, Dumbbell, Upload, Download, FileArchive, RefreshCw, ClipboardCheck,
@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/cn'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { toast } from 'sonner'
 import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { FileUploadField } from '@/features/admin/components/file-upload-field'
@@ -39,7 +40,7 @@ import {
   listScenes, getScene, createScene, updateScene, deleteScene,
   listVocabularies, createVocabulary, updateVocabulary, deleteVocabulary,
   listTrainingTopics, createTrainingTopic, updateTrainingTopic, deleteTrainingTopic,
-  getTrainingTopic, listAllChunks, listStories, getStory, listScriptEpisodes, deleteScriptEpisode,
+  getTrainingTopic, getTrainingTopicNavigation, listAllChunks, listStories, getStory, listScriptEpisodes, deleteScriptEpisode,
   listLibraryPatterns, createLibraryVocabulary, createLibraryPattern, createLibraryChunk,
   suggestTopicSupports, suggestTopicVocabs,
   enqueueWarmupPipelineGeneration,
@@ -117,6 +118,8 @@ function mergeById<T extends { id: string }>(...groups: Array<Array<T | null | u
   return [...map.values()]
 }
 
+type TopicEditorTab = 'basic' | 'teaching' | 'training' | 'experience' | 'ink' | 'warmup'
+
 function GroupMaterialUsageCell({ usages }: { usages: GroupMaterialUsageEntry[] }) {
   const detail = usages.map((usage) =>
     `${usage.sceneTitle} / ${usage.topicTitle ?? '包级'}（${usage.role === 'review' ? '复习' : '新学'}）`,
@@ -150,15 +153,22 @@ function normalizeTopicPattern(item: any): SentencePatternFull | null {
   }
 }
 
-async function listAllLibraryPatternsForAdmin() {
-  const first = await listLibraryPatterns({ page: 1, pageSize: 100 })
-  if (first.totalPages <= 1) return first.items
-  const rest = await Promise.all(
-    Array.from({ length: first.totalPages - 1 }, (_, index) =>
-      listLibraryPatterns({ page: index + 2, pageSize: 100 }).then((result) => result.items),
-    ),
-  )
-  return [...first.items, ...rest.flat()]
+let initialPatternPagePromise: Promise<SentencePatternFull[]> | null = null
+
+/**
+ * 话题编辑器只预取一页常用句式。其余内容由搜索框按需从服务端查询，
+ * 并在当前网页会话内复用首次请求，避免切换学习包时重复加载。
+ */
+function listInitialLibraryPatterns() {
+  if (!initialPatternPagePromise) {
+    initialPatternPagePromise = listLibraryPatterns({ page: 1, pageSize: 100 })
+      .then((result) => result.items)
+      .catch((error) => {
+        initialPatternPagePromise = null
+        throw error
+      })
+  }
+  return initialPatternPagePromise
 }
 
 const PACKAGE_TYPE_FILTERS: Array<{ id: Scene['packageType']; label: string }> = [
@@ -660,7 +670,7 @@ function TopicSupportSuggestionPanel({
 }
 
 function TrainingTopicDialog({
-  open, onClose, edit, sceneId, packageType, contentMode, chunks, patterns, topicIndex, topicTotal, onPrevTopic, onNextTopic, onOpenTopic, onSaved, initialTab = 'basic', onTabChange,
+  open, onClose, edit, sceneId, packageType, contentMode, chunks, patterns, onOpenTopic, onSaved, initialTab = 'basic', onTabChange,
 }: {
   open: boolean
   onClose: () => void
@@ -670,18 +680,21 @@ function TrainingTopicDialog({
   contentMode: Scene['contentMode']
   chunks: Chunk[]
   patterns: SentencePatternFull[]
-  topicIndex?: number
-  topicTotal?: number
-  onPrevTopic?: () => void
-  onNextTopic?: () => void
-  onOpenTopic?: (topicId: string, tab: 'teaching' | 'warmup') => void
+  onOpenTopic?: (topicId: string, tab: TopicEditorTab) => void
   onSaved: (topic: TrainingTopic) => void
-  initialTab?: 'basic' | 'teaching' | 'warmup'
+  initialTab?: TopicEditorTab
   onTabChange?: (tab: string) => void
 }) {
   const [form, setForm] = useState<any>({})
   const [saving, setSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('basic')
+  const [topicPickerOpen, setTopicPickerOpen] = useState(false)
+  const [topicPickerSearch, setTopicPickerSearch] = useState('')
+  const [topicPickerPage, setTopicPickerPage] = useState(1)
+  const [topicPickerItems, setTopicPickerItems] = useState<TrainingTopic[]>([])
+  const [topicPickerTotal, setTopicPickerTotal] = useState(0)
+  const [topicPickerLoading, setTopicPickerLoading] = useState(false)
+  const [topicNavigation, setTopicNavigation] = useState({ index: -1, total: 0, previousId: null as string | null, nextId: null as string | null })
   const [savedGroupMaterialUsage, setSavedGroupMaterialUsage] = useState<Record<string, GroupMaterialUsageEntry[]>>({})
   const [usageSceneTitle, setUsageSceneTitle] = useState('当前学习包')
   // 引用冲突：保存被拦截时记录冲突与待保存 payload，供“改为复习并保存”重试
@@ -714,7 +727,7 @@ function TrainingTopicDialog({
   const [storyPageSize, setStoryPageSize] = useState(20)
   const [storyTotal, setStoryTotal] = useState(0)
   const storiesLoadedRef = useRef(false)
-  const nextInitialTabRef = useRef<'basic' | 'teaching' | 'warmup'>('basic')
+  const nextInitialTabRef = useRef<TopicEditorTab>('basic')
   const savedFormSnapshotRef = useRef('')
   // Fetch the bound story individually (bypasses pagination)
   const [boundStory, setBoundStory] = useState<StoryData | null>(null)
@@ -722,6 +735,7 @@ function TrainingTopicDialog({
   const editKey = edit?.id ?? '__new__'
   const [lastInitKey, setLastInitKey] = useState<string | null>(null)
   const [createdPatterns, setCreatedPatterns] = useState<SentencePatternFull[]>([])
+  const [patternPool, setPatternPool] = useState<SentencePatternFull[]>(patterns)
   const [createdChunks, setCreatedChunks] = useState<Chunk[]>([])
   const [quickCreateKind, setQuickCreateKind] = useState<TopicSupportKind | 'vocab' | null>(null)
   const [quickCreateDraft, setQuickCreateDraft] = useState({ text: '', meaning: '' })
@@ -732,21 +746,24 @@ function TrainingTopicDialog({
     () => (edit?.topicPatterns ?? []).map(normalizeTopicPattern).filter(Boolean) as SentencePatternFull[],
     [edit?.topicPatterns],
   )
+  useEffect(() => {
+    setPatternPool((current) => mergeById(current, patterns))
+  }, [patterns])
   const selectablePatterns = useMemo(
-    () => mergeById(patterns, topicBoundPatterns, createdPatterns),
-    [patterns, topicBoundPatterns, createdPatterns],
+    () => mergeById(patternPool, topicBoundPatterns, createdPatterns),
+    [patternPool, topicBoundPatterns, createdPatterns],
   )
-  // 词汇远程搜索池：打开时预拉前 100 条 + 话题绑定词条，搜索时按需补充（不加载全量词汇库）
+  const remotePatternSearch = useCallback(async (query: string) => {
+    const result = await listLibraryPatterns({ search: query, page: 1, pageSize: 50 })
+    setPatternPool((current) => mergeById(current, result.items))
+    return result.items
+  }, [])
+  // 词汇远程搜索池：打开时只保留当前话题绑定词条，用户输入搜索词后再按需查询。
   const [vocabPool, setVocabPool] = useState<Vocabulary[]>([])
   useEffect(() => {
     if (!open) return
-    let cancelled = false
     const bound = (edit?.topicVocabs ?? []).map((tv: any) => tv.vocab).filter(Boolean) as Vocabulary[]
     setVocabPool(bound)
-    listVocabularies()
-      .then((items) => { if (!cancelled) setVocabPool(mergeById(bound, items)) })
-      .catch(() => {})
-    return () => { cancelled = true }
   }, [open, editKey])
   const remoteVocabSearch = useCallback(async (query: string) => {
     const items = await listVocabularies(query)
@@ -763,7 +780,7 @@ function TrainingTopicDialog({
   )
 
   useEffect(() => {
-    if (!open) return
+    if (!open || activeTab !== 'training') return
     let cancelled = false
     getSceneMaterialUsage(sceneId)
       .then((usage) => {
@@ -775,7 +792,7 @@ function TrainingTopicDialog({
         if (!cancelled) setSavedGroupMaterialUsage({})
       })
     return () => { cancelled = true }
-  }, [open, sceneId])
+  }, [activeTab, open, sceneId])
 
   const getMaterialUsage = (kind: 'pattern' | 'chunk' | 'vocab', materialId: string): GroupMaterialUsageEntry[] => {
     const topicId = form.id ?? edit?.id
@@ -866,10 +883,50 @@ function TrainingTopicDialog({
     setLastInitKey(editKey)
   }, [open, editKey, sceneId, packageType, contentMode, lastInitKey, initialTab])
 
-  const saveAndNavigateTopicFromWarmup = async (navigate?: () => void) => {
+  useEffect(() => {
+    if (!topicPickerOpen) return
+    let cancelled = false
+    setTopicPickerLoading(true)
+    const timer = window.setTimeout(() => {
+      listTrainingTopics(sceneId, {
+        search: topicPickerSearch,
+        page: topicPickerPage,
+        pageSize: 8,
+      }).then((result) => {
+        if (cancelled) return
+        setTopicPickerItems(result.items)
+        setTopicPickerTotal(result.total)
+      }).catch(() => {
+        if (!cancelled) {
+          setTopicPickerItems([])
+          setTopicPickerTotal(0)
+        }
+      }).finally(() => {
+        if (!cancelled) setTopicPickerLoading(false)
+      })
+    }, topicPickerSearch.trim() ? 250 : 0)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [sceneId, topicPickerOpen, topicPickerPage, topicPickerSearch])
+
+  useEffect(() => {
+    const topicId = edit?.id
+    if (!open || !topicId) {
+      setTopicNavigation({ index: -1, total: 0, previousId: null, nextId: null })
+      return
+    }
+    let cancelled = false
+    getTrainingTopicNavigation(topicId)
+      .then((navigation) => { if (!cancelled) setTopicNavigation(navigation) })
+      .catch(() => { if (!cancelled) setTopicNavigation({ index: -1, total: 0, previousId: null, nextId: null }) })
+    return () => { cancelled = true }
+  }, [edit?.id, open])
+
+  const saveAndNavigateTopic = async (navigate?: () => void) => {
     if (!navigate || saving) return
-    nextInitialTabRef.current = 'warmup'
-    setActiveTab('warmup')
+    nextInitialTabRef.current = activeTab as TopicEditorTab
     if (serializeTrainingTopicForm(form) === savedFormSnapshotRef.current) {
       navigate()
       return
@@ -880,6 +937,18 @@ function TrainingTopicDialog({
       return
     }
     navigate()
+  }
+
+  const selectTopic = (topicId: string) => {
+    if (!onOpenTopic || topicId === (form.id ?? edit?.id)) {
+      setTopicPickerOpen(false)
+      return
+    }
+    const tab = activeTab as TopicEditorTab
+    void saveAndNavigateTopic(() => {
+      setTopicPickerOpen(false)
+      onOpenTopic(topicId, tab)
+    })
   }
 
   const openTeachingDocument = async (topicId: string) => {
@@ -1267,8 +1336,114 @@ function TrainingTopicDialog({
         <DialogHeader className={cn('shrink-0 border-b px-5', activeTab === 'teaching' ? 'py-2.5' : 'py-4')}>
           <DialogTitle className="sr-only">{edit ? '编辑话题' : '新增话题'}</DialogTitle>
           <div className="flex flex-wrap items-start justify-between gap-3 pr-8">
-            <div>
-              <p className="text-base font-semibold leading-none tracking-tight">{edit ? '编辑话题' : '新增话题'}</p>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-base font-semibold leading-none tracking-tight">{edit ? '编辑话题' : '新增话题'}</p>
+                {edit && onOpenTopic && (
+                  <div className="flex items-center rounded-lg border bg-muted/25 p-0.5">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 rounded-md"
+                      aria-label="切换到上一个话题"
+                      title="上一个话题"
+                      disabled={!topicNavigation.previousId || saving}
+                      onClick={() => void saveAndNavigateTopic(topicNavigation.previousId ? () => onOpenTopic(topicNavigation.previousId!, activeTab as TopicEditorTab) : undefined)}
+                    >
+                      <ChevronLeft className="size-4" />
+                    </Button>
+                    <Popover open={topicPickerOpen} onOpenChange={setTopicPickerOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 max-w-[22rem] gap-1.5 rounded-md px-2 text-xs"
+                          title="快速切换话题"
+                        >
+                          <span className="tabular-nums text-muted-foreground">
+                            {topicNavigation.index >= 0 ? topicNavigation.index + 1 : '—'}/{topicNavigation.total || '—'}
+                          </span>
+                          <span className="max-w-52 truncate font-medium">{form.title || edit.title || '未命名话题'}</span>
+                          <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-[min(30rem,calc(100vw-2rem))] overflow-hidden p-0">
+                        <div className="border-b p-3">
+                          <p className="text-sm font-semibold">快速切换话题</p>
+                          <div className="relative mt-2">
+                            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                              value={topicPickerSearch}
+                              onChange={(event) => { setTopicPickerSearch(event.target.value); setTopicPickerPage(1) }}
+                              className="h-8 pl-8 text-xs"
+                              placeholder="搜索标题、英文提示或中文提示"
+                            />
+                          </div>
+                        </div>
+                        <div className="max-h-[23rem] overflow-y-auto p-2">
+                          {topicPickerLoading ? (
+                            <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">
+                              <Loader2 className="mr-2 size-4 animate-spin" />加载话题…
+                            </div>
+                          ) : topicPickerItems.length ? topicPickerItems.map((topic, index) => {
+                            const current = topic.id === (form.id ?? edit.id)
+                            return (
+                              <button
+                                key={topic.id}
+                                type="button"
+                                className={cn(
+                                  'flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
+                                  current ? 'bg-primary/10 text-primary' : 'hover:bg-muted/70',
+                                )}
+                                onClick={() => selectTopic(topic.id)}
+                              >
+                                <span className="mt-0.5 min-w-7 text-right text-[11px] tabular-nums text-muted-foreground">
+                                  {(topicPickerPage - 1) * 8 + index + 1}
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-sm font-medium">{topic.title}</span>
+                                  <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">{topic.promptZh || topic.promptEn || '暂无提示语'}</span>
+                                </span>
+                                <Badge variant={current ? 'default' : 'outline'} className="shrink-0 text-[10px]">{topic.difficulty || 'L2'}</Badge>
+                              </button>
+                            )
+                          }) : (
+                            <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">没有匹配的话题</div>
+                          )}
+                        </div>
+                        {topicPickerTotal > 0 && (
+                          <div className="flex items-center justify-between border-t bg-muted/15 px-3 py-2">
+                            <span className="text-[11px] text-muted-foreground">共 {topicPickerTotal} 个话题</span>
+                            <div className="flex items-center gap-1">
+                              <Button type="button" variant="outline" size="icon" className="size-7" disabled={topicPickerPage <= 1 || topicPickerLoading} onClick={() => setTopicPickerPage((page) => page - 1)} aria-label="上一页">
+                                <ChevronLeft className="size-3.5" />
+                              </Button>
+                              <span className="min-w-16 text-center text-[11px] tabular-nums text-muted-foreground">{topicPickerPage} / {getTotalPages(topicPickerTotal, 8)}</span>
+                              <Button type="button" variant="outline" size="icon" className="size-7" disabled={topicPickerPage >= getTotalPages(topicPickerTotal, 8) || topicPickerLoading} onClick={() => setTopicPickerPage((page) => page + 1)} aria-label="下一页">
+                                <ChevronRight className="size-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </PopoverContent>
+                    </Popover>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 rounded-md"
+                      aria-label="切换到下一个话题"
+                      title="下一个话题"
+                      disabled={!topicNavigation.nextId || saving}
+                      onClick={() => void saveAndNavigateTopic(topicNavigation.nextId ? () => onOpenTopic(topicNavigation.nextId!, activeTab as TopicEditorTab) : undefined)}
+                    >
+                      <ChevronRight className="size-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
               <DialogDescription className="mt-1 text-xs text-muted-foreground">
                 {contentMode === 'writing' ? '设计完整写作题面、作答边界和评分标准，并实时检查考生视图。' : '组织练习提示、句型 Chunk，并为话题绑定可交互 Ink 故事。'}
               </DialogDescription>
@@ -1496,6 +1671,7 @@ function TrainingTopicDialog({
                   })
                 }}
                 onCreateMaterial={openQuickCreate}
+                onSearchPatterns={remotePatternSearch}
                 onSearchVocabs={remoteVocabSearch}
               />
             </TabsContent>
@@ -1564,6 +1740,7 @@ function TrainingTopicDialog({
                     }
                     emptyText="没有匹配的句型"
                     getBadgeLabel={(item) => item.pattern}
+                    remoteSearch={remotePatternSearch}
                     columns={[
                       { key: 'pattern', header: '句型', className: 'font-mono text-sm font-medium', render: (p) => p.pattern },
                       { key: 'meaning', header: '含义', className: 'text-xs text-muted-foreground max-w-[200px] truncate', render: (p) => p.meaning || '-' },
@@ -1870,10 +2047,6 @@ function TrainingTopicDialog({
                     action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
                   })
                 }}
-                topicIndex={topicIndex}
-                topicTotal={topicTotal}
-                onPrevTopic={onPrevTopic && !saving ? () => saveAndNavigateTopicFromWarmup(onPrevTopic) : undefined}
-                onNextTopic={onNextTopic && !saving ? () => saveAndNavigateTopicFromWarmup(onNextTopic) : undefined}
               />
             </TabsContent>
           </div>
@@ -2013,7 +2186,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
   const [topicDialog, setTopicDialog] = useState(false)
   const [editTopic, setEditTopic] = useState<TrainingTopic | null>(null)
   const [openingTopicId, setOpeningTopicId] = useState<string | null>(null)
-  const [topicInitialTab, setTopicInitialTab] = useState<'basic' | 'teaching' | 'warmup'>('basic')
+  const [topicInitialTab, setTopicInitialTab] = useState<TopicEditorTab>('basic')
   const openedDeepLinkRef = useRef<string | null>(null)
   const [storyDialog, setStoryDialog] = useState(false)
   const [editStoryEpisode, setEditStoryEpisode] = useState<StoryEpisode | null>(null)
@@ -2031,7 +2204,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
     materialsLoadedRef.current = true
     setMaterialsLoading(true)
     try {
-      const jobs: Promise<unknown>[] = [listAllLibraryPatternsForAdmin().then(setPatterns)]
+      const jobs: Promise<unknown>[] = [listInitialLibraryPatterns().then(setPatterns)]
       if (needVocabs) jobs.push(listVocabularies().then(setVocabs))
       await Promise.all(jobs)
     } catch {
@@ -2067,14 +2240,6 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
 
   const topicTotalPages = getTotalPages(topicTotal, topicPageSize)
   const topicItems = topics
-  const sortedTopics = useMemo(
-    () => [...topics].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
-    [topics],
-  )
-  const editTopicIndex = editTopic ? sortedTopics.findIndex((topic) => topic.id === editTopic.id) : -1
-  const editTopicGlobalIndex = editTopicIndex >= 0
-    ? (topicPage - 1) * topicPageSize + editTopicIndex
-    : -1
   const currentPackageTypeLabel = packageTypeLabel(scene?.packageType)
 
   const handleTopicSaved = (saved: TrainingTopic) => {
@@ -2112,7 +2277,9 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
     const next = new URLSearchParams(searchParams)
     next.set('sceneId', sceneId)
     if (topicId) {
-      const linkedTab = tab === 'warmup' || tab === 'teaching' ? tab : 'basic'
+      const linkedTab: TopicEditorTab = ['basic', 'teaching', 'training', 'experience', 'ink', 'warmup'].includes(tab)
+        ? tab as TopicEditorTab
+        : 'basic'
       openedDeepLinkRef.current = `${topicId}:${linkedTab}`
       next.set('topicId', topicId)
       next.set('dialog', 'topic')
@@ -2131,9 +2298,9 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
     syncTopicLink()
   }
 
-  const openTopicEditor = async (topic: TrainingTopic | null, initialTab: 'basic' | 'teaching' | 'warmup' = 'basic') => {
-    // 打开编辑器前确保句型库已就绪（词汇选择器为远程搜索，无需全量加载）
-    await ensureMaterialsLoaded(false)
+  const openTopicEditor = async (topic: TrainingTopic | null, initialTab: TopicEditorTab = 'basic') => {
+    // 话题详情优先打开；句式首屏在后台预取，搜索时再按需请求其余数据。
+    void ensureMaterialsLoaded(false)
     if (!topic) {
       setEditTopic(null)
       setTopicInitialTab('basic')
@@ -2155,35 +2322,13 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
     }
   }
 
-  const openAdjacentWarmupTopic = async (direction: -1 | 1) => {
-    if (editTopicIndex < 0) return
-    const adjacentIndex = editTopicIndex + direction
-    if (adjacentIndex >= 0 && adjacentIndex < sortedTopics.length) {
-      await openTopicEditor(sortedTopics[adjacentIndex], 'warmup')
-      return
-    }
-
-    const targetPage = topicPage + direction
-    if (targetPage < 1 || targetPage > topicTotalPages) return
-    try {
-      const result = await listTrainingTopics(sceneId, { page: targetPage, pageSize: topicPageSize })
-      const targetPageTopics = [...result.items].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-      const target = direction > 0 ? targetPageTopics[0] : targetPageTopics[targetPageTopics.length - 1]
-      if (!target) return
-      setTopicPage(targetPage)
-      setTopics(result.items)
-      setTopicTotal(result.total)
-      await openTopicEditor(target, 'warmup')
-    } catch (error: any) {
-      toast.error(error?.message || '相邻话题加载失败')
-    }
-  }
-
   useEffect(() => {
     const linkedTopicId = searchParams.get('topicId')
     if (searchParams.get('sceneId') !== sceneId || searchParams.get('dialog') !== 'topic' || !linkedTopicId) return
     const requestedTab = searchParams.get('tab')
-    const tab = requestedTab === 'warmup' || requestedTab === 'teaching' ? requestedTab : 'basic'
+    const tab: TopicEditorTab = requestedTab && ['basic', 'teaching', 'training', 'experience', 'ink', 'warmup'].includes(requestedTab)
+      ? requestedTab as TopicEditorTab
+      : 'basic'
     const key = `${linkedTopicId}:${tab}`
     if (openedDeepLinkRef.current === key) return
     openedDeepLinkRef.current = key
@@ -2401,10 +2546,6 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
         edit={editTopic} sceneId={sceneId} packageType={scene.packageType} contentMode={scene.contentMode} chunks={chunks} patterns={patterns}
         initialTab={topicInitialTab}
         onTabChange={(tab) => { if (editTopic?.id) syncTopicLink(editTopic.id, tab) }}
-        topicIndex={editTopicGlobalIndex >= 0 ? editTopicGlobalIndex : undefined}
-        topicTotal={topicTotal}
-        onPrevTopic={editTopicGlobalIndex > 0 ? () => void openAdjacentWarmupTopic(-1) : undefined}
-        onNextTopic={editTopicGlobalIndex >= 0 && editTopicGlobalIndex < topicTotal - 1 ? () => void openAdjacentWarmupTopic(1) : undefined}
         onOpenTopic={(topicId, tab) => void openTopicEditor({ id: topicId } as TrainingTopic, tab)}
         onSaved={handleTopicSaved} />
       <EpisodeEditDialog

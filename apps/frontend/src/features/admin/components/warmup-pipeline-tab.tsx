@@ -4,9 +4,7 @@ import {
   AlertTriangle,
   BarChart3,
   Braces,
-  ChevronLeft,
   ChevronDown,
-  ChevronRight,
   ChevronUp,
   CheckCircle2,
   FileText,
@@ -89,10 +87,6 @@ interface Props {
   chunks?: { id: string; text: string; meaning: string }[]
   patterns?: { id: string; pattern: string; meaning?: string }[]
   topicTitle?: string
-  topicIndex?: number
-  topicTotal?: number
-  onPrevTopic?: () => void
-  onNextTopic?: () => void
   difficulty?: string
   onGenerateInBackground?: () => Promise<void>
 }
@@ -554,10 +548,6 @@ export function WarmupPipelineTab({
   chunks = [],
   patterns = [],
   topicTitle,
-  topicIndex,
-  topicTotal,
-  onPrevTopic,
-  onNextTopic,
   difficulty,
   onGenerateInBackground,
 }: Props) {
@@ -1379,9 +1369,6 @@ export function WarmupPipelineTab({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="truncate text-sm font-semibold">{topicTitle?.trim() || '未命名话题'}</p>
-            {typeof topicIndex === 'number' && topicTotal ? (
-              <Badge variant="outline" className="text-[10px]">话题 {topicIndex + 1}/{topicTotal}</Badge>
-            ) : null}
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {totalPracticeItems} 题 · {local.pipeline.length} 步 · {totalHintableItems} 题可生成 AI 提示
@@ -1389,28 +1376,6 @@ export function WarmupPipelineTab({
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
           {renderMaterialPoolPopover()}
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-8"
-            title="上一个话题"
-            disabled={!onPrevTopic || aiGeneratingMissing || aiHintingAll || aiAudioAll}
-            onClick={onPrevTopic}
-          >
-            <ChevronLeft className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-8"
-            title="下一个话题"
-            disabled={!onNextTopic || aiGeneratingMissing || aiHintingAll || aiAudioAll}
-            onClick={onNextTopic}
-          >
-            <ChevronRight className="size-4" />
-          </Button>
           <Button
             type="button"
             size="sm"

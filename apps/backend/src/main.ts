@@ -28,6 +28,7 @@ function getClientIp(req: any) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bodyParser: false });
+  app.enableShutdownHooks();
 
   const originsFromEnv = (process.env.FRONTEND_URL || '')
     .split(',')

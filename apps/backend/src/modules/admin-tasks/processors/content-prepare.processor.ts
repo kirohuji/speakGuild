@@ -81,13 +81,25 @@ export class ContentPrepareProcessor extends WorkerHost {
   }
 
   private async refreshDictionaryPronunciations(taskId: string, words: string[], job: Job) {
-    if (!await this.adminTasksService.markRunning(taskId, 'refresh')) return null;
-    let succeeded = 0;
-    let failed = 0;
-    let skipped = 0;
+    const checkpoint = await this.adminTasksService.beginOrResume(taskId, 'refresh');
+    if (!checkpoint) return null;
+    const startIndex = Math.min(Math.max(0, checkpoint.processedItems), words.length);
+    let succeeded = checkpoint.successItems;
+    let failed = checkpoint.failedItems;
+    let skipped = Math.max(0, startIndex - succeeded - failed);
     const errors: Array<{ word: string; message: string }> = [];
 
-    for (let index = 0; index < words.length; index += 1) {
+    if (startIndex > 0) {
+      await this.adminTasksService.log(
+        taskId,
+        'warn',
+        `从持久化检查点继续执行：${startIndex}/${words.length}`,
+        { step: 'resumed', meta: { startIndex, succeeded, failed, skipped } },
+      );
+      await job.updateProgress(Math.floor((startIndex / Math.max(1, words.length)) * 100));
+    }
+
+    for (let index = startIndex; index < words.length; index += 1) {
       const word = words[index];
       if (await this.adminTasksService.isCanceled(taskId)) return null;
       if (await this.dictionaryService.isPronunciationLocked(word)) {
