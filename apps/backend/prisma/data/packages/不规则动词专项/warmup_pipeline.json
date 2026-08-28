@@ -1,0 +1,23 @@
+{
+  "日常起居": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": [],
+        "generatedAt": "2026-08-27T12:24:38.681Z"
+      }
+    }
+  }
+}

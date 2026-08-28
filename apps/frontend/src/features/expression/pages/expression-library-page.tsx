@@ -1,4 +1,4 @@
-import { forwardRef, useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { localDateKey } from '@/lib/date/calendar-date'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -41,13 +41,6 @@ type LibraryTab = 'words' | 'chunk' | 'pattern'
 type LibraryReviewState = MasteryStatus | 'all'
 const LIBRARY_TABS: LibraryTab[] = ['words', 'chunk', 'pattern']
 const TAB_SWIPE_DISTANCE = 70
-
-const VirtualListScroller = forwardRef<HTMLDivElement, React.ComponentPropsWithoutRef<'div'>>(
-  ({ className, ...props }, ref) => (
-    <div ref={ref} {...props} className={cn(className, 'scrollbar-hide')} />
-  ),
-)
-VirtualListScroller.displayName = 'VirtualListScroller'
 
 interface Expression {
   id: string; type: string; original: string | null; corrected: string | null
@@ -811,7 +804,7 @@ export function ExpressionLibraryPage() {
   const renderVirtualList = (immersiveClassName: string) => (
     <Virtuoso
       data={virtualRows}
-      className="h-full md:h-[calc(100dvh-17rem)]"
+      className="h-full scrollbar-hide md:h-[calc(100dvh-17rem)]"
       increaseViewportBy={{ top: 360, bottom: 720 }}
       onScroll={(event) => {
         const scroller = event.currentTarget
@@ -846,7 +839,6 @@ export function ExpressionLibraryPage() {
         listScrollTopRef.current = top
       }}
       components={{
-        Scroller: VirtualListScroller,
         Header: () => (
           <div className="mb-2 flex items-center justify-between px-0 pt-0">
             <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>

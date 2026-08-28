@@ -17,7 +17,7 @@ import type { Request, Response } from 'express';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { requireAuthSession } from '../auth/session.util';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { basename, extname, join } from 'path';
 import {
   existsSync, mkdirSync, readdirSync, readFileSync,
   rmSync, createWriteStream,
@@ -104,6 +104,61 @@ export class PackageDataController {
       trim: true,
       relax_column_count: true,
     }) as CsvRow[];
+  }
+
+  /**
+   * 读取话题教学文档。新数据包使用 teaching-docs/*.md，旧包继续兼容
+   * training_topics.csv 内嵌的 teaching_markdown 列。
+   */
+  private readTeachingMarkdown(pkgDir: string, row: CsvRow): string | null {
+    const explicitFilename = row.teaching_markdown_file?.trim();
+    const inferredFilename = row.title && row.title === basename(row.title)
+      ? `${row.title}.md`
+      : '';
+    const filename = explicitFilename || inferredFilename;
+
+    if (filename && explicitFilename) {
+      if (filename !== basename(filename) || !filename.toLowerCase().endsWith('.md')) {
+        throw new ForbiddenException(
+          `话题“${row.title || '未命名'}”的教学文档文件名无效：${filename}`,
+        );
+      }
+    }
+
+    if (filename) {
+      const documentPath = join(pkgDir, 'teaching-docs', filename);
+      if (existsSync(documentPath)) {
+        return readFileSync(documentPath, 'utf-8');
+      }
+      if (explicitFilename) {
+        throw new ForbiddenException(
+          `话题“${row.title || '未命名'}”缺少教学文档：teaching-docs/${filename}`,
+        );
+      }
+    }
+
+    return row.teaching_markdown || null;
+  }
+
+  /** 生成适合放入 ZIP/Windows 文件夹的稳定 Markdown 文件名。 */
+  private createTeachingDocumentFilename(
+    title: string,
+    index: number,
+    usedFilenames: Set<string>,
+  ): string {
+    const sanitized = title
+      .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '-')
+      .replace(/[. ]+$/g, '')
+      .trim()
+      .slice(0, 100) || `topic-${index + 1}`;
+    let filename = `${sanitized}.md`;
+    let suffix = 2;
+    while (usedFilenames.has(filename.toLowerCase())) {
+      filename = `${sanitized}-${suffix}.md`;
+      suffix++;
+    }
+    usedFilenames.add(filename.toLowerCase());
+    return filename;
   }
 
   /**
@@ -497,7 +552,7 @@ export class PackageDataController {
             difficulty: row.difficulty || 'L2',
             description: row.description || null,
             knowledgePoints: row.knowledge_points || null,
-            teachingMarkdown: row.teaching_markdown || null,
+            teachingMarkdown: this.readTeachingMarkdown(pkgDir, row),
             inkScriptId,
             sortOrder: topicIds.length,
           },
@@ -756,7 +811,12 @@ export class PackageDataController {
     if (!scene) throw new ForbiddenException('场景不存在');
 
     // 推断包目录名
-    const dirName = `${scene.packageType}-${scene.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/g, '-')}`.substring(0, 50);
+    const titleSlug = scene.title
+      .normalize('NFKC')
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, '-')
+      .replace(/^-+|-+$/g, '') || 'package';
+    const dirName = `${scene.packageType}-${titleSlug}`.slice(0, 80);
 
     const toCsvLine = (values: string[]) => values.map(v => {
       if (v.includes(',') || v.includes('"') || v.includes('\n')) {
@@ -827,9 +887,18 @@ export class PackageDataController {
       chunkCsv += toCsvLine([scene.title, '', c.category, c.text, c.meaning, c.difficulty, c.description, c.examples]) + '\n';
     }
 
-    // 4. training_topics.csv
-    let topicCsv = 'scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown,ink_script_key\n';
-    for (const topic of scene.trainingTopics) {
+    // 4. training_topics.csv + teaching-docs/*.md
+    // 教学文档独立存放，避免大段多行 Markdown 让 CSV 难以维护。
+    let topicCsv = 'scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown_file,ink_script_key\n';
+    const teachingDocuments = new Map<string, string>();
+    const usedTeachingFilenames = new Set<string>();
+    for (const [index, topic] of scene.trainingTopics.entries()) {
+      const teachingFilename = topic.teachingMarkdown
+        ? this.createTeachingDocumentFilename(topic.title, index, usedTeachingFilenames)
+        : '';
+      if (teachingFilename) {
+        teachingDocuments.set(teachingFilename, topic.teachingMarkdown);
+      }
       topicCsv += toCsvLine([
         scene.title,
         topic.title,
@@ -839,7 +908,7 @@ export class PackageDataController {
         topic.difficulty,
         topic.description || '',
         topic.knowledgePoints || '',
-        topic.teachingMarkdown || '',
+        teachingFilename,
         '',
       ]) + '\n';
     }
@@ -947,6 +1016,9 @@ export class PackageDataController {
     zip.addFile(prefix + 'scene_vocabulary.csv', Buffer.from(vocabCsv, 'utf-8'));
     zip.addFile(prefix + 'chunks.csv', Buffer.from(chunkCsv, 'utf-8'));
     zip.addFile(prefix + 'training_topics.csv', Buffer.from(topicCsv, 'utf-8'));
+    for (const [filename, markdown] of teachingDocuments) {
+      zip.addFile(prefix + `teaching-docs/${filename}`, Buffer.from(markdown, 'utf-8'));
+    }
     zip.addFile(prefix + 'sentence_patterns.csv', Buffer.from(patternCsv, 'utf-8'));
     if (epCsv.split('\n').length > 2) zip.addFile(prefix + 'script_episodes.csv', Buffer.from(epCsv, 'utf-8'));
     if (epChunkCsv.split('\n').length > 2) zip.addFile(prefix + 'episode_chunks.csv', Buffer.from(epChunkCsv, 'utf-8'));
@@ -1183,7 +1255,7 @@ export class PackageDataController {
           title: row.title, promptEn: row.prompt_en || '', promptZh: row.prompt_zh || '',
           suggestedDurationSec: parseInt(row.duration_sec || '60'), difficulty: row.difficulty || 'L2',
           description: row.description || null, knowledgePoints: row.knowledge_points || null,
-          teachingMarkdown: row.teaching_markdown || null,
+          teachingMarkdown: this.readTeachingMarkdown(pkgDir, row),
           inkScriptId,
           sortOrder: topicIds.length,
         },

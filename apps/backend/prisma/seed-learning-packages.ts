@@ -21,7 +21,7 @@
 import { PrismaClient } from '@prisma/client'
 import { readCsv, parseJson } from './seed-csv'
 import { readdirSync, existsSync, readFileSync } from 'fs'
-import { resolve } from 'path'
+import { basename, resolve } from 'path'
 import { enrichVocabulary } from './seed-vocab-enrich'
 
 const PKG_DIR = 'packages'
@@ -46,10 +46,30 @@ function parseInkMeta(raw: string): { key: string; title: string; scriptType: st
 type CsvScene = { category_name: string; title: string; location: string; required_output_level: string; required_user_level: string; description: string; package_type?: string }
 type CsvVocab = { scene_title: string; topic_title: string; word: string; meaning: string; part_of_speech: string; phonetic_us: string; phonetic_uk: string; difficulty: string; description: string; examples_json: string; sort_order: string }
 type CsvChunk = { scene_title: string; topic_title: string; category: string; text: string; meaning: string; difficulty: string; description: string; examples_json: string }
-type CsvTopic = { scene_title: string; title: string; prompt_en: string; prompt_zh: string; duration_sec: string; difficulty: string; description: string; knowledge_points: string; teaching_markdown: string; ink_script_key: string }
+type CsvTopic = { scene_title: string; title: string; prompt_en: string; prompt_zh: string; duration_sec: string; difficulty: string; description: string; knowledge_points: string; teaching_markdown?: string; teaching_markdown_file?: string; ink_script_key: string }
 type CsvPattern = { scene_title: string; topic_title: string; pattern: string; meaning: string; slots: string; example: string; difficulty: string; sort_order: string }
 type CsvEpisode = { chapter_id: string; chapter_title: string; episode_order: string; title: string; scene_title: string; required_output_level: string; required_user_level: string; vocab_required_count: string; vocab_total_count: string; chunk_required_count: string; chunk_total_count: string; objectives_json: string; pass_objective_count: string; pass_chunk_count: string; pass_min_dialogues: string; npc_name: string; npc_role: string; is_preview: string; ink_script_key: string; rewards_json: string }
 type CsvEpChunk = { episode_chapter: string; episode_order: string; chunk_text_match: string; sort_order: string }
+
+function readTeachingMarkdown(pkgPath: string, row: CsvTopic): string | null {
+  const explicitFilename = row.teaching_markdown_file?.trim()
+  const inferredFilename = row.title && row.title === basename(row.title) ? `${row.title}.md` : ''
+  const filename = explicitFilename || inferredFilename
+
+  if (explicitFilename && (explicitFilename !== basename(explicitFilename) || !explicitFilename.toLowerCase().endsWith('.md'))) {
+    throw new Error(`话题“${row.title || '未命名'}”的教学文档文件名无效：${explicitFilename}`)
+  }
+
+  if (filename) {
+    const documentPath = resolve(__dirname, 'data', pkgPath, 'teaching-docs', filename)
+    if (existsSync(documentPath)) return readFileSync(documentPath, 'utf-8')
+    if (explicitFilename) {
+      throw new Error(`话题“${row.title || '未命名'}”缺少教学文档：teaching-docs/${filename}`)
+    }
+  }
+
+  return row.teaching_markdown || null
+}
 
 async function createLearningPackageRecord(prisma: PrismaClient, input: {
   sceneId: string
@@ -744,7 +764,7 @@ export async function seedLearningPackages(prisma: PrismaClient, packageName?: s
           difficulty: row.difficulty || 'L2',
           description: row.description || null,
           knowledgePoints: row.knowledge_points || null,
-          teachingMarkdown: row.teaching_markdown || null,
+          teachingMarkdown: readTeachingMarkdown(pkgPath, row),
           inkScriptId: inkId,
           sortOrder: topicCount,
         },
