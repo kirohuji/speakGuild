@@ -1,0 +1,8 @@
+{
+  "状态还是动作？": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "想法、感受与偏好": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "看见、听见与尝试": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "拥有、需要与客观属性": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "性格还是临时表现？": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "综合任务：把眼前情况说清楚": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } }
+}

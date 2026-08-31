@@ -101,6 +101,13 @@ async function createLearningPackageRecord(prisma: PrismaClient, input: {
   })
 }
 
+function resolveLearningPackageType(value?: string): 'daily' | 'exam' | 'story' | 'course' | 'foundation' {
+  const allowed = ['daily', 'exam', 'story', 'course', 'foundation'] as const
+  return allowed.includes(value as typeof allowed[number])
+    ? value as typeof allowed[number]
+    : 'daily'
+}
+
 async function upsertSeedVocabulary(prisma: PrismaClient, word: string, meaning: string, difficulty = 'L2') {
   return prisma.vocabulary.upsert({
     where: { word },
@@ -575,6 +582,7 @@ export async function seedLearningPackages(prisma: PrismaClient, packageName?: s
     // ═══ 1. 场景 ═══
     const sceneRows = readCsv<CsvScene>('scenes.csv', pkgPath)
     for (const row of sceneRows) {
+      const packageType = resolveLearningPackageType(row.package_type)
       const catId = catMap.get(row.category_name)
       if (!catId) {
         console.warn(`  ⚠️  分类未找到: ${row.category_name}, 跳过场景: ${row.title}`)
@@ -587,13 +595,13 @@ export async function seedLearningPackages(prisma: PrismaClient, packageName?: s
       if (existingScene) {
         sceneMap.set(row.title, existingScene.id)
         // 确保 LearningPackage 记录存在（防止之前被意外删除）
-        await createLearningPackageRecord(prisma, { sceneId: existingScene.id, title: row.title, type: 'daily' })
+        await createLearningPackageRecord(prisma, { sceneId: existingScene.id, title: row.title, type: packageType })
         continue
       }
       const scene = await prisma.scene.create({
         data: {
           categoryId: catId,
-          packageType: (row.package_type as any) || 'daily',
+          packageType,
           title: row.title,
           location: row.location,
           description: row.description || null,
@@ -602,7 +610,7 @@ export async function seedLearningPackages(prisma: PrismaClient, packageName?: s
           isFree: ['宿舍入住', '机场入境', '认识室友'].includes(row.title),
         },
       })
-      await createLearningPackageRecord(prisma, { sceneId: scene.id, title: scene.title, type: 'daily' })
+      await createLearningPackageRecord(prisma, { sceneId: scene.id, title: scene.title, type: packageType })
       sceneMap.set(row.title, scene.id)
     }
     console.log(`  ✓ ${sceneRows.length} 个场景`)

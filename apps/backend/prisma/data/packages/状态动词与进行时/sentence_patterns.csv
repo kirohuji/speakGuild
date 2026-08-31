@@ -1,0 +1,21 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+状态动词与进行时,状态还是动作？,[Place] is usually [adjective].,描述一个地点或事物通常的状态,,This room is usually quiet.,L1,0
+状态动词与进行时,状态还是动作？,[Person] is [verb-ing] right now.,描述此刻正在发生的动作,,My friend is cooking right now.,L1,1
+状态动词与进行时,想法、感受与偏好,I think [clause].,表达观点,,I think this is a good idea.,L1,0
+状态动词与进行时,想法、感受与偏好,I am thinking about [noun / V-ing].,表达正在思考的事,,I am thinking about changing my plan.,L1,1
+状态动词与进行时,看见、听见与尝试,[Thing] smells / tastes [adjective].,描述感官结果,,The soup tastes great.,L1,0
+状态动词与进行时,看见、听见与尝试,[Person] is smelling / tasting [thing].,描述主动尝试的动作,,The chef is tasting the soup.,L1,1
+状态动词与进行时,拥有、需要与客观属性,[Thing] belongs to [person].,说明所属关系,,This key belongs to my roommate.,L1,0
+状态动词与进行时,拥有、需要与客观属性,I am weighing [thing].,说明正在称重量,,I am weighing my suitcase.,L2,1
+状态动词与进行时,性格还是临时表现？,[Person] is usually [adjective].,描述稳定特点,,She is usually kind.,L1,0
+状态动词与进行时,性格还是临时表现？,[Person] is being [adjective] today.,描述临时表现,,He is being impatient today.,L2,1
+状态动词与进行时,变化、礼貌与持续意图,I am [verb-ing] [comparative] and [comparative].,强调感受或偏好逐渐变化,,I am liking it more and more.,L2,0
+状态动词与进行时,变化、礼貌与持续意图,Will you be needing [noun] [time]?,委婉询问将来的需求,,Will you be needing the car this afternoon?,L2,1
+状态动词与进行时,变化、礼貌与持续意图,I have been [wanting / meaning] to [verb].,表达持续到现在但未完成的意图,,I have been meaning to call you.,L2,2
+状态动词与进行时,-ing 不等于进行时,Knowing [fact] [main clause].,用分词短语交代已知背景,,Knowing her tastes I bought chocolate.,L2,0
+状态动词与进行时,-ing 不等于进行时,[Main clause] without [verb-ing].,用介词后的 -ing 表示不做某事的条件或方式,,You can disagree without being rude.,L2,1
+状态动词与进行时,总是发生，还是老是发生？,I always [verb] when [event].,描述常规、预期或计划中的习惯,,I always meet her at the station when she visits.,L2,0
+状态动词与进行时,总是发生，还是老是发生？,[Person] is always [verb-ing].,表达反复发生且使人惊讶、烦恼或觉得可爱的事,,He is always leaving his phone at home.,L2,1
+状态动词与进行时,总是发生，还是老是发生？,I am continually / forever [verb-ing].,加强“老是反复发生”的语气,,I am continually running into Oliver these days.,L2,2
+状态动词与进行时,综合任务：把眼前情况说清楚,[Thing] tastes / looks / sounds [adjective].,说明问题呈现出来的状态,,This drink tastes strange.,L1,0
+状态动词与进行时,综合任务：把眼前情况说清楚,Could you [verb] it for me?,提出服务请求,,Could you replace it for me?,L1,1

@@ -1,0 +1,21 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+状态动词与进行时,状态还是动作？,state,状态,noun,/steɪt/,/steɪt/,L1,某人或某物所处的情况。,"[{""en"":""The room is in a quiet state."",""zh"":""房间处于安静的状态。""}]",0
+状态动词与进行时,状态还是动作？,action,动作,noun,/ˈækʃən/,/ˈækʃən/,L1,正在发生或由人主动完成的事。,"[{""en"":""Opening the window is an action."",""zh"":""打开窗户是一个动作。""}]",1
+状态动词与进行时,想法、感受与偏好,opinion,观点,noun,/əˈpɪnjən/,/əˈpɪnjən/,L1,对一件事的看法。,"[{""en"":""My opinion is that the plan is useful."",""zh"":""我的看法是这个计划很有用。""}]",0
+状态动词与进行时,想法、感受与偏好,preference,偏好,noun,/ˈprefrəns/,/ˈprefrəns/,L2,更喜欢的选择。,"[{""en"":""Tea is my preference in the evening."",""zh"":""晚上我更喜欢喝茶。""}]",1
+状态动词与进行时,看见、听见与尝试,flavor,味道,noun,/ˈfleɪvər/,/ˈfleɪvə/,L1,食物或饮料的味道。,"[{""en"":""The soup has a rich flavor."",""zh"":""这汤味道很浓。""}]",0
+状态动词与进行时,看见、听见与尝试,perfume,香味,noun,/ˈpɜːrfjuːm/,/ˈpɜːfjuːm/,L2,花或香水发出的气味。,"[{""en"":""The perfume smells sweet."",""zh"":""这香水闻起来很甜。""}]",1
+状态动词与进行时,拥有、需要与客观属性,belong,属于,verb,/bɪˈlɔːŋ/,/bɪˈlɒŋ/,L1,表示所属关系。,"[{""en"":""This key belongs to me."",""zh"":""这把钥匙属于我。""}]",0
+状态动词与进行时,拥有、需要与客观属性,contain,包含,verb,/kənˈteɪn/,/kənˈteɪn/,L2,表示容器或内容物的关系。,"[{""en"":""The box contains three books."",""zh"":""这个盒子里有三本书。""}]",1
+状态动词与进行时,拥有、需要与客观属性,weight,重量,noun,/weɪt/,/weɪt/,L1,物品有多重。,"[{""en"":""The weight is ten kilos."",""zh"":""重量是十公斤。""}]",2
+状态动词与进行时,性格还是临时表现？,behavior,行为,noun,/bɪˈheɪvjər/,/bɪˈheɪviə/,L1,一个人当前的表现。,"[{""en"":""His behavior is unusual today."",""zh"":""他今天的表现不太寻常。""}]",0
+状态动词与进行时,性格还是临时表现？,rude,粗鲁的,adjective,/ruːd/,/ruːd/,L1,不礼貌或不尊重他人。,"[{""en"":""He is being rude to the waiter."",""zh"":""他现在对服务员很粗鲁。""}]",1
+状态动词与进行时,变化、礼貌与持续意图,gradually,逐渐地,adverb,/ˈɡrædʒuəli/,/ˈɡrædʒuəli/,L2,强调一个变化慢慢发生。,"[{""en"":""I am gradually liking the new city more."",""zh"":""我正逐渐更喜欢这座新城市。""}]",0
+状态动词与进行时,变化、礼貌与持续意图,intention,意图；打算,noun,/ɪnˈtenʃən/,/ɪnˈtenʃən/,L2,已经持续一段时间但尚未完成的计划。,"[{""en"":""I have had the intention to tell you for weeks."",""zh"":""我几周来一直想告诉你。""}]",1
+状态动词与进行时,-ing 不等于进行时,participle,分词,noun,/ˈpɑːrtɪsɪpəl/,/ˈpɑːtɪsɪpəl/,L3,可用来压缩说明原因、时间或伴随情况的动词形式。,"[{""en"":""Knowing the answer, she stayed quiet."",""zh"":""她知道答案，于是保持沉默。""}]",0
+状态动词与进行时,-ing 不等于进行时,preposition,介词,noun,/ˌprepəˈzɪʃən/,/ˌprepəˈzɪʃən/,L2,after、without、by 等词后常接动词 -ing 形式。,"[{""en"":""You can disagree without being rude."",""zh"":""你可以不同意，但不必粗鲁。""}]",1
+状态动词与进行时,总是发生，还是老是发生？,unexpected,出乎意料的,adjective,/ˌʌnɪkˈspektɪd/,/ˌʌnɪkˈspektɪd/,L2,没有预料或计划到的。,"[{""en"":""The meeting was unexpected."",""zh"":""这次见面是意料之外的。""}]",0
+状态动词与进行时,总是发生，还是老是发生？,continually,不断地；老是,adverb,/kənˈtɪnjuəli/,/kənˈtɪnjuəli/,L2,强调反复发生，常带说话人的不耐烦或惊讶。,"[{""en"":""I am continually running into him."",""zh"":""我老是碰见他。""}]",1
+状态动词与进行时,总是发生，还是老是发生？,forever,老是；总是,adverb,/fərˈevər/,/fəˈrevə/,L2,与进行时连用时常强调令人印象深刻的反复发生。,"[{""en"":""That cat is forever getting shut in the bathroom."",""zh"":""那只猫老是被关在浴室里。""}]",2
+状态动词与进行时,综合任务：把眼前情况说清楚,available,可用的,adjective,/əˈveɪləbl/,/əˈveɪləbl/,L2,可以使用或有空。,"[{""en"":""Is another table available?"",""zh"":""还有别的桌子可以用吗？""}]",0
+状态动词与进行时,综合任务：把眼前情况说清楚,replace,更换,verb,/rɪˈpleɪs/,/rɪˈpleɪs/,L2,用新的东西替换原来的东西。,"[{""en"":""Could you replace this drink?"",""zh"":""你能换掉这杯饮料吗？""}]",1

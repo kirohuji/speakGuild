@@ -1,0 +1,162 @@
+{
+  "问候与寒暄": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "感谢、道歉与祝福": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "请求、指令与许可": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "疑问、澄清与确认": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "观点、同意与评价": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "情绪与安慰": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "日常陈述与事务": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "惯用语与俚语": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  }
+}

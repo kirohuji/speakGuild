@@ -1,0 +1,302 @@
+{
+  "01 介绍自己与近况": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "02 日常计划与待办": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "03 想做与不想做": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "04 礼貌请求": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "05 主动帮忙与回应": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "06 聊兴趣与经历": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "07 发出邀请与约时间": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "08 听不懂时怎么问": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "09 表示同意与保留意见": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "10 自然反应与共情": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "11 生活小故障": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "12 工作学习进度": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "13 聊过去经历": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "14 期待与不确定的未来": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "15 给建议与找解决办法": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  }
+}

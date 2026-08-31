@@ -1,0 +1,13 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+基础句子类型与连接,先把一句话说清楚,[Subject] [verb] [object] [time].,按基本词序说明一件事,,I sent the message this morning.,L1,0
+基础句子类型与连接,把想知道的问出来,Where / When / Why did [subject] [verb]?,询问缺失信息,,Where did you put it?,L1,0
+基础句子类型与连接,自然地说不,[Subject] do not / does not [verb].,否定一个习惯或事实,,I do not agree.,L1,0
+基础句子类型与连接,难道不是吗？,Don't / Isn't [subject] ...?,带期待或惊讶地确认,,Don't you know her?,L2,0
+基础句子类型与连接,在否定句里选对词,I have not [past participle] anything yet.,在否定句中说尚未发生,,I have not seen anything yet.,L2,0
+基础句子类型与连接,感叹、提醒和指令,Please do not [verb].,礼貌提醒不要做某事,,Please do not touch it.,L1,0
+基础句子类型与连接,让我们和让他做,Let's [verb].,提出共同建议,,Let's take a break.,L1,0
+基础句子类型与连接,用 and but or 接住下一句,[Clause] but / and / or [clause].,连接平等的两个意思,,It is small but comfortable.,L1,0
+基础句子类型与连接,两个选择都说清楚,Either [option] or [option].,给出两个平行选择,,Either call me or send a message.,L2,0
+基础句子类型与连接,让一句话说明原因和条件,[Main clause] because / if / when [clause].,补充原因条件或时间,,I will stay if it rains.,L2,0
+基础句子类型与连接,介词后面和从句里的选择,Who / What ... [preposition]?,询问介词后的对象,,Who did you go with?,L3,0
+基础句子类型与连接,建议、假设与简化时间,If I were you I would [verb].,给出假设性建议,,If I were you I would wait.,L3,0

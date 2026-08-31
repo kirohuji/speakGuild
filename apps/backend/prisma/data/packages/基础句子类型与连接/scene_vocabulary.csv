@@ -1,0 +1,5 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+基础句子类型与连接,先把一句话说清楚,subject,主语,noun,/ˈsʌbdʒɪkt/,/ˈsʌbdʒɪkt/,L1,句子里做动作或被描述的人或事。,"[{""en"":""Emma is cooking."",""zh"":""埃玛在做饭。""}]",0
+基础句子类型与连接,把想知道的问出来,question,问题,noun,/ˈkwestʃən/,/ˈkwestʃən/,L1,用来获取缺失信息的话。,"[{""en"":""I have a question."",""zh"":""我有个问题。""}]",0
+基础句子类型与连接,自然地说不,correct,纠正,verb,/kəˈrekt/,/kəˈrekt/,L1,说明原先的信息不对。,"[{""en"":""Let me correct that."",""zh"":""让我纠正一下。""}]",0
+基础句子类型与连接,让一句话说明原因和条件,condition,条件,noun,/kənˈdɪʃən/,/kənˈdɪʃən/,L2,某事发生所需要满足的情况。,"[{""en"":""The condition is simple."",""zh"":""条件很简单。""}]",0
