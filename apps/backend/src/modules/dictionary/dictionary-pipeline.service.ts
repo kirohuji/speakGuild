@@ -373,7 +373,7 @@ export class DictionaryPipelineService {
         return aiConfirmed.length > 0 ? aiConfirmed : selected;
       } catch (error: any) {
         this.logger.warn(`AI pronunciation verification failed: ${error.message}`);
-        return selected;
+        throw error;
       }
     }
 
@@ -492,7 +492,7 @@ export class DictionaryPipelineService {
     for (const item of [...evidence.pronunciations, ...supporting]) {
       addCandidate({
         ipa: item.ipa,
-        eligibleTypes: ['uk', 'us'],
+        eligibleTypes: [item.type],
         declaredTypes: [item.type],
         source: item.source ?? 'unknown',
         sourceFamily: this.pronunciationSourceFamily(item.source),
@@ -517,40 +517,68 @@ export class DictionaryPipelineService {
     }
     const llmConfig = await this.aiModelService.getLlmConfig();
     if (!llmConfig.apiKey) throw new Error('当前激活的 LLM 未配置 API Key');
-    const { text } = await generateText({
-      model: this.llmFactory.create(llmConfig),
-      prompt: `You are a conservative English pronunciation lexicographer.
+    const prompt = `You are a conservative English pronunciation lexicographer.
 
 Return one standard broad IPA pronunciation separately for standard British English (UK/RP) and standard American English (US/General American).
 
 Rules:
 1. Prefer selecting a reliable existing candidate by candidateId.
 2. If no reliable candidate exists for an accent, generate its IPA from established lexical knowledge and return it in ipa.
-3. Never return both candidateId and ipa for the same accent.
-4. A candidate may be selected only for a type listed in eligibleTypes. declaredTypes is supporting evidence, not a hard restriction.
-5. Use standard learner-friendly broad IPA enclosed in /.../. Do not use phonetic brackets [...].
-6. Keep UK/RP and US/General American distinct. They may be identical only when that is genuinely standard for both accents.
-7. Use simple canonical notation: write syllabic consonants with schwa (ən, əl, əm), and write rhotic vowels with r rather than ɝ or ɚ.
-8. Exclude non-standard regional varieties. Return null only when genuinely uncertain.
+3. Never select a candidate below ${AI_PRONUNCIATION_MIN_CONFIDENCE} confidence. Generate the IPA directly instead.
+4. Never return both candidateId and ipa for the same accent.
+5. A candidate may be selected only for a type listed in eligibleTypes. Never reuse a UK-only candidate for US or a US-only candidate for UK.
+6. Use standard learner-friendly broad IPA enclosed in /.../. Do not use phonetic brackets [...].
+7. Keep UK/RP and US/General American distinct. They may be identical only when that is genuinely standard for both accents.
+8. Use simple canonical notation: write syllabic consonants with schwa (ən, əl, əm), and write rhotic vowels with r rather than ɝ or ɚ.
+9. Exclude non-standard regional varieties. Return null only when genuinely uncertain.
 
 Evidence:
 ${JSON.stringify({ word, requestedScope: scope, candidates })}
 
 Return ONLY JSON. Each requested accent must be null or an object containing candidateId or ipa, plus confidence and reason.
 Example shape:
-{"uk":{"candidateId":"c1","ipa":null,"confidence":0.95,"reason":"short explanation"},"us":{"candidateId":null,"ipa":"/ɪɡˈzæmpəl/","confidence":0.9,"reason":"generated because no reliable US candidate exists"}}`,
-      temperature: 0,
-      maxOutputTokens: 300,
-    });
-
-    const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    this.logger.debug(`AI pronunciation evaluation for "${word}": ${cleaned}`);
-    const parsed = JSON.parse(cleaned) as Partial<Record<'uk' | 'us', {
+{"uk":{"candidateId":"c1","ipa":null,"confidence":0.95,"reason":"short explanation"},"us":{"candidateId":null,"ipa":"/ɪɡˈzæmpəl/","confidence":0.9,"reason":"generated because no reliable US candidate exists"}}`;
+    type AiPronunciationChoice = {
       candidateId?: string | null;
       ipa?: string | null;
       confidence?: number;
       reason?: string;
-    } | null>>;
+    };
+    let parsed: Partial<Record<'uk' | 'us', AiPronunciationChoice | null>> | undefined;
+    const model = this.llmFactory.create(llmConfig, { thinking: 'disabled' });
+
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      const generation = await generateText({
+        model,
+        prompt,
+        temperature: 0,
+        maxOutputTokens: 600,
+      });
+      const withoutFences = generation.text.replace(/```(?:json)?\s*/gi, '').trim();
+      const objectStart = withoutFences.indexOf('{');
+      const objectEnd = withoutFences.lastIndexOf('}');
+      const cleaned = objectStart >= 0 && objectEnd >= objectStart
+        ? withoutFences.slice(objectStart, objectEnd + 1)
+        : withoutFences;
+      this.logger.debug(`AI pronunciation evaluation for "${word}" (attempt ${attempt}): ${cleaned || '[empty]'}`);
+
+      try {
+        if (!cleaned) throw new Error('empty response text');
+        parsed = JSON.parse(cleaned) as Partial<Record<'uk' | 'us', AiPronunciationChoice | null>>;
+        break;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.logger.warn(
+          `AI pronunciation response invalid for "${word}" (attempt ${attempt}/2): ${message}; `
+          + `finishReason=${generation.finishReason}; usage=${JSON.stringify(generation.usage)}`,
+        );
+        if (attempt === 2) {
+          throw new Error(`AI pronunciation evaluation returned invalid JSON after 2 attempts: ${message}`);
+        }
+      }
+    }
+
+    if (!parsed) throw new Error('AI pronunciation evaluation returned no result');
     const requestedTypes: Array<'uk' | 'us'> = scope === 'all' ? ['uk', 'us'] : [scope];
     const result: CleanedPronunciation[] = [];
 
@@ -591,6 +619,79 @@ Example shape:
         aiConfidence: confidence,
         aiReason: typeof choice.reason === 'string' ? choice.reason.slice(0, 200) : undefined,
       });
+    }
+
+    const unresolvedTypes = requestedTypes.filter(
+      (type) => !result.some((item) => item.type === type),
+    );
+    if (unresolvedTypes.length > 0) {
+      const fallbackPrompt = `You are an English pronunciation lexicographer.
+
+The previous evaluation did not produce a usable pronunciation for ${unresolvedTypes.join(' and ')}.
+Generate the missing standard broad IPA directly from established lexical knowledge.
+
+Word: ${JSON.stringify(word)}
+Accents required: ${JSON.stringify(unresolvedTypes)}
+
+Rules:
+1. You MUST return one IPA for every required accent. Do not return null and do not return candidateId.
+2. Use UK/RP for uk and US/General American for us.
+3. Use learner-friendly broad IPA enclosed in /.../.
+4. Use schwa plus consonant instead of syllabic-consonant marks, and r instead of ɝ or ɚ.
+5. Return ONLY JSON in this shape: {"uk":{"ipa":"/.../","confidence":0.9,"reason":"..."}}.`;
+
+      for (let attempt = 1; attempt <= 2; attempt += 1) {
+        const generation = await generateText({
+          model,
+          prompt: fallbackPrompt,
+          temperature: 0,
+          maxOutputTokens: 400,
+        });
+        const withoutFences = generation.text.replace(/```(?:json)?\s*/gi, '').trim();
+        const objectStart = withoutFences.indexOf('{');
+        const objectEnd = withoutFences.lastIndexOf('}');
+        const cleaned = objectStart >= 0 && objectEnd >= objectStart
+          ? withoutFences.slice(objectStart, objectEnd + 1)
+          : withoutFences;
+        this.logger.debug(
+          `AI pronunciation direct generation for "${word}" (attempt ${attempt}): ${cleaned || '[empty]'}`,
+        );
+
+        try {
+          if (!cleaned) throw new Error('empty response text');
+          const generated = JSON.parse(cleaned) as Partial<Record<'uk' | 'us', AiPronunciationChoice | null>>;
+          const fallbackResults = unresolvedTypes.map((type) => {
+            const choice = generated[type];
+            const ipa = this.normalizeBroadIpa(choice?.ipa ?? '');
+            if (!ipa) throw new Error(`missing or invalid ${type.toUpperCase()} IPA`);
+            const rawConfidence = Number(choice?.confidence);
+            const confidence = Number.isFinite(rawConfidence)
+              ? Math.max(0, Math.min(1, rawConfidence))
+              : 0.5;
+            return {
+              type,
+              ipa,
+              isPreferred: true,
+              notation: 'IPA' as const,
+              source: `AI generated / ${llmConfig.provider} / ${llmConfig.model}`,
+              needsReview: true,
+              aiConfidence: confidence,
+              aiReason: typeof choice?.reason === 'string' ? choice.reason.slice(0, 200) : undefined,
+            } satisfies CleanedPronunciation;
+          });
+          result.push(...fallbackResults);
+          break;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          this.logger.warn(
+            `AI direct pronunciation generation invalid for "${word}" (attempt ${attempt}/2): ${message}; `
+            + `finishReason=${generation.finishReason}; usage=${JSON.stringify(generation.usage)}`,
+          );
+          if (attempt === 2) {
+            throw new Error(`AI failed to generate required ${unresolvedTypes.join('/').toUpperCase()} IPA: ${message}`);
+          }
+        }
+      }
     }
 
     return result;
