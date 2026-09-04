@@ -87,6 +87,7 @@ export interface PaginatedResult<T> {
 
 export type PronunciationProvider = 'auto' | 'wiktionary' | 'freedictionaryapi' | 'dictionaryapi.dev' | 'datamuse' | 'ai_verify';
 export type PronunciationScope = 'all' | 'uk' | 'us';
+export type PronunciationAuditFilter = 'all' | 'missing';
 
 export interface PronunciationAuditAccent {
   ipa: string | null;
@@ -164,8 +165,18 @@ export async function deleteDictionaryEntry(word: string): Promise<void> {
 export async function getPronunciationAudit(params?: {
   search?: string;
   page?: number;
+  filter?: PronunciationAuditFilter;
 }): Promise<PronunciationAuditResult> {
   return get('/dictionary/pronunciation-audit', params);
+}
+
+/** Lock all complete UK/US pairs selected from Wiktionary by AI at >= 90% confidence. */
+export async function lockTrustedAiWiktionaryPronunciations(): Promise<{
+  eligible: number;
+  locked: number;
+  alreadyLocked: number;
+}> {
+  return post('/dictionary/pronunciation/lock-trusted-ai-wiktionary');
 }
 
 /** Replace one word's pronunciation data from a selected provider. */

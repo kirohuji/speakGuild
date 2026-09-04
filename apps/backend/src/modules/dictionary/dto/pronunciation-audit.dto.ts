@@ -14,6 +14,9 @@ export type PronunciationProvider = (typeof PRONUNCIATION_PROVIDERS)[number];
 export const PRONUNCIATION_SCOPES = ['all', 'uk', 'us'] as const;
 export type PronunciationScope = (typeof PRONUNCIATION_SCOPES)[number];
 
+export const PRONUNCIATION_AUDIT_FILTERS = ['all', 'missing'] as const;
+export type PronunciationAuditFilter = (typeof PRONUNCIATION_AUDIT_FILTERS)[number];
+
 export class PronunciationAuditQueryDto {
   @IsOptional()
   @Type(() => Number)
@@ -26,6 +29,10 @@ export class PronunciationAuditQueryDto {
   @MaxLength(100)
   @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
   search?: string;
+
+  @IsOptional()
+  @IsIn(PRONUNCIATION_AUDIT_FILTERS)
+  filter: PronunciationAuditFilter = 'all';
 }
 
 export class RefreshPronunciationDto {

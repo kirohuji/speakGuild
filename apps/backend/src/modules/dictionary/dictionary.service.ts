@@ -3,7 +3,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { DictionaryPipelineService } from './dictionary-pipeline.service';
 import { DictionaryClusteringService } from './dictionary-clustering.service';
 import type { CleanedPronunciation, SenseCluster } from './dictionary.types';
-import type { PronunciationProvider, PronunciationScope } from './dto/pronunciation-audit.dto';
+import type { PronunciationAuditFilter, PronunciationProvider, PronunciationScope } from './dto/pronunciation-audit.dto';
 import { isCanonicalBroadIpa, isStandardBroadIpa, normalizeBroadIpa } from './dictionary-ipa.util';
 
 const PRONUNCIATION_AUDIT_PAGE_SIZE = 100;
@@ -179,12 +179,42 @@ export class DictionaryService {
     return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
   }
 
-  async pronunciationAudit(params?: { search?: string; page?: number }) {
-    const { search, page = 1 } = params ?? {};
+  async pronunciationAudit(params?: { search?: string; page?: number; filter?: PronunciationAuditFilter }) {
+    const { search, page = 1, filter = 'all' } = params ?? {};
     const safePage = Math.max(1, page);
     const where = search
       ? { word: { contains: search.toLowerCase().trim(), mode: 'insensitive' as const } }
       : {};
+
+    if (filter === 'missing') {
+      const entries = await this.prisma.dictionaryEntry.findMany({
+        where,
+        select: { word: true, sourceUrl: true, pronunciations: true },
+        orderBy: { word: 'asc' },
+      });
+      const missingItems = entries
+        .map((entry) => this.toPronunciationAuditItem(entry))
+        .filter((item) => item.status === 'missing');
+      const total = missingItems.length;
+      const items = missingItems.slice(
+        (safePage - 1) * PRONUNCIATION_AUDIT_PAGE_SIZE,
+        safePage * PRONUNCIATION_AUDIT_PAGE_SIZE,
+      );
+      return {
+        items,
+        total,
+        page: safePage,
+        pageSize: PRONUNCIATION_AUDIT_PAGE_SIZE,
+        totalPages: Math.ceil(total / PRONUNCIATION_AUDIT_PAGE_SIZE),
+        pageStats: {
+          passed: 0,
+          attention: 0,
+          missing: items.length,
+          withAudio: items.filter((item) => item.uk.hasAudio || item.us.hasAudio).length,
+        },
+      };
+    }
+
     const [entries, total] = await Promise.all([
       this.prisma.dictionaryEntry.findMany({
         where,
@@ -208,6 +238,50 @@ export class DictionaryService {
         missing: items.filter((item) => item.status === 'missing').length,
         withAudio: items.filter((item) => item.uk.hasAudio || item.us.hasAudio).length,
       },
+    };
+  }
+
+  async lockTrustedAiWiktionaryPronunciations() {
+    const entries = await this.prisma.dictionaryEntry.findMany({
+      select: { word: true, pronunciations: true },
+      orderBy: { word: 'asc' },
+    });
+
+    const eligible = entries.filter((entry) => {
+      const pronunciations = Array.isArray(entry.pronunciations)
+        ? entry.pronunciations as unknown as CleanedPronunciation[]
+        : [];
+      return (['uk', 'us'] as const).every((type) => {
+        const variants = pronunciations.filter((item) => item?.type === type);
+        const selected = variants.find((item) => item.isPreferred) ?? variants[0];
+        return !!selected
+          && selected.source?.startsWith('AI selected / Wiktionary Action API') === true
+          && Number(selected.aiConfidence) >= 0.9
+          && isCanonicalBroadIpa(selected.ipa);
+      });
+    });
+    const pending = eligible.filter((entry) => {
+      const pronunciations = Array.isArray(entry.pronunciations)
+        ? entry.pronunciations as unknown as CleanedPronunciation[]
+        : [];
+      return !pronunciations.some((item) => item?.locked);
+    });
+
+    for (let offset = 0; offset < pending.length; offset += 50) {
+      const batch = pending.slice(offset, offset + 50);
+      await Promise.all(batch.map((entry) => {
+        const pronunciations = entry.pronunciations as unknown as CleanedPronunciation[];
+        return this.prisma.dictionaryEntry.update({
+          where: { word: entry.word },
+          data: { pronunciations: pronunciations.map((item) => ({ ...item, locked: true })) as any },
+        });
+      }));
+    }
+
+    return {
+      eligible: eligible.length,
+      locked: pending.length,
+      alreadyLocked: eligible.length - pending.length,
     };
   }
 

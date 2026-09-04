@@ -45,6 +45,17 @@ export class DictionaryController {
     return { code: 200, message: 'success', data: result };
   }
 
+  /** Admin: lock every complete UK/US pair selected from Wiktionary by AI at >= 90% confidence. */
+  @Post('pronunciation/lock-trusted-ai-wiktionary')
+  async lockTrustedAiWiktionaryPronunciations(@Req() req: Request) {
+    const session = await requireAuthSession(req);
+    if (session.user.role !== 'admin') {
+      return { code: 403, message: 'Admin only', data: null };
+    }
+    const result = await this.dictionaryService.lockTrustedAiWiktionaryPronunciations();
+    return { code: 200, message: 'success', data: result };
+  }
+
   /** Admin: replace a word's pronunciation data with one audited provider response. */
   @Post(':word/pronunciation/refresh')
   async refreshPronunciation(

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp,
-  ClipboardCheck, Database, Headphones, ListChecks, LockKeyhole, LockKeyholeOpen, Loader2, PenLine, RefreshCw, Save, Search, SpellCheck2, Trash2, Volume2,
+  ClipboardCheck, Database, Headphones, ListChecks, LockKeyhole, LockKeyholeOpen, Loader2, PenLine, RefreshCw, Save, Search, ShieldCheck, SpellCheck2, Trash2, Volume2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -16,14 +16,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/cn';
 import {
   clearDictionaryPronunciation, getPronunciationAudit, refreshDictionaryPronunciation,
+  lockTrustedAiWiktionaryPronunciations,
   normalizeDictionaryPronunciation, saveManualDictionaryPronunciation,
   enqueuePronunciationRefreshCurrentPage,
   setDictionaryPronunciationLocked,
-  type PronunciationAuditAccent, type PronunciationAuditItem,
+  type PronunciationAuditAccent, type PronunciationAuditFilter, type PronunciationAuditItem,
   type PronunciationAuditResult, type PronunciationProvider, type PronunciationScope,
 } from '@/features/admin/api-dictionary';
 
@@ -175,24 +177,26 @@ export function DictionaryPronunciationAuditDialog({
   const [jumpDraft, setJumpDraft] = useState('');
   const [searchDraft, setSearchDraft] = useState('');
   const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<PronunciationAuditFilter>('all');
   const [providers, setProviders] = useState<Record<string, PronunciationProvider>>({});
   const [scopes, setScopes] = useState<Record<string, PronunciationScope>>({});
   const [processingActions, setProcessingActions] = useState<Record<string, 'update' | 'clear' | 'manual' | 'normalize-uk' | 'normalize-us' | 'lock'>>({});
   const [manualEditor, setManualEditor] = useState<{ word: string; type: 'uk' | 'us' } | null>(null);
   const [manualValue, setManualValue] = useState('');
   const [batchSubmitting, setBatchSubmitting] = useState(false);
+  const [autoLocking, setAutoLocking] = useState(false);
 
   const load = useCallback(async () => {
     if (!open) return;
     setLoading(true);
     try {
-      setData(await getPronunciationAudit({ page, search: search || undefined }));
+      setData(await getPronunciationAudit({ page, search: search || undefined, filter }));
     } catch (error: any) {
       toast.error(error?.message || '音标审查数据加载失败');
     } finally {
       setLoading(false);
     }
-  }, [open, page, search]);
+  }, [filter, open, page, search]);
 
   useEffect(() => { void load(); }, [load]);
   useEffect(() => { if (!open) setManualEditor(null); }, [open]);
@@ -343,6 +347,24 @@ export function DictionaryPronunciationAuditDialog({
     }
   };
 
+  const autoLockTrustedPronunciations = async () => {
+    if (autoLocking) return;
+    setAutoLocking(true);
+    try {
+      const result = await lockTrustedAiWiktionaryPronunciations();
+      if (result.locked > 0) {
+        toast.success(`已自动锁定 ${result.locked} 个高可信词条；${result.alreadyLocked} 个此前已锁定`);
+      } else {
+        toast.success(`没有新的词条需要锁定；已有 ${result.alreadyLocked} 个符合条件`);
+      }
+      await load();
+    } catch (error: any) {
+      toast.error(error?.message || '自动锁定高可信音标失败');
+    } finally {
+      setAutoLocking(false);
+    }
+  };
+
   const stats = data?.pageStats ?? { passed: 0, attention: 0, missing: 0, withAudio: 0 };
   const manualBody = manualValue.trim().replace(/^\/+/, '').replace(/\/+$/, '');
   const manualSaving = !!manualEditor && processingActions[manualEditor.word] === 'manual';
@@ -419,8 +441,8 @@ export function DictionaryPronunciationAuditDialog({
           </aside>
 
           <section className="flex min-h-0 min-w-0 flex-col">
-            <div className="flex items-center justify-between gap-4 border-b py-4 pl-6 pr-14">
-              <div>
+            <div className="flex flex-wrap items-center gap-3 border-b py-4 pl-6 pr-14">
+              <div className="mr-auto">
                 <div className="flex items-center gap-2">
                   <h3 className="text-lg font-semibold">音标审查报告</h3>
                   {stats.attention > 0 && <Badge variant="secondary">{stats.attention} 个需复核</Badge>}
@@ -428,6 +450,37 @@ export function DictionaryPronunciationAuditDialog({
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">更新与清空均按所选 UK / US 范围执行，不改释义、例句和词形。</p>
               </div>
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                size="sm"
+                value={filter}
+                onValueChange={(value) => {
+                  if (!value) return;
+                  setPage(1);
+                  setFilter(value as PronunciationAuditFilter);
+                }}
+                aria-label="筛选音标审查结果"
+              >
+                <ToggleGroupItem value="all" aria-label="显示全部音标">全部</ToggleGroupItem>
+                <ToggleGroupItem value="missing" aria-label="只显示缺失音标">
+                  只看缺失{filter === 'missing' && data ? ` ${data.total}` : ''}
+                </ToggleGroupItem>
+              </ToggleGroup>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => void autoLockTrustedPronunciations()}
+                    disabled={loading || autoLocking}
+                  >
+                    {autoLocking ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <ShieldCheck data-icon="inline-start" />}
+                    全库自动锁定 ≥90%
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>扫描数据库全部词条，锁定 UK、US 均来自 AI selected / Wiktionary Action API 且置信度不低于 90% 的词条</TooltipContent>
+              </Tooltip>
               <Button
                 type="button"
                 variant="outline"
@@ -438,7 +491,7 @@ export function DictionaryPronunciationAuditDialog({
                 一键检查本页音标
               </Button>
               <form
-                className="flex w-full max-w-md gap-2"
+                className="flex w-full max-w-sm gap-2"
                 onSubmit={(event) => { event.preventDefault(); runSearch(); }}
               >
                 <Input
