@@ -87,7 +87,7 @@ export interface PaginatedResult<T> {
 
 export type PronunciationProvider = 'auto' | 'wiktionary' | 'freedictionaryapi' | 'dictionaryapi.dev' | 'datamuse' | 'ai_verify';
 export type PronunciationScope = 'all' | 'uk' | 'us';
-export type PronunciationAuditFilter = 'all' | 'missing';
+export type PronunciationAuditFilter = 'all' | 'missing' | 'noncanonical';
 
 export interface PronunciationAuditAccent {
   ipa: string | null;
@@ -179,6 +179,15 @@ export async function lockTrustedAiWiktionaryPronunciations(): Promise<{
   return post('/dictionary/pronunciation/lock-trusted-ai-wiktionary');
 }
 
+/** Normalize all non-canonical IPA spellings without changing other dictionary data. */
+export async function normalizeNoncanonicalPronunciations(): Promise<{
+  scanned: number;
+  wordsUpdated: number;
+  pronunciationsUpdated: number;
+}> {
+  return post('/dictionary/pronunciation/normalize-noncanonical');
+}
+
 /** Replace one word's pronunciation data from a selected provider. */
 export async function refreshDictionaryPronunciation(
   word: string,
@@ -221,6 +230,10 @@ export async function clearDictionaryPronunciation(
 }
 
 /** 将音标审查页当前的最多 100 个单词交由任务中心自动更新。 */
-export async function enqueuePronunciationRefreshCurrentPage(params: { page: number; search?: string }): Promise<{ id: string }> {
+export async function enqueuePronunciationRefreshCurrentPage(params: {
+  page: number;
+  search?: string;
+  filter?: PronunciationAuditFilter;
+}): Promise<{ id: string }> {
   return post('/admin/tasks/dictionary-pronunciations/refresh-current-page', undefined, { params });
 }

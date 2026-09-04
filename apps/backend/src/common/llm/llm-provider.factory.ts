@@ -9,6 +9,10 @@ export interface LlmConfig {
   baseUrl: string;
 }
 
+export interface LlmRequestOptions {
+  thinking?: 'enabled' | 'disabled';
+}
+
 /**
  * LLM Provider Factory
  *
@@ -26,7 +30,7 @@ export class LlmProviderFactory {
   /**
    * 根据配置创建 AI SDK LanguageModel 实例。
    */
-  create(config: LlmConfig): LanguageModel {
+  create(config: LlmConfig, options?: LlmRequestOptions): LanguageModel {
     const { apiKey, model, baseUrl } = config;
 
     if (!apiKey) {
@@ -39,6 +43,23 @@ export class LlmProviderFactory {
       apiKey,
       baseURL: baseUrl || undefined,
       name: config.provider,
+      fetch: config.provider === 'deepseek' && options?.thinking
+        ? async (input, init) => {
+            if (typeof init?.body !== 'string') return fetch(input, init);
+            try {
+              const body = JSON.parse(init.body) as Record<string, unknown>;
+              return fetch(input, {
+                ...init,
+                body: JSON.stringify({
+                  ...body,
+                  thinking: { type: options.thinking },
+                }),
+              });
+            } catch {
+              return fetch(input, init);
+            }
+          }
+        : undefined,
     });
 
     if (config.provider !== 'openai') {

@@ -186,17 +186,23 @@ export class DictionaryService {
       ? { word: { contains: search.toLowerCase().trim(), mode: 'insensitive' as const } }
       : {};
 
-    if (filter === 'missing') {
+    if (filter !== 'all') {
       const entries = await this.prisma.dictionaryEntry.findMany({
         where,
         select: { word: true, sourceUrl: true, pronunciations: true },
         orderBy: { word: 'asc' },
       });
-      const missingItems = entries
+      const filteredItems = entries
         .map((entry) => this.toPronunciationAuditItem(entry))
-        .filter((item) => item.status === 'missing');
-      const total = missingItems.length;
-      const items = missingItems.slice(
+        .filter((item) => filter === 'missing'
+          ? item.status === 'missing'
+          : [item.uk, item.us].some((accent) => (
+            accent.ipa !== null
+            && accent.normalizedIpa !== null
+            && accent.ipa !== accent.normalizedIpa
+          )));
+      const total = filteredItems.length;
+      const items = filteredItems.slice(
         (safePage - 1) * PRONUNCIATION_AUDIT_PAGE_SIZE,
         safePage * PRONUNCIATION_AUDIT_PAGE_SIZE,
       );
@@ -207,9 +213,9 @@ export class DictionaryService {
         pageSize: PRONUNCIATION_AUDIT_PAGE_SIZE,
         totalPages: Math.ceil(total / PRONUNCIATION_AUDIT_PAGE_SIZE),
         pageStats: {
-          passed: 0,
-          attention: 0,
-          missing: items.length,
+          passed: items.filter((item) => item.status === 'passed').length,
+          attention: items.filter((item) => item.status === 'attention').length,
+          missing: items.filter((item) => item.status === 'missing').length,
           withAudio: items.filter((item) => item.uk.hasAudio || item.us.hasAudio).length,
         },
       };
@@ -238,6 +244,42 @@ export class DictionaryService {
         missing: items.filter((item) => item.status === 'missing').length,
         withAudio: items.filter((item) => item.uk.hasAudio || item.us.hasAudio).length,
       },
+    };
+  }
+
+  async normalizeNoncanonicalPronunciations() {
+    const entries = await this.prisma.dictionaryEntry.findMany({
+      select: { word: true, pronunciations: true },
+      orderBy: { word: 'asc' },
+    });
+    const pending = entries.flatMap((entry) => {
+      const pronunciations = Array.isArray(entry.pronunciations)
+        ? entry.pronunciations as unknown as CleanedPronunciation[]
+        : [];
+      let pronunciationsUpdated = 0;
+      const normalized = pronunciations.map((item) => {
+        const ipa = normalizeBroadIpa(item.ipa);
+        if (!ipa || ipa === item.ipa) return item;
+        pronunciationsUpdated += 1;
+        return { ...item, ipa };
+      });
+      return pronunciationsUpdated > 0
+        ? [{ word: entry.word, pronunciations: normalized, pronunciationsUpdated }]
+        : [];
+    });
+
+    for (let offset = 0; offset < pending.length; offset += 50) {
+      const batch = pending.slice(offset, offset + 50);
+      await Promise.all(batch.map((entry) => this.prisma.dictionaryEntry.update({
+        where: { word: entry.word },
+        data: { pronunciations: entry.pronunciations as any },
+      })));
+    }
+
+    return {
+      scanned: entries.length,
+      wordsUpdated: pending.length,
+      pronunciationsUpdated: pending.reduce((total, entry) => total + entry.pronunciationsUpdated, 0),
     };
   }
 
@@ -307,9 +349,7 @@ export class DictionaryService {
       throw new BadRequestException(`${provider} 没有返回可确认的 ${scopeLabel} 标准 IPA 数据`);
     }
 
-    const refreshedTypes = scope === 'all'
-      ? new Set<CleanedPronunciation['type']>(['uk', 'us'])
-      : new Set(pronunciations.map((item) => item.type));
+    const refreshedTypes = new Set(pronunciations.map((item) => item.type));
     // Fetching remote providers can take a few seconds. Re-read immediately before
     // saving so a lock set while the request was in flight is never overwritten.
     const latest = await this.prisma.dictionaryEntry.findUnique({
@@ -320,9 +360,20 @@ export class DictionaryService {
       ? latest.pronunciations as unknown as CleanedPronunciation[]
       : [];
     const isLocked = existingPronunciations.some((item) => item?.locked);
+    const existingAudioByType = new Map<CleanedPronunciation['type'], string>();
+    for (const type of refreshedTypes) {
+      const variants = existingPronunciations.filter((item) => item.type === type);
+      const selected = variants.find((item) => item.isPreferred) ?? variants[0];
+      if (selected?.audioUrl) existingAudioByType.set(type, selected.audioUrl);
+    }
     const mergedPronunciations = [
       ...existingPronunciations.filter((item) => !refreshedTypes.has(item.type)),
-      ...pronunciations.map((item) => isLocked ? { ...item, locked: true } : item),
+      ...pronunciations.map((item) => {
+        const withPreservedAudio = item.audioUrl || !item.isPreferred
+          ? item
+          : { ...item, audioUrl: existingAudioByType.get(item.type) };
+        return isLocked ? { ...withPreservedAudio, locked: true } : withPreservedAudio;
+      }),
     ];
 
     const updated = await this.prisma.dictionaryEntry.update({
@@ -358,6 +409,30 @@ export class DictionaryService {
     });
     return Array.isArray(entry?.pronunciations)
       && (entry.pronunciations as unknown as CleanedPronunciation[]).some((item) => item?.locked);
+  }
+
+  async getPronunciationBatchRefreshPlan(word: string): Promise<{
+    locked: boolean;
+    refreshScopes: Array<'uk' | 'us'>;
+    skippedScopes: Array<'uk' | 'us'>;
+  }> {
+    const entry = await this.prisma.dictionaryEntry.findUnique({
+      where: { word: word.toLowerCase().trim() },
+      select: { pronunciations: true },
+    });
+    const pronunciations = Array.isArray(entry?.pronunciations)
+      ? entry.pronunciations as unknown as CleanedPronunciation[]
+      : [];
+    const locked = pronunciations.some((item) => item?.locked);
+    if (locked) return { locked: true, refreshScopes: [], skippedScopes: ['uk', 'us'] };
+
+    const skippedScopes = (['uk', 'us'] as const).filter((type) => {
+      const variants = pronunciations.filter((item) => item?.type === type);
+      const selected = variants.find((item) => item.isPreferred) ?? variants[0];
+      return !!selected?.ipa && Number(selected.aiConfidence) >= 0.9;
+    });
+    const refreshScopes = (['uk', 'us'] as const).filter((type) => !skippedScopes.includes(type));
+    return { locked: false, refreshScopes, skippedScopes };
   }
 
   async clearPronunciation(word: string, scope: PronunciationScope = 'all') {

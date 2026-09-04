@@ -2,6 +2,7 @@ import { Controller, Get, Param, Post, Query, Req, ForbiddenException } from '@n
 import { AdminTaskStatus } from '@prisma/client';
 import type { Request } from 'express';
 import { requireAuthSession } from '../auth/session.util';
+import { PRONUNCIATION_AUDIT_FILTERS, type PronunciationAuditFilter } from '../dictionary/dto/pronunciation-audit.dto';
 import { AdminTasksService } from './admin-tasks.service';
 
 @Controller('admin/tasks')
@@ -29,11 +30,16 @@ export class AdminTasksController {
     @Req() req: Request,
     @Query('page') page?: string,
     @Query('search') search?: string,
+    @Query('filter') filter?: string,
   ) {
     const session = await this.requireAdmin(req);
+    const auditFilter: PronunciationAuditFilter = PRONUNCIATION_AUDIT_FILTERS.includes(filter as PronunciationAuditFilter)
+      ? filter as PronunciationAuditFilter
+      : 'all';
     return this.adminTasksService.enqueueDictionaryPronunciationBatchRefresh(session.user.id, {
       page: page ? Number(page) : 1,
       search,
+      filter: auditFilter,
     });
   }
 

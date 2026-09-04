@@ -20,6 +20,13 @@ export function normalizeBroadIpa(value: string): string | null {
     .replace(/ɹ/gu, 'r')
     .replace(/g/gu, 'ɡ')
     .replace(/ɫ/gu, 'l')
+    // Keep the learner-facing transcription simple and consistent.
+    .replace(/n̩/gu, 'ən')
+    .replace(/l̩/gu, 'əl')
+    .replace(/m̩/gu, 'əm')
+    .replace(/[rɹ]̩/gu, 'ər')
+    .replace(/ɝ/gu, 'ɜːr')
+    .replace(/ɚ/gu, 'ər')
     // Affricate tie bars and non-syllabic marks are optional in broad English IPA.
     .replace(/[͜͡]/gu, '')
     .replace(/̯/gu, '')

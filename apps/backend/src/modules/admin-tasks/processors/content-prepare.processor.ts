@@ -102,7 +102,8 @@ export class ContentPrepareProcessor extends WorkerHost {
     for (let index = startIndex; index < words.length; index += 1) {
       const word = words[index];
       if (await this.adminTasksService.isCanceled(taskId)) return null;
-      if (await this.dictionaryService.isPronunciationLocked(word)) {
+      const refreshPlan = await this.dictionaryService.getPronunciationBatchRefreshPlan(word);
+      if (refreshPlan.locked) {
         skipped += 1;
         await this.adminTasksService.log(taskId, 'info', `${word} 已确认锁定，跳过检查`, { step: 'refresh', meta: { word, skipped: true } });
         await this.adminTasksService.setProgress(taskId, {
@@ -112,11 +113,31 @@ export class ContentPrepareProcessor extends WorkerHost {
         continue;
       }
 
+      if (refreshPlan.refreshScopes.length === 0) {
+        skipped += 1;
+        await this.adminTasksService.log(taskId, 'info', `${word} 英式和美式音标的 AI 置信度均不低于 90%，跳过检查`, {
+          step: 'refresh',
+          meta: { word, skipped: true, skippedScopes: refreshPlan.skippedScopes },
+        });
+        await this.adminTasksService.setProgress(taskId, {
+          currentStep: `refresh:${word}（英式/美式均 ≥90%，跳过）`, totalItems: words.length,
+          processedItems: index + 1, successItems: succeeded, failedItems: failed,
+        });
+        continue;
+      }
+
+      const refreshScope = refreshPlan.refreshScopes.length === 2
+        ? 'all' as const
+        : refreshPlan.refreshScopes[0];
+
       for (;;) {
         try {
-          await this.dictionaryService.refreshPronunciation(word, 'auto', 'all', { surfaceProviderRateLimit: true });
+          await this.dictionaryService.refreshPronunciation(word, 'auto', refreshScope, { surfaceProviderRateLimit: true });
           succeeded += 1;
-          await this.adminTasksService.log(taskId, 'info', `${word} 音标已更新`, { step: 'refresh', meta: { word } });
+          await this.adminTasksService.log(taskId, 'info', `${word} 音标已更新`, {
+            step: 'refresh',
+            meta: { word, refreshScope, skippedScopes: refreshPlan.skippedScopes },
+          });
           break;
         } catch (error) {
           if (!isProviderRateLimited(error)) {

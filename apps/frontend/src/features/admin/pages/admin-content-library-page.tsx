@@ -204,9 +204,9 @@ function VocabularyTab() {
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <div className="flex gap-3">
-          <div className="relative max-w-xs">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input className="pl-9" placeholder="搜索词汇..." value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
@@ -221,72 +221,53 @@ function VocabularyTab() {
             {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
           </Select>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={async () => {
-              try {
-                const result = await api.polishVocabularies();
-                toast.success('已创建词汇修补任务（例句缺中文翻译补翻译 / 释义过长精简）', {
-                  action: {
-                    label: '查看任务',
-                    onClick: () => window.location.hash = '#/admin/tasks',
-                  },
-                });
-                void result;
-              } catch (err: any) {
-                toast.error(err?.message || '创建修补任务失败');
-              }
-            }}
-          >
-            <Languages className="mr-1.5 size-4" />修补例句翻译/精简释义
-          </Button>
-          <Button
-            variant="outline"
-            onClick={async () => {
-              try {
-                const result = await api.enrichVocabulariesMissingChinese();
-                toast.success('已创建词汇字段检查任务（词典管道补全：中文释义/讲解/例句/音标/难度）', {
-                  action: {
-                    label: '查看任务',
-                    onClick: () => window.location.hash = '#/admin/tasks',
-                  },
-                });
-                void result;
-              } catch (err: any) {
-                toast.error(err?.message || '创建检查任务失败');
-              }
-            }}
-          >
-            <Sparkles className="mr-1.5 size-4" />检查并补全词汇字段（词典+AI）
-          </Button>
-          <Button onClick={() => { setEditing(null); setDialogOpen(true) }}>
-            <Plus className="mr-1.5 size-4" />新增词汇
-          </Button>
-          <Button variant="outline" onClick={() => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.csv';
-            input.onchange = async (e) => {
-              const file = (e.target as HTMLInputElement).files?.[0];
-              if (!file) return;
-              try {
-                const result = await (await import('../api-content-admin')).importVocabularyCsv(file);
-                toast.success(`已创建导入任务，${result.wordCount} 个词汇`, {
-                  action: {
-                    label: '查看任务',
-                    onClick: () => window.location.hash = '#/admin/tasks',
-                  },
-                });
-                load();
-              } catch (err: any) {
-                toast.error(err?.message || '导入失败');
-              }
-            };
-            input.click();
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button size="sm" variant="outline" onClick={async () => {
+            try {
+              const result = await api.polishVocabularies();
+              toast.success('已创建词汇修补任务（例句缺中文翻译补翻译 / 释义过长精简）', {
+                action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+              });
+              void result;
+            } catch (err: any) { toast.error(err?.message || '创建修补任务失败'); }
           }}>
-            <Upload className="mr-1.5 size-4" />批量导入
+            <Languages data-icon="inline-start" />修补词汇内容
           </Button>
+          <Button size="sm" variant="outline" onClick={async () => {
+            try {
+              const result = await api.enrichVocabulariesMissingChinese();
+              toast.success('已创建词汇字段检查任务（词典管道补全：中文释义/讲解/例句/音标/难度）', {
+                action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+              });
+              void result;
+            } catch (err: any) { toast.error(err?.message || '创建检查任务失败'); }
+          }}>
+            <Sparkles data-icon="inline-start" />检查并补全
+          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={() => {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = '.csv';
+              input.onchange = async (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (!file) return;
+                try {
+                  const result = await (await import('../api-content-admin')).importVocabularyCsv(file);
+                  toast.success(`已创建导入任务，${result.wordCount} 个词汇`, {
+                    action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+                  });
+                  load();
+                } catch (err: any) { toast.error(err?.message || '导入失败'); }
+              };
+              input.click();
+            }}>
+              <Upload data-icon="inline-start" />批量导入
+            </Button>
+            <Button size="sm" onClick={() => { setEditing(null); setDialogOpen(true) }}>
+              <Plus data-icon="inline-start" />新增词汇
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -372,9 +353,9 @@ function ChunkTab() {
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <div className="flex gap-3">
-          <div className="relative max-w-xs">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input className="pl-9" placeholder="搜索句块..." value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
@@ -384,8 +365,9 @@ function ChunkTab() {
             {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
           </Select>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <Button
+            size="sm"
             variant="outline"
             onClick={async () => {
               try {
@@ -397,10 +379,10 @@ function ChunkTab() {
               } catch (err: any) { toast.error(err?.message || '创建检查任务失败'); }
             }}
           >
-            <Sparkles className="mr-1.5 size-4" />检查并 AI 富化中文释义、讲解与例句
+            <Sparkles data-icon="inline-start" />AI 补全句块
           </Button>
-          <Button onClick={() => { setEditing(null); setDialogOpen(true) }}>
-            <Plus className="mr-1.5 size-4" />新增句块
+          <Button size="sm" onClick={() => { setEditing(null); setDialogOpen(true) }}>
+            <Plus data-icon="inline-start" />新增句块
           </Button>
         </div>
       </div>
@@ -482,9 +464,9 @@ function PatternTab() {
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <div className="flex gap-3">
-          <div className="relative max-w-xs">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative min-w-[220px] flex-1 sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input className="pl-9" placeholder="搜索句式..." value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
@@ -494,8 +476,9 @@ function PatternTab() {
             {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
           </Select>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <Button
+            size="sm"
             variant="outline"
             onClick={async () => {
               try {
@@ -507,10 +490,10 @@ function PatternTab() {
               } catch (err: any) { toast.error(err?.message || '创建检查任务失败'); }
             }}
           >
-            <Sparkles className="mr-1.5 size-4" />检查并 AI 富化中文释义、讲解与例句
+            <Sparkles data-icon="inline-start" />AI 补全句式
           </Button>
-          <Button onClick={() => { setEditing(null); setDialogOpen(true) }}>
-            <Plus className="mr-1.5 size-4" />新增句式
+          <Button size="sm" onClick={() => { setEditing(null); setDialogOpen(true) }}>
+            <Plus data-icon="inline-start" />新增句式
           </Button>
         </div>
       </div>

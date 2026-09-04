@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -22,6 +23,7 @@ import { cn } from '@/lib/cn';
 import {
   clearDictionaryPronunciation, getPronunciationAudit, refreshDictionaryPronunciation,
   lockTrustedAiWiktionaryPronunciations,
+  normalizeNoncanonicalPronunciations,
   normalizeDictionaryPronunciation, saveManualDictionaryPronunciation,
   enqueuePronunciationRefreshCurrentPage,
   setDictionaryPronunciationLocked,
@@ -35,7 +37,7 @@ const PROVIDER_LABELS: Record<PronunciationProvider, string> = {
   freedictionaryapi: 'FreeDictionaryAPI',
   'dictionaryapi.dev': 'dictionaryapi.dev',
   datamuse: 'Datamuse（US·需复核）',
-  ai_verify: 'AI 综合评估',
+  ai_verify: 'AI 生成 / 评估',
 };
 
 const SCOPE_LABELS: Record<PronunciationScope, string> = {
@@ -185,6 +187,7 @@ export function DictionaryPronunciationAuditDialog({
   const [manualValue, setManualValue] = useState('');
   const [batchSubmitting, setBatchSubmitting] = useState(false);
   const [autoLocking, setAutoLocking] = useState(false);
+  const [normalizingAll, setNormalizingAll] = useState(false);
 
   const load = useCallback(async () => {
     if (!open) return;
@@ -338,7 +341,11 @@ export function DictionaryPronunciationAuditDialog({
     if (!data || batchSubmitting) return;
     setBatchSubmitting(true);
     try {
-      await enqueuePronunciationRefreshCurrentPage({ page: data.page, search: search || undefined });
+      await enqueuePronunciationRefreshCurrentPage({
+        page: data.page,
+        search: search || undefined,
+        filter,
+      });
       toast.success(`已创建本页 ${data.items.length} 个单词的音标检查任务，可在任务中心查看进度`);
     } catch (error: any) {
       toast.error(error?.message || '创建音标检查任务失败');
@@ -362,6 +369,22 @@ export function DictionaryPronunciationAuditDialog({
       toast.error(error?.message || '自动锁定高可信音标失败');
     } finally {
       setAutoLocking(false);
+    }
+  };
+
+  const normalizeAllPronunciations = async () => {
+    if (normalizingAll) return;
+    setNormalizingAll(true);
+    try {
+      const result = await normalizeNoncanonicalPronunciations();
+      toast.success(result.wordsUpdated > 0
+        ? `已统一 ${result.wordsUpdated} 个词条中的 ${result.pronunciationsUpdated} 处音标写法`
+        : '所有音标写法已经统一');
+      await load();
+    } catch (error: any) {
+      toast.error(error?.message || '统一音标写法失败');
+    } finally {
+      setNormalizingAll(false);
     }
   };
 
@@ -441,8 +464,8 @@ export function DictionaryPronunciationAuditDialog({
           </aside>
 
           <section className="flex min-h-0 min-w-0 flex-col">
-            <div className="flex flex-wrap items-center gap-3 border-b py-4 pl-6 pr-14">
-              <div className="mr-auto">
+            <div className="border-b py-4 pl-6 pr-14">
+              <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-lg font-semibold">音标审查报告</h3>
                   {stats.attention > 0 && <Badge variant="secondary">{stats.attention} 个需复核</Badge>}
@@ -450,60 +473,89 @@ export function DictionaryPronunciationAuditDialog({
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">更新与清空均按所选 UK / US 范围执行，不改释义、例句和词形。</p>
               </div>
-              <ToggleGroup
-                type="single"
-                variant="outline"
-                size="sm"
-                value={filter}
-                onValueChange={(value) => {
-                  if (!value) return;
-                  setPage(1);
-                  setFilter(value as PronunciationAuditFilter);
-                }}
-                aria-label="筛选音标审查结果"
-              >
-                <ToggleGroupItem value="all" aria-label="显示全部音标">全部</ToggleGroupItem>
-                <ToggleGroupItem value="missing" aria-label="只显示缺失音标">
-                  只看缺失{filter === 'missing' && data ? ` ${data.total}` : ''}
-                </ToggleGroupItem>
-              </ToggleGroup>
-              <Tooltip>
-                <TooltipTrigger asChild>
+              <div className="mt-4 flex flex-col gap-3 2xl:flex-row 2xl:items-center">
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">查看</span>
+                  <ToggleGroup
+                    type="single"
+                    variant="outline"
+                    size="sm"
+                    value={filter}
+                    onValueChange={(value) => {
+                      if (!value) return;
+                      setPage(1);
+                      setFilter(value as PronunciationAuditFilter);
+                    }}
+                    aria-label="筛选音标审查结果"
+                  >
+                    <ToggleGroupItem value="all" aria-label="显示全部音标">全部</ToggleGroupItem>
+                    <ToggleGroupItem value="missing" aria-label="只显示缺失音标">
+                      只看缺失{filter === 'missing' && data ? ` ${data.total}` : ''}
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="noncanonical" aria-label="只显示写法不统一的音标">
+                      写法不统一{filter === 'noncanonical' && data ? ` ${data.total}` : ''}
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+
+                <form
+                  className="flex min-w-0 flex-1 gap-2 2xl:max-w-sm"
+                  onSubmit={(event) => { event.preventDefault(); runSearch(); }}
+                >
+                  <Input
+                    value={searchDraft}
+                    onChange={(event) => setSearchDraft(event.target.value)}
+                    placeholder="按原单词定位..."
+                    aria-label="搜索原单词"
+                  />
+                  <Button type="submit" variant="outline">
+                    <Search data-icon="inline-start" />搜索
+                  </Button>
+                </form>
+
+                <Separator orientation="vertical" className="hidden h-8 2xl:block" />
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="mr-1 text-xs font-medium text-muted-foreground">批量操作</span>
                   <Button
                     type="button"
-                    variant="secondary"
-                    onClick={() => void autoLockTrustedPronunciations()}
-                    disabled={loading || autoLocking}
+                    variant="outline"
+                    onClick={() => void refreshCurrentPageInTaskCenter()}
+                    disabled={loading || !data?.items.length || batchSubmitting}
                   >
-                    {autoLocking ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <ShieldCheck data-icon="inline-start" />}
-                    全库自动锁定 ≥90%
+                    {batchSubmitting ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <ListChecks data-icon="inline-start" />}
+                    检查本页
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent>扫描数据库全部词条，锁定 UK、US 均来自 AI selected / Wiktionary Action API 且置信度不低于 90% 的词条</TooltipContent>
-              </Tooltip>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => void refreshCurrentPageInTaskCenter()}
-                disabled={loading || !data?.items.length || batchSubmitting}
-              >
-                {batchSubmitting ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <ListChecks data-icon="inline-start" />}
-                一键检查本页音标
-              </Button>
-              <form
-                className="flex w-full max-w-sm gap-2"
-                onSubmit={(event) => { event.preventDefault(); runSearch(); }}
-              >
-                <Input
-                  value={searchDraft}
-                  onChange={(event) => setSearchDraft(event.target.value)}
-                  placeholder="按原单词定位..."
-                  aria-label="搜索原单词"
-                />
-                <Button type="submit" variant="outline">
-                  <Search data-icon="inline-start" />搜索
-                </Button>
-              </form>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => void normalizeAllPronunciations()}
+                        disabled={loading || normalizingAll}
+                      >
+                        {normalizingAll ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <SpellCheck2 data-icon="inline-start" />}
+                        统一写法
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>统一全库中的音节辅音、卷舌元音等写法，不改释义、来源和音频</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => void autoLockTrustedPronunciations()}
+                        disabled={loading || autoLocking}
+                      >
+                        {autoLocking ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <ShieldCheck data-icon="inline-start" />}
+                        锁定 ≥90%
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>扫描数据库全部词条，锁定 UK、US 均来自 AI selected / Wiktionary Action API 且置信度不低于 90% 的词条</TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
             </div>
 
             <div className="min-h-0 flex-1 overflow-hidden">

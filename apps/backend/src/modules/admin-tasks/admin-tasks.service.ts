@@ -5,6 +5,7 @@ import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB } from './admin-tasks.constants';
 import { DictionaryService } from '../dictionary/dictionary.service';
+import type { PronunciationAuditFilter } from '../dictionary/dto/pronunciation-audit.dto';
 
 @Injectable()
 export class AdminTasksService implements OnModuleInit {
@@ -79,7 +80,11 @@ export class AdminTasksService implements OnModuleInit {
   }
 
   /** 将音标审查页当前的最多 100 个词作为一个可追踪的后台刷新任务。 */
-  async enqueueDictionaryPronunciationBatchRefresh(createdById: string, params?: { search?: string; page?: number }) {
+  async enqueueDictionaryPronunciationBatchRefresh(createdById: string, params?: {
+    search?: string;
+    page?: number;
+    filter?: PronunciationAuditFilter;
+  }) {
     const audit = await this.dictionaryService.pronunciationAudit(params);
     const words = audit.items.filter((item: any) => !item.locked).map((item) => item.word);
     if (!words.length) throw new BadRequestException('当前审查页的单词均已确认并锁定，无需检查');
@@ -92,7 +97,12 @@ export class AdminTasksService implements OnModuleInit {
         targetId: String(audit.page),
         createdById,
         totalItems: words.length,
-        payload: { words, page: audit.page, search: params?.search?.trim() || undefined } as Prisma.InputJsonValue,
+        payload: {
+          words,
+          page: audit.page,
+          search: params?.search?.trim() || undefined,
+          filter: params?.filter ?? 'all',
+        } as Prisma.InputJsonValue,
       },
     });
     const job = await this.contentQueue.add(DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, { taskId: task.id, words });
@@ -625,7 +635,11 @@ export class AdminTasksService implements OnModuleInit {
     }
     if (task.type === DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB && createdById) {
       const payload = task.payload as any;
-      return this.enqueueDictionaryPronunciationBatchRefresh(createdById, { page: payload?.page, search: payload?.search });
+      return this.enqueueDictionaryPronunciationBatchRefresh(createdById, {
+        page: payload?.page,
+        search: payload?.search,
+        filter: payload?.filter,
+      });
     }
     if (task.type !== CONTENT_PREPARE_JOB || task.targetType !== 'scene' || !task.targetId) {
       throw new NotFoundException('暂不支持重试该任务');

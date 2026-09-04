@@ -17,6 +17,8 @@ import type {
 import type { PronunciationProvider, PronunciationScope } from './dto/pronunciation-audit.dto';
 import { DictionaryPronunciationProviderService } from './dictionary-pronunciation-provider.service';
 import { normalizeBroadIpa } from './dictionary-ipa.util';
+import { AiModelService } from '../ai-model/ai-model.service';
+import { LlmProviderFactory } from '../../common/llm/llm-provider.factory';
 
 // ──── Utility ────
 
@@ -119,6 +121,8 @@ export class DictionaryPipelineService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly pronunciationProviders: DictionaryPronunciationProviderService,
+    private readonly aiModelService: AiModelService,
+    private readonly llmFactory: LlmProviderFactory,
   ) {}
 
   // ════════════════════════════════════════════════════════════
@@ -361,12 +365,12 @@ export class DictionaryPipelineService {
         return this.fetchAiEvaluatedPronunciations(word, combined, scope);
       }
 
-      const selected = this.selectPreferredPronunciations(combined);
-      if (selected.some((item) => item.type === scope)) return selected;
+      const selected = this.selectPreferredPronunciations(combined)
+        .filter((item) => item.type === scope);
 
       try {
         const aiConfirmed = await this.fetchAiEvaluatedPronunciations(word, combined, scope);
-        return this.selectPreferredPronunciations([...selected, ...aiConfirmed]);
+        return aiConfirmed.length > 0 ? aiConfirmed : selected;
       } catch (error: any) {
         this.logger.warn(`AI pronunciation verification failed: ${error.message}`);
         return selected;
@@ -511,31 +515,30 @@ export class DictionaryPipelineService {
         unlabelled: true,
       });
     }
-    if (candidates.length === 0) return [];
-
-    const provider = this.getDeepSeekProvider();
+    const llmConfig = await this.aiModelService.getLlmConfig();
+    if (!llmConfig.apiKey) throw new Error('当前激活的 LLM 未配置 API Key');
     const { text } = await generateText({
-      model: provider('deepseek-chat'),
-      prompt: `You are a conservative English pronunciation evidence evaluator.
+      model: this.llmFactory.create(llmConfig),
+      prompt: `You are a conservative English pronunciation lexicographer.
 
-Select the best existing candidate separately for standard British English (UK/RP) and standard American English (US/General American).
+Return one standard broad IPA pronunciation separately for standard British English (UK/RP) and standard American English (US/General American).
 
 Rules:
-1. Return candidate IDs only. Never generate, rewrite, or normalize IPA.
-2. A candidate may be selected only for a type listed in eligibleTypes. declaredTypes records which accents the source explicitly labels; it is evidence, not a hard restriction.
-3. Use both the supplied evidence and your established lexical knowledge of standard UK/RP and US/General American pronunciation.
-4. A region-labelled IPA may also be selected for the other accent only when you independently know that exact broad transcription is standard for both accents. An unlabelled Wiktionary IPA may likewise be selected for UK, US, or both. Missing region labels are absence of metadata, not negative evidence. Many words legitimately have identical UK and US broad IPA.
-5. An audio accent label alone does not prove the IPA accent, but it is supporting evidence. Do not lower confidence solely because Wiktionary stores one shared IPA instead of separate UK/US records.
-6. Prefer explicit region labels, agreement between independent sourceFamily values, standard broad IPA, reliable lexical sources, and well-established lexical knowledge. Multiple records from the same sourceFamily are not independent confirmation. reliability is a prior score, not proof.
-7. Datamuse may be algorithmically estimated and requires corroboration.
-8. Exclude non-standard regional varieties. If genuinely uncertain, return null for that accent. Never guess.
+1. Prefer selecting a reliable existing candidate by candidateId.
+2. If no reliable candidate exists for an accent, generate its IPA from established lexical knowledge and return it in ipa.
+3. Never return both candidateId and ipa for the same accent.
+4. A candidate may be selected only for a type listed in eligibleTypes. declaredTypes is supporting evidence, not a hard restriction.
+5. Use standard learner-friendly broad IPA enclosed in /.../. Do not use phonetic brackets [...].
+6. Keep UK/RP and US/General American distinct. They may be identical only when that is genuinely standard for both accents.
+7. Use simple canonical notation: write syllabic consonants with schwa (ən, əl, əm), and write rhotic vowels with r rather than ɝ or ɚ.
+8. Exclude non-standard regional varieties. Return null only when genuinely uncertain.
 
 Evidence:
 ${JSON.stringify({ word, requestedScope: scope, candidates })}
 
-Return ONLY JSON. Each accent must be either null or an object with candidateId, confidence, and reason.
+Return ONLY JSON. Each requested accent must be null or an object containing candidateId or ipa, plus confidence and reason.
 Example shape:
-{"uk":null,"us":{"candidateId":"c2","confidence":0.95,"reason":"short explanation"}}`,
+{"uk":{"candidateId":"c1","ipa":null,"confidence":0.95,"reason":"short explanation"},"us":{"candidateId":null,"ipa":"/ɪɡˈzæmpəl/","confidence":0.9,"reason":"generated because no reliable US candidate exists"}}`,
       temperature: 0,
       maxOutputTokens: 300,
     });
@@ -544,6 +547,7 @@ Example shape:
     this.logger.debug(`AI pronunciation evaluation for "${word}": ${cleaned}`);
     const parsed = JSON.parse(cleaned) as Partial<Record<'uk' | 'us', {
       candidateId?: string | null;
+      ipa?: string | null;
       confidence?: number;
       reason?: string;
     } | null>>;
@@ -552,21 +556,39 @@ Example shape:
 
     for (const type of requestedTypes) {
       const choice = parsed[type];
-      if (!choice?.candidateId || Number(choice.confidence) < AI_PRONUNCIATION_MIN_CONFIDENCE) continue;
-      const candidate = candidates.find((item) => item.id === choice.candidateId);
-      if (!candidate || !candidate.eligibleTypes.includes(type)) continue;
-      const ipa = this.normalizeBroadIpa(candidate.ipa);
-      if (!ipa || ipa !== candidate.ipa) continue;
-      const matchingAudio = candidate.audioUrls[type]
-        ?? candidates.find((item) => item.ipa === ipa && item.audioUrls[type])?.audioUrls[type];
+      const confidence = Number(choice?.confidence);
+      if (!choice || !Number.isFinite(confidence) || confidence < AI_PRONUNCIATION_MIN_CONFIDENCE) continue;
+
+      if (choice.candidateId) {
+        const candidate = candidates.find((item) => item.id === choice.candidateId);
+        if (!candidate || !candidate.eligibleTypes.includes(type)) continue;
+        const ipa = this.normalizeBroadIpa(candidate.ipa);
+        if (!ipa) continue;
+        const matchingAudio = candidate.audioUrls[type]
+          ?? candidates.find((item) => this.normalizeBroadIpa(item.ipa) === ipa && item.audioUrls[type])?.audioUrls[type];
+        result.push({
+          type,
+          ipa,
+          audioUrl: matchingAudio,
+          isPreferred: true,
+          notation: 'IPA',
+          source: `AI selected / ${candidate.source}`,
+          aiConfidence: confidence,
+          aiReason: typeof choice.reason === 'string' ? choice.reason.slice(0, 200) : undefined,
+        });
+        continue;
+      }
+
+      const ipa = this.normalizeBroadIpa(choice.ipa ?? '');
+      if (!ipa) continue;
       result.push({
         type,
         ipa,
-        audioUrl: matchingAudio,
         isPreferred: true,
         notation: 'IPA',
-        source: `AI selected / ${candidate.source}`,
-        aiConfidence: Number(choice.confidence),
+        source: `AI generated / ${llmConfig.provider} / ${llmConfig.model}`,
+        needsReview: true,
+        aiConfidence: confidence,
         aiReason: typeof choice.reason === 'string' ? choice.reason.slice(0, 200) : undefined,
       });
     }
