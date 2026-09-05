@@ -1,0 +1,17 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+情态动词：能力、建议与推测,情态动词的基本结构,modal,情态动词,noun,/ˈmoʊdəl/,/ˈməʊdəl/,L1,表达说话者态度或判断的助动词。,"[{""en"":""Can is a modal verb."",""zh"":""can 是情态动词。""}]",0
+情态动词：能力、建议与推测,情态动词的基本结构,base form,动词原形,noun phrase,/beɪs fɔːrm/,/beɪs fɔːm/,L1,没有时态或人称变化的基本形式。,"[{""en"":""Use the base form after can."",""zh"":""在 can 后使用动词原形。""}]",1
+情态动词：能力、建议与推测,能力：can could be able to,ability,能力,noun,/əˈbɪləti/,/əˈbɪləti/,L1,完成某事的本领或条件。,"[{""en"":""She has the ability to lead."",""zh"":""她有领导能力。""}]",0
+情态动词：能力、建议与推测,能力：can could be able to,skill,技能,noun,/skɪl/,/skɪl/,L1,通过学习获得的能力。,"[{""en"":""Cooking is a useful skill."",""zh"":""烹饪是一项实用技能。""}]",1
+情态动词：能力、建议与推测,可能性：may might could,possibility,可能性,noun,/ˌpɑːsəˈbɪləti/,/ˌpɒsəˈbɪləti/,L2,某事可能发生的程度。,"[{""en"":""There is a possibility of rain."",""zh"":""有下雨的可能。""}]",0
+情态动词：能力、建议与推测,可能性：may might could,uncertain,不确定的,adjective,/ʌnˈsɜːrtən/,/ʌnˈsɜːtən/,L2,无法肯定的。,"[{""en"":""The result is still uncertain."",""zh"":""结果仍不确定。""}]",1
+情态动词：能力、建议与推测,义务：must have to need to,obligation,义务,noun,/ˌɑːbləˈɡeɪʃən/,/ˌɒblɪˈɡeɪʃən/,L2,必须履行的责任。,"[{""en"":""It is a legal obligation."",""zh"":""这是一项法律义务。""}]",0
+情态动词：能力、建议与推测,义务：must have to need to,necessary,必要的,adjective,/ˈnesəseri/,/ˈnesəsəri/,L1,为了某个结果必须具备的。,"[{""en"":""A ticket is necessary."",""zh"":""票是必需的。""}]",1
+情态动词：能力、建议与推测,建议：should ought to had better,advice,建议,noun,/ədˈvaɪs/,/ədˈvaɪs/,L1,帮助别人决定怎么做的意见。,"[{""en"":""Can you give me some advice?"",""zh"":""你能给我一些建议吗？""}]",0
+情态动词：能力、建议与推测,建议：should ought to had better,consequence,后果,noun,/ˈkɑːnsəkwens/,/ˈkɒnsɪkwens/,L2,某个行动带来的结果。,"[{""en"":""Think about the consequence."",""zh"":""想想后果。""}]",1
+情态动词：能力、建议与推测,请求与许可,permission,许可,noun,/pərˈmɪʃən/,/pəˈmɪʃən/,L1,允许某人做某事。,"[{""en"":""Ask for permission first."",""zh"":""先征得许可。""}]",0
+情态动词：能力、建议与推测,请求与许可,request,请求,noun,/rɪˈkwest/,/rɪˈkwest/,L1,礼貌或正式地请别人做事。,"[{""en"":""Her request was reasonable."",""zh"":""她的请求很合理。""}]",1
+情态动词：能力、建议与推测,推测：must might can't,evidence,证据,noun,/ˈevɪdəns/,/ˈevɪdəns/,L2,支持判断的信息或事实。,"[{""en"":""Look at the evidence first."",""zh"":""先看看证据。""}]",0
+情态动词：能力、建议与推测,推测：must might can't,certainty,确定程度,noun,/ˈsɜːrtənti/,/ˈsɜːtənti/,L2,对判断有多确定。,"[{""en"":""Choose a modal for the level of certainty."",""zh"":""根据确定程度选择情态动词。""}]",1
+情态动词：能力、建议与推测,过去情态与综合运用,regret,遗憾,noun,/rɪˈɡret/,/rɪˈɡret/,L2,希望过去情况有所不同的感受。,"[{""en"":""Missing the trip is my biggest regret."",""zh"":""错过旅行是我最大的遗憾。""}]",0
+情态动词：能力、建议与推测,过去情态与综合运用,deduction,推断,noun,/dɪˈdʌkʃən/,/dɪˈdʌkʃən/,L3,根据已知信息得出的判断。,"[{""en"":""That is a reasonable deduction."",""zh"":""那是一个合理的推断。""}]",1

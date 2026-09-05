@@ -1,0 +1,10 @@
+{
+  "时间点：at on in": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "时间段：for since during": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "位置：at in on": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "方位：above below between among": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "移动：to into onto from": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "路线：through across along past": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "方式与工具：by with in": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "固定搭配与综合运用": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } }
+}

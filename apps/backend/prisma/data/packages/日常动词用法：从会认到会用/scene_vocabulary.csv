@@ -1,0 +1,37 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+日常动词用法：从会认到会用,01 做事：do 与 make,task,任务,noun,/tæsk/,/tɑːsk/,L1,需要完成的一项工作。,"[{""en"":""This is an easy task to do."",""zh"":""这是一项容易完成的任务。""}]",0
+日常动词用法：从会认到会用,01 做事：do 与 make,result,结果,noun,/rɪˈzʌlt/,/rɪˈzʌlt/,L1,行动产生的结果。,"[{""en"":""Making a plan produces a result."",""zh"":""制定计划会产生结果。""}]",1
+日常动词用法：从会认到会用,02 获得与变化：get,receive,收到,verb,/rɪˈsiːv/,/rɪˈsiːv/,L1,得到别人送来或发来的东西。,"[{""en"":""Did you receive my message?"",""zh"":""你收到我的消息了吗？""}]",0
+日常动词用法：从会认到会用,02 获得与变化：get,become,变成,verb,/bɪˈkʌm/,/bɪˈkʌm/,L1,进入新的状态。,"[{""en"":""It is becoming colder."",""zh"":""天气正在变冷。""}]",1
+日常动词用法：从会认到会用,03 拿走与花费：take,carry,携带,verb,/ˈkæri/,/ˈkæri/,L1,拿着或带着物品移动。,"[{""en"":""Can you carry this box?"",""zh"":""你能搬这个箱子吗？""}]",0
+日常动词用法：从会认到会用,03 拿走与花费：take,consume,消耗,verb,/kənˈsuːm/,/kənˈsjuːm/,L2,用掉时间、能量或资源。,"[{""en"":""The task consumes time."",""zh"":""这项任务耗费时间。""}]",1
+日常动词用法：从会认到会用,04 拥有与保持：have keep hold,possession,拥有物,noun,/pəˈzeʃən/,/pəˈzeʃən/,L2,某人拥有或控制的东西。,"[{""en"":""The key is in my possession."",""zh"":""钥匙在我这里。""}]",0
+日常动词用法：从会认到会用,04 拥有与保持：have keep hold,continue,继续,verb,/kənˈtɪnjuː/,/kənˈtɪnjuː/,L1,使动作保持下去。,"[{""en"":""Continue reading the page."",""zh"":""继续阅读这一页。""}]",1
+日常动词用法：从会认到会用,05 给予与传递：give bring send show,transfer,传递,verb,/trænsˈfɜːr/,/trænsˈfɜː/,L2,让东西从一人或一处转到另一人或另一处。,"[{""en"":""Transfer the file to Mia."",""zh"":""把文件传给 Mia。""}]",0
+日常动词用法：从会认到会用,05 给予与传递：give bring send show,recipient,接收者,noun,/rɪˈsɪpiənt/,/rɪˈsɪpiənt/,L2,收到物品或信息的人。,"[{""en"":""Check the recipient before sending it."",""zh"":""发送前检查接收者。""}]",1
+日常动词用法：从会认到会用,06 说话：say tell speak talk,content,内容,noun,/ˈkɑːntent/,/ˈkɒntent/,L1,话语或信息所表达的东西。,"[{""en"":""Say focuses on the content."",""zh"":""say 强调说话内容。""}]",0
+日常动词用法：从会认到会用,06 说话：say tell speak talk,conversation,交谈,noun,/ˌkɑːnvərˈseɪʃən/,/ˌkɒnvəˈseɪʃən/,L1,两人或多人之间的交流。,"[{""en"":""We had a short conversation."",""zh"":""我们进行了简短交谈。""}]",1
+日常动词用法：从会认到会用,07 看：look see watch read,attention,注意力,noun,/əˈtenʃən/,/əˈtenʃən/,L1,集中于某物的意识。,"[{""en"":""Watch requires attention over time."",""zh"":""watch 需要持续注意。""}]",0
+日常动词用法：从会认到会用,07 看：look see watch read,notice,注意到,verb,/ˈnoʊtɪs/,/ˈnəʊtɪs/,L1,通过感官发现某事。,"[{""en"":""Did you notice the change?"",""zh"":""你注意到变化了吗？""}]",1
+日常动词用法：从会认到会用,08 听：hear listen sound,noise,声响,noun,/nɔɪz/,/nɔɪz/,L1,听见的声音。,"[{""en"":""I can hear a noise."",""zh"":""我能听见一个声响。""}]",0
+日常动词用法：从会认到会用,08 听：hear listen sound,impression,印象,noun,/ɪmˈpreʃən/,/ɪmˈpreʃən/,L2,某事给人的感觉或看法。,"[{""en"":""Sound describes an auditory impression."",""zh"":""sound 描述听觉印象。""}]",1
+日常动词用法：从会认到会用,09 来去与到达：go come arrive reach,destination,目的地,noun,/ˌdestəˈneɪʃən/,/ˌdestɪˈneɪʃən/,L1,移动最终到达的地点。,"[{""en"":""We reached our destination."",""zh"":""我们到达了目的地。""}]",0
+日常动词用法：从会认到会用,09 来去与到达：go come arrive reach,reference point,参照点,noun phrase,/ˈrefrəns pɔɪnt/,/ˈrefrəns pɔɪnt/,L2,判断移动方向所依据的位置。,"[{""en"":""Here is the reference point for come."",""zh"":""这里是判断 come 的参照点。""}]",1
+日常动词用法：从会认到会用,10 放置与留下：put set leave,position,位置,noun,/pəˈzɪʃən/,/pəˈzɪʃən/,L1,物品所在或被放置的地方。,"[{""en"":""Put it in the correct position."",""zh"":""把它放到正确位置。""}]",0
+日常动词用法：从会认到会用,10 放置与留下：put set leave,state,状态,noun,/steɪt/,/steɪt/,L1,某物当前保持的情况。,"[{""en"":""Leave the machine in this state."",""zh"":""让机器保持这个状态。""}]",1
+日常动词用法：从会认到会用,11 找与发现：find look for discover,search,寻找,noun,/sɜːrtʃ/,/sɜːtʃ/,L1,为了找到目标而进行的过程。,"[{""en"":""The search took an hour."",""zh"":""寻找过程花了一小时。""}]",0
+日常动词用法：从会认到会用,11 找与发现：find look for discover,locate,找到位置,verb,/ˈloʊkeɪt/,/ləʊˈkeɪt/,L2,确定某人或某物的位置。,"[{""en"":""We located the missing file."",""zh"":""我们找到了丢失的文件。""}]",1
+日常动词用法：从会认到会用,12 学与知道：know learn study teach,knowledge,知识,noun,/ˈnɑːlɪdʒ/,/ˈnɒlɪdʒ/,L1,通过经验或学习获得的信息。,"[{""en"":""Knowledge is what you already know."",""zh"":""知识是你已经知道的内容。""}]",0
+日常动词用法：从会认到会用,12 学与知道：know learn study teach,skill,技能,noun,/skɪl/,/skɪl/,L1,通过练习获得的能力。,"[{""en"":""You learn a skill through practice."",""zh"":""你通过练习学会技能。""}]",1
+日常动词用法：从会认到会用,13 想与决定：think consider decide choose,option,选项,noun,/ˈɑːpʃən/,/ˈɒpʃən/,L1,可以选择的一种方案。,"[{""en"":""Consider every option."",""zh"":""考虑每一个选项。""}]",0
+日常动词用法：从会认到会用,13 想与决定：think consider decide choose,decision,决定,noun,/dɪˈsɪʒən/,/dɪˈsɪʒən/,L1,考虑后作出的选择。,"[{""en"":""We made a final decision."",""zh"":""我们作出了最终决定。""}]",1
+日常动词用法：从会认到会用,14 尝试与成功：try manage practice,attempt,尝试,noun,/əˈtempt/,/əˈtempt/,L2,为完成某事所作的努力。,"[{""en"":""The first attempt failed."",""zh"":""第一次尝试失败了。""}]",0
+日常动词用法：从会认到会用,14 尝试与成功：try manage practice,method,方法,noun,/ˈmeθəd/,/ˈmeθəd/,L1,解决问题或完成任务的办法。,"[{""en"":""Try a different method."",""zh"":""试试另一种方法。""}]",1
+日常动词用法：从会认到会用,15 开始继续与停止,interrupt,中断,verb,/ˌɪntəˈrʌpt/,/ˌɪntəˈrʌpt/,L2,暂时打断正在进行的活动。,"[{""en"":""A phone call interrupted my work."",""zh"":""一通电话打断了我的工作。""}]",0
+日常动词用法：从会认到会用,15 开始继续与停止,complete,完成,verb,/kəmˈpliːt/,/kəmˈpliːt/,L1,把事情全部做完。,"[{""en"":""Complete the task before leaving."",""zh"":""离开前完成任务。""}]",1
+日常动词用法：从会认到会用,16 请求等待与支付：ask wait pay apply,request,请求,noun,/rɪˈkwest/,/rɪˈkwest/,L1,礼貌或正式地要求得到某物或行动。,"[{""en"":""They accepted my request."",""zh"":""他们接受了我的请求。""}]",0
+日常动词用法：从会认到会用,16 请求等待与支付：ask wait pay apply,application,申请,noun,/ˌæplɪˈkeɪʃən/,/ˌæplɪˈkeɪʃən/,L2,请求职位、课程或服务的正式材料。,"[{""en"":""I sent my application yesterday."",""zh"":""我昨天提交了申请。""}]",1
+日常动词用法：从会认到会用,17 关系与处理：care depend deal belong,ownership,所有权,noun,/ˈoʊnərʃɪp/,/ˈəʊnəʃɪp/,L2,拥有某物的状态或权利。,"[{""en"":""Belong to describes ownership."",""zh"":""belong to 描述归属。""}]",0
+日常动词用法：从会认到会用,17 关系与处理：care depend deal belong,handle,处理,verb,/ˈhændl/,/ˈhændl/,L1,应对任务、情况或问题。,"[{""en"":""She can handle the problem."",""zh"":""她能处理这个问题。""}]",1
+日常动词用法：从会认到会用,18 高频短语动词综合,particle,小品词,noun,/ˈpɑːrtɪkəl/,/ˈpɑːtɪkəl/,L2,与动词组合并改变意义的短词。,"[{""en"":""Up is the particle in pick up."",""zh"":""up 是 pick up 中的小品词。""}]",0
+日常动词用法：从会认到会用,18 高频短语动词综合,separable,可分的,adjective,/ˈseprəbəl/,/ˈseprəbəl/,L2,宾语可以放在动词和小品词之间的。,"[{""en"":""Turn off is separable."",""zh"":""turn off 是可分短语动词。""}]",1

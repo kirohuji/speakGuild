@@ -1,0 +1,17 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+情态动词：能力、建议与推测,情态动词的基本结构,[Subject] [modal] [base verb].,情态动词后接动词原形,,She can drive.,L1,0
+情态动词：能力、建议与推测,情态动词的基本结构,[Modal] [subject] [base verb]?,用情态动词构成疑问句,,Can you help?,L1,1
+情态动词：能力、建议与推测,能力：can could be able to,I can [base verb] now but I couldn't [base verb] before.,对比现在和过去的能力,,I can swim now but I couldn't swim before.,L1,0
+情态动词：能力、建议与推测,能力：can could be able to,I will be able to [base verb] [future time].,表达将来能够做某事,,I will be able to join tomorrow.,L2,1
+情态动词：能力、建议与推测,可能性：may might could,[Subject] may / might / could [base verb].,表达不确定的可能性,,The train might be late.,L2,0
+情态动词：能力、建议与推测,可能性：may might could,It may not [base verb].,表达某事可能不会发生,,It may not rain tonight.,L2,1
+情态动词：能力、建议与推测,义务：must have to need to,You must [base verb] but you don't have to [base verb].,对比必须做与不必做,,You must register but you don't have to pay.,L2,0
+情态动词：能力、建议与推测,义务：must have to need to,I have to / need to [base verb] because [reason].,说明现实需要及原因,,I have to leave because the office is closing.,L2,1
+情态动词：能力、建议与推测,建议：should ought to had better,You should / ought to [base verb].,提出一般建议,,You should take a short break.,L1,0
+情态动词：能力、建议与推测,建议：should ought to had better,You had better [base verb] or [consequence].,提出带后果暗示的强建议,,You had better hurry or you will miss the bus.,L2,1
+情态动词：能力、建议与推测,请求与许可,Could you please [base verb]?,礼貌提出请求,,Could you please open the window?,L1,0
+情态动词：能力、建议与推测,请求与许可,May I [base verb]? / Would you like me to [base verb]?,询问许可或主动帮忙,,May I come in?,L2,1
+情态动词：能力、建议与推测,推测：must might can't,[Subject] must be [noun / adjective] because [evidence].,根据证据作高度确信的推测,,He must be tired because he worked all night.,L2,0
+情态动词：能力、建议与推测,推测：must might can't,[Subject] might be [noun / adjective] but [subject] can't be [noun / adjective].,对比可能与不可能,,She might be busy but she can't be at work.,L2,1
+情态动词：能力、建议与推测,过去情态与综合运用,[Subject] should have [past participle].,表达过去本应做但未做,,I should have called you.,L3,0
+情态动词：能力、建议与推测,过去情态与综合运用,[Subject] must / might have [past participle].,推测过去已经发生的事,,They might have taken the wrong train.,L3,1

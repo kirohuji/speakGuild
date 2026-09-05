@@ -1,0 +1,10 @@
+{
+  "情态动词的基本结构": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "能力：can could be able to": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "可能性：may might could": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "义务：must have to need to": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "建议：should ought to had better": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "请求与许可": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "推测：must might can't": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } },
+  "过去情态与综合运用": { "outputTraining": { "enabled": true, "version": 1, "pipeline": [], "materialUsage": { "totals": { "chunks": [], "vocabs": [], "patterns": [] }, "usedRefs": { "chunkIds": [], "vocabIds": [], "patternIds": [] }, "itemStats": [] } } }
+}

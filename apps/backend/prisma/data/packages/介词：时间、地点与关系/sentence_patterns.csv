@@ -1,0 +1,17 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+英语介词：时间、地点与关系,时间点：at on in,The event starts at [time].,在具体时刻开始,,The event starts at six thirty.,L1,0
+英语介词：时间、地点与关系,时间点：at on in,It happens on [day / date] in [month / year].,在某日和某月或年份发生,,It happens on Monday in September.,L1,1
+英语介词：时间、地点与关系,时间段：for since during,I have [past participle] for [period].,已经持续某段时间,,I have lived here for three years.,L2,0
+英语介词：时间、地点与关系,时间段：for since during,I have [past participle] since [starting point].,从某个起点持续至今,,I have worked here since 2024.,L2,1
+英语介词：时间、地点与关系,位置：at in on,[Person / thing] is at [point] in [space].,某人或某物在空间内的一个地点,,Mia is at the desk in the office.,L1,0
+英语介词：时间、地点与关系,位置：at in on,[Thing] is on [surface].,某物在一个表面上,,The keys are on the shelf.,L1,1
+英语介词：时间、地点与关系,方位：above below between among,[Thing] is between [A] and [B].,某物在两者之间,,The bank is between the café and the hotel.,L1,0
+英语介词：时间、地点与关系,方位：above below between among,[Thing] is among [group].,某物在一群事物之中,,The note is among the papers.,L2,1
+英语介词：时间、地点与关系,移动：to into onto from,[Person] goes from [start] to [destination].,某人从起点前往目的地,,I go from home to the office.,L1,0
+英语介词：时间、地点与关系,移动：to into onto from,[Person / thing] moves into [space] / onto [surface].,进入空间或移到表面,,She walked into the room.,L2,1
+英语介词：时间、地点与关系,路线：through across along past,Go through [space] and across [surface].,穿过空间并横过表面,,Go through the gate and across the bridge.,L2,0
+英语介词：时间、地点与关系,路线：through across along past,Walk along [route] and past [landmark].,沿路线行走并经过地标,,Walk along this street and past the library.,L2,1
+英语介词：时间、地点与关系,方式与工具：by with in,I go there by [transport].,乘某种交通工具前往,,I go there by train.,L1,0
+英语介词：时间、地点与关系,方式与工具：by with in,I [verb] it with [tool] in [language / form].,用工具并以某种语言或形式完成,,I wrote it with a pen in English.,L2,1
+英语介词：时间、地点与关系,固定搭配与综合运用,I am interested in [noun / V-ing] and good at [noun / V-ing].,表达兴趣和擅长,,I am interested in music and good at singing.,L2,0
+英语介词：时间、地点与关系,固定搭配与综合运用,It depends on [factor].,表示取决于某个因素,,It depends on the weather.,L2,1

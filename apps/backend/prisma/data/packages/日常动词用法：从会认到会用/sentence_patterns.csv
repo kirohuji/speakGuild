@@ -1,0 +1,37 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+日常动词用法：从会认到会用,01 做事：do 与 make,I need to do [task] before [time].,在某时前完成事务,,I need to do the laundry before dinner.,L1,0
+日常动词用法：从会认到会用,01 做事：do 与 make,[Person] made [product / decision / change].,创造结果或作出决定,,We made a small change to the plan.,L1,1
+日常动词用法：从会认到会用,02 获得与变化：get,I got [object / message] from [source].,从某处收到或得到,,I got a message from Mia.,L1,0
+日常动词用法：从会认到会用,02 获得与变化：get,It is getting [adjective].,状态正在变化,,It is getting dark.,L1,1
+日常动词用法：从会认到会用,03 拿走与花费：take,It takes [person] [time] to [verb].,做某事花费时间,,It takes me twenty minutes to walk there.,L1,0
+日常动词用法：从会认到会用,03 拿走与花费：take,Please take [object] to [place / person].,把物品带离当前地点,,Please take this form to reception.,L1,1
+日常动词用法：从会认到会用,04 拥有与保持：have keep hold,I have [object / experience] but I keep [object] [place / state].,对比拥有与保留,,I have a spare key and I keep it in my bag.,L1,0
+日常动词用法：从会认到会用,04 拥有与保持：have keep hold,Keep [doing / object + adjective] while I hold [object].,保持动作或状态并握住物品,,Keep the door open while I hold these boxes.,L2,1
+日常动词用法：从会认到会用,05 给予与传递：give bring send show,Could you give / show [person] [thing]?,把东西给某人或展示给某人,,Could you show me the receipt?,L1,0
+日常动词用法：从会认到会用,05 给予与传递：give bring send show,Please bring [thing] here and send [thing] to [person].,带来实物并发送信息或物品,,Please bring the file here and send a copy to Leo.,L1,1
+日常动词用法：从会认到会用,06 说话：say tell speak talk,[Person] said [words] to [person].,说出具体内容,,She said hello to me.,L1,0
+日常动词用法：从会认到会用,06 说话：say tell speak talk,I told [person] about [topic] and talked to [person] about [topic].,告知某人并与某人交谈,,I told Mia about it and talked to Leo about the plan.,L2,1
+日常动词用法：从会认到会用,07 看：look see watch read,Look at [object]. Can you see [detail]?,主动看并说明看见的结果,,Look at the screen. Can you see the icon?,L1,0
+日常动词用法：从会认到会用,07 看：look see watch read,I am watching [moving event] and reading [text].,持续观看并阅读文字,,I am watching the news and reading the captions.,L1,1
+日常动词用法：从会认到会用,08 听：hear listen sound,I can hear [sound] but I am listening to [source].,对比自然听见与主动倾听,,I can hear traffic but I am listening to you.,L1,0
+日常动词用法：从会认到会用,08 听：hear listen sound,That sounds [adjective / like + noun].,表达听起来的印象,,That sounds like a good idea.,L1,1
+日常动词用法：从会认到会用,09 来去与到达：go come arrive reach,I am going to [there] but [person] is coming to [here].,根据参照点表达去和来,,I am going to the café and Mia is coming here.,L1,0
+日常动词用法：从会认到会用,09 来去与到达：go come arrive reach,We arrived at / in [place] and reached [destination] at [time].,使用不同到达结构,,We arrived at the station and reached the hotel at nine.,L2,1
+日常动词用法：从会认到会用,10 放置与留下：put set leave,Put [object] in / on [place] and leave it [state].,放好物品并保持某种状态,,Put the food in the fridge and leave the door closed.,L1,0
+日常动词用法：从会认到会用,10 放置与留下：put set leave,I set [device / time / rule] for [purpose].,设置设备时间或规则,,I set an alarm for six thirty.,L2,1
+日常动词用法：从会认到会用,11 找与发现：find look for discover,I am looking for [thing] but I haven't found it yet.,区分寻找过程与找到结果,,I am looking for my keys but I haven't found them yet.,L1,0
+日常动词用法：从会认到会用,11 找与发现：find look for discover,We discovered [new fact / place] when [event].,表达首次发现,,We discovered a quiet café when we explored the area.,L2,1
+日常动词用法：从会认到会用,12 学与知道：know learn study teach,I know [fact / person] but I am learning how to [skill].,区分知道和逐渐学会,,I know the rules but I am learning how to play.,L1,0
+日常动词用法：从会认到会用,12 学与知道：know learn study teach,[Person] studies [subject] and teaches [person] how to [verb].,学习学科并教授技能,,Mia studies design and teaches me how to draw.,L1,1
+日常动词用法：从会认到会用,13 想与决定：think consider decide choose,I think [opinion] but I am considering [noun / V-ing].,表达观点并认真考虑,,I think it is useful but I am considering waiting.,L2,0
+日常动词用法：从会认到会用,13 想与决定：think consider decide choose,We decided to [verb] and chose [option] over [option].,决定行动并选择选项,,We decided to stay and chose the train over the bus.,L2,1
+日常动词用法：从会认到会用,14 尝试与成功：try manage practice,I tried to [verb] and managed to [verb].,努力尝试并最终成功,,I tried to fix it and managed to restart it.,L2,0
+日常动词用法：从会认到会用,14 尝试与成功：try manage practice,Try [V-ing] and practice [V-ing].,试用一种办法并反复练习,,Try restarting it and practice speaking slowly.,L2,1
+日常动词用法：从会认到会用,15 开始继续与停止,I started [V-ing] and kept [V-ing] until [event].,开始并持续做某事,,I started reading and kept reading until midnight.,L2,0
+日常动词用法：从会认到会用,15 开始继续与停止,I stopped [V-ing] to [verb] and then finished [V-ing].,停止原活动去做另一事再完成,,I stopped working to eat and then finished writing the report.,L2,1
+日常动词用法：从会认到会用,16 请求等待与支付：ask wait pay apply,I asked [person] for [thing] and waited for [thing / person].,请求并等待,,I asked the clerk for help and waited for a reply.,L1,0
+日常动词用法：从会认到会用,16 请求等待与支付：ask wait pay apply,I paid for [thing] and applied for [position / service].,付款并提出申请,,I paid for the course and applied for a scholarship.,L2,1
+日常动词用法：从会认到会用,17 关系与处理：care depend deal belong,I care about [topic] and it depends on [factor].,表达关心和取决于,,I care about quality and it depends on the materials.,L2,0
+日常动词用法：从会认到会用,17 关系与处理：care depend deal belong,[Thing] belongs to [owner] and [person] deals with [problem].,表达归属和处理问题,,The account belongs to Mia and she deals with the payments.,L2,1
+日常动词用法：从会认到会用,18 高频短语动词综合,Please turn [object] on / off and pick [object] up.,操作设备并拿起物品,,Please turn the light off and pick your bag up.,L1,0
+日常动词用法：从会认到会用,18 高频短语动词综合,We ran out of [thing] so we worked out [solution].,用完某物后想出办法,,We ran out of milk so we worked out another recipe.,L2,1

@@ -1,0 +1,17 @@
+scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order
+英语介词：时间、地点与关系,时间点：at on in,schedule,日程,noun,/ˈskedʒuːl/,/ˈʃedjuːl/,L1,按时间安排的活动。,"[{""en"":""Check the schedule for Monday."",""zh"":""查看周一的日程。""}]",0
+英语介词：时间、地点与关系,时间点：at on in,appointment,预约,noun,/əˈpɔɪntmənt/,/əˈpɔɪntmənt/,L2,约定在某时见面或办事。,"[{""en"":""My appointment is at ten."",""zh"":""我的预约在十点。""}]",1
+英语介词：时间、地点与关系,时间段：for since during,duration,持续时间,noun,/duˈreɪʃən/,/djʊˈreɪʃən/,L2,事情持续的长度。,"[{""en"":""The duration is two hours."",""zh"":""持续时间是两小时。""}]",0
+英语介词：时间、地点与关系,时间段：for since during,period,期间,noun,/ˈpɪriəd/,/ˈpɪəriəd/,L2,一段时间。,"[{""en"":""It happened during a busy period."",""zh"":""这发生在一段忙碌时期。""}]",1
+英语介词：时间、地点与关系,位置：at in on,surface,表面,noun,/ˈsɜːrfɪs/,/ˈsɜːfɪs/,L1,物体外部可接触的一面。,"[{""en"":""Put it on a flat surface."",""zh"":""把它放在平面上。""}]",0
+英语介词：时间、地点与关系,位置：at in on,entrance,入口,noun,/ˈentrəns/,/ˈentrəns/,L1,进入某处的位置。,"[{""en"":""Meet me at the entrance."",""zh"":""在入口处和我见面。""}]",1
+英语介词：时间、地点与关系,方位：above below between among,position,位置,noun,/pəˈzɪʃən/,/pəˈzɪʃən/,L1,某人或物所在的地方。,"[{""en"":""Describe the object's position."",""zh"":""描述物体的位置。""}]",0
+英语介词：时间、地点与关系,方位：above below between among,surround,围绕,verb,/səˈraʊnd/,/səˈraʊnd/,L2,从四周包围。,"[{""en"":""Trees surround the house."",""zh"":""树木环绕着房子。""}]",1
+英语介词：时间、地点与关系,移动：to into onto from,destination,目的地,noun,/ˌdestəˈneɪʃən/,/ˌdestɪˈneɪʃən/,L2,移动最终到达的地方。,"[{""en"":""The station is our destination."",""zh"":""车站是我们的目的地。""}]",0
+英语介词：时间、地点与关系,移动：to into onto from,direction,方向,noun,/dəˈrekʃən/,/dɪˈrekʃən/,L1,移动所朝向的一方。,"[{""en"":""Walk in this direction."",""zh"":""朝这个方向走。""}]",1
+英语介词：时间、地点与关系,路线：through across along past,route,路线,noun,/ruːt/,/ruːt/,L1,从起点到终点经过的道路。,"[{""en"":""This is the shortest route."",""zh"":""这是最短路线。""}]",0
+英语介词：时间、地点与关系,路线：through across along past,landmark,地标,noun,/ˈlændmɑːrk/,/ˈlændmɑːk/,L2,帮助辨认位置的明显建筑或地点。,"[{""en"":""Walk past the landmark."",""zh"":""走过这个地标。""}]",1
+英语介词：时间、地点与关系,方式与工具：by with in,method,方法,noun,/ˈmeθəd/,/ˈmeθəd/,L2,完成事情的方式。,"[{""en"":""We used a simple method."",""zh"":""我们用了一个简单方法。""}]",0
+英语介词：时间、地点与关系,方式与工具：by with in,instrument,工具,noun,/ˈɪnstrəmənt/,/ˈɪnstrəmənt/,L2,用于完成任务的器具。,"[{""en"":""The instrument is easy to use."",""zh"":""这个工具很容易使用。""}]",1
+英语介词：时间、地点与关系,固定搭配与综合运用,collocation,固定搭配,noun,/ˌkɑːləˈkeɪʃən/,/ˌkɒləˈkeɪʃən/,L2,经常自然地一起出现的一组词。,"[{""en"":""Depend on is a common collocation."",""zh"":""depend on 是常见搭配。""}]",0
+英语介词：时间、地点与关系,固定搭配与综合运用,context,语境,noun,/ˈkɑːntekst/,/ˈkɒntekst/,L2,帮助确定表达意义的上下文。,"[{""en"":""Choose the preposition from the context."",""zh"":""根据语境选择介词。""}]",1
