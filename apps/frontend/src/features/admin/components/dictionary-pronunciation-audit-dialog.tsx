@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp,
-  ClipboardCheck, Database, Headphones, ListChecks, LockKeyhole, Loader2, PenLine, RefreshCw, Save, Search, ShieldCheck, SpellCheck2, Trash2, Volume2,
+  ClipboardCheck, Database, Headphones, ListChecks, LockKeyhole, Loader2, PenLine, RefreshCw, Save, Search, ShieldCheck, SpellCheck2, Trash2, Volume2, WandSparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -22,10 +21,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/cn';
 import {
   clearDictionaryPronunciation, getPronunciationAudit, refreshDictionaryPronunciation,
+  generateDictionaryPronunciationAudio,
   lockTrustedAiWiktionaryPronunciations,
   normalizeNoncanonicalPronunciations,
   normalizeDictionaryPronunciation, saveManualDictionaryPronunciation,
   enqueuePronunciationRefreshCurrentPage,
+  enqueuePronunciationAudioCurrentPage,
   setDictionaryPronunciationLocked,
   type PronunciationAuditAccent, type PronunciationAuditFilter, type PronunciationAuditItem,
   type PronunciationAuditResult, type PronunciationProvider, type PronunciationScope,
@@ -146,7 +147,19 @@ function SourcePair({ item }: { item: PronunciationAuditItem }) {
   );
 }
 
-function AudioPair({ item }: { item: PronunciationAuditItem }) {
+function AudioPair({
+  item,
+  generating,
+  onGenerate,
+}: {
+  item: PronunciationAuditItem;
+  generating?: 'uk' | 'us';
+  onGenerate: (type: 'uk' | 'us', gender: 'female' | 'male') => void;
+}) {
+  const [genders, setGenders] = useState<Record<'uk' | 'us', 'female' | 'male'>>({
+    uk: 'female',
+    us: 'female',
+  });
   const play = (url: string) => {
     const audio = new Audio(url);
     void audio.play().catch(() => toast.error('音频播放失败'));
@@ -156,14 +169,57 @@ function AudioPair({ item }: { item: PronunciationAuditItem }) {
       {(['uk', 'us'] as const).map((type) => {
         const accent = item[type];
         return (
-          <div key={type} className="flex items-center gap-2">
+          <div key={type} className="flex flex-wrap items-center gap-2">
             <span className="w-6 text-[11px] font-medium uppercase text-muted-foreground">{type}</span>
             {accent.audioUrl ? (
-              <Button variant="outline" size="sm" onClick={() => play(accent.audioUrl!)}>
-                <Volume2 data-icon="inline-start" />有音频
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={() => play(accent.audioUrl!)}
+                    aria-label={`播放 ${item.word} ${type.toUpperCase()} 音频`}
+                  >
+                    <Volume2 />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>播放 {type.toUpperCase()} 音频</TooltipContent>
+              </Tooltip>
             ) : (
-              <Badge variant="secondary">无音频</Badge>
+              <>
+                <Badge variant="secondary" className="h-6 px-1.5 text-[10px]">无</Badge>
+                <Select
+                  value={genders[type]}
+                  onChange={(event) => setGenders((current) => ({
+                    ...current,
+                    [type]: event.target.value as 'female' | 'male',
+                  }))}
+                  aria-label={`${item.word} ${type.toUpperCase()} 生成音色`}
+                  className="h-8 min-w-[54px] px-1.5 text-xs"
+                  disabled={!!generating}
+                >
+                  <option value="female">女</option>
+                  <option value="male">男</option>
+                </Select>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline-primary"
+                      size="icon-sm"
+                      onClick={() => onGenerate(type, genders[type])}
+                      disabled={!!generating}
+                      aria-label={`生成 ${item.word} ${type.toUpperCase()} 音频`}
+                    >
+                      {generating === type
+                        ? <Loader2 className="animate-spin" />
+                        : <WandSparkles />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>生成 {type.toUpperCase()} {genders[type] === 'female' ? '女声' : '男声'}音频</TooltipContent>
+                </Tooltip>
+              </>
             )}
           </div>
         );
@@ -188,10 +244,11 @@ export function DictionaryPronunciationAuditDialog({
   const [filter, setFilter] = useState<PronunciationAuditFilter>('all');
   const [providers, setProviders] = useState<Record<string, PronunciationProvider>>({});
   const [scopes, setScopes] = useState<Record<string, PronunciationScope>>({});
-  const [processingActions, setProcessingActions] = useState<Record<string, 'update' | 'clear' | 'manual' | 'normalize-uk' | 'normalize-us' | 'lock'>>({});
+  const [processingActions, setProcessingActions] = useState<Record<string, 'update' | 'clear' | 'manual' | 'normalize-uk' | 'normalize-us' | 'lock' | 'audio-uk' | 'audio-us'>>({});
   const [manualEditor, setManualEditor] = useState<{ word: string; type: 'uk' | 'us' } | null>(null);
   const [manualValue, setManualValue] = useState('');
   const [batchSubmitting, setBatchSubmitting] = useState(false);
+  const [audioBatchSubmitting, setAudioBatchSubmitting] = useState(false);
   const [autoLocking, setAutoLocking] = useState(false);
   const [normalizingAll, setNormalizingAll] = useState(false);
 
@@ -254,6 +311,32 @@ export function DictionaryPronunciationAuditDialog({
       toast.success(locked ? `${word} 已确认无误并锁定，批量检查将跳过它` : `${word} 已解除锁定，会参与后续批量检查`);
     } catch (error: any) {
       toast.error(error?.message || `${word} 锁定状态更新失败`);
+    } finally {
+      setProcessingActions((current) => {
+        const next = { ...current };
+        delete next[word];
+        return next;
+      });
+    }
+  };
+
+  const generateAudio = async (
+    word: string,
+    type: 'uk' | 'us',
+    gender: 'female' | 'male',
+  ) => {
+    if (processingActions[word]) return;
+    setProcessingActions((current) => ({ ...current, [word]: `audio-${type}` }));
+    try {
+      const updatedItem = await generateDictionaryPronunciationAudio(word, type, gender);
+      setData((current) => {
+        if (!current) return current;
+        const items = current.items.map((item) => item.word === word ? updatedItem : item);
+        return { ...current, items, pageStats: summarizePage(items) };
+      });
+      toast.success(`${word} 的 ${type.toUpperCase()} ${gender === 'female' ? '女声' : '男声'}音频已生成`);
+    } catch (error: any) {
+      toast.error(error?.message || `${word} 的 ${type.toUpperCase()} 音频生成失败`);
     } finally {
       setProcessingActions((current) => {
         const next = { ...current };
@@ -358,6 +441,23 @@ export function DictionaryPronunciationAuditDialog({
       toast.error(error?.message || '创建音标检查任务失败');
     } finally {
       setBatchSubmitting(false);
+    }
+  };
+
+  const generateCurrentPageAudioInTaskCenter = async () => {
+    if (!data || audioBatchSubmitting) return;
+    setAudioBatchSubmitting(true);
+    try {
+      const task = await enqueuePronunciationAudioCurrentPage({
+        page: data.page,
+        search: search || undefined,
+        filter,
+      });
+      toast.success(`已创建本页 ${task.totalItems} 条缺失音频的补全任务，可在任务中心查看进度`);
+    } catch (error: any) {
+      toast.error(error?.message || '创建本页音频补全任务失败');
+    } finally {
+      setAudioBatchSubmitting(false);
     }
   };
 
@@ -480,10 +580,11 @@ export function DictionaryPronunciationAuditDialog({
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">更新与清空均按所选 UK / US 范围执行，不改释义、例句和词形。</p>
               </div>
-              <div className="mt-4 flex flex-col gap-3 2xl:flex-row 2xl:items-center">
-                <div className="flex shrink-0 items-center gap-2">
-                  <span className="text-xs font-medium text-muted-foreground">查看</span>
-                  <ToggleGroup
+              <div className="mt-4 space-y-3">
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground">查看</span>
+                    <ToggleGroup
                     type="single"
                     variant="outline"
                     size="sm"
@@ -515,27 +616,26 @@ export function DictionaryPronunciationAuditDialog({
                       </TooltipTrigger>
                       <TooltipContent>显示所有精细标音 […]、格式异常或缺失项</TooltipContent>
                     </Tooltip>
-                  </ToggleGroup>
+                    </ToggleGroup>
+                  </div>
+
+                  <form
+                    className="flex min-w-0 gap-2 xl:w-80"
+                    onSubmit={(event) => { event.preventDefault(); runSearch(); }}
+                  >
+                    <Input
+                      value={searchDraft}
+                      onChange={(event) => setSearchDraft(event.target.value)}
+                      placeholder="按原单词定位..."
+                      aria-label="搜索原单词"
+                    />
+                    <Button type="submit" variant="outline">
+                      <Search data-icon="inline-start" />搜索
+                    </Button>
+                  </form>
                 </div>
 
-                <form
-                  className="flex min-w-0 flex-1 gap-2 2xl:max-w-sm"
-                  onSubmit={(event) => { event.preventDefault(); runSearch(); }}
-                >
-                  <Input
-                    value={searchDraft}
-                    onChange={(event) => setSearchDraft(event.target.value)}
-                    placeholder="按原单词定位..."
-                    aria-label="搜索原单词"
-                  />
-                  <Button type="submit" variant="outline">
-                    <Search data-icon="inline-start" />搜索
-                  </Button>
-                </form>
-
-                <Separator orientation="vertical" className="hidden h-8 2xl:block" />
-
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
                   <span className="mr-1 text-xs font-medium text-muted-foreground">批量操作</span>
                   <Button
                     type="button"
@@ -546,6 +646,22 @@ export function DictionaryPronunciationAuditDialog({
                     {batchSubmitting ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <ListChecks data-icon="inline-start" />}
                     检查本页
                   </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline-primary"
+                        onClick={() => void generateCurrentPageAudioInTaskCenter()}
+                        disabled={loading || !data?.items.length || audioBatchSubmitting}
+                      >
+                        {audioBatchSubmitting
+                          ? <Loader2 data-icon="inline-start" className="animate-spin" />
+                          : <Headphones data-icon="inline-start" />}
+                        补本页音频
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>仅生成当前页缺少的 UK / US 音频，男女声稳定自动分配</TooltipContent>
+                  </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -588,11 +704,11 @@ export function DictionaryPronunciationAuditDialog({
                   <Table>
                     <TableHeader className="sticky top-0 bg-background">
                       <TableRow>
-                        <TableHead className="w-[14%] pl-6">原单词</TableHead>
+                        <TableHead className="w-[13%] pl-5">原单词</TableHead>
                         <TableHead className="w-[31%]">英式 / 美式 IPA 写法</TableHead>
-                        <TableHead className="w-[20%]">对应来源</TableHead>
-                        <TableHead className="w-[14%]">是否有发音</TableHead>
-                        <TableHead className="w-[21%] pr-6 text-right">操作</TableHead>
+                        <TableHead className="w-[19%]">对应来源</TableHead>
+                        <TableHead className="w-[17%]">发音</TableHead>
+                        <TableHead className="w-[20%] pr-5 text-right">操作</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -611,7 +727,7 @@ export function DictionaryPronunciationAuditDialog({
                               || !!item.us.invalidVariantIpa
                             ) && 'bg-destructive/5')}
                           >
-                            <TableCell className="pl-6 align-top">
+                            <TableCell className="py-3 pl-5 align-top">
                               <div className="flex items-center gap-2">
                                 <span className="font-english font-semibold">{item.word}</span>
                                 {item.locked && (
@@ -627,7 +743,7 @@ export function DictionaryPronunciationAuditDialog({
                                   : <AlertCircle className="size-4 text-destructive" />}
                               </div>
                             </TableCell>
-                            <TableCell className="align-top">
+                            <TableCell className="py-3 align-top">
                               <div className="flex flex-col gap-3">
                                 <AccentIpa
                                   label="UK"
@@ -647,10 +763,18 @@ export function DictionaryPronunciationAuditDialog({
                                 />
                               </div>
                             </TableCell>
-                            <TableCell className="align-top"><SourcePair item={item} /></TableCell>
-                            <TableCell className="align-top"><AudioPair item={item} /></TableCell>
-                            <TableCell className="pr-6 align-top">
-                              <div className="ml-auto flex max-w-[300px] flex-col items-stretch gap-2">
+                            <TableCell className="py-3 align-top"><SourcePair item={item} /></TableCell>
+                            <TableCell className="py-3 align-top">
+                              <AudioPair
+                                item={item}
+                                generating={processingAction === 'audio-uk'
+                                  ? 'uk'
+                                  : processingAction === 'audio-us' ? 'us' : undefined}
+                                onGenerate={(type, gender) => void generateAudio(item.word, type, gender)}
+                              />
+                            </TableCell>
+                            <TableCell className="py-3 pr-5 align-top">
+                              <div className="ml-auto flex max-w-[230px] flex-col items-stretch gap-1.5">
                                 <Select
                                   value={selectedProvider}
                                   onChange={(event) => setProviders((current) => ({
@@ -658,14 +782,14 @@ export function DictionaryPronunciationAuditDialog({
                                     [item.word]: event.target.value as PronunciationProvider,
                                   }))}
                                   aria-label={`${item.word} 的更新来源`}
-                                  className="min-w-[190px]"
+                                  className="h-8 min-w-[160px] text-xs"
                                   disabled={isProcessing}
                                 >
                                   {Object.entries(PROVIDER_LABELS).map(([value, label]) => (
                                     <option key={value} value={value}>{label}</option>
                                   ))}
                                 </Select>
-                                <div className="flex justify-end gap-2">
+                                <div className="flex justify-end gap-1.5">
                                   <Select
                                     value={selectedScope}
                                     onChange={(event) => setScopes((current) => ({
@@ -673,7 +797,7 @@ export function DictionaryPronunciationAuditDialog({
                                       [item.word]: event.target.value as PronunciationScope,
                                     }))}
                                     aria-label={`${item.word} 的操作范围`}
-                                    className="min-w-[92px] flex-1"
+                                    className="h-8 min-w-[78px] flex-1 text-xs"
                                     disabled={isProcessing}
                                   >
                                     {Object.entries(SCOPE_LABELS).map(([value, label]) => (
@@ -684,7 +808,7 @@ export function DictionaryPronunciationAuditDialog({
                                     <TooltipTrigger asChild>
                                       <Button
                                         variant="outline"
-                                        size="icon"
+                                        size="icon-sm"
                                         onClick={() => void clearWord(item.word)}
                                         disabled={isProcessing}
                                         aria-label={`清空 ${item.word} 的音标和发音`}
@@ -697,7 +821,7 @@ export function DictionaryPronunciationAuditDialog({
                                   <Tooltip>
                                     <TooltipTrigger asChild>
                                       <Button
-                                        size="icon"
+                                        size="icon-sm"
                                         onClick={() => void updateWord(item.word)}
                                         disabled={isProcessing}
                                         aria-label={`更新 ${item.word} 的音标`}
@@ -711,7 +835,7 @@ export function DictionaryPronunciationAuditDialog({
                                     <TooltipTrigger asChild>
                                       <Button
                                         variant={item.locked ? 'outline' : 'secondary'}
-                                        size="sm"
+                                        size="icon-sm"
                                         onClick={() => void setWordLocked(item.word, !item.locked)}
                                         disabled={isProcessing}
                                         className={cn(item.locked && 'border-emerald-600/30 text-emerald-700 hover:bg-emerald-500/10 hover:text-emerald-700')}
@@ -720,7 +844,6 @@ export function DictionaryPronunciationAuditDialog({
                                         {processingAction === 'lock'
                                           ? <Loader2 className="animate-spin" />
                                           : item.locked ? <LockKeyhole /> : <ClipboardCheck />}
-                                        {item.locked ? '已确认' : '确认无误'}
                                       </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>

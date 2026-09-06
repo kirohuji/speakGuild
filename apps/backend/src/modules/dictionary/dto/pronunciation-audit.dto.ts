@@ -58,6 +58,15 @@ export class NormalizePronunciationDto {
   type!: 'uk' | 'us';
 }
 
+export class GeneratePronunciationAudioDto {
+  @IsIn(['uk', 'us'])
+  type!: 'uk' | 'us';
+
+  @IsOptional()
+  @IsIn(['female', 'male'])
+  gender: 'female' | 'male' = 'female';
+}
+
 export class ClearPronunciationQueryDto {
   @IsIn(PRONUNCIATION_SCOPES)
   scope: PronunciationScope = 'all';

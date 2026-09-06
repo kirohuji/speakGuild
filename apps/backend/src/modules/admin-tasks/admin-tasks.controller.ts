@@ -43,6 +43,25 @@ export class AdminTasksController {
     });
   }
 
+  /** Generate every missing UK/US audio asset on the current audit page. */
+  @Post('dictionary-pronunciations/generate-current-page-audio')
+  async generateDictionaryPageAudio(
+    @Req() req: Request,
+    @Query('page') page?: string,
+    @Query('search') search?: string,
+    @Query('filter') filter?: string,
+  ) {
+    const session = await this.requireAdmin(req);
+    const auditFilter: PronunciationAuditFilter = PRONUNCIATION_AUDIT_FILTERS.includes(filter as PronunciationAuditFilter)
+      ? filter as PronunciationAuditFilter
+      : 'all';
+    return this.adminTasksService.enqueueDictionaryAudioBatch(session.user.id, {
+      page: page ? Number(page) : 1,
+      search,
+      filter: auditFilter,
+    });
+  }
+
   /** 查看某个队列中等待/活跃的任务 */
   @Get('queues/:queueName/jobs')
   async getQueueJobs(

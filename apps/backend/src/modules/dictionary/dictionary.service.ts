@@ -5,6 +5,7 @@ import { DictionaryClusteringService } from './dictionary-clustering.service';
 import type { CleanedPronunciation, SenseCluster } from './dictionary.types';
 import type { PronunciationAuditFilter, PronunciationProvider, PronunciationScope } from './dto/pronunciation-audit.dto';
 import { isCanonicalBroadIpa, isStandardBroadIpa, normalizeBroadIpa } from './dictionary-ipa.util';
+import { DictionaryAudioService } from './dictionary-audio.service';
 
 const PRONUNCIATION_AUDIT_PAGE_SIZE = 100;
 
@@ -20,6 +21,7 @@ export class DictionaryService {
     private readonly prisma: PrismaService,
     private readonly pipeline: DictionaryPipelineService,
     private readonly clustering: DictionaryClusteringService,
+    private readonly dictionaryAudio: DictionaryAudioService,
   ) {}
 
   // ════════════════════════════════════════════════════════════
@@ -475,6 +477,51 @@ export class DictionaryService {
     const updated = await this.prisma.dictionaryEntry.update({
       where: { word: key },
       data: { pronunciations: pronunciations as any },
+      select: { word: true, sourceUrl: true, pronunciations: true },
+    });
+    return this.toPronunciationAuditItem(updated);
+  }
+
+  async generatePronunciationAudio(
+    word: string,
+    type: 'uk' | 'us',
+    gender: 'female' | 'male' = 'female',
+  ) {
+    const key = word.toLowerCase().trim();
+    const exists = await this.prisma.dictionaryEntry.findUnique({
+      where: { word: key },
+      select: { word: true, sourceUrl: true, pronunciations: true },
+    });
+    if (!exists) throw new NotFoundException(`Word "${key}" not found`);
+    const pronunciations = Array.isArray(exists.pronunciations)
+      ? exists.pronunciations as unknown as CleanedPronunciation[]
+      : [];
+    const variants = pronunciations.filter((item) => item.type === type);
+    const selected = variants.find((item) => item.isPreferred) ?? variants[0];
+    if (!selected) throw new BadRequestException(`该单词暂无 ${type.toUpperCase()} 音标，无法关联生成音频`);
+    if (selected.audioUrl) return this.toPronunciationAuditItem(exists);
+
+    const audioUrl = await this.dictionaryAudio.generate(key, type, gender);
+    const latest = await this.prisma.dictionaryEntry.findUnique({
+      where: { word: key },
+      select: { word: true, sourceUrl: true, pronunciations: true },
+    });
+    if (!latest) throw new NotFoundException(`Word "${key}" not found`);
+    const latestPronunciations = Array.isArray(latest.pronunciations)
+      ? latest.pronunciations as unknown as CleanedPronunciation[]
+      : [];
+    const latestVariants = latestPronunciations.filter((item) => item.type === type);
+    const latestSelected = latestVariants.find((item) => item.isPreferred) ?? latestVariants[0];
+    if (!latestSelected) throw new BadRequestException(`该单词的 ${type.toUpperCase()} 音标已被移除`);
+    if (latestSelected.audioUrl) return this.toPronunciationAuditItem(latest);
+
+    const updated = await this.prisma.dictionaryEntry.update({
+      where: { word: key },
+      data: {
+        pronunciations: latestPronunciations.map((item) => (
+          item === latestSelected ? { ...item, audioUrl } : item
+        )) as any,
+      },
       select: { word: true, sourceUrl: true, pronunciations: true },
     });
     return this.toPronunciationAuditItem(updated);

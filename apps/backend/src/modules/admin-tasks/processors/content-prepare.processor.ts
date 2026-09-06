@@ -1,6 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB } from '../admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB } from '../admin-tasks.constants';
 import { AdminTasksService } from '../admin-tasks.service';
 import { ContentPrepareService } from '../jobs/content-prepare.service';
 import { WarmupPipelineGenerateService } from '../jobs/warmup-pipeline-generate.service';
@@ -44,8 +44,12 @@ export class ContentPrepareProcessor extends WorkerHost {
     minAgeDays?: number;
     candidateIds?: string[];
     words?: string[];
+    audioItems?: Array<{ word: string; type: 'uk' | 'us'; gender: 'female' | 'male' }>;
   }>): Promise<unknown> {
     try {
+      if (job.name === DICTIONARY_AUDIO_BATCH_GENERATE_JOB) {
+        return await this.generateDictionaryAudio(job.data.taskId, job.data.audioItems ?? [], job);
+      }
       if (job.name === DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB) {
         return await this.refreshDictionaryPronunciations(job.data.taskId, job.data.words ?? [], job);
       }
@@ -166,6 +170,56 @@ export class ContentPrepareProcessor extends WorkerHost {
     const summary = { total: words.length, succeeded, failed, skipped, errors };
     await this.adminTasksService.markCompleted(taskId, summary);
     await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `音标批量检查完成：${succeeded} 成功，${failed} 失败`, { step: 'completed', meta: summary });
+    return summary;
+  }
+
+  private async generateDictionaryAudio(
+    taskId: string,
+    items: Array<{ word: string; type: 'uk' | 'us'; gender: 'female' | 'male' }>,
+    job: Job,
+  ) {
+    const checkpoint = await this.adminTasksService.beginOrResume(taskId, 'generate-audio');
+    if (!checkpoint) return null;
+    const startIndex = Math.min(Math.max(0, checkpoint.processedItems), items.length);
+    let succeeded = checkpoint.successItems;
+    let failed = checkpoint.failedItems;
+    const errors: Array<{ word: string; type: 'uk' | 'us'; message: string }> = [];
+
+    for (let index = startIndex; index < items.length; index += 1) {
+      if (await this.adminTasksService.isCanceled(taskId)) return null;
+      const item = items[index];
+      try {
+        await this.dictionaryService.generatePronunciationAudio(item.word, item.type, item.gender);
+        succeeded += 1;
+        await this.adminTasksService.log(taskId, 'info', `${item.word} ${item.type.toUpperCase()} 音频已生成`, {
+          step: 'generate-audio', meta: item,
+        });
+      } catch (error) {
+        failed += 1;
+        const message = error instanceof Error ? error.message : String(error);
+        errors.push({ word: item.word, type: item.type, message });
+        await this.adminTasksService.log(taskId, 'error', `${item.word} ${item.type.toUpperCase()} 生成失败：${message}`, {
+          step: 'generate-audio', meta: item,
+        });
+      }
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: `generate-audio:${item.word}:${item.type} (${index + 1}/${items.length})`,
+        totalItems: items.length,
+        processedItems: index + 1,
+        successItems: succeeded,
+        failedItems: failed,
+      });
+      await job.updateProgress(Math.floor(((index + 1) / Math.max(1, items.length)) * 100));
+    }
+
+    const summary = { total: items.length, succeeded, failed, errors };
+    await this.adminTasksService.markCompleted(taskId, summary);
+    await this.adminTasksService.log(
+      taskId,
+      failed ? 'warn' : 'info',
+      `词典音频补全完成：${succeeded} 成功，${failed} 失败`,
+      { step: 'completed', meta: summary },
+    );
     return summary;
   }
 }

@@ -14,3 +14,4 @@ export const NARRATIVE_VIDEO_RENDER_JOB = 'narrative-video-render';
 export const FILE_ASSET_INSPECT_JOB = 'file-asset-inspect';
 export const FILE_ASSET_CLEANUP_JOB = 'file-asset-cleanup';
 export const DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB = 'dictionary-pronunciation-batch-refresh';
+export const DICTIONARY_AUDIO_BATCH_GENERATE_JOB = 'dictionary-audio-batch-generate';

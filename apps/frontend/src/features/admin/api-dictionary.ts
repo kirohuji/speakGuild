@@ -204,6 +204,15 @@ export async function setDictionaryPronunciationLocked(word: string, locked: boo
   return post(`/dictionary/${encodeURIComponent(word)}/pronunciation/lock`, { locked });
 }
 
+/** Generate and persist one missing UK/US pronunciation audio asset. */
+export async function generateDictionaryPronunciationAudio(
+  word: string,
+  type: 'uk' | 'us',
+  gender: 'female' | 'male' = 'female',
+): Promise<PronunciationAuditItem> {
+  return post(`/dictionary/${encodeURIComponent(word)}/pronunciation/audio/generate`, { type, gender });
+}
+
 /** Manually replace one accent's IPA. Slashes are optional. */
 export async function saveManualDictionaryPronunciation(
   word: string,
@@ -238,4 +247,13 @@ export async function enqueuePronunciationRefreshCurrentPage(params: {
   filter?: PronunciationAuditFilter;
 }): Promise<{ id: string }> {
   return post('/admin/tasks/dictionary-pronunciations/refresh-current-page', undefined, { params });
+}
+
+/** Generate every missing UK/US audio asset on the current 100-row audit page. */
+export async function enqueuePronunciationAudioCurrentPage(params: {
+  page: number;
+  search?: string;
+  filter?: PronunciationAuditFilter;
+}): Promise<{ id: string; totalItems: number }> {
+  return post('/admin/tasks/dictionary-pronunciations/generate-current-page-audio', undefined, { params });
 }

@@ -4,6 +4,7 @@ import { DictionaryService } from './dictionary.service';
 import { requireAuthSession } from '../auth/session.util';
 import {
   ClearPronunciationQueryDto,
+  GeneratePronunciationAudioDto,
   ManualPronunciationDto,
   NormalizePronunciationDto,
   PronunciationAuditQueryDto,
@@ -53,6 +54,21 @@ export class DictionaryController {
       return { code: 403, message: 'Admin only', data: null };
     }
     const result = await this.dictionaryService.normalizeNoncanonicalPronunciations();
+    return { code: 200, message: 'success', data: result };
+  }
+
+  /** Admin: generate and persist one missing UK/US pronunciation audio asset. */
+  @Post(':word/pronunciation/audio/generate')
+  async generatePronunciationAudio(
+    @Req() req: Request,
+    @Param('word') word: string,
+    @Body() dto: GeneratePronunciationAudioDto,
+  ) {
+    const session = await requireAuthSession(req);
+    if (session.user.role !== 'admin') {
+      return { code: 403, message: 'Admin only', data: null };
+    }
+    const result = await this.dictionaryService.generatePronunciationAudio(word, dto.type, dto.gender);
     return { code: 200, message: 'success', data: result };
   }
 
