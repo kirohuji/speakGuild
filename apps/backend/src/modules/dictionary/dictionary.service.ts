@@ -194,13 +194,18 @@ export class DictionaryService {
       });
       const filteredItems = entries
         .map((entry) => this.toPronunciationAuditItem(entry))
-        .filter((item) => filter === 'missing'
-          ? item.status === 'missing'
-          : [item.uk, item.us].some((accent) => (
+        .filter((item) => {
+          if (filter === 'missing') return item.status === 'missing';
+          if (filter === 'invalid') {
+            return [item.uk, item.us].some((accent) => (
+              !accent.ipa || !accent.isIpa || accent.invalidVariantIpa !== null
+            ));
+          }
+          return [item.uk, item.us].some((accent) => (
             accent.ipa !== null
-            && accent.normalizedIpa !== null
-            && accent.ipa !== accent.normalizedIpa
-          )));
+            && (accent.normalizedIpa === null || accent.ipa !== accent.normalizedIpa)
+          ));
+        });
       const total = filteredItems.length;
       const items = filteredItems.slice(
         (safePage - 1) * PRONUNCIATION_AUDIT_PAGE_SIZE,
@@ -257,14 +262,30 @@ export class DictionaryService {
         ? entry.pronunciations as unknown as CleanedPronunciation[]
         : [];
       let pronunciationsUpdated = 0;
-      const normalized = pronunciations.map((item) => {
+      let pronunciationsRemoved = 0;
+      const normalizedCandidates = pronunciations.map((item) => {
         const ipa = normalizeBroadIpa(item.ipa);
         if (!ipa || ipa === item.ipa) return item;
         pronunciationsUpdated += 1;
         return { ...item, ipa };
       });
-      return pronunciationsUpdated > 0
-        ? [{ word: entry.word, pronunciations: normalized, pronunciationsUpdated }]
+      const typesWithValidPronunciation = new Set(
+        normalizedCandidates
+          .filter((item) => isStandardIpa(item.ipa))
+          .map((item) => item.type),
+      );
+      const normalized = normalizedCandidates.filter((item) => {
+        const remove = typesWithValidPronunciation.has(item.type) && !isStandardIpa(item.ipa);
+        if (remove) pronunciationsRemoved += 1;
+        return !remove;
+      });
+      return pronunciationsUpdated > 0 || pronunciationsRemoved > 0
+        ? [{
+          word: entry.word,
+          pronunciations: normalized,
+          pronunciationsUpdated,
+          pronunciationsRemoved,
+        }]
         : [];
     });
 
@@ -280,6 +301,7 @@ export class DictionaryService {
       scanned: entries.length,
       wordsUpdated: pending.length,
       pronunciationsUpdated: pending.reduce((total, entry) => total + entry.pronunciationsUpdated, 0),
+      pronunciationsRemoved: pending.reduce((total, entry) => total + entry.pronunciationsRemoved, 0),
     };
   }
 
@@ -512,11 +534,17 @@ export class DictionaryService {
       throw new BadRequestException(`该 ${type.toUpperCase()} 音标无法安全规范化，请手动填写`);
     }
 
-    const pronunciations = existingPronunciations.map((item) => {
+    const normalizedCandidates = existingPronunciations.map((item) => {
       if (item.type !== type) return item;
       const ipa = normalizeBroadIpa(item.ipa);
       return ipa ? { ...item, ipa } : item;
     });
+    const hasValidPronunciation = normalizedCandidates.some(
+      (item) => item.type === type && isStandardIpa(item.ipa),
+    );
+    const pronunciations = normalizedCandidates.filter((item) => (
+      item.type !== type || !hasValidPronunciation || isStandardIpa(item.ipa)
+    ));
     const updated = await this.prisma.dictionaryEntry.update({
       where: { word: key },
       data: { pronunciations: pronunciations as any },
@@ -533,6 +561,7 @@ export class DictionaryService {
     const pronunciations = Array.isArray(entry.pronunciations)
       ? entry.pronunciations as unknown as CleanedPronunciation[]
       : [];
+    const locked = pronunciations.some((item) => item?.locked);
     const buildAccent = (type: 'uk' | 'us') => {
       const variants = pronunciations.filter((item) => item?.type === type);
       const pronunciation = variants.find((item) => item.isPreferred) ?? variants[0];
@@ -547,9 +576,11 @@ export class DictionaryService {
           isTrusted: false,
           aiConfidence: null,
           aiReason: null,
+          invalidVariantIpa: null,
           issues: ['暂无该地区音标'],
         };
       }
+      const invalidVariant = variants.find((item) => !isStandardIpa(item.ipa));
       const isIpa = isStandardIpa(pronunciation.ipa);
       const isCanonical = isCanonicalBroadIpa(pronunciation.ipa);
       const hasPreferred = variants.some((item) => item.isPreferred);
@@ -557,11 +588,14 @@ export class DictionaryService {
         ?? (!hasPreferred ? '系统推导（旧数据）' : 'FreeDictionaryAPI / Wiktionary');
       const issues: string[] = [];
       if (!isIpa) issues.push('不是统一的 /.../ IPA 格式');
+      if (invalidVariant && invalidVariant !== pronunciation) {
+        issues.push('存在精细标音或格式异常的备用变体');
+      }
       if (isIpa && !isCanonical) {
         issues.push(`IPA 写法尚未规范化，可统一为 ${normalizeBroadIpa(pronunciation.ipa)}`);
       }
       if (!hasPreferred) issues.push('缺少可验证的首选发音，疑似旧版推导');
-      if (pronunciation.needsReview) issues.push('该来源可能包含算法估读，建议人工复核');
+      if (pronunciation.needsReview && !locked) issues.push('该来源可能包含算法估读，建议人工复核');
       return {
         ipa: pronunciation.ipa,
         normalizedIpa: isIpa ? normalizeBroadIpa(pronunciation.ipa) : null,
@@ -569,15 +603,19 @@ export class DictionaryService {
         audioUrl: pronunciation.audioUrl ?? null,
         hasAudio: !!pronunciation.audioUrl,
         isIpa,
-        isTrusted: isIpa && isCanonical && hasPreferred && !pronunciation.needsReview,
+        isTrusted: isIpa
+          && isCanonical
+          && hasPreferred
+          && (!pronunciation.needsReview || locked)
+          && !invalidVariant,
         aiConfidence: pronunciation.aiConfidence ?? null,
         aiReason: pronunciation.aiReason ?? null,
+        invalidVariantIpa: invalidVariant && invalidVariant !== pronunciation ? invalidVariant.ipa : null,
         issues,
       };
     };
     const uk = buildAccent('uk');
     const us = buildAccent('us');
-    const locked = pronunciations.some((item) => item?.locked);
     const missing = !uk.ipa || !us.ipa;
     const status = missing ? 'missing' : uk.isTrusted && us.isTrusted ? 'passed' : 'attention';
     return { word: entry.word, sourceUrl: entry.sourceUrl, uk, us, status, locked };

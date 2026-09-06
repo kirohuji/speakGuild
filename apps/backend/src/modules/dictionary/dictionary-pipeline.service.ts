@@ -530,7 +530,10 @@ Rules:
 6. Use standard learner-friendly broad IPA enclosed in /.../. Do not use phonetic brackets [...].
 7. Keep UK/RP and US/General American distinct. They may be identical only when that is genuinely standard for both accents.
 8. Use simple canonical notation: write syllabic consonants with schwa (ən, əl, əm), and write rhotic vowels with r rather than ɝ or ɚ.
-9. Exclude non-standard regional varieties. Return null only when genuinely uncertain.
+9. Use e for the DRESS vowel, never ɛ. Consequently, write the AIR vowel as eə for UK and er for US.
+10. Preserve meaningful primary stress ˈ, secondary stress ˌ, and unstressed syllable boundaries (.). Never put a syllable dot directly beside a stress mark, because the stress mark already identifies that boundary.
+11. Never use narrow diacritics (such as t̬) or non-English consonants (such as ʈ).
+12. Exclude non-standard regional varieties. Return null only when genuinely uncertain.
 
 Evidence:
 ${JSON.stringify({ word, requestedScope: scope, candidates })}
@@ -638,7 +641,10 @@ Rules:
 2. Use UK/RP for uk and US/General American for us.
 3. Use learner-friendly broad IPA enclosed in /.../.
 4. Use schwa plus consonant instead of syllabic-consonant marks, and r instead of ɝ or ɚ.
-5. Return ONLY JSON in this shape: {"uk":{"ipa":"/.../","confidence":0.9,"reason":"..."}}.`;
+5. Use e for the DRESS vowel, never ɛ. Consequently, write the AIR vowel as eə for UK and er for US.
+6. Preserve meaningful primary stress ˈ, secondary stress ˌ, and unstressed syllable boundaries. Never put a dot directly beside a stress mark.
+7. Never use narrow diacritics or non-English consonants.
+8. Return ONLY JSON in this shape: {"uk":{"ipa":"/.../","confidence":0.9,"reason":"..."}}.`;
 
       for (let attempt = 1; attempt <= 2; attempt += 1) {
         const generation = await generateText({

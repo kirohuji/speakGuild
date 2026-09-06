@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp,
-  ClipboardCheck, Database, Headphones, ListChecks, LockKeyhole, LockKeyholeOpen, Loader2, PenLine, RefreshCw, Save, Search, ShieldCheck, SpellCheck2, Trash2, Volume2,
+  ClipboardCheck, Database, Headphones, ListChecks, LockKeyhole, Loader2, PenLine, RefreshCw, Save, Search, ShieldCheck, SpellCheck2, Trash2, Volume2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -70,7 +70,7 @@ function AccentIpa({
   onManualEdit: () => void;
   onNormalize: () => void;
 }) {
-  const invalid = !accent.ipa || !accent.isIpa;
+  const invalid = !accent.ipa || !accent.isIpa || !!accent.invalidVariantIpa;
   const canNormalize = !!accent.ipa
     && !!accent.normalizedIpa
     && accent.ipa !== accent.normalizedIpa;
@@ -107,6 +107,12 @@ function AccentIpa({
             </Button>
           )}
         </div>
+        {accent.invalidVariantIpa && (
+          <p className="mt-1 flex items-start gap-1.5 font-ipa text-xs font-semibold leading-5 text-destructive">
+            <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+            <span className="break-all">异常变体 {accent.invalidVariantIpa}</span>
+          </p>
+        )}
         {accent.issues.length > 0 && (
           <p className={cn('mt-0.5 text-[11px] leading-4', invalid ? 'text-destructive' : 'text-muted-foreground')}>
             {accent.issues.join('；')}
@@ -242,7 +248,8 @@ export function DictionaryPronunciationAuditDialog({
       const updatedItem = await setDictionaryPronunciationLocked(word, locked);
       setData((current) => {
         if (!current) return current;
-        return { ...current, items: current.items.map((item) => item.word === word ? updatedItem : item) };
+        const items = current.items.map((item) => item.word === word ? updatedItem : item);
+        return { ...current, items, pageStats: summarizePage(items) };
       });
       toast.success(locked ? `${word} 已确认无误并锁定，批量检查将跳过它` : `${word} 已解除锁定，会参与后续批量检查`);
     } catch (error: any) {
@@ -378,7 +385,7 @@ export function DictionaryPronunciationAuditDialog({
     try {
       const result = await normalizeNoncanonicalPronunciations();
       toast.success(result.wordsUpdated > 0
-        ? `已统一 ${result.wordsUpdated} 个词条中的 ${result.pronunciationsUpdated} 处音标写法`
+        ? `已统一 ${result.wordsUpdated} 个词条：改写 ${result.pronunciationsUpdated} 处，清理 ${result.pronunciationsRemoved} 条异常备用变体`
         : '所有音标写法已经统一');
       await load();
     } catch (error: any) {
@@ -495,6 +502,19 @@ export function DictionaryPronunciationAuditDialog({
                     <ToggleGroupItem value="noncanonical" aria-label="只显示写法不统一的音标">
                       写法不统一{filter === 'noncanonical' && data ? ` ${data.total}` : ''}
                     </ToggleGroupItem>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <ToggleGroupItem
+                          value="invalid"
+                          aria-label="显示精细标音、格式异常或缺失音标"
+                          className="text-destructive hover:text-destructive data-[state=on]:border-destructive/40 data-[state=on]:bg-destructive/10 data-[state=on]:text-destructive"
+                        >
+                          <AlertCircle />
+                          异常{filter === 'invalid' && data ? ` ${data.total}` : ''}
+                        </ToggleGroupItem>
+                      </TooltipTrigger>
+                      <TooltipContent>显示所有精细标音 […]、格式异常或缺失项</TooltipContent>
+                    </Tooltip>
                   </ToggleGroup>
                 </div>
 
@@ -535,10 +555,10 @@ export function DictionaryPronunciationAuditDialog({
                         disabled={loading || normalizingAll}
                       >
                         {normalizingAll ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <SpellCheck2 data-icon="inline-start" />}
-                        统一写法
+                        统一全部写法
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>统一全库中的音节辅音、卷舌元音等写法，不改释义、来源和音频</TooltipContent>
+                    <TooltipContent>统一全库写法；已有正常音标时，同时清理 […] 等无法作为整词音标的异常备用变体</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -582,7 +602,15 @@ export function DictionaryPronunciationAuditDialog({
                         const processingAction = processingActions[item.word];
                         const isProcessing = !!processingAction;
                         return (
-                          <TableRow key={item.word} className={cn((!item.uk.isIpa || !item.us.isIpa) && 'bg-destructive/5')}>
+                          <TableRow
+                            key={item.word}
+                            className={cn((
+                              !item.uk.isIpa
+                              || !item.us.isIpa
+                              || !!item.uk.invalidVariantIpa
+                              || !!item.us.invalidVariantIpa
+                            ) && 'bg-destructive/5')}
+                          >
                             <TableCell className="pl-6 align-top">
                               <div className="flex items-center gap-2">
                                 <span className="font-english font-semibold">{item.word}</span>
@@ -683,17 +711,23 @@ export function DictionaryPronunciationAuditDialog({
                                     <TooltipTrigger asChild>
                                       <Button
                                         variant={item.locked ? 'outline' : 'secondary'}
-                                        size="icon"
+                                        size="sm"
                                         onClick={() => void setWordLocked(item.word, !item.locked)}
                                         disabled={isProcessing}
+                                        className={cn(item.locked && 'border-emerald-600/30 text-emerald-700 hover:bg-emerald-500/10 hover:text-emerald-700')}
                                         aria-label={item.locked ? `解除 ${item.word} 的音标锁定` : `确认 ${item.word} 的音标无误并锁定`}
                                       >
                                         {processingAction === 'lock'
                                           ? <Loader2 className="animate-spin" />
-                                          : item.locked ? <LockKeyholeOpen /> : <LockKeyhole />}
+                                          : item.locked ? <LockKeyhole /> : <ClipboardCheck />}
+                                        {item.locked ? '已确认' : '确认无误'}
                                       </Button>
                                     </TooltipTrigger>
-                                    <TooltipContent>{item.locked ? '解除锁定' : '确认无误并锁定'}</TooltipContent>
+                                    <TooltipContent>
+                                      {item.locked
+                                        ? '点击解除人工确认，使其重新参与批量检查'
+                                        : '人工核对音标与发音后确认；确认后不再提示算法估读'}
+                                    </TooltipContent>
                                   </Tooltip>
                                 </div>
                               </div>

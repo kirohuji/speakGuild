@@ -1,4 +1,7 @@
-const BROAD_IPA_BODY = /^[\p{Ll}\p{M}\u02b0-\u02ff.()‿ -]+$/u;
+// This is intentionally narrower than "any Unicode IPA-looking character".
+// We store learner-facing broad English IPA, not narrow transcriptions or
+// pronunciations copied from another language.
+const BROAD_ENGLISH_IPA_BODY = /^[pbtdkɡfvθðszʃʒhmnŋlrjwɪieɛæɑɒɔʊuʌɜəaoːˈˌ.() ‿-]+$/u;
 
 /**
  * Accept broad IPA from heterogeneous dictionary providers and return the
@@ -16,6 +19,13 @@ export function normalizeBroadIpa(value: string): string | null {
     .replace(/[·‧]/gu, '.')
     .replace(/'/gu, 'ˈ')
     .replace(/:/gu, 'ː')
+    // Narrow/provider-specific consonants reduced to broad English spelling.
+    .replace(/t̬/gu, 't')
+    .replace(/[ʈɾ]/gu, 't')
+    .replace(/ɵ/gu, 'ə')
+    // Oxford/Cambridge learner notation uses e for the DRESS vowel. This also
+    // canonicalizes AIR spellings ɛə -> eə and ɛr -> er.
+    .replace(/ɛ/gu, 'e')
     // Canonical broad-English symbols used by this dictionary.
     .replace(/ɹ/gu, 'r')
     .replace(/g/gu, 'ɡ')
@@ -30,13 +40,15 @@ export function normalizeBroadIpa(value: string): string | null {
     // Affricate tie bars and non-syllabic marks are optional in broad English IPA.
     .replace(/[͜͡]/gu, '')
     .replace(/̯/gu, '')
-    // A stress mark already identifies the adjacent syllable boundary.
+    // Stress marks already identify a syllable boundary. Keep meaningful
+    // unstressed boundaries, but remove duplicate punctuation around stress.
     .replace(/\.([ˈˌ])/gu, '$1')
     .replace(/([ˈˌ])\./gu, '$1')
     .replace(/\.{2,}/gu, '.')
+    .replace(/^\.|\.$/gu, '')
     .normalize('NFC');
 
-  if (!inner || !BROAD_IPA_BODY.test(inner)) return null;
+  if (!inner || !BROAD_ENGLISH_IPA_BODY.test(inner)) return null;
   return `/${inner}/`;
 }
 

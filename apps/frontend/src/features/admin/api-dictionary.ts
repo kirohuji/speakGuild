@@ -87,7 +87,7 @@ export interface PaginatedResult<T> {
 
 export type PronunciationProvider = 'auto' | 'wiktionary' | 'freedictionaryapi' | 'dictionaryapi.dev' | 'datamuse' | 'ai_verify';
 export type PronunciationScope = 'all' | 'uk' | 'us';
-export type PronunciationAuditFilter = 'all' | 'missing' | 'noncanonical';
+export type PronunciationAuditFilter = 'all' | 'missing' | 'noncanonical' | 'invalid';
 
 export interface PronunciationAuditAccent {
   ipa: string | null;
@@ -99,6 +99,7 @@ export interface PronunciationAuditAccent {
   isTrusted: boolean;
   aiConfidence: number | null;
   aiReason: string | null;
+  invalidVariantIpa: string | null;
   issues: string[];
 }
 
@@ -184,6 +185,7 @@ export async function normalizeNoncanonicalPronunciations(): Promise<{
   scanned: number;
   wordsUpdated: number;
   pronunciationsUpdated: number;
+  pronunciationsRemoved: number;
 }> {
   return post('/dictionary/pronunciation/normalize-noncanonical');
 }
