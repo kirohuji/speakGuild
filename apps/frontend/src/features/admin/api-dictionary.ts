@@ -87,7 +87,7 @@ export interface PaginatedResult<T> {
 
 export type PronunciationProvider = 'auto' | 'wiktionary' | 'freedictionaryapi' | 'dictionaryapi.dev' | 'datamuse' | 'ai_verify';
 export type PronunciationScope = 'all' | 'uk' | 'us';
-export type PronunciationAuditFilter = 'all' | 'missing' | 'noncanonical' | 'invalid';
+export type PronunciationAuditFilter = 'all' | 'missing' | 'unreviewed' | 'noncanonical' | 'invalid';
 
 export interface PronunciationAuditAccent {
   ipa: string | null;
@@ -110,6 +110,8 @@ export interface PronunciationAuditItem {
   us: PronunciationAuditAccent;
   status: 'passed' | 'attention' | 'missing';
   locked: boolean;
+  /** UK 与 US 均由 AI 选择可信来源，且均记录了置信度。 */
+  aiReviewed: boolean;
 }
 
 export interface PronunciationAuditResult {
@@ -171,13 +173,14 @@ export async function getPronunciationAudit(params?: {
   return get('/dictionary/pronunciation-audit', params);
 }
 
-/** Lock all complete UK/US pairs selected from Wiktionary by AI at >= 90% confidence. */
-export async function lockTrustedAiWiktionaryPronunciations(): Promise<{
+/** Lock complete high-confidence UK/US pairs from the visible audit page. */
+export async function lockHighConfidencePronunciations(words: string[]): Promise<{
+  scanned: number;
   eligible: number;
   locked: number;
   alreadyLocked: number;
 }> {
-  return post('/dictionary/pronunciation/lock-trusted-ai-wiktionary');
+  return post('/dictionary/pronunciation/lock-high-confidence-current-page', { words });
 }
 
 /** Normalize all non-canonical IPA spellings without changing other dictionary data. */

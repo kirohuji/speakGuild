@@ -186,6 +186,7 @@ function VocabularyTab() {
   const [search, setSearch] = useState('')
   const [matchType, setMatchType] = useState<'fuzzy' | 'exact'>('fuzzy')
   const [difficulty, setDifficulty] = useState('')
+  const [pronunciationStatus, setPronunciationStatus] = useState<'' | 'missing-phonetic' | 'missing-audio' | 'incomplete'>('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -193,10 +194,10 @@ function VocabularyTab() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    try { setData(await api.listLibraryVocabularies({ search, matchType, difficulty, page, pageSize })) }
+    try { setData(await api.listLibraryVocabularies({ search, matchType, difficulty, pronunciationStatus: pronunciationStatus || undefined, page, pageSize })) }
     catch { setData(null) }
     finally { setLoading(false) }
-  }, [search, matchType, difficulty, page, pageSize])
+  }, [search, matchType, difficulty, pronunciationStatus, page, pageSize])
 
   useEffect(() => { load() }, [load])
 
@@ -220,8 +221,25 @@ function VocabularyTab() {
             <option value="">全部等级</option>
             {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
           </Select>
+          <Select value={pronunciationStatus} onChange={(e) => { setPronunciationStatus(e.target.value as typeof pronunciationStatus); setPage(1) }} className="w-40">
+            <option value="">全部发音状态</option>
+            <option value="incomplete">音标或发音缺失</option>
+            <option value="missing-phonetic">缺音标（美/英任一）</option>
+            <option value="missing-audio">缺发音（美/英任一）</option>
+          </Select>
         </div>
         <div className="flex flex-wrap justify-end gap-2">
+          <Button size="sm" variant="outline" onClick={async () => {
+            try {
+              const result = await api.syncLibraryVocabularyDictionaryPronunciations();
+              toast.success('已创建词典音标与发音同步任务，可在任务中心查看进度和结果', {
+                action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+              });
+              void result;
+            } catch (err: any) { toast.error(err?.message || '音标与发音同步失败'); }
+          }}>
+            <Volume2 data-icon="inline-start" />同步词典音标与发音
+          </Button>
           <Button size="sm" variant="outline" onClick={async () => {
             try {
               const result = await api.polishVocabularies();
@@ -898,11 +916,6 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
             <div className="space-y-1.5">
               <Label>美式发音</Label>
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" disabled={!form.word?.trim() || ttsGenerating === 'pron-us'}
-                  onClick={() => generatePronunciation('us')}>
-                  {ttsGenerating === 'pron-us' ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <Volume2 className="size-3.5 mr-1" />}
-                  TTS
-                </Button>
                 {form.audioUsUrl ? (
                   <>
                     <Button size="sm" variant="outline"
@@ -910,27 +923,29 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                       {usAudioPlaying ? <Pause className="size-3.5 mr-1" /> : <Play className="size-3.5 mr-1" />}
                       {usAudioPlaying ? '暂停' : '试听'}
                     </Button>
-                    <span className="text-xs text-muted-foreground truncate flex-1">已上传</span>
+                    <span className="text-xs text-muted-foreground truncate flex-1">已有音频</span>
                     <Button size="sm" variant="ghost" className="text-xs" onClick={() => setForm({ ...form, audioUsUrl: '' })}>清除</Button>
                   </>
                 ) : (
-                  <label className="cursor-pointer flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    <Upload className="size-3.5" />
-                    上传
-                    <input type="file" accept="audio/mp3,audio/mpeg,.mp3" className="hidden"
-                      onChange={e => { const f = e.target.files?.[0]; if (f) handleAudioUpload('us', f) }} />
-                  </label>
+                  <>
+                    <Button size="sm" variant="outline" disabled={!form.word?.trim() || ttsGenerating === 'pron-us'}
+                      onClick={() => generatePronunciation('us')}>
+                      {ttsGenerating === 'pron-us' ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <Volume2 className="size-3.5 mr-1" />}
+                      生成 TTS
+                    </Button>
+                    <label className="cursor-pointer flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      <Upload className="size-3.5" />
+                      上传
+                      <input type="file" accept="audio/mp3,audio/mpeg,.mp3" className="hidden"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) handleAudioUpload('us', f) }} />
+                    </label>
+                  </>
                 )}
               </div>
             </div>
             <div className="space-y-1.5">
               <Label>英式发音</Label>
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" disabled={!form.word?.trim() || ttsGenerating === 'pron-uk'}
-                  onClick={() => generatePronunciation('uk')}>
-                  {ttsGenerating === 'pron-uk' ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <Volume2 className="size-3.5 mr-1" />}
-                  TTS
-                </Button>
                 {form.audioUkUrl ? (
                   <>
                     <Button size="sm" variant="outline"
@@ -938,16 +953,23 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                       {ukAudioPlaying ? <Pause className="size-3.5 mr-1" /> : <Play className="size-3.5 mr-1" />}
                       {ukAudioPlaying ? '暂停' : '试听'}
                     </Button>
-                    <span className="text-xs text-muted-foreground truncate flex-1">已上传</span>
+                    <span className="text-xs text-muted-foreground truncate flex-1">已有音频</span>
                     <Button size="sm" variant="ghost" className="text-xs" onClick={() => setForm({ ...form, audioUkUrl: '' })}>清除</Button>
                   </>
                 ) : (
-                  <label className="cursor-pointer flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    <Upload className="size-3.5" />
-                    上传
-                    <input type="file" accept="audio/mp3,audio/mpeg,.mp3" className="hidden"
-                      onChange={e => { const f = e.target.files?.[0]; if (f) handleAudioUpload('uk', f) }} />
-                  </label>
+                  <>
+                    <Button size="sm" variant="outline" disabled={!form.word?.trim() || ttsGenerating === 'pron-uk'}
+                      onClick={() => generatePronunciation('uk')}>
+                      {ttsGenerating === 'pron-uk' ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <Volume2 className="size-3.5 mr-1" />}
+                      生成 TTS
+                    </Button>
+                    <label className="cursor-pointer flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      <Upload className="size-3.5" />
+                      上传
+                      <input type="file" accept="audio/mp3,audio/mpeg,.mp3" className="hidden"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) handleAudioUpload('uk', f) }} />
+                    </label>
+                  </>
                 )}
               </div>
             </div>

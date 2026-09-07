@@ -889,7 +889,8 @@ export interface PaginatedResult<T> {
 // ─── Vocabulary ──────────────────────────────────────────────
 
 export function listLibraryVocabularies(params?: {
-  search?: string; matchType?: 'fuzzy' | 'exact'; difficulty?: string; page?: number; pageSize?: number
+  search?: string; matchType?: 'fuzzy' | 'exact'; difficulty?: string;
+  pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete'; page?: number; pageSize?: number
 }): Promise<PaginatedResult<VocabularyFull>> {
   return get('/admin/content/library/vocabularies', params);
 }
@@ -922,6 +923,12 @@ export function enrichVocabulariesMissingChinese(): Promise<{ taskId: string }> 
 /** 创建后台任务：例句缺中文翻译补翻译 + 中文释义过长精简。 */
 export function polishVocabularies(): Promise<{ taskId: string }> {
   return post('/admin/content/library/vocabularies/polish');
+}
+
+export function syncLibraryVocabularyDictionaryPronunciations(): Promise<{
+  taskId: string;
+}> {
+  return post('/admin/content/library/vocabularies/sync-dictionary-pronunciations');
 }
 
 export function enrichChunksMissingChinese(): Promise<{ taskId: string }> {

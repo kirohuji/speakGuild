@@ -22,7 +22,7 @@ import { cn } from '@/lib/cn';
 import {
   clearDictionaryPronunciation, getPronunciationAudit, refreshDictionaryPronunciation,
   generateDictionaryPronunciationAudio,
-  lockTrustedAiWiktionaryPronunciations,
+  lockHighConfidencePronunciations,
   normalizeNoncanonicalPronunciations,
   normalizeDictionaryPronunciation, saveManualDictionaryPronunciation,
   enqueuePronunciationRefreshCurrentPage,
@@ -52,7 +52,7 @@ function summarizePage(items: PronunciationAuditItem[]): PronunciationAuditResul
     passed: items.filter((item) => item.status === 'passed').length,
     attention: items.filter((item) => item.status === 'attention').length,
     missing: items.filter((item) => item.status === 'missing').length,
-    withAudio: items.filter((item) => item.uk.hasAudio || item.us.hasAudio).length,
+    withAudio: items.filter((item) => item.uk.hasAudio && item.us.hasAudio).length,
   };
 }
 
@@ -462,14 +462,14 @@ export function DictionaryPronunciationAuditDialog({
   };
 
   const autoLockTrustedPronunciations = async () => {
-    if (autoLocking) return;
+    if (autoLocking || !data?.items.length) return;
     setAutoLocking(true);
     try {
-      const result = await lockTrustedAiWiktionaryPronunciations();
+      const result = await lockHighConfidencePronunciations(data?.items.map((item) => item.word) ?? []);
       if (result.locked > 0) {
-        toast.success(`已自动锁定 ${result.locked} 个高可信词条；${result.alreadyLocked} 个此前已锁定`);
+        toast.success(`本页已锁定 ${result.locked} 个高可信词条；${result.alreadyLocked} 个此前已锁定`);
       } else {
-        toast.success(`没有新的词条需要锁定；已有 ${result.alreadyLocked} 个符合条件`);
+        toast.success(`本页没有新的词条需要锁定；已有 ${result.alreadyLocked} 个符合条件`);
       }
       await load();
     } catch (error: any) {
@@ -535,7 +535,7 @@ export function DictionaryPronunciationAuditDialog({
                     { label: '通过', value: stats.passed },
                     { label: '需复核', value: stats.attention },
                     { label: '有缺失', value: stats.missing },
-                    { label: '有音频', value: stats.withAudio },
+                    { label: '双端有音频', value: stats.withAudio },
                   ].map((stat) => (
                     <div key={stat.label} className="rounded-lg border bg-background px-3 py-2.5">
                       <p className="text-[11px] text-muted-foreground">{stat.label}</p>
@@ -552,7 +552,7 @@ export function DictionaryPronunciationAuditDialog({
                   </div>
                   <div className="flex items-start gap-2 text-xs leading-5">
                     <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
-                    <p>精细标音 <code>[...]</code>、格式异常或缺失会直接标红。</p>
+                    <p>精细标音 <code>[...]</code>、格式异常、缺少音标或美/英任一发音音频、待人工复核都会显示感叹号；缺少任一项会归入“只看缺失”。</p>
                   </div>
                   <div className="flex items-start gap-2 text-xs leading-5">
                     <CircleHelp className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
@@ -597,8 +597,11 @@ export function DictionaryPronunciationAuditDialog({
                     aria-label="筛选音标审查结果"
                   >
                     <ToggleGroupItem value="all" aria-label="显示全部音标">全部</ToggleGroupItem>
-                    <ToggleGroupItem value="missing" aria-label="只显示缺失音标">
+                    <ToggleGroupItem value="missing" aria-label="只显示缺失音标或发音">
                       只看缺失{filter === 'missing' && data ? ` ${data.total}` : ''}
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="unreviewed" aria-label="只显示尚未经过 AI 审核的音标">
+                      未 AI 审核{filter === 'unreviewed' && data ? ` ${data.total}` : ''}
                     </ToggleGroupItem>
                     <ToggleGroupItem value="noncanonical" aria-label="只显示写法不统一的音标">
                       写法不统一{filter === 'noncanonical' && data ? ` ${data.total}` : ''}
@@ -607,14 +610,14 @@ export function DictionaryPronunciationAuditDialog({
                       <TooltipTrigger asChild>
                         <ToggleGroupItem
                           value="invalid"
-                          aria-label="显示精细标音、格式异常或缺失音标"
+                          aria-label="显示所有带感叹号、需要关注的音标"
                           className="text-destructive hover:text-destructive data-[state=on]:border-destructive/40 data-[state=on]:bg-destructive/10 data-[state=on]:text-destructive"
                         >
                           <AlertCircle />
                           异常{filter === 'invalid' && data ? ` ${data.total}` : ''}
                         </ToggleGroupItem>
                       </TooltipTrigger>
-                      <TooltipContent>显示所有精细标音 […]、格式异常或缺失项</TooltipContent>
+                      <TooltipContent>显示所有带感叹号的项目，包括格式异常、缺失、待人工复核和旧版推导</TooltipContent>
                     </Tooltip>
                     </ToggleGroup>
                   </div>
@@ -682,13 +685,13 @@ export function DictionaryPronunciationAuditDialog({
                         type="button"
                         variant="secondary"
                         onClick={() => void autoLockTrustedPronunciations()}
-                        disabled={loading || autoLocking}
+                        disabled={loading || autoLocking || !data?.items.length}
                       >
                         {autoLocking ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <ShieldCheck data-icon="inline-start" />}
                         锁定 ≥90%
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>扫描数据库全部词条，锁定 UK、US 均来自 AI selected / Wiktionary Action API 且置信度不低于 90% 的词条</TooltipContent>
+                    <TooltipContent>仅扫描当前页；UK、US 首选音标均规范且 AI 置信度不低于 90% 时，按人工确认方式锁定</TooltipContent>
                   </Tooltip>
                 </div>
               </div>
