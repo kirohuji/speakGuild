@@ -3296,6 +3296,7 @@ ${contextBlock}
     @Query('matchType') matchType?: string,
     @Query('difficulty') difficulty?: string,
     @Query('pronunciationStatus') pronunciationStatus?: string,
+    @Query('qualityIssue') qualityIssue?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
@@ -3331,12 +3332,44 @@ ${contextBlock}
         { audioUkUrl: null }, { audioUkUrl: '' },
       ],
     };
-    if (pronunciationStatus === 'missing-phonetic') where.AND = [missingPhonetic];
-    if (pronunciationStatus === 'missing-audio') where.AND = [missingAudio];
-    if (pronunciationStatus === 'incomplete') where.AND = [{ OR: [missingPhonetic, missingAudio] }];
+    const andFilters: any[] = [];
+    if (pronunciationStatus === 'missing-phonetic') andFilters.push(missingPhonetic);
+    if (pronunciationStatus === 'missing-audio') andFilters.push(missingAudio);
+    if (pronunciationStatus === 'incomplete') andFilters.push({ OR: [missingPhonetic, missingAudio] });
+
+    // 中文释义里残留 POS 标签 other（词典/AI 未归入标准词性）
+    if (qualityIssue === 'meaning-other') {
+      andFilters.push({ meaning: { contains: 'other', mode: 'insensitive' } });
+    }
+    // 英文释义有内容但无中文 → 双语翻译未生成成功
+    if (qualityIssue === 'english-only-definition') {
+      andFilters.push({ definitionEn: { not: null } });
+      andFilters.push({ NOT: { definitionEn: '' } });
+    }
+    if (andFilters.length) where.AND = andFilters;
 
     const p = Math.max(1, parseInt(page || '1'));
     const ps = Math.min(100, Math.max(1, parseInt(pageSize || '20')));
+
+    // 纯英文释义无法用 Prisma 字符串过滤器表达「不含汉字」，先筛候选再内存判定后分页
+    if (qualityIssue === 'english-only-definition') {
+      const candidates = await this.prisma.vocabulary.findMany({
+        where,
+        select: { id: true, definitionEn: true },
+        orderBy: { sortOrder: 'asc' },
+      });
+      const matchedIds = candidates
+        .filter((v) => v.definitionEn && !/[\u3400-\u9fff]/.test(v.definitionEn))
+        .map((v) => v.id);
+      const total = matchedIds.length;
+      const pageIds = matchedIds.slice((p - 1) * ps, p * ps);
+      const unordered = pageIds.length
+        ? await this.prisma.vocabulary.findMany({ where: { id: { in: pageIds } } })
+        : [];
+      const byId = new Map(unordered.map((item) => [item.id, item]));
+      const items = pageIds.map((id) => byId.get(id)!);
+      return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.vocabulary.findMany({
@@ -3437,6 +3470,15 @@ ${contextBlock}
     await this.requireAdmin(req);
     const session = await requireAuthSession(req);
     const task = await this.adminTasksService.enqueueVocabularyPolish((session.user as any)?.id);
+    return { code: 200, message: 'success', data: { taskId: task.id } };
+  }
+
+  /** 只重写中文释义：扫描 meaning 含 other 的词，AI 重写 meaning（不改其他字段）。 */
+  @Post('library/vocabularies/rewrite-meaning-other')
+  async rewriteVocabulariesMeaningOther(@Req() req: Request) {
+    await this.requireAdmin(req);
+    const session = await requireAuthSession(req);
+    const task = await this.adminTasksService.enqueueVocabularyMeaningOtherRewrite((session.user as any)?.id);
     return { code: 200, message: 'success', data: { taskId: task.id } };
   }
 

@@ -1,6 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB } from '../admin-tasks.constants';
+import { VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, VOCABULARY_MEANING_OTHER_REWRITE_JOB, VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB } from '../admin-tasks.constants';
 import { AdminTasksService } from '../admin-tasks.service';
 import { VocabularyCsvImportService } from '../jobs/vocabulary-csv-import.service';
 
@@ -26,6 +26,9 @@ export class VocabularyCsvImportProcessor extends WorkerHost {
       }
       if (job.name === VOCABULARY_POLISH_JOB) {
         return await this.vocabularyCsvImportService.runVocabularyPolish(job.data.taskId);
+      }
+      if (job.name === VOCABULARY_MEANING_OTHER_REWRITE_JOB) {
+        return await this.vocabularyCsvImportService.runMeaningOtherRewrite(job.data.taskId);
       }
       if (job.name === VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB) {
         return await this.vocabularyCsvImportService.runDictionaryPronunciationSync(job.data.taskId);

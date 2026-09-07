@@ -953,4 +953,123 @@ export class VocabularyCsvImportService {
     });
   }
 
+  /**
+   * 只重写中文释义：扫描 meaning 含 other 的词汇，用 AI 重写 meaning 字段（不改音标/例句/讲解等）。
+   */
+  async runMeaningOtherRewrite(taskId: string) {
+    if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
+
+    const candidates: Array<{ id: string; word: string }> = [];
+    let cursor: string | undefined;
+    let scanned = 0;
+    const totalToScan = await this.prisma.vocabulary.count({
+      where: { meaning: { contains: 'other', mode: 'insensitive' } },
+    });
+
+    await this.adminTasksService.log(taskId, 'info', `开始扫描中文释义含 other 的词汇（约 ${totalToScan} 个候选）`, { step: 'scan' });
+
+    do {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      const rows = await this.prisma.vocabulary.findMany({
+        where: { meaning: { contains: 'other', mode: 'insensitive' } },
+        select: { id: true, word: true, meaning: true },
+        orderBy: { id: 'asc' },
+        take: 500,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      });
+      if (rows.length === 0) break;
+
+      for (const v of rows) {
+        scanned++;
+        candidates.push({ id: v.id, word: v.word });
+      }
+      cursor = rows.at(-1)?.id;
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: 'scan', totalItems: totalToScan, processedItems: scanned, successItems: scanned,
+      });
+    } while (cursor);
+
+    await this.adminTasksService.log(taskId, 'info', `扫描完成：发现 ${candidates.length} 个需重写中文释义`, {
+      step: 'scan', meta: { scanned, missingEnrich: candidates.length },
+    });
+
+    let enriched = 0;
+    let failed = 0;
+    const errors: Array<{ id: string; word: string; message: string }> = [];
+    const usageStats = createUsageStats();
+
+    if (candidates.length > 0) {
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: 'rewrite-meaning', totalItems: candidates.length, processedItems: 0, successItems: 0, failedItems: 0,
+      });
+
+      let done = 0;
+      await runConcurrent(candidates, AI_ENRICH_CONCURRENCY, async (candidate) => {
+        if (await this.adminTasksService.isCanceled(taskId)) return;
+        try {
+          const record = await this.prisma.vocabulary.findUnique({
+            where: { id: candidate.id },
+            select: { word: true, meaning: true, definitionEn: true },
+          });
+          if (!record) { failed++; return; }
+          if (!/other/i.test(record.meaning ?? '')) return;
+
+          const result = await this.adminContentAiService.rewriteVocabularyMeaning(
+            {
+              word: record.word,
+              meaning: record.meaning ?? '',
+              definitionEn: record.definitionEn ?? '',
+            },
+            usageCallback(usageStats),
+          );
+
+          const newMeaning = result.meaning?.trim() ?? '';
+          if (
+            !newMeaning ||
+            !/[\u3400-\u9fff]/.test(newMeaning) ||
+            /other/i.test(newMeaning)
+          ) {
+            throw new Error(newMeaning ? `AI 返回仍含 other 或无效：${newMeaning}` : 'AI 未返回有效中文释义');
+          }
+
+          await this.prisma.vocabulary.update({
+            where: { id: candidate.id },
+            data: { meaning: newMeaning },
+          });
+          enriched++;
+        } catch (error: any) {
+          failed++;
+          const message = error?.message ?? 'unknown error';
+          errors.push({ id: candidate.id, word: candidate.word, message });
+          await this.adminTasksService.log(taskId, 'error', `词汇 "${candidate.word}" 释义重写失败：${message}`, {
+            step: 'rewrite-meaning', meta: { id: candidate.id, word: candidate.word },
+          });
+        } finally {
+          done++;
+          if (done % 10 === 0 || done === candidates.length) {
+            await this.adminTasksService.setProgress(taskId, {
+              currentStep: `rewrite-meaning (${done}/${candidates.length})`,
+              totalItems: candidates.length,
+              processedItems: done,
+              successItems: enriched,
+              failedItems: failed,
+            });
+          }
+          if (done % 50 === 0) {
+            await this.adminTasksService.log(taskId, 'info', `AI 用量（已处理 ${done} 项）：${usageStats.calls} 次调用，输入 ${usageStats.promptTokens} / 输出 ${usageStats.completionTokens} / 合计 ${usageStats.totalTokens} tokens`, {
+              step: 'ai-usage',
+              meta: { ...usageStats, processedItems: done },
+            });
+          }
+        }
+      });
+    }
+
+    const summary = { scanned, missingEnrich: candidates.length, enriched, failed, errors, usage: usageStats };
+    await this.adminTasksService.markCompleted(taskId, summary);
+    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `释义重写完成：扫描 ${scanned}，已更新 ${enriched}，失败 ${failed}`, {
+      step: 'completed', meta: summary,
+    });
+  }
+
 }

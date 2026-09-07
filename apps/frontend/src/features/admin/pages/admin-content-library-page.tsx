@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Search, Plus, Trash2, Edit3, BookOpen, Sparkles, Loader2,
   Type, Code2, ChevronLeft, ChevronRight, Play, Pause, Upload, Globe, Volume2, Languages,
+  AlertTriangle, X, RefreshCw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -187,6 +188,7 @@ function VocabularyTab() {
   const [matchType, setMatchType] = useState<'fuzzy' | 'exact'>('fuzzy')
   const [difficulty, setDifficulty] = useState('')
   const [pronunciationStatus, setPronunciationStatus] = useState<'' | 'missing-phonetic' | 'missing-audio' | 'incomplete'>('')
+  const [qualityIssue, setQualityIssue] = useState<'' | 'meaning-other' | 'english-only-definition'>('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -194,14 +196,34 @@ function VocabularyTab() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    try { setData(await api.listLibraryVocabularies({ search, matchType, difficulty, pronunciationStatus: pronunciationStatus || undefined, page, pageSize })) }
+    try {
+      setData(await api.listLibraryVocabularies({
+        search,
+        matchType,
+        difficulty,
+        pronunciationStatus: pronunciationStatus || undefined,
+        qualityIssue: qualityIssue || undefined,
+        page,
+        pageSize,
+      }))
+    }
     catch { setData(null) }
     finally { setLoading(false) }
-  }, [search, matchType, difficulty, pronunciationStatus, page, pageSize])
+  }, [search, matchType, difficulty, pronunciationStatus, qualityIssue, page, pageSize])
 
   useEffect(() => { load() }, [load])
 
   const totalPages = data?.totalPages ?? 1
+  const qualityIssueLabel = qualityIssue === 'meaning-other'
+    ? '中文释义含 other'
+    : qualityIssue === 'english-only-definition'
+      ? '英文释义未双语'
+      : ''
+
+  const applyQualityIssue = (issue: typeof qualityIssue) => {
+    setQualityIssue((prev) => (prev === issue ? '' : issue))
+    setPage(1)
+  }
 
   return (
     <>
@@ -227,6 +249,15 @@ function VocabularyTab() {
             <option value="missing-phonetic">缺音标（美/英任一）</option>
             <option value="missing-audio">缺发音（美/英任一）</option>
           </Select>
+          {qualityIssue && (
+            <Badge variant="secondary" className="gap-1 pr-1">
+              {qualityIssueLabel}
+              <button type="button" className="rounded-sm p-0.5 hover:bg-muted" aria-label="清除质量筛选"
+                onClick={() => { setQualityIssue(''); setPage(1) }}>
+                <X className="size-3" />
+              </button>
+            </Badge>
+          )}
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <Button size="sm" variant="outline" onClick={async () => {
@@ -239,6 +270,39 @@ function VocabularyTab() {
             } catch (err: any) { toast.error(err?.message || '音标与发音同步失败'); }
           }}>
             <Volume2 data-icon="inline-start" />同步词典音标与发音
+          </Button>
+          <Button
+            size="sm"
+            variant={qualityIssue === 'meaning-other' ? 'default' : 'outline'}
+            title="查出中文释义中带有 other 的所有词（多为未归入标准词性的 POS 标签）"
+            onClick={() => applyQualityIssue('meaning-other')}
+          >
+            <AlertTriangle data-icon="inline-start" />释义含 other
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            title="只重写中文释义：扫描全部 meaning 含 other 的词，用 AI 按标准词性重写 meaning（不改音标/例句/讲解）"
+            onClick={async () => {
+              try {
+                await api.rewriteVocabulariesMeaningOther();
+                toast.success('已创建「重写含 other 的中文释义」任务，只更新 meaning 字段', {
+                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+                });
+              } catch (err: any) {
+                toast.error(err?.message || '创建释义重写任务失败');
+              }
+            }}
+          >
+            <RefreshCw data-icon="inline-start" />重写含 other 释义
+          </Button>
+          <Button
+            size="sm"
+            variant={qualityIssue === 'english-only-definition' ? 'default' : 'outline'}
+            title="查出英文释义全是英文、缺少中文翻译的词（词典双语未生成好）"
+            onClick={() => applyQualityIssue('english-only-definition')}
+          >
+            <Globe data-icon="inline-start" />英文释义未双语
           </Button>
           <Button size="sm" variant="outline" onClick={async () => {
             try {

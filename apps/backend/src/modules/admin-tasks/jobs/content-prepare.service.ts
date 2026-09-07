@@ -522,11 +522,19 @@ export class ContentPrepareService {
       for (const sense of cluster.senses) {
         const zh = sense.translations?.zh?.trim();
         if (!zh) continue;
+        // other 是词典未归类时的兜底桶，写入释义会显得「不对」；用 phr. 代替
         const posKey =
           sense.partOfSpeech === 'noun' ? 'n.' :
           sense.partOfSpeech === 'verb' ? 'v.' :
           sense.partOfSpeech === 'adj' ? 'adj.' :
           sense.partOfSpeech === 'adv' ? 'adv.' :
+          sense.partOfSpeech === 'pronoun' ? 'pron.' :
+          sense.partOfSpeech === 'preposition' ? 'prep.' :
+          sense.partOfSpeech === 'conjunction' ? 'conj.' :
+          sense.partOfSpeech === 'interjection' ? 'interj.' :
+          sense.partOfSpeech === 'determiner' ? 'det.' :
+          sense.partOfSpeech === 'article' ? 'art.' :
+          sense.partOfSpeech === 'other' ? 'phr.' :
           sense.partOfSpeech;
         if (!posKey) continue;
         if (!zhByPos[posKey]) zhByPos[posKey] = [];

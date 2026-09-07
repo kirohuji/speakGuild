@@ -296,6 +296,64 @@ ${exLines || '(none)'}
     return { meaning: typeof result.meaning === 'string' ? result.meaning : '', translations };
   }
 
+  /**
+   * 强制重写中文释义（只改 meaning）。
+   * 用于修复残留 POS 标签 other / 词性不准 / 释义生硬的记录。
+   */
+  async rewriteVocabularyMeaning(
+    dto: {
+      word: string;
+      meaning: string;
+      definitionEn?: string;
+    },
+    onUsage?: (usage: AiUsage) => void,
+  ): Promise<{ meaning: string }> {
+    const model = this.getDeepSeekModel();
+    const { text, usage } = await generateText({
+      model,
+      prompt: `You are maintaining a Chinese-English learner's dictionary for Chinese speakers at B1-B2 level.
+
+## Task
+Rewrite ONLY the Chinese meaning (gloss) for the word below.
+The current meaning is wrong or low-quality — often because it contains the POS label "other" (a fallback when the dictionary could not classify the part of speech).
+
+## Input
+Word: "${dto.word}"
+
+Current Chinese meaning (needs rewrite):
+${dto.meaning || '(none)'}
+
+English definitions (bilingual format "POS: English  [中文]" when available — use as ground truth):
+${dto.definitionEn?.trim() || '(none)'}
+
+## Rules
+1. Output a short learner-friendly Chinese gloss, grouped by POS.
+2. Each POS group MUST start with an English abbreviation from this allow-list ONLY:
+   n. v. adj. adv. pron. prep. conj. interj. num. det. art. phr. modal v.
+3. NEVER use "other", NEVER use Chinese POS labels (名词/动词), NEVER use full English POS words (noun/verb).
+4. Same POS senses joined with ； ; different POS separated with / .
+5. Prefer the 2-3 most common senses; drop rare/redundant ones. Max ~60 Chinese characters.
+6. Infer the real POS from the English definitions (and the word itself). If unsure, use phr. — never other.
+7. Keep natural Chinese; do not copy long dictionary definitions.
+
+## Output (raw JSON, no markdown, no code fences)
+{
+  "meaning": "重写后的中文释义"
+}`,
+      temperature: 0.3,
+      maxOutputTokens: 400,
+    });
+
+    let result: any;
+    try {
+      result = this.parseJsonText(text);
+    } catch {
+      return { meaning: '' };
+    }
+    if (usage) onUsage?.(extractUsage(usage)!);
+    return { meaning: typeof result.meaning === 'string' ? result.meaning.trim() : '' };
+  }
+
   async enrichChunk(
     dto: { text: string; meaning: string },
     onUsage?: (usage: AiUsage) => void,

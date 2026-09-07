@@ -890,7 +890,9 @@ export interface PaginatedResult<T> {
 
 export function listLibraryVocabularies(params?: {
   search?: string; matchType?: 'fuzzy' | 'exact'; difficulty?: string;
-  pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete'; page?: number; pageSize?: number
+  pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete';
+  qualityIssue?: 'meaning-other' | 'english-only-definition';
+  page?: number; pageSize?: number
 }): Promise<PaginatedResult<VocabularyFull>> {
   return get('/admin/content/library/vocabularies', params);
 }
@@ -923,6 +925,11 @@ export function enrichVocabulariesMissingChinese(): Promise<{ taskId: string }> 
 /** 创建后台任务：例句缺中文翻译补翻译 + 中文释义过长精简。 */
 export function polishVocabularies(): Promise<{ taskId: string }> {
   return post('/admin/content/library/vocabularies/polish');
+}
+
+/** 创建后台任务：只重写 meaning 含 other 的中文释义（不改其他字段）。 */
+export function rewriteVocabulariesMeaningOther(): Promise<{ taskId: string }> {
+  return post('/admin/content/library/vocabularies/rewrite-meaning-other');
 }
 
 export function syncLibraryVocabularyDictionaryPronunciations(): Promise<{
