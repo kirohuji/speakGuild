@@ -570,7 +570,7 @@ function PatternTab() {
 // Vocabulary Dialog
 // ═══════════════════════════════════════════════════════════════
 
-function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
+export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
   open: boolean; onClose: () => void; edit: api.VocabularyFull | null;
   items: api.VocabularyFull[]; onSaved: () => void
 }) {
@@ -578,6 +578,8 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
   const [saving, setSaving] = useState(false)
   const [enriching, setEnriching] = useState(false)
   const [dictLoading, setDictLoading] = useState(false)
+  const [pronunciationSyncing, setPronunciationSyncing] = useState(false)
+  const pronunciationSyncRequest = useRef(0)
   const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
   const [currentIdx, setCurrentIdx] = useState(0)
   const [usAudioPlaying, setUsAudioPlaying] = useState(false)
@@ -590,6 +592,13 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
   const [dictEntry, setDictEntry] = useState<DictionaryEntry | null>(null)
   const [dictPreview, setDictPreview] = useState(false)
   const [editExamples, setEditExamples] = useState(false)
+
+  // Ignore a lookup that finishes after closing the dialog or switching words.
+  useEffect(() => {
+    pronunciationSyncRequest.current += 1
+    setPronunciationSyncing(false)
+    return () => { pronunciationSyncRequest.current += 1 }
+  }, [open, form.id, form.word])
 
   // Fetch dictionary entry when word changes
   useEffect(() => {
@@ -690,12 +699,65 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
     if (!form.word?.trim() || !form.meaning?.trim()) return
     setSaving(true)
     try {
-      if (edit) await api.updateLibraryVocabulary(edit.id, form)
+      if (edit) await api.updateLibraryVocabulary(form.id, form)
       else await api.createLibraryVocabulary(form)
       toast.success('已保存')
       onSaved(); onClose()
     } catch { toast.error('保存失败') }
     finally { setSaving(false) }
+  }
+
+  const handlePronunciationSync = async () => {
+    const word = form.word?.trim()
+    if (!word || pronunciationSyncing) return
+    const request = ++pronunciationSyncRequest.current
+    setPronunciationSyncing(true)
+    try {
+      const entry = await getDictionaryEntry(word)
+      if (request !== pronunciationSyncRequest.current) return
+      if (!entry?.word) { toast.info('词典未收录该词'); return }
+
+      setDictEntry(entry)
+      const fields: Record<string, string> = {}
+      const missing: string[] = []
+      for (const side of ['us', 'uk'] as const) {
+        const pronunciation = entry.pronunciations?.find(p => p.type === side && p.isPreferred)
+          ?? entry.pronunciations?.find(p => p.type === side)
+        const label = side === 'us' ? '美式' : '英式'
+        const ipa = pronunciation?.ipa?.trim()
+        const audio = pronunciation?.audioUrl?.trim()
+        if (ipa) fields[side === 'us' ? 'phoneticUs' : 'phoneticUk'] = ipa
+        else missing.push(`${label}音标`)
+        if (audio) fields[side === 'us' ? 'audioUsUrl' : 'audioUkUrl'] = audio
+        else missing.push(`${label}音频`)
+      }
+
+      if (!Object.keys(fields).length) {
+        toast.info('词典暂无可同步的音标与发音，已保留当前内容')
+        return
+      }
+      usAudioRef.current?.pause()
+      ukAudioRef.current?.pause()
+      setUsAudioPlaying(false)
+      setUkAudioPlaying(false)
+      setForm((prev: any) => ({ ...prev, ...fields }))
+      // An earlier enrichment preview must not restore stale pronunciation data.
+      setPendingDiff((prev: any) => {
+        if (!prev) return prev
+        const remaining = { ...prev.fields }
+        for (const key of Object.keys(fields)) delete remaining[key]
+        return Object.keys(remaining).length ? { ...prev, fields: remaining } : null
+      })
+      if (missing.length) {
+        toast.warning(`已同步可用内容；词典仍缺少${missing.join('、')}，对应原值已保留。请保存修改。`)
+      } else {
+        toast.success('已同步当前单词的音标与发音，请保存修改')
+      }
+    } catch (error: any) {
+      if (request === pronunciationSyncRequest.current) toast.error(error?.message || '音标与发音同步失败')
+    } finally {
+      if (request === pronunciationSyncRequest.current) setPronunciationSyncing(false)
+    }
   }
 
   // 统一富化：词典条目（dictionary_entry，缓存 miss 时后台自动跑流水线生成）+ AI 补全
@@ -906,6 +968,15 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
           </div>
 
           {/* Phonetic US + Phonetic UK */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">从词典同步当前单词的英美音标与音频，保存后生效。</p>
+            <Button type="button" size="sm" variant="outline" onClick={handlePronunciationSync}
+              disabled={!form.word?.trim() || pronunciationSyncing || dictLoading || enriching || !!ttsGenerating || saving}
+              aria-busy={pronunciationSyncing}>
+              {pronunciationSyncing ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <Volume2 data-icon="inline-start" />}
+              {pronunciationSyncing ? '同步中…' : '同步词典音标与发音'}
+            </Button>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label htmlFor="v-phus">美式音标</Label><Input id="v-phus" value={form.phoneticUs ?? ''} onChange={e => setForm({ ...form, phoneticUs: e.target.value })} placeholder="/ˈdɔːrməˌtɔri/" className="font-ipa" /></div>
             <div><Label htmlFor="v-phuk">英式音标</Label><Input id="v-phuk" value={form.phoneticUk ?? ''} onChange={e => setForm({ ...form, phoneticUk: e.target.value })} placeholder="/ˈdɔːmɪtri/" className="font-ipa" /></div>
@@ -1218,12 +1289,12 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
               </Button>
               {/* 富化按钮：词典+AI 一键，AI 补全 */}
               <Button variant="outline" size="sm" onClick={handleDictionaryLookup}
-                disabled={dictLoading || !form.word?.trim()}>
+                disabled={dictLoading || pronunciationSyncing || !form.word?.trim()}>
                 {dictLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Globe className="mr-1 size-3.5" />}
                 {dictLoading ? '处理中...' : '词典+AI 富化'}
               </Button>
               <Button variant="outline" size="sm"
-                disabled={enriching || !form.word?.trim() || !form.definitionEn?.trim()}
+                disabled={enriching || pronunciationSyncing || !form.word?.trim() || !form.definitionEn?.trim()}
                 onClick={handleAiEnrich}>
                 {enriching ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Sparkles className="mr-1 size-3.5" />}
                 AI 补全
@@ -1232,7 +1303,7 @@ function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
             {/* Right: cancel + save */}
             <div className="flex gap-2">
               <Button variant="outline" onClick={onClose}>取消</Button>
-              <Button onClick={handleSave} disabled={saving}>{edit ? '保存' : '创建'}</Button>
+              <Button onClick={handleSave} disabled={saving || pronunciationSyncing}>{edit ? '保存' : '创建'}</Button>
             </div>
           </div>
         </div>

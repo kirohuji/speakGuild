@@ -23,26 +23,26 @@ export class ContentAccessService implements OnModuleInit {
   async onModuleInit() {
     // Historical rows predate creator ownership. Assign them to the oldest
     // administrator so every row has an accountable owner in normal operation.
-    const admin = await this.prisma.user.findFirst({
-      where: { role: 'admin' },
-      orderBy: { createdAt: 'asc' },
-      select: { id: true },
-    });
-    if (!admin) {
-      this.logger.warn('No administrator exists; legacy content ownership backfill was skipped');
-      return;
-    }
+    // const admin = await this.prisma.user.findFirst({
+    //   where: { role: 'admin' },
+    //   orderBy: { createdAt: 'asc' },
+    //   select: { id: true },
+    // });
+    // if (!admin) {
+    //   this.logger.warn('No administrator exists; legacy content ownership backfill was skipped');
+    //   return;
+    // }
 
-    const owner = { ownerId: admin.id };
-    const results = await this.prisma.$transaction([
-      this.prisma.scene.updateMany({ where: { ownerId: null }, data: owner }),
-      this.prisma.packageGroup.updateMany({ where: { ownerId: null }, data: owner }),
-      this.prisma.inkScript.updateMany({ where: { ownerId: null }, data: owner }),
-      this.prisma.gameCharacter.updateMany({ where: { ownerId: null }, data: owner }),
-      this.prisma.ttsVoiceAsset.updateMany({ where: { ownerId: null }, data: owner }),
-    ]);
-    const updated = results.reduce((sum, result) => sum + result.count, 0);
-    if (updated > 0) this.logger.log(`Assigned ${updated} legacy content rows to the default administrator`);
+    // const owner = { ownerId: admin.id };
+    // const results = await this.prisma.$transaction([
+    //   this.prisma.scene.updateMany({ where: { ownerId: null }, data: owner }),
+    //   this.prisma.packageGroup.updateMany({ where: { ownerId: null }, data: owner }),
+    //   this.prisma.inkScript.updateMany({ where: { ownerId: null }, data: owner }),
+    //   this.prisma.gameCharacter.updateMany({ where: { ownerId: null }, data: owner }),
+    //   this.prisma.ttsVoiceAsset.updateMany({ where: { ownerId: null }, data: owner }),
+    // ]);
+    // const updated = results.reduce((sum, result) => sum + result.count, 0);
+    // if (updated > 0) this.logger.log(`Assigned ${updated} legacy content rows to the default administrator`);
   }
 
   async requireManager(req: Request): Promise<ManagementSession> {

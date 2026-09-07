@@ -18,7 +18,7 @@ function isProviderRateLimited(error: unknown) {
     || /(?:^|\D)(?:423|429)(?:\D|$)/.test(String(value?.message ?? ''));
 }
 
-@Processor(ADMIN_CONTENT_QUEUE, { concurrency: 3 })
+@Processor(ADMIN_CONTENT_QUEUE, { concurrency: 5 })
 export class ContentPrepareProcessor extends WorkerHost {
   constructor(
     private readonly contentPrepareService: ContentPrepareService,

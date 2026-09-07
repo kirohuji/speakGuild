@@ -198,7 +198,12 @@ export class DictionaryService {
         .map((entry) => this.toPronunciationAuditItem(entry))
         .filter((item) => {
           if (filter === 'missing') return item.status === 'missing';
-          if (filter === 'unreviewed') return !item.aiReviewed;
+          if (filter === 'unreviewed') {
+            return [item.uk, item.us].some((accent) => (
+              accent.source === 'FreeDictionaryAPI / Wiktionary'
+              && accent.aiConfidence === null
+            ));
+          }
           if (filter === 'invalid') {
             // Keep this filter aligned with the red attention icon in the UI.
             // Besides malformed or missing IPA, attention also covers generated
