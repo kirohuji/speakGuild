@@ -354,7 +354,7 @@ function ChunkTab() {
   const [search, setSearch] = useState('')
   const [difficulty, setDifficulty] = useState('')
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [pageSize, setPageSize] = useState(100)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<api.ChunkFull | null>(null)
 

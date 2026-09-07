@@ -3472,6 +3472,13 @@ ${contextBlock}
       await this.fileAssetsService.syncPersistentAssetReferences(
         tx, session.user.id, 'vocabulary_asset', id, null,
       );
+      // Vocabulary 被多个业务表直接引用，且部分外键未配置级联删除；统一在同一事务内清理，
+      // 同时移除无物理外键的场景材料认领，避免留下幽灵引用。
+      await tx.storyEpisodeVocabulary.deleteMany({ where: { vocabId: id } });
+      await tx.trainingTopicVocab.deleteMany({ where: { vocabId: id } });
+      await tx.sceneMaterialReference.deleteMany({
+        where: { materialType: 'vocab', materialId: id },
+      });
       return tx.vocabulary.delete({ where: { id } });
     });
   }

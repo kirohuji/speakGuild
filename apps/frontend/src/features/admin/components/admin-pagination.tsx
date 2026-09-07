@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { cn } from '@/lib/cn'
 
-export const ADMIN_PAGE_SIZES = [10, 15, 20, 50]
+export const ADMIN_PAGE_SIZES = [10, 15, 20, 50,100]
 
 export function getTotalPages(total: number, pageSize: number) {
   return Math.max(1, Math.ceil(total / pageSize))
