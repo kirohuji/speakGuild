@@ -5,6 +5,7 @@ import { requireAuthSession } from '../auth/session.util';
 import {
   ClearPronunciationQueryDto,
   GeneratePronunciationAudioDto,
+  LockHighConfidencePronunciationsDto,
   ManualPronunciationDto,
   NormalizePronunciationDto,
   PronunciationAuditQueryDto,
@@ -72,14 +73,17 @@ export class DictionaryController {
     return { code: 200, message: 'success', data: result };
   }
 
-  /** Admin: lock every complete UK/US pair selected from Wiktionary by AI at >= 90% confidence. */
-  @Post('pronunciation/lock-trusted-ai-wiktionary')
-  async lockTrustedAiWiktionaryPronunciations(@Req() req: Request) {
+  /** Admin: lock high-confidence UK/US pairs from the visible audit page. */
+  @Post('pronunciation/lock-high-confidence-current-page')
+  async lockHighConfidencePronunciations(
+    @Req() req: Request,
+    @Body() dto: LockHighConfidencePronunciationsDto,
+  ) {
     const session = await requireAuthSession(req);
     if (session.user.role !== 'admin') {
       return { code: 403, message: 'Admin only', data: null };
     }
-    const result = await this.dictionaryService.lockTrustedAiWiktionaryPronunciations();
+    const result = await this.dictionaryService.lockHighConfidencePronunciations(dto.words);
     return { code: 200, message: 'success', data: result };
   }
 

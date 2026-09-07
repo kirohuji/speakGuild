@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
 export const PRONUNCIATION_PROVIDERS = [
   'auto',
@@ -14,7 +14,7 @@ export type PronunciationProvider = (typeof PRONUNCIATION_PROVIDERS)[number];
 export const PRONUNCIATION_SCOPES = ['all', 'uk', 'us'] as const;
 export type PronunciationScope = (typeof PRONUNCIATION_SCOPES)[number];
 
-export const PRONUNCIATION_AUDIT_FILTERS = ['all', 'missing', 'noncanonical', 'invalid'] as const;
+export const PRONUNCIATION_AUDIT_FILTERS = ['all', 'missing', 'unreviewed', 'noncanonical', 'invalid'] as const;
 export type PronunciationAuditFilter = (typeof PRONUNCIATION_AUDIT_FILTERS)[number];
 
 export class PronunciationAuditQueryDto {
@@ -65,6 +65,15 @@ export class GeneratePronunciationAudioDto {
   @IsOptional()
   @IsIn(['female', 'male'])
   gender: 'female' | 'male' = 'female';
+}
+
+export class LockHighConfidencePronunciationsDto {
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(100)
+  @IsString({ each: true })
+  @MaxLength(100, { each: true })
+  words!: string[];
 }
 
 export class ClearPronunciationQueryDto {

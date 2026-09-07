@@ -23,6 +23,62 @@ export class VocabularyCsvImportService {
     private readonly adminContentAiService: AdminContentAiService,
   ) {}
 
+  /** Copy the preferred UK/US pronunciation from managed dictionary entries. */
+  async runDictionaryPronunciationSync(taskId: string) {
+    if (!await this.adminTasksService.markRunning(taskId, 'load-dictionary')) return;
+
+    const vocabularies = await this.prisma.vocabulary.findMany({ select: { id: true, word: true } });
+    const dictionaryWords = [...new Set(vocabularies.map((item) => item.word.trim().toLowerCase()).filter(Boolean))];
+    await this.adminTasksService.setProgress(taskId, { currentStep: 'load-dictionary', totalItems: vocabularies.length });
+    await this.adminTasksService.log(taskId, 'info', `开始同步 ${vocabularies.length} 个词汇的美式/英式音标和发音`, { step: 'load-dictionary' });
+
+    const entries = [] as Array<{ word: string; pronunciations: unknown }>;
+    for (let index = 0; index < dictionaryWords.length; index += 1_000) {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      entries.push(...await this.prisma.dictionaryEntry.findMany({
+        where: { word: { in: dictionaryWords.slice(index, index + 1_000) } },
+        select: { word: true, pronunciations: true },
+      }));
+    }
+    const entryByWord = new Map(entries.map((entry) => [entry.word.toLowerCase(), entry]));
+    let matched = 0;
+    let missing = 0;
+    let processed = 0;
+
+    for (let index = 0; index < vocabularies.length; index += 100) {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      const batch = vocabularies.slice(index, index + 100);
+      await this.prisma.$transaction(batch.map((vocabulary) => {
+        const entry = entryByWord.get(vocabulary.word.trim().toLowerCase());
+        const pronunciations = Array.isArray(entry?.pronunciations) ? entry.pronunciations as any[] : [];
+        const selected = (type: 'us' | 'uk') => pronunciations.find((item) => item?.type === type && item?.isPreferred)
+          ?? pronunciations.find((item) => item?.type === type);
+        const us = selected('us');
+        const uk = selected('uk');
+        if (entry) matched += 1;
+        else missing += 1;
+        return this.prisma.vocabulary.update({
+          where: { id: vocabulary.id },
+          data: {
+            phoneticUs: typeof us?.ipa === 'string' && us.ipa.trim() ? us.ipa.trim() : null,
+            phoneticUk: typeof uk?.ipa === 'string' && uk.ipa.trim() ? uk.ipa.trim() : null,
+            audioUsUrl: typeof us?.audioUrl === 'string' && us.audioUrl.trim() ? us.audioUrl.trim() : null,
+            audioUkUrl: typeof uk?.audioUrl === 'string' && uk.audioUrl.trim() ? uk.audioUrl.trim() : null,
+          },
+        });
+      }));
+      processed += batch.length;
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: 'sync', totalItems: vocabularies.length, processedItems: processed, successItems: processed,
+      });
+    }
+
+    const summary = { total: vocabularies.length, matched, missing, updated: processed };
+    await this.adminTasksService.log(taskId, 'info', `同步完成：词典匹配 ${matched} 个，未匹配 ${missing} 个（已清空音标和发音）`, { step: 'completed', meta: summary });
+    await this.adminTasksService.markCompleted(taskId, summary);
+    return summary;
+  }
+
   async run(taskId: string, words: string[]) {
     if (!await this.adminTasksService.markRunning(taskId, 'write')) return;
 

@@ -3295,6 +3295,7 @@ ${contextBlock}
     @Query('search') search?: string,
     @Query('matchType') matchType?: string,
     @Query('difficulty') difficulty?: string,
+    @Query('pronunciationStatus') pronunciationStatus?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
@@ -3316,6 +3317,23 @@ ${contextBlock}
       }
     }
     if (difficulty) where.difficulty = difficulty;
+    // Any missing US/UK field marks the entry as incomplete.  Empty strings
+    // are included because older CSV imports used them instead of NULL.
+    const missingPhonetic = {
+      OR: [
+        { phoneticUs: null }, { phoneticUs: '' },
+        { phoneticUk: null }, { phoneticUk: '' },
+      ],
+    };
+    const missingAudio = {
+      OR: [
+        { audioUsUrl: null }, { audioUsUrl: '' },
+        { audioUkUrl: null }, { audioUkUrl: '' },
+      ],
+    };
+    if (pronunciationStatus === 'missing-phonetic') where.AND = [missingPhonetic];
+    if (pronunciationStatus === 'missing-audio') where.AND = [missingAudio];
+    if (pronunciationStatus === 'incomplete') where.AND = [{ OR: [missingPhonetic, missingAudio] }];
 
     const p = Math.max(1, parseInt(page || '1'));
     const ps = Math.min(100, Math.max(1, parseInt(pageSize || '20')));
@@ -3419,6 +3437,15 @@ ${contextBlock}
     await this.requireAdmin(req);
     const session = await requireAuthSession(req);
     const task = await this.adminTasksService.enqueueVocabularyPolish((session.user as any)?.id);
+    return { code: 200, message: 'success', data: { taskId: task.id } };
+  }
+
+  /** 创建后台任务：将内容语料库的音标/发音同步为词典管理中的首选 UK/US 发音。 */
+  @Post('library/vocabularies/sync-dictionary-pronunciations')
+  async syncLibraryVocabularyDictionaryPronunciations(@Req() req: Request) {
+    await this.requireAdmin(req);
+    const session = await requireAuthSession(req);
+    const task = await this.adminTasksService.enqueueVocabularyDictionaryPronunciationSync((session.user as any)?.id);
     return { code: 200, message: 'success', data: { taskId: task.id } };
   }
 

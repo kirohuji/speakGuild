@@ -198,10 +198,13 @@ export class DictionaryService {
         .map((entry) => this.toPronunciationAuditItem(entry))
         .filter((item) => {
           if (filter === 'missing') return item.status === 'missing';
+          if (filter === 'unreviewed') return !item.aiReviewed;
           if (filter === 'invalid') {
-            return [item.uk, item.us].some((accent) => (
-              !accent.ipa || !accent.isIpa || accent.invalidVariantIpa !== null
-            ));
+            // Keep this filter aligned with the red attention icon in the UI.
+            // Besides malformed or missing IPA, attention also covers generated
+            // pronunciations awaiting review and legacy data without a preferred
+            // pronunciation.
+            return item.status !== 'passed';
           }
           return [item.uk, item.us].some((accent) => (
             accent.ipa !== null
@@ -223,7 +226,7 @@ export class DictionaryService {
           passed: items.filter((item) => item.status === 'passed').length,
           attention: items.filter((item) => item.status === 'attention').length,
           missing: items.filter((item) => item.status === 'missing').length,
-          withAudio: items.filter((item) => item.uk.hasAudio || item.us.hasAudio).length,
+          withAudio: items.filter((item) => item.uk.hasAudio && item.us.hasAudio).length,
         },
       };
     }
@@ -249,7 +252,7 @@ export class DictionaryService {
         passed: items.filter((item) => item.status === 'passed').length,
         attention: items.filter((item) => item.status === 'attention').length,
         missing: items.filter((item) => item.status === 'missing').length,
-        withAudio: items.filter((item) => item.uk.hasAudio || item.us.hasAudio).length,
+        withAudio: items.filter((item) => item.uk.hasAudio && item.us.hasAudio).length,
       },
     };
   }
@@ -307,8 +310,10 @@ export class DictionaryService {
     };
   }
 
-  async lockTrustedAiWiktionaryPronunciations() {
+  async lockHighConfidencePronunciations(words: string[]) {
+    const normalizedWords = [...new Set(words.map((word) => word.toLowerCase().trim()).filter(Boolean))];
     const entries = await this.prisma.dictionaryEntry.findMany({
+      where: { word: { in: normalizedWords } },
       select: { word: true, pronunciations: true },
       orderBy: { word: 'asc' },
     });
@@ -319,11 +324,11 @@ export class DictionaryService {
         : [];
       return (['uk', 'us'] as const).every((type) => {
         const variants = pronunciations.filter((item) => item?.type === type);
-        const selected = variants.find((item) => item.isPreferred) ?? variants[0];
+        const selected = variants.find((item) => item.isPreferred);
         return !!selected
-          && selected.source?.startsWith('AI selected / Wiktionary Action API') === true
           && Number(selected.aiConfidence) >= 0.9
-          && isCanonicalBroadIpa(selected.ipa);
+          && isCanonicalBroadIpa(selected.ipa)
+          && variants.every((item) => isStandardBroadIpa(item.ipa));
       });
     });
     const pending = eligible.filter((entry) => {
@@ -345,6 +350,7 @@ export class DictionaryService {
     }
 
     return {
+      scanned: entries.length,
       eligible: eligible.length,
       locked: pending.length,
       alreadyLocked: eligible.length - pending.length,
@@ -635,6 +641,7 @@ export class DictionaryService {
         ?? (!hasPreferred ? '系统推导（旧数据）' : 'FreeDictionaryAPI / Wiktionary');
       const issues: string[] = [];
       if (!isIpa) issues.push('不是统一的 /.../ IPA 格式');
+      if (!pronunciation.audioUrl) issues.push('缺少发音音频');
       if (invalidVariant && invalidVariant !== pronunciation) {
         issues.push('存在精细标音或格式异常的备用变体');
       }
@@ -663,9 +670,19 @@ export class DictionaryService {
     };
     const uk = buildAccent('uk');
     const us = buildAccent('us');
-    const missing = !uk.ipa || !us.ipa;
+    // 审查报告的“缺失”必须同时覆盖 IPA 与音频：任一口音缺少
+    // 其中一个，就不能被视为可同步到内容语料库的完整发音资料。
+    const missing = !uk.ipa || !us.ipa || !uk.hasAudio || !us.hasAudio;
     const status = missing ? 'missing' : uk.isTrusted && us.isTrusted ? 'passed' : 'attention';
-    return { word: entry.word, sourceUrl: entry.sourceUrl, uk, us, status, locked };
+    // "AI 审核" is deliberately tied to the selected, evidence-backed result.
+    // A manually entered IPA, or a raw FreeDictionary/Wiktionary result, does
+    // not qualify even when the entry itself was otherwise edited by an admin.
+    const aiReviewed = [uk, us].every((accent) => (
+      accent.source.startsWith('AI selected / ')
+      && typeof accent.aiConfidence === 'number'
+      && Number.isFinite(accent.aiConfidence)
+    ));
+    return { word: entry.word, sourceUrl: entry.sourceUrl, uk, us, status, locked, aiReviewed };
   }
 
   // ════════════════════════════════════════════════════════════
