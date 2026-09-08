@@ -44,10 +44,41 @@ function parseInkMeta(raw: string): { key: string; title: string; scriptType: st
 
 // ── CSV 类型 ──
 type CsvScene = { category_name: string; title: string; location: string; required_output_level: string; required_user_level: string; description: string; package_type?: string }
-type CsvVocab = { scene_title: string; topic_title: string; word: string; meaning: string; part_of_speech: string; phonetic_us: string; phonetic_uk: string; difficulty: string; description: string; examples_json: string; sort_order: string }
-type CsvChunk = { scene_title: string; topic_title: string; category: string; text: string; meaning: string; difficulty: string; description: string; examples_json: string }
+type CsvVocab = {
+  scene_title: string
+  topic_title: string
+  word: string
+  sort_order: string
+  meaning?: string
+  part_of_speech?: string
+  phonetic_us?: string
+  phonetic_uk?: string
+  difficulty?: string
+  description?: string
+  examples_json?: string
+}
+type CsvChunk = {
+  scene_title: string
+  topic_title: string
+  text: string
+  sort_order?: string
+  category?: string
+  meaning?: string
+  difficulty?: string
+  description?: string
+  examples_json?: string
+}
 type CsvTopic = { scene_title: string; title: string; prompt_en: string; prompt_zh: string; duration_sec: string; difficulty: string; description: string; knowledge_points: string; teaching_markdown?: string; teaching_markdown_file?: string; ink_script_key: string }
-type CsvPattern = { scene_title: string; topic_title: string; pattern: string; meaning: string; slots: string; example: string; difficulty: string; sort_order: string }
+type CsvPattern = {
+  scene_title: string
+  topic_title: string
+  pattern: string
+  sort_order: string
+  meaning?: string
+  slots?: string
+  example?: string
+  difficulty?: string
+}
 type CsvEpisode = { chapter_id: string; chapter_title: string; episode_order: string; title: string; scene_title: string; required_output_level: string; required_user_level: string; vocab_required_count: string; vocab_total_count: string; chunk_required_count: string; chunk_total_count: string; objectives_json: string; pass_objective_count: string; pass_chunk_count: string; pass_min_dialogues: string; npc_name: string; npc_role: string; is_preview: string; ink_script_key: string; rewards_json: string }
 type CsvEpChunk = { episode_chapter: string; episode_order: string; chunk_text_match: string; sort_order: string }
 
@@ -627,7 +658,8 @@ export async function seedLearningPackages(prisma: PrismaClient, packageName?: s
         where: { word: row.word },
         create: {
           word: row.word,
-          meaning: row.meaning,
+          // 精简 CSV 可不带释义；后续由语料库补全。create 需非空字符串。
+          meaning: row.meaning?.trim() || row.word,
           partOfSpeech: row.part_of_speech || null,
           phoneticUs: row.phonetic_us || null,
           phoneticUk: row.phonetic_uk || null,
@@ -641,13 +673,13 @@ export async function seedLearningPackages(prisma: PrismaClient, packageName?: s
           sortOrder: parseInt(row.sort_order) || 0,
         },
         update: {
-          meaning: row.meaning,
-          partOfSpeech: row.part_of_speech || undefined,
-          phoneticUs: row.phonetic_us || undefined,
-          phoneticUk: row.phonetic_uk || undefined,
-          examples: parseJson(row.examples_json) ?? undefined,
-          description: row.description || undefined,
-          difficulty: row.difficulty || 'L1',
+          ...(row.meaning?.trim() ? { meaning: row.meaning } : {}),
+          ...(row.part_of_speech ? { partOfSpeech: row.part_of_speech } : {}),
+          ...(row.phonetic_us ? { phoneticUs: row.phonetic_us } : {}),
+          ...(row.phonetic_uk ? { phoneticUk: row.phonetic_uk } : {}),
+          ...(row.examples_json ? { examples: parseJson(row.examples_json) ?? undefined } : {}),
+          ...(row.description ? { description: row.description } : {}),
+          ...(row.difficulty ? { difficulty: row.difficulty } : {}),
           sortOrder: parseInt(row.sort_order) || 0,
         },
       })
@@ -679,25 +711,30 @@ export async function seedLearningPackages(prisma: PrismaClient, packageName?: s
         where: { text: row.text },
         create: {
           text: row.text,
-          meaning: row.meaning,
-          category: row.category,
-          difficulty: row.difficulty || 'L2',
+          // 精简 CSV 可不带释义/例句；后续由语料库 AI 富化
+          meaning: row.meaning?.trim() || row.text,
+          category: row.category || '核心句块',
+          difficulty: row.difficulty || 'L1',
           description: row.description || null,
           examples: examples?.length
             ? { create: examples.map((ex, i) => ({ en: ex.en, zh: ex.zh, note: ex.note || null, level: ex.level || 'basic', sortOrder: i })) }
             : undefined,
         },
         update: {
-          meaning: row.meaning,
-          category: row.category,
-          difficulty: row.difficulty || 'L2',
-          description: row.description || null,
-          examples: examples?.length
+          ...(row.meaning?.trim() ? { meaning: row.meaning } : {}),
+          ...(row.category ? { category: row.category } : {}),
+          ...(row.difficulty ? { difficulty: row.difficulty } : {}),
+          ...(row.description !== undefined && row.description !== ''
+            ? { description: row.description }
+            : {}),
+          ...(examples?.length
             ? {
-                deleteMany: {},
-                create: examples.map((ex, i) => ({ en: ex.en, zh: ex.zh, note: ex.note || null, level: ex.level || 'basic', sortOrder: i })),
+                examples: {
+                  deleteMany: {},
+                  create: examples.map((ex, i) => ({ en: ex.en, zh: ex.zh, note: ex.note || null, level: ex.level || 'basic', sortOrder: i })),
+                },
               }
-            : undefined,
+            : {}),
         },
       })
       chunkTextToId.set(row.text.slice(0, 20), chunk.id)
@@ -838,7 +875,12 @@ export async function seedLearningPackages(prisma: PrismaClient, packageName?: s
           examples: row.example ? [{ en: row.example, zh: '', level: 'intermediate' }] : undefined,
           difficulty: row.difficulty || 'L1',
         },
-        update: {},
+        update: {
+          ...(row.meaning ? { meaning: row.meaning } : {}),
+          ...(row.slots ? { slots: parseJson(row.slots) } : {}),
+          ...(row.example ? { examples: [{ en: row.example, zh: '', level: 'intermediate' }] } : {}),
+          ...(row.difficulty ? { difficulty: row.difficulty } : {}),
+        },
       })
       await prisma.trainingTopicSentencePattern.upsert({
         where: { topicId_patternId: { topicId, patternId: patternRecord.id } },

@@ -1186,13 +1186,20 @@ export class VocabularyCsvImportService {
   }
 
   async runDifficultyReclassify(taskId: string) {
-    if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
+    const checkpoint = await this.adminTasksService.beginOrResume(taskId, 'scan');
+    if (!checkpoint) return;
+    const persisted = (checkpoint.summary as any)?.checkpoint ?? {};
+    const isResume = persisted.scopeVersion === 1 && (
+      checkpoint.currentStep?.startsWith('reclassify-difficulty')
+      || checkpoint.currentStep?.startsWith('resume:')
+    );
 
     const candidates: Array<{ id: string; word: string; definitionEn: string; meaning: string; difficulty: string }> = [];
     let cursor: string | undefined;
     do {
       if (await this.adminTasksService.isCanceled(taskId)) return;
       const rows = await this.prisma.vocabulary.findMany({
+        where: { difficulty: 'L1', difficultyReviewedAt: null },
         select: { id: true, word: true, definitionEn: true, meaning: true, difficulty: true },
         orderBy: { id: 'asc' },
         take: 500,
@@ -1207,25 +1214,32 @@ export class VocabularyCsvImportService {
         difficulty: row.difficulty ?? '',
       })));
       cursor = rows.at(-1)?.id;
-      await this.adminTasksService.setProgress(taskId, {
-        currentStep: 'scan', totalItems: candidates.length, processedItems: candidates.length, successItems: candidates.length,
-      });
     } while (cursor);
 
-    await this.adminTasksService.log(taskId, 'info', `扫描完成：将使用词典释义上下文重新判断全部 ${candidates.length} 个词汇的难度`, {
-      step: 'scan', meta: { scanned: candidates.length },
-    });
-
-    let updated = 0;
-    let unchanged = 0;
+    const processedBase = isResume ? checkpoint.successItems : 0;
+    const totalItems = isResume
+      ? Math.max(checkpoint.totalItems, processedBase + candidates.length)
+      : candidates.length;
+    let updated = isResume ? Number(persisted.updated ?? 0) : 0;
+    let unchanged = isResume ? Number(persisted.unchanged ?? 0) : 0;
     let failed = 0;
-    let processed = 0;
-    const distribution: Record<string, number> = { L1: 0, L2: 0, L3: 0, L4: 0, L5: 0 };
-    const errors: Array<{ id: string; word: string; message: string }> = [];
-    const usageStats = createUsageStats();
+    let processed = processedBase;
+    const distribution: Record<string, number> = isResume && persisted.distribution
+      ? { L1: 0, L2: 0, L3: 0, L4: 0, L5: 0, ...persisted.distribution }
+      : { L1: 0, L2: 0, L3: 0, L4: 0, L5: 0 };
+    const errors: Array<{ id: string; word: string; message: string }> = isResume && Array.isArray(persisted.errors)
+      ? persisted.errors.slice(0, 20)
+      : [];
+    const usageStats = { ...createUsageStats(), ...(isResume ? persisted.usage : {}) };
+
+    await this.adminTasksService.log(taskId, isResume ? 'warn' : 'info', isResume
+      ? `恢复难度复核：已完成 ${processedBase} 个，继续处理剩余 ${candidates.length} 个未复核 L1 词汇`
+      : `扫描完成：将重新判断 ${candidates.length} 个未复核 L1 词汇的难度`, {
+      step: isResume ? 'resumed' : 'scan', meta: { totalItems, processedBase, remaining: candidates.length },
+    });
     await this.adminTasksService.setProgress(taskId, {
-      currentStep: 'reclassify-difficulty', totalItems: candidates.length, processedItems: 0,
-      successItems: 0, failedItems: 0,
+      currentStep: 'reclassify-difficulty', totalItems, processedItems: processedBase,
+      successItems: updated + unchanged, failedItems: failed,
     });
 
     const batchSize = 20;
@@ -1244,27 +1258,34 @@ export class VocabularyCsvImportService {
         );
         const resultById = new Map(results.map((result) => [result.id, result.difficulty]));
         const updates = [];
+        const missingResults: Array<{ id: string; word: string; message: string }> = [];
+        let batchUpdated = 0;
+        let batchUnchanged = 0;
+        const reviewedAt = new Date();
         for (const candidate of batch) {
           const difficulty = resultById.get(candidate.id);
           if (!difficulty) {
-            failed++;
-            errors.push({ id: candidate.id, word: candidate.word, message: 'AI 未返回有效难度' });
+            missingResults.push({ id: candidate.id, word: candidate.word, message: 'AI 未返回有效难度' });
             continue;
           }
           distribution[difficulty] = (distribution[difficulty] ?? 0) + 1;
           if (difficulty === candidate.difficulty) {
-            unchanged++;
+            batchUnchanged++;
           } else {
-            updates.push(this.prisma.vocabulary.update({
-              where: { id: candidate.id },
-              data: { difficulty },
-            }));
+            batchUpdated++;
           }
+          updates.push(this.prisma.vocabulary.update({
+            where: { id: candidate.id },
+            data: { difficulty, difficultyReviewedAt: reviewedAt },
+          }));
         }
         if (updates.length) {
           await this.prisma.$transaction(updates);
-          updated += updates.length;
         }
+        updated += batchUpdated;
+        unchanged += batchUnchanged;
+        failed += missingResults.length;
+        errors.push(...missingResults);
       } catch (error: any) {
         const message = error?.message ?? 'unknown error';
         failed += batch.length;
@@ -1275,20 +1296,55 @@ export class VocabularyCsvImportService {
       }
       processed += batch.length;
       await this.adminTasksService.setProgress(taskId, {
-        currentStep: `reclassify-difficulty (${processed}/${candidates.length})`,
-        totalItems: candidates.length,
+        currentStep: `reclassify-difficulty (${processed}/${totalItems})`,
+        totalItems,
         processedItems: processed,
         successItems: updated + unchanged,
         failedItems: failed,
       });
-      if (processed % 100 === 0 || processed === candidates.length) {
+      await this.prisma.adminTask.updateMany({
+        where: { id: taskId, status: 'running' },
+        data: {
+          summary: {
+            updated,
+            unchanged,
+            failed,
+            distribution,
+            errors: errors.slice(0, 20),
+            usage: usageStats,
+            checkpoint: {
+              scopeVersion: 1,
+              updated,
+              unchanged,
+              failed,
+              distribution,
+              errors: errors.slice(0, 20),
+              usage: usageStats,
+            },
+          } as Prisma.InputJsonValue,
+        },
+      });
+      if (processed % 100 === 0 || processed === totalItems) {
         await this.adminTasksService.log(taskId, 'info', `AI 用量（已处理 ${processed} 项）：${usageStats.calls} 次调用，合计 ${usageStats.totalTokens} tokens`, {
           step: 'ai-usage', meta: { ...usageStats, processedItems: processed },
         });
       }
     }
 
-    const summary = { scanned: candidates.length, updated, unchanged, failed, distribution, errors: errors.slice(0, 20), usage: usageStats };
+    const remaining = await this.prisma.vocabulary.count({
+      where: { difficulty: 'L1', difficultyReviewedAt: null },
+    });
+    const finalDistributionRows = await this.prisma.vocabulary.groupBy({
+      by: ['difficulty'],
+      _count: { _all: true },
+    });
+    const finalDistribution = { L1: 0, L2: 0, L3: 0, L4: 0, L5: 0 };
+    for (const row of finalDistributionRows) {
+      if (row.difficulty in finalDistribution) {
+        finalDistribution[row.difficulty as keyof typeof finalDistribution] = row._count._all;
+      }
+    }
+    const summary = { scanned: totalItems, reviewed: updated + unchanged, updated, unchanged, failed, remaining, distribution: finalDistribution, errors: errors.slice(0, 20), usage: usageStats };
     await this.adminTasksService.markCompleted(taskId, summary);
     await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `难度复核完成：变更 ${updated}，保持 ${unchanged}，失败 ${failed}`, {
       step: 'completed', meta: summary,

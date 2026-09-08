@@ -21,6 +21,7 @@ export class AdminTasksService implements OnModuleInit {
 
   async onModuleInit() {
     await this.recoverInterruptedDictionaryPronunciationTasks();
+    await this.recoverInterruptedVocabularyDifficultyTasks();
   }
 
   /**
@@ -522,6 +523,48 @@ export class AdminTasksService implements OnModuleInit {
     return { ...task, bullJobId: job.id };
   }
 
+  private async recoverInterruptedVocabularyDifficultyTasks() {
+    const tasks = await this.prisma.adminTask.findMany({
+      where: {
+        type: VOCABULARY_DIFFICULTY_RECLASSIFY_JOB,
+        status: { in: [AdminTaskStatus.queued, AdminTaskStatus.running] },
+      },
+      select: { id: true, bullJobId: true, processedItems: true, totalItems: true },
+    });
+
+    for (const task of tasks) {
+      try {
+        const existingJob = task.bullJobId ? await this.vocabularyImportQueue.getJob(task.bullJobId) : null;
+        const existingState = existingJob ? await existingJob.getState() : null;
+        if (existingJob && ['active', 'waiting', 'prioritized', 'delayed', 'waiting-children'].includes(existingState)) {
+          continue;
+        }
+        if (existingJob) await existingJob.remove().catch(() => undefined);
+
+        const recoveryJobId = `resume-${task.id}`;
+        const previousRecoveryJob = await this.vocabularyImportQueue.getJob(recoveryJobId);
+        if (previousRecoveryJob) {
+          const state = await previousRecoveryJob.getState();
+          if (['completed', 'failed'].includes(state)) await previousRecoveryJob.remove().catch(() => undefined);
+        }
+        const job = await this.vocabularyImportQueue.add(
+          VOCABULARY_DIFFICULTY_RECLASSIFY_JOB,
+          { taskId: task.id },
+          { jobId: recoveryJobId },
+        );
+        await this.prisma.adminTask.update({
+          where: { id: task.id },
+          data: { bullJobId: job.id, currentStep: `resume:${task.processedItems}/${task.totalItems}` },
+        });
+        await this.log(task.id, 'warn', `后端重启后已从 ${task.processedItems}/${task.totalItems} 的检查点重新入队`, {
+          step: 'resumed', meta: { processedItems: task.processedItems, totalItems: task.totalItems },
+        });
+      } catch (error) {
+        this.logger.error(`Failed to recover vocabulary difficulty task ${task.id}`, error instanceof Error ? error.stack : String(error));
+      }
+    }
+  }
+
   async enqueueVocabularyBilingualDefinitionEnrich(createdById?: string) {
     const existing = await this.prisma.adminTask.findFirst({
       where: {
@@ -557,18 +600,24 @@ export class AdminTasksService implements OnModuleInit {
     });
     if (existing) return { ...existing, reused: true };
 
+    const pendingCount = await this.prisma.vocabulary.count({
+      where: { difficulty: 'L1', difficultyReviewedAt: null },
+    });
+    if (!pendingCount) throw new BadRequestException('没有尚未复核的 L1 词汇');
+
     const task = await this.prisma.adminTask.create({
       data: {
         type: VOCABULARY_DIFFICULTY_RECLASSIFY_JOB,
-        title: '词典+AI 全量复核词汇难度',
+        title: `词典+AI 复核未检查的 L1 词汇（${pendingCount} 个）`,
         targetType: 'vocabulary',
         createdById,
-        payload: {} as Prisma.InputJsonValue,
+        totalItems: pendingCount,
+        payload: { scope: 'unreviewed-l1', scopeVersion: 1 } as Prisma.InputJsonValue,
       },
     });
     const job = await this.vocabularyImportQueue.add(VOCABULARY_DIFFICULTY_RECLASSIFY_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', '全量词汇难度复核任务已加入 Redis 队列', { step: 'queued' });
+    await this.log(task.id, 'info', `${pendingCount} 个未复核 L1 词汇已加入难度检查队列`, { step: 'queued' });
     return { ...task, bullJobId: job.id, reused: false };
   }
 
@@ -874,11 +923,13 @@ export class AdminTasksService implements OnModuleInit {
       select: {
         id: true,
         status: true,
+        currentStep: true,
         totalItems: true,
         processedItems: true,
         successItems: true,
         failedItems: true,
         startedAt: true,
+        summary: true,
       },
     });
     if (!task || (task.status !== AdminTaskStatus.queued && task.status !== AdminTaskStatus.running)) return null;

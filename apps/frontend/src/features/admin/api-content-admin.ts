@@ -937,7 +937,7 @@ export function enrichEnglishOnlyVocabularyDefinitions(): Promise<{ taskId: stri
   return post('/admin/content/library/vocabularies/enrich-english-only-definitions');
 }
 
-/** 词典+AI 全量复核词汇难度；只更新 difficulty。 */
+/** 词典+AI 复核尚未检查的 L1 词汇；成功后记录复核时间。 */
 export function reclassifyVocabularyDifficulties(): Promise<{ taskId: string; reused?: boolean }> {
   return post('/admin/content/library/vocabularies/reclassify-difficulties');
 }

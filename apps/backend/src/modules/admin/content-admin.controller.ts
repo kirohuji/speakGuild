@@ -3491,7 +3491,7 @@ ${contextBlock}
     return { code: 200, message: 'success', data: { taskId: task.id, reused: task.reused } };
   }
 
-  /** 使用词典释义作为上下文，AI 全量重判难度；只写回 difficulty。 */
+  /** AI 复核尚未检查的 L1 词汇；写回 difficulty 与复核时间。 */
   @Post('library/vocabularies/reclassify-difficulties')
   async reclassifyVocabularyDifficulties(@Req() req: Request) {
     await this.requireAdmin(req);

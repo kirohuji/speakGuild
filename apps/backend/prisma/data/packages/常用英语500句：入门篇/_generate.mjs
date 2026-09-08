@@ -26,7 +26,7 @@ function examplesJson(examples) {
 
 /**
  * @typedef {{ text: string, meaning: string, insight: string, active?: boolean, examples: {en:string,zh:string}[], vocabs?: string[], pattern?: string }} Expr
- * @typedef {{ title: string, promptEn: string, promptZh: string, description: string, knowledgePoints: string, duration: number, goal: string, tip: string, expressions: Expr[], patterns: {pattern:string,meaning:string,slots:string,example:string}[], vocabs: {word:string,meaning:string,pos:string}[] }} Topic
+ * @typedef {{ title: string, promptEn: string, promptZh: string, description: string, knowledgePoints: string, duration: number, goal: string, tip: string, expressions: Expr[], patterns: {pattern:string,meaning:string,slots:string,example:string}[], vocabs: string[] }} Topic
  */
 
 /** @type {Topic[]} */
@@ -41,20 +41,10 @@ const topics = [
     goal: '学习者能用原版高频寒暄短句开场、接话并自然告别。',
     tip: '',
     docIntro: '这一课直接对齐原版「问候与寒暄」里的常用短句：怎么打招呼、怎么接话、怎么收尾。太基础的 Hi / Hello / My name is 不再单列。',
-    patterns: [
-      { pattern: "How's it going?", meaning: '最近怎么样？', slots: '[]', example: "How's it going?" },
-      { pattern: 'See you ___.', meaning: '再见（可补时间）', slots: '["later / then / tomorrow"]', example: 'See you later.' },
-      { pattern: 'One more thing.', meaning: '还有一件事', slots: '[]', example: 'One more thing.' },
-    ],
+    patterns: [],
     vocabs: [
-      { word: 'later', meaning: '稍后；待会', pos: 'adverb' },
-      { word: 'touch', meaning: '联系（keep in touch）', pos: 'noun' },
-      { word: 'deal', meaning: '方案；约定', pos: 'noun' },
-      { word: 'care', meaning: '保重；小心', pos: 'noun' },
-      { word: 'story', meaning: '故事；经历', pos: 'noun' },
-      { word: 'home', meaning: '家', pos: 'noun' },
-      { word: 'aboard', meaning: '登机/上船；加入', pos: 'adverb' },
-      { word: 'forget', meaning: '忘记', pos: 'verb' },
+      'later', 'touch', 'care', 'deal', 'story', 'home', 'aboard', 'forget',
+      'going', 'lovely', 'case', 'back', 'station', 'rain',
     ],
     expressions: [
       {
@@ -269,20 +259,10 @@ const topics = [
     goal: '学习者能在帮助、小碰撞、打扰他人时，用短句完成感谢、道歉和回应。',
     tip: 'Thank you 比 Thanks 稍正式；You\'re welcome / No problem 都可回感谢。Excuse me 既可引起注意，也可表示借过。',
     docIntro: '别人帮了你、你不小心碰到人、或者想礼貌打断对方时，用哪几句最稳？这里把感谢、道歉和常见回应都摆在一起，方便你对照着用。',
-    patterns: [
-      { pattern: 'Thank you for ___.', meaning: '谢谢你……', slots: '["helping me / waiting / the coffee"]', example: 'Thank you for your help.' },
-      { pattern: "I'm sorry.", meaning: '对不起', slots: '[]', example: "I'm sorry." },
-      { pattern: "That's okay.", meaning: '没关系', slots: '[]', example: "That's okay." },
-    ],
+    patterns: [],
     vocabs: [
-      { word: 'thank', meaning: '感谢', pos: 'verb' },
-      { word: 'thanks', meaning: '谢谢', pos: 'noun' },
-      { word: 'sorry', meaning: '抱歉的', pos: 'adjective' },
-      { word: 'welcome', meaning: '别客气（回应感谢）', pos: 'adjective' },
-      { word: 'problem', meaning: '问题；麻烦', pos: 'noun' },
-      { word: 'excuse', meaning: '原谅；劳驾', pos: 'verb' },
-      { word: 'please', meaning: '请', pos: 'adverb' },
-      { word: 'sure', meaning: '当然；没问题', pos: 'adjective' },
+      'thank', 'thanks', 'sorry', 'welcome', 'problem', 'excuse', 'please', 'sure',
+      'fault', 'interrupt', 'luck', 'fun', 'okay', 'worries',
     ],
     expressions: [
       {
@@ -497,39 +477,29 @@ const topics = [
     goal: '学习者能独立完成一次简单点单，并请对方结账。',
     tip: '',
     docIntro: '柜台点单时，最常说的就是「我想要…」「外带还是堂食」「就这些」「买单」。刷卡、现金这些付钱细节，放在下一课「找商品、问价格与结账」里。',
-    patterns: [
-      { pattern: "I'd like ___.", meaning: '我想要……', slots: '["a coffee / the soup / two tacos"]', example: "I'd like a latte." },
-      { pattern: 'Can I have ___?', meaning: '可以给我……吗？', slots: '["a water / the menu / one more"]', example: 'Can I have a menu?' },
-      { pattern: '___ , please.', meaning: '请给我……', slots: '["A coffee / The check / Two waters"]', example: 'A coffee, please.' },
-    ],
+    patterns: [],
     vocabs: [
-      { word: 'order', meaning: '点单；订单', pos: 'noun' },
-      { word: 'menu', meaning: '菜单', pos: 'noun' },
-      { word: 'coffee', meaning: '咖啡', pos: 'noun' },
-      { word: 'water', meaning: '水', pos: 'noun' },
-      { word: 'check', meaning: '账单（美式）', pos: 'noun' },
-      { word: 'size', meaning: '尺寸；规格', pos: 'noun' },
-      { word: 'spicy', meaning: '辣的', pos: 'adjective' },
-      { word: 'ice', meaning: '冰块', pos: 'noun' },
+      'order', 'menu', 'coffee', 'water', 'check', 'size', 'spicy', 'ice',
+      'takeout', 'change', 'sugar', 'table', 'sandwich', 'glass',
     ],
     expressions: [
       {
-        text: "I'd like ___.",
-        meaning: '我想要……',
-        insight: '点餐最常用礼貌句；本系列里点单场景优先用这句。比 I want 更得体。',
+        text: "I'd like a coffee, please.",
+        meaning: '我想要一杯咖啡',
+        insight: '点餐礼貌完整句。本系列点单场景优先用 I\'d like...；比 I want 更得体。',
         active: true,
         examples: [
-          { en: "I'd like a coffee, please.", zh: '我想要一杯咖啡。' },
+          { en: "Good morning. I'd like a coffee, please.", zh: '早上好。我想要一杯咖啡。' },
           { en: "I'd like the chicken sandwich.", zh: '我想要鸡肉三明治。' },
         ],
       },
       {
-        text: 'Can I have ___?',
-        meaning: '可以给我……吗？',
-        insight: '点单、要菜单、加水都很通用；比直接命令更礼貌。',
+        text: 'Can I have a glass of water?',
+        meaning: '可以给我一杯水吗？',
+        insight: '点单、加水时的完整礼貌句；换菜单可以说 Can I have the menu, please?',
         active: true,
         examples: [
-          { en: 'Can I have a glass of water?', zh: '可以给我一杯水吗？' },
+          { en: "It's hot today. Can I have a glass of water?", zh: '今天好热。可以给我一杯水吗？' },
           { en: 'Can I have the menu, please?', zh: '可以给我菜单吗？' },
         ],
       },
@@ -539,7 +509,7 @@ const topics = [
         insight: '「名词 + please」是最短点单模板：A tea, please. / Two waters, please. 都同一套。',
         active: true,
         examples: [
-          { en: 'A coffee, please.', zh: '请来杯咖啡。' },
+          { en: 'What can I get you? — A coffee, please.', zh: '您要点什么？——请来杯咖啡。' },
           { en: 'Two iced teas, please.', zh: '请来两杯冰茶。' },
         ],
       },
@@ -604,9 +574,9 @@ const topics = [
         ],
       },
       {
-        text: 'Without ___, please.',
-        meaning: '请不要加……',
-        insight: '说明不要的配料：Without sugar / ice / onions。要加则说 With milk, please。',
+        text: 'Without sugar, please.',
+        meaning: '请不要加糖',
+        insight: '说明不要的配料。不要冰可说 Without ice, please。',
         active: true,
         examples: [
           { en: 'Coffee without sugar, please.', zh: '请来杯不加糖的咖啡。' },
@@ -619,7 +589,7 @@ const topics = [
         insight: '刚坐下或还没看清选项时用；也可说 Can I see the menu?',
         active: false,
         examples: [
-          { en: 'The menu, please.', zh: '请给我菜单。' },
+          { en: "We just sat down. The menu, please.", zh: '我们刚坐下。请给我菜单。' },
           { en: 'Can we see the menu, please?', zh: '可以看一下菜单吗？' },
         ],
       },
@@ -629,7 +599,7 @@ const topics = [
         insight: '你这边准备好了就说；对方问 Are you ready to order? 时也可直接开始点。',
         active: false,
         examples: [
-          { en: "I'm ready to order.", zh: '我可以点餐了。' },
+          { en: "We've decided. I'm ready to order.", zh: '我们想好了。可以点餐了。' },
           { en: "We're ready to order now.", zh: '我们现在可以点了。' },
         ],
       },
@@ -709,8 +679,8 @@ const topics = [
         insight: '和 To go, please. 同义，有的店更常说 takeout。',
         active: false,
         examples: [
-          { en: 'Takeout, please.', zh: '外带，谢谢。' },
-          { en: 'Is this for takeout or dine-in?', zh: '外带还是堂食？' },
+          { en: 'For here or to go? — Takeout, please.', zh: '堂食还是外带？——外带，谢谢。' },
+          { en: 'One burger, takeout, please.', zh: '一个汉堡，外带，谢谢。' },
         ],
       },
     ],
@@ -725,39 +695,29 @@ const topics = [
     goal: '学习者能在商店里找到目标商品、问清价格，并完成简单购买。',
     tip: '找货用 Where is... / Do you have...；决定购买说 I\'ll take it；结账听 Cash or card? 并要收据 Receipt, please。',
     docIntro: '进店找东西、问贵不贵、决定买不买、现金还是刷卡——购物和付钱的主场在这里。点餐课只管「点什么 / 买单」，刷卡细节看本课。',
-    patterns: [
-      { pattern: 'Where is ___?', meaning: '……在哪里？', slots: '["the milk / the fitting room"]', example: 'Where is the milk?' },
-      { pattern: 'Do you have ___?', meaning: '你们有……吗？', slots: '["this in blue / a smaller size"]', example: 'Do you have this in medium?' },
-      { pattern: "I'll take it.", meaning: '我要这个', slots: '[]', example: "I'll take it." },
-    ],
+    patterns: [],
     vocabs: [
-      { word: 'price', meaning: '价格', pos: 'noun' },
-      { word: 'size', meaning: '尺码', pos: 'noun' },
-      { word: 'color', meaning: '颜色', pos: 'noun' },
-      { word: 'receipt', meaning: '收据', pos: 'noun' },
-      { word: 'bag', meaning: '袋子', pos: 'noun' },
-      { word: 'sale', meaning: '打折；促销', pos: 'noun' },
-      { word: 'expensive', meaning: '贵的', pos: 'adjective' },
-      { word: 'cheap', meaning: '便宜的', pos: 'adjective' },
+      'milk', 'blue', 'price', 'size', 'receipt', 'bag', 'sale', 'expensive',
+      'card', 'cash', 'stock', 'return', 'perfect', 'shirt',
     ],
     expressions: [
       {
-        text: 'Where is ___?',
-        meaning: '……在哪里？',
-        insight: '找货架、收银台、试衣间的最短问法。',
+        text: 'Where is the milk?',
+        meaning: '牛奶在哪里？',
+        insight: '找货完整句。试衣间可说 Where is the fitting room?',
         active: true,
         examples: [
-          { en: 'Where is the milk?', zh: '牛奶在哪里？' },
+          { en: 'Excuse me, where is the milk?', zh: '请问，牛奶在哪里？' },
           { en: 'Excuse me, where is the fitting room?', zh: '请问试衣间在哪里？' },
         ],
       },
       {
-        text: 'Do you have ___?',
-        meaning: '你们有……吗？',
-        insight: '确认有没有某商品、某颜色或某尺码。',
+        text: 'Do you have this in blue?',
+        meaning: '这件有蓝色的吗？',
+        insight: '确认颜色/款式是否有货的完整句。',
         active: true,
         examples: [
-          { en: 'Do you have this in blue?', zh: '这件有蓝色的吗？' },
+          { en: 'I like this shirt. Do you have this in blue?', zh: '我喜欢这件衬衫。有蓝色的吗？' },
           { en: 'Do you have batteries?', zh: '有电池吗？' },
         ],
       },
@@ -953,20 +913,10 @@ const topics = [
     goal: '学习者能用原版短句说明迷路/在路上/到了，并问票与下一班车。',
     tip: '原版几乎没有 Turn left / Go straight 这类课本句；本课改收路上、找位置、交通相关原句。',
     docIntro: '原版几乎不教「左转直行」课本指路。这一课换成原版里会说的：迷路了、在路上、到了、买票、下一班车、洗手间在这边、离城里不远。',
-    patterns: [
-      { pattern: 'Where can I ___?', meaning: '我在哪里能……？', slots: '["buy a ticket / find a map"]', example: 'Where can I buy a ticket?' },
-      { pattern: 'When is the next ___?', meaning: '下一班……什么时候？', slots: '["train / bus"]', example: 'When is the next train?' },
-      { pattern: 'Now I\'m ___.', meaning: '我现在……', slots: '["lost / home"]', example: "Now I'm lost." },
-    ],
+    patterns: [],
     vocabs: [
-      { word: 'lost', meaning: '迷路的', pos: 'adjective' },
-      { word: 'way', meaning: '路；路上', pos: 'noun' },
-      { word: 'ticket', meaning: '票', pos: 'noun' },
-      { word: 'train', meaning: '火车', pos: 'noun' },
-      { word: 'bathroom', meaning: '洗手间；浴室', pos: 'noun' },
-      { word: 'far', meaning: '远的', pos: 'adjective' },
-      { word: 'road', meaning: '路', pos: 'noun' },
-      { word: 'corner', meaning: '拐角', pos: 'noun' },
+      'lost', 'way', 'ticket', 'train', 'bathroom', 'far', 'road', 'corner',
+      'town', 'hotel', 'park', 'gate', 'trip', 'station',
     ],
     expressions: [
       {
@@ -1181,29 +1131,19 @@ const topics = [
     goal: '学习者能清楚说出 I want / I need / I like / I don\'t like，并对提议做出接受或婉拒。',
     tip: '需求用 I need；愿望用 I\'d like（更礼貌）或 I want。拒绝时 No, thanks 比直接 No 更柔和。',
     docIntro: '想要什么、需不需要、喜不喜欢、答应对方还是礼貌拒绝——把「我的想法」说清楚，看这里。点餐时的 I\'d like a coffee 在「点餐」课。',
-    patterns: [
-      { pattern: 'I want ___.', meaning: '我想要……', slots: '["water / to go home"]', example: 'I want some water.' },
-      { pattern: 'I need ___.', meaning: '我需要……', slots: '["help / a break"]', example: 'I need help.' },
-      { pattern: 'I like ___.', meaning: '我喜欢……', slots: '["tea / this song"]', example: 'I like this.' },
-    ],
+    patterns: [],
     vocabs: [
-      { word: 'want', meaning: '想要', pos: 'verb' },
-      { word: 'need', meaning: '需要', pos: 'verb' },
-      { word: 'like', meaning: '喜欢', pos: 'verb' },
-      { word: 'love', meaning: '很喜欢；爱', pos: 'verb' },
-      { word: 'prefer', meaning: '更喜欢', pos: 'verb' },
-      { word: 'hungry', meaning: '饿的', pos: 'adjective' },
-      { word: 'thirsty', meaning: '渴的', pos: 'adjective' },
-      { word: 'tired', meaning: '累的', pos: 'adjective' },
+      'want', 'need', 'like', 'hungry', 'thirsty', 'tired', 'water', 'hope',
+      'absolutely', 'dessert', 'tea', 'song', 'party', 'break',
     ],
     expressions: [
       {
-        text: 'I want ___.',
-        meaning: '我想要……',
-        insight: '直接表达愿望；对店员或正式场合，优先改用 I\'d like。',
+        text: 'I want some water.',
+        meaning: '我想要点水',
+        insight: '直接表达愿望的完整句；对店员或正式场合，优先改用 I\'d like...。',
         active: true,
         examples: [
-          { en: 'I want some water.', zh: '我想要点水。' },
+          { en: "I'm thirsty. I want some water.", zh: '我渴了。我想要点水。' },
           { en: 'I want to go home now.', zh: '我现在想回家。' },
         ],
       },
@@ -1218,19 +1158,19 @@ const topics = [
         ],
       },
       {
-        text: 'I need ___.',
-        meaning: '我需要……',
-        insight: '强调必要性，不只是想要；常用于求助或说明困难。',
+        text: 'It is just what I need.',
+        meaning: '这正是我所需要的',
+        insight: '原版短句。看到合适的东西或方案时表示「正合我意」；比单纯说 I need... 更完整。',
         active: true,
         examples: [
-          { en: 'I need help with this form.', zh: '我需要有人帮我填这张表。' },
-          { en: 'I need a minute.', zh: '我需要一分钟。' },
+          { en: 'This size? It is just what I need.', zh: '这个尺码？正是我需要的。' },
+          { en: 'A quiet room—it is just what I need.', zh: '安静的房间——正是我需要的。' },
         ],
       },
       {
-        text: 'I like ___.',
-        meaning: '我喜欢……',
-        insight: '表达喜好；否定用 I don\'t like。',
+        text: 'I like this.',
+        meaning: '我喜欢这个',
+        insight: '表达喜好的完整短句；否定用 I don\'t like this.',
         active: true,
         examples: [
           { en: 'I like this song.', zh: '我喜欢这首歌。' },
@@ -1238,9 +1178,9 @@ const topics = [
         ],
       },
       {
-        text: "I don't like ___.",
-        meaning: '我不喜欢……',
-        insight: '直接但不攻击；可补 very much / that much 来减弱语气。',
+        text: "I don't like this.",
+        meaning: '我不喜欢这个',
+        insight: '直接但不攻击；可加 very much 减弱语气。',
         active: true,
         examples: [
           { en: "I don't like spicy food.", zh: '我不喜欢辣的。' },
@@ -1258,9 +1198,9 @@ const topics = [
         ],
       },
       {
-        text: 'Do you like ___?',
-        meaning: '你喜欢……吗？',
-        insight: '开启偏好话题；回答可用 Yes / Not really / It\'s okay。',
+        text: 'Do you like this?',
+        meaning: '你喜欢这个吗？',
+        insight: '开启偏好话题的完整句；回答可用 Yes / Not really / It\'s okay。',
         active: false,
         examples: [
           { en: 'Do you like coffee?', zh: '你喜欢咖啡吗？' },
@@ -1409,20 +1349,10 @@ const topics = [
     goal: '学习者在没听懂时，能在 8 秒内用短句请求重复或确认意思。',
     tip: '没听清先说 Sorry? / Pardon?；需要完整重复用 Can you say that again?；确认理解用 Got it / I see / Do you mean...?',
     docIntro: '没听清、跟不上语速、不确定对方什么意思时，别硬撑。这份文档就是教你怎么自然地请对方再说一遍、说慢一点，并确认自己听懂了。',
-    patterns: [
-      { pattern: 'Can you ___?', meaning: '你能……吗？', slots: '["repeat that / say that again / speak slowly"]', example: 'Can you repeat that?' },
-      { pattern: 'What does ___ mean?', meaning: '……是什么意思？', slots: '["this word / that"]', example: 'What does this mean?' },
-      { pattern: 'Do you mean ___?', meaning: '你是说……吗？', slots: '["tomorrow / this one"]', example: 'Do you mean tomorrow?' },
-    ],
+    patterns: [],
     vocabs: [
-      { word: 'repeat', meaning: '重复', pos: 'verb' },
-      { word: 'slowly', meaning: '慢慢地', pos: 'adverb' },
-      { word: 'understand', meaning: '理解', pos: 'verb' },
-      { word: 'mean', meaning: '意思是', pos: 'verb' },
-      { word: 'again', meaning: '再一次', pos: 'adverb' },
-      { word: 'check', meaning: '核对；检查', pos: 'verb' },
-      { word: 'right', meaning: '对的', pos: 'adjective' },
-      { word: 'write', meaning: '写', pos: 'verb' },
+      'repeat', 'slowly', 'understand', 'mean', 'again', 'check', 'right', 'write',
+      'clear', 'English', 'explain', 'tomorrow', 'basic', 'address',
     ],
     expressions: [
       {
@@ -1506,9 +1436,9 @@ const topics = [
         ],
       },
       {
-        text: 'Do you mean ___?',
-        meaning: '你是说……吗？',
-        insight: '用猜测确认，比反复让对方重说更高效。',
+        text: 'Do you mean tomorrow?',
+        meaning: '你是说明天吗？',
+        insight: '用完整猜测句确认；比反复让对方重说更高效。',
         active: true,
         examples: [
           { en: 'Do you mean tomorrow morning?', zh: '你是说明天早上吗？' },
@@ -1566,9 +1496,9 @@ const topics = [
         ],
       },
       {
-        text: 'How do you say ___ in English?',
-        meaning: '……用英语怎么说？',
-        insight: '主动索取表达，学习场景和生活场景都适用。',
+        text: 'How do you say this in English?',
+        meaning: '这个用英语怎么说？',
+        insight: '主动索取表达的完整句；学习与生活场景都适用。',
         active: false,
         examples: [
           { en: 'How do you say “收据” in English?', zh: '“收据”用英语怎么说？' },
@@ -1637,20 +1567,10 @@ const topics = [
     goal: '学习者能在迷路、不适、物品丢失等情况下，用短句成功求助。',
     tip: '先引起注意 Excuse me，再说 Can you help me? 然后补一句具体问题。语言不够时可以说 I don\'t speak English well。',
     docIntro: '东西找不到、身体不舒服、机器坏了、英语一时卡住——需要开口求助时先看这里。洗手间位置见「询问地点」课的 Over here is the bathroom.；Excuse me 开场见「感谢」课。',
-    patterns: [
-      { pattern: 'Can you help me?', meaning: '你能帮我吗？', slots: '[]', example: 'Can you help me?' },
-      { pattern: "I can't find ___.", meaning: '我找不到……', slots: '["my phone / the gate"]', example: "I can't find my bag." },
-      { pattern: 'I have a problem.', meaning: '我有个问题 / 麻烦', slots: '[]', example: 'I have a problem.' },
-    ],
+    patterns: [],
     vocabs: [
-      { word: 'help', meaning: '帮助', pos: 'noun' },
-      { word: 'problem', meaning: '问题', pos: 'noun' },
-      { word: 'lost', meaning: '丢失的；迷路的', pos: 'adjective' },
-      { word: 'find', meaning: '找到', pos: 'verb' },
-      { word: 'sick', meaning: '不舒服的', pos: 'adjective' },
-      { word: 'urgent', meaning: '紧急的', pos: 'adjective' },
-      { word: 'phone', meaning: '手机', pos: 'noun' },
-      { word: 'wait', meaning: '等待', pos: 'verb' },
+      'help', 'problem', 'find', 'sick', 'urgent', 'phone', 'wallet', 'book',
+      'doctor', 'careful', 'wrong', 'wifi', 'charger', 'machine',
     ],
     expressions: [
       {
@@ -1704,22 +1624,22 @@ const topics = [
         ],
       },
       {
-        text: "I can't find ___.",
-        meaning: '我找不到……',
-        insight: '说明丢失或找不到的对象：phone / bag / gate / room。',
+        text: "I can't find my book.",
+        meaning: '我找不到我的书',
+        insight: '原版短句。说明找不到某物；手机可说 I can\'t find my phone.',
         active: true,
         examples: [
-          { en: "I can't find my phone.", zh: '我找不到手机。' },
+          { en: "Excuse me, I can't find my book.", zh: '请问，我找不到我的书。' },
           { en: "I can't find my hotel on the map.", zh: '我在地图上找不到酒店。' },
         ],
       },
       {
-        text: 'I lost my ___.',
-        meaning: '我丢了……',
-        insight: '明确“丢失”；比 can\'t find 更肯定已经不在身边。',
+        text: 'I lost my wallet.',
+        meaning: '我钱包丢了',
+        insight: '明确“丢失”的完整句；比 can\'t find 更肯定东西已不在身边。',
         active: true,
         examples: [
-          { en: 'I lost my wallet.', zh: '我钱包丢了。' },
+          { en: 'Can you help me? I lost my wallet.', zh: '你能帮我吗？我钱包丢了。' },
           { en: 'I lost my ticket. What should I do?', zh: '我票丢了。我该怎么办？' },
         ],
       },
@@ -1759,7 +1679,7 @@ const topics = [
         insight: '原版短句。突发危险时的提醒，比 Be careful 更急。',
         active: false,
         examples: [
-          { en: 'Watch out!', zh: '当心！' },
+          { en: 'Watch out! That car is coming.', zh: '当心！那辆车过来了。' },
           { en: 'Watch out for the step.', zh: '当心台阶。' },
         ],
       },
@@ -1857,6 +1777,35 @@ const topics = [
   },
 ]
 
+function normalizeExpr(s) {
+  return String(s || '')
+    .replace(/[.?!…]+$/u, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+}
+
+/** 速查表优先用不等于核心句、带场景的例句 */
+function pickNaturalExample(expr) {
+  const examples = expr.examples || []
+  if (!examples.length) return { en: '', zh: '' }
+  const core = normalizeExpr(expr.text)
+  const scored = examples.map((ex) => {
+    const en = ex.en || ''
+    const same = normalizeExpr(en) === core
+    const hasContext = /[—–?]/.test(en) || /,|;|:/.test(en) || en.length > expr.text.length + 8
+    const hasDialogue = /—|–/.test(en)
+    let score = 0
+    if (!same) score += 5
+    if (hasContext) score += 2
+    if (hasDialogue) score += 2
+    if (en.length > expr.text.length) score += 1
+    return { ex, score, same }
+  })
+  scored.sort((a, b) => b.score - a.score)
+  return scored[0].ex
+}
+
 function buildTeachingMd(topic) {
   const lines = []
   lines.push(`# ${topic.title}`)
@@ -1899,7 +1848,7 @@ function buildTeachingMd(topic) {
   lines.push('| # | 表达 | 中文意思 | 自然例句 |')
   lines.push('|---:|---|---|---|')
   topic.expressions.forEach((expr, index) => {
-    const sample = expr.examples[0]?.en?.replace(/\|/g, '\\|') || ''
+    const sample = pickNaturalExample(expr).en?.replace(/\|/g, '\\|') || ''
     lines.push(`| ${index + 1} | ${expr.text.replace(/\|/g, '\\|')} | ${expr.meaning.replace(/\|/g, '\\|')} | ${sample} |`)
   })
   lines.push('')
@@ -2067,13 +2016,13 @@ const topicRows = [
   'scene_title,title,prompt_en,prompt_zh,duration_sec,difficulty,description,knowledge_points,teaching_markdown_file,ink_script_key',
 ]
 const chunkRows = [
-  'scene_title,topic_title,category,text,meaning,difficulty,description,examples_json',
+  'scene_title,topic_title,text,sort_order',
 ]
 const vocabRows = [
-  'scene_title,topic_title,word,meaning,part_of_speech,phonetic_us,phonetic_uk,difficulty,description,examples_json,sort_order',
+  'scene_title,topic_title,word,sort_order',
 ]
 const patternRows = [
-  'scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order',
+  'scene_title,topic_title,pattern,sort_order',
 ]
 const warmup = {}
 
@@ -2097,33 +2046,22 @@ topics.forEach((topic, ti) => {
     '',
   ]))
 
-  topic.expressions.forEach((expr) => {
+  topic.expressions.forEach((expr, ei) => {
     totalChunks += 1
     if (expr.active) totalActive += 1
     chunkRows.push(csvLine([
       SCENE,
       topic.title,
-      '核心句块',
       expr.text,
-      expr.meaning,
-      'L1',
-      expr.active ? '优先开口' : '听辨复习',
-      examplesJson(expr.examples),
+      String(ei + 1),
     ]))
   })
 
-  topic.vocabs.forEach((v, vi) => {
+  topic.vocabs.forEach((word, vi) => {
     vocabRows.push(csvLine([
       SCENE,
       topic.title,
-      v.word,
-      v.meaning,
-      v.pos,
-      '',
-      '',
-      'L1',
-      '',
-      '[]',
+      word,
       String(vi + 1),
     ]))
   })
@@ -2133,10 +2071,6 @@ topics.forEach((topic, ti) => {
       SCENE,
       topic.title,
       p.pattern,
-      p.meaning,
-      p.slots,
-      p.example,
-      'L1',
       String(pi + 1),
     ]))
   })
@@ -2204,8 +2138,8 @@ const design = `# 常用英语500句 · 入门篇
 
 ## 文件清单
 
-- \`scenes.csv\` / \`training_topics.csv\` / \`chunks.csv\`
-- \`scene_vocabulary.csv\` / \`sentence_patterns.csv\`
+- \`scenes.csv\` / \`training_topics.csv\` / \`chunks.csv\`（仅 scene_title,topic_title,text,sort_order；释义/例句走语料库富化）
+- \`scene_vocabulary.csv\`（仅 scene_title,topic_title,word,sort_order；释义/发音走语料库） / \`sentence_patterns.csv\`（仅 scene_title,topic_title,pattern,sort_order）
 - \`warmup_pipeline.json\`（每话题含中译英、英译中、句型操练与句子拆解）
 - \`teaching-docs/*.md\`（用户可见教学文档：意思、见解、例句、速查表）
 

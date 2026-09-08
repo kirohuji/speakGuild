@@ -1051,6 +1051,7 @@ model Vocabulary {
   examples                 Json? // 例句 [{ en, zh, note? }]
   description              String?                  @db.Text // 用法讲解/搭配说明
   difficulty               String                   @default("L1") // L1~L5
+  difficultyReviewedAt     DateTime?                @map("difficulty_reviewed_at")
   sortOrder                Int                      @default(0)
   outputPriority           String                   @default("low") @map("output_priority") // low | medium | high
   collocations             Json?                    @map("collocations")
@@ -1061,6 +1062,7 @@ model Vocabulary {
   sceneVocabularies        SceneVocabulary[]
 
   @@unique([word])
+  @@index([difficulty, difficultyReviewedAt])
   @@index([updatedAt])
   @@map("vocabulary")
 }

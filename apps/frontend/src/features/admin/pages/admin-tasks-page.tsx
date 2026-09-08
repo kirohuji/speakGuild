@@ -37,7 +37,7 @@ const TYPE_LABELS: Record<string, string> = {
   'vocabulary-polish': '词汇例句翻译补全与释义精简',
   'vocabulary-meaning-other-rewrite': '重写含 other 的中文释义',
   'vocabulary-bilingual-definition-enrich': '词典+AI 富化未双语英文释义',
-  'vocabulary-difficulty-reclassify': '词典+AI 全量复核词汇难度',
+  'vocabulary-difficulty-reclassify': '词典+AI 检查未复核 L1 难度',
   'chunk-missing-meaning-enrich': '句块字段检查与 AI 补全',
   'pattern-missing-meaning-enrich': '句型字段检查与 AI 补全',
   'script-video-render': '剧本演出视频',
@@ -72,6 +72,8 @@ const STEP_LABELS: Record<string, string> = {
   refresh: '更新音标',
   'generate-audio': '生成词典发音',
   throttled: '等待限流解除',
+  resume: '恢复任务',
+  resumed: '恢复任务',
 };
 
 const ERROR_TYPE_LABELS: Record<string, string> = {
@@ -370,12 +372,12 @@ function SummaryPanel({ task }: { task: AdminTask }) {
     return (
       <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
         <div className="grid grid-cols-3 gap-2">
-          <Metric label="难度已变更" value={summary.updated ?? 0} tone="good" />
-          <Metric label="难度未变化" value={summary.unchanged ?? 0} tone="muted" />
+          <Metric label="已调整等级" value={summary.updated ?? 0} tone="good" />
+          <Metric label="复核后仍为 L1" value={summary.unchanged ?? 0} tone="muted" />
           <Metric label="失败" value={errors} tone={errors ? 'bad' : 'muted'} />
         </div>
         <p className="text-xs text-muted-foreground">
-          只更新难度字段；新分布：L1 {distribution.L1 ?? 0} / L2 {distribution.L2 ?? 0} / L3 {distribution.L3 ?? 0} / L4 {distribution.L4 ?? 0} / L5 {distribution.L5 ?? 0}。
+          成功复核 {summary.reviewed ?? 0} 个并已标记；剩余未复核 L1：{summary.remaining ?? 0}。当前分布：L1 {distribution.L1 ?? 0} / L2 {distribution.L2 ?? 0} / L3 {distribution.L3 ?? 0} / L4 {distribution.L4 ?? 0} / L5 {distribution.L5 ?? 0}。
         </p>
       </div>
     );
@@ -625,7 +627,7 @@ export function AdminTasksPage() {
             <option value="vocabulary-polish">词汇例句翻译补全与释义精简</option>
             <option value="vocabulary-meaning-other-rewrite">重写含 other 的中文释义</option>
             <option value="vocabulary-bilingual-definition-enrich">词典+AI 富化未双语英文释义</option>
-            <option value="vocabulary-difficulty-reclassify">词典+AI 全量复核词汇难度</option>
+            <option value="vocabulary-difficulty-reclassify">词典+AI 检查未复核 L1 难度</option>
             <option value="vocabulary-missing-meaning-enrich">词汇字段检查与 AI 补全（词典+AI）</option>
             <option value="chunk-missing-meaning-enrich">句块字段检查与 AI 补全</option>
             <option value="pattern-missing-meaning-enrich">句型字段检查与 AI 补全</option>

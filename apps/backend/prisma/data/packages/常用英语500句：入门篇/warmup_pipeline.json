@@ -95,26 +95,6 @@
         },
         {
           "id": "l1-t1-5",
-          "type": "pattern_drill",
-          "title": "How's it going? 句型操练",
-          "pattern": "How's it going?",
-          "patternMeaning": "最近怎么样？",
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": "嗨，Emma。最近怎么样？",
-              "answer": "Hi, Emma. How's it going?",
-              "hint": "套用句型：How's it going?"
-            },
-            {
-              "zh": "嗨，Emma。最近怎么样？",
-              "answer": "Hi, Emma. How's it going?",
-              "hint": "套用句型：How's it going?"
-            }
-          ]
-        },
-        {
-          "id": "l1-t1-6",
           "type": "sentence_decomposition",
           "title": "What's up? 句子拆解",
           "sourceText": "What's up?",
@@ -252,31 +232,6 @@
         },
         {
           "id": "l1-t2-5",
-          "type": "pattern_drill",
-          "title": "Thank you for ___. 句型操练",
-          "pattern": "Thank you for ___.",
-          "patternMeaning": "谢谢你……",
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": "谢谢你。这帮大忙了。",
-              "answer": "Thank you. That helps a lot.",
-              "hint": "套用句型：Thank you for ___."
-            },
-            {
-              "zh": "我给你拿了点水。——谢谢！",
-              "answer": "I got you some water. — Thanks!",
-              "hint": "套用句型：Thank you for ___."
-            },
-            {
-              "zh": "太谢谢你来接我了。",
-              "answer": "Thank you so much for picking me up.",
-              "hint": "套用句型：Thank you for ___."
-            }
-          ]
-        },
-        {
-          "id": "l1-t2-6",
           "type": "sentence_decomposition",
           "title": "Thank you. 句子拆解",
           "sourceText": "Thank you.",
@@ -326,42 +281,42 @@
         {
           "id": "l1-t3-1",
           "type": "chunk_substitution",
-          "title": "I'd like ___. 句块替换",
-          "chunk": "I'd like ___.",
-          "chunkMeaning": "我想要……",
+          "title": "I'd like a coffee, please. 句块替换",
+          "chunk": "I'd like a coffee, please.",
+          "chunkMeaning": "我想要一杯咖啡",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "我想要一杯咖啡。",
-              "answer": "I'd like a coffee, please.",
-              "hint": "用「I'd like ___.」来表达"
+              "zh": "早上好。我想要一杯咖啡。",
+              "answer": "Good morning. I'd like a coffee, please.",
+              "hint": "用「I'd like a coffee, please.」来表达"
             },
             {
               "zh": "我想要鸡肉三明治。",
               "answer": "I'd like the chicken sandwich.",
-              "hint": "用「I'd like ___.」来表达"
+              "hint": "用「I'd like a coffee, please.」来表达"
             }
           ]
         },
         {
           "id": "l1-t3-2",
           "type": "chunk_substitution",
-          "title": "Can I have ___? 句块替换",
-          "chunk": "Can I have ___?",
-          "chunkMeaning": "可以给我……吗？",
+          "title": "Can I have a glass of water? 句块替换",
+          "chunk": "Can I have a glass of water?",
+          "chunkMeaning": "可以给我一杯水吗？",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "可以给我一杯水吗？",
-              "answer": "Can I have a glass of water?",
-              "hint": "用「Can I have ___?」来表达"
+              "zh": "今天好热。可以给我一杯水吗？",
+              "answer": "It's hot today. Can I have a glass of water?",
+              "hint": "用「Can I have a glass of water?」来表达"
             },
             {
               "zh": "可以给我菜单吗？",
               "answer": "Can I have the menu, please?",
-              "hint": "用「Can I have ___?」来表达"
+              "hint": "用「Can I have a glass of water?」来表达"
             }
           ]
         },
@@ -375,8 +330,8 @@
           "kind": "chunk",
           "items": [
             {
-              "zh": "请来杯咖啡。",
-              "answer": "A coffee, please.",
+              "zh": "您要点什么？——请来杯咖啡。",
+              "answer": "What can I get you? — A coffee, please.",
               "hint": "用「A coffee, please.」来表达"
             },
             {
@@ -390,76 +345,51 @@
           "id": "l1-t3-4",
           "type": "chunk_substitution",
           "title": "点餐、数量与付款 听辨理解",
-          "chunk": "I'd like ___.",
-          "chunkMeaning": "我想要……",
+          "chunk": "I'd like a coffee, please.",
+          "chunkMeaning": "我想要一杯咖啡",
           "direction": "en_to_zh",
           "kind": "chunk",
           "items": [
             {
-              "en": "I'd like a coffee, please.",
-              "answer": "我想要一杯咖啡。",
+              "en": "Good morning. I'd like a coffee, please.",
+              "answer": "早上好。我想要一杯咖啡。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Can I have a glass of water?",
-              "answer": "可以给我一杯水吗？",
+              "en": "It's hot today. Can I have a glass of water?",
+              "answer": "今天好热。可以给我一杯水吗？",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "A coffee, please.",
-              "answer": "请来杯咖啡。",
+              "en": "What can I get you? — A coffee, please.",
+              "answer": "您要点什么？——请来杯咖啡。",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
         },
         {
           "id": "l1-t3-5",
-          "type": "pattern_drill",
-          "title": "I'd like ___. 句型操练",
-          "pattern": "I'd like ___.",
-          "patternMeaning": "我想要……",
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": "我想要一杯咖啡。",
-              "answer": "I'd like a coffee, please.",
-              "hint": "套用句型：I'd like ___."
-            },
-            {
-              "zh": "可以给我一杯水吗？",
-              "answer": "Can I have a glass of water?",
-              "hint": "套用句型：I'd like ___."
-            },
-            {
-              "zh": "请来杯不加糖的咖啡。",
-              "answer": "Coffee without sugar, please.",
-              "hint": "套用句型：I'd like ___."
-            }
-          ]
-        },
-        {
-          "id": "l1-t3-6",
           "type": "sentence_decomposition",
-          "title": "I'd like ___. 句子拆解",
-          "sourceText": "I'd like ___.",
+          "title": "I'd like a coffee, please. 句子拆解",
+          "sourceText": "I'd like a coffee, please.",
           "sourceKind": "chunk",
-          "fullSentence": "I'd like a coffee, please.",
-          "fullSentenceZh": "我想要一杯咖啡。",
+          "fullSentence": "Good morning. I'd like a coffee, please.",
+          "fullSentenceZh": "早上好。我想要一杯咖啡。",
           "levels": [
             {
               "level": 1,
               "label": "核心句",
-              "en": "I'd like it.",
-              "zh": "我想要……",
+              "en": "I'd like a coffee, please.",
+              "zh": "我想要一杯咖啡",
               "highlight": "",
               "hint": "先说出本课核心表达"
             },
             {
               "level": 2,
               "label": "完整句",
-              "en": "I'd like a coffee, please.",
-              "zh": "我想要一杯咖啡。",
-              "highlight": "I'd like a coffee, please.",
+              "en": "Good morning. I'd like a coffee, please.",
+              "zh": "早上好。我想要一杯咖啡。",
+              "highlight": "Good morning. .",
               "hint": "补上场景信息，说成一句完整话"
             }
           ]
@@ -488,42 +418,42 @@
         {
           "id": "l1-t4-1",
           "type": "chunk_substitution",
-          "title": "Where is ___? 句块替换",
-          "chunk": "Where is ___?",
-          "chunkMeaning": "……在哪里？",
+          "title": "Where is the milk? 句块替换",
+          "chunk": "Where is the milk?",
+          "chunkMeaning": "牛奶在哪里？",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "牛奶在哪里？",
-              "answer": "Where is the milk?",
-              "hint": "用「Where is ___?」来表达"
+              "zh": "请问，牛奶在哪里？",
+              "answer": "Excuse me, where is the milk?",
+              "hint": "用「Where is the milk?」来表达"
             },
             {
               "zh": "请问试衣间在哪里？",
               "answer": "Excuse me, where is the fitting room?",
-              "hint": "用「Where is ___?」来表达"
+              "hint": "用「Where is the milk?」来表达"
             }
           ]
         },
         {
           "id": "l1-t4-2",
           "type": "chunk_substitution",
-          "title": "Do you have ___? 句块替换",
-          "chunk": "Do you have ___?",
-          "chunkMeaning": "你们有……吗？",
+          "title": "Do you have this in blue? 句块替换",
+          "chunk": "Do you have this in blue?",
+          "chunkMeaning": "这件有蓝色的吗？",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "这件有蓝色的吗？",
-              "answer": "Do you have this in blue?",
-              "hint": "用「Do you have ___?」来表达"
+              "zh": "我喜欢这件衬衫。有蓝色的吗？",
+              "answer": "I like this shirt. Do you have this in blue?",
+              "hint": "用「Do you have this in blue?」来表达"
             },
             {
               "zh": "有电池吗？",
               "answer": "Do you have batteries?",
-              "hint": "用「Do you have ___?」来表达"
+              "hint": "用「Do you have this in blue?」来表达"
             }
           ]
         },
@@ -552,19 +482,19 @@
           "id": "l1-t4-4",
           "type": "chunk_substitution",
           "title": "找商品、问价格与结账 听辨理解",
-          "chunk": "Where is ___?",
-          "chunkMeaning": "……在哪里？",
+          "chunk": "Where is the milk?",
+          "chunkMeaning": "牛奶在哪里？",
           "direction": "en_to_zh",
           "kind": "chunk",
           "items": [
             {
-              "en": "Where is the milk?",
-              "answer": "牛奶在哪里？",
+              "en": "Excuse me, where is the milk?",
+              "answer": "请问，牛奶在哪里？",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Do you have this in blue?",
-              "answer": "这件有蓝色的吗？",
+              "en": "I like this shirt. Do you have this in blue?",
+              "answer": "我喜欢这件衬衫。有蓝色的吗？",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
@@ -576,47 +506,27 @@
         },
         {
           "id": "l1-t4-5",
-          "type": "pattern_drill",
-          "title": "Where is ___? 句型操练",
-          "pattern": "Where is ___?",
-          "patternMeaning": "……在哪里？",
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": "牛奶在哪里？",
-              "answer": "Where is the milk?",
-              "hint": "套用句型：Where is ___?"
-            },
-            {
-              "zh": "这件有蓝色的吗？",
-              "answer": "Do you have this in blue?",
-              "hint": "套用句型：Where is ___?"
-            }
-          ]
-        },
-        {
-          "id": "l1-t4-6",
           "type": "sentence_decomposition",
-          "title": "Where is ___? 句子拆解",
-          "sourceText": "Where is ___?",
+          "title": "Where is the milk? 句子拆解",
+          "sourceText": "Where is the milk?",
           "sourceKind": "chunk",
-          "fullSentence": "Where is the milk?",
-          "fullSentenceZh": "牛奶在哪里？",
+          "fullSentence": "Excuse me, where is the milk?",
+          "fullSentenceZh": "请问，牛奶在哪里？",
           "levels": [
             {
               "level": 1,
               "label": "核心句",
-              "en": "Where is it?",
-              "zh": "……在哪里？",
+              "en": "Where is the milk?",
+              "zh": "牛奶在哪里？",
               "highlight": "",
               "hint": "先说出本课核心表达"
             },
             {
               "level": 2,
               "label": "完整句",
-              "en": "Where is the milk?",
-              "zh": "牛奶在哪里？",
-              "highlight": "Where is the milk?",
+              "en": "Excuse me, where is the milk?",
+              "zh": "请问，牛奶在哪里？",
+              "highlight": "Excuse me, where is the milk?",
               "hint": "补上场景信息，说成一句完整话"
             }
           ]
@@ -733,26 +643,6 @@
         },
         {
           "id": "l1-t5-5",
-          "type": "pattern_drill",
-          "title": "Where can I ___? 句型操练",
-          "pattern": "Where can I ___?",
-          "patternMeaning": "我在哪里能……？",
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": "请问，在哪里能买到票？",
-              "answer": "Excuse me, where can I buy a ticket?",
-              "hint": "套用句型：Where can I ___?"
-            },
-            {
-              "zh": "你在哪？——在路上了。",
-              "answer": "Where are you? — On my way.",
-              "hint": "套用句型：Where can I ___?"
-            }
-          ]
-        },
-        {
-          "id": "l1-t5-6",
           "type": "sentence_decomposition",
           "title": "Now I'm lost. 句子拆解",
           "sourceText": "Now I'm lost.",
@@ -802,21 +692,21 @@
         {
           "id": "l1-t6-1",
           "type": "chunk_substitution",
-          "title": "I want ___. 句块替换",
-          "chunk": "I want ___.",
-          "chunkMeaning": "我想要……",
+          "title": "I want some water. 句块替换",
+          "chunk": "I want some water.",
+          "chunkMeaning": "我想要点水",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "我想要点水。",
-              "answer": "I want some water.",
-              "hint": "用「I want ___.」来表达"
+              "zh": "我渴了。我想要点水。",
+              "answer": "I'm thirsty. I want some water.",
+              "hint": "用「I want some water.」来表达"
             },
             {
               "zh": "我现在想回家。",
               "answer": "I want to go home now.",
-              "hint": "用「I want ___.」来表达"
+              "hint": "用「I want some water.」来表达"
             }
           ]
         },
@@ -844,21 +734,21 @@
         {
           "id": "l1-t6-3",
           "type": "chunk_substitution",
-          "title": "I need ___. 句块替换",
-          "chunk": "I need ___.",
-          "chunkMeaning": "我需要……",
+          "title": "It is just what I need. 句块替换",
+          "chunk": "It is just what I need.",
+          "chunkMeaning": "这正是我所需要的",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "我需要有人帮我填这张表。",
-              "answer": "I need help with this form.",
-              "hint": "用「I need ___.」来表达"
+              "zh": "这个尺码？正是我需要的。",
+              "answer": "This size? It is just what I need.",
+              "hint": "用「It is just what I need.」来表达"
             },
             {
-              "zh": "我需要一分钟。",
-              "answer": "I need a minute.",
-              "hint": "用「I need ___.」来表达"
+              "zh": "安静的房间——正是我需要的。",
+              "answer": "A quiet room—it is just what I need.",
+              "hint": "用「It is just what I need.」来表达"
             }
           ]
         },
@@ -866,14 +756,14 @@
           "id": "l1-t6-4",
           "type": "chunk_substitution",
           "title": "表达想要、需要和基本喜恶 听辨理解",
-          "chunk": "I want ___.",
-          "chunkMeaning": "我想要……",
+          "chunk": "I want some water.",
+          "chunkMeaning": "我想要点水",
           "direction": "en_to_zh",
           "kind": "chunk",
           "items": [
             {
-              "en": "I want some water.",
-              "answer": "我想要点水。",
+              "en": "I'm thirsty. I want some water.",
+              "answer": "我渴了。我想要点水。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
@@ -882,60 +772,35 @@
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "I need help with this form.",
-              "answer": "我需要有人帮我填这张表。",
+              "en": "This size? It is just what I need.",
+              "answer": "这个尺码？正是我需要的。",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
         },
         {
           "id": "l1-t6-5",
-          "type": "pattern_drill",
-          "title": "I want ___. 句型操练",
-          "pattern": "I want ___.",
-          "patternMeaning": "我想要……",
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": "我想要点水。",
-              "answer": "I want some water.",
-              "hint": "套用句型：I want ___."
-            },
-            {
-              "zh": "要不要一起？——好，我想去。",
-              "answer": "Want to come with us? — Yes, I'd like to.",
-              "hint": "套用句型：I want ___."
-            },
-            {
-              "zh": "我需要有人帮我填这张表。",
-              "answer": "I need help with this form.",
-              "hint": "套用句型：I want ___."
-            }
-          ]
-        },
-        {
-          "id": "l1-t6-6",
           "type": "sentence_decomposition",
-          "title": "I want ___. 句子拆解",
-          "sourceText": "I want ___.",
+          "title": "I want some water. 句子拆解",
+          "sourceText": "I want some water.",
           "sourceKind": "chunk",
-          "fullSentence": "I want some water.",
-          "fullSentenceZh": "我想要点水。",
+          "fullSentence": "I'm thirsty. I want some water.",
+          "fullSentenceZh": "我渴了。我想要点水。",
           "levels": [
             {
               "level": 1,
               "label": "核心句",
-              "en": "I want it.",
-              "zh": "我想要……",
+              "en": "I want some water.",
+              "zh": "我想要点水",
               "highlight": "",
               "hint": "先说出本课核心表达"
             },
             {
               "level": 2,
               "label": "完整句",
-              "en": "I want some water.",
-              "zh": "我想要点水。",
-              "highlight": "I want some water.",
+              "en": "I'm thirsty. I want some water.",
+              "zh": "我渴了。我想要点水。",
+              "highlight": "I'm thirsty. .",
               "hint": "补上场景信息，说成一句完整话"
             }
           ]
@@ -1052,31 +917,6 @@
         },
         {
           "id": "l1-t7-5",
-          "type": "pattern_drill",
-          "title": "Can you ___? 句型操练",
-          "pattern": "Can you ___?",
-          "patternMeaning": "你能……吗？",
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": "请你重复一下好吗？",
-              "answer": "Can you repeat that, please?",
-              "hint": "套用句型：Can you ___?"
-            },
-            {
-              "zh": "能再说一遍吗？我没听到。",
-              "answer": "Can you say that again? I missed it.",
-              "hint": "套用句型：Can you ___?"
-            },
-            {
-              "zh": "你是说明天早上吗？",
-              "answer": "Do you mean tomorrow morning?",
-              "hint": "套用句型：Can you ___?"
-            }
-          ]
-        },
-        {
-          "id": "l1-t7-6",
           "type": "sentence_decomposition",
           "title": "Sorry? 句子拆解",
           "sourceText": "Sorry?",
@@ -1214,31 +1054,6 @@
         },
         {
           "id": "l1-t8-5",
-          "type": "pattern_drill",
-          "title": "Can you help me? 句型操练",
-          "pattern": "Can you help me?",
-          "patternMeaning": "你能帮我吗？",
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": "打扰一下，你能帮我吗？",
-              "answer": "Excuse me, can you help me?",
-              "hint": "套用句型：Can you help me?"
-            },
-            {
-              "zh": "我找不到手机。",
-              "answer": "I can't find my phone.",
-              "hint": "套用句型：Can you help me?"
-            },
-            {
-              "zh": "我钱包丢了。",
-              "answer": "I lost my wallet.",
-              "hint": "套用句型：Can you help me?"
-            }
-          ]
-        },
-        {
-          "id": "l1-t8-6",
           "type": "sentence_decomposition",
           "title": "Can you help me? 句子拆解",
           "sourceText": "Can you help me?",

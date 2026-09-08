@@ -324,19 +324,19 @@ function VocabularyTab() {
           <Button
             size="sm"
             variant="outline"
-            title="使用词典释义作为上下文，让 AI 重新判断数据库中全部词汇的 L1-L5 难度；只更新难度字段"
+            title="只检查尚未复核的 L1 词汇；成功后记录复核时间，之后不会重复执行，失败项下次重试"
             onClick={async () => {
               try {
                 const result = await api.reclassifyVocabularyDifficulties();
-                toast.success(result.reused ? '全量难度复核任务已在任务中心执行' : '已创建全量词汇难度复核任务，只更新难度字段', {
+                toast.success(result.reused ? 'L1 难度复核任务已在任务中心执行' : '已创建未复核 L1 词汇的难度检查任务', {
                   action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
                 });
               } catch (err: any) {
-                toast.error(err?.message || '创建全量难度复核任务失败');
+                toast.error(err?.message || '创建 L1 难度复核任务失败');
               }
             }}
           >
-            <RefreshCw data-icon="inline-start" />重检全部难度
+            <RefreshCw data-icon="inline-start" />检查未复核 L1
           </Button>
           <Button size="sm" variant="outline" onClick={async () => {
             try {
