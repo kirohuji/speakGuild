@@ -304,6 +304,40 @@ function VocabularyTab() {
           >
             <Globe data-icon="inline-start" />英文释义未双语
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            title="扫描英文释义未双语的词汇，按编辑弹窗的词典+AI流程生成双语释义并重新判断难度；只更新英文释义和难度"
+            onClick={async () => {
+              try {
+                const result = await api.enrichEnglishOnlyVocabularyDefinitions();
+                toast.success(result.reused ? '同类任务已在任务中心执行' : '已创建未双语英文释义的词典+AI富化任务，只更新英文释义与难度', {
+                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+                });
+              } catch (err: any) {
+                toast.error(err?.message || '创建双语释义富化任务失败');
+              }
+            }}
+          >
+            <Sparkles data-icon="inline-start" />富化未双语释义
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            title="使用词典释义作为上下文，让 AI 重新判断数据库中全部词汇的 L1-L5 难度；只更新难度字段"
+            onClick={async () => {
+              try {
+                const result = await api.reclassifyVocabularyDifficulties();
+                toast.success(result.reused ? '全量难度复核任务已在任务中心执行' : '已创建全量词汇难度复核任务，只更新难度字段', {
+                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+                });
+              } catch (err: any) {
+                toast.error(err?.message || '创建全量难度复核任务失败');
+              }
+            }}
+          >
+            <RefreshCw data-icon="inline-start" />重检全部难度
+          </Button>
           <Button size="sm" variant="outline" onClick={async () => {
             try {
               const result = await api.polishVocabularies();

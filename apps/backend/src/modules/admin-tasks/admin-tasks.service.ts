@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleIni
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, VOCABULARY_MEANING_OTHER_REWRITE_JOB, VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, VOCABULARY_MEANING_OTHER_REWRITE_JOB, VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB, VOCABULARY_DIFFICULTY_RECLASSIFY_JOB, VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB } from './admin-tasks.constants';
 import { DictionaryService } from '../dictionary/dictionary.service';
 import type { PronunciationAuditFilter } from '../dictionary/dto/pronunciation-audit.dto';
 
@@ -522,6 +522,56 @@ export class AdminTasksService implements OnModuleInit {
     return { ...task, bullJobId: job.id };
   }
 
+  async enqueueVocabularyBilingualDefinitionEnrich(createdById?: string) {
+    const existing = await this.prisma.adminTask.findFirst({
+      where: {
+        type: VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB,
+        status: { in: [AdminTaskStatus.queued, AdminTaskStatus.running] },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (existing) return { ...existing, reused: true };
+
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB,
+        title: '词典+AI 富化未双语英文释义',
+        targetType: 'vocabulary',
+        createdById,
+        payload: {} as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.vocabularyImportQueue.add(VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB, { taskId: task.id });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', '未双语英文释义的词典+AI 富化任务已加入 Redis 队列', { step: 'queued' });
+    return { ...task, bullJobId: job.id, reused: false };
+  }
+
+  async enqueueVocabularyDifficultyReclassify(createdById?: string) {
+    const existing = await this.prisma.adminTask.findFirst({
+      where: {
+        type: VOCABULARY_DIFFICULTY_RECLASSIFY_JOB,
+        status: { in: [AdminTaskStatus.queued, AdminTaskStatus.running] },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (existing) return { ...existing, reused: true };
+
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: VOCABULARY_DIFFICULTY_RECLASSIFY_JOB,
+        title: '词典+AI 全量复核词汇难度',
+        targetType: 'vocabulary',
+        createdById,
+        payload: {} as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.vocabularyImportQueue.add(VOCABULARY_DIFFICULTY_RECLASSIFY_JOB, { taskId: task.id });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', '全量词汇难度复核任务已加入 Redis 队列', { step: 'queued' });
+    return { ...task, bullJobId: job.id, reused: false };
+  }
+
   async enqueueVocabularyDictionaryPronunciationSync(createdById?: string) {
     const task = await this.prisma.adminTask.create({
       data: {
@@ -712,6 +762,12 @@ export class AdminTasksService implements OnModuleInit {
     }
     if (task.type === VOCABULARY_MEANING_OTHER_REWRITE_JOB) {
       return this.enqueueVocabularyMeaningOtherRewrite(createdById);
+    }
+    if (task.type === VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB) {
+      return this.enqueueVocabularyBilingualDefinitionEnrich(createdById);
+    }
+    if (task.type === VOCABULARY_DIFFICULTY_RECLASSIFY_JOB) {
+      return this.enqueueVocabularyDifficultyReclassify(createdById);
     }
     if (task.type === VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB) {
       return this.enqueueVocabularyDictionaryPronunciationSync(createdById);
@@ -1111,7 +1167,7 @@ export class AdminTasksService implements OnModuleInit {
     if (type === SCRIPT_VIDEO_RENDER_JOB || type === NARRATIVE_VIDEO_RENDER_JOB) {
       return this.videoQueue;
     }
-    if (type === VOCABULARY_CSV_IMPORT_JOB || type === VOCABULARY_MISSING_MEANING_ENRICH_JOB || type === VOCABULARY_POLISH_JOB || type === VOCABULARY_MEANING_OTHER_REWRITE_JOB || type === VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB || type === CHUNK_MISSING_MEANING_ENRICH_JOB || type === PATTERN_MISSING_MEANING_ENRICH_JOB) {
+    if (type === VOCABULARY_CSV_IMPORT_JOB || type === VOCABULARY_MISSING_MEANING_ENRICH_JOB || type === VOCABULARY_POLISH_JOB || type === VOCABULARY_MEANING_OTHER_REWRITE_JOB || type === VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB || type === VOCABULARY_DIFFICULTY_RECLASSIFY_JOB || type === VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB || type === CHUNK_MISSING_MEANING_ENRICH_JOB || type === PATTERN_MISSING_MEANING_ENRICH_JOB) {
       return this.vocabularyImportQueue;
     }
     return this.contentQueue;

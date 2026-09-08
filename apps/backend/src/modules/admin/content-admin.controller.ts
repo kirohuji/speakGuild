@@ -3482,6 +3482,24 @@ ${contextBlock}
     return { code: 200, message: 'success', data: { taskId: task.id } };
   }
 
+  /** 词典+AI 富化纯英文释义；只写回 definitionEn 与 difficulty。 */
+  @Post('library/vocabularies/enrich-english-only-definitions')
+  async enrichEnglishOnlyVocabularyDefinitions(@Req() req: Request) {
+    await this.requireAdmin(req);
+    const session = await requireAuthSession(req);
+    const task = await this.adminTasksService.enqueueVocabularyBilingualDefinitionEnrich((session.user as any)?.id);
+    return { code: 200, message: 'success', data: { taskId: task.id, reused: task.reused } };
+  }
+
+  /** 使用词典释义作为上下文，AI 全量重判难度；只写回 difficulty。 */
+  @Post('library/vocabularies/reclassify-difficulties')
+  async reclassifyVocabularyDifficulties(@Req() req: Request) {
+    await this.requireAdmin(req);
+    const session = await requireAuthSession(req);
+    const task = await this.adminTasksService.enqueueVocabularyDifficultyReclassify((session.user as any)?.id);
+    return { code: 200, message: 'success', data: { taskId: task.id, reused: task.reused } };
+  }
+
   /** 创建后台任务：将内容语料库的音标/发音同步为词典管理中的首选 UK/US 发音。 */
   @Post('library/vocabularies/sync-dictionary-pronunciations')
   async syncLibraryVocabularyDictionaryPronunciations(@Req() req: Request) {

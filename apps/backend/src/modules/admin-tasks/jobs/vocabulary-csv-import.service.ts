@@ -1072,4 +1072,227 @@ export class VocabularyCsvImportService {
     });
   }
 
+  async runBilingualDefinitionEnrich(taskId: string) {
+    if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
+
+    const candidates: Array<{ id: string; word: string; definitionEn: string; meaning: string }> = [];
+    let cursor: string | undefined;
+    let scanned = 0;
+    const totalToScan = await this.prisma.vocabulary.count();
+
+    do {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      const rows = await this.prisma.vocabulary.findMany({
+        select: { id: true, word: true, definitionEn: true, meaning: true },
+        orderBy: { id: 'asc' },
+        take: 500,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      });
+      if (!rows.length) break;
+      for (const vocabulary of rows) {
+        scanned++;
+        if (vocabulary.definitionEn?.trim() && !/[\u3400-\u9fff]/.test(vocabulary.definitionEn)) {
+          candidates.push({
+            id: vocabulary.id,
+            word: vocabulary.word,
+            definitionEn: vocabulary.definitionEn,
+            meaning: vocabulary.meaning ?? '',
+          });
+        }
+      }
+      cursor = rows.at(-1)?.id;
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: 'scan', totalItems: totalToScan, processedItems: scanned, successItems: scanned,
+      });
+    } while (cursor);
+
+    await this.adminTasksService.log(taskId, 'info', `扫描完成：共 ${scanned} 个词汇，发现 ${candidates.length} 个英文释义未双语`, {
+      step: 'scan', meta: { scanned, candidates: candidates.length },
+    });
+
+    let updated = 0;
+    let failed = 0;
+    let unchanged = 0;
+    const errors: Array<{ id: string; word: string; message: string }> = [];
+    const usageStats = createUsageStats();
+    let processed = 0;
+
+    await this.adminTasksService.setProgress(taskId, {
+      currentStep: 'definition-and-difficulty', totalItems: candidates.length, processedItems: 0,
+      successItems: 0, failedItems: 0,
+    });
+
+    await runConcurrent(candidates, AI_ENRICH_CONCURRENCY, async (candidate) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      try {
+        const dictionaryDefinitions = await this.contentPrepareService.getVocabularyDictionaryDefinitions(candidate.word, usageStats);
+        const definitions = dictionaryDefinitions.length
+          ? dictionaryDefinitions
+          : candidate.definitionEn.split('; ').map((definition) => definition.trim()).filter(Boolean);
+        if (!definitions.length) throw new Error('词典与现有记录均无可用英文释义');
+
+        const review = await this.adminContentAiService.reviewVocabularyDefinitionAndDifficulty({
+          word: candidate.word,
+          definitions,
+          meaning: candidate.meaning,
+          translateMissingDefinitions: true,
+        }, usageCallback(usageStats));
+        if (!review.difficulty) throw new Error('AI 未返回有效难度');
+
+        const bilingualDefinitions = definitions.map((definition, index) => {
+          if (/[\u3400-\u9fff]/.test(definition)) return definition;
+          const translation = review.definitionTranslations[index]?.replace(/^\[|\]$/g, '').trim();
+          return translation ? `${definition}  [${translation}]` : definition;
+        }).join('; ');
+        if (!/[\u3400-\u9fff]/.test(bilingualDefinitions)) throw new Error('AI 未返回有效中文释义翻译');
+
+        await this.prisma.vocabulary.update({
+          where: { id: candidate.id },
+          data: { definitionEn: bilingualDefinitions, difficulty: review.difficulty },
+        });
+        updated++;
+      } catch (error: any) {
+        failed++;
+        const message = error?.message ?? 'unknown error';
+        errors.push({ id: candidate.id, word: candidate.word, message });
+        await this.adminTasksService.log(taskId, 'error', `词汇 "${candidate.word}" 双语释义富化失败：${message}`, {
+          step: 'definition-and-difficulty', meta: { id: candidate.id, word: candidate.word },
+        });
+      } finally {
+        processed++;
+        unchanged = processed - updated - failed;
+        if (processed % 10 === 0 || processed === candidates.length) {
+          await this.adminTasksService.setProgress(taskId, {
+            currentStep: `definition-and-difficulty (${processed}/${candidates.length})`,
+            totalItems: candidates.length,
+            processedItems: processed,
+            successItems: updated,
+            failedItems: failed,
+          });
+        }
+        if (processed % 50 === 0) {
+          await this.adminTasksService.log(taskId, 'info', `AI 用量（已处理 ${processed} 项）：${usageStats.calls} 次调用，合计 ${usageStats.totalTokens} tokens`, {
+            step: 'ai-usage', meta: { ...usageStats, processedItems: processed },
+          });
+        }
+      }
+    });
+
+    const summary = { scanned, candidates: candidates.length, updated, unchanged, failed, errors: errors.slice(0, 20), usage: usageStats };
+    await this.adminTasksService.markCompleted(taskId, summary);
+    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `双语释义富化完成：更新 ${updated}，失败 ${failed}`, {
+      step: 'completed', meta: summary,
+    });
+  }
+
+  async runDifficultyReclassify(taskId: string) {
+    if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
+
+    const candidates: Array<{ id: string; word: string; definitionEn: string; meaning: string; difficulty: string }> = [];
+    let cursor: string | undefined;
+    do {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      const rows = await this.prisma.vocabulary.findMany({
+        select: { id: true, word: true, definitionEn: true, meaning: true, difficulty: true },
+        orderBy: { id: 'asc' },
+        take: 500,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      });
+      if (!rows.length) break;
+      candidates.push(...rows.map((row) => ({
+        id: row.id,
+        word: row.word,
+        definitionEn: row.definitionEn ?? '',
+        meaning: row.meaning ?? '',
+        difficulty: row.difficulty ?? '',
+      })));
+      cursor = rows.at(-1)?.id;
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: 'scan', totalItems: candidates.length, processedItems: candidates.length, successItems: candidates.length,
+      });
+    } while (cursor);
+
+    await this.adminTasksService.log(taskId, 'info', `扫描完成：将使用词典释义上下文重新判断全部 ${candidates.length} 个词汇的难度`, {
+      step: 'scan', meta: { scanned: candidates.length },
+    });
+
+    let updated = 0;
+    let unchanged = 0;
+    let failed = 0;
+    let processed = 0;
+    const distribution: Record<string, number> = { L1: 0, L2: 0, L3: 0, L4: 0, L5: 0 };
+    const errors: Array<{ id: string; word: string; message: string }> = [];
+    const usageStats = createUsageStats();
+    await this.adminTasksService.setProgress(taskId, {
+      currentStep: 'reclassify-difficulty', totalItems: candidates.length, processedItems: 0,
+      successItems: 0, failedItems: 0,
+    });
+
+    const batchSize = 20;
+    for (let index = 0; index < candidates.length; index += batchSize) {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      const batch = candidates.slice(index, index + batchSize);
+      try {
+        const results = await this.adminContentAiService.reviewVocabularyDifficultiesBatch(
+          batch.map((candidate) => ({
+            id: candidate.id,
+            word: candidate.word,
+            meaning: candidate.meaning,
+            definitions: candidate.definitionEn.split('; ').map((definition) => definition.trim()).filter(Boolean),
+          })),
+          usageCallback(usageStats),
+        );
+        const resultById = new Map(results.map((result) => [result.id, result.difficulty]));
+        const updates = [];
+        for (const candidate of batch) {
+          const difficulty = resultById.get(candidate.id);
+          if (!difficulty) {
+            failed++;
+            errors.push({ id: candidate.id, word: candidate.word, message: 'AI 未返回有效难度' });
+            continue;
+          }
+          distribution[difficulty] = (distribution[difficulty] ?? 0) + 1;
+          if (difficulty === candidate.difficulty) {
+            unchanged++;
+          } else {
+            updates.push(this.prisma.vocabulary.update({
+              where: { id: candidate.id },
+              data: { difficulty },
+            }));
+          }
+        }
+        if (updates.length) {
+          await this.prisma.$transaction(updates);
+          updated += updates.length;
+        }
+      } catch (error: any) {
+        const message = error?.message ?? 'unknown error';
+        failed += batch.length;
+        errors.push(...batch.map((candidate) => ({ id: candidate.id, word: candidate.word, message })));
+        await this.adminTasksService.log(taskId, 'error', `第 ${Math.floor(index / batchSize) + 1} 批难度复核失败：${message}`, {
+          step: 'reclassify-difficulty', meta: { startIndex: index, count: batch.length },
+        });
+      }
+      processed += batch.length;
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: `reclassify-difficulty (${processed}/${candidates.length})`,
+        totalItems: candidates.length,
+        processedItems: processed,
+        successItems: updated + unchanged,
+        failedItems: failed,
+      });
+      if (processed % 100 === 0 || processed === candidates.length) {
+        await this.adminTasksService.log(taskId, 'info', `AI 用量（已处理 ${processed} 项）：${usageStats.calls} 次调用，合计 ${usageStats.totalTokens} tokens`, {
+          step: 'ai-usage', meta: { ...usageStats, processedItems: processed },
+        });
+      }
+    }
+
+    const summary = { scanned: candidates.length, updated, unchanged, failed, distribution, errors: errors.slice(0, 20), usage: usageStats };
+    await this.adminTasksService.markCompleted(taskId, summary);
+    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `难度复核完成：变更 ${updated}，保持 ${unchanged}，失败 ${failed}`, {
+      step: 'completed', meta: summary,
+    });
+  }
+
 }

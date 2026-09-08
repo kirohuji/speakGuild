@@ -38,6 +38,13 @@ export interface VocabularyDefinitionDifficultyReviewResult {
   difficulty: string;
 }
 
+export interface VocabularyDifficultyBatchItem {
+  id: string;
+  word: string;
+  meaning?: string;
+  definitions: string[];
+}
+
 /** 单次 LLM 调用的 token 用量 */
 export interface AiUsage {
   promptTokens: number;
@@ -297,6 +304,39 @@ Return raw JSON only:
         : [],
       difficulty,
     };
+  }
+
+  async reviewVocabularyDifficultiesBatch(
+    items: VocabularyDifficultyBatchItem[],
+    onUsage?: (usage: AiUsage) => void,
+  ): Promise<Array<{ id: string; difficulty: string }>> {
+    if (!items.length) return [];
+    const model = this.getDeepSeekModel();
+    const compactItems = items.map((item) => ({
+      id: item.id,
+      word: item.word.trim().slice(0, 80),
+      meaning: item.meaning?.trim().slice(0, 100) || '',
+      definitions: item.definitions
+        .slice(0, 2)
+        .map((definition) => definition.replace(/\s+\[[^\]]*\]\s*$/, '').trim().slice(0, 180)),
+    }));
+    const { text, usage } = await generateText({
+      model,
+      prompt: `Classify each English word by learner difficulty. L1=junior-secondary basic/high-frequency; L2=senior-secondary common; L3=CET-4/IELTS6; L4=CET-6/IELTS6.5-7; L5=rare academic/specialist IELTS7.5+/TOEFL. Use frequency, abstraction and common senses; do not default to L1.
+Input:${JSON.stringify(compactItems)}
+Return exactly one plain-text line per input item, preserving order. No header, JSON, bullets or explanation:
+<id><TAB><L1|L2|L3|L4|L5>`,
+      temperature: 0.1,
+      maxOutputTokens: Math.max(100, items.length * 18),
+    });
+    if (usage) onUsage?.(extractUsage(usage)!);
+    return items.flatMap((item) => {
+      const idIndex = text.indexOf(item.id);
+      if (idIndex < 0) return [];
+      const followingText = text.slice(idIndex + item.id.length, idIndex + item.id.length + 80);
+      const difficulty = followingText.match(/\bL[1-5]\b/)?.[0];
+      return difficulty ? [{ id: item.id, difficulty }] : [];
+    });
   }
 
   /**

@@ -932,6 +932,16 @@ export function rewriteVocabulariesMeaningOther(): Promise<{ taskId: string }> {
   return post('/admin/content/library/vocabularies/rewrite-meaning-other');
 }
 
+/** 词典+AI 富化英文释义未双语的词汇；只更新 definitionEn 与 difficulty。 */
+export function enrichEnglishOnlyVocabularyDefinitions(): Promise<{ taskId: string; reused?: boolean }> {
+  return post('/admin/content/library/vocabularies/enrich-english-only-definitions');
+}
+
+/** 词典+AI 全量复核词汇难度；只更新 difficulty。 */
+export function reclassifyVocabularyDifficulties(): Promise<{ taskId: string; reused?: boolean }> {
+  return post('/admin/content/library/vocabularies/reclassify-difficulties');
+}
+
 export function syncLibraryVocabularyDictionaryPronunciations(): Promise<{
   taskId: string;
 }> {

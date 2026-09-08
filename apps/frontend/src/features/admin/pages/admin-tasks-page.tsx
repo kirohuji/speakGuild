@@ -36,6 +36,8 @@ const TYPE_LABELS: Record<string, string> = {
   'vocabulary-missing-meaning-enrich': '词汇字段检查与 AI 补全（词典+AI）',
   'vocabulary-polish': '词汇例句翻译补全与释义精简',
   'vocabulary-meaning-other-rewrite': '重写含 other 的中文释义',
+  'vocabulary-bilingual-definition-enrich': '词典+AI 富化未双语英文释义',
+  'vocabulary-difficulty-reclassify': '词典+AI 全量复核词汇难度',
   'chunk-missing-meaning-enrich': '句块字段检查与 AI 补全',
   'pattern-missing-meaning-enrich': '句型字段检查与 AI 补全',
   'script-video-render': '剧本演出视频',
@@ -59,6 +61,8 @@ const STEP_LABELS: Record<string, string> = {
   canceled: '已取消',
   write: '写入词汇',
   enrich: 'AI富化词汇',
+  'definition-and-difficulty': '富化双语释义并复核难度',
+  'reclassify-difficulty': '重新判断词汇难度',
   bundling: '准备渲染器',
   'initializing-renderer': '初始化渲染器',
   rendering: '生成视频',
@@ -346,6 +350,37 @@ function SummaryPanel({ task }: { task: AdminTask }) {
     );
   }
 
+  if (task.type === 'vocabulary-bilingual-definition-enrich') {
+    const errors = taskErrors(task).length || summary.failed || task.failedItems;
+    return (
+      <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
+        <div className="grid grid-cols-3 gap-2">
+          <Metric label="未双语" value={summary.candidates ?? 0} tone="muted" />
+          <Metric label="已更新" value={summary.updated ?? 0} tone="good" />
+          <Metric label="失败" value={errors} tone={errors ? 'bad' : 'muted'} />
+        </div>
+        <p className="text-xs text-muted-foreground">只更新英文释义与难度字段；共扫描 {summary.scanned ?? 0} 个词汇。</p>
+      </div>
+    );
+  }
+
+  if (task.type === 'vocabulary-difficulty-reclassify') {
+    const errors = taskErrors(task).length || summary.failed || task.failedItems;
+    const distribution = summary.distribution ?? {};
+    return (
+      <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
+        <div className="grid grid-cols-3 gap-2">
+          <Metric label="难度已变更" value={summary.updated ?? 0} tone="good" />
+          <Metric label="难度未变化" value={summary.unchanged ?? 0} tone="muted" />
+          <Metric label="失败" value={errors} tone={errors ? 'bad' : 'muted'} />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          只更新难度字段；新分布：L1 {distribution.L1 ?? 0} / L2 {distribution.L2 ?? 0} / L3 {distribution.L3 ?? 0} / L4 {distribution.L4 ?? 0} / L5 {distribution.L5 ?? 0}。
+        </p>
+      </div>
+    );
+  }
+
   if (task.type === 'vocabulary-missing-meaning-enrich') {
     const errors = taskErrors(task).length || summary.failed || task.failedItems;
     return (
@@ -405,7 +440,7 @@ function SummaryPanel({ task }: { task: AdminTask }) {
 
 export function AdminTasksPage() {
   const [status, setStatus] = useState<AdminTaskStatus | 'all' | 'active'>('active');
-  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'warmup-pipeline-generate' | 'scene-topic-batch-generate' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'vocabulary-polish' | 'vocabulary-meaning-other-rewrite' | 'chunk-missing-meaning-enrich' | 'pattern-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
+  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'warmup-pipeline-generate' | 'scene-topic-batch-generate' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'vocabulary-polish' | 'vocabulary-meaning-other-rewrite' | 'vocabulary-bilingual-definition-enrich' | 'vocabulary-difficulty-reclassify' | 'chunk-missing-meaning-enrich' | 'pattern-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
   const [items, setItems] = useState<AdminTask[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AdminTaskDetail | null>(null);
@@ -565,6 +600,8 @@ export function AdminTasksPage() {
     || task.type === 'vocabulary-missing-meaning-enrich'
     || task.type === 'vocabulary-polish'
     || task.type === 'vocabulary-meaning-other-rewrite'
+    || task.type === 'vocabulary-bilingual-definition-enrich'
+    || task.type === 'vocabulary-difficulty-reclassify'
     || task.type === 'chunk-missing-meaning-enrich'
     || task.type === 'pattern-missing-meaning-enrich'
     || task.type === 'script-video-render'
@@ -587,6 +624,8 @@ export function AdminTasksPage() {
             <option value="vocabulary-csv-import">词汇 CSV 批量导入</option>
             <option value="vocabulary-polish">词汇例句翻译补全与释义精简</option>
             <option value="vocabulary-meaning-other-rewrite">重写含 other 的中文释义</option>
+            <option value="vocabulary-bilingual-definition-enrich">词典+AI 富化未双语英文释义</option>
+            <option value="vocabulary-difficulty-reclassify">词典+AI 全量复核词汇难度</option>
             <option value="vocabulary-missing-meaning-enrich">词汇字段检查与 AI 补全（词典+AI）</option>
             <option value="chunk-missing-meaning-enrich">句块字段检查与 AI 补全</option>
             <option value="pattern-missing-meaning-enrich">句型字段检查与 AI 补全</option>

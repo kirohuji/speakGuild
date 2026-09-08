@@ -7,63 +7,63 @@
         {
           "id": "l1-t1-1",
           "type": "chunk_substitution",
-          "title": "Hi. 句块替换",
-          "chunk": "Hi.",
-          "chunkMeaning": "嗨 / 你好",
+          "title": "What's up? 句块替换",
+          "chunk": "What's up?",
+          "chunkMeaning": "你好 / 怎么啦？（打招呼）",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "嗨！你现在有空吗？",
-              "answer": "Hi! Are you free now?",
-              "hint": "用「Hi.」来表达"
+              "zh": "嘿！最近怎么样？",
+              "answer": "Hey! What's up?",
+              "hint": "用「What's up?」来表达"
             },
             {
-              "zh": "嗨，Mina。好久不见。",
-              "answer": "Hi, Mina. Long time no see.",
-              "hint": "用「Hi.」来表达"
+              "zh": "你看起来有心事。怎么了？",
+              "answer": "You look worried. What's up?",
+              "hint": "用「What's up?」来表达"
             }
           ]
         },
         {
           "id": "l1-t1-2",
           "type": "chunk_substitution",
-          "title": "Hello. 句块替换",
-          "chunk": "Hello.",
-          "chunkMeaning": "你好",
+          "title": "How's it going? 句块替换",
+          "chunk": "How's it going?",
+          "chunkMeaning": "最近怎么样",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "你好。我叫 Tom。",
-              "answer": "Hello. My name is Tom.",
-              "hint": "用「Hello.」来表达"
+              "zh": "嗨，Emma。最近怎么样？",
+              "answer": "Hi, Emma. How's it going?",
+              "hint": "用「How's it going?」来表达"
             },
             {
-              "zh": "你好，请问是前台吗？",
-              "answer": "Hello, is this the front desk?",
-              "hint": "用「Hello.」来表达"
+              "zh": "工作还顺利吗？",
+              "answer": "How's it going at work?",
+              "hint": "用「How's it going?」来表达"
             }
           ]
         },
         {
           "id": "l1-t1-3",
           "type": "chunk_substitution",
-          "title": "How are you? 句块替换",
-          "chunk": "How are you?",
-          "chunkMeaning": "你好吗？ / 最近怎么样？",
+          "title": "How have you been? 句块替换",
+          "chunk": "How have you been?",
+          "chunkMeaning": "最近怎么样（久别）",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "嗨，Anna。你好吗？",
-              "answer": "Hi, Anna. How are you?",
-              "hint": "用「How are you?」来表达"
+              "zh": "好久不见！你最近怎么样？",
+              "answer": "It's been ages! How have you been?",
+              "hint": "用「How have you been?」来表达"
             },
             {
-              "zh": "你好吗？好久不见。",
-              "answer": "How are you? Long time no see.",
-              "hint": "用「How are you?」来表达"
+              "zh": "搬家之后最近怎么样？",
+              "answer": "How have you been since the move?",
+              "hint": "用「How have you been?」来表达"
             }
           ]
         },
@@ -71,24 +71,24 @@
           "id": "l1-t1-4",
           "type": "chunk_substitution",
           "title": "问候、告别与自我介绍 听辨理解",
-          "chunk": "Hi.",
-          "chunkMeaning": "嗨 / 你好",
+          "chunk": "What's up?",
+          "chunkMeaning": "你好 / 怎么啦？（打招呼）",
           "direction": "en_to_zh",
           "kind": "chunk",
           "items": [
             {
-              "en": "Hi! Are you free now?",
-              "answer": "嗨！你现在有空吗？",
+              "en": "Hey! What's up?",
+              "answer": "嘿！最近怎么样？",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Hello. My name is Tom.",
-              "answer": "你好。我叫 Tom。",
+              "en": "Hi, Emma. How's it going?",
+              "answer": "嗨，Emma。最近怎么样？",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Hi, Anna. How are you?",
-              "answer": "嗨，Anna。你好吗？",
+              "en": "It's been ages! How have you been?",
+              "answer": "好久不见！你最近怎么样？",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
@@ -96,46 +96,46 @@
         {
           "id": "l1-t1-5",
           "type": "pattern_drill",
-          "title": "I'm ___. 句型操练",
-          "pattern": "I'm ___.",
-          "patternMeaning": "我是…… / 我叫……",
+          "title": "How's it going? 句型操练",
+          "pattern": "How's it going?",
+          "patternMeaning": "最近怎么样？",
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "我还好，谢谢。你呢？",
-              "answer": "I'm fine, thanks. And you?",
-              "hint": "套用句型：I'm ___."
+              "zh": "嗨，Emma。最近怎么样？",
+              "answer": "Hi, Emma. How's it going?",
+              "hint": "套用句型：How's it going?"
             },
             {
-              "zh": "我是 Ken。",
-              "answer": "I'm Ken.",
-              "hint": "套用句型：I'm ___."
+              "zh": "嗨，Emma。最近怎么样？",
+              "answer": "Hi, Emma. How's it going?",
+              "hint": "套用句型：How's it going?"
             }
           ]
         },
         {
           "id": "l1-t1-6",
           "type": "sentence_decomposition",
-          "title": "Hi. 句子拆解",
-          "sourceText": "Hi.",
+          "title": "What's up? 句子拆解",
+          "sourceText": "What's up?",
           "sourceKind": "chunk",
-          "fullSentence": "Hi! Are you free now?",
-          "fullSentenceZh": "嗨！你现在有空吗？",
+          "fullSentence": "Hey! What's up?",
+          "fullSentenceZh": "嘿！最近怎么样？",
           "levels": [
             {
               "level": 1,
               "label": "核心句",
-              "en": "Hi.",
-              "zh": "嗨 / 你好",
+              "en": "What's up?",
+              "zh": "你好 / 怎么啦？（打招呼）",
               "highlight": "",
               "hint": "先说出本课核心表达"
             },
             {
               "level": 2,
               "label": "完整句",
-              "en": "Hi! Are you free now?",
-              "zh": "嗨！你现在有空吗？",
-              "highlight": "! Are you free now?",
+              "en": "Hey! What's up?",
+              "zh": "嘿！最近怎么样？",
+              "highlight": "Hey!",
               "hint": "补上场景信息，说成一句完整话"
             }
           ]
@@ -375,8 +375,8 @@
           "kind": "chunk",
           "items": [
             {
-              "zh": "请来杯咖啡。堂食。",
-              "answer": "A coffee, please. For here.",
+              "zh": "请来杯咖啡。",
+              "answer": "A coffee, please.",
               "hint": "用「A coffee, please.」来表达"
             },
             {
@@ -406,8 +406,8 @@
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "A coffee, please. For here.",
-              "answer": "请来杯咖啡。堂食。",
+              "en": "A coffee, please.",
+              "answer": "请来杯咖啡。",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
@@ -428,6 +428,11 @@
             {
               "zh": "可以给我一杯水吗？",
               "answer": "Can I have a glass of water?",
+              "hint": "套用句型：I'd like ___."
+            },
+            {
+              "zh": "请来杯不加糖的咖啡。",
+              "answer": "Coffee without sugar, please.",
               "hint": "套用句型：I'd like ___."
             }
           ]
@@ -640,63 +645,63 @@
         {
           "id": "l1-t5-1",
           "type": "chunk_substitution",
-          "title": "Where is the station? 句块替换",
-          "chunk": "Where is the station?",
-          "chunkMeaning": "车站在哪里？",
+          "title": "Now I'm lost. 句块替换",
+          "chunk": "Now I'm lost.",
+          "chunkMeaning": "我现在迷路了",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "请问，车站在哪里？",
-              "answer": "Excuse me, where is the station?",
-              "hint": "用「Where is the station?」来表达"
+              "zh": "等等——这里看着不对。我现在迷路了。",
+              "answer": "Wait—this doesn't look right. Now I'm lost.",
+              "hint": "用「Now I'm lost.」来表达"
             },
             {
-              "zh": "最近的地铁站在哪里？",
-              "answer": "Where is the nearest subway station?",
-              "hint": "用「Where is the station?」来表达"
+              "zh": "我现在迷路了。你能指一下车站吗？",
+              "answer": "Now I'm lost. Can you point me to the station?",
+              "hint": "用「Now I'm lost.」来表达"
             }
           ]
         },
         {
           "id": "l1-t5-2",
           "type": "chunk_substitution",
-          "title": "How do I get to ___? 句块替换",
-          "chunk": "How do I get to ___?",
-          "chunkMeaning": "去……怎么走？",
+          "title": "On my way. 句块替换",
+          "chunk": "On my way.",
+          "chunkMeaning": "我在路上了",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "去博物馆怎么走？",
-              "answer": "How do I get to the museum?",
-              "hint": "用「How do I get to ___?」来表达"
+              "zh": "你在哪？——在路上了。",
+              "answer": "Where are you? — On my way.",
+              "hint": "用「On my way.」来表达"
             },
             {
-              "zh": "从这里去机场怎么走？",
-              "answer": "How do I get to the airport from here?",
-              "hint": "用「How do I get to ___?」来表达"
+              "zh": "别丢下我。我在路上了。",
+              "answer": "Don't leave without me. I'm on my way.",
+              "hint": "用「On my way.」来表达"
             }
           ]
         },
         {
           "id": "l1-t5-3",
           "type": "chunk_substitution",
-          "title": "Turn left. 句块替换",
-          "chunk": "Turn left.",
-          "chunkMeaning": "左转",
+          "title": "Here we are. 句块替换",
+          "chunk": "Here we are.",
+          "chunkMeaning": "我们到了",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "直行然后左转。",
-              "answer": "Go straight and turn left.",
-              "hint": "用「Turn left.」来表达"
+              "zh": "到了。这就是你的酒店。",
+              "answer": "Here we are. This is your hotel.",
+              "hint": "用「Here we are.」来表达"
             },
             {
-              "zh": "到红绿灯左转。",
-              "answer": "At the light, turn left.",
-              "hint": "用「Turn left.」来表达"
+              "zh": "二十分钟后——到了。",
+              "answer": "After twenty minutes—here we are.",
+              "hint": "用「Here we are.」来表达"
             }
           ]
         },
@@ -704,24 +709,24 @@
           "id": "l1-t5-4",
           "type": "chunk_substitution",
           "title": "询问地点、方向和交通 听辨理解",
-          "chunk": "Where is the station?",
-          "chunkMeaning": "车站在哪里？",
+          "chunk": "Now I'm lost.",
+          "chunkMeaning": "我现在迷路了",
           "direction": "en_to_zh",
           "kind": "chunk",
           "items": [
             {
-              "en": "Excuse me, where is the station?",
-              "answer": "请问，车站在哪里？",
+              "en": "Wait—this doesn't look right. Now I'm lost.",
+              "answer": "等等——这里看着不对。我现在迷路了。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "How do I get to the museum?",
-              "answer": "去博物馆怎么走？",
+              "en": "Where are you? — On my way.",
+              "answer": "你在哪？——在路上了。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Go straight and turn left.",
-              "answer": "直行然后左转。",
+              "en": "Here we are. This is your hotel.",
+              "answer": "到了。这就是你的酒店。",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
@@ -729,46 +734,46 @@
         {
           "id": "l1-t5-5",
           "type": "pattern_drill",
-          "title": "Where is the ___? 句型操练",
-          "pattern": "Where is the ___?",
-          "patternMeaning": "……在哪里？",
+          "title": "Where can I ___? 句型操练",
+          "pattern": "Where can I ___?",
+          "patternMeaning": "我在哪里能……？",
           "direction": "zh_to_en",
           "items": [
             {
-              "zh": "请问，车站在哪里？",
-              "answer": "Excuse me, where is the station?",
-              "hint": "套用句型：Where is the ___?"
+              "zh": "请问，在哪里能买到票？",
+              "answer": "Excuse me, where can I buy a ticket?",
+              "hint": "套用句型：Where can I ___?"
             },
             {
-              "zh": "去博物馆怎么走？",
-              "answer": "How do I get to the museum?",
-              "hint": "套用句型：Where is the ___?"
+              "zh": "你在哪？——在路上了。",
+              "answer": "Where are you? — On my way.",
+              "hint": "套用句型：Where can I ___?"
             }
           ]
         },
         {
           "id": "l1-t5-6",
           "type": "sentence_decomposition",
-          "title": "Where is the station? 句子拆解",
-          "sourceText": "Where is the station?",
+          "title": "Now I'm lost. 句子拆解",
+          "sourceText": "Now I'm lost.",
           "sourceKind": "chunk",
-          "fullSentence": "Excuse me, where is the station?",
-          "fullSentenceZh": "请问，车站在哪里？",
+          "fullSentence": "Wait—this doesn't look right. Now I'm lost.",
+          "fullSentenceZh": "等等——这里看着不对。我现在迷路了。",
           "levels": [
             {
               "level": 1,
               "label": "核心句",
-              "en": "Where is the station?",
-              "zh": "车站在哪里？",
+              "en": "Now I'm lost.",
+              "zh": "我现在迷路了",
               "highlight": "",
               "hint": "先说出本课核心表达"
             },
             {
               "level": 2,
               "label": "完整句",
-              "en": "Excuse me, where is the station?",
-              "zh": "请问，车站在哪里？",
-              "highlight": "Excuse me, where is the station?",
+              "en": "Wait—this doesn't look right. Now I'm lost.",
+              "zh": "等等——这里看着不对。我现在迷路了。",
+              "highlight": "Wait—this doesn't look right. .",
               "hint": "补上场景信息，说成一句完整话"
             }
           ]
@@ -818,21 +823,21 @@
         {
           "id": "l1-t6-2",
           "type": "chunk_substitution",
-          "title": "I'd like ___. 句块替换",
-          "chunk": "I'd like ___.",
-          "chunkMeaning": "我想要……（更礼貌）",
+          "title": "Yes, I'd like to. 句块替换",
+          "chunk": "Yes, I'd like to.",
+          "chunkMeaning": "好，我也想 / 好的，我愿意",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "我想要一张安静的桌子。",
-              "answer": "I'd like a quiet table.",
-              "hint": "用「I'd like ___.」来表达"
+              "zh": "要不要一起？——好，我想去。",
+              "answer": "Want to come with us? — Yes, I'd like to.",
+              "hint": "用「Yes, I'd like to.」来表达"
             },
             {
-              "zh": "我想试试这个。",
-              "answer": "I'd like to try this one.",
-              "hint": "用「I'd like ___.」来表达"
+              "zh": "要再试一次吗？——好，我想试。",
+              "answer": "Would you like to try again? — Yes, I'd like to.",
+              "hint": "用「Yes, I'd like to.」来表达"
             }
           ]
         },
@@ -872,8 +877,8 @@
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "I'd like a quiet table.",
-              "answer": "我想要一张安静的桌子。",
+              "en": "Want to come with us? — Yes, I'd like to.",
+              "answer": "要不要一起？——好，我想去。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
@@ -897,8 +902,8 @@
               "hint": "套用句型：I want ___."
             },
             {
-              "zh": "我想要一张安静的桌子。",
-              "answer": "I'd like a quiet table.",
+              "zh": "要不要一起？——好，我想去。",
+              "answer": "Want to come with us? — Yes, I'd like to.",
               "hint": "套用句型：I want ___."
             },
             {
@@ -1163,21 +1168,21 @@
         {
           "id": "l1-t8-3",
           "type": "chunk_substitution",
-          "title": "Excuse me. 句块替换",
-          "chunk": "Excuse me.",
-          "chunkMeaning": "打扰一下",
+          "title": "Something's wrong. 句块替换",
+          "chunk": "Something's wrong.",
+          "chunkMeaning": "有点不对劲",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "打扰一下。你能帮我吗？",
-              "answer": "Excuse me. Can you help me?",
-              "hint": "用「Excuse me.」来表达"
+              "zh": "我的卡有点问题。",
+              "answer": "Something's wrong with my card.",
+              "hint": "用「Something's wrong.」来表达"
             },
             {
-              "zh": "请问，这里有工作人员吗？",
-              "answer": "Excuse me, is anyone working here?",
-              "hint": "用「Excuse me.」来表达"
+              "zh": "有点不对劲。你能看看吗？",
+              "answer": "Something's wrong. Can you check?",
+              "hint": "用「Something's wrong.」来表达"
             }
           ]
         },
@@ -1201,8 +1206,8 @@
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Excuse me. Can you help me?",
-              "answer": "打扰一下。你能帮我吗？",
+              "en": "Something's wrong with my card.",
+              "answer": "我的卡有点问题。",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
