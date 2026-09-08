@@ -346,6 +346,34 @@ export class ContentPrepareService {
 
   private static readonly VALID_DIFFICULTIES = ['L1', 'L2', 'L3', 'L4', 'L5'];
 
+  private async getDictionaryEntryData(
+    word: string,
+    usageStats?: AiUsageStats,
+  ): Promise<DictionaryEntryData | null> {
+    const key = word.toLowerCase().trim();
+    let entry = (await this.prisma.dictionaryEntry.findUnique({
+      where: { word: key },
+    })) as unknown as DictionaryEntryData | null;
+    if (!entry) {
+      entry = (await this.dictionaryService.runFullPipeline(
+        key,
+        usageStats ? usageCallback(usageStats) : undefined,
+      )) as unknown as DictionaryEntryData | null;
+    }
+    return entry;
+  }
+
+  async getVocabularyDictionaryDefinitions(
+    word: string,
+    usageStats?: AiUsageStats,
+  ): Promise<string[]> {
+    const entry = await this.getDictionaryEntryData(word, usageStats);
+    const senses = (entry?.senseClusters ?? []).flatMap((cluster) => cluster.senses);
+    return senses.map((sense) => (
+      `${sense.partOfSpeech}: ${sense.definition}${sense.translations?.zh ? `  [${sense.translations.zh}]` : ''}`
+    ));
+  }
+
   /**
    * 阶段一：词典字段填充。以词典（dictionary_entry）为唯一数据源，
    * 词典缺失时先跑词典流水线生成。落库：音标/音频/词性/英文释义/同义词/词典例句/中文释义（词典翻译）。
@@ -358,15 +386,8 @@ export class ContentPrepareService {
     const vocab = await this.prisma.vocabulary.findUnique({ where: { id: vocabId } });
     const word = vocab?.word?.trim();
     if (!word) return 'skipped';
-    const key = word.toLowerCase().trim();
-
     // 1) 统一数据源：dictionary_entry（缓存 miss 则跑完整流水线生成）
-    let entry = (await this.prisma.dictionaryEntry.findUnique({
-      where: { word: key },
-    })) as unknown as DictionaryEntryData | null;
-    if (!entry) {
-      entry = (await this.dictionaryService.runFullPipeline(key, usageStats ? usageCallback(usageStats) : undefined)) as unknown as DictionaryEntryData | null;
-    }
+    const entry = await this.getDictionaryEntryData(word, usageStats);
     if (!entry) return 'missing'; // 词典未收录该词
 
     const pronunciations = entry.pronunciations ?? [];

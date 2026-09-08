@@ -26,6 +26,18 @@ export interface VocabularyAiEnrichResult {
   difficulty: string;
 }
 
+export interface VocabularyDefinitionDifficultyReviewInput {
+  word: string;
+  definitions: string[];
+  meaning?: string;
+  translateMissingDefinitions: boolean;
+}
+
+export interface VocabularyDefinitionDifficultyReviewResult {
+  definitionTranslations: string[];
+  difficulty: string;
+}
+
 /** 单次 LLM 调用的 token 用量 */
 export interface AiUsage {
   promptTokens: number;
@@ -234,6 +246,56 @@ Use CLEAN standard IPA inside /slashes/. Normalize /ɹ/ to /r/, syllabic consona
       meaning: result.meaning ?? '',
       description: result.description ?? '',
       difficulty: ['L1', 'L2', 'L3', 'L4', 'L5'].includes(result.difficulty) ? result.difficulty : '',
+    };
+  }
+
+  async reviewVocabularyDefinitionAndDifficulty(
+    dto: VocabularyDefinitionDifficultyReviewInput,
+    onUsage?: (usage: AiUsage) => void,
+  ): Promise<VocabularyDefinitionDifficultyReviewResult> {
+    const model = this.getDeepSeekModel();
+    const definitions = dto.definitions.map((definition, index) => `${index + 1}. ${definition}`).join('\n');
+    const { text, usage } = await generateText({
+      model,
+      prompt: `You are a senior bilingual lexicographer grading vocabulary for Chinese English learners.
+
+## Input
+Word: "${dto.word}"
+Current Chinese meaning: ${dto.meaning?.trim() || '(none)'}
+Dictionary definitions:
+${definitions || '(none)'}
+
+## Tasks
+1. Classify the word as exactly one difficulty level:
+   - L1: basic high-frequency junior-secondary vocabulary (apple, help)
+   - L2: common senior-secondary vocabulary (appointment, attitude)
+   - L3: CET-4 / IELTS 6 core vocabulary (accommodate, derive)
+   - L4: CET-6 / IELTS 6.5-7 advanced vocabulary (ambiguous, endeavor)
+   - L5: low-frequency academic, specialist, IELTS 7.5+ / TOEFL vocabulary (ubiquitous, paradigm)
+   Judge by frequency, learning stage, abstraction and the common senses shown above. Do not default to L1.
+2. ${dto.translateMissingDefinitions
+    ? 'For each definition, provide natural Simplified Chinese only when that definition does not already end with a Chinese translation in [brackets]. Return an empty string for an already bilingual definition.'
+    : 'Do not translate definitions. Return an empty definitionTranslations array.'}
+
+## Output
+Return raw JSON only:
+{
+  "definitionTranslations": ["one entry per input definition, or empty strings as instructed"],
+  "difficulty": "L1|L2|L3|L4|L5"
+}`,
+      temperature: 0.2,
+      maxOutputTokens: Math.max(180, dto.definitions.length * 80),
+    });
+    if (usage) onUsage?.(extractUsage(usage)!);
+    const result = this.parseJsonText(text);
+    const difficulty = ['L1', 'L2', 'L3', 'L4', 'L5'].includes(result.difficulty)
+      ? result.difficulty
+      : '';
+    return {
+      definitionTranslations: Array.isArray(result.definitionTranslations)
+        ? result.definitionTranslations.map((value: unknown) => typeof value === 'string' ? value.trim() : '')
+        : [],
+      difficulty,
     };
   }
 

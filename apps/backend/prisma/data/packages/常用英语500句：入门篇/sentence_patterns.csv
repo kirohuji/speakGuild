@@ -1,0 +1,25 @@
+scene_title,topic_title,pattern,meaning,slots,example,difficulty,sort_order
+常用英语500句 · 入门篇,问候、告别与自我介绍,I'm ___.,我是…… / 我叫……,"[""name / role / feeling""]",I'm Mina.,L1,1
+常用英语500句 · 入门篇,问候、告别与自我介绍,Nice to meet you.,初次见面的礼貌开场,[],Nice to meet you.,L1,2
+常用英语500句 · 入门篇,问候、告别与自我介绍,See you ___.,再见（可补时间）,"[""later / tomorrow / soon""]",See you later.,L1,3
+常用英语500句 · 入门篇,感谢、简单道歉与回应,Thank you for ___.,谢谢你……,"[""helping me / waiting / the coffee""]",Thank you for your help.,L1,1
+常用英语500句 · 入门篇,感谢、简单道歉与回应,I'm sorry.,对不起,[],I'm sorry.,L1,2
+常用英语500句 · 入门篇,感谢、简单道歉与回应,That's okay.,没关系,[],That's okay.,L1,3
+常用英语500句 · 入门篇,点餐、数量与付款,I'd like ___.,我想要……,"[""a coffee / the soup / two tacos""]",I'd like a latte.,L1,1
+常用英语500句 · 入门篇,点餐、数量与付款,Can I have ___?,可以给我……吗？,"[""a water / the bill / one more""]",Can I have a menu?,L1,2
+常用英语500句 · 入门篇,点餐、数量与付款,"___ , please.",请给我……,"[""A coffee / The check / Two waters""]","A coffee, please.",L1,3
+常用英语500句 · 入门篇,找商品、问价格与结账,Where is ___?,……在哪里？,"[""the milk / the fitting room""]",Where is the milk?,L1,1
+常用英语500句 · 入门篇,找商品、问价格与结账,Do you have ___?,你们有……吗？,"[""this in blue / a smaller size""]",Do you have this in medium?,L1,2
+常用英语500句 · 入门篇,找商品、问价格与结账,I'll take it.,我要这个,[],I'll take it.,L1,3
+常用英语500句 · 入门篇,询问地点、方向和交通,Where is the ___?,……在哪里？,"[""station / bathroom / exit""]",Where is the station?,L1,1
+常用英语500句 · 入门篇,询问地点、方向和交通,How do I get to ___?,去……怎么走？,"[""the park / the hotel""]",How do I get to the museum?,L1,2
+常用英语500句 · 入门篇,询问地点、方向和交通,Turn ___.,向……转,"[""left / right""]",Turn left.,L1,3
+常用英语500句 · 入门篇,表达想要、需要和基本喜恶,I want ___.,我想要……,"[""water / to go home""]",I want some water.,L1,1
+常用英语500句 · 入门篇,表达想要、需要和基本喜恶,I need ___.,我需要……,"[""help / a break""]",I need help.,L1,2
+常用英语500句 · 入门篇,表达想要、需要和基本喜恶,I like ___.,我喜欢……,"[""tea / this song""]",I like this.,L1,3
+常用英语500句 · 入门篇,请求重复、说慢一点和确认听懂,Can you ___?,你能……吗？,"[""repeat that / say that again / speak slowly""]",Can you repeat that?,L1,1
+常用英语500句 · 入门篇,请求重复、说慢一点和确认听懂,What does ___ mean?,……是什么意思？,"[""this word / that""]",What does this mean?,L1,2
+常用英语500句 · 入门篇,请求重复、说慢一点和确认听懂,Do you mean ___?,你是说……吗？,"[""tomorrow / this one""]",Do you mean tomorrow?,L1,3
+常用英语500句 · 入门篇,遇到困难时请求帮助,Can you help me?,你能帮我吗？,[],Can you help me?,L1,1
+常用英语500句 · 入门篇,遇到困难时请求帮助,I can't find ___.,我找不到……,"[""my phone / the gate""]",I can't find my bag.,L1,2
+常用英语500句 · 入门篇,遇到困难时请求帮助,I have a problem.,我有个问题 / 麻烦,[],I have a problem.,L1,3
