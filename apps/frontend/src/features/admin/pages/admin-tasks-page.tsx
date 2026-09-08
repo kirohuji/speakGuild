@@ -46,6 +46,7 @@ const TYPE_LABELS: Record<string, string> = {
   'file-asset-cleanup': '清理未使用资源',
   'dictionary-pronunciation-batch-refresh': '词典音标批量检查',
   'dictionary-audio-batch-generate': '词典发音批量补全',
+  'vocabulary-example-audio-batch-generate': '词汇例句音频批量补全',
 };
 
 const STEP_LABELS: Record<string, string> = {
@@ -71,6 +72,7 @@ const STEP_LABELS: Record<string, string> = {
   'recheck-and-clean': '复查并清理资源',
   refresh: '更新音标',
   'generate-audio': '生成词典发音',
+  'generate-example-audio': '生成例句音频',
   throttled: '等待限流解除',
   resume: '恢复任务',
   resumed: '恢复任务',
@@ -609,7 +611,8 @@ export function AdminTasksPage() {
     || task.type === 'script-video-render'
     || task.type === 'narrative-video-render'
     || task.type === 'dictionary-pronunciation-batch-refresh'
-    || task.type === 'dictionary-audio-batch-generate';
+    || task.type === 'dictionary-audio-batch-generate'
+    || task.type === 'vocabulary-example-audio-batch-generate';
 
   return (
     <div className="space-y-4">
@@ -635,6 +638,7 @@ export function AdminTasksPage() {
             <option value="narrative-video-render">叙事视频预览</option>
             <option value="dictionary-pronunciation-batch-refresh">词典音标批量检查</option>
             <option value="dictionary-audio-batch-generate">词典发音批量补全</option>
+            <option value="vocabulary-example-audio-batch-generate">词汇例句音频批量补全</option>
             <option value="warmup-pipeline-generate">知识点练习 AI 生成</option>
           </Select>
           <Select value={status} onChange={(event) => { setStatus(event.target.value as AdminTaskStatus | 'all' | 'active'); setPage(1); }}>

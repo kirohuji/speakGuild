@@ -948,6 +948,29 @@ export function syncLibraryVocabularyDictionaryPronunciations(): Promise<{
   return post('/admin/content/library/vocabularies/sync-dictionary-pronunciations');
 }
 
+/** 为本页缺失音频的词汇例句创建 ENTTS 批量补全任务 */
+export function enqueueLibraryVocabularyExampleAudioCurrentPage(params: {
+  page: number;
+  pageSize?: number;
+  search?: string;
+  matchType?: 'fuzzy' | 'exact';
+  difficulty?: string;
+  pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete';
+  qualityIssue?: 'meaning-other' | 'english-only-definition';
+}): Promise<{ id: string; totalItems: number }> {
+  return post('/admin/tasks/library-vocabularies/generate-current-page-example-audio', undefined, { params });
+}
+
+/** 单条例句 ENTTS 音频（返回 asset://，需保存词汇后生效） */
+export function generateLibraryVocabularyExampleAudio(data: {
+  text: string;
+  type?: 'uk' | 'us';
+  gender?: 'female' | 'male';
+  bizId?: string;
+}): Promise<{ url: string; type: 'uk' | 'us'; gender: 'female' | 'male' }> {
+  return post('/admin/content/library/vocabularies/example-audio/generate', data);
+}
+
 export function enrichChunksMissingChinese(): Promise<{ taskId: string }> {
   return post('/admin/content/library/chunks/enrich-missing-chinese');
 }

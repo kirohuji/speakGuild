@@ -6,8 +6,8 @@ import { ConfigService } from '@nestjs/config';
 import { FileAssetGroup } from '@prisma/client';
 import { FileAssetsService } from '../file-assets/file-assets.service';
 
-type DictionaryAccent = 'uk' | 'us';
-type VoiceGender = 'female' | 'male';
+export type DictionaryAccent = 'uk' | 'us';
+export type VoiceGender = 'female' | 'male';
 
 const ENTTS_BASE_URL = 'https://www.entts.com';
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
@@ -18,6 +18,12 @@ const ENTTS_ACCENTS: Record<DictionaryAccent, Record<VoiceGender, string>> = {
   us: { female: 'enf', male: 'en' },
 };
 
+export interface GenerateEnttsAudioOptions {
+  bizType?: string;
+  bizId?: string;
+  filenamePrefix?: string;
+}
+
 @Injectable()
 export class DictionaryAudioService {
   constructor(
@@ -25,11 +31,19 @@ export class DictionaryAudioService {
     private readonly fileAssets: FileAssetsService,
   ) {}
 
-  async generate(word: string, type: DictionaryAccent, gender: VoiceGender) {
+  async generate(
+    text: string,
+    type: DictionaryAccent,
+    gender: VoiceGender,
+    options?: GenerateEnttsAudioOptions,
+  ) {
+    const content = text.trim();
+    if (!content) throw new BadGatewayException('ENTTS 文本不能为空');
+
     const baseUrl = new URL(this.config.get<string>('ENTTS_BASE_URL')?.trim() || ENTTS_BASE_URL);
     const playerUrl = new URL('/api/post/', baseUrl);
     const form = new URLSearchParams({
-      content: word,
+      content,
       accent: ENTTS_ACCENTS[type][gender],
       speed: '0',
     });
@@ -92,17 +106,20 @@ export class DictionaryAudioService {
       : isWav ? 'wav'
         : isOgg ? 'ogg'
           : mimeType.includes('mp4') || mimeType.includes('m4a') ? 'm4a' : 'audio';
+    const filenamePrefix = (options?.filenamePrefix || content)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 48) || 'audio';
+    const bizType = options?.bizType || 'dictionary_pronunciation_audio';
+    const bizId = options?.bizId || `${content}:${type}`;
     const asset = await this.fileAssets.createAssetFromBuffer({
       buffer,
-      filename: `${word}-${type}-${gender}.${extension}`,
+      filename: `${filenamePrefix}-${type}-${gender}.${extension}`,
       mimeType,
       group: FileAssetGroup.tts,
     });
-    await this.fileAssets.createSystemReference(
-      asset.id,
-      'dictionary_pronunciation_audio',
-      `${word}:${type}`,
-    );
+    await this.fileAssets.createSystemReference(asset.id, bizType, bizId);
     return this.fileAssets.getAssetReference(asset.id);
   }
 }

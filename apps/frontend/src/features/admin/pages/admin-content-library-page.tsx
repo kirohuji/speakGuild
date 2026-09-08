@@ -271,6 +271,26 @@ function VocabularyTab() {
           }}>
             <Volume2 data-icon="inline-start" />同步词典音标与发音
           </Button>
+          <Button size="sm" variant="outline" title="用 ENTTS 为本页缺失音频的词汇例句补全发音（英/美 × 男/女稳定分配）" onClick={async () => {
+            try {
+              const task = await api.enqueueLibraryVocabularyExampleAudioCurrentPage({
+                page,
+                pageSize,
+                search: search || undefined,
+                matchType,
+                difficulty: difficulty || undefined,
+                pronunciationStatus: pronunciationStatus || undefined,
+                qualityIssue: qualityIssue || undefined,
+              });
+              toast.success(`已创建本页 ${task.totalItems} 条例句音频补全任务，可在任务中心查看进度`, {
+                action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+              });
+            } catch (err: any) {
+              toast.error(err?.message || '创建例句音频补全任务失败');
+            }
+          }}>
+            <Volume2 data-icon="inline-start" />补本页例句音频
+          </Button>
           <Button
             size="sm"
             variant={qualityIssue === 'meaning-other' ? 'default' : 'outline'}
@@ -1033,13 +1053,16 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
     const key = `ex-${idx}`
     setTtsGenerating(key)
     try {
-      const url = await generateLibraryAudio(text, 'neutral', 'library_vocab_example', `${edit?.id ?? form.word ?? 'new'}-${idx}`)
+      const result = await api.generateLibraryVocabularyExampleAudio({
+        text,
+        bizId: `${edit?.id ?? form.word ?? 'new'}-${idx}`,
+      })
       const arr = [...exs]
-      arr[idx] = { ...arr[idx], audioUrl: url }
+      arr[idx] = { ...arr[idx], audioUrl: result.url }
       setForm({ ...form, examples: arr })
-      toast.success('例句音频已生成')
+      toast.success(`例句音频已生成（${result.type === 'uk' ? '英' : '美'}/${result.gender === 'female' ? '女' : '男'}）`)
     } catch (err: any) {
-      toast.error(err?.message || 'TTS 生成失败')
+      toast.error(err?.message || '例句音频生成失败')
     } finally {
       setTtsGenerating(null)
     }
@@ -1293,7 +1316,7 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                         <Play className="size-3.5" />
                       </Button>
                     )}
-                    <Button size="icon" variant="ghost" className="size-7 shrink-0" title="生成例句 TTS"
+                    <Button size="icon" variant="ghost" className="size-7 shrink-0" title="ENTTS 生成例句音频"
                       disabled={!ex.en?.trim() || ttsGenerating === `ex-${i}`}
                       onClick={() => generateExampleAudio(i)}>
                       {ttsGenerating === `ex-${i}` ? <Loader2 className="size-3.5 animate-spin" /> : <Volume2 className="size-3.5" />}
@@ -1321,7 +1344,7 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                         <Play className="size-3" />
                       </Button>
                     )}
-                    <Button size="icon" variant="ghost" className="size-8 flex-shrink-0" title="生成例句 TTS"
+                    <Button size="icon" variant="ghost" className="size-8 flex-shrink-0" title="ENTTS 生成例句音频"
                       disabled={!ex.en?.trim() || ttsGenerating === `ex-${i}`}
                       onClick={() => generateExampleAudio(i)}>
                       {ttsGenerating === `ex-${i}` ? <Loader2 className="size-3 animate-spin" /> : <Volume2 className="size-3" />}

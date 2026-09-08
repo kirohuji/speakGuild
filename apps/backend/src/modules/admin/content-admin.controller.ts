@@ -54,6 +54,7 @@ import { AiModelService } from '../ai-model/ai-model.service';
 import { FileAssetsService } from '../file-assets/file-assets.service';
 import { AdminTasksService } from '../admin-tasks/admin-tasks.service';
 import { ContentPrepareService } from '../admin-tasks/jobs/content-prepare.service';
+import { VocabularyExampleAudioService } from '../admin-tasks/jobs/vocabulary-example-audio.service';
 import { ListeningPipelineTextDto } from './dto/listening-pipeline.dto';
 import { ListeningTranscriptSegment } from '../tts/tts.service';
 import { MaterialConstraintService, type MaterialKind, type GroupSceneInfo } from '../content-experiences/material-constraint.service';
@@ -153,6 +154,7 @@ export class ContentAdminController {
     private readonly fileAssetsService: FileAssetsService,
     private readonly adminTasksService: AdminTasksService,
     private readonly contentPrepareService: ContentPrepareService,
+    private readonly vocabularyExampleAudio: VocabularyExampleAudioService,
     private readonly materialConstraints: MaterialConstraintService,
     private readonly contentAccess: ContentAccessService,
   ) {}
@@ -3507,6 +3509,22 @@ ${contextBlock}
     const session = await requireAuthSession(req);
     const task = await this.adminTasksService.enqueueVocabularyDictionaryPronunciationSync((session.user as any)?.id);
     return { code: 200, message: 'success', data: { taskId: task.id } };
+  }
+
+  /** ENTTS 生成单条例句音频（返回 asset:// URL，由前端写入 examples 后保存） */
+  @Post('library/vocabularies/example-audio/generate')
+  async generateLibraryVocabularyExampleAudio(
+    @Req() req: Request,
+    @Body() body: { text?: string; type?: 'uk' | 'us'; gender?: 'female' | 'male'; bizId?: string },
+  ) {
+    await this.requireAdmin(req);
+    if (!body?.text?.trim()) throw new BadRequestException('例句英文不能为空');
+    return this.vocabularyExampleAudio.generatePreviewAudio({
+      text: body.text,
+      type: body.type,
+      gender: body.gender,
+      bizId: body.bizId,
+    });
   }
 
   @Patch('library/vocabularies/:id')

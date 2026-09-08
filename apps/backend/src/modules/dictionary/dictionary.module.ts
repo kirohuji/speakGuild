@@ -19,6 +19,6 @@ import { DictionaryAudioService } from './dictionary-audio.service';
     DictionaryPronunciationProviderService,
     DictionaryAudioService,
   ],
-  exports: [DictionaryService],
+  exports: [DictionaryService, DictionaryAudioService],
 })
 export class DictionaryModule {}

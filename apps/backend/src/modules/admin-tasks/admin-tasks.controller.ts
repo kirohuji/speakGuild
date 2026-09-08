@@ -62,6 +62,30 @@ export class AdminTasksController {
     });
   }
 
+  /** Fill missing vocabulary example-sentence audio on the current content-library page. */
+  @Post('library-vocabularies/generate-current-page-example-audio')
+  async generateVocabularyExamplePageAudio(
+    @Req() req: Request,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('search') search?: string,
+    @Query('matchType') matchType?: string,
+    @Query('difficulty') difficulty?: string,
+    @Query('pronunciationStatus') pronunciationStatus?: string,
+    @Query('qualityIssue') qualityIssue?: string,
+  ) {
+    const session = await this.requireAdmin(req);
+    return this.adminTasksService.enqueueVocabularyExampleAudioBatch(session.user.id, {
+      page: page ? Number(page) : 1,
+      pageSize: pageSize ? Number(pageSize) : 20,
+      search,
+      matchType: matchType === 'exact' ? 'exact' : 'fuzzy',
+      difficulty,
+      pronunciationStatus: pronunciationStatus as any,
+      qualityIssue: qualityIssue as any,
+    });
+  }
+
   /** 查看某个队列中等待/活跃的任务 */
   @Get('queues/:queueName/jobs')
   async getQueueJobs(

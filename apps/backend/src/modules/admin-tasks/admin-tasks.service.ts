@@ -3,9 +3,14 @@ import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleIni
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, VOCABULARY_MEANING_OTHER_REWRITE_JOB, VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB, VOCABULARY_DIFFICULTY_RECLASSIFY_JOB, VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, VOCABULARY_MEANING_OTHER_REWRITE_JOB, VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB, VOCABULARY_DIFFICULTY_RECLASSIFY_JOB, VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB, VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB } from './admin-tasks.constants';
 import { DictionaryService } from '../dictionary/dictionary.service';
 import type { PronunciationAuditFilter } from '../dictionary/dto/pronunciation-audit.dto';
+import {
+  VocabularyExampleAudioService,
+  type LibraryVocabularyListParams,
+  type VocabularyExampleAudioItem,
+} from './jobs/vocabulary-example-audio.service';
 
 @Injectable()
 export class AdminTasksService implements OnModuleInit {
@@ -17,10 +22,12 @@ export class AdminTasksService implements OnModuleInit {
     @InjectQueue(VOCABULARY_IMPORT_QUEUE) private readonly vocabularyImportQueue: Queue,
     @InjectQueue(SCRIPT_VIDEO_QUEUE) private readonly videoQueue: Queue,
     private readonly dictionaryService: DictionaryService,
+    private readonly vocabularyExampleAudio: VocabularyExampleAudioService,
   ) {}
 
   async onModuleInit() {
     await this.recoverInterruptedDictionaryPronunciationTasks();
+    await this.recoverInterruptedVocabularyExampleAudioTasks();
     await this.recoverInterruptedVocabularyDifficultyTasks();
   }
 
@@ -86,6 +93,65 @@ export class AdminTasksService implements OnModuleInit {
         );
       } catch (error) {
         this.logger.error(`Failed to recover admin task ${task.id}`, error instanceof Error ? error.stack : String(error));
+      }
+    }
+  }
+
+  private async recoverInterruptedVocabularyExampleAudioTasks() {
+    const tasks = await this.prisma.adminTask.findMany({
+      where: {
+        type: VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB,
+        status: { in: [AdminTaskStatus.queued, AdminTaskStatus.running] },
+      },
+      select: { id: true, status: true, bullJobId: true, payload: true, processedItems: true, totalItems: true, createdById: true },
+    });
+
+    for (const task of tasks) {
+      const payload = task.payload as any;
+      const audioItems = Array.isArray(payload?.audioItems)
+        ? payload.audioItems.filter((item: unknown): item is VocabularyExampleAudioItem => {
+          const value = item as any;
+          return typeof value?.vocabularyId === 'string'
+            && typeof value?.word === 'string'
+            && typeof value?.exampleIndex === 'number'
+            && typeof value?.text === 'string'
+            && ['uk', 'us'].includes(value?.type)
+            && ['female', 'male'].includes(value?.gender);
+        })
+        : [];
+      if (!audioItems.length) continue;
+
+      try {
+        const existingJob = task.bullJobId ? await this.contentQueue.getJob(task.bullJobId) : null;
+        const existingState = existingJob ? await existingJob.getState() : null;
+        if (existingJob && ['active', 'waiting', 'prioritized', 'delayed', 'waiting-children'].includes(existingState)) {
+          continue;
+        }
+        if (existingJob) await existingJob.remove().catch(() => undefined);
+
+        const recoveryJobId = `resume-${task.id}`;
+        const previousRecoveryJob = await this.contentQueue.getJob(recoveryJobId);
+        if (previousRecoveryJob) {
+          const state = await previousRecoveryJob.getState();
+          if (['completed', 'failed'].includes(state)) await previousRecoveryJob.remove().catch(() => undefined);
+        }
+        const job = await this.contentQueue.add(
+          VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB,
+          { taskId: task.id, audioItems, createdById: task.createdById },
+          { jobId: recoveryJobId },
+        );
+        await this.prisma.adminTask.update({
+          where: { id: task.id },
+          data: { bullJobId: job.id, currentStep: `resume:${task.processedItems}/${task.totalItems}` },
+        });
+        await this.log(
+          task.id,
+          'warn',
+          `后端重启后已从 ${task.processedItems}/${task.totalItems} 的检查点重新入队`,
+          { step: 'resumed', meta: { processedItems: task.processedItems, totalItems: task.totalItems } },
+        );
+      } catch (error) {
+        this.logger.error(`Failed to recover vocab example audio task ${task.id}`, error instanceof Error ? error.stack : String(error));
       }
     }
   }
@@ -164,6 +230,40 @@ export class AdminTasksService implements OnModuleInit {
     );
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
     await this.log(task.id, 'info', `已加入队列：补全本页 ${audioItems.length} 条 UK / US 音频`, { step: 'queued' });
+    return { ...task, bullJobId: job.id };
+  }
+
+  async enqueueVocabularyExampleAudioBatch(createdById: string, params?: LibraryVocabularyListParams) {
+    const page = await this.vocabularyExampleAudio.listPage(params);
+    const audioItems = this.vocabularyExampleAudio.collectMissingItems(page.items);
+    if (!audioItems.length) throw new BadRequestException('当前页例句音频均已齐全（或尚无例句）');
+
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB,
+        title: `补全词汇例句音频：第 ${page.page} 页（${audioItems.length} 条）`,
+        targetType: 'vocabulary_example_audio',
+        targetId: String(page.page),
+        createdById,
+        totalItems: audioItems.length,
+        payload: {
+          audioItems,
+          page: page.page,
+          pageSize: page.pageSize,
+          search: params?.search?.trim() || undefined,
+          matchType: params?.matchType,
+          difficulty: params?.difficulty || undefined,
+          pronunciationStatus: params?.pronunciationStatus || undefined,
+          qualityIssue: params?.qualityIssue || undefined,
+        } as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.contentQueue.add(
+      VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB,
+      { taskId: task.id, audioItems, createdById },
+    );
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', `已加入队列：补全本页 ${audioItems.length} 条例句音频`, { step: 'queued' });
     return { ...task, bullJobId: job.id };
   }
 
@@ -849,6 +949,18 @@ export class AdminTasksService implements OnModuleInit {
         filter: payload?.filter,
       });
     }
+    if (task.type === VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB && createdById) {
+      const payload = task.payload as any;
+      return this.enqueueVocabularyExampleAudioBatch(createdById, {
+        page: payload?.page,
+        pageSize: payload?.pageSize,
+        search: payload?.search,
+        matchType: payload?.matchType,
+        difficulty: payload?.difficulty,
+        pronunciationStatus: payload?.pronunciationStatus,
+        qualityIssue: payload?.qualityIssue,
+      });
+    }
     if (task.type !== CONTENT_PREPARE_JOB || task.targetType !== 'scene' || !task.targetId) {
       throw new NotFoundException('暂不支持重试该任务');
     }
@@ -1185,6 +1297,7 @@ export class AdminTasksService implements OnModuleInit {
         userId: payload?.userId || userId,
         frames: payload?.frames || [],
         words: payload?.words || [],
+        audioItems: payload?.audioItems || [],
         retryItems: payload?.retryItems,
         topicId: payload?.topicId,
         createdById: payload?.createdById || userId,
