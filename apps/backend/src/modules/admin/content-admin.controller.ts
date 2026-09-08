@@ -171,6 +171,54 @@ export class ContentAdminController {
     return this.contentAccess.requireManager(req);
   }
 
+  private async syncOxford5kVocabularyTags() {
+    const { existsSync, readFileSync } = await import('fs');
+    const { join } = await import('path');
+    const tag = 'oxford-5k';
+    const cwd = process.cwd();
+    const csvPath = [
+      join(cwd, 'prisma', 'data', 'oxford-5k.csv'),
+      join(cwd, '..', 'oxford-5k.csv'),
+      join(cwd, 'oxford-5k.csv'),
+    ].find((path) => existsSync(path));
+    if (!csvPath) throw new BadRequestException('找不到 oxford-5k.csv');
+
+    const oxfordWords = [...new Set(
+      readFileSync(csvPath, 'utf-8')
+        .split(/\r?\n/)
+        .slice(1)
+        .map((line) => line.split(',', 1)[0]?.trim().toLowerCase())
+        .filter((word): word is string => !!word),
+    )];
+
+    await this.prisma.$executeRawUnsafe(`
+      ALTER TABLE vocabulary
+      ADD COLUMN IF NOT EXISTS tags TEXT[] NOT NULL DEFAULT '{}'::text[]
+    `);
+
+    const updated = await this.prisma.$executeRaw`
+      UPDATE vocabulary
+      SET tags = array_append(tags, ${tag})
+      WHERE lower(word) = ANY(${oxfordWords}::text[])
+        AND NOT (${tag} = ANY(tags))
+    `;
+
+    const matched = await this.prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*)::bigint AS count
+      FROM vocabulary
+      WHERE lower(word) = ANY(${oxfordWords}::text[])
+    `;
+
+    return {
+      tag,
+      oxfordUnique: oxfordWords.length,
+      matched: Number(matched[0]?.count ?? 0),
+      updated: Number(updated),
+      skipped: Math.max(0, Number(matched[0]?.count ?? 0) - Number(updated)),
+      missingInLibrary: Math.max(0, oxfordWords.length - Number(matched[0]?.count ?? 0)),
+    };
+  }
+
   private async detachInkScript(id: string) {
     await this.prisma.trainingTopic.updateMany({
       where: { inkScriptId: id },
@@ -3299,6 +3347,7 @@ ${contextBlock}
     @Query('difficulty') difficulty?: string,
     @Query('pronunciationStatus') pronunciationStatus?: string,
     @Query('qualityIssue') qualityIssue?: string,
+    @Query('tag') tag?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
@@ -3348,6 +3397,8 @@ ${contextBlock}
       andFilters.push({ definitionEn: { not: null } });
       andFilters.push({ NOT: { definitionEn: '' } });
     }
+    const tagFilter = tag?.trim();
+    if (tagFilter) andFilters.push({ tags: { has: tagFilter } });
     if (andFilters.length) where.AND = andFilters;
 
     const p = Math.max(1, parseInt(page || '1'));
@@ -3358,7 +3409,7 @@ ${contextBlock}
       const candidates = await this.prisma.vocabulary.findMany({
         where,
         select: { id: true, definitionEn: true },
-        orderBy: { sortOrder: 'asc' },
+        orderBy: { word: 'asc' },
       });
       const matchedIds = candidates
         .filter((v) => v.definitionEn && !/[\u3400-\u9fff]/.test(v.definitionEn))
@@ -3376,7 +3427,7 @@ ${contextBlock}
     const [items, total] = await Promise.all([
       this.prisma.vocabulary.findMany({
         where,
-        orderBy: { sortOrder: 'asc' },
+        orderBy: { word: 'asc' },
         skip: (p - 1) * ps,
         take: ps,
       }),
@@ -3384,6 +3435,26 @@ ${contextBlock}
     ]);
 
     return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
+  }
+
+  /** 返回语料库中已出现过的过滤标签（用于管理端筛选） */
+  @Get('library/vocabularies/tags')
+  async listLibraryVocabularyTags(@Req() req: Request) {
+    await this.requireAdmin(req);
+    const rows = await this.prisma.$queryRaw<Array<{ tag: string; count: bigint }>>`
+      SELECT tag, COUNT(*)::bigint AS count
+      FROM vocabulary, unnest(tags) AS tag
+      GROUP BY tag
+      ORDER BY tag ASC
+    `;
+    return rows.map((row) => ({ tag: row.tag, count: Number(row.count) }));
+  }
+
+  /** 根据 prisma/data/oxford-5k.csv 给已有词汇打上 oxford-5k 标签（不建新词） */
+  @Post('library/vocabularies/tags/oxford-5k/sync')
+  async syncOxford5kTags(@Req() req: Request) {
+    await this.requireAdmin(req);
+    return this.syncOxford5kVocabularyTags();
   }
 
   @Post('library/vocabularies')

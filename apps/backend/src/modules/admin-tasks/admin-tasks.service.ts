@@ -255,6 +255,7 @@ export class AdminTasksService implements OnModuleInit {
           difficulty: params?.difficulty || undefined,
           pronunciationStatus: params?.pronunciationStatus || undefined,
           qualityIssue: params?.qualityIssue || undefined,
+          tag: params?.tag?.trim() || undefined,
         } as Prisma.InputJsonValue,
       },
     });
@@ -959,6 +960,7 @@ export class AdminTasksService implements OnModuleInit {
         difficulty: payload?.difficulty,
         pronunciationStatus: payload?.pronunciationStatus,
         qualityIssue: payload?.qualityIssue,
+        tag: payload?.tag,
       });
     }
     if (task.type !== CONTENT_PREPARE_JOB || task.targetType !== 'scene' || !task.targetId) {

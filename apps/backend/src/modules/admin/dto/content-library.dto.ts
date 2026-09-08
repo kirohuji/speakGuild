@@ -20,6 +20,7 @@ export class CreateFullVocabularyDto {
   @IsOptional() @IsString() audioUkUrl?: string;
   @IsOptional() @IsString() definitionEn?: string;
   @IsOptional() @IsArray() @IsString({ each: true }) synonyms?: string[];
+  @IsOptional() @IsArray() @IsString({ each: true }) tags?: string[];
   @IsOptional() @IsArray() examples?: ExampleDto[];
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsString() difficulty?: string;
@@ -36,6 +37,7 @@ export class UpdateFullVocabularyDto {
   @IsOptional() @IsString() audioUkUrl?: string;
   @IsOptional() @IsString() definitionEn?: string;
   @IsOptional() @IsArray() @IsString({ each: true }) synonyms?: string[];
+  @IsOptional() @IsArray() @IsString({ each: true }) tags?: string[];
   @IsOptional() @IsArray() examples?: ExampleDto[];
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsString() difficulty?: string;

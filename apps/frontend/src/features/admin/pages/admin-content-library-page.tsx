@@ -187,12 +187,22 @@ function VocabularyTab() {
   const [search, setSearch] = useState('')
   const [matchType, setMatchType] = useState<'fuzzy' | 'exact'>('fuzzy')
   const [difficulty, setDifficulty] = useState('')
+  const [tag, setTag] = useState('')
+  const [availableTags, setAvailableTags] = useState<Array<{ tag: string; count: number }>>([])
   const [pronunciationStatus, setPronunciationStatus] = useState<'' | 'missing-phonetic' | 'missing-audio' | 'incomplete'>('')
   const [qualityIssue, setQualityIssue] = useState<'' | 'meaning-other' | 'english-only-definition'>('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<api.VocabularyFull | null>(null)
+
+  const loadTags = useCallback(async () => {
+    try {
+      setAvailableTags(await api.listLibraryVocabularyTags())
+    } catch {
+      setAvailableTags([])
+    }
+  }, [])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -201,6 +211,7 @@ function VocabularyTab() {
         search,
         matchType,
         difficulty,
+        tag: tag || undefined,
         pronunciationStatus: pronunciationStatus || undefined,
         qualityIssue: qualityIssue || undefined,
         page,
@@ -209,9 +220,10 @@ function VocabularyTab() {
     }
     catch { setData(null) }
     finally { setLoading(false) }
-  }, [search, matchType, difficulty, pronunciationStatus, qualityIssue, page, pageSize])
+  }, [search, matchType, difficulty, tag, pronunciationStatus, qualityIssue, page, pageSize])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => { void loadTags() }, [loadTags])
 
   const totalPages = data?.totalPages ?? 1
   const qualityIssueLabel = qualityIssue === 'meaning-other'
@@ -243,6 +255,15 @@ function VocabularyTab() {
             <option value="">全部等级</option>
             {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
           </Select>
+          <Select value={tag} onChange={(e) => { setTag(e.target.value); setPage(1) }} className="w-44">
+            <option value="">全部标签</option>
+            <option value="oxford-5k">oxford-5k</option>
+            {availableTags
+              .filter((item) => item.tag !== 'oxford-5k')
+              .map((item) => (
+                <option key={item.tag} value={item.tag}>{item.tag}（{item.count}）</option>
+              ))}
+          </Select>
           <Select value={pronunciationStatus} onChange={(e) => { setPronunciationStatus(e.target.value as typeof pronunciationStatus); setPage(1) }} className="w-40">
             <option value="">全部发音状态</option>
             <option value="incomplete">音标或发音缺失</option>
@@ -260,6 +281,18 @@ function VocabularyTab() {
           )}
         </div>
         <div className="flex flex-wrap justify-end gap-2">
+          <Button size="sm" variant="outline" title="根据 oxford-5k.csv 给已有词汇打上 oxford-5k 标签（不新建词）" onClick={async () => {
+            try {
+              const result = await api.syncOxford5kVocabularyTags()
+              toast.success(`牛津标签同步完成：更新 ${result.updated}，已有 ${result.skipped}，库中未命中 ${result.missingInLibrary}`)
+              await loadTags()
+              if (tag === 'oxford-5k') await load()
+            } catch (err: any) {
+              toast.error(err?.message || '同步牛津标签失败')
+            }
+          }}>
+            <RefreshCw data-icon="inline-start" />同步牛津5000标签
+          </Button>
           <Button size="sm" variant="outline" onClick={async () => {
             try {
               const result = await api.syncLibraryVocabularyDictionaryPronunciations();
@@ -279,6 +312,7 @@ function VocabularyTab() {
                 search: search || undefined,
                 matchType,
                 difficulty: difficulty || undefined,
+                tag: tag || undefined,
                 pronunciationStatus: pronunciationStatus || undefined,
                 qualityIssue: qualityIssue || undefined,
               });

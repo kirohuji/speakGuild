@@ -23,6 +23,7 @@ export type LibraryVocabularyListParams = {
   difficulty?: string;
   pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete' | '';
   qualityIssue?: 'meaning-other' | 'english-only-definition' | '';
+  tag?: string;
   page?: number;
   pageSize?: number;
 };
@@ -97,6 +98,8 @@ export class VocabularyExampleAudioService {
       andFilters.push({ definitionEn: { not: null } });
       andFilters.push({ NOT: { definitionEn: '' } });
     }
+    const tag = params?.tag?.trim();
+    if (tag) andFilters.push({ tags: { has: tag } });
     if (andFilters.length) where.AND = andFilters;
     return where;
   }
@@ -110,7 +113,7 @@ export class VocabularyExampleAudioService {
       const candidates = await this.prisma.vocabulary.findMany({
         where,
         select: { id: true, definitionEn: true },
-        orderBy: { sortOrder: 'asc' },
+        orderBy: { word: 'asc' },
       });
       const matchedIds = candidates
         .filter((item) => item.definitionEn && !/[\u3400-\u9fff]/.test(item.definitionEn))
@@ -128,7 +131,7 @@ export class VocabularyExampleAudioService {
     const [items, total] = await Promise.all([
       this.prisma.vocabulary.findMany({
         where,
-        orderBy: { sortOrder: 'asc' },
+        orderBy: { word: 'asc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),

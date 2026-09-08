@@ -863,6 +863,7 @@ export interface VocabularyFull {
   phoneticUs?: string | null; phoneticUk?: string | null;
   audioUsUrl?: string | null; audioUkUrl?: string | null;
   definitionEn?: string | null; synonyms: string[];
+  tags?: string[];
   examples?: any; description?: string | null;
   difficulty: string; sortOrder: number;
 }
@@ -892,9 +893,25 @@ export function listLibraryVocabularies(params?: {
   search?: string; matchType?: 'fuzzy' | 'exact'; difficulty?: string;
   pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete';
   qualityIssue?: 'meaning-other' | 'english-only-definition';
+  tag?: string;
   page?: number; pageSize?: number
 }): Promise<PaginatedResult<VocabularyFull>> {
   return get('/admin/content/library/vocabularies', params);
+}
+
+export function listLibraryVocabularyTags(): Promise<Array<{ tag: string; count: number }>> {
+  return get('/admin/content/library/vocabularies/tags');
+}
+
+export function syncOxford5kVocabularyTags(): Promise<{
+  tag: string;
+  oxfordUnique: number;
+  matched: number;
+  updated: number;
+  skipped: number;
+  missingInLibrary: number;
+}> {
+  return post('/admin/content/library/vocabularies/tags/oxford-5k/sync');
 }
 export function createLibraryVocabulary(data: Partial<VocabularyFull>): Promise<VocabularyFull> {
   return post('/admin/content/library/vocabularies', data);
@@ -957,6 +974,7 @@ export function enqueueLibraryVocabularyExampleAudioCurrentPage(params: {
   difficulty?: string;
   pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete';
   qualityIssue?: 'meaning-other' | 'english-only-definition';
+  tag?: string;
 }): Promise<{ id: string; totalItems: number }> {
   return post('/admin/tasks/library-vocabularies/generate-current-page-example-audio', undefined, { params });
 }

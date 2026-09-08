@@ -1048,6 +1048,7 @@ model Vocabulary {
   audioUkUrl               String? // 英式发音音频
   definitionEn             String?                  @db.Text // 英文释义
   synonyms                 String[]                 @default([]) // 同义词
+  tags                     String[]                 @default([]) // 过滤标签，如 oxford-5k
   examples                 Json? // 例句 [{ en, zh, note? }]
   description              String?                  @db.Text // 用法讲解/搭配说明
   difficulty               String                   @default("L1") // L1~L5
@@ -1064,6 +1065,7 @@ model Vocabulary {
   @@unique([word])
   @@index([difficulty, difficultyReviewedAt])
   @@index([updatedAt])
+  @@index([tags], type: Gin)
   @@map("vocabulary")
 }
 
