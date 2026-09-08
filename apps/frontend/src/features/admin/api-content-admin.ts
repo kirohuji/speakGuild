@@ -892,7 +892,7 @@ export interface PaginatedResult<T> {
 export function listLibraryVocabularies(params?: {
   search?: string; matchType?: 'fuzzy' | 'exact'; difficulty?: string;
   pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete';
-  qualityIssue?: 'meaning-other' | 'english-only-definition';
+  qualityIssue?: 'meaning-other' | 'english-only-definition' | 'missing-pos-prefix';
   tag?: string;
   page?: number; pageSize?: number
 }): Promise<PaginatedResult<VocabularyFull>> {
@@ -949,6 +949,11 @@ export function rewriteVocabulariesMeaningOther(): Promise<{ taskId: string }> {
   return post('/admin/content/library/vocabularies/rewrite-meaning-other');
 }
 
+/** 扫描缺词性前缀的纯中文释义，轻量 AI 只重写 meaning */
+export function rewriteVocabulariesMeaningMissingPos(): Promise<{ taskId: string }> {
+  return post('/admin/content/library/vocabularies/rewrite-meaning-missing-pos');
+}
+
 /** 词典+AI 富化英文释义未双语的词汇；只更新 definitionEn 与 difficulty。 */
 export function enrichEnglishOnlyVocabularyDefinitions(): Promise<{ taskId: string; reused?: boolean }> {
   return post('/admin/content/library/vocabularies/enrich-english-only-definitions');
@@ -973,7 +978,7 @@ export function enqueueLibraryVocabularyExampleAudioCurrentPage(params: {
   matchType?: 'fuzzy' | 'exact';
   difficulty?: string;
   pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete';
-  qualityIssue?: 'meaning-other' | 'english-only-definition';
+  qualityIssue?: 'meaning-other' | 'english-only-definition' | 'missing-pos-prefix';
   tag?: string;
 }): Promise<{ id: string; totalItems: number }> {
   return post('/admin/tasks/library-vocabularies/generate-current-page-example-audio', undefined, { params });

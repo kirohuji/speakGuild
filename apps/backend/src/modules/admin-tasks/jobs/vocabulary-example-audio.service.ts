@@ -7,6 +7,7 @@ import {
   type VoiceGender,
 } from '../../dictionary/dictionary-audio.service';
 import { FileAssetsService } from '../../file-assets/file-assets.service';
+import { vocabularyMeaningMissingPosPrefix } from '../../admin/vocabulary-meaning.util';
 
 export type VocabularyExampleAudioItem = {
   vocabularyId: string;
@@ -22,7 +23,7 @@ export type LibraryVocabularyListParams = {
   matchType?: 'fuzzy' | 'exact';
   difficulty?: string;
   pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete' | '';
-  qualityIssue?: 'meaning-other' | 'english-only-definition' | '';
+  qualityIssue?: 'meaning-other' | 'english-only-definition' | 'missing-pos-prefix' | '';
   tag?: string;
   page?: number;
   pageSize?: number;
@@ -98,6 +99,9 @@ export class VocabularyExampleAudioService {
       andFilters.push({ definitionEn: { not: null } });
       andFilters.push({ NOT: { definitionEn: '' } });
     }
+    if (params?.qualityIssue === 'missing-pos-prefix') {
+      andFilters.push({ NOT: { meaning: '' } });
+    }
     const tag = params?.tag?.trim();
     if (tag) andFilters.push({ tags: { has: tag } });
     if (andFilters.length) where.AND = andFilters;
@@ -109,14 +113,19 @@ export class VocabularyExampleAudioService {
     const pageSize = Math.min(100, Math.max(1, params?.pageSize || 20));
     const where = this.buildWhere(params);
 
-    if (params?.qualityIssue === 'english-only-definition') {
+    if (params?.qualityIssue === 'english-only-definition' || params?.qualityIssue === 'missing-pos-prefix') {
       const candidates = await this.prisma.vocabulary.findMany({
         where,
-        select: { id: true, definitionEn: true },
+        select: { id: true, definitionEn: true, meaning: true },
         orderBy: { word: 'asc' },
       });
       const matchedIds = candidates
-        .filter((item) => item.definitionEn && !/[\u3400-\u9fff]/.test(item.definitionEn))
+        .filter((item) => {
+          if (params?.qualityIssue === 'english-only-definition') {
+            return !!(item.definitionEn && !/[\u3400-\u9fff]/.test(item.definitionEn));
+          }
+          return vocabularyMeaningMissingPosPrefix(item.meaning);
+        })
         .map((item) => item.id);
       const total = matchedIds.length;
       const pageIds = matchedIds.slice((page - 1) * pageSize, page * pageSize);

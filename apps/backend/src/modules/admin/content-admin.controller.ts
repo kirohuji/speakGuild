@@ -26,6 +26,7 @@ import {
 } from './dto/content-library.dto';
 import { requireAuthSession } from '../auth/session.util';
 import { ContentAccessService } from './content-access.service';
+import { vocabularyMeaningMissingPosPrefix } from './vocabulary-meaning.util';
 
 /** 统计训练话题 pipeline 中的练习题数（与 warmup-pipeline-generate.service 口径一致） */
 function countPipelineExercises(pipeline: any[] | undefined): number {
@@ -3397,6 +3398,10 @@ ${contextBlock}
       andFilters.push({ definitionEn: { not: null } });
       andFilters.push({ NOT: { definitionEn: '' } });
     }
+    // 中文释义有汉字但缺少 n./v./adj. 等词性前缀
+    if (qualityIssue === 'missing-pos-prefix') {
+      andFilters.push({ NOT: { meaning: '' } });
+    }
     const tagFilter = tag?.trim();
     if (tagFilter) andFilters.push({ tags: { has: tagFilter } });
     if (andFilters.length) where.AND = andFilters;
@@ -3404,15 +3409,20 @@ ${contextBlock}
     const p = Math.max(1, parseInt(page || '1'));
     const ps = Math.min(100, Math.max(1, parseInt(pageSize || '20')));
 
-    // 纯英文释义无法用 Prisma 字符串过滤器表达「不含汉字」，先筛候选再内存判定后分页
-    if (qualityIssue === 'english-only-definition') {
+    // 需要内存判定的质量筛选：纯英文释义 / 释义缺词性前缀
+    if (qualityIssue === 'english-only-definition' || qualityIssue === 'missing-pos-prefix') {
       const candidates = await this.prisma.vocabulary.findMany({
         where,
-        select: { id: true, definitionEn: true },
+        select: { id: true, definitionEn: true, meaning: true },
         orderBy: { word: 'asc' },
       });
       const matchedIds = candidates
-        .filter((v) => v.definitionEn && !/[\u3400-\u9fff]/.test(v.definitionEn))
+        .filter((v) => {
+          if (qualityIssue === 'english-only-definition') {
+            return !!(v.definitionEn && !/[\u3400-\u9fff]/.test(v.definitionEn));
+          }
+          return vocabularyMeaningMissingPosPrefix(v.meaning);
+        })
         .map((v) => v.id);
       const total = matchedIds.length;
       const pageIds = matchedIds.slice((p - 1) * ps, p * ps);
@@ -3552,6 +3562,15 @@ ${contextBlock}
     await this.requireAdmin(req);
     const session = await requireAuthSession(req);
     const task = await this.adminTasksService.enqueueVocabularyMeaningOtherRewrite((session.user as any)?.id);
+    return { code: 200, message: 'success', data: { taskId: task.id } };
+  }
+
+  /** 只重写中文释义：扫描缺词性前缀（纯中文）的词，轻量 AI 只更新 meaning。 */
+  @Post('library/vocabularies/rewrite-meaning-missing-pos')
+  async rewriteVocabulariesMeaningMissingPos(@Req() req: Request) {
+    await this.requireAdmin(req);
+    const session = await requireAuthSession(req);
+    const task = await this.adminTasksService.enqueueVocabularyMeaningPosRewrite((session.user as any)?.id);
     return { code: 200, message: 'success', data: { taskId: task.id } };
   }
 

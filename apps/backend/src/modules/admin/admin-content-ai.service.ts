@@ -200,7 +200,7 @@ Return exactly a JSON object with these fields — no markdown, no code fences, 
   "generatedExamples": [
     { "en": "原创英文例句（不要照抄词典例句或参考句块，要全新创作）", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced" }
   ],
-  "meaning": "仅当中文释义 MISSING 时提供：按词性分组的简洁中文关键词。每个词性组必须以英文缩写POS前缀开头，且只能使用：n. v. adj. adv. pron. prep. conj. interj. num. det. art. phr. modal v. other（禁止中文词性如“名词/动词”，禁止英文全词如 noun/verb，缩写必须带点号）。同一词性所有义项用；连接，不同词性用 / 分隔。示例：n. 苹果；苹果树 / v. 结果实",
+  "meaning": "仅当中文释义 MISSING 时提供：按词性分组的简洁中文关键词。每个词性组必须以英文缩写POS前缀开头，且只能使用：n. v. adj. adv. pron. prep. conj. interj. num. det. art. phr. modal v.（禁止 other；禁止中文词性如“名词/动词”；禁止英文全词如 noun/verb；缩写必须带点号）。若词性不确定用 phr.，绝不用 other。同一词性所有义项用；连接，不同词性用 / 分隔。示例：n. 苹果；苹果树 / v. 结果实",
   "description": "仅当讲解 MISSING 时提供：中文学习笔记，轻量 Markdown。结构按需：**核心含义：**/**用法提示：**/**易错点：**/**常见搭配：**。每个小节独立成段，在下一个 **小节标题：** 之前必须空一行分隔，段内不要换行。英文用反引号。语气亲切。80-200字。",
   "difficulty": "仅当难度 MISSING 时提供：词汇难度等级，必须是 L1|L2|L3|L4|L5 之一：L1=基础高频（中考核心，如 apple/help）、L2=常用（高考核心，如 appointment/attitude）、L3=核心（大学四级/雅思6分，如 accommodate/derive）、L4=进阶（六级/雅思6.5-7，如 ambiguous/endeavor）、L5=低频专业（雅思7.5+/托福，如 ubiquitous/paradigm）。依据：词频、学习阶段、抽象程度。"
 }
@@ -219,7 +219,8 @@ Use CLEAN standard IPA inside /slashes/. Normalize /ɹ/ to /r/, syllabic consona
 1. Translations must sound like natural Chinese, not machine-translated English.
 2. The meaning field must cover EVERY sense — no merging.
 3. Description should focus on what's HARD for Chinese learners.
-4. Generated examples must be DIVERSE — different sentence structures, contexts, and registers.`,
+4. Generated examples must be DIVERSE — different sentence structures, contexts, and registers.
+5. NEVER put the POS label "other" into meaning. Map unclassified POS to phr.`,
       temperature: 0.4,
       maxOutputTokens: 2500,
     });
@@ -230,7 +231,7 @@ Use CLEAN standard IPA inside /slashes/. Normalize /ɹ/ to /r/, syllabic consona
       result = this.parseJsonText(text);
     } catch {
       // 主调用 JSON 解析失败：降级重试一次，只要求核心字段（避免整次调用作废）
-      const retryPrompt = `为英语单词 "${dto.word}" 生成中文学习内容。\n\n义项：\n${defLines}\n\n返回 JSON（无 markdown）：\n{"meaning": "按词性分组的中文释义（如 n. 苹果；苹果树 / v. 结果实）", "description": "80-150字中文讲解，含**核心含义：**/**用法提示：**/**易错点：**等小节，小节间空行分隔", "generatedExamples": [{"en": "原创英文例句", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced"}]}`;
+      const retryPrompt = `为英语单词 "${dto.word}" 生成中文学习内容。\n\n义项：\n${defLines}\n\n返回 JSON（无 markdown）：\n{"meaning": "按词性分组的中文释义，POS 只能用 n./v./adj./adv./pron./prep./conj./interj./num./det./art./phr./modal v.，禁止 other（不确定用 phr.），如 n. 苹果；苹果树 / v. 结果实", "description": "80-150字中文讲解，含**核心含义：**/**用法提示：**/**易错点：**等小节，小节间空行分隔", "generatedExamples": [{"en": "原创英文例句", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced"}]}`;
       const retry = await generateText({
         model,
         prompt: retryPrompt,
@@ -250,7 +251,7 @@ Use CLEAN standard IPA inside /slashes/. Normalize /ɹ/ to /r/, syllabic consona
         zh: e.zh || '',
         level: e.level || 'intermediate',
       })),
-      meaning: result.meaning ?? '',
+      meaning: this.sanitizeVocabularyMeaning(result.meaning ?? ''),
       description: result.description ?? '',
       difficulty: ['L1', 'L2', 'L3', 'L4', 'L5'].includes(result.difficulty) ? result.difficulty : '',
     };
@@ -417,7 +418,9 @@ ${exLines || '(none)'}
 
 ## Task
 Rewrite ONLY the Chinese meaning (gloss) for the word below.
-The current meaning is wrong or low-quality — often because it contains the POS label "other" (a fallback when the dictionary could not classify the part of speech).
+The current meaning is wrong or low-quality — often because:
+- it contains the POS label "other" (a fallback when the dictionary could not classify the part of speech), OR
+- it is plain Chinese without any POS prefixes like n. / v. / adj.
 
 ## Input
 Word: "${dto.word}"
@@ -437,6 +440,7 @@ ${dto.definitionEn?.trim() || '(none)'}
 5. Prefer the 2-3 most common senses; drop rare/redundant ones. Max ~60 Chinese characters.
 6. Infer the real POS from the English definitions (and the word itself). If unsure, use phr. — never other.
 7. Keep natural Chinese; do not copy long dictionary definitions.
+8. Do NOT invent examples, phonetics, or explanations — return ONLY the meaning field.
 
 ## Output (raw JSON, no markdown, no code fences)
 {
@@ -453,7 +457,16 @@ ${dto.definitionEn?.trim() || '(none)'}
       return { meaning: '' };
     }
     if (usage) onUsage?.(extractUsage(usage)!);
-    return { meaning: typeof result.meaning === 'string' ? result.meaning.trim() : '' };
+    return { meaning: this.sanitizeVocabularyMeaning(typeof result.meaning === 'string' ? result.meaning.trim() : '') };
+  }
+
+  /** 与「重写含 other」对齐：禁止 meaning 里出现 POS 标签 other，兜底改成 phr. */
+  private sanitizeVocabularyMeaning(meaning: string) {
+    if (!meaning?.trim()) return '';
+    return meaning
+      .replace(/(^|[\s/])other\.?(?=\s|$)/gi, '$1phr.')
+      .replace(/\bother\b(?=\s*[:：])/gi, 'phr.')
+      .trim();
   }
 
   async enrichChunk(

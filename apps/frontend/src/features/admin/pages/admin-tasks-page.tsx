@@ -36,6 +36,7 @@ const TYPE_LABELS: Record<string, string> = {
   'vocabulary-missing-meaning-enrich': '词汇字段检查与 AI 补全（词典+AI）',
   'vocabulary-polish': '词汇例句翻译补全与释义精简',
   'vocabulary-meaning-other-rewrite': '重写含 other 的中文释义',
+  'vocabulary-meaning-pos-rewrite': '重写缺词性前缀的中文释义',
   'vocabulary-bilingual-definition-enrich': '词典+AI 富化未双语英文释义',
   'vocabulary-difficulty-reclassify': '词典+AI 检查未复核 L1 难度',
   'chunk-missing-meaning-enrich': '句块字段检查与 AI 补全',
@@ -354,6 +355,20 @@ function SummaryPanel({ task }: { task: AdminTask }) {
     );
   }
 
+  if (task.type === 'vocabulary-meaning-pos-rewrite') {
+    const errors = taskErrors(task).length || summary.failed || task.failedItems;
+    return (
+      <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
+        <div className="grid grid-cols-3 gap-2">
+          <Metric label="已扫描" value={summary.scanned ?? 0} tone="muted" />
+          <Metric label="已重写" value={summary.enriched ?? 0} tone="good" />
+          <Metric label="失败" value={errors} tone={errors ? 'bad' : 'muted'} />
+        </div>
+        <p className="text-xs text-muted-foreground">只更新 meaning 字段；发现缺词性前缀释义 {summary.missingEnrich ?? 0} 个。</p>
+      </div>
+    );
+  }
+
   if (task.type === 'vocabulary-bilingual-definition-enrich') {
     const errors = taskErrors(task).length || summary.failed || task.failedItems;
     return (
@@ -444,7 +459,7 @@ function SummaryPanel({ task }: { task: AdminTask }) {
 
 export function AdminTasksPage() {
   const [status, setStatus] = useState<AdminTaskStatus | 'all' | 'active'>('active');
-  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'warmup-pipeline-generate' | 'scene-topic-batch-generate' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'vocabulary-polish' | 'vocabulary-meaning-other-rewrite' | 'vocabulary-bilingual-definition-enrich' | 'vocabulary-difficulty-reclassify' | 'chunk-missing-meaning-enrich' | 'pattern-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
+  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'warmup-pipeline-generate' | 'scene-topic-batch-generate' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'vocabulary-polish' | 'vocabulary-meaning-other-rewrite' | 'vocabulary-meaning-pos-rewrite' | 'vocabulary-bilingual-definition-enrich' | 'vocabulary-difficulty-reclassify' | 'chunk-missing-meaning-enrich' | 'pattern-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
   const [items, setItems] = useState<AdminTask[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AdminTaskDetail | null>(null);
@@ -604,6 +619,7 @@ export function AdminTasksPage() {
     || task.type === 'vocabulary-missing-meaning-enrich'
     || task.type === 'vocabulary-polish'
     || task.type === 'vocabulary-meaning-other-rewrite'
+    || task.type === 'vocabulary-meaning-pos-rewrite'
     || task.type === 'vocabulary-bilingual-definition-enrich'
     || task.type === 'vocabulary-difficulty-reclassify'
     || task.type === 'chunk-missing-meaning-enrich'
@@ -629,6 +645,7 @@ export function AdminTasksPage() {
             <option value="vocabulary-csv-import">词汇 CSV 批量导入</option>
             <option value="vocabulary-polish">词汇例句翻译补全与释义精简</option>
             <option value="vocabulary-meaning-other-rewrite">重写含 other 的中文释义</option>
+            <option value="vocabulary-meaning-pos-rewrite">重写缺词性前缀的中文释义</option>
             <option value="vocabulary-bilingual-definition-enrich">词典+AI 富化未双语英文释义</option>
             <option value="vocabulary-difficulty-reclassify">词典+AI 检查未复核 L1 难度</option>
             <option value="vocabulary-missing-meaning-enrich">词汇字段检查与 AI 补全（词典+AI）</option>

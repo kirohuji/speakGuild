@@ -125,7 +125,19 @@ function deriveMeaning(definitionsEn: string): string {
   definitionsEn.split('; ').forEach(d => {
     const colonIdx = d.indexOf(': ')
     const posRaw = colonIdx > 0 ? d.slice(0, colonIdx) : ''
-    const pos = posRaw === 'verb' ? 'v.' : posRaw === 'noun' ? 'n.' : posRaw === 'adj' ? 'adj.' : posRaw === 'adv' ? 'adv.' : posRaw
+    // 与后端 content-prepare / rewrite-other 对齐：词典兜底桶 other → phr.
+    const pos = posRaw === 'verb' ? 'v.'
+      : posRaw === 'noun' ? 'n.'
+        : posRaw === 'adj' ? 'adj.'
+          : posRaw === 'adv' ? 'adv.'
+            : posRaw === 'pronoun' ? 'pron.'
+              : posRaw === 'preposition' ? 'prep.'
+                : posRaw === 'conjunction' ? 'conj.'
+                  : posRaw === 'interjection' ? 'interj.'
+                    : posRaw === 'determiner' ? 'det.'
+                      : posRaw === 'article' ? 'art.'
+                        : posRaw === 'other' ? 'phr.'
+                          : posRaw
     const zhMatch = d.match(/\s\s\[(.+?)\]$/)
     if (zhMatch && pos) {
       if (!zhByPos[pos]) zhByPos[pos] = []
@@ -190,7 +202,7 @@ function VocabularyTab() {
   const [tag, setTag] = useState('')
   const [availableTags, setAvailableTags] = useState<Array<{ tag: string; count: number }>>([])
   const [pronunciationStatus, setPronunciationStatus] = useState<'' | 'missing-phonetic' | 'missing-audio' | 'incomplete'>('')
-  const [qualityIssue, setQualityIssue] = useState<'' | 'meaning-other' | 'english-only-definition'>('')
+  const [qualityIssue, setQualityIssue] = useState<'' | 'meaning-other' | 'english-only-definition' | 'missing-pos-prefix'>('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -230,7 +242,9 @@ function VocabularyTab() {
     ? '中文释义含 other'
     : qualityIssue === 'english-only-definition'
       ? '英文释义未双语'
-      : ''
+      : qualityIssue === 'missing-pos-prefix'
+        ? '释义缺词性前缀'
+        : ''
 
   const applyQualityIssue = (issue: typeof qualityIssue) => {
     setQualityIssue((prev) => (prev === issue ? '' : issue))
@@ -349,6 +363,31 @@ function VocabularyTab() {
             }}
           >
             <RefreshCw data-icon="inline-start" />重写含 other 释义
+          </Button>
+          <Button
+            size="sm"
+            variant={qualityIssue === 'missing-pos-prefix' ? 'default' : 'outline'}
+            title="查出中文释义有汉字、但没有任何 n./v./adj. 等词性前缀的词（纯中文释义）"
+            onClick={() => applyQualityIssue('missing-pos-prefix')}
+          >
+            <AlertTriangle data-icon="inline-start" />释义缺词性前缀
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            title="轻量重写：只更新中文释义，扫描全部缺词性前缀的词，参考词典释义生成 n./v./adj. 格式（不改例句/音标/讲解）"
+            onClick={async () => {
+              try {
+                await api.rewriteVocabulariesMeaningMissingPos();
+                toast.success('已创建「重写缺词性前缀释义」任务，只更新 meaning 字段', {
+                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+                });
+              } catch (err: any) {
+                toast.error(err?.message || '创建释义重写任务失败');
+              }
+            }}
+          >
+            <Sparkles data-icon="inline-start" />重写缺词性释义
           </Button>
           <Button
             size="sm"
