@@ -296,15 +296,53 @@ Return raw JSON only:
     });
     if (usage) onUsage?.(extractUsage(usage)!);
     const result = this.parseJsonText(text);
-    const difficulty = ['L1', 'L2', 'L3', 'L4', 'L5'].includes(result.difficulty)
-      ? result.difficulty
-      : '';
     return {
       definitionTranslations: Array.isArray(result.definitionTranslations)
         ? result.definitionTranslations.map((value: unknown) => typeof value === 'string' ? value.trim() : '')
         : [],
-      difficulty,
+      difficulty: this.normalizeDifficultyLevel(result.difficulty),
     };
+  }
+
+  /** 归一化难度：接受 L1/l1/"难度 L2"/带空格等，非法则空串 */
+  private normalizeDifficultyLevel(value: unknown): string {
+    if (typeof value !== 'string' && typeof value !== 'number') return '';
+    const match = String(value).trim().toUpperCase().match(/\bL[1-5]\b/);
+    return match?.[0] ?? '';
+  }
+
+  /** 从模型回复中按顺序抽出 L1~L5（逗号/换行/空格分隔均可） */
+  private extractDifficultySequence(text: string, expected: number): string[] {
+    const levels = Array.from(String(text).toUpperCase().matchAll(/\bL[1-5]\b/g), (m) => m[0]);
+    return levels.slice(0, expected);
+  }
+
+  private compactDifficultyGloss(item: VocabularyDifficultyBatchItem): string {
+    const raw = (item.meaning?.trim() || item.definitions[0] || '')
+      .replace(/\s+\[[^\]]*\]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return raw.slice(0, 36);
+  }
+
+  /** 单词轻量难度判定（批量漏项兜底） */
+  async reviewVocabularyDifficultyOne(
+    word: string,
+    meaning?: string,
+    onUsage?: (usage: AiUsage) => void,
+  ): Promise<string> {
+    const model = this.getDeepSeekModel();
+    const gloss = (meaning ?? '').trim().slice(0, 36);
+    const { text, usage } = await generateText({
+      model,
+      prompt: `ESL难度(中国学习者) L1中考高频 L2高考常用 L3四级 L4六级 L5低频学术. 勿默认L1.
+词: ${word.trim().slice(0, 40)}${gloss ? ` | ${gloss}` : ''}
+只回 L1|L2|L3|L4|L5 之一.`,
+      temperature: 0.1,
+      maxOutputTokens: 8,
+    });
+    if (usage) onUsage?.(extractUsage(usage)!);
+    return this.normalizeDifficultyLevel(text);
   }
 
   async reviewVocabularyDifficultiesBatch(
@@ -313,29 +351,28 @@ Return raw JSON only:
   ): Promise<Array<{ id: string; difficulty: string }>> {
     if (!items.length) return [];
     const model = this.getDeepSeekModel();
-    const compactItems = items.map((item) => ({
-      id: item.id,
-      word: item.word.trim().slice(0, 80),
-      meaning: item.meaning?.trim().slice(0, 100) || '',
-      definitions: item.definitions
-        .slice(0, 2)
-        .map((definition) => definition.replace(/\s+\[[^\]]*\]\s*$/, '').trim().slice(0, 180)),
-    }));
+    // 用序号代替 cuid，只带 word + 极短释义，大幅压缩 token
+    const lines = items.map((item, index) => {
+      const word = item.word.trim().slice(0, 40);
+      const gloss = this.compactDifficultyGloss(item);
+      return gloss ? `${index}|${word}|${gloss}` : `${index}|${word}`;
+    }).join('\n');
+
     const { text, usage } = await generateText({
       model,
-      prompt: `Classify each English word by learner difficulty. L1=junior-secondary basic/high-frequency; L2=senior-secondary common; L3=CET-4/IELTS6; L4=CET-6/IELTS6.5-7; L5=rare academic/specialist IELTS7.5+/TOEFL. Use frequency, abstraction and common senses; do not default to L1.
-Input:${JSON.stringify(compactItems)}
-Return exactly one plain-text line per input item, preserving order. No header, JSON, bullets or explanation:
-<id><TAB><L1|L2|L3|L4|L5>`,
+      prompt: `给中国学习者标 ESL 难度. L1中考高频 L2高考常用 L3四级/雅思6 L4六级/雅思6.5 L5低频学术. 按词频与抽象度,勿默认L1.
+输入(序号|词|短释义):
+${lines}
+只输出与输入同序、逗号分隔的难度,例: L2,L1,L3
+禁止其它文字.`,
       temperature: 0.1,
-      maxOutputTokens: Math.max(100, items.length * 18),
+      maxOutputTokens: Math.max(60, items.length * 4),
     });
     if (usage) onUsage?.(extractUsage(usage)!);
-    return items.flatMap((item) => {
-      const idIndex = text.indexOf(item.id);
-      if (idIndex < 0) return [];
-      const followingText = text.slice(idIndex + item.id.length, idIndex + item.id.length + 80);
-      const difficulty = followingText.match(/\bL[1-5]\b/)?.[0];
+
+    const levels = this.extractDifficultySequence(text, items.length);
+    return items.flatMap((item, index) => {
+      const difficulty = levels[index] || '';
       return difficulty ? [{ id: item.id, difficulty }] : [];
     });
   }

@@ -1365,7 +1365,7 @@ export class VocabularyCsvImportService {
       successItems: updated + unchanged, failedItems: failed,
     });
 
-    const batchSize = 20;
+    const batchSize = 30;
     for (let index = 0; index < candidates.length; index += batchSize) {
       if (await this.adminTasksService.isCanceled(taskId)) return;
       const batch = candidates.slice(index, index + batchSize);
@@ -1385,6 +1385,24 @@ export class VocabularyCsvImportService {
         let batchUpdated = 0;
         let batchUnchanged = 0;
         const reviewedAt = new Date();
+
+        // 批量漏掉的词：单条轻量复核兜底
+        for (const candidate of batch) {
+          if (resultById.get(candidate.id)) continue;
+          try {
+            const difficulty = await this.adminContentAiService.reviewVocabularyDifficultyOne(
+              candidate.word,
+              candidate.meaning,
+              usageCallback(usageStats),
+            );
+            if (difficulty) {
+              resultById.set(candidate.id, difficulty);
+            }
+          } catch {
+            // 单条失败仍记入 missingResults
+          }
+        }
+
         for (const candidate of batch) {
           const difficulty = resultById.get(candidate.id);
           if (!difficulty) {
