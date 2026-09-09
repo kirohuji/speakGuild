@@ -210,12 +210,10 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         const newItems: ChunkSubstitutionItem['items'] = res.items.map((it: any) => (
           (local.direction ?? 'zh_to_en') === 'en_to_zh'
             ? { en: it.en ?? it.zh, answer: it.answer, hint: it.hint ?? '' }
-            : { zh: it.zh ?? it.en, answer: it.answer, hint: it.hint ?? '' }
+            : { zh: it.zh ?? '', answer: it.answer, hint: it.hint ?? '' }
         ))
         commit({ items: newItems })
         toast.success(`已生成 ${res.items.length} 道题目`)
-        // 自动触发 AI 提示生成
-        await aiGenerateHints(newItems, source)
       }
     } catch { toast.error('AI 生成失败') }
     finally { setAiBusy(null) }
@@ -238,7 +236,11 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         kind: local.kind ?? 'chunk',
         generateHints: true,
         itemCount: targetItems.length,
-        items: targetItems.map(it => ({ zh: getPromptText(it), answer: getAnswerText(it) })),
+        items: targetItems.map((it) => (
+          (local.direction ?? 'zh_to_en') === 'en_to_zh'
+            ? { en: getPromptText(it), answer: getAnswerText(it) }
+            : { zh: getPromptText(it), answer: getAnswerText(it) }
+        )),
         ...(generationContext ?? {}),
       })
       if (res?.hints?.length) {
@@ -270,7 +272,11 @@ export function ChunkSubstitutionForm({ value, onChange, onDelete, vocabs = [], 
         direction: local.direction ?? 'zh_to_en',
         kind: local.kind ?? 'chunk',
         polish: true,
-        items: local.items.map(it => ({ zh: getPromptText(it), answer: getAnswerText(it) })),
+        items: local.items.map((it) => (
+          (local.direction ?? 'zh_to_en') === 'en_to_zh'
+            ? { en: getPromptText(it), answer: getAnswerText(it) }
+            : { zh: getPromptText(it), answer: getAnswerText(it) }
+        )),
         ...(generationContext ?? {}),
       })
       if (res?.items?.length) {

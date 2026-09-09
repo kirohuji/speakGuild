@@ -186,8 +186,7 @@ export class WarmupPipelineGenerateService {
       const hint = String(item?.hint ?? '').trim();
       if (direction === 'en_to_zh') {
         const rawEn = String(item?.en ?? '').trim();
-        const rawZh = String(item?.zh ?? '').trim();
-        return { en: rawEn || (/[A-Za-z]/.test(rawZh) ? rawZh : ''), answer, hint };
+        return { en: rawEn, answer, hint };
       }
       return { zh: String(item?.zh ?? '').trim(), answer, hint };
     }).filter((item: any) => Boolean(direction === 'en_to_zh' ? item.en : item.zh) && Boolean(item.answer));

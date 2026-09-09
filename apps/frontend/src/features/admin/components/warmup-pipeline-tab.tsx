@@ -713,7 +713,11 @@ export function WarmupPipelineTab({
             kind: item.kind ?? 'chunk',
             generateHints: true,
             itemCount: item.items.length,
-            items: item.items.map((it) => ({ zh: getPromptText(it, direction), answer: getAnswerText(it, direction) })),
+            items: item.items.map((it) => (
+              direction === 'en_to_zh'
+                ? { en: getPromptText(it, direction), answer: getAnswerText(it, direction) }
+                : { zh: getPromptText(it, direction), answer: getAnswerText(it, direction) }
+            )),
             ...generationContext,
           })
           const hints = Array.isArray(res?.hints) ? res.hints : []
@@ -738,7 +742,11 @@ export function WarmupPipelineTab({
             direction,
             generateHints: true,
             itemCount: item.items.length,
-            items: item.items.map((it) => ({ zh: getPromptText(it, direction), answer: getAnswerText(it, direction) })),
+            items: item.items.map((it) => (
+              direction === 'en_to_zh'
+                ? { en: getPromptText(it, direction), answer: getAnswerText(it, direction) }
+                : { zh: getPromptText(it, direction), answer: getAnswerText(it, direction) }
+            )),
             ...generationContext,
           })
           const hints = Array.isArray(res?.hints) ? res.hints : []
@@ -764,7 +772,11 @@ export function WarmupPipelineTab({
             direction,
             generateHints: true,
             itemCount: allItems.length,
-            items: allItems.map((it) => ({ zh: getPromptText(it, direction), answer: getAnswerText(it, direction) })),
+            items: allItems.map((it) => (
+              direction === 'en_to_zh'
+                ? { en: getPromptText(it, direction), answer: getAnswerText(it, direction) }
+                : { zh: getPromptText(it, direction), answer: getAnswerText(it, direction) }
+            )),
             ...generationContext,
           })
           const hints = Array.isArray(res?.hints) ? res.hints : []
@@ -852,11 +864,9 @@ export function WarmupPipelineTab({
             const hint = String(it?.hint ?? '').trim()
             if (direction === 'en_to_zh') {
               // en_to_zh: prompt is English (field "en"), answer is Chinese.
-              // If AI mistakenly put content in "zh" instead of "en", swap.
+              // 严格拒绝放错字段的 AI 输出，不能靠前端猜测方向后继续写入。
               const rawEn = String(it?.en ?? '').trim()
-              const rawZh = String(it?.zh ?? '').trim()
-              const en = rawEn || (rawZh && /[A-Za-z]/.test(rawZh) ? rawZh : '')
-              return { en, answer, hint }
+              return { en: rawEn, answer, hint }
             }
             // zh_to_en: prompt is Chinese (field "zh"), answer is English.
             // If AI mistakenly used "en" field for the prompt, drop it — do NOT fallback.

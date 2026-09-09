@@ -213,13 +213,11 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
           items: (p.items || []).map((it: any) => (
             (local.direction ?? 'zh_to_en') === 'en_to_zh'
               ? { en: it.en ?? it.zh, answer: it.answer, hint: it.hint ?? '' }
-              : { zh: it.zh ?? it.en, answer: it.answer, hint: it.hint ?? '' }
+              : { zh: it.zh ?? '', answer: it.answer, hint: it.hint ?? '' }
           )),
         }))
         commit({ patterns: newPatterns })
         toast.success(`已生成 ${res.patterns.length} 组搭配`)
-        // 自动触发 AI 提示生成
-        await aiGenerateHints(newPatterns, local.vocabWord)
       }
     } catch { toast.error('AI 生成失败') }
     finally { setAiBusy(null) }
@@ -241,7 +239,11 @@ export function VocabSentenceBuildingForm({ value, onChange, onDelete, vocabs = 
         direction: local.direction ?? 'zh_to_en',
         generateHints: true,
         itemCount: allItems.length,
-        items: allItems.map(it => ({ zh: getPromptText(it), answer: getAnswerText(it) })),
+        items: allItems.map((it) => (
+          (local.direction ?? 'zh_to_en') === 'en_to_zh'
+            ? { en: getPromptText(it), answer: getAnswerText(it) }
+            : { zh: getPromptText(it), answer: getAnswerText(it) }
+        )),
         ...(generationContext ?? {}),
       })
       if (res?.hints?.length) {

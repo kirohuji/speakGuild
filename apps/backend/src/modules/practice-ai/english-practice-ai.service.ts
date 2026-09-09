@@ -13,6 +13,7 @@ import {
 } from './prompts/warmup-pipeline.prompt';
 import {
   DRILL_HINT_OUTPUT_REQUIREMENT,
+  DRILL_TRANSLATION_ITEM_CONTRACT,
   buildDrillHintsSystemPrompt,
 } from './prompts/drill-hints.prompt';
 
@@ -681,7 +682,10 @@ For correction/upgraded/retryRequired: only populate these when the response is 
       ? hints.map((hint) => String(hint ?? '').trim())
       : [];
     const fallback = this.buildFallbackDrillHints(dto);
-    return Array.from({ length: itemCount }, (_, index) => normalized[index] || fallback[index] || '先抓住题目的核心意思，再用自然的表达完成句子。');
+    return Array.from({ length: itemCount }, (_, index) => {
+      const item = dto.items?.[index] ?? {};
+      return this.sanitizeGeneratedHint(normalized[index] || fallback[index] || '', dto, item);
+    });
   }
 
   private parseDrillHintText(text: string) {
@@ -794,33 +798,138 @@ For correction/upgraded/retryRequired: only populate these when the response is 
     items?: Array<{ zh?: string; en?: string; answer?: string; hint?: string }>;
   }) {
     const isEnToZh = dto.direction === 'en_to_zh';
-    const target = dto.keyword?.trim();
     const items: Array<{ zh?: string; en?: string; answer?: string; hint?: string }> = dto.items?.length
       ? dto.items
       : Array.from({ length: dto.itemCount ?? 0 }, () => ({}));
     return items.map((item) => {
       if (item.hint?.trim()) return item.hint.trim();
-      const promptText = this.getDrillPromptText(item, dto.direction);
-      const answerText = this.getDrillAnswerText(item, dto.direction);
       if (dto.type === 'pattern_drill') {
         return isEnToZh
-          ? `先看英文句子的结构，抓住句型「${target}」表达的关系，再翻成自然中文。`
-          : `先套住句型「${target}」，再把中文里的具体信息放进空位，最后检查语序。`;
+          ? '先判断说话者想表达的关系，再用自然中文说清楚。'
+          : '先找出题干里的动作或对象，再填进句型的可变位置。';
       }
       if (dto.type === 'vocab_sentence_building') {
         return isEnToZh
-          ? '先找出英文里的核心词和搭配，再用中文说清楚完整意思。'
-          : `先确定要表达的场景，再参考答案里的搭配，把「${target || '核心词'}」放进完整句子。`;
-      }
-      if (!promptText && answerText) {
-        return isEnToZh
-          ? '这道题目前只有参考中文，先补上英文原句，再根据英文意思生成更具体的提示。'
-          : `这道题目前只有中文内容，先把它当作题干，再尝试用「${target || '核心表达'}」写出自然英文。`;
+          ? '先找出句子中的核心动作和对象，再连成自然中文。'
+          : '先确定场景里要做什么，再用核心词组织完整英文句。';
       }
       return isEnToZh
-        ? '先理解英文原句的核心意思，再翻成自然中文，不必逐词硬翻。'
-        : `先看中文要表达的核心意思，再参考答案的说法；如果适合，用「${target || '核心表达'}」完成自然英文句子。`;
+        ? '先判断说话者的意图和语气，再翻成自然中文。'
+        : '先判断题干是在询问、请求还是回应，再组织完整英文句。';
     });
+  }
+
+  /** AI 输出不能直接信任：在服务端统一守住题型、语言方向和提示泄题边界。 */
+  private isEnglishSentence(value: string) {
+    const text = value.trim();
+    const words = text.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g) ?? [];
+    return words.length >= 2 && !/[\u4e00-\u9fff]/.test(text);
+  }
+
+  private isChinesePrompt(value: string) {
+    const text = value.trim();
+    return /[\u4e00-\u9fff]/.test(text) && (text.match(/[A-Za-z]+/g) ?? []).length <= 1;
+  }
+
+  private answerUsesTarget(answer: string, target: string) {
+    const normalizedAnswer = answer.toLowerCase().replace(/[’‘]/g, "'");
+    const fixedTarget = target
+      .toLowerCase()
+      .replace(/[’‘]/g, "'")
+      .replace(/\[[^\]]*\]|\{[^}]*\}|<[^>]*>|_{2,}|\.{2,}/g, ' ')
+      .replace(/[^a-z0-9'\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!fixedTarget) return true;
+    const targetWords = fixedTarget.split(' ').filter((word) => word.length > 1);
+    return targetWords.length
+      ? targetWords.every((word) => new RegExp(`(^|[^a-z])${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z]|$)`, 'i').test(normalizedAnswer))
+      : normalizedAnswer.includes(fixedTarget);
+  }
+
+  private sanitizeGeneratedHint(rawHint: unknown, dto: DrillGenerationDto, item: { zh?: string; en?: string; answer?: string }) {
+    const hint = String(rawHint ?? '').trim();
+    const answer = String(item.answer ?? '').toLowerCase().replace(/[’‘]/g, "'");
+    const target = dto.keyword.trim().toLowerCase().replace(/[’‘]/g, "'");
+    const answerWords = answer.match(/[a-z]+(?:'[a-z]+)?/g) ?? [];
+    const leaksAnswer = answerWords.some((word, index) => index < answerWords.length - 1
+      && hint.toLowerCase().includes(`${word} ${answerWords[index + 1]}`));
+    const generic = /用目标词造句|注意语法|参考句型|按照提示完成|参考答案/.test(hint);
+    const valid = hint.length >= 8 && hint.length <= 80 && /[\u4e00-\u9fff]/.test(hint)
+      && !/[A-Za-z]{2,}/.test(hint) && !leaksAnswer && (!target || !hint.toLowerCase().includes(target)) && !generic;
+    if (valid) return hint;
+    return this.buildFallbackDrillHints({ ...dto, itemCount: 1, items: [{ ...item, hint: '' }] })[0];
+  }
+
+  private normalizeGeneratedTranslationItems(rawItems: unknown, dto: DrillGenerationDto) {
+    const direction = dto.direction === 'en_to_zh' ? 'en_to_zh' : 'zh_to_en';
+    return (Array.isArray(rawItems) ? rawItems : []).flatMap((raw: any) => {
+      const answer = String(raw?.answer ?? '').trim();
+      const prompt = direction === 'en_to_zh' ? String(raw?.en ?? '').trim() : String(raw?.zh ?? '').trim();
+      const isValid = direction === 'en_to_zh'
+        ? this.isEnglishSentence(prompt) && this.isChinesePrompt(answer)
+        : this.isChinesePrompt(prompt) && this.isEnglishSentence(answer) && this.answerUsesTarget(answer, dto.keyword);
+      // 短句块不能单独作为完整替换答案；必须嵌入有语境的完整句。
+      const targetWords = dto.keyword.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g) ?? [];
+      const answerWords = answer.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g) ?? [];
+      const fragmentOnly = direction === 'zh_to_en' && targetWords.length <= 3
+        && answerWords.length <= targetWords.length + 1;
+      if (!isValid || fragmentOnly) return [];
+      const item = direction === 'en_to_zh'
+        ? { en: prompt, answer }
+        : { zh: prompt, answer };
+      return [{ ...item, hint: this.sanitizeGeneratedHint(raw?.hint, dto, item) }];
+    });
+  }
+
+  private normalizeSentenceDecomposition(raw: any, expectedFullSentence?: string, requireFullSentenceZh = true) {
+    const fullSentence = String(raw?.fullSentence ?? expectedFullSentence ?? '').trim();
+    const fullSentenceZh = String(raw?.fullSentenceZh ?? '').trim();
+    const normalizeEnglish = (value: string) => value.toLowerCase().replace(/[^a-z0-9'\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    const expected = normalizeEnglish(expectedFullSentence ?? fullSentence);
+    if (!this.isEnglishSentence(fullSentence) || (requireFullSentenceZh && !this.isChinesePrompt(fullSentenceZh))) return null;
+    if (expected && normalizeEnglish(fullSentence) !== expected) return null;
+
+    const levels = (Array.isArray(raw?.levels) ? raw.levels : []).map((level: any, index: number) => {
+      const en = String(level?.en ?? '').trim();
+      const zh = String(level?.zh ?? '').trim();
+      const label = String(level?.label ?? '').trim() || `第 ${index + 1} 步`;
+      const hint = this.sanitizeGeneratedHint(level?.hint, {
+        type: 'sentence_decomposition', keyword: fullSentence,
+      }, { zh, answer: '' });
+      return {
+        ...level,
+        level: index + 1,
+        label,
+        en,
+        zh,
+        highlight: String(level?.highlight ?? '').trim(),
+        hint,
+      };
+    }).filter((level: any) => this.isEnglishSentence(level.en) && this.isChinesePrompt(level.zh));
+
+    if (levels.length < 3 || levels.length > 5) return null;
+    if (normalizeEnglish(levels[levels.length - 1].en) !== normalizeEnglish(fullSentence)) return null;
+    // 每一级都必须比前一级增加信息，避免“拆解”变成三句互不相关的例句。
+    for (let index = 1; index < levels.length; index += 1) {
+      const previousWords = normalizeEnglish(levels[index - 1].en).split(' ').filter(Boolean);
+      const currentWords = normalizeEnglish(levels[index].en).split(' ').filter(Boolean);
+      if (currentWords.length <= previousWords.length) return null;
+    }
+    return { ...raw, fullSentence, fullSentenceZh, levels };
+  }
+
+  private normalizeGeneratedLongSentence(raw: any, target: string) {
+    const fullSentence = String(raw?.fullSentence ?? '').trim();
+    const fullSentenceZh = String(raw?.fullSentenceZh ?? '').trim();
+    const wordCount = fullSentence.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g)?.length ?? 0;
+    return this.isEnglishSentence(fullSentence)
+      && this.isChinesePrompt(fullSentenceZh)
+      && wordCount >= 12
+      && wordCount <= 25
+      && this.answerUsesTarget(fullSentence, target)
+      ? { fullSentence, fullSentenceZh }
+      : { fullSentence: '', fullSentenceZh: '' };
   }
 
   private getDrillPromptText(item: { zh?: string; en?: string; answer?: string }, direction?: string) {
@@ -1599,6 +1708,41 @@ Rules:
     return capped;
   }
 
+  /** 批量生成与单题生成复用相同题型校验，不能让批量入口绕过完整句/语言方向规则。 */
+  private normalizeWarmupPipeline(pipeline: unknown): any[] {
+    return (Array.isArray(pipeline) ? pipeline : []).flatMap((raw: any) => {
+      const direction = raw?.direction === 'en_to_zh' ? 'en_to_zh' : 'zh_to_en';
+      if (raw?.type === 'chunk_substitution' || raw?.type === 'pattern_drill') {
+        const keyword = String(raw.type === 'chunk_substitution' ? raw.chunk ?? '' : raw.pattern ?? '').trim();
+        const items = this.normalizeGeneratedTranslationItems(raw.items, {
+          type: raw.type,
+          keyword,
+          meaning: raw.type === 'chunk_substitution' ? raw.chunkMeaning : raw.patternMeaning,
+          direction,
+          kind: raw.kind,
+        });
+        return keyword && items.length >= 2 ? [{ ...raw, direction, items }] : [];
+      }
+      if (raw?.type === 'vocab_sentence_building') {
+        const keyword = String(raw.vocabWord ?? '').trim();
+        const patterns = (Array.isArray(raw.patterns) ? raw.patterns : [])
+          .map((pattern: any) => ({
+            ...pattern,
+            items: this.normalizeGeneratedTranslationItems(pattern?.items, {
+              type: 'vocab_sentence_building', keyword, meaning: raw.vocabMeaning, direction,
+            }),
+          }))
+          .filter((pattern: any) => String(pattern.chunk ?? '').trim() && pattern.items.length >= 2);
+        return keyword && patterns.length ? [{ ...raw, direction, patterns }] : [];
+      }
+      if (raw?.type === 'sentence_decomposition') {
+        const normalized = this.normalizeSentenceDecomposition(raw);
+        return normalized ? [normalized] : [];
+      }
+      return [];
+    });
+  }
+
   /** 一次性生成知识点练习补齐题组：同时考虑结构要求和材料覆盖 */
   async generateWarmupPipeline(dto: WarmupPipelineGenerationDto) {
     const runtime = await this.getLlmRuntime();
@@ -1818,11 +1962,11 @@ Rules:
       const providerName = runtime.config.provider.trim().toLowerCase();
       if (providerName === 'deepseek') {
         return {
-          pipeline: this.capWarmupPipeline(await this.generateDeepSeekWarmupPipeline(
+          pipeline: this.normalizeWarmupPipeline(this.capWarmupPipeline(await this.generateDeepSeekWarmupPipeline(
             runtime.config,
             WARMUP_PIPELINE_SYSTEM_PROMPT,
             prompt,
-          )),
+          ))),
         };
       }
 
@@ -1834,7 +1978,7 @@ Rules:
         maxOutputTokens: WARMUP_PIPELINE_MAX_OUTPUT_TOKENS,
       });
       const parsed = JSON.parse(this.extractJson(text).trim());
-      return { pipeline: Array.isArray(parsed.pipeline) ? this.capWarmupPipeline(parsed.pipeline) : [] };
+      return { pipeline: this.normalizeWarmupPipeline(this.capWarmupPipeline(parsed.pipeline)) };
     } catch (error) {
       this.logger.warn(`Warmup pipeline generation failed: ${error instanceof Error ? error.message : String(error)}`);
       return { pipeline: [] };
@@ -1901,12 +2045,13 @@ Rules:
 - Improve the Chinese prompts (zh) to sound more natural and conversational.
 - Refine the English answers (answer) to be more idiomatic while keeping the target keyword "${dto.keyword}".
 - Keep the original meaning and difficulty level.
-- For en_to_zh direction, the "zh" field contains the English sentence and "answer" is Chinese — polish both accordingly.
+- For en_to_zh direction, use the "en" field for the English sentence and "answer" for Chinese — polish both accordingly.
 - Fix any grammar issues, awkward phrasing, or unnatural collocations.
 - Each answer MUST still naturally include the target chunk/pattern: "${dto.keyword}".
+${DRILL_TRANSLATION_ITEM_CONTRACT}
 
 Return ONLY a JSON object (no markdown):
-{ "items": [{ "zh": "polished Chinese", "answer": "polished English" }, ...] }`;
+{ "items": [{ "zh": "Chinese prompt", "en": "English prompt only for en_to_zh", "answer": "answer in the required direction" }, ...] }`;
 
       const itemsJson = dto.items.map((it, i) =>
         `[${i + 1}] ZH: ${it.zh} | Answer: ${it.answer}`
@@ -1922,7 +2067,8 @@ Return ONLY a JSON object (no markdown):
           maxOutputTokens: 1500,
         });
         const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        return JSON.parse(cleaned);
+        const parsed = JSON.parse(cleaned);
+        return { items: this.normalizeGeneratedTranslationItems(parsed.items, dto) };
       } catch {
         return { items: dto.items };
       }
@@ -1939,10 +2085,12 @@ Rules:
 - Keep sentences natural, practical, and at an intermediate level.
 - Vary the sentence contexts (different situations, verb tenses, subjects).
 - ${DRILL_HINT_OUTPUT_REQUIREMENT}
+- ${DRILL_TRANSLATION_ITEM_CONTRACT}
 - Use the topic material pool below. Prefer unused vocabulary/chunks when they fit.
 
 Return ONLY a JSON object (no markdown):
-{ "items": [{ "zh": "中文句子", "answer": "English sentence", "hint": "中文提示" }, ...] }`;
+For zh_to_en use { "items": [{ "zh": "中文交际任务", "answer": "完整英文句", "hint": "中文提示" }] }.
+For en_to_zh use { "items": [{ "en": "complete English sentence", "answer": "中文答案", "hint": "中文提示" }] }.`;
 
       const user = `Target: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}
 Direction: ${direction}
@@ -1959,7 +2107,7 @@ Count: ${count}${generationContext}`;
       try {
         const cleaned = this.extractJson(text).replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         const parsed = JSON.parse(cleaned);
-        return { items: this.addFallbackHintsToItems((parsed.items ?? []).slice(0, count), dto) };
+        return { items: this.normalizeGeneratedTranslationItems((parsed.items ?? []).slice(0, count), dto) };
       } catch {
         return { items: [] };
       }
@@ -1975,12 +2123,14 @@ For each pattern:
 - Each pattern has 2-3 "items" with zh (Chinese prompt) and answer (English full sentence using the chunk)
 - Vary the patterns to show different uses of the word
 - ${DRILL_HINT_OUTPUT_REQUIREMENT}
+- ${DRILL_TRANSLATION_ITEM_CONTRACT}
 - Use the topic material pool below. Prefer unused sentence patterns/chunks when they fit.
 
 ${availableChunks ? `You may use these available chunks as inspiration: ${availableChunks}` : ''}
 
 Return ONLY a JSON object (no markdown):
-{ "patterns": [{ "chunk": "sentence starter", "items": [{ "zh": "中文", "answer": "English", "hint": "中文提示" }, ...] }, ...] }`;
+For zh_to_en use { "patterns": [{ "chunk": "sentence starter", "items": [{ "zh": "中文交际任务", "answer": "完整英文句", "hint": "中文提示" }] }] }.
+For en_to_zh use "en" instead of "zh" and make answer Chinese.`;
 
       const user = `Word: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}
 Create 3 patterns with 2-3 items each.${generationContext}`;
@@ -2001,7 +2151,10 @@ Create 3 patterns with 2-3 items each.${generationContext}`;
         return {
           patterns: (parsed.patterns ?? []).map((pattern: any) => ({
             ...pattern,
-            items: (pattern.items ?? []).map((item: any) => ({ ...item, hint: item.hint?.trim() || hints[hintIndex++] || '' })),
+            items: this.normalizeGeneratedTranslationItems(
+              (pattern.items ?? []).map((item: any) => ({ ...item, hint: item.hint?.trim() || hints[hintIndex++] || '' })),
+              dto,
+            ),
           })),
         };
       } catch {
@@ -2022,6 +2175,7 @@ The sentence should:
 - Add time, place, reason, or manner to make it vivid
 - Be suitable for sentence decomposition exercises
 - Fit the topic material pool and difficulty below.
+- MUST contain the assigned chunk/pattern exactly; do not replace it with a synonym.
 
 Return ONLY a JSON object (no markdown):
 { "fullSentence": "the generated long English sentence", "fullSentenceZh": "Chinese translation" }`;
@@ -2037,7 +2191,7 @@ Return ONLY a JSON object (no markdown):
         });
         try {
           const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-          return JSON.parse(cleaned);
+          return this.normalizeGeneratedLongSentence(JSON.parse(cleaned), chunk);
         } catch {
           return { fullSentence: '', fullSentenceZh: '' };
         }
@@ -2061,7 +2215,7 @@ Each level needs:
 - "en": English sentence at this level
 - "zh": Chinese translation of THIS level (progressive, not the same every level)
 - "highlight": the exact newly added part (text that differentiates from previous level)
-- "hint": Chinese hint (10-25 chars) guiding what to ADD at THIS step, referencing the specific element being added — never generic advice like "试着补充更多细节"
+- "hint": Chinese 12-32 char coaching for what to ADD at THIS step. It must not reveal English from this level or the final sentence.
 
 Return ONLY a JSON object (no markdown):
 { "levels": [{ "level": 1, "label": "...", "en": "...", "zh": "...", "highlight": "...", "hint": "..." }, ...] }`;
@@ -2077,7 +2231,12 @@ Return ONLY a JSON object (no markdown):
       });
       try {
         const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        return JSON.parse(cleaned);
+        const normalized = this.normalizeSentenceDecomposition({
+          fullSentence,
+          fullSentenceZh: fullZh,
+          levels: JSON.parse(cleaned).levels,
+        }, fullSentence, false);
+        return { levels: normalized?.levels ?? [] };
       } catch {
         return { levels: [] };
       }
@@ -2096,10 +2255,12 @@ Rules:
 - Vary the slot fillers to show different real-world uses of the same pattern.
 - Keep sentences practical and at an intermediate level.
 - ${DRILL_HINT_OUTPUT_REQUIREMENT}
+- ${DRILL_TRANSLATION_ITEM_CONTRACT}
 - Use the topic material pool below. Prefer unused vocabulary/chunks when they fit.
 
 Return ONLY a JSON object (no markdown):
-{ "items": [{ "zh": "中文句子", "answer": "English sentence using the pattern", "hint": "中文提示" }, ...] }`;
+For zh_to_en use { "items": [{ "zh": "中文交际任务", "answer": "完整英文句", "hint": "中文提示" }] }.
+For en_to_zh use { "items": [{ "en": "complete English sentence", "answer": "中文答案", "hint": "中文提示" }] }.`;
 
       const user = `Pattern: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}
 Direction: ${direction}
@@ -2116,7 +2277,7 @@ Create exercises where the learner practices this pattern with different content
       try {
         const cleaned = this.extractJson(text).replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         const parsed = JSON.parse(cleaned);
-        return { items: this.addFallbackHintsToItems((parsed.items ?? []).slice(0, count), dto) };
+        return { items: this.normalizeGeneratedTranslationItems((parsed.items ?? []).slice(0, count), dto) };
       } catch {
         return { items: [] };
       }

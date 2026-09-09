@@ -46,9 +46,7 @@ const topics = [
       { pattern: "You look [adjective].", meaning: "你看起来……", slots: "adjective", example: "You look great." },
       { pattern: "What a [noun / clause]!", meaning: "真是……！", slots: "noun / clause", example: "What a coincidence." },
     ],
-    vocabs: [
-      "what's", "going", "bad", "rough", "day", "how", "look", "great", "what", "coincidence", "nice", "shall", "sleep", "tight",
-    ],
+    vocabs: [],
     expressions: [
       {
         text: "What's going on?",
@@ -122,8 +120,8 @@ const topics = [
       },
       {
         text: "Shall we?",
-        meaning: "要不要一起？",
-        insight: "邀请一起行动的短问句。",
+        meaning: "一起……吧？ / 走吧？",
+        insight: "邀请立刻一起行动；常跟在 Ready? 或指着门口说，不等于 Shall we discuss。",
         active: true,
         examples: [
           { en: "The table is free. Shall we?", zh: "那桌空了。坐吗？" },
@@ -152,8 +150,8 @@ const topics = [
       },
       {
         text: "Have fun.",
-        meaning: "开心点",
-        insight: "对方要去玩或赴约时送一句。",
+        meaning: "玩得开心",
+        insight: "对方要去玩、赴约时送行；Cheer up 才是对方心情低落时的打气。",
         active: false,
         examples: [
           { en: "Have fun at the party!", zh: "聚会计玩得开心！" },
@@ -172,8 +170,8 @@ const topics = [
       },
       {
         text: "Take it easy.",
-        meaning: "放轻松",
-        insight: "让对方放松、别着急。",
+        meaning: "放轻松 / 别太拼",
+        insight: "劝对方放松心态；和 Take your time（别催、慢慢来）侧重点不同。",
         active: false,
         examples: [
           { en: "Take it easy. No rush.", zh: "放轻松。不着急。" },
@@ -182,8 +180,8 @@ const topics = [
       },
       {
         text: "Take your time.",
-        meaning: "别着急",
-        insight: "表示不催促，慢慢来即可。",
+        meaning: "不着急，慢慢来",
+        insight: "表示不催促；不是劝人「人生放轻松」（那是 Take it easy）。",
         active: false,
         examples: [
           { en: "Take your time. I'll wait.", zh: "慢慢来。我等你。" },
@@ -192,8 +190,8 @@ const topics = [
       },
       {
         text: "Home sweet home.",
-        meaning: "到家了",
-        insight: "到家或谈到家时的感叹。",
+        meaning: "家真好 / 到家了",
+        insight: "到家或想到家时的感叹，不是正式报到用语。",
         active: false,
         examples: [
           { en: "Finally, home sweet home.", zh: "终于，到家了。" },
@@ -202,8 +200,8 @@ const topics = [
       },
       {
         text: "Better late than never.",
-        meaning: "晚到总比不到好",
-        insight: "迟到或晚做总比不做强。",
+        meaning: "晚做总比不做好",
+        insight: "为迟到或拖延打圆场；也可自嘲「总算做了」。",
         active: false,
         examples: [
           { en: "You're late, but better late than never.", zh: "你迟到了，但晚到总比不到好。" },
@@ -222,8 +220,8 @@ const topics = [
       },
       {
         text: "Break a leg.",
-        meaning: "祝你好运",
-        insight: "演出或上场前的加油（字面不是真摔）。",
+        meaning: "加油，祝顺利（演出用语）",
+        insight: "上台、面试前的加油；字面不是真摔跤。",
         active: false,
         examples: [
           { en: "Break a leg tonight!", zh: "今晚演出加油！" },
@@ -232,8 +230,8 @@ const topics = [
       },
       {
         text: "Cheer up.",
-        meaning: "开心点",
-        insight: "对方情绪低落时的打气。",
+        meaning: "振作一点 / 开心点",
+        insight: "对方情绪低落时鼓励；不是送行用语。",
         active: false,
         examples: [
           { en: "Cheer up. It'll get better.", zh: "振作点。会好起来的。" },
@@ -243,7 +241,7 @@ const topics = [
       {
         text: "Lucky me.",
         meaning: "我真走运",
-        insight: "自嘲或庆幸时的短反应。",
+        insight: "庆幸或带点自嘲；常接在好事发生后。",
         active: false,
         examples: [
           { en: "Found a seat. Lucky me.", zh: "找到座位了。我真走运。" },
@@ -267,14 +265,12 @@ const topics = [
       { pattern: "That's so [adjective].", meaning: "那真是太……了", slots: "adjective", example: "That's so sweet." },
       { pattern: "That's very [adjective].", meaning: "非常……", slots: "adjective", example: "That's very impressive." },
     ],
-    vocabs: [
-      "good", "job", "congratulations", "proud", "fault", "way", "i'm", "impressed", "that's", "sweet", "apologies", "forgive", "well", "done",
-    ],
+    vocabs: [],
     expressions: [
       {
         text: "Good job.",
-        meaning: "做的好",
-        insight: "即时夸奖完成的事。",
+        meaning: "干得好",
+        insight: "事刚做完时立刻夸；偏具体表现。",
         active: true,
         examples: [
           { en: "Good job on the report.", zh: "报告做得好。" },
@@ -313,8 +309,8 @@ const topics = [
       },
       {
         text: "Way to go.",
-        meaning: "做得好",
-        insight: "口语化夸奖「好样的」。",
+        meaning: "好样的",
+        insight: "口语夸奖，相当于 Well done；不是指路「往那边走」。",
         active: true,
         examples: [
           { en: "You made it. Way to go!", zh: "你做到了。好样的！" },
@@ -343,8 +339,8 @@ const topics = [
       },
       {
         text: "My apologies.",
-        meaning: "我向你道歉",
-        insight: "比 Sorry 稍正式的道歉。",
+        meaning: "抱歉 / 我道歉",
+        insight: "比 Sorry 稍正式；适合弄错时间、打扰别人等。",
         active: true,
         examples: [
           { en: "My apologies for the wait.", zh: "抱歉让你久等了。" },
@@ -363,8 +359,8 @@ const topics = [
       },
       {
         text: "Well done.",
-        meaning: "很好、干得好",
-        insight: "对完成质量的肯定。",
+        meaning: "干得漂亮",
+        insight: "肯定完成质量和结果；语气比 Good job 稍稳一点。",
         active: true,
         examples: [
           { en: "Well done. That was clear.", zh: "很好。说得很清楚。" },
@@ -393,8 +389,8 @@ const topics = [
       },
       {
         text: "You saved my life.",
-        meaning: "你救了我",
-        insight: "极度感谢帮助（可夸张）。",
+        meaning: "你可救了我了",
+        insight: "感谢很大帮助；日常常夸张，未必真救命。",
         active: false,
         examples: [
           { en: "Thanks. You saved my life with that tip.", zh: "谢谢。你那一招真救了我。" },
@@ -433,8 +429,8 @@ const topics = [
       },
       {
         text: "No hard feelings.",
-        meaning: "别往心里去",
-        insight: "希望对方不要介意、别往心里去。",
+        meaning: "别往心里去 / 不计前嫌",
+        insight: "争执或拒绝之后，希望双方别记仇。",
         active: false,
         examples: [
           { en: "We're fine. No hard feelings.", zh: "我们没事。别往心里去。" },
@@ -444,7 +440,7 @@ const topics = [
       {
         text: "No offense.",
         meaning: "无意冒犯",
-        insight: "直言前先声明无意冒犯。",
+        insight: "接下来要说直话或不中听的话时先垫一句。",
         active: false,
         examples: [
           { en: "No offense, but this is too spicy.", zh: "无意冒犯，但这太辣了。" },
@@ -489,9 +485,7 @@ const topics = [
       { pattern: "Which would you [verb]?", meaning: "你要选哪个？", slots: "verb", example: "Which would you prefer?" },
       { pattern: "That would be [adjective].", meaning: "那会很……", slots: "adjective", example: "That would be great." },
     ],
-    vocabs: [
-      "anything", "else", "keep", "change", "accept", "credit", "cards", "how", "about", "drink", "tonight", "would", "great", "should",
-    ],
+    vocabs: [],
     expressions: [
       {
         text: "Anything else?",
@@ -505,8 +499,8 @@ const topics = [
       },
       {
         text: "Keep the change.",
-        meaning: "不用找钱了",
-        insight: "结账时表示不用找零。",
+        meaning: "不用找了",
+        insight: "付现金时把零钱当小费或嫌找零麻烦；不是「留着找零以后再用」。",
         active: true,
         examples: [
           { en: "Here's twenty. Keep the change.", zh: "这是二十。不用找了。" },
@@ -525,8 +519,8 @@ const topics = [
       },
       {
         text: "How about a drink tonight?",
-        meaning: "今晚喝一杯怎样?",
-        insight: "邀约喝一杯的提议。",
+        meaning: "今晚喝一杯怎样？",
+        insight: "轻松邀约；a drink 常指喝酒，也可说得含糊。",
         active: true,
         examples: [
           { en: "How about a drink tonight after work?", zh: "下班后今晚喝一杯怎样？" },
@@ -555,8 +549,8 @@ const topics = [
       },
       {
         text: "Finished already?",
-        meaning: "已经完成了吗？",
-        insight: "惊讶对方这么快结束。",
+        meaning: "这就好了？ / 吃完了？",
+        insight: "带点惊讶：对方结束得比预期快。",
         active: true,
         examples: [
           { en: "Finished already? That was fast.", zh: "已经吃完了？真快。" },
@@ -626,7 +620,7 @@ const topics = [
       {
         text: "First come first served.",
         meaning: "先到先得",
-        insight: "说明先到先得的规则。",
+        insight: "说明没有预约、按到达顺序；常用来解释排队规则。",
         active: false,
         examples: [
           { en: "No tickets left? First come first served.", zh: "票没了？先到先得。" },
@@ -645,8 +639,8 @@ const topics = [
       },
       {
         text: "Yes,I'd like to.",
-        meaning: "好，我也想去",
-        insight: "礼貌答应邀请或提议。",
+        meaning: "好，我想……",
+        insight: "I'd like to = I would like to，礼貌答应邀请或提议。",
         active: false,
         examples: [
           { en: "Want to join us? — Yes,I'd like to.", zh: "要一起吗？——好，我想去。" },
@@ -656,7 +650,7 @@ const topics = [
       {
         text: "It's settled, then.",
         meaning: "那就这么定了",
-        insight: "敲定方案时的收尾。",
+        insight: "双方谈妥后收尾确认。",
         active: false,
         examples: [
           { en: "Six o'clock works. It's settled, then.", zh: "六点可以。那就这么定了。" },
@@ -665,8 +659,8 @@ const topics = [
       },
       {
         text: "Just in time.",
-        meaning: "时间刚刚好",
-        insight: "刚好赶上。",
+        meaning: "刚好赶上",
+        insight: "差一点迟到却赶上了；事后感叹。",
         active: false,
         examples: [
           { en: "The bus is here. Just in time.", zh: "车来了。刚好赶上。" },
@@ -675,8 +669,8 @@ const topics = [
       },
       {
         text: "Will do.",
-        meaning: "没问题",
-        insight: "表示「好的，我会做」。",
+        meaning: "好的，我会做",
+        insight: "回答别人拜托/吩咐：答应去办。不是笼统的「没问题」万能句。",
         active: false,
         examples: [
           { en: "Please call them. — Will do.", zh: "请给他们打电话。——好的，我会。" },
@@ -711,9 +705,7 @@ const topics = [
       { pattern: "It's not worth [it / noun].", meaning: "……不值得", slots: "it / noun", example: "It's not worth it." },
       { pattern: "Of course, it's all [yours].", meaning: "当然都是……的", slots: "yours", example: "Of course, it's all yours." },
     ],
-    vocabs: [
-      "price", "reasonable", "can't", "afford", "new", "car", "it's", "worth", "money", "everything", "too", "good", "true", "check",
-    ],
+    vocabs: [],
     expressions: [
       {
         text: "The price is reasonable.",
@@ -757,8 +749,8 @@ const topics = [
       },
       {
         text: "It's too good to be true!",
-        meaning: "好得难以置信",
-        insight: "觉得好得不像真的。",
+        meaning: "好得不像真的",
+        insight: "觉得优惠或消息可疑、别轻易全信。",
         active: true,
         examples: [
           { en: "Half price? It's too good to be true!", zh: "半价？好得不像真的！" },
@@ -767,8 +759,8 @@ const topics = [
       },
       {
         text: "Check it out.",
-        meaning: "快看、快瞧瞧",
-        insight: "让对方看看某样东西。",
+        meaning: "瞧瞧这个",
+        insight: "招呼对方过来看；偏轻松口语。",
         active: true,
         examples: [
           { en: "New colors are in. Check it out.", zh: "新颜色到了。看看。" },
@@ -777,8 +769,8 @@ const topics = [
       },
       {
         text: "Be my guest.",
-        meaning: "请自便",
-        insight: "请对方自便、尽管用。",
+        meaning: "请自便 / 请吧",
+        insight: "允许对方做某事，态度大方；和 Suit yourself（随你，可带无奈）语气不同。",
         active: true,
         examples: [
           { en: "Can I try this? — Be my guest.", zh: "我能试试吗？——请自便。" },
@@ -788,7 +780,7 @@ const topics = [
       {
         text: "Suit yourself.",
         meaning: "随你便",
-        insight: "随对方便（可带一点无奈）。",
+        insight: "把选择丢回给对方；可中性，也可略不耐烦。",
         active: true,
         examples: [
           { en: "I won't take it. — Suit yourself.", zh: "我不买了。——随你便。" },
@@ -797,8 +789,8 @@ const topics = [
       },
       {
         text: "No can do.",
-        meaning: "不行",
-        insight: "直说办不到。",
+        meaning: "办不到 / 不行",
+        insight: "口语直拒，比 Sorry, I can't 更硬、更短。",
         active: true,
         examples: [
           { en: "Can you open early? — No can do.", zh: "能早点开门吗？——不行。" },
@@ -807,8 +799,8 @@ const topics = [
       },
       {
         text: "As you wish.",
-        meaning: "如你所愿",
-        insight: "按你的意思来。",
+        meaning: "按你的意思",
+        insight: "照对方意愿做；语气可礼貌，也可略疏远。",
         active: true,
         examples: [
           { en: "I want the blue one. — As you wish.", zh: "我要蓝色那件。——按你的意思。" },
@@ -817,8 +809,8 @@ const topics = [
       },
       {
         text: "Whatever you say.",
-        meaning: "随便你怎么说",
-        insight: "听你的。",
+        meaning: "听你的",
+        insight: "让步同意；有时也带一点无奈「随便你」。",
         active: false,
         examples: [
           { en: "Let's get the cheaper one. — Whatever you say.", zh: "买便宜那个吧。——听你的。" },
@@ -827,8 +819,8 @@ const topics = [
       },
       {
         text: "By all means.",
-        meaning: "当然可以",
-        insight: "当然可以、尽管做。",
+        meaning: "当然可以，请吧",
+        insight: "正式一点地允许；鼓励对方尽管做。",
         active: false,
         examples: [
           { en: "May I look around? — By all means.", zh: "我可以随便看看吗？——当然可以。" },
@@ -847,8 +839,8 @@ const topics = [
       },
       {
         text: "You bet.",
-        meaning: "当然、一定",
-        insight: "当然、一定。",
+        meaning: "当然 / 一定",
+        insight: "爽快肯定；不是真的在打赌。",
         active: false,
         examples: [
           { en: "Is this washable? — You bet.", zh: "这个能洗吗？——当然。" },
@@ -907,8 +899,8 @@ const topics = [
       },
       {
         text: "No biggie.",
-        meaning: "不要紧",
-        insight: "小事一桩、没关系。",
+        meaning: "小事 / 没关系",
+        insight: "把对方道歉或小麻烦轻轻放下；偏随意口语。",
         active: false,
         examples: [
           { en: "I broke a cup. — No biggie.", zh: "我打碎杯子了。——小事。" },
@@ -933,9 +925,7 @@ const topics = [
       { pattern: "I'm here to take you [place].", meaning: "我是来接你去……的", slots: "place", example: "I'm here to take you home." },
       { pattern: "I'd pick [someone] up.", meaning: "我会来接……", slots: "someone", example: "I'd pick her up." },
     ],
-    vocabs: [
-      "now", "i'm", "lost", "way", "here", "where", "can", "buy", "ticket", "when", "next", "train", "over", "bathroom",
-    ],
+    vocabs: [],
     expressions: [
       {
         text: "Now I'm lost.",
@@ -949,8 +939,8 @@ const topics = [
       },
       {
         text: "On my way.",
-        meaning: "我在路上了",
-        insight: "回复「在路上了」。",
+        meaning: "在路上了",
+        insight: "回答「你到哪了」：已经出发、正在赶来。",
         active: true,
         examples: [
           { en: "Where are you? — On my way.", zh: "你在哪？——在路上了。" },
@@ -1009,8 +999,8 @@ const topics = [
       },
       {
         text: "Just around the comer.",
-        meaning: "就在附近",
-        insight: "表示就在附近（惯用拼写）。",
+        meaning: "就在附近 / 转角就到",
+        insight: "表示很近，走几步就到。",
         active: true,
         examples: [
           { en: "The station is just around the comer.", zh: "车站就在附近。" },
@@ -1029,8 +1019,8 @@ const topics = [
       },
       {
         text: "I'll be right there.",
-        meaning: "我马上来",
-        insight: "表示马上赶到。",
+        meaning: "我马上到",
+        insight: "强调很快赶到；比 On my way 更短、更急。",
         active: true,
         examples: [
           { en: "Stay at the gate. I'll be right there.", zh: "在门口等。我马上到。" },
@@ -1039,8 +1029,8 @@ const topics = [
       },
       {
         text: "Pull over.",
-        meaning: "靠边停车",
-        insight: "让车靠边停。",
+        meaning: "靠边停一下",
+        insight: "对开车的人说；让车停到路边。",
         active: false,
         examples: [
           { en: "Pull over. I need to check the map.", zh: "靠边停。我要看地图。" },
@@ -1089,8 +1079,8 @@ const topics = [
       },
       {
         text: "What are you waiting for?",
-        meaning: "你在等什么呢？",
-        insight: "催促或询问还在等什么。",
+        meaning: "你还在等什么？",
+        insight: "常用来催「还不快做」；真问「在等谁」时靠语气区分。",
         active: false,
         examples: [
           { en: "The light is green. What are you waiting for?", zh: "绿灯了。你还在等什么？" },
@@ -1099,8 +1089,8 @@ const topics = [
       },
       {
         text: "Stay where you are.",
-        meaning: "待在那里别动",
-        insight: "让对方原地等候。",
+        meaning: "待在原地别动",
+        insight: "位置别变，方便汇合或等救援/接应。",
         active: false,
         examples: [
           { en: "Stay where you are. I'll find you.", zh: "待在那里别动。我来找你。" },
@@ -1109,8 +1099,8 @@ const topics = [
       },
       {
         text: "Sit tight.",
-        meaning: "坐着别动",
-        insight: "让对方先别动、再等一等。",
+        meaning: "先待着别动 / 再等一下",
+        insight: "让对方原地等，自己去处理或马上到；不是训人「坐好」。",
         active: false,
         examples: [
           { en: "Sit tight. The bus is coming.", zh: "先别动。车快来了。" },
@@ -1156,9 +1146,7 @@ const topics = [
       { pattern: "I wish I could.", meaning: "我希望我能……", slots: "", example: "I wish I could." },
       { pattern: "Maybe next [time].", meaning: "也许下次……", slots: "time", example: "Maybe next time." },
     ],
-    vocabs: [
-      "want", "stay", "need", "like", "animals", "love", "hope", "wish", "dreaming", "mood", "chance", "book", "enjoyed", "really",
-    ],
+    vocabs: [],
     expressions: [
       {
         text: "Is that what you want?",
@@ -1182,8 +1170,8 @@ const topics = [
       },
       {
         text: "I do want to see him now.",
-        meaning: "我现在确实很想去见他",
-        insight: "do 用来加强语气：现在就想见。",
+        meaning: "我现在就想见他",
+        insight: "I do want：do 加强语气，强调「确实想、现在就要」。",
         active: true,
         examples: [
           { en: "Can it wait? — No. I do want to see him now.", zh: "能等等吗？——不行。我现在就想见他。" },
@@ -1212,8 +1200,8 @@ const topics = [
       },
       {
         text: "No need.",
-        meaning: "不用",
-        insight: "表示不必帮忙或不必要再做。",
+        meaning: "不用了",
+        insight: "谢绝帮忙或表示没必要再做。",
         active: true,
         examples: [
           { en: "Should I carry that? — No need.", zh: "要我帮你拿吗？——不用。" },
@@ -1242,8 +1230,8 @@ const topics = [
       },
       {
         text: "I do, I love them.",
-        meaning: "我很喜欢它们",
-        insight: "先肯定再加爱：回答 Do you like… 时很自然。",
+        meaning: "喜欢，而且很爱",
+        insight: "先用 I do 接住问句，再补程度。",
         active: true,
         examples: [
           { en: "Do you like cats? — I do, I love them.", zh: "你喜欢猫吗？——喜欢，我超爱。" },
@@ -1252,8 +1240,8 @@ const topics = [
       },
       {
         text: "Not in my book.",
-        meaning: "我不喜欢此事",
-        insight: "表示这件事自己不认同、不喜欢。",
+        meaning: "在我这儿不算 / 我不这么看",
+        insight: "惯用语：按自己的标准不认同。",
         active: true,
         examples: [
           { en: "Is that fair? — Not in my book.", zh: "这样公平吗？——在我这儿不算。" },
@@ -1272,8 +1260,8 @@ const topics = [
       },
       {
         text: "I wish I could.",
-        meaning: "我希望我能",
-        insight: "心里想答应，但现实做不到时用。",
+        meaning: "我也想啊（但不行）",
+        insight: "想答应却做不到；重点在遗憾，不是单纯许愿。",
         active: false,
         examples: [
           { en: "Come with us? — I wish I could.", zh: "一起去？——我也想能去。" },
@@ -1282,8 +1270,8 @@ const topics = [
       },
       {
         text: "I hope so.",
-        meaning: "我希望如此",
-        insight: "对还不确定的结果表示期待。",
+        meaning: "希望如此",
+        insight: "对还没发生的结果表示期待；比 I wish I could 更偏「但愿会这样」。",
         active: false,
         examples: [
           { en: "Will we make it on time? — I hope so.", zh: "我们赶得上吗？——希望可以。" },
@@ -1303,7 +1291,7 @@ const topics = [
       {
         text: "You wish.",
         meaning: "想得美",
-        insight: "轻松打回不现实的愿望。",
+        insight: "轻松回绝不切实际的愿望；带调侃，不是真祝福。",
         active: false,
         examples: [
           { en: "I'll finish in five minutes. — You wish.", zh: "我五分钟做完。——想得美。" },
@@ -1313,7 +1301,7 @@ const topics = [
       {
         text: "Not really.",
         meaning: "不太 / 说不上",
-        insight: "温和地说不太想、不太喜欢。",
+        insight: "温和否定：不太喜欢、不太想；比 No 软。",
         active: false,
         examples: [
           { en: "Do you like it? — Not really.", zh: "喜欢吗？——不太喜欢。" },
@@ -1322,8 +1310,8 @@ const topics = [
       },
       {
         text: "Maybe next time.",
-        meaning: "也许下次吧",
-        insight: "这次不方便，把邀请推到以后。",
+        meaning: "下次吧",
+        insight: "这次婉拒，把可能性留到以后；比 Not a chance 软。",
         active: false,
         examples: [
           { en: "Join us tonight? — Maybe next time.", zh: "今晚一起？——下次吧。" },
@@ -1333,7 +1321,7 @@ const topics = [
       {
         text: "Not a chance.",
         meaning: "想都别想",
-        insight: "明确拒绝：完全没可能。",
+        insight: "强硬拒绝；没有商量余地。",
         active: false,
         examples: [
           { en: "Can we leave early? — Not a chance.", zh: "能早点走吗？——想都别想。" },
@@ -1378,14 +1366,12 @@ const topics = [
       { pattern: "What's the word for [it]?", meaning: "……怎么说来着？", slots: "it", example: "What's the word for it?" },
       { pattern: "May I ask [some questions]?", meaning: "我可以问……吗？", slots: "some questions", example: "May I ask some questions?" },
     ],
-    vocabs: [
-      "beg", "pardon", "what", "mean", "clear", "see", "gotcha", "what's", "word", "it's", "tip", "tongue", "may", "ask",
-    ],
+    vocabs: [],
     expressions: [
       {
         text: "I beg your pardon.",
-        meaning: "你能再说一遍吗",
-        insight: "请对方再说一遍或表示没听清。",
+        meaning: "对不起，请再说一遍？",
+        insight: "没听清时请人重复；也可表示「抱歉？（你刚说什么）」；比 What? 礼貌。",
         active: true,
         examples: [
           { en: "I beg your pardon? I didn't catch that.", zh: "你能再说一遍吗？我没听清。" },
@@ -1394,8 +1380,8 @@ const topics = [
       },
       {
         text: "What do you mean?",
-        meaning: "你什么意思?",
-        insight: "要求澄清意思。",
+        meaning: "你是什么意思？",
+        insight: "要求澄清；语气重时像在质问。",
         active: true,
         examples: [
           { en: "What do you mean by 'later'?", zh: "你说的「晚点」是什么意思？" },
@@ -1415,7 +1401,7 @@ const topics = [
       {
         text: "Is that so?",
         meaning: "是这样吗？",
-        insight: "追问是否属实。",
+        insight: "接住对方信息：可真好奇，也可略带怀疑。",
         active: true,
         examples: [
           { en: "He quit. — Is that so?", zh: "他辞职了。——是这样吗？" },
@@ -1434,8 +1420,8 @@ const topics = [
       },
       {
         text: "Gotcha.",
-        meaning: "明白了",
-        insight: "更口语的「懂了」。",
+        meaning: "懂了 / 明白",
+        insight: "口语确认听懂；偏随意，正式场合少用。",
         active: true,
         examples: [
           { en: "Turn left, then right. — Gotcha.", zh: "先左转，再右转。——懂了。" },
@@ -1454,8 +1440,8 @@ const topics = [
       },
       {
         text: "It's on the tip of my tongue.",
-        meaning: "话就在嘴边，就是想不起来",
-        insight: "话到嘴边却想不起。",
+        meaning: "就在嘴边，一时想不起",
+        insight: "知道但瞬间叫不出名字/单词。",
         active: true,
         examples: [
           { en: "Her name is… it's on the tip of my tongue.", zh: "她叫……话就在嘴边。" },
@@ -1504,8 +1490,8 @@ const topics = [
       },
       {
         text: "Hard to say.",
-        meaning: "很难说",
-        insight: "表示不好判断。",
+        meaning: "不好说",
+        insight: "信息不够、不愿下结论。",
         active: false,
         examples: [
           { en: "Will it rain? — Hard to say.", zh: "会下雨吗？——很难说。" },
@@ -1544,8 +1530,8 @@ const topics = [
       },
       {
         text: "Where were we?",
-        meaning: "我们说到哪了",
-        insight: "打断后找回话题。",
+        meaning: "我们刚才说到哪？",
+        insight: "被打断后把话题拉回来。",
         active: false,
         examples: [
           { en: "Sorry about that. Where were we?", zh: "抱歉。我们说到哪了？" },
@@ -1564,8 +1550,8 @@ const topics = [
       },
       {
         text: "Says who?",
-        meaning: "谁说的",
-        insight: "质疑信息来源时用；语气偏口语。",
+        meaning: "谁说的？",
+        insight: "质疑权威或来源；语气冲，慎用。",
         active: false,
         examples: [
           { en: "That's the rule. — Says who?", zh: "那是规定。——谁说的？" },
@@ -1574,8 +1560,8 @@ const topics = [
       },
       {
         text: "I'm not sure I can do it.",
-        meaning: "恐怕这事我干不了",
-        insight: "委婉表示可能做不到。",
+        meaning: "这事我恐怕干不了",
+        insight: "委婉说能力/条件不够；比 I can't 留一点余地。",
         active: false,
         examples: [
           { en: "Can you finish tonight? — I'm not sure I can do it.", zh: "今晚能做完吗？——恐怕我干不了。" },
@@ -1600,14 +1586,12 @@ const topics = [
       { pattern: "Do me a [favor].", meaning: "帮我个……", slots: "favor", example: "Do me a favor." },
       { pattern: "Tell me what to [verb].", meaning: "告诉我该……", slots: "verb", example: "Tell me what to do." },
     ],
-    vocabs: [
-      "watch", "out", "careful", "favor", "give", "hand", "hold", "something's", "wrong", "doesn't", "work", "can't", "find", "book",
-    ],
+    vocabs: [],
     expressions: [
       {
         text: "Watch out.",
-        meaning: "当心",
-        insight: "突发危险时的提醒。",
+        meaning: "当心！",
+        insight: "突发危险时喊停；比 Be careful 更急、更短。",
         active: true,
         examples: [
           { en: "Watch out! The car is coming.", zh: "当心！车来了。" },
@@ -1616,8 +1600,8 @@ const topics = [
       },
       {
         text: "Be careful.",
-        meaning: "小心",
-        insight: "提醒注意安全。",
+        meaning: "小心一点",
+        insight: "提醒注意安全或别弄坏；可事先说，不必等危险已到眼前。",
         active: true,
         examples: [
           { en: "Be careful. The floor is wet.", zh: "小心。地板湿。" },
@@ -1627,7 +1611,7 @@ const topics = [
       {
         text: "Do me a favor.",
         meaning: "帮我个忙",
-        insight: "开口请人帮忙。",
+        insight: "请人做一件事（打电话、带话等）；Give me a hand 更偏动手帮忙。",
         active: true,
         examples: [
           { en: "Do me a favor. Hold this door.", zh: "帮个忙。扶一下门。" },
@@ -1636,8 +1620,8 @@ const topics = [
       },
       {
         text: "Give me a hand.",
-        meaning: "帮个忙",
-        insight: "请求搭把手。",
+        meaning: "搭把手",
+        insight: "请人上手帮忙搬、扶、拿；偏具体体力活。",
         active: true,
         examples: [
           { en: "Give me a hand with these bags.", zh: "帮我拿一下这些包。" },
@@ -1647,7 +1631,7 @@ const topics = [
       {
         text: "Hold up.",
         meaning: "等一下",
-        insight: "让对方等一下。",
+        insight: "让对方停一下/等自己；这里不是抢劫用语。",
         active: true,
         examples: [
           { en: "Hold up. I forgot my phone.", zh: "等一下。我忘带手机了。" },
@@ -1657,7 +1641,7 @@ const topics = [
       {
         text: "Something's wrong.",
         meaning: "有点不对劲",
-        insight: "感到情况不对。",
+        insight: "感觉情况异常，先示警再说明。",
         active: true,
         examples: [
           { en: "Something's wrong with my card.", zh: "我的卡好像有问题。" },
@@ -1666,8 +1650,8 @@ const topics = [
       },
       {
         text: "It doesn't work.",
-        meaning: "没有用",
-        insight: "说明东西失灵。",
+        meaning: "用不了 / 坏了",
+        insight: "设备、按钮、方法没效果；不是说「这人没用」。",
         active: true,
         examples: [
           { en: "I pressed it, but it doesn't work.", zh: "我按了，但没用。" },
@@ -1687,7 +1671,7 @@ const topics = [
       {
         text: "We got a problem.",
         meaning: "我们有麻烦了",
-        insight: "把麻烦说清楚。",
+        insight: "把已经出现的麻烦挑明；比 Something's wrong 更确定「出问题了」。",
         active: true,
         examples: [
           { en: "We got a problem. The gate is closed.", zh: "我们有麻烦了。门关了。" },
@@ -1696,8 +1680,8 @@ const topics = [
       },
       {
         text: "It's urgent.",
-        meaning: "有急事",
-        insight: "强调事情紧急。",
+        meaning: "很急 / 有急事",
+        insight: "强调时间紧，请对方优先处理。",
         active: true,
         examples: [
           { en: "I need to talk. It's urgent.", zh: "我需要谈谈。很紧急。" },
@@ -1706,8 +1690,8 @@ const topics = [
       },
       {
         text: "Is there anything I can do?",
-        meaning: "有什么我可以帮忙的吗？",
-        insight: "主动提出帮忙。",
+        meaning: "我能帮上什么忙吗？",
+        insight: "主动提出帮忙；方向是「我帮你」，不是「你帮我」。",
         active: false,
         examples: [
           { en: "You look stuck. Is there anything I can do?", zh: "你看着为难。有什么我能帮忙的吗？" },
@@ -1716,8 +1700,8 @@ const topics = [
       },
       {
         text: "Mayday.",
-        meaning: "求救",
-        insight: "紧急求救信号式呼喊。",
+        meaning: "求救（无线电用语）",
+        insight: "紧急呼救信号；日常口语很少用，电影/航空语境更常见。",
         active: false,
         examples: [
           { en: "Mayday! We need help now!", zh: "求救！我们现在需要帮助！" },
@@ -1726,8 +1710,8 @@ const topics = [
       },
       {
         text: "I got your back.",
-        meaning: "我支持你",
-        insight: "表示会支持对方。",
+        meaning: "我撑着你 / 我站你这边",
+        insight: "表示会支持、帮忙顶着；不是字面「看你的背」。",
         active: false,
         examples: [
           { en: "Don't worry. I got your back.", zh: "别担心。我支持你。" },
@@ -1736,8 +1720,8 @@ const topics = [
       },
       {
         text: "Hang in there.",
-        meaning: "坚持下去",
-        insight: "鼓励对方撑住。",
+        meaning: "撑住 / 再坚持一下",
+        insight: "鼓励对方熬过难关；偏打气。",
         active: false,
         examples: [
           { en: "Hang in there. Help is coming.", zh: "坚持住。支援马上到。" },
@@ -1747,7 +1731,7 @@ const topics = [
       {
         text: "Don't panic.",
         meaning: "别慌",
-        insight: "让对方别慌。",
+        insight: "稳住情绪，先别乱；常接着给下一步。",
         active: false,
         examples: [
           { en: "Don't panic. Breathe.", zh: "别慌。深呼吸。" },
@@ -1757,7 +1741,7 @@ const topics = [
       {
         text: "Don't give up.",
         meaning: "别放弃",
-        insight: "鼓励坚持。",
+        insight: "鼓励继续尝试；和 Hang in there 近，但更强调「别停」。",
         active: false,
         examples: [
           { en: "Don't give up. Try once more.", zh: "别放弃。再试一次。" },
@@ -1766,8 +1750,8 @@ const topics = [
       },
       {
         text: "I'm feeling a little under the weather today.",
-        meaning: "我今天感觉有点不舒服",
-        insight: "说明身体有点不舒服。",
+        meaning: "今天有点不舒服",
+        insight: "惯用语：身体不适；不是在评价天气。",
         active: false,
         examples: [
           { en: "I can't go out. I'm feeling a little under the weather today.", zh: "我出不了门。今天有点不舒服。" },
@@ -1776,8 +1760,8 @@ const topics = [
       },
       {
         text: "Fear not.",
-        meaning: "别害怕",
-        insight: "让对方别害怕。",
+        meaning: "别怕",
+        insight: "安慰用语，略文/旧；日常更常说 Don't worry / It's okay。",
         active: false,
         examples: [
           { en: "Fear not. I'm right here.", zh: "别怕。我就在这儿。" },
@@ -1786,8 +1770,8 @@ const topics = [
       },
       {
         text: "Tell me what to do.",
-        meaning: "告诉我该怎么做",
-        insight: "请对方给出指示。",
+        meaning: "告诉我该怎么办",
+        insight: "自己卡住时，请对方给明确指示。",
         active: false,
         examples: [
           { en: "I'm lost. Tell me what to do.", zh: "我迷路了。告诉我该怎么办。" },
@@ -1797,7 +1781,7 @@ const topics = [
       {
         text: "I'm begging you.",
         meaning: "我求你了",
-        insight: "强烈恳求。",
+        insight: "强烈恳求；语气很重，用于真的很在意的事。",
         active: false,
         examples: [
           { en: "Please stay. I'm begging you.", zh: "请留下来。我求你了。" },
@@ -2315,7 +2299,7 @@ const sceneCsv = [
     '日常生活与生存开口',
     'L1',
     '1',
-    '常用英语500句入门篇：在见面、用餐、判断取舍、问路和求助中，用短语和简单句完成听懂与立即回应。',
+    '常用英语500句入门篇：在寒暄接话、用餐、判断取舍、出行和求助鼓励中，用短语和简单句完成听懂与立即回应。',
     'foundation',
   ]),
 ].join('\n') + '\n'

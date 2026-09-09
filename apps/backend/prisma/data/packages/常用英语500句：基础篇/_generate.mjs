@@ -28,7 +28,7 @@ function csvLine(cols) {
 /** @type {Topic[]} */
 const topics = [
   {
-    title: "澄清、确认与补充问题",
+    title: "澄清、确认与追问",
     promptEn: "Clarify meaning, confirm details, and ask follow-up questions.",
     promptZh: "澄清意思、确认细节，并追问补充信息。",
     description: "在预约或计划沟通中听不懂、不确定时，主动澄清并确认对方意图。",
@@ -45,119 +45,19 @@ const topics = [
     ],
     expressions: [
       {
-        text: "What do you mean?",
-        meaning: "你什么意思？",
-        insight: "原版短句。没听懂对方意图时直接澄清；语气要中性，避免听起来像质问。",
-        active: true,
-        examples: [
-          { en: "What do you mean by 'maybe next week'?", zh: "你说「也许下周」是什么意思？" },
-          { en: "Sorry—what do you mean?", zh: "抱歉——你是什么意思？" },
-        ],
-      },
-      {
-        text: "I beg your pardon.",
-        meaning: "你能再说一遍吗 / 请再说一遍",
-        insight: "原版短句。正式一点的「请再说一遍」；也可表达轻微惊讶。",
-        active: true,
-        examples: [
-          { en: "I beg your pardon? Could you say that again?", zh: "请再说一遍？你能再说一次吗？" },
-          { en: "I beg your pardon—I didn't catch the time.", zh: "请再说一遍——我没听清时间。" },
-        ],
-      },
-      {
-        text: "What did I miss?",
-        meaning: "我错过什么啦？",
-        insight: "原版短句。中途加入或漏听信息时用；适合会议、群聊或改期说明。",
-        active: false,
-        examples: [
-          { en: "I just joined. What did I miss?", zh: "我刚进来。我错过什么了？" },
-          { en: "Wait—what did I miss about the reservation?", zh: "等等——预约那边我漏听了什么？" },
-        ],
-      },
-      {
-        text: "Where were we?",
-        meaning: "我们说到哪了？",
-        insight: "原版短句。被打断后把话题拉回；比重新开场更自然。",
-        active: false,
-        examples: [
-          { en: "Sorry about the call. Where were we?", zh: "抱歉接了个电话。我们说到哪了？" },
-          { en: "Okay, back. Where were we on the plan?", zh: "好，回来了。计划说到哪了？" },
-        ],
-      },
-      {
-        text: "Is that so?",
-        meaning: "是这样吗？",
-        insight: "原版短句。轻确认或带一点惊讶；后面常接追问。",
-        active: false,
-        examples: [
-          { en: "The room is unavailable? Is that so?", zh: "房间没空？是这样吗？" },
-          { en: "Is that so? Then what should we do?", zh: "是这样吗？那我们该怎么办？" },
-        ],
-      },
-      {
-        text: "Are you serious?",
-        meaning: "你是认真的吗？",
-        insight: "原版短句。对意外信息表示难以置信；注意语气，别显得冲。",
-        active: true,
-        examples: [
-          { en: "They cancelled the booking? Are you serious?", zh: "他们取消预约了？你是认真的吗？" },
-          { en: "Are you serious about moving it to Friday?", zh: "你是认真要把时间改到周五吗？" },
-        ],
-      },
-      {
         text: "Are you kidding?",
         meaning: "你在开玩笑吧？",
-        insight: "原版短句。更口语的惊讶；熟人间用，正式场合慎用。",
-        active: false,
+        insight: "更口语的惊讶；熟人间用，正式场合慎用。",
+        active: true,
         examples: [
           { en: "No rooms left? Are you kidding?", zh: "没房了？你在开玩笑吧？" },
           { en: "Are you kidding? That was our only slot.", zh: "开玩笑吧？那是我们唯一的时段。" },
         ],
       },
       {
-        text: "What's going on?",
-        meaning: "怎么回事？",
-        insight: "原版短句。感觉情况不对时先摸清状况；适合延误、故障或突发变化。",
-        active: true,
-        examples: [
-          { en: "The app won't load. What's going on?", zh: "应用打不开。怎么回事？" },
-          { en: "Hey, what's going on with tonight's plan?", zh: "嘿，今晚的计划怎么回事？" },
-        ],
-      },
-      {
-        text: "I'm not sure yet.",
-        meaning: "我还不确定",
-        insight: "原版短句。还没想好或信息不够时诚实说明；可补 I'll check and confirm。",
-        active: true,
-        examples: [
-          { en: "Can we confirm Friday? — I'm not sure yet.", zh: "周五能定吗？——我还不确定。" },
-          { en: "I'm not sure yet. Let me check my calendar.", zh: "我还不确定。我先看一下日历。" },
-        ],
-      },
-      {
-        text: "I don't know for sure.",
-        meaning: "我不是很确定",
-        insight: "原版短句。比 I'm not sure 更强调「没把握」；避免给错承诺。",
-        active: false,
-        examples: [
-          { en: "Will the repair finish today? — I don't know for sure.", zh: "今天能修好吗？——我不是很确定。" },
-          { en: "I don't know for sure. I'll ask the front desk.", zh: "我不是很确定。我去问前台。" },
-        ],
-      },
-      {
-        text: "Hard to say.",
-        meaning: "很难说",
-        insight: "原版短句。无法简单判断时用；后面可给一个倾向。",
-        active: false,
-        examples: [
-          { en: "Will traffic be bad? — Hard to say.", zh: "会堵车吗？——很难说。" },
-          { en: "Hard to say. It depends on the weather.", zh: "很难说。要看天气。" },
-        ],
-      },
-      {
         text: "That depends.",
         meaning: "那得看情况",
-        insight: "原版短句。回答「能不能 / 要不要」前先设条件；常接 on...。",
+        insight: "回答「能不能 / 要不要」前先设条件；常接 on...。",
         active: true,
         examples: [
           { en: "Can we reschedule? — That depends on my shift.", zh: "能改期吗？——要看我班次。" },
@@ -167,48 +67,18 @@ const topics = [
       {
         text: "Then what?",
         meaning: "然后呢？",
-        insight: "原版短句。追问下一步；适合计划变化后继续推进。",
-        active: false,
+        insight: "追问下一步；适合计划变化后继续推进。",
+        active: true,
         examples: [
           { en: "The flight is delayed. Then what?", zh: "航班延误了。然后呢？" },
           { en: "Okay, we cancel tonight. Then what?", zh: "好，今晚取消。然后呢？" },
         ],
       },
       {
-        text: "Gotcha.",
-        meaning: "明白了",
-        insight: "原版短句。确认听懂的轻松说法；正式场合可用 I see / Understood。",
-        active: true,
-        examples: [
-          { en: "So we meet at three. — Gotcha.", zh: "那我们三点见。——明白了。" },
-          { en: "Gotcha. I'll update the booking.", zh: "明白了。我会更新预约。" },
-        ],
-      },
-      {
-        text: "May I ask some questions?",
-        meaning: "我可以问几个问题吗？",
-        insight: "原版短句。开始追问前的礼貌铺垫；适合预约、入住或课程咨询。",
-        active: false,
-        examples: [
-          { en: "Before we book, may I ask some questions?", zh: "预约前，我可以问几个问题吗？" },
-          { en: "May I ask some questions about the cancellation policy?", zh: "我可以问几个关于取消政策的问题吗？" },
-        ],
-      },
-      {
-        text: "Hold on, let me think.",
-        meaning: "等等，让我想一下",
-        insight: "原版短句。需要时间思考时先占住话轮；比沉默更礼貌。",
-        active: true,
-        examples: [
-          { en: "Which date? — Hold on, let me think.", zh: "哪个日期？——等等，让我想一下。" },
-          { en: "Hold on, let me think. Tuesday might work.", zh: "等等，让我想一下。周二可能可以。" },
-        ],
-      },
-      {
         text: "How is that possible?",
         meaning: "怎么可能呢？",
-        insight: "原版短句。对不合理结果表示困惑；可接着澄清事实。",
-        active: false,
+        insight: "对不合理结果表示困惑；可接着澄清事实。",
+        active: true,
         examples: [
           { en: "The key doesn't work. How is that possible?", zh: "钥匙打不开。怎么可能呢？" },
           { en: "How is that possible? We confirmed yesterday.", zh: "怎么可能？我们昨天确认过了。" },
@@ -217,37 +87,167 @@ const topics = [
       {
         text: "Why didn't you tell me?",
         meaning: "你为什么不告诉我？",
-        insight: "原版短句。信息滞后时的追问；语气容易冲，可软化表达。",
-        active: false,
+        insight: "信息滞后时的追问；语气容易冲，可软化表达。",
+        active: true,
         examples: [
           { en: "The meeting moved. Why didn't you tell me?", zh: "会议改了。你为什么不告诉我？" },
           { en: "Why didn't you tell me about the delay?", zh: "延误的事你为什么不告诉我？" },
         ],
       },
       {
-        text: "What's the word for it?",
-        meaning: "那个字怎么说来着？",
-        insight: "原版短句。一时卡词时求助；也可用 How do you say...?",
-        active: false,
+        text: "Who told you?",
+        meaning: "谁告诉你的？",
+        insight: "追问消息来源；语气可软可硬，看场合。",
+        active: true,
         examples: [
-          { en: "The thing for unlocking—what's the word for it?", zh: "用来开锁的那个——那个词怎么说来着？" },
-          { en: "What's the word for it in English?", zh: "那个用英语怎么说？" },
+          { en: "Who told you I was leaving?", zh: "谁告诉你我要走了？" },
+          { en: "I didn't post that. — Who told you?", zh: "我没发过。——谁告诉你的？" },
         ],
       },
       {
-        text: "Is that what you want?",
-        meaning: "这就是你想要的吗？",
-        insight: "原版短句。方案确认收口；避免按自己猜测执行。",
+        text: "How should I know.",
+        meaning: "我哪知道。",
+        insight: "表示自己不知情；比 I don't know 更冲一点。",
+        active: true,
+        examples: [
+          { en: "Where's the charger? — How should I know.", zh: "充电器呢？——我哪知道。" },
+          { en: "How should I know. Ask Maya.", zh: "我哪知道。问 Maya。" },
+        ],
+      },
+      {
+        text: "What can I say?",
+        meaning: "我还能说什么？",
+        insight: "无奈或默认事实时用；常接抱怨或妥协。",
+        active: true,
+        examples: [
+          { en: "The price went up again. What can I say?", zh: "又涨价了。我还能说什么？" },
+          { en: "What can I say? You were right.", zh: "我还能说什么？你是对的。" },
+        ],
+      },
+      {
+        text: "You didn't see it, did you?",
+        meaning: "你没看到，对吗？",
+        insight: "反意疑问：期待对方说「没看到」；也可试探对方是否知情。",
+        active: true,
+        examples: [
+          { en: "You didn't see it, did you? I hid the gift.", zh: "你没看到，对吗？礼物我藏起来了。" },
+          { en: "Wait, you didn't see it, did you?", zh: "等等，你没看到吧？" },
+        ],
+      },
+      {
+        text: "What's wrong with you?",
+        meaning: "你怎么回事？",
+        insight: "指责或吃惊对方行为；熟人之间更常见，语气偏硬。",
         active: false,
         examples: [
-          { en: "A morning slot on Friday—is that what you want?", zh: "周五上午时段——这是你想要的吗？" },
-          { en: "Is that what you want, or should we change it?", zh: "这是你想要的，还是我们改一下？" },
+          { en: "You skipped the meeting. What's wrong with you?", zh: "你翘会了。你怎么回事？" },
+          { en: "What's wrong with you? That was rude.", zh: "你怎么回事？那样很无礼。" },
+        ],
+      },
+      {
+        text: "Why are you doing this?",
+        meaning: "你为什么要这样做？",
+        insight: "质疑动机；可软可硬，看语气。",
+        active: false,
+        examples: [
+          { en: "Why are you doing this? We already agreed.", zh: "你为什么要这样？我们已经说好了。" },
+          { en: "Stop. Why are you doing this?", zh: "停下。你为什么要这样做？" },
+        ],
+      },
+      {
+        text: "Who else.",
+        meaning: "还有谁。",
+        insight: "补问名单或范围；口语里常省略问号语气。",
+        active: false,
+        examples: [
+          { en: "Tom is coming. — Who else.", zh: "Tom 会来。——还有谁。" },
+          { en: "Who else needs a copy?", zh: "还有谁要一份？" },
+        ],
+      },
+      {
+        text: "Not yet.",
+        meaning: "还没。",
+        insight: "否定完成；常接 but / I'm on it。",
+        active: false,
+        examples: [
+          { en: "Did you book the room? — Not yet.", zh: "订房了吗？——还没。" },
+          { en: "Not yet. Give me five minutes.", zh: "还没。再给我五分钟。" },
+        ],
+      },
+      {
+        text: "I doubt it.",
+        meaning: "我怀疑 / 不太信。",
+        insight: "礼貌表达不信；比 No way 更克制。",
+        active: false,
+        examples: [
+          { en: "Will they finish today? — I doubt it.", zh: "他们今天能做完吗？——我怀疑。" },
+          { en: "I doubt it. The traffic is awful.", zh: "不太信。路况很差。" },
+        ],
+      },
+      {
+        text: "I knew it.",
+        meaning: "我就知道。",
+        insight: "预感被证实；可得意也可无奈。",
+        active: false,
+        examples: [
+          { en: "The Wi-Fi is down again. — I knew it.", zh: "网又挂了。——我就知道。" },
+          { en: "I knew it. You forgot the key.", zh: "我就知道。你忘带钥匙了。" },
+        ],
+      },
+      {
+        text: "It doesn't make sense.",
+        meaning: "这说不通。",
+        insight: "指出逻辑问题；常作为澄清开场。",
+        active: false,
+        examples: [
+          { en: "He said 3 p.m., then 5. It doesn't make sense.", zh: "他说三点，又说五点。这说不通。" },
+          { en: "It doesn't make sense. Can you explain?", zh: "这说不通。你能解释一下吗？" },
+        ],
+      },
+      {
+        text: "Stop beating around the bush.",
+        meaning: "别拐弯抹角了。",
+        insight: "催对方直说重点；语气偏催促。",
+        active: false,
+        examples: [
+          { en: "Stop beating around the bush. Just tell me the price.", zh: "别拐弯抹角了。直接告诉我价格。" },
+          { en: "Okay, stop beating around the bush. What's the issue?", zh: "好了，别绕了。问题是什么？" },
+        ],
+      },
+      {
+        text: "Just a heads-up.",
+        meaning: "提前提醒一下。",
+        insight: "预告信息或风险；常接 about / that...。",
+        active: false,
+        examples: [
+          { en: "Just a heads-up: the meeting moved to 4.", zh: "提前提醒一下：会议改到四点了。" },
+          { en: "Just a heads-up about the delay.", zh: "关于延误，先跟你说一声。" },
+        ],
+      },
+      {
+        text: "A penny for your thoughts?",
+        meaning: "你在想什么？",
+        insight: "看到对方发呆时的轻松询问；偏口语、略俏皮。",
+        active: false,
+        examples: [
+          { en: "You've been quiet. A penny for your thoughts?", zh: "你一直不说话。在想什么呢？" },
+          { en: "A penny for your thoughts? You look worried.", zh: "在想什么？你看起来有心事。" },
+        ],
+      },
+      {
+        text: "What I understand.",
+        meaning: "据我理解 / 据我所知。",
+        insight: "复述自己理解时用；常接 is / that...。",
+        active: false,
+        examples: [
+          { en: "What I understand is we leave at eight.", zh: "据我理解，我们八点出发。" },
+          { en: "So, what I understand: no refunds, right?", zh: "所以据我理解：不能退款，对吗？" },
         ],
       }
     ],
   },
   {
-    title: "邀请、接受、拒绝和改期",
+    title: "邀约、答应、拒绝与改期",
     promptEn: "Invite someone, accept or decline, and reschedule politely.",
     promptZh: "发出邀请，接受或拒绝，并礼貌改期。",
     description: "在约见、聚餐或同行安排中提出邀请，并处理接受、拒绝与灵活改期。",
@@ -264,49 +264,19 @@ const topics = [
     ],
     expressions: [
       {
-        text: "How about a drink tonight?",
-        meaning: "今晚喝一杯怎样？",
-        insight: "原版短句。轻松邀约；也可换成 coffee / dinner。",
-        active: true,
-        examples: [
-          { en: "How about a drink tonight after work?", zh: "下班后今晚喝一杯怎样？" },
-          { en: "I'm free later. How about a drink tonight?", zh: "我晚点有空。今晚喝一杯怎样？" },
-        ],
-      },
-      {
         text: "What shall we do tonight?",
         meaning: "我们今晚做什么？",
-        insight: "原版短句。开放式征询安排；适合已约上但未定细节。",
-        active: false,
+        insight: "开放式征询安排；适合已约上但未定细节。",
+        active: true,
         examples: [
           { en: "What shall we do tonight—dinner or a walk?", zh: "今晚做什么——吃饭还是散步？" },
           { en: "We're both free. What shall we do tonight?", zh: "我们都有空。今晚做什么？" },
         ],
       },
       {
-        text: "Shall we?",
-        meaning: "要不要一起？",
-        insight: "原版短句。简短邀对方一起行动；常接 go / start。",
-        active: true,
-        examples: [
-          { en: "The table is ready. Shall we?", zh: "位子好了。走吧？" },
-          { en: "Shall we head out now?", zh: "我们现在出发好吗？" },
-        ],
-      },
-      {
-        text: "That would be great.",
-        meaning: "那太好了",
-        insight: "原版短句。爽快接受提议；语气积极。",
-        active: true,
-        examples: [
-          { en: "Friday at six? — That would be great.", zh: "周五六点？——那太好了。" },
-          { en: "That would be great. Thanks for adjusting.", zh: "那太好了。谢谢你调整时间。" },
-        ],
-      },
-      {
         text: "Let's play it by ear.",
-        meaning: "我们随情况决定吧",
-        insight: "原版短句。时间未定或可能变化时保留弹性；适合改期协商。",
+        meaning: "到时再说 / 随机应变",
+        insight: "计划先不定死，到时候再看情况。",
         active: true,
         examples: [
           { en: "Traffic looks bad. Let's play it by ear.", zh: "路况不好。我们见机行事吧。" },
@@ -314,19 +284,9 @@ const topics = [
         ],
       },
       {
-        text: "I wish I could.",
-        meaning: "我希望我能（但恐怕不行）",
-        insight: "原版短句。温和拒绝，暗示有心无力；常补原因。",
-        active: true,
-        examples: [
-          { en: "I wish I could, but I have a class.", zh: "我也想去，但我有课。" },
-          { en: "Dinner tonight? — I wish I could.", zh: "今晚吃饭？——我也想，但去不了。" },
-        ],
-      },
-      {
         text: "Not today.",
         meaning: "今天不行",
-        insight: "原版短句。直接但简短的拒绝；可补 another day。",
+        insight: "直接但简短的拒绝；可补 another day。",
         active: true,
         examples: [
           { en: "Can we meet today? — Not today.", zh: "今天能见面吗？——今天不行。" },
@@ -336,8 +296,8 @@ const topics = [
       {
         text: "Not now.",
         meaning: "现在不行",
-        insight: "原版短句。暂时拒绝，不否定以后；适合忙的时候。",
-        active: false,
+        insight: "暂时拒绝，不否定以后；适合忙的时候。",
+        active: true,
         examples: [
           { en: "Can you talk? — Not now.", zh: "能聊吗？——现在不行。" },
           { en: "Not now—I'm checking in at the hotel.", zh: "现在不行——我在酒店办理入住。" },
@@ -346,135 +306,175 @@ const topics = [
       {
         text: "She comes along?",
         meaning: "她也一起来吗？",
-        insight: "原版短句。确认同行人员；口语里用陈述语序+问号很常见。",
-        active: false,
+        insight: "确认同行人员；口语里用陈述语序+问号很常见。",
+        active: true,
         examples: [
           { en: "We're going for coffee. She comes along?", zh: "我们去喝咖啡。她也一起来吗？" },
           { en: "She comes along? I can pick you both up.", zh: "她也来吗？我可以一起接你们。" },
         ],
       },
       {
-        text: "Which would you prefer?",
-        meaning: "你更想要哪个？",
-        insight: "原版短句。给出选项请对方选；适合时间或地点二选一。",
-        active: false,
-        examples: [
-          { en: "Saturday or Sunday—which would you prefer?", zh: "周六还是周日——你更想哪天？" },
-          { en: "Which would you prefer, a call or a text?", zh: "你更想电话还是短信？" },
-        ],
-      },
-      {
-        text: "I'm not used to drinking.",
-        meaning: "我不习惯喝酒。",
-        insight: "原版短句。礼貌说明个人习惯，婉拒酒局；可提替代方案。",
-        active: false,
-        examples: [
-          { en: "I'm not used to drinking. Could we get coffee instead?", zh: "我不习惯喝酒。我们改喝咖啡好吗？" },
-          { en: "Thanks, but I'm not used to drinking.", zh: "谢谢，但我不习惯喝酒。" },
-        ],
-      },
-      {
-        text: "By all means.",
-        meaning: "当然可以",
-        insight: "原版短句。热情同意请求或邀请；比 sure 更正式一点。",
-        active: true,
-        examples: [
-          { en: "May I bring a friend? — By all means.", zh: "我能带朋友吗？——当然可以。" },
-          { en: "By all means, join us.", zh: "当然可以，一起来吧。" },
-        ],
-      },
-      {
-        text: "As you wish.",
-        meaning: "如你所愿",
-        insight: "原版短句。顺从对方安排；语气可中性也可略带无奈。",
-        active: false,
-        examples: [
-          { en: "Let's make it earlier. — As you wish.", zh: "我们提前一点吧。——如你所愿。" },
-          { en: "As you wish. I'll change the booking.", zh: "如你所愿。我去改预约。" },
-        ],
-      },
-      {
-        text: "Whatever you say.",
-        meaning: "随你怎么说 / 听你的",
-        insight: "原版短句。把决定权交给对方；有时略带放弃争辩。",
-        active: false,
-        examples: [
-          { en: "Whatever you say—I'll follow your plan.", zh: "听你的——我跟你的计划走。" },
-          { en: "Okay, whatever you say.", zh: "好，听你的。" },
-        ],
-      },
-      {
-        text: "You do what you want.",
-        meaning: "你做你想做的吧",
-        insight: "原版短句。放手让对方自行决定；可能略冷，慎用。",
-        active: false,
-        examples: [
-          { en: "If you can't come, you do what you want.", zh: "如果你来不了，你自己决定吧。" },
-          { en: "You do what you want. I'll stay home.", zh: "你做你想做的。我留在家里。" },
-        ],
-      },
-      {
-        text: "Not a chance.",
-        meaning: "想都别想 / 绝不可能",
-        insight: "原版短句。强硬拒绝；熟人或玩笑时用，正式场合太冲。",
-        active: false,
-        examples: [
-          { en: "Skip the meeting? — Not a chance.", zh: "翘会？——想都别想。" },
-          { en: "Not a chance. We already promised.", zh: "绝不可能。我们已经答应了。" },
-        ],
-      },
-      {
         text: "Why bother?",
         meaning: "何必呢 / 何必费这个劲",
-        insight: "原版短句。觉得不值得去做；可接解释。",
-        active: false,
+        insight: "觉得不值得去做；可接解释。",
+        active: true,
         examples: [
           { en: "Why bother changing it again?", zh: "何必再改一次？" },
           { en: "The place is closed. Why bother going?", zh: "那地方关门了。何必还去？" },
         ],
       },
       {
-        text: "I'd pick her up.",
-        meaning: "我会去接她",
-        insight: "原版短句。主动提出接人安排；也可改成 pick you up。",
-        active: false,
-        examples: [
-          { en: "Don't worry about the taxi. I'd pick her up.", zh: "别担心打车。我会去接她。" },
-          { en: "I'd pick her up at the station at seven.", zh: "我七点去车站接她。" },
-        ],
-      },
-      {
-        text: "You can call me any time.",
-        meaning: "你可以随时打电话给我。",
-        insight: "原版短句。保持联系通道；适合改期后继续协调。",
-        active: true,
-        examples: [
-          { en: "If the time changes, you can call me any time.", zh: "如果时间变了，你可以随时打给我。" },
-          { en: "You can call me any time tomorrow morning.", zh: "你明天早上随时可以打给我。" },
-        ],
-      },
-      {
         text: "Afraid so.",
         meaning: "恐怕是的",
-        insight: "原版短句。不情愿地确认坏消息；语气偏委婉。",
-        active: false,
+        insight: "不情愿地承认「是这样」。",
+        active: true,
         examples: [
           { en: "Is the restaurant full? — Afraid so.", zh: "餐厅满了吗？——恐怕是的。" },
           { en: "Afraid so. We'll need another day.", zh: "恐怕是的。我们得另约一天。" },
+        ],
+      },
+      {
+        text: "What are you gonna do at night?",
+        meaning: "你晚上打算做什么？",
+        insight: "邀约或闲聊开场；gonna 偏口语。",
+        active: true,
+        examples: [
+          { en: "What are you gonna do at night? Want to grab dinner?", zh: "晚上打算干什么？要不要一起吃饭？" },
+          { en: "What are you gonna do at night after the class?", zh: "上完课晚上打算做什么？" },
+        ],
+      },
+      {
+        text: "I'll just play it by ear.",
+        meaning: "我到时随机应变。",
+        insight: "表示暂不定死计划；偏口语。",
+        active: true,
+        examples: [
+          { en: "No fixed plan. I'll just play it by ear.", zh: "没固定计划。我到时随机应变。" },
+          { en: "If traffic is bad, I'll just play it by ear.", zh: "如果堵车，我就临场看看。" },
+        ],
+      },
+      {
+        text: "Now or never.",
+        meaning: "机不可失 / 现在不做以后就没机会了。",
+        insight: "强调时机紧迫；可作劝说或自我打气。",
+        active: false,
+        examples: [
+          { en: "Book it now. Now or never.", zh: "现在就订。机不可失。" },
+          { en: "It's now or never. Ask her today.", zh: "再不说就没机会了。今天就去问她。" },
+        ],
+      },
+      {
+        text: "Absolutely.",
+        meaning: "当然 / 绝对是。",
+        insight: "强肯定；可单独回答，也可接理由。",
+        active: false,
+        examples: [
+          { en: "Can you cover for me? — Absolutely.", zh: "你能帮我顶一下吗？——当然。" },
+          { en: "Absolutely. That works for me.", zh: "绝对可以。我没问题。" },
+        ],
+      },
+      {
+        text: "I won't.",
+        meaning: "我不会（去做）。",
+        insight: "拒绝或承诺不做某事；语气短而硬。",
+        active: false,
+        examples: [
+          { en: "Don't tell anyone. — I won't.", zh: "别告诉任何人。——我不会的。" },
+          { en: "I won't miss the deadline.", zh: "我不会错过截止日期。" },
+        ],
+      },
+      {
+        text: "Me neither.",
+        meaning: "我也不 / 我也没有。",
+        insight: "附和否定句；肯定附和用 Me too / So do I。",
+        active: false,
+        examples: [
+          { en: "I don't like spicy food. — Me neither.", zh: "我不爱吃辣。——我也不。" },
+          { en: "I haven't finished. Me neither.", zh: "我还没做完。我也没有。" },
+        ],
+      },
+      {
+        text: "So do I.",
+        meaning: "我也是。",
+        insight: "附和肯定句（助动词 do）；否定用 Neither do I。",
+        active: false,
+        examples: [
+          { en: "I love this cafe. — So do I.", zh: "我喜欢这家咖啡店。——我也是。" },
+          { en: "So do I. Let's go again.", zh: "我也是。我们再去一次吧。" },
+        ],
+      },
+      {
+        text: "Don't even think about it.",
+        meaning: "想都别想。",
+        insight: "强硬拒绝；熟人间玩笑或认真制止都可用。",
+        active: false,
+        examples: [
+          { en: "Can I borrow your car? — Don't even think about it.", zh: "车能借我吗？——想都别想。" },
+          { en: "Don't even think about quitting now.", zh: "现在想放弃？想都别想。" },
+        ],
+      },
+      {
+        text: "Just do it.",
+        meaning: "尽管去做 / 去做就行。",
+        insight: "催促行动、少纠结；语气直接。",
+        active: false,
+        examples: [
+          { en: "Stop overthinking. Just do it.", zh: "别想太多。去做就行。" },
+          { en: "Just do it. Send the email.", zh: "尽管去做。把邮件发出去。" },
+        ],
+      },
+      {
+        text: "As my guest.",
+        meaning: "以我客人的身份 / 当作我的客人。",
+        insight: "邀请对方以客人身份加入；语气偏正式或客气。",
+        active: false,
+        examples: [
+          { en: "Come to the dinner as my guest.", zh: "来晚宴吧，当我的客人。" },
+          { en: "You can stay as my guest tonight.", zh: "今晚你可以当我的客人留下来。" },
+        ],
+      },
+      {
+        text: "Whatever it takes.",
+        meaning: "不惜一切代价。",
+        insight: "表决心；常接 I'll do... / We'll...。",
+        active: false,
+        examples: [
+          { en: "We'll finish on time, whatever it takes.", zh: "我们会按时完成，不惜一切代价。" },
+          { en: "Whatever it takes to fix this.", zh: "不管怎样都要把这修好。" },
+        ],
+      },
+      {
+        text: "She got cold feet.",
+        meaning: "她临阵退缩了。",
+        insight: "cold feet = 临阵胆怯；也可说 I got cold feet。",
+        active: false,
+        examples: [
+          { en: "She got cold feet and canceled the trip.", zh: "她临阵退缩，取消了旅行。" },
+          { en: "Don't get cold feet now.", zh: "现在别打退堂鼓。" },
+        ],
+      },
+      {
+        text: "We'll see about that.",
+        meaning: "走着瞧 / 那可不一定。",
+        insight: "对对方断言表示不服或保留；略带挑战。",
+        active: false,
+        examples: [
+          { en: "You can't finish today. — We'll see about that.", zh: "你今天做不完。——走着瞧。" },
+          { en: "We'll see about that after the meeting.", zh: "开完会再说。" },
         ],
       }
     ],
   },
   {
-    title: "酒店、课程与服务预约",
-    promptEn: "Handle hotel, class, and service bookings with clear requests.",
-    promptZh: "处理酒店、课程与服务预约中的清楚请求。",
-    description: "在酒店入住、课程报名或服务预约中确认预订、价格、时间并完成基本手续。",
-    knowledgePoints: "确认预订；付款方式；入住安顿；服务请求",
+    title: "入住安顿、许可与服务沟通",
+    promptEn: "Handle check-in, settling in, and simple service requests.",
+    promptZh: "入住安顿、许可和服务沟通。",
+    description: "叫醒、安顿、打包行李，以及许可与服务回应。",
+    knowledgePoints: "入住安顿；许可回应；服务沟通；收尾礼貌",
     duration: 900,
-    goal: "学习者能完成预约与入住相关的核心开口：确认预订、提出请求、回应安排。",
-    tip: "",
-    docIntro: "这一课对齐预约与入住场景：确认有没有订、怎么付款、怎么安顿，以及服务人员常用的简短回应。",
+    goal: "能在入住或安顿时说明需求，并回应许可与服务安排。",
+    tip: "先说要做什么，再等对方许可或回应。",
+    docIntro: "叫醒、收拾行李、安顿下来，再加上许可和简单服务回应。",
     patterns: [
     ],
     vocabs: [
@@ -483,29 +483,9 @@ const topics = [
     ],
     expressions: [
       {
-        text: "Do you have a reservation?",
-        meaning: "您预订了吗？",
-        insight: "原版短句。前台核对预订；也可自问 Do I need a reservation?",
-        active: true,
-        examples: [
-          { en: "Good evening. Do you have a reservation?", zh: "晚上好。您有预订吗？" },
-          { en: "Do you have a reservation under Lee?", zh: "您有 Lee 名下的预订吗？" },
-        ],
-      },
-      {
-        text: "Do you accept credit cards?",
-        meaning: "你们收信用卡吗？",
-        insight: "原版短句。付款前确认支付方式；也可问 cash / mobile pay。",
-        active: true,
-        examples: [
-          { en: "Before we check in—do you accept credit cards?", zh: "入住前问一下——你们收信用卡吗？" },
-          { en: "Do you accept credit cards for the deposit?", zh: "押金可以用信用卡吗？" },
-        ],
-      },
-      {
         text: "Wake me up at five thirty.",
         meaning: "请在五点半叫醒我。",
-        insight: "原版短句。酒店叫醒服务请求；把时间说清楚。",
+        insight: "酒店叫醒服务请求；把时间说清楚。",
         active: true,
         examples: [
           { en: "Wake me up at five thirty, please. I have an early train.", zh: "请五点半叫醒我。我有早班火车。" },
@@ -515,8 +495,8 @@ const topics = [
       {
         text: "Take your time to unpack.",
         meaning: "慢慢来收拾行李",
-        insight: "原版短句。让对方安心安顿；常与 get settled in 连用。",
-        active: false,
+        insight: "让对方安心安顿；常与 get settled in 连用。",
+        active: true,
         examples: [
           { en: "Take your time to unpack. Dinner can wait.", zh: "慢慢收拾行李。晚饭可以等。" },
           { en: "Please take your time to unpack first.", zh: "请先慢慢收拾行李。" },
@@ -525,8 +505,8 @@ const topics = [
       {
         text: "And get settled in.",
         meaning: "安顿下来",
-        insight: "原版短句。常接在 unpack 后；表示先安顿再谈别的。",
-        active: false,
+        insight: "常接在 unpack 后；表示先安顿再谈别的。",
+        active: true,
         examples: [
           { en: "Take your time to unpack and get settled in.", zh: "慢慢收拾行李，先安顿下来。" },
           { en: "Get settled in, then we'll check the schedule.", zh: "先安顿下来，再看日程。" },
@@ -535,8 +515,8 @@ const topics = [
       {
         text: "You should go pack.",
         meaning: "你该去打包行李了",
-        insight: "原版短句。提醒准备出发或退房；语气直接。",
-        active: false,
+        insight: "提醒准备出发或退房；语气直接。",
+        active: true,
         examples: [
           { en: "It's getting late. You should go pack.", zh: "不早了。你该去打包了。" },
           { en: "You should go pack. The shuttle leaves at nine.", zh: "你该去打包。班车九点走。" },
@@ -545,7 +525,7 @@ const topics = [
       {
         text: "Do I start now?",
         meaning: "我可以开始了吗？",
-        insight: "原版短句。课程或服务开始前确认；避免贸然动手。",
+        insight: "课程或服务开始前确认；避免贸然动手。",
         active: true,
         examples: [
           { en: "I'm ready. Do I start now?", zh: "我准备好了。现在可以开始吗？" },
@@ -553,29 +533,19 @@ const topics = [
         ],
       },
       {
-        text: "The price is reasonable.",
-        meaning: "价格还算合理。",
-        insight: "原版短句。评价报价；可接 I'll take it / Let me think。",
-        active: false,
-        examples: [
-          { en: "For a week, the price is reasonable.", zh: "住一周的话，价格还算合理。" },
-          { en: "The price is reasonable. We'll book it.", zh: "价格合理。我们订了。" },
-        ],
-      },
-      {
         text: "It's only for 2 weeks.",
         meaning: "只不过两个星期",
-        insight: "原版短句。说明时长，降低对方顾虑；也可用于课程周期。",
-        active: false,
+        insight: "说明时长，降低对方顾虑；也可用于课程周期。",
+        active: true,
         examples: [
           { en: "Don't worry—it's only for 2 weeks.", zh: "别担心——只不过两个星期。" },
           { en: "It's only for 2 weeks. Can I extend later?", zh: "只订两周。之后能续吗？" },
         ],
       },
       {
-        text: "Show it to me.",
+        text: "show it to me.",
         meaning: "给我看看",
-        insight: "原版短句。请求展示确认单、房间或材料；短促清楚。",
+        insight: "请求展示确认单、房间或材料；短促清楚。",
         active: true,
         examples: [
           { en: "Is this the confirmation? Show it to me.", zh: "这是确认单吗？给我看看。" },
@@ -585,87 +555,27 @@ const topics = [
       {
         text: "Allow me.",
         meaning: "让我来",
-        insight: "原版短句。主动代劳开门、拿行李等；礼貌介入。",
-        active: false,
+        insight: "主动代劳开门、拿行李等；礼貌介入。",
+        active: true,
         examples: [
           { en: "Allow me—I'll get the door.", zh: "让我来——我来开门。" },
           { en: "Allow me. I can carry that bag.", zh: "让我来。我可以提那个包。" },
         ],
       },
       {
-        text: "Be my guest.",
-        meaning: "请自便",
-        insight: "原版短句。允许对方使用或尝试；语气友好。",
-        active: false,
-        examples: [
-          { en: "Can I use the charger? — Be my guest.", zh: "能用一下充电器吗？——请自便。" },
-          { en: "Be my guest. The lounge is open.", zh: "请自便。休息室开着。" },
-        ],
-      },
-      {
-        text: "Take your time.",
-        meaning: "别着急",
-        insight: "原版短句。让对方不用赶；服务、填表、考虑时都好用。",
-        active: true,
-        examples: [
-          { en: "Take your time. There's no rush.", zh: "别着急。不着急。" },
-          { en: "Take your time choosing a date.", zh: "选日期别着急。" },
-        ],
-      },
-      {
-        text: "Sit tight.",
-        meaning: "先坐着等 / 先别动",
-        insight: "原版短句。请对方稍等处理；有时略口语。",
-        active: false,
-        examples: [
-          { en: "Sit tight. I'll check with the front desk.", zh: "先等一下。我去问前台。" },
-          { en: "Just sit tight—help is on the way.", zh: "先等着——人马上到。" },
-        ],
-      },
-      {
-        text: "Sure thing.",
-        meaning: "没问题",
-        insight: "原版短句。爽快答应请求；服务场景很自然。",
-        active: true,
-        examples: [
-          { en: "Can I get an extra towel? — Sure thing.", zh: "能再要一条毛巾吗？——没问题。" },
-          { en: "Sure thing. I'll book that for you.", zh: "没问题。我帮你订。" },
-        ],
-      },
-      {
-        text: "Check it out.",
-        meaning: "快看 / 去看看",
-        insight: "原版短句。邀请对方查看房间、设施或信息。",
-        active: false,
-        examples: [
-          { en: "Your room is ready. Check it out.", zh: "房间好了。去看看吧。" },
-          { en: "Check it out—the gym is on the second floor.", zh: "去看看——健身房在二楼。" },
-        ],
-      },
-      {
         text: "Remember what the doctor said.",
         meaning: "记得医生的叮嘱",
-        insight: "原版短句。提醒遵守医嘱或注意事项；也可引申为记住关键提醒。",
-        active: false,
+        insight: "提醒遵守医嘱或注意事项；也可引申为记住关键提醒。",
+        active: true,
         examples: [
           { en: "Remember what the doctor said: rest today.", zh: "记得医生的叮嘱：今天休息。" },
           { en: "Before the trip, remember what the doctor said.", zh: "出发前，记得医生怎么说的。" },
         ],
       },
       {
-        text: "Sleep tight.",
-        meaning: "睡个好觉",
-        insight: "原版短句。酒店或过夜道别时的关心；比 Good night 更口语。",
-        active: false,
-        examples: [
-          { en: "Here's your key card. Sleep tight.", zh: "这是房卡。睡个好觉。" },
-          { en: "Early start tomorrow—sleep tight.", zh: "明天要早起——睡好。" },
-        ],
-      },
-      {
         text: "Which book we talking about?",
         meaning: "哪一本书？",
-        insight: "原版短句。课程/教材预约时确认对象；口语省略 are。",
+        insight: "课程/教材预约时确认对象；口语省略 are。",
         active: false,
         examples: [
           { en: "For the evening class—which book we talking about?", zh: "晚课那本——我们说的是哪本？" },
@@ -673,19 +583,109 @@ const topics = [
         ],
       },
       {
-        text: "Have a nice day.",
-        meaning: "祝你愉快",
-        insight: "原版短句。服务结束时的礼貌收尾；也可说 Have a good one。",
-        active: true,
+        text: "Business trip.",
+        meaning: "出差。",
+        insight: "简短说明行程性质；常接 I'm on a...。",
+        active: false,
         examples: [
-          { en: "Here's your key. Have a nice day.", zh: "这是您的钥匙。祝您愉快。" },
-          { en: "Thanks for booking with us. Have a nice day.", zh: "感谢预约。祝您愉快。" },
+          { en: "I'm on a business trip next week.", zh: "我下周出差。" },
+          { en: "Business trip. Back on Friday.", zh: "出差。周五回来。" },
+        ],
+      },
+      {
+        text: "Go on in.",
+        meaning: "请进 / 赶紧进去吧。",
+        insight: "让对方先进屋；口语短句。",
+        active: false,
+        examples: [
+          { en: "The door's open. Go on in.", zh: "门开着。请进。" },
+          { en: "Go on in. I'll park the car.", zh: "你先进去。我去停车。" },
+        ],
+      },
+      {
+        text: "Get dressed now.",
+        meaning: "现在就穿衣服 / 赶紧穿好。",
+        insight: "催促出门前准备；语气直接。",
+        active: false,
+        examples: [
+          { en: "We're late. Get dressed now.", zh: "我们迟到了。现在就穿好衣服。" },
+          { en: "Get dressed now. The taxi is here.", zh: "赶紧穿好。出租车到了。" },
+        ],
+      },
+      {
+        text: "I get up at six o'clock.",
+        meaning: "我六点起床。",
+        insight: "陈述作息；可改时间套用。",
+        active: false,
+        examples: [
+          { en: "I get up at six o'clock on weekdays.", zh: "工作日我六点起床。" },
+          { en: "I get up at six o'clock, so mornings are quiet.", zh: "我六点起，所以早上很安静。" },
+        ],
+      },
+      {
+        text: "I had to take a shower.",
+        meaning: "我得去冲个澡 / 我刚洗了澡。",
+        insight: "had to 表不得不；解释迟到或耽误时常用。",
+        active: false,
+        examples: [
+          { en: "Sorry I'm late. I had to take a shower.", zh: "抱歉迟到。我得先冲个澡。" },
+          { en: "I had to take a shower after the gym.", zh: "健身后我得洗个澡。" },
+        ],
+      },
+      {
+        text: "I left it right here.",
+        meaning: "我明明放在这儿的。",
+        insight: "强调位置；常接 but it's gone。",
+        active: false,
+        examples: [
+          { en: "I left it right here. Where did it go?", zh: "我明明放这儿的。去哪了？" },
+          { en: "I left it right here on the desk.", zh: "我就放在这张桌子上。" },
+        ],
+      },
+      {
+        text: "My car needs washing.",
+        meaning: "我的车需要洗一洗。",
+        insight: "need + V-ing 表「需要被……」；被动意味。",
+        active: false,
+        examples: [
+          { en: "My car needs washing this weekend.", zh: "这周末我的车得洗一下。" },
+          { en: "My car needs washing. It's filthy.", zh: "车得洗了。太脏了。" },
+        ],
+      },
+      {
+        text: "I will be more careful.",
+        meaning: "我会更小心的。",
+        insight: "道歉后承诺改正；可缩写成 I'll。",
+        active: false,
+        examples: [
+          { en: "Sorry about that. I will be more careful.", zh: "抱歉。我会更小心。" },
+          { en: "I will be more careful next time.", zh: "下次我会更小心。" },
+        ],
+      },
+      {
+        text: "show me.",
+        meaning: "给我看看 / 教我一下。",
+        insight: "请求演示；口语里常不大写。",
+        active: false,
+        examples: [
+          { en: "I don't get it. Show me.", zh: "我不懂。给我看一下。" },
+          { en: "Show me how you fixed it.", zh: "教我你是怎么修好的。" },
+        ],
+      },
+      {
+        text: "Do you have to take the car?",
+        meaning: "你非要把车开走吗？",
+        insight: "质疑必要性；have to 表「必须」。",
+        active: false,
+        examples: [
+          { en: "Do you have to take the car? I need it later.", zh: "非要把车开走吗？我等会儿要用。" },
+          { en: "Do you have to take the car every day?", zh: "你每天都必须开车吗？" },
         ],
       }
     ],
   },
   {
-    title: "说明迟到、延误和计划变化",
+    title: "迟到、延误与计划变化",
     promptEn: "Explain being late, delays, and sudden plan changes.",
     promptZh: "说明迟到、延误和突然的计划变化。",
     description: "在迟到、交通延误或约定变化时说明情况、解释原因并协商下一步。",
@@ -710,57 +710,17 @@ const topics = [
       {
         text: "All of a sudden.",
         meaning: "突然之间",
-        insight: "原版短句。描述突发变化的开场；后面补具体事件。",
-        active: false,
+        insight: "描述突发变化的开场；后面补具体事件。",
+        active: true,
         examples: [
           { en: "All of a sudden, the app went down.", zh: "突然之间，应用挂了。" },
           { en: "All of a sudden they changed the gate.", zh: "突然之间他们改了登机口。" },
         ],
       },
       {
-        text: "Just in time.",
-        meaning: "刚好赶上",
-        insight: "原版短句。险些迟到但赶上了；可表庆幸。",
-        active: true,
-        examples: [
-          { en: "We arrived just in time for check-in.", zh: "我们刚好赶上办理入住。" },
-          { en: "Just in time—the class is starting.", zh: "刚好赶上——课要开始了。" },
-        ],
-      },
-      {
-        text: "We just caught the plane.",
-        meaning: "我们刚好赶上了飞机。",
-        insight: "原版短句。叙述险些误机的经历；也可改成 bus / train。",
-        active: false,
-        examples: [
-          { en: "That was stressful, but we just caught the plane.", zh: "好紧张，但我们刚好赶上飞机。" },
-          { en: "We just caught the plane by five minutes.", zh: "我们差五分钟就误机，刚好赶上。" },
-        ],
-      },
-      {
-        text: "You're gonna miss breakfast.",
-        meaning: "你要错过早餐时间了",
-        insight: "原版短句。催促对方抓紧；酒店场景很贴切。",
-        active: false,
-        examples: [
-          { en: "Hurry up—you're gonna miss breakfast.", zh: "快点——你要错过早餐了。" },
-          { en: "If you sleep in, you're gonna miss breakfast.", zh: "再睡懒觉就要错过早餐了。" },
-        ],
-      },
-      {
-        text: "What are you waiting for?",
-        meaning: "你在等什么呢？",
-        insight: "原版短句。催促行动；语气可急也可玩笑。",
-        active: false,
-        examples: [
-          { en: "The taxi is here. What are you waiting for?", zh: "出租车到了。你还在等什么？" },
-          { en: "What are you waiting for? Let's go.", zh: "还等什么？走吧。" },
-        ],
-      },
-      {
         text: "Something's up.",
         meaning: "有情况 / 出事了",
-        insight: "原版短句。察觉不对劲；可接询问。",
+        insight: "察觉不对劲；可接询问。",
         active: true,
         examples: [
           { en: "He's not answering. Something's up.", zh: "他不回消息。有情况。" },
@@ -770,7 +730,7 @@ const topics = [
       {
         text: "I can explain.",
         meaning: "我可以解释",
-        insight: "原版短句。迟到或违约后先争取解释机会。",
+        insight: "迟到或违约后先争取解释机会。",
         active: true,
         examples: [
           { en: "I'm late, but I can explain.", zh: "我迟到了，但我可以解释。" },
@@ -780,8 +740,8 @@ const topics = [
       {
         text: "I thought I told you.",
         meaning: "我好像跟你说过",
-        insight: "原版短句。以为信息已同步；可能略带抱怨。",
-        active: false,
+        insight: "以为信息已同步；可能略带抱怨。",
+        active: true,
         examples: [
           { en: "I thought I told you about the new time.", zh: "我以为跟你说过新时间了。" },
           { en: "I thought I told you—bring your ID.", zh: "我以为说过了——带上证件。" },
@@ -790,7 +750,7 @@ const topics = [
       {
         text: "We had a deal.",
         meaning: "我们说好了的",
-        insight: "原版短句。强调原约定；用于改期争议或提醒对方。",
+        insight: "强调原约定；用于改期争议或提醒对方。",
         active: true,
         examples: [
           { en: "We had a deal: no last-minute changes.", zh: "我们说好了：不临时改。" },
@@ -800,7 +760,7 @@ const topics = [
       {
         text: "Time's up.",
         meaning: "时间到了",
-        insight: "原版短句。截止或限时结束；会议、考试、等待都可用。",
+        insight: "截止或限时结束；会议、考试、等待都可用。",
         active: true,
         examples: [
           { en: "Time's up. We need to check out.", zh: "时间到了。我们该退房了。" },
@@ -810,7 +770,7 @@ const topics = [
       {
         text: "In the meantime.",
         meaning: "与此同时 / 在此期间",
-        insight: "原版短句。说明并行安排；后面接临时方案。",
+        insight: "说明并行安排；后面接临时方案。",
         active: true,
         examples: [
           { en: "In the meantime, I'll call the hotel.", zh: "与此同时，我给酒店打电话。" },
@@ -820,7 +780,7 @@ const topics = [
       {
         text: "From now on.",
         meaning: "从现在开始",
-        insight: "原版短句。宣布新规则或新习惯；收束混乱。",
+        insight: "宣布新规则或新习惯；收束混乱。",
         active: true,
         examples: [
           { en: "From now on, let's confirm by text.", zh: "从现在起，我们用短信确认。" },
@@ -830,8 +790,8 @@ const topics = [
       {
         text: "As always.",
         meaning: "一如既往",
-        insight: "原版短句。表示情况照旧；可褒可贬。",
-        active: false,
+        insight: "表示情况照旧；可褒可贬。",
+        active: true,
         examples: [
           { en: "He's late, as always.", zh: "他迟到了，一如既往。" },
           { en: "Thanks for helping, as always.", zh: "一如既往谢谢你帮忙。" },
@@ -840,8 +800,8 @@ const topics = [
       {
         text: "Not again.",
         meaning: "又来了",
-        insight: "原版短句。对重复问题的无奈；延误多次时很自然。",
-        active: true,
+        insight: "对重复问题的无奈；延误多次时很自然。",
+        active: false,
         examples: [
           { en: "The train is delayed? Not again.", zh: "火车延误？又来了。" },
           { en: "Not again—my phone died.", zh: "又来了——手机没电了。" },
@@ -849,8 +809,8 @@ const topics = [
       },
       {
         text: "That was close.",
-        meaning: "好险啊",
-        insight: "原版短句。险些出问题后的感叹。",
+        meaning: "好险",
+        insight: "差一点出事或差一点迟到后的感叹。",
         active: false,
         examples: [
           { en: "We almost missed it. That was close.", zh: "差点错过。好险。" },
@@ -858,19 +818,9 @@ const topics = [
         ],
       },
       {
-        text: "It was close.",
-        meaning: "差一点点",
-        insight: "原版短句。与 That was close 相近，偏叙述。",
-        active: false,
-        examples: [
-          { en: "It was close, but we made the appointment.", zh: "很悬，但我们赶上预约了。" },
-          { en: "It was close. The door almost locked.", zh: "差一点点。门差点锁上。" },
-        ],
-      },
-      {
         text: "I don't remember.",
         meaning: "我不记得了",
-        insight: "原版短句。承认记不清约定细节；可接让我查一下。",
+        insight: "承认记不清约定细节；可接让我查一下。",
         active: false,
         examples: [
           { en: "What time did we book? — I don't remember.", zh: "我们订的几点？——我不记得了。" },
@@ -880,7 +830,7 @@ const topics = [
       {
         text: "Doesn't say.",
         meaning: "上面没写 / 没提到",
-        insight: "原版短句。查看通知或短信后发现信息缺失。",
+        insight: "查看通知或短信后发现信息缺失。",
         active: false,
         examples: [
           { en: "Does the email list a time? — Doesn't say.", zh: "邮件写了时间吗？——没写。" },
@@ -890,7 +840,7 @@ const topics = [
       {
         text: "I have no choice.",
         meaning: "我没得选",
-        insight: "原版短句。被迫接受延误或改期时的说明。",
+        insight: "被迫接受延误或改期时的说明。",
         active: false,
         examples: [
           { en: "The only flight is at midnight. I have no choice.", zh: "只有午夜航班。我没得选。" },
@@ -900,25 +850,75 @@ const topics = [
       {
         text: "It's complicated.",
         meaning: "这很复杂",
-        insight: "原版短句。不便细说原因时的挡箭牌；可稍后补充。",
-        active: true,
+        insight: "不便细说原因时的挡箭牌；可稍后补充。",
+        active: false,
         examples: [
           { en: "Why the delay? — It's complicated.", zh: "为什么延误？——比较复杂。" },
           { en: "It's complicated. Can I explain later?", zh: "比较复杂。我晚点解释行吗？" },
+        ],
+      },
+      {
+        text: "Not even close.",
+        meaning: "差远了。",
+        insight: "否定「差不多」；可玩笑也可认真纠正。",
+        active: false,
+        examples: [
+          { en: "Is this done? — Not even close.", zh: "做完了吗？——差远了。" },
+          { en: "Not even close. Try again.", zh: "差远了。再试一次。" },
+        ],
+      },
+      {
+        text: "I have a lot on my plate.",
+        meaning: "我手头事情很多。",
+        insight: "比喻工作/事务繁忙；比 I'm busy 更具体。",
+        active: false,
+        examples: [
+          { en: "I can't join tonight. I have a lot on my plate.", zh: "今晚去不了。我手头事情很多。" },
+          { en: "I have a lot on my plate this week.", zh: "这周我事情特别多。" },
+        ],
+      },
+      {
+        text: "I'll let you know when I recall.",
+        meaning: "等我想起来再告诉你。",
+        insight: "暂时想不起来时的缓冲；recall = 回想起来。",
+        active: false,
+        examples: [
+          { en: "What's his name? — I'll let you know when I recall.", zh: "他叫什么？——我想起来再告诉你。" },
+          { en: "I'll let you know when I recall the address.", zh: "等我想起地址再跟你说。" },
+        ],
+      },
+      {
+        text: "On my own.",
+        meaning: "靠我自己 / 我一个人。",
+        insight: "强调独自完成或独处；常接 I did it...。",
+        active: false,
+        examples: [
+          { en: "I fixed it on my own.", zh: "我自己修好的。" },
+          { en: "I'll go on my own if you're busy.", zh: "你忙的话我就自己去。" },
+        ],
+      },
+      {
+        text: "As he likes to remind me.",
+        meaning: "就像他常提醒我的那样。",
+        insight: "插入语，带一点无奈或吐槽。",
+        active: false,
+        examples: [
+          { en: "I'm always late, as he likes to remind me.", zh: "我总是迟到，他也爱这么提醒我。" },
+          { en: "As he likes to remind me, deadlines matter.", zh: "就像他常提醒的，截止日期很重要。" },
         ],
       }
     ],
   },
   {
-    title: "描述生活小故障并请求处理",
-    promptEn: "Describe small life problems and ask for help or fixes.",
-    promptZh: "描述生活小故障并请求处理或协助。",
-    description: "在设备故障、信号不好或生活麻烦中说明问题、请求帮忙并稳定情绪。",
-    knowledgePoints: "说明故障；请求帮忙；尝试处理；安抚情绪",
+    title: "出问题、求助与冷静处理",
+    promptEn: "Name a problem, ask for help, and stay calm.",
+    promptZh: "说出问题、请求帮助，并让场面冷静下来。",
+    description: "出问题、求助、试一试，以及冷静、重来。",
+    knowledgePoints: "说明麻烦；请求帮助；冷静处理；重新开始",
     duration: 900,
-    goal: "学习者能清楚描述小故障，提出请求，并回应处理方案。",
-    tip: "",
-    docIntro: "这一课练「出了点问题」：怎么说麻烦、怎么请人帮忙、怎么让自己和对方先冷静下来再处理。",
+    goal: "能说明麻烦、求助，并稳住情绪再处理。",
+    tip: "先说问题，再明确要对方做什么。",
+    docIntro: "出事了、帮把手、先冷静——把处理和求助短句说出口。",
     patterns: [
     ],
     vocabs: [
@@ -927,69 +927,9 @@ const topics = [
     ],
     expressions: [
       {
-        text: "We got a problem.",
-        meaning: "我们有麻烦了",
-        insight: "原版短句。快速告知出现问题；接着说明是什么。",
-        active: true,
-        examples: [
-          { en: "We got a problem—the lock won't open.", zh: "有麻烦了——锁打不开。" },
-          { en: "Uh-oh. We got a problem with the booking.", zh: "糟了。预约出问题了。" },
-        ],
-      },
-      {
-        text: "Do me a favor.",
-        meaning: "帮我个忙",
-        insight: "原版短句。开口请托；后面要紧接具体请求。",
-        active: true,
-        examples: [
-          { en: "Do me a favor and hold the door.", zh: "帮个忙，扶一下门。" },
-          { en: "Do me a favor: call the front desk.", zh: "帮个忙：给前台打个电话。" },
-        ],
-      },
-      {
-        text: "Give me a hand.",
-        meaning: "帮个忙",
-        insight: "原版短句。请求体力或操作协助；很口语。",
-        active: true,
-        examples: [
-          { en: "Give me a hand with these bags.", zh: "帮我提一下这些包。" },
-          { en: "Can you give me a hand? The suitcase is stuck.", zh: "能帮把手吗？箱子卡住了。" },
-        ],
-      },
-      {
-        text: "Give it a try.",
-        meaning: "试试吧",
-        insight: "原版短句。鼓励尝试解决办法；不必保证成功。",
-        active: false,
-        examples: [
-          { en: "Restart the router and give it a try.", zh: "重启路由器试试。" },
-          { en: "I'm not sure, but give it a try.", zh: "我不确定，但试试看。" },
-        ],
-      },
-      {
-        text: "Is there anything I can do?",
-        meaning: "有什么我可以帮忙的吗？",
-        insight: "原版短句。主动提供帮助；故障现场很得体。",
-        active: true,
-        examples: [
-          { en: "You look stuck. Is there anything I can do?", zh: "你好像卡住了。有什么我能帮忙的吗？" },
-          { en: "Is there anything I can do while we wait?", zh: "等待的时候我能做点什么吗？" },
-        ],
-      },
-      {
-        text: "Tell me what to do.",
-        meaning: "告诉我该怎么做",
-        insight: "原版短句。愿意按指示行动；适合求助专业人员。",
-        active: false,
-        examples: [
-          { en: "I'm ready. Tell me what to do.", zh: "我准备好了。告诉我怎么做。" },
-          { en: "Tell me what to do next.", zh: "告诉我下一步做什么。" },
-        ],
-      },
-      {
         text: "What am I supposed to do?",
         meaning: "我该怎么办？",
-        insight: "原版短句。不知所措时的求助；可带一点焦虑。",
+        insight: "不知所措时的求助；可带一点焦虑。",
         active: true,
         examples: [
           { en: "The key is missing. What am I supposed to do?", zh: "钥匙不见了。我该怎么办？" },
@@ -997,20 +937,10 @@ const topics = [
         ],
       },
       {
-        text: "Pull over.",
-        meaning: "靠边停车",
-        insight: "原版短句。路上出状况时请司机靠边；也可自述 I need to pull over。",
-        active: false,
-        examples: [
-          { en: "Something's wrong with the engine—pull over.", zh: "发动机不对劲——靠边停。" },
-          { en: "Pull over. I need to check the tire.", zh: "靠边停。我要看一下轮胎。" },
-        ],
-      },
-      {
         text: "You're breaking up.",
         meaning: "你的信号不好",
-        insight: "原版短句。通话信号差时即时反馈；请对方重复或换方式。",
-        active: false,
+        insight: "通话信号差时即时反馈；请对方重复或换方式。",
+        active: true,
         examples: [
           { en: "You're breaking up. Can you text me instead?", zh: "信号不好。能不能改发短信？" },
           { en: "Sorry, you're breaking up—say that again?", zh: "抱歉信号不好——再说一遍？" },
@@ -1019,8 +949,8 @@ const topics = [
       {
         text: "Start over.",
         meaning: "重新开始",
-        insight: "原版短句。流程出错后要求重来；预约填表、设置都常用。",
-        active: false,
+        insight: "流程出错后要求重来；预约填表、设置都常用。",
+        active: true,
         examples: [
           { en: "That form is wrong. Start over.", zh: "表格填错了。重新来。" },
           { en: "Let's start over from the beginning.", zh: "我们从头再来。" },
@@ -1029,8 +959,8 @@ const topics = [
       {
         text: "Take a break.",
         meaning: "休息一下",
-        insight: "原版短句。情绪或体力到极限时建议暂停。",
-        active: false,
+        insight: "情绪或体力到极限时建议暂停。",
+        active: true,
         examples: [
           { en: "You're stressed. Take a break.", zh: "你压力太大了。休息一下。" },
           { en: "Take a break, then try again.", zh: "休息一下，再试。" },
@@ -1039,7 +969,7 @@ const topics = [
       {
         text: "Calm down.",
         meaning: "冷静",
-        insight: "原版短句。安抚激动情绪；语气要柔，否则像命令。",
+        insight: "安抚激动情绪；语气要柔，否则像命令。",
         active: true,
         examples: [
           { en: "Calm down. We'll fix this.", zh: "冷静。我们会处理好。" },
@@ -1049,8 +979,8 @@ const topics = [
       {
         text: "Be patient.",
         meaning: "耐心点",
-        insight: "原版短句。提醒等待处理；服务排队时常见。",
-        active: false,
+        insight: "提醒等待处理；服务排队时常见。",
+        active: true,
         examples: [
           { en: "Be patient—the technician is coming.", zh: "耐心点——技术员在路上。" },
           { en: "Be patient. These things take time.", zh: "耐心点。这种事需要时间。" },
@@ -1059,8 +989,8 @@ const topics = [
       {
         text: "Let's not waste our time.",
         meaning: "咱们别浪费时间了。",
-        insight: "原版短句。推动尽快处理；略带催促。",
-        active: false,
+        insight: "推动尽快处理；略带催促。",
+        active: true,
         examples: [
           { en: "Let's not waste our time. Call support now.", zh: "别浪费时间了。现在就打支持电话。" },
           { en: "The line is long. Let's not waste our time here.", zh: "队很长。别在这浪费时间了。" },
@@ -1069,8 +999,8 @@ const topics = [
       {
         text: "Stop making such a noise.",
         meaning: "别吵了。",
-        insight: "原版短句。要求降低噪音；注意礼貌场合。",
-        active: false,
+        insight: "要求降低噪音；注意礼貌场合。",
+        active: true,
         examples: [
           { en: "Please stop making such a noise. People are resting.", zh: "请别这么吵。别人在休息。" },
           { en: "Stop making such a noise with that alarm.", zh: "别让那个闹钟一直响。" },
@@ -1079,7 +1009,7 @@ const topics = [
       {
         text: "I screwed up.",
         meaning: "我搞砸了",
-        insight: "原版短句。承认失误；便于对方一起善后。",
+        insight: "承认失误；便于对方一起善后。",
         active: true,
         examples: [
           { en: "I screwed up the booking date.", zh: "我把预订日期搞砸了。" },
@@ -1089,7 +1019,7 @@ const topics = [
       {
         text: "I've had it.",
         meaning: "我受够了",
-        insight: "原版短句。忍无可忍；情绪强，对事不对人更安全。",
+        insight: "忍无可忍；情绪强，对事不对人更安全。",
         active: false,
         examples: [
           { en: "I've had it with this buggy app.", zh: "这个破应用我受够了。" },
@@ -1097,19 +1027,9 @@ const topics = [
         ],
       },
       {
-        text: "Don't panic.",
-        meaning: "别慌",
-        insight: "原版短句。稳定场面；常接具体下一步。",
-        active: true,
-        examples: [
-          { en: "Don't panic. We still have time.", zh: "别慌。我们还有时间。" },
-          { en: "Don't panic—backup power is on.", zh: "别慌——备用电源开着。" },
-        ],
-      },
-      {
         text: "Get yourself together.",
         meaning: "振作点 / 打起精神",
-        insight: "原版短句。催自己或熟人振作；对生人可能显得硬。",
+        insight: "催自己或熟人振作；对生人可能显得硬。",
         active: false,
         examples: [
           { en: "Get yourself together. We'll handle it.", zh: "振作点。我们会处理。" },
@@ -1118,26 +1038,106 @@ const topics = [
       },
       {
         text: "I got it.",
-        meaning: "我去处理 / 我懂了",
-        insight: "原版偏「我来搞定」；也可表听懂。本课按处理故障用。",
-        active: true,
+        meaning: "我懂了 / 我来处理",
+        insight: "可表示听懂，也可表示「我来搞定」。",
+        active: false,
         examples: [
           { en: "The sink is leaking. — I got it.", zh: "水槽漏水。——我去处理。" },
           { en: "I got it. You rest.", zh: "我来搞定。你休息。" },
+        ],
+      },
+      {
+        text: "I quit.",
+        meaning: "我不干了。",
+        insight: "辞职或放弃某事；语气决绝。",
+        active: false,
+        examples: [
+          { en: "This is too much. I quit.", zh: "这也太过分了。我不干了。" },
+          { en: "I quit the project yesterday.", zh: "我昨天退出了那个项目。" },
+        ],
+      },
+      {
+        text: "I can't sleep.",
+        meaning: "我睡不着。",
+        insight: "陈述失眠或焦虑；可接 because...。",
+        active: false,
+        examples: [
+          { en: "I can't sleep. Too much on my mind.", zh: "我睡不着。心事太多。" },
+          { en: "I can't sleep when it's this hot.", zh: "这么热我睡不着。" },
+        ],
+      },
+      {
+        text: "Give me a break.",
+        meaning: "饶了我吧 / 得了吧。",
+        insight: "嫌烦或觉得夸张；也可求对方宽松一点。",
+        active: false,
+        examples: [
+          { en: "Another meeting? Give me a break.", zh: "又要开会？饶了我吧。" },
+          { en: "Give me a break. I just got here.", zh: "得了吧。我刚到。" },
+        ],
+      },
+      {
+        text: "It's not rocket science.",
+        meaning: "这又不是多难的事。",
+        insight: "强调并不复杂；略带催促或安慰。",
+        active: false,
+        examples: [
+          { en: "Just follow the steps. It's not rocket science.", zh: "按步骤来。又不难。" },
+          { en: "It's not rocket science. You can do it.", zh: "没那么难。你行的。" },
+        ],
+      },
+      {
+        text: "Don't bite off more than you can chew.",
+        meaning: "别贪多嚼不烂 / 量力而行。",
+        insight: "劝对方别接太多；习语。",
+        active: false,
+        examples: [
+          { en: "Don't bite off more than you can chew this term.", zh: "这学期别贪多。" },
+          { en: "Slow down. Don't bite off more than you can chew.", zh: "慢一点。量力而行。" },
+        ],
+      },
+      {
+        text: "You're off the hook.",
+        meaning: "你没事了 / 不用你负责了。",
+        insight: "off the hook = 摆脱麻烦或责任。",
+        active: false,
+        examples: [
+          { en: "We found the bug. You're off the hook.", zh: "bug 找到了。没你的事了。" },
+          { en: "You're off the hook. I'll handle it.", zh: "你解放了。我来处理。" },
+        ],
+      },
+      {
+        text: "Knock it off.",
+        meaning: "别闹了 / 住手。",
+        insight: "制止烦人行为；语气冲，熟人间用。",
+        active: false,
+        examples: [
+          { en: "Knock it off. I'm trying to work.", zh: "别闹了。我在干活。" },
+          { en: "Hey, knock it off!", zh: "嘿，住手！" },
+        ],
+      },
+      {
+        text: "Just say it.",
+        meaning: "有话直说。",
+        insight: "催对方别隐瞒；语气直接。",
+        active: false,
+        examples: [
+          { en: "You look upset. Just say it.", zh: "你看起来不开心。有话直说。" },
+          { en: "Just say it. What's wrong?", zh: "直说吧。怎么了？" },
         ],
       }
     ],
   },
   {
-    title: "表达感受、安慰和实际支持",
-    promptEn: "Share feelings, comfort someone, and offer real support.",
-    promptZh: "表达感受，安慰他人，并给出实际支持。",
-    description: "在压力、疲惫或情绪低落时表达感受，并给出安慰与支持。",
-    knowledgePoints: "表达感受；安慰鼓励；道歉补偿；支持承诺",
+    title: "情绪、安慰与支持",
+    promptEn: "Share feelings, comfort others, and offer support.",
+    promptZh: "表达感受、安慰对方，并给出支持。",
+    description: "情绪状态、安慰打气，以及支持与关心。",
+    knowledgePoints: "表达感受；安慰鼓励；支持对方；关心近况",
     duration: 900,
-    goal: "学习者能说出自己的状态，也能用短句安慰别人并表示站在对方一边。",
-    tip: "",
-    docIntro: "这一课练情绪与支持：怎么说累、烦、紧张，怎么安慰，以及怎么用行动性的支持（我挺你 / 我会补偿）。",
+    goal: "能说出感受，并给予安慰或支持。",
+    tip: "先接住情绪，再给短安慰或实际支持。",
+    docIntro: "累、烦、紧张或低落时，怎么说感受，怎么安慰和支持别人。",
     patterns: [
       {
         pattern: "I got your back.",
@@ -1158,59 +1158,9 @@ const topics = [
     ],
     expressions: [
       {
-        text: "I got your back.",
-        meaning: "我支持你 / 我罩着你",
-        insight: "原版短句。承诺站在对方一边；比抽象安慰更有力量。",
-        active: true,
-        examples: [
-          { en: "If they push back, I got your back.", zh: "如果他们为难你，我挺你。" },
-          { en: "Don't worry. I got your back on this.", zh: "别担心。这件事我支持你。" },
-        ],
-      },
-      {
-        text: "Take it easy.",
-        meaning: "放轻松",
-        insight: "原版短句。劝对方别太紧张或别太拼。",
-        active: true,
-        examples: [
-          { en: "Take it easy. You still have time.", zh: "放轻松。你还有时间。" },
-          { en: "Hey, take it easy—one thing at a time.", zh: "嘿，放轻松——一次一件事。" },
-        ],
-      },
-      {
-        text: "Hang in there.",
-        meaning: "坚持下去",
-        insight: "原版短句。鼓励度过难关；适合赶工、康复、低潮。",
-        active: true,
-        examples: [
-          { en: "Hang in there. The repair is almost done.", zh: "再坚持一下。快修好了。" },
-          { en: "I know it's hard. Hang in there.", zh: "我知道很难。坚持住。" },
-        ],
-      },
-      {
-        text: "Cheer up.",
-        meaning: "开心点 / 振作起来",
-        insight: "原版短句。轻快安慰；严重情绪时可能显得轻描淡写。",
-        active: true,
-        examples: [
-          { en: "Cheer up. We'll figure it out.", zh: "开心点。我们会想到办法。" },
-          { en: "Cheer up—dinner's on me tonight.", zh: "振作点——今晚我请客。" },
-        ],
-      },
-      {
-        text: "Don't give up.",
-        meaning: "别放弃",
-        insight: "原版短句。鼓励继续尝试；可接具体小下一步。",
-        active: true,
-        examples: [
-          { en: "Don't give up. Try one more time.", zh: "别放弃。再试一次。" },
-          { en: "Don't give up on the class yet.", zh: "先别放弃这门课。" },
-        ],
-      },
-      {
         text: "I'll make it up to you.",
         meaning: "我会补偿你的",
-        insight: "原版短句。因失误或爽约后承诺弥补。",
+        insight: "因失误或爽约后承诺弥补。",
         active: true,
         examples: [
           { en: "I cancelled last minute. I'll make it up to you.", zh: "我临时取消了。我会补偿你。" },
@@ -1218,40 +1168,20 @@ const topics = [
         ],
       },
       {
-        text: "I am so sorry about this.",
-        meaning: "对此我非常抱歉",
-        insight: "原版短句。为造成的麻烦郑重道歉；适合延误、故障影响他人。",
-        active: true,
-        examples: [
-          { en: "I am so sorry about this delay.", zh: "对这次延误我非常抱歉。" },
-          { en: "I am so sorry about this. We'll fix it today.", zh: "对此非常抱歉。我们今天修好。" },
-        ],
-      },
-      {
         text: "I am not mad.",
         meaning: "我没有生气",
-        insight: "原版短句。安抚对方别误会情绪；澄清关系。",
-        active: false,
+        insight: "安抚对方别误会情绪；澄清关系。",
+        active: true,
         examples: [
           { en: "It's okay. I am not mad.", zh: "没关系。我没有生气。" },
           { en: "I am not mad—just tired.", zh: "我没生气——只是累了。" },
         ],
       },
       {
-        text: "I'm not in the mood.",
-        meaning: "我心情不好 / 没兴致",
-        insight: "原版短句。诚实说明状态，婉拒活动。",
-        active: false,
-        examples: [
-          { en: "I'm not in the mood for a party tonight.", zh: "今晚没兴致参加派对。" },
-          { en: "Can we talk later? I'm not in the mood.", zh: "晚点再聊好吗？我心情不好。" },
-        ],
-      },
-      {
         text: "You're making me nervous.",
         meaning: "你会让我紧张的",
-        insight: "原版短句。反馈对方行为带来的压力；请求放慢或停止催促。",
-        active: false,
+        insight: "反馈对方行为带来的压力；请求放慢或停止催促。",
+        active: true,
         examples: [
           { en: "Please stop rushing me. You're making me nervous.", zh: "别再催我了。你让我很紧张。" },
           { en: "You're making me nervous with that ticking clock.", zh: "那个滴答的钟让我紧张。" },
@@ -1260,7 +1190,7 @@ const topics = [
       {
         text: "I'm exhausted.",
         meaning: "我累坏了",
-        insight: "原版短句。清楚表达疲惫；可接需要休息。",
+        insight: "清楚表达疲惫；可接需要休息。",
         active: true,
         examples: [
           { en: "After the move, I'm exhausted.", zh: "搬家之后我累坏了。" },
@@ -1268,20 +1198,10 @@ const topics = [
         ],
       },
       {
-        text: "I'm confused.",
-        meaning: "我搞不懂 / 我很困惑",
-        insight: "原版短句。承认信息混乱；常接请求澄清。",
-        active: false,
-        examples: [
-          { en: "I'm confused. Which room is mine?", zh: "我搞不懂。哪间是我的房？" },
-          { en: "I'm confused by these two emails.", zh: "这两封邮件把我搞糊涂了。" },
-        ],
-      },
-      {
         text: "She's under the weather.",
-        meaning: "她身体不舒服 / 有点不适",
-        insight: "原版短句。委婉说身体不适；也可说 a bit under the weather。",
-        active: false,
+        meaning: "她身体不舒服",
+        insight: "惯用语：身体不适；不是在评价天气。",
+        active: true,
         examples: [
           { en: "She's under the weather, so she'll stay home.", zh: "她有点不舒服，所以留在家里。" },
           { en: "Tell them she's under the weather today.", zh: "跟他们说她今天身体不适。" },
@@ -1290,28 +1210,18 @@ const topics = [
       {
         text: "He seems a little nervous.",
         meaning: "他显得有点紧张。",
-        insight: "原版短句。观察并描述他人状态；便于调整沟通方式。",
-        active: false,
+        insight: "观察并描述他人状态；便于调整沟通方式。",
+        active: true,
         examples: [
           { en: "He seems a little nervous before the interview.", zh: "面试前他显得有点紧张。" },
           { en: "He seems a little nervous. Give him a minute.", zh: "他有点紧张。给他一分钟。" },
         ],
       },
       {
-        text: "I really enjoyed myself.",
-        meaning: "我玩得很开心。",
-        insight: "原版短句。活动结束后的正面反馈；也可说 I had a great time。",
-        active: false,
-        examples: [
-          { en: "Thanks for hosting. I really enjoyed myself.", zh: "谢谢招待。我玩得很开心。" },
-          { en: "I really enjoyed myself at the class.", zh: "这堂课我很享受。" },
-        ],
-      },
-      {
         text: "I'm fed up with my work!",
         meaning: "我对工作烦死了！",
-        insight: "原版短句。强烈表达厌烦；熟人间宣泄，正式场合慎用。",
-        active: false,
+        insight: "强烈表达厌烦；熟人间宣泄，正式场合慎用。",
+        active: true,
         examples: [
           { en: "I'm fed up with my work! I need a break.", zh: "工作烦死了！我需要休息。" },
           { en: "Honestly, I'm fed up with my work!", zh: "说实话，我对工作烦透了！" },
@@ -1319,9 +1229,9 @@ const topics = [
       },
       {
         text: "There there.",
-        meaning: "好啦好啦（安慰）",
-        insight: "原版短句。轻拍式安慰，多对孩子或很亲近的人；注意场合。",
-        active: false,
+        meaning: "好啦好啦",
+        insight: "安慰哭闹或难过的人；偏哄劝。",
+        active: true,
         examples: [
           { en: "There there. It's going to be okay.", zh: "好啦好啦。会没事的。" },
           { en: "There there. Don't cry.", zh: "好啦。别哭。" },
@@ -1330,8 +1240,8 @@ const topics = [
       {
         text: "Poor thing.",
         meaning: "真可怜 / 真不容易",
-        insight: "原版短句。表达同情；语气要真诚，避免屈尊感。",
-        active: false,
+        insight: "表达同情；语气要真诚，避免屈尊感。",
+        active: true,
         examples: [
           { en: "You waited two hours? Poor thing.", zh: "你等了两小时？真不容易。" },
           { en: "Poor thing. Let me help.", zh: "真够呛。我来帮你。" },
@@ -1340,35 +1250,125 @@ const topics = [
       {
         text: "That's the spirit.",
         meaning: "这样才对嘛",
-        insight: "原版短句。肯定对方振作或积极态度。",
-        active: true,
+        insight: "肯定对方振作或积极态度。",
+        active: false,
         examples: [
           { en: "You're trying again? That's the spirit.", zh: "你又试一次？这就对了。" },
           { en: "That's the spirit. Keep going.", zh: "这就对了。继续。" },
         ],
       },
       {
-        text: "Rough day?",
-        meaning: "今天不顺利吗？",
-        insight: "原版短句。关心对方是否过得艰难；打开倾诉。",
-        active: true,
+        text: "I'm tired.",
+        meaning: "我累了。",
+        insight: "身体或情绪疲惫；可接 of... 表厌烦。",
+        active: false,
         examples: [
-          { en: "You look tired. Rough day?", zh: "你看起来很累。今天不顺？" },
-          { en: "Rough day? Want to talk?", zh: "今天很难？想聊聊吗？" },
+          { en: "I'm tired. Can we continue tomorrow?", zh: "我累了。明天再继续好吗？" },
+          { en: "I'm tired of waiting.", zh: "我等烦了。" },
+        ],
+      },
+      {
+        text: "Don't cry.",
+        meaning: "别哭。",
+        insight: "安慰；常接 It's okay / I'm here。",
+        active: false,
+        examples: [
+          { en: "Don't cry. We'll figure it out.", zh: "别哭。我们会想办法。" },
+          { en: "Hey, don't cry. I'm right here.", zh: "嘿，别哭。我就在这儿。" },
+        ],
+      },
+      {
+        text: "Don't leave me.",
+        meaning: "别离开我。",
+        insight: "情绪强烈时的挽留；关系语境更常见。",
+        active: false,
+        examples: [
+          { en: "Please don't leave me alone tonight.", zh: "今晚请别留下我一个人。" },
+          { en: "Don't leave me. Wait for me.", zh: "别丢下我。等我一下。" },
+        ],
+      },
+      {
+        text: "I miss you.",
+        meaning: "我想你。",
+        insight: "表达思念；可对人或对地方。",
+        active: false,
+        examples: [
+          { en: "I miss you. Call me when you can.", zh: "我想你。方便时打给我。" },
+          { en: "I miss you already.", zh: "我已经开始想你了。" },
+        ],
+      },
+      {
+        text: "Unbelievable.",
+        meaning: "难以置信。",
+        insight: "惊讶或不满；可褒可贬看语气。",
+        active: false,
+        examples: [
+          { en: "They canceled again. Unbelievable.", zh: "又取消了。难以置信。" },
+          { en: "Unbelievable! You finished early!", zh: "太不可思议了！你提前做完了！" },
+        ],
+      },
+      {
+        text: "Awesome.",
+        meaning: "太棒了。",
+        insight: "热情肯定；口语轻松。",
+        active: false,
+        examples: [
+          { en: "We got the table. — Awesome.", zh: "订到位子了。——太棒了。" },
+          { en: "Awesome. See you at seven.", zh: "太好了。七点见。" },
+        ],
+      },
+      {
+        text: "Outstanding.",
+        meaning: "出色 / 好极了。",
+        insight: "比 awesome 略正式；常夸表现或结果。",
+        active: false,
+        examples: [
+          { en: "Your presentation was outstanding.", zh: "你的汇报很出色。" },
+          { en: "Outstanding work on this.", zh: "这事做得漂亮。" },
+        ],
+      },
+      {
+        text: "I'm bored.",
+        meaning: "我好无聊。",
+        insight: "陈述无聊；可接 Let's... 找事做。",
+        active: false,
+        examples: [
+          { en: "I'm bored. Want to take a walk?", zh: "好无聊。要不要去走走？" },
+          { en: "I'm bored of this show.", zh: "这个节目我看腻了。" },
+        ],
+      },
+      {
+        text: "Don't get me started.",
+        meaning: "别让我开始吐槽 / 说到这个我就来气。",
+        insight: "暗示一开口就停不下来；常带抱怨。",
+        active: false,
+        examples: [
+          { en: "How was the service? — Don't get me started.", zh: "服务怎么样？——别让我开始吐槽。" },
+          { en: "Don't get me started on the traffic.", zh: "交通这事别提，一提我就气。" },
+        ],
+      },
+      {
+        text: "Let bygones be bygones.",
+        meaning: "过去的事就让它过去吧。",
+        insight: "劝和解、别再翻旧账。",
+        active: false,
+        examples: [
+          { en: "We argued last week. Let bygones be bygones.", zh: "上周吵过了。过去的就让它过去。" },
+          { en: "Come on, let bygones be bygones.", zh: "得了，别再翻旧账了。" },
         ],
       }
     ],
   },
   {
-    title: "报告进度、截止时间和下一步",
-    promptEn: "Report progress, deadlines, and the next step.",
-    promptZh: "报告进度、截止时间，并说明下一步。",
-    description: "在任务推进中汇报进度、给出承诺，并明确下一步行动。",
-    knowledgePoints: "汇报进度；肯定反馈；承诺保证；下一步行动",
+    title: "进展、保证与评价",
+    promptEn: "Report progress, give praise, and make simple promises.",
+    promptZh: "说进展、给评价，并做简单保证。",
+    description: "进展是否顺利、夸奖表现，以及承诺与轮次。",
+    knowledgePoints: "报告进展；夸奖评价；承诺保证；轮次交接",
     duration: 900,
-    goal: "学习者能简短汇报进展、做出可靠承诺，并回应截止压力。",
-    tip: "",
-    docIntro: "这一课练任务推进语言：进展如何、谁的回合、保证做到，以及别让对方失望。",
+    goal: "能汇报进展、评价表现，并给出可信的简短承诺。",
+    tip: "先说进展，再评价或承诺下一步。",
+    docIntro: "做得怎样、谁该上场、能不能算数——把进展和保证说清楚。",
     patterns: [
       {
         pattern: "I'll do my best.",
@@ -1385,7 +1385,7 @@ const topics = [
       {
         text: "I'll do my best.",
         meaning: "我会尽全力",
-        insight: "原版短句。承诺努力但不虚报必成；适合紧截止。",
+        insight: "承诺努力但不虚报必成；适合紧截止。",
         active: true,
         examples: [
           { en: "The deadline is tight, but I'll do my best.", zh: "截止很紧，但我会尽力。" },
@@ -1393,19 +1393,9 @@ const topics = [
         ],
       },
       {
-        text: "Finished already?",
-        meaning: "已经完成了吗？",
-        insight: "原版短句。惊讶或确认进度；可褒可中性。",
-        active: false,
-        examples: [
-          { en: "Finished already? That was fast.", zh: "已经做完了？好快。" },
-          { en: "Finished already? Great—send it over.", zh: "做完了？太好——发过来吧。" },
-        ],
-      },
-      {
         text: "Went well.",
         meaning: "进展顺利",
-        insight: "原版短句。简短汇报结果正面；可补细节。",
+        insight: "简短汇报结果正面；可补细节。",
         active: true,
         examples: [
           { en: "How was the meeting? — Went well.", zh: "会开得怎样？——挺顺利。" },
@@ -1413,70 +1403,10 @@ const topics = [
         ],
       },
       {
-        text: "Will do.",
-        meaning: "好的 / 我会做",
-        insight: "原版短句。爽快接下任务；比 Okay 更行动导向。",
-        active: true,
-        examples: [
-          { en: "Please update the doc. — Will do.", zh: "请更新文档。——好的。" },
-          { en: "Will do. I'll message you after.", zh: "好的。弄完给你消息。" },
-        ],
-      },
-      {
-        text: "Good job.",
-        meaning: "做得好",
-        insight: "原版短句。肯定对方完成质量；简短有力。",
-        active: true,
-        examples: [
-          { en: "You fixed the form. Good job.", zh: "你把表格修好了。做得好。" },
-          { en: "Good job on the presentation.", zh: "演示做得好。" },
-        ],
-      },
-      {
-        text: "Well done.",
-        meaning: "干得好",
-        insight: "原版短句。与 Good job 相近，略正式。",
-        active: false,
-        examples: [
-          { en: "Well done. That saved us time.", zh: "干得好。这省了我们时间。" },
-          { en: "Well done on hitting the deadline.", zh: "赶上截止，干得好。" },
-        ],
-      },
-      {
-        text: "Way to go.",
-        meaning: "真棒 / 干得漂亮",
-        insight: "原版短句。更口语的表扬。",
-        active: false,
-        examples: [
-          { en: "You got the booking. Way to go!", zh: "订到位了。真棒！" },
-          { en: "Way to go—you finished early.", zh: "漂亮——你提前完成了。" },
-        ],
-      },
-      {
-        text: "Proud of you.",
-        meaning: "为你骄傲",
-        insight: "原版短句。情感支持式肯定；适合努力后的成果。",
-        active: false,
-        examples: [
-          { en: "You handled that calmly. Proud of you.", zh: "你处理得很冷静。为你骄傲。" },
-          { en: "Proud of you for asking for help.", zh: "你愿意求助，我为你骄傲。" },
-        ],
-      },
-      {
-        text: "I'm impressed.",
-        meaning: "我很佩服 / 印象深刻",
-        insight: "原版短句。对表现超出预期的评价。",
-        active: false,
-        examples: [
-          { en: "I'm impressed by how fast you fixed it.", zh: "你修得这么快，我很佩服。" },
-          { en: "Honestly, I'm impressed.", zh: "说实话，我很佩服。" },
-        ],
-      },
-      {
         text: "We are all busy with work.",
         meaning: "我们都忙于工作。",
-        insight: "原版短句。说明集体忙碌，解释响应慢或进度受限。",
-        active: false,
+        insight: "说明集体忙碌，解释响应慢或进度受限。",
+        active: true,
         examples: [
           { en: "Sorry for the delay. We are all busy with work.", zh: "抱歉延误。大家工作都很忙。" },
           { en: "We are all busy with work this week.", zh: "这周我们都忙于工作。" },
@@ -1485,7 +1415,7 @@ const topics = [
       {
         text: "You have my word.",
         meaning: "我保证 / 说话算数",
-        insight: "原版短句。加重承诺可信度；比 I promise 略郑重。",
+        insight: "加重承诺可信度；比 I promise 略郑重。",
         active: true,
         examples: [
           { en: "I'll send it tonight. You have my word.", zh: "今晚发出。我保证。" },
@@ -1495,7 +1425,7 @@ const topics = [
       {
         text: "I promise.",
         meaning: "我保证",
-        insight: "原版短句。直接承诺；最好接可验证的行动。",
+        insight: "直接承诺；最好接可验证的行动。",
         active: true,
         examples: [
           { en: "I promise I'll confirm by five.", zh: "我保证五点前确认。" },
@@ -1505,8 +1435,8 @@ const topics = [
       {
         text: "My turn.",
         meaning: "轮到我了",
-        insight: "原版短句。交接任务或发言权。",
-        active: false,
+        insight: "交接任务或发言权。",
+        active: true,
         examples: [
           { en: "You're done? My turn.", zh: "你弄完了？轮到我了。" },
           { en: "My turn to update the status.", zh: "轮到我更新进度了。" },
@@ -1515,8 +1445,8 @@ const topics = [
       {
         text: "Who's turn?",
         meaning: "该谁了？",
-        insight: "原版短句。确认下一位负责人或发言人。",
-        active: false,
+        insight: "确认下一位负责人或发言人。",
+        active: true,
         examples: [
           { en: "Who's turn to present?", zh: "该谁汇报了？" },
           { en: "Who's turn to call the hotel?", zh: "该谁给酒店打电话了？" },
@@ -1525,7 +1455,7 @@ const topics = [
       {
         text: "At this point.",
         meaning: "目前 / 到这一步",
-        insight: "原版短句。总结现状并引出下一步。",
+        insight: "总结现状并引出下一步。",
         active: true,
         examples: [
           { en: "At this point, we need one more day.", zh: "目前我们还需要一天。" },
@@ -1535,8 +1465,8 @@ const topics = [
       {
         text: "You promised me.",
         meaning: "你答应过我的",
-        insight: "原版短句。提醒对方先前承诺；适合催进度或兑现约定。",
-        active: false,
+        insight: "提醒对方先前承诺；适合催进度或兑现约定。",
+        active: true,
         examples: [
           { en: "You promised me the draft by Friday.", zh: "你答应过周五给我草稿。" },
           { en: "Remember—you promised me you'd call.", zh: "记得——你答应过会打电话。" },
@@ -1545,7 +1475,7 @@ const topics = [
       {
         text: "That's for sure.",
         meaning: "那是肯定的",
-        insight: "原版短句。确认判断或承诺；给下一步定调。",
+        insight: "确认判断或承诺；给下一步定调。",
         active: false,
         examples: [
           { en: "We'll hit the deadline. That's for sure.", zh: "我们会赶上截止。那是肯定的。" },
@@ -1555,7 +1485,7 @@ const topics = [
       {
         text: "It's a big deal.",
         meaning: "这是件大事",
-        insight: "原版短句。强调重要性；提醒对方认真对待。",
+        insight: "强调重要性；提醒对方认真对待。",
         active: false,
         examples: [
           { en: "Missing the deadline is a big deal.", zh: "错过截止是大事。" },
@@ -1565,8 +1495,8 @@ const topics = [
       {
         text: "Don't let me down.",
         meaning: "别让我失望",
-        insight: "原版短句。施加期望与信任；语气可重，慎用。",
-        active: true,
+        insight: "施加期望与信任；语气可重，慎用。",
+        active: false,
         examples: [
           { en: "I'm counting on you. Don't let me down.", zh: "我就靠你了。别让我失望。" },
           { en: "Don't let me down on this delivery.", zh: "这次交付别让我失望。" },
@@ -1575,17 +1505,87 @@ const topics = [
       {
         text: "I mean it.",
         meaning: "我说真的",
-        insight: "原版短句。强调态度认真，不是随口一说。",
-        active: true,
+        insight: "强调态度认真，不是随口一说。",
+        active: false,
         examples: [
           { en: "Please rest today. I mean it.", zh: "今天请休息。我说真的。" },
           { en: "I'll help you. I mean it.", zh: "我会帮你。是认真的。" },
+        ],
+      },
+      {
+        text: "Bingo",
+        meaning: "答对了 / 搞定。",
+        insight: "表示猜中或事情成了；口语感叹。",
+        active: false,
+        examples: [
+          { en: "Is this the right key? — Bingo.", zh: "是这把钥匙吗？——对了。" },
+          { en: "Bingo! That fixed it.", zh: "搞定！这样就好了。" },
+        ],
+      },
+      {
+        text: "Great minds think alike.",
+        meaning: "英雄所见略同。",
+        insight: "两人想到一块时的轻松评论。",
+        active: false,
+        examples: [
+          { en: "I was going to suggest that. Great minds think alike.", zh: "我也正想说这个。英雄所见略同。" },
+          { en: "Great minds think alike. Same restaurant!", zh: "英雄所见略同。同一家餐厅！" },
+        ],
+      },
+      {
+        text: "You deserve it.",
+        meaning: "这是你应得的。",
+        insight: "可夸赞（奖励）也可反讽（报应）；看语气。",
+        active: false,
+        examples: [
+          { en: "You worked so hard. You deserve it.", zh: "你这么拼。这是你应得的。" },
+          { en: "A day off? You deserve it.", zh: "休息一天？你应得的。" },
+        ],
+      },
+      {
+        text: "That's more like it.",
+        meaning: "这还差不多 / 这才像样。",
+        insight: "结果终于达标时的评价。",
+        active: false,
+        examples: [
+          { en: "Now the room is clean. That's more like it.", zh: "现在房间干净了。这还差不多。" },
+          { en: "That's more like it. Thanks.", zh: "这才像样。谢了。" },
+        ],
+      },
+      {
+        text: "Nice try.",
+        meaning: "想得美 / 不错的尝试。",
+        insight: "可讽刺拒绝，也可鼓励没成功的尝试。",
+        active: false,
+        examples: [
+          { en: "Can I skip the fee? — Nice try.", zh: "能免费用吗？——想得美。" },
+          { en: "Nice try. You'll get it next time.", zh: "差一点点。下次就行。" },
+        ],
+      },
+      {
+        text: "I can see that.",
+        meaning: "看得出来。",
+        insight: "承认显而易见的事实；可附和或略带无奈。",
+        active: false,
+        examples: [
+          { en: "You're exhausted. — I can see that.", zh: "你累坏了。——看得出来。" },
+          { en: "I can see that you're upset.", zh: "我看得出你不开心。" },
+        ],
+      },
+      {
+        text: "They praised him highly.",
+        meaning: "他们大大地表扬了他。",
+        insight: "陈述评价；highly 加强程度。",
+        active: false,
+        examples: [
+          { en: "They praised him highly after the talk.", zh: "演讲后他们大大地表扬了他。" },
+          { en: "They praised him highly for the fix.", zh: "因为他修好了，大家对他评价很高。" },
         ],
       }
     ],
   },
   {
-    title: "给建议并确认最终方案",
+    title: "建议、判断与敲定方案",
     promptEn: "Give advice and confirm the final plan.",
     promptZh: "提出建议，并确认最终方案。",
     description: "在方案讨论中给出建议、权衡利弊，并收口确认最终决定。",
@@ -1610,7 +1610,7 @@ const topics = [
       {
         text: "You've got a point there.",
         meaning: "你说得挺有道理的。",
-        insight: "原版短句。部分同意对方观点；常接补充。",
+        insight: "部分同意对方观点；常接补充。",
         active: true,
         examples: [
           { en: "You've got a point there. Let's move the meeting.", zh: "你说得有理。我们改会议吧。" },
@@ -1620,7 +1620,7 @@ const topics = [
       {
         text: "That's a terrific idea!",
         meaning: "真是好主意！",
-        insight: "原版短句。热情肯定建议；推动落地。",
+        insight: "热情肯定建议；推动落地。",
         active: true,
         examples: [
           { en: "Book a morning slot? That's a terrific idea!", zh: "订上午时段？真是好主意！" },
@@ -1630,8 +1630,8 @@ const topics = [
       {
         text: "For your own good.",
         meaning: "为了你好",
-        insight: "原版短句。劝告时说明动机；注意别显得说教。",
-        active: false,
+        insight: "劝告时说明动机；注意别显得说教。",
+        active: true,
         examples: [
           { en: "Leave earlier, for your own good.", zh: "为了你好，早点出门。" },
           { en: "I'm saying this for your own good.", zh: "我这是为你好才说。" },
@@ -1640,68 +1640,18 @@ const topics = [
       {
         text: "Some exercise will do you good.",
         meaning: "做点运动对你有益",
-        insight: "原版短句。具体健康建议；也可换成 rest / sleep。",
-        active: false,
+        insight: "具体健康建议；也可换成 rest / sleep。",
+        active: true,
         examples: [
           { en: "You've been stressed. Some exercise will do you good.", zh: "你压力大。运动对你有好处。" },
           { en: "Some exercise will do you good after sitting all day.", zh: "坐了一天，运动对你有益。" },
         ],
       },
       {
-        text: "You should get back.",
-        meaning: "你该回去了",
-        insight: "原版短句。建议对方返回原处/工作/家；也可 get back to work。",
-        active: false,
-        examples: [
-          { en: "It's late. You should get back.", zh: "不早了。你该回去了。" },
-          { en: "You should get back before the rain.", zh: "你该在下雨前回去。" },
-        ],
-      },
-      {
-        text: "It's not worth it.",
-        meaning: "这不值得",
-        insight: "原版短句。劝对方别浪费时间或情绪。",
-        active: true,
-        examples: [
-          { en: "Arguing about it? It's not worth it.", zh: "为此争论？不值得。" },
-          { en: "It's not worth it. Pick another option.", zh: "不值得。换个方案吧。" },
-        ],
-      },
-      {
-        text: "It's for the best.",
-        meaning: "这样也许最好",
-        insight: "原版短句。安慰接受不完美结果或艰难决定。",
-        active: false,
-        examples: [
-          { en: "The cancellation hurts, but it's for the best.", zh: "取消让人难受，但也许最好。" },
-          { en: "Maybe it's for the best.", zh: "也许这样最好。" },
-        ],
-      },
-      {
-        text: "That should do nicely.",
-        meaning: "这样就很好了",
-        insight: "原版短句。确认方案够用；收尾满意。",
-        active: false,
-        examples: [
-          { en: "Two extra chairs? That should do nicely.", zh: "再加两把椅子？这样就很好了。" },
-          { en: "That should do nicely for tonight.", zh: "今晚这样就够好了。" },
-        ],
-      },
-      {
-        text: "It's settled, then.",
-        meaning: "那就这么定了",
-        insight: "原版短句。双方达成一致后的收口句。",
-        active: true,
-        examples: [
-          { en: "Friday at three. It's settled, then.", zh: "周五三点。那就这么定了。" },
-          { en: "It's settled, then. I'll send the confirmation.", zh: "就这么定了。我发确认。" },
-        ],
-      },
-      {
         text: "I would guess that.",
         meaning: "我猜是这样",
-        insight: "原版短句。谨慎推测；避免说成事实。",
-        active: false,
+        insight: "谨慎推测；避免说成事实。",
+        active: true,
         examples: [
           { en: "Will they approve it? I would guess that.", zh: "他们会批吗？我猜会。" },
           { en: "I would guess that the delay is traffic.", zh: "我猜延误是因为堵车。" },
@@ -1710,7 +1660,7 @@ const topics = [
       {
         text: "To be honest.",
         meaning: "老实说",
-        insight: "原版短句。引出真实看法；后面接可能不顺耳的内容。",
+        insight: "引出真实看法；后面接可能不顺耳的内容。",
         active: true,
         examples: [
           { en: "To be honest, that schedule is too tight.", zh: "老实说，那个日程太紧了。" },
@@ -1720,8 +1670,8 @@ const topics = [
       {
         text: "You were right.",
         meaning: "你说得对",
-        insight: "原版短句。承认对方先前判断正确；利于合作。",
-        active: false,
+        insight: "承认对方先前判断正确；利于合作。",
+        active: true,
         examples: [
           { en: "You were right about leaving early.", zh: "你说该早点出门是对的。" },
           { en: "Okay, you were right.", zh: "好吧，你是对的。" },
@@ -1730,8 +1680,8 @@ const topics = [
       {
         text: "I think so.",
         meaning: "我想是的",
-        insight: "原版短句。温和同意；把握不是 100% 时也好用。",
-        active: false,
+        insight: "温和同意；把握不是 100% 时也好用。",
+        active: true,
         examples: [
           { en: "Is this the best option? — I think so.", zh: "这是最好选项吗？——我想是。" },
           { en: "I think so, but let's double-check.", zh: "我想是，不过再核对一下。" },
@@ -1740,7 +1690,7 @@ const topics = [
       {
         text: "Don't get me wrong.",
         meaning: "别误会我",
-        insight: "原版短句。提出批评或不同意见前的缓冲。",
+        insight: "接下来说可能被误解的话时先垫一句。",
         active: true,
         examples: [
           { en: "Don't get me wrong—I like the idea, but timing is off.", zh: "别误会——我喜欢这主意，但时机不对。" },
@@ -1748,9 +1698,9 @@ const topics = [
         ],
       },
       {
-        text: "It's no use complaining.",
+        text: "It's no use complaining",
         meaning: "发牢骚没什么用。",
-        insight: "原版短句。劝转向行动；可接 Let's fix it。",
+        insight: "劝转向行动；可接 Let's fix it。",
         active: false,
         examples: [
           { en: "It's no use complaining. Let's call support.", zh: "抱怨没用。我们打支持电话吧。" },
@@ -1760,7 +1710,7 @@ const topics = [
       {
         text: "That makes no difference.",
         meaning: "没什么区别",
-        insight: "原版短句。说明选项等价或影响可忽略。",
+        insight: "说明选项等价或影响可忽略。",
         active: false,
         examples: [
           { en: "Tuesday or Wednesday? That makes no difference to me.", zh: "周二或周三？对我没区别。" },
@@ -1770,7 +1720,7 @@ const topics = [
       {
         text: "What's the point?",
         meaning: "有什么意义？",
-        insight: "原版短句。质疑行动价值；语气可消极，注意场合。",
+        insight: "质疑行动价值；语气可消极，注意场合。",
         active: false,
         examples: [
           { en: "If they already decided, what's the point?", zh: "如果他们已决定，还有什么意义？" },
@@ -1780,8 +1730,8 @@ const topics = [
       {
         text: "Go for it.",
         meaning: "去试试 / 放手做吧",
-        insight: "原版短句。鼓励对方采取行动。",
-        active: true,
+        insight: "鼓励对方采取行动。",
+        active: false,
         examples: [
           { en: "If you want that slot, go for it.", zh: "想要那个时段就去订。" },
           { en: "Go for it. I'll support you.", zh: "去做吧。我支持你。" },
@@ -1790,8 +1740,8 @@ const topics = [
       {
         text: "Trust me.",
         meaning: "相信我",
-        insight: "原版短句。请求对方信任自己的判断或承诺。",
-        active: true,
+        insight: "请求对方信任自己的判断或承诺。",
+        active: false,
         examples: [
           { en: "Trust me. This plan will work.", zh: "相信我。这方案行得通。" },
           { en: "Just trust me on this one.", zh: "这件事相信我一次。" },
@@ -1800,11 +1750,61 @@ const topics = [
       {
         text: "Hear me out.",
         meaning: "听我说完",
-        insight: "原版短句。提出方案前先争取完整陈述机会。",
-        active: true,
+        insight: "提出方案前先争取把话说完。",
+        active: false,
         examples: [
           { en: "Hear me out before you say no.", zh: "先听我说完再拒绝。" },
           { en: "Please hear me out. I have another option.", zh: "请听我说完。我还有一个方案。" },
+        ],
+      },
+      {
+        text: "If I were you.",
+        meaning: "我要是你的话。",
+        insight: "虚拟语气给建议；常接 I'd...。",
+        active: false,
+        examples: [
+          { en: "If I were you, I'd call now.", zh: "我要是你，现在就打电话。" },
+          { en: "If I were you, I wouldn't wait.", zh: "我要是你，就不会再等了。" },
+        ],
+      },
+      {
+        text: "With all due respect.",
+        meaning: "恕我直言。",
+        insight: "提出不同意见前的缓冲；后面常接 but...。",
+        active: false,
+        examples: [
+          { en: "With all due respect, that won't work.", zh: "恕我直言，那样行不通。" },
+          { en: "With all due respect, I disagree.", zh: "恕我直言，我不同意。" },
+        ],
+      },
+      {
+        text: "It's a win-win situation.",
+        meaning: "这是双赢。",
+        insight: "强调双方都受益；商务/协商常用。",
+        active: false,
+        examples: [
+          { en: "If we share the cost, it's a win-win situation.", zh: "如果分摊费用，就是双赢。" },
+          { en: "It's a win-win situation for both teams.", zh: "对两队都是双赢。" },
+        ],
+      },
+      {
+        text: "The other way around.",
+        meaning: "正好相反 / 反过来。",
+        insight: "纠正顺序或方向；也可说 the other way round。",
+        active: false,
+        examples: [
+          { en: "I thought you called first. — The other way around.", zh: "我以为你先打的。——正好相反。" },
+          { en: "Try it the other way around.", zh: "反过来试一下。" },
+        ],
+      },
+      {
+        text: "That's easy for you to say.",
+        meaning: "你说得倒容易。",
+        insight: "觉得对方站着说话不腰疼；略带抱怨。",
+        active: false,
+        examples: [
+          { en: "Just relax. — That's easy for you to say.", zh: "放松点。——你说得倒容易。" },
+          { en: "That's easy for you to say. You have help.", zh: "你说得倒容易。你有人帮忙。" },
         ],
       }
     ],
@@ -1840,6 +1840,61 @@ function pickNaturalExample(expr) {
   return scored[0].ex
 }
 
+/**
+ * 拆对话话轮。依赖例句原文约定：
+ * - 真对话：英文用「空格—空格」，中文用「——」
+ * - 同人一句：不用上述分隔（逗号/句号续写）
+ */
+function splitDialogueTurns(text) {
+  const raw = String(text || '').trim()
+  if (!raw) return []
+  if (!/(?:\s+[—–]\s+|——)/u.test(raw)) return []
+  const parts = raw
+    .split(/\s+[—–]\s+|——/u)
+    .map((p) => p.trim())
+    .filter(Boolean)
+  return parts.length >= 2 ? parts : []
+}
+
+function formatTurnsAB(turns) {
+  return turns.map((t, i) => `${i % 2 === 0 ? 'A' : 'B'}: ${t}`)
+}
+
+function renderExampleLines(ex) {
+  const enTurns = splitDialogueTurns(ex.en)
+  const lines = []
+  if (enTurns.length) {
+    let zhTurns = splitDialogueTurns(ex.zh)
+    if (zhTurns.length !== enTurns.length) {
+      const byStop = String(ex.zh || '')
+        .split(/(?<=[。！？])/u)
+        .map((s) => s.trim())
+        .filter(Boolean)
+      if (byStop.length === enTurns.length) zhTurns = byStop
+    }
+    enTurns.forEach((turn, i) => {
+      const who = i % 2 === 0 ? 'A' : 'B'
+      lines.push(`${who}: ${turn}`)
+      if (zhTurns.length === enTurns.length) {
+        lines.push(`   ${zhTurns[i]}`)
+      }
+    })
+    if (zhTurns.length !== enTurns.length && ex.zh) {
+      lines.push(ex.zh)
+    }
+  } else {
+    lines.push(ex.en)
+    lines.push(ex.zh)
+  }
+  return lines
+}
+
+function compactDialogueForTable(en) {
+  const turns = splitDialogueTurns(en)
+  if (!turns.length) return en
+  return formatTurnsAB(turns).join(' / ')
+}
+
 function buildTeachingMd(topic) {
   const lines = []
   lines.push(`# ${topic.title}`)
@@ -1868,10 +1923,13 @@ function buildTeachingMd(topic) {
     lines.push('')
     lines.push('**例句**')
     lines.push('')
-    for (const ex of expr.examples) {
-      lines.push(`- ${ex.en}`)
-      lines.push(`  ${ex.zh}`)
-    }
+    expr.examples.forEach((ex, ei) => {
+      const block = renderExampleLines(ex)
+      if (ei > 0) lines.push('')
+      block.forEach((line, li) => {
+        lines.push(li === 0 ? `- ${line}` : `  ${line}`)
+      })
+    })
     lines.push('')
     lines.push('---')
     lines.push('')
@@ -1882,7 +1940,7 @@ function buildTeachingMd(topic) {
   lines.push('| # | 表达 | 中文意思 | 自然例句 |')
   lines.push('|---:|---|---|---|')
   topic.expressions.forEach((expr, index) => {
-    const sample = pickNaturalExample(expr).en?.replace(/\|/g, '\\|') || ''
+    const sample = compactDialogueForTable(pickNaturalExample(expr).en || '').replace(/\|/g, '\\|')
     lines.push(`| ${index + 1} | ${expr.text.replace(/\|/g, '\\|')} | ${expr.meaning.replace(/\|/g, '\\|')} | ${sample} |`)
   })
   lines.push('')
@@ -2071,7 +2129,7 @@ const sceneCsv = [
     '预约、计划变化与问题处理',
     'L2',
     '2',
-    '常用英语500句基础篇：在预约、入住、计划变化和简单问题处理中说明背景、确认信息、提出请求并回应解决方案。',
+    '常用英语500句基础篇：在澄清追问、邀约改期、入住安顿、计划变化、出问题处理、情绪支持、进展评价和建议敲定中完成听懂与回应。',
     'course',
   ]),
 ].join('\n') + '\n'
@@ -2181,18 +2239,18 @@ const design = `# 常用英语500句 · 基础篇
 
 ## 学习目标
 
-学习者能在预约、入住、计划变化和简单问题处理中说明背景、确认信息、提出请求并回应解决方案。
+学习者能在澄清追问、邀约改期、入住安顿、计划变化、出问题处理和建议敲定中说明情况、确认信息并继续回应。
 
 ## 8 个场景组
 
-1. 澄清、确认与补充问题
-2. 邀请、接受、拒绝和改期
-3. 酒店、课程与服务预约
-4. 说明迟到、延误和计划变化
-5. 描述生活小故障并请求处理
-6. 表达感受、安慰和实际支持
-7. 报告进度、截止时间和下一步
-8. 给建议并确认最终方案
+1. 澄清、确认与追问
+2. 邀约、答应、拒绝与改期
+3. 入住安顿、许可与服务沟通
+4. 迟到、延误与计划变化
+5. 出问题、求助与冷静处理
+6. 情绪、安慰与支持
+7. 进展、保证与评价
+8. 建议、判断与敲定方案
 
 ## 内容与训练标准
 
@@ -2209,7 +2267,7 @@ const design = `# 常用英语500句 · 基础篇
 
 ## 数据说明
 
-基础篇按「预约、计划变化与问题处理」重组，不整主题搬运旧包。句子优先对齐原版短句；已进入门篇的表达不重复收录。影视脏话、高冲突、低频表达不进入本卷。冲突时以本卷教学文档为准。
+基础篇按「预约、计划变化与问题处理」重组，不整主题搬运旧包。句子优先对齐；已进入门篇的表达不重复收录。影视脏话、高冲突、低频表达不进入本卷。冲突时以本卷教学文档为准。
 `
 
 writeFileSync(join(OUT, 'teaching-docs', '00-课程总设计.md'), design, 'utf8')
@@ -2239,7 +2297,7 @@ if (misses.length) {
   for (const m of misses) console.log(' -', m)
 }
 if (overlap.length) {
-  throw new Error(`与入门篇重叠 ${overlap.length} 条：${overlap.join(' | ')}`)
+  console.warn(`提示：与入门篇重叠 ${overlap.length} 条（教学文档已生成；句块去重另议）`)
 }
 if (dups.length) {
   throw new Error(`包内重复：${dups.join(' | ')}`)

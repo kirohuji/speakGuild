@@ -22,7 +22,7 @@
  * =============================================================================
  */
 
-import { DRILL_HINT_WRITING_RULES } from './drill-hints.prompt';
+import { DRILL_HINT_WRITING_RULES, DRILL_TRANSLATION_ITEM_CONTRACT } from './drill-hints.prompt';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PART A: System Prompt
@@ -75,6 +75,8 @@ Exercise group types:
    Full: "She is happy because she passed the exam."
    L1: "She is." (incomplete — subject+verb alone is ungrammatical here)
    Better: L1: "She is happy." → L2: "She is happy because she passed the exam."
+
+${DRILL_TRANSLATION_ITEM_CONTRACT}
 
 ## ══ VOCABULARY TIER SYSTEM (核心词 vs 扩展词) ══
 
