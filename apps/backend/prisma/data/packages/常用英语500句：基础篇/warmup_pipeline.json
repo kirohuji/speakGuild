@@ -95,26 +95,6 @@
         },
         {
           "id": "l2-t1-5",
-          "type": "pattern_drill",
-          "title": "What do you mean by ___? 句型操练",
-          "pattern": "What do you mean by ___?",
-          "patternMeaning": "你说的___是什么意思？",
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": "你说「也许下周」是什么意思？",
-              "answer": "What do you mean by 'maybe next week'?",
-              "hint": "套用句型：What do you mean by ___?"
-            },
-            {
-              "zh": "应用打不开。怎么回事？",
-              "answer": "The app won't load. What's going on?",
-              "hint": "套用句型：What do you mean by ___?"
-            }
-          ]
-        },
-        {
-          "id": "l2-t1-6",
           "type": "sentence_decomposition",
           "title": "What do you mean? 句子拆解",
           "sourceText": "What do you mean?",
@@ -252,26 +232,6 @@
         },
         {
           "id": "l2-t2-5",
-          "type": "pattern_drill",
-          "title": "How about ___? 句型操练",
-          "pattern": "How about ___?",
-          "patternMeaning": "……怎么样？",
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": "下班后今晚喝一杯怎样？",
-              "answer": "How about a drink tonight after work?",
-              "hint": "套用句型：How about ___?"
-            },
-            {
-              "zh": "位子好了。走吧？",
-              "answer": "The table is ready. Shall we?",
-              "hint": "套用句型：How about ___?"
-            }
-          ]
-        },
-        {
-          "id": "l2-t2-6",
           "type": "sentence_decomposition",
           "title": "How about a drink tonight? 句子拆解",
           "sourceText": "How about a drink tonight?",
@@ -409,26 +369,6 @@
         },
         {
           "id": "l2-t3-5",
-          "type": "pattern_drill",
-          "title": "I'd like to ___. 句型操练",
-          "pattern": "I'd like to ___.",
-          "patternMeaning": "我想要……",
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": "晚上好。您有预订吗？",
-              "answer": "Good evening. Do you have a reservation?",
-              "hint": "套用句型：I'd like to ___."
-            },
-            {
-              "zh": "入住前问一下——你们收信用卡吗？",
-              "answer": "Before we check in—do you accept credit cards?",
-              "hint": "套用句型：I'd like to ___."
-            }
-          ]
-        },
-        {
-          "id": "l2-t3-6",
           "type": "sentence_decomposition",
           "title": "Do you have a reservation? 句子拆解",
           "sourceText": "Do you have a reservation?",
@@ -728,26 +668,6 @@
         },
         {
           "id": "l2-t5-5",
-          "type": "pattern_drill",
-          "title": "The problem is ___. 句型操练",
-          "pattern": "The problem is ___.",
-          "patternMeaning": "问题是……",
-          "direction": "zh_to_en",
-          "items": [
-            {
-              "zh": "有麻烦了——锁打不开。",
-              "answer": "We got a problem—the lock won't open.",
-              "hint": "套用句型：The problem is ___."
-            },
-            {
-              "zh": "帮个忙，扶一下门。",
-              "answer": "Do me a favor and hold the door.",
-              "hint": "套用句型：The problem is ___."
-            }
-          ]
-        },
-        {
-          "id": "l2-t5-6",
           "type": "sentence_decomposition",
           "title": "We got a problem. 句子拆解",
           "sourceText": "We got a problem.",

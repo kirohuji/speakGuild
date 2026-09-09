@@ -2582,6 +2582,8 @@ export function AdminScenesPage() {
   const [packageImportDialog, setPackageImportDialog] = useState(false)
   const [exportingId, setExportingId] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [deletePackageTarget, setDeletePackageTarget] = useState<Scene | null>(null)
+  const [deletingPackage, setDeletingPackage] = useState(false)
   const [loading, setLoading] = useState(true)
   const [selectedCat, setSelectedCat] = useState<string | null>(null)
   const [selectedPackageType, setSelectedPackageType] = useState<PackageTypeFilter>('all')
@@ -2630,6 +2632,21 @@ export function AdminScenesPage() {
       toast.error('付费状态更新失败')
     } finally {
       setUpdatingId(null)
+    }
+  }
+
+  const handleDeletePackage = async () => {
+    if (!deletePackageTarget || deletingPackage) return
+    setDeletingPackage(true)
+    try {
+      await packageDataAdminApi.delete(deletePackageTarget.id)
+      toast.success(`已删除学习包「${deletePackageTarget.title}」及其关联内容`)
+      setDeletePackageTarget(null)
+      await load()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || '删除学习包失败')
+    } finally {
+      setDeletingPackage(false)
     }
   }
 
@@ -2941,7 +2958,8 @@ export function AdminScenesPage() {
                             <Edit3 className="size-3.5" />
                           </Button>
                           <Button size="icon" variant="ghost" className="size-8 text-destructive"
-                            onClick={async (e) => { e.stopPropagation(); if (!confirm('确认删除此学习包？关联数据将一并清除。')) return; setUpdatingId(s.id); try { await packageDataAdminApi.delete(s.id); toast.success('已删除'); load(); } catch (err: any) { toast.error(err?.response?.data?.message || err?.message || '删除失败'); } finally { setUpdatingId(null); } }}>
+                            disabled={deletingPackage}
+                            onClick={(e) => { e.stopPropagation(); setDeletePackageTarget(s) }}>
                             <Trash2 className="size-3.5" />
                           </Button>
                         </div>
@@ -2961,6 +2979,29 @@ export function AdminScenesPage() {
           />
         </CardContent>
       </Card>
+      <Dialog
+        open={Boolean(deletePackageTarget)}
+        onOpenChange={(open) => { if (!open && !deletingPackage) setDeletePackageTarget(null) }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash2 className="size-4 text-destructive" />
+              确认删除学习包
+            </DialogTitle>
+            <DialogDescription>
+              删除「{deletePackageTarget?.title}」会同时清理其中的话题、教学文档、练习、故事关卡和学习记录关联。此操作不可撤销。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" disabled={deletingPackage} onClick={() => setDeletePackageTarget(null)}>取消</Button>
+            <Button variant="destructive" disabled={deletingPackage} onClick={() => void handleDeletePackage()}>
+              {deletingPackage && <Loader2 data-icon="inline-start" className="animate-spin" />}
+              确认删除
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <PackageImportDialog
         key={packageImportDialog ? 'package-import-review-v2-open' : 'package-import-review-v2-closed'}
         file={packageImportFile}

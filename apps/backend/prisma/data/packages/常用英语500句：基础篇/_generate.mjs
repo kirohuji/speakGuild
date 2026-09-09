@@ -38,18 +38,6 @@ const topics = [
     tip: "",
     docIntro: "这一课练「没听清 / 没听懂 / 还不确定」时怎么开口：澄清、确认、追问下一步，而不是假装听懂。",
     patterns: [
-      {
-        pattern: "What do you mean by ___?",
-        meaning: "你说的___是什么意思？",
-        slots: "词语或安排",
-        example: "What do you mean by 'flexible time'?",
-      },
-      {
-        pattern: "May I ask ___?",
-        meaning: "我可以问___吗？",
-        slots: "问题",
-        example: "May I ask a few questions about the booking?",
-      }
     ],
     vocabs: [
       "mean", "pardon", "miss", "serious", "kidding", "sure", "depend", "gotcha",
@@ -269,18 +257,6 @@ const topics = [
     tip: "",
     docIntro: "这一课练「要约 / 答应 / 婉拒 / 改时间」：把态度说清楚，同时给人台阶和备选。",
     patterns: [
-      {
-        pattern: "How about ___?",
-        meaning: "……怎么样？",
-        slots: "活动或时间",
-        example: "How about coffee tomorrow?",
-      },
-      {
-        pattern: "Would ___ work for you?",
-        meaning: "……对你方便吗？",
-        slots: "时间方案",
-        example: "Would Thursday work for you?",
-      }
     ],
     vocabs: [
       "invite", "drink", "tonight", "prefer", "accept", "decline", "reschedule", "chance",
@@ -500,24 +476,6 @@ const topics = [
     tip: "",
     docIntro: "这一课对齐预约与入住场景：确认有没有订、怎么付款、怎么安顿，以及服务人员常用的简短回应。",
     patterns: [
-      {
-        pattern: "I'd like to ___.",
-        meaning: "我想要……",
-        slots: "预约动作",
-        example: "I'd like to book a room for two nights.",
-      },
-      {
-        pattern: "Do you ___?",
-        meaning: "你们……吗？",
-        slots: "服务或条件",
-        example: "Do you accept credit cards?",
-      },
-      {
-        pattern: "Let me check ___.",
-        meaning: "让我查一下……",
-        slots: "预订/时间/空房",
-        example: "Let me check availability for tonight.",
-      },
     ],
     vocabs: [
       "reservation", "credit", "card", "unpack", "settled", "pack", "reasonable", "price",
@@ -743,12 +701,6 @@ const topics = [
         slots: "无",
         example: "I can explain—the train was delayed.",
       },
-      {
-        pattern: "From now on, ___.",
-        meaning: "从现在起……",
-        slots: "新安排",
-        example: "From now on, let's confirm by message.",
-      }
     ],
     vocabs: [
       "sudden", "delay", "late", "plane", "breakfast", "explain", "deal", "meantime",
@@ -968,18 +920,6 @@ const topics = [
     tip: "",
     docIntro: "这一课练「出了点问题」：怎么说麻烦、怎么请人帮忙、怎么让自己和对方先冷静下来再处理。",
     patterns: [
-      {
-        pattern: "The problem is ___.",
-        meaning: "问题是……",
-        slots: "故障描述",
-        example: "The problem is the Wi-Fi keeps dropping.",
-      },
-      {
-        pattern: "Could you ___?",
-        meaning: "你能……吗？",
-        slots: "请求动作",
-        example: "Could you give me a hand with this?",
-      }
     ],
     vocabs: [
       "problem", "favor", "hand", "try", "supposed", "breaking", "patient", "panic",
@@ -1210,7 +1150,7 @@ const topics = [
         meaning: "坚持住。",
         slots: "无",
         example: "Hang in there. Tomorrow will be better.",
-      }
+      },
     ],
     vocabs: [
       "back", "easy", "hang", "cheer", "mood", "exhausted", "confused", "weather",
@@ -1436,12 +1376,6 @@ const topics = [
         slots: "无",
         example: "The deadline is tight, but I'll do my best.",
       },
-      {
-        pattern: "At this point, ___.",
-        meaning: "目前……",
-        slots: "现状",
-        example: "At this point, we need one more day.",
-      }
     ],
     vocabs: [
       "best", "finished", "progress", "impressed", "promise", "turn", "deadline", "sure",
@@ -1667,12 +1601,6 @@ const topics = [
         slots: "无",
         example: "Friday at three. It's settled, then.",
       },
-      {
-        pattern: "To be honest, ___.",
-        meaning: "老实说……",
-        slots: "真实看法",
-        example: "To be honest, that plan is too tight.",
-      }
     ],
     vocabs: [
       "point", "idea", "worth", "settled", "honest", "difference", "trust", "advice",

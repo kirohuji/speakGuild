@@ -1,5 +1,5 @@
 {
-  "问候、告别与自我介绍": {
+  "寒暄、接话与祝福": {
     "outputTraining": {
       "enabled": true,
       "version": 1,
@@ -7,115 +7,235 @@
         {
           "id": "l1-t1-1",
           "type": "chunk_substitution",
-          "title": "What's up? 句块替换",
-          "chunk": "What's up?",
-          "chunkMeaning": "你好 / 怎么啦？（打招呼）",
+          "title": "What's going on? 句块替换",
+          "chunk": "What's going on?",
+          "chunkMeaning": "怎么回事？",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "嘿！最近怎么样？",
-              "answer": "Hey! What's up?",
-              "hint": "用「What's up?」来表达"
+              "zh": "嘿，怎么回事？",
+              "answer": "Hey, what's going on?",
+              "hint": "用「What's going on?」来表达"
             },
             {
-              "zh": "你看起来有心事。怎么了？",
-              "answer": "You look worried. What's up?",
-              "hint": "用「What's up?」来表达"
+              "zh": "这里怎么回事？",
+              "answer": "What's going on here?",
+              "hint": "用「What's going on?」来表达"
             }
           ]
         },
         {
           "id": "l1-t1-2",
           "type": "chunk_substitution",
-          "title": "How's it going? 句块替换",
-          "chunk": "How's it going?",
-          "chunkMeaning": "最近怎么样",
+          "title": "Not bad. 句块替换",
+          "chunk": "Not bad.",
+          "chunkMeaning": "还不错",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "嗨，Emma。最近怎么样？",
-              "answer": "Hi, Emma. How's it going?",
-              "hint": "用「How's it going?」来表达"
+              "zh": "工作怎么样？——还不错。",
+              "answer": "How's work? — Not bad.",
+              "hint": "用「Not bad.」来表达"
             },
             {
-              "zh": "工作还顺利吗？",
-              "answer": "How's it going at work?",
-              "hint": "用「How's it going?」来表达"
+              "zh": "这饭还不错。",
+              "answer": "The food is not bad.",
+              "hint": "用「Not bad.」来表达"
             }
           ]
         },
         {
           "id": "l1-t1-3",
           "type": "chunk_substitution",
-          "title": "How have you been? 句块替换",
-          "chunk": "How have you been?",
-          "chunkMeaning": "最近怎么样（久别）",
+          "title": "Rough day? 句块替换",
+          "chunk": "Rough day?",
+          "chunkMeaning": "今天不顺利吗？",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "好久不见！你最近怎么样？",
-              "answer": "It's been ages! How have you been?",
-              "hint": "用「How have you been?」来表达"
+              "zh": "你看着累。今天不顺利吗？",
+              "answer": "You look tired. Rough day?",
+              "hint": "用「Rough day?」来表达"
             },
             {
-              "zh": "搬家之后最近怎么样？",
-              "answer": "How have you been since the move?",
-              "hint": "用「How have you been?」来表达"
+              "zh": "今天不顺？要不要喝点水？",
+              "answer": "Rough day? Want some water?",
+              "hint": "用「Rough day?」来表达"
             }
           ]
         },
         {
           "id": "l1-t1-4",
           "type": "chunk_substitution",
-          "title": "问候、告别与自我介绍 听辨理解",
-          "chunk": "What's up?",
-          "chunkMeaning": "你好 / 怎么啦？（打招呼）",
+          "title": "寒暄、接话与祝福 听辨理解",
+          "chunk": "What's going on?",
+          "chunkMeaning": "怎么回事？",
           "direction": "en_to_zh",
           "kind": "chunk",
           "items": [
             {
-              "en": "Hey! What's up?",
-              "answer": "嘿！最近怎么样？",
+              "en": "Hey, what's going on?",
+              "answer": "嘿，怎么回事？",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Hi, Emma. How's it going?",
-              "answer": "嗨，Emma。最近怎么样？",
+              "en": "How's work? — Not bad.",
+              "answer": "工作怎么样？——还不错。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "It's been ages! How have you been?",
-              "answer": "好久不见！你最近怎么样？",
+              "en": "You look tired. Rough day?",
+              "answer": "你看着累。今天不顺利吗？",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
         },
         {
           "id": "l1-t1-5",
+          "type": "vocab_sentence_building",
+          "title": "what's 造句",
+          "vocabWord": "what's",
+          "vocabMeaning": "what's",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "What's going on?",
+              "items": [
+                {
+                  "zh": "嘿，怎么回事？",
+                  "answer": "Hey, what's going on?",
+                  "hint": "用到单词「what's」"
+                },
+                {
+                  "zh": "这里怎么回事？",
+                  "answer": "What's going on here?",
+                  "hint": "用到单词「what's」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t1-6",
+          "type": "vocab_sentence_building",
+          "title": "going 造句",
+          "vocabWord": "going",
+          "vocabMeaning": "进行中/怎么了",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "What's going on?",
+              "items": [
+                {
+                  "zh": "嘿，怎么回事？",
+                  "answer": "Hey, what's going on?",
+                  "hint": "用到单词「going」"
+                },
+                {
+                  "zh": "这里怎么回事？",
+                  "answer": "What's going on here?",
+                  "hint": "用到单词「going」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t1-7",
+          "type": "vocab_sentence_building",
+          "title": "bad 造句",
+          "vocabWord": "bad",
+          "vocabMeaning": "bad",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Not bad.",
+              "items": [
+                {
+                  "zh": "工作怎么样？——还不错。",
+                  "answer": "How's work? — Not bad.",
+                  "hint": "用到单词「bad」"
+                },
+                {
+                  "zh": "这饭还不错。",
+                  "answer": "The food is not bad.",
+                  "hint": "用到单词「bad」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t1-8",
+          "type": "vocab_sentence_building",
+          "title": "rough 造句",
+          "vocabWord": "rough",
+          "vocabMeaning": "艰难的",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Rough day?",
+              "items": [
+                {
+                  "zh": "你看着累。今天不顺利吗？",
+                  "answer": "You look tired. Rough day?",
+                  "hint": "用到单词「rough」"
+                },
+                {
+                  "zh": "今天不顺？要不要喝点水？",
+                  "answer": "Rough day? Want some water?",
+                  "hint": "用到单词「rough」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t1-9",
+          "type": "pattern_drill",
+          "title": "Have a [adjective] day. 句型操练",
+          "pattern": "Have a [adjective] day.",
+          "patternMeaning": "祝你有个……的一天",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "谢谢。祝你愉快。",
+              "answer": "Thanks. Have a nice day.",
+              "hint": "套用句型：Have a [adjective] day."
+            },
+            {
+              "zh": "工作怎么样？——还不错。",
+              "answer": "How's work? — Not bad.",
+              "hint": "套用句型：Have a [adjective] day."
+            }
+          ]
+        },
+        {
+          "id": "l1-t1-10",
           "type": "sentence_decomposition",
-          "title": "What's up? 句子拆解",
-          "sourceText": "What's up?",
+          "title": "What's going on? 句子拆解",
+          "sourceText": "What's going on?",
           "sourceKind": "chunk",
-          "fullSentence": "Hey! What's up?",
-          "fullSentenceZh": "嘿！最近怎么样？",
+          "fullSentence": "Hey, what's going on?",
+          "fullSentenceZh": "嘿，怎么回事？",
           "levels": [
             {
               "level": 1,
               "label": "核心句",
-              "en": "What's up?",
-              "zh": "你好 / 怎么啦？（打招呼）",
+              "en": "What's going on?",
+              "zh": "怎么回事？",
               "highlight": "",
               "hint": "先说出本课核心表达"
             },
             {
               "level": 2,
               "label": "完整句",
-              "en": "Hey! What's up?",
-              "zh": "嘿！最近怎么样？",
-              "highlight": "Hey!",
+              "en": "Hey, what's going on?",
+              "zh": "嘿，怎么回事？",
+              "highlight": "Hey, what's going on?",
               "hint": "补上场景信息，说成一句完整话"
             }
           ]
@@ -144,63 +264,63 @@
         {
           "id": "l1-t2-1",
           "type": "chunk_substitution",
-          "title": "Thank you. 句块替换",
-          "chunk": "Thank you.",
-          "chunkMeaning": "谢谢你",
+          "title": "Good job. 句块替换",
+          "chunk": "Good job.",
+          "chunkMeaning": "做的好",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "谢谢你。这帮大忙了。",
-              "answer": "Thank you. That helps a lot.",
-              "hint": "用「Thank you.」来表达"
+              "zh": "报告做得好。",
+              "answer": "Good job on the report.",
+              "hint": "用「Good job.」来表达"
             },
             {
-              "zh": "这是你的包。——谢谢。",
-              "answer": "Here is your bag. — Thank you.",
-              "hint": "用「Thank you.」来表达"
+              "zh": "你修好了？干得好。",
+              "answer": "You fixed it? Good job.",
+              "hint": "用「Good job.」来表达"
             }
           ]
         },
         {
           "id": "l1-t2-2",
           "type": "chunk_substitution",
-          "title": "Thanks. 句块替换",
-          "chunk": "Thanks.",
-          "chunkMeaning": "谢谢",
+          "title": "Congratulations. 句块替换",
+          "chunk": "Congratulations.",
+          "chunkMeaning": "恭喜",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "我给你拿了点水。——谢谢！",
-              "answer": "I got you some water. — Thanks!",
-              "hint": "用「Thanks.」来表达"
+              "zh": "恭喜你找到新工作！",
+              "answer": "Congratulations on the new job!",
+              "hint": "用「Congratulations.」来表达"
             },
             {
-              "zh": "谢谢你等我。",
-              "answer": "Thanks for waiting.",
-              "hint": "用「Thanks.」来表达"
+              "zh": "你过了？恭喜！",
+              "answer": "You passed? Congratulations!",
+              "hint": "用「Congratulations.」来表达"
             }
           ]
         },
         {
           "id": "l1-t2-3",
           "type": "chunk_substitution",
-          "title": "Thank you so much. 句块替换",
-          "chunk": "Thank you so much.",
-          "chunkMeaning": "太谢谢你了",
+          "title": "Proud of you. 句块替换",
+          "chunk": "Proud of you.",
+          "chunkMeaning": "为你骄傲",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "太谢谢你来接我了。",
-              "answer": "Thank you so much for picking me up.",
-              "hint": "用「Thank you so much.」来表达"
+              "zh": "我真为你骄傲。",
+              "answer": "I'm so proud of you.",
+              "hint": "用「Proud of you.」来表达"
             },
             {
-              "zh": "你找到我的手机了？太谢谢了！",
-              "answer": "You found my phone? Thank you so much!",
-              "hint": "用「Thank you so much.」来表达"
+              "zh": "你做到了。为你骄傲。",
+              "answer": "You did it. Proud of you.",
+              "hint": "用「Proud of you.」来表达"
             }
           ]
         },
@@ -208,51 +328,171 @@
           "id": "l1-t2-4",
           "type": "chunk_substitution",
           "title": "感谢、简单道歉与回应 听辨理解",
-          "chunk": "Thank you.",
-          "chunkMeaning": "谢谢你",
+          "chunk": "Good job.",
+          "chunkMeaning": "做的好",
           "direction": "en_to_zh",
           "kind": "chunk",
           "items": [
             {
-              "en": "Thank you. That helps a lot.",
-              "answer": "谢谢你。这帮大忙了。",
+              "en": "Good job on the report.",
+              "answer": "报告做得好。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "I got you some water. — Thanks!",
-              "answer": "我给你拿了点水。——谢谢！",
+              "en": "Congratulations on the new job!",
+              "answer": "恭喜你找到新工作！",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Thank you so much for picking me up.",
-              "answer": "太谢谢你来接我了。",
+              "en": "I'm so proud of you.",
+              "answer": "我真为你骄傲。",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
         },
         {
           "id": "l1-t2-5",
+          "type": "vocab_sentence_building",
+          "title": "good 造句",
+          "vocabWord": "good",
+          "vocabMeaning": "good",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Good job.",
+              "items": [
+                {
+                  "zh": "报告做得好。",
+                  "answer": "Good job on the report.",
+                  "hint": "用到单词「good」"
+                },
+                {
+                  "zh": "你修好了？干得好。",
+                  "answer": "You fixed it? Good job.",
+                  "hint": "用到单词「good」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t2-6",
+          "type": "vocab_sentence_building",
+          "title": "job 造句",
+          "vocabWord": "job",
+          "vocabMeaning": "工作/干得好",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Good job.",
+              "items": [
+                {
+                  "zh": "报告做得好。",
+                  "answer": "Good job on the report.",
+                  "hint": "用到单词「job」"
+                },
+                {
+                  "zh": "你修好了？干得好。",
+                  "answer": "You fixed it? Good job.",
+                  "hint": "用到单词「job」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t2-7",
+          "type": "vocab_sentence_building",
+          "title": "congratulations 造句",
+          "vocabWord": "congratulations",
+          "vocabMeaning": "恭喜",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Congratulations.",
+              "items": [
+                {
+                  "zh": "恭喜你找到新工作！",
+                  "answer": "Congratulations on the new job!",
+                  "hint": "用到单词「congratulations」"
+                },
+                {
+                  "zh": "你过了？恭喜！",
+                  "answer": "You passed? Congratulations!",
+                  "hint": "用到单词「congratulations」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t2-8",
+          "type": "vocab_sentence_building",
+          "title": "proud 造句",
+          "vocabWord": "proud",
+          "vocabMeaning": "骄傲",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Proud of you.",
+              "items": [
+                {
+                  "zh": "我真为你骄傲。",
+                  "answer": "I'm so proud of you.",
+                  "hint": "用到单词「proud」"
+                },
+                {
+                  "zh": "你做到了。为你骄傲。",
+                  "answer": "You did it. Proud of you.",
+                  "hint": "用到单词「proud」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t2-9",
+          "type": "pattern_drill",
+          "title": "I'm [adjective]. 句型操练",
+          "pattern": "I'm [adjective].",
+          "patternMeaning": "我感到……（佩服/抱歉等）",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你的英语让我佩服。",
+              "answer": "I'm impressed by your English.",
+              "hint": "套用句型：I'm [adjective]."
+            },
+            {
+              "zh": "恭喜你找到新工作！",
+              "answer": "Congratulations on the new job!",
+              "hint": "套用句型：I'm [adjective]."
+            }
+          ]
+        },
+        {
+          "id": "l1-t2-10",
           "type": "sentence_decomposition",
-          "title": "Thank you. 句子拆解",
-          "sourceText": "Thank you.",
+          "title": "Good job. 句子拆解",
+          "sourceText": "Good job.",
           "sourceKind": "chunk",
-          "fullSentence": "Thank you. That helps a lot.",
-          "fullSentenceZh": "谢谢你。这帮大忙了。",
+          "fullSentence": "Good job on the report.",
+          "fullSentenceZh": "报告做得好。",
           "levels": [
             {
               "level": 1,
               "label": "核心句",
-              "en": "Thank you.",
-              "zh": "谢谢你",
+              "en": "Good job.",
+              "zh": "做的好",
               "highlight": "",
               "hint": "先说出本课核心表达"
             },
             {
               "level": 2,
               "label": "完整句",
-              "en": "Thank you. That helps a lot.",
-              "zh": "谢谢你。这帮大忙了。",
-              "highlight": ". That helps a lot.",
+              "en": "Good job on the report.",
+              "zh": "报告做得好。",
+              "highlight": "on the report.",
               "hint": "补上场景信息，说成一句完整话"
             }
           ]
@@ -273,7 +513,7 @@
       }
     }
   },
-  "点餐、数量与付款": {
+  "约饭、结账与用餐回应": {
     "outputTraining": {
       "enabled": true,
       "version": 1,
@@ -281,115 +521,235 @@
         {
           "id": "l1-t3-1",
           "type": "chunk_substitution",
-          "title": "I'd like a coffee, please. 句块替换",
-          "chunk": "I'd like a coffee, please.",
-          "chunkMeaning": "我想要一杯咖啡",
+          "title": "Anything else? 句块替换",
+          "chunk": "Anything else?",
+          "chunkMeaning": "还要别的吗？",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "早上好。我想要一杯咖啡。",
-              "answer": "Good morning. I'd like a coffee, please.",
-              "hint": "用「I'd like a coffee, please.」来表达"
+              "zh": "请来杯咖啡。——还要别的吗？——不用了，谢谢。",
+              "answer": "A coffee, please. — Anything else? — No, thanks.",
+              "hint": "用「Anything else?」来表达"
             },
             {
-              "zh": "我想要鸡肉三明治。",
-              "answer": "I'd like the chicken sandwich.",
-              "hint": "用「I'd like a coffee, please.」来表达"
+              "zh": "还要别的吗？——只要水。",
+              "answer": "Anything else for you? — Just water.",
+              "hint": "用「Anything else?」来表达"
             }
           ]
         },
         {
           "id": "l1-t3-2",
           "type": "chunk_substitution",
-          "title": "Can I have a glass of water? 句块替换",
-          "chunk": "Can I have a glass of water?",
-          "chunkMeaning": "可以给我一杯水吗？",
+          "title": "Keep the change. 句块替换",
+          "chunk": "Keep the change.",
+          "chunkMeaning": "不用找钱了",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "今天好热。可以给我一杯水吗？",
-              "answer": "It's hot today. Can I have a glass of water?",
-              "hint": "用「Can I have a glass of water?」来表达"
+              "zh": "这是二十。不用找了。",
+              "answer": "Here's twenty. Keep the change.",
+              "hint": "用「Keep the change.」来表达"
             },
             {
-              "zh": "可以给我菜单吗？",
-              "answer": "Can I have the menu, please?",
-              "hint": "用「Can I have a glass of water?」来表达"
+              "zh": "一共十二。——这是十五。不用找了。",
+              "answer": "That'll be twelve. — Here's fifteen. Keep the change.",
+              "hint": "用「Keep the change.」来表达"
             }
           ]
         },
         {
           "id": "l1-t3-3",
           "type": "chunk_substitution",
-          "title": "A coffee, please. 句块替换",
-          "chunk": "A coffee, please.",
-          "chunkMeaning": "请来杯咖啡",
+          "title": "Do you accept credit cards? 句块替换",
+          "chunk": "Do you accept credit cards?",
+          "chunkMeaning": "你们收信用卡吗?",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "您要点什么？——请来杯咖啡。",
-              "answer": "What can I get you? — A coffee, please.",
-              "hint": "用「A coffee, please.」来表达"
+              "zh": "你们收信用卡吗？——收。",
+              "answer": "Do you accept credit cards? — Yes, we do.",
+              "hint": "用「Do you accept credit cards?」来表达"
             },
             {
-              "zh": "请来两杯冰茶。",
-              "answer": "Two iced teas, please.",
-              "hint": "用「A coffee, please.」来表达"
+              "zh": "点之前问一下，收信用卡吗？",
+              "answer": "Before I order, do you accept credit cards?",
+              "hint": "用「Do you accept credit cards?」来表达"
             }
           ]
         },
         {
           "id": "l1-t3-4",
           "type": "chunk_substitution",
-          "title": "点餐、数量与付款 听辨理解",
-          "chunk": "I'd like a coffee, please.",
-          "chunkMeaning": "我想要一杯咖啡",
+          "title": "约饭、结账与用餐回应 听辨理解",
+          "chunk": "Anything else?",
+          "chunkMeaning": "还要别的吗？",
           "direction": "en_to_zh",
           "kind": "chunk",
           "items": [
             {
-              "en": "Good morning. I'd like a coffee, please.",
-              "answer": "早上好。我想要一杯咖啡。",
+              "en": "A coffee, please. — Anything else? — No, thanks.",
+              "answer": "请来杯咖啡。——还要别的吗？——不用了，谢谢。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "It's hot today. Can I have a glass of water?",
-              "answer": "今天好热。可以给我一杯水吗？",
+              "en": "Here's twenty. Keep the change.",
+              "answer": "这是二十。不用找了。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "What can I get you? — A coffee, please.",
-              "answer": "您要点什么？——请来杯咖啡。",
+              "en": "Do you accept credit cards? — Yes, we do.",
+              "answer": "你们收信用卡吗？——收。",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
         },
         {
           "id": "l1-t3-5",
+          "type": "vocab_sentence_building",
+          "title": "anything 造句",
+          "vocabWord": "anything",
+          "vocabMeaning": "任何事",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Anything else?",
+              "items": [
+                {
+                  "zh": "请来杯咖啡。——还要别的吗？——不用了，谢谢。",
+                  "answer": "A coffee, please. — Anything else? — No, thanks.",
+                  "hint": "用到单词「anything」"
+                },
+                {
+                  "zh": "还要别的吗？——只要水。",
+                  "answer": "Anything else for you? — Just water.",
+                  "hint": "用到单词「anything」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t3-6",
+          "type": "vocab_sentence_building",
+          "title": "else 造句",
+          "vocabWord": "else",
+          "vocabMeaning": "其他",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Anything else?",
+              "items": [
+                {
+                  "zh": "请来杯咖啡。——还要别的吗？——不用了，谢谢。",
+                  "answer": "A coffee, please. — Anything else? — No, thanks.",
+                  "hint": "用到单词「else」"
+                },
+                {
+                  "zh": "还要别的吗？——只要水。",
+                  "answer": "Anything else for you? — Just water.",
+                  "hint": "用到单词「else」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t3-7",
+          "type": "vocab_sentence_building",
+          "title": "keep 造句",
+          "vocabWord": "keep",
+          "vocabMeaning": "保留",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Keep the change.",
+              "items": [
+                {
+                  "zh": "这是二十。不用找了。",
+                  "answer": "Here's twenty. Keep the change.",
+                  "hint": "用到单词「keep」"
+                },
+                {
+                  "zh": "一共十二。——这是十五。不用找了。",
+                  "answer": "That'll be twelve. — Here's fifteen. Keep the change.",
+                  "hint": "用到单词「keep」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t3-8",
+          "type": "vocab_sentence_building",
+          "title": "change 造句",
+          "vocabWord": "change",
+          "vocabMeaning": "零钱",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Keep the change.",
+              "items": [
+                {
+                  "zh": "这是二十。不用找了。",
+                  "answer": "Here's twenty. Keep the change.",
+                  "hint": "用到单词「change」"
+                },
+                {
+                  "zh": "一共十二。——这是十五。不用找了。",
+                  "answer": "That'll be twelve. — Here's fifteen. Keep the change.",
+                  "hint": "用到单词「change」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t3-9",
+          "type": "pattern_drill",
+          "title": "How about a [drink] tonight? 句型操练",
+          "pattern": "How about a [drink] tonight?",
+          "patternMeaning": "今晚……怎么样？",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "下班后今晚喝一杯怎样？",
+              "answer": "How about a drink tonight after work?",
+              "hint": "套用句型：How about a [drink] tonight?"
+            },
+            {
+              "zh": "这是二十。不用找了。",
+              "answer": "Here's twenty. Keep the change.",
+              "hint": "套用句型：How about a [drink] tonight?"
+            }
+          ]
+        },
+        {
+          "id": "l1-t3-10",
           "type": "sentence_decomposition",
-          "title": "I'd like a coffee, please. 句子拆解",
-          "sourceText": "I'd like a coffee, please.",
+          "title": "Anything else? 句子拆解",
+          "sourceText": "Anything else?",
           "sourceKind": "chunk",
-          "fullSentence": "Good morning. I'd like a coffee, please.",
-          "fullSentenceZh": "早上好。我想要一杯咖啡。",
+          "fullSentence": "A coffee, please. — Anything else? — No, thanks.",
+          "fullSentenceZh": "请来杯咖啡。——还要别的吗？——不用了，谢谢。",
           "levels": [
             {
               "level": 1,
               "label": "核心句",
-              "en": "I'd like a coffee, please.",
-              "zh": "我想要一杯咖啡",
+              "en": "Anything else?",
+              "zh": "还要别的吗？",
               "highlight": "",
               "hint": "先说出本课核心表达"
             },
             {
               "level": 2,
               "label": "完整句",
-              "en": "Good morning. I'd like a coffee, please.",
-              "zh": "早上好。我想要一杯咖啡。",
-              "highlight": "Good morning. .",
+              "en": "A coffee, please. — Anything else? — No, thanks.",
+              "zh": "请来杯咖啡。——还要别的吗？——不用了，谢谢。",
+              "highlight": "A coffee, please. —  — No, thanks.",
               "hint": "补上场景信息，说成一句完整话"
             }
           ]
@@ -410,7 +770,7 @@
       }
     }
   },
-  "找商品、问价格与结账": {
+  "评价价格、取舍与许可回应": {
     "outputTraining": {
       "enabled": true,
       "version": 1,
@@ -418,115 +778,235 @@
         {
           "id": "l1-t4-1",
           "type": "chunk_substitution",
-          "title": "Where is the milk? 句块替换",
-          "chunk": "Where is the milk?",
-          "chunkMeaning": "牛奶在哪里？",
+          "title": "The price is reasonable. 句块替换",
+          "chunk": "The price is reasonable.",
+          "chunkMeaning": "价格还算合理",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "请问，牛奶在哪里？",
-              "answer": "Excuse me, where is the milk?",
-              "hint": "用「Where is the milk?」来表达"
+              "zh": "按这个质量，价格还算合理。",
+              "answer": "For this quality, the price is reasonable.",
+              "hint": "用「The price is reasonable.」来表达"
             },
             {
-              "zh": "请问试衣间在哪里？",
-              "answer": "Excuse me, where is the fitting room?",
-              "hint": "用「Where is the milk?」来表达"
+              "zh": "我上网查了。价格合理。",
+              "answer": "I checked online. The price is reasonable.",
+              "hint": "用「The price is reasonable.」来表达"
             }
           ]
         },
         {
           "id": "l1-t4-2",
           "type": "chunk_substitution",
-          "title": "Do you have this in blue? 句块替换",
-          "chunk": "Do you have this in blue?",
-          "chunkMeaning": "这件有蓝色的吗？",
+          "title": "I can't afford a new car. 句块替换",
+          "chunk": "I can't afford a new car.",
+          "chunkMeaning": "我买不起一部新车",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "我喜欢这件衬衫。有蓝色的吗？",
-              "answer": "I like this shirt. Do you have this in blue?",
-              "hint": "用「Do you have this in blue?」来表达"
+              "zh": "我喜欢，但买不起新车。",
+              "answer": "I like it, but I can't afford a new car.",
+              "hint": "用「I can't afford a new car.」来表达"
             },
             {
-              "zh": "有电池吗？",
-              "answer": "Do you have batteries?",
-              "hint": "用「Do you have this in blue?」来表达"
+              "zh": "目前我买不起新车。",
+              "answer": "Right now I can't afford a new car.",
+              "hint": "用「I can't afford a new car.」来表达"
             }
           ]
         },
         {
           "id": "l1-t4-3",
           "type": "chunk_substitution",
-          "title": "How much is this? 句块替换",
-          "chunk": "How much is this?",
-          "chunkMeaning": "这个多少钱？",
+          "title": "It's not worth it. 句块替换",
+          "chunk": "It's not worth it.",
+          "chunkMeaning": "这不值得",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "这件衬衫多少钱？",
-              "answer": "How much is this shirt?",
-              "hint": "用「How much is this?」来表达"
+              "zh": "太贵了。不值得。",
+              "answer": "Too expensive. It's not worth it.",
+              "hint": "用「It's not worth it.」来表达"
             },
             {
-              "zh": "请问，这个多少钱？",
-              "answer": "Excuse me, how much is this?",
-              "hint": "用「How much is this?」来表达"
+              "zh": "排队太久。不划算。",
+              "answer": "The wait is long. It's not worth it.",
+              "hint": "用「It's not worth it.」来表达"
             }
           ]
         },
         {
           "id": "l1-t4-4",
           "type": "chunk_substitution",
-          "title": "找商品、问价格与结账 听辨理解",
-          "chunk": "Where is the milk?",
-          "chunkMeaning": "牛奶在哪里？",
+          "title": "评价价格、取舍与许可回应 听辨理解",
+          "chunk": "The price is reasonable.",
+          "chunkMeaning": "价格还算合理",
           "direction": "en_to_zh",
           "kind": "chunk",
           "items": [
             {
-              "en": "Excuse me, where is the milk?",
-              "answer": "请问，牛奶在哪里？",
+              "en": "For this quality, the price is reasonable.",
+              "answer": "按这个质量，价格还算合理。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "I like this shirt. Do you have this in blue?",
-              "answer": "我喜欢这件衬衫。有蓝色的吗？",
+              "en": "I like it, but I can't afford a new car.",
+              "answer": "我喜欢，但买不起新车。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "How much is this shirt?",
-              "answer": "这件衬衫多少钱？",
+              "en": "Too expensive. It's not worth it.",
+              "answer": "太贵了。不值得。",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
         },
         {
           "id": "l1-t4-5",
+          "type": "vocab_sentence_building",
+          "title": "price 造句",
+          "vocabWord": "price",
+          "vocabMeaning": "价格",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "The price is reasonable.",
+              "items": [
+                {
+                  "zh": "按这个质量，价格还算合理。",
+                  "answer": "For this quality, the price is reasonable.",
+                  "hint": "用到单词「price」"
+                },
+                {
+                  "zh": "我上网查了。价格合理。",
+                  "answer": "I checked online. The price is reasonable.",
+                  "hint": "用到单词「price」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t4-6",
+          "type": "vocab_sentence_building",
+          "title": "reasonable 造句",
+          "vocabWord": "reasonable",
+          "vocabMeaning": "合理的",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "The price is reasonable.",
+              "items": [
+                {
+                  "zh": "按这个质量，价格还算合理。",
+                  "answer": "For this quality, the price is reasonable.",
+                  "hint": "用到单词「reasonable」"
+                },
+                {
+                  "zh": "我上网查了。价格合理。",
+                  "answer": "I checked online. The price is reasonable.",
+                  "hint": "用到单词「reasonable」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t4-7",
+          "type": "vocab_sentence_building",
+          "title": "can't 造句",
+          "vocabWord": "can't",
+          "vocabMeaning": "can't",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I can't afford a new car.",
+              "items": [
+                {
+                  "zh": "我喜欢，但买不起新车。",
+                  "answer": "I like it, but I can't afford a new car.",
+                  "hint": "用到单词「can't」"
+                },
+                {
+                  "zh": "目前我买不起新车。",
+                  "answer": "Right now I can't afford a new car.",
+                  "hint": "用到单词「can't」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t4-8",
+          "type": "vocab_sentence_building",
+          "title": "afford 造句",
+          "vocabWord": "afford",
+          "vocabMeaning": "负担得起",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I can't afford a new car.",
+              "items": [
+                {
+                  "zh": "我喜欢，但买不起新车。",
+                  "answer": "I like it, but I can't afford a new car.",
+                  "hint": "用到单词「afford」"
+                },
+                {
+                  "zh": "目前我买不起新车。",
+                  "answer": "Right now I can't afford a new car.",
+                  "hint": "用到单词「afford」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t4-9",
+          "type": "pattern_drill",
+          "title": "The price is [adjective]. 句型操练",
+          "pattern": "The price is [adjective].",
+          "patternMeaning": "价格……",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "按这个质量，价格还算合理。",
+              "answer": "For this quality, the price is reasonable.",
+              "hint": "套用句型：The price is [adjective]."
+            },
+            {
+              "zh": "我喜欢，但买不起新车。",
+              "answer": "I like it, but I can't afford a new car.",
+              "hint": "套用句型：The price is [adjective]."
+            }
+          ]
+        },
+        {
+          "id": "l1-t4-10",
           "type": "sentence_decomposition",
-          "title": "Where is the milk? 句子拆解",
-          "sourceText": "Where is the milk?",
+          "title": "The price is reasonable. 句子拆解",
+          "sourceText": "The price is reasonable.",
           "sourceKind": "chunk",
-          "fullSentence": "Excuse me, where is the milk?",
-          "fullSentenceZh": "请问，牛奶在哪里？",
+          "fullSentence": "For this quality, the price is reasonable.",
+          "fullSentenceZh": "按这个质量，价格还算合理。",
           "levels": [
             {
               "level": 1,
               "label": "核心句",
-              "en": "Where is the milk?",
-              "zh": "牛奶在哪里？",
+              "en": "The price is reasonable.",
+              "zh": "价格还算合理",
               "highlight": "",
               "hint": "先说出本课核心表达"
             },
             {
               "level": 2,
               "label": "完整句",
-              "en": "Excuse me, where is the milk?",
-              "zh": "请问，牛奶在哪里？",
-              "highlight": "Excuse me, where is the milk?",
+              "en": "For this quality, the price is reasonable.",
+              "zh": "按这个质量，价格还算合理。",
+              "highlight": "For this quality, the price is reasonable.",
               "hint": "补上场景信息，说成一句完整话"
             }
           ]
@@ -547,7 +1027,7 @@
       }
     }
   },
-  "询问地点、方向和交通": {
+  "迷路、在路上与接人": {
     "outputTraining": {
       "enabled": true,
       "version": 1,
@@ -562,13 +1042,13 @@
           "kind": "chunk",
           "items": [
             {
-              "zh": "等等——这里看着不对。我现在迷路了。",
-              "answer": "Wait—this doesn't look right. Now I'm lost.",
+              "zh": "等等，这条街不对。我迷路了。",
+              "answer": "Wait, this street looks wrong. Now I'm lost.",
               "hint": "用「Now I'm lost.」来表达"
             },
             {
-              "zh": "我现在迷路了。你能指一下车站吗？",
-              "answer": "Now I'm lost. Can you point me to the station?",
+              "zh": "我拐错弯了。现在迷路了。",
+              "answer": "I missed the turn. Now I'm lost.",
               "hint": "用「Now I'm lost.」来表达"
             }
           ]
@@ -588,8 +1068,8 @@
               "hint": "用「On my way.」来表达"
             },
             {
-              "zh": "别丢下我。我在路上了。",
-              "answer": "Don't leave without me. I'm on my way.",
+              "zh": "别走。我在路上了。",
+              "answer": "Don't leave. I'm on my way.",
               "hint": "用「On my way.」来表达"
             }
           ]
@@ -604,13 +1084,13 @@
           "kind": "chunk",
           "items": [
             {
-              "zh": "到了。这就是你的酒店。",
-              "answer": "Here we are. This is your hotel.",
+              "zh": "到了。这是你的站。",
+              "answer": "Here we are. This is your stop.",
               "hint": "用「Here we are.」来表达"
             },
             {
-              "zh": "二十分钟后——到了。",
-              "answer": "After twenty minutes—here we are.",
+              "zh": "到了。我们进去吧。",
+              "answer": "Here we are. Let's go in.",
               "hint": "用「Here we are.」来表达"
             }
           ]
@@ -618,15 +1098,15 @@
         {
           "id": "l1-t5-4",
           "type": "chunk_substitution",
-          "title": "询问地点、方向和交通 听辨理解",
+          "title": "迷路、在路上与接人 听辨理解",
           "chunk": "Now I'm lost.",
           "chunkMeaning": "我现在迷路了",
           "direction": "en_to_zh",
           "kind": "chunk",
           "items": [
             {
-              "en": "Wait—this doesn't look right. Now I'm lost.",
-              "answer": "等等——这里看着不对。我现在迷路了。",
+              "en": "Wait, this street looks wrong. Now I'm lost.",
+              "answer": "等等，这条街不对。我迷路了。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
@@ -635,20 +1115,155 @@
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Here we are. This is your hotel.",
-              "answer": "到了。这就是你的酒店。",
+              "en": "Here we are. This is your stop.",
+              "answer": "到了。这是你的站。",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
         },
         {
           "id": "l1-t5-5",
+          "type": "vocab_sentence_building",
+          "title": "now 造句",
+          "vocabWord": "now",
+          "vocabMeaning": "now",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Now I'm lost.",
+              "items": [
+                {
+                  "zh": "等等，这条街不对。我迷路了。",
+                  "answer": "Wait, this street looks wrong. Now I'm lost.",
+                  "hint": "用到单词「now」"
+                },
+                {
+                  "zh": "我拐错弯了。现在迷路了。",
+                  "answer": "I missed the turn. Now I'm lost.",
+                  "hint": "用到单词「now」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t5-6",
+          "type": "vocab_sentence_building",
+          "title": "i'm 造句",
+          "vocabWord": "i'm",
+          "vocabMeaning": "i'm",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Now I'm lost.",
+              "items": [
+                {
+                  "zh": "等等，这条街不对。我迷路了。",
+                  "answer": "Wait, this street looks wrong. Now I'm lost.",
+                  "hint": "用到单词「i'm」"
+                },
+                {
+                  "zh": "我拐错弯了。现在迷路了。",
+                  "answer": "I missed the turn. Now I'm lost.",
+                  "hint": "用到单词「i'm」"
+                }
+              ]
+            },
+            {
+              "chunk": "I'm home.",
+              "items": [
+                {
+                  "zh": "我回来了！有人在吗？",
+                  "answer": "I'm home! Anyone here?",
+                  "hint": "用到单词「i'm」"
+                },
+                {
+                  "zh": "我到家了再给我电话。",
+                  "answer": "Call me when I'm home.",
+                  "hint": "用到单词「i'm」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t5-7",
+          "type": "vocab_sentence_building",
+          "title": "lost 造句",
+          "vocabWord": "lost",
+          "vocabMeaning": "迷路",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Now I'm lost.",
+              "items": [
+                {
+                  "zh": "等等，这条街不对。我迷路了。",
+                  "answer": "Wait, this street looks wrong. Now I'm lost.",
+                  "hint": "用到单词「lost」"
+                },
+                {
+                  "zh": "我拐错弯了。现在迷路了。",
+                  "answer": "I missed the turn. Now I'm lost.",
+                  "hint": "用到单词「lost」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t5-8",
+          "type": "vocab_sentence_building",
+          "title": "way 造句",
+          "vocabWord": "way",
+          "vocabMeaning": "方式/好样的",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "On my way.",
+              "items": [
+                {
+                  "zh": "你在哪？——在路上了。",
+                  "answer": "Where are you? — On my way.",
+                  "hint": "用到单词「way」"
+                },
+                {
+                  "zh": "别走。我在路上了。",
+                  "answer": "Don't leave. I'm on my way.",
+                  "hint": "用到单词「way」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t5-9",
+          "type": "pattern_drill",
+          "title": "Where can I buy a [thing]? 句型操练",
+          "pattern": "Where can I buy a [thing]?",
+          "patternMeaning": "哪里能买到……？",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "请问哪里能买到票？",
+              "answer": "Excuse me, where can I buy a ticket?",
+              "hint": "套用句型：Where can I buy a [thing]?"
+            },
+            {
+              "zh": "你在哪？——在路上了。",
+              "answer": "Where are you? — On my way.",
+              "hint": "套用句型：Where can I buy a [thing]?"
+            }
+          ]
+        },
+        {
+          "id": "l1-t5-10",
           "type": "sentence_decomposition",
           "title": "Now I'm lost. 句子拆解",
           "sourceText": "Now I'm lost.",
           "sourceKind": "chunk",
-          "fullSentence": "Wait—this doesn't look right. Now I'm lost.",
-          "fullSentenceZh": "等等——这里看着不对。我现在迷路了。",
+          "fullSentence": "Wait, this street looks wrong. Now I'm lost.",
+          "fullSentenceZh": "等等，这条街不对。我迷路了。",
           "levels": [
             {
               "level": 1,
@@ -661,9 +1276,9 @@
             {
               "level": 2,
               "label": "完整句",
-              "en": "Wait—this doesn't look right. Now I'm lost.",
-              "zh": "等等——这里看着不对。我现在迷路了。",
-              "highlight": "Wait—this doesn't look right. .",
+              "en": "Wait, this street looks wrong. Now I'm lost.",
+              "zh": "等等，这条街不对。我迷路了。",
+              "highlight": "Wait, this street looks wrong. .",
               "hint": "补上场景信息，说成一句完整话"
             }
           ]
@@ -684,7 +1299,7 @@
       }
     }
   },
-  "表达想要、需要和基本喜恶": {
+  "想要、喜好与婉拒": {
     "outputTraining": {
       "enabled": true,
       "version": 1,
@@ -692,115 +1307,280 @@
         {
           "id": "l1-t6-1",
           "type": "chunk_substitution",
-          "title": "I want some water. 句块替换",
-          "chunk": "I want some water.",
-          "chunkMeaning": "我想要点水",
+          "title": "Is that what you want? 句块替换",
+          "chunk": "Is that what you want?",
+          "chunkMeaning": "这就是你想要的吗",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "我渴了。我想要点水。",
-              "answer": "I'm thirsty. I want some water.",
-              "hint": "用「I want some water.」来表达"
+              "zh": "你是要这个吗？——对，就要这个。",
+              "answer": "Is that what you want? — Yes, this one.",
+              "hint": "用「Is that what you want?」来表达"
             },
             {
-              "zh": "我现在想回家。",
-              "answer": "I want to go home now.",
-              "hint": "用「I want some water.」来表达"
+              "zh": "你是要这个，还是要我换一个？",
+              "answer": "Is that what you want, or should I change it?",
+              "hint": "用「Is that what you want?」来表达"
             }
           ]
         },
         {
           "id": "l1-t6-2",
           "type": "chunk_substitution",
-          "title": "Yes, I'd like to. 句块替换",
-          "chunk": "Yes, I'd like to.",
-          "chunkMeaning": "好，我也想 / 好的，我愿意",
+          "title": "I want you to stay. 句块替换",
+          "chunk": "I want you to stay.",
+          "chunkMeaning": "我要你留下来",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "要不要一起？——好，我想去。",
-              "answer": "Want to come with us? — Yes, I'd like to.",
-              "hint": "用「Yes, I'd like to.」来表达"
+              "zh": "先别走。我想让你留下来。",
+              "answer": "Don't go yet. I want you to stay.",
+              "hint": "用「I want you to stay.」来表达"
             },
             {
-              "zh": "要再试一次吗？——好，我想试。",
-              "answer": "Would you like to try again? — Yes, I'd like to.",
-              "hint": "用「Yes, I'd like to.」来表达"
+              "zh": "我想让你留下来吃晚饭。",
+              "answer": "I want you to stay for dinner.",
+              "hint": "用「I want you to stay.」来表达"
             }
           ]
         },
         {
           "id": "l1-t6-3",
           "type": "chunk_substitution",
-          "title": "It is just what I need. 句块替换",
-          "chunk": "It is just what I need.",
-          "chunkMeaning": "这正是我所需要的",
+          "title": "I do want to see him now. 句块替换",
+          "chunk": "I do want to see him now.",
+          "chunkMeaning": "我现在确实很想去见他",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "这个尺码？正是我需要的。",
-              "answer": "This size? It is just what I need.",
-              "hint": "用「It is just what I need.」来表达"
+              "zh": "能等等吗？——不行。我现在就想见他。",
+              "answer": "Can it wait? — No. I do want to see him now.",
+              "hint": "用「I do want to see him now.」来表达"
             },
             {
-              "zh": "安静的房间——正是我需要的。",
-              "answer": "A quiet room—it is just what I need.",
-              "hint": "用「It is just what I need.」来表达"
+              "zh": "他走之前，我现在就想见他。",
+              "answer": "I do want to see him now, before he leaves.",
+              "hint": "用「I do want to see him now.」来表达"
             }
           ]
         },
         {
           "id": "l1-t6-4",
           "type": "chunk_substitution",
-          "title": "表达想要、需要和基本喜恶 听辨理解",
-          "chunk": "I want some water.",
-          "chunkMeaning": "我想要点水",
+          "title": "想要、喜好与婉拒 听辨理解",
+          "chunk": "Is that what you want?",
+          "chunkMeaning": "这就是你想要的吗",
           "direction": "en_to_zh",
           "kind": "chunk",
           "items": [
             {
-              "en": "I'm thirsty. I want some water.",
-              "answer": "我渴了。我想要点水。",
+              "en": "Is that what you want? — Yes, this one.",
+              "answer": "你是要这个吗？——对，就要这个。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Want to come with us? — Yes, I'd like to.",
-              "answer": "要不要一起？——好，我想去。",
+              "en": "Don't go yet. I want you to stay.",
+              "answer": "先别走。我想让你留下来。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "This size? It is just what I need.",
-              "answer": "这个尺码？正是我需要的。",
+              "en": "Can it wait? — No. I do want to see him now.",
+              "answer": "能等等吗？——不行。我现在就想见他。",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
         },
         {
           "id": "l1-t6-5",
+          "type": "vocab_sentence_building",
+          "title": "want 造句",
+          "vocabWord": "want",
+          "vocabMeaning": "want",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Is that what you want?",
+              "items": [
+                {
+                  "zh": "你是要这个吗？——对，就要这个。",
+                  "answer": "Is that what you want? — Yes, this one.",
+                  "hint": "用到单词「want」"
+                },
+                {
+                  "zh": "你是要这个，还是要我换一个？",
+                  "answer": "Is that what you want, or should I change it?",
+                  "hint": "用到单词「want」"
+                }
+              ]
+            },
+            {
+              "chunk": "I want you to stay.",
+              "items": [
+                {
+                  "zh": "先别走。我想让你留下来。",
+                  "answer": "Don't go yet. I want you to stay.",
+                  "hint": "用到单词「want」"
+                },
+                {
+                  "zh": "我想让你留下来吃晚饭。",
+                  "answer": "I want you to stay for dinner.",
+                  "hint": "用到单词「want」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t6-6",
+          "type": "vocab_sentence_building",
+          "title": "stay 造句",
+          "vocabWord": "stay",
+          "vocabMeaning": "待着",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I want you to stay.",
+              "items": [
+                {
+                  "zh": "先别走。我想让你留下来。",
+                  "answer": "Don't go yet. I want you to stay.",
+                  "hint": "用到单词「stay」"
+                },
+                {
+                  "zh": "我想让你留下来吃晚饭。",
+                  "answer": "I want you to stay for dinner.",
+                  "hint": "用到单词「stay」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t6-7",
+          "type": "vocab_sentence_building",
+          "title": "need 造句",
+          "vocabWord": "need",
+          "vocabMeaning": "需要",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "It is just what I need.",
+              "items": [
+                {
+                  "zh": "这个尺码？——正是我需要的。",
+                  "answer": "This size? — It is just what I need.",
+                  "hint": "用到单词「need」"
+                },
+                {
+                  "zh": "安静的座位。正是我需要的。",
+                  "answer": "A quiet seat. It is just what I need.",
+                  "hint": "用到单词「need」"
+                }
+              ]
+            },
+            {
+              "chunk": "No need.",
+              "items": [
+                {
+                  "zh": "要我帮你拿吗？——不用。",
+                  "answer": "Should I carry that? — No need.",
+                  "hint": "用到单词「need」"
+                },
+                {
+                  "zh": "不用。我已经订好了。",
+                  "answer": "No need. I already booked one.",
+                  "hint": "用到单词「need」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t6-8",
+          "type": "vocab_sentence_building",
+          "title": "like 造句",
+          "vocabWord": "like",
+          "vocabMeaning": "像/喜欢",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Do you like animals?",
+              "items": [
+                {
+                  "zh": "你喜欢动物吗？——喜欢，尤其是狗。",
+                  "answer": "Do you like animals? — Yes, especially dogs.",
+                  "hint": "用到单词「like」"
+                },
+                {
+                  "zh": "你更喜欢动物，还是安静的公园？",
+                  "answer": "Do you like animals or quiet parks more?",
+                  "hint": "用到单词「like」"
+                }
+              ]
+            },
+            {
+              "chunk": "Does she like ice-cream?",
+              "items": [
+                {
+                  "zh": "她喜欢冰淇淋吗？——超爱。",
+                  "answer": "Does she like ice-cream? — She loves it.",
+                  "hint": "用到单词「like」"
+                },
+                {
+                  "zh": "她喜欢冰淇淋还是蛋糕？",
+                  "answer": "Does she like ice-cream or cake?",
+                  "hint": "用到单词「like」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t6-9",
+          "type": "pattern_drill",
+          "title": "Is that what you [want]? 句型操练",
+          "pattern": "Is that what you [want]?",
+          "patternMeaning": "这就是你想要的吗？",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你是要这个吗？——对，就要这个。",
+              "answer": "Is that what you want? — Yes, this one.",
+              "hint": "套用句型：Is that what you [want]?"
+            },
+            {
+              "zh": "先别走。我想让你留下来。",
+              "answer": "Don't go yet. I want you to stay.",
+              "hint": "套用句型：Is that what you [want]?"
+            }
+          ]
+        },
+        {
+          "id": "l1-t6-10",
           "type": "sentence_decomposition",
-          "title": "I want some water. 句子拆解",
-          "sourceText": "I want some water.",
+          "title": "Is that what you want? 句子拆解",
+          "sourceText": "Is that what you want?",
           "sourceKind": "chunk",
-          "fullSentence": "I'm thirsty. I want some water.",
-          "fullSentenceZh": "我渴了。我想要点水。",
+          "fullSentence": "Is that what you want? — Yes, this one.",
+          "fullSentenceZh": "你是要这个吗？——对，就要这个。",
           "levels": [
             {
               "level": 1,
               "label": "核心句",
-              "en": "I want some water.",
-              "zh": "我想要点水",
+              "en": "Is that what you want?",
+              "zh": "这就是你想要的吗",
               "highlight": "",
               "hint": "先说出本课核心表达"
             },
             {
               "level": 2,
               "label": "完整句",
-              "en": "I'm thirsty. I want some water.",
-              "zh": "我渴了。我想要点水。",
-              "highlight": "I'm thirsty. .",
+              "en": "Is that what you want? — Yes, this one.",
+              "zh": "你是要这个吗？——对，就要这个。",
+              "highlight": "— Yes, this one.",
               "hint": "补上场景信息，说成一句完整话"
             }
           ]
@@ -829,63 +1609,63 @@
         {
           "id": "l1-t7-1",
           "type": "chunk_substitution",
-          "title": "Sorry? 句块替换",
-          "chunk": "Sorry?",
-          "chunkMeaning": "什么？ / 你说什么？（没听清）",
+          "title": "I beg your pardon. 句块替换",
+          "chunk": "I beg your pardon.",
+          "chunkMeaning": "你能再说一遍吗",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "什么？我没听见。",
-              "answer": "Sorry? I didn't hear you.",
-              "hint": "用「Sorry?」来表达"
+              "zh": "你能再说一遍吗？我没听清。",
+              "answer": "I beg your pardon? I didn't catch that.",
+              "hint": "用「I beg your pardon.」来表达"
             },
             {
-              "zh": "五点见。——什么？",
-              "answer": "Meet at five. — Sorry?",
-              "hint": "用「Sorry?」来表达"
+              "zh": "抱歉。名字能再说一遍吗？",
+              "answer": "I beg your pardon. Could you repeat the name?",
+              "hint": "用「I beg your pardon.」来表达"
             }
           ]
         },
         {
           "id": "l1-t7-2",
           "type": "chunk_substitution",
-          "title": "Can you repeat that? 句块替换",
-          "chunk": "Can you repeat that?",
-          "chunkMeaning": "你能重复一下吗？",
+          "title": "What do you mean? 句块替换",
+          "chunk": "What do you mean?",
+          "chunkMeaning": "你什么意思?",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "请你重复一下好吗？",
-              "answer": "Can you repeat that, please?",
-              "hint": "用「Can you repeat that?」来表达"
+              "zh": "你说的「晚点」是什么意思？",
+              "answer": "What do you mean by 'later'?",
+              "hint": "用「What do you mean?」来表达"
             },
             {
-              "zh": "抱歉，能慢一点再重复一遍吗？",
-              "answer": "Sorry, can you repeat that more slowly?",
-              "hint": "用「Can you repeat that?」来表达"
+              "zh": "抱歉，你什么意思？",
+              "answer": "Sorry, what do you mean?",
+              "hint": "用「What do you mean?」来表达"
             }
           ]
         },
         {
           "id": "l1-t7-3",
           "type": "chunk_substitution",
-          "title": "Can you say that again? 句块替换",
-          "chunk": "Can you say that again?",
-          "chunkMeaning": "你能再说一遍吗？",
+          "title": "Is that clear? 句块替换",
+          "chunk": "Is that clear?",
+          "chunkMeaning": "明白了吗？",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "能再说一遍吗？我没听到。",
-              "answer": "Can you say that again? I missed it.",
-              "hint": "用「Can you say that again?」来表达"
+              "zh": "六点见。明白了吗？",
+              "answer": "Meet at six. Is that clear?",
+              "hint": "用「Is that clear?」来表达"
             },
             {
-              "zh": "再来一次——能再说一遍吗？",
-              "answer": "One more time—can you say that again?",
-              "hint": "用「Can you say that again?」来表达"
+              "zh": "清楚了吗，还是要我再说一遍？",
+              "answer": "Is that clear, or should I say it again?",
+              "hint": "用「Is that clear?」来表达"
             }
           ]
         },
@@ -893,51 +1673,186 @@
           "id": "l1-t7-4",
           "type": "chunk_substitution",
           "title": "请求重复、说慢一点和确认听懂 听辨理解",
-          "chunk": "Sorry?",
-          "chunkMeaning": "什么？ / 你说什么？（没听清）",
+          "chunk": "I beg your pardon.",
+          "chunkMeaning": "你能再说一遍吗",
           "direction": "en_to_zh",
           "kind": "chunk",
           "items": [
             {
-              "en": "Sorry? I didn't hear you.",
-              "answer": "什么？我没听见。",
+              "en": "I beg your pardon? I didn't catch that.",
+              "answer": "你能再说一遍吗？我没听清。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Can you repeat that, please?",
-              "answer": "请你重复一下好吗？",
+              "en": "What do you mean by 'later'?",
+              "answer": "你说的「晚点」是什么意思？",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Can you say that again? I missed it.",
-              "answer": "能再说一遍吗？我没听到。",
+              "en": "Meet at six. Is that clear?",
+              "answer": "六点见。明白了吗？",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
         },
         {
           "id": "l1-t7-5",
+          "type": "vocab_sentence_building",
+          "title": "beg 造句",
+          "vocabWord": "beg",
+          "vocabMeaning": "请求",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I beg your pardon.",
+              "items": [
+                {
+                  "zh": "你能再说一遍吗？我没听清。",
+                  "answer": "I beg your pardon? I didn't catch that.",
+                  "hint": "用到单词「beg」"
+                },
+                {
+                  "zh": "抱歉。名字能再说一遍吗？",
+                  "answer": "I beg your pardon. Could you repeat the name?",
+                  "hint": "用到单词「beg」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t7-6",
+          "type": "vocab_sentence_building",
+          "title": "pardon 造句",
+          "vocabWord": "pardon",
+          "vocabMeaning": "原谅/再说一遍",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "I beg your pardon.",
+              "items": [
+                {
+                  "zh": "你能再说一遍吗？我没听清。",
+                  "answer": "I beg your pardon? I didn't catch that.",
+                  "hint": "用到单词「pardon」"
+                },
+                {
+                  "zh": "抱歉。名字能再说一遍吗？",
+                  "answer": "I beg your pardon. Could you repeat the name?",
+                  "hint": "用到单词「pardon」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t7-7",
+          "type": "vocab_sentence_building",
+          "title": "what 造句",
+          "vocabWord": "what",
+          "vocabMeaning": "what",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "What do you mean?",
+              "items": [
+                {
+                  "zh": "你说的「晚点」是什么意思？",
+                  "answer": "What do you mean by 'later'?",
+                  "hint": "用到单词「what」"
+                },
+                {
+                  "zh": "抱歉，你什么意思？",
+                  "answer": "Sorry, what do you mean?",
+                  "hint": "用到单词「what」"
+                }
+              ]
+            },
+            {
+              "chunk": "What's the word for it?",
+              "items": [
+                {
+                  "zh": "这个用英语怎么说来着？",
+                  "answer": "What's the word for it in English?",
+                  "hint": "用到单词「what」"
+                },
+                {
+                  "zh": "我知道是什么。那个词怎么说？",
+                  "answer": "I know the thing. What's the word for it?",
+                  "hint": "用到单词「what」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t7-8",
+          "type": "vocab_sentence_building",
+          "title": "mean 造句",
+          "vocabWord": "mean",
+          "vocabMeaning": "意思",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "What do you mean?",
+              "items": [
+                {
+                  "zh": "你说的「晚点」是什么意思？",
+                  "answer": "What do you mean by 'later'?",
+                  "hint": "用到单词「mean」"
+                },
+                {
+                  "zh": "抱歉，你什么意思？",
+                  "answer": "Sorry, what do you mean?",
+                  "hint": "用到单词「mean」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t7-9",
+          "type": "pattern_drill",
+          "title": "What do you mean? 句型操练",
+          "pattern": "What do you mean?",
+          "patternMeaning": "你什么意思？",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你说的「晚点」是什么意思？",
+              "answer": "What do you mean by 'later'?",
+              "hint": "套用句型：What do you mean?"
+            },
+            {
+              "zh": "这个用英语怎么说来着？",
+              "answer": "What's the word for it in English?",
+              "hint": "套用句型：What do you mean?"
+            }
+          ]
+        },
+        {
+          "id": "l1-t7-10",
           "type": "sentence_decomposition",
-          "title": "Sorry? 句子拆解",
-          "sourceText": "Sorry?",
+          "title": "I beg your pardon. 句子拆解",
+          "sourceText": "I beg your pardon.",
           "sourceKind": "chunk",
-          "fullSentence": "Sorry? I didn't hear you.",
-          "fullSentenceZh": "什么？我没听见。",
+          "fullSentence": "I beg your pardon? I didn't catch that.",
+          "fullSentenceZh": "你能再说一遍吗？我没听清。",
           "levels": [
             {
               "level": 1,
               "label": "核心句",
-              "en": "Sorry?",
-              "zh": "什么？ / 你说什么？（没听清）",
+              "en": "I beg your pardon.",
+              "zh": "你能再说一遍吗",
               "highlight": "",
               "hint": "先说出本课核心表达"
             },
             {
               "level": 2,
               "label": "完整句",
-              "en": "Sorry? I didn't hear you.",
-              "zh": "什么？我没听见。",
-              "highlight": "I didn't hear you.",
+              "en": "I beg your pardon? I didn't catch that.",
+              "zh": "你能再说一遍吗？我没听清。",
+              "highlight": "? I didn't catch that.",
               "hint": "补上场景信息，说成一句完整话"
             }
           ]
@@ -958,7 +1873,7 @@
       }
     }
   },
-  "遇到困难时请求帮助": {
+  "提醒、求助与鼓励": {
     "outputTraining": {
       "enabled": true,
       "version": 1,
@@ -966,115 +1881,235 @@
         {
           "id": "l1-t8-1",
           "type": "chunk_substitution",
-          "title": "Can you help me? 句块替换",
-          "chunk": "Can you help me?",
-          "chunkMeaning": "你能帮我吗？",
+          "title": "Watch out. 句块替换",
+          "chunk": "Watch out.",
+          "chunkMeaning": "当心",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "打扰一下，你能帮我吗？",
-              "answer": "Excuse me, can you help me?",
-              "hint": "用「Can you help me?」来表达"
+              "zh": "当心！车来了。",
+              "answer": "Watch out! The car is coming.",
+              "hint": "用「Watch out.」来表达"
             },
             {
-              "zh": "你能帮我找 5 号登机口吗？",
-              "answer": "Can you help me find Gate 5?",
-              "hint": "用「Can you help me?」来表达"
+              "zh": "当心台阶。",
+              "answer": "Watch out for the step.",
+              "hint": "用「Watch out.」来表达"
             }
           ]
         },
         {
           "id": "l1-t8-2",
           "type": "chunk_substitution",
-          "title": "I need help. 句块替换",
-          "chunk": "I need help.",
-          "chunkMeaning": "我需要帮助",
+          "title": "Be careful. 句块替换",
+          "chunk": "Be careful.",
+          "chunkMeaning": "小心",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "我需要帮助。我迷路了。",
-              "answer": "I need help. I'm lost.",
-              "hint": "用「I need help.」来表达"
+              "zh": "小心。地板湿。",
+              "answer": "Be careful. The floor is wet.",
+              "hint": "用「Be careful.」来表达"
             },
             {
-              "zh": "拜托，我需要有人帮我拿行李。",
-              "answer": "Please, I need help with my bag.",
-              "hint": "用「I need help.」来表达"
+              "zh": "那个包小心点。",
+              "answer": "Be careful with that bag.",
+              "hint": "用「Be careful.」来表达"
             }
           ]
         },
         {
           "id": "l1-t8-3",
           "type": "chunk_substitution",
-          "title": "Something's wrong. 句块替换",
-          "chunk": "Something's wrong.",
-          "chunkMeaning": "有点不对劲",
+          "title": "Do me a favor. 句块替换",
+          "chunk": "Do me a favor.",
+          "chunkMeaning": "帮我个忙",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "我的卡有点问题。",
-              "answer": "Something's wrong with my card.",
-              "hint": "用「Something's wrong.」来表达"
+              "zh": "帮个忙。扶一下门。",
+              "answer": "Do me a favor. Hold this door.",
+              "hint": "用「Do me a favor.」来表达"
             },
             {
-              "zh": "有点不对劲。你能看看吗？",
-              "answer": "Something's wrong. Can you check?",
-              "hint": "用「Something's wrong.」来表达"
+              "zh": "帮个忙，给他们打个电话。",
+              "answer": "Do me a favor and call them.",
+              "hint": "用「Do me a favor.」来表达"
             }
           ]
         },
         {
           "id": "l1-t8-4",
           "type": "chunk_substitution",
-          "title": "遇到困难时请求帮助 听辨理解",
-          "chunk": "Can you help me?",
-          "chunkMeaning": "你能帮我吗？",
+          "title": "提醒、求助与鼓励 听辨理解",
+          "chunk": "Watch out.",
+          "chunkMeaning": "当心",
           "direction": "en_to_zh",
           "kind": "chunk",
           "items": [
             {
-              "en": "Excuse me, can you help me?",
-              "answer": "打扰一下，你能帮我吗？",
+              "en": "Watch out! The car is coming.",
+              "answer": "当心！车来了。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "I need help. I'm lost.",
-              "answer": "我需要帮助。我迷路了。",
+              "en": "Be careful. The floor is wet.",
+              "answer": "小心。地板湿。",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Something's wrong with my card.",
-              "answer": "我的卡有点问题。",
+              "en": "Do me a favor. Hold this door.",
+              "answer": "帮个忙。扶一下门。",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
         },
         {
           "id": "l1-t8-5",
+          "type": "vocab_sentence_building",
+          "title": "watch 造句",
+          "vocabWord": "watch",
+          "vocabMeaning": "当心",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Watch out.",
+              "items": [
+                {
+                  "zh": "当心！车来了。",
+                  "answer": "Watch out! The car is coming.",
+                  "hint": "用到单词「watch」"
+                },
+                {
+                  "zh": "当心台阶。",
+                  "answer": "Watch out for the step.",
+                  "hint": "用到单词「watch」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t8-6",
+          "type": "vocab_sentence_building",
+          "title": "out 造句",
+          "vocabWord": "out",
+          "vocabMeaning": "out",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Watch out.",
+              "items": [
+                {
+                  "zh": "当心！车来了。",
+                  "answer": "Watch out! The car is coming.",
+                  "hint": "用到单词「out」"
+                },
+                {
+                  "zh": "当心台阶。",
+                  "answer": "Watch out for the step.",
+                  "hint": "用到单词「out」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t8-7",
+          "type": "vocab_sentence_building",
+          "title": "careful 造句",
+          "vocabWord": "careful",
+          "vocabMeaning": "小心",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Be careful.",
+              "items": [
+                {
+                  "zh": "小心。地板湿。",
+                  "answer": "Be careful. The floor is wet.",
+                  "hint": "用到单词「careful」"
+                },
+                {
+                  "zh": "那个包小心点。",
+                  "answer": "Be careful with that bag.",
+                  "hint": "用到单词「careful」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t8-8",
+          "type": "vocab_sentence_building",
+          "title": "favor 造句",
+          "vocabWord": "favor",
+          "vocabMeaning": "忙",
+          "direction": "zh_to_en",
+          "patterns": [
+            {
+              "chunk": "Do me a favor.",
+              "items": [
+                {
+                  "zh": "帮个忙。扶一下门。",
+                  "answer": "Do me a favor. Hold this door.",
+                  "hint": "用到单词「favor」"
+                },
+                {
+                  "zh": "帮个忙，给他们打个电话。",
+                  "answer": "Do me a favor and call them.",
+                  "hint": "用到单词「favor」"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "l1-t8-9",
+          "type": "pattern_drill",
+          "title": "Give me a [hand]. 句型操练",
+          "pattern": "Give me a [hand].",
+          "patternMeaning": "帮我……",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "帮我拿一下这些包。",
+              "answer": "Give me a hand with these bags.",
+              "hint": "套用句型：Give me a [hand]."
+            },
+            {
+              "zh": "小心。地板湿。",
+              "answer": "Be careful. The floor is wet.",
+              "hint": "套用句型：Give me a [hand]."
+            }
+          ]
+        },
+        {
+          "id": "l1-t8-10",
           "type": "sentence_decomposition",
-          "title": "Can you help me? 句子拆解",
-          "sourceText": "Can you help me?",
+          "title": "Watch out. 句子拆解",
+          "sourceText": "Watch out.",
           "sourceKind": "chunk",
-          "fullSentence": "Excuse me, can you help me?",
-          "fullSentenceZh": "打扰一下，你能帮我吗？",
+          "fullSentence": "Watch out! The car is coming.",
+          "fullSentenceZh": "当心！车来了。",
           "levels": [
             {
               "level": 1,
               "label": "核心句",
-              "en": "Can you help me?",
-              "zh": "你能帮我吗？",
+              "en": "Watch out.",
+              "zh": "当心",
               "highlight": "",
               "hint": "先说出本课核心表达"
             },
             {
               "level": 2,
               "label": "完整句",
-              "en": "Excuse me, can you help me?",
-              "zh": "打扰一下，你能帮我吗？",
-              "highlight": "Excuse me, can you help me?",
+              "en": "Watch out! The car is coming.",
+              "zh": "当心！车来了。",
+              "highlight": "! The car is coming.",
               "hint": "补上场景信息，说成一句完整话"
             }
           ]

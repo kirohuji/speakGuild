@@ -14,7 +14,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
@@ -659,6 +659,8 @@ function PatternTab() {
   const [pageSize, setPageSize] = useState(20)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<api.SentencePatternFull | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<api.SentencePatternFull | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -670,6 +672,21 @@ function PatternTab() {
   useEffect(() => { load() }, [load])
 
   const totalPages = data?.totalPages ?? 1
+
+  const handleDelete = async () => {
+    if (!deleteTarget || deleting) return
+    setDeleting(true)
+    try {
+      await api.deleteLibraryPattern(deleteTarget.id)
+      toast.success(`已删除句式「${deleteTarget.pattern}」及其所有关联引用`)
+      setDeleteTarget(null)
+      await load()
+    } catch (err: any) {
+      toast.error(err?.message || '删除句式失败')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <>
@@ -737,7 +754,7 @@ function PatternTab() {
                           <Edit3 className="size-3.5" />
                         </Button>
                         <Button size="icon" variant="ghost" className="size-8 text-destructive"
-                          onClick={async () => { if (confirm(`删除 "${p.pattern}"？`)) { await api.deleteLibraryPattern(p.id); load() } }}>
+                          onClick={() => setDeleteTarget(p)}>
                           <Trash2 className="size-3.5" />
                         </Button>
                       </div>
@@ -753,6 +770,23 @@ function PatternTab() {
       </Card>
 
       <PatternDialog open={dialogOpen} onClose={() => setDialogOpen(false)} edit={editing} onSaved={load} />
+      <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null) }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Trash2 className="size-4 text-destructive" />确认删除句式</DialogTitle>
+            <DialogDescription>
+              删除「{deleteTarget?.pattern}」将同时移除它在教学话题、故事关卡、场景语言支架和学习包材料认领中的所有关联。此操作不可撤销。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>取消</Button>
+            <Button variant="destructive" onClick={() => void handleDelete()} disabled={deleting}>
+              {deleting && <Loader2 data-icon="inline-start" className="animate-spin" />}
+              确认删除
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

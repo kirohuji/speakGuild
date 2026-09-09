@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { BookOpen, Clapperboard, Home, Library, ListChecks } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { useLayoutStore } from '@/stores/layout.store'
+import { useFeatureFlagsStore } from '@/stores/feature-flags.store'
 import { useAuth } from '@/providers/auth-provider'
 import { useIsMobile } from '@/hooks/use-mobile'
 
@@ -13,16 +14,15 @@ export function BottomNav() {
   const { session } = useAuth()
   const isMobile = useIsMobile()
   const isLoggedIn = !!session
+  const scriptPracticeEnabled = useFeatureFlagsStore((s) => s.scriptPracticeEnabled)
 
   const navItems = [
     { label: t('nav.home'), path: '/', icon: Home },
     { label: t('nav.todayTask'), path: '/today', icon: ListChecks },
     { label: t('nav.learningPlan'), path: '/learning', icon: BookOpen },
-    { label: t('nav.scripts'), path: '/scripts', icon: Clapperboard },
+    ...(scriptPracticeEnabled ? [{ label: t('nav.scripts'), path: '/scripts', icon: Clapperboard }] : []),
     { label: t('nav.myLibrary'), path: '/expressions', icon: Library },
   ]
-
-
 
   const isActive = (path: string) => {
     if (path === '/') return location.pathname === '/'

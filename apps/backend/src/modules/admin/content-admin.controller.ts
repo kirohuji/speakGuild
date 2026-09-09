@@ -3938,8 +3938,10 @@ ${contextBlock}
   @Delete('library/patterns/:id')
   async deleteLibraryPattern(@Req() req: Request, @Param('id') id: string) {
     const session = await this.requireManager(req);
-    await this.contentAccess.assertStoryAccess(session, id);
     return this.prisma.$transaction(async (tx) => {
+      // 先确认句式本身存在。这里不能使用 assertStoryAccess：该方法查询的是 InkScript。
+      const pattern = await tx.sentencePattern.findUnique({ where: { id }, select: { id: true } });
+      if (!pattern) throw new NotFoundException('句式不存在或已删除');
       await this.fileAssetsService.syncPersistentAssetReferences(
         tx, session.user.id, 'sentence_pattern_asset', id, null,
       );

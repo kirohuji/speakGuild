@@ -425,45 +425,49 @@ export class PackageDataController {
 
     // 2. Practice 相关（必须先删，因为 PracticeSession.topic FK 无 cascade）
     // PracticeTurn 有 onDelete: Cascade from session，删 session 会自动级联删 turn
-    await this.prisma.practiceSession.deleteMany({ where: { sceneId } }).catch(() => {});
-    if (plainTopicIds.length > 0) {
-      await this.prisma.practiceWarmupRecord.deleteMany({ where: { topicId: { in: plainTopicIds } } }).catch(() => {});
-    }
+    await this.prisma.practiceSession.deleteMany({ where: { sceneId } });
+    const learningRecordWhere = plainTopicIds.length > 0
+      ? { OR: [{ topicId: { in: plainTopicIds } }, { packId: sceneId }] }
+      : { packId: sceneId };
+    await this.prisma.practiceWarmupRecord.deleteMany({ where: learningRecordWhere });
+    await this.prisma.userWarmupItemProgress.deleteMany({ where: learningRecordWhere });
+    await this.prisma.userDailyPracticeAttempt.deleteMany({ where: learningRecordWhere });
 
     // 3. Story 相关
     if (storyEpisodeIds.length > 0) {
-      await this.prisma.storyTurn.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } }).catch(() => {});
-      await this.prisma.storyRecord.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } }).catch(() => {});
-      await this.prisma.storyEpisodeChunk.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } }).catch(() => {});
-      await this.prisma.storyEpisodeVocabulary.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } }).catch(() => {});
-      await this.prisma.storyEpisodeSentencePattern.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } }).catch(() => {});
+      await this.prisma.storyTurn.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } });
+      await this.prisma.storyRecord.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } });
+      await this.prisma.storyEpisodeChunk.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } });
+      await this.prisma.storyEpisodeVocabulary.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } });
+      await this.prisma.storyEpisodeSentencePattern.deleteMany({ where: { episodeId: { in: storyEpisodeIds } } });
     }
-    await this.prisma.storyEpisode.deleteMany({ where: { sceneId } }).catch(() => {});
+    await this.prisma.storyEpisode.deleteMany({ where: { sceneId } });
 
     // 4. TrainingTopic 关联（必须在删 topic 之前）
     if (plainTopicIds.length > 0) {
-      await this.prisma.trainingTopicChunk.deleteMany({ where: { topicId: { in: plainTopicIds } } }).catch(() => {});
-      await this.prisma.trainingTopicVocab.deleteMany({ where: { topicId: { in: plainTopicIds } } }).catch(() => {});
-      await this.prisma.trainingTopicSentencePattern.deleteMany({ where: { topicId: { in: plainTopicIds } } }).catch(() => {});
+      await this.prisma.trainingTopicChunk.deleteMany({ where: { topicId: { in: plainTopicIds } } });
+      await this.prisma.trainingTopicVocab.deleteMany({ where: { topicId: { in: plainTopicIds } } });
+      await this.prisma.trainingTopicSentencePattern.deleteMany({ where: { topicId: { in: plainTopicIds } } });
     }
     // 解除 InkScript 关联（使用 inkScriptIds 而非 topicIds）
     if (inkScriptIds.length > 0) {
       await this.prisma.inkScript.updateMany({
         where: { id: { in: inkScriptIds } }, data: { topicId: null },
-      }).catch(() => {});
+      });
     }
-    await this.prisma.trainingTopic.deleteMany({ where: { sceneId } }).catch(() => {});
+    await this.prisma.trainingTopic.deleteMany({ where: { sceneId } });
 
     // 5. 其他关联
-    await this.prisma.learningPackage.deleteMany({ where: { sceneId } }).catch(() => {});
-    await this.prisma.userSceneProgress.deleteMany({ where: { sceneId } }).catch(() => {});
+    await this.prisma.learningPackage.deleteMany({ where: { sceneId } });
+    await this.prisma.userSceneProgress.deleteMany({ where: { sceneId } });
     await this.prisma.scenePrerequisite.deleteMany({
       where: { OR: [{ sceneId }, { prerequisiteId: sceneId }] },
-    }).catch(() => {});
+    });
+    await this.prisma.gameLocation.updateMany({ where: { sceneId }, data: { sceneId: null } });
 
     // 6. 删除本包关联的 InkScript。必须在 topic/episode 删除之后，避免 training_topic.inkScriptId FK 阻塞。
     if (packageInkScriptIds.length > 0) {
-      await this.prisma.inkScript.deleteMany({ where: { id: { in: packageInkScriptIds } } }).catch(() => {});
+      await this.prisma.inkScript.deleteMany({ where: { id: { in: packageInkScriptIds } } });
     }
 
     // 6. 删除场景
