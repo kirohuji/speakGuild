@@ -55,6 +55,7 @@ import { packageDataAdminApi } from '../api-package-data'
 import { ContentExperiencePanel } from '../components/content-experience-panel'
 import { TopicExperienceFields } from '../components/topic-experience-fields'
 import { LearningPackageQualityDialog } from '../components/learning-package-quality-dialog'
+import { PackageImportDialog } from '../components/package-import-dialog'
 import { contentExperienceAdminApi, type PackageGroup } from '../api-content-experiences'
 
 function packageTypeLabel(type?: Scene['packageType']) {
@@ -2577,6 +2578,8 @@ export function AdminScenesPage() {
   // 数据包导入/导出
   const uploadRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [packageImportFile, setPackageImportFile] = useState<File | null>(null)
+  const [packageImportDialog, setPackageImportDialog] = useState(false)
   const [exportingId, setExportingId] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -2763,24 +2766,11 @@ export function AdminScenesPage() {
               type="file"
               accept=".zip"
               className="hidden"
-              onChange={async (e) => {
+              onChange={(e) => {
                 const file = e.target.files?.[0]
                 if (!file) return
-                setUploading(true)
-                // 从文件名推断包目录名：去掉 .zip 后缀
-                const pkgName = file.name.replace(/\.zip$/, '')
-                if (!pkgName) { toast.error('无法识别文件名'); setUploading(false); return }
-                try {
-                  const res = await packageDataAdminApi.import(file, pkgName)
-                  notifyContentTask((res as any).contentPrepareTaskId)
-                  toast.success(`导入成功：${(res as any).sceneTitle ?? pkgName}（词汇${(res as any).vocabCount ?? 0} 话题${(res as any).topicCount ?? 0}）`)
-                  load()
-                } catch (err: any) {
-                  toast.error(err?.response?.data?.message || err?.message || '导入失败')
-                } finally {
-                  setUploading(false)
-                  if (uploadRef.current) uploadRef.current.value = ''
-                }
+                setPackageImportFile(file)
+                setPackageImportDialog(true)
               }}
             />
             <Button size="sm" variant="outline" disabled={uploading}
@@ -2933,25 +2923,14 @@ export function AdminScenesPage() {
                             disabled={updatingId === s.id}
                             onClick={(e) => {
                               e.stopPropagation()
-                              const titleSlug = s.title?.replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-').replace(/-+$/g, '') || s.id
-                              const pkgName = `${s.packageType || 'daily'}-${titleSlug}`
                               const input = document.createElement('input')
                               input.type = 'file'
                               input.accept = '.zip'
-                              input.onchange = async () => {
+                              input.onchange = () => {
                                 const file = input.files?.[0]
                                 if (!file) return
-                                setUpdatingId(s.id)
-                                try {
-                                  const res = await packageDataAdminApi.import(file, pkgName)
-                                  notifyContentTask((res as any).contentPrepareTaskId)
-                                  toast.success(`已覆盖：${(res as any).sceneTitle ?? pkgName}`)
-                                  load()
-                                } catch (err: any) {
-                                  toast.error(err?.response?.data?.message || err?.message || '更新失败')
-                                } finally {
-                                  setUpdatingId(null)
-                                }
+                                setPackageImportFile(file)
+                                setPackageImportDialog(true)
                               }
                               input.click()
                             }}>
@@ -2982,6 +2961,23 @@ export function AdminScenesPage() {
           />
         </CardContent>
       </Card>
+      <PackageImportDialog
+        key={packageImportDialog ? 'package-import-review-v2-open' : 'package-import-review-v2-closed'}
+        file={packageImportFile}
+        open={packageImportDialog}
+        onOpenChange={(open) => {
+          setPackageImportDialog(open)
+          if (!open) {
+            setPackageImportFile(null)
+            if (uploadRef.current) uploadRef.current.value = ''
+          }
+        }}
+        onImported={(res) => {
+          notifyContentTask(res.contentPrepareTaskId)
+          toast.success(`导入成功：${res.sceneTitle}（词汇${res.vocabCount}，话题${res.topicCount}）`)
+          void load()
+        }}
+      />
 
       <CategoryDialog open={catDialog} onClose={() => setCatDialog(false)}
         edit={editCat} onSaved={load} />

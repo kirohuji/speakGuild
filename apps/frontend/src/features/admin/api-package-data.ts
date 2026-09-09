@@ -12,7 +12,37 @@ export interface ImportResult {
   contentPrepareTaskId?: string;
 }
 
+export interface PackageImportPreview {
+  packageName: string;
+  scene: { title: string; category: string; description: string; packageType: string; willReplace: boolean };
+  counts: { topics: number; documents: number; exercises: number; vocabularies: number; chunks: number; patterns: number; episodes: number };
+  importPlan: Array<{ title: string; detail: string; status: string }>;
+  documents: Array<{
+    topicTitle: string;
+    filename: string | null;
+    exists: boolean;
+    willImport: boolean;
+    content: string;
+    materials: Record<'vocabulary' | 'chunk' | 'pattern', Array<{ text: string; status: 'existing' | 'missing' }>>;
+  }>;
+  exercises: Array<{ topicTitle: string; groupTitle: string; prompt: string; answer: string }>;
+  corpus: Record<'vocabulary' | 'chunk' | 'pattern', { existing: string[]; missing: string[] }>;
+  warnings: string[];
+  notices: string[];
+  canImport: boolean;
+}
+
 export const packageDataAdminApi = {
+  preview: (file: File, packageDirName: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('packageDirName', packageDirName);
+    return post<PackageImportPreview>('/admin/content/packages/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120_000,
+    });
+  },
+
   import: (file: File, packageDirName: string) => {
     const formData = new FormData();
     formData.append('file', file);

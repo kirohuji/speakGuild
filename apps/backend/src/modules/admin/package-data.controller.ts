@@ -33,6 +33,17 @@ import { FileAssetGroup } from '@prisma/client';
 // ── 类型定义 ──
 type CsvRow = Record<string, string>;
 
+function resolvePackageType(packageDirName: string, sceneRow?: CsvRow) {
+  const declared = sceneRow?.package_type?.trim();
+  if (declared && ['daily', 'exam', 'story', 'course', 'foundation'].includes(declared)) return declared;
+  if (packageDirName.startsWith('daily-')) return 'daily';
+  if (packageDirName.startsWith('exam-')) return 'exam';
+  if (packageDirName.startsWith('story-')) return 'story';
+  if (packageDirName.startsWith('course-')) return 'course';
+  if (packageDirName.startsWith('foundation-')) return 'foundation';
+  return 'daily';
+}
+
 /** 递归遍历 warmup pipeline 中所有的 audioAssetId */
 function collectAudioAssetIds(pipeline: any[]): string[] {
   const ids = new Set<string>();
@@ -104,6 +115,162 @@ export class PackageDataController {
       trim: true,
       relax_column_count: true,
     }) as CsvRow[];
+  }
+
+  /** 上传前只读解析：让管理员在覆盖任何数据之前核对包内容与语料库命中情况。 */
+  @Post('preview')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: join(process.cwd(), 'uploads', 'tmp'),
+        filename: (_req, file, cb) => cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`),
+      }),
+      fileFilter: (_req, file, cb) => {
+        if (file.mimetype === 'application/zip' || file.originalname?.endsWith('.zip')) cb(null, true);
+        else cb(new Error('仅支持 ZIP 文件'), false);
+      },
+      limits: { fileSize: 100 * 1024 * 1024 },
+    }),
+  )
+  async previewPackage(
+    @Req() req: Request,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('packageDirName') packageDirName?: string,
+  ) {
+    await this.requireAdmin(req);
+    if (!file) throw new ForbiddenException('请上传 ZIP 文件');
+    if (!packageDirName?.trim()) throw new ForbiddenException('请指定包目录名');
+
+    const tmpDir = join(process.cwd(), 'uploads', 'tmp', `pkg-preview-${Date.now()}`);
+    try {
+      mkdirSync(tmpDir, { recursive: true });
+      new AdmZip(file.path).extractAllTo(tmpDir, true);
+      const pkgDir = this.resolvePackageDir(tmpDir, packageDirName);
+      const scenes = this.readCsvFile(pkgDir, 'scenes.csv');
+      if (!scenes.length) throw new ForbiddenException('ZIP 中未找到有效的 scenes.csv。请检查压缩包目录结构。');
+      const vocabularies = this.readCsvFile(pkgDir, 'scene_vocabulary.csv');
+      const chunks = this.readCsvFile(pkgDir, 'chunks.csv');
+      const patterns = this.readCsvFile(pkgDir, 'sentence_patterns.csv');
+      const topics = this.readCsvFile(pkgDir, 'training_topics.csv');
+      const episodes = this.readCsvFile(pkgDir, 'script_episodes.csv');
+      const inkDir = join(pkgDir, 'ink-scripts');
+      const inkScriptCount = existsSync(inkDir) ? readdirSync(inkDir).filter(name => name.endsWith('.ink')).length : 0;
+      const hasFileAssets = existsSync(join(pkgDir, 'file_assets.json'));
+      const warnings: string[] = [];
+      const notices: string[] = [];
+      const packageType = resolvePackageType(packageDirName, scenes[0]);
+      const existingScene = await this.prisma.scene.findFirst({
+        where: { title: scenes[0].title || packageDirName, packageType: packageType as any },
+        select: { id: true },
+      });
+      if (scenes.length !== 1) warnings.push(`scenes.csv 包含 ${scenes.length} 条记录；导入器只会使用第一条作为学习包。`);
+      if (!scenes[0].category_name?.trim()) warnings.push('scenes.csv 缺少 category_name，当前不能导入。');
+
+      let warmup: Record<string, any> = {};
+      const pipelinePath = join(pkgDir, 'warmup_pipeline.json');
+      if (existsSync(pipelinePath)) {
+        try { warmup = JSON.parse(readFileSync(pipelinePath, 'utf-8')); }
+        catch { warnings.push('warmup_pipeline.json 不是有效 JSON，当前不能导入练习题。'); }
+      }
+      const topicTitles = new Set(topics.map(row => row.title).filter(Boolean));
+      const referencedDocumentNames = new Set(topics.map(row => row.teaching_markdown_file?.trim()).filter(Boolean));
+      const documents = topics.map((row) => {
+        const filename = row.teaching_markdown_file?.trim();
+        const validFilename = Boolean(filename && filename === basename(filename) && filename.toLowerCase().endsWith('.md'));
+        const path = validFilename ? join(pkgDir, 'teaching-docs', filename!) : '';
+        const exists = Boolean(validFilename && existsSync(path));
+        if (!filename && !row.teaching_markdown?.trim()) warnings.push(`话题“${row.title || '未命名'}”缺少教学文档。`);
+        else if (filename && !validFilename) warnings.push(`话题“${row.title || '未命名'}”的教学文档文件名无效：${filename}`);
+        else if (filename && !exists) warnings.push(`话题“${row.title || '未命名'}”缺少教学文档：teaching-docs/${filename}`);
+        return { topicTitle: row.title, filename: filename || null, exists, willImport: true, content: exists ? readFileSync(path, 'utf-8') : row.teaching_markdown || '' };
+      });
+      const teachingDocsDir = join(pkgDir, 'teaching-docs');
+      const unreferencedDocuments = existsSync(teachingDocsDir)
+        ? readdirSync(teachingDocsDir).filter(name => name.endsWith('.md') && !referencedDocumentNames.has(name))
+        : [];
+      if (unreferencedDocuments.length) {
+        notices.push(`已跳过 ${unreferencedDocuments.length} 份未关联话题的包级文档：${unreferencedDocuments.join('、')}`);
+        documents.push(...unreferencedDocuments.map(filename => ({
+          topicTitle: `未关联文档：${filename.replace(/\.md$/i, '')}`,
+          filename,
+          exists: true,
+          willImport: false,
+          content: readFileSync(join(teachingDocsDir, filename), 'utf-8'),
+        })));
+      }
+      const exerciseRows = Object.entries(warmup).flatMap(([topicTitle, value]) => {
+        const pipeline = (value as any)?.outputTraining?.pipeline;
+        return Array.isArray(pipeline) ? pipeline.flatMap((group: any) => {
+          const items = group.items ?? group.levels ?? group.patterns?.flatMap((pattern: any) => pattern.items ?? []) ?? [];
+          return items.map((item: any) => ({ topicTitle, groupTitle: group.title || group.type || '未命名练习', prompt: item.zh || item.en || '', answer: item.answer || '' }));
+        }) : [];
+      });
+      const unlinkedWarmupTopics = Object.keys(warmup).filter(title => !topicTitles.has(title));
+      if (unlinkedWarmupTopics.length) warnings.push(`${unlinkedWarmupTopics.length} 个练习题话题未在 training_topics.csv 中找到同名话题。`);
+
+      const findExisting = async (values: string[], field: 'word' | 'text' | 'pattern') => {
+        const unique = [...new Set(values.map(value => value.trim()).filter(Boolean))];
+        if (!unique.length) return { existing: [] as string[], missing: [] as string[] };
+        const rows = field === 'word'
+          ? await this.prisma.vocabulary.findMany({ where: { word: { in: unique } }, select: { word: true } })
+          : field === 'text'
+            ? await this.prisma.chunk.findMany({ where: { text: { in: unique } }, select: { text: true } })
+            : await this.prisma.sentencePattern.findMany({ where: { pattern: { in: unique } }, select: { pattern: true } });
+        const existing = rows.map((row: any) => row[field] as string);
+        const set = new Set(existing);
+        return { existing, missing: unique.filter(value => !set.has(value)) };
+      };
+      const [vocabularyCorpus, chunkCorpus, patternCorpus] = await Promise.all([
+        findExisting(vocabularies.map(row => row.word || ''), 'word'),
+        findExisting(chunks.map(row => row.text || ''), 'text'),
+        findExisting(patterns.map(row => row.pattern || ''), 'pattern'),
+      ]);
+      const corpusSets = {
+        vocabulary: new Set(vocabularyCorpus.existing),
+        chunk: new Set(chunkCorpus.existing),
+        pattern: new Set(patternCorpus.existing),
+      };
+      const sceneTitle = scenes[0].title || packageDirName;
+      const materialItems = (rows: CsvRow[], field: 'word' | 'text' | 'pattern', topicTitle: string, corpus: Set<string>) => rows
+        .filter(row => row.topic_title === topicTitle || (!row.topic_title && row.scene_title === sceneTitle))
+        .map(row => ({ text: row[field], status: corpus.has(row[field]) ? 'existing' : 'missing' }));
+      const documentsWithMaterials = documents.map((document) => ({
+        ...document,
+        materials: {
+          vocabulary: materialItems(vocabularies, 'word', document.topicTitle, corpusSets.vocabulary),
+          chunk: materialItems(chunks, 'text', document.topicTitle, corpusSets.chunk),
+          pattern: materialItems(patterns, 'pattern', document.topicTitle, corpusSets.pattern),
+        },
+      }));
+
+      return {
+        code: 200,
+        message: '数据包预览解析成功',
+        data: {
+          packageName: packageDirName,
+          scene: { title: scenes[0].title || packageDirName, category: scenes[0].category_name || '', description: scenes[0].description || '', packageType, willReplace: Boolean(existingScene) },
+          counts: { topics: topics.length, documents: documents.filter(item => item.exists || item.content).length, exercises: exerciseRows.length, vocabularies: vocabularies.length, chunks: chunks.length, patterns: patterns.length, episodes: episodes.length },
+          importPlan: [
+            { title: existingScene ? '覆盖已有学习包' : '创建学习包', detail: `${existingScene ? '删除该学习包的关联内容后，' : ''}写入标题、分类、类型、地点、描述及学习等级；同时创建 LearningPackage 草稿记录。`, status: existingScene ? '覆盖' : '新增' },
+            { title: '写入教学内容', detail: `创建 ${topics.length} 个教学话题，写入中英文提示、时长、难度、描述、知识点及 ${documents.filter(item => item.willImport && (item.exists || item.content)).length} 份关联教学文档。`, status: '将导入' },
+            { title: '关联内容语料', detail: `引用 ${vocabularies.length} 个词汇、${chunks.length} 个句块、${patterns.length} 个句式；已有项保留现有富化字段。`, status: '将导入' },
+            { title: '写入练习与扩展内容', detail: `写入 ${exerciseRows.length} 道练习题；剧本关卡 ${episodes.length} 个。`, status: '将导入' },
+            { title: '创建内容准备任务', detail: '导入完成后自动扫描本包的词汇、句块和句式，补全缺失的词典、释义、例句和音频等内容。', status: '后续任务' },
+            { title: '封面与其他可选媒体', detail: `封面、付费状态、系列归属、排序和内容模式均不是当前 ZIP 的必填字段，可在学习包编辑页后续调整。${inkScriptCount ? `检测到 ${inkScriptCount} 个 Ink 脚本，将同步。` : '未检测到 Ink 脚本。'}${hasFileAssets ? '检测到 file_assets.json，将同步文件资产记录。' : '未检测到 file_assets.json。'}`, status: '可后补' },
+          ],
+          documents: documentsWithMaterials,
+          exercises: exerciseRows,
+          corpus: { vocabulary: vocabularyCorpus, chunk: chunkCorpus, pattern: patternCorpus },
+          warnings,
+          notices,
+          // 未关联的包级说明文档只提示管理员，不阻断导入；词汇、句块、句式也均为可选内容。
+          canImport: !warnings.some(message => message.includes('缺少 category_name') || message.includes('不是有效 JSON') || message.includes('缺少教学文档') || message.includes('文件名无效')),
+        },
+      };
+    } finally {
+      try { if (existsSync(file.path)) rmSync(file.path); } catch {}
+      try { if (existsSync(tmpDir)) rmSync(tmpDir, { recursive: true }); } catch {}
+    }
   }
 
   /**
@@ -390,12 +557,7 @@ export class PackageDataController {
       }
 
       // 4. 查找已有场景（按包目录名推断 packageType 和场景标题）
-      const packageType = packageDirName.startsWith('daily-') ? 'daily'
-        : packageDirName.startsWith('exam-') ? 'exam'
-        : packageDirName.startsWith('story-') ? 'story'
-        : packageDirName.startsWith('course-') ? 'course'
-        : packageDirName.startsWith('foundation-') ? 'foundation'
-        : 'daily';
+      const packageType = resolvePackageType(packageDirName, sceneRows[0]);
 
       let sceneTitle = sceneRows[0]?.title || packageDirName;
       const existingScene = await this.prisma.scene.findFirst({
@@ -489,12 +651,14 @@ export class PackageDataController {
           where: { word: row.word },
           create: {
             word: row.word,
-            meaning: row.meaning,
+            // 数据包通常只声明要引用的词；缺失语料由内容准备任务补全。
+            meaning: row.meaning || '',
             partOfSpeech: row.part_of_speech || null,
             difficulty: row.difficulty || 'L1',
             sortOrder: parseInt(row.sort_order) || 0,
           },
-          update: { meaning: row.meaning },
+          // 不允许空 CSV 字段抹掉内容语料库中已人工维护的释义。
+          update: row.meaning ? { meaning: row.meaning } : {},
         });
         if (row.topic_title) {
           const ids = topicVocabMap.get(row.topic_title) ?? [];
@@ -515,11 +679,15 @@ export class PackageDataController {
           where: { text: row.text },
           create: {
             text: row.text,
-            meaning: row.meaning,
+            meaning: row.meaning || '',
             category: row.category || '',
             difficulty: row.difficulty || 'L2',
           },
-          update: { meaning: row.meaning, category: row.category || '' },
+          // 包内只引用已有句块时，保留语料库的富化字段。
+          update: {
+            ...(row.meaning ? { meaning: row.meaning } : {}),
+            ...(row.category ? { category: row.category } : {}),
+          },
         });
         if (row.topic_title) {
           const ids = topicChunkMap.get(row.topic_title) ?? [];
@@ -1127,12 +1295,7 @@ export class PackageDataController {
       warmupPipeline = JSON.parse(readFileSync(pipelinePath, 'utf-8'));
     }
 
-    const packageType = packageDirName.startsWith('daily-') ? 'daily'
-      : packageDirName.startsWith('exam-') ? 'exam'
-      : packageDirName.startsWith('story-') ? 'story'
-      : packageDirName.startsWith('course-') ? 'course'
-      : packageDirName.startsWith('foundation-') ? 'foundation'
-      : 'daily';
+    const packageType = resolvePackageType(packageDirName, sceneRows[0]);
 
     const sceneTitle = sceneRows[0]?.title || packageDirName;
     const existingScene = await this.prisma.scene.findFirst({

@@ -1,0 +1,1268 @@
+{
+  "澄清、确认与补充问题": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l2-t1-1",
+          "type": "chunk_substitution",
+          "title": "What do you mean? 句块替换",
+          "chunk": "What do you mean?",
+          "chunkMeaning": "你什么意思？",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "你说「也许下周」是什么意思？",
+              "answer": "What do you mean by 'maybe next week'?",
+              "hint": "用「What do you mean?」来表达"
+            },
+            {
+              "zh": "抱歉——你是什么意思？",
+              "answer": "Sorry—what do you mean?",
+              "hint": "用「What do you mean?」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t1-2",
+          "type": "chunk_substitution",
+          "title": "I beg your pardon. 句块替换",
+          "chunk": "I beg your pardon.",
+          "chunkMeaning": "你能再说一遍吗 / 请再说一遍",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "请再说一遍？你能再说一次吗？",
+              "answer": "I beg your pardon? Could you say that again?",
+              "hint": "用「I beg your pardon.」来表达"
+            },
+            {
+              "zh": "请再说一遍——我没听清时间。",
+              "answer": "I beg your pardon—I didn't catch the time.",
+              "hint": "用「I beg your pardon.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t1-3",
+          "type": "chunk_substitution",
+          "title": "Are you serious? 句块替换",
+          "chunk": "Are you serious?",
+          "chunkMeaning": "你是认真的吗？",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "他们取消预约了？你是认真的吗？",
+              "answer": "They cancelled the booking? Are you serious?",
+              "hint": "用「Are you serious?」来表达"
+            },
+            {
+              "zh": "你是认真要把时间改到周五吗？",
+              "answer": "Are you serious about moving it to Friday?",
+              "hint": "用「Are you serious?」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t1-4",
+          "type": "chunk_substitution",
+          "title": "澄清、确认与补充问题 听辨理解",
+          "chunk": "What do you mean?",
+          "chunkMeaning": "你什么意思？",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "What do you mean by 'maybe next week'?",
+              "answer": "你说「也许下周」是什么意思？",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "I beg your pardon? Could you say that again?",
+              "answer": "请再说一遍？你能再说一次吗？",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "They cancelled the booking? Are you serious?",
+              "answer": "他们取消预约了？你是认真的吗？",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l2-t1-5",
+          "type": "pattern_drill",
+          "title": "What do you mean by ___? 句型操练",
+          "pattern": "What do you mean by ___?",
+          "patternMeaning": "你说的___是什么意思？",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "你说「也许下周」是什么意思？",
+              "answer": "What do you mean by 'maybe next week'?",
+              "hint": "套用句型：What do you mean by ___?"
+            },
+            {
+              "zh": "应用打不开。怎么回事？",
+              "answer": "The app won't load. What's going on?",
+              "hint": "套用句型：What do you mean by ___?"
+            }
+          ]
+        },
+        {
+          "id": "l2-t1-6",
+          "type": "sentence_decomposition",
+          "title": "What do you mean? 句子拆解",
+          "sourceText": "What do you mean?",
+          "sourceKind": "chunk",
+          "fullSentence": "What do you mean by 'maybe next week'?",
+          "fullSentenceZh": "你说「也许下周」是什么意思？",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "What do you mean?",
+              "zh": "你什么意思？",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "What do you mean by 'maybe next week'?",
+              "zh": "你说「也许下周」是什么意思？",
+              "highlight": "What do you mean by 'maybe next week'?",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "邀请、接受、拒绝和改期": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l2-t2-1",
+          "type": "chunk_substitution",
+          "title": "How about a drink tonight? 句块替换",
+          "chunk": "How about a drink tonight?",
+          "chunkMeaning": "今晚喝一杯怎样？",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "下班后今晚喝一杯怎样？",
+              "answer": "How about a drink tonight after work?",
+              "hint": "用「How about a drink tonight?」来表达"
+            },
+            {
+              "zh": "我晚点有空。今晚喝一杯怎样？",
+              "answer": "I'm free later. How about a drink tonight?",
+              "hint": "用「How about a drink tonight?」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t2-2",
+          "type": "chunk_substitution",
+          "title": "Shall we? 句块替换",
+          "chunk": "Shall we?",
+          "chunkMeaning": "要不要一起？",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "位子好了。走吧？",
+              "answer": "The table is ready. Shall we?",
+              "hint": "用「Shall we?」来表达"
+            },
+            {
+              "zh": "我们现在出发好吗？",
+              "answer": "Shall we head out now?",
+              "hint": "用「Shall we?」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t2-3",
+          "type": "chunk_substitution",
+          "title": "That would be great. 句块替换",
+          "chunk": "That would be great.",
+          "chunkMeaning": "那太好了",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "周五六点？——那太好了。",
+              "answer": "Friday at six? — That would be great.",
+              "hint": "用「That would be great.」来表达"
+            },
+            {
+              "zh": "那太好了。谢谢你调整时间。",
+              "answer": "That would be great. Thanks for adjusting.",
+              "hint": "用「That would be great.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t2-4",
+          "type": "chunk_substitution",
+          "title": "邀请、接受、拒绝和改期 听辨理解",
+          "chunk": "How about a drink tonight?",
+          "chunkMeaning": "今晚喝一杯怎样？",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "How about a drink tonight after work?",
+              "answer": "下班后今晚喝一杯怎样？",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "The table is ready. Shall we?",
+              "answer": "位子好了。走吧？",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Friday at six? — That would be great.",
+              "answer": "周五六点？——那太好了。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l2-t2-5",
+          "type": "pattern_drill",
+          "title": "How about ___? 句型操练",
+          "pattern": "How about ___?",
+          "patternMeaning": "……怎么样？",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "下班后今晚喝一杯怎样？",
+              "answer": "How about a drink tonight after work?",
+              "hint": "套用句型：How about ___?"
+            },
+            {
+              "zh": "位子好了。走吧？",
+              "answer": "The table is ready. Shall we?",
+              "hint": "套用句型：How about ___?"
+            }
+          ]
+        },
+        {
+          "id": "l2-t2-6",
+          "type": "sentence_decomposition",
+          "title": "How about a drink tonight? 句子拆解",
+          "sourceText": "How about a drink tonight?",
+          "sourceKind": "chunk",
+          "fullSentence": "How about a drink tonight after work?",
+          "fullSentenceZh": "下班后今晚喝一杯怎样？",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "How about a drink tonight?",
+              "zh": "今晚喝一杯怎样？",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "How about a drink tonight after work?",
+              "zh": "下班后今晚喝一杯怎样？",
+              "highlight": "How about a drink tonight after work?",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "酒店、课程与服务预约": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l2-t3-1",
+          "type": "chunk_substitution",
+          "title": "Do you have a reservation? 句块替换",
+          "chunk": "Do you have a reservation?",
+          "chunkMeaning": "您预订了吗？",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "晚上好。您有预订吗？",
+              "answer": "Good evening. Do you have a reservation?",
+              "hint": "用「Do you have a reservation?」来表达"
+            },
+            {
+              "zh": "您有 Lee 名下的预订吗？",
+              "answer": "Do you have a reservation under Lee?",
+              "hint": "用「Do you have a reservation?」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t3-2",
+          "type": "chunk_substitution",
+          "title": "Do you accept credit cards? 句块替换",
+          "chunk": "Do you accept credit cards?",
+          "chunkMeaning": "你们收信用卡吗？",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "入住前问一下——你们收信用卡吗？",
+              "answer": "Before we check in—do you accept credit cards?",
+              "hint": "用「Do you accept credit cards?」来表达"
+            },
+            {
+              "zh": "押金可以用信用卡吗？",
+              "answer": "Do you accept credit cards for the deposit?",
+              "hint": "用「Do you accept credit cards?」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t3-3",
+          "type": "chunk_substitution",
+          "title": "Wake me up at five thirty. 句块替换",
+          "chunk": "Wake me up at five thirty.",
+          "chunkMeaning": "请在五点半叫醒我。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "请五点半叫醒我。我有早班火车。",
+              "answer": "Wake me up at five thirty, please. I have an early train.",
+              "hint": "用「Wake me up at five thirty.」来表达"
+            },
+            {
+              "zh": "明天能五点半叫醒我吗？",
+              "answer": "Could you wake me up at five thirty tomorrow?",
+              "hint": "用「Wake me up at five thirty.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t3-4",
+          "type": "chunk_substitution",
+          "title": "酒店、课程与服务预约 听辨理解",
+          "chunk": "Do you have a reservation?",
+          "chunkMeaning": "您预订了吗？",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "Good evening. Do you have a reservation?",
+              "answer": "晚上好。您有预订吗？",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Before we check in—do you accept credit cards?",
+              "answer": "入住前问一下——你们收信用卡吗？",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Wake me up at five thirty, please. I have an early train.",
+              "answer": "请五点半叫醒我。我有早班火车。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l2-t3-5",
+          "type": "pattern_drill",
+          "title": "I'd like to ___. 句型操练",
+          "pattern": "I'd like to ___.",
+          "patternMeaning": "我想要……",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "晚上好。您有预订吗？",
+              "answer": "Good evening. Do you have a reservation?",
+              "hint": "套用句型：I'd like to ___."
+            },
+            {
+              "zh": "入住前问一下——你们收信用卡吗？",
+              "answer": "Before we check in—do you accept credit cards?",
+              "hint": "套用句型：I'd like to ___."
+            }
+          ]
+        },
+        {
+          "id": "l2-t3-6",
+          "type": "sentence_decomposition",
+          "title": "Do you have a reservation? 句子拆解",
+          "sourceText": "Do you have a reservation?",
+          "sourceKind": "chunk",
+          "fullSentence": "Good evening. Do you have a reservation?",
+          "fullSentenceZh": "晚上好。您有预订吗？",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "Do you have a reservation?",
+              "zh": "您预订了吗？",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "Good evening. Do you have a reservation?",
+              "zh": "晚上好。您有预订吗？",
+              "highlight": "Good evening.",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "说明迟到、延误和计划变化": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l2-t4-1",
+          "type": "chunk_substitution",
+          "title": "Just in time. 句块替换",
+          "chunk": "Just in time.",
+          "chunkMeaning": "刚好赶上",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "我们刚好赶上办理入住。",
+              "answer": "We arrived just in time for check-in.",
+              "hint": "用「Just in time.」来表达"
+            },
+            {
+              "zh": "刚好赶上——课要开始了。",
+              "answer": "Just in time—the class is starting.",
+              "hint": "用「Just in time.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t4-2",
+          "type": "chunk_substitution",
+          "title": "Something's up. 句块替换",
+          "chunk": "Something's up.",
+          "chunkMeaning": "有情况 / 出事了",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "他不回消息。有情况。",
+              "answer": "He's not answering. Something's up.",
+              "hint": "用「Something's up.」来表达"
+            },
+            {
+              "zh": "日程好像有问题。",
+              "answer": "Something's up with the schedule.",
+              "hint": "用「Something's up.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t4-3",
+          "type": "chunk_substitution",
+          "title": "I can explain. 句块替换",
+          "chunk": "I can explain.",
+          "chunkMeaning": "我可以解释",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "我迟到了，但我可以解释。",
+              "answer": "I'm late, but I can explain.",
+              "hint": "用「I can explain.」来表达"
+            },
+            {
+              "zh": "等等——延误的事我可以解释。",
+              "answer": "Wait—I can explain the delay.",
+              "hint": "用「I can explain.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t4-4",
+          "type": "chunk_substitution",
+          "title": "说明迟到、延误和计划变化 听辨理解",
+          "chunk": "Just in time.",
+          "chunkMeaning": "刚好赶上",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "We arrived just in time for check-in.",
+              "answer": "我们刚好赶上办理入住。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "He's not answering. Something's up.",
+              "answer": "他不回消息。有情况。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "I'm late, but I can explain.",
+              "answer": "我迟到了，但我可以解释。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l2-t4-5",
+          "type": "pattern_drill",
+          "title": "I can explain. 句型操练",
+          "pattern": "I can explain.",
+          "patternMeaning": "我可以解释。",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "我迟到了，但我可以解释。",
+              "answer": "I'm late, but I can explain.",
+              "hint": "套用句型：I can explain."
+            },
+            {
+              "zh": "与此同时，我给酒店打电话。",
+              "answer": "In the meantime, I'll call the hotel.",
+              "hint": "套用句型：I can explain."
+            },
+            {
+              "zh": "为什么延误？——比较复杂。",
+              "answer": "Why the delay? — It's complicated.",
+              "hint": "套用句型：I can explain."
+            }
+          ]
+        },
+        {
+          "id": "l2-t4-6",
+          "type": "sentence_decomposition",
+          "title": "Just in time. 句子拆解",
+          "sourceText": "Just in time.",
+          "sourceKind": "chunk",
+          "fullSentence": "We arrived just in time for check-in.",
+          "fullSentenceZh": "我们刚好赶上办理入住。",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "Just in time.",
+              "zh": "刚好赶上",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "We arrived just in time for check-in.",
+              "zh": "我们刚好赶上办理入住。",
+              "highlight": "We arrived just in time for check-in.",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "描述生活小故障并请求处理": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l2-t5-1",
+          "type": "chunk_substitution",
+          "title": "We got a problem. 句块替换",
+          "chunk": "We got a problem.",
+          "chunkMeaning": "我们有麻烦了",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "有麻烦了——锁打不开。",
+              "answer": "We got a problem—the lock won't open.",
+              "hint": "用「We got a problem.」来表达"
+            },
+            {
+              "zh": "糟了。预约出问题了。",
+              "answer": "Uh-oh. We got a problem with the booking.",
+              "hint": "用「We got a problem.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t5-2",
+          "type": "chunk_substitution",
+          "title": "Do me a favor. 句块替换",
+          "chunk": "Do me a favor.",
+          "chunkMeaning": "帮我个忙",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "帮个忙，扶一下门。",
+              "answer": "Do me a favor and hold the door.",
+              "hint": "用「Do me a favor.」来表达"
+            },
+            {
+              "zh": "帮个忙：给前台打个电话。",
+              "answer": "Do me a favor: call the front desk.",
+              "hint": "用「Do me a favor.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t5-3",
+          "type": "chunk_substitution",
+          "title": "Give me a hand. 句块替换",
+          "chunk": "Give me a hand.",
+          "chunkMeaning": "帮个忙",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "帮我提一下这些包。",
+              "answer": "Give me a hand with these bags.",
+              "hint": "用「Give me a hand.」来表达"
+            },
+            {
+              "zh": "能帮把手吗？箱子卡住了。",
+              "answer": "Can you give me a hand? The suitcase is stuck.",
+              "hint": "用「Give me a hand.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t5-4",
+          "type": "chunk_substitution",
+          "title": "描述生活小故障并请求处理 听辨理解",
+          "chunk": "We got a problem.",
+          "chunkMeaning": "我们有麻烦了",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "We got a problem—the lock won't open.",
+              "answer": "有麻烦了——锁打不开。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Do me a favor and hold the door.",
+              "answer": "帮个忙，扶一下门。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Give me a hand with these bags.",
+              "answer": "帮我提一下这些包。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l2-t5-5",
+          "type": "pattern_drill",
+          "title": "The problem is ___. 句型操练",
+          "pattern": "The problem is ___.",
+          "patternMeaning": "问题是……",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "有麻烦了——锁打不开。",
+              "answer": "We got a problem—the lock won't open.",
+              "hint": "套用句型：The problem is ___."
+            },
+            {
+              "zh": "帮个忙，扶一下门。",
+              "answer": "Do me a favor and hold the door.",
+              "hint": "套用句型：The problem is ___."
+            }
+          ]
+        },
+        {
+          "id": "l2-t5-6",
+          "type": "sentence_decomposition",
+          "title": "We got a problem. 句子拆解",
+          "sourceText": "We got a problem.",
+          "sourceKind": "chunk",
+          "fullSentence": "We got a problem—the lock won't open.",
+          "fullSentenceZh": "有麻烦了——锁打不开。",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "We got a problem.",
+              "zh": "我们有麻烦了",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "We got a problem—the lock won't open.",
+              "zh": "有麻烦了——锁打不开。",
+              "highlight": "—the lock won't open.",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "表达感受、安慰和实际支持": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l2-t6-1",
+          "type": "chunk_substitution",
+          "title": "I got your back. 句块替换",
+          "chunk": "I got your back.",
+          "chunkMeaning": "我支持你 / 我罩着你",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "如果他们为难你，我挺你。",
+              "answer": "If they push back, I got your back.",
+              "hint": "用「I got your back.」来表达"
+            },
+            {
+              "zh": "别担心。这件事我支持你。",
+              "answer": "Don't worry. I got your back on this.",
+              "hint": "用「I got your back.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t6-2",
+          "type": "chunk_substitution",
+          "title": "Take it easy. 句块替换",
+          "chunk": "Take it easy.",
+          "chunkMeaning": "放轻松",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "放轻松。你还有时间。",
+              "answer": "Take it easy. You still have time.",
+              "hint": "用「Take it easy.」来表达"
+            },
+            {
+              "zh": "嘿，放轻松——一次一件事。",
+              "answer": "Hey, take it easy—one thing at a time.",
+              "hint": "用「Take it easy.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t6-3",
+          "type": "chunk_substitution",
+          "title": "Hang in there. 句块替换",
+          "chunk": "Hang in there.",
+          "chunkMeaning": "坚持下去",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "再坚持一下。快修好了。",
+              "answer": "Hang in there. The repair is almost done.",
+              "hint": "用「Hang in there.」来表达"
+            },
+            {
+              "zh": "我知道很难。坚持住。",
+              "answer": "I know it's hard. Hang in there.",
+              "hint": "用「Hang in there.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t6-4",
+          "type": "chunk_substitution",
+          "title": "表达感受、安慰和实际支持 听辨理解",
+          "chunk": "I got your back.",
+          "chunkMeaning": "我支持你 / 我罩着你",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "If they push back, I got your back.",
+              "answer": "如果他们为难你，我挺你。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Take it easy. You still have time.",
+              "answer": "放轻松。你还有时间。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Hang in there. The repair is almost done.",
+              "answer": "再坚持一下。快修好了。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l2-t6-5",
+          "type": "pattern_drill",
+          "title": "I got your back. 句型操练",
+          "pattern": "I got your back.",
+          "patternMeaning": "我支持你。",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "如果他们为难你，我挺你。",
+              "answer": "If they push back, I got your back.",
+              "hint": "套用句型：I got your back."
+            },
+            {
+              "zh": "我临时取消了。我会补偿你。",
+              "answer": "I cancelled last minute. I'll make it up to you.",
+              "hint": "套用句型：I got your back."
+            },
+            {
+              "zh": "对这次延误我非常抱歉。",
+              "answer": "I am so sorry about this delay.",
+              "hint": "套用句型：I got your back."
+            }
+          ]
+        },
+        {
+          "id": "l2-t6-6",
+          "type": "sentence_decomposition",
+          "title": "I got your back. 句子拆解",
+          "sourceText": "I got your back.",
+          "sourceKind": "chunk",
+          "fullSentence": "If they push back, I got your back.",
+          "fullSentenceZh": "如果他们为难你，我挺你。",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "I got your back.",
+              "zh": "我支持你 / 我罩着你",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "If they push back, I got your back.",
+              "zh": "如果他们为难你，我挺你。",
+              "highlight": "If they push back, .",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "报告进度、截止时间和下一步": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l2-t7-1",
+          "type": "chunk_substitution",
+          "title": "I'll do my best. 句块替换",
+          "chunk": "I'll do my best.",
+          "chunkMeaning": "我会尽全力",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "截止很紧，但我会尽力。",
+              "answer": "The deadline is tight, but I'll do my best.",
+              "hint": "用「I'll do my best.」来表达"
+            },
+            {
+              "zh": "我会尽力中午前完成。",
+              "answer": "I'll do my best to finish before noon.",
+              "hint": "用「I'll do my best.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t7-2",
+          "type": "chunk_substitution",
+          "title": "Went well. 句块替换",
+          "chunk": "Went well.",
+          "chunkMeaning": "进展顺利",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "会开得怎样？——挺顺利。",
+              "answer": "How was the meeting? — Went well.",
+              "hint": "用「Went well.」来表达"
+            },
+            {
+              "zh": "入住办理顺利。",
+              "answer": "The check-in went well.",
+              "hint": "用「Went well.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t7-3",
+          "type": "chunk_substitution",
+          "title": "Will do. 句块替换",
+          "chunk": "Will do.",
+          "chunkMeaning": "好的 / 我会做",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "请更新文档。——好的。",
+              "answer": "Please update the doc. — Will do.",
+              "hint": "用「Will do.」来表达"
+            },
+            {
+              "zh": "好的。弄完给你消息。",
+              "answer": "Will do. I'll message you after.",
+              "hint": "用「Will do.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t7-4",
+          "type": "chunk_substitution",
+          "title": "报告进度、截止时间和下一步 听辨理解",
+          "chunk": "I'll do my best.",
+          "chunkMeaning": "我会尽全力",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "The deadline is tight, but I'll do my best.",
+              "answer": "截止很紧，但我会尽力。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "How was the meeting? — Went well.",
+              "answer": "会开得怎样？——挺顺利。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Please update the doc. — Will do.",
+              "answer": "请更新文档。——好的。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l2-t7-5",
+          "type": "pattern_drill",
+          "title": "I'll do my best. 句型操练",
+          "pattern": "I'll do my best.",
+          "patternMeaning": "我会尽力。",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "截止很紧，但我会尽力。",
+              "answer": "The deadline is tight, but I'll do my best.",
+              "hint": "套用句型：I'll do my best."
+            },
+            {
+              "zh": "会开得怎样？——挺顺利。",
+              "answer": "How was the meeting? — Went well.",
+              "hint": "套用句型：I'll do my best."
+            }
+          ]
+        },
+        {
+          "id": "l2-t7-6",
+          "type": "sentence_decomposition",
+          "title": "I'll do my best. 句子拆解",
+          "sourceText": "I'll do my best.",
+          "sourceKind": "chunk",
+          "fullSentence": "The deadline is tight, but I'll do my best.",
+          "fullSentenceZh": "截止很紧，但我会尽力。",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "I'll do my best.",
+              "zh": "我会尽全力",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "The deadline is tight, but I'll do my best.",
+              "zh": "截止很紧，但我会尽力。",
+              "highlight": "The deadline is tight, but .",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "给建议并确认最终方案": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l2-t8-1",
+          "type": "chunk_substitution",
+          "title": "You've got a point there. 句块替换",
+          "chunk": "You've got a point there.",
+          "chunkMeaning": "你说得挺有道理的。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "你说得有理。我们改会议吧。",
+              "answer": "You've got a point there. Let's move the meeting.",
+              "hint": "用「You've got a point there.」来表达"
+            },
+            {
+              "zh": "嗯，你说得挺有道理。",
+              "answer": "Hmm, you've got a point there.",
+              "hint": "用「You've got a point there.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t8-2",
+          "type": "chunk_substitution",
+          "title": "That's a terrific idea! 句块替换",
+          "chunk": "That's a terrific idea!",
+          "chunkMeaning": "真是好主意！",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "订上午时段？真是好主意！",
+              "answer": "Book a morning slot? That's a terrific idea!",
+              "hint": "用「That's a terrific idea!」来表达"
+            },
+            {
+              "zh": "好主意！就这么办。",
+              "answer": "That's a terrific idea! Let's do it.",
+              "hint": "用「That's a terrific idea!」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t8-3",
+          "type": "chunk_substitution",
+          "title": "It's not worth it. 句块替换",
+          "chunk": "It's not worth it.",
+          "chunkMeaning": "这不值得",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "为此争论？不值得。",
+              "answer": "Arguing about it? It's not worth it.",
+              "hint": "用「It's not worth it.」来表达"
+            },
+            {
+              "zh": "不值得。换个方案吧。",
+              "answer": "It's not worth it. Pick another option.",
+              "hint": "用「It's not worth it.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l2-t8-4",
+          "type": "chunk_substitution",
+          "title": "给建议并确认最终方案 听辨理解",
+          "chunk": "You've got a point there.",
+          "chunkMeaning": "你说得挺有道理的。",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "You've got a point there. Let's move the meeting.",
+              "answer": "你说得有理。我们改会议吧。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Book a morning slot? That's a terrific idea!",
+              "answer": "订上午时段？真是好主意！",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Arguing about it? It's not worth it.",
+              "answer": "为此争论？不值得。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l2-t8-5",
+          "type": "pattern_drill",
+          "title": "It's settled, then. 句型操练",
+          "pattern": "It's settled, then.",
+          "patternMeaning": "那就这么定了。",
+          "direction": "zh_to_en",
+          "items": [
+            {
+              "zh": "为此争论？不值得。",
+              "answer": "Arguing about it? It's not worth it.",
+              "hint": "套用句型：It's settled, then."
+            },
+            {
+              "zh": "周五三点。那就这么定了。",
+              "answer": "Friday at three. It's settled, then.",
+              "hint": "套用句型：It's settled, then."
+            }
+          ]
+        },
+        {
+          "id": "l2-t8-6",
+          "type": "sentence_decomposition",
+          "title": "You've got a point there. 句子拆解",
+          "sourceText": "You've got a point there.",
+          "sourceKind": "chunk",
+          "fullSentence": "You've got a point there. Let's move the meeting.",
+          "fullSentenceZh": "你说得有理。我们改会议吧。",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "You've got a point there.",
+              "zh": "你说得挺有道理的。",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "You've got a point there. Let's move the meeting.",
+              "zh": "你说得有理。我们改会议吧。",
+              "highlight": ". Let's move the meeting.",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  }
+}
