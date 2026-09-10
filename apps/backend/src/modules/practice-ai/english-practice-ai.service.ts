@@ -88,10 +88,11 @@ type WarmupPipelineGenerationDto = {
   };
 };
 
-const WARMUP_PIPELINE_MAX_OUTPUT_TOKENS = 24_000;
-const WARMUP_PIPELINE_MAX_PREVIOUS_ITEMS = 40;
-const WARMUP_PIPELINE_MAX_ITEMS = 48; // 单轮生成题目硬上限（整组截断，极端失控兑底）
-const WARMUP_PIPELINE_MAX_GROUPS = 12; // 单轮生成题组硬上限
+// 点击“AI 逐条生成”会按当前材料池一次规划完整 pipeline；前端只逐条回显供审核。
+const WARMUP_PIPELINE_MAX_OUTPUT_TOKENS = 16_000;
+const WARMUP_PIPELINE_MAX_PREVIOUS_ITEMS = 8;
+const WARMUP_PIPELINE_MAX_ITEMS = 48;
+const WARMUP_PIPELINE_MAX_GROUPS = 12;
 
 @Injectable()
 export class EnglishPracticeAiService {
@@ -147,6 +148,7 @@ export class EnglishPracticeAiService {
     let lastError: unknown = null;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
+        this.logger.log(`[warmup-ai] DeepSeek JSON request attempt=${attempt + 1} systemChars=${system.length} promptChars=${prompt.length} maxTokens=${WARMUP_PIPELINE_MAX_OUTPUT_TOKENS}`);
         const response = await fetch(this.buildChatCompletionsUrl(config.baseUrl), {
           method: 'POST',
           headers: {
@@ -163,8 +165,8 @@ export class EnglishPracticeAiService {
               },
             ],
             response_format: { type: 'json_object' },
-            // JSON 生成不需要思维链，避免其占用输出预算并降低格式稳定性。
-            // thinking: 'disabled',
+            // deepseek-v4-flash 默认会思考；嵌套 JSON 任务必须关闭，否则正文会被推理耗尽。
+            thinking: { type: 'disabled' },
             temperature: attempt === 0 ? 0.35 : 0,
             max_tokens: WARMUP_PIPELINE_MAX_OUTPUT_TOKENS,
           }),
@@ -177,7 +179,8 @@ export class EnglishPracticeAiService {
         const choice = payload?.choices?.[0];
         const finishReason = String(choice?.finish_reason ?? 'unknown');
         const content = String(choice?.message?.content ?? '').trim();
-        if (!content) throw new Error(`DeepSeek JSON output was empty; finish_reason=${finishReason}`);
+        const reasoningChars = String(choice?.message?.reasoning_content ?? '').length;
+        if (!content) throw new Error(`DeepSeek JSON output was empty; finish_reason=${finishReason}, reasoningChars=${reasoningChars}`);
         if (finishReason === 'length') {
           throw new Error(`DeepSeek JSON output was truncated; finish_reason=length, chars=${content.length}`);
         }
@@ -847,6 +850,19 @@ For correction/upgraded/retryRequired: only populate these when the response is 
       : normalizedAnswer.includes(fixedTarget);
   }
 
+  /** 句块是固定表达：不能只命中其中几个词，英文题干/答案必须含完整句块。 */
+  private englishTextUsesExactChunk(text: string, chunk: string) {
+    const normalize = (value: string) => value
+      .toLowerCase()
+      .replace(/[’‘]/g, "'")
+      .replace(/[^a-z0-9'\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const normalizedText = ` ${normalize(text)} `;
+    const normalizedChunk = normalize(chunk);
+    return Boolean(normalizedChunk) && normalizedText.includes(` ${normalizedChunk} `);
+  }
+
   private sanitizeGeneratedHint(rawHint: unknown, dto: DrillGenerationDto, item: { zh?: string; en?: string; answer?: string }) {
     const hint = String(rawHint ?? '').trim();
     const answer = String(item.answer ?? '').toLowerCase().replace(/[’‘]/g, "'");
@@ -866,9 +882,15 @@ For correction/upgraded/retryRequired: only populate these when the response is 
     return (Array.isArray(rawItems) ? rawItems : []).flatMap((raw: any) => {
       const answer = String(raw?.answer ?? '').trim();
       const prompt = direction === 'en_to_zh' ? String(raw?.en ?? '').trim() : String(raw?.zh ?? '').trim();
+      // The target is always checked in the English side of an item. For
+      // en_to_zh exercises that is the prompt, not the Chinese answer.
+      const englishText = direction === 'en_to_zh' ? prompt : answer;
+      const usesTarget = dto.type === 'chunk_substitution'
+        ? this.englishTextUsesExactChunk(englishText, dto.keyword)
+        : this.answerUsesTarget(englishText, dto.keyword);
       const isValid = direction === 'en_to_zh'
-        ? this.isEnglishSentence(prompt) && this.isChinesePrompt(answer)
-        : this.isChinesePrompt(prompt) && this.isEnglishSentence(answer) && this.answerUsesTarget(answer, dto.keyword);
+        ? this.isEnglishSentence(prompt) && this.isChinesePrompt(answer) && usesTarget
+        : this.isChinesePrompt(prompt) && this.isEnglishSentence(answer) && usesTarget;
       // 短句块不能单独作为完整替换答案；必须嵌入有语境的完整句。
       const targetWords = dto.keyword.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g) ?? [];
       const answerWords = answer.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g) ?? [];
@@ -1737,7 +1759,14 @@ Rules:
       }
       if (raw?.type === 'sentence_decomposition') {
         const normalized = this.normalizeSentenceDecomposition(raw);
-        return normalized ? [normalized] : [];
+        const sourceText = String(raw?.sourceText ?? '').trim();
+        // A decomposition sourced from a chunk/word/pattern must keep that
+        // source in its final sentence; otherwise it looks like practice but
+        // does not actually train the selected knowledge point.
+        const sourceIsUsed = !sourceText || (raw?.sourceKind === 'chunk'
+          ? this.englishTextUsesExactChunk(normalized?.fullSentence ?? '', sourceText)
+          : this.answerUsesTarget(normalized?.fullSentence ?? '', sourceText));
+        return normalized && sourceIsUsed ? [normalized] : [];
       }
       return [];
     });
@@ -1873,7 +1902,7 @@ Rules:
           '=== PREVIOUSLY GENERATED ITEMS (DO NOT duplicate; improve upon these) ===',
           ...previousPipeline
             .slice(-WARMUP_PIPELINE_MAX_PREVIOUS_ITEMS)
-            .map((item, i) => `  ${i + 1}. ${summarizePreviousItem(item)}`),
+            .map((item, i) => `  ${i + 1}. ${summarizePreviousItem(item).slice(0, 420)}`),
           '=== END PREVIOUS ITEMS ===',
           '',
         ].join('\n')
@@ -2042,7 +2071,7 @@ Rules:
 Polish the following exercise items to make them more natural, idiomatic, and pedagogically effective.
 
 Rules:
-- Improve the Chinese prompts (zh) to sound more natural and conversational.
+- For zh_to_en, make each Chinese prompt (zh) an accurate, natural Chinese translation of its English answer — never turn it into a scenario or a communicative task.
 - Refine the English answers (answer) to be more idiomatic while keeping the target keyword "${dto.keyword}".
 - Keep the original meaning and difficulty level.
 - For en_to_zh direction, use the "en" field for the English sentence and "answer" for Chinese — polish both accordingly.
@@ -2079,7 +2108,7 @@ Return ONLY a JSON object (no markdown):
 Create ${count} Chinese→English translation exercises focusing on the target word/chunk.
 
 Rules:
-- Each item has a Chinese prompt (zh) and the expected English answer (answer).
+- Each item has a Chinese prompt (zh) that is the direct, complete Chinese translation of the expected English answer (answer). Do NOT write a scenario, a speaking task, or extra context in zh.
 - The English answer MUST naturally include the target word/chunk: "${dto.keyword}".
 - If direction is "en_to_zh", swap: the prompt is the English sentence and answer is the Chinese translation.
 - Keep sentences natural, practical, and at an intermediate level.
@@ -2089,7 +2118,7 @@ Rules:
 - Use the topic material pool below. Prefer unused vocabulary/chunks when they fit.
 
 Return ONLY a JSON object (no markdown):
-For zh_to_en use { "items": [{ "zh": "中文交际任务", "answer": "完整英文句", "hint": "中文提示" }] }.
+For zh_to_en use { "items": [{ "zh": "完整英文句的准确中文翻译", "answer": "完整英文句", "hint": "中文提示" }] }.
 For en_to_zh use { "items": [{ "en": "complete English sentence", "answer": "中文答案", "hint": "中文提示" }] }.`;
 
       const user = `Target: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}
@@ -2120,7 +2149,7 @@ Create vocabulary sentence-building exercises for the word: "${dto.keyword}".
 
 For each pattern:
 - "chunk" is a sentence starter or collocation frame using the target word (e.g., "She easily...", "I find it easy to...")
-- Each pattern has 2-3 "items" with zh (Chinese prompt) and answer (English full sentence using the chunk)
+- Each pattern has 2-3 "items" with zh (the accurate Chinese translation of answer) and answer (English full sentence using the chunk)
 - Vary the patterns to show different uses of the word
 - ${DRILL_HINT_OUTPUT_REQUIREMENT}
 - ${DRILL_TRANSLATION_ITEM_CONTRACT}
@@ -2129,7 +2158,7 @@ For each pattern:
 ${availableChunks ? `You may use these available chunks as inspiration: ${availableChunks}` : ''}
 
 Return ONLY a JSON object (no markdown):
-For zh_to_en use { "patterns": [{ "chunk": "sentence starter", "items": [{ "zh": "中文交际任务", "answer": "完整英文句", "hint": "中文提示" }] }] }.
+For zh_to_en use { "patterns": [{ "chunk": "sentence starter", "items": [{ "zh": "完整英文句的准确中文翻译", "answer": "完整英文句", "hint": "中文提示" }] }] }.
 For en_to_zh use "en" instead of "zh" and make answer Chinese.`;
 
       const user = `Word: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}
@@ -2249,7 +2278,7 @@ Create ${count} sentence-building exercises focusing on a target sentence patter
 The pattern is a grammar framework with a variable slot. Learners must fill the slot to create complete sentences.
 
 Rules:
-- Each item has a Chinese prompt (zh) and the expected English answer (answer).
+- Each item has a Chinese prompt (zh) that is the direct, complete Chinese translation of the expected English answer (answer). Do NOT write a scenario, a speaking task, or extra context in zh.
 - The English answer MUST follow the target pattern: "${dto.keyword}".
 - If direction is "en_to_zh", swap: the prompt is the English sentence using the pattern, and answer is Chinese.
 - Vary the slot fillers to show different real-world uses of the same pattern.
@@ -2259,7 +2288,7 @@ Rules:
 - Use the topic material pool below. Prefer unused vocabulary/chunks when they fit.
 
 Return ONLY a JSON object (no markdown):
-For zh_to_en use { "items": [{ "zh": "中文交际任务", "answer": "完整英文句", "hint": "中文提示" }] }.
+For zh_to_en use { "items": [{ "zh": "完整英文句的准确中文翻译", "answer": "完整英文句", "hint": "中文提示" }] }.
 For en_to_zh use { "items": [{ "en": "complete English sentence", "answer": "中文答案", "hint": "中文提示" }] }.`;
 
       const user = `Pattern: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}

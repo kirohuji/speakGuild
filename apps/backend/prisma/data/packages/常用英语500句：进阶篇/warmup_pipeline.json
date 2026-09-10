@@ -1,0 +1,1098 @@
+{
+  "评价、保留与不完全同意": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l3-t1-1",
+          "type": "chunk_substitution",
+          "title": "That's true. 句块替换",
+          "chunk": "That's true.",
+          "chunkMeaning": "那是真的 / 说得对。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "你累了。——说得对。",
+              "answer": "You're tired. — That's true.",
+              "hint": "用「That's true.」来表达"
+            },
+            {
+              "zh": "说得对，但时机不好。",
+              "answer": "That's true, but timing is bad.",
+              "hint": "用「That's true.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t1-2",
+          "type": "chunk_substitution",
+          "title": "No wonder. 句块替换",
+          "chunk": "No wonder.",
+          "chunkMeaning": "难怪。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "火车延误了。——难怪。",
+              "answer": "The train was delayed. — No wonder.",
+              "hint": "用「No wonder.」来表达"
+            },
+            {
+              "zh": "难怪你看起来这么累。",
+              "answer": "No wonder you look exhausted.",
+              "hint": "用「No wonder.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t1-3",
+          "type": "chunk_substitution",
+          "title": "That's weird. 句块替换",
+          "chunk": "That's weird.",
+          "chunkMeaning": "太奇怪了。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "门自己开了。——太奇怪了。",
+              "answer": "The door opened by itself. — That's weird.",
+              "hint": "用「That's weird.」来表达"
+            },
+            {
+              "zh": "太奇怪了。你能再查一下吗？",
+              "answer": "That's weird. Can you check again?",
+              "hint": "用「That's weird.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t1-4",
+          "type": "chunk_substitution",
+          "title": "评价、保留与不完全同意 听辨理解",
+          "chunk": "That's true.",
+          "chunkMeaning": "那是真的 / 说得对。",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "You're tired. — That's true.",
+              "answer": "你累了。——说得对。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "The train was delayed. — No wonder.",
+              "answer": "火车延误了。——难怪。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "The door opened by itself. — That's weird.",
+              "answer": "门自己开了。——太奇怪了。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l3-t1-5",
+          "type": "sentence_decomposition",
+          "title": "That's true. 句子拆解",
+          "sourceText": "That's true.",
+          "sourceKind": "chunk",
+          "fullSentence": "You're tired. — That's true.",
+          "fullSentenceZh": "你累了。——说得对。",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "That's true.",
+              "zh": "那是真的 / 说得对。",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "You're tired. — That's true.",
+              "zh": "你累了。——说得对。",
+              "highlight": "You're tired. — .",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "附和、补充与换角度看": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l3-t2-1",
+          "type": "chunk_substitution",
+          "title": "I bet you do. 句块替换",
+          "chunk": "I bet you do.",
+          "chunkMeaning": "我想也是 / 我猜你也是。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "我爱吃宵夜。——我想也是。",
+              "answer": "I love late-night snacks. — I bet you do.",
+              "hint": "用「I bet you do.」来表达"
+            },
+            {
+              "zh": "我想也是。我也一样。",
+              "answer": "I bet you do. Same here.",
+              "hint": "用「I bet you do.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t2-2",
+          "type": "chunk_substitution",
+          "title": "I'm not. 句块替换",
+          "chunk": "I'm not.",
+          "chunkMeaning": "才没有呢。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "你生气了。——才没有。",
+              "answer": "You're angry. — I'm not.",
+              "hint": "用「I'm not.」来表达"
+            },
+            {
+              "zh": "才没有。只是累了。",
+              "answer": "I'm not. Just tired.",
+              "hint": "用「I'm not.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t2-3",
+          "type": "chunk_substitution",
+          "title": "Now you're talking 句块替换",
+          "chunk": "Now you're talking",
+          "chunkMeaning": "这才像话嘛。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "我们分摊费用吧。——这才像话。",
+              "answer": "Let's split the cost. — Now you're talking.",
+              "hint": "用「Now you're talking」来表达"
+            },
+            {
+              "zh": "这才像话。这样可以。",
+              "answer": "Now you're talking. That works.",
+              "hint": "用「Now you're talking」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t2-4",
+          "type": "chunk_substitution",
+          "title": "附和、补充与换角度看 听辨理解",
+          "chunk": "I bet you do.",
+          "chunkMeaning": "我想也是 / 我猜你也是。",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "I love late-night snacks. — I bet you do.",
+              "answer": "我爱吃宵夜。——我想也是。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "You're angry. — I'm not.",
+              "answer": "你生气了。——才没有。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Let's split the cost. — Now you're talking.",
+              "answer": "我们分摊费用吧。——这才像话。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l3-t2-5",
+          "type": "sentence_decomposition",
+          "title": "I bet you do. 句子拆解",
+          "sourceText": "I bet you do.",
+          "sourceKind": "chunk",
+          "fullSentence": "I love late-night snacks. — I bet you do.",
+          "fullSentenceZh": "我爱吃宵夜。——我想也是。",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "I bet you do.",
+              "zh": "我想也是 / 我猜你也是。",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "I love late-night snacks. — I bet you do.",
+              "zh": "我爱吃宵夜。——我想也是。",
+              "highlight": "I love late-night snacks. — .",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "边界、缓和与轻度拒绝": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l3-t3-1",
+          "type": "chunk_substitution",
+          "title": "Don't push me. 句块替换",
+          "chunk": "Don't push me.",
+          "chunkMeaning": "别逼我。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "现在就定！——别逼我。",
+              "answer": "Decide now! — Don't push me.",
+              "hint": "用「Don't push me.」来表达"
+            },
+            {
+              "zh": "别逼我。给我一分钟。",
+              "answer": "Don't push me. I need a minute.",
+              "hint": "用「Don't push me.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t3-2",
+          "type": "chunk_substitution",
+          "title": "Don't talk to me like that. 句块替换",
+          "chunk": "Don't talk to me like that.",
+          "chunkMeaning": "别这样跟我说话。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "快点，笨蛋。——别这样跟我说话。",
+              "answer": "Hurry up, idiot. — Don't talk to me like that.",
+              "hint": "用「Don't talk to me like that.」来表达"
+            },
+            {
+              "zh": "别这样跟我说话。我在帮忙。",
+              "answer": "Don't talk to me like that. I'm helping.",
+              "hint": "用「Don't talk to me like that.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t3-3",
+          "type": "chunk_substitution",
+          "title": "Don't lie to me. 句块替换",
+          "chunk": "Don't lie to me.",
+          "chunkMeaning": "不要对我说谎。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "我当时不在。——别对我说谎。",
+              "answer": "I wasn't there. — Don't lie to me.",
+              "hint": "用「Don't lie to me.」来表达"
+            },
+            {
+              "zh": "别骗我。我看到消息了。",
+              "answer": "Don't lie to me. I saw the message.",
+              "hint": "用「Don't lie to me.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t3-4",
+          "type": "chunk_substitution",
+          "title": "边界、缓和与轻度拒绝 听辨理解",
+          "chunk": "Don't push me.",
+          "chunkMeaning": "别逼我。",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "Decide now! — Don't push me.",
+              "answer": "现在就定！——别逼我。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Hurry up, idiot. — Don't talk to me like that.",
+              "answer": "快点，笨蛋。——别这样跟我说话。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "I wasn't there. — Don't lie to me.",
+              "answer": "我当时不在。——别对我说谎。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l3-t3-5",
+          "type": "sentence_decomposition",
+          "title": "Don't push me. 句子拆解",
+          "sourceText": "Don't push me.",
+          "sourceKind": "chunk",
+          "fullSentence": "Decide now! — Don't push me.",
+          "fullSentenceZh": "现在就定！——别逼我。",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "Don't push me.",
+              "zh": "别逼我。",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "Decide now! — Don't push me.",
+              "zh": "现在就定！——别逼我。",
+              "highlight": "Decide now! — .",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "惊喜、吐槽与情绪接话": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l3-t4-1",
+          "type": "chunk_substitution",
+          "title": "Hilarious. 句块替换",
+          "chunk": "Hilarious.",
+          "chunkMeaning": "真搞笑。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "他穿了两只不一样的鞋。——真搞笑。",
+              "answer": "He wore two different shoes. — Hilarious.",
+              "hint": "用「Hilarious.」来表达"
+            },
+            {
+              "zh": "真搞笑。再说细点。",
+              "answer": "Hilarious. Tell me more.",
+              "hint": "用「Hilarious.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t4-2",
+          "type": "chunk_substitution",
+          "title": "This is incredible. 句块替换",
+          "chunk": "This is incredible.",
+          "chunkMeaning": "这太不可思议了。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "我们拿到免费票。——太不可思议了。",
+              "answer": "We got free tickets. — This is incredible.",
+              "hint": "用「This is incredible.」来表达"
+            },
+            {
+              "zh": "太不可思议了。你怎么做到的？",
+              "answer": "This is incredible. How did you do it?",
+              "hint": "用「This is incredible.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t4-3",
+          "type": "chunk_substitution",
+          "title": "This is insane. 句块替换",
+          "chunk": "This is insane.",
+          "chunkMeaning": "这太疯狂了。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "截止日期改到今晚。——太疯狂了。",
+              "answer": "They moved the deadline to tonight. — This is insane.",
+              "hint": "用「This is insane.」来表达"
+            },
+            {
+              "zh": "太疯狂了。我们需要帮忙。",
+              "answer": "This is insane. We need help.",
+              "hint": "用「This is insane.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t4-4",
+          "type": "chunk_substitution",
+          "title": "惊喜、吐槽与情绪接话 听辨理解",
+          "chunk": "Hilarious.",
+          "chunkMeaning": "真搞笑。",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "He wore two different shoes. — Hilarious.",
+              "answer": "他穿了两只不一样的鞋。——真搞笑。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "We got free tickets. — This is incredible.",
+              "answer": "我们拿到免费票。——太不可思议了。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "They moved the deadline to tonight. — This is insane.",
+              "answer": "截止日期改到今晚。——太疯狂了。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l3-t4-5",
+          "type": "sentence_decomposition",
+          "title": "Hilarious. 句子拆解",
+          "sourceText": "Hilarious.",
+          "sourceKind": "chunk",
+          "fullSentence": "He wore two different shoes. — Hilarious.",
+          "fullSentenceZh": "他穿了两只不一样的鞋。——真搞笑。",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "Hilarious.",
+              "zh": "真搞笑。",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "He wore two different shoes. — Hilarious.",
+              "zh": "他穿了两只不一样的鞋。——真搞笑。",
+              "highlight": "He wore two different shoes. — .",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "关系感受与疲惫表达": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l3-t5-1",
+          "type": "chunk_substitution",
+          "title": "Do you have any idea how tired I am? 句块替换",
+          "chunk": "Do you have any idea how tired I am?",
+          "chunkMeaning": "你知不知道我有多累？",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "你知不知道我有多累？",
+              "answer": "Do you have any idea how tired I am?",
+              "hint": "用「Do you have any idea how tired I am?」来表达"
+            },
+            {
+              "zh": "你知道我今天有多累吗？",
+              "answer": "Do you have any idea how tired I am after today?",
+              "hint": "用「Do you have any idea how tired I am?」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t5-2",
+          "type": "chunk_substitution",
+          "title": "Being criticized is awful! 句块替换",
+          "chunk": "Being criticized is awful!",
+          "chunkMeaning": "被人批评真是痛苦！",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "被人批评真是痛苦！",
+              "answer": "Being criticized is awful!",
+              "hint": "用「Being criticized is awful!」来表达"
+            },
+            {
+              "zh": "被批评很痛苦，但我学到了东西。",
+              "answer": "Being criticized is awful, but I learned something.",
+              "hint": "用「Being criticized is awful!」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t5-3",
+          "type": "chunk_substitution",
+          "title": "What kind of a person does that. 句块替换",
+          "chunk": "What kind of a person does that.",
+          "chunkMeaning": "怎么会有这样的人。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "他没付钱就走了。怎么会有这样的人。",
+              "answer": "He left without paying. What kind of a person does that.",
+              "hint": "用「What kind of a person does that.」来表达"
+            },
+            {
+              "zh": "怎么能这样对朋友？",
+              "answer": "What kind of a person does that to a friend?",
+              "hint": "用「What kind of a person does that.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t5-4",
+          "type": "chunk_substitution",
+          "title": "关系感受与疲惫表达 听辨理解",
+          "chunk": "Do you have any idea how tired I am?",
+          "chunkMeaning": "你知不知道我有多累？",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "Do you have any idea how tired I am?",
+              "answer": "你知不知道我有多累？",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Being criticized is awful!",
+              "answer": "被人批评真是痛苦！",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "He left without paying. What kind of a person does that.",
+              "answer": "他没付钱就走了。怎么会有这样的人。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l3-t5-5",
+          "type": "sentence_decomposition",
+          "title": "Do you have any idea how tired I am? 句子拆解",
+          "sourceText": "Do you have any idea how tired I am?",
+          "sourceKind": "chunk",
+          "fullSentence": "Do you have any idea how tired I am?",
+          "fullSentenceZh": "你知不知道我有多累？",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "Do you have any idea how tired I am?",
+              "zh": "你知不知道我有多累？",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "Do you have any idea how tired I am?",
+              "zh": "你知不知道我有多累？",
+              "highlight": "Do you have any idea how tired I am?",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "决定、行动与惯用提醒": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l3-t6-1",
+          "type": "chunk_substitution",
+          "title": "mark my words. 句块替换",
+          "chunk": "mark my words.",
+          "chunkMeaning": "记住我说的 / 不信走着瞧。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "记住我说的。这计划行得通。",
+              "answer": "Mark my words. This plan will work.",
+              "hint": "用「mark my words.」来表达"
+            },
+            {
+              "zh": "等会儿会下雨。不信走着瞧。",
+              "answer": "It'll rain later. Mark my words.",
+              "hint": "用「mark my words.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t6-2",
+          "type": "chunk_substitution",
+          "title": "The ball is in your court. 句块替换",
+          "chunk": "The ball is in your court.",
+          "chunkMeaning": "该你采取行动了。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "报价发了。下一步看你。",
+              "answer": "I sent the offer. The ball is in your court.",
+              "hint": "用「The ball is in your court.」来表达"
+            },
+            {
+              "zh": "现在该你行动了。",
+              "answer": "The ball is in your court now.",
+              "hint": "用「The ball is in your court.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t6-3",
+          "type": "chunk_substitution",
+          "title": "He's still sitting on the fence. 句块替换",
+          "chunk": "He's still sitting on the fence.",
+          "chunkMeaning": "他还没做出决定。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "工作邀请那事：他还在犹豫。",
+              "answer": "About the job offer: he's still sitting on the fence.",
+              "hint": "用「He's still sitting on the fence.」来表达"
+            },
+            {
+              "zh": "别犹豫太久。",
+              "answer": "Don't sit on the fence too long.",
+              "hint": "用「He's still sitting on the fence.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t6-4",
+          "type": "chunk_substitution",
+          "title": "决定、行动与惯用提醒 听辨理解",
+          "chunk": "mark my words.",
+          "chunkMeaning": "记住我说的 / 不信走着瞧。",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "Mark my words. This plan will work.",
+              "answer": "记住我说的。这计划行得通。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "I sent the offer. The ball is in your court.",
+              "answer": "报价发了。下一步看你。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "About the job offer: he's still sitting on the fence.",
+              "answer": "工作邀请那事：他还在犹豫。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l3-t6-5",
+          "type": "sentence_decomposition",
+          "title": "mark my words. 句子拆解",
+          "sourceText": "mark my words.",
+          "sourceKind": "chunk",
+          "fullSentence": "Mark my words. This plan will work.",
+          "fullSentenceZh": "记住我说的。这计划行得通。",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "mark my words.",
+              "zh": "记住我说的 / 不信走着瞧。",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "Mark my words. This plan will work.",
+              "zh": "记住我说的。这计划行得通。",
+              "highlight": "Mark my words. This plan will work.",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "态度、立场与口语惯用语": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l3-t7-1",
+          "type": "chunk_substitution",
+          "title": "I'm an open book. 句块替换",
+          "chunk": "I'm an open book.",
+          "chunkMeaning": "我没有什么秘密 / 我很好懂。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "你什么都能问。我很好懂。",
+              "answer": "You can ask me anything. I'm an open book.",
+              "hint": "用「I'm an open book.」来表达"
+            },
+            {
+              "zh": "我对团队没什么隐瞒。",
+              "answer": "I'm an open book with my team.",
+              "hint": "用「I'm an open book.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t7-2",
+          "type": "chunk_substitution",
+          "title": "You don't say. 句块替换",
+          "chunk": "You don't say.",
+          "chunkMeaning": "这还要你说 / 是吗。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "路况很差。——这还用你说。",
+              "answer": "Traffic is bad. — You don't say.",
+              "hint": "用「You don't say.」来表达"
+            },
+            {
+              "zh": "是吗。我注意到了。",
+              "answer": "You don't say. I noticed.",
+              "hint": "用「You don't say.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t7-3",
+          "type": "chunk_substitution",
+          "title": "East,west,home is best. 句块替换",
+          "chunk": "East,west,home is best.",
+          "chunkMeaning": "金窝银窝不如自己的草窝。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "旅行结束：还是自家最好。",
+              "answer": "After the trip: East,west,home is best.",
+              "hint": "用「East,west,home is best.」来表达"
+            },
+            {
+              "zh": "还是家好。我待在家里。",
+              "answer": "East,west,home is best. I'm staying in.",
+              "hint": "用「East,west,home is best.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t7-4",
+          "type": "chunk_substitution",
+          "title": "态度、立场与口语惯用语 听辨理解",
+          "chunk": "I'm an open book.",
+          "chunkMeaning": "我没有什么秘密 / 我很好懂。",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "You can ask me anything. I'm an open book.",
+              "answer": "你什么都能问。我很好懂。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Traffic is bad. — You don't say.",
+              "answer": "路况很差。——这还用你说。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "After the trip: East,west,home is best.",
+              "answer": "旅行结束：还是自家最好。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l3-t7-5",
+          "type": "sentence_decomposition",
+          "title": "I'm an open book. 句子拆解",
+          "sourceText": "I'm an open book.",
+          "sourceKind": "chunk",
+          "fullSentence": "You can ask me anything. I'm an open book.",
+          "fullSentenceZh": "你什么都能问。我很好懂。",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "I'm an open book.",
+              "zh": "我没有什么秘密 / 我很好懂。",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "You can ask me anything. I'm an open book.",
+              "zh": "你什么都能问。我很好懂。",
+              "highlight": "You can ask me anything. .",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  },
+  "说明情况、补救与确认": {
+    "outputTraining": {
+      "enabled": true,
+      "version": 1,
+      "pipeline": [
+        {
+          "id": "l3-t8-1",
+          "type": "chunk_substitution",
+          "title": "I left it right here. 句块替换",
+          "chunk": "I left it right here.",
+          "chunkMeaning": "我明明放在这儿的。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "我明明放这儿的。去哪了？",
+              "answer": "I left it right here. Where did it go?",
+              "hint": "用「I left it right here.」来表达"
+            },
+            {
+              "zh": "我就放在这张桌子上。",
+              "answer": "I left it right here on the desk.",
+              "hint": "用「I left it right here.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t8-2",
+          "type": "chunk_substitution",
+          "title": "I will be more careful. 句块替换",
+          "chunk": "I will be more careful.",
+          "chunkMeaning": "我会更小心的。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "抱歉。我会更小心。",
+              "answer": "Sorry about that. I will be more careful.",
+              "hint": "用「I will be more careful.」来表达"
+            },
+            {
+              "zh": "下次我会更小心。",
+              "answer": "I will be more careful next time.",
+              "hint": "用「I will be more careful.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t8-3",
+          "type": "chunk_substitution",
+          "title": "I will never forget it. 句块替换",
+          "chunk": "I will never forget it.",
+          "chunkMeaning": "我会记着的。",
+          "direction": "zh_to_en",
+          "kind": "chunk",
+          "items": [
+            {
+              "zh": "谢谢帮忙。我会记着的。",
+              "answer": "Thanks for helping. I will never forget it.",
+              "hint": "用「I will never forget it.」来表达"
+            },
+            {
+              "zh": "我不会忘。你帮了我大忙。",
+              "answer": "I will never forget it. You saved me.",
+              "hint": "用「I will never forget it.」来表达"
+            }
+          ]
+        },
+        {
+          "id": "l3-t8-4",
+          "type": "chunk_substitution",
+          "title": "说明情况、补救与确认 听辨理解",
+          "chunk": "I left it right here.",
+          "chunkMeaning": "我明明放在这儿的。",
+          "direction": "en_to_zh",
+          "kind": "chunk",
+          "items": [
+            {
+              "en": "I left it right here. Where did it go?",
+              "answer": "我明明放这儿的。去哪了？",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Sorry about that. I will be more careful.",
+              "answer": "抱歉。我会更小心。",
+              "hint": "先抓住关键词，再说出中文意思"
+            },
+            {
+              "en": "Thanks for helping. I will never forget it.",
+              "answer": "谢谢帮忙。我会记着的。",
+              "hint": "先抓住关键词，再说出中文意思"
+            }
+          ]
+        },
+        {
+          "id": "l3-t8-5",
+          "type": "sentence_decomposition",
+          "title": "I left it right here. 句子拆解",
+          "sourceText": "I left it right here.",
+          "sourceKind": "chunk",
+          "fullSentence": "I left it right here. Where did it go?",
+          "fullSentenceZh": "我明明放这儿的。去哪了？",
+          "levels": [
+            {
+              "level": 1,
+              "label": "核心句",
+              "en": "I left it right here.",
+              "zh": "我明明放在这儿的。",
+              "highlight": "",
+              "hint": "先说出本课核心表达"
+            },
+            {
+              "level": 2,
+              "label": "完整句",
+              "en": "I left it right here. Where did it go?",
+              "zh": "我明明放这儿的。去哪了？",
+              "highlight": ". Where did it go?",
+              "hint": "补上场景信息，说成一句完整话"
+            }
+          ]
+        }
+      ],
+      "materialUsage": {
+        "totals": {
+          "chunks": [],
+          "vocabs": [],
+          "patterns": []
+        },
+        "usedRefs": {
+          "chunkIds": [],
+          "vocabIds": [],
+          "patternIds": []
+        },
+        "itemStats": []
+      }
+    }
+  }
+}

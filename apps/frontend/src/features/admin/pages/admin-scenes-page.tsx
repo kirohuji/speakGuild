@@ -43,7 +43,6 @@ import {
   getTrainingTopic, getTrainingTopicNavigation, listAllChunks, listStories, getStory, listScriptEpisodes, deleteScriptEpisode,
   listLibraryPatterns, createLibraryVocabulary, createLibraryPattern, createLibraryChunk,
   suggestTopicSupports, suggestTopicVocabs,
-  enqueueWarmupPipelineGeneration,
   enqueueSceneTopicBatchGeneration,
   type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData, type SentencePatternFull, type StoryEpisode,
   type TopicClaimConflict, type SuggestedTopicSupportItem, type SuggestedVocabItem, type TopicSupportKind, type GroupMaterialUsageEntry,
@@ -2040,14 +2039,6 @@ function TrainingTopicDialog({
                 patterns={boundPatterns}
                 topicTitle={form.title || edit?.title || ''}
                 difficulty={form.difficulty ?? edit?.difficulty ?? 'L2'}
-                onGenerateInBackground={async () => {
-                  const saved = await saveTopic()
-                  if (!saved) throw new Error('请先保存完整的话题信息')
-                  const task = await enqueueWarmupPipelineGeneration(saved.id)
-                  toast.success(task.reused ? '该话题已有生成任务正在执行' : '已发送到任务中心，可继续编辑或离开页面', {
-                    action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-                  })
-                }}
               />
             </TabsContent>
           </div>

@@ -56,13 +56,13 @@
           "kind": "chunk",
           "items": [
             {
-              "zh": "航班延误了。然后呢？",
-              "answer": "The flight is delayed. Then what?",
+              "zh": "航班延误了。——然后呢？",
+              "answer": "The flight is delayed. — Then what?",
               "hint": "用「Then what?」来表达"
             },
             {
-              "zh": "好，今晚取消。然后呢？",
-              "answer": "Okay, we cancel tonight. Then what?",
+              "zh": "好，今晚取消。——然后呢？",
+              "answer": "Okay, we cancel tonight. — Then what?",
               "hint": "用「Then what?」来表达"
             }
           ]
@@ -87,8 +87,8 @@
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "The flight is delayed. Then what?",
-              "answer": "航班延误了。然后呢？",
+              "en": "The flight is delayed. — Then what?",
+              "answer": "航班延误了。——然后呢？",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
@@ -151,8 +151,8 @@
           "kind": "chunk",
           "items": [
             {
-              "zh": "今晚做什么——吃饭还是散步？",
-              "answer": "What shall we do tonight—dinner or a walk?",
+              "zh": "今晚做什么：吃饭还是散步？",
+              "answer": "What shall we do tonight: dinner or a walk?",
               "hint": "用「What shall we do tonight?」来表达"
             },
             {
@@ -177,8 +177,8 @@
               "hint": "用「Let's play it by ear.」来表达"
             },
             {
-              "zh": "我可能晚点结束——我们灵活一点吧。",
-              "answer": "I might finish late—let's play it by ear.",
+              "zh": "我可能晚点结束。我们灵活一点吧。",
+              "answer": "I might finish late. Let's play it by ear.",
               "hint": "用「Let's play it by ear.」来表达"
             }
           ]
@@ -214,8 +214,8 @@
           "kind": "chunk",
           "items": [
             {
-              "en": "What shall we do tonight—dinner or a walk?",
-              "answer": "今晚做什么——吃饭还是散步？",
+              "en": "What shall we do tonight: dinner or a walk?",
+              "answer": "今晚做什么：吃饭还是散步？",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
@@ -236,8 +236,8 @@
           "title": "What shall we do tonight? 句子拆解",
           "sourceText": "What shall we do tonight?",
           "sourceKind": "chunk",
-          "fullSentence": "What shall we do tonight—dinner or a walk?",
-          "fullSentenceZh": "今晚做什么——吃饭还是散步？",
+          "fullSentence": "What shall we do tonight: dinner or a walk?",
+          "fullSentenceZh": "今晚做什么：吃饭还是散步？",
           "levels": [
             {
               "level": 1,
@@ -250,9 +250,9 @@
             {
               "level": 2,
               "label": "完整句",
-              "en": "What shall we do tonight—dinner or a walk?",
-              "zh": "今晚做什么——吃饭还是散步？",
-              "highlight": "What shall we do tonight—dinner or a walk?",
+              "en": "What shall we do tonight: dinner or a walk?",
+              "zh": "今晚做什么：吃饭还是散步？",
+              "highlight": "What shall we do tonight: dinner or a walk?",
               "hint": "补上场景信息，说成一句完整话"
             }
           ]
@@ -273,7 +273,7 @@
       }
     }
   },
-  "入住安顿、许可与服务沟通": {
+  "叫醒、安顿与出门准备": {
     "outputTraining": {
       "enabled": true,
       "version": 1,
@@ -302,49 +302,49 @@
         {
           "id": "l2-t3-2",
           "type": "chunk_substitution",
-          "title": "Take your time to unpack. 句块替换",
-          "chunk": "Take your time to unpack.",
-          "chunkMeaning": "慢慢来收拾行李",
+          "title": "What are you still doing in bed? 句块替换",
+          "chunk": "What are you still doing in bed?",
+          "chunkMeaning": "你怎么还不起床？",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "慢慢收拾行李。晚饭可以等。",
-              "answer": "Take your time to unpack. Dinner can wait.",
-              "hint": "用「Take your time to unpack.」来表达"
+              "zh": "都八点了。你怎么还不起床？",
+              "answer": "It's already eight. What are you still doing in bed?",
+              "hint": "用「What are you still doing in bed?」来表达"
             },
             {
-              "zh": "请先慢慢收拾行李。",
-              "answer": "Please take your time to unpack first.",
-              "hint": "用「Take your time to unpack.」来表达"
+              "zh": "你怎么还不起床？我们该走了。",
+              "answer": "What are you still doing in bed? We need to leave.",
+              "hint": "用「What are you still doing in bed?」来表达"
             }
           ]
         },
         {
           "id": "l2-t3-3",
           "type": "chunk_substitution",
-          "title": "And get settled in. 句块替换",
-          "chunk": "And get settled in.",
-          "chunkMeaning": "安顿下来",
+          "title": "I get up at six o'clock. 句块替换",
+          "chunk": "I get up at six o'clock.",
+          "chunkMeaning": "我六点起床。",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "慢慢收拾行李，先安顿下来。",
-              "answer": "Take your time to unpack and get settled in.",
-              "hint": "用「And get settled in.」来表达"
+              "zh": "工作日我六点起床。",
+              "answer": "I get up at six o'clock on weekdays.",
+              "hint": "用「I get up at six o'clock.」来表达"
             },
             {
-              "zh": "先安顿下来，再看日程。",
-              "answer": "Get settled in, then we'll check the schedule.",
-              "hint": "用「And get settled in.」来表达"
+              "zh": "我六点起，所以早上比较安静。",
+              "answer": "I get up at six o'clock, so mornings are quiet.",
+              "hint": "用「I get up at six o'clock.」来表达"
             }
           ]
         },
         {
           "id": "l2-t3-4",
           "type": "chunk_substitution",
-          "title": "入住安顿、许可与服务沟通 听辨理解",
+          "title": "叫醒、安顿与出门准备 听辨理解",
           "chunk": "Wake me up at five thirty.",
           "chunkMeaning": "请在五点半叫醒我。",
           "direction": "en_to_zh",
@@ -356,13 +356,13 @@
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Take your time to unpack. Dinner can wait.",
-              "answer": "慢慢收拾行李。晚饭可以等。",
+              "en": "It's already eight. What are you still doing in bed?",
+              "answer": "都八点了。你怎么还不起床？",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Take your time to unpack and get settled in.",
-              "answer": "慢慢收拾行李，先安顿下来。",
+              "en": "I get up at six o'clock on weekdays.",
+              "answer": "工作日我六点起床。",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]
@@ -472,8 +472,8 @@
               "hint": "用「I can explain.」来表达"
             },
             {
-              "zh": "等等——延误的事我可以解释。",
-              "answer": "Wait—I can explain the delay.",
+              "zh": "等等。延误的事我可以解释。",
+              "answer": "Wait. I can explain the delay.",
               "hint": "用「I can explain.」来表达"
             }
           ]
@@ -613,8 +613,8 @@
               "hint": "用「You're breaking up.」来表达"
             },
             {
-              "zh": "抱歉信号不好——再说一遍？",
-              "answer": "Sorry, you're breaking up—say that again?",
+              "zh": "抱歉信号不好。再说一遍？",
+              "answer": "Sorry, you're breaking up. Say that again?",
               "hint": "用「You're breaking up.」来表达"
             }
           ]
@@ -750,8 +750,8 @@
               "hint": "用「I am not mad.」来表达"
             },
             {
-              "zh": "我没生气——只是累了。",
-              "answer": "I am not mad—just tired.",
+              "zh": "我没生气，只是累了。",
+              "answer": "I am not mad, just tired.",
               "hint": "用「I am not mad.」来表达"
             }
           ]
@@ -1064,8 +1064,8 @@
           "kind": "chunk",
           "items": [
             {
-              "zh": "订上午时段？真是好主意！",
-              "answer": "Book a morning slot? That's a terrific idea!",
+              "zh": "订上午时段？——真是好主意！",
+              "answer": "Book a morning slot? — That's a terrific idea!",
               "hint": "用「That's a terrific idea!」来表达"
             },
             {
@@ -1111,8 +1111,8 @@
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "Book a morning slot? That's a terrific idea!",
-              "answer": "订上午时段？真是好主意！",
+              "en": "Book a morning slot? — That's a terrific idea!",
+              "answer": "订上午时段？——真是好主意！",
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
@@ -1136,8 +1136,8 @@
               "hint": "套用句型：It's settled, then."
             },
             {
-              "zh": "订上午时段？真是好主意！",
-              "answer": "Book a morning slot? That's a terrific idea!",
+              "zh": "订上午时段？——真是好主意！",
+              "answer": "Book a morning slot? — That's a terrific idea!",
               "hint": "套用句型：It's settled, then."
             }
           ]

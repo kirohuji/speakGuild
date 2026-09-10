@@ -34,7 +34,7 @@ Generate a compact set of warmup exercise groups in ONE JSON response.
 Exercise group types:
 1. chunk_substitution
    Fields: type, title, chunk, chunkMeaning, direction("zh_to_en"|"en_to_zh"), kind("word"|"chunk"), items[]
-   Items (zh_to_en): {zh: "中文题干", answer: "English answer", hint: "提示"}
+   Items (zh_to_en): {zh: "英文答案的准确中文翻译", answer: "English answer", hint: "提示"}
    Items (en_to_zh): {en: "English prompt", answer: "中文答案", hint: "提示"}
    NEVER mix: if direction=zh_to_en, ALL items use {zh, answer}. If direction=en_to_zh, ALL items use {en, answer}.
 2. vocab_sentence_building
@@ -138,17 +138,19 @@ When assigning words to patterns, match the word's semantic category to the patt
 Rules:
 - Return ONLY valid JSON: { "pipeline": [...] }
 - Do not include ids; frontend will assign ids.
-- Cover EVERY missing material at least once across the pipeline — one exercise per word/chunk/pattern is enough, do NOT force second passes. When there are many missing materials, that is fine: keep each exercise distinct (see COMBINATION DESIGN) and stay within the hard caps below.
+- Use the current material-pool usage counts as the source of truth. Cover EVERY material whose count is 0 at least once in this pipeline; do not stop after a small priority subset. A material with count > 0 is already covered and should not displace an unused one.
 - Each group should target a DIFFERENT material (word/chunk/pattern). Do not put all missing materials into one giant group.
 - Use missing materials preferentially, but choose exercise types naturally and vary them.
-- Mix types: do not generate only chunk_substitution groups. Include at least one pattern_drill, one vocab_sentence_building, and varied combinations.
+- Across the complete pipeline, use all four types where the material pool supports them — chunk_substitution, vocab_sentence_building, pattern_drill, and sentence_decomposition. Do NOT force every target into every type; assign each unused material to the exercise type that genuinely practices it.
+- When generating sentence_decomposition, choose one of this batch's target words/chunks/patterns as sourceText and ensure its final fullSentence contains that source material.
 - IMPORTANT — en_to_zh comprehension check: Always include at least 2 en_to_zh items (chunk_substitution with direction="en_to_zh"). These confirm the learner can read/hear English and understand it — not just produce it. Use natural English sentences, not textbook examples.
 - Avoid homogeneous output and near-duplicate sentences.
-- Keep each group compact: 2-4 translation items per group, 2-3 pattern groups for vocab_sentence_building, 3-5 progressive levels for sentence_decomposition (L1 ⊂ L2 ⊂ ... ⊂ LN, same sentence, incremental, N adapts to sentence complexity).
+- Keep each group compact: 2-3 translation items per group, 1-2 pattern groups for vocab_sentence_building, 3-4 progressive levels for sentence_decomposition.
 - CRITICAL: Every group MUST have at least 2 items — never generate a group with only 1 item (that creates a "single-item section" which is invalid). If you can only fill 1 item for a material, combine it with another material in the same group.
 - STRUCTURE TARGETS (aim for these, not just the minimum):
-  * Total practice items: 8-25 is ideal; more is acceptable if every exercise stays distinct. HARD MAXIMUM: 48 items per round.
-  * Total groups (steps): 4-8 is ideal. HARD MAXIMUM: 12 groups per round.
+  * Total practice items: 8-25 is ideal; more is acceptable when needed to cover all unused material. HARD MAXIMUM: 48 items.
+  * Total groups (steps): 4-8 is ideal. HARD MAXIMUM: 12 groups.
+  * Exercise types: aim to cover all four types across this complete pipeline, while prioritising each unused material's most suitable type.
   * zh_to_en output items: at least 3 (output activation, step 1 priority).
   * en_to_zh comprehension items: at least 2 (input check — confirms reading/listening understanding).
   * pattern_drill items: at least 2 (structural output training — ensures learner can use sentence patterns flexibly).
@@ -156,16 +158,17 @@ Rules:
 - PIPELINE ORDERING (the pipeline array is an ordered sequence — position matters):
   * The FIRST group(s) MUST be zh_to_en chunk_substitution — these are the warmup opener that activates the learner's English output. Like "中译英替换" in the UI, this is step 1 of the warmup flow.
   * Follow with en_to_zh comprehension check groups — after producing English, confirm understanding.
-  * Then pattern_drill or vocab_sentence_building groups for deeper practice.
-  * Sentence decomposition (if any) goes last as the consolidation exercise.
+  * Then use pattern_drill and vocab_sentence_building groups for deeper practice.
+  * Sentence decomposition goes last as the consolidation exercise when included.
   * Do NOT put en_to_zh or decomposition before zh_to_en. The order is: output activation → input check → structure drill → consolidation.
 ${DRILL_HINT_WRITING_RULES}
 - PIPELINE ORDERING (the pipeline array is an ordered sequence — position matters):
 - For en_to_zh, put English prompt in "en" and Chinese answer in "answer". Do NOT include a "zh" field on en_to_zh items.
 - For zh_to_en, put Chinese prompt in "zh" and English answer in "answer". Do NOT include an "en" field on zh_to_en items.
 - CRITICAL: Every item in a group must follow the group's direction. If direction="zh_to_en", ALL items use {zh, answer} — never mix {en, answer} items into a zh_to_en group, and never include both zh and en on the same item. Direction mixing within one group is invalid.
-- Make sure generated English actually uses the target material or clearly demonstrates the source pattern.
-- IMPORTANT: Review the PREVIOUSLY GENERATED ITEMS section below. Do NOT generate the same exercises again. Instead, fix gaps: if previous items were too short, make them richer; if they were too similar, vary the scenarios; if a material was covered poorly, cover it better this time.`;
+- TRANSLATION FIDELITY (non-negotiable): every zh_to_en "zh" must be the direct, complete Chinese translation of its own "answer" — no scene-setting, inferred intent, speaking task, or extra context. A learner who translates zh literally and naturally must arrive at answer.
+- TARGET-IN-ITEM CHECK (non-negotiable): the target must occur in EVERY practice item, not only in the group title/metadata. For zh_to_en, put the complete target in each English "answer". For en_to_zh, put the complete target in each English "en" prompt. A chunk must appear as the exact continuous phrase; do not replace it with a synonym or use only one word from it. For sentence_decomposition, the final fullSentence must contain sourceText.
+- IMPORTANT: Do not repeat the compact previous-item summary below. Return the smallest valid JSON that meets this brief.`;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PART B: User Prompt（由 buildWarmupPipelineUserPrompt 在运行时构建）
@@ -233,7 +236,7 @@ export function buildWarmupPipelineUserPrompt(input: WarmupPipelinePromptInput):
         '',
         '## ══ FORBIDDEN MATERIALS (MUST NOT appear anywhere) ══',
         'These knowledge points belong to LATER learning packs. NEVER use them in any exercise, example sentence, prompt, hint, or answer:',
-        input.forbiddenMaterials.map((text) => `- ${text}`).join('\n'),
+        input.forbiddenMaterials.slice(0, 24).map((text) => `- ${text}`).join('\n'),
         '',
       ].join('\n')
     : '';
@@ -243,7 +246,7 @@ export function buildWarmupPipelineUserPrompt(input: WarmupPipelinePromptInput):
         '',
         '## ══ REVIEW MATERIALS (earlier packs, nice-to-have) ══',
         'You MAY reuse these as spaced repetition in example sentences, but do NOT make them new teaching targets:',
-        input.reviewMaterials.map((text) => `- ${text}`).join('\n'),
+        input.reviewMaterials.slice(0, 12).map((text) => `- ${text}`).join('\n'),
         '',
       ].join('\n')
     : '';
@@ -256,8 +259,8 @@ export function buildWarmupPipelineUserPrompt(input: WarmupPipelinePromptInput):
     previousSummary,
     forbiddenBlock,
     reviewBlock,
-    `There are ${totalMissing} missing materials. Cover each of them at least once across the pipeline — one exercise per word/chunk/pattern is enough, do NOT force second passes.`,
-    'Generate enough groups to cover them, but keep every exercise distinct and stay within the hard caps.',
+    `There are ${totalMissing} unused materials (count=0) in the current pool. Cover every one of them at least once in this pipeline.`,
+    'The editor will reveal the returned groups one at a time for human review; do not reduce coverage just because review is sequential.',
     '',
     '## ══ Current State (already generated; targets per System rules) ══',
     '',
@@ -268,13 +271,13 @@ export function buildWarmupPipelineUserPrompt(input: WarmupPipelinePromptInput):
     `- pattern_drill items so far: ${structure.patternItems}`,
     `- expansion groups so far: ${structure.expansionUnits}`,
     '',
-    `IMPORTANT: Stay within the hard caps (48 items / 12 groups). The more materials you cover, the more you must fight homogeneity: vary scenarios, tones and details between every exercise. Combine words with sentence patterns (see COMBINATION DESIGN) instead of churning out same-structure substitutions. Quality over mechanical coverage.`,
+    'Keep JSON concise, but do not omit an unused material. Use short titles, 2-4 items per group, and one Chinese hint per item.',
     '',
     '## ══ Materials ══',
     '',
     'Select materials following the coverage priority defined in the System rules ([core] count=0 → [ext] count=0 → under-covered → [carry]).',
     '',
-    '### Missing Materials (count=0, MUST cover):',
+    '### Unused materials (count=0, every one must be covered):',
     '',
     '#### Core Words [core] — must cover first:',
     fmtVocabs(materials.missingCoreVocabs),
@@ -295,15 +298,6 @@ export function buildWarmupPipelineUserPrompt(input: WarmupPipelinePromptInput):
       ? materials.missingPatterns.map((p) => `- ${p.pattern}${p.meaning ? `: ${p.meaning}` : ''}`).join('\n')
       : '- (none — all covered!)',
     '',
-    '## ══ Full Material Pool (for context) ══',
-    '',
-    '### Vocabulary (with tier tags):',
-    materials.vocabPoolSummary || '(none)',
-    '',
-    '### Chunks:',
-    materials.chunkPoolSummary || '(none)',
-    '',
-    '### Sentence Patterns:',
-    materials.patternPoolSummary || '(none)',
+    'Only use the listed material pool plus safe review materials. Do not invent unlisted learning targets.',
   ].join('\n');
 }

@@ -88,7 +88,6 @@ interface Props {
   patterns?: { id: string; pattern: string; meaning?: string }[]
   topicTitle?: string
   difficulty?: string
-  onGenerateInBackground?: () => Promise<void>
 }
 
 let _idCounter = Date.now()
@@ -549,7 +548,6 @@ export function WarmupPipelineTab({
   patterns = [],
   topicTitle,
   difficulty,
-  onGenerateInBackground,
 }: Props) {
   const [local, setLocal] = useState<WarmupPipelineData>(value)
   const [selectedItemId, setSelectedItemId] = useState<string | null>(value.pipeline[0]?.id ?? null)
@@ -557,6 +555,11 @@ export function WarmupPipelineTab({
   const [aiHintingAll, setAiHintingAll] = useState(false)
   const [aiAudioAll, setAiAudioAll] = useState(false)
   const [compacting, setCompacting] = useState(false)
+  // AI may return several groups in one response, but only one is put into the
+  // editable form at a time. This makes the author explicitly approve each
+  // group before seeing the next one.
+  const [reviewingItemId, setReviewingItemId] = useState<string | null>(null)
+  const [reviewQueue, setReviewQueue] = useState<WarmupPipelineItem[]>([])
   const [materialContext, setMaterialContext] = useState<SceneMaterialContext | null>(null)
   const prevIdsRef = useRef<string>('')
 
@@ -806,15 +809,8 @@ export function WarmupPipelineTab({
   }
 
   const generateMissingPracticeItems = async () => {
-    if (onGenerateInBackground) {
-      setAiGeneratingMissing(true)
-      try {
-        await onGenerateInBackground()
-      } catch (err: any) {
-        toast.error(err?.message || '后台生成任务创建失败')
-      } finally {
-        setAiGeneratingMissing(false)
-      }
+    if (reviewingItemId) {
+      toast.error('请先审核当前 AI 题组，再继续生成')
       return
     }
     const currentZhItems = local.pipeline
@@ -1012,16 +1008,43 @@ export function WarmupPipelineTab({
         return
       }
 
-      const nextPipeline = [...local.pipeline, ...generatedItems]
-      const compacted = compactWarmupPipeline(nextPipeline)
-      commit({ pipeline: compacted.pipeline })
-      setSelectedItemId(generatedItems[0].id)
-      toast.success(`已补齐生成 ${generatedItems.length} 个题组${compacted.removedCount ? `，并去掉 ${compacted.removedCount} 条重复题目` : ''}`)
+      // Do not append the whole result: render the first group in the editor
+      // and keep the rest behind an explicit review gate.
+      const [firstItem, ...pendingItems] = generatedItems
+      commit({ pipeline: [...local.pipeline, firstItem] })
+      setSelectedItemId(firstItem.id)
+      setReviewingItemId(firstItem.id)
+      setReviewQueue(pendingItems)
+      toast.success(`已生成第 1/${generatedItems.length} 个题组，请在右侧检查并修改后确认`)
     } catch (err: any) {
       toast.error(err?.message || '全部 AI 生成失败')
     } finally {
       setAiGeneratingMissing(false)
     }
+  }
+
+  const advanceReviewedItem = (discardCurrent = false) => {
+    if (!reviewingItemId) return
+    const currentPipeline = discardCurrent
+      ? local.pipeline.filter((item) => item.id !== reviewingItemId)
+      : local.pipeline
+    const [nextItem, ...remainingItems] = reviewQueue
+
+    if (!nextItem) {
+      commit({ pipeline: currentPipeline })
+      setReviewingItemId(null)
+      setReviewQueue([])
+      setSelectedItemId(currentPipeline[currentPipeline.length - 1]?.id ?? null)
+      toast.success(discardCurrent ? '已跳过当前题组，审核流程完成' : '全部 AI 题组已审核完成')
+      return
+    }
+
+    const nextPipeline = [...currentPipeline, nextItem]
+    commit({ pipeline: nextPipeline })
+    setSelectedItemId(nextItem.id)
+    setReviewingItemId(nextItem.id)
+    setReviewQueue(remainingItems)
+    toast.success(`已进入下一题组（剩余 ${remainingItems.length} 个待审核）`)
   }
 
   const generateAllEnglishAudio = async () => {
@@ -1390,11 +1413,11 @@ export function WarmupPipelineTab({
             type="button"
             size="sm"
             className="h-8 gap-1.5"
-            disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll}
+            disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll || Boolean(reviewingItemId)}
             onClick={generateMissingPracticeItems}
           >
             {aiGeneratingMissing ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
-            全部 AI 生成{missingMaterialCount ? ` ${missingMaterialCount}` : ''}
+            {reviewingItemId ? `审核中 · 余 ${reviewQueue.length}` : `AI 逐条生成${missingMaterialCount ? ` ${missingMaterialCount}` : ''}`}
           </Button>
           <Button
             type="button"
@@ -1431,6 +1454,26 @@ export function WarmupPipelineTab({
           </Button>
         </div>
       </div>
+
+      {reviewingItemId && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300/80 bg-amber-50/70 px-3 py-2.5 text-sm dark:border-amber-800 dark:bg-amber-950/20">
+          <div className="flex min-w-0 items-center gap-2">
+            <CheckCircle2 className="size-4 shrink-0 text-amber-700 dark:text-amber-400" />
+            <p className="text-xs leading-5 text-amber-950 dark:text-amber-100">
+              当前题组已回显到编辑区。请检查题干、答案和提示；修改会保留在本话题中，确认后才展示下一题。
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Button type="button" size="sm" variant="ghost" className="h-8 text-xs" onClick={() => advanceReviewedItem(true)}>
+              跳过此题组
+            </Button>
+            <Button type="button" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => advanceReviewedItem()}>
+              <CheckCircle2 className="size-3.5" />
+              确认，下一题
+            </Button>
+          </div>
+        </div>
+      )}
 
       <div className="grid h-[min(660px,calc(92vh-15rem))] min-h-[520px] gap-3 xl:grid-cols-[19rem_minmax(0,1fr)]">
       <aside className="flex min-h-0 flex-col rounded-lg border border-border/70 bg-background">

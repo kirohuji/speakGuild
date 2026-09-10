@@ -70,8 +70,8 @@ const topics = [
         insight: "追问下一步；适合计划变化后继续推进。",
         active: true,
         examples: [
-          { en: "The flight is delayed. Then what?", zh: "航班延误了。然后呢？" },
-          { en: "Okay, we cancel tonight. Then what?", zh: "好，今晚取消。然后呢？" },
+          { en: "The flight is delayed. — Then what?", zh: "航班延误了。——然后呢？" },
+          { en: "Okay, we cancel tonight. — Then what?", zh: "好，今晚取消。——然后呢？" },
         ],
       },
       {
@@ -269,7 +269,7 @@ const topics = [
         insight: "开放式征询安排；适合已约上但未定细节。",
         active: true,
         examples: [
-          { en: "What shall we do tonight—dinner or a walk?", zh: "今晚做什么——吃饭还是散步？" },
+          { en: "What shall we do tonight: dinner or a walk?", zh: "今晚做什么：吃饭还是散步？" },
           { en: "We're both free. What shall we do tonight?", zh: "我们都有空。今晚做什么？" },
         ],
       },
@@ -280,7 +280,7 @@ const topics = [
         active: true,
         examples: [
           { en: "Traffic looks bad. Let's play it by ear.", zh: "路况不好。我们见机行事吧。" },
-          { en: "I might finish late—let's play it by ear.", zh: "我可能晚点结束——我们灵活一点吧。" },
+          { en: "I might finish late. Let's play it by ear.", zh: "我可能晚点结束。我们灵活一点吧。" },
         ],
       },
       {
@@ -300,7 +300,7 @@ const topics = [
         active: true,
         examples: [
           { en: "Can you talk? — Not now.", zh: "能聊吗？——现在不行。" },
-          { en: "Not now—I'm checking in at the hotel.", zh: "现在不行——我在酒店办理入住。" },
+          { en: "Not now. I'm checking in at the hotel.", zh: "现在不行。我在酒店办理入住。" },
         ],
       },
       {
@@ -390,7 +390,7 @@ const topics = [
         active: false,
         examples: [
           { en: "I don't like spicy food. — Me neither.", zh: "我不爱吃辣。——我也不。" },
-          { en: "I haven't finished. Me neither.", zh: "我还没做完。我也没有。" },
+          { en: "I haven't finished. — Me neither.", zh: "我还没做完。——我也没有。" },
         ],
       },
       {
@@ -466,26 +466,23 @@ const topics = [
     ],
   },
   {
-    title: "入住安顿、许可与服务沟通",
-    promptEn: "Handle check-in, settling in, and simple service requests.",
-    promptZh: "入住安顿、许可和服务沟通。",
-    description: "叫醒、安顿、打包行李，以及许可与服务回应。",
-    knowledgePoints: "入住安顿；许可回应；服务沟通；收尾礼貌",
+    title: "叫醒、安顿与出门准备",
+    promptEn: "Handle waking up, settling in, and getting ready to go out.",
+    promptZh: "叫醒、安顿和出门准备。",
+    description: "叫醒与起床、收拾安顿，以及出门前的准备与接待。",
+    knowledgePoints: "叫醒起床；安顿收拾；出门准备；简单接待",
     duration: 900,
-    goal: "能在入住或安顿时说明需求，并回应许可与服务安排。",
-    tip: "先说要做什么，再等对方许可或回应。",
-    docIntro: "叫醒、收拾行李、安顿下来，再加上许可和简单服务回应。",
+    goal: "能说明叫醒、安顿和出门准备，并回应简单接待。",
+    tip: "先说时间或动作，再补一句原因或安排。",
+    docIntro: "这一课围着叫醒、收拾安顿和出门准备：把时间说清，再把下一步讲明白。",
     patterns: [
     ],
-    vocabs: [
-      "reservation", "credit", "card", "unpack", "settled", "pack", "reasonable", "price",
-      "guest", "wake", "check", "service", "booking", "room", "course", "sleep", "book",
-    ],
+    vocabs: [],
     expressions: [
       {
         text: "Wake me up at five thirty.",
         meaning: "请在五点半叫醒我。",
-        insight: "酒店叫醒服务请求；把时间说清楚。",
+        insight: "请人叫醒时把时间说清楚；也可改成其他整点。",
         active: true,
         examples: [
           { en: "Wake me up at five thirty, please. I have an early train.", zh: "请五点半叫醒我。我有早班火车。" },
@@ -493,9 +490,59 @@ const topics = [
         ],
       },
       {
+        text: "What are you still doing in bed?",
+        meaning: "你怎么还不起床？",
+        insight: "催对方起床；语气偏直接，熟人间更常见。",
+        active: true,
+        examples: [
+          { en: "It's already eight. What are you still doing in bed?", zh: "都八点了。你怎么还不起床？" },
+          { en: "What are you still doing in bed? We need to leave.", zh: "你怎么还不起床？我们该走了。" },
+        ],
+      },
+      {
+        text: "I get up at six o'clock.",
+        meaning: "我六点起床。",
+        insight: "说明作息；把时间换成你的即可。",
+        active: true,
+        examples: [
+          { en: "I get up at six o'clock on weekdays.", zh: "工作日我六点起床。" },
+          { en: "I get up at six o'clock, so mornings are quiet.", zh: "我六点起，所以早上比较安静。" },
+        ],
+      },
+      {
+        text: "I had to take a shower.",
+        meaning: "我得冲个澡。",
+        insight: "had to 表示不得不；常用来解释耽误了一会儿。",
+        active: false,
+        examples: [
+          { en: "Sorry I'm late. I had to take a shower.", zh: "抱歉迟到。我得先冲个澡。" },
+          { en: "I had to take a shower after the gym.", zh: "健身后我得洗个澡。" },
+        ],
+      },
+      {
+        text: "Get dressed now.",
+        meaning: "现在就穿好衣服。",
+        insight: "催促出门前穿戴；语气短而直接。",
+        active: true,
+        examples: [
+          { en: "We're late. Get dressed now.", zh: "我们迟到了。现在就穿好衣服。" },
+          { en: "Get dressed now. The taxi is here.", zh: "赶紧穿好。出租车到了。" },
+        ],
+      },
+      {
+        text: "Mother doesn't make up.",
+        meaning: "妈妈不化妆。",
+        insight: "陈述出门前习惯；也可换成其他人称。",
+        active: false,
+        examples: [
+          { en: "Mother doesn't make up before work.", zh: "妈妈上班前不化妆。" },
+          { en: "Mother doesn't make up, but she still looks neat.", zh: "妈妈不化妆，但看起来还是很整洁。" },
+        ],
+      },
+      {
         text: "Take your time to unpack.",
-        meaning: "慢慢来收拾行李",
-        insight: "让对方安心安顿；常与 get settled in 连用。",
+        meaning: "慢慢收拾行李。",
+        insight: "让对方先安顿；常和 get settled in 一起说。",
         active: true,
         examples: [
           { en: "Take your time to unpack. Dinner can wait.", zh: "慢慢收拾行李。晚饭可以等。" },
@@ -504,18 +551,18 @@ const topics = [
       },
       {
         text: "And get settled in.",
-        meaning: "安顿下来",
+        meaning: "先安顿下来。",
         insight: "常接在 unpack 后；表示先安顿再谈别的。",
         active: true,
         examples: [
-          { en: "Take your time to unpack and get settled in.", zh: "慢慢收拾行李，先安顿下来。" },
+          { en: "Rest a bit and get settled in.", zh: "先休息一下，安顿下来。" },
           { en: "Get settled in, then we'll check the schedule.", zh: "先安顿下来，再看日程。" },
         ],
       },
       {
         text: "You should go pack.",
-        meaning: "你该去打包行李了",
-        insight: "提醒准备出发或退房；语气直接。",
+        meaning: "你该去打包了。",
+        insight: "提醒准备出发或退房；可补离开时间。",
         active: true,
         examples: [
           { en: "It's getting late. You should go pack.", zh: "不早了。你该去打包了。" },
@@ -523,69 +570,19 @@ const topics = [
         ],
       },
       {
-        text: "Do I start now?",
-        meaning: "我可以开始了吗？",
-        insight: "课程或服务开始前确认；避免贸然动手。",
-        active: true,
-        examples: [
-          { en: "I'm ready. Do I start now?", zh: "我准备好了。现在可以开始吗？" },
-          { en: "Do I start now, or wait for the others?", zh: "我现在开始，还是等其他人？" },
-        ],
-      },
-      {
         text: "It's only for 2 weeks.",
-        meaning: "只不过两个星期",
-        insight: "说明时长，降低对方顾虑；也可用于课程周期。",
-        active: true,
-        examples: [
-          { en: "Don't worry—it's only for 2 weeks.", zh: "别担心——只不过两个星期。" },
-          { en: "It's only for 2 weeks. Can I extend later?", zh: "只订两周。之后能续吗？" },
-        ],
-      },
-      {
-        text: "show it to me.",
-        meaning: "给我看看",
-        insight: "请求展示确认单、房间或材料；短促清楚。",
-        active: true,
-        examples: [
-          { en: "Is this the confirmation? Show it to me.", zh: "这是确认单吗？给我看看。" },
-          { en: "Show it to me on your phone.", zh: "在你手机上给我看一下。" },
-        ],
-      },
-      {
-        text: "Allow me.",
-        meaning: "让我来",
-        insight: "主动代劳开门、拿行李等；礼貌介入。",
-        active: true,
-        examples: [
-          { en: "Allow me—I'll get the door.", zh: "让我来——我来开门。" },
-          { en: "Allow me. I can carry that bag.", zh: "让我来。我可以提那个包。" },
-        ],
-      },
-      {
-        text: "Remember what the doctor said.",
-        meaning: "记得医生的叮嘱",
-        insight: "提醒遵守医嘱或注意事项；也可引申为记住关键提醒。",
-        active: true,
-        examples: [
-          { en: "Remember what the doctor said: rest today.", zh: "记得医生的叮嘱：今天休息。" },
-          { en: "Before the trip, remember what the doctor said.", zh: "出发前，记得医生怎么说的。" },
-        ],
-      },
-      {
-        text: "Which book we talking about?",
-        meaning: "哪一本书？",
-        insight: "课程/教材预约时确认对象；口语省略 are。",
+        meaning: "只不过两个星期。",
+        insight: "说明停留或安排时长，减轻对方顾虑。",
         active: false,
         examples: [
-          { en: "For the evening class—which book we talking about?", zh: "晚课那本——我们说的是哪本？" },
-          { en: "Which book we talking about for level two?", zh: "二级课说的是哪本书？" },
+          { en: "Don't worry. It's only for 2 weeks.", zh: "别担心。只不过两个星期。" },
+          { en: "It's only for 2 weeks. Can I extend later?", zh: "只住两周。之后能续吗？" },
         ],
       },
       {
         text: "Business trip.",
         meaning: "出差。",
-        insight: "简短说明行程性质；常接 I'm on a...。",
+        insight: "简短说明行程性质；常说 I'm on a business trip。",
         active: false,
         examples: [
           { en: "I'm on a business trip next week.", zh: "我下周出差。" },
@@ -593,93 +590,93 @@ const topics = [
         ],
       },
       {
-        text: "Go on in.",
-        meaning: "请进 / 赶紧进去吧。",
-        insight: "让对方先进屋；口语短句。",
+        text: "Thank you so much for helping me move yesterday.",
+        meaning: "非常感谢你昨天帮我搬家。",
+        insight: "搬家后道谢；也可改成其他帮忙场景。",
         active: false,
         examples: [
-          { en: "The door's open. Go on in.", zh: "门开着。请进。" },
+          { en: "Thank you so much for helping me move yesterday.", zh: "非常感谢你昨天帮我搬家。" },
+          { en: "Thank you so much for helping me move yesterday. I owe you dinner.", zh: "非常感谢你昨天帮我搬家。我请你吃饭。" },
+        ],
+      },
+      {
+        text: "Go on in.",
+        meaning: "请进 / 你先进去。",
+        insight: "让对方先进门；口语短句。",
+        active: true,
+        examples: [
+          { en: "Can I come in? — Go on in.", zh: "我能进来吗？——请进。" },
           { en: "Go on in. I'll park the car.", zh: "你先进去。我去停车。" },
         ],
       },
       {
-        text: "Get dressed now.",
-        meaning: "现在就穿衣服 / 赶紧穿好。",
-        insight: "催促出门前准备；语气直接。",
-        active: false,
+        text: "Allow me.",
+        meaning: "让我来。",
+        insight: "主动代劳开门、提行李等；礼貌介入。",
+        active: true,
         examples: [
-          { en: "We're late. Get dressed now.", zh: "我们迟到了。现在就穿好衣服。" },
-          { en: "Get dressed now. The taxi is here.", zh: "赶紧穿好。出租车到了。" },
+          { en: "That bag looks heavy. — Allow me.", zh: "那个包看着很重。——让我来。" },
+          { en: "Allow me. I can carry that bag.", zh: "让我来。我可以提那个包。" },
         ],
       },
       {
-        text: "I get up at six o'clock.",
-        meaning: "我六点起床。",
-        insight: "陈述作息；可改时间套用。",
+        text: "We got company.",
+        meaning: "有人来了。",
+        insight: "提醒家里来客人了；got 偏口语。",
         active: false,
         examples: [
-          { en: "I get up at six o'clock on weekdays.", zh: "工作日我六点起床。" },
-          { en: "I get up at six o'clock, so mornings are quiet.", zh: "我六点起，所以早上很安静。" },
+          { en: "Quiet down. We got company.", zh: "小声点。有人来了。" },
+          { en: "We got company. Can you get the door?", zh: "有人来了。你去开下门？" },
         ],
       },
       {
-        text: "I had to take a shower.",
-        meaning: "我得去冲个澡 / 我刚洗了澡。",
-        insight: "had to 表不得不；解释迟到或耽误时常用。",
+        text: "I would chaperone.",
+        meaning: "我会陪同。",
+        insight: "表示愿意陪对方去；语气偏正式一点。",
         active: false,
         examples: [
-          { en: "Sorry I'm late. I had to take a shower.", zh: "抱歉迟到。我得先冲个澡。" },
-          { en: "I had to take a shower after the gym.", zh: "健身后我得洗个澡。" },
+          { en: "If you need someone there, I would chaperone.", zh: "如果你需要人陪，我可以陪同。" },
+          { en: "I would chaperone the kids to the station.", zh: "我可以陪孩子们去车站。" },
         ],
       },
       {
-        text: "I left it right here.",
-        meaning: "我明明放在这儿的。",
-        insight: "强调位置；常接 but it's gone。",
+        text: "Don't be rude.",
+        meaning: "注意礼貌 / 别失礼。",
+        insight: "提醒对方对客人或长辈有礼貌。",
         active: false,
         examples: [
-          { en: "I left it right here. Where did it go?", zh: "我明明放这儿的。去哪了？" },
-          { en: "I left it right here on the desk.", zh: "我就放在这张桌子上。" },
+          { en: "Don't be rude. Say hello first.", zh: "注意礼貌。先打个招呼。" },
+          { en: "Don't be rude to our guests.", zh: "别对客人不礼貌。" },
         ],
       },
       {
-        text: "My car needs washing.",
-        meaning: "我的车需要洗一洗。",
-        insight: "need + V-ing 表「需要被……」；被动意味。",
+        text: "Why did you stay at home?",
+        meaning: "你为什么待在家里？",
+        insight: "追问没出门的原因；过去时。",
         active: false,
         examples: [
-          { en: "My car needs washing this weekend.", zh: "这周末我的车得洗一下。" },
-          { en: "My car needs washing. It's filthy.", zh: "车得洗了。太脏了。" },
+          { en: "Why did you stay at home? Was it raining?", zh: "你为什么待在家里？下雨了吗？" },
+          { en: "Why did you stay at home all weekend?", zh: "整个周末你为什么都待在家里？" },
         ],
       },
       {
-        text: "I will be more careful.",
-        meaning: "我会更小心的。",
-        insight: "道歉后承诺改正；可缩写成 I'll。",
+        text: "What horrible weather!",
+        meaning: "这天气真糟糕！",
+        insight: "出门前或路上抱怨天气；感叹句。",
         active: false,
         examples: [
-          { en: "Sorry about that. I will be more careful.", zh: "抱歉。我会更小心。" },
-          { en: "I will be more careful next time.", zh: "下次我会更小心。" },
+          { en: "What horrible weather! Take an umbrella.", zh: "这天气真糟糕！带把伞。" },
+          { en: "What horrible weather! Let's stay in.", zh: "这天气真糟糕！我们待在家里吧。" },
         ],
       },
       {
-        text: "show me.",
-        meaning: "给我看看 / 教我一下。",
-        insight: "请求演示；口语里常不大写。",
+        text: "He was not a bit tired.",
+        meaning: "他一点也不累。",
+        insight: "not a bit = 一点也不；描述精力状态。",
         active: false,
         examples: [
-          { en: "I don't get it. Show me.", zh: "我不懂。给我看一下。" },
-          { en: "Show me how you fixed it.", zh: "教我你是怎么修好的。" },
-        ],
-      },
-      {
-        text: "Do you have to take the car?",
-        meaning: "你非要把车开走吗？",
-        insight: "质疑必要性；have to 表「必须」。",
-        active: false,
-        examples: [
-          { en: "Do you have to take the car? I need it later.", zh: "非要把车开走吗？我等会儿要用。" },
-          { en: "Do you have to take the car every day?", zh: "你每天都必须开车吗？" },
+          { en: "After the long walk, he was not a bit tired.", zh: "走了那么远，他一点也不累。" },
+          { en: "He was not a bit tired, so we kept going.", zh: "他一点也不累，所以我们继续走。" },
         ],
       }
     ],
@@ -734,7 +731,7 @@ const topics = [
         active: true,
         examples: [
           { en: "I'm late, but I can explain.", zh: "我迟到了，但我可以解释。" },
-          { en: "Wait—I can explain the delay.", zh: "等等——延误的事我可以解释。" },
+          { en: "Wait. I can explain the delay.", zh: "等等。延误的事我可以解释。" },
         ],
       },
       {
@@ -744,7 +741,7 @@ const topics = [
         active: true,
         examples: [
           { en: "I thought I told you about the new time.", zh: "我以为跟你说过新时间了。" },
-          { en: "I thought I told you—bring your ID.", zh: "我以为说过了——带上证件。" },
+          { en: "I thought I told you: bring your ID.", zh: "我以为说过了：带上证件。" },
         ],
       },
       {
@@ -803,8 +800,8 @@ const topics = [
         insight: "对重复问题的无奈；延误多次时很自然。",
         active: false,
         examples: [
-          { en: "The train is delayed? Not again.", zh: "火车延误？又来了。" },
-          { en: "Not again—my phone died.", zh: "又来了——手机没电了。" },
+          { en: "The train is delayed? — Not again.", zh: "火车延误？——又来了。" },
+          { en: "Not again. My phone died.", zh: "又来了。手机没电了。" },
         ],
       },
       {
@@ -943,7 +940,7 @@ const topics = [
         active: true,
         examples: [
           { en: "You're breaking up. Can you text me instead?", zh: "信号不好。能不能改发短信？" },
-          { en: "Sorry, you're breaking up—say that again?", zh: "抱歉信号不好——再说一遍？" },
+          { en: "Sorry, you're breaking up. Say that again?", zh: "抱歉信号不好。再说一遍？" },
         ],
       },
       {
@@ -982,7 +979,7 @@ const topics = [
         insight: "提醒等待处理；服务排队时常见。",
         active: true,
         examples: [
-          { en: "Be patient—the technician is coming.", zh: "耐心点——技术员在路上。" },
+          { en: "Be patient. The technician is coming.", zh: "耐心点。技术员在路上。" },
           { en: "Be patient. These things take time.", zh: "耐心点。这种事需要时间。" },
         ],
       },
@@ -1072,7 +1069,7 @@ const topics = [
         insight: "嫌烦或觉得夸张；也可求对方宽松一点。",
         active: false,
         examples: [
-          { en: "Another meeting? Give me a break.", zh: "又要开会？饶了我吧。" },
+          { en: "Another meeting? — Give me a break.", zh: "又要开会？——饶了我吧。" },
           { en: "Give me a break. I just got here.", zh: "得了吧。我刚到。" },
         ],
       },
@@ -1174,7 +1171,7 @@ const topics = [
         active: true,
         examples: [
           { en: "It's okay. I am not mad.", zh: "没关系。我没有生气。" },
-          { en: "I am not mad—just tired.", zh: "我没生气——只是累了。" },
+          { en: "I am not mad, just tired.", zh: "我没生气，只是累了。" },
         ],
       },
       {
@@ -1303,7 +1300,7 @@ const topics = [
         insight: "惊讶或不满；可褒可贬看语气。",
         active: false,
         examples: [
-          { en: "They canceled again. Unbelievable.", zh: "又取消了。难以置信。" },
+          { en: "They canceled again. — Unbelievable.", zh: "又取消了。——难以置信。" },
           { en: "Unbelievable! You finished early!", zh: "太不可思议了！你提前做完了！" },
         ],
       },
@@ -1323,7 +1320,7 @@ const topics = [
         insight: "比 awesome 略正式；常夸表现或结果。",
         active: false,
         examples: [
-          { en: "Your presentation was outstanding.", zh: "你的汇报很出色。" },
+          { en: "How was the presentation? — Outstanding.", zh: "汇报怎么样？——好极了。" },
           { en: "Outstanding work on this.", zh: "这事做得漂亮。" },
         ],
       },
@@ -1419,7 +1416,7 @@ const topics = [
         active: true,
         examples: [
           { en: "I'll send it tonight. You have my word.", zh: "今晚发出。我保证。" },
-          { en: "You have my word—no more delays.", zh: "我保证——不再延误。" },
+          { en: "You have my word: no more delays.", zh: "我保证：不再延误。" },
         ],
       },
       {
@@ -1429,7 +1426,7 @@ const topics = [
         active: true,
         examples: [
           { en: "I promise I'll confirm by five.", zh: "我保证五点前确认。" },
-          { en: "I won't forget. I promise.", zh: "我不会忘。我保证。" },
+          { en: "Please don't forget. — I promise.", zh: "请别忘了。——我保证。" },
         ],
       },
       {
@@ -1469,7 +1466,7 @@ const topics = [
         active: true,
         examples: [
           { en: "You promised me the draft by Friday.", zh: "你答应过周五给我草稿。" },
-          { en: "Remember—you promised me you'd call.", zh: "记得——你答应过会打电话。" },
+          { en: "Remember: you promised me you'd call.", zh: "记得：你答应过会打电话。" },
         ],
       },
       {
@@ -1528,7 +1525,7 @@ const topics = [
         insight: "两人想到一块时的轻松评论。",
         active: false,
         examples: [
-          { en: "I was going to suggest that. Great minds think alike.", zh: "我也正想说这个。英雄所见略同。" },
+          { en: "Let's book the same cafe. — Great minds think alike.", zh: "咱们订同一家咖啡店吧。——英雄所见略同。" },
           { en: "Great minds think alike. Same restaurant!", zh: "英雄所见略同。同一家餐厅！" },
         ],
       },
@@ -1539,7 +1536,7 @@ const topics = [
         active: false,
         examples: [
           { en: "You worked so hard. You deserve it.", zh: "你这么拼。这是你应得的。" },
-          { en: "A day off? You deserve it.", zh: "休息一天？你应得的。" },
+          { en: "A day off? — You deserve it.", zh: "休息一天？——你应得的。" },
         ],
       },
       {
@@ -1548,7 +1545,7 @@ const topics = [
         insight: "结果终于达标时的评价。",
         active: false,
         examples: [
-          { en: "Now the room is clean. That's more like it.", zh: "现在房间干净了。这还差不多。" },
+          { en: "Is this better? — That's more like it.", zh: "这样好点了吗？——这还差不多。" },
           { en: "That's more like it. Thanks.", zh: "这才像样。谢了。" },
         ],
       },
@@ -1623,7 +1620,7 @@ const topics = [
         insight: "热情肯定建议；推动落地。",
         active: true,
         examples: [
-          { en: "Book a morning slot? That's a terrific idea!", zh: "订上午时段？真是好主意！" },
+          { en: "Book a morning slot? — That's a terrific idea!", zh: "订上午时段？——真是好主意！" },
           { en: "That's a terrific idea! Let's do it.", zh: "好主意！就这么办。" },
         ],
       },
@@ -1653,7 +1650,7 @@ const topics = [
         insight: "谨慎推测；避免说成事实。",
         active: true,
         examples: [
-          { en: "Will they approve it? I would guess that.", zh: "他们会批吗？我猜会。" },
+          { en: "Will they approve it? — I would guess that.", zh: "他们会批吗？——我猜会。" },
           { en: "I would guess that the delay is traffic.", zh: "我猜延误是因为堵车。" },
         ],
       },
@@ -1693,7 +1690,7 @@ const topics = [
         insight: "接下来说可能被误解的话时先垫一句。",
         active: true,
         examples: [
-          { en: "Don't get me wrong—I like the idea, but timing is off.", zh: "别误会——我喜欢这主意，但时机不对。" },
+          { en: "Don't get me wrong. I like the idea, but timing is off.", zh: "别误会。我喜欢这主意，但时机不对。" },
           { en: "Don't get me wrong. I'm not blaming you.", zh: "别误会。我不是在怪你。" },
         ],
       },
@@ -1713,7 +1710,7 @@ const topics = [
         insight: "说明选项等价或影响可忽略。",
         active: false,
         examples: [
-          { en: "Tuesday or Wednesday? That makes no difference to me.", zh: "周二或周三？对我没区别。" },
+          { en: "Tuesday or Wednesday? — That makes no difference to me.", zh: "周二或周三？——对我没区别。" },
           { en: "That makes no difference. Either works.", zh: "没区别。哪个都行。" },
         ],
       },
@@ -1860,6 +1857,7 @@ function formatTurnsAB(turns) {
   return turns.map((t, i) => `${i % 2 === 0 ? 'A' : 'B'}: ${t}`)
 }
 
+/** 例句渲染：对话按 A/B 换行，中文跟在对应话轮下；非对话保持原样 */
 function renderExampleLines(ex) {
   const enTurns = splitDialogueTurns(ex.en)
   const lines = []
@@ -2129,7 +2127,7 @@ const sceneCsv = [
     '预约、计划变化与问题处理',
     'L2',
     '2',
-    '常用英语500句基础篇：在澄清追问、邀约改期、入住安顿、计划变化、出问题处理、情绪支持、进展评价和建议敲定中完成听懂与回应。',
+    '常用英语500句基础篇：在澄清追问、邀约改期、叫醒安顿、计划变化、出问题处理、情绪支持、进展评价和建议敲定中完成听懂与回应。',
     'course',
   ]),
 ].join('\n') + '\n'
@@ -2239,13 +2237,13 @@ const design = `# 常用英语500句 · 基础篇
 
 ## 学习目标
 
-学习者能在澄清追问、邀约改期、入住安顿、计划变化、出问题处理和建议敲定中说明情况、确认信息并继续回应。
+学习者能在澄清追问、邀约改期、叫醒安顿、计划变化、出问题处理和建议敲定中说明情况、确认信息并继续回应。
 
 ## 8 个场景组
 
 1. 澄清、确认与追问
 2. 邀约、答应、拒绝与改期
-3. 入住安顿、许可与服务沟通
+3. 叫醒、安顿与出门准备
 4. 迟到、延误与计划变化
 5. 出问题、求助与冷静处理
 6. 情绪、安慰与支持
@@ -2267,7 +2265,7 @@ const design = `# 常用英语500句 · 基础篇
 
 ## 数据说明
 
-基础篇按「预约、计划变化与问题处理」重组，不整主题搬运旧包。句子优先对齐；已进入门篇的表达不重复收录。影视脏话、高冲突、低频表达不进入本卷。冲突时以本卷教学文档为准。
+基础篇按「安顿出门、计划变化与问题处理」重组，不整主题搬运旧包。句子优先对齐；已进入门篇的表达不重复收录。影视脏话、高冲突、低频表达不进入本卷。冲突时以本卷教学文档为准。
 `
 
 writeFileSync(join(OUT, 'teaching-docs', '00-课程总设计.md'), design, 'utf8')
