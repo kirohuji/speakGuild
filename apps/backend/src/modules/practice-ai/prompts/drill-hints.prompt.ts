@@ -43,14 +43,16 @@ export const DRILL_HINT_OUTPUT_REQUIREMENT = `Every item MUST include a "hint" f
 
 /**
  * 所有中英互译题（批量、单题生成与润色）共用的题目契约。
- * 题干只描述“用户要完成的交际任务”，答案才是完整的目标语言输出；提示只负责搭脚手架。
+ * 题干是答案的准确源语言翻译；提示只负责搭脚手架，不能把题干改写成场景描述。
  */
 export const DRILL_TRANSLATION_ITEM_CONTRACT = `## ══ TRANSLATION ITEM CONTRACT (NON-NEGOTIABLE) ══
 - zh_to_en: "zh" is the accurate, natural Chinese translation of "answer". "answer" is ONE complete, natural English sentence (a complete question is allowed) using the assigned target material. They must express the SAME meaning.
 - en_to_zh: "en" is ONE complete natural English sentence. "answer" is its natural Chinese meaning. Never put the English prompt in "zh".
 - Never use a scenario, a communicative task, a lead-in, or a loose paraphrase as zh_to_en "zh". Bad: zh="你看到朋友在等车，想邀请他一起走，先问一句要不要一起。" + answer="The bus is coming. Shall we go?". Good: zh="公交车来了。我们走吗？" + that same answer.
 - Keep the three layers separate: prompt = exact source sentence to translate; answer = reference translation; hint = how to reason. Never place the answer or target English expression in the prompt or hint.
-- Do not make a fragment-only exercise. If the target is a short chunk, embed it in a complete, realistic sentence or question. Example: target "What's going on?" can be used in the complete answer "You look worried. What's going on?"; the Chinese prompt describes the situation, while the hint only guides the learner to ask about the reason.
+- Do not make a fragment-only exercise. If the target is only a phrase, embed it in ONE coherent sentence. If the target is already a complete standalone utterance (for example "What's going on?" or "It doesn't matter."), prefer using that utterance directly; do NOT prepend a filler sentence merely to make the answer longer.
+- Every answer must be pragmatically coherent by itself. If two clauses or sentences are genuinely necessary, their speakers, references, possessives, and logical relationship must be immediately clear. Bad padding: "You forgot my book. It doesn't matter." Better: "You forgot the book, but it doesn't matter." Best when the target is already complete: "It doesn't matter."
+- PAIRWISE SEMANTIC CHECK: before returning each pair, compare actor, action/state, object, modifiers, tense/aspect, modality, negation, quantity, and question/statement intent. The source and answer must match on every applicable point. Never add or omit a proposition on either side.
 - The ENGLISH side must contain the assigned word/chunk or instantiate the fixed part of the assigned pattern: for zh_to_en this is "answer"; for en_to_zh this is "en". Do not silently replace it with a synonym. For a chunk, include the entire chunk as one continuous phrase, not just a few of its words.
 - zh must be Chinese-dominant and en/English answer must be English-dominant. Do not mix directions or return both zh and en in one item.`;
 

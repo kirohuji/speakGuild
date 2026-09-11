@@ -8,7 +8,9 @@ import { LlmProviderFactory, type LlmConfig } from '../../common/llm/llm-provide
 import { AiModelService } from '../ai-model/ai-model.service';
 import { MaterialConstraintService } from '../content-experiences/material-constraint.service';
 import {
+  WARMUP_PIPELINE_ALIGNMENT_SYSTEM_PROMPT,
   WARMUP_PIPELINE_SYSTEM_PROMPT,
+  buildWarmupPipelineAlignmentPrompt,
   buildWarmupPipelineUserPrompt,
 } from './prompts/warmup-pipeline.prompt';
 import {
@@ -168,7 +170,7 @@ export class EnglishPracticeAiService {
    * DeepSeek 的普通文本模式不能保证可被 JSON.parse。热身流水线是嵌套长 JSON，
    * 直接使用其 JSON Output，并保留 finish_reason 以便区分截断和格式错误。
    */
-  private async generateDeepSeekWarmupPipeline(config: LlmConfig, system: string, prompt: string) {
+  private async generateDeepSeekWarmupPipeline(config: LlmConfig, system: string, prompt: string, temperature = 0.35) {
     let lastError: unknown = null;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
@@ -191,7 +193,7 @@ export class EnglishPracticeAiService {
             response_format: { type: 'json_object' },
             // deepseek-v4-flash 默认会思考；嵌套 JSON 任务必须关闭，否则正文会被推理耗尽。
             thinking: { type: 'disabled' },
-            temperature: attempt === 0 ? 0.35 : 0,
+            temperature: attempt === 0 ? temperature : 0,
             max_tokens: WARMUP_PIPELINE_MAX_OUTPUT_TOKENS,
           }),
         });
@@ -870,6 +872,13 @@ For correction/upgraded/retryRequired: only populate these when the response is 
     return /[\u4e00-\u9fff]/.test(text) && (text.match(/[A-Za-z]+/g) ?? []).length <= 1;
   }
 
+  private isStandaloneEnglishUtterance(value: string) {
+    const text = value.trim();
+    if (!this.isEnglishSentence(text)) return false;
+    return /[.!?]["']?$/.test(text)
+      || /^(?:i|you|he|she|it|we|they|there|this|that|these|those|what|what's|who|who's|how|how's|where|where's|when|when's|why|why's)\b/i.test(text);
+  }
+
   private answerUsesTarget(answer: string, target: string) {
     const normalizedAnswer = answer.toLowerCase().replace(/[’‘]/g, "'");
     const fixedTarget = target
@@ -946,7 +955,8 @@ For correction/upgraded/retryRequired: only populate these when the response is 
       const targetWords = dto.keyword.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g) ?? [];
       const answerWords = answer.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g) ?? [];
       const fragmentOnly = direction === 'zh_to_en' && targetWords.length <= 3
-        && answerWords.length <= targetWords.length + 1;
+        && answerWords.length <= targetWords.length + 1
+        && !this.isStandaloneEnglishUtterance(dto.keyword);
       if (!isValid || fragmentOnly) return [];
       const item = direction === 'en_to_zh'
         ? { en: prompt, answer }
@@ -1823,6 +1833,142 @@ Rules:
     });
   }
 
+  private warmupPipelineStructureKey(pipeline: any[]) {
+    return JSON.stringify(pipeline.map((item) => {
+      const base = {
+        type: String(item?.type ?? ''),
+        direction: String(item?.direction ?? ''),
+      };
+      if (item?.type === 'chunk_substitution') {
+        return {
+          ...base,
+          chunk: String(item.chunk ?? ''),
+          kind: String(item.kind ?? ''),
+          itemCount: Array.isArray(item.items) ? item.items.length : 0,
+        };
+      }
+      if (item?.type === 'pattern_drill') {
+        return {
+          ...base,
+          pattern: String(item.pattern ?? ''),
+          itemCount: Array.isArray(item.items) ? item.items.length : 0,
+        };
+      }
+      if (item?.type === 'vocab_sentence_building') {
+        return {
+          ...base,
+          vocabWord: String(item.vocabWord ?? ''),
+          patterns: (Array.isArray(item.patterns) ? item.patterns : []).map((pattern: any) => ({
+            chunk: String(pattern?.chunk ?? ''),
+            itemCount: Array.isArray(pattern?.items) ? pattern.items.length : 0,
+          })),
+        };
+      }
+      if (item?.type === 'sentence_decomposition') {
+        return {
+          ...base,
+          sourceText: String(item.sourceText ?? ''),
+          sourceKind: String(item.sourceKind ?? ''),
+          levelCount: Array.isArray(item.levels) ? item.levels.length : 0,
+        };
+      }
+      return base;
+    }));
+  }
+
+  private restoreWarmupPipelineMetadata(source: any[], candidate: any[]) {
+    return candidate.map((item, index) => {
+      const original = source[index];
+      if (item.type === 'chunk_substitution') {
+        return {
+          ...item,
+          title: original.title,
+          chunk: original.chunk,
+          chunkMeaning: original.chunkMeaning,
+          kind: original.kind,
+        };
+      }
+      if (item.type === 'pattern_drill') {
+        return {
+          ...item,
+          title: original.title,
+          pattern: original.pattern,
+          patternMeaning: original.patternMeaning,
+        };
+      }
+      if (item.type === 'vocab_sentence_building') {
+        return {
+          ...item,
+          title: original.title,
+          vocabWord: original.vocabWord,
+          vocabMeaning: original.vocabMeaning,
+          patterns: item.patterns.map((pattern: any, patternIndex: number) => ({
+            ...pattern,
+            chunk: original.patterns[patternIndex].chunk,
+          })),
+        };
+      }
+      if (item.type === 'sentence_decomposition') {
+        return {
+          ...item,
+          title: original.title,
+          sourceText: original.sourceText,
+          sourceKind: original.sourceKind,
+        };
+      }
+      return item;
+    });
+  }
+
+  /** 二次低温修订只处理双语错配；结构或目标材料一旦漂移，就安全回退到首次生成结果。 */
+  private async refineWarmupPipelineAlignment(params: {
+    config: LlmConfig;
+    provider: () => ReturnType<LlmProviderFactory['create']>;
+    pipeline: any[];
+    topicTitle: string;
+    difficulty: string;
+  }) {
+    if (!params.pipeline.length) return params.pipeline;
+    const prompt = buildWarmupPipelineAlignmentPrompt({
+      topicTitle: params.topicTitle,
+      difficulty: params.difficulty,
+      pipeline: params.pipeline,
+    });
+
+    try {
+      let refinedRaw: Array<Record<string, unknown>>;
+      if (params.config.provider.trim().toLowerCase() === 'deepseek') {
+        refinedRaw = await this.generateDeepSeekWarmupPipeline(
+          params.config,
+          WARMUP_PIPELINE_ALIGNMENT_SYSTEM_PROMPT,
+          prompt,
+          0,
+        );
+      } else {
+        const { text } = await generateText({
+          model: params.provider(),
+          system: WARMUP_PIPELINE_ALIGNMENT_SYSTEM_PROMPT,
+          prompt,
+          temperature: 0,
+          maxOutputTokens: WARMUP_PIPELINE_MAX_OUTPUT_TOKENS,
+        });
+        const parsed = JSON.parse(this.extractJson(text).trim()) as { pipeline?: unknown };
+        if (!Array.isArray(parsed.pipeline)) throw new Error('alignment output is missing pipeline');
+        refinedRaw = parsed.pipeline as Array<Record<string, unknown>>;
+      }
+
+      const refined = this.normalizeWarmupPipeline(this.capWarmupPipeline(refinedRaw));
+      if (this.warmupPipelineStructureKey(refined) !== this.warmupPipelineStructureKey(params.pipeline)) {
+        this.logger.warn('[generate-warmup-pipeline] 语义修订改变了题组结构或目标材料，已回退首次生成结果');
+        return params.pipeline;
+      }
+      return this.restoreWarmupPipelineMetadata(params.pipeline, refined);
+    } catch (error) {
+      this.logger.warn(`[generate-warmup-pipeline] 语义修订失败，已回退首次生成结果: ${error instanceof Error ? error.message : String(error)}`);
+      return params.pipeline;
+    }
+  }
+
   /** 一次性生成知识点练习补齐题组：同时考虑结构要求和材料覆盖 */
   async generateWarmupPipeline(dto: WarmupPipelineGenerationDto) {
     const runtime = await this.getLlmRuntime();
@@ -2048,25 +2194,35 @@ Rules:
 
     try {
       const providerName = runtime.config.provider.trim().toLowerCase();
+      let generated: Array<Record<string, unknown>>;
       if (providerName === 'deepseek') {
-        return {
-          pipeline: this.normalizeWarmupPipeline(this.capWarmupPipeline(await this.generateDeepSeekWarmupPipeline(
-            runtime.config,
-            WARMUP_PIPELINE_SYSTEM_PROMPT,
-            prompt,
-          ))),
-        };
+        generated = await this.generateDeepSeekWarmupPipeline(
+          runtime.config,
+          WARMUP_PIPELINE_SYSTEM_PROMPT,
+          prompt,
+        );
+      } else {
+        const { text } = await generateText({
+          model: provider(),
+          system: WARMUP_PIPELINE_SYSTEM_PROMPT,
+          prompt,
+          temperature: 0.25,
+          maxOutputTokens: WARMUP_PIPELINE_MAX_OUTPUT_TOKENS,
+        });
+        const parsed = JSON.parse(this.extractJson(text).trim()) as { pipeline?: unknown };
+        if (!Array.isArray(parsed.pipeline)) throw new Error('Warmup pipeline output is missing pipeline');
+        generated = parsed.pipeline as Array<Record<string, unknown>>;
       }
 
-      const { text } = await generateText({
-        model: provider(),
-        system: WARMUP_PIPELINE_SYSTEM_PROMPT,
-        prompt,
-        temperature: 0.35,
-        maxOutputTokens: WARMUP_PIPELINE_MAX_OUTPUT_TOKENS,
+      const normalized = this.normalizeWarmupPipeline(this.capWarmupPipeline(generated));
+      const pipeline = await this.refineWarmupPipelineAlignment({
+        config: runtime.config,
+        provider,
+        pipeline: normalized,
+        topicTitle: dto.topicTitle || 'Untitled topic',
+        difficulty,
       });
-      const parsed = JSON.parse(this.extractJson(text).trim());
-      return { pipeline: this.normalizeWarmupPipeline(this.capWarmupPipeline(parsed.pipeline)) };
+      return { pipeline };
     } catch (error) {
       this.logger.warn(`Warmup pipeline generation failed: ${error instanceof Error ? error.message : String(error)}`);
       return { pipeline: [] };

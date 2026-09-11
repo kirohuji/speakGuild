@@ -1419,7 +1419,7 @@ export function WarmupPipelineTab({
   const renderMaterialPoolPopover = () => (
     <Popover>
       <PopoverTrigger asChild>
-        <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5">
+        <Button type="button" variant="outline" size="sm" className="h-9 gap-1.5">
           <ListChecks className="size-3.5" />
           材料池
         </Button>
@@ -1532,6 +1532,7 @@ export function WarmupPipelineTab({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {renderMaterialPoolPopover()}
           <Button
             type="button"
             size="sm"
@@ -1560,7 +1561,6 @@ export function WarmupPipelineTab({
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-52 space-y-1.5 p-2">
-              {renderMaterialPoolPopover()}
               <Button type="button" variant="ghost" className="h-8 w-full justify-start gap-2 text-xs" disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll || totalHintableItems === 0} onClick={generateAllHints}>
                 {aiHintingAll ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />} 生成全部提示
               </Button>

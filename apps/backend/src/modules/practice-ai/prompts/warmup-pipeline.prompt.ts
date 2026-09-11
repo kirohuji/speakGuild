@@ -180,6 +180,8 @@ ${DRILL_HINT_WRITING_RULES}
 - For zh_to_en, put Chinese prompt in "zh" and English answer in "answer". Do NOT include an "en" field on zh_to_en items.
 - CRITICAL: Every item in a group must follow the group's direction. If direction="zh_to_en", ALL items use {zh, answer} — never mix {en, answer} items into a zh_to_en group, and never include both zh and en on the same item. Direction mixing within one group is invalid.
 - TRANSLATION FIDELITY (non-negotiable): every zh_to_en "zh" must be the direct, complete Chinese translation of its own "answer" — no scene-setting, inferred intent, speaking task, or extra context. A learner who translates zh literally and naturally must arrive at answer.
+- Before emitting JSON, silently audit EVERY translation pair using this ledger: actor → action/state → object/complement → time/place/manner → tense/aspect → modality → negation → quantity → question/statement intent. Repair any pair where either side adds, omits, or changes one of these facts. Topic relevance and target-material coverage NEVER excuse a semantic mismatch.
+- Do not pad a complete target utterance with an invented setup sentence. A short complete target such as "It doesn't matter." is already a valid answer. Never produce disconnected padding such as "You forgot my book. It doesn't matter." If context is truly needed, express one clear logical relation in one sentence, e.g. "You forgot the book, but it doesn't matter."
 - TARGET-IN-ITEM CHECK (non-negotiable): the target must occur in EVERY practice item, not only in the group title/metadata. For zh_to_en, put the complete target in each English "answer". For en_to_zh, put the complete target in each English "en" prompt. A chunk must appear as the exact continuous phrase; do not replace it with a synonym or use only one word from it. For sentence_decomposition, the final fullSentence must contain sourceText.
 - IMPORTANT: Do not repeat the compact previous-item summary below. Return the smallest valid JSON that meets this brief.`;
 
@@ -321,5 +323,38 @@ export function buildWarmupPipelineUserPrompt(input: WarmupPipelinePromptInput):
       : '- (none — all covered!)',
     '',
     'Only use the listed material pool plus safe review materials. Do not invent unlisted learning targets.',
+  ].join('\n');
+}
+
+export const WARMUP_PIPELINE_ALIGNMENT_SYSTEM_PROMPT = `You are a meticulous bilingual ESL exercise copy editor.
+You receive an already-generated warmup pipeline. Return the same JSON structure as {"pipeline":[...]}, correcting semantic alignment only where needed.
+
+NON-NEGOTIABLE PRESERVATION RULES:
+- Preserve every group's order, type, target material, direction, title, and item count.
+- Preserve chunk, chunkMeaning, kind, pattern, patternMeaning, vocabWord, vocabMeaning, sourceText, and sourceKind exactly.
+- Keep the assigned English target word/chunk/pattern in every English exercise side. Never replace it with a synonym.
+- Do not add or remove groups, items, patterns, or decomposition levels.
+
+ALIGNMENT RULES:
+- zh_to_en: zh must be the direct, complete, natural Chinese translation of answer. It is never a scenario, instruction, intention, or loose paraphrase.
+- en_to_zh: answer must be the direct, complete, natural Chinese translation of en.
+- sentence_decomposition: fullSentenceZh must directly translate fullSentence; every level.zh must directly translate that level.en.
+- For every pair, silently compare actor, action/state, object/complement, modifiers, time/place/manner, tense/aspect, modality, negation, quantity, and question/statement intent. Fix every added, omitted, or changed fact.
+- Check internal discourse coherence as well: adjacent clauses/sentences must have an obvious causal, contrastive, question-answer, or reference relationship. Remove filler setup sentences added only to lengthen a short target. Specifically reject constructions like "You forgot my book. It doesn't matter."; use the standalone target or one logically connected sentence instead.
+- If the English is unnatural, minimally repair it while preserving its exact target material, then update the Chinese to match. If the pair is already aligned, leave it unchanged.
+- Keep hints concrete and consistent with the corrected pair, without revealing the complete answer.
+
+Return valid JSON only. Do not explain your edits and do not use Markdown.`;
+
+export function buildWarmupPipelineAlignmentPrompt(input: {
+  topicTitle: string;
+  difficulty: string;
+  pipeline: Array<Record<string, unknown>>;
+}): string {
+  return [
+    `Topic: ${input.topicTitle}`,
+    `Difficulty: ${input.difficulty}`,
+    'Audit and minimally repair every bilingual pair in this pipeline. Preserve its structure exactly:',
+    JSON.stringify({ pipeline: input.pipeline }),
   ].join('\n');
 }
