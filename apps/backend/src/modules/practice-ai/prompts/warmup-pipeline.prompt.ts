@@ -119,6 +119,19 @@ Train vocabulary and sentence patterns TOGETHER, never in isolation:
 - Chinese prompts must be visibly distinct; avoid chains like "我想买…" repeated across many items.
 - When both words and patterns are missing, prefer vocab_sentence_building (一词多句: one word across several patterns) and pattern_drill (one pattern with several words) — these combine both by design.
 
+## ══ COVERAGE-FIRST, CONTROLLED VOLUME (CRITICAL) ══
+
+The material-pool count is NOT a required number of groups or exercises. Plan for complete material coverage with the fewest useful learner actions:
+- Every count=0 word, chunk and pattern must appear in at least one REAL English practice answer/prompt/final sentence. It may be a supporting slot inside another material's group; it does not need its own group.
+- Never multiply one material across all four exercise types. Select the ONE primary type that teaches it best, then combine it naturally with other missing materials.
+- Use the calculated learner-action budget supplied in the user prompt. It is composition-aware: core vocabulary contributes about 1 action, extension/carry vocabulary less because it is embedded, each chunk contributes 2 retrieval actions, and each pattern contributes 3 varied-slot actions. Combine compatible materials first, but COVERAGE ALWAYS WINS over a preferred group count. If 20 materials are genuinely independent (for example, 20 distinct chunks), generate enough groups to cover all 20 — never silently leave materials at count=0 just to keep the batch small.
+- Recommended group mix, adjusted to the actual pool rather than forced evenly:
+  * chunk_substitution: 2-3 groups, 2 items each. Use for high-value chunks and output activation; include one en_to_zh check only when it genuinely checks a chunk.
+  * pattern_drill: 2-3 groups, 3 items each. Use each pattern's variable slots to cover several missing words in meaningful sentences.
+  * vocab_sentence_building: 1-2 groups, 2 items each. Use only for vocabulary that needs contrasting contexts; do not create one group per word.
+  * sentence_decomposition: 0-1 group, 3-4 levels. Use one representative, richer sentence to consolidate several already-selected materials; never make a decomposition for every material.
+- Before writing JSON, silently make a coverage ledger of all count=0 materials and assign each to a primary group or a concrete slot. Do not claim coverage through a title, hint, or metadata alone.
+
 ## ══ SENTENCE PATTERN DRIVEN WORD ALLOCATION ══
 
 Each sentence pattern has "slots" that certain word types can fill:
@@ -141,16 +154,16 @@ Rules:
 - Use the current material-pool usage counts as the source of truth. Cover EVERY material whose count is 0 at least once in this pipeline; do not stop after a small priority subset. A material with count > 0 is already covered and should not displace an unused one.
 - Each group should target a DIFFERENT material (word/chunk/pattern). Do not put all missing materials into one giant group.
 - Use missing materials preferentially, but choose exercise types naturally and vary them.
-- Across the complete pipeline, use all four types where the material pool supports them — chunk_substitution, vocab_sentence_building, pattern_drill, and sentence_decomposition. Do NOT force every target into every type; assign each unused material to the exercise type that genuinely practices it.
+- Use types by teaching value, not equal quotas. Chunk and pattern practice normally make up most of a topic; vocabulary expansion is selective, and decomposition is an occasional consolidator. Do not add a weak group merely to make all four types appear.
 - When generating sentence_decomposition, choose one of this batch's target words/chunks/patterns as sourceText and ensure its final fullSentence contains that source material.
 - IMPORTANT — en_to_zh comprehension check: Always include at least 2 en_to_zh items (chunk_substitution with direction="en_to_zh"). These confirm the learner can read/hear English and understand it — not just produce it. Use natural English sentences, not textbook examples.
 - Avoid homogeneous output and near-duplicate sentences.
 - Keep each group compact: 2-3 translation items per group, 1-2 pattern groups for vocab_sentence_building, 3-4 progressive levels for sentence_decomposition.
 - CRITICAL: Every group MUST have at least 2 items — never generate a group with only 1 item (that creates a "single-item section" which is invalid). If you can only fill 1 item for a material, combine it with another material in the same group.
 - STRUCTURE TARGETS (aim for these, not just the minimum):
-  * Total practice items: 8-25 is ideal; more is acceptable when needed to cover all unused material. HARD MAXIMUM: 48 items.
-  * Total groups (steps): 4-8 is ideal. HARD MAXIMUM: 12 groups.
-  * Exercise types: aim to cover all four types across this complete pipeline, while prioritising each unused material's most suitable type.
+  * Total practice items: follow the calculated learner-action budget in the user prompt (normally within ±2). HARD MAXIMUM: 60 items.
+  * Total groups (steps): combine materials where natural, but use as many as necessary for complete count=0 coverage. HARD MAXIMUM: 30 groups.
+  * Exercise types: distribute by material fit; do not equalise type counts.
   * zh_to_en output items: at least 3 (output activation, step 1 priority).
   * en_to_zh comprehension items: at least 2 (input check — confirms reading/listening understanding).
   * pattern_drill items: at least 2 (structural output training — ensures learner can use sentence patterns flexibly).
@@ -188,6 +201,13 @@ export interface WarmupPipelinePromptInput {
   difficulty: string;
   previousSummary: string;
   totalMissing: number;
+  practiceBudget: {
+    targetActions: number;
+    targetGroups: number;
+    vocabActions: number;
+    chunkActions: number;
+    patternActions: number;
+  };
   /** 后序包知识点（禁止出现在任何题目/例句/提示中） */
   forbiddenMaterials: string[];
   /** 前序包知识点（仅允许作为复习复现） */
@@ -221,7 +241,7 @@ export interface WarmupPipelinePromptInput {
 }
 
 export function buildWarmupPipelineUserPrompt(input: WarmupPipelinePromptInput): string {
-  const { topicTitle, difficulty, previousSummary, totalMissing, structure, materials } = input;
+  const { topicTitle, difficulty, previousSummary, totalMissing, practiceBudget, structure, materials } = input;
 
   const minItemsNeeded = Math.max(0, 6 - structure.totalItems);
   const minStepsNeeded = Math.max(0, 3 - structure.steps);
@@ -259,8 +279,10 @@ export function buildWarmupPipelineUserPrompt(input: WarmupPipelinePromptInput):
     previousSummary,
     forbiddenBlock,
     reviewBlock,
-    `There are ${totalMissing} unused materials (count=0) in the current pool. Cover every one of them at least once in this pipeline.`,
-    'The editor will reveal the returned groups one at a time for human review; do not reduce coverage just because review is sequential.',
+    `There are ${totalMissing} unused materials (count=0) in the current pool. Cover them through a compact, combined practice plan — this number is NOT the required number of groups.`,
+    `This pool's calculated learner-action budget is ${practiceBudget.targetActions} actions across about ${practiceBudget.targetGroups} groups. Follow it within ±2 actions unless complete material coverage needs more.`,
+    `Budget rationale: vocabulary ${practiceBudget.vocabActions} actions (mostly embedded), chunks ${practiceBudget.chunkActions} actions (retrieval needs revisiting), patterns ${practiceBudget.patternActions} actions (different slots).`,
+    'The editor will reveal returned groups one at a time for human review. Prioritise coverage and the calculated action budget; do not flatten all material types into an equal ratio.',
     '',
     '## ══ Current State (already generated; targets per System rules) ══',
     '',
@@ -271,7 +293,7 @@ export function buildWarmupPipelineUserPrompt(input: WarmupPipelinePromptInput):
     `- pattern_drill items so far: ${structure.patternItems}`,
     `- expansion groups so far: ${structure.expansionUnits}`,
     '',
-    'Keep JSON concise, but do not omit an unused material. Use short titles, 2-4 items per group, and one Chinese hint per item.',
+    'Keep JSON concise: use short titles, 2-3 items per chunk/vocab group, 3 items per pattern group, and at most one 3-4-level decomposition. Do not omit an unused material merely because it is combined into another group.',
     '',
     '## ══ Materials ══',
     '',

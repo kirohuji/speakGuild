@@ -88,11 +88,17 @@ type WarmupPipelineGenerationDto = {
   };
 };
 
-// 点击“AI 逐条生成”会按当前材料池一次规划完整 pipeline；前端只逐条回显供审核。
-const WARMUP_PIPELINE_MAX_OUTPUT_TOKENS = 16_000;
+type WarmupPipelineQualityDto = {
+  pipeline?: Array<Record<string, unknown>>;
+  topicTitle?: string;
+  difficulty?: string;
+};
+
+// 覆盖优先：一个题组可组合多个材料；若材料本身不可组合，也必须允许足够题组完成覆盖。
+const WARMUP_PIPELINE_MAX_OUTPUT_TOKENS = 20_000;
 const WARMUP_PIPELINE_MAX_PREVIOUS_ITEMS = 8;
-const WARMUP_PIPELINE_MAX_ITEMS = 48;
-const WARMUP_PIPELINE_MAX_GROUPS = 12;
+const WARMUP_PIPELINE_MAX_ITEMS = 60;
+const WARMUP_PIPELINE_MAX_GROUPS = 30;
 
 @Injectable()
 export class EnglishPracticeAiService {
@@ -131,6 +137,24 @@ export class EnglishPracticeAiService {
 
   private extractJson(text: string) {
     return text.match(/```json\s*([\s\S]*?)\s*```/)?.[1] ?? text;
+  }
+
+  /** Convert a material mix into a learner-action budget, rather than using a flat ratio. */
+  private buildWarmupPracticeBudget(input: {
+    coreVocabs: number;
+    extVocabs: number;
+    carryVocabs: number;
+    chunks: number;
+    patterns: number;
+  }) {
+    const vocabActions = input.coreVocabs + Math.ceil(input.extVocabs * 0.75) + Math.ceil(input.carryVocabs * 0.5);
+    const chunkActions = input.chunks * 2; // output retrieval + revisit
+    const patternActions = input.patterns * 3; // varied slot fillers
+    const targetActions = Math.min(60, Math.max(10, vocabActions + chunkActions + patternActions));
+    const targetGroups = Math.min(30, Math.max(3,
+      input.chunks + input.patterns + Math.ceil((input.coreVocabs + input.extVocabs + input.carryVocabs) / 3),
+    ));
+    return { targetActions, targetGroups, vocabActions, chunkActions, patternActions };
   }
 
   private buildChatCompletionsUrl(baseUrl: string) {
@@ -804,21 +828,33 @@ For correction/upgraded/retryRequired: only populate these when the response is 
     const items: Array<{ zh?: string; en?: string; answer?: string; hint?: string }> = dto.items?.length
       ? dto.items
       : Array.from({ length: dto.itemCount ?? 0 }, () => ({}));
-    return items.map((item) => {
+    const targetWords = dto.keyword.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g) ?? [];
+    const firstWord = targetWords[0] ?? '';
+    // A visible foothold is useful; the rest stays blank so the hint cannot turn
+    // into the answer.  This is also the safe fallback when the model returns a
+    // generic all-Chinese instruction.
+    const maskedAnchor = targetWords.length > 1 ? `${firstWord} ___` : firstWord;
+    return items.map((item, index) => {
       if (item.hint?.trim()) return item.hint.trim();
       if (dto.type === 'pattern_drill') {
         return isEnToZh
-          ? '先判断说话者想表达的关系，再用自然中文说清楚。'
-          : '先找出题干里的动作或对象，再填进句型的可变位置。';
+          ? `句型线索：${maskedAnchor}；先看语气和关系，再用自然中文顺着说。`
+          : index % 2 === 0
+            ? `句型线索：${maskedAnchor}；把题干中的动作原形填进空位。`
+            : `先找出人、动作和对象；用 ${maskedAnchor} 把它们连成一句。`;
       }
       if (dto.type === 'vocab_sentence_building') {
         return isEnToZh
-          ? '先找出句子中的核心动作和对象，再连成自然中文。'
-          : '先确定场景里要做什么，再用核心词组织完整英文句。';
+          ? `关键词：${firstWord}；先抓住它表示的动作或事物，再译成自然中文。`
+          : index % 2 === 0
+            ? `关键词：${firstWord}；先译出核心动作，再补对象或原因。`
+            : `从“谁做什么”起句；把 ${firstWord} 放在表达重点的位置。`;
       }
       return isEnToZh
-        ? '先判断说话者的意图和语气，再翻成自然中文。'
-        : '先判断题干是在询问、请求还是回应，再组织完整英文句。';
+        ? `句块线索：${maskedAnchor}；先判断这句话是在询问、请求还是回应。`
+        : index % 2 === 0
+          ? `句块线索：${maskedAnchor}；先译出题干的核心意思，再补齐对象或语气。`
+          : `先决定是陈述、提问还是回应；用 ${maskedAnchor} 组织主干。`;
     });
   }
 
@@ -868,11 +904,26 @@ For correction/upgraded/retryRequired: only populate these when the response is 
     const answer = String(item.answer ?? '').toLowerCase().replace(/[’‘]/g, "'");
     const target = dto.keyword.trim().toLowerCase().replace(/[’‘]/g, "'");
     const answerWords = answer.match(/[a-z]+(?:'[a-z]+)?/g) ?? [];
+    const targetWords = target.match(/[a-z]+(?:'[a-z]+)?/g) ?? [];
+    const hintWords = hint.toLowerCase().match(/[a-z]+(?:'[a-z]+)?/g) ?? [];
     const leaksAnswer = answerWords.some((word, index) => index < answerWords.length - 1
       && hint.toLowerCase().includes(`${word} ${answerWords[index + 1]}`));
-    const generic = /用目标词造句|注意语法|参考句型|按照提示完成|参考答案/.test(hint);
-    const valid = hint.length >= 8 && hint.length <= 80 && /[\u4e00-\u9fff]/.test(hint)
-      && !/[A-Za-z]{2,}/.test(hint) && !leaksAnswer && (!target || !hint.toLowerCase().includes(target)) && !generic;
+    const normalizeEnglish = (value: string) => value.toLowerCase()
+      .replace(/[’‘]/g, "'")
+      .replace(/[^a-z0-9'\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const normalizedHint = normalizeEnglish(hint);
+    const normalizedTarget = normalizeEnglish(target);
+    const revealsWholeTarget = targetWords.length > 1 && Boolean(normalizedTarget)
+      && normalizedHint.includes(normalizedTarget);
+    const hasMaskedScaffold = /_{2,}|…/.test(hint);
+    const EnglishIsSafe = hintWords.length <= 1 || (hasMaskedScaffold && hintWords.length <= 3);
+    const generic = /用目标词造句|注意语法|参考句型|按照提示完成|参考答案|结合语境|想想要表达什么/.test(hint);
+    const valid = hint.length >= 12 && hint.length <= 64 && /[\u4e00-\u9fff]/.test(hint)
+      // A Chinese-only description tends to restate the task. Require a small,
+      // safe English foothold so the learner knows what language to retrieve.
+      && hintWords.length >= 1 && EnglishIsSafe && !leaksAnswer && !revealsWholeTarget && !generic;
     if (valid) return hint;
     return this.buildFallbackDrillHints({ ...dto, itemCount: 1, items: [{ ...item, hint: '' }] })[0];
   }
@@ -1923,6 +1974,13 @@ Rules:
     ];
     const totalMissing = missingCoreVocabs.length + missingExtVocabs.length + missingCarryVocabs.length
       + missingChunks.length + missingPatterns.length;
+    const practiceBudget = this.buildWarmupPracticeBudget({
+      coreVocabs: missingCoreVocabs.length,
+      extVocabs: missingExtVocabs.length,
+      carryVocabs: missingCarryVocabs.length,
+      chunks: missingChunks.length,
+      patterns: missingPatterns.length,
+    });
 
     const vocabPoolSummary = filterVocabs.length
       ? filterVocabs.map((v) => {
@@ -1965,6 +2023,7 @@ Rules:
       difficulty,
       previousSummary,
       totalMissing,
+      practiceBudget,
       forbiddenMaterials: forbiddenMaterialTexts,
       reviewMaterials: reviewMaterialTexts,
       structure: {
@@ -2014,6 +2073,71 @@ Rules:
     }
   }
 
+  /**
+   * Review authoring quality without persisting changes. The client shows each
+   * suggested replacement beside the original and only applies it after the
+   * author confirms, so AI cleanup can never silently overwrite editorial work.
+   */
+  async validateWarmupPipeline(dto: WarmupPipelineQualityDto) {
+    const pipeline = Array.isArray(dto.pipeline) ? dto.pipeline : [];
+    if (!pipeline.length) return { reviews: [] };
+
+    const runtime = await this.getLlmRuntime();
+    const items = pipeline.map((item) => ({ ...item, id: String(item.id ?? '') })).filter((item) => item.id);
+    // Audio URLs and generated asset ids do not affect editorial quality, but
+    // they add a surprising amount of context to a large pipeline request.
+    // Keep the audit focused on learner-facing content and return quickly.
+    const auditItems = items.map((item) => JSON.parse(JSON.stringify(item, (key, value) => (
+      key === 'audioUrl' || key === 'audioAssetId' ? undefined : value
+    ))));
+    const system = `You are a meticulous ESL exercise editor for Chinese learners.
+Audit each warmup exercise group. Check: Chinese-to-English prompts are direct translations of their English answers (not vague scenarios); each target word/chunk/pattern is actually practised in the English side; answers are natural, complete and at the intended level; hints are concrete without leaking the answer; directions and fields are correct; and there are no near-duplicate exercises.
+
+Return ONLY valid JSON:
+{"reviews":[{"itemId":"existing id","severity":"high|medium|low","summary":"short Chinese diagnosis","issues":["specific Chinese issue"],"replacement":{...the COMPLETE corrected item, preserving the exact id and type}}]}
+
+Only return a review when a change is genuinely needed. Return ZERO OR ONE review only: choose the single highest-impact problem, because the editor reviews one item before moving to the next. Every replacement must preserve the exercise type, id, target material and intended direction. Do not invent material outside the original item. Keep summary and issues concise. Do not wrap JSON in Markdown.`;
+    const prompt = `Topic: ${dto.topicTitle || '未命名话题'}\nDifficulty: ${dto.difficulty || 'L2'}\n\nPipeline to audit:\n${JSON.stringify(auditItems)}`;
+    try {
+      const requestReview = (maxOutputTokens: number, temperature: number) => generateText({
+        model: runtime.provider(),
+        system,
+        prompt,
+        temperature,
+        // A replacement is a complete exercise group. Give one suggestion
+        // enough room to close its JSON instead of asking for six truncated
+        // replacements in a 5k-token response.
+        maxOutputTokens,
+      });
+      let response = await requestReview(12_000, 0.1);
+      let parsed: { reviews?: any[] };
+      try {
+        parsed = JSON.parse(this.extractJson(response.text).trim()) as { reviews?: any[] };
+      } catch (firstParseError) {
+        // DeepSeek occasionally ends an otherwise valid object early. One
+        // deterministic retry is cheaper than surfacing a 500 to the editor.
+        this.logger.warn(`Warmup quality response was not complete JSON; retrying once: ${firstParseError instanceof Error ? firstParseError.message : String(firstParseError)}`);
+        response = await requestReview(16_000, 0);
+        parsed = JSON.parse(this.extractJson(response.text).trim()) as { reviews?: any[] };
+      }
+      const knownIds = new Set(items.map((item) => item.id));
+      const reviews = (Array.isArray(parsed.reviews) ? parsed.reviews : [])
+        .filter((review) => knownIds.has(String(review?.itemId ?? '')) && review?.replacement && typeof review.replacement === 'object')
+        .slice(0, 1)
+        .map((review) => ({
+          itemId: String(review.itemId),
+          severity: ['high', 'medium', 'low'].includes(review.severity) ? review.severity : 'medium',
+          summary: String(review.summary ?? '建议调整此题组').trim(),
+          issues: (Array.isArray(review.issues) ? review.issues : []).map((issue) => String(issue).trim()).filter(Boolean).slice(0, 4),
+          replacement: { ...review.replacement, id: String(review.itemId) },
+        }));
+      return { reviews };
+    } catch (error) {
+      this.logger.warn(`Warmup pipeline quality check failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new BadRequestException('质量校验失败，请稍后重试');
+    }
+  }
+
   /** AI 生成练习题：根据关键词和题型批量生成练习项目 */
   async generateDrills(dto: DrillGenerationDto) {
     const runtime = await this.getLlmRuntime();
@@ -2030,10 +2154,15 @@ Rules:
       const isEnToZh = dto.direction === 'en_to_zh';
       const promptLabel = isEnToZh ? 'English prompt' : 'Chinese prompt';
       const answerLabel = isEnToZh ? 'Chinese answer' : 'English answer';
+      const hintForms = dto.type === 'vocab_sentence_building'
+        ? ['关键词：只给一个核心英文词', '关键词：只给一个核心英文词', '带空格的句子骨架']
+        : dto.type === 'pattern_drill'
+          ? ['带空格的句型骨架', '带空格的句型骨架', '只给一个固定部分的英文词']
+          : ['首词加空格的句块线索', '只给一个核心英文词', '带空格的句子骨架'];
       const itemsJson = dto.items.map((it, i) => {
         const promptText = this.getDrillPromptText(it, dto.direction);
         const answerText = this.getDrillAnswerText(it, dto.direction);
-        return `[${i + 1}] ${promptLabel}: ${promptText || '(missing)'} | ${answerLabel}: ${answerText || '(missing)'}`;
+        return `[${i + 1}] Required hint form: ${hintForms[i % hintForms.length]}. ${promptLabel}: ${promptText || '(missing)'} | ${answerLabel}: ${answerText || '(missing)'}`;
       }).join('\n')
       const user = `Type: ${dto.type}, Keyword: "${dto.keyword}"${dto.meaning ? `, Meaning: ${dto.meaning}` : ''}, Direction: ${dto.direction ?? 'zh_to_en'}${generationContext}\nExercises:\n${itemsJson}`;
 

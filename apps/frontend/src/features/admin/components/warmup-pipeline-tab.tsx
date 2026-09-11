@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
 import { synthesizeAdminAudio } from '@/lib/admin-tts-helpers'
@@ -90,6 +91,14 @@ interface Props {
   difficulty?: string
 }
 
+type WarmupQualityReview = {
+  itemId: string
+  severity: 'high' | 'medium' | 'low'
+  summary: string
+  issues: string[]
+  replacement: WarmupPipelineItem
+}
+
 let _idCounter = Date.now()
 const genId = () => `warmup_${++_idCounter}`
 
@@ -126,6 +135,7 @@ const itemTypeOptions: Array<{
 ]
 
 const WARMUP_BATCH_AI_TIMEOUT_MS = 300_000
+const WARMUP_MATERIALS_PER_BATCH = 20
 
 type ValidationTone = 'ok' | 'warn' | 'error'
 
@@ -560,8 +570,16 @@ export function WarmupPipelineTab({
   // group before seeing the next one.
   const [reviewingItemId, setReviewingItemId] = useState<string | null>(null)
   const [reviewQueue, setReviewQueue] = useState<WarmupPipelineItem[]>([])
+  const [qualityChecking, setQualityChecking] = useState(false)
+  const [qualityReviews, setQualityReviews] = useState<WarmupQualityReview[]>([])
+  const [qualityReviewIndex, setQualityReviewIndex] = useState(0)
+  const [qualityDialogOpen, setQualityDialogOpen] = useState(false)
   const [materialContext, setMaterialContext] = useState<SceneMaterialContext | null>(null)
   const prevIdsRef = useRef<string>('')
+  const localRef = useRef<WarmupPipelineData>(value)
+  const generationSessionRef = useRef(false)
+  const previousBatchMissingRef = useRef<number | null>(null)
+  const noProgressBatchesRef = useRef(0)
 
   // 组顺序约束上下文（前序/后序包知识点），用于材料池展示
   useEffect(() => {
@@ -578,6 +596,7 @@ export function WarmupPipelineTab({
   }, [sceneId])
 
   useEffect(() => {
+    localRef.current = value
     setLocal(value)
     const ids = value.pipeline.map(item => item.id)
     const currentIds = ids.join(',')
@@ -588,11 +607,12 @@ export function WarmupPipelineTab({
   }, [value])
 
   const commit = (patch: Partial<WarmupPipelineData>) => {
-    const base = { ...local, ...patch }
+    const base = { ...localRef.current, ...patch }
     const next = {
       ...base,
       materialUsage: buildWarmupMaterialUsage(base, vocabs, chunks, patterns),
     }
+    localRef.current = next
     setLocal(next)
     onChange(next)
   }
@@ -808,24 +828,26 @@ export function WarmupPipelineTab({
     }
   }
 
-  const generateMissingPracticeItems = async () => {
-    if (reviewingItemId) {
+  const generateMissingPracticeItems = async (continuing = false) => {
+    if (reviewingItemId && !continuing) {
       toast.error('请先审核当前 AI 题组，再继续生成')
       return
     }
-    const currentZhItems = local.pipeline
+    const pipelineSnapshot = localRef.current.pipeline
+    const usageSnapshot = buildWarmupMaterialUsage(localRef.current, vocabs, chunks, patterns)
+    const currentZhItems = pipelineSnapshot
       .filter((item): item is ChunkSubstitutionItem => item.type === 'chunk_substitution' && item.direction === 'zh_to_en')
       .reduce((sum, item) => sum + item.items.length, 0)
-    const currentEnItems = local.pipeline
+    const currentEnItems = pipelineSnapshot
       .filter((item): item is ChunkSubstitutionItem => item.type === 'chunk_substitution' && item.direction === 'en_to_zh')
       .reduce((sum, item) => sum + item.items.length, 0)
-    const currentPatternItems = local.pipeline
+    const currentPatternItems = pipelineSnapshot
       .filter((item): item is PatternDrillItem => item.type === 'pattern_drill')
       .reduce((sum, item) => sum + item.items.length, 0)
-    const currentExpansionUnits = local.pipeline
+    const currentExpansionUnits = pipelineSnapshot
       .filter((item) => item.type === 'vocab_sentence_building' || item.type === 'sentence_decomposition')
       .length
-    const currentPracticeItems = local.pipeline.reduce((sum, item) => {
+    const currentPracticeItems = pipelineSnapshot.reduce((sum, item) => {
       if (item.type === 'sentence_decomposition') return sum + item.levels.length
       if (item.type === 'vocab_sentence_building') return sum + item.patterns.reduce((inner, pattern) => inner + pattern.items.length, 0)
       return sum + item.items.length
@@ -836,16 +858,51 @@ export function WarmupPipelineTab({
       + Math.max(0, 2 - currentEnItems)
       + Math.max(0, 2 - currentPatternItems)
       + Math.max(0, 1 - currentExpansionUnits)
-      + Math.max(0, 3 - local.pipeline.length)
+      + Math.max(0, 3 - pipelineSnapshot.length)
       + Math.max(0, 6 - currentPracticeItems)
-    const missingVocabs = materialUsageStats.totals.vocabs.filter((entry) => entry.count === 0)
-    const missingChunks = materialUsageStats.totals.chunks.filter((entry) => entry.count === 0)
-    const missingPatterns = materialUsageStats.totals.patterns.filter((entry) => entry.count === 0)
+    const missingVocabs = usageSnapshot.totals.vocabs.filter((entry) => entry.count === 0)
+    const missingChunks = usageSnapshot.totals.chunks.filter((entry) => entry.count === 0)
+    const missingPatterns = usageSnapshot.totals.patterns.filter((entry) => entry.count === 0)
     const missingCount = missingVocabs.length + missingChunks.length + missingPatterns.length
     if (!missingCount && !structureMissing) {
+      generationSessionRef.current = false
+      previousBatchMissingRef.current = null
+      noProgressBatchesRef.current = 0
       toast.success('当前材料都已经覆盖')
       return
     }
+
+    if (!continuing) {
+      generationSessionRef.current = true
+      previousBatchMissingRef.current = missingCount
+      noProgressBatchesRef.current = 0
+    } else if (previousBatchMissingRef.current !== null) {
+      noProgressBatchesRef.current = missingCount >= previousBatchMissingRef.current
+        ? noProgressBatchesRef.current + 1
+        : 0
+      previousBatchMissingRef.current = missingCount
+      if (noProgressBatchesRef.current >= 2) {
+        generationSessionRef.current = false
+        toast.error('连续两批没有提升材料覆盖率，已停止自动生成，请检查或手动调整当前题目')
+        return
+      }
+    }
+
+    // Reserve room for chunks and patterns whenever they exist: vocabulary is
+    // best practised inside those structures, so a batch of only words would
+    // produce weaker, isolated exercises. If a pool has only one material
+    // kind, the remaining slots naturally fall back to that kind.
+    const preferredChunks = missingChunks.slice(0, Math.min(missingChunks.length, 6))
+    const preferredPatterns = missingPatterns.slice(0, Math.min(missingPatterns.length, 4))
+    const scopedVocabs = [
+      ...missingVocabs.filter((item) => item.tier === 'core'),
+      ...missingVocabs.filter((item) => item.tier !== 'core' && item.tier !== 'carry'),
+      ...missingVocabs.filter((item) => item.tier === 'carry'),
+    ].slice(0, Math.max(0, WARMUP_MATERIALS_PER_BATCH - preferredChunks.length - preferredPatterns.length))
+    let remainingMaterialSlots = WARMUP_MATERIALS_PER_BATCH - scopedVocabs.length - preferredChunks.length - preferredPatterns.length
+    const scopedChunks = [...preferredChunks, ...missingChunks.slice(preferredChunks.length, preferredChunks.length + Math.max(0, remainingMaterialSlots))]
+    remainingMaterialSlots -= Math.max(0, scopedChunks.length - preferredChunks.length)
+    const scopedPatterns = [...preferredPatterns, ...missingPatterns.slice(preferredPatterns.length, preferredPatterns.length + Math.max(0, remainingMaterialSlots))]
 
     setAiGeneratingMissing(true)
     try {
@@ -962,9 +1019,9 @@ export function WarmupPipelineTab({
         topicTitle,
         difficulty,
         materials: {
-          vocabs: materialUsageStats.totals.vocabs,
-          chunks: materialUsageStats.totals.chunks,
-          patterns: materialUsageStats.totals.patterns,
+          vocabs: scopedVocabs,
+          chunks: scopedChunks,
+          patterns: scopedPatterns,
         },
         // 学习包组顺序约束：后端按 sceneId 查引用表，排除后序包知识点、标记前序复习词
         constraints: {
@@ -976,11 +1033,11 @@ export function WarmupPipelineTab({
           enToZhItems: currentEnItems,
           patternItems: currentPatternItems,
           expansionUnits: currentExpansionUnits,
-          steps: local.pipeline.length,
+          steps: pipelineSnapshot.length,
           totalItems: currentPracticeItems,
         },
         // 把当前已生成的 pipeline 内容传给后端，AI 可以参考/改进
-        previousPipeline: local.pipeline.map((item) => {
+        previousPipeline: pipelineSnapshot.map((item) => {
           const { id, audioUrl, audioAssetId, ...rest } = item as any
           // 递归清理子项中的音频字段
           const cleanItems = (arr: any[]) => arr?.map((it: any) => {
@@ -1011,7 +1068,7 @@ export function WarmupPipelineTab({
       // Do not append the whole result: render the first group in the editor
       // and keep the rest behind an explicit review gate.
       const [firstItem, ...pendingItems] = generatedItems
-      commit({ pipeline: [...local.pipeline, firstItem] })
+      commit({ pipeline: [...pipelineSnapshot, firstItem] })
       setSelectedItemId(firstItem.id)
       setReviewingItemId(firstItem.id)
       setReviewQueue(pendingItems)
@@ -1026,8 +1083,8 @@ export function WarmupPipelineTab({
   const advanceReviewedItem = (discardCurrent = false) => {
     if (!reviewingItemId) return
     const currentPipeline = discardCurrent
-      ? local.pipeline.filter((item) => item.id !== reviewingItemId)
-      : local.pipeline
+      ? localRef.current.pipeline.filter((item) => item.id !== reviewingItemId)
+      : localRef.current.pipeline
     const [nextItem, ...remainingItems] = reviewQueue
 
     if (!nextItem) {
@@ -1035,7 +1092,12 @@ export function WarmupPipelineTab({
       setReviewingItemId(null)
       setReviewQueue([])
       setSelectedItemId(currentPipeline[currentPipeline.length - 1]?.id ?? null)
-      toast.success(discardCurrent ? '已跳过当前题组，审核流程完成' : '全部 AI 题组已审核完成')
+      if (generationSessionRef.current) {
+        toast.success('当前批次审核完成，正在检查材料池并准备下一批')
+        window.setTimeout(() => { void generateMissingPracticeItems(true) }, 0)
+      } else {
+        toast.success(discardCurrent ? '已跳过当前题组，审核流程完成' : '全部 AI 题组已审核完成')
+      }
       return
     }
 
@@ -1114,6 +1176,66 @@ export function WarmupPipelineTab({
       toast.error(err?.message || '批量生成英文音频失败')
     } finally {
       setAiAudioAll(false)
+    }
+  }
+
+  const validatePipelineQuality = async () => {
+    if (!local.pipeline.length) {
+      toast.error('请先生成或添加练习题')
+      return
+    }
+    // Open first: a full-pipeline audit can take a few seconds, and otherwise
+    // the user has no visible acknowledgement that the click was received.
+    setQualityReviews([])
+    setQualityReviewIndex(0)
+    setQualityDialogOpen(true)
+    setQualityChecking(true)
+    try {
+      const { post } = await import('@/lib/request')
+      const result: { reviews?: WarmupQualityReview[] } = await post('/practice-ai/validate-warmup-pipeline', {
+        topicTitle,
+        difficulty,
+        pipeline: local.pipeline,
+      }, { timeout: WARMUP_BATCH_AI_TIMEOUT_MS })
+      const reviews = (Array.isArray(result?.reviews) ? result.reviews : [])
+        .filter((review) => review?.itemId && review?.replacement)
+      setQualityReviews(reviews)
+      setQualityReviewIndex(0)
+      if (!reviews.length) {
+        setQualityDialogOpen(false)
+        toast.success('质量校验通过：当前练习没有发现需要修改的问题')
+      }
+      else {
+        setQualityDialogOpen(true)
+        toast.warning(`发现 ${reviews.length} 个可优化题组，请逐项确认修改`)
+      }
+    } catch (err: any) {
+      setQualityDialogOpen(false)
+      toast.error(err?.message || '质量校验失败')
+    } finally {
+      setQualityChecking(false)
+    }
+  }
+
+  const resolveQualityReview = (applyReplacement: boolean) => {
+    const review = qualityReviews[qualityReviewIndex]
+    if (!review) return
+    if (applyReplacement) {
+      const original = local.pipeline.find((item) => item.id === review.itemId)
+      if (!original || review.replacement?.type !== original.type) {
+        toast.error('建议内容格式不完整，已保留原题')
+      } else {
+        commit({ pipeline: local.pipeline.map((item) => item.id === review.itemId ? { ...review.replacement, id: item.id } : item) })
+        toast.success('已应用建议修改')
+      }
+    }
+    const nextIndex = qualityReviewIndex + 1
+    if (nextIndex >= qualityReviews.length) {
+      setQualityReviews([])
+      setQualityReviewIndex(0)
+      toast.success('所有质量建议已处理')
+    } else {
+      setQualityReviewIndex(nextIndex)
     }
   }
 
@@ -1241,6 +1363,8 @@ export function WarmupPipelineTab({
   const validationIssueCount = validationItems.filter((item) => item.tone !== 'ok').length
   const selectedIndex = local.pipeline.findIndex((item) => item.id === selectedItemId)
   const selectedItem = selectedIndex >= 0 ? local.pipeline[selectedIndex] : null
+  const activeQualityReview = qualityReviews[qualityReviewIndex]
+  const qualityOriginal = activeQualityReview ? local.pipeline.find((item) => item.id === activeQualityReview.itemId) : null
   const getItemMaterialStats = (itemId: string) => materialUsageStats.itemStats.find((stat) => stat.id === itemId)
 
   const renderItemForm = (item: WarmupPipelineItem, idx: number) => {
@@ -1398,22 +1522,21 @@ export function WarmupPipelineTab({
 
   return (
     <div className="mt-0 space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/70 bg-background px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-gradient-to-r from-background via-background to-muted/30 px-3.5 py-3 shadow-sm">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="truncate text-sm font-semibold">{topicTitle?.trim() || '未命名话题'}</p>
           </div>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {totalPracticeItems} 题 · {local.pipeline.length} 步 · {totalHintableItems} 题可生成 AI 提示
+            {totalPracticeItems} 题 · {local.pipeline.length} 组 · 材料覆盖 {usedMaterialCount}/{totalMaterialCount || 0}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {renderMaterialPoolPopover()}
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
             size="sm"
-            className="h-8 gap-1.5"
-            disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll || Boolean(reviewingItemId)}
+            className="h-9 gap-1.5 shadow-sm"
+            disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll || qualityChecking || Boolean(reviewingItemId)}
             onClick={generateMissingPracticeItems}
           >
             {aiGeneratingMissing ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
@@ -1423,37 +1546,79 @@ export function WarmupPipelineTab({
             type="button"
             size="sm"
             variant="outline"
-            className="h-8 gap-1.5"
-            disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll || totalHintableItems === 0}
-            onClick={generateAllHints}
+            className="h-9 gap-1.5 border-emerald-300 bg-emerald-50/70 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300"
+            disabled={qualityChecking || aiGeneratingMissing || aiHintingAll || aiAudioAll || totalPracticeItems === 0 || Boolean(reviewingItemId)}
+            onClick={qualityReviews.length ? () => setQualityDialogOpen(true) : validatePipelineQuality}
           >
-            {aiHintingAll ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
-            全部 AI 提示
+            {qualityChecking ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}
+            {qualityReviews.length ? `继续校验 · ${qualityReviewIndex + 1}/${qualityReviews.length}` : '质量校验'}
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8 gap-1.5"
-            disabled={compacting || aiGeneratingMissing || aiHintingAll || aiAudioAll || totalPracticeItems === 0}
-            onClick={() => compactDuplicates(true)}
-          >
-            {compacting ? <Loader2 className="size-3.5 animate-spin" /> : <Scissors className="size-3.5" />}
-            去重压缩
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8 gap-1.5"
-            disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll}
-            onClick={generateAllEnglishAudio}
-          >
-            {aiAudioAll ? <Loader2 className="size-3.5 animate-spin" /> : <Volume2 className="size-3.5" />}
-            全部 AI 音频
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button type="button" size="sm" variant="ghost" className="h-9 gap-1 text-muted-foreground">
+                更多工具 <ChevronDown className="size-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-52 space-y-1.5 p-2">
+              {renderMaterialPoolPopover()}
+              <Button type="button" variant="ghost" className="h-8 w-full justify-start gap-2 text-xs" disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll || totalHintableItems === 0} onClick={generateAllHints}>
+                {aiHintingAll ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />} 生成全部提示
+              </Button>
+              <Button type="button" variant="ghost" className="h-8 w-full justify-start gap-2 text-xs" disabled={compacting || aiGeneratingMissing || aiHintingAll || aiAudioAll || totalPracticeItems === 0} onClick={() => compactDuplicates(true)}>
+                {compacting ? <Loader2 className="size-3.5 animate-spin" /> : <Scissors className="size-3.5" />} 去重压缩
+              </Button>
+              <Button type="button" variant="ghost" className="h-8 w-full justify-start gap-2 text-xs" disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll} onClick={generateAllEnglishAudio}>
+                {aiAudioAll ? <Loader2 className="size-3.5 animate-spin" /> : <Volume2 className="size-3.5" />} 生成英文音频
+              </Button>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
+
+      <Dialog open={qualityDialogOpen} onOpenChange={setQualityDialogOpen}>
+        <DialogContent className="max-h-[88vh] max-w-4xl overflow-y-auto p-0">
+          {qualityChecking ? (
+            <div className="flex min-h-64 flex-col items-center justify-center gap-3 px-8 py-12 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                <Loader2 className="size-6 animate-spin" />
+              </div>
+              <div>
+                <DialogTitle>正在校验练习质量</DialogTitle>
+                <DialogDescription className="mt-2 max-w-md leading-6">
+                  正在优先检查题干与答案是否互译、材料是否真正被练到，以及提示是否有用且不泄题。完成后会在这里逐项让你确认。
+                </DialogDescription>
+              </div>
+            </div>
+          ) : activeQualityReview && qualityOriginal ? <>
+            <DialogHeader className="border-b border-border/70 bg-amber-50/70 px-6 py-5 dark:bg-amber-950/20">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="bg-amber-600 text-[10px] text-white">质量建议 {qualityReviewIndex + 1}/{qualityReviews.length}</Badge>
+                <DialogTitle>{activeQualityReview.summary}</DialogTitle>
+              </div>
+              <DialogDescription className="pt-1">{activeQualityReview.issues.length ? activeQualityReview.issues.join(' · ') : '请比较原题与建议版本，再决定是否应用修改。'}</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 p-6 lg:grid-cols-2">
+              <div className="rounded-xl border border-red-200 bg-red-50/30 p-4 dark:border-red-900 dark:bg-red-950/10">
+                <p className="mb-2 text-xs font-semibold text-red-700 dark:text-red-300">原题</p>
+                <p className="whitespace-pre-wrap text-sm leading-6 text-foreground/80">{getWarmupItemText(qualityOriginal)}</p>
+              </div>
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/30 p-4 dark:border-emerald-900 dark:bg-emerald-950/10">
+                <p className="mb-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300">建议新版</p>
+                <p className="whitespace-pre-wrap text-sm leading-6 text-foreground/80">{getWarmupItemText(activeQualityReview.replacement)}</p>
+              </div>
+            </div>
+            <DialogFooter className="border-t border-border/70 bg-muted/20 px-6 py-4 sm:justify-between">
+              <Button type="button" variant="ghost" onClick={() => resolveQualityReview(false)}>保留原题，下一项</Button>
+              <Button type="button" onClick={() => resolveQualityReview(true)}>应用建议修改，下一项</Button>
+            </DialogFooter>
+          </> : (
+            <div className="px-8 py-12 text-center">
+              <DialogTitle>没有可显示的质量建议</DialogTitle>
+              <DialogDescription className="mt-2">请关闭后重新校验；若问题持续出现，请检查当前练习题是否仍在编辑中。</DialogDescription>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {reviewingItemId && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300/80 bg-amber-50/70 px-3 py-2.5 text-sm dark:border-amber-800 dark:bg-amber-950/20">

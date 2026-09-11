@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
+import { spawn } from 'node:child_process';
 import * as path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { FileAssetGroup } from '@prisma/client';
@@ -165,6 +166,48 @@ export class TtsService {
     return TTS_PARAMS_SCHEMA;
   }
 
+  /**
+   * Make independently generated clips comfortable to play back in sequence.
+   * TTS voices (and even sentences from one voice) have different source
+   * loudness, so provider-side volume alone cannot keep a practice list even.
+   * ffmpeg is part of the production image; failures deliberately fall back to
+   * the original provider output rather than failing a content authoring task.
+   */
+  private async normalizeTtsLoudness(buffer: Buffer, extension: string): Promise<Buffer> {
+    const format = extension === 'wav' ? 'wav' : extension === 'flac' ? 'flac' : 'mp3';
+    return new Promise((resolve, reject) => {
+      const process = spawn('ffmpeg', [
+        '-hide_banner', '-loglevel', 'error',
+        '-i', 'pipe:0',
+        '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11',
+        '-ar', '32000', '-ac', '1',
+        '-f', format, 'pipe:1',
+      ], { stdio: ['pipe', 'pipe', 'pipe'] });
+      const output: Buffer[] = [];
+      const errors: Buffer[] = [];
+      const timeout = setTimeout(() => process.kill('SIGKILL'), 30_000);
+      process.stdout.on('data', (chunk: Buffer) => output.push(chunk));
+      process.stderr.on('data', (chunk: Buffer) => errors.push(chunk));
+      process.once('error', reject);
+      process.once('close', (code) => {
+        clearTimeout(timeout);
+        const normalized = Buffer.concat(output);
+        if (code === 0 && normalized.length > 0) resolve(normalized);
+        else reject(new Error(Buffer.concat(errors).toString('utf8').trim() || `ffmpeg exited with code ${code}`));
+      });
+      process.stdin.end(buffer);
+    });
+  }
+
+  private async normalizeTtsResult<T extends { audioBuffer: Buffer; fileExtension: string }>(result: T): Promise<T> {
+    try {
+      return { ...result, audioBuffer: await this.normalizeTtsLoudness(result.audioBuffer, result.fileExtension) };
+    } catch (error) {
+      this.logger.warn(`TTS loudness normalization skipped: ${error instanceof Error ? error.message : String(error)}`);
+      return result;
+    }
+  }
+
   /** 用户录音 → STT 转写，返回文本 + 词时间戳 + 音频 COS URL */
   async transcribeRecording(
     audioBuffer: Buffer,
@@ -239,7 +282,7 @@ export class TtsService {
     const groupId = dto.groupId?.trim() || providerConfig.groupId;
     const sanitizedParams = sanitizeTtsParams(dto.provider, model, dto.params);
     const provider = this.factory.getProvider(dto.provider);
-    const result = await provider.generateAudio({
+    const rawResult = await provider.generateAudio({
       id: `ephemeral-${randomUUID()}`,
       text: dto.text.trim(),
       model,
@@ -250,9 +293,9 @@ export class TtsService {
       groupId,
     });
     return {
-      mimeType: result.mimeType,
-      audioBase64: result.audioBuffer.toString('base64'),
-      wordTimestamps: result.wordTimestamps,
+      mimeType: rawResult.mimeType,
+      audioBase64: rawResult.audioBuffer.toString('base64'),
+      wordTimestamps: rawResult.wordTimestamps,
     };
   }
 
@@ -270,7 +313,7 @@ export class TtsService {
     const configHash = this.buildConfigHash(dto.provider, model, dto.voiceId, sanitizedParams, text);
     const generatedId = `story-line-${configHash}-${randomUUID()}`;
 
-    const result = await provider.generateAudio({
+    const rawResult = await provider.generateAudio({
       id: generatedId,
       text,
       model,
@@ -281,6 +324,7 @@ export class TtsService {
       groupId,
     });
 
+    const result = await this.normalizeTtsResult(rawResult);
     const asset = await this.fileAssetsService.createAssetFromBuffer({
       buffer: result.audioBuffer,
       filename: `${generatedId}.${result.fileExtension}`,

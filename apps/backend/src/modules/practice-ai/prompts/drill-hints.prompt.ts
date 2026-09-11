@@ -15,30 +15,31 @@
  *
  * 核心原则：
  *   - 提示必须具体、可操作，告诉学习者先判断什么信息、再怎样组织句子；
- *   - 不能泄露英语答案、答案中的连续英文片段或目标表达本身；
+ *   - 可以给一个关键词、带空格的句型骨架或不完整句块；不能泄露完整答案或完整目标表达；
  *   - 禁止泛化套话（"用目标词造句"等）；
- *   - 中文 18~48 字，让学习者看完就知道先说什么、再补哪类信息；不直接给答案。
+ *   - 中文 18~56 字，让学习者看完就知道先说什么、再补哪类信息；不直接给答案。
  *
  * =============================================================================
  */
 
 /** 提示写作规则（system prompt 片段，所有生成点共用） */
 export const DRILL_HINT_WRITING_RULES = `## ══ HINT WRITING RULES (CRITICAL — every item MUST be immediately answerable) ══
-- zh_to_en is a TRANSLATION exercise, not an open-ended speaking scenario. A hint is a TWO-STEP translation cue: (1) identify the exact Chinese sentence elements to translate (subject / action / object / time / attitude), then (2) say how to assemble them around the target expression. It is NOT a paraphrase of the answer.
-- The learner must be able to infer a translation plan after reading it. Prefer concrete guidance such as “先译出公交车正在靠近，再用疑问句邀请对方同行”; never merely tell them to “think about the context”.
-- chunk_substitution (zh_to_en): point to the exact Chinese clause(s) and whether the translation is a statement, question, request, or reply. Do NOT reveal the target English chunk.
-  Good: "先译出你想改预约时间，再把新日期补在请求句后面。"
+- zh_to_en is a TRANSLATION exercise, not an open-ended speaking scenario. A hint must expose a usable but incomplete foothold: identify the exact Chinese sentence elements to translate AND give one of: a single English keyword, a masked sentence skeleton, or a masked partial chunk. It is NOT a paraphrase of the answer.
+- Every hint MUST contain a usable English foothold. Within one batch, deliberately rotate these hint forms: “关键词：word；…”, “句型线索：Word ___；…”, and “句块线索：word ___；…”. Do not repeatedly begin with “先译出”; do not return a Chinese-only paraphrase of the task.
+- The learner must be able to infer a translation plan after reading it. Prefer concrete guidance such as “关键词：reschedule；把‘改期’作主要动作，再补新的日期”; never merely tell them to “think about the context”.
+- chunk_substitution (zh_to_en): point to the exact Chinese clause(s) and whether the translation is a statement, question, request, or reply. You MAY show the first word plus “___”, but MUST NOT reveal the complete target English chunk.
+  Good: "句块线索：put ___；先说清想推迟的事情，再补时间。"
 - chunk_substitution (en_to_zh): identify the English sentence's purpose and tone, then guide natural Chinese translation rather than word-by-word translation.
-- pattern_drill: identify the exact Chinese content that fills each variable slot and its grammar form (person / thing / base action / time / place). Do NOT write the completed English pattern.
-  Good: "先找出你想做的具体动作，再把动作原形放进意愿后的空位。"
-- vocab_sentence_building: name a concrete scenario and tell the learner which sentence role the target meaning plays (action, object, reason, result, etc.). Do NOT state an English collocation from the answer.
+- pattern_drill: identify the exact Chinese content that fills each variable slot and its grammar form (person / thing / base action / time / place). You MAY show an incomplete skeleton with “___”; do NOT write the completed English pattern.
+  Good: "句型线索：Would ___ …?；把邀请的动作原形放进空位。"
+- vocab_sentence_building: name a concrete scenario and tell the learner which sentence role the target meaning plays (action, object, reason, result, etc.). You MAY state the single target word, but do NOT state an English collocation from the answer.
 - sentence_decomposition: each level must state exactly which NEW element to add (object, degree, manner, time, place, reason) and where it attaches; never repeat the completed level.
-- NEVER include the answer, the target English expression, or ANY sequence of 2+ English words copied from the answer.
+- NEVER include the answer, the complete target English expression, or ANY sequence of 2+ English words copied from the answer. One English word is allowed. A masked scaffold may show at most three English words and must contain “___” or “…”.
 - NEVER use generic hints like "用目标词造句", "注意语法", "参考句型", "按照提示完成句子", "结合语境", "想想要表达什么".
-- Hints are Chinese, 18-48 characters, concrete and actionable. Each one must contain an explicit information target AND an explicit sentence-building action.`;
+- Hints are Chinese-led, 18-56 characters, concrete and actionable. Each one must contain an explicit information target AND an explicit sentence-building action.`;
 
 /** 题型生成时的内嵌 hint 要求（user prompt 片段，追加到 JSON 输出指令后） */
-export const DRILL_HINT_OUTPUT_REQUIREMENT = `Every item MUST include a "hint" field following the HINT WRITING RULES: Chinese 18-48 chars, explicit information target plus sentence-building action, no English answer/target expression/2-word answer fragment, and never generic advice.`;
+export const DRILL_HINT_OUTPUT_REQUIREMENT = `Every item MUST include a "hint" field following the HINT WRITING RULES: Chinese-led 18-56 chars, explicit information target plus sentence-building action, one English keyword OR a masked scaffold is allowed, but never the answer, a complete multi-word target expression, or a 2-word answer fragment.`;
 
 /**
  * 所有中英互译题（批量、单题生成与润色）共用的题目契约。

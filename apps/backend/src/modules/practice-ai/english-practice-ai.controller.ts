@@ -115,4 +115,11 @@ export class EnglishPracticeAiController {
     await requireAuthSession(req);
     return this.service.generateWarmupPipeline(dto);
   }
+
+  /** 管理后台：逐题审查知识点练习，并给出可确认的替换建议。 */
+  @Post('validate-warmup-pipeline')
+  async validateWarmupPipeline(@Req() req: Request, @Body() dto: { pipeline?: Array<Record<string, unknown>>; topicTitle?: string; difficulty?: string }) {
+    await requireAuthSession(req);
+    return this.service.validateWarmupPipeline(dto);
+  }
 }
