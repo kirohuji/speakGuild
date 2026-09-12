@@ -908,6 +908,38 @@ For correction/upgraded/retryRequired: only populate these when the response is 
     return Boolean(normalizedChunk) && normalizedText.includes(` ${normalizedChunk} `);
   }
 
+  /**
+   * A short chunk must be preserved verbatim. A material which is already a
+   * complete sentence can be the anchor of a conversational turn or a natural
+   * clause: either form can break a literal substring match. In that case,
+   * preserve all target words in order while practising a coherent utterance.
+   */
+  private englishTextUsesChunkOrSentencePattern(text: string, target: string) {
+    if (this.englishTextUsesExactChunk(text, target)) return true;
+    if (!this.isStandaloneEnglishUtterance(target)) return false;
+
+    const words = (value: string) => value.toLowerCase().match(/[a-z]+(?:'[a-z]+)?/g) ?? [];
+    const targetWords = words(target);
+    const textWords = words(text);
+    if (!targetWords.length || textWords.length < targetWords.length) return false;
+
+    let cursor = 0;
+    for (const word of textWords) {
+      if (word === targetWords[cursor]) cursor += 1;
+      if (cursor === targetWords.length) return true;
+    }
+    return false;
+  }
+
+  private isTargetRepeatedByItself(text: string, target: string) {
+    const words = (value: string) => value.toLowerCase().match(/[a-z]+(?:'[a-z]+)?/g) ?? [];
+    const textWords = words(text);
+    const targetWords = words(target);
+    return textWords.length > 0
+      && textWords.length === targetWords.length
+      && textWords.every((word, index) => word === targetWords[index]);
+  }
+
   private sanitizeGeneratedHint(rawHint: unknown, dto: DrillGenerationDto, item: { zh?: string; en?: string; answer?: string }) {
     const hint = String(rawHint ?? '').trim();
     const answer = String(item.answer ?? '').toLowerCase().replace(/[’‘]/g, "'");
@@ -946,7 +978,7 @@ For correction/upgraded/retryRequired: only populate these when the response is 
       // en_to_zh exercises that is the prompt, not the Chinese answer.
       const englishText = direction === 'en_to_zh' ? prompt : answer;
       const usesTarget = dto.type === 'chunk_substitution'
-        ? this.englishTextUsesExactChunk(englishText, dto.keyword)
+        ? this.englishTextUsesChunkOrSentencePattern(englishText, dto.keyword)
         : this.answerUsesTarget(englishText, dto.keyword);
       const isValid = direction === 'en_to_zh'
         ? this.isEnglishSentence(prompt) && this.isChinesePrompt(answer) && usesTarget
@@ -957,7 +989,10 @@ For correction/upgraded/retryRequired: only populate these when the response is 
       const fragmentOnly = direction === 'zh_to_en' && targetWords.length <= 3
         && answerWords.length <= targetWords.length + 1
         && !this.isStandaloneEnglishUtterance(dto.keyword);
-      if (!isValid || fragmentOnly) return [];
+      // Even a grammatical target sentence is material to practise, not the
+      // complete exercise. Reject a bare echo on either translation direction.
+      const repeatedTargetOnly = this.isTargetRepeatedByItself(englishText, dto.keyword);
+      if (!isValid || fragmentOnly || repeatedTargetOnly) return [];
       const item = direction === 'en_to_zh'
         ? { en: prompt, answer }
         : { zh: prompt, answer };
@@ -1825,7 +1860,7 @@ Rules:
         // source in its final sentence; otherwise it looks like practice but
         // does not actually train the selected knowledge point.
         const sourceIsUsed = !sourceText || (raw?.sourceKind === 'chunk'
-          ? this.englishTextUsesExactChunk(normalized?.fullSentence ?? '', sourceText)
+          ? this.englishTextUsesChunkOrSentencePattern(normalized?.fullSentence ?? '', sourceText)
           : this.answerUsesTarget(normalized?.fullSentence ?? '', sourceText));
         return normalized && sourceIsUsed ? [normalized] : [];
       }
@@ -2247,7 +2282,7 @@ Rules:
       key === 'audioUrl' || key === 'audioAssetId' ? undefined : value
     ))));
     const system = `You are a meticulous ESL exercise editor for Chinese learners.
-Audit each warmup exercise group. Check: Chinese-to-English prompts are direct translations of their English answers (not vague scenarios); each target word/chunk/pattern is actually practised in the English side; answers are natural, complete and at the intended level; hints are concrete without leaking the answer; directions and fields are correct; and there are no near-duplicate exercises.
+Audit each warmup exercise group. Check: Chinese-to-English prompts are direct translations of their English answers (not vague scenarios); each target word/chunk/pattern is actually practised in the English side; every answer sounds like something a speaker would naturally say for the target's own meaning, speech act, and grammar — never a mechanically padded sentence, bare repetition, invented scene, or generic template applied to an incompatible target; hints are concrete without leaking the answer; directions and fields are correct; titles describe the teaching goal rather than only repeating the target; and there are no near-duplicate exercises.
 
 Return ONLY valid JSON:
 {"reviews":[{"itemId":"existing id","severity":"high|medium|low","summary":"short Chinese diagnosis","issues":["specific Chinese issue"],"replacement":{...the COMPLETE corrected item, preserving the exact id and type}}]}

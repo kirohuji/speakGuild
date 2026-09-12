@@ -1552,6 +1552,7 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
   const [editDesc, setEditDesc] = useState(false)
   const [editExamples, setEditExamples] = useState(false)
   const [enriching, setEnriching] = useState(false)
+  const [pendingDiff, setPendingDiff] = useState<any>(null)
   const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
   const [categories, setCategories] = useState<string[]>([])
 
@@ -1560,10 +1561,12 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
       setForm(edit)
       setEditDesc(false)
       setEditExamples(false)
+      setPendingDiff(null)
     } else {
       setForm({ text: '', meaning: '', difficulty: 'L2', category: '', examples: [] })
       setEditDesc(false)
       setEditExamples(false)
+      setPendingDiff(null)
     }
   }, [edit, open])
 
@@ -1585,7 +1588,42 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
     finally { setSaving(false) }
   }
 
-  // AI 生成讲解 + 例句
+  const showEnrichmentDiff = (newFields: Record<string, any>) => {
+    const fields: Record<string, { old: any; new: any }> = {}
+    for (const [key, next] of Object.entries(newFields)) {
+      const current = form[key]
+      if (next === '' || next === null || next === undefined || next === current) continue
+      if (Array.isArray(next) && (!next.length || JSON.stringify(next) === JSON.stringify(current))) continue
+      fields[key] = { old: current, new: next }
+    }
+    if (!Object.keys(fields).length) {
+      toast.info('AI 富化没有返回可应用的更新')
+      return
+    }
+    setPendingDiff({ source: 'AI 富化', fields })
+  }
+
+  const acceptEnrichmentField = (key: string) => {
+    if (!pendingDiff) return
+    setForm((prev: any) => ({ ...prev, [key]: pendingDiff.fields[key].new }))
+    const fields = { ...pendingDiff.fields }
+    delete fields[key]
+    if (Object.keys(fields).length) setPendingDiff({ ...pendingDiff, fields })
+    else {
+      setPendingDiff(null)
+      toast.success('AI 富化：已全部应用')
+    }
+  }
+
+  const acceptAllEnrichment = () => {
+    if (!pendingDiff) return
+    const updates = Object.fromEntries(Object.entries(pendingDiff.fields).map(([key, value]: [string, any]) => [key, value.new]))
+    setForm((prev: any) => ({ ...prev, ...updates }))
+    setPendingDiff(null)
+    toast.success('AI 富化：已全部应用')
+  }
+
+  // AI 富化句块：先展示中文释义、讲解、例句的差异，由管理员选择应用。
   const handleAiEnrich = async () => {
     if (!form.text?.trim()) return
     setEnriching(true)
@@ -1595,14 +1633,11 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
         text: form.text.trim(),
         meaning: form.meaning ?? '',
       })
-      setForm((prev: any) => ({
-        ...prev,
-        description: result.description || prev.description,
-        examples: result.examples?.length ? result.examples : prev.examples,
-      }))
-      setEditDesc(false)
-      setEditExamples(false)
-      toast.success('AI 已生成讲解和例句')
+      showEnrichmentDiff({
+        meaning: result.meaning?.trim(),
+        description: result.description,
+        examples: result.examples,
+      })
     } catch { toast.error('AI 生成失败') }
     finally { setEnriching(false) }
   }
@@ -1669,7 +1704,20 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
               <Input id="c-text" value={form.text ?? ''} onChange={e => setForm({ ...form, text: e.target.value })} placeholder="I'm here to check in" />
             </div>
             <div className="flex-1">
-              <Label htmlFor="c-meaning">中文释义 *</Label>
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <Label htmlFor="c-meaning">中文释义 *</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+                  disabled={enriching || !form.text?.trim()}
+                  onClick={handleAiEnrich}
+                >
+                  {enriching ? <Loader2 className="mr-1 size-3 animate-spin" /> : <Sparkles className="mr-1 size-3" />}
+                  AI 富化
+                </Button>
+              </div>
               <Input id="c-meaning" value={form.meaning ?? ''} onChange={e => setForm({ ...form, meaning: e.target.value })} placeholder="我来办理入住" />
             </div>
           </div>
@@ -1738,7 +1786,7 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
                   disabled={enriching || !form.text?.trim()}
                   onClick={handleAiEnrich}>
                   {enriching ? <Loader2 className="mr-1 size-3 animate-spin" /> : <Sparkles className="mr-1 size-3" />}
-                  AI 生成
+                  AI 富化
                 </Button>
                 {form.description && (
                   <button onClick={() => setEditDesc(!editDesc)}
@@ -1832,6 +1880,31 @@ function ChunkDialog({ open, onClose, edit, onSaved }: {
               </div>
             )}
           </div>
+
+          {pendingDiff && (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-amber-600">AI 富化返回了 {Object.keys(pendingDiff.fields).length} 项更新</span>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={acceptAllEnrichment}>全部应用</Button>
+                  <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground" onClick={() => setPendingDiff(null)}>忽略</Button>
+                </div>
+              </div>
+              {Object.entries(pendingDiff.fields).map(([key, value]: [string, any]) => {
+                const label: Record<string, string> = { meaning: '中文释义', description: '讲解', examples: '例句' }
+                const display = (item: any) => Array.isArray(item) ? `${item.length} 条` : (item || '（空）')
+                return (
+                  <div key={key} className="flex items-center gap-2 text-xs">
+                    <span className="w-16 shrink-0 text-muted-foreground">{label[key] || key}</span>
+                    <span className="min-w-0 flex-1 truncate text-muted-foreground/60 line-through">{String(display(value.old)).slice(0, 48)}</span>
+                    <span className="text-amber-600">→</span>
+                    <span className="min-w-0 flex-1 truncate font-medium">{String(display(value.new)).slice(0, 48)}</span>
+                    <Button size="sm" variant="outline" className="h-6 shrink-0 text-xs" onClick={() => acceptEnrichmentField(key)}>采用</Button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           {/* Bottom bar */}
           <div className="flex justify-end gap-2 pt-2 border-t border-border/40">

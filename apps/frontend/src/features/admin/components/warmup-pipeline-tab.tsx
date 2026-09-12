@@ -1538,7 +1538,7 @@ export function WarmupPipelineTab({
             size="sm"
             className="h-9 gap-1.5 shadow-sm"
             disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll || qualityChecking || Boolean(reviewingItemId)}
-            onClick={generateMissingPracticeItems}
+            onClick={() => void generateMissingPracticeItems(false)}
           >
             {aiGeneratingMissing ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
             {reviewingItemId ? `审核中 · 余 ${reviewQueue.length}` : `AI 逐条生成${missingMaterialCount ? ` ${missingMaterialCount}` : ''}`}

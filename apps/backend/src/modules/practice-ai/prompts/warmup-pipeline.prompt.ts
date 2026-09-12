@@ -47,6 +47,8 @@ Exercise group types:
    Fields: type, title, sourceText, sourceKind("vocab"|"chunk"|"pattern"), fullSentence, fullSentenceZh, levels[]
    Levels: [{level:1-N, label:"加对象"|"加程度"|"加方式"|"加时间"|"加地点"|"加原因"|"完整句", en:"English at this level", zh:"Chinese translation", highlight:"newly added element text", hint:"Chinese hint"}]
 
+Title rule: title is a short Chinese teaching label that describes the daily conversational intention, not a copy of the target material. For a target such as "Cheer up.", use a title like "安慰朋友" or "给予鼓励"; never use only "Cheer up." as the title.
+
    ── Progressive decomposition rules (CRITICAL) ──
    - ALL levels decompose the SAME fullSentence, from simple to complete. Never generate different sentences per level.
    - Level count (N) should be 3-5, adapting to the sentence's actual grammar structure. Do NOT force 5 levels if the sentence is simple — 3 well-chosen levels are better than 5 forced ones.
@@ -181,8 +183,13 @@ ${DRILL_HINT_WRITING_RULES}
 - CRITICAL: Every item in a group must follow the group's direction. If direction="zh_to_en", ALL items use {zh, answer} — never mix {en, answer} items into a zh_to_en group, and never include both zh and en on the same item. Direction mixing within one group is invalid.
 - TRANSLATION FIDELITY (non-negotiable): every zh_to_en "zh" must be the direct, complete Chinese translation of its own "answer" — no scene-setting, inferred intent, speaking task, or extra context. A learner who translates zh literally and naturally must arrive at answer.
 - Before emitting JSON, silently audit EVERY translation pair using this ledger: actor → action/state → object/complement → time/place/manner → tense/aspect → modality → negation → quantity → question/statement intent. Repair any pair where either side adds, omits, or changes one of these facts. Topic relevance and target-material coverage NEVER excuse a semantic mismatch.
-- Do not pad a complete target utterance with an invented setup sentence. A short complete target such as "It doesn't matter." is already a valid answer. Never produce disconnected padding such as "You forgot my book. It doesn't matter." If context is truly needed, express one clear logical relation in one sentence, e.g. "You forgot the book, but it doesn't matter."
-- TARGET-IN-ITEM CHECK (non-negotiable): the target must occur in EVERY practice item, not only in the group title/metadata. For zh_to_en, put the complete target in each English "answer". For en_to_zh, put the complete target in each English "en" prompt. A chunk must appear as the exact continuous phrase; do not replace it with a synonym or use only one word from it. For sentence_decomposition, the final fullSentence must contain sourceText.
+- SEMANTIC-FIRST DAILY-CONVERSATION DESIGN (non-negotiable): before generating an item, identify the target's actual meaning, speech act, and grammar: is it a word, fixed phrase, response, open frame needing a complement, complete statement, or question? Choose a plausible everyday intention that specifically calls for that material, then write the natural utterance a speaker would use. Do not impose one expansion shape, a fixed number of clauses, or a stock situation across all materials.
+  * The target must carry the main meaning. Extra words are allowed only when required by the target's grammar or when they directly make its particular intention clear; never paste on an unrelated question, invitation, setting, or object simply to lengthen it.
+  * Read the target's grammar before writing. For example, "Shall we?" is an open proposal frame and needs an action in the question itself: "Shall we start the movie now?". A complete encouragement, reaction, or statement may instead need a naturally related reason or response. These examples show how to reason about meaning; they are NOT a formula to copy.
+  * Semantic test: if the target could be deleted and the remaining words still express the same useful message, the target was pasted in and the item is invalid. If the whole utterance sounds like a scripted exercise rather than something a person would say, rewrite it.
+  * Never return the bare material as the whole English side.
+- VARY THE CONVERSATION: within one group, use distinct daily situations and communicative moves. Do not create near-duplicates by only changing a name, subject, place, or one noun.
+- TARGET-IN-ITEM CHECK (non-negotiable): the target must be genuinely practised in EVERY item, not only in the group title/metadata. For zh_to_en, put it in each English "answer". For en_to_zh, put it in each English "en" prompt. Preserve short chunks as an exact continuous phrase. If the target is already a full sentence, it may stay intact as the anchor of a longer conversational turn, or its words and grammar may be retained in order in a natural clause. For sentence_decomposition, the final fullSentence must use sourceText by the same rule.
 - IMPORTANT: Do not repeat the compact previous-item summary below. Return the smallest valid JSON that meets this brief.`;
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -340,7 +347,7 @@ ALIGNMENT RULES:
 - en_to_zh: answer must be the direct, complete, natural Chinese translation of en.
 - sentence_decomposition: fullSentenceZh must directly translate fullSentence; every level.zh must directly translate that level.en.
 - For every pair, silently compare actor, action/state, object/complement, modifiers, time/place/manner, tense/aspect, modality, negation, quantity, and question/statement intent. Fix every added, omitted, or changed fact.
-- Check internal discourse coherence as well: adjacent clauses/sentences must have an obvious causal, contrastive, question-answer, or reference relationship. Remove filler setup sentences added only to lengthen a short target. Specifically reject constructions like "You forgot my book. It doesn't matter."; use the standalone target or one logically connected sentence instead.
+- Check semantic and discourse coherence as well: the target's grammar and communicative function must fit the utterance, and adjacent clauses/sentences must have an obvious relationship. Remove generic filler or invented scenes added only to lengthen a target. Do not force every target into the same sentence shape; minimally rewrite each item according to the actual meaning of its word, chunk, or pattern.
 - If the English is unnatural, minimally repair it while preserving its exact target material, then update the Chinese to match. If the pair is already aligned, leave it unchanged.
 - Keep hints concrete and consistent with the corrected pair, without revealing the complete answer.
 

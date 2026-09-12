@@ -119,6 +119,15 @@ export class AdminContentAiService {
     }
   }
 
+  /** 句块释义是索引字段，不承载用法、语气或教学解释。 */
+  private sanitizeChunkMeaning(value: unknown) {
+    const meaning = typeof value === 'string' ? value.trim() : '';
+    if (!meaning) return '';
+    // 这类内容应进入 description；避免把一整段解释写进“中文释义”。
+    if (meaning.length > 24 || /^(?:用于|用来|表示|意思是|表达|常用于|语气|指(?:的是)?)/.test(meaning)) return '';
+    return meaning;
+  }
+
   async enrichVocabulary(
     dto: VocabularyAiEnrichInput,
     onUsage?: (usage: AiUsage) => void,
@@ -526,7 +535,7 @@ Chinese meaning: ${dto.meaning || '(未提供)'}
 Return exactly a JSON object — no markdown, no code fences:
 
 {
-  "meaning": "简洁地道的中文释义，一句话概括句块的核心意思并覆盖常见用法；若原有释义不准确或生硬则重写。",
+  "meaning": "仅写可直接保存到“中文释义”字段的短译法：2-16 个汉字，必要时用；分隔同义短译，如“振作起来；别灰心”。只输出译法本身，禁止写“用于…/意思是…/常用于…/语气…/口语…”等用法解释；这些内容放到 description。若无法给出可靠短译，返回空字符串。",
   "description": "中文学习笔记，轻量 Markdown。结构按需：**核心含义：** 一句话概括这个表达的核心意思。**用法提示：** 什么场景用、语体正式/非正式、常见搭配。**易错点：** 中国学习者容易犯的错误。**类似表达：** 意思相近的其他说法（可选）。英文单词用反引号。每个小节标题前必须空一行（\n\n），段内不要换行。80-150字。语气亲切如老师。",
   "examples": [
     { "en": "原创英文例句，展示该句块在不同场景的自然用法", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced" }
@@ -549,7 +558,7 @@ Return exactly a JSON object — no markdown, no code fences:
     const result = this.parseJsonText(text);
     if (usage) onUsage?.(extractUsage(usage)!);
     return {
-      meaning: result.meaning ?? '',
+      meaning: this.sanitizeChunkMeaning(result.meaning),
       description: result.description ?? '',
       examples: (result.examples ?? []).map((e: any) => ({
         en: e.en || '',
