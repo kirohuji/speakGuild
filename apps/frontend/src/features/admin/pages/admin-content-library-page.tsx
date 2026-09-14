@@ -578,6 +578,22 @@ function ChunkTab() {
           <Button
             size="sm"
             variant="outline"
+            title="在任务中心重写全部句块的中文释义；不会修改讲解、例句、难度或分类"
+            onClick={async () => {
+              try {
+                const result = await api.rewriteAllChunkChineseMeanings();
+                toast.success('已创建句块中文释义重写任务，仅更新中文释义', {
+                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+                });
+                void result;
+              } catch (err: any) { toast.error(err?.message || '创建中文释义重写任务失败'); }
+            }}
+          >
+            <Sparkles data-icon="inline-start" />AI 补全中文释义
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
             onClick={async () => {
               try {
                 const result = await api.enrichChunksMissingChinese();

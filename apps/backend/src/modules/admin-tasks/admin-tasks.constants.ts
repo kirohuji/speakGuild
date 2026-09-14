@@ -9,6 +9,7 @@ export const VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB = 'vocabulary-bilingual-
 export const VOCABULARY_DIFFICULTY_RECLASSIFY_JOB = 'vocabulary-difficulty-reclassify';
 export const VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB = 'vocabulary-dictionary-pronunciation-sync';
 export const CHUNK_MISSING_MEANING_ENRICH_JOB = 'chunk-missing-meaning-enrich';
+export const CHUNK_MEANING_REWRITE_JOB = 'chunk-meaning-rewrite';
 export const PATTERN_MISSING_MEANING_ENRICH_JOB = 'pattern-missing-meaning-enrich';
 export const CONTENT_PREPARE_JOB = 'learning-package-content-prepare';
 export const WARMUP_PIPELINE_GENERATE_JOB = 'warmup-pipeline-generate';

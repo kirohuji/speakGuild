@@ -40,6 +40,7 @@ const TYPE_LABELS: Record<string, string> = {
   'vocabulary-bilingual-definition-enrich': '词典+AI 富化未双语英文释义',
   'vocabulary-difficulty-reclassify': '词典+AI 检查未复核 L1 难度',
   'chunk-missing-meaning-enrich': '句块字段检查与 AI 补全',
+  'chunk-meaning-rewrite': 'AI 重写句块中文释义',
   'pattern-missing-meaning-enrich': '句型字段检查与 AI 补全',
   'script-video-render': '剧本演出视频',
   'narrative-video-render': '叙事视频预览',
@@ -428,6 +429,20 @@ function SummaryPanel({ task }: { task: AdminTask }) {
     );
   }
 
+  if (task.type === 'chunk-meaning-rewrite') {
+    const errors = taskErrors(task).length || summary.failed || task.failedItems;
+    return (
+      <div className="space-y-3 rounded-md border border-border bg-muted/20 p-3">
+        <div className="grid grid-cols-3 gap-2">
+          <Metric label="已处理" value={summary.scanned ?? 0} tone="muted" />
+          <Metric label="已重写" value={summary.rewritten ?? 0} tone="good" />
+          <Metric label="失败" value={errors} tone={errors ? 'bad' : 'muted'} />
+        </div>
+        <p className="text-xs text-muted-foreground">仅更新句块中文释义，不修改讲解、例句、难度或分类。</p>
+      </div>
+    );
+  }
+
   const totalUpdated = (summary.vocabEnriched ?? 0) + (summary.chunkEnriched ?? 0) + (summary.patternEnriched ?? 0);
   const totalSkipped = (summary.vocabSkipped ?? 0) + (summary.chunkSkipped ?? 0) + (summary.patternSkipped ?? 0);
   const errors = taskErrors(task).length || task.failedItems;
@@ -459,7 +474,7 @@ function SummaryPanel({ task }: { task: AdminTask }) {
 
 export function AdminTasksPage() {
   const [status, setStatus] = useState<AdminTaskStatus | 'all' | 'active'>('active');
-  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'warmup-pipeline-generate' | 'scene-topic-batch-generate' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'vocabulary-polish' | 'vocabulary-meaning-other-rewrite' | 'vocabulary-meaning-pos-rewrite' | 'vocabulary-bilingual-definition-enrich' | 'vocabulary-difficulty-reclassify' | 'chunk-missing-meaning-enrich' | 'pattern-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
+  const [type, setType] = useState<'all' | 'learning-package-content-prepare' | 'warmup-pipeline-generate' | 'scene-topic-batch-generate' | 'vocabulary-csv-import' | 'vocabulary-missing-meaning-enrich' | 'vocabulary-polish' | 'vocabulary-meaning-other-rewrite' | 'vocabulary-meaning-pos-rewrite' | 'vocabulary-bilingual-definition-enrich' | 'vocabulary-difficulty-reclassify' | 'chunk-missing-meaning-enrich' | 'chunk-meaning-rewrite' | 'pattern-missing-meaning-enrich' | 'script-video-render' | 'narrative-video-render'>('all');
   const [items, setItems] = useState<AdminTask[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AdminTaskDetail | null>(null);
@@ -650,6 +665,7 @@ export function AdminTasksPage() {
             <option value="vocabulary-difficulty-reclassify">词典+AI 检查未复核 L1 难度</option>
             <option value="vocabulary-missing-meaning-enrich">词汇字段检查与 AI 补全（词典+AI）</option>
             <option value="chunk-missing-meaning-enrich">句块字段检查与 AI 补全</option>
+            <option value="chunk-meaning-rewrite">AI 重写句块中文释义</option>
             <option value="pattern-missing-meaning-enrich">句型字段检查与 AI 补全</option>
             <option value="script-video-render">剧本演出视频</option>
             <option value="narrative-video-render">叙事视频预览</option>

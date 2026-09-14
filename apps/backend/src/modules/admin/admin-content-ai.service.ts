@@ -690,7 +690,7 @@ Return exactly a JSON object — no markdown, no code fences:
         });
         if (usage) onUsage?.(extractUsage(usage)!);
         const parsed = this.parseJsonArrayText(text);
-        results.push(...batch.map((item, idx) => ({ id: item.id, result: this.normalizeTextResult(parsed[idx]) })));
+        results.push(...batch.map((item, idx) => ({ id: item.id, result: this.normalizeTextResult(parsed[idx], kind) })));
       } catch {
         // 批量失败：逐条降级（仍按缺补缺），避免整批作废
         for (const item of batch) {
@@ -702,7 +702,7 @@ Return exactly a JSON object — no markdown, no code fences:
               maxOutputTokens: 1500,
             });
             if (usage) onUsage?.(extractUsage(usage)!);
-            results.push({ id: item.id, result: this.normalizeTextResult(this.parseJsonText(text)) });
+            results.push({ id: item.id, result: this.normalizeTextResult(this.parseJsonText(text), kind) });
           } catch {
             results.push({ id: item.id, result: { meaning: '', description: '', examples: [] } });
           }
@@ -731,7 +731,7 @@ Return exactly a raw JSON array with ${items.length} objects, one per item, in t
 
 [
   {
-    "meaning": "仅当该条 meaning 缺失时提供：简洁地道的中文释义，一句话概括句块的核心意思并覆盖常见用法；已存在则省略此字段",
+    "meaning": "仅当该条 meaning 需要生成时提供：可直接保存的短中文释义（2-16个汉字）；可用；分隔同义短译，例如“振作起来；别灰心”。只写译法本身，禁止“用于/意思是/常用于/语气/口语”等解释；已存在则省略此字段",
     "description": "仅当该条 description 缺失时提供：${profile.descSchema}",
     "examples": [
       { "en": "原创英文例句，展示该句块在不同场景的自然用法", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced" }
@@ -763,7 +763,7 @@ Missing fields: ${this.missingFieldsLabel(item.missing)}
 Return exactly a raw JSON object — no markdown, no code fences:
 
 {
-  "meaning": "仅当缺失时提供：简洁地道的中文释义，一句话概括核心意思；已存在则省略",
+  "meaning": "仅当需要生成时提供：可直接保存的短中文释义（2-16个汉字），只写译法本身；禁止用法或语气解释；已存在则省略",
   "description": "仅当缺失时提供：${profile.descSchema}",
   "examples": [
     { "en": "原创英文例句", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced" }
@@ -776,9 +776,11 @@ Return exactly a raw JSON object — no markdown, no code fences:
 ${profile.rules}`;
   }
 
-  private normalizeTextResult(raw: any): TextBatchEnrichResult {
+  private normalizeTextResult(raw: any, kind?: 'chunk' | 'pattern'): TextBatchEnrichResult {
     return {
-      meaning: typeof raw?.meaning === 'string' ? raw.meaning : '',
+      meaning: kind === 'chunk'
+        ? this.sanitizeChunkMeaning(raw?.meaning)
+        : (typeof raw?.meaning === 'string' ? raw.meaning : ''),
       description: typeof raw?.description === 'string' ? raw.description : '',
       examples: Array.isArray(raw?.examples)
         ? raw.examples

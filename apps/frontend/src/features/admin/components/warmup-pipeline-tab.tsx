@@ -17,6 +17,7 @@ import {
   Scissors,
   Sparkles,
   Trash2,
+  X,
   Volume2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -1109,6 +1110,21 @@ export function WarmupPipelineTab({
     toast.success(`已进入下一题组（剩余 ${remainingItems.length} 个待审核）`)
   }
 
+  /** 保留当前已回显的题组，主动结束本轮 AI 自动补全并丢弃未审核队列。 */
+  const endGenerationSession = () => {
+    if (!reviewingItemId) return
+    const pendingCount = reviewQueue.length
+    generationSessionRef.current = false
+    previousBatchMissingRef.current = null
+    noProgressBatchesRef.current = 0
+    setReviewingItemId(null)
+    setReviewQueue([])
+    setSelectedItemId(reviewingItemId)
+    toast.success(pendingCount
+      ? `已结束本次生成，保留当前题组并丢弃 ${pendingCount} 个未审核题组`
+      : '已结束本次生成，当前题组已保留')
+  }
+
   const generateAllEnglishAudio = async () => {
     const pendingCount = local.pipeline.reduce((sum, item) => {
       if (!('direction' in item) || item.direction !== 'en_to_zh') return sum
@@ -1447,7 +1463,7 @@ export function WarmupPipelineTab({
                 <p className="text-[11px] font-medium">{group.label}</p>
                 <span className="text-[10px] text-muted-foreground">已用 {group.usedIds.length}/{group.items.length}</span>
               </div>
-              <div className="flex max-h-24 flex-wrap gap-1 overflow-y-auto pr-1">
+              <div className="flex flex-wrap gap-1">
                 {group.items.length ? group.items.map((item: any) => {
                   const used = item.count > 0
                   return (
@@ -1629,6 +1645,17 @@ export function WarmupPipelineTab({
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 gap-1 border-amber-300/80 bg-background/70 text-xs text-muted-foreground hover:text-foreground dark:border-amber-800"
+              title="保留当前题组，结束本次 AI 自动补全并丢弃后续未审核题组"
+              onClick={endGenerationSession}
+            >
+              <X className="size-3.5" />
+              结束本次生成
+            </Button>
             <Button type="button" size="sm" variant="ghost" className="h-8 text-xs" onClick={() => advanceReviewedItem(true)}>
               跳过此题组
             </Button>

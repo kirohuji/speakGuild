@@ -323,21 +323,21 @@
         {
           "id": "l2-t3-3",
           "type": "chunk_substitution",
-          "title": "I get up at six o'clock. 句块替换",
-          "chunk": "I get up at six o'clock.",
-          "chunkMeaning": "我六点起床。",
+          "title": "Get dressed now. 句块替换",
+          "chunk": "Get dressed now.",
+          "chunkMeaning": "现在就穿好衣服。",
           "direction": "zh_to_en",
           "kind": "chunk",
           "items": [
             {
-              "zh": "工作日我六点起床。",
-              "answer": "I get up at six o'clock on weekdays.",
-              "hint": "用「I get up at six o'clock.」来表达"
+              "zh": "我们迟到了。现在就穿好衣服。",
+              "answer": "We're late. Get dressed now.",
+              "hint": "用「Get dressed now.」来表达"
             },
             {
-              "zh": "我六点起，所以早上比较安静。",
-              "answer": "I get up at six o'clock, so mornings are quiet.",
-              "hint": "用「I get up at six o'clock.」来表达"
+              "zh": "赶紧穿好。出租车到了。",
+              "answer": "Get dressed now. The taxi is here.",
+              "hint": "用「Get dressed now.」来表达"
             }
           ]
         },
@@ -361,8 +361,8 @@
               "hint": "先抓住关键词，再说出中文意思"
             },
             {
-              "en": "I get up at six o'clock on weekdays.",
-              "answer": "工作日我六点起床。",
+              "en": "We're late. Get dressed now.",
+              "answer": "我们迟到了。现在就穿好衣服。",
               "hint": "先抓住关键词，再说出中文意思"
             }
           ]

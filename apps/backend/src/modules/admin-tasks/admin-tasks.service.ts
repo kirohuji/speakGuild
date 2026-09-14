@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleIni
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, VOCABULARY_MEANING_OTHER_REWRITE_JOB, VOCABULARY_MEANING_POS_REWRITE_JOB, VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB, VOCABULARY_DIFFICULTY_RECLASSIFY_JOB, VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB, VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, VOCABULARY_MEANING_OTHER_REWRITE_JOB, VOCABULARY_MEANING_POS_REWRITE_JOB, VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB, VOCABULARY_DIFFICULTY_RECLASSIFY_JOB, VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, CHUNK_MEANING_REWRITE_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB, VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB } from './admin-tasks.constants';
 import { DictionaryService } from '../dictionary/dictionary.service';
 import type { PronunciationAuditFilter } from '../dictionary/dto/pronunciation-audit.dto';
 import {
@@ -773,6 +773,25 @@ export class AdminTasksService implements OnModuleInit {
     return { ...task, bullJobId: job.id };
   }
 
+  /** 重写全部句块中文释义；严格只写 meaning，不触碰讲解、例句或其它元数据。 */
+  async enqueueChunkMeaningRewrite(createdById?: string) {
+    const totalItems = await this.prisma.chunk.count();
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: CHUNK_MEANING_REWRITE_JOB,
+        title: `AI 重写全部句块中文释义（${totalItems} 个）`,
+        targetType: 'chunk',
+        createdById,
+        totalItems,
+        payload: { scope: 'all-chunks', fields: ['meaning'] } as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.vocabularyImportQueue.add(CHUNK_MEANING_REWRITE_JOB, { taskId: task.id });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', `已将 ${totalItems} 个句块加入中文释义重写队列；任务只更新 meaning 字段`, { step: 'queued' });
+    return { ...task, bullJobId: job.id };
+  }
+
   /** 扫描全部句型，为缺失中文释义、讲解/描述或例句的记录创建 AI 富化任务。 */
   async enqueuePatternMissingMeaningEnrich(createdById?: string) {
     const task = await this.prisma.adminTask.create({
@@ -945,6 +964,9 @@ export class AdminTasksService implements OnModuleInit {
     }
     if (task.type === CHUNK_MISSING_MEANING_ENRICH_JOB) {
       return this.enqueueChunkMissingMeaningEnrich(createdById);
+    }
+    if (task.type === CHUNK_MEANING_REWRITE_JOB) {
+      return this.enqueueChunkMeaningRewrite(createdById);
     }
     if (task.type === PATTERN_MISSING_MEANING_ENRICH_JOB) {
       return this.enqueuePatternMissingMeaningEnrich(createdById);

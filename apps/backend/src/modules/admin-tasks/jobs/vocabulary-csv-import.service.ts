@@ -626,6 +626,69 @@ export class VocabularyCsvImportService {
     await this.adminTasksService.markCompleted(taskId, summary);
   }
 
+  /** 重写所有句块的短中文释义；有意不读取或修改讲解、例句和例句翻译。 */
+  async runChunkMeaningRewrite(taskId: string) {
+    if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
+
+    const totalItems = await this.prisma.chunk.count();
+    const usageStats = createUsageStats();
+    const errors: Array<{ id: string; text: string; message: string }> = [];
+    let rewritten = 0;
+    let failed = 0;
+    let processed = 0;
+    let cursor: string | undefined;
+
+    await this.adminTasksService.log(taskId, 'info', `开始重写全部 ${totalItems} 个句块的中文释义；不会修改讲解、例句或其它字段`, { step: 'rewrite' });
+    do {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      const rows = await this.prisma.chunk.findMany({
+        select: { id: true, text: true, meaning: true },
+        orderBy: { id: 'asc' },
+        take: 50,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      });
+      if (!rows.length) break;
+
+      try {
+        const results = await this.adminContentAiService.enrichChunksBatch(
+          rows.map((chunk) => ({
+            id: chunk.id,
+            text: chunk.text,
+            meaning: chunk.meaning ?? '',
+            missing: { meaning: true, description: false, examples: false },
+          })),
+          usageCallback(usageStats),
+        );
+        for (const { id, result } of results) {
+          const chunk = rows.find((item) => item.id === id);
+          if (!chunk) continue;
+          const meaning = result.meaning?.trim();
+          if (!meaning || !/[\u3400-\u9fff]/.test(meaning)) {
+            failed++;
+            errors.push({ id, text: chunk.text, message: 'AI 未返回有效的短中文释义' });
+            continue;
+          }
+          await this.prisma.chunk.update({ where: { id }, data: { meaning } });
+          rewritten++;
+        }
+      } catch (error: any) {
+        failed += rows.length;
+        for (const chunk of rows) errors.push({ id: chunk.id, text: chunk.text, message: error?.message ?? 'unknown error' });
+      }
+
+      processed += rows.length;
+      cursor = rows.at(-1)?.id;
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: `rewrite (${processed}/${totalItems})`, totalItems, processedItems: processed,
+        successItems: rewritten, failedItems: failed,
+      });
+    } while (cursor);
+
+    const summary = { scanned: processed, rewritten, failed, errors: errors.slice(0, 20), usage: usageStats };
+    await this.adminTasksService.markCompleted(taskId, summary);
+    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `中文释义重写完成：处理 ${processed}，已更新 ${rewritten}，失败 ${failed}`, { step: 'completed', meta: summary });
+  }
+
   /**
    * 扫描全部句型，为缺失中文释义、讲解/描述或例句的记录调用 AI 富化（按缺补缺、批量调用），
    * 并为缺失中文翻译的例句批量补翻译。

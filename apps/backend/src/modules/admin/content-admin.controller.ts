@@ -3699,6 +3699,15 @@ ${contextBlock}
     return { code: 200, message: 'success', data: { taskId: task.id } };
   }
 
+  /** 在任务中心异步重写全部句块中文释义；不会修改讲解、例句或其它字段。 */
+  @Post('library/chunks/rewrite-chinese-meanings')
+  async rewriteChunkChineseMeanings(@Req() req: Request) {
+    await this.requireAdmin(req);
+    const session = await requireAuthSession(req);
+    const task = await this.adminTasksService.enqueueChunkMeaningRewrite((session.user as any)?.id);
+    return { code: 200, message: 'success', data: { taskId: task.id } };
+  }
+
   /** AI 增强句式：DeepSeek 例句生成 + 讲解 */
   @Post('library/patterns/ai-enrich')
   async aiEnrichPattern(@Req() req: Request, @Body() dto: {

@@ -998,6 +998,11 @@ export function enrichChunksMissingChinese(): Promise<{ taskId: string }> {
   return post('/admin/content/library/chunks/enrich-missing-chinese');
 }
 
+/** 在任务中心异步重写全部句块的中文释义；不会触碰讲解、例句或其它字段。 */
+export function rewriteAllChunkChineseMeanings(): Promise<{ taskId: string }> {
+  return post('/admin/content/library/chunks/rewrite-chinese-meanings');
+}
+
 export function enrichPatternsMissingChinese(): Promise<{ taskId: string }> {
   return post('/admin/content/library/patterns/enrich-missing-chinese');
 }
