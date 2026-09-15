@@ -80,17 +80,17 @@ export async function deleteSceneCategory(id: string): Promise<void> {
 
 export interface Scene {
   id: string
-  categoryId: string
+  categoryId: string | null
   packageType: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
   contentMode: 'practice' | 'writing' | 'reading' | 'listening' | 'novel' | 'story'
   title: string
-  location: string
+  location: string | null
   description: string | null
   coverImage?: string | null
   requiredOutputLevel: string
   requiredUserLevel: number
   isFree: boolean
-  category?: { id: string; name: string }
+  category?: { id: string; name: string } | null
   /** 所属学习包组与组内顺序（层 1 顺序约束字段） */
   groupId?: string | null
   sortOrder?: number

@@ -34,7 +34,7 @@ export function MarkdownEditor({
       <div
         data-color-mode="light"
         className={cn(
-          '[&_.w-md-editor]:shadow-none [&_.w-md-editor]:border [&_.w-md-editor]:border-border [&_.w-md-editor]:rounded-lg',
+          '[&_.w-md-editor]:shadow-none [&_.w-md-editor]:border [&_.w-md-editor]:border-border [&_.w-md-editor]:rounded-lg [&_.w-md-editor-text]:!min-h-full',
           minimal && '[&_.w-md-editor-toolbar]:hidden',
           disabled && '[&_.w-md-editor]:opacity-60 [&_.w-md-editor]:pointer-events-none',
         )}

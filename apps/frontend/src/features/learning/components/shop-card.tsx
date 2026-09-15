@@ -106,9 +106,6 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
                 {unit.completionPercent}%
               </Badge>
             )}
-            <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">
-              Lv.{unit.requiredUserLevel}
-            </Badge>
           </div>
           {isDownloading && (
             <div className="mt-2 flex items-center gap-2">
@@ -197,7 +194,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
               ) : (
                 <Button className="w-full gap-2" disabled={!unit.isUnlocked || unit.isLocked || acquiring} onClick={handleAcquire} data-spotlight="confirm-start">
                   {acquiring ? <Spinner data-icon="inline-start" /> : <ArrowRight className="size-4" />}
-                  {acquiring ? t('learning.downloading') : unit.isUnlocked && !unit.isLocked ? t('learning.start') : `${t('learning.level')}.${unit.requiredUserLevel} ${t('learning.unlock')}`}
+                  {acquiring ? t('learning.downloading') : unit.isUnlocked && !unit.isLocked ? t('learning.start') : t('learning.unlock')}
                 </Button>
               )}
             </div>

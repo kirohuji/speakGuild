@@ -2246,7 +2246,6 @@ function ScriptShop({
                   {(task?.status === 'downloading' || task?.status === 'extracting') && (
                     <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{Math.round(task.progress)}%</Badge>
                   )}
-                  <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">Lv.{unit.requiredUserLevel}</Badge>
                 </div>
               </div>
             </button>

@@ -30,8 +30,9 @@ export class UpdateSceneCategoryDto {
 }
 
 export class CreateSceneDto {
+  @IsOptional()
   @IsString()
-  categoryId: string;
+  categoryId?: string;
 
   @IsOptional()
   @IsIn(['daily', 'exam', 'story', 'course', 'foundation'])
@@ -44,8 +45,9 @@ export class CreateSceneDto {
   @IsString()
   title: string;
 
+  @IsOptional()
   @IsString()
-  location: string;
+  location?: string;
 
   @IsOptional()
   @IsString()

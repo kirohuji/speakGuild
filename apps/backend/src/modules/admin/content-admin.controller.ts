@@ -424,6 +424,8 @@ export class ContentAdminController {
     const session = await this.requireManager(req);
     const data = await this.fileAssetsService.normalizePersistentAssetUrls({
         ...dto,
+        // 兼容旧客户端提交的空字符串；空分类不应作为外键值写入。
+        categoryId: dto.categoryId || null,
         contentMode: dto.contentMode ?? (dto.packageType === 'story' ? 'story' : 'practice'),
         ownerId: session.user.id,
     });
@@ -443,6 +445,7 @@ export class ContentAdminController {
     const nextContentMode = dto.contentMode ?? (dto.packageType === 'story' ? 'story' : undefined);
     const data = await this.fileAssetsService.normalizePersistentAssetUrls({
       ...dto,
+      ...(dto.categoryId !== undefined ? { categoryId: dto.categoryId || null } : {}),
       ...(nextContentMode ? { contentMode: nextContentMode } : {}),
     });
     return this.prisma.$transaction(async (tx) => {

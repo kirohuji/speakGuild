@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, BookOpen, Check, Download, GitCompareArrows, Link2, Loader2, PanelLeftClose, PanelLeftOpen, Plus, Search, X } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowRight, BookOpen, Check, Download, GitCompareArrows, Link2, Loader2, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus, Search, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,7 +22,9 @@ interface TopicTeachingWorkspaceProps {
   currentDifficulty: string
   value: string
   onChange: (value: string) => void
+  onTitleChange: (value: string) => void
   onOpenDocument?: (topicId: string) => void
+  onCreateDocument?: () => void
   patterns: Array<{ id: string; pattern: string; meaning?: string | null }>
   chunks: Array<{ id: string; text: string; meaning?: string | null }>
   vocabs: Array<{ id: string; word: string; meaning?: string | null }>
@@ -147,7 +149,9 @@ export function TopicTeachingWorkspace({
   currentDifficulty,
   value,
   onChange,
+  onTitleChange,
   onOpenDocument,
+  onCreateDocument,
   patterns,
   chunks,
   vocabs,
@@ -168,7 +172,10 @@ export function TopicTeachingWorkspace({
   const [exportMode, setExportMode] = useState(false)
   const [exportIds, setExportIds] = useState<string[]>([])
   const [exporting, setExporting] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [materialsOpen, setMaterialsOpen] = useState(false)
+  const editorViewportRef = useRef<HTMLDivElement>(null)
+  const [editorHeight, setEditorHeight] = useState(560)
   const [materialQueries, setMaterialQueries] = useState<Record<MaterialKind, string>>({ pattern: '', chunk: '', vocab: '' })
   const [savedMaterialUsage, setSavedMaterialUsage] = useState<Record<string, GroupMaterialUsageEntry[]>>({})
   const [currentSceneTitle, setCurrentSceneTitle] = useState('当前学习包')
@@ -186,6 +193,16 @@ export function TopicTeachingWorkspace({
       })
     return () => { cancelled = true }
   }, [sceneId])
+
+  useEffect(() => {
+    const viewport = editorViewportRef.current
+    if (!viewport) return
+    const updateHeight = () => setEditorHeight(Math.max(280, Math.floor(viewport.clientHeight - 16)))
+    updateHeight()
+    const observer = new ResizeObserver(updateHeight)
+    observer.observe(viewport)
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     const query = materialQueries.pattern.trim()
@@ -220,18 +237,6 @@ export function TopicTeachingWorkspace({
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [sceneId])
-
-  useEffect(() => {
-    if (!currentTopicId) return
-    setDocuments((current) => current.map((document) => document.id === currentTopicId
-      ? {
-          ...document,
-          title: currentTitle || document.title,
-          difficulty: currentDifficulty || document.difficulty,
-          teachingMarkdown: value,
-        }
-      : document))
-  }, [currentDifficulty, currentTitle, currentTopicId, value])
 
   const currentId = currentTopicId || draftId
   const mergedDocuments = useMemo(() => {
@@ -388,9 +393,13 @@ export function TopicTeachingWorkspace({
   return (
     <div className={cn(
       'grid h-[calc(97vh-10.5rem)] min-h-[32rem] overflow-hidden rounded-xl border border-border/70 bg-background',
-      sidebarOpen
+      sidebarOpen && materialsOpen
         ? 'lg:grid-cols-[12rem_minmax(0,1fr)_22rem]'
-        : 'lg:grid-cols-[minmax(0,1fr)_22rem]',
+        : sidebarOpen
+          ? 'lg:grid-cols-[12rem_minmax(0,1fr)]'
+          : materialsOpen
+            ? 'lg:grid-cols-[minmax(0,1fr)_22rem]'
+            : 'lg:grid-cols-1',
     )}>
       <aside className={cn('min-h-0 flex-col border-b border-border/70 bg-muted/20 lg:border-b-0 lg:border-r', sidebarOpen ? 'flex' : 'hidden')}>
         <div className="border-b border-border/70 px-2 py-2">
@@ -408,13 +417,18 @@ export function TopicTeachingWorkspace({
                 <X className="size-3" />退出导出
               </Button>
             ) : (
-              <div className="flex items-center gap-1">
-                <Button type="button" size="sm" variant="outline" className="h-6 gap-1 px-1.5 text-[9px]" onClick={enterCompare}>
-                  <GitCompareArrows className="size-3" />对比
+              <div className="flex min-w-[5.5rem] flex-col gap-1">
+                <Button type="button" size="sm" variant="outline" className="h-6 w-full gap-1 px-1.5 text-[9px]" onClick={onCreateDocument}>
+                  <Plus className="size-3" />新增文档
                 </Button>
-                <Button type="button" size="sm" variant="outline" className="h-6 gap-1 px-1.5 text-[9px]" onClick={enterExport}>
-                  <Download className="size-3" />导出
-                </Button>
+                <div className="grid grid-cols-2 gap-1">
+                  <Button type="button" size="sm" variant="outline" className="h-6 gap-1 px-1 text-[9px]" onClick={enterCompare}>
+                    <GitCompareArrows className="size-3" />对比
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" className="h-6 gap-1 px-1 text-[9px]" onClick={enterExport}>
+                    <Download className="size-3" />导出
+                  </Button>
+                </div>
               </div>
             )}
           </div>
@@ -507,7 +521,17 @@ export function TopicTeachingWorkspace({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <BookOpen className="size-4 text-sky-600" />
-                <p className="truncate text-sm font-semibold">{mode === 'compare' ? '教学文档左右对比' : currentTitle || '未命名话题'}</p>
+                {mode === 'compare' ? (
+                  <p className="truncate text-sm font-semibold">教学文档左右对比</p>
+                ) : (
+                  <Input
+                    value={currentTitle}
+                    onChange={(event) => onTitleChange(event.target.value)}
+                    className="h-8 max-w-[26rem] text-sm font-semibold"
+                    placeholder="请输入教学文档标题"
+                    aria-label="教学文档标题"
+                  />
+                )}
               </div>
               <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
                 {mode === 'compare' ? '并排检查目标范围、表达递进与内容重复。' : '先完成教学设计，再向后派生语言支架和知识点练习。'}
@@ -525,6 +549,10 @@ export function TopicTeachingWorkspace({
                     {sidebarOpen ? <PanelLeftClose className="size-3.5" /> : <PanelLeftOpen className="size-3.5" />}
                     {sidebarOpen ? '收起文档库' : '展开文档库'}
                   </Button>
+                  <Button type="button" size="sm" variant="ghost" className="h-8 gap-1.5 text-xs" onClick={() => setMaterialsOpen((open) => !open)}>
+                    {materialsOpen ? <PanelRightClose className="size-3.5" /> : <PanelRightOpen className="size-3.5" />}
+                    {materialsOpen ? '收起语言材料' : '展开语言材料'}
+                  </Button>
                   <div className="flex rounded-md border border-border/70 bg-background p-0.5">
                     <Button type="button" size="sm" variant={mode === 'edit' ? 'secondary' : 'ghost'} className="h-7 px-3 text-xs" onClick={() => setMode('edit')}>编辑</Button>
                     <Button type="button" size="sm" variant={mode === 'preview' ? 'secondary' : 'ghost'} className="h-7 px-3 text-xs" onClick={() => setMode('preview')}>预览</Button>
@@ -535,7 +563,7 @@ export function TopicTeachingWorkspace({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
+        <div ref={editorViewportRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
           {mode === 'compare' && compareDocuments.length === 2 ? (
             <div className="grid gap-2 lg:grid-cols-2">
               {compareDocuments.map((document, index) => (
@@ -557,15 +585,17 @@ export function TopicTeachingWorkspace({
             <MarkdownEditor
               value={value}
               onChange={onChange}
-              height={650}
+              height={editorHeight}
               preview={mode === 'preview' ? 'preview' : 'edit'}
+              // 长文档逐字重做语法高亮会阻塞输入；预览模式仍保留完整 Markdown 渲染。
+              highlightEnable={false}
               placeholder="从教学目标开始，依次写明核心概念、表达结构、示例、易错点和练习迁移……"
             />
           )}
         </div>
       </section>
 
-      <aside className="flex min-h-0 flex-col border-t border-border/70 bg-muted/10 lg:border-l lg:border-t-0">
+      <aside className={cn('min-h-0 flex-col border-t border-border/70 bg-muted/10 lg:border-l lg:border-t-0', materialsOpen ? 'flex' : 'hidden')}>
         <div className="shrink-0 border-b border-border/70 px-2 py-2">
           <p className="text-xs font-semibold">当前语言材料</p>
           <p className="mt-0.5 text-[9px] leading-[0.875rem] text-muted-foreground">搜索库中内容即可添加；点击已选内容可移除。</p>

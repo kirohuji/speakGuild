@@ -711,12 +711,12 @@ model SceneCategory {
 
 model Scene {
   id                  String                   @id @default(cuid())
-  category            SceneCategory            @relation(fields: [categoryId], references: [id])
-  categoryId          String
+  category            SceneCategory?           @relation(fields: [categoryId], references: [id])
+  categoryId          String?
   packageType         LearningPackageType      @default(daily)
   contentMode         ContentMode              @default(practice)
   title               String
-  location            String
+  location            String?
   description         String?
   requiredOutputLevel String                   @default("L1")
   requiredUserLevel   Int                      @default(1)

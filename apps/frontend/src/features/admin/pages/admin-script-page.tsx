@@ -205,7 +205,6 @@ function EpisodeDetailView({ episode, onSaved, onClose }: { episode: StoryEpisod
                         <div><dt className="text-muted-foreground">场景</dt><dd className="font-medium">{episode.scene?.title ?? '-'}</dd></div>
                         <div><dt className="text-muted-foreground">NPC</dt><dd className="font-medium">{episode.npcName} · {episode.npcRole}</dd></div>
                         <div><dt className="text-muted-foreground">输出要求</dt><dd className="font-medium">{episode.requiredOutputLevel}</dd></div>
-                        <div><dt className="text-muted-foreground">用户等级要求</dt><dd className="font-medium">Lv.{episode.requiredUserLevel}</dd></div>
                         <div><dt className="text-muted-foreground">词汇要求</dt><dd className="font-medium">{episode.vocabRequiredCount}/{episode.vocabTotalCount}</dd></div>
                         <div><dt className="text-muted-foreground">Chunk 要求</dt><dd className="font-medium">{episode.chunkRequiredCount}/{episode.chunkTotalCount}</dd></div>
                     </dl>

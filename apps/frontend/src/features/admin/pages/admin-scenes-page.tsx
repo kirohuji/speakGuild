@@ -258,11 +258,11 @@ function SceneDialog({
 
   useEffect(() => {
     if (edit) setForm(edit)
-    else setForm({ categoryId: categories[0]?.id, packageType: 'daily', contentMode: 'practice', requiredOutputLevel: 'L1', requiredUserLevel: 1 })
+    else setForm({ categoryId: null, packageType: 'daily', contentMode: 'practice', requiredOutputLevel: 'L1', requiredUserLevel: 1 })
   }, [edit, open, categories])
 
   const handleSave = async () => {
-    if (!form.title?.trim() || !form.categoryId) return
+    if (!form.title?.trim()) return
     setSaving(true)
     try {
       if (edit) await updateScene(edit.id, form)
@@ -286,8 +286,9 @@ function SceneDialog({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>所属分类</Label>
-              <Select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
+              <Label>所属分类（可选）</Label>
+              <Select value={form.categoryId ?? ''} onChange={(e) => setForm({ ...form, categoryId: e.target.value || null })}>
+                  <option value="">未分类</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
@@ -341,20 +342,13 @@ function SceneDialog({
               group="scene_cover"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>输出等级要求</Label>
-              <Select value={form.requiredOutputLevel} onChange={(e) => setForm({ ...form, requiredOutputLevel: e.target.value })}>
-                  {['L1', 'L2', 'L3', 'L4', 'L5'].map((l) => (
-                    <option key={l} value={l}>{l}</option>
-                  ))}
-                </Select>
-            </div>
-            <div>
-              <Label>用户等级要求</Label>
-              <Input type="number" min={1} value={form.requiredUserLevel ?? 1}
-                onChange={(e) => setForm({ ...form, requiredUserLevel: Number(e.target.value) })} />
-            </div>
+          <div>
+            <Label>输出等级要求</Label>
+            <Select value={form.requiredOutputLevel} onChange={(e) => setForm({ ...form, requiredOutputLevel: e.target.value })}>
+                {['L1', 'L2', 'L3', 'L4', 'L5'].map((l) => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </Select>
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>取消</Button>
@@ -670,7 +664,7 @@ function TopicSupportSuggestionPanel({
 }
 
 function TrainingTopicDialog({
-  open, onClose, edit, sceneId, packageType, contentMode, chunks, patterns, onOpenTopic, onSaved, initialTab = 'basic', onTabChange,
+  open, onClose, edit, sceneId, packageType, contentMode, chunks, patterns, onOpenTopic, onCreateTopic, onSaved, initialTab = 'basic', onTabChange,
 }: {
   open: boolean
   onClose: () => void
@@ -681,6 +675,7 @@ function TrainingTopicDialog({
   chunks: Chunk[]
   patterns: SentencePatternFull[]
   onOpenTopic?: (topicId: string, tab: TopicEditorTab) => void
+  onCreateTopic?: (initialTab: TopicEditorTab) => void
   onSaved: (topic: TrainingTopic) => void
   initialTab?: TopicEditorTab
   onTabChange?: (tab: string) => void
@@ -1450,7 +1445,6 @@ function TrainingTopicDialog({
             </div>
             <div className="flex flex-wrap gap-1.5">
               <Badge variant="outline" className="text-xs">{form.difficulty ?? 'L2'}</Badge>
-              <Badge variant="secondary" className="text-xs">{form.suggestedDurationSec ?? 60}s</Badge>
               {displayStory && <Badge variant="outline" className="gap-1 text-xs"><Link2 className="size-3" />已绑定 Ink</Badge>}
             </div>
           </div>
@@ -1486,7 +1480,7 @@ function TrainingTopicDialog({
                   <Label>标题</Label>
                   <Input value={form.title ?? ''} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="自我介绍" />
                 </div>
-                <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-3">
                   <div className="space-y-1">
                     <Label>话题类型</Label>
                     <Select
@@ -1521,14 +1515,6 @@ function TrainingTopicDialog({
                         <option key={l} value={l}>{l}</option>
                       ))}
                     </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label>建议时长</Label>
-                    <div className="relative">
-                      <Clock3 className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                      <Input className="pl-8" type="number" value={form.suggestedDurationSec ?? 60}
-                        onChange={(e) => setForm({ ...form, suggestedDurationSec: Number(e.target.value) })} />
-                    </div>
                   </div>
                 </div>
               </div>
@@ -1656,7 +1642,9 @@ function TrainingTopicDialog({
                 currentDifficulty={form.difficulty ?? edit?.difficulty ?? 'L2'}
                 value={form.teachingMarkdown ?? ''}
                 onChange={(teachingMarkdown) => setForm({ ...form, teachingMarkdown })}
+                onTitleChange={(title) => setForm((current: any) => ({ ...current, title }))}
                 onOpenDocument={(topicId) => void openTeachingDocument(topicId)}
+                onCreateDocument={() => onCreateTopic?.('teaching')}
                 patterns={selectablePatterns}
                 chunks={selectableChunks}
                 vocabs={selectableVocabs}
@@ -2295,7 +2283,8 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
     void ensureMaterialsLoaded(false)
     if (!topic) {
       setEditTopic(null)
-      setTopicInitialTab('basic')
+      setTopicInitialTab(initialTab)
+      syncTopicLink()
       setTopicDialog(true)
       return
     }
@@ -2402,7 +2391,6 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
                                 {t.type === 'ielts' ? '雅思' : '日常'}
                               </Badge>
                               <Badge variant="outline" className="text-xs">{t.difficulty}</Badge>
-                              <Badge variant="secondary" className="text-xs">{t.suggestedDurationSec}s</Badge>
                             </div>
                             <p className="mt-1 max-w-xl truncate text-xs text-muted-foreground">{t.promptEn}</p>
                           </div>
@@ -2539,6 +2527,7 @@ function SceneDetailView({ sceneId, onBack, chunks }: { sceneId: string; onBack:
         initialTab={topicInitialTab}
         onTabChange={(tab) => { if (editTopic?.id) syncTopicLink(editTopic.id, tab) }}
         onOpenTopic={(topicId, tab) => void openTopicEditor({ id: topicId } as TrainingTopic, tab)}
+        onCreateTopic={(tab) => void openTopicEditor(null, tab)}
         onSaved={handleTopicSaved} />
       <EpisodeEditDialog
         open={storyDialog}
@@ -2854,7 +2843,7 @@ export function AdminScenesPage() {
                       </td>
                       <td className="hidden px-4 py-3 md:table-cell">
                         <span className="text-xs text-muted-foreground">
-                          {s.requiredOutputLevel} · 用户 Lv.{s.requiredUserLevel}
+                          {s.requiredOutputLevel}
                         </span>
                       </td>
                       <td className="px-4 py-3">
