@@ -45,6 +45,14 @@ export interface VocabularyDifficultyBatchItem {
   definitions: string[];
 }
 
+export interface VocabularyMeaningPriorityItem {
+  id: string;
+  word: string;
+  meaning: string;
+  definitionEn?: string;
+  partOfSpeech?: string;
+}
+
 /** 单次 LLM 调用的 token 用量 */
 export interface AiUsage {
   promptTokens: number;
@@ -125,6 +133,14 @@ export class AdminContentAiService {
     if (!meaning) return '';
     // 这类内容应进入 description；避免把一整段解释写进“中文释义”。
     if (meaning.length > 24 || /^(?:用于|用来|表示|意思是|表达|常用于|语气|指(?:的是)?)/.test(meaning)) return '';
+    return meaning;
+  }
+
+  /** 句式释义同样只承担快速索引；句式结构、语气和使用场景属于 description。 */
+  private sanitizePatternMeaning(value: unknown) {
+    const meaning = typeof value === 'string' ? value.trim() : '';
+    if (!meaning) return '';
+    if (meaning.length > 36 || /^(?:用于|用来|表示|意思是|表达|常用于|语气|这个句型|该句型|此句型)/.test(meaning)) return '';
     return meaning;
   }
 
@@ -506,6 +522,89 @@ ${dto.definitionEn?.trim() || '(none)'}
     return { meaning: this.sanitizeVocabularyMeaning(typeof result.meaning === 'string' ? result.meaning.trim() : '') };
   }
 
+  /**
+   * 全量释义质量审查：按学习价值重排并精简义项，避免生僻义、俚语或专业义抢占首屏。
+   * 每批共享一次模型调用；批量解析失败时逐条降级，避免整批丢失。
+   */
+  async prioritizeVocabularyMeaningsBatch(
+    items: VocabularyMeaningPriorityItem[],
+    onUsage?: (usage: AiUsage) => void,
+  ): Promise<Array<{ id: string; meaning: string }>> {
+    if (!items.length) return [];
+    const model = this.getDeepSeekModel();
+    const buildInput = (batch: VocabularyMeaningPriorityItem[]) => batch.map((item, index) => ({
+      index,
+      word: item.word,
+      currentMeaning: item.meaning,
+      partOfSpeechHint: item.partOfSpeech || undefined,
+      dictionaryDefinitions: item.definitionEn?.slice(0, 1_200) || undefined,
+    }));
+    const buildPrompt = (batch: VocabularyMeaningPriorityItem[]) => `You are a senior bilingual lexicographer reviewing a Chinese-English learner dictionary.
+
+## Goal
+Rewrite each word's Chinese meaning so learners see the common, core meanings first. A rare, slang, dialectal, archaic, literary, technical, or highly context-bound sense must never appear before the everyday senses.
+
+## Input
+${JSON.stringify(buildInput(batch), null, 2)}
+
+## Rules
+1. Use the English dictionary definitions as evidence, but rank senses by modern general-English frequency and usefulness for Chinese B1-B2 learners—not by source order.
+2. Put the most common everyday meaning first within each POS group. Put the most common POS group first.
+3. Keep 2-4 useful senses in total. Remove duplicate, obsolete, extremely rare, narrowly specialist, regional, or confusing senses unless they are genuinely important for learners.
+4. Slang/informal/technical senses may remain only when common or highly useful; place them last and mark them briefly as （俚）, （非正式）, or （术语）.
+5. Every POS group must start with one abbreviation from: n. v. adj. adv. pron. prep. conj. interj. num. det. art. phr. modal v.
+6. Join senses of the same POS with ； and separate POS groups with / . Never use “other” or full POS words such as noun/verb.
+7. Use concise, natural Simplified Chinese glosses, not explanatory sentences. Aim for <=60 Chinese characters; hard limit 90.
+8. If the current meaning is already clean, correctly ordered and concise, return it unchanged.
+9. Return exactly one result per input item, in the same order. Do not add examples, commentary, phonetics, or markdown.
+
+## Output
+Raw JSON array only:
+[
+  { "meaning": "n. 核心义；次常用义 / v. 核心义" }
+]`;
+
+    const normalize = (value: unknown) => {
+      const meaning = typeof (value as any)?.meaning === 'string' ? (value as any).meaning.trim() : '';
+      return this.sanitizeVocabularyMeaning(meaning);
+    };
+
+    try {
+      const { text, usage } = await generateText({
+        model,
+        prompt: buildPrompt(items),
+        temperature: 0.2,
+        maxOutputTokens: Math.max(800, items.length * 180),
+      });
+      if (usage) onUsage?.(extractUsage(usage)!);
+      const parsed = this.parseJsonArrayText(text);
+      const results = items.flatMap((item, index) => {
+        const meaning = normalize(parsed[index]);
+        return meaning ? [{ id: item.id, meaning }] : [];
+      });
+      if (results.length === items.length) return results;
+      throw new Error(`AI 仅返回 ${results.length}/${items.length} 条有效释义`);
+    } catch {
+      const results: Array<{ id: string; meaning: string }> = [];
+      for (const item of items) {
+        try {
+          const { text, usage } = await generateText({
+            model,
+            prompt: buildPrompt([item]),
+            temperature: 0.2,
+            maxOutputTokens: 300,
+          });
+          if (usage) onUsage?.(extractUsage(usage)!);
+          const meaning = normalize(this.parseJsonArrayText(text)[0]);
+          if (meaning) results.push({ id: item.id, meaning });
+        } catch {
+          // 由任务层记录缺失结果并继续处理其它词汇。
+        }
+      }
+      return results;
+    }
+  }
+
   /** 与「重写含 other」对齐：禁止 meaning 里出现 POS 标签 other，兜底改成 phr. */
   private sanitizeVocabularyMeaning(meaning: string) {
     if (!meaning?.trim()) return '';
@@ -588,7 +687,7 @@ Chinese meaning: ${dto.meaning || '(未提供)'}
 Return exactly a JSON object — no markdown, no code fences:
 
 {
-  "meaning": "简洁地道的中文释义，说明这个句型表达的逻辑关系；若原有释义不准确或生硬则重写。",
+  "meaning": "只写可直接保存到“释义”字段的简短中文句式译法，保留原句型的槽位关系，可用“……”表示 __。建议 4-28 个汉字。只输出译法本身；禁止写“用于……/表示……/这个句型……”等用法、逻辑、语气或场景解释，这些内容全部放入 description。若无法给出可靠短译，返回空字符串。",
   "examples": [
     { "en": "将每个 __ 替换成具体、有趣的单词。句子自然地道，像真人说的话。", "zh": "自然的中文翻译", "level": "basic/intermediate/advanced" }
   ],
@@ -611,7 +710,7 @@ Return exactly a JSON object — no markdown, no code fences:
     const result = this.parseJsonText(text);
     if (usage) onUsage?.(extractUsage(usage)!);
     return {
-      meaning: result.meaning ?? '',
+      meaning: this.sanitizePatternMeaning(result.meaning),
       examples: (result.examples ?? []).map((e: any) => ({
         en: e.en || '',
         zh: e.zh || '',
@@ -780,7 +879,9 @@ ${profile.rules}`;
     return {
       meaning: kind === 'chunk'
         ? this.sanitizeChunkMeaning(raw?.meaning)
-        : (typeof raw?.meaning === 'string' ? raw.meaning : ''),
+        : kind === 'pattern'
+          ? this.sanitizePatternMeaning(raw?.meaning)
+          : (typeof raw?.meaning === 'string' ? raw.meaning : ''),
       description: typeof raw?.description === 'string' ? raw.description : '',
       examples: Array.isArray(raw?.examples)
         ? raw.examples

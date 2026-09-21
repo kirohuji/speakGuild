@@ -3577,6 +3577,15 @@ ${contextBlock}
     return { code: 200, message: 'success', data: { taskId: task.id } };
   }
 
+  /** 全量审查中文释义：核心常用义优先，低频/俚语/专业义后置或精简。 */
+  @Post('library/vocabularies/review-meaning-priority')
+  async reviewVocabularyMeaningPriority(@Req() req: Request) {
+    await this.requireAdmin(req);
+    const session = await requireAuthSession(req);
+    const task = await this.adminTasksService.enqueueVocabularyMeaningPriorityReview((session.user as any)?.id);
+    return { code: 200, message: 'success', data: { taskId: task.id, reused: task.reused } };
+  }
+
   /** 词典+AI 富化纯英文释义；只写回 definitionEn 与 difficulty。 */
   @Post('library/vocabularies/enrich-english-only-definitions')
   async enrichEnglishOnlyVocabularyDefinitions(@Req() req: Request) {

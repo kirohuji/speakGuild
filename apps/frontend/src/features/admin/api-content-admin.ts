@@ -954,6 +954,11 @@ export function rewriteVocabulariesMeaningMissingPos(): Promise<{ taskId: string
   return post('/admin/content/library/vocabularies/rewrite-meaning-missing-pos');
 }
 
+/** 全量审查中文释义，只更新 meaning：核心常用义优先，受限义项后置或精简。 */
+export function reviewVocabularyMeaningPriority(): Promise<{ taskId: string; reused?: boolean }> {
+  return post('/admin/content/library/vocabularies/review-meaning-priority');
+}
+
 /** 词典+AI 富化英文释义未双语的词汇；只更新 definitionEn 与 difficulty。 */
 export function enrichEnglishOnlyVocabularyDefinitions(): Promise<{ taskId: string; reused?: boolean }> {
   return post('/admin/content/library/vocabularies/enrich-english-only-definitions');
@@ -1034,6 +1039,7 @@ export function aiEnrichVocabulary(data: {
 // ─── Pattern AI Enrich ───────────────────────────────────────
 
 export interface PatternAiEnrichResult {
+  meaning: string;
   examples: { en: string; zh: string; level: string }[];
   description: string;
 }
@@ -1069,6 +1075,7 @@ export function deleteLibraryChunk(id: string): Promise<void> {
 // ─── Chunk AI Enrich ─────────────────────────────────────────
 
 export interface ChunkAiEnrichResult {
+  meaning: string;
   description: string;
   examples: { en: string; zh: string; level: string }[];
 }

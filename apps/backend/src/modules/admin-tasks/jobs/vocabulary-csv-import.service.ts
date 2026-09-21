@@ -1258,6 +1258,145 @@ export class VocabularyCsvImportService {
     });
   }
 
+  /**
+   * 检查全部词汇的中文释义：核心/常用义优先，低频、俚语和专业义降级到末尾或移除。
+   * 只更新 meaning，其他词汇字段保持不变。
+   */
+  async runMeaningPriorityReview(taskId: string) {
+    if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
+
+    const candidates: Array<{
+      id: string;
+      word: string;
+      meaning: string;
+      definitionEn: string;
+      partOfSpeech: string;
+    }> = [];
+    let cursor: string | undefined;
+    const totalItems = await this.prisma.vocabulary.count();
+
+    do {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      const rows = await this.prisma.vocabulary.findMany({
+        select: { id: true, word: true, meaning: true, definitionEn: true, partOfSpeech: true },
+        orderBy: { id: 'asc' },
+        take: 500,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      });
+      if (!rows.length) break;
+      candidates.push(...rows.map((row) => ({
+        id: row.id,
+        word: row.word,
+        meaning: row.meaning ?? '',
+        definitionEn: row.definitionEn ?? '',
+        partOfSpeech: row.partOfSpeech ?? '',
+      })));
+      cursor = rows.at(-1)?.id;
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: 'scan', totalItems, processedItems: candidates.length,
+      });
+    } while (cursor);
+
+    await this.adminTasksService.log(taskId, 'info', `扫描完成：将检查全部 ${candidates.length} 个词汇的中文释义排序与质量`, {
+      step: 'scan', meta: { totalItems: candidates.length },
+    });
+
+    let processed = 0;
+    let updated = 0;
+    let unchanged = 0;
+    let failed = 0;
+    const errors: Array<{ id: string; word: string; message: string }> = [];
+    const usageStats = createUsageStats();
+    const batchSize = 8;
+
+    await this.adminTasksService.setProgress(taskId, {
+      currentStep: 'review-meaning-priority', totalItems: candidates.length,
+      processedItems: 0, successItems: 0, failedItems: 0,
+    });
+
+    for (let index = 0; index < candidates.length; index += batchSize) {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      const batch = candidates.slice(index, index + batchSize);
+      try {
+        const results = await this.adminContentAiService.prioritizeVocabularyMeaningsBatch(
+          batch,
+          usageCallback(usageStats),
+        );
+        const resultById = new Map(results.map((result) => [result.id, result.meaning.trim()]));
+        const updates = [];
+        let batchUpdated = 0;
+        let batchUnchanged = 0;
+        let batchFailed = 0;
+        const batchErrors: Array<{ id: string; word: string; message: string }> = [];
+
+        for (const candidate of batch) {
+          const nextMeaning = resultById.get(candidate.id) ?? '';
+          if (
+            !nextMeaning ||
+            !/[\u3400-\u9fff]/.test(nextMeaning) ||
+            /\bother\b/i.test(nextMeaning) ||
+            vocabularyMeaningMissingPosPrefix(nextMeaning) ||
+            nextMeaning.length > 90
+          ) {
+            batchFailed++;
+            batchErrors.push({ id: candidate.id, word: candidate.word, message: 'AI 未返回有效、规范且足够精简的中文释义' });
+            continue;
+          }
+          if (nextMeaning === candidate.meaning.trim()) {
+            batchUnchanged++;
+            continue;
+          }
+          updates.push(this.prisma.vocabulary.update({
+            where: { id: candidate.id },
+            data: { meaning: nextMeaning },
+          }));
+          batchUpdated++;
+        }
+        if (updates.length) await this.prisma.$transaction(updates);
+        updated += batchUpdated;
+        unchanged += batchUnchanged;
+        failed += batchFailed;
+        errors.push(...batchErrors);
+      } catch (error: any) {
+        const message = error?.message ?? 'unknown error';
+        failed += batch.length;
+        errors.push(...batch.map((candidate) => ({ id: candidate.id, word: candidate.word, message })));
+        await this.adminTasksService.log(taskId, 'error', `第 ${Math.floor(index / batchSize) + 1} 批释义检查失败：${message}`, {
+          step: 'review-meaning-priority', meta: { startIndex: index, count: batch.length },
+        });
+      }
+
+      processed += batch.length;
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: `review-meaning-priority (${processed}/${candidates.length})`,
+        totalItems: candidates.length,
+        processedItems: processed,
+        successItems: updated + unchanged,
+        failedItems: failed,
+      });
+      if (processed % 80 === 0 || processed === candidates.length) {
+        await this.adminTasksService.log(taskId, 'info', `已检查 ${processed}/${candidates.length}：更新 ${updated}，保持 ${unchanged}，失败 ${failed}`, {
+          step: 'review-meaning-priority', meta: { processed, updated, unchanged, failed, usage: usageStats },
+        });
+      }
+    }
+
+    const summary = {
+      total: candidates.length,
+      updated,
+      unchanged,
+      failed,
+      errors: errors.slice(0, 100),
+      usage: usageStats,
+      policyVersion: 1,
+    };
+    await this.adminTasksService.markCompleted(taskId, summary);
+    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `全部词汇释义检查完成：更新 ${updated}，保持 ${unchanged}，失败 ${failed}`, {
+      step: 'completed', meta: summary,
+    });
+    return summary;
+  }
+
   async runBilingualDefinitionEnrich(taskId: string) {
     if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
 

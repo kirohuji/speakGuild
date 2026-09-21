@@ -344,8 +344,9 @@ export class DictionaryPipelineService {
     options?: { surfaceProviderRateLimit?: boolean },
   ): Promise<CleanedPronunciation[]> {
     if (provider === 'auto') {
-      const orderedProviders: Exclude<PronunciationProvider, 'auto'>[] = [
-        'wiktionary',
+      // Wiktionary evidence is fetched once inside the AI evaluator because it
+      // also supplies ambiguous IPA and accent-specific audio metadata.
+      const orderedProviders: Array<Exclude<PronunciationProvider, 'auto' | 'ai_verify' | 'wiktionary'>> = [
         'freedictionaryapi',
         'dictionaryapi.dev',
         'datamuse',
@@ -445,7 +446,20 @@ export class DictionaryPipelineService {
     scope: PronunciationScope = 'all',
   ): Promise<CleanedPronunciation[]> {
     const [evidence, phraseCandidates] = await Promise.all([
-      this.pronunciationProviders.fetchWiktionaryEvidence(word),
+      this.pronunciationProviders.fetchWiktionaryEvidence(word).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        const cause = error instanceof Error
+          ? (error as Error & { cause?: { code?: string; message?: string } }).cause
+          : undefined;
+        const causeDetail = cause?.code || cause?.message
+          ? ` (${[cause.code, cause.message].filter(Boolean).join(': ')})`
+          : '';
+        this.logger.warn(
+          `Wiktionary pronunciation evidence unavailable for "${word}": ${message}${causeDetail}; `
+          + 'continuing with supporting providers',
+        );
+        return { pronunciations: [], ambiguousIpas: [], audioUrls: {} };
+      }),
       this.buildPhrasePronunciationCandidates(word),
     ]);
     let supporting = preloadedSupporting;

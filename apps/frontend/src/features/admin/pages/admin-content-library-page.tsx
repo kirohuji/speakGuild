@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Search, Plus, Trash2, Edit3, BookOpen, Sparkles, Loader2,
   Type, Code2, ChevronLeft, ChevronRight, Play, Pause, Upload, Globe, Volume2, Languages,
-  AlertTriangle, X, RefreshCw,
+  AlertTriangle, X, RefreshCw, ListChecks,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -441,6 +441,22 @@ function VocabularyTab() {
             } catch (err: any) { toast.error(err?.message || '创建修补任务失败'); }
           }}>
             <Languages data-icon="inline-start" />修补词汇内容
+          </Button>
+          <Button size="sm" variant="outline"
+            title="检查全部词汇的词性与中文释义：核心常用义优先；低频、俚语和专业义后置或精简。只更新 meaning 字段"
+            onClick={async () => {
+              if (!confirm('将用 AI 检查全部词汇的中文释义，并自动写回整理结果。只修改 meaning 字段，是否继续？')) return;
+              try {
+                const result = await api.reviewVocabularyMeaningPriority();
+                toast.success(result.reused ? '同类全量释义检查任务已在执行' : '已创建全部词汇释义检查任务', {
+                  description: '常用核心义会优先显示，低频、俚语及专业义将后置或精简。',
+                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+                });
+              } catch (err: any) {
+                toast.error(err?.message || '创建全部词汇释义检查任务失败');
+              }
+            }}>
+            <ListChecks data-icon="inline-start" />整理全部释义
           </Button>
           <Button size="sm" variant="outline" onClick={async () => {
             try {
@@ -1945,6 +1961,7 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
   const [enriching, setEnriching] = useState(false)
   const [editDesc, setEditDesc] = useState(false)
   const [editExamples, setEditExamples] = useState(false)
+  const [pendingDiff, setPendingDiff] = useState<any>(null)
   const [ttsGenerating, setTtsGenerating] = useState<string | null>(null)
   const [categories, setCategories] = useState<string[]>([])
 
@@ -1953,10 +1970,12 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
       setForm(edit)
       setEditDesc(false)
       setEditExamples(false)
+      setPendingDiff(null)
     } else {
       setForm({ pattern: '', meaning: '', difficulty: 'L2', category: '', examples: [] })
       setEditDesc(false)
       setEditExamples(false)
+      setPendingDiff(null)
     }
   }, [edit, open])
 
@@ -1978,7 +1997,49 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
     finally { setSaving(false) }
   }
 
-  // AI 生成例句 + 讲解
+  const showEnrichmentDiff = (newFields: Record<string, any>) => {
+    const fields: Record<string, { old: any; new: any }> = {}
+    for (const [key, next] of Object.entries(newFields)) {
+      const current = form[key]
+      if (next === '' || next === null || next === undefined || next === current) continue
+      if (Array.isArray(next) && (!next.length || JSON.stringify(next) === JSON.stringify(current))) continue
+      fields[key] = { old: current, new: next }
+    }
+    if (!Object.keys(fields).length) {
+      toast.info('AI 生成没有返回可应用的更新')
+      return
+    }
+    setPendingDiff({ source: 'AI 生成', fields })
+  }
+
+  const acceptEnrichmentField = (key: string) => {
+    if (!pendingDiff) return
+    setForm((prev: any) => ({ ...prev, [key]: pendingDiff.fields[key].new }))
+    if (key === 'description') setEditDesc(false)
+    if (key === 'examples') setEditExamples(false)
+
+    const fields = { ...pendingDiff.fields }
+    delete fields[key]
+    if (Object.keys(fields).length) setPendingDiff({ ...pendingDiff, fields })
+    else {
+      setPendingDiff(null)
+      toast.success('AI 生成：已全部应用')
+    }
+  }
+
+  const acceptAllEnrichment = () => {
+    if (!pendingDiff) return
+    const updates = Object.fromEntries(
+      Object.entries(pendingDiff.fields).map(([key, value]: [string, any]) => [key, value.new]),
+    )
+    setForm((prev: any) => ({ ...prev, ...updates }))
+    setEditDesc(false)
+    setEditExamples(false)
+    setPendingDiff(null)
+    toast.success('AI 生成：已全部应用')
+  }
+
+  // AI 生成释义、例句和讲解，先展示差异，由管理员确认后再应用。
   const handleAiGenerate = async () => {
     if (!form.pattern?.trim()) return
     setEnriching(true)
@@ -1988,14 +2049,11 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
         pattern: form.pattern.trim(),
         meaning: form.meaning ?? '',
       })
-      setForm((prev: any) => ({
-        ...prev,
-        examples: result.examples?.length ? result.examples : prev.examples,
-        description: result.description || prev.description,
-      }))
-      setEditDesc(false)
-      setEditExamples(false)
-      toast.success('AI 已生成例句和讲解')
+      showEnrichmentDiff({
+        meaning: result.meaning?.trim(),
+        description: result.description,
+        examples: result.examples,
+      })
     } catch { toast.error('AI 生成失败') }
     finally { setEnriching(false) }
   }
@@ -2034,19 +2092,19 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-6xl min-w-0 max-h-[90vh] overflow-x-hidden overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{edit ? '编辑句式' : '新增句式'}</DialogTitle>
           <DialogDescription>句式如 "__ is the __ I have ever __"，用 __ 表示可替换槽位</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           {/* Row 1: Pattern + Meaning */}
-          <div className="flex gap-2">
-            <div className="flex-1">
+          <div className="flex min-w-0 gap-2">
+            <div className="min-w-0 flex-1">
               <Label htmlFor="p-pattern">句式 *</Label>
               <Input id="p-pattern" value={form.pattern ?? ''} onChange={e => setForm({ ...form, pattern: e.target.value })} placeholder="__ is the __ I have ever __" className="font-mono" />
             </div>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <Label htmlFor="p-meaning">释义</Label>
               <Input id="p-meaning" value={form.meaning ?? ''} onChange={e => setForm({ ...form, meaning: e.target.value })} placeholder="这是我__过的最__的__" />
             </div>
@@ -2190,6 +2248,33 @@ function PatternDialog({ open, onClose, edit, onSaved }: {
               </div>
             )}
           </div>
+
+          {pendingDiff && (
+            <div className="min-w-0 max-w-full space-y-2 overflow-hidden rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-amber-600">
+                  AI 生成返回了 {Object.keys(pendingDiff.fields).length} 项更新
+                </span>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={acceptAllEnrichment}>全部应用</Button>
+                  <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground" onClick={() => setPendingDiff(null)}>忽略</Button>
+                </div>
+              </div>
+              {Object.entries(pendingDiff.fields).map(([key, value]: [string, any]) => {
+                const label: Record<string, string> = { meaning: '中文释义', description: '讲解', examples: '例句' }
+                const display = (item: any) => Array.isArray(item) ? `${item.length} 条` : (item || '（空）')
+                return (
+                  <div key={key} className="grid min-w-0 max-w-full grid-cols-[4rem_minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-2 text-xs">
+                    <span className="text-muted-foreground">{label[key] || key}</span>
+                    <span className="min-w-0 truncate text-muted-foreground line-through" title={display(value.old)}>{display(value.old)}</span>
+                    <span className="text-muted-foreground">→</span>
+                    <span className="min-w-0 truncate text-foreground" title={display(value.new)}>{display(value.new)}</span>
+                    <Button size="sm" variant="ghost" className="h-6 shrink-0 px-2 text-xs" onClick={() => acceptEnrichmentField(key)}>采用</Button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           {/* Bottom bar */}
           <div className="flex justify-end gap-2 pt-2 border-t border-border/40">
