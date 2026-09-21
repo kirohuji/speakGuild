@@ -19,5 +19,5 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false
   },
-  "exclude": ["prisma", "scripts"]
+  "exclude": ["dist", "prisma", "scripts"]
 }

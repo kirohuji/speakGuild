@@ -1,6 +1,8 @@
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import rehypeRaw from 'rehype-raw'
+import rehypeSanitize from 'rehype-sanitize'
 import { cn } from '@/lib/cn'
 
 interface Props {
@@ -32,6 +34,7 @@ export function MarkdownRenderer({ content, className, variant = 'default' }: Pr
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw, rehypeSanitize]}
         components={{
           img: ({ src, alt }) => (
             <img
@@ -78,8 +81,8 @@ export function MarkdownRenderer({ content, className, variant = 'default' }: Pr
             </blockquote>
           ),
           table: ({ children }) => (
-            <div className={cn('overflow-x-auto my-3', isTeaching && 'my-5 rounded-xl border border-border/65')}>
-              <table className={cn('w-full border-collapse rounded-lg border border-border text-xs', isTeaching && 'border-0 text-sm')}>
+            <div className={cn('my-3 overflow-x-auto', isTeaching && 'my-0 rounded-xl border border-border/65')}>
+              <table className={cn('w-full border-collapse rounded-lg border border-border text-xs', isTeaching && '!my-0 border-0 text-sm')}>
                 {children}
               </table>
             </div>
@@ -88,10 +91,10 @@ export function MarkdownRenderer({ content, className, variant = 'default' }: Pr
             <thead className={cn('bg-muted/50', isTeaching && 'bg-primary/[0.07]')}>{children}</thead>
           ),
           th: ({ children }) => (
-            <th className={cn('border border-border px-3 py-2 text-left font-medium text-foreground', isTeaching && 'border-x-0 border-t-0 px-3.5 py-2.5 font-semibold')}>{children}</th>
+            <th className={cn('border border-border px-2 py-1.5 text-left align-top font-medium leading-5 text-foreground', isTeaching && 'border-x-0 border-t-0 font-semibold')}>{children}</th>
           ),
           td: ({ children }) => (
-            <td className={cn('border border-border px-3 py-2 text-muted-foreground', isTeaching && 'border-x-0 border-b-0 px-3.5 py-2.5 leading-6')}>{children}</td>
+            <td className={cn('border border-border px-2 py-1.5 align-top leading-5 text-muted-foreground', isTeaching && 'border-x-0 border-b-0')}>{children}</td>
           ),
         }}
       >

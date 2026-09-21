@@ -563,9 +563,9 @@ export class LearningService {
         location: scene.location,
         description: scene.description,
         coverImage: scene.coverImage,
-        categoryId: scene.category.id,
-        categoryName: scene.category.name,
-        categoryIcon: scene.category.icon,
+        categoryId: scene.category?.id ?? null,
+        categoryName: scene.category?.name ?? null,
+        categoryIcon: scene.category?.icon ?? null,
         topics: scene.trainingTopics.map((t: any) => ({
           id: t.id,
           type: t.type,
@@ -698,7 +698,7 @@ export class LearningService {
         location: scene.location,
         description: scene.description,
         coverImage: scene.coverImage,
-        categoryName: scene.category.name,
+        categoryName: scene.category?.name ?? null,
         topics: scene.trainingTopics.map((t) => ({
           id: t.id,
           type: t.type,
@@ -1150,7 +1150,7 @@ export class LearningService {
       location: scene.location,
       description: scene.description,
       coverImage: scene.coverImage,
-      category: scene.category.name,
+      category: scene.category?.name ?? null,
       requiredOutputLevel: scene.requiredOutputLevel,
       requiredUserLevel: scene.requiredUserLevel,
       prerequisites: scene.prerequisiteScenes.map((ps) => ({

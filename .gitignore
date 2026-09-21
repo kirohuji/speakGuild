@@ -34,3 +34,5 @@ playwright-report
 packages_backup/
 *.zip
 backups/
+scripts/audio-to-srt/
+scripts/audio-to-srt.ps1
