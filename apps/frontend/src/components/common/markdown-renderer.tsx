@@ -27,6 +27,31 @@ function headingText(value: string) {
     .trim()
 }
 
+function markdownNodeText(node: any): string {
+  if (typeof node?.value === 'string') return node.value
+  if (!Array.isArray(node?.children)) return ''
+  return node.children.map(markdownNodeText).join('')
+}
+
+/** 教学文档不展示仅用于人工编号的 # 列。 */
+function removeTeachingIndexColumn() {
+  return (tree: any) => {
+    const walk = (node: any) => {
+      if (node?.type === 'table') {
+        const headerCell = node.children?.[0]?.children?.[0]
+        if (markdownNodeText(headerCell).trim() === '#') {
+          for (const row of node.children ?? []) {
+            if (Array.isArray(row?.children)) row.children.splice(0, 1)
+          }
+          if (Array.isArray(node.align)) node.align.splice(0, 1)
+        }
+      }
+      for (const child of node?.children ?? []) walk(child)
+    }
+    walk(tree)
+  }
+}
+
 export function getMarkdownHeadings(content: string, idPrefix: string): MarkdownHeading[] {
   const headings: MarkdownHeading[] = []
   let fence: '`' | '~' | null = null
@@ -78,7 +103,7 @@ export function MarkdownRenderer({ content, className, variant = 'default', head
       )}
     >
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={isTeaching ? [remarkGfm, removeTeachingIndexColumn] : [remarkGfm]}
         rehypePlugins={[rehypeRaw, rehypeSanitize]}
         components={{
           h1: ({ node, children }) => <h1 id={headingId(node?.position?.start.line)}>{children}</h1>,
