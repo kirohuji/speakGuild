@@ -9,10 +9,55 @@ interface Props {
   content: string
   className?: string
   variant?: 'default' | 'teaching'
+  headingIdPrefix?: string
 }
 
-export function MarkdownRenderer({ content, className, variant = 'default' }: Props) {
+export interface MarkdownHeading {
+  id: string
+  level: 1 | 2 | 3
+  text: string
+}
+
+function headingText(value: string) {
+  return value
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]+>/g, '')
+    .replace(/[`*_~]/g, '')
+    .trim()
+}
+
+export function getMarkdownHeadings(content: string, idPrefix: string): MarkdownHeading[] {
+  const headings: MarkdownHeading[] = []
+  let fence: '`' | '~' | null = null
+
+  content.split(/\r?\n/).forEach((line, index) => {
+    const fenceMatch = line.match(/^\s*(`{3,}|~{3,})/)
+    if (fenceMatch) {
+      const marker = fenceMatch[1][0] as '`' | '~'
+      fence = fence === marker ? null : fence ?? marker
+      return
+    }
+    if (fence) return
+
+    const match = line.match(/^\s*(#{1,3})[ \t]+(.+?)[ \t]*#*[ \t]*$/)
+    if (!match) return
+
+    const text = headingText(match[2])
+    if (!text) return
+    headings.push({
+      id: `${idPrefix}-${index + 1}`,
+      level: match[1].length as 1 | 2 | 3,
+      text,
+    })
+  })
+
+  return headings
+}
+
+export function MarkdownRenderer({ content, className, variant = 'default', headingIdPrefix }: Props) {
   const isTeaching = variant === 'teaching'
+  const headingId = (line?: number) => line && headingIdPrefix ? `${headingIdPrefix}-${line}` : undefined
 
   return (
     <div
@@ -36,6 +81,9 @@ export function MarkdownRenderer({ content, className, variant = 'default' }: Pr
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw, rehypeSanitize]}
         components={{
+          h1: ({ node, children }) => <h1 id={headingId(node?.position?.start.line)}>{children}</h1>,
+          h2: ({ node, children }) => <h2 id={headingId(node?.position?.start.line)}>{children}</h2>,
+          h3: ({ node, children }) => <h3 id={headingId(node?.position?.start.line)}>{children}</h3>,
           img: ({ src, alt }) => (
             <img
               src={src}

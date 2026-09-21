@@ -965,6 +965,7 @@ const zhCN = {
       current: '当前',
     },
     practiceVn: {
+      contents: '目录',
       teaching: '教学',
       teachingDesc: '查看这个话题的场景说明和表达策略。',
       loadingTeaching: '正在加载教学内容...',

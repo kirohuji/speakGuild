@@ -963,6 +963,7 @@ const en = {
       tableBilingual: 'English + Chinese', exportColumns: 'Layout', oneColumn: '1 column', twoColumns: '2 columns',
     },
     practiceVn: {
+      contents: 'Contents',
       teaching: 'Teaching',
       teachingDesc: 'Review the scenario notes and speaking strategies for this topic.',
       loadingTeaching: 'Loading teaching notes...',

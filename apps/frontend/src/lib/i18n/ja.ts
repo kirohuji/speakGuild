@@ -963,6 +963,7 @@ const ja = {
       tableBilingual: '英語 + 中国語', exportColumns: 'レイアウト', oneColumn: '1列', twoColumns: '2列',
     },
     practiceVn: {
+      contents: '目次',
       teaching: '学習ポイント',
       teachingDesc: 'このトピックの場面説明と表現のコツを確認します。',
       loadingTeaching: '学習内容を読み込んでいます...',
