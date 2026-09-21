@@ -139,10 +139,16 @@ export function MarkdownRenderer({ content, className, variant = 'default', head
             <thead className={cn('bg-muted/50', isTeaching && 'bg-primary/[0.07]')}>{children}</thead>
           ),
           th: ({ children }) => (
-            <th className={cn('border border-border px-2 py-1.5 text-left align-top font-medium leading-5 text-foreground', isTeaching && 'border-x-0 border-t-0 font-semibold')}>{children}</th>
+            <th className={cn(
+              'border border-border px-2 py-1.5 text-left font-medium leading-5 text-foreground',
+              isTeaching ? 'align-middle border-x-0 border-t-0 font-semibold' : 'align-top',
+            )}>{children}</th>
           ),
           td: ({ children }) => (
-            <td className={cn('border border-border px-2 py-1.5 align-top leading-5 text-muted-foreground', isTeaching && 'border-x-0 border-b-0')}>{children}</td>
+            <td className={cn(
+              'border border-border px-2 py-1.5 leading-5 text-muted-foreground',
+              isTeaching ? 'align-middle border-x-0 border-b-0' : 'align-top',
+            )}>{children}</td>
           ),
         }}
       >
