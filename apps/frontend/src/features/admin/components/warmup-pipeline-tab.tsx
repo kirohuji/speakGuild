@@ -354,6 +354,58 @@ const getWarmupItemText = (item: WarmupPipelineItem) => {
   return [item.pattern, item.patternMeaning, ...item.items.flatMap((it) => [getPromptText(it, item.direction), getAnswerText(it, item.direction), it.hint])].join('\n')
 }
 
+/** A structured review card makes it possible to compare actual learner-facing
+ * prompts, answers and hints instead of an undifferentiated text blob. */
+function WarmupExerciseSnapshot({ item, variant }: { item: WarmupPipelineItem; variant: 'before' | 'after' }) {
+  const target = item.type === 'chunk_substitution' ? item.chunk
+    : item.type === 'pattern_drill' ? item.pattern
+      : item.type === 'vocab_sentence_building' ? item.vocabWord
+        : item.sourceText || item.fullSentence
+  const type = item.type === 'chunk_substitution' ? (item.kind === 'word' ? '单词替换' : '句块替换')
+    : item.type === 'pattern_drill' ? '句型操练'
+      : item.type === 'vocab_sentence_building' ? '一词多句'
+        : '句子拆解'
+  const itemCount = item.type === 'sentence_decomposition' ? item.levels.length
+    : item.type === 'vocab_sentence_building' ? item.patterns.reduce((total, pattern) => total + pattern.items.length, 0)
+      : item.items.length
+  const rows = item.type === 'sentence_decomposition'
+    ? [{ prompt: '完整句', value: item.fullSentence }, { prompt: '中文意思', value: item.fullSentenceZh }, ...item.levels.map((level) => ({ prompt: `${level.label || `第 ${level.level} 层`} · 英文`, value: level.en, secondary: level.zh }))]
+    : item.type === 'vocab_sentence_building'
+      ? item.patterns.flatMap((pattern, patternIndex) => pattern.items.map((entry, entryIndex) => ({
+          prompt: `练习 ${patternIndex + 1}-${entryIndex + 1} · ${item.direction === 'en_to_zh' ? '英文题干' : '中文题干'}`,
+          value: getPromptText(entry, item.direction), answer: getAnswerText(entry, item.direction), hint: entry.hint,
+        })))
+      : item.items.map((entry, index) => ({
+          prompt: `练习 ${index + 1} · ${item.direction === 'en_to_zh' ? '英文题干' : '中文题干'}`,
+          value: getPromptText(entry, item.direction), answer: getAnswerText(entry, item.direction), hint: entry.hint,
+        }))
+  const color = variant === 'before'
+    ? 'border-rose-200 bg-rose-50/35 dark:border-rose-900 dark:bg-rose-950/10'
+    : 'border-emerald-200 bg-emerald-50/35 dark:border-emerald-900 dark:bg-emerald-950/10'
+  const label = variant === 'before' ? '原练习题目' : '建议替换后'
+  return <section className={cn('min-w-0 rounded-xl border p-3', color)}>
+    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+    {/* Mirrors the saved exercise-list row: title → count → type/direction. */}
+    <div className="mb-3 rounded-lg border border-border/70 bg-background/80">
+      <div className="flex min-w-0 items-center gap-2 px-2.5 py-2">
+        <span className={cn('flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold', variant === 'before' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700')}>{variant === 'before' ? '原' : '新'}</span>
+        <span className="min-w-0 flex-1"><span className="block truncate text-xs font-medium">{item.title || type}</span><span className="mt-0.5 block truncate text-[10px] text-muted-foreground">{type}{'direction' in item ? ` · ${item.direction === 'en_to_zh' ? '英→中' : '中→英'}` : ''}</span></span>
+        <Badge variant="outline" className="shrink-0 px-1.5 text-[10px]">{itemCount} 题</Badge>
+      </div>
+      <div className="border-t border-border/50 px-2.5 py-1.5 text-[10px] text-muted-foreground">目标材料：<span className="font-medium text-foreground">{target || '未标记'}</span></div>
+    </div>
+    <div className="space-y-2.5">
+      {rows.map((row, index) => <div key={index} className="rounded-lg border border-current/10 bg-background/70 p-2.5 shadow-sm">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{row.prompt}</p>
+        <p className="mt-1 whitespace-pre-wrap text-sm leading-6">{row.value || '—'}</p>
+        {'answer' in row && <><p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">标准答案</p><p className="mt-0.5 whitespace-pre-wrap text-sm leading-6">{row.answer || '—'}</p></>}
+        {'secondary' in row && row.secondary && <p className="mt-1 text-xs text-muted-foreground">{row.secondary}</p>}
+        {'hint' in row && row.hint && <p className="mt-2 rounded bg-muted/60 px-2 py-1 text-xs text-muted-foreground">提示：{row.hint}</p>}
+      </div>)}
+    </div>
+  </section>
+}
+
 const normalizeDedupeText = (value?: string) => normalizeForUsage(value ?? '')
   .replace(/[^a-z0-9\u4e00-\u9fa5\s]/g, ' ')
   .replace(/\s+/g, ' ')
@@ -1601,7 +1653,7 @@ export function WarmupPipelineTab({
               <div>
                 <DialogTitle>正在校验练习质量</DialogTitle>
                 <DialogDescription className="mt-2 max-w-md leading-6">
-                  正在优先检查题干与答案是否互译、材料是否真正被练到，以及提示是否有用且不泄题。完成后会在这里逐项让你确认。
+                  正在检查互译准确性、材料覆盖、提示质量，以及题目之间是否反复使用同一种场景、搭配或句式。完成后会逐项展示原题与替换建议。
                 </DialogDescription>
               </div>
             </div>
@@ -1614,14 +1666,8 @@ export function WarmupPipelineTab({
               <DialogDescription className="pt-1">{activeQualityReview.issues.length ? activeQualityReview.issues.join(' · ') : '请比较原题与建议版本，再决定是否应用修改。'}</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 p-6 lg:grid-cols-2">
-              <div className="rounded-xl border border-red-200 bg-red-50/30 p-4 dark:border-red-900 dark:bg-red-950/10">
-                <p className="mb-2 text-xs font-semibold text-red-700 dark:text-red-300">原题</p>
-                <p className="whitespace-pre-wrap text-sm leading-6 text-foreground/80">{getWarmupItemText(qualityOriginal)}</p>
-              </div>
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/30 p-4 dark:border-emerald-900 dark:bg-emerald-950/10">
-                <p className="mb-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300">建议新版</p>
-                <p className="whitespace-pre-wrap text-sm leading-6 text-foreground/80">{getWarmupItemText(activeQualityReview.replacement)}</p>
-              </div>
+              <WarmupExerciseSnapshot item={qualityOriginal} variant="before" />
+              <WarmupExerciseSnapshot item={activeQualityReview.replacement} variant="after" />
             </div>
             <DialogFooter className="border-t border-border/70 bg-muted/20 px-6 py-4 sm:justify-between">
               <Button type="button" variant="ghost" onClick={() => resolveQualityReview(false)}>保留原题，下一项</Button>

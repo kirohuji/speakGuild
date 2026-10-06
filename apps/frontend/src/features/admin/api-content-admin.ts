@@ -169,7 +169,7 @@ export interface SuggestedVocabItem {
   meaning: string
   partOfSpeech: string
   difficulty: string
-  status: 'available' | 'referenced'
+  status: 'available' | 'referenced' | 'new'
   references: GroupMaterialUsageEntry[]
   reason: string
   score: number

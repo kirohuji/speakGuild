@@ -98,7 +98,9 @@ type WarmupPipelineQualityDto = {
 
 // 覆盖优先：一个题组可组合多个材料；若材料本身不可组合，也必须允许足够题组完成覆盖。
 const WARMUP_PIPELINE_MAX_OUTPUT_TOKENS = 20_000;
-const WARMUP_PIPELINE_MAX_PREVIOUS_ITEMS = 8;
+// Repeated “generate next batch” calls need enough history to avoid falling
+// back to the same stock situations after the first few groups.
+const WARMUP_PIPELINE_MAX_PREVIOUS_ITEMS = 30;
 const WARMUP_PIPELINE_MAX_ITEMS = 60;
 const WARMUP_PIPELINE_MAX_GROUPS = 30;
 
@@ -222,6 +224,45 @@ export class EnglishPracticeAiService {
           throw new Error(`DeepSeek JSON output schema mismatch; expected pipeline array, finish_reason=${finishReason}`);
         }
         return (parsed as { pipeline: Array<Record<string, unknown>> }).pipeline;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error(String(lastError));
+  }
+
+  /** Quality review uses the same DeepSeek JSON mode as pipeline generation.
+   * The generic SDK path does not disable reasoning, so flash models can spend
+   * the response budget before closing a replacement JSON object. */
+  private async generateDeepSeekWarmupQualityReview(config: LlmConfig, system: string, prompt: string) {
+    let lastError: unknown = null;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const response = await fetch(this.buildChatCompletionsUrl(config.baseUrl), {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: config.model,
+            messages: [
+              { role: 'system', content: system },
+              { role: 'user', content: `${prompt}\n\nReturn one complete JSON object only: {"reviews":[]}. Do not truncate any string or object.` },
+            ],
+            response_format: { type: 'json_object' },
+            thinking: { type: 'disabled' },
+            temperature: attempt === 0 ? 0.1 : 0,
+            max_tokens: 12_000,
+          }),
+        });
+        const payload = await response.json().catch(() => null) as any;
+        if (!response.ok) throw new Error(payload?.error?.message || `DeepSeek quality JSON failed (${response.status})`);
+        const choice = payload?.choices?.[0];
+        const finishReason = String(choice?.finish_reason ?? 'unknown');
+        const content = String(choice?.message?.content ?? '').trim();
+        if (!content) throw new Error(`DeepSeek quality JSON was empty; finish_reason=${finishReason}`);
+        if (finishReason === 'length') throw new Error(`DeepSeek quality JSON was truncated; finish_reason=length`);
+        const parsed = JSON.parse(this.extractJson(content).trim()) as { reviews?: unknown };
+        if (!Array.isArray(parsed.reviews)) throw new Error('DeepSeek quality JSON schema mismatch; expected reviews array');
+        return parsed as { reviews: any[] };
       } catch (error) {
         lastError = error;
       }
@@ -2004,6 +2045,37 @@ Rules:
     }
   }
 
+  /** Verify actual English exercise content, not titles/hints, before a batch is returned. */
+  private findUncoveredWarmupMaterials(
+    pipeline: any[],
+    materials: {
+      vocabs: Array<{ word?: string }>;
+      chunks: Array<{ text?: string }>;
+      patterns: Array<{ pattern?: string }>;
+    },
+  ) {
+    const englishFor = (item: any) => {
+      if (item.type === 'sentence_decomposition') return [item.fullSentence, ...(item.levels ?? []).map((level: any) => level?.en)].join(' ');
+      const english = (entry: any) => item.direction === 'en_to_zh' ? entry?.en : entry?.answer;
+      if (item.type === 'vocab_sentence_building') return (item.patterns ?? []).flatMap((pattern: any) => (pattern?.items ?? []).map(english)).join(' ');
+      return (item.items ?? []).map(english).join(' ');
+    };
+    const directTarget = (item: any, target: string) => [item.chunk, item.pattern, item.vocabWord, item.sourceText]
+      .some((value) => String(value ?? '').trim().toLowerCase() === target.trim().toLowerCase());
+    const has = (target: string, kind: 'vocab' | 'chunk' | 'pattern') => pipeline.some((item) => {
+      const text = englishFor(item);
+      if (directTarget(item, target)) return true;
+      return kind === 'chunk'
+        ? this.englishTextUsesChunkOrSentencePattern(text, target)
+        : this.answerUsesTarget(text, target);
+    });
+    return [
+      ...materials.vocabs.map((item) => ({ kind: 'vocab' as const, text: String(item.word ?? '') })),
+      ...materials.chunks.map((item) => ({ kind: 'chunk' as const, text: String(item.text ?? '') })),
+      ...materials.patterns.map((item) => ({ kind: 'pattern' as const, text: String(item.pattern ?? '') })),
+    ].filter((item) => item.text && !has(item.text, item.kind));
+  }
+
   /** 一次性生成知识点练习补齐题组：同时考虑结构要求和材料覆盖 */
   async generateWarmupPipeline(dto: WarmupPipelineGenerationDto) {
     const runtime = await this.getLlmRuntime();
@@ -2249,7 +2321,35 @@ Rules:
         generated = parsed.pipeline as Array<Record<string, unknown>>;
       }
 
-      const normalized = this.normalizeWarmupPipeline(this.capWarmupPipeline(generated));
+      let normalized = this.normalizeWarmupPipeline(this.capWarmupPipeline(generated));
+      const uncovered = this.findUncoveredWarmupMaterials(normalized, {
+        vocabs: missingVocabs,
+        chunks: missingChunks,
+        patterns: missingPatterns,
+      });
+
+      // A prompt alone cannot guarantee coverage. Ask once more for exactly
+      // the targets the first pass failed to put in real English content.
+      if (uncovered.length) {
+        const repairPrompt = `${prompt}\n\n## REQUIRED COVERAGE REPAIR\nThe first draft missed these targets in actual English exercises (titles and hints do not count):\n${uncovered.map((item) => `- [${item.kind}] ${item.text}`).join('\n')}\n\nReturn ONLY additional, non-duplicate groups that practise every listed target. Keep the same JSON schema and use natural combinations where slot meaning permits. Avoid every target already present in this first draft:\n${JSON.stringify({ pipeline: normalized })}`;
+        try {
+          let repaired: Array<Record<string, unknown>>;
+          if (providerName === 'deepseek') {
+            repaired = await this.generateDeepSeekWarmupPipeline(runtime.config, WARMUP_PIPELINE_SYSTEM_PROMPT, repairPrompt);
+          } else {
+            const { text } = await generateText({
+              model: provider(), system: WARMUP_PIPELINE_SYSTEM_PROMPT, prompt: repairPrompt,
+              temperature: 0.15, maxOutputTokens: WARMUP_PIPELINE_MAX_OUTPUT_TOKENS,
+            });
+            const parsed = JSON.parse(this.extractJson(text).trim()) as { pipeline?: unknown };
+            repaired = Array.isArray(parsed.pipeline) ? parsed.pipeline as Array<Record<string, unknown>> : [];
+          }
+          normalized = this.normalizeWarmupPipeline(this.capWarmupPipeline([...normalized, ...repaired]));
+        } catch (repairError) {
+          this.logger.warn(`[generate-warmup-pipeline] 覆盖修复失败: ${repairError instanceof Error ? repairError.message : String(repairError)}`);
+        }
+      }
+
       const pipeline = await this.refineWarmupPipelineAlignment({
         config: runtime.config,
         provider,
@@ -2282,34 +2382,24 @@ Rules:
       key === 'audioUrl' || key === 'audioAssetId' ? undefined : value
     ))));
     const system = `You are a meticulous ESL exercise editor for Chinese learners.
-Audit each warmup exercise group. Check: Chinese-to-English prompts are direct translations of their English answers (not vague scenarios); each target word/chunk/pattern is actually practised in the English side; every answer sounds like something a speaker would naturally say for the target's own meaning, speech act, and grammar — never a mechanically padded sentence, bare repetition, invented scene, or generic template applied to an incompatible target; hints are concrete without leaking the answer; directions and fields are correct; titles describe the teaching goal rather than only repeating the target; and there are no near-duplicate exercises.
+Audit the ENTIRE warmup pipeline, not isolated groups. Check: Chinese-to-English prompts are direct translations of their English answers (not vague scenarios); each target word/chunk/pattern is actually practised in the English side; every answer sounds like something a speaker would naturally say for the target's own meaning, speech act, and grammar — never a mechanically padded sentence, bare repetition, invented scene, or generic template applied to an incompatible target; hints are concrete without leaking the answer; directions and fields are correct; titles describe the teaching goal rather than only repeating the target.
+
+HOMOGENEITY / DIVERSITY CHECK (required): compare every exercise with the rest of the pipeline. Flag repeated semantic scenarios, stock collocations, sentence frames, information structures, or communicative moves even when the target material differs. A change of name, subject, place, or one noun does NOT make two exercises meaningfully distinct. Assess diversity across situation, relationship between speakers, communicative purpose, tone, grammar shape, and added detail. Prefer a balanced range of everyday contexts and speech acts. When you flag homogeneity, state the repeated pattern in Chinese issues and rewrite the flagged group's examples into a genuinely different context while preserving its exact target material.
 
 Return ONLY valid JSON:
 {"reviews":[{"itemId":"existing id","severity":"high|medium|low","summary":"short Chinese diagnosis","issues":["specific Chinese issue"],"replacement":{...the COMPLETE corrected item, preserving the exact id and type}}]}
 
-Only return a review when a change is genuinely needed. Return ZERO OR ONE review only: choose the single highest-impact problem, because the editor reviews one item before moving to the next. Every replacement must preserve the exercise type, id, target material and intended direction. Do not invent material outside the original item. Keep summary and issues concise. Do not wrap JSON in Markdown.`;
+Only return a review when a change is genuinely needed. Return ZERO OR ONE review only: choose the single highest-impact issue across the entire pipeline. Prioritise a diversity/homogeneity problem when it affects multiple exercises; after the author applies or keeps it, the next quality check will identify the next issue. Every replacement must preserve the exercise type, id, target material and intended direction. Do not invent material outside the original item. Keep summary and issues concise. Do not wrap JSON in Markdown.`;
     const prompt = `Topic: ${dto.topicTitle || '未命名话题'}\nDifficulty: ${dto.difficulty || 'L2'}\n\nPipeline to audit:\n${JSON.stringify(auditItems)}`;
     try {
-      const requestReview = (maxOutputTokens: number, temperature: number) => generateText({
-        model: runtime.provider(),
-        system,
-        prompt,
-        temperature,
-        // A replacement is a complete exercise group. Give one suggestion
-        // enough room to close its JSON instead of asking for six truncated
-        // replacements in a 5k-token response.
-        maxOutputTokens,
-      });
-      let response = await requestReview(12_000, 0.1);
       let parsed: { reviews?: any[] };
-      try {
-        parsed = JSON.parse(this.extractJson(response.text).trim()) as { reviews?: any[] };
-      } catch (firstParseError) {
-        // DeepSeek occasionally ends an otherwise valid object early. One
-        // deterministic retry is cheaper than surfacing a 500 to the editor.
-        this.logger.warn(`Warmup quality response was not complete JSON; retrying once: ${firstParseError instanceof Error ? firstParseError.message : String(firstParseError)}`);
-        response = await requestReview(16_000, 0);
-        parsed = JSON.parse(this.extractJson(response.text).trim()) as { reviews?: any[] };
+      if (runtime.config.provider.trim().toLowerCase() === 'deepseek') {
+        parsed = await this.generateDeepSeekWarmupQualityReview(runtime.config, system, prompt);
+      } else {
+        const { text } = await generateText({
+          model: runtime.provider(), system, prompt, temperature: 0.1, maxOutputTokens: 8_000,
+        });
+        parsed = JSON.parse(this.extractJson(text).trim()) as { reviews?: any[] };
       }
       const knownIds = new Set(items.map((item) => item.id));
       const reviews = (Array.isArray(parsed.reviews) ? parsed.reviews : [])

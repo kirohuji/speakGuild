@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowRight, BookOpen, Check, Download, GitCompareArrows, Link2, Loader2, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus, Search, X } from 'lucide-react'
+import { ArrowRight, BookOpen, Check, Download, GitCompareArrows, Link2, Loader2, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Plus, Search, Sparkles, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,6 +14,15 @@ import {
 } from '@/features/admin/api-content-admin'
 
 type WorkspaceMode = 'edit' | 'preview' | 'compare'
+type MaterialKind = 'pattern' | 'chunk' | 'vocab'
+
+export interface TeachingMaterialRecommendation {
+  id: string
+  primary: string
+  secondary?: string | null
+  reason: string
+  status: 'available' | 'referenced' | 'new'
+}
 
 interface TopicTeachingWorkspaceProps {
   sceneId: string
@@ -35,9 +44,13 @@ interface TopicTeachingWorkspaceProps {
   onCreateMaterial: (kind: MaterialKind) => void
   onSearchPatterns?: (query: string) => Promise<unknown>
   onSearchVocabs?: (query: string) => Promise<unknown>
+  recommendations?: Partial<Record<MaterialKind, { summary: string; items: TeachingMaterialRecommendation[] }>>
+  recommendingKind?: MaterialKind | null
+  addingRecommendationId?: string | null
+  onRecommendMaterial?: (kind: MaterialKind) => void
+  onAddRecommendation?: (kind: MaterialKind, id: string) => void
+  onDismissRecommendations?: (kind: MaterialKind) => void
 }
-
-type MaterialKind = 'pattern' | 'chunk' | 'vocab'
 
 interface MaterialShelfProps {
   title: string
@@ -47,6 +60,12 @@ interface MaterialShelfProps {
   items: Array<{ id: string; primary: string; secondary?: string | null; selected: boolean; usages: GroupMaterialUsageEntry[] }>
   onToggle: (id: string) => void
   onCreate: () => void
+  recommendation?: { summary: string; items: TeachingMaterialRecommendation[] }
+  recommending?: boolean
+  addingRecommendationId?: string | null
+  onRecommend?: () => void
+  onAddRecommendation?: (id: string) => void
+  onDismissRecommendations?: () => void
 }
 
 function formatMaterialLocations(usages: GroupMaterialUsageEntry[]) {
@@ -56,19 +75,42 @@ function formatMaterialLocations(usages: GroupMaterialUsageEntry[]) {
   ).join('；')
 }
 
-function MaterialShelf({ title, count, query, onQueryChange, items, onToggle, onCreate }: MaterialShelfProps) {
+function MaterialShelf({ title, count, query, onQueryChange, items, onToggle, onCreate, recommendation, recommending, addingRecommendationId, onRecommend, onAddRecommendation, onDismissRecommendations }: MaterialShelfProps) {
   return (
-    <section className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center justify-between gap-1.5 px-2 py-1.5">
+    <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex shrink-0 items-center justify-between gap-1.5 px-2 py-1.5">
         <div className="flex min-w-0 items-center gap-1">
           <p className="truncate text-[11px] font-semibold">{title}</p>
           <Badge variant="secondary" className="h-4 shrink-0 px-1 text-[8px]">{count}</Badge>
         </div>
-        <Button type="button" size="sm" variant="ghost" className="h-6 px-1.5 text-[9px]" onClick={onCreate}>
-          <Plus data-icon="inline-start" />新建
-        </Button>
+        <div className="flex shrink-0 items-center gap-0.5">
+          {onRecommend && <Button type="button" size="sm" variant="ghost" className="h-6 px-1.5 text-[9px]" onClick={onRecommend} disabled={recommending}>
+            {recommending ? <Loader2 className="animate-spin" /> : <Sparkles />}AI 推荐
+          </Button>}
+          <Button type="button" size="sm" variant="ghost" className="h-6 px-1.5 text-[9px]" onClick={onCreate}>
+            <Plus data-icon="inline-start" />新建
+          </Button>
+        </div>
       </div>
-      <div className="px-1.5 pb-1.5">
+      {recommendation && (
+        <div className="mx-1.5 mb-1.5 shrink-0 overflow-hidden rounded-md border border-sky-500/20 bg-sky-500/[0.04]">
+          <div className="flex items-start justify-between gap-1 border-b border-sky-500/15 px-2 py-1.5">
+            <p className="text-[9px] leading-3 text-muted-foreground">{recommendation.summary}</p>
+            <button type="button" className="shrink-0 text-[9px] text-muted-foreground hover:text-foreground" onClick={onDismissRecommendations}>收起</button>
+          </div>
+          <div className="max-h-40 overflow-y-auto">
+            {recommendation.items.length ? recommendation.items.map((item) => {
+              const blocked = item.status === 'referenced'
+              const adding = addingRecommendationId === item.id
+              return <div key={item.id} className="flex items-center gap-1.5 border-b border-sky-500/10 px-2 py-1 last:border-0">
+                <div className="min-w-0 flex-1"><p className="truncate text-[10px] font-medium">{item.primary}{item.status === 'new' && <span className="ml-1 text-sky-600">新建</span>}</p>{item.secondary && <p className="truncate text-[9px] text-muted-foreground">{item.secondary}</p>}<p className="line-clamp-2 text-[9px] leading-3 text-muted-foreground">{item.reason}</p></div>
+                <Button type="button" size="sm" variant="outline" className="h-5 shrink-0 px-1.5 text-[8px]" disabled={blocked || adding || !onAddRecommendation} onClick={() => onAddRecommendation?.(item.id)}>{adding ? <Loader2 className="animate-spin" /> : blocked ? '已引用' : item.status === 'new' ? '新建并加' : '加入'}</Button>
+              </div>
+            }) : <p className="px-2 py-2 text-center text-[9px] text-muted-foreground">当前材料已覆盖教学文档</p>}
+          </div>
+        </div>
+      )}
+      <div className="shrink-0 px-1.5 pb-1.5">
         <div className="relative">
           <Search className="pointer-events-none absolute left-2 top-1/2 size-3 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -84,7 +126,7 @@ function MaterialShelf({ title, count, query, onQueryChange, items, onToggle, on
           )}
         </div>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1.5 pb-1.5">
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-1.5 pb-1.5">
         <div className="flex flex-col gap-0.5">
           {items.map((item) => (
             <button
@@ -92,31 +134,31 @@ function MaterialShelf({ title, count, query, onQueryChange, items, onToggle, on
               type="button"
               onClick={() => onToggle(item.id)}
               className={cn(
-                'group flex w-full items-start gap-1.5 rounded-md border px-1.5 py-1 text-left transition-colors',
+                'group flex w-full min-w-0 flex-col gap-0.5 rounded-md border px-1.5 py-1 text-left transition-colors',
                 item.selected ? 'border-primary/25 bg-primary/[0.05]' : 'border-border/60 bg-background hover:border-primary/30 hover:bg-muted/40',
               )}
             >
-              <span className={cn(
-                'mt-0.5 flex size-3.5 shrink-0 items-center justify-center rounded-full border',
-                item.selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground',
-              )}>
-                {item.selected ? <Check className="size-2" /> : <Plus className="size-2" />}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[10px] font-medium leading-[0.875rem]">{item.primary}</span>
-                {item.secondary && <span className="block truncate text-[9px] leading-[0.875rem] text-muted-foreground">{item.secondary}</span>}
-              </span>
-              <span className="flex max-w-[11.5rem] shrink-0 self-end items-center justify-end gap-1">
-                <span className="text-right text-[7px] leading-[0.625rem] text-muted-foreground">
-                  {formatMaterialLocations(item.usages)}
+              <span className="flex w-full min-w-0 items-start gap-1.5">
+                <span className={cn(
+                  'mt-0.5 flex size-3.5 shrink-0 items-center justify-center rounded-full border',
+                  item.selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground',
+                )}>
+                  {item.selected ? <Check className="size-2" /> : <Plus className="size-2" />}
+                </span>
+                <span className="min-w-0 flex-1 overflow-hidden">
+                  <span className="block truncate text-[10px] font-medium leading-[0.875rem]">{item.primary}</span>
+                  {item.secondary && <span className="block truncate text-[9px] leading-[0.875rem] text-muted-foreground">{item.secondary}</span>}
                 </span>
                 <Badge
                   variant={item.usages.length ? 'secondary' : 'outline'}
-                  className="h-3.5 shrink-0 gap-0.5 px-1 text-[7px] [&_svg]:size-2"
+                  className="mt-0.5 h-3.5 shrink-0 gap-0.5 px-1 text-[7px] [&_svg]:size-2"
                   aria-label={`组内引用 ${item.usages.length} 次`}
                 >
                   <Link2 data-icon="inline-start" />{item.usages.length}
                 </Badge>
+              </span>
+              <span className="truncate pl-5 text-[7px] leading-[0.625rem] text-muted-foreground" title={formatMaterialLocations(item.usages)}>
+                {formatMaterialLocations(item.usages)}
               </span>
             </button>
           ))}
@@ -162,6 +204,12 @@ export function TopicTeachingWorkspace({
   onCreateMaterial,
   onSearchPatterns,
   onSearchVocabs,
+  recommendations,
+  recommendingKind,
+  addingRecommendationId,
+  onRecommendMaterial,
+  onAddRecommendation,
+  onDismissRecommendations,
 }: TopicTeachingWorkspaceProps) {
   const [documents, setDocuments] = useState<TopicTeachingDocument[]>([])
   const [loading, setLoading] = useState(true)
@@ -394,11 +442,11 @@ export function TopicTeachingWorkspace({
     <div className={cn(
       'grid h-[calc(97vh-10.5rem)] min-h-[32rem] overflow-hidden rounded-xl border border-border/70 bg-background',
       sidebarOpen && materialsOpen
-        ? 'lg:grid-cols-[12rem_minmax(0,1fr)_22rem]'
+        ? 'lg:grid-cols-[12rem_minmax(0,1fr)_minmax(0,22rem)]'
         : sidebarOpen
           ? 'lg:grid-cols-[12rem_minmax(0,1fr)]'
           : materialsOpen
-            ? 'lg:grid-cols-[minmax(0,1fr)_22rem]'
+            ? 'lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]'
             : 'lg:grid-cols-1',
     )}>
       <aside className={cn('min-h-0 flex-col border-b border-border/70 bg-muted/20 lg:border-b-0 lg:border-r', sidebarOpen ? 'flex' : 'hidden')}>
@@ -595,12 +643,12 @@ export function TopicTeachingWorkspace({
         </div>
       </section>
 
-      <aside className={cn('min-h-0 flex-col border-t border-border/70 bg-muted/10 lg:border-l lg:border-t-0', materialsOpen ? 'flex' : 'hidden')}>
+      <aside className={cn('min-h-0 min-w-0 flex-col overflow-hidden border-t border-border/70 bg-muted/10 lg:border-l lg:border-t-0', materialsOpen ? 'flex' : 'hidden')}>
         <div className="shrink-0 border-b border-border/70 px-2 py-2">
           <p className="text-xs font-semibold">当前语言材料</p>
           <p className="mt-0.5 text-[9px] leading-[0.875rem] text-muted-foreground">搜索库中内容即可添加；点击已选内容可移除。</p>
         </div>
-        <Tabs defaultValue="pattern" className="flex min-h-0 flex-1 flex-col">
+        <Tabs defaultValue="pattern" className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <TabsList className="grid h-8 w-full shrink-0 grid-cols-3 rounded-none border-b border-border/70 bg-muted/30 p-0.5">
             <TabsTrigger value="pattern" className="h-7 gap-1 px-1 text-[10px]">
               句型 <Badge variant="secondary" className="h-4 px-1 text-[8px]">{selectedPatternIds.length}</Badge>
@@ -612,7 +660,7 @@ export function TopicTeachingWorkspace({
               单词 <Badge variant="secondary" className="h-4 px-1 text-[8px]">{selectedVocabIds.length}</Badge>
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="pattern" className="mt-0 min-h-0 flex-1 data-[state=active]:flex">
+          <TabsContent value="pattern" className="mt-0 min-h-0 min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col">
             <MaterialShelf
               title="句型"
               count={selectedPatternIds.length}
@@ -621,9 +669,15 @@ export function TopicTeachingWorkspace({
               items={materialShelves.pattern}
               onToggle={(id) => onToggleMaterial('pattern', id)}
               onCreate={() => onCreateMaterial('pattern')}
+              recommendation={recommendations?.pattern}
+              recommending={recommendingKind === 'pattern'}
+              addingRecommendationId={addingRecommendationId}
+              onRecommend={() => onRecommendMaterial?.('pattern')}
+              onAddRecommendation={(id) => onAddRecommendation?.('pattern', id)}
+              onDismissRecommendations={() => onDismissRecommendations?.('pattern')}
             />
           </TabsContent>
-          <TabsContent value="chunk" className="mt-0 min-h-0 flex-1 data-[state=active]:flex">
+          <TabsContent value="chunk" className="mt-0 min-h-0 min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col">
             <MaterialShelf
               title="句块"
               count={selectedChunkIds.length}
@@ -632,9 +686,15 @@ export function TopicTeachingWorkspace({
               items={materialShelves.chunk}
               onToggle={(id) => onToggleMaterial('chunk', id)}
               onCreate={() => onCreateMaterial('chunk')}
+              recommendation={recommendations?.chunk}
+              recommending={recommendingKind === 'chunk'}
+              addingRecommendationId={addingRecommendationId}
+              onRecommend={() => onRecommendMaterial?.('chunk')}
+              onAddRecommendation={(id) => onAddRecommendation?.('chunk', id)}
+              onDismissRecommendations={() => onDismissRecommendations?.('chunk')}
             />
           </TabsContent>
-          <TabsContent value="vocab" className="mt-0 min-h-0 flex-1 data-[state=active]:flex">
+          <TabsContent value="vocab" className="mt-0 min-h-0 min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col">
             <MaterialShelf
               title="单词"
               count={selectedVocabIds.length}
@@ -643,6 +703,12 @@ export function TopicTeachingWorkspace({
               items={materialShelves.vocab}
               onToggle={(id) => onToggleMaterial('vocab', id)}
               onCreate={() => onCreateMaterial('vocab')}
+              recommendation={recommendations?.vocab}
+              recommending={recommendingKind === 'vocab'}
+              addingRecommendationId={addingRecommendationId}
+              onRecommend={() => onRecommendMaterial?.('vocab')}
+              onAddRecommendation={(id) => onAddRecommendation?.('vocab', id)}
+              onDismissRecommendations={() => onDismissRecommendations?.('vocab')}
             />
           </TabsContent>
         </Tabs>

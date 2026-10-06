@@ -1151,23 +1151,38 @@ function TrainingTopicDialog({
     }
   }
 
-  const addSuggestedVocab = (vocabularyId: string) => {
+  const addSuggestedVocab = async (vocabularyId: string) => {
     const ids = form.vocabIds ?? []
     if (ids.includes(vocabularyId)) return
-    // 推荐词条并入词汇池，保证 boundVocabs 统计不遗漏
     const suggestion = suggestions?.find((s) => s.vocabularyId === vocabularyId)
     if (suggestion?.status === 'referenced') return
-    if (suggestion) {
-      setVocabPool((prev) => mergeById(prev, [{
-        id: vocabularyId,
+    try {
+      setSupportAdding(vocabularyId)
+      // “new” 只在用户确认加入时才落库；已有语料则直接关联。
+      const resolvedId = suggestion?.status === 'new'
+        ? (await createLibraryVocabulary({
+            word: suggestion.word,
+            meaning: suggestion.meaning,
+            difficulty: suggestion.difficulty,
+            sortOrder: 0,
+          })).id
+        : vocabularyId
+      if (suggestion) {
+        setVocabPool((prev) => mergeById(prev, [{
+          id: resolvedId,
         word: suggestion.word,
         meaning: suggestion.meaning ?? '',
         description: null,
         sortOrder: 0,
       } as Vocabulary]))
+      }
+      setForm((current: any) => ({ ...current, vocabIds: [...new Set([...(current.vocabIds ?? []), resolvedId])]}))
+      toast.success(suggestion?.status === 'new' ? '已新建并加入关联词汇' : '已加入关联词汇')
+    } catch (error: any) {
+      toast.error(error?.message || '新增词汇失败')
+    } finally {
+      setSupportAdding(null)
     }
-    setForm({ ...form, vocabIds: [...ids, vocabularyId] })
-    toast.success('已加入关联词汇')
   }
 
   const runSuggestSupports = async (kind: TopicSupportKind) => {
@@ -1318,6 +1333,49 @@ function TrainingTopicDialog({
     } finally {
       setQuickCreateSaving(false)
     }
+  }
+
+  // 教学文档工作台与“语言支架”页共用同一套 AI 审查结果，避免两处推荐口径不一致。
+  const teachingRecommendations = {
+    pattern: supportSuggestions.pattern && {
+      summary: supportSuggestions.pattern.summary,
+      items: supportSuggestions.pattern.items.map((item) => ({
+        id: item.materialId,
+        primary: item.text,
+        secondary: item.meaning,
+        reason: item.reason,
+        status: item.status,
+      })),
+    },
+    chunk: supportSuggestions.chunk && {
+      summary: supportSuggestions.chunk.summary,
+      items: supportSuggestions.chunk.items.map((item) => ({
+        id: item.materialId,
+        primary: item.text,
+        secondary: item.meaning,
+        reason: item.reason,
+        status: item.status,
+      })),
+    },
+    vocab: suggestions && {
+      summary: vocabSuggestionSummary,
+      items: suggestions.map((item) => ({
+        id: item.vocabularyId,
+        primary: item.word,
+        secondary: item.meaning,
+        reason: item.reason,
+        status: item.status,
+      })),
+    },
+  }
+
+  const addTeachingRecommendation = (kind: TopicSupportKind | 'vocab', id: string) => {
+    if (kind === 'vocab') {
+      void addSuggestedVocab(id)
+      return
+    }
+    const item = supportSuggestions[kind]?.items.find((candidate) => candidate.materialId === id)
+    if (item) void addSuggestedSupport(kind, item)
   }
 
   return (
@@ -1661,6 +1719,18 @@ function TrainingTopicDialog({
                 onCreateMaterial={openQuickCreate}
                 onSearchPatterns={remotePatternSearch}
                 onSearchVocabs={remoteVocabSearch}
+                recommendations={teachingRecommendations}
+                recommendingKind={supportSuggesting ?? (suggesting ? 'vocab' : null)}
+                addingRecommendationId={supportAdding}
+                onRecommendMaterial={(kind) => {
+                  if (kind === 'vocab') void runSuggestVocabs()
+                  else void runSuggestSupports(kind)
+                }}
+                onAddRecommendation={addTeachingRecommendation}
+                onDismissRecommendations={(kind) => {
+                  if (kind === 'vocab') setSuggestions(null)
+                  else setSupportSuggestions((current) => ({ ...current, [kind]: null }))
+                }}
               />
             </TabsContent>
 

@@ -76,22 +76,18 @@ export class WarmupPipelineGenerateService {
     const metadata = this.asRecord(topic.metadata);
     const outputTraining = this.asRecord(metadata.outputTraining);
     const currentPipeline = Array.isArray(outputTraining.pipeline) ? outputTraining.pipeline as JsonRecord[] : [];
-    const usage = this.asRecord(outputTraining.materialUsage);
-    const totals = this.asRecord(usage.totals);
-    const countMap = (items: unknown) => new Map(
-      (Array.isArray(items) ? items : []).map((item: any) => [String(item?.id ?? ''), Number(item?.count ?? 0)]),
-    );
-    const vocabCounts = countMap(totals.vocabs);
-    const chunkCounts = countMap(totals.chunks);
-    const patternCounts = countMap(totals.patterns);
+    // Do not trust persisted materialUsage: older jobs deleted it after saving,
+    // which made every subsequent run believe the whole pool was uncovered.
+    // Recompute from the actual pipeline before every generation.
+    const currentCounts = this.materialCounts(currentPipeline, topic);
 
     const result = await this.practiceAi.generateWarmupPipeline({
       topicTitle: topic.title,
       difficulty: topic.difficulty,
       materials: {
-        vocabs: topic.topicVocabs.map(({ vocab }) => ({ id: vocab.id, word: vocab.word, meaning: vocab.meaning, count: vocabCounts.get(vocab.id) ?? 0 })),
-        chunks: topic.activeChunks.map(({ chunk }) => ({ id: chunk.id, text: chunk.text, meaning: chunk.meaning, count: chunkCounts.get(chunk.id) ?? 0 })),
-        patterns: topic.topicPatterns.map(({ pattern }) => ({ id: pattern.id, pattern: pattern.pattern, meaning: pattern.meaning ?? undefined, count: patternCounts.get(pattern.id) ?? 0 })),
+        vocabs: topic.topicVocabs.map(({ vocab }) => ({ id: vocab.id, word: vocab.word, meaning: vocab.meaning, count: currentCounts.vocabs.get(vocab.id) ?? 0 })),
+        chunks: topic.activeChunks.map(({ chunk }) => ({ id: chunk.id, text: chunk.text, meaning: chunk.meaning, count: currentCounts.chunks.get(chunk.id) ?? 0 })),
+        patterns: topic.topicPatterns.map(({ pattern }) => ({ id: pattern.id, pattern: pattern.pattern, meaning: pattern.meaning ?? undefined, count: currentCounts.patterns.get(pattern.id) ?? 0 })),
       },
       constraints: { sceneId: topic.sceneId, difficulty: topic.difficulty },
       structure: this.describeStructure(currentPipeline),
@@ -120,7 +116,7 @@ export class WarmupPipelineGenerateService {
       enabled: latestOutputTraining.enabled !== false,
       pipeline: nextPipeline,
     };
-    delete nextOutputTraining.materialUsage;
+    nextOutputTraining.materialUsage = this.materialUsage(nextPipeline, topic);
 
     await this.prisma.trainingTopic.update({
       where: { id: topic.id },
@@ -180,6 +176,43 @@ export class WarmupPipelineGenerateService {
     }, 0);
   }
 
+  private normalizeText(value: unknown) {
+    return String(value ?? '').toLowerCase().replace(/[’‘]/g, "'").replace(/\s+/g, ' ').trim();
+  }
+
+  private itemEnglishText(item: JsonRecord) {
+    if (item.type === 'sentence_decomposition') return [item.fullSentence, ...(Array.isArray(item.levels) ? item.levels.map((level: any) => level?.en) : [])].join(' ');
+    const english = (entry: any) => item.direction === 'en_to_zh' ? entry?.en : entry?.answer;
+    if (item.type === 'vocab_sentence_building') return (Array.isArray(item.patterns) ? item.patterns : []).flatMap((pattern: any) => (pattern?.items ?? []).map(english)).join(' ');
+    return (Array.isArray(item.items) ? item.items : []).map(english).join(' ');
+  }
+
+  private materialCounts(pipeline: JsonRecord[], topic: any): { vocabs: Map<string, number>; chunks: Map<string, number>; patterns: Map<string, number> } {
+    const count = (target: string): number => pipeline.reduce<number>((total, item) => {
+      const direct = [item.chunk, item.pattern, item.vocabWord, item.sourceText].some((value) => this.normalizeText(value) === this.normalizeText(target));
+      const text = this.normalizeText(this.itemEnglishText(item));
+      const escaped = this.normalizeText(target).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return total + (direct || (escaped && new RegExp(`(^|[^a-z])${escaped}([^a-z]|$)`, 'i').test(text)) ? 1 : 0);
+    }, 0);
+    return {
+      vocabs: new Map<string, number>(topic.topicVocabs.map(({ vocab }: any) => [vocab.id, count(vocab.word)])),
+      chunks: new Map<string, number>(topic.activeChunks.map(({ chunk }: any) => [chunk.id, count(chunk.text)])),
+      patterns: new Map<string, number>(topic.topicPatterns.map(({ pattern }: any) => [pattern.id, count(pattern.pattern)])),
+    };
+  }
+
+  private materialUsage(pipeline: JsonRecord[], topic: any) {
+    const counts = this.materialCounts(pipeline, topic);
+    return {
+      generatedAt: new Date().toISOString(),
+      totals: {
+        vocabs: topic.topicVocabs.map(({ vocab }: any) => ({ id: vocab.id, word: vocab.word, meaning: vocab.meaning, count: counts.vocabs.get(vocab.id) ?? 0 })),
+        chunks: topic.activeChunks.map(({ chunk }: any) => ({ id: chunk.id, text: chunk.text, meaning: chunk.meaning, count: counts.chunks.get(chunk.id) ?? 0 })),
+        patterns: topic.topicPatterns.map(({ pattern }: any) => ({ id: pattern.id, pattern: pattern.pattern, meaning: pattern.meaning, count: counts.patterns.get(pattern.id) ?? 0 })),
+      },
+    };
+  }
+
   private normalizeTranslations(items: unknown, direction: 'zh_to_en' | 'en_to_zh') {
     return (Array.isArray(items) ? items : []).map((item: any) => {
       const answer = String(item?.answer ?? '').trim();
@@ -224,11 +257,18 @@ export class WarmupPipelineGenerateService {
   private dedupe(pipeline: JsonRecord[]) {
     const seen = new Set<string>();
     return pipeline.filter((item) => {
+      const exercisePairs = item.type === 'vocab_sentence_building'
+        ? (Array.isArray(item.patterns) ? item.patterns : []).flatMap((pattern: any) => pattern?.items ?? [])
+        : item.type === 'sentence_decomposition'
+          ? (Array.isArray(item.levels) ? item.levels : [])
+          : (Array.isArray(item.items) ? item.items : []);
       const signature = JSON.stringify({
         type: item.type,
         direction: item.direction,
         keyword: item.chunk ?? item.pattern ?? item.vocabWord ?? item.fullSentence ?? '',
-        content: item.items ?? item.patterns ?? item.levels ?? [],
+        // Titles, hints and generated ids vary between calls; they must not
+        // allow the same bilingual exercise to bypass duplicate detection.
+        content: exercisePairs.map((entry: any) => [entry.zh ?? entry.en ?? '', entry.answer ?? '']),
       }).toLowerCase().replace(/\s+/g, ' ');
       if (seen.has(signature)) return false;
       seen.add(signature);

@@ -784,8 +784,10 @@ export class ContentAdminController {
     const patternIds = [...new Set(dto.patternIds ?? [...currentPatternIds])];
     const chunkIds = [...new Set(dto.chunkIds ?? [...currentChunkIds])];
     const difficulty = dto.difficulty ?? topic.difficulty ?? topic.scene.requiredOutputLevel;
-    const count = Math.min(Math.max(dto.count ?? 12, 1), 20);
-    const extensionCount = Math.min(Math.max(dto.extensionCount ?? 6, 0), 20);
+    // 教学文档材料用于后续造句、替换和复习，默认给足一批可练习词，
+    // 而非只挑最少的“缺口词”。调用方仍可用 count 收紧数量。
+    const count = Math.min(Math.max(dto.count ?? 20, 1), 30);
+    const extensionCount = Math.min(Math.max(dto.extensionCount ?? 12, 0), 20);
 
     const [patterns, chunks] = await Promise.all([
       patternIds.length ? this.prisma.sentencePattern.findMany({ where: { id: { in: patternIds } } }) : [],
@@ -813,31 +815,15 @@ export class ContentAdminController {
     const teachingText = (dto.teachingMarkdown ?? topic.teachingMarkdown ?? '').slice(0, 6000).toLowerCase();
     const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-    // 推荐词必须属于当前学习包的词汇资产。此前这里直接扫全局 vocabulary 表，
-    // 所以会把别的学习包甚至更高等级的词带进来。
-    const packageVocabularyRefs = await this.prisma.sceneVocabulary.findMany({
-      where: { sceneId: topic.sceneId },
-      select: { vocabularyId: true },
+    // 这里是“语料库复用优先”入口：不能只看当前学习包，否则教学文档中的
+    // 正确词汇会因为尚未被该包预置而错误地得到空推荐。
+    const library = await this.prisma.vocabulary.findMany({
+      orderBy: [{ outputPriority: 'desc' }, { sortOrder: 'asc' }],
     });
-    const packageVocabularyIds = new Set([
-      ...packageVocabularyRefs.map((item) => item.vocabularyId),
-      ...topic.topicVocabs.map((item) => item.vocab.id),
-    ]);
-    const library = packageVocabularyIds.size
-      ? await this.prisma.vocabulary.findMany({
-          where: { id: { in: [...packageVocabularyIds] } },
-          orderBy: [{ outputPriority: 'desc' }, { sortOrder: 'asc' }],
-        })
-      : [];
     const scored: Array<{ vocabulary: (typeof library)[number]; score: number }> = [];
     for (const vocabulary of library) {
       if (boundIds.has(vocabulary.id)) continue;
       if (isFunctionWord(vocabulary.word, vocabulary.partOfSpeech)) continue;
-      if (targetLevel != null) {
-        const level = levelOf(vocabulary.difficulty);
-        // 这是“当前包 + 当前难度”的推荐，不再用 ±1 放宽到相邻等级。
-        if (level == null || level !== targetLevel) continue;
-      }
       let score = 0;
       const word = vocabulary.word.toLowerCase();
       const pos = (vocabulary.partOfSpeech ?? '').toLowerCase();
@@ -852,6 +838,7 @@ export class ContentAdminController {
       // 难度匹配本身不是“教学关联”。教学文档、句型和 Chunk 都没有命中时不进入候选池。
       if (!chunkRelated && !patternRelated && !teachingRelated) continue;
       const level = levelOf(vocabulary.difficulty);
+      // 已存在的语料应优先复用；难度只影响排序，不能把唯一的精确词条过滤掉。
       if (targetLevel != null && level != null) score += Math.max(0, 3 - Math.abs(level - targetLevel));
       if (vocabulary.outputPriority === 'high') score += 1;
       scored.push({ vocabulary, score });
@@ -879,7 +866,7 @@ export class ContentAdminController {
         const teaching = (dto.teachingMarkdown ?? topic.teachingMarkdown ?? '').slice(0, 6000);
         const { text } = await generateText({
           model,
-          prompt: `你是英语教学设计助手。请先检查教学文档，再从候选库挑选文档明确需要、但当前语言支架尚未覆盖的词汇。\n\n话题目标难度：${difficulty}\n\n已绑定句型：\n${patternLines}\n\n已绑定句块：\n${chunkLines}\n\n教学文档：\n${teaching || '(无)'}\n\n候选词（id | 单词 | 中文释义 | 词性 | 难度）：\n${candidateLines}\n\n请选出最多 ${count} 个核心词和 ${extensionCount} 个扩展词：\n1. 先判断教学文档中的表达目标、示例和练习需要哪些词，不要为了凑数推荐。\n2. 推荐词应补足当前已绑定句型和 Chunk 尚未覆盖的内容。\n3. 难度必须符合目标难度；只选择候选库中的词。\n4. 只选有实际学习价值的实义词，不选代词、介词、冠词、助动词或连词。\n5. 不要考虑材料是否在组内被引用；系统会在 AI 审查完成后单独过滤。\n\n只输出 JSON：{"core":[{"vocabularyId":"候选词id","reason":"一句话说明补足教学文档中的哪个内容"}],"extension":[{"vocabularyId":"候选词id","reason":"一句话中文理由"}]}，不要输出其他内容。`,
+          prompt: `你是英语教学设计助手。请结合教学文档、已绑定句型与句块，为后续“词汇练习、造句替换、复习”准备一批尽可能完整的实义词材料。\n\n话题目标难度：${difficulty}\n\n已绑定句型：\n${patternLines}\n\n已绑定句块：\n${chunkLines}\n\n教学文档：\n${teaching || '(无)'}\n\n候选词（id | 单词 | 中文释义 | 词性 | 难度）：\n${candidateLines}\n\n请选出最多 ${count} 个核心词和 ${extensionCount} 个扩展词：\n1. 优先覆盖教学目标、教学文档示例、句型可替换槽位，以及句块中可用于替换造句的名词、动词、形容词和副词；同一词在多个材料中出现时价值更高。\n2. 在确有教学关联的前提下尽量多推荐，目标是为练习准备丰富素材，不要只报最少缺口。\n3. 只选择候选库中的词；优先难度相近的词，但已有语料中的精确匹配词可以保留。\n4. 不选代词、介词、冠词、助动词或连词等功能词；不要加入当前已绑定的词。\n5. 不要考虑材料是否在组内被引用；系统会在 AI 审查完成后单独过滤。\n\n只输出 JSON：{"core":[{"vocabularyId":"候选词id","reason":"一句话说明它对应哪段教学内容、句型或句块"}],"extension":[{"vocabularyId":"候选词id","reason":"一句话中文理由"}]}，不要输出其他内容。`,
           temperature: 0.4,
           maxOutputTokens: 2400,
           abortSignal: AbortSignal.timeout(230_000),
@@ -948,13 +935,62 @@ export class ContentAdminController {
     ].sort((a, b) => Number(a.status === 'referenced') - Number(b.status === 'referenced'));
     const availableCount = items.filter((item) => item.status === 'available').length;
     const referencedCount = items.length - availableCount;
+    const generatedItems: Array<Record<string, unknown>> = [];
+
+    // 当可复用词条不足时，补提取教学文档真正需要的新词。创建发生在管理员
+    // 点击“新建并加入”时，避免一次推荐就污染公共语料库。
+    if (items.length < count) {
+      try {
+        const llmConfig = await this.aiModelService.getLlmConfig();
+        if (llmConfig.apiKey) {
+          const client = createOpenAI({ apiKey: llmConfig.apiKey, baseURL: llmConfig.baseUrl });
+          const { text } = await generateText({
+            model: client.chat(llmConfig.model),
+            prompt: `你是英语教学设计助手。请结合教学文档、已绑定句型与句块，提取尚值得加入练习的实义词，优先覆盖例句、句型槽位和句块中的可替换词，最多 ${Math.max(0, count - items.length)} 个；不要包含代词、介词、冠词、连词或助动词，也不要为了凑数。
+
+话题难度：${difficulty}
+教学文档：
+${(dto.teachingMarkdown ?? topic.teachingMarkdown ?? '').slice(0, 6000)}
+
+只输出 JSON：{"summary":"中文说明","items":[{"word":"英文单词或短语","meaning":"简洁中文释义","partOfSpeech":"n./v./adj./adv./phr.","difficulty":"${difficulty}","reason":"它如何支撑教学文档"}]}。`,
+            temperature: 0.25,
+            maxOutputTokens: 1800,
+            abortSignal: AbortSignal.timeout(230_000),
+          });
+          const parsed = extractJsonObject(text);
+          const existingWords = new Set(library.map((entry) => entry.word.trim().toLowerCase()));
+          if (Array.isArray(parsed?.items)) {
+            for (const item of parsed.items) {
+              const word = String(item?.word ?? '').trim().slice(0, 120);
+              const meaning = String(item?.meaning ?? '').trim().slice(0, 240);
+              if (!word || !meaning || existingWords.has(word.toLowerCase()) || isFunctionWord(word, String(item?.partOfSpeech ?? ''))) continue;
+              existingWords.add(word.toLowerCase());
+              generatedItems.push({
+                vocabularyId: `new:vocab:${generatedItems.length + 1}`,
+                word,
+                meaning,
+                partOfSpeech: String(item?.partOfSpeech ?? 'phr.').trim().slice(0, 40),
+                difficulty: /^L[1-5]$/i.test(String(item?.difficulty ?? '')) ? String(item.difficulty).toUpperCase() : difficulty,
+                status: 'new', references: [], group: 'core', score: 0,
+                reason: String(item?.reason ?? '教学文档需要该词来完成表达').trim().slice(0, 240),
+              });
+              if (generatedItems.length >= Math.max(0, count - items.length)) break;
+            }
+          }
+        }
+      } catch (error: any) {
+        console.warn(`[suggest-vocabs] AI 新词生成失败: ${error.message}`);
+      }
+    }
 
     return {
       code: 200,
       message: 'success',
       data: {
-        summary: `AI 根据教学文档找到 ${items.length} 个候选：${availableCount} 个组内未引用，可直接加入；${referencedCount} 个已有引用，仅作说明。`,
-        items,
+        summary: generatedItems.length
+          ? `语料库未命中，AI 提取了 ${generatedItems.length} 个建议新建词汇。`
+          : `AI 根据教学文档找到 ${items.length} 个候选：${availableCount} 个组内未引用，可直接加入；${referencedCount} 个已有引用，仅作说明。`,
+        items: [...items, ...generatedItems],
       },
     };
   }
@@ -1055,7 +1091,7 @@ export class ContentAdminController {
     const targetLevel = levelOf(difficulty);
     const kindKey = dto.kind;
 
-    // 候选只来自当前学习包已经配置的材料资产；全局材料库中的相似项不能冒充本包内容。
+    // 句型、Chunk 的推荐保持当前学习包范围；本次词汇推荐会跨全局语料库复用。
     const packageSupportRows = dto.kind === 'pattern'
       ? await this.prisma.sceneSentencePattern.findMany({ where: { sceneId: topic.sceneId }, select: { patternId: true } })
       : await this.prisma.sceneChunk.findMany({ where: { sceneId: topic.sceneId }, select: { chunkId: true } });
