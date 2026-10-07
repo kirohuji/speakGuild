@@ -1,11 +1,13 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { BookOpen, ClipboardCheck, Eye, FilePenLine, Headphones, Languages, Loader2, Plus, Sparkles, Target, Trash2, Upload, UserRound, Play, Pause, Clock, Music, FileAudio, GripVertical, Volume2, Split } from 'lucide-react'
+import { BookOpen, ClipboardCheck, Eye, FilePenLine, Headphones, Languages, Loader2, Plus, Sparkles, Target, Trash2, Upload, Play, Pause, Clock, Music, FileAudio, GripVertical, Volume2, Split, ChevronDown, MessageCircle, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
@@ -66,6 +68,7 @@ function WritingFields({
 }) {
   const [instruction, setInstruction] = useState('')
   const [generating, setGenerating] = useState(false)
+  const [configOpen, setConfigOpen] = useState(false)
   const isDialogue = value.genre === 'dialogue'
   const isTranslation = value.genre === 'translation'
   const isFormal = value.genre === 'essay' || value.genre === 'email'
@@ -102,37 +105,30 @@ function WritingFields({
   const turns: Array<{ aText: string; hint: string }> = value.turns ?? []
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* AI 命题助手 */}
-      <section className="rounded-xl border border-border/70 bg-muted/25 p-3">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-2">
-              <span className="grid size-7 place-items-center rounded-lg bg-primary text-primary-foreground"><Sparkles className="size-3.5" /></span>
-              <div><p className="text-sm font-semibold">AI 命题助手</p><p className="text-xs text-muted-foreground">{isTranslation ? '描述主题、难度和翻译方向，AI 会生成可逐段审核的原文、参考译文与提示。' : isDialogue ? '描述对话场景和角色关系，AI 生成对话轮次和提示。' : '描述考试场景和能力目标，AI 会生成完整题干与评分要点；生成后仍需人工审题。'}</p></div>
-            </div>
-            <Textarea
-              value={instruction}
-              onChange={(event) => setInstruction(event.target.value)}
-              className="min-h-16 resize-y bg-background"
-              maxLength={2000}
-              placeholder={isTranslation
-                ? '例如：B1 难度，中译英篇章，主题是第一次租房时与房东沟通水电和入住时间。每段给出提示但不要泄露完整译文。'
-                : isDialogue
-                ? '例如：两个学生在食堂讨论周末计划，A 邀请 B 去爬山，B 有事但想改天。'
-                : '例如：B1 学生收到学校社团延期通知，需要给组织者写一封邮件，说明影响、提出两个问题并建议新的时间。'}
-            />
-          </div>
-          <Button type="button" onClick={generateDraft} disabled={generating} size="sm" className="min-w-32">
-            {generating ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <Sparkles className="mr-1.5 size-3.5" />}
-            {generating ? '正在命题' : '生成完整题目'}
-          </Button>
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_25rem]">
+      <div className="min-w-0 space-y-5">
+      {/* 顶部题型配置：高频字段集中在一处，AI 生成按需展开。 */}
+      <Collapsible open={configOpen} onOpenChange={setConfigOpen} className="rounded-xl border border-border/70 bg-muted/[0.16]">
+        <div className="flex items-center justify-between gap-3 p-3.5">
+          <CollapsibleTrigger asChild>
+            <button type="button" className="flex min-w-0 flex-1 items-center gap-2 text-left">
+              <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><FilePenLine className="size-3.5" /></span>
+              <div className="min-w-0"><p className="text-sm font-semibold">文体与规格</p><p className="truncate text-[11px] text-muted-foreground">{configOpen ? '配置题型、情境和写作要点' : '已收起，专心编辑对话轮次'}</p></div>
+              <ChevronDown className={cn('ml-auto size-4 shrink-0 text-muted-foreground transition-transform', configOpen && 'rotate-180')} />
+            </button>
+          </CollapsibleTrigger>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5"><Sparkles className="size-3.5 text-primary" />AI 命题助手</Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-[min(28rem,calc(100vw-2rem))] space-y-3 p-4">
+              <div className="flex items-start gap-2"><span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><Sparkles className="size-3.5" /></span><div><p className="text-sm font-semibold">AI 命题助手</p><p className="mt-0.5 text-xs leading-5 text-muted-foreground">{isTranslation ? '描述主题、难度和翻译方向，AI 会生成可逐段审核的原文、参考译文与提示。' : isDialogue ? '描述对话场景和角色关系，AI 生成对话轮次和提示。' : '描述考试场景和能力目标，AI 会生成完整题干与评分要点；生成后仍需人工审题。'}</p></div></div>
+              <Textarea value={instruction} onChange={(event) => setInstruction(event.target.value)} className="min-h-28 resize-y" maxLength={2000} placeholder={isTranslation ? '例如：B1 难度，中译英篇章，主题是第一次租房时与房东沟通水电和入住时间。每段给出提示但不要泄露完整译文。' : isDialogue ? '例如：两个学生在食堂讨论周末计划，A 邀请 B 去爬山，B 有事但想改天。' : '例如：B1 学生收到学校社团延期通知，需要给组织者写一封邮件，说明影响、提出两个问题并建议新的时间。'} />
+              <Button type="button" onClick={generateDraft} disabled={generating} size="sm" className="w-full">{generating ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <Sparkles className="mr-1.5 size-3.5" />}{generating ? '正在命题' : '生成完整题目'}</Button>
+            </PopoverContent>
+          </Popover>
         </div>
-      </section>
-
-      {/* 文体 + 词数（所有写作类型共用） */}
-      <section className="flex flex-col gap-3">
-        <SectionHeading icon={FilePenLine} step="01" title="文体与规格" description="选择写作类型；不同文体的题目结构不同，切换文体可能会清空已填内容。" />
+        <CollapsibleContent className="border-t border-border/60 px-4 pb-4 pt-3">
         <div className="grid gap-3 md:grid-cols-3">
           <div className="flex flex-col gap-1">
             <Label>文体</Label>
@@ -182,13 +178,13 @@ function WritingFields({
                 onChange({ ...value, ...reset })
               }}
             >
-              <option value="translation">🌐 中英互译 — 原文在上，逐句/段填写译文</option>
-              <option value="dialogue">🗣️ 对话 — 日常社交对话，A说B填</option>
-              <option value="message">💬 消息 — 简短留言、短信、聊天</option>
-              <option value="journal">📓 日记 — 第一人称记录与反思</option>
-              <option value="email">✉️ 邮件/书信 — 有明确收件人</option>
-              <option value="paragraph">📝 段落 — 聚焦一个主题的短段落</option>
-              <option value="essay">📄 议论文 — 正式议论型写作</option>
+              <option value="translation">中英互译</option>
+              <option value="dialogue">对话</option>
+              <option value="message">消息</option>
+              <option value="journal">日记</option>
+              <option value="email">邮件 / 书信</option>
+              <option value="paragraph">段落</option>
+              <option value="essay">议论文</option>
             </Select>
             <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
               {value.genre === 'translation' && '中英互译，支持单句或篇章；学习者在原文下方填写目标语言译文，AI 会逐段反馈。'}
@@ -215,29 +211,21 @@ function WritingFields({
             </div>
           </>}
         </div>
-      </section>
+        {!isTranslation && <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <div className="space-y-1"><Label>情境描述</Label><Textarea value={value.situation ?? value.purpose ?? ''} onChange={(event) => onChange({ ...value, situation: event.target.value })} placeholder={isDialogue ? '例如：你和朋友 A 在咖啡店闲聊，A 问你周末有什么安排' : '例如：你是学生，收到社团活动延期通知，需要给组织者写邮件说明影响并建议新时间'} className="min-h-[5.5rem] resize-y" /></div>
+          <div className="space-y-1"><Label>写作要点（选填）</Label><Textarea value={requirements.join('\n')} onChange={(event) => onChange({ ...value, requirements: lines(event.target.value) })} placeholder={isDialogue ? '用自然的日常口语，不要太正式\n必要时给出具体信息（时间、地点等）' : '说明相关背景\n完成明确的沟通动作\n覆盖指定细节'} className="min-h-[5.5rem] resize-y" /></div>
+        </div>}
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* ====== 对话模式专属 UI ====== */}
       {isTranslation ? (
         <TranslationFields value={value} onChange={onChange} />
       ) : isDialogue ? (
         <>
-          {/* 对话情境 */}
-          <section className="flex flex-col gap-3">
-            <SectionHeading icon={UserRound} step="02" title="对话情境" description="交代对话发生的地点、人物关系和话题背景，帮助学习者理解语境。" />
-            <div className="flex flex-col gap-1">
-              <Label>情境描述</Label>
-              <Input
-                value={value.situation ?? ''}
-                onChange={(event) => onChange({ ...value, situation: event.target.value })}
-                placeholder="例如：你和朋友 A 在咖啡店闲聊，A 问你周末有什么安排"
-              />
-            </div>
-          </section>
-
           {/* 对话轮次 */}
           <section className="flex flex-col gap-3">
-            <SectionHeading icon={Target} step="03" title="对话轮次" description="每轮 A 先说一句话，学习者根据中文提示用英语填写 B 的回应。像 VN 练习一样，提示告诉学习者应该说什么。" />
+            <SectionHeading icon={Target} step="02" title="对话轮次" description="每轮 A 先说一句话，学习者根据中文提示用英语填写 B 的回应。像 VN 练习一样，提示告诉学习者应该说什么。" />
             <div className="flex flex-col gap-3">
               {turns.map((turn, index) => (
                 <div key={index} className="flex items-start gap-3 rounded-lg border border-border/70 bg-muted/20 p-3">
@@ -294,16 +282,6 @@ function WritingFields({
             </div>
           </section>
 
-          {/* 对话写作要点 */}
-          <section className="flex flex-col gap-3">
-            <SectionHeading icon={ClipboardCheck} step="04" title="写作要点（选填）" description="提醒学习者在回复时要注意的要点，如语气、关键表达等。每行一项。" />
-            <Textarea
-              value={requirements.join('\n')}
-              onChange={(event) => onChange({ ...value, requirements: lines(event.target.value) })}
-              placeholder={'用自然的日常口语，不要太正式\n必要时给出具体信息（时间、地点等）\n适当使用学过的词汇或句型'}
-              className="min-h-20"
-            />
-          </section>
         </>
       ) : (
         <>
@@ -321,31 +299,10 @@ function WritingFields({
             />
           </section>
 
-          {/* 写作情境 */}
-          <section className="flex flex-col gap-3">
-            <SectionHeading icon={UserRound} step="03" title="写作情境" description="一句话说清写作场景：谁在什么情况下写给谁、为了什么。" />
-            <Input
-              value={value.situation ?? value.purpose ?? ''}
-              onChange={(event) => onChange({ ...value, situation: event.target.value })}
-              placeholder="例如：你是学生，收到社团活动延期通知，需要给组织者写邮件说明影响并建议新时间"
-            />
-          </section>
-
-          {/* 写作要点 */}
-          <section className="flex flex-col gap-3">
-            <SectionHeading icon={Target} step="04" title="写作要点" description="学习者写作时需要覆盖的关键内容。每行一项，应可直接从作文中判断是否完成。" />
-            <Textarea
-              value={requirements.join('\n')}
-              onChange={(event) => onChange({ ...value, requirements: lines(event.target.value) })}
-              placeholder={'说明相关背景\n完成明确的沟通动作\n覆盖指定细节\n给出合适的结尾或下一步'}
-              className="min-h-24"
-            />
-          </section>
-
           {/* 评分标准（仅正式文体显示） */}
           {isFormal && (
             <section className="flex flex-col gap-3">
-              <SectionHeading icon={ClipboardCheck} step="05" title="评分标准" description="用于 AI 反馈参考，不展示给考生。" />
+              <SectionHeading icon={ClipboardCheck} step="03" title="评分标准" description="用于 AI 反馈参考，不展示给考生。" />
               <Textarea
                 value={(value.rubric ?? ['任务完成', '结构与衔接', '词汇与表达', '语法准确性', '语域与得体性']).join('\n')}
                 onChange={(event) => onChange({ ...value, rubric: lines(event.target.value) })}
@@ -356,56 +313,73 @@ function WritingFields({
         </>
       )}
 
-      {/* 考生视图预览 */}
-      <aside className="overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm">
-        <div className="flex items-center justify-between border-b border-border/60 bg-muted/30 px-4 py-2.5">
-          <div className="flex items-center gap-2"><Eye className="size-4 text-primary" /><p className="text-sm font-semibold">考生视图</p></div>
-          <Badge variant="secondary" className="text-xs">实时预览</Badge>
+      </div>
+
+      <WritingLearnerPhonePreview
+        value={value}
+        context={context}
+        isDialogue={isDialogue}
+        isTranslation={isTranslation}
+        turns={turns}
+      />
+    </div>
+  )
+}
+
+function WritingLearnerPhonePreview({
+  value,
+  context,
+  isDialogue,
+  isTranslation,
+  turns,
+}: {
+  value: Record<string, any>
+  context?: Props['draftContext']
+  isDialogue: boolean
+  isTranslation: boolean
+  turns: Array<{ aText: string; hint: string }>
+}) {
+  return (
+    <aside className="sticky top-4 min-w-0">
+      <div className="mb-3 flex items-center justify-between px-1">
+        <div className="flex items-center gap-2"><Eye className="size-4 text-primary" /><p className="text-sm font-semibold">考生视图</p></div>
+        <Badge variant="secondary" className="text-[10px]">实时预览</Badge>
+      </div>
+
+      <div className="mx-auto w-full max-w-[390px] rounded-[2.7rem] bg-zinc-950 p-2 shadow-[0_18px_45px_-20px_rgba(0,0,0,0.65)] ring-1 ring-black/20 dark:ring-white/15">
+        <div className="relative h-[min(46rem,calc(100vh-9rem))] min-h-[34rem] overflow-hidden rounded-[2.15rem] bg-[#fffefb] dark:bg-background">
+          <div className="absolute left-1/2 top-2 z-10 h-6 w-24 -translate-x-1/2 rounded-full bg-zinc-950" aria-hidden="true" />
+          {isDialogue ? <DialogueMobilePreview value={value} context={context} turns={turns} /> : <div className="flex h-full flex-col pt-10">
+            <div className="border-b border-border/60 px-5 pb-3"><p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Writing practice</p><h3 className="mt-1 text-base font-semibold leading-6">{context?.title || '未命名写作题'}</h3></div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{isTranslation ? <TranslationLearnerPreview value={value} /> : <WritingTaskCard questionMarkdown={value.questionMarkdown} promptEn={context?.promptEn} promptZh={context?.promptZh} genre={value.genre} minWords={value.minWords} maxWords={value.maxWords} durationMinutes={Math.max(1, Math.round((context?.suggestedDurationSec ?? 900) / 60))} onStart={() => undefined} />}</div>
+          </div>}
         </div>
-        <div className="bg-[#fffefb] p-3 dark:bg-background">
-          <div className="mb-3 px-1">
-            <p className="text-xs text-muted-foreground">移动端写作页</p>
-            <h3 className="mt-1 text-base font-semibold leading-6">{context?.title || '未命名写作题'}</h3>
-          </div>
-          {isTranslation ? (
-            <TranslationLearnerPreview value={value} />
-          ) : isDialogue ? (
-            <div className="space-y-3">
-              {value.situation && (
-                <div className="rounded-lg border border-sky-200 bg-sky-50/50 p-2.5 text-sm leading-relaxed dark:border-sky-800 dark:bg-sky-950/30">
-                  📍 {value.situation}
-                </div>
-              )}
-              {turns.slice(0, 3).map((turn, index) => (
-                <div key={index} className="space-y-1.5">
-                  <div className="flex items-start gap-2">
-                    <span className="mt-0.5 shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">A</span>
-                    <p className="text-sm leading-relaxed">{turn.aText || '(A 的台词)'}</p>
-                  </div>
-                  <div className="ml-6 flex items-start gap-2">
-                    <span className="mt-0.5 shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">B</span>
-                    <div className="min-w-[120px] rounded border border-dashed border-muted-foreground/30 bg-muted/30 p-2">
-                      <p className="text-xs text-muted-foreground">{turn.hint || '(提示：学习者根据此提示填写 B 的回复)'}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {turns.length > 3 && <p className="text-center text-xs text-muted-foreground">... 还有 {turns.length - 3} 轮对话 ...</p>}
-            </div>
-          ) : (
-            <WritingTaskCard
-              questionMarkdown={value.questionMarkdown}
-              promptEn={context?.promptEn}
-              promptZh={context?.promptZh}
-              genre={value.genre}
-              minWords={value.minWords}
-              maxWords={value.maxWords}
-              durationMinutes={Math.max(1, Math.round((context?.suggestedDurationSec ?? 900) / 60))}
-              onStart={() => undefined}
-            />
-          )}
+      </div>
+      <p className="mt-3 text-center text-[11px] text-muted-foreground">iPhone 视口 · 内容可在设备内滚动查看</p>
+    </aside>
+  )
+}
+
+/** Mirrors the learner DialogueEditor markup so the admin device shows the real mobile composition. */
+function DialogueMobilePreview({ value, context, turns }: { value: Record<string, any>; context?: Props['draftContext']; turns: Array<{ aText: string; hint: string }> }) {
+  const currentTurn = turns[0]
+  return (
+    <div className="flex h-full flex-col pt-10">
+      <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-4">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><MessageCircle className="size-[18px]" /></span>
+          <div className="min-w-0 flex-1"><div className="mb-1.5 flex items-center gap-2"><Badge variant="secondary">对话写作</Badge><span className="truncate text-xs text-muted-foreground">{context?.difficulty ?? '—'}</span></div><h1 className="break-words text-xl font-bold leading-tight text-foreground">{context?.title || '未命名写作题'}</h1><p className="mt-1.5 truncate text-sm text-muted-foreground">写作练习</p></div>
+          <div className="flex items-center gap-1"><Button type="button" variant="ghost" size="icon" disabled className="size-8"><BookOpen className="size-4" /></Button><button type="button" disabled className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground"><X className="size-4" /></button></div>
         </div>
-      </aside>
+      </header>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col px-5 pb-8 pt-5">
+          {value.situation && <div className="mb-5 rounded-lg bg-sky-50/60 px-3 py-2 text-sm leading-relaxed dark:bg-sky-950/20"><span className="font-medium text-sky-600 dark:text-sky-400">📍 </span>{value.situation}</div>}
+          {currentTurn && <div className="flex-1 py-5"><div className="flex items-start gap-2.5"><span className="mt-1 shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">A</span><div className="max-w-[85%] rounded-2xl rounded-tl-md bg-muted/50 px-4 py-3 text-[15px] leading-relaxed">{currentTurn.aText || 'A 的台词会显示在这里'}</div></div><div className="ml-9 mt-2"><button type="button" disabled className="flex items-center gap-1.5 rounded-full border border-amber-200/60 bg-amber-50/60 px-3 py-1.5 text-xs text-amber-700 dark:border-amber-800/30 dark:bg-amber-950/20 dark:text-amber-400"><Sparkles className="size-3" />查看提示</button></div><div className="ml-9 mt-4"><div className="flex items-start gap-2.5"><span className="mt-1 shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">B</span><div className="min-h-[140px] flex-1 rounded-2xl rounded-tl-md bg-muted/40 p-4 text-[16px] leading-7 text-muted-foreground/45">用英语写下 B 的回复…</div></div></div></div>}
+          {turns.length > 1 && <div className="mt-4 border-t border-border/50 pt-4"><div className="flex items-center justify-center gap-2">{turns.map((_, index) => <span key={index} className={cn('flex size-8 items-center justify-center rounded-full text-xs font-medium', index === 0 ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground')}>{index + 1}</span>)}</div><p className="mt-2 text-center text-xs text-muted-foreground">0/{turns.length} 轮已填写</p></div>}
+        </div>
+      </div>
+      <footer className="shrink-0 rounded-b-[2.15rem] border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-xl"><Button size="lg" disabled className="w-full gap-1.5 rounded-full"><Sparkles className="size-4" />提交反馈</Button></footer>
     </div>
   )
 }
