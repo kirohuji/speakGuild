@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, ListMusic, Loader2, MessageCircle, MessageSquareText, Save, Search, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, ListMusic, Loader2, MessageCircle, MessageSquareText, RotateCcw, Save, Search, Sparkles, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -19,8 +19,10 @@ import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-dra
 import { LearningInsightDialog, type LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
 import { learningContentRepository } from '@/lib/offline'
-import { learningApi, type ChunkItem, type SentencePattern, type TrainingTopicItem, type VocabItem } from '../api/learning-api'
+import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type VocabItem } from '../api/learning-api'
 import { WritingTaskCard } from '../components/writing-task-card'
+import { useTopicSession } from '../hooks/use-topic-session'
+import { Switch } from '@/components/ui/switch'
 
 type WritingPhase = 'prepare' | 'write'
 
@@ -510,47 +512,33 @@ function WritingEditor({
   const config = topic.contentConfig?.writing ?? {}
   const editorPrompt = String(config.questionMarkdown ?? '').trim()
   const [text, setText] = useState('')
-  const [sessionId, setSessionId] = useState<string | null>(null)
-  const [analysisResult, setAnalysisResult] = useState<Record<string, any> | null>(null)
-  const [submitted, setSubmitted] = useState(false)
+  const [view, setView] = useState<'editor' | 'analysis'>('editor')
   const [saving, setSaving] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0
+  const restore = useCallback((response: Record<string, unknown>) => setText(String(response.text ?? '')), [])
+  const session = useTopicSession(topic.id, restore)
+  const response = useMemo(() => ({ text }), [text])
 
   useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      try {
-        const latest = await learningApi.getLatestTopicSession(topic.id)
-        if (cancelled) return
-        if (latest?.status === 'active') {
-          setSessionId(latest.id)
-          if (latest.submissions?.[0]?.response?.text) setText(latest.submissions[0].response.text)
-        } else if (latest?.status === 'analyzed') {
-          setAnalysisResult(latest.analysisResult ?? null)
-          const created = await learningApi.startTopicSession(topic.id)
-          if (!cancelled) setSessionId(created.id)
-        } else {
-          const created = await learningApi.startTopicSession(topic.id)
-          if (!cancelled) setSessionId(created.id)
-        }
-      } catch { /* 离线 */ }
-    })()
-    return () => { cancelled = true }
-  }, [topic.id])
+    if (session.readOnly) setView('analysis')
+  }, [session.readOnly])
+
+  useEffect(() => {
+    if (!session.sessionId || session.readOnly) return
+    const timer = window.setTimeout(() => { void session.saveDraft(response) }, 600)
+    return () => window.clearTimeout(timer)
+  }, [response, session])
 
   const save = async (submit = false) => {
     setSaving(true)
     try {
-      if (submit && sessionId) {
-        await learningApi.saveTopicSubmission(topic.id, { response: { text }, status: 'submitted' })
-        await learningApi.completeTopicSession(topic.id, sessionId)
-        const result = await learningApi.analyzeTopicSession(topic.id, sessionId)
-        setAnalysisResult(result.analysis ?? null)
-        setSubmitted(true)
+      if (submit) {
+        await session.submit(response)
+        setView('analysis')
         toast.success(t('learning.aiEvaluationDone'))
       } else {
-        // 仅保存草稿到本地
+        await session.saveDraft(response)
         toast.success(t('learning.draftSaved'))
       }
     } catch (error: any) { toast.error(error?.message || t('learning.saveFailed')) } finally { setSaving(false) }
@@ -565,17 +553,18 @@ function WritingEditor({
       data-keyboard-overlay="writing"
       className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pt-safe"
     >
-      <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-4 sm:px-6 sm:pt-6">
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><FilePenLine className="size-[18px]" /></span>
+      <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
+        <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-3">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><FilePenLine className="size-4" /></span>
           <div className="min-w-0 flex-1">
-            <div className="mb-1.5 flex items-center gap-2">
-              <Badge variant="secondary">{t('learning.writingPractice')}</Badge>
-              <span className="truncate text-xs text-muted-foreground">{topic.difficulty}</span>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{t('learning.writingPractice')}</Badge>
+              <span className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span>
             </div>
-            <h1 className="break-words text-xl font-bold leading-tight text-foreground">{topic.title}</h1>
-            <p className="mt-1.5 truncate text-sm text-muted-foreground">{unitTitle}</p>
+            <h1 className="truncate text-base font-bold leading-snug text-foreground">{topic.title}</h1>
+            <p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p>
           </div>
+          {session.readOnly && <WritingReviewControls view={view} onViewChange={setView} onRetry={() => void session.startNewAttempt().then(() => { setText(''); setView('editor') })} />}
           <button
             type="button"
             onClick={onClose}
@@ -587,7 +576,9 @@ function WritingEditor({
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-writing-scroll-region>
+      {session.readOnly && view === 'analysis' ? (
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto max-w-2xl px-4 py-5 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]"><WritingAnalysisPanel analysis={session.analysis} /></div></main>
+      ) : <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-writing-scroll-region>
         <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-5 pb-8 pt-5 sm:px-8 sm:pt-7">
           <section className="shrink-0 border-b border-border/50 pb-5">
             <div className="flex items-start justify-between gap-4">
@@ -605,6 +596,7 @@ function WritingEditor({
             <textarea
               value={text}
               onChange={(event) => setText(event.target.value)}
+              readOnly={session.readOnly}
               onFocus={focusEditor}
               className="m-0 min-h-[52dvh] w-full flex-1 resize-none appearance-none rounded-none border-0 bg-transparent p-0 text-[17px] leading-8 text-foreground shadow-none outline-none ring-0 placeholder:text-muted-foreground/45 focus:border-0 focus:outline-none focus:ring-0"
               placeholder="开始写作…"
@@ -612,10 +604,9 @@ function WritingEditor({
               autoCorrect="on"
               spellCheck
             />
-            {analysisResult && <div className="mt-6"><WritingAnalysisPanel analysis={analysisResult} /></div>}
           </div>
         </div>
-      </div>
+      </div>}
 
       <footer className="shrink-0 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-xl pb-safe" data-writing-footer>
         <div className="mx-auto flex max-w-3xl items-center gap-3">
@@ -625,10 +616,10 @@ function WritingEditor({
               {wordCount} 词{config.minWords ? ` · 目标 ${config.minWords}–${config.maxWords ?? '∞'}` : ''}
             </p>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => save(false)} disabled={saving || !text.trim()} className="shrink-0 gap-1.5">
+          <Button variant="ghost" size="sm" onClick={() => save(false)} disabled={saving || session.readOnly || !text.trim() || !session.ready} className="shrink-0 gap-1.5">
             <Save className="size-4" />保存
           </Button>
-          <Button size="sm" onClick={() => save(true)} disabled={saving || !text.trim()} className="shrink-0 gap-1.5 rounded-full px-4">
+          <Button size="sm" onClick={() => save(true)} disabled={saving || session.readOnly || !text.trim() || !session.sessionId} className="shrink-0 gap-1.5 rounded-full px-4">
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}提交反馈
           </Button>
         </div>
@@ -667,54 +658,33 @@ function TranslationEditor({
   const [hintOpen, setHintOpen] = useState(false)
   const [listOpen, setListOpen] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [sessionId, setSessionId] = useState<string | null>(null)
-  const [analysisResult, setAnalysisResult] = useState<Record<string, any> | null>(null)
+  const [view, setView] = useState<'editor' | 'analysis'>('editor')
+  const restore = useCallback((saved: Record<string, unknown>) => {
+    const values = saved.answers
+    if (Array.isArray(values)) setAnswers(Object.fromEntries(values.map((item: any) => [String(item.segmentId), String(item.text ?? '')])))
+  }, [])
+  const session = useTopicSession(topic.id, restore)
 
-  useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      try {
-        const latest = await learningApi.getLatestTopicSession(topic.id)
-        if (cancelled) return
-        if (latest?.status === 'active') {
-          setSessionId(latest.id)
-          const saved = latest.submissions?.[0]?.response?.answers
-          if (Array.isArray(saved)) setAnswers(Object.fromEntries(saved.map((item: any) => [String(item.segmentId), String(item.text ?? '')])))
-        } else if (latest?.status === 'analyzed') {
-          setAnalysisResult(latest.analysisResult ?? null)
-          const created = await learningApi.startTopicSession(topic.id)
-          if (!cancelled) setSessionId(created.id)
-        } else {
-          const created = await learningApi.startTopicSession(topic.id)
-          if (!cancelled) setSessionId(created.id)
-        }
-      } catch { /* keep the editor usable while offline */ }
-    })()
-    return () => { cancelled = true }
-  }, [topic.id])
+  useEffect(() => { if (session.readOnly) setView('analysis') }, [session.readOnly])
 
   const answeredCount = segments.filter((segment) => (answers[segment.id] ?? '').trim()).length
   const active = segments[activeIndex]
+  const response = useMemo(() => ({ direction, scope, answers: segments.map((segment) => ({ segmentId: segment.id, text: answers[segment.id] ?? '' })) }), [answers, direction, scope, segments])
+  useEffect(() => {
+    if (!session.sessionId || session.readOnly || !answeredCount) return
+    const timer = window.setTimeout(() => { void session.saveDraft(response) }, 600)
+    return () => window.clearTimeout(timer)
+  }, [answeredCount, response, session])
   const save = async (submit = false) => {
-    const response = {
-      direction,
-      scope,
-      answers: segments.map((segment) => ({ segmentId: segment.id, text: answers[segment.id] ?? '' })),
-    }
     if (!submit && !answeredCount) return
     setSaving(true)
     try {
       if (!submit) {
-        if (!sessionId) throw new Error('练习会话尚未准备好，请稍后重试')
-        await learningApi.saveTopicSubmission(topic.id, { response, status: 'draft', sessionId })
+        await session.saveDraft(response)
         toast.success(t('learning.draftSaved'))
         return
       }
-      if (!sessionId) throw new Error('练习会话尚未准备好，请稍后重试')
-      await learningApi.saveTopicSubmission(topic.id, { response, status: 'submitted', sessionId })
-      await learningApi.completeTopicSession(topic.id, sessionId)
-      const result = await learningApi.analyzeTopicSession(topic.id, sessionId)
-      setAnalysisResult(result.analysis ?? null)
+      await session.submit(response)
       toast.success(t('learning.aiEvaluationDone'))
     } catch (error: any) {
       toast.error(error?.message || t('learning.saveFailed'))
@@ -738,12 +708,12 @@ function TranslationEditor({
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Languages className="size-4" /></span>
           <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{direction === 'zh_to_en' ? '中译英' : '英译中'}</Badge><span className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span></div><h1 className="truncate text-base font-bold leading-snug text-foreground">{config.sourceTitle || topic.title}</h1><p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p></div>
-          <div className="flex items-center gap-1"><Button type="button" variant="ghost" size="icon-sm" onClick={onOpenGuide} title={t('learning.viewGuide')}><BookOpen className="size-4" /></Button><button type="button" onClick={onClose} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground" aria-label="退出翻译"><X className="size-3.5" /></button></div>
+          <div className="flex items-center gap-1">{session.readOnly && <WritingReviewControls view={view} onViewChange={setView} onRetry={() => void session.startNewAttempt().then(() => { setAnswers({}); setActiveIndex(0); setView('editor') })} />}<Button type="button" variant="ghost" size="icon-sm" onClick={onOpenGuide} title={t('learning.viewGuide')}><BookOpen className="size-4" /></Button><button type="button" onClick={onClose} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground" aria-label="退出翻译"><X className="size-3.5" /></button></div>
         </div>
       </header>
 
-      {analysisResult ? (
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto max-w-3xl px-4 py-5 pb-safe"><WritingAnalysisPanel analysis={analysisResult} /><Button variant="outline" className="mt-5 w-full" onClick={onClose}>返回学习包</Button></div></main>
+      {session.readOnly && view === 'analysis' ? (
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto max-w-3xl px-4 py-5 pb-safe"><WritingAnalysisPanel analysis={session.analysis} /></div></main>
       ) : (
         <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(15rem,40dvh)]" data-writing-scroll-region>
           <section className="min-h-0 overflow-y-auto overscroll-contain" aria-label={sourceLanguage}>
@@ -758,11 +728,11 @@ function TranslationEditor({
               <Button variant="outline" size="sm" className="h-8 px-2.5" disabled={activeIndex === 0} onClick={() => selectSegment(activeIndex - 1)}><ChevronLeft className="size-4" />上一{scope === 'article' ? '段' : '句'}</Button>
               <span className="min-w-0 flex-1 truncate text-center text-xs tabular-nums text-muted-foreground">{answeredCount}/{segments.length} 已完成</span>
               <div className="flex shrink-0 items-center gap-1.5">
-                {activeIndex < segments.length - 1 ? <Button variant="outline" size="sm" className="h-8 px-2.5" onClick={() => selectSegment(activeIndex + 1)}>下一{scope === 'article' ? '段' : '句'}<ChevronRight className="size-4" /></Button> : <Button size="sm" className="h-8 px-3" onClick={() => save(true)} disabled={saving || !sessionId || answeredCount !== segments.length || !segments.length}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}提交</Button>}
+                {activeIndex < segments.length - 1 ? <Button variant="outline" size="sm" className="h-8 px-2.5" onClick={() => selectSegment(activeIndex + 1)}>下一{scope === 'article' ? '段' : '句'}<ChevronRight className="size-4" /></Button> : <Button size="sm" className="h-8 px-3" onClick={() => save(true)} disabled={saving || !session.sessionId || answeredCount !== segments.length || !segments.length}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}提交</Button>}
                 <Button variant="ghost" size="icon" className="size-8" onClick={() => setListOpen(true)} title="段落列表"><ListMusic className="size-4" /></Button>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto w-full max-w-3xl px-5 py-4 sm:px-8"><div className="mb-3 flex items-center justify-between gap-3"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{answerLanguage}</p>{active?.hint && <Button type="button" size="sm" variant="ghost" onClick={() => setHintOpen((current) => !current)} className="shrink-0 gap-1.5 px-2 text-primary"><Sparkles className="size-3.5" />提示</Button>}</div>{hintOpen && active?.hint && <div className="mb-3 rounded-lg bg-muted/60 px-3 py-2.5 text-sm leading-6 text-muted-foreground">{active.hint}</div>}<textarea value={active ? answers[active.id] ?? '' : ''} onChange={(event) => active && setAnswers((current) => ({ ...current, [active.id]: event.target.value }))} className="min-h-[132px] w-full resize-y bg-transparent p-0 text-[16px] leading-8 text-foreground outline-none placeholder:text-muted-foreground/45 focus:ring-0" placeholder={direction === 'zh_to_en' ? 'Write your English translation here…' : '在这里写下中文译文…'} autoCapitalize="sentences" autoCorrect="on" spellCheck={direction === 'zh_to_en'} /></div></div>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto w-full max-w-3xl px-5 py-4 sm:px-8"><div className="mb-3 flex items-center justify-between gap-3"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{answerLanguage}</p>{active?.hint && <Button type="button" size="sm" variant="ghost" onClick={() => setHintOpen((current) => !current)} className="shrink-0 gap-1.5 px-2 text-primary"><Sparkles className="size-3.5" />提示</Button>}</div>{hintOpen && active?.hint && <div className="mb-3 rounded-lg bg-muted/60 px-3 py-2.5 text-sm leading-6 text-muted-foreground">{active.hint}</div>}<textarea value={active ? answers[active.id] ?? '' : ''} onChange={(event) => active && setAnswers((current) => ({ ...current, [active.id]: event.target.value }))} readOnly={session.readOnly} className="min-h-[132px] w-full resize-y bg-transparent p-0 text-[16px] leading-8 text-foreground outline-none placeholder:text-muted-foreground/45 focus:ring-0" placeholder={direction === 'zh_to_en' ? 'Write your English translation here…' : '在这里写下中文译文…'} autoCapitalize="sentences" autoCorrect="on" spellCheck={direction === 'zh_to_en'} /></div></div>
           </section>
         </main>
       )}
@@ -795,9 +765,16 @@ function DialogueEditor({
   const [responses, setResponses] = useState<Record<number, string>>({})
   const [showHint, setShowHint] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [sessionId, setSessionId] = useState<string | null>(null)
-  const [analysisResult, setAnalysisResult] = useState<Record<string, any> | null>(null)
-  const [submitted, setSubmitted] = useState(false)
+  const [view, setView] = useState<'editor' | 'analysis'>('editor')
+  const restore = useCallback((saved: Record<string, unknown>) => {
+    const savedTurns = saved.turns
+    if (!Array.isArray(savedTurns)) return
+    const next: Record<number, string> = {}
+    savedTurns.forEach((turn: any, index: number) => { if (turn?.userResponse) next[index] = String(turn.userResponse) })
+    setResponses(next)
+  }, [])
+  const session = useTopicSession(topic.id, restore)
+  useEffect(() => { if (session.readOnly) setView('analysis') }, [session.readOnly])
 
   // B 输入框聚焦时滚到可视区：底部对齐到键盘上方（而非居中，
   // 因为软键盘在部分浏览器不压缩布局，居中的输入框会落在键盘后面）
@@ -820,54 +797,26 @@ function DialogueEditor({
     }, 300)
   }
 
-  useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      try {
-        const latest = await learningApi.getLatestTopicSession(topic.id)
-        if (cancelled) return
-        if (latest?.status === 'active') {
-          setSessionId(latest.id)
-          if (latest.submissions?.[0]?.response?.turns) {
-            const prevTurns = latest.submissions[0].response.turns as any[]
-            const init: Record<number, string> = {}
-            prevTurns.forEach((t: any, i: number) => { if (t?.userResponse) init[i] = t.userResponse })
-            setResponses(init)
-          }
-        } else if (latest?.status === 'analyzed') {
-          setAnalysisResult(latest.analysisResult ?? null)
-          const created = await learningApi.startTopicSession(topic.id)
-          if (!cancelled) setSessionId(created.id)
-        } else {
-          const created = await learningApi.startTopicSession(topic.id)
-          if (!cancelled) setSessionId(created.id)
-        }
-      } catch { /* 离线 */ }
-    })()
-    return () => { cancelled = true }
-  }, [topic.id])
-
   const currentTurn = turns[currentIndex]
   const currentResponse = responses[currentIndex] ?? ''
   const answeredCount = turns.filter((_, i) => (responses[i] ?? '').trim()).length
   const allAnswered = answeredCount === turns.length
+  const responseTurns = useMemo(() => turns.map((turn, index) => ({ aText: turn.aText, hint: turn.hint, userResponse: responses[index] ?? '' })), [responses, turns])
+  const response = useMemo(() => ({ turns: responseTurns }), [responseTurns])
+  useEffect(() => {
+    if (!session.sessionId || session.readOnly || !answeredCount) return
+    const timer = window.setTimeout(() => { void session.saveDraft(response) }, 600)
+    return () => window.clearTimeout(timer)
+  }, [answeredCount, response, session])
 
   const save = async (submit = false) => {
     setSaving(true)
     try {
-      const responseTurns = turns.map((turn, i) => ({
-        aText: turn.aText,
-        hint: turn.hint,
-        userResponse: responses[i] ?? '',
-      }))
-      if (submit && sessionId) {
-        await learningApi.saveTopicSubmission(topic.id, { response: { turns: responseTurns }, status: 'submitted' })
-        await learningApi.completeTopicSession(topic.id, sessionId)
-        const result = await learningApi.analyzeTopicSession(topic.id, sessionId)
-        setAnalysisResult(result.analysis ?? null)
-        setSubmitted(true)
+      if (submit) {
+        await session.submit(response)
         toast.success(t('learning.aiEvaluationDone'))
       } else {
+        await session.saveDraft(response)
         toast.success(t('learning.draftSaved'))
       }
     } catch (error: any) { toast.error(error?.message || t('learning.saveFailed')) } finally { setSaving(false) }
@@ -886,20 +835,21 @@ function DialogueEditor({
       className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pt-safe"
     >
       {/* Header — unified with WritingEditor style */}
-      <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-4 sm:px-6 sm:pt-6">
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <MessageCircle className="size-[18px]" />
+      <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
+        <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-3">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <MessageCircle className="size-4" />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="mb-1.5 flex items-center gap-2">
-              <Badge variant="secondary">{t('learning.conversationWriting')}</Badge>
-              <span className="truncate text-xs text-muted-foreground">{topic.difficulty}</span>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{t('learning.conversationWriting')}</Badge>
+              <span className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span>
             </div>
-            <h1 className="break-words text-xl font-bold leading-tight text-foreground">{topic.title}</h1>
-            <p className="mt-1.5 truncate text-sm text-muted-foreground">{unitTitle}</p>
+            <h1 className="truncate text-base font-bold leading-snug text-foreground">{topic.title}</h1>
+            <p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p>
           </div>
           <div className="flex items-center gap-1">
+            {session.readOnly && <WritingReviewControls view={view} onViewChange={setView} onRetry={() => void session.startNewAttempt().then(() => { setResponses({}); setCurrentIndex(0); setView('editor') })} />}
             <Button type="button" variant="ghost" size="icon" className="size-8" onClick={onOpenGuide} title={t('learning.viewGuide')}>
               <BookOpen className="size-4" />
             </Button>
@@ -915,8 +865,12 @@ function DialogueEditor({
         </div>
       </header>
 
-      {/* Scrollable content */}
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-writing-scroll-region>
+      {/* Switch 的两侧都是完整页面；评估不再堆在对话作答的底部。 */}
+      {session.readOnly && view === 'analysis' ? (
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div className="mx-auto max-w-2xl px-4 py-5 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]"><WritingAnalysisPanel analysis={session.analysis} /></div>
+        </main>
+      ) : <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-writing-scroll-region>
         <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col px-5 pb-8 pt-5 sm:px-8 sm:pt-7">
           {/* Situation banner */}
           {config.situation && (
@@ -972,6 +926,7 @@ function DialogueEditor({
                     <textarea
                       value={currentResponse}
                       onChange={(event) => setResponses({ ...responses, [currentIndex]: event.target.value })}
+                      readOnly={session.readOnly}
                       onFocus={focusInput}
                       className="min-h-[140px] w-full resize-none rounded-2xl rounded-tl-md border-0 bg-muted/40 p-4 text-[16px] leading-7 text-foreground outline-none ring-0 placeholder:text-muted-foreground/45 focus:bg-background focus:ring-2 focus:ring-primary/20"
                       placeholder="用英语写下 B 的回复…"
@@ -1020,21 +975,21 @@ function DialogueEditor({
             </div>
           )}
 
-          {/* AI feedback */}
-          {submitted && analysisResult && (
-            <div className="mt-6">
-              <WritingAnalysisPanel analysis={analysisResult} />
-            </div>
-          )}
         </div>
-      </div>
+      </div>}
 
       {/* Footer — submit feedback only */}
       <footer className="shrink-0 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-xl pb-safe" data-writing-footer>
         <div className="mx-auto flex max-w-2xl items-center gap-3">
-          <Button size="lg" onClick={() => save(true)} disabled={saving || !allAnswered} className="w-full gap-1.5 rounded-full">
-            {saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}提交反馈
-          </Button>
+          {session.readOnly ? (
+            <Button size="lg" onClick={() => void session.startNewAttempt().then(() => { setResponses({}); setCurrentIndex(0); setView('editor') })} className="w-full gap-1.5 rounded-full">
+              <RotateCcw className="size-4" />重新练习
+            </Button>
+          ) : (
+            <Button size="lg" onClick={() => save(true)} disabled={saving || !allAnswered || !session.sessionId} className="w-full gap-1.5 rounded-full">
+              {saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}提交反馈
+            </Button>
+          )}
         </div>
       </footer>
     </div>
@@ -1052,20 +1007,26 @@ function WritingGuide({ open, onOpenChange, topic }: { open: boolean; onOpenChan
   )
 }
 
+function WritingReviewControls({ view, onViewChange, onRetry }: { view: 'editor' | 'analysis'; onViewChange: (view: 'editor' | 'analysis') => void; onRetry: () => void }) {
+  return <div className="flex shrink-0 items-center gap-1.5"><Sparkles className={cn('size-3.5 transition-colors', view === 'analysis' ? 'text-primary' : 'text-muted-foreground')} /><Switch checked={view === 'analysis'} onCheckedChange={(checked) => onViewChange(checked ? 'analysis' : 'editor')} aria-label="切换 AI 评估" title={view === 'analysis' ? '查看作答' : '查看 AI 评估'} /><button type="button" onClick={onRetry} title="重新练习" className="flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="重新练习"><RotateCcw className="size-3.5" /></button></div>
+}
+
 function WritingAnalysisPanel({ analysis }: { analysis: Record<string, any> | null }) {
   if (!analysis) return null
   const score = analysis.overallScore ?? 0
   const strengths = (analysis.strengths ?? []) as string[]
   const improvements = (analysis.improvements ?? []) as string[]
   const segmentFeedback = (analysis.segmentFeedback ?? []) as Array<{ segmentId?: string; score?: number; comment?: string; suggestion?: string; acceptableExpression?: string }>
+  const scoreTone = score >= 80 ? 'text-emerald-600 dark:text-emerald-400' : score >= 60 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'
   return (
-    <div className="rounded-2xl border border-primary/10 bg-primary/[0.04] p-4">
-      <div className="mb-3 flex items-center gap-2"><Sparkles className="size-4 text-primary" /><p className="text-sm font-semibold">AI 写作评估</p>{score > 0 && <Badge className="ml-auto">{score}</Badge>}</div>
-      {analysis.summary && <p className="text-sm leading-6 text-muted-foreground">{analysis.summary}</p>}
-      {segmentFeedback.length > 0 && <div className="mt-4 space-y-2">{segmentFeedback.map((item, index) => <div key={item.segmentId ?? index} className="rounded-xl bg-background/70 p-3"><div className="flex items-center gap-2"><span className="text-xs font-semibold text-foreground">第 {index + 1} 段</span>{typeof item.score === 'number' && <Badge variant="secondary" className="text-[10px]">{item.score}</Badge>}</div>{item.comment && <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{item.comment}</p>}{item.suggestion && <p className="mt-1 text-xs leading-5 text-amber-700 dark:text-amber-400">建议：{item.suggestion}</p>}{item.acceptableExpression && <p className="mt-1 text-xs leading-5 text-primary">可参考：{item.acceptableExpression}</p>}</div>)}</div>}
-      {strengths.length > 0 && <ul className="mt-3 space-y-1 text-sm">{strengths.map((item: string) => <li key={item} className="flex gap-2"><CheckCircle2 className="mt-1 size-3.5 shrink-0 text-emerald-600" />{item}</li>)}</ul>}
-      {improvements.length > 0 && <ul className="mt-3 space-y-1 text-sm text-amber-700 dark:text-amber-400">{improvements.map((item: string) => <li key={item}>→ {item}</li>)}</ul>}
-      {analysis.nextStepSuggestion && <p className="mt-3 rounded-lg bg-background/70 px-3 py-2 text-sm font-medium">下一步：{analysis.nextStepSuggestion}</p>}
+    <div className="mx-auto w-full max-w-2xl space-y-4 pb-4">
+      <section className="flex items-center gap-4 rounded-xl bg-muted/30 p-5">
+        <div className={cn('flex size-[72px] shrink-0 flex-col items-center justify-center rounded-xl bg-background/70', scoreTone)}><span className="text-3xl font-bold leading-none tabular-nums">{score}</span><span className="mt-1 text-[10px] font-medium">总分</span></div>
+        <div className="min-w-0">{analysis.summary ? <p className="whitespace-pre-wrap break-words text-sm leading-6 text-foreground">{analysis.summary}</p> : <p className="text-sm text-muted-foreground">已完成本次写作评估。</p>}</div>
+      </section>
+      {segmentFeedback.length > 0 && <section className="rounded-xl bg-muted/30 p-4"><h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><Sparkles className="size-4 text-primary" />逐段反馈</h3><div className="space-y-3">{segmentFeedback.map((item, index) => <div key={item.segmentId ?? index} className="rounded-lg bg-background/60 p-3"><div className="flex items-center gap-2"><span className="text-xs font-semibold">第 {index + 1} 段</span>{typeof item.score === 'number' && <span className="ml-auto text-xs font-semibold text-primary">{item.score} 分</span>}</div>{item.comment && <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">{item.comment}</p>}{item.suggestion && <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-amber-700 dark:text-amber-400">建议：{item.suggestion}</p>}{item.acceptableExpression && <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-primary">可参考：{item.acceptableExpression}</p>}</div>)}</div></section>}
+      {(strengths.length > 0 || improvements.length > 0) && <section className="rounded-xl bg-muted/30 p-4">{strengths.length > 0 && <div className={improvements.length > 0 ? 'mb-4' : ''}><h3 className="mb-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">做得好的地方</h3><ul className="space-y-2">{strengths.map((item) => <li key={item} className="flex gap-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground"><CheckCircle2 className="mt-1 size-3.5 shrink-0 text-emerald-600" />{item}</li>)}</ul></div>}{improvements.length > 0 && <div><h3 className="mb-2 text-sm font-semibold text-amber-700 dark:text-amber-400">可以改进</h3><ul className="space-y-2">{improvements.map((item) => <li key={item} className="whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">→ {item}</li>)}</ul></div>}</section>}
+      {analysis.nextStepSuggestion && <section className="rounded-xl bg-primary/[0.04] p-4"><h3 className="mb-1 text-sm font-semibold text-primary">下一步建议</h3><p className="text-sm leading-6 text-muted-foreground">{analysis.nextStepSuggestion}</p></section>}
     </div>
   )
 }

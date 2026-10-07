@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom'
 import { parseISO, startOfDay } from 'date-fns'
 import {
   ClipboardList, ShoppingBag, Eye, Settings, CircleCheck, CircleDashed,
-  CheckCircle2, XCircle, ChevronDown, ChevronLeft, ChevronRight,
+  CheckCircle2, XCircle, ChevronDown, ChevronLeft, ChevronRight, Filter,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
 import { type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
 import { type PracticeSession, type TopicDetail, warmupRecordApi, type WarmupRecord } from '@/features/practice/api/english-practice-api'
@@ -35,6 +36,7 @@ import { MyLearningView } from '../components/my-learning-view'
 import { ShopView } from '../components/shop-view'
 import { LearningPackDownloadDrawer, LearningPackDownloadStatusButton } from '@/layout/learning-pack-download-monitor'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { learningApi, type TopicSession } from '../api/learning-api'
 
 export function LearningPlanPage() {
   const { t } = useTranslation()
@@ -545,12 +547,13 @@ function PracticeRecordsContent() {
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [selectedRecord, setSelectedRecord] = useState<PracticeRecord | null>(null)
+  const [recordTypes, setRecordTypes] = useState<Array<'dialogue' | 'reading' | 'writing'>>(['dialogue', 'reading', 'writing'])
   const pageSize = 15
 
   useEffect(() => {
     let cancelled = false
     setIsLoading(true)
-    practiceRepository.listPracticeRecords({ page, pageSize })
+    practiceRepository.refreshPracticeRecords({ page: 1, pageSize: 100 })
       .then((next) => {
         if (!cancelled) setData(next)
       })
@@ -562,7 +565,15 @@ function PracticeRecordsContent() {
       })
 
     return () => { cancelled = true }
-  }, [page])
+  }, [])
+
+  const visibleRecords = useMemo(() => (data?.list ?? []).filter((record) => recordTypes.includes(record.recordType ?? 'dialogue')), [data?.list, recordTypes])
+  const pagedRecords = useMemo(() => visibleRecords.slice((page - 1) * pageSize, page * pageSize), [page, visibleRecords])
+  const toggleRecordType = (type: 'dialogue' | 'reading' | 'writing') => {
+    setPage(1)
+    setRecordTypes((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type])
+  }
+  const isFiltered = recordTypes.length < 3
 
   const columns: ColumnConfig<PracticeRecord>[] = [
     {
@@ -571,7 +582,7 @@ function PracticeRecordsContent() {
       cell: (v, row) => (
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
-            <span className="text-sm font-medium">{v}</span>
+            <div className="flex items-center gap-1.5"><span className="text-sm font-medium">{v}</span><Badge variant="outline" className="h-5 px-1.5 text-[10px]">{row.recordType === 'reading' ? '阅读' : row.recordType === 'writing' ? '写作' : '对话'}</Badge></div>
             {row.questionText && (
               <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{row.questionText}</p>
             )}
@@ -615,13 +626,33 @@ function PracticeRecordsContent() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
-      <p className="shrink-0 rounded-lg bg-muted/35 px-3 py-1.5 text-xs leading-5 text-muted-foreground">
-        {t('profile.reviewIncompleteHint')}
-      </p>
+      <div className="flex shrink-0 items-center gap-2">
+        <p className="min-w-0 flex-1 rounded-lg bg-muted/35 px-3 py-1.5 text-xs leading-5 text-muted-foreground">{t('profile.reviewIncompleteHint')}</p>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn('h-8 shrink-0 rounded-full border-border/70 bg-card px-2.5 text-xs shadow-none', isFiltered && 'border-primary/25 bg-primary/[0.07] text-primary hover:bg-primary/[0.1]')} aria-label="筛选练习记录">
+              <Filter className="size-3.5" />
+              <span>{isFiltered ? `${recordTypes.length}/3` : '筛选'}</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" sideOffset={8} className="w-52 overflow-hidden rounded-2xl border-border/70 bg-card p-1.5 shadow-xl">
+            <div className="flex items-center justify-between px-2.5 pb-1.5 pt-1">
+              <p className="text-xs font-semibold tracking-wide text-foreground">显示的练习类型</p>
+              {isFiltered && <button type="button" onClick={() => setRecordTypes(['dialogue', 'reading', 'writing'])} className="text-[11px] font-medium text-primary transition-opacity hover:opacity-70">全部显示</button>}
+            </div>
+            <div className="space-y-0.5">
+              {([['dialogue', '对话练习'], ['reading', '阅读练习'], ['writing', '写作练习']] as const).map(([type, label]) => {
+                const selected = recordTypes.includes(type)
+                return <button key={type} type="button" role="checkbox" aria-checked={selected} onClick={() => toggleRecordType(type)} className={cn('flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm transition-colors', selected ? 'bg-primary/[0.08] text-foreground' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground')}><span className={cn('flex size-4 shrink-0 items-center justify-center rounded-[5px] border transition-colors', selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background')}>{selected && <CheckCircle2 className="size-3" />}</span><span className="flex-1">{label}</span>{selected && <span className="text-[10px] font-medium text-primary">已显示</span>}</button>
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
       <ConfigDataTable
-        data={data?.list || []}
+        data={pagedRecords}
         columns={columns}
-        total={data?.total || 0}
+        total={visibleRecords.length}
         page={page}
         pageSize={pageSize}
         onPageChange={setPage}
@@ -632,10 +663,68 @@ function PracticeRecordsContent() {
       />
       <PracticeRecordReadonlyReviewDrawer
         record={selectedRecord}
-        open={Boolean(selectedRecord)}
+        open={Boolean(selectedRecord && (selectedRecord.recordType ?? 'dialogue') === 'dialogue')}
+        onOpenChange={(open) => { if (!open) setSelectedRecord(null) }}
+      />
+      <TopicSessionReadonlyReviewDrawer
+        record={selectedRecord && (selectedRecord.recordType === 'reading' || selectedRecord.recordType === 'writing') ? selectedRecord : null}
+        open={Boolean(selectedRecord && (selectedRecord.recordType === 'reading' || selectedRecord.recordType === 'writing'))}
         onOpenChange={(open) => { if (!open) setSelectedRecord(null) }}
       />
     </div>
+  )
+}
+
+function TopicSessionReadonlyReviewDrawer({
+  record,
+  open,
+  onOpenChange,
+}: {
+  record: PracticeRecord | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const [session, setSession] = useState<TopicSession | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!open || !record?.sessionId) return
+    let cancelled = false
+    setLoading(true)
+    setSession(null)
+    void learningApi.listTopicSessions(record.topicId)
+      .then((sessions) => {
+        if (!cancelled) setSession(sessions.find((item) => item.id === record.sessionId) ?? null)
+      })
+      .catch(() => { if (!cancelled) setSession(null) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [open, record?.sessionId, record?.topicId])
+
+  const response = session?.submissions?.[0]?.response ?? {}
+  const answers = Array.isArray(response.answers) ? response.answers : null
+  const turns = Array.isArray(response.turns) ? response.turns : null
+
+  return (
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="flex h-[95dvh] max-h-[95dvh] flex-col rounded-t-[28px] border-border/70 bg-background drawer-surface">
+        <DrawerHeader className="shrink-0 border-b border-border/50 px-4 pb-3 pt-3 text-left">
+          <DrawerTitle className="text-base font-semibold">{record?.recordType === 'reading' ? '阅读练习回看' : '写作练习回看'}</DrawerTitle>
+          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{record?.questionText}</p>
+        </DrawerHeader>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+          {loading ? <MobilePageLoading rows={4} minHeightClassName="min-h-64" /> : !session ? (
+            <p className="py-12 text-center text-sm text-muted-foreground">无法加载这次练习记录。</p>
+          ) : <div className="mx-auto max-w-2xl space-y-5">
+            <section className="rounded-xl bg-muted/35 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">你的作答</p>
+              {typeof response.text === 'string' ? <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-foreground">{response.text}</p> : answers ? <div className="mt-3 space-y-3">{answers.map((item: any, index: number) => <div key={item.segmentId ?? index} className="rounded-lg bg-background p-3"><p className="text-xs font-medium text-muted-foreground">第 {index + 1} 题</p><p className="mt-1 whitespace-pre-wrap text-sm leading-6">{String(item.text ?? '') || '未作答'}</p></div>)}</div> : turns ? <div className="mt-3 space-y-3">{turns.map((item: any, index: number) => <div key={index} className="rounded-lg bg-background p-3"><p className="text-xs text-muted-foreground">A：{item.aText}</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6">B：{item.userResponse || '未作答'}</p></div>)}</div> : <pre className="mt-3 whitespace-pre-wrap break-words text-xs leading-5 text-muted-foreground">{JSON.stringify(response, null, 2)}</pre>}
+            </section>
+            {session.analysisResult ? <section className="rounded-xl border border-primary/15 bg-primary/[0.04] p-4"><div className="flex items-center justify-between gap-3"><p className="text-sm font-semibold">AI 评估</p>{typeof session.analysisResult.overallScore === 'number' && <Badge>{session.analysisResult.overallScore}</Badge>}</div>{session.analysisResult.summary && <p className="mt-3 text-sm leading-6 text-muted-foreground">{session.analysisResult.summary}</p>}{Array.isArray(session.analysisResult.strengths) && session.analysisResult.strengths.length > 0 && <ul className="mt-3 space-y-1 text-sm leading-6">{session.analysisResult.strengths.map((item: string) => <li key={item}>✓ {item}</li>)}</ul>}{Array.isArray(session.analysisResult.improvements) && session.analysisResult.improvements.length > 0 && <ul className="mt-3 space-y-1 text-sm leading-6 text-amber-700 dark:text-amber-400">{session.analysisResult.improvements.map((item: string) => <li key={item}>→ {item}</li>)}</ul>}</section> : <p className="rounded-xl bg-muted/35 p-4 text-sm text-muted-foreground">本次练习暂未生成 AI 评估。</p>}
+          </div>}
+        </div>
+      </DrawerContent>
+    </Drawer>
   )
 }
 

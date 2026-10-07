@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BookOpen, ListTree, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,8 @@ import { getMarkdownHeadings, MarkdownRenderer } from '@/components/common/markd
 import { cn } from '@/lib/cn'
 
 const TEACHING_HEADING_PREFIX = 'teaching-document-heading'
+/** 等 drawer 滑入动画起步后再挂载 Markdown，避免打开瞬间主线程被解析占满 */
+const CONTENT_MOUNT_DELAY_MS = 240
 
 interface PracticeVnDrawerProps {
   teachingMarkdown?: string
@@ -42,21 +44,55 @@ export function PracticeVnDrawer({
   const { t } = useTranslation()
   const [internalOpen, setInternalOpen] = useState(false)
   const [tocOpen, setTocOpen] = useState(false)
+  const [contentReady, setContentReady] = useState(false)
+  const closingRef = useRef(false)
   const isControlled = controlledOpen !== undefined
   const open = isControlled ? controlledOpen : internalOpen
-  const handleOpenChange = isControlled ? controlledOnOpenChange! : setInternalOpen
+  const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
   const headings = useMemo(
     () => getMarkdownHeadings(teachingMarkdown ?? '', TEACHING_HEADING_PREFIX),
     [teachingMarkdown],
   )
   const tocHeight = Math.min(Math.max(headings.length * 40, 48), 288)
 
-  const handleTriggerClick = () => {
-    if (isControlled) {
-      controlledOnOpenChange?.(true)
-    } else {
-      setInternalOpen(true)
+  useEffect(() => {
+    if (!open) {
+      setTocOpen(false)
+      setContentReady(false)
+      closingRef.current = false
+      return
     }
+    const timer = window.setTimeout(() => {
+      startTransition(() => setContentReady(true))
+    }, CONTENT_MOUNT_DELAY_MS)
+    return () => window.clearTimeout(timer)
+  }, [open])
+
+  /** 先卸掉重 DOM，下一帧再触发收起动画，避免「整篇 Markdown + transform」同时跑 */
+  const beginClose = useCallback(() => {
+    if (closingRef.current || !open) return
+    closingRef.current = true
+    setTocOpen(false)
+    setContentReady(false)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setOpen(false)
+      })
+    })
+  }, [open, setOpen])
+
+  const onDrawerOpenChange = useCallback((next: boolean) => {
+    if (next) {
+      closingRef.current = false
+      setOpen(true)
+      return
+    }
+    beginClose()
+  }, [beginClose, setOpen])
+
+  const handleTriggerClick = () => {
+    closingRef.current = false
+    setOpen(true)
     void onOpen?.()
   }
 
@@ -72,7 +108,7 @@ export function PracticeVnDrawer({
           type="button"
           onClick={handleTriggerClick}
           className={cn(
-            !plainTrigger && 'flex items-center gap-2 rounded-full border border-border/20 bg-background/60 px-3.5 py-2 text-xs font-medium text-foreground shadow-lg backdrop-blur-2xl transition-transform active:scale-[0.97]',
+            !plainTrigger && 'flex items-center gap-2 rounded-full border border-border/20 bg-background/60 px-3.5 py-2 text-xs font-medium text-foreground shadow-lg transition-transform active:scale-[0.97]',
             triggerClassName,
           )}
         >
@@ -81,9 +117,9 @@ export function PracticeVnDrawer({
         </button>
       )}
 
-      <Drawer open={open} onOpenChange={handleOpenChange} shouldScaleBackground={false}>
-        <DrawerContent className="h-[82vh] max-h-[82vh] rounded-t-[28px] border-border/20 bg-background text-foreground shadow-[0_-24px_80px_rgba(0,0,0,.42)] backdrop-blur-2xl">
-          <DrawerHeader className="border-b border-border/45 px-5 pb-4 pt-3 text-left">
+      <Drawer open={open} onOpenChange={onDrawerOpenChange} shouldScaleBackground={false}>
+        <DrawerContent className="h-[82vh] max-h-[82vh] rounded-t-[28px] border-border/20 bg-background text-foreground shadow-[0_-12px_40px_rgba(0,0,0,.28)] contain-paint">
+          <DrawerHeader className="shrink-0 border-b border-border/45 px-5 pb-4 pt-3 text-left">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 {headings.length > 0 ? (
@@ -103,7 +139,7 @@ export function PracticeVnDrawer({
                       sideOffset={8}
                       collisionPadding={12}
                       data-vaul-no-drag
-                      className="w-[min(20rem,calc(100vw-2rem))] overflow-hidden border-0 bg-background/95 p-0 text-foreground shadow-[0_18px_50px_rgba(0,0,0,.28)] backdrop-blur-2xl"
+                      className="w-[min(20rem,calc(100vw-2rem))] overflow-hidden border-0 bg-background p-0 text-foreground shadow-[0_18px_50px_rgba(0,0,0,.28)]"
                       onWheel={(event) => event.stopPropagation()}
                       onTouchMove={(event) => event.stopPropagation()}
                       onPointerMove={(event) => event.stopPropagation()}
@@ -158,7 +194,7 @@ export function PracticeVnDrawer({
                   size="icon"
                   className="size-10 rounded-full"
                   aria-label={t('common.close')}
-                  onClick={() => handleOpenChange(false)}
+                  onClick={beginClose}
                 >
                   <X />
                 </Button>
@@ -166,7 +202,7 @@ export function PracticeVnDrawer({
             </div>
           </DrawerHeader>
 
-          <ScrollArea className="min-h-0 flex-1">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {loading ? (
               <div className="flex h-full items-center justify-center px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4">
                 <p className="rounded-2xl border border-dashed border-border/70 px-4 py-8 text-center text-xs text-muted-foreground">
@@ -175,11 +211,15 @@ export function PracticeVnDrawer({
               </div>
             ) : teachingMarkdown ? (
               <section className="px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4">
-                <MarkdownRenderer
-                  content={teachingMarkdown}
-                  variant="teaching"
-                  headingIdPrefix={TEACHING_HEADING_PREFIX}
-                />
+                {contentReady ? (
+                  <MarkdownRenderer
+                    content={teachingMarkdown}
+                    variant="teaching"
+                    headingIdPrefix={TEACHING_HEADING_PREFIX}
+                  />
+                ) : (
+                  <TeachingContentPlaceholder />
+                )}
               </section>
             ) : (
               <div className="flex h-full items-center justify-center px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-4">
@@ -188,9 +228,23 @@ export function PracticeVnDrawer({
                 </p>
               </div>
             )}
-          </ScrollArea>
+          </div>
         </DrawerContent>
       </Drawer>
     </>
+  )
+}
+
+function TeachingContentPlaceholder() {
+  return (
+    <div className="flex flex-col gap-3" aria-hidden="true">
+      <div className="h-5 w-2/5 rounded-md bg-muted/60" />
+      <div className="h-4 w-full rounded-md bg-muted/40" />
+      <div className="h-4 w-[92%] rounded-md bg-muted/40" />
+      <div className="h-4 w-[85%] rounded-md bg-muted/40" />
+      <div className="mt-3 h-5 w-1/3 rounded-md bg-muted/60" />
+      <div className="h-4 w-full rounded-md bg-muted/40" />
+      <div className="h-4 w-[88%] rounded-md bg-muted/40" />
+    </div>
   )
 }

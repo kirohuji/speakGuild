@@ -200,12 +200,10 @@ export class ProfileService {
     const skip = (page - 1) * pageSize;
     const where = { userId, status: 'analyzed' };
 
-    const [sessions, sessionTotal] = await Promise.all([
+    const [sessions, topicSessions] = await Promise.all([
       this.prisma.practiceSession.findMany({
         where,
         orderBy: { startedAt: 'desc' },
-        skip,
-        take: pageSize,
         include: {
           topic: {
             select: {
@@ -216,12 +214,17 @@ export class ProfileService {
           },
         },
       }),
-      this.prisma.practiceSession.count({ where }),
+      this.prisma.topicSession.findMany({
+        where,
+        orderBy: { startedAt: 'desc' },
+        include: {
+          topic: { select: { title: true, activityType: true, scene: { select: { title: true } } } },
+          submissions: { orderBy: { revision: 'desc' }, take: 1, select: { response: true } },
+        },
+      }),
     ]);
 
-    if (sessionTotal > 0) {
-      return {
-        list: sessions.map((session) => {
+    const dialogueRecords = sessions.map((session) => {
           const analysis = session.analysisResult as any;
           const topicSnapshot = session.topicSnapshot as any;
           const sceneSnapshot = session.sceneSnapshot as any;
@@ -239,14 +242,23 @@ export class ProfileService {
             summary: analysis?.summary ?? null,
             completedAt: session.completedAt?.toISOString() ?? null,
             analyzedAt: session.analyzedAt?.toISOString() ?? null,
+            recordType: 'dialogue',
           };
-        }),
-        total: sessionTotal,
-        page,
-        pageSize,
+        });
+    const topicRecords = topicSessions.filter((session) => session.topic.activityType === 'reading' || session.topic.activityType === 'writing').map((session) => {
+      const analysis = session.analysisResult as any;
+      const response = session.submissions[0]?.response as any;
+      return {
+        recordId: session.id, sessionId: session.id, topicId: session.topicId,
+        topicName: session.topic.scene?.title || '学习包练习', questionId: session.topicId, questionText: session.topic.title,
+        practiceCount: session.topic.activityType === 'reading' ? Object.keys(response?.answers ?? {}).length : 1,
+        lastPracticeAt: session.startedAt.toISOString(), status: session.analysisResult ? 'analyzed' : 'failed',
+        score: analysis?.overallScore ?? null, summary: analysis?.summary ?? session.analysisError ?? null,
+        completedAt: session.completedAt?.toISOString() ?? null, analyzedAt: session.analyzedAt?.toISOString() ?? null,
+        recordType: session.topic.activityType,
       };
-    }
-
-    return { list: [], total: sessionTotal, page, pageSize };
+    });
+    const records = [...dialogueRecords, ...topicRecords].sort((a, b) => b.lastPracticeAt.localeCompare(a.lastPracticeAt));
+    return { list: records.slice(skip, skip + pageSize), total: records.length, page, pageSize };
   }
 }

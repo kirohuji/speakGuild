@@ -1089,14 +1089,12 @@ Rules for generate mode:
     try {
       const config = await this.aiModels.getLlmConfig();
       if (!config.apiKey) throw new Error('LLM API key is not configured');
-      const model = this.llmFactory.create(config);
-
       if (activityType === 'reading') {
         const result = await this.analyzeReading(session, submission, contentConfig, { title, promptEn, promptZh }, config);
         analysis = result.analysis;
         raw = result.raw;
       } else if (activityType === 'writing') {
-        const result = await this.analyzeWriting(session, submission, contentConfig, { title, promptEn, promptZh }, model, config);
+        const result = await this.analyzeWriting(session, submission, contentConfig, { title, promptEn, promptZh }, config);
         analysis = result.analysis;
         raw = result.raw;
       } else {
@@ -1187,11 +1185,10 @@ Keep the response compact: each comment and evidenceMatch must be at most 50 Chi
     submission: any,
     contentConfig: any,
     topicInfo: { title: string; promptEn: string; promptZh: string },
-    model: any,
-    _llmConfig: any,
+    llmConfig: LlmConfig,
   ) {
     const writing = (contentConfig as any)?.writing ?? {};
-    if (writing.genre === 'translation') return this.analyzeTranslation(submission, writing, topicInfo, model);
+    if (writing.genre === 'translation') return this.analyzeTranslation(submission, writing, topicInfo, llmConfig);
     const dialogueResponses = Array.isArray((submission.response as any)?.turns)
       ? (submission.response as any).turns
       : [];
@@ -1233,9 +1230,7 @@ Keep the response compact: each comment and evidenceMatch must be at most 50 Chi
       ? 'Genre is essay: expect a clear position and multi-paragraph argument (reasons/examples). A single undeveloped paragraph is incomplete.'
       : '';
 
-    const { text } = await generateText({
-      model,
-      system: `You are an ESL writing coach evaluating a learner's composition. Return one valid JSON object only. Required shape:
+    const system = `You are an ESL writing coach evaluating a learner's composition. Return one valid JSON object only. Required shape:
 {
   "overallScore": 0-100,
   "summary": "Chinese summary of overall writing quality",
@@ -1243,16 +1238,14 @@ Keep the response compact: each comment and evidenceMatch must be at most 50 Chi
   "improvements": ["Chinese improvement with specific evidence from the text", ...],
   "nextStepSuggestion": "Chinese suggestion for next writing focus"
 }
-Evaluate task completion, clarity, register fit, and language accuracy. Quote specific parts of the learner's text as evidence for each improvement. Be encouraging but specific. Do NOT write a full model answer — only point out what to improve. ${genreEvalHint}`,
-      prompt,
-      temperature: 0.35,
-      maxOutputTokens: 1800,
-    });
+Evaluate task completion, clarity, register fit, and language accuracy. Quote specific parts of the learner's text as evidence for each improvement. Be encouraging but specific. Do NOT write a full model answer — only point out what to improve.
+Keep the result easy to scan on a phone: summary at most 90 Chinese characters; return at most 3 strengths and 3 improvements; each strength/improvement at most 60 Chinese characters; nextStepSuggestion at most 70 Chinese characters. Use short complete sentences, not Markdown, headings, or long paragraphs. ${genreEvalHint}`;
+    const text = await this.generateWritingJson(llmConfig, system, prompt, 3200);
 
     return { analysis: parseJsonResponse(text), raw: text };
   }
 
-  private async analyzeTranslation(submission: any, writing: any, topicInfo: { title: string; promptEn: string; promptZh: string }, model: any) {
+  private async analyzeTranslation(submission: any, writing: any, topicInfo: { title: string; promptEn: string; promptZh: string }, llmConfig: LlmConfig) {
     const answers = Array.isArray((submission.response as any)?.answers) ? (submission.response as any).answers : [];
     const answerById = new Map<string, string>(answers.map((item: any): [string, string] => [String(item.segmentId), String(item.text ?? '')]));
     const segments = Array.isArray(writing.segments) ? writing.segments.map((segment: any, index: number) => ({
@@ -1263,9 +1256,7 @@ Evaluate task completion, clarity, register fit, and language accuracy. Quote sp
       learnerAnswer: (answerById.get(String(segment.id ?? `s${index + 1}`)) ?? '').slice(0, 3000),
     })) : [];
     if (!segments.length || !segments.some((segment: any) => segment.learnerAnswer.trim())) throw new BadRequestException('翻译内容为空');
-    const { text } = await generateText({
-      model,
-      system: `You are a bilingual translation coach. Return one valid JSON object only. Required shape:
+    const system = `You are a bilingual translation coach. Return one valid JSON object only. Required shape:
 {
   "overallScore": 0-100,
   "summary": "Chinese summary of overall translation quality",
@@ -1274,11 +1265,9 @@ Evaluate task completion, clarity, register fit, and language accuracy. Quote sp
   "improvements": ["Chinese improvement with concrete evidence"],
   "nextStepSuggestion": "Chinese suggestion"
 }
-Judge meaning fidelity, naturalness, grammar and register. Reference translation is one valid option, not an answer key: accept semantically equivalent wording and word order. Optional referenceExplanation is editor guidance only; do not quote it verbatim to the learner. Give feedback for every segment; do not write a complete model translation for an article.`,
-      prompt: JSON.stringify({ topic: topicInfo, direction: writing.direction, scope: writing.scope, segments }),
-      temperature: 0.3,
-      maxOutputTokens: 2200,
-    });
+Judge meaning fidelity, naturalness, grammar and register. Reference translation is one valid option, not an answer key: accept semantically equivalent wording and word order. Optional referenceExplanation is editor guidance only; do not quote it verbatim to the learner. Give feedback for every segment; do not write a complete model translation for an article.
+Keep this easy to scan on a phone: summary at most 90 Chinese characters; each comment and suggestion at most 70 Chinese characters; return at most 3 strengths and 3 improvements; use short complete sentences, not Markdown or long paragraphs.`;
+    const text = await this.generateWritingJson(llmConfig, system, JSON.stringify({ topic: topicInfo, direction: writing.direction, scope: writing.scope, segments }), 3600);
     return { analysis: parseJsonResponse(text), raw: text };
   }
 

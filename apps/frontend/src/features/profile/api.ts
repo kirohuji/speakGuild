@@ -36,6 +36,7 @@ export interface PracticeRecord {
   summary?: string | null
   completedAt?: string | null
   analyzedAt?: string | null
+  recordType?: 'dialogue' | 'reading' | 'writing'
 }
 
 export interface PracticeRecordsResult {
