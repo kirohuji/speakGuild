@@ -55,7 +55,7 @@ export function ReadingSessionPage() {
     <>
       {phase === 'prepare'
         ? <ReadingPreparePage topic={topic} unitTitle={unit.title} onBack={() => navigate(-1)} onOpenGuide={() => setGuideOpen(true)} onStart={() => setPhase('answer')} />
-        : <ReadingAnswerPage topic={topic} unitTitle={unit.title} onClose={() => setPhase('prepare')} />}
+        : <ReadingAnswerPage topic={topic} unitTitle={unit.title} onClose={() => setPhase('prepare')} onOpenGuide={() => setGuideOpen(true)} />}
       <PracticeVnDrawer open={guideOpen} onOpenChange={setGuideOpen} hideToggles teachingMarkdown={topic.teachingMarkdown?.trim() || topic.description?.trim() || ''} />
     </>
   )
@@ -128,7 +128,7 @@ function ReadingHeader({ topic, unitTitle, onBack }: { topic: TrainingTopicItem;
   return <header className="mb-4 flex min-h-10 items-center gap-3"><button type="button" onClick={onBack} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted" aria-label={t('learning.backToPack')}><ArrowLeft className="size-4" /></button><div className="min-w-0 flex-1"><p className="truncate text-xs text-muted-foreground">{unitTitle}</p><h1 className="truncate text-lg font-semibold tracking-tight">{topic.title}</h1></div><Badge variant="secondary">{topic.difficulty}</Badge></header>
 }
 
-function ReadingAnswerPage({ topic, unitTitle, onClose }: { topic: TrainingTopicItem; unitTitle: string; onClose: () => void }) {
+function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: TrainingTopicItem; unitTitle: string; onClose: () => void; onOpenGuide: () => void }) {
   const { t } = useTranslation()
   const config = topic.contentConfig?.reading ?? {}
   const questions: any[] = config.questions ?? []
@@ -257,12 +257,15 @@ function ReadingAnswerPage({ topic, unitTitle, onClose }: { topic: TrainingTopic
               <Switch
                 checked={view === 'analysis'}
                 onCheckedChange={(checked) => setView(checked ? 'analysis' : 'answer')}
-                aria-label="切换 AI 评估"
-                title={view === 'analysis' ? '查看题目' : '查看 AI 评估'}
+                aria-label={t('learning.toggleAiReview')}
+                title={view === 'analysis' ? t('learning.viewQuestions') : t('learning.viewAiReview')}
               />
-              <button type="button" onClick={() => void startNewAttempt()} disabled={saving} title="重新练习" className="flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50" aria-label="重新练习"><RotateCcw className="size-3.5" /></button>
+              <button type="button" onClick={() => void startNewAttempt()} disabled={saving} title={t('learning.retryPractice')} className="flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50" aria-label={t('learning.retryPractice')}><RotateCcw className="size-3.5" /></button>
             </div>
           )}
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onOpenGuide} title={t('learning.viewGuide')} aria-label={t('learning.guide')}>
+            <BookOpen className="size-4" />
+          </Button>
           <button type="button" onClick={onClose} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground" aria-label={t('learning.exitAnswering')}><X className="size-3.5" /></button>
         </div>
       </header>
@@ -363,7 +366,14 @@ function ReadingAnswerPage({ topic, unitTitle, onClose }: { topic: TrainingTopic
 }
 
 function ReadingQuestion({ index, question, value, onChange, readOnly = false }: { index: number; question: any; value: string; onChange: (value: string) => void; readOnly?: boolean }) {
-  const options = question.type === 'boolean' ? ['正确', '错误'] : (question.options ?? [])
+  const { t } = useTranslation()
+  // 判断题提交值保持「正确/错误」稳定，避免换语言后草稿与评分对不上；界面文案走 i18n
+  const options: Array<{ value: string; label: string }> = question.type === 'boolean'
+    ? [
+        { value: '正确', label: t('learning.booleanTrue') },
+        { value: '错误', label: t('learning.booleanFalse') },
+      ]
+    : (question.options ?? []).map((option: string) => ({ value: option, label: option }))
   return (
     <div className="min-w-0 rounded-xl bg-muted/30 p-4">
       <div className="mb-3 flex min-w-0 items-start gap-3">
@@ -372,25 +382,25 @@ function ReadingQuestion({ index, question, value, onChange, readOnly = false }:
       </div>
       {['choice', 'boolean'].includes(question.type) ? (
         <div className="flex flex-col gap-2">
-          {options.map((option: string, optionIndex: number) => (
+          {options.map((option, optionIndex) => (
             <button
-              key={`${option}-${optionIndex}`}
+              key={`${option.value}-${optionIndex}`}
               type="button"
               disabled={readOnly}
-              onClick={() => onChange(option)}
+              onClick={() => onChange(option.value)}
               className={cn(
                 'flex min-h-12 w-full min-w-0 items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
-                value === option ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-background text-foreground',
+                value === option.value ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-background text-foreground',
               )}
             >
               <span className={cn(
                 'flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
-                value === option ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground',
+                value === option.value ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground',
               )}
               >
                 {question.type === 'boolean' ? (optionIndex === 0 ? '✓' : '×') : String.fromCharCode(65 + optionIndex)}
               </span>
-              <span className="min-w-0 flex-1 break-words">{option}</span>
+              <span className="min-w-0 flex-1 break-words">{option.label}</span>
             </button>
           ))}
         </div>
@@ -400,7 +410,7 @@ function ReadingQuestion({ index, question, value, onChange, readOnly = false }:
           onChange={(event) => onChange(event.target.value)}
           readOnly={readOnly}
           className="min-h-28 resize-y bg-background"
-          placeholder="根据阅读材料作答…"
+          placeholder={t('learning.readingAnswerPlaceholder')}
         />
       )}
     </div>
@@ -408,14 +418,15 @@ function ReadingQuestion({ index, question, value, onChange, readOnly = false }:
 }
 
 function ReadingAnalysisPanel({ analysis, error, onClose }: { analysis: Record<string, any> | null; error?: string | null; onClose: () => void }) {
+  const { t } = useTranslation()
   if (!analysis) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
         {error ? <X className="size-8 text-destructive" /> : <Loader2 className="size-8 animate-spin text-muted-foreground" />}
         <div className="max-w-sm text-center">
-          <p className="text-sm font-medium text-foreground">{error ? 'AI 评估暂时未完成' : 'AI 正在评估你的回答...'}</p>
+          <p className="text-sm font-medium text-foreground">{error ? t('learning.aiReviewPending') : t('learning.aiReviewLoading')}</p>
           {error && <p className="mt-1 text-xs leading-5 text-muted-foreground">{error}</p>}
-          {error && <p className="mt-3 text-xs leading-5 text-muted-foreground">你可以在顶部切回题目查看本次答案，或点击“重新练习”开始新一轮。</p>}
+          {error && <p className="mt-3 text-xs leading-5 text-muted-foreground">{t('learning.aiReviewPendingHint')}</p>}
         </div>
       </main>
     )
@@ -431,7 +442,7 @@ function ReadingAnalysisPanel({ analysis, error, onClose }: { analysis: Record<s
         <div className="flex items-center gap-4 rounded-xl bg-muted/30 p-5">
           <div className={cn('flex size-[72px] shrink-0 flex-col items-center justify-center rounded-xl bg-background/70', score >= 80 ? 'text-green-600' : score >= 60 ? 'text-amber-600' : 'text-destructive')}>
             <span className="text-3xl font-bold leading-none">{score}</span>
-            <span className="mt-1 text-[10px] font-medium">总分</span>
+            <span className="mt-1 text-[10px] font-medium">{t('learning.totalScore')}</span>
           </div>
           <div className="min-w-0">
             {analysis.summary && <p className="text-sm leading-6 text-foreground">{analysis.summary}</p>}
@@ -439,14 +450,14 @@ function ReadingAnalysisPanel({ analysis, error, onClose }: { analysis: Record<s
         </div>
         {qByQ.length > 0 && (
           <div className="rounded-xl bg-muted/30 p-4">
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><Sparkles className="size-4 text-primary" />逐题分析</h3>
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><Sparkles className="size-4 text-primary" />{t('learning.questionByQuestion')}</h3>
             <div className="space-y-3">
               {qByQ.map((item: any) => (
                 <div key={item.index} className="rounded-lg bg-background/60 p-3">
                   <div className="flex items-start gap-2">
                     {item.isCorrect ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-green-500" /> : <X className="mt-0.5 size-4 shrink-0 text-destructive" />}
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-foreground">第 {item.index} 题</p>
+                      <p className="text-xs font-semibold text-foreground">{t('learning.questionNumberShort', { number: item.index })}</p>
                       {item.comment && <p className="mt-1 text-xs text-muted-foreground">{item.comment}</p>}
                       {item.evidenceMatch && <p className="mt-0.5 text-[11px] text-muted-foreground/70">{item.evidenceMatch}</p>}
                     </div>
@@ -459,24 +470,24 @@ function ReadingAnalysisPanel({ analysis, error, onClose }: { analysis: Record<s
         <div className="rounded-xl bg-muted/30 p-4">
           {strengths.length > 0 && (
             <div className="mb-3">
-              <h3 className="mb-2 text-sm font-semibold text-green-700 dark:text-green-400">做得好的地方</h3>
+              <h3 className="mb-2 text-sm font-semibold text-green-700 dark:text-green-400">{t('learning.strengthsTitle')}</h3>
               <ul className="space-y-1">{strengths.map((s: string) => <li key={s} className="text-xs text-muted-foreground">→ {s}</li>)}</ul>
             </div>
           )}
           {improvements.length > 0 && (
             <div>
-              <h3 className="mb-2 text-sm font-semibold text-amber-700 dark:text-amber-400">可以改进</h3>
+              <h3 className="mb-2 text-sm font-semibold text-amber-700 dark:text-amber-400">{t('learning.improvementsTitle')}</h3>
               <ul className="space-y-1">{improvements.map((s: string) => <li key={s} className="text-xs text-muted-foreground">→ {s}</li>)}</ul>
             </div>
           )}
         </div>
         {analysis.nextStepSuggestion && (
           <div className="rounded-xl bg-primary/[0.04] p-4">
-            <h3 className="mb-1 text-sm font-semibold text-primary">下一步建议</h3>
+            <h3 className="mb-1 text-sm font-semibold text-primary">{t('learning.nextStepSuggestion')}</h3>
             <p className="text-sm leading-6 text-muted-foreground">{analysis.nextStepSuggestion}</p>
           </div>
         )}
-        <Button variant="outline" className="w-full" onClick={onClose}>返回学习包</Button>
+        <Button variant="outline" className="w-full" onClick={onClose}>{t('learning.backToPack')}</Button>
       </div>
     </main>
   )

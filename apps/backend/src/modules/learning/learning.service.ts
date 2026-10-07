@@ -78,29 +78,21 @@ function sanitizeTopicContentConfig(activityType: string, value: any) {
   if (activityType === 'writing') {
     const writing = value.writing;
     if (!writing || typeof writing !== 'object') return value;
-    const {
-      referenceAnswer: _referenceAnswer,
-      referenceExplanation: _referenceExplanation,
-      ...publicWriting
-    } = writing;
     return {
       ...value,
       writing: {
-        ...publicWriting,
+        // These supports are intentionally available to enrolled learners only.
+        // The mobile writer reveals them progressively (hint → explanation →
+        // reference), rather than rendering them in the question by default.
+        ...writing,
         ...(Array.isArray(writing.turns)
           ? {
-              turns: writing.turns.map((turn: any) => {
-                const { referenceAnswer: _turnAnswer, referenceExplanation: _turnExplanation, ...publicTurn } = turn ?? {};
-                return publicTurn;
-              }),
+              turns: writing.turns.map((turn: any) => ({ ...turn })),
             }
           : {}),
         ...(Array.isArray(writing.segments)
           ? {
-              segments: writing.segments.map((segment: any) => {
-                const { reference: _reference, referenceExplanation: _segmentExplanation, ...publicSegment } = segment ?? {};
-                return publicSegment;
-              }),
+              segments: writing.segments.map((segment: any) => ({ ...segment })),
             }
           : {}),
       },
