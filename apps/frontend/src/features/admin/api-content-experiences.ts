@@ -97,4 +97,8 @@ export const contentExperienceAdminApi = {
     post<AiWritingTopicDraft>(`/admin/content-experiences/scenes/${sceneId}/writing-topics/ai-draft`, data),
   generateDialogueReferences: (sceneId: string, data: Record<string, unknown>) =>
     post<{ turns: Array<{ referenceAnswer: string; referenceExplanation: string }> }>(`/admin/content-experiences/scenes/${sceneId}/dialogue-references/ai-draft`, data),
+  generateWritingSupport: (sceneId: string, data: Record<string, unknown>) =>
+    post<{ referenceAnswer: string; referenceExplanation: string; situation: string; requirements: string[] }>(`/admin/content-experiences/scenes/${sceneId}/writing-support/ai-draft`, data),
+  generateTranslationSupport: (sceneId: string, data: Record<string, unknown>) =>
+    post<{ segments: Array<{ reference: string; hint: string; referenceExplanation: string }> }>(`/admin/content-experiences/scenes/${sceneId}/translation-support/ai-draft`, data),
 }

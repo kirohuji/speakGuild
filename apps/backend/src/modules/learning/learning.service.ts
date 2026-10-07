@@ -60,19 +60,53 @@ function compactKey(value: any, fallback: string) {
 }
 
 function sanitizeTopicContentConfig(activityType: string, value: any) {
-  if (!value || typeof value !== 'object' || activityType !== 'reading') return value;
-  const reading = value.reading;
-  if (!reading || typeof reading !== 'object' || !Array.isArray(reading.questions)) return value;
-  return {
-    ...value,
-    reading: {
-      ...reading,
-      questions: reading.questions.map((question: any) => {
-        const { answer: _answer, correctAnswer: _correct, acceptedAnswers: _accepted, evidence: _evidence, ...publicQuestion } = question ?? {};
-        return publicQuestion;
-      }),
-    },
-  };
+  if (!value || typeof value !== 'object') return value;
+  if (activityType === 'reading') {
+    const reading = value.reading;
+    if (!reading || typeof reading !== 'object' || !Array.isArray(reading.questions)) return value;
+    return {
+      ...value,
+      reading: {
+        ...reading,
+        questions: reading.questions.map((question: any) => {
+          const { answer: _answer, correctAnswer: _correct, acceptedAnswers: _accepted, evidence: _evidence, ...publicQuestion } = question ?? {};
+          return publicQuestion;
+        }),
+      },
+    };
+  }
+  if (activityType === 'writing') {
+    const writing = value.writing;
+    if (!writing || typeof writing !== 'object') return value;
+    const {
+      referenceAnswer: _referenceAnswer,
+      referenceExplanation: _referenceExplanation,
+      ...publicWriting
+    } = writing;
+    return {
+      ...value,
+      writing: {
+        ...publicWriting,
+        ...(Array.isArray(writing.turns)
+          ? {
+              turns: writing.turns.map((turn: any) => {
+                const { referenceAnswer: _turnAnswer, referenceExplanation: _turnExplanation, ...publicTurn } = turn ?? {};
+                return publicTurn;
+              }),
+            }
+          : {}),
+        ...(Array.isArray(writing.segments)
+          ? {
+              segments: writing.segments.map((segment: any) => {
+                const { reference: _reference, referenceExplanation: _segmentExplanation, ...publicSegment } = segment ?? {};
+                return publicSegment;
+              }),
+            }
+          : {}),
+      },
+    };
+  }
+  return value;
 }
 
 function decodeTagValue(value?: string | null) {

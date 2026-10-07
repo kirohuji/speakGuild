@@ -314,7 +314,11 @@ function SceneDialog({
               <option value="novel">小说包（EPUB）</option>
               <option value="story">剧情包</option>
             </Select>
-            <p className="mt-1.5 text-xs text-muted-foreground">决定话题题型和用户端主交互；日常、考试、课程等分类仍保留。</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              {form.packageType === 'exam'
+                ? '考试包：雅思写作选「写作包」；雅思口语（含 Part 2 描述/叙事）选「知识点练习」。'
+                : '决定话题题型和用户端主交互；日常、考试、课程等分类仍保留。'}
+            </p>
           </div>
           <div>
             <Label>标题</Label>
@@ -1578,12 +1582,26 @@ function TrainingTopicDialog({
               </div>
               {(form.type ?? (packageType === 'exam' ? 'ielts' : 'daily')) === 'ielts' && (
                 contentMode === 'writing' ? (
-                <div className="grid gap-3 rounded-lg border border-border/70 bg-muted/20 p-3 md:grid-cols-4">
+                <div className="space-y-2 rounded-lg border border-border/70 bg-muted/20 p-3">
+                  <p className="text-xs text-muted-foreground">雅思写作正式题。日常「短段落 / 议论文」文体请用日常话题，不要和这里混用。</p>
+                  <div className="grid gap-3 md:grid-cols-4">
                   <div className="space-y-1">
                     <Label>Writing Task</Label>
-                    <Select value={String(form.metadata?.part ?? 2)} onChange={(e) => updateMetadata({ part: Number(e.target.value) })}>
-                      <option value="1">Task 1</option>
-                      <option value="2">Task 2</option>
+                    <Select
+                      value={String(form.metadata?.part ?? 2)}
+                      onChange={(e) => {
+                        const part = Number(e.target.value)
+                        updateMetadata({
+                          part,
+                          questionType: part === 1
+                            ? (form.metadata?.questionType === 'task_1_report' ? 'task_1_report' : 'task_1_letter')
+                            : 'task_2_essay',
+                          timeLimitMinutes: part === 1 ? (form.metadata?.timeLimitMinutes ?? 20) : (form.metadata?.timeLimitMinutes ?? 40),
+                        })
+                      }}
+                    >
+                      <option value="1">Task 1（书信/图表）</option>
+                      <option value="2">Task 2（议论文）</option>
                     </Select>
                   </div>
                   <div className="space-y-1">
@@ -1593,24 +1611,39 @@ function TrainingTopicDialog({
                   <div className="space-y-1">
                     <Label>题型</Label>
                     <Select value={form.metadata?.questionType ?? 'task_2_essay'} onChange={(e) => updateMetadata({ questionType: e.target.value })}>
-                      <option value="task_1_letter">Task 1 Letter</option>
-                      <option value="task_1_report">Task 1 Report</option>
-                      <option value="task_2_essay">Task 2 Essay</option>
+                      <option value="task_1_letter">Task 1 书信</option>
+                      <option value="task_1_report">Task 1 图表报告</option>
+                      <option value="task_2_essay">Task 2 议论文</option>
                     </Select>
                   </div>
                   <div className="space-y-1">
                     <Label>考试时限（分钟）</Label>
                     <Input type="number" min={1} value={form.metadata?.timeLimitMinutes ?? 40} onChange={(e) => updateMetadata({ timeLimitMinutes: Number(e.target.value) })} />
                   </div>
+                  </div>
                 </div>
                 ) : (
-                <div className="grid gap-3 rounded-lg border border-border/70 bg-muted/20 p-3 md:grid-cols-5">
+                <div className="space-y-2 rounded-lg border border-border/70 bg-muted/20 p-3">
+                  <p className="text-xs text-muted-foreground">雅思口语。Part 2 是 cue card 独白（描述人物/地点/经历/事物），不是写作题。</p>
+                  <div className="grid gap-3 md:grid-cols-5">
                   <div className="space-y-1">
                     <Label>Part</Label>
-                    <Select value={String(form.metadata?.part ?? 1)} onChange={(e) => updateMetadata({ part: Number(e.target.value) })}>
-                      <option value="1">Part 1</option>
-                      <option value="2">Part 2</option>
-                      <option value="3">Part 3</option>
+                    <Select
+                      value={String(form.metadata?.part ?? 1)}
+                      onChange={(e) => {
+                        const part = Number(e.target.value)
+                        const questionType = part === 2 ? 'cue_card' : part === 3 ? 'discussion' : 'interview'
+                        updateMetadata({
+                          part,
+                          questionType,
+                          prepSeconds: part === 2 ? (form.metadata?.prepSeconds ?? 60) : null,
+                          answerSeconds: part === 2 ? (form.metadata?.answerSeconds ?? 120) : part === 1 ? (form.metadata?.answerSeconds ?? 30) : (form.metadata?.answerSeconds ?? 60),
+                        })
+                      }}
+                    >
+                      <option value="1">Part 1 问答</option>
+                      <option value="2">Part 2 独白（描述/叙事）</option>
+                      <option value="3">Part 3 讨论</option>
                     </Select>
                   </div>
                   <div className="space-y-1">
@@ -1620,9 +1653,9 @@ function TrainingTopicDialog({
                   <div className="space-y-1">
                     <Label>题型</Label>
                     <Select value={form.metadata?.questionType ?? 'interview'} onChange={(e) => updateMetadata({ questionType: e.target.value })}>
-                      <option value="interview">Interview</option>
-                      <option value="cue_card">Cue card</option>
-                      <option value="discussion">Discussion</option>
+                      <option value="interview">Part 1 访谈问答</option>
+                      <option value="cue_card">Part 2 Cue card 独白</option>
+                      <option value="discussion">Part 3 深入讨论</option>
                     </Select>
                   </div>
                   <div className="space-y-1">
@@ -1632,6 +1665,7 @@ function TrainingTopicDialog({
                   <div className="space-y-1">
                     <Label>回答秒数</Label>
                     <Input type="number" value={form.metadata?.answerSeconds ?? ''} onChange={(e) => updateMetadata({ answerSeconds: e.target.value ? Number(e.target.value) : null })} />
+                  </div>
                   </div>
                 </div>
                 )

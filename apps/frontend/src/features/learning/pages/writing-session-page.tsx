@@ -620,7 +620,7 @@ function WritingEditor({
       <footer className="shrink-0 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-xl pb-safe" data-writing-footer>
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs text-muted-foreground">{config.genre || '自由写作'}</p>
+            <p className="truncate text-xs text-muted-foreground">{({ message: '消息', journal: '日记', email: '邮件', paragraph: '短段落', essay: '议论文', dialogue: '对话', translation: '中英互译' } as Record<string, string>)[config.genre ?? ''] || config.genre || '自由写作'}</p>
             <p className={cn('mt-0.5 text-xs tabular-nums text-muted-foreground', config.minWords && wordCount < config.minWords && 'text-amber-600')}>
               {wordCount} 词{config.minWords ? ` · 目标 ${config.minWords}–${config.maxWords ?? '∞'}` : ''}
             </p>

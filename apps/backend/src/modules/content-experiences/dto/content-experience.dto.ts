@@ -245,3 +245,90 @@ export class GenerateDialogueReferencesDto {
   @MaxLength(300, { each: true })
   sentencePatterns?: string[];
 }
+
+export class GenerateWritingSupportDto {
+  @IsString()
+  @MaxLength(12000)
+  questionMarkdown: string;
+
+  @IsIn(['journal', 'message', 'email', 'paragraph', 'essay'])
+  genre: 'journal' | 'message' | 'email' | 'paragraph' | 'essay';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  situation?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(8)
+  @IsString({ each: true })
+  requirements?: string[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  difficulty?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(40)
+  @IsString({ each: true })
+  vocabulary?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(30)
+  @IsString({ each: true })
+  chunks?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  sentencePatterns?: string[];
+}
+
+export class GenerateTranslationSupportDto {
+  @IsIn(['zh_to_en', 'en_to_zh'])
+  direction: 'zh_to_en' | 'en_to_zh';
+
+  @IsOptional()
+  @IsIn(['sentence', 'article'])
+  scope?: 'sentence' | 'article';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
+  sourceTitle?: string;
+
+  @IsArray()
+  @ArrayMaxSize(8)
+  segments: Array<{ id?: string; source?: string; reference?: string; hint?: string; referenceExplanation?: string }>;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  difficulty?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(40)
+  @IsString({ each: true })
+  @MaxLength(200, { each: true })
+  vocabulary?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(30)
+  @IsString({ each: true })
+  @MaxLength(300, { each: true })
+  chunks?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  @MaxLength(300, { each: true })
+  sentencePatterns?: string[];
+}

@@ -17,6 +17,8 @@ import {
   AssignPackageGroupDto,
   AttachEpubDto,
   GenerateDialogueReferencesDto,
+  GenerateTranslationSupportDto,
+  GenerateWritingSupportDto,
   CreatePackageGroupDto,
   GenerateWritingTopicDto,
   UpdatePackageGroupDto,
@@ -122,5 +124,25 @@ export class AdminContentExperienceController {
   ) {
     await this.requireAdmin(req);
     return this.experiences.generateDialogueReferences(sceneId, dto);
+  }
+
+  @Post('scenes/:sceneId/writing-support/ai-draft')
+  async generateWritingSupport(
+    @Req() req: Request,
+    @Param('sceneId') sceneId: string,
+    @Body() dto: GenerateWritingSupportDto,
+  ) {
+    await this.requireAdmin(req);
+    return this.experiences.generateWritingSupport(sceneId, dto);
+  }
+
+  @Post('scenes/:sceneId/translation-support/ai-draft')
+  async generateTranslationSupport(
+    @Req() req: Request,
+    @Param('sceneId') sceneId: string,
+    @Body() dto: GenerateTranslationSupportDto,
+  ) {
+    await this.requireAdmin(req);
+    return this.experiences.generateTranslationSupport(sceneId, dto);
   }
 }

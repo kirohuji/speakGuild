@@ -37,7 +37,7 @@ export function WritingTaskCard({
           <p className="text-sm font-semibold text-foreground">{t('learning.writingTaskTitle')}</p>
         </div>
         <span className="text-right text-xs leading-5 text-muted-foreground">
-          {durationMinutes ? `${t('learning.minutesWithCount', { count: durationMinutes })} · ` : ''}{genre || t('learning.freeWriting')}
+          {durationMinutes ? `${t('learning.minutesWithCount', { count: durationMinutes })} · ` : ''}{({ message: '消息', journal: '日记', email: '邮件', paragraph: '短段落', essay: '议论文', dialogue: '对话', translation: '中英互译' } as Record<string, string>)[genre ?? ''] || genre || t('learning.freeWriting')}
           {minWords ? ` · ${t('learning.wordRange', { min: minWords, max: maxWords ?? '∞' })}` : ''}
         </span>
       </div>

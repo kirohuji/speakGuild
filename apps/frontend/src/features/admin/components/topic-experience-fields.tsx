@@ -69,10 +69,16 @@ function WritingFields({
   const [instruction, setInstruction] = useState('')
   const [generating, setGenerating] = useState(false)
   const [generatingReferences, setGeneratingReferences] = useState(false)
+  const [generatingSupport, setGeneratingSupport] = useState(false)
   const [configOpen, setConfigOpen] = useState(false)
   const isDialogue = value.genre === 'dialogue'
   const isTranslation = value.genre === 'translation'
+  const isMessage = value.genre === 'message'
+  const isParagraph = value.genre === 'paragraph'
+  const isEssay = value.genre === 'essay'
   const isFormal = value.genre === 'essay' || value.genre === 'email'
+  const defaultMinWords = isDialogue ? 40 : isMessage ? 30 : isParagraph ? 80 : isEssay ? 150 : 80
+  const defaultMaxWords = isDialogue ? 120 : isMessage ? 80 : isParagraph ? 120 : isEssay ? 220 : 180
 
   const generateDraft = async () => {
     if (generating) return
@@ -83,8 +89,8 @@ function WritingFields({
         genre: value.genre ?? 'paragraph',
         translationDirection: value.direction ?? 'zh_to_en',
         translationScope: value.scope ?? 'sentence',
-        minWords: isTranslation ? undefined : Number(value.minWords) || (isDialogue ? 40 : 80),
-        maxWords: isTranslation ? undefined : Number(value.maxWords) || (isDialogue ? 120 : 180),
+        minWords: isTranslation ? undefined : Number(value.minWords) || defaultMinWords,
+        maxWords: isTranslation ? undefined : Number(value.maxWords) || defaultMaxWords,
         difficulty: context?.difficulty,
         currentTitle: context?.title,
         currentPromptEn: context?.promptEn,
@@ -119,11 +125,40 @@ function WritingFields({
         sentencePatterns: context?.sentencePatterns,
       })
       onChange({ ...value, turns: turns.map((turn, index) => ({ ...turn, referenceAnswer: turn.referenceAnswer || result.turns[index]?.referenceAnswer || '', referenceExplanation: turn.referenceExplanation || result.turns[index]?.referenceExplanation || '' })) })
-      toast.success('已补全缺失的参考答案与讲解')
+      toast.success('已补全缺失的参考答案与见解')
     } catch (error: any) {
       toast.error(error?.message || 'AI 补全参考答案失败')
     } finally {
       setGeneratingReferences(false)
+    }
+  }
+
+  const generateWritingSupport = async () => {
+    if (generatingSupport || !String(value.questionMarkdown ?? '').trim()) return
+    setGeneratingSupport(true)
+    try {
+      const result = await contentExperienceAdminApi.generateWritingSupport(sceneId, {
+        questionMarkdown: value.questionMarkdown,
+        genre: value.genre ?? 'paragraph',
+        situation: value.situation,
+        requirements,
+        difficulty: context?.difficulty,
+        vocabulary: context?.vocabulary,
+        chunks: context?.chunks,
+        sentencePatterns: context?.sentencePatterns,
+      })
+      onChange({
+        ...value,
+        situation: value.situation || result.situation,
+        requirements: requirements.length ? requirements : result.requirements,
+        referenceAnswer: value.referenceAnswer || result.referenceAnswer,
+        referenceExplanation: value.referenceExplanation || result.referenceExplanation,
+      })
+      toast.success('已补全缺失的参考答案、见解与写作支架')
+    } catch (error: any) {
+      toast.error(error?.message || 'AI 补全写作资料失败')
+    } finally {
+      setGeneratingSupport(false)
     }
   }
 
@@ -145,8 +180,8 @@ function WritingFields({
               <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5"><Sparkles className="size-3.5 text-primary" />AI 命题助手</Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-[min(28rem,calc(100vw-2rem))] space-y-3 p-4">
-              <div className="flex items-start gap-2"><span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><Sparkles className="size-3.5" /></span><div><p className="text-sm font-semibold">AI 命题助手</p><p className="mt-0.5 text-xs leading-5 text-muted-foreground">{isTranslation ? '描述主题、难度和翻译方向，AI 会生成可逐段审核的原文、参考译文与提示。' : isDialogue ? '描述对话场景和角色关系，AI 生成对话轮次和提示。' : '描述考试场景和能力目标，AI 会生成完整题干与评分要点；生成后仍需人工审题。'}</p></div></div>
-              <Textarea value={instruction} onChange={(event) => setInstruction(event.target.value)} className="min-h-28 resize-y" maxLength={2000} placeholder={isTranslation ? '例如：B1 难度，中译英篇章，主题是第一次租房时与房东沟通水电和入住时间。每段给出提示但不要泄露完整译文。' : isDialogue ? '例如：两个学生在食堂讨论周末计划，A 邀请 B 去爬山，B 有事但想改天。' : '例如：B1 学生收到学校社团延期通知，需要给组织者写一封邮件，说明影响、提出两个问题并建议新的时间。'} />
+              <div className="flex items-start gap-2"><span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><Sparkles className="size-3.5" /></span><div><p className="text-sm font-semibold">AI 命题助手</p><p className="mt-0.5 text-xs leading-5 text-muted-foreground">{isTranslation ? '先选好单句/篇章。单句只要一句短句；篇章要生成一篇可连贯阅读的短文并拆成 3–6 段。' : isDialogue ? '描述对话场景和角色关系，AI 生成对话轮次和提示。' : isMessage ? '描述收件人、沟通目的和必须写清的信息；生成短消息题，不要写成邮件。' : isParagraph ? '描述一个具体主题，生成单段短文题（中心句 + 细节），不要做成多段议论文。' : isEssay ? '描述观点议题，生成多段议论文题（立场、理由、例子）；正式雅思题请用话题类型「雅思写作」。' : '描述考试场景和能力目标，AI 会生成完整题干与评分要点；生成后仍需人工审题。'}</p></div></div>
+              <Textarea value={instruction} onChange={(event) => setInstruction(event.target.value)} className="min-h-28 resize-y" maxLength={2000} placeholder={isTranslation ? '单句例：B1，中译英单句。主题：第一次租房。只要一句，如“这是我第一次租房。”\n篇章例：B1，中译英篇章。以租客视角写一则短留言，分 4 段：自我介绍、问水电、问押金、问入住时间。不要把房东回答塞进同一段。' : isDialogue ? '例如：两个学生在食堂讨论周末计划，A 邀请 B 去爬山，B 有事但想改天。' : isMessage ? '例如：B1，消息。约好周末看电影但周六有事，给同学发短消息改期，给两个新时间，像微信聊天，不要写成邮件。词数 40–70。' : isParagraph ? '例如：B1，短段落。介绍你最常去的一家咖啡店：先写中心句，再补位置、氛围和你喜欢它的一个原因。只写一段，80–120 词。' : isEssay ? '例如：B2，议论文。有人认为学生应多做兼职，你是否同意？写多段短文：明确立场、给出两个理由并各举一例。150–220 词。' : '例如：B1 学生收到学校社团延期通知，需要给组织者写一封邮件，说明影响、提出两个问题并建议新的时间。'} />
               <Button type="button" onClick={generateDraft} disabled={generating} size="sm" className="w-full">{generating ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <Sparkles className="mr-1.5 size-3.5" />}{generating ? '正在命题' : '生成完整题目'}</Button>
             </PopoverContent>
           </Popover>
@@ -174,7 +209,7 @@ function WritingFields({
                   reset.scope = 'sentence'
                   reset.sourceTitle = ''
                   reset.sourceText = ''
-                  reset.segments = [{ id: 's1', source: '', reference: '', hint: '' }]
+                  reset.segments = [{ id: 's1', source: '', reference: '', hint: '', referenceExplanation: '' }]
                   reset.minWords = 0
                   reset.maxWords = 300
                 } else if (nextGenre === 'dialogue') {
@@ -186,6 +221,24 @@ function WritingFields({
                   reset.rubric = undefined
                   reset.minWords = 40
                   reset.maxWords = 120
+                } else if (nextGenre === 'message') {
+                  reset.turns = undefined
+                  reset.direction = undefined
+                  reset.scope = undefined
+                  reset.sourceTitle = undefined
+                  reset.sourceText = undefined
+                  reset.segments = undefined
+                  reset.minWords = 30
+                  reset.maxWords = 80
+                } else if (nextGenre === 'email') {
+                  reset.turns = undefined
+                  reset.direction = undefined
+                  reset.scope = undefined
+                  reset.sourceTitle = undefined
+                  reset.sourceText = undefined
+                  reset.segments = undefined
+                  reset.minWords = 80
+                  reset.maxWords = 180
                 } else if (value.genre === 'dialogue' || value.genre === 'translation') {
                   reset.turns = undefined
                   reset.situation = undefined
@@ -197,17 +250,26 @@ function WritingFields({
                   reset.questionMarkdown = ''
                   reset.minWords = 80
                   reset.maxWords = 180
+                } else if (nextGenre === 'paragraph') {
+                  reset.minWords = 80
+                  reset.maxWords = 120
+                } else if (nextGenre === 'essay') {
+                  reset.minWords = 150
+                  reset.maxWords = 220
+                } else if (nextGenre === 'journal') {
+                  reset.minWords = 80
+                  reset.maxWords = 180
                 }
                 onChange({ ...value, ...reset })
               }}
             >
-              <option value="translation">中英互译</option>
-              <option value="dialogue">对话</option>
               <option value="message">消息</option>
               <option value="journal">日记</option>
               <option value="email">邮件 / 书信</option>
-              <option value="paragraph">段落</option>
-              <option value="essay">议论文</option>
+              <option value="paragraph">短段落（基础）</option>
+              <option value="essay">议论文 / 观点文</option>
+              <option value="dialogue">对话</option>
+              <option value="translation">中英互译</option>
             </Select>
             <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
               {value.genre === 'translation' && '中英互译，支持单句或篇章；学习者在原文下方填写目标语言译文，AI 会逐段反馈。'}
@@ -215,8 +277,8 @@ function WritingFields({
               {value.genre === 'message' && '简短社交消息，如短信、微信聊天。直接、口语化，通常 30-80 词。'}
               {value.genre === 'journal' && '个人日记或周记，第一人称记录经历、感受和反思。语气自由。'}
               {value.genre === 'email' && '邮件或书信，有明确收件人和沟通目的，注意称呼和结尾礼仪。'}
-              {value.genre === 'paragraph' && '围绕一个主题的段落练习，3-5 句话，结构清晰。适合基础写作训练。'}
-              {value.genre === 'essay' && '正式议论文，需明确观点、论据支撑和逻辑结构。适合考试准备。'}
+              {value.genre === 'paragraph' && '只写一段：中心句 + 支撑细节。练基础结构，通常 80–120 词。正式雅思 Task 不要用这个。'}
+              {value.genre === 'essay' && '多段观点文：立场、理由、例子。课程议论文用这个；正式雅思写作请把话题类型改成「雅思写作」。'}
             </p>
           </div>
           {isTranslation ? (
@@ -226,29 +288,29 @@ function WritingFields({
           ) : <>
             <div className="flex flex-col gap-1">
               <Label>最少词数</Label>
-              <Input type="number" min={20} value={value.minWords ?? (isDialogue ? 40 : 80)} onChange={(event) => onChange({ ...value, minWords: Number(event.target.value) })} />
+              <Input type="number" min={20} value={value.minWords ?? defaultMinWords} onChange={(event) => onChange({ ...value, minWords: Number(event.target.value) })} />
             </div>
             <div className="flex flex-col gap-1">
               <Label>最多词数</Label>
-              <Input type="number" min={20} value={value.maxWords ?? (isDialogue ? 120 : 180)} onChange={(event) => onChange({ ...value, maxWords: Number(event.target.value) })} />
+              <Input type="number" min={20} value={value.maxWords ?? defaultMaxWords} onChange={(event) => onChange({ ...value, maxWords: Number(event.target.value) })} />
             </div>
           </>}
         </div>
         {!isTranslation && <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <div className="space-y-1"><Label>情境描述</Label><Textarea value={value.situation ?? value.purpose ?? ''} onChange={(event) => onChange({ ...value, situation: event.target.value })} placeholder={isDialogue ? '例如：你和朋友 A 在咖啡店闲聊，A 问你周末有什么安排' : '例如：你是学生，收到社团活动延期通知，需要给组织者写邮件说明影响并建议新时间'} className="min-h-[5.5rem] resize-y" /></div>
-          <div className="space-y-1"><Label>写作要点（选填）</Label><Textarea value={requirements.join('\n')} onChange={(event) => onChange({ ...value, requirements: lines(event.target.value) })} placeholder={isDialogue ? '用自然的日常口语，不要太正式\n必要时给出具体信息（时间、地点等）' : '说明相关背景\n完成明确的沟通动作\n覆盖指定细节'} className="min-h-[5.5rem] resize-y" /></div>
+          <div className="space-y-1"><Label>情境描述</Label><Textarea value={value.situation ?? value.purpose ?? ''} onChange={(event) => onChange({ ...value, situation: event.target.value })} placeholder={isDialogue ? '例如：你和朋友 A 在咖啡店闲聊，A 问你周末有什么安排' : isMessage ? '例如：你约了同学周末看电影，但周六临时有事，需要发一条微信改期' : '例如：你是学生，收到社团活动延期通知，需要给组织者写邮件说明影响并建议新时间'} className="min-h-[5.5rem] resize-y" /></div>
+          <div className="space-y-1"><Label>写作要点（选填）</Label><Textarea value={requirements.join('\n')} onChange={(event) => onChange({ ...value, requirements: lines(event.target.value) })} placeholder={isDialogue ? '用自然的日常口语，不要太正式\n必要时给出具体信息（时间、地点等）' : isMessage ? '开门见山说明来意\n写清时间或原因\n提出明确下一步\n不要写成邮件称呼落款' : '说明相关背景\n完成明确的沟通动作\n覆盖指定细节'} className="min-h-[5.5rem] resize-y" /></div>
         </div>}
         </CollapsibleContent>
       </Collapsible>
 
       {/* ====== 对话模式专属 UI ====== */}
       {isTranslation ? (
-        <TranslationFields value={value} onChange={onChange} />
+        <TranslationFields value={value} sceneId={sceneId} context={context} onChange={onChange} />
       ) : isDialogue ? (
         <>
           {/* 对话轮次 */}
           <section className="flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-3"><SectionHeading icon={Target} step="02" title="对话轮次" description="每轮 A 先说一句话，学习者根据中文提示用英语填写 B 的回应；参考答案与讲解仅供 AI 评估和后台审阅。" /><Button type="button" size="sm" variant="outline" className="mt-1 shrink-0 gap-1.5" disabled={generatingReferences || !turns.length} onClick={generateDialogueReferences}>{generatingReferences ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5 text-primary" />}{generatingReferences ? '正在补全' : 'AI 补全答案与讲解'}</Button></div>
+            <div className="flex items-start justify-between gap-3"><SectionHeading icon={Target} step="02" title="对话轮次" description="每轮 A 先说一句话，学习者根据中文提示用英语填写 B 的回应；参考答案与见解仅供 AI 评估和后台审阅。" /><Button type="button" size="sm" variant="outline" className="mt-1 shrink-0 gap-1.5" disabled={generatingReferences || !turns.length} onClick={generateDialogueReferences}>{generatingReferences ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5 text-primary" />}{generatingReferences ? '正在补全' : 'AI 补全答案与见解'}</Button></div>
             <div className="flex flex-col gap-3">
               {turns.map((turn, index) => (
                 <div key={index} className="flex items-start gap-3 rounded-lg border border-border/70 bg-muted/20 p-3">
@@ -268,7 +330,7 @@ function WritingFields({
                       />
                     </div>
                     <div className="flex items-start gap-2">
-                      <Badge variant="outline" className="mt-1.5 shrink-0 border-sky-200 text-[10px] text-sky-700 dark:border-sky-800 dark:text-sky-400">讲解</Badge>
+                      <Badge variant="outline" className="mt-1.5 shrink-0 border-sky-200 text-[10px] text-sky-700 dark:border-sky-800 dark:text-sky-400">见解</Badge>
                       <Textarea
                         className="min-h-16 text-sm"
                         value={turn.referenceExplanation ?? ''}
@@ -348,6 +410,11 @@ function WritingFields({
             />
           </section>
 
+          <section className="flex flex-col gap-3 rounded-xl border border-emerald-200/70 bg-emerald-50/30 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/10">
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-sm font-semibold">参考答案与见解</p><p className="mt-1 text-xs leading-5 text-muted-foreground">仅供后台审阅与 AI 评估；参考答案和见解都不会出现在考生题目中。</p></div><Button type="button" size="sm" variant="outline" className="gap-1.5" disabled={generatingSupport || !String(value.questionMarkdown ?? '').trim()} onClick={generateWritingSupport}>{generatingSupport ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5 text-primary" />}{generatingSupport ? '正在补全' : 'AI 补全答案与见解'}</Button></div>
+            <div className="grid gap-3"><MarkdownEditor label="英文参考答案（Markdown）" value={value.referenceAnswer ?? ''} onChange={(referenceAnswer) => onChange({ ...value, referenceAnswer })} height={260} preview="live" placeholder={isMessage ? 'Hey Alex, sorry I can\'t make the movie this weekend — something came up on Saturday.\nCan we do next Sunday afternoon, or next weekend? Tell me what works for you!' : '## Reference Answer\n\nWrite a complete, natural English response here.'} /><MarkdownEditor label="见解（Markdown）" value={value.referenceExplanation ?? ''} onChange={(referenceExplanation) => onChange({ ...value, referenceExplanation })} height={260} preview="live" placeholder={isMessage ? '### 结构\n\n- 先道歉并说明改期\n- 再给两个可选时间\n- 最后请对方回复\n\n### 可借鉴表达\n\n- **something came up**：自然说明有事\n- **Can we do …?**：提出改期\n\n### 为什么这样写\n\n短、直接、像微信，没有邮件称呼和落款。' : '### 结构\n\n- 开头点明经历\n- 按时间顺序推进\n- 结尾收束感受或愿望\n\n### 可借鉴表达\n\n- **took off / landed**：描述飞行过程\n- **I was nervous, but …**：写出感受变化\n\n### 为什么这样写\n\n时间线清楚，细节支撑感受，结尾有认识。'} /></div>
+          </section>
+
           {/* 评分标准（仅正式文体显示） */}
           {isFormal && (
             <section className="flex flex-col gap-3">
@@ -370,62 +437,155 @@ function WritingFields({
         isDialogue={isDialogue}
         isTranslation={isTranslation}
         turns={turns}
-        translationPreview={<TranslationLearnerPreview value={value} />}
       />
     </div>
   )
 }
 
-type TranslationSegment = { id: string; source: string; reference: string; hint?: string }
+type TranslationSegment = { id: string; source: string; reference: string; hint?: string; referenceExplanation?: string }
 
-function TranslationFields({ value, onChange }: { value: Record<string, any>; onChange: (value: Record<string, any>) => void }) {
+function TranslationFields({
+  value,
+  sceneId,
+  context,
+  onChange,
+}: {
+  value: Record<string, any>
+  sceneId: string
+  context?: Props['draftContext']
+  onChange: (value: Record<string, any>) => void
+}) {
+  const [generatingSupport, setGeneratingSupport] = useState(false)
   const scope = value.scope === 'article' ? 'article' : 'sentence'
   const direction = value.direction === 'en_to_zh' ? 'en_to_zh' : 'zh_to_en'
   const segments: TranslationSegment[] = Array.isArray(value.segments) && value.segments.length
     ? value.segments
-    : [{ id: 's1', source: '', reference: '', hint: '' }]
+    : [{ id: 's1', source: '', reference: '', hint: '', referenceExplanation: '' }]
   const updateSegment = (index: number, patch: Partial<TranslationSegment>) => {
     const next = segments.map((segment, itemIndex) => itemIndex === index ? { ...segment, ...patch } : segment)
     onChange({ ...value, segments: next, sourceText: next.map((segment) => segment.source).filter(Boolean).join('\n\n') })
   }
   const setScope = (nextScope: 'sentence' | 'article') => {
-    const nextSegments = nextScope === 'sentence' ? [segments[0] ?? { id: 's1', source: '', reference: '', hint: '' }] : segments
+    const nextSegments = nextScope === 'sentence' ? [segments[0] ?? { id: 's1', source: '', reference: '', hint: '', referenceExplanation: '' }] : segments
     onChange({ ...value, scope: nextScope, segments: nextSegments, sourceText: nextSegments.map((segment) => segment.source).filter(Boolean).join('\n\n') })
   }
   const sourceLabel = direction === 'zh_to_en' ? '中文原文' : '英文原文'
   const referenceLabel = direction === 'zh_to_en' ? '英文参考译文' : '中文参考译文'
+  const emptySegment = (): TranslationSegment => ({ id: `s${Date.now()}`, source: '', reference: '', hint: '', referenceExplanation: '' })
+
+  const generateTranslationSupport = async () => {
+    if (generatingSupport) return
+    if (segments.some((segment) => !segment.source.trim())) {
+      toast.error('请先填写每段原文')
+      return
+    }
+    setGeneratingSupport(true)
+    try {
+      const result = await contentExperienceAdminApi.generateTranslationSupport(sceneId, {
+        direction,
+        scope,
+        sourceTitle: value.sourceTitle,
+        segments,
+        difficulty: context?.difficulty,
+        vocabulary: context?.vocabulary,
+        chunks: context?.chunks,
+        sentencePatterns: context?.sentencePatterns,
+      })
+      onChange({
+        ...value,
+        segments: segments.map((segment, index) => ({
+          ...segment,
+          reference: segment.reference || result.segments[index]?.reference || '',
+          hint: segment.hint || result.segments[index]?.hint || '',
+          referenceExplanation: segment.referenceExplanation || result.segments[index]?.referenceExplanation || '',
+        })),
+        sourceText: segments.map((segment) => segment.source).filter(Boolean).join('\n\n'),
+      })
+      toast.success('已补全缺失的参考译文、提示与见解')
+    } catch (error: any) {
+      toast.error(error?.message || 'AI 补全翻译资料失败')
+    } finally {
+      setGeneratingSupport(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
       <section className="space-y-3">
-        <SectionHeading icon={Languages} step="02" title="翻译方式" description="学习者阅读上层原文，并在下层横线式输入区写出目标语言译文。参考译文只发送给 AI 评估，不会在作答前显示。" />
+        <SectionHeading icon={Languages} step="02" title="翻译方式" description="学习者阅读上层原文，并在下层横线式输入区写出目标语言译文。参考译文与见解只供后台和 AI 评估，不会在作答前显示。" />
         <div className="grid gap-3 md:grid-cols-3">
           <div className="space-y-1"><Label>翻译方向</Label><Select value={direction} onChange={(event) => onChange({ ...value, direction: event.target.value })}><option value="zh_to_en">中文 → 英文</option><option value="en_to_zh">英文 → 中文</option></Select></div>
-          <div className="space-y-1"><Label>练习范围</Label><Select value={scope} onChange={(event) => setScope(event.target.value as 'sentence' | 'article')}><option value="sentence">单个句子</option><option value="article">一篇文章（逐段）</option></Select></div>
+          <div className="space-y-1"><Label>练习范围</Label><Select value={scope} onChange={(event) => setScope(event.target.value as 'sentence' | 'article')}><option value="sentence">单个句子（一句短句）</option><option value="article">一篇短文（3–6 段）</option></Select><p className="text-[11px] leading-relaxed text-muted-foreground">{scope === 'sentence' ? '只生成一句，不要堆多个问题或对话。' : '生成一篇单一视角的连贯短文，再拆段；不要把问答糊成一大段。'}</p></div>
           <div className="space-y-1"><Label>来源标题（选填）</Label><Input value={value.sourceTitle ?? ''} onChange={(event) => onChange({ ...value, sourceTitle: event.target.value })} placeholder="如：租房沟通" /></div>
         </div>
       </section>
 
       <section className="space-y-3">
-        <div className="flex items-start justify-between gap-3"><SectionHeading icon={FilePenLine} step="03" title={scope === 'article' ? '原文与逐段译文' : '原文与参考译文'} description={scope === 'article' ? '每一项在学习端对应一段原文和一条下划线输入区。篇章建议 2–8 段，每段语义完整。' : '单句题只有一项。提示可以给关键词或语法策略，但不要写出完整译文。'} />{scope === 'article' && <Button type="button" size="sm" variant="outline" className="shrink-0" onClick={() => onChange({ ...value, segments: [...segments, { id: `s${segments.length + 1}`, source: '', reference: '', hint: '' }] })}><Plus className="mr-1 size-3.5" />添加段落</Button>}</div>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <SectionHeading icon={FilePenLine} step="03" title={scope === 'article' ? '原文、参考译文与见解' : '原文、参考译文与见解'} description={scope === 'article' ? '每一项对应一段原文和下划线输入区。提示给学习者策略；见解给后台审阅与 AI 评估。' : '单句题只有一项。提示可给关键词或语法策略；见解用「结构 / 可借鉴表达 / 为什么这样写」。'} />
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <Button type="button" size="sm" variant="outline" className="gap-1.5" disabled={generatingSupport || !segments.some((segment) => segment.source.trim())} onClick={generateTranslationSupport}>
+              {generatingSupport ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5 text-primary" />}
+              {generatingSupport ? '正在补全' : 'AI 补全译文与见解'}
+            </Button>
+            {scope === 'article' && (
+              <Button type="button" size="sm" variant="outline" onClick={() => onChange({ ...value, segments: [...segments, emptySegment()] })}>
+                <Plus className="mr-1 size-3.5" />添加段落
+              </Button>
+            )}
+          </div>
+        </div>
         <div className="space-y-3">
           {segments.map((segment, index) => (
             <div key={`${segment.id}-${index}`} className="rounded-xl border border-border/70 bg-muted/20 p-4">
-              <div className="mb-3 flex items-center gap-2"><Badge variant="secondary">{scope === 'article' ? `第 ${index + 1} 段` : '翻译句'}</Badge>{scope === 'article' && <Button type="button" size="icon" variant="ghost" className="ml-auto size-8 text-muted-foreground hover:text-destructive" onClick={() => { const next = segments.filter((_, itemIndex) => itemIndex !== index); const fallback = next.length ? next : [{ id: 's1', source: '', reference: '', hint: '' }]; onChange({ ...value, segments: fallback, sourceText: next.map((item) => item.source).filter(Boolean).join('\n\n') }) }}><Trash2 className="size-3.5" /></Button>}</div>
-              <div className="grid gap-3 md:grid-cols-2"><div className="space-y-1.5"><Label>{sourceLabel}</Label><Textarea value={segment.source} onChange={(event) => updateSegment(index, { source: event.target.value })} className="min-h-24" placeholder={direction === 'zh_to_en' ? '请输入学习者需要翻译的中文原文' : 'Enter the English source text learners need to translate'} /></div><div className="space-y-1.5"><Label>{referenceLabel} <span className="text-muted-foreground">（仅 AI 可见）</span></Label><Textarea value={segment.reference} onChange={(event) => updateSegment(index, { reference: event.target.value })} className="min-h-24" placeholder={direction === 'zh_to_en' ? '输入自然的英文参考译文' : '输入自然的中文参考译文'} /></div></div>
-              <div className="mt-3 space-y-1.5"><Label>AI 提示（选填）</Label><Input value={segment.hint ?? ''} onChange={(event) => updateSegment(index, { hint: event.target.value })} placeholder="例如：先找主语和谓语；注意过去完成时，不要直接给出完整译文。" /></div>
+              <div className="mb-3 flex items-center gap-2">
+                <Badge variant="secondary">{scope === 'article' ? `第 ${index + 1} 段` : '翻译句'}</Badge>
+                {scope === 'article' && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="ml-auto size-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      const next = segments.filter((_, itemIndex) => itemIndex !== index)
+                      const fallback = next.length ? next : [{ id: 's1', source: '', reference: '', hint: '', referenceExplanation: '' }]
+                      onChange({ ...value, segments: fallback, sourceText: next.map((item) => item.source).filter(Boolean).join('\n\n') })
+                    }}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                )}
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label>{sourceLabel}</Label>
+                  <Textarea value={segment.source} onChange={(event) => updateSegment(index, { source: event.target.value })} className="min-h-24" placeholder={direction === 'zh_to_en' ? '请输入学习者需要翻译的中文原文' : 'Enter the English source text learners need to translate'} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{referenceLabel} <span className="text-muted-foreground">（仅后台 / AI）</span></Label>
+                  <Textarea value={segment.reference} onChange={(event) => updateSegment(index, { reference: event.target.value })} className="min-h-24" placeholder={direction === 'zh_to_en' ? '输入自然的英文参考译文' : '输入自然的中文参考译文'} />
+                </div>
+              </div>
+              <div className="mt-3 space-y-1.5">
+                <Label>学习者提示（选填）</Label>
+                <Input value={segment.hint ?? ''} onChange={(event) => updateSegment(index, { hint: event.target.value })} placeholder="例如：先找主语和谓语；注意过去完成时，不要直接给出完整译文。" />
+              </div>
+              <div className="mt-3 space-y-1.5 rounded-lg border border-emerald-200/70 bg-emerald-50/30 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/10">
+                <MarkdownEditor
+                  label="见解（Markdown）"
+                  value={segment.referenceExplanation ?? ''}
+                  onChange={(referenceExplanation) => updateSegment(index, { referenceExplanation })}
+                  height={200}
+                  preview="live"
+                  placeholder={'### 结构\n\n- 先译主干\n- 再补原因或细节\n\n### 可借鉴表达\n\n- **I would like to …**：礼貌表达意愿\n- **because …**：连接原因\n\n### 为什么这样写\n\n意思完整，语序自然，符合目标语言习惯。'}
+                />
+              </div>
             </div>
           ))}
         </div>
       </section>
     </div>
   )
-}
-
-function TranslationLearnerPreview({ value }: { value: Record<string, any> }) {
-  const direction = value.direction === 'en_to_zh' ? '英译中' : '中译英'
-  const segments: TranslationSegment[] = Array.isArray(value.segments) ? value.segments : []
-  return <div className="space-y-3"><div className="flex items-center justify-between"><Badge variant="secondary">{direction} · {value.scope === 'article' ? '篇章' : '单句'}</Badge>{value.sourceTitle && <span className="text-xs text-muted-foreground">{value.sourceTitle}</span>}</div>{segments.slice(0, 3).map((segment, index) => <div key={`${segment.id}-${index}`} className="rounded-lg bg-muted/35 p-3"><p className="text-sm leading-6 text-foreground">{segment.source || '（原文会显示在这里）'}</p><div className="mt-3 border-b-2 border-dashed border-primary/35 pb-2 text-sm text-muted-foreground">在这里填写译文</div></div>)}{segments.length > 3 && <p className="text-center text-xs text-muted-foreground">… 共 {segments.length} 段 …</p>}</div>
 }
 
 function SectionHeading({ icon: Icon, step, title, description }: { icon: typeof FilePenLine; step: string; title: string; description: string }) {
