@@ -54,6 +54,8 @@ function useNativeKeyboard() {
       if (!(activeElement instanceof HTMLElement)) return;
       if (!activeElement.matches('input, textarea, select, [contenteditable="true"]')) return;
       if (!activeElement.closest('[data-keyboard-overlay]')) return;
+      // 写作长文由页面按光标行滚动；这里按「整块输入框」滚会把光标顶飞。
+      if (activeElement.closest('[data-writing-caret-scroll]')) return;
 
       const scrollParent = findScrollParent(activeElement);
       if (!scrollParent) return;

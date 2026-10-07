@@ -144,6 +144,6 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   </>
 }
 
-const TeachingSectionView = memo(function TeachingSectionView({ section }: { section: TeachingSection }) { return <section className="px-4 py-3 first:pt-4 last:pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]"><MarkdownRenderer content={section.markdown} variant="teaching" /></section> })
+const TeachingSectionView = memo(function TeachingSectionView({ section }: { section: TeachingSection }) { return <section className="px-4 py-1.5 first:pt-3 last:pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]"><MarkdownRenderer content={section.markdown} variant="teaching" /></section> })
 function TeachingStatus({ text }: { text: string }) { return <div className="flex h-full items-center justify-center px-5"><p className="rounded-2xl border border-dashed border-border/70 px-4 py-8 text-center text-xs text-muted-foreground">{text}</p></div> }
 function TeachingContentPlaceholder() { return <div className="flex flex-col gap-3" aria-hidden="true"><div className="h-5 w-2/5 rounded-md bg-muted/60" /><div className="h-4 w-full rounded-md bg-muted/40" /><div className="h-4 w-[92%] rounded-md bg-muted/40" /><div className="h-4 w-[85%] rounded-md bg-muted/40" /></div> }

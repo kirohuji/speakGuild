@@ -473,25 +473,131 @@ function WritingKnowledgeActions({
   )
 }
 
-/** 键盘动画结束后，把输入区滚到键盘上方的安全可视范围。 */
-function scrollWritingInputIntoSafeView(
+/**
+ * textarea 没有可靠的原生 caret 屏幕坐标 API，只能用镜像 div 量一次位置。
+ * 这不是「画假光标」，只是测量；真光标仍是系统的。
+ * 性能：debounce 300ms + 仅 focus/click 触发，单次离屏 DOM 测量后立即移除。
+ */
+const TEXTAREA_CARET_MIRROR_PROPS = [
+  'direction', 'boxSizing', 'width',
+  'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle',
+  'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+  'fontStyle', 'fontVariant', 'fontWeight', 'fontStretch', 'fontSize', 'fontSizeAdjust',
+  'lineHeight', 'fontFamily', 'textAlign', 'textTransform', 'textIndent',
+  'textDecoration', 'letterSpacing', 'wordSpacing', 'tabSize', 'MozTabSize',
+  'whiteSpace', 'wordBreak', 'overflowWrap',
+] as const
+
+function getTextareaCaretCoordinates(textarea: HTMLTextAreaElement, position: number) {
+  const computed = window.getComputedStyle(textarea)
+  const mirror = document.createElement('div')
+  mirror.setAttribute('aria-hidden', 'true')
+  const style = mirror.style
+  style.position = 'absolute'
+  style.visibility = 'hidden'
+  style.overflow = 'hidden'
+  style.top = '0'
+  style.left = '-9999px'
+  for (const prop of TEXTAREA_CARET_MIRROR_PROPS) {
+    style[prop as any] = (computed as any)[prop]
+  }
+  // 宽度对齐可视内容区；高度必须 auto，否则长文测量会被裁切导致 top 偏小、越滚越高。
+  style.width = `${textarea.clientWidth}px`
+  style.height = 'auto'
+  style.whiteSpace = 'pre-wrap'
+  style.overflowWrap = 'break-word'
+
+  mirror.textContent = textarea.value.slice(0, position)
+  const marker = document.createElement('span')
+  marker.textContent = '|'
+  mirror.appendChild(marker)
+  document.body.appendChild(mirror)
+
+  const top = marker.offsetTop + (Number.parseFloat(computed.borderTopWidth) || 0)
+  const height = marker.offsetHeight || Number.parseFloat(computed.fontSize) || 17
+  document.body.removeChild(mirror)
+  return { top, height }
+}
+
+function resolveWritingTextarea(target: HTMLElement | null) {
+  if (!target) return null
+  if (target instanceof HTMLTextAreaElement) return target
+  return target.querySelector('textarea')
+}
+
+let writingCaretScrollTimer: number | undefined
+
+/**
+ * 键盘就绪后把光标行滚进安全区。
+ * 普通写作必须让 textarea 自己滚（定高 + overflow），不能靠外层被长文撑开，
+ * 否则光标已在「盒子」里会早退，表现为点底部无反应。
+ */
+function scheduleWritingInputSafeScroll(
   target: HTMLElement | null,
   scrollRegionSelector = '[data-writing-scroll-region]',
 ) {
-  window.setTimeout(() => {
-    const scrollRegion = target?.closest<HTMLElement>(scrollRegionSelector)
-    if (!target || !scrollRegion) return
+  window.clearTimeout(writingCaretScrollTimer)
+
+  const run = (attempt: number) => {
+    const textarea = resolveWritingTextarea(target)
+    const anchor = textarea ?? target
+    const scrollRegion = anchor?.closest<HTMLElement>(scrollRegionSelector)
+    if (!anchor || !scrollRegion) return
 
     const keyboardHeight =
       Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--keyboard-height')) || 0
-    const regionRect = scrollRegion.getBoundingClientRect()
-    const targetRect = target.getBoundingClientRect()
-    const safeBottom = Math.min(regionRect.bottom, window.innerHeight - keyboardHeight) - 16
-
-    if (targetRect.bottom > safeBottom) {
-      scrollRegion.scrollBy({ top: targetRect.bottom - safeBottom, behavior: 'smooth' })
+    // 键盘已打开但高度尚未写入时再等一轮，避免按 0 高度误判「已在安全区」。
+    if (document.body.dataset.keyboardOpen === 'true' && keyboardHeight < 1 && attempt < 2) {
+      writingCaretScrollTimer = window.setTimeout(() => run(attempt + 1), 180)
+      return
     }
-  }, 300)
+
+    const regionRect = scrollRegion.getBoundingClientRect()
+    const safeBottom = Math.min(regionRect.bottom, window.innerHeight - keyboardHeight) - 12
+    const safeTop = regionRect.top + 12
+
+    if (textarea) {
+      const caret = getTextareaCaretCoordinates(textarea, textarea.selectionEnd)
+      const textareaRect = textarea.getBoundingClientRect()
+      const caretInViewTop = caret.top - textarea.scrollTop
+      const caretScreenTop = textareaRect.top + caretInViewTop
+      const caretScreenBottom = caretScreenTop + caret.height
+      const maxInner = Math.max(0, textarea.scrollHeight - textarea.clientHeight)
+
+      // textarea 可视底边还要被键盘裁切
+      const clippedBottomInView = Math.min(textarea.clientHeight, safeBottom - textareaRect.top) - 8
+      const clippedTopInView = Math.max(0, safeTop - textareaRect.top) + 8
+
+      const outOfScreen = caretScreenBottom > safeBottom + 1 || caretScreenTop < safeTop - 1
+      const outOfTextareaBand =
+        maxInner > 0 && (caretInViewTop > clippedBottomInView || caretInViewTop < clippedTopInView)
+
+      if (!outOfScreen && !outOfTextareaBand) return
+
+      // 直接按内容坐标对齐：把光标行放到裁切可视区中部偏下，比累加 delta 更稳。
+      if (maxInner > 0) {
+        const avail = Math.max(caret.height + 24, clippedBottomInView - clippedTopInView)
+        const targetInView = clippedTopInView + Math.min(avail * 0.62, avail - caret.height - 8)
+        textarea.scrollTop = Math.max(0, Math.min(maxInner, caret.top - targetInView))
+        return
+      }
+
+      // 外层兜底（短气泡 / 尚未定高时）
+      if (caretScreenBottom > safeBottom) {
+        scrollRegion.scrollBy({ top: caretScreenBottom - safeBottom, behavior: 'auto' })
+      } else if (caretScreenTop < safeTop) {
+        scrollRegion.scrollBy({ top: caretScreenTop - safeTop, behavior: 'auto' })
+      }
+      return
+    }
+
+    const targetRect = anchor.getBoundingClientRect()
+    if (targetRect.bottom > safeBottom) {
+      scrollRegion.scrollBy({ top: targetRect.bottom - safeBottom, behavior: 'auto' })
+    }
+  }
+
+  writingCaretScrollTimer = window.setTimeout(() => run(0), 320)
 }
 
 function WritingEditor({
@@ -514,7 +620,7 @@ function WritingEditor({
   const [taskOpen, setTaskOpen] = useState(false)
   const [supportOpen, setSupportOpen] = useState(false)
   const [saving, setSaving] = useState(false)
-  const editorRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0
   const restore = useCallback((response: Record<string, unknown>) => setText(String(response.text ?? '')), [])
   const session = useTopicSession(topic.id, restore)
@@ -544,9 +650,9 @@ function WritingEditor({
     } catch (error: any) { toast.error(error?.message || t('learning.saveFailed')) } finally { setSaving(false) }
   }
 
-  // 与对话/互译相同：等键盘动画结束，按 --keyboard-height 把纸面滚进安全区。
-  const focusEditor = () => {
-    scrollWritingInputIntoSafeView(editorRef.current)
+  // focus 时 selection 可能未落到点击处，兼听 click；不听 select，避免打字时反复测量滚动。
+  const scheduleCaretScroll = () => {
+    scheduleWritingInputSafeScroll(textareaRef.current)
   }
 
   return (
@@ -588,17 +694,22 @@ function WritingEditor({
 
       {session.readOnly && view === 'analysis' ? (
         <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto max-w-2xl px-4 py-5 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]"><WritingAnalysisPanel analysis={session.analysis} /></div></main>
-      ) : <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-writing-scroll-region>
-        <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-5 pb-8 pt-5 sm:px-8 sm:pt-7">
-          {(config.referenceExplanation || config.referenceAnswer) && <button type="button" onClick={() => setSupportOpen(true)} className="mt-3 w-fit text-xs font-medium text-primary transition-opacity hover:opacity-70">{t('learning.seeWritingSupport')}</button>}
+      ) : (
+      // 定高 flex 链 + textarea 内滚（与互译一致）。若 min-h-full 被长文撑开，外层滚、内层 maxInner=0，底部点击会早退无反应。
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden" data-writing-scroll-region>
+        <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col px-5 pb-4 pt-5 sm:px-8 sm:pt-7">
+          {(config.referenceExplanation || config.referenceAnswer) && <button type="button" onClick={() => setSupportOpen(true)} className="mt-3 w-fit shrink-0 text-xs font-medium text-primary transition-opacity hover:opacity-70">{t('learning.seeWritingSupport')}</button>}
 
-          <div ref={editorRef} className="flex min-h-[55dvh] flex-1 flex-col pt-5" data-writing-editor>
+          <div className="flex min-h-0 flex-1 flex-col pt-3" data-writing-editor>
             <textarea
+              ref={textareaRef}
+              data-writing-caret-scroll
               value={text}
               onChange={(event) => setText(event.target.value)}
               readOnly={session.readOnly}
-              onFocus={focusEditor}
-              className="m-0 min-h-[52dvh] w-full flex-1 resize-none appearance-none rounded-none border-0 bg-transparent p-0 text-[17px] leading-8 text-foreground shadow-none outline-none ring-0 placeholder:text-muted-foreground/45 focus:border-0 focus:outline-none focus:ring-0"
+              onFocus={scheduleCaretScroll}
+              onClick={scheduleCaretScroll}
+              className="m-0 min-h-0 w-full flex-1 resize-none overflow-y-auto overscroll-contain appearance-none rounded-none border-0 bg-transparent p-0 text-[17px] leading-8 text-foreground shadow-none outline-none ring-0 placeholder:text-muted-foreground/45 focus:border-0 focus:outline-none focus:ring-0"
               placeholder={t('learning.writingPlaceholder')}
               autoCapitalize="sentences"
               autoCorrect="on"
@@ -606,7 +717,8 @@ function WritingEditor({
             />
           </div>
         </div>
-      </div>}
+      </div>
+      )}
 
       <footer className="shrink-0 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-xl pb-safe" data-writing-footer>
         <div className="mx-auto flex max-w-3xl items-center gap-3">
@@ -713,9 +825,9 @@ function TranslationEditor({
     setListOpen(false)
   }
 
-  // CSS 负责缩壳与分区；这里只兜底长译文/旧设备滚进安全区。
-  const focusTranslationInput = () => {
-    scrollWritingInputIntoSafeView(translationInputRef.current, '[data-writing-translation-answer-scroll]')
+  // CSS 负责缩壳与分区；长译文按光标滚进安全区（兼听 click；不听 select，避免打字抖动）。
+  const scheduleTranslationCaretScroll = () => {
+    scheduleWritingInputSafeScroll(translationInputRef.current, '[data-writing-translation-answer-scroll]')
   }
 
   const sourceLanguage = direction === 'zh_to_en' ? t('learning.sourceZh') : t('learning.sourceEn')
@@ -751,7 +863,7 @@ function TranslationEditor({
                 <Button variant="ghost" size="icon" className="size-8" onClick={() => setListOpen(true)} title={scope === 'article' ? t('learning.segmentList') : t('learning.sentenceList')}><ListMusic className="size-4" /></Button>
               </div>
             </div>
-            <div data-writing-translation-answer-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div data-writing-translation-input className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-5 py-4 sm:px-8"><div className="mb-3 flex shrink-0 items-center justify-between gap-3"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{answerLanguage}</p><Button type="button" size="sm" variant="ghost" onClick={() => setHintOpen(true)} disabled={!active?.hint} className="h-7 shrink-0 gap-1 px-2 text-primary" aria-label={t('learning.hint')}><Lightbulb className="size-3.5" />{t('learning.hint')}</Button></div><textarea ref={translationInputRef} data-writing-translation-textarea value={active ? answers[active.id] ?? '' : ''} onChange={(event) => active && setAnswers((current) => ({ ...current, [active.id]: event.target.value }))} readOnly={session.readOnly} onFocus={focusTranslationInput} className="min-h-[132px] w-full flex-1 resize-y bg-transparent p-0 text-[16px] leading-8 text-foreground outline-none placeholder:text-muted-foreground/45 focus:ring-0" placeholder={direction === 'zh_to_en' ? t('learning.translationPlaceholderEn') : t('learning.translationPlaceholderZh')} autoCapitalize="sentences" autoCorrect="on" spellCheck={direction === 'zh_to_en'} /></div></div>
+            <div data-writing-translation-answer-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div data-writing-translation-input className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-5 py-4 sm:px-8"><div className="mb-3 flex shrink-0 items-center justify-between gap-3"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{answerLanguage}</p><Button type="button" size="sm" variant="ghost" onClick={() => setHintOpen(true)} disabled={!active?.hint} className="h-7 shrink-0 gap-1 px-2 text-primary" aria-label={t('learning.hint')}><Lightbulb className="size-3.5" />{t('learning.hint')}</Button></div><textarea ref={translationInputRef} data-writing-caret-scroll data-writing-translation-textarea value={active ? answers[active.id] ?? '' : ''} onChange={(event) => active && setAnswers((current) => ({ ...current, [active.id]: event.target.value }))} readOnly={session.readOnly} onFocus={scheduleTranslationCaretScroll} onClick={scheduleTranslationCaretScroll} className="min-h-[132px] w-full flex-1 resize-y bg-transparent p-0 text-[16px] leading-8 text-foreground outline-none placeholder:text-muted-foreground/45 focus:ring-0" placeholder={direction === 'zh_to_en' ? t('learning.translationPlaceholderEn') : t('learning.translationPlaceholderZh')} autoCapitalize="sentences" autoCorrect="on" spellCheck={direction === 'zh_to_en'} /></div></div>
           </section>
         </main>
       )}
@@ -810,10 +922,10 @@ function DialogueEditor({
   const session = useTopicSession(topic.id, restore)
   useEffect(() => { if (session.readOnly) setView('analysis') }, [session.readOnly])
 
-  // B 输入框聚焦：底部对齐键盘上方（CSS 缩壳 + 滚动兜底）
+  // B 输入框聚焦：短气泡滚盒子；长回复时同样按光标滚。
   const inputWrapRef = useRef<HTMLDivElement>(null)
   const focusInput = () => {
-    scrollWritingInputIntoSafeView(inputWrapRef.current)
+    scheduleWritingInputSafeScroll(inputWrapRef.current)
   }
 
   const currentTurn = turns[currentIndex]
@@ -939,15 +1051,17 @@ function DialogueEditor({
               </div>
 
               {/* B's response input */}
-              <div ref={inputWrapRef} className="ml-9 mt-4">
+              <div ref={inputWrapRef} data-writing-caret-scroll className="ml-9 mt-4">
                 <div className="flex items-start gap-2.5">
                   <span className="mt-1 shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">B</span>
                   <div className="flex-1">
                     <textarea
+                      data-writing-caret-scroll
                       value={currentResponse}
                       onChange={(event) => setResponses({ ...responses, [currentIndex]: event.target.value })}
                       readOnly={session.readOnly}
                       onFocus={focusInput}
+                      onClick={focusInput}
                       className="min-h-[140px] w-full resize-none rounded-2xl rounded-tl-md border-0 bg-muted/40 p-4 text-[16px] leading-7 text-foreground outline-none ring-0 placeholder:text-muted-foreground/45 focus:bg-background focus:ring-2 focus:ring-primary/20"
                       placeholder={t('learning.dialogueReplyPlaceholder')}
                       autoCapitalize="sentences"

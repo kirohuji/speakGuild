@@ -93,15 +93,17 @@ export function MarkdownRenderer({ content, className, variant = 'default', head
         'prose-strong:text-foreground prose-td:text-foreground/85 prose-th:text-foreground',
         'prose-blockquote:text-muted-foreground prose-code:text-foreground prose-a:text-primary',
         isTeaching && [
-          'text-[15px] leading-7',
+          // 章节拆分后每个 .prose 常以标题开头；强制首子元素 mt-0，避免与 section 间距叠乘
+          'text-[15px] leading-7 [&>:first-child]:!mt-0',
           'prose-headings:tracking-tight',
-          'prose-h1:mb-5 prose-h1:text-2xl prose-h1:font-bold',
-          'prose-h2:mb-3 prose-h2:mt-8 prose-h2:border-b prose-h2:border-primary/15 prose-h2:pb-2 prose-h2:text-lg prose-h2:font-semibold',
-          'prose-h3:mb-2 prose-h3:mt-6 prose-h3:text-base prose-h3:font-semibold prose-h3:text-primary',
-          'prose-p:my-3 prose-p:leading-7',
+          'prose-h1:mb-3 prose-h1:mt-0 prose-h1:text-2xl prose-h1:font-bold',
+          // h2 去掉底部分割线；章节已按标题拆分，再加 border-b 会显得块状割裂
+          'prose-h2:my-1 prose-h2:border-none prose-h2:pb-0 prose-h2:text-lg prose-h2:font-semibold prose-h2:leading-snug',
+          'prose-h3:my-1 prose-h3:text-base prose-h3:font-semibold prose-h3:leading-snug prose-h3:text-primary',
+          'prose-p:my-2.5 prose-p:leading-7',
           'prose-li:my-1 prose-li:marker:text-primary/70',
           'prose-strong:font-semibold',
-          'prose-hr:my-7 prose-hr:border-border/60',
+          'prose-hr:my-5 prose-hr:border-border/60',
         ],
         className,
       )}

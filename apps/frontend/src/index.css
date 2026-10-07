@@ -372,11 +372,14 @@
 
   body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-compose] [data-writing-editor] {
     min-height: 0 !important;
-    padding-bottom: 1rem;
+    padding-bottom: 0.5rem;
   }
 
+  /* 普通写作纸面始终内滚；键盘时禁止被内容撑开 */
   body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-compose] [data-writing-editor] textarea {
     min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
   }
 
   /* 中英互译：保留精简原文对照，主要空间留给译文；nav 在收起键盘后恢复。 */
