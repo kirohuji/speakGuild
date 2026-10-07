@@ -1,5 +1,8 @@
 import {
+  isInProgressLearningUnit,
+  isStoryLearningUnit,
   learningApi,
+  MAX_CONCURRENT_LEARNING_UNITS,
   type LearningUnitSummary,
   type MyUnit,
   type StoryEpisodePlayerData,
@@ -292,6 +295,18 @@ export const learningRepository = {
   },
 
   async enrollUnit(unitId: string, unit?: LearningUnitSummary | UnitDetail | null): Promise<void> {
+    const alreadyEnrolled = await localDb.get<MyUnit>('my_learning_units', unitId)
+    if (!alreadyEnrolled && !(unit && isStoryLearningUnit(unit))) {
+      const localUnits = await localDb.list<MyUnit>('my_learning_units').catch(() => [])
+      const inProgressCount = localUnits.filter(isInProgressLearningUnit).length
+      if (inProgressCount >= MAX_CONCURRENT_LEARNING_UNITS) {
+        throw new ApiRequestError('server', 'LEARNING_UNIT_LIMIT_REACHED', {
+          status: 409,
+          apiCode: 'LEARNING_UNIT_LIMIT_REACHED',
+        })
+      }
+    }
+
     if (unit) await localDb.put('my_learning_units', summaryToMyUnit(unit))
     const outboxItem = await syncOutbox.enqueue({
       entityType: 'my_unit',

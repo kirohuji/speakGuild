@@ -2,6 +2,9 @@ import { create } from 'zustand'
 import { Network } from '@capacitor/network'
 import {
   learningApi,
+  isInProgressLearningUnit,
+  isStoryLearningUnit,
+  MAX_CONCURRENT_LEARNING_UNITS,
   type LearningUnitSummary,
   type LearningPackageType,
   type MyUnit,
@@ -334,6 +337,14 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       ? state.unitDetail
       : state.shopUnits.find((unit) => unit.id === unitId) ?? null)
     const packTitle = title ?? sourceUnit?.title ?? unitId
+
+    const alreadyEnrolled = state.myUnits.some((unit) => unit.id === unitId)
+    const isStory = sourceUnit ? isStoryLearningUnit(sourceUnit) : false
+    const inProgressCount = state.myUnits.filter(isInProgressLearningUnit).length
+    if (!alreadyEnrolled && !isStory && inProgressCount >= MAX_CONCURRENT_LEARNING_UNITS) {
+      toast.error(i18n.t('learning.concurrentUnitLimit'))
+      return false
+    }
 
     try {
       await learningRepository.enrollUnit(unitId, sourceUnit)

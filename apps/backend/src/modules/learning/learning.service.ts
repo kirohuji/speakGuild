@@ -2043,16 +2043,20 @@ export class LearningService {
   }
 
   /**
-   * 开始学习一个单元——创建进度记录（如果不存在），将其设为当前学习
-   * 限制同时最多学习 MAX_CONCURRENT_UNITS 个单元
+   * 开始学习一个单元——创建进度记录（如果不存在），将其设为当前学习。
+   * 与学习计划「进行中」一致：非剧情包、未完成（mastery < 100）最多 MAX_CONCURRENT_UNITS 个。
    */
   private readonly MAX_CONCURRENT_UNITS = 3;
+
+  private isStoryLearningPack(scene: { packageType?: string | null; contentMode?: string | null }) {
+    return scene.packageType === 'story' || scene.contentMode === 'story';
+  }
 
   async startUnit(userId: string, unitId: string) {
     await this.assertLearningPackAccess(userId, unitId, { allowExistingProgress: true });
     const scene = await this.prisma.scene.findUnique({
       where: { id: unitId },
-      select: { id: true, contentMode: true },
+      select: { id: true, contentMode: true, packageType: true },
     });
     if (!scene) return null;
 
@@ -2061,7 +2065,10 @@ export class LearningService {
       where: {
         userId,
         mastery: { lt: 100 },
-        scene: { contentMode: 'practice' },
+        scene: {
+          packageType: { not: 'story' },
+          contentMode: { not: 'story' },
+        },
       },
     });
 
@@ -2070,7 +2077,7 @@ export class LearningService {
       where: { userId_sceneId: { userId, sceneId: unitId } },
     });
 
-    if (!existing && scene.contentMode === 'practice' && existingCount >= this.MAX_CONCURRENT_UNITS) {
+    if (!existing && !this.isStoryLearningPack(scene) && existingCount >= this.MAX_CONCURRENT_UNITS) {
       throw new ConflictException({
         code: 'LEARNING_UNIT_LIMIT_REACHED',
         message: `最多同时学习 ${this.MAX_CONCURRENT_UNITS} 个单元，请先完成当前单元`,

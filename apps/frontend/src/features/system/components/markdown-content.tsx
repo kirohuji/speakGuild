@@ -4,17 +4,17 @@ import remarkGfm from 'remark-gfm'
 export function MarkdownContent({ content }: { content: string }) {
   return (
     <article className="
-      text-sm leading-relaxed text-foreground/85
-      [&_h1]:font-display [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:mt-0 [&_h1]:mb-4
-      [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:mt-8 [&_h2]:mb-4
-      [&_h3]:font-display [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:tracking-tight [&_h3]:mt-6 [&_h3]:mb-3
-      [&_h4]:font-display [&_h4]:text-base [&_h4]:font-semibold [&_h4]:mt-5 [&_h4]:mb-2
-      [&_p]:mb-3 [&_p]:leading-relaxed
+      text-sm leading-relaxed text-foreground
+      [&_h1]:font-display [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:mt-0 [&_h1]:mb-4 [&_h1]:text-foreground
+      [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:text-foreground
+      [&_h3]:font-display [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:tracking-tight [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:text-foreground
+      [&_h4]:font-display [&_h4]:text-base [&_h4]:font-semibold [&_h4]:mt-5 [&_h4]:mb-2 [&_h4]:text-foreground
+      [&_p]:mb-3 [&_p]:leading-relaxed [&_p]:text-foreground/85
       [&_strong]:font-semibold [&_strong]:text-foreground
       [&_a]:text-primary [&_a]:no-underline hover:[&_a]:underline
       [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-3
       [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-3
-      [&_li]:mb-1 [&_li]:leading-relaxed
+      [&_li]:mb-1 [&_li]:leading-relaxed [&_li]:text-foreground/85
 
       /* 权限表格：第一列英文 key 小字徽章独占一行（居中），中文注释自动换行到下一行（居中） */
       [&_th:first-child]:text-center [&_td:first-child]:text-center [&_td:first-child>code]:block [&_td:first-child>code]:mx-auto [&_td:first-child>code]:w-fit [&_td:first-child>code]:mb-0.5 [&_td:first-child>code]:text-[9px] [&_td:first-child>code]:leading-tight

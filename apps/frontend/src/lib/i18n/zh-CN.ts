@@ -1531,7 +1531,7 @@ const zhCN = {
       questionNumberAria: '第 {{number}} 题',
       prevQuestion: '上一题',
       nextQuestion: '下一题',
-      submitEvaluation: '提交评估',
+      submitEvaluation: '提交',
       noComprehensionQuestions: '暂未配置理解题',
       writingRequirements: '写作要求',
       requirementsHint: '提交前确认已经覆盖这些内容',

@@ -1529,7 +1529,7 @@ const en = {
       questionNumberAria: 'Question {{number}}',
       prevQuestion: 'Previous',
       nextQuestion: 'Next',
-      submitEvaluation: 'Submit for Evaluation',
+      submitEvaluation: 'Submit',
       noComprehensionQuestions: 'No comprehension questions configured yet',
       writingRequirements: 'Writing Requirements',
       requirementsHint: 'Make sure these are covered before submitting',

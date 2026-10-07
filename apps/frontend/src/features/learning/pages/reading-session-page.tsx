@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, CheckCircle2, ChevronLeft, ChevronRight, FileText, Layers, Loader2, Search, Sparkles, Target, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, CheckCircle2, ChevronLeft, ChevronRight, ClipboardCheck, FileText, Layers, Loader2, RotateCcw, Search, Sparkles, Target, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
@@ -10,10 +10,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
+import { Switch } from '@/components/ui/switch'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
 import { cn } from '@/lib/cn'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useLearningStore } from '@/stores/learning.store'
+import { cacheReadingSession, clearReadingDraft, finalizeCachedReadingSession, getCachedReadingSession, getReadingDraft, saveReadingDraft } from '@/lib/offline/reading-draft.repository'
 import { learningApi, type TrainingTopicItem } from '../api/learning-api'
 
 type ReadingPhase = 'prepare' | 'answer'
@@ -53,7 +55,7 @@ export function ReadingSessionPage() {
     <>
       {phase === 'prepare'
         ? <ReadingPreparePage topic={topic} unitTitle={unit.title} onBack={() => navigate(-1)} onOpenGuide={() => setGuideOpen(true)} onStart={() => setPhase('answer')} />
-        : <ReadingAnswerPage topic={topic} unitTitle={unit.title} onClose={() => setPhase('prepare')} onOpenGuide={() => setGuideOpen(true)} />}
+        : <ReadingAnswerPage topic={topic} unitTitle={unit.title} onClose={() => setPhase('prepare')} />}
       <PracticeVnDrawer open={guideOpen} onOpenChange={setGuideOpen} hideToggles teachingMarkdown={topic.teachingMarkdown?.trim() || topic.description?.trim() || ''} />
     </>
   )
@@ -126,18 +128,41 @@ function ReadingHeader({ topic, unitTitle, onBack }: { topic: TrainingTopicItem;
   return <header className="mb-4 flex min-h-10 items-center gap-3"><button type="button" onClick={onBack} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted" aria-label={t('learning.backToPack')}><ArrowLeft className="size-4" /></button><div className="min-w-0 flex-1"><p className="truncate text-xs text-muted-foreground">{unitTitle}</p><h1 className="truncate text-lg font-semibold tracking-tight">{topic.title}</h1></div><Badge variant="secondary">{topic.difficulty}</Badge></header>
 }
 
-function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: TrainingTopicItem; unitTitle: string; onClose: () => void; onOpenGuide: () => void }) {
+function ReadingAnswerPage({ topic, unitTitle, onClose }: { topic: TrainingTopicItem; unitTitle: string; onClose: () => void }) {
   const { t } = useTranslation()
   const config = topic.contentConfig?.reading ?? {}
   const questions: any[] = config.questions ?? []
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [analysisResult, setAnalysisResult] = useState<Record<string, any> | null>(null)
+  const [analysisError, setAnalysisError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
   const [currentQuestion, setCurrentQuestion] = useState(0)
+  const [view, setView] = useState<'answer' | 'analysis'>('answer')
+  const answersRef = useRef(answers)
+  const sessionIdRef = useRef<string | null>(null)
+  const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const draftSavingRef = useRef<Promise<void>>(Promise.resolve())
+  const finalizedRef = useRef(false)
   const answeredCount = questions.filter((_: any, index: number) => String(answers[String(index)] ?? '').trim()).length
   const question = questions[currentQuestion]
+  const hasCompletedAttempt = Boolean(analysisResult || analysisError)
+
+  useEffect(() => { answersRef.current = answers }, [answers])
+  useEffect(() => { sessionIdRef.current = sessionId }, [sessionId])
+
+  const flushDraft = (nextAnswers = answersRef.current) => {
+    const activeSessionId = sessionIdRef.current
+    if (!activeSessionId || finalizedRef.current) return Promise.resolve()
+    const snapshot = { ...nextAnswers }
+    draftSavingRef.current = draftSavingRef.current.then(() => saveReadingDraft(topic.id, activeSessionId, snapshot))
+    return draftSavingRef.current
+  }
+
+  const scheduleDraftSave = (nextAnswers: Record<string, string>) => {
+    if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
+    draftTimerRef.current = setTimeout(() => { void flushDraft(nextAnswers) }, 600)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -147,72 +172,187 @@ function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: 
         if (cancelled) return
         if (latest?.status === 'active') {
           setSessionId(latest.id)
-          if (latest.submissions?.[0]?.response?.answers) setAnswers(latest.submissions[0].response.answers)
+          await cacheReadingSession(topic.id, latest.id)
+          const localAnswers = await getReadingDraft(latest.id)
+          if (!cancelled) setAnswers(localAnswers ?? latest.submissions?.[0]?.response?.answers ?? {})
         } else if (latest?.status === 'analyzed') {
+          setSessionId(latest.id)
+          setAnswers(latest.submissions?.[0]?.response?.answers ?? {})
           setAnalysisResult(latest.analysisResult ?? null)
-          const created = await learningApi.startTopicSession(topic.id)
-          if (!cancelled) setSessionId(created.id)
+          setAnalysisError(latest.analysisError ?? null)
+          setView('analysis')
         } else {
           const created = await learningApi.startTopicSession(topic.id)
+          await cacheReadingSession(topic.id, created.id)
           if (!cancelled) setSessionId(created.id)
         }
-      } catch { /* 离线 */ }
+      } catch {
+        const cached = await getCachedReadingSession(topic.id).catch(() => null)
+        if (!cancelled && cached) {
+          setSessionId(cached.sessionId)
+          setAnswers(cached.answers)
+        }
+      }
     })()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+      if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
+      void flushDraft()
+    }
   }, [topic.id])
+
+  const startNewAttempt = async () => {
+    if (saving) return
+    setSaving(true)
+    try {
+      const created = await learningApi.startTopicSession(topic.id)
+      await cacheReadingSession(topic.id, created.id)
+      finalizedRef.current = false
+      setSessionId(created.id)
+      setAnswers({})
+      setCurrentQuestion(0)
+      setAnalysisResult(null)
+      setAnalysisError(null)
+      setView('answer')
+    } catch (error: any) {
+      toast.error(error?.message || t('learning.submitFailed'))
+    } finally { setSaving(false) }
+  }
 
   const submit = async () => {
     if (!sessionId || saving) return
     setSaving(true)
     try {
-      await learningApi.saveTopicSubmission(topic.id, { response: { answers }, status: 'submitted' })
+      if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
+      await flushDraft()
+      finalizedRef.current = true
+      await learningApi.saveTopicSubmission(topic.id, {
+        response: { answers },
+        status: 'submitted',
+        sessionId,
+      })
       await learningApi.completeTopicSession(topic.id, sessionId)
       const result = await learningApi.analyzeTopicSession(topic.id, sessionId)
+      await clearReadingDraft(sessionId)
+      await finalizeCachedReadingSession(sessionId)
       setAnalysisResult(result.analysis ?? null)
-      setSubmitted(true)
+      setAnalysisError(result.error ?? null)
+      setView('analysis')
       toast.success(t('learning.aiEvaluationDone'))
-    } catch (error: any) { toast.error(error?.message || t('learning.submitFailed')) } finally { setSaving(false) }
+    } catch (error: any) {
+      finalizedRef.current = false
+      toast.error(error?.message || t('learning.submitFailed'))
+    } finally { setSaving(false) }
   }
 
-  const showAnalysis = submitted || analysisResult
-
   return (
-    <div className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-[#fffefb] pt-safe dark:bg-background">
+    <div className="fixed inset-0 z-[10000] flex h-[100dvh] w-full max-w-[100vw] flex-col overflow-hidden bg-background pt-safe text-foreground">
       <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
-        <div className="mx-auto flex max-w-3xl items-center gap-3">
+        <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-3">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><BookOpen className="size-4" /></span>
-          <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Badge variant="secondary" className="text-[10px] h-5 px-1.5">{t('learning.readingPractice')}</Badge><span className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span></div><h1 className="truncate text-base font-bold leading-snug">{topic.title}</h1><p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p></div>
-          <button type="button" onClick={onClose} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground" aria-label={t('learning.exitAnswering')}><X className="size-3.5" /></button>
+          <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{t('learning.readingPractice')}</Badge><span className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span></div><h1 className="truncate text-base font-bold leading-snug">{topic.title}</h1><p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p></div>
+          {hasCompletedAttempt && (
+            <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 bg-background/80 py-1 pl-2 pr-1 shadow-sm">
+              <Sparkles className={cn('size-3.5 transition-colors', view === 'analysis' ? 'text-primary' : 'text-muted-foreground')} />
+              <Switch
+                checked={view === 'analysis'}
+                onCheckedChange={(checked) => setView(checked ? 'analysis' : 'answer')}
+                aria-label="切换 AI 评估"
+                title={view === 'analysis' ? '查看题目' : '查看 AI 评估'}
+              />
+              <button type="button" onClick={() => void startNewAttempt()} disabled={saving} title="重新练习" className="flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50" aria-label="重新练习"><RotateCcw className="size-3.5" /></button>
+            </div>
+          )}
+          <button type="button" onClick={onClose} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground" aria-label={t('learning.exitAnswering')}><X className="size-3.5" /></button>
         </div>
       </header>
-      {showAnalysis ? (
-        <ReadingAnalysisPanel analysis={analysisResult} onClose={onClose} />
+      {view === 'analysis' && hasCompletedAttempt ? (
+        <ReadingAnalysisPanel analysis={analysisResult} error={analysisError} onClose={onClose} />
       ) : (
-        <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(15rem,40dvh)]">
-          <section className="min-h-0 overflow-y-auto overscroll-contain" aria-label={t('learning.readingArticle')}>
-            <article className="mx-auto w-full max-w-3xl px-5 pb-6 pt-4 sm:px-8">
-              <div className="mb-3 flex items-center justify-between gap-3"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{t('learning.readingPassage')}</p><Button variant="ghost" size="sm" onClick={onOpenGuide} className="-mr-2 h-7 text-xs"><BookOpen className="size-3.5" />{t('learning.guide')}</Button></div>
-              <MarkdownRenderer content={String(config.questionMarkdown ?? '')} className="text-[16px] leading-8 prose-p:my-4 prose-p:leading-8 prose-img:my-5 prose-img:w-full" />
+        <main className="grid min-h-0 min-w-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(15rem,40dvh)]">
+          <section className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-contain" aria-label={t('learning.readingArticle')}>
+            <article className="mx-auto w-full max-w-3xl min-w-0 px-4 pb-6 pt-4 sm:px-6">
+              <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
+                <p className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{t('learning.readingPassage')}</p>
+              </div>
+              <MarkdownRenderer
+                content={String(config.questionMarkdown ?? '')}
+                className="min-w-0 max-w-full break-words text-[16px] leading-8 prose-p:my-4 prose-p:leading-8 prose-img:my-5 prose-img:w-full prose-pre:max-w-full prose-pre:overflow-x-auto prose-table:block prose-table:max-w-full prose-table:overflow-x-auto"
+              />
             </article>
           </section>
 
-          <section className="flex min-h-0 flex-col border-t border-border/70 bg-background shadow-[0_-8px_20px_rgba(0,0,0,0.04)]" aria-label={t('learning.readingQuestions')}>
-            <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-2 border-b border-border/50 px-4 py-2">
-              <p className="shrink-0 text-[11px] font-medium text-muted-foreground">{t('learning.questionsLabel')}</p>
+          <section className="flex min-h-0 min-w-0 flex-col border-t border-border/70 bg-card shadow-[0_-8px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_-8px_20px_rgba(0,0,0,0.25)]" aria-label={t('learning.readingQuestions')}>
+            <div className="mx-auto flex w-full max-w-3xl min-w-0 shrink-0 items-center gap-2 border-b border-border/50 px-4 py-2">
               <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
-                {questions.map((_: any, index: number) => <button key={index} type="button" onClick={() => setCurrentQuestion(index)} className={cn('flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold', currentQuestion === index ? 'border-primary bg-primary text-primary-foreground' : answers[String(index)] ? 'border-primary/30 bg-primary/10 text-primary' : 'border-border bg-background text-muted-foreground')} aria-label={t('learning.questionNumberAria', { number: index + 1 })}>{index + 1}</button>)}
+                {questions.map((_: any, index: number) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setCurrentQuestion(index)}
+                    className={cn(
+                      'flex size-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold',
+                      currentQuestion === index
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : answers[String(index)]
+                          ? 'border-primary/30 bg-primary/10 text-primary'
+                          : 'border-border bg-background text-muted-foreground',
+                    )}
+                    aria-label={t('learning.questionNumberAria', { number: index + 1 })}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
               </div>
-              <span className="shrink-0 text-[11px] text-muted-foreground">{answeredCount}/{questions.length}</span>
-              <div className="flex shrink-0 items-center gap-1.5">
-                <Button variant="outline" size="sm" className="h-8 px-2.5" disabled={currentQuestion === 0} onClick={() => setCurrentQuestion((index) => Math.max(0, index - 1))}><ChevronLeft className="size-4" />{t('learning.prevQuestion')}</Button>
-                {currentQuestion < questions.length - 1
-                  ? <Button size="sm" className="h-8 px-3" onClick={() => setCurrentQuestion((index) => Math.min(questions.length - 1, index + 1))}>{t('learning.nextQuestion')}<ChevronRight className="size-4" /></Button>
-                  : <Button size="sm" className="h-8 px-3" onClick={submit} disabled={saving || answeredCount < questions.length || questions.length === 0 || !sessionId}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{t('learning.submitEvaluation')}</Button>}
+              <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{answeredCount}/{questions.length}</span>
+              <div className="flex shrink-0 items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  disabled={currentQuestion === 0}
+                  onClick={() => setCurrentQuestion((index) => Math.max(0, index - 1))}
+                  aria-label={t('learning.prevQuestion')}
+                >
+                  <ChevronLeft className="size-4" />
+                </Button>
+                {currentQuestion < questions.length - 1 ? (
+                  <Button
+                    size="icon-sm"
+                    onClick={() => setCurrentQuestion((index) => Math.min(questions.length - 1, index + 1))}
+                    aria-label={t('learning.nextQuestion')}
+                  >
+                    <ChevronRight className="size-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="h-8 px-2.5"
+                    onClick={submit}
+                    disabled={saving || hasCompletedAttempt || answeredCount < questions.length || questions.length === 0 || !sessionId}
+                  >
+                    {saving ? <Loader2 className="size-4 animate-spin" /> : <ClipboardCheck className="size-4" />}
+                    {t('learning.submitEvaluation')}
+                  </Button>
+                )}
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-              <div className="mx-auto w-full max-w-3xl px-4 py-3 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
-                {question ? <ReadingQuestion index={currentQuestion} question={question} value={answers[String(currentQuestion)] ?? ''} onChange={(value) => setAnswers((current) => ({ ...current, [String(currentQuestion)]: value }))} /> : <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">{t('learning.noComprehensionQuestions')}</p>}
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
+              <div className="mx-auto w-full max-w-3xl min-w-0 px-4 py-3 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+                {question
+                  ? (
+                    <ReadingQuestion
+                      index={currentQuestion}
+                      question={question}
+                      value={answers[String(currentQuestion)] ?? ''}
+                      readOnly={hasCompletedAttempt}
+                      onChange={(value) => setAnswers((current) => {
+                        const next = { ...current, [String(currentQuestion)]: value }
+                        scheduleDraftSave(next)
+                        return next
+                      })}
+                    />
+                    )
+                  : <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">{t('learning.noComprehensionQuestions')}</p>}
               </div>
             </div>
           </section>
@@ -222,22 +362,61 @@ function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: 
   )
 }
 
-function ReadingQuestion({ index, question, value, onChange }: { index: number; question: any; value: string; onChange: (value: string) => void }) {
+function ReadingQuestion({ index, question, value, onChange, readOnly = false }: { index: number; question: any; value: string; onChange: (value: string) => void; readOnly?: boolean }) {
   const options = question.type === 'boolean' ? ['正确', '错误'] : (question.options ?? [])
   return (
-    <div className="rounded-xl bg-muted/30 p-4">
-      <div className="mb-3 flex items-start gap-3"><span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">{index + 1}</span><p className="pt-0.5 text-sm font-semibold leading-6">{question.prompt}</p></div>
-      {['choice', 'boolean'].includes(question.type) ? <div className="space-y-2">{options.map((option: string, optionIndex: number) => <button key={`${option}-${optionIndex}`} type="button" onClick={() => onChange(option)} className={cn('flex min-h-12 w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors', value === option ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-background')}><span className={cn('flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold', value === option ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground')}>{question.type === 'boolean' ? (optionIndex === 0 ? '✓' : '×') : String.fromCharCode(65 + optionIndex)}</span><span>{option}</span></button>)}</div> : <Textarea value={value} onChange={(event) => onChange(event.target.value)} className="min-h-28 resize-y bg-background" placeholder="根据阅读材料作答…" />}
+    <div className="min-w-0 rounded-xl bg-muted/30 p-4">
+      <div className="mb-3 flex min-w-0 items-start gap-3">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">{index + 1}</span>
+        <p className="min-w-0 flex-1 break-words pt-0.5 text-sm font-semibold leading-6 text-foreground">{question.prompt}</p>
+      </div>
+      {['choice', 'boolean'].includes(question.type) ? (
+        <div className="flex flex-col gap-2">
+          {options.map((option: string, optionIndex: number) => (
+            <button
+              key={`${option}-${optionIndex}`}
+              type="button"
+              disabled={readOnly}
+              onClick={() => onChange(option)}
+              className={cn(
+                'flex min-h-12 w-full min-w-0 items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
+                value === option ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-background text-foreground',
+              )}
+            >
+              <span className={cn(
+                'flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
+                value === option ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground',
+              )}
+              >
+                {question.type === 'boolean' ? (optionIndex === 0 ? '✓' : '×') : String.fromCharCode(65 + optionIndex)}
+              </span>
+              <span className="min-w-0 flex-1 break-words">{option}</span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <Textarea
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          readOnly={readOnly}
+          className="min-h-28 resize-y bg-background"
+          placeholder="根据阅读材料作答…"
+        />
+      )}
     </div>
   )
 }
 
-function ReadingAnalysisPanel({ analysis, onClose }: { analysis: Record<string, any> | null; onClose: () => void }) {
+function ReadingAnalysisPanel({ analysis, error, onClose }: { analysis: Record<string, any> | null; error?: string | null; onClose: () => void }) {
   if (!analysis) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">AI 正在评估你的回答...</p>
+        {error ? <X className="size-8 text-destructive" /> : <Loader2 className="size-8 animate-spin text-muted-foreground" />}
+        <div className="max-w-sm text-center">
+          <p className="text-sm font-medium text-foreground">{error ? 'AI 评估暂时未完成' : 'AI 正在评估你的回答...'}</p>
+          {error && <p className="mt-1 text-xs leading-5 text-muted-foreground">{error}</p>}
+          {error && <p className="mt-3 text-xs leading-5 text-muted-foreground">你可以在顶部切回题目查看本次答案，或点击“重新练习”开始新一轮。</p>}
+        </div>
       </main>
     )
   }
@@ -292,7 +471,7 @@ function ReadingAnalysisPanel({ analysis, onClose }: { analysis: Record<string, 
           )}
         </div>
         {analysis.nextStepSuggestion && (
-          <div className="rounded-xl border border-primary/10 bg-primary/[0.04] p-4">
+          <div className="rounded-xl bg-primary/[0.04] p-4">
             <h3 className="mb-1 text-sm font-semibold text-primary">下一步建议</h3>
             <p className="text-sm leading-6 text-muted-foreground">{analysis.nextStepSuggestion}</p>
           </div>

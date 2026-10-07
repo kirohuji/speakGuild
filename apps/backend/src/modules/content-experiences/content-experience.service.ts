@@ -1046,7 +1046,7 @@ Rules for generate mode:
       where: { userId, topicId },
       orderBy: { createdAt: 'desc' },
       select: {
-        id: true, status: true, analysisResult: true,
+        id: true, status: true, analysisResult: true, analysisError: true,
         startedAt: true, completedAt: true, analyzedAt: true, createdAt: true,
         submissions: { select: { id: true, revision: true, response: true } },
       },
@@ -1058,7 +1058,7 @@ Rules for generate mode:
       where: { userId, topicId },
       orderBy: { createdAt: 'desc' },
       select: {
-        id: true, status: true, analysisResult: true,
+        id: true, status: true, analysisResult: true, analysisError: true,
         startedAt: true, completedAt: true, analyzedAt: true, createdAt: true,
         submissions: { orderBy: { revision: 'desc' }, take: 1, select: { id: true, revision: true, response: true } },
       },
@@ -1092,7 +1092,7 @@ Rules for generate mode:
       const model = this.llmFactory.create(config);
 
       if (activityType === 'reading') {
-        const result = await this.analyzeReading(session, submission, contentConfig, { title, promptEn, promptZh }, model, config);
+        const result = await this.analyzeReading(session, submission, contentConfig, { title, promptEn, promptZh }, config);
         analysis = result.analysis;
         raw = result.raw;
       } else if (activityType === 'writing') {
@@ -1134,8 +1134,7 @@ Rules for generate mode:
     submission: any,
     contentConfig: any,
     topicInfo: { title: string; promptEn: string; promptZh: string },
-    model: any,
-    _llmConfig: any,
+    llmConfig: LlmConfig,
   ) {
     const reading = (contentConfig as any)?.reading ?? {};
     const questions: any[] = reading.questions ?? [];
@@ -1157,9 +1156,7 @@ Rules for generate mode:
       questions: questionDetails,
     });
 
-    const { text } = await generateText({
-      model,
-      system: `You are an ESL reading coach evaluating a learner's comprehension answers. Return one valid JSON object only. Required shape:
+    const system = `You are an ESL reading coach evaluating a learner's comprehension answers. Return one valid JSON object only. Required shape:
 {
   "overallScore": 0-100,
   "summary": "Chinese summary of overall performance",
@@ -1173,12 +1170,15 @@ Rules for generate mode:
   "improvements": ["Chinese improvement 1", ...],
   "nextStepSuggestion": "Chinese suggestion for next study focus"
 }
-Compare the learner's answer to the referenceAnswer and acceptedAnswers. Ground every claim in the supplied content. Be encouraging but honest.`,
-      prompt,
-      temperature: 0.35,
-      maxOutputTokens: 2000,
-    });
+Compare the learner's answer to the referenceAnswer and acceptedAnswers. Ground every claim in the supplied content. Be encouraging but honest.
+Keep the response compact: each comment and evidenceMatch must be at most 50 Chinese characters; return at most 3 strengths and 3 improvements; nextStepSuggestion must be at most 60 Chinese characters.`;
 
+    // Use the established JSON request path: for DeepSeek it sets
+    // response_format=json_object, disables thinking, and explicitly rejects
+    // a length-truncated response before parsing it. This is intentional: an
+    // evaluation must succeed as one complete first-pass response, not be
+    // repaired or silently replaced after the fact.
+    const text = await this.generateWritingJson(llmConfig, system, prompt, 5000);
     return { analysis: parseJsonResponse(text), raw: text };
   }
 

@@ -1528,7 +1528,7 @@ const ja = {
       questionNumberAria: '第 {{number}} 問',
       prevQuestion: '前の問題',
       nextQuestion: '次の問題',
-      submitEvaluation: '評価を送信',
+      submitEvaluation: '送信',
       noComprehensionQuestions: '理解問題がまだ設定されていません',
       writingRequirements: '作文の要件',
       requirementsHint: '提出前にこれらの内容をカバーしているか確認してください',

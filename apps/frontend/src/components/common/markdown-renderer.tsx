@@ -87,16 +87,20 @@ export function MarkdownRenderer({ content, className, variant = 'default', head
   return (
     <div
       className={cn(
-        'prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed text-foreground/85',
+        // 正文颜色走语义 token，避免仅依赖 dark:prose-invert（typography 默认字色在暗色下偏黑）
+        'prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed text-foreground',
+        'prose-headings:text-foreground prose-p:text-foreground/85 prose-li:text-foreground/85',
+        'prose-strong:text-foreground prose-td:text-foreground/85 prose-th:text-foreground',
+        'prose-blockquote:text-muted-foreground prose-code:text-foreground prose-a:text-primary',
         isTeaching && [
-          'text-[15px] leading-7 text-foreground/82',
-          'prose-headings:tracking-tight prose-headings:text-foreground',
+          'text-[15px] leading-7',
+          'prose-headings:tracking-tight',
           'prose-h1:mb-5 prose-h1:text-2xl prose-h1:font-bold',
           'prose-h2:mb-3 prose-h2:mt-8 prose-h2:border-b prose-h2:border-primary/15 prose-h2:pb-2 prose-h2:text-lg prose-h2:font-semibold',
           'prose-h3:mb-2 prose-h3:mt-6 prose-h3:text-base prose-h3:font-semibold prose-h3:text-primary',
           'prose-p:my-3 prose-p:leading-7',
           'prose-li:my-1 prose-li:marker:text-primary/70',
-          'prose-strong:font-semibold prose-strong:text-foreground',
+          'prose-strong:font-semibold',
           'prose-hr:my-7 prose-hr:border-border/60',
         ],
         className,

@@ -30,6 +30,7 @@ import { useLearningStore } from '@/stores/learning.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import { toast } from 'sonner'
+import { isInProgressLearningUnit, isStoryLearningUnit } from '../api/learning-api'
 import { MyLearningView } from '../components/my-learning-view'
 import { ShopView } from '../components/shop-view'
 import { LearningPackDownloadDrawer, LearningPackDownloadStatusButton } from '@/layout/learning-pack-download-monitor'
@@ -100,9 +101,9 @@ export function LearningPlanPage() {
     }
   }, [location.key, myUnits.length, refreshMyUnits])
 
-  // 学习页不显示剧情包（story）
-  const learningUnits = myUnits.filter((unit) => unit.packageType !== 'story')
-  const inProgress = learningUnits.filter((unit) => unit.completionPercent < 100)
+  // 学习页不显示剧情包（story）；进行中口径与加入上限一致
+  const learningUnits = myUnits.filter((unit) => !isStoryLearningUnit(unit))
+  const inProgress = learningUnits.filter(isInProgressLearningUnit)
   const completed = learningUnits.filter((unit) => unit.completionPercent >= 100)
 
   return (

@@ -275,6 +275,24 @@ export interface MyUnit {
   completionPercent: number
 }
 
+/** 与学习计划「进行中」一致：非剧情包最多同时未完成 3 个。 */
+export const MAX_CONCURRENT_LEARNING_UNITS = 3
+
+export function isStoryLearningUnit(unit: {
+  packageType?: string | null
+  contentMode?: string | null
+}) {
+  return unit.packageType === 'story' || unit.contentMode === 'story'
+}
+
+export function isInProgressLearningUnit(unit: {
+  packageType?: string | null
+  contentMode?: string | null
+  completionPercent?: number | null
+}) {
+  return !isStoryLearningUnit(unit) && (unit.completionPercent ?? 0) < 100
+}
+
 export interface TagInfo {
   name: string
   icon: string | null
@@ -311,6 +329,7 @@ export interface TopicSession {
   id: string
   status: 'active' | 'completed' | 'analyzed'
   analysisResult?: Record<string, any> | null
+  analysisError?: string | null
   startedAt: string
   completedAt?: string | null
   analyzedAt?: string | null

@@ -45,7 +45,7 @@ export function ReadingLearnerPhonePreview({ value, context }: Props) {
         <Badge variant="secondary" className="text-[10px]">本地交互预览</Badge>
       </div>
       <div className="mx-auto w-full max-w-[390px] rounded-[2.7rem] bg-zinc-950 p-2 shadow-[0_18px_45px_-20px_rgba(0,0,0,0.65)] ring-1 ring-black/20 dark:ring-white/15">
-        <div className="relative h-[min(46rem,calc(100vh-9rem))] min-h-[34rem] overflow-hidden rounded-[2.15rem] bg-[#fffefb] dark:bg-background">
+        <div className="relative h-[min(46rem,calc(100vh-9rem))] min-h-[34rem] overflow-hidden rounded-[2.15rem] bg-background text-foreground">
           <div className="absolute left-1/2 top-2 z-10 h-6 w-24 -translate-x-1/2 rounded-full bg-zinc-950" aria-hidden="true" />
           {phase === 'prepare'
             ? <ReadingPreparePreview value={value} context={context} onStart={() => setPhase('answer')} />
@@ -182,22 +182,25 @@ function ReadingAnswerPreview({ value, context, onClose }: Props & { onClose: ()
           <Button variant="outline" className="mt-4 w-full" onClick={onClose}>返回准备页</Button>
         </main>
       ) : (
-        <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(11rem,42%)]">
-          <section className="min-h-0 overflow-y-auto overscroll-contain" aria-label="阅读材料">
-            <article className="mx-auto w-full px-5 pb-6 pt-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Passage</p>
-                <Button variant="ghost" size="sm" className="-mr-2 h-7 text-xs"><BookOpen className="size-3.5" />指南</Button>
+        <main className="grid min-h-0 min-w-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(11rem,42%)]">
+          <section className="min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-contain" aria-label="阅读材料">
+            <article className="mx-auto w-full min-w-0 px-4 pb-6 pt-4">
+              <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
+                <p className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">Passage</p>
               </div>
               {value.questionMarkdown?.trim()
-                ? <MarkdownRenderer content={String(value.questionMarkdown)} className="text-[16px] leading-8 prose-p:my-4 prose-p:leading-8 prose-img:my-5 prose-img:w-full" />
+                ? (
+                  <MarkdownRenderer
+                    content={String(value.questionMarkdown)}
+                    className="min-w-0 max-w-full break-words text-[16px] leading-8 prose-p:my-4 prose-p:leading-8 prose-img:my-5 prose-img:w-full prose-pre:max-w-full prose-pre:overflow-x-auto"
+                  />
+                  )
                 : <p className="text-sm text-muted-foreground">阅读材料会显示在这里</p>}
             </article>
           </section>
 
-          <section className="flex min-h-0 flex-col border-t border-border/70 bg-background shadow-[0_-8px_20px_rgba(0,0,0,0.04)]" aria-label="理解题">
-            <div className="flex shrink-0 items-center gap-2 border-b border-border/50 px-3 py-2">
-              <p className="shrink-0 text-[11px] font-medium text-muted-foreground">题目</p>
+          <section className="flex min-h-0 min-w-0 flex-col border-t border-border/70 bg-card shadow-[0_-8px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_-8px_20px_rgba(0,0,0,0.25)]" aria-label="理解题">
+            <div className="flex min-w-0 shrink-0 items-center gap-2 border-b border-border/50 px-3 py-2">
               <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
                 {questions.map((_: any, index: number) => (
                   <button
@@ -213,24 +216,24 @@ function ReadingAnswerPreview({ value, context, onClose }: Props & { onClose: ()
                   </button>
                 ))}
               </div>
-              <span className="shrink-0 text-[11px] text-muted-foreground">{answeredCount}/{questions.length}</span>
-              <div className="flex shrink-0 items-center gap-1.5">
-                <Button variant="outline" size="sm" className="h-8 px-2.5" disabled={currentQuestion === 0} onClick={() => setCurrentQuestion((index) => Math.max(0, index - 1))}>
-                  <ChevronLeft className="size-4" />上一题
+              <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{answeredCount}/{questions.length}</span>
+              <div className="flex shrink-0 items-center gap-1">
+                <Button variant="outline" size="icon-sm" disabled={currentQuestion === 0} onClick={() => setCurrentQuestion((index) => Math.max(0, index - 1))} aria-label="上一题">
+                  <ChevronLeft className="size-4" />
                 </Button>
                 {currentQuestion < questions.length - 1 ? (
-                  <Button size="sm" className="h-8 px-3" onClick={() => setCurrentQuestion((index) => Math.min(questions.length - 1, index + 1))}>
-                    下一题<ChevronRight className="size-4" />
+                  <Button size="icon-sm" onClick={() => setCurrentQuestion((index) => Math.min(questions.length - 1, index + 1))} aria-label="下一题">
+                    <ChevronRight className="size-4" />
                   </Button>
                 ) : (
-                  <Button size="sm" className="h-8 px-3" onClick={() => setSubmitted(true)} disabled={answeredCount < questions.length || questions.length === 0}>
+                  <Button size="sm" className="h-8 px-2.5" onClick={() => setSubmitted(true)} disabled={answeredCount < questions.length || questions.length === 0}>
                     <Sparkles className="size-4" />提交
                   </Button>
                 )}
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-              <div className="px-4 py-3">
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
+              <div className="min-w-0 px-3 py-3">
                 {question ? (
                   <ReadingQuestionPreview
                     index={currentQuestion}
@@ -253,27 +256,27 @@ function ReadingAnswerPreview({ value, context, onClose }: Props & { onClose: ()
 function ReadingQuestionPreview({ index, question, value, onChange }: { index: number; question: any; value: string; onChange: (value: string) => void }) {
   const options = question.type === 'boolean' ? ['正确', '错误'] : (question.options ?? [])
   return (
-    <div className="rounded-xl bg-muted/30 p-4">
-      <div className="mb-3 flex items-start gap-3">
+    <div className="min-w-0 rounded-xl bg-muted/30 p-4">
+      <div className="mb-3 flex min-w-0 items-start gap-3">
         <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">{index + 1}</span>
-        <p className="pt-0.5 text-sm font-semibold leading-6">{question.prompt || '题干会显示在这里'}</p>
+        <p className="min-w-0 flex-1 break-words pt-0.5 text-sm font-semibold leading-6 text-foreground">{question.prompt || '题干会显示在这里'}</p>
       </div>
       {['choice', 'boolean'].includes(question.type) ? (
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           {options.map((option: string, optionIndex: number) => (
             <button
               key={`${option}-${optionIndex}`}
               type="button"
               onClick={() => onChange(option)}
               className={cn(
-                'flex min-h-12 w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
-                value === option ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-background',
+                'flex min-h-12 w-full min-w-0 items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
+                value === option ? 'border-primary bg-primary/10 text-foreground' : 'border-border/70 bg-background text-foreground',
               )}
             >
               <span className={cn('flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold', value === option ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground')}>
                 {question.type === 'boolean' ? (optionIndex === 0 ? '✓' : '×') : String.fromCharCode(65 + optionIndex)}
               </span>
-              <span>{option || `选项 ${String.fromCharCode(65 + optionIndex)}`}</span>
+              <span className="min-w-0 flex-1 break-words">{option || `选项 ${String.fromCharCode(65 + optionIndex)}`}</span>
             </button>
           ))}
         </div>

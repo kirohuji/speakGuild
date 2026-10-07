@@ -535,6 +535,7 @@ async function replayItem(
         response: payload.response,
         status: payload.status ?? 'submitted',
         revision: payload.revision,
+        sessionId: remoteSessionId,
       })
       return true
     }
