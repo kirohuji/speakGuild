@@ -25,8 +25,9 @@ import { VnPlayer, type VnPlayerLine, type VnPlayerHandle } from '@/features/vn-
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { cn } from '@/lib/cn'
 import { isIOS } from '@/lib/native'
-import { practiceRepository } from '@/lib/offline'
+import { learningRepository, practiceRepository } from '@/lib/offline'
 import { dailyPracticeRepository } from '@/lib/offline/daily-practice.repository'
+import { getTopicSessionForReview } from '@/lib/offline/topic-session-draft.repository'
 import { useLearningStore } from '@/stores/learning.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { usePreferencesStore } from '@/stores/preferences.store'
@@ -36,7 +37,9 @@ import { MyLearningView } from '../components/my-learning-view'
 import { ShopView } from '../components/shop-view'
 import { LearningPackDownloadDrawer, LearningPackDownloadStatusButton } from '@/layout/learning-pack-download-monitor'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { learningApi, type TopicSession } from '../api/learning-api'
+import { type TopicSession, type TrainingTopicItem } from '../api/learning-api'
+import { ReadingSessionReview } from './reading-session-page'
+import { WritingSessionReview } from './writing-session-page'
 
 export function LearningPlanPage() {
   const { t } = useTranslation()
@@ -152,7 +155,7 @@ export function LearningPlanPage() {
               <DrawerTitle className="text-base font-semibold">{t('profile.records')}</DrawerTitle>
             </DrawerHeader>
             <div className="min-h-0 flex-1 overflow-hidden px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-              <PracticeRecordsWithTabs />
+              <PracticeRecordsWithTabs active={recordsOpen} />
             </div>
           </DrawerContent>
         </Drawer>
@@ -193,7 +196,7 @@ export function LearningPlanPage() {
 
 
 // ─── Tabbed Records (VN + Warmup) ──────────────────────────────────────────
-function PracticeRecordsWithTabs() {
+function PracticeRecordsWithTabs({ active }: { active: boolean }) {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState('vn')
 
@@ -204,7 +207,7 @@ function PracticeRecordsWithTabs() {
         <TabsTrigger value="warmup" className="flex-1 text-xs">{t('learning.warmupPractice')}</TabsTrigger>
       </TabsList>
       <TabsContent value="vn" className="mt-0 min-h-0 flex-1 overflow-hidden">
-        <PracticeRecordsContent />
+        <PracticeRecordsContent active={active && activeTab === 'vn'} />
       </TabsContent>
       <TabsContent value="warmup" className="mt-0 min-h-0 flex-1 overflow-hidden">
         <WarmupRecordsContent />
@@ -541,19 +544,21 @@ function WarmupRecordDetailDrawer({
 
 
 // ─── 练习记录列表内容 ──────────────────────────────────────────────────────
-function PracticeRecordsContent() {
-  const { t, i18n } = useTranslation()
+function PracticeRecordsContent({ active }: { active: boolean }) {
+  const { t } = useTranslation()
   const [data, setData] = useState<PracticeRecordsResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [selectedRecord, setSelectedRecord] = useState<PracticeRecord | null>(null)
   const [recordTypes, setRecordTypes] = useState<Array<'dialogue' | 'reading' | 'writing'>>(['dialogue', 'reading', 'writing'])
+  const [filterOpen, setFilterOpen] = useState(false)
   const pageSize = 15
 
   useEffect(() => {
     let cancelled = false
     setIsLoading(true)
-    practiceRepository.refreshPracticeRecords({ page: 1, pageSize: 100 })
+    // 离线优先：有本地缓存直接展示；空缓存时 repository 内部再 refresh
+    void practiceRepository.listPracticeRecords({ page: 1, pageSize: 100 })
       .then((next) => {
         if (!cancelled) setData(next)
       })
@@ -567,6 +572,10 @@ function PracticeRecordsContent() {
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    if (!active) setFilterOpen(false)
+  }, [active])
+
   const visibleRecords = useMemo(() => (data?.list ?? []).filter((record) => recordTypes.includes(record.recordType ?? 'dialogue')), [data?.list, recordTypes])
   const pagedRecords = useMemo(() => visibleRecords.slice((page - 1) * pageSize, page * pageSize), [page, visibleRecords])
   const toggleRecordType = (type: 'dialogue' | 'reading' | 'writing') => {
@@ -574,15 +583,32 @@ function PracticeRecordsContent() {
     setRecordTypes((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type])
   }
   const isFiltered = recordTypes.length < 3
+  const filterTypeOptions = [
+    ['dialogue', t('profile.practiceRecords.filterTypes.dialogue')],
+    ['reading', t('profile.practiceRecords.filterTypes.reading')],
+    ['writing', t('profile.practiceRecords.filterTypes.writing')],
+  ] as const
 
   const columns: ColumnConfig<PracticeRecord>[] = [
     {
       key: 'topicName',
       header: t('profile.practiceRecords.columns.topic'),
-      cell: (v, row) => (
-        <div className="flex items-start gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5"><span className="text-sm font-medium">{v}</span><Badge variant="outline" className="h-5 px-1.5 text-[10px]">{row.recordType === 'reading' ? '阅读' : row.recordType === 'writing' ? '写作' : '对话'}</Badge></div>
+      cell: (v, row) => {
+        const type = row.recordType ?? 'dialogue'
+        const typeClass =
+          type === 'reading'
+            ? 'border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300'
+            : type === 'writing'
+              ? 'border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300'
+              : 'border-border/80 bg-muted/60 text-muted-foreground'
+        return (
+          <div className="min-w-0">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate text-sm font-medium">{v}</span>
+              <Badge variant="outline" className={cn('h-5 shrink-0 px-1.5 text-[10px] font-semibold opacity-90', typeClass)}>
+                {t(`profile.practiceRecords.types.${type}`)}
+              </Badge>
+            </div>
             {row.questionText && (
               <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{row.questionText}</p>
             )}
@@ -590,36 +616,46 @@ function PracticeRecordsContent() {
               <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground/70">{row.summary}</p>
             )}
           </div>
-          <Eye className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/60" />
-        </div>
-      ),
+        )
+      },
     },
     {
       key: 'status',
       header: t('profile.practiceRecords.columns.status'),
-      width: 110,
+      width: 88,
       cell: (v, row) => (
-        <div className="space-y-1">
-          <Badge variant={v === 'analyzed' ? 'default' : v === 'failed' ? 'destructive' : 'secondary'} className="text-[10px]">
-            {v === 'analyzed' ? t('profile.practiceRecords.status.analyzed') : v === 'analyzing' ? t('profile.practiceRecords.status.analyzing') : v === 'completed' ? t('profile.practiceRecords.status.completed') : v === 'failed' ? t('profile.practiceRecords.status.failed') : t('profile.practiceRecords.status.inProgress')}
-          </Badge>
-          <div className="text-[11px] text-muted-foreground">
-            {typeof row.score === 'number' && <span className="font-semibold text-primary tabular-nums">{row.score}{t('profile.reviewScoreUnit')}</span>}
-            {typeof row.score === 'number' && <span className="mx-1 text-border">·</span>}
-            <span>{row.practiceCount}{t('profile.reviewPracticeCountUnit')}</span>
+          <div className="inline-flex flex-col items-center gap-1">
+            <Badge variant={v === 'analyzed' ? 'default' : v === 'failed' ? 'destructive' : 'secondary'} className="max-w-full truncate text-[10px]">
+              {v === 'analyzed' ? t('profile.practiceRecords.status.analyzed') : v === 'analyzing' ? t('profile.practiceRecords.status.analyzing') : v === 'completed' ? t('profile.practiceRecords.status.completed') : v === 'failed' ? t('profile.practiceRecords.status.failed') : t('profile.practiceRecords.status.inProgress')}
+            </Badge>
+            <div className="flex flex-col items-center gap-0.5 text-[11px] leading-none text-muted-foreground">
+              {typeof row.score === 'number' && (
+                <span className="font-semibold text-primary tabular-nums">
+                  {row.score}
+                  <span className="ml-0.5 font-medium text-muted-foreground">{t('profile.reviewScoreUnit')}</span>
+                </span>
+              )}
+              <span className="tabular-nums">
+                {row.practiceCount ?? 0}
+                <span className="ml-0.5">{t('profile.reviewPracticeCountUnit')}</span>
+              </span>
+            </div>
           </div>
-        </div>
       ),
       align: 'center',
     },
     {
       key: 'lastPracticeAt',
       header: t('profile.practiceRecords.columns.date'),
-      cell: (v) => (
-        <span className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
-          {new Date(v).toLocaleDateString(i18n.language)}
-        </span>
-      ),
+      width: 64,
+      cell: (v) => {
+        const date = new Date(v)
+        return (
+          <span className="inline-block whitespace-nowrap text-xs text-muted-foreground tabular-nums">
+            {`${date.getMonth() + 1}/${date.getDate()}`}
+          </span>
+        )
+      },
       align: 'center',
     },
   ]
@@ -628,22 +664,62 @@ function PracticeRecordsContent() {
     <div className="flex h-full min-h-0 flex-col gap-2">
       <div className="flex shrink-0 items-center gap-2">
         <p className="min-w-0 flex-1 rounded-lg bg-muted/35 px-3 py-1.5 text-xs leading-5 text-muted-foreground">{t('profile.reviewIncompleteHint')}</p>
-        <Popover>
+        <Popover open={filterOpen} onOpenChange={setFilterOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className={cn('h-8 shrink-0 rounded-full border-border/70 bg-card px-2.5 text-xs shadow-none', isFiltered && 'border-primary/25 bg-primary/[0.07] text-primary hover:bg-primary/[0.1]')} aria-label="筛选练习记录">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 shrink-0 rounded-full px-2.5 text-xs"
+              aria-label={t('profile.practiceRecords.filterAria')}
+            >
               <Filter className="size-3.5" />
-              <span>{isFiltered ? `${recordTypes.length}/3` : '筛选'}</span>
+              <span>{isFiltered ? `${recordTypes.length}/3` : t('profile.practiceRecords.filter')}</span>
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="end" sideOffset={8} className="w-52 overflow-hidden rounded-2xl border-border/70 bg-card p-1.5 shadow-xl">
+          <PopoverContent
+            align="end"
+            sideOffset={8}
+            className="app-surface drawer-surface w-52 overflow-hidden rounded-xl border border-border/70 bg-background p-1.5 text-foreground shadow-md"
+          >
             <div className="flex items-center justify-between px-2.5 pb-1.5 pt-1">
-              <p className="text-xs font-semibold tracking-wide text-foreground">显示的练习类型</p>
-              {isFiltered && <button type="button" onClick={() => setRecordTypes(['dialogue', 'reading', 'writing'])} className="text-[11px] font-medium text-primary transition-opacity hover:opacity-70">全部显示</button>}
+              <p className="text-xs font-semibold tracking-wide text-foreground">{t('profile.practiceRecords.filterTitle')}</p>
+              {isFiltered && (
+                <button
+                  type="button"
+                  onClick={() => setRecordTypes(['dialogue', 'reading', 'writing'])}
+                  className="text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {t('profile.practiceRecords.showAll')}
+                </button>
+              )}
             </div>
             <div className="space-y-0.5">
-              {([['dialogue', '对话练习'], ['reading', '阅读练习'], ['writing', '写作练习']] as const).map(([type, label]) => {
+              {filterTypeOptions.map(([type, label]) => {
                 const selected = recordTypes.includes(type)
-                return <button key={type} type="button" role="checkbox" aria-checked={selected} onClick={() => toggleRecordType(type)} className={cn('flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-sm transition-colors', selected ? 'bg-primary/[0.08] text-foreground' : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground')}><span className={cn('flex size-4 shrink-0 items-center justify-center rounded-[5px] border transition-colors', selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background')}>{selected && <CheckCircle2 className="size-3" />}</span><span className="flex-1">{label}</span>{selected && <span className="text-[10px] font-medium text-primary">已显示</span>}</button>
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    role="checkbox"
+                    aria-checked={selected}
+                    onClick={() => toggleRecordType(type)}
+                    className={cn(
+                      'flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-muted',
+                      selected ? 'text-foreground' : 'text-muted-foreground',
+                    )}
+                  >
+                    <span className={cn(
+                      'flex size-4 shrink-0 items-center justify-center rounded-[5px] border transition-colors',
+                      selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background',
+                    )}>
+                      {selected && <CheckCircle2 className="size-3" />}
+                    </span>
+                    <span className="flex-1">{label}</span>
+                    {selected && (
+                      <span className="text-[10px] font-medium text-muted-foreground">{t('profile.practiceRecords.shown')}</span>
+                    )}
+                  </button>
+                )
               })}
             </div>
           </PopoverContent>
@@ -675,6 +751,14 @@ function PracticeRecordsContent() {
   )
 }
 
+function normalizeReadingAnswers(raw: unknown): Record<string, string> {
+  if (!raw || typeof raw !== 'object') return {}
+  if (Array.isArray(raw)) {
+    return Object.fromEntries(raw.map((item: any, index: number) => [String(item?.segmentId ?? index), String(item?.text ?? '')]))
+  }
+  return Object.fromEntries(Object.entries(raw as Record<string, unknown>).map(([key, value]) => [String(key), String(value ?? '')]))
+}
+
 function TopicSessionReadonlyReviewDrawer({
   record,
   open,
@@ -684,45 +768,93 @@ function TopicSessionReadonlyReviewDrawer({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+  const { t } = useTranslation()
   const [session, setSession] = useState<TopicSession | null>(null)
+  const [topic, setTopic] = useState<TrainingTopicItem | null>(null)
+  const [unitTitle, setUnitTitle] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!open || !record?.sessionId) return
+    if (!open || !record?.sessionId || !record.topicId) return
     let cancelled = false
     setLoading(true)
     setSession(null)
-    void learningApi.listTopicSessions(record.topicId)
-      .then((sessions) => {
-        if (!cancelled) setSession(sessions.find((item) => item.id === record.sessionId) ?? null)
-      })
-      .catch(() => { if (!cancelled) setSession(null) })
-      .finally(() => { if (!cancelled) setLoading(false) })
-    return () => { cancelled = true }
-  }, [open, record?.sessionId, record?.topicId])
+    setTopic(null)
+    setUnitTitle(record.topicName || '')
 
-  const response = session?.submissions?.[0]?.response ?? {}
-  const answers = Array.isArray(response.answers) ? response.answers : null
-  const turns = Array.isArray(response.turns) ? response.turns : null
+    const load = async () => {
+      const matched = await getTopicSessionForReview(record.sessionId, record.topicId)
+      if (cancelled) return
+      setSession(matched)
+
+      const unitId = record.unitId || (matched as { sceneId?: string } | null)?.sceneId
+      if (!unitId) {
+        setTopic(null)
+        return
+      }
+      // 已下载学习包走本地；未安装再请求并缓存
+      const unit = await learningRepository.getUnitDetail(unitId)
+      if (cancelled) return
+      if (!unit) {
+        setTopic(null)
+        return
+      }
+      setUnitTitle(unit.title || record.topicName || '')
+      setTopic(unit.trainingTopics.find((item) => item.id === record.topicId) ?? null)
+    }
+
+    void load()
+      .catch(() => {
+        if (!cancelled) {
+          setSession(null)
+          setTopic(null)
+        }
+      })
+      .finally(() => { if (!cancelled) setLoading(false) })
+
+    return () => { cancelled = true }
+  }, [open, record?.sessionId, record?.topicId, record?.topicName, record?.unitId])
+
+  const response = (session?.submissions?.[0]?.response ?? {}) as Record<string, unknown>
+  const close = () => onOpenChange(false)
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="flex h-[95dvh] max-h-[95dvh] flex-col rounded-t-[28px] border-border/70 bg-background drawer-surface">
-        <DrawerHeader className="shrink-0 border-b border-border/50 px-4 pb-3 pt-3 text-left">
-          <DrawerTitle className="text-base font-semibold">{record?.recordType === 'reading' ? '阅读练习回看' : '写作练习回看'}</DrawerTitle>
-          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{record?.questionText}</p>
+      <DrawerContent showHandle={false} className="h-[100dvh] max-h-[100dvh] rounded-none border-0 bg-background pt-safe">
+        <DrawerHeader className="sr-only">
+          <DrawerTitle>{record?.recordType === 'reading' ? t('learning.readingPractice') : t('learning.writingPractice')}</DrawerTitle>
         </DrawerHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
-          {loading ? <MobilePageLoading rows={4} minHeightClassName="min-h-64" /> : !session ? (
-            <p className="py-12 text-center text-sm text-muted-foreground">无法加载这次练习记录。</p>
-          ) : <div className="mx-auto max-w-2xl space-y-5">
-            <section className="rounded-xl bg-muted/35 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">你的作答</p>
-              {typeof response.text === 'string' ? <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-foreground">{response.text}</p> : answers ? <div className="mt-3 space-y-3">{answers.map((item: any, index: number) => <div key={item.segmentId ?? index} className="rounded-lg bg-background p-3"><p className="text-xs font-medium text-muted-foreground">第 {index + 1} 题</p><p className="mt-1 whitespace-pre-wrap text-sm leading-6">{String(item.text ?? '') || '未作答'}</p></div>)}</div> : turns ? <div className="mt-3 space-y-3">{turns.map((item: any, index: number) => <div key={index} className="rounded-lg bg-background p-3"><p className="text-xs text-muted-foreground">A：{item.aText}</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6">B：{item.userResponse || '未作答'}</p></div>)}</div> : <pre className="mt-3 whitespace-pre-wrap break-words text-xs leading-5 text-muted-foreground">{JSON.stringify(response, null, 2)}</pre>}
-            </section>
-            {session.analysisResult ? <section className="rounded-xl border border-primary/15 bg-primary/[0.04] p-4"><div className="flex items-center justify-between gap-3"><p className="text-sm font-semibold">AI 评估</p>{typeof session.analysisResult.overallScore === 'number' && <Badge>{session.analysisResult.overallScore}</Badge>}</div>{session.analysisResult.summary && <p className="mt-3 text-sm leading-6 text-muted-foreground">{session.analysisResult.summary}</p>}{Array.isArray(session.analysisResult.strengths) && session.analysisResult.strengths.length > 0 && <ul className="mt-3 space-y-1 text-sm leading-6">{session.analysisResult.strengths.map((item: string) => <li key={item}>✓ {item}</li>)}</ul>}{Array.isArray(session.analysisResult.improvements) && session.analysisResult.improvements.length > 0 && <ul className="mt-3 space-y-1 text-sm leading-6 text-amber-700 dark:text-amber-400">{session.analysisResult.improvements.map((item: string) => <li key={item}>→ {item}</li>)}</ul>}</section> : <p className="rounded-xl bg-muted/35 p-4 text-sm text-muted-foreground">本次练习暂未生成 AI 评估。</p>}
-          </div>}
-        </div>
+        {loading ? (
+          <MobilePageLoading rows={4} minHeightClassName="min-h-full" />
+        ) : !session || !topic ? (
+          <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+            <p className="text-sm text-muted-foreground">无法加载这次练习记录。</p>
+            <Button variant="outline" size="sm" onClick={close}>{t('common.close')}</Button>
+          </div>
+        ) : record?.recordType === 'reading' ? (
+          <ReadingSessionReview
+            topic={topic}
+            unitTitle={unitTitle}
+            onClose={close}
+            review={{
+              answers: normalizeReadingAnswers(response.answers),
+              analysis: session.analysisResult ?? null,
+              analysisError: session.analysisError ?? null,
+              hideRetry: true,
+            }}
+          />
+        ) : (
+          <WritingSessionReview
+            topic={topic}
+            unitTitle={unitTitle}
+            onClose={close}
+            review={{
+              response,
+              analysis: session.analysisResult ?? null,
+              analysisError: session.analysisError ?? null,
+            }}
+          />
+        )}
       </DrawerContent>
     </Drawer>
   )

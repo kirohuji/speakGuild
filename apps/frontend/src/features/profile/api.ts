@@ -26,6 +26,8 @@ export interface PracticeRecord {
   recordId: string
   sessionId?: string
   topicId: string
+  /** 学习包 / scene id，用于回看时拉取完整 topic（contentConfig） */
+  unitId?: string
   topicName: string
   questionId: string
   questionText: string

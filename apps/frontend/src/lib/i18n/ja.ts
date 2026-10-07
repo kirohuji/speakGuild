@@ -290,6 +290,21 @@ const ja = {
           count: '回数',
           date: '日付',
         },
+        types: {
+          dialogue: '対話',
+          reading: '読解',
+          writing: '作文',
+        },
+        filter: '絞り込み',
+        filterAria: '練習記録を絞り込む',
+        filterTitle: '表示する練習タイプ',
+        showAll: 'すべて表示',
+        shown: '表示中',
+        filterTypes: {
+          dialogue: '対話練習',
+          reading: '読解練習',
+          writing: '作文練習',
+        },
         status: {
           analyzed: '分析済み',
           analyzing: '分析中',

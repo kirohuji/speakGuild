@@ -1,9 +1,79 @@
-import { learningApi } from '@/features/learning/api/learning-api'
+import { learningApi, type TopicSession } from '@/features/learning/api/learning-api'
 import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
 
 const idFor = (sessionId: string) => `topic-draft:${sessionId}`
 const sessionIdFor = (sessionId: string) => `topic-session:${sessionId}`
+const syncedSessionIdFor = (sessionId: string) => `session:${sessionId}`
+
+function toTopicSession(local: any, sessionId: string): TopicSession {
+  return {
+    id: String(local.remoteId ?? sessionId),
+    status: (local.status ?? 'analyzed') as TopicSession['status'],
+    analysisResult: local.analysisResult ?? null,
+    analysisError: local.analysisError ?? null,
+    startedAt: String(local.startedAt ?? ''),
+    completedAt: local.completedAt ?? null,
+    analyzedAt: local.analyzedAt ?? null,
+    createdAt: String(local.createdAt ?? local.startedAt ?? ''),
+    submissions: local.submissions ?? [],
+  }
+}
+
+async function readLocalTopicSession(sessionId: string): Promise<(TopicSession & { sceneId?: string }) | null> {
+  const local =
+    (await localDb.get<any>('topic_sessions', syncedSessionIdFor(sessionId)))
+    ?? (await localDb.get<any>('topic_sessions', sessionIdFor(sessionId)))
+  if (!local) return null
+
+  let submissions = local.submissions
+  if (!Array.isArray(submissions) || submissions.length === 0) {
+    const draft = await loadTopicSessionDraft(sessionId)
+    if (draft) submissions = [{ id: idFor(sessionId), response: draft, revision: 0, status: 'submitted', updatedAt: local.updatedAt }]
+  }
+
+  const hasPayload = Boolean(local.analysisResult || local.analysisError || (Array.isArray(submissions) && submissions.length > 0))
+  if (!hasPayload && local.status !== 'analyzed') return null
+
+  return { ...toTopicSession({ ...local, submissions }, sessionId), sceneId: local.sceneId }
+}
+
+async function cacheReviewedTopicSession(topicId: string, session: TopicSession, sceneId?: string | null) {
+  await localDb.put('topic_sessions', {
+    id: syncedSessionIdFor(session.id),
+    remoteId: session.id,
+    topicId,
+    sceneId: sceneId ?? undefined,
+    status: session.status,
+    analysisResult: session.analysisResult ?? null,
+    analysisError: session.analysisError ?? null,
+    startedAt: session.startedAt,
+    completedAt: session.completedAt ?? null,
+    analyzedAt: session.analyzedAt ?? null,
+    submissions: session.submissions ?? [],
+    updatedAt: new Date().toISOString(),
+    syncStatus: 'synced',
+  })
+}
+
+/** 离线优先：sync/本地草稿 → 再拉远端并写回。 */
+export async function getTopicSessionForReview(sessionId: string, topicId: string): Promise<(TopicSession & { sceneId?: string }) | null> {
+  const cached = await readLocalTopicSession(sessionId)
+  if (cached?.analysisResult || cached?.submissions?.length) return cached
+
+  try {
+    const sessions = await learningApi.listTopicSessions(topicId)
+    const matched = sessions.find((item) => item.id === sessionId) ?? null
+    if (matched) {
+      await cacheReviewedTopicSession(topicId, matched, cached?.sceneId)
+      return matched
+    }
+  } catch {
+    /* fall through */
+  }
+
+  return cached
+}
 
 export async function cacheTopicSession(topicId: string, sessionId: string, status: 'active' | 'analyzed' = 'active') {
   await localDb.put('topic_sessions', {

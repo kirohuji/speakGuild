@@ -21,10 +21,29 @@ import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-n
 import { learningContentRepository } from '@/lib/offline'
 import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type VocabItem } from '../api/learning-api'
 import { withoutWritingRequirements, WritingTaskCard } from '../components/writing-task-card'
-import { useTopicSession } from '../hooks/use-topic-session'
+import { useTopicSession, type TopicSessionReviewSnapshot } from '../hooks/use-topic-session'
 import { Switch } from '@/components/ui/switch'
 
 type WritingPhase = 'prepare' | 'write'
+
+/** 历史练习回看：按 genre 挂载只读练习壳 + Switch，隐藏重试。 */
+export function WritingSessionReview({
+  topic,
+  unitTitle,
+  review,
+  onClose,
+}: {
+  topic: TrainingTopicItem
+  unitTitle: string
+  review: TopicSessionReviewSnapshot
+  onClose: () => void
+}) {
+  const genre = topic.contentConfig?.writing?.genre
+  const shared = { topic, unitTitle, onClose, review, hideRetry: true as const }
+  if (genre === 'dialogue') return <DialogueEditor {...shared} />
+  if (genre === 'translation') return <TranslationEditor {...shared} />
+  return <WritingEditor {...shared} />
+}
 
 export function WritingSessionPage() {
   const { t } = useTranslation()
@@ -605,25 +624,29 @@ function WritingEditor({
   unitTitle,
   onClose,
   onOpenGuide,
+  review,
+  hideRetry = false,
 }: {
   topic: TrainingTopicItem
   unitTitle: string
   onClose: () => void
-  onOpenGuide: () => void
+  onOpenGuide?: () => void
+  review?: TopicSessionReviewSnapshot
+  hideRetry?: boolean
 }) {
   const { t } = useTranslation()
   const config = topic.contentConfig?.writing ?? {}
   const editorPrompt = withoutWritingRequirements(String(config.questionMarkdown ?? ''))
   const requirements: string[] = config.requirements ?? []
   const [text, setText] = useState('')
-  const [view, setView] = useState<'editor' | 'analysis'>('editor')
+  const [view, setView] = useState<'editor' | 'analysis'>(review ? 'analysis' : 'editor')
   const [taskOpen, setTaskOpen] = useState(false)
   const [supportOpen, setSupportOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0
   const restore = useCallback((response: Record<string, unknown>) => setText(String(response.text ?? '')), [])
-  const session = useTopicSession(topic.id, restore)
+  const session = useTopicSession(topic.id, restore, { review })
   const response = useMemo(() => ({ text }), [text])
 
   useEffect(() => {
@@ -673,13 +696,15 @@ function WritingEditor({
             <p data-writing-compose-meta className="truncate text-[11px] text-muted-foreground">{unitTitle}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            {session.readOnly && <WritingReviewControls view={view} onViewChange={setView} onRetry={() => void session.startNewAttempt().then(() => { setText(''); setView('editor') })} />}
+            {session.readOnly && <WritingReviewControls view={view} onViewChange={setView} hideRetry={hideRetry} onRetry={() => void session.startNewAttempt().then(() => { setText(''); setView('editor') })} />}
             <Button type="button" variant="ghost" size="icon-sm" onClick={() => setTaskOpen(true)} aria-label={t('learning.writingTaskTitle')} title={t('learning.writingTaskTitle')}>
               <FilePenLine className="size-4" />
             </Button>
-            <Button type="button" variant="ghost" size="icon-sm" onClick={onOpenGuide} aria-label={t('learning.guide')} title={t('learning.guide')}>
-              <BookOpen className="size-4" />
-            </Button>
+            {onOpenGuide && (
+              <Button type="button" variant="ghost" size="icon-sm" onClick={onOpenGuide} aria-label={t('learning.guide')} title={t('learning.guide')}>
+                <BookOpen className="size-4" />
+              </Button>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -761,11 +786,15 @@ function TranslationEditor({
   unitTitle,
   onClose,
   onOpenGuide,
+  review,
+  hideRetry = false,
 }: {
   topic: TrainingTopicItem
   unitTitle: string
   onClose: () => void
-  onOpenGuide: () => void
+  onOpenGuide?: () => void
+  review?: TopicSessionReviewSnapshot
+  hideRetry?: boolean
 }) {
   const { t } = useTranslation()
   const config = topic.contentConfig?.writing ?? {}
@@ -783,15 +812,17 @@ function TranslationEditor({
   const [supportOpen, setSupportOpen] = useState(false)
   const [listOpen, setListOpen] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [view, setView] = useState<'editor' | 'analysis'>('editor')
+  const [view, setView] = useState<'editor' | 'analysis'>(review ? 'analysis' : 'editor')
   const translationInputRef = useRef<HTMLTextAreaElement>(null)
   const restore = useCallback((saved: Record<string, unknown>) => {
     const values = saved.answers
     if (Array.isArray(values)) setAnswers(Object.fromEntries(values.map((item: any) => [String(item.segmentId), String(item.text ?? '')])))
   }, [])
-  const session = useTopicSession(topic.id, restore)
+  const session = useTopicSession(topic.id, restore, { review })
 
-  useEffect(() => { if (session.readOnly) setView('analysis') }, [session.readOnly])
+  useEffect(() => {
+    if (session.readOnly) setView('analysis')
+  }, [session.readOnly])
 
   const answeredCount = segments.filter((segment) => (answers[segment.id] ?? '').trim()).length
   const active = segments[activeIndex]
@@ -839,7 +870,11 @@ function TranslationEditor({
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Languages className="size-4" /></span>
           <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{direction === 'zh_to_en' ? t('learning.zhToEnBadge') : t('learning.enToZhBadge')}</Badge><span data-writing-translation-meta className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span></div><h1 className="truncate text-base font-bold leading-snug text-foreground">{config.sourceTitle || topic.title}</h1><p data-writing-translation-meta className="truncate text-[11px] text-muted-foreground">{unitTitle}</p></div>
-          <div className="flex items-center gap-1">{session.readOnly && <WritingReviewControls view={view} onViewChange={setView} onRetry={() => void session.startNewAttempt().then(() => { setAnswers({}); setActiveIndex(0); setView('editor') })} />}<Button type="button" variant="ghost" size="icon-sm" onClick={onOpenGuide} aria-label={t('learning.viewGuide')} title={t('learning.viewGuide')}><BookOpen className="size-4" /></Button><button type="button" onClick={onClose} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground" aria-label={t('learning.exitTranslation')}><X className="size-3.5" /></button></div>
+          <div className="flex items-center gap-1">
+            {session.readOnly && <WritingReviewControls view={view} onViewChange={setView} hideRetry={hideRetry} onRetry={() => void session.startNewAttempt().then(() => { setAnswers({}); setActiveIndex(0); setView('editor') })} />}
+            {onOpenGuide && <Button type="button" variant="ghost" size="icon-sm" onClick={onOpenGuide} aria-label={t('learning.viewGuide')} title={t('learning.viewGuide')}><BookOpen className="size-4" /></Button>}
+            <button type="button" onClick={onClose} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground" aria-label={t('learning.exitTranslation')}><X className="size-3.5" /></button>
+          </div>
         </div>
       </header>
 
@@ -896,11 +931,15 @@ function DialogueEditor({
   unitTitle,
   onClose,
   onOpenGuide,
+  review,
+  hideRetry = false,
 }: {
   topic: TrainingTopicItem
   unitTitle: string
   onClose: () => void
-  onOpenGuide: () => void
+  onOpenGuide?: () => void
+  review?: TopicSessionReviewSnapshot
+  hideRetry?: boolean
 }) {
   const { t } = useTranslation()
   const config = topic.contentConfig?.writing ?? {}
@@ -910,7 +949,7 @@ function DialogueEditor({
   const [responses, setResponses] = useState<Record<number, string>>({})
   const [showHint, setShowHint] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [view, setView] = useState<'editor' | 'analysis'>('editor')
+  const [view, setView] = useState<'editor' | 'analysis'>(review ? 'analysis' : 'editor')
   const [supportOpen, setSupportOpen] = useState(false)
   const restore = useCallback((saved: Record<string, unknown>) => {
     const savedTurns = saved.turns
@@ -919,8 +958,10 @@ function DialogueEditor({
     savedTurns.forEach((turn: any, index: number) => { if (turn?.userResponse) next[index] = String(turn.userResponse) })
     setResponses(next)
   }, [])
-  const session = useTopicSession(topic.id, restore)
-  useEffect(() => { if (session.readOnly) setView('analysis') }, [session.readOnly])
+  const session = useTopicSession(topic.id, restore, { review })
+  useEffect(() => {
+    if (session.readOnly) setView('analysis')
+  }, [session.readOnly])
 
   // B 输入框聚焦：短气泡滚盒子；长回复时同样按光标滚。
   const inputWrapRef = useRef<HTMLDivElement>(null)
@@ -980,10 +1021,12 @@ function DialogueEditor({
             <p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p>
           </div>
           <div className="flex items-center gap-1">
-            {session.readOnly && <WritingReviewControls view={view} onViewChange={setView} onRetry={() => void session.startNewAttempt().then(() => { setResponses({}); setCurrentIndex(0); setView('editor') })} />}
-            <Button type="button" variant="ghost" size="icon" className="size-8" onClick={onOpenGuide} title={t('learning.viewGuide')}>
-              <BookOpen className="size-4" />
-            </Button>
+            {session.readOnly && <WritingReviewControls view={view} onViewChange={setView} hideRetry={hideRetry} onRetry={() => void session.startNewAttempt().then(() => { setResponses({}); setCurrentIndex(0); setView('editor') })} />}
+            {onOpenGuide && (
+              <Button type="button" variant="ghost" size="icon" className="size-8" onClick={onOpenGuide} title={t('learning.viewGuide')}>
+                <BookOpen className="size-4" />
+              </Button>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -1112,7 +1155,8 @@ function DialogueEditor({
         </div>
       </div>}
 
-      {/* Footer — submit feedback only */}
+      {/* Footer — submit / retry；历史回看隐藏重试 */}
+      {!(session.readOnly && hideRetry) && (
       <footer className="shrink-0 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-xl pb-safe" data-writing-footer>
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           {session.readOnly ? (
@@ -1126,6 +1170,7 @@ function DialogueEditor({
           )}
         </div>
       </footer>
+      )}
       <WritingSupportDrawer open={supportOpen} onOpenChange={setSupportOpen} explanation={String(currentTurn?.referenceExplanation ?? '')} referenceAnswer={String(currentTurn?.referenceAnswer ?? '')} hasAttempt={Boolean(currentResponse.trim())} />
     </div>
   )
@@ -1173,9 +1218,29 @@ function WritingSupportDrawer({
   </Drawer>
 }
 
-function WritingReviewControls({ view, onViewChange, onRetry }: { view: 'editor' | 'analysis'; onViewChange: (view: 'editor' | 'analysis') => void; onRetry: () => void }) {
+function WritingReviewControls({
+  view,
+  onViewChange,
+  onRetry,
+  hideRetry = false,
+}: {
+  view: 'editor' | 'analysis'
+  onViewChange: (view: 'editor' | 'analysis') => void
+  onRetry: () => void
+  hideRetry?: boolean
+}) {
   const { t } = useTranslation()
-  return <div className="flex shrink-0 items-center gap-1.5"><Sparkles className={cn('size-3.5 transition-colors', view === 'analysis' ? 'text-primary' : 'text-muted-foreground')} /><Switch checked={view === 'analysis'} onCheckedChange={(checked) => onViewChange(checked ? 'analysis' : 'editor')} aria-label={t('learning.toggleAiReview')} title={view === 'analysis' ? t('learning.viewAnswer') : t('learning.viewAiReview')} /><button type="button" onClick={onRetry} title={t('learning.retryPractice')} className="flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label={t('learning.retryPractice')}><RotateCcw className="size-3.5" /></button></div>
+  return (
+    <div className="flex shrink-0 items-center gap-1.5">
+      <Sparkles className={cn('size-3.5 transition-colors', view === 'analysis' ? 'text-primary' : 'text-muted-foreground')} />
+      <Switch checked={view === 'analysis'} onCheckedChange={(checked) => onViewChange(checked ? 'analysis' : 'editor')} aria-label={t('learning.toggleAiReview')} title={view === 'analysis' ? t('learning.viewAnswer') : t('learning.viewAiReview')} />
+      {!hideRetry && (
+        <button type="button" onClick={onRetry} title={t('learning.retryPractice')} className="flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label={t('learning.retryPractice')}>
+          <RotateCcw className="size-3.5" />
+        </button>
+      )}
+    </div>
+  )
 }
 
 function WritingAnalysisPanel({ analysis }: { analysis: Record<string, any> | null }) {

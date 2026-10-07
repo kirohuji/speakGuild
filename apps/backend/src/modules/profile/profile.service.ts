@@ -218,7 +218,7 @@ export class ProfileService {
         where,
         orderBy: { startedAt: 'desc' },
         include: {
-          topic: { select: { title: true, activityType: true, scene: { select: { title: true } } } },
+          topic: { select: { title: true, activityType: true, sceneId: true, scene: { select: { title: true } } } },
           submissions: { orderBy: { revision: 'desc' }, take: 1, select: { response: true } },
         },
       }),
@@ -250,6 +250,7 @@ export class ProfileService {
       const response = session.submissions[0]?.response as any;
       return {
         recordId: session.id, sessionId: session.id, topicId: session.topicId,
+        unitId: session.topic.sceneId,
         topicName: session.topic.scene?.title || '学习包练习', questionId: session.topicId, questionText: session.topic.title,
         practiceCount: session.topic.activityType === 'reading' ? Object.keys(response?.answers ?? {}).length : 1,
         lastPracticeAt: session.startedAt.toISOString(), status: session.analysisResult ? 'analyzed' : 'failed',

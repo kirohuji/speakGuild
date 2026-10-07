@@ -128,17 +128,59 @@ function ReadingHeader({ topic, unitTitle, onBack }: { topic: TrainingTopicItem;
   return <header className="mb-4 flex min-h-10 items-center gap-3"><button type="button" onClick={onBack} className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted" aria-label={t('learning.backToPack')}><ArrowLeft className="size-4" /></button><div className="min-w-0 flex-1"><p className="truncate text-xs text-muted-foreground">{unitTitle}</p><h1 className="truncate text-lg font-semibold tracking-tight">{topic.title}</h1></div><Badge variant="secondary">{topic.difficulty}</Badge></header>
 }
 
-function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: TrainingTopicItem; unitTitle: string; onClose: () => void; onOpenGuide: () => void }) {
+export type ReadingReviewSnapshot = {
+  answers: Record<string, string>
+  analysis: Record<string, any> | null
+  analysisError?: string | null
+  hideRetry?: boolean
+}
+
+/** 历史练习回看：只读练习壳 + Switch，不启 session/草稿。 */
+export function ReadingSessionReview({
+  topic,
+  unitTitle,
+  review,
+  onClose,
+}: {
+  topic: TrainingTopicItem
+  unitTitle: string
+  review: ReadingReviewSnapshot
+  onClose: () => void
+}) {
+  return (
+    <ReadingAnswerPage
+      topic={topic}
+      unitTitle={unitTitle}
+      onClose={onClose}
+      review={{ ...review, hideRetry: review.hideRetry ?? true }}
+    />
+  )
+}
+
+function ReadingAnswerPage({
+  topic,
+  unitTitle,
+  onClose,
+  onOpenGuide,
+  review,
+}: {
+  topic: TrainingTopicItem
+  unitTitle: string
+  onClose: () => void
+  onOpenGuide?: () => void
+  review?: ReadingReviewSnapshot
+}) {
   const { t } = useTranslation()
+  const isReview = Boolean(review)
   const config = topic.contentConfig?.reading ?? {}
   const questions: any[] = config.questions ?? []
-  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [answers, setAnswers] = useState<Record<string, string>>(review?.answers ?? {})
   const [sessionId, setSessionId] = useState<string | null>(null)
-  const [analysisResult, setAnalysisResult] = useState<Record<string, any> | null>(null)
-  const [analysisError, setAnalysisError] = useState<string | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<Record<string, any> | null>(review?.analysis ?? null)
+  const [analysisError, setAnalysisError] = useState<string | null>(review?.analysisError ?? null)
   const [saving, setSaving] = useState(false)
   const [currentQuestion, setCurrentQuestion] = useState(0)
-  const [view, setView] = useState<'answer' | 'analysis'>('answer')
+  const [view, setView] = useState<'answer' | 'analysis'>(isReview ? 'analysis' : 'answer')
   const answersRef = useRef(answers)
   const sessionIdRef = useRef<string | null>(null)
   const draftTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -146,12 +188,14 @@ function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: 
   const finalizedRef = useRef(false)
   const answeredCount = questions.filter((_: any, index: number) => String(answers[String(index)] ?? '').trim()).length
   const question = questions[currentQuestion]
-  const hasCompletedAttempt = Boolean(analysisResult || analysisError)
+  const hasCompletedAttempt = Boolean(analysisResult || analysisError) || isReview
+  const hideRetry = Boolean(review?.hideRetry)
 
   useEffect(() => { answersRef.current = answers }, [answers])
   useEffect(() => { sessionIdRef.current = sessionId }, [sessionId])
 
   const flushDraft = (nextAnswers = answersRef.current) => {
+    if (isReview) return Promise.resolve()
     const activeSessionId = sessionIdRef.current
     if (!activeSessionId || finalizedRef.current) return Promise.resolve()
     const snapshot = { ...nextAnswers }
@@ -160,11 +204,13 @@ function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: 
   }
 
   const scheduleDraftSave = (nextAnswers: Record<string, string>) => {
+    if (isReview) return
     if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
     draftTimerRef.current = setTimeout(() => { void flushDraft(nextAnswers) }, 600)
   }
 
   useEffect(() => {
+    if (isReview) return
     let cancelled = false
     void (async () => {
       try {
@@ -199,7 +245,7 @@ function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: 
       if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
       void flushDraft()
     }
-  }, [topic.id])
+  }, [isReview, topic.id])
 
   const startNewAttempt = async () => {
     if (saving) return
@@ -260,12 +306,16 @@ function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: 
                 aria-label={t('learning.toggleAiReview')}
                 title={view === 'analysis' ? t('learning.viewQuestions') : t('learning.viewAiReview')}
               />
-              <button type="button" onClick={() => void startNewAttempt()} disabled={saving} title={t('learning.retryPractice')} className="flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50" aria-label={t('learning.retryPractice')}><RotateCcw className="size-3.5" /></button>
+              {!hideRetry && (
+                <button type="button" onClick={() => void startNewAttempt()} disabled={saving} title={t('learning.retryPractice')} className="flex size-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50" aria-label={t('learning.retryPractice')}><RotateCcw className="size-3.5" /></button>
+              )}
             </div>
           )}
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onOpenGuide} title={t('learning.viewGuide')} aria-label={t('learning.guide')}>
-            <BookOpen className="size-4" />
-          </Button>
+          {onOpenGuide && (
+            <Button type="button" variant="ghost" size="icon-sm" onClick={onOpenGuide} title={t('learning.viewGuide')} aria-label={t('learning.guide')}>
+              <BookOpen className="size-4" />
+            </Button>
+          )}
           <button type="button" onClick={onClose} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground" aria-label={t('learning.exitAnswering')}><X className="size-3.5" /></button>
         </div>
       </header>
@@ -326,7 +376,7 @@ function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: 
                   >
                     <ChevronRight className="size-4" />
                   </Button>
-                ) : (
+                ) : !isReview ? (
                   <Button
                     size="sm"
                     className="h-8 px-2.5"
@@ -336,7 +386,7 @@ function ReadingAnswerPage({ topic, unitTitle, onClose, onOpenGuide }: { topic: 
                     {saving ? <Loader2 className="size-4 animate-spin" /> : <ClipboardCheck className="size-4" />}
                     {t('learning.submitEvaluation')}
                   </Button>
-                )}
+                ) : null}
               </div>
             </div>
             <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">

@@ -292,6 +292,21 @@ const zhCN = {
           count: '次数',
           date: '日期',
         },
+        types: {
+          dialogue: '对话',
+          reading: '阅读',
+          writing: '写作',
+        },
+        filter: '筛选',
+        filterAria: '筛选练习记录',
+        filterTitle: '显示的练习类型',
+        showAll: '全部显示',
+        shown: '已显示',
+        filterTypes: {
+          dialogue: '对话练习',
+          reading: '阅读练习',
+          writing: '写作练习',
+        },
         status: {
           analyzed: '已分析',
           analyzing: '分析中',
