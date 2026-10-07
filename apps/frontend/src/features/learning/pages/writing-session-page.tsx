@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, ListMusic, Loader2, MessageCircle, MessageSquareText, RotateCcw, Save, Search, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, Lightbulb, ListMusic, Loader2, MessageCircle, MessageSquareText, RotateCcw, Save, Search, Sparkles, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -20,7 +20,7 @@ import { LearningInsightDialog, type LearningInsightItem } from '@/features/prac
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
 import { learningContentRepository } from '@/lib/offline'
 import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type VocabItem } from '../api/learning-api'
-import { WritingTaskCard } from '../components/writing-task-card'
+import { withoutWritingRequirements, WritingTaskCard } from '../components/writing-task-card'
 import { useTopicSession } from '../hooks/use-topic-session'
 import { Switch } from '@/components/ui/switch'
 
@@ -296,35 +296,11 @@ function WritingPreparePage({
           </Tabs>
         </section>
 
-        {requirements.length > 0 && (
-          <section>
-            <div className="mb-3 flex items-end justify-between gap-3 px-1">
-              <div>
-                <h2 className="text-base font-semibold text-foreground">{t('learning.writingRequirements')}</h2>
-                <p className="mt-0.5 text-xs text-muted-foreground">{t('learning.requirementsHint')}</p>
-              </div>
-              <Badge variant="outline" className="rounded-full text-[11px]">{t('learning.supportCount', { count: requirements.length })}</Badge>
-            </div>
-            <div className="space-y-2">
-              {requirements.map((item, index) => (
-                <div key={item} className="flex items-center gap-3 rounded-lg bg-muted/30 p-3">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                    <CheckCircle2 className="size-4" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[11px] text-muted-foreground">{t('learning.requirementNumber', { number: index + 1 })}</p>
-                    <p className="mt-0.5 text-sm font-medium leading-5 text-foreground">{item}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
         <WritingTaskCard
-          questionMarkdown={config.genre === 'translation' ? config.sourceText : config.questionMarkdown}
+          questionMarkdown={config.genre === 'translation' ? undefined : config.questionMarkdown}
           promptEn={topic.promptEn}
           promptZh={topic.promptZh}
+          requirements={requirements}
           genre={config.genre}
           minWords={config.minWords}
           maxWords={config.maxWords}
@@ -510,9 +486,11 @@ function WritingEditor({
 }) {
   const { t } = useTranslation()
   const config = topic.contentConfig?.writing ?? {}
-  const editorPrompt = String(config.questionMarkdown ?? '').trim()
+  const editorPrompt = withoutWritingRequirements(String(config.questionMarkdown ?? ''))
+  const requirements: string[] = config.requirements ?? []
   const [text, setText] = useState('')
   const [view, setView] = useState<'editor' | 'analysis'>('editor')
+  const [taskOpen, setTaskOpen] = useState(false)
   const [supportOpen, setSupportOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const editorRef = useRef<HTMLDivElement>(null)
@@ -565,15 +543,23 @@ function WritingEditor({
             <h1 className="truncate text-base font-bold leading-snug text-foreground">{topic.title}</h1>
             <p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p>
           </div>
-          {session.readOnly && <WritingReviewControls view={view} onViewChange={setView} onRetry={() => void session.startNewAttempt().then(() => { setText(''); setView('editor') })} />}
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-            aria-label={t('learning.exitEdit')}
-          >
-            <X className="size-4" />
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            {session.readOnly && <WritingReviewControls view={view} onViewChange={setView} onRetry={() => void session.startNewAttempt().then(() => { setText(''); setView('editor') })} />}
+            <Button type="button" variant="ghost" size="icon-sm" onClick={() => setTaskOpen(true)} aria-label={t('learning.writingTaskTitle')} title={t('learning.writingTaskTitle')}>
+              <FilePenLine className="size-4" />
+            </Button>
+            <Button type="button" variant="ghost" size="icon-sm" onClick={onOpenGuide} aria-label={t('learning.guide')} title={t('learning.guide')}>
+              <BookOpen className="size-4" />
+            </Button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+              aria-label={t('learning.exitEdit')}
+            >
+              <X className="size-4" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -581,17 +567,6 @@ function WritingEditor({
         <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto max-w-2xl px-4 py-5 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]"><WritingAnalysisPanel analysis={session.analysis} /></div></main>
       ) : <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-writing-scroll-region>
         <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-5 pb-8 pt-5 sm:px-8 sm:pt-7">
-          <section className="shrink-0 border-b border-border/50 pb-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-600 dark:text-amber-400">{t('learning.writingPromptLabel')}</p>
-                <MarkdownRenderer content={editorPrompt} className="mt-2 line-clamp-4 text-[15px] font-semibold leading-6 prose-p:my-0 prose-img:hidden" />
-              </div>
-              <Button type="button" variant="ghost" size="sm" onClick={onOpenGuide} className="-mr-2 shrink-0 gap-1.5 text-primary">
-                <BookOpen className="size-4" />{t('learning.guide')}
-              </Button>
-            </div>
-          </section>
           {(config.referenceExplanation || config.referenceAnswer) && <button type="button" onClick={() => setSupportOpen(true)} className="mt-3 w-fit text-xs font-medium text-primary transition-opacity hover:opacity-70">{t('learning.seeWritingSupport')}</button>}
 
           <div ref={editorRef} className="flex min-h-[55dvh] flex-1 flex-col pt-5" data-writing-editor>
@@ -629,6 +604,15 @@ function WritingEditor({
         </div>
       </footer>
       <WritingSupportDrawer open={supportOpen} onOpenChange={setSupportOpen} explanation={String(config.referenceExplanation ?? '')} referenceAnswer={String(config.referenceAnswer ?? '')} hasAttempt={wordCount >= 3} />
+      <Drawer open={taskOpen} onOpenChange={setTaskOpen}>
+        <DrawerContent className="max-h-[82dvh] rounded-t-[28px] border-0 bg-background !z-[10001]" overlayClassName="!z-[10001]">
+          <DrawerHeader className="px-5 pb-2 pt-5"><DrawerTitle>{t('learning.writingTaskTitle')}</DrawerTitle></DrawerHeader>
+          <div className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+            <MarkdownRenderer content={editorPrompt} className="text-[15px] leading-7 prose-headings:mb-3 prose-headings:mt-5 prose-headings:text-foreground prose-p:my-3 prose-p:leading-7 prose-li:my-1 prose-img:my-4 prose-img:w-full prose-img:object-contain" />
+            {requirements.length > 0 && <section className="mt-6 border-t border-border/60 pt-5"><h2 className="text-base font-semibold text-foreground">{t('learning.writingRequirements')}</h2><div className="mt-3 space-y-2">{requirements.map((item, index) => <div key={item} className="flex items-center gap-3 rounded-lg bg-muted/30 p-3"><span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="size-4" /></span><div className="min-w-0 flex-1"><p className="text-[11px] text-muted-foreground">{t('learning.requirementNumber', { number: index + 1 })}</p><p className="mt-0.5 text-sm font-medium leading-5 text-foreground">{item}</p></div></div>)}</div></section>}
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }
@@ -660,11 +644,12 @@ function TranslationEditor({
   }, [config.segments, config.sourceText])
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [activeIndex, setActiveIndex] = useState(0)
-  const [hintOpen, setHintOpen] = useState(true)
+  const [hintOpen, setHintOpen] = useState(false)
   const [supportOpen, setSupportOpen] = useState(false)
   const [listOpen, setListOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [view, setView] = useState<'editor' | 'analysis'>('editor')
+  const translationInputRef = useRef<HTMLTextAreaElement>(null)
   const restore = useCallback((saved: Record<string, unknown>) => {
     const values = saved.answers
     if (Array.isArray(values)) setAnswers(Object.fromEntries(values.map((item: any) => [String(item.segmentId), String(item.text ?? '')])))
@@ -701,36 +686,56 @@ function TranslationEditor({
 
   const selectSegment = (index: number) => {
     setActiveIndex(index)
-    setHintOpen(true)
+    setHintOpen(false)
     setListOpen(false)
+  }
+
+  // 与对话写作相同：等 Capacitor 键盘动画结束后，按原生键盘高度把输入区
+  // 滚到安全可视范围内。CSS 负责缩小布局，这段只负责处理长译文/旧设备的兜底。
+  const focusTranslationInput = () => {
+    window.setTimeout(() => {
+      const input = translationInputRef.current
+      const scrollRegion = input?.closest<HTMLElement>('[data-writing-translation-answer-scroll]')
+      if (!input || !scrollRegion) return
+
+      const keyboardHeight =
+        Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--keyboard-height')) || 0
+      const regionRect = scrollRegion.getBoundingClientRect()
+      const inputRect = input.getBoundingClientRect()
+      const safeBottom = Math.min(regionRect.bottom, window.innerHeight - keyboardHeight) - 16
+
+      if (inputRect.bottom > safeBottom) {
+        scrollRegion.scrollBy({ top: inputRect.bottom - safeBottom, behavior: 'smooth' })
+      }
+    }, 300)
   }
 
   const sourceLanguage = direction === 'zh_to_en' ? t('learning.sourceZh') : t('learning.sourceEn')
   const answerLanguage = direction === 'zh_to_en' ? t('learning.answerWriteEn') : t('learning.answerWriteZh')
 
   return (
-    <div data-keyboard-overlay="writing" className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pt-safe">
-      <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
+    <div data-keyboard-overlay="writing" data-writing-translation className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pt-safe">
+      <header data-writing-translation-header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Languages className="size-4" /></span>
-          <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{direction === 'zh_to_en' ? t('learning.zhToEnBadge') : t('learning.enToZhBadge')}</Badge><span className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span></div><h1 className="truncate text-base font-bold leading-snug text-foreground">{config.sourceTitle || topic.title}</h1><p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p></div>
-          <div className="flex items-center gap-1">{session.readOnly && <WritingReviewControls view={view} onViewChange={setView} onRetry={() => void session.startNewAttempt().then(() => { setAnswers({}); setActiveIndex(0); setView('editor') })} />}<Button type="button" variant="ghost" size="icon-sm" onClick={onOpenGuide} title={t('learning.viewGuide')}><BookOpen className="size-4" /></Button><button type="button" onClick={onClose} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground" aria-label={t('learning.exitTranslation')}><X className="size-3.5" /></button></div>
+          <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{direction === 'zh_to_en' ? t('learning.zhToEnBadge') : t('learning.enToZhBadge')}</Badge><span data-writing-translation-meta className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span></div><h1 className="truncate text-base font-bold leading-snug text-foreground">{config.sourceTitle || topic.title}</h1><p data-writing-translation-meta className="truncate text-[11px] text-muted-foreground">{unitTitle}</p></div>
+          <div className="flex items-center gap-1">{session.readOnly && <WritingReviewControls view={view} onViewChange={setView} onRetry={() => void session.startNewAttempt().then(() => { setAnswers({}); setActiveIndex(0); setView('editor') })} />}<Button type="button" variant="ghost" size="icon-sm" onClick={onOpenGuide} aria-label={t('learning.viewGuide')} title={t('learning.viewGuide')}><BookOpen className="size-4" /></Button><button type="button" onClick={onClose} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground" aria-label={t('learning.exitTranslation')}><X className="size-3.5" /></button></div>
         </div>
       </header>
 
       {session.readOnly && view === 'analysis' ? (
         <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto max-w-3xl px-4 py-5 pb-safe"><WritingAnalysisPanel analysis={session.analysis} /></div></main>
       ) : (
-        <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(15rem,40dvh)]" data-writing-scroll-region>
-          <section className="min-h-0 overflow-y-auto overscroll-contain" aria-label={sourceLanguage}>
-            <article className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center px-5 py-6 sm:px-8">
+        <main data-writing-translation-main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(20rem,55dvh)]" data-writing-scroll-region>
+          <section data-writing-translation-source className="min-h-0 overflow-y-auto overscroll-contain" aria-label={sourceLanguage}>
+            <article data-writing-translation-source-content className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-center px-5 py-6 sm:px-8">
               <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{sourceLanguage}</p>
               <p className="text-[16px] leading-8 text-foreground">{active?.source || t('learning.noSourceContent')}</p>
             </article>
           </section>
 
           <section className="flex min-h-0 flex-col border-t border-border/70 bg-background shadow-[0_-8px_20px_rgba(0,0,0,0.04)]" aria-label={answerLanguage}>
-            <div className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-2 border-b border-border/50 px-4 py-2">
+            <div data-writing-translation-nav className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-2 border-b border-border/50 px-4 py-2">
               <Button variant="outline" size="sm" className="h-8 px-2.5" disabled={activeIndex === 0} onClick={() => selectSegment(activeIndex - 1)}><ChevronLeft className="size-4" />{scope === 'article' ? t('learning.prevParagraph') : t('learning.prevSentence')}</Button>
               <span className="min-w-0 flex-1 truncate text-center text-xs tabular-nums text-muted-foreground">{t('learning.completedCount', { count: answeredCount, total: segments.length })}</span>
               <div className="flex shrink-0 items-center gap-1.5">
@@ -738,12 +743,24 @@ function TranslationEditor({
                 <Button variant="ghost" size="icon" className="size-8" onClick={() => setListOpen(true)} title={scope === 'article' ? t('learning.segmentList') : t('learning.sentenceList')}><ListMusic className="size-4" /></Button>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto w-full max-w-3xl px-5 py-4 sm:px-8"><div className="mb-3 flex items-center justify-between gap-3"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{answerLanguage}</p>{active?.hint && <Button type="button" size="sm" variant="ghost" onClick={() => setHintOpen((current) => !current)} className="shrink-0 px-2 text-primary">{t('learning.hint')}</Button>}</div>{hintOpen && active?.hint && <div className="mb-3 rounded-lg bg-muted/60 px-3 py-2.5 text-sm leading-6 text-muted-foreground">{active.hint}{(active.referenceExplanation || active.reference) && <button type="button" onClick={() => setSupportOpen(true)} className="mt-2 block text-xs font-medium text-primary">{t('learning.stillStuckSeeSample')}</button>}</div>}<textarea value={active ? answers[active.id] ?? '' : ''} onChange={(event) => active && setAnswers((current) => ({ ...current, [active.id]: event.target.value }))} readOnly={session.readOnly} className="min-h-[132px] w-full resize-y bg-transparent p-0 text-[16px] leading-8 text-foreground outline-none placeholder:text-muted-foreground/45 focus:ring-0" placeholder={direction === 'zh_to_en' ? t('learning.translationPlaceholderEn') : t('learning.translationPlaceholderZh')} autoCapitalize="sentences" autoCorrect="on" spellCheck={direction === 'zh_to_en'} /></div></div>
+            <div data-writing-translation-answer-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div data-writing-translation-input className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-5 py-4 sm:px-8"><div className="mb-3 flex shrink-0 items-center justify-between gap-3"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{answerLanguage}</p><Button type="button" size="sm" variant="ghost" onClick={() => setHintOpen(true)} disabled={!active?.hint} className="h-7 shrink-0 gap-1 px-2 text-primary" aria-label={t('learning.hint')}><Lightbulb className="size-3.5" />{t('learning.hint')}</Button></div><textarea ref={translationInputRef} data-writing-translation-textarea value={active ? answers[active.id] ?? '' : ''} onChange={(event) => active && setAnswers((current) => ({ ...current, [active.id]: event.target.value }))} readOnly={session.readOnly} onFocus={focusTranslationInput} className="min-h-[132px] w-full flex-1 resize-y bg-transparent p-0 text-[16px] leading-8 text-foreground outline-none placeholder:text-muted-foreground/45 focus:ring-0" placeholder={direction === 'zh_to_en' ? t('learning.translationPlaceholderEn') : t('learning.translationPlaceholderZh')} autoCapitalize="sentences" autoCorrect="on" spellCheck={direction === 'zh_to_en'} /></div></div>
           </section>
         </main>
       )}
 
       <WritingSupportDrawer open={supportOpen} onOpenChange={setSupportOpen} explanation={String(active?.referenceExplanation ?? '')} referenceAnswer={String(active?.reference ?? '')} hasAttempt={Boolean(active && answers[active.id]?.trim())} />
+
+      <Drawer open={hintOpen} onOpenChange={setHintOpen}>
+        <DrawerContent className="max-h-[82dvh] rounded-t-[28px] border-0 bg-background !z-[10001]" overlayClassName="!z-[10001]">
+          <DrawerHeader className="px-5 pb-2 pt-5">
+            <DrawerTitle>{t('learning.hint')}</DrawerTitle>
+          </DrawerHeader>
+          <div className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
+            <p className="text-sm leading-7 text-muted-foreground">{active?.hint}</p>
+            {(active?.referenceExplanation || active?.reference) && <Button type="button" variant="link" className="mt-3 h-auto px-0 text-primary" onClick={() => { setHintOpen(false); setSupportOpen(true) }}>{t('learning.stillStuckSeeSample')}</Button>}
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       <Drawer open={listOpen} onOpenChange={setListOpen}>
         <DrawerContent className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]"><div className="flex items-center justify-between px-5 py-3"><DrawerTitle className="text-lg">{scope === 'article' ? t('learning.segmentList') : t('learning.sentenceList')}</DrawerTitle><button type="button" onClick={() => setListOpen(false)} className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground"><ChevronDown className="size-5" /></button></div><div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8"><div className="space-y-1">{segments.map((segment, index) => <button key={segment.id} type="button" onClick={() => selectSegment(index)} className={cn('flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors', activeIndex === index ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted')}><span className={cn('flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold', activeIndex === index ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>{index + 1}</span><p className="line-clamp-2 min-w-0 flex-1 text-sm leading-5">{segment.source}</p>{(answers[segment.id] ?? '').trim() && <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />}</button>)}</div></div></DrawerContent>

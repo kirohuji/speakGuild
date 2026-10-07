@@ -8,6 +8,7 @@ import {
   Eye,
   FilePenLine,
   Languages,
+  Lightbulb,
   ListMusic,
   MessageCircle,
   Save,
@@ -17,7 +18,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
-import { WritingTaskCard } from '@/features/learning/components/writing-task-card'
+import { withoutWritingRequirements, WritingTaskCard } from '@/features/learning/components/writing-task-card'
 import { cn } from '@/lib/cn'
 
 type WritingConfig = Record<string, any>
@@ -60,6 +61,7 @@ export function WritingLearnerPhonePreview({ value, context, isDialogue, isTrans
                   questionMarkdown={value.questionMarkdown}
                   promptEn={context?.promptEn}
                   promptZh={context?.promptZh}
+                  requirements={value.requirements}
                   genre={value.genre}
                   minWords={value.minWords}
                   maxWords={value.maxWords}
@@ -79,9 +81,10 @@ export function WritingLearnerPhonePreview({ value, context, isDialogue, isTrans
 function WritingMobilePreview({ value, context, onClose }: Pick<Props, 'value' | 'context'> & { onClose: () => void }) {
   const [text, setText] = useState('')
   const [saved, setSaved] = useState(false)
+  const [taskOpen, setTaskOpen] = useState(false)
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0
   return (
-    <div className="flex h-full flex-col pt-10">
+    <div className="relative flex h-full flex-col pt-10">
       <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-4">
         <div className="flex items-start gap-3">
           <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><FilePenLine className="size-[18px]" /></span>
@@ -90,20 +93,11 @@ function WritingMobilePreview({ value, context, onClose }: Pick<Props, 'value' |
             <h1 className="break-words text-xl font-bold leading-tight text-foreground">{context?.title || '未命名写作题'}</h1>
             <p className="mt-1.5 truncate text-sm text-muted-foreground">写作练习</p>
           </div>
-          <button type="button" onClick={onClose} className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground" aria-label="返回题目"><X className="size-4" /></button>
+          <div className="flex shrink-0 items-center gap-1"><Button type="button" variant="ghost" size="icon" className="size-8" onClick={() => setTaskOpen(true)} aria-label="写作题目"><FilePenLine className="size-4" /></Button><Button type="button" variant="ghost" size="icon" className="size-8" aria-label="指南"><BookOpen className="size-4" /></Button><button type="button" onClick={onClose} className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground" aria-label="返回题目"><X className="size-4" /></button></div>
         </div>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-5 pb-8 pt-5">
-          <section className="shrink-0 border-b border-border/50 pb-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-600 dark:text-amber-400">Writing prompt</p>
-                <MarkdownRenderer content={String(value.questionMarkdown ?? '')} className="mt-2 line-clamp-4 text-[15px] font-semibold leading-6 prose-p:my-0 prose-img:hidden" />
-              </div>
-              <Button type="button" variant="ghost" size="sm" className="-mr-2 shrink-0 gap-1.5 text-primary"><BookOpen className="size-4" />指南</Button>
-            </div>
-          </section>
           <div className="flex min-h-[55dvh] flex-1 flex-col pt-5">
             <textarea
               value={text}
@@ -128,6 +122,7 @@ function WritingMobilePreview({ value, context, onClose }: Pick<Props, 'value' |
           <Button size="sm" disabled={!text.trim()} onClick={() => setSaved(true)} className="shrink-0 gap-1.5 rounded-full px-4"><Sparkles className="size-4" />提交反馈</Button>
         </div>
       </footer>
+      {taskOpen && <div className="absolute inset-0 z-20 flex flex-col bg-background pt-10"><div className="flex items-center justify-between border-b border-border/60 px-5 py-3"><p className="text-base font-semibold">写作题目</p><button type="button" onClick={() => setTaskOpen(false)} className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground" aria-label="关闭题目"><X className="size-4" /></button></div><div className="min-h-0 flex-1 overflow-y-auto px-5 py-5"><MarkdownRenderer content={withoutWritingRequirements(value.questionMarkdown)} className="text-[15px] leading-7 prose-headings:mb-3 prose-headings:mt-5 prose-headings:text-foreground prose-p:my-3 prose-p:leading-7 prose-li:my-1 prose-img:my-4 prose-img:w-full prose-img:object-contain" />{Array.isArray(value.requirements) && value.requirements.length > 0 && <section className="mt-6 border-t border-border/60 pt-5"><h2 className="text-base font-semibold">写作要求</h2><div className="mt-3 space-y-2">{value.requirements.map((item: string, index: number) => <div key={`${item}-${index}`} className="rounded-lg bg-muted/30 px-3 py-2.5"><p className="text-[11px] text-muted-foreground">要求 {index + 1}</p><p className="mt-0.5 text-sm font-medium leading-5">{item}</p></div>)}</div></section>}</div></div>}
     </div>
   )
 }
@@ -192,13 +187,13 @@ function TranslationMobilePreview({ value, context }: Pick<Props, 'value' | 'con
             <p className="truncate text-[11px] text-muted-foreground">写作练习</p>
           </div>
           <div className="flex items-center gap-1">
-            <Button type="button" variant="ghost" size="icon" className="size-7" title="教学指引"><BookOpen className="size-4" /></Button>
+            <Button type="button" variant="ghost" size="icon" className="size-7" title="教学指引" aria-label="教学指引"><BookOpen className="size-4" /></Button>
             <button type="button" onClick={resetPreview} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground" aria-label="重置预览"><X className="size-3.5" /></button>
           </div>
         </div>
       </header>
 
-      <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(11rem,42%)]">
+      <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(20rem,55%)]">
         <section className="min-h-0 overflow-y-auto overscroll-contain" aria-label={sourceLanguage}>
           <article className="mx-auto flex min-h-full w-full flex-col justify-center px-5 py-6">
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{sourceLanguage}</p>
@@ -236,15 +231,8 @@ function TranslationMobilePreview({ value, context }: Pick<Props, 'value' | 'con
             <div className="px-5 py-4">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{answerLanguage}</p>
-                {active?.hint ? (
-                  <Button type="button" size="sm" variant="ghost" onClick={() => setHintOpen((current) => !current)} className="shrink-0 gap-1.5 px-2 text-primary">
-                    <Sparkles className="size-3.5" />提示
-                  </Button>
-                ) : null}
+                <Button type="button" size="sm" variant="ghost" className="h-7 shrink-0 gap-1 px-2 text-primary" disabled={!active?.hint} onClick={() => setHintOpen(true)}><Lightbulb className="size-3.5" />提示</Button>
               </div>
-              {hintOpen && active?.hint ? (
-                <div className="mb-3 rounded-lg bg-muted/60 px-3 py-2.5 text-sm leading-6 text-muted-foreground">{active.hint}</div>
-              ) : null}
               <textarea
                 value={active ? answers[active.id] ?? '' : ''}
                 onChange={(event) => {
@@ -267,6 +255,16 @@ function TranslationMobilePreview({ value, context }: Pick<Props, 'value' | 'con
           </div>
         </section>
       </main>
+
+      {hintOpen && active?.hint && (
+        <div className="absolute inset-0 z-20 flex flex-col bg-background pt-10">
+          <div className="flex items-center justify-between border-b border-border/60 px-5 py-3">
+            <p className="text-base font-semibold">提示</p>
+            <button type="button" onClick={() => setHintOpen(false)} className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground" aria-label="关闭提示"><X className="size-4" /></button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 text-sm leading-7 text-muted-foreground">{active.hint}</div>
+        </div>
+      )}
 
       {listOpen && (
         <div className="absolute inset-0 z-20 flex flex-col bg-background pt-10">

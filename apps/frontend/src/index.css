@@ -358,6 +358,47 @@
     transition: height 220ms ease, max-height 220ms ease;
   }
 
+  /* 中英互译：键盘出现时保留精简的原文对照，把主要空间留给译文输入。
+     段落切换和提交等操作在收起键盘后恢复，避免它们挤占正在输入的区域。 */
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'][data-writing-translation] {
+    height: var(--keyboard-available-height, 100dvh) !important;
+    max-height: var(--keyboard-available-height, 100dvh) !important;
+    transition: height 220ms ease, max-height 220ms ease;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-translation-header] {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    transition: padding 220ms ease;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-translation-meta] {
+    display: none;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-translation-main] {
+    grid-template-rows: minmax(8rem, 42%) minmax(0, 58%) !important;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-translation-source-content] {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-translation-nav] {
+    display: none;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-translation-input] {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-translation-textarea] {
+    min-height: 0;
+    resize: none;
+  }
+
   body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'] [data-writing-editor] {
     min-height: calc(100dvh - var(--keyboard-height) - 7rem) !important;
     padding-bottom: 1rem;
