@@ -334,8 +334,7 @@
     overscroll-behavior: contain;
   }
 
-  /* 全屏写作使用原生 overlay 键盘：页面和 header 保持原位，只给纸张编辑区
-     增加键盘等高的可滚动留白，让当前光标可以滚到可见区域。 */
+  /* 全屏写作：键盘打开时壳不平移，各 genre 再按业务缩壳/重分配。 */
   body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'] {
     left: 0 !important;
     top: 0 !important;
@@ -349,23 +348,38 @@
     scroll-padding-bottom: 1rem;
   }
 
-  /* 对话写作：键盘弹出时把编辑区缩到键盘上方（--keyboard-available-height
-     由 KeyboardProvider 计算，兼容 iOS/Android 的 dvh 差异），
-     输入框自然落在键盘上方；内容溢出时再由聚焦滚动兜底。 */
-  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'][data-writing-dialogue] {
-    height: var(--keyboard-available-height, 100dvh) !important;
-    max-height: var(--keyboard-available-height, 100dvh) !important;
-    transition: height 220ms ease, max-height 220ms ease;
-  }
-
-  /* 中英互译：键盘出现时保留精简的原文对照，把主要空间留给译文输入。
-     段落切换和提交等操作在收起键盘后恢复，避免它们挤占正在输入的区域。 */
+  /* 对话 / 普通写作 / 互译：缩壳到键盘上方可用高度
+     （--keyboard-available-height 由 KeyboardProvider 计算）。 */
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'][data-writing-dialogue],
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'][data-writing-compose],
   body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'][data-writing-translation] {
     height: var(--keyboard-available-height, 100dvh) !important;
     max-height: var(--keyboard-available-height, 100dvh) !important;
     transition: height 220ms ease, max-height 220ms ease;
   }
 
+  /* 普通写作：键盘时压缩 header 次要信息，纸面占满剩余高度，不再用
+     100dvh - keyboard 的双重补偿 min-height。 */
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-compose-header] {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    transition: padding 220ms ease;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-compose-meta] {
+    display: none;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-compose] [data-writing-editor] {
+    min-height: 0 !important;
+    padding-bottom: 1rem;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-compose] [data-writing-editor] textarea {
+    min-height: 0 !important;
+  }
+
+  /* 中英互译：保留精简原文对照，主要空间留给译文；nav 在收起键盘后恢复。 */
   body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-translation-header] {
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
@@ -399,15 +413,6 @@
     resize: none;
   }
 
-  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'] [data-writing-editor] {
-    min-height: calc(100dvh - var(--keyboard-height) - 7rem) !important;
-    padding-bottom: 1rem;
-  }
-
-  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'] [data-writing-editor] textarea {
-    min-height: calc(100dvh - var(--keyboard-height) - 8rem) !important;
-  }
-
   [data-writing-editor] textarea {
     -webkit-appearance: none !important;
     appearance: none !important;
@@ -426,7 +431,8 @@
     box-shadow: none !important;
   }
 
-  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'] [data-writing-footer] {
+  /* 对话写作：键盘时收起 footer，把空间留给气泡输入。 */
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-dialogue] [data-writing-footer] {
     max-height: 0;
     min-height: 0;
     overflow: hidden;
@@ -436,6 +442,30 @@
     opacity: 0;
     pointer-events: none;
     transition: max-height 180ms ease, padding 180ms ease, opacity 120ms ease;
+  }
+
+  /* 普通写作：键盘时保留压缩 footer（字数 + 图标按钮），去掉 safe-area 底垫。 */
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-compose] [data-writing-footer] {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+    transition: padding 180ms ease;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-compose] [data-writing-footer-meta] {
+    display: none;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-compose] [data-writing-footer-count] {
+    margin-top: 0;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-compose] [data-writing-footer-label] {
+    display: none;
+  }
+
+  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-writing-compose] [data-writing-footer] button {
+    min-width: 2.25rem;
+    padding-inline: 0.5rem;
   }
 
   body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='practice'] {

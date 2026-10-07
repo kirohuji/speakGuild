@@ -473,6 +473,27 @@ function WritingKnowledgeActions({
   )
 }
 
+/** 键盘动画结束后，把输入区滚到键盘上方的安全可视范围。 */
+function scrollWritingInputIntoSafeView(
+  target: HTMLElement | null,
+  scrollRegionSelector = '[data-writing-scroll-region]',
+) {
+  window.setTimeout(() => {
+    const scrollRegion = target?.closest<HTMLElement>(scrollRegionSelector)
+    if (!target || !scrollRegion) return
+
+    const keyboardHeight =
+      Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--keyboard-height')) || 0
+    const regionRect = scrollRegion.getBoundingClientRect()
+    const targetRect = target.getBoundingClientRect()
+    const safeBottom = Math.min(regionRect.bottom, window.innerHeight - keyboardHeight) - 16
+
+    if (targetRect.bottom > safeBottom) {
+      scrollRegion.scrollBy({ top: targetRect.bottom - safeBottom, behavior: 'smooth' })
+    }
+  }, 300)
+}
+
 function WritingEditor({
   topic,
   unitTitle,
@@ -523,25 +544,27 @@ function WritingEditor({
     } catch (error: any) { toast.error(error?.message || t('learning.saveFailed')) } finally { setSaving(false) }
   }
 
+  // 与对话/互译相同：等键盘动画结束，按 --keyboard-height 把纸面滚进安全区。
   const focusEditor = () => {
-    window.setTimeout(() => editorRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 260)
+    scrollWritingInputIntoSafeView(editorRef.current)
   }
 
   return (
     <div
       data-keyboard-overlay="writing"
+      data-writing-compose
       className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pt-safe"
     >
-      <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
+      <header data-writing-compose-header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
         <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-3">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><FilePenLine className="size-4" /></span>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{t('learning.writingPractice')}</Badge>
-              <span className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span>
+              <span data-writing-compose-meta className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span>
             </div>
             <h1 className="truncate text-base font-bold leading-snug text-foreground">{topic.title}</h1>
-            <p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p>
+            <p data-writing-compose-meta className="truncate text-[11px] text-muted-foreground">{unitTitle}</p>
           </div>
           <div className="flex shrink-0 items-center gap-1">
             {session.readOnly && <WritingReviewControls view={view} onViewChange={setView} onRetry={() => void session.startNewAttempt().then(() => { setText(''); setView('editor') })} />}
@@ -588,18 +611,18 @@ function WritingEditor({
       <footer className="shrink-0 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-xl pb-safe" data-writing-footer>
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs text-muted-foreground">{({ message: t('learning.genreMessage'), journal: t('learning.genreJournal'), email: t('learning.genreEmail'), paragraph: t('learning.genreParagraph'), essay: t('learning.genreEssay'), dialogue: t('learning.genreDialogue'), translation: t('learning.genreTranslation') } as Record<string, string>)[config.genre ?? ''] || config.genre || t('learning.freeWriting')}</p>
-            <p className={cn('mt-0.5 text-xs tabular-nums text-muted-foreground', config.minWords && wordCount < config.minWords && 'text-amber-600')}>
+            <p data-writing-footer-meta className="truncate text-xs text-muted-foreground">{({ message: t('learning.genreMessage'), journal: t('learning.genreJournal'), email: t('learning.genreEmail'), paragraph: t('learning.genreParagraph'), essay: t('learning.genreEssay'), dialogue: t('learning.genreDialogue'), translation: t('learning.genreTranslation') } as Record<string, string>)[config.genre ?? ''] || config.genre || t('learning.freeWriting')}</p>
+            <p data-writing-footer-count className={cn('mt-0.5 text-xs tabular-nums text-muted-foreground', config.minWords && wordCount < config.minWords && 'text-amber-600')}>
               {config.minWords
                 ? t('learning.wordCountWithTarget', { count: wordCount, min: config.minWords, max: config.maxWords ?? '∞' })
                 : t('learning.wordCount', { count: wordCount })}
             </p>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => save(false)} disabled={saving || session.readOnly || !text.trim() || !session.ready} className="shrink-0 gap-1.5">
-            <Save className="size-4" />{t('learning.save')}
+          <Button variant="ghost" size="sm" onClick={() => save(false)} disabled={saving || session.readOnly || !text.trim() || !session.ready} className="shrink-0 gap-1.5" aria-label={t('learning.save')}>
+            <Save className="size-4" /><span data-writing-footer-label>{t('learning.save')}</span>
           </Button>
-          <Button size="sm" onClick={() => save(true)} disabled={saving || session.readOnly || !text.trim() || !session.sessionId} className="shrink-0 gap-1.5 rounded-full px-4">
-            {saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{t('learning.submitFeedback')}
+          <Button size="sm" onClick={() => save(true)} disabled={saving || session.readOnly || !text.trim() || !session.sessionId} className="shrink-0 gap-1.5 rounded-full px-4" aria-label={t('learning.submitFeedback')}>
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}<span data-writing-footer-label>{t('learning.submitFeedback')}</span>
           </Button>
         </div>
       </footer>
@@ -690,24 +713,9 @@ function TranslationEditor({
     setListOpen(false)
   }
 
-  // 与对话写作相同：等 Capacitor 键盘动画结束后，按原生键盘高度把输入区
-  // 滚到安全可视范围内。CSS 负责缩小布局，这段只负责处理长译文/旧设备的兜底。
+  // CSS 负责缩壳与分区；这里只兜底长译文/旧设备滚进安全区。
   const focusTranslationInput = () => {
-    window.setTimeout(() => {
-      const input = translationInputRef.current
-      const scrollRegion = input?.closest<HTMLElement>('[data-writing-translation-answer-scroll]')
-      if (!input || !scrollRegion) return
-
-      const keyboardHeight =
-        Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--keyboard-height')) || 0
-      const regionRect = scrollRegion.getBoundingClientRect()
-      const inputRect = input.getBoundingClientRect()
-      const safeBottom = Math.min(regionRect.bottom, window.innerHeight - keyboardHeight) - 16
-
-      if (inputRect.bottom > safeBottom) {
-        scrollRegion.scrollBy({ top: inputRect.bottom - safeBottom, behavior: 'smooth' })
-      }
-    }, 300)
+    scrollWritingInputIntoSafeView(translationInputRef.current, '[data-writing-translation-answer-scroll]')
   }
 
   const sourceLanguage = direction === 'zh_to_en' ? t('learning.sourceZh') : t('learning.sourceEn')
@@ -802,25 +810,10 @@ function DialogueEditor({
   const session = useTopicSession(topic.id, restore)
   useEffect(() => { if (session.readOnly) setView('analysis') }, [session.readOnly])
 
-  // B 输入框聚焦时滚到可视区：底部对齐到键盘上方（而非居中，
-  // 因为软键盘在部分浏览器不压缩布局，居中的输入框会落在键盘后面）
+  // B 输入框聚焦：底部对齐键盘上方（CSS 缩壳 + 滚动兜底）
   const inputWrapRef = useRef<HTMLDivElement>(null)
   const focusInput = () => {
-    window.setTimeout(() => {
-      const wrap = inputWrapRef.current
-      const scrollRegion = wrap?.closest<HTMLElement>('[data-writing-scroll-region]')
-      if (!wrap || !scrollRegion) return
-      // --keyboard-height 由 KeyboardProvider 写入（原生 Capacitor / Web visualViewport）
-      const keyboardHeight =
-        Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--keyboard-height')) || 0
-      const regionRect = scrollRegion.getBoundingClientRect()
-      const wrapRect = wrap.getBoundingClientRect()
-      // 可视区底部 = 滚动区底部与「键盘上方」取较小者，再留 16px 呼吸
-      const safeBottom = Math.min(regionRect.bottom, window.innerHeight - keyboardHeight) - 16
-      if (wrapRect.bottom > safeBottom) {
-        scrollRegion.scrollBy({ top: wrapRect.bottom - safeBottom, behavior: 'smooth' })
-      }
-    }, 300)
+    scrollWritingInputIntoSafeView(inputWrapRef.current)
   }
 
   const currentTurn = turns[currentIndex]
