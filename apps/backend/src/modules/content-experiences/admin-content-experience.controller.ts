@@ -16,6 +16,7 @@ import { ContentExperienceService } from './content-experience.service';
 import {
   AssignPackageGroupDto,
   AttachEpubDto,
+  GenerateDialogueReferencesDto,
   CreatePackageGroupDto,
   GenerateWritingTopicDto,
   UpdatePackageGroupDto,
@@ -111,5 +112,15 @@ export class AdminContentExperienceController {
   ) {
     await this.requireAdmin(req);
     return this.experiences.generateWritingTopicDraft(sceneId, dto);
+  }
+
+  @Post('scenes/:sceneId/dialogue-references/ai-draft')
+  async generateDialogueReferences(
+    @Req() req: Request,
+    @Param('sceneId') sceneId: string,
+    @Body() dto: GenerateDialogueReferencesDto,
+  ) {
+    await this.requireAdmin(req);
+    return this.experiences.generateDialogueReferences(sceneId, dto);
   }
 }

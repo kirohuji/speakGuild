@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { BookOpen, ClipboardCheck, Eye, FilePenLine, Headphones, Languages, Loader2, Plus, Sparkles, Target, Trash2, Upload, Play, Pause, Clock, Music, FileAudio, GripVertical, Volume2, Split, ChevronDown, MessageCircle, X } from 'lucide-react'
+import { BookOpen, ClipboardCheck, Eye, FilePenLine, Headphones, Languages, Loader2, Plus, Sparkles, Target, Trash2, Upload, Play, Pause, Clock, Music, FileAudio, GripVertical, Volume2, Split, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +12,6 @@ import { Select } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { WritingTaskCard } from '@/features/learning/components/writing-task-card'
 import { ReadingTaskCard } from '@/features/learning/components/reading-task-card'
 import { cn } from '@/lib/cn'
 import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
@@ -24,6 +23,7 @@ import {
   type ListeningTranscriptSegment,
 } from '../api-content-admin'
 import { listAiProviders, type AiProviderItem } from '../api-ai-models'
+import { WritingLearnerPhonePreview } from './writing-learner-phone-preview'
 
 type Props = {
   mode: Exclude<Scene['contentMode'], 'practice' | 'novel' | 'story'>
@@ -68,6 +68,7 @@ function WritingFields({
 }) {
   const [instruction, setInstruction] = useState('')
   const [generating, setGenerating] = useState(false)
+  const [generatingReferences, setGeneratingReferences] = useState(false)
   const [configOpen, setConfigOpen] = useState(false)
   const isDialogue = value.genre === 'dialogue'
   const isTranslation = value.genre === 'translation'
@@ -102,7 +103,29 @@ function WritingFields({
   }
 
   const requirements: string[] = value.requirements ?? []
-  const turns: Array<{ aText: string; hint: string }> = value.turns ?? []
+  const turns: Array<{ aText: string; hint: string; referenceAnswer?: string; referenceExplanation?: string }> = value.turns ?? []
+
+  const generateDialogueReferences = async () => {
+    if (generatingReferences || !turns.length) return
+    if (turns.some((turn) => !turn.aText.trim())) { toast.error('请先填写每轮 A 的台词'); return }
+    setGeneratingReferences(true)
+    try {
+      const result = await contentExperienceAdminApi.generateDialogueReferences(sceneId, {
+        situation: value.situation,
+        turns,
+        difficulty: context?.difficulty,
+        vocabulary: context?.vocabulary,
+        chunks: context?.chunks,
+        sentencePatterns: context?.sentencePatterns,
+      })
+      onChange({ ...value, turns: turns.map((turn, index) => ({ ...turn, referenceAnswer: turn.referenceAnswer || result.turns[index]?.referenceAnswer || '', referenceExplanation: turn.referenceExplanation || result.turns[index]?.referenceExplanation || '' })) })
+      toast.success('已补全缺失的参考答案与讲解')
+    } catch (error: any) {
+      toast.error(error?.message || 'AI 补全参考答案失败')
+    } finally {
+      setGeneratingReferences(false)
+    }
+  }
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_25rem]">
@@ -225,7 +248,7 @@ function WritingFields({
         <>
           {/* 对话轮次 */}
           <section className="flex flex-col gap-3">
-            <SectionHeading icon={Target} step="02" title="对话轮次" description="每轮 A 先说一句话，学习者根据中文提示用英语填写 B 的回应。像 VN 练习一样，提示告诉学习者应该说什么。" />
+            <div className="flex items-start justify-between gap-3"><SectionHeading icon={Target} step="02" title="对话轮次" description="每轮 A 先说一句话，学习者根据中文提示用英语填写 B 的回应；参考答案与讲解仅供 AI 评估和后台审阅。" /><Button type="button" size="sm" variant="outline" className="mt-1 shrink-0 gap-1.5" disabled={generatingReferences || !turns.length} onClick={generateDialogueReferences}>{generatingReferences ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5 text-primary" />}{generatingReferences ? '正在补全' : 'AI 补全答案与讲解'}</Button></div>
             <div className="flex flex-col gap-3">
               {turns.map((turn, index) => (
                 <div key={index} className="flex items-start gap-3 rounded-lg border border-border/70 bg-muted/20 p-3">
@@ -244,6 +267,19 @@ function WritingFields({
                         placeholder="A 的台词（英文）"
                       />
                     </div>
+                    <div className="flex items-start gap-2">
+                      <Badge variant="outline" className="mt-1.5 shrink-0 border-sky-200 text-[10px] text-sky-700 dark:border-sky-800 dark:text-sky-400">讲解</Badge>
+                      <Textarea
+                        className="min-h-16 text-sm"
+                        value={turn.referenceExplanation ?? ''}
+                        onChange={(event) => {
+                          const next = [...turns]
+                          next[index] = { ...next[index], referenceExplanation: event.target.value }
+                          onChange({ ...value, turns: next })
+                        }}
+                        placeholder="解释这句答案用了什么句型、句块或词汇，以及为什么适合当前语境（仅 AI 评估和后台可见）"
+                      />
+                    </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="shrink-0 text-[10px]">B 提示</Badge>
                       <Input
@@ -255,6 +291,19 @@ function WritingFields({
                           onChange({ ...value, turns: next })
                         }}
                         placeholder="中文提示，告诉学习者 B 应该回复什么"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="shrink-0 border-emerald-200 text-[10px] text-emerald-700 dark:border-emerald-800 dark:text-emerald-400">参考答案</Badge>
+                      <Input
+                        className="h-8 text-sm"
+                        value={turn.referenceAnswer ?? ''}
+                        onChange={(event) => {
+                          const next = [...turns]
+                          next[index] = { ...next[index], referenceAnswer: event.target.value }
+                          onChange({ ...value, turns: next })
+                        }}
+                        placeholder="B 的自然英文参考回复（仅 AI 评估可见）"
                       />
                     </div>
                   </div>
@@ -275,7 +324,7 @@ function WritingFields({
                 variant="outline"
                 size="sm"
                 className="gap-1.5"
-                onClick={() => onChange({ ...value, turns: [...turns, { aText: '', hint: '' }] })}
+                onClick={() => onChange({ ...value, turns: [...turns, { aText: '', hint: '', referenceAnswer: '', referenceExplanation: '' }] })}
               >
                 <Plus className="size-3.5" />添加一轮对话
               </Button>
@@ -321,65 +370,8 @@ function WritingFields({
         isDialogue={isDialogue}
         isTranslation={isTranslation}
         turns={turns}
+        translationPreview={<TranslationLearnerPreview value={value} />}
       />
-    </div>
-  )
-}
-
-function WritingLearnerPhonePreview({
-  value,
-  context,
-  isDialogue,
-  isTranslation,
-  turns,
-}: {
-  value: Record<string, any>
-  context?: Props['draftContext']
-  isDialogue: boolean
-  isTranslation: boolean
-  turns: Array<{ aText: string; hint: string }>
-}) {
-  return (
-    <aside className="sticky top-4 min-w-0">
-      <div className="mb-3 flex items-center justify-between px-1">
-        <div className="flex items-center gap-2"><Eye className="size-4 text-primary" /><p className="text-sm font-semibold">考生视图</p></div>
-        <Badge variant="secondary" className="text-[10px]">实时预览</Badge>
-      </div>
-
-      <div className="mx-auto w-full max-w-[390px] rounded-[2.7rem] bg-zinc-950 p-2 shadow-[0_18px_45px_-20px_rgba(0,0,0,0.65)] ring-1 ring-black/20 dark:ring-white/15">
-        <div className="relative h-[min(46rem,calc(100vh-9rem))] min-h-[34rem] overflow-hidden rounded-[2.15rem] bg-[#fffefb] dark:bg-background">
-          <div className="absolute left-1/2 top-2 z-10 h-6 w-24 -translate-x-1/2 rounded-full bg-zinc-950" aria-hidden="true" />
-          {isDialogue ? <DialogueMobilePreview value={value} context={context} turns={turns} /> : <div className="flex h-full flex-col pt-10">
-            <div className="border-b border-border/60 px-5 pb-3"><p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">Writing practice</p><h3 className="mt-1 text-base font-semibold leading-6">{context?.title || '未命名写作题'}</h3></div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{isTranslation ? <TranslationLearnerPreview value={value} /> : <WritingTaskCard questionMarkdown={value.questionMarkdown} promptEn={context?.promptEn} promptZh={context?.promptZh} genre={value.genre} minWords={value.minWords} maxWords={value.maxWords} durationMinutes={Math.max(1, Math.round((context?.suggestedDurationSec ?? 900) / 60))} onStart={() => undefined} />}</div>
-          </div>}
-        </div>
-      </div>
-      <p className="mt-3 text-center text-[11px] text-muted-foreground">iPhone 视口 · 内容可在设备内滚动查看</p>
-    </aside>
-  )
-}
-
-/** Mirrors the learner DialogueEditor markup so the admin device shows the real mobile composition. */
-function DialogueMobilePreview({ value, context, turns }: { value: Record<string, any>; context?: Props['draftContext']; turns: Array<{ aText: string; hint: string }> }) {
-  const currentTurn = turns[0]
-  return (
-    <div className="flex h-full flex-col pt-10">
-      <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-4">
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><MessageCircle className="size-[18px]" /></span>
-          <div className="min-w-0 flex-1"><div className="mb-1.5 flex items-center gap-2"><Badge variant="secondary">对话写作</Badge><span className="truncate text-xs text-muted-foreground">{context?.difficulty ?? '—'}</span></div><h1 className="break-words text-xl font-bold leading-tight text-foreground">{context?.title || '未命名写作题'}</h1><p className="mt-1.5 truncate text-sm text-muted-foreground">写作练习</p></div>
-          <div className="flex items-center gap-1"><Button type="button" variant="ghost" size="icon" disabled className="size-8"><BookOpen className="size-4" /></Button><button type="button" disabled className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground"><X className="size-4" /></button></div>
-        </div>
-      </header>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col px-5 pb-8 pt-5">
-          {value.situation && <div className="mb-5 rounded-lg bg-sky-50/60 px-3 py-2 text-sm leading-relaxed dark:bg-sky-950/20"><span className="font-medium text-sky-600 dark:text-sky-400">📍 </span>{value.situation}</div>}
-          {currentTurn && <div className="flex-1 py-5"><div className="flex items-start gap-2.5"><span className="mt-1 shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">A</span><div className="max-w-[85%] rounded-2xl rounded-tl-md bg-muted/50 px-4 py-3 text-[15px] leading-relaxed">{currentTurn.aText || 'A 的台词会显示在这里'}</div></div><div className="ml-9 mt-2"><button type="button" disabled className="flex items-center gap-1.5 rounded-full border border-amber-200/60 bg-amber-50/60 px-3 py-1.5 text-xs text-amber-700 dark:border-amber-800/30 dark:bg-amber-950/20 dark:text-amber-400"><Sparkles className="size-3" />查看提示</button></div><div className="ml-9 mt-4"><div className="flex items-start gap-2.5"><span className="mt-1 shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">B</span><div className="min-h-[140px] flex-1 rounded-2xl rounded-tl-md bg-muted/40 p-4 text-[16px] leading-7 text-muted-foreground/45">用英语写下 B 的回复…</div></div></div></div>}
-          {turns.length > 1 && <div className="mt-4 border-t border-border/50 pt-4"><div className="flex items-center justify-center gap-2">{turns.map((_, index) => <span key={index} className={cn('flex size-8 items-center justify-center rounded-full text-xs font-medium', index === 0 ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground')}>{index + 1}</span>)}</div><p className="mt-2 text-center text-xs text-muted-foreground">0/{turns.length} 轮已填写</p></div>}
-        </div>
-      </div>
-      <footer className="shrink-0 rounded-b-[2.15rem] border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-xl"><Button size="lg" disabled className="w-full gap-1.5 rounded-full"><Sparkles className="size-4" />提交反馈</Button></footer>
     </div>
   )
 }

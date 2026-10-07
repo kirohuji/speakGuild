@@ -208,3 +208,40 @@ export class GenerateWritingTopicDto {
   @MaxLength(300, { each: true })
   sentencePatterns?: string[];
 }
+
+export class GenerateDialogueReferencesDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  situation?: string;
+
+  @IsArray()
+  @ArrayMaxSize(8)
+  turns: Array<{ aText?: string; hint?: string; referenceAnswer?: string; referenceExplanation?: string }>;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  difficulty?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(40)
+  @IsString({ each: true })
+  @MaxLength(200, { each: true })
+  vocabulary?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(30)
+  @IsString({ each: true })
+  @MaxLength(300, { each: true })
+  chunks?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  @MaxLength(300, { each: true })
+  sentencePatterns?: string[];
+}
