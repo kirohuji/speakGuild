@@ -52,6 +52,18 @@ export interface AiWritingTopicDraft {
   contentConfig: { writing: Record<string, any> }
 }
 
+export interface AiReadingTopicDraft {
+  title: string
+  description: string
+  promptEn: string
+  promptZh: string
+  difficulty: string
+  suggestedDurationSec: number
+  contentConfig: { reading: Record<string, any> }
+}
+
+export type AiTopicDraft = AiWritingTopicDraft | AiReadingTopicDraft
+
 /** 组内重排后的引用冲突（规则 C：允许重排，但必须展示） */
 export interface GroupReorderConflict {
   sceneId: string
@@ -95,6 +107,8 @@ export const contentExperienceAdminApi = {
     post(`/admin/content-experiences/scenes/${sceneId}/epub`, { assetId }),
   generateWritingTopic: (sceneId: string, data: Record<string, unknown>) =>
     post<AiWritingTopicDraft>(`/admin/content-experiences/scenes/${sceneId}/writing-topics/ai-draft`, data),
+  generateReadingTopic: (sceneId: string, data: Record<string, unknown>) =>
+    post<AiReadingTopicDraft>(`/admin/content-experiences/scenes/${sceneId}/reading-topics/ai-draft`, data),
   generateDialogueReferences: (sceneId: string, data: Record<string, unknown>) =>
     post<{ turns: Array<{ referenceAnswer: string; referenceExplanation: string }> }>(`/admin/content-experiences/scenes/${sceneId}/dialogue-references/ai-draft`, data),
   generateWritingSupport: (sceneId: string, data: Record<string, unknown>) =>

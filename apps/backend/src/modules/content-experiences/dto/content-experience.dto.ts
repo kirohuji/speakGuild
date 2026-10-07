@@ -209,6 +209,70 @@ export class GenerateWritingTopicDto {
   sentencePatterns?: string[];
 }
 
+export class GenerateReadingTopicDto {
+  @IsOptional()
+  @IsIn(['generate', 'format'])
+  mode?: 'generate' | 'format';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20000)
+  instruction?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  difficulty?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(12)
+  questionCount?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(40)
+  @Max(800)
+  targetWordCount?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  currentTitle?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  currentPromptEn?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(12000)
+  currentPassageMarkdown?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(40)
+  @IsString({ each: true })
+  @MaxLength(200, { each: true })
+  vocabulary?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(30)
+  @IsString({ each: true })
+  @MaxLength(300, { each: true })
+  chunks?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  @MaxLength(300, { each: true })
+  sentencePatterns?: string[];
+}
+
 export class GenerateDialogueReferencesDto {
   @IsOptional()
   @IsString()
