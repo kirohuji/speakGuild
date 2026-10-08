@@ -679,7 +679,7 @@ function PracticeRecordsContent({ active }: { active: boolean }) {
           <PopoverContent
             align="end"
             sideOffset={8}
-            className="app-surface drawer-surface w-52 overflow-hidden rounded-xl border border-border/70 bg-background p-1.5 text-foreground shadow-md"
+            className="w-52 overflow-hidden rounded-xl border border-border/70 bg-card p-1.5 text-card-foreground shadow-md"
           >
             <div className="flex items-center justify-between px-2.5 pb-1.5 pt-1">
               <p className="text-xs font-semibold tracking-wide text-foreground">{t('profile.practiceRecords.filterTitle')}</p>

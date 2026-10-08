@@ -2,6 +2,14 @@ import { get, post, put, del } from '@/lib/request';
 
 // ── 类型定义 ──
 
+export type ThemeBgType = 'gradient' | 'image' | 'video' | 'animation';
+
+export interface ThemeBgAssets {
+  gradient?: string;
+  image?: string;
+  video?: string;
+}
+
 export interface ThemeDecoration {
   type: 'glow' | 'grid' | 'particle';
   color: string;
@@ -19,7 +27,12 @@ export interface ThemePreset {
   sortOrder: number;
   isActive: boolean;
   isDefault: boolean;
+  /** 兼容旧字段：解析后的主背景类型 */
   bgType: string;
+  /** 启用的背景类型多选 */
+  bgTypes: ThemeBgType[] | null;
+  lightBgAssets: ThemeBgAssets | null;
+  darkBgAssets: ThemeBgAssets | null;
 
   lightColors: Record<string, string> | null;
   lightBackground: string | null;
@@ -43,6 +56,9 @@ export interface CreateThemePresetInput {
   isActive?: boolean;
   isDefault?: boolean;
   bgType?: string;
+  bgTypes?: ThemeBgType[];
+  lightBgAssets?: ThemeBgAssets;
+  darkBgAssets?: ThemeBgAssets;
   lightColors?: Record<string, string>;
   lightBackground?: string;
   lightDecorations?: ThemeDecoration[];

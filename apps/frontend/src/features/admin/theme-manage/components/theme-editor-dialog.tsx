@@ -23,10 +23,19 @@ import {
   type ThemePreset,
   type CreateThemePresetInput,
   type ThemeDecoration,
+  type ThemeBgType,
+  type ThemeBgAssets,
 } from '../api/theme-api';
 import { FileUploadField } from '@/features/admin/components/file-upload-field';
 import { ColorPickerField } from '@/features/admin/components/color-picker-field';
 import { AudioPlayerField } from '@/features/admin/components/audio-player-field';
+import {
+  BG_TYPE_PRIORITY,
+  BG_TYPE_LABELS,
+  normalizeBgTypes,
+  normalizeBgAssets,
+  deriveLegacyBackgroundFields,
+} from '@/lib/theme-bg-resolve';
 
 // ── 色板字段定义 ──
 
@@ -79,6 +88,9 @@ function emptyForm(): CreateThemePresetInput & { name: string } {
     isActive: true,
     isDefault: false,
     bgType: 'gradient',
+    bgTypes: ['gradient'],
+    lightBgAssets: {},
+    darkBgAssets: {},
     lightColors: {},
     lightBackground: '',
     lightDecorations: [],
@@ -91,6 +103,7 @@ function emptyForm(): CreateThemePresetInput & { name: string } {
 }
 
 function presetToForm(preset: ThemePreset): CreateThemePresetInput & { name: string } {
+  const bgTypes = normalizeBgTypes(preset);
   return {
     name: preset.name,
     description: preset.description ?? '',
@@ -98,6 +111,9 @@ function presetToForm(preset: ThemePreset): CreateThemePresetInput & { name: str
     isActive: preset.isActive,
     isDefault: preset.isDefault,
     bgType: preset.bgType,
+    bgTypes,
+    lightBgAssets: normalizeBgAssets(preset, 'light'),
+    darkBgAssets: normalizeBgAssets(preset, 'dark'),
     lightColors: preset.lightColors ?? {},
     lightBackground: preset.lightBackground ?? '',
     lightDecorations: preset.lightDecorations ?? [],
@@ -213,17 +229,29 @@ export function ThemeEditorDialog({
       toast.error('请输入主题名称');
       return;
     }
+    const bgTypes = (form.bgTypes?.length ? form.bgTypes : ['gradient']) as ThemeBgType[];
+    if (bgTypes.length === 0) {
+      toast.error('请至少选择一种背景类型');
+      return;
+    }
     setSaving(true);
     try {
-      // 清理空值
+      const lightBgAssets = form.lightBgAssets ?? {};
+      const darkBgAssets = form.darkBgAssets ?? {};
+      const legacy = deriveLegacyBackgroundFields(bgTypes, lightBgAssets, darkBgAssets);
+
       const payload = {
         ...form,
+        bgTypes,
+        bgType: legacy.bgType,
+        lightBgAssets,
+        darkBgAssets,
         lightColors: form.lightColors && Object.keys(form.lightColors).length > 0 ? form.lightColors : undefined,
         darkColors: form.darkColors && Object.keys(form.darkColors).length > 0 ? form.darkColors : undefined,
         lightDecorations: (form.lightDecorations ?? []).length > 0 ? form.lightDecorations : undefined,
         darkDecorations: (form.darkDecorations ?? []).length > 0 ? form.darkDecorations : undefined,
-        lightBackground: form.lightBackground || undefined,
-        darkBackground: form.darkBackground || undefined,
+        lightBackground: legacy.lightBackground,
+        darkBackground: legacy.darkBackground,
         bgmUrl: form.bgmUrl || undefined,
         description: form.description || undefined,
       };
@@ -496,157 +524,92 @@ function BackgroundTab({
   addDecoration: (mode: 'lightDecorations' | 'darkDecorations') => void;
   removeDecoration: (mode: 'lightDecorations' | 'darkDecorations', index: number) => void;
 }) {
+  const selected = (form.bgTypes?.length ? form.bgTypes : ['gradient']) as ThemeBgType[];
 
-  const bgDesc =
-    form.bgType === 'gradient'
-      ? '粘贴 CSS gradient 字符串，支持多层叠加'
-      : form.bgType === 'image'
-        ? '上传背景图片，支持 JPG/PNG/WebP，建议分辨率 ≥ 1920×1080'
-        : form.bgType === 'video'
-          ? '上传背景视频，支持 MP4/WebV，建议静音循环播放'
-          : 'PixiJS 粒子动画：星空/雨滴/浪花/极光，需要在代码中配置动画类型';
+  const toggleBgType = (type: ThemeBgType) => {
+    const next = selected.includes(type)
+      ? selected.filter((t) => t !== type)
+      : [...selected, type];
+    // 至少保留一种
+    const normalized = BG_TYPE_PRIORITY.filter((t) => next.includes(t));
+    updateField('bgTypes', normalized.length > 0 ? normalized : [type]);
+  };
+
+  const updateAsset = (
+    mode: 'lightBgAssets' | 'darkBgAssets',
+    key: keyof ThemeBgAssets,
+    value: string,
+  ) => {
+    updateField(mode, { ...(form[mode] ?? {}), [key]: value });
+  };
+
+  const activeLabels = BG_TYPE_PRIORITY
+    .filter((t) => selected.includes(t))
+    .map((t) => BG_TYPE_LABELS[t])
+    .join(' → ');
 
   return (
     <>
-      {/* 背景类型选择器 */}
+      {/* 背景类型多选 */}
       <fieldset className="space-y-3 rounded-lg border p-4">
-        <legend className="px-1 text-sm font-semibold text-foreground">背景类型</legend>
-        <div className="flex gap-4">
-            {(['gradient', 'image', 'video', 'animation'] as const).map((type) => {
-            const Icon = type === 'gradient' ? Palette : type === 'image' ? ImageIcon : type === 'video' ? Music : Sparkles;
-            const label = type === 'gradient' ? 'CSS 渐变' : type === 'image' ? '背景图片' : type === 'video' ? '背景视频' : 'PixiJS 动画';
+        <legend className="px-1 text-sm font-semibold text-foreground">背景类型（可多选）</legend>
+        <div className="flex gap-3">
+          {BG_TYPE_PRIORITY.map((type) => {
+            const Icon =
+              type === 'gradient' ? Palette
+                : type === 'image' ? ImageIcon
+                  : type === 'video' ? Music
+                    : Sparkles;
+            const checked = selected.includes(type);
             return (
               <label
                 key={type}
                 className={cn(
-                  'flex flex-1 cursor-pointer flex-col items-center gap-1.5 rounded-lg border px-4 py-3 transition-colors',
-                  form.bgType === type
+                  'flex flex-1 cursor-pointer flex-col items-center gap-1.5 rounded-lg border px-3 py-3 transition-colors',
+                  checked
                     ? 'border-primary bg-primary/5 text-primary'
                     : 'border-border bg-card text-muted-foreground hover:border-primary/40',
                 )}
               >
                 <Icon className="size-5" />
-                <span className="text-xs font-medium">{label}</span>
+                <span className="text-xs font-medium">{BG_TYPE_LABELS[type]}</span>
                 <input
-                  type="radio"
-                  name="bgType"
-                  value={type}
-                  checked={form.bgType === type}
-                  onChange={() => updateField('bgType', type)}
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleBgType(type)}
                   className="sr-only"
                 />
               </label>
             );
           })}
         </div>
-        <p className="text-xs text-muted-foreground">{bgDesc}</p>
-      </fieldset>
-
-      {/* Light 背景 */}
-      <fieldset className="space-y-3 rounded-lg border p-4">
-        <legend className="flex items-center gap-1.5 px-1 text-sm font-semibold text-foreground">
-          <Sun className="size-3.5" /> Light 模式背景
-        </legend>
-        {(form.bgType === 'gradient' || form.bgType === 'animation') && (
-          <>
-            <Textarea
-              value={form.lightBackground ?? ''}
-              onChange={(e) => updateField('lightBackground', e.target.value)}
-              placeholder={
-                'radial-gradient(circle at 18% 0%, hsl(166 56% 88% / 0.48), transparent 28rem),\n' +
-                'radial-gradient(circle at 88% 10%, hsl(207 86% 92% / 0.58), transparent 24rem),\n' +
-                'linear-gradient(180deg, hsl(156 43% 97%) 0%, hsl(204 56% 98%) 52%, #fff 100%)'
-              }
-              rows={6}
-              className="font-mono text-xs"
-            />
-            {form.lightBackground && (
-              <div
-                className="h-10 rounded-md border border-border"
-                style={{ background: form.lightBackground }}
-              />
-            )}
-            {form.bgType === 'animation' && (
-              <p className="text-xs text-muted-foreground">
-                PixiJS 动画将由主题 ID 自动匹配（如 theme-ocean, theme-stars）
-              </p>
-            )}
-          </>
-        )}
-        {form.bgType === 'image' && (
-          <FileUploadField
-            value={form.lightBackground ?? ''}
-            onChange={(url) => updateField('lightBackground', url)}
-            accept="image/*"
-            uploadLabel="上传背景图"
-            placeholder="上传或粘贴浅色模式背景图片 URL"
-            previewSize="lg"
-          />
-        )}
-        {form.bgType === 'video' && (
-          <FileUploadField
-            value={form.lightBackground ?? ''}
-            onChange={(url) => updateField('lightBackground', url)}
-            accept="video/*"
-            uploadLabel="上传视频"
-            placeholder="上传或粘贴浅色模式背景视频 URL（mp4/webm）"
-          />
+        <p className="text-xs text-muted-foreground">
+          首页按优先级只渲染最高可用层：<span className="font-medium text-foreground">视频 → 图片 → PixiJS → 渐变</span>
+          {activeLabels ? `。当前：${activeLabels}` : ''}
+        </p>
+        {selected.includes('animation') && (
+          <p className="text-xs text-muted-foreground">
+            PixiJS 动画由主题 ID 自动匹配（如 theme-ocean、theme-stars）。若同时勾选图片，首页优先显示图片。
+          </p>
         )}
       </fieldset>
 
-      {/* Dark 背景 */}
-      <fieldset className="space-y-3 rounded-lg border p-4">
-        <legend className="flex items-center gap-1.5 px-1 text-sm font-semibold text-foreground">
-          <Moon className="size-3.5" /> Dark 模式背景
-        </legend>
-        {(form.bgType === 'gradient' || form.bgType === 'animation') && (
-          <>
-            <Textarea
-              value={form.darkBackground ?? ''}
-              onChange={(e) => updateField('darkBackground', e.target.value)}
-              placeholder={
-                'radial-gradient(circle at 50% 0%, hsl(0 0% 100% / 0.08), transparent 22rem),\n' +
-                'radial-gradient(circle at 18% 14%, hsl(330 84% 62% / 0.14), transparent 26rem),\n' +
-                'linear-gradient(155deg, hsl(252 43% 5%) 0%, hsl(258 36% 10%) 50%, hsl(336 36% 11%) 100%)'
-              }
-              rows={6}
-              className="font-mono text-xs"
-            />
-            {form.darkBackground && (
-              <div
-                className="h-10 rounded-md border border-border"
-                style={{ background: form.darkBackground }}
-              />
-            )}
-            {form.bgType === 'animation' && (
-              <p className="text-xs text-muted-foreground">
-                PixiJS 动画将由主题 ID 自动匹配（如 theme-ocean, theme-stars）
-              </p>
-            )}
-          </>
-        )}
-        {form.bgType === 'image' && (
-          <FileUploadField
-            value={form.darkBackground ?? ''}
-            onChange={(url) => updateField('darkBackground', url)}
-            accept="image/*"
-            uploadLabel="上传背景图"
-            placeholder="上传或粘贴深色模式背景图片 URL"
-            previewSize="lg"
-          />
-        )}
-        {form.bgType === 'video' && (
-          <FileUploadField
-            value={form.darkBackground ?? ''}
-            onChange={(url) => updateField('darkBackground', url)}
-            accept="video/*"
-            uploadLabel="上传视频"
-            placeholder="上传或粘贴深色模式背景视频 URL（mp4/webm）"
-          />
-        )}
-      </fieldset>
+      {/* Light 背景资源 */}
+      <ModeBackgroundAssets
+        mode="light"
+        selected={selected}
+        assets={form.lightBgAssets ?? {}}
+        onChange={(key, value) => updateAsset('lightBgAssets', key, value)}
+      />
 
-      {/* 装饰元素 — 所有背景类型都适用 */}
+      {/* Dark 背景资源 */}
+      <ModeBackgroundAssets
+        mode="dark"
+        selected={selected}
+        assets={form.darkBgAssets ?? {}}
+        onChange={(key, value) => updateAsset('darkBgAssets', key, value)}
+      />
+
       <DecorationEditor
         mode="light"
         decorations={form.lightDecorations ?? []}
@@ -663,6 +626,94 @@ function BackgroundTab({
         onRemove={(i) => removeDecoration('darkDecorations', i)}
       />
     </>
+  );
+}
+
+function ModeBackgroundAssets({
+  mode,
+  selected,
+  assets,
+  onChange,
+}: {
+  mode: 'light' | 'dark';
+  selected: ThemeBgType[];
+  assets: ThemeBgAssets;
+  onChange: (key: keyof ThemeBgAssets, value: string) => void;
+}) {
+  const Icon = mode === 'light' ? Sun : Moon;
+  const showGradient = selected.includes('gradient') || selected.includes('animation');
+  const showImage = selected.includes('image');
+  const showVideo = selected.includes('video');
+
+  if (!showGradient && !showImage && !showVideo) {
+    return (
+      <fieldset className="space-y-3 rounded-lg border p-4">
+        <legend className="flex items-center gap-1.5 px-1 text-sm font-semibold text-foreground">
+          <Icon className="size-3.5" /> {mode === 'light' ? 'Light' : 'Dark'} 模式背景
+        </legend>
+        <p className="text-xs text-muted-foreground">请先勾选背景类型</p>
+      </fieldset>
+    );
+  }
+
+  return (
+    <fieldset className="space-y-4 rounded-lg border p-4">
+      <legend className="flex items-center gap-1.5 px-1 text-sm font-semibold text-foreground">
+        <Icon className="size-3.5" /> {mode === 'light' ? 'Light' : 'Dark'} 模式背景
+      </legend>
+
+      {showVideo && (
+        <div className="space-y-1.5">
+          <Label className="text-xs">背景视频（最高优先级）</Label>
+          <FileUploadField
+            value={assets.video ?? ''}
+            onChange={(url) => onChange('video', url)}
+            accept="video/*"
+            uploadLabel="上传视频"
+            placeholder={`${mode === 'light' ? '浅色' : '深色'}模式背景视频 URL（mp4/webm）`}
+          />
+        </div>
+      )}
+
+      {showImage && (
+        <div className="space-y-1.5">
+          <Label className="text-xs">背景图片</Label>
+          <FileUploadField
+            value={assets.image ?? ''}
+            onChange={(url) => onChange('image', url)}
+            accept="image/*"
+            uploadLabel="上传背景图"
+            placeholder={`${mode === 'light' ? '浅色' : '深色'}模式背景图片 URL`}
+            previewSize="lg"
+          />
+        </div>
+      )}
+
+      {showGradient && (
+        <div className="space-y-1.5">
+          <Label className="text-xs">
+            CSS 渐变{selected.includes('animation') && !selected.includes('gradient') ? '（PixiJS 回退底色）' : ''}
+          </Label>
+          <Textarea
+            value={assets.gradient ?? ''}
+            onChange={(e) => onChange('gradient', e.target.value)}
+            placeholder={
+              mode === 'light'
+                ? 'radial-gradient(circle at 18% 0%, hsl(166 56% 88% / 0.48), transparent 28rem),\nlinear-gradient(180deg, hsl(156 43% 97%) 0%, #fff 100%)'
+                : 'linear-gradient(155deg, hsl(252 43% 5%) 0%, hsl(258 36% 10%) 50%, hsl(336 36% 11%) 100%)'
+            }
+            rows={5}
+            className="font-mono text-xs"
+          />
+          {assets.gradient && (
+            <div
+              className="h-10 rounded-md border border-border"
+              style={{ background: assets.gradient }}
+            />
+          )}
+        </div>
+      )}
+    </fieldset>
   );
 }
 

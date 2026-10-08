@@ -270,12 +270,17 @@ model ThemePreset {
   isActive    Boolean @default(true) // 是否启用
   isDefault   Boolean @default(false) // 是否默认主题
 
-  // 背景类型: gradient | image | video
+  // 背景主类型（兼容旧字段，取启用类型中优先级最高者）: gradient | image | video | animation
   bgType String @default("gradient")
+  // 启用的背景类型多选（JSON: string[]），优先级 video > image > animation > gradient
+  bgTypes Json?
+  // Light/Dark 分层背景资源（JSON: { gradient?, image?, video? }）
+  lightBgAssets Json?
+  darkBgAssets  Json?
 
   // ── Light 模式色板（JSON: { background, foreground, primary, card, muted, accent, border ... }）──
   lightColors      Json?
-  // ── Light 模式背景（CSS gradient string 或图片 URL）──
+  // ── Light 模式背景（兼容旧字段：解析后的主背景 CSS/URL）──
   lightBackground  String? @db.Text
   // ── Light 模式装饰配置（JSON: [{ type, color, position, size, blur, animation }]）──
   lightDecorations Json?

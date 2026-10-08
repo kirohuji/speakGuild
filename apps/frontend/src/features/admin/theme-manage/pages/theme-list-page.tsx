@@ -203,7 +203,19 @@ function ThemeCard({
             : <XCircle className="size-3.5 text-muted-foreground" />
           }
           <Badge variant="secondary" className="ml-auto text-[10px]">
-            {theme.bgType === 'image' ? '图片' : theme.bgType === 'video' ? '视频' : '渐变'}
+            {Array.isArray(theme.bgTypes) && theme.bgTypes.length > 0
+              ? theme.bgTypes
+                  .map((t) =>
+                    t === 'image' ? '图片'
+                      : t === 'video' ? '视频'
+                        : t === 'animation' ? '动画'
+                          : '渐变',
+                  )
+                  .join('+')
+              : theme.bgType === 'image' ? '图片'
+                : theme.bgType === 'video' ? '视频'
+                  : theme.bgType === 'animation' ? '动画'
+                    : '渐变'}
           </Badge>
         </div>
         {theme.description && (

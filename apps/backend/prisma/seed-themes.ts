@@ -402,10 +402,32 @@ export async function seedThemes(prisma: PrismaClient) {
   ];
 
   for (const t of themes) {
+    const bgTypes =
+      t.bgType === 'animation' ? ['animation', 'gradient']
+        : [t.bgType];
+    const toAssets = (bg?: string) => {
+      if (!bg) return {};
+      if (t.bgType === 'image') return { image: bg };
+      if (t.bgType === 'video') return { video: bg };
+      return { gradient: bg };
+    };
+
+    const data = {
+      ...t,
+      isActive: true,
+      bgTypes,
+      lightBgAssets: toAssets(t.lightBackground),
+      darkBgAssets: toAssets(t.darkBackground),
+    };
+
     const preset = await prisma.themePreset.upsert({
       where: { id: t.id },
-      create: { ...t, isActive: true },
-      update: {},
+      create: data,
+      update: {
+        bgTypes: data.bgTypes,
+        lightBgAssets: data.lightBgAssets,
+        darkBgAssets: data.darkBgAssets,
+      },
     });
     console.log(`  ✅ ${preset.name}`);
   }

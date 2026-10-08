@@ -1,4 +1,14 @@
-import { IsString, IsOptional, IsBoolean, IsNumber, IsObject, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsNumber,
+  IsObject,
+  IsArray,
+  IsIn,
+  Min,
+  Max,
+} from 'class-validator';
 
 export class CreateThemePresetDto {
   @IsString()
@@ -20,9 +30,24 @@ export class CreateThemePresetDto {
   @IsBoolean()
   isDefault?: boolean;
 
+  /** 兼容旧字段 */
   @IsOptional()
   @IsString()
   bgType?: string;
+
+  /** 启用的背景类型多选 */
+  @IsOptional()
+  @IsArray()
+  @IsIn(['gradient', 'image', 'video', 'animation'], { each: true })
+  bgTypes?: string[];
+
+  @IsOptional()
+  @IsObject()
+  lightBgAssets?: Record<string, string>;
+
+  @IsOptional()
+  @IsObject()
+  darkBgAssets?: Record<string, string>;
 
   // Light mode
   @IsOptional()

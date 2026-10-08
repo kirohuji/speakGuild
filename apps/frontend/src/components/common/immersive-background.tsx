@@ -4,10 +4,12 @@ import { useTheme } from 'next-themes';
 import { useThemePreset } from '@/providers/theme-preset-provider';
 import type { ThemeDecoration } from '@/features/admin/theme-manage/api/theme-api';
 import { PixiAnimatedBackground } from '@/components/common/pixi-animated-background';
+import { resolveThemeBackground } from '@/lib/theme-bg-resolve';
 
 /**
  * 沉浸式背景组件
- * 从当前激活的主题预设中读取背景和装饰配置，渲染动态背景效果。
+ * 从当前激活的主题预设中读取背景和装饰配置，按优先级渲染：
+ * 视频 > 图片 > PixiJS 动画 > CSS 渐变
  *
  * URL 参数:
  *   ?test=1  — 强制显示月亮和银河（仅对星空主题生效）
@@ -18,19 +20,24 @@ export function ImmersiveBackground() {
   const isDark = resolvedTheme === 'dark';
   const testMode = location.hash.includes('test=1');
 
-  const bg = isDark ? activePreset?.darkBackground : activePreset?.lightBackground;
   const decorations = useMemo<ThemeDecoration[]>(() => {
     const raw = isDark ? activePreset?.darkDecorations : activePreset?.lightDecorations;
     if (!raw?.length) return [];
     return raw;
   }, [activePreset, isDark]);
 
-  const bgType = activePreset?.bgType;
-  const isGradient = bg?.startsWith('linear-gradient') || bg?.startsWith('radial-gradient');
-  const isAnimation = bgType === 'animation';
+  const resolved = useMemo(
+    () => resolveThemeBackground(activePreset, isDark ? 'dark' : 'light'),
+    [activePreset, isDark],
+  );
 
-  // 如果没有背景且没有装饰且不是动画，不渲染
-  if (!bg && !decorations.length && !isAnimation) return null;
+  if (!resolved && !decorations.length) return null;
+
+  const isGradient = resolved?.type === 'gradient';
+  const isAnimation = resolved?.type === 'animation';
+  const isImage = resolved?.type === 'image';
+  const isVideo = resolved?.type === 'video';
+  const bg = resolved?.src;
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
@@ -39,8 +46,28 @@ export function ImmersiveBackground() {
         <PixiAnimatedBackground themeId={activePreset?.id} testMode={testMode} />
       )}
 
-      {/* 背景层 — 渐变背景带缓慢位移动画 */}
-      {bg && !isAnimation && isGradient ? (
+      {/* 背景视频（最高优先级） */}
+      {isVideo && bg ? (
+        <video
+          className="absolute inset-0 size-full object-cover"
+          src={bg}
+          autoPlay
+          muted
+          loop
+          playsInline
+        />
+      ) : null}
+
+      {/* 背景图片 */}
+      {isImage && bg ? (
+        <div
+          className="absolute inset-0"
+          style={{ background: `url(${bg}) center / cover no-repeat` }}
+        />
+      ) : null}
+
+      {/* CSS 渐变 — 带缓慢位移动画 */}
+      {isGradient && bg ? (
         <motion.div
           className="absolute inset-0"
           style={{
@@ -51,11 +78,6 @@ export function ImmersiveBackground() {
             backgroundPosition: ['50% 0%', '42% 12%', '58% 4%', '50% 0%'],
           }}
           transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      ) : bg && !isAnimation ? (
-        <div
-          className="absolute inset-0"
-          style={{ background: `url(${bg}) center / cover no-repeat` }}
         />
       ) : null}
 
@@ -112,16 +134,23 @@ export function useImmersiveStyle() {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
 
-  const bg = isDark ? activePreset?.darkBackground : activePreset?.lightBackground;
+  const resolved = useMemo(
+    () => resolveThemeBackground(activePreset, isDark ? 'dark' : 'light'),
+    [activePreset, isDark],
+  );
 
   const style = useMemo(() => {
-    if (!bg) return {};
-    return {
-      background: bg.startsWith('linear-gradient') || bg.startsWith('radial-gradient')
-        ? bg
-        : `url(${bg}) center / cover no-repeat`,
-    } as React.CSSProperties;
-  }, [bg]);
+    if (!resolved?.src) return {};
+    if (resolved.type === 'gradient') {
+      return { background: resolved.src } as React.CSSProperties;
+    }
+    if (resolved.type === 'image' || resolved.type === 'video') {
+      return {
+        background: `url(${resolved.src}) center / cover no-repeat`,
+      } as React.CSSProperties;
+    }
+    return {};
+  }, [resolved]);
 
-  return { backgroundStyle: style, decorations: activePreset };
+  return { backgroundStyle: style, decorations: activePreset, resolved };
 }
