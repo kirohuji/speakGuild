@@ -1604,7 +1604,6 @@ const en = {
       hint: 'Hint',
       viewHint: 'Show reply brief',
       writingHintTitle: 'Reply brief',
-      collapse: 'Collapse',
       translationPlaceholderEn: 'Write your English translation here…',
       translationPlaceholderZh: 'Write your Chinese translation here…',
       dialogueReplyPlaceholder: 'Write B’s reply in English…',

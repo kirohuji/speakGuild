@@ -1603,7 +1603,6 @@ const ja = {
       hint: 'ヒント',
       viewHint: '回答の要件を見る',
       writingHintTitle: '回答の要件',
-      collapse: '閉じる',
       translationPlaceholderEn: 'Write your English translation here…',
       translationPlaceholderZh: 'ここに中国語の訳を書いてください…',
       dialogueReplyPlaceholder: 'B の返答を英語で書いてください…',

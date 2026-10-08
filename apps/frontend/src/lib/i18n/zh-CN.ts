@@ -1606,7 +1606,6 @@ const zhCN = {
       hint: '提示',
       viewHint: '查看作答要求',
       writingHintTitle: '作答要求',
-      collapse: '收起',
       translationPlaceholderEn: 'Write your English translation here…',
       translationPlaceholderZh: '在这里写下中文译文…',
       dialogueReplyPlaceholder: '用英语写下 B 的回复…',
