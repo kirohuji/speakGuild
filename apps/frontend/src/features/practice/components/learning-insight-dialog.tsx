@@ -1,6 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  AudioLines,
   BookOpen,
   BookmarkPlus,
   ChevronDown,
@@ -382,6 +383,8 @@ export function LearningInsightDialog({
   const hasNext = index < items.length - 1
   const [playlistOpen, setPlaylistOpen] = useState(false)
   const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
+  const touchAxis = useRef<'pending' | 'horizontal' | 'vertical'>('pending')
 
   const gotoPrev = useCallback(() => {
     if (hasPrev) onIndexChange(index - 1)
@@ -404,13 +407,29 @@ export function LearningInsightDialog({
 
   // 触摸滑动切换
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length !== 1) {
+      touchAxis.current = 'vertical'
+      return
+    }
     touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+    touchAxis.current = 'pending'
+  }, [])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (touchAxis.current !== 'pending' || e.touches.length !== 1) return
+    const deltaX = e.touches[0].clientX - touchStartX.current
+    const deltaY = e.touches[0].clientY - touchStartY.current
+    if (Math.hypot(deltaX, deltaY) < 12) return
+    touchAxis.current = Math.abs(deltaX) > Math.abs(deltaY) * 1.25 ? 'horizontal' : 'vertical'
   }, [])
 
   const handleTouchEnd = useCallback(
     (e: React.TouchEvent) => {
+      if (touchAxis.current !== 'horizontal') return
       const deltaX = e.changedTouches[0].clientX - touchStartX.current
-      if (Math.abs(deltaX) < 50) return
+      const deltaY = e.changedTouches[0].clientY - touchStartY.current
+      if (Math.abs(deltaX) < 64 || Math.abs(deltaX) <= Math.abs(deltaY) * 1.25) return
       if (deltaX > 0) gotoPrev()
       else gotoNext()
     },
@@ -431,7 +450,9 @@ export function LearningInsightDialog({
           data-keyboard-overlay="practice"
           className="left-0 top-0 !z-[10000] flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0 pt-safe md:left-[50%] md:top-[50%] md:h-[88vh] md:max-w-3xl md:translate-x-[-50%] md:translate-y-[-50%] md:rounded-2xl md:pt-0 [&>button]:hidden"
           onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          onTouchCancel={() => { touchAxis.current = 'vertical' }}
         >
           <DialogTitle className="sr-only">
             {current.kind === 'word' ? current.word : current.kind === 'chunk' ? current.text : current.pattern}
@@ -860,11 +881,13 @@ function PhoneticPill({
   value,
   audioUrl,
   onPlay,
+  isPlaying = false,
 }: {
   label: '美' | '英'
   value: string
   audioUrl?: string | null
   onPlay: (url: string) => void
+  isPlaying?: boolean
 }) {
   return (
     <span className="inline-flex h-7 items-center gap-1 rounded-md bg-muted px-2 font-ipa text-[11px] text-muted-foreground">
@@ -874,10 +897,16 @@ function PhoneticPill({
         <button
           type="button"
           onClick={() => onPlay(audioUrl)}
-          className="inline-flex size-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-          aria-label={`${label}发音`}
+          className={cn(
+            'inline-flex size-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground',
+            isPlaying && 'text-primary',
+          )}
+          aria-label={isPlaying ? `${label}发音播放中` : `${label}发音`}
+          aria-pressed={isPlaying}
         >
-          <Volume2 className="size-3" />
+          {isPlaying
+            ? <AudioLines className="size-3 animate-pulse" />
+            : <Volume2 className="size-3" />}
         </button>
       )}
     </span>

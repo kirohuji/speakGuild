@@ -54,3 +54,4 @@ export { requestInAppReview, getInAppReviewPluginVersion } from './in-app-review
 export { promptSavePassword, readSavedPassword } from './save-password';
 export { requestNativeWechatAuthCode } from './wechat';
 export { requestNativeAppleSignIn } from './apple';
+export { openAppSettings } from './app-settings';

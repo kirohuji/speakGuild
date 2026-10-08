@@ -2088,6 +2088,7 @@ const zhCN = {
       testReminderNativeOnly: '本地通知仅支持 iOS / Android App',
       testReminderSendFailed: '测试提醒发送失败',
       checkVersion: '检查版本',
+      openAppSettingsFailed: '无法打开系统设置，请稍后重试',
       version: '版本',
       versionWeb: 'Web 端无需检查更新，刷新页面即可获取最新版本',
       alreadyLatest: '已是最新版本',

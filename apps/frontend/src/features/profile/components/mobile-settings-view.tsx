@@ -17,7 +17,7 @@ import { useAppUpdateStore } from '@/stores/app-update.store'
 import { IosRow, IosSection } from '@/features/profile/components/ios-components'
 import { AlarmTimePicker } from '@/features/profile/components/alarm-time-picker'
 import { SystemDocumentDrawer } from '@/features/system/components/system-document-drawer'
-import { isNative, requestInAppReview } from '@/lib/native'
+import { isNative, openAppSettings, requestInAppReview } from '@/lib/native'
 import { updater } from '@/lib/native'
 import { scheduleLearningReminderTestNotification } from '@/lib/native/learning-reminder'
 import { isNativeSpeechRecognitionAvailable } from '@/lib/native/vn-voice-input'
@@ -268,6 +268,16 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
     key,
     label: t(tKey),
   }))
+
+  const handleOpenAppPermissions = async () => {
+    try {
+      const opened = await openAppSettings()
+      if (!opened) toast.error(t('settings.openAppSettingsFailed'))
+    } catch (error) {
+      console.warn('[settings] Failed to open app settings', error)
+      toast.error(t('settings.openAppSettingsFailed'))
+    }
+  }
   const latestFailedSyncLog = syncLogs.find((log) => log.status === 'failed' || log.error)
   const latestSyncLog = syncLogs[0]
 
@@ -521,10 +531,12 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
           subtitle={latestFailedSyncLog?.error ?? latestSyncLog?.summary ?? t('settings.noSyncRecords')}
           onTap={() => setSyncLogsOpen(true)}
         />
-        <IosRow
-          label={t('profile.appPermissions')}
-          onTap={() => {}}
-        />
+        {isNative() && (
+          <IosRow
+            label={t('profile.appPermissions')}
+            onTap={handleOpenAppPermissions}
+          />
+        )}
         <IosRow
           label={t('profile.deleteAccount')}
           last

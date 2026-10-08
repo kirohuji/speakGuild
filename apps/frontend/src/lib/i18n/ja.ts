@@ -2086,6 +2086,7 @@ const ja = {
       testReminderNativeOnly: 'ローカル通知はiOS/Androidアプリのみ対応',
       testReminderSendFailed: 'テスト通知の送信に失敗しました',
       checkVersion: '更新を確認',
+      openAppSettingsFailed: 'システム設定を開けませんでした。もう一度お試しください。',
       version: 'バージョン',
       versionWeb: 'Web版は更新確認不要、ページを更新すれば最新になります',
       alreadyLatest: '最新バージョンです',

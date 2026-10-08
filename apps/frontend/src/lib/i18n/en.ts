@@ -2086,6 +2086,7 @@ const en = {
       testReminderNativeOnly: 'Local notifications are only available on iOS / Android',
       testReminderSendFailed: 'Failed to send test reminder',
       checkVersion: 'Check for Updates',
+      openAppSettingsFailed: 'Unable to open system settings. Please try again.',
       version: 'Version',
       versionWeb: 'No updates needed on Web — refresh the page for the latest version',
       alreadyLatest: 'Already up to date',
