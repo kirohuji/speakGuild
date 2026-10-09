@@ -68,3 +68,27 @@ export class SynthesizeAssetDto extends SynthesizeTextDto {
   @IsString()
   bizId?: string;
 }
+
+/** Free ENTTS synthesis shared by dictionary examples and authored dialogue. */
+export class SynthesizeEnttsAssetDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(2_000)
+  text: string;
+
+  @IsOptional()
+  @IsIn(['uk', 'us'])
+  accent?: 'uk' | 'us';
+
+  @IsOptional()
+  @IsIn(['female', 'male'])
+  gender?: 'female' | 'male';
+
+  @IsOptional()
+  @IsString()
+  bizType?: string;
+
+  @IsOptional()
+  @IsString()
+  bizId?: string;
+}

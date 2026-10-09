@@ -14,7 +14,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/cn'
 import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
-import type { Scene, TrainingTopic } from '../api-content-admin'
+import { createFileAssetReference } from '@/lib/file-asset-reference'
+import { synthesizeAsset, synthesizeEnttsAsset, type TtsProviderKey } from '@/lib/tts-api'
+import { usePreferencesStore } from '@/stores/preferences.store'
+import { type Scene, type TrainingTopic } from '../api-content-admin'
 import { contentExperienceAdminApi, type AiTopicDraft } from '../api-content-experiences'
 import {
   listeningPipelineFromText,
@@ -24,6 +27,7 @@ import {
 import { listAiProviders, type AiProviderItem } from '../api-ai-models'
 import { ReadingLearnerPhonePreview } from './reading-learner-phone-preview'
 import { WritingLearnerPhonePreview } from './writing-learner-phone-preview'
+import { VnLineAudioGenerator } from './vn-line-audio-generator'
 
 type Props = {
   mode: Exclude<Scene['contentMode'], 'practice' | 'novel' | 'story'>
@@ -70,7 +74,9 @@ function WritingFields({
   const [generating, setGenerating] = useState(false)
   const [generatingReferences, setGeneratingReferences] = useState(false)
   const [generatingSupport, setGeneratingSupport] = useState(false)
+  const [generatingDialogueAudio, setGeneratingDialogueAudio] = useState(false)
   const [configOpen, setConfigOpen] = useState(false)
+  const [dialogueVoiceConfigOpen, setDialogueVoiceConfigOpen] = useState(false)
   const isDialogue = value.genre === 'dialogue'
   const isTranslation = value.genre === 'translation'
   const isMessage = value.genre === 'message'
@@ -109,7 +115,55 @@ function WritingFields({
   }
 
   const requirements: string[] = value.requirements ?? []
-  const turns: Array<{ aText: string; hint: string; referenceAnswer?: string; referenceExplanation?: string }> = value.turns ?? []
+  const turns: Array<{ aText: string; hint: string; referenceAnswer?: string; referenceExplanation?: string; aAudioUrl?: string; referenceAudioUrl?: string }> = value.turns ?? []
+  const dialogueAudio = value.dialogueAudio ?? {}
+  const ttsBackend = usePreferencesStore((state) => state.ttsBackend)
+  const generateEnttsLine = async (text: string, speaker: 'a' | 'b', lineIndex: number) => {
+    const config = dialogueAudio[speaker] ?? {}
+    const result = await synthesizeEnttsAsset({
+      text,
+      type: config.enttsAccent === 'uk' ? 'uk' : 'us',
+      gender: config.enttsGender === 'male' ? 'male' : 'female',
+      bizId: `${sceneId}:dialogue:${lineIndex}:${speaker}`,
+    })
+    return result.url
+  }
+
+  const generateMissingDialogueAudio = async () => {
+    if (generatingDialogueAudio || !turns.length) return
+    const missingCount = turns.reduce((count, turn) => count + Number(Boolean(turn.aText.trim() && !turn.aAudioUrl)) + Number(Boolean(turn.referenceAnswer?.trim() && !turn.referenceAudioUrl)), 0)
+    if (!missingCount) { toast.success('所有可生成台词都已有音频'); return }
+    setGeneratingDialogueAudio(true)
+    try {
+      const synthesizeLine = async (text: string, speaker: 'a' | 'b', lineIndex: number) => {
+        const config = { ...ttsBackend, ...(dialogueAudio[speaker] ?? {}) }
+        if (config.source === 'entts') {
+          return generateEnttsLine(text, speaker, lineIndex)
+        }
+        const result = await synthesizeAsset({
+          text,
+          provider: config.provider as TtsProviderKey,
+          model: config.model,
+          voiceId: config.voiceId,
+          params: config.params,
+          bizType: 'tts_writing_dialogue',
+          bizId: `${sceneId}:dialogue:${lineIndex}:${speaker}`,
+        })
+        return createFileAssetReference(result.assetId)
+      }
+      const nextTurns = await Promise.all(turns.map(async (turn, index) => ({
+        ...turn,
+        aAudioUrl: turn.aAudioUrl || !turn.aText.trim() ? turn.aAudioUrl : await synthesizeLine(turn.aText.trim(), 'a', index * 2),
+        referenceAudioUrl: turn.referenceAudioUrl || !turn.referenceAnswer?.trim() ? turn.referenceAudioUrl : await synthesizeLine(turn.referenceAnswer.trim(), 'b', index * 2 + 1),
+      })))
+      onChange({ ...value, turns: nextTurns })
+      toast.success(`已生成 ${missingCount} 段对话音频`)
+    } catch (error: any) {
+      toast.error(error?.message || '批量生成对话音频失败')
+    } finally {
+      setGeneratingDialogueAudio(false)
+    }
+  }
 
   const generateDialogueReferences = async () => {
     if (generatingReferences || !turns.length) return
@@ -310,7 +364,23 @@ function WritingFields({
         <>
           {/* 对话轮次 */}
           <section className="flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-3"><SectionHeading icon={Target} step="02" title="对话轮次" description="每轮 A 先说一句话，学习者根据中文提示用英语填写 B 的回应；参考答案与见解仅供 AI 评估和后台审阅。" /><Button type="button" size="sm" variant="outline" className="mt-1 shrink-0 gap-1.5" disabled={generatingReferences || !turns.length} onClick={generateDialogueReferences}>{generatingReferences ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5 text-primary" />}{generatingReferences ? '正在补全' : 'AI 补全答案与见解'}</Button></div>
+            <div className="flex items-start justify-between gap-3">
+              <SectionHeading icon={Target} step="02" title="对话轮次" description="每轮 A 先说一句话，学习者根据中文提示用英语填写 B 的回应；参考答案与见解仅供 AI 评估和后台审阅。" />
+              <div className="mt-1 flex shrink-0 flex-wrap justify-end gap-2">
+                <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={() => setDialogueVoiceConfigOpen((open) => !open)}>
+                  <Volume2 className="size-3.5 text-primary" />配置 A / B 声音
+                </Button>
+                <Button type="button" size="sm" variant="outline" className="gap-1.5" disabled={generatingDialogueAudio || !turns.length} onClick={generateMissingDialogueAudio}>
+                  {generatingDialogueAudio ? <Loader2 className="size-3.5 animate-spin" /> : <Volume2 className="size-3.5 text-primary" />}
+                  {generatingDialogueAudio ? '正在生成音频' : '一键生成缺失音频'}
+                </Button>
+                <Button type="button" size="sm" variant="outline" className="gap-1.5" disabled={generatingReferences || !turns.length} onClick={generateDialogueReferences}>
+                  {generatingReferences ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5 text-primary" />}
+                  {generatingReferences ? '正在补全' : 'AI 补全答案与见解'}
+                </Button>
+              </div>
+            </div>
+            {dialogueVoiceConfigOpen && <div className="grid gap-3 rounded-xl border border-primary/20 bg-primary/[0.03] p-3 md:grid-cols-2"><DialogueSpeakerVoiceConfig speaker="A" config={dialogueAudio.a} onChange={(a) => onChange({ ...value, dialogueAudio: { ...dialogueAudio, a } })} /><DialogueSpeakerVoiceConfig speaker="B" config={dialogueAudio.b} onChange={(b) => onChange({ ...value, dialogueAudio: { ...dialogueAudio, b } })} /></div>}
             <div className="flex flex-col gap-3">
               {turns.map((turn, index) => (
                 <div key={index} className="flex items-start gap-3 rounded-lg border border-border/70 bg-muted/20 p-3">
@@ -329,6 +399,26 @@ function WritingFields({
                         placeholder="A 的台词（英文）"
                       />
                     </div>
+                    <VnLineAudioGenerator
+                      text={turn.aText}
+                      audioUrl={turn.aAudioUrl}
+                      speaker="A"
+                      characterTtsProvider={dialogueAudio.a?.provider}
+                      characterTtsModel={dialogueAudio.a?.model}
+                      characterTtsVoice={dialogueAudio.a?.voiceId}
+                      characterTtsParams={dialogueAudio.a?.params}
+                      storyKey={`writing:${sceneId}`}
+                      sceneName="dialogue"
+                      lineIndex={index * 2}
+                      onChange={(aAudioUrl) => {
+                        const next = [...turns]
+                        next[index] = { ...next[index], aAudioUrl }
+                        onChange({ ...value, turns: next })
+                      }}
+                      onTtsConfigChange={(a) => onChange({ ...value, dialogueAudio: { ...dialogueAudio, a } })}
+                      hideConfig
+                      customGenerate={dialogueAudio.a?.source === 'entts' ? (text) => generateEnttsLine(text, 'a', index * 2) : undefined}
+                    />
                     <div className="flex items-start gap-2">
                       <Badge variant="outline" className="mt-1.5 shrink-0 border-sky-200 text-[10px] text-sky-700 dark:border-sky-800 dark:text-sky-400">见解</Badge>
                       <Textarea
@@ -355,6 +445,26 @@ function WritingFields({
                         placeholder="中文提示，告诉学习者 B 应该回复什么"
                       />
                     </div>
+                    <VnLineAudioGenerator
+                      text={turn.referenceAnswer ?? ''}
+                      audioUrl={turn.referenceAudioUrl}
+                      speaker="B · 参考回复"
+                      characterTtsProvider={dialogueAudio.b?.provider}
+                      characterTtsModel={dialogueAudio.b?.model}
+                      characterTtsVoice={dialogueAudio.b?.voiceId}
+                      characterTtsParams={dialogueAudio.b?.params}
+                      storyKey={`writing:${sceneId}`}
+                      sceneName="dialogue"
+                      lineIndex={index * 2 + 1}
+                      onChange={(referenceAudioUrl) => {
+                        const next = [...turns]
+                        next[index] = { ...next[index], referenceAudioUrl }
+                        onChange({ ...value, turns: next })
+                      }}
+                      onTtsConfigChange={(b) => onChange({ ...value, dialogueAudio: { ...dialogueAudio, b } })}
+                      hideConfig
+                      customGenerate={dialogueAudio.b?.source === 'entts' ? (text) => generateEnttsLine(text, 'b', index * 2 + 1) : undefined}
+                    />
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="shrink-0 border-emerald-200 text-[10px] text-emerald-700 dark:border-emerald-800 dark:text-emerald-400">参考答案</Badge>
                       <Input
@@ -443,6 +553,24 @@ function WritingFields({
 }
 
 type TranslationSegment = { id: string; source: string; reference: string; hint?: string; referenceExplanation?: string }
+
+function DialogueSpeakerVoiceConfig({
+  speaker,
+  config,
+  onChange,
+}: {
+  speaker: 'A' | 'B'
+  config?: Record<string, any>
+  onChange: (config: Record<string, any>) => void
+}) {
+  const source = config?.source === 'entts' ? 'entts' : 'model'
+  return (
+    <div className="min-w-0">
+      <div className="mb-2 flex items-center justify-between gap-2"><p className="text-xs font-semibold text-foreground">{speaker} 的声音（所有 {speaker} 台词一致）</p><Select value={source} onChange={(event) => onChange({ ...config, source: event.target.value })} className="h-8 w-32 text-xs"><option value="model">模型 TTS</option><option value="entts">免费 ENTTS</option></Select></div>
+      {source === 'entts' ? <div className="grid grid-cols-2 gap-2 rounded-md border border-border bg-background p-3"><label className="space-y-1"><span className="text-[11px] text-muted-foreground">口音</span><Select value={config?.enttsAccent === 'uk' ? 'uk' : 'us'} onChange={(event) => onChange({ ...config, source: 'entts', enttsAccent: event.target.value })} className="h-8 text-xs"><option value="us">美式英语</option><option value="uk">英式英语</option></Select></label><label className="space-y-1"><span className="text-[11px] text-muted-foreground">性别</span><Select value={config?.enttsGender === 'male' ? 'male' : 'female'} onChange={(event) => onChange({ ...config, source: 'entts', enttsGender: event.target.value })} className="h-8 text-xs"><option value="female">女声</option><option value="male">男声</option></Select></label><p className="col-span-2 text-[11px] leading-4 text-muted-foreground">复用词典例句的 ENTTS 免费音频生成；一键生成会为该角色的所有缺失台词使用此口音和性别。</p></div> : <VnLineAudioGenerator text="voice configuration" speaker={speaker} configOnly characterTtsProvider={config?.provider} characterTtsModel={config?.model} characterTtsVoice={config?.voiceId} characterTtsParams={config?.params} onChange={() => undefined} onTtsConfigChange={(next) => onChange({ ...config, ...next, source: 'model' })} />}
+    </div>
+  )
+}
 
 function TranslationFields({
   value,

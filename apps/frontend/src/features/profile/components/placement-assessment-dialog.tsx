@@ -125,7 +125,7 @@ function getAssessmentMicErrorMessage(error: unknown, t: ReturnType<typeof useTr
   })
 }
 
-function AssessmentAnswerInput({
+export function AssessmentAnswerInput({
   value,
   onChange,
   disabled,
@@ -343,7 +343,7 @@ function AssessmentAnswerInput({
   }, [disabled, voiceStatus, processAudioBlob, setLocalPlaybackUrl])
 
   return (
-    <div className="rounded-lg bg-muted/30 p-2">
+    <div className="w-full min-w-0 rounded-lg bg-muted/30 p-2">
       <audio ref={audioRef} src={recordedAudioUrl ?? undefined} preload="auto" className="hidden" />
       <input
         ref={fileInputRef}
@@ -359,8 +359,8 @@ function AssessmentAnswerInput({
         disabled={disabled || isProcessing}
         className="min-h-[112px] resize-none rounded-lg border-0 bg-background/70 p-3 text-base shadow-none"
       />
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <p className={cn('min-w-0 flex-1 truncate text-xs text-muted-foreground', voiceError && 'text-destructive')}>
+      <div className="mt-2 flex items-start justify-between gap-2">
+        <p className={cn('min-w-0 flex-1 break-words text-xs leading-4 text-muted-foreground', voiceError && 'text-destructive')}>
           {voiceError || (isRecording
             ? t('profile.placement.voiceRecording', { time: formatAssessmentElapsed(elapsed) })
             : isProcessing
@@ -369,7 +369,7 @@ function AssessmentAnswerInput({
                 ? t('profile.placement.charHint', { current: value.trim().length, min: 5, defaultValue: '至少输入 {{min}} 个字符（当前 {{current}}）' })
               : t('profile.placement.voiceIdle'))}
         </p>
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5">
           {isAdmin && (
             <Button
               type="button"

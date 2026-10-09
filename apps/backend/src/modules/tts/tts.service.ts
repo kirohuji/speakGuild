@@ -8,10 +8,11 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { TtsProviderFactory } from './tts-provider.factory';
 import { SttProviderFactory } from './stt/stt-provider.factory';
 import { TTS_PARAMS_SCHEMA, sanitizeTtsParams } from './tts-params.schema';
-import { SynthesizeAssetDto, SynthesizeTextDto } from './dto/synthesize.dto';
+import { SynthesizeAssetDto, SynthesizeEnttsAssetDto, SynthesizeTextDto } from './dto/synthesize.dto';
 import { FileAssetsService } from '../file-assets/file-assets.service';
 import { AiModelService } from '../ai-model/ai-model.service';
 import { SttWordTimestamp } from './stt/stt.types';
+import { DictionaryAudioService } from '../dictionary/dictionary-audio.service';
 
 // ─── Sentence Segmentation ───────────────────────────────────
 
@@ -160,6 +161,7 @@ export class TtsService {
     private readonly sttFactory: SttProviderFactory,
     private readonly fileAssetsService: FileAssetsService,
     private readonly aiModel: AiModelService,
+    private readonly dictionaryAudio: DictionaryAudioService,
   ) {}
 
   getParamsSchema() {
@@ -348,6 +350,25 @@ export class TtsService {
       voiceId: dto.voiceId ?? null,
       configHash,
     };
+  }
+
+  /**
+   * Free text-to-speech backed by ENTTS.  The implementation lives in the
+   * dictionary audio service because it owns the provider's accent/gender
+   * mapping and file validation; exposing it here makes it a first-class TTS
+   * choice for authored content rather than a vocabulary-only workaround.
+   */
+  async synthesizeEnttsAsset(dto: SynthesizeEnttsAssetDto) {
+    const text = dto.text.trim();
+    if (!text) throw new BadRequestException('合成文本不能为空');
+    const accent = dto.accent ?? 'us';
+    const gender = dto.gender ?? 'female';
+    const url = await this.dictionaryAudio.generate(text, accent, gender, {
+      bizType: dto.bizType?.trim() || 'tts_entts',
+      bizId: dto.bizId?.trim() || createHash('sha256').update(`${accent}:${gender}:${text}`).digest('hex').slice(0, 24),
+      filenamePrefix: text,
+    });
+    return { url, accent, gender, provider: 'entts' as const };
   }
 
   // ─── Listening Pipeline ────────────────────────────────────

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, Lightbulb, ListMusic, Loader2, MessageCircle, MessageSquareText, RotateCcw, Save, Search, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, Lightbulb, ListMusic, Loader2, MessageCircle, MessageSquareText, RotateCcw, Save, Search, Sparkles, Volume2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,8 @@ import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type Voca
 import { withoutWritingRequirements, WritingTaskCard } from '../components/writing-task-card'
 import { useTopicSession, type TopicSessionReviewSnapshot } from '../hooks/use-topic-session'
 import { Switch } from '@/components/ui/switch'
+import { AssessmentAnswerInput } from '@/features/profile/components/placement-assessment-dialog'
+import { resolveFileAssetUrl } from '@/lib/file-asset-reference'
 
 type WritingPhase = 'prepare' | 'write'
 
@@ -943,7 +945,7 @@ function DialogueEditor({
 }) {
   const { t } = useTranslation()
   const config = topic.contentConfig?.writing ?? {}
-  const turns: Array<{ aText: string; hint: string; referenceAnswer?: string; referenceExplanation?: string }> = config.turns ?? []
+  const turns: Array<{ aText: string; hint: string; referenceAnswer?: string; referenceExplanation?: string; aAudioUrl?: string; referenceAudioUrl?: string }> = config.turns ?? []
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [responses, setResponses] = useState<Record<number, string>>({})
@@ -1061,7 +1063,10 @@ function DialogueEditor({
               <div className="flex items-start gap-2.5">
                 <span className="mt-1 shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">A</span>
                 <div className="max-w-[85%] rounded-2xl rounded-tl-md bg-muted/50 px-4 py-3 text-[15px] leading-relaxed">
-                  {currentTurn.aText}
+                  <div className="flex items-start gap-2">
+                    <span className="min-w-0 flex-1">{currentTurn.aText}</span>
+                    {currentTurn.aAudioUrl && <button type="button" onClick={() => void new Audio(resolveFileAssetUrl(currentTurn.aAudioUrl)).play()} className="mt-0.5 shrink-0 text-primary/75 transition-colors hover:text-primary" aria-label="播放 A 的台词"><Volume2 className="size-4" /></button>}
+                  </div>
                 </div>
               </div>
 
@@ -1097,19 +1102,14 @@ function DialogueEditor({
               <div ref={inputWrapRef} data-writing-caret-scroll className="ml-9 mt-4">
                 <div className="flex items-start gap-2.5">
                   <span className="mt-1 shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">B</span>
-                  <div className="flex-1">
-                    <textarea
-                      data-writing-caret-scroll
+                  <div className="min-w-0 flex-1">
+                    <AssessmentAnswerInput
                       value={currentResponse}
-                      onChange={(event) => setResponses({ ...responses, [currentIndex]: event.target.value })}
-                      readOnly={session.readOnly}
-                      onFocus={focusInput}
-                      onClick={focusInput}
-                      className="min-h-[140px] w-full resize-none rounded-2xl rounded-tl-md border-0 bg-muted/40 p-4 text-[16px] leading-7 text-foreground outline-none ring-0 placeholder:text-muted-foreground/45 focus:bg-background focus:ring-2 focus:ring-primary/20"
-                      placeholder={t('learning.dialogueReplyPlaceholder')}
-                      autoCapitalize="sentences"
-                      autoCorrect="on"
-                      spellCheck
+                      onChange={(text) => {
+                        setResponses((current) => ({ ...current, [currentIndex]: text }))
+                        focusInput()
+                      }}
+                      disabled={session.readOnly}
                     />
                     {currentResponse.trim() && (
                       <p className="mt-1.5 text-right text-xs tabular-nums text-muted-foreground">
@@ -1171,7 +1171,7 @@ function DialogueEditor({
         </div>
       </footer>
       )}
-      <WritingSupportDrawer open={supportOpen} onOpenChange={setSupportOpen} explanation={String(currentTurn?.referenceExplanation ?? '')} referenceAnswer={String(currentTurn?.referenceAnswer ?? '')} hasAttempt={Boolean(currentResponse.trim())} />
+      <WritingSupportDrawer open={supportOpen} onOpenChange={setSupportOpen} explanation={String(currentTurn?.referenceExplanation ?? '')} referenceAnswer={String(currentTurn?.referenceAnswer ?? '')} referenceAudioUrl={currentTurn?.referenceAudioUrl} hasAttempt={Boolean(currentResponse.trim())} />
     </div>
   )
 }
@@ -1189,12 +1189,13 @@ function WritingGuide({ open, onOpenChange, topic }: { open: boolean; onOpenChan
 
 /** Progressive help: strategy first, model answer only after an explicit second step. */
 function WritingSupportDrawer({
-  open, onOpenChange, explanation, referenceAnswer, hasAttempt,
+  open, onOpenChange, explanation, referenceAnswer, referenceAudioUrl, hasAttempt,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   explanation: string
   referenceAnswer: string
+  referenceAudioUrl?: string
   hasAttempt: boolean
 }) {
   const { t } = useTranslation()
@@ -1212,6 +1213,7 @@ function WritingSupportDrawer({
           <button type="button" onClick={() => setShowAnswer(false)} className="mb-3 text-xs font-medium text-primary">{t('learning.backToWritingSupport')}</button>
           <p className="mb-3 text-sm leading-6 text-muted-foreground"></p>
           <MarkdownRenderer content={referenceAnswer} className="text-[15px] leading-7 prose-p:my-3 prose-headings:my-3" />
+          {referenceAudioUrl && <audio controls src={resolveFileAssetUrl(referenceAudioUrl)} className="mt-4 h-9 w-full" />}
         </>}
       </div>
     </DrawerContent>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FileAudio, Keyboard, Loader2, Mic, Send, Square } from 'lucide-react'
+import { FileAudio, Keyboard, Loader2, Mic, Pause, Play, Send, Square } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { transcribeVoiceInput } from '@/lib/local-stt/local-stt.service'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
@@ -562,7 +562,7 @@ export function VnInputPanel({
                   />
                 </div>
 
-                {/* <button
+                <button
                   type="button"
                   disabled={!recordedAudioUrl}
                   onClick={(e) => { e.stopPropagation(); togglePlayback() }}
@@ -576,7 +576,7 @@ export function VnInputPanel({
                   aria-label={isPlaying ? '暂停回放' : '回放录音'}
                 >
                   {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
-                </button> */}
+                </button>
                 <button
                   type="button"
                   disabled={isDisabled || !text.trim()}

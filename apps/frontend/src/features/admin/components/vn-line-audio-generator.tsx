@@ -12,6 +12,7 @@ import {
   type TtsSchema,
 } from '@/lib/tts-api'
 import { createFileAssetReference } from '@/features/file-assets/api'
+import { resolveFileAssetUrl } from '@/lib/file-asset-reference'
 import { usePreferencesStore } from '@/stores/preferences.store'
 
 const CARTESIA_VOICES: Array<{ id: string; label: string }> = [
@@ -48,8 +49,16 @@ interface VnLineAudioGeneratorProps {
   sceneName?: string
   lineIndex?: number
   onChange: (audioUrl: string) => void
+  /** Keep a named speaker on the same provider / model / voice across lines. */
+  onTtsConfigChange?: (config: { provider: TtsProviderKey; model: string; voiceId?: string; params: ParamValues }) => void
   /** Called when audio is generated with (url, assetId) for assetMap registration */
   onGenerated?: (url: string, assetId: string) => void
+  /** Render only the provider / model / voice controls for a shared speaker. */
+  configOnly?: boolean
+  /** Speaker configuration belongs at the dialogue level, not individual lines. */
+  hideConfig?: boolean
+  /** Optional non-model generator, e.g. the free dictionary ENTTS service. */
+  customGenerate?: (text: string) => Promise<string>
 }
 
 export function VnLineAudioGenerator({
@@ -64,7 +73,11 @@ export function VnLineAudioGenerator({
   sceneName,
   lineIndex,
   onChange,
+  onTtsConfigChange,
   onGenerated,
+  configOnly = false,
+  hideConfig = false,
+  customGenerate,
 }: VnLineAudioGeneratorProps) {
   const { ttsBackend, setTtsBackend } = usePreferencesStore()
   const [generating, setGenerating] = useState(false)
@@ -83,7 +96,7 @@ export function VnLineAudioGenerator({
 
   useEffect(() => {
     const characterProvider = characterTtsProvider as TtsProviderKey | undefined
-    const hasCharacterConfig = Boolean(characterProvider && characterTtsVoice)
+    const hasCharacterConfig = Boolean(characterProvider)
 
     const nextProvider = hasCharacterConfig ? (characterProvider ?? ttsBackend.provider) : ttsBackend.provider
     setProvider(nextProvider)
@@ -133,7 +146,7 @@ export function VnLineAudioGenerator({
   const play = () => {
     if (!audioUrl) return
     audioRef.current?.pause()
-    const audio = new Audio(audioUrl)
+    const audio = new Audio(resolveFileAssetUrl(audioUrl))
     audioRef.current = audio
     void audio.play()
   }
@@ -143,6 +156,10 @@ export function VnLineAudioGenerator({
     setGenerating(true)
     setError('')
     try {
+      if (customGenerate) {
+        onChange(await customGenerate(text.trim()))
+        return
+      }
       const result = await synthesizeAsset({
         text: text.trim(),
         provider,
@@ -166,28 +183,28 @@ export function VnLineAudioGenerator({
     <div className="space-y-2 rounded-md border border-border bg-muted/20 p-3">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold text-foreground">台词音频</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
+          <p className="text-xs font-semibold text-foreground">{configOnly ? '声音配置' : '台词音频'}</p>
+          {!hideConfig && <p className="mt-0.5 text-[11px] text-muted-foreground">
             {configLabel}
-          </p>
+          </p>}
         </div>
         <div className="flex shrink-0 gap-1.5">
-          <Button type="button" variant="ghost" size="icon-sm" onClick={() => setParamsOpen((value) => !value)}>
+          {!hideConfig && <Button type="button" variant="ghost" size="icon-sm" onClick={() => setParamsOpen((value) => !value)}>
             <ChevronDown className={cn('size-3.5 transition-transform', paramsOpen && 'rotate-180')} />
-          </Button>
-          {audioUrl && (
+          </Button>}
+          {!configOnly && audioUrl && (
             <Button type="button" variant="outline" size="icon-sm" onClick={play}>
               <Play className="size-3.5" />
             </Button>
           )}
-          <Button type="button" size="sm" onClick={generate} disabled={generating || !text.trim()} className="h-8 gap-1.5">
+          {!configOnly && <Button type="button" size="sm" onClick={generate} disabled={generating || !text.trim()} className="h-8 gap-1.5">
             {generating ? <Loader2 className="size-3.5 animate-spin" /> : <Volume2 className="size-3.5" />}
             生成
-          </Button>
+          </Button>}
         </div>
       </div>
 
-      {paramsOpen && (
+      {!hideConfig && paramsOpen && (
         <div className="space-y-3 rounded-md border border-border bg-background p-3">
           <div className="grid grid-cols-2 gap-2">
             <label className="space-y-1">
@@ -195,7 +212,11 @@ export function VnLineAudioGenerator({
               <select
                 className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs"
                 value={provider}
-                onChange={(event) => setProvider(event.target.value as TtsProviderKey)}
+                onChange={(event) => {
+                  const nextProvider = event.target.value as TtsProviderKey
+                  setProvider(nextProvider)
+                  onTtsConfigChange?.({ provider: nextProvider, model, voiceId: voiceId || undefined, params })
+                }}
               >
                 <option value="minimax">MiniMax</option>
                 <option value="cartesia">Cartesia</option>
@@ -206,7 +227,11 @@ export function VnLineAudioGenerator({
               <select
                 className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs"
                 value={model}
-                onChange={(event) => setModel(event.target.value)}
+                onChange={(event) => {
+                  const nextModel = event.target.value
+                  setModel(nextModel)
+                  onTtsConfigChange?.({ provider, model: nextModel, voiceId: voiceId || undefined, params })
+                }}
               >
                 {(currentSchema?.models ?? []).map((item) => (
                   <option key={item.model} value={item.model}>{item.label}</option>
@@ -220,7 +245,11 @@ export function VnLineAudioGenerator({
             <select
               className="h-8 w-full rounded-md border border-border bg-background px-2 text-xs"
               value={voiceId}
-              onChange={(event) => setVoiceId(event.target.value)}
+                onChange={(event) => {
+                  const nextVoiceId = event.target.value
+                  setVoiceId(nextVoiceId)
+                  onTtsConfigChange?.({ provider, model, voiceId: nextVoiceId || undefined, params })
+                }}
             >
               <option value="">默认声音</option>
               {voiceOptions.map((voice) => (
@@ -236,7 +265,11 @@ export function VnLineAudioGenerator({
                   key={field.key}
                   field={field}
                   value={params[field.key]}
-                  onChange={(value) => setParams((prev) => ({ ...prev, [field.key]: value }))}
+                  onChange={(value) => {
+                    const nextParams = { ...params, [field.key]: value }
+                    setParams(nextParams)
+                    onTtsConfigChange?.({ provider, model, voiceId: voiceId || undefined, params: nextParams })
+                  }}
                 />
               ))}
             </div>
@@ -255,7 +288,7 @@ export function VnLineAudioGenerator({
         </div>
       )}
 
-      <div className="flex gap-2">
+      {!configOnly && <div className="flex gap-2">
         <Input
           value={audioUrl ?? ''}
           onChange={(event) => onChange(event.target.value)}
@@ -267,10 +300,10 @@ export function VnLineAudioGenerator({
             <X className="size-3.5" />
           </Button>
         )}
-      </div>
+      </div>}
 
-      {audioUrl && (
-        <audio controls src={audioUrl} className="h-9 w-full" />
+      {!configOnly && audioUrl && (
+        <audio controls src={resolveFileAssetUrl(audioUrl)} className="h-9 w-full" />
       )}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
