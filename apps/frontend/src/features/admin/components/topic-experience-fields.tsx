@@ -687,7 +687,7 @@ function ReadingFields({
                   </div>
                   <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
                     {isFormatMode
-                      ? '粘贴已有原文、练习题和参考答案；AI 只负责清理断行、拆段排版，并填入材料与理解题字段，不另编新题。'
+                      ? '粘贴已有原文、练习题和答案详解；AI 只负责清理断行、拆段排版，并把答案详解填入「原文证据」，不另编新题。'
                       : '描述主题、难度和题型组合，AI 会生成英文短文 + 理解题（含原文证据）。生成后仍需人工审题。'}
                   </p>
                 </div>
@@ -698,7 +698,7 @@ function ReadingFields({
                 className={cn('resize-y', isFormatMode ? 'min-h-56' : 'min-h-28')}
                 maxLength={isFormatMode ? 20000 : 2000}
                 placeholder={isFormatMode
-                  ? '粘贴完整内容，例如：英文原文段落 + Choose correct answers… 选择题 + 参考答案解析。断行、全角空格、[page] 标记都可以直接贴进来。'
+                  ? '粘贴完整内容，例如：英文原文段落 + Choose correct answers… 选择题 + 答案详解。断行、全角空格、[page] 标记都可以直接贴进来；详解会写入「原文证据」。'
                   : '例如：B1，约 140 词。主题：第一次坐火车晚点，主角如何调整入住时间。生成 4 道理解题，含选择、判断和一道简答。'}
               />
               <Button type="button" onClick={generateDraft} disabled={generating} size="sm" className="w-full">
@@ -768,7 +768,7 @@ function ReadingFields({
                     <div className="space-y-1.5"><Label>正确答案</Label><div className="grid grid-cols-2 gap-2">{['正确', '错误'].map((option) => <Button key={option} type="button" variant={question.answer === option ? 'default' : 'outline'} onClick={() => updateQuestion(index, { answer: option })}>{option}</Button>)}</div></div>
                   )}
                   {['short', 'open'].includes(question.type) && <div className="space-y-1.5"><Label>参考答案</Label><Textarea value={question.answer ?? ''} onChange={(event) => updateQuestion(index, { answer: event.target.value })} placeholder="用于反馈和判定，不会在作答前展示" /></div>}
-                  <div className="space-y-1.5"><Label>原文证据</Label><Textarea value={question.evidence ?? ''} onChange={(event) => updateQuestion(index, { evidence: event.target.value })} className="min-h-20" placeholder="粘贴支持正确答案的原文片段" /></div>
+                  <div className="space-y-1.5"><Label>原文证据</Label><Textarea value={question.evidence ?? ''} onChange={(event) => updateQuestion(index, { evidence: event.target.value })} className="min-h-20" placeholder="支持正确答案的原文片段；排版导入时会填入答案详解" /></div>
                 </div>
               </div>
             ))}
