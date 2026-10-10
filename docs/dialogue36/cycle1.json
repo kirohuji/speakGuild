@@ -1,0 +1,452 @@
+[
+  {
+    "order": 1,
+    "title": "闲聊业余爱好",
+    "description": "通过和朋友闲聊业余爱好，讨论自己的兴趣爱好，询问对方的兴趣爱好。",
+    "promptEn": "You are B. Chat about hobbies with A in natural spoken English.",
+    "promptZh": "你是 B。根据 A 的话和中文提示，用英语聊聊各自的兴趣爱好。",
+    "situation": "你和朋友 A 在闲聊，对方问起业余时间喜欢做什么。你们都喜欢骑车；A 爱踢足球，你爱打篮球。",
+    "turns": [
+      {
+        "aText": "Hey, what do you like to do in your free time?",
+        "hint": "喜欢打篮球，也喜欢骑车，语气轻松。",
+        "referenceAnswer": "I like playing basketball, and I also enjoy cycling.",
+        "referenceExplanation": "### 语法点\n- **like / enjoy + V-ing**：谈爱好时动词用动名词（playing / cycling）\n- **and I also …**：用 **also** 并列第二个爱好，比再开新句更顺\n\n### 知识点\n- 球类：**play basketball**；骑车可以说 **cycling** 或 **go cycling**\n- **enjoy** 比 **like** 稍正式一点，口语里互换很常见\n\n### 怎么说\n- 先报一个爱好：**I like playing basketball**\n- 再加第二个：**and I also enjoy cycling**"
+      },
+      {
+        "aText": "That's cool. I like cycling too. Do you often go?",
+        "hint": "经常骑，周末常和朋友一起，骑车能让你放松。",
+        "referenceAnswer": "Yeah, I usually go cycling on weekends with my friends. It helps me relax.",
+        "referenceExplanation": "### 语法点\n- **usually + 时间/对象**：习惯用法里频度词靠近动词（usually go）\n- **It helps me + V**：用 **It** 指代前面的活动，说明好处\n\n### 知识点\n- **go cycling**：户外运动常用 **go + V-ing**\n- **on weekends / with my friends**：时间与同伴可叠在同一句\n\n### 怎么说\n- 先答频率和同伴：**Yeah, I usually go cycling on weekends with my friends**\n- 再补感受：**It helps me relax**"
+      },
+      {
+        "aText": "Nice. I play football most weekends. Any other sports?",
+        "hint": "主要打篮球，有时也跑步。",
+        "referenceAnswer": "I mainly play basketball, but sometimes I go running too.",
+        "referenceExplanation": "### 语法点\n- **mainly / sometimes**：用频度词区分「主要」和「偶尔」\n- **go running**：运动常用 **go + V-ing**（go swimming / go running）\n\n### 知识点\n- 球类用 **play + sport**；跑步/游泳用 **go + V-ing**\n- **but … too**：在主要习惯后补次要习惯，语气自然\n\n### 怎么说\n- 先说主要爱好：**I mainly play basketball**\n- 再补偶尔做什么：**but sometimes I go running too**"
+      },
+      {
+        "aText": "How often do you play basketball?",
+        "hint": "大概一周两次，通常和同学一起。",
+        "referenceAnswer": "About twice a week, usually with my classmates.",
+        "referenceExplanation": "### 语法点\n- **About twice a week**：频率用 **twice / three times a week**\n- **usually with …**：省略主语的口语短答，后面补同伴\n\n### 知识点\n- 回答 **How often** 可直接给频率短语，不必重复整句\n- **classmates** 指同学，比 **friends** 更具体\n\n### 怎么说\n- 先给频率：**About twice a week**\n- 再补和谁打：**usually with my classmates**"
+      },
+      {
+        "aText": "Do you watch games on TV?",
+        "hint": "有时看，但更喜欢自己打；可提喜欢的球队。",
+        "referenceAnswer": "Sometimes. I prefer playing myself though. I'm a Lakers fan.",
+        "referenceExplanation": "### 语法点\n- **prefer + V-ing**：表达更倾向的做法\n- **though**：句尾轻转折，比句首 **but** 更口语\n\n### 知识点\n- 先短答 **Sometimes**，再补偏好，节奏像聊天\n- 球队粉可以说 **I'm a … fan**（a Lakers fan）\n\n### 怎么说\n- 先答看不看：**Sometimes**\n- 再转折并亮身份：**I prefer playing myself though. I'm a Lakers fan**"
+      },
+      {
+        "aText": "What do you like about basketball?",
+        "hint": "好玩、能保持健康，也能交朋友。",
+        "referenceAnswer": "I like that it's fun and keeps me healthy. I can also make friends.",
+        "referenceExplanation": "### 语法点\n- **I like that + 从句**：用 **that** 引出喜欢的原因\n- **keep me + adj**：说明带来的状态（keeps me healthy）\n\n### 知识点\n- 优点可并列：**fun and keeps me healthy**\n- **make friends**：交朋友的固定搭配\n\n### 怎么说\n- 先说核心好处：**I like that it's fun and keeps me healthy**\n- 再加社交点：**I can also make friends**"
+      },
+      {
+        "aText": "We should play sometime.",
+        "hint": "表示愿意，问对方什么时候方便。",
+        "referenceAnswer": "That sounds good. When are you usually free?",
+        "referenceExplanation": "### 语法点\n- **That sounds + adj**：接建议时的常用回应\n- **When are you usually free?**：用 **usually** 问习惯空档，不是单次\n\n### 知识点\n- 先表态再提问，比只说 **OK** 更有互动\n- **free** 指有空，约时间口语高频词\n\n### 怎么说\n- 先接住邀请：**That sounds good**\n- 再抛时间问题：**When are you usually free?**"
+      },
+      {
+        "aText": "Maybe next weekend?",
+        "hint": "可以，先定个大概，回头再确认。",
+        "referenceAnswer": "How about next Saturday afternoon? We can confirm later.",
+        "referenceExplanation": "### 语法点\n- **How about + 时间？**：提出具体选项的建议句\n- **can + V**：表示后续还能再调整（can confirm later）\n\n### 知识点\n- 把「大概」说成具体时段更易落地（Saturday afternoon）\n- **confirm later**：先定方向、细节后谈的口语说法\n\n### 怎么说\n- 先给具体时间：**How about next Saturday afternoon?**\n- 再留余地：**We can confirm later**"
+      },
+      {
+        "aText": "Deal. Do you listen to much music too?",
+        "hint": "简短分享，并反问对方。",
+        "referenceAnswer": "I mostly listen when I study. How about you?",
+        "referenceExplanation": "### 语法点\n- **mostly + when 从句**：说明主要在什么情况下做某事\n- **How about you?**：反问对方同一话题\n\n### 知识点\n- **listen when I study**：边学边听，不必说成很长从句\n- 分享后反问，对话不会单方面结束\n\n### 怎么说\n- 先简短分享习惯：**I mostly listen when I study**\n- 再把球踢回：**How about you?**"
+      }
+    ]
+  },
+  {
+    "order": 2,
+    "title": "在图书馆偶遇",
+    "description": "在图书馆碰见朋友，聊聊最近的学习进度、忙什么，以及要不要一起复习。",
+    "promptEn": "You are B. A checks in on how you're doing at the library. Reply naturally.",
+    "promptZh": "你是 B。朋友关心你的近况，请根据提示用英语自然回应。",
+    "situation": "你和朋友在图书馆偶遇。你最近在准备考试，有点忙；对方关心你，还提出帮忙。",
+    "turns": [
+      {
+        "aText": "Hi! Fancy seeing you here. How's it going?",
+        "hint": "还不错，不过最近有点忙。",
+        "referenceAnswer": "Pretty good. I've been pretty busy lately.",
+        "referenceExplanation": "### 语法点\n- **Pretty good**：省略主语的口语近况答法\n- **I've been + adj + lately**：现在完成进行感，强调最近一段时间\n\n### 知识点\n- 先给正面短答，再用第二句补忙，语气不冲\n- **lately / recently** 都表「近来」，**lately** 更口语\n\n### 怎么说\n- 先报状态：**Pretty good**\n- 再补近况：**I've been pretty busy lately**"
+      },
+      {
+        "aText": "What's keeping you busy?",
+        "hint": "在准备考试，要学的东西很多。",
+        "referenceAnswer": "I've been getting ready for an exam, so there's a lot to study.",
+        "referenceExplanation": "### 语法点\n- **I've been getting ready for …**：现在完成进行，强调一直在准备\n- **so + 结果句**：用 **so** 自然带出「要学的很多」\n\n### 知识点\n- **get ready for an exam** 比 **prepare for** 更口语\n- **there's a lot to study**：用 **there is** 谈任务量\n\n### 怎么说\n- 先说在忙什么：**I've been getting ready for an exam**\n- 再接结果：**so there's a lot to study**"
+      },
+      {
+        "aText": "That sounds rough. Do you need any help?",
+        "hint": "感谢，礼貌表示自己先试试。",
+        "referenceAnswer": "Thanks for offering, but I think I can handle it for now.",
+        "referenceExplanation": "### 语法点\n- **Thanks for + V-ing**：感谢对方的具体举动\n- **but I think I can … for now**：礼貌婉拒并加时间限定\n\n### 知识点\n- **handle it**：表示自己能应付，比 **I don't need help** 软\n- **for now** 留后路，不把话说死\n\n### 怎么说\n- 先谢好意：**Thanks for offering**\n- 再婉拒：**but I think I can handle it for now**"
+      },
+      {
+        "aText": "No problem. Are you staying all afternoon?",
+        "hint": "打算再待两小时，然后回去。",
+        "referenceAnswer": "Yeah, I'm going to stay for another two hours, then head back.",
+        "referenceExplanation": "### 语法点\n- **I'm going to + V**：谈已定的近期打算\n- **another + 时段**：**another two hours** 表示「再待两小时」\n- **then + V**：表先后顺序（then head back）\n\n### 知识点\n- **head back**：口语里「回去」，比 **go home** 稍灵活\n- 时长 + 下一步，一句说清停留计划\n\n### 怎么说\n- 先说还待多久：**I'm going to stay for another two hours**\n- 再接后续：**then head back**"
+      },
+      {
+        "aText": "I usually study here on Tuesdays. You too?",
+        "hint": "周三和周五比较多。",
+        "referenceAnswer": "I usually come on Wednesdays and Fridays.",
+        "referenceExplanation": "### 语法点\n- **usually come on + 星期复数**：习惯在哪些天来\n- 星期用复数 **Wednesdays and Fridays** 表「每周这些天」\n\n### 知识点\n- 对方说周二，你答不同天数即可，不必重复整句问法\n- **come** 指来图书馆这个地点，比 **study** 更贴「到场」\n\n### 怎么说\n- 直接报自己的日子：**I usually come on Wednesdays and Fridays**"
+      },
+      {
+        "aText": "Maybe we can review together next week?",
+        "hint": "表示愿意，等这周忙完再约。",
+        "referenceAnswer": "I'd love to. Let's do it next week when things calm down.",
+        "referenceExplanation": "### 语法点\n- **I'd love to**：乐意接受邀请的套语（I would love to）\n- **when + 从句**：约定「忙完再约」的时间条件\n\n### 知识点\n- **things calm down**：事情缓和下来，谈忙季后安排很常用\n- 先热情接住，再给可执行时间\n\n### 怎么说\n- 先表态：**I'd love to**\n- 再定窗口：**Let's do it next week when things calm down**"
+      },
+      {
+        "aText": "What time works for you next week?",
+        "hint": "下午比较好，上午还有课。",
+        "referenceAnswer": "How about Wednesday afternoon? Mornings are full for me.",
+        "referenceExplanation": "### 语法点\n- **How about + 时间？**：提出具体时段\n- **be full**：日程满了（Mornings are full）\n\n### 知识点\n- 建议时间后补一句原因，对方更容易同意\n- **for me** 标明是自己的限制，不替对方做主\n\n### 怎么说\n- 先提时段：**How about Wednesday afternoon?**\n- 再说明上午不行：**Mornings are full for me**"
+      },
+      {
+        "aText": "Wednesday at three?",
+        "hint": "确认可以。",
+        "referenceAnswer": "That works for me.",
+        "referenceExplanation": "### 语法点\n- **That works for me**：确认安排可行的固定短句\n- 主语 **That** 指对方刚提的时间点\n\n### 知识点\n- 约时间时短确认比长句更自然\n- 同类还有 **Works for me / That works**\n\n### 怎么说\n- 直接确认：**That works for me**"
+      },
+      {
+        "aText": "I'll save a table near the window.",
+        "hint": "道谢，到了会发消息。",
+        "referenceAnswer": "Thanks. I'll text you when I get here.",
+        "referenceExplanation": "### 语法点\n- **I'll + V when + 从句**：到场后再做某事的计划\n- **get here**：到达说话双方约定的地点\n\n### 知识点\n- 先 **Thanks** 接住对方帮忙占座\n- **text you**：发短信/消息，比 **call** 更轻量\n\n### 怎么说\n- 先道谢：**Thanks**\n- 再约联络：**I'll text you when I get here**"
+      },
+      {
+        "aText": "Good luck with the exam!",
+        "hint": "道谢并道别。",
+        "referenceAnswer": "Thanks! Talk soon.",
+        "referenceExplanation": "### 语法点\n- **Thanks!**：感叹号加强语气的简短致谢\n- **Talk soon**：道别套语，表还会再联系\n\n### 知识点\n- 收到 **Good luck** 先谢再道别，顺序固定\n- **Talk soon** 比 **Bye** 更有「之后还聊」的感觉\n\n### 怎么说\n- 先谢祝福：**Thanks!**\n- 再收尾：**Talk soon**"
+      }
+    ]
+  },
+  {
+    "order": 3,
+    "title": "讨论午饭在食堂",
+    "description": "在食堂和朋友讨论午餐吃什么，顺便聊聊各自的口味和推荐。",
+    "promptEn": "You are B. Decide what to eat for lunch with A.",
+    "promptZh": "你是 B。和朋友商量中午吃什么，根据提示用英语回应。",
+    "situation": "中午你和朋友 A 在食堂排队。对方还没决定吃什么，想听听你的想法。",
+    "turns": [
+      {
+        "aText": "I'm starving. What are you getting?",
+        "hint": "还没想好，今天想吃清淡一点。",
+        "referenceAnswer": "I'm not sure yet. I kind of want something light today.",
+        "referenceExplanation": "### 语法点\n- **I'm not sure yet**：尚未决定，**yet** 暗示还会想\n- **kind of want**：缓和语气，比直接 **I want** 软\n\n### 知识点\n- **something light**：清淡一点的食物，食堂场景高频\n- 先说不确定，再给偏好方向，方便对方接着建议\n\n### 怎么说\n- 先说还没定：**I'm not sure yet**\n- 再给口味倾向：**I kind of want something light today**"
+      },
+      {
+        "aText": "Noodles or a rice bowl?",
+        "hint": "建议一起吃面，看起来不错。",
+        "referenceAnswer": "How about the noodles? They look pretty good.",
+        "referenceExplanation": "### 语法点\n- **How about + 名词？**：在选项里推荐一个\n- **look + adj**：凭外观评价（look pretty good）\n\n### 知识点\n- 面对二选一，用 **How about** 表倾向而不是命令\n- **pretty** 作程度词，口语加强「挺不错」\n\n### 怎么说\n- 先提建议：**How about the noodles?**\n- 再补理由：**They look pretty good**"
+      },
+      {
+        "aText": "Spicy or not?",
+        "hint": "不太能吃辣，微辣或不要辣都行。",
+        "referenceAnswer": "I'd rather not go too spicy. Mild is fine.",
+        "referenceExplanation": "### 语法点\n- **I'd rather not + V**：委婉拒绝某种程度\n- **go too spicy**：口语里 **go + adj** 表「弄得太…」\n\n### 知识点\n- **Mild is fine**：点餐说「微辣就行」很地道\n- 先说上限（不太辣），再给可接受档位\n\n### 怎么说\n- 先表辣度上限：**I'd rather not go too spicy**\n- 再给可选项：**Mild is fine**"
+      },
+      {
+        "aText": "Should we share dumplings too?",
+        "hint": "赞成，点一份一起吃。",
+        "referenceAnswer": "Sure, that works for me. Let's get a small plate.",
+        "referenceExplanation": "### 语法点\n- **Sure, that works for me**：同意 + 确认可行\n- **Let's get + 份量**：提议一起点什么\n\n### 知识点\n- **a small plate**：点一份小份分享，比 **one order** 更口语\n- 赞成后立刻落到行动（点什么）\n\n### 怎么说\n- 先同意：**Sure, that works for me**\n- 再定份量：**Let's get a small plate**"
+      },
+      {
+        "aText": "I was thinking of sitting by the window.",
+        "hint": "你也正打算坐那边。",
+        "referenceAnswer": "Same — I was thinking of sitting by the window too.",
+        "referenceExplanation": "### 语法点\n- **Same —**：附和对方，破折号后展开\n- **I was thinking of + V-ing**：刚也在想同一计划（过去进行表「刚才在想」）\n\n### 知识点\n- **Same** 单独用可表「我也是」\n- 重复对方短语（sitting by the window）加强共鸣\n\n### 怎么说\n- 先附和：**Same —**\n- 再复述同想法：**I was thinking of sitting by the window too**"
+      },
+      {
+        "aText": "Do you usually eat here?",
+        "hint": "工作日中午常来，周末比较少。",
+        "referenceAnswer": "Yeah, I usually eat here on weekdays.",
+        "referenceExplanation": "### 语法点\n- **usually + 地点/时间**：谈习惯频率\n- **on weekdays**：工作日；对比常用 **on weekends**\n\n### 知识点\n- 答 **Do you usually…** 时给时间范围即可\n- 参考答聚焦工作日，周末少来可不必硬凑进同一句\n\n### 怎么说\n- 肯定后报习惯：**Yeah, I usually eat here on weekdays**"
+      },
+      {
+        "aText": "The soup place next door is good too.",
+        "hint": "表示有兴趣改天试试。",
+        "referenceAnswer": "We could try that tomorrow if you want.",
+        "referenceExplanation": "### 语法点\n- **We could + V**：提出可能性建议，语气商量\n- **if you want**：把决定权留给对方\n\n### 知识点\n- **try that**：用 **that** 指代对方刚提的店\n- **tomorrow** 把「改天」落成具体一天更可执行\n\n### 怎么说\n- 用可能语气邀约：**We could try that tomorrow if you want**"
+      },
+      {
+        "aText": "I'm in. I'll grab the trays.",
+        "hint": "道谢，去占座。",
+        "referenceAnswer": "Thanks. I'll go save us a table.",
+        "referenceExplanation": "### 语法点\n- **I'll go + V**：主动承担下一步动作\n- **save us a table**：占座；**us** 把双方都算上\n\n### 知识点\n- 对方拿托盘时，你去占座是常见分工话术\n- 先 **Thanks** 再行动，礼貌完整\n\n### 怎么说\n- 先道谢：**Thanks**\n- 再说明分工：**I'll go save us a table**"
+      },
+      {
+        "aText": "Want tea or water?",
+        "hint": "白开水就好。",
+        "referenceAnswer": "Could you get me water? Thanks.",
+        "referenceExplanation": "### 语法点\n- **Could you + V？**：礼貌请求\n- 请求后加 **Thanks** 收束，语气完整\n\n### 知识点\n- 点饮料时直接说品名即可（water），不必说 **plain water**\n- **Could you get me …** 比 **I want** 更适合请对方代拿\n\n### 怎么说\n- 先礼貌点单：**Could you get me water?**\n- 再补谢：**Thanks**"
+      },
+      {
+        "aText": "Done. Let's eat.",
+        "hint": "轻松收尾。",
+        "referenceAnswer": "Let's dig in.",
+        "referenceExplanation": "### 语法点\n- **Let's + V**：提议一起开始做某事\n- **dig in**：开始吃的口语习语\n\n### 知识点\n- 开饭前短促一句即可，不必再解释\n- 同类还有 **Let's eat / Tuck in**（英式）\n\n### 怎么说\n- 轻松收尾开吃：**Let's dig in**"
+      }
+    ]
+  },
+  {
+    "order": 4,
+    "title": "修改出行计划",
+    "description": "和朋友讨论突然变天，原来的出行计划要不要改，以及改成做什么。",
+    "promptEn": "You are B. Talk about the weather change and adjust your plans with A.",
+    "promptZh": "你是 B。天气变了，和朋友商量要不要改计划。",
+    "situation": "你们本来想下午出门，结果看起来要下雨。朋友 A 来问你还去不去。",
+    "turns": [
+      {
+        "aText": "Have you looked outside? The sky's getting dark.",
+        "hint": "注意到了，好像快下雨了。",
+        "referenceAnswer": "Yeah, it looks like it's going to rain soon.",
+        "referenceExplanation": "### 语法点\n- **it looks like + 从句**：根据迹象判断将发生什么\n- **be going to + V**：谈眼看要发生的天气变化\n\n### 知识点\n- **Yeah** 先对齐对方观察，再补充判断\n- **soon** 强调「快了」，贴合变天紧迫感\n\n### 怎么说\n- 先附和再判断：**Yeah, it looks like it's going to rain soon**"
+      },
+      {
+        "aText": "We were going to walk to the park later.",
+        "hint": "本来也打算去，现在有点犹豫。",
+        "referenceAnswer": "I was going to go too, but now I'm not so sure.",
+        "referenceExplanation": "### 语法点\n- **I was going to + V**：原计划（后来可能变）\n- **but now I'm not so sure**：转折表犹豫\n\n### 知识点\n- **too** 对齐「我也本来要去」\n- **not so sure** 比 **I won't go** 更留商量空间\n\n### 怎么说\n- 先说原打算：**I was going to go too**\n- 再表犹豫：**but now I'm not so sure**"
+      },
+      {
+        "aText": "Maybe we should cancel?",
+        "hint": "建议别完全取消，改成咖啡馆之类室内活动。",
+        "referenceAnswer": "Why don't we go to a cafe instead? We can still hang out.",
+        "referenceExplanation": "### 语法点\n- **Why don't we + V？**：提替代方案的建议句\n- **instead**：表示「改做…」而不是取消一切\n\n### 知识点\n- **hang out**：一起打发时间，不强调目的地\n- 否决取消时给室内备选更建设性\n\n### 怎么说\n- 先提替代：**Why don't we go to a cafe instead?**\n- 再补目的：**We can still hang out**"
+      },
+      {
+        "aText": "That could work. What time?",
+        "hint": "三点左右可以。",
+        "referenceAnswer": "How about three? Then we won't mind the rain.",
+        "referenceExplanation": "### 语法点\n- **How about + 钟点？**：提议具体时间\n- **won't mind the rain**：将来否定，说明那时不在意雨\n\n### 知识点\n- 定时间后补一句「为何这个点」，说服力更强\n- **Then** 承接「所以选三点」\n\n### 怎么说\n- 先提议点：**How about three?**\n- 再补理由：**Then we won't mind the rain**"
+      },
+      {
+        "aText": "Alright. Bring an umbrella just in case.",
+        "hint": "答应，已经带了。",
+        "referenceAnswer": "Sure. I already packed one.",
+        "referenceExplanation": "### 语法点\n- **Sure**：答应请求的最短回应\n- **already + 过去分词**：说明事先已做好（already packed）\n\n### 知识点\n- **pack** 可指把伞放进包里，不一定是旅行行李\n- 答应 + 已准备好，一句消对方顾虑\n\n### 怎么说\n- 先答应：**Sure**\n- 再报准备：**I already packed one**"
+      },
+      {
+        "aText": "I'm not sure if the cafe will be crowded.",
+        "hint": "不确定，去早一点也许好一些。",
+        "referenceAnswer": "I'm not sure if it'll be crowded. Maybe we should go a bit earlier.",
+        "referenceExplanation": "### 语法点\n- **I'm not sure if + 从句**：对不确定情况留余地\n- **Maybe we should + V**：软性建议下一步\n\n### 知识点\n- 先复述不确定，再给「早去一点」的对策\n- **a bit earlier** 比 **early** 语气更商量\n\n### 怎么说\n- 先对齐不确定：**I'm not sure if it'll be crowded**\n- 再提对策：**Maybe we should go a bit earlier**"
+      },
+      {
+        "aText": "Good call. Should we invite Mia?",
+        "hint": "表示可以，但不确定她有没有空。",
+        "referenceAnswer": "Sure, though I'm not sure if she's free.",
+        "referenceExplanation": "### 语法点\n- **Sure, though …**：**though** 引导轻转折，同意里带保留\n- **I'm not sure if she's free**：不确定第三方空档\n\n### 知识点\n- 邀请第三人时常「可以请，但看她有没有空」\n- **free** = 有空，约人场景核心词\n\n### 怎么说\n- 先同意：**Sure**\n- 再保留：**though I'm not sure if she's free**"
+      },
+      {
+        "aText": "Actually, wait — the mall has a new exhibit. Want that instead?",
+        "hint": "比较两个选择：咖啡馆安静，商场也能避雨。",
+        "referenceAnswer": "I guess either works. The mall might be more fun if it's pouring.",
+        "referenceExplanation": "### 语法点\n- **either works**：两者都行；**either** 指二选一\n- **might be + 比较级 + if 从句**：有条件的倾向\n\n### 知识点\n- **I guess** 缓和立场，避免强推\n- **if it's pouring**：倾盆大雨时商场更合适，用条件句比较\n\n### 怎么说\n- 先表两者可接受：**I guess either works**\n- 再给雨天倾向：**The mall might be more fun if it's pouring**"
+      },
+      {
+        "aText": "Let's do the mall then. Meet at the south entrance?",
+        "hint": "确认地点。",
+        "referenceAnswer": "So you're saying south entrance at three? That works.",
+        "referenceExplanation": "### 语法点\n- **So you're saying …?**：复述确认对方安排\n- 确认后接 **That works**：短句敲定\n\n### 知识点\n- 地点 + 时间一起复述，减少听错\n- **south entrance** 这类方位入口要说全\n\n### 怎么说\n- 先复述确认：**So you're saying south entrance at three?**\n- 再表同意：**That works**"
+      },
+      {
+        "aText": "I'll text Mia.",
+        "hint": "好，有变再联系。",
+        "referenceAnswer": "Perfect. I'll text you if anything changes.",
+        "referenceExplanation": "### 语法点\n- **Perfect**：对安排满意的短回应\n- **I'll text you if …**：条件变化时再联系\n\n### 知识点\n- **if anything changes**：有变再通知，收尾很实用\n- 对方去联络第三人时，你负责「有变互通」\n\n### 怎么说\n- 先肯定：**Perfect**\n- 再约联络：**I'll text you if anything changes**"
+      },
+      {
+        "aText": "See you there!",
+        "hint": "道别。",
+        "referenceAnswer": "See you!",
+        "referenceExplanation": "### 语法点\n- **See you!**：道别套语，可省略地点（双方已知）\n- 感叹号加强轻松语气\n\n### 知识点\n- 对方已说 **See you there**，你回 **See you** 即可对称收尾\n- 不必再重复时间地点\n\n### 怎么说\n- 简短道别：**See you!**"
+      },
+      {
+        "aText": "And thanks for being flexible.",
+        "hint": "轻松回应。",
+        "referenceAnswer": "Of course — plans change.",
+        "referenceExplanation": "### 语法点\n- **Of course**：轻松应承感谢\n- **plans change**：概括句，说明变通是常态\n\n### 知识点\n- 破折号后补一句道理，比只说 **No problem** 更有内容\n- 回应「谢谢你灵活」时，淡化功劳更自然\n\n### 怎么说\n- 先应承再点评：**Of course — plans change**"
+      }
+    ]
+  },
+  {
+    "order": 5,
+    "title": "商量周末出游",
+    "description": "朋友邀请你周末一起活动，你需要回应邀请，并商量时间和细节。",
+    "promptEn": "You are B. Respond to A's weekend invitation and work out the details.",
+    "promptZh": "你是 B。朋友邀请你周末出去，根据提示商量细节。",
+    "situation": "朋友 A 约你周六去爬山。你这周有点忙，还不确定天气，但并不想直接回绝。中间可能会有人来不了，或临时换地点。",
+    "turns": [
+      {
+        "aText": "Hey, are you doing anything this Saturday?",
+        "hint": "还没定，这周一直挺忙。",
+        "referenceAnswer": "I haven't decided yet. I've been pretty busy this week.",
+        "referenceExplanation": "### 语法点\n- **I haven't decided yet**：现在完成否定 + **yet**\n- **I've been pretty busy**：现在完成进行感，谈这周状态\n\n### 知识点\n- 被问周末安排时，先「未定」再「忙」，给对方铺垫邀请\n- **this week** 锚定最近时段\n\n### 怎么说\n- 先说未定：**I haven't decided yet**\n- 再补原因：**I've been pretty busy this week**"
+      },
+      {
+        "aText": "I was thinking of going hiking. Want to come?",
+        "hint": "听起来不错，但不确定下午天气。",
+        "referenceAnswer": "That sounds good, but I'm not sure if the weather will hold up.",
+        "referenceExplanation": "### 语法点\n- **That sounds good, but …**：先接住再转折\n- **I'm not sure if + 从句**：对天气留不确定\n\n### 知识点\n- **hold up**（天气）= 撑得住、别变坏\n- 兴趣 + 顾虑并陈，方便下一步商量对策\n\n### 怎么说\n- 先表兴趣：**That sounds good**\n- 再提天气顾虑：**but I'm not sure if the weather will hold up**"
+      },
+      {
+        "aText": "It might rain in the afternoon.",
+        "hint": "建议早点出发。",
+        "referenceAnswer": "How about we leave earlier then?",
+        "referenceExplanation": "### 语法点\n- **How about we + V？**：提议共同行动\n- **then**：承接对方「下午可能下雨」的信息\n\n### 知识点\n- 听到风险后立刻给调整方案，比只说 **Oh no** 更有用\n- **leave earlier** 是应对午后雨的常见对策\n\n### 怎么说\n- 用建议句推进：**How about we leave earlier then?**"
+      },
+      {
+        "aText": "Good idea! What time works for you?",
+        "hint": "十点前都可以，想先吃早餐。",
+        "referenceAnswer": "Any time before ten works for me, but I'd like to grab breakfast first.",
+        "referenceExplanation": "### 语法点\n- **Any time before ten works for me**：时间窗口 + **works for me**\n- **but I'd like to + V first**：附加条件（先吃早餐）\n\n### 知识点\n- **grab breakfast**：随便吃顿早饭，很口语\n- 给「可用区间」比只说一个点更灵活\n\n### 怎么说\n- 先给时间窗：**Any time before ten works for me**\n- 再加前提：**but I'd like to grab breakfast first**"
+      },
+      {
+        "aText": "Should we ask Tom to come along too?",
+        "hint": "赞成，但不确定他有没有空。",
+        "referenceAnswer": "Sure, though I'm not sure if he's free.",
+        "referenceExplanation": "### 语法点\n- **Sure, though …**：同意里带保留\n- **I'm not sure if he's free**：不确定第三人是否有空\n\n### 知识点\n- 拉人入局时常先赞成，再诚实说不确定\n- **free** 比 **available** 更口语\n\n### 怎么说\n- 先同意：**Sure**\n- 再保留：**though I'm not sure if he's free**"
+      },
+      {
+        "aText": "I'll text him.",
+        "hint": "表示同意。",
+        "referenceAnswer": "Sounds good.",
+        "referenceExplanation": "### 语法点\n- **Sounds good**：对对方行动的简短认可（It sounds good）\n- 主语常省略，单独成句\n\n### 知识点\n- 对方说去发消息时，短确认即可，不必加戏\n- 同类：**Cool / Okay / Great**\n\n### 怎么说\n- 简短接住：**Sounds good**"
+      },
+      {
+        "aText": "Tom might not make it — he has a family thing.",
+        "hint": "提出另一种安排：两人去或换轻松路线。",
+        "referenceAnswer": "We could still go, just the two of us. Or we could pick an easier trail.",
+        "referenceExplanation": "### 语法点\n- **We could still + V**：情况变了仍可继续的建议\n- **Or we could + V**：给出第二个备选\n\n### 知识点\n- **just the two of us**：就我们俩，排除第三人后的说法\n- **easier trail**：轻松路线，降低强度的替换项\n\n### 怎么说\n- 先给方案一：**We could still go, just the two of us**\n- 再给方案二：**Or we could pick an easier trail**"
+      },
+      {
+        "aText": "Easier trail works. How are you getting there?",
+        "hint": "描述出行计划：地铁再走过去。",
+        "referenceAnswer": "I'm thinking of taking the subway and walking from the station.",
+        "referenceExplanation": "### 语法点\n- **I'm thinking of + V-ing**：谈尚未最终敲定的出行方式\n- **taking A and walking from B**：交通方式串联\n\n### 知识点\n- **subway / station**：地铁出行的基本词\n- 用 **thinking of** 比 **I will** 更商量、可改\n\n### 怎么说\n- 按顺序说交通：**I'm thinking of taking the subway and walking from the station**"
+      },
+      {
+        "aText": "Bring a light raincoat, just in case.",
+        "hint": "回应提醒，说明准备情况。",
+        "referenceAnswer": "I will. I've already packed one.",
+        "referenceExplanation": "### 语法点\n- **I will**：回应提醒的简短承诺（常缩成 **I will.**）\n- **I've already + 过去分词**：说明准备完成\n\n### 知识点\n- 先答应提醒，再报已打包，双重安心\n- **one** 指代对方说的 raincoat，避免重复名词\n\n### 怎么说\n- 先承诺：**I will**\n- 再报准备：**I've already packed one**"
+      },
+      {
+        "aText": "If it really pours, should we switch to the indoor climbing gym?",
+        "hint": "比较两个选择并表态。",
+        "referenceAnswer": "That could work. I'd rather climb indoors than get soaked.",
+        "referenceExplanation": "### 语法点\n- **That could work**：对备选方案的开放态度\n- **I'd rather A than B**：明确偏好对比\n\n### 知识点\n- **get soaked**：被淋透，形象口语\n- 先说「可以」，再用 **rather … than …** 表态\n\n### 怎么说\n- 先开放接住：**That could work**\n- 再亮偏好：**I'd rather climb indoors than get soaked**"
+      },
+      {
+        "aText": "Outdoor if okay, gym as backup. Meet at 9:30?",
+        "hint": "确认最终安排。",
+        "referenceAnswer": "So we're meeting at 9:30, and we'll decide based on the weather. That works for me.",
+        "referenceExplanation": "### 语法点\n- **So we're + V-ing …**：复述共识安排\n- **decide based on …**：依据某条件再决定\n\n### 知识点\n- 把时间与天气决策规则说全，避免歧义\n- 末尾 **That works for me** 正式敲定\n\n### 怎么说\n- 先复述计划：**So we're meeting at 9:30, and we'll decide based on the weather**\n- 再确认：**That works for me**"
+      },
+      {
+        "aText": "Can't wait. See you Saturday!",
+        "hint": "自然回应并结束。",
+        "referenceAnswer": "Same here. See you Saturday!",
+        "referenceExplanation": "### 语法点\n- **Same here**：同感附和（I feel the same）\n- 重复对方道别语 **See you Saturday!** 对称收尾\n\n### 知识点\n- 期待感用 **Same here** 回应 **Can't wait** 很省力\n- 周末约见道别常带上具体日子\n\n### 怎么说\n- 先附和期待：**Same here**\n- 再道别：**See you Saturday!**"
+      }
+    ]
+  },
+  {
+    "order": 6,
+    "title": "向朋友借东西",
+    "description": "向朋友借充电器或小物件，说明原因，并约定什么时候还。",
+    "promptEn": "You are B. Ask to borrow something and arrange returning it.",
+    "promptZh": "你是 B。向朋友借东西，把原因和归还说清楚。",
+    "situation": "你的手机快没电了，想向旁边的朋友 A 借一下充电宝。",
+    "turns": [
+      {
+        "aText": "Hey, your phone's on 5%. Need a charger?",
+        "hint": "太好了，能不能借充电宝用一下。",
+        "referenceAnswer": "Oh yes — could I borrow your power bank for a bit?",
+        "referenceExplanation": "### 语法点\n- **could I + V？**：礼貌请求许可（比 **can I** 稍软）\n- **borrow … for a bit**：借用 + 短暂时长\n\n### 知识点\n- **power bank**：充电宝；勿与 **charger**（充电器）混淆\n- **Oh yes —** 先接住对方好意，再提出具体请求\n\n### 怎么说\n- 先接住：**Oh yes —**\n- 再礼貌借物：**could I borrow your power bank for a bit?**"
+      },
+      {
+        "aText": "Sure. When can you return it?",
+        "hint": "一小时后下课就还。",
+        "referenceAnswer": "I'll give it back in about an hour, right after class.",
+        "referenceExplanation": "### 语法点\n- **I'll give it back + 时间**：承诺归还\n- **in about an hour / right after class**：时间表达叠用，更精确\n\n### 知识点\n- **give it back** = return it，口语很常用\n- 回答 **When can you return it** 要落到具体节点\n\n### 怎么说\n- 先给时长：**I'll give it back in about an hour**\n- 再锚定事件：**right after class**"
+      },
+      {
+        "aText": "No rush. It's almost full anyway.",
+        "hint": "本来想回宿舍充，但下节课马上开始。",
+        "referenceAnswer": "Thanks. I was going to head back to the dorm, but my next class starts soon.",
+        "referenceExplanation": "### 语法点\n- **I was going to + V, but …**：原计划被打断的经典结构\n- **starts soon**：一般现在表即将发生的时刻表事件\n\n### 知识点\n- 先 **Thanks** 再解释为何不回宿舍充\n- **head back to the dorm**：回宿舍的口语说法\n\n### 怎么说\n- 先道谢：**Thanks**\n- 再说原计划与冲突：**I was going to head back to the dorm, but my next class starts soon**"
+      },
+      {
+        "aText": "Happens to me all the time.",
+        "hint": "附和：自己也常忘带线。",
+        "referenceAnswer": "Same here. I keep forgetting to bring my cable.",
+        "referenceExplanation": "### 语法点\n- **Same here**：附和对方经历\n- **keep + V-ing**：表示反复发生的坏习惯\n\n### 知识点\n- **forget to bring**：忘记带某物；**cable** 指充电线\n- 共鸣后补一句自己的同类糗事，聊天更热\n\n### 怎么说\n- 先附和：**Same here**\n- 再补细节：**I keep forgetting to bring my cable**"
+      },
+      {
+        "aText": "Do you mind if I ask — is your cable USB-C?",
+        "hint": "确认型号，避免借错。",
+        "referenceAnswer": "Do you mean this one is USB-C? Just checking.",
+        "referenceExplanation": "### 语法点\n- **Do you mean …?**：澄清对方所指\n- **Just checking**：补一句说明「只是确认」，降低尴尬\n\n### 知识点\n- **USB-C** 型号要说清楚，借错线很常见\n- 用问句确认比直接断言更稳妥\n\n### 怎么说\n- 先澄清型号：**Do you mean this one is USB-C?**\n- 再软化语气：**Just checking**"
+      },
+      {
+        "aText": "Yep. Here you go.",
+        "hint": "再次感谢。",
+        "referenceAnswer": "I really appreciate it.",
+        "referenceExplanation": "### 语法点\n- **I really appreciate it**：比 **Thanks** 更重一点的感谢\n- **really** 加强真诚度\n\n### 知识点\n- 东西递到手时再用一次感谢，不显重复\n- 正式一点的场合也可用这句话\n\n### 怎么说\n- 郑重道谢：**I really appreciate it**"
+      },
+      {
+        "aText": "Want me to text you a reminder before class ends?",
+        "hint": "婉拒提醒，你会设闹钟。",
+        "referenceAnswer": "I'm good — I'll set an alarm. Thanks though.",
+        "referenceExplanation": "### 语法点\n- **I'm good —**：婉拒好意的口语短句\n- **Thanks though**：拒绝后仍致谢，**though** 表「不过还是谢谢」\n\n### 知识点\n- **set an alarm**：设闹钟/提醒，比让对方操心更独立\n- 婉拒提醒时先说自己有办法，再谢对方\n\n### 怎么说\n- 先婉拒并给方案：**I'm good — I'll set an alarm**\n- 再补谢：**Thanks though**"
+      },
+      {
+        "aText": "Alright. Where should I find you later?",
+        "hint": "约定归还地点：图书馆门口。",
+        "referenceAnswer": "How about by the library entrance?",
+        "referenceExplanation": "### 语法点\n- **How about + 地点？**：提议见面/交接地点\n- **by the …**：在…附近（by the library entrance）\n\n### 知识点\n- 约定还物地点要具体到入口/门口\n- 用 **How about** 比直接命令 **Meet me at** 更商量\n\n### 怎么说\n- 提议交接点：**How about by the library entrance?**"
+      },
+      {
+        "aText": "Library entrance works.",
+        "hint": "确认。",
+        "referenceAnswer": "That works for me.",
+        "referenceExplanation": "### 语法点\n- **That works for me**：确认地点/安排可行\n- **That** 指代对方刚认可的方案\n\n### 知识点\n- 双方对齐地点后一句确认即可\n- 与约时间场景同一套语，可复用\n\n### 怎么说\n- 确认敲定：**That works for me**"
+      },
+      {
+        "aText": "See you after class.",
+        "hint": "道别。",
+        "referenceAnswer": "See you later — and thanks again!",
+        "referenceExplanation": "### 语法点\n- **See you later**：稍后见的道别\n- **thanks again**：再次感谢，呼应借物情节\n\n### 知识点\n- 道别时可把感谢叠在同一句，用破折号连接\n- **again** 提醒这是第二轮谢意\n\n### 怎么说\n- 道别 + 再谢：**See you later — and thanks again!**"
+      },
+      {
+        "aText": "Anytime.",
+        "hint": "简短收尾。",
+        "referenceAnswer": "You saved me.",
+        "referenceExplanation": "### 语法点\n- **You saved me**：夸张口语，表「帮了大忙」\n- 一般过去，指刚才那件事救了场\n\n### 知识点\n- 对方说 **Anytime** 后，用一句轻松夸赞收尾很自然\n- 比再堆 **Thank you** 更有变化\n\n### 怎么说\n- 轻松夸对方：**You saved me**"
+      },
+      {
+        "aText": "Don't mention it.",
+        "hint": "轻松结束。",
+        "referenceAnswer": "Talk soon.",
+        "referenceExplanation": "### 语法点\n- **Talk soon**：即将结束对话时的轻道别\n- 隐含「之后还会联系」，语气友好\n\n### 知识点\n- 对方说 **Don't mention it** 后，不必继续客套\n- 用短句关掉话题即可\n\n### 怎么说\n- 轻松收束：**Talk soon**"
+      }
+    ]
+  }
+]
