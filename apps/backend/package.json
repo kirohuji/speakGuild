@@ -11,7 +11,8 @@
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:seed:test-coverage": "ts-node prisma/seed-test-coverage.ts",
     "prisma:seed:ai": "ts-node prisma/seed-ai-models.ts",
-    "prisma:seed:pkg": "ts-node prisma/seed.ts --"
+    "prisma:seed:pkg": "ts-node prisma/seed.ts --",
+    "prisma:seed:exam-essay": "ts-node prisma/seed-exam-essay-writing.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.53",
