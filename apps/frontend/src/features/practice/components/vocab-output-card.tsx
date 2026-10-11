@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Lightbulb, Eye, Loader2, CheckCircle2, ChevronDown, Layers3, Play, Pause, Repeat2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -100,6 +100,11 @@ export function VocabOutputCard({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const rehearsalRef = useRef(false)
 
+  useEffect(() => () => {
+    audioRef.current?.pause()
+    audioRef.current = null
+  }, [])
+
   const current = vocabs[currentIdx]
   const totalItems = vocabs.length
   const isZhToEn = direction === 'zh_to_en'
@@ -173,6 +178,7 @@ export function VocabOutputCard({
     setResult(null)
     setUserInput('')
     setHintLevel('none')
+    setAudioUrl(null)
     if (currentIdx < totalItems - 1) setCurrentIdx(prev => prev + 1)
   }, [currentIdx, totalItems])
 
@@ -289,6 +295,7 @@ export function VocabOutputCard({
 
       {/* Input �?persist on success; 回顾模式 disabled */}
       <PracticeAnswerInput
+        key={currentIdx}
         value={userInput}
         onChange={(nextValue) => { if (!result?.passed && !skipped) { setUserInput(nextValue); setResult(null) } }}
         placeholder={isZhToEn ? t('practiceSession.warmupDrill.vocabPlaceholder') : t('practiceSession.warmupDrill.inputPlaceholderZh')}

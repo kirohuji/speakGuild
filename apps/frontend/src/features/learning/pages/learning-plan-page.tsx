@@ -392,6 +392,10 @@ function WarmupRecordDetailDrawer({
   const { t } = useTranslation()
   const [currentIdx, setCurrentIdx] = useState(0)
 
+  useEffect(() => {
+    setCurrentIdx(0)
+  }, [open, record?.id])
+
   if (!record) return null
 
   const items = record.items ?? []
@@ -416,6 +420,7 @@ function WarmupRecordDetailDrawer({
     if (current.stepType === 'chunk_substitution') {
       return (
         <ChunkOutputDrillCard
+          key={current.stepId || `chunk-${currentIdx}`}
           chunk={{ text: current.correction?.split(' ')?.slice(0, 3)?.join(' ') || current.answer || current.zh || '', meaning: '' }}
           items={[{ zh: current.zh, answer: current.answer }]}
           stepId={current.stepId || String(currentIdx)}
@@ -427,6 +432,7 @@ function WarmupRecordDetailDrawer({
     if (current.stepType === 'vocab_drill') {
       return (
         <VocabOutputCard
+          key={current.stepId || `vocab-${currentIdx}`}
           title={current.groupTitle || t('learning.wordDrill')}
           vocabs={[{ vocabId: '', promptZh: current.zh, suggestedAnswer: current.answer }]}
           stepId={current.stepId || String(currentIdx)}
@@ -437,6 +443,7 @@ function WarmupRecordDetailDrawer({
     if (current.stepType === 'pattern_drill') {
       return (
         <PatternDrillCard
+          key={current.stepId || `pattern-${currentIdx}`}
           pattern={current.correction || current.answer || current.zh || ''}
           items={[{ zh: current.zh, answer: current.answer }]}
           stepId={current.stepId || String(currentIdx)}
@@ -453,6 +460,7 @@ function WarmupRecordDetailDrawer({
       try { levelAudios = JSON.parse(current.userAnswer || '{}') } catch {}
       return (
         <SentenceDecompositionCard
+          key={current.stepId || `sentence-${currentIdx}`}
           title={current.zh || t('learning.sentenceBreakdown')}
           levels={levels.length > 0 ? levels : [{ level: 1, label: '', en: current.answer || current.zh || '', zh: '' }]}
           stepId={current.stepId || String(currentIdx)}

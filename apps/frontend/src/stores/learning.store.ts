@@ -26,6 +26,8 @@ import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { toast } from 'sonner'
 import i18n from '@/lib/i18n'
 import { ApiRequestError } from '@/lib/request'
+import { confirmCellularDownload } from '@/components/common/cellular-download-confirm-dialog'
+import { recordLearningPackDownloadFailure } from '@/lib/offline/learning-pack-diagnostics'
 
 /** 下载任务状态 */
 export interface DownloadTask {
@@ -156,21 +158,8 @@ async function checkNetworkBeforeDownload(): Promise<boolean> {
       return false
     }
 
-    // 允许移动网络 → 弹确认对话框
-    return await new Promise<boolean>((resolve) => {
-      toast(i18n.t('profile.cellularDownloadConfirm'), {
-        duration: 10000,
-        position: 'top-center',
-        action: {
-          label: i18n.t('common.confirm'),
-          onClick: () => resolve(true),
-        },
-        cancel: {
-          label: i18n.t('common.cancel'),
-          onClick: () => resolve(false),
-        },
-      })
-    })
+    // 允许移动网络 → 由应用根部的 Dialog 进行明确确认。
+    return await confirmCellularDownload()
   } catch {
     // 无法获取网络状态时放行
     return true
@@ -729,6 +718,15 @@ async function processDownloadQueue() {
     const cancelled = activePackTaskControllers.get(next.packId)?.signal.aborted || error?.name === 'AbortError' || error?.code === 'ERR_CANCELED'
     if (cancelled) return
     console.error(`[learning-store] ❌ 下载失败: ${next.title}`, error)
+    const activeTask = useLearningStore.getState().downloadTasks.find((task) => task.packId === next.packId)
+    const connectionType = await Network.getStatus().then((status) => status.connectionType).catch(() => 'unknown')
+    recordLearningPackDownloadFailure({
+      packId: next.packId,
+      title: next.title,
+      stage: activeTask?.step,
+      connectionType,
+      error,
+    })
     useLearningStore.setState((s) => ({
         downloadTasks: s.downloadTasks.map((t) =>
           t.packId === next.packId

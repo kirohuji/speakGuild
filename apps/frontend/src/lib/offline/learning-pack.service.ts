@@ -7,9 +7,25 @@ import { syncOutbox } from './sync-outbox'
 import { BlobReader, BlobWriter, TextWriter, ZipReader, type Entry } from '@zip.js/zip.js'
 import { learningContentRepository } from './learning-content.repository'
 import { Capacitor } from '@capacitor/core'
+import { FileTransfer } from '@capacitor/file-transfer'
+import { Directory, Filesystem } from '@capacitor/filesystem'
+import { Network } from '@capacitor/network'
+import { getBearerToken } from '@/features/auth/client'
 import { createLogger } from './logger'
 
 const logger = createLogger('learning-pack')
+
+function toArrayBuffer(base64: string) {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index)
+  return bytes.buffer
+}
+
+function learningPackDownloadUrl(unitId: string) {
+  const base = import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu'
+  return new URL(`${base.replace(/\/$/, '')}/learning/units/${encodeURIComponent(unitId)}/download-pack`, window.location.origin).toString()
+}
 
 export interface LearningPackManifest {
   packId: string
@@ -404,6 +420,60 @@ export const learningPackService = {
     }
   },
 
+  async downloadUnitZip(
+    unitId: string,
+    onProgress?: LearningPackInstallProgressHandler,
+    signal?: AbortSignal,
+  ) {
+    // Wi-Fi 已有稳定下载路径，保持原样；仅蜂窝网络改走 FileTransfer，
+    // 以取得原生且可靠的进度回调。
+    const connectionType = Capacitor.isNativePlatform()
+      ? await Network.getStatus().then((status) => status.connectionType).catch(() => 'unknown')
+      : 'unknown'
+    if (!Capacitor.isNativePlatform() || connectionType !== 'cellular') {
+      return learningApi.downloadPack(unitId, signal, (loaded, total) => {
+        const percent = total && total > 0
+          ? 5 + (loaded / total) * 10
+          : Math.min(14, 5 + Math.log10(Math.max(loaded, 1)) * 1.5)
+        onProgress?.('downloading', percent, { label: '下载学习包' })
+      })
+    }
+
+    throwIfAborted(signal)
+    const url = learningPackDownloadUrl(unitId)
+    await Filesystem.mkdir({ path: 'learning-packs', directory: Directory.Cache, recursive: true }).catch(() => undefined)
+    const target = await Filesystem.getUri({
+      path: `learning-packs/${unitId}-${Date.now()}.zip`,
+      directory: Directory.Cache,
+    })
+    const listener = await FileTransfer.addListener('progress', (progress) => {
+      if (progress.url !== url) return
+      const total = progress.contentLength || 0
+      const percent = total > 0 ? 5 + (progress.bytes / total) * 10 : 5
+      onProgress?.('downloading', percent, { label: '下载学习包' })
+    })
+
+    try {
+      await FileTransfer.downloadFile({
+        url,
+        path: target.uri,
+        headers: getBearerToken() ? { Authorization: `Bearer ${getBearerToken()}` } : undefined,
+        progress: true,
+        connectTimeout: 60_000,
+        readTimeout: 10 * 60_000,
+      })
+      throwIfAborted(signal)
+      // FileTransfer returns a platform-specific path (iOS strips `file://`,
+      // Android may preserve it). Read the exact URI originally allocated by
+      // Filesystem instead, so the cellular path is stable across platforms.
+      const file = await Filesystem.readFile({ path: target.uri })
+      return toArrayBuffer(file.data as string)
+    } finally {
+      await listener.remove()
+      await Filesystem.deleteFile({ path: target.uri }).catch(() => undefined)
+    }
+  },
+
   async installUnit(unitId: string, onProgress?: LearningPackInstallProgressHandler, signal?: AbortSignal): Promise<InstalledLearningPack> {
     logger.info('installUnit start zip-only mode', {
       unitId,
@@ -473,7 +543,7 @@ export const learningPackService = {
     const startTime = performance.now()
     logger.info('⏳ ① 下载 zip...')
     report('downloading', 5, { label: '下载学习包' })
-    const zipBuffer = await learningApi.downloadPack(unitId, signal)
+    const zipBuffer = await this.downloadUnitZip(unitId, onProgress, signal)
     throwIfAborted(signal)
     const zipSizeMB = (zipBuffer.byteLength / 1024 / 1024).toFixed(1)
     logger.info(`✅ ① zip 下载完成: ${zipSizeMB} MB (${zipBuffer.byteLength} bytes)`)

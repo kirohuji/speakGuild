@@ -206,6 +206,20 @@ export function AssessmentAnswerInput({
     }
   }, [playbackUrl])
 
+  // iOS/WebView may keep an audio element alive while React swaps its source.
+  // Stop it explicitly on a turn change as well as on component unmount.
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    audio.pause()
+    audio.currentTime = 0
+    setIsPlaying(false)
+    return () => {
+      audio.pause()
+      audio.currentTime = 0
+    }
+  }, [playbackUrl])
+
   const setLocalPlaybackUrl = useCallback((url: string | null) => {
     if (onRecordedAudioUrlChange) {
       onRecordedAudioUrlChange(url)
@@ -448,6 +462,8 @@ export function LearningAssessmentDialog({
   const [step, setStep] = useState(0)
   const [selectedGoals, setSelectedGoals] = useState<string[]>(() => normalizeLearningGoals(profile?.learningGoals))
   const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [recordedAudios, setRecordedAudios] = useState<Record<string, string>>({})
+  const recordedAudiosRef = useRef<Record<string, string>>({})
   const [result, setResult] = useState<PlacementAssessmentResult | null>(null)
   const [saving, setSaving] = useState(false)
   const [pendingClose, setPendingClose] = useState(false)
@@ -471,15 +487,47 @@ export function LearningAssessmentDialog({
       ? currentAnswer.trim().length >= 5
       : true
 
+  const setPromptRecording = useCallback((promptId: string, url: string | null) => {
+    setRecordedAudios((current) => {
+      const previous = current[promptId]
+      if (previous?.startsWith('blob:') && previous !== url) URL.revokeObjectURL(previous)
+      if (!url) {
+        const { [promptId]: _, ...remaining } = current
+        return remaining
+      }
+      return { ...current, [promptId]: url }
+    })
+  }, [])
+
+  const clearPromptRecordings = useCallback(() => {
+    setRecordedAudios((current) => {
+      Object.values(current).forEach((url) => {
+        if (url.startsWith('blob:')) URL.revokeObjectURL(url)
+      })
+      return {}
+    })
+  }, [])
+
+  useEffect(() => {
+    recordedAudiosRef.current = recordedAudios
+  }, [recordedAudios])
+
+  useEffect(() => () => {
+    Object.values(recordedAudiosRef.current).forEach((url) => {
+      if (url.startsWith('blob:')) URL.revokeObjectURL(url)
+    })
+  }, [])
+
   useEffect(() => {
     if (open && !wasOpenRef.current) {
       setStep(0)
       setSelectedGoals(normalizeLearningGoals(profile?.learningGoals))
       setAnswers({})
+      clearPromptRecordings()
       setResult(null)
     }
     wasOpenRef.current = open
-  }, [open])
+  }, [clearPromptRecordings, open])
 
   const toggleGoal = (goal: string) => {
     setSelectedGoals((current) => {
@@ -725,6 +773,8 @@ export function LearningAssessmentDialog({
                 onChange={(nextValue) => setAnswers((current) => ({ ...current, [currentPrompt.id]: nextValue }))}
                 disabled={saving}
                 isAdmin={session?.user?.role === 'admin'}
+                recordedAudioUrl={recordedAudios[currentPrompt.id] ?? null}
+                onRecordedAudioUrlChange={(url) => setPromptRecording(currentPrompt.id, url)}
               />
             </div>
           )}

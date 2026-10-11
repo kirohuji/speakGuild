@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { HashRouter, Navigate, Routes, Route, useLocation } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { Toaster } from 'sonner'
@@ -14,6 +14,8 @@ import { OnboardingProvider } from '@/providers/onboarding-provider'
 import { MobileGestureProvider } from '@/providers/mobile-gesture-provider'
 import { RootLayout } from '@/layout/root-layout'
 import { ErrorBoundary } from '@/components/common/error-boundary'
+import { CellularDownloadConfirmDialog } from '@/components/common/cellular-download-confirm-dialog'
+import { installMediaPlaybackTracking, stopTransientMediaPlayback } from '@/lib/media-playback-lifecycle'
 // ── 首屏必需：静态导入 ──
 import { EnglishHomePage } from '@/features/home/pages/english-home-page'
 import { LearningPlanPage } from '@/features/learning/pages/learning-plan-page'
@@ -63,6 +65,30 @@ function PageLoader() {
   return <div className="flex min-h-[100dvh] items-center justify-center bg-background text-sm text-muted-foreground">Loading...</div>
 }
 
+/** Stops transient voice, TTS, and recording playback on route/app lifecycle changes. */
+function MediaPlaybackLifecycle() {
+  const location = useLocation()
+
+  useEffect(() => {
+    installMediaPlaybackTracking()
+    const stopWhenHidden = () => {
+      if (document.visibilityState === 'hidden') stopTransientMediaPlayback()
+    }
+    document.addEventListener('visibilitychange', stopWhenHidden)
+    window.addEventListener('pagehide', stopTransientMediaPlayback)
+    return () => {
+      document.removeEventListener('visibilitychange', stopWhenHidden)
+      window.removeEventListener('pagehide', stopTransientMediaPlayback)
+    }
+  }, [])
+
+  useEffect(() => {
+    stopTransientMediaPlayback()
+  }, [location.key])
+
+  return null
+}
+
 function LearningClientProviders({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   if (location.pathname.startsWith('/admin')) return <>{children}</>
@@ -84,6 +110,8 @@ export default function App() {
           <AuthProvider>
             <ThemePresetProvider>
             <HashRouter>
+            <MediaPlaybackLifecycle />
+            <CellularDownloadConfirmDialog />
             <LearningClientProviders>
             <AuthRouteGate>
               <Suspense fallback={<PageLoader />}>

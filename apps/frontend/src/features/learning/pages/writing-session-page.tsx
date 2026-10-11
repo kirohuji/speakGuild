@@ -951,6 +951,7 @@ function DialogueEditor({
   const [responses, setResponses] = useState<Record<number, string>>({})
   const [recordedAudios, setRecordedAudios] = useState<Record<number, string>>({})
   const recordedAudiosRef = useRef<Record<number, string>>({})
+  const promptAudioRef = useRef<HTMLAudioElement | null>(null)
   const [showHint, setShowHint] = useState(true)
   const [saving, setSaving] = useState(false)
   const [view, setView] = useState<'editor' | 'analysis'>(review ? 'analysis' : 'editor')
@@ -1000,8 +1001,22 @@ function DialogueEditor({
 
   const goToTurn = (index: number) => {
     if (index < 0 || index >= turns.length) return
+    promptAudioRef.current?.pause()
+    promptAudioRef.current = null
     setCurrentIndex(index)
     setShowHint(false)
+  }
+
+  const playPromptAudio = (url: string) => {
+    promptAudioRef.current?.pause()
+    const audio = new Audio(resolveFileAssetUrl(url))
+    promptAudioRef.current = audio
+    audio.onended = () => {
+      if (promptAudioRef.current === audio) promptAudioRef.current = null
+    }
+    audio.play().catch(() => {
+      if (promptAudioRef.current === audio) promptAudioRef.current = null
+    })
   }
 
   const setTurnRecording = useCallback((index: number, url: string | null) => {
@@ -1024,6 +1039,11 @@ function DialogueEditor({
     Object.values(recordedAudiosRef.current).forEach((url) => {
       if (url.startsWith('blob:')) URL.revokeObjectURL(url)
     })
+  }, [])
+
+  useEffect(() => () => {
+    promptAudioRef.current?.pause()
+    promptAudioRef.current = null
   }, [])
 
   return (
@@ -1089,7 +1109,7 @@ function DialogueEditor({
                 <div className="max-w-[85%] rounded-2xl rounded-tl-md bg-muted/50 px-4 py-3 text-[15px] leading-relaxed">
                   <div className="flex items-start gap-2">
                     <span className="min-w-0 flex-1">{currentTurn.aText}</span>
-                    {currentTurn.aAudioUrl && <button type="button" onClick={() => void new Audio(resolveFileAssetUrl(currentTurn.aAudioUrl)).play()} className="mt-0.5 shrink-0 text-primary/75 transition-colors hover:text-primary" aria-label="播放 A 的台词"><Volume2 className="size-4" /></button>}
+                    {currentTurn.aAudioUrl && <button type="button" onClick={() => playPromptAudio(currentTurn.aAudioUrl!)} className="mt-0.5 shrink-0 text-primary/75 transition-colors hover:text-primary" aria-label="播放 A 的台词"><Volume2 className="size-4" /></button>}
                   </div>
                 </div>
               </div>
