@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { Bell, Loader2, WifiOff, Wrench } from 'lucide-react'
 import { Header } from './header'
 import { Footer } from './footer'
@@ -21,9 +21,26 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { isDevHost } from '@/lib/dev-host'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 
+const ROUTE_SCROLL_POSITIONS_KEY = 'manyu:route-scroll-positions:v1'
+
+function readRouteScrollPositions(): Record<string, number> {
+  if (typeof window === 'undefined') return {}
+  try {
+    const parsed = JSON.parse(window.sessionStorage.getItem(ROUTE_SCROLL_POSITIONS_KEY) ?? '{}')
+    if (!parsed || typeof parsed !== 'object') return {}
+    return Object.fromEntries(
+      Object.entries(parsed).filter(([, value]) => typeof value === 'number' && value >= 0),
+    )
+  } catch {
+    return {}
+  }
+}
+
 export function RootLayout() {
   const { t } = useTranslation()
-  const { pathname } = useLocation()
+  const location = useLocation()
+  const { pathname } = location
+  const navigationType = useNavigationType()
   const { session } = useAuth()
   const immersiveMode = useLayoutStore((s) => s.immersiveMode)
   const bottomNavVisible = useLayoutStore((s) => s.bottomNavVisible)
@@ -44,6 +61,62 @@ export function RootLayout() {
   const showMobileAvatar = isLoggedIn && isHomePage && !immersiveMode
   const [profileDrawerOpen, setProfileDrawerOpen] = React.useState(false)
   const [notificationDrawerOpen, setNotificationDrawerOpen] = React.useState(false)
+  const mainRef = React.useRef<HTMLElement>(null)
+  const scrollPositionsRef = React.useRef<Record<string, number>>(readRouteScrollPositions())
+
+  // Mobile uses this <main> as its scroll container, rather than window. The
+  // browser therefore cannot restore its offset when returning from a session
+  // route (the short session page also clamps the container back to zero).
+  React.useEffect(() => {
+    const container = mainRef.current
+    if (!container) return
+    const savePosition = () => {
+      scrollPositionsRef.current[location.key] = container.scrollTop
+    }
+    container.addEventListener('scroll', savePosition, { passive: true })
+    return () => {
+      container.removeEventListener('scroll', savePosition)
+      try {
+        window.sessionStorage.setItem(ROUTE_SCROLL_POSITIONS_KEY, JSON.stringify(scrollPositionsRef.current))
+      } catch {
+        // Scroll restoration is a progressive enhancement; storage failures
+        // must not affect navigation.
+      }
+    }
+  }, [location.key])
+
+  React.useLayoutEffect(() => {
+    // Only restore browser-history returns. Fresh navigation should begin at
+    // the top, while Back returns the learner to the topic they just opened.
+    if (navigationType !== 'POP') return
+    const targetTop = scrollPositionsRef.current[location.key]
+    const container = mainRef.current
+    if (!container || !targetTop) return
+
+    let timer: number | undefined
+    let attempts = 0
+    let cancelled = false
+    const cancelRestore = () => {
+      cancelled = true
+      if (timer !== undefined) window.clearTimeout(timer)
+    }
+    const restore = () => {
+      if (cancelled) return
+      container.scrollTop = targetTop
+      // The unit detail can render asynchronously. Retry briefly until its
+      // height can accommodate the saved offset, without fighting user input.
+      if (Math.abs(container.scrollTop - targetTop) < 1 || attempts++ >= 40) return
+      timer = window.setTimeout(restore, 50)
+    }
+    container.addEventListener('touchstart', cancelRestore, { passive: true, once: true })
+    container.addEventListener('wheel', cancelRestore, { passive: true, once: true })
+    timer = window.setTimeout(restore, 0)
+    return () => {
+      cancelRestore()
+      container.removeEventListener('touchstart', cancelRestore)
+      container.removeEventListener('wheel', cancelRestore)
+    }
+  }, [location.key, navigationType])
 
   return (
     <div
@@ -66,7 +139,7 @@ export function RootLayout() {
           onProfileOpen={() => setProfileDrawerOpen(true)}
         />
       )}
-      <main className={cn('min-h-0 flex-1 pt-0', isMobile ? (isExpressionNotebookDetail ? 'overflow-hidden' : 'overflow-y-auto overscroll-contain') : 'overflow-visible', `${
+      <main ref={mainRef} className={cn('min-h-0 flex-1 pt-0', isMobile ? (isExpressionNotebookDetail ? 'overflow-hidden' : 'overflow-y-auto overscroll-contain') : 'overflow-visible', `${
         immersiveMode
           ? 'pb-0'
           : isAuthPage || !isLoggedIn

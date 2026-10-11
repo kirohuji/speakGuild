@@ -11,7 +11,6 @@ const PROGRESS_KEY = (unitId: string) => `manyu:novel-progress:${unitId}`
 export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-
   if (unit.contentMode === 'novel') {
     return <NovelEntryCard unit={unit} />
   }
