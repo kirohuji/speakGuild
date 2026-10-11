@@ -1,16 +1,31 @@
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { BookOpen, CheckCircle2, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { PrepPager } from '@/features/practice/components/prep-pager'
+import { paginateItems } from '@/features/practice/lib/practice-session-utils'
 import { type UnitDetail } from '../api/learning-api'
 
 const PROGRESS_KEY = (unitId: string) => `manyu:novel-progress:${unitId}`
+const TOPIC_PAGE_SIZE = 8
 
 export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [topicPage, setTopicPage] = useState(1)
+
+  useEffect(() => {
+    setTopicPage(1)
+  }, [unit.id, unit.contentMode])
+
+  const topicPageItems = useMemo(
+    () => paginateItems(unit.trainingTopics, topicPage, TOPIC_PAGE_SIZE),
+    [topicPage, unit.trainingTopics],
+  )
+
   if (unit.contentMode === 'novel') {
     return <NovelEntryCard unit={unit} />
   }
@@ -30,7 +45,9 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
         <Badge variant="outline" className="shrink-0 rounded-full text-[11px]">{t('learning.topicCount', { count: unit.trainingTopics.length })}</Badge>
       </div>
       <div className="space-y-2">
-        {unit.trainingTopics.map((topic, index) => (
+        {topicPageItems.items.map((topic, index) => {
+          const absoluteIndex = topicPageItems.startIndex + index
+          return (
           <button
             key={topic.id}
             type="button"
@@ -39,16 +56,27 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
           >
             <Card className="border-0 bg-primary/[0.045] shadow-none transition-transform active:scale-[0.99]">
               <CardContent className="flex items-center gap-3 p-4">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-sm font-semibold shadow-sm">{index + 1}</span>
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-sm font-semibold shadow-sm">{absoluteIndex + 1}</span>
                 <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{topic.title}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{topic.promptZh || topic.promptEn}</span></span>
                 {topic.latestSubmission?.status === 'reviewed' && <CheckCircle2 className="size-4 text-emerald-600" />}
                 <ChevronRight className="size-4 text-muted-foreground" />
               </CardContent>
             </Card>
           </button>
-        ))}
+          )
+        })}
         {unit.trainingTopics.length === 0 && <div className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">{t('learning.noContentTopics')}</div>}
       </div>
+      {unit.trainingTopics.length > 0 && (
+        <div className="mt-2">
+          <PrepPager
+            currentPage={topicPageItems.currentPage}
+            totalPages={topicPageItems.totalPages}
+            totalItems={unit.trainingTopics.length}
+            onPageChange={setTopicPage}
+          />
+        </div>
+      )}
     </section>
   )
 }

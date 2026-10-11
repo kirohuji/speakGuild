@@ -132,6 +132,8 @@ export function AssessmentAnswerInput({
   isAdmin = false,
   recordedAudioUrl: controlledRecordedAudioUrl,
   onRecordedAudioUrlChange,
+  /** 只渲染语音条；对话写作等场景用原生 textarea 承接键盘。 */
+  hideTextarea = false,
 }: {
   value: string
   onChange: (value: string) => void
@@ -140,6 +142,7 @@ export function AssessmentAnswerInput({
   /** When supplied, playback is owned by the caller (for example, per dialogue turn). */
   recordedAudioUrl?: string | null
   onRecordedAudioUrlChange?: (url: string | null) => void
+  hideTextarea?: boolean
 }) {
   const { t } = useTranslation()
   const nativeSpeechRecognitionEnabled = usePreferencesStore((s) => s.nativeSpeechRecognitionEnabled)
@@ -367,7 +370,7 @@ export function AssessmentAnswerInput({
   }, [disabled, voiceStatus, processAudioBlob, setLocalPlaybackUrl])
 
   return (
-    <div className="w-full min-w-0 rounded-lg bg-muted/30 p-2">
+    <div className={cn('w-full min-w-0', !hideTextarea && 'rounded-lg bg-muted/30 p-2')}>
       <audio ref={audioRef} src={playbackUrl ?? undefined} preload="auto" className="hidden" />
       <input
         ref={fileInputRef}
@@ -376,20 +379,22 @@ export function AssessmentAnswerInput({
         className="hidden"
         onChange={handleFileUpload}
       />
-      <Textarea
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={t('profile.placement.voicePlaceholder')}
-        disabled={disabled || isProcessing}
-        className="min-h-[112px] resize-none rounded-lg border-0 bg-background/70 p-3 text-base shadow-none"
-      />
-      <div className="mt-2 flex items-start justify-between gap-2">
+      {!hideTextarea && (
+        <Textarea
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={t('profile.placement.voicePlaceholder')}
+          disabled={disabled || isProcessing}
+          className="min-h-[112px] resize-none rounded-lg border-0 bg-background/70 p-3 text-base shadow-none"
+        />
+      )}
+      <div className={cn('flex items-start justify-between gap-2', !hideTextarea && 'mt-2')}>
         <p className={cn('min-w-0 flex-1 break-words text-xs leading-4 text-muted-foreground', voiceError && 'text-destructive')}>
           {voiceError || (isRecording
             ? t('profile.placement.voiceRecording', { time: formatAssessmentElapsed(elapsed) })
             : isProcessing
               ? t('profile.placement.voiceProcessing')
-              : value.trim().length > 0 && value.trim().length < 5
+              : !hideTextarea && value.trim().length > 0 && value.trim().length < 5
                 ? t('profile.placement.charHint', { current: value.trim().length, min: 5, defaultValue: '至少输入 {{min}} 个字符（当前 {{current}}）' })
               : t('profile.placement.voiceIdle'))}
         </p>

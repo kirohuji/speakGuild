@@ -4,17 +4,46 @@
 // 解决 Capacitor 端键盘弹出时的卡顿和布局问题：
 //   - 将键盘高度写入 CSS 变量 --keyboard-height
 //   - 在 body 上设置 data-keyboard-open 属性（Pixi 背景据此暂停）
-//   - 键盘弹出/收起时暂停/恢复动态背景
+//   - 通过 React Context 暴露 open / height / availableHeight，供全屏页主动缩壳
 //   - 仅原生环境生效，Web 端为 no-op
 //
 // 用法：在 App.tsx 的 Provider 链中加入 <KeyboardProvider>
+//       页面内用 useKeyboard() 订阅状态
 // ──────────────────────────────────────────────
 
-import { useEffect, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { isNative } from '@/lib/native/platform';
 
+export type KeyboardState = {
+  /** 软键盘是否打开（仅原生） */
+  open: boolean
+  /** 键盘高度 px */
+  height: number
+  /** 键盘上方可用高度 px（稳定视口 - 键盘） */
+  availableHeight: number
+}
+
+const DEFAULT_KEYBOARD_STATE: KeyboardState = {
+  open: false,
+  height: 0,
+  availableHeight: typeof window === 'undefined' ? 800 : window.innerHeight,
+}
+
+const KeyboardContext = createContext<KeyboardState>(DEFAULT_KEYBOARD_STATE)
+
+export function useKeyboard() {
+  return useContext(KeyboardContext);
+}
+
 /** 在原生端初始化键盘监听，Web 端无操作 */
-function useNativeKeyboard() {
+function useNativeKeyboardController(setState: (next: KeyboardState) => void) {
   useEffect(() => {
     if (!isNative()) return;
 
@@ -37,6 +66,9 @@ function useNativeKeyboard() {
     };
 
     const findScrollParent = (element: HTMLElement) => {
+      const writingRegion = element.closest<HTMLElement>('[data-writing-scroll-region]');
+      if (writingRegion) return writingRegion;
+
       const overlay = element.closest<HTMLElement>('[data-keyboard-overlay]');
       let current: HTMLElement | null = element.parentElement;
       while (current) {
@@ -54,14 +86,17 @@ function useNativeKeyboard() {
       if (!(activeElement instanceof HTMLElement)) return;
       if (!activeElement.matches('input, textarea, select, [contenteditable="true"]')) return;
       if (!activeElement.closest('[data-keyboard-overlay]')) return;
-      // 写作长文由页面按光标行滚动；这里按「整块输入框」滚会把光标顶飞。
+      // 普通写作 / 互译长文由页面按光标行滚；对话写作不带此标记，走整框滚。
       if (activeElement.closest('[data-writing-caret-scroll]')) return;
 
       const scrollParent = findScrollParent(activeElement);
       if (!scrollParent) return;
 
+      const scrollTarget =
+        activeElement.closest<HTMLElement>('[data-writing-block-scroll]') ?? activeElement;
+
       const parentRect = scrollParent.getBoundingClientRect();
-      const inputRect = activeElement.getBoundingClientRect();
+      const inputRect = scrollTarget.getBoundingClientRect();
       const padding = 16;
       const safeTop = parentRect.top + padding;
       const safeBottom = Math.min(parentRect.bottom, stableViewportHeight - currentKeyboardHeight) - padding;
@@ -81,7 +116,7 @@ function useNativeKeyboard() {
 
     const scheduleFocusedInputScroll = () => {
       window.clearTimeout(focusScrollTimer);
-      focusScrollTimer = window.setTimeout(scrollFocusedInputIntoView, 300); // 键盘动画完成后再滚动，避免冲突
+      focusScrollTimer = window.setTimeout(scrollFocusedInputIntoView, 300);
     };
 
     const handleFocusIn = () => {
@@ -90,18 +125,20 @@ function useNativeKeyboard() {
     };
 
     const setKeyboardOpen = (height: number) => {
-      currentKeyboardHeight = height;
-      const currentViewportHeight = window.innerHeight;
-      const expectedAvailableHeight = stableViewportHeight - height;
-      const availableHeight = Math.max(
-        240,
-        Math.min(currentViewportHeight, expectedAvailableHeight > 0 ? expectedAvailableHeight : currentViewportHeight),
-      );
-      document.documentElement.style.setProperty('--keyboard-height', `${height}px`);
-      document.documentElement.style.setProperty('--keyboard-offset', `${Math.round(height / -2)}px`);
+      const keyboardHeight = Math.max(0, height || 0);
+      currentKeyboardHeight = keyboardHeight;
+      // KeyboardResize.None：innerHeight 不随键盘变，可用高度 = 稳定视口 - 键盘。
+      if (stableViewportHeight < window.innerHeight) {
+        stableViewportHeight = window.innerHeight;
+      }
+      const availableHeight = Math.max(240, stableViewportHeight - keyboardHeight);
+
+      document.documentElement.style.setProperty('--keyboard-height', `${keyboardHeight}px`);
+      document.documentElement.style.setProperty('--keyboard-offset', `${Math.round(keyboardHeight / -2)}px`);
       document.documentElement.style.setProperty('--keyboard-available-height', `${Math.round(availableHeight)}px`);
       document.body.dataset.keyboardOpen = 'true';
       document.body.dataset.keyboardContext = getKeyboardContext();
+      setState({ open: true, height: keyboardHeight, availableHeight });
       scheduleFocusedInputScroll();
     };
 
@@ -113,6 +150,11 @@ function useNativeKeyboard() {
       document.documentElement.style.setProperty('--keyboard-available-height', '100dvh');
       delete document.body.dataset.keyboardOpen;
       delete document.body.dataset.keyboardContext;
+      setState({
+        open: false,
+        height: 0,
+        availableHeight: stableViewportHeight,
+      });
     };
 
     const overlayObserver = new MutationObserver(syncKeyboardContext);
@@ -150,10 +192,12 @@ function useNativeKeyboard() {
       document.removeEventListener('focusin', handleFocusIn);
       setKeyboardClosed();
     };
-  }, []);
+  }, [setState]);
 }
 
 export function KeyboardProvider({ children }: { children: ReactNode }) {
-  useNativeKeyboard();
-  return <>{children}</>;
+  const [state, setState] = useState<KeyboardState>(DEFAULT_KEYBOARD_STATE);
+  useNativeKeyboardController(setState);
+  const value = useMemo(() => state, [state]);
+  return <KeyboardContext.Provider value={value}>{children}</KeyboardContext.Provider>;
 }
