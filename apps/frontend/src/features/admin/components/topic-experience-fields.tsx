@@ -122,7 +122,7 @@ function WritingFields({
     const config = dialogueAudio[speaker] ?? {}
     const result = await synthesizeEnttsAsset({
       text,
-      type: config.enttsAccent === 'uk' ? 'uk' : 'us',
+      accent: config.enttsAccent === 'uk' ? 'uk' : 'us',
       gender: config.enttsGender === 'male' ? 'male' : 'female',
       bizId: `${sceneId}:dialogue:${lineIndex}:${speaker}`,
     })

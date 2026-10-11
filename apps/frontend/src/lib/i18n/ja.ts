@@ -1586,6 +1586,8 @@ const ja = {
       wordTarget: '目標 {{min}}–{{max}}',
       save: '保存',
       submitFeedback: 'フィードバックを送信',
+      previousTurn: '前のターン',
+      nextTurn: '次のターン',
       submitShort: '送信',
       conversationWriting: '対話作文',
       sourceZh: '中国語原文',

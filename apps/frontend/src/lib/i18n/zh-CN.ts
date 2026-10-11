@@ -1589,6 +1589,8 @@ const zhCN = {
       wordTarget: '目标 {{min}}–{{max}}',
       save: '保存',
       submitFeedback: '提交反馈',
+      previousTurn: '上一轮',
+      nextTurn: '下一轮',
       submitShort: '提交',
       conversationWriting: '对话写作',
       sourceZh: '中文原文',

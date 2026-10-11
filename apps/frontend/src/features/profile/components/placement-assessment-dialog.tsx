@@ -130,11 +130,16 @@ export function AssessmentAnswerInput({
   onChange,
   disabled,
   isAdmin = false,
+  recordedAudioUrl: controlledRecordedAudioUrl,
+  onRecordedAudioUrlChange,
 }: {
   value: string
   onChange: (value: string) => void
   disabled?: boolean
   isAdmin?: boolean
+  /** When supplied, playback is owned by the caller (for example, per dialogue turn). */
+  recordedAudioUrl?: string | null
+  onRecordedAudioUrlChange?: (url: string | null) => void
 }) {
   const { t } = useTranslation()
   const nativeSpeechRecognitionEnabled = usePreferencesStore((s) => s.nativeSpeechRecognitionEnabled)
@@ -142,7 +147,7 @@ export function AssessmentAnswerInput({
   const [voiceStatus, setVoiceStatus] = useState<'idle' | 'recording' | 'processing'>('idle')
   const [voiceError, setVoiceError] = useState('')
   const [elapsed, setElapsed] = useState(0)
-  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null)
+  const [localRecordedAudioUrl, setLocalRecordedAudioUrl] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const nativeVoiceSessionRef = useRef<NativeVoiceInputSession | null>(null)
@@ -152,6 +157,7 @@ export function AssessmentAnswerInput({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const localAudioUrlRef = useRef<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const playbackUrl = controlledRecordedAudioUrl ?? localRecordedAudioUrl
 
   const cleanupRecording = useCallback(() => {
     nativeVoiceSessionRef.current?.cancel().catch(() => undefined)
@@ -198,20 +204,24 @@ export function AssessmentAnswerInput({
       audio.removeEventListener('pause', onPause)
       audio.removeEventListener('ended', onEnded)
     }
-  }, [recordedAudioUrl])
+  }, [playbackUrl])
 
   const setLocalPlaybackUrl = useCallback((url: string | null) => {
+    if (onRecordedAudioUrlChange) {
+      onRecordedAudioUrlChange(url)
+      return
+    }
     if (localAudioUrlRef.current?.startsWith('blob:')) URL.revokeObjectURL(localAudioUrlRef.current)
     localAudioUrlRef.current = url
-    setRecordedAudioUrl(url)
-  }, [])
+    setLocalRecordedAudioUrl(url)
+  }, [onRecordedAudioUrlChange])
 
   const processAudioBlob = useCallback(async (blob: Blob, filename: string, fallbackAudioUrl: string | null) => {
     setVoiceStatus('processing')
     try {
       const result = await transcribeVoiceInput(blob, filename)
       const text = normalizeAssessmentTranscript(result.text ?? '')
-      setRecordedAudioUrl(result.audioUrl ?? fallbackAudioUrl)
+      setLocalPlaybackUrl(result.audioUrl ?? fallbackAudioUrl)
       if (!text) {
         setVoiceError(t('profile.placement.voiceNoContent'))
         setVoiceStatus('idle')
@@ -224,14 +234,14 @@ export function AssessmentAnswerInput({
       setVoiceError(t('profile.placement.voiceFailed'))
       setVoiceStatus('idle')
     }
-  }, [onChange, t])
+  }, [onChange, setLocalPlaybackUrl, t])
 
   const startRecording = useCallback(async () => {
     if (disabled || voiceStatus !== 'idle') return
     setVoiceError('')
     setElapsed(0)
     cleanupRecording()
-    setRecordedAudioUrl(null)
+    setLocalPlaybackUrl(null)
     setIsPlaying(false)
 
     try {
@@ -316,7 +326,7 @@ export function AssessmentAnswerInput({
 
   const isRecording = voiceStatus === 'recording'
   const isProcessing = voiceStatus === 'processing'
-  const hasRecording = !isRecording && !isProcessing && recordedAudioUrl !== null
+  const hasRecording = !isRecording && !isProcessing && playbackUrl !== null
 
   const handlePlayback = () => {
     const audio = audioRef.current
@@ -335,7 +345,7 @@ export function AssessmentAnswerInput({
     event.target.value = ''
     setVoiceError('')
     setElapsed(0)
-    setRecordedAudioUrl(null)
+    setLocalPlaybackUrl(null)
     setIsPlaying(false)
     const playbackUrl = URL.createObjectURL(file)
     setLocalPlaybackUrl(playbackUrl)
@@ -344,7 +354,7 @@ export function AssessmentAnswerInput({
 
   return (
     <div className="w-full min-w-0 rounded-lg bg-muted/30 p-2">
-      <audio ref={audioRef} src={recordedAudioUrl ?? undefined} preload="auto" className="hidden" />
+      <audio ref={audioRef} src={playbackUrl ?? undefined} preload="auto" className="hidden" />
       <input
         ref={fileInputRef}
         type="file"

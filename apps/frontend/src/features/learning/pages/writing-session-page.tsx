@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, Lightbulb, ListMusic, Loader2, MessageCircle, MessageSquareText, RotateCcw, Save, Search, Sparkles, Volume2, X } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, Lightbulb, ListMusic, Loader2, MessageCircle, MessageSquareText, RotateCcw, Save, Search, Sparkles, Volume2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -949,6 +949,8 @@ function DialogueEditor({
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [responses, setResponses] = useState<Record<number, string>>({})
+  const [recordedAudios, setRecordedAudios] = useState<Record<number, string>>({})
+  const recordedAudiosRef = useRef<Record<number, string>>({})
   const [showHint, setShowHint] = useState(true)
   const [saving, setSaving] = useState(false)
   const [view, setView] = useState<'editor' | 'analysis'>(review ? 'analysis' : 'editor')
@@ -1001,6 +1003,28 @@ function DialogueEditor({
     setCurrentIndex(index)
     setShowHint(false)
   }
+
+  const setTurnRecording = useCallback((index: number, url: string | null) => {
+    setRecordedAudios((current) => {
+      const previous = current[index]
+      if (previous?.startsWith('blob:') && previous !== url) URL.revokeObjectURL(previous)
+      if (!url) {
+        const { [index]: _, ...remaining } = current
+        return remaining
+      }
+      return { ...current, [index]: url }
+    })
+  }, [])
+
+  useEffect(() => {
+    recordedAudiosRef.current = recordedAudios
+  }, [recordedAudios])
+
+  useEffect(() => () => {
+    Object.values(recordedAudiosRef.current).forEach((url) => {
+      if (url.startsWith('blob:')) URL.revokeObjectURL(url)
+    })
+  }, [])
 
   return (
     <div
@@ -1110,6 +1134,8 @@ function DialogueEditor({
                         focusInput()
                       }}
                       disabled={session.readOnly}
+                      recordedAudioUrl={recordedAudios[currentIndex] ?? null}
+                      onRecordedAudioUrlChange={(url) => setTurnRecording(currentIndex, url)}
                     />
                     {currentResponse.trim() && (
                       <p className="mt-1.5 text-right text-xs tabular-nums text-muted-foreground">
@@ -1164,9 +1190,21 @@ function DialogueEditor({
               <RotateCcw className="size-4" />{t('learning.retryPractice')}
             </Button>
           ) : (
-            <Button size="lg" onClick={() => save(true)} disabled={saving || !allAnswered || !session.sessionId} className="w-full gap-1.5 rounded-full">
-              {saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{t('learning.submitFeedback')}
-            </Button>
+            <>
+              {turns.length > 1 && (
+                <Button type="button" size="lg" variant="outline" onClick={() => goToTurn(currentIndex - 1)} disabled={saving || currentIndex === 0} className="shrink-0 gap-1.5 rounded-full px-4">
+                  <ChevronLeft className="size-4" />{t('learning.previousTurn', { defaultValue: '上一轮' })}
+                </Button>
+              )}
+              <Button size="lg" onClick={() => save(true)} disabled={saving || !allAnswered || !session.sessionId} className="min-w-0 flex-1 gap-1.5 rounded-full">
+                {saving ? <Loader2 className="size-4 animate-spin" /> : <BadgeCheck className="size-4" />}{t('learning.submitFeedback')}
+              </Button>
+              {turns.length > 1 && (
+                <Button type="button" size="lg" variant="outline" onClick={() => goToTurn(currentIndex + 1)} disabled={saving || currentIndex === turns.length - 1} className="shrink-0 gap-1.5 rounded-full px-4">
+                  {t('learning.nextTurn', { defaultValue: '下一轮' })}<ChevronRight className="size-4" />
+                </Button>
+              )}
+            </>
           )}
         </div>
       </footer>

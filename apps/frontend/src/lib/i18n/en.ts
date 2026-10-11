@@ -1587,6 +1587,8 @@ const en = {
       wordTarget: 'Target {{min}}–{{max}}',
       save: 'Save',
       submitFeedback: 'Submit',
+      previousTurn: 'Previous turn',
+      nextTurn: 'Next turn',
       submitShort: 'Submit',
       conversationWriting: 'Dialogue Writing',
       sourceZh: 'Chinese source',
