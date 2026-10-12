@@ -303,14 +303,14 @@ function TranslationMobilePreview({ value, context }: Pick<Props, 'value' | 'con
 function DialogueMobilePreview({ value, context, turns }: Pick<Props, 'value' | 'context' | 'turns'>) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [responses, setResponses] = useState<Record<number, string>>({})
-  const [showHint, setShowHint] = useState(false)
+  const [showHint, setShowHint] = useState(true)
   const [submitted, setSubmitted] = useState(false)
   const currentTurn = turns[currentIndex]
   const answeredCount = turns.filter((_, index) => responses[index]?.trim()).length
   const allAnswered = turns.length > 0 && answeredCount === turns.length
 
-  const selectTurn = (index: number) => { setCurrentIndex(index); setShowHint(false); setSubmitted(false) }
-  const resetPreview = () => { setCurrentIndex(0); setResponses({}); setShowHint(false); setSubmitted(false) }
+  const selectTurn = (index: number) => { setCurrentIndex(index); setShowHint(true); setSubmitted(false) }
+  const resetPreview = () => { setCurrentIndex(0); setResponses({}); setShowHint(true); setSubmitted(false) }
 
   return (
     <div className="flex h-full flex-col pt-10">

@@ -59,6 +59,7 @@ export function PracticeAnswerInput({
   const streamRef = useRef<MediaStream | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioUrlRef = useRef<string | null>(null)
 
   const cleanupRecording = useCallback(() => {
     nativeVoiceSessionRef.current?.cancel().catch(() => undefined)
@@ -75,8 +76,16 @@ export function PracticeAnswerInput({
   useEffect(() => () => {
     cleanupRecording()
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
-    if (audioUrl) URL.revokeObjectURL(audioUrl)
+    if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current)
   }, [cleanupRecording])
+
+  const setRecordedAudioUrl = useCallback((nextUrl: string | null) => {
+    const previousUrl = audioUrlRef.current
+    if (previousUrl && previousUrl !== nextUrl) URL.revokeObjectURL(previousUrl)
+    audioUrlRef.current = nextUrl
+    setAudioUrl(nextUrl)
+    onAudioChange?.(nextUrl)
+  }, [onAudioChange])
 
   useEffect(() => {
     if (voiceStatus !== 'recording') return
@@ -99,10 +108,8 @@ export function PracticeAnswerInput({
       const text = normalizeInputText(result.text ?? '')
 
       // Save audio URL for playback
-      if (audioUrl) URL.revokeObjectURL(audioUrl)
       const url = URL.createObjectURL(blob)
-      setAudioUrl(url)
-      onAudioChange?.(url)
+      setRecordedAudioUrl(url)
 
       if (!text) {
         setVoiceError('未识别到语音内容，请重试')
@@ -116,7 +123,7 @@ export function PracticeAnswerInput({
       setVoiceError('语音识别失败，请重试')
       setVoiceStatus('idle')
     }
-  }, [onChange, audioUrl, onAudioChange])
+  }, [lang, onChange, setRecordedAudioUrl])
 
   const startRecording = useCallback(async () => {
     if (disabled || voiceStatus !== 'idle') return
@@ -124,7 +131,7 @@ export function PracticeAnswerInput({
     setElapsed(0)
     cleanupRecording()
     // Revoke old audio when starting new recording
-    if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); onAudioChange?.(null) }
+    if (audioUrlRef.current) setRecordedAudioUrl(null)
     if (audioRef.current) { audioRef.current.pause(); setIsPlaying(false) }
 
     try {
@@ -172,7 +179,7 @@ export function PracticeAnswerInput({
       setVoiceError('无法访问麦克风，请检查权限设置')
       setVoiceStatus('idle')
     }
-  }, [cleanupRecording, disabled, lang, localSttEnabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, voiceStatus])
+  }, [cleanupRecording, disabled, lang, localSttEnabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, setRecordedAudioUrl, voiceStatus])
 
   const stopRecording = useCallback(async () => {
     const nativeSession = nativeVoiceSessionRef.current

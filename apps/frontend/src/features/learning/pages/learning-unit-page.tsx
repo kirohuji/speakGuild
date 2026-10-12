@@ -889,14 +889,14 @@ function PracticeTopicCard({
 }) {
   return (
     <Card
-      className="cursor-pointer border-0 bg-orange-500/[0.06] shadow-none transition-colors hover:bg-orange-500/[0.1]"
+      className="cursor-pointer border-0 bg-accent/[0.06] shadow-none transition-colors hover:bg-accent/[0.1]"
       onClick={onStart}
       {...rest}
     >
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-orange-500/20">
-            <span className="text-sm font-bold text-orange-500">{index + 1}</span>
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent/10">
+            <span className="text-sm font-bold text-accent">{index + 1}</span>
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">

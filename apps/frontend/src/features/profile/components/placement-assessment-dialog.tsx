@@ -130,11 +130,19 @@ export function AssessmentAnswerInput({
   onChange,
   disabled,
   isAdmin = false,
+  recordedAudioUrl: controlledRecordedAudioUrl,
+  onRecordedAudioUrlChange,
+  /** 只渲染语音条；对话写作等场景用原生 textarea 承接键盘。 */
+  hideTextarea = false,
 }: {
   value: string
   onChange: (value: string) => void
   disabled?: boolean
   isAdmin?: boolean
+  /** When supplied, playback is owned by the caller (for example, per dialogue turn). */
+  recordedAudioUrl?: string | null
+  onRecordedAudioUrlChange?: (url: string | null) => void
+  hideTextarea?: boolean
 }) {
   const { t } = useTranslation()
   const nativeSpeechRecognitionEnabled = usePreferencesStore((s) => s.nativeSpeechRecognitionEnabled)
@@ -142,7 +150,7 @@ export function AssessmentAnswerInput({
   const [voiceStatus, setVoiceStatus] = useState<'idle' | 'recording' | 'processing'>('idle')
   const [voiceError, setVoiceError] = useState('')
   const [elapsed, setElapsed] = useState(0)
-  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null)
+  const [localRecordedAudioUrl, setLocalRecordedAudioUrl] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const nativeVoiceSessionRef = useRef<NativeVoiceInputSession | null>(null)
@@ -152,6 +160,7 @@ export function AssessmentAnswerInput({
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const localAudioUrlRef = useRef<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const playbackUrl = controlledRecordedAudioUrl ?? localRecordedAudioUrl
 
   const cleanupRecording = useCallback(() => {
     nativeVoiceSessionRef.current?.cancel().catch(() => undefined)
@@ -198,20 +207,38 @@ export function AssessmentAnswerInput({
       audio.removeEventListener('pause', onPause)
       audio.removeEventListener('ended', onEnded)
     }
-  }, [recordedAudioUrl])
+  }, [playbackUrl])
+
+  // iOS/WebView may keep an audio element alive while React swaps its source.
+  // Stop it explicitly on a turn change as well as on component unmount.
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    audio.pause()
+    audio.currentTime = 0
+    setIsPlaying(false)
+    return () => {
+      audio.pause()
+      audio.currentTime = 0
+    }
+  }, [playbackUrl])
 
   const setLocalPlaybackUrl = useCallback((url: string | null) => {
+    if (onRecordedAudioUrlChange) {
+      onRecordedAudioUrlChange(url)
+      return
+    }
     if (localAudioUrlRef.current?.startsWith('blob:')) URL.revokeObjectURL(localAudioUrlRef.current)
     localAudioUrlRef.current = url
-    setRecordedAudioUrl(url)
-  }, [])
+    setLocalRecordedAudioUrl(url)
+  }, [onRecordedAudioUrlChange])
 
   const processAudioBlob = useCallback(async (blob: Blob, filename: string, fallbackAudioUrl: string | null) => {
     setVoiceStatus('processing')
     try {
       const result = await transcribeVoiceInput(blob, filename)
       const text = normalizeAssessmentTranscript(result.text ?? '')
-      setRecordedAudioUrl(result.audioUrl ?? fallbackAudioUrl)
+      setLocalPlaybackUrl(result.audioUrl ?? fallbackAudioUrl)
       if (!text) {
         setVoiceError(t('profile.placement.voiceNoContent'))
         setVoiceStatus('idle')
@@ -224,14 +251,14 @@ export function AssessmentAnswerInput({
       setVoiceError(t('profile.placement.voiceFailed'))
       setVoiceStatus('idle')
     }
-  }, [onChange, t])
+  }, [onChange, setLocalPlaybackUrl, t])
 
   const startRecording = useCallback(async () => {
     if (disabled || voiceStatus !== 'idle') return
     setVoiceError('')
     setElapsed(0)
     cleanupRecording()
-    setRecordedAudioUrl(null)
+    setLocalPlaybackUrl(null)
     setIsPlaying(false)
 
     try {
@@ -316,7 +343,7 @@ export function AssessmentAnswerInput({
 
   const isRecording = voiceStatus === 'recording'
   const isProcessing = voiceStatus === 'processing'
-  const hasRecording = !isRecording && !isProcessing && recordedAudioUrl !== null
+  const hasRecording = !isRecording && !isProcessing && playbackUrl !== null
 
   const handlePlayback = () => {
     const audio = audioRef.current
@@ -335,7 +362,7 @@ export function AssessmentAnswerInput({
     event.target.value = ''
     setVoiceError('')
     setElapsed(0)
-    setRecordedAudioUrl(null)
+    setLocalPlaybackUrl(null)
     setIsPlaying(false)
     const playbackUrl = URL.createObjectURL(file)
     setLocalPlaybackUrl(playbackUrl)
@@ -343,8 +370,8 @@ export function AssessmentAnswerInput({
   }, [disabled, voiceStatus, processAudioBlob, setLocalPlaybackUrl])
 
   return (
-    <div className="w-full min-w-0 rounded-lg bg-muted/30 p-2">
-      <audio ref={audioRef} src={recordedAudioUrl ?? undefined} preload="auto" className="hidden" />
+    <div className={cn('w-full min-w-0', !hideTextarea && 'rounded-lg bg-muted/30 p-2')}>
+      <audio ref={audioRef} src={playbackUrl ?? undefined} preload="auto" className="hidden" />
       <input
         ref={fileInputRef}
         type="file"
@@ -352,20 +379,22 @@ export function AssessmentAnswerInput({
         className="hidden"
         onChange={handleFileUpload}
       />
-      <Textarea
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={t('profile.placement.voicePlaceholder')}
-        disabled={disabled || isProcessing}
-        className="min-h-[112px] resize-none rounded-lg border-0 bg-background/70 p-3 text-base shadow-none"
-      />
-      <div className="mt-2 flex items-start justify-between gap-2">
+      {!hideTextarea && (
+        <Textarea
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={t('profile.placement.voicePlaceholder')}
+          disabled={disabled || isProcessing}
+          className="min-h-[112px] resize-none rounded-lg border-0 bg-background/70 p-3 text-base shadow-none"
+        />
+      )}
+      <div className={cn('flex items-start justify-between gap-2', !hideTextarea && 'mt-2')}>
         <p className={cn('min-w-0 flex-1 break-words text-xs leading-4 text-muted-foreground', voiceError && 'text-destructive')}>
           {voiceError || (isRecording
             ? t('profile.placement.voiceRecording', { time: formatAssessmentElapsed(elapsed) })
             : isProcessing
               ? t('profile.placement.voiceProcessing')
-              : value.trim().length > 0 && value.trim().length < 5
+              : !hideTextarea && value.trim().length > 0 && value.trim().length < 5
                 ? t('profile.placement.charHint', { current: value.trim().length, min: 5, defaultValue: '至少输入 {{min}} 个字符（当前 {{current}}）' })
               : t('profile.placement.voiceIdle'))}
         </p>
@@ -438,6 +467,8 @@ export function LearningAssessmentDialog({
   const [step, setStep] = useState(0)
   const [selectedGoals, setSelectedGoals] = useState<string[]>(() => normalizeLearningGoals(profile?.learningGoals))
   const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [recordedAudios, setRecordedAudios] = useState<Record<string, string>>({})
+  const recordedAudiosRef = useRef<Record<string, string>>({})
   const [result, setResult] = useState<PlacementAssessmentResult | null>(null)
   const [saving, setSaving] = useState(false)
   const [pendingClose, setPendingClose] = useState(false)
@@ -461,15 +492,47 @@ export function LearningAssessmentDialog({
       ? currentAnswer.trim().length >= 5
       : true
 
+  const setPromptRecording = useCallback((promptId: string, url: string | null) => {
+    setRecordedAudios((current) => {
+      const previous = current[promptId]
+      if (previous?.startsWith('blob:') && previous !== url) URL.revokeObjectURL(previous)
+      if (!url) {
+        const { [promptId]: _, ...remaining } = current
+        return remaining
+      }
+      return { ...current, [promptId]: url }
+    })
+  }, [])
+
+  const clearPromptRecordings = useCallback(() => {
+    setRecordedAudios((current) => {
+      Object.values(current).forEach((url) => {
+        if (url.startsWith('blob:')) URL.revokeObjectURL(url)
+      })
+      return {}
+    })
+  }, [])
+
+  useEffect(() => {
+    recordedAudiosRef.current = recordedAudios
+  }, [recordedAudios])
+
+  useEffect(() => () => {
+    Object.values(recordedAudiosRef.current).forEach((url) => {
+      if (url.startsWith('blob:')) URL.revokeObjectURL(url)
+    })
+  }, [])
+
   useEffect(() => {
     if (open && !wasOpenRef.current) {
       setStep(0)
       setSelectedGoals(normalizeLearningGoals(profile?.learningGoals))
       setAnswers({})
+      clearPromptRecordings()
       setResult(null)
     }
     wasOpenRef.current = open
-  }, [open])
+  }, [clearPromptRecordings, open])
 
   const toggleGoal = (goal: string) => {
     setSelectedGoals((current) => {
@@ -715,6 +778,8 @@ export function LearningAssessmentDialog({
                 onChange={(nextValue) => setAnswers((current) => ({ ...current, [currentPrompt.id]: nextValue }))}
                 disabled={saving}
                 isAdmin={session?.user?.role === 'admin'}
+                recordedAudioUrl={recordedAudios[currentPrompt.id] ?? null}
+                onRecordedAudioUrlChange={(url) => setPromptRecording(currentPrompt.id, url)}
               />
             </div>
           )}

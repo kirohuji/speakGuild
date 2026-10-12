@@ -112,6 +112,7 @@ export function ThemePresetProvider({ children }: { children: ReactNode }) {
       <audio
         ref={bgmAudioRef}
         src={store.activePreset?.bgmUrl ?? undefined}
+        data-persistent-media
         loop
         preload="none"
       />

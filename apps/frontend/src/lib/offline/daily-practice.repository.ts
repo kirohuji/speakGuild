@@ -871,8 +871,7 @@ export const dailyPracticeRepository = {
       .filter((item) => item.id !== ACTIVE_DAILY_PRACTICE_PACK_ID
         && item.date === date
         && item.mode === mode
-        && Array.isArray(item.scheduledItemIds)
-        && item.scheduledItemIds.length > 0)
+        && Array.isArray(item.scheduledItemIds))
       .sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt))[0]
     if (!run) return null
     return {

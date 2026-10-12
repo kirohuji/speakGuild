@@ -479,12 +479,13 @@ export const learningApi = {
   getPackManifest: (unitId: string) =>
     get<PackManifestPreview>(`/learning/units/${unitId}/pack-manifest`, undefined, { dedupe: false }),
 
-  downloadPack: (unitId: string, signal?: AbortSignal) =>
+  downloadPack: (unitId: string, signal?: AbortSignal, onDownloadProgress?: (loaded: number, total?: number) => void) =>
     get<ArrayBuffer>(`/learning/units/${unitId}/download-pack`, undefined, {
       dedupe: false,
       responseType: 'arraybuffer',
       timeout: LEARNING_PACK_DOWNLOAD_TIMEOUT_MS,
       signal,
+      onDownloadProgress: (event) => onDownloadProgress?.(event.loaded, event.total),
     }),
 
   checkPacks: (installed: Array<{ packId: string; version?: number }>) =>

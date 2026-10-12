@@ -334,12 +334,12 @@
     overscroll-behavior: contain;
   }
 
-  /* 全屏写作：键盘打开时壳不平移，各 genre 再按业务缩壳/重分配。 */
+  /* 全屏写作：键盘打开时壳不平移；取消 inset bottom，避免与 height 缩壳互斥。 */
   body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'] {
     left: 0 !important;
+    right: 0 !important;
     top: 0 !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
+    bottom: auto !important;
     transform: none !important;
     overflow: hidden;
   }
@@ -348,14 +348,18 @@
     scroll-padding-bottom: 1rem;
   }
 
-  /* 对话 / 普通写作 / 互译：缩壳到键盘上方可用高度
-     （--keyboard-available-height 由 KeyboardProvider 计算）。 */
-  body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'][data-writing-dialogue],
+  /* 普通写作 / 互译：CSS 缩壳；对话写作由 DialogueEditor + useKeyboard 主动设 height。 */
   body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'][data-writing-compose],
   body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'][data-writing-translation] {
     height: var(--keyboard-available-height, 100dvh) !important;
     max-height: var(--keyboard-available-height, 100dvh) !important;
     transition: height 220ms ease, max-height 220ms ease;
+  }
+
+  /* 对话写作兜底：data-keyboard-active 由组件在键盘打开时写入 */
+  [data-writing-dialogue][data-keyboard-active='true'] {
+    height: var(--keyboard-available-height, 100dvh) !important;
+    max-height: var(--keyboard-available-height, 100dvh) !important;
   }
 
   /* 普通写作：键盘时压缩 header 次要信息，纸面占满剩余高度，不再用
@@ -524,9 +528,11 @@
       transition: height 220ms ease, max-height 220ms ease, transform 220ms ease;
     }
 
-    body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing'] {
+    body[data-keyboard-open='true'][data-keyboard-context='overlay'] [data-keyboard-overlay='writing']:not([data-writing-dialogue]) {
       left: 50% !important;
+      right: auto !important;
       top: 50% !important;
+      bottom: auto !important;
       height: min(92dvh, var(--keyboard-available-height)) !important;
       max-height: var(--keyboard-available-height) !important;
       transform: translate(-50%, -50%) translateY(var(--keyboard-offset)) !important;

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, Lightbulb, ListMusic, Loader2, MessageCircle, MessageSquareText, RotateCcw, Save, Search, Sparkles, Volume2, X } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, Lightbulb, ListMusic, Loader2, MessageCircle, MessageSquareText, RotateCcw, Save, Search, Sparkles, Volume2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -25,6 +25,7 @@ import { useTopicSession, type TopicSessionReviewSnapshot } from '../hooks/use-t
 import { Switch } from '@/components/ui/switch'
 import { AssessmentAnswerInput } from '@/features/profile/components/placement-assessment-dialog'
 import { resolveFileAssetUrl } from '@/lib/file-asset-reference'
+import { useKeyboard } from '@/providers/keyboard-provider'
 
 type WritingPhase = 'prepare' | 'write'
 
@@ -913,7 +914,9 @@ function TranslationEditor({
             <DrawerTitle>{t('learning.hint')}</DrawerTitle>
           </DrawerHeader>
           <div className="min-h-0 overflow-y-auto overscroll-contain px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))]">
-            <p className="text-sm leading-7 text-muted-foreground">{active?.hint}</p>
+            {active?.hint
+              ? <MarkdownRenderer content={active.hint} className="text-sm leading-7 text-muted-foreground prose-headings:mt-4 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-li:my-1" />
+              : <p className="text-sm leading-7 text-muted-foreground">{t('learning.noWritingSupport')}</p>}
             {(active?.referenceExplanation || active?.reference) && <Button type="button" variant="link" className="mt-3 h-auto px-0 text-primary" onClick={() => { setHintOpen(false); setSupportOpen(true) }}>{t('learning.stillStuckSeeSample')}</Button>}
           </div>
         </DrawerContent>
@@ -927,6 +930,23 @@ function TranslationEditor({
 }
 
 // ─── Dialogue Editor ──────────────────────────────────────
+
+function scrollDialogueInputIntoSafeArea(
+  wrap: HTMLElement | null,
+  availableHeight: number,
+) {
+  const region = wrap?.closest<HTMLElement>('[data-writing-scroll-region]')
+  if (!wrap || !region) return
+  const wrapRect = wrap.getBoundingClientRect()
+  const regionRect = region.getBoundingClientRect()
+  const safeBottom = Math.min(regionRect.bottom, availableHeight) - 12
+  const safeTop = regionRect.top + 12
+  if (wrapRect.bottom > safeBottom + 1) {
+    region.scrollBy({ top: wrapRect.bottom - safeBottom, behavior: 'auto' })
+  } else if (wrapRect.top < safeTop - 1) {
+    region.scrollBy({ top: wrapRect.top - safeTop, behavior: 'auto' })
+  }
+}
 
 function DialogueEditor({
   topic,
@@ -944,11 +964,17 @@ function DialogueEditor({
   hideRetry?: boolean
 }) {
   const { t } = useTranslation()
+  const keyboard = useKeyboard()
   const config = topic.contentConfig?.writing ?? {}
   const turns: Array<{ aText: string; hint: string; referenceAnswer?: string; referenceExplanation?: string; aAudioUrl?: string; referenceAudioUrl?: string }> = config.turns ?? []
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [responses, setResponses] = useState<Record<number, string>>({})
+  const [recordedAudios, setRecordedAudios] = useState<Record<number, string>>({})
+  const recordedAudiosRef = useRef<Record<number, string>>({})
+  const promptAudioRef = useRef<HTMLAudioElement | null>(null)
+  const shellRef = useRef<HTMLDivElement>(null)
+  const inputWrapRef = useRef<HTMLDivElement>(null)
   const [showHint, setShowHint] = useState(true)
   const [saving, setSaving] = useState(false)
   const [view, setView] = useState<'editor' | 'analysis'>(review ? 'analysis' : 'editor')
@@ -965,10 +991,37 @@ function DialogueEditor({
     if (session.readOnly) setView('analysis')
   }, [session.readOnly])
 
-  // B 输入框聚焦：短气泡滚盒子；长回复时同样按光标滚。
-  const inputWrapRef = useRef<HTMLDivElement>(null)
+  // 键盘打开：inline !important 缩壳（压过 writing 全局 100dvh !important）。
+  useEffect(() => {
+    const shell = shellRef.current
+    if (!shell) return
+    if (keyboard.open) {
+      shell.style.setProperty('height', `${keyboard.availableHeight}px`, 'important')
+      shell.style.setProperty('max-height', `${keyboard.availableHeight}px`, 'important')
+      shell.style.setProperty('bottom', 'auto', 'important')
+      shell.dataset.keyboardActive = 'true'
+      return
+    }
+    shell.style.removeProperty('height')
+    shell.style.removeProperty('max-height')
+    shell.style.removeProperty('bottom')
+    delete shell.dataset.keyboardActive
+  }, [keyboard.open, keyboard.availableHeight])
+
+  // footer / 语音条卸掉后再滚，保证输入框落在键盘上方安全区。
+  useEffect(() => {
+    if (!keyboard.open) return
+    const timer = window.setTimeout(() => {
+      scrollDialogueInputIntoSafeArea(inputWrapRef.current, keyboard.availableHeight)
+    }, 120)
+    return () => window.clearTimeout(timer)
+  }, [keyboard.open, keyboard.availableHeight, currentIndex])
+
   const focusInput = () => {
-    scheduleWritingInputSafeScroll(inputWrapRef.current)
+    const available = keyboard.open ? keyboard.availableHeight : window.innerHeight
+    window.setTimeout(() => {
+      scrollDialogueInputIntoSafeArea(inputWrapRef.current, available)
+    }, keyboard.open ? 40 : 320)
   }
 
   const currentTurn = turns[currentIndex]
@@ -998,18 +1051,67 @@ function DialogueEditor({
 
   const goToTurn = (index: number) => {
     if (index < 0 || index >= turns.length) return
+    promptAudioRef.current?.pause()
+    promptAudioRef.current = null
     setCurrentIndex(index)
-    setShowHint(false)
+    setShowHint(true)
   }
+
+  const playPromptAudio = (url: string) => {
+    promptAudioRef.current?.pause()
+    const audio = new Audio(resolveFileAssetUrl(url))
+    promptAudioRef.current = audio
+    audio.onended = () => {
+      if (promptAudioRef.current === audio) promptAudioRef.current = null
+    }
+    audio.play().catch(() => {
+      if (promptAudioRef.current === audio) promptAudioRef.current = null
+    })
+  }
+
+  const setTurnRecording = useCallback((index: number, url: string | null) => {
+    setRecordedAudios((current) => {
+      const previous = current[index]
+      if (previous?.startsWith('blob:') && previous !== url) URL.revokeObjectURL(previous)
+      if (!url) {
+        const { [index]: _, ...remaining } = current
+        return remaining
+      }
+      return { ...current, [index]: url }
+    })
+  }, [])
+
+  useEffect(() => {
+    recordedAudiosRef.current = recordedAudios
+  }, [recordedAudios])
+
+  useEffect(() => () => {
+    Object.values(recordedAudiosRef.current).forEach((url) => {
+      if (url.startsWith('blob:')) URL.revokeObjectURL(url)
+    })
+  }, [])
+
+  useEffect(() => () => {
+    promptAudioRef.current?.pause()
+    promptAudioRef.current = null
+  }, [])
+
+  const keyboardComposing = keyboard.open
 
   return (
     <div
+      ref={shellRef}
       data-keyboard-overlay="writing"
       data-writing-dialogue
-      className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pt-safe"
+      className="fixed inset-x-0 top-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pt-safe"
     >
-      {/* Header — unified with WritingEditor style */}
-      <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
+      {/* Header — 与段落/论文一致：键盘时只收紧 padding、隐藏 meta，保留图标/徽章/标题/操作 */}
+      <header
+        className={cn(
+          'shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background transition-[padding] duration-200',
+          keyboardComposing ? 'px-4 py-2 sm:px-6' : 'px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4',
+        )}
+      >
         <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-3">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <MessageCircle className="size-4" />
@@ -1017,10 +1119,10 @@ function DialogueEditor({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{t('learning.conversationWriting')}</Badge>
-              <span className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span>
+              {!keyboardComposing && <span className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span>}
             </div>
             <h1 className="truncate text-base font-bold leading-snug text-foreground">{topic.title}</h1>
-            <p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p>
+            {!keyboardComposing && <p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p>}
           </div>
           <div className="flex items-center gap-1">
             {session.readOnly && <WritingReviewControls view={view} onViewChange={setView} hideRetry={hideRetry} onRetry={() => void session.startNewAttempt().then(() => { setResponses({}); setCurrentIndex(0); setView('editor') })} />}
@@ -1065,7 +1167,7 @@ function DialogueEditor({
                 <div className="max-w-[85%] rounded-2xl rounded-tl-md bg-muted/50 px-4 py-3 text-[15px] leading-relaxed">
                   <div className="flex items-start gap-2">
                     <span className="min-w-0 flex-1">{currentTurn.aText}</span>
-                    {currentTurn.aAudioUrl && <button type="button" onClick={() => void new Audio(resolveFileAssetUrl(currentTurn.aAudioUrl)).play()} className="mt-0.5 shrink-0 text-primary/75 transition-colors hover:text-primary" aria-label="播放 A 的台词"><Volume2 className="size-4" /></button>}
+                    {currentTurn.aAudioUrl && <button type="button" onClick={() => playPromptAudio(currentTurn.aAudioUrl!)} className="mt-0.5 shrink-0 text-primary/75 transition-colors hover:text-primary" aria-label="播放 A 的台词"><Volume2 className="size-4" /></button>}
                   </div>
                 </div>
               </div>
@@ -1092,25 +1194,41 @@ function DialogueEditor({
                         {t('learning.collapse')}
                       </button>
                     </div>
-                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{currentTurn.hint}</p>
+                    <MarkdownRenderer content={currentTurn.hint} className="mt-1.5 text-sm leading-relaxed text-muted-foreground prose-p:my-1.5 prose-ul:my-1.5 prose-li:my-0.5" />
                     {(currentTurn.referenceExplanation || currentTurn.referenceAnswer) && <button type="button" onClick={() => setSupportOpen(true)} className="mt-2 text-xs font-medium text-primary underline-offset-2 hover:underline">{t('learning.stillStuckSeeSample')}</button>}
                   </div>
                 )}
               </div>
 
-              {/* B's response input */}
-              <div ref={inputWrapRef} data-writing-caret-scroll className="ml-9 mt-4">
+              {/* B 输入：原生 textarea；键盘打开时隐藏语音条，把空间留给输入（与加麦克风前一致） */}
+              <div ref={inputWrapRef} data-writing-block-scroll className="ml-9 mt-4">
                 <div className="flex items-start gap-2.5">
                   <span className="mt-1 shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">B</span>
                   <div className="min-w-0 flex-1">
-                    <AssessmentAnswerInput
+                    <textarea
                       value={currentResponse}
-                      onChange={(text) => {
-                        setResponses((current) => ({ ...current, [currentIndex]: text }))
-                        focusInput()
-                      }}
-                      disabled={session.readOnly}
+                      onChange={(event) => setResponses((current) => ({ ...current, [currentIndex]: event.target.value }))}
+                      readOnly={session.readOnly}
+                      onFocus={focusInput}
+                      onClick={focusInput}
+                      className="min-h-[140px] w-full resize-none rounded-2xl rounded-tl-md border-0 bg-muted/40 p-4 text-[16px] leading-7 text-foreground outline-none ring-0 placeholder:text-muted-foreground/45 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                      placeholder={t('learning.dialogueReplyPlaceholder')}
+                      autoCapitalize="sentences"
+                      autoCorrect="on"
+                      spellCheck
                     />
+                    {!session.readOnly && !keyboardComposing && (
+                      <div className="mt-2">
+                        <AssessmentAnswerInput
+                          key={currentIndex}
+                          hideTextarea
+                          value={currentResponse}
+                          onChange={(text) => setResponses((current) => ({ ...current, [currentIndex]: text }))}
+                          recordedAudioUrl={recordedAudios[currentIndex] ?? null}
+                          onRecordedAudioUrlChange={(url) => setTurnRecording(currentIndex, url)}
+                        />
+                      </div>
+                    )}
                     {currentResponse.trim() && (
                       <p className="mt-1.5 text-right text-xs tabular-nums text-muted-foreground">
                         {t('learning.wordCount', { count: currentResponse.trim().split(/\s+/).length })}
@@ -1122,8 +1240,8 @@ function DialogueEditor({
             </div>
           )}
 
-          {/* Turn progress dots */}
-          {turns.length > 1 && (
+          {/* Turn progress dots — 键盘打开时隐藏，避免占输入空间 */}
+          {turns.length > 1 && !keyboardComposing && (
             <div className="mt-4 border-t border-border/50 pt-4">
               <div className="flex items-center justify-center gap-2">
                 {turns.map((_, i) => {
@@ -1155,8 +1273,8 @@ function DialogueEditor({
         </div>
       </div>}
 
-      {/* Footer — submit / retry；历史回看隐藏重试 */}
-      {!(session.readOnly && hideRetry) && (
+      {/* Footer — 键盘打开时直接不渲染，避免与 CSS 抢优先级 */}
+      {!(session.readOnly && hideRetry) && !keyboardComposing && (
       <footer className="shrink-0 border-t border-border/60 bg-background/95 px-4 py-3 backdrop-blur-xl pb-safe" data-writing-footer>
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           {session.readOnly ? (
@@ -1164,9 +1282,21 @@ function DialogueEditor({
               <RotateCcw className="size-4" />{t('learning.retryPractice')}
             </Button>
           ) : (
-            <Button size="lg" onClick={() => save(true)} disabled={saving || !allAnswered || !session.sessionId} className="w-full gap-1.5 rounded-full">
-              {saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{t('learning.submitFeedback')}
-            </Button>
+            <>
+              {turns.length > 1 && (
+                <Button type="button" size="lg" variant="outline" onClick={() => goToTurn(currentIndex - 1)} disabled={saving || currentIndex === 0} className="shrink-0 gap-1.5 rounded-full px-4">
+                  <ChevronLeft className="size-4" />{t('learning.previousTurn', { defaultValue: '上一轮' })}
+                </Button>
+              )}
+              <Button size="lg" onClick={() => save(true)} disabled={saving || !allAnswered || !session.sessionId} className="min-w-0 flex-1 gap-1.5 rounded-full">
+                {saving ? <Loader2 className="size-4 animate-spin" /> : <BadgeCheck className="size-4" />}{t('learning.submitFeedback')}
+              </Button>
+              {turns.length > 1 && (
+                <Button type="button" size="lg" variant="outline" onClick={() => goToTurn(currentIndex + 1)} disabled={saving || currentIndex === turns.length - 1} className="shrink-0 gap-1.5 rounded-full px-4">
+                  {t('learning.nextTurn', { defaultValue: '下一轮' })}<ChevronRight className="size-4" />
+                </Button>
+              )}
+            </>
           )}
         </div>
       </footer>

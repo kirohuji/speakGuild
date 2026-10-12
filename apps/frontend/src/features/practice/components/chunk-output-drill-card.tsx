@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Lightbulb, Eye, Loader2, CheckCircle2, Repeat2, Play, Pause } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -93,6 +93,11 @@ export function ChunkOutputDrillCard({
   const [playing, setPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const rehearsalRef = useRef(false)
+
+  useEffect(() => () => {
+    audioRef.current?.pause()
+    audioRef.current = null
+  }, [])
 
   const current = items[currentIdx]
   const { resolvedUrl: cachedImageUrl } = useCachedImage(current.imageUrl)

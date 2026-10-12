@@ -1,6 +1,6 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { Bell, Loader2, WifiOff, Wrench } from 'lucide-react'
 import { Header } from './header'
 import { Footer } from './footer'
@@ -21,9 +21,26 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { isDevHost } from '@/lib/dev-host'
 import { useOnlineStatus } from '@/hooks/use-online-status'
 
+const ROUTE_SCROLL_POSITIONS_KEY = 'manyu:route-scroll-positions:v1'
+
+function readRouteScrollPositions(): Record<string, number> {
+  if (typeof window === 'undefined') return {}
+  try {
+    const parsed = JSON.parse(window.sessionStorage.getItem(ROUTE_SCROLL_POSITIONS_KEY) ?? '{}')
+    if (!parsed || typeof parsed !== 'object') return {}
+    return Object.fromEntries(
+      Object.entries(parsed).filter(([, value]) => typeof value === 'number' && value >= 0),
+    )
+  } catch {
+    return {}
+  }
+}
+
 export function RootLayout() {
   const { t } = useTranslation()
-  const { pathname } = useLocation()
+  const location = useLocation()
+  const { pathname } = location
+  const navigationType = useNavigationType()
   const { session } = useAuth()
   const immersiveMode = useLayoutStore((s) => s.immersiveMode)
   const bottomNavVisible = useLayoutStore((s) => s.bottomNavVisible)
@@ -44,6 +61,90 @@ export function RootLayout() {
   const showMobileAvatar = isLoggedIn && isHomePage && !immersiveMode
   const [profileDrawerOpen, setProfileDrawerOpen] = React.useState(false)
   const [notificationDrawerOpen, setNotificationDrawerOpen] = React.useState(false)
+  const mainRef = React.useRef<HTMLElement>(null)
+  const scrollPositionsRef = React.useRef<Record<string, number>>(readRouteScrollPositions())
+  const [scrollLocationKey, setScrollLocationKey] = React.useState(location.key)
+  const [isRestoringScroll, setIsRestoringScroll] = React.useState(false)
+
+  // Hide the outgoing paint at scrollTop=0 until the saved offset sticks.
+  // State is adjusted during render so the first frame of a POP already starts
+  // invisible — waiting for useLayoutEffect would still flash the top briefly.
+  if (location.key !== scrollLocationKey) {
+    setScrollLocationKey(location.key)
+    const targetTop =
+      navigationType === 'POP' ? scrollPositionsRef.current[location.key] : undefined
+    setIsRestoringScroll(typeof targetTop === 'number' && targetTop > 0)
+  }
+
+  // Mobile uses this <main> as its scroll container, rather than window. The
+  // browser therefore cannot restore its offset when returning from a session
+  // route (the short session page also clamps the container back to zero).
+  React.useEffect(() => {
+    const container = mainRef.current
+    if (!container) return
+    const savePosition = () => {
+      scrollPositionsRef.current[location.key] = container.scrollTop
+    }
+    container.addEventListener('scroll', savePosition, { passive: true })
+    return () => {
+      container.removeEventListener('scroll', savePosition)
+      try {
+        window.sessionStorage.setItem(ROUTE_SCROLL_POSITIONS_KEY, JSON.stringify(scrollPositionsRef.current))
+      } catch {
+        // Scroll restoration is a progressive enhancement; storage failures
+        // must not affect navigation.
+      }
+    }
+  }, [location.key])
+
+  React.useLayoutEffect(() => {
+    // Only restore browser-history returns. Fresh navigation should begin at
+    // the top, while Back returns the learner to the topic they just opened.
+    if (navigationType !== 'POP') {
+      setIsRestoringScroll(false)
+      return
+    }
+    const targetTop = scrollPositionsRef.current[location.key]
+    const container = mainRef.current
+    if (!container || !targetTop) {
+      setIsRestoringScroll(false)
+      return
+    }
+
+    let timer: number | undefined
+    let attempts = 0
+    let cancelled = false
+    const finishRestore = () => {
+      cancelled = true
+      if (timer !== undefined) window.clearTimeout(timer)
+      setIsRestoringScroll(false)
+    }
+    const cancelRestore = () => {
+      finishRestore()
+    }
+    const restore = () => {
+      if (cancelled) return
+      container.scrollTop = targetTop
+      // The unit detail can render asynchronously. Retry briefly until its
+      // height can accommodate the saved offset, without fighting user input.
+      if (Math.abs(container.scrollTop - targetTop) < 1 || attempts++ >= 40) {
+        finishRestore()
+        return
+      }
+      timer = window.setTimeout(restore, 50)
+    }
+    container.addEventListener('touchstart', cancelRestore, { passive: true, once: true })
+    container.addEventListener('wheel', cancelRestore, { passive: true, once: true })
+    // Apply immediately in this layout pass so reveal happens after the offset
+    // is already correct whenever content height is already available.
+    restore()
+    return () => {
+      cancelled = true
+      if (timer !== undefined) window.clearTimeout(timer)
+      container.removeEventListener('touchstart', cancelRestore)
+      container.removeEventListener('wheel', cancelRestore)
+    }
+  }, [location.key, navigationType])
 
   return (
     <div
@@ -66,7 +167,7 @@ export function RootLayout() {
           onProfileOpen={() => setProfileDrawerOpen(true)}
         />
       )}
-      <main className={cn('min-h-0 flex-1 pt-0', isMobile ? (isExpressionNotebookDetail ? 'overflow-hidden' : 'overflow-y-auto overscroll-contain') : 'overflow-visible', `${
+      <main ref={mainRef} className={cn('min-h-0 flex-1 pt-0', isMobile ? (isExpressionNotebookDetail ? 'overflow-hidden' : 'overflow-y-auto overscroll-contain') : 'overflow-visible', `${
         immersiveMode
           ? 'pb-0'
           : isAuthPage || !isLoggedIn
@@ -77,7 +178,15 @@ export function RootLayout() {
                 ? isMobile ? 'pt-[env(safe-area-inset-top,0px)] pb-[calc(5rem+env(safe-area-inset-bottom,0px))]' : 'pt-14 pb-0'
                 : isMobile ? 'pt-[env(safe-area-inset-top,0px)] pb-0' : 'pt-14 pb-0'
       }`)}>
-        <div className={isAuthPage || isHomePage || immersiveMode ? 'h-full max-w-none px-0 py-0' : cn('mx-auto max-w-[1480px]', isMobile ? 'h-full min-h-0 px-0' : 'px-4 py-6')}>
+        <div
+          className={cn(
+            isAuthPage || isHomePage || immersiveMode ? 'h-full max-w-none px-0 py-0' : cn('mx-auto max-w-[1480px]', isMobile ? 'h-full min-h-0 px-0' : 'px-4 py-6'),
+            // Keep layout (and scrollHeight) intact while restoring; only hide the
+            // wrong-offset paint so the learner never sees a jump from the top.
+            isRestoringScroll && 'invisible pointer-events-none',
+          )}
+          aria-busy={isRestoringScroll || undefined}
+        >
           <Outlet />
         </div>
       </main>
