@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Lightbulb, Eye, Loader2, CheckCircle2, Repeat2, Play, Pause } from 'lucide-react'
+import { Lightbulb, Eye, Loader2, CheckCircle2, Repeat2, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -90,14 +90,7 @@ export function ChunkOutputDrillCard({
   const [correction, setCorrection] = useState(isReview ? (reviewData?.correction ?? '') : (saved?.correction ?? ''))
   const [hintLevel, setHintLevel] = useState<HintLevel>(isReview ? 'answer' : (saved?.hintLevel ?? 'none'))
   const [audioUrl, setAudioUrl] = useState<string | null>(isReview ? (reviewData?.audioUrl ?? null) : (saved?.audioUrl ?? null))
-  const [playing, setPlaying] = useState(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
   const rehearsalRef = useRef(false)
-
-  useEffect(() => () => {
-    audioRef.current?.pause()
-    audioRef.current = null
-  }, [])
 
   const current = items[currentIdx]
   const { resolvedUrl: cachedImageUrl } = useCachedImage(current.imageUrl)
@@ -333,28 +326,12 @@ export function ChunkOutputDrillCard({
         disabled={isReview || skipped || status === 'judging' || status === 'passed'}
         onEnter={isReview ? undefined : submit}
         onAudioChange={isReview ? undefined : setAudioUrl}
+        recordedAudioUrl={audioUrl}
+        readOnly={isReview}
         lang={isZhToEn ? 'en-US' : 'zh-CN'}
       />
 
       {/* 回顾模式：录音回放按�?*/}
-      {isReview && audioUrl && (
-        <button
-          type="button"
-          onClick={() => {
-            if (playing) { audioRef.current?.pause(); setPlaying(false); return }
-            const a = new Audio(audioUrl!)
-            a.onended = () => setPlaying(false)
-            a.play().catch(() => {})
-            audioRef.current = a
-            setPlaying(true)
-          }}
-          className="inline-flex items-center gap-1.5 self-start rounded-full bg-muted/60 px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-        >
-          {playing ? <Pause className="size-3" /> : <Play className="size-3 ml-0.5" />}
-          {t('practiceSession.warmupDrill.audioPlayback')}
-        </button>
-      )}
-
       {/* Feedback */}
       {feedback && (
         <div className={cn('rounded-lg px-3 py-2', status === 'passed' ? 'bg-green-500/10' : 'bg-amber-500/10')}>

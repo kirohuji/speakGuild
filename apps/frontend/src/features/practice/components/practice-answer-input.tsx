@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Loader2, Mic, Square, Play, Pause } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { transcribeVoiceInput } from '@/lib/local-stt/local-stt.service'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 import { usePreferencesStore } from '@/stores/preferences.store'
-
-type VoiceStatus = 'idle' | 'recording' | 'processing'
+import {
+  getVoiceInputFeedbackText,
+  getVoiceMicErrorMessage,
+  normalizeVoiceInputText,
+  pickVoiceRecordingMimeType,
+  type VoiceInputStatus,
+} from '@/lib/voice-input-feedback'
 
 interface PracticeAnswerInputProps {
   value: string
@@ -14,41 +20,29 @@ interface PracticeAnswerInputProps {
   disabled?: boolean
   onEnter?: () => void
   onAudioChange?: (audioUrl: string | null) => void
+  /** Restores playback when moving between questions or opening a review. */
+  recordedAudioUrl?: string | null
+  /** Removes the record action while keeping the answer and playback visible. */
+  readOnly?: boolean
   /** 语音识别语言，默认 en-US；中文输入时传 zh-CN */
   lang?: string
-}
-
-function pickMimeType() {
-  if (typeof MediaRecorder === 'undefined') return ''
-  return (
-    ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'].find(
-      (mimeType) => MediaRecorder.isTypeSupported(mimeType),
-    ) ?? ''
-  )
-}
-
-function formatElapsed(ms: number) {
-  const seconds = Math.floor(ms / 1000)
-  const minutes = Math.floor(seconds / 60)
-  return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
-}
-
-function normalizeInputText(value: string) {
-  return value.replace(/\r\n?/g, '\n').trim()
 }
 
 export function PracticeAnswerInput({
   value,
   onChange,
-  placeholder = '输入回答...',
+  placeholder = '输入回答…',
   disabled,
   onEnter,
   onAudioChange,
+  recordedAudioUrl,
+  readOnly = false,
   lang = 'en-US',
 }: PracticeAnswerInputProps) {
+  const { t } = useTranslation()
   const nativeSpeechRecognitionEnabled = usePreferencesStore((s) => s.nativeSpeechRecognitionEnabled)
   const localSttEnabled = usePreferencesStore((s) => s.localSttEnabled)
-  const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle')
+  const [voiceStatus, setVoiceStatus] = useState<VoiceInputStatus>('idle')
   const [voiceError, setVoiceError] = useState('')
   const [elapsed, setElapsed] = useState(0)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
@@ -60,6 +54,7 @@ export function PracticeAnswerInput({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const audioUrlRef = useRef<string | null>(null)
+  const playbackUrl = recordedAudioUrl === undefined ? audioUrl : recordedAudioUrl
 
   const cleanupRecording = useCallback(() => {
     nativeVoiceSessionRef.current?.cancel().catch(() => undefined)
@@ -76,12 +71,12 @@ export function PracticeAnswerInput({
   useEffect(() => () => {
     cleanupRecording()
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
-    if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current)
-  }, [cleanupRecording])
+    if (!onAudioChange && audioUrlRef.current?.startsWith('blob:')) URL.revokeObjectURL(audioUrlRef.current)
+  }, [cleanupRecording, onAudioChange])
 
   const setRecordedAudioUrl = useCallback((nextUrl: string | null) => {
     const previousUrl = audioUrlRef.current
-    if (previousUrl && previousUrl !== nextUrl) URL.revokeObjectURL(previousUrl)
+    if (!onAudioChange && previousUrl?.startsWith('blob:') && previousUrl !== nextUrl) URL.revokeObjectURL(previousUrl)
     audioUrlRef.current = nextUrl
     setAudioUrl(nextUrl)
     onAudioChange?.(nextUrl)
@@ -105,14 +100,16 @@ export function PracticeAnswerInput({
     setVoiceStatus('processing')
     try {
       const result = await transcribeVoiceInput(blob, filename, lang)
-      const text = normalizeInputText(result.text ?? '')
+      const text = normalizeVoiceInputText(result.text ?? '')
 
-      // Save audio URL for playback
-      const url = URL.createObjectURL(blob)
-      setRecordedAudioUrl(url)
+      // Prefer the uploaded URL so playback survives question changes.
+      const fallbackUrl = URL.createObjectURL(blob)
+      const nextAudioUrl = result.audioUrl ?? fallbackUrl
+      if (nextAudioUrl !== fallbackUrl) URL.revokeObjectURL(fallbackUrl)
+      setRecordedAudioUrl(nextAudioUrl)
 
       if (!text) {
-        setVoiceError('未识别到语音内容，请重试')
+        setVoiceError(t('profile.placement.voiceNoContent'))
         setVoiceStatus('idle')
         return
       }
@@ -120,10 +117,10 @@ export function PracticeAnswerInput({
       setVoiceError('')
       setVoiceStatus('idle')
     } catch {
-      setVoiceError('语音识别失败，请重试')
+      setVoiceError(t('profile.placement.voiceFailed'))
       setVoiceStatus('idle')
     }
-  }, [lang, onChange, setRecordedAudioUrl])
+  }, [lang, onChange, setRecordedAudioUrl, t])
 
   const startRecording = useCallback(async () => {
     if (disabled || voiceStatus !== 'idle') return
@@ -139,7 +136,7 @@ export function PracticeAnswerInput({
         language: lang,
         useNativeSpeechRecognition: nativeSpeechRecognitionEnabled && !localSttEnabled,
         onPartial: (partialText) => {
-          const text = normalizeInputText(partialText)
+          const text = normalizeVoiceInputText(partialText)
           if (text) onChange(text)
         },
       })
@@ -152,7 +149,7 @@ export function PracticeAnswerInput({
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
-      const mimeType = pickMimeType()
+      const mimeType = pickVoiceRecordingMimeType()
       const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
       chunksRef.current = []
 
@@ -175,11 +172,11 @@ export function PracticeAnswerInput({
       mediaRecorderRef.current = mediaRecorder
       mediaRecorder.start(200)
       setVoiceStatus('recording')
-    } catch {
-      setVoiceError('无法访问麦克风，请检查权限设置')
+    } catch (error) {
+      setVoiceError(getVoiceMicErrorMessage(error, t))
       setVoiceStatus('idle')
     }
-  }, [cleanupRecording, disabled, lang, localSttEnabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, setRecordedAudioUrl, voiceStatus])
+  }, [cleanupRecording, disabled, lang, localSttEnabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, setRecordedAudioUrl, t, voiceStatus])
 
   const stopRecording = useCallback(async () => {
     const nativeSession = nativeVoiceSessionRef.current
@@ -189,12 +186,12 @@ export function PracticeAnswerInput({
       try {
         if (nativeSession.kind === 'speech') {
           const result = await nativeSession.stop()
-          const text = normalizeInputText(result.text)
+          const text = normalizeVoiceInputText(result.text)
           if (text) {
             onChange(text)
             setVoiceError('')
           } else {
-            setVoiceError('未识别到语音内容，请重试')
+            setVoiceError(t('profile.placement.voiceNoContent'))
           }
           setVoiceStatus('idle')
           return
@@ -203,7 +200,7 @@ export function PracticeAnswerInput({
         const result = await nativeSession.stop()
         await processAudioBlob(result.blob, result.filename)
       } catch {
-        setVoiceError('语音识别失败，请重试')
+        setVoiceError(t('profile.placement.voiceFailed'))
         setVoiceStatus('idle')
       }
       return
@@ -213,10 +210,17 @@ export function PracticeAnswerInput({
       mediaRecorderRef.current.stop()
       mediaRecorderRef.current = null
     }
-  }, [onChange, processAudioBlob])
+  }, [onChange, processAudioBlob, t])
 
   const isRecording = voiceStatus === 'recording'
   const isProcessing = voiceStatus === 'processing'
+  const voiceFeedbackText = getVoiceInputFeedbackText({
+    t,
+    status: voiceStatus,
+    elapsed,
+    error: voiceError,
+    idleText: placeholder,
+  })
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current
@@ -233,23 +237,23 @@ export function PracticeAnswerInput({
   return (
     <div className={cn(
       'mx-1 rounded-xl bg-background/70 ring-1 ring-border/45 transition-colors focus-within:ring-primary/30',
-      disabled && 'opacity-75',
+      disabled && !readOnly && 'opacity-75',
     )}>
       <div className="flex items-end gap-2 p-1.5">
-        <button
+        {!readOnly && <button
           type="button"
           disabled={disabled || isProcessing}
           onClick={isRecording ? stopRecording : startRecording}
           className={cn(
-            'flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors disabled:cursor-not-allowed disabled:opacity-45',
+            'flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-45',
             isRecording
               ? 'bg-rose-500 text-white'
               : voiceError
                 ? 'bg-destructive/10 text-destructive ring-1 ring-destructive/25'
                 : 'bg-muted/75 text-muted-foreground hover:bg-muted hover:text-foreground',
           )}
-          aria-label={isRecording ? '停止录音' : '语音输入'}
-          title={voiceError || (isRecording ? `录音中 ${formatElapsed(elapsed)}` : '语音输入')}
+          aria-label={isRecording ? t('profile.placement.voiceStop') : t('profile.placement.voiceButton')}
+          title={voiceStatus === 'idle' && !voiceError ? t('profile.placement.voiceIdle') : voiceFeedbackText}
         >
           {isProcessing ? (
             <Loader2 className="size-5 animate-spin" />
@@ -258,13 +262,15 @@ export function PracticeAnswerInput({
           ) : (
             <Mic className="size-5" />
           )}
-        </button>
+        </button>}
         <textarea
           rows={2}
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          placeholder={isRecording ? `录音中 ${formatElapsed(elapsed)}` : isProcessing ? '识别中...' : voiceError || placeholder}
+          placeholder={voiceFeedbackText}
+          aria-label={placeholder}
           disabled={disabled || isProcessing}
+          readOnly={readOnly}
           onKeyDown={(event) => {
             if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
               event.preventDefault()
@@ -273,24 +279,33 @@ export function PracticeAnswerInput({
           }}
           className="block min-h-[52px] min-w-0 flex-1 resize-none bg-transparent py-2 pl-0 pr-1 text-base leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
         />
-        {audioUrl && voiceStatus === 'idle' && (
+        {playbackUrl && voiceStatus === 'idle' && (
           <button
             type="button"
             onClick={togglePlay}
-            className="mb-1.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-            aria-label={isPlaying ? '暂停回放' : '回放录音'}
-            title={isPlaying ? '暂停回放' : '回放录音'}
+            className="mb-1.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
+            aria-label={isPlaying ? t('vnSettings.pausePlayback') : t('vnSettings.playbackRecording')}
+            title={isPlaying ? t('vnSettings.pausePlayback') : t('vnSettings.playbackRecording')}
           >
             {isPlaying ? <Pause className="size-4" /> : <Play className="size-4 ml-0.5" />}
           </button>
         )}
       </div>
 
-      {audioUrl && voiceStatus === 'idle' && (
+      {(voiceStatus !== 'idle' || voiceError) && (
+        <p
+          aria-live="polite"
+          className={cn('break-words px-3 pb-2 text-xs leading-4 text-muted-foreground', voiceError && 'text-destructive')}
+        >
+          {voiceFeedbackText}
+        </p>
+      )}
+
+      {playbackUrl && voiceStatus === 'idle' && (
         // biome-ignore lint/a11y/useMediaCaption: short self-recording replay
         <audio
           ref={audioRef}
-          src={audioUrl}
+          src={playbackUrl}
           onEnded={() => setIsPlaying(false)}
           onPause={() => setIsPlaying(false)}
           onPlay={() => setIsPlaying(true)}

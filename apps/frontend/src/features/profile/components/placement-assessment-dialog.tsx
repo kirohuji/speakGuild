@@ -25,6 +25,13 @@ import { useUserStore } from '@/stores/user.store'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 import { transcribeVoiceInput } from '@/lib/local-stt/local-stt.service'
 import {
+  getVoiceInputFeedbackText,
+  getVoiceMicErrorMessage,
+  normalizeVoiceInputText,
+  pickVoiceRecordingMimeType,
+  type VoiceInputStatus,
+} from '@/lib/voice-input-feedback'
+import {
   Home, BriefcaseBusiness, Shield, Compass as CompassIcon,
 } from 'lucide-react'
 
@@ -86,45 +93,6 @@ const PLACEMENT_PROMPTS = [
   },
 ] as const
 
-function pickAssessmentMimeType() {
-  if (typeof MediaRecorder === 'undefined') return ''
-  return (
-    ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'].find(
-      (mimeType) => MediaRecorder.isTypeSupported(mimeType),
-    ) ?? ''
-  )
-}
-
-function formatAssessmentElapsed(ms: number) {
-  const seconds = Math.floor(ms / 1000)
-  const minutes = Math.floor(seconds / 60)
-  return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
-}
-
-function normalizeAssessmentTranscript(value: string) {
-  return value.replace(/\r\n?/g, '\n').trim()
-}
-
-function getAssessmentMicErrorMessage(error: unknown, t: ReturnType<typeof useTranslation>['t']) {
-  if (typeof window !== 'undefined' && window.isSecureContext === false) {
-    return t('profile.placement.micInsecureContext', {
-      defaultValue: '当前网页不是 HTTPS 或 localhost，浏览器会禁止麦克风。请用 HTTPS 或 localhost 打开。',
-    })
-  }
-  if (!navigator.mediaDevices?.getUserMedia) {
-    return t('profile.placement.micUnavailable', {
-      defaultValue: '当前浏览器不支持麦克风录音，请更换浏览器或在 App 内使用。',
-    })
-  }
-  const name = error instanceof DOMException ? error.name : ''
-  if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-    return t('profile.placement.micDenied')
-  }
-  return t('profile.placement.micFailed', {
-    defaultValue: '麦克风启动失败，请检查浏览器权限、系统权限或是否有其他应用占用麦克风。',
-  })
-}
-
 export function AssessmentAnswerInput({
   value,
   onChange,
@@ -134,6 +102,7 @@ export function AssessmentAnswerInput({
   onRecordedAudioUrlChange,
   /** 只渲染语音条；对话写作等场景用原生 textarea 承接键盘。 */
   hideTextarea = false,
+  readOnly = false,
 }: {
   value: string
   onChange: (value: string) => void
@@ -143,11 +112,12 @@ export function AssessmentAnswerInput({
   recordedAudioUrl?: string | null
   onRecordedAudioUrlChange?: (url: string | null) => void
   hideTextarea?: boolean
+  readOnly?: boolean
 }) {
   const { t } = useTranslation()
   const nativeSpeechRecognitionEnabled = usePreferencesStore((s) => s.nativeSpeechRecognitionEnabled)
   const localSttEnabled = usePreferencesStore((s) => s.localSttEnabled)
-  const [voiceStatus, setVoiceStatus] = useState<'idle' | 'recording' | 'processing'>('idle')
+  const [voiceStatus, setVoiceStatus] = useState<VoiceInputStatus>('idle')
   const [voiceError, setVoiceError] = useState('')
   const [elapsed, setElapsed] = useState(0)
   const [localRecordedAudioUrl, setLocalRecordedAudioUrl] = useState<string | null>(null)
@@ -237,7 +207,7 @@ export function AssessmentAnswerInput({
     setVoiceStatus('processing')
     try {
       const result = await transcribeVoiceInput(blob, filename)
-      const text = normalizeAssessmentTranscript(result.text ?? '')
+      const text = normalizeVoiceInputText(result.text ?? '')
       setLocalPlaybackUrl(result.audioUrl ?? fallbackAudioUrl)
       if (!text) {
         setVoiceError(t('profile.placement.voiceNoContent'))
@@ -266,7 +236,7 @@ export function AssessmentAnswerInput({
         language: 'en-US',
         useNativeSpeechRecognition: nativeSpeechRecognitionEnabled && !localSttEnabled,
         onPartial: (partialText) => {
-          const text = normalizeAssessmentTranscript(partialText)
+          const text = normalizeVoiceInputText(partialText)
           if (text) onChange(text)
         },
       })
@@ -279,7 +249,7 @@ export function AssessmentAnswerInput({
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
-      const mimeType = pickAssessmentMimeType()
+      const mimeType = pickVoiceRecordingMimeType()
       const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
       chunksRef.current = []
 
@@ -302,7 +272,7 @@ export function AssessmentAnswerInput({
       setVoiceStatus('recording')
     } catch (error) {
       console.warn('[placement voice] microphone start failed:', error)
-      setVoiceError(getAssessmentMicErrorMessage(error, t))
+      setVoiceError(getVoiceMicErrorMessage(error, t))
       setVoiceStatus('idle')
     }
   }, [cleanupRecording, disabled, localSttEnabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, setLocalPlaybackUrl, t, voiceStatus])
@@ -315,7 +285,7 @@ export function AssessmentAnswerInput({
       try {
         if (nativeSession.kind === 'speech') {
           const result = await nativeSession.stop()
-          const text = normalizeAssessmentTranscript(result.text)
+          const text = normalizeVoiceInputText(result.text)
           if (text) {
             onChange(text)
             setVoiceError('')
@@ -369,8 +339,19 @@ export function AssessmentAnswerInput({
     await processAudioBlob(file, file.name || 'upload.webm', playbackUrl)
   }, [disabled, voiceStatus, processAudioBlob, setLocalPlaybackUrl])
 
+  const idleFeedbackText = !hideTextarea && value.trim().length > 0 && value.trim().length < 5
+    ? t('profile.placement.charHint', { current: value.trim().length, min: 5 })
+    : undefined
+  const voiceFeedbackText = getVoiceInputFeedbackText({
+    t,
+    status: voiceStatus,
+    elapsed,
+    error: voiceError,
+    idleText: idleFeedbackText,
+  })
+
   return (
-    <div className={cn('w-full min-w-0', !hideTextarea && 'rounded-lg bg-muted/30 p-2')}>
+    <div className={cn('w-full min-w-0', !hideTextarea && 'rounded-xl bg-background/70 p-1.5 ring-1 ring-border/45 transition-colors focus-within:ring-primary/30')}>
       <audio ref={audioRef} src={playbackUrl ?? undefined} preload="auto" className="hidden" />
       <input
         ref={fileInputRef}
@@ -384,64 +365,69 @@ export function AssessmentAnswerInput({
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={t('profile.placement.voicePlaceholder')}
+          aria-label={t('profile.placement.voicePlaceholder')}
           disabled={disabled || isProcessing}
-          className="min-h-[112px] resize-none rounded-lg border-0 bg-background/70 p-3 text-base shadow-none"
+          readOnly={readOnly}
+          className="min-h-[112px] resize-none rounded-lg border-0 bg-transparent px-3 pb-2 pt-3 text-base shadow-none"
         />
       )}
-      <div className={cn('flex items-start justify-between gap-2', !hideTextarea && 'mt-2')}>
-        <p className={cn('min-w-0 flex-1 break-words text-xs leading-4 text-muted-foreground', voiceError && 'text-destructive')}>
-          {voiceError || (isRecording
-            ? t('profile.placement.voiceRecording', { time: formatAssessmentElapsed(elapsed) })
-            : isProcessing
-              ? t('profile.placement.voiceProcessing')
-              : !hideTextarea && value.trim().length > 0 && value.trim().length < 5
-                ? t('profile.placement.charHint', { current: value.trim().length, min: 5, defaultValue: '至少输入 {{min}} 个字符（当前 {{current}}）' })
-              : t('profile.placement.voiceIdle'))}
+      <div className={cn('flex items-end justify-between gap-2', !hideTextarea && 'mt-1')}>
+        <p
+          aria-live="polite"
+          className={cn('order-2 min-w-0 flex-1 break-words pb-1 text-xs leading-4 text-muted-foreground', voiceError && 'text-destructive')}
+        >
+          {voiceFeedbackText}
         </p>
-        <div className="flex shrink-0 items-center gap-1.5">
-          {isAdmin && (
+        <div className="contents">
+          {isAdmin && !readOnly && (
             <Button
               type="button"
               size="sm"
               variant="ghost"
               disabled={disabled || isProcessing || isRecording}
               onClick={() => fileInputRef.current?.click()}
-              className="h-9 w-9 shrink-0 rounded-full p-0"
+              className="order-1 size-11 shrink-0 rounded-xl p-0"
               title="上传音频文件测试 STT"
+              aria-label="上传音频文件测试 STT"
             >
               <Upload className="size-4" />
             </Button>
           )}
           {hasRecording && (
-            <Button
+            <button
               type="button"
-              size="sm"
-              variant="secondary"
-              disabled={disabled || isProcessing}
+              disabled={isProcessing}
               onClick={handlePlayback}
-              className="h-9 shrink-0 rounded-full px-3"
+              className="order-3 mb-1.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-45"
+              aria-label={isPlaying ? t('vnSettings.pausePlayback') : t('vnSettings.playbackRecording')}
+              title={isPlaying ? t('vnSettings.pausePlayback') : t('vnSettings.playbackRecording')}
             >
-              {isPlaying ? <Pause className="mr-1.5 size-4" /> : <Play className="mr-1.5 size-4" />}
-              {isPlaying ? '暂停' : '回放'}
-            </Button>
+              {isPlaying ? <Pause className="size-4" /> : <Play className="ml-0.5 size-4" />}
+            </button>
           )}
-          <Button
+          {!readOnly && <button
             type="button"
-            size="sm"
-            variant={isRecording ? 'destructive' : 'outline'}
             disabled={disabled || isProcessing}
             onClick={isRecording ? stopRecording : startRecording}
-            className="h-9 shrink-0 rounded-full px-3"
+            className={cn(
+              'order-none flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-45',
+              isRecording
+                ? 'bg-rose-500 text-white'
+                : voiceError
+                  ? 'bg-destructive/10 text-destructive ring-1 ring-destructive/25'
+                  : 'bg-muted/75 text-muted-foreground hover:bg-muted hover:text-foreground',
+            )}
+            aria-label={isRecording ? t('profile.placement.voiceStop') : t('profile.placement.voiceButton')}
+            title={voiceStatus === 'idle' && !voiceError ? t('profile.placement.voiceIdle') : voiceFeedbackText}
           >
             {isProcessing ? (
-              <Loader2 className="mr-1.5 size-4 animate-spin" />
+              <Loader2 className="size-5 animate-spin" />
             ) : isRecording ? (
-              <Square className="mr-1.5 size-3.5 fill-current" />
+              <Square className="size-4 fill-current" />
             ) : (
-              <Mic className="mr-1.5 size-4" />
+              <Mic className="size-5" />
             )}
-            {isRecording ? t('profile.placement.voiceStop') : isProcessing ? t('profile.placement.voiceProcessingButton') : t('profile.placement.voiceButton')}
-          </Button>
+          </button>}
         </div>
       </div>
     </div>

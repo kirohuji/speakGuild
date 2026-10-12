@@ -983,8 +983,13 @@ function DialogueEditor({
     const savedTurns = saved.turns
     if (!Array.isArray(savedTurns)) return
     const next: Record<number, string> = {}
-    savedTurns.forEach((turn: any, index: number) => { if (turn?.userResponse) next[index] = String(turn.userResponse) })
+    const nextAudios: Record<number, string> = {}
+    savedTurns.forEach((turn: any, index: number) => {
+      if (turn?.userResponse) next[index] = String(turn.userResponse)
+      if (turn?.userAudioUrl) nextAudios[index] = String(turn.userAudioUrl)
+    })
     setResponses(next)
+    setRecordedAudios(nextAudios)
   }, [])
   const session = useTopicSession(topic.id, restore, { review })
   useEffect(() => {
@@ -1028,7 +1033,12 @@ function DialogueEditor({
   const currentResponse = responses[currentIndex] ?? ''
   const answeredCount = turns.filter((_, i) => (responses[i] ?? '').trim()).length
   const allAnswered = answeredCount === turns.length
-  const responseTurns = useMemo(() => turns.map((turn, index) => ({ aText: turn.aText, hint: turn.hint, userResponse: responses[index] ?? '' })), [responses, turns])
+  const responseTurns = useMemo(() => turns.map((turn, index) => ({
+    aText: turn.aText,
+    hint: turn.hint,
+    userResponse: responses[index] ?? '',
+    userAudioUrl: recordedAudios[index] ?? null,
+  })), [recordedAudios, responses, turns])
   const response = useMemo(() => ({ turns: responseTurns }), [responseTurns])
   useEffect(() => {
     if (!session.sessionId || session.readOnly || !answeredCount) return
@@ -1205,30 +1215,37 @@ function DialogueEditor({
                 <div className="flex items-start gap-2.5">
                   <span className="mt-1 shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">B</span>
                   <div className="min-w-0 flex-1">
-                    <textarea
+                    <div className="relative">
+                      <textarea
                       value={currentResponse}
                       onChange={(event) => setResponses((current) => ({ ...current, [currentIndex]: event.target.value }))}
                       readOnly={session.readOnly}
                       onFocus={focusInput}
                       onClick={focusInput}
-                      className="min-h-[140px] w-full resize-none rounded-2xl rounded-tl-md border-0 bg-muted/40 p-4 text-[16px] leading-7 text-foreground outline-none ring-0 placeholder:text-muted-foreground/45 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                      className={cn(
+                        'block min-h-[140px] w-full resize-none rounded-2xl rounded-tl-md border-0 bg-muted/40 p-4 text-[16px] leading-7 text-foreground outline-none ring-0 placeholder:text-muted-foreground/45 focus:bg-background focus:ring-2 focus:ring-primary/20',
+                        !keyboardComposing && (!session.readOnly || recordedAudios[currentIndex]) && 'pb-16',
+                      )}
                       placeholder={t('learning.dialogueReplyPlaceholder')}
                       autoCapitalize="sentences"
                       autoCorrect="on"
                       spellCheck
-                    />
-                    {!session.readOnly && !keyboardComposing && (
-                      <div className="mt-2">
-                        <AssessmentAnswerInput
-                          key={currentIndex}
-                          hideTextarea
-                          value={currentResponse}
-                          onChange={(text) => setResponses((current) => ({ ...current, [currentIndex]: text }))}
-                          recordedAudioUrl={recordedAudios[currentIndex] ?? null}
-                          onRecordedAudioUrlChange={(url) => setTurnRecording(currentIndex, url)}
-                        />
-                      </div>
-                    )}
+                      />
+                      {!keyboardComposing && (!session.readOnly || recordedAudios[currentIndex]) && (
+                        <div className="absolute inset-x-1.5 bottom-1.5">
+                          <AssessmentAnswerInput
+                            key={currentIndex}
+                            hideTextarea
+                            value={currentResponse}
+                            onChange={(text) => setResponses((current) => ({ ...current, [currentIndex]: text }))}
+                            disabled={session.readOnly}
+                            readOnly={session.readOnly}
+                            recordedAudioUrl={recordedAudios[currentIndex] ?? null}
+                            onRecordedAudioUrlChange={(url) => setTurnRecording(currentIndex, url)}
+                          />
+                        </div>
+                      )}
+                    </div>
                     {currentResponse.trim() && (
                       <p className="mt-1.5 text-right text-xs tabular-nums text-muted-foreground">
                         {t('learning.wordCount', { count: currentResponse.trim().split(/\s+/).length })}
