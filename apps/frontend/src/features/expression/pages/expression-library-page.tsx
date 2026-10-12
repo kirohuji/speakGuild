@@ -1044,7 +1044,10 @@ export function ExpressionLibraryPage() {
       </Dialog>
 
       <Dialog open={zoomPreviewPage !== null} onOpenChange={(open) => { if (!open) setZoomPreviewPage(null) }}>
-        <DialogContent className="[&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-background p-0 text-foreground sm:h-[94svh] sm:max-w-6xl sm:rounded-2xl sm:border sm:border-border/60">
+        <DialogContent
+          onOpenAutoFocus={(event) => event.preventDefault()}
+          className="[&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-background p-0 text-foreground sm:h-[94svh] sm:max-w-6xl sm:rounded-2xl sm:border sm:border-border/60"
+        >
           <DialogTitle className="sr-only">{t('expressionLib.zoomPreview')}</DialogTitle>
           <div className="min-h-0 flex-1 overflow-auto bg-muted/30 px-3 pb-5 pt-[calc(4rem+env(safe-area-inset-top,0px))] sm:px-6 sm:pt-5">
             {zoomPreviewPage !== null && exportPages[zoomPreviewPage] && (

@@ -299,6 +299,13 @@ const pdfStyles = StyleSheet.create({
   prompt: { width: '42%' },
   answer: { width: '38%' },
   check: { width: '10%', alignItems: 'center' },
+  // NotoSansSC 不含 □，用边框画勾选框，避免 PDF 落成乱码/i。
+  checkbox: {
+    width: 10,
+    height: 10,
+    borderWidth: 1,
+    borderColor: '#71717a',
+  },
   cellText: {
     fontSize: 10,
     lineHeight: 1.35,
@@ -388,7 +395,7 @@ function PracticeSheetPdfTable({
           <Text style={pdfStyles.cellTextStrong}>{labels.answer}</Text>
         </View>
         <View style={cellStyle(true, true, 3)}>
-          <Text style={pdfStyles.cellTextStrong}>□</Text>
+          <View style={pdfStyles.checkbox} />
         </View>
       </View>
 
@@ -408,7 +415,7 @@ function PracticeSheetPdfTable({
               <Text style={pdfStyles.cellText}> </Text>
             </View>
             <View style={cellStyle(false, false, 3)}>
-              <Text style={pdfStyles.cellTextMuted}>□</Text>
+              <View style={pdfStyles.checkbox} />
             </View>
           </View>
         )
