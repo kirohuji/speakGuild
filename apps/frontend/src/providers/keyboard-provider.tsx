@@ -195,9 +195,69 @@ function useNativeKeyboardController(setState: (next: KeyboardState) => void) {
   }, [setState]);
 }
 
+type MockKeyboardChangeDetail = {
+  visible?: boolean
+  heightPx?: number
+  viewportHeightPx?: number
+}
+
+/** Let the Mock Keyboard Chrome extension drive the existing layout in local development. */
+function useWebMockKeyboardController(setState: (next: KeyboardState) => void) {
+  useEffect(() => {
+    if (!import.meta.env.DEV || isNative()) return;
+
+    let mockKeyboardActive = false;
+
+    const getKeyboardContext = () => {
+      const activeElement = document.activeElement;
+      if (activeElement?.closest('[data-keyboard-overlay]')) return 'overlay';
+      if (document.querySelector('[data-keyboard-overlay]')) return 'overlay';
+      return 'page';
+    };
+
+    const setKeyboardClosed = (availableHeight = window.innerHeight) => {
+      mockKeyboardActive = false;
+      document.documentElement.style.setProperty('--keyboard-height', '0px');
+      document.documentElement.style.setProperty('--keyboard-offset', '0px');
+      document.documentElement.style.setProperty('--keyboard-available-height', '100dvh');
+      delete document.body.dataset.keyboardOpen;
+      delete document.body.dataset.keyboardContext;
+      setState({ open: false, height: 0, availableHeight });
+    };
+
+    const handleMockKeyboardChange = (event: Event) => {
+      const detail = (event as CustomEvent<MockKeyboardChangeDetail>).detail;
+      const keyboardHeight = Math.max(0, detail?.heightPx ?? 0);
+      const viewportHeight = Math.max(0, detail?.viewportHeightPx ?? window.innerHeight);
+
+      if (!detail?.visible || keyboardHeight === 0) {
+        setKeyboardClosed(viewportHeight);
+        return;
+      }
+
+      mockKeyboardActive = true;
+      const availableHeight = Math.max(240, viewportHeight - keyboardHeight);
+      document.documentElement.style.setProperty('--keyboard-height', `${keyboardHeight}px`);
+      document.documentElement.style.setProperty('--keyboard-offset', `${Math.round(keyboardHeight / -2)}px`);
+      document.documentElement.style.setProperty('--keyboard-available-height', `${Math.round(availableHeight)}px`);
+      document.body.dataset.keyboardOpen = 'true';
+      document.body.dataset.keyboardContext = getKeyboardContext();
+      setState({ open: true, height: keyboardHeight, availableHeight });
+    };
+
+    window.addEventListener('mockkeyboardchange', handleMockKeyboardChange);
+
+    return () => {
+      window.removeEventListener('mockkeyboardchange', handleMockKeyboardChange);
+      if (mockKeyboardActive) setKeyboardClosed();
+    };
+  }, [setState]);
+}
+
 export function KeyboardProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<KeyboardState>(DEFAULT_KEYBOARD_STATE);
   useNativeKeyboardController(setState);
+  useWebMockKeyboardController(setState);
   const value = useMemo(() => state, [state]);
   return <KeyboardContext.Provider value={value}>{children}</KeyboardContext.Provider>;
 }

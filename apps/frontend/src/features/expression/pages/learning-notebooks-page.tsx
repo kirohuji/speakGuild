@@ -268,7 +268,7 @@ export function LearningNotebooksPage() {
       )}
 
       <Drawer open={mode !== null} onOpenChange={(open) => !open && setMode(null)}>
-        <DrawerContent className="rounded-t-[28px]">
+        <DrawerContent className="rounded-t-[28px] border-border drawer-surface">
           {(mode === 'create' || mode === 'rename') && (
             <>
               <DrawerHeader className="text-left">
@@ -290,11 +290,13 @@ export function LearningNotebooksPage() {
                   }}
                 />
               </div>
-              <DrawerFooter className="pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-                <Button onClick={() => void submitName()} disabled={submitting}>
+              <DrawerFooter className="flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+                <Button variant="outline" className="flex-1" onClick={() => setMode(null)}>
+                  {t('learningNotebooks.cancel')}
+                </Button>
+                <Button className="flex-1" onClick={() => void submitName()} disabled={submitting}>
                   {mode === 'create' ? t('learningNotebooks.create') : t('learningNotebooks.save')}
                 </Button>
-                <Button variant="outline" onClick={() => setMode(null)}>{t('learningNotebooks.cancel')}</Button>
               </DrawerFooter>
             </>
           )}
@@ -321,7 +323,7 @@ export function LearningNotebooksPage() {
                   {t('learningNotebooks.deleteAction')}
                 </Button>
               </div>
-              <DrawerFooter className="pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+              <DrawerFooter className="bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
                 <Button variant="outline" onClick={() => setMode(null)}>{t('learningNotebooks.cancel')}</Button>
               </DrawerFooter>
             </>
@@ -335,11 +337,13 @@ export function LearningNotebooksPage() {
                   {t('learningNotebooks.deleteDescription')}
                 </DrawerDescription>
               </DrawerHeader>
-              <DrawerFooter className="pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-                <Button variant="destructive" onClick={() => void removeNotebook()} disabled={submitting}>
+              <DrawerFooter className="flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+                <Button variant="outline" className="flex-1" onClick={() => setMode('manage')}>
+                  {t('learningNotebooks.cancel')}
+                </Button>
+                <Button variant="destructive" className="flex-1" onClick={() => void removeNotebook()} disabled={submitting}>
                   {t('learningNotebooks.deleteAction')}
                 </Button>
-                <Button variant="outline" onClick={() => setMode('manage')}>{t('learningNotebooks.cancel')}</Button>
               </DrawerFooter>
             </>
           )}

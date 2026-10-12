@@ -107,7 +107,7 @@ export function SaveToNotebookDrawer({
     <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
       <DrawerContent
         overlayClassName="!z-[10001]"
-        className="!z-[10002] flex max-h-[86svh] flex-col rounded-t-[28px] border-border/70 bg-background shadow-[0_-18px_52px_rgba(15,23,42,0.18)] drawer-surface dark:shadow-[0_-20px_56px_rgba(0,0,0,0.46)]"
+        className="!z-[10002] flex max-h-[86svh] flex-col rounded-t-[28px] border-border bg-background drawer-surface"
       >
         <DrawerHeader className="shrink-0 px-4 pb-2 pt-2 text-left">
           <DrawerTitle>{creating ? t('learningNotebooks.createNew') : t('learningNotebooks.saveTo')}</DrawerTitle>
@@ -140,8 +140,8 @@ export function SaveToNotebookDrawer({
                     type="button"
                     onClick={() => toggle(notebook.id)}
                     className={cn(
-                      'flex min-h-14 items-center gap-3 rounded-xl border px-3 text-left shadow-sm transition-colors',
-                      checked ? 'border-primary/80 bg-primary/5 shadow-primary/5' : 'border-border/80 bg-background/70',
+                      'flex min-h-14 items-center gap-3 rounded-xl px-3 text-left transition-colors',
+                      checked ? 'bg-primary/5' : 'bg-muted/40',
                     )}
                   >
                     <span className={cn(
@@ -170,18 +170,24 @@ export function SaveToNotebookDrawer({
           </div>
         )}
 
-        <DrawerFooter className="shrink-0 border-t border-border/60 bg-background/80 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3">
+        <DrawerFooter className="shrink-0 flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3">
           {creating ? (
             <>
-              <Button onClick={() => void createNotebook()} disabled={submitting}>{t('learningNotebooks.createAndSelect')}</Button>
-              <Button variant="outline" onClick={() => setCreating(false)}>{t('learningNotebooks.back')}</Button>
+              <Button variant="outline" className="flex-1" onClick={() => setCreating(false)}>
+                {t('learningNotebooks.back')}
+              </Button>
+              <Button className="flex-1" onClick={() => void createNotebook()} disabled={submitting}>
+                {t('learningNotebooks.createAndSelect')}
+              </Button>
             </>
           ) : (
             <>
-              <Button onClick={() => void save()} disabled={submitting}>
+              <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+                {t('learningNotebooks.cancel')}
+              </Button>
+              <Button className="flex-1" onClick={() => void save()} disabled={submitting}>
                 {selectedIds.length === 0 ? t('learningNotebooks.saveUncategorized') : t('learningNotebooks.save')}
               </Button>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>{t('learningNotebooks.cancel')}</Button>
             </>
           )}
         </DrawerFooter>

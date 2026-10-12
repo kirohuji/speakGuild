@@ -1033,7 +1033,7 @@ export function ExpressionLibraryPage() {
       </Dialog>
 
       <Drawer open={batchOpen} onOpenChange={(open) => { setBatchOpen(open); if (!open) setBatchCreatingNotebook(false) }}>
-        <DrawerContent className="max-h-[86svh] rounded-t-[28px]">
+        <DrawerContent className="max-h-[86svh] rounded-t-[28px] border-border drawer-surface">
           <DrawerHeader className="text-left"><DrawerTitle>{t('expressionLib.batchEdit')}</DrawerTitle><DrawerDescription>{t('expressionLib.selectedCount', { count: selectedNotebookItemIds.length })}</DrawerDescription></DrawerHeader>
           {!batchAction ? (
             <div className="grid gap-2 px-4">
@@ -1054,7 +1054,7 @@ export function ExpressionLibraryPage() {
               <div className="flex flex-col gap-2">
                 {notebooks.map((notebook) => {
                   const checked = targetNotebookId === notebook.id
-                  return <button key={notebook.id} type="button" onClick={() => setTargetNotebookId(notebook.id)} className={cn('flex min-h-14 items-center gap-3 rounded-xl border px-3 text-left transition-colors', checked ? 'border-primary bg-primary/5' : 'border-border bg-card')}>
+                  return <button key={notebook.id} type="button" onClick={() => setTargetNotebookId(notebook.id)} className={cn('flex min-h-14 items-center gap-3 rounded-xl px-3 text-left transition-colors', checked ? 'bg-primary/5' : 'bg-muted/40')}>
                     <span className={cn('flex size-5 shrink-0 items-center justify-center rounded-md border', checked ? 'border-primary bg-primary text-primary-foreground' : 'border-border')}>
                       {checked && <Check className="size-3.5" />}
                     </span>
@@ -1068,10 +1068,24 @@ export function ExpressionLibraryPage() {
               </div>
             </div>
           )}
-          <DrawerFooter className="pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-            {batchAction && (batchAction !== 'notebook' || !batchCreatingNotebook) && <Button onClick={() => void applyBatch()} disabled={batchBusy || (batchAction === 'notebook' && !targetNotebookId)}>{t('expressionLib.apply')}</Button>}
-            {batchAction === 'notebook' && batchCreatingNotebook && <Button onClick={() => void createBatchNotebook()} disabled={batchBusy}>{t('learningNotebooks.createAndSelect')}</Button>}
-            <Button variant="outline" onClick={() => batchCreatingNotebook ? setBatchCreatingNotebook(false) : batchAction ? setBatchAction(null) : setBatchOpen(false)}>{batchCreatingNotebook || batchAction ? t('learningNotebooks.back') : t('learningNotebooks.cancel')}</Button>
+          <DrawerFooter className="flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => batchCreatingNotebook ? setBatchCreatingNotebook(false) : batchAction ? setBatchAction(null) : setBatchOpen(false)}
+            >
+              {batchCreatingNotebook || batchAction ? t('learningNotebooks.back') : t('learningNotebooks.cancel')}
+            </Button>
+            {batchAction && (batchAction !== 'notebook' || !batchCreatingNotebook) && (
+              <Button className="flex-1" onClick={() => void applyBatch()} disabled={batchBusy || (batchAction === 'notebook' && !targetNotebookId)}>
+                {t('expressionLib.apply')}
+              </Button>
+            )}
+            {batchAction === 'notebook' && batchCreatingNotebook && (
+              <Button className="flex-1" onClick={() => void createBatchNotebook()} disabled={batchBusy}>
+                {t('learningNotebooks.createAndSelect')}
+              </Button>
+            )}
           </DrawerFooter>
         </DrawerContent>
       </Drawer>

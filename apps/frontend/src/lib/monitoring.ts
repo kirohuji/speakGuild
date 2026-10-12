@@ -13,6 +13,9 @@ type ClientErrorPayload = {
   userAgent: string
 }
 
+/** 暂时关闭 Sentry；恢复监控时改为 false */
+const SENTRY_TEMPORARILY_DISABLED = true
+
 let installed = false
 let sentryEnabled = false
 const sentRecently = new Map<string, number>()
@@ -71,7 +74,7 @@ export function installMonitoring() {
   installed = true
 
   const dsn = import.meta.env.VITE_SENTRY_DSN
-  if (dsn) {
+  if (dsn && !SENTRY_TEMPORARILY_DISABLED) {
     Sentry.init(
       {
         dsn,

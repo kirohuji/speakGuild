@@ -228,6 +228,14 @@ async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
       updatedAt: toIsoString(item.updatedAt) ?? new Date().toISOString(),
       syncStatus: 'synced',
     })
+    // 收藏时会先写入 local: 临时关联；远程条目到位后清掉同本同内容的临时副本，避免列表双份显示。
+    await localDb.deleteWhere<any>(
+      'learning_notebook_items',
+      (row) =>
+        row.notebookId === item.notebookId
+        && row.expressionEntryId === expression.id
+        && String(row.id).startsWith('local:'),
+    )
   }
 
   for (const item of changed?.sceneProgresses ?? []) {

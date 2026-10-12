@@ -123,14 +123,42 @@ export const learningNotebookRepository = {
     ])
     const entriesById = new Map(entries.map((entry) => [entry.id, entry]))
     const status = request.reviewState
-    const rows = notebookItems
-      .filter((item) => item.notebookId === request.notebookId)
-      .filter((item) => {
-        if (!status) return true
-        return status === 'learning'
+
+    // 同一学习本 + 同一内容可能同时存在 local: 临时行和远程同步行；列表只保留一条（优先远程）。
+    const uniqueItems = new Map<string, CachedNotebookItem>()
+    for (const item of notebookItems) {
+      if (item.notebookId !== request.notebookId) continue
+      if (status) {
+        const matches = status === 'learning'
           ? item.masteryStatus === 'learning' || item.masteryStatus === 'activated'
           : item.masteryStatus === status
+        if (!matches) continue
+      }
+      const key = item.expressionEntryId
+      const existing = uniqueItems.get(key)
+      if (!existing) {
+        uniqueItems.set(key, item)
+        continue
+      }
+      const existingLocal = String(existing.id).startsWith('local:')
+      const nextLocal = String(item.id).startsWith('local:')
+      if (existingLocal && !nextLocal) uniqueItems.set(key, item)
+    }
+
+    // 顺手清掉已被远程条目取代的 local: 脏数据，避免下次再撞上。
+    const staleLocalIds = notebookItems
+      .filter((item) => {
+        if (item.notebookId !== request.notebookId) return false
+        if (!String(item.id).startsWith('local:')) return false
+        const kept = uniqueItems.get(item.expressionEntryId)
+        return Boolean(kept && kept.id !== item.id)
       })
+      .map((item) => item.id)
+    if (staleLocalIds.length > 0) {
+      await Promise.all(staleLocalIds.map((id) => localDb.delete('learning_notebook_items', id)))
+    }
+
+    const rows = [...uniqueItems.values()]
       .map((item) => {
         const entry = entriesById.get(item.expressionEntryId)
         if (!entry || !matchesLocalExpression(entry, request)) return null
