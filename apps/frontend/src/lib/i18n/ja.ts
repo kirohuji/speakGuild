@@ -950,6 +950,7 @@ const ja = {
       exportPreviewDescription: '実際の印刷レイアウトを確認してから、右上の印刷を押します。',
       print: '印刷',
       loadingPreview: 'プレビューを準備中…',
+      zoomPreview: 'タップして拡大',
       pdfPages: 'ページ数',
       pdfItems: '練習内容',
       pdfWords: '単語数',

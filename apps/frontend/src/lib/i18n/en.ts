@@ -950,6 +950,7 @@ const en = {
       exportPreviewDescription: 'Preview the printed sheet, then use the Print button in the top right.',
       print: 'Print',
       loadingPreview: 'Preparing preview…',
+      zoomPreview: 'Tap to enlarge preview',
       pdfPages: 'Pages',
       pdfItems: 'Practice items',
       pdfWords: 'Words',

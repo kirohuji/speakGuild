@@ -942,6 +942,7 @@ const zhCN = {
       exportPreviewDescription: '预览实际打印效果，确认后点击右上角打印。',
       print: '打印',
       loadingPreview: '正在生成预览…',
+      zoomPreview: '点击放大预览',
       pdfPages: '总页数',
       pdfItems: '练习内容',
       pdfWords: '单词数',

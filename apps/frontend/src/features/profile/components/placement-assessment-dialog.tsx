@@ -398,11 +398,11 @@ export function AssessmentAnswerInput({
               type="button"
               disabled={isProcessing}
               onClick={handlePlayback}
-              className="order-3 mb-1.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-45"
+              className="order-3 flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-45"
               aria-label={isPlaying ? t('vnSettings.pausePlayback') : t('vnSettings.playbackRecording')}
               title={isPlaying ? t('vnSettings.pausePlayback') : t('vnSettings.playbackRecording')}
             >
-              {isPlaying ? <Pause className="size-4" /> : <Play className="ml-0.5 size-4" />}
+              {isPlaying ? <Pause className="size-5" /> : <Play className="ml-0.5 size-5" />}
             </button>
           )}
           {!readOnly && <button
@@ -423,7 +423,7 @@ export function AssessmentAnswerInput({
             {isProcessing ? (
               <Loader2 className="size-5 animate-spin" />
             ) : isRecording ? (
-              <Square className="size-4 fill-current" />
+              <Square className="size-5 fill-current" />
             ) : (
               <Mic className="size-5" />
             )}

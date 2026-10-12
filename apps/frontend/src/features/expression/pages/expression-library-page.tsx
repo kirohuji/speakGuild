@@ -32,10 +32,15 @@ import { Switch } from '@/components/ui/switch'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Virtuoso } from 'react-virtuoso'
-import { jsPDF } from 'jspdf'
-import html2canvas from 'html2canvas'
 import { Directory, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
+import {
+  PracticeSheetPage,
+  PracticeSheetPreviewFrame,
+  buildPracticeSheetPdfBlob,
+  practiceSheetItemsPerPage,
+  type PracticeSheetExportMode,
+} from '@/features/expression/components/practice-sheet-export'
 
 type LibraryTab = 'words' | 'chunk' | 'pattern'
 type LibraryReviewState = MasteryStatus | 'all'
@@ -69,39 +74,7 @@ interface PageResult {
 
 const PAGE_SIZE = 30
 
-type ExportMode = 'zh-to-en' | 'en-to-zh' | 'bilingual'
-
-function escapeHtml(value: string) {
-  return value.replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]!))
-}
-
-function printPracticeSheet(popup: Window, name: string, items: Expression[], mode: ExportMode, modeLabel: string, hint: string, countLabel: string, labels: { english: string; chinese: string; answer: string; date: string }, date: string) {
-  const title = `${name} · ${modeLabel}`
-  const itemsPerPage = mode === 'bilingual' ? 9 : 12
-  const pages = Array.from({ length: Math.max(1, Math.ceil(items.length / itemsPerPage)) }, (_, index) => items.slice(index * itemsPerPage, (index + 1) * itemsPerPage))
-  const table = (tableItems: Expression[], offset: number, bilingualColumn?: 'english' | 'chinese') => {
-    const firstLabel = bilingualColumn === 'chinese' || mode === 'zh-to-en' ? labels.chinese : labels.english
-    const rows = tableItems.map((item, index) => {
-      const english = item.type === 'word' ? (item.original ?? '') : (item.chunkText ?? item.corrected ?? '')
-      const chinese = item.type === 'word' ? (item.vocabulary?.meaning ?? item.corrected ?? '') : (item.original ?? '')
-      const prompt = bilingualColumn === 'chinese' || mode === 'zh-to-en' ? chinese : english
-      return `<tr><td>${offset + index + 1}</td><td>${escapeHtml(prompt || english)}</td><td></td><td>□</td></tr>`
-    }).join('')
-    return `<table><thead><tr><th>#</th><th>${escapeHtml(firstLabel)}</th><th>${escapeHtml(labels.answer)}</th><th>□</th></tr></thead><tbody>${rows}</tbody></table>`
-  }
-  const pagesHtml = pages.map((pageItems, index) => {
-    const offset = index * itemsPerPage
-    const tables = mode === 'bilingual'
-      ? `<div class="two-columns">${table(pageItems.slice(0, Math.ceil(pageItems.length / 2)), offset, 'english')}${table(pageItems.slice(Math.ceil(pageItems.length / 2)), offset + Math.ceil(pageItems.length / 2), 'chinese')}</div>`
-      : table(pageItems, offset)
-    return `<section class="page"><header><span class="date">${escapeHtml(labels.date)}: ${escapeHtml(date)}</span><h1>${escapeHtml(title)}</h1><p>${escapeHtml(countLabel)} · ${escapeHtml(hint)}</p></header>${tables}<footer>${index + 1} / ${pages.length}</footer></section>`
-  }).join('')
-  popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>
-    @page { size: A4; margin: 14mm; } * { box-sizing:border-box; } body { color:#000; background:#fff; font-family: "PingFang SC", "Noto Sans SC", sans-serif; } .page { min-height:267mm; break-after:page; } .page:last-child { break-after:auto; } header { position:relative; border:1px solid #000; padding:16px 18px; color:#000; background:#fff; margin-bottom:18px; } h1{text-align:center;font-size:20px;margin:0 0 5px} header p{margin:0;text-align:center;font-size:12px}.date{position:absolute;right:18px;top:18px;font-size:10px}.two-columns{display:grid;grid-template-columns:1fr 1fr;gap:8px}table{width:100%;border-collapse:collapse;font-size:10px}th{background:#fee2d5;text-align:left;font-weight:700}th,td{border:1px solid #fed7c3;padding:6px 5px;height:24px}th:first-child,td:first-child,th:last-child,td:last-child{text-align:center;width:24px}footer{margin-top:16px;border-top:1px solid #d1d5db;padding-top:6px;text-align:right;font-size:10px;color:#444}</style></head><body>${pagesHtml}</body></html>`)
-  popup.document.close()
-  popup.focus()
-  window.setTimeout(() => popup.print(), 250)
-}
+type ExportMode = PracticeSheetExportMode
 
 export function ExpressionLibraryPage() {
   const { t, i18n } = useTranslation()
@@ -149,13 +122,15 @@ export function ExpressionLibraryPage() {
   const [shuffleExport, setShuffleExport] = useState(false)
   const [exportDate, setExportDate] = useState(() => localDateKey())
   const [exportColumns, setExportColumns] = useState<1 | 2>(2)
+  const [zoomPreviewPage, setZoomPreviewPage] = useState<number | null>(null)
   const [handledDeepLink, setHandledDeepLink] = useState('')
   const tabSwipeRef = useRef({ x: 0, y: 0, blocked: false })
-  const exportPageRefs = useRef(new Map<number, HTMLElement>())
   const listScrollTopRef = useRef(0)
   const headerScrollIntentRef = useRef({ down: 0, up: 0 })
   const [headerCondensed, setHeaderCondensed] = useState(false)
-  const exportItemsPerPage = exportColumns === 2 ? 40 : 20
+  const exportItemsPerPage = practiceSheetItemsPerPage(exportColumns)
+  const exportThumbScale = isMobile ? 0.34 : 0.42
+  const exportZoomScale = isMobile ? 0.72 : 0.92
   const displayExportItems = useMemo(() => {
     if (!shuffleExport) return exportItems
     return exportItems.map((item) => ({ item, order: Math.random() })).sort((a, b) => a.order - b.order).map(({ item }) => item)
@@ -540,38 +515,52 @@ export function ExpressionLibraryPage() {
   }, [localListRequest, notebookId, t])
 
   const printExportPreview = useCallback(async () => {
-    if (!exportPageRefs.current.size || !displayExportItems.length) return
+    if (!displayExportItems.length) return
     try {
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-      for (let pageIndex = 0; pageIndex < exportPages.length; pageIndex += 1) {
-        const page = exportPageRefs.current.get(pageIndex)
-        if (!page) continue
-        const clone = page.cloneNode(true) as HTMLElement
-        clone.style.position = 'fixed'
-        clone.style.left = '0'
-        clone.style.top = '0'
-        clone.style.transform = 'none'
-        clone.style.transformOrigin = 'top left'
-        clone.style.zIndex = '-1'
-        document.body.appendChild(clone)
-        if (pageIndex > 0) pdf.addPage('a4', 'portrait')
-        const canvas = await html2canvas(clone, { scale: 2, backgroundColor: '#ffffff', useCORS: true, width: clone.offsetWidth, height: clone.offsetHeight })
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297)
-        clone.remove()
-      }
+      const modeTitle = exportMode === 'zh-to-en'
+        ? t('expressionLib.chineseList')
+        : exportMode === 'en-to-zh'
+          ? t('expressionLib.englishList')
+          : t('expressionLib.bilingualList')
+      const blob = await buildPracticeSheetPdfBlob({
+        items: displayExportItems,
+        columns: exportColumns,
+        mode: exportMode,
+        notebookName,
+        modeTitle,
+        hint: t('expressionLib.practiceSheetHint'),
+        dateValue: exportDate,
+        labels: {
+          bilingual: t('expressionLib.tableBilingual'),
+          english: t('expressionLib.tableEnglish'),
+          chinese: t('expressionLib.tableChinese'),
+          answer: t('expressionLib.tableAnswer'),
+          date: t('expressionLib.date'),
+        },
+        pageNumber: (current, total) => t('expressionLib.pdfPageNumber', { current, total }),
+      })
       const filename = `${notebookName}-${exportDate}.pdf`
       if (isNative()) {
-        const data = pdf.output('datauristring').split(',')[1]
+        const buffer = await blob.arrayBuffer()
+        const bytes = new Uint8Array(buffer)
+        let binary = ''
+        for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]!)
+        const data = btoa(binary)
         const file = await Filesystem.writeFile({ path: `exports/${filename}`, data, directory: Directory.Cache, recursive: true })
         await Share.share({ title: notebookName, url: file.uri, dialogTitle: t('expressionLib.exportPdfAction') })
       } else {
-        pdf.save(filename)
+        const url = URL.createObjectURL(blob)
+        const anchor = document.createElement('a')
+        anchor.href = url
+        anchor.download = filename
+        anchor.click()
+        URL.revokeObjectURL(url)
       }
     } catch (error) {
       console.warn('[expression-library] PDF export failed', error)
       toast.error(t('expressionLib.operationFailed'))
     }
-  }, [displayExportItems.length, exportDate, exportPages.length, notebookName, t])
+  }, [displayExportItems, exportColumns, exportDate, exportMode, notebookName, t])
 
   // ---- 二级状态过滤 ----
   const filterPills = [
@@ -975,39 +964,61 @@ export function ExpressionLibraryPage() {
         <Button size="sm" className="h-9 shrink-0 rounded-xl px-3 text-xs" disabled={selectedIds.size === 0} onClick={() => void openBatch()}>{t('expressionLib.batchEdit')}</Button>
       </div>}
 
-      <Dialog open={exportOpen} onOpenChange={setExportOpen}>
-        <DialogContent className="[&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-background p-0 text-foreground sm:h-[92svh] sm:max-w-3xl sm:rounded-2xl sm:border sm:border-border/60">
+      <Dialog open={exportOpen} onOpenChange={(open) => { setExportOpen(open); if (!open) setZoomPreviewPage(null) }}>
+        <DialogContent className="[&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-background p-0 text-foreground sm:h-[92svh] sm:max-w-5xl sm:rounded-2xl sm:border sm:border-border/60">
           <DialogTitle className="sr-only">{t('expressionLib.exportPdf')}</DialogTitle>
-          <div className="min-h-0 flex-1 overflow-y-auto bg-muted/25 px-6 pb-5 pt-[calc(4.5rem+env(safe-area-inset-top,0px))] sm:px-8 sm:pt-5">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-muted/25 px-4 pb-5 pt-[calc(4.5rem+env(safe-area-inset-top,0px))] sm:px-8 sm:pt-5">
             {exportLoading ? <div className="flex h-full min-h-64 items-center justify-center text-sm text-muted-foreground"><Loader2 className="mr-2 size-4 animate-spin" />{t('expressionLib.loadingPreview')}</div> : (
-              <div className="mx-auto flex w-full max-w-[500px] flex-col gap-4">
+              <div className="mx-auto flex w-full max-w-[680px] flex-col gap-4">
                 <div className="grid grid-cols-3 divide-x divide-border/70 rounded-xl border border-border/70 bg-background text-center text-xs text-foreground">
                   <div className="py-2"><span className="block text-[10px] text-muted-foreground">{t('expressionLib.pdfPages')}</span><strong>{t('expressionLib.pdfPagesCount', { count: exportPages.length })}</strong></div>
                   <div className="py-2"><span className="block text-[10px] text-muted-foreground">{t('expressionLib.pdfItems')}</span><strong>{t('expressionLib.practiceSheetCount', { count: displayExportItems.length })}</strong></div>
                   <div className="py-2"><span className="block text-[10px] text-muted-foreground">{t('expressionLib.pdfWords')}</span><strong>{t('expressionLib.pdfWordsCount', { count: exportWordCount })}</strong></div>
                 </div>
-                {exportPages.map((pageItems, pageIndex) => <div key={pageIndex} className="mx-auto h-[449px] w-[318px] sm:h-[618px] sm:w-[436px]">
-                  <article ref={(node) => { if (node) exportPageRefs.current.set(pageIndex, node); else exportPageRefs.current.delete(pageIndex) }} className="h-[297mm] w-[210mm] origin-top-left scale-[0.4] overflow-hidden rounded-xl bg-white px-5 py-5 text-black shadow-[0_8px_22px_rgba(15,23,42,0.05)] sm:scale-[0.55] sm:px-8">
-                  <header className="relative mb-3 border-b border-black/15 px-1 pb-2 text-center">
-                    <h2 className="mx-20 text-sm font-semibold">{notebookName} · {exportMode === 'zh-to-en' ? t('expressionLib.chineseList') : exportMode === 'en-to-zh' ? t('expressionLib.englishList') : t('expressionLib.bilingualList')}</h2>
-                    <p className="mt-0.5 text-[10px] text-black/70">{t('expressionLib.practiceSheetHint')}</p>
-                    <label className="absolute right-0 top-0 flex items-center gap-1 text-[9px] text-black/60"><span>{t('expressionLib.date')}</span><input type="date" value={exportDate} onChange={(event) => setExportDate(event.target.value)} className="h-5 w-[82px] border-0 bg-transparent p-0 text-[8px] text-black outline-none" /></label>
-                  </header>
-                  <div className={cn('grid gap-2', exportColumns === 2 && 'grid-cols-2')}>
-                    {(exportColumns === 2 ? [pageItems.slice(0, Math.ceil(pageItems.length / 2)), pageItems.slice(Math.ceil(pageItems.length / 2))] : [pageItems]).map((tableItems, tableIndex) => <table key={tableIndex} className="w-full table-fixed border-collapse text-[8px]">
-                      <thead className="bg-orange-100"><tr><th className="w-5 border border-orange-200 py-1 text-center">#</th><th className="border border-orange-200 px-1 text-left">{exportMode === 'bilingual' ? (exportColumns === 1 ? t('expressionLib.tableBilingual') : tableIndex === 0 ? t('expressionLib.tableEnglish') : t('expressionLib.tableChinese')) : exportMode === 'zh-to-en' ? t('expressionLib.tableChinese') : t('expressionLib.tableEnglish')}</th><th className="w-[42%] border border-orange-200 px-1 text-left">{t('expressionLib.tableAnswer')}</th><th className="w-5 border border-orange-200 text-center">□</th></tr></thead>
-                      <tbody>{tableItems.map((item, index) => {
-                        const absoluteIndex = pageIndex * exportItemsPerPage + (tableIndex === 0 ? index : Math.ceil(pageItems.length / 2) + index)
-                        const english = item.type === 'word' ? (item.original ?? '') : (item.chunkText ?? item.corrected ?? '')
-                        const chinese = item.type === 'word' ? (item.vocabulary?.meaning ?? item.corrected ?? '') : (item.original ?? '')
-                        const prompt = exportMode === 'bilingual' ? (exportColumns === 1 ? `${english} · ${chinese}` : tableIndex === 0 ? english : chinese) : exportMode === 'zh-to-en' ? chinese : english
-                        return <tr key={item.id} className="h-6"><td className="border border-orange-100 text-center text-black/55">{absoluteIndex + 1}</td><td className="border border-orange-100 px-1 font-medium">{prompt || english}</td><td className="border border-orange-100 px-1" /><td className="border border-orange-100 text-center text-black/55">□</td></tr>
-                      })}</tbody>
-                    </table>)}
-                  </div>
-                  <footer className="mt-3 pt-1.5 text-right text-[9px] text-black/60">{t('expressionLib.pdfPageNumber', { current: pageIndex + 1, total: exportPages.length })}</footer>
-                  </article>
-                </div>)}
+                <p className="text-center text-xs text-muted-foreground">{t('expressionLib.zoomPreview')}</p>
+                {exportPages.map((pageItems, pageIndex) => {
+                  const modeTitle = exportMode === 'zh-to-en'
+                    ? t('expressionLib.chineseList')
+                    : exportMode === 'en-to-zh'
+                      ? t('expressionLib.englishList')
+                      : t('expressionLib.bilingualList')
+
+                  return (
+                    <div key={pageIndex} className="relative mx-auto w-fit">
+                      <PracticeSheetPreviewFrame scale={exportThumbScale}>
+                        <PracticeSheetPage
+                          pageItems={pageItems}
+                          pageIndex={pageIndex}
+                          itemsPerPage={exportItemsPerPage}
+                          columns={exportColumns}
+                          mode={exportMode}
+                          notebookName={notebookName}
+                          modeTitle={modeTitle}
+                          hint={t('expressionLib.practiceSheetHint')}
+                          dateLabel={t('expressionLib.date')}
+                          dateValue={exportDate}
+                          onDateChange={setExportDate}
+                          pageNumber={t('expressionLib.pdfPageNumber', { current: pageIndex + 1, total: exportPages.length })}
+                          labels={{
+                            bilingual: t('expressionLib.tableBilingual'),
+                            english: t('expressionLib.tableEnglish'),
+                            chinese: t('expressionLib.tableChinese'),
+                            answer: t('expressionLib.tableAnswer'),
+                          }}
+                        />
+                      </PracticeSheetPreviewFrame>
+                      <button
+                        type="button"
+                        className="absolute inset-0 z-10 rounded-xl bg-transparent"
+                        onClick={() => setZoomPreviewPage(pageIndex)}
+                        aria-label={t('expressionLib.zoomPreview')}
+                      />
+                      <span className="pointer-events-none absolute bottom-3 right-3 z-20 flex size-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm ring-1 ring-border/60">
+                        <Expand className="size-4" />
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -1028,6 +1039,40 @@ export function ExpressionLibraryPage() {
               <Switch checked={shuffleExport} onCheckedChange={setShuffleExport} />
             </div>
             <Button className="mt-3 h-12 w-full rounded-xl text-base font-semibold" onClick={printExportPreview} disabled={exportLoading || displayExportItems.length === 0}>{t('expressionLib.exportPdfAction')}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={zoomPreviewPage !== null} onOpenChange={(open) => { if (!open) setZoomPreviewPage(null) }}>
+        <DialogContent className="[&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-background p-0 text-foreground sm:h-[94svh] sm:max-w-6xl sm:rounded-2xl sm:border sm:border-border/60">
+          <DialogTitle className="sr-only">{t('expressionLib.zoomPreview')}</DialogTitle>
+          <div className="min-h-0 flex-1 overflow-auto bg-muted/30 px-3 pb-5 pt-[calc(4rem+env(safe-area-inset-top,0px))] sm:px-6 sm:pt-5">
+            {zoomPreviewPage !== null && exportPages[zoomPreviewPage] && (
+              <div className="mx-auto w-fit">
+                <PracticeSheetPreviewFrame scale={exportZoomScale}>
+                  <PracticeSheetPage
+                    pageItems={exportPages[zoomPreviewPage]!}
+                    pageIndex={zoomPreviewPage}
+                    itemsPerPage={exportItemsPerPage}
+                    columns={exportColumns}
+                    mode={exportMode}
+                    notebookName={notebookName}
+                    modeTitle={exportMode === 'zh-to-en' ? t('expressionLib.chineseList') : exportMode === 'en-to-zh' ? t('expressionLib.englishList') : t('expressionLib.bilingualList')}
+                    hint={t('expressionLib.practiceSheetHint')}
+                    dateLabel={t('expressionLib.date')}
+                    dateValue={exportDate}
+                    onDateChange={setExportDate}
+                    pageNumber={t('expressionLib.pdfPageNumber', { current: zoomPreviewPage + 1, total: exportPages.length })}
+                    labels={{
+                      bilingual: t('expressionLib.tableBilingual'),
+                      english: t('expressionLib.tableEnglish'),
+                      chinese: t('expressionLib.tableChinese'),
+                      answer: t('expressionLib.tableAnswer'),
+                    }}
+                  />
+                </PracticeSheetPreviewFrame>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

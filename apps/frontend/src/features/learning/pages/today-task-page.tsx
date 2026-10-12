@@ -38,8 +38,6 @@ import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { localDateKey } from '@/lib/date/calendar-date'
-import { getLatestLearningPackDownloadFailure, type LearningPackDownloadDiagnostic } from '@/lib/offline/learning-pack-diagnostics'
-
 // ── 类型 ──
 type SimplePromptItem = { zh?: string; en?: string; answer?: string; hint?: string; imageUrl?: string; audioUrl?: string; audioAssetId?: string }
 type VocabPromptItem = {
@@ -257,8 +255,6 @@ export function TodayTaskPage() {
   const [hasPendingSync, setHasPendingSync] = useState(false)
   // 同步发现今日任务有更新时，询问用户是否立即刷新。
   const [showTodayUpdateDialog, setShowTodayUpdateDialog] = useState(false)
-  const [downloadErrorDetailsOpen, setDownloadErrorDetailsOpen] = useState(false)
-  const [downloadErrorDetails, setDownloadErrorDetails] = useState<LearningPackDownloadDiagnostic | null>(null)
   // 任意一次同步完成（登录 / 自动 / 手动 / 其他页面）都会更新该时间戳。
   const lastSyncedAt = useOfflineSyncStore((s) => s.lastSyncedAt)
   const todayState = useTodayPracticeStore()
@@ -1766,18 +1762,6 @@ export function TodayTaskPage() {
                           className="origin-right scale-90"
                         />
                       </label>
-                      {isAdmin && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDownloadErrorDetails(getLatestLearningPackDownloadFailure())
-                            setDownloadErrorDetailsOpen(true)
-                          }}
-                          className="rounded-full bg-background/70 px-2 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70 transition-colors hover:bg-background hover:text-foreground"
-                        >
-                          {t('common.viewDetails')}
-                        </button>
-                      )}
                       <button
                         type="button"
                         onClick={closePracticeDrawer}
@@ -1979,20 +1963,6 @@ export function TodayTaskPage() {
               {t('todayTask.todayUpdateNow')}
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={downloadErrorDetailsOpen} onOpenChange={setDownloadErrorDetailsOpen}>
-        <DialogContent className="!z-[10002] w-[calc(100vw-2rem)] max-w-xl rounded-2xl p-5">
-          <DialogTitle className="text-base">{t('todayTask.downloadErrorDetails')}</DialogTitle>
-          <DialogDescription className="mt-1 text-sm leading-5">
-            {t('todayTask.downloadErrorDetailsDesc')}
-          </DialogDescription>
-          <pre className="mt-4 max-h-[60dvh] overflow-auto whitespace-pre-wrap break-all rounded-lg bg-muted/60 p-3 text-[11px] leading-5 text-foreground">
-            {downloadErrorDetails
-              ? JSON.stringify(downloadErrorDetails, null, 2)
-              : t('todayTask.noDownloadErrorDetails')}
-          </pre>
         </DialogContent>
       </Dialog>
 

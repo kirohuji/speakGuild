@@ -258,7 +258,7 @@ export function PracticeAnswerInput({
           {isProcessing ? (
             <Loader2 className="size-5 animate-spin" />
           ) : isRecording ? (
-            <Square className="size-4 fill-current" />
+            <Square className="size-5 fill-current" />
           ) : (
             <Mic className="size-5" />
           )}
@@ -283,11 +283,11 @@ export function PracticeAnswerInput({
           <button
             type="button"
             onClick={togglePlay}
-            className="mb-1.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
+            className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
             aria-label={isPlaying ? t('vnSettings.pausePlayback') : t('vnSettings.playbackRecording')}
             title={isPlaying ? t('vnSettings.pausePlayback') : t('vnSettings.playbackRecording')}
           >
-            {isPlaying ? <Pause className="size-4" /> : <Play className="size-4 ml-0.5" />}
+            {isPlaying ? <Pause className="size-5" /> : <Play className="ml-0.5 size-5" />}
           </button>
         )}
       </div>
