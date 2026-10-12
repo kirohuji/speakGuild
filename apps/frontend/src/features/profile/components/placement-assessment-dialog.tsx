@@ -351,7 +351,11 @@ export function AssessmentAnswerInput({
   })
 
   return (
-    <div className={cn('w-full min-w-0', !hideTextarea && 'rounded-xl bg-background/70 p-1.5 ring-1 ring-border/45 transition-colors focus-within:ring-primary/30')}>
+    <div className={cn(
+      'w-full min-w-0',
+      !hideTextarea && 'relative rounded-xl bg-background/70 p-1.5 ring-1 ring-border/45 transition-colors focus-within:ring-primary/30',
+      disabled && !readOnly && 'opacity-75',
+    )}>
       <audio ref={audioRef} src={playbackUrl ?? undefined} preload="auto" className="hidden" />
       <input
         ref={fileInputRef}
@@ -368,10 +372,13 @@ export function AssessmentAnswerInput({
           aria-label={t('profile.placement.voicePlaceholder')}
           disabled={disabled || isProcessing}
           readOnly={readOnly}
-          className="min-h-[112px] resize-none rounded-lg border-0 bg-transparent px-3 pb-2 pt-3 text-base shadow-none"
+          className="min-h-[112px] resize-none rounded-lg border-0 bg-transparent px-3 pb-[3.75rem] pt-3 text-base shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 md:text-base"
         />
       )}
-      <div className={cn('flex items-end justify-between gap-2', !hideTextarea && 'mt-1')}>
+      <div className={cn(
+        'flex items-end justify-between gap-2',
+        hideTextarea ? 'w-full' : 'absolute inset-x-1.5 bottom-1.5',
+      )}>
         <p
           aria-live="polite"
           className={cn('order-2 min-w-0 flex-1 break-words pb-1 text-xs leading-4 text-muted-foreground', voiceError && 'text-destructive')}

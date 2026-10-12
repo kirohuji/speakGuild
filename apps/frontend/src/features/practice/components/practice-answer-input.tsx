@@ -219,7 +219,6 @@ export function PracticeAnswerInput({
     status: voiceStatus,
     elapsed,
     error: voiceError,
-    idleText: placeholder,
   })
 
   const togglePlay = useCallback(() => {
@@ -236,16 +235,42 @@ export function PracticeAnswerInput({
 
   return (
     <div className={cn(
-      'mx-1 rounded-xl bg-background/70 ring-1 ring-border/45 transition-colors focus-within:ring-primary/30',
+      'relative mx-1 rounded-xl bg-background/70 ring-1 ring-border/45 transition-colors focus-within:ring-primary/30',
       disabled && !readOnly && 'opacity-75',
     )}>
-      <div className="flex items-end gap-2 p-1.5">
+      <div className="p-1.5">
+        <textarea
+          rows={2}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          aria-label={placeholder}
+          disabled={disabled || isProcessing}
+          readOnly={readOnly}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+              event.preventDefault()
+              onEnter?.()
+            }
+          }}
+          className="block min-h-[112px] w-full resize-none rounded-lg border-0 bg-transparent px-3 pb-[3.75rem] pt-3 text-base leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
+        />
+      </div>
+
+      <div className="absolute inset-x-1.5 bottom-1.5 flex items-end justify-between gap-2">
+        <p
+          aria-live="polite"
+          className={cn('order-2 min-w-0 flex-1 break-words pb-1 text-xs leading-4 text-muted-foreground', voiceError && 'text-destructive')}
+        >
+          {voiceFeedbackText}
+        </p>
+
         {!readOnly && <button
           type="button"
           disabled={disabled || isProcessing}
           onClick={isRecording ? stopRecording : startRecording}
           className={cn(
-            'flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-45',
+            'order-1 flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-45',
             isRecording
               ? 'bg-rose-500 text-white'
               : voiceError
@@ -263,27 +288,12 @@ export function PracticeAnswerInput({
             <Mic className="size-5" />
           )}
         </button>}
-        <textarea
-          rows={2}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={voiceFeedbackText}
-          aria-label={placeholder}
-          disabled={disabled || isProcessing}
-          readOnly={readOnly}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
-              event.preventDefault()
-              onEnter?.()
-            }
-          }}
-          className="block min-h-[52px] min-w-0 flex-1 resize-none bg-transparent py-2 pl-0 pr-1 text-base leading-6 text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
-        />
+
         {playbackUrl && voiceStatus === 'idle' && (
           <button
             type="button"
             onClick={togglePlay}
-            className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
+            className="order-3 flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
             aria-label={isPlaying ? t('vnSettings.pausePlayback') : t('vnSettings.playbackRecording')}
             title={isPlaying ? t('vnSettings.pausePlayback') : t('vnSettings.playbackRecording')}
           >
@@ -291,15 +301,6 @@ export function PracticeAnswerInput({
           </button>
         )}
       </div>
-
-      {(voiceStatus !== 'idle' || voiceError) && (
-        <p
-          aria-live="polite"
-          className={cn('break-words px-3 pb-2 text-xs leading-4 text-muted-foreground', voiceError && 'text-destructive')}
-        >
-          {voiceFeedbackText}
-        </p>
-      )}
 
       {playbackUrl && voiceStatus === 'idle' && (
         // biome-ignore lint/a11y/useMediaCaption: short self-recording replay
