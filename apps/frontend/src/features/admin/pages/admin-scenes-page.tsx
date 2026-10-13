@@ -1708,6 +1708,7 @@ function TrainingTopicDialog({
                   transcript={form.transcript}
                   draftContext={{
                     title: form.title,
+                    description: form.description,
                     promptEn: form.promptEn,
                     promptZh: form.promptZh,
                     difficulty: form.difficulty,

@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { BookOpen, ClipboardCheck, FilePenLine, Headphones, Languages, Loader2, Plus, Sparkles, Target, Trash2, Upload, Play, Pause, Clock, Music, FileAudio, GripVertical, Volume2, Split, ChevronDown } from 'lucide-react'
+import { BookOpen, ClipboardCheck, Download, FilePenLine, Headphones, Languages, Loader2, Plus, Sparkles, Target, Trash2, Upload, Play, Pause, Clock, Music, FileAudio, GripVertical, Volume2, Split, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { Badge } from '@/components/ui/badge'
@@ -37,6 +37,7 @@ type Props = {
   sceneId: string
   draftContext?: {
     title?: string
+    description?: string
     promptEn?: string
     promptZh?: string
     difficulty?: string
@@ -50,6 +51,88 @@ type Props = {
 }
 
 const lines = (value: string) => value.split('\n').map((item) => item.trim()).filter(Boolean)
+
+type DialogueTurn = {
+  aText: string
+  hint: string
+  referenceAnswer?: string
+  referenceExplanation?: string
+  aAudioUrl?: string
+  referenceAudioUrl?: string
+}
+
+const markdownValue = (value?: string) => value?.trim() || '（未填写）'
+
+function buildDialogueMarkdown({
+  title,
+  description,
+  promptEn,
+  promptZh,
+  situation,
+  turns,
+}: {
+  title?: string
+  description?: string
+  promptEn?: string
+  promptZh?: string
+  situation?: string
+  turns: DialogueTurn[]
+}) {
+  const dialogueSections = turns.length
+    ? turns.map((turn, index) => [
+        `### 第 ${index + 1} 轮`,
+        '',
+        '**A 台词**',
+        '',
+        markdownValue(turn.aText),
+        '',
+        '**B 中文提示**',
+        '',
+        markdownValue(turn.hint),
+        '',
+        '**B 参考答案**',
+        '',
+        markdownValue(turn.referenceAnswer),
+        '',
+        '**参考见解**',
+        '',
+        markdownValue(turn.referenceExplanation),
+      ].join('\n')).join('\n\n')
+    : '（暂无对话轮次）'
+
+  return [
+    `# ${markdownValue(title)}`,
+    '',
+    '## 情境描述',
+    '',
+    markdownValue(situation),
+    '',
+    '## 对话轮次',
+    '',
+    dialogueSections,
+    '',
+    '## 话题说明',
+    '',
+    markdownValue(description),
+    '',
+    '### 英文提示',
+    '',
+    markdownValue(promptEn),
+    '',
+    '### 中文提示',
+    '',
+    markdownValue(promptZh),
+    '',
+  ].join('\n')
+}
+
+function safeMarkdownFilename(title?: string) {
+  const safeTitle = title
+    ?.trim()
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '-')
+    .replace(/[. ]+$/g, '')
+  return `${safeTitle || '对话写作题'}.md`
+}
 
 export function TopicExperienceFields({ mode, value, mediaAssetId, transcript, sceneId, draftContext, onApplyDraft, onChange }: Props) {
   if (mode === 'writing') return <WritingFields sceneId={sceneId} context={draftContext} value={value.writing ?? {}} onApplyDraft={onApplyDraft} onChange={(writing) => onChange({ contentConfig: { ...value, writing } })} />
@@ -115,7 +198,7 @@ function WritingFields({
   }
 
   const requirements: string[] = value.requirements ?? []
-  const turns: Array<{ aText: string; hint: string; referenceAnswer?: string; referenceExplanation?: string; aAudioUrl?: string; referenceAudioUrl?: string }> = value.turns ?? []
+  const turns: DialogueTurn[] = value.turns ?? []
   const dialogueAudio = value.dialogueAudio ?? {}
   const ttsBackend = usePreferencesStore((state) => state.ttsBackend)
   const generateEnttsLine = async (text: string, speaker: 'a' | 'b', lineIndex: number) => {
@@ -214,6 +297,26 @@ function WritingFields({
     } finally {
       setGeneratingSupport(false)
     }
+  }
+
+  const exportDialogueMarkdown = () => {
+    const markdown = buildDialogueMarkdown({
+      title: context?.title,
+      description: context?.description,
+      promptEn: context?.promptEn,
+      promptZh: context?.promptZh,
+      situation: value.situation ?? value.purpose,
+      turns,
+    })
+    const url = URL.createObjectURL(new Blob([`\uFEFF${markdown}`], { type: 'text/markdown;charset=utf-8' }))
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = safeMarkdownFilename(context?.title)
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+    toast.success('对话内容已导出为 Markdown')
   }
 
   return (
@@ -367,6 +470,9 @@ function WritingFields({
             <div className="flex items-start justify-between gap-3">
               <SectionHeading icon={Target} step="02" title="对话轮次" description="每轮 A 先说一句话，学习者根据中文提示用英语填写 B 的回应；参考答案与见解仅供 AI 评估和后台审阅。" />
               <div className="mt-1 flex shrink-0 flex-wrap justify-end gap-2">
+                <Button type="button" size="sm" variant="outline" onClick={exportDialogueMarkdown}>
+                  <Download data-icon="inline-start" />导出 Markdown
+                </Button>
                 <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={() => setDialogueVoiceConfigOpen((open) => !open)}>
                   <Volume2 className="size-3.5 text-primary" />配置 A / B 声音
                 </Button>
