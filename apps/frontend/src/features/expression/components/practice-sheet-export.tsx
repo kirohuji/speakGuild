@@ -2,6 +2,7 @@ import { forwardRef, useMemo, type ReactNode } from 'react'
 import {
   Document,
   Font,
+  Image,
   Page,
   pdf,
   StyleSheet,
@@ -97,6 +98,7 @@ function splitColumns(pageItems: PracticeSheetItem[], columns: 1 | 2) {
 const SHEET_CSS = `
 .practice-sheet {
   box-sizing: border-box;
+  position: relative;
   display: flex;
   flex-direction: column;
   width: ${PRACTICE_SHEET_A4.widthPx}px;
@@ -106,6 +108,20 @@ const SHEET_CSS = `
   background: #fff;
   font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+.practice-sheet-watermark {
+  position: absolute;
+  left: 10%;
+  top: 44%;
+  width: 80%;
+  transform: rotate(-28deg);
+  color: #f4ede6;
+  font-size: 46px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  z-index: 2;
+  pointer-events: none;
 }
 .practice-sheet *,
 .practice-sheet *::before,
@@ -119,12 +135,16 @@ const SHEET_CSS = `
   padding-bottom: 12px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.14);
 }
-.practice-sheet-header-spacer {
-  visibility: hidden;
+.practice-sheet-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   white-space: nowrap;
-  font-size: 11px;
-  line-height: 1.45;
+  font-size: 10px;
+  font-weight: 650;
+  color: rgba(0, 0, 0, 0.62);
 }
+.practice-sheet-brand img { width: 24px; height: 24px; object-fit: contain; }
 .practice-sheet-title-wrap { min-width: 0; text-align: center; padding: 0 4px; }
 .practice-sheet-title {
   margin: 0;
@@ -162,6 +182,7 @@ const SHEET_CSS = `
   outline: none;
 }
 .practice-sheet-body {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
@@ -225,6 +246,17 @@ const pdfStyles = StyleSheet.create({
     paddingBottom: 18,
     paddingHorizontal: 18,
   },
+  watermark: {
+    position: 'absolute',
+    top: '44%',
+    left: '13%',
+    width: '74%',
+    textAlign: 'center',
+    transform: 'rotate(-28deg)',
+    fontSize: 34,
+    fontWeight: 700,
+    color: '#f4ede6',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -235,6 +267,21 @@ const pdfStyles = StyleSheet.create({
   },
   headerSide: {
     width: '22%',
+  },
+  brand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logo: {
+    width: 18,
+    height: 18,
+    objectFit: 'contain',
+  },
+  brandText: {
+    marginLeft: 5,
+    fontSize: 7.5,
+    fontWeight: 700,
+    color: '#57534e',
   },
   headerCenter: {
     width: '56%',
@@ -443,7 +490,8 @@ function PracticeSheetPdfDocument({
   dateValue,
   labels,
   pageNumber,
-}: PracticeSheetPdfInput) {
+  logoUrl,
+}: PracticeSheetPdfInput & { logoUrl: string }) {
   const itemsPerPage = practiceSheetItemsPerPage(columns)
   const pages = paginateItems(items, itemsPerPage)
   const rowsPerColumn = columns === 2 ? Math.ceil(itemsPerPage / 2) : itemsPerPage
@@ -456,7 +504,10 @@ function PracticeSheetPdfDocument({
         return (
           <Page key={pageIndex} size="A4" style={pdfStyles.page}>
             <View style={pdfStyles.header}>
-              <View style={pdfStyles.headerSide} />
+              <View style={[pdfStyles.headerSide, pdfStyles.brand]}>
+                <Image style={pdfStyles.logo} src={logoUrl} />
+                <Text style={pdfStyles.brandText}>漫语町</Text>
+              </View>
               <View style={pdfStyles.headerCenter}>
                 <Text style={pdfStyles.title}>{notebookName} · {modeTitle}</Text>
                 <Text style={pdfStyles.hint}>{hint}</Text>
@@ -483,6 +534,7 @@ function PracticeSheetPdfDocument({
               ))}
             </View>
 
+            <Text fixed style={pdfStyles.watermark}>漫语町 · ManYuDing</Text>
             <Text style={pdfStyles.footer}>{pageNumber(pageIndex + 1, pages.length)}</Text>
           </Page>
         )
@@ -493,7 +545,8 @@ function PracticeSheetPdfDocument({
 
 export async function buildPracticeSheetPdfBlob(input: PracticeSheetPdfInput): Promise<Blob> {
   registerPracticeSheetFont()
-  return pdf(<PracticeSheetPdfDocument {...input} />).toBlob()
+  const logoUrl = new URL('/logo.png', window.location.href).href
+  return pdf(<PracticeSheetPdfDocument {...input} logoUrl={logoUrl} />).toBlob()
 }
 
 export const PracticeSheetPage = forwardRef<HTMLElement, {
@@ -535,8 +588,6 @@ export const PracticeSheetPage = forwardRef<HTMLElement, {
     ? [pageItems.slice(0, splitAt), pageItems.slice(splitAt)]
     : [pageItems]
   const rowsPerColumn = columns === 2 ? Math.ceil(itemsPerPage / 2) : itemsPerPage
-  const dateSpacer = `${dateLabel} 0000-00-00`
-
   return (
     <article
       ref={ref}
@@ -544,8 +595,9 @@ export const PracticeSheetPage = forwardRef<HTMLElement, {
       data-practice-sheet-page={pageIndex}
     >
       <style>{SHEET_CSS}</style>
+      <div className="practice-sheet-watermark" aria-hidden>漫语町 · ManYuDing</div>
       <header className="practice-sheet-header">
-        <span className="practice-sheet-header-spacer" aria-hidden>{dateSpacer}</span>
+        <span className="practice-sheet-brand"><img src="/logo.png" alt="" />漫语町</span>
         <div className="practice-sheet-title-wrap">
           <h2 className="practice-sheet-title">{notebookName} · {modeTitle}</h2>
           <p className="practice-sheet-hint">{hint}</p>

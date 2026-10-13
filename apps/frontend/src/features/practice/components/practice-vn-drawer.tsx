@@ -1,12 +1,26 @@
 import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { BookOpen, ChevronDown, ListTree, X } from 'lucide-react'
+import { BookOpen, ChevronDown, Download, Expand, FileText, ListTree, Loader2, X } from 'lucide-react'
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso'
+import { Directory, Filesystem } from '@capacitor/filesystem'
+import { Share } from '@capacitor/share'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { cn } from '@/lib/cn'
+import { localDateKey } from '@/lib/date/calendar-date'
+import { isNative } from '@/lib/native'
+import { useIsMobile } from '@/hooks/use-mobile'
+import {
+  TeachingDocumentPage,
+  TeachingDocumentPreviewFrame,
+  buildTeachingDocumentPages,
+  buildTeachingDocumentPdfBlob,
+  teachingDocumentTitle,
+} from './teaching-document-export'
 
 const CONTENT_MOUNT_DELAY_MS = 180
 
@@ -62,8 +76,12 @@ function splitTeachingDocument(markdown: string): { sections: TeachingSection[];
 
 export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hideToggles = false, triggerClassName, plainTrigger = false, showTriggerIcon = true, open: controlledOpen, onOpenChange: controlledOnOpenChange }: PracticeVnDrawerProps) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const [internalOpen, setInternalOpen] = useState(false)
   const [tocOpen, setTocOpen] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [zoomPreviewPage, setZoomPreviewPage] = useState<number | null>(null)
+  const [exporting, setExporting] = useState(false)
   const [expandedTocSections, setExpandedTocSections] = useState<Set<number>>(() => new Set())
   const [contentReady, setContentReady] = useState(false)
   const closingRef = useRef(false)
@@ -72,6 +90,11 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   const open = isControlled ? controlledOpen : internalOpen
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
   const document = useMemo(() => splitTeachingDocument(teachingMarkdown ?? ''), [teachingMarkdown])
+  const printDate = useMemo(() => localDateKey(), [previewOpen])
+  const printTitle = useMemo(() => teachingDocumentTitle(teachingMarkdown ?? '', t('practiceVn.teaching')), [t, teachingMarkdown])
+  const printPages = useMemo(() => buildTeachingDocumentPages(teachingMarkdown ?? ''), [teachingMarkdown])
+  const previewScale = isMobile ? 0.43 : 0.58
+  const zoomScale = isMobile ? 0.72 : 0.92
   const tocRows = useMemo<TocRow[]>(() => {
     const hasChildren = (index: number) => {
       const level = document.toc[index].level
@@ -128,19 +151,79 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
     })
   }, [])
 
+  const exportTeachingDocument = useCallback(async () => {
+    if (!teachingMarkdown?.trim() || exporting) return
+    setExporting(true)
+    try {
+      const blob = await buildTeachingDocumentPdfBlob({ markdown: teachingMarkdown, title: printTitle, date: printDate })
+      const safeTitle = printTitle.replace(/[\\/:*?"<>|]/g, '-').trim() || '教学文档'
+      const filename = `${safeTitle}-${printDate}.pdf`
+      if (isNative()) {
+        const bytes = new Uint8Array(await blob.arrayBuffer())
+        let binary = ''
+        for (let index = 0; index < bytes.length; index += 1) binary += String.fromCharCode(bytes[index]!)
+        const file = await Filesystem.writeFile({ path: `exports/${filename}`, data: btoa(binary), directory: Directory.Cache, recursive: true })
+        await Share.share({ title: printTitle, url: file.uri, dialogTitle: t('practiceVn.exportPdf') })
+      } else {
+        const url = URL.createObjectURL(blob)
+        const anchor = window.document.createElement('a')
+        anchor.href = url
+        anchor.download = filename
+        anchor.click()
+        window.setTimeout(() => URL.revokeObjectURL(url), 1_000)
+      }
+    } catch (error) {
+      console.warn('[teaching-document] PDF export failed', error)
+      toast.error(t('practiceVn.exportFailed'))
+    } finally {
+      setExporting(false)
+    }
+  }, [exporting, printDate, printTitle, t, teachingMarkdown])
+
   return <>
     {!hideToggles && <button type="button" onClick={() => { closingRef.current = false; setOpen(true); void onOpen?.() }} className={cn(!plainTrigger && 'flex items-center gap-2 rounded-full border border-border/20 bg-background/60 px-3.5 py-2 text-xs font-medium text-foreground shadow-lg transition-transform active:scale-[0.97]', triggerClassName)}>{showTriggerIcon && <BookOpen className="size-3.5 text-foreground/70" />}<span>{t('practiceVn.teaching')}</span></button>}
     <Drawer open={open} onOpenChange={onDrawerOpenChange} shouldScaleBackground={false}>
       <DrawerContent className="h-[82vh] max-h-[82vh] rounded-t-[28px] border-border/20 bg-background text-foreground shadow-[0_-12px_40px_rgba(0,0,0,.28)] contain-paint !z-[10001]" overlayClassName="!z-[10001]">
         <DrawerHeader className="shrink-0 border-b border-border/45 px-5 pb-4 pt-3 text-left">
           <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3">
-            {document.toc.length > 0 ? <Popover open={tocOpen} onOpenChange={setTocOpen}><PopoverTrigger asChild><button type="button" className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14]" aria-label={t('practiceVn.contents')}><ListTree className="size-5" /></button></PopoverTrigger><PopoverContent align="start" sideOffset={8} collisionPadding={12} data-vaul-no-drag className="!z-[10002] w-[min(20rem,calc(100vw-2rem))] overflow-hidden border-0 bg-background p-0 text-foreground shadow-[0_18px_50px_rgba(0,0,0,.28)]" onWheel={(event) => event.stopPropagation()} onTouchMove={(event) => event.stopPropagation()} onPointerMove={(event) => event.stopPropagation()}><p className="bg-muted/45 px-4 py-3 text-xs font-semibold tracking-wide text-muted-foreground">{t('practiceVn.contents')}</p><div data-vaul-no-drag className="min-h-0 touch-pan-y overscroll-contain" style={{ height: tocHeight, maxHeight: '50dvh' }}><Virtuoso data={tocRows} fixedItemHeight={42} className="h-full" style={{ height: '100%' }} itemContent={(_, row) => <div className={cn('mx-2 my-0.5 flex w-[calc(100%-1rem)] items-center rounded-lg text-sm leading-5 transition-colors hover:bg-accent hover:text-accent-foreground', row.item.level === 2 && 'pl-3', row.item.level === 3 && 'pl-8 text-muted-foreground')}><button type="button" className="min-w-0 flex-1 px-2 py-2 text-left" onClick={() => handleTocSelect(row.item.sectionIndex)}>{row.item.text}</button>{row.expandable && <button type="button" className="mr-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => toggleTocSection(row.item.sectionIndex)} aria-label={row.expanded ? '收起三级标题' : '展开三级标题'}><ChevronDown className={cn('size-4 transition-transform', row.expanded && 'rotate-180')} /></button>}</div>} /></div></PopoverContent></Popover> : <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary"><ListTree className="size-5" /></div>}
+            <div className="flex shrink-0 items-center gap-2">{document.toc.length > 0 ? <Popover open={tocOpen} onOpenChange={setTocOpen}><PopoverTrigger asChild><button type="button" className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14]" aria-label={t('practiceVn.contents')}><ListTree className="size-5" /></button></PopoverTrigger><PopoverContent align="start" sideOffset={8} collisionPadding={12} data-vaul-no-drag className="!z-[10002] w-[min(20rem,calc(100vw-2rem))] overflow-hidden border-0 bg-background p-0 text-foreground shadow-[0_18px_50px_rgba(0,0,0,.28)]" onWheel={(event) => event.stopPropagation()} onTouchMove={(event) => event.stopPropagation()} onPointerMove={(event) => event.stopPropagation()}><p className="bg-muted/45 px-4 py-3 text-xs font-semibold tracking-wide text-muted-foreground">{t('practiceVn.contents')}</p><div data-vaul-no-drag className="min-h-0 touch-pan-y overscroll-contain" style={{ height: tocHeight, maxHeight: '50dvh' }}><Virtuoso data={tocRows} fixedItemHeight={42} className="h-full" style={{ height: '100%' }} itemContent={(_, row) => <div className={cn('mx-2 my-0.5 flex w-[calc(100%-1rem)] items-center rounded-lg text-sm leading-5 transition-colors hover:bg-accent hover:text-accent-foreground', row.item.level === 2 && 'pl-3', row.item.level === 3 && 'pl-8 text-muted-foreground')}><button type="button" className="min-w-0 flex-1 px-2 py-2 text-left" onClick={() => handleTocSelect(row.item.sectionIndex)}>{row.item.text}</button>{row.expandable && <button type="button" className="mr-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => toggleTocSection(row.item.sectionIndex)} aria-label={row.expanded ? '收起三级标题' : '展开三级标题'}><ChevronDown className={cn('size-4 transition-transform', row.expanded && 'rotate-180')} /></button>}</div>} /></div></PopoverContent></Popover> : <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary"><ListTree className="size-5" /></div>}<button type="button" className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14] disabled:opacity-40" aria-label={t('practiceVn.previewPdf')} disabled={!teachingMarkdown?.trim() || loading} onClick={() => setPreviewOpen(true)}><FileText className="size-5" /></button></div>
             <div className="min-w-0"><DrawerTitle className="text-base font-semibold tracking-tight">{t('practiceVn.teaching')}</DrawerTitle><DrawerDescription className="mt-1 text-xs">{t('practiceVn.teachingDesc')}</DrawerDescription></div>
           </div><Button type="button" variant="ghost" size="icon" className="size-10 shrink-0 rounded-full" aria-label={t('common.close')} onClick={beginClose}><X /></Button></div>
         </DrawerHeader>
         <div className="min-h-0 flex-1 overflow-hidden">{loading ? <TeachingStatus text={t('practiceVn.loadingTeaching')} /> : teachingMarkdown ? contentReady ? <Virtuoso ref={documentRef} className="h-full" data={document.sections} increaseViewportBy={{ top: 600, bottom: 900 }} itemContent={(_, section) => <TeachingSectionView section={section} />} /> : <div className="px-4 pt-4"><TeachingContentPlaceholder /></div> : <TeachingStatus text={t('practiceVn.noTeaching')} />}</div>
       </DrawerContent>
     </Drawer>
+    <Dialog open={previewOpen} onOpenChange={(next) => { if (!next && zoomPreviewPage !== null) { setZoomPreviewPage(null); return } setPreviewOpen(next) }}>
+      <DialogContent onEscapeKeyDown={(event) => { if (zoomPreviewPage !== null) { event.preventDefault(); setZoomPreviewPage(null) } }} overlayClassName="!z-[10003]" className={cn('[&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] !z-[10004] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-background p-0 text-foreground sm:h-[92svh] sm:max-w-5xl sm:rounded-2xl', zoomPreviewPage !== null && '[&>button:last-child]:hidden')}>
+        <DialogTitle className="sr-only">{t('practiceVn.previewPdf')}</DialogTitle>
+        <div className="flex shrink-0 items-center gap-3 bg-background px-4 pb-3 pr-16 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
+          <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{printTitle}</p><p className="mt-0.5 text-xs text-muted-foreground">{t('practiceVn.a4Summary', { count: printPages.length })}</p></div>
+          <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">A4</span>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto bg-muted/30 px-0 pb-5 pt-3 sm:px-4 sm:pt-4">
+          <div className="mx-auto flex w-full max-w-[720px] flex-col gap-4">
+            <p className="text-center text-xs text-muted-foreground">{t('practiceVn.tapToZoom')}</p>
+            {printPages.map((blocks, pageIndex) => <div key={pageIndex} className="relative mx-auto w-fit">
+              <TeachingDocumentPreviewFrame scale={previewScale}><TeachingDocumentPage blocks={blocks} title={printTitle} date={printDate} pageNumber={`${pageIndex + 1} / ${printPages.length}`} /></TeachingDocumentPreviewFrame>
+              <button type="button" className="absolute inset-0 rounded-xl" onClick={() => setZoomPreviewPage(pageIndex)} aria-label={t('practiceVn.tapToZoom')} />
+              <span className="pointer-events-none absolute bottom-3 right-3 flex size-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm"><Expand /></span>
+            </div>)}
+          </div>
+        </div>
+        <div className="shrink-0 bg-background px-5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-4">
+          <Button className="h-12 w-full rounded-xl text-base font-semibold" onClick={() => void exportTeachingDocument()} disabled={exporting || !teachingMarkdown?.trim()}>{exporting ? <Loader2 className="animate-spin" data-icon="inline-start" /> : <Download data-icon="inline-start" />}{exporting ? t('practiceVn.exporting') : t('practiceVn.exportPdf')}</Button>
+        </div>
+        {zoomPreviewPage !== null && printPages[zoomPreviewPage] && <div className="absolute inset-0 flex flex-col bg-background">
+          <div className="flex shrink-0 items-center justify-between px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
+            <p className="text-sm font-semibold text-muted-foreground">{zoomPreviewPage + 1} / {printPages.length}</p>
+            <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" aria-label={t('common.close')} onClick={() => setZoomPreviewPage(null)}><X /></Button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-auto bg-muted/30 px-3 pb-5 sm:px-6">
+            <div className="mx-auto w-fit"><TeachingDocumentPreviewFrame scale={zoomScale}><TeachingDocumentPage blocks={printPages[zoomPreviewPage]!} title={printTitle} date={printDate} pageNumber={`${zoomPreviewPage + 1} / ${printPages.length}`} /></TeachingDocumentPreviewFrame></div>
+          </div>
+        </div>}
+      </DialogContent>
+    </Dialog>
   </>
 }
 
