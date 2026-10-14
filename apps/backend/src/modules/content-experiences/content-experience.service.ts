@@ -11,6 +11,7 @@ import {
   CreatePackageGroupDto,
   DialogueMarkdownAiDto,
   GenerateDialogueReferencesDto,
+  GenerateReadingTeachingDocumentDto,
   GenerateReadingTopicDto,
   GenerateTranslationSupportDto,
   GenerateWritingSupportDto,
@@ -25,6 +26,7 @@ import { EpubAnalysisService } from './epub-analysis.service';
 import { MaterialConstraintService } from './material-constraint.service';
 import { buildDialoguePolishPrompt } from './prompts/dialogue-polish.prompt';
 import { buildDialogueTeachingPrompt } from './prompts/dialogue-teaching.prompt';
+import { buildReadingTeachingPrompt, type ReadingTeachingQuestionInput } from './prompts/reading-teaching.prompt';
 
 function toJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
@@ -236,6 +238,16 @@ export class ContentExperienceService {
     });
     if (!scene) throw new NotFoundException('学习包不存在');
     if (scene.contentMode !== 'writing') throw new BadRequestException('只有写作包可以使用对话 AI 能力');
+    return scene;
+  }
+
+  private async assertReadingScene(sceneId: string) {
+    const scene = await this.prisma.scene.findUnique({
+      where: { id: sceneId },
+      select: { title: true, contentMode: true },
+    });
+    if (!scene) throw new NotFoundException('学习包不存在');
+    if (scene.contentMode !== 'reading') throw new BadRequestException('只有阅读包可以生成阅读教学文档');
     return scene;
   }
 
@@ -871,6 +883,57 @@ Rules for generate mode:
       const message = error instanceof Error ? error.message : 'unknown error';
       throw new ServiceUnavailableException(`AI 生成教学文档失败：${message}`);
     }
+  }
+
+  /** 根据阅读材料正文和理解题生成教学文档 */
+  async generateReadingTeachingDocument(sceneId: string, dto: GenerateReadingTeachingDocumentDto) {
+    await this.assertReadingScene(sceneId);
+    const passage = String(dto.passageMarkdown ?? '').trim();
+    if (passage.length < 80) throw new BadRequestException('请先完善阅读材料后再生成教学文档');
+
+    const questions = this.normalizeReadingTeachingQuestions(dto.questions);
+    const config = await this.aiModels.getLlmConfig();
+    if (!config.apiKey) throw new ServiceUnavailableException('LLM API key is not configured');
+
+    try {
+      const markdown = await this.generateLongMarkdown(
+        config,
+        buildReadingTeachingPrompt({
+          title: dto.title,
+          source: dto.source,
+          cefr: dto.cefr,
+          wordCount: dto.wordCount,
+          passageMarkdown: passage,
+          questions,
+        }),
+        32000,
+      );
+      if (markdown.length < 800 || !markdown.includes('## 一、文章概述') || !markdown.includes('## 二、文章结构与关键句解析') || !markdown.includes('## 三、核心词汇与表达')) {
+        throw new BadRequestException('AI 教学文档结构不完整，请重试');
+      }
+      return { markdown };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ServiceUnavailableException) throw error;
+      const message = error instanceof Error ? error.message : 'unknown error';
+      throw new ServiceUnavailableException(`AI 生成教学文档失败：${message}`);
+    }
+  }
+
+  private normalizeReadingTeachingQuestions(questions: GenerateReadingTeachingDocumentDto['questions']): ReadingTeachingQuestionInput[] {
+    const typeLabels: Record<string, string> = {
+      choice: '单项选择',
+      boolean: '判断题',
+      short: '简答题',
+      open: '开放回答',
+    };
+    return (questions ?? []).slice(0, 20).map((question, index) => ({
+      index: index + 1,
+      type: typeLabels[String(question?.type ?? '')] ?? '题目',
+      prompt: String(question?.prompt ?? '').trim().slice(0, 2000),
+      options: (Array.isArray(question?.options) ? question.options : []).slice(0, 8).map((option) => String(option ?? '').trim().slice(0, 500)).filter(Boolean),
+      answer: String(question?.answer ?? '').trim().slice(0, 2000),
+      evidence: String(question?.evidence ?? '').trim().slice(0, 4000),
+    }));
   }
 
   async generateTranslationSupport(sceneId: string, dto: GenerateTranslationSupportDto) {

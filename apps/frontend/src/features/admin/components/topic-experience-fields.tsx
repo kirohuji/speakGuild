@@ -149,7 +149,18 @@ export function TopicExperienceFields({ mode, value, mediaAssetId, transcript, s
       />
     )
   }
-  if (mode === 'reading') return <ReadingFields sceneId={sceneId} context={draftContext} value={value.reading ?? { questions: [] }} onApplyDraft={onApplyDraft} onChange={(reading) => onChange({ contentConfig: { ...value, reading } })} />
+  if (mode === 'reading') {
+    return (
+      <ReadingFields
+        sceneId={sceneId}
+        context={draftContext}
+        value={value.reading ?? { questions: [] }}
+        onApplyDraft={onApplyDraft}
+        onApplyTeachingMarkdown={onApplyTeachingMarkdown}
+        onChange={(reading) => onChange({ contentConfig: { ...value, reading } })}
+      />
+    )
+  }
   return <ListeningFields value={value.listening ?? {}} mediaAssetId={mediaAssetId} transcript={transcript ?? []} onChange={(next) => onChange({ contentConfig: { ...value, listening: next.listening }, mediaAssetId: next.mediaAssetId, transcript: next.transcript })} />
 }
 
@@ -935,18 +946,21 @@ function ReadingFields({
   sceneId,
   context,
   onApplyDraft,
+  onApplyTeachingMarkdown,
   onChange,
 }: {
   value: Record<string, any>
   sceneId: string
   context?: Props['draftContext']
   onApplyDraft?: (draft: AiTopicDraft) => void
+  onApplyTeachingMarkdown?: (markdown: string) => void
   onChange: (value: Record<string, any>) => void
 }) {
   const [assistantMode, setAssistantMode] = useState<'generate' | 'format'>('generate')
   const [generateInstruction, setGenerateInstruction] = useState('')
   const [formatMaterial, setFormatMaterial] = useState('')
   const [generating, setGenerating] = useState(false)
+  const [generatingTeachingDoc, setGeneratingTeachingDoc] = useState(false)
   const isFormatMode = assistantMode === 'format'
   const questions: any[] = value.questions ?? []
   const updateQuestion = (index: number, patch: Record<string, any>) => onChange({ ...value, questions: questions.map((question, itemIndex) => itemIndex === index ? { ...question, ...patch } : question) })
@@ -988,6 +1002,39 @@ function ReadingFields({
       toast.error(error?.message || (isFormatMode ? 'AI 排版失败' : 'AI 命题失败'))
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const generateReadingTeachingDocument = async () => {
+    const passageMarkdown = String(value.questionMarkdown ?? '').trim()
+    if (generatingTeachingDoc || generating) return
+    if (passageMarkdown.length < 80) {
+      toast.error('请先完善阅读材料后再生成教学文档')
+      return
+    }
+    setGeneratingTeachingDoc(true)
+    try {
+      const wordCount = Number(value.wordCount)
+      const result = await contentExperienceAdminApi.generateReadingTeachingDocument(sceneId, {
+        passageMarkdown,
+        title: context?.title,
+        source: value.source,
+        cefr: value.cefr,
+        wordCount: Number.isFinite(wordCount) && wordCount > 0 ? wordCount : undefined,
+        questions: questions.map((question) => ({
+          type: question.type,
+          prompt: question.prompt,
+          options: question.options,
+          answer: question.answer,
+          evidence: question.evidence,
+        })),
+      })
+      onApplyTeachingMarkdown?.(result.markdown)
+      toast.success('教学文档已生成，请到「教学文档」Tab 查看后保存')
+    } catch (error: any) {
+      toast.error(error?.message || 'AI 生成教学文档失败')
+    } finally {
+      setGeneratingTeachingDoc(false)
     }
   }
 
@@ -1043,7 +1090,22 @@ function ReadingFields({
         </div>
 
         <section className="space-y-4">
-          <SectionHeading icon={BookOpen} step="01" title="阅读材料" description="学习者作答页上半屏阅读的英文正文；支持 Markdown、图片、表格和引用。" />
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <SectionHeading icon={BookOpen} step="01" title="阅读材料" description="学习者作答页上半屏阅读的英文正文；支持 Markdown、图片、表格和引用。" />
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="mt-1 shrink-0 gap-1.5"
+              disabled={generatingTeachingDoc || generating || !String(value.questionMarkdown ?? '').trim()}
+              onClick={generateReadingTeachingDocument}
+            >
+              {generatingTeachingDoc ? <Loader2 className="size-3.5 animate-spin" /> : <BookOpen className="size-3.5 text-primary" />}
+              {generatingTeachingDoc ? '正在生成' : '教学文档'}
+            </Button>
+          </div>
           <MarkdownEditor
             label="材料正文"
             value={value.questionMarkdown ?? ''}

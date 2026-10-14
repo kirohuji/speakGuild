@@ -18,6 +18,7 @@ import {
   AttachEpubDto,
   DialogueMarkdownAiDto,
   GenerateDialogueReferencesDto,
+  GenerateReadingTeachingDocumentDto,
   GenerateReadingTopicDto,
   GenerateTranslationSupportDto,
   GenerateWritingSupportDto,
@@ -158,6 +159,17 @@ export class AdminContentExperienceController {
   ) {
     await this.requireAdmin(req);
     return this.experiences.generateDialogueTeachingDocument(sceneId, dto);
+  }
+
+  /** 根据阅读材料正文和理解题生成教学文档 */
+  @Post('scenes/:sceneId/reading/teaching-document')
+  async generateReadingTeachingDocument(
+    @Req() req: Request,
+    @Param('sceneId') sceneId: string,
+    @Body() dto: GenerateReadingTeachingDocumentDto,
+  ) {
+    await this.requireAdmin(req);
+    return this.experiences.generateReadingTeachingDocument(sceneId, dto);
   }
 
   @Post('scenes/:sceneId/writing-support/ai-draft')

@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -11,6 +12,7 @@ import {
   MaxLength,
   Max,
   Min,
+  ValidateNested,
 } from 'class-validator';
 
 export const CONTENT_MODES = ['practice', 'writing', 'reading', 'listening', 'novel', 'story'] as const;
@@ -315,6 +317,70 @@ export class DialogueMarkdownAiDto {
   @IsString()
   @MaxLength(120000)
   markdown: string;
+}
+
+export class ReadingTeachingQuestionDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  type?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  prompt?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(8)
+  @IsString({ each: true })
+  @MaxLength(500, { each: true })
+  options?: string[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  answer?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  evidence?: string;
+}
+
+/** 阅读题：根据材料正文与理解题生成教学文档 */
+export class GenerateReadingTeachingDocumentDto {
+  @IsString()
+  @MaxLength(40000)
+  passageMarkdown: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  source?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  cefr?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(20000)
+  wordCount?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @ValidateNested({ each: true })
+  @Type(() => ReadingTeachingQuestionDto)
+  questions?: ReadingTeachingQuestionDto[];
 }
 
 export class GenerateWritingSupportDto {

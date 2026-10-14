@@ -123,6 +123,15 @@ export const contentExperienceAdminApi = {
     }>(`/admin/content-experiences/scenes/${sceneId}/dialogue/polish`, data, { timeout: 300_000 }),
   generateDialogueTeachingDocument: (sceneId: string, data: { markdown: string }) =>
     post<{ markdown: string }>(`/admin/content-experiences/scenes/${sceneId}/dialogue/teaching-document`, data, { timeout: 300_000 }),
+  generateReadingTeachingDocument: (sceneId: string, data: {
+    passageMarkdown: string
+    title?: string
+    source?: string
+    cefr?: string
+    wordCount?: number
+    questions?: Array<{ type?: string; prompt?: string; options?: string[]; answer?: string; evidence?: string }>
+  }) =>
+    post<{ markdown: string }>(`/admin/content-experiences/scenes/${sceneId}/reading/teaching-document`, data, { timeout: 360_000 }),
   generateWritingSupport: (sceneId: string, data: Record<string, unknown>) =>
     post<{ referenceAnswer: string; referenceExplanation: string; situation: string; requirements: string[] }>(`/admin/content-experiences/scenes/${sceneId}/writing-support/ai-draft`, data),
   generateTranslationSupport: (sceneId: string, data: Record<string, unknown>) =>

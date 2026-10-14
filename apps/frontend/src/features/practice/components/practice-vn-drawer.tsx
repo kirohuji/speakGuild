@@ -155,6 +155,8 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
     if (!teachingMarkdown?.trim() || exporting) return
     setExporting(true)
     try {
+      // Let the loading state paint before react-pdf starts its CPU-heavy layout work.
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
       const blob = await buildTeachingDocumentPdfBlob({ markdown: teachingMarkdown, title: printTitle, date: printDate })
       const safeTitle = printTitle.replace(/[\\/:*?"<>|]/g, '-').trim() || '教学文档'
       const filename = `${safeTitle}-${printDate}.pdf`
