@@ -310,6 +310,13 @@ export class GenerateDialogueReferencesDto {
   sentencePatterns?: string[];
 }
 
+/** 对话 Markdown 润色 / 教学文档生成共用入参（与 admin 导出格式一致） */
+export class DialogueMarkdownAiDto {
+  @IsString()
+  @MaxLength(120000)
+  markdown: string;
+}
+
 export class GenerateWritingSupportDto {
   @IsString()
   @MaxLength(12000)

@@ -9,6 +9,7 @@ import { LearningService } from '../learning/learning.service';
 import {
   AssignPackageGroupDto,
   CreatePackageGroupDto,
+  DialogueMarkdownAiDto,
   GenerateDialogueReferencesDto,
   GenerateReadingTopicDto,
   GenerateTranslationSupportDto,
@@ -19,8 +20,11 @@ import {
   UpdatePackageGroupDto,
   UpdateSceneKnowledgeDto,
 } from './dto/content-experience.dto';
+import { parseDialogueMarkdown, stripMarkdownFences } from './dialogue-markdown';
 import { EpubAnalysisService } from './epub-analysis.service';
 import { MaterialConstraintService } from './material-constraint.service';
+import { buildDialoguePolishPrompt } from './prompts/dialogue-polish.prompt';
+import { buildDialogueTeachingPrompt } from './prompts/dialogue-teaching.prompt';
 
 function toJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
@@ -184,6 +188,55 @@ export class ContentExperienceService {
     if (!text) throw new Error(`DeepSeek returned an empty JSON response; finish_reason=${finishReason}`);
     if (finishReason === 'length') throw new Error(`DeepSeek truncated JSON; finish_reason=length, chars=${text.length}`);
     return text;
+  }
+
+  /**
+   * 长 Markdown 生成：统一走大模型管理配置。
+   * DeepSeek 原生 chat/completions 并关闭 thinking，避免推理吃光输出预算。
+   */
+  private async generateLongMarkdown(config: LlmConfig, prompt: string, maxOutputTokens: number) {
+    if (config.provider !== 'deepseek') {
+      const { text } = await generateText({
+        model: this.llmFactory.create(config, { thinking: 'disabled' }),
+        prompt,
+        temperature: 0.35,
+        maxOutputTokens,
+      });
+      return stripMarkdownFences(text);
+    }
+    const response = await fetch(this.deepSeekChatCompletionsUrl(config.baseUrl), {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.35,
+        max_tokens: maxOutputTokens,
+        thinking: { type: 'disabled' },
+      }),
+    });
+    const payload = await response.json().catch(() => null) as any;
+    if (!response.ok) {
+      throw new Error(payload?.error?.message || `DeepSeek Markdown request failed (${response.status})`);
+    }
+    const choice = payload?.choices?.[0];
+    const finishReason = String(choice?.finish_reason ?? 'unknown');
+    const text = stripMarkdownFences(String(choice?.message?.content ?? ''));
+    if (!text) throw new Error(`DeepSeek returned empty Markdown; finish_reason=${finishReason}`);
+    if (finishReason === 'length') {
+      throw new Error(`DeepSeek truncated Markdown; finish_reason=length, chars=${text.length}`);
+    }
+    return text;
+  }
+
+  private async assertWritingScene(sceneId: string) {
+    const scene = await this.prisma.scene.findUnique({
+      where: { id: sceneId },
+      select: { title: true, contentMode: true },
+    });
+    if (!scene) throw new NotFoundException('学习包不存在');
+    if (scene.contentMode !== 'writing') throw new BadRequestException('只有写作包可以使用对话 AI 能力');
+    return scene;
   }
 
   listGroups(ownerId?: string) {
@@ -756,6 +809,68 @@ Rules for generate mode:
         };
       }),
     };
+  }
+
+  /** 润色对话 Markdown，并解析回可回填表单的结构化字段 */
+  async polishDialogueMarkdown(sceneId: string, dto: DialogueMarkdownAiDto) {
+    await this.assertWritingScene(sceneId);
+    const source = String(dto.markdown ?? '').trim();
+    if (source.length < 80) throw new BadRequestException('请先完善对话内容后再润色');
+    const sourceParsed = parseDialogueMarkdown(source);
+    if (!sourceParsed.turns.length) throw new BadRequestException('原稿未识别到对话轮次，请先用「导出 Markdown」确认格式');
+
+    const config = await this.aiModels.getLlmConfig();
+    if (!config.apiKey) throw new ServiceUnavailableException('LLM API key is not configured');
+
+    try {
+      const markdown = await this.generateLongMarkdown(config, buildDialoguePolishPrompt(source), 10000);
+      const parsed = parseDialogueMarkdown(markdown);
+      if (!parsed.turns.length) {
+        throw new BadRequestException('AI 润色结果无法解析为对话轮次，请重试');
+      }
+      if (parsed.turns.length !== sourceParsed.turns.length) {
+        throw new BadRequestException(
+          `AI 润色后轮次数变化（原稿 ${sourceParsed.turns.length} → 结果 ${parsed.turns.length}），请重试或人工核对`,
+        );
+      }
+      return {
+        markdown,
+        title: parsed.title,
+        situation: parsed.situation,
+        description: parsed.description,
+        promptEn: parsed.promptEn,
+        promptZh: parsed.promptZh,
+        turns: parsed.turns,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ServiceUnavailableException) throw error;
+      const message = error instanceof Error ? error.message : 'unknown error';
+      throw new ServiceUnavailableException(`AI 润色对话失败：${message}`);
+    }
+  }
+
+  /** 根据对话 Markdown 生成独立教学文档 */
+  async generateDialogueTeachingDocument(sceneId: string, dto: DialogueMarkdownAiDto) {
+    await this.assertWritingScene(sceneId);
+    const source = String(dto.markdown ?? '').trim();
+    if (source.length < 80) throw new BadRequestException('请先完善对话内容后再生成教学文档');
+    const sourceParsed = parseDialogueMarkdown(source);
+    if (!sourceParsed.turns.length) throw new BadRequestException('原稿未识别到对话轮次，请先用「导出 Markdown」确认格式');
+
+    const config = await this.aiModels.getLlmConfig();
+    if (!config.apiKey) throw new ServiceUnavailableException('LLM API key is not configured');
+
+    try {
+      const markdown = await this.generateLongMarkdown(config, buildDialogueTeachingPrompt(source), 14000);
+      if (markdown.length < 400) {
+        throw new BadRequestException('AI 教学文档过短，请重试');
+      }
+      return { markdown };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ServiceUnavailableException) throw error;
+      const message = error instanceof Error ? error.message : 'unknown error';
+      throw new ServiceUnavailableException(`AI 生成教学文档失败：${message}`);
+    }
   }
 
   async generateTranslationSupport(sceneId: string, dto: GenerateTranslationSupportDto) {

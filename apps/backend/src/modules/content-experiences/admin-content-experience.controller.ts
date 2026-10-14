@@ -16,6 +16,7 @@ import { ContentExperienceService } from './content-experience.service';
 import {
   AssignPackageGroupDto,
   AttachEpubDto,
+  DialogueMarkdownAiDto,
   GenerateDialogueReferencesDto,
   GenerateReadingTopicDto,
   GenerateTranslationSupportDto,
@@ -135,6 +136,28 @@ export class AdminContentExperienceController {
   ) {
     await this.requireAdmin(req);
     return this.experiences.generateDialogueReferences(sceneId, dto);
+  }
+
+  /** 润色对话 Markdown（走大模型管理当前激活的 LLM） */
+  @Post('scenes/:sceneId/dialogue/polish')
+  async polishDialogueMarkdown(
+    @Req() req: Request,
+    @Param('sceneId') sceneId: string,
+    @Body() dto: DialogueMarkdownAiDto,
+  ) {
+    await this.requireAdmin(req);
+    return this.experiences.polishDialogueMarkdown(sceneId, dto);
+  }
+
+  /** 根据对话 Markdown 生成教学文档（走大模型管理当前激活的 LLM） */
+  @Post('scenes/:sceneId/dialogue/teaching-document')
+  async generateDialogueTeachingDocument(
+    @Req() req: Request,
+    @Param('sceneId') sceneId: string,
+    @Body() dto: DialogueMarkdownAiDto,
+  ) {
+    await this.requireAdmin(req);
+    return this.experiences.generateDialogueTeachingDocument(sceneId, dto);
   }
 
   @Post('scenes/:sceneId/writing-support/ai-draft')

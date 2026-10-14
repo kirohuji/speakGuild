@@ -1722,6 +1722,7 @@ function TrainingTopicDialog({
                     ...draft,
                     contentConfig: { ...(current.contentConfig ?? {}), ...(draft.contentConfig ?? {}) },
                   }))}
+                  onApplyTeachingMarkdown={(teachingMarkdown) => setForm((current: any) => ({ ...current, teachingMarkdown }))}
                   onChange={(next) => setForm({ ...form, ...next })}
                 />
               </TabsContent>

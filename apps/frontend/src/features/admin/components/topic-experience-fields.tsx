@@ -47,6 +47,8 @@ type Props = {
     sentencePatterns?: string[]
   }
   onApplyDraft?: (draft: AiTopicDraft) => void
+  /** 对话题生成教学文档后写回话题 teachingMarkdown */
+  onApplyTeachingMarkdown?: (markdown: string) => void
   onChange: (next: { contentConfig?: Record<string, any>; mediaAssetId?: string | null; transcript?: TrainingTopic['transcript'] }) => void
 }
 
@@ -134,8 +136,19 @@ function safeMarkdownFilename(title?: string) {
   return `${safeTitle || '对话写作题'}.md`
 }
 
-export function TopicExperienceFields({ mode, value, mediaAssetId, transcript, sceneId, draftContext, onApplyDraft, onChange }: Props) {
-  if (mode === 'writing') return <WritingFields sceneId={sceneId} context={draftContext} value={value.writing ?? {}} onApplyDraft={onApplyDraft} onChange={(writing) => onChange({ contentConfig: { ...value, writing } })} />
+export function TopicExperienceFields({ mode, value, mediaAssetId, transcript, sceneId, draftContext, onApplyDraft, onApplyTeachingMarkdown, onChange }: Props) {
+  if (mode === 'writing') {
+    return (
+      <WritingFields
+        sceneId={sceneId}
+        context={draftContext}
+        value={value.writing ?? {}}
+        onApplyDraft={onApplyDraft}
+        onApplyTeachingMarkdown={onApplyTeachingMarkdown}
+        onChange={(writing) => onChange({ contentConfig: { ...value, writing } })}
+      />
+    )
+  }
   if (mode === 'reading') return <ReadingFields sceneId={sceneId} context={draftContext} value={value.reading ?? { questions: [] }} onApplyDraft={onApplyDraft} onChange={(reading) => onChange({ contentConfig: { ...value, reading } })} />
   return <ListeningFields value={value.listening ?? {}} mediaAssetId={mediaAssetId} transcript={transcript ?? []} onChange={(next) => onChange({ contentConfig: { ...value, listening: next.listening }, mediaAssetId: next.mediaAssetId, transcript: next.transcript })} />
 }
@@ -145,12 +158,14 @@ function WritingFields({
   sceneId,
   context,
   onApplyDraft,
+  onApplyTeachingMarkdown,
   onChange,
 }: {
   value: Record<string, any>
   sceneId: string
   context?: Props['draftContext']
   onApplyDraft?: (draft: AiTopicDraft) => void
+  onApplyTeachingMarkdown?: (markdown: string) => void
   onChange: (value: Record<string, any>) => void
 }) {
   const [instruction, setInstruction] = useState('')
@@ -158,6 +173,8 @@ function WritingFields({
   const [generatingReferences, setGeneratingReferences] = useState(false)
   const [generatingSupport, setGeneratingSupport] = useState(false)
   const [generatingDialogueAudio, setGeneratingDialogueAudio] = useState(false)
+  const [polishingDialogue, setPolishingDialogue] = useState(false)
+  const [generatingTeachingDoc, setGeneratingTeachingDoc] = useState(false)
   const [configOpen, setConfigOpen] = useState(false)
   const [dialogueVoiceConfigOpen, setDialogueVoiceConfigOpen] = useState(false)
   const isDialogue = value.genre === 'dialogue'
@@ -299,15 +316,17 @@ function WritingFields({
     }
   }
 
+  const currentDialogueMarkdown = () => buildDialogueMarkdown({
+    title: context?.title,
+    description: context?.description,
+    promptEn: context?.promptEn,
+    promptZh: context?.promptZh,
+    situation: value.situation ?? value.purpose,
+    turns,
+  })
+
   const exportDialogueMarkdown = () => {
-    const markdown = buildDialogueMarkdown({
-      title: context?.title,
-      description: context?.description,
-      promptEn: context?.promptEn,
-      promptZh: context?.promptZh,
-      situation: value.situation ?? value.purpose,
-      turns,
-    })
+    const markdown = currentDialogueMarkdown()
     const url = URL.createObjectURL(new Blob([`\uFEFF${markdown}`], { type: 'text/markdown;charset=utf-8' }))
     const anchor = document.createElement('a')
     anchor.href = url
@@ -317,6 +336,64 @@ function WritingFields({
     anchor.remove()
     URL.revokeObjectURL(url)
     toast.success('对话内容已导出为 Markdown')
+  }
+
+  const polishDialogueMarkdown = async () => {
+    if (polishingDialogue || generatingTeachingDoc || !turns.length) return
+    if (turns.some((turn) => !turn.aText.trim())) {
+      toast.error('请先填写每轮 A 的台词')
+      return
+    }
+    setPolishingDialogue(true)
+    try {
+      const result = await contentExperienceAdminApi.polishDialogueMarkdown(sceneId, {
+        markdown: currentDialogueMarkdown(),
+      })
+      const nextWriting = {
+        ...value,
+        situation: result.situation || value.situation,
+        turns: result.turns.map((turn, index) => ({
+          ...turn,
+          aAudioUrl: turns[index]?.aAudioUrl,
+          referenceAudioUrl: turns[index]?.referenceAudioUrl,
+        })),
+      }
+      // 一次回填话题字段 + 对话写作配置，避免与 onChange 分两次 setState 互相覆盖
+      onApplyDraft?.({
+        title: result.title || context?.title || '',
+        description: result.description || context?.description || '',
+        promptEn: result.promptEn || context?.promptEn || '',
+        promptZh: result.promptZh || context?.promptZh || '',
+        difficulty: context?.difficulty || 'L2',
+        suggestedDurationSec: context?.suggestedDurationSec || 600,
+        contentConfig: { writing: nextWriting },
+      })
+      toast.success('对话已润色并回填，请检查后保存')
+    } catch (error: any) {
+      toast.error(error?.message || 'AI 润色对话失败')
+    } finally {
+      setPolishingDialogue(false)
+    }
+  }
+
+  const generateDialogueTeachingDocument = async () => {
+    if (generatingTeachingDoc || polishingDialogue || !turns.length) return
+    if (turns.some((turn) => !turn.aText.trim())) {
+      toast.error('请先填写每轮 A 的台词')
+      return
+    }
+    setGeneratingTeachingDoc(true)
+    try {
+      const result = await contentExperienceAdminApi.generateDialogueTeachingDocument(sceneId, {
+        markdown: currentDialogueMarkdown(),
+      })
+      onApplyTeachingMarkdown?.(result.markdown)
+      toast.success('教学文档已生成，请到「教学文档」Tab 查看后保存')
+    } catch (error: any) {
+      toast.error(error?.message || 'AI 生成教学文档失败')
+    } finally {
+      setGeneratingTeachingDoc(false)
+    }
   }
 
   return (
@@ -472,6 +549,28 @@ function WritingFields({
               <div className="mt-1 flex shrink-0 flex-wrap justify-end gap-2">
                 <Button type="button" size="sm" variant="outline" onClick={exportDialogueMarkdown}>
                   <Download data-icon="inline-start" />导出 Markdown
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  disabled={polishingDialogue || generatingTeachingDoc || !turns.length}
+                  onClick={polishDialogueMarkdown}
+                >
+                  {polishingDialogue ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5 text-primary" />}
+                  {polishingDialogue ? '正在润色' : '润色对话'}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  disabled={generatingTeachingDoc || polishingDialogue || !turns.length}
+                  onClick={generateDialogueTeachingDocument}
+                >
+                  {generatingTeachingDoc ? <Loader2 className="size-3.5 animate-spin" /> : <BookOpen className="size-3.5 text-primary" />}
+                  {generatingTeachingDoc ? '正在生成' : '教学文档'}
                 </Button>
                 <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={() => setDialogueVoiceConfigOpen((open) => !open)}>
                   <Volume2 className="size-3.5 text-primary" />配置 A / B 声音
