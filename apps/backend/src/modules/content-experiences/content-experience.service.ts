@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException, ServiceUnavailableE
 import { generateText } from 'ai';
 import { Prisma, TopicActivityType } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { LlmChatClient } from '../../common/llm/llm-chat.client';
 import { LlmProviderFactory, type LlmConfig } from '../../common/llm/llm-provider.factory';
 import { AiModelService } from '../ai-model/ai-model.service';
 import { FileAssetsService } from '../file-assets/file-assets.service';
@@ -155,49 +156,41 @@ export class ContentExperienceService {
     private readonly fileAssets: FileAssetsService,
     private readonly learning: LearningService,
     private readonly llmFactory: LlmProviderFactory,
+    private readonly llmChat: LlmChatClient,
     private readonly aiModels: AiModelService,
     private readonly materialConstraints: MaterialConstraintService,
   ) {}
 
-  private deepSeekChatCompletionsUrl(baseUrl: string) {
-    const normalized = (baseUrl || 'https://api.deepseek.com').replace(/\/+$/, '');
-    return normalized.endsWith('/chat/completions') ? normalized : `${normalized}/chat/completions`;
-  }
-
-  /** DeepSeek Flash otherwise spends response budget on hidden reasoning and may truncate JSON. */
+  /** 结构化 JSON：prefersNativeJsonMode 的厂商走统一 chat 客户端，其余走 AI SDK。 */
   private async generateWritingJson(config: LlmConfig, system: string, prompt: string, maxOutputTokens: number) {
-    if (config.provider !== 'deepseek') {
-      const { text } = await generateText({ model: this.llmFactory.create(config), system, prompt, temperature: 0.3, maxOutputTokens });
+    if (!this.llmChat.prefersNativeJsonMode(config)) {
+      const { text } = await generateText({
+        model: this.llmFactory.create(config, { thinking: 'disabled' }),
+        system,
+        prompt,
+        temperature: 0.3,
+        maxOutputTokens,
+      });
       return text;
     }
-    const response = await fetch(this.deepSeekChatCompletionsUrl(config.baseUrl), {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [{ role: 'system', content: system }, { role: 'user', content: `${prompt}\n\nReturn one complete JSON object only. Do not truncate any field.` }],
-        response_format: { type: 'json_object' },
-        thinking: { type: 'disabled' },
-        temperature: 0.25,
-        max_tokens: maxOutputTokens,
-      }),
+
+    const result = await this.llmChat.completeJson({
+      config,
+      system,
+      prompt: `${prompt}\n\nReturn one complete JSON object only. Do not truncate any field.`,
+      temperature: 0.25,
+      maxTokens: maxOutputTokens,
     });
-    const payload = await response.json().catch(() => null) as any;
-    if (!response.ok) throw new Error(payload?.error?.message || `DeepSeek JSON request failed (${response.status})`);
-    const choice = payload?.choices?.[0];
-    const finishReason = String(choice?.finish_reason ?? 'unknown');
-    const text = String(choice?.message?.content ?? '').trim();
-    if (!text) throw new Error(`DeepSeek returned an empty JSON response; finish_reason=${finishReason}`);
-    if (finishReason === 'length') throw new Error(`DeepSeek truncated JSON; finish_reason=length, chars=${text.length}`);
-    return text;
+    if (!result.text) throw new Error(`LLM returned an empty JSON response; finish_reason=${result.finishReason}`);
+    if (result.finishReason === 'length') {
+      throw new Error(`LLM truncated JSON; finish_reason=length, chars=${result.text.length}`);
+    }
+    return result.text;
   }
 
-  /**
-   * 长 Markdown 生成：统一走大模型管理配置。
-   * DeepSeek 原生 chat/completions 并关闭 thinking，避免推理吃光输出预算。
-   */
+  /** 长 Markdown：同样按 Adapter 能力选择原生或 SDK 路径。 */
   private async generateLongMarkdown(config: LlmConfig, prompt: string, maxOutputTokens: number) {
-    if (config.provider !== 'deepseek') {
+    if (!this.llmChat.prefersNativeJsonMode(config)) {
       const { text } = await generateText({
         model: this.llmFactory.create(config, { thinking: 'disabled' }),
         prompt,
@@ -206,27 +199,18 @@ export class ContentExperienceService {
       });
       return stripMarkdownFences(text);
     }
-    const response = await fetch(this.deepSeekChatCompletionsUrl(config.baseUrl), {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.35,
-        max_tokens: maxOutputTokens,
-        thinking: { type: 'disabled' },
-      }),
+
+    const result = await this.llmChat.complete({
+      config,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.35,
+      maxTokens: maxOutputTokens,
+      thinking: 'disabled',
     });
-    const payload = await response.json().catch(() => null) as any;
-    if (!response.ok) {
-      throw new Error(payload?.error?.message || `DeepSeek Markdown request failed (${response.status})`);
-    }
-    const choice = payload?.choices?.[0];
-    const finishReason = String(choice?.finish_reason ?? 'unknown');
-    const text = stripMarkdownFences(String(choice?.message?.content ?? ''));
-    if (!text) throw new Error(`DeepSeek returned empty Markdown; finish_reason=${finishReason}`);
-    if (finishReason === 'length') {
-      throw new Error(`DeepSeek truncated Markdown; finish_reason=length, chars=${text.length}`);
+    const text = stripMarkdownFences(result.text);
+    if (!text) throw new Error(`LLM returned empty Markdown; finish_reason=${result.finishReason}`);
+    if (result.finishReason === 'length') {
+      throw new Error(`LLM truncated Markdown; finish_reason=length, chars=${text.length}`);
     }
     return text;
   }

@@ -10,6 +10,7 @@ import { DictionaryPronunciationProviderService } from '../src/modules/dictionar
 import { DictionaryClusteringService } from '../src/modules/dictionary/dictionary-clustering.service';
 import { PrismaService } from '../src/common/prisma/prisma.service';
 import { AiModelService } from '../src/modules/ai-model/ai-model.service';
+import { LlmAdapterRegistry } from '../src/common/llm/llm-adapter.registry';
 import { LlmProviderFactory } from '../src/common/llm/llm-provider.factory';
 import * as fs from 'fs';
 
@@ -17,7 +18,7 @@ async function main() {
   const prisma = new PrismaService();
   await prisma.$connect();
 
-  const llmFactory = new LlmProviderFactory();
+  const llmFactory = new LlmProviderFactory(new LlmAdapterRegistry());
   const pipeline = new DictionaryPipelineService(
     prisma,
     new DictionaryPronunciationProviderService(),

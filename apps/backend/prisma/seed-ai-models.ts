@@ -125,6 +125,15 @@ function providerSeeds(): ProviderSeed[] {
       baseUrl: env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
       sortOrder: 1,
     },
+    {
+      type: 'llm',
+      provider: 'bailian',
+      label: '阿里云百炼',
+      model: env('BAILIAN_MODEL', 'qwen3.7-flash'),
+      apiKey: env('DASHSCOPE_API_KEY') || env('BAILIAN_API_KEY'),
+      baseUrl: env('BAILIAN_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
+      sortOrder: 2,
+    },
   ];
 }
 
