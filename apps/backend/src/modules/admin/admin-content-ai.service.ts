@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { LlmProviderFactory } from '../../common/llm/llm-provider.factory';
+import { AiModelService } from '../ai-model/ai-model.service';
 
 export interface VocabularyAiEnrichInput {
   word: string;
@@ -98,13 +99,17 @@ export interface TextBatchEnrichResult {
 
 @Injectable()
 export class AdminContentAiService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly aiModel: AiModelService,
+    private readonly llmFactory: LlmProviderFactory,
+  ) {}
 
-  private getDeepSeekModel() {
-    const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
-    if (!apiKey) throw new Error('DEEPSEEK_API_KEY not configured');
-    const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
-    return client.chat('deepseek-chat');
+  /** 使用大模型管理中当前激活的 LLM */
+  private async getLlmModel() {
+    const config = await this.aiModel.getLlmConfig();
+    if (!config.apiKey) throw new Error('LLM API key is not configured');
+    return this.llmFactory.create(config);
   }
 
   private parseJsonText(text: string) {
@@ -148,7 +153,7 @@ export class AdminContentAiService {
     dto: VocabularyAiEnrichInput,
     onUsage?: (usage: AiUsage) => void,
   ): Promise<VocabularyAiEnrichResult> {
-    const model = this.getDeepSeekModel();
+    const model = await this.getLlmModel();
     const defLines = dto.definitions.map((d, i) => `${i + 1}. ${d}`).join('\n');
     const phoneticUsInput = dto.phoneticUs || '(未提供)';
     const phoneticUkInput = dto.phoneticUk || '(未提供)';
@@ -286,7 +291,7 @@ Use CLEAN standard IPA inside /slashes/. Normalize /ɹ/ to /r/, syllabic consona
     dto: VocabularyDefinitionDifficultyReviewInput,
     onUsage?: (usage: AiUsage) => void,
   ): Promise<VocabularyDefinitionDifficultyReviewResult> {
-    const model = this.getDeepSeekModel();
+    const model = await this.getLlmModel();
     const definitions = dto.definitions.map((definition, index) => `${index + 1}. ${definition}`).join('\n');
     const { text, usage } = await generateText({
       model,
@@ -356,7 +361,7 @@ Return raw JSON only:
     meaning?: string,
     onUsage?: (usage: AiUsage) => void,
   ): Promise<string> {
-    const model = this.getDeepSeekModel();
+    const model = await this.getLlmModel();
     const gloss = (meaning ?? '').trim().slice(0, 36);
     const { text, usage } = await generateText({
       model,
@@ -375,7 +380,7 @@ Return raw JSON only:
     onUsage?: (usage: AiUsage) => void,
   ): Promise<Array<{ id: string; difficulty: string }>> {
     if (!items.length) return [];
-    const model = this.getDeepSeekModel();
+    const model = await this.getLlmModel();
     // 用序号代替 cuid，只带 word + 极短释义，大幅压缩 token
     const lines = items.map((item, index) => {
       const word = item.word.trim().slice(0, 40);
@@ -414,7 +419,7 @@ ${lines}
     },
     onUsage?: (usage: AiUsage) => void,
   ): Promise<{ meaning: string; translations: { en: string; zh: string }[] }> {
-    const model = this.getDeepSeekModel();
+    const model = await this.getLlmModel();
     const exLines = dto.examples.map((e, i) => `${i + 1}. ${e.en}`).join('\n');
     const { text, usage } = await generateText({
       model,
@@ -473,7 +478,7 @@ ${exLines || '(none)'}
     },
     onUsage?: (usage: AiUsage) => void,
   ): Promise<{ meaning: string }> {
-    const model = this.getDeepSeekModel();
+    const model = await this.getLlmModel();
     const { text, usage } = await generateText({
       model,
       prompt: `You are maintaining a Chinese-English learner's dictionary for Chinese speakers at B1-B2 level.
@@ -531,7 +536,7 @@ ${dto.definitionEn?.trim() || '(none)'}
     onUsage?: (usage: AiUsage) => void,
   ): Promise<Array<{ id: string; meaning: string }>> {
     if (!items.length) return [];
-    const model = this.getDeepSeekModel();
+    const model = await this.getLlmModel();
     const buildInput = (batch: VocabularyMeaningPriorityItem[]) => batch.map((item, index) => ({
       index,
       word: item.word,
@@ -618,7 +623,7 @@ Raw JSON array only:
     dto: { text: string; meaning: string },
     onUsage?: (usage: AiUsage) => void,
   ): Promise<TextAiEnrichResult> {
-    const model = this.getDeepSeekModel();
+    const model = await this.getLlmModel();
     const { text, usage } = await generateText({
       model,
       prompt: `You are a senior English teacher creating learning materials for Chinese speakers at B1-B2 level.
@@ -671,7 +676,7 @@ Return exactly a JSON object — no markdown, no code fences:
     dto: { pattern: string; meaning: string },
     onUsage?: (usage: AiUsage) => void,
   ): Promise<TextAiEnrichResult> {
-    const model = this.getDeepSeekModel();
+    const model = await this.getLlmModel();
     const { text, usage } = await generateText({
       model,
       prompt: `You are a senior English teacher creating learning materials for Chinese speakers at B1-B2 level.
@@ -774,7 +779,7 @@ Return exactly a JSON object — no markdown, no code fences:
     kind: 'chunk' | 'pattern',
     onUsage?: (usage: AiUsage) => void,
   ): Promise<Array<{ id: string; result: TextBatchEnrichResult }>> {
-    const model = this.getDeepSeekModel();
+    const model = await this.getLlmModel();
     const BATCH_SIZE = 5;
     const results: Array<{ id: string; result: TextBatchEnrichResult }> = [];
 
@@ -904,7 +909,7 @@ ${profile.rules}`;
     onUsage?: (usage: AiUsage) => void,
   ): Promise<string[]> {
     if (sentences.length === 0) return [];
-    const model = this.getDeepSeekModel();
+    const model = await this.getLlmModel();
     const lines = sentences.map((s, i) => `${i + 1}. ${s.en}`).join('\n');
     const { text, usage } = await generateText({
       model,
