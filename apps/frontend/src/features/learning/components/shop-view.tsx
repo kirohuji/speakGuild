@@ -21,11 +21,10 @@ interface Props {
 }
 
 const PACKAGE_TYPE_TABS: Array<{ id: LearningPackageType; labelKey: string }> = [
-  { id: 'daily', labelKey: 'learning.packageTypeDaily' },
-  { id: 'exam', labelKey: 'learning.packageTypeExam' },
-  { id: 'story', labelKey: 'learning.packageTypeStory' },
-  { id: 'course', labelKey: 'learning.packageTypeCourse' },
   { id: 'foundation', labelKey: 'learning.packageTypeFoundation' },
+  { id: 'daily', labelKey: 'learning.packageTypeDaily' },
+  { id: 'course', labelKey: 'learning.packageTypeCourse' },
+  { id: 'exam', labelKey: 'learning.packageTypeExam' },
 ]
 
 type PackageTypeFilter = LearningPackageType | 'all'

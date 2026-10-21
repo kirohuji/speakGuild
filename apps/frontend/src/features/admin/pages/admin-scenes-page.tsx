@@ -58,11 +58,11 @@ import { PackageImportDialog } from '../components/package-import-dialog'
 import { contentExperienceAdminApi, type PackageGroup } from '../api-content-experiences'
 
 function packageTypeLabel(type?: Scene['packageType']) {
-  if (type === 'exam') return '考试'
+  if (type === 'exam') return '考试备考'
   if (type === 'story') return '故事'
-  if (type === 'course') return '课程'
-  if (type === 'foundation') return '零基础'
-  return '日常'
+  if (type === 'course') return '专项提升'
+  if (type === 'foundation') return '基础学习'
+  return '日常应用'
 }
 
 function kindLabel(kind: TopicClaimConflict['kind']) {
@@ -172,10 +172,10 @@ function listInitialLibraryPatterns() {
 }
 
 const PACKAGE_TYPE_FILTERS: Array<{ id: Scene['packageType']; label: string }> = [
-  { id: 'daily', label: '日常' },
-  { id: 'exam', label: '考试' },
-  { id: 'course', label: '课程' },
-  { id: 'foundation', label: '零基础' },
+  { id: 'foundation', label: '基础学习' },
+  { id: 'daily', label: '日常应用' },
+  { id: 'course', label: '专项提升' },
+  { id: 'exam', label: '考试备考' },
 ]
 
 type PackageTypeFilter = Scene['packageType'] | 'all'
@@ -297,10 +297,10 @@ function SceneDialog({
             <div>
               <Label>学习包类型</Label>
               <Select value={form.packageType ?? 'daily'} onChange={(e) => setForm({ ...form, packageType: e.target.value })}>
-                <option value="daily">日常练习</option>
-                <option value="exam">考试专项</option>
-                <option value="course">付费课程</option>
-                <option value="foundation">零基础</option>
+                <option value="foundation">基础学习</option>
+                <option value="daily">日常应用</option>
+                <option value="course">专项提升</option>
+                <option value="exam">考试备考</option>
               </Select>
             </div>
           </div>
@@ -317,7 +317,7 @@ function SceneDialog({
             <p className="mt-1.5 text-xs text-muted-foreground">
               {form.packageType === 'exam'
                 ? '考试包：雅思写作选「写作包」；雅思口语（含 Part 2 描述/叙事）选「知识点练习」。'
-                : '决定话题题型和用户端主交互；日常、考试、课程等分类仍保留。'}
+                : '一级类型表示学习目的；难度和写作、阅读等交互方式由其他字段分别控制。'}
             </p>
           </div>
           <div>
@@ -2751,6 +2751,15 @@ export function AdminScenesPage() {
     () => (selectedGroup ? scenes.filter((scene) => scene.groupId === selectedGroup) : scenes),
     [scenes, selectedGroup],
   )
+  const availableGroups = useMemo(() => {
+    const sceneIds = new Set(scenes.map((scene) => scene.id))
+    return groups.filter((group) => group.items?.some((item) => sceneIds.has(item.sceneId)))
+  }, [groups, scenes])
+  useEffect(() => {
+    if (selectedGroup && !availableGroups.some((group) => group.id === selectedGroup)) {
+      setSelectedGroup(null)
+    }
+  }, [availableGroups, selectedGroup])
   const groupNameById = useMemo(() => {
     const map = new Map<string, string>()
     groups.forEach((group) => map.set(group.id, group.name))
@@ -2777,7 +2786,7 @@ export function AdminScenesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">学习包内容管理</h1>
-          <p className="text-sm text-muted-foreground">统一管理日常练习、考试、课程和零基础话题内容</p>
+          <p className="text-sm text-muted-foreground">统一管理基础学习、日常应用、专项提升和考试备考内容；剧情包在独立入口管理</p>
         </div>
         <Button onClick={() => { setEditCat(null); setCatDialog(true) }}>
           <Plus className="size-4 mr-1" /> 新增分类
@@ -2786,74 +2795,120 @@ export function AdminScenesPage() {
 
       {/* Categories */}
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">筛选</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between gap-3 p-3 pb-2">
+          <CardTitle className="text-sm">筛选学习包</CardTitle>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={selectedPackageType === 'all' && !selectedCat && !selectedGroup}
+            onClick={() => {
+              setSelectedPackageType('all')
+              setSelectedCat(null)
+              setSelectedGroup(null)
+            }}
+          >
+            <X data-icon="inline-start" />
+            清除筛选
+          </Button>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <p className="mb-2 text-xs font-medium text-muted-foreground">一级类型</p>
-            <div className="flex flex-wrap gap-2">
-              {[{ id: 'all' as const, label: '全部' }, ...PACKAGE_TYPE_FILTERS].map((item) => (
-                <Badge
-                  key={item.id}
-                  variant={selectedPackageType === item.id ? 'default' : 'outline'}
-                  className="cursor-pointer"
+        <CardContent className="grid gap-3 p-3 pt-0 lg:grid-cols-[160px_minmax(260px,0.8fr)_minmax(0,1.4fr)]">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="package-type-filter" className="text-xs">一级类型</Label>
+              <Select
+                id="package-type-filter"
+                value={selectedPackageType}
+                onChange={(event) => {
+                  setSelectedPackageType(event.target.value as PackageTypeFilter)
+                  setSelectedCat(null)
+                  setSelectedGroup(null)
+                }}
+              >
+                <option value="all">全部类型</option>
+                {PACKAGE_TYPE_FILTERS.map((item) => (
+                  <option key={item.id} value={item.id}>{item.label}</option>
+                ))}
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="category-filter" className="text-xs">二级主题</Label>
+              <div className="flex gap-2">
+                <div className="min-w-0 flex-1">
+                  <Select
+                    id="category-filter"
+                    value={selectedCat ?? 'all'}
+                    disabled={categories.length === 0}
+                    onChange={(event) => setSelectedCat(event.target.value === 'all' ? null : event.target.value)}
+                  >
+                    <option value="all">全部主题</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}（{category._count?.scenes ?? 0}）
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="outline"
+                  aria-label="编辑当前二级主题"
+                  title="编辑当前二级主题"
+                  disabled={!selectedCat}
                   onClick={() => {
-                    setSelectedPackageType(item.id)
-                    setSelectedCat(null)
+                    const category = categories.find((item) => item.id === selectedCat)
+                    if (category) {
+                      setEditCat(category)
+                      setCatDialog(true)
+                    }
                   }}
                 >
-                  {item.label}
-                </Badge>
-              ))}
-            </div>
-          </div>
-          {categories.length > 0 && (
-            <div>
-              <p className="mb-2 text-xs font-medium text-muted-foreground">二级主题</p>
-              <div className="flex flex-wrap gap-2">
-              <Badge variant={!selectedCat ? 'default' : 'outline'}
-                className="cursor-pointer" onClick={() => setSelectedCat(null)}>
-                全部
-              </Badge>
-              {categories.map((c) => (
-                <Badge key={c.id} variant={selectedCat === c.id ? 'default' : 'outline'}
-                  className="cursor-pointer flex items-center gap-1"
-                  onClick={() => setSelectedCat(c.id)}>
-                  {c.name}
-                  <span className="text-xs opacity-60">({c._count?.scenes ?? 0})</span>
-                  <button className="ml-1 hover:text-destructive"
-                    onClick={(e) => { e.stopPropagation(); setEditCat(c); setCatDialog(true) }}>
-                    <Edit3 className="size-2.5" />
-                  </button>
-                  <button className="hover:text-destructive"
-                    onClick={async (e) => { e.stopPropagation(); if (confirm('确认删除？')) { await deleteSceneCategory(c.id); load() } }}>
-                    <X className="size-2.5" />
-                  </button>
-                </Badge>
-              ))}
+                  <Edit3 />
+                </Button>
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="outline"
+                  aria-label="删除当前二级主题"
+                  title="删除当前二级主题"
+                  disabled={!selectedCat}
+                  onClick={async () => {
+                    if (!selectedCat || !confirm('确认删除？')) return
+                    await deleteSceneCategory(selectedCat)
+                    setSelectedCat(null)
+                    await load()
+                  }}
+                >
+                  <Trash2 />
+                </Button>
               </div>
             </div>
-          )}
-          {groups.length > 0 && (
-            <div>
-              <p className="mb-2 text-xs font-medium text-muted-foreground">所属系列</p>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant={!selectedGroup ? 'default' : 'outline'}
-                  className="cursor-pointer" onClick={() => setSelectedGroup(null)}>
-                  全部
-                </Badge>
-                {groups.map((group) => (
-                  <Badge key={group.id} variant={selectedGroup === group.id ? 'default' : 'outline'}
-                    className="cursor-pointer flex items-center gap-1"
-                    onClick={() => setSelectedGroup(group.id)}>
-                    {group.name}
-                    <span className="text-xs opacity-60">({group.items?.length ?? 0})</span>
-                  </Badge>
-                ))}
-              </div>
+            <div className="flex min-w-0 flex-col gap-1">
+              <Label htmlFor="group-filter" className="flex items-center gap-1.5 text-xs">
+                <Layers className="size-3.5" />
+                所属系列
+                <span className="font-normal text-muted-foreground">· 学习路径</span>
+              </Label>
+              <Select
+                id="group-filter"
+                value={selectedGroup ?? 'all'}
+                disabled={availableGroups.length === 0}
+                aria-label="按所属系列筛选"
+                onChange={(event) => setSelectedGroup(event.target.value === 'all' ? null : event.target.value)}
+              >
+                <option value="all">
+                  {availableGroups.length === 0 ? '当前筛选下没有系列' : '全部系列'}
+                </option>
+                {availableGroups.map((group) => {
+                  const visibleCount = group.items?.filter((item) => scenes.some((scene) => scene.id === item.sceneId)).length ?? 0
+                  return (
+                    <option key={group.id} value={group.id}>
+                      {group.name}（{visibleCount}）
+                    </option>
+                  )
+                })}
+              </Select>
             </div>
-          )}
         </CardContent>
       </Card>
 

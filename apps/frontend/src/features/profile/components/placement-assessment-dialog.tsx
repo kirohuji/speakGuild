@@ -40,7 +40,7 @@ export const LEARNING_GOAL_OPTIONS = [
   { value: 'daily_scenes', label: '日常实战', desc: '吃饭、住宿、交通、社交求助', icon: Home, tint: 'text-emerald-600 bg-emerald-500/10' },
   { value: 'exam_ielts', label: '雅思口语', desc: 'Part 1/2/3、观点、展开和追问', icon: GraduationCap, tint: 'text-blue-600 bg-blue-500/10' },
   { value: 'story_roleplay', label: '故事剧情', desc: '角色扮演、剧情选择、自由探索', icon: CompassIcon, tint: 'text-violet-600 bg-violet-500/10' },
-  { value: 'course_system', label: '系统课程', desc: '发音、句型、表达策略系统补齐', icon: BriefcaseBusiness, tint: 'text-amber-600 bg-amber-500/10' },
+  { value: 'course_system', label: '专项提升', desc: '翻译、写作和表达能力集中突破', icon: BriefcaseBusiness, tint: 'text-amber-600 bg-amber-500/10' },
 ] as const
 
 export const goalLabelMap: Record<string, string> = {
@@ -48,7 +48,7 @@ export const goalLabelMap: Record<string, string> = {
   arrival_roots: '日常实战',
   daily_hustle: '日常实战',
   people: '日常实战',
-  work_study: '系统课程',
+  work_study: '专项提升',
   crisis_mode: '日常实战',
   out_about: '日常实战',
 }
