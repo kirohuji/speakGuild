@@ -2924,9 +2924,6 @@ export function AdminScenesPage() {
             {uploading ? <Loader2 className="animate-spin" data-icon="inline-start" /> : <Upload data-icon="inline-start" />}
             上传数据包
           </Button>
-          <Button size="sm" variant="outline" onClick={() => navigate('/admin/tasks')}>
-            <Clock3 data-icon="inline-start" /> 任务中心
-          </Button>
           <Button size="sm" onClick={() => { setEditScene(null); setSceneDialog(true) }}>
             <Plus data-icon="inline-start" /> 新增学习包
           </Button>
