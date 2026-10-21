@@ -1,4 +1,5 @@
 ﻿import { Injectable } from '@nestjs/common';
+import { LlmChatClient } from '../../../common/llm/llm-chat.client';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { AiModelService } from '../../ai-model/ai-model.service';
 import { buildTopicTeachingPolishPrompt, type PolishChange } from '../prompts/topic-teaching.prompt';
@@ -50,6 +51,7 @@ export class TopicTeachingGenerateService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly aiModelService: AiModelService,
+    private readonly llmChat: LlmChatClient,
   ) {}
 
   /** 润色话题教学文档，返回润色后 Markdown + 改动列表（失败抛错） */
@@ -106,11 +108,7 @@ export class TopicTeachingGenerateService {
     return { chunks, patterns, vocabs };
   }
 
-  /**
-   * 调用 AI 润色接口，解析分隔标记格式的响应。
-   * deepseek-v4-flash 默认开启 thinking 模式，会把全部输出预算花在推理上导致正文为空，
-   * 因此这里直接调用 OpenAI 兼容接口并显式关闭 thinking。
-   */
+  /** 调用 AI 润色接口；思考参数由 Adapter 统一映射。 */
   private async callPolishApi(
     topic: any,
     llmConfig: any,
@@ -128,31 +126,23 @@ export class TopicTeachingGenerateService {
     });
     console.log(`[topic-teaching-polish] topic=${topic.title} model=${llmConfig.model} baseUrl=${llmConfig.baseUrl} draftChars=${draftMarkdown.length} promptChars=${prompt.length}`);
 
-    const endpoint = `${llmConfig.baseUrl.replace(/\/$/, '')}/chat/completions`;
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${llmConfig.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: llmConfig.model,
+    let chatResult;
+    try {
+      chatResult = await this.llmChat.complete({
+        config: llmConfig,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.45,
-        max_tokens: 6000,
-        thinking: { type: 'disabled' },
-      }),
-    });
-    const data: any = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(`AI 润色调用失败（HTTP ${response.status}）：${JSON.stringify(data).slice(0, 500)}`);
+        maxTokens: 6000,
+        thinking: 'disabled',
+      });
+    } catch (error) {
+      throw new Error(`AI 润色调用失败：${error instanceof Error ? error.message : String(error)}`);
     }
-    const raw = String(data?.choices?.[0]?.message?.content ?? '');
-    console.log(`[topic-teaching-polish] AI raw: textChars=${raw.length} finish=${data?.choices?.[0]?.finish_reason ?? 'n/a'}`);
 
-    const result = this.parsePolishResponse(raw);
+    console.log(`[topic-teaching-polish] AI raw: textChars=${chatResult.text.length} finish=${chatResult.finishReason}`);
+    const result = this.parsePolishResponse(chatResult.text);
     if (!result.markdown) {
-      console.error(`[topic-teaching-polish] AI 返回内容为空，原始响应：${JSON.stringify(data).slice(0, 2000)}`);
+      console.error(`[topic-teaching-polish] AI 返回内容为空，原始响应：${JSON.stringify(chatResult.raw).slice(0, 2000)}`);
       throw new Error('AI 润色返回内容为空');
     }
     console.log(`[topic-teaching-polish] polishedChars=${result.markdown.length} changes=${result.changes.length}`);

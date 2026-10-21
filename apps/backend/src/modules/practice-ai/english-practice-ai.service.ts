@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { DialogueTurnJudgeDto, SceneRoleplayTurnDto, WarmupTurnJudgeDto } from './dto/english-feedback.dto';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AiQuotaService } from '../../common/ai-quota/ai-quota.service';
+import { LlmChatClient } from '../../common/llm/llm-chat.client';
 import { LlmProviderFactory, type LlmConfig } from '../../common/llm/llm-provider.factory';
 import { AiModelService } from '../ai-model/ai-model.service';
 import { MaterialConstraintService } from '../content-experiences/material-constraint.service';
@@ -112,6 +113,7 @@ export class EnglishPracticeAiService {
     private readonly prisma: PrismaService,
     private readonly quotaService: AiQuotaService,
     private readonly llmFactory: LlmProviderFactory,
+    private readonly llmChat: LlmChatClient,
     private readonly aiModel: AiModelService,
     private readonly materialConstraints: MaterialConstraintService,
   ) {}
@@ -161,67 +163,37 @@ export class EnglishPracticeAiService {
     return { targetActions, targetGroups, vocabActions, chunkActions, patternActions };
   }
 
-  private buildChatCompletionsUrl(baseUrl: string) {
-    const normalized = (baseUrl || 'https://api.deepseek.com').replace(/\/+$/, '');
-    return normalized.endsWith('/chat/completions')
-      ? normalized
-      : `${normalized}/chat/completions`;
-  }
-
   /**
-   * DeepSeek 的普通文本模式不能保证可被 JSON.parse。热身流水线是嵌套长 JSON，
-   * 直接使用其 JSON Output，并保留 finish_reason 以便区分截断和格式错误。
+   * 长 JSON 流水线：通过 LlmChatClient + Adapter，避免业务层写厂商字段。
    */
-  private async generateDeepSeekWarmupPipeline(config: LlmConfig, system: string, prompt: string, temperature = 0.35) {
+  private async generateHybridWarmupPipeline(config: LlmConfig, system: string, prompt: string, temperature = 0.35) {
     let lastError: unknown = null;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
-        this.logger.log(`[warmup-ai] DeepSeek JSON request attempt=${attempt + 1} systemChars=${system.length} promptChars=${prompt.length} maxTokens=${WARMUP_PIPELINE_MAX_OUTPUT_TOKENS}`);
-        const response = await fetch(this.buildChatCompletionsUrl(config.baseUrl), {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${config.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: config.model,
-            messages: [
-              { role: 'system', content: system },
-              {
-                role: 'user',
-                content: `${prompt}\n\nReturn one complete JSON object only: {"pipeline":[...]}. Do not truncate any string or array.`,
-              },
-            ],
-            response_format: { type: 'json_object' },
-            // deepseek-v4-flash 默认会思考；嵌套 JSON 任务必须关闭，否则正文会被推理耗尽。
-            thinking: { type: 'disabled' },
-            temperature: attempt === 0 ? temperature : 0,
-            max_tokens: WARMUP_PIPELINE_MAX_OUTPUT_TOKENS,
-          }),
+        this.logger.log(`[warmup-ai] JSON request provider=${config.provider} attempt=${attempt + 1} systemChars=${system.length} promptChars=${prompt.length} maxTokens=${WARMUP_PIPELINE_MAX_OUTPUT_TOKENS}`);
+        const result = await this.llmChat.completeJson({
+          config,
+          system,
+          prompt: `${prompt}\n\nReturn one complete JSON object only: {"pipeline":[...]}. Do not truncate any string or array.`,
+          temperature: attempt === 0 ? temperature : 0,
+          maxTokens: WARMUP_PIPELINE_MAX_OUTPUT_TOKENS,
         });
-        const payload = await response.json().catch(() => null) as any;
-        if (!response.ok) {
-          throw new Error(payload?.error?.message || payload?.message || `DeepSeek JSON output failed (${response.status})`);
+        if (!result.text) {
+          throw new Error(`LLM JSON output was empty; finish_reason=${result.finishReason}, reasoningChars=${result.reasoningChars}`);
         }
-
-        const choice = payload?.choices?.[0];
-        const finishReason = String(choice?.finish_reason ?? 'unknown');
-        const content = String(choice?.message?.content ?? '').trim();
-        const reasoningChars = String(choice?.message?.reasoning_content ?? '').length;
-        if (!content) throw new Error(`DeepSeek JSON output was empty; finish_reason=${finishReason}, reasoningChars=${reasoningChars}`);
-        if (finishReason === 'length') {
-          throw new Error(`DeepSeek JSON output was truncated; finish_reason=length, chars=${content.length}`);
+        if (result.finishReason === 'length') {
+          throw new Error(`LLM JSON output was truncated; finish_reason=length, chars=${result.text.length}`);
         }
 
         let parsed: unknown;
         try {
-          parsed = JSON.parse(this.extractJson(content).trim());
+          parsed = JSON.parse(this.extractJson(result.text).trim());
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          throw new Error(`DeepSeek JSON output was invalid; finish_reason=${finishReason}, chars=${content.length}, error=${message}`);
+          throw new Error(`LLM JSON output was invalid; finish_reason=${result.finishReason}, chars=${result.text.length}, error=${message}`);
         }
         if (!parsed || typeof parsed !== 'object' || !Array.isArray((parsed as { pipeline?: unknown }).pipeline)) {
-          throw new Error(`DeepSeek JSON output schema mismatch; expected pipeline array, finish_reason=${finishReason}`);
+          throw new Error(`LLM JSON output schema mismatch; expected pipeline array, finish_reason=${result.finishReason}`);
         }
         return (parsed as { pipeline: Array<Record<string, unknown>> }).pipeline;
       } catch (error) {
@@ -231,37 +203,21 @@ export class EnglishPracticeAiService {
     throw lastError instanceof Error ? lastError : new Error(String(lastError));
   }
 
-  /** Quality review uses the same DeepSeek JSON mode as pipeline generation.
-   * The generic SDK path does not disable reasoning, so flash models can spend
-   * the response budget before closing a replacement JSON object. */
-  private async generateDeepSeekWarmupQualityReview(config: LlmConfig, system: string, prompt: string) {
+  private async generateHybridWarmupQualityReview(config: LlmConfig, system: string, prompt: string) {
     let lastError: unknown = null;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
-        const response = await fetch(this.buildChatCompletionsUrl(config.baseUrl), {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: config.model,
-            messages: [
-              { role: 'system', content: system },
-              { role: 'user', content: `${prompt}\n\nReturn one complete JSON object only: {"reviews":[]}. Do not truncate any string or object.` },
-            ],
-            response_format: { type: 'json_object' },
-            thinking: { type: 'disabled' },
-            temperature: attempt === 0 ? 0.1 : 0,
-            max_tokens: 12_000,
-          }),
+        const result = await this.llmChat.completeJson({
+          config,
+          system,
+          prompt: `${prompt}\n\nReturn one complete JSON object only: {"reviews":[]}. Do not truncate any string or object.`,
+          temperature: attempt === 0 ? 0.1 : 0,
+          maxTokens: 12_000,
         });
-        const payload = await response.json().catch(() => null) as any;
-        if (!response.ok) throw new Error(payload?.error?.message || `DeepSeek quality JSON failed (${response.status})`);
-        const choice = payload?.choices?.[0];
-        const finishReason = String(choice?.finish_reason ?? 'unknown');
-        const content = String(choice?.message?.content ?? '').trim();
-        if (!content) throw new Error(`DeepSeek quality JSON was empty; finish_reason=${finishReason}`);
-        if (finishReason === 'length') throw new Error(`DeepSeek quality JSON was truncated; finish_reason=length`);
-        const parsed = JSON.parse(this.extractJson(content).trim()) as { reviews?: unknown };
-        if (!Array.isArray(parsed.reviews)) throw new Error('DeepSeek quality JSON schema mismatch; expected reviews array');
+        if (!result.text) throw new Error(`LLM quality JSON was empty; finish_reason=${result.finishReason}`);
+        if (result.finishReason === 'length') throw new Error(`LLM quality JSON was truncated; finish_reason=length`);
+        const parsed = JSON.parse(this.extractJson(result.text).trim()) as { reviews?: unknown };
+        if (!Array.isArray(parsed.reviews)) throw new Error('LLM quality JSON schema mismatch; expected reviews array');
         return parsed as { reviews: any[] };
       } catch (error) {
         lastError = error;
@@ -800,46 +756,23 @@ For correction/upgraded/retryRequired: only populate these when the response is 
     dto: DrillGenerationDto;
   }) {
     const maxOutputTokens = Math.max(1000, (params.dto.items?.length ?? params.dto.itemCount ?? 4) * 180);
-    const providerName = params.config.provider.trim().toLowerCase();
-
-    if (providerName === 'deepseek') {
+    if (this.llmChat.prefersNativeJsonMode(params.config)) {
       let lastError: unknown = null;
       for (let attempt = 0; attempt < 2; attempt += 1) {
         try {
-          const response = await fetch(this.buildChatCompletionsUrl(params.config.baseUrl), {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${params.config.apiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              model: params.config.model,
-              messages: [
-                { role: 'system', content: params.system },
-                {
-                  role: 'user',
-                  content: `${params.prompt}\n\nReturn a complete JSON object only. It must start with {"hints":[ and must be valid JSON.`,
-                },
-              ],
-              response_format: { type: 'json_object' },
-              temperature: attempt === 0 ? 0.2 : 0,
-              max_tokens: maxOutputTokens,
-            }),
+          const chatResult = await this.llmChat.completeJson({
+            config: params.config,
+            system: params.system,
+            prompt: `${params.prompt}\n\nReturn a complete JSON object only. It must start with {"hints":[ and must be valid JSON.`,
+            temperature: attempt === 0 ? 0.2 : 0,
+            maxTokens: maxOutputTokens,
           });
-
-          const payload = await response.json().catch(() => null) as any;
-          if (!response.ok) {
-            throw new Error(payload?.error?.message || payload?.message || `DeepSeek JSON output failed (${response.status})`);
+          if (!chatResult.text) {
+            throw new Error(`LLM JSON output was empty; finish_reason=${chatResult.finishReason}`);
           }
-
-          const content = String(payload?.choices?.[0]?.message?.content ?? '').trim();
-          if (!content) {
-            throw new Error(`DeepSeek JSON output was empty; finish_reason=${payload?.choices?.[0]?.finish_reason ?? 'unknown'}`);
-          }
-
-          const parsed = JSON.parse(this.extractJson(content).trim());
+          const parsed = JSON.parse(this.extractJson(chatResult.text).trim());
           const result = this.drillHintsSchema.safeParse(parsed);
-          if (!result.success) throw new Error(`DeepSeek JSON output schema mismatch: ${result.error.message}`);
+          if (!result.success) throw new Error(`LLM JSON output schema mismatch: ${result.error.message}`);
           return result.data;
         } catch (error) {
           lastError = error;
@@ -2013,8 +1946,8 @@ Rules:
 
     try {
       let refinedRaw: Array<Record<string, unknown>>;
-      if (params.config.provider.trim().toLowerCase() === 'deepseek') {
-        refinedRaw = await this.generateDeepSeekWarmupPipeline(
+      if (this.llmChat.prefersNativeJsonMode(params.config)) {
+        refinedRaw = await this.generateHybridWarmupPipeline(
           params.config,
           WARMUP_PIPELINE_ALIGNMENT_SYSTEM_PROMPT,
           prompt,
@@ -2300,10 +2233,9 @@ Rules:
     });
 
     try {
-      const providerName = runtime.config.provider.trim().toLowerCase();
       let generated: Array<Record<string, unknown>>;
-      if (providerName === 'deepseek') {
-        generated = await this.generateDeepSeekWarmupPipeline(
+      if (this.llmChat.prefersNativeJsonMode(runtime.config)) {
+        generated = await this.generateHybridWarmupPipeline(
           runtime.config,
           WARMUP_PIPELINE_SYSTEM_PROMPT,
           prompt,
@@ -2334,8 +2266,8 @@ Rules:
         const repairPrompt = `${prompt}\n\n## REQUIRED COVERAGE REPAIR\nThe first draft missed these targets in actual English exercises (titles and hints do not count):\n${uncovered.map((item) => `- [${item.kind}] ${item.text}`).join('\n')}\n\nReturn ONLY additional, non-duplicate groups that practise every listed target. Keep the same JSON schema and use natural combinations where slot meaning permits. Avoid every target already present in this first draft:\n${JSON.stringify({ pipeline: normalized })}`;
         try {
           let repaired: Array<Record<string, unknown>>;
-          if (providerName === 'deepseek') {
-            repaired = await this.generateDeepSeekWarmupPipeline(runtime.config, WARMUP_PIPELINE_SYSTEM_PROMPT, repairPrompt);
+          if (this.llmChat.prefersNativeJsonMode(runtime.config)) {
+            repaired = await this.generateHybridWarmupPipeline(runtime.config, WARMUP_PIPELINE_SYSTEM_PROMPT, repairPrompt);
           } else {
             const { text } = await generateText({
               model: provider(), system: WARMUP_PIPELINE_SYSTEM_PROMPT, prompt: repairPrompt,
@@ -2393,8 +2325,8 @@ Only return a review when a change is genuinely needed. Return ZERO OR ONE revie
     const prompt = `Topic: ${dto.topicTitle || '未命名话题'}\nDifficulty: ${dto.difficulty || 'L2'}\n\nPipeline to audit:\n${JSON.stringify(auditItems)}`;
     try {
       let parsed: { reviews?: any[] };
-      if (runtime.config.provider.trim().toLowerCase() === 'deepseek') {
-        parsed = await this.generateDeepSeekWarmupQualityReview(runtime.config, system, prompt);
+      if (this.llmChat.prefersNativeJsonMode(runtime.config)) {
+        parsed = await this.generateHybridWarmupQualityReview(runtime.config, system, prompt);
       } else {
         const { text } = await generateText({
           model: runtime.provider(), system, prompt, temperature: 0.1, maxOutputTokens: 8_000,

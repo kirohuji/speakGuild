@@ -47,11 +47,11 @@ const learningGoalLabels: Record<string, string> = {
   daily_scenes: '日常实战',
   exam_ielts: '雅思口语',
   story_roleplay: '故事剧情',
-  course_system: '系统课程',
+  course_system: '专项提升',
   arrival_roots: '日常实战',
   daily_hustle: '日常实战',
   people: '日常实战',
-  work_study: '系统课程',
+  work_study: '专项提升',
   crisis_mode: '日常实战',
   out_about: '日常实战',
 };

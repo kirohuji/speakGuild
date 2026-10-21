@@ -443,13 +443,13 @@ export class LearningService {
    */
   async getTags(packageType?: string) {
     const categories = await this.prisma.sceneCategory.findMany({
-      where: packageType
-        ? {
-            scenes: {
-              some: { packageType: packageType as any },
-            },
-          }
-        : undefined,
+      where: {
+        scenes: {
+          some: packageType
+            ? { packageType: packageType as any }
+            : { packageType: { not: 'story' } },
+        },
+      },
       orderBy: { sortOrder: 'asc' },
       select: { name: true, icon: true },
     });

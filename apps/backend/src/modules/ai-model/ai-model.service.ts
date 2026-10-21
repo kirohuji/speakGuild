@@ -100,7 +100,7 @@ export class AiModelService {
   async remove(id: string): Promise<{ success: true }> {
     const provider = await this.prisma.aiProvider.findUnique({ where: { id } });
     if (!provider) throw new NotFoundException('Provider not found');
-    if (['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'elevenlabs', 'deepseek', 'openai'].includes(provider.provider)) {
+    if (['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'elevenlabs', 'deepseek', 'openai', 'bailian'].includes(provider.provider)) {
       throw new BadRequestException('Built-in providers cannot be deleted');
     }
     if (provider.isActive) {
@@ -128,14 +128,30 @@ export class AiModelService {
     });
   }
 
+  private llmEnvFallback(provider?: string | null) {
+    const name = (provider || 'deepseek').toLowerCase();
+    if (name === 'openai') return process.env.OPENAI_API_KEY?.trim() || '';
+    if (name === 'bailian') {
+      return process.env.DASHSCOPE_API_KEY?.trim() || process.env.BAILIAN_API_KEY?.trim() || '';
+    }
+    return process.env.DEEPSEEK_API_KEY?.trim() || '';
+  }
+
   /** 获取 LLM 配置（用于 LlmProviderFactory） */
   async getLlmConfig() {
     const active = await this.getActive('llm');
+    const provider = active?.provider ?? 'deepseek';
     return {
-      provider: active?.provider ?? 'deepseek',
-      apiKey: active?.apiKey || process.env.DEEPSEEK_API_KEY?.trim() || '',
-      model: active?.model || 'deepseek-v4',
-      baseUrl: active?.baseUrl || 'https://api.deepseek.com',
+      provider,
+      apiKey: active?.apiKey || this.llmEnvFallback(provider),
+      model: active?.model || (provider === 'bailian' ? 'qwen3.7-flash' : 'deepseek-v4'),
+      baseUrl:
+        active?.baseUrl
+        || (provider === 'bailian'
+          ? 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+          : provider === 'openai'
+            ? 'https://api.openai.com/v1'
+            : 'https://api.deepseek.com'),
     };
   }
 
@@ -147,18 +163,16 @@ export class AiModelService {
     if (!trimmedPrompt) throw new BadRequestException('Prompt is required');
 
     const startedAt = Date.now();
-    const fallbackApiKey =
-      provider.provider === 'deepseek'
-        ? process.env.DEEPSEEK_API_KEY?.trim()
-        : provider.provider === 'openai'
-          ? process.env.OPENAI_API_KEY?.trim()
-          : undefined;
-    const model = this.llmFactory.create({
-      provider: provider.provider,
-      apiKey: provider.apiKey || fallbackApiKey || '',
-      model: provider.model,
-      baseUrl: provider.baseUrl,
-    });
+    // 管理后台连通性测试默认关闭思考，避免百炼/DeepSeek 推理把简单测试拖到数十秒
+    const model = this.llmFactory.create(
+      {
+        provider: provider.provider,
+        apiKey: provider.apiKey || this.llmEnvFallback(provider.provider),
+        model: provider.model,
+        baseUrl: provider.baseUrl,
+      },
+      { thinking: 'disabled' },
+    );
     const { text, usage } = await generateText({
       model,
       prompt: trimmedPrompt,
@@ -256,6 +270,15 @@ export class AiModelService {
       { type: 'tts', provider: 'elevenlabs', label: 'ElevenLabs', model: 'eleven_multilingual_v2', apiKey: process.env.ELEVENLABS_API_KEY?.trim() || '', baseUrl: 'https://api.elevenlabs.io', config: { voiceId: process.env.ELEVENLABS_VOICE_ID?.trim() || 'JBFqnCBsd6RMkjVDRZzb' }, sortOrder: 3 },
       { type: 'llm', provider: 'deepseek', label: 'DeepSeek', model: 'deepseek-v4', apiKey: process.env.DEEPSEEK_API_KEY?.trim() || '', baseUrl: 'https://api.deepseek.com', sortOrder: 0 },
       { type: 'llm', provider: 'openai', label: 'OpenAI', model: 'gpt-4o', apiKey: '', baseUrl: 'https://api.openai.com/v1', sortOrder: 1 },
+      {
+        type: 'llm',
+        provider: 'bailian',
+        label: '阿里云百炼',
+        model: 'qwen3.7-flash',
+        apiKey: process.env.DASHSCOPE_API_KEY?.trim() || process.env.BAILIAN_API_KEY?.trim() || '',
+        baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+        sortOrder: 2,
+      },
     ];
 
     for (const def of defaults) {

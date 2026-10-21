@@ -1,71 +1,39 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModel } from 'ai';
+import { LlmAdapterRegistry } from './llm-adapter.registry';
+import type { LlmConfig, LlmRequestOptions } from './llm.types';
 
-export interface LlmConfig {
-  provider: string;
-  apiKey: string;
-  model: string;
-  baseUrl: string;
-}
-
-export interface LlmRequestOptions {
-  thinking?: 'enabled' | 'disabled';
-}
+export type { LlmConfig, LlmRequestOptions } from './llm.types';
 
 /**
- * LLM Provider Factory
- *
- * 统一管理大语言模型供应商，通过配置动态切换。
- * 当前支持：deepseek, openai（以及兼容 OpenAI API 的供应商）。
- *
- * 使用方式：
- *   const model = llmFactory.create(config);
- *   const result = await generateText({ model, prompt: '...' });
+ * 对外工厂：业务通过 create(config) 拿到 AI SDK LanguageModel。
+ * 协议差异全部委托给 LlmVendorAdapter。
  */
 @Injectable()
 export class LlmProviderFactory {
   private readonly logger = new Logger(LlmProviderFactory.name);
 
-  /**
-   * 根据配置创建 AI SDK LanguageModel 实例。
-   */
-  create(config: LlmConfig, options?: LlmRequestOptions): LanguageModel {
-    const { apiKey, model, baseUrl } = config;
+  constructor(private readonly registry: LlmAdapterRegistry) {}
 
-    if (!apiKey) {
+  create(config: LlmConfig, options?: LlmRequestOptions): LanguageModel {
+    if (!config.apiKey) {
       throw new Error(`[LlmFactory] LLM API key not configured (provider: ${config.provider})`);
     }
 
-    this.logger.log(`Creating LLM provider: ${config.provider} model=${model} baseUrl=${baseUrl}`);
+    const adapter = this.registry.resolve(config.provider);
+    const thinking = options?.thinking ?? adapter.defaultThinkingMode();
+    this.logger.log(
+      `Creating LLM provider: ${adapter.id} model=${config.model} baseUrl=${config.baseUrl}`
+      + (thinking ? ` thinking=${thinking}` : ''),
+    );
 
-    const client = createOpenAI({
-      apiKey,
-      baseURL: baseUrl || undefined,
-      name: config.provider,
-      fetch: config.provider === 'deepseek' && options?.thinking
-        ? async (input, init) => {
-            if (typeof init?.body !== 'string') return fetch(input, init);
-            try {
-              const body = JSON.parse(init.body) as Record<string, unknown>;
-              return fetch(input, {
-                ...init,
-                body: JSON.stringify({
-                  ...body,
-                  thinking: { type: options.thinking },
-                }),
-              });
-            } catch {
-              return fetch(input, init);
-            }
-          }
-        : undefined,
+    return adapter.createLanguageModel(config, {
+      ...options,
+      thinking,
     });
+  }
 
-    if (config.provider !== 'openai') {
-      return client.chat(model as any);
-    }
-
-    return client(model);
+  adapterFor(provider?: string | null) {
+    return this.registry.resolve(provider);
   }
 }

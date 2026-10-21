@@ -54,13 +54,19 @@ const TABS = [
 ] as const;
 
 const TYPE_LABELS: Record<string, string> = { stt: 'STT', tts: 'TTS', llm: 'LLM' };
-const BUILT_IN_PROVIDERS = new Set(['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'elevenlabs', 'deepseek', 'openai']);
+const BUILT_IN_PROVIDERS = new Set(['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'elevenlabs', 'deepseek', 'openai', 'bailian']);
 
 const DEEPSEEK_MODELS = [
   { value: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro', hint: 'Flagship model for higher-quality reasoning and complex tasks.' },
   { value: 'deepseek-v4-flash', label: 'DeepSeek V4 Flash', hint: 'Faster and cheaper option for everyday dialogue and lightweight tasks.' },
   { value: 'deepseek-chat', label: 'deepseek-chat (legacy alias)', hint: 'Legacy alias. DeepSeek says it will be deprecated on 2026-07-24 15:59 UTC.' },
   { value: 'deepseek-reasoner', label: 'deepseek-reasoner (legacy alias)', hint: 'Legacy alias. DeepSeek says it will be deprecated on 2026-07-24 15:59 UTC.' },
+];
+
+const BAILIAN_MODELS = [
+  { value: 'qwen3.7-flash', label: 'Qwen3.7 Flash', hint: '阿里云百炼高速模型，适合排版/生成等日常调用。' },
+  { value: 'qwen-plus', label: 'Qwen Plus', hint: '均衡效果与成本。' },
+  { value: 'qwen-max', label: 'Qwen Max', hint: '更高质量，适合复杂推理。' },
 ];
 
 const MINIMAX_MODELS = [
@@ -474,9 +480,31 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
   useEffect(() => {
     if (!item) return;
     const cfg = item.config ?? {};
-    setModel(item.provider === 'deepseek' ? (item.model || 'deepseek-v4-pro') : item.provider === 'minimax' ? (item.model || 'speech-2.8-hd') : item.provider === 'hume' ? (item.model || '2') : item.provider === 'elevenlabs' ? (item.model || 'eleven_multilingual_v2') : (item.model ?? ''));
+    setModel(
+      item.provider === 'deepseek'
+        ? (item.model || 'deepseek-v4-pro')
+        : item.provider === 'bailian'
+          ? (item.model || 'qwen3.7-flash')
+          : item.provider === 'minimax'
+            ? (item.model || 'speech-2.8-hd')
+            : item.provider === 'hume'
+              ? (item.model || '2')
+              : item.provider === 'elevenlabs'
+                ? (item.model || 'eleven_multilingual_v2')
+                : (item.model ?? ''),
+    );
     setApiKey(item.apiKey ?? '');
-    setBaseUrl(item.provider === 'deepseek' ? (item.baseUrl || 'https://api.deepseek.com') : item.provider === 'elevenlabs' ? (item.baseUrl || 'https://api.elevenlabs.io') : item.provider === 'minimax' ? (item.baseUrl || 'https://api.minimax.io') : (item.baseUrl ?? ''));
+    setBaseUrl(
+      item.provider === 'deepseek'
+        ? (item.baseUrl || 'https://api.deepseek.com')
+        : item.provider === 'bailian'
+          ? (item.baseUrl || 'https://dashscope.aliyuncs.com/compatible-mode/v1')
+          : item.provider === 'elevenlabs'
+            ? (item.baseUrl || 'https://api.elevenlabs.io')
+            : item.provider === 'minimax'
+              ? (item.baseUrl || 'https://api.minimax.io')
+              : (item.baseUrl ?? ''),
+    );
     setGroupId(String((cfg as Record<string, unknown>).groupId ?? ''));
     const configuredVoices = (cfg as Record<string, unknown>).randomVoiceIds ?? (cfg as Record<string, unknown>).voiceIds ?? '';
     setRandomVoiceIds(Array.isArray(configuredVoices) ? configuredVoices.join('\n') : String(configuredVoices ?? ''));
@@ -496,6 +524,7 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
   const isWhisper = item.type === 'stt' && item.provider === 'whisper';
   const isTencentAsr = item.type === 'stt' && item.provider === 'tencent';
   const isDeepSeek = item.type === 'llm' && item.provider === 'deepseek';
+  const isBailian = item.type === 'llm' && item.provider === 'bailian';
   const isMiniMax = item.type === 'tts' && item.provider === 'minimax';
   const isHume = item.type === 'tts' && item.provider === 'hume';
   const isElevenLabs = item.type === 'tts' && item.provider === 'elevenlabs';
@@ -644,6 +673,22 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
               <div className="space-y-2"><Label>DeepSeek model</Label><Select value={model} onChange={(event) => setModel(event.target.value)}>{DEEPSEEK_MODELS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</Select><p className="text-[11px] text-muted-foreground">{DEEPSEEK_MODELS.find((option) => option.value === model)?.hint}</p></div>
               <div className="space-y-2"><Label>Base URL</Label><Input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} className="font-mono text-sm" placeholder="https://api.deepseek.com" /></div>
               <div className="space-y-2"><Label>DEEPSEEK_API_KEY</Label><Input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} className="font-mono text-sm" placeholder="Use env var when empty" /></div>
+            </>
+          ) : isBailian ? (
+            <>
+              <div className="space-y-2">
+                <Label>百炼模型</Label>
+                <Select value={model || 'qwen3.7-flash'} onChange={(event) => setModel(event.target.value)}>
+                  {BAILIAN_MODELS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                  {model && !BAILIAN_MODELS.some((option) => option.value === model) && (
+                    <SelectItem value={model}>{model} (custom)</SelectItem>
+                  )}
+                </Select>
+                <Input value={model} onChange={(event) => setModel(event.target.value)} className="font-mono text-sm" placeholder="也可直接填写控制台模型名" />
+                <p className="text-[11px] text-muted-foreground">{BAILIAN_MODELS.find((option) => option.value === model)?.hint || '可填写控制台中的自定义模型名。'}</p>
+              </div>
+              <div className="space-y-2"><Label>Base URL</Label><Input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} className="font-mono text-sm" placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1" /></div>
+              <div className="space-y-2"><Label>DASHSCOPE_API_KEY</Label><Input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} className="font-mono text-sm" placeholder="Use env var when empty" /></div>
             </>
           ) : (
             <>

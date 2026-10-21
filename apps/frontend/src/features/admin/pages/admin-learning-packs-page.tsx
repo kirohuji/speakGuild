@@ -55,11 +55,11 @@ function statusLabel(status: LearningPackStatus) {
 }
 
 function packageTypeLabel(type?: LearningPackType) {
-  if (type === 'exam') return '考试';
+  if (type === 'exam') return '考试备考';
   if (type === 'story') return '故事';
-  if (type === 'course') return '课程';
-  if (type === 'foundation') return '零基础';
-  return '日常';
+  if (type === 'course') return '专项提升';
+  if (type === 'foundation') return '基础学习';
+  return '日常应用';
 }
 
 function saveBlob(buffer: ArrayBuffer, filename: string) {

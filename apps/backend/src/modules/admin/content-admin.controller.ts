@@ -46,12 +46,12 @@ function countPipelineExercises(pipeline: any[] | undefined): number {
 import { EnglishPracticeAiService } from '../practice-ai/english-practice-ai.service';
 import { DialogueTurnJudgeDto } from '../practice-ai/dto/english-feedback.dto';
 import { DictionaryService } from '../dictionary/dictionary.service';
-import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { TtsService } from '../tts/tts.service';
 import { TtsProvider } from '@prisma/client';
 import { AdminContentAiService } from './admin-content-ai.service';
 import { AiModelService } from '../ai-model/ai-model.service';
+import { LlmProviderFactory } from '../../common/llm/llm-provider.factory';
 import { FileAssetsService } from '../file-assets/file-assets.service';
 import { AdminTasksService } from '../admin-tasks/admin-tasks.service';
 import { ContentPrepareService } from '../admin-tasks/jobs/content-prepare.service';
@@ -152,6 +152,7 @@ export class ContentAdminController {
     private readonly ttsService: TtsService,
     private readonly adminContentAiService: AdminContentAiService,
     private readonly aiModelService: AiModelService,
+    private readonly llmFactory: LlmProviderFactory,
     private readonly fileAssetsService: FileAssetsService,
     private readonly adminTasksService: AdminTasksService,
     private readonly contentPrepareService: ContentPrepareService,
@@ -856,8 +857,7 @@ export class ContentAdminController {
     try {
       const llmConfig = await this.aiModelService.getLlmConfig();
       if (llmConfig.apiKey && candidates.length) {
-        const client = createOpenAI({ apiKey: llmConfig.apiKey, baseURL: llmConfig.baseUrl });
-        const model = client.chat(llmConfig.model);
+        const model = this.llmFactory.create(llmConfig);
         const candidateLines = candidates
           .map(({ vocabulary }) => `- ${vocabulary.id} | ${vocabulary.word} | ${vocabulary.meaning} | ${vocabulary.partOfSpeech ?? ''} | ${vocabulary.difficulty}`)
           .join('\n');
@@ -943,9 +943,9 @@ export class ContentAdminController {
       try {
         const llmConfig = await this.aiModelService.getLlmConfig();
         if (llmConfig.apiKey) {
-          const client = createOpenAI({ apiKey: llmConfig.apiKey, baseURL: llmConfig.baseUrl });
+          const model = this.llmFactory.create(llmConfig);
           const { text } = await generateText({
-            model: client.chat(llmConfig.model),
+            model,
             prompt: `你是英语教学设计助手。请结合教学文档、已绑定句型与句块，提取尚值得加入练习的实义词，优先覆盖例句、句型槽位和句块中的可替换词，最多 ${Math.max(0, count - items.length)} 个；不要包含代词、介词、冠词、连词或助动词，也不要为了凑数。
 
 话题难度：${difficulty}
@@ -1140,8 +1140,7 @@ ${(dto.teachingMarkdown ?? topic.teachingMarkdown ?? '').slice(0, 6000)}
     try {
       const llmConfig = await this.aiModelService.getLlmConfig();
       if (llmConfig.apiKey) {
-        const client = createOpenAI({ apiKey: llmConfig.apiKey, baseURL: llmConfig.baseUrl });
-        const model = client.chat(llmConfig.model);
+        const model = this.llmFactory.create(llmConfig);
         const selectedPatternLines = selectedPatterns.map((item) => `- ${item.pattern} — ${item.meaning ?? ''}`).join('\n') || '- (无)';
         const selectedChunkLines = selectedChunks.map((item) => `- ${item.text} — ${item.meaning}`).join('\n') || '- (无)';
         const selectedVocabLines = selectedVocabs.map((item) => `- ${item.word} — ${item.meaning}`).join('\n') || '- (无)';
@@ -2746,9 +2745,8 @@ ${candidateLines}
 
       const roleBlock = roleBlockParts.join('\n');
 
-      // ── 4. 调用 DeepSeek 生成 ──
-      const client = createOpenAI({ apiKey: llmConfig.apiKey, baseURL: llmConfig.baseUrl });
-      const model = client.chat(llmConfig.model);
+      // ── 4. 调用当前激活 LLM 生成 ──
+      const model = this.llmFactory.create(llmConfig);
 
       const { text } = await generateText({
         model,
@@ -2956,12 +2954,10 @@ Alex: 更多英文对白
         return { code: 200, message: '所有对白已有翻译', data: { inkSource: source } };
       }
 
-      // 构建批量翻译请求
-      const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
-      if (!apiKey) throw new Error('DEEPSEEK_API_KEY 未配置');
-
-      const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
-      const model = client.chat('deepseek-chat');
+      // 构建批量翻译请求（走大模型管理当前激活的 LLM）
+      const llmConfig = await this.aiModelService.getLlmConfig();
+      if (!llmConfig.apiKey) throw new Error('LLM API key 未配置');
+      const model = this.llmFactory.create(llmConfig);
 
       const dialogueTexts = untranslated.map((d, i) =>
         `[${i}] ${d.speaker}: ${d.text}`,
@@ -3283,10 +3279,9 @@ ${dialogueTexts}
 
       const contextBlock = parts.join('\n');
 
-      const client = createOpenAI({ apiKey: llmConfig.apiKey, baseURL: llmConfig.baseUrl });
-      const model = client.chat(llmConfig.model);
+      const model = this.llmFactory.create(llmConfig);
 
-      // 清洗输出：DeepSeek 偶发返回空内容，自动重试一次
+      // 清洗输出：模型偶发返回空内容，自动重试一次
       let md = '';
       for (let attempt = 0; attempt < 2; attempt += 1) {
         const { text } = await generateText({

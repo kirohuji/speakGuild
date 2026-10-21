@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import type {
@@ -881,9 +880,9 @@ Rules:
       }).join('\n\n');
 
       try {
-        const provider = this.getDeepSeekProvider();
+        const model = await this.getLlmModel();
         const { text, usage } = await generateText({
-          model: provider('deepseek-chat'),
+          model,
           prompt: `Translate the following English dictionary senses and examples to Simplified Chinese (zh-CN).
 
 ${items}
@@ -945,7 +944,9 @@ Return ONLY a JSON object (no markdown):
     sourceUrl: string,
     onUsage?: (usage: LlmUsage) => void,
   ): Promise<{ clusters: SenseCluster[]; meta: AiReviewMeta }> {
-    const provider = this.getDeepSeekProvider();
+    const llmConfig = await this.aiModelService.getLlmConfig();
+    if (!llmConfig.apiKey) throw new Error('当前激活的 LLM 未配置 API Key');
+    const model = this.llmFactory.create(llmConfig);
 
     // Build a compact representation for the AI to review
     const clusterSummary = clusters.map((c) => ({
@@ -992,7 +993,7 @@ Return ONLY a JSON object (no markdown):
 
     try {
       const { text, usage } = await generateText({
-        model: provider('deepseek-chat'),
+        model,
         prompt,
         temperature: 0.1,
         maxOutputTokens: 3000,
@@ -1010,7 +1011,7 @@ Return ONLY a JSON object (no markdown):
           reviewedAt: new Date().toISOString(),
           issuesFound: patch.issuesFound ?? fixesApplied,
           fixesApplied,
-          modelUsed: 'deepseek-chat',
+          modelUsed: llmConfig.model,
         },
       };
     } catch (err: any) {
@@ -1021,7 +1022,7 @@ Return ONLY a JSON object (no markdown):
           reviewedAt: new Date().toISOString(),
           issuesFound: 0,
           fixesApplied: 0,
-          modelUsed: 'deepseek-chat',
+          modelUsed: llmConfig.model,
         },
       };
     }
@@ -1124,14 +1125,10 @@ Return ONLY a JSON object (no markdown):
     return count;
   }
 
-  // ════════════════════════════════════════════════════════════
-  // DeepSeek provider factory
-  // ════════════════════════════════════════════════════════════
-
-  private getDeepSeekProvider() {
-    const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
-    if (!apiKey) throw new Error('DEEPSEEK_API_KEY is not configured');
-    const client = createOpenAI({ apiKey, baseURL: 'https://api.deepseek.com/v1' });
-    return (model: string) => client.chat(model);
+  /** 使用大模型管理中当前激活的 LLM */
+  private async getLlmModel() {
+    const llmConfig = await this.aiModelService.getLlmConfig();
+    if (!llmConfig.apiKey) throw new Error('当前激活的 LLM 未配置 API Key');
+    return this.llmFactory.create(llmConfig);
   }
 }

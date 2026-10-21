@@ -58,11 +58,11 @@ import { PackageImportDialog } from '../components/package-import-dialog'
 import { contentExperienceAdminApi, type PackageGroup } from '../api-content-experiences'
 
 function packageTypeLabel(type?: Scene['packageType']) {
-  if (type === 'exam') return '考试'
+  if (type === 'exam') return '考试备考'
   if (type === 'story') return '故事'
-  if (type === 'course') return '课程'
-  if (type === 'foundation') return '零基础'
-  return '日常'
+  if (type === 'course') return '专项提升'
+  if (type === 'foundation') return '基础学习'
+  return '日常应用'
 }
 
 function kindLabel(kind: TopicClaimConflict['kind']) {
@@ -172,10 +172,10 @@ function listInitialLibraryPatterns() {
 }
 
 const PACKAGE_TYPE_FILTERS: Array<{ id: Scene['packageType']; label: string }> = [
-  { id: 'daily', label: '日常' },
-  { id: 'exam', label: '考试' },
-  { id: 'course', label: '课程' },
-  { id: 'foundation', label: '零基础' },
+  { id: 'foundation', label: '基础学习' },
+  { id: 'daily', label: '日常应用' },
+  { id: 'course', label: '专项提升' },
+  { id: 'exam', label: '考试备考' },
 ]
 
 type PackageTypeFilter = Scene['packageType'] | 'all'
@@ -297,10 +297,10 @@ function SceneDialog({
             <div>
               <Label>学习包类型</Label>
               <Select value={form.packageType ?? 'daily'} onChange={(e) => setForm({ ...form, packageType: e.target.value })}>
-                <option value="daily">日常练习</option>
-                <option value="exam">考试专项</option>
-                <option value="course">付费课程</option>
-                <option value="foundation">零基础</option>
+                <option value="foundation">基础学习</option>
+                <option value="daily">日常应用</option>
+                <option value="course">专项提升</option>
+                <option value="exam">考试备考</option>
               </Select>
             </div>
           </div>
@@ -317,7 +317,7 @@ function SceneDialog({
             <p className="mt-1.5 text-xs text-muted-foreground">
               {form.packageType === 'exam'
                 ? '考试包：雅思写作选「写作包」；雅思口语（含 Part 2 描述/叙事）选「知识点练习」。'
-                : '决定话题题型和用户端主交互；日常、考试、课程等分类仍保留。'}
+                : '一级类型表示学习目的；难度和写作、阅读等交互方式由其他字段分别控制。'}
             </p>
           </div>
           <div>
@@ -2671,6 +2671,7 @@ export function AdminScenesPage() {
   const [deletePackageTarget, setDeletePackageTarget] = useState<Scene | null>(null)
   const [deletingPackage, setDeletingPackage] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
   const [selectedCat, setSelectedCat] = useState<string | null>(null)
   const [selectedPackageType, setSelectedPackageType] = useState<PackageTypeFilter>('all')
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
@@ -2739,23 +2740,43 @@ export function AdminScenesPage() {
   useEffect(() => { load() }, [selectedCat, selectedPackageType])
   // 详情视图以 URL 的 sceneId 为唯一数据源，避免 state 与 URL 异步竞争导致返回后页面不切换
   const detailSceneId = searchParams.get('sceneId')
-  useEffect(() => { setPage(1) }, [selectedCat, selectedPackageType, selectedGroup])
+  useEffect(() => { setPage(1) }, [search, selectedCat, selectedPackageType, selectedGroup])
   useEffect(() => {
     if (selectedCat && !categories.some((category) => category.id === selectedCat)) {
       setSelectedCat(null)
     }
   }, [categories, selectedCat])
 
-  // 按所属系列过滤：只显示选中组的包，过滤掉其他
-  const filteredScenes = useMemo(
-    () => (selectedGroup ? scenes.filter((scene) => scene.groupId === selectedGroup) : scenes),
-    [scenes, selectedGroup],
-  )
   const groupNameById = useMemo(() => {
     const map = new Map<string, string>()
     groups.forEach((group) => map.set(group.id, group.name))
     return map
   }, [groups])
+
+  // 按所属系列 + 搜索过滤
+  const filteredScenes = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    return scenes.filter((scene) => {
+      if (selectedGroup && scene.groupId !== selectedGroup) return false
+      if (!query) return true
+      const groupName = scene.groupId ? groupNameById.get(scene.groupId) ?? '' : ''
+      return (
+        scene.title.toLowerCase().includes(query)
+        || scene.category?.name?.toLowerCase().includes(query)
+        || groupName.toLowerCase().includes(query)
+        || packageTypeLabel(scene.packageType).toLowerCase().includes(query)
+      )
+    })
+  }, [scenes, selectedGroup, search, groupNameById])
+  const availableGroups = useMemo(() => {
+    const sceneIds = new Set(scenes.map((scene) => scene.id))
+    return groups.filter((group) => group.items?.some((item) => sceneIds.has(item.sceneId)))
+  }, [groups, scenes])
+  useEffect(() => {
+    if (selectedGroup && !availableGroups.some((group) => group.id === selectedGroup)) {
+      setSelectedGroup(null)
+    }
+  }, [availableGroups, selectedGroup])
 
   const totalPages = getTotalPages(filteredScenes.length, pageSize)
   const pageItems = getPageItems(filteredScenes, Math.min(page, totalPages), pageSize)
@@ -2773,121 +2794,148 @@ export function AdminScenesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">学习包内容管理</h1>
-          <p className="text-sm text-muted-foreground">统一管理日常练习、考试、课程和零基础话题内容</p>
-        </div>
-        <Button onClick={() => { setEditCat(null); setCatDialog(true) }}>
-          <Plus className="size-4 mr-1" /> 新增分类
-        </Button>
-      </div>
+    <div className="flex min-h-0 flex-col gap-5">
+      <header>
+        <h1 className="text-2xl font-bold">学习包内容管理</h1>
+        <p className="mt-1 text-sm text-muted-foreground">统一管理基础学习、日常应用、专项提升和考试备考内容；剧情包在独立入口管理</p>
+      </header>
 
-      {/* Categories */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">筛选</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <p className="mb-2 text-xs font-medium text-muted-foreground">一级类型</p>
-            <div className="flex flex-wrap gap-2">
-              {[{ id: 'all' as const, label: '全部' }, ...PACKAGE_TYPE_FILTERS].map((item) => (
-                <Badge
-                  key={item.id}
-                  variant={selectedPackageType === item.id ? 'default' : 'outline'}
-                  className="cursor-pointer"
-                  onClick={() => {
-                    setSelectedPackageType(item.id)
-                    setSelectedCat(null)
-                  }}
-                >
-                  {item.label}
-                </Badge>
-              ))}
-            </div>
-          </div>
-          {categories.length > 0 && (
-            <div>
-              <p className="mb-2 text-xs font-medium text-muted-foreground">二级主题</p>
-              <div className="flex flex-wrap gap-2">
-              <Badge variant={!selectedCat ? 'default' : 'outline'}
-                className="cursor-pointer" onClick={() => setSelectedCat(null)}>
-                全部
-              </Badge>
-              {categories.map((c) => (
-                <Badge key={c.id} variant={selectedCat === c.id ? 'default' : 'outline'}
-                  className="cursor-pointer flex items-center gap-1"
-                  onClick={() => setSelectedCat(c.id)}>
-                  {c.name}
-                  <span className="text-xs opacity-60">({c._count?.scenes ?? 0})</span>
-                  <button className="ml-1 hover:text-destructive"
-                    onClick={(e) => { e.stopPropagation(); setEditCat(c); setCatDialog(true) }}>
-                    <Edit3 className="size-2.5" />
-                  </button>
-                  <button className="hover:text-destructive"
-                    onClick={async (e) => { e.stopPropagation(); if (confirm('确认删除？')) { await deleteSceneCategory(c.id); load() } }}>
-                    <X className="size-2.5" />
-                  </button>
-                </Badge>
-              ))}
-              </div>
-            </div>
-          )}
-          {groups.length > 0 && (
-            <div>
-              <p className="mb-2 text-xs font-medium text-muted-foreground">所属系列</p>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant={!selectedGroup ? 'default' : 'outline'}
-                  className="cursor-pointer" onClick={() => setSelectedGroup(null)}>
-                  全部
-                </Badge>
-                {groups.map((group) => (
-                  <Badge key={group.id} variant={selectedGroup === group.id ? 'default' : 'outline'}
-                    className="cursor-pointer flex items-center gap-1"
-                    onClick={() => setSelectedGroup(group.id)}>
-                    {group.name}
-                    <span className="text-xs opacity-60">({group.items?.length ?? 0})</span>
-                  </Badge>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="flex min-w-[140px] flex-col gap-1">
+          <Select
+            id="package-type-filter"
+            value={selectedPackageType}
+            onChange={(event) => {
+              setSelectedPackageType(event.target.value as PackageTypeFilter)
+              setSelectedCat(null)
+              setSelectedGroup(null)
+            }}
+          >
+            <option value="all">全部类型</option>
+            {PACKAGE_TYPE_FILTERS.map((item) => (
+              <option key={item.id} value={item.id}>{item.label}</option>
+            ))}
+          </Select>
+        </div>
+        <div className="flex min-w-[200px] flex-1 flex-col gap-1">
+          <div className="flex gap-2">
+            <div className="min-w-0 flex-1">
+              <Select
+                id="category-filter"
+                value={selectedCat ?? 'all'}
+                disabled={categories.length === 0}
+                onChange={(event) => setSelectedCat(event.target.value === 'all' ? null : event.target.value)}
+              >
+                <option value="all">全部主题</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}（{category._count?.scenes ?? 0}）
+                  </option>
                 ))}
-              </div>
+              </Select>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="outline"
+              aria-label="编辑当前二级主题"
+              title="编辑当前二级主题"
+              disabled={!selectedCat}
+              onClick={() => {
+                const category = categories.find((item) => item.id === selectedCat)
+                if (category) {
+                  setEditCat(category)
+                  setCatDialog(true)
+                }
+              }}
+            >
+              <Edit3 />
+            </Button>
+            <Button
+              type="button"
+              size="icon-sm"
+              variant="outline"
+              aria-label="删除当前二级主题"
+              title="删除当前二级主题"
+              disabled={!selectedCat}
+              onClick={async () => {
+                if (!selectedCat || !confirm('确认删除？')) return
+                await deleteSceneCategory(selectedCat)
+                setSelectedCat(null)
+                await load()
+              }}
+            >
+              <Trash2 />
+            </Button>
+          </div>
+        </div>
+        <div className="flex min-w-[180px] flex-1 flex-col gap-1">
+          <Select
+            id="group-filter"
+            value={selectedGroup ?? 'all'}
+            disabled={availableGroups.length === 0}
+            aria-label="按所属系列筛选"
+            onChange={(event) => setSelectedGroup(event.target.value === 'all' ? null : event.target.value)}
+          >
+            <option value="all">
+              {availableGroups.length === 0 ? '当前筛选下没有系列' : '全部系列'}
+            </option>
+            {availableGroups.map((group) => {
+              const visibleCount = group.items?.filter((item) => scenes.some((scene) => scene.id === item.sceneId)).length ?? 0
+              return (
+                <option key={group.id} value={group.id}>
+                  {group.name}（{visibleCount}）
+                </option>
+              )
+            })}
+          </Select>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={selectedPackageType === 'all' && !selectedCat && !selectedGroup}
+            onClick={() => {
+              setSelectedPackageType('all')
+              setSelectedCat(null)
+              setSelectedGroup(null)
+            }}
+          >
+            <X data-icon="inline-start" />
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => { setEditCat(null); setCatDialog(true) }}>
+            <Plus data-icon="inline-start" /> 新增分类
+          </Button>
+          <input
+            ref={uploadRef}
+            type="file"
+            accept=".zip"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              setPackageImportFile(file)
+              setPackageImportDialog(true)
+            }}
+          />
+          <Button size="sm" variant="outline" disabled={uploading}
+            onClick={() => uploadRef.current?.click()}>
+            {uploading ? <Loader2 className="animate-spin" data-icon="inline-start" /> : <Upload data-icon="inline-start" />}
+            上传数据包
+          </Button>
+          <Button size="sm" onClick={() => { setEditScene(null); setSceneDialog(true) }}>
+            <Plus data-icon="inline-start" /> 新增学习包
+          </Button>
+        </div>
+      </div>
 
       {/* Scenes */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
             <MapPin className="size-4" /> 学习包列表 ({filteredScenes.length})
           </CardTitle>
-          <div className="flex items-center gap-2">
-            <input
-              ref={uploadRef}
-              type="file"
-              accept=".zip"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0]
-                if (!file) return
-                setPackageImportFile(file)
-                setPackageImportDialog(true)
-              }}
-            />
-            <Button size="sm" variant="outline" disabled={uploading}
-              onClick={() => uploadRef.current?.click()}>
-              {uploading ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <Upload className="size-3.5 mr-1" />}
-              上传数据包
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => navigate('/admin/tasks')}>
-              <Clock3 className="size-3.5 mr-1" /> 任务中心
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => { setEditScene(null); setSceneDialog(true) }}>
-              <Plus className="size-3.5 mr-1" /> 新增学习包
-            </Button>
-          </div>
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
