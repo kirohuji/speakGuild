@@ -985,6 +985,8 @@ const en = {
       teachingDesc: 'Review the scenario notes and speaking strategies for this topic.',
       loadingTeaching: 'Loading teaching notes...',
       noTeaching: 'No teaching document has been configured for this topic yet.',
+      resumeReading: 'Resume reading · {{progress}}%',
+      readingProgress: 'Reading progress {{progress}}%',
       previewPdf: 'A4 layout preview',
       tapToZoom: 'Tap a page to enlarge it',
       a4Summary: 'A4 teaching document · {{count}} pages',

@@ -987,6 +987,8 @@ const zhCN = {
       teachingDesc: '查看这个话题的场景说明和表达策略。',
       loadingTeaching: '正在加载教学内容...',
       noTeaching: '这个话题暂时还没有配置教学文档。',
+      resumeReading: '继续上次阅读 · {{progress}}%',
+      readingProgress: '阅读进度 {{progress}}%',
       previewPdf: 'A4 排版预览',
       tapToZoom: '点击纸张可放大预览',
       a4Summary: 'A4 教学文档 · 共 {{count}} 页',

@@ -23,6 +23,7 @@ import {
 } from './teaching-document-export'
 
 const CONTENT_MOUNT_DELAY_MS = 180
+const READING_POSITION_PREFIX = 'speak-guild:teaching-reading-position:'
 
 interface PracticeVnDrawerProps {
   teachingMarkdown?: string
@@ -39,6 +40,19 @@ interface PracticeVnDrawerProps {
 type TeachingSection = { key: string; markdown: string; heading?: { text: string; level: 1 | 2 | 3 } }
 type TocItem = { text: string; level: 1 | 2 | 3; sectionIndex: number }
 type TocRow = { item: TocItem; expandable: boolean; expanded: boolean }
+
+function documentStorageKey(markdown: string) {
+  let hash = 5381
+  for (let index = 0; index < markdown.length; index += 1) hash = ((hash << 5) + hash) ^ markdown.charCodeAt(index)
+  return `${READING_POSITION_PREFIX}${hash >>> 0}`
+}
+
+function readSavedPosition(key: string, sectionCount: number) {
+  try {
+    const value = Number(window.localStorage.getItem(key))
+    return Number.isFinite(value) ? Math.max(0, Math.min(Math.round(value), Math.max(0, sectionCount - 1))) : 0
+  } catch { return 0 }
+}
 
 /** Split headings before rendering so a long document is never one huge DOM tree. */
 function splitTeachingDocument(markdown: string): { sections: TeachingSection[]; toc: TocItem[] } {
@@ -84,12 +98,17 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   const [exporting, setExporting] = useState(false)
   const [expandedTocSections, setExpandedTocSections] = useState<Set<number>>(() => new Set())
   const [contentReady, setContentReady] = useState(false)
+  const [visibleSectionIndex, setVisibleSectionIndex] = useState(0)
+  const [savedSectionIndex, setSavedSectionIndex] = useState(0)
+  const [showResumePrompt, setShowResumePrompt] = useState(false)
   const closingRef = useRef(false)
+  const ignoreInitialRangeRef = useRef(false)
   const documentRef = useRef<VirtuosoHandle>(null)
   const isControlled = controlledOpen !== undefined
   const open = isControlled ? controlledOpen : internalOpen
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
   const document = useMemo(() => splitTeachingDocument(teachingMarkdown ?? ''), [teachingMarkdown])
+  const storageKey = useMemo(() => documentStorageKey(teachingMarkdown ?? ''), [teachingMarkdown])
   const printDate = useMemo(() => localDateKey(), [previewOpen])
   const printTitle = useMemo(() => teachingDocumentTitle(teachingMarkdown ?? '', t('practiceVn.teaching')), [t, teachingMarkdown])
   const printPages = useMemo(() => buildTeachingDocumentPages(teachingMarkdown ?? ''), [teachingMarkdown])
@@ -126,9 +145,16 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
 
   useEffect(() => {
     if (!open) { setTocOpen(false); setContentReady(false); closingRef.current = false; return }
+    const savedIndex = readSavedPosition(storageKey, document.sections.length)
+    setSavedSectionIndex(savedIndex)
+    setVisibleSectionIndex(0)
+    setShowResumePrompt(savedIndex > 0)
+    // Virtuoso reports its initial top range on mount. Do not mistake it for the
+    // reader moving back to the start, otherwise it overwrites the saved spot.
+    ignoreInitialRangeRef.current = true
     const timer = window.setTimeout(() => startTransition(() => setContentReady(true)), CONTENT_MOUNT_DELAY_MS)
     return () => window.clearTimeout(timer)
-  }, [open])
+  }, [document.sections.length, open, storageKey])
 
   const beginClose = useCallback(() => {
     if (closingRef.current || !open) return
@@ -142,6 +168,21 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
     setTocOpen(false)
     requestAnimationFrame(() => documentRef.current?.scrollToIndex({ index: sectionIndex, align: 'start', behavior: 'smooth' }))
   }, [])
+  const resumeReading = useCallback(() => {
+    setShowResumePrompt(false)
+    requestAnimationFrame(() => documentRef.current?.scrollToIndex({ index: savedSectionIndex, align: 'start', behavior: 'smooth' }))
+  }, [savedSectionIndex])
+  const handleRangeChanged = useCallback((range: { startIndex: number }) => {
+    const index = Math.max(0, range.startIndex)
+    setVisibleSectionIndex(index)
+    if (ignoreInitialRangeRef.current) {
+      ignoreInitialRangeRef.current = false
+      return
+    }
+    if (index > 0) setShowResumePrompt(false)
+    try { window.localStorage.setItem(storageKey, String(index)) } catch { /* storage unavailable */ }
+  }, [storageKey])
+  const readingProgress = document.sections.length <= 1 ? 0 : Math.round((visibleSectionIndex / (document.sections.length - 1)) * 100)
   const toggleTocSection = useCallback((sectionIndex: number) => {
     setExpandedTocSections((current) => {
       const next = new Set(current)
@@ -186,13 +227,19 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
     {!hideToggles && <button type="button" onClick={() => { closingRef.current = false; setOpen(true); void onOpen?.() }} className={cn(!plainTrigger && 'flex items-center gap-2 rounded-full border border-border/20 bg-background/60 px-3.5 py-2 text-xs font-medium text-foreground shadow-lg transition-transform active:scale-[0.97]', triggerClassName)}>{showTriggerIcon && <BookOpen className="size-3.5 text-foreground/70" />}<span>{t('practiceVn.teaching')}</span></button>}
     <Drawer open={open} onOpenChange={onDrawerOpenChange} shouldScaleBackground={false}>
       <DrawerContent className="h-[82vh] max-h-[82vh] rounded-t-[28px] border-border/20 bg-background text-foreground shadow-[0_-12px_40px_rgba(0,0,0,.28)] contain-paint !z-[10001]" overlayClassName="!z-[10001]">
-        <DrawerHeader className="shrink-0 border-b border-border/45 px-5 pb-4 pt-3 text-left">
+        <DrawerHeader className="shrink-0 border-b border-border/45 px-5 pb-3 pt-3 text-left">
           <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3">
             <div className="flex shrink-0 items-center gap-2">{document.toc.length > 0 ? <Popover open={tocOpen} onOpenChange={setTocOpen}><PopoverTrigger asChild><button type="button" className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14]" aria-label={t('practiceVn.contents')}><ListTree className="size-5" /></button></PopoverTrigger><PopoverContent align="start" sideOffset={8} collisionPadding={12} data-vaul-no-drag className="!z-[10002] w-[min(20rem,calc(100vw-2rem))] overflow-hidden border-0 bg-background p-0 text-foreground shadow-[0_18px_50px_rgba(0,0,0,.28)]" onWheel={(event) => event.stopPropagation()} onTouchMove={(event) => event.stopPropagation()} onPointerMove={(event) => event.stopPropagation()}><p className="bg-muted/45 px-4 py-3 text-xs font-semibold tracking-wide text-muted-foreground">{t('practiceVn.contents')}</p><div data-vaul-no-drag className="min-h-0 touch-pan-y overscroll-contain" style={{ height: tocHeight, maxHeight: '50dvh' }}><Virtuoso data={tocRows} fixedItemHeight={42} className="h-full" style={{ height: '100%' }} itemContent={(_, row) => <div className={cn('mx-2 my-0.5 flex w-[calc(100%-1rem)] items-center rounded-lg text-sm leading-5 transition-colors hover:bg-accent hover:text-accent-foreground', row.item.level === 2 && 'pl-3', row.item.level === 3 && 'pl-8 text-muted-foreground')}><button type="button" className="min-w-0 flex-1 px-2 py-2 text-left" onClick={() => handleTocSelect(row.item.sectionIndex)}>{row.item.text}</button>{row.expandable && <button type="button" className="mr-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => toggleTocSection(row.item.sectionIndex)} aria-label={row.expanded ? '收起三级标题' : '展开三级标题'}><ChevronDown className={cn('size-4 transition-transform', row.expanded && 'rotate-180')} /></button>}</div>} /></div></PopoverContent></Popover> : <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary"><ListTree className="size-5" /></div>}<button type="button" className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14] disabled:opacity-40" aria-label={t('practiceVn.previewPdf')} disabled={!teachingMarkdown?.trim() || loading} onClick={() => setPreviewOpen(true)}><FileText className="size-5" /></button></div>
             <div className="min-w-0"><DrawerTitle className="text-base font-semibold tracking-tight">{t('practiceVn.teaching')}</DrawerTitle><DrawerDescription className="mt-1 text-xs">{t('practiceVn.teachingDesc')}</DrawerDescription></div>
           </div><Button type="button" variant="ghost" size="icon" className="size-10 shrink-0 rounded-full" aria-label={t('common.close')} onClick={beginClose}><X /></Button></div>
+          <div className="mt-3">
+            <div className="h-1 w-full overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{ width: `${readingProgress}%` }} /></div>
+            <div className="mt-1.5 text-center">
+              {showResumePrompt ? <button type="button" onClick={resumeReading} className="text-[10px] font-medium text-primary/80 transition-colors hover:text-primary">{t('practiceVn.resumeReading', { progress: Math.round((savedSectionIndex / Math.max(1, document.sections.length - 1)) * 100) })}</button> : <span className="text-[10px] tabular-nums text-muted-foreground/80">{t('practiceVn.readingProgress', { progress: readingProgress })}</span>}
+            </div>
+          </div>
         </DrawerHeader>
-        <div className="min-h-0 flex-1 overflow-hidden">{loading ? <TeachingStatus text={t('practiceVn.loadingTeaching')} /> : teachingMarkdown ? contentReady ? <Virtuoso ref={documentRef} className="h-full" data={document.sections} increaseViewportBy={{ top: 600, bottom: 900 }} itemContent={(_, section) => <TeachingSectionView section={section} />} /> : <div className="px-4 pt-4"><TeachingContentPlaceholder /></div> : <TeachingStatus text={t('practiceVn.noTeaching')} />}</div>
+        <div className="min-h-0 flex-1 overflow-hidden">{loading ? <TeachingStatus text={t('practiceVn.loadingTeaching')} /> : teachingMarkdown ? contentReady ? <Virtuoso ref={documentRef} className="h-full" data={document.sections} increaseViewportBy={{ top: 600, bottom: 900 }} rangeChanged={handleRangeChanged} itemContent={(_, section) => <TeachingSectionView section={section} />} /> : <div className="px-4 pt-4"><TeachingContentPlaceholder /></div> : <TeachingStatus text={t('practiceVn.noTeaching')} />}</div>
       </DrawerContent>
     </Drawer>
     <Dialog open={previewOpen} onOpenChange={(next) => { if (!next && zoomPreviewPage !== null) { setZoomPreviewPage(null); return } setPreviewOpen(next) }}>

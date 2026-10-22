@@ -985,6 +985,8 @@ const ja = {
       teachingDesc: 'このトピックの場面説明と表現のコツを確認します。',
       loadingTeaching: '学習内容を読み込んでいます...',
       noTeaching: 'このトピックにはまだ学習ドキュメントが設定されていません。',
+      resumeReading: '前回の続き · {{progress}}%',
+      readingProgress: '読書の進捗 {{progress}}%',
       previewPdf: 'A4レイアウトプレビュー',
       tapToZoom: 'ページをタップして拡大',
       a4Summary: 'A4学習ドキュメント · 全{{count}}ページ',

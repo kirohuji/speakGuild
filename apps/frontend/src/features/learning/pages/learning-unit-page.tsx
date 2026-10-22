@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
-  ArrowLeft, ChevronLeft, ChevronRight, BookText, MessageSquareText,
+  ArrowLeft, ChevronLeft, ChevronRight, BookOpen, BookText, MessageSquareText,
   Target,
   BookmarkPlus, Search, ChevronDown,
 } from 'lucide-react'
@@ -26,6 +26,7 @@ import { extractCoreUsage } from '@/lib/markdown-utils'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
 import { ContentModeExperience } from '../components/content-mode-experience'
 import { CurrentTabExpandButton } from '../components/current-tab-expand-button'
+import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
 
 const PREP_PAGE_SIZE = 8
 const TOPIC_PAGE_SIZE = 8
@@ -44,6 +45,7 @@ export function LearningUnitPage() {
   const [activeTab, setActiveTab] = useState('vocab')
   const [prepPage, setPrepPage] = useState({ vocab: 1, chunk: 1, pattern: 1 })
   const [topicPage, setTopicPage] = useState(1)
+  const [teachingTopic, setTeachingTopic] = useState<TrainingTopicItem | null>(null)
 
   // Dialog
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -499,6 +501,7 @@ export function LearningUnitPage() {
                 topic={topic}
                 index={absoluteIndex}
                 onStart={() => navigate(`/practice/session/${topic.id}?unitId=${unitId}`)}
+                onOpenTeaching={() => setTeachingTopic(topic)}
                 {...(absoluteIndex === 0 ? { 'data-spotlight': 'start-vn-practice' as any } : {})}
               />
               )
@@ -532,6 +535,12 @@ export function LearningUnitPage() {
         open={dialogOpen}
         onOpenChange={handleDialogClose}
         onIndexChange={setDialogIndex}
+      />
+      <PracticeVnDrawer
+        open={Boolean(teachingTopic)}
+        onOpenChange={(open) => { if (!open) setTeachingTopic(null) }}
+        hideToggles
+        teachingMarkdown={teachingTopic?.teachingMarkdown?.trim() || ''}
       />
       <SaveToNotebookDrawer
         open={saveDrawerOpen}
@@ -880,11 +889,13 @@ function PracticeTopicCard({
   topic,
   index,
   onStart,
+  onOpenTeaching,
   ...rest
 }: {
   topic: TrainingTopicItem
   index: number
   onStart: () => void
+  onOpenTeaching: () => void
   [key: `data-${string}`]: string | undefined
 }) {
   return (
@@ -905,6 +916,16 @@ function PracticeTopicCard({
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{topic.promptZh}</p>
           </div>
+          {topic.teachingMarkdown?.trim() && (
+            <button
+              type="button"
+              onClick={(event) => { event.stopPropagation(); onOpenTeaching() }}
+              className="flex size-8 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground active:scale-[0.92]"
+              aria-label={`阅读${topic.title}教学文档`}
+            >
+              <BookOpen className="size-4" />
+            </button>
+          )}
           <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
         </div>
         {topic.activeChunks.length > 0 && (
