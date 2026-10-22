@@ -29,7 +29,7 @@ function readRouteScrollPositions(): Record<string, number> {
     const parsed = JSON.parse(window.sessionStorage.getItem(ROUTE_SCROLL_POSITIONS_KEY) ?? '{}')
     if (!parsed || typeof parsed !== 'object') return {}
     return Object.fromEntries(
-      Object.entries(parsed).filter(([, value]) => typeof value === 'number' && value >= 0),
+      Object.entries(parsed).filter((entry): entry is [string, number] => typeof entry[1] === 'number' && entry[1] >= 0),
     )
   } catch {
     return {}
