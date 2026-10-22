@@ -47,11 +47,23 @@ function documentStorageKey(markdown: string) {
   return `${READING_POSITION_PREFIX}${hash >>> 0}`
 }
 
-function readSavedPosition(key: string, sectionCount: number) {
+function readSavedPosition(key: string, sectionCount: number): { sectionIndex: number; scrollTop: number | null } {
   try {
-    const value = Number(window.localStorage.getItem(key))
-    return Number.isFinite(value) ? Math.max(0, Math.min(Math.round(value), Math.max(0, sectionCount - 1))) : 0
-  } catch { return 0 }
+    const raw = window.localStorage.getItem(key)
+    if (!raw) return { sectionIndex: 0, scrollTop: null }
+    const parsed = JSON.parse(raw)
+    if (typeof parsed === 'object' && parsed !== null) {
+      const sectionIndex = Number(parsed.sectionIndex)
+      const scrollTop = Number(parsed.scrollTop)
+      return {
+        sectionIndex: Number.isFinite(sectionIndex) ? Math.max(0, Math.min(Math.round(sectionIndex), Math.max(0, sectionCount - 1))) : 0,
+        scrollTop: Number.isFinite(scrollTop) ? Math.max(0, scrollTop) : null,
+      }
+    }
+    // Keep positions saved by the first release of this feature usable.
+    const sectionIndex = Number(raw)
+    return { sectionIndex: Number.isFinite(sectionIndex) ? Math.max(0, Math.min(Math.round(sectionIndex), Math.max(0, sectionCount - 1))) : 0, scrollTop: null }
+  } catch { return { sectionIndex: 0, scrollTop: null } }
 }
 
 /** Split headings before rendering so a long document is never one huge DOM tree. */
@@ -100,10 +112,13 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   const [contentReady, setContentReady] = useState(false)
   const [visibleSectionIndex, setVisibleSectionIndex] = useState(0)
   const [savedSectionIndex, setSavedSectionIndex] = useState(0)
+  const [savedScrollTop, setSavedScrollTop] = useState<number | null>(null)
   const [showResumePrompt, setShowResumePrompt] = useState(false)
   const closingRef = useRef(false)
   const ignoreInitialRangeRef = useRef(false)
   const documentRef = useRef<VirtuosoHandle>(null)
+  const scrollerElementRef = useRef<HTMLElement | null>(null)
+  const visibleSectionIndexRef = useRef(0)
   const isControlled = controlledOpen !== undefined
   const open = isControlled ? controlledOpen : internalOpen
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
@@ -145,16 +160,32 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
 
   useEffect(() => {
     if (!open) { setTocOpen(false); setContentReady(false); closingRef.current = false; return }
-    const savedIndex = readSavedPosition(storageKey, document.sections.length)
-    setSavedSectionIndex(savedIndex)
+    const savedPosition = readSavedPosition(storageKey, document.sections.length)
+    setSavedSectionIndex(savedPosition.sectionIndex)
+    setSavedScrollTop(savedPosition.scrollTop)
     setVisibleSectionIndex(0)
-    setShowResumePrompt(savedIndex > 0)
+    visibleSectionIndexRef.current = 0
+    setShowResumePrompt(savedPosition.sectionIndex > 0 || savedPosition.scrollTop !== null && savedPosition.scrollTop > 0)
     // Virtuoso reports its initial top range on mount. Do not mistake it for the
     // reader moving back to the start, otherwise it overwrites the saved spot.
     ignoreInitialRangeRef.current = true
     const timer = window.setTimeout(() => startTransition(() => setContentReady(true)), CONTENT_MOUNT_DELAY_MS)
     return () => window.clearTimeout(timer)
   }, [document.sections.length, open, storageKey])
+
+  const persistReadingPosition = useCallback((scrollTop: number) => {
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify({ sectionIndex: visibleSectionIndexRef.current, scrollTop: Math.round(scrollTop) }))
+    } catch { /* storage unavailable */ }
+  }, [storageKey])
+
+  useEffect(() => {
+    const scroller = scrollerElementRef.current
+    if (!open || !contentReady || !scroller) return
+    const onScroll = () => persistReadingPosition(scroller.scrollTop)
+    scroller.addEventListener('scroll', onScroll, { passive: true })
+    return () => scroller.removeEventListener('scroll', onScroll)
+  }, [contentReady, open, persistReadingPosition])
 
   const beginClose = useCallback(() => {
     if (closingRef.current || !open) return
@@ -170,18 +201,23 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   }, [])
   const resumeReading = useCallback(() => {
     setShowResumePrompt(false)
-    requestAnimationFrame(() => documentRef.current?.scrollToIndex({ index: savedSectionIndex, align: 'start', behavior: 'smooth' }))
-  }, [savedSectionIndex])
+    requestAnimationFrame(() => savedScrollTop !== null
+      ? documentRef.current?.scrollTo({ top: savedScrollTop, behavior: 'smooth' })
+      : documentRef.current?.scrollToIndex({ index: savedSectionIndex, align: 'start', behavior: 'smooth' }))
+  }, [savedScrollTop, savedSectionIndex])
   const handleRangeChanged = useCallback((range: { startIndex: number }) => {
     const index = Math.max(0, range.startIndex)
     setVisibleSectionIndex(index)
+    visibleSectionIndexRef.current = index
     if (ignoreInitialRangeRef.current) {
       ignoreInitialRangeRef.current = false
       return
     }
     if (index > 0) setShowResumePrompt(false)
-    try { window.localStorage.setItem(storageKey, String(index)) } catch { /* storage unavailable */ }
-  }, [storageKey])
+  }, [])
+  const setScrollerRef = useCallback((element: HTMLElement | null | Window) => {
+    scrollerElementRef.current = element instanceof HTMLElement ? element : null
+  }, [])
   const readingProgress = document.sections.length <= 1 ? 0 : Math.round((visibleSectionIndex / (document.sections.length - 1)) * 100)
   const toggleTocSection = useCallback((sectionIndex: number) => {
     setExpandedTocSections((current) => {
@@ -239,7 +275,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
             </div>
           </div>
         </DrawerHeader>
-        <div className="min-h-0 flex-1 overflow-hidden">{loading ? <TeachingStatus text={t('practiceVn.loadingTeaching')} /> : teachingMarkdown ? contentReady ? <Virtuoso ref={documentRef} className="h-full" data={document.sections} increaseViewportBy={{ top: 600, bottom: 900 }} rangeChanged={handleRangeChanged} itemContent={(_, section) => <TeachingSectionView section={section} />} /> : <div className="px-4 pt-4"><TeachingContentPlaceholder /></div> : <TeachingStatus text={t('practiceVn.noTeaching')} />}</div>
+        <div className="min-h-0 flex-1 overflow-hidden">{loading ? <TeachingStatus text={t('practiceVn.loadingTeaching')} /> : teachingMarkdown ? contentReady ? <Virtuoso ref={documentRef} scrollerRef={setScrollerRef} className="h-full" data={document.sections} increaseViewportBy={{ top: 600, bottom: 900 }} rangeChanged={handleRangeChanged} itemContent={(_, section) => <TeachingSectionView section={section} />} /> : <div className="px-4 pt-4"><TeachingContentPlaceholder /></div> : <TeachingStatus text={t('practiceVn.noTeaching')} />}</div>
       </DrawerContent>
     </Drawer>
     <Dialog open={previewOpen} onOpenChange={(next) => { if (!next && zoomPreviewPage !== null) { setZoomPreviewPage(null); return } setPreviewOpen(next) }}>
