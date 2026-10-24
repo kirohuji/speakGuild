@@ -1,4 +1,4 @@
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsObject, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsObject, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
 export class DialogueTurnJudgeDto {
   @IsString()
@@ -299,6 +299,5 @@ export class GenerateWarmupPipelineDto {
   @IsInt()
   @IsOptional()
   @Min(1)
-  @Max(12)
   requestedGroupCount?: number;
 }

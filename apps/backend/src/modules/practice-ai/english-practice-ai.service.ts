@@ -105,8 +105,6 @@ const WARMUP_PIPELINE_MAX_OUTPUT_TOKENS = 20_000;
 // Repeated “generate next batch” calls need enough history to avoid falling
 // back to the same stock situations after the first few groups.
 const WARMUP_PIPELINE_MAX_PREVIOUS_ITEMS = 30;
-const WARMUP_PIPELINE_MAX_ITEMS = 60;
-const WARMUP_PIPELINE_MAX_GROUPS = 30;
 
 @Injectable()
 export class EnglishPracticeAiService {
@@ -1774,35 +1772,6 @@ Rules:
     ];
   }
 
-  /** 题量兜底：AI 生成结果超过上限时按整组截断（优先保留首个 en_to_zh 与 pattern_drill 组） */
-  private capWarmupPipeline(pipeline: any[]): any[] {
-    if (!Array.isArray(pipeline)) return [];
-    const countItems = (item: any): number => {
-      if (!item || typeof item !== 'object') return 0;
-      if (item.type === 'sentence_decomposition') return Array.isArray(item.levels) ? item.levels.length : 0;
-      if (item.type === 'vocab_sentence_building') {
-        return (Array.isArray(item.patterns) ? item.patterns : [])
-          .reduce((sum, p) => sum + (Array.isArray(p?.items) ? p.items.length : 0), 0);
-      }
-      return Array.isArray(item.items) ? item.items.length : 0;
-    };
-    const isEnToZh = (item: any) => item?.type === 'chunk_substitution' && item?.direction === 'en_to_zh';
-    const isPatternDrill = (item: any) => item?.type === 'pattern_drill';
-    const capped: any[] = [];
-    let total = 0;
-    for (const item of pipeline) {
-      const n = countItems(item);
-      // 关键类型（首个 en_to_zh / pattern_drill）即使超限也保留，保证题型多样性
-      const critical = (!capped.some(isEnToZh) && isEnToZh(item)) || (!capped.some(isPatternDrill) && isPatternDrill(item));
-      if (!critical && (total + n > WARMUP_PIPELINE_MAX_ITEMS || capped.length >= WARMUP_PIPELINE_MAX_GROUPS)) break;
-      capped.push(item);
-      total += n;
-    }
-    if (capped.length === pipeline.length) return pipeline;
-    this.logger.warn(`[generate-warmup-pipeline] 超出单轮上限，截断 ${pipeline.length - capped.length} 个题组（${pipeline.length} → ${capped.length}）`);
-    return capped;
-  }
-
   /** 批量生成与单题生成复用相同题型校验，不能让批量入口绕过完整句/语言方向规则。 */
   private normalizeWarmupPipeline(pipeline: unknown): any[] {
     return (Array.isArray(pipeline) ? pipeline : []).flatMap((raw: any) => {
@@ -1969,7 +1938,7 @@ Rules:
         refinedRaw = parsed.pipeline as Array<Record<string, unknown>>;
       }
 
-      const refined = this.normalizeWarmupPipeline(this.capWarmupPipeline(refinedRaw));
+      const refined = this.normalizeWarmupPipeline(refinedRaw);
       if (this.warmupPipelineStructureKey(refined) !== this.warmupPipelineStructureKey(params.pipeline)) {
         this.logger.warn('[generate-warmup-pipeline] 语义修订改变了题组结构或目标材料，已回退首次生成结果');
         return params.pipeline;
@@ -2216,7 +2185,7 @@ Rules:
       previousSummary,
       generationMode: exampleVariation ? 'example_variation' : 'coverage',
       exampleSentences,
-      requestedGroupCount: Math.min(12, Math.max(1, dto.requestedGroupCount ?? 1)),
+      requestedGroupCount: Math.max(1, dto.requestedGroupCount ?? 1),
       totalMissing,
       practiceBudget,
       forbiddenMaterials: forbiddenMaterialTexts,
@@ -2262,7 +2231,7 @@ Rules:
         generated = parsed.pipeline as Array<Record<string, unknown>>;
       }
 
-      let normalized = this.normalizeWarmupPipeline(this.capWarmupPipeline(generated));
+      let normalized = this.normalizeWarmupPipeline(generated);
       // 例句扩展只改变题目的表达来源与场景，不降低材料覆盖要求；首轮遗漏的
       // 词、句块或句型仍必须进入补漏轮次，确保新增练习真正能支撑学习。
       const uncovered = this.findUncoveredWarmupMaterials(normalized, {
@@ -2273,7 +2242,7 @@ Rules:
 
       // 多组例句扩展若仍全部落在中译英／单一题型，补一组不同的检索路径。
       // 不要求每一种题型都出现，只阻止“看起来有多组、实际反复做同一题”的结果。
-      const requestedGroups = Math.min(12, Math.max(1, dto.requestedGroupCount ?? 1));
+      const requestedGroups = Math.max(1, dto.requestedGroupCount ?? 1);
       const generatedDirections = new Set(normalized
         .map((item: any) => item?.direction)
         .filter((direction): direction is string => direction === 'zh_to_en' || direction === 'en_to_zh'));
@@ -2305,7 +2274,7 @@ Rules:
             const parsed = JSON.parse(this.extractJson(text).trim()) as { pipeline?: unknown };
             repaired = Array.isArray(parsed.pipeline) ? parsed.pipeline as Array<Record<string, unknown>> : [];
           }
-          normalized = this.normalizeWarmupPipeline(this.capWarmupPipeline([...normalized, ...repaired]));
+          normalized = this.normalizeWarmupPipeline([...normalized, ...repaired]);
         } catch (repairError) {
           this.logger.warn(`[generate-warmup-pipeline] 覆盖修复失败: ${repairError instanceof Error ? repairError.message : String(repairError)}`);
         }

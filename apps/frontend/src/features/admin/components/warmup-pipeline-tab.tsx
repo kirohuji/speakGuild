@@ -1651,7 +1651,7 @@ export function WarmupPipelineTab({
                 <div><p className="text-sm font-semibold">例句扩展</p><p className="mt-0.5 text-xs leading-5 text-muted-foreground">以你提供的例句为主，保留有价值的句型和表达意图，换词汇、人物与真实场景生成新题。会继续参考当前绑定的词汇、句块和句型，但不读取教学文档。</p></div>
               </div>
               <Textarea value={exampleSentences} onChange={(event) => setExampleSentences(event.target.value)} className="min-h-32 resize-y" maxLength={6000} placeholder={'每行一条例句，例如：\nI need to reschedule our meeting because something came up.\nCould you let me know if Friday afternoon works for you?'} />
-              <div className="flex items-center justify-between gap-3"><div><Label className="text-xs">生成题组数</Label><p className="mt-0.5 text-[10px] text-muted-foreground">1–12 组；AI 按例句选择题型，必要时组合不同练法。</p></div><Input type="number" min={1} max={12} value={exampleGroupCount} onChange={(event) => setExampleGroupCount(Math.min(12, Math.max(1, Number(event.target.value) || 1)))} className="h-8 w-16 text-center text-xs" /></div>
+              <div className="flex items-center justify-between gap-3"><div><Label className="text-xs">生成题组数</Label><p className="mt-0.5 text-[10px] text-muted-foreground">至少 1 组，无固定上限；AI 按例句选择题型，必要时组合不同练法。</p></div><Input type="number" min={1} value={exampleGroupCount} onChange={(event) => setExampleGroupCount(Math.max(1, Number(event.target.value) || 1))} className="h-8 w-20 text-center text-xs" /></div>
               <Button type="button" onClick={() => void generateFromExamples()} disabled={!exampleSentences.trim()} size="sm" className="w-full"><Sparkles className="mr-1.5 size-3.5" />生成变式练习</Button>
             </PopoverContent>
           </Popover>
