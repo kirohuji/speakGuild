@@ -42,6 +42,7 @@ import {
   listTrainingTopics, createTrainingTopic, updateTrainingTopic, deleteTrainingTopic,
   getTrainingTopic, getTrainingTopicNavigation, listAllChunks, listStories, getStory, listScriptEpisodes, deleteScriptEpisode,
   listLibraryPatterns, createLibraryVocabulary, createLibraryPattern, createLibraryChunk,
+  generateTopicLanguageMaterials,
   suggestTopicSupports, suggestTopicVocabs,
   enqueueSceneTopicBatchGeneration,
   type SceneCategory, type Scene, type Vocabulary, type TrainingTopic, type Chunk, type StoryData, type SentencePatternFull, type StoryEpisode,
@@ -709,6 +710,7 @@ function TrainingTopicDialog({
     pattern: null,
     chunk: null,
   })
+  const [generatingLanguageMaterials, setGeneratingLanguageMaterials] = useState(false)
   const groupedSuggestions = useMemo(() => {
     if (!suggestions?.length) return []
     const core = suggestions.filter((item) => item.group !== 'extension')
@@ -1285,6 +1287,37 @@ function TrainingTopicDialog({
     setQuickCreateKind(kind)
   }
 
+  const generateLanguageMaterialsFromText = async (text: string) => {
+    if (generatingLanguageMaterials) return
+    let topicId = form.id ?? edit?.id
+    if (!topicId) {
+      const saved = await saveTopic()
+      topicId = saved?.id
+      if (!topicId) return
+    }
+    setGeneratingLanguageMaterials(true)
+    try {
+      const result = await generateTopicLanguageMaterials(topicId, { text, difficulty: form.difficulty ?? 'L2' })
+      if (!result.patterns.length && !result.chunks.length) {
+        toast.info('未从文本中识别出可复用的句型或句块')
+        return
+      }
+      setCreatedPatterns((current) => mergeById(current, result.patterns))
+      setCreatedChunks((current) => mergeById(current, result.chunks as Chunk[]))
+      setForm((current: any) => ({
+        ...current,
+        patternIds: [...new Set([...(current.patternIds ?? []), ...result.patterns.map((item) => item.id)])],
+        chunkIds: [...new Set([...(current.chunkIds ?? []), ...result.chunks.map((item) => item.id)])],
+      }))
+      toast.success(`已关联 ${result.patterns.length} 个句型、${result.chunks.length} 个句块`)
+    } catch (error: any) {
+      toast.error(error?.message || '文本生成语言材料失败')
+      throw error
+    } finally {
+      setGeneratingLanguageMaterials(false)
+    }
+  }
+
   const saveQuickCreate = async () => {
     const text = quickCreateDraft.text.trim()
     const meaning = quickCreateDraft.meaning.trim()
@@ -1755,18 +1788,8 @@ function TrainingTopicDialog({
                 onCreateMaterial={openQuickCreate}
                 onSearchPatterns={remotePatternSearch}
                 onSearchVocabs={remoteVocabSearch}
-                recommendations={teachingRecommendations}
-                recommendingKind={supportSuggesting ?? (suggesting ? 'vocab' : null)}
-                addingRecommendationId={supportAdding}
-                onRecommendMaterial={(kind) => {
-                  if (kind === 'vocab') void runSuggestVocabs()
-                  else void runSuggestSupports(kind)
-                }}
-                onAddRecommendation={addTeachingRecommendation}
-                onDismissRecommendations={(kind) => {
-                  if (kind === 'vocab') setSuggestions(null)
-                  else setSupportSuggestions((current) => ({ ...current, [kind]: null }))
-                }}
+                onGenerateMaterials={generateLanguageMaterialsFromText}
+                generatingMaterials={generatingLanguageMaterials}
               />
             </TabsContent>
 
@@ -1790,37 +1813,13 @@ function TrainingTopicDialog({
 
                 <TabsContent value="patterns" className="mt-0">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-muted-foreground">结合教学文档、已选句型、Chunk 和词汇，检查是否还缺少表达骨架。</p>
+                    <p className="text-xs text-muted-foreground">管理当前话题的表达骨架；可搜索已有句型或直接新建。</p>
                     <div className="flex flex-wrap gap-2">
                       <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => openQuickCreate('pattern')}>
                         <Plus data-icon="inline-start" />新建句型
                       </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-8"
-                        onClick={() => void runSuggestSupports('pattern')}
-                        disabled={supportSuggesting !== null}
-                      >
-                        {supportSuggesting === 'pattern'
-                          ? <Loader2 data-icon="inline-start" className="animate-spin" />
-                          : <Sparkles data-icon="inline-start" />}
-                        检查是否需要补充
-                      </Button>
                     </div>
                   </div>
-                  {supportSuggestions.pattern && (
-                    <TopicSupportSuggestionPanel
-                      kind="pattern"
-                      summary={supportSuggestions.pattern.summary}
-                      items={supportSuggestions.pattern.items}
-                      selectedIds={form.patternIds ?? []}
-                      addingId={supportAdding}
-                      onAdd={(item) => void addSuggestedSupport('pattern', item)}
-                      onClose={() => setSupportSuggestions((current) => ({ ...current, pattern: null }))}
-                    />
-                  )}
                   <SearchSelectTable
                     items={selectablePatterns}
                     selectedIds={form.patternIds ?? []}
@@ -1846,37 +1845,13 @@ function TrainingTopicDialog({
 
                 <TabsContent value="chunks" className="mt-0">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-muted-foreground">结合教学文档和现有语言支架，检查是否还需要补充可直接复用的表达块。</p>
+                    <p className="text-xs text-muted-foreground">管理当前话题可直接复用的表达块；可搜索已有 Chunk 或直接新建。</p>
                     <div className="flex flex-wrap gap-2">
                       <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => openQuickCreate('chunk')}>
                         <Plus data-icon="inline-start" />新建 Chunk
                       </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-8"
-                        onClick={() => void runSuggestSupports('chunk')}
-                        disabled={supportSuggesting !== null}
-                      >
-                        {supportSuggesting === 'chunk'
-                          ? <Loader2 data-icon="inline-start" className="animate-spin" />
-                          : <Sparkles data-icon="inline-start" />}
-                        检查是否需要补充
-                      </Button>
                     </div>
                   </div>
-                  {supportSuggestions.chunk && (
-                    <TopicSupportSuggestionPanel
-                      kind="chunk"
-                      summary={supportSuggestions.chunk.summary}
-                      items={supportSuggestions.chunk.items}
-                      selectedIds={form.chunkIds ?? []}
-                      addingId={supportAdding}
-                      onAdd={(item) => void addSuggestedSupport('chunk', item)}
-                      onClose={() => setSupportSuggestions((current) => ({ ...current, chunk: null }))}
-                    />
-                  )}
                   <SearchSelectTable
                     items={selectableChunks}
                     selectedIds={form.chunkIds ?? []}
@@ -1901,66 +1876,13 @@ function TrainingTopicDialog({
 
                 <TabsContent value="vocabs" className="mt-0">
                   <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-muted-foreground">AI 先检查教学文档，再按组内引用区分可加入词汇与已引用词汇。</p>
+                    <p className="text-xs text-muted-foreground">管理当前话题的关联词汇；可搜索已有词汇或直接新建。</p>
                     <div className="flex flex-wrap gap-2">
                       <Button type="button" size="sm" variant="outline" className="h-8" onClick={() => openQuickCreate('vocab')}>
                         <Plus data-icon="inline-start" />新建词汇
                       </Button>
-                      <Button type="button" size="sm" variant="outline" className="h-8" onClick={runSuggestVocabs} disabled={suggesting}>
-                        {suggesting
-                          ? <Loader2 data-icon="inline-start" className="animate-spin" />
-                          : <Sparkles data-icon="inline-start" />}
-                        检查是否需要补充
-                      </Button>
                     </div>
                   </div>
-                  {suggestions && (
-                    <div className="mb-3 overflow-hidden rounded-lg border border-border/70 bg-background">
-                      <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-xs font-semibold">教学文档审查 · 词汇（{suggestions.length}）</p>
-                            <Badge variant="outline" className="text-[10px]">可加入 {suggestions.filter((item) => item.status === 'available').length}</Badge>
-                            <Badge variant="secondary" className="text-[10px]">已引用 {suggestions.filter((item) => item.status === 'referenced').length}</Badge>
-                          </div>
-                          {vocabSuggestionSummary && <p className="mt-1 text-xs text-muted-foreground">{vocabSuggestionSummary}</p>}
-                        </div>
-                        <Button type="button" variant="ghost" size="sm" className="h-6 text-[10px] text-muted-foreground" onClick={() => setSuggestions(null)}>收起</Button>
-                      </div>
-                      <div className="max-h-56 divide-y divide-border/60 overflow-y-auto">
-                        {groupedSuggestions.map((group) => (
-                          <div key={group.label} className="divide-y divide-border/60">
-                            <div className="flex items-center gap-2 bg-muted/40 px-3 py-1.5">
-                              <span className="text-[10px] font-semibold text-muted-foreground">{group.label}</span>
-                              <Badge variant="secondary" className="text-[10px]">{group.items.length}</Badge>
-                            </div>
-                            {group.items.map((item) => {
-                              const added = (form.vocabIds ?? []).includes(item.vocabularyId)
-                              return (
-                                <div key={item.vocabularyId} className="flex items-center gap-3 px-3 py-2">
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex flex-wrap items-center gap-1.5">
-                                      <span className="text-sm font-medium">{item.word}</span>
-                                      <Badge variant="outline" className="text-[10px]">{item.difficulty}</Badge>
-                                      {item.partOfSpeech && <Badge variant="secondary" className="text-[10px]">{item.partOfSpeech}</Badge>}
-                                      {item.group === 'extension' && <Badge variant="secondary" className="text-[10px]">扩展</Badge>}
-                                      {item.status === 'referenced' && <Badge variant="secondary" className="text-[10px]">组内已引用</Badge>}
-                                    </div>
-                                    <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.reason}</p>
-                                    {item.references.length ? <div className="mt-1"><GroupMaterialUsageCell usages={item.references} /></div> : null}
-                                  </div>
-                                  <Button type="button" size="sm" variant={added ? 'ghost' : 'outline'} className="h-7 shrink-0 text-xs"
-                                    disabled={added || item.status === 'referenced'} onClick={() => addSuggestedVocab(item.vocabularyId)}>
-                                    {added ? '已加入' : item.status === 'referenced' ? '已被引用' : '加入'}
-                                  </Button>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                   <SearchSelectTable
                     items={selectableVocabs}
                     selectedIds={form.vocabIds ?? []}

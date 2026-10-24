@@ -407,6 +407,42 @@ function WritingFields({
     }
   }
 
+  const generateWritingTeachingDocument = async () => {
+    const questionMarkdown = String(value.questionMarkdown ?? '').trim()
+    if (generatingTeachingDoc || generatingSupport) return
+    if (questionMarkdown.length < 40) {
+      toast.error('请先完善题目正文后再生成教学文档')
+      return
+    }
+    setGeneratingTeachingDoc(true)
+    try {
+      const result = await contentExperienceAdminApi.generateWritingTeachingDocument(sceneId, {
+        questionMarkdown,
+        title: context?.title,
+        description: context?.description,
+        difficulty: context?.difficulty,
+        promptEn: context?.promptEn,
+        promptZh: context?.promptZh,
+        genre: value.genre ?? 'paragraph',
+        minWords: Number(value.minWords) || defaultMinWords,
+        maxWords: Number(value.maxWords) || defaultMaxWords,
+        situation: value.situation,
+        audience: value.audience,
+        purpose: value.purpose,
+        requirements,
+        rubric: value.rubric,
+        referenceAnswer: value.referenceAnswer,
+        referenceExplanation: value.referenceExplanation,
+      })
+      onApplyTeachingMarkdown?.(result.markdown)
+      toast.success('教学文档已生成，请到「教学文档」Tab 查看后保存')
+    } catch (error: any) {
+      toast.error(error?.message || 'AI 生成教学文档失败')
+    } finally {
+      setGeneratingTeachingDoc(false)
+    }
+  }
+
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_25rem]">
       <div className="min-w-0 space-y-5">
@@ -725,7 +761,20 @@ function WritingFields({
           {/* ====== 非对话模式：题目 + 情境 + 要点 + 评分 ====== */}
           {/* 题目 */}
           <section className="flex flex-col gap-3">
-            <SectionHeading icon={FilePenLine} step="02" title="题目" description="这是考生真正作答的题目正文；支持 Markdown、表格与图片。" />
+            <div className="flex items-start justify-between gap-3">
+              <SectionHeading icon={FilePenLine} step="02" title="题目" description="这是考生真正作答的题目正文；支持 Markdown、表格与图片。" />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="mt-1 shrink-0 gap-1.5"
+                disabled={generatingTeachingDoc || generatingSupport || String(value.questionMarkdown ?? '').trim().length < 40}
+                onClick={generateWritingTeachingDocument}
+              >
+                {generatingTeachingDoc ? <Loader2 className="size-3.5 animate-spin" /> : <BookOpen className="size-3.5 text-primary" />}
+                {generatingTeachingDoc ? '正在生成' : '教学文档'}
+              </Button>
+            </div>
             <MarkdownEditor
               label="题目正文"
               value={value.questionMarkdown ?? ''}

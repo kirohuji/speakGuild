@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsObject, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export class DialogueTurnJudgeDto {
   @IsString()
@@ -283,4 +283,22 @@ export class GenerateWarmupPipelineDto {
   @IsArray()
   @IsOptional()
   previousPipeline?: Array<Record<string, unknown>>;
+
+  /** 例句扩展：优先仿照管理员提供的句子生成变式，不读取教学文档。 */
+  @IsOptional()
+  @IsIn(['coverage', 'example_variation'])
+  generationMode?: 'coverage' | 'example_variation';
+
+  @IsArray()
+  @IsOptional()
+  @ArrayMaxSize(12)
+  @IsString({ each: true })
+  @MaxLength(500, { each: true })
+  exampleSentences?: string[];
+
+  @IsInt()
+  @IsOptional()
+  @Min(1)
+  @Max(12)
+  requestedGroupCount?: number;
 }

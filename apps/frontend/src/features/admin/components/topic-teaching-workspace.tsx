@@ -3,6 +3,8 @@ import { ArrowRight, BookOpen, Check, Download, GitCompareArrows, Link2, Loader2
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { cn } from '@/lib/cn'
@@ -15,14 +17,6 @@ import {
 
 type WorkspaceMode = 'edit' | 'preview' | 'compare'
 type MaterialKind = 'pattern' | 'chunk' | 'vocab'
-
-export interface TeachingMaterialRecommendation {
-  id: string
-  primary: string
-  secondary?: string | null
-  reason: string
-  status: 'available' | 'referenced' | 'new'
-}
 
 interface TopicTeachingWorkspaceProps {
   sceneId: string
@@ -44,12 +38,8 @@ interface TopicTeachingWorkspaceProps {
   onCreateMaterial: (kind: MaterialKind) => void
   onSearchPatterns?: (query: string) => Promise<unknown>
   onSearchVocabs?: (query: string) => Promise<unknown>
-  recommendations?: Partial<Record<MaterialKind, { summary: string; items: TeachingMaterialRecommendation[] }>>
-  recommendingKind?: MaterialKind | null
-  addingRecommendationId?: string | null
-  onRecommendMaterial?: (kind: MaterialKind) => void
-  onAddRecommendation?: (kind: MaterialKind, id: string) => void
-  onDismissRecommendations?: (kind: MaterialKind) => void
+  onGenerateMaterials?: (text: string) => Promise<void>
+  generatingMaterials?: boolean
 }
 
 interface MaterialShelfProps {
@@ -60,12 +50,6 @@ interface MaterialShelfProps {
   items: Array<{ id: string; primary: string; secondary?: string | null; selected: boolean; usages: GroupMaterialUsageEntry[] }>
   onToggle: (id: string) => void
   onCreate: () => void
-  recommendation?: { summary: string; items: TeachingMaterialRecommendation[] }
-  recommending?: boolean
-  addingRecommendationId?: string | null
-  onRecommend?: () => void
-  onAddRecommendation?: (id: string) => void
-  onDismissRecommendations?: () => void
 }
 
 function formatMaterialLocations(usages: GroupMaterialUsageEntry[]) {
@@ -75,7 +59,7 @@ function formatMaterialLocations(usages: GroupMaterialUsageEntry[]) {
   ).join('；')
 }
 
-function MaterialShelf({ title, count, query, onQueryChange, items, onToggle, onCreate, recommendation, recommending, addingRecommendationId, onRecommend, onAddRecommendation, onDismissRecommendations }: MaterialShelfProps) {
+function MaterialShelf({ title, count, query, onQueryChange, items, onToggle, onCreate }: MaterialShelfProps) {
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <div className="flex shrink-0 items-center justify-between gap-1.5 px-2 py-1.5">
@@ -84,32 +68,11 @@ function MaterialShelf({ title, count, query, onQueryChange, items, onToggle, on
           <Badge variant="secondary" className="h-4 shrink-0 px-1 text-[8px]">{count}</Badge>
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
-          {onRecommend && <Button type="button" size="sm" variant="ghost" className="h-6 px-1.5 text-[9px]" onClick={onRecommend} disabled={recommending}>
-            {recommending ? <Loader2 className="animate-spin" /> : <Sparkles />}AI 推荐
-          </Button>}
           <Button type="button" size="sm" variant="ghost" className="h-6 px-1.5 text-[9px]" onClick={onCreate}>
             <Plus data-icon="inline-start" />新建
           </Button>
         </div>
       </div>
-      {recommendation && (
-        <div className="mx-1.5 mb-1.5 shrink-0 overflow-hidden rounded-md border border-sky-500/20 bg-sky-500/[0.04]">
-          <div className="flex items-start justify-between gap-1 border-b border-sky-500/15 px-2 py-1.5">
-            <p className="text-[9px] leading-3 text-muted-foreground">{recommendation.summary}</p>
-            <button type="button" className="shrink-0 text-[9px] text-muted-foreground hover:text-foreground" onClick={onDismissRecommendations}>收起</button>
-          </div>
-          <div className="max-h-40 overflow-y-auto">
-            {recommendation.items.length ? recommendation.items.map((item) => {
-              const blocked = item.status === 'referenced'
-              const adding = addingRecommendationId === item.id
-              return <div key={item.id} className="flex items-center gap-1.5 border-b border-sky-500/10 px-2 py-1 last:border-0">
-                <div className="min-w-0 flex-1"><p className="truncate text-[10px] font-medium">{item.primary}{item.status === 'new' && <span className="ml-1 text-sky-600">新建</span>}</p>{item.secondary && <p className="truncate text-[9px] text-muted-foreground">{item.secondary}</p>}<p className="line-clamp-2 text-[9px] leading-3 text-muted-foreground">{item.reason}</p></div>
-                <Button type="button" size="sm" variant="outline" className="h-5 shrink-0 px-1.5 text-[8px]" disabled={blocked || adding || !onAddRecommendation} onClick={() => onAddRecommendation?.(item.id)}>{adding ? <Loader2 className="animate-spin" /> : blocked ? '已引用' : item.status === 'new' ? '新建并加' : '加入'}</Button>
-              </div>
-            }) : <p className="px-2 py-2 text-center text-[9px] text-muted-foreground">当前材料已覆盖教学文档</p>}
-          </div>
-        </div>
-      )}
       <div className="shrink-0 px-1.5 pb-1.5">
         <div className="relative">
           <Search className="pointer-events-none absolute left-2 top-1/2 size-3 -translate-y-1/2 text-muted-foreground" />
@@ -204,12 +167,8 @@ export function TopicTeachingWorkspace({
   onCreateMaterial,
   onSearchPatterns,
   onSearchVocabs,
-  recommendations,
-  recommendingKind,
-  addingRecommendationId,
-  onRecommendMaterial,
-  onAddRecommendation,
-  onDismissRecommendations,
+  onGenerateMaterials,
+  generatingMaterials,
 }: TopicTeachingWorkspaceProps) {
   const [documents, setDocuments] = useState<TopicTeachingDocument[]>([])
   const [loading, setLoading] = useState(true)
@@ -225,6 +184,8 @@ export function TopicTeachingWorkspace({
   const editorViewportRef = useRef<HTMLDivElement>(null)
   const [editorHeight, setEditorHeight] = useState(560)
   const [materialQueries, setMaterialQueries] = useState<Record<MaterialKind, string>>({ pattern: '', chunk: '', vocab: '' })
+  const [materialGeneratorOpen, setMaterialGeneratorOpen] = useState(false)
+  const [materialSourceText, setMaterialSourceText] = useState('')
   const [savedMaterialUsage, setSavedMaterialUsage] = useState<Record<string, GroupMaterialUsageEntry[]>>({})
   const [currentSceneTitle, setCurrentSceneTitle] = useState('当前学习包')
 
@@ -438,6 +399,13 @@ export function TopicTeachingWorkspace({
     }
   }
 
+  const generateMaterials = async () => {
+    const text = materialSourceText.trim()
+    if (!text || !onGenerateMaterials || generatingMaterials) return
+    await onGenerateMaterials(text)
+    setMaterialGeneratorOpen(false)
+  }
+
   return (
     <div className={cn(
       'grid h-[calc(97vh-10.5rem)] min-h-[32rem] overflow-hidden rounded-xl border border-border/70 bg-background',
@@ -645,8 +613,8 @@ export function TopicTeachingWorkspace({
 
       <aside className={cn('min-h-0 min-w-0 flex-col overflow-hidden border-t border-border/70 bg-muted/10 lg:border-l lg:border-t-0', materialsOpen ? 'flex' : 'hidden')}>
         <div className="shrink-0 border-b border-border/70 px-2 py-2">
-          <p className="text-xs font-semibold">当前语言材料</p>
-          <p className="mt-0.5 text-[9px] leading-[0.875rem] text-muted-foreground">搜索库中内容即可添加；点击已选内容可移除。</p>
+          <div className="flex items-start justify-between gap-2"><div><p className="text-xs font-semibold">当前语言材料</p><p className="mt-0.5 text-[9px] leading-[0.875rem] text-muted-foreground">搜索库中内容即可添加；点击已选内容可移除。</p></div>
+          {onGenerateMaterials && <Popover open={materialGeneratorOpen} onOpenChange={setMaterialGeneratorOpen}><PopoverTrigger asChild><Button type="button" size="sm" variant="outline" className="h-7 shrink-0 gap-1 px-2 text-[9px]" disabled={generatingMaterials}>{generatingMaterials ? <Loader2 className="size-3 animate-spin" /> : <Sparkles className="size-3 text-primary" />}文本生成</Button></PopoverTrigger><PopoverContent align="end" className="w-[min(30rem,calc(100vw-2rem))] space-y-3 p-4"><div><p className="text-sm font-semibold">根据文本创建语言材料</p><p className="mt-1 text-xs leading-5 text-muted-foreground">粘贴例句、对话或任意文本。AI 会选择已有的同类句型／句块；没有时按已被引用的库内格式标准化新建并关联当前话题，不读取教学文档。</p></div><Textarea value={materialSourceText} onChange={(event) => setMaterialSourceText(event.target.value)} className="min-h-36 resize-y" maxLength={12000} placeholder={'例如：I was going to call you, but my phone ran out of battery.\nCould we talk after dinner instead?'} /><Button type="button" size="sm" className="w-full" disabled={!materialSourceText.trim() || generatingMaterials} onClick={() => void generateMaterials()}>{generatingMaterials ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <Sparkles className="mr-1.5 size-3.5" />}生成并关联</Button></PopoverContent></Popover>}</div>
         </div>
         <Tabs defaultValue="pattern" className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <TabsList className="grid h-8 w-full shrink-0 grid-cols-3 rounded-none border-b border-border/70 bg-muted/30 p-0.5">
@@ -669,12 +637,6 @@ export function TopicTeachingWorkspace({
               items={materialShelves.pattern}
               onToggle={(id) => onToggleMaterial('pattern', id)}
               onCreate={() => onCreateMaterial('pattern')}
-              recommendation={recommendations?.pattern}
-              recommending={recommendingKind === 'pattern'}
-              addingRecommendationId={addingRecommendationId}
-              onRecommend={() => onRecommendMaterial?.('pattern')}
-              onAddRecommendation={(id) => onAddRecommendation?.('pattern', id)}
-              onDismissRecommendations={() => onDismissRecommendations?.('pattern')}
             />
           </TabsContent>
           <TabsContent value="chunk" className="mt-0 min-h-0 min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col">
@@ -686,12 +648,6 @@ export function TopicTeachingWorkspace({
               items={materialShelves.chunk}
               onToggle={(id) => onToggleMaterial('chunk', id)}
               onCreate={() => onCreateMaterial('chunk')}
-              recommendation={recommendations?.chunk}
-              recommending={recommendingKind === 'chunk'}
-              addingRecommendationId={addingRecommendationId}
-              onRecommend={() => onRecommendMaterial?.('chunk')}
-              onAddRecommendation={(id) => onAddRecommendation?.('chunk', id)}
-              onDismissRecommendations={() => onDismissRecommendations?.('chunk')}
             />
           </TabsContent>
           <TabsContent value="vocab" className="mt-0 min-h-0 min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col">
@@ -703,12 +659,6 @@ export function TopicTeachingWorkspace({
               items={materialShelves.vocab}
               onToggle={(id) => onToggleMaterial('vocab', id)}
               onCreate={() => onCreateMaterial('vocab')}
-              recommendation={recommendations?.vocab}
-              recommending={recommendingKind === 'vocab'}
-              addingRecommendationId={addingRecommendationId}
-              onRecommend={() => onRecommendMaterial?.('vocab')}
-              onAddRecommendation={(id) => onAddRecommendation?.('vocab', id)}
-              onDismissRecommendations={() => onDismissRecommendations?.('vocab')}
             />
           </TabsContent>
         </Tabs>

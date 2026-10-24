@@ -23,9 +23,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
@@ -615,6 +617,9 @@ export function WarmupPipelineTab({
   const [local, setLocal] = useState<WarmupPipelineData>(value)
   const [selectedItemId, setSelectedItemId] = useState<string | null>(value.pipeline[0]?.id ?? null)
   const [aiGeneratingMissing, setAiGeneratingMissing] = useState(false)
+  const [exampleGeneratorOpen, setExampleGeneratorOpen] = useState(false)
+  const [exampleSentences, setExampleSentences] = useState('')
+  const [exampleGroupCount, setExampleGroupCount] = useState(1)
   const [aiHintingAll, setAiHintingAll] = useState(false)
   const [aiAudioAll, setAiAudioAll] = useState(false)
   const [compacting, setCompacting] = useState(false)
@@ -881,7 +886,8 @@ export function WarmupPipelineTab({
     }
   }
 
-  const generateMissingPracticeItems = async (continuing = false) => {
+  const generateMissingPracticeItems = async (continuing = false, exampleInput?: { sentences: string[]; groupCount: number }) => {
+    const isExampleVariation = Boolean(exampleInput?.sentences.length)
     if (reviewingItemId && !continuing) {
       toast.error('请先审核当前 AI 题组，再继续生成')
       return
@@ -917,7 +923,7 @@ export function WarmupPipelineTab({
     const missingChunks = usageSnapshot.totals.chunks.filter((entry) => entry.count === 0)
     const missingPatterns = usageSnapshot.totals.patterns.filter((entry) => entry.count === 0)
     const missingCount = missingVocabs.length + missingChunks.length + missingPatterns.length
-    if (!missingCount && !structureMissing) {
+    if (!isExampleVariation && !missingCount && !structureMissing) {
       generationSessionRef.current = false
       previousBatchMissingRef.current = null
       noProgressBatchesRef.current = 0
@@ -925,11 +931,11 @@ export function WarmupPipelineTab({
       return
     }
 
-    if (!continuing) {
+    if (!continuing && !isExampleVariation) {
       generationSessionRef.current = true
       previousBatchMissingRef.current = missingCount
       noProgressBatchesRef.current = 0
-    } else if (previousBatchMissingRef.current !== null) {
+    } else if (continuing && previousBatchMissingRef.current !== null) {
       noProgressBatchesRef.current = missingCount >= previousBatchMissingRef.current
         ? noProgressBatchesRef.current + 1
         : 0
@@ -941,21 +947,22 @@ export function WarmupPipelineTab({
       }
     }
 
-    // Reserve room for chunks and patterns whenever they exist: vocabulary is
-    // best practised inside those structures, so a batch of only words would
-    // produce weaker, isolated exercises. If a pool has only one material
-    // kind, the remaining slots naturally fall back to that kind.
+    // 例句扩展要保留完整材料池供模型按语义择用；常规补齐则按缺口分批，
+    // 避免一次请求带入过多待覆盖材料。
     const preferredChunks = missingChunks.slice(0, Math.min(missingChunks.length, 6))
     const preferredPatterns = missingPatterns.slice(0, Math.min(missingPatterns.length, 4))
-    const scopedVocabs = [
+    const coverageVocabs = [
       ...missingVocabs.filter((item) => item.tier === 'core'),
       ...missingVocabs.filter((item) => item.tier !== 'core' && item.tier !== 'carry'),
       ...missingVocabs.filter((item) => item.tier === 'carry'),
     ].slice(0, Math.max(0, WARMUP_MATERIALS_PER_BATCH - preferredChunks.length - preferredPatterns.length))
-    let remainingMaterialSlots = WARMUP_MATERIALS_PER_BATCH - scopedVocabs.length - preferredChunks.length - preferredPatterns.length
-    const scopedChunks = [...preferredChunks, ...missingChunks.slice(preferredChunks.length, preferredChunks.length + Math.max(0, remainingMaterialSlots))]
-    remainingMaterialSlots -= Math.max(0, scopedChunks.length - preferredChunks.length)
-    const scopedPatterns = [...preferredPatterns, ...missingPatterns.slice(preferredPatterns.length, preferredPatterns.length + Math.max(0, remainingMaterialSlots))]
+    let remainingMaterialSlots = WARMUP_MATERIALS_PER_BATCH - coverageVocabs.length - preferredChunks.length - preferredPatterns.length
+    const coverageChunks = [...preferredChunks, ...missingChunks.slice(preferredChunks.length, preferredChunks.length + Math.max(0, remainingMaterialSlots))]
+    remainingMaterialSlots -= Math.max(0, coverageChunks.length - preferredChunks.length)
+    const coveragePatterns = [...preferredPatterns, ...missingPatterns.slice(preferredPatterns.length, preferredPatterns.length + Math.max(0, remainingMaterialSlots))]
+    const scopedVocabs = isExampleVariation ? usageSnapshot.totals.vocabs.slice(0, 40) : coverageVocabs
+    const scopedChunks = isExampleVariation ? usageSnapshot.totals.chunks.slice(0, 30) : coverageChunks
+    const scopedPatterns = isExampleVariation ? usageSnapshot.totals.patterns.slice(0, 20) : coveragePatterns
 
     setAiGeneratingMissing(true)
     try {
@@ -1071,6 +1078,11 @@ export function WarmupPipelineTab({
       const res: any = await post('/practice-ai/generate-warmup-pipeline', {
         topicTitle,
         difficulty,
+        ...(isExampleVariation ? {
+          generationMode: 'example_variation',
+          exampleSentences: exampleInput!.sentences,
+          requestedGroupCount: exampleInput!.groupCount,
+        } : {}),
         materials: {
           vocabs: scopedVocabs,
           chunks: scopedChunks,
@@ -1131,6 +1143,16 @@ export function WarmupPipelineTab({
     } finally {
       setAiGeneratingMissing(false)
     }
+  }
+
+  const generateFromExamples = async () => {
+    const sentences = exampleSentences.split('\n').map((sentence) => sentence.trim()).filter(Boolean).slice(0, 12)
+    if (!sentences.length) {
+      toast.error('请至少输入一个参考例句')
+      return
+    }
+    setExampleGeneratorOpen(false)
+    await generateMissingPracticeItems(false, { sentences, groupCount: exampleGroupCount })
   }
 
   const advanceReviewedItem = (discardCurrent = false) => {
@@ -1611,6 +1633,28 @@ export function WarmupPipelineTab({
             {aiGeneratingMissing ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
             {reviewingItemId ? `审核中 · 余 ${reviewQueue.length}` : `AI 逐条生成${missingMaterialCount ? ` ${missingMaterialCount}` : ''}`}
           </Button>
+          <Popover open={exampleGeneratorOpen} onOpenChange={setExampleGeneratorOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-9 gap-1.5"
+                disabled={aiGeneratingMissing || aiHintingAll || aiAudioAll || qualityChecking || Boolean(reviewingItemId)}
+              >
+                <Sparkles className="size-3.5 text-primary" />例句扩展
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-[min(32rem,calc(100vw-2rem))] space-y-3 p-4">
+              <div className="flex items-start gap-2">
+                <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><Sparkles className="size-3.5" /></span>
+                <div><p className="text-sm font-semibold">例句扩展</p><p className="mt-0.5 text-xs leading-5 text-muted-foreground">以你提供的例句为主，保留有价值的句型和表达意图，换词汇、人物与真实场景生成新题。会继续参考当前绑定的词汇、句块和句型，但不读取教学文档。</p></div>
+              </div>
+              <Textarea value={exampleSentences} onChange={(event) => setExampleSentences(event.target.value)} className="min-h-32 resize-y" maxLength={6000} placeholder={'每行一条例句，例如：\nI need to reschedule our meeting because something came up.\nCould you let me know if Friday afternoon works for you?'} />
+              <div className="flex items-center justify-between gap-3"><div><Label className="text-xs">生成题组数</Label><p className="mt-0.5 text-[10px] text-muted-foreground">1–12 组；AI 按例句选择题型，必要时组合不同练法。</p></div><Input type="number" min={1} max={12} value={exampleGroupCount} onChange={(event) => setExampleGroupCount(Math.min(12, Math.max(1, Number(event.target.value) || 1)))} className="h-8 w-16 text-center text-xs" /></div>
+              <Button type="button" onClick={() => void generateFromExamples()} disabled={!exampleSentences.trim()} size="sm" className="w-full"><Sparkles className="mr-1.5 size-3.5" />生成变式练习</Button>
+            </PopoverContent>
+          </Popover>
           <Button
             type="button"
             size="sm"

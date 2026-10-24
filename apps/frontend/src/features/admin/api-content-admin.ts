@@ -163,6 +163,13 @@ export async function getSceneMaterialUsage(sceneId: string): Promise<GroupMater
   return get(`/admin/content/scenes/${sceneId}/material-usage`)
 }
 
+export async function generateTopicLanguageMaterials(topicId: string, data: { text: string; difficulty?: string }): Promise<{
+  patterns: SentencePatternFull[]
+  chunks: Chunk[]
+}> {
+  return post(`/admin/content/training-topics/${topicId}/generate-language-materials`, data, { timeout: 300_000 })
+}
+
 export interface SuggestedVocabItem {
   vocabularyId: string
   word: string

@@ -1,4 +1,16 @@
-import { IsString, IsOptional, IsInt, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsInt, IsArray, ArrayMaxSize, MaxLength } from 'class-validator';
+
+/** 从管理员提供的文本提炼句型与句块，并直接关联当前话题。 */
+export class GenerateTopicLanguageMaterialsDto {
+  @IsString()
+  @MaxLength(12000)
+  text: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  difficulty?: string;
+}
 
 export class ChunkExampleDto {
   @IsString()

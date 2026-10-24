@@ -12,6 +12,7 @@ import {
   CreatePackageGroupDto,
   DialogueMarkdownAiDto,
   GenerateDialogueReferencesDto,
+  GenerateWritingTeachingDocumentDto,
   GenerateReadingTeachingDocumentDto,
   GenerateReadingTopicDto,
   GenerateTranslationSupportDto,
@@ -28,6 +29,7 @@ import { MaterialConstraintService } from './material-constraint.service';
 import { buildDialoguePolishPrompt } from './prompts/dialogue-polish.prompt';
 import { buildDialogueTeachingPrompt } from './prompts/dialogue-teaching.prompt';
 import { buildReadingTeachingPrompt, type ReadingTeachingQuestionInput } from './prompts/reading-teaching.prompt';
+import { buildWritingTeachingPrompt } from './prompts/writing-teaching.prompt';
 
 function toJson(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
@@ -928,6 +930,28 @@ Rules for generate mode:
       if (error instanceof BadRequestException || error instanceof ServiceUnavailableException) throw error;
       const message = error instanceof Error ? error.message : 'unknown error';
       throw new ServiceUnavailableException(`AI 生成教学文档失败：${message}`);
+    }
+  }
+
+  /** 根据普通写作题生成教学文档（消息、邮件、段落、日记、议论文）。 */
+  async generateWritingTeachingDocument(sceneId: string, dto: GenerateWritingTeachingDocumentDto) {
+    await this.assertWritingScene(sceneId);
+    const questionMarkdown = String(dto.questionMarkdown ?? '').trim();
+    if (questionMarkdown.length < 40) throw new BadRequestException('请先完善题目正文后再生成教学文档');
+    const config = await this.aiModels.getLlmConfig();
+    if (!config.apiKey) throw new ServiceUnavailableException('LLM API key is not configured');
+
+    try {
+      const markdown = await this.generateLongMarkdown(config, buildWritingTeachingPrompt({ ...dto, questionMarkdown }), 18000);
+      const requiredHeadings = ['## 一、写作框架', '## 二、核心表达与搭配', '## 三、关键句型与语言选择', '## 四、示范写作与语言拆解'];
+      if (markdown.length < 2500 || !requiredHeadings.every((heading) => markdown.includes(heading))) {
+        throw new BadRequestException('AI 教学文档结构不完整或篇幅过短，请重试');
+      }
+      return { markdown };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ServiceUnavailableException) throw error;
+      const message = error instanceof Error ? error.message : 'unknown error';
+      throw new ServiceUnavailableException(`AI 生成写作教学文档失败：${message}`);
     }
   }
 

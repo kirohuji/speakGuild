@@ -319,6 +319,44 @@ export class DialogueMarkdownAiDto {
   markdown: string;
 }
 
+/** 普通写作题：根据题面及写作支架生成教学文档。 */
+export class GenerateWritingTeachingDocumentDto {
+  @IsString()
+  @MaxLength(12000)
+  questionMarkdown: string;
+
+  @IsOptional() @IsString() @MaxLength(200)
+  title?: string;
+  @IsOptional() @IsString() @MaxLength(4000)
+  description?: string;
+  @IsOptional() @IsString() @MaxLength(10)
+  difficulty?: string;
+  @IsOptional() @IsString() @MaxLength(4000)
+  promptEn?: string;
+  @IsOptional() @IsString() @MaxLength(4000)
+  promptZh?: string;
+  @IsOptional() @IsIn(['journal', 'message', 'email', 'paragraph', 'essay'])
+  genre?: 'journal' | 'message' | 'email' | 'paragraph' | 'essay';
+  @IsOptional() @IsInt() @Min(1) @Max(3000)
+  minWords?: number;
+  @IsOptional() @IsInt() @Min(1) @Max(3000)
+  maxWords?: number;
+  @IsOptional() @IsString() @MaxLength(2000)
+  situation?: string;
+  @IsOptional() @IsString() @MaxLength(1000)
+  audience?: string;
+  @IsOptional() @IsString() @MaxLength(1000)
+  purpose?: string;
+  @IsOptional() @IsArray() @ArrayMaxSize(10) @IsString({ each: true }) @MaxLength(1000, { each: true })
+  requirements?: string[];
+  @IsOptional() @IsArray() @ArrayMaxSize(10) @IsString({ each: true }) @MaxLength(500, { each: true })
+  rubric?: string[];
+  @IsOptional() @IsString() @MaxLength(16000)
+  referenceAnswer?: string;
+  @IsOptional() @IsString() @MaxLength(16000)
+  referenceExplanation?: string;
+}
+
 export class ReadingTeachingQuestionDto {
   @IsOptional()
   @IsString()

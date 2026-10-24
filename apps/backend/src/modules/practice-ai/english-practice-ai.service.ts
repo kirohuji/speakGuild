@@ -82,6 +82,9 @@ type WarmupPipelineGenerationDto = {
   };
   /** 之前已生成的 pipeline 内容，供 AI 参考避免重复并改进质量 */
   previousPipeline?: Array<Record<string, unknown>>;
+  generationMode?: 'coverage' | 'example_variation';
+  exampleSentences?: string[];
+  requestedGroupCount?: number;
   /** 学习包组顺序约束：excluded（后序包知识点，禁止出现）/ review（前序包知识点，仅复习）/ 目标难度 */
   constraints?: {
     sceneId?: string;
@@ -2013,6 +2016,9 @@ Rules:
   async generateWarmupPipeline(dto: WarmupPipelineGenerationDto) {
     const runtime = await this.getLlmRuntime();
     const provider = runtime.provider;
+    const exampleVariation = dto.generationMode === 'example_variation';
+    const exampleSentences = (dto.exampleSentences ?? []).map((item) => String(item).trim()).filter(Boolean).slice(0, 12);
+    if (exampleVariation && !exampleSentences.length) return { pipeline: [] };
     const vocabs = dto.materials?.vocabs ?? [];
     const chunks = dto.materials?.chunks ?? [];
     const patterns = dto.materials?.patterns ?? [];
@@ -2208,6 +2214,9 @@ Rules:
       topicTitle: dto.topicTitle || 'Untitled topic',
       difficulty,
       previousSummary,
+      generationMode: exampleVariation ? 'example_variation' : 'coverage',
+      exampleSentences,
+      requestedGroupCount: Math.min(12, Math.max(1, dto.requestedGroupCount ?? 1)),
       totalMissing,
       practiceBudget,
       forbiddenMaterials: forbiddenMaterialTexts,
@@ -2254,16 +2263,36 @@ Rules:
       }
 
       let normalized = this.normalizeWarmupPipeline(this.capWarmupPipeline(generated));
+      // 例句扩展只改变题目的表达来源与场景，不降低材料覆盖要求；首轮遗漏的
+      // 词、句块或句型仍必须进入补漏轮次，确保新增练习真正能支撑学习。
       const uncovered = this.findUncoveredWarmupMaterials(normalized, {
         vocabs: missingVocabs,
         chunks: missingChunks,
         patterns: missingPatterns,
       });
 
+      // 多组例句扩展若仍全部落在中译英／单一题型，补一组不同的检索路径。
+      // 不要求每一种题型都出现，只阻止“看起来有多组、实际反复做同一题”的结果。
+      const requestedGroups = Math.min(12, Math.max(1, dto.requestedGroupCount ?? 1));
+      const generatedDirections = new Set(normalized
+        .map((item: any) => item?.direction)
+        .filter((direction): direction is string => direction === 'zh_to_en' || direction === 'en_to_zh'));
+      const generatedTypes = new Set(normalized.map((item: any) => String(item?.type ?? '')).filter(Boolean));
+      const needsExampleDiversity = exampleVariation && requestedGroups >= 2 && (
+        !generatedDirections.has('en_to_zh')
+        || (requestedGroups >= 3 && generatedTypes.size < 2)
+      );
+
       // A prompt alone cannot guarantee coverage. Ask once more for exactly
       // the targets the first pass failed to put in real English content.
-      if (uncovered.length) {
-        const repairPrompt = `${prompt}\n\n## REQUIRED COVERAGE REPAIR\nThe first draft missed these targets in actual English exercises (titles and hints do not count):\n${uncovered.map((item) => `- [${item.kind}] ${item.text}`).join('\n')}\n\nReturn ONLY additional, non-duplicate groups that practise every listed target. Keep the same JSON schema and use natural combinations where slot meaning permits. Avoid every target already present in this first draft:\n${JSON.stringify({ pipeline: normalized })}`;
+      if (uncovered.length || needsExampleDiversity) {
+        const coverageRepair = uncovered.length
+          ? `The first draft missed these targets in actual English exercises (titles and hints do not count):\n${uncovered.map((item) => `- [${item.kind}] ${item.text}`).join('\n')}\n`
+          : '';
+        const diversityRepair = needsExampleDiversity
+          ? `The first draft is too one-dimensional: directions=${[...generatedDirections].join(', ') || 'none'}; types=${[...generatedTypes].join(', ') || 'none'}. Add compact, non-duplicate groups that introduce ${!generatedDirections.has('en_to_zh') ? 'an en_to_zh recognition check' : 'a genuinely useful second exercise type'} for the highest-value expressions. Keep scenarios different and do not add filler groups.\n`
+          : '';
+        const repairPrompt = `${prompt}\n\n## REQUIRED PRACTICE REPAIR\n${coverageRepair}${diversityRepair}\nReturn ONLY additional, non-duplicate groups. Keep the same JSON schema, preserve direct bilingual translation fidelity, and use natural combinations where slot meaning permits. Avoid every target already present in this first draft:\n${JSON.stringify({ pipeline: normalized })}`;
         try {
           let repaired: Array<Record<string, unknown>>;
           if (this.llmChat.prefersNativeJsonMode(runtime.config)) {

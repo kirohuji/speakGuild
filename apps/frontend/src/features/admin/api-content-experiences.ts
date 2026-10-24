@@ -123,6 +123,8 @@ export const contentExperienceAdminApi = {
     }>(`/admin/content-experiences/scenes/${sceneId}/dialogue/polish`, data, { timeout: 300_000 }),
   generateDialogueTeachingDocument: (sceneId: string, data: { markdown: string }) =>
     post<{ markdown: string }>(`/admin/content-experiences/scenes/${sceneId}/dialogue/teaching-document`, data, { timeout: 300_000 }),
+  generateWritingTeachingDocument: (sceneId: string, data: Record<string, unknown>) =>
+    post<{ markdown: string }>(`/admin/content-experiences/scenes/${sceneId}/writing/teaching-document`, data, { timeout: 360_000 }),
   generateReadingTeachingDocument: (sceneId: string, data: {
     passageMarkdown: string
     title?: string
