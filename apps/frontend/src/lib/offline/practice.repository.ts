@@ -153,7 +153,7 @@ async function isPracticeRecordsCacheLoaded(): Promise<boolean> {
 async function listCachedPracticeHistory(): Promise<PracticeRecord[]> {
   const entries = await localDb.list<any>('practice_records')
   return entries
-    .filter((item) => item?.type === 'history' && item?.record?.status === 'analyzed')
+    .filter((item) => item?.type === 'history' && ['analyzed', 'failed'].includes(item?.record?.status))
     .map((item) => normalizePracticeRecord(item.record))
     .sort((a, b) => String(b.analyzedAt ?? b.lastPracticeAt).localeCompare(String(a.analyzedAt ?? a.lastPracticeAt)))
 }
@@ -361,7 +361,7 @@ export const practiceRepository = {
       : remote.list
     await Promise.all(
       list
-        .filter((record) => record.status === 'analyzed')
+        .filter((record) => record.status === 'analyzed' || record.status === 'failed')
         .map((record) => putPracticeHistoryRecord({ record, syncStatus: 'synced' })),
     )
     await markPracticeRecordsCacheLoaded()
@@ -394,6 +394,10 @@ export const practiceRepository = {
 
   async clearPracticeRecordsCache(): Promise<void> {
     await localDb.clear('practice_records')
+    await localDb.delete('kv', PRACTICE_RECORDS_CACHE_KEY)
+  },
+
+  async invalidatePracticeRecordsCache(): Promise<void> {
     await localDb.delete('kv', PRACTICE_RECORDS_CACHE_KEY)
   },
 

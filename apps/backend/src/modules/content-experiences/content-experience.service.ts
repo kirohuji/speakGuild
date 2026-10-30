@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { generateText } from 'ai';
 import { Prisma, TopicActivityType } from '@prisma/client';
+import { z } from 'zod';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { LlmChatClient } from '../../common/llm/llm-chat.client';
 import { LlmProviderFactory, type LlmConfig } from '../../common/llm/llm-provider.factory';
@@ -200,6 +201,49 @@ function parseJsonResponse(text: string) {
     }
   }
   throw new Error('AI response contains an incomplete JSON object');
+}
+
+const scoreValueSchema = z.preprocess(
+  (value) => typeof value === 'string' && value.trim() ? Number(value) : value,
+  z.number().finite().min(0).max(100),
+);
+
+const writingAnalysisSchema = z.object({
+  overallScore: scoreValueSchema,
+  summary: z.string().trim().min(1),
+  dimensions: z.array(z.object({
+    key: z.string().trim().min(1),
+    label: z.string().trim().min(1),
+    score: scoreValueSchema,
+    comment: z.string().trim().optional(),
+  })).max(6).default([]),
+  segmentFeedback: z.array(z.object({
+    segmentId: z.string().optional(),
+    label: z.string().optional(),
+    score: scoreValueSchema.optional(),
+    comment: z.string().optional(),
+    suggestion: z.string().optional(),
+    acceptableExpression: z.string().optional(),
+  })).max(30).default([]),
+  corrections: z.array(z.object({
+    type: z.string().optional(),
+    original: z.string().trim().min(1),
+    correction: z.string().trim().min(1),
+    explanation: z.string().optional(),
+  })).max(8).default([]),
+  strengths: z.array(z.string().trim().min(1)).max(4).default([]),
+  improvements: z.array(z.string().trim().min(1)).max(4).default([]),
+  nextStepSuggestion: z.string().optional(),
+}).passthrough();
+
+function parseWritingAnalysis(text: string) {
+  const parsed = parseJsonResponse(text);
+  const result = writingAnalysisSchema.safeParse(parsed);
+  if (!result.success) {
+    const issue = result.error.issues[0];
+    throw new Error(`AI writing analysis has an invalid shape at ${issue?.path.join('.') || 'root'}: ${issue?.message || 'validation failed'}`);
+  }
+  return result.data;
 }
 
 @Injectable()
@@ -1324,7 +1368,8 @@ Rules for generate mode:
       },
     });
     if (!session) throw new NotFoundException('练习记录不存在');
-    if (session.status !== 'completed') throw new BadRequestException('请先完成练习再申请评估');
+    const isRetryableFailure = session.status === 'analyzed' && !session.analysisResult && Boolean(session.analysisError);
+    if (session.status !== 'completed' && !isRetryableFailure) throw new BadRequestException('请先完成练习再申请评估');
     if (!session.submissions.length) throw new BadRequestException('未找到提交内容');
 
     const submission = session.submissions[0];
@@ -1352,24 +1397,26 @@ Rules for generate mode:
       error = err?.message ?? 'AI 评估失败';
     }
 
-    await this.prisma.topicSession.update({
-      where: { id: sessionId },
-      data: {
-        status: 'analyzed',
-        analyzedAt: new Date(),
-        analysisResult: analysis ? (analysis as any) : undefined,
-        analysisRaw: raw,
-        analysisError: error,
-      },
-    });
-
-    // 标记关联的 submission 为 completed
-    if (analysis && submission.status !== 'completed') {
-      await this.prisma.trainingTopicSubmission.update({
-        where: { id: submission.id },
-        data: { status: 'completed' },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.topicSession.update({
+        where: { id: sessionId },
+        data: {
+          status: 'analyzed',
+          analyzedAt: new Date(),
+          analysisResult: analysis ? (analysis as any) : Prisma.JsonNull,
+          analysisRaw: raw,
+          analysisError: error,
+        },
       });
-    }
+
+      // 标记关联的 submission 为 completed
+      if (analysis && submission.status !== 'completed') {
+        await tx.trainingTopicSubmission.update({
+          where: { id: submission.id },
+          data: { status: 'completed' },
+        });
+      }
+    });
 
     await this.updateTopicExperienceProgress(userId, session.sceneId);
     return { analysis, raw, error };
@@ -1482,15 +1529,23 @@ Keep the response compact: each comment and evidenceMatch must be at most 50 Chi
 {
   "overallScore": 0-100,
   "summary": "Chinese summary of overall writing quality",
+  "dimensions": [
+    {"key":"task","label":"任务完成","score":0-100,"comment":"Chinese evidence-based comment"},
+    {"key":"organization","label":"组织连贯","score":0-100,"comment":"Chinese evidence-based comment"},
+    {"key":"language","label":"词汇语域","score":0-100,"comment":"Chinese evidence-based comment"},
+    {"key":"accuracy","label":"语法准确","score":0-100,"comment":"Chinese evidence-based comment"}
+  ],
+  "segmentFeedback": [{"segmentId":"turn or paragraph index","label":"第 1 轮/第 1 段","score":0-100,"comment":"Chinese feedback","suggestion":"Chinese suggestion","acceptableExpression":"optional short improved expression"}],
+  "corrections": [{"type":"grammar|collocation|register|clarity","original":"exact short learner excerpt","correction":"short corrected expression","explanation":"Chinese explanation"}],
   "strengths": ["Chinese strength 1", ...],
   "improvements": ["Chinese improvement with specific evidence from the text", ...],
   "nextStepSuggestion": "Chinese suggestion for next writing focus"
 }
-Evaluate task completion, clarity, register fit, and language accuracy. Quote specific parts of the learner's text as evidence for each improvement. Be encouraging but specific. Do NOT write a full model answer — only point out what to improve.
-Keep the result easy to scan on a phone: summary at most 90 Chinese characters; return at most 3 strengths and 3 improvements; each strength/improvement at most 60 Chinese characters; nextStepSuggestion at most 70 Chinese characters. Use short complete sentences, not Markdown, headings, or long paragraphs. ${genreEvalHint}`;
+Evaluate task completion, organization/coherence, vocabulary/register, and grammar/accuracy. Always return the four dimension rows. Quote specific parts of the learner's text as evidence. Return 0-5 concise corrections; never invent an original excerpt. For dialogue, return one segmentFeedback item per learner turn; for other genres segmentFeedback may be empty. Be encouraging but specific. Do NOT write a full model answer — only point out what to improve.
+Keep the result easy to scan on a phone: summary at most 90 Chinese characters; return at most 3 strengths and 3 improvements; each comment/strength/improvement at most 60 Chinese characters; nextStepSuggestion at most 70 Chinese characters. Use short complete sentences, not Markdown, headings, or long paragraphs. ${genreEvalHint}`;
     const text = await this.generateWritingJson(llmConfig, system, prompt, 3200);
 
-    return { analysis: parseJsonResponse(text), raw: text };
+    return { analysis: parseWritingAnalysis(text), raw: text };
   }
 
   private async analyzeTranslation(submission: any, writing: any, topicInfo: { title: string; promptEn: string; promptZh: string }, llmConfig: LlmConfig) {
@@ -1508,15 +1563,17 @@ Keep the result easy to scan on a phone: summary at most 90 Chinese characters; 
 {
   "overallScore": 0-100,
   "summary": "Chinese summary of overall translation quality",
+  "dimensions": [{"key":"fidelity","label":"意义忠实","score":0-100,"comment":"Chinese comment"},{"key":"naturalness","label":"表达自然","score":0-100,"comment":"Chinese comment"},{"key":"accuracy","label":"语言准确","score":0-100,"comment":"Chinese comment"}],
   "segmentFeedback": [{"segmentId":"string","score":0-100,"comment":"Chinese specific feedback","suggestion":"Chinese improvement suggestion","acceptableExpression":"optional short target-language alternative; never a full article"}],
+  "corrections": [{"type":"meaning|grammar|collocation|register","original":"exact short learner excerpt","correction":"short corrected expression","explanation":"Chinese explanation"}],
   "strengths": ["Chinese strength 1"],
   "improvements": ["Chinese improvement with concrete evidence"],
   "nextStepSuggestion": "Chinese suggestion"
 }
 Judge meaning fidelity, naturalness, grammar and register. Reference translation is one valid option, not an answer key: accept semantically equivalent wording and word order. Optional referenceExplanation is editor guidance only; do not quote it verbatim to the learner. Give feedback for every segment; do not write a complete model translation for an article.
-Keep this easy to scan on a phone: summary at most 90 Chinese characters; each comment and suggestion at most 70 Chinese characters; return at most 3 strengths and 3 improvements; use short complete sentences, not Markdown or long paragraphs.`;
+Always return the three dimension rows and feedback for every segment. Return 0-5 concise corrections and never invent an original excerpt. Keep this easy to scan on a phone: summary at most 90 Chinese characters; each comment and suggestion at most 70 Chinese characters; return at most 3 strengths and 3 improvements; use short complete sentences, not Markdown or long paragraphs.`;
     const text = await this.generateWritingJson(llmConfig, system, JSON.stringify({ topic: topicInfo, direction: writing.direction, scope: writing.scope, segments }), 3600);
-    return { analysis: parseJsonResponse(text), raw: text };
+    return { analysis: parseWritingAnalysis(text), raw: text };
   }
 
   async saveTopicSubmission(userId: string, topicId: string, dto: SaveTopicSubmissionDto) {

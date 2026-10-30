@@ -59,7 +59,7 @@ async function cacheReviewedTopicSession(topicId: string, session: TopicSession,
 /** 离线优先：sync/本地草稿 → 再拉远端并写回。 */
 export async function getTopicSessionForReview(sessionId: string, topicId: string): Promise<(TopicSession & { sceneId?: string }) | null> {
   const cached = await readLocalTopicSession(sessionId)
-  if (cached?.analysisResult || cached?.submissions?.length) return cached
+  if (cached?.analysisResult || cached?.analysisError) return cached
 
   try {
     const sessions = await learningApi.listTopicSessions(topicId)
@@ -112,8 +112,26 @@ export async function clearTopicSessionDraft(sessionId: string) {
   await localDb.deleteWhere<any>('outbox', (item) => item.entityType === 'topic_submission' && item.entityId === id)
 }
 
-export async function finalizeTopicSession(sessionId: string) {
+export async function finalizeTopicSession(
+  sessionId: string,
+  result?: {
+    analysisResult?: Record<string, unknown> | null
+    analysisError?: string | null
+    response?: Record<string, unknown>
+  },
+) {
   const id = sessionIdFor(sessionId)
   const session = await localDb.get<any>('topic_sessions', id)
-  if (session) await localDb.put('topic_sessions', { ...session, status: 'analyzed', updatedAt: new Date().toISOString() })
+  if (session) {
+    await localDb.put('topic_sessions', {
+      ...session,
+      status: 'analyzed',
+      analysisResult: result?.analysisResult ?? null,
+      analysisError: result?.analysisError ?? null,
+      submissions: result?.response
+        ? [{ id: idFor(sessionId), response: result.response, revision: 1, status: 'submitted', updatedAt: new Date().toISOString() }]
+        : session.submissions ?? [],
+      updatedAt: new Date().toISOString(),
+    })
+  }
 }

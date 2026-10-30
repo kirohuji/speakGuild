@@ -3,21 +3,23 @@ import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
 import {
-  getPracticeRecords,
   type PracticeRecord,
   type PracticeRecordsResult,
 } from '@/features/profile/api'
+import { TopicSessionReadonlyReviewDrawer } from '@/features/learning/components/topic-session-readonly-review-drawer'
+import { practiceRepository } from '@/lib/offline'
 
 export function RecordsTab() {
   const { t } = useTranslation()
   const [data, setData] = useState<PracticeRecordsResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
+  const [selectedRecord, setSelectedRecord] = useState<PracticeRecord | null>(null)
   const pageSize = 15
 
   useEffect(() => {
     setIsLoading(true)
-    getPracticeRecords({ page, pageSize })
+    practiceRepository.listPracticeRecords({ page, pageSize })
       .then(setData)
       .catch(() => {})
       .finally(() => setIsLoading(false))
@@ -94,6 +96,14 @@ export function RecordsTab() {
         onPageChange={setPage}
         isLoading={isLoading}
         emptyMessage={t('common.empty')}
+        onRowClick={(record) => {
+          if (record.recordType === 'reading' || record.recordType === 'writing') setSelectedRecord(record)
+        }}
+      />
+      <TopicSessionReadonlyReviewDrawer
+        record={selectedRecord}
+        open={Boolean(selectedRecord)}
+        onOpenChange={(open) => { if (!open) setSelectedRecord(null) }}
       />
     </div>
   )

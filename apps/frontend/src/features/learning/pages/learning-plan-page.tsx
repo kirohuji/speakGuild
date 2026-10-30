@@ -27,7 +27,6 @@ import { cn } from '@/lib/cn'
 import { isIOS } from '@/lib/native'
 import { learningRepository, practiceRepository } from '@/lib/offline'
 import { dailyPracticeRepository } from '@/lib/offline/daily-practice.repository'
-import { getTopicSessionForReview } from '@/lib/offline/topic-session-draft.repository'
 import { useLearningStore } from '@/stores/learning.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { usePreferencesStore } from '@/stores/preferences.store'
@@ -37,9 +36,7 @@ import { MyLearningView } from '../components/my-learning-view'
 import { ShopView } from '../components/shop-view'
 import { LearningPackDownloadDrawer, LearningPackDownloadStatusButton } from '@/layout/learning-pack-download-monitor'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { type TopicSession, type TrainingTopicItem } from '../api/learning-api'
-import { ReadingSessionReview } from './reading-session-page'
-import { WritingSessionReview } from './writing-session-page'
+import { TopicSessionReadonlyReviewDrawer } from '../components/topic-session-readonly-review-drawer'
 
 export function LearningPlanPage() {
   const { t } = useTranslation()
@@ -563,6 +560,7 @@ function PracticeRecordsContent({ active }: { active: boolean }) {
   const pageSize = 15
 
   useEffect(() => {
+    if (!active) return
     let cancelled = false
     setIsLoading(true)
     // 离线优先：有本地缓存直接展示；空缓存时 repository 内部再 refresh
@@ -578,7 +576,7 @@ function PracticeRecordsContent({ active }: { active: boolean }) {
       })
 
     return () => { cancelled = true }
-  }, [])
+  }, [active])
 
   useEffect(() => {
     if (!active) setFilterOpen(false)
@@ -756,115 +754,6 @@ function PracticeRecordsContent({ active }: { active: boolean }) {
         onOpenChange={(open) => { if (!open) setSelectedRecord(null) }}
       />
     </div>
-  )
-}
-
-function normalizeReadingAnswers(raw: unknown): Record<string, string> {
-  if (!raw || typeof raw !== 'object') return {}
-  if (Array.isArray(raw)) {
-    return Object.fromEntries(raw.map((item: any, index: number) => [String(item?.segmentId ?? index), String(item?.text ?? '')]))
-  }
-  return Object.fromEntries(Object.entries(raw as Record<string, unknown>).map(([key, value]) => [String(key), String(value ?? '')]))
-}
-
-function TopicSessionReadonlyReviewDrawer({
-  record,
-  open,
-  onOpenChange,
-}: {
-  record: PracticeRecord | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}) {
-  const { t } = useTranslation()
-  const [session, setSession] = useState<TopicSession | null>(null)
-  const [topic, setTopic] = useState<TrainingTopicItem | null>(null)
-  const [unitTitle, setUnitTitle] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (!open || !record?.sessionId || !record.topicId) return
-    let cancelled = false
-    setLoading(true)
-    setSession(null)
-    setTopic(null)
-    setUnitTitle(record.topicName || '')
-
-    const load = async () => {
-      const matched = await getTopicSessionForReview(record.sessionId, record.topicId)
-      if (cancelled) return
-      setSession(matched)
-
-      const unitId = record.unitId || (matched as { sceneId?: string } | null)?.sceneId
-      if (!unitId) {
-        setTopic(null)
-        return
-      }
-      // 已下载学习包走本地；未安装再请求并缓存
-      const unit = await learningRepository.getUnitDetail(unitId)
-      if (cancelled) return
-      if (!unit) {
-        setTopic(null)
-        return
-      }
-      setUnitTitle(unit.title || record.topicName || '')
-      setTopic(unit.trainingTopics.find((item) => item.id === record.topicId) ?? null)
-    }
-
-    void load()
-      .catch(() => {
-        if (!cancelled) {
-          setSession(null)
-          setTopic(null)
-        }
-      })
-      .finally(() => { if (!cancelled) setLoading(false) })
-
-    return () => { cancelled = true }
-  }, [open, record?.sessionId, record?.topicId, record?.topicName, record?.unitId])
-
-  const response = (session?.submissions?.[0]?.response ?? {}) as Record<string, unknown>
-  const close = () => onOpenChange(false)
-
-  return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent showHandle={false} className="h-[100dvh] max-h-[100dvh] rounded-none border-0 bg-background pt-safe">
-        <DrawerHeader className="sr-only">
-          <DrawerTitle>{record?.recordType === 'reading' ? t('learning.readingPractice') : t('learning.writingPractice')}</DrawerTitle>
-        </DrawerHeader>
-        {loading ? (
-          <MobilePageLoading rows={4} minHeightClassName="min-h-full" />
-        ) : !session || !topic ? (
-          <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
-            <p className="text-sm text-muted-foreground">无法加载这次练习记录。</p>
-            <Button variant="outline" size="sm" onClick={close}>{t('common.close')}</Button>
-          </div>
-        ) : record?.recordType === 'reading' ? (
-          <ReadingSessionReview
-            topic={topic}
-            unitTitle={unitTitle}
-            onClose={close}
-            review={{
-              answers: normalizeReadingAnswers(response.answers),
-              analysis: session.analysisResult ?? null,
-              analysisError: session.analysisError ?? null,
-              hideRetry: true,
-            }}
-          />
-        ) : (
-          <WritingSessionReview
-            topic={topic}
-            unitTitle={unitTitle}
-            onClose={close}
-            review={{
-              response,
-              analysis: session.analysisResult ?? null,
-              analysisError: session.analysisError ?? null,
-            }}
-          />
-        )}
-      </DrawerContent>
-    </Drawer>
   )
 }
 

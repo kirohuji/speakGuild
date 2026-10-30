@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BadgeCheck, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, Lightbulb, ListMusic, Loader2, MessageCircle, MessageSquareText, RotateCcw, Save, Search, Sparkles, Volume2, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, BadgeCheck, BarChart3, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, Lightbulb, ListMusic, Loader2, MessageCircle, MessageSquareText, PenLine, RotateCcw, Save, Search, Sparkles, Volume2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
@@ -666,9 +667,10 @@ function WritingEditor({
     setSaving(true)
     try {
       if (submit) {
-        await session.submit(response)
+        const result = await session.submit(response)
         setView('analysis')
-        toast.success(t('learning.aiEvaluationDone'))
+        if (result.error) toast.error(t('learning.aiReviewPending'))
+        else toast.success(t('learning.aiEvaluationDone'))
       } else {
         await session.saveDraft(response)
         toast.success(t('learning.draftSaved'))
@@ -721,7 +723,7 @@ function WritingEditor({
       </header>
 
       {session.readOnly && view === 'analysis' ? (
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto max-w-2xl px-4 py-5 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]"><WritingAnalysisPanel analysis={session.analysis} /></div></main>
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto max-w-2xl px-4 py-5 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]"><WritingAnalysisPanel analysis={session.analysis} error={session.analysisError} onRetry={hideRetry ? undefined : session.retryAnalysis} /></div></main>
       ) : (
       // 定高 flex 链 + textarea 内滚（与互译一致）。若 min-h-full 被长文撑开，外层滚、内层 maxInner=0，底部点击会早退无反应。
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden" data-writing-scroll-region>
@@ -844,8 +846,9 @@ function TranslationEditor({
         toast.success(t('learning.draftSaved'))
         return
       }
-      await session.submit(response)
-      toast.success(t('learning.aiEvaluationDone'))
+      const result = await session.submit(response)
+      if (result.error) toast.error(t('learning.aiReviewPending'))
+      else toast.success(t('learning.aiEvaluationDone'))
     } catch (error: any) {
       toast.error(error?.message || t('learning.saveFailed'))
     } finally {
@@ -882,7 +885,7 @@ function TranslationEditor({
       </header>
 
       {session.readOnly && view === 'analysis' ? (
-        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto max-w-3xl px-4 py-5 pb-safe"><WritingAnalysisPanel analysis={session.analysis} /></div></main>
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div className="mx-auto max-w-3xl px-4 py-5 pb-safe"><WritingAnalysisPanel analysis={session.analysis} error={session.analysisError} onRetry={hideRetry ? undefined : session.retryAnalysis} /></div></main>
       ) : (
         <main data-writing-translation-main className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(20rem,55dvh)]" data-writing-scroll-region>
           <section data-writing-translation-source className="min-h-0 overflow-y-auto overscroll-contain" aria-label={sourceLanguage}>
@@ -1050,8 +1053,9 @@ function DialogueEditor({
     setSaving(true)
     try {
       if (submit) {
-        await session.submit(response)
-        toast.success(t('learning.aiEvaluationDone'))
+        const result = await session.submit(response)
+        if (result.error) toast.error(t('learning.aiReviewPending'))
+        else toast.success(t('learning.aiEvaluationDone'))
       } else {
         await session.saveDraft(response)
         toast.success(t('learning.draftSaved'))
@@ -1156,7 +1160,7 @@ function DialogueEditor({
       {/* Switch 的两侧都是完整页面；评估不再堆在对话作答的底部。 */}
       {session.readOnly && view === 'analysis' ? (
         <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <div className="mx-auto max-w-2xl px-4 py-5 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]"><WritingAnalysisPanel analysis={session.analysis} /></div>
+          <div className="mx-auto max-w-2xl px-4 py-5 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]"><WritingAnalysisPanel analysis={session.analysis} error={session.analysisError} onRetry={hideRetry ? undefined : session.retryAnalysis} /></div>
         </main>
       ) : <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-writing-scroll-region>
         <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col px-5 pb-8 pt-5 sm:px-8 sm:pt-7">
@@ -1392,22 +1396,102 @@ function WritingReviewControls({
   )
 }
 
-function WritingAnalysisPanel({ analysis }: { analysis: Record<string, any> | null }) {
+function WritingAnalysisPanel({
+  analysis,
+  error,
+  onRetry,
+}: {
+  analysis: Record<string, any> | null
+  error?: string | null
+  onRetry?: () => Promise<{ analysis: any; error?: string | null }>
+}) {
   const { t } = useTranslation()
-  if (!analysis) return null
+  const [retrying, setRetrying] = useState(false)
+
+  const retry = async () => {
+    if (!onRetry || retrying) return
+    setRetrying(true)
+    try {
+      const result = await onRetry()
+      if (result.error) toast.error(t('learning.aiReviewPending'))
+      else toast.success(t('learning.aiEvaluationDone'))
+    } catch (retryError: any) {
+      toast.error(retryError?.message || t('learning.submitFailed'))
+    } finally {
+      setRetrying(false)
+    }
+  }
+
+  if (!analysis) {
+    return (
+      <Card className="mx-auto max-w-lg border-0 bg-muted/30 shadow-none">
+        <CardContent className="flex flex-col items-center gap-4 px-6 py-12 text-center">
+          <span className="flex size-12 items-center justify-center rounded-xl bg-background text-destructive">
+            {error ? <AlertTriangle className="size-6" /> : <Loader2 className="size-6 animate-spin" />}
+          </span>
+          <div className="flex flex-col gap-1.5">
+            <p className="font-semibold text-foreground">{error ? t('learning.aiReviewPending') : t('learning.aiReviewLoading')}</p>
+            <p className="text-sm leading-6 text-muted-foreground">{error || t('learning.aiReviewPendingHint')}</p>
+          </div>
+          {error && onRetry && (
+            <Button type="button" onClick={() => void retry()} disabled={retrying}>
+              {retrying ? <Loader2 data-icon="inline-start" className="animate-spin" /> : <RotateCcw data-icon="inline-start" />}
+              {t('learning.retryAiEvaluation')}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    )
+  }
+
   const score = analysis.overallScore ?? 0
   const strengths = (analysis.strengths ?? []) as string[]
   const improvements = (analysis.improvements ?? []) as string[]
-  const segmentFeedback = (analysis.segmentFeedback ?? []) as Array<{ segmentId?: string; score?: number; comment?: string; suggestion?: string; acceptableExpression?: string }>
+  const dimensions = (analysis.dimensions ?? []) as Array<{ key?: string; label?: string; score?: number; comment?: string }>
+  const corrections = (analysis.corrections ?? []) as Array<{ type?: string; original?: string; correction?: string; explanation?: string }>
+  const segmentFeedback = (analysis.segmentFeedback ?? []) as Array<{ segmentId?: string; label?: string; score?: number; comment?: string; suggestion?: string; acceptableExpression?: string }>
   const scoreTone = score >= 80 ? 'text-emerald-600 dark:text-emerald-400' : score >= 60 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-4 pb-4">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 pb-4">
       <section className="flex items-center gap-4 rounded-xl bg-muted/30 p-5">
         <div className={cn('flex size-[72px] shrink-0 flex-col items-center justify-center rounded-xl bg-background/70', scoreTone)}><span className="text-3xl font-bold leading-none tabular-nums">{score}</span><span className="mt-1 text-[10px] font-medium">{t('learning.totalScore')}</span></div>
         <div className="min-w-0">{analysis.summary ? <p className="whitespace-pre-wrap break-words text-sm leading-6 text-foreground">{analysis.summary}</p> : <p className="text-sm text-muted-foreground">{t('learning.writingReviewDone')}</p>}</div>
       </section>
-      {segmentFeedback.length > 0 && <section className="rounded-xl bg-muted/30 p-4"><h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><Sparkles className="size-4 text-primary" />{t('learning.segmentFeedback')}</h3><div className="space-y-3">{segmentFeedback.map((item, index) => <div key={item.segmentId ?? index} className="rounded-lg bg-background/60 p-3"><div className="flex items-center gap-2"><span className="text-xs font-semibold">{t('learning.segmentNumber', { number: index + 1 })}</span>{typeof item.score === 'number' && <span className="ml-auto text-xs font-semibold text-primary">{t('learning.scorePoints', { score: item.score })}</span>}</div>{item.comment && <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">{item.comment}</p>}{item.suggestion && <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-amber-700 dark:text-amber-400">{t('learning.suggestionPrefix', { text: item.suggestion })}</p>}{item.acceptableExpression && <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-primary">{t('learning.referencePrefix', { text: item.acceptableExpression })}</p>}</div>)}</div></section>}
-      {(strengths.length > 0 || improvements.length > 0) && <section className="rounded-xl bg-muted/30 p-4">{strengths.length > 0 && <div className={improvements.length > 0 ? 'mb-4' : ''}><h3 className="mb-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">{t('learning.strengthsTitle')}</h3><ul className="space-y-2">{strengths.map((item) => <li key={item} className="flex gap-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground"><CheckCircle2 className="mt-1 size-3.5 shrink-0 text-emerald-600" />{item}</li>)}</ul></div>}{improvements.length > 0 && <div><h3 className="mb-2 text-sm font-semibold text-amber-700 dark:text-amber-400">{t('learning.improvementsTitle')}</h3><ul className="space-y-2">{improvements.map((item) => <li key={item} className="whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">→ {item}</li>)}</ul></div>}</section>}
+
+      {dimensions.length > 0 && (
+        <section className="rounded-xl bg-muted/30 p-4">
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><BarChart3 className="size-4 text-primary" />{t('learning.writingDimensions')}</h3>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {dimensions.map((item, index) => (
+              <div key={item.key ?? index} className="flex flex-col gap-2 rounded-lg bg-background/70 p-3">
+                <div className="flex items-center justify-between gap-3"><span className="text-xs font-semibold text-foreground">{item.label || t('learning.dimensionNumber', { number: index + 1 })}</span><span className="text-sm font-bold tabular-nums text-primary">{item.score ?? 0}</span></div>
+                <Progress value={item.score ?? 0} className="h-1.5" />
+                {item.comment && <p className="text-xs leading-5 text-muted-foreground">{item.comment}</p>}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {segmentFeedback.length > 0 && <section className="rounded-xl bg-muted/30 p-4"><h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><Sparkles className="size-4 text-primary" />{t('learning.segmentFeedback')}</h3><div className="flex flex-col gap-3">{segmentFeedback.map((item, index) => <div key={item.segmentId ?? index} className="rounded-lg bg-background/60 p-3"><div className="flex items-center gap-2"><span className="text-xs font-semibold">{item.label || t('learning.segmentNumber', { number: index + 1 })}</span>{typeof item.score === 'number' && <span className="ml-auto text-xs font-semibold text-primary">{t('learning.scorePoints', { score: item.score })}</span>}</div>{item.comment && <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">{item.comment}</p>}{item.suggestion && <p className="mt-2 whitespace-pre-wrap break-words text-xs leading-5 text-amber-700 dark:text-amber-400">{t('learning.suggestionPrefix', { text: item.suggestion })}</p>}{item.acceptableExpression && <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-primary">{t('learning.referencePrefix', { text: item.acceptableExpression })}</p>}</div>)}</div></section>}
+
+      {corrections.length > 0 && (
+        <section className="rounded-xl bg-muted/30 p-4">
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><PenLine className="size-4 text-primary" />{t('learning.writingCorrections')}</h3>
+          <div className="flex flex-col gap-3">
+            {corrections.map((item, index) => (
+              <div key={`${item.original}-${index}`} className="rounded-lg bg-background/60 p-3">
+                {item.type && <Badge variant="outline" className="mb-2 text-[10px]">{item.type}</Badge>}
+                <p className="text-sm leading-6 text-destructive line-through">{item.original}</p>
+                <p className="mt-1 text-sm font-medium leading-6 text-foreground">→ {item.correction}</p>
+                {item.explanation && <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.explanation}</p>}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {(strengths.length > 0 || improvements.length > 0) && <section className="rounded-xl bg-muted/30 p-4">{strengths.length > 0 && <div className={improvements.length > 0 ? 'mb-4' : ''}><h3 className="mb-2 text-sm font-semibold text-emerald-700 dark:text-emerald-400">{t('learning.strengthsTitle')}</h3><ul className="flex flex-col gap-2">{strengths.map((item) => <li key={item} className="flex gap-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground"><CheckCircle2 className="mt-1 size-3.5 shrink-0 text-emerald-600" />{item}</li>)}</ul></div>}{improvements.length > 0 && <div><h3 className="mb-2 text-sm font-semibold text-amber-700 dark:text-amber-400">{t('learning.improvementsTitle')}</h3><ul className="flex flex-col gap-2">{improvements.map((item) => <li key={item} className="whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">→ {item}</li>)}</ul></div>}</section>}
       {analysis.nextStepSuggestion && <section className="rounded-xl bg-primary/[0.04] p-4"><h3 className="mb-1 text-sm font-semibold text-primary">{t('learning.nextStepSuggestion')}</h3><p className="text-sm leading-6 text-muted-foreground">{analysis.nextStepSuggestion}</p></section>}
     </div>
   )

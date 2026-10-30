@@ -298,6 +298,7 @@ async function applyUserPullChanges(changed: any, deleted: any): Promise<void> {
       sceneId: session.sceneId,
       status: session.status,
       analysisResult: session.analysisResult,
+      analysisError: session.analysisError ?? null,
       startedAt: toIsoString(session.startedAt),
       completedAt: toIsoString(session.completedAt),
       analyzedAt: toIsoString(session.analyzedAt),

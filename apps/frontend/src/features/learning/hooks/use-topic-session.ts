@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { learningApi, type TopicSession } from '../api/learning-api'
 import { cacheTopicSession, clearTopicSessionDraft, finalizeTopicSession, getCachedTopicSession, loadTopicSessionDraft, saveTopicSessionDraft } from '@/lib/offline/topic-session-draft.repository'
+import { practiceRepository } from '@/lib/offline/practice.repository'
 
 export type TopicSessionReviewSnapshot = {
   response: Record<string, unknown>
@@ -98,11 +99,35 @@ export function useTopicSession(
     await learningApi.saveTopicSubmission(topicId, { response, status: 'submitted', sessionId })
     await learningApi.completeTopicSession(topicId, sessionId)
     const result = await learningApi.analyzeTopicSession(topicId, sessionId)
+    await finalizeTopicSession(sessionId, {
+      analysisResult: result.analysis ?? null,
+      analysisError: result.error ?? null,
+      response,
+    })
     await clearTopicSessionDraft(sessionId)
-    await finalizeTopicSession(sessionId)
+    await practiceRepository.invalidatePracticeRecordsCache()
     setCompletedSession({ id: sessionId, status: 'analyzed', analysisResult: result.analysis ?? null, analysisError: result.error ?? null, startedAt: '', createdAt: '' })
     return result
   }, [review, saveDraft, sessionId, topicId])
+
+  const retryAnalysis = useCallback(async () => {
+    if (review) throw new Error('历史回看不可重新评估')
+    const completedSessionId = completedSession?.id
+    if (!completedSessionId || completedSessionId === 'review') throw new Error('没有可重新评估的练习记录')
+    const result = await learningApi.analyzeTopicSession(topicId, completedSessionId)
+    await finalizeTopicSession(completedSessionId, {
+      analysisResult: result.analysis ?? null,
+      analysisError: result.error ?? null,
+    })
+    await practiceRepository.invalidatePracticeRecordsCache()
+    setCompletedSession((current) => current ? {
+      ...current,
+      status: 'analyzed',
+      analysisResult: result.analysis ?? null,
+      analysisError: result.error ?? null,
+    } : current)
+    return result
+  }, [completedSession?.id, review, topicId])
 
   const startNewAttempt = useCallback(async () => {
     if (review) throw new Error('历史回看不可重练')
@@ -121,6 +146,7 @@ export function useTopicSession(
     readOnly: Boolean(completedSession) || Boolean(review),
     saveDraft,
     submit,
+    retryAnalysis,
     startNewAttempt,
   }
 }
