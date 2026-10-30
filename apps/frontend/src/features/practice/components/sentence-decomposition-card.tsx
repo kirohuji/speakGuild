@@ -92,7 +92,7 @@ export function SentenceDecompositionCard({
         levelRecordings.forEach((v, k) => { levelAudioObj[k] = v.audioUrl })
         const levelsData = JSON.stringify(levels)
         store.recordStep(stepId, { userAnswer: JSON.stringify(levelAudioObj), passed: true, feedback: '', score: 'strong', correction: levelsData })
-        store.recordEntry({ stepId, stepType: 'sentence_decomposition', zh: title, answer: finalSentence, userAnswer: JSON.stringify(levelAudioObj), passed: true, feedback: '', displayLabel: '句子拆解', score: 'strong', correction: levelsData })
+        store.recordEntry({ stepId, stepType: 'sentence_decomposition', zh: title, answer: finalSentence, userAnswer: JSON.stringify(levelAudioObj), passed: true, feedback: '', displayLabel: t('todayTask.sentenceDecomposition'), score: 'strong', correction: levelsData })
         onComplete?.(true, 'strong')
         onAttempt?.({ stepId, outcome: 'correct', assistance: 'none' })
         return
@@ -336,7 +336,7 @@ export function SentenceDecompositionCard({
               variant="ghost"
               size="icon-sm"
               className="size-8 shrink-0 rounded-full"
-              title="播放句子音频"
+              title={t('practiceSession.warmupDrill.playAudio')}
               onClick={() => exerciseAudio.play(current.audioUrl, current.audioAssetId, 'warmup_audio')}
             >
               <Play className="size-3.5" />
@@ -359,7 +359,7 @@ export function SentenceDecompositionCard({
             className="gap-1.5 rounded-full"
           >
             <Mic className="size-3.5" />
-            {displayAudioUrl ? '重录' : '录音'}
+            {displayAudioUrl ? t('practiceSession.decomp.reRecord') : t('practiceSession.decomp.record')}
           </Button>
         )}
         {!isReview && recordingStatus === 'recording' && (
@@ -371,7 +371,7 @@ export function SentenceDecompositionCard({
               className="gap-1.5 rounded-full"
             >
               <Square className="size-3.5 fill-current" />
-              停止
+              {t('practiceSession.decomp.stop')}
             </Button>
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span className="size-1.5 animate-pulse rounded-full bg-red-500" />
@@ -397,7 +397,7 @@ export function SentenceDecompositionCard({
               onPlay={() => setIsPlaying(true)}
               preload="auto"
             />
-            <span className="text-[11px] text-muted-foreground">{isReview ? '录音回放' : ''}</span>
+            <span className="text-[11px] text-muted-foreground">{isReview ? t('practiceSession.warmupDrill.audioPlayback') : ''}</span>
           </>
         )}
       </div>
@@ -411,7 +411,7 @@ export function SentenceDecompositionCard({
           disabled={isFirst}
         >
           <ChevronLeft className="size-4" />
-          上一级
+          {t('practiceSession.decomp.previousLevel')}
         </Button>
         <Button
           size="default"
@@ -419,7 +419,7 @@ export function SentenceDecompositionCard({
           className="min-h-11 flex-1 gap-1.5 text-sm"
           onClick={advance}
         >
-          {isLast ? '完成' : '下一级'}
+          {isLast ? t('practiceSession.decomp.complete') : t('practiceSession.decomp.nextLevel')}
           <ChevronRight className="size-4" />
         </Button>
       </div>

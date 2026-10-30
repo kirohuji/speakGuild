@@ -38,7 +38,7 @@ export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Pro
     return (
       <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
         <DialogContent
-          className="left-0 top-0 flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 bg-background p-0 pt-safe text-foreground shadow-none sm:rounded-none [&>button]:hidden"
+          className="app-surface drawer-surface left-0 top-0 flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none border-0 p-0 pt-safe text-foreground shadow-none sm:rounded-none [&>button]:hidden"
           onOpenAutoFocus={(event) => event.preventDefault()}
         >
           <DialogTitle className="sr-only">{item.title}</DialogTitle>

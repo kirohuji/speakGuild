@@ -144,7 +144,7 @@ export function WarmupRecordDetailDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={cn('!z-[10001] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden', contentClassName)}
+        className={cn('app-surface drawer-surface !z-[10001] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden', contentClassName)}
         overlayClassName={overlayClassName}
       >
         <DialogTitle className="sr-only">{t('learning.reviewTitle')}</DialogTitle>

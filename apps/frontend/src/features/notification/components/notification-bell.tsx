@@ -424,7 +424,7 @@ export function NotificationBell({ className }: { className?: string } = {}) {
           className={cn(
             'flex flex-col overflow-hidden p-0',
             isMobile
-              ? 'fixed inset-0 z-50 h-full w-full max-w-none rounded-none border-0'
+              ? 'app-surface drawer-surface fixed inset-0 z-50 h-full w-full max-w-none rounded-none border-0'
               : 'sm:max-w-[520px] h-[620px] max-h-[85vh]'
           )}
         >

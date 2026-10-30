@@ -292,7 +292,7 @@ function ReadingAnswerPage({
   }
 
   return (
-    <div className="fixed inset-0 z-[10000] flex h-[100dvh] w-full max-w-[100vw] flex-col overflow-hidden bg-background pt-safe text-foreground">
+    <div className="app-surface drawer-surface fixed inset-0 z-[10000] flex h-[100dvh] w-full max-w-[100vw] flex-col overflow-hidden pt-safe text-foreground">
       <header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
         <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-3">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><BookOpen className="size-4" /></span>

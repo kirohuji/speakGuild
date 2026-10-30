@@ -348,7 +348,7 @@ export function LearningReaderPage() {
 
       {/* ── 书籍信息 Sheet（右侧） ── */}
       <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
-        <SheetContent side="right" className="w-[80vw] max-w-sm border-border/60 bg-background p-0 text-foreground">
+        <SheetContent side="right" className="w-[80vw] max-w-sm border-border/60 p-0 text-foreground">
           <SheetHeader className="border-b border-border/60 px-5 py-4">
             <SheetTitle className="text-base font-semibold">{t('learning.bookInfo')}</SheetTitle>
           </SheetHeader>

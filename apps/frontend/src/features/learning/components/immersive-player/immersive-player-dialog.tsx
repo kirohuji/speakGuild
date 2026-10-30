@@ -374,7 +374,7 @@ export function ImmersivePlayerDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
           data-keyboard-overlay="practice"
-          className="left-0 top-0 !z-[10000] flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0 pt-safe md:left-[50%] md:top-[50%] md:h-[88vh] md:max-w-3xl md:translate-x-[-50%] md:translate-y-[-50%] md:rounded-2xl md:pt-0 [&>button]:hidden"
+          className="app-surface drawer-surface left-0 top-0 !z-[10000] flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0 pt-safe md:left-[50%] md:top-[50%] md:h-[88vh] md:max-w-3xl md:translate-x-[-50%] md:translate-y-[-50%] md:rounded-2xl md:pt-0 [&>button]:hidden"
         >
           <DialogTitle className="sr-only">{current.title}</DialogTitle>
           <DialogDescription className="sr-only">{current.meaning || current.sceneName || t('immersivePlayer.description')}</DialogDescription>

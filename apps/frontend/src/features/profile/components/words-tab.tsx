@@ -326,7 +326,7 @@ function WordDetailDialog({
 
   return (
     <Dialog open={!!entry} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="h-[100dvh] w-screen max-w-none flex flex-col p-0 gap-0 overflow-hidden rounded-none md:h-[90vh] md:max-w-4xl md:rounded-2xl [&>button]:hidden">
+      <DialogContent className="app-surface drawer-surface h-[100dvh] w-screen max-w-none flex flex-col p-0 gap-0 overflow-hidden rounded-none md:h-[90vh] md:max-w-4xl md:rounded-2xl [&>button]:hidden">
 
         {/* Header */}
         <div className="relative border-b border-border/50 bg-gradient-to-br from-primary/5 to-background px-6 py-5">

@@ -965,7 +965,7 @@ export function ExpressionLibraryPage() {
       </div>}
 
       <Dialog open={exportOpen} onOpenChange={(open) => { setExportOpen(open); if (!open) setZoomPreviewPage(null) }}>
-        <DialogContent className="[&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-background p-0 text-foreground sm:h-[92svh] sm:max-w-5xl sm:rounded-2xl sm:border sm:border-border/60">
+        <DialogContent className="app-surface drawer-surface [&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 text-foreground sm:h-[92svh] sm:max-w-5xl sm:rounded-2xl sm:border sm:border-border/60">
           <DialogTitle className="sr-only">{t('expressionLib.exportPdf')}</DialogTitle>
           <div className="min-h-0 flex-1 overflow-y-auto bg-muted/25 px-4 pb-5 pt-[calc(4.5rem+env(safe-area-inset-top,0px))] sm:px-8 sm:pt-5">
             {exportLoading ? <div className="flex h-full min-h-64 items-center justify-center text-sm text-muted-foreground"><Loader2 className="mr-2 size-4 animate-spin" />{t('expressionLib.loadingPreview')}</div> : (
@@ -1046,7 +1046,7 @@ export function ExpressionLibraryPage() {
       <Dialog open={zoomPreviewPage !== null} onOpenChange={(open) => { if (!open) setZoomPreviewPage(null) }}>
         <DialogContent
           onOpenAutoFocus={(event) => event.preventDefault()}
-          className="[&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-background p-0 text-foreground sm:h-[94svh] sm:max-w-6xl sm:rounded-2xl sm:border sm:border-border/60"
+          className="app-surface drawer-surface [&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 text-foreground sm:h-[94svh] sm:max-w-6xl sm:rounded-2xl sm:border sm:border-border/60"
         >
           <DialogTitle className="sr-only">{t('expressionLib.zoomPreview')}</DialogTitle>
           <div className="min-h-0 flex-1 overflow-auto bg-muted/30 px-3 pb-5 pt-[calc(4rem+env(safe-area-inset-top,0px))] sm:px-6 sm:pt-5">

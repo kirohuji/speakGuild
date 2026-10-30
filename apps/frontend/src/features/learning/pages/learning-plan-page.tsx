@@ -490,7 +490,7 @@ function WarmupRecordDetailDrawer({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!z-[10001] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden">
+      <DialogContent className="app-surface drawer-surface !z-[10001] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden">
         <DialogTitle className="sr-only">{t('learning.reviewTitle')}</DialogTitle>
         <DialogDescription className="sr-only">{t('learning.reviewSubtitle')}</DialogDescription>
 
@@ -822,7 +822,7 @@ function PracticeRecordReadonlyReviewDrawer({
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
           </div>
         ) : showAnalysis ? (
-          <div className="h-full overflow-y-auto bg-background">
+          <div className="h-full overflow-y-auto">
             <div className="mx-auto max-w-2xl px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-[calc(1rem+env(safe-area-inset-top,0px))]">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <Button variant="ghost" size="sm" onClick={() => setShowAnalysis(false)}>{t('profile.reviewBackToChat')}</Button>
@@ -845,7 +845,7 @@ function PracticeRecordReadonlyReviewDrawer({
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
           </div>
         ) : (
-          <div className="relative h-full bg-background">
+          <div className="relative h-full">
             <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2">
               <div className="flex h-9 w-full max-w-[440px] items-center gap-2 rounded-full border border-border/55 bg-background/90 px-2 text-foreground shadow-lg backdrop-blur-2xl">
                 <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>

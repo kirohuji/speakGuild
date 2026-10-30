@@ -448,7 +448,7 @@ export function LearningInsightDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
           data-keyboard-overlay="practice"
-          className="left-0 top-0 !z-[10000] flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0 pt-safe md:left-[50%] md:top-[50%] md:h-[88vh] md:max-w-3xl md:translate-x-[-50%] md:translate-y-[-50%] md:rounded-2xl md:pt-0 [&>button]:hidden"
+          className="app-surface drawer-surface left-0 top-0 !z-[10000] flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0 pt-safe md:left-[50%] md:top-[50%] md:h-[88vh] md:max-w-3xl md:translate-x-[-50%] md:translate-y-[-50%] md:rounded-2xl md:pt-0 [&>button]:hidden"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -582,12 +582,12 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
                     type="button"
                     onClick={() => setShowUk((prev) => !prev)}
                     className="flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    aria-label={showUk ? '切换美式' : '切换英式'}
+                    aria-label={showUk ? t('insight.switchToUs') : t('insight.switchToUk')}
                   >
                     <ArrowLeftRight className="size-3.5" />
                   </button>
                   <PhoneticPill
-                    label={showUk ? '英' : '美'}
+                    label={showUk ? t('insight.accentUk') : t('insight.accentUs')}
                     value={showUk ? item.phoneticUk! : item.phoneticUs!}
                     audioUrl={showUk ? item.audioUkUrl : item.audioUsUrl}
                     onPlay={playAudio}
@@ -595,7 +595,7 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
                 </>
               ) : (
                 <PhoneticPill
-                  label={item.phoneticUs ? '美' : '英'}
+                  label={item.phoneticUs ? t('insight.accentUs') : t('insight.accentUk')}
                   value={(item.phoneticUs || item.phoneticUk)!}
                   audioUrl={item.phoneticUs ? item.audioUsUrl : item.audioUkUrl}
                   onPlay={playAudio}
@@ -719,9 +719,9 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
         <div className="scrollbar-hide min-w-0 flex-1 overflow-x-auto">
         <TabsList>
           <TabsTrigger value="meaning">{t('insight.meaning')}</TabsTrigger>
-          <TabsTrigger value="description">讲解</TabsTrigger>
+          <TabsTrigger value="description">{t('insight.explanation')}</TabsTrigger>
           <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
-          <TabsTrigger value="dictionary">词典</TabsTrigger>
+          <TabsTrigger value="dictionary">{t('insight.dictionary')}</TabsTrigger>
         </TabsList>
         </div>
         {!hideSave && (
@@ -802,7 +802,7 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
                     {meaningText}
                   </p>
                 ) : (
-                  <p className="px-4 py-4 text-sm text-muted-foreground">暂无释义</p>
+                  <p className="px-4 py-4 text-sm text-muted-foreground">{t('insight.noMeaning')}</p>
                 )}
               </section>
             </div>
@@ -820,7 +820,7 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
               ) : enrichData === 'loading' ? (
                 <Skeleton className="h-16 w-full rounded-md" />
               ) : (
-                <p className="text-sm text-muted-foreground">暂无讲解/描述</p>
+                <p className="text-sm text-muted-foreground">{t('insight.noExplanation')}</p>
               )}
             </div>
           </ScrollArea>
@@ -842,7 +842,7 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
                   onPlay={playAudio}
                 />
               ) : (
-                <p className="rounded-md border border-border/70 bg-background p-4 text-sm text-muted-foreground">暂无词典数据</p>
+                <p className="rounded-md border border-border/70 bg-background p-4 text-sm text-muted-foreground">{t('insight.noDictionary')}</p>
               )}
             </div>
           </ScrollArea>
@@ -883,12 +883,13 @@ function PhoneticPill({
   onPlay,
   isPlaying = false,
 }: {
-  label: '美' | '英'
+  label: string
   value: string
   audioUrl?: string | null
   onPlay: (url: string) => void
   isPlaying?: boolean
 }) {
+  const { t } = useTranslation()
   return (
     <span className="inline-flex h-7 items-center gap-1 rounded-md bg-muted px-2 font-ipa text-[11px] text-muted-foreground">
       <span className="font-sans text-[10px] font-semibold text-foreground/70">{label}</span>
@@ -901,7 +902,7 @@ function PhoneticPill({
             'inline-flex size-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground',
             isPlaying && 'text-primary',
           )}
-          aria-label={isPlaying ? `${label}发音播放中` : `${label}发音`}
+          aria-label={t('insight.pronunciation')}
           aria-pressed={isPlaying}
         >
           {isPlaying
@@ -924,6 +925,7 @@ function ManagedDictionaryView({
   onToggleUncommon: () => void
   onPlay: (url: string) => void
 }) {
+  const { t } = useTranslation()
   const ukPron = entry.pronunciations?.find((p) => p.type === 'uk' && p.isPreferred)
     ?? entry.pronunciations?.find((p) => p.type === 'uk')
   const usPron = entry.pronunciations?.find((p) => p.type === 'us' && p.isPreferred)
@@ -952,19 +954,19 @@ function ManagedDictionaryView({
               onClick={onToggleUncommon}
               className="shrink-0 rounded border border-border/60 px-1.5 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
             >
-              {showUncommon ? '隐藏不常用' : `显示不常用 ${uncommonCount}`}
+              {showUncommon ? t('insight.hideUncommon') : t('insight.showUncommon', { count: uncommonCount })}
             </button>
           )}
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {false && usPron?.ipa && <PhoneticPill label="美" value={usPron.ipa} audioUrl={usPron.audioUrl} onPlay={onPlay} />}
-          {false && ukPron?.ipa && <PhoneticPill label="英" value={ukPron.ipa} audioUrl={ukPron.audioUrl} onPlay={onPlay} />}
+          {false && usPron?.ipa && <PhoneticPill label={t('insight.accentUs')} value={usPron.ipa} audioUrl={usPron.audioUrl} onPlay={onPlay} />}
+          {false && ukPron?.ipa && <PhoneticPill label={t('insight.accentUk')} value={ukPron.ipa} audioUrl={ukPron.audioUrl} onPlay={onPlay} />}
         </div>
 
         {entry.wordForms?.length > 0 && (
           <div className="flex items-baseline gap-2">
-            <span className="shrink-0 text-xs font-medium text-muted-foreground/60">变形</span>
+            <span className="shrink-0 text-xs font-medium text-muted-foreground/60">{t('insight.wordForms')}</span>
             <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
               {entry.wordForms.slice(0, 10).map((form) => (
                 <span key={`${form.word}-${form.tags.join('-')}`} className="inline-flex items-baseline gap-1.5">
@@ -978,7 +980,7 @@ function ManagedDictionaryView({
 
         {entry.entrySynonyms?.length > 0 && (
           <div className="flex items-baseline gap-2">
-            <span className="shrink-0 text-xs font-medium text-muted-foreground/60">近义</span>
+            <span className="shrink-0 text-xs font-medium text-muted-foreground/60">{t('insight.synonyms')}</span>
             <p className="font-english text-[13px] leading-5 text-foreground/70">
               {entry.entrySynonyms.slice(0, 16).join(', ')}
               {entry.entrySynonyms.length > 16 && <span className="text-muted-foreground/45"> +{entry.entrySynonyms.length - 16}</span>}
@@ -994,12 +996,12 @@ function ManagedDictionaryView({
           ))}
         </div>
       ) : (
-        <DictionaryEmptyState text="暂无释义" />
+        <DictionaryEmptyState text={t('insight.noMeaning')} />
       )}
 
       {dictionaryExamples.length > 0 && (
         <section className="border-t border-border/60 px-4 py-4">
-          <h4 className="mb-3 text-sm font-semibold text-foreground">词典例句</h4>
+          <h4 className="mb-3 text-sm font-semibold text-foreground">{t('insight.dictExamples')}</h4>
           <div className="space-y-3">
             {dictionaryExamples.slice(0, 6).map((example, index) => (
               <div key={`${example.en}-${index}`} className="rounded-md bg-muted/45 p-3">
@@ -1012,7 +1014,7 @@ function ManagedDictionaryView({
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 px-4 py-2 text-[11px] text-muted-foreground/55">
-        <span>{allSenseCount} 个义项</span>
+        <span>{t('insight.senseCount', { count: allSenseCount })}</span>
         {entry.sourceUrl ? (
           <a
             href={entry.sourceUrl}
@@ -1024,7 +1026,7 @@ function ManagedDictionaryView({
             Wiktionary CC BY-SA 4.0
           </a>
         ) : (
-          <span>内容来自后台词典</span>
+          <span>{t('insight.fromDictionary')}</span>
         )}
       </div>
     </div>
@@ -1038,9 +1040,10 @@ function DictionaryEmptyState({ text }: { text: string }) {
 }
 
 function DictionaryClusterSection({ cluster, showUncommon }: { cluster: DictionaryCluster; showUncommon: boolean }) {
+  const { t } = useTranslation()
   const commonSenses = cluster.senses.filter((sense) => sense.frequency !== 'uncommon')
   const senses = showUncommon ? cluster.senses : commonSenses
-  const cnLabel = POS_LABELS_CN[cluster.posBucket] ?? ''
+  const cnLabel = cluster.posBucket ? t(`insight.pos.${cluster.posBucket}`, { defaultValue: POS_LABELS_CN[cluster.posBucket] ?? '' }) : ''
   const enLabel = POS_LABELS[cluster.posBucket] ?? cluster.posBucket
 
   return (
@@ -1048,7 +1051,7 @@ function DictionaryClusterSection({ cluster, showUncommon }: { cluster: Dictiona
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <Badge variant="secondary" className="rounded-md px-1.5 py-0.5 text-xs font-bold">{cnLabel || enLabel}</Badge>
         <span className="text-[11px] leading-4 text-muted-foreground/70">{clusterName(cluster)}</span>
-        {cluster.senses.length > 1 && <span className="text-[11px] text-muted-foreground/45">{cluster.senses.length} 义</span>}
+        {cluster.senses.length > 1 && <span className="text-[11px] text-muted-foreground/45">{t('insight.senseShort', { count: cluster.senses.length })}</span>}
       </div>
       {senses.length > 0 ? (
         <div className="space-y-3">
@@ -1057,7 +1060,7 @@ function DictionaryClusterSection({ cluster, showUncommon }: { cluster: Dictiona
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">暂无常用释义</p>
+        <p className="text-sm text-muted-foreground">{t('insight.noCommonMeaning')}</p>
       )}
     </section>
   )
@@ -1146,7 +1149,7 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
       <div className="flex shrink-0 items-center gap-2 px-5 pt-3 md:px-6">
         <div className="scrollbar-hide min-w-0 flex-1 overflow-x-auto">
         <TabsList>
-          <TabsTrigger value="description">讲解</TabsTrigger>
+          <TabsTrigger value="description">{t('insight.explanation')}</TabsTrigger>
           <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
         </TabsList>
         </div>
@@ -1161,7 +1164,7 @@ function ChunkInsightView({ item, hideSave = false }: { item: ChunkInsight; hide
         <TabsContent value="description" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
             <div className="py-4">
-              {item.description ? <RichText text={item.description} /> : <p className="text-sm text-muted-foreground">暂无讲解</p>}
+              {item.description ? <RichText text={item.description} /> : <p className="text-sm text-muted-foreground">{t('insight.noExplanationShort')}</p>}
             </div>
           </ScrollArea>
         </TabsContent>
@@ -1227,7 +1230,7 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
         <div className="scrollbar-hide min-w-0 flex-1 overflow-x-auto">
         <TabsList>
           {/* <TabsTrigger value="structure">结构</TabsTrigger> */}
-          <TabsTrigger value="description">讲解</TabsTrigger>
+          <TabsTrigger value="description">{t('insight.explanation')}</TabsTrigger>
           <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
         </TabsList>
         </div>
@@ -1259,7 +1262,7 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
         <TabsContent value="description" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
             <div className="py-4">
-              {item.description ? <RichText text={item.description} /> : <p className="text-sm text-muted-foreground">暂无讲解</p>}
+              {item.description ? <RichText text={item.description} /> : <p className="text-sm text-muted-foreground">{t('insight.noExplanationShort')}</p>}
             </div>
           </ScrollArea>
         </TabsContent>
@@ -1292,6 +1295,7 @@ function ExampleBlock({ en, zh, note, level, audioUrl, onPlayAudio }: {
   audioUrl?: string | null
   onPlayAudio?: (url: string) => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="rounded-md bg-muted/60 p-3">
       <div className="flex items-start gap-2">
@@ -1301,7 +1305,7 @@ function ExampleBlock({ en, zh, note, level, audioUrl, onPlayAudio }: {
             type="button"
             onClick={(e) => { e.stopPropagation(); onPlayAudio(audioUrl) }}
             className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-            aria-label="播放例句发音"
+            aria-label={t('insight.playExample')}
           >
             <Volume2 className="size-3.5" />
           </button>

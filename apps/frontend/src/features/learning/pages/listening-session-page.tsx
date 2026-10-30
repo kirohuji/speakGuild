@@ -665,7 +665,7 @@ function ListeningFooter({
           onClick={onSpeedToggle}
           disabled={disabled}
           className="size-11 justify-self-end rounded-full text-xs font-semibold"
-          aria-label="倍速"
+          aria-label={t('learning.playbackRateAria')}
         >
           {formatSpeed(playbackRate)}
         </Button>
@@ -689,15 +689,15 @@ function isObjectUrl(url: string | null | undefined) {
   return Boolean(url?.startsWith('blob:'))
 }
 
-function getMicErrorMessage(error: unknown) {
+function getMicErrorMessage(error: unknown, t: (key: string) => string) {
   if (typeof window !== 'undefined' && window.isSecureContext === false) {
-    return '当前页面不是安全环境，浏览器会禁止麦克风'
+    return t('practiceVn.micInsecureContext')
   }
-  if (!navigator.mediaDevices?.getUserMedia) return '当前 WebView 不支持麦克风录音'
-  if (typeof MediaRecorder === 'undefined') return '当前 WebView 不支持 MediaRecorder 录音'
+  if (!navigator.mediaDevices?.getUserMedia) return t('practiceVn.micUnavailable')
+  if (typeof MediaRecorder === 'undefined') return t('practiceVn.micRecorderUnavailable')
   const name = error instanceof DOMException ? error.name : ''
-  if (name === 'NotAllowedError' || name === 'PermissionDeniedError') return '无法访问麦克风，请检查权限设置'
-  return '麦克风启动失败，请稍后重试'
+  if (name === 'NotAllowedError' || name === 'PermissionDeniedError') return t('voice.micError')
+  return t('practiceVn.micStartFailed')
 }
 
 function ListeningShadowDrawer({
@@ -709,6 +709,7 @@ function ListeningShadowDrawer({
   onOpenChange: (open: boolean) => void
   segment: ListeningTranscriptSegment
 }) {
+  const { t } = useTranslation()
   const [recording, setRecording] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null)
@@ -778,7 +779,7 @@ function ListeningShadowDrawer({
       }
 
       if (typeof MediaRecorder === 'undefined') {
-        setError('当前浏览器不支持录音')
+        setError(t('learning.recordUnsupported'))
         return
       }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -804,9 +805,9 @@ function ListeningShadowDrawer({
       setRecording(true)
       recorder.start(200)
     } catch (err) {
-      setError(getMicErrorMessage(err))
+      setError(getMicErrorMessage(err, t))
     }
-  }, [cleanupAudio, cleanupRecording])
+  }, [cleanupAudio, cleanupRecording, t])
 
   // 停止录音
   const stopRecording = useCallback(async () => {
@@ -825,13 +826,13 @@ function ListeningShadowDrawer({
         recordedUrlRef.current = url
         setRecordedUrl(url)
       } catch (err) {
-        setError('录音保存失败，请重试')
+        setError(t('learning.recordSaveFailed'))
       }
       return
     }
     recorderRef.current?.stop()
     setRecording(false)
-  }, [])
+  }, [t])
 
   // 回放录音
   const playRecording = useCallback(() => {
@@ -869,7 +870,7 @@ function ListeningShadowDrawer({
         <DrawerHeader className="px-4 pb-2 pt-3 text-left">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <DrawerTitle className="text-sm font-semibold text-foreground">跟读练习</DrawerTitle>
+              <DrawerTitle className="text-sm font-semibold text-foreground">{t('learning.shadowingPractice')}</DrawerTitle>
             </div>
             <span
               className={cn(
@@ -877,7 +878,7 @@ function ListeningShadowDrawer({
                 recording ? 'bg-rose-500/10 text-rose-700' : recordedUrl ? 'bg-emerald-500/10 text-emerald-700' : 'bg-muted text-muted-foreground',
               )}
             >
-              {recording ? formatElapsed(elapsed) : recordedUrl ? '已录音' : '待录音'}
+              {recording ? formatElapsed(elapsed) : recordedUrl ? t('learning.recorded') : t('practiceVn.waitingRecord')}
             </span>
           </div>
         </DrawerHeader>
@@ -910,7 +911,7 @@ function ListeningShadowDrawer({
               onClick={recording ? stopRecording : startRecording}
             >
               {recording ? <Square className="size-3.5 fill-current" /> : <Mic className="size-3.5" />}
-              {recording ? '停止' : '录音'}
+              {recording ? t('audio.stop') : t('learning.record')}
             </Button>
             <Button
               type="button"
@@ -920,7 +921,7 @@ function ListeningShadowDrawer({
               onClick={playRecording}
             >
               {playingRecording ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
-              回放
+              {t('learning.replay')}
             </Button>
           </div>
 
@@ -932,7 +933,7 @@ function ListeningShadowDrawer({
             className="h-9 w-full gap-1.5 text-muted-foreground hover:text-foreground"
           >
             <RotateCcw className="size-3.5" />
-            重录
+            {t('learning.reRecord')}
           </Button>
         </div>
       </DrawerContent>

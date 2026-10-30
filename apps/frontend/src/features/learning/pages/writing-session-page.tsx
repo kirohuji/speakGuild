@@ -687,7 +687,7 @@ function WritingEditor({
     <div
       data-keyboard-overlay="writing"
       data-writing-compose
-      className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pt-safe"
+      className="app-surface drawer-surface fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden pt-safe"
     >
       <header data-writing-compose-header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
         <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-3">
@@ -871,7 +871,7 @@ function TranslationEditor({
   const answerLanguage = direction === 'zh_to_en' ? t('learning.answerWriteEn') : t('learning.answerWriteZh')
 
   return (
-    <div data-keyboard-overlay="writing" data-writing-translation className="fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pt-safe">
+    <div data-keyboard-overlay="writing" data-writing-translation className="app-surface drawer-surface fixed inset-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden pt-safe">
       <header data-writing-translation-header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-4 pb-2.5 pt-3 sm:px-6 sm:pt-4">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Languages className="size-4" /></span>
@@ -1117,7 +1117,7 @@ function DialogueEditor({
       ref={shellRef}
       data-keyboard-overlay="writing"
       data-writing-dialogue
-      className="fixed inset-x-0 top-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background pt-safe"
+      className="app-surface drawer-surface fixed inset-x-0 top-0 z-[10000] flex h-[100dvh] w-screen flex-col overflow-hidden pt-safe"
     >
       {/* Header — 与段落/论文一致：键盘时只收紧 padding、隐藏 meta，保留图标/徽章/标题/操作 */}
       <header

@@ -26,20 +26,23 @@ function getWarmupStepStatusLabel(params: {
   isPassiveStep: boolean
   score?: WarmupScore
   isDone: boolean
+  t: (key: string) => string
 }) {
-  if (params.isPassiveStep) return '阅读'
+  if (params.isPassiveStep) return params.t('practiceSession.warmupStatus.reading')
 
   switch (params.score) {
     case 'strong':
-      return '熟练'
+      return params.t('practiceSession.warmupStatus.strong')
     case 'ok':
-      return '通过'
+      return params.t('practiceSession.warmupStatus.ok')
     case 'weak':
-      return '待稳'
+      return params.t('practiceSession.warmupStatus.weak')
     case 'miss':
-      return '复练'
+      return params.t('practiceSession.warmupStatus.miss')
     default:
-      return params.isDone ? '完成' : '未做'
+      return params.isDone
+        ? params.t('practiceSession.warmupStatus.done')
+        : params.t('practiceSession.warmupStatus.pending')
   }
 }
 
@@ -229,7 +232,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
 
     for (const item of warmupItems) {
       if (item.type === 'chunk_substitution') {
-        const dirLabel = item.direction === 'en_to_zh' ? '英→中' : '中→英'
+        const dirLabel = item.direction === 'en_to_zh' ? t('practiceSession.directionEnToZh') : t('practiceSession.directionZhToEn')
         ;((item.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
           const ref = getSimplePromptReference(sub, item.direction ?? 'zh_to_en')
           makeStep({
@@ -238,7 +241,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
             prompt: sub,
             promptIndex: subIdx,
             label: `${item.title} (${dirLabel})`,
-            displayLabel: item.kind === 'word' ? '词汇替换' : '句块替换',
+            displayLabel: item.kind === 'word' ? t('todayTask.wordSubstitution') : t('todayTask.chunkSubstitution'),
             headerContent: item.chunk || ref.promptText || item.title || '',
             render: (stepId) => (
               <ChunkOutputDrillCard
@@ -262,7 +265,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
             prompt: v,
             promptIndex: vIdx,
             label: `${item.title}: ${v.targetWords?.join(', ') || v.promptZh?.slice(0, 20)}`,
-            displayLabel: '词汇输出',
+            displayLabel: t('todayTask.vocabDrill'),
             headerContent: v.targetWords?.join(', ') || v.promptZh || item.title || '',
             render: (stepId) => (
               <VocabOutputCard
@@ -288,7 +291,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
               promptIndex: subIdx,
               patternIndex,
               label: item.vocabWord,
-              displayLabel: '一词多句',
+              displayLabel: t('todayTask.vocabSentenceBuilding'),
               headerContent: item.vocabWord || pattern.chunk || ref.promptText || '',
               render: (flatId) => (
                 <ChunkOutputDrillCard
@@ -307,14 +310,14 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
           })
         }
       } else if (item.type === 'sentence_decomposition') {
-        const title = item.title || '句子拆解'
+        const title = item.title || t('todayTask.sentenceDecomposition')
         makeStep({
           item,
           type: 'sentence_decomposition',
           prompt: { levels: item.levels, fullSentence: item.fullSentence },
           promptIndex: 0,
           label: title,
-          displayLabel: '句子拆解',
+          displayLabel: t('todayTask.sentenceDecomposition'),
           headerContent: item.levels?.[0]?.en || item.fullSentence || title,
           render: (stepId) => (
             <SentenceDecompositionCard
@@ -326,7 +329,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
           ),
         })
       } else if (item.type === 'pattern_drill') {
-        const dirLabel = item.direction === 'en_to_zh' ? '英→中' : '中→英'
+        const dirLabel = item.direction === 'en_to_zh' ? t('practiceSession.directionEnToZh') : t('practiceSession.directionZhToEn')
         ;((item.items ?? []) as SimplePromptItem[]).forEach((sub, subIdx) => {
           const ref = getSimplePromptReference(sub, item.direction ?? 'zh_to_en')
           makeStep({
@@ -335,7 +338,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
             prompt: sub,
             promptIndex: subIdx,
             label: `${item.title} (${dirLabel})`,
-            displayLabel: '句型操练',
+            displayLabel: t('todayTask.patternDrill'),
             headerContent: item.pattern || ref.promptText || item.title || '',
             render: (stepId) => (
               <PatternDrillCard
@@ -354,7 +357,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
       }
     }
     return shuffleSteps(steps)
-  }, [packId, shuffleSteps, topicId, topicTitle, warmupItems, warmupRunSeed])
+  }, [packId, shuffleSteps, t, topicId, topicTitle, warmupItems, warmupRunSeed])
 
   const totalSteps = flatSteps.length
   const warmupReferencePreloads = useMemo(() => buildWarmupReferencePreloads(warmupItems), [buildWarmupReferencePreloads, warmupItems])
@@ -516,7 +519,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
       const finish = () => {
         const rankValues = records.map((record) => record.score === 'strong' ? 3 : record.score === 'ok' ? 2 : record.score === 'weak' ? 1 : 0).filter((rank) => rank > 0)
         const localScore = rankValues.length > 0 ? Math.round(rankValues.reduce((a, b) => a + b, 0) / rankValues.length / 3 * 100) : 0
-        setLastAssessment({ score: localScore, feedback: `已完成"${topicTitle}"的 ${records.length} 道热身练习` })
+        setLastAssessment({ score: localScore, feedback: t('practiceSession.warmupSummary.completedAssessment', { title: topicTitle, count: records.length }) })
         setAssessing(false)
       }
       if (packId && itemIds.length) {
@@ -532,7 +535,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
         finish()
       }
     }
-  }, [allDone, flatSteps, needsReviewRound, packId, recordStorageKey, topicId, topicTitle, assessing, lastAssessment, warmupStore])
+  }, [allDone, flatSteps, needsReviewRound, packId, recordStorageKey, t, topicId, topicTitle, assessing, lastAssessment, warmupStore])
 
   // ── Carousel state ──
   const [currentIdx, setCurrentIdx] = useState(0)
@@ -579,8 +582,8 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
             <Lightbulb className="size-6" />
           </div>
           <div className="space-y-1">
-            <p className="text-base font-semibold text-foreground">还有 {weakStepIds.size} 个表达需要再稳一下</p>
-            <p className="text-sm leading-6 text-muted-foreground">这些题刚才答错、跳过，或借助了完整答案。先集中再练一轮，再进入 VN 对话。</p>
+            <p className="text-base font-semibold text-foreground">{t('practiceSession.warmupSummary.needReviewTitle', { count: weakStepIds.size })}</p>
+            <p className="text-sm leading-6 text-muted-foreground">{t('practiceSession.warmupSummary.needReviewDesc')}</p>
           </div>
           <div className="w-full max-w-sm space-y-2 rounded-xl border bg-card p-3 text-left">
             {weakRecords.slice(0, 5).map((record) => (
@@ -595,12 +598,12 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
               </div>
             ))}
             {weakRecords.length > 5 && (
-              <p className="px-1 text-[11px] text-muted-foreground">还有 {weakRecords.length - 5} 题会一起进入复练。</p>
+              <p className="px-1 text-[11px] text-muted-foreground">{t('practiceSession.warmupSummary.moreInReview', { count: weakRecords.length - 5 })}</p>
             )}
           </div>
           <div className="flex w-full max-w-sm gap-3">
-            <Button variant="outline" className="flex-1" onClick={resetForRepractice}>整组重练</Button>
-            <Button className="flex-1" onClick={startWeakReviewRound}>开始错题再练</Button>
+            <Button variant="outline" className="flex-1" onClick={resetForRepractice}>{t('practiceSession.warmupSummary.retryAll')}</Button>
+            <Button className="flex-1" onClick={startWeakReviewRound}>{t('practiceSession.warmupSummary.startWrongReview')}</Button>
           </div>
         </div>
       </div>
@@ -621,30 +624,30 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
                 <CheckCircle2 className="size-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-base font-semibold text-foreground">知识点热身完成</p>
+                <p className="text-base font-semibold text-foreground">{t('practiceSession.warmupSummary.title')}</p>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  你已经把本场景会用到的表达过了一遍，可以回到准备页选择下一步。
+                  {t('practiceSession.warmupSummary.desc')}
                 </p>
               </div>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2">
-              <WarmupSummaryMetric label="完成" value={`${doneCount}/${totalSteps}`} />
-              <WarmupSummaryMetric label="稳妥" value={`${scoreSummary.strong + scoreSummary.ok}`} />
-              <WarmupSummaryMetric label="待巩固" value={`${scoreSummary.weak + scoreSummary.miss}`} />
+              <WarmupSummaryMetric label={t('practiceSession.warmupSummary.metricDone')} value={`${doneCount}/${totalSteps}`} />
+              <WarmupSummaryMetric label={t('practiceSession.warmupSummary.metricSteady')} value={`${scoreSummary.strong + scoreSummary.ok}`} />
+              <WarmupSummaryMetric label={t('practiceSession.warmupSummary.metricWeak')} value={`${scoreSummary.weak + scoreSummary.miss}`} />
             </div>
           </div>
 
           {assessing ? (
             <div className="flex items-center justify-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" /> AI 综合评估中...
+              <Loader2 className="size-4 animate-spin" /> {t('practiceSession.warmupSummary.assessing')}
             </div>
           ) : lastAssessment ? (
             <div className="rounded-xl border bg-card px-4 py-3 text-left space-y-2">
               <div className="flex items-center gap-2">
                 <Badge variant={lastAssessment.score >= 80 ? 'default' : 'secondary'} className="text-sm px-2">
-                  {lastAssessment.score} 分
+                  {t('practiceSession.warmupSummary.scorePoints', { score: lastAssessment.score })}
                 </Badge>
-                <span className="text-xs text-muted-foreground">综合评估</span>
+                <span className="text-xs text-muted-foreground">{t('practiceSession.warmupSummary.overall')}</span>
               </div>
               <p className="text-sm text-foreground">{lastAssessment.feedback}</p>
             </div>
@@ -654,7 +657,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
             <div className="rounded-xl border bg-card p-4">
               <div className="mb-3 flex items-center gap-2">
                 <BookOpen className="size-4 text-primary" />
-                <p className="text-sm font-semibold text-foreground">建议保留在脑中的表达</p>
+                <p className="text-sm font-semibold text-foreground">{t('practiceSession.warmupSummary.keepInMind')}</p>
               </div>
               <div className="space-y-2">
                 {carryIntoSceneRecords.map((record) => (
@@ -668,34 +671,34 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
             <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-4">
               <div className="mb-3 flex items-center gap-2">
                 <Lightbulb className="size-4 text-amber-600" />
-                <p className="text-sm font-semibold text-foreground">还不太稳的表达</p>
+                <p className="text-sm font-semibold text-foreground">{t('practiceSession.warmupSummary.stillWeak')}</p>
               </div>
               <div className="space-y-2">
                 {weakRecords.slice(0, 3).map((record) => (
                   <WarmupRecordRow key={record.stepId} record={record} tone="weak" />
                 ))}
                 {weakRecords.length > 3 && (
-                  <p className="px-1 text-[11px] text-muted-foreground">还有 {weakRecords.length - 3} 题可以一起复练。</p>
+                  <p className="px-1 text-[11px] text-muted-foreground">{t('practiceSession.warmupSummary.moreWeakItems', { count: weakRecords.length - 3 })}</p>
                 )}
               </div>
             </div>
           ) : (
             <div className="rounded-xl border bg-card px-4 py-3 text-sm leading-6 text-muted-foreground">
-              这一轮没有明显薄弱项。回到准备页后，你可以直接开始场景对话，或者整组再刷一遍加深熟悉度。
+              {t('practiceSession.warmupSummary.noWeakItems')}
             </div>
           )}
 
           <div className="grid gap-2">
             {weakStepIds.size > 0 && (
               <Button className="min-h-11" onClick={startWeakReviewRound}>
-                只练薄弱项
+                {t('practiceSession.warmupSummary.practiceWeakOnly')}
               </Button>
             )}
             <Button variant="outline" className="min-h-11" onClick={resetForRepractice}>
-              整组重练
+              {t('practiceSession.warmupSummary.retryAll')}
             </Button>
             <Button variant="ghost" className="min-h-10 text-muted-foreground" onClick={onBack}>
-              返回准备页
+              {t('practiceSession.warmupSummary.backToPrep')}
             </Button>
           </div>
         </div>
@@ -736,14 +739,14 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
       {/* Bottom nav — fixed at bottom like LearningInsightDialog */}
       <div data-keyboard-practice-footer className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
         <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
-          <ChevronLeft className="size-4" /> 上一个
+          <ChevronLeft className="size-4" /> {t('insight.prev')}
         </Button>
         <span className="text-xs text-muted-foreground">
           {currentIdx + 1} / {totalSteps}
         </span>
         <div className="flex items-center gap-1.5">
           <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
-            下一个 <ChevronRight className="size-4" />
+            {t('insight.next')} <ChevronRight className="size-4" />
           </Button>
           <Button
             variant="ghost"
@@ -752,7 +755,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
               event.currentTarget.blur()
               setPlaylistOpen(true)
             }}
-            title="列表"
+            title={t('practiceSession.warmupSummary.list')}
           >
             <ListMusic className="size-4" />
           </Button>
@@ -763,7 +766,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
       <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
         <DrawerContent className={cn('h-[80dvh] w-full max-w-full overflow-hidden rounded-t-2xl !z-[10001]', isIOS() && 'pt-safe')} overlayClassName="!z-[10001]">
           <div className="flex min-w-0 items-center justify-between gap-3 px-5 py-3">
-            <DrawerTitle className="min-w-0 truncate text-lg">题目列表</DrawerTitle>
+            <DrawerTitle className="min-w-0 truncate text-lg">{t('todayTask.questionList')}</DrawerTitle>
             <button
               onClick={() => setPlaylistOpen(false)}
               className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
@@ -778,7 +781,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
                 const isCurrent = i === currentIdx
                 const isPassiveStep = step.type === 'sentence_decomposition'
                 const score = warmupStore.stepStates[step.id]?.score
-                const statusLabel = getWarmupStepStatusLabel({ isPassiveStep, score, isDone })
+                const statusLabel = getWarmupStepStatusLabel({ isPassiveStep, score, isDone, t })
                 return (
                   <button
                     key={step.id}
@@ -842,12 +845,13 @@ function WarmupRecordRow({
   record: WarmupRecordEntry
   tone?: 'default' | 'weak'
 }) {
+  const { t } = useTranslation()
   const score = record.score ?? (record.passed ? 'ok' : 'miss')
   const scoreLabel: Record<WarmupScore, string> = {
-    strong: '熟练',
-    ok: '通过',
-    weak: '待稳',
-    miss: '漏掉',
+    strong: t('practiceSession.warmupStatus.strong'),
+    ok: t('practiceSession.warmupStatus.ok'),
+    weak: t('practiceSession.warmupStatus.weak'),
+    miss: t('practiceSession.warmupStatus.miss'),
   }
   const title = record.groupTitle || record.answer || record.zh
   const subtitle = record.groupTitle ? record.answer || record.zh : record.zh
