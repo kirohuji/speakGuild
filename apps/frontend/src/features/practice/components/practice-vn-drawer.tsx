@@ -87,8 +87,9 @@ function readSavedPosition(key: string, sectionCount: number): { sectionIndex: n
     if (typeof parsed === 'object' && parsed !== null) {
       const sectionIndex = Number(parsed.sectionIndex)
       const state = parsed.virtuosoState
+      const ranges = Array.isArray(state?.ranges) ? state.ranges as Array<{ size?: number }> : []
       const virtuosoState = parsed.version === 2 && state && typeof state === 'object'
-        && Number.isFinite(Number(state.scrollTop)) && Array.isArray(state.ranges)
+        && Number.isFinite(Number(state.scrollTop)) && ranges.some((range) => Number(range?.size) > 0)
         ? state as StateSnapshot
         : null
       return {
@@ -315,6 +316,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   }, [contentReady, open, savedVirtuosoState, syncVisibleSection])
 
   const persistReadingPosition = useCallback(() => {
+    if ((scrollerElementRef.current?.clientHeight ?? 0) < 1) return
     documentRef.current?.getState((virtuosoState) => {
       try {
         const position: SavedReadingPosition = {
@@ -367,6 +369,12 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
     startTransition(() => setContentReady(false))
   }, [open, setOpen])
   const onDrawerOpenChange = useCallback((next: boolean) => next ? (closingRef.current = false, setOpen(true)) : beginClose(), [beginClose, setOpen])
+  // Phone TOC is a portaled sheet, so a tap inside it is outside this drawer.
+  // iOS defers that outside-dismiss to the same click that selects a heading.
+  const keepDrawerOpenForToc = useCallback((event: { preventDefault: () => void; target: EventTarget | null }) => {
+    const target = event.target instanceof Element ? event.target : null
+    if (tocOpen || target?.closest('[data-teaching-toc]')) event.preventDefault()
+  }, [tocOpen])
   const handleTocSelect = useCallback((sectionIndex: number) => {
     setTocOpen(false)
     const tocIndex = document.toc.findIndex((item) => item.sectionIndex === sectionIndex)
@@ -454,7 +462,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   return <>
     {!hideToggles && <button type="button" onClick={() => { closingRef.current = false; setOpen(true); void onOpen?.() }} className={cn(!plainTrigger && 'flex items-center gap-2 rounded-full border border-border/20 bg-background/60 px-3.5 py-2 text-xs font-medium text-foreground shadow-lg transition-transform active:scale-[0.97]', triggerClassName)}>{showTriggerIcon && <BookOpen className="size-3.5 text-foreground/70" />}<span>{t('practiceVn.teaching')}</span></button>}
     <Drawer open={open} onOpenChange={onDrawerOpenChange} shouldScaleBackground={false}>
-      <DrawerContent className="h-[82vh] max-h-[82vh] rounded-t-[28px] border-border/20 bg-background text-foreground shadow-[0_-12px_40px_rgba(0,0,0,.28)] contain-paint !z-[10001]" overlayClassName="!z-[10001]">
+      <DrawerContent onPointerDownOutside={keepDrawerOpenForToc} className="h-[82vh] max-h-[82vh] rounded-t-[28px] border-border/20 bg-background text-foreground shadow-[0_-12px_40px_rgba(0,0,0,.28)] contain-paint !z-[10001]" overlayClassName="!z-[10001]">
         <DrawerHeader className="shrink-0 border-b border-border/45 px-5 pb-3 pt-3 text-left">
           <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3">
             <div className="flex shrink-0 items-center gap-2">{!inlineToc && (document.toc.length > 0 ? <button type="button" onClick={() => setTocOpen(true)} className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14]" aria-label={t('practiceVn.contents')}><ListTree className="size-5" /></button> : <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary"><ListTree className="size-5" /></div>)}<button type="button" className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14] disabled:opacity-40" aria-label={t('practiceVn.previewPdf')} disabled={!teachingMarkdown?.trim() || loading} onClick={() => setPreviewOpen(true)}><FileText className="size-5" /></button></div>
@@ -466,17 +474,17 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
           </div>
         </DrawerHeader>
         <div className="min-h-0 flex-1 overflow-hidden">
-          {/* On tablets the outline and Markdown renderer share this reading row;
-              the header remains outside it rather than becoming part of a sidebar. */}
-          <div className={cn('h-full min-h-0', inlineToc && 'flex')}>
+          {/* Tablets keep the outline in this row. Phones use the same flex row
+              without the aside, so the Markdown list still gets a real height. */}
+          <div className="flex h-full min-h-0">
             {inlineToc && document.toc.length > 0 && <aside className="flex w-60 shrink-0 flex-col border-r border-border/45"><div className="flex shrink-0 items-center justify-between border-b border-border/45 bg-muted/35 px-3 py-2"><p className="px-1 text-xs font-semibold tracking-wide text-muted-foreground">{t('practiceVn.contents')}</p><div className="flex items-center"><button type="button" onClick={expandAllTocSections} className={cn('flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocExpanded && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label="全部展开" aria-pressed={allTocExpanded}><ChevronsDown className="size-4" /></button><button type="button" onClick={collapseAllTocSections} className={cn('flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocCollapsed && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label="全部收起" aria-pressed={allTocCollapsed}><ChevronsUp className="size-4" /></button></div></div><TeachingToc rows={tocRows} activeSectionIndex={visibleSectionIndex} onSelect={handleTocSelect} onToggle={toggleTocSection} className="flex-1" /></aside>}
-            <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">{loading ? <TeachingStatus text={t('practiceVn.loadingTeaching')} /> : teachingMarkdown ? contentReady ? <><Virtuoso ref={documentRef} scrollerRef={setScrollerRef} className="h-full" data={document.sections} restoreStateFrom={savedVirtuosoState ?? undefined} increaseViewportBy={{ top: 900, bottom: 1200 }} rangeChanged={handleRangeChanged} isScrolling={(isScrolling) => { if (!isScrolling && !restoringRef.current) persistReadingPosition() }} itemContent={(index, section) => <TeachingSectionView section={section} sectionIndex={index} />} />{restoringReadingPosition && <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background"><Loader2 className="size-5 animate-spin text-muted-foreground" /><p className="text-xs text-muted-foreground">{t('common.loading')}</p></div>}</> : <div className="px-4 pt-4"><TeachingContentPlaceholder /></div> : <TeachingStatus text={t('practiceVn.noTeaching')} />}</div>
+            <div className="relative h-full min-h-0 min-w-0 flex-1 overflow-hidden">{loading ? <TeachingStatus text={t('practiceVn.loadingTeaching')} /> : teachingMarkdown ? contentReady ? <><Virtuoso ref={documentRef} scrollerRef={setScrollerRef} className="h-full" data={document.sections} restoreStateFrom={savedVirtuosoState ?? undefined} increaseViewportBy={{ top: 900, bottom: 1200 }} rangeChanged={handleRangeChanged} isScrolling={(isScrolling) => { if (!isScrolling && !restoringRef.current) persistReadingPosition() }} itemContent={(index, section) => <TeachingSectionView section={section} sectionIndex={index} />} />{restoringReadingPosition && <div className="app-surface drawer-surface absolute inset-0 z-10 flex flex-col items-center justify-center gap-3"><Loader2 className="size-5 animate-spin text-muted-foreground" /><p className="text-xs text-muted-foreground">{t('common.loading')}</p></div>}</> : <div className="px-4 pt-4"><TeachingContentPlaceholder /></div> : <TeachingStatus text={t('practiceVn.noTeaching')} />}</div>
           </div>
         </div>
       </DrawerContent>
     </Drawer>
     <Sheet open={tocOpen && !inlineToc} onOpenChange={setTocOpen}>
-      <SheetContent side="left" className="!z-[10002] flex h-full w-[min(20rem,86vw)] max-w-none flex-col gap-0 border-border/45 bg-background p-0 text-foreground shadow-2xl">
+      <SheetContent side="left" data-teaching-toc="" className="app-surface drawer-surface !z-[10002] flex h-full w-[min(20rem,86vw)] max-w-none flex-col gap-0 border-border/45 p-0 text-foreground shadow-2xl">
         <SheetHeader className="flex shrink-0 flex-row items-center justify-between border-b border-border/45 px-5 py-3 text-left"><SheetTitle className="text-base">{t('practiceVn.contents')}</SheetTitle><div className="mr-9 flex items-center"><button type="button" onClick={expandAllTocSections} className={cn('flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocExpanded && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label="全部展开" aria-pressed={allTocExpanded}><ChevronsDown className="size-4" /></button><button type="button" onClick={collapseAllTocSections} className={cn('flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocCollapsed && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label="全部收起" aria-pressed={allTocCollapsed}><ChevronsUp className="size-4" /></button></div></SheetHeader>
         <TeachingToc rows={tocRows} activeSectionIndex={visibleSectionIndex} onSelect={handleTocSelect} onToggle={toggleTocSection} className="min-h-0 flex-1" />
       </SheetContent>
