@@ -812,6 +812,8 @@ function TranslationEditor({
     return source ? [{ id: 's1', source, reference: '', hint: '', referenceExplanation: '' }] : []
   }, [config.segments, config.sourceText])
   const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [recordedAudios, setRecordedAudios] = useState<Record<string, string>>({})
+  const recordedAudiosRef = useRef<Record<string, string>>({})
   const [activeIndex, setActiveIndex] = useState(0)
   const [hintOpen, setHintOpen] = useState(false)
   const [supportOpen, setSupportOpen] = useState(false)
@@ -821,7 +823,13 @@ function TranslationEditor({
   const translationInputRef = useRef<HTMLTextAreaElement>(null)
   const restore = useCallback((saved: Record<string, unknown>) => {
     const values = saved.answers
-    if (Array.isArray(values)) setAnswers(Object.fromEntries(values.map((item: any) => [String(item.segmentId), String(item.text ?? '')])))
+    if (!Array.isArray(values)) return
+    setAnswers(Object.fromEntries(values.map((item: any) => [String(item.segmentId), String(item.text ?? '')])))
+    setRecordedAudios(Object.fromEntries(
+      values
+        .filter((item: any) => typeof item?.audioUrl === 'string' && item.audioUrl)
+        .map((item: any) => [String(item.segmentId), item.audioUrl]),
+    ))
   }, [])
   const session = useTopicSession(topic.id, restore, { review })
 
@@ -831,7 +839,11 @@ function TranslationEditor({
 
   const answeredCount = segments.filter((segment) => (answers[segment.id] ?? '').trim()).length
   const active = segments[activeIndex]
-  const response = useMemo(() => ({ direction, scope, answers: segments.map((segment) => ({ segmentId: segment.id, text: answers[segment.id] ?? '' })) }), [answers, direction, scope, segments])
+  const response = useMemo(() => ({ direction, scope, answers: segments.map((segment) => ({
+    segmentId: segment.id,
+    text: answers[segment.id] ?? '',
+    audioUrl: recordedAudios[segment.id] ?? null,
+  })) }), [answers, direction, recordedAudios, scope, segments])
   useEffect(() => {
     if (!session.sessionId || session.readOnly || !answeredCount) return
     const timer = window.setTimeout(() => { void session.saveDraft(response) }, 600)
@@ -862,6 +874,28 @@ function TranslationEditor({
     setListOpen(false)
   }
 
+  const setSegmentRecording = useCallback((segmentId: string, url: string | null) => {
+    setRecordedAudios((current) => {
+      const previous = current[segmentId]
+      if (previous?.startsWith('blob:') && previous !== url) URL.revokeObjectURL(previous)
+      if (!url) {
+        const { [segmentId]: _, ...remaining } = current
+        return remaining
+      }
+      return { ...current, [segmentId]: url }
+    })
+  }, [])
+
+  useEffect(() => {
+    recordedAudiosRef.current = recordedAudios
+  }, [recordedAudios])
+
+  useEffect(() => () => {
+    Object.values(recordedAudiosRef.current).forEach((url) => {
+      if (url.startsWith('blob:')) URL.revokeObjectURL(url)
+    })
+  }, [])
+
   // CSS 负责缩壳与分区；长译文按光标滚进安全区（兼听 click；不听 select，避免打字抖动）。
   const scheduleTranslationCaretScroll = () => {
     scheduleWritingInputSafeScroll(translationInputRef.current, '[data-writing-translation-answer-scroll]')
@@ -877,7 +911,7 @@ function TranslationEditor({
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Languages className="size-4" /></span>
           <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{direction === 'zh_to_en' ? t('learning.zhToEnBadge') : t('learning.enToZhBadge')}</Badge><span data-writing-translation-meta className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span></div><h1 className="truncate text-base font-bold leading-snug text-foreground">{config.sourceTitle || topic.title}</h1><p data-writing-translation-meta className="truncate text-[11px] text-muted-foreground">{unitTitle}</p></div>
           <div className="flex items-center gap-1">
-            {session.readOnly && <WritingReviewControls view={view} onViewChange={setView} hideRetry={hideRetry} onRetry={() => void session.startNewAttempt().then(() => { setAnswers({}); setActiveIndex(0); setView('editor') })} />}
+            {session.readOnly && <WritingReviewControls view={view} onViewChange={setView} hideRetry={hideRetry} onRetry={() => void session.startNewAttempt().then(() => { setAnswers({}); setRecordedAudios({}); setActiveIndex(0); setView('editor') })} />}
             {onOpenGuide && <Button type="button" variant="ghost" size="icon-sm" onClick={onOpenGuide} aria-label={t('learning.viewGuide')} title={t('learning.viewGuide')}><BookOpen className="size-4" /></Button>}
             <button type="button" onClick={onClose} className="flex size-7 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground" aria-label={t('learning.exitTranslation')}><X className="size-3.5" /></button>
           </div>
@@ -904,7 +938,7 @@ function TranslationEditor({
                 <Button variant="ghost" size="icon" className="size-8" onClick={() => setListOpen(true)} title={scope === 'article' ? t('learning.segmentList') : t('learning.sentenceList')}><ListMusic className="size-4" /></Button>
               </div>
             </div>
-            <div data-writing-translation-answer-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div data-writing-translation-input className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-5 py-4 sm:px-8"><div className="mb-3 flex shrink-0 items-center justify-between gap-3"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{answerLanguage}</p><Button type="button" size="sm" variant="ghost" onClick={() => setHintOpen(true)} disabled={!active?.hint} className="h-7 shrink-0 gap-1 px-2 text-primary" aria-label={t('learning.hint')}><Lightbulb className="size-3.5" />{t('learning.hint')}</Button></div><textarea ref={translationInputRef} data-writing-caret-scroll data-writing-translation-textarea value={active ? answers[active.id] ?? '' : ''} onChange={(event) => active && setAnswers((current) => ({ ...current, [active.id]: event.target.value }))} readOnly={session.readOnly} onFocus={scheduleTranslationCaretScroll} onClick={scheduleTranslationCaretScroll} className="min-h-[132px] w-full flex-1 resize-y bg-transparent p-0 text-[16px] leading-8 text-foreground outline-none placeholder:text-muted-foreground/45 focus:ring-0" placeholder={direction === 'zh_to_en' ? t('learning.translationPlaceholderEn') : t('learning.translationPlaceholderZh')} autoCapitalize="sentences" autoCorrect="on" spellCheck={direction === 'zh_to_en'} /></div></div>
+            <div data-writing-translation-answer-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain"><div data-writing-translation-input className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-5 py-4 sm:px-8"><div className="mb-3 flex shrink-0 items-center justify-between gap-3"><p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">{answerLanguage}</p><Button type="button" size="sm" variant="ghost" onClick={() => setHintOpen(true)} disabled={!active?.hint} className="h-7 shrink-0 gap-1 px-2 text-primary" aria-label={t('learning.hint')}><Lightbulb className="size-3.5" />{t('learning.hint')}</Button></div><div className="relative min-h-[132px] flex-1"><textarea ref={translationInputRef} data-writing-caret-scroll data-writing-translation-textarea value={active ? answers[active.id] ?? '' : ''} onChange={(event) => active && setAnswers((current) => ({ ...current, [active.id]: event.target.value }))} readOnly={session.readOnly} onFocus={scheduleTranslationCaretScroll} onClick={scheduleTranslationCaretScroll} className={cn('min-h-[132px] w-full flex-1 resize-y bg-transparent p-0 text-[16px] leading-8 text-foreground outline-none placeholder:text-muted-foreground/45 focus:ring-0', direction === 'zh_to_en' && (!session.readOnly || (active && recordedAudios[active.id])) && 'pb-16')} placeholder={direction === 'zh_to_en' ? t('learning.translationPlaceholderEn') : t('learning.translationPlaceholderZh')} autoCapitalize="sentences" autoCorrect="on" spellCheck={direction === 'zh_to_en'} />{direction === 'zh_to_en' && active && (!session.readOnly || recordedAudios[active.id]) && <div className="absolute inset-x-0 bottom-0"><AssessmentAnswerInput key={active.id} hideTextarea value={answers[active.id] ?? ''} onChange={(text) => setAnswers((current) => ({ ...current, [active.id]: text }))} disabled={session.readOnly} readOnly={session.readOnly} recordedAudioUrl={recordedAudios[active.id] ?? null} onRecordedAudioUrlChange={(url) => setSegmentRecording(active.id, url)} /></div>}</div></div></div>
           </section>
         </main>
       )}
