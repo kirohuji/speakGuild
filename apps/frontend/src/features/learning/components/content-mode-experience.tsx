@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { BookOpen, CheckCircle2, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -13,16 +13,27 @@ import { type TrainingTopicItem, type UnitDetail } from '../api/learning-api'
 const PROGRESS_KEY = (unitId: string) => `manyu:novel-progress:${unitId}`
 const TOPIC_PAGE_SIZE = 8
 
+function pageFromSearchParams(searchParams: URLSearchParams, name: string) {
+  const value = Number(searchParams.get(name))
+  return Number.isInteger(value) && value > 0 ? value : 1
+}
+
 export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [topicPage, setTopicPage] = useState(1)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [topicPage, setTopicPage] = useState(() => pageFromSearchParams(searchParams, 'contentPage'))
   const [teachingTopic, setTeachingTopic] = useState<TrainingTopicItem | null>(null)
 
-  useEffect(() => {
-    setTopicPage(1)
-    setTeachingTopic(null)
-  }, [unit.id, unit.contentMode])
+  const changeTopicPage = (page: number) => {
+    setTopicPage(page)
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      if (page === 1) next.delete('contentPage')
+      else next.set('contentPage', String(page))
+      return next
+    }, { replace: true })
+  }
 
   const topicPageItems = useMemo(
     () => paginateItems(unit.trainingTopics, topicPage, TOPIC_PAGE_SIZE),
@@ -91,7 +102,7 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
               currentPage={topicPageItems.currentPage}
               totalPages={topicPageItems.totalPages}
               totalItems={unit.trainingTopics.length}
-              onPageChange={setTopicPage}
+              onPageChange={changeTopicPage}
             />
           </div>
         )}

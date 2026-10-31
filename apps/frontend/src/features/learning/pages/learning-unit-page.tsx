@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft, ChevronLeft, ChevronRight, BookOpen, BookText, MessageSquareText,
   Target,
@@ -31,10 +31,16 @@ import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-dra
 const PREP_PAGE_SIZE = 8
 const TOPIC_PAGE_SIZE = 8
 
+function pageFromSearchParams(searchParams: URLSearchParams, name: string) {
+  const value = Number(searchParams.get(name))
+  return Number.isInteger(value) && value > 0 ? value : 1
+}
+
 export function LearningUnitPage() {
   const { t } = useTranslation()
   const { unitId } = useParams<{ unitId: string }>()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   // 数据：来自 store
   const unit = useLearningStore((s) => s.unitDetail)
@@ -42,9 +48,13 @@ export function LearningUnitPage() {
   const fetchUnitDetail = useLearningStore((s) => s.fetchUnitDetail)
   const fetchDownloadedPacks = useLearningStore((s) => s.fetchDownloadedPacks)
 
-  const [activeTab, setActiveTab] = useState('vocab')
-  const [prepPage, setPrepPage] = useState({ vocab: 1, chunk: 1, pattern: 1 })
-  const [topicPage, setTopicPage] = useState(1)
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') ?? 'vocab')
+  const [prepPage, setPrepPage] = useState(() => ({
+    vocab: pageFromSearchParams(searchParams, 'vocabPage'),
+    chunk: pageFromSearchParams(searchParams, 'chunkPage'),
+    pattern: pageFromSearchParams(searchParams, 'patternPage'),
+  }))
+  const [topicPage, setTopicPage] = useState(() => pageFromSearchParams(searchParams, 'practicePage'))
   const [teachingTopic, setTeachingTopic] = useState<TrainingTopicItem | null>(null)
 
   // Dialog
@@ -270,17 +280,36 @@ export function LearningUnitPage() {
 
   const changePrepPage = useCallback((kind: keyof typeof prepPage, page: number) => {
     setPrepPage((current) => ({ ...current, [kind]: page }))
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      const key = `${kind}Page`
+      if (page === 1) next.delete(key)
+      else next.set(key, String(page))
+      return next
+    }, { replace: true })
     setExpandedItemId(null)
-  }, [])
+  }, [setSearchParams])
 
   const changeTopicPage = useCallback((page: number) => {
     setTopicPage(page)
-  }, [])
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      if (page === 1) next.delete('practicePage')
+      else next.set('practicePage', String(page))
+      return next
+    }, { replace: true })
+  }, [setSearchParams])
 
   const handleTabChange = useCallback((value: string) => {
     setActiveTab(value)
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      if (value === 'vocab') next.delete('tab')
+      else next.set('tab', value)
+      return next
+    }, { replace: true })
     setExpandedItemId(null)
-  }, [])
+  }, [setSearchParams])
 
   // 当前 unit 已有数据时不展示骨架，避免切换/重进时闪烁
   if (loading && unit?.id !== unitId) return <MobilePageLoading rows={5} />
@@ -479,7 +508,7 @@ export function LearningUnitPage() {
 
       {/* ===== 题目 ===== */}
       {unit.contentMode && !['practice', 'story'].includes(unit.contentMode) && (
-        <ContentModeExperience unit={unit} />
+        <ContentModeExperience key={unit.id} unit={unit} />
       )}
       {(unit.contentMode ?? (unit.packageType === 'story' ? 'story' : 'practice')) === 'practice' && unit.trainingTopics.length > 0 && (
         <section className="mb-5">
