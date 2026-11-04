@@ -446,8 +446,14 @@ export class LearningService {
       where: {
         scenes: {
           some: packageType
-            ? { packageType: packageType as any }
-            : { packageType: { not: 'story' } },
+            ? {
+                packageType: packageType as any,
+                learningPackages: { some: { status: 'published', fileAssetId: { not: null } } },
+              }
+            : {
+                packageType: { not: 'story' },
+                learningPackages: { some: { status: 'published', fileAssetId: { not: null } } },
+              },
         },
       },
       orderBy: { sortOrder: 'asc' },
@@ -488,7 +494,12 @@ export class LearningService {
     const freeDownloadsEnabled = await this.isLearningPackFreeDownloadsEnabled();
 
     // 查询条件
-    const sceneWhere: any = {};
+    // 学习商店只展示发布管理中存在有效发布版本的学习包。
+    const sceneWhere: any = {
+      learningPackages: {
+        some: { status: 'published', fileAssetId: { not: null } },
+      },
+    };
     if (packageType) {
       sceneWhere.packageType = packageType;
     } else if (excludePackageType) {

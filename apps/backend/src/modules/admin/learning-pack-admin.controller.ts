@@ -82,6 +82,12 @@ export class LearningPackAdminController {
     return this.service.publish(id);
   }
 
+  @Post('scenes/:sceneId/unpublish')
+  async unpublishScene(@Req() req: Request, @Param('sceneId') sceneId: string) {
+    await requireAdmin(req);
+    return this.service.unpublishScene(sceneId);
+  }
+
   @Delete(':id')
   async remove(@Req() req: Request, @Param('id') id: string) {
     await requireAdmin(req);

@@ -76,5 +76,9 @@ export const learningPackAdminApi = {
   publish: (id: string) => post<LearningPackItem>(`/admin/learning-packs/${id}/publish`, undefined, {
     timeout: LEARNING_PACK_MUTATION_TIMEOUT_MS,
   }),
+  unpublishScene: (sceneId: string) =>
+    post<{ success: boolean; unpublishedCount: number }>(`/admin/learning-packs/scenes/${sceneId}/unpublish`, undefined, {
+      timeout: LEARNING_PACK_MUTATION_TIMEOUT_MS,
+    }),
   remove: (id: string) => del<{ success: boolean }>(`/admin/learning-packs/${id}`),
 };

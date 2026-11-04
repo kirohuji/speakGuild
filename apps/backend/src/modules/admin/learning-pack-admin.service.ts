@@ -22,7 +22,7 @@ export class LearningPackAdminService {
 
   async list(params: { sceneId?: string; packageType?: string; excludePackageType?: string; categoryId?: string; status?: string; page?: number; pageSize?: number; ownerId?: string }) {
     const page = Math.max(1, params.page ?? 1);
-    const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
+    const pageSize = Math.min(500, Math.max(1, params.pageSize ?? 20));
     const where: any = {};
     if (params.ownerId) where.scene = { ownerId: params.ownerId };
     if (params.sceneId) where.sceneId = params.sceneId;
@@ -124,7 +124,7 @@ export class LearningPackAdminService {
       select: { id: true, title: true, packageType: true },
     });
     if (!scene) throw new NotFoundException('学习单元不存在');
-    if (input?.publish !== false) await this.validateExperienceForPublish(sceneId);
+    if (input?.publish === true) await this.validateExperienceForPublish(sceneId);
 
     const latest = await (this.prisma as any).learningPackage.findFirst({
       where: { sceneId },
@@ -168,12 +168,12 @@ export class LearningPackAdminService {
       const updated = await (this.prisma as any).learningPackage.update({
         where: { id: record.id },
         data: {
-          status: input?.publish === false ? PACKAGE_STATUS.draft : PACKAGE_STATUS.published,
+          status: PACKAGE_STATUS.draft,
           fileAssetId: asset.id,
           zipChecksum: pack.checksum,
           zipSize: pack.buffer.byteLength,
           manifestSnapshot: pack.manifest,
-          publishedAt: input?.publish === false ? null : new Date(),
+          publishedAt: null,
           buildLog: `Generated ${pack.fileName}`,
         },
         include: {
@@ -181,12 +181,7 @@ export class LearningPackAdminService {
           fileAsset: { select: { id: true, size: true, sha256: true, filename: true, createdAt: true } },
         },
       });
-      if (updated.status === PACKAGE_STATUS.published) {
-        await this.generateDeltaIfPossible(updated).catch((err) => {
-          console.warn('[learning-pack] delta generation failed, continuing generate:', err.message);
-        });
-      }
-      return updated;
+      return input?.publish === true ? this.publish(updated.id) : updated;
     } catch (error) {
       await (this.prisma as any).learningPackage.update({
         where: { id: record.id },
@@ -248,23 +243,23 @@ export class LearningPackAdminService {
         version,
         title,
         type: scene.packageType,
-        status: input.publish === false ? PACKAGE_STATUS.draft : PACKAGE_STATUS.published,
+        status: PACKAGE_STATUS.draft,
         fileAssetId: asset.id,
         zipChecksum: asset.sha256,
         zipSize: asset.size,
         manifestSnapshot,
-        publishedAt: input.publish === false ? null : new Date(),
+        publishedAt: null,
         buildLog: `Uploaded ${filename}`,
       },
       update: {
         title,
         type: scene.packageType,
-        status: input.publish === false ? PACKAGE_STATUS.draft : PACKAGE_STATUS.published,
+        status: PACKAGE_STATUS.draft,
         fileAssetId: asset.id,
         zipChecksum: asset.sha256,
         zipSize: asset.size,
         manifestSnapshot,
-        publishedAt: input.publish === false ? null : new Date(),
+        publishedAt: null,
         buildLog: `Uploaded ${filename}`,
       },
     });
@@ -281,12 +276,7 @@ export class LearningPackAdminService {
         fileAsset: { select: { id: true, size: true, sha256: true, filename: true, createdAt: true } },
       },
     });
-    if (result?.status === PACKAGE_STATUS.published) {
-      await this.generateDeltaIfPossible(result).catch((err) => {
-        console.warn('[learning-pack] delta generation failed, continuing upload:', err.message);
-      });
-    }
-    return result;
+    return input.publish === true ? this.publish(result.id) : result;
   }
 
   async download(id: string, ownerId?: string) {
@@ -316,14 +306,35 @@ export class LearningPackAdminService {
       console.warn('[learning-pack] delta generation failed, continuing publish:', err.message);
     });
 
-    return (this.prisma as any).learningPackage.update({
-      where: { id },
-      data: { status: PACKAGE_STATUS.published, publishedAt: new Date() },
-      include: {
-        scene: { select: { id: true, title: true, location: true, packageType: true } },
-        fileAsset: { select: { id: true, size: true, sha256: true, filename: true, createdAt: true } },
-      },
+    // 同一个学习单元任何时刻只允许一个发布版本。发布新版时，旧版自动回到草稿。
+    return this.prisma.$transaction(async (tx) => {
+      await (tx as any).learningPackage.updateMany({
+        where: { sceneId: pack.sceneId, status: PACKAGE_STATUS.published, id: { not: id } },
+        data: { status: PACKAGE_STATUS.draft, publishedAt: null },
+      });
+      return (tx as any).learningPackage.update({
+        where: { id },
+        data: { status: PACKAGE_STATUS.published, publishedAt: new Date() },
+        include: {
+          scene: { select: { id: true, title: true, location: true, packageType: true } },
+          fileAsset: { select: { id: true, size: true, sha256: true, filename: true, createdAt: true } },
+        },
+      });
     });
+  }
+
+  async unpublishScene(sceneId: string) {
+    const scene = await this.prisma.scene.findUnique({
+      where: { id: sceneId },
+      select: { id: true },
+    });
+    if (!scene) throw new NotFoundException('学习单元不存在');
+
+    const result = await (this.prisma as any).learningPackage.updateMany({
+      where: { sceneId, status: PACKAGE_STATUS.published },
+      data: { status: PACKAGE_STATUS.draft, publishedAt: null },
+    });
+    return { success: true, unpublishedCount: result.count };
   }
 
   private async validateExperienceForPublish(sceneId: string) {
