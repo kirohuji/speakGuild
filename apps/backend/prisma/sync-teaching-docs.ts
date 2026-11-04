@@ -4,6 +4,7 @@
  *   pnpm docs:export              数据库 -> Markdown（会覆盖清单内的本地文件）
  *   pnpm docs:sync               Markdown -> 数据库
  *   pnpm docs:sync -- --dry-run  只预览，不写数据库
+ *   pnpm docs:sync -- --force    忽略数据库侧变化，以本地 Markdown 强制覆盖
  */
 import { createHash } from 'crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
@@ -153,7 +154,7 @@ async function exportDocuments(prisma: PrismaClient) {
   console.log(`目录：${DOCS_ROOT}`)
 }
 
-async function syncDocuments(prisma: PrismaClient, dryRun: boolean) {
+async function syncDocuments(prisma: PrismaClient, dryRun: boolean, force: boolean) {
   const manifest = readManifest()
   const missing: string[] = []
   const changed: Array<ManifestDocument & { content: string }> = []
@@ -184,6 +185,8 @@ async function syncDocuments(prisma: PrismaClient, dryRun: boolean) {
     const databaseHash = sha256(databaseContent)
     if (localHash === databaseHash) {
       unchanged++
+    } else if (force) {
+      changed.push({ ...document, content })
     } else if (localHash === document.exportedSha256) {
       databaseChanged.push(document.path)
     } else if (databaseHash !== document.exportedSha256) {
@@ -210,13 +213,13 @@ async function syncDocuments(prisma: PrismaClient, dryRun: boolean) {
   }
 
   if (dryRun) {
-    console.log(`预览：将更新 ${changed.length} 份，未变化 ${unchanged} 份，仅数据库变化 ${databaseChanged.length} 份，缺失 ${missing.length} 份。`)
+    console.log(`${force ? '强制覆盖预览' : '预览'}：将更新 ${changed.length} 份，未变化 ${unchanged} 份，仅数据库变化 ${databaseChanged.length} 份，缺失 ${missing.length} 份。`)
     changed.forEach((document) => console.log(`  - ${document.path}`))
     return
   }
 
   if (changed.length) {
-    console.log(`即将更新 ${changed.length} 份教学文档：`)
+    console.log(`${force ? '强制覆盖' : '即将更新'} ${changed.length} 份教学文档：`)
     changed.forEach((document) => console.log(`  - ${document.path}`))
     await prisma.$transaction(
       changed.map((document) => prisma.trainingTopic.update({
@@ -238,14 +241,16 @@ async function syncDocuments(prisma: PrismaClient, dryRun: boolean) {
 async function main() {
   const command = process.argv.slice(2).find((argument) => argument === 'export' || argument === 'sync')
   const dryRun = process.argv.includes('--dry-run')
-  if (!command) throw new Error('用法：sync-teaching-docs.ts <export|sync> [--dry-run]')
+  const force = process.argv.includes('--force')
+  if (!command) throw new Error('用法：sync-teaching-docs.ts <export|sync> [--dry-run] [--force]')
   if (command === 'export' && dryRun) throw new Error('export 命令不支持 --dry-run。')
+  if (command === 'export' && force) throw new Error('export 命令不支持 --force。')
 
   loadRootEnv()
   const prisma = new PrismaClient()
   try {
     if (command === 'export') await exportDocuments(prisma)
-    else await syncDocuments(prisma, dryRun)
+    else await syncDocuments(prisma, dryRun, force)
   } finally {
     await prisma.$disconnect()
   }
