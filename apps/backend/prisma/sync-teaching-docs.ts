@@ -216,6 +216,8 @@ async function syncDocuments(prisma: PrismaClient, dryRun: boolean) {
   }
 
   if (changed.length) {
+    console.log(`即将更新 ${changed.length} 份教学文档：`)
+    changed.forEach((document) => console.log(`  - ${document.path}`))
     await prisma.$transaction(
       changed.map((document) => prisma.trainingTopic.update({
         where: { id: document.topicId },
