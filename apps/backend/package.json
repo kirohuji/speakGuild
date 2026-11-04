@@ -14,6 +14,7 @@
     "prisma:seed:pkg": "ts-node prisma/seed.ts --",
     "prisma:seed:exam-essay": "ts-node prisma/seed-exam-essay-writing.ts",
     "docs:export": "ts-node prisma/sync-teaching-docs.ts export",
+    "docs:export-learning": "ts-node prisma/sync-teaching-docs.ts export-learning",
     "docs:sync": "ts-node prisma/sync-teaching-docs.ts sync"
   },
   "dependencies": {
@@ -52,6 +53,7 @@
     "hume": "^0.16.0",
     "ioredis": "^5.11.1",
     "jose": "^6.2.3",
+    "js-yaml": "^4.1.1",
     "multer": "^2.1.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",

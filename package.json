@@ -16,6 +16,7 @@
     "typecheck:company": "pnpm --filter @manyu/company build",
     "typecheck": "pnpm -r typecheck",
     "docs:export": "pnpm --filter @manyu/backend docs:export",
+    "docs:export-learning": "pnpm --filter @manyu/backend docs:export-learning",
     "docs:sync": "pnpm --filter @manyu/backend docs:sync"
   },
   "devDependencies": {
