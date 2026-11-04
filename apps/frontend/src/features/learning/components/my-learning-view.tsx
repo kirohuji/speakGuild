@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import { toast } from 'sonner'
-import { learningApi, type MyUnit } from '../api/learning-api'
+import { learningApi, MAX_CONCURRENT_LEARNING_UNITS, type MyUnit } from '../api/learning-api'
 import { learningRepository } from '@/lib/offline'
 import { getCategoryIcon } from './category-icons'
 import { LearningWeekTracker } from './week-tracker'
@@ -32,6 +32,23 @@ interface Props {
   onSetActivePracticePack?: (unit: MyUnit) => Promise<void>
 }
 
+function completionProgressText(t: ReturnType<typeof useTranslation>['t'], unit: MyUnit) {
+  const completion = unit.completion
+  if (!completion) {
+    return t('learning.practiceProgress', {
+      done: unit.progress?.completedPracticeCount ?? 0,
+      total: unit.progress?.totalPracticeCount ?? unit.topicCount ?? 0,
+    })
+  }
+  if (completion.kind === 'novel') return t('learning.readingPercent', { percent: completion.percent })
+  if (completion.kind === 'manual') return t('learning.manualCompletionHint')
+  const key = completion.kind === 'practice' ? 'practiceProgress'
+    : completion.kind === 'reading' ? 'readingProgress'
+      : completion.kind === 'writing' ? 'writingProgress'
+        : 'listeningProgress'
+  return t(`learning.${key}`, { done: completion.completed, total: completion.total })
+}
+
 export function MyLearningView({
   myUnits,
   inProgress,
@@ -51,6 +68,7 @@ export function MyLearningView({
   const downloadedPackIdSet = useMemo(() => new Set(downloadedPackIds), [downloadedPackIds])
   const updatePackIdSet = useMemo(() => new Set(updatePackIds), [updatePackIds])
   const installingPackIdSet = useMemo(() => new Set(installingPackIds), [installingPackIds])
+  const [showAllCompleted, setShowAllCompleted] = useState(false)
 
   if (loading && myUnits.length === 0) {
     return (
@@ -96,7 +114,12 @@ export function MyLearningView({
 
       {inProgress.length > 0 && (
         <section>
-          <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">{t('learning.inProgress')}</h2>
+          <div className="mb-2 flex items-center justify-between px-1">
+            <h2 className="text-xs font-medium text-muted-foreground">{t('learning.inProgress')}</h2>
+            <span className="rounded-full bg-primary/8 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-primary">
+              {inProgress.length}/{MAX_CONCURRENT_LEARNING_UNITS}
+            </span>
+          </div>
           <div className="space-y-2">
             {inProgress.map((unit) => (
               <InProgressUnitCard
@@ -117,9 +140,16 @@ export function MyLearningView({
 
       {completed.length > 0 && (
         <section>
-          <h2 className="mb-2 px-1 text-xs font-medium text-muted-foreground">{t('learning.completed')}</h2>
+          <div className="mb-2 flex items-center justify-between px-1">
+            <h2 className="text-xs font-medium text-muted-foreground">{t('learning.completed')} · {completed.length}</h2>
+            {completed.length > 3 && (
+              <button type="button" onClick={() => setShowAllCompleted((value) => !value)} className="text-[11px] font-medium text-primary">
+                {showAllCompleted ? t('learning.collapse') : t('learning.viewAll')}
+              </button>
+            )}
+          </div>
           <div className="space-y-2.5">
-            {completed.map((unit) => (
+            {(showAllCompleted ? completed : completed.slice(0, 3)).map((unit) => (
               <MyUnitCard key={unit.id} unit={unit} />
             ))}
           </div>
@@ -153,12 +183,12 @@ function InProgressUnitCard({
   const [quitting, setQuitting] = useState(false)
   const [confirmSwitch, setConfirmSwitch] = useState(false)
   const [switchingPractice, setSwitchingPractice] = useState(false)
+  const [markingComplete, setMarkingComplete] = useState(false)
   const [imgFailed, setImgFailed] = useState(false)
   const Icon = getCategoryIcon(unit.categoryName)
   const showCover = unit.coverImage && !imgFailed
   const needsDownload = !isPackDownloaded
   const pct = Math.max(0, Math.min(100, unit.completionPercent ?? 0))
-  const completedPracticeCount = unit.progress?.completedPracticeCount ?? 0
   const totalPracticeCount = unit.progress?.totalPracticeCount ?? unit.topicCount ?? 0
   const downloadTask = useLearningStore((state) => state.downloadTasks.find((task) => task.packId === unit.id))
   const isTaskError = downloadTask?.status === 'error'
@@ -223,6 +253,20 @@ function InProgressUnitCard({
       setSwitchingPractice(false)
     }
   }, [isActivePracticePack, onSetActivePracticePack, switchingPractice, t])
+
+  const handleManualComplete = useCallback(async () => {
+    if (markingComplete) return
+    setMarkingComplete(true)
+    try {
+      await learningApi.completeUnit(unit.id)
+      await useLearningStore.getState().refreshMyUnits()
+      toast.success(t('learning.markCompletedDone', { title: unit.title }))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('learning.markCompletedFailed'))
+    } finally {
+      setMarkingComplete(false)
+    }
+  }, [markingComplete, t, unit.id, unit.title])
 
   return (
     <div className="overflow-hidden rounded-lg bg-muted/30">
@@ -291,7 +335,7 @@ function InProgressUnitCard({
             </div>
             <div className="mt-2 space-y-1.5">
               <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>{t('learning.practiceProgress', { done: completedPracticeCount, total: totalPracticeCount })}</span>
+                <span>{completionProgressText(t, unit)}</span>
                 <span className="font-semibold tabular-nums text-foreground/75">{pct}%</span>
               </div>
               <Progress value={pct} className="h-1" />
@@ -344,6 +388,13 @@ function InProgressUnitCard({
           </div>
         )}
 
+        {unit.completion?.kind === 'manual' && (
+          <Button type="button" variant="outline" className="mt-3 h-9 w-full rounded-full" disabled={markingComplete || isPackBusy || needsDownload} onClick={handleManualComplete}>
+            {markingComplete ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+            {t('learning.markCompleted')}
+          </Button>
+        )}
+
         <Dialog open={confirmSwitch} onOpenChange={setConfirmSwitch}>
           <DialogContent className="rounded-2xl p-6 sm:mx-auto sm:max-w-xs w-[90vw]">
             <DialogHeader className="p-0">
@@ -389,10 +440,8 @@ function InProgressUnitCard({
 function MyUnitCard({ unit }: { unit: MyUnit }) {
   const { t } = useTranslation()
   const pct = Math.max(0, Math.min(100, unit.completionPercent ?? 0))
-  const isCompleted = pct >= 100
+  const isCompleted = unit.status === 'completed' || pct >= 100
   const Icon = isCompleted ? CheckCircle2 : getCategoryIcon(unit.categoryName)
-  const completedPracticeCount = unit.progress?.completedPracticeCount ?? 0
-  const totalPracticeCount = unit.progress?.totalPracticeCount ?? unit.topicCount ?? 0
   const [imgFailed, setImgFailed] = useState(false)
   const [confirmRestart, setConfirmRestart] = useState(false)
   const [restarting, setRestarting] = useState(false)
@@ -458,7 +507,7 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
           </div>
           <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
             {isCompleted && <CheckCircle2 className="size-3.5 text-emerald-600" />}
-            <span>{t('learning.practiceProgress', { done: completedPracticeCount, total: totalPracticeCount })}</span>
+            <span>{completionProgressText(t, unit)}</span>
           </div>
           {!isCompleted && unit.topics && unit.topics.length > 0 && (
             <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">

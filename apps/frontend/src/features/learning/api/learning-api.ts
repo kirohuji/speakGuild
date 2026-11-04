@@ -4,6 +4,15 @@ const LEARNING_PACK_DOWNLOAD_TIMEOUT_MS = 10 * 60_000
 
 export type ContentMode = 'practice' | 'writing' | 'reading' | 'listening' | 'novel' | 'story'
 export type TopicActivityType = 'practice' | 'writing' | 'reading' | 'listening'
+export type LearningUnitStatus = 'not_started' | 'in_progress' | 'completed'
+export type LearningCompletionKind = 'practice' | 'reading' | 'writing' | 'listening' | 'novel' | 'manual'
+
+export interface LearningUnitCompletion {
+  kind: LearningCompletionKind
+  completed: number
+  total: number
+  percent: number
+}
 
 // ---- 类型定义 ----
 
@@ -50,6 +59,9 @@ export interface LearningUnitSummary {
     totalPracticeCount?: number
     completedScriptCount: number
   } | null
+  status: LearningUnitStatus
+  completedAt?: string | null
+  completion: LearningUnitCompletion
   completionPercent: number
 }
 
@@ -272,6 +284,9 @@ export interface MyUnit {
     totalPracticeCount?: number
     completedScriptCount: number
   }
+  status: LearningUnitStatus
+  completedAt?: string | null
+  completion: LearningUnitCompletion
   completionPercent: number
 }
 
@@ -289,8 +304,9 @@ export function isInProgressLearningUnit(unit: {
   packageType?: string | null
   contentMode?: string | null
   completionPercent?: number | null
+  status?: LearningUnitStatus | null
 }) {
-  return !isStoryLearningUnit(unit) && (unit.completionPercent ?? 0) < 100
+  return !isStoryLearningUnit(unit) && (unit.status ? unit.status === 'in_progress' : (unit.completionPercent ?? 0) < 100)
 }
 
 export interface TagInfo {
@@ -510,6 +526,9 @@ export const learningApi = {
 
   /** 开始学习一个单元 */
   startUnit: (unitId: string) => post(`/learning/units/${unitId}/start`),
+
+  /** 没有可追踪任务的资料包由用户主动确认完成 */
+  completeUnit: (unitId: string) => post(`/learning/units/${unitId}/complete`),
 
   /** 退出学习一个单元 */
   quitUnit: (unitId: string) => del(`/learning/units/${unitId}`),

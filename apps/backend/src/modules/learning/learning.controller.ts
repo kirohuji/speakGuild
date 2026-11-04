@@ -190,6 +190,13 @@ export class LearningController {
     return this.learningService.startUnit(session.user.id, id);
   }
 
+  /** 没有可追踪任务的资料型学习包可由用户主动标记完成。 */
+  @Post('units/:id/complete')
+  async completeUnit(@Req() req: Request, @Param('id') id: string) {
+    const session = await requireAuthSession(req);
+    return this.learningService.completeUnitManually(session.user.id, id);
+  }
+
   /** 退出学习一个单元 */
   @Delete('units/:id')
   async quitUnit(@Req() req: Request, @Param('id') id: string) {

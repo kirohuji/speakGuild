@@ -101,7 +101,7 @@ export function LearningPlanPage() {
   // 学习页不显示剧情包（story）；进行中口径与加入上限一致
   const learningUnits = myUnits.filter((unit) => !isStoryLearningUnit(unit))
   const inProgress = learningUnits.filter(isInProgressLearningUnit)
-  const completed = learningUnits.filter((unit) => unit.completionPercent >= 100)
+  const completed = learningUnits.filter((unit) => unit.status === 'completed' || (!unit.status && unit.completionPercent >= 100))
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">

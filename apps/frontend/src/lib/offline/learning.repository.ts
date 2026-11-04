@@ -167,6 +167,14 @@ function summaryToMyUnit(unit: LearningUnitSummary | UnitDetail): MyUnit {
     topicCount: unit.topicCount,
     scriptCount: unit.scriptCount,
     progress,
+    status: 'status' in unit ? unit.status : Math.round(progress.mastery) >= 100 ? 'completed' : 'in_progress',
+    completedAt: 'completedAt' in unit ? unit.completedAt : null,
+    completion: 'completion' in unit ? unit.completion : {
+      kind: unit.contentMode === 'novel' ? 'novel' : unit.contentMode === 'reading' || unit.contentMode === 'writing' || unit.contentMode === 'listening' ? unit.contentMode : 'practice',
+      completed: 0,
+      total: unit.topicCount,
+      percent: Math.round(progress.mastery),
+    },
     completionPercent: 'completionPercent' in unit ? unit.completionPercent : Math.round(progress.mastery),
   }
 }
@@ -223,6 +231,7 @@ async function mergeLocalPracticeProgress(units: MyUnit[]): Promise<MyUnit[]> {
     const completionPercent = totalPracticeCount > 0
       ? Math.round((completedPracticeCount / totalPracticeCount) * 100)
       : unit.completionPercent
+    const mergedCompletionPercent = Math.max(unit.completionPercent ?? 0, completionPercent)
 
     return {
       ...unit,
@@ -231,7 +240,15 @@ async function mergeLocalPracticeProgress(units: MyUnit[]): Promise<MyUnit[]> {
         completedPracticeCount,
         totalPracticeCount,
       },
-      completionPercent: Math.max(unit.completionPercent ?? 0, completionPercent),
+      status: mergedCompletionPercent >= 100 ? 'completed' : 'in_progress',
+      completion: {
+        ...unit.completion,
+        kind: 'practice',
+        completed: completedPracticeCount,
+        total: totalPracticeCount,
+        percent: Math.max(unit.completion?.percent ?? 0, completionPercent),
+      },
+      completionPercent: mergedCompletionPercent,
     }
   })
 }

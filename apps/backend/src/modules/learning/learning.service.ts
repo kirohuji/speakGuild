@@ -438,6 +438,106 @@ export class LearningService {
     return byScene;
   }
 
+  private async getCompletedActivityTopicIdsByScene(userId: string, sceneIds: string[]) {
+    if (!sceneIds.length) return new Map<string, Set<string>>();
+    const [topicSessions, practiceSessions, submissions] = await Promise.all([
+      this.prisma.topicSession.findMany({
+        where: { userId, sceneId: { in: sceneIds }, completedAt: { not: null } },
+        select: { sceneId: true, topicId: true },
+      }),
+      this.prisma.practiceSession.findMany({
+        where: { userId, sceneId: { in: sceneIds }, completedAt: { not: null } },
+        select: { sceneId: true, topicId: true },
+      }),
+      this.prisma.trainingTopicSubmission.findMany({
+        where: {
+          userId,
+          status: 'completed',
+          topic: { sceneId: { in: sceneIds } },
+        },
+        select: { topicId: true, topic: { select: { sceneId: true } } },
+      }),
+    ]);
+
+    const byScene = new Map<string, Set<string>>();
+    const add = (sceneId: string, topicId: string) => {
+      const topicIds = byScene.get(sceneId) ?? new Set<string>();
+      topicIds.add(topicId);
+      byScene.set(sceneId, topicIds);
+    };
+    topicSessions.forEach((item) => add(item.sceneId, item.topicId));
+    practiceSessions.forEach((item) => add(item.sceneId, item.topicId));
+    submissions.forEach((item) => add(item.topic.sceneId, item.topicId));
+    return byScene;
+  }
+
+  private async getNovelProgressByScene(userId: string, sceneIds: string[]) {
+    if (!sceneIds.length) return new Map<string, number>();
+    const rows = await this.prisma.novelReadingProgress.findMany({
+      where: { userId, novelPackage: { sceneId: { in: sceneIds } } },
+      select: { percentage: true, novelPackage: { select: { sceneId: true } } },
+    });
+    return new Map(rows.map((row) => [row.novelPackage.sceneId, row.percentage]));
+  }
+
+  private calculateUnitCompletion(params: {
+    scene: { id: string; contentMode?: string | null; trainingTopics: Array<WarmupTopicForProgress & { activityType?: string | null }> };
+    progress?: { mastery?: number | null; updatedAt?: Date | null } | null;
+    completedWarmupItemIds?: Set<string>;
+    completedActivityTopicIds?: Set<string>;
+    novelPercentage?: number;
+  }) {
+    const { scene, progress } = params;
+    const completedActivityTopicIds = params.completedActivityTopicIds ?? new Set<string>();
+    let kind: 'practice' | 'reading' | 'writing' | 'listening' | 'novel' | 'manual' = 'practice';
+    let completed = 0;
+    let total = 0;
+
+    if (scene.contentMode === 'novel') {
+      kind = 'novel';
+      total = 100;
+      completed = Math.min(100, Math.max(0, Math.round((params.novelPercentage ?? 0) * 100)));
+      // EPUB locations are not perfectly stable across renderers; reaching 95% counts as read.
+      if (completed >= 95) completed = 100;
+    } else {
+      const activityTopics = scene.trainingTopics.filter((topic) => topic.activityType && topic.activityType !== 'practice');
+      if (activityTopics.length > 0) {
+        const mode = scene.contentMode;
+        kind = mode === 'reading' || mode === 'writing' || mode === 'listening' ? mode : 'reading';
+        total = activityTopics.length;
+        completed = activityTopics.filter((topic) => completedActivityTopicIds.has(topic.id)).length;
+      } else {
+        const warmupItemIds = this.buildWarmupPracticeItemIds(scene.id, scene.trainingTopics);
+        if (warmupItemIds.length > 0) {
+          kind = 'practice';
+          total = warmupItemIds.length;
+          const completedWarmupItemIds = params.completedWarmupItemIds ?? new Set<string>();
+          completed = warmupItemIds.filter((itemId) => completedWarmupItemIds.has(itemId)).length;
+        } else {
+          const practiceTopics = scene.trainingTopics.filter((topic) => !topic.activityType || topic.activityType === 'practice');
+          if (practiceTopics.length > 0) {
+            kind = 'practice';
+            total = practiceTopics.length;
+            completed = practiceTopics.filter((topic) => completedActivityTopicIds.has(topic.id)).length;
+          } else {
+            kind = 'manual';
+            total = 1;
+            completed = (progress?.mastery ?? 0) >= 100 ? 1 : 0;
+          }
+        }
+      }
+    }
+
+    const percent = total > 0 ? Math.round((Math.min(completed, total) / total) * 100) : 0;
+    const status = !progress ? 'not_started' : percent >= 100 ? 'completed' : 'in_progress';
+    return {
+      status,
+      completedAt: status === 'completed' ? progress?.updatedAt?.toISOString?.() ?? null : null,
+      completion: { kind, completed: Math.min(completed, total), total, percent },
+      completionPercent: percent,
+    };
+  }
+
   /**
    * 获取全部教材分类标签列表（供筛选下拉使用）
    */
@@ -558,7 +658,11 @@ export class LearningService {
       where: { userId, sceneId: { in: sceneIds } },
     });
     const progressMap = new Map(progresses.map((p) => [p.sceneId, p]));
-    const completedWarmupItemIdsByScene = await this.getCompletedWarmupItemIdsByScene(userId, sceneIds);
+    const [completedWarmupItemIdsByScene, completedActivityTopicIdsByScene, novelProgressByScene] = await Promise.all([
+      this.getCompletedWarmupItemIdsByScene(userId, sceneIds),
+      this.getCompletedActivityTopicIdsByScene(userId, sceneIds),
+      this.getNovelProgressByScene(userId, sceneIds),
+    ]);
 
     // 查询用户等级/输出级别
     const user = await this.prisma.user.findUnique({
@@ -588,6 +692,13 @@ export class LearningService {
       const completedWarmupItemIds = completedWarmupItemIdsByScene.get(scene.id) ?? new Set<string>();
       const completedPracticeCount = warmupItemIds.filter((itemId) => completedWarmupItemIds.has(itemId)).length;
       const totalPracticeItems = warmupItemIds.length;
+      const unitCompletion = this.calculateUnitCompletion({
+        scene,
+        progress: prog,
+        completedWarmupItemIds,
+        completedActivityTopicIds: completedActivityTopicIdsByScene.get(scene.id),
+        novelPercentage: novelProgressByScene.get(scene.id),
+      });
 
       const isUnlocked =
         freeDownloadsEnabled || (user?.userLevel ?? 1) >= scene.requiredUserLevel;
@@ -635,10 +746,7 @@ export class LearningService {
               completedScriptCount: prog.completedScriptCount,
             }
           : null,
-        completionPercent:
-          totalPracticeItems > 0
-            ? Math.round((completedPracticeCount / totalPracticeItems) * 100)
-            : 0,
+        ...unitCompletion,
       };
     });
 
@@ -701,7 +809,11 @@ export class LearningService {
       orderBy: { updatedAt: 'desc' },
     });
     const sceneIds = progresses.map((progress) => progress.sceneId);
-    const completedWarmupItemIdsByScene = await this.getCompletedWarmupItemIdsByScene(userId, sceneIds);
+    const [completedWarmupItemIdsByScene, completedActivityTopicIdsByScene, novelProgressByScene] = await Promise.all([
+      this.getCompletedWarmupItemIdsByScene(userId, sceneIds),
+      this.getCompletedActivityTopicIdsByScene(userId, sceneIds),
+      this.getNovelProgressByScene(userId, sceneIds),
+    ]);
 
     return progresses.map((p) => {
       const scene = p.scene;
@@ -725,7 +837,13 @@ export class LearningService {
       const completedWarmupItemIds = completedWarmupItemIdsByScene.get(scene.id) ?? new Set<string>();
       const completedPracticeCount = warmupItemIds.filter((itemId) => completedWarmupItemIds.has(itemId)).length;
       const totalPracticeItems = warmupItemIds.length;
-      const completionPercent = totalPracticeItems > 0 ? Math.round((completedPracticeCount / totalPracticeItems) * 100) : 0;
+      const unitCompletion = this.calculateUnitCompletion({
+        scene,
+        progress: p,
+        completedWarmupItemIds,
+        completedActivityTopicIds: completedActivityTopicIdsByScene.get(scene.id),
+        novelPercentage: novelProgressByScene.get(scene.id),
+      });
 
       return {
         id: scene.id,
@@ -761,7 +879,7 @@ export class LearningService {
           totalPracticeCount: totalPracticeItems,
           completedScriptCount: p.completedScriptCount,
         },
-        completionPercent,
+        ...unitCompletion,
       };
     });
   }
@@ -2047,7 +2165,7 @@ export class LearningService {
 
   /**
    * 开始学习一个单元——创建进度记录（如果不存在），将其设为当前学习。
-   * 与学习计划「进行中」一致：非剧情包、未完成（mastery < 100）最多 MAX_CONCURRENT_UNITS 个。
+   * 与学习计划「进行中」一致：非剧情包、统一完成状态为 in_progress 的最多 MAX_CONCURRENT_UNITS 个。
    */
   private readonly MAX_CONCURRENT_UNITS = 3;
 
@@ -2063,28 +2181,21 @@ export class LearningService {
     });
     if (!scene) return null;
 
-    // 检查是否已达到最大并行学习数
-    const existingCount = await this.prisma.userSceneProgress.count({
-      where: {
-        userId,
-        mastery: { lt: 100 },
-        scene: {
-          packageType: { not: 'story' },
-          contentMode: { not: 'story' },
-        },
-      },
-    });
-
     // 检查该单元是否已有进度（已学过的允许继续）
     const existing = await this.prisma.userSceneProgress.findUnique({
       where: { userId_sceneId: { userId, sceneId: unitId } },
     });
 
-    if (!existing && !this.isStoryLearningPack(scene) && existingCount >= this.MAX_CONCURRENT_UNITS) {
-      throw new ConflictException({
-        code: 'LEARNING_UNIT_LIMIT_REACHED',
-        message: `最多同时学习 ${this.MAX_CONCURRENT_UNITS} 个单元，请先完成当前单元`,
-      });
+    if (!existing && !this.isStoryLearningPack(scene)) {
+      const currentUnits = await this.getMyLearningUnits(userId);
+      const existingCount = currentUnits.filter((unit) =>
+        !this.isStoryLearningPack(unit) && unit.status === 'in_progress').length;
+      if (existingCount >= this.MAX_CONCURRENT_UNITS) {
+        throw new ConflictException({
+          code: 'LEARNING_UNIT_LIMIT_REACHED',
+          message: `最多同时学习 ${this.MAX_CONCURRENT_UNITS} 个单元，请先完成当前单元`,
+        });
+      }
     }
 
     const record = await this.prisma.userSceneProgress.upsert({
@@ -2103,6 +2214,29 @@ export class LearningService {
     });
 
     return record;
+  }
+
+  /** 仅供没有任何可追踪任务的资料型学习包使用。 */
+  async completeUnitManually(userId: string, unitId: string) {
+    await this.assertLearningPackAccess(userId, unitId, { allowExistingProgress: true });
+    const scene = await this.prisma.scene.findUnique({
+      where: { id: unitId },
+      select: {
+        id: true,
+        contentMode: true,
+        trainingTopics: { select: { id: true, activityType: true, metadata: true } },
+      },
+    });
+    if (!scene) throw new NotFoundException('学习包不存在');
+    const hasWarmups = this.buildWarmupPracticeItemIds(scene.id, scene.trainingTopics).length > 0;
+    if (scene.contentMode === 'novel' || scene.trainingTopics.length > 0 || hasWarmups) {
+      throw new ConflictException('该学习包包含可追踪任务，不能手动标记完成');
+    }
+    return this.prisma.userSceneProgress.upsert({
+      where: { userId_sceneId: { userId, sceneId: unitId } },
+      create: { userId, sceneId: unitId, readiness: 100, mastery: 100 },
+      update: { readiness: 100, mastery: 100 },
+    });
   }
 
   /**
