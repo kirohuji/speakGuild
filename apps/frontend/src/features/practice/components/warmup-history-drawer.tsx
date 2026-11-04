@@ -7,10 +7,10 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Drawer, DrawerContent, DrawerTitle,
 } from '@/components/ui/drawer'
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import { practiceRepository } from '@/lib/offline'
 import { warmupRecordApi, type WarmupRecord } from '../api/english-practice-api'
+import { WarmupRecordDetailDialog } from './warmup-record-detail-dialog'
 
 interface WarmupHistoryDrawerProps {
   open: boolean
@@ -237,62 +237,14 @@ export function WarmupHistoryDrawer({ open, onOpenChange, topicId, topicTitle }:
           )}
         </ScrollArea>
       </DrawerContent>
-      <Dialog open={!!replayItem} onOpenChange={(nextOpen) => { if (!nextOpen) setReplayItem(null) }}>
-        <DialogContent className="!z-[10001] w-[calc(100vw-2rem)] max-w-md rounded-2xl p-0 [&>button]:hidden">
-          <DialogTitle className="sr-only">{t('todayTask.replayDialogTitle')}</DialogTitle>
-          <DialogDescription className="sr-only">{t('todayTask.replayDialogDesc')}</DialogDescription>
-          {replayItem && (
-            <div className="overflow-hidden rounded-2xl">
-              <div className="border-b border-border/60 bg-muted/20 px-5 py-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <Badge variant="secondary" className="text-[10px]">{typeLabel(replayItem)}</Badge>
-                    <h2 className="mt-2 truncate text-base font-semibold text-foreground">
-                      {replayItem.groupTitle || topicTitle}
-                    </h2>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setReplayItem(null)}
-                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/70 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                  >
-                    <ChevronDown className="size-4" />
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-3 px-5 py-4">
-                <div className="rounded-lg bg-muted/20 px-3 py-2.5">
-                  <p className="text-xs text-muted-foreground">{t('todayTask.questionLabel')}</p>
-                  <p className="mt-1 text-base font-semibold text-foreground">{replayItem.zh || replayItem.promptZh}</p>
-                </div>
-                {(replayItem.answer || replayItem.suggestedAnswer || replayItem.correction) && (
-                  <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-2.5">
-                    <p className="text-[10px] text-muted-foreground">{t('todayTask.referenceAnswer')}</p>
-                    <p className="mt-1 text-sm font-medium text-foreground">
-                      {replayItem.answer || replayItem.suggestedAnswer || replayItem.correction}
-                    </p>
-                  </div>
-                )}
-                <div>
-                  <p className="mb-1.5 text-xs text-muted-foreground">{t('learning.yourAnswer')}</p>
-                  <div className="min-h-[72px] rounded-lg bg-background/70 px-3 py-2 text-base leading-6 ring-1 ring-border/45">
-                    {replayItem.userAnswer || t('todayTask.notAnswered')}
-                  </div>
-                </div>
-                {replayItem.feedback && (
-                  <div className={cn('rounded-lg px-3 py-2.5', replayItem.passed ? 'bg-green-500/10' : 'bg-amber-500/10')}>
-                    <div className="flex items-center gap-1.5">
-                      {replayItem.passed ? <CheckCircle2 className="size-3.5 text-green-500" /> : <XCircle className="size-3.5 text-amber-500" />}
-                      <p className="text-xs font-medium">{replayItem.passed ? t('todayTask.correct') : t('todayTask.feedback')}</p>
-                    </div>
-                    <p className="mt-1 text-[11px] text-muted-foreground">{replayItem.feedback}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <WarmupRecordDetailDialog
+        open={Boolean(replayItem)}
+        onOpenChange={(nextOpen) => { if (!nextOpen) setReplayItem(null) }}
+        items={replayItem ? [replayItem] : []}
+        topicTitle={replayItem?.groupTitle || topicTitle}
+        contentClassName="!z-[10002]"
+        overlayClassName="!z-[10002]"
+      />
     </Drawer>
   )
 }

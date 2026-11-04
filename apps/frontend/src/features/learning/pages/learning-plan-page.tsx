@@ -4,27 +4,22 @@ import { useLocation } from 'react-router-dom'
 import { parseISO, startOfDay } from 'date-fns'
 import {
   ClipboardList, ShoppingBag, Eye, Settings, CircleCheck, CircleDashed,
-  CheckCircle2, XCircle, ChevronDown, ChevronLeft, ChevronRight, Filter,
+  CheckCircle2, ChevronDown, Filter,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
 import { type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
 import { type PracticeSession, type TopicDetail, warmupRecordApi, type WarmupRecord } from '@/features/practice/api/english-practice-api'
 import { PracticeAnalysisPanel } from '@/features/practice/components/practice-analysis-panel'
-import { ChunkOutputDrillCard } from '@/features/practice/components/chunk-output-drill-card'
-import { VocabOutputCard } from '@/features/practice/components/vocab-output-card'
-import { PatternDrillCard } from '@/features/practice/components/pattern-drill-card'
-import { SentenceDecompositionCard } from '@/features/practice/components/sentence-decomposition-card'
+import { WarmupRecordDetailDialog } from '@/features/practice/components/warmup-record-detail-dialog'
 import { VnPlayer, type VnPlayerLine, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { MemberPage } from '@/features/membership/pages/member-page'
 import { cn } from '@/lib/cn'
-import { isIOS } from '@/lib/native'
 import { learningRepository, practiceRepository } from '@/lib/offline'
 import { dailyPracticeRepository } from '@/lib/offline/daily-practice.repository'
 import { useLearningStore } from '@/stores/learning.store'
@@ -368,8 +363,10 @@ function WarmupRecordsContent() {
         onRowClick={setSelectedRecord}
         className="min-h-0 flex-1 text-xs [&_td]:px-3 [&_td]:py-2 [&_th]:h-9 [&_th]:px-3"
       />
-      <WarmupRecordDetailDrawer
-        record={selectedRecord}
+      <WarmupRecordDetailDialog
+        items={selectedRecord?.items ?? []}
+        topicTitle={selectedRecord?.topicTitle}
+        score={selectedRecord?.score}
         open={Boolean(selectedRecord)}
         onOpenChange={(open) => { if (!open) setSelectedRecord(null) }}
       />
@@ -377,178 +374,6 @@ function WarmupRecordsContent() {
   )
 }
 
-function WarmupRecordDetailDrawer({
-  record,
-  open,
-  onOpenChange,
-}: {
-  record: WarmupRecord | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-}) {
-  const { t } = useTranslation()
-  const [currentIdx, setCurrentIdx] = useState(0)
-
-  useEffect(() => {
-    setCurrentIdx(0)
-  }, [open, record?.id])
-
-  if (!record) return null
-
-  const items = record.items ?? []
-  const total = items.length
-  const current = items[currentIdx]
-  const hasPrev = currentIdx > 0
-  const hasNext = currentIdx < total - 1
-
-  const gotoPrev = () => setCurrentIdx((p) => Math.max(0, p - 1))
-  const gotoNext = () => setCurrentIdx((p) => Math.min(total - 1, p + 1))
-
-  // 根据 stepType 渲染对应的练习卡片
-  const renderCard = () => {
-    if (!current) return null
-    const rd = {
-      userAnswer: current.userAnswer || '',
-      passed: current.passed,
-      feedback: current.feedback || '',
-      correction: current.correction,
-      audioUrl: current.audioUrl,
-    }
-    if (current.stepType === 'chunk_substitution') {
-      return (
-        <ChunkOutputDrillCard
-          key={current.stepId || `chunk-${currentIdx}`}
-          chunk={{ text: current.correction?.split(' ')?.slice(0, 3)?.join(' ') || current.answer || current.zh || '', meaning: '' }}
-          items={[{ zh: current.zh, answer: current.answer }]}
-          stepId={current.stepId || String(currentIdx)}
-          groupTitle={current.groupTitle}
-          reviewData={rd}
-        />
-      )
-    }
-    if (current.stepType === 'vocab_drill') {
-      return (
-        <VocabOutputCard
-          key={current.stepId || `vocab-${currentIdx}`}
-          title={current.groupTitle || t('learning.wordDrill')}
-          vocabs={[{ vocabId: '', promptZh: current.zh, suggestedAnswer: current.answer }]}
-          stepId={current.stepId || String(currentIdx)}
-          reviewData={rd}
-        />
-      )
-    }
-    if (current.stepType === 'pattern_drill') {
-      return (
-        <PatternDrillCard
-          key={current.stepId || `pattern-${currentIdx}`}
-          pattern={current.correction || current.answer || current.zh || ''}
-          items={[{ zh: current.zh, answer: current.answer }]}
-          stepId={current.stepId || String(currentIdx)}
-          groupTitle={current.groupTitle}
-          reviewData={rd}
-        />
-      )
-    }
-    if (current.stepType === 'sentence_decomposition') {
-      // 从 correction 反序列化 levels，从 userAnswer 反序列化录音
-      let levels: any[] = []
-      try { levels = JSON.parse(current.correction || '[]') } catch {}
-      let levelAudios: Record<number, string> | null = null
-      try { levelAudios = JSON.parse(current.userAnswer || '{}') } catch {}
-      return (
-        <SentenceDecompositionCard
-          key={current.stepId || `sentence-${currentIdx}`}
-          title={current.zh || t('learning.sentenceBreakdown')}
-          levels={levels.length > 0 ? levels : [{ level: 1, label: '', en: current.answer || current.zh || '', zh: '' }]}
-          stepId={current.stepId || String(currentIdx)}
-          reviewData={{ levelAudios }}
-        />
-      )
-    }
-    // fallback
-    return (
-      <div className="rounded-lg border bg-card p-3">
-        <div className="flex items-start gap-3">
-          <div className={cn(
-            'flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold',
-            current.passed ? 'bg-green-500/15 text-green-600' : 'bg-red-500/15 text-red-500',
-          )}>
-            {current.passed ? <CheckCircle2 className="size-4" /> : <XCircle className="size-4" />}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-foreground">{current.zh}</p>
-            {current.userAnswer && (
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {t('learning.yourAnswer')}<span className={cn('font-medium', current.passed ? 'text-green-600' : 'text-red-500')}>{current.userAnswer}</span>
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="app-surface drawer-surface !z-[10001] h-[100dvh] w-screen max-w-none gap-0 overflow-hidden rounded-none p-0 pt-safe md:h-[88vh] md:max-w-3xl md:rounded-2xl md:pt-0 [&>button]:hidden">
-        <DialogTitle className="sr-only">{t('learning.reviewTitle')}</DialogTitle>
-        <DialogDescription className="sr-only">{t('learning.reviewSubtitle')}</DialogDescription>
-
-        <div className="flex h-full flex-col">
-          {/* Header — 与练习 Dialog 一致 */}
-          <div className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-9 md:px-6">
-            <div className="grid grid-cols-[2.25rem_minmax(0,1fr)] items-start gap-3">
-              <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <CheckCircle2 className="size-[18px]" />
-              </div>
-              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-2">
-                <p className="min-w-0 truncate text-xs text-muted-foreground">
-                  {record.topicTitle || t('learning.warmupPractice')} · {t('common.total')} {record.score ?? '-'} {t('learning.scoreUnit')}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => onOpenChange(false)}
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                >
-                  <ChevronDown className="size-4" />
-                </button>
-                <h2 className="col-span-2 line-clamp-2 break-words text-lg font-bold leading-snug text-foreground">
-                  {current?.groupTitle || current?.displayLabel || current?.zh || t('learning.practiceReview')}
-                </h2>
-              </div>
-            </div>
-          </div>
-
-          {/* Body — 当前题目卡片 */}
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 md:px-6">
-            <div key={currentIdx} className="h-full">
-              {renderCard()}
-            </div>
-          </div>
-
-          {/* Footer — 与练习 Dialog 完全一致的导航栏 */}
-          <div className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
-            <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
-              <ChevronLeft className="size-4" />
-              <span className="ml-1">{t('todayTask.prevQuestion')}</span>
-            </Button>
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {currentIdx + 1} / {total}
-              {current?.practiceCount && current.practiceCount > 1 ? ` · ${t('todayTask.practiceTimes', { count: current.practiceCount })}` : ''}
-            </span>
-            <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
-              <span className="mr-1">{t('todayTask.nextQuestion')}</span>
-              <ChevronRight className="size-4" />
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-
-// ─── 练习记录列表内容 ──────────────────────────────────────────────────────
 function PracticeRecordsContent({ active }: { active: boolean }) {
   const { t } = useTranslation()
   const [data, setData] = useState<PracticeRecordsResult | null>(null)
