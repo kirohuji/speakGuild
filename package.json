@@ -17,7 +17,8 @@
     "typecheck": "pnpm -r typecheck",
     "docs:export": "pnpm --filter @manyu/backend docs:export",
     "docs:export-learning": "pnpm --filter @manyu/backend docs:export-learning",
-    "docs:sync": "pnpm --filter @manyu/backend docs:sync"
+    "docs:sync": "pnpm --filter @manyu/backend docs:sync",
+    "docs:sync-learning": "pnpm --filter @manyu/backend docs:sync-learning"
   },
   "devDependencies": {
     "typescript": "^5.9.0"

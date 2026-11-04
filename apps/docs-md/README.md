@@ -21,6 +21,12 @@ pnpm docs:sync -- --dry-run
 # 把本地 Markdown 修改写回数据库
 pnpm docs:sync
 
+# 只把本地 .learning.md 的材料和练习写回数据库，不更新教学正文 .md
+pnpm docs:sync-learning
+
+# 先预览仅学习配置的写回结果
+pnpm docs:sync-learning -- --dry-run
+
 # 忽略数据库侧的新改动，强制以本地 Markdown 覆盖（建议先加 --dry-run 预览）
 pnpm docs:sync -- --force
 ```
@@ -29,7 +35,7 @@ pnpm docs:sync -- --force
 
 ## 话题材料与知识点练习
 
-每个话题导出为同目录的一对文件：`话题.md` 只保存用户端展示的教学正文；`话题.learning.md` 只保存材料和知识点练习配置。`docs:sync` 分别同步两者。旧清单中的文档仍只同步教学正文；运行一次 `docs:export` 即可升级为双文件结构。
+每个话题导出为同目录的一对文件：`话题.md` 只保存用户端展示的教学正文；`话题.learning.md` 只保存材料和知识点练习配置。`docs:sync` 分别同步两者；`docs:sync-learning` 只同步后者，不读取或更新教学正文。旧清单中的文档仍只同步教学正文；运行一次 `docs:export` 即可升级为双文件结构。
 
 `酒店入住.learning.md`：
 

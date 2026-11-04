@@ -15,7 +15,8 @@
     "prisma:seed:exam-essay": "ts-node prisma/seed-exam-essay-writing.ts",
     "docs:export": "ts-node prisma/sync-teaching-docs.ts export",
     "docs:export-learning": "ts-node prisma/sync-teaching-docs.ts export-learning",
-    "docs:sync": "ts-node prisma/sync-teaching-docs.ts sync"
+    "docs:sync": "ts-node prisma/sync-teaching-docs.ts sync",
+    "docs:sync-learning": "ts-node prisma/sync-teaching-docs.ts sync-learning"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.53",

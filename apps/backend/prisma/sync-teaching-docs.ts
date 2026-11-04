@@ -3,6 +3,7 @@
  *
  *   pnpm docs:export              数据库 -> Markdown（会覆盖清单内的本地文件）
  *   pnpm docs:sync               Markdown -> 数据库
+ *   pnpm docs:sync-learning      .learning.md -> 数据库（不更新教学正文）
  *   pnpm docs:sync -- --dry-run  只预览，不写数据库
  *   pnpm docs:sync -- --force    忽略数据库侧变化，以本地 Markdown 强制覆盖
  */
@@ -336,7 +337,7 @@ async function syncLearningConfig(tx: any, topicId: string, config: LearningConf
   }
 }
 
-async function syncDocuments(prisma: PrismaClient, dryRun: boolean, force: boolean) {
+async function syncDocuments(prisma: PrismaClient, dryRun: boolean, force: boolean, learningOnly = false) {
   const manifest = readManifest()
   const missing: string[] = []
   const changed: Array<ManifestDocument & { content: string; learning?: LearningConfig; learningContent?: string }> = []
@@ -357,8 +358,10 @@ async function syncDocuments(prisma: PrismaClient, dryRun: boolean, force: boole
 
   for (const document of manifest.documents) {
     const absolutePath = resolveManifestPath(document.path)
-    if (!existsSync(absolutePath)) {
-      missing.push(document.path)
+    const learningAbsolutePath = document.learningPath ? resolveManifestPath(document.learningPath) : null
+    const requiredPath = learningOnly ? learningAbsolutePath : absolutePath
+    if (!requiredPath || !existsSync(requiredPath)) {
+      missing.push(learningOnly ? (document.learningPath ?? `${document.path}（缺少 learningPath）`) : document.path)
       continue
     }
     const topic = topicById.get(document.topicId)
@@ -366,8 +369,7 @@ async function syncDocuments(prisma: PrismaClient, dryRun: boolean, force: boole
     if (topic.sceneId !== document.sceneId) {
       throw new Error(`话题所属学习包已变化：${document.path}。请重新运行 pnpm docs:export。`)
     }
-    const content = readFileSync(absolutePath, 'utf8')
-    const learningAbsolutePath = document.learningPath ? resolveManifestPath(document.learningPath) : null
+    const content = learningOnly ? (topic.teachingMarkdown ?? '') : readFileSync(absolutePath, 'utf8')
     const learningContent = learningAbsolutePath && existsSync(learningAbsolutePath) ? readFileSync(learningAbsolutePath, 'utf8') : undefined
     const learning = learningContent === undefined ? undefined : parseDocument(learningContent, document.learningPath!).learning
     if (learningContent !== undefined && !learning) throw new Error(`${document.learningPath} 缺少 learning Front Matter。`)
@@ -384,9 +386,15 @@ async function syncDocuments(prisma: PrismaClient, dryRun: boolean, force: boole
     const databaseHash = sha256(topic.teachingMarkdown ?? '')
     const learningLocalHash = learningContent === undefined ? undefined : sha256(learningContent)
     const learningDatabaseHash = databaseLearningContent === undefined ? undefined : sha256(databaseLearningContent)
-    const localChanged = localHash !== databaseHash || (learningLocalHash !== undefined && learningLocalHash !== learningDatabaseHash)
-    const dbChanged = databaseHash !== document.exportedSha256 || (learningDatabaseHash !== undefined && document.exportedLearningSha256 !== undefined && learningDatabaseHash !== document.exportedLearningSha256)
-    const localMatchesExport = localHash === document.exportedSha256 && (learningLocalHash === undefined || learningLocalHash === document.exportedLearningSha256)
+    const localChanged = learningOnly
+      ? learningLocalHash !== learningDatabaseHash
+      : localHash !== databaseHash || (learningLocalHash !== undefined && learningLocalHash !== learningDatabaseHash)
+    const dbChanged = learningOnly
+      ? learningDatabaseHash !== undefined && document.exportedLearningSha256 !== undefined && learningDatabaseHash !== document.exportedLearningSha256
+      : databaseHash !== document.exportedSha256 || (learningDatabaseHash !== undefined && document.exportedLearningSha256 !== undefined && learningDatabaseHash !== document.exportedLearningSha256)
+    const localMatchesExport = learningOnly
+      ? learningLocalHash !== undefined && learningLocalHash === document.exportedLearningSha256
+      : localHash === document.exportedSha256 && (learningLocalHash === undefined || learningLocalHash === document.exportedLearningSha256)
     if (!localChanged) unchanged++
     else if (force || !dbChanged) changed.push({ ...document, content, learning, learningContent })
     else if (localMatchesExport) databaseChanged.push(document.path)
@@ -410,39 +418,41 @@ async function syncDocuments(prisma: PrismaClient, dryRun: boolean, force: boole
   }
 
   if (dryRun) {
-    console.log(`${force ? '强制覆盖预览' : '预览'}：将更新 ${changed.length} 份，未变化 ${unchanged} 份，仅数据库变化 ${databaseChanged.length} 份，缺失 ${missing.length} 份。`)
+    console.log(`${force ? '强制覆盖预览' : '预览'}：将更新 ${changed.length} 份${learningOnly ? '学习配置' : '文档'}，未变化 ${unchanged} 份，仅数据库变化 ${databaseChanged.length} 份，缺失 ${missing.length} 份。`)
     changed.forEach((document) => console.log(`  - ${document.path}`))
     return
   }
 
   if (changed.length) {
-    console.log(`${force ? '强制覆盖' : '即将更新'} ${changed.length} 份教学文档：`)
+    console.log(`${force ? '强制覆盖' : '即将更新'} ${changed.length} 份${learningOnly ? '学习配置（不更新教学正文）' : '教学文档'}：`)
     changed.forEach((document) => console.log(`  - ${document.path}`))
     await prisma.$transaction(
       async (tx) => {
         for (const document of changed) {
-          await tx.trainingTopic.update({ where: { id: document.topicId }, data: { teachingMarkdown: document.content } })
+          if (!learningOnly) await tx.trainingTopic.update({ where: { id: document.topicId }, data: { teachingMarkdown: document.content } })
           if (document.learning) await syncLearningConfig(tx, document.topicId, document.learning, document.learningPath ?? document.path)
         }
       },
+      // 一个总览课可能声明数十个新材料；默认 5 秒不足以完成查找、创建和关联，但仍需保持整份配置原子写入。
+      { maxWait: 10_000, timeout: 60_000 },
     )
     const changedById = new Map(changed.map((document) => [document.topicId, { teaching: sha256(document.content), learning: document.learningContent ? sha256(document.learningContent) : undefined }]))
     manifest.documents = manifest.documents.map((document) => ({
       ...document,
-      exportedSha256: changedById.get(document.topicId)?.teaching ?? document.exportedSha256,
+      exportedSha256: learningOnly ? document.exportedSha256 : changedById.get(document.topicId)?.teaching ?? document.exportedSha256,
       exportedLearningSha256: changedById.get(document.topicId)?.learning ?? document.exportedLearningSha256,
     }))
     manifest.generatedAt = new Date().toISOString()
     writeFileSync(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8')
   }
-  console.log(`同步完成：更新 ${changed.length} 份，未变化 ${unchanged} 份，仅数据库变化并跳过 ${databaseChanged.length} 份，缺失并跳过 ${missing.length} 份。`)
+  console.log(`同步完成：更新 ${changed.length} 份${learningOnly ? '学习配置' : '文档'}，未变化 ${unchanged} 份，仅数据库变化并跳过 ${databaseChanged.length} 份，缺失并跳过 ${missing.length} 份。`)
 }
 
 async function main() {
-  const command = process.argv.slice(2).find((argument) => argument === 'export' || argument === 'export-learning' || argument === 'sync')
+  const command = process.argv.slice(2).find((argument) => argument === 'export' || argument === 'export-learning' || argument === 'sync' || argument === 'sync-learning')
   const dryRun = process.argv.includes('--dry-run')
   const force = process.argv.includes('--force')
-  if (!command) throw new Error('用法：sync-teaching-docs.ts <export|export-learning|sync> [--dry-run] [--force]')
+  if (!command) throw new Error('用法：sync-teaching-docs.ts <export|export-learning|sync|sync-learning> [--dry-run] [--force]')
   if ((command === 'export' || command === 'export-learning') && dryRun) throw new Error('export 命令不支持 --dry-run。')
   if ((command === 'export' || command === 'export-learning') && force) throw new Error('export 命令不支持 --force。')
 
@@ -450,7 +460,7 @@ async function main() {
   const prisma = new PrismaClient()
   try {
     if (command === 'export' || command === 'export-learning') await exportDocuments(prisma, command === 'export-learning')
-    else await syncDocuments(prisma, dryRun, force)
+    else await syncDocuments(prisma, dryRun, force, command === 'sync-learning')
   } finally {
     await prisma.$disconnect()
   }
