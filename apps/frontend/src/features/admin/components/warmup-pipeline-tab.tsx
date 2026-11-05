@@ -878,7 +878,7 @@ export function WarmupPipelineTab({
 
       commit({ pipeline: nextPipeline })
       if (appliedCount) toast.success(`已为 ${appliedCount} 道题生成 AI 提示`)
-      else toast.error('AI 未返回教学提示，请检查题目关键词后重试')
+      else toast.error('AI 未返回教学提示，请检查题目内容后重试')
     } catch (err: any) {
       toast.error(err?.message || '批量生成 AI 提示失败')
     } finally {
@@ -1648,7 +1648,7 @@ export function WarmupPipelineTab({
             <PopoverContent align="end" className="w-[min(32rem,calc(100vw-2rem))] space-y-3 p-4">
               <div className="flex items-start gap-2">
                 <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"><Sparkles className="size-3.5" /></span>
-                <div><p className="text-sm font-semibold">例句扩展</p><p className="mt-0.5 text-xs leading-5 text-muted-foreground">以你提供的例句为主，保留有价值的句型和表达意图，换词汇、人物与真实场景生成新题。会继续参考当前绑定的词汇、句块和句型，但不读取教学文档。</p></div>
+                <div><p className="text-sm font-semibold">例句扩展</p><p className="mt-0.5 text-xs leading-5 text-muted-foreground">以你提供的例句为主，保留有价值的句型和表达意图，换词汇、人物与真实场景生成新题；会按教学价值搭配中译英/英译中与不同题型。提示只点非目标支撑信息。会继续参考当前绑定材料，但不读取教学文档。</p></div>
               </div>
               <Textarea value={exampleSentences} onChange={(event) => setExampleSentences(event.target.value)} className="min-h-32 resize-y" maxLength={6000} placeholder={'每行一条例句，例如：\nI need to reschedule our meeting because something came up.\nCould you let me know if Friday afternoon works for you?'} />
               <div className="flex items-center justify-between gap-3"><div><Label className="text-xs">生成题组数</Label><p className="mt-0.5 text-[10px] text-muted-foreground">至少 1 组，无固定上限；AI 按例句选择题型，必要时组合不同练法。</p></div><Input type="number" min={1} value={exampleGroupCount} onChange={(event) => setExampleGroupCount(Math.max(1, Number(event.target.value) || 1))} className="h-8 w-20 text-center text-xs" /></div>
@@ -1697,7 +1697,7 @@ export function WarmupPipelineTab({
               <div>
                 <DialogTitle>正在校验练习质量</DialogTitle>
                 <DialogDescription className="mt-2 max-w-md leading-6">
-                  正在检查互译准确性、材料覆盖、提示质量，以及题目之间是否反复使用同一种场景、搭配或句式。完成后会逐项展示原题与替换建议。
+                  正在检查互译准确性、材料覆盖、题型与中英方向丰富度、提示是否只点非目标支撑信息，以及题目之间是否反复使用同一种场景、搭配或句式。完成后会逐项展示原题与替换建议。
                 </DialogDescription>
               </div>
             </div>

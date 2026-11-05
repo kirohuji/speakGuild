@@ -16,6 +16,7 @@ import {
 } from './prompts/warmup-pipeline.prompt';
 import {
   DRILL_HINT_OUTPUT_REQUIREMENT,
+  DRILL_HINT_WRITING_RULES,
   DRILL_TRANSLATION_ITEM_CONTRACT,
   buildDrillHintsSystemPrompt,
 } from './prompts/drill-hints.prompt';
@@ -801,6 +802,63 @@ For correction/upgraded/retryRequired: only populate these when the response is 
     return result.object as { hints: string[] };
   }
 
+  /** 从英文句中提取非目标支撑词，用作精简 hint（just / usually；at nine）。 */
+  private extractNonTargetHintTips(english: string, target: string) {
+    const wordsOf = (value: string) => value.toLowerCase().replace(/[’‘]/g, "'").match(/[a-z]+(?:'[a-z]+)?/g) ?? [];
+    const targetSet = new Set(wordsOf(target));
+    const stop = new Set([
+      'i', 'me', 'my', 'you', 'your', 'he', 'him', 'his', 'she', 'her', 'it', 'its',
+      'we', 'us', 'our', 'they', 'them', 'their', 'a', 'an', 'the', 'to', 'of', 'in',
+      'on', 'at', 'for', 'and', 'or', 'but', 'with', 'from', 'this', 'that', 'these',
+      'those', 'is', 'am', 'are', 'was', 'were', 'be', 'been', 'do', 'does', 'did',
+      'have', 'has', 'had', 'will', 'would', 'can', 'could', 'should', 'may', 'might',
+    ]);
+    const preferred = new Set([
+      'just', 'finally', 'usually', 'always', 'really', 'still', 'already', 'yet',
+      'first', 'then', 'later', 'today', 'tomorrow', 'yesterday', 'please', 'sorry',
+      'once', 'again', 'more', 'only', 'early', 'soon', 'never', 'ever', 'often',
+      'sometimes', 'carefully', 'accidentally', 'eventually', 'seriously',
+    ]);
+    const tips: string[] = [];
+    const push = (tip: string) => {
+      const clean = tip.trim();
+      if (!clean) return;
+      if (tips.some((existing) => existing.toLowerCase() === clean.toLowerCase())) return;
+      tips.push(clean);
+    };
+
+    // Multi-word non-target phrases first.
+    const phrasePatterns = [
+      /\bon time\b/i,
+      /\bas soon as possible\b/i,
+      /\bin a minute\b/i,
+      /\bthis afternoon\b/i,
+      /\bnext week\b/i,
+      /\blast night\b/i,
+      /\bbecause of (?:the )?traffic\b/i,
+      /\bdon't forget(?: to)?\b/i,
+      /\bhow can(?: we)?\b/i,
+      /\bif that fails\b/i,
+      /\bat (?:\d+|nine|ten|eleven|twelve|one|two|three|four|five|six|seven|eight)\b/i,
+    ];
+    for (const pattern of phrasePatterns) {
+      const matched = english.match(pattern)?.[0];
+      if (matched) push(matched);
+    }
+
+    for (const word of wordsOf(english)) {
+      if (targetSet.has(word) || stop.has(word)) continue;
+      if (preferred.has(word) || word.length >= 5) push(word);
+      if (tips.length >= 3) break;
+    }
+
+    if (!tips.length) {
+      const leftovers = wordsOf(english).filter((word) => !targetSet.has(word) && !stop.has(word));
+      for (const word of leftovers.slice(0, 2)) push(word);
+    }
+    return tips.slice(0, 3);
+  }
+
   private buildFallbackDrillHints(dto: {
     type: 'chunk_substitution' | 'vocab_sentence_building' | 'sentence_decomposition' | 'pattern_drill';
     keyword: string;
@@ -812,33 +870,15 @@ For correction/upgraded/retryRequired: only populate these when the response is 
     const items: Array<{ zh?: string; en?: string; answer?: string; hint?: string }> = dto.items?.length
       ? dto.items
       : Array.from({ length: dto.itemCount ?? 0 }, () => ({}));
-    const targetWords = dto.keyword.match(/[A-Za-z]+(?:'[A-Za-z]+)?/g) ?? [];
-    const firstWord = targetWords[0] ?? '';
-    // A visible foothold is useful; the rest stays blank so the hint cannot turn
-    // into the answer.  This is also the safe fallback when the model returns a
-    // generic all-Chinese instruction.
-    const maskedAnchor = targetWords.length > 1 ? `${firstWord} ___` : firstWord;
-    return items.map((item, index) => {
+    return items.map((item) => {
       if (item.hint?.trim()) return item.hint.trim();
-      if (dto.type === 'pattern_drill') {
-        return isEnToZh
-          ? `句型线索：${maskedAnchor}；先看语气和关系，再用自然中文顺着说。`
-          : index % 2 === 0
-            ? `句型线索：${maskedAnchor}；把题干中的动作原形填进空位。`
-            : `先找出人、动作和对象；用 ${maskedAnchor} 把它们连成一句。`;
-      }
-      if (dto.type === 'vocab_sentence_building') {
-        return isEnToZh
-          ? `关键词：${firstWord}；先抓住它表示的动作或事物，再译成自然中文。`
-          : index % 2 === 0
-            ? `关键词：${firstWord}；先译出核心动作，再补对象或原因。`
-            : `从“谁做什么”起句；把 ${firstWord} 放在表达重点的位置。`;
-      }
-      return isEnToZh
-        ? `句块线索：${maskedAnchor}；先判断这句话是在询问、请求还是回应。`
-        : index % 2 === 0
-          ? `句块线索：${maskedAnchor}；先译出题干的核心意思，再补齐对象或语气。`
-          : `先决定是陈述、提问还是回应；用 ${maskedAnchor} 组织主干。`;
+      const english = isEnToZh
+        ? String(item.en ?? '').trim()
+        : String(item.answer ?? '').trim();
+      const tips = this.extractNonTargetHintTips(english, dto.keyword);
+      if (tips.length) return tips.join('；');
+      if (dto.type === 'sentence_decomposition') return '补上新信息';
+      return isEnToZh ? '注意语气' : '注意时态';
     });
   }
 
@@ -923,31 +963,66 @@ For correction/upgraded/retryRequired: only populate these when the response is 
   }
 
   private sanitizeGeneratedHint(rawHint: unknown, dto: DrillGenerationDto, item: { zh?: string; en?: string; answer?: string }) {
-    const hint = String(rawHint ?? '').trim();
+    let hint = String(rawHint ?? '').trim();
+    // Strip legacy labels so older model output can still be salvaged.
+    hint = hint
+      .replace(/^(?:关键词|句块线索|句型线索|搭配|结构)\s*[:：]\s*/u, '')
+      .replace(/「[^」]+」用\s*/g, '')
+      .replace(/先译出[^；。]*[；。]?/g, '')
+      .replace(/把题干中的[^；。]*[；。]?/g, '')
+      .trim()
+      .replace(/^；+|；+$/g, '')
+      .trim();
+
     const answer = String(item.answer ?? '').toLowerCase().replace(/[’‘]/g, "'");
+    const englishSide = (dto.direction === 'en_to_zh'
+      ? String(item.en ?? item.answer ?? '')
+      : String(item.answer ?? '')).toLowerCase().replace(/[’‘]/g, "'");
     const target = dto.keyword.trim().toLowerCase().replace(/[’‘]/g, "'");
     const answerWords = answer.match(/[a-z]+(?:'[a-z]+)?/g) ?? [];
-    const targetWords = target.match(/[a-z]+(?:'[a-z]+)?/g) ?? [];
+    const targetWords = target
+      .replace(/\[[^\]]*\]|\{[^}]*\}|<[^>]*>|_{2,}|\.{2,}/g, ' ')
+      .match(/[a-z]+(?:'[a-z]+)?/g) ?? [];
     const hintWords = hint.toLowerCase().match(/[a-z]+(?:'[a-z]+)?/g) ?? [];
-    const leaksAnswer = answerWords.some((word, index) => index < answerWords.length - 1
-      && hint.toLowerCase().includes(`${word} ${answerWords[index + 1]}`));
     const normalizeEnglish = (value: string) => value.toLowerCase()
       .replace(/[’‘]/g, "'")
       .replace(/[^a-z0-9'\s]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
     const normalizedHint = normalizeEnglish(hint);
-    const normalizedTarget = normalizeEnglish(target);
+    const normalizedTarget = normalizeEnglish(
+      target.replace(/\[[^\]]*\]|\{[^}]*\}|<[^>]*>|_{2,}|\.{2,}/g, ' '),
+    );
     const revealsWholeTarget = targetWords.length > 1 && Boolean(normalizedTarget)
       && normalizedHint.includes(normalizedTarget);
-    const hasMaskedScaffold = /_{2,}|…/.test(hint);
-    const EnglishIsSafe = hintWords.length <= 1 || (hasMaskedScaffold && hintWords.length <= 3);
-    const generic = /用目标词造句|注意语法|参考句型|按照提示完成|参考答案|结合语境|想想要表达什么/.test(hint);
-    const valid = hint.length >= 12 && hint.length <= 64 && /[\u4e00-\u9fff]/.test(hint)
-      // A Chinese-only description tends to restate the task. Require a small,
-      // safe English foothold so the learner knows what language to retrieve.
-      && hintWords.length >= 1 && EnglishIsSafe && !leaksAnswer && !revealsWholeTarget && !generic;
-    if (valid) return hint;
+    const targetBigrams = targetWords
+      .slice(0, -1)
+      .map((word, index) => `${word} ${targetWords[index + 1]}`);
+    const revealsTargetBigram = targetBigrams.some((pair) => normalizedHint.includes(pair));
+    const leaksFullAnswer = answerWords.length >= 4
+      && normalizeEnglish(answer)
+      && normalizedHint.includes(normalizeEnglish(answer));
+    const restatesTarget = /句块线索|句型线索|关键词|结构迁移|结构 get|结构 take|搭配 /.test(String(rawHint ?? ''));
+    const generic = /用目标词造句|注意语法|参考句型|按照提示完成|参考答案|结合语境|想想要表达什么|先译出核心|补上时间$/.test(hint);
+    const segments = hint.split(/[；;]+/).map((part) => part.trim()).filter(Boolean);
+    const segmentsOk = segments.length > 0
+      && segments.length <= 4
+      && segments.every((part) => {
+        const words = part.toLowerCase().match(/[a-z]+(?:'[a-z]+)?/g) ?? [];
+        return part.length <= 28 && words.length <= 4;
+      });
+    const valid = hint.length >= 1
+      && hint.length <= 48
+      && segmentsOk
+      && !revealsWholeTarget
+      && !revealsTargetBigram
+      && !leaksFullAnswer
+      && !restatesTarget
+      && !generic;
+    if (valid) return segments.join('；');
+
+    const tips = this.extractNonTargetHintTips(englishSide || answer, dto.keyword);
+    if (tips.length) return tips.join('；');
     return this.buildFallbackDrillHints({ ...dto, itemCount: 1, items: [{ ...item, hint: '' }] })[0];
   }
 
@@ -2336,7 +2411,13 @@ Rules:
       key === 'audioUrl' || key === 'audioAssetId' ? undefined : value
     ))));
     const system = `You are a meticulous ESL exercise editor for Chinese learners.
-Audit the ENTIRE warmup pipeline, not isolated groups. Check: Chinese-to-English prompts are direct translations of their English answers (not vague scenarios); each target word/chunk/pattern is actually practised in the English side; every answer sounds like something a speaker would naturally say for the target's own meaning, speech act, and grammar — never a mechanically padded sentence, bare repetition, invented scene, or generic template applied to an incompatible target; hints are concrete without leaking the answer; directions and fields are correct; titles describe the teaching goal rather than only repeating the target.
+Audit the ENTIRE warmup pipeline, not isolated groups. Check: Chinese-to-English prompts are direct translations of their English answers (not vague scenarios); each target word/chunk/pattern is actually practised in the English side; every answer sounds like something a speaker would naturally say for the target's own meaning, speech act, and grammar — never a mechanically padded sentence, bare repetition, invented scene, or generic template applied to an incompatible target; directions and fields are correct; titles describe the teaching goal rather than only repeating the target; the pipeline should include meaningful variety across exercise types and both zh_to_en / en_to_zh when the material supports it.
+
+HINT QUALITY CHECK (required):
+- Hints must tip NON-TARGET supporting elements only (e.g. usually；at nine / just / couldn't；on time).
+- Bad hints: restating the target chunk/pattern, or using labels like 关键词：/句块线索：/句型线索：/结构迁移.
+- When rewriting a replacement, rewrite every item hint to the compact non-target style.
+${DRILL_HINT_WRITING_RULES}
 
 HOMOGENEITY / DIVERSITY CHECK (required): compare every exercise with the rest of the pipeline. Flag repeated semantic scenarios, stock collocations, sentence frames, information structures, or communicative moves even when the target material differs. A change of name, subject, place, or one noun does NOT make two exercises meaningfully distinct. Assess diversity across situation, relationship between speakers, communicative purpose, tone, grammar shape, and added detail. Prefer a balanced range of everyday contexts and speech acts. When you flag homogeneity, state the repeated pattern in Chinese issues and rewrite the flagged group's examples into a genuinely different context while preserving its exact target material.
 
@@ -2389,17 +2470,15 @@ Only return a review when a change is genuinely needed. Return ZERO OR ONE revie
       const isEnToZh = dto.direction === 'en_to_zh';
       const promptLabel = isEnToZh ? 'English prompt' : 'Chinese prompt';
       const answerLabel = isEnToZh ? 'Chinese answer' : 'English answer';
-      const hintForms = dto.type === 'vocab_sentence_building'
-        ? ['关键词：只给一个核心英文词', '关键词：只给一个核心英文词', '带空格的句子骨架']
-        : dto.type === 'pattern_drill'
-          ? ['带空格的句型骨架', '带空格的句型骨架', '只给一个固定部分的英文词']
-          : ['首词加空格的句块线索', '只给一个核心英文词', '带空格的句子骨架'];
       const itemsJson = dto.items.map((it, i) => {
         const promptText = this.getDrillPromptText(it, dto.direction);
         const answerText = this.getDrillAnswerText(it, dto.direction);
-        return `[${i + 1}] Required hint form: ${hintForms[i % hintForms.length]}. ${promptLabel}: ${promptText || '(missing)'} | ${answerLabel}: ${answerText || '(missing)'}`;
+        return `[${i + 1}] ${promptLabel}: ${promptText || '(missing)'} | ${answerLabel}: ${answerText || '(missing)'}`;
       }).join('\n')
-      const user = `Type: ${dto.type}, Keyword: "${dto.keyword}"${dto.meaning ? `, Meaning: ${dto.meaning}` : ''}, Direction: ${dto.direction ?? 'zh_to_en'}${generationContext}\nExercises:\n${itemsJson}`;
+      const user = `Type: ${dto.type}, Target (already known — DO NOT tip it): "${dto.keyword}"${dto.meaning ? `, Meaning: ${dto.meaning}` : ''}, Direction: ${dto.direction ?? 'zh_to_en'}${generationContext}
+For each item, tip ONLY non-target supporting words/phrases from the sentence (examples: just / finally / usually；at nine / couldn't；on time). No 关键词： labels.
+Exercises:
+${itemsJson}`;
 
       try {
         const object = await this.generateDrillHintsObject({
@@ -2441,13 +2520,15 @@ Rules:
 - For en_to_zh direction, use the "en" field for the English sentence and "answer" for Chinese — polish both accordingly.
 - Fix any grammar issues, awkward phrasing, or unnatural collocations.
 - Each answer MUST still naturally include the target chunk/pattern: "${dto.keyword}".
+- Also rewrite each item's hint following HINT WRITING RULES: tip ONLY non-target supporting parts; never restate "${dto.keyword}"; no 关键词：/句块线索： labels.
+${DRILL_HINT_WRITING_RULES}
 ${DRILL_TRANSLATION_ITEM_CONTRACT}
 
 Return ONLY a JSON object (no markdown):
-{ "items": [{ "zh": "Chinese prompt", "en": "English prompt only for en_to_zh", "answer": "answer in the required direction" }, ...] }`;
+{ "items": [{ "zh": "Chinese prompt", "en": "English prompt only for en_to_zh", "answer": "answer in the required direction", "hint": "compact non-target tip" }, ...] }`;
 
       const itemsJson = dto.items.map((it, i) =>
-        `[${i + 1}] ZH: ${it.zh} | Answer: ${it.answer}`
+        `[${i + 1}] ZH: ${it.zh ?? ''} | EN: ${it.en ?? ''} | Answer: ${it.answer ?? ''} | Hint: ${it.hint ?? ''}`
       ).join('\n')
       const user = `Type: ${dto.type}, Keyword: "${dto.keyword}"${dto.meaning ? `, Meaning: ${dto.meaning}` : ''}, Direction: ${dto.direction ?? 'zh_to_en'}\nItems to polish:\n${itemsJson}`;
 
@@ -2482,13 +2563,15 @@ Rules:
 - Use the topic material pool below. Prefer unused vocabulary/chunks when they fit.
 
 Return ONLY a JSON object (no markdown):
-For zh_to_en use { "items": [{ "zh": "完整英文句的准确中文翻译", "answer": "完整英文句", "hint": "中文提示" }] }.
-For en_to_zh use { "items": [{ "en": "complete English sentence", "answer": "中文答案", "hint": "中文提示" }] }.`;
+For zh_to_en use { "items": [{ "zh": "完整英文句的准确中文翻译", "answer": "完整英文句", "hint": "usually；at nine" }] }.
+For en_to_zh use { "items": [{ "en": "complete English sentence", "answer": "中文答案", "hint": "but；late" }] }.
+Hints tip non-target parts only.`;
 
       const user = `Target: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}
 Direction: ${direction}
 Kind: ${kind}
-Count: ${count}${generationContext}`;
+Count: ${count}
+Prefer natural variety. If generating multiple items, keep them meaningfully different in situation and grammar shape.${generationContext}`;
 
       const { text } = await generateText({
         model: provider(),
@@ -2522,8 +2605,9 @@ For each pattern:
 ${availableChunks ? `You may use these available chunks as inspiration: ${availableChunks}` : ''}
 
 Return ONLY a JSON object (no markdown):
-For zh_to_en use { "patterns": [{ "chunk": "sentence starter", "items": [{ "zh": "完整英文句的准确中文翻译", "answer": "完整英文句", "hint": "中文提示" }] }] }.
-For en_to_zh use "en" instead of "zh" and make answer Chinese.`;
+For zh_to_en use { "patterns": [{ "chunk": "sentence starter", "items": [{ "zh": "完整英文句的准确中文翻译", "answer": "完整英文句", "hint": "finally；more" }] }] }.
+For en_to_zh use "en" instead of "zh" and make answer Chinese.
+Hints tip non-target parts only.`;
 
       const user = `Word: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}
 Create 3 patterns with 2-3 items each.${generationContext}`;
@@ -2608,10 +2692,10 @@ Each level needs:
 - "en": English sentence at this level
 - "zh": Chinese translation of THIS level (progressive, not the same every level)
 - "highlight": the exact newly added part (text that differentiates from previous level)
-- "hint": Chinese 12-32 char coaching for what to ADD at THIS step. It must not reveal English from this level or the final sentence.
+- "hint": compact tip for what to ADD at THIS step only (e.g. 补上昨天 / 补上因为堵车). Do not restate the target material or reveal the full English of this level.
 
 Return ONLY a JSON object (no markdown):
-{ "levels": [{ "level": 1, "label": "...", "en": "...", "zh": "...", "highlight": "...", "hint": "..." }, ...] }`;
+{ "levels": [{ "level": 1, "label": "...", "en": "...", "zh": "...", "highlight": "...", "hint": "补上昨天" }, ...] }`;
 
       const user = `Full sentence: "${fullSentence}"${fullZh ? `\nChinese: ${fullZh}` : ''}${generationContext}`;
 
@@ -2652,13 +2736,14 @@ Rules:
 - Use the topic material pool below. Prefer unused vocabulary/chunks when they fit.
 
 Return ONLY a JSON object (no markdown):
-For zh_to_en use { "items": [{ "zh": "完整英文句的准确中文翻译", "answer": "完整英文句", "hint": "中文提示" }] }.
-For en_to_zh use { "items": [{ "en": "complete English sentence", "answer": "中文答案", "hint": "中文提示" }] }.`;
+For zh_to_en use { "items": [{ "zh": "完整英文句的准确中文翻译", "answer": "完整英文句", "hint": "about half an hour" }] }.
+For en_to_zh use { "items": [{ "en": "complete English sentence", "answer": "中文答案", "hint": "before the meeting" }] }.
+Hints tip non-target slot fillers / modifiers only, never the fixed pattern frame itself.`;
 
       const user = `Pattern: "${dto.keyword}"${dto.meaning ? ` (${dto.meaning})` : ''}
 Direction: ${direction}
 Count: ${count}
-Create exercises where the learner practices this pattern with different content.${generationContext}`;
+Create exercises where the learner practices this pattern with different content. Include en_to_zh when direction requests it.${generationContext}`;
 
       const { text } = await generateText({
         model: provider(),

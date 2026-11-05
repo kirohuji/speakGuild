@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": "2026-11-05T04:39:40.278Z",
+  "generatedAt": "2026-11-05T07:13:47.372Z",
   "documents": [
     {
       "topicId": "cmu296m4h000b15lcpn4zp30w",
@@ -22,7 +22,7 @@
       "path": "学习包/常用动词300个 高频核心/核心动作与日常表达.md",
       "exportedSha256": "5f8b8c834d5e7fbbd77797ee93a38f76d84eff78963059be53e0f5cd255f092d",
       "learningPath": "学习包/常用动词300个 高频核心/核心动作与日常表达.learning.md",
-      "exportedLearningSha256": "4d5cbbe4a020446ed0d2b4c82380cfd563ea8480fa76a75702ebf3ea7f112a8e"
+      "exportedLearningSha256": "fab383af3d1881cc47bbafe2e544df7bf5da6192e8a1c508e9be5708f0442685"
     },
     {
       "topicId": "cmuz4bd4424e13e54e608843f",
@@ -99,7 +99,7 @@
       "path": "学习包/常用动词300个 高频核心/移动、位置与变化.md",
       "exportedSha256": "da6f6a32e878ffdeb1f6a5c4c724dda6f441bb609e4061d5e292f3a244ab842f",
       "learningPath": "学习包/常用动词300个 高频核心/移动、位置与变化.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "d1d89b2c80e49a9086fd50b7adb0719708bb4b1807883518d6de2d0ccd8338b2"
     },
     {
       "topicId": "cmuza06210493e94472b97dc5",
@@ -165,7 +165,7 @@
       "path": "学习包/常用动词300个 高频核心/思考与判断.md",
       "exportedSha256": "d9a3b6cc262c9b12ae548bac178e79a88536cf2115d88435cd9afe7b71465425",
       "learningPath": "学习包/常用动词300个 高频核心/思考与判断.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "0518f74ce25af977ec0cc675c59c66fddb25dd55299c30bf9af02bdbb473e630"
     },
     {
       "topicId": "cmuzhyuck002msbr091n3b9iq",
@@ -231,7 +231,7 @@
       "path": "学习包/常用动词300个 高频核心/沟通与表达.md",
       "exportedSha256": "c510a976dd4585b25986e5a42d38d4786b067c2e36b403ea5db636d895d7fe70",
       "learningPath": "学习包/常用动词300个 高频核心/沟通与表达.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "1dadffc9c42c21576c824259822dbcee6a9cbdcd2b2480e5b0eab8613a4a00a6"
     },
     {
       "topicId": "cmuza742db284c924669a9ffe",
@@ -295,9 +295,9 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "选择与意图",
       "path": "学习包/常用动词300个 高频核心/选择与意图.md",
-      "exportedSha256": "815d8deed33972125476b7b254360f33b949fa0e83f97d50fe31b2c1ae376c8f",
+      "exportedSha256": "0c1663fd9e53b3bcf7f10ca3334c908a91cbcfee9314bd8f08fdc34e6b281ad5",
       "learningPath": "学习包/常用动词300个 高频核心/选择与意图.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "a25870c746cad3e532d9cf37a6c78c31eba492a42aa7090480e25c61effb10ad"
     },
     {
       "topicId": "cmuz355004a32ad143bdad13c",

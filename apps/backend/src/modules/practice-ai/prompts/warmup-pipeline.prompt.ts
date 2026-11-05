@@ -172,17 +172,16 @@ Rules:
 - Use missing materials preferentially, but choose exercise types naturally and vary them.
 - Use types by teaching value, not equal quotas. Chunk and pattern practice normally make up most of a topic; vocabulary expansion is selective, and decomposition is an occasional consolidator. Do not add a weak group merely to make all four types appear.
 - When generating sentence_decomposition, choose one of this batch's target words/chunks/patterns as sourceText and ensure its final fullSentence contains that source material.
-- IMPORTANT — en_to_zh comprehension check: Always include at least 2 en_to_zh items (chunk_substitution with direction="en_to_zh"). These confirm the learner can read/hear English and understand it — not just produce it. Use natural English sentences, not textbook examples.
+- IMPORTANT — en_to_zh comprehension check: Always include multiple en_to_zh items (chunk_substitution and, when natural, pattern_drill with direction="en_to_zh"). These confirm the learner can read/hear English and understand it — not just produce it. Use natural English sentences, not textbook examples.
 - Avoid homogeneous output and near-duplicate sentences.
 - Keep each group compact: 2-3 translation items per group, 1-2 pattern groups for vocab_sentence_building, 3-4 progressive levels for sentence_decomposition.
 - CRITICAL: Every group MUST have at least 2 items — never generate a group with only 1 item (that creates a "single-item section" which is invalid). If you can only fill 1 item for a material, combine it with another material in the same group.
-- STRUCTURE TARGETS (aim for these, not just the minimum):
-  * Total practice items: follow the calculated learner-action budget in the user prompt (normally within ±2). HARD MAXIMUM: 60 items.
-  * Total groups (steps): combine materials where natural, but use as many as necessary for complete count=0 coverage. HARD MAXIMUM: 30 groups.
-  * Exercise types: distribute by material fit; do not equalise type counts.
+- STRUCTURE TARGETS (coverage first; no artificial small cap that leaves materials uncovered):
+  * Total practice items / groups: follow the calculated learner-action budget when provided, but COVERAGE ALWAYS WINS. Generate as many groups as needed for complete count=0 coverage.
+  * Exercise types: distribute by material fit; include a meaningful mix of chunk_substitution, pattern_drill, vocab_sentence_building, and sentence_decomposition when the pool supports them. Do not equalise type counts mechanically.
   * zh_to_en output items: at least 3 (output activation, step 1 priority).
-  * en_to_zh comprehension items: at least 2 (input check — confirms reading/listening understanding).
-  * pattern_drill items: at least 2 (structural output training — ensures learner can use sentence patterns flexibly).
+  * en_to_zh comprehension items: at least 4 when the pool is large enough (input check — confirms reading/listening understanding). Prefer both chunk and pattern comprehension when possible.
+  * pattern_drill items: at least 2 (structural output training — ensures learner can use sentence patterns flexibly). Prefer including at least one en_to_zh pattern group when patterns exist.
   * Zero single-item groups: every group 2+ items.
 - PIPELINE ORDERING (the pipeline array is an ordered sequence — position matters):
   * The FIRST group(s) MUST be zh_to_en chunk_substitution — these are the warmup opener that activates the learner's English output. Like "中译英替换" in the UI, this is step 1 of the warmup flow.
