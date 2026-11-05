@@ -2191,12 +2191,21 @@ export class LearningService {
   }
 
   /**
-   * 退出学习——删除用户在该单元的进度记录
+   * 退出学习——删除用户在该单元的进度记录。
+   *
+   * 知识点练习的 SRS 状态、答题记录和今日计划也都归属于学习包；若只
+   * 删除 userSceneProgress，它们会在客户端下次同步时重新出现并被计入
+   * “到期/逾期”。历史 warmup record 仍保留，供学习记录查看。
    */
   async quitUnit(userId: string, unitId: string) {
-    await this.prisma.userSceneProgress.deleteMany({
-      where: { userId, sceneId: unitId },
-    });
+    await this.prisma.$transaction([
+      this.prisma.userSceneProgress.deleteMany({
+        where: { userId, sceneId: unitId },
+      }),
+      (this.prisma as any).userWarmupItemProgress.deleteMany({ where: { userId, packId: unitId } }),
+      (this.prisma as any).userDailyPracticeAttempt.deleteMany({ where: { userId, packId: unitId } }),
+      (this.prisma as any).userDailyPracticeRun.deleteMany({ where: { userId, packIds: { has: unitId } } }),
+    ]);
     return { success: true };
   }
 

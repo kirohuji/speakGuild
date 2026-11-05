@@ -101,7 +101,9 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
       // 切换「今日复习 ↔ 今日练习」时，目标模式的 plan 通常已经构建过。只要
       // 本地 run 还在，就直接复用缓存：完全跳过 buildTodayPlan（不再请求
       // 服务端、也就没有旧快照覆盖本地数据的风险），从本地 facts 恢复进度。
-      if (cachedPlan && !forceNew) {
+      // 空队列不能长期作为缓存真相：同步、跨设备答题或到达新的到期日后，
+      // 它可能已变成有待复习题的队列。非空队列仍正常复用，避免切 Tab 重建。
+      if (cachedPlan && !forceNew && cachedPlan.scheduledItemIds.length > 0) {
         const cachedFacts = await dailyPracticeRepository.getRunFacts(cachedPlan.runId).catch(() => null)
         if (cachedFacts) {
           const hydrated = await hydratePlanIntoStore(cachedPlan)
@@ -254,7 +256,10 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
   },
 
   invalidatePlans() {
-    set({ plansByMode: {} })
+    // A pack can be quit/uninstalled while Today is open. Keeping `plan` here
+    // lets the page's reuse guard render that removed pack until navigation.
+    useTodayPracticeStore.getState().reset()
+    set({ plan: null, plansByMode: {} })
   },
 
   async checkRunChangedLocally() {

@@ -393,6 +393,10 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       }))
     }
     try {
+      // “退出学习”是放弃该学习包，而非仅移除下载的素材。先清本地 SRS
+      // 与 run，避免卸载期间 Today 继续显示旧包的到期/逾期题。
+      await learningRepository.clearPackPracticeProgress(unitId)
+      useDailyPracticeStore.getState().invalidatePlans()
       await learningRepository.quitUnit(unitId)
       updateUninstallProgress(35, 'removing_assets', packTaskStepLabel('removing_assets', 'uninstall'))
       await learningPackService.uninstall(unitId)
@@ -487,6 +491,9 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
 
   async uninstallUnitPack(unitId) {
     await learningPackService.uninstall(unitId)
+    // 单纯卸载保留进度，以便将来重新下载；但不能继续把已卸载包作为 Today
+    // 的内存计划展示。重新加载时会按仍安装的学习包重新解析。
+    useDailyPracticeStore.getState().invalidatePlans()
     await getState().syncPackStateAfterLocalChange(unitId)
     set((state) => ({
       availablePackUpdates: state.availablePackUpdates.filter((update) => update.packId !== unitId),
@@ -584,6 +591,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     for (const pack of packs) {
       await learningPackService.uninstall(pack.packId)
     }
+    useDailyPracticeStore.getState().invalidatePlans()
     await getState().syncPackStateAfterLocalChange()
     set({
       availablePackUpdates: [],

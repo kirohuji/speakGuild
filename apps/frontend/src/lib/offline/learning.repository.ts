@@ -516,10 +516,19 @@ export const learningRepository = {
 
   /** 清空某学习包在前端本地的练习/复习进度（重新学习时调用，与服务端 restart 对齐）。 */
   async clearPackPracticeProgress(packId: string) {
+    const runs = await localDb.list<any>('daily_practice_runs')
+    const removedRunIds = new Set(runs
+      .filter((item) => Array.isArray(item.packIds) && item.packIds.includes(packId))
+      .map((item) => item.id))
     await localDb.deleteWhere<any>('daily_practice_items', (item) => item.packId === packId)
     await localDb.deleteWhere<any>('daily_practice_attempts', (item) => item.packId === packId)
     await localDb.deleteWhere<any>('daily_practice_runs', (item) =>
       Array.isArray((item as any).packIds) && (item as any).packIds.includes(packId))
+    // 删除指向已删 run 的日期/mode 指针，以及已退出包的当前练习包指针。
+    // 否则 Today 页面会从这些指针恢复一个已经不存在的旧计划。
+    await localDb.deleteWhere<any>('daily_practice_runs', (item) =>
+      (typeof (item as any).runId === 'string' && removedRunIds.has((item as any).runId))
+      || ((item as any).id === 'daily:active-pack' && (item as any).packId === packId))
     await localDb.delete('user_progress', `novel:${packId}`)
     await localDb.deleteWhere<LocalTeachingReadingProgress>('user_progress', (record) =>
       record.type === 'teaching_reading' && record.sceneId === packId)

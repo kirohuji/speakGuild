@@ -158,21 +158,23 @@ function expandedPathFor(toc: TocItem[], sectionIndex: number) {
 
 function TeachingToc({ rows, activeSectionIndex, onSelect, onToggle, className }: TeachingTocProps) {
   const { t } = useTranslation()
-  const tocRef = useRef<VirtuosoHandle>(null)
+  const tocItemRefs = useRef(new Map<number, HTMLDivElement>())
   const activeRowIndex = rows.findIndex((row) => row.item.sectionIndex === activeSectionIndex)
 
   useEffect(() => {
-    if (activeRowIndex >= 0) tocRef.current?.scrollIntoView({ index: activeRowIndex, align: 'center', behavior: 'auto' })
-  }, [activeRowIndex])
+    if (activeRowIndex < 0) return
+    const sectionIndex = rows[activeRowIndex]?.item.sectionIndex
+    if (sectionIndex !== undefined) tocItemRefs.current.get(sectionIndex)?.scrollIntoView({ block: 'nearest', behavior: 'auto' })
+  }, [activeRowIndex, rows])
 
-  return <Virtuoso
-    ref={tocRef}
-    data={rows}
-    fixedItemHeight={42}
-    // Keep a real scroll-end gutter inside the virtual list. Padding on the
-    // Sheet itself does not give the last virtual row enough room on iOS.
-    className={cn('h-full pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]', className)}
-    itemContent={(_, row) => <div className={cn(
+  return <div className={cn('h-full overflow-y-auto overscroll-contain', className)}>
+    {rows.map((row) => <div
+      key={row.item.sectionIndex}
+      ref={(element) => {
+        if (element) tocItemRefs.current.set(row.item.sectionIndex, element)
+        else tocItemRefs.current.delete(row.item.sectionIndex)
+      }}
+      className={cn(
       'mx-2 my-0.5 flex w-[calc(100%-1rem)] items-center rounded-lg text-sm leading-5',
       row.item.level === 2 && 'pl-3',
       row.item.level === 3 && 'pl-8 text-muted-foreground',
@@ -187,8 +189,8 @@ function TeachingToc({ rows, activeSectionIndex, onSelect, onToggle, className }
         {row.item.text}
       </button>
       {row.expandable && <button type="button" className="mr-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => onToggle(row.item.sectionIndex)} aria-label={row.expanded ? t('practiceVn.collapseSubheadings') : t('practiceVn.expandSubheadings')}><ChevronDown className={cn('size-4 transition-transform', row.expanded && 'rotate-180')} /></button>}
-    </div>}
-  />
+    </div>)}
+  </div>
 }
 
 export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hideToggles = false, triggerClassName, plainTrigger = false, showTriggerIcon = true, open: controlledOpen, onOpenChange: controlledOnOpenChange, unitId, topicId }: PracticeVnDrawerProps) {

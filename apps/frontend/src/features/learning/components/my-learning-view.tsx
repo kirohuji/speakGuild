@@ -15,6 +15,7 @@ import { learningRepository } from '@/lib/offline'
 import { getCategoryIcon } from './category-icons'
 import { LearningWeekTracker } from './week-tracker'
 import { useLearningStore } from '@/stores/learning.store'
+import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 
 interface Props {
   myUnits: MyUnit[]
@@ -465,6 +466,7 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
       // 服务端 restart 已清空进度，这里同步清空前端本地进度，
       // 否则 mergeLocalPracticeProgress 会用本地旧数据把完成度顶回 100%。
       await learningRepository.clearPackPracticeProgress(unit.id)
+      useDailyPracticeStore.getState().invalidatePlans()
       await useLearningStore.getState().refreshMyUnits()
       toast.success(t('learning.learnAgainDone', { title: unit.title }))
     } catch (error) {

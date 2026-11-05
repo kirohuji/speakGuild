@@ -545,73 +545,34 @@ function buildCandidates(unit: UnitDetail): DailyPracticeCandidate[] {
 }
 
 async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: string | null): Promise<UnitDetail[]> {
-  // 获取当前用户已加入的学习包列表（my_learning_units 是用户级表，退出登录时会被清空）
-  const cachedMyUnits = await learningRepository.getCachedMyUnits().catch(() => [])
-  let myUnits = cachedMyUnits.length > 0
-    ? cachedMyUnits
-    : await learningRepository.getMyUnits().catch(() => [])
+  // Today 的候选题、计划和角标都必须来自同一份本地包快照；这里绝不为了
+  // 显示/构建计划临时请求后端，避免服务端旧进度或网络时序改变本地口径。
+  const myUnits = await learningRepository.getCachedMyUnits().catch(() => [])
   const packs = await learningPackService.listInstalled().catch(() => [])
   const installedIds = new Set(
     packs.filter((pack) => pack.status === 'installed').map((pack) => pack.packId),
   )
-
-  const hasInstalledEnrolledPack = () => myUnits.some((unit) => installedIds.has(unit.id))
-  const shouldRefreshEnrollment = targetPackId
-    ? installedIds.has(targetPackId) && !myUnits.some((unit) => unit.id === targetPackId)
-    : installedIds.size > 0 && !hasInstalledEnrolledPack()
-
-  if (shouldRefreshEnrollment) {
-    myUnits = await learningRepository.refreshMyUnits().catch(() => myUnits)
-  }
-
   const enrolledIds = new Set(myUnits.map((u) => u.id))
 
-  const getContentMode = async (unitId: string, declaredMode?: string, declaredType?: string) => {
-    if (declaredMode) return declaredMode
-    const installed = packs.find((pack) => pack.packId === unitId)
-    if (installed?.manifest?.contentMode) return installed.manifest.contentMode
-    const localDetail = await localDb.get<{ packageType?: string; contentMode?: string }>('downloaded_unit_details', unitId).catch(() => null)
-    const legacyType = declaredType ?? installed?.manifest?.packageType ?? localDetail?.packageType
-    return localDetail?.contentMode ?? (legacyType === 'story' ? 'story' : 'practice')
-  }
-
   if (targetPackId) {
-    // 即使通过 URL 指定了 packId，也必须检查当前用户是否已加入并安装了该学习包。
+    // URL 指定的包也必须是当前用户已加入、已安装且本地仍有题目的包。
     if (!enrolledIds.has(targetPackId) || !installedIds.has(targetPackId)) return []
-    const unit = myUnits.find((item) => item.id === targetPackId)
-    const contentMode = await getContentMode(targetPackId, unit?.contentMode, unit?.packageType)
-    if (contentMode !== 'practice') {
-      return []
-    }
     const detail = await learningRepository.getCachedUnitDetail(targetPackId)
-    return detail ? [detail] : []
+    return detail && detail.contentMode !== 'story' && buildCandidates(detail).length > 0 ? [detail] : []
   }
 
   if (enrolledIds.size === 0 || installedIds.size === 0) return []
 
-  // Story packs contain episodes, not warm-up practice. They must never become
-  // the implicit current pack for Today merely because they sort first.
-  const candidateEntries = await Promise.all(myUnits
-    .filter((unit) => installedIds.has(unit.id))
-    .map(async (unit) => ({
-      id: unit.id,
-      contentMode: await getContentMode(unit.id, unit.contentMode, unit.packageType),
-    })))
-  const candidateIds = candidateEntries
-    .filter((entry) => entry.contentMode === 'practice')
-    .map((entry) => entry.id)
   const detailsById = new Map<string, UnitDetail>()
-  await Promise.all(candidateIds.map(async (id) => {
+  await Promise.all(myUnits.filter((unit) => installedIds.has(unit.id)).map(async (unit) => {
+    const id = unit.id
     const detail = await learningRepository.getCachedUnitDetail(id)
-    if (detail) detailsById.set(id, detail)
+    if (detail && detail.contentMode !== 'story' && buildCandidates(detail).length > 0) {
+      detailsById.set(id, detail)
+    }
   }))
 
-  // 当前练习包必须有实际可执行的知识点题目。没有 pipeline 的 practice 包
-  // 仍可下载和学习，但不能抢占或清空 Today 的练习上下文。
-  const practiceCandidateIds = candidateIds.filter((id) => {
-    const detail = detailsById.get(id)
-    return detail ? buildCandidates(detail).length > 0 : false
-  })
+  const practiceCandidateIds = [...detailsById.keys()]
   const activePackId = await getActivePracticePackId()
   const selectedPackIds = scope === 'mixed'
     ? practiceCandidateIds
@@ -625,6 +586,30 @@ async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: stri
     .map((id) => detailsById.get(id))
     .filter(Boolean) as UnitDetail[]
   return resolved
+}
+
+type PracticeCandidateContext = {
+  scope: DailyPracticeScope
+  units: UnitDetail[]
+  candidates: DailyPracticeCandidate[]
+  packIds: string[]
+  itemIds: Set<string>
+}
+
+/** The sole eligibility gate for Today plans, review counts, and review runs. */
+async function resolvePracticeCandidateContext(
+  scope: DailyPracticeScope,
+  targetPackId?: string | null,
+): Promise<PracticeCandidateContext> {
+  const units = await loadCandidateUnits(scope, targetPackId)
+  const candidates = units.flatMap(buildCandidates)
+  return {
+    scope,
+    units,
+    candidates,
+    packIds: units.map((unit) => unit.id),
+    itemIds: new Set(candidates.map((candidate) => candidate.itemId)),
+  }
 }
 
 function buildTopicStats(
@@ -740,19 +725,19 @@ export const dailyPracticeRepository = {
 
   /**
    * 复习模式全局待办数量（逾期 + 今天到期），与当前 Tab/plan 无关。
-   * 纯本地轻量计算：只读 daily_practice_items 与 review run，不加载学习包
-   * 内容、不发起网络请求，避免挂载/切换卡顿。
-   * 范围：开跨学习包复习 → 所有包；否则 → 当前激活学习包。
+   * 只统计当前仍“已加入 + 已安装 + 有可执行知识点练习”的学习包。SRS
+   * 进度会为重装保留在本地，因而绝不能仅按 daily_practice_items 计数。
+   * 此方法不请求每日练习后端接口；只读取本地的包、学习关系和 SRS 数据。
    */
   async getReviewDebtCount(
     targetDate?: string | null,
-    context?: { scope: DailyPracticeScope; packIds: string[] },
+    requestedScope?: DailyPracticeScope,
   ): Promise<number> {
     const date = normalizePlanDate(targetDate)
     const preferences = usePreferencesStore.getState()
-    const mixed = context?.scope === 'mixed' || (!context && preferences.dailyPracticeMixedPacks)
-    const activePackId = mixed || context ? null : await getActivePracticePackId()
-    const allowedPackIds = context ? new Set(context.packIds) : null
+    const scope = requestedScope ?? (preferences.dailyPracticeMixedPacks ? 'mixed' : 'single')
+    const context = await resolvePracticeCandidateContext(scope)
+    if (context.itemIds.size === 0) return 0
     const [progresses, runs] = await Promise.all([
       localDb.list<DailyPracticeProgress>('daily_practice_items'),
       localDb.list<StoredDailyPracticeRun>('daily_practice_runs'),
@@ -761,11 +746,11 @@ export const dailyPracticeRepository = {
       run.id !== ACTIVE_DAILY_PRACTICE_PACK_ID
       && run.mode === 'review'
       && run.date === date
-      && (!context || runMatchesScope(run, context.scope, context.packIds)),
+      && runMatchesScope(run, scope, context.packIds),
     )
     const appliedToday = await appliedReviewItemIds(reviewRuns)
     return progresses.filter((p) =>
-      (mixed || (allowedPackIds ? allowedPackIds.has(p.packId) : p.packId === activePackId))
+      context.itemIds.has(p.itemId)
       && (p.attempts ?? 0) > 0
       && (p.dueDate ?? '') <= date
       && !appliedToday.has(p.itemId)
@@ -780,7 +765,7 @@ export const dailyPracticeRepository = {
   async refreshPlanProgress(plan: DailyPracticePlan): Promise<DailyPracticePlan> {
     const [progresses, reviewDebt] = await Promise.all([
       localDb.list<DailyPracticeProgress>('daily_practice_items'),
-      this.getReviewDebtCount(plan.date, { scope: plan.scope, packIds: plan.units.map((unit) => unit.id) }),
+      this.getReviewDebtCount(plan.date, plan.scope),
     ])
     const candidates = plan.units.flatMap(buildCandidates)
     const candidateById = new Map(candidates.map((candidate) => [candidate.itemId, candidate]))
@@ -799,11 +784,18 @@ export const dailyPracticeRepository = {
    * active plan. The Today page keeps one active plan at a time, so its tabs
    * must never borrow counts from that active plan for the other mode.
    */
-  async getRunSummary(date: string, mode: DailyPracticePlanMode): Promise<DailyPracticeRunSummary | null> {
+  async getRunSummary(
+    date: string,
+    mode: DailyPracticePlanMode,
+    scope: DailyPracticeScope = mode === 'review' && usePreferencesStore.getState().dailyPracticeMixedPacks ? 'mixed' : 'single',
+  ): Promise<DailyPracticeRunSummary | null> {
+    const context = await resolvePracticeCandidateContext(scope)
+    if (context.itemIds.size === 0) return null
     const run = (await localDb.list<StoredDailyPracticeRun>('daily_practice_runs'))
       .filter((item) => item.id !== ACTIVE_DAILY_PRACTICE_PACK_ID
         && item.date === date
         && item.mode === mode
+        && runMatchesScope(item, scope, context.packIds)
         && Array.isArray(item.scheduledItemIds))
       .sort((a, b) => (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt))[0]
     if (!run) return null
@@ -819,10 +811,6 @@ export const dailyPracticeRepository = {
       throw new Error('当前学习包没有可执行的知识点练习')
     }
     await setActivePracticePackId(packId)
-  },
-
-  async resolveCandidateUnits(scope: DailyPracticeScope, targetPackId?: string | null): Promise<UnitDetail[]> {
-    return loadCandidateUnits(scope, targetPackId)
   },
 
   async buildTodayPlan(
@@ -864,9 +852,13 @@ export const dailyPracticeRepository = {
       ?? (packScope === 'single' && recoveredRun?.packIds.length === 1
         ? recoveredRun.packIds[0]
         : null)
-    const units = await this.resolveCandidateUnits(packScope, targetPackId ?? recoveredPackId)
-    const candidates = units.flatMap(buildCandidates)
-    const packIds = units.map((unit) => unit.id)
+    let context = await resolvePracticeCandidateContext(packScope, targetPackId ?? recoveredPackId)
+    // 旧 run 可能属于已经卸载/退出的包。它不能阻塞 Today 自动回退到
+    // 当前仍有效的练习包；显式 URL 指定的包则保持严格失败，不做回退。
+    if (!targetPackId && recoveredPackId && context.itemIds.size === 0) {
+      context = await resolvePracticeCandidateContext(packScope)
+    }
+    const { units, candidates, packIds } = context
     const packIdsKey = packKey(packIds)
     const configFingerprint = stableHash({
       mode,

@@ -250,7 +250,6 @@ export function TodayTaskPage() {
   const [rehearsalAll, setRehearsalAll] = useState(false)
   const [manualSyncing, setManualSyncing] = useState(false)
   const [practiceTabSummary, setPracticeTabSummary] = useState<{ attemptedCount: number; totalCount: number } | null>(null)
-  const [reviewTabSummary, setReviewTabSummary] = useState<{ attemptedCount: number; totalCount: number } | null>(null)
   const [reviewDebtCount, setReviewDebtCount] = useState<number | null>(null)
   // 今日任务相关 outbox 存在未同步改动时，同步按钮显示感叹号角标。
   const [hasPendingSync, setHasPendingSync] = useState(false)
@@ -313,17 +312,12 @@ export function TodayTaskPage() {
   useEffect(() => {
     if (!plan?.date) {
       setPracticeTabSummary(null)
-      setReviewTabSummary(null)
       return
     }
     let cancelled = false
-    void Promise.all([
-      dailyPracticeRepository.getRunSummary(plan.date, 'practice'),
-      dailyPracticeRepository.getRunSummary(plan.date, 'review'),
-    ]).then(([practiceSummary, reviewSummary]) => {
+    void dailyPracticeRepository.getRunSummary(plan.date, 'practice', 'single').then((practiceSummary) => {
       if (cancelled) return
       setPracticeTabSummary(practiceSummary)
-      setReviewTabSummary(reviewSummary)
     })
     return () => { cancelled = true }
   }, [plan?.date, plan?.runId])
@@ -337,22 +331,18 @@ export function TodayTaskPage() {
       return
     }
     let cancelled = false
-    const context = plan.mode === 'review'
-      ? { scope: plan.scope, packIds: plan.units.map((unit) => unit.id) }
-      : undefined
-    void dailyPracticeRepository.getReviewDebtCount(plan.date, context).then((count) => {
+    // 这张卡在两个 Tab 中必须使用同一范围：由当前偏好和当前练习包决定。
+    // 不能复用 review plan 的快照范围，否则一个空的旧 review run 会显示 0，
+    // 而切到 practice 后又按实时 SRS 显示正确的待复习数。
+    void dailyPracticeRepository.getReviewDebtCount(plan.date).then((count) => {
       if (!cancelled) setReviewDebtCount(count)
     })
     return () => { cancelled = true }
   }, [lastSyncedAt, plan])
 
-  // An empty run is authoritative: do not fall back to an old debt projection
-  // and show tasks that cannot actually be started from this page.
-  const displayedReviewDebtCount = plan?.mode === 'review'
-    ? (plan.scheduledItemIds.length === 0 ? 0 : plan.availableReviewCount)
-    : (reviewTabSummary?.totalCount === 0
-      ? 0
-      : (reviewDebtCount ?? plan?.availableReviewCount ?? 0))
+  // 卡片只显示实时 SRS 待办，而非某个 Tab 的历史 run 快照，确保切换 Tab
+  // 前后数值一致。计划本身的队列仍由 buildTodayPlan 单独控制。
+  const displayedReviewDebtCount = reviewDebtCount ?? plan?.availableReviewCount ?? 0
 
   useEffect(() => {
     if (currentPlanReusable) return
