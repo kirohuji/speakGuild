@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
 import { Card, CardContent } from '@/components/ui/card'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -1733,7 +1734,7 @@ export function TodayTaskPage() {
       >
         <DialogContent
           data-keyboard-overlay="practice"
-          className="app-surface drawer-surface left-0 top-0 !z-[10000] flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0 pt-safe md:left-[50%] md:top-[50%] md:h-[88vh] md:max-w-3xl md:translate-x-[-50%] md:translate-y-[-50%] md:rounded-2xl md:pt-0 [&>button]:hidden"
+          className="app-surface drawer-surface left-0 top-0 !z-[10000] flex h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-none p-0 md:left-[50%] md:top-[50%] md:h-[88vh] md:max-w-3xl md:translate-x-[-50%] md:translate-y-[-50%] md:rounded-2xl [&>button]:hidden"
         >
           <DialogTitle className="sr-only">
             {currentStep?.displayLabel || currentMeta.label} · {currentStep?.topicTitle}
@@ -1742,67 +1743,54 @@ export function TodayTaskPage() {
             {currentStep?.label}
           </DialogDescription>
 
-          <div className="flex min-h-0 flex-1 flex-col">
-            {/* Header：Badge 标识题型，大字展示练习内容 */}
-            <div data-keyboard-practice-header className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-9 md:px-6">
-              <div className="grid grid-cols-[2.25rem_minmax(0,1fr)] items-start gap-3">
-                <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  {(() => { const Icon = currentMeta.icon; return <Icon className="size-[18px]" /> })()}
-                </div>
-                <div className="min-w-0 space-y-2">
-                  <div className="flex min-w-0 items-center justify-between gap-2">
-                    <Badge variant="secondary" className="min-w-0 max-w-[45%] truncate">{currentMeta.label}</Badge>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <label className="flex items-center gap-1.5 rounded-full bg-background/70 px-2 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70">
-                        <span>{t('todayTask.autoNext')}</span>
-                        <Switch
-                          checked={autoNextEnabled}
-                          onCheckedChange={setAutoNextEnabled}
-                          disabled={activeTotal <= 1}
-                          className="origin-right scale-90"
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        onClick={closePracticeDrawer}
-                        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background/60 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
-                      >
-                        <ChevronDown className="size-4" />
-                      </button>
-                    </div>
-                  </div>
-                  <div data-keyboard-practice-title className="min-w-0">
-                    <h2 className="line-clamp-2 break-words text-lg font-bold leading-snug text-foreground">
-                      {currentStep?.headerContent || currentStep?.label}
-                    </h2>
-                    <p className="mt-1 line-clamp-1 break-words text-sm leading-relaxed text-muted-foreground">
-                      {currentStep?.topicTitle}
-                    </p>
-                  </div>
-                </div>
+          <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden pt-[calc(1rem+env(safe-area-inset-top,0px))]">
+            <div data-keyboard-practice-header className="mb-4 grid shrink-0 grid-cols-[minmax(0,1fr)_2.25rem] items-start gap-3 px-4">
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-2">
+                <p className="min-w-0 truncate text-xs text-muted-foreground">
+                  {currentMeta.label} · {currentIdx + 1}/{activeTotal}
+                </p>
+                <label className="flex shrink-0 items-center gap-1.5 rounded-full bg-background/70 px-2 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70">
+                  <span>{t('todayTask.autoNext')}</span>
+                  <Switch
+                    checked={autoNextEnabled}
+                    onCheckedChange={setAutoNextEnabled}
+                    disabled={activeTotal <= 1}
+                    className="origin-right scale-90"
+                  />
+                </label>
+                <h2 data-keyboard-practice-title className="col-span-2 line-clamp-2 break-words text-lg font-bold leading-snug text-foreground">
+                  {currentStep?.headerContent || currentStep?.label}
+                </h2>
+                <p data-keyboard-practice-title className="col-span-2 line-clamp-2 break-words text-xs text-muted-foreground/70">
+                  {currentStep?.topicTitle}
+                </p>
               </div>
+              <Button variant="ghost" size="icon" onClick={closePracticeDrawer} className="mt-0.5">
+                <ChevronDown className="size-5" />
+              </Button>
             </div>
+            <Progress
+              data-keyboard-practice-progress
+              value={activeTotal > 0 ? ((currentIdx + 1) / activeTotal) * 100 : 0}
+              className="mb-4 h-1.5 shrink-0 px-4"
+            />
 
-            {/* Body */}
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-4 md:px-6">
+            <div className="min-h-0 min-w-0 flex-1 overscroll-contain overflow-x-hidden overflow-y-auto px-4 pb-4">
               <div key={`${currentStep?.id}:${reviewRunNonce}:${currentStep ? (todayState.retryCycles[currentStep.id]?.cycle ?? 0) : 0}`}>
                 {currentStep?.render()}
               </div>
             </div>
 
-            {/* Bottom nav */}
             <div data-keyboard-practice-footer className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
               <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
-                <ChevronLeft className="size-4" />
-                <span className="ml-1">{t('todayTask.prevQuestion')}</span>
+                <ChevronLeft className="size-4" /> {t('todayTask.prevQuestion')}
               </Button>
-              <span className="text-xs text-muted-foreground tabular-nums">
+              <span className="text-xs text-muted-foreground">
                 {currentIdx + 1} / {activeTotal}
               </span>
               <div className="flex items-center gap-1.5">
                 <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
-                  <span className="mr-1">{t('todayTask.nextQuestion')}</span>
-                  <ChevronRight className="size-4" />
+                  {t('todayTask.nextQuestion')} <ChevronRight className="size-4" />
                 </Button>
                 <Button
                   variant="ghost"

@@ -380,7 +380,7 @@ export function ImmersivePlayerDialog({
           <DialogDescription className="sr-only">{current.meaning || current.sceneName || t('immersivePlayer.description')}</DialogDescription>
 
           <div className="flex min-h-0 flex-1 flex-col">
-            <div className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-9 md:px-6">
+            <div className="shrink-0 border-b border-border/60 px-5 pb-4 pt-9 md:px-6">
               <div className="grid grid-cols-[2.25rem_minmax(0,1fr)] items-start gap-3">
                 <div className={cn('mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl', meta.tone)}>
                   <Icon className="size-[18px]" />
@@ -433,12 +433,12 @@ export function ImmersivePlayerDialog({
             </div>
 
             <div className="min-h-0 flex-1 overscroll-contain overflow-y-auto px-5 py-6 md:px-6">
-              <div className={cn('mx-auto flex min-h-full max-w-xl flex-col gap-5', hiddenText ? 'items-center justify-center' : 'pt-8 md:pt-10')}>
+              <div className={cn('mx-auto flex min-h-full max-w-xl flex-col gap-5', hiddenText ? 'items-center justify-center' : 'pt-2 md:pt-2')}>
                 {!hiddenText && (
                 <div className="text-center">
                   <p className="text-xs tabular-nums text-muted-foreground">{index + 1} / {items.length}</p>
                   {current.meaning && (
-                    <p className="mx-auto mt-5 max-w-md break-words text-2xl font-bold leading-snug text-foreground">{current.meaning}</p>
+                    <p className="mx-auto mt-5 max-w-md break-words text-xl font-bold leading-snug text-foreground">{current.meaning}</p>
                   )}
                 </div>
                 )}
@@ -619,15 +619,15 @@ function ImmersiveQueueDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[100dvh] overscroll-contain rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]">
-        <div className="flex items-center justify-between px-5 py-3">
-          <DrawerTitle className="text-lg">{t('immersivePlayer.queueTitle')}</DrawerTitle>
-          <button type="button" onClick={() => onOpenChange(false)} aria-label={t('immersivePlayer.close')} className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
+      <DrawerContent className={cn('h-[100dvh] w-full max-w-full overflow-hidden overscroll-contain rounded-none pt-safe !z-[10001]', isIOS() && 'pb-safe')} overlayClassName="!z-[10001]">
+        <div className="flex min-w-0 items-center justify-between gap-3 px-5 py-3">
+          <DrawerTitle className="min-w-0 truncate text-lg">{t('immersivePlayer.queueTitle')}</DrawerTitle>
+          <button type="button" onClick={() => onOpenChange(false)} aria-label={t('immersivePlayer.close')} className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <ChevronDown className="size-5" />
           </button>
         </div>
-        <ScrollArea className="min-h-0 flex-1 px-4 pb-8">
-          <div className="space-y-1">
+        <ScrollArea className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden px-4 pb-8">
+          <div className="w-full max-w-full min-w-0 space-y-1 overflow-hidden">
             {items.map((item, itemIndex) => {
               const meta = TYPE_META[item.kind]
               const Icon = meta.Icon
@@ -637,14 +637,21 @@ function ImmersiveQueueDrawer({
                   key={item.id}
                   type="button"
                   onClick={() => onSelect(itemIndex)}
-                  className={cn('flex min-h-11 w-full touch-manipulation items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', active ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted')}
+                  className={cn(
+                    'grid w-full max-w-full min-w-0 touch-manipulation grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                    active ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted',
+                  )}
                 >
                   <Icon className="size-4 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{item.title}</p>
-                    <p className="truncate text-xs text-muted-foreground">{item.meaning || item.sceneName || t(KIND_LABEL_KEY[item.kind])}</p>
-                  </div>
-                  {active && <Badge variant="default" className="px-1.5 py-0 text-[10px]">{t('immersivePlayer.current')}</Badge>}
+                  <span className="min-w-0 max-w-full overflow-hidden">
+                    <span className="block truncate text-sm font-medium">{item.title}</span>
+                    <span className="block truncate text-xs text-muted-foreground">{item.meaning || item.sceneName || t(KIND_LABEL_KEY[item.kind])}</span>
+                  </span>
+                  {active ? (
+                    <Badge variant="default" className="max-w-[4.5rem] shrink-0 truncate px-1.5 py-0 text-[10px]">{t('immersivePlayer.current')}</Badge>
+                  ) : (
+                    <span className="w-0" />
+                  )}
                 </button>
               )
             })}

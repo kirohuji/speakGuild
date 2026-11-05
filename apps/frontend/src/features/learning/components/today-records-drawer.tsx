@@ -90,7 +90,8 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps }: Today
   ]
 
   return (
-    <Drawer open={open} onOpenChange={setDrawerOpen}>
+    <>
+      <Drawer open={open} onOpenChange={setDrawerOpen}>
       <DrawerContent
         className="!z-[10001] flex h-[95dvh] max-h-[95dvh] w-full max-w-full flex-col overflow-hidden bg-background p-0"
         overlayClassName="!z-[10001]"
@@ -123,16 +124,17 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps }: Today
           </div>
         </div>
       </DrawerContent>
-
-      <WarmupRecordDetailDialog
-        open={detailIndex !== null && Boolean(selectedRecord)}
-        onOpenChange={(nextOpen) => { if (!nextOpen) setDetailIndex(null) }}
-        items={records}
-        topicTitle={selectedRecord?.topicTitle || t('todayTask.todayPracticeRecords')}
-        initialIndex={detailIndex ?? 0}
-        contentClassName="!z-[10002]"
-        overlayClassName="!z-[10002]"
-      />
     </Drawer>
+
+    <WarmupRecordDetailDialog
+      open={detailIndex !== null && Boolean(selectedRecord)}
+      onOpenChange={(nextOpen) => { if (!nextOpen) setDetailIndex(null) }}
+      items={records}
+      topicTitle={selectedRecord?.topicTitle || t('todayTask.todayPracticeRecords')}
+      initialIndex={detailIndex ?? 0}
+      contentClassName="!z-[10002]"
+      overlayClassName="!z-[10002]"
+    />
+    </>
   )
 }

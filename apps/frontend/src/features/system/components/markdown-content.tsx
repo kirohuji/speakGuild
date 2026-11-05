@@ -1,9 +1,10 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { cn } from '@/lib/cn'
 
-export function MarkdownContent({ content }: { content: string }) {
+export function MarkdownContent({ content, className }: { content: string; className?: string }) {
   return (
-    <article className="
+    <article className={cn(`
       text-sm leading-relaxed text-foreground
       [&_h1]:font-display [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:tracking-tight [&_h1]:mt-0 [&_h1]:mb-4 [&_h1]:text-foreground
       [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:text-foreground
@@ -37,7 +38,7 @@ export function MarkdownContent({ content }: { content: string }) {
 
       [&_tr:hover]:bg-muted/30
       [&_tr]:transition-colors
-    ">
+    `, className)}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{

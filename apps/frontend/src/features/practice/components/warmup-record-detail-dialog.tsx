@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, XCircle } from 'lucide-react'
+import { CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
+import { setRecordDetailOverlay } from '@/components/ui/drawer'
 import { Progress } from '@/components/ui/progress'
 import { ChunkOutputDrillCard } from '@/features/practice/components/chunk-output-drill-card'
 import { PatternDrillCard } from '@/features/practice/components/pattern-drill-card'
@@ -62,6 +63,12 @@ export function WarmupRecordDetailDialog({
     if (!open) return
     setCurrentIdx(Math.max(0, Math.min(items.length - 1, initialIndex)))
   }, [initialIndex, items.length, open])
+
+  useEffect(() => {
+    if (!open) return
+    setRecordDetailOverlay(true)
+    return () => setRecordDetailOverlay(false)
+  }, [open])
 
   const gotoPrev = () => setCurrentIdx((index) => Math.max(0, index - 1))
   const gotoNext = () => setCurrentIdx((index) => Math.min(total - 1, index + 1))
@@ -159,10 +166,7 @@ export function WarmupRecordDetailDialog({
         <DialogDescription className="sr-only">{t('learning.reviewSubtitle')}</DialogDescription>
 
         <div className="flex h-full flex-col">
-          <div className="mb-4 grid shrink-0 grid-cols-[2.25rem_minmax(0,1fr)_2.25rem] items-start gap-3 px-4 pt-4">
-            <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="mt-0.5" aria-label={t('common.back')}>
-              <ArrowLeft className="size-5" />
-            </Button>
+          <div className="mb-4 grid shrink-0 grid-cols-[minmax(0,1fr)_2.25rem] items-start gap-3 px-4 pt-4">
             <div className="min-w-0">
               <p className="truncate text-xs text-muted-foreground">
                 {t('learning.warmupPractice')} · {total > 0 ? currentIdx + 1 : 0}/{total}

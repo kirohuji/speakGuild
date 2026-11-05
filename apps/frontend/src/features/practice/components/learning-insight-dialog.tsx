@@ -352,9 +352,21 @@ function renderInline(text: string): ReactNode {
   })
 }
 
+/** 把 **小节标题：** 拆成独立段落。覆盖核心含义、用法提示、易错点、常见搭配、类似表达、句式解析、使用场景、替换练习等。 */
+function separateInsightSections(markdown: string) {
+  return markdown
+    .replace(/([^\n])\n?(?=\*\*[^*\n]+[：:]\*\*)/g, '$1\n\n')
+    .replace(/\n{3,}/g, '\n\n')
+}
+
 function RichText({ text }: { text: string }) {
   if (!text.trim()) return null
-  return <MarkdownContent content={text} />
+  return (
+    <MarkdownContent
+      content={separateInsightSections(text)}
+      className="flex flex-col gap-6 [&_ol]:!mb-0 [&_p]:!mb-0 [&_ul]:!mb-0"
+    />
+  )
 }
 
 interface LearningInsightDialogProps {
@@ -565,7 +577,7 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
   const { play: playAudio } = useCachedAudio()
 
   return (
-    <div className="shrink-0 border-b border-border/60 bg-gradient-to-br from-primary/5 to-background px-5 pb-4 pt-9 md:px-6">
+    <div className="shrink-0 border-b border-border/60 px-5 pb-4 pt-9 md:px-6">
       <div className="flex items-start gap-3">
         <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Icon className="size-[18px]" />
@@ -736,76 +748,69 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
         {/* 释义 */}
         <TabsContent value="meaning" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
           <ScrollArea className="h-full">
-            <div className="space-y-4 py-4">
-              <section className="overflow-hidden rounded-md border border-border/70 bg-background">
-                {definitionEntries.length > 0 ? (
-                  <div className="divide-y divide-border/60">
-                    {definitionEntries.map((definition, index) => {
-                      const zhParsed = definition.chineseGloss ? parseZhQualifiers(definition.chineseGloss) : null
-                      const qualifiers = zhParsed?.qualifiers ?? []
-                      const zhText = zhParsed?.text ?? definition.chineseGloss ?? ''
-                      return (
-                        <div key={`${definition.partOfSpeech}-${index}`} className="px-4 py-3.5">
-                          <div className="flex items-start gap-2">
-                            <span className="mt-0.5 shrink-0 text-right text-xs tabular-nums leading-6 text-muted-foreground/40">{index + 1}.</span>
-                            <div className="min-w-0 flex-1">
-                              {/* 中文释义 + 词性标签同行 */}
-                              <div className="flex items-baseline gap-2">
-                                <span className="min-w-0 flex-1">
-                                  {qualifiers.length > 0 && qualifiers.map((q) => (
-                                    <span key={q} className="mr-1.5 inline-flex items-center rounded border border-border/50 bg-muted/50 px-1 py-px text-[11px] leading-none text-muted-foreground">{q}</span>
-                                  ))}
-                                  <span className={cn('text-sm font-medium leading-6 text-foreground', !zhText && 'font-english')}>{zhText || definition.definition}</span>
-                                </span>
-                                {definition.label && (
-                                  <span className="shrink-0 text-xs text-muted-foreground/50">{definition.label}</span>
-                                )}
-                              </div>
-                              {definition.definition && definition.chineseGloss && (
-                                <p className="mt-0.5 font-english text-xs leading-5 text-muted-foreground">{definition.definition}</p>
-                              )}
-                            </div>
+            <div className="py-4">
+              {definitionEntries.length > 0 ? (
+                <div className="space-y-3">
+                  {definitionEntries.map((definition, index) => {
+                    const zhParsed = definition.chineseGloss ? parseZhQualifiers(definition.chineseGloss) : null
+                    const qualifiers = zhParsed?.qualifiers ?? []
+                    const zhText = zhParsed?.text ?? definition.chineseGloss ?? ''
+                    return (
+                      <div key={`${definition.partOfSpeech}-${index}`} className="flex items-start gap-2">
+                        <span className="mt-0.5 shrink-0 text-right text-xs tabular-nums leading-6 text-muted-foreground/40">{index + 1}.</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="min-w-0 flex-1">
+                              {qualifiers.length > 0 && qualifiers.map((q) => (
+                                <span key={q} className="mr-1.5 inline-flex items-center rounded px-1 py-px text-[11px] leading-none text-muted-foreground">{q}</span>
+                              ))}
+                              <span className={cn('text-sm font-medium leading-6 text-foreground', !zhText && 'font-english')}>{zhText || definition.definition}</span>
+                            </span>
+                            {definition.label && (
+                              <span className="shrink-0 text-xs text-muted-foreground/50">{definition.label}</span>
+                            )}
+                          </div>
+                          {definition.definition && definition.chineseGloss && (
+                            <p className="mt-0.5 font-english text-xs leading-5 text-muted-foreground">{definition.definition}</p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : enriched?.meanings?.length ? (
+                <div className="space-y-3">
+                  {enriched.meanings.slice(0, 8).map((meaning, index) => {
+                    const zhParsed = meaning.chineseGloss ? parseZhQualifiers(meaning.chineseGloss) : null
+                    const qualifiers = zhParsed?.qualifiers ?? []
+                    const zhText = zhParsed?.text ?? meaning.chineseGloss ?? ''
+                    return (
+                      <div key={`${meaning.partOfSpeech}-${index}`} className="flex items-start gap-2">
+                        <span className="mt-0.5 shrink-0 text-right text-xs tabular-nums leading-6 text-muted-foreground/40">{index + 1}.</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="min-w-0 flex-1">
+                              {qualifiers.length > 0 && qualifiers.map((q) => (
+                                <span key={q} className="mr-1.5 inline-flex items-center rounded px-1 py-px text-[11px] leading-none text-muted-foreground">{q}</span>
+                              ))}
+                              <span className="text-sm font-medium leading-6 text-foreground">{zhText}</span>
+                            </span>
+                            {meaning.partOfSpeech && (
+                              <span className="shrink-0 text-xs text-muted-foreground/50">{posShortLabel(meaning.partOfSpeech) || meaning.partOfSpeech}</span>
+                            )}
                           </div>
                         </div>
-                      )
-                    })}
-                  </div>
-                ) : enriched?.meanings?.length ? (
-                  <div className="divide-y divide-border/60">
-                    {enriched.meanings.slice(0, 8).map((meaning, index) => {
-                      const zhParsed = meaning.chineseGloss ? parseZhQualifiers(meaning.chineseGloss) : null
-                      const qualifiers = zhParsed?.qualifiers ?? []
-                      const zhText = zhParsed?.text ?? meaning.chineseGloss ?? ''
-                      return (
-                        <div key={`${meaning.partOfSpeech}-${index}`} className="px-4 py-3.5">
-                          <div className="flex items-start gap-2">
-                            <span className="mt-0.5 shrink-0 text-right text-xs tabular-nums leading-6 text-muted-foreground/40">{index + 1}.</span>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-baseline gap-2">
-                                <span className="min-w-0 flex-1">
-                                  {qualifiers.length > 0 && qualifiers.map((q) => (
-                                    <span key={q} className="mr-1.5 inline-flex items-center rounded border border-border/50 bg-muted/50 px-1 py-px text-[11px] leading-none text-muted-foreground">{q}</span>
-                                  ))}
-                                  <span className="text-sm font-medium leading-6 text-foreground">{zhText}</span>
-                                </span>
-                                {meaning.partOfSpeech && (
-                                  <span className="shrink-0 text-xs text-muted-foreground/50">{posShortLabel(meaning.partOfSpeech) || meaning.partOfSpeech}</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : meaningText ? (
-                  <p className="px-4 py-4 text-sm font-medium leading-6 text-foreground">
-                    {meaningText}
-                  </p>
-                ) : (
-                  <p className="px-4 py-4 text-sm text-muted-foreground">{t('insight.noMeaning')}</p>
-                )}
-              </section>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : meaningText ? (
+                <p className="text-sm font-medium leading-6 text-foreground">
+                  {meaningText}
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t('insight.noMeaning')}</p>
+              )}
             </div>
           </ScrollArea>
         </TabsContent>
@@ -843,7 +848,7 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
                   onPlay={playAudio}
                 />
               ) : (
-                <p className="rounded-md border border-border/70 bg-background p-4 text-sm text-muted-foreground">{t('insight.noDictionary')}</p>
+                <p className="text-sm text-muted-foreground">{t('insight.noDictionary')}</p>
               )}
             </div>
           </ScrollArea>
@@ -945,8 +950,8 @@ function ManagedDictionaryView({
     .filter((sense) => sense.frequency === 'uncommon').length
 
   return (
-    <div className="overflow-hidden rounded-md border border-border/70 bg-background">
-      <section className="space-y-3 px-4 py-4">
+    <div className="space-y-4">
+      <section className="space-y-3">
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-english text-xl font-bold leading-tight text-foreground">{entry.word}</h3>
           {uncommonCount > 0 && (
@@ -991,7 +996,7 @@ function ManagedDictionaryView({
       </section>
 
       {clusters.length > 0 ? (
-        <div className="divide-y divide-border/60">
+        <div className="space-y-4">
           {clusters.map((cluster) => (
             <DictionaryClusterSection key={cluster.id} cluster={cluster} showUncommon={showUncommon} />
           ))}
@@ -1001,20 +1006,20 @@ function ManagedDictionaryView({
       )}
 
       {dictionaryExamples.length > 0 && (
-        <section className="border-t border-border/60 px-4 py-4">
-          <h4 className="mb-3 text-sm font-semibold text-foreground">{t('insight.dictExamples')}</h4>
+        <section className="space-y-3">
+          <h4 className="text-sm font-semibold text-foreground">{t('insight.dictExamples')}</h4>
           <div className="space-y-3">
             {dictionaryExamples.slice(0, 6).map((example, index) => (
-              <div key={`${example.en}-${index}`} className="rounded-md bg-muted/45 p-3">
-                <p className="font-english text-xs italic leading-5 text-muted-foreground/85">{highlightWord(example.en, entry.word)}</p>
-                {example.zh && <p className="mt-1 text-[11px] leading-4 text-muted-foreground/70">{highlightWord(example.zh, entry.word)}</p>}
+              <div key={`${example.en}-${index}`} className="rounded-md bg-muted/60 p-3">
+                <p className="font-english text-sm font-medium leading-relaxed text-foreground">{highlightWord(example.en, entry.word)}</p>
+                {example.zh && <p className="mt-1 text-xs text-muted-foreground">{highlightWord(example.zh, entry.word)}</p>}
               </div>
             ))}
           </div>
         </section>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 px-4 py-2 text-[11px] text-muted-foreground/55">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground/55">
         <span>{t('insight.senseCount', { count: allSenseCount })}</span>
         {entry.sourceUrl ? (
           <a
@@ -1036,7 +1041,7 @@ function ManagedDictionaryView({
 
 function DictionaryEmptyState({ text }: { text: string }) {
   return (
-    <p className="border-t border-border/60 px-4 py-4 text-sm text-muted-foreground">{text}</p>
+    <p className="text-sm text-muted-foreground">{text}</p>
   )
 }
 
@@ -1048,7 +1053,7 @@ function DictionaryClusterSection({ cluster, showUncommon }: { cluster: Dictiona
   const enLabel = POS_LABELS[cluster.posBucket] ?? cluster.posBucket
 
   return (
-    <section className="px-4 py-4">
+    <section>
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <Badge variant="secondary" className="rounded-md px-1.5 py-0.5 text-xs font-bold">{cnLabel || enLabel}</Badge>
         <span className="text-[11px] leading-4 text-muted-foreground/70">{clusterName(cluster)}</span>
@@ -1079,19 +1084,19 @@ function DictionarySenseRow({ sense, index }: { sense: DictionarySense; index: n
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
             <p className={cn('text-sm font-medium leading-6 text-foreground', !cleanZh && 'font-english')}>{cleanZh || sense.definition.substring(0, 80)}</p>
             {zhQuals.map((qualifier) => (
-              <span key={qualifier} className="rounded border border-border/60 px-1 py-0 text-[10px] leading-4 text-muted-foreground">
+              <span key={qualifier} className="rounded px-1 py-0 text-[10px] leading-4 text-muted-foreground">
                 {qualifier}
               </span>
             ))}
             {sense.frequency === 'uncommon' && (
-              <span className="rounded bg-muted px-1 py-0 text-[10px] leading-4 text-muted-foreground/65">不常用</span>
+              <span className="rounded px-1 py-0 text-[10px] leading-4 text-muted-foreground/65">不常用</span>
             )}
           </div>
           {sense.definition && (
             <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
               <p className="font-english text-xs leading-5 text-muted-foreground">{cleanEn}</p>
               {enQuals.map((qualifier) => (
-                <span key={qualifier} className="rounded border border-border/60 px-1 py-0 text-[10px] leading-4 text-muted-foreground">
+                <span key={qualifier} className="rounded px-1 py-0 text-[10px] leading-4 text-muted-foreground">
                   {qualifier}
                 </span>
               ))}

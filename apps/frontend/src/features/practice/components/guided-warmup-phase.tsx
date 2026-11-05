@@ -709,8 +709,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden pt-[calc(1rem+env(safe-area-inset-top,0px))]">
       {/* Header */}
-      <div data-keyboard-practice-header className="mb-4 grid shrink-0 grid-cols-[2.25rem_minmax(0,1fr)_2.25rem] items-start gap-3 px-4">
-        <Button variant="ghost" size="icon" onClick={onBack} className="mt-0.5"><ArrowLeft className="size-5" /></Button>
+      <div data-keyboard-practice-header className="mb-4 grid shrink-0 grid-cols-[minmax(0,1fr)_2.25rem] items-start gap-3 px-4">
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-2">
           <p className="min-w-0 truncate text-xs text-muted-foreground">{t('practiceSession.warmupTitle')} · {currentIdx + 1}/{totalSteps}</p>
           <label className="flex shrink-0 items-center gap-1.5 rounded-full bg-background/70 px-2 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70">

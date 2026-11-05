@@ -3,15 +3,60 @@ import { Drawer as DrawerPrimitive } from "vaul"
 
 import { cn } from "@/lib/cn"
 
+const NESTED_DIALOG_EVENT = "manyu:record-detail-overlay"
+
+export function setRecordDetailOverlay(open: boolean) {
+  window.dispatchEvent(new CustomEvent(NESTED_DIALOG_EVENT, { detail: open }))
+}
+
 const Drawer = ({
   shouldScaleBackground = true,
+  dismissible = true,
+  onOpenChange,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
-  <DrawerPrimitive.Root
-    shouldScaleBackground={shouldScaleBackground}
-    {...props}
-  />
-)
+}: React.ComponentProps<typeof DrawerPrimitive.Root>) => {
+  const [nestedHeld, setNestedHeld] = React.useState(false)
+  const openCountRef = React.useRef(0)
+  const releaseTimerRef = React.useRef<number | null>(null)
+
+  React.useEffect(() => {
+    const onToggle = (event: Event) => {
+      const nextOpen = Boolean((event as CustomEvent<boolean>).detail)
+      if (nextOpen) {
+        openCountRef.current += 1
+        if (releaseTimerRef.current !== null) {
+          window.clearTimeout(releaseTimerRef.current)
+          releaseTimerRef.current = null
+        }
+        setNestedHeld(true)
+        return
+      }
+      openCountRef.current = Math.max(0, openCountRef.current - 1)
+      if (releaseTimerRef.current !== null) window.clearTimeout(releaseTimerRef.current)
+      releaseTimerRef.current = window.setTimeout(() => {
+        if (openCountRef.current === 0) setNestedHeld(false)
+        releaseTimerRef.current = null
+      }, 500)
+    }
+    window.addEventListener(NESTED_DIALOG_EVENT, onToggle)
+    return () => {
+      window.removeEventListener(NESTED_DIALOG_EVENT, onToggle)
+      if (releaseTimerRef.current !== null) window.clearTimeout(releaseTimerRef.current)
+    }
+  }, [])
+
+  return (
+    <DrawerPrimitive.Root
+      shouldScaleBackground={shouldScaleBackground}
+      {...props}
+      dismissible={dismissible && !nestedHeld}
+      onOpenChange={(open) => {
+        if (!open && nestedHeld) return
+        onOpenChange?.(open)
+      }}
+    />
+  )
+}
 Drawer.displayName = "Drawer"
 
 const DrawerTrigger = DrawerPrimitive.Trigger
