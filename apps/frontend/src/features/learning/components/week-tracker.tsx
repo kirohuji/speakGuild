@@ -431,10 +431,10 @@ function MonthlyActivityChart({ days, dailyStats, locale, selectedDay, onSelectD
   const selectedDateKey = selectedDay ? format(selectedDay, 'yyyy-MM-dd') : undefined
   const selectedChartIndex = chartData.findIndex((item) => item.dateKey === selectedDateKey)
   const selectedChartItem = selectedChartIndex >= 0 ? chartData[selectedChartIndex] : null
-  const minutesMax = getChartDomainMax(chartData.map((item) => item.minutes), 15)
-  // A few completed questions should read as a gentle start, not a peak.
-  // On phone-sized charts, 20 questions is a useful visual baseline for a day.
-  const questionsMax = getChartDomainMax(chartData.map((item) => item.questions), 20)
+  const minutesMax = getChartDomainMax(chartData.map((item) => item.minutes), 60)
+  // Treat the line as a quiet trend cue. On the compact monthly chart, a
+  // normal session (up to roughly 80 questions) should remain below midline.
+  const questionsMax = getChartDomainMax(chartData.map((item) => item.questions), 160)
   const selectedChartRatio = selectedChartItem
     ? Math.max(selectedChartItem.minutes / minutesMax, selectedChartItem.questions / questionsMax)
     : 0
@@ -514,9 +514,10 @@ function YearlyActivity({ year, dailyStats, today, onSelectMonth, onPrevYear, on
   })
   const chartData = values
   const selectedChartItem = selectedMonthIndex === null ? null : chartData[selectedMonthIndex]
-  const minutesMax = getChartDomainMax(chartData.map((item) => item.minutes), 30)
-  // Monthly totals need a slightly broader baseline than the daily view.
-  const questionsMax = getChartDomainMax(chartData.map((item) => item.questions), 40)
+  const minutesMax = getChartDomainMax(chartData.map((item) => item.minutes), 120)
+  // Keep modest monthly totals visually calm as well; only a genuinely busy
+  // month should make the line climb into the upper half of the chart.
+  const questionsMax = getChartDomainMax(chartData.map((item) => item.questions), 240)
   const selectedChartRatio = selectedChartItem
     ? Math.max(selectedChartItem.minutes / minutesMax, selectedChartItem.questions / questionsMax)
     : 0

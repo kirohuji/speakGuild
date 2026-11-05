@@ -25,6 +25,12 @@ export interface GenerateEnttsAudioOptions {
 }
 
 const EXTERNAL_AUDIO_MAX_BYTES = 10 * 1024 * 1024;
+const EXTERNAL_AUDIO_RETRY_ATTEMPTS = 3;
+const EXTERNAL_AUDIO_TIMEOUT_MS = 8_000;
+
+function waitForRetry(delayMs: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, delayMs));
+}
 
 @Injectable()
 export class DictionaryAudioService {
@@ -137,17 +143,35 @@ export class DictionaryAudioService {
       throw new BadGatewayException('旧音频地址必须使用 HTTP 或 HTTPS');
     }
 
-    let response: Response;
-    try {
-      // External dictionary CDNs are only a best-effort source during this
-      // one-off migration. Fail quickly so the caller can generate a managed
-      // fallback instead of holding up thousands of queued items.
-      response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new BadGatewayException(`旧音频下载失败：${message}`);
+    let response: Response | null = null;
+    let lastError: unknown = null;
+    for (let attempt = 1; attempt <= EXTERNAL_AUDIO_RETRY_ATTEMPTS; attempt += 1) {
+      try {
+        // dictionaryapi.dev and Wikimedia can intermittently return 5xx or
+        // time out from server-side networks. Retry only transient failures;
+        // a 4xx other than 429 is a permanent source problem.
+        const candidate = await fetch(url, { signal: AbortSignal.timeout(EXTERNAL_AUDIO_TIMEOUT_MS) });
+        if (candidate.ok) {
+          response = candidate;
+          break;
+        }
+        if (candidate.body) await candidate.body.cancel().catch(() => undefined);
+        if (candidate.status < 500 && candidate.status !== 429) {
+          throw new BadGatewayException(`旧音频返回 HTTP ${candidate.status}`);
+        }
+        lastError = new Error(`HTTP ${candidate.status}`);
+      } catch (error) {
+        if (error instanceof BadGatewayException) throw error;
+        lastError = error;
+      }
+      if (attempt < EXTERNAL_AUDIO_RETRY_ATTEMPTS) {
+        await waitForRetry(500 * attempt);
+      }
     }
-    if (!response.ok) throw new BadGatewayException(`旧音频返回 HTTP ${response.status}`);
+    if (!response) {
+      const message = lastError instanceof Error ? lastError.message : String(lastError ?? 'unknown error');
+      throw new BadGatewayException(`旧音频下载失败（已重试 ${EXTERNAL_AUDIO_RETRY_ATTEMPTS} 次）：${message}`);
+    }
     const declaredSize = Number(response.headers.get('content-length') || 0);
     if (declaredSize > EXTERNAL_AUDIO_MAX_BYTES) throw new BadGatewayException('旧音频文件过大');
     const buffer = Buffer.from(await response.arrayBuffer());

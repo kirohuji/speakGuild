@@ -3,6 +3,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import AdmZip = require('adm-zip');
 import { createHash } from 'crypto';
 import { FileAssetsService } from '../file-assets/file-assets.service';
+import { DictionaryAudioService } from '../dictionary/dictionary-audio.service';
 
 function sha256Buffer(buffer: Buffer) {
   return createHash('sha256').update(buffer).digest('hex');
@@ -169,7 +170,53 @@ export class LearningService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly fileAssets: FileAssetsService,
+    private readonly dictionaryAudio: DictionaryAudioService,
   ) {}
+
+  /**
+   * Older vocabulary rows may point directly at third-party pronunciation
+   * files. An offline package needs a managed FileAsset, so migrate that one
+   * resource type into COS before the package manifest is assembled.
+   */
+  private async ensureVocabularyPronunciationAsset(
+    vocabulary: { id?: string; word?: string; audioUsUrl?: string | null; audioUkUrl?: string | null },
+    field: 'audioUsUrl' | 'audioUkUrl',
+  ) {
+    const existingUrl = vocabulary[field]?.trim();
+    if (!existingUrl || !vocabulary.id) return existingUrl ?? null;
+
+    // Managed asset references (including legacy own-COS URLs) already have
+    // a stable identity and need no migration.
+    if (await this.fileAssets.findAssetByPersistentUrl(existingUrl)) return existingUrl;
+
+    const accent = field === 'audioUsUrl' ? 'us' : 'uk';
+    const filenamePrefix = `${safeFilePart(vocabulary.word || vocabulary.id)}-${accent}`;
+    let managedUrl: string;
+    try {
+      // Third-party dictionary CDNs are too slow/unreliable during package
+      // generation. Generate the managed pronunciation first; this gives the
+      // package a predictable source and avoids waiting on old external URLs.
+      managedUrl = await this.dictionaryAudio.generate(
+        vocabulary.word || vocabulary.id,
+        accent,
+        'female',
+        {
+          bizType: 'dictionary_pronunciation_audio',
+          bizId: `${vocabulary.id}:${accent}`,
+          filenamePrefix,
+        },
+      );
+    } catch (enttsError) {
+      const message = enttsError instanceof Error ? enttsError.message : String(enttsError);
+      throw new Error(`词条 ${vocabulary.word || vocabulary.id} 的 ${accent} 发音 ENTTS 生成失败：${message}`);
+    }
+    await this.prisma.vocabulary.update({
+      where: { id: vocabulary.id },
+      data: { [field]: managedUrl },
+    });
+    vocabulary[field] = managedUrl;
+    return managedUrl;
+  }
 
   private pushAsset(assets: any[], url?: string | null, role?: string) {
     if (!url || url.startsWith('blob:') || url.startsWith('data:')) return;
@@ -1729,9 +1776,31 @@ export class LearningService {
       ...topicDetails.flatMap((topicDetail) => topicDetail.vocabularies ?? []),
       ...(unitDetail.contentMode === 'novel' ? (unitVocabs ?? []) : []),
     ];
-    for (const vocabulary of packagedVocabularies) {
-      this.pushAsset(assets, vocabulary?.audioUsUrl, 'vocabulary_pronunciation_us');
-      this.pushAsset(assets, vocabulary?.audioUkUrl, 'vocabulary_pronunciation_uk');
+    const pronunciationMigrations = new Map<string, Promise<string | null>>();
+    const resolvePronunciation = (vocabulary: any, field: 'audioUsUrl' | 'audioUkUrl') => {
+      const key = `${vocabulary?.id ?? ''}:${field}`;
+      let migration = pronunciationMigrations.get(key);
+      if (!migration) {
+        migration = this.ensureVocabularyPronunciationAsset(vocabulary, field);
+        pronunciationMigrations.set(key, migration);
+      }
+      return migration;
+    };
+    // Each vocabulary has up to US + UK audio generation requests. Keep the
+    // batch bounded for ENTTS while making large legacy packages practical.
+    const VOCABULARY_AUDIO_MIGRATION_CONCURRENCY = 10;
+    for (let index = 0; index < packagedVocabularies.length; index += VOCABULARY_AUDIO_MIGRATION_CONCURRENCY) {
+      const batch = packagedVocabularies.slice(index, index + VOCABULARY_AUDIO_MIGRATION_CONCURRENCY);
+      await Promise.all(batch.map(async (vocabulary) => {
+        const [audioUsUrl, audioUkUrl] = await Promise.all([
+          resolvePronunciation(vocabulary, 'audioUsUrl'),
+          resolvePronunciation(vocabulary, 'audioUkUrl'),
+        ]);
+        vocabulary.audioUsUrl = audioUsUrl;
+        vocabulary.audioUkUrl = audioUkUrl;
+        this.pushAsset(assets, audioUsUrl, 'vocabulary_pronunciation_us');
+        this.pushAsset(assets, audioUkUrl, 'vocabulary_pronunciation_uk');
+      }));
     }
 
     const totalVocabs = topicDetails.reduce((sum, td) => sum + (td.vocabularies?.length ?? 0), 0);

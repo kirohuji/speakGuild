@@ -3,6 +3,17 @@ import { assetCacheService } from '@/lib/offline/asset-cache.service'
 import { isNative } from '@/lib/native'
 import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
 
+function assetIdFromReference(value?: string | null) {
+  if (!value?.startsWith('asset://')) return null
+  const encodedId = value.slice('asset://'.length).split(/[?#]/, 1)[0]
+  if (!encodedId || encodedId.includes('/')) return null
+  try {
+    return decodeURIComponent(encodedId)
+  } catch {
+    return null
+  }
+}
+
 /**
  * Capacitor-first audio playback hook.
  *
@@ -55,24 +66,21 @@ export function useCachedAudio() {
 
     // Normalize protocol-relative URLs
     let resolvedUrl = url?.startsWith('//') ? `https:${url}` : (url ?? '')
+    const resolvedAssetId = assetId ?? assetIdFromReference(resolvedUrl)
 
     if (isNative()) {
       try {
-        if (assetId) {
-          const fresh = await getFileAssetPrivateUrl(assetId)
-          resolvedUrl = fresh.url
-        }
         resolvedUrl = await assetCacheService.resolve({
           url: resolvedUrl,
-          assetId: assetId ?? undefined,
+          assetId: resolvedAssetId ?? undefined,
           role,
         })
       } catch {
         // Fall back to direct URL if caching fails
       }
-    } else if (assetId) {
+    } else if (resolvedAssetId) {
       try {
-        const fresh = await getFileAssetPrivateUrl(assetId)
+        const fresh = await getFileAssetPrivateUrl(resolvedAssetId)
         resolvedUrl = fresh.url
       } catch {
         // Fall back to the saved URL.
@@ -85,13 +93,13 @@ export function useCachedAudio() {
       audio.load()
       await audio.play()
     } catch {
-      if (!assetId) return
+      if (!resolvedAssetId) return
       try {
-        const fresh = await getFileAssetPrivateUrl(assetId)
+        const fresh = await getFileAssetPrivateUrl(resolvedAssetId)
         const fallbackUrl = isNative()
           ? await assetCacheService.download({
               url: fresh.url,
-              assetId,
+              assetId: resolvedAssetId,
               role,
             })
           : fresh.url
