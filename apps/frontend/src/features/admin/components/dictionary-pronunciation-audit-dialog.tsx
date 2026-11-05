@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp,
-  ClipboardCheck, Database, Headphones, ListChecks, LockKeyhole, Loader2, PenLine, RefreshCw, Save, Search, ShieldCheck, SpellCheck2, Trash2, Volume2, WandSparkles,
+  ClipboardCheck, CloudUpload, Database, Headphones, ListChecks, LockKeyhole, Loader2, PenLine, RefreshCw, Save, Search, ShieldCheck, SpellCheck2, Trash2, Volume2, WandSparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,7 @@ import {
   normalizeDictionaryPronunciation, saveManualDictionaryPronunciation,
   enqueuePronunciationRefreshCurrentPage,
   enqueuePronunciationAudioCurrentPage,
+  enqueueDictionaryAudioLibraryMigration,
   setDictionaryPronunciationLocked,
   type PronunciationAuditAccent, type PronunciationAuditFilter, type PronunciationAuditItem,
   type PronunciationAuditResult, type PronunciationProvider, type PronunciationScope,
@@ -249,6 +250,7 @@ export function DictionaryPronunciationAuditDialog({
   const [manualValue, setManualValue] = useState('');
   const [batchSubmitting, setBatchSubmitting] = useState(false);
   const [audioBatchSubmitting, setAudioBatchSubmitting] = useState(false);
+  const [audioMigrationSubmitting, setAudioMigrationSubmitting] = useState(false);
   const [autoLocking, setAutoLocking] = useState(false);
   const [normalizingAll, setNormalizingAll] = useState(false);
 
@@ -461,6 +463,19 @@ export function DictionaryPronunciationAuditDialog({
     }
   };
 
+  const migrateDictionaryAudioToLibrary = async () => {
+    if (audioMigrationSubmitting) return;
+    setAudioMigrationSubmitting(true);
+    try {
+      const task = await enqueueDictionaryAudioLibraryMigration();
+      toast.success(`已创建 ${task.totalItems} 条外部词典音频迁入资源库任务，可在任务中心查看进度`);
+    } catch (error: any) {
+      toast.error(error?.message || '创建词典音频迁入资源库任务失败');
+    } finally {
+      setAudioMigrationSubmitting(false);
+    }
+  };
+
   const autoLockTrustedPronunciations = async () => {
     if (autoLocking || !data?.items.length) return;
     setAutoLocking(true);
@@ -664,6 +679,22 @@ export function DictionaryPronunciationAuditDialog({
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>仅生成当前页缺少的 UK / US 音频，男女声稳定自动分配</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline-primary"
+                        onClick={() => void migrateDictionaryAudioToLibrary()}
+                        disabled={audioMigrationSubmitting}
+                      >
+                        {audioMigrationSubmitting
+                          ? <Loader2 data-icon="inline-start" className="animate-spin" />
+                          : <CloudUpload data-icon="inline-start" />}
+                        迁入资源库
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>扫描全词典，将所有外部 MP3 下载并迁入腾讯云资源库；任务在后台执行，不受当前页限制</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>

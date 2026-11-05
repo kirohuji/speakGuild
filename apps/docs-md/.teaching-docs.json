@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": "2026-11-05T10:01:27.482Z",
+  "generatedAt": "2026-11-05T12:51:36.437Z",
   "documents": [
     {
       "topicId": "cmu296m4h000b15lcpn4zp30w",
@@ -20,9 +20,9 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "核心动作与日常表达",
       "path": "学习包/常用动词300个 高频核心/核心动作与日常表达.md",
-      "exportedSha256": "5f8b8c834d5e7fbbd77797ee93a38f76d84eff78963059be53e0f5cd255f092d",
+      "exportedSha256": "7ced9ba5fb4827adaa47d0e4cb6f24007a872d78742313cad4019adcbfc29e77",
       "learningPath": "学习包/常用动词300个 高频核心/核心动作与日常表达.learning.md",
-      "exportedLearningSha256": "fab383af3d1881cc47bbafe2e544df7bf5da6192e8a1c508e9be5708f0442685"
+      "exportedLearningSha256": "2b2b38ce2ad1d11ca7904e04fe112935f186e0c8117ac7d3c24e0ccea6a32e5c"
     },
     {
       "topicId": "cmuz4bd4424e13e54e608843f",
@@ -99,7 +99,7 @@
       "path": "学习包/常用动词300个 高频核心/移动、位置与变化.md",
       "exportedSha256": "da6f6a32e878ffdeb1f6a5c4c724dda6f441bb609e4061d5e292f3a244ab842f",
       "learningPath": "学习包/常用动词300个 高频核心/移动、位置与变化.learning.md",
-      "exportedLearningSha256": "d1d89b2c80e49a9086fd50b7adb0719708bb4b1807883518d6de2d0ccd8338b2"
+      "exportedLearningSha256": "1ae3b06fab2426d918fb0c537f53cba8fd1e61e57acc738d3a28f511d904561c"
     },
     {
       "topicId": "cmuza06210493e94472b97dc5",
@@ -163,9 +163,9 @@
       "packageTitle": "常用动词300个:高频核心",
       "topicTitle": "思考与判断",
       "path": "学习包/常用动词300个 高频核心/思考与判断.md",
-      "exportedSha256": "d9a3b6cc262c9b12ae548bac178e79a88536cf2115d88435cd9afe7b71465425",
+      "exportedSha256": "94b29c89418bbfb9a21be85756306df5cc00218101615ff660ad3c5e240b5474",
       "learningPath": "学习包/常用动词300个 高频核心/思考与判断.learning.md",
-      "exportedLearningSha256": "0518f74ce25af977ec0cc675c59c66fddb25dd55299c30bf9af02bdbb473e630"
+      "exportedLearningSha256": "eeaee9180a93bf460b830cc749f89dae3ef7bc0cfe6160139a4b9fe2e00fffbd"
     },
     {
       "topicId": "cmuzhyuck002msbr091n3b9iq",
@@ -231,7 +231,7 @@
       "path": "学习包/常用动词300个 高频核心/沟通与表达.md",
       "exportedSha256": "c510a976dd4585b25986e5a42d38d4786b067c2e36b403ea5db636d895d7fe70",
       "learningPath": "学习包/常用动词300个 高频核心/沟通与表达.learning.md",
-      "exportedLearningSha256": "1dadffc9c42c21576c824259822dbcee6a9cbdcd2b2480e5b0eab8613a4a00a6"
+      "exportedLearningSha256": "aaea77ffa7bb80021648aba524ff52ca1ec9c7d00c06ec1285a578d59cc7fabc"
     },
     {
       "topicId": "cmuza742db284c924669a9ffe",
@@ -297,7 +297,7 @@
       "path": "学习包/常用动词300个 高频核心/选择与意图.md",
       "exportedSha256": "0c1663fd9e53b3bcf7f10ca3334c908a91cbcfee9314bd8f08fdc34e6b281ad5",
       "learningPath": "学习包/常用动词300个 高频核心/选择与意图.learning.md",
-      "exportedLearningSha256": "a25870c746cad3e532d9cf37a6c78c31eba492a42aa7090480e25c61effb10ad"
+      "exportedLearningSha256": "3f8c91ed19444aa42983c2d029e43fc1be5c9c43e0eb431e91cc32c0a1782607"
     },
     {
       "topicId": "cmuz355004a32ad143bdad13c",
@@ -374,7 +374,7 @@
       "path": "学习包/常用动词300个 高频核心/行动、尝试与完成.md",
       "exportedSha256": "34541febaa2940a09047fc87e013fdc64a10e2091b299c62e112515ea51264de",
       "learningPath": "学习包/常用动词300个 高频核心/行动、尝试与完成.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "089d1e4b633fd9962df30232321135aca4bda446d11e83b6a519d43a914d5b5e"
     },
     {
       "topicId": "cmuzhys8r0026sbr0kw8mjn48",
@@ -429,7 +429,7 @@
       "path": "学习包/常用动词300个 高频核心/人际关系与影响.md",
       "exportedSha256": "66e898fd84c27f6971e163249048399a33d8f3b758d3a20bda52dac5ded9e5c3",
       "learningPath": "学习包/常用动词300个 高频核心/人际关系与影响.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "21e19bb31c6191f190dce653ba6d7f2c756391da188418eb5e5468174d42f5b6"
     },
     {
       "topicId": "cmuz07fea02e4198450db8daf",
@@ -484,7 +484,7 @@
       "path": "学习包/常用动词300个 高频核心/情绪、态度与经历.md",
       "exportedSha256": "d9a772c20576e38346cc9eaeadc949a3960289760b988a59969abbcf2a48c6c0",
       "learningPath": "学习包/常用动词300个 高频核心/情绪、态度与经历.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "e41d967b7d7c39fa78aef3d18855396b422af7d8e156831643edb29d153a31f4"
     },
     {
       "topicId": "cmuz973af08d24d54fe3909e1",
@@ -539,7 +539,7 @@
       "path": "学习包/常用动词300个 高频核心/工作、学习与解决问题.md",
       "exportedSha256": "90f231aa883298d00ceb9773a8f2cd9846898ea04e9a04391693caee3cfb379e",
       "learningPath": "学习包/常用动词300个 高频核心/工作、学习与解决问题.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "21cf7d11784762f9b26e291827c14d7154f53922ab75313c67529ff8863f56b4"
     },
     {
       "topicId": "cmuz32d5ef8ffb64426786949",
@@ -594,7 +594,7 @@
       "path": "学习包/常用动词300个 高频核心/变化、趋势与结果.md",
       "exportedSha256": "7b0c5c86330a4d7c4755a4f1c891b9e5947f3a3860e0831e55e5ce334d218756",
       "learningPath": "学习包/常用动词300个 高频核心/变化、趋势与结果.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "488cf66f72a1dd492204aefa7667678bb9a089cc677d3108a85d4522ea8bd963"
     },
     {
       "topicId": "cmuz59214264675e4be4bd1d7",
@@ -660,7 +660,7 @@
       "path": "学习包/常用动词300个 高频核心/分析与说明.md",
       "exportedSha256": "bfb572bce5ee7b0a56a3bf9a495b84a0b2df98208abfdcdfc9d75e8ab866f510",
       "learningPath": "学习包/常用动词300个 高频核心/分析与说明.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "3910f84083ecf3ec75da3a6a922e50092a13d8bdcc56d15930d3af4a40acd1f5"
     },
     {
       "topicId": "cmuzhyt07002csbr0w8ev2sd0",
@@ -726,7 +726,7 @@
       "path": "学习包/常用动词300个 高频核心/中高级观点与抽象表达.md",
       "exportedSha256": "c5a41cc5d140d5aa8dc4586ed84c012ecebba0cc25cb155de15f182fef9d4420",
       "learningPath": "学习包/常用动词300个 高频核心/中高级观点与抽象表达.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "f055e73cbc150d52c5cf288b386121d248542c6ced129b0d332bf1076fbe2bea"
     },
     {
       "topicId": "cmuz007312f4902c4c909d4e5",
@@ -2440,9 +2440,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "02｜三种形式相同的动词",
       "path": "学习包/不规则动词专区/02｜三种形式相同的动词.md",
-      "exportedSha256": "473e92d2d56a44549a0ed7cec2785bb652820de6c081b95097ffd1b7e59b8ab1",
+      "exportedSha256": "7cf4d6da6fcf638c9d101b67ca6d0e27a0e00c0579249a0ca3035fd8e259a5d7",
       "learningPath": "学习包/不规则动词专区/02｜三种形式相同的动词.learning.md",
-      "exportedLearningSha256": "ae93034bc5133f9aa5adc4e9160f6ee4d2880b716c5c96f6c8134a7cc1b5c196"
+      "exportedLearningSha256": "53d8cb8f1f539f249ee4f7787e233a27bb3e4e4bdd117f98a0a701f9dfbbea4f"
     },
     {
       "topicId": "cmuwlyifn000dsbeecb64nrt2",
@@ -2451,9 +2451,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "03｜过去式与过去分词相同的动词",
       "path": "学习包/不规则动词专区/03｜过去式与过去分词相同的动词.md",
-      "exportedSha256": "b116a65c489729352d15ab5dfec04f0a29813c976ea20105e04af4060bccbded",
+      "exportedSha256": "fc253e6c6d6fc0befbf8fb7bdad894083c14f33426f479243ffb9529c8a1695f",
       "learningPath": "学习包/不规则动词专区/03｜过去式与过去分词相同的动词.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmuwlzk83000fsbee0igqm71u",
@@ -2462,9 +2462,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "04｜三种形式不同的动词",
       "path": "学习包/不规则动词专区/04｜三种形式不同的动词.md",
-      "exportedSha256": "2de00c152cdcef7e5a7c6d700827ec6877441d034858aa5f199fce9a4100ef5d",
+      "exportedSha256": "af77d368b133f9d393b16fc1d532c3aafad56e3e2d16fdb58417a85d025ce1f0",
       "learningPath": "学习包/不规则动词专区/04｜三种形式不同的动词.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmuwmcnad000hsbeeqxggtdda",
@@ -2473,9 +2473,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "05｜原形与过去分词相同的动词",
       "path": "学习包/不规则动词专区/05｜原形与过去分词相同的动词.md",
-      "exportedSha256": "1ac31ff20a9d8752b64453fee569558509074c08e3325f91de01a36e8eb188a1",
+      "exportedSha256": "1a5b86012954a17848b9af388898245072e1c96819dddd250e259ed25ff0925e",
       "learningPath": "学习包/不规则动词专区/05｜原形与过去分词相同的动词.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmuwme4lr000jsbee5v345diy",
@@ -2484,9 +2484,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "06｜高频核心不规则动词",
       "path": "学习包/不规则动词专区/06｜高频核心不规则动词.md",
-      "exportedSha256": "9f81fccfc7d65dc456e42bfd69b1a10ef3c95631d1ed1351ebd5c90b38665b3e",
+      "exportedSha256": "2561b7b8d61878209e41663da9de6425afb77deaede454877d824b36b358836e",
       "learningPath": "学习包/不规则动词专区/06｜高频核心不规则动词.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmuwmevon000lsbeeijmh3d4f",
@@ -2495,9 +2495,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "07｜易混形式与特殊变化",
       "path": "学习包/不规则动词专区/07｜易混形式与特殊变化.md",
-      "exportedSha256": "3ac53ef0766ddc89860400f0eb71fe6eca940a68d9a69847ace1c520c8f5e260",
+      "exportedSha256": "b7b8f3413a37562114da00b3e109d59a47d188e965392e23f57a3bada7d789af",
       "learningPath": "学习包/不规则动词专区/07｜易混形式与特殊变化.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmuwmfxt4000nsbeenmauaea1",
@@ -2506,9 +2506,9 @@
       "packageTitle": "不规则动词专区",
       "topicTitle": "08｜过去分词的实际使用",
       "path": "学习包/不规则动词专区/08｜过去分词的实际使用.md",
-      "exportedSha256": "6b299f21fb0cbce5b99d7d3c168af4c600f6c466e9c6e0039eda20b607b9d08c",
+      "exportedSha256": "22d5730d40f8037477e48210c04cc15f3ad61fedce2f6d004a661eff7361843f",
       "learningPath": "学习包/不规则动词专区/08｜过去分词的实际使用.learning.md",
-      "exportedLearningSha256": "6012602695f0e562b757e6091c76af46c67fb1e47428232591ea5baec81a7c99"
+      "exportedLearningSha256": "9239abfec8cb0bbb4f59bc3c894cfa7f1a3518dc9f49f0db464847e89678f217"
     },
     {
       "topicId": "cmuwmgkhc000psbeeddht9d6z",
@@ -4554,7 +4554,7 @@
       "path": "学习包/英语常用句式/日常生活与习惯.md",
       "exportedSha256": "ab274ece56121909752876e1be0f5bbd20554c9f500e3b9ecadc41bd2bf07e44",
       "learningPath": "学习包/英语常用句式/日常生活与习惯.learning.md",
-      "exportedLearningSha256": "6870cee00d19d6fadd77588b35c2d1bd1e9f66a74a999ba9731591ac887244d5"
+      "exportedLearningSha256": "081922b35c98e4d49d355603a23e2d58dd553e4abaa427315f7b907bba984afe"
     },
     {
       "topicId": "cmuzf96c5572a6e948f588ff2",

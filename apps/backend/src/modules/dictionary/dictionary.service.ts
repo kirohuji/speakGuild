@@ -538,6 +538,59 @@ export class DictionaryService {
     return this.toPronunciationAuditItem(updated);
   }
 
+  /** Migrate one legacy external pronunciation URL into the managed file library. */
+  async migratePronunciationAudio(word: string, type: 'uk' | 'us') {
+    const key = word.toLowerCase().trim();
+    const entry = await this.prisma.dictionaryEntry.findUnique({
+      where: { word: key }, select: { pronunciations: true },
+    });
+    if (!entry) throw new NotFoundException(`Word "${key}" not found`);
+    const pronunciations = Array.isArray(entry.pronunciations)
+      ? entry.pronunciations as unknown as CleanedPronunciation[] : [];
+    const variants = pronunciations.filter((item) => item.type === type);
+    const selected = variants.find((item) => item.isPreferred) ?? variants[0];
+    const sourceUrl = selected?.audioUrl?.trim();
+    if (!sourceUrl || sourceUrl.startsWith('asset://')) return { migrated: false };
+
+    // Some historical providers (notably dictionaryapi.dev and Wikimedia) are
+    // intermittently unavailable from server networks. Prefer a byte-for-byte
+    // migration, but never leave playback dependent on that external host.
+    let replacementUrl: string;
+    let migratedFrom: 'source' | 'generated';
+    try {
+      const imported = await this.dictionaryAudio.importExternalAudio(
+        sourceUrl, `${key}-${type}-legacy`, `${key}:${type}`,
+      );
+      replacementUrl = imported.url;
+      migratedFrom = 'source';
+    } catch (error) {
+      this.logger.warn(`Unable to download legacy ${type.toUpperCase()} audio for "${key}"; generating managed fallback`, error instanceof Error ? error.message : String(error));
+      const hash = [...`${key}:${type}`].reduce(
+        (total, character) => ((total * 31) + character.codePointAt(0)!) >>> 0,
+        0,
+      );
+      replacementUrl = await this.dictionaryAudio.generate(
+        key, type, hash % 2 === 0 ? 'female' : 'male',
+        { bizType: 'dictionary_pronunciation_audio', bizId: `${key}:${type}`, filenamePrefix: `${key}-${type}-fallback` },
+      );
+      migratedFrom = 'generated';
+    }
+    const latest = await this.prisma.dictionaryEntry.findUnique({
+      where: { word: key }, select: { pronunciations: true },
+    });
+    const latestPronunciations = Array.isArray(latest?.pronunciations)
+      ? latest.pronunciations as unknown as CleanedPronunciation[] : [];
+    const latestVariants = latestPronunciations.filter((item) => item.type === type);
+    const latestSelected = latestVariants.find((item) => item.isPreferred) ?? latestVariants[0];
+    if (!latestSelected || latestSelected.audioUrl !== sourceUrl) return { migrated: false };
+    await this.prisma.dictionaryEntry.update({
+      where: { word: key },
+      data: { pronunciations: latestPronunciations.map((item) => item === latestSelected
+        ? { ...item, audioUrl: replacementUrl } : item) as any },
+    });
+    return { migrated: true, migratedFrom };
+  }
+
   async saveManualPronunciation(word: string, type: 'uk' | 'us', value: string) {
     const key = word.toLowerCase().trim();
     const ipa = normalizeBroadIpa(value);

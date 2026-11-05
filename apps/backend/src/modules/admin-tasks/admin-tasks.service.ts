@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleIni
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, VOCABULARY_MEANING_OTHER_REWRITE_JOB, VOCABULARY_MEANING_POS_REWRITE_JOB, VOCABULARY_MEANING_PRIORITY_REVIEW_JOB, VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB, VOCABULARY_DIFFICULTY_RECLASSIFY_JOB, VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, CHUNK_MEANING_REWRITE_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB, VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, VOCABULARY_MEANING_OTHER_REWRITE_JOB, VOCABULARY_MEANING_POS_REWRITE_JOB, VOCABULARY_MEANING_PRIORITY_REVIEW_JOB, VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB, VOCABULARY_DIFFICULTY_RECLASSIFY_JOB, VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, CHUNK_MEANING_REWRITE_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB, DICTIONARY_AUDIO_MIGRATE_TO_LIBRARY_JOB, VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB } from './admin-tasks.constants';
 import { DictionaryService } from '../dictionary/dictionary.service';
 import type { PronunciationAuditFilter } from '../dictionary/dto/pronunciation-audit.dto';
 import {
@@ -40,7 +40,7 @@ export class AdminTasksService implements OnModuleInit {
   private async recoverInterruptedDictionaryPronunciationTasks() {
     const tasks = await this.prisma.adminTask.findMany({
       where: {
-        type: { in: [DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB] },
+        type: { in: [DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB, DICTIONARY_AUDIO_MIGRATE_TO_LIBRARY_JOB] },
         status: { in: [AdminTaskStatus.queued, AdminTaskStatus.running] },
       },
       select: { id: true, type: true, status: true, bullJobId: true, payload: true, processedItems: true, totalItems: true },
@@ -49,6 +49,7 @@ export class AdminTasksService implements OnModuleInit {
     for (const task of tasks) {
       const payload = task.payload as any;
       const isAudioTask = task.type === DICTIONARY_AUDIO_BATCH_GENERATE_JOB;
+      const isMigrationTask = task.type === DICTIONARY_AUDIO_MIGRATE_TO_LIBRARY_JOB;
       const words = Array.isArray(payload?.words)
         ? payload.words.filter((word: unknown): word is string => typeof word === 'string')
         : [];
@@ -57,10 +58,10 @@ export class AdminTasksService implements OnModuleInit {
           const value = item as any;
           return typeof value?.word === 'string'
             && ['uk', 'us'].includes(value?.type)
-            && ['female', 'male'].includes(value?.gender);
+            && (isMigrationTask || ['female', 'male'].includes(value?.gender));
         })
         : [];
-      if (isAudioTask ? !audioItems.length : !words.length) continue;
+      if ((isAudioTask || isMigrationTask) ? !audioItems.length : !words.length) continue;
 
       try {
         const existingJob = task.bullJobId ? await this.contentQueue.getJob(task.bullJobId) : null;
@@ -77,8 +78,9 @@ export class AdminTasksService implements OnModuleInit {
           if (['completed', 'failed'].includes(state)) await previousRecoveryJob.remove().catch(() => undefined);
         }
         const job = await this.contentQueue.add(
-          isAudioTask ? DICTIONARY_AUDIO_BATCH_GENERATE_JOB : DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB,
-          isAudioTask ? { taskId: task.id, audioItems } : { taskId: task.id, words },
+          isMigrationTask ? DICTIONARY_AUDIO_MIGRATE_TO_LIBRARY_JOB
+            : isAudioTask ? DICTIONARY_AUDIO_BATCH_GENERATE_JOB : DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB,
+          (isAudioTask || isMigrationTask) ? { taskId: task.id, audioItems } : { taskId: task.id, words },
           { jobId: recoveryJobId },
         );
         await this.prisma.adminTask.update({
@@ -230,6 +232,38 @@ export class AdminTasksService implements OnModuleInit {
     );
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
     await this.log(task.id, 'info', `已加入队列：补全本页 ${audioItems.length} 条 UK / US 音频`, { step: 'queued' });
+    return { ...task, bullJobId: job.id };
+  }
+
+  /** Queue all legacy remote dictionary pronunciation files for COS migration. */
+  async enqueueDictionaryAudioLibraryMigration(createdById: string) {
+    const entries = await this.prisma.dictionaryEntry.findMany({
+      select: { word: true, pronunciations: true },
+    });
+    const audioItems = entries.flatMap((entry) => {
+      const pronunciations = Array.isArray(entry.pronunciations) ? entry.pronunciations as any[] : [];
+      return (['uk', 'us'] as const).flatMap((type) => {
+        const variants = pronunciations.filter((item) => item?.type === type);
+        const selected = variants.find((item) => item?.isPreferred) ?? variants[0];
+        const url = typeof selected?.audioUrl === 'string' ? selected.audioUrl.trim() : '';
+        return url && !url.startsWith('asset://') ? [{ word: entry.word, type }] : [];
+      });
+    });
+    if (!audioItems.length) throw new BadRequestException('所有词典发音均已迁入资源库');
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: DICTIONARY_AUDIO_MIGRATE_TO_LIBRARY_JOB,
+        title: `迁入词典外部音频至资源库（${audioItems.length} 条）`,
+        targetType: 'dictionary_pronunciation_audio',
+        targetId: 'all',
+        createdById,
+        totalItems: audioItems.length,
+        payload: { audioItems } as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.contentQueue.add(DICTIONARY_AUDIO_MIGRATE_TO_LIBRARY_JOB, { taskId: task.id, audioItems });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', `已加入队列：将 ${audioItems.length} 条外部词典发音迁入腾讯云资源库`, { step: 'queued' });
     return { ...task, bullJobId: job.id };
   }
 
@@ -1024,6 +1058,9 @@ export class AdminTasksService implements OnModuleInit {
         search: payload?.search,
         filter: payload?.filter,
       });
+    }
+    if (task.type === DICTIONARY_AUDIO_MIGRATE_TO_LIBRARY_JOB && createdById) {
+      return this.enqueueDictionaryAudioLibraryMigration(createdById);
     }
     if (task.type === VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB && createdById) {
       const payload = task.payload as any;

@@ -30,10 +30,16 @@ function getChartCardPosition(index: number, itemCount: number) {
   }
 }
 
-function getChartCardTop(value: number, maxValue: number, plotHeight: number, topMargin: number) {
-  const ratio = maxValue > 0 ? value / maxValue : 0
+function getChartCardTopByRatio(ratio: number, plotHeight: number, topMargin: number) {
   const barTop = topMargin + (1 - ratio) * plotHeight
   return Math.max(4, barTop - 46)
+}
+
+// Minutes and completed questions are separate units. Give each one a little
+// headroom so a single high value does not visually pin its mark to the top.
+function getChartDomainMax(values: number[], minimum: number) {
+  const maximum = Math.max(0, ...values)
+  return Math.max(minimum, Math.ceil(maximum * 1.15))
 }
 
 export function LearningWeekTracker() {
@@ -382,7 +388,7 @@ function WeeklyActivity({ days, dailyStats, checkedInDates, locale, today, selec
           </ComposedChart>
         </ChartContainer>
         {selectedChartItem && (
-          <div className="pointer-events-none absolute z-10" style={{ ...getChartCardPosition(selectedChartIndex, chartData.length), top: getChartCardTop(selectedChartItem.minutes, chartMaxValue, 300, 18) }}>
+          <div className="pointer-events-none absolute z-10" style={{ ...getChartCardPosition(selectedChartIndex, chartData.length), top: getChartCardTopByRatio(selectedChartItem.minutes / chartMaxValue, 300, 18) }}>
             <ActivityInfoCard title={selectedChartItem.date} minutes={selectedChartItem.minutes} questions={selectedChartItem.questions} />
           </div>
         )}
@@ -425,8 +431,13 @@ function MonthlyActivityChart({ days, dailyStats, locale, selectedDay, onSelectD
   const selectedDateKey = selectedDay ? format(selectedDay, 'yyyy-MM-dd') : undefined
   const selectedChartIndex = chartData.findIndex((item) => item.dateKey === selectedDateKey)
   const selectedChartItem = selectedChartIndex >= 0 ? chartData[selectedChartIndex] : null
-  // Y 轴设置下限（60 分钟）：数据较少时柱子按绝对值比例显示，避免小数据被归一化顶满整图
-  const chartMaxValue = Math.max(60, ...chartData.flatMap((item) => [item.minutes, item.questions]))
+  const minutesMax = getChartDomainMax(chartData.map((item) => item.minutes), 15)
+  // A few completed questions should read as a gentle start, not a peak.
+  // On phone-sized charts, 20 questions is a useful visual baseline for a day.
+  const questionsMax = getChartDomainMax(chartData.map((item) => item.questions), 20)
+  const selectedChartRatio = selectedChartItem
+    ? Math.max(selectedChartItem.minutes / minutesMax, selectedChartItem.questions / questionsMax)
+    : 0
   return (
     <section className="shrink-0 px-3 pt-2">
       <div className="mb-1 flex items-center justify-between">
@@ -447,19 +458,20 @@ function MonthlyActivityChart({ days, dailyStats, locale, selectedDay, onSelectD
           >
             <CartesianGrid vertical={false} />
             <XAxis dataKey="dateKey" axisLine={false} tickLine={false} interval={4} tick={{ fontSize: 9 }} tickFormatter={(value) => String(value).slice(-2).replace(/^0/, '')} />
-            <YAxis hide yAxisId="metric" domain={[0, chartMaxValue]} />
-            {selectedDateKey && <ReferenceLine x={selectedDateKey} yAxisId="metric" stroke="hsl(var(--accent))" strokeOpacity={0.75} strokeWidth={1.5} />}
-            <Bar dataKey="minutes" yAxisId="metric" barSize={5} fill="var(--color-minutes)" radius={[2, 2, 0, 0]} isAnimationActive={false}>
+            <YAxis hide yAxisId="minutes" domain={[0, minutesMax]} />
+            <YAxis hide yAxisId="questions" orientation="right" domain={[0, questionsMax]} />
+            {selectedDateKey && <ReferenceLine x={selectedDateKey} yAxisId="minutes" stroke="hsl(var(--accent))" strokeOpacity={0.75} strokeWidth={1.5} />}
+            <Bar dataKey="minutes" yAxisId="minutes" barSize={5} fill="var(--color-minutes)" radius={[2, 2, 0, 0]} isAnimationActive={false}>
               {chartData.map((item) => {
                 const isSelected = item.dateKey === selectedDateKey
                 return <Cell key={item.dateKey} fill={isSelected ? 'hsl(var(--accent))' : 'var(--color-minutes)'} stroke={isSelected ? 'hsl(var(--accent))' : 'transparent'} strokeWidth={isSelected ? 2 : 0} />
               })}
             </Bar>
-            <Line type="linear" dataKey="questions" yAxisId="metric" stroke="var(--color-questions)" strokeWidth={2} dot={false} activeDot={{ r: 3 }} isAnimationActive={false} />
+            <Line type="linear" dataKey="questions" yAxisId="questions" stroke="var(--color-questions)" strokeWidth={2} dot={false} activeDot={{ r: 3 }} isAnimationActive={false} />
           </ComposedChart>
         </ChartContainer>
         {selectedChartItem && (
-          <div className="pointer-events-none absolute z-10" style={{ ...getChartCardPosition(selectedChartIndex, chartData.length), top: getChartCardTop(selectedChartItem.minutes, chartMaxValue, 76, 8) }}>
+          <div className="pointer-events-none absolute z-10" style={{ ...getChartCardPosition(selectedChartIndex, chartData.length), top: getChartCardTopByRatio(selectedChartRatio, 76, 8) }}>
             <ActivityInfoCard title={selectedChartItem.date} minutes={selectedChartItem.minutes} questions={selectedChartItem.questions} />
           </div>
         )}
@@ -502,8 +514,12 @@ function YearlyActivity({ year, dailyStats, today, onSelectMonth, onPrevYear, on
   })
   const chartData = values
   const selectedChartItem = selectedMonthIndex === null ? null : chartData[selectedMonthIndex]
-  // Y 轴设置下限（60 分钟）：数据较少时柱子按绝对值比例显示，避免小数据被归一化顶满整图
-  const chartMaxValue = Math.max(60, ...chartData.flatMap((item) => [item.minutes, item.questions]))
+  const minutesMax = getChartDomainMax(chartData.map((item) => item.minutes), 30)
+  // Monthly totals need a slightly broader baseline than the daily view.
+  const questionsMax = getChartDomainMax(chartData.map((item) => item.questions), 40)
+  const selectedChartRatio = selectedChartItem
+    ? Math.max(selectedChartItem.minutes / minutesMax, selectedChartItem.questions / questionsMax)
+    : 0
 
   return (
     <div className="flex h-[440px] flex-none flex-col overflow-hidden rounded-2xl bg-background">
@@ -534,19 +550,20 @@ function YearlyActivity({ year, dailyStats, today, onSelectMonth, onPrevYear, on
           >
             <CartesianGrid vertical={false} />
             <XAxis dataKey="label" hide />
-            <YAxis hide yAxisId="metric" domain={[0, chartMaxValue]} />
-            {selectedChartItem && <ReferenceLine x={selectedChartItem.label} yAxisId="metric" stroke="hsl(var(--accent))" strokeOpacity={0.75} strokeWidth={1.5} />}
-            <Bar dataKey="minutes" yAxisId="metric" barSize={10} fill="var(--color-minutes)" radius={[4, 4, 0, 0]} isAnimationActive={false}>
+            <YAxis hide yAxisId="minutes" domain={[0, minutesMax]} />
+            <YAxis hide yAxisId="questions" orientation="right" domain={[0, questionsMax]} />
+            {selectedChartItem && <ReferenceLine x={selectedChartItem.label} yAxisId="minutes" stroke="hsl(var(--accent))" strokeOpacity={0.75} strokeWidth={1.5} />}
+            <Bar dataKey="minutes" yAxisId="minutes" barSize={10} fill="var(--color-minutes)" radius={[4, 4, 0, 0]} isAnimationActive={false}>
               {chartData.map((item, index) => {
                 const isSelected = index === selectedMonthIndex
                 return <Cell key={item.label} fill={isSelected ? 'hsl(var(--accent))' : 'var(--color-minutes)'} stroke={isSelected ? 'hsl(var(--accent))' : 'transparent'} strokeWidth={isSelected ? 2 : 0} />
               })}
             </Bar>
-            <Line type="linear" dataKey="questions" yAxisId="metric" stroke="var(--color-questions)" strokeWidth={3} dot={{ r: 2.5, fill: 'var(--color-questions)', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={false} />
+            <Line type="linear" dataKey="questions" yAxisId="questions" stroke="var(--color-questions)" strokeWidth={3} dot={{ r: 2.5, fill: 'var(--color-questions)', strokeWidth: 0 }} activeDot={{ r: 4 }} isAnimationActive={false} />
           </ComposedChart>
         </ChartContainer>
         {selectedChartItem && selectedMonthIndex !== null && (
-          <div className="pointer-events-none absolute z-10" style={{ ...getChartCardPosition(selectedMonthIndex, chartData.length), top: getChartCardTop(selectedChartItem.minutes, chartMaxValue, 298, 18) }}>
+          <div className="pointer-events-none absolute z-10" style={{ ...getChartCardPosition(selectedMonthIndex, chartData.length), top: getChartCardTopByRatio(selectedChartRatio, 298, 18) }}>
             <ActivityInfoCard title={`${format(year, 'yyyy')}-${String(selectedChartItem.label).padStart(2, '0')}`} minutes={selectedChartItem.minutes} questions={selectedChartItem.questions} />
           </div>
         )}

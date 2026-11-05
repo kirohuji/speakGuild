@@ -1,6 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB, VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB } from '../admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB, DICTIONARY_AUDIO_MIGRATE_TO_LIBRARY_JOB, VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB } from '../admin-tasks.constants';
 import { AdminTasksService } from '../admin-tasks.service';
 import { ContentPrepareService } from '../jobs/content-prepare.service';
 import { WarmupPipelineGenerateService } from '../jobs/warmup-pipeline-generate.service';
@@ -64,6 +64,13 @@ export class ContentPrepareProcessor extends WorkerHost {
         return await this.generateDictionaryAudio(
           job.data.taskId,
           (job.data.audioItems ?? []) as Array<{ word: string; type: 'uk' | 'us'; gender: 'female' | 'male' }>,
+          job,
+        );
+      }
+      if (job.name === DICTIONARY_AUDIO_MIGRATE_TO_LIBRARY_JOB) {
+        return await this.migrateDictionaryAudioToLibrary(
+          job.data.taskId,
+          (job.data.audioItems ?? []) as Array<{ word: string; type: 'uk' | 'us' }>,
           job,
         );
       }
@@ -237,6 +244,48 @@ export class ContentPrepareProcessor extends WorkerHost {
       `词典音频补全完成：${succeeded} 成功，${failed} 失败`,
       { step: 'completed', meta: summary },
     );
+    return summary;
+  }
+
+  private async migrateDictionaryAudioToLibrary(
+    taskId: string, items: Array<{ word: string; type: 'uk' | 'us' }>, job: Job,
+  ) {
+    const checkpoint = await this.adminTasksService.beginOrResume(taskId, 'migrate-audio');
+    if (!checkpoint) return null;
+    const startIndex = Math.min(Math.max(0, checkpoint.processedItems), items.length);
+    let succeeded = checkpoint.successItems;
+    let failed = checkpoint.failedItems;
+    let skipped = 0;
+    const errors: Array<{ word: string; type: 'uk' | 'us'; message: string }> = [];
+    for (let index = startIndex; index < items.length; index += 1) {
+      if (await this.adminTasksService.isCanceled(taskId)) return null;
+      const item = items[index]!;
+      try {
+        const result = await this.dictionaryService.migratePronunciationAudio(item.word, item.type);
+        if (result.migrated) {
+          succeeded += 1;
+          await this.adminTasksService.log(
+            taskId,
+            result.migratedFrom === 'generated' ? 'warn' : 'info',
+            `${item.word} ${item.type.toUpperCase()} 已${result.migratedFrom === 'generated' ? '用稳定音源重新生成并' : ''}迁入资源库`,
+            { step: 'migrate-audio', meta: { ...item, migratedFrom: result.migratedFrom } },
+          );
+        } else skipped += 1;
+      } catch (error) {
+        failed += 1;
+        const message = error instanceof Error ? error.message : String(error);
+        errors.push({ ...item, message });
+        await this.adminTasksService.log(taskId, 'error', `${item.word} ${item.type.toUpperCase()} 迁入失败：${message}`, { step: 'migrate-audio', meta: item });
+      }
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: `migrate-audio:${item.word}:${item.type} (${index + 1}/${items.length})`,
+        totalItems: items.length, processedItems: index + 1, successItems: succeeded, failedItems: failed,
+      });
+      await job.updateProgress(Math.floor(((index + 1) / Math.max(1, items.length)) * 100));
+    }
+    const summary = { total: items.length, succeeded, failed, skipped, errors };
+    await this.adminTasksService.markCompleted(taskId, summary);
+    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `词典音频迁入完成：${succeeded} 成功，${failed} 失败，${skipped} 跳过`, { step: 'completed', meta: summary });
     return summary;
   }
 

@@ -439,6 +439,23 @@ async function resolveMaterialIds(
   })
 }
 
+function modelIdentityKey(structure: string, meaning: string) {
+  return `${structure}\0${meaning}`
+}
+
+/** 大批量 OR 查询分片，避免单次 where 过大拖垮事务。 */
+async function findByOrChunks<T>(
+  values: T[],
+  chunkSize: number,
+  findChunk: (chunk: T[]) => Promise<Array<{ id: string; key: string }>>,
+) {
+  const rows: Array<{ id: string; key: string }> = []
+  for (let index = 0; index < values.length; index += chunkSize) {
+    rows.push(...await findChunk(values.slice(index, index + chunkSize)))
+  }
+  return rows
+}
+
 async function syncChunkModels(tx: Tx, topicId: string, models: ChunkModelConfig[], path: string) {
   await tx.trainingTopicChunkModel.deleteMany({ where: { topicId } })
   if (!models.length) return
@@ -449,49 +466,82 @@ async function syncChunkModels(tx: Tx, topicId: string, models: ChunkModelConfig
   const exampleChunkIds = await resolveMaterialIds(
     exampleTexts,
     'Chunk Model 示例',
-    async (texts) => {
+    async (texts) => findByOrChunks(texts, 80, async (chunk) => {
       const rows = await tx.chunk.findMany({
-        where: { OR: texts.map((text) => ({ text: { equals: text, mode: 'insensitive' } })) },
+        where: { OR: chunk.map((text) => ({ text: { equals: text, mode: 'insensitive' } })) },
         select: { id: true, text: true },
       })
       return rows.map((row) => ({ id: row.id, key: row.text }))
-    },
+    }),
     async (missing) => {
       throw new Error(`${path} 的 chunk_models.examples 找不到已有 Chunk：${missing.join('、')}。请先写入同文件 chunks 或确保库中已有对应 Chunk。`)
     },
   )
   const chunkIdByText = new Map(exampleTexts.map((text, index) => [normalizeMaterial(text), exampleChunkIds[index]]))
 
-  const modelIds: string[] = []
-  for (const model of models) {
-    const existing = await tx.chunkModel.findUnique({
-      where: { structure_meaning: { structure: model.structure, meaning: model.meaning } },
-      select: { id: true },
-    })
-    const chunkModel = existing
-      ? await tx.chunkModel.update({
-          where: { id: existing.id },
-          data: { notes: model.notes },
-          select: { id: true },
-        })
-      : await tx.chunkModel.create({
-          data: { structure: model.structure, meaning: model.meaning, notes: model.notes },
-          select: { id: true },
-        })
+  const existingRows = await findByOrChunks(
+    models,
+    80,
+    async (chunk) => {
+      const rows = await tx.chunkModel.findMany({
+        where: { OR: chunk.map((model) => ({ structure: model.structure, meaning: model.meaning })) },
+        select: { id: true, structure: true, meaning: true },
+      })
+      return rows.map((row) => ({ id: row.id, key: modelIdentityKey(row.structure, row.meaning) }))
+    },
+  )
+  const existingIdByKey = new Map(existingRows.map((row) => [row.key, row.id]))
 
-    await tx.chunkModelExample.deleteMany({ where: { chunkModelId: chunkModel.id } })
-    const exampleIds = model.examples.map((text) => {
-      const chunkId = chunkIdByText.get(normalizeMaterial(text))
-      if (!chunkId) throw new Error(`${path} 的 chunk_models.examples 未能解析 Chunk：${text}`)
-      return chunkId
+  const missingModels = models.filter((model) => !existingIdByKey.has(modelIdentityKey(model.structure, model.meaning)))
+  if (missingModels.length) {
+    await tx.chunkModel.createMany({
+      data: missingModels.map((model) => ({
+        structure: model.structure,
+        meaning: model.meaning,
+        notes: model.notes,
+      })),
+      skipDuplicates: true,
     })
-    if (exampleIds.length) {
-      await tx.chunkModelExample.createMany({
-        data: exampleIds.map((chunkId, sortOrder) => ({ chunkModelId: chunkModel.id, chunkId, sortOrder })),
-        skipDuplicates: true,
+  }
+
+  const resolvedRows = await findByOrChunks(
+    models,
+    80,
+    async (chunk) => {
+      const rows = await tx.chunkModel.findMany({
+        where: { OR: chunk.map((model) => ({ structure: model.structure, meaning: model.meaning })) },
+        select: { id: true, structure: true, meaning: true },
+      })
+      return rows.map((row) => ({ id: row.id, key: modelIdentityKey(row.structure, row.meaning) }))
+    },
+  )
+  const idByKey = new Map(resolvedRows.map((row) => [row.key, row.id]))
+
+  const modelIds: string[] = []
+  const exampleRows: Array<{ chunkModelId: string; chunkId: string; sortOrder: number }> = []
+  for (const model of models) {
+    const key = modelIdentityKey(model.structure, model.meaning)
+    const chunkModelId = idByKey.get(key)
+    if (!chunkModelId) throw new Error(`${path} 未能解析 Chunk Model：structure="${model.structure}"`)
+    if (existingIdByKey.has(key)) {
+      await tx.chunkModel.update({
+        where: { id: chunkModelId },
+        data: { notes: model.notes },
       })
     }
-    modelIds.push(chunkModel.id)
+    for (const [sortOrder, text] of model.examples.entries()) {
+      const chunkId = chunkIdByText.get(normalizeMaterial(text))
+      if (!chunkId) throw new Error(`${path} 的 chunk_models.examples 未能解析 Chunk：${text}`)
+      exampleRows.push({ chunkModelId, chunkId, sortOrder })
+    }
+    modelIds.push(chunkModelId)
+  }
+
+  if (modelIds.length) {
+    await tx.chunkModelExample.deleteMany({ where: { chunkModelId: { in: modelIds } } })
+  }
+  if (exampleRows.length) {
+    await tx.chunkModelExample.createMany({ data: exampleRows, skipDuplicates: true })
   }
 
   await tx.trainingTopicChunkModel.createMany({
@@ -505,13 +555,13 @@ async function syncLearningConfig(tx: Tx, topicId: string, config: LearningConfi
     const ids = await resolveMaterialIds(
       config.vocabulary,
       '词汇',
-      async (words) => {
+      async (words) => findByOrChunks(words, 80, async (chunk) => {
         const rows = await tx.vocabulary.findMany({
-          where: { OR: words.map((word) => ({ word: { equals: word, mode: 'insensitive' } })) },
+          where: { OR: chunk.map((word) => ({ word: { equals: word, mode: 'insensitive' } })) },
           select: { id: true, word: true },
         })
         return rows.map((row) => ({ id: row.id, key: row.word }))
-      },
+      }),
       async (missing) => {
         await tx.vocabulary.createMany({
           data: missing.map((word) => ({ word, meaning: '待补充' })),
@@ -526,13 +576,13 @@ async function syncLearningConfig(tx: Tx, topicId: string, config: LearningConfi
     const ids = await resolveMaterialIds(
       config.chunks,
       'Chunk',
-      async (texts) => {
+      async (texts) => findByOrChunks(texts, 80, async (chunk) => {
         const rows = await tx.chunk.findMany({
-          where: { OR: texts.map((text) => ({ text: { equals: text, mode: 'insensitive' } })) },
+          where: { OR: chunk.map((text) => ({ text: { equals: text, mode: 'insensitive' } })) },
           select: { id: true, text: true },
         })
         return rows.map((row) => ({ id: row.id, key: row.text }))
-      },
+      }),
       async (missing) => {
         await tx.chunk.createMany({
           data: missing.map((text) => ({ text, meaning: '待补充', category: 'general' })),
@@ -547,13 +597,13 @@ async function syncLearningConfig(tx: Tx, topicId: string, config: LearningConfi
     const ids = await resolveMaterialIds(
       config.patterns,
       '句型',
-      async (patterns) => {
+      async (patterns) => findByOrChunks(patterns, 80, async (chunk) => {
         const rows = await tx.sentencePattern.findMany({
-          where: { OR: patterns.map((pattern) => ({ pattern: { equals: pattern, mode: 'insensitive' } })) },
+          where: { OR: chunk.map((pattern) => ({ pattern: { equals: pattern, mode: 'insensitive' } })) },
           select: { id: true, pattern: true },
         })
         return rows.map((row) => ({ id: row.id, key: row.pattern }))
-      },
+      }),
       async (missing) => {
         await tx.sentencePattern.createMany({
           data: missing.map((pattern) => ({ pattern })),
@@ -660,17 +710,20 @@ async function syncDocuments(prisma: PrismaClient, dryRun: boolean, force: boole
   if (changed.length) {
     console.log(`${force ? '强制覆盖' : '即将更新'} ${changed.length} 份${learningOnly ? '学习配置（不更新教学正文）' : '教学文档'}：`)
     changed.forEach((document) => console.log(`  - ${document.path}`))
-    await prisma.$transaction(
-      async (tx) => {
-        for (const document of changed) {
+    // 按文档独立事务，避免大批量 chunk_models 把交互式事务拖过超时。
+    const synced: typeof changed = []
+    for (const [index, document] of changed.entries()) {
+      console.log(`  [${index + 1}/${changed.length}] ${document.path}`)
+      await prisma.$transaction(
+        async (tx) => {
           if (!learningOnly) await tx.trainingTopic.update({ where: { id: document.topicId }, data: { teachingMarkdown: document.content } })
           if (document.learning) await syncLearningConfig(tx, document.topicId, document.learning, document.learningPath ?? document.path)
-        }
-      },
-      // 材料已批量查找/创建，但仍保留足够超时以覆盖多文档原子写入。
-      { maxWait: 10_000, timeout: 180_000 },
-    )
-    const changedById = new Map(changed.map((document) => [document.topicId, { teaching: sha256(document.content), learning: document.learningContent ? sha256(document.learningContent) : undefined }]))
+        },
+        { maxWait: 10_000, timeout: 180_000 },
+      )
+      synced.push(document)
+    }
+    const changedById = new Map(synced.map((document) => [document.topicId, { teaching: sha256(document.content), learning: document.learningContent ? sha256(document.learningContent) : undefined }]))
     manifest.documents = manifest.documents.map((document) => ({
       ...document,
       exportedSha256: learningOnly ? document.exportedSha256 : changedById.get(document.topicId)?.teaching ?? document.exportedSha256,

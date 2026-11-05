@@ -1721,6 +1721,19 @@ export class LearningService {
       ? { ...unitBase, vocabularies: unitVocabs, chunks: unitChunks, sentencePatterns: unitPatterns, trainingTopics: [] }
       : unitBase;
 
+    // Vocabulary pronunciation is a primary offline-learning interaction.
+    // Keep both accents: the client lets learners switch between US and UK
+    // pronunciation, so packaging only one would make that switch depend on
+    // a network request in the native app.
+    const packagedVocabularies = [
+      ...topicDetails.flatMap((topicDetail) => topicDetail.vocabularies ?? []),
+      ...(unitDetail.contentMode === 'novel' ? (unitVocabs ?? []) : []),
+    ];
+    for (const vocabulary of packagedVocabularies) {
+      this.pushAsset(assets, vocabulary?.audioUsUrl, 'vocabulary_pronunciation_us');
+      this.pushAsset(assets, vocabulary?.audioUkUrl, 'vocabulary_pronunciation_uk');
+    }
+
     const totalVocabs = topicDetails.reduce((sum, td) => sum + (td.vocabularies?.length ?? 0), 0);
     const totalChunks = topicDetails.reduce((sum, td) => sum + (td.activeChunks?.length ?? 0), 0);
     const versions = [

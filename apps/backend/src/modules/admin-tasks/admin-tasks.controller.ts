@@ -62,6 +62,13 @@ export class AdminTasksController {
     });
   }
 
+  /** Queue every legacy remote dictionary pronunciation file for COS migration. */
+  @Post('dictionary-pronunciations/migrate-audio-to-library')
+  async migrateDictionaryAudioToLibrary(@Req() req: Request) {
+    const session = await this.requireAdmin(req);
+    return this.adminTasksService.enqueueDictionaryAudioLibraryMigration(session.user.id);
+  }
+
   /** Fill missing vocabulary example-sentence audio on the current content-library page. */
   @Post('library-vocabularies/generate-current-page-example-audio')
   async generateVocabularyExamplePageAudio(

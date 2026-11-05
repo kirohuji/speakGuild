@@ -24,6 +24,8 @@ export interface GenerateEnttsAudioOptions {
   filenamePrefix?: string;
 }
 
+const EXTERNAL_AUDIO_MAX_BYTES = 10 * 1024 * 1024;
+
 @Injectable()
 export class DictionaryAudioService {
   constructor(
@@ -121,5 +123,49 @@ export class DictionaryAudioService {
     });
     await this.fileAssets.createSystemReference(asset.id, bizType, bizId);
     return this.fileAssets.getAssetReference(asset.id);
+  }
+
+  /** Copy a legacy remote pronunciation file into the managed COS asset library. */
+  async importExternalAudio(sourceUrl: string, filenamePrefix: string, bizId: string) {
+    let url: URL;
+    try {
+      url = new URL(sourceUrl);
+    } catch {
+      throw new BadGatewayException('旧音频地址无效');
+    }
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      throw new BadGatewayException('旧音频地址必须使用 HTTP 或 HTTPS');
+    }
+
+    let response: Response;
+    try {
+      // External dictionary CDNs are only a best-effort source during this
+      // one-off migration. Fail quickly so the caller can generate a managed
+      // fallback instead of holding up thousands of queued items.
+      response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new BadGatewayException(`旧音频下载失败：${message}`);
+    }
+    if (!response.ok) throw new BadGatewayException(`旧音频返回 HTTP ${response.status}`);
+    const declaredSize = Number(response.headers.get('content-length') || 0);
+    if (declaredSize > EXTERNAL_AUDIO_MAX_BYTES) throw new BadGatewayException('旧音频文件过大');
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const mimeType = response.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() || '';
+    if (!mimeType.startsWith('audio/') || buffer.length === 0 || buffer.length > EXTERNAL_AUDIO_MAX_BYTES) {
+      throw new BadGatewayException('旧音频未返回有效的音频文件');
+    }
+    const extension = mimeType.includes('mpeg') ? 'mp3'
+      : mimeType.includes('wav') ? 'wav'
+        : mimeType.includes('ogg') ? 'ogg'
+          : mimeType.includes('mp4') || mimeType.includes('m4a') ? 'm4a' : 'audio';
+    const asset = await this.fileAssets.createAssetFromBuffer({
+      buffer,
+      filename: `${filenamePrefix}.${extension}`,
+      mimeType,
+      group: FileAssetGroup.tts,
+    });
+    await this.fileAssets.createSystemReference(asset.id, 'dictionary_pronunciation_audio', bizId);
+    return { assetId: asset.id, url: this.fileAssets.getAssetReference(asset.id) };
   }
 }

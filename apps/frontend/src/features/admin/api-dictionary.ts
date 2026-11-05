@@ -260,3 +260,8 @@ export async function enqueuePronunciationAudioCurrentPage(params: {
 }): Promise<{ id: string; totalItems: number }> {
   return post('/admin/tasks/dictionary-pronunciations/generate-current-page-audio', undefined, { params });
 }
+
+/** Queue a full-library migration of external dictionary audio into managed COS assets. */
+export async function enqueueDictionaryAudioLibraryMigration(): Promise<{ id: string; totalItems: number }> {
+  return post('/admin/tasks/dictionary-pronunciations/migrate-audio-to-library');
+}

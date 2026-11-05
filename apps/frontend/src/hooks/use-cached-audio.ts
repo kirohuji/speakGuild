@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { assetCacheService } from '@/lib/offline/asset-cache.service'
 import { isNative } from '@/lib/native'
 import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
@@ -19,15 +19,39 @@ import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
  */
 export function useCachedAudio() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  const stopCurrent = useCallback(() => {
+    const current = audioRef.current
+    if (!current) return
+    current.pause()
+    current.onplay = null
+    current.onpause = null
+    current.onended = null
+    current.onerror = null
+    audioRef.current = null
+    setIsPlaying(false)
+  }, [])
+
+  useEffect(() => () => stopCurrent(), [stopCurrent])
 
   const play = useCallback(async (url?: string | null, assetId?: string | null, role = 'voice') => {
     if (!url && !assetId) return
 
     // Stop any currently playing audio
-    audioRef.current?.pause()
+    stopCurrent()
     const audio = new Audio()
     audio.preload = 'auto'
     audioRef.current = audio
+    audio.onplay = () => {
+      if (audioRef.current === audio) setIsPlaying(true)
+    }
+    const clearPlayingState = () => {
+      if (audioRef.current === audio) setIsPlaying(false)
+    }
+    audio.onpause = clearPlayingState
+    audio.onended = clearPlayingState
+    audio.onerror = clearPlayingState
 
     // Normalize protocol-relative URLs
     let resolvedUrl = url?.startsWith('//') ? `https:${url}` : (url ?? '')
@@ -78,7 +102,7 @@ export function useCachedAudio() {
         console.warn('[useCachedAudio] playback failed', error)
       }
     }
-  }, [])
+  }, [stopCurrent])
 
   /**
    * Synchronous play — skips asset cache resolution.
@@ -86,17 +110,23 @@ export function useCachedAudio() {
    */
   const playDirect = useCallback((url: string) => {
     if (!url) return
-    audioRef.current?.pause()
+    stopCurrent()
     const resolvedUrl = url.startsWith('//') ? `https:${url}` : url
     const audio = new Audio(resolvedUrl)
     audioRef.current = audio
+    audio.onplay = () => {
+      if (audioRef.current === audio) setIsPlaying(true)
+    }
+    const clearPlayingState = () => {
+      if (audioRef.current === audio) setIsPlaying(false)
+    }
+    audio.onpause = clearPlayingState
+    audio.onended = clearPlayingState
+    audio.onerror = clearPlayingState
     audio.play().catch(() => {})
-  }, [])
+  }, [stopCurrent])
 
-  const stop = useCallback(() => {
-    audioRef.current?.pause()
-    audioRef.current = null
-  }, [])
+  const stop = stopCurrent
 
-  return { play, playDirect, stop }
+  return { play, playDirect, stop, isPlaying }
 }

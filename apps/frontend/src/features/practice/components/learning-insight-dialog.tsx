@@ -512,18 +512,19 @@ export function LearningInsightDialog({
 
       {/* 播放列表抽屉 */}
       <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
-        <DrawerContent className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]">
-          <div className="flex items-center justify-between px-5 py-3">
-            <DrawerTitle className="text-lg">{t('insight.playlist')}</DrawerTitle>
+        <DrawerContent className={cn('h-[100dvh] w-full max-w-full overflow-hidden overscroll-contain rounded-none pt-safe !z-[10001]', isIOS() && 'pb-safe')} overlayClassName="!z-[10001]">
+          <div className="flex min-w-0 items-center justify-between gap-3 px-5 py-3">
+            <DrawerTitle className="min-w-0 truncate text-lg">{t('insight.playlist')}</DrawerTitle>
             <button
+              type="button"
               onClick={() => setPlaylistOpen(false)}
-              className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground"
             >
               <ChevronDown className="size-5" />
             </button>
           </div>
-          <ScrollArea className="flex-1 px-4 pb-8">
-            <div className="space-y-1">
+          <ScrollArea className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden px-4 pb-8">
+            <div className="w-full max-w-full min-w-0 space-y-1 overflow-hidden">
               {items.map((item, i) => {
                 const Icon = item.kind === 'word' ? BookOpen : item.kind === 'chunk' ? Layers : Sparkles
                 const title =
@@ -533,25 +534,28 @@ export function LearningInsightDialog({
                 return (
                   <button
                     key={item.id}
+                    type="button"
                     onClick={() => selectFromPlaylist(i)}
                     className={cn(
-                      'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors',
+                      'grid w-full max-w-full min-w-0 grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-xl px-3 py-2.5 text-left transition-colors',
                       isActive
                         ? 'bg-primary/10 text-primary'
                         : 'text-foreground hover:bg-muted',
                     )}
                   >
                     <Icon className="size-4 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-english text-sm font-medium">{title}</p>
-                      {item.meaning && (
-                        <p className="truncate text-xs text-muted-foreground">{item.meaning}</p>
-                      )}
-                    </div>
-                    {isActive && (
-                      <Badge variant="default" className="px-1.5 py-0 text-[10px]">
+                    <span className="min-w-0 max-w-full overflow-hidden">
+                      <span className="block truncate font-english text-sm font-medium">{title}</span>
+                      {item.meaning ? (
+                        <span className="block truncate text-xs text-muted-foreground">{item.meaning}</span>
+                      ) : null}
+                    </span>
+                    {isActive ? (
+                      <Badge variant="default" className="max-w-[4.5rem] shrink-0 truncate px-1.5 py-0 text-[10px]">
                         {t('insight.current')}
                       </Badge>
+                    ) : (
+                      <span className="w-0" />
                     )}
                   </button>
                 )
@@ -574,7 +578,7 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
   const hasBothPhonetics = isWord && item.phoneticUs && item.phoneticUk
   const [showUk, setShowUk] = useState(false)
 
-  const { play: playAudio } = useCachedAudio()
+  const { play: playAudio, stop: stopAudio, isPlaying } = useCachedAudio()
 
   return (
     <div className="shrink-0 border-b border-border/60 px-5 pb-4 pt-9 md:px-6">
@@ -593,7 +597,10 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
                 <>
                   <button
                     type="button"
-                    onClick={() => setShowUk((prev) => !prev)}
+                    onClick={() => {
+                      stopAudio()
+                      setShowUk((prev) => !prev)
+                    }}
                     className="flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                     aria-label={showUk ? t('insight.switchToUs') : t('insight.switchToUk')}
                   >
@@ -604,6 +611,7 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
                     value={showUk ? item.phoneticUk! : item.phoneticUs!}
                     audioUrl={showUk ? item.audioUkUrl : item.audioUsUrl}
                     onPlay={playAudio}
+                    isPlaying={isPlaying}
                   />
                 </>
               ) : (
@@ -612,6 +620,7 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
                   value={(item.phoneticUs || item.phoneticUk)!}
                   audioUrl={item.phoneticUs ? item.audioUsUrl : item.audioUkUrl}
                   onPlay={playAudio}
+                  isPlaying={isPlaying}
                 />
               )}
             </div>
@@ -912,7 +921,7 @@ function PhoneticPill({
           aria-pressed={isPlaying}
         >
           {isPlaying
-            ? <AudioLines className="size-3 animate-pulse" />
+            ? <AudioLines className="size-3 animate-pulse" aria-hidden="true" />
             : <Volume2 className="size-3" />}
         </button>
       )}
