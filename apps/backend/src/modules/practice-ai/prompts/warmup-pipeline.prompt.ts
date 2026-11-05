@@ -96,6 +96,15 @@ Each word only needs ONE exercise to be considered covered. Never add extra exer
 
 A word is "covered" when it appears as the target word (chunk/vocabWord/pattern) in at least one exercise group.
 
+## ══ CHUNK MODELS (internal structure hints) ══
+
+Some topics include hidden chunk_models. They are NOT learner materials and NOT coverage targets.
+Use them only as structure guidance when generating variations around listed chunks:
+- structure shows the reusable frame (for example get to [place]).
+- examples lists the real chunks already in the topic pool that instantiate that frame.
+- meaning / notes clarify sense and hard constraints (prepositions that must stay, slots that may change).
+When practising a listed example chunk, you may migrate the same structure to a new fitting filler for transfer practice, but keep at least some items that activate the exact learned chunk. Do not invent a new learning target from a model alone.
+
 ## ══ CUMULATIVE DESIGN (累加式设计) ══
 
 This learning package uses cumulative design: later topics can reuse core words from earlier topics as extension words ([carry] tier).
@@ -254,6 +263,8 @@ export interface WarmupPipelinePromptInput {
     chunkPoolSummary: string;
     /** 完整句型池 */
     patternPoolSummary: string;
+    /** 内部结构模型（非覆盖目标） */
+    chunkModelSummary: string;
   };
 }
 
@@ -355,6 +366,9 @@ export function buildWarmupPipelineUserPrompt(input: WarmupPipelinePromptInput):
     materials.missingPatterns.length
       ? materials.missingPatterns.map((p) => `- ${p.pattern}${p.meaning ? `: ${p.meaning}` : ''}`).join('\n')
       : '- (none — all covered!)',
+    '',
+    '#### Chunk models (internal; not coverage targets):',
+    materials.chunkModelSummary || '- (none)',
     '',
     'Only use the listed material pool plus safe review materials. Do not invent unlisted learning targets.',
   ].join('\n');

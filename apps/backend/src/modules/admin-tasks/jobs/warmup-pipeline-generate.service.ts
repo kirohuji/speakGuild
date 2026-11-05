@@ -69,6 +69,19 @@ export class WarmupPipelineGenerateService {
         topicVocabs: { orderBy: { sortOrder: 'asc' }, include: { vocab: true } },
         activeChunks: { orderBy: { sortOrder: 'asc' }, include: { chunk: true } },
         topicPatterns: { orderBy: { sortOrder: 'asc' }, include: { pattern: true } },
+        topicChunkModels: {
+          orderBy: { sortOrder: 'asc' },
+          include: {
+            chunkModel: {
+              include: {
+                examples: {
+                  orderBy: { sortOrder: 'asc' },
+                  include: { chunk: { select: { id: true, text: true } } },
+                },
+              },
+            },
+          },
+        },
       },
     });
     if (!topic) throw new NotFoundException('学习话题不存在');
@@ -88,6 +101,13 @@ export class WarmupPipelineGenerateService {
         vocabs: topic.topicVocabs.map(({ vocab }) => ({ id: vocab.id, word: vocab.word, meaning: vocab.meaning, count: currentCounts.vocabs.get(vocab.id) ?? 0 })),
         chunks: topic.activeChunks.map(({ chunk }) => ({ id: chunk.id, text: chunk.text, meaning: chunk.meaning, count: currentCounts.chunks.get(chunk.id) ?? 0 })),
         patterns: topic.topicPatterns.map(({ pattern }) => ({ id: pattern.id, pattern: pattern.pattern, meaning: pattern.meaning ?? undefined, count: currentCounts.patterns.get(pattern.id) ?? 0 })),
+        chunkModels: topic.topicChunkModels.map(({ chunkModel }) => ({
+          id: chunkModel.id,
+          structure: chunkModel.structure,
+          meaning: chunkModel.meaning || undefined,
+          notes: chunkModel.notes,
+          examples: chunkModel.examples.map(({ chunk }) => ({ id: chunk.id, text: chunk.text })),
+        })),
       },
       constraints: { sceneId: topic.sceneId, difficulty: topic.difficulty },
       structure: this.describeStructure(currentPipeline),

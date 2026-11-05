@@ -71,6 +71,13 @@ type WarmupPipelineGenerationDto = {
     vocabs?: Array<{ id?: string; word?: string; meaning?: string; count?: number; tier?: 'core' | 'ext' | 'carry' }>;
     chunks?: Array<{ id?: string; text?: string; meaning?: string; count?: number }>;
     patterns?: Array<{ id?: string; pattern?: string; meaning?: string; count?: number }>;
+    chunkModels?: Array<{
+      id?: string;
+      structure?: string;
+      meaning?: string;
+      notes?: string[];
+      examples?: Array<{ id?: string; text?: string }>;
+    }>;
   };
   structure?: {
     zhToEnItems?: number;
@@ -1991,6 +1998,7 @@ Rules:
     const vocabs = dto.materials?.vocabs ?? [];
     const chunks = dto.materials?.chunks ?? [];
     const patterns = dto.materials?.patterns ?? [];
+    const chunkModels = dto.materials?.chunkModels ?? [];
 
     // ── 学习包组顺序约束（M2） ──
     // excluded：组内后序包认领（learn）→ 禁止出现在任何题目/例句/提示中
@@ -2159,6 +2167,21 @@ Rules:
       ? filterPatterns.map((p) => `${p.pattern}${(p.count ?? 0) > 0 ? ' [used]' : ' [missing]'}`).join(' | ')
       : 'none';
 
+    const chunkModelSummary = chunkModels.length
+      ? chunkModels.map((model) => {
+          const structure = model.structure?.trim() || '(missing structure)';
+          const meaning = model.meaning?.trim() ? ` — ${model.meaning.trim()}` : '';
+          const examples = (model.examples ?? [])
+            .map((example) => example.text?.trim())
+            .filter(Boolean)
+            .join(', ');
+          const notes = (model.notes ?? []).map((note) => note.trim()).filter(Boolean).join('; ');
+          const examplePart = examples ? ` | examples: ${examples}` : '';
+          const notesPart = notes ? ` | notes: ${notes}` : '';
+          return `- ${structure}${meaning}${examplePart}${notesPart}`;
+        }).join('\n')
+      : '';
+
     // 后序包知识点文本（禁止出现），用于 prompt 的 Forbidden 清单
     let forbiddenMaterialTexts: string[] = [];
     if (excludedClaims.length) {
@@ -2207,6 +2230,7 @@ Rules:
         vocabPoolSummary,
         chunkPoolSummary,
         patternPoolSummary,
+        chunkModelSummary,
       },
     });
 

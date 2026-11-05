@@ -1029,6 +1029,7 @@ model Chunk {
   category           String
   difficulty         String               @default("L2")
   examples           ChunkExample[]
+  modelExamples      ChunkModelExample[]
   userProgresses     UserChunkProgress[]
   storyEpisodeChunks StoryEpisodeChunk[]
   topicChunks        TrainingTopicChunk[]
@@ -1147,6 +1148,7 @@ model TrainingTopic {
   mediaAssetId               String?
   transcript                 Json?
   activeChunks               TrainingTopicChunk[]
+  topicChunkModels           TrainingTopicChunkModel[]
   topicPatterns              TrainingTopicSentencePattern[]
   topicVocabs                TrainingTopicVocab[]
   practiceSessions           PracticeSession[]
@@ -1384,6 +1386,49 @@ model TrainingTopicChunk {
 
   @@unique([topicId, chunkId])
   @@map("training_topic_chunk")
+}
+
+// ──── Chunk Model（内部结构元数据，非用户学习材料） ────
+
+model ChunkModel {
+  id        String                    @id @default(cuid())
+  structure String
+  meaning   String                    @default("")
+  notes     String[]                  @default([])
+  examples  ChunkModelExample[]
+  topics    TrainingTopicChunkModel[]
+  createdAt DateTime                  @default(now())
+  updatedAt DateTime                  @updatedAt
+
+  @@unique([structure, meaning])
+  @@index([updatedAt])
+  @@map("chunk_model")
+}
+
+model ChunkModelExample {
+  id           String     @id @default(cuid())
+  chunkModel   ChunkModel @relation(fields: [chunkModelId], references: [id], onDelete: Cascade)
+  chunkModelId String
+  chunk        Chunk      @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+  chunkId      String
+  sortOrder    Int        @default(0)
+
+  @@unique([chunkModelId, chunkId])
+  @@index([chunkModelId, sortOrder])
+  @@map("chunk_model_example")
+}
+
+model TrainingTopicChunkModel {
+  id           String        @id @default(cuid())
+  topic        TrainingTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId      String
+  chunkModel   ChunkModel    @relation(fields: [chunkModelId], references: [id], onDelete: Cascade)
+  chunkModelId String
+  sortOrder    Int           @default(0)
+
+  @@unique([topicId, chunkModelId])
+  @@index([topicId, sortOrder])
+  @@map("training_topic_chunk_model")
 }
 
 // ──── 故事剧情系统 ────

@@ -48,10 +48,18 @@ type Manifest = {
   documents: ManifestDocument[]
 }
 
+type ChunkModelConfig = {
+  structure: string
+  meaning: string
+  examples: string[]
+  notes: string[]
+}
+
 type LearningConfig = {
   vocabulary?: string[]
   chunks?: string[]
   patterns?: string[]
+  chunkModels?: ChunkModelConfig[]
   exercises?: { enabled?: boolean; pipeline?: unknown[] }
 }
 
@@ -64,12 +72,45 @@ function normalizeMaterial(value: string) {
   return value.normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US')
 }
 
+function normalizeModelText(value: string) {
+  return value.normalize('NFC').trim().replace(/\s+/g, ' ')
+}
+
 function stringList(value: unknown, field: string) {
   if (value === undefined) return undefined
   if (!Array.isArray(value) || value.some((item) => typeof item !== 'string' || !item.trim())) {
     throw new Error(`learning.${field} 必须是非空字符串数组。`)
   }
   return [...new Map(value.map((item) => [normalizeMaterial(item), item.normalize('NFC').trim()])).values()]
+}
+
+function parseChunkModels(value: unknown, path: string): ChunkModelConfig[] | undefined {
+  if (value === undefined) return undefined
+  if (!Array.isArray(value)) throw new Error(`${path} 的 learning.chunk_models 必须是数组。`)
+
+  const models: ChunkModelConfig[] = []
+  const seen = new Set<string>()
+  for (const [index, raw] of value.entries()) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      throw new Error(`${path} 的 learning.chunk_models[${index + 1}] 必须是对象。`)
+    }
+    const item = raw as Record<string, unknown>
+    const structure = typeof item.structure === 'string' ? normalizeModelText(item.structure) : ''
+    if (!structure) throw new Error(`${path} 的 learning.chunk_models[${index + 1}] 缺少 structure。`)
+    const meaning = typeof item.meaning === 'string' ? normalizeModelText(item.meaning) : ''
+    const examples = stringList(item.examples, `chunk_models[${index + 1}].examples`)
+    if (!examples?.length) throw new Error(`${path} 的 learning.chunk_models[${index + 1}].examples 不能为空。`)
+    const notes = item.notes === undefined
+      ? []
+      : stringList(item.notes, `chunk_models[${index + 1}].notes`) ?? []
+    const key = `${structure}\0${meaning}`
+    if (seen.has(key)) {
+      throw new Error(`${path} 的 learning.chunk_models 存在重复项：structure="${structure}" meaning="${meaning}"。`)
+    }
+    seen.add(key)
+    models.push({ structure, meaning, examples, notes })
+  }
+  return models
 }
 
 function parseDocument(content: string, path: string): ParsedDocument {
@@ -107,6 +148,7 @@ function parseDocument(content: string, path: string): ParsedDocument {
       vocabulary: stringList(raw.vocabulary, 'vocabulary'),
       chunks: stringList(raw.chunks, 'chunks'),
       patterns: stringList(raw.patterns, 'patterns'),
+      chunkModels: parseChunkModels(raw.chunk_models, path),
       exercises: exerciseValue ? { enabled: exerciseValue.enabled as boolean | undefined, pipeline: exerciseValue.pipeline as unknown[] | undefined } : undefined,
     },
   }
@@ -154,10 +196,90 @@ function materializePipeline(topicId: string, pipeline: unknown[], path: string)
   })
 }
 
+function learningConfigForYaml(learning: LearningConfig) {
+  const payload: Record<string, unknown> = {}
+  if (learning.vocabulary !== undefined) payload.vocabulary = learning.vocabulary
+  if (learning.chunks !== undefined) payload.chunks = learning.chunks
+  if (learning.patterns !== undefined) payload.patterns = learning.patterns
+  if (learning.chunkModels !== undefined) {
+    payload.chunk_models = learning.chunkModels.map((model) => {
+      const item: Record<string, unknown> = {
+        structure: model.structure,
+        examples: model.examples,
+      }
+      if (model.meaning) item.meaning = model.meaning
+      if (model.notes.length) item.notes = model.notes
+      return item
+    })
+  }
+  if (learning.exercises !== undefined) payload.exercises = learning.exercises
+  return payload
+}
+
 function documentWithLearningConfig(learning: LearningConfig) {
-  const frontmatter = dump({ learning }, { noRefs: true, lineWidth: -1, quotingType: '"', forceQuotes: false })
+  const frontmatter = dump({ learning: learningConfigForYaml(learning) }, { noRefs: true, lineWidth: -1, quotingType: '"', forceQuotes: false })
   return `---\n${frontmatter}---\n`
 }
+
+type TopicLearningSnapshot = {
+  topicVocabs: Array<{ vocab: { word: string } }>
+  activeChunks: Array<{ chunk: { text: string } }>
+  topicPatterns: Array<{ pattern: { pattern: string } }>
+  topicChunkModels: Array<{
+    chunkModel: {
+      structure: string
+      meaning: string
+      notes: string[]
+      examples: Array<{ chunk: { text: string }; sortOrder: number }>
+    }
+  }>
+  metadata: unknown
+}
+
+function learningConfigFromTopic(topic: TopicLearningSnapshot, topicId: string): LearningConfig {
+  const chunkModels = topic.topicChunkModels.map(({ chunkModel }) => ({
+    structure: chunkModel.structure,
+    meaning: chunkModel.meaning,
+    notes: chunkModel.notes,
+    examples: [...chunkModel.examples]
+      .sort((left, right) => left.sortOrder - right.sortOrder)
+      .map((item) => item.chunk.text),
+  }))
+  return {
+    vocabulary: topic.topicVocabs.map((item) => item.vocab.word),
+    chunks: topic.activeChunks.map((item) => item.chunk.text),
+    patterns: topic.topicPatterns.map((item) => item.pattern.pattern),
+    // 无模型时不写出字段，避免空数组改变既有 .learning.md 哈希。
+    chunkModels: chunkModels.length ? chunkModels : undefined,
+    exercises: {
+      ...outputTrainingFromMetadata(topic.metadata),
+      pipeline: pipelineForDocument(topicId, outputTrainingFromMetadata(topic.metadata).pipeline),
+    },
+  }
+}
+
+const topicLearningSelect = {
+  topicVocabs: { select: { sortOrder: true, vocab: { select: { word: true } } }, orderBy: { sortOrder: 'asc' as const } },
+  activeChunks: { select: { sortOrder: true, chunk: { select: { text: true } } }, orderBy: { sortOrder: 'asc' as const } },
+  topicPatterns: { select: { sortOrder: true, pattern: { select: { pattern: true } } }, orderBy: { sortOrder: 'asc' as const } },
+  topicChunkModels: {
+    select: {
+      sortOrder: true,
+      chunkModel: {
+        select: {
+          structure: true,
+          meaning: true,
+          notes: true,
+          examples: {
+            select: { sortOrder: true, chunk: { select: { text: true } } },
+            orderBy: { sortOrder: 'asc' as const },
+          },
+        },
+      },
+    },
+    orderBy: { sortOrder: 'asc' as const },
+  },
+} as const
 
 function loadRootEnv() {
   if (!process.env.DATABASE_URL && existsSync(ENV_PATH)) loadEnvFile(ENV_PATH)
@@ -243,9 +365,7 @@ async function exportDocuments(prisma: PrismaClient, learningOnly = false) {
       title: true,
       teachingMarkdown: true,
       metadata: true,
-      topicVocabs: { select: { sortOrder: true, vocab: { select: { word: true } } }, orderBy: { sortOrder: 'asc' } },
-      activeChunks: { select: { sortOrder: true, chunk: { select: { text: true } } }, orderBy: { sortOrder: 'asc' } },
-      topicPatterns: { select: { sortOrder: true, pattern: { select: { pattern: true } } }, orderBy: { sortOrder: 'asc' } },
+      ...topicLearningSelect,
       scene: { select: { id: true, title: true, contentMode: true, sortOrder: true } },
     },
     orderBy: [{ scene: { sortOrder: 'asc' } }, { sortOrder: 'asc' }, { createdAt: 'asc' }],
@@ -260,12 +380,7 @@ async function exportDocuments(prisma: PrismaClient, learningOnly = false) {
       ? resolveManifestPath(existingDocument.path)
       : uniqueDocumentPath(usedPaths, mode, topic.scene.title, topic.title, topic.id)
     const content = topic.teachingMarkdown ?? ''
-    const learningContent = documentWithLearningConfig({
-      vocabulary: topic.topicVocabs.map((item) => item.vocab.word),
-      chunks: topic.activeChunks.map((item) => item.chunk.text),
-      patterns: topic.topicPatterns.map((item) => item.pattern.pattern),
-      exercises: { ...outputTrainingFromMetadata(topic.metadata), pipeline: pipelineForDocument(topic.id, outputTrainingFromMetadata(topic.metadata).pipeline) },
-    })
+    const learningContent = documentWithLearningConfig(learningConfigFromTopic(topic, topic.id))
     const learningAbsolutePath = absolutePath.replace(/\.md$/i, '.learning.md')
     mkdirSync(dirname(absolutePath), { recursive: true })
     if (!learningOnly) writeFileSync(absolutePath, content, 'utf8')
@@ -321,6 +436,66 @@ async function resolveMaterialIds(
     const id = byKey.get(normalizeMaterial(value))
     if (!id) throw new Error(`未能解析${label}：${value}`)
     return id
+  })
+}
+
+async function syncChunkModels(tx: Tx, topicId: string, models: ChunkModelConfig[], path: string) {
+  await tx.trainingTopicChunkModel.deleteMany({ where: { topicId } })
+  if (!models.length) return
+
+  const exampleTexts = [...new Map(
+    models.flatMap((model) => model.examples).map((text) => [normalizeMaterial(text), text]),
+  ).values()]
+  const exampleChunkIds = await resolveMaterialIds(
+    exampleTexts,
+    'Chunk Model 示例',
+    async (texts) => {
+      const rows = await tx.chunk.findMany({
+        where: { OR: texts.map((text) => ({ text: { equals: text, mode: 'insensitive' } })) },
+        select: { id: true, text: true },
+      })
+      return rows.map((row) => ({ id: row.id, key: row.text }))
+    },
+    async (missing) => {
+      throw new Error(`${path} 的 chunk_models.examples 找不到已有 Chunk：${missing.join('、')}。请先写入同文件 chunks 或确保库中已有对应 Chunk。`)
+    },
+  )
+  const chunkIdByText = new Map(exampleTexts.map((text, index) => [normalizeMaterial(text), exampleChunkIds[index]]))
+
+  const modelIds: string[] = []
+  for (const model of models) {
+    const existing = await tx.chunkModel.findUnique({
+      where: { structure_meaning: { structure: model.structure, meaning: model.meaning } },
+      select: { id: true },
+    })
+    const chunkModel = existing
+      ? await tx.chunkModel.update({
+          where: { id: existing.id },
+          data: { notes: model.notes },
+          select: { id: true },
+        })
+      : await tx.chunkModel.create({
+          data: { structure: model.structure, meaning: model.meaning, notes: model.notes },
+          select: { id: true },
+        })
+
+    await tx.chunkModelExample.deleteMany({ where: { chunkModelId: chunkModel.id } })
+    const exampleIds = model.examples.map((text) => {
+      const chunkId = chunkIdByText.get(normalizeMaterial(text))
+      if (!chunkId) throw new Error(`${path} 的 chunk_models.examples 未能解析 Chunk：${text}`)
+      return chunkId
+    })
+    if (exampleIds.length) {
+      await tx.chunkModelExample.createMany({
+        data: exampleIds.map((chunkId, sortOrder) => ({ chunkModelId: chunkModel.id, chunkId, sortOrder })),
+        skipDuplicates: true,
+      })
+    }
+    modelIds.push(chunkModel.id)
+  }
+
+  await tx.trainingTopicChunkModel.createMany({
+    data: modelIds.map((chunkModelId, sortOrder) => ({ topicId, chunkModelId, sortOrder })),
   })
 }
 
@@ -389,6 +564,9 @@ async function syncLearningConfig(tx: Tx, topicId: string, config: LearningConfi
     await tx.trainingTopicSentencePattern.deleteMany({ where: { topicId } })
     if (ids.length) await tx.trainingTopicSentencePattern.createMany({ data: ids.map((patternId, sortOrder) => ({ topicId, patternId, sortOrder })) })
   }
+  if (config.chunkModels !== undefined) {
+    await syncChunkModels(tx, topicId, config.chunkModels, path)
+  }
   if (config.exercises !== undefined) {
     const topic = await tx.trainingTopic.findUniqueOrThrow({ where: { id: topicId }, select: { metadata: true } })
     const metadata = topic.metadata && typeof topic.metadata === 'object' && !Array.isArray(topic.metadata) ? topic.metadata as Record<string, unknown> : {}
@@ -412,9 +590,7 @@ async function syncDocuments(prisma: PrismaClient, dryRun: boolean, force: boole
     where: { id: { in: manifest.documents.map((document) => document.topicId) } },
     select: {
       id: true, sceneId: true, teachingMarkdown: true, metadata: true,
-      topicVocabs: { select: { sortOrder: true, vocab: { select: { word: true } } }, orderBy: { sortOrder: 'asc' } },
-      activeChunks: { select: { sortOrder: true, chunk: { select: { text: true } } }, orderBy: { sortOrder: 'asc' } },
-      topicPatterns: { select: { sortOrder: true, pattern: { select: { pattern: true } } }, orderBy: { sortOrder: 'asc' } },
+      ...topicLearningSelect,
     },
   })
   const topicById = new Map(databaseTopics.map((topic) => [topic.id, topic]))
@@ -438,12 +614,7 @@ async function syncDocuments(prisma: PrismaClient, dryRun: boolean, force: boole
     if (learningContent !== undefined && !learning) throw new Error(`${document.learningPath} 缺少 learning Front Matter。`)
     if (learning?.exercises?.pipeline) materializePipeline(document.topicId, learning.exercises.pipeline, document.learningPath!)
     const databaseLearningContent = learning
-      ? documentWithLearningConfig({
-        vocabulary: topic.topicVocabs.map((item) => item.vocab.word),
-        chunks: topic.activeChunks.map((item) => item.chunk.text),
-        patterns: topic.topicPatterns.map((item) => item.pattern.pattern),
-        exercises: { ...outputTrainingFromMetadata(topic.metadata), pipeline: pipelineForDocument(topic.id, outputTrainingFromMetadata(topic.metadata).pipeline) },
-      })
+      ? documentWithLearningConfig(learningConfigFromTopic(topic, topic.id))
       : undefined
     const localHash = sha256(content)
     const databaseHash = sha256(topic.teachingMarkdown ?? '')
