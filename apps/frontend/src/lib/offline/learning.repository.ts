@@ -521,6 +521,8 @@ export const learningRepository = {
     await localDb.deleteWhere<any>('daily_practice_runs', (item) =>
       Array.isArray((item as any).packIds) && (item as any).packIds.includes(packId))
     await localDb.delete('user_progress', `novel:${packId}`)
+    await localDb.deleteWhere<LocalTeachingReadingProgress>('user_progress', (record) =>
+      record.type === 'teaching_reading' && record.sceneId === packId)
     const pending = await syncOutbox.listPending()
     await Promise.all(pending
       .filter((item) => item.entityId === packId && (
