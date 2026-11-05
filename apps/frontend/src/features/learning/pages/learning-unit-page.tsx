@@ -27,6 +27,8 @@ import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-n
 import { ContentModeExperience } from '../components/content-mode-experience'
 import { CurrentTabExpandButton } from '../components/current-tab-expand-button'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
+import { patternSlotDescription, patternSlotLabel } from '../lib/pattern-slot'
+import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 
 const PREP_PAGE_SIZE = 8
 const TOPIC_PAGE_SIZE = 8
@@ -56,6 +58,12 @@ export function LearningUnitPage() {
   }))
   const [topicPage, setTopicPage] = useState(() => pageFromSearchParams(searchParams, 'practicePage'))
   const [teachingTopic, setTeachingTopic] = useState<TrainingTopicItem | null>(null)
+  useEffectivePracticeTimer({
+    enabled: Boolean(unitId && unit?.id === unitId),
+    sourceId: unitId ? `learning-unit:${unitId}` : null,
+    scope: 'learning',
+    idlePauseMs: 3 * 60_000,
+  })
 
   // Dialog
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -889,8 +897,8 @@ function PatternPrepCard({
             </div>
             {(pattern.slots ?? []).length > 0 && (
               <div className="mb-3 flex flex-wrap gap-1.5">
-                {pattern.slots.map((slot) => (
-                  <Badge key={slot} variant="secondary" className="rounded-full px-2 text-[10px]">{slot}</Badge>
+                {pattern.slots.map((slot, index) => (
+                  <Badge key={index} title={patternSlotDescription(slot)} variant="secondary" className="rounded-full px-2 text-[10px]">{patternSlotLabel(slot)}</Badge>
                 ))}
               </div>
             )}

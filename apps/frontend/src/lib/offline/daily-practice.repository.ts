@@ -21,7 +21,7 @@ import type {
   SubmissionStatus,
 } from '@/stores/today-practice.store'
 import { compareReviewDebt, deriveTodayScheduledPracticeIds, selectPracticeBatch, selectReviewBatch } from './daily-practice.planner'
-import { createWarmupPracticeItemId } from './warmup-practice-item-id'
+import { createWarmupPracticeItemId, stableHash } from './warmup-practice-item-id'
 export { createWarmupPracticeItemId } from './warmup-practice-item-id'
 export { compareReviewDebt, deriveTodayScheduledPracticeIds, selectPracticeBatch, selectReviewBatch } from './daily-practice.planner'
 

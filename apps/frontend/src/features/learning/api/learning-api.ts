@@ -1,4 +1,5 @@
 import { del, get, post, put } from '@/lib/request'
+import type { PatternSlot } from '../lib/pattern-slot'
 
 const LEARNING_PACK_DOWNLOAD_TIMEOUT_MS = 10 * 60_000
 
@@ -110,7 +111,7 @@ export interface SentencePattern {
   id?: string
   pattern: string
   meaning: string
-  slots: string[]
+  slots: PatternSlot[]
   example: string
   /** 富文本讲解；离线包与在线详情都会携带。 */
   description?: string | null

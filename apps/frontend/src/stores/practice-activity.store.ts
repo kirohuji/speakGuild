@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export type PracticeActivityScope = 'daily' | 'dialogue'
+export type PracticeActivityScope = 'daily' | 'dialogue' | 'learning'
 
 export type PracticeActivityRecord = {
   date: string
@@ -17,7 +17,7 @@ type PracticeActivityState = {
   getRecord: (date: string, sourceId: string) => PracticeActivityRecord | null
 }
 
-const MAX_ACTIVE_SECONDS_PER_SOURCE = 30 * 60
+const MAX_ACTIVE_SECONDS_PER_SOURCE = 4 * 60 * 60
 
 function recordKey(date: string, sourceId: string) {
   return `${date}:${sourceId}`

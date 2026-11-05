@@ -17,6 +17,7 @@ import { useTopicMediaUrl } from '@/hooks/use-topic-media'
 import { MixedPlaybackSettingsDialog, type DisplayMode, type LoopMode } from '@/components/common/playback-settings-dialog'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useLearningStore } from '@/stores/learning.store'
+import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
 import { learningApi, type ListeningTranscriptSegment, type TrainingTopicItem } from '../api/learning-api'
 
@@ -46,6 +47,12 @@ export function ListeningSessionPage() {
   }, [phase, setImmersiveMode])
 
   const topic = useMemo(() => unit?.trainingTopics.find((item) => item.id === topicId) ?? null, [topicId, unit?.trainingTopics])
+  const { touch: touchListeningTimer } = useEffectivePracticeTimer({
+    enabled: Boolean(unitId && topic && unit?.contentMode === 'listening'),
+    sourceId: topicId ? `learning-listening:${topicId}` : null,
+    scope: 'learning',
+    idlePauseMs: 3 * 60_000,
+  })
 
   if (loading && (!unit || unit.id !== unitId)) return <MobilePageLoading rows={5} minHeightClassName="min-h-[100dvh]" />
 
@@ -66,7 +73,7 @@ export function ListeningSessionPage() {
     <>
       {phase === 'prepare'
         ? <ListeningPreparePage topic={topic} unitTitle={unit.title} onBack={() => navigate(-1)} onOpenGuide={() => setGuideOpen(true)} onStart={() => setPhase('listen')} />
-        : <ListeningPlayerPage topic={topic} unitId={unit.id} unitTitle={unit.title} onClose={() => setPhase('prepare')} />}
+        : <ListeningPlayerPage topic={topic} unitId={unit.id} unitTitle={unit.title} onClose={() => setPhase('prepare')} onPlaybackProgress={touchListeningTimer} />}
       <PracticeVnDrawer open={guideOpen} onOpenChange={setGuideOpen} hideToggles teachingMarkdown={topic.teachingMarkdown?.trim() || topic.description?.trim() || ''} />
     </>
   )
@@ -173,7 +180,7 @@ function formatSpeed(rate: number) {
 
 // ── 听力学练播放页 ──────────────────────────────────────────────────────────
 
-function ListeningPlayerPage({ topic, unitId, unitTitle, onClose }: { topic: TrainingTopicItem; unitId?: string | null; unitTitle: string; onClose: () => void }) {
+function ListeningPlayerPage({ topic, unitId, unitTitle, onClose, onPlaybackProgress }: { topic: TrainingTopicItem; unitId?: string | null; unitTitle: string; onClose: () => void; onPlaybackProgress: () => void }) {
   const { t } = useTranslation()
   const audioRef = useRef<HTMLAudioElement>(null)
   const segments = topic.transcript ?? []
@@ -239,8 +246,9 @@ function ListeningPlayerPage({ topic, unitId, unitTitle, onClose }: { topic: Tra
   const onTimeUpdate = useCallback(() => {
     const audio = audioRef.current
     if (!audio) return
+    onPlaybackProgress()
     setCurrentMs(audio.currentTime * 1000)
-  }, [])
+  }, [onPlaybackProgress])
 
   // 句间自动停顿导致的 pause 不重置 playing（等待句间间隔后自动续播）
   const onPause = useCallback(() => {

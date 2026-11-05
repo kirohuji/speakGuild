@@ -11,8 +11,10 @@ import { createHash } from 'crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { loadEnvFile } from 'process'
 import { dirname, isAbsolute, relative, resolve, sep } from 'path'
-import { PrismaClient } from '@prisma/client'
+import { Prisma, PrismaClient } from '@prisma/client'
 import { dump, load } from 'js-yaml'
+
+type Tx = Prisma.TransactionClient
 
 const REPO_ROOT = resolve(__dirname, '../../..')
 const DOCS_ROOT = resolve(REPO_ROOT, 'apps', 'docs-md')
@@ -293,36 +295,97 @@ async function exportDocuments(prisma: PrismaClient, learningOnly = false) {
   console.log(`目录：${DOCS_ROOT}`)
 }
 
-async function syncLearningConfig(tx: any, topicId: string, config: LearningConfig, path: string) {
-  const resolveVocabulary = async (word: string) => {
-    const existing = await tx.vocabulary.findFirst({ where: { word: { equals: word, mode: 'insensitive' } } })
-    return existing ?? tx.vocabulary.create({ data: { word, meaning: '待补充' } })
-  }
-  const resolveChunk = async (text: string) => {
-    const existing = await tx.chunk.findFirst({ where: { text: { equals: text, mode: 'insensitive' } } })
-    return existing ?? tx.chunk.create({ data: { text, meaning: '待补充', category: 'general' } })
-  }
-  const resolvePattern = async (pattern: string) => {
-    const existing = await tx.sentencePattern.findFirst({ where: { pattern: { equals: pattern, mode: 'insensitive' } } })
-    return existing ?? tx.sentencePattern.create({ data: { pattern } })
+/** 批量按大小写不敏感匹配已有材料，缺失的一次 createMany，再按原列表顺序返回 id。 */
+async function resolveMaterialIds(
+  values: string[],
+  label: string,
+  findMany: (values: string[]) => Promise<Array<{ id: string; key: string }>>,
+  createMissing: (missing: string[]) => Promise<void>,
+) {
+  if (!values.length) return [] as string[]
+
+  const toMap = (rows: Array<{ id: string; key: string }>) => {
+    const map = new Map<string, string>()
+    for (const row of rows) map.set(normalizeMaterial(row.key), row.id)
+    return map
   }
 
+  let byKey = toMap(await findMany(values))
+  const missing = values.filter((value) => !byKey.has(normalizeMaterial(value)))
+  if (missing.length) {
+    await createMissing(missing)
+    byKey = toMap(await findMany(values))
+  }
+
+  return values.map((value) => {
+    const id = byKey.get(normalizeMaterial(value))
+    if (!id) throw new Error(`未能解析${label}：${value}`)
+    return id
+  })
+}
+
+async function syncLearningConfig(tx: Tx, topicId: string, config: LearningConfig, path: string) {
   // 某区块未声明时不触碰现有数据；声明为空数组则明确清空对应话题关联。
   if (config.vocabulary !== undefined) {
-    const ids = [] as string[]
-    for (const word of config.vocabulary) ids.push((await resolveVocabulary(word)).id)
+    const ids = await resolveMaterialIds(
+      config.vocabulary,
+      '词汇',
+      async (words) => {
+        const rows = await tx.vocabulary.findMany({
+          where: { OR: words.map((word) => ({ word: { equals: word, mode: 'insensitive' } })) },
+          select: { id: true, word: true },
+        })
+        return rows.map((row) => ({ id: row.id, key: row.word }))
+      },
+      async (missing) => {
+        await tx.vocabulary.createMany({
+          data: missing.map((word) => ({ word, meaning: '待补充' })),
+          skipDuplicates: true,
+        })
+      },
+    )
     await tx.trainingTopicVocab.deleteMany({ where: { topicId } })
     if (ids.length) await tx.trainingTopicVocab.createMany({ data: ids.map((vocabId, sortOrder) => ({ topicId, vocabId, sortOrder })) })
   }
   if (config.chunks !== undefined) {
-    const ids = [] as string[]
-    for (const text of config.chunks) ids.push((await resolveChunk(text)).id)
+    const ids = await resolveMaterialIds(
+      config.chunks,
+      'Chunk',
+      async (texts) => {
+        const rows = await tx.chunk.findMany({
+          where: { OR: texts.map((text) => ({ text: { equals: text, mode: 'insensitive' } })) },
+          select: { id: true, text: true },
+        })
+        return rows.map((row) => ({ id: row.id, key: row.text }))
+      },
+      async (missing) => {
+        await tx.chunk.createMany({
+          data: missing.map((text) => ({ text, meaning: '待补充', category: 'general' })),
+          skipDuplicates: true,
+        })
+      },
+    )
     await tx.trainingTopicChunk.deleteMany({ where: { topicId } })
     if (ids.length) await tx.trainingTopicChunk.createMany({ data: ids.map((chunkId, sortOrder) => ({ topicId, chunkId, sortOrder })) })
   }
   if (config.patterns !== undefined) {
-    const ids = [] as string[]
-    for (const pattern of config.patterns) ids.push((await resolvePattern(pattern)).id)
+    const ids = await resolveMaterialIds(
+      config.patterns,
+      '句型',
+      async (patterns) => {
+        const rows = await tx.sentencePattern.findMany({
+          where: { OR: patterns.map((pattern) => ({ pattern: { equals: pattern, mode: 'insensitive' } })) },
+          select: { id: true, pattern: true },
+        })
+        return rows.map((row) => ({ id: row.id, key: row.pattern }))
+      },
+      async (missing) => {
+        await tx.sentencePattern.createMany({
+          data: missing.map((pattern) => ({ pattern })),
+          skipDuplicates: true,
+        })
+      },
+    )
     await tx.trainingTopicSentencePattern.deleteMany({ where: { topicId } })
     if (ids.length) await tx.trainingTopicSentencePattern.createMany({ data: ids.map((patternId, sortOrder) => ({ topicId, patternId, sortOrder })) })
   }
@@ -433,8 +496,8 @@ async function syncDocuments(prisma: PrismaClient, dryRun: boolean, force: boole
           if (document.learning) await syncLearningConfig(tx, document.topicId, document.learning, document.learningPath ?? document.path)
         }
       },
-      // 一个总览课可能声明数十个新材料；默认 5 秒不足以完成查找、创建和关联，但仍需保持整份配置原子写入。
-      { maxWait: 10_000, timeout: 60_000 },
+      // 材料已批量查找/创建，但仍保留足够超时以覆盖多文档原子写入。
+      { maxWait: 10_000, timeout: 180_000 },
     )
     const changedById = new Map(changed.map((document) => [document.topicId, { teaching: sha256(document.content), learning: document.learningContent ? sha256(document.learningContent) : undefined }]))
     manifest.documents = manifest.documents.map((document) => ({

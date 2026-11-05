@@ -15,6 +15,7 @@ import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-dra
 import { cn } from '@/lib/cn'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useLearningStore } from '@/stores/learning.store'
+import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 import { cacheReadingSession, clearReadingDraft, finalizeCachedReadingSession, getCachedReadingSession, getReadingDraft, saveReadingDraft } from '@/lib/offline/reading-draft.repository'
 import { learningApi, type TrainingTopicItem } from '../api/learning-api'
 
@@ -44,6 +45,12 @@ export function ReadingSessionPage() {
   }, [phase, setImmersiveMode])
 
   const topic = useMemo(() => unit?.trainingTopics.find((item) => item.id === topicId) ?? null, [topicId, unit?.trainingTopics])
+  useEffectivePracticeTimer({
+    enabled: Boolean(unitId && topic && unit?.contentMode === 'reading'),
+    sourceId: topicId ? `learning-reading:${topicId}` : null,
+    scope: 'learning',
+    idlePauseMs: 3 * 60_000,
+  })
 
   if (loading && (!unit || unit.id !== unitId)) return <MobilePageLoading rows={5} minHeightClassName="min-h-[100dvh]" />
 

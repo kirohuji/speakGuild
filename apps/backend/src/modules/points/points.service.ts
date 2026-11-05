@@ -10,7 +10,8 @@ import {
 
 const CHECK_IN_BASE_POINTS = 10;
 const STREAK_BONUS_CAP = 5; // max bonus per day from streak
-const MAX_CALENDAR_RANGE_DAYS = 62;
+const MAX_CALENDAR_RANGE_DAYS = 371;
+const MAX_ACTIVE_SECONDS_PER_SOURCE = 4 * 60 * 60;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 function parseCalendarDate(value: string) {
@@ -110,19 +111,28 @@ export class PointsService {
       }),
     ]);
 
-    const dailyStats = runs.map((run: any) => {
+    const statsByDate = new Map<string, { date: string; completedIds: Set<string>; dialogueQuestions: number; activeSeconds: number }>();
+    for (const run of runs) {
       const stats = run.stats && typeof run.stats === 'object' && !Array.isArray(run.stats) ? run.stats : {};
       const activity = stats.activity && typeof stats.activity === 'object' && !Array.isArray(stats.activity) ? Object.values(stats.activity) as any[] : [];
-      const activeSeconds = activity.reduce((total, item) => total + Math.max(0, Math.min(1800, Number(item?.activeSeconds) || 0)), 0);
+      const activeSeconds = activity.reduce((total, item) => total + Math.max(0, Math.min(MAX_ACTIVE_SECONDS_PER_SOURCE, Number(item?.activeSeconds) || 0)), 0);
       const dialogueQuestions = activity
         .filter((item) => item?.scope === 'dialogue')
         .reduce((total, item) => total + Math.max(0, Number(item?.questionCount) || 0), 0);
-      return {
-        date: formatCalendarDate(run.date),
-        questionCount: (run.completedItemIds?.length ?? 0) + dialogueQuestions,
+      const date = formatCalendarDate(run.date);
+      const previous = statsByDate.get(date) ?? { date, completedIds: new Set<string>(), dialogueQuestions: 0, activeSeconds: 0 };
+      for (const itemId of run.completedItemIds ?? []) previous.completedIds.add(itemId);
+      previous.dialogueQuestions += dialogueQuestions;
+      previous.activeSeconds += activeSeconds;
+      statsByDate.set(date, previous);
+    }
+    const dailyStats = [...statsByDate.values()]
+      .map(({ date, completedIds, dialogueQuestions, activeSeconds }) => ({
+        date,
+        questionCount: completedIds.size + dialogueQuestions,
         activeSeconds,
-      };
-    });
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
 
     return {
       dates: [...new Set(checkIns

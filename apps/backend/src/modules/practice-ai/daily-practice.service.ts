@@ -36,7 +36,8 @@ interface DailyPracticeRunInput {
   stats?: any;
 }
 
-type ActivityStats = Record<string, { scope: 'daily' | 'dialogue'; activeSeconds: number; questionCount: number }>;
+type ActivityStats = Record<string, { scope: 'daily' | 'dialogue' | 'learning'; activeSeconds: number; questionCount: number }>;
+const MAX_ACTIVE_SECONDS_PER_SOURCE = 4 * 60 * 60;
 
 function toActivityStats(value: unknown): ActivityStats {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
@@ -44,10 +45,10 @@ function toActivityStats(value: unknown): ActivityStats {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
   return Object.fromEntries(Object.entries(raw).flatMap(([key, item]) => {
     if (!item || typeof item !== 'object' || Array.isArray(item)) return [];
-    const scope = (item as any).scope === 'dialogue' ? 'dialogue' : 'daily';
+    const scope = (item as any).scope === 'dialogue' ? 'dialogue' : (item as any).scope === 'learning' ? 'learning' : 'daily';
     return [[key, {
       scope,
-      activeSeconds: Math.max(0, Math.min(1800, Number((item as any).activeSeconds) || 0)),
+      activeSeconds: Math.max(0, Math.min(MAX_ACTIVE_SECONDS_PER_SOURCE, Number((item as any).activeSeconds) || 0)),
       questionCount: Math.max(0, Number((item as any).questionCount) || 0),
     }]];
   }));
@@ -136,14 +137,14 @@ export class DailyPracticeService {
   async recordActivity(userId: string, body: {
     date?: string;
     sourceId?: string;
-    scope?: 'daily' | 'dialogue';
+    scope?: 'daily' | 'dialogue' | 'learning';
     activeSeconds?: number;
     questionCount?: number;
   }) {
     const date = typeof body.date === 'string' ? startOfDate(body.date) : new Date();
     const sourceId = String(body.sourceId ?? '').trim();
-    const scope = body.scope === 'dialogue' ? 'dialogue' : 'daily';
-    const activeSeconds = Math.max(0, Math.min(1800, Math.floor(Number(body.activeSeconds) || 0)));
+    const scope = body.scope === 'dialogue' ? 'dialogue' : body.scope === 'learning' ? 'learning' : 'daily';
+    const activeSeconds = Math.max(0, Math.min(MAX_ACTIVE_SECONDS_PER_SOURCE, Math.floor(Number(body.activeSeconds) || 0)));
     if (!/^[-:_a-zA-Z0-9]{3,180}$/.test(sourceId) || activeSeconds === 0) {
       return { accepted: false };
     }

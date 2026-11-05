@@ -181,7 +181,7 @@ export class ProfileService {
       const stats = run.stats && typeof run.stats === 'object' && !Array.isArray(run.stats) ? run.stats : {};
       const sources = stats.activity && typeof stats.activity === 'object' && !Array.isArray(stats.activity) ? Object.values(stats.activity) as any[] : [];
       const dialogueQuestions = sources.filter((item) => item?.scope === 'dialogue').reduce((total, item) => total + Math.max(0, Number(item?.questionCount) || 0), 0);
-      const activeSeconds = sources.reduce((total, item) => total + Math.max(0, Math.min(1800, Number(item?.activeSeconds) || 0)), 0);
+      const activeSeconds = sources.reduce((total, item) => total + Math.max(0, Math.min(4 * 60 * 60, Number(item?.activeSeconds) || 0)), 0);
       const previous = byDate.get(key) ?? { count: 0, questionCount: 0, activeSeconds: 0 };
       byDate.set(key, {
         count: Math.max(previous.count, run.completedItemIds?.length ?? 0, dialogueQuestions),

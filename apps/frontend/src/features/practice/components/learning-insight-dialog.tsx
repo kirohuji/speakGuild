@@ -37,6 +37,7 @@ import { useCachedAudio } from '@/hooks/use-cached-audio'
 import type { DictionaryCluster, DictionaryEntry, DictionarySense } from '@/features/admin/api-dictionary'
 import { type TopicDetail } from '../api/english-practice-api'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
+import { patternSlotLabel, type PatternSlot } from '@/features/learning/lib/pattern-slot'
 
 type VocabularyInsight = {
   kind: 'word'
@@ -73,7 +74,7 @@ type PatternInsight = {
   id: string
   pattern: string
   meaning?: string
-  slots?: string[]
+  slots?: PatternSlot[]
   example?: string
   description?: string | null
   examples?: unknown
@@ -1194,7 +1195,7 @@ function PatternInsightView({ item, hideSave = false }: { item: PatternInsight; 
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(item.saved ?? false)
   const [saveDrawerOpen, setSaveDrawerOpen] = useState(false)
-  const slotText = useMemo(() => item.slots?.filter(Boolean).join(' / '), [item.slots])
+  const slotText = useMemo(() => item.slots?.map(patternSlotLabel).filter(Boolean).join(' / '), [item.slots])
   const examples = useMemo(() => normalizeVocabExamples(item.examples), [item.examples])
   // 新版 SentencePattern 用 examples 保存例句；example 仅兼容旧数据。
   const primaryExample = item.example || examples[0]?.en

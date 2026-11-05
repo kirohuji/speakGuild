@@ -133,6 +133,12 @@ export function PracticeSessionPage() {
 
   // ── Teaching drawer (controlled from prepare phase) ──
   const [teachingOpen, setTeachingOpen] = useState(false)
+  useEffectivePracticeTimer({
+    enabled: phase === 'prepare' && teachingOpen && Boolean(topicId),
+    sourceId: topicId ? `learning-guide:${topicId}` : null,
+    scope: 'learning',
+    idlePauseMs: 3 * 60_000,
+  })
   const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
   const syncedInkLineCountRef = useRef(0)
 

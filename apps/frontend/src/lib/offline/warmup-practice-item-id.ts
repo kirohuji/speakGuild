@@ -9,7 +9,7 @@ function stableStringify(value: any): string {
   return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`
 }
 
-function stableHash(value: any): string {
+export function stableHash(value: any): string {
   const input = stableStringify(value)
   let hash = 5381
   for (let index = 0; index < input.length; index += 1) hash = ((hash << 5) + hash) ^ input.charCodeAt(index)

@@ -15,11 +15,13 @@ export function useEffectivePracticeTimer({
   sourceId,
   scope,
   questionCount = 0,
+  idlePauseMs = IDLE_PAUSE_MS,
 }: {
   enabled: boolean
   sourceId: string | null
   scope: PracticeActivityScope
   questionCount?: number
+  idlePauseMs?: number
 }) {
   const addActiveSeconds = usePracticeActivityStore((s) => s.addActiveSeconds)
   const getRecord = usePracticeActivityStore((s) => s.getRecord)
@@ -69,7 +71,7 @@ export function useEffectivePracticeTimer({
         lastTickAt.current = Date.now()
       }
     }
-    const events: Array<keyof DocumentEventMap> = ['pointerdown', 'keydown', 'touchstart', 'input']
+    const events: Array<keyof DocumentEventMap> = ['pointerdown', 'keydown', 'touchstart', 'input', 'scroll', 'wheel']
     events.forEach((event) => document.addEventListener(event, onActivity, { passive: true }))
     document.addEventListener('visibilitychange', onVisibilityChange)
 
@@ -77,7 +79,7 @@ export function useEffectivePracticeTimer({
       const now = Date.now()
       const elapsed = Math.floor((now - lastTickAt.current) / 1000)
       lastTickAt.current = now
-      if (document.visibilityState === 'visible' && now - lastInteractionAt.current <= IDLE_PAUSE_MS) {
+      if (document.visibilityState === 'visible' && now - lastInteractionAt.current <= idlePauseMs) {
         addActiveSeconds({ date: localDateKey(), sourceId, scope, seconds: elapsed })
       }
       if (now - lastFlushAt.current >= FLUSH_INTERVAL_MS) flush()
@@ -89,7 +91,7 @@ export function useEffectivePracticeTimer({
       document.removeEventListener('visibilitychange', onVisibilityChange)
       flush()
     }
-  }, [addActiveSeconds, enabled, flush, scope, sourceId])
+  }, [addActiveSeconds, enabled, flush, idlePauseMs, scope, sourceId])
 
   useEffect(() => {
     if (enabled && sourceId && questionCount > 0) flush()

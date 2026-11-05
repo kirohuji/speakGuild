@@ -515,7 +515,7 @@ export const dailyPracticeApi = {
   recordActivity: (payload: {
     date: string
     sourceId: string
-    scope: 'daily' | 'dialogue'
+    scope: 'daily' | 'dialogue' | 'learning'
     activeSeconds: number
     questionCount?: number
   }) => post('/practice/daily-practice/activity', payload),

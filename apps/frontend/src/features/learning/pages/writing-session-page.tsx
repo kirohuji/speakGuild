@@ -22,11 +22,13 @@ import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-n
 import { learningContentRepository } from '@/lib/offline'
 import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type VocabItem } from '../api/learning-api'
 import { withoutWritingRequirements, WritingTaskCard } from '../components/writing-task-card'
+import { patternSlotDescription, patternSlotLabel } from '../lib/pattern-slot'
 import { useTopicSession, type TopicSessionReviewSnapshot } from '../hooks/use-topic-session'
 import { Switch } from '@/components/ui/switch'
 import { AssessmentAnswerInput } from '@/features/profile/components/placement-assessment-dialog'
 import { resolveFileAssetUrl } from '@/lib/file-asset-reference'
 import { useKeyboard } from '@/providers/keyboard-provider'
+import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 
 type WritingPhase = 'prepare' | 'write'
 
@@ -76,6 +78,12 @@ export function WritingSessionPage() {
     () => unit?.trainingTopics.find((item) => item.id === topicId) ?? null,
     [topicId, unit?.trainingTopics],
   )
+  useEffectivePracticeTimer({
+    enabled: Boolean(unitId && topic && unit?.contentMode === 'writing'),
+    sourceId: topicId ? `learning-writing:${topicId}` : null,
+    scope: 'learning',
+    idlePauseMs: 3 * 60_000,
+  })
 
   const isDialogue = useMemo(
     () => topic?.contentConfig?.writing?.genre === 'dialogue',
@@ -441,7 +449,7 @@ function WritingKnowledgeDetail({
         )}
         {item.slots.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-1.5">
-            {item.slots.map((slot) => <Badge key={slot} variant="secondary" className="rounded-full px-2 text-[10px]">{slot}</Badge>)}
+            {item.slots.map((slot, index) => <Badge key={index} title={patternSlotDescription(slot)} variant="secondary" className="rounded-full px-2 text-[10px]">{patternSlotLabel(slot)}</Badge>)}
           </div>
         )}
         <WritingKnowledgeActions collected={collected} onInspect={onInspect} onCollect={onCollect} />

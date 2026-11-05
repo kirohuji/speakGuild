@@ -16,6 +16,7 @@ import { cn } from '@/lib/cn'
 import { localDb } from '@/lib/offline/unified-storage'
 import { useLearningStore } from '@/stores/learning.store'
 import { learningRepository } from '@/lib/offline'
+import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 
 const PROGRESS_KEY = (unitId: string) => `manyu:novel-progress:${unitId}`
 // 阅读器主题与全局主题统一：
@@ -58,6 +59,12 @@ export function LearningReaderPage() {
   const fetchUnitDetail = useLearningStore((s) => s.fetchUnitDetail)
   const [loading, setLoading] = useState(true)
   const [epubUrl, setEpubUrl] = useState<string>('')
+  const { touch: touchReadingTimer } = useEffectivePracticeTimer({
+    enabled: Boolean(unitId && epubUrl && unit?.id === unitId),
+    sourceId: unitId ? `learning-reader:${unitId}` : null,
+    scope: 'learning',
+    idlePauseMs: 3 * 60_000,
+  })
   const [location, setLocation] = useState<string | number>(0)
   const { resolvedTheme, setTheme: setGlobalTheme } = useTheme()
   // 浅色模式下的「纸面」偏好（白 / 护眼）；深色模式直接跟随全局主题
@@ -114,6 +121,7 @@ export function LearningReaderPage() {
   }, [fontSize])
 
   const handleLocation = useCallback((epubcfi: string) => {
+    touchReadingTimer()
     setLocation(epubcfi)
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
@@ -132,7 +140,7 @@ export function LearningReaderPage() {
         percentage: val,
       }).catch(() => { /* local storage may be unavailable during shutdown */ })
     }, 800)
-  }, [unitId])
+  }, [touchReadingTimer, unitId])
 
   // 在阅读器内切换主题时同步切换全局主题，保证整站一致
   const selectTheme = useCallback((t: ReaderTheme) => {
