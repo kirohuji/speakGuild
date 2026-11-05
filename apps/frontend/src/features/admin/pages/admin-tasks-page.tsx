@@ -27,6 +27,8 @@ import { Select } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/cn';
 import { adminTasksApi, type AdminTask, type AdminTaskDetail, type AdminTaskStatus, type QueuesStatusResult } from '../api-admin-tasks';
+import { listAiProviders } from '../api-ai-models';
+import { estimateDeepSeekCost } from '../deepseek-pricing';
 
 const TYPE_LABELS: Record<string, string> = {
   'warmup-pipeline-generate': '知识点练习 AI 生成',
@@ -178,23 +180,17 @@ function getAiUsage(task: AdminTask | AdminTaskDetail | null): AiUsageData | nul
   return null;
 }
 
-/** 按 deepseek-chat 约 1 元/百万输入 token、2 元/百万输出 token 估算 */
-function estimateCost(usage: AiUsageData) {
-  const input = usage.promptTokens ?? 0;
-  const output = usage.completionTokens ?? 0;
-  return (input / 1e6) * 1 + (output / 1e6) * 2;
-}
-
 function fmtTokens(n: number) {
   if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`;
   if (n >= 1e3) return `${(n / 1e3).toFixed(1)}k`;
   return String(n);
 }
 
-function AiUsageCard({ task }: { task: AdminTask | AdminTaskDetail }) {
+function AiUsageCard({ task, model }: { task: AdminTask | AdminTaskDetail; model: string }) {
   const usage = getAiUsage(task);
   if (!usage) return null;
-  const cost = estimateCost(usage);
+  const pricedAt = task.startedAt || task.createdAt;
+  const estimate = estimateDeepSeekCost(usage, model, pricedAt);
   const items = [
     { label: '调用次数', value: String(usage.calls ?? 0) },
     { label: '输入 tokens', value: fmtTokens(usage.promptTokens ?? 0) },
@@ -217,7 +213,16 @@ function AiUsageCard({ task }: { task: AdminTask | AdminTaskDetail }) {
       </div>
       <div className="mt-2 flex items-center justify-between border-t border-border/60 pt-2 text-xs">
         <span className="text-muted-foreground">合计 {fmtTokens(usage.totalTokens ?? 0)} tokens</span>
-        <span className="font-medium text-amber-600">≈ ¥{cost.toFixed(2)}</span>
+        {estimate ? (
+          <span
+            className="font-medium text-amber-600"
+            title={`按大模型管理中的 ${model}（${estimate.price.billedAs}）缓存未命中${estimate.peak ? '高峰' : '空闲'}价估算：输入 ¥${estimate.rate.input} / 输出 ¥${estimate.rate.output}（每百万 token）`}
+          >
+            ≈ ¥{estimate.cost.toFixed(2)}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">当前模型未收录价目</span>
+        )}
       </div>
     </div>
   );
@@ -487,6 +492,7 @@ export function AdminTasksPage() {
   // Queue status
   const [queuesStatus, setQueuesStatus] = useState<QueuesStatusResult | null>(null);
   const [queuesLoading, setQueuesLoading] = useState(false);
+  const [activeLlmModel, setActiveLlmModel] = useState('');
   const listRequestRef = useRef(0);
   const detailRequestRef = useRef(0);
   const queuesRequestRef = useRef(0);
@@ -558,6 +564,19 @@ export function AdminTasksPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    let cancelled = false;
+    listAiProviders()
+      .then((grouped) => {
+        const active = grouped.llm?.find((item) => item.isActive);
+        if (!cancelled && active?.provider === 'deepseek') setActiveLlmModel(active.model);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     void loadQueuesStatus();
@@ -916,7 +935,7 @@ export function AdminTasksPage() {
                   </div>
                 )}
 
-                <AiUsageCard task={selected} />
+                <AiUsageCard task={selected} model={activeLlmModel} />
 
                 <SummaryPanel task={selected} />
 

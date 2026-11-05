@@ -46,6 +46,7 @@ import {
   type SttTestResult,
   type TtsTestResult,
 } from '@/features/admin/api-ai-models';
+import { deepseekPriceSummary, deepseekPricingConfig, resolveDeepSeekPrice } from '@/features/admin/deepseek-pricing';
 
 const TABS = [
   { key: 'stt', label: 'Speech to Text', short: 'STT', icon: Mic, accent: 'text-sky-500', tint: 'bg-sky-500/10' },
@@ -57,10 +58,11 @@ const TYPE_LABELS: Record<string, string> = { stt: 'STT', tts: 'TTS', llm: 'LLM'
 const BUILT_IN_PROVIDERS = new Set(['whisper', 'tencent', 'minimax', 'cartesia', 'hume', 'elevenlabs', 'deepseek', 'openai', 'bailian']);
 
 const DEEPSEEK_MODELS = [
-  { value: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro', hint: 'Flagship model for higher-quality reasoning and complex tasks.' },
-  { value: 'deepseek-v4-flash', label: 'DeepSeek V4 Flash', hint: 'Faster and cheaper option for everyday dialogue and lightweight tasks.' },
-  { value: 'deepseek-chat', label: 'deepseek-chat (legacy alias)', hint: 'Legacy alias. DeepSeek says it will be deprecated on 2026-07-24 15:59 UTC.' },
-  { value: 'deepseek-reasoner', label: 'deepseek-reasoner (legacy alias)', hint: 'Legacy alias. DeepSeek says it will be deprecated on 2026-07-24 15:59 UTC.' },
+  { value: 'deepseek-flash', label: 'DeepSeek Flash', hint: '官方现用名。DeepSeek-V4.1-Flash，按 Flash 价格计费。' },
+  { value: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro', hint: 'DeepSeek-V4-Pro，按 Pro 价格计费。' },
+  { value: 'deepseek-v4-flash', label: 'deepseek-v4-flash（旧名）', hint: '旧模型名仍可调用，由 DeepSeek-V4.1-Flash 提供服务，按 Flash 价格计费。' },
+  { value: 'deepseek-chat', label: 'deepseek-chat（旧名）', hint: '旧别名。按 Flash 价格估算。官方曾标注将于 2026-07-24 15:59 UTC 停用。' },
+  { value: 'deepseek-reasoner', label: 'deepseek-reasoner（旧名）', hint: '旧别名。按 Flash 价格估算。官方曾标注将于 2026-07-24 15:59 UTC 停用。' },
 ];
 
 const BAILIAN_MODELS = [
@@ -344,6 +346,39 @@ function WordTimeline({ words, currentTime }: { words: AiWordTimestamp[] | null 
   );
 }
 
+function DeepSeekPricingNote({ model }: { model: string }) {
+  const price = resolveDeepSeekPrice(model);
+  const saved = deepseekPricingConfig(model);
+  if (!price || !saved) {
+    return <p className="text-[11px] text-muted-foreground">这个模型名没有对应的 DeepSeek 官方价目，任务中心不会估算费用。</p>;
+  }
+  const rows = [
+    { label: '输入 · 缓存命中', offPeak: price.cacheHit.offPeak, peak: price.cacheHit.peak },
+    { label: '输入 · 缓存未命中', offPeak: price.offPeak.input, peak: price.peak.input },
+    { label: '输出', offPeak: price.offPeak.output, peak: price.peak.output },
+  ];
+  return (
+    <div className="flex flex-col gap-2 rounded-md bg-muted/40 p-3 text-[11px] leading-5 text-muted-foreground">
+      <p className="font-medium text-foreground">费用说明 · 核对于 {saved.checkedAt}</p>
+      <p>{saved.note}</p>
+      <div className="grid grid-cols-[minmax(0,1.4fr)_1fr_1fr] gap-x-2 gap-y-1">
+        <span />
+        <span className="text-right">空闲</span>
+        <span className="text-right">高峰</span>
+        {rows.map((row) => (
+          <React.Fragment key={row.label}>
+            <span>{row.label}</span>
+            <span className="text-right font-mono text-foreground">¥{row.offPeak}</span>
+            <span className="text-right font-mono text-foreground">¥{row.peak}</span>
+          </React.Fragment>
+        ))}
+      </div>
+      <p>单位：元 / 百万 token。{saved.peakHours}。</p>
+      <p>{saved.estimateBasis}。任务中心当前按：空闲 输入 ¥{price.offPeak.input} / 输出 ¥{price.offPeak.output}，高峰 输入 ¥{price.peak.input} / 输出 ¥{price.peak.output}。</p>
+    </div>
+  );
+}
+
 function ProviderCard({
   item,
   onConfigure,
@@ -388,6 +423,14 @@ function ProviderCard({
           <span className="shrink-0 text-muted-foreground">{getProviderPrimaryLabel(item)}</span>
           <span className="min-w-0 flex-1 truncate text-right font-mono" title={getProviderPrimaryLine(item)}>{getProviderPrimaryLine(item)}</span>
         </div>
+        {item.provider === 'deepseek' && (
+          <div className="flex min-w-0 items-center justify-between gap-3 rounded-md bg-muted/40 px-2.5 py-2">
+            <span className="shrink-0 text-muted-foreground">费用</span>
+            <span className="min-w-0 flex-1 truncate text-right" title={deepseekPricingConfig(item.model)?.note}>
+              {deepseekPriceSummary(item.model) || '未收录价目'}
+            </span>
+          </div>
+        )}
         <div className="flex min-w-0 items-center justify-between gap-3 rounded-md bg-muted/40 px-2.5 py-2">
           <span className="shrink-0 text-muted-foreground">Status</span>
           <div className="flex min-w-0 items-center gap-1.5">
@@ -564,6 +607,9 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
         config.voiceProvider = voiceProvider === 'CUSTOM_VOICE' ? 'CUSTOM_VOICE' : 'HUME_AI';
       } else if (isElevenLabs) {
         config.voiceId = elevenLabsVoiceId.trim() || 'JBFqnCBsd6RMkjVDRZzb';
+      } else if (isDeepSeek) {
+        const pricing = deepseekPricingConfig(model);
+        if (pricing) config.pricing = pricing;
       }
       await updateAiProvider(item.id, { model, apiKey, baseUrl, ...(Object.keys(config).length ? { config } : {}) });
       setMessage('Saved');
@@ -670,7 +716,17 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
             </>
           ) : isDeepSeek ? (
             <>
-              <div className="space-y-2"><Label>DeepSeek model</Label><Select value={model} onChange={(event) => setModel(event.target.value)}>{DEEPSEEK_MODELS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</Select><p className="text-[11px] text-muted-foreground">{DEEPSEEK_MODELS.find((option) => option.value === model)?.hint}</p></div>
+              <div className="flex flex-col gap-2">
+                <Label>DeepSeek model</Label>
+                <Select value={model} onChange={(event) => setModel(event.target.value)}>
+                  {DEEPSEEK_MODELS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                  {model && !DEEPSEEK_MODELS.some((option) => option.value === model) && (
+                    <SelectItem value={model}>{model}</SelectItem>
+                  )}
+                </Select>
+                <p className="text-[11px] text-muted-foreground">{DEEPSEEK_MODELS.find((option) => option.value === model)?.hint}</p>
+                <DeepSeekPricingNote model={model} />
+              </div>
               <div className="space-y-2"><Label>Base URL</Label><Input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} className="font-mono text-sm" placeholder="https://api.deepseek.com" /></div>
               <div className="space-y-2"><Label>DEEPSEEK_API_KEY</Label><Input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} className="font-mono text-sm" placeholder="Use env var when empty" /></div>
             </>

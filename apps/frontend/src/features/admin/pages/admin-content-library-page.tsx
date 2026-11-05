@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import {
   Search, Plus, Trash2, Edit3, BookOpen, Sparkles, Loader2,
   Type, Code2, ChevronLeft, ChevronRight, Play, Pause, Upload, Globe, Volume2, Languages,
-  AlertTriangle, X, RefreshCw, ListChecks,
+  AlertTriangle, X, RefreshCw, ListChecks, ChevronDown, SlidersHorizontal, Wrench, Database,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,8 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { toast } from 'sonner'
 import { AdminPagination } from '../components/admin-pagination'
 import * as api from '../api-content-admin'
@@ -93,6 +95,81 @@ function playAudioUrl(url?: string | null) {
   if (!url) return
   const audio = new Audio(url)
   audio.play().catch(() => toast.error('音频播放失败'))
+}
+
+function ActionTooltip({ children, title, description }: { children: ReactNode; title: string; description: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="bottom" align="end" className="max-w-80 p-3">
+        <p className="font-medium">{title}</p>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{description}</p>
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+type LibraryActionItem = {
+  label: string
+  description: string
+  icon: ReactNode
+  onSelect: () => void | Promise<void>
+  active?: boolean
+}
+
+function LibraryActionMenu({
+  label,
+  tooltip,
+  icon,
+  items,
+}: {
+  label: string
+  tooltip: string
+  icon: ReactNode
+  items: LibraryActionItem[]
+}) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <ActionTooltip title={label} description={tooltip}>
+        <PopoverTrigger asChild>
+          <Button size="sm" variant="outline" aria-label={`${label}，展开菜单`} aria-expanded={open}>
+            {icon}{label}<ChevronDown className="size-3.5 opacity-60" />
+          </Button>
+        </PopoverTrigger>
+      </ActionTooltip>
+      <PopoverContent align="end" className="w-[340px] p-2">
+        <div className="px-2 pb-2 pt-1">
+          <p className="text-sm font-semibold">{label}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{tooltip}</p>
+        </div>
+        <div className="space-y-1">
+          {items.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              className={`flex w-full items-start gap-3 rounded-lg px-2.5 py-2.5 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${item.active ? 'bg-primary/10 text-primary' : ''}`}
+              aria-pressed={item.active || undefined}
+              title={item.description}
+              onClick={() => {
+                setOpen(false)
+                void item.onSelect()
+              }}
+            >
+              <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-muted text-foreground [&_svg]:size-3.5">
+                {item.icon}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-medium">{item.label}</span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">{item.description}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
 }
 
 /** Simple Markdown → HTML for description field */
@@ -251,6 +328,105 @@ function VocabularyTab() {
     setPage(1)
   }
 
+  const openTasks = () => { window.location.hash = '#/admin/tasks' }
+  const taskToast = (message: string) => toast.success(message, {
+    action: { label: '查看任务', onClick: openTasks },
+  })
+
+  const syncOxfordTags = async () => {
+    try {
+      const result = await api.syncOxford5kVocabularyTags()
+      toast.success(`牛津标签同步完成：更新 ${result.updated}，已有 ${result.skipped}，库中未命中 ${result.missingInLibrary}`)
+      await loadTags()
+      if (tag === 'oxford-5k') await load()
+    } catch (err: any) { toast.error(err?.message || '同步牛津标签失败') }
+  }
+
+  const syncDictionaryPronunciations = async () => {
+    try {
+      await api.syncLibraryVocabularyDictionaryPronunciations()
+      taskToast('已创建词典音标与发音同步任务')
+    } catch (err: any) { toast.error(err?.message || '音标与发音同步失败') }
+  }
+
+  const fillPageExampleAudio = async () => {
+    try {
+      const task = await api.enqueueLibraryVocabularyExampleAudioCurrentPage({
+        page, pageSize, search: search || undefined, matchType,
+        difficulty: difficulty || undefined, tag: tag || undefined,
+        pronunciationStatus: pronunciationStatus || undefined,
+        qualityIssue: qualityIssue || undefined,
+      })
+      taskToast(`已创建本页 ${task.totalItems} 条例句音频补全任务`)
+    } catch (err: any) { toast.error(err?.message || '创建例句音频补全任务失败') }
+  }
+
+  const rewriteOtherMeanings = async () => {
+    try {
+      await api.rewriteVocabulariesMeaningOther()
+      taskToast('已创建「重写异常词性释义」任务，只更新中文释义')
+    } catch (err: any) { toast.error(err?.message || '创建释义重写任务失败') }
+  }
+
+  const rewriteMissingPosMeanings = async () => {
+    try {
+      await api.rewriteVocabulariesMeaningMissingPos()
+      taskToast('已创建「补齐词性标记」任务，只更新中文释义')
+    } catch (err: any) { toast.error(err?.message || '创建释义重写任务失败') }
+  }
+
+  const enrichBilingualDefinitions = async () => {
+    try {
+      const result = await api.enrichEnglishOnlyVocabularyDefinitions()
+      taskToast(result.reused ? '同类任务已在任务中心执行' : '已创建「补齐双语释义」任务')
+    } catch (err: any) { toast.error(err?.message || '创建双语释义富化任务失败') }
+  }
+
+  const reviewL1Difficulties = async () => {
+    try {
+      const result = await api.reclassifyVocabularyDifficulties()
+      taskToast(result.reused ? 'L1 难度复核任务已在执行' : '已创建「复核 L1 难度」任务')
+    } catch (err: any) { toast.error(err?.message || '创建 L1 难度复核任务失败') }
+  }
+
+  const repairExamplesAndMeanings = async () => {
+    try {
+      await api.polishVocabularies()
+      taskToast('已创建「修复例句与释义」任务')
+    } catch (err: any) { toast.error(err?.message || '创建修补任务失败') }
+  }
+
+  const organizeAllMeanings = async () => {
+    if (!confirm('将用 AI 检查全部词汇的中文释义，并自动写回整理结果。只修改 meaning 字段，是否继续？')) return
+    try {
+      const result = await api.reviewVocabularyMeaningPriority()
+      taskToast(result.reused ? '同类全量释义检查任务已在执行' : '已创建「整理全部中文释义」任务')
+    } catch (err: any) { toast.error(err?.message || '创建全部词汇释义检查任务失败') }
+  }
+
+  const fillMissingContent = async () => {
+    try {
+      await api.enrichVocabulariesMissingChinese()
+      taskToast('已创建「补齐缺失内容」任务')
+    } catch (err: any) { toast.error(err?.message || '创建检查任务失败') }
+  }
+
+  const importCsv = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.csv'
+    input.onchange = async (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0]
+      if (!file) return
+      try {
+        const result = await api.importVocabularyCsv(file)
+        taskToast(`已创建导入任务，共 ${result.wordCount} 个词汇`)
+        load()
+      } catch (err: any) { toast.error(err?.message || '导入失败') }
+    }
+    input.click()
+  }
+
   return (
     <>
       <div className="flex flex-col gap-3">
@@ -295,204 +471,128 @@ function VocabularyTab() {
           )}
         </div>
         <div className="flex flex-wrap justify-end gap-2">
-          <Button size="sm" variant="outline" title="根据 oxford-5k.csv 给已有词汇打上 oxford-5k 标签（不新建词）" onClick={async () => {
-            try {
-              const result = await api.syncOxford5kVocabularyTags()
-              toast.success(`牛津标签同步完成：更新 ${result.updated}，已有 ${result.skipped}，库中未命中 ${result.missingInLibrary}`)
-              await loadTags()
-              if (tag === 'oxford-5k') await load()
-            } catch (err: any) {
-              toast.error(err?.message || '同步牛津标签失败')
-            }
-          }}>
-            <RefreshCw data-icon="inline-start" />同步牛津5000标签
-          </Button>
-          <Button size="sm" variant="outline" onClick={async () => {
-            try {
-              const result = await api.syncLibraryVocabularyDictionaryPronunciations();
-              toast.success('已创建词典音标与发音同步任务，可在任务中心查看进度和结果', {
-                action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-              });
-              void result;
-            } catch (err: any) { toast.error(err?.message || '音标与发音同步失败'); }
-          }}>
-            <Volume2 data-icon="inline-start" />同步词典音标与发音
-          </Button>
-          <Button size="sm" variant="outline" title="用 ENTTS 为本页缺失音频的词汇例句补全发音（英/美 × 男/女稳定分配）" onClick={async () => {
-            try {
-              const task = await api.enqueueLibraryVocabularyExampleAudioCurrentPage({
-                page,
-                pageSize,
-                search: search || undefined,
-                matchType,
-                difficulty: difficulty || undefined,
-                tag: tag || undefined,
-                pronunciationStatus: pronunciationStatus || undefined,
-                qualityIssue: qualityIssue || undefined,
-              });
-              toast.success(`已创建本页 ${task.totalItems} 条例句音频补全任务，可在任务中心查看进度`, {
-                action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-              });
-            } catch (err: any) {
-              toast.error(err?.message || '创建例句音频补全任务失败');
-            }
-          }}>
-            <Volume2 data-icon="inline-start" />补本页例句音频
-          </Button>
-          <Button
-            size="sm"
-            variant={qualityIssue === 'meaning-other' ? 'default' : 'outline'}
-            title="查出中文释义中带有 other 的所有词（多为未归入标准词性的 POS 标签）"
-            onClick={() => applyQualityIssue('meaning-other')}
-          >
-            <AlertTriangle data-icon="inline-start" />释义含 other
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            title="只重写中文释义：扫描全部 meaning 含 other 的词，用 AI 按标准词性重写 meaning（不改音标/例句/讲解）"
-            onClick={async () => {
-              try {
-                await api.rewriteVocabulariesMeaningOther();
-                toast.success('已创建「重写含 other 的中文释义」任务，只更新 meaning 字段', {
-                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-                });
-              } catch (err: any) {
-                toast.error(err?.message || '创建释义重写任务失败');
-              }
-            }}
-          >
-            <RefreshCw data-icon="inline-start" />重写含 other 释义
-          </Button>
-          <Button
-            size="sm"
-            variant={qualityIssue === 'missing-pos-prefix' ? 'default' : 'outline'}
-            title="查出中文释义有汉字、但没有任何 n./v./adj. 等词性前缀的词（纯中文释义）"
-            onClick={() => applyQualityIssue('missing-pos-prefix')}
-          >
-            <AlertTriangle data-icon="inline-start" />释义缺词性前缀
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            title="轻量重写：只更新中文释义，扫描全部缺词性前缀的词，参考词典释义生成 n./v./adj. 格式（不改例句/音标/讲解）"
-            onClick={async () => {
-              try {
-                await api.rewriteVocabulariesMeaningMissingPos();
-                toast.success('已创建「重写缺词性前缀释义」任务，只更新 meaning 字段', {
-                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-                });
-              } catch (err: any) {
-                toast.error(err?.message || '创建释义重写任务失败');
-              }
-            }}
-          >
-            <Sparkles data-icon="inline-start" />重写缺词性释义
-          </Button>
-          <Button
-            size="sm"
-            variant={qualityIssue === 'english-only-definition' ? 'default' : 'outline'}
-            title="查出英文释义全是英文、缺少中文翻译的词（词典双语未生成好）"
-            onClick={() => applyQualityIssue('english-only-definition')}
-          >
-            <Globe data-icon="inline-start" />英文释义未双语
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            title="扫描英文释义未双语的词汇，按编辑弹窗的词典+AI流程生成双语释义并重新判断难度；只更新英文释义和难度"
-            onClick={async () => {
-              try {
-                const result = await api.enrichEnglishOnlyVocabularyDefinitions();
-                toast.success(result.reused ? '同类任务已在任务中心执行' : '已创建未双语英文释义的词典+AI富化任务，只更新英文释义与难度', {
-                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-                });
-              } catch (err: any) {
-                toast.error(err?.message || '创建双语释义富化任务失败');
-              }
-            }}
-          >
-            <Sparkles data-icon="inline-start" />富化未双语释义
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            title="只检查尚未复核的 L1 词汇；成功后记录复核时间，之后不会重复执行，失败项下次重试"
-            onClick={async () => {
-              try {
-                const result = await api.reclassifyVocabularyDifficulties();
-                toast.success(result.reused ? 'L1 难度复核任务已在任务中心执行' : '已创建未复核 L1 词汇的难度检查任务', {
-                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-                });
-              } catch (err: any) {
-                toast.error(err?.message || '创建 L1 难度复核任务失败');
-              }
-            }}
-          >
-            <RefreshCw data-icon="inline-start" />检查未复核 L1
-          </Button>
-          <Button size="sm" variant="outline" onClick={async () => {
-            try {
-              const result = await api.polishVocabularies();
-              toast.success('已创建词汇修补任务（例句缺中文翻译补翻译 / 释义过长精简）', {
-                action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-              });
-              void result;
-            } catch (err: any) { toast.error(err?.message || '创建修补任务失败'); }
-          }}>
-            <Languages data-icon="inline-start" />修补词汇内容
-          </Button>
-          <Button size="sm" variant="outline"
-            title="检查全部词汇的词性与中文释义：核心常用义优先；低频、俚语和专业义后置或精简。只更新 meaning 字段"
-            onClick={async () => {
-              if (!confirm('将用 AI 检查全部词汇的中文释义，并自动写回整理结果。只修改 meaning 字段，是否继续？')) return;
-              try {
-                const result = await api.reviewVocabularyMeaningPriority();
-                toast.success(result.reused ? '同类全量释义检查任务已在执行' : '已创建全部词汇释义检查任务', {
-                  description: '常用核心义会优先显示，低频、俚语及专业义将后置或精简。',
-                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-                });
-              } catch (err: any) {
-                toast.error(err?.message || '创建全部词汇释义检查任务失败');
-              }
-            }}>
-            <ListChecks data-icon="inline-start" />整理全部释义
-          </Button>
-          <Button size="sm" variant="outline" onClick={async () => {
-            try {
-              const result = await api.enrichVocabulariesMissingChinese();
-              toast.success('已创建词汇字段检查任务（词典管道补全：中文释义/讲解/例句/音标/难度）', {
-                action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-              });
-              void result;
-            } catch (err: any) { toast.error(err?.message || '创建检查任务失败'); }
-          }}>
-            <Sparkles data-icon="inline-start" />检查并补全
-          </Button>
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={() => {
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.accept = '.csv';
-              input.onchange = async (e) => {
-                const file = (e.target as HTMLInputElement).files?.[0];
-                if (!file) return;
-                try {
-                  const result = await (await import('../api-content-admin')).importVocabularyCsv(file);
-                  toast.success(`已创建导入任务，${result.wordCount} 个词汇`, {
-                    action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-                  });
-                  load();
-                } catch (err: any) { toast.error(err?.message || '导入失败'); }
-              };
-              input.click();
-            }}>
-              <Upload data-icon="inline-start" />批量导入
-            </Button>
-            <Button size="sm" onClick={() => { setEditing(null); setDialogOpen(true) }}>
-              <Plus data-icon="inline-start" />新增词汇
-            </Button>
-          </div>
+          <TooltipProvider delayDuration={250}>
+            <LibraryActionMenu
+              label="筛查问题"
+              tooltip="只筛选列表，不会修改任何词汇。再次点击当前条件可取消筛选。"
+              icon={<SlidersHorizontal data-icon="inline-start" />}
+              items={[
+                {
+                  label: '筛出异常词性释义',
+                  description: '显示中文释义含 other 的词，通常表示词性还没有正确归类。仅筛选。',
+                  icon: <AlertTriangle />,
+                  active: qualityIssue === 'meaning-other',
+                  onSelect: () => applyQualityIssue('meaning-other'),
+                },
+                {
+                  label: '筛出缺少词性标记',
+                  description: '显示中文释义前没有 n.、v.、adj. 等词性标记的词。仅筛选。',
+                  icon: <AlertTriangle />,
+                  active: qualityIssue === 'missing-pos-prefix',
+                  onSelect: () => applyQualityIssue('missing-pos-prefix'),
+                },
+                {
+                  label: '筛出缺少中文的英文释义',
+                  description: '显示英文释义只有英文、还没有中文翻译的词。仅筛选。',
+                  icon: <Globe />,
+                  active: qualityIssue === 'english-only-definition',
+                  onSelect: () => applyQualityIssue('english-only-definition'),
+                },
+              ]}
+            />
+            <LibraryActionMenu
+              label="批量补全"
+              tooltip="创建后台任务来补齐缺失信息。菜单内会明确说明处理范围和会修改的字段。"
+              icon={<Wrench data-icon="inline-start" />}
+              items={[
+                {
+                  label: '补齐词典音标与单词发音',
+                  description: '扫描整个词汇库，从词典同步缺失的英/美音标与单词发音。',
+                  icon: <Volume2 />,
+                  onSelect: syncDictionaryPronunciations,
+                },
+                {
+                  label: '补齐本页例句音频',
+                  description: `仅处理当前筛选结果的第 ${page} 页，为缺少音频的例句生成发音。`,
+                  icon: <Volume2 />,
+                  onSelect: fillPageExampleAudio,
+                },
+                {
+                  label: '补齐双语英文释义',
+                  description: '扫描英文释义缺少中文翻译的词；更新英文释义与难度。',
+                  icon: <Globe />,
+                  onSelect: enrichBilingualDefinitions,
+                },
+                {
+                  label: '补齐所有缺失内容',
+                  description: '扫描整个词汇库，补齐中文释义、讲解、例句、音标和难度等缺失字段。',
+                  icon: <Sparkles />,
+                  onSelect: fillMissingContent,
+                },
+              ]}
+            />
+            <LibraryActionMenu
+              label="批量整理"
+              tooltip="对已有内容做 AI 修复或质量复核。这些操作会写回数据，并在任务中心运行。"
+              icon={<Sparkles data-icon="inline-start" />}
+              items={[
+                {
+                  label: '修正异常词性释义',
+                  description: '扫描释义含 other 的词，改写为标准词性格式；只修改中文释义。',
+                  icon: <RefreshCw />,
+                  onSelect: rewriteOtherMeanings,
+                },
+                {
+                  label: '补上缺失的词性标记',
+                  description: '为缺少 n.、v.、adj. 等前缀的释义补上词性；只修改中文释义。',
+                  icon: <Sparkles />,
+                  onSelect: rewriteMissingPosMeanings,
+                },
+                {
+                  label: '修复例句翻译与过长释义',
+                  description: '补上例句的中文翻译，并精简过长的释义。',
+                  icon: <Languages />,
+                  onSelect: repairExamplesAndMeanings,
+                },
+                {
+                  label: '整理全部中文释义',
+                  description: '全库检查：常用义优先，低频、俚语和专业义后置或精简；只修改中文释义。',
+                  icon: <ListChecks />,
+                  onSelect: organizeAllMeanings,
+                },
+                {
+                  label: '复核尚未检查的 L1 难度',
+                  description: '只检查还没复核过的 L1 词汇；成功项会被标记，之后不会重复处理。',
+                  icon: <RefreshCw />,
+                  onSelect: reviewL1Difficulties,
+                },
+              ]}
+            />
+            <LibraryActionMenu
+              label="数据工具"
+              tooltip="导入外部数据或同步标签；不会自动新建牛津词表中不存在的词。"
+              icon={<Database data-icon="inline-start" />}
+              items={[
+                {
+                  label: '同步牛津 5000 标签',
+                  description: '根据 oxford-5k.csv 给库中已有词汇加标签；不会新建词汇。',
+                  icon: <RefreshCw />,
+                  onSelect: syncOxfordTags,
+                },
+                {
+                  label: '从 CSV 批量导入词汇',
+                  description: '选择一个 .csv 文件并创建导入任务；进度和结果可在任务中心查看。',
+                  icon: <Upload />,
+                  onSelect: importCsv,
+                },
+              ]}
+            />
+            <ActionTooltip title="新增词汇" description="手动创建一条词汇，并填写释义、音标、例句与难度等信息。">
+              <Button size="sm" onClick={() => { setEditing(null); setDialogOpen(true) }}>
+                <Plus data-icon="inline-start" />新增词汇
+              </Button>
+            </ActionTooltip>
+          </TooltipProvider>
         </div>
       </div>
 
@@ -591,40 +691,37 @@ function ChunkTab() {
           </Select>
         </div>
         <div className="flex flex-wrap justify-end gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            title="在任务中心重写全部句块的中文释义；不会修改讲解、例句、难度或分类"
-            onClick={async () => {
-              try {
-                const result = await api.rewriteAllChunkChineseMeanings();
-                toast.success('已创建句块中文释义重写任务，仅更新中文释义', {
-                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-                });
-                void result;
-              } catch (err: any) { toast.error(err?.message || '创建中文释义重写任务失败'); }
-            }}
-          >
-            <Sparkles data-icon="inline-start" />AI 补全中文释义
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={async () => {
-              try {
-                const result = await api.enrichChunksMissingChinese();
-                toast.success('已创建句块中文释义、讲解与例句检查任务', {
-                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-                });
-                void result;
-              } catch (err: any) { toast.error(err?.message || '创建检查任务失败'); }
-            }}
-          >
-            <Sparkles data-icon="inline-start" />AI 补全句块
-          </Button>
-          <Button size="sm" onClick={() => { setEditing(null); setDialogOpen(true) }}>
-            <Plus data-icon="inline-start" />新增句块
-          </Button>
+          <TooltipProvider delayDuration={250}>
+            <ActionTooltip title="重写全部中文释义" description="扫描整个句块库并重写中文释义；不会修改讲解、例句、难度或分类。任务会在后台运行。">
+              <Button size="sm" variant="outline" onClick={async () => {
+                try {
+                  await api.rewriteAllChunkChineseMeanings()
+                  toast.success('已创建句块中文释义重写任务，仅更新中文释义', {
+                    action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+                  })
+                } catch (err: any) { toast.error(err?.message || '创建中文释义重写任务失败') }
+              }}>
+                <Sparkles data-icon="inline-start" />重写全部释义
+              </Button>
+            </ActionTooltip>
+            <ActionTooltip title="补齐句块缺失内容" description="扫描整个句块库，补齐缺失的中文释义、讲解和例句；已有完整内容会保留。">
+              <Button size="sm" variant="outline" onClick={async () => {
+                try {
+                  await api.enrichChunksMissingChinese()
+                  toast.success('已创建句块中文释义、讲解与例句检查任务', {
+                    action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+                  })
+                } catch (err: any) { toast.error(err?.message || '创建检查任务失败') }
+              }}>
+                <Sparkles data-icon="inline-start" />补齐缺失内容
+              </Button>
+            </ActionTooltip>
+            <ActionTooltip title="新增句块" description="手动创建一条句块，并填写释义、讲解、例句、难度与分类。">
+              <Button size="sm" onClick={() => { setEditing(null); setDialogOpen(true) }}>
+                <Plus data-icon="inline-start" />新增句块
+              </Button>
+            </ActionTooltip>
+          </TooltipProvider>
         </div>
       </div>
 
@@ -735,24 +832,25 @@ function PatternTab() {
           </Select>
         </div>
         <div className="flex flex-wrap justify-end gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={async () => {
-              try {
-                const result = await api.enrichPatternsMissingChinese();
-                toast.success('已创建句型中文释义、讲解与例句检查任务', {
-                  action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-                });
-                void result;
-              } catch (err: any) { toast.error(err?.message || '创建检查任务失败'); }
-            }}
-          >
-            <Sparkles data-icon="inline-start" />AI 补全句式
-          </Button>
-          <Button size="sm" onClick={() => { setEditing(null); setDialogOpen(true) }}>
-            <Plus data-icon="inline-start" />新增句式
-          </Button>
+          <TooltipProvider delayDuration={250}>
+            <ActionTooltip title="补齐句式缺失内容" description="扫描整个句式库，补齐缺失的中文释义、讲解和例句；已有完整内容会保留。">
+              <Button size="sm" variant="outline" onClick={async () => {
+                try {
+                  await api.enrichPatternsMissingChinese()
+                  toast.success('已创建句型中文释义、讲解与例句检查任务', {
+                    action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+                  })
+                } catch (err: any) { toast.error(err?.message || '创建检查任务失败') }
+              }}>
+                <Sparkles data-icon="inline-start" />补齐缺失内容
+              </Button>
+            </ActionTooltip>
+            <ActionTooltip title="新增句式" description="手动创建一条句式，并填写结构、释义、讲解、例句、难度与分类。">
+              <Button size="sm" onClick={() => { setEditing(null); setDialogOpen(true) }}>
+                <Plus data-icon="inline-start" />新增句式
+              </Button>
+            </ActionTooltip>
+          </TooltipProvider>
         </div>
       </div>
 
