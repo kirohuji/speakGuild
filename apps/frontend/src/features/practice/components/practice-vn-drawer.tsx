@@ -169,7 +169,9 @@ function TeachingToc({ rows, activeSectionIndex, onSelect, onToggle, className }
     ref={tocRef}
     data={rows}
     fixedItemHeight={42}
-    className={cn('h-full', className)}
+    // Keep a real scroll-end gutter inside the virtual list. Padding on the
+    // Sheet itself does not give the last virtual row enough room on iOS.
+    className={cn('h-full pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]', className)}
     itemContent={(_, row) => <div className={cn(
       'mx-2 my-0.5 flex w-[calc(100%-1rem)] items-center rounded-lg text-sm leading-5',
       row.item.level === 2 && 'pl-3',
@@ -512,7 +514,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
-        <SheetHeader className="flex shrink-0 flex-row items-center justify-between border-b border-border/45 px-5 py-3 text-left"><SheetTitle className="text-base">{t('practiceVn.contents')}</SheetTitle><div className="mr-9 flex items-center"><button type="button" onClick={expandAllTocSections} className={cn('flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocExpanded && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label={t('practiceVn.expandAll')} aria-pressed={allTocExpanded}><ChevronsDown className="size-4" /></button><button type="button" onClick={collapseAllTocSections} className={cn('flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocCollapsed && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label={t('practiceVn.collapseAll')} aria-pressed={allTocCollapsed}><ChevronsUp className="size-4" /></button></div></SheetHeader>
+        <SheetHeader className="flex shrink-0 flex-row items-center justify-between border-b border-border/45 px-5 py-3 text-left"><SheetTitle className="text-base">{t('practiceVn.contents')}</SheetTitle><div className="-mr-2 flex items-center"><button type="button" onClick={expandAllTocSections} className={cn('flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocExpanded && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label={t('practiceVn.expandAll')} aria-pressed={allTocExpanded}><ChevronsDown className="size-4" /></button><button type="button" onClick={collapseAllTocSections} className={cn('flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocCollapsed && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label={t('practiceVn.collapseAll')} aria-pressed={allTocCollapsed}><ChevronsUp className="size-4" /></button></div></SheetHeader>
         <TeachingToc rows={tocRows} activeSectionIndex={visibleSectionIndex} onSelect={handleTocSelect} onToggle={toggleTocSection} className="min-h-0 flex-1" />
       </SheetContent>
     </Sheet>
