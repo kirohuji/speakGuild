@@ -543,7 +543,7 @@ const en = {
       featureAdvanced: 'Everything in Standard, plus:',
       noCommitment: 'No commitment · Cancel anytime',
       serviceItem1: 'Takes effect immediately after purchase',
-      serviceItem2: 'Up to 3 question banks per account',
+      serviceItem2: 'Up to 3 learning packs per account',
       serviceItem3: 'Renewal reminder 7 days before expiry',
       serviceItem4: 'Contact online support for assistance',
       serviceFooter: 'Purchase implies agreement to Terms of Service and Privacy Policy',

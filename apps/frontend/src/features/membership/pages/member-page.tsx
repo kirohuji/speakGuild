@@ -249,8 +249,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       {t('common.empty')}
     </div>
   ) : compact ? (
-    <div className="overflow-hidden rounded-lg border border-border/40">
-      <div className="grid grid-cols-2 items-center gap-1 bg-muted/40 px-3 py-1.5">
+    <div className="overflow-hidden rounded-xl bg-muted/30">
+      <div className="grid grid-cols-2 items-center gap-1 bg-primary/[0.055] px-3 py-2">
         <span className="text-[10px] font-semibold text-muted-foreground">{t('member.compactBenefit')}</span>
         <span className="text-center text-[10px] font-semibold text-muted-foreground">{t('member.benefitItem')}</span>
       </div>
@@ -313,8 +313,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         <div className={cn(
           'overflow-hidden rounded-xl px-4 py-3.5',
           isAdmin
-            ? 'bg-gradient-to-br from-purple-500/10 via-violet-500/8 to-indigo-500/10'
-            : 'bg-gradient-to-br from-amber-500/8 via-orange-500/5 to-sky-500/8',
+            ? 'bg-purple-500/[0.08]'
+            : hasActiveMembership ? 'bg-primary/[0.08]' : 'bg-muted/30',
         )}>
           <div className="flex items-center gap-3">
             <div className={cn(
@@ -537,12 +537,12 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           <div className="space-y-2.5">
             <div className="flex items-center justify-between px-0.5">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('member.selectPlan')}</p>
-              <div className="inline-flex rounded-full bg-muted p-0.5">
+              <div className="inline-flex rounded-lg bg-muted/50 p-0.5">
                 <button
                   type="button"
                   onClick={() => setBillingCycle('monthly')}
                   className={cn(
-                    'rounded-full px-2.5 py-1 text-[11px] font-medium transition-all',
+                    'rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors',
                     billingCycle === 'monthly'
                       ? 'bg-background shadow-sm text-foreground'
                       : 'text-muted-foreground hover:text-foreground'
@@ -554,7 +554,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                   type="button"
                   onClick={() => setBillingCycle('yearly')}
                   className={cn(
-                    'rounded-full px-2.5 py-1 text-[11px] font-medium transition-all',
+                    'rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors',
                     billingCycle === 'yearly'
                       ? 'bg-background shadow-sm text-foreground'
                       : 'text-muted-foreground hover:text-foreground'
@@ -659,7 +659,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           )}
         </div>
       ) : (
-      <div className={compact ? 'overflow-hidden rounded-xl bg-muted/30' : ''}>
+      <div>
         {!compact && (
           <Card className="rounded-lg border-border/70 shadow-sm">
             <CardHeader>
@@ -671,8 +671,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           </Card>
         )}
         {compact && (
-          <div className="space-y-1.5 px-3 py-3">
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('member.benefitCompact')}</p>
+          <div className="space-y-2.5">
+            <p className="px-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t('member.benefitCompact')}</p>
             {benefitsContent}
           </div>
         )}
@@ -1068,29 +1068,26 @@ function CompactPlanCard({
   const monthlyEquivalent = billingCycle === 'yearly' && plan.yearlyPrice
     ? Math.round(plan.yearlyPrice / 12) / 100
     : plan.price / 100
-  const colorAccent =
-    plan.level === 'standard' ? 'border-primary/25 bg-gradient-to-br from-primary/[0.12] via-background to-amber-500/[0.08]' :
-    ''
-
   return (
     <button
       type="button"
       onClick={isCurrent ? undefined : onUpgrade}
       className={cn(
-        'group relative overflow-hidden rounded-2xl border px-4 py-4 text-left shadow-sm transition-all active:scale-[0.99]',
+        'group relative overflow-hidden rounded-xl px-4 py-4 text-left transition-all active:scale-[0.99]',
         compact && 'w-full',
         isCurrent
-          ? 'cursor-default border-primary/40 bg-primary/[0.08]'
-          : colorAccent || 'border-border/60 bg-card hover:border-primary/30 hover:shadow-md',
+          ? 'cursor-default bg-primary/[0.10]'
+          : plan.level === 'standard'
+            ? 'bg-primary/[0.06] hover:bg-primary/[0.09]'
+            : 'bg-muted/30 hover:bg-muted/45',
       )}
     >
-      <div className="absolute -right-8 -top-10 size-28 rounded-full bg-primary/[0.08] blur-2xl transition-transform group-hover:scale-125" />
       {isCurrent && (
         <Badge variant="default" className="absolute right-3 top-3 h-5 px-2 text-[10px] leading-none">
           {t('member.currentPlanBadge')}
         </Badge>
       )}
-      <div className="relative flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <div className={cn(
             'flex size-10 items-center justify-center rounded-xl',
@@ -1110,7 +1107,7 @@ function CompactPlanCard({
         </div>
       </div>
 
-      <div className="relative mt-4 flex items-end justify-between gap-3 border-b border-primary/10 pb-3">
+      <div className="mt-4 flex items-end justify-between gap-3 border-b border-border/60 pb-3">
         <div>
           <p className="text-3xl font-bold tracking-tight">
             ¥{(price / 100).toFixed(0)}
@@ -1128,7 +1125,7 @@ function CompactPlanCard({
       </div>
 
       {plan.features && plan.features.length > 0 && (
-        <ul className="relative mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5">
+        <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5">
           {plan.features.slice(0, 3).map((f, i) => (
             <li key={i} className="flex items-center gap-1.5 text-[11px] leading-4 text-muted-foreground">
               <Check className="size-3 shrink-0 text-primary" />

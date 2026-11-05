@@ -545,7 +545,7 @@ const zhCN = {
       featureAdvanced: '标准版全部功能，以及：',
       noCommitment: '无合约限制 · 随时取消',
       serviceItem1: '购买后立即生效，按自然周期计算有效期',
-      serviceItem2: '每个账号最多绑定 3 套题库',
+      serviceItem2: '每个账号最多绑定 3 个学习包',
       serviceItem3: '到期前 7 天系统发送续费提醒',
       serviceItem4: '如有问题请联系在线客服',
       serviceFooter: '购买即代表同意《用户协议》和《隐私政策》',

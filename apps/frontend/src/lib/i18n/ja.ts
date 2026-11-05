@@ -543,7 +543,7 @@ const ja = {
       featureAdvanced: 'スタンダード版の全機能に加え：',
       noCommitment: '契約なし · いつでも解約可能',
       serviceItem1: '購入後すぐに有効になります',
-      serviceItem2: 'アカウントごとに最大3つの問題集',
+      serviceItem2: 'アカウントごとに最大3つの学習パック',
       serviceItem3: '期限切れ7日前に更新通知',
       serviceItem4: 'ご不明な点はカスタマーサポートへ',
       serviceFooter: '購入は利用規約とプライバシーポリシーに同意したものとみなされます',
