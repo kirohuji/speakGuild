@@ -22,7 +22,6 @@ interface Props {
   completed: MyUnit[]
   loading: boolean
   onGoToShop: () => void
-  onRefresh?: () => void
   onQuitUnit?: (id: string) => Promise<void>
   downloadedPackIds?: string[]
   updatePackIds?: string[]
@@ -41,7 +40,11 @@ function completionProgressText(t: ReturnType<typeof useTranslation>['t'], unit:
     })
   }
   if (completion.kind === 'novel') return t('learning.readingPercent', { percent: completion.percent })
-  if (completion.kind === 'manual') return t('learning.manualCompletionHint')
+  if (completion.kind === 'manual') {
+    return completion.total > 1
+      ? t('learning.readingProgress', { done: completion.completed, total: completion.total })
+      : t('learning.manualCompletionHint')
+  }
   const key = completion.kind === 'practice' ? 'practiceProgress'
     : completion.kind === 'reading' ? 'readingProgress'
       : completion.kind === 'writing' ? 'writingProgress'
@@ -55,7 +58,6 @@ export function MyLearningView({
   completed,
   loading,
   onGoToShop,
-  onRefresh,
   onQuitUnit,
   downloadedPackIds = [],
   updatePackIds = [],
@@ -189,6 +191,8 @@ function InProgressUnitCard({
   const showCover = unit.coverImage && !imgFailed
   const needsDownload = !isPackDownloaded
   const pct = Math.max(0, Math.min(100, unit.completionPercent ?? 0))
+  const manualCompletionReady = unit.completion?.kind === 'manual'
+    && unit.completion.completed >= unit.completion.total
   const totalPracticeCount = unit.progress?.totalPracticeCount ?? unit.topicCount ?? 0
   const downloadTask = useLearningStore((state) => state.downloadTasks.find((task) => task.packId === unit.id))
   const isTaskError = downloadTask?.status === 'error'
@@ -258,7 +262,7 @@ function InProgressUnitCard({
     if (markingComplete) return
     setMarkingComplete(true)
     try {
-      await learningApi.completeUnit(unit.id)
+      await learningRepository.completeUnit(unit.id)
       await useLearningStore.getState().refreshMyUnits()
       toast.success(t('learning.markCompletedDone', { title: unit.title }))
     } catch (error) {
@@ -269,7 +273,7 @@ function InProgressUnitCard({
   }, [markingComplete, t, unit.id, unit.title])
 
   return (
-    <div className="overflow-hidden rounded-lg bg-muted/30">
+    <div className="relative overflow-hidden rounded-lg bg-muted/30">
       <div className="p-3.5">
         <Link
           to={`/learning/units/${unit.id}`}
@@ -333,9 +337,9 @@ function InProgressUnitCard({
               <span>{unit.chunkCount} {t('learning.chunks')}</span>
               <span>{unit.topicCount} {t('learning.topics')}</span>
             </div>
-            <div className="mt-2 space-y-1.5">
+            <div className={cn('mt-2 space-y-1.5', manualCompletionReady && 'pr-24')}>
               <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                <span>{completionProgressText(t, unit)}</span>
+                <span>{isPackDownloaded ? completionProgressText(t, unit) : t('learning.packNeedsDownload')}</span>
                 <span className="font-semibold tabular-nums text-foreground/75">{pct}%</span>
               </div>
               <Progress value={pct} className="h-1" />
@@ -388,11 +392,16 @@ function InProgressUnitCard({
           </div>
         )}
 
-        {unit.completion?.kind === 'manual' && (
-          <Button type="button" variant="outline" className="mt-3 h-9 w-full rounded-full" disabled={markingComplete || isPackBusy || needsDownload} onClick={handleManualComplete}>
-            {markingComplete ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+        {manualCompletionReady && (
+          <button
+            type="button"
+            className="absolute bottom-2.5 right-2.5 inline-flex h-7 items-center gap-1 rounded-full bg-transparent px-2.5 text-[11px] font-medium text-foreground active:bg-muted disabled:opacity-50"
+            disabled={markingComplete || isPackBusy || needsDownload || hasPackUpdate}
+            onClick={handleManualComplete}
+          >
+            {markingComplete ? <Loader2 className="size-3 animate-spin" /> : <CheckCircle2 className="size-3" />}
             {t('learning.markCompleted')}
-          </Button>
+          </button>
         )}
 
         <Dialog open={confirmSwitch} onOpenChange={setConfirmSwitch}>
@@ -524,7 +533,7 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
           type="button"
           disabled={restarting}
           onClick={() => setConfirmRestart(true)}
-          className="absolute bottom-2.5 right-2.5 inline-flex h-7 items-center gap-1 rounded-full border border-border/70 bg-background/85 px-2.5 text-[11px] font-medium text-foreground shadow-sm backdrop-blur active:bg-muted disabled:opacity-50"
+          className="absolute bottom-2.5 right-2.5 inline-flex h-7 items-center gap-1 rounded-full bg-transparent px-2.5 text-[11px] font-medium text-foreground active:bg-muted disabled:opacity-50"
         >
           {restarting ? <Loader2 className="size-3 animate-spin" /> : <RotateCcw className="size-3" />}
           {t('learning.learnAgain')}

@@ -12,6 +12,7 @@ export type SyncEntityType =
   | 'daily_practice'
   | 'topic_session'
   | 'topic_submission'
+  | 'novel_progress'
 
 export type SyncOperation = 'create' | 'update' | 'delete' | 'complete' | 'snapshot'
 

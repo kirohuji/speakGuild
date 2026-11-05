@@ -569,6 +569,8 @@ export function LearningUnitPage() {
         open={Boolean(teachingTopic)}
         onOpenChange={(open) => { if (!open) setTeachingTopic(null) }}
         hideToggles
+        unitId={unitId}
+        topicId={teachingTopic?.id}
         teachingMarkdown={teachingTopic?.teachingMarkdown?.trim() || ''}
       />
       <SaveToNotebookDrawer

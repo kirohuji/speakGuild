@@ -15,7 +15,7 @@ import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/cn'
 import { localDb } from '@/lib/offline/unified-storage'
 import { useLearningStore } from '@/stores/learning.store'
-import { learningApi } from '../api/learning-api'
+import { learningRepository } from '@/lib/offline'
 
 const PROGRESS_KEY = (unitId: string) => `manyu:novel-progress:${unitId}`
 // 阅读器主题与全局主题统一：
@@ -125,11 +125,12 @@ export function LearningReaderPage() {
       const val = Number.isFinite(percentage) ? Math.max(0, Math.min(1, percentage)) : 0
       setPct(Math.round(val * 100))
       localStorage.setItem(PROGRESS_KEY(unitId), JSON.stringify({ cfi: epubcfi, percentage: val, updatedAt: Date.now() }))
-      // 本地进度始终先保存；在线时同步服务端，达到 95% 后统一视为读完。
-      void learningApi.saveNovelProgress(unitId, {
+      // SQLite records the latest location first; its outbox retries this
+      // snapshot after reconnecting, so offline reading can still complete a pack.
+      void learningRepository.saveNovelProgress(unitId, {
         locator: { cfi: epubcfi },
         percentage: val,
-      }).catch(() => { /* offline: the local reader position is still preserved */ })
+      }).catch(() => { /* local storage may be unavailable during shutdown */ })
     }, 800)
   }, [unitId])
 

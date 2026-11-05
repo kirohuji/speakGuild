@@ -170,29 +170,9 @@ function paginatePracticeRecords(items: PracticeRecord[], page: number, pageSize
 
 export const practiceRepository = {
   async getTopicDetail(topicId: string): Promise<TopicDetail | null> {
-    const localFirst = await getCachedTopicDetail(topicId)
-    if (localFirst) return localFirst
-
-    try {
-      const detail = await practiceApi.getTopicDetail(topicId)
-      await localDb.put('downloaded_unit_details', {
-        id: `topic:${topicId}`,
-        topicId,
-        detail,
-        updatedAt: new Date().toISOString(),
-      })
-      if (detail.inkScript) {
-        await localDb.put('ink_scripts', {
-          id: detail.inkScript.id,
-          topicId,
-          ...detail.inkScript,
-          updatedAt: new Date().toISOString(),
-        })
-      }
-      return detail
-    } catch {
-      return getCachedTopicDetail(topicId)
-    }
+    // Practice content belongs to a downloaded package. Do not silently fetch
+    // a newer server-side topic when the local package lacks this record.
+    return getCachedTopicDetail(topicId)
   },
 
   async getTopicInk(topicId: string) {
@@ -203,20 +183,7 @@ export const practiceRepository = {
       if (!localScript.unitId || pack?.status === 'installed') return localScript
     }
 
-    try {
-      const ink = await practiceApi.getTopicInk(topicId)
-      if (ink) {
-        await localDb.put('ink_scripts', {
-          id: ink.id,
-          topicId,
-          ...ink,
-          updatedAt: new Date().toISOString(),
-        })
-      }
-      return ink
-    } catch {
-      return localScript ?? null
-    }
+    return null
   },
 
   // ── Practice Session 生命周期 ──

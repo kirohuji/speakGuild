@@ -375,6 +375,19 @@ async function replayItem(
       await learningApi.quitUnit(item.entityId)
       return true
     }
+    if (item.operation === 'complete') {
+      await learningApi.completeUnit(item.entityId)
+      return true
+    }
+  }
+
+  if (item.entityType === 'novel_progress' && item.operation === 'update') {
+    const payload = item.payload as { locator?: Record<string, any>; percentage?: number }
+    await learningApi.saveNovelProgress(item.entityId, {
+      locator: payload.locator ?? {},
+      percentage: Number(payload.percentage ?? 0),
+    })
+    return true
   }
 
   if (item.entityType === 'practice_session') {

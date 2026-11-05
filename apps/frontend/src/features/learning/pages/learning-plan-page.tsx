@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
 import { parseISO, startOfDay } from 'date-fns'
 import {
   ClipboardList, ShoppingBag, Eye, Settings, CircleCheck, CircleDashed,
@@ -35,7 +34,6 @@ import { TopicSessionReadonlyReviewDrawer } from '../components/topic-session-re
 
 export function LearningPlanPage() {
   const { t } = useTranslation()
-  const location = useLocation()
   const isMobile = useIsMobile()
   const [shopOpen, setShopOpen] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
@@ -46,7 +44,6 @@ export function LearningPlanPage() {
   const myUnits = useLearningStore((s) => s.myUnits)
   const myLoading = useLearningStore((s) => s.myLoading)
   const fetchMyLearning = useLearningStore((s) => s.fetchMyLearning)
-  const refreshMyUnits = useLearningStore((s) => s.refreshMyUnits)
   const refreshShop = useLearningStore((s) => s.refreshShop)
   const loadMoreShop = useLearningStore((s) => s.loadMoreShop)
   const fetchTags = useLearningStore((s) => s.fetchTags)
@@ -59,11 +56,12 @@ export function LearningPlanPage() {
   const downloadUnitPack = useLearningStore((s) => s.downloadUnitPack)
 
   useEffect(() => {
-    if (myUnits.length === 0) {
-      fetchMyLearning()
-    }
-    fetchDownloadedPacks()
-  }, [fetchMyLearning, fetchDownloadedPacks, myUnits.length])
+    // Local SQLite remains the normal source when returning to this page.
+    // The repository contacts my-units only when its account projection is
+    // absent, so document-reading progress can update without polling.
+    void fetchMyLearning(true)
+    void fetchDownloadedPacks()
+  }, [fetchMyLearning, fetchDownloadedPacks])
 
   useEffect(() => {
     void dailyPracticeRepository.getActivePracticePackId().then(setActivePracticePackId)
@@ -76,27 +74,6 @@ export function LearningPlanPage() {
     setActivePracticePackId(unit.id)
     toast.success(t('learning.currentPracticePackSet', { title: unit.title }))
   }
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      void refreshMyUnits()
-    }, myUnits.length > 0 ? 1_500 : 3_000)
-
-    const refreshVisibleLearning = () => {
-      if (document.visibilityState === 'visible') void refreshMyUnits()
-    }
-    const refreshFocusedLearning = () => {
-      void refreshMyUnits()
-    }
-
-    document.addEventListener('visibilitychange', refreshVisibleLearning)
-    window.addEventListener('focus', refreshFocusedLearning)
-    return () => {
-      window.clearTimeout(timeout)
-      document.removeEventListener('visibilitychange', refreshVisibleLearning)
-      window.removeEventListener('focus', refreshFocusedLearning)
-    }
-  }, [location.key, myUnits.length, refreshMyUnits])
 
   // 学习页不显示剧情包（story）；进行中口径与加入上限一致
   const learningUnits = myUnits.filter((unit) => !isStoryLearningUnit(unit))
@@ -131,7 +108,6 @@ export function LearningPlanPage() {
           myUnits={learningUnits} inProgress={inProgress} completed={completed}
           loading={myLoading}
           onGoToShop={() => { setShopOpen(true); refreshShop({ excludePackageType: 'story' }); fetchTags() }}
-          onRefresh={refreshMyUnits}
           onQuitUnit={storeQuitUnit}
           downloadedPackIds={downloadedPacks.filter((pack) => pack.status === 'installed').map((pack) => pack.packId)}
           updatePackIds={availablePackUpdates.map((update) => update.packId)}

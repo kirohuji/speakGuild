@@ -514,16 +514,11 @@ export class LearningService {
           const completedWarmupItemIds = params.completedWarmupItemIds ?? new Set<string>();
           completed = warmupItemIds.filter((itemId) => completedWarmupItemIds.has(itemId)).length;
         } else {
-          const practiceTopics = scene.trainingTopics.filter((topic) => !topic.activityType || topic.activityType === 'practice');
-          if (practiceTopics.length > 0) {
-            kind = 'practice';
-            total = practiceTopics.length;
-            completed = practiceTopics.filter((topic) => completedActivityTopicIds.has(topic.id)).length;
-          } else {
-            kind = 'manual';
-            total = 1;
-            completed = (progress?.mastery ?? 0) >= 100 ? 1 : 0;
-          }
+          // A topic can be a teaching document/material collection without an
+          // executable task. Topic count alone must not prevent completion.
+          kind = 'manual';
+          total = 1;
+          completed = (progress?.mastery ?? 0) >= 100 ? 1 : 0;
         }
       }
     }
@@ -536,6 +531,16 @@ export class LearningService {
       completion: { kind, completed: Math.min(completed, total), total, percent },
       completionPercent: percent,
     };
+  }
+
+  private hasTrackableUnitTask(scene: {
+    id: string;
+    contentMode?: string | null;
+    trainingTopics: Array<WarmupTopicForProgress & { activityType?: string | null }>;
+  }) {
+    if (scene.contentMode === 'novel') return true;
+    if (scene.trainingTopics.some((topic) => topic.activityType && topic.activityType !== 'practice')) return true;
+    return this.buildWarmupPracticeItemIds(scene.id, scene.trainingTopics).length > 0;
   }
 
   /**
@@ -721,7 +726,6 @@ export class LearningService {
           title: t.title,
           description: t.description,
           difficulty: t.difficulty,
-          metadata: t.metadata,
           suggestedDurationSec: t.suggestedDurationSec,
         })),
         requiredOutputLevel: scene.requiredOutputLevel,
@@ -784,66 +788,22 @@ export class LearningService {
         scene: {
           include: {
             category: { select: { name: true } },
-            _count: { select: { trainingTopics: true, storyEpisodes: true } },
-            sceneVocabularies: { select: { vocabularyId: true } },
-            sceneChunks: { select: { chunkId: true } },
-            trainingTopics: {
-              select: {
-                id: true,
-                type: true,
-                activityType: true,
-                title: true,
-                description: true,
-                difficulty: true,
-                metadata: true,
-                suggestedDurationSec: true,
-                _count: { select: { activeChunks: true, topicVocabs: true } },
-                topicVocabs: { select: { vocabId: true } },
-                activeChunks: { select: { chunkId: true } },
-              },
-              orderBy: { sortOrder: 'asc' },
-            },
           },
         },
       },
       orderBy: { updatedAt: 'desc' },
     });
     const sceneIds = progresses.map((progress) => progress.sceneId);
-    const [completedWarmupItemIdsByScene, completedActivityTopicIdsByScene, novelProgressByScene] = await Promise.all([
-      this.getCompletedWarmupItemIdsByScene(userId, sceneIds),
-      this.getCompletedActivityTopicIdsByScene(userId, sceneIds),
-      this.getNovelProgressByScene(userId, sceneIds),
-    ]);
+    const novelProgressByScene = await this.getNovelProgressByScene(userId, sceneIds);
 
     return progresses.map((p) => {
       const scene = p.scene;
-      const vocabIds = new Set<string>();
-      const chunkIds = new Set<string>();
-      if (scene.contentMode === 'novel') {
-        for (const item of scene.sceneVocabularies) vocabIds.add(item.vocabularyId);
-        for (const item of scene.sceneChunks) chunkIds.add(item.chunkId);
-      }
-      for (const t of scene.trainingTopics) {
-        for (const tv of (t as any).topicVocabs ?? []) {
-          if (tv.vocabId) vocabIds.add(tv.vocabId);
-        }
-        for (const ac of (t as any).activeChunks ?? []) {
-          if (ac.chunkId) chunkIds.add(ac.chunkId);
-        }
-      }
-      const vocabCount = vocabIds.size;
-      const chunkCount = chunkIds.size;
-      const warmupItemIds = this.buildWarmupPracticeItemIds(scene.id, scene.trainingTopics);
-      const completedWarmupItemIds = completedWarmupItemIdsByScene.get(scene.id) ?? new Set<string>();
-      const completedPracticeCount = warmupItemIds.filter((itemId) => completedWarmupItemIds.has(itemId)).length;
-      const totalPracticeItems = warmupItemIds.length;
-      const unitCompletion = this.calculateUnitCompletion({
-        scene,
-        progress: p,
-        completedWarmupItemIds,
-        completedActivityTopicIds: completedActivityTopicIdsByScene.get(scene.id),
-        novelPercentage: novelProgressByScene.get(scene.id),
-      });
+      const novelPercent = scene.contentMode === 'novel'
+        ? Math.min(100, Math.max(0, Math.round((novelProgressByScene.get(scene.id) ?? 0) * 100)))
+        : 0;
+      const percent = scene.contentMode === 'novel'
+        ? (novelPercent >= 95 ? 100 : novelPercent)
+        : Math.min(100, Math.max(0, p.mastery ?? 0));
 
       return {
         id: scene.id,
@@ -854,32 +814,33 @@ export class LearningService {
         description: scene.description,
         coverImage: scene.coverImage,
         categoryName: scene.category?.name ?? null,
-        topics: scene.trainingTopics.map((t) => ({
-          id: t.id,
-          type: t.type,
-          activityType: t.activityType,
-          title: t.title,
-          description: t.description,
-          difficulty: t.difficulty,
-          metadata: t.metadata,
-          suggestedDurationSec: t.suggestedDurationSec,
-        })),
-        vocabCount,
-        chunkCount,
-        topicCount: scene._count.trainingTopics,
-        scriptCount: scene._count.storyEpisodes,
+        // `my-units` is an account/plan projection. Learning material is
+        // supplied exclusively by the installed package, never by this API.
+        topics: [],
+        // Counts and task completion are package-versioned data. The mobile
+        // client replaces these placeholders from its installed SQLite pack;
+        // never derive them from a Scene that may have unpublished edits.
+        vocabCount: p.vocabTotal,
+        chunkCount: p.chunkTotal,
+        topicCount: 0,
+        scriptCount: 0,
         progress: {
           readiness: p.readiness,
           mastery: p.mastery,
           vocabLearned: p.vocabLearned,
-          vocabTotal: vocabCount,
+          vocabTotal: p.vocabTotal,
           chunkMastered: p.chunkMastered,
-          chunkTotal: chunkCount,
-          completedPracticeCount,
-          totalPracticeCount: totalPracticeItems,
+          chunkTotal: p.chunkTotal,
+          completedPracticeCount: 0,
+          totalPracticeCount: 0,
           completedScriptCount: p.completedScriptCount,
         },
-        ...unitCompletion,
+        status: percent >= 100 ? 'completed' : 'in_progress',
+        completedAt: percent >= 100 ? p.updatedAt.toISOString() : null,
+        completion: scene.contentMode === 'novel'
+          ? { kind: 'novel', completed: percent, total: 100, percent }
+          : { kind: 'practice', completed: 0, total: 0, percent },
+        completionPercent: percent,
       };
     });
   }
@@ -2219,19 +2180,9 @@ export class LearningService {
   /** 仅供没有任何可追踪任务的资料型学习包使用。 */
   async completeUnitManually(userId: string, unitId: string) {
     await this.assertLearningPackAccess(userId, unitId, { allowExistingProgress: true });
-    const scene = await this.prisma.scene.findUnique({
-      where: { id: unitId },
-      select: {
-        id: true,
-        contentMode: true,
-        trainingTopics: { select: { id: true, activityType: true, metadata: true } },
-      },
-    });
-    if (!scene) throw new NotFoundException('学习包不存在');
-    const hasWarmups = this.buildWarmupPracticeItemIds(scene.id, scene.trainingTopics).length > 0;
-    if (scene.contentMode === 'novel' || scene.trainingTopics.length > 0 || hasWarmups) {
-      throw new ConflictException('该学习包包含可追踪任务，不能手动标记完成');
-    }
+    // Eligibility is determined by the installed package on the mobile client.
+    // Do not inspect the mutable Scene here: unpublished editor changes must
+    // never invalidate an offline package the user has already downloaded.
     return this.prisma.userSceneProgress.upsert({
       where: { userId_sceneId: { userId, sceneId: unitId } },
       create: { userId, sceneId: unitId, readiness: 100, mastery: 100 },

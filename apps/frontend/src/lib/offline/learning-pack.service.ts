@@ -1,8 +1,7 @@
 import { assetCacheService, digestSync, type AssetRef } from './asset-cache.service'
 import { learningApi } from '@/features/learning/api/learning-api'
-import { buildAggregatedUnitContent, learningRepository } from './learning.repository'
+import { buildAggregatedUnitContent } from './learning.repository'
 import { localDb } from './unified-storage'
-import { practiceRepository } from './practice.repository'
 import { syncOutbox } from './sync-outbox'
 import { BlobReader, BlobWriter, TextWriter, ZipReader, type Entry } from '@zip.js/zip.js'
 import { learningContentRepository } from './learning-content.repository'
@@ -81,29 +80,6 @@ function pushUrlAsset(assets: AssetRef[], url?: string | null, role?: AssetRef['
   if (!url || url.startsWith('blob:') || url.startsWith('data:')) return
   if (assets.some((asset) => asset.url === url)) return
   assets.push({ url, role })
-}
-
-function collectUnitAssets(unitDetail: any): AssetRef[] {
-  const assets: AssetRef[] = []
-  // Scene background + cover
-  pushUrlAsset(assets, unitDetail?.scene?.backgroundUrl, 'background')
-  pushUrlAsset(assets, unitDetail?.scene?.coverImage, 'cover')
-  // Characters (sprites + avatars)
-  for (const character of unitDetail?.scene?.characters ?? []) {
-    pushUrlAsset(assets, character.avatarUrl, 'thumbnail')
-    pushUrlAsset(assets, character.spriteBaseUrl, 'sprite')
-    const expressions = character.expressions && typeof character.expressions === 'object'
-      ? Object.values(character.expressions)
-      : []
-    for (const value of expressions) {
-      if (typeof value === 'string') pushUrlAsset(assets, value, 'sprite')
-      else if (value && typeof value === 'object') {
-        pushUrlAsset(assets, (value as any).spriteUrl, 'sprite')
-        pushUrlAsset(assets, (value as any).avatarUrl, 'thumbnail')
-      }
-    }
-  }
-  return assets
 }
 
 /** Merge unit-level shared data (scene) into each topic detail */
@@ -329,95 +305,9 @@ async function persistInstalledRecord(manifest: LearningPackManifest): Promise<I
   return installed
 }
 
-/**
- * 从内容派生稳定版本号（djb2 哈希）。
- * 用于 getOfflineManifest 不可用时的降级路径：避免 Date.now() 每次调用都生成“新版本”，
- * 导致客户端无法判断是否需要更新。内容不变则版本不变。
- */
-function stableContentVersion(unitDetail: any, topicDetails: any[]): number {
-  const input = JSON.stringify({
-    id: unitDetail.id,
-    title: unitDetail.title,
-    updatedAt: unitDetail.updatedAt ?? null,
-    topics: (unitDetail.trainingTopics ?? []).map((t: any) => t.id),
-    vocabs: (unitDetail.vocabularies ?? []).map((v: any) => v.id),
-    chunks: (unitDetail.chunks ?? []).map((c: any) => c.id),
-    patterns: (unitDetail.sentencePatterns ?? []).map((p: any) => p.pattern ?? p.id),
-    storyEpisodes: (unitDetail.storyEpisodes ?? []).map((e: any) => e.id),
-    topicCount: topicDetails.length,
-  })
-  let hash = 5381
-  for (let i = 0; i < input.length; i += 1) {
-    hash = ((hash << 5) + hash) ^ input.charCodeAt(i)
-  }
-  return hash >>> 0
-}
-
 export const learningPackService = {
   async buildManifestFromUnit(unitId: string): Promise<{ manifest: LearningPackManifest; unitDetail: any; topicDetails: any[] }> {
-    try {
-      return await learningApi.getOfflineManifest(unitId) as any
-    } catch {
-      // Older backend deployments can still assemble a manifest from existing endpoints.
-    }
-
-    const unitDetail = await learningRepository.getUnitDetail(unitId)
-    if (!unitDetail) throw new Error('Unit detail is not available')
-
-    const topicDetails = []
-    for (const topic of unitDetail.trainingTopics ?? []) {
-      const detail = await practiceRepository.getTopicDetail(topic.id)
-      if (detail) topicDetails.push(detail)
-    }
-
-    // Collect assets from unit-level where available, fall back to first topicDetail
-    const assets: AssetRef[] = []
-    if ((unitDetail as any).scene) {
-      for (const asset of collectUnitAssets(unitDetail)) {
-        pushUrlAsset(assets, asset.url, asset.role)
-      }
-    } else if (topicDetails.length > 0) {
-      // Old fallback: scene data is in each topicDetail, collect from first one only
-      const first = topicDetails[0]
-      pushUrlAsset(assets, first?.scene?.backgroundUrl, 'background')
-      for (const character of first?.scene?.characters ?? []) {
-        pushUrlAsset(assets, character.avatarUrl, 'thumbnail')
-        pushUrlAsset(assets, character.spriteBaseUrl, 'sprite')
-        const expressions = character.expressions && typeof character.expressions === 'object'
-          ? Object.values(character.expressions) : []
-        for (const value of expressions) {
-          if (typeof value === 'string') pushUrlAsset(assets, value, 'sprite')
-          else if (value && typeof value === 'object') {
-            pushUrlAsset(assets, (value as any).spriteUrl, 'sprite')
-            pushUrlAsset(assets, (value as any).avatarUrl, 'thumbnail')
-          }
-        }
-      }
-    }
-
-    return {
-      unitDetail,
-      topicDetails,
-      manifest: {
-        packId: unitDetail.id,
-        version: stableContentVersion(unitDetail, topicDetails),
-        title: unitDetail.title,
-        packageType: unitDetail.packageType,
-        contentMode: unitDetail.contentMode,
-        updatedAt: new Date().toISOString(),
-        units: [unitDetail.id],
-        topics: (unitDetail.trainingTopics ?? []).map((topic: any) => topic.id),
-        vocabularies: (unitDetail.vocabularies ?? []).map((item: any) => item.id),
-        chunks: (unitDetail.chunks ?? []).map((item: any) => item.id),
-        sentencePatterns: (unitDetail.sentencePatterns ?? []).map((item: any) => item.pattern),
-        storyEpisodes: (unitDetail.storyEpisodes ?? []).map((episode: any) => episode.id),
-        inkScripts: [
-          ...topicDetails.map((detail: any) => detail.inkScript?.id),
-          ...(unitDetail.offlineStoryEpisodePlayers ?? []).map((item: any) => item.inkScript?.id),
-        ].filter(Boolean),
-        assets,
-      },
-    }
+    return learningApi.getOfflineManifest(unitId) as any
   },
 
   async downloadUnitZip(

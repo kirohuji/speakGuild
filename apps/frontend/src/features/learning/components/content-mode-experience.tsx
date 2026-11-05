@@ -111,6 +111,8 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
         open={Boolean(teachingTopic)}
         onOpenChange={(open) => { if (!open) setTeachingTopic(null) }}
         hideToggles
+        unitId={unit.id}
+        topicId={teachingTopic?.id}
         teachingMarkdown={teachingTopic?.teachingMarkdown?.trim() || ''}
       />
     </>

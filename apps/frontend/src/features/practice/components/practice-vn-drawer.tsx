@@ -14,6 +14,7 @@ import { cn } from '@/lib/cn'
 import { localDateKey } from '@/lib/date/calendar-date'
 import { isNative } from '@/lib/native'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { learningRepository } from '@/lib/offline/learning.repository'
 import {
   TeachingDocumentPage,
   TeachingDocumentPreviewFrame,
@@ -35,6 +36,8 @@ interface PracticeVnDrawerProps {
   showTriggerIcon?: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  unitId?: string
+  topicId?: string
 }
 
 type TeachingSection = { key: string; markdown: string; heading?: { text: string; level: 1 | 2 | 3 } }
@@ -186,7 +189,7 @@ function TeachingToc({ rows, activeSectionIndex, onSelect, onToggle, className }
   />
 }
 
-export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hideToggles = false, triggerClassName, plainTrigger = false, showTriggerIcon = true, open: controlledOpen, onOpenChange: controlledOnOpenChange }: PracticeVnDrawerProps) {
+export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hideToggles = false, triggerClassName, plainTrigger = false, showTriggerIcon = true, open: controlledOpen, onOpenChange: controlledOnOpenChange, unitId, topicId }: PracticeVnDrawerProps) {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
   const inlineToc = useInlineTeachingToc()
@@ -199,6 +202,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   const [contentReady, setContentReady] = useState(false)
   const [restoringReadingPosition, setRestoringReadingPosition] = useState(false)
   const [visibleSectionIndex, setVisibleSectionIndex] = useState(0)
+  const [scrollReadingProgress, setScrollReadingProgress] = useState(0)
   const [savedVirtuosoState, setSavedVirtuosoState] = useState<StateSnapshot | null>(null)
   const closingRef = useRef(false)
   const ignoreInitialRangeRef = useRef(false)
@@ -211,6 +215,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   const documentRef = useRef<VirtuosoHandle>(null)
   const scrollerElementRef = useRef<HTMLElement | null>(null)
   const visibleSectionIndexRef = useRef(0)
+  const lastSavedReadingProgressRef = useRef<number | null>(null)
   const isControlled = controlledOpen !== undefined
   const open = isControlled ? controlledOpen : internalOpen
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
@@ -296,6 +301,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
     const savedPosition = readSavedPosition(storageKey, document.sections.length)
     setSavedVirtuosoState(savedPosition.virtuosoState)
     setVisibleSectionIndex(0)
+    setScrollReadingProgress(0)
     visibleSectionIndexRef.current = 0
     restoringRef.current = true
     setRestoringReadingPosition(true)
@@ -335,6 +341,10 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
     if (!open || !contentReady || !scroller) return
     const onScroll = () => {
       if (restoringRef.current) return
+      const maxScrollTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
+      if (maxScrollTop > 0) {
+        setScrollReadingProgress(Math.round(Math.min(1, Math.max(0, scroller.scrollTop / maxScrollTop)) * 100))
+      }
       if (scrollSyncFrameRef.current === null) {
         scrollSyncFrameRef.current = requestAnimationFrame(() => {
           scrollSyncFrameRef.current = null
@@ -407,7 +417,15 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   const setScrollerRef = useCallback((element: HTMLElement | null | Window) => {
     scrollerElementRef.current = element instanceof HTMLElement ? element : null
   }, [])
-  const readingProgress = document.sections.length <= 1 ? 0 : Math.round((visibleSectionIndex / (document.sections.length - 1)) * 100)
+  const sectionReadingProgress = document.sections.length <= 1
+    ? 0
+    : Math.round((visibleSectionIndex / (document.sections.length - 1)) * 100)
+  const readingProgress = Math.max(sectionReadingProgress, scrollReadingProgress)
+  useEffect(() => {
+    if (!open || !unitId || !topicId || lastSavedReadingProgressRef.current === readingProgress) return
+    lastSavedReadingProgressRef.current = readingProgress
+    void learningRepository.saveTeachingReadingProgress(unitId, topicId, readingProgress)
+  }, [open, readingProgress, topicId, unitId])
   const toggleTocSection = useCallback((sectionIndex: number) => {
     setExpandedTocSections((current) => {
       const targetIndex = document.toc.findIndex((item) => item.sectionIndex === sectionIndex)
@@ -485,7 +503,15 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
       </DrawerContent>
     </Drawer>
     <Sheet open={tocOpen && !inlineToc} onOpenChange={setTocOpen}>
-      <SheetContent side="left" data-teaching-toc="" className="!z-[10002] flex h-full w-[min(20rem,86vw)] max-w-none flex-col gap-0 border-border/45 p-0 text-foreground shadow-2xl">
+      <SheetContent
+        side="left"
+        data-teaching-toc=""
+        className="!z-[10002] flex h-[100dvh] w-[min(20rem,86vw)] max-w-none flex-col gap-0 border-border/45 p-0 text-foreground shadow-2xl [&>button]:hidden"
+        style={{
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        }}
+      >
         <SheetHeader className="flex shrink-0 flex-row items-center justify-between border-b border-border/45 px-5 py-3 text-left"><SheetTitle className="text-base">{t('practiceVn.contents')}</SheetTitle><div className="mr-9 flex items-center"><button type="button" onClick={expandAllTocSections} className={cn('flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocExpanded && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label={t('practiceVn.expandAll')} aria-pressed={allTocExpanded}><ChevronsDown className="size-4" /></button><button type="button" onClick={collapseAllTocSections} className={cn('flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocCollapsed && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label={t('practiceVn.collapseAll')} aria-pressed={allTocCollapsed}><ChevronsUp className="size-4" /></button></div></SheetHeader>
         <TeachingToc rows={tocRows} activeSectionIndex={visibleSectionIndex} onSelect={handleTocSelect} onToggle={toggleTocSection} className="min-h-0 flex-1" />
       </SheetContent>

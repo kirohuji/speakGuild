@@ -21,6 +21,8 @@ import type {
   SubmissionStatus,
 } from '@/stores/today-practice.store'
 import { compareReviewDebt, deriveTodayScheduledPracticeIds, selectPracticeBatch, selectReviewBatch } from './daily-practice.planner'
+import { createWarmupPracticeItemId } from './warmup-practice-item-id'
+export { createWarmupPracticeItemId } from './warmup-practice-item-id'
 export { compareReviewDebt, deriveTodayScheduledPracticeIds, selectPracticeBatch, selectReviewBatch } from './daily-practice.planner'
 
 export type DailyPracticeStatus = 'new' | 'review' | 'overdue' | 'done' | 'mastered'
@@ -314,75 +316,6 @@ function typeLabel(type: string, item: any) {
   if (type === 'pattern_drill') return '句型操练'
   if (type === 'sentence_decomposition') return '句子拆解'
   return '知识点练习'
-}
-
-function stableStringify(value: any): string {
-  if (value == null || typeof value !== 'object') return JSON.stringify(value)
-  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`
-  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`
-}
-
-function stableHash(value: any): string {
-  const input = stableStringify(value)
-  let hash = 5381
-  for (let i = 0; i < input.length; i += 1) {
-    hash = ((hash << 5) + hash) ^ input.charCodeAt(i)
-  }
-  return (hash >>> 0).toString(36)
-}
-
-function compactKey(value: any, fallback: string) {
-  if (value == null) return fallback
-  return String(value).trim() || fallback
-}
-
-function warmupItemIdentity(item: any) {
-  return {
-    type: item?.type,
-    title: item?.title,
-    kind: item?.kind,
-    direction: item?.direction,
-    chunk: item?.chunk,
-    chunkMeaning: item?.chunkMeaning,
-    pattern: item?.pattern,
-    patternMeaning: item?.patternMeaning,
-    vocabWord: item?.vocabWord,
-    vocabMeaning: item?.vocabMeaning,
-    fullSentence: item?.fullSentence,
-    levels: item?.levels,
-  }
-}
-
-export function createWarmupPracticeItemId(params: {
-  packId: string
-  topicId: string
-  type: string
-  item: any
-  prompt: any
-  pattern?: any
-}) {
-  const itemKey = compactKey(params.item?.id, `item-${stableHash(warmupItemIdentity(params.item))}`)
-  const patternPart = params.pattern
-    ? `:p-${compactKey(params.pattern.id, stableHash({
-      chunk: params.pattern.chunk,
-      meaning: params.pattern.meaning,
-      chunkMeaning: params.pattern.chunkMeaning,
-      pattern: params.pattern.pattern,
-    }))}`
-    : ''
-  const promptKey = compactKey(
-    params.prompt?.id ?? params.prompt?.vocabId,
-    `prompt-${stableHash({
-      zh: params.prompt?.zh,
-      answer: params.prompt?.answer,
-      promptZh: params.prompt?.promptZh,
-      suggestedAnswer: params.prompt?.suggestedAnswer,
-      targetWords: params.prompt?.targetWords,
-      fullSentence: params.prompt?.fullSentence,
-      levels: params.prompt?.levels,
-    })}`,
-  )
-  return `${params.packId}:${params.topicId}:${itemKey}:${params.type}${patternPart}:i-${promptKey}`
 }
 
 function emptyProgress(candidate: DailyPracticeCandidate, date: string): DailyPracticeProgress {
