@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { AlertCircle, BookOpen, CheckCircle2, ChevronRight, Download, Loader2, RotateCcw, X } from 'lucide-react'
@@ -16,6 +16,37 @@ import { getCategoryIcon } from './category-icons'
 import { LearningWeekTracker } from './week-tracker'
 import { useLearningStore } from '@/stores/learning.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
+
+const retainedCovers = new Map<string, HTMLImageElement>()
+
+function retainCover(src: string) {
+  if (retainedCovers.has(src)) return
+  const image = new Image()
+  image.decoding = 'sync'
+  image.src = src
+  retainedCovers.set(src, image)
+}
+
+function PlanCoverImage({ src, alt, onError }: { src: string; alt: string; onError: () => void }) {
+  useEffect(() => {
+    retainCover(src)
+  }, [src])
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="absolute inset-0 size-full object-cover"
+      loading="eager"
+      decoding="sync"
+      onLoad={() => retainCover(src)}
+      onError={() => {
+        retainedCovers.delete(src)
+        onError()
+      }}
+    />
+  )
+}
 
 interface Props {
   myUnits: MyUnit[]
@@ -289,7 +320,7 @@ function InProgressUnitCard({
         >
           <div className="relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
             {showCover ? (
-              <img src={unit.coverImage!} alt={unit.title} className="absolute inset-0 size-full object-cover" loading="lazy" onError={() => setImgFailed(true)} />
+              <PlanCoverImage src={unit.coverImage!} alt={unit.title} onError={() => setImgFailed(true)} />
             ) : (
               <>
                 <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />
@@ -495,7 +526,7 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
           isCompleted && 'from-slate-100 via-emerald-50 to-slate-100 text-emerald-600 opacity-80 dark:from-slate-900/70 dark:via-emerald-950/30 dark:to-slate-950/40',
         )}>
           {showCover ? (
-            <img src={unit.coverImage!} alt={unit.title} className="absolute inset-0 size-full object-cover" loading="lazy" onError={() => setImgFailed(true)} />
+            <PlanCoverImage src={unit.coverImage!} alt={unit.title} onError={() => setImgFailed(true)} />
           ) : (
             <>
               <div className="absolute inset-x-0 bottom-0 h-1/2 bg-background/20" />

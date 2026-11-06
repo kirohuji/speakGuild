@@ -581,12 +581,14 @@ export function LearningUnitPage() {
             })}
           </div>
           {!collapsedSections.has('topics') && (
-            <PrepPager
-              currentPage={topicPage}
-              totalPages={topicPageItems.totalPages}
-              totalItems={unit.trainingTopics.length}
-              onPageChange={changeTopicPage}
-            />
+            <div className="mt-2">
+              <PrepPager
+                currentPage={topicPage}
+                totalPages={topicPageItems.totalPages}
+                totalItems={unit.trainingTopics.length}
+                onPageChange={changeTopicPage}
+              />
+            </div>
           )}
           {collapsedSections.has('topics') && (
             <Button
