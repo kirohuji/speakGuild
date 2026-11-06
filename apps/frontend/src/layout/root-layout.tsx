@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { Bell, Loader2, WifiOff, Wrench } from 'lucide-react'
@@ -10,8 +10,12 @@ import { useAuth } from '@/providers/auth-provider'
 import { UserAvatar } from '@/components/common/user-avatar'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { useNotificationStore } from '@/features/notification/store'
-import { ProfilePage } from '@/features/profile/pages/profile-page'
-import { NotificationListPage } from '@/features/notification/pages/notification-list-page'
+const ProfilePage = lazy(() =>
+  import('@/features/profile/pages/profile-page').then((m) => ({ default: m.ProfilePage })),
+)
+const NotificationListPage = lazy(() =>
+  import('@/features/notification/pages/notification-list-page').then((m) => ({ default: m.NotificationListPage })),
+)
 import { useUserStore } from '@/stores/user.store'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
@@ -199,7 +203,11 @@ export function RootLayout() {
             <DrawerTitle className="sr-only">{t('nav.profile')}</DrawerTitle>
           </DrawerHeader>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-            <ProfilePage />
+            {profileDrawerOpen && (
+              <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>}>
+                <ProfilePage />
+              </Suspense>
+            )}
           </div>
         </DrawerContent>
       </Drawer>
@@ -209,7 +217,11 @@ export function RootLayout() {
             <DrawerTitle className="text-[17px] font-semibold tracking-tight">{t('notification.title')}</DrawerTitle>
           </DrawerHeader>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]">
-            <NotificationListPage compact />
+            {notificationDrawerOpen && (
+              <Suspense fallback={<div className="flex justify-center py-16"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>}>
+                <NotificationListPage compact />
+              </Suspense>
+            )}
           </div>
         </DrawerContent>
       </Drawer>

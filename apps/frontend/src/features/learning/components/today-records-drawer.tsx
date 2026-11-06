@@ -1,12 +1,23 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CheckCircle2, ChevronDown, Eye, XCircle } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer'
-import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
-import { WarmupRecordDetailDialog } from '@/features/practice/components/warmup-record-detail-dialog'
+import type { ColumnConfig, ConfigDataTableProps } from '@/components/common/config-datatable'
+import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { cn } from '@/lib/cn'
 import type { WarmupRecordEntry } from '@/stores/warmup-session.store'
 import type { PracticeItem } from '../pages/today-task-page'
+
+const LazyConfigDataTable = lazy(() =>
+  import('@/components/common/config-datatable').then((m) => ({ default: m.ConfigDataTable })),
+)
+
+function ConfigDataTable<T extends Record<string, any>>(props: ConfigDataTableProps<T>) {
+  return <LazyConfigDataTable {...(props as ConfigDataTableProps<Record<string, any>>)} />
+}
+const WarmupRecordDetailDialog = lazy(() =>
+  import('@/features/practice/components/warmup-record-detail-dialog').then((m) => ({ default: m.WarmupRecordDetailDialog })),
+)
 
 interface TodayRecordsDrawerProps {
   open: boolean
@@ -110,31 +121,39 @@ export function TodayRecordsDrawer({ open, onOpenChange, records, steps }: Today
           </div>
 
           <div className="min-h-0 flex-1 px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] pt-3">
-            <ConfigDataTable
-              data={pagedRecords}
-              columns={columns}
-              total={records.length}
-              page={page}
-              pageSize={pageSize}
-              onPageChange={setPage}
-              emptyMessage={t('todayTask.noTodayPracticeRecords')}
-              onRowClick={(record) => setDetailIndex(records.indexOf(record))}
-              className="h-full min-h-0 text-xs [&_td]:px-3 [&_td]:py-2.5 [&_th]:h-9 [&_th]:px-3"
-            />
+            {open && (
+              <Suspense fallback={<MobilePageLoading rows={4} />}>
+                <ConfigDataTable
+                  data={pagedRecords}
+                  columns={columns}
+                  total={records.length}
+                  page={page}
+                  pageSize={pageSize}
+                  onPageChange={setPage}
+                  emptyMessage={t('todayTask.noTodayPracticeRecords')}
+                  onRowClick={(record) => setDetailIndex(records.indexOf(record))}
+                  className="h-full min-h-0 text-xs [&_td]:px-3 [&_td]:py-2.5 [&_th]:h-9 [&_th]:px-3"
+                />
+              </Suspense>
+            )}
           </div>
         </div>
       </DrawerContent>
     </Drawer>
 
-    <WarmupRecordDetailDialog
-      open={detailIndex !== null && Boolean(selectedRecord)}
-      onOpenChange={(nextOpen) => { if (!nextOpen) setDetailIndex(null) }}
-      items={records}
-      topicTitle={selectedRecord?.topicTitle || t('todayTask.todayPracticeRecords')}
-      initialIndex={detailIndex ?? 0}
-      contentClassName="!z-[10002]"
-      overlayClassName="!z-[10002]"
-    />
+    {open && (
+      <Suspense fallback={null}>
+        <WarmupRecordDetailDialog
+          open={detailIndex !== null && Boolean(selectedRecord)}
+          onOpenChange={(nextOpen) => { if (!nextOpen) setDetailIndex(null) }}
+          items={records}
+          topicTitle={selectedRecord?.topicTitle || t('todayTask.todayPracticeRecords')}
+          initialIndex={detailIndex ?? 0}
+          contentClassName="!z-[10002]"
+          overlayClassName="!z-[10002]"
+        />
+      </Suspense>
+    )}
     </>
   )
 }

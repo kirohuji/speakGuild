@@ -22,7 +22,7 @@ import {
 import { enrichWord, type WordEnrichmentResult, type WordExampleItem } from '@/lib/practice-ai-api'
 import { synthesizeText } from '@/lib/tts-api'
 import { usePreferencesStore } from '@/stores/preferences.store'
-import { learningContentRepository } from '@/lib/offline'
+import { learningContentRepository } from '@/lib/offline/learning-content.repository'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

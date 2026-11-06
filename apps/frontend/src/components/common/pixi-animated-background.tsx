@@ -1,14 +1,32 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
 import { Application, useApplication, useTick } from '@pixi/react';
-import { initDevtools } from '@pixi/devtools';
 import type { ThemeSetup } from './pixi-themes/types';
-import { setupOcean } from './pixi-themes/ocean';
-import { setupStars } from './pixi-themes/stars';
-import { setupRain } from './pixi-themes/rain';
-import { setupAurora } from './pixi-themes/aurora';
-import { setupLittlePrince } from './pixi-themes/little-prince';
 import { isNative } from '@/lib/native/platform';
+
+type ThemeSetupFn = (
+  app: any,
+  width: number,
+  height: number,
+  isDark: boolean,
+  testMode?: boolean,
+) => ThemeSetup;
+
+function loadThemeSetup(themeId?: string): Promise<ThemeSetupFn> {
+  if (themeId?.includes('ocean')) {
+    return import('./pixi-themes/ocean').then((m) => m.setupOcean);
+  }
+  if (themeId?.includes('rain')) {
+    return import('./pixi-themes/rain').then((m) => m.setupRain);
+  }
+  if (themeId?.includes('aurora')) {
+    return import('./pixi-themes/aurora').then((m) => m.setupAurora);
+  }
+  if (themeId?.includes('little-prince')) {
+    return import('./pixi-themes/little-prince').then((m) => m.setupLittlePrince);
+  }
+  return import('./pixi-themes/stars').then((m) => m.setupStars);
+}
 
 interface AnimatedBackgroundProps {
   themeId?: string;
@@ -105,42 +123,44 @@ function PixiThemeLayer({ themeId, isDark, testMode, visualScale }: {
   const { app, isInitialised } = useApplication();
   const setupRef = useRef<ActiveThemeSetup | null>(null);
 
-  // Stable reference to the theme setup function
-  const setupFn = useMemo(() => {
-    if (themeId?.includes('ocean')) return setupOcean;
-    if (themeId?.includes('rain')) return setupRain;
-    if (themeId?.includes('aurora')) return setupAurora;
-    if (themeId?.includes('little-prince')) return setupLittlePrince;
-    return setupStars;
-  }, [themeId]);
-
   // ── DevTools (dev only) ──
   useEffect(() => {
     if (!isInitialised || !import.meta.env.DEV) return;
-    initDevtools({ app }).catch(() => { /* ignore */ });
+    let cancelled = false;
+    void import('@pixi/devtools')
+      .then(({ initDevtools }) => {
+        if (!cancelled) return initDevtools({ app });
+      })
+      .catch(() => { /* ignore */ });
+    return () => { cancelled = true; };
   }, [app, isInitialised]);
 
   // ── Theme setup / teardown ──
   useEffect(() => {
     if (!isInitialised) return;
+    let cancelled = false;
 
     cleanupTheme(setupRef.current);
     setupRef.current = null;
 
-    const { width: w, height: h } = getViewportSize(app);
-    if (w === 0 || h === 0) return;
+    void loadThemeSetup(themeId).then((setupFn) => {
+      if (cancelled) return;
+      const { width: w, height: h } = getViewportSize(app);
+      if (w === 0 || h === 0) return;
 
-    applyVisualScale(app, w, visualScale);
-    const before = new Set(app.stage.children as StageChild[]);
-    const setup = setupFn(app, w, h, isDark, testMode);
-    const roots = (app.stage.children as StageChild[]).filter((child) => !before.has(child));
-    setupRef.current = { setup, roots };
+      applyVisualScale(app, w, visualScale);
+      const before = new Set(app.stage.children as StageChild[]);
+      const setup = setupFn(app, w, h, isDark, testMode);
+      const roots = (app.stage.children as StageChild[]).filter((child) => !before.has(child));
+      setupRef.current = { setup, roots };
+    });
 
     return () => {
+      cancelled = true;
       cleanupTheme(setupRef.current);
       setupRef.current = null;
     };
-  }, [app, isInitialised, setupFn, isDark, testMode, visualScale]);
+  }, [app, isInitialised, themeId, isDark, testMode, visualScale]);
 
   // ── Per-frame animation loop ──
   useTick((ticker) => {

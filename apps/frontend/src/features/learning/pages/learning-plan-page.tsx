@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { lazy, Suspense, useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { parseISO, startOfDay } from 'date-fns'
 import {
@@ -11,13 +11,10 @@ import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { ConfigDataTable, type ColumnConfig } from '@/components/common/config-datatable'
+import type { ColumnConfig, ConfigDataTableProps } from '@/components/common/config-datatable'
 import { type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
 import { type PracticeSession, type TopicDetail, warmupRecordApi, type WarmupRecord } from '@/features/practice/api/english-practice-api'
-import { PracticeAnalysisPanel } from '@/features/practice/components/practice-analysis-panel'
-import { WarmupRecordDetailDialog } from '@/features/practice/components/warmup-record-detail-dialog'
-import { VnPlayer, type VnPlayerLine, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
-import { MemberPage } from '@/features/membership/pages/member-page'
+import type { VnPlayerLine, VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { cn } from '@/lib/cn'
 import { learningRepository, practiceRepository } from '@/lib/offline'
 import { dailyPracticeRepository } from '@/lib/offline/daily-practice.repository'
@@ -27,10 +24,32 @@ import { usePreferencesStore } from '@/stores/preferences.store'
 import { toast } from 'sonner'
 import { isInProgressLearningUnit, isStoryLearningUnit } from '../api/learning-api'
 import { MyLearningView } from '../components/my-learning-view'
-import { ShopView } from '../components/shop-view'
 import { LearningPackDownloadDrawer, LearningPackDownloadStatusButton } from '@/layout/learning-pack-download-monitor'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { TopicSessionReadonlyReviewDrawer } from '../components/topic-session-readonly-review-drawer'
+
+const LazyConfigDataTable = lazy(() =>
+  import('@/components/common/config-datatable').then((m) => ({ default: m.ConfigDataTable })),
+)
+
+function ConfigDataTable<T extends Record<string, any>>(props: ConfigDataTableProps<T>) {
+  return <LazyConfigDataTable {...(props as ConfigDataTableProps<Record<string, any>>)} />
+}
+const PracticeAnalysisPanel = lazy(() =>
+  import('@/features/practice/components/practice-analysis-panel').then((m) => ({ default: m.PracticeAnalysisPanel })),
+)
+const WarmupRecordDetailDialog = lazy(() =>
+  import('@/features/practice/components/warmup-record-detail-dialog').then((m) => ({ default: m.WarmupRecordDetailDialog })),
+)
+const VnPlayer = lazy(() =>
+  import('@/features/vn-engine/vn-player').then((m) => ({ default: m.VnPlayer })),
+)
+const MemberPage = lazy(() =>
+  import('@/features/membership/pages/member-page').then((m) => ({ default: m.MemberPage })),
+)
+const ShopView = lazy(() =>
+  import('../components/shop-view').then((m) => ({ default: m.ShopView })),
+)
 
 export function LearningPlanPage() {
   const { t } = useTranslation()
@@ -123,7 +142,11 @@ export function LearningPlanPage() {
               <DrawerTitle className="text-base font-semibold">{t('profile.records')}</DrawerTitle>
             </DrawerHeader>
             <div className="min-h-0 flex-1 overflow-hidden px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-              <PracticeRecordsWithTabs active={recordsOpen} />
+              {recordsOpen && (
+                <Suspense fallback={<MobilePageLoading rows={4} />}>
+                  <PracticeRecordsWithTabs active={recordsOpen} />
+                </Suspense>
+              )}
             </div>
           </DrawerContent>
         </Drawer>
@@ -136,14 +159,18 @@ export function LearningPlanPage() {
               <DrawerTitle className="text-base font-semibold">{t('learning.shopTitle')}</DrawerTitle>
             </DrawerHeader>
             <div className="h-[calc(88vh-4rem)] overflow-x-hidden px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-              <ShopView
-                isOpen={shopOpen}
-                onMemberOpen={() => setMemberOpen(true)}
-                onEnrollUnit={storeEnrollUnit}
-                onRefreshShop={refreshShop}
-                onLoadMore={loadMoreShop}
-                excludePackageType="story"
-              />
+              {shopOpen && (
+                <Suspense fallback={<MobilePageLoading rows={4} />}>
+                  <ShopView
+                    isOpen={shopOpen}
+                    onMemberOpen={() => setMemberOpen(true)}
+                    onEnrollUnit={storeEnrollUnit}
+                    onRefreshShop={refreshShop}
+                    onLoadMore={loadMoreShop}
+                    excludePackageType="story"
+                  />
+                </Suspense>
+              )}
             </div>
           </DrawerContent>
         </Drawer>
@@ -154,7 +181,11 @@ export function LearningPlanPage() {
               <DrawerTitle className="text-base font-semibold">{t('member.title')}</DrawerTitle>
             </DrawerHeader>
             <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-              <MemberPage compact />
+              {memberOpen && (
+                <Suspense fallback={<MobilePageLoading rows={4} />}>
+                  <MemberPage compact />
+                </Suspense>
+              )}
             </div>
           </DrawerContent>
         </Drawer>
@@ -339,13 +370,15 @@ function WarmupRecordsContent() {
         onRowClick={setSelectedRecord}
         className="min-h-0 flex-1 text-xs [&_td]:px-3 [&_td]:py-2 [&_th]:h-9 [&_th]:px-3"
       />
-      <WarmupRecordDetailDialog
-        items={selectedRecord?.items ?? []}
-        topicTitle={selectedRecord?.topicTitle}
-        score={selectedRecord?.score}
-        open={Boolean(selectedRecord)}
-        onOpenChange={(open) => { if (!open) setSelectedRecord(null) }}
-      />
+      <Suspense fallback={null}>
+        <WarmupRecordDetailDialog
+          items={selectedRecord?.items ?? []}
+          topicTitle={selectedRecord?.topicTitle}
+          score={selectedRecord?.score}
+          open={Boolean(selectedRecord)}
+          onOpenChange={(open) => { if (!open) setSelectedRecord(null) }}
+        />
+      </Suspense>
     </div>
   )
 }
@@ -633,7 +666,9 @@ function PracticeRecordReadonlyReviewDrawer({
                 <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
               </div>
               {session.analysisResult ? (
-                <PracticeAnalysisPanel analysis={session.analysisResult} loading={false} readOnly />
+                <Suspense fallback={<MobilePageLoading rows={3} />}>
+                  <PracticeAnalysisPanel analysis={session.analysisResult} loading={false} readOnly />
+                </Suspense>
               ) : (
                 <p className="rounded-lg bg-muted/30 px-4 py-10 text-center text-sm text-muted-foreground">{t('profile.reviewNoAnalysis')}</p>
               )}
@@ -666,6 +701,7 @@ function PracticeRecordReadonlyReviewDrawer({
                 </button>
               </div>
             </div>
+            <Suspense fallback={<MobilePageLoading rows={4} minHeightClassName="min-h-full" />}>
             <VnPlayer
               ref={vnPlayerRef}
               className="h-full max-w-none rounded-none border-none"
@@ -690,6 +726,7 @@ function PracticeRecordReadonlyReviewDrawer({
                 </Button>
               )}
             />
+            </Suspense>
           </div>
         )}
       </DrawerContent>

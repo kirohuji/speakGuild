@@ -6,7 +6,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { PixiVnStage } from '@/features/vn-engine/pixi-vn-stage'
 import { MixedPlaybackSettingsDialog, type LoopMode } from '@/components/common/playback-settings-dialog'
 import { type MixedTimelineFrame } from './vn-mixed-timeline'
-import { assetCacheService } from '@/lib/offline'
+import { assetCacheService } from '@/lib/offline/asset-cache.service'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 
 // 兼容旧导入：播放设置弹窗已抽为公共组件

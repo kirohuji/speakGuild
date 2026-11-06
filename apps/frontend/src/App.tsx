@@ -21,10 +21,7 @@ import { EnglishHomePage } from '@/features/home/pages/english-home-page'
 import { LearningPlanPage } from '@/features/learning/pages/learning-plan-page'
 import { TodayTaskPage } from '@/features/learning/pages/today-task-page'
 import { LearningUnitPage } from '@/features/learning/pages/learning-unit-page'
-import { ProfilePage } from '@/features/profile/pages/profile-page'
 import { AccountPage } from '@/features/account/pages/account-page'
-import { MemberPage } from '@/features/membership/pages/member-page'
-import { NotificationListPage } from '@/features/notification/pages/notification-list-page'
 import { NotificationDetailPage } from '@/features/notification/pages/notification-detail-page'
 import { FeedbackPage } from '@/features/feedback/pages/feedback-page'
 import { LoginPage } from '@/features/auth/pages/login-page'
@@ -33,6 +30,9 @@ import { ForgotPasswordPage } from '@/features/auth/pages/forgot-password-page'
 
 // ── 非首屏页面：懒加载 ──
 const AdminRoutes = lazy(() => import('@/routes/admin-routes'))
+const ProfilePage = lazy(() => import('@/features/profile/pages/profile-page').then(m => ({ default: m.ProfilePage })))
+const MemberPage = lazy(() => import('@/features/membership/pages/member-page').then(m => ({ default: m.MemberPage })))
+const NotificationListPage = lazy(() => import('@/features/notification/pages/notification-list-page').then(m => ({ default: m.NotificationListPage })))
 const PracticeSessionPage = lazy(() => import('@/features/practice/pages/practice-session-page').then(m => ({ default: m.PracticeSessionPage })))
 const WritingSessionPage = lazy(() => import('@/features/learning/pages/writing-session-page').then(m => ({ default: m.WritingSessionPage })))
 const ReadingSessionPage = lazy(() => import('@/features/learning/pages/reading-session-page').then(m => ({ default: m.ReadingSessionPage })))

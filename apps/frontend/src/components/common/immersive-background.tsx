@@ -1,10 +1,15 @@
-import { useMemo } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { useTheme } from 'next-themes';
 import { useThemePreset } from '@/providers/theme-preset-provider';
 import type { ThemeDecoration } from '@/features/admin/theme-manage/api/theme-api';
-import { PixiAnimatedBackground } from '@/components/common/pixi-animated-background';
 import { resolveThemeBackground } from '@/lib/theme-bg-resolve';
+
+const PixiAnimatedBackground = lazy(() =>
+  import('@/components/common/pixi-animated-background').then((m) => ({
+    default: m.PixiAnimatedBackground,
+  })),
+);
 
 /**
  * 沉浸式背景组件
@@ -41,9 +46,10 @@ export function ImmersiveBackground() {
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
-      {/* PixiJS 动画背景 */}
       {isAnimation && (
-        <PixiAnimatedBackground themeId={activePreset?.id} testMode={testMode} />
+        <Suspense fallback={null}>
+          <PixiAnimatedBackground themeId={activePreset?.id} testMode={testMode} />
+        </Suspense>
       )}
 
       {/* 背景视频（最高优先级） */}
