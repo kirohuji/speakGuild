@@ -359,7 +359,7 @@ function DialogueMobilePreview({ value, context, turns }: Pick<Props, 'value' | 
                     <textarea
                       value={responses[currentIndex] ?? ''}
                       onChange={(event) => { setResponses({ ...responses, [currentIndex]: event.target.value }); setSubmitted(false) }}
-                      className="min-h-[140px] w-full resize-none rounded-2xl rounded-tl-md border-0 bg-muted/40 p-4 text-[16px] leading-7 text-foreground outline-none ring-0 placeholder:text-muted-foreground/45 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                      className="min-h-[140px] w-full resize-none rounded-2xl rounded-tl-md border-0 bg-muted/40 p-4 text-[16px] leading-7 text-foreground outline-none ring-0 placeholder:text-muted-foreground/45 focus:bg-background focus:ring-0"
                       placeholder="用英语写下 B 的回复…"
                       autoCapitalize="sentences"
                       autoCorrect="on"

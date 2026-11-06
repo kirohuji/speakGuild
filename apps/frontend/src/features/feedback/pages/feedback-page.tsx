@@ -85,7 +85,7 @@ export function FeedbackPage() {
               <div>
                 <label className="text-sm font-medium mb-1.5 block">{t('feedback.detail')}</label>
                 <textarea
-                  className="w-full min-h-[120px] rounded-lg border border-border bg-background px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full min-h-[120px] rounded-lg border border-border bg-background px-3 py-2 text-sm resize-y outline-none focus:outline-none focus:ring-0"
                   placeholder={t('feedback.placeholder')}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -94,7 +94,7 @@ export function FeedbackPage() {
               <div>
                 <label className="text-sm font-medium mb-1.5 block">{t('feedback.contact')}</label>
                 <input
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:outline-none focus:ring-0"
                   placeholder={t('feedback.contactPlaceholder')}
                   value={contact}
                   onChange={(e) => setContact(e.target.value)}

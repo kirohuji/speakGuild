@@ -353,7 +353,7 @@ export function AssessmentAnswerInput({
   return (
     <div className={cn(
       'w-full min-w-0',
-      !hideTextarea && 'relative rounded-xl bg-background/70 p-1.5 ring-1 ring-border/45 transition-colors focus-within:ring-primary/30',
+      !hideTextarea && 'relative rounded-xl bg-background/70 p-1.5 ring-1 ring-border/45',
       disabled && !readOnly && 'opacity-75',
     )}>
       <audio ref={audioRef} src={playbackUrl ?? undefined} preload="auto" className="hidden" />

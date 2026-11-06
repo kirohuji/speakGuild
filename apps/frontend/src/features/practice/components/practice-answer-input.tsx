@@ -235,7 +235,7 @@ export function PracticeAnswerInput({
 
   return (
     <div className={cn(
-      'relative mx-1 rounded-xl bg-background/70 ring-1 ring-border/45 transition-colors focus-within:ring-primary/30',
+      'relative mx-1 rounded-xl bg-background/70 ring-1 ring-border/45',
       disabled && !readOnly && 'opacity-75',
     )}>
       <div className="p-1.5">

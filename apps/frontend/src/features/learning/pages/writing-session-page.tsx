@@ -1271,7 +1271,7 @@ function DialogueEditor({
                       onFocus={focusInput}
                       onClick={focusInput}
                       className={cn(
-                        'block min-h-[140px] w-full resize-none rounded-2xl rounded-tl-md border-0 bg-muted/40 p-4 text-[16px] leading-7 text-foreground outline-none ring-0 placeholder:text-muted-foreground/45 focus:bg-background focus:ring-2 focus:ring-primary/20',
+                        'block min-h-[140px] w-full resize-none rounded-2xl rounded-tl-md border-0 bg-muted/40 p-4 text-[16px] leading-7 text-foreground outline-none ring-0 placeholder:text-muted-foreground/45 focus:bg-background focus:ring-0',
                         !keyboardComposing && (!session.readOnly || recordedAudios[currentIndex]) && 'pb-16',
                       )}
                       placeholder={t('learning.dialogueReplyPlaceholder')}
