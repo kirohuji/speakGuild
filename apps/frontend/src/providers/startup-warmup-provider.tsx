@@ -3,6 +3,7 @@ import { useAuth } from '@/providers/auth-provider'
 import { useLearningStore } from '@/stores/learning.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { localDb } from '@/lib/offline/unified-storage'
+import { learningPackService } from '@/lib/offline/learning-pack.service'
 import { useManagementHashRoute } from '@/hooks/use-management-route'
 
 function scheduleIdleWork(task: () => void, timeout = 2_000) {
@@ -45,6 +46,7 @@ export function StartupWarmupProvider({ children }: { children: ReactNode }) {
 
         const learningStore = useLearningStore.getState()
         try {
+          await learningPackService.recoverInterruptedOperations()
           if (learningStore.myUnits.length === 0) {
             await learningStore.fetchMyLearning()
           }

@@ -25,6 +25,8 @@ export type LibraryVocabularyListParams = {
   pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete' | '';
   qualityIssue?: 'meaning-other' | 'english-only-definition' | 'missing-pos-prefix' | '';
   tag?: string;
+  sceneId?: string;
+  topicId?: string;
   page?: number;
   pageSize?: number;
 };
@@ -104,6 +106,18 @@ export class VocabularyExampleAudioService {
     }
     const tag = params?.tag?.trim();
     if (tag) andFilters.push({ tags: { has: tag } });
+    const scene = params?.sceneId?.trim();
+    const topic = params?.topicId?.trim();
+    if (scene || topic) {
+      andFilters.push({
+        topicVocabs: {
+          some: {
+            ...(topic ? { topicId: topic } : {}),
+            ...(scene ? { topic: { sceneId: scene } } : {}),
+          },
+        },
+      });
+    }
     if (andFilters.length) where.AND = andFilters;
     return where;
   }

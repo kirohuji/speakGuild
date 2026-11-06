@@ -81,6 +81,8 @@ export class AdminTasksController {
     @Query('pronunciationStatus') pronunciationStatus?: string,
     @Query('qualityIssue') qualityIssue?: string,
     @Query('tag') tag?: string,
+    @Query('sceneId') sceneId?: string,
+    @Query('topicId') topicId?: string,
   ) {
     const session = await this.requireAdmin(req);
     return this.adminTasksService.enqueueVocabularyExampleAudioBatch(session.user.id, {
@@ -92,6 +94,8 @@ export class AdminTasksController {
       pronunciationStatus: pronunciationStatus as any,
       qualityIssue: qualityIssue as any,
       tag,
+      sceneId,
+      topicId,
     });
   }
 

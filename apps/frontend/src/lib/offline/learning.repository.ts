@@ -208,7 +208,8 @@ function hasTrackableTasksInDownloadedPack(unit: UnitDetail): boolean {
 async function mergeLocalPracticeProgress(units: MyUnit[]): Promise<MyUnit[]> {
   if (units.length === 0) return units
 
-  const progresses = await localDb.list<LocalDailyPracticeProgress>('daily_practice_items').catch(() => [])
+  const packIds = units.map((unit) => unit.id)
+  const progresses = await localDb.findByIndexIn<LocalDailyPracticeProgress>('daily_practice_items', 'pack_id', packIds).catch(() => [])
 
   const completedByPack = new Map<string, Set<string>>()
   for (const progress of progresses) {
@@ -217,7 +218,7 @@ async function mergeLocalPracticeProgress(units: MyUnit[]): Promise<MyUnit[]> {
     itemIds.add(progress.itemId)
     completedByPack.set(progress.packId, itemIds)
   }
-  const teachingProgresses = await localDb.list<LocalTeachingReadingProgress>('user_progress').catch(() => [])
+  const teachingProgresses = await localDb.findByIndexIn<LocalTeachingReadingProgress>('user_progress', 'scene_id', packIds).catch(() => [])
   const teachingProgressByTopic = new Map(
     teachingProgresses
       .filter((record) => record.type === 'teaching_reading' && record.topicId)
@@ -520,8 +521,8 @@ export const learningRepository = {
     const removedRunIds = new Set(runs
       .filter((item) => Array.isArray(item.packIds) && item.packIds.includes(packId))
       .map((item) => item.id))
-    await localDb.deleteWhere<any>('daily_practice_items', (item) => item.packId === packId)
-    await localDb.deleteWhere<any>('daily_practice_attempts', (item) => item.packId === packId)
+    await localDb.deleteByIndex('daily_practice_items', 'pack_id', packId)
+    await localDb.deleteByIndex('daily_practice_attempts', 'pack_id', packId)
     await localDb.deleteWhere<any>('daily_practice_runs', (item) =>
       Array.isArray((item as any).packIds) && (item as any).packIds.includes(packId))
     // 删除指向已删 run 的日期/mode 指针，以及已退出包的当前练习包指针。
@@ -530,8 +531,10 @@ export const learningRepository = {
       (typeof (item as any).runId === 'string' && removedRunIds.has((item as any).runId))
       || ((item as any).id === 'daily:active-pack' && (item as any).packId === packId))
     await localDb.delete('user_progress', `novel:${packId}`)
-    await localDb.deleteWhere<LocalTeachingReadingProgress>('user_progress', (record) =>
-      record.type === 'teaching_reading' && record.sceneId === packId)
+    const packProgress = await localDb.findByIndex<LocalTeachingReadingProgress>('user_progress', 'scene_id', packId)
+    for (const record of packProgress) {
+      if (record.type === 'teaching_reading') await localDb.delete('user_progress', record.id)
+    }
     const pending = await syncOutbox.listPending()
     await Promise.all(pending
       .filter((item) => item.entityId === packId && (

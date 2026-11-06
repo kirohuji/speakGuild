@@ -51,6 +51,7 @@ export const TABLE_NAMES = [
   'topic_submissions',
   'local_assets',
   'asset_refs',
+  'pack_events',
   'outbox',
 ] as const
 
@@ -346,6 +347,18 @@ export const DDL: Record<TableName, string> = {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `,
+  pack_events: `
+    CREATE TABLE IF NOT EXISTS pack_events (
+      id TEXT PRIMARY KEY NOT NULL,
+      pack_id TEXT NOT NULL,
+      action TEXT NOT NULL,
+      version INTEGER,
+      previous_version INTEGER,
+      occurred_at TEXT NOT NULL,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
   outbox: `
     CREATE TABLE IF NOT EXISTS outbox (
       id TEXT PRIMARY KEY NOT NULL,
@@ -393,6 +406,9 @@ export const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_offline_content_refs_topic ON offline_content_refs (topic_id)`,
   `CREATE INDEX IF NOT EXISTS idx_asset_refs_sha256 ON asset_refs (sha256)`,
   `CREATE INDEX IF NOT EXISTS idx_asset_refs_pack_id ON asset_refs (pack_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_pack_events_pack_id ON pack_events (pack_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_pack_events_action ON pack_events (action)`,
+  `CREATE INDEX IF NOT EXISTS idx_pack_events_occurred_at ON pack_events (occurred_at)`,
   `CREATE INDEX IF NOT EXISTS idx_user_progress_remote_id ON user_progress (remote_id)`,
   `CREATE INDEX IF NOT EXISTS idx_user_progress_type ON user_progress (progress_type)`,
   `CREATE INDEX IF NOT EXISTS idx_user_progress_scene_id ON user_progress (scene_id)`,
@@ -411,7 +427,10 @@ export const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_daily_practice_items_topic_id ON daily_practice_items (topic_id)`,
   `CREATE INDEX IF NOT EXISTS idx_daily_practice_items_due_date ON daily_practice_items (due_date)`,
   `CREATE INDEX IF NOT EXISTS idx_daily_practice_runs_date ON daily_practice_runs (date)`,
+  `CREATE INDEX IF NOT EXISTS idx_daily_practice_runs_scope ON daily_practice_runs (scope)`,
+  `CREATE INDEX IF NOT EXISTS idx_daily_practice_runs_pack_ids ON daily_practice_runs (pack_ids)`,
   `CREATE INDEX IF NOT EXISTS idx_daily_practice_attempts_item_id ON daily_practice_attempts (item_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_daily_practice_attempts_pack_id ON daily_practice_attempts (pack_id)`,
   `CREATE INDEX IF NOT EXISTS idx_daily_practice_attempts_sync_status ON daily_practice_attempts (sync_status)`,
   `CREATE INDEX IF NOT EXISTS idx_warmup_embedding_model_key ON warmup_embedding_refs (model_key)`,
   `CREATE INDEX IF NOT EXISTS idx_warmup_embedding_reference_key ON warmup_embedding_refs (reference_key)`,

@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import { isNative } from '@/lib/native'
 import { localDb } from './unified-storage'
 import write_blob from 'capacitor-blob-writer'
+import { digestBuffer } from './sha256-worker.service'
 
 export interface AssetRef {
   assetId?: string
@@ -137,7 +138,7 @@ async function digest(value: string | ArrayBuffer): Promise<string> {
   if (typeof value === 'string') {
     return digestSync(new TextEncoder().encode(value).buffer as ArrayBuffer)
   }
-  return digestSync(value)
+  return digestBuffer(value)
 }
 
 function extensionFrom(url: string, mimeType?: string | null) {
@@ -269,9 +270,8 @@ export const assetCacheService = {
         await Filesystem.stat({ path: cached.localPath, directory: Directory.Data })
       } catch {
         const canonicalId = cached.assetId || cached.id
-        await localDb.deleteWhere<LocalAsset>('local_assets', (asset) =>
-          asset.id === canonicalId || asset.assetId === canonicalId,
-        )
+        const aliases = await localDb.findByIndex<LocalAsset>('local_assets', 'asset_id', canonicalId)
+        await Promise.all(aliases.map((asset) => localDb.delete('local_assets', asset.id)))
         console.warn('[offline-assets] removed stale metadata', { assetId, canonicalId, path: cached.localPath })
         return false
       }
@@ -502,9 +502,8 @@ export const assetCacheService = {
     // Delete every alias together; otherwise a later install can see a stale
     // ready row and incorrectly deduplicate to a file that has been removed.
     const canonicalId = cached.assetId || cached.id
-    await localDb.deleteWhere<LocalAsset>('local_assets', (asset) =>
-      asset.id === canonicalId || asset.assetId === canonicalId,
-    )
+    const aliases = await localDb.findByIndex<LocalAsset>('local_assets', 'asset_id', canonicalId)
+    await Promise.all(aliases.map((asset) => localDb.delete('local_assets', asset.id)))
   },
 
   async removeRef(ref: AssetRef): Promise<void> {

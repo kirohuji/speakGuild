@@ -406,12 +406,28 @@ export const offlineStorageService = {
     }
 
     if (category === 'assets') {
+      const packs = await localDb.list<InstalledLearningPack>('downloaded_packs')
+      const now = new Date().toISOString()
+      if (packs.length > 0) {
+        await localDb.putMany('downloaded_packs', packs.map((pack) => ({
+          ...pack,
+          status: 'failed' as const,
+          lastError: 'assets_cleared_reinstall_required',
+          updatedAt: now,
+        })))
+      }
       await clearAssetFiles()
       // A reference without a file is invalid. Keeping it makes the next pack
       // install deduplicate against a non-existent asset and produce 0 local
       // resource files.
       await localDb.clear('local_assets')
       await localDb.clear('asset_refs')
+      const [{ useDailyPracticeStore }, { useLearningStore }] = await Promise.all([
+        import('@/stores/daily-practice.store'),
+        import('@/stores/learning.store'),
+      ])
+      useDailyPracticeStore.getState().invalidatePlans()
+      await useLearningStore.getState().fetchDownloadedPacks()
       return
     }
 

@@ -343,16 +343,26 @@ export const learningContentRepository = {
   },
 
   async removePackContentIndex(packId: string): Promise<void> {
-    const allRefs = await localDb.list<{ id: string; kind: 'vocab' | 'chunk' | 'pattern'; contentId: string; packId: string }>('offline_content_refs')
-    const refs = allRefs.filter((ref) => ref.packId === packId)
+    const refs = await localDb.findByIndex<{ id: string; kind: 'vocab' | 'chunk' | 'pattern'; contentId: string; packId: string }>(
+      'offline_content_refs',
+      'pack_id',
+      packId,
+    )
     if (refs.length === 0) return
 
     const keyOf = (ref: { kind: string; contentId: string }) => `${ref.kind}\u0000${ref.contentId}`
-    const remainingKeys = new Set(
-      allRefs
-        .filter((ref) => ref.packId !== packId)
-        .map(keyOf),
-    )
+    const remainingKeys = new Set<string>()
+    const uniqueContentIds = [...new Set(refs.map((ref) => ref.contentId))]
+    for (let index = 0; index < uniqueContentIds.length; index += 50) {
+      const matches = await localDb.findByIndexIn<typeof refs[number]>(
+        'offline_content_refs',
+        'content_id',
+        uniqueContentIds.slice(index, index + 50),
+      )
+      for (const ref of matches) {
+        if (ref.packId !== packId) remainingKeys.add(keyOf(ref))
+      }
+    }
     const orphanIds = {
       vocab: new Set<string>(),
       chunk: new Set<string>(),
@@ -365,10 +375,10 @@ export const learningContentRepository = {
       }
     }
 
-    await localDb.deleteWhere<any>('offline_content_refs', (ref) => ref.packId === packId)
-    await localDb.deleteWhere<any>('offline_vocabularies', (item) => orphanIds.vocab.has(String(item.id)))
-    await localDb.deleteWhere<any>('offline_chunks', (item) => orphanIds.chunk.has(String(item.id)))
-    await localDb.deleteWhere<any>('offline_patterns', (item) => orphanIds.pattern.has(String(item.id)))
+    await localDb.deleteByIndex('offline_content_refs', 'pack_id', packId)
+    for (const id of orphanIds.vocab) await localDb.delete('offline_vocabularies', id)
+    for (const id of orphanIds.chunk) await localDb.delete('offline_chunks', id)
+    for (const id of orphanIds.pattern) await localDb.delete('offline_patterns', id)
   },
 
   /** 从已下载的学习包中提取词汇数据 */

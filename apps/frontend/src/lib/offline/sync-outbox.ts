@@ -8,7 +8,6 @@ export type SyncEntityType =
   | 'pattern_entry'
   | 'practice_session'
   | 'practice_turn'
-  | 'learning_pack'
   | 'daily_practice'
   | 'topic_session'
   | 'topic_submission'
@@ -39,7 +38,7 @@ export const syncOutbox = {
     payload: TPayload
   }): Promise<SyncOutboxItem<TPayload>> {
     const now = new Date().toISOString()
-    const existing = (await localDb.list<SyncOutboxItem<TPayload>>('outbox')).find((item) =>
+    const existing = (await localDb.findByIndex<SyncOutboxItem<TPayload>>('outbox', 'entity_id', input.entityId)).find((item) =>
       item.entityType === input.entityType
       && item.entityId === input.entityId
       && item.operation === input.operation
@@ -84,8 +83,11 @@ export const syncOutbox = {
   },
 
   async listPending(): Promise<SyncOutboxItem[]> {
-    const items = await localDb.list<SyncOutboxItem>('outbox')
+    const items = await localDb.findByIndexIn<SyncOutboxItem>('outbox', 'status', ['pending', 'failed'])
     return items
+      // Older app versions briefly wrote device-local learning-pack events to
+      // the sync outbox. Never replay those records as remote mutations.
+      .filter((item) => String(item.entityType) !== 'learning_pack')
       .filter((item) => item.status === 'pending' || item.status === 'failed')
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   },
@@ -126,6 +128,9 @@ export const syncOutbox = {
   /** 清理历史上残留的 synced 记录和过期失败记录 */
   async cleanup(): Promise<number> {
     try {
+      await localDb.deleteWhere<SyncOutboxItem>('outbox', (item) =>
+        String(item.entityType) === 'learning_pack',
+      )
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
       // 清理 7 天前的已同步记录（正常完成，无需保留）
       await localDb.deleteWhere<SyncOutboxItem>('outbox', (item) =>

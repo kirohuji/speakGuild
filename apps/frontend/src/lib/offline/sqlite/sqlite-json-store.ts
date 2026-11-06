@@ -146,6 +146,13 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['status', 'status', (value) => value?.status ?? null],
     ['mime_type', 'mimeType', (value) => value?.mimeType ?? null],
   ],
+  pack_events: [
+    ['pack_id', 'packId', (value) => value?.packId ?? null],
+    ['action', 'action', (value) => value?.action ?? null],
+    ['version', 'version', (value) => typeof value?.version === 'number' ? value.version : null],
+    ['previous_version', 'previousVersion', (value) => typeof value?.previousVersion === 'number' ? value.previousVersion : null],
+    ['occurred_at', 'occurredAt', (value) => value?.occurredAt ?? null],
+  ],
   outbox: [
     ['entity_type', 'entityType', (value) => value?.entityType ?? null],
     ['entity_id', 'entityId', (value) => value?.entityId ?? null],
@@ -248,7 +255,7 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
         return hydrateRow<T>(storeName, rows[0] as any)
       } catch (error) {
         console.warn(`[${executor.label}] get failed for ${storeName}:${id}`, error)
-        return null
+        throw error
       }
     },
 
@@ -302,6 +309,7 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
         await write(`DELETE FROM "${storeName}" WHERE id = ?`, [id])
       } catch (error) {
         console.warn(`[${executor.label}] delete failed for ${storeName}:${id}`, error)
+        throw error
       }
     },
 
@@ -313,7 +321,7 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
         return rows.map((row) => hydrateRow<T>(storeName, row))
       } catch (error) {
         console.warn(`[${executor.label}] list failed for ${storeName}`, error)
-        return []
+        throw error
       }
     },
 
@@ -331,7 +339,7 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
         return rows.map((row) => hydrateRow<T>(storeName, row))
       } catch (error) {
         console.warn(`[${executor.label}] findByIndex failed for ${storeName}.${columnName}`, error)
-        return []
+        throw error
       }
     },
 
@@ -356,7 +364,7 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
         return rows.map((row) => hydrateRow<T>(storeName, row))
       } catch (error) {
         console.warn(`[${executor.label}] findByIndexIn failed for ${storeName}.${columnName}`, error)
-        return []
+        throw error
       }
     },
 
@@ -366,8 +374,9 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
           `SELECT COUNT(*) as cnt FROM "${storeName}"`,
         )
         return rows[0]?.cnt ?? 0
-      } catch {
-        return 0
+      } catch (error) {
+        console.warn(`[${executor.label}] count failed for ${storeName}`, error)
+        throw error
       }
     },
 
@@ -376,6 +385,7 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
         await write(`DELETE FROM "${storeName}"`)
       } catch (error) {
         console.warn(`[${executor.label}] clear failed for ${storeName}`, error)
+        throw error
       }
     },
 
@@ -388,6 +398,7 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
         )
       } catch (error) {
         console.warn(`[${executor.label}] deleteByIndex failed for ${storeName}.${columnName}`, error)
+        throw error
       }
     },
 
@@ -418,6 +429,7 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
         })
       } catch (error) {
         console.warn(`[${executor.label}] deleteWhere failed for ${storeName}`, error)
+        throw error
       }
     },
   }

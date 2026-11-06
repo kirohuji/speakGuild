@@ -422,11 +422,6 @@ async function replayItem(
   // warmup_records 不再单独入队：统一走 daily_practice → dailyPracticeApi.complete（含 SM-2 排期）。
   // 旧的 bare push 分支已删除，避免与 complete 路径重复创建 practiceWarmupRecord。
 
-  // 学习包：本地概念，不推服务端，直接标记完成
-  if (item.entityType === 'learning_pack') {
-    return true
-  }
-
   if (item.entityType === 'daily_practice') {
     const payload = item.payload as any
     const result = await dailyPracticeApi.complete(payload)

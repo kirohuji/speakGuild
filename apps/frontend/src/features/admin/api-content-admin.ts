@@ -901,6 +901,8 @@ export function listLibraryVocabularies(params?: {
   pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete';
   qualityIssue?: 'meaning-other' | 'english-only-definition' | 'missing-pos-prefix';
   tag?: string;
+  sceneId?: string;
+  topicId?: string;
   page?: number; pageSize?: number
 }): Promise<PaginatedResult<VocabularyFull>> {
   return get('/admin/content/library/vocabularies', params);
@@ -992,6 +994,8 @@ export function enqueueLibraryVocabularyExampleAudioCurrentPage(params: {
   pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete';
   qualityIssue?: 'meaning-other' | 'english-only-definition' | 'missing-pos-prefix';
   tag?: string;
+  sceneId?: string;
+  topicId?: string;
 }): Promise<{ id: string; totalItems: number }> {
   return post('/admin/tasks/library-vocabularies/generate-current-page-example-audio', undefined, { params });
 }
@@ -1061,7 +1065,7 @@ export function aiEnrichPattern(data: {
 // ─── Chunk ───────────────────────────────────────────────────
 
 export function listLibraryChunks(params?: {
-  search?: string; difficulty?: string; page?: number; pageSize?: number
+  search?: string; difficulty?: string; sceneId?: string; topicId?: string; page?: number; pageSize?: number
 }): Promise<PaginatedResult<ChunkFull>> {
   return get('/admin/content/library/chunks', params);
 }
@@ -1102,7 +1106,7 @@ export function listChunkCategories(): Promise<string[]> {
 // ─── Sentence Pattern ────────────────────────────────────────
 
 export function listLibraryPatterns(params?: {
-  search?: string; difficulty?: string; page?: number; pageSize?: number
+  search?: string; difficulty?: string; sceneId?: string; topicId?: string; page?: number; pageSize?: number
 }): Promise<PaginatedResult<SentencePatternFull>> {
   return get('/admin/content/library/patterns', params);
 }

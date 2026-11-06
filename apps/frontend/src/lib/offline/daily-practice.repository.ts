@@ -739,8 +739,8 @@ export const dailyPracticeRepository = {
     const context = await resolvePracticeCandidateContext(scope)
     if (context.itemIds.size === 0) return 0
     const [progresses, runs] = await Promise.all([
-      localDb.list<DailyPracticeProgress>('daily_practice_items'),
-      localDb.list<StoredDailyPracticeRun>('daily_practice_runs'),
+      localDb.findByIndexIn<DailyPracticeProgress>('daily_practice_items', 'item_id', [...context.itemIds]),
+      localDb.findByIndex<StoredDailyPracticeRun>('daily_practice_runs', 'date', date),
     ])
     const reviewRuns = runs.filter((run) =>
       run.id !== ACTIVE_DAILY_PRACTICE_PACK_ID
@@ -763,11 +763,11 @@ export const dailyPracticeRepository = {
    * projections (steps, topic cards, review debt) current after an answer.
    */
   async refreshPlanProgress(plan: DailyPracticePlan): Promise<DailyPracticePlan> {
+    const candidates = plan.units.flatMap(buildCandidates)
     const [progresses, reviewDebt] = await Promise.all([
-      localDb.list<DailyPracticeProgress>('daily_practice_items'),
+      localDb.findByIndexIn<DailyPracticeProgress>('daily_practice_items', 'item_id', candidates.map((item) => item.itemId)),
       this.getReviewDebtCount(plan.date, plan.scope),
     ])
-    const candidates = plan.units.flatMap(buildCandidates)
     const candidateById = new Map(candidates.map((candidate) => [candidate.itemId, candidate]))
     const progressById = new Map(progresses.map((progress) => [progress.itemId, progress]))
     const steps = plan.steps.map((previous) => {
@@ -791,7 +791,7 @@ export const dailyPracticeRepository = {
   ): Promise<DailyPracticeRunSummary | null> {
     const context = await resolvePracticeCandidateContext(scope)
     if (context.itemIds.size === 0) return null
-    const run = (await localDb.list<StoredDailyPracticeRun>('daily_practice_runs'))
+    const run = (await localDb.findByIndex<StoredDailyPracticeRun>('daily_practice_runs', 'date', date))
       .filter((item) => item.id !== ACTIVE_DAILY_PRACTICE_PACK_ID
         && item.date === date
         && item.mode === mode
@@ -830,7 +830,7 @@ export const dailyPracticeRepository = {
     // offlineSyncService.sync（登录、自动、手动同步）的 pull 承担
     // （dailyPracticeRuns → restoreRemoteDailyPracticeRun，progress →
     // pullRemoteDailyProgress），不再在每次构建时请求网络。
-    const storedRuns = (await localDb.list<StoredDailyPracticeRun>('daily_practice_runs'))
+    const storedRuns = (await localDb.findByIndex<StoredDailyPracticeRun>('daily_practice_runs', 'date', date))
       .filter((run) => run.id !== ACTIVE_DAILY_PRACTICE_PACK_ID && Array.isArray(run.scheduledItemIds))
     const resumableStoredRun = !options.forceNew && !targetPackId
       ? storedRuns
@@ -860,6 +860,8 @@ export const dailyPracticeRepository = {
     }
     const { units, candidates, packIds } = context
     const packIdsKey = packKey(packIds)
+    const allRuns = (await localDb.findByIndex<StoredDailyPracticeRun>('daily_practice_runs', 'pack_ids', packIdsKey))
+      .filter((run) => run.id !== ACTIVE_DAILY_PRACTICE_PACK_ID && Array.isArray(run.scheduledItemIds))
     const configFingerprint = stableHash({
       mode,
       scope: packScope,
@@ -888,7 +890,11 @@ export const dailyPracticeRepository = {
       }
     }
 
-    const localProgress = await localDb.list<DailyPracticeProgress>('daily_practice_items')
+    const localProgress = await localDb.findByIndexIn<DailyPracticeProgress>(
+      'daily_practice_items',
+      'item_id',
+      candidates.map((candidate) => candidate.itemId),
+    )
     const progressMap = new Map(localProgress.map((item) => [item.itemId, item]))
     const withStatus = candidates.map((candidate) => {
       const progress = progressMap.get(candidate.itemId) ?? emptyProgress(candidate, date)
@@ -896,7 +902,6 @@ export const dailyPracticeRepository = {
       return { candidate, progress, status: scheduleStatus(progress, date) }
     })
 
-    const allRuns = storedRuns
     const reviewAppliedToday = await appliedReviewItemIds(allRuns
       .filter((run) => run.mode === 'review' && run.date === date && runMatchesScope(run, packScope, packIds)))
     const reviewBacklog = withStatus
@@ -1163,9 +1168,9 @@ export const dailyPracticeRepository = {
   }) {
     const date = normalizePlanDate(params.date)
     const itemIdSet = new Set(params.itemIds)
-    const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
+    const attempts = await localDb.findByIndexIn<DailyPracticeAttempt>('daily_practice_attempts', 'item_id', params.itemIds)
     const pending = attempts.filter((attempt) => attempt.syncStatus !== 'synced' && itemIdSet.has(attempt.itemId))
-    const progresses = await localDb.list<DailyPracticeProgress>('daily_practice_items')
+    const progresses = await localDb.findByIndexIn<DailyPracticeProgress>('daily_practice_items', 'item_id', params.itemIds)
     const itemProgresses = progresses.filter((progress) => itemIdSet.has(progress.itemId))
     const completedIds = itemProgresses
       .filter((progress) => progress.lastPracticedAt?.slice(0, 10) === date || progress.bestScoreRank >= 2)

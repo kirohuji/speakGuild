@@ -46,7 +46,6 @@ export interface DownloadTask {
 }
 
 /** 最大并发下载数 */
-const MAX_CONCURRENT_DOWNLOADS = 2
 const PACK_TASKS_STORAGE_KEY = 'manyu.learning-pack.tasks.v1'
 const activePackTaskIds = new Set<string>()
 const activePackTaskControllers = new Map<string, AbortController>()
@@ -622,11 +621,9 @@ async function processDownloadQueue() {
   if (isProcessingQueue) return
   isProcessingQueue = true
   const state = useLearningStore.getState()
-  const running = state.downloadTasks.filter(
-    (t) => t.status === 'downloading' || t.status === 'extracting',
-  ).length
-  if (running >= MAX_CONCURRENT_DOWNLOADS) { isProcessingQueue = false; return }
 
+  // Mobile package installation is intentionally a single FIFO queue. It keeps
+  // ZIP memory, filesystem writes, and the shared SQLite connection bounded.
   const next = state.downloadTasks.find((t) => t.status === 'queued' && (t.kind ?? 'download') === 'download')
   if (!next) {
     isProcessingQueue = false
@@ -798,6 +795,7 @@ useLearningStore.subscribe((state) => {
 /** App 启动/恢复时调用：检查已安装包更新 + 加载本地状态 */
 export async function startupPackSync() {
   const store = useLearningStore.getState()
+  await learningPackService.recoverInterruptedOperations()
   await store.fetchDownloadedPacks()
   await store.checkPackUpdates(true)
 }

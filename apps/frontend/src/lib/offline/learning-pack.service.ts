@@ -1,8 +1,9 @@
-import { assetCacheService, digestSync, type AssetRef } from './asset-cache.service'
+import { assetCacheService, type AssetRef } from './asset-cache.service'
+import { digestBuffer } from './sha256-worker.service'
 import { learningApi } from '@/features/learning/api/learning-api'
 import { buildAggregatedUnitContent } from './learning.repository'
 import { localDb } from './unified-storage'
-import { syncOutbox } from './sync-outbox'
+import { packAuditService, type PackAuditAction } from './pack-audit.service'
 import { BlobReader, BlobWriter, TextWriter, ZipReader, type Entry } from '@zip.js/zip.js'
 import { learningContentRepository } from './learning-content.repository'
 import { Capacitor } from '@capacitor/core'
@@ -74,6 +75,12 @@ export type LearningPackInstallProgressHandler = (
 
 function throwIfAborted(signal?: AbortSignal) {
   if (signal?.aborted) throw new DOMException('Learning pack download cancelled', 'AbortError')
+}
+
+function chunkArray<T>(values: T[], size: number): T[][] {
+  const chunks: T[][] = []
+  for (let index = 0; index < values.length; index += size) chunks.push(values.slice(index, index + size))
+  return chunks
 }
 
 function pushUrlAsset(assets: AssetRef[], url?: string | null, role?: AssetRef['role']) {
@@ -173,7 +180,7 @@ async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
  * guarantees identical hashes in development and production.
  */
 async function digest(buffer: ArrayBuffer): Promise<string> {
-  return digestSync(buffer)
+  return digestBuffer(buffer)
 }
 
 function normalizeZipPath(path: string) {
@@ -295,17 +302,143 @@ async function persistInstalledRecord(manifest: LearningPackManifest): Promise<I
     installedAt: saved?.installedAt,
     updatedAt: saved?.updatedAt,
   })
-  const outboxItem = await syncOutbox.enqueue({
-    entityType: 'learning_pack',
-    entityId: manifest.packId,
-    operation: 'create',
-    payload: { packId: manifest.packId, version: manifest.version },
-  })
-  await syncOutbox.markSynced(outboxItem.id)
   return installed
 }
 
+async function recordPackAudit(input: {
+  packId: string
+  action: PackAuditAction
+  version: number | null
+  previousVersion: number | null
+  title?: string
+  updateMode?: 'full' | 'delta'
+}): Promise<void> {
+  try {
+    await packAuditService.record(input)
+    await packAuditService.cleanup()
+  } catch (error) {
+    // Auditing must never turn a completed package operation into a failure.
+    logger.warn('learning-pack audit write failed', { ...input, error: debugError(error) })
+  }
+}
+
+type PackOperationKind = 'install' | 'update' | 'uninstall'
+
+interface PackStateSnapshot {
+  pack: InstalledLearningPack | null
+  unitDetails: any[]
+  inkScripts: any[]
+  contentRefs: any[]
+  vocabularies: any[]
+  chunks: any[]
+  patterns: any[]
+  assetRefs: any[]
+}
+
+interface PackOperationJournal {
+  id: string
+  packId: string
+  kind: PackOperationKind
+  phase: 'prepared' | 'committing'
+  snapshot: PackStateSnapshot
+  createdAt: string
+  updatedAt: string
+}
+
+function operationJournalId(packId: string) {
+  return `learning-pack-operation:${packId}`
+}
+
+async function snapshotPackState(packId: string): Promise<PackStateSnapshot> {
+  const [pack, indexedDetails, rootDetail, inkScripts, contentRefs, assetRefs] = await Promise.all([
+    localDb.get<InstalledLearningPack>('downloaded_packs', packId),
+    localDb.findByIndex<any>('downloaded_unit_details', 'unit_id', packId),
+    localDb.get<any>('downloaded_unit_details', packId),
+    localDb.findByIndex<any>('ink_scripts', 'unit_id', packId),
+    localDb.findByIndex<any>('offline_content_refs', 'pack_id', packId),
+    localDb.findByIndex<any>('asset_refs', 'pack_id', packId),
+  ])
+  const unitDetails = [...indexedDetails]
+  if (rootDetail && !unitDetails.some((item) => item.id === rootDetail.id)) unitDetails.push(rootDetail)
+
+  const idsByKind = {
+    vocab: [...new Set(contentRefs.filter((ref) => ref.kind === 'vocab').map((ref) => String(ref.contentId)))],
+    chunk: [...new Set(contentRefs.filter((ref) => ref.kind === 'chunk').map((ref) => String(ref.contentId)))],
+    pattern: [...new Set(contentRefs.filter((ref) => ref.kind === 'pattern').map((ref) => String(ref.contentId)))],
+  }
+  const [vocabularies, chunks, patterns] = await Promise.all([
+    Promise.all(idsByKind.vocab.map((id) => localDb.get<any>('offline_vocabularies', id))).then((items) => items.filter(Boolean)),
+    Promise.all(idsByKind.chunk.map((id) => localDb.get<any>('offline_chunks', id))).then((items) => items.filter(Boolean)),
+    Promise.all(idsByKind.pattern.map((id) => localDb.get<any>('offline_patterns', id))).then((items) => items.filter(Boolean)),
+  ])
+  return { pack, unitDetails, inkScripts, contentRefs, vocabularies, chunks, patterns, assetRefs }
+}
+
+async function beginPackOperation(packId: string, kind: PackOperationKind): Promise<void> {
+  const id = operationJournalId(packId)
+  const existing = await localDb.get<PackOperationJournal>('kv', id)
+  if (existing) await restorePackOperation(existing)
+  const now = new Date().toISOString()
+  await localDb.put<PackOperationJournal>('kv', {
+    id,
+    packId,
+    kind,
+    phase: 'prepared',
+    snapshot: await snapshotPackState(packId),
+    createdAt: now,
+    updatedAt: now,
+  })
+}
+
+async function markPackOperationCommitting(packId: string): Promise<void> {
+  const id = operationJournalId(packId)
+  const journal = await localDb.get<PackOperationJournal>('kv', id)
+  if (journal) await localDb.put('kv', { ...journal, phase: 'committing', updatedAt: new Date().toISOString() })
+}
+
+async function restorePackOperation(journal: PackOperationJournal): Promise<void> {
+  const { packId, snapshot } = journal
+  await learningContentRepository.removePackContentIndex(packId)
+  await localDb.deleteByIndex('downloaded_unit_details', 'unit_id', packId)
+  await localDb.delete('downloaded_unit_details', packId)
+  await localDb.deleteByIndex('ink_scripts', 'unit_id', packId)
+  await localDb.deleteByIndex('asset_refs', 'pack_id', packId)
+  await localDb.delete('downloaded_packs', packId)
+
+  if (snapshot.vocabularies.length > 0) await localDb.putMany('offline_vocabularies', snapshot.vocabularies)
+  if (snapshot.chunks.length > 0) await localDb.putMany('offline_chunks', snapshot.chunks)
+  if (snapshot.patterns.length > 0) await localDb.putMany('offline_patterns', snapshot.patterns)
+  if (snapshot.contentRefs.length > 0) await localDb.putMany('offline_content_refs', snapshot.contentRefs)
+  if (snapshot.unitDetails.length > 0) await localDb.putMany('downloaded_unit_details', snapshot.unitDetails)
+  if (snapshot.inkScripts.length > 0) await localDb.putMany('ink_scripts', snapshot.inkScripts)
+  if (snapshot.assetRefs.length > 0) await localDb.putMany('asset_refs', snapshot.assetRefs)
+  if (snapshot.pack) await localDb.put('downloaded_packs', snapshot.pack)
+  await localDb.delete('kv', journal.id)
+}
+
+async function finishPackOperation(packId: string): Promise<void> {
+  await localDb.delete('kv', operationJournalId(packId))
+}
+
 export const learningPackService = {
+  async recoverInterruptedOperations(): Promise<void> {
+    const journals = (await localDb.list<PackOperationJournal>('kv'))
+      .filter((item) => item.id?.startsWith('learning-pack-operation:'))
+    for (const journal of journals) {
+      const current = await localDb.get<InstalledLearningPack>('downloaded_packs', journal.packId)
+      const committed = journal.phase === 'committing' && (
+        (journal.kind === 'uninstall' && !current)
+        || (journal.kind !== 'uninstall'
+          && current?.status === 'installed'
+          && (!journal.snapshot.pack
+            || current.version !== journal.snapshot.pack.version
+            || current.updatedAt !== journal.snapshot.pack.updatedAt))
+      )
+      if (committed) await finishPackOperation(journal.packId)
+      else await restorePackOperation(journal)
+    }
+  },
+
   async buildManifestFromUnit(unitId: string): Promise<{ manifest: LearningPackManifest; unitDetail: any; topicDetails: any[] }> {
     return learningApi.getOfflineManifest(unitId) as any
   },
@@ -370,8 +503,20 @@ export const learningPackService = {
       platform: Capacitor.getPlatform(),
       isNative: Capacitor.isNativePlatform(),
     })
+    const previous = await localDb.get<InstalledLearningPack>('downloaded_packs', unitId)
+    await beginPackOperation(unitId, previous ? 'update' : 'install')
     try {
-      return await this.installUnitFromZip(unitId, onProgress, signal)
+      const installed = await this.installUnitFromZip(unitId, onProgress, signal)
+      await finishPackOperation(unitId)
+      await recordPackAudit({
+        packId: unitId,
+        action: previous ? 'update' : 'install',
+        version: installed.version,
+        previousVersion: previous?.version ?? null,
+        title: installed.title,
+        updateMode: previous ? 'full' : undefined,
+      })
+      return installed
     } catch (error) {
       logger.error('install failed, rolling back partial data', { unitId, error: debugError(error) })
       await this.rollbackInstall(unitId)
@@ -382,13 +527,18 @@ export const learningPackService = {
   /** 清理安装失败残留的 SQLite 数据，避免下次重试被误判为"已存在" */
   async rollbackInstall(packId: string): Promise<void> {
     try {
+      const journal = await localDb.get<PackOperationJournal>('kv', operationJournalId(packId))
+      if (journal) {
+        await restorePackOperation(journal)
+        return
+      }
       await learningContentRepository.removePackContentIndex(packId)
-      await localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId)
-      await localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId)
+      await localDb.deleteByIndex('ink_scripts', 'unit_id', packId)
+      await localDb.deleteByIndex('downloaded_unit_details', 'unit_id', packId)
       await localDb.delete('downloaded_unit_details', packId)
       await localDb.delete('downloaded_packs', packId)
       // 清理本次安装写入的 asset_refs（不去重计数，简单全部清除）
-      await localDb.deleteWhere<any>('asset_refs', (ref) => ref.packId === packId)
+      await localDb.deleteByIndex('asset_refs', 'pack_id', packId)
       logger.info(`🧹 已回滚残留数据: ${packId}`)
     } catch (rollbackErr) {
       logger.warn(`回滚清理异常: ${packId}`, rollbackErr)
@@ -458,6 +608,9 @@ export const learningPackService = {
 
       logger.info('⏳ ③ 读取 manifest + checksums...')
       const manifest = await readJsonEntry<LearningPackManifest>(entries, 'pack-manifest.json')
+      if (manifest.packId !== unitId) {
+        throw new Error(`Pack manifest identity mismatch: ${manifest.packId} !== ${unitId}`)
+      }
       const checksums = await readJsonEntry<Record<string, string>>(entries, 'checksums.json').catch(() => manifest.files ?? {})
       logger.info('zip pack-manifest.json parsed', {
         packId: manifest.packId,
@@ -540,7 +693,10 @@ export const learningPackService = {
       const totalAssets = manifest.assets?.length ?? 0
 
       // 一次性加载所有 asset_refs 到内存 Map，避免每个资产全表扫描
-      const allRefsList = await localDb.list<any>('asset_refs')
+      const declaredAssetShas = (manifest.assets ?? [])
+        .map((asset) => asset.sha256)
+        .filter((sha256): sha256 is string => Boolean(sha256))
+      const allRefsList = await localDb.findByIndexIn<any>('asset_refs', 'sha256', declaredAssetShas)
       const refsBySha256 = new Map<string, any>()
       for (const ref of allRefsList) {
         if (ref.sha256) refsBySha256.set(ref.sha256, ref)
@@ -548,7 +704,10 @@ export const learningPackService = {
       logger.info(`asset_refs 预加载: ${refsBySha256.size} 条`)
 
       // ── 阶段 A：并行读取 ZIP + 计算 SHA-256（CPU 密集型，可并行）──
-      const ASSET_CONCURRENCY = 8
+      // Keep both decompression buffers and native file writes bounded. A pack
+      // can contain large audio files, so retaining every buffer until the end
+      // can easily terminate the mobile WebView under memory pressure.
+      const ASSET_CONCURRENCY = 2
       const assetTasks: Array<{
         asset: any
         entry: ReturnType<typeof entries.get>
@@ -584,10 +743,11 @@ export const learningPackService = {
       }
 
       type AssetResult =
-        | { ok: true; asset: any; sha256: string; buffer: ArrayBuffer; index: number }
+        | { ok: true; asset: any; sha256: string; buffer: ArrayBuffer | null; index: number; staged?: boolean }
         | { ok: false; asset: any; error: string; index: number }
 
       const assetResults: AssetResult[] = []
+      const scheduledAssetShas = new Set<string>()
       for (let i = 0; i < assetTasks.length; i += ASSET_CONCURRENCY) {
         throwIfAborted(signal)
         const batch = assetTasks.slice(i, i + ASSET_CONCURRENCY)
@@ -609,6 +769,36 @@ export const learningPackService = {
             }
           }),
         )
+        const failedBatch = batchResults.filter((result): result is Extract<AssetResult, { ok: false }> => !result.ok)
+        if (failedBatch.length > 0) {
+          throw new Error(`Pack asset validation failed: ${failedBatch.map((item) => `${item.asset.path}: ${item.error}`).join('; ')}`)
+        }
+
+        // Persist this small batch immediately, then release its ArrayBuffers.
+        // Hashing happens in sha256.worker.ts and writes never exceed the same
+        // bounded concurrency as extraction.
+        await Promise.all(batchResults.map(async (result) => {
+          if (!result.ok || !result.buffer) return
+          const existingRef = refsBySha256.get(result.sha256)
+          const ready = scheduledAssetShas.has(result.sha256)
+            || (Boolean(existingRef) && await assetCacheService.isReady(result.sha256))
+          if (!ready) {
+            // Reserve before the asynchronous write so duplicate SHA entries in
+            // the same batch cannot race and write the same physical file twice.
+            scheduledAssetShas.add(result.sha256)
+            await assetCacheService.saveFromBufferWithSha256(
+              { ...result.asset, sha256: result.sha256 },
+              result.buffer,
+              result.sha256,
+            )
+            result.staged = true
+            refsBySha256.set(result.sha256, {
+              sha256: result.sha256,
+              ext: extensionFrom(result.asset.path ?? result.asset.url, result.asset.mimeType),
+            })
+          }
+          result.buffer = null
+        }))
         assetResults.push(...batchResults)
         progressForAssetRead(assetResults.length, '校验资源文件', batch[batch.length - 1]?.asset?.path ?? batch[batch.length - 1]?.asset?.url)
       }
@@ -621,7 +811,6 @@ export const learningPackService = {
       // ── 阶段 B：批量写入文件系统 + SQLite ──
       const assetRefsToWrite: any[] = []
       const filesToSave: Array<{ asset: any; sha256: string; buffer: ArrayBuffer }> = []
-      const scheduledAssetShas = new Set<string>()
       let assetOk = 0
       let assetDeduped = 0
       let assetFail = 0
@@ -638,7 +827,7 @@ export const learningPackService = {
         // asset_refs is metadata, not proof that a file still exists. This
         // guards clear/interrupted-install recovery: stale refs must not cause
         // the installer to skip writing a missing local resource.
-        const alreadyInPool = scheduledAssetShas.has(actualSha256)
+        const alreadyInPool = Boolean(result.staged) || scheduledAssetShas.has(actualSha256)
           || (Boolean(existingRef) && await assetCacheService.isReady(actualSha256))
 
         if (existingRef && !alreadyInPool) {
@@ -649,10 +838,10 @@ export const learningPackService = {
           })
         }
 
-        if (!alreadyInPool) {
+        if (!alreadyInPool && buffer) {
           filesToSave.push({ asset, sha256: actualSha256, buffer })
           scheduledAssetShas.add(actualSha256)
-        } else {
+        } else if (!result.staged) {
           assetDeduped++
         }
 
@@ -677,15 +866,15 @@ export const learningPackService = {
       // 并行写文件 + 批量写 SQLite 引用
       let savedFiles = 0
       progressForAssetWrite(0, filesToSave.length, filesToSave[0]?.asset?.path ?? filesToSave[0]?.asset?.url)
-      await Promise.all(
-        filesToSave.map(async ({ asset, sha256, buffer }) => {
+      for (const fileBatch of chunkArray(filesToSave, 2)) {
+        await Promise.all(fileBatch.map(async ({ asset, sha256, buffer }) => {
           progressForAssetWrite(savedFiles, filesToSave.length, asset.path ?? asset.url)
           const saved = await assetCacheService.saveFromBufferWithSha256({ ...asset, sha256 }, buffer, sha256)
           savedFiles++
           progressForAssetWrite(savedFiles, filesToSave.length, asset.path ?? asset.url)
           return saved
-        }),
-      )
+        }))
+      }
       if (assetRefsToWrite.length > 0) {
         await localDb.putMany('asset_refs', assetRefsToWrite)
       }
@@ -704,6 +893,7 @@ export const learningPackService = {
       logger.info(`✅ ⑨ 资源提取完成: ${assetOk} 成功 (${assetDeduped} 去重复用), ${assetSkip} 跳过, ${assetFail} 失败`)
       report('finishing', 99, { label: '完成安装' })
 
+      await markPackOperationCommitting(unitId)
       const result = await persistInstalledRecord(manifest)
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(1)
       logger.info(`🎉 安装完成! 耗时 ${elapsed}s`, {
@@ -720,6 +910,27 @@ export const learningPackService = {
 
   /** V2: 安装 delta 增量包 */
   async installDelta(packId: string, fromVersion: number, toVersion: number, signal?: AbortSignal): Promise<InstalledLearningPack> {
+    await beginPackOperation(packId, 'update')
+    try {
+      const installed = await this.installDeltaUnsafe(packId, fromVersion, toVersion, signal)
+      await finishPackOperation(packId)
+      await recordPackAudit({
+        packId,
+        action: 'update',
+        version: installed.version,
+        previousVersion: fromVersion,
+        title: installed.title,
+        updateMode: 'delta',
+      })
+      return installed
+    } catch (error) {
+      const journal = await localDb.get<PackOperationJournal>('kv', operationJournalId(packId))
+      if (journal) await restorePackOperation(journal)
+      throw error
+    }
+  },
+
+  async installDeltaUnsafe(packId: string, fromVersion: number, toVersion: number, signal?: AbortSignal): Promise<InstalledLearningPack> {
     const startTime = performance.now()
     logger.info(`📦 开始安装增量包 v${fromVersion} → v${toVersion}`, { packId })
 
@@ -764,8 +975,11 @@ export const learningPackService = {
       if (hasContentChanges) {
         const { unitDetail, topicDetails } = await readPackContentFromEntries(entries, targetManifest, checksums)
         const topicIds = new Set(targetManifest.topics ?? [])
-        await localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId && item.topicId && !topicIds.has(item.topicId))
-        await localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId)
+        const previousTopics = await localDb.findByIndex<any>('downloaded_unit_details', 'unit_id', packId)
+        for (const item of previousTopics) {
+          if (item.topicId && !topicIds.has(item.topicId)) await localDb.delete('downloaded_unit_details', item.id)
+        }
+        await localDb.deleteByIndex('ink_scripts', 'unit_id', packId)
         await learningContentRepository.removePackContentIndex(packId)
         await persistUnitContent(unitDetail, topicDetails)
         await learningContentRepository.savePackContentIndex(packId, unitDetail.id ?? packId, unitDetail, topicDetails)
@@ -848,6 +1062,7 @@ export const learningPackService = {
       logger.info(`  removed: ${deltaManifest.removed?.length ?? 0}`)
 
       // 5. 更新 pack 记录
+      await markPackOperationCommitting(packId)
       const pack = await localDb.get<InstalledLearningPack>('downloaded_packs', packId)
       if (pack) {
         await localDb.put('downloaded_packs', {
@@ -864,10 +1079,12 @@ export const learningPackService = {
       // Garbage collection is intentionally last. A failure here only leaves
       // extra cache files and can be retried; it cannot corrupt the new pack.
       for (const oldRef of obsoleteAssetRefs) {
-        await localDb.delete('asset_refs', oldRef.id)
-        const remaining = await localDb.findByIndex<any>('asset_refs', 'sha256', oldRef.sha256)
-        if (remaining.length === 0) {
-          await assetCacheService.remove(oldRef.sha256)
+        try {
+          await localDb.delete('asset_refs', oldRef.id)
+          const remaining = await localDb.findByIndex<any>('asset_refs', 'sha256', oldRef.sha256)
+          if (remaining.length === 0) await assetCacheService.remove(oldRef.sha256)
+        } catch (error) {
+          logger.warn('delta asset garbage collection failed', { packId, sha256: oldRef.sha256, error })
         }
       }
 
@@ -885,24 +1102,25 @@ export const learningPackService = {
     const pack = await localDb.get<InstalledLearningPack>('downloaded_packs', packId)
     timer.lap('load pack record', { found: Boolean(pack) })
     if (!pack) return
+    await beginPackOperation(packId, 'uninstall')
 
     // 清理 asset_refs（引用计数保护）
-    const allRefs = await localDb.list<any>('asset_refs')
-    const myRefs = allRefs.filter((r) => r.packId === packId)
-    timer.lap('load asset refs', { totalRefs: allRefs.length, packRefs: myRefs.length })
+    const myRefs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
+    timer.lap('load asset refs', { packRefs: myRefs.length })
 
     // 预计算每个 sha256 的总引用数（排除当前包，O(n) 一次扫描）
     const refCountBySha = new Map<string, number>()
-    for (const r of allRefs) {
-      if (r.packId !== packId) {
-        refCountBySha.set(r.sha256, (refCountBySha.get(r.sha256) ?? 0) + 1)
+    for (const shaBatch of chunkArray([...new Set(myRefs.map((ref) => String(ref.sha256)))], 8)) {
+      const results = await Promise.all(shaBatch.map(async (sha256) => ({
+        sha256,
+        refs: await localDb.findByIndex<any>('asset_refs', 'sha256', sha256),
+      })))
+      for (const result of results) {
+        const sharedCount = result.refs.filter((ref) => ref.packId !== packId).length
+        if (sharedCount > 0) refCountBySha.set(result.sha256, sharedCount)
       }
     }
     timer.lap('compute shared asset refs', { sharedAssetCount: refCountBySha.size })
-
-    // 批量删除 asset_refs 记录
-    await localDb.deleteWhere<any>('asset_refs', (ref) => ref.packId === packId)
-    timer.lap('delete asset refs', { deletedRefs: myRefs.length })
 
     // 并行删除未被其他包引用的文件
     let deletedFiles = 0
@@ -916,23 +1134,16 @@ export const learningPackService = {
         keptFiles++
       }
     }
-    if (Capacitor.isNativePlatform()) {
-      await Promise.all(filesToRemove.map((sha256) => assetCacheService.remove(sha256)))
-    } else {
-      const removeSet = new Set(filesToRemove)
-      await localDb.deleteWhere<any>('local_assets', (asset) => removeSet.has(String(asset.id)))
-    }
-    timer.lap('delete asset files', { deletedFiles, keptFiles })
-    logger.info(`🗑️ 资产清理: ${deletedFiles} 个文件删除, ${keptFiles} 个文件被其他包保留`)
-
     // Keep SQLite cleanup sequential. The web adapter is much happier when
     // large deletes do not compete on the same connection.
     try {
+      await localDb.deleteByIndex('asset_refs', 'pack_id', packId)
+      timer.lap('delete asset refs', { deletedRefs: myRefs.length })
       await learningContentRepository.removePackContentIndex(packId)
       timer.lap('remove content index')
-      await localDb.deleteWhere<any>('ink_scripts', (item) => item.unitId === packId)
+      await localDb.deleteByIndex('ink_scripts', 'unit_id', packId)
       timer.lap('delete ink scripts')
-      await localDb.deleteWhere<any>('downloaded_unit_details', (item) => item.unitId === packId)
+      await localDb.deleteByIndex('downloaded_unit_details', 'unit_id', packId)
       timer.lap('delete topic unit details')
       await localDb.delete('downloaded_unit_details', packId)
       timer.lap('delete root unit detail')
@@ -940,22 +1151,32 @@ export const learningPackService = {
       timer.lap('delete downloaded pack record')
     } catch (error) {
       logger.warn(`关联数据清理异常: ${packId}`, error)
+      const journal = await localDb.get<PackOperationJournal>('kv', operationJournalId(packId))
+      if (journal) await restorePackOperation(journal)
+      throw error
     }
 
-    logger.info(`🗑️ 已卸载: ${packId} (${pack.title} v${pack.version})`)
-    try {
-      const outboxItem = await syncOutbox.enqueue({
-        entityType: 'learning_pack',
-        entityId: packId,
-        operation: 'delete',
-        payload: { packId },
-      })
-      timer.lap('enqueue uninstall sync', { outboxId: outboxItem.id })
-      await syncOutbox.markSynced(outboxItem.id)
-      timer.lap('mark uninstall sync synced')
-    } catch (error) {
-      logger.warn(`同步出队异常: ${packId}`, error)
+    // Delete physical files only after SQLite no longer advertises the pack as
+    // installed. A database failure therefore leaves a fully usable old pack.
+    await markPackOperationCommitting(packId)
+    for (const shaBatch of chunkArray([...new Set(filesToRemove)], 3)) {
+      const results = await Promise.allSettled(shaBatch.map((sha256) => assetCacheService.remove(sha256)))
+      for (const result of results) {
+        if (result.status === 'rejected') logger.warn('asset garbage collection failed', result.reason)
+      }
     }
+    timer.lap('delete asset files', { deletedFiles, keptFiles })
+    logger.info(`🗑️ 资产清理: ${deletedFiles} 个文件删除, ${keptFiles} 个文件被其他包保留`)
+    await finishPackOperation(packId)
+
+    logger.info(`🗑️ 已卸载: ${packId} (${pack.title} v${pack.version})`)
+    await recordPackAudit({
+      packId,
+      action: 'uninstall',
+      version: pack.version,
+      previousVersion: pack.version,
+      title: pack.title,
+    })
     timer.done({ packId, title: pack.title, version: pack.version })
   },
 

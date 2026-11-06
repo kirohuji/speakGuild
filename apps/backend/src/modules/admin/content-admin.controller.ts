@@ -62,6 +62,19 @@ import { ListeningTranscriptSegment } from '../tts/tts.service';
 import { MaterialConstraintService, type MaterialKind, type GroupSceneInfo } from '../content-experiences/material-constraint.service';
 import { SuggestTopicSupportsDto, SuggestTopicVocabsDto } from './dto/scene-admin.dto';
 
+/** 语料库按学习包 / 话题过滤：只命中话题上实际绑定的材料。 */
+function topicBindingSome(sceneId?: string, topicId?: string) {
+  const scene = sceneId?.trim();
+  const topic = topicId?.trim();
+  if (!scene && !topic) return undefined;
+  return {
+    some: {
+      ...(topic ? { topicId: topic } : {}),
+      ...(scene ? { topic: { sceneId: scene } } : {}),
+    },
+  };
+}
+
 /** 语法功能词（代词/介词/冠词/连词/助动词/虚副词/限定词等），无实际学习价值，不进入推荐 */
 const FUNCTION_WORDS = new Set([
   // 代词
@@ -3462,6 +3475,8 @@ ${contextBlock}
     @Query('pronunciationStatus') pronunciationStatus?: string,
     @Query('qualityIssue') qualityIssue?: string,
     @Query('tag') tag?: string,
+    @Query('sceneId') sceneId?: string,
+    @Query('topicId') topicId?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
@@ -3517,6 +3532,8 @@ ${contextBlock}
     }
     const tagFilter = tag?.trim();
     if (tagFilter) andFilters.push({ tags: { has: tagFilter } });
+    const binding = topicBindingSome(sceneId, topicId);
+    if (binding) andFilters.push({ topicVocabs: binding });
     if (andFilters.length) where.AND = andFilters;
 
     const p = Math.max(1, parseInt(page || '1'));
@@ -3864,6 +3881,8 @@ ${contextBlock}
     @Req() req: Request,
     @Query('search') search?: string,
     @Query('difficulty') difficulty?: string,
+    @Query('sceneId') sceneId?: string,
+    @Query('topicId') topicId?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
@@ -3876,6 +3895,8 @@ ${contextBlock}
       ];
     }
     if (difficulty) where.difficulty = difficulty;
+    const binding = topicBindingSome(sceneId, topicId);
+    if (binding) where.topicChunks = binding;
 
     const p = Math.max(1, parseInt(page || '1'));
     const ps = Math.min(100, Math.max(1, parseInt(pageSize || '20')));
@@ -3994,6 +4015,8 @@ ${contextBlock}
     @Req() req: Request,
     @Query('search') search?: string,
     @Query('difficulty') difficulty?: string,
+    @Query('sceneId') sceneId?: string,
+    @Query('topicId') topicId?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
@@ -4006,6 +4029,8 @@ ${contextBlock}
       ];
     }
     if (difficulty) where.difficulty = difficulty;
+    const binding = topicBindingSome(sceneId, topicId);
+    if (binding) where.topicPatterns = binding;
 
     const p = Math.max(1, parseInt(page || '1'));
     const ps = Math.min(100, Math.max(1, parseInt(pageSize || '20')));

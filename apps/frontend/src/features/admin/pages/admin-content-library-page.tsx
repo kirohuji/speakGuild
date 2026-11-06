@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
 import {
   Search, Plus, Trash2, Edit3, BookOpen, Sparkles, Loader2,
   Type, Code2, ChevronLeft, ChevronRight, Play, Pause, Upload, Globe, Volume2, Languages,
@@ -24,6 +24,8 @@ import { AdminPagination } from '../components/admin-pagination'
 import * as api from '../api-content-admin'
 import { listAiProviders, type AiProviderItem } from '../api-ai-models'
 import { DictionaryPreview } from '../components/dictionary-preview'
+import { LibraryScopeBar, type LibraryPackageTypeFilter } from '../components/library-scope-bar'
+import { contentExperienceAdminApi, type PackageGroup } from '../api-content-experiences'
 import { getDictionaryEntry } from '../api-dictionary'
 import type { DictionaryEntry } from '../api-dictionary'
 import { synthesizeAsset } from '@/lib/tts-api'
@@ -235,15 +237,162 @@ function deriveMeaning(definitionsEn: string): string {
 // Main Page
 // ═══════════════════════════════════════════════════════════════
 
+type LibraryScope = { sceneId?: string; topicId?: string }
+
+function emptyLibraryText(kind: '词汇' | '句块' | '句式', scope: LibraryScope) {
+  if (scope.topicId) return `这个话题还没有绑定${kind}`
+  if (scope.sceneId) return `这个学习包还没有绑定${kind}`
+  return `暂无${kind}`
+}
+
+function useScopedLibraryLoad(
+  scope: LibraryScope,
+  page: number,
+  setPage: (page: number) => void,
+  load: () => void | Promise<void>,
+) {
+  const scopeKey = `${scope.sceneId ?? ''}:${scope.topicId ?? ''}`
+  const appliedScope = useRef(scopeKey)
+  useEffect(() => {
+    if (appliedScope.current !== scopeKey) {
+      appliedScope.current = scopeKey
+      if (page !== 1) {
+        setPage(1)
+        return
+      }
+    }
+    void load()
+  }, [load, scopeKey, page, setPage])
+}
+
 export function AdminContentLibraryPage() {
   const [tab, setTab] = useState('vocabularies')
+  const [packageType, setPackageType] = useState<LibraryPackageTypeFilter>('all')
+  const [categories, setCategories] = useState<api.SceneCategory[]>([])
+  const [categoryId, setCategoryId] = useState<string | null>(null)
+  const [groups, setGroups] = useState<PackageGroup[]>([])
+  const [groupId, setGroupId] = useState<string | null>(null)
+  const [scenes, setScenes] = useState<api.Scene[]>([])
+  const [sceneId, setSceneId] = useState<string | null>(null)
+  const [topics, setTopics] = useState<api.TrainingTopic[]>([])
+  const [topicsLoading, setTopicsLoading] = useState(false)
+  const [topicId, setTopicId] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([
+      api.listSceneCategories(packageType === 'all' ? undefined : packageType, 'story'),
+      api.listScenes(categoryId ?? undefined, packageType === 'all' ? undefined : packageType, 'story'),
+    ]).then(([nextCategories, nextScenes]) => {
+      if (cancelled) return
+      setCategories(nextCategories)
+      setScenes(nextScenes)
+    }).catch(() => {
+      if (cancelled) return
+      setCategories([])
+      setScenes([])
+    })
+    return () => { cancelled = true }
+  }, [packageType, categoryId])
+
+  useEffect(() => {
+    contentExperienceAdminApi.listGroups().then(setGroups).catch(() => setGroups([]))
+  }, [])
+
+  useEffect(() => {
+    if (categoryId && !categories.some((category) => category.id === categoryId)) {
+      setCategoryId(null)
+    }
+  }, [categories, categoryId])
+
+  const availableGroups = useMemo(() => {
+    const sceneIds = new Set(scenes.map((scene) => scene.id))
+    return groups.filter((group) => group.items?.some((item) => sceneIds.has(item.sceneId)))
+  }, [groups, scenes])
+
+  useEffect(() => {
+    if (groupId && !availableGroups.some((group) => group.id === groupId)) {
+      setGroupId(null)
+    }
+  }, [availableGroups, groupId])
+
+  const visibleScenes = useMemo(() => {
+    const filtered = groupId ? scenes.filter((scene) => scene.groupId === groupId) : scenes
+    return [...filtered].sort((a, b) => a.title.localeCompare(b.title, 'zh'))
+  }, [scenes, groupId])
+
+  useEffect(() => {
+    if (sceneId && !visibleScenes.some((scene) => scene.id === sceneId)) {
+      setSceneId(null)
+      setTopicId(null)
+    }
+  }, [visibleScenes, sceneId])
+
+  useEffect(() => {
+    if (!sceneId) {
+      setTopics([])
+      setTopicsLoading(false)
+      return
+    }
+    let cancelled = false
+    setTopicsLoading(true)
+    api.listTrainingTopics(sceneId)
+      .then((items) => { if (!cancelled) setTopics(items) })
+      .catch(() => { if (!cancelled) setTopics([]) })
+      .finally(() => { if (!cancelled) setTopicsLoading(false) })
+    return () => { cancelled = true }
+  }, [sceneId])
+
+  const scope = useMemo<LibraryScope>(() => ({
+    sceneId: sceneId ?? undefined,
+    topicId: topicId ?? undefined,
+  }), [sceneId, topicId])
+
+  const groupOptions = availableGroups.map((group) => ({
+    id: group.id,
+    name: group.name,
+    count: group.items?.filter((item) => scenes.some((scene) => scene.id === item.sceneId)).length ?? 0,
+  }))
+
+  const clearScope = () => {
+    setPackageType('all')
+    setCategoryId(null)
+    setGroupId(null)
+    setSceneId(null)
+    setTopicId(null)
+  }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight">内容语料库</h1>
-        <p className="text-sm text-muted-foreground">管理词汇、句块 (Chunk) 和句式，支持搜索、筛选、AI 富化</p>
-      </div>
+    <div className="flex flex-col gap-4">
+      <h1 className="text-xl font-bold tracking-tight">内容语料库</h1>
+
+      <LibraryScopeBar
+        packageType={packageType}
+        onPackageTypeChange={(value) => {
+          setPackageType(value)
+          setCategoryId(null)
+          setGroupId(null)
+          setSceneId(null)
+          setTopicId(null)
+        }}
+        categories={categories}
+        categoryId={categoryId}
+        onCategoryChange={setCategoryId}
+        groups={groupOptions}
+        groupId={groupId}
+        onGroupChange={setGroupId}
+        scenes={visibleScenes}
+        sceneId={sceneId}
+        onSceneChange={(id) => {
+          setSceneId(id)
+          setTopicId(null)
+        }}
+        topics={topics}
+        topicsLoading={topicsLoading}
+        topicId={topicId}
+        onTopicChange={setTopicId}
+        onClear={clearScope}
+      />
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
@@ -252,14 +401,14 @@ export function AdminContentLibraryPage() {
           <TabsTrigger value="patterns"><Code2 className="mr-1.5 size-4" />句式 Pattern</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="vocabularies" className="mt-4 space-y-4">
-          <VocabularyTab />
+        <TabsContent value="vocabularies" className="mt-4 flex flex-col gap-4">
+          <VocabularyTab scope={scope} />
         </TabsContent>
-        <TabsContent value="chunks" className="mt-4 space-y-4">
-          <ChunkTab />
+        <TabsContent value="chunks" className="mt-4 flex flex-col gap-4">
+          <ChunkTab scope={scope} />
         </TabsContent>
-        <TabsContent value="patterns" className="mt-4 space-y-4">
-          <PatternTab />
+        <TabsContent value="patterns" className="mt-4 flex flex-col gap-4">
+          <PatternTab scope={scope} />
         </TabsContent>
       </Tabs>
     </div>
@@ -270,7 +419,7 @@ export function AdminContentLibraryPage() {
 // Vocabulary Tab
 // ═══════════════════════════════════════════════════════════════
 
-function VocabularyTab() {
+function VocabularyTab({ scope }: { scope: LibraryScope }) {
   const [data, setData] = useState<api.PaginatedResult<api.VocabularyFull> | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -303,15 +452,17 @@ function VocabularyTab() {
         tag: tag || undefined,
         pronunciationStatus: pronunciationStatus || undefined,
         qualityIssue: qualityIssue || undefined,
+        sceneId: scope.sceneId,
+        topicId: scope.topicId,
         page,
         pageSize,
       }))
     }
     catch { setData(null) }
     finally { setLoading(false) }
-  }, [search, matchType, difficulty, tag, pronunciationStatus, qualityIssue, page, pageSize])
+  }, [search, matchType, difficulty, tag, pronunciationStatus, qualityIssue, scope.sceneId, scope.topicId, page, pageSize])
 
-  useEffect(() => { load() }, [load])
+  useScopedLibraryLoad(scope, page, setPage, load)
   useEffect(() => { void loadTags() }, [loadTags])
 
   const totalPages = data?.totalPages ?? 1
@@ -356,6 +507,8 @@ function VocabularyTab() {
         difficulty: difficulty || undefined, tag: tag || undefined,
         pronunciationStatus: pronunciationStatus || undefined,
         qualityIssue: qualityIssue || undefined,
+        sceneId: scope.sceneId,
+        topicId: scope.topicId,
       })
       taskToast(`已创建本页 ${task.totalItems} 条例句音频补全任务`)
     } catch (err: any) { toast.error(err?.message || '创建例句音频补全任务失败') }
@@ -600,7 +753,7 @@ function VocabularyTab() {
         <CardHeader className="pb-2"><CardTitle className="text-base">词汇列表 {data && <span className="ml-2 text-sm font-normal text-muted-foreground">共 {data.total} 个</span>}</CardTitle></CardHeader>
         <CardContent className="p-0">
           {loading ? <div className="space-y-2 p-4">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
-          : !data || data.items.length === 0 ? <div className="flex flex-col items-center py-12 text-muted-foreground"><BookOpen className="mb-3 size-10 text-muted-foreground/40" /><p>暂无词汇</p></div>
+          : !data || data.items.length === 0 ? <div className="flex flex-col items-center py-12 text-muted-foreground"><BookOpen className="mb-3 size-10 text-muted-foreground/40" /><p>{emptyLibraryText('词汇', scope)}</p></div>
           : <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-border/60 text-left text-muted-foreground">
@@ -655,7 +808,7 @@ function VocabularyTab() {
 // Chunk Tab
 // ═══════════════════════════════════════════════════════════════
 
-function ChunkTab() {
+function ChunkTab({ scope }: { scope: LibraryScope }) {
   const [data, setData] = useState<api.PaginatedResult<api.ChunkFull> | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -667,12 +820,12 @@ function ChunkTab() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    try { setData(await api.listLibraryChunks({ search, difficulty, page, pageSize })) }
+    try { setData(await api.listLibraryChunks({ search, difficulty, sceneId: scope.sceneId, topicId: scope.topicId, page, pageSize })) }
     catch { setData(null) }
     finally { setLoading(false) }
-  }, [search, difficulty, page, pageSize])
+  }, [search, difficulty, scope.sceneId, scope.topicId, page, pageSize])
 
-  useEffect(() => { load() }, [load])
+  useScopedLibraryLoad(scope, page, setPage, load)
 
   const totalPages = data?.totalPages ?? 1
 
@@ -729,7 +882,7 @@ function ChunkTab() {
         <CardHeader className="pb-2"><CardTitle className="text-base">句块列表 {data && <span className="ml-2 text-sm font-normal text-muted-foreground">共 {data.total} 个</span>}</CardTitle></CardHeader>
         <CardContent className="p-0">
           {loading ? <div className="space-y-2 p-4">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
-          : !data || data.items.length === 0 ? <div className="flex flex-col items-center py-12 text-muted-foreground"><Type className="mb-3 size-10 text-muted-foreground/40" /><p>暂无句块</p></div>
+          : !data || data.items.length === 0 ? <div className="flex flex-col items-center py-12 text-muted-foreground"><Type className="mb-3 size-10 text-muted-foreground/40" /><p>{emptyLibraryText('句块', scope)}</p></div>
           : <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-border/60 text-left text-muted-foreground">
@@ -779,7 +932,7 @@ function ChunkTab() {
 // Pattern Tab
 // ═══════════════════════════════════════════════════════════════
 
-function PatternTab() {
+function PatternTab({ scope }: { scope: LibraryScope }) {
   const [data, setData] = useState<api.PaginatedResult<api.SentencePatternFull> | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -793,12 +946,12 @@ function PatternTab() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    try { setData(await api.listLibraryPatterns({ search, difficulty, page, pageSize })) }
+    try { setData(await api.listLibraryPatterns({ search, difficulty, sceneId: scope.sceneId, topicId: scope.topicId, page, pageSize })) }
     catch { setData(null) }
     finally { setLoading(false) }
-  }, [search, difficulty, page, pageSize])
+  }, [search, difficulty, scope.sceneId, scope.topicId, page, pageSize])
 
-  useEffect(() => { load() }, [load])
+  useScopedLibraryLoad(scope, page, setPage, load)
 
   const totalPages = data?.totalPages ?? 1
 
@@ -858,7 +1011,7 @@ function PatternTab() {
         <CardHeader className="pb-2"><CardTitle className="text-base">句式列表 {data && <span className="ml-2 text-sm font-normal text-muted-foreground">共 {data.total} 个</span>}</CardTitle></CardHeader>
         <CardContent className="p-0">
           {loading ? <div className="space-y-2 p-4">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
-          : !data || data.items.length === 0 ? <div className="flex flex-col items-center py-12 text-muted-foreground"><Code2 className="mb-3 size-10 text-muted-foreground/40" /><p>暂无句式</p></div>
+          : !data || data.items.length === 0 ? <div className="flex flex-col items-center py-12 text-muted-foreground"><Code2 className="mb-3 size-10 text-muted-foreground/40" /><p>{emptyLibraryText('句式', scope)}</p></div>
           : <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-border/60 text-left text-muted-foreground">
