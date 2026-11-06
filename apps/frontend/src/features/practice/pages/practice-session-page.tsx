@@ -18,6 +18,7 @@ import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { practiceApi, practiceAiApi, chunkApi, expressionApi, type TopicDetail } from '../api/english-practice-api'
 import { learningContentRepository, practiceRepository } from '@/lib/offline'
+import { listContentPage } from '@/lib/offline/learning-pack-read-model'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { GuidedWarmupPhase } from '../components/guided-warmup-phase'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
@@ -68,6 +69,7 @@ export function PracticeSessionPage() {
 
   // ── Data ──
   const detail = usePracticeStore((s) => s.topicDetail)
+  const projected = Boolean((detail as { __offlineProjection?: boolean } | null)?.__offlineProjection)
   const fetchTopicDetail = usePracticeStore((s) => s.fetchTopicDetail)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -81,6 +83,8 @@ export function PracticeSessionPage() {
   const [expandedVocabId, setExpandedVocabId] = useState<string | null>(null)
   const [expandedPatternIdx, setExpandedPatternIdx] = useState<number | null>(null)
   const [prepPage, setPrepPage] = useState({ vocab: 1, chunk: 1, pattern: 1 })
+  const [runtimePipeline, setRuntimePipeline] = useState<any[] | null>(null)
+  const [remotePrep, setRemotePrep] = useState<{ kind: 'vocab' | 'chunk' | 'pattern'; items: any[]; total: number }>({ kind: 'vocab', items: [], total: 0 })
   const [insightIndex, setInsightIndex] = useState(0)
   const [insightOpen, setInsightOpen] = useState(false)
   const [fallbackInsightItem, setFallbackInsightItem] = useState<LearningInsightItem | null>(null)
@@ -174,8 +178,17 @@ export function PracticeSessionPage() {
   }, [phase, guidedOpen, setImmersiveMode])
 
   // Switch to immersive mode BEFORE mounting PixiVnStage, so layout is stable
+  const ensurePipeline = useCallback(async () => {
+    if (!projected || !topicId) return
+    const row = await practiceRepository.getTopicRuntime(topicId)
+    const output = row?.metadata?.outputTraining
+    const pipeline = output?.enabled === false ? [] : (output?.pipeline ?? row?.metadata?.pipeline ?? [])
+    setRuntimePipeline(pipeline)
+  }, [projected, topicId])
+
   const handleStartPractice = useCallback(async () => {
     setImmersiveMode(true)
+    await ensurePipeline()
     setPhase('practice')
     if (!topicId) return
     try {
@@ -185,13 +198,14 @@ export function PracticeSessionPage() {
       console.error('[practice-session] ❌ 创建会话失败:', err)
       // Keep local practice usable even if session persistence is temporarily unavailable.
     }
-  }, [setImmersiveMode, topicId])
+  }, [ensurePipeline, setImmersiveMode, topicId])
 
   // Switch to guided warmup phase before practice
-  const handleStartGuided = useCallback(() => {
+  const handleStartGuided = useCallback(async () => {
     setImmersiveMode(true)
+    await ensurePipeline()
     setGuidedOpen(true)
-  }, [setImmersiveMode])
+  }, [ensurePipeline, setImmersiveMode])
 
   // Complete guided and go to practice
   const handleGuidedComplete = useCallback(async () => {
@@ -222,7 +236,9 @@ export function PracticeSessionPage() {
   }, [detail])
 
   const warmupItems = useMemo(() => {
-    const pipeline = detail?.topic?.metadata?.outputTraining?.pipeline ?? []
+    const pipeline = projected
+      ? (runtimePipeline ?? [])
+      : (detail?.topic?.metadata?.outputTraining?.pipeline ?? [])
     const metadataItems = pipeline.filter((item: any) =>
       item.type === 'chunk_substitution' || item.type === 'vocab_drill' || item.type === 'vocab_sentence_building' || item.type === 'sentence_decomposition' || item.type === 'pattern_drill'
     )
@@ -237,7 +253,7 @@ export function PracticeSessionPage() {
         chunkMeaning: c.meaning || '',
         items: (c.examples ?? []).map((e: any) => ({ zh: e.zh, answer: e.en })),
       }))
-  }, [detail])
+  }, [detail, projected, runtimePipeline])
 
   // ==================== Load Data ====================
   useEffect(() => {
@@ -256,7 +272,9 @@ export function PracticeSessionPage() {
     setExpandedChunkId(detail.activeChunks[0]?.id ?? null)
 
     const compiledInk = compilePracticeInk(detail.inkScript?.inkSource, detail.inkScript?.inkJson)
-    setTeachingMarkdown(detail.topic.teachingMarkdown || '')
+    if (!(detail as { __offlineProjection?: boolean }).__offlineProjection) {
+      setTeachingMarkdown(detail.topic.teachingMarkdown || '')
+    }
     if (compiledInk) {
       setInkJson(compiledInk)
     } else if (detail.topic.inkScriptId) {
@@ -277,6 +295,22 @@ export function PracticeSessionPage() {
   // 按 tab 懒加载：vocab → word, chunk → chunk
   const [prepTab, setPrepTab] = useState('vocab')
   const [prepCollapsed, setPrepCollapsed] = useState(true)
+  useEffect(() => {
+    if (!projected || !topicId) return
+    const kind = prepTab === 'chunk' ? 'chunk' : prepTab === 'pattern' ? 'pattern' : 'vocab'
+    const page = prepPage[kind]
+    let cancelled = false
+    listContentPage({ topicId, kind, page, pageSize: PREP_PAGE_SIZE }).then((result) => {
+      if (!cancelled) setRemotePrep({ kind, items: result.items, total: result.total })
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [prepPage, prepTab, projected, topicId])
+  useEffect(() => {
+    if (!teachingOpen || !projected || !topicId) return
+    practiceRepository.getTopicDocument(topicId).then((document) => {
+      setTeachingMarkdown(document?.teachingMarkdown || '')
+    }).catch(() => {})
+  }, [projected, teachingOpen, topicId])
   const loadedPrepTabs = useRef<Set<string>>(new Set())
   useEffect(() => {
     if (loadedPrepTabs.current.has(prepTab)) return
@@ -570,23 +604,33 @@ export function PracticeSessionPage() {
     setPendingSave(null)
   }, [detail, pendingSave, t])
 
+  const topicCounts = detail?.topic as { vocabCount?: number; chunkCount?: number; patternCount?: number; practiceItemIds?: string[] } | undefined
+  const vocabTotal = projected ? (topicCounts?.vocabCount ?? remotePrep.total) : (detail?.vocabularies.length ?? 0)
+  const chunkTotal = projected ? (topicCounts?.chunkCount ?? 0) : (detail?.activeChunks.length ?? 0)
+  const patternTotal = projected ? (topicCounts?.patternCount ?? 0) : (detail?.sentencePatterns?.length ?? 0)
   const vocabPageItems = useMemo(
-    () => paginateItems(detail?.vocabularies ?? [], prepPage.vocab, PREP_PAGE_SIZE),
-    [detail?.vocabularies, prepPage.vocab],
+    () => projected && remotePrep.kind === 'vocab'
+      ? { items: remotePrep.items, startIndex: (prepPage.vocab - 1) * PREP_PAGE_SIZE, totalPages: Math.max(1, Math.ceil((topicCounts?.vocabCount || remotePrep.total) / PREP_PAGE_SIZE)), currentPage: prepPage.vocab }
+      : paginateItems(detail?.vocabularies ?? [], prepPage.vocab, PREP_PAGE_SIZE),
+    [detail?.vocabularies, prepPage.vocab, projected, remotePrep.items, remotePrep.kind, remotePrep.total, topicCounts?.vocabCount],
   )
   const chunkPageItems = useMemo(
-    () => paginateItems(detail?.activeChunks ?? [], prepPage.chunk, PREP_PAGE_SIZE),
-    [detail?.activeChunks, prepPage.chunk],
+    () => projected && remotePrep.kind === 'chunk'
+      ? { items: remotePrep.items, startIndex: (prepPage.chunk - 1) * PREP_PAGE_SIZE, totalPages: Math.max(1, Math.ceil(chunkTotal / PREP_PAGE_SIZE)), currentPage: prepPage.chunk }
+      : paginateItems(detail?.activeChunks ?? [], prepPage.chunk, PREP_PAGE_SIZE),
+    [chunkTotal, detail?.activeChunks, prepPage.chunk, projected, remotePrep.items, remotePrep.kind],
   )
   const patternPageItems = useMemo(
-    () => paginateItems(detail?.sentencePatterns ?? [], prepPage.pattern, PREP_PAGE_SIZE),
-    [detail?.sentencePatterns, prepPage.pattern],
+    () => projected && remotePrep.kind === 'pattern'
+      ? { items: remotePrep.items, startIndex: (prepPage.pattern - 1) * PREP_PAGE_SIZE, totalPages: Math.max(1, Math.ceil(patternTotal / PREP_PAGE_SIZE)), currentPage: prepPage.pattern }
+      : paginateItems(detail?.sentencePatterns ?? [], prepPage.pattern, PREP_PAGE_SIZE),
+    [detail?.sentencePatterns, patternTotal, prepPage.pattern, projected, remotePrep.items, remotePrep.kind],
   )
   const currentPrepTabCount = prepTab === 'vocab'
-    ? (detail?.vocabularies.length ?? 0)
+    ? vocabTotal
     : prepTab === 'chunk'
-      ? (detail?.activeChunks.length ?? 0)
-      : (detail?.sentencePatterns?.length ?? 0)
+      ? chunkTotal
+      : patternTotal
 
   const changePrepPage = useCallback((kind: keyof typeof prepPage, page: number) => {
     setPrepPage((current) => ({ ...current, [kind]: page }))
@@ -890,7 +934,9 @@ export function PracticeSessionPage() {
   }
 
   const canShowPractice = !flagsLoaded || scriptPracticeEnabled
-  const hasWarmup = detail?.topic?.metadata?.outputTraining?.enabled && detail?.topic?.metadata?.outputTraining?.pipeline?.length > 0
+  const hasWarmup = projected
+    ? (topicCounts?.practiceItemIds?.length ?? 0) > 0
+    : Boolean(detail?.topic?.metadata?.outputTraining?.enabled && detail?.topic?.metadata?.outputTraining?.pipeline?.length > 0)
   const hasExamples = detail?.activeChunks?.some(c => c.examples?.length)
 
   function renderPracticeButtons() {
@@ -992,7 +1038,7 @@ export function PracticeSessionPage() {
 
           {/* Teaching drawer — controlled, trigger is the Button above */}
           <PracticeVnDrawer
-            teachingMarkdown={detail.topic.teachingMarkdown || ''}
+            teachingMarkdown={teachingMarkdown || detail.topic.teachingMarkdown || ''}
             hideToggles
             open={teachingOpen}
             onOpenChange={setTeachingOpen}
@@ -1008,7 +1054,7 @@ export function PracticeSessionPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="rounded-full text-[11px]">
-                  {detail.vocabularies.length + detail.activeChunks.length + (detail.sentencePatterns?.length ?? 0)} {t('practiceSession.items')}
+                  {vocabTotal + chunkTotal + patternTotal} {t('practiceSession.items')}
                 </Badge>
                 <button
                   type="button"
@@ -1023,15 +1069,15 @@ export function PracticeSessionPage() {
 
             <Tabs value={prepTab} onValueChange={handlePrepTabChange} className="w-full" data-mobile-route-swipe>
               <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-                <TabsTrigger value="vocab" className="rounded-md text-xs">{t('learning.vocab')} ({detail.vocabularies.length})</TabsTrigger>
-                <TabsTrigger value="chunk" className="rounded-md text-xs">{t('learning.coreChunks')} ({detail.activeChunks.length})</TabsTrigger>
-                <TabsTrigger value="pattern" className="rounded-md text-xs">{t('learning.patterns')} ({detail.sentencePatterns?.length ?? 0})</TabsTrigger>
+                <TabsTrigger value="vocab" className="rounded-md text-xs">{t('learning.vocab')} ({vocabTotal})</TabsTrigger>
+                <TabsTrigger value="chunk" className="rounded-md text-xs">{t('learning.coreChunks')} ({chunkTotal})</TabsTrigger>
+                <TabsTrigger value="pattern" className="rounded-md text-xs">{t('learning.patterns')} ({patternTotal})</TabsTrigger>
               </TabsList>
 
               <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow>
-                {detail.vocabularies.length > 0 ? (
+                {vocabTotal > 0 ? (
                   <div className="space-y-2">
-                    {(prepCollapsed ? detail.vocabularies.slice(0, 2) : vocabPageItems.items).map((v) => {
+                    {(prepCollapsed ? (projected ? vocabPageItems.items : detail.vocabularies).slice(0, 2) : vocabPageItems.items).map((v) => {
                       const isExpanded = expandedVocabId === v.id
                       return (
                         <Card
@@ -1084,7 +1130,7 @@ export function PracticeSessionPage() {
                     <PrepPager
                       currentPage={vocabPageItems.currentPage}
                       totalPages={vocabPageItems.totalPages}
-                      totalItems={detail.vocabularies.length}
+                      totalItems={vocabTotal}
                       onPageChange={(page) => changePrepPage('vocab', page)}
                     />
                     )}
@@ -1096,9 +1142,9 @@ export function PracticeSessionPage() {
 
               <TabsContent value="chunk" className="mt-3" data-mobile-gesture-allow>
                 <ChunkActivationPanel
-                  chunks={prepCollapsed ? detail.activeChunks.slice(0, 2) : chunkPageItems.items}
-                  totalCount={detail.activeChunks.length}
-                  collectedCount={detail.activeChunks.filter((chunk) => collectedTexts.has(chunk.text)).length}
+                  chunks={prepCollapsed ? (projected ? chunkPageItems.items : detail.activeChunks).slice(0, 2) : chunkPageItems.items}
+                  totalCount={chunkTotal}
+                  collectedCount={(projected ? chunkPageItems.items : detail.activeChunks).filter((chunk) => collectedTexts.has(chunk.text)).length}
                   activatedIds={activatedChunks}
                   collectedTexts={collectedTexts}
                   savingTexts={savingTexts}
@@ -1114,7 +1160,7 @@ export function PracticeSessionPage() {
                   <PrepPager
                     currentPage={chunkPageItems.currentPage}
                     totalPages={chunkPageItems.totalPages}
-                    totalItems={detail.activeChunks.length}
+                    totalItems={chunkTotal}
                     onPageChange={(page) => changePrepPage('chunk', page)}
                   />
                 </div>
@@ -1122,10 +1168,10 @@ export function PracticeSessionPage() {
               </TabsContent>
 
               <TabsContent value="pattern" className="mt-3" data-mobile-gesture-allow>
-                {detail.sentencePatterns?.length ? (
+                {patternTotal > 0 ? (
                   <div className="space-y-2">
-                    {(prepCollapsed ? (detail.sentencePatterns ?? []).slice(0, 2) : patternPageItems.items).map((p, index) => {
-                      const absoluteIndex = prepCollapsed ? (detail.sentencePatterns ?? []).indexOf(p) : patternPageItems.startIndex + index
+                    {(prepCollapsed ? (projected ? patternPageItems.items : (detail.sentencePatterns ?? [])).slice(0, 2) : patternPageItems.items).map((p, index) => {
+                      const absoluteIndex = projected ? index : (prepCollapsed ? (detail.sentencePatterns ?? []).indexOf(p) : patternPageItems.startIndex + index)
                       const isExpanded = expandedPatternIdx === absoluteIndex
                       return (
                         <Card key={`${p.pattern}-${absoluteIndex}`} className={cn('border-0 bg-muted/30 shadow-none transition-colors', isExpanded && 'bg-primary/[0.06]')}>
@@ -1169,7 +1215,7 @@ export function PracticeSessionPage() {
                     <PrepPager
                       currentPage={patternPageItems.currentPage}
                       totalPages={patternPageItems.totalPages}
-                      totalItems={detail.sentencePatterns?.length ?? 0}
+                      totalItems={patternTotal}
                       onPageChange={(page) => changePrepPage('pattern', page)}
                     />
                     )}

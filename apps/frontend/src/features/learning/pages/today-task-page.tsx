@@ -852,7 +852,8 @@ export function TodayTaskPage() {
     let cancelled = false
     void Promise.all(missingTopicIds.map(async (topicId) => {
       const detail = await practiceRepository.getTopicDetail(topicId).catch(() => null)
-      return [topicId, Boolean(detail?.topic?.teachingMarkdown?.trim())] as const
+      const topic = detail?.topic as { teachingMarkdown?: string; hasTeachingDocument?: boolean } | undefined
+      return [topicId, Boolean(topic?.hasTeachingDocument || topic?.teachingMarkdown?.trim())] as const
     })).then((results) => {
       if (cancelled) return
       setTeachingAvailability((current) => {
@@ -936,9 +937,9 @@ export function TodayTaskPage() {
     setTeachingLoading(true)
     setTeachingOpen(true)
     try {
-      const detail = await practiceRepository.getTopicDetail(topicId)
+      const document = await practiceRepository.getTopicDocument(topicId)
       if (teachingRequestIdRef.current !== requestId) return
-      setTeachingMarkdown(detail?.topic?.teachingMarkdown || '')
+      setTeachingMarkdown(document?.teachingMarkdown || '')
     } finally {
       if (teachingRequestIdRef.current === requestId) setTeachingLoading(false)
     }

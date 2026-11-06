@@ -252,9 +252,23 @@ export const learningContentRepository = {
       packId: string
       unitId: string
       topicId: string | null
+      sortOrder: number
       createdAt: string
     }> = []
     const now = new Date().toISOString()
+    let sortOrder = 0
+    const pushRef = (kind: 'vocab' | 'chunk' | 'pattern', contentId: string, topicId: string | null) => {
+      refs.push({
+        id: `${kind}:${contentId}:${packId}:${topicId ?? 'unit'}`,
+        kind,
+        contentId,
+        packId,
+        unitId,
+        topicId,
+        sortOrder: sortOrder++,
+        createdAt: now,
+      })
+    }
 
     for (const raw of topicDetails ?? []) {
       const detail = topicPayload(raw)
@@ -263,32 +277,39 @@ export const learningContentRepository = {
       for (const vocab of detail?.vocabularies ?? []) {
         if (!vocab?.id) continue
         vocabById.set(vocab.id, vocab)
-        refs.push({ id: `vocab:${vocab.id}:${packId}:${topicId ?? 'unit'}`, kind: 'vocab', contentId: vocab.id, packId, unitId, topicId, createdAt: now })
+        pushRef('vocab', vocab.id, topicId)
       }
 
       for (const chunk of detail?.activeChunks ?? detail?.chunks ?? []) {
         if (!chunk?.id) continue
         chunkById.set(chunk.id, chunk)
-        refs.push({ id: `chunk:${chunk.id}:${packId}:${topicId ?? 'unit'}`, kind: 'chunk', contentId: chunk.id, packId, unitId, topicId, createdAt: now })
+        pushRef('chunk', chunk.id, topicId)
       }
 
       for (const pattern of detail?.sentencePatterns ?? []) {
         const id = patternId(pattern)
         if (!id) continue
         patternById.set(id, { ...pattern, id })
-        refs.push({ id: `pattern:${id}:${packId}:${topicId ?? 'unit'}`, kind: 'pattern', contentId: id, packId, unitId, topicId, createdAt: now })
+        pushRef('pattern', id, topicId)
       }
     }
 
+    const referenced = new Set(refs.map((ref) => `${ref.kind}:${ref.contentId}`))
     for (const vocab of unitDetail?.vocabularies ?? []) {
-      if (vocab?.id) vocabById.set(vocab.id, vocab)
+      if (!vocab?.id) continue
+      vocabById.set(vocab.id, vocab)
+      if (!referenced.has(`vocab:${vocab.id}`)) pushRef('vocab', vocab.id, null)
     }
     for (const chunk of unitDetail?.chunks ?? []) {
-      if (chunk?.id) chunkById.set(chunk.id, chunk)
+      if (!chunk?.id) continue
+      chunkById.set(chunk.id, chunk)
+      if (!referenced.has(`chunk:${chunk.id}`)) pushRef('chunk', chunk.id, null)
     }
     for (const pattern of unitDetail?.sentencePatterns ?? []) {
       const id = patternId(pattern)
-      if (id) patternById.set(id, { ...pattern, id })
+      if (!id) continue
+      patternById.set(id, { ...pattern, id })
+      if (!referenced.has(`pattern:${id}`)) pushRef('pattern', id, null)
     }
 
     console.log(`[content-index] 📊 索引统计: ${vocabById.size} 词汇, ${chunkById.size} 语块, ${patternById.size} 句型, ${refs.length} 引用记录`)
@@ -384,12 +405,7 @@ export const learningContentRepository = {
   /** 从已下载的学习包中提取词汇数据 */
   async _getAllVocabularies(): Promise<any[]> {
     const indexed = await localDb.list<any>('offline_vocabularies')
-    if (indexed.length > 0) return indexed.map((item) => ({ ...item.data, id: item.id }))
-
-    const details = await localDb.list<any>('downloaded_unit_details')
-    return details
-      .filter((d) => d.vocabularies && !d.id.startsWith('topic:'))
-      .flatMap((d) => (d.vocabularies ?? []).map((item: any) => ({ ...item, unitId: d.id })))
+    return indexed.map((item) => ({ ...item.data, id: item.id }))
   },
 
   async getVocabulary(wordOrId: string): Promise<any | null> {
@@ -433,14 +449,10 @@ export const learningContentRepository = {
   async getChunk(chunkId: string): Promise<any | null> {
     const localExpression = await this.getExpressionByText('chunk', chunkId)
     if (localExpression?.contentSnapshot) return localExpression.contentSnapshot
-    const details = await localDb.list<any>('downloaded_unit_details')
-    for (const d of details) {
-      if (d.chunks) {
-        const found = d.chunks.find((item: any) => item.id === chunkId || item.text === chunkId)
-        if (found) return { ...found, unitId: d.id }
-      }
-    }
-    return null
+    const indexed = await localDb.get<any>('offline_chunks', chunkId)
+    if (!indexed) return null
+    const body = indexed.data && typeof indexed.data === 'object' ? indexed.data : indexed
+    return { ...body, id: indexed.id ?? chunkId }
   },
 
   async searchChunks(query: string): Promise<any[]> {
@@ -453,11 +465,7 @@ export const learningContentRepository = {
         sceneName: entry.sceneName,
       })
     const indexed = await localDb.list<any>('offline_chunks')
-    const all = indexed.length > 0
-      ? indexed.map((item) => ({ ...item.data, id: item.id }))
-      : (await localDb.list<any>('downloaded_unit_details'))
-        .filter((d) => d.chunks && !d.id.startsWith('topic:'))
-        .flatMap((d) => (d.chunks ?? []).map((item: any) => ({ ...item, unitId: d.id })))
+    const all = indexed.map((item) => ({ ...item.data, id: item.id }))
     return uniqueById([...expressions, ...all]).filter((item) =>
       includesText(item.text, query) ||
       includesText(item.meaning, query) ||
@@ -475,11 +483,7 @@ export const learningContentRepository = {
         sceneName: entry.sceneName,
       })
     const indexed = await localDb.list<any>('offline_patterns')
-    const all = indexed.length > 0
-      ? indexed.map((item) => ({ ...item.data, id: item.id }))
-      : (await localDb.list<any>('downloaded_unit_details'))
-        .filter((d) => d.sentencePatterns && !d.id.startsWith('topic:'))
-        .flatMap((d) => (d.sentencePatterns ?? []).map((item: any) => ({ ...item, id: item.id ?? item.pattern, unitId: d.id })))
+    const all = indexed.map((item) => ({ ...item.data, id: item.id }))
     return uniqueById([...expressions, ...all]).filter((item) =>
       includesText(item.pattern, query) ||
       includesText(item.meaning, query) ||

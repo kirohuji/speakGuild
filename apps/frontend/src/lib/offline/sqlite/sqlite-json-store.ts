@@ -24,6 +24,8 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
   downloaded_unit_details: [
     ['unit_id', 'unitId', (value) => value?.unitId ?? null],
     ['topic_id', 'topicId', (value) => value?.topicId ?? null],
+    ['row_kind', 'rowKind', (value) => value?.rowKind ?? null],
+    ['sort_order', 'sortOrder', (value) => typeof value?.sortOrder === 'number' ? value.sortOrder : null],
   ],
   ink_scripts: [
     ['unit_id', 'unitId', (value) => value?.unitId ?? null],
@@ -66,6 +68,7 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['pack_id', 'packId', (value) => value?.packId ?? null],
     ['unit_id', 'unitId', (value) => value?.unitId ?? null],
     ['topic_id', 'topicId', (value) => value?.topicId ?? null],
+    ['sort_order', 'sortOrder', (value) => typeof value?.sortOrder === 'number' ? value.sortOrder : null],
   ],
   user_progress: [
     ['remote_id', 'remoteId', (value) => value?.remoteId ?? null],
@@ -84,6 +87,7 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['scene_id', 'sceneId', (value) => value?.sceneId ?? null],
     ['status', 'status', (value) => value?.status ?? null],
     ['sync_status', 'syncStatus', (value) => value?.syncStatus ?? null],
+    ['practiced_at', 'practicedAt', (value) => value?.practicedAt ?? value?.record?.analyzedAt ?? value?.record?.lastPracticeAt ?? null],
   ],
   warmup_records: [
     ['topic_id', 'topicId', (value) => value?.topicId ?? null],
@@ -213,6 +217,58 @@ function upsertSql(storeName: TableName, metadataColumns: string[]) {
 
   return `INSERT INTO "${storeName}" (${columns.join(', ')}) VALUES (${placeholders})
           ON CONFLICT(id) DO UPDATE SET ${updates}`
+}
+
+export type PageFilter = { column: string; value: string | number | null | Array<string | number> }
+export type PageQuery = {
+  filters?: PageFilter[]
+  orderBy?: Array<{ column: string; direction: 'asc' | 'desc' }>
+  limit: number
+  offset?: number
+}
+
+const MAX_PAGE_SIZE = 100
+
+function assertPageBounds(limit: number, offset: number) {
+  if (!Number.isInteger(limit) || limit < 1 || limit > MAX_PAGE_SIZE) {
+    throw new Error(`Page limit must be an integer from 1 to ${MAX_PAGE_SIZE}`)
+  }
+  if (!Number.isInteger(offset) || offset < 0) {
+    throw new Error('Page offset must be a non-negative integer')
+  }
+}
+
+function whereClause(storeName: TableName, filters: PageFilter[] = []) {
+  const clauses: string[] = []
+  const values: Array<string | number> = []
+  for (const filter of filters) {
+    assertIndexedColumn(storeName, filter.column)
+    if (Array.isArray(filter.value)) {
+      if (filter.value.length === 0) return { sql: '1 = 0', values: [] }
+      clauses.push(`"${filter.column}" IN (${filter.value.map(() => '?').join(', ')})`)
+      values.push(...filter.value)
+      continue
+    }
+    if (filter.value === null) {
+      clauses.push(`"${filter.column}" IS NULL`)
+      continue
+    }
+    clauses.push(`"${filter.column}" = ?`)
+    values.push(filter.value)
+  }
+  return { sql: clauses.length > 0 ? clauses.join(' AND ') : '1 = 1', values }
+}
+
+function orderClause(storeName: TableName, orderBy: PageQuery['orderBy'] = []) {
+  const clauses = orderBy.map((order) => {
+    assertIndexedColumn(storeName, order.column)
+    if (order.direction !== 'asc' && order.direction !== 'desc') {
+      throw new Error(`Unsupported sort direction: ${order.direction}`)
+    }
+    return `"${order.column}" ${order.direction.toUpperCase()}`
+  })
+  if (!clauses.some((clause) => clause.startsWith('"id" '))) clauses.push('"id" ASC')
+  return clauses.join(', ')
 }
 
 function assertIndexedColumn(storeName: TableName, columnName: string) {
@@ -366,6 +422,59 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
         console.warn(`[${executor.label}] findByIndexIn failed for ${storeName}.${columnName}`, error)
         throw error
       }
+    },
+
+    async listPage<T>(storeName: TableName, query: PageQuery): Promise<T[]> {
+      const offset = query.offset ?? 0
+      assertPageBounds(query.limit, offset)
+      const where = whereClause(storeName, query.filters)
+      const rows = await executor.queryRows<Record<string, any>>(
+        `SELECT * FROM "${storeName}" WHERE ${where.sql} ORDER BY ${orderClause(storeName, query.orderBy)} LIMIT ? OFFSET ?`,
+        [...where.values, query.limit, offset],
+      )
+      return rows.map((row) => hydrateRow<T>(storeName, row))
+    },
+
+    async countWhere(storeName: TableName, filters: PageFilter[] = []): Promise<number> {
+      const where = whereClause(storeName, filters)
+      const rows = await executor.queryRows<{ cnt: number }>(
+        `SELECT COUNT(*) as cnt FROM "${storeName}" WHERE ${where.sql}`,
+        where.values,
+      )
+      return rows[0]?.cnt ?? 0
+    },
+
+    async listContentRefPage(params: {
+      packId?: string
+      topicId?: string
+      kind: 'vocab' | 'chunk' | 'pattern'
+      limit: number
+      offset?: number
+    }): Promise<{ contentIds: string[]; total: number }> {
+      const offset = params.offset ?? 0
+      assertPageBounds(params.limit, offset)
+      if (!params.packId && !params.topicId) throw new Error('Content page requires a pack or topic')
+      const scopeColumn = params.topicId ? 'topic_id' : 'pack_id'
+      const scopeValue = params.topicId ?? params.packId
+      const rows = await executor.queryRows<{ content_id: string }>(
+        `SELECT content_id
+         FROM offline_content_refs
+         WHERE ${scopeColumn} = ? AND content_kind = ?
+         GROUP BY content_id
+         ORDER BY MIN(COALESCE(sort_order, 0)), content_id
+         LIMIT ? OFFSET ?`,
+        [scopeValue, params.kind, params.limit, offset],
+      )
+      const totals = await executor.queryRows<{ cnt: number }>(
+        `SELECT COUNT(*) as cnt FROM (
+           SELECT content_id
+           FROM offline_content_refs
+           WHERE ${scopeColumn} = ? AND content_kind = ?
+           GROUP BY content_id
+         ) grouped`,
+        [scopeValue, params.kind],
+      )
+      return { contentIds: rows.map((row) => row.content_id), total: totals[0]?.cnt ?? 0 }
     },
 
     async count(storeName: TableName): Promise<number> {

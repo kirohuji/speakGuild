@@ -129,6 +129,7 @@ export interface TrainingTopicItem {
   title: string
   description?: string | null
   teachingMarkdown?: string | null
+  hasTeachingDocument?: boolean
   promptEn: string
   promptZh: string
   difficulty: string

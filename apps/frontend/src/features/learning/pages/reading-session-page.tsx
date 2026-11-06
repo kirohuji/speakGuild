@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
+import { useTopicDocument } from '../hooks/use-topic-document'
 import { cn } from '@/lib/cn'
 import { useLayoutStore } from '@/stores/layout.store'
 import { useLearningStore } from '@/stores/learning.store'
@@ -44,7 +45,8 @@ export function ReadingSessionPage() {
     return () => setImmersiveMode(false)
   }, [phase, setImmersiveMode])
 
-  const topic = useMemo(() => unit?.trainingTopics.find((item) => item.id === topicId) ?? null, [topicId, unit?.trainingTopics])
+  const baseTopic = useMemo(() => unit?.trainingTopics.find((item) => item.id === topicId) ?? null, [topicId, unit?.trainingTopics])
+  const topic = useTopicDocument(baseTopic)
   useEffectivePracticeTimer({
     enabled: Boolean(unitId && topic && unit?.contentMode === 'reading'),
     sourceId: topicId ? `learning-reading:${topicId}` : null,

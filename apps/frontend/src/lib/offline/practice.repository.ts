@@ -6,6 +6,7 @@ import {
 } from '@/features/practice/api/english-practice-api'
 import { getPracticeRecords, type PracticeRecord, type PracticeRecordsResult } from '@/features/profile/api'
 import { localDb } from './unified-storage'
+import { readTopicPipeline, readTopicPrep, readTopicTeaching } from './learning-pack-read-model'
 import { localDateKey, normalizeCalendarDate } from '@/lib/date/calendar-date'
 import { syncOutbox } from './sync-outbox'
 import type { WarmupRecordEntry } from '@/stores/warmup-session.store'
@@ -42,6 +43,8 @@ const PRACTICE_DATA_RESET_KEY = 'practice-data-reset-at'
  * merges shared data from the unit-level record for backward compatibility.
  */
 async function getCachedTopicDetail(topicId: string): Promise<TopicDetail | null> {
+  const projected = await readTopicPrep(topicId)
+  if (projected) return projected as TopicDetail
   const cached = await localDb.get<{ detail: any; unitId?: string }>('downloaded_unit_details', `topic:${topicId}`)
   if (!cached?.detail) return null
 
@@ -114,6 +117,7 @@ async function putPracticeHistoryRecord(input: {
     topicId: record.topicId,
     sceneId: session?.sceneId,
     status: record.status ?? session?.status ?? 'analyzed',
+    practicedAt: record.analyzedAt ?? record.lastPracticeAt ?? new Date().toISOString(),
     record,
     session: session ? {
       id: session.id,
@@ -150,29 +154,19 @@ async function isPracticeRecordsCacheLoaded(): Promise<boolean> {
   return marker?.value === true
 }
 
-async function listCachedPracticeHistory(): Promise<PracticeRecord[]> {
-  const entries = await localDb.list<any>('practice_records')
-  return entries
-    .filter((item) => item?.type === 'history' && ['analyzed', 'failed'].includes(item?.record?.status))
-    .map((item) => normalizePracticeRecord(item.record))
-    .sort((a, b) => String(b.analyzedAt ?? b.lastPracticeAt).localeCompare(String(a.analyzedAt ?? a.lastPracticeAt)))
-}
-
-function paginatePracticeRecords(items: PracticeRecord[], page: number, pageSize: number): PracticeRecordsResult {
-  const start = (page - 1) * pageSize
-  return {
-    list: items.slice(start, start + pageSize),
-    total: items.length,
-    page,
-    pageSize,
-  }
-}
-
 export const practiceRepository = {
   async getTopicDetail(topicId: string): Promise<TopicDetail | null> {
     // Practice content belongs to a downloaded package. Do not silently fetch
     // a newer server-side topic when the local package lacks this record.
     return getCachedTopicDetail(topicId)
+  },
+
+  async getTopicDocument(topicId: string) {
+    return readTopicTeaching(topicId)
+  },
+
+  async getTopicRuntime(topicId: string) {
+    return readTopicPipeline(topicId)
   },
 
   async getTopicInk(topicId: string) {
@@ -309,13 +303,26 @@ export const practiceRepository = {
 
   async listPracticeRecords(params: { page?: number; pageSize?: number } = {}): Promise<PracticeRecordsResult> {
     const page = params.page ?? 1
-    const pageSize = params.pageSize ?? 20
-    const cached = await listCachedPracticeHistory()
+    const pageSize = Math.min(100, params.pageSize ?? 20)
+    const filters = [
+      { column: 'record_type' as const, value: 'history' },
+      { column: 'status' as const, value: ['analyzed', 'failed'] },
+    ]
+    const total = await localDb.countWhere('practice_records', filters)
     const cacheLoaded = await isPracticeRecordsCacheLoaded()
-    if (cached.length > 0 || cacheLoaded) {
-      return paginatePracticeRecords(cached, page, pageSize)
+    if (total === 0 && !cacheLoaded) return this.refreshPracticeRecords({ page, pageSize })
+    const rows = await localDb.listPage<any>('practice_records', {
+      filters,
+      orderBy: [{ column: 'practiced_at', direction: 'desc' }],
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+    })
+    return {
+      list: rows.map((item) => normalizePracticeRecord(item.record)),
+      total,
+      page,
+      pageSize,
     }
-    return this.refreshPracticeRecords({ page, pageSize })
   },
 
   async refreshPracticeRecords(params: { page?: number; pageSize?: number } = {}): Promise<PracticeRecordsResult> {

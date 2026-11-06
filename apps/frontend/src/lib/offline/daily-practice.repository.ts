@@ -5,6 +5,7 @@ import { usePreferencesStore } from '@/stores/preferences.store'
 import { setLearningBadgeCount } from '@/lib/native/learning-reminder'
 import { learningPackService } from './learning-pack.service'
 import { learningRepository } from './learning.repository'
+import { ensurePackProjection, readPracticeSource, readUnitSummary } from './learning-pack-read-model'
 import { practiceRepository } from './practice.repository'
 import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
@@ -544,6 +545,17 @@ function buildCandidates(unit: UnitDetail): DailyPracticeCandidate[] {
   return candidates
 }
 
+async function loadPracticeUnit(unitId: string): Promise<UnitDetail | null> {
+  let summary = await readUnitSummary(unitId)
+  if (!summary) {
+    const ready = await ensurePackProjection(unitId)
+    if (!ready) return null
+    summary = await readUnitSummary(unitId)
+  }
+  if (!summary || summary.contentMode === 'story' || (summary.practiceItemCount ?? 0) === 0) return null
+  return readPracticeSource(unitId) as Promise<UnitDetail | null>
+}
+
 async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: string | null): Promise<UnitDetail[]> {
   // Today 的候选题、计划和角标都必须来自同一份本地包快照；这里绝不为了
   // 显示/构建计划临时请求后端，避免服务端旧进度或网络时序改变本地口径。
@@ -555,37 +567,35 @@ async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: stri
   const enrolledIds = new Set(myUnits.map((u) => u.id))
 
   if (targetPackId) {
-    // URL 指定的包也必须是当前用户已加入、已安装且本地仍有题目的包。
     if (!enrolledIds.has(targetPackId) || !installedIds.has(targetPackId)) return []
-    const detail = await learningRepository.getCachedUnitDetail(targetPackId)
-    return detail && detail.contentMode !== 'story' && buildCandidates(detail).length > 0 ? [detail] : []
+    const detail = await loadPracticeUnit(targetPackId)
+    return detail ? [detail] : []
   }
 
-  if (enrolledIds.size === 0 || installedIds.size === 0) return []
+  const eligibleIds = myUnits.map((unit) => unit.id).filter((id) => installedIds.has(id))
+  if (eligibleIds.length === 0) return []
 
-  const detailsById = new Map<string, UnitDetail>()
-  await Promise.all(myUnits.filter((unit) => installedIds.has(unit.id)).map(async (unit) => {
-    const id = unit.id
-    const detail = await learningRepository.getCachedUnitDetail(id)
-    if (detail && detail.contentMode !== 'story' && buildCandidates(detail).length > 0) {
-      detailsById.set(id, detail)
-    }
-  }))
+  const summaries = await Promise.all(eligibleIds.map(async (id) => ({ id, summary: await readUnitSummary(id) })))
+  const readyIds = summaries
+    .filter((item) => item.summary && item.summary.contentMode !== 'story' && (item.summary.practiceItemCount ?? 0) > 0)
+    .map((item) => item.id)
+  for (const item of summaries) {
+    if (!item.summary) void ensurePackProjection(item.id).catch(() => {})
+  }
 
-  const practiceCandidateIds = [...detailsById.keys()]
   const activePackId = await getActivePracticePackId()
-  const selectedPackIds = scope === 'mixed'
-    ? practiceCandidateIds
-    : [practiceCandidateIds.includes(activePackId ?? '') ? activePackId! : practiceCandidateIds[0]].filter(Boolean)
+  const selectedPackIds = readyIds.length === 0
+    ? [eligibleIds.includes(activePackId ?? '') ? activePackId! : eligibleIds[0]]
+    : scope === 'mixed'
+      ? readyIds
+      : [readyIds.includes(activePackId ?? '') ? activePackId! : readyIds[0]].filter(Boolean)
 
   if (scope === 'single' && selectedPackIds[0] && selectedPackIds[0] !== activePackId) {
     await setActivePracticePackId(selectedPackIds[0])
   }
 
-  const resolved = selectedPackIds
-    .map((id) => detailsById.get(id))
-    .filter(Boolean) as UnitDetail[]
-  return resolved
+  const details = (await Promise.all(selectedPackIds.map((id) => loadPracticeUnit(id)))).filter(Boolean) as UnitDetail[]
+  return details
 }
 
 type PracticeCandidateContext = {
@@ -806,7 +816,7 @@ export const dailyPracticeRepository = {
   },
 
   async setActivePracticePackId(packId: string) {
-    const detail = await learningRepository.getCachedUnitDetail(packId)
+    const detail = await loadPracticeUnit(packId)
     if (!detail || buildCandidates(detail).length === 0) {
       throw new Error('当前学习包没有可执行的知识点练习')
     }

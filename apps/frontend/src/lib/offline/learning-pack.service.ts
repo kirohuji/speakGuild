@@ -1,7 +1,7 @@
 import { assetCacheService, type AssetRef } from './asset-cache.service'
 import { digestBuffer } from './sha256-worker.service'
 import { learningApi } from '@/features/learning/api/learning-api'
-import { buildAggregatedUnitContent } from './learning.repository'
+import { readStoredTopicDetail, readStoredUnitDetail, writePackProjection } from './learning-pack-read-model'
 import { localDb } from './unified-storage'
 import { packAuditService, type PackAuditAction } from './pack-audit.service'
 import { BlobReader, BlobWriter, TextWriter, ZipReader, type Entry } from '@zip.js/zip.js'
@@ -89,17 +89,6 @@ function pushUrlAsset(assets: AssetRef[], url?: string | null, role?: AssetRef['
   assets.push({ url, role })
 }
 
-/** Merge unit-level shared data (scene) into each topic detail */
-function mergeTopicDetail(topicDetail: any, unitDetail: any) {
-  if (!topicDetail || !unitDetail) return topicDetail
-  return {
-    ...topicDetail,
-    // scene is shared at unit level
-    scene: unitDetail.scene ?? topicDetail.scene,
-    // topic metadata, vocabularies, activeChunks are already per-topic — no merge needed
-  }
-}
-
 function debugError(error: unknown) {
   if (error instanceof Error) {
     return {
@@ -139,37 +128,19 @@ function summarizeZipEntries(entries: Map<string, Entry>) {
 
 async function persistUnitContent(unitDetail: any, topicDetails: any[]) {
   let inkCount = 0
-  const mergedTopicDetails: Array<{ topicId: string; detail: any }> = []
   for (const topicDetail of topicDetails) {
-    if (topicDetail?.inkScript) {
-      await localDb.put('ink_scripts', {
-        id: topicDetail.inkScript.id,
-        topicId: topicDetail.topic.id,
-        unitId: unitDetail.id,
-        ...topicDetail.inkScript,
-        updatedAt: new Date().toISOString(),
-      })
-      inkCount++
-    }
-    // Merge unit-level shared data into the stored topic detail
-    const merged = mergeTopicDetail(topicDetail, unitDetail)
-    mergedTopicDetails.push({ topicId: topicDetail.topic.id, detail: merged })
-    await localDb.put('downloaded_unit_details', {
-      id: `topic:${topicDetail.topic.id}`,
-      unitId: unitDetail.id,
+    if (!topicDetail?.inkScript) continue
+    await localDb.put('ink_scripts', {
+      id: topicDetail.inkScript.id,
       topicId: topicDetail.topic.id,
-      detail: merged,
+      unitId: unitDetail.id,
+      ...topicDetail.inkScript,
       updatedAt: new Date().toISOString(),
     })
+    inkCount++
   }
-  logger.info(`  SQLite: ${topicDetails.length} 个 topic, ${inkCount} 个 ink_script`)
-  const aggregatedUnitDetail = buildAggregatedUnitContent(unitDetail, mergedTopicDetails)
-  await localDb.put('downloaded_unit_details', {
-    id: unitDetail.id,
-    ...aggregatedUnitDetail,
-    downloadedAt: new Date().toISOString(),
-  })
-  logger.info(`  SQLite: downloaded_unit_details/${unitDetail.id} (unit view)`)
+  await writePackProjection(unitDetail, topicDetails)
+  logger.info(`  SQLite: ${topicDetails.length} 个 topic, ${inkCount} 个 ink_script，文档和流水线分行存放`)
 }
 
 /**
@@ -247,7 +218,7 @@ async function readPackContentFromEntries(
     await verifyEntry('content/scene.json', new TextEncoder().encode(sceneText).buffer, checksums)
     unitDetail = JSON.parse(sceneText)
   } else {
-    unitDetail = await localDb.get<any>('downloaded_unit_details', manifest.packId)
+    unitDetail = await readStoredUnitDetail(manifest.packId)
   }
   if (!unitDetail) throw new Error('Delta pack cannot reconstruct content/scene.json')
 
@@ -262,8 +233,7 @@ async function readPackContentFromEntries(
       continue
     }
 
-    const cached = await localDb.get<any>('downloaded_unit_details', `topic:${topicId}`)
-    const cachedDetail = cached?.detail ?? cached
+    const cachedDetail = await readStoredTopicDetail(topicId)
     if (!cachedDetail) throw new Error(`Delta pack cannot reconstruct topic content: ${topicId}`)
     topicDetails.push(cachedDetail)
   }

@@ -36,6 +36,39 @@ describe('sqlite-json-store write failures', () => {
     )
   })
 
+  it('pages with bound parameters and a stable id order', async () => {
+    const queryRows = vi.fn(async () => [])
+    const store = createSqliteJsonStore(executor({ queryRows }))
+    await store.listPage('practice_records', {
+      filters: [
+        { column: 'record_type', value: 'history' },
+        { column: 'status', value: ['analyzed', 'failed'] },
+      ],
+      orderBy: [{ column: 'practiced_at', direction: 'desc' }],
+      limit: 20,
+      offset: 40,
+    })
+    expect(queryRows).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE "record_type" = ? AND "status" IN (?, ?) ORDER BY "practiced_at" DESC, "id" ASC LIMIT ? OFFSET ?'),
+      ['history', 'analyzed', 'failed', 20, 40],
+    )
+  })
+
+  it('rejects a page that would read an unbounded result', async () => {
+    const store = createSqliteJsonStore(executor())
+    await expect(store.listPage('offline_vocabularies', { limit: 0 })).rejects.toThrow(/limit/i)
+  })
+
+  it('pages deduped content refs with limit and offset', async () => {
+    const queryRows = vi.fn(async () => [])
+    const store = createSqliteJsonStore(executor({ queryRows }))
+    await store.listContentRefPage({ packId: 'pack-1', kind: 'vocab', limit: 8, offset: 16 })
+    expect(queryRows).toHaveBeenCalledWith(
+      expect.stringContaining('GROUP BY content_id'),
+      ['pack-1', 'vocab', 8, 16],
+    )
+  })
+
   it('stores learning-pack audit fields as indexed columns', async () => {
     const run = vi.fn(async () => undefined)
     const store = createSqliteJsonStore(executor({ run }))

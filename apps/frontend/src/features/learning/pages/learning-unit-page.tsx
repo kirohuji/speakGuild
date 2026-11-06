@@ -17,6 +17,7 @@ import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type Unit
 import { useLearningStore } from '@/stores/learning.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { learningContentRepository } from '@/lib/offline'
+import { listContentPage } from '@/lib/offline/learning-pack-read-model'
 import {
   LearningInsightDialog,
   type LearningInsightItem,
@@ -46,6 +47,7 @@ export function LearningUnitPage() {
 
   // 数据：来自 store
   const unit = useLearningStore((s) => s.unitDetail)
+  const projected = Boolean((unit as { __offlineProjection?: boolean } | null)?.__offlineProjection)
   const loading = useLearningStore((s) => s.unitDetailLoading)
   const fetchUnitDetail = useLearningStore((s) => s.fetchUnitDetail)
   const fetchDownloadedPacks = useLearningStore((s) => s.fetchDownloadedPacks)
@@ -57,6 +59,9 @@ export function LearningUnitPage() {
     pattern: pageFromSearchParams(searchParams, 'patternPage'),
   }))
   const [topicPage, setTopicPage] = useState(() => pageFromSearchParams(searchParams, 'practicePage'))
+  const [vocabRemote, setVocabRemote] = useState<{ items: VocabItem[]; total: number }>({ items: [], total: 0 })
+  const [chunkRemote, setChunkRemote] = useState<{ items: ChunkItem[]; total: number }>({ items: [], total: 0 })
+  const [patternRemote, setPatternRemote] = useState<{ items: SentencePattern[]; total: number }>({ items: [], total: 0 })
   const [teachingTopic, setTeachingTopic] = useState<TrainingTopicItem | null>(null)
   useEffectivePracticeTimer({
     enabled: Boolean(unitId && unit?.id === unitId),
@@ -102,6 +107,20 @@ export function LearningUnitPage() {
     fetchDownloadedPacks()
   }, [unitId, fetchUnitDetail, fetchDownloadedPacks])
 
+  useEffect(() => {
+    if (!projected || !unitId) return
+    const kind = activeTab === 'chunk' ? 'chunk' : activeTab === 'pattern' ? 'pattern' : 'vocab'
+    const page = prepPage[kind]
+    let cancelled = false
+    listContentPage({ unitId, kind, page, pageSize: PREP_PAGE_SIZE }).then((result) => {
+      if (cancelled) return
+      if (kind === 'vocab') setVocabRemote(result as { items: VocabItem[]; total: number })
+      else if (kind === 'chunk') setChunkRemote(result as { items: ChunkItem[]; total: number })
+      else setPatternRemote(result as { items: SentencePattern[]; total: number })
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [activeTab, prepPage, projected, unitId])
+
   // 切 tab 时按需加载已收集状态
   const loadCollectedForTab = useCallback(async (tab: string) => {
     if (loadedTabs.current.has(tab)) return
@@ -119,10 +138,13 @@ export function LearningUnitPage() {
   // 知识点数据就绪时触发「加入学习库」引导（条件式分段，仅首次）
   useEffect(() => {
     if (!unit) return
-    const hasKnowledge =
-      unit.vocabularies.length > 0 ||
-      unit.chunks.length > 0 ||
-      (unit.sentencePatterns?.length ?? 0) > 0
+    const hasKnowledge = projected
+      ? (unit.vocabCount > 0 || unit.chunkCount > 0 || ((unit as { patternCount?: number }).patternCount ?? 0) > 0)
+      : (
+        unit.vocabularies.length > 0 ||
+        unit.chunks.length > 0 ||
+        (unit.sentencePatterns?.length ?? 0) > 0
+      )
     if (hasKnowledge) {
       useOnboardingStore.getState().tryStartSegment('unit-save-to-library')
     }
@@ -189,7 +211,7 @@ export function LearningUnitPage() {
   }, [pendingSave, t, unit?.title])
 
   const vocabDialogItems = useMemo<LearningInsightItem[]>(() =>
-    (unit?.vocabularies ?? []).map((v) => ({
+    (projected ? vocabRemote.items : (unit?.vocabularies ?? [])).map((v) => ({
       kind: 'word' as const,
       id: v.id,
       word: v.word,
@@ -205,10 +227,10 @@ export function LearningUnitPage() {
       description: v.description,
       difficulty: v.difficulty,
       sceneName: unit?.title,
-    })), [unit])
+    })), [projected, unit, vocabRemote.items])
 
   const chunkDialogItems = useMemo<LearningInsightItem[]>(() =>
-    (unit?.chunks ?? []).map((c) => ({
+    (projected ? chunkRemote.items : (unit?.chunks ?? [])).map((c) => ({
       kind: 'chunk' as const,
       id: c.id,
       text: c.text,
@@ -216,12 +238,12 @@ export function LearningUnitPage() {
       description: c.description,
       examples: c.examples,
       sceneName: unit?.title,
-    })), [unit])
+    })), [chunkRemote.items, projected, unit])
 
   const allVocabCount = vocabDialogItems.length
   const allChunkCount = chunkDialogItems.length
   const patternDialogItems = useMemo<LearningInsightItem[]>(() =>
-    (unit?.sentencePatterns ?? []).map((p, index) => ({
+    (projected ? patternRemote.items : (unit?.sentencePatterns ?? [])).map((p, index) => ({
       kind: 'pattern' as const,
       // 句型库对象本身有稳定 id；旧下载包没有时才回退到 topic/index。
       id: p.id ?? `${p.topicId}-${index}`,
@@ -234,7 +256,7 @@ export function LearningUnitPage() {
       examples: p.examples,
       difficulty: p.difficulty,
       sceneName: unit?.title,
-    })), [unit])
+    })), [patternRemote.items, projected, unit])
 
   const currentDialogItems = useMemo(() => {
     if (dialogKind === 'chunk') return chunkDialogItems
@@ -264,23 +286,37 @@ export function LearningUnitPage() {
     }
   }, [activeTab, loadCollectedForTab])
 
+  const remotePage = <T,>(items: T[], total: number, page: number) => {
+    const totalPages = Math.max(1, Math.ceil(total / PREP_PAGE_SIZE))
+    const currentPage = Math.min(Math.max(page, 1), totalPages)
+    return { items, startIndex: (currentPage - 1) * PREP_PAGE_SIZE, totalPages }
+  }
   const vocabPageItems = useMemo(
-    () => paginateItems(unit?.vocabularies ?? [], prepPage.vocab, PREP_PAGE_SIZE),
-    [prepPage.vocab, unit?.vocabularies],
+    () => projected
+      ? remotePage(vocabRemote.items, vocabRemote.total || unit?.vocabCount || 0, prepPage.vocab)
+      : paginateItems(unit?.vocabularies ?? [], prepPage.vocab, PREP_PAGE_SIZE),
+    [prepPage.vocab, projected, unit?.vocabCount, unit?.vocabularies, vocabRemote.items, vocabRemote.total],
   )
   const chunkPageItems = useMemo(
-    () => paginateItems(unit?.chunks ?? [], prepPage.chunk, PREP_PAGE_SIZE),
-    [prepPage.chunk, unit?.chunks],
+    () => projected
+      ? remotePage(chunkRemote.items, chunkRemote.total || unit?.chunkCount || 0, prepPage.chunk)
+      : paginateItems(unit?.chunks ?? [], prepPage.chunk, PREP_PAGE_SIZE),
+    [chunkRemote.items, chunkRemote.total, prepPage.chunk, projected, unit?.chunkCount, unit?.chunks],
   )
   const patternPageItems = useMemo(
-    () => paginateItems(unit?.sentencePatterns ?? [], prepPage.pattern, PREP_PAGE_SIZE),
-    [prepPage.pattern, unit?.sentencePatterns],
+    () => projected
+      ? remotePage(patternRemote.items, patternRemote.total || (unit as { patternCount?: number } | null)?.patternCount || 0, prepPage.pattern)
+      : paginateItems(unit?.sentencePatterns ?? [], prepPage.pattern, PREP_PAGE_SIZE),
+    [patternRemote.items, patternRemote.total, prepPage.pattern, projected, unit],
   )
+  const vocabTotal = projected ? (vocabRemote.total || unit?.vocabCount || 0) : (unit?.vocabularies.length ?? 0)
+  const chunkTotal = projected ? (chunkRemote.total || unit?.chunkCount || 0) : (unit?.chunks.length ?? 0)
+  const patternTotal = projected ? (patternRemote.total || (unit as { patternCount?: number } | null)?.patternCount || 0) : (unit?.sentencePatterns?.length ?? 0)
   const currentKnowledgeTabCount = activeTab === 'vocab'
-    ? (unit?.vocabularies.length ?? 0)
+    ? vocabTotal
     : activeTab === 'chunk'
-      ? (unit?.chunks.length ?? 0)
-      : (unit?.sentencePatterns?.length ?? 0)
+      ? chunkTotal
+      : patternTotal
   const topicPageItems = useMemo(
     () => paginateItems(unit?.trainingTopics ?? [], topicPage, TOPIC_PAGE_SIZE),
     [topicPage, unit?.trainingTopics],
@@ -397,7 +433,7 @@ export function LearningUnitPage() {
           eyebrow="2"
           title={t('learning.knowledgePoints')}
           subtitle={collapsedSections.has('knowledge') ? undefined : t('learning.knowledgeSubtitle')}
-          meta={`${allVocabCount + allChunkCount + patternDialogItems.length}${t('learning.items')}`}
+          meta={`${vocabTotal + chunkTotal + patternTotal}${t('learning.items')}`}
           collapsible
           collapsed={collapsedSections.has('knowledge')}
           onToggle={() => toggleSection('knowledge')}
@@ -406,27 +442,27 @@ export function LearningUnitPage() {
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3" data-mobile-route-swipe>
           <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
             <TabsTrigger value="vocab" className="gap-1.5 rounded-md text-xs">
-              <BookText className="size-3.5" /> {t('learning.vocab')} {allVocabCount}
+              <BookText className="size-3.5" /> {t('learning.vocab')} {vocabTotal}
             </TabsTrigger>
             <TabsTrigger value="chunk" className="gap-1.5 rounded-md text-xs">
-              <MessageSquareText className="size-3.5" /> {t('learning.coreChunks')} {allChunkCount}
+              <MessageSquareText className="size-3.5" /> {t('learning.coreChunks')} {chunkTotal}
             </TabsTrigger>
             <TabsTrigger value="pattern" className="gap-1.5 rounded-md text-xs">
-              <Search className="size-3.5" /> {t('learning.patterns')} {patternDialogItems.length}
+              <Search className="size-3.5" /> {t('learning.patterns')} {patternTotal}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="vocab" className="mt-0 space-y-2" data-mobile-gesture-allow>
-            {unit.vocabularies.length > 0 ? (
+            {vocabTotal > 0 ? (
               <>
-                {(collapsedSections.has('knowledge') ? unit.vocabularies.slice(0, 2) : vocabPageItems.items).map((vocab, index) => (
+                {(collapsedSections.has('knowledge') ? (projected ? vocabPageItems.items : unit.vocabularies).slice(0, 2) : vocabPageItems.items).map((vocab, index) => (
                   <VocabPrepCard
                     key={vocab.id}
                     vocab={vocab}
                     collected={collectedTexts.has(vocab.word)}
                     expanded={expandedItemId === vocab.id}
                     onToggle={() => handleItemClick(vocab.id)}
-                    onOpen={() => openDialog('vocab', collapsedSections.has('knowledge') ? unit.vocabularies.indexOf(vocab) : vocabPageItems.startIndex + index)}
+                    onOpen={() => openDialog('vocab', projected ? index : (collapsedSections.has('knowledge') ? unit.vocabularies.indexOf(vocab) : vocabPageItems.startIndex + index))}
                     onCollect={() => handleCollectWord(vocab)}
                     {...(index === 0 ? { 'data-spotlight': 'first-vocab-card' as any } : {})}
                   />
@@ -435,7 +471,7 @@ export function LearningUnitPage() {
                 <PrepPager
                   currentPage={prepPage.vocab}
                   totalPages={vocabPageItems.totalPages}
-                  totalItems={unit.vocabularies.length}
+                  totalItems={vocabTotal}
                   onPageChange={(page) => changePrepPage('vocab', page)}
                 />
                 )}
@@ -446,16 +482,16 @@ export function LearningUnitPage() {
           </TabsContent>
 
           <TabsContent value="chunk" className="mt-0 space-y-2" data-mobile-gesture-allow>
-            {unit.chunks.length > 0 ? (
+            {chunkTotal > 0 ? (
               <>
-                {(collapsedSections.has('knowledge') ? unit.chunks.slice(0, 2) : chunkPageItems.items).map((chunk, index) => (
+                {(collapsedSections.has('knowledge') ? (projected ? chunkPageItems.items : unit.chunks).slice(0, 2) : chunkPageItems.items).map((chunk, index) => (
                   <ChunkPrepCard
                     key={chunk.id}
                     chunk={chunk}
                     collected={collectedTexts.has(chunk.text)}
                     expanded={expandedItemId === chunk.id}
                     onToggle={() => handleItemClick(chunk.id)}
-                    onOpen={() => openDialog('chunk', collapsedSections.has('knowledge') ? unit.chunks.indexOf(chunk) : chunkPageItems.startIndex + index)}
+                    onOpen={() => openDialog('chunk', projected ? index : (collapsedSections.has('knowledge') ? unit.chunks.indexOf(chunk) : chunkPageItems.startIndex + index))}
                     onCollect={() => handleCollectChunk(chunk)}
                   />
                 ))}
@@ -463,7 +499,7 @@ export function LearningUnitPage() {
                 <PrepPager
                   currentPage={prepPage.chunk}
                   totalPages={chunkPageItems.totalPages}
-                  totalItems={unit.chunks.length}
+                  totalItems={chunkTotal}
                   onPageChange={(page) => changePrepPage('chunk', page)}
                 />
                 )}
@@ -474,10 +510,10 @@ export function LearningUnitPage() {
           </TabsContent>
 
           <TabsContent value="pattern" className="mt-0 space-y-2" data-mobile-gesture-allow>
-            {unit.sentencePatterns.length > 0 ? (
+            {patternTotal > 0 ? (
               <>
-                {(collapsedSections.has('knowledge') ? unit.sentencePatterns.slice(0, 2) : patternPageItems.items).map((pattern, index) => {
-                  const absoluteIndex = collapsedSections.has('knowledge') ? unit.sentencePatterns!.indexOf(pattern) : patternPageItems.startIndex + index
+                {(collapsedSections.has('knowledge') ? (projected ? patternPageItems.items : unit.sentencePatterns).slice(0, 2) : patternPageItems.items).map((pattern, index) => {
+                  const absoluteIndex = projected ? index : (collapsedSections.has('knowledge') ? unit.sentencePatterns!.indexOf(pattern) : patternPageItems.startIndex + index)
                   const key = `${pattern.topicId}-${absoluteIndex}`
                   return (
                     <PatternPrepCard
@@ -495,7 +531,7 @@ export function LearningUnitPage() {
                 <PrepPager
                   currentPage={prepPage.pattern}
                   totalPages={patternPageItems.totalPages}
-                  totalItems={unit.sentencePatterns.length}
+                  totalItems={patternTotal}
                   onPageChange={(page) => changePrepPage('pattern', page)}
                 />
                 )}

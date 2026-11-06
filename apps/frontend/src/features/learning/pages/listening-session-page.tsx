@@ -19,6 +19,7 @@ import { useLayoutStore } from '@/stores/layout.store'
 import { useLearningStore } from '@/stores/learning.store'
 import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
+import { useTopicDocument } from '../hooks/use-topic-document'
 import { learningApi, type ListeningTranscriptSegment, type TrainingTopicItem } from '../api/learning-api'
 
 type ListeningPhase = 'prepare' | 'listen'
@@ -46,7 +47,8 @@ export function ListeningSessionPage() {
     return () => setImmersiveMode(false)
   }, [phase, setImmersiveMode])
 
-  const topic = useMemo(() => unit?.trainingTopics.find((item) => item.id === topicId) ?? null, [topicId, unit?.trainingTopics])
+  const baseTopic = useMemo(() => unit?.trainingTopics.find((item) => item.id === topicId) ?? null, [topicId, unit?.trainingTopics])
+  const topic = useTopicDocument(baseTopic)
   const { touch: touchListeningTimer } = useEffectivePracticeTimer({
     enabled: Boolean(unitId && topic && unit?.contentMode === 'listening'),
     sourceId: topicId ? `learning-listening:${topicId}` : null,

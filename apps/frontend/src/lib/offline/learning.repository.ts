@@ -12,6 +12,7 @@ import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
 import { ApiRequestError } from '@/lib/request'
 import { buildWarmupPracticeItemIds } from './warmup-practice-item-id'
+import { ensurePackProjection, readUnitScene, readUnitShell, readUnitSummary } from './learning-pack-read-model'
 
 type LocalDailyPracticeProgress = {
   itemId: string
@@ -201,6 +202,10 @@ function summaryToMyUnit(unit: LearningUnitSummary | UnitDetail): MyUnit {
 
 function hasTrackableTasksInDownloadedPack(unit: UnitDetail): boolean {
   if (unit.contentMode === 'novel') return true
+  const projected = unit as UnitDetail & { __offlineProjection?: boolean; hasActivityTasks?: boolean; practiceItemCount?: number }
+  if (projected.__offlineProjection) {
+    return Boolean(projected.hasActivityTasks) || (projected.practiceItemCount ?? 0) > 0
+  }
   if (unit.trainingTopics.some((topic) => topic.activityType && topic.activityType !== 'practice')) return true
   return buildWarmupPracticeItemIds(unit.id, unit.trainingTopics).length > 0
 }
@@ -229,24 +234,21 @@ async function mergeLocalPracticeProgress(units: MyUnit[]): Promise<MyUnit[]> {
     // A plan response deliberately contains no exercise pipeline. For every
     // installed package, both numerator and denominator must be calculated
     // from this exact SQLite package version, never from current server edits.
-    const cachedUnit = await isPackInstalled(unit.id)
-      ? await localDb.get<any>('downloaded_unit_details', unit.id)
-      : null
-    if (!cachedUnit) return unit
+    const summary = await isPackInstalled(unit.id) ? await readUnitSummary(unit.id) : null
+    if (!summary) {
+      if (await isPackInstalled(unit.id)) void ensurePackProjection(unit.id).catch(() => {})
+      return unit
+    }
 
-    const localUnit = await aggregateUnitContent(cachedUnit)
-    const itemIds = buildWarmupPracticeItemIds(unit.id, localUnit.trainingTopics ?? [])
+    const itemIds = summary.practiceItemIds ?? []
     const localCounts = {
-      vocabCount: localUnit.vocabularies?.length ?? unit.vocabCount,
-      chunkCount: localUnit.chunks?.length ?? unit.chunkCount,
-      topicCount: localUnit.trainingTopics?.length ?? unit.topicCount,
+      vocabCount: summary.vocabCount ?? unit.vocabCount,
+      chunkCount: summary.chunkCount ?? unit.chunkCount,
+      topicCount: summary.topicCount ?? unit.topicCount,
     }
     if (itemIds.length === 0) {
-      const hasActivityTask = (localUnit.trainingTopics ?? [])
-        .some((topic: any) => topic.activityType && topic.activityType !== 'practice')
-      if (localUnit.contentMode === 'novel' || hasActivityTask) return { ...unit, ...localCounts }
-      const teachingTopics = (localUnit.trainingTopics ?? [])
-        .filter((topic: any) => typeof topic.teachingMarkdown === 'string' && topic.teachingMarkdown.trim())
+      if (summary.contentMode === 'novel' || summary.hasActivityTasks) return { ...unit, ...localCounts }
+      const teachingTopics = (summary.teachingTopicIds ?? []).map((id: string) => ({ id }))
       if (teachingTopics.length > 0) {
         const completed = teachingTopics.filter((topic: any) =>
           (teachingProgressByTopic.get(topic.id) ?? 0) > 90,
@@ -364,6 +366,14 @@ export const learningRepository = {
 
   async getCachedUnitDetail(unitId: string): Promise<UnitDetail | null> {
     if (!await isPackInstalled(unitId)) return null
+    const projected = await readUnitShell(unitId)
+    if (projected) return projected
+    const migrated = await ensurePackProjection(unitId)
+    if (migrated) {
+      const shell = await readUnitShell(unitId)
+      if (shell) return shell
+    }
+    if (import.meta.env.DEV) console.warn('[offline] reading legacy aggregated unit row', unitId)
     const cached = await localDb.get<any>('downloaded_unit_details', unitId)
     return cached ? aggregateUnitContent(cached) : null
   },
@@ -371,9 +381,13 @@ export const learningRepository = {
   /** 已安装包优先本地播放；旧包缺章节 Ink 时才回退线上。 */
   async getStoryEpisodePlayer(packageId: string | null | undefined, episodeId: string): Promise<StoryEpisodePlayerData> {
     if (packageId && await isPackInstalled(packageId)) {
-      const unit = await this.getCachedUnitDetail(packageId)
-      const localPlayer = unit?.offlineStoryEpisodePlayers?.find((item) => item.episode.id === episodeId)
+      const scene = await readUnitScene(packageId)
+      const players = scene?.offlineStoryEpisodePlayers ?? []
+      const localPlayer = players.find((item: StoryEpisodePlayerData) => item.episode.id === episodeId)
       if (localPlayer?.inkScript?.inkJson) return localPlayer
+      const unit = await this.getCachedUnitDetail(packageId)
+      const legacyPlayer = unit?.offlineStoryEpisodePlayers?.find((item) => item.episode.id === episodeId)
+      if (legacyPlayer?.inkScript?.inkJson) return legacyPlayer
     }
     return learningApi.getStoryEpisodePlayer(episodeId)
   },
@@ -425,7 +439,8 @@ export const learningRepository = {
       throw new Error('该学习包包含可追踪任务，不能手动标记完成')
     }
     const teachingTopics = downloadedUnit.trainingTopics.filter((topic) =>
-      typeof topic.teachingMarkdown === 'string' && topic.teachingMarkdown.trim())
+      Boolean((topic as { hasTeachingDocument?: boolean }).hasTeachingDocument)
+      || (typeof topic.teachingMarkdown === 'string' && topic.teachingMarkdown.trim()))
     if (teachingTopics.length > 0) {
       const readingRecords = await localDb.list<LocalTeachingReadingProgress>('user_progress').catch(() => [])
       const progressByTopic = new Map(readingRecords

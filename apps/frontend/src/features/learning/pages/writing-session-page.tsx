@@ -29,6 +29,7 @@ import { AssessmentAnswerInput } from '@/features/profile/components/placement-a
 import { resolveFileAssetUrl } from '@/lib/file-asset-reference'
 import { useKeyboard } from '@/providers/keyboard-provider'
 import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
+import { useTopicDocument } from '../hooks/use-topic-document'
 
 type WritingPhase = 'prepare' | 'write'
 
@@ -74,10 +75,11 @@ export function WritingSessionPage() {
     return () => setImmersiveMode(false)
   }, [phase, setImmersiveMode])
 
-  const topic = useMemo(
+  const baseTopic = useMemo(
     () => unit?.trainingTopics.find((item) => item.id === topicId) ?? null,
     [topicId, unit?.trainingTopics],
   )
+  const topic = useTopicDocument(baseTopic)
   useEffectivePracticeTimer({
     enabled: Boolean(unitId && topic && unit?.contentMode === 'writing'),
     sourceId: topicId ? `learning-writing:${topicId}` : null,

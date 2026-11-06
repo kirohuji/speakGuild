@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { BookOpen, CheckCircle2, ChevronRight } from 'lucide-react'
@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { PrepPager } from '@/features/practice/components/prep-pager'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
 import { paginateItems } from '@/features/practice/lib/practice-session-utils'
+import { readTopicTeaching } from '@/lib/offline/learning-pack-read-model'
 import { type TrainingTopicItem, type UnitDetail } from '../api/learning-api'
 
 const PROGRESS_KEY = (unitId: string) => `manyu:novel-progress:${unitId}`
@@ -24,6 +25,21 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [topicPage, setTopicPage] = useState(() => pageFromSearchParams(searchParams, 'contentPage'))
   const [teachingTopic, setTeachingTopic] = useState<TrainingTopicItem | null>(null)
+  const [teachingMarkdown, setTeachingMarkdown] = useState('')
+
+  useEffect(() => {
+    if (!teachingTopic) {
+      setTeachingMarkdown('')
+      return
+    }
+    let cancelled = false
+    readTopicTeaching(teachingTopic.id).then((document) => {
+      if (!cancelled) setTeachingMarkdown(document?.teachingMarkdown?.trim() || teachingTopic.teachingMarkdown?.trim() || '')
+    }).catch(() => {
+      if (!cancelled) setTeachingMarkdown(teachingTopic.teachingMarkdown?.trim() || '')
+    })
+    return () => { cancelled = true }
+  }, [teachingTopic])
 
   const changeTopicPage = (page: number) => {
     setTopicPage(page)
@@ -74,12 +90,12 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
                       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-sm font-semibold shadow-sm">{absoluteIndex + 1}</span>
                       <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{topic.title}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{topic.promptZh || topic.promptEn}</span></span>
                       {(topic.latestSubmission?.status === 'reviewed' || topic.latestSubmission?.status === 'completed') && <CheckCircle2 className="size-4 text-emerald-600" />}
-                      {topic.teachingMarkdown?.trim() && <span className="size-8 shrink-0" aria-hidden="true" />}
+                      {(topic.hasTeachingDocument || topic.teachingMarkdown?.trim()) && <span className="size-8 shrink-0" aria-hidden="true" />}
                       <ChevronRight className="size-4 text-muted-foreground" />
                     </CardContent>
                   </Card>
                 </button>
-                {topic.teachingMarkdown?.trim() && (
+                {(topic.hasTeachingDocument || topic.teachingMarkdown?.trim()) && (
                   <Button
                     type="button"
                     variant="ghost"
@@ -113,7 +129,7 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
         hideToggles
         unitId={unit.id}
         topicId={teachingTopic?.id}
-        teachingMarkdown={teachingTopic?.teachingMarkdown?.trim() || ''}
+        teachingMarkdown={teachingMarkdown}
       />
     </>
   )

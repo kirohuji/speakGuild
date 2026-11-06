@@ -14,6 +14,7 @@
  * from '@/lib/offline' instead of importing localDb directly.
  */
 import type { TableName } from './sqlite/schema'
+import type { PageFilter, PageQuery } from './sqlite/sqlite-json-store'
 import { Capacitor } from '@capacitor/core'
 
 // ── Storage interface (shared by all backends) ──────────
@@ -27,6 +28,15 @@ export interface ILocalDb {
   findByIndex<T>(storeName: TableName, columnName: string, value: string | number | null): Promise<T[]>
   findByIndexIn<T>(storeName: TableName, columnName: string, values: Array<string | number>): Promise<T[]>
   count(storeName: TableName): Promise<number>
+  listPage<T>(storeName: TableName, query: PageQuery): Promise<T[]>
+  countWhere(storeName: TableName, filters?: PageFilter[]): Promise<number>
+  listContentRefPage(params: {
+    packId?: string
+    topicId?: string
+    kind: 'vocab' | 'chunk' | 'pattern'
+    limit: number
+    offset?: number
+  }): Promise<{ contentIds: string[]; total: number }>
   clear(storeName: TableName): Promise<void>
   deleteByIndex(storeName: TableName, columnName: string, value: string | number | null): Promise<void>
   deleteWhere<T>(storeName: TableName, predicate: (value: T & { id: string }) => boolean): Promise<void>
@@ -120,6 +130,18 @@ export const localDb: ILocalDb = {
 
   async count(storeName: TableName): Promise<number> {
     return (await getBackend()).count(storeName)
+  },
+
+  async listPage<T>(storeName: TableName, query: PageQuery): Promise<T[]> {
+    return (await getBackend()).listPage<T>(storeName, query)
+  },
+
+  async countWhere(storeName: TableName, filters: PageFilter[] = []): Promise<number> {
+    return (await getBackend()).countWhere(storeName, filters)
+  },
+
+  async listContentRefPage(params) {
+    return (await getBackend()).listContentRefPage(params)
   },
 
   async clear(storeName: TableName): Promise<void> {

@@ -9,7 +9,7 @@
  */
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite'
 import { Capacitor } from '@capacitor/core'
-import { DB_NAME, DB_VERSION, ALL_DDL, INDEXES } from './schema'
+import { DB_NAME, DB_VERSION, initializeOfflineSchema } from './schema'
 import { createSqliteJsonStore } from './sqlite-json-store'
 
 let dbPromise: Promise<SQLiteDBConnection> | null = null
@@ -106,10 +106,7 @@ function resetConnectionState() {
 }
 
 async function initializeSchema(db: SQLiteDBConnection): Promise<void> {
-  await db.execute(ALL_DDL)
-  for (const idx of INDEXES) {
-    try { await db.execute(idx) } catch { /* index may already exist */ }
-  }
+  await initializeOfflineSchema((sql) => db.execute(sql))
 }
 
 /** Ensure the database is open and ready. */

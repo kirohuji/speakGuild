@@ -11,16 +11,15 @@
  * repository code still works with one object shape while SQLite keeps indexes
  * over real columns instead of json_extract(data, ...).
  *
- * We intentionally do not carry schema migrations here. Offline data is cache
- * or replayable sync state, and local database resets are the supported way to
- * move between incompatible cache schemas during development.
+ * Additive columns are applied with idempotent ALTER statements. Existing
+ * downloaded packs stay on disk; a reset is not required to add a column.
  *
  * Binary resource data is not stored in SQLite.
  */
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 12
+export const DB_VERSION = 13
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -90,6 +89,8 @@ export const DDL: Record<TableName, string> = {
       id TEXT PRIMARY KEY NOT NULL,
       unit_id TEXT,
       topic_id TEXT,
+      row_kind TEXT,
+      sort_order INTEGER,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -179,6 +180,7 @@ export const DDL: Record<TableName, string> = {
       pack_id TEXT,
       unit_id TEXT,
       topic_id TEXT,
+      sort_order INTEGER,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -207,6 +209,7 @@ export const DDL: Record<TableName, string> = {
       scene_id TEXT,
       status TEXT,
       sync_status TEXT,
+      practiced_at TEXT,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -378,6 +381,39 @@ export const DDL: Record<TableName, string> = {
 /** All CREATE TABLE statements as a single batch. */
 export const ALL_DDL = Object.values(DDL).join(';\n') + ';'
 
+/**
+ * Columns added after the original CREATE TABLE. CREATE TABLE IF NOT EXISTS
+ * does not alter an existing table, so these statements run on every open.
+ */
+export const COLUMN_MIGRATIONS = [
+  `ALTER TABLE downloaded_unit_details ADD COLUMN row_kind TEXT`,
+  `ALTER TABLE downloaded_unit_details ADD COLUMN sort_order INTEGER`,
+  `ALTER TABLE offline_content_refs ADD COLUMN sort_order INTEGER`,
+  `ALTER TABLE practice_records ADD COLUMN practiced_at TEXT`,
+]
+
+export function isDuplicateColumnError(error: unknown) {
+  const message = (error instanceof Error ? error.message : String(error)).toLowerCase()
+  return message.includes('duplicate column') || message.includes('already exists')
+}
+
+export async function initializeOfflineSchema(execute: (sql: string) => Promise<unknown>) {
+  await execute(ALL_DDL)
+  for (const sql of COLUMN_MIGRATIONS) {
+    try {
+      await execute(sql)
+    } catch (error) {
+      if (!isDuplicateColumnError(error)) throw error
+    }
+  }
+  for (const idx of INDEXES) {
+    try { await execute(idx) } catch { /* index may already exist */ }
+  }
+  try {
+    await execute(`UPDATE practice_records SET practiced_at = updated_at WHERE practiced_at IS NULL`)
+  } catch { /* practiced_at is absent only if the alter failed */ }
+}
+
 /** Indexes for commonly queried fields. */
 export const INDEXES = [
   // downloaded_packs: fast installed/missing checks and maintenance.
@@ -385,6 +421,7 @@ export const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_downloaded_packs_status ON downloaded_packs (status)`,
   `CREATE INDEX IF NOT EXISTS idx_downloaded_unit_details_unit_id ON downloaded_unit_details (unit_id)`,
   `CREATE INDEX IF NOT EXISTS idx_downloaded_unit_details_topic_id ON downloaded_unit_details (topic_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_downloaded_unit_details_unit_kind_order ON downloaded_unit_details (unit_id, row_kind, sort_order, id)`,
   `CREATE INDEX IF NOT EXISTS idx_ink_scripts_unit_id ON ink_scripts (unit_id)`,
   `CREATE INDEX IF NOT EXISTS idx_ink_scripts_topic_id ON ink_scripts (topic_id)`,
   // expression_entries: filter by kind or remote id.
@@ -404,6 +441,9 @@ export const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_offline_content_refs_kind_id ON offline_content_refs (content_kind, content_id)`,
   `CREATE INDEX IF NOT EXISTS idx_offline_content_refs_pack ON offline_content_refs (pack_id)`,
   `CREATE INDEX IF NOT EXISTS idx_offline_content_refs_topic ON offline_content_refs (topic_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_offline_content_refs_pack_kind_order ON offline_content_refs (pack_id, content_kind, sort_order, content_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_offline_content_refs_topic_kind_order ON offline_content_refs (topic_id, content_kind, sort_order, content_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_practice_records_practiced_at ON practice_records (practiced_at, id)`,
   `CREATE INDEX IF NOT EXISTS idx_asset_refs_sha256 ON asset_refs (sha256)`,
   `CREATE INDEX IF NOT EXISTS idx_asset_refs_pack_id ON asset_refs (pack_id)`,
   `CREATE INDEX IF NOT EXISTS idx_pack_events_pack_id ON pack_events (pack_id)`,

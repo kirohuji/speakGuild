@@ -6,7 +6,7 @@
  */
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite'
 import { defineCustomElements } from 'jeep-sqlite/loader'
-import { DB_NAME, DB_VERSION, ALL_DDL, INDEXES } from './schema'
+import { DB_NAME, DB_VERSION, initializeOfflineSchema } from './schema'
 import { createSqliteJsonStore } from './sqlite-json-store'
 
 const JEEP_SQLITE_TAG = 'jeep-sqlite'
@@ -137,10 +137,7 @@ function resetConnectionState() {
 }
 
 async function initializeSchema(db: SQLiteDBConnection): Promise<void> {
-  await db.execute(ALL_DDL)
-  for (const idx of INDEXES) {
-    try { await db.execute(idx) } catch { /* index may already exist */ }
-  }
+  await initializeOfflineSchema((sql) => db.execute(sql))
   await getSqliteConnection().saveToStore(DB_NAME)
 }
 
