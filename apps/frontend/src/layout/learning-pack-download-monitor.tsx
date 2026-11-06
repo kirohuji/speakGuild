@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AlertCircle, Ban, ChevronDown, DownloadCloud, Film, ListChecks, Loader2, PackageOpen, Pause, RotateCcw, Trash2, X } from 'lucide-react'
+import { AlertCircle, Ban, ChevronDown, DownloadCloud, Film, ListChecks, Loader2, PackageOpen, Pause, Play, RotateCcw, Trash2, X } from 'lucide-react'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -291,10 +291,13 @@ export function LearningPackDownloadDrawer({
                             <span className="tabular-nums">{t('learning.packTaskRemaining', { count: Math.max(0, task.total - task.current) })}</span>
                           )}
                         </div>
-                        <code className="block rounded-md bg-muted px-2 py-1.5 font-mono text-[11px] text-foreground">
+                        <code
+                          title={task.kind === 'uninstall' ? undefined : (task.currentItem ?? undefined)}
+                          className="block truncate rounded-md bg-muted px-2 py-1.5 font-mono text-[11px] text-foreground"
+                        >
                           {task.kind === 'uninstall' ? (task.stepLabel || task.step || t('learning.packTaskWaiting')) : (compactPath(task.currentItem) || task.step || t('learning.packTaskWaiting'))}
                         </code>
-                        {task.status === 'paused' && (
+                        {task.kind === 'uninstall' && task.status === 'paused' && (
                           <Button
                             type="button"
                             size="sm"
@@ -302,7 +305,7 @@ export function LearningPackDownloadDrawer({
                             className="mt-1 h-8 w-full rounded-full text-xs"
                             onClick={() => void resumePackTask(task.packId)}
                           >
-                            {task.kind === 'uninstall' ? t('learning.resumeUninstall') : t('learning.resumeDownload')}
+                            {t('learning.resumeUninstall')}
                           </Button>
                         )}
                         {task.kind !== 'uninstall' && (task.status === 'queued' || task.status === 'downloading' || task.status === 'extracting') && (
@@ -316,9 +319,14 @@ export function LearningPackDownloadDrawer({
                           </div>
                         )}
                         {task.kind !== 'uninstall' && task.status === 'paused' && (
-                          <Button type="button" size="sm" variant="ghost" className="h-8 w-full gap-1.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => cancelPackTask(task.packId)}>
-                            <Ban className="size-3.5" />{t('learning.terminateDownload')}
-                          </Button>
+                          <div className="grid grid-cols-2 gap-2 pt-1">
+                            <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => void resumePackTask(task.packId)}>
+                              <Play className="size-3.5" />{t('learning.resumeDownload')}
+                            </Button>
+                            <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5 border-destructive/30 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => cancelPackTask(task.packId)}>
+                              <Ban className="size-3.5" />{t('learning.terminateDownload')}
+                            </Button>
+                          </div>
                         )}
                       </div>
                     )}

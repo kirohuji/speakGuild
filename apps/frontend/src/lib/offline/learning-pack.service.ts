@@ -704,10 +704,10 @@ export const learningPackService = {
       logger.info(`asset_refs 预加载: ${refsBySha256.size} 条`)
 
       // ── 阶段 A：并行读取 ZIP + 计算 SHA-256（CPU 密集型，可并行）──
-      // Keep both decompression buffers and native file writes bounded. A pack
-      // can contain large audio files, so retaining every buffer until the end
-      // can easily terminate the mobile WebView under memory pressure.
-      const ASSET_CONCURRENCY = 2
+      // Keep the proven iOS limit to protect WKWebView memory. Desktop browsers
+      // have more headroom and benefit from a wider batch when a pack contains
+      // thousands of small audio assets.
+      const ASSET_CONCURRENCY = Capacitor.isNativePlatform() ? 2 : 20
       const assetTasks: Array<{
         asset: any
         entry: ReturnType<typeof entries.get>
@@ -879,11 +879,13 @@ export const learningPackService = {
         await localDb.putMany('asset_refs', assetRefsToWrite)
       }
 
-      // Several semantic references (thumbnail, sprite, Ink alias) can point
-      // at one ZIP entry/SHA. The file is written once above; now persist every
-      // reference alias so runtime lookup never depends on a signed URL.
+      // Newly staged files already persisted their aliases inside
+      // saveFromBufferWithSha256(). Only backfill aliases for references that
+      // reused an existing/same-SHA file; otherwise every fresh asset would
+      // repeat one lookup plus several SQLite upserts across the native bridge.
       await Promise.all(assetResults
         .filter((result): result is Extract<AssetResult, { ok: true }> => result.ok)
+        .filter((result) => !result.staged)
         .map((result) => assetCacheService.addAliases(result.sha256, {
           ...result.asset,
           sha256: result.sha256,
