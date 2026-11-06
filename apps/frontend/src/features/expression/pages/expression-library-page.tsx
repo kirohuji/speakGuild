@@ -958,10 +958,10 @@ export function ExpressionLibraryPage() {
         </TabsContent>
       </Tabs>
 
-      {selectionMode && <div className="fixed inset-x-4 bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] z-40 mx-auto flex max-w-2xl items-center gap-3 rounded-2xl border border-border/70 bg-background/95 px-3 py-2 shadow-[0_12px_32px_rgba(15,23,42,0.16)] backdrop-blur-xl">
+      {selectionMode && <div className="fixed inset-x-4 bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] z-40 mx-auto flex max-w-2xl items-center gap-3 rounded-2xl border-0 bg-muted px-3 py-2 shadow-none">
         <button type="button" onClick={() => setSelectedIds(allVisibleSelected ? new Set() : new Set(result.items.map((item) => item.id)))} className="shrink-0 text-xs font-medium text-primary">{allVisibleSelected ? t('expressionLib.clearSelection') : t('expressionLib.selectAll')}</button>
         <span className="min-w-0 flex-1 truncate text-center text-xs text-muted-foreground">{t('expressionLib.selectedCount', { count: selectedIds.size })}</span>
-        <Button size="sm" className="h-9 shrink-0 rounded-xl px-3 text-xs" disabled={selectedIds.size === 0} onClick={() => void openBatch()}>{t('expressionLib.batchEdit')}</Button>
+        <Button size="sm" className="h-9 shrink-0 rounded-xl px-3 text-xs shadow-none hover:shadow-none active:shadow-none" disabled={selectedIds.size === 0} onClick={() => void openBatch()}>{t('expressionLib.batchEdit')}</Button>
       </div>}
 
       <Dialog open={exportOpen} onOpenChange={(open) => { setExportOpen(open); if (!open) setZoomPreviewPage(null) }}>
