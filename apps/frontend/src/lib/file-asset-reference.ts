@@ -32,6 +32,11 @@ export function parseFileAssetReference(value?: string | null): { assetId: strin
   }
 }
 
+/** File id from either a persisted asset:// reference or a resolved content URL. */
+export function fileAssetIdFromUrl(value?: string | null): string | null {
+  return parseFileAssetReference(value)?.assetId ?? parseFileAssetContentUrl(value)?.assetId ?? null
+}
+
 export function parseFileAssetContentUrl(value?: string | null): { assetId: string; suffix: string } | null {
   if (!value) return null
   try {

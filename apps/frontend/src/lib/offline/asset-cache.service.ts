@@ -19,6 +19,11 @@ export interface AssetRef {
   role?: 'background' | 'sprite' | 'voice' | 'bgm' | 'sfx' | 'thumbnail' | string
   /** For an installed package, a cache miss must not silently issue a network request. */
   offlineOnly?: boolean
+  /**
+   * Native audio players cannot open the WebView `capacitor://` URL.
+   * They need the original `file://` URI.
+   */
+  asFileUri?: boolean
 }
 
 export interface LocalAsset {
@@ -49,6 +54,12 @@ function stableRemoteUrl(url: string) {
   } catch {
     return url
   }
+}
+
+export const OFFLINE_RESOURCE_MISSING = '__offline_resource_missing__'
+
+export function isCachedPlaybackUrl(url: string) {
+  return isLoadableLocalUrl(url)
 }
 
 function isLoadableLocalUrl(url: string) {
@@ -320,12 +331,13 @@ export const assetCacheService = {
               requestedUrl: url,
               localPath: cached.localPath,
             })
-            return '__offline_resource_missing__'
+            return OFFLINE_RESOURCE_MISSING
           }
           return this.download({ ...ref, url })
         }
       }
       await localDb.put('local_assets', { ...cached, lastAccessedAt: new Date().toISOString() })
+      if (ref.asFileUri) return cached.localUri
       return isNative() ? toLoadableUrl(cached.localUri) : cached.localUri
     }
 
@@ -339,7 +351,7 @@ export const assetCacheService = {
         requestedUrl: url,
         assetId: ref.assetId,
       })
-      return '__offline_resource_missing__'
+      return OFFLINE_RESOURCE_MISSING
     }
     console.warn('[offline-assets] resolve miss; downloading remote fallback', { key, requestedUrl: url, assetId: ref.assetId })
     return this.download({ ...ref, url })
@@ -400,7 +412,7 @@ export const assetCacheService = {
       await localDb.put<LocalAsset>('local_assets', record)
       await putAliases(record, ref, url)
 
-      return toLoadableUrl(uri.uri)
+      return ref.asFileUri ? uri.uri : toLoadableUrl(uri.uri)
     } catch (error) {
       await localDb.put<LocalAsset>('local_assets', {
         id: key,

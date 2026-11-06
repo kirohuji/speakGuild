@@ -1,9 +1,8 @@
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
 import { NativeAudio, type PlaybackStateEvent } from '@capgo/capacitor-native-audio'
 import { MediaSession, type MediaSessionAction } from '@capgo/capacitor-media-session'
-import { assetCacheService } from '@/lib/offline/asset-cache.service'
+import { resolvePlaybackAudio } from '@/lib/offline/playback-audio'
 import { isNative } from '@/lib/native'
-import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
 import { synthesizeAsset } from '@/lib/tts-api'
 import { usePreferencesStore } from '@/stores/preferences.store'
 import type { PlaybackSegment } from './immersive-player.types'
@@ -37,16 +36,11 @@ type MediaMetadataLabels = {
   album?: string
 }
 
-function normalizeUrl(url: string) {
-  return url.startsWith('//') ? `https:${url}` : url
-}
-
 async function resolveAudioUrl(segment: PlaybackSegment): Promise<string | null> {
+  // NativeAudio crashes on the WebView capacitor:// URL. It can only open file://.
+  const asFileUri = isNative()
   if (segment.audioUrl) {
-    const normalized = normalizeUrl(segment.audioUrl)
-    return isNative()
-      ? assetCacheService.resolve({ url: normalized, role: 'immersive_audio' })
-      : normalized
+    return resolvePlaybackAudio({ url: segment.audioUrl, role: 'immersive_audio', asFileUri })
   }
 
   const { ttsBackend } = usePreferencesStore.getState()
@@ -59,10 +53,12 @@ async function resolveAudioUrl(segment: PlaybackSegment): Promise<string | null>
     bizType: 'immersive_player',
     bizId: segment.id,
   })
-  const fresh = result.assetId ? await getFileAssetPrivateUrl(result.assetId).catch(() => ({ url: result.url })) : { url: result.url }
-  return isNative()
-    ? assetCacheService.resolve({ url: fresh.url, assetId: result.assetId, role: 'immersive_audio', mimeType: result.mimeType })
-    : fresh.url
+  return resolvePlaybackAudio({
+    url: result.url,
+    assetId: result.assetId,
+    role: 'immersive_audio',
+    asFileUri,
+  })
 }
 
 async function configureNativeAudio() {
