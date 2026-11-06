@@ -668,17 +668,32 @@ async function syncDocuments(prisma: PrismaClient, dryRun: boolean, force: boole
       : undefined
     const localHash = sha256(content)
     const databaseHash = sha256(topic.teachingMarkdown ?? '')
-    const learningLocalHash = learningContent === undefined ? undefined : sha256(learningContent)
+    // 学习配置按重新序列化后的文本比较。手写 YAML 的缩进和 js-yaml 从数据库导出的缩进不同，不能把这种字节差异当成数据库被改过。
+    const rawLearningHash = learningContent === undefined ? undefined : sha256(learningContent)
+    const learningLocalHash = learning ? sha256(documentWithLearningConfig(learning)) : undefined
     const learningDatabaseHash = databaseLearningContent === undefined ? undefined : sha256(databaseLearningContent)
+    const learningBaseline = document.exportedLearningSha256
+    // 旧清单里的 learning 哈希有的是导出时的规范 YAML，有的是某次 sync 写下的原文。
+    // 只有这个基准还能对上当前文件或当前数据库时，才说明数据库离开了上次记录。
+    const learningBaselineRecognized = learningBaseline !== undefined && (
+      learningBaseline === learningDatabaseHash
+      || learningBaseline === learningLocalHash
+      || learningBaseline === rawLearningHash
+    )
+    const learningDbChanged = Boolean(
+      learningDatabaseHash !== undefined
+      && learningBaseline !== undefined
+      && learningDatabaseHash !== learningBaseline
+      && learningBaselineRecognized,
+    )
     const localChanged = learningOnly
       ? learningLocalHash !== learningDatabaseHash
       : localHash !== databaseHash || (learningLocalHash !== undefined && learningLocalHash !== learningDatabaseHash)
-    const dbChanged = learningOnly
-      ? learningDatabaseHash !== undefined && document.exportedLearningSha256 !== undefined && learningDatabaseHash !== document.exportedLearningSha256
-      : databaseHash !== document.exportedSha256 || (learningDatabaseHash !== undefined && document.exportedLearningSha256 !== undefined && learningDatabaseHash !== document.exportedLearningSha256)
+    const teachingDbChanged = databaseHash !== document.exportedSha256 && localHash !== databaseHash
+    const dbChanged = learningOnly ? learningDbChanged : teachingDbChanged || learningDbChanged
     const localMatchesExport = learningOnly
-      ? learningLocalHash !== undefined && learningLocalHash === document.exportedLearningSha256
-      : localHash === document.exportedSha256 && (learningLocalHash === undefined || learningLocalHash === document.exportedLearningSha256)
+      ? learningLocalHash !== undefined && (learningLocalHash === learningBaseline || rawLearningHash === learningBaseline)
+      : localHash === document.exportedSha256 && (learningLocalHash === undefined || learningLocalHash === learningBaseline || rawLearningHash === learningBaseline)
     if (!localChanged) unchanged++
     else if (force || !dbChanged) changed.push({ ...document, content, learning, learningContent })
     else if (localMatchesExport) databaseChanged.push(document.path)
@@ -723,7 +738,7 @@ async function syncDocuments(prisma: PrismaClient, dryRun: boolean, force: boole
       )
       synced.push(document)
     }
-    const changedById = new Map(synced.map((document) => [document.topicId, { teaching: sha256(document.content), learning: document.learningContent ? sha256(document.learningContent) : undefined }]))
+    const changedById = new Map(synced.map((document) => [document.topicId, { teaching: sha256(document.content), learning: document.learning ? sha256(documentWithLearningConfig(document.learning)) : undefined }]))
     manifest.documents = manifest.documents.map((document) => ({
       ...document,
       exportedSha256: learningOnly ? document.exportedSha256 : changedById.get(document.topicId)?.teaching ?? document.exportedSha256,
