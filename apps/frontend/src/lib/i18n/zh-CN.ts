@@ -1833,6 +1833,8 @@ const zhCN = {
         times: '{{count}}次',
         infinite: '无限',
         speed: '{{value}}x',
+        playbackContent: '播放内容',
+        continuousPlayback: '连续播放',
         playMainText: '播放原文',
         playMeaning: '播放译文',
         playExample: '播放例句',

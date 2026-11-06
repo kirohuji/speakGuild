@@ -589,12 +589,20 @@ function ImmersiveSettingsDrawer({
                 onChange={(value) => onChange({ playbackRate: value as ImmersivePlaybackSettings['playbackRate'] })}
               />
             </OptionGroup>
-            <SwitchRow label={t('immersivePlayer.settings.playMainText')} checked={settings.playMainText} onChange={(value) => onChange({ playMainText: value })} />
-            <SwitchRow label={t('immersivePlayer.settings.playMeaning')} checked={settings.playMeaning} onChange={(value) => onChange({ playMeaning: value })} />
-            <SwitchRow label={t('immersivePlayer.settings.playExample')} checked={settings.playExample} onChange={(value) => onChange({ playExample: value })} />
-            <SwitchRow label={t('immersivePlayer.settings.playExampleTranslation')} checked={settings.playExampleTranslation} onChange={(value) => onChange({ playExampleTranslation: value })} />
-            <SwitchRow label={t('immersivePlayer.settings.autoNext')} checked={settings.autoNext} onChange={(value) => onChange({ autoNext: value })} />
-            <SwitchRow label={t('immersivePlayer.settings.loopQueue')} checked={settings.loopQueue} onChange={(value) => onChange({ loopQueue: value })} />
+            <OptionGroup label={t('immersivePlayer.settings.playbackContent')}>
+              <div className="overflow-hidden rounded-lg bg-muted/35">
+                <SwitchRow label={t('immersivePlayer.settings.playMainText')} checked={settings.playMainText} onChange={(value) => onChange({ playMainText: value })} />
+                <SwitchRow label={t('immersivePlayer.settings.playMeaning')} checked={settings.playMeaning} onChange={(value) => onChange({ playMeaning: value })} />
+                <SwitchRow label={t('immersivePlayer.settings.playExample')} checked={settings.playExample} onChange={(value) => onChange({ playExample: value })} />
+                <SwitchRow label={t('immersivePlayer.settings.playExampleTranslation')} checked={settings.playExampleTranslation} onChange={(value) => onChange({ playExampleTranslation: value })} />
+              </div>
+            </OptionGroup>
+            <OptionGroup label={t('immersivePlayer.settings.continuousPlayback')}>
+              <div className="overflow-hidden rounded-lg bg-muted/35">
+                <SwitchRow label={t('immersivePlayer.settings.autoNext')} checked={settings.autoNext} onChange={(value) => onChange({ autoNext: value })} />
+                <SwitchRow label={t('immersivePlayer.settings.loopQueue')} checked={settings.loopQueue} onChange={(value) => onChange({ loopQueue: value })} />
+              </div>
+            </OptionGroup>
           </div>
         </ScrollArea>
       </DrawerContent>
@@ -688,7 +696,7 @@ function SegmentedOptions<T extends string | number>({
           type="button"
           onClick={() => onChange(option.value)}
           aria-pressed={value === option.value}
-          className={cn('h-10 touch-manipulation rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', value === option.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground')}
+          className={cn('h-10 touch-manipulation rounded-md text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', value === option.value ? 'bg-background text-foreground' : 'text-muted-foreground')}
         >
           {option.label}
         </button>
@@ -699,7 +707,7 @@ function SegmentedOptions<T extends string | number>({
 
 function SwitchRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) {
   return (
-    <div className="flex items-center justify-between rounded-lg bg-muted/35 px-3 py-2.5">
+    <div className="flex items-center justify-between px-3 py-2.5">
       <span className="text-sm font-medium text-foreground">{label}</span>
       <Switch checked={checked} onCheckedChange={onChange} aria-label={label} />
     </div>

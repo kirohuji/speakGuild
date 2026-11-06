@@ -1831,6 +1831,8 @@ const ja = {
         times: '{{count}}回',
         infinite: '無限',
         speed: '{{value}}x',
+        playbackContent: '再生内容',
+        continuousPlayback: '連続再生',
         playMainText: '原文を再生',
         playMeaning: '訳文を再生',
         playExample: '例文を再生',

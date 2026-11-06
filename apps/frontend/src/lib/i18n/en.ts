@@ -1831,6 +1831,8 @@ const en = {
         times: '{{count}}x',
         infinite: '∞',
         speed: '{{value}}x',
+        playbackContent: 'Playback',
+        continuousPlayback: 'Continue',
         playMainText: 'Play text',
         playMeaning: 'Play meaning',
         playExample: 'Play example',
