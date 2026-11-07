@@ -369,7 +369,7 @@ function InProgressUnitCard({
               <span>{unit.chunkCount} {t('learning.chunks')}</span>
               <span>{unit.topicCount} {t('learning.topics')}</span>
             </div>
-            <div className={cn('mt-2 space-y-1.5', manualCompletionReady && 'pr-24')}>
+            <div className={cn('mt-2 space-y-1.5', manualCompletionReady && 'pr-20')}>
               <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                 <span>{isPackDownloaded ? completionProgressText(t, unit) : t('learning.packNeedsDownload')}</span>
                 <span className="font-semibold tabular-nums text-foreground/75">{pct}%</span>
@@ -427,7 +427,7 @@ function InProgressUnitCard({
         {manualCompletionReady && (
           <button
             type="button"
-            className="absolute bottom-2.5 right-2.5 inline-flex h-7 items-center gap-1 rounded-full bg-transparent px-2.5 text-[11px] font-medium text-foreground active:bg-muted disabled:opacity-50"
+            className="absolute bottom-1 right-2.5 inline-flex h-7 items-center gap-1 rounded-full bg-transparent pl-3.5 pr-2.5 text-[11px] font-medium text-foreground active:bg-muted disabled:opacity-50"
             disabled={markingComplete || isPackBusy || needsDownload || hasPackUpdate}
             onClick={handleManualComplete}
           >
