@@ -186,6 +186,14 @@ const COLUMN_EXTRACTORS: Partial<Record<TableName, ColumnExtractor[]>> = {
     ['logical_path', 'logicalPath', (value) => value?.logicalPath ?? null],
     ['ext', 'ext', (value) => value?.ext ?? null],
   ],
+  deferred_pack_assets: [
+    ['pack_id', 'packId', (value) => value?.packId ?? null],
+    ['lookup_key', 'lookupKey', (value) => value?.lookupKey ?? null],
+    ['file_asset_id', 'fileAssetId', (value) => value?.fileAssetId ?? null],
+    ['source_zip_version', 'sourceZipVersion', (value) => typeof value?.sourceZipVersion === 'number' ? value.sourceZipVersion : null],
+    ['sha256', 'sha256', (value) => value?.sha256 ?? null],
+    ['status', 'status', (value) => value?.status ?? null],
+  ],
 }
 
 // Indexed columns are the source of truth for stable sync/cache keys. They are

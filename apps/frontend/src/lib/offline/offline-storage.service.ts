@@ -3,6 +3,7 @@ import { isNative } from '@/lib/native'
 import { localDb } from './unified-storage'
 import type { InstalledLearningPack } from './learning-pack.service'
 import { learningPackService } from './learning-pack.service'
+import { deferredPackAssetService } from './deferred-pack-asset.service'
 import type { LocalAsset } from './asset-cache.service'
 import type { TableName } from './sqlite/schema'
 import type { SyncOutboxItem } from './sync-outbox'
@@ -171,6 +172,12 @@ async function clearAssetFiles(): Promise<void> {
   } catch {
     // Directory may not exist.
   }
+  try {
+    await Filesystem.rmdir({ path: 'learning-packs', directory: Directory.Data, recursive: true })
+  } catch {
+    // Directory may not exist.
+  }
+  await deferredPackAssetService.clearOpenZips()
 }
 
 function clearPracticeLocalStorageKeys(): void {
@@ -406,8 +413,13 @@ export const offlineStorageService = {
       }
       // Repair interrupted/legacy installs that left no downloaded_packs row.
       await localDb.clear('asset_refs')
+      await localDb.clear('deferred_pack_assets')
       await clearTables(['downloaded_packs', 'downloaded_unit_details', 'ink_scripts'])
       await clearTables(['offline_vocabularies', 'offline_chunks', 'offline_patterns', 'offline_content_refs'])
+      if (isNative()) {
+        await deferredPackAssetService.clearOpenZips()
+        await Filesystem.rmdir({ path: 'learning-packs', directory: Directory.Data, recursive: true }).catch(() => undefined)
+      }
       return
     }
 
@@ -428,6 +440,7 @@ export const offlineStorageService = {
       // resource files.
       await localDb.clear('local_assets')
       await localDb.clear('asset_refs')
+      await localDb.clear('deferred_pack_assets')
       const [{ useDailyPracticeStore }, { useLearningStore }] = await Promise.all([
         import('@/stores/daily-practice.store'),
         import('@/stores/learning.store'),

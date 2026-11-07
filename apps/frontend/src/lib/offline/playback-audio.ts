@@ -2,6 +2,7 @@ import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
 import { fileAssetIdFromUrl } from '@/lib/file-asset-reference'
 import { isNative } from '@/lib/native'
 import { assetCacheService, isCachedPlaybackUrl, OFFLINE_RESOURCE_MISSING } from './asset-cache.service'
+import { deferredPackAssetService } from './deferred-pack-asset.service'
 
 function normalizeUrl(url: string) {
   return url.startsWith('//') ? `https:${url}` : url
@@ -48,6 +49,19 @@ export async function resolvePlaybackAudio(input: {
       asFileUri,
     }).catch(() => '')
     if (local && local !== OFFLINE_RESOURCE_MISSING && isPlayable(local, asFileUri)) return local
+  }
+
+  // Vocabulary pronunciations included in a native learning pack are indexed
+  // but not extracted during installation. Materialize only the requested ZIP
+  // entry before falling back to the normal signed-URL network path.
+  if (rawUrl) {
+    const deferred = await deferredPackAssetService.resolve({
+      url: rawUrl,
+      assetId,
+      role,
+      asFileUri,
+    }).catch(() => null)
+    if (deferred && isPlayable(deferred, asFileUri)) return deferred
   }
 
   if (!assetId) return null

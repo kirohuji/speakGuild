@@ -19,7 +19,7 @@
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 13
+export const DB_VERSION = 14
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -50,6 +50,7 @@ export const TABLE_NAMES = [
   'topic_submissions',
   'local_assets',
   'asset_refs',
+  'deferred_pack_assets',
   'pack_events',
   'outbox',
 ] as const
@@ -350,6 +351,19 @@ export const DDL: Record<TableName, string> = {
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
   `,
+  deferred_pack_assets: `
+    CREATE TABLE IF NOT EXISTS deferred_pack_assets (
+      id TEXT PRIMARY KEY NOT NULL,
+      pack_id TEXT NOT NULL,
+      lookup_key TEXT NOT NULL,
+      file_asset_id TEXT,
+      source_zip_version INTEGER NOT NULL,
+      sha256 TEXT NOT NULL,
+      status TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
   pack_events: `
     CREATE TABLE IF NOT EXISTS pack_events (
       id TEXT PRIMARY KEY NOT NULL,
@@ -446,6 +460,9 @@ export const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_practice_records_practiced_at ON practice_records (practiced_at, id)`,
   `CREATE INDEX IF NOT EXISTS idx_asset_refs_sha256 ON asset_refs (sha256)`,
   `CREATE INDEX IF NOT EXISTS idx_asset_refs_pack_id ON asset_refs (pack_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_deferred_pack_assets_lookup ON deferred_pack_assets (lookup_key)`,
+  `CREATE INDEX IF NOT EXISTS idx_deferred_pack_assets_pack ON deferred_pack_assets (pack_id, source_zip_version)`,
+  `CREATE INDEX IF NOT EXISTS idx_deferred_pack_assets_file_asset ON deferred_pack_assets (file_asset_id)`,
   `CREATE INDEX IF NOT EXISTS idx_pack_events_pack_id ON pack_events (pack_id)`,
   `CREATE INDEX IF NOT EXISTS idx_pack_events_action ON pack_events (action)`,
   `CREATE INDEX IF NOT EXISTS idx_pack_events_occurred_at ON pack_events (occurred_at)`,

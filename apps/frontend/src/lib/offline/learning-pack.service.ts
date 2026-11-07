@@ -1,4 +1,5 @@
 import { assetCacheService, type AssetRef } from './asset-cache.service'
+import { deferredLookupKeys, deferredPackAssetService, learningPackZipPath, type DeferredPackAsset } from './deferred-pack-asset.service'
 import { digestBuffer } from './sha256-worker.service'
 import { learningApi } from '@/features/learning/api/learning-api'
 import { readStoredTopicDetail, readStoredUnitDetail, writePackProjection } from './learning-pack-read-model'
@@ -11,16 +12,11 @@ import { FileTransfer } from '@capacitor/file-transfer'
 import { Directory, Filesystem } from '@capacitor/filesystem'
 import { Network } from '@capacitor/network'
 import { getBearerToken } from '@/features/auth/client'
+import { createFileAssetReference, fileAssetIdFromUrl } from '@/lib/file-asset-reference'
+import write_blob from 'capacitor-blob-writer'
 import { createLogger } from './logger'
 
 const logger = createLogger('learning-pack')
-
-function toArrayBuffer(base64: string) {
-  const binary = atob(base64)
-  const bytes = new Uint8Array(binary.length)
-  for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index)
-  return bytes.buffer
-}
 
 function learningPackDownloadUrl(unitId: string) {
   const base = import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu'
@@ -166,6 +162,144 @@ function isAssetPath(path: string) {
   return normalizeZipPath(path).startsWith('assets/')
 }
 
+const DEFERRED_ASSET_ROLES = new Set(['vocabulary_pronunciation_us', 'vocabulary_pronunciation_uk'])
+
+function isDeferredAsset(asset: AssetRef) {
+  return DEFERRED_ASSET_ROLES.has(asset.role ?? '')
+}
+
+/** Preserve the persisted asset:// URL (including a possible suffix) that UI playback uses. */
+function collectContentAssetUrls(value: unknown, output = new Map<string, string>()): Map<string, string> {
+  if (typeof value === 'string') {
+    const id = fileAssetIdFromUrl(value)
+    if (id && !output.has(id)) output.set(id, value)
+    return output
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) collectContentAssetUrls(item, output)
+    return output
+  }
+  if (value && typeof value === 'object') {
+    for (const item of Object.values(value as Record<string, unknown>)) collectContentAssetUrls(item, output)
+  }
+  return output
+}
+
+interface DownloadedUnitZip {
+  blob: Blob
+  /** Native FileTransfer destination, promoted by rename once the manifest is trusted. */
+  temporaryPath?: string
+}
+
+async function retainPackZip(packId: string, version: number, zip: DownloadedUnitZip) {
+  const directory = `learning-packs/${packId}`
+  const partial = `${directory}/${version}.zip.partial`
+  const target = learningPackZipPath(packId, version)
+  const previous = `${directory}/${version}.zip.previous`
+
+  // A failed same-version reinstall must never remove the only source archive
+  // of already-installed deferred pronunciations. Repair an interrupted prior
+  // exchange before starting a new one.
+  const targetExists = await Filesystem.stat({ path: target, directory: Directory.Data }).then(() => true).catch(() => false)
+  const previousExists = await Filesystem.stat({ path: previous, directory: Directory.Data }).then(() => true).catch(() => false)
+  if (!targetExists && previousExists) {
+    await Filesystem.rename({ from: previous, to: target, directory: Directory.Data })
+  } else if (targetExists && previousExists) {
+    await Filesystem.deleteFile({ path: previous, directory: Directory.Data }).catch(() => undefined)
+  }
+
+  // Both download paths first produce a same-directory partial file.
+  await Filesystem.deleteFile({ path: partial, directory: Directory.Data }).catch(() => undefined)
+  if (zip.temporaryPath) {
+    await Filesystem.rename({ from: zip.temporaryPath, to: partial, directory: Directory.Data })
+  } else {
+    await write_blob({ path: partial, directory: Directory.Data, blob: zip.blob, recursive: true })
+  }
+
+  const hasCurrent = await Filesystem.stat({ path: target, directory: Directory.Data }).then(() => true).catch(() => false)
+  if (hasCurrent) await Filesystem.rename({ from: target, to: previous, directory: Directory.Data })
+  try {
+    await Filesystem.rename({ from: partial, to: target, directory: Directory.Data })
+  } catch (error) {
+    if (hasCurrent) await Filesystem.rename({ from: previous, to: target, directory: Directory.Data }).catch(() => undefined)
+    throw error
+  }
+  if (hasCurrent) await Filesystem.deleteFile({ path: previous, directory: Directory.Data }).catch(() => undefined)
+}
+
+async function removePartialPackZips(packId: string) {
+  if (!Capacitor.isNativePlatform()) return
+  try {
+    const listing = await Filesystem.readdir({ path: `learning-packs/${packId}`, directory: Directory.Data }) as any
+    await Promise.all((listing.files ?? [])
+      .filter((file: any) => String(file.name ?? '').endsWith('.partial'))
+      .map((file: any) => Filesystem.deleteFile({
+        path: `learning-packs/${packId}/${file.name}`,
+        directory: Directory.Data,
+      }).catch(() => undefined)))
+  } catch {
+    // No retained archive directory yet.
+  }
+}
+
+async function restoreReferencedPreviousPackZips(packId: string) {
+  if (!Capacitor.isNativePlatform()) return
+  const deferred = await localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'pack_id', packId)
+  for (const version of new Set(deferred.filter((asset) => asset.status === 'deferred').map((asset) => asset.sourceZipVersion))) {
+    const target = learningPackZipPath(packId, version)
+    const previous = `learning-packs/${packId}/${version}.zip.previous`
+    const targetExists = await Filesystem.stat({ path: target, directory: Directory.Data }).then(() => true).catch(() => false)
+    if (targetExists) continue
+    const previousExists = await Filesystem.stat({ path: previous, directory: Directory.Data }).then(() => true).catch(() => false)
+    if (previousExists) await Filesystem.rename({ from: previous, to: target, directory: Directory.Data }).catch(() => undefined)
+  }
+}
+
+async function pruneUnreferencedPackZips(packId: string) {
+  if (!Capacitor.isNativePlatform()) return
+  const [pack, deferred] = await Promise.all([
+    localDb.get<InstalledLearningPack>('downloaded_packs', packId),
+    localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'pack_id', packId),
+  ])
+  const retainedVersions = new Set<number>([
+    ...(pack?.status === 'installed' ? [pack.version] : []),
+    ...deferred.filter((asset) => asset.status === 'deferred').map((asset) => asset.sourceZipVersion),
+  ])
+  try {
+    const listing = await Filesystem.readdir({ path: `learning-packs/${packId}`, directory: Directory.Data }) as any
+    await Promise.all((listing.files ?? []).map(async (file: any) => {
+      const name = String(file.name ?? '')
+      const versionMatch = name.match(/^(\d+)\.zip$/)
+      const previousMatch = name.match(/^(\d+)\.zip\.previous$/)
+      // A failed restore leaves the only copy under .previous. Keep it while
+      // deferred rows still reference that version and the official zip is absent.
+      if (previousMatch && retainedVersions.has(Number(previousMatch[1]))) {
+        const officialExists = await Filesystem.stat({
+          path: learningPackZipPath(packId, Number(previousMatch[1])),
+          directory: Directory.Data,
+        }).then(() => true).catch(() => false)
+        if (!officialExists) return
+      }
+      if (name.endsWith('.partial') || previousMatch || (versionMatch && !retainedVersions.has(Number(versionMatch[1])))) {
+        await Filesystem.deleteFile({ path: `learning-packs/${packId}/${name}`, directory: Directory.Data }).catch(() => undefined)
+      }
+    }))
+  } catch {
+    // Nothing to prune.
+  }
+}
+
+async function cleanupObsoletePackAssetRefs(packId: string, manifest: LearningPackManifest) {
+  const declared = new Set((manifest.assets ?? []).map((asset) => asset.sha256).filter(Boolean))
+  const refs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
+  for (const ref of refs) {
+    if (declared.has(ref.sha256)) continue
+    await localDb.delete('asset_refs', ref.id)
+    const remaining = await localDb.findByIndex<any>('asset_refs', 'sha256', ref.sha256)
+    if (remaining.length === 0) await assetCacheService.remove(ref.sha256).catch(() => undefined)
+  }
+}
+
 /** 从文件路径或 URL 提取扩展名 */
 function extensionFrom(urlOrPath: string, mimeType?: string | null) {
   const match = urlOrPath.match(/\.([a-z0-9]{2,5})$/i)
@@ -303,6 +437,7 @@ interface PackStateSnapshot {
   chunks: any[]
   patterns: any[]
   assetRefs: any[]
+  deferredAssets: DeferredPackAsset[]
 }
 
 interface PackOperationJournal {
@@ -320,13 +455,14 @@ function operationJournalId(packId: string) {
 }
 
 async function snapshotPackState(packId: string): Promise<PackStateSnapshot> {
-  const [pack, indexedDetails, rootDetail, inkScripts, contentRefs, assetRefs] = await Promise.all([
+  const [pack, indexedDetails, rootDetail, inkScripts, contentRefs, assetRefs, deferredAssets] = await Promise.all([
     localDb.get<InstalledLearningPack>('downloaded_packs', packId),
     localDb.findByIndex<any>('downloaded_unit_details', 'unit_id', packId),
     localDb.get<any>('downloaded_unit_details', packId),
     localDb.findByIndex<any>('ink_scripts', 'unit_id', packId),
     localDb.findByIndex<any>('offline_content_refs', 'pack_id', packId),
     localDb.findByIndex<any>('asset_refs', 'pack_id', packId),
+    localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'pack_id', packId),
   ])
   const unitDetails = [...indexedDetails]
   if (rootDetail && !unitDetails.some((item) => item.id === rootDetail.id)) unitDetails.push(rootDetail)
@@ -341,7 +477,7 @@ async function snapshotPackState(packId: string): Promise<PackStateSnapshot> {
     Promise.all(idsByKind.chunk.map((id) => localDb.get<any>('offline_chunks', id))).then((items) => items.filter(Boolean)),
     Promise.all(idsByKind.pattern.map((id) => localDb.get<any>('offline_patterns', id))).then((items) => items.filter(Boolean)),
   ])
-  return { pack, unitDetails, inkScripts, contentRefs, vocabularies, chunks, patterns, assetRefs }
+  return { pack, unitDetails, inkScripts, contentRefs, vocabularies, chunks, patterns, assetRefs, deferredAssets }
 }
 
 async function beginPackOperation(packId: string, kind: PackOperationKind): Promise<void> {
@@ -373,6 +509,7 @@ async function restorePackOperation(journal: PackOperationJournal): Promise<void
   await localDb.delete('downloaded_unit_details', packId)
   await localDb.deleteByIndex('ink_scripts', 'unit_id', packId)
   await localDb.deleteByIndex('asset_refs', 'pack_id', packId)
+  await localDb.deleteByIndex('deferred_pack_assets', 'pack_id', packId)
   await localDb.delete('downloaded_packs', packId)
 
   if (snapshot.vocabularies.length > 0) await localDb.putMany('offline_vocabularies', snapshot.vocabularies)
@@ -382,7 +519,10 @@ async function restorePackOperation(journal: PackOperationJournal): Promise<void
   if (snapshot.unitDetails.length > 0) await localDb.putMany('downloaded_unit_details', snapshot.unitDetails)
   if (snapshot.inkScripts.length > 0) await localDb.putMany('ink_scripts', snapshot.inkScripts)
   if (snapshot.assetRefs.length > 0) await localDb.putMany('asset_refs', snapshot.assetRefs)
+  if (snapshot.deferredAssets.length > 0) await localDb.putMany('deferred_pack_assets', snapshot.deferredAssets)
   if (snapshot.pack) await localDb.put('downloaded_packs', snapshot.pack)
+  await restoreReferencedPreviousPackZips(packId)
+  await pruneUnreferencedPackZips(packId)
   await localDb.delete('kv', journal.id)
 }
 
@@ -404,8 +544,23 @@ export const learningPackService = {
             || current.version !== journal.snapshot.pack.version
             || current.updatedAt !== journal.snapshot.pack.updatedAt))
       )
-      if (committed) await finishPackOperation(journal.packId)
-      else await restorePackOperation(journal)
+      if (committed) {
+        await restoreReferencedPreviousPackZips(journal.packId)
+        if (journal.kind === 'uninstall' && Capacitor.isNativePlatform()) {
+          await deferredPackAssetService.discardPack(journal.packId)
+          await Filesystem.rmdir({ path: `learning-packs/${journal.packId}`, directory: Directory.Data, recursive: true }).catch(() => undefined)
+        }
+        await finishPackOperation(journal.packId)
+      } else {
+        await removePartialPackZips(journal.packId)
+        await restorePackOperation(journal)
+      }
+    }
+    // An exchange can finish just before a journal is created/removed. Repair
+    // retained sources for every installed pack as part of normal startup too.
+    for (const pack of await localDb.list<InstalledLearningPack>('downloaded_packs')) {
+      await restoreReferencedPreviousPackZips(pack.packId)
+      await pruneUnreferencedPackZips(pack.packId)
     }
   },
 
@@ -417,27 +572,30 @@ export const learningPackService = {
     unitId: string,
     onProgress?: LearningPackInstallProgressHandler,
     signal?: AbortSignal,
-  ) {
-    // Wi-Fi 已有稳定下载路径，保持原样；仅蜂窝网络改走 FileTransfer，
-    // 以取得原生且可靠的进度回调。
+  ): Promise<DownloadedUnitZip> {
     const connectionType = Capacitor.isNativePlatform()
       ? await Network.getStatus().then((status) => status.connectionType).catch(() => 'unknown')
       : 'unknown'
+    // Wi-Fi keeps the proven API/XHR downloader. Only cellular uses native
+    // FileTransfer because its progress and long-lived disk write are more
+    // reliable there.
     if (!Capacitor.isNativePlatform() || connectionType !== 'cellular') {
-      return learningApi.downloadPack(unitId, signal, (loaded, total) => {
+      const buffer = await learningApi.downloadPack(unitId, signal, (loaded, total) => {
         const percent = total && total > 0
           ? 5 + (loaded / total) * 10
           : Math.min(14, 5 + Math.log10(Math.max(loaded, 1)) * 1.5)
         onProgress?.('downloading', percent, { label: '下载学习包' })
       })
+      return { blob: new Blob([buffer], { type: 'application/zip' }) }
     }
 
     throwIfAborted(signal)
     const url = learningPackDownloadUrl(unitId)
-    await Filesystem.mkdir({ path: 'learning-packs', directory: Directory.Cache, recursive: true }).catch(() => undefined)
+    const temporaryPath = `learning-packs/${unitId}/download-${Date.now()}.zip.partial`
+    await Filesystem.mkdir({ path: `learning-packs/${unitId}`, directory: Directory.Data, recursive: true }).catch(() => undefined)
     const target = await Filesystem.getUri({
-      path: `learning-packs/${unitId}-${Date.now()}.zip`,
-      directory: Directory.Cache,
+      path: temporaryPath,
+      directory: Directory.Data,
     })
     const listener = await FileTransfer.addListener('progress', (progress) => {
       if (progress.url !== url) return
@@ -456,14 +614,17 @@ export const learningPackService = {
         readTimeout: 10 * 60_000,
       })
       throwIfAborted(signal)
-      // FileTransfer returns a platform-specific path (iOS strips `file://`,
-      // Android may preserve it). Read the exact URI originally allocated by
-      // Filesystem instead, so the cellular path is stable across platforms.
-      const file = await Filesystem.readFile({ path: target.uri })
-      return toArrayBuffer(file.data as string)
+      // Do not use Filesystem.readFile here: native bridge returns base64,
+      // which transiently inflates a large pack into a second JS string.
+      // Capacitor's local scheme streams the temporary file as a Blob instead.
+      const response = await fetch(Capacitor.convertFileSrc(target.uri))
+      if (!response.ok) throw new Error(`Unable to read downloaded pack (${response.status})`)
+      return { blob: await response.blob(), temporaryPath }
+    } catch (error) {
+      await Filesystem.deleteFile({ path: temporaryPath, directory: Directory.Data }).catch(() => undefined)
+      throw error
     } finally {
       await listener.remove()
-      await Filesystem.deleteFile({ path: target.uri }).catch(() => undefined)
     }
   },
 
@@ -478,6 +639,16 @@ export const learningPackService = {
     try {
       const installed = await this.installUnitFromZip(unitId, onProgress, signal)
       await finishPackOperation(unitId)
+      if (Capacitor.isNativePlatform() && previous && previous.version !== installed.version) {
+        // Full replacement removes every prior deferred row before inserting
+        // the new generation, so the old complete archive is no longer a
+        // source for playback once the new pack has committed.
+        await deferredPackAssetService.discardPack(unitId)
+        await Filesystem.deleteFile({
+          path: learningPackZipPath(unitId, previous.version),
+          directory: Directory.Data,
+        }).catch(() => undefined)
+      }
       await recordPackAudit({
         packId: unitId,
         action: previous ? 'update' : 'install',
@@ -509,6 +680,7 @@ export const learningPackService = {
       await localDb.delete('downloaded_packs', packId)
       // 清理本次安装写入的 asset_refs（不去重计数，简单全部清除）
       await localDb.deleteByIndex('asset_refs', 'pack_id', packId)
+      await deferredPackAssetService.withPackLock(packId, () => localDb.deleteByIndex('deferred_pack_assets', 'pack_id', packId))
       logger.info(`🧹 已回滚残留数据: ${packId}`)
     } catch (rollbackErr) {
       logger.warn(`回滚清理异常: ${packId}`, rollbackErr)
@@ -553,14 +725,14 @@ export const learningPackService = {
     const startTime = performance.now()
     logger.info('⏳ ① 下载 zip...')
     report('downloading', 5, { label: '下载学习包' })
-    const zipBuffer = await this.downloadUnitZip(unitId, onProgress, signal)
+    const downloadedZip = await this.downloadUnitZip(unitId, onProgress, signal)
     throwIfAborted(signal)
-    const zipSizeMB = (zipBuffer.byteLength / 1024 / 1024).toFixed(1)
-    logger.info(`✅ ① zip 下载完成: ${zipSizeMB} MB (${zipBuffer.byteLength} bytes)`)
+    const zipSizeMB = (downloadedZip.blob.size / 1024 / 1024).toFixed(1)
+    logger.info(`✅ ① zip 下载完成: ${zipSizeMB} MB (${downloadedZip.blob.size} bytes)`)
     report('parsing', 15, { label: '解析压缩包' })
 
     logger.info('⏳ ② 解析 zip 条目...')
-    const reader = new ZipReader(new BlobReader(new Blob([zipBuffer], { type: 'application/zip' })))
+    const reader = new ZipReader(new BlobReader(downloadedZip.blob))
     try {
       const entryList = await reader.getEntries()
       throwIfAborted(signal)
@@ -592,9 +764,17 @@ export const learningPackService = {
         checksumCount: Object.keys(checksums).length,
       })
 
+      // Native packs retain their original archive as the source for deferred
+      // vocabulary pronunciations. The archive is versioned so an interrupted
+      // update can still restore the previous generation.
+      if (Capacitor.isNativePlatform()) {
+        await retainPackZip(manifest.packId, manifest.version, downloadedZip)
+      }
+
       // ④⑤ 读取并校验 scene + topics（独立 helper，便于测试）
       report('reading_topics', 25, { label: '读取话题内容' })
       const { unitDetail, topicDetails } = await this.parsePackContent(entries, checksums, signal)
+      const contentUrlsByFileAssetId = collectContentAssetUrls([unitDetail, ...topicDetails])
       logger.info(`✅ ④⑤ scene + ${topicDetails.length} 个话题读取完成`)
       report('persisting_content', 30, { label: '写入学习内容' })
 
@@ -657,13 +837,17 @@ export const learningPackService = {
         throw error
       }
       logger.info('✅ ⑧ 索引表写入完成')
-      report('extracting_assets', 40, { label: '提取离线资源', current: 0, total: manifest.assets?.length ?? 0 })
+      const deferredAssets = Capacitor.isNativePlatform()
+        ? (manifest.assets ?? []).filter(isDeferredAsset)
+        : []
+      const eagerAssets = (manifest.assets ?? []).filter((asset) => !deferredAssets.includes(asset))
+      report('extracting_assets', 40, { label: '提取离线资源', current: 0, total: eagerAssets.length })
 
-      logger.info(`⏳ ⑨ 提取资源文件 (${manifest.assets?.length ?? 0} 个)...`)
-      const totalAssets = manifest.assets?.length ?? 0
+      logger.info(`⏳ ⑨ 提取资源文件 (${eagerAssets.length} 个，${deferredAssets.length} 个发音延迟物化)...`)
+      const totalAssets = eagerAssets.length
 
       // 一次性加载所有 asset_refs 到内存 Map，避免每个资产全表扫描
-      const declaredAssetShas = (manifest.assets ?? [])
+      const declaredAssetShas = eagerAssets
         .map((asset) => asset.sha256)
         .filter((sha256): sha256 is string => Boolean(sha256))
       const allRefsList = await localDb.findByIndexIn<any>('asset_refs', 'sha256', declaredAssetShas)
@@ -685,7 +869,7 @@ export const learningPackService = {
       }> = []
 
       for (let i = 0; i < totalAssets; i++) {
-        const asset = manifest.assets![i]
+        const asset = eagerAssets[i]
         if (!asset.path) throw new Error(`Pack asset is missing path at index ${i}`)
         const entry = entries.get(normalizeZipPath(asset.path))
         if (!entry) throw new Error(`Pack asset file is missing: ${asset.path}`)
@@ -849,6 +1033,42 @@ export const learningPackService = {
         await localDb.putMany('asset_refs', assetRefsToWrite)
       }
 
+      // A deferred row is keyed by the identity the player actually holds
+      // (normally asset://fileAssetId), never by the manifest's signed URL.
+      // Multiple vocabulary entries may share an audio file; upserting the
+      // same lookup identity is intentional and keeps one materialization.
+      if (Capacitor.isNativePlatform()) await deferredPackAssetService.withPackLock(manifest.packId, async () => {
+        await localDb.deleteByIndex('deferred_pack_assets', 'pack_id', manifest.packId)
+        if (deferredAssets.length === 0) return
+        const nowIso = new Date().toISOString()
+        const deferredRows = deferredAssets.flatMap((asset): DeferredPackAsset[] => {
+          if (!asset.path || !asset.sha256) return []
+          const contentUrl = asset.fileAssetId
+            ? (contentUrlsByFileAssetId.get(asset.fileAssetId) ?? createFileAssetReference(asset.fileAssetId))
+            : asset.url
+          const lookupKey = deferredLookupKeys(contentUrl, asset.fileAssetId)[0]
+          if (!lookupKey) return []
+          return [{
+            id: `${manifest.packId}:${manifest.version}:${lookupKey}`,
+            packId: manifest.packId,
+            lookupKey,
+            fileAssetId: asset.fileAssetId ?? null,
+            sourceZipVersion: manifest.version,
+            contentUrl,
+            signedUrl: asset.url,
+            zipPath: asset.path!,
+            sha256: asset.sha256!,
+            mimeType: asset.mimeType,
+            size: asset.size,
+            role: asset.role ?? 'vocabulary_pronunciation_us',
+            status: 'deferred',
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          }]
+        })
+        await localDb.putMany('deferred_pack_assets', deferredRows)
+      })
+
       // Newly staged files already persisted their aliases inside
       // saveFromBufferWithSha256(). Only backfill aliases for references that
       // reused an existing/same-SHA file; otherwise every fresh asset would
@@ -867,6 +1087,7 @@ export const learningPackService = {
 
       await markPackOperationCommitting(unitId)
       const result = await persistInstalledRecord(manifest)
+      await cleanupObsoletePackAssetRefs(manifest.packId, manifest)
       const elapsed = ((performance.now() - startTime) / 1000).toFixed(1)
       logger.info(`🎉 安装完成! 耗时 ${elapsed}s`, {
         packId: manifest.packId,
@@ -877,6 +1098,9 @@ export const learningPackService = {
       return result
     } finally {
       await reader.close()
+      if (downloadedZip.temporaryPath) {
+        await Filesystem.deleteFile({ path: downloadedZip.temporaryPath, directory: Directory.Data }).catch(() => undefined)
+      }
     }
   },
 
@@ -940,6 +1164,22 @@ export const learningPackService = {
         ? await readJsonEntry<Record<string, string>>(entries, 'checksums.json')
         : (deltaManifest.targetFiles ?? targetManifest.files ?? {})
       const obsoleteAssetRefs: any[] = []
+      const targetAssetForPath = (path: string) => targetManifest.assets?.find(
+        (asset) => normalizeZipPath(asset.path ?? '') === normalizeZipPath(path),
+      )
+      const deltaAssetRef = (path: string, sha256: string): AssetRef => {
+        const manifestAsset = targetAssetForPath(path)
+        return {
+          ...manifestAsset,
+          // Aliases must match persisted content's asset:// identity, not the
+          // target manifest's signed URL.
+          url: manifestAsset?.fileAssetId
+            ? createFileAssetReference(manifestAsset.fileAssetId)
+            : (manifestAsset?.url ?? `cos://${sha256}`),
+          path,
+          sha256,
+        }
+      }
 
       // 1. 应用 content 文件，重建本地详情和索引
       const hasContentChanges = [...(deltaManifest.added ?? []), ...(deltaManifest.modified ?? []), ...(deltaManifest.removed ?? [])]
@@ -968,16 +1208,9 @@ export const learningPackService = {
         const sha256 = await digest(buffer)
 
         const existingRefs = await localDb.findByIndex<any>('asset_refs', 'sha256', sha256)
-        if (existingRefs.length === 0) {
-          const assetRef = {
-            url: `cos://${sha256}`,
-            path,
-            sha256,
-            mimeType: null,
-            role: 'asset' as any,
-          }
-          await assetCacheService.saveFromBuffer(assetRef, buffer)
-        }
+        const assetRef = deltaAssetRef(path, sha256)
+        if (!(await assetCacheService.isReady(sha256))) await assetCacheService.saveFromBufferWithSha256(assetRef, buffer, sha256)
+        await assetCacheService.addAliases(sha256, assetRef)
         const ext = existingRefs[0]?.ext ?? extensionFrom(path, null)
         await localDb.put('asset_refs', {
           id: `${packId}:${sha256}`,
@@ -1006,10 +1239,9 @@ export const learningPackService = {
         const packRefs = await localDb.findByIndex<any>('asset_refs', 'pack_id', packId)
         const oldRefs = packRefs.filter((r: any) => r.logicalPath === path)
 
-        const existingRefs = await localDb.findByIndex<any>('asset_refs', 'sha256', newSha256)
-        if (existingRefs.length === 0) {
-          await assetCacheService.saveFromBuffer({ url: `cos://${newSha256}`, path, sha256: newSha256, mimeType: null }, buffer)
-        }
+        const assetRef = deltaAssetRef(path, newSha256)
+        if (!(await assetCacheService.isReady(newSha256))) await assetCacheService.saveFromBufferWithSha256(assetRef, buffer, newSha256)
+        await assetCacheService.addAliases(newSha256, assetRef)
         const ext = extensionFrom(path, null)
         await localDb.put('asset_refs', {
           id: `${packId}:${newSha256}`,
@@ -1033,6 +1265,21 @@ export const learningPackService = {
       }
       logger.info(`  removed: ${deltaManifest.removed?.length ?? 0}`)
 
+      // Delta packs keep unchanged pronunciations deferred against their old
+      // complete ZIP. Changed/deleted entries were materialized above, so their
+      // stale deferred source must not keep an obsolete ZIP alive.
+      const changedAssetPaths = new Set([
+        ...(deltaManifest.added ?? []),
+        ...(deltaManifest.modified ?? []),
+        ...(deltaManifest.removed ?? []),
+      ].map(normalizeZipPath))
+      const deferredRows = await localDb.findByIndex<DeferredPackAsset>('deferred_pack_assets', 'pack_id', packId)
+      await deferredPackAssetService.withPackLock(packId, async () => {
+        await Promise.all(deferredRows
+          .filter((row) => changedAssetPaths.has(normalizeZipPath(row.zipPath)))
+          .map((row) => localDb.delete('deferred_pack_assets', row.id)))
+      })
+
       // 5. 更新 pack 记录
       await markPackOperationCommitting(packId)
       const pack = await localDb.get<InstalledLearningPack>('downloaded_packs', packId)
@@ -1047,6 +1294,7 @@ export const learningPackService = {
           updatedAt: new Date().toISOString(),
         })
       }
+      await pruneUnreferencedPackZips(packId)
 
       // Garbage collection is intentionally last. A failure here only leaves
       // extra cache files and can be retried; it cannot corrupt the new pack.
@@ -1109,6 +1357,7 @@ export const learningPackService = {
     // Keep SQLite cleanup sequential. The web adapter is much happier when
     // large deletes do not compete on the same connection.
     try {
+      await deferredPackAssetService.withPackLock(packId, () => localDb.deleteByIndex('deferred_pack_assets', 'pack_id', packId))
       await localDb.deleteByIndex('asset_refs', 'pack_id', packId)
       timer.lap('delete asset refs', { deletedRefs: myRefs.length })
       await learningContentRepository.removePackContentIndex(packId)
@@ -1131,11 +1380,15 @@ export const learningPackService = {
     // Delete physical files only after SQLite no longer advertises the pack as
     // installed. A database failure therefore leaves a fully usable old pack.
     await markPackOperationCommitting(packId)
+    await deferredPackAssetService.discardPack(packId)
     for (const shaBatch of chunkArray([...new Set(filesToRemove)], 3)) {
       const results = await Promise.allSettled(shaBatch.map((sha256) => assetCacheService.remove(sha256)))
       for (const result of results) {
         if (result.status === 'rejected') logger.warn('asset garbage collection failed', result.reason)
       }
+    }
+    if (Capacitor.isNativePlatform()) {
+      await Filesystem.rmdir({ path: `learning-packs/${packId}`, directory: Directory.Data, recursive: true }).catch(() => undefined)
     }
     timer.lap('delete asset files', { deletedFiles, keptFiles })
     logger.info(`🗑️ 资产清理: ${deletedFiles} 个文件删除, ${keptFiles} 个文件被其他包保留`)

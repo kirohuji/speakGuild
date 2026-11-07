@@ -31,6 +31,7 @@ import { isIOS } from '@/lib/native'
 import { get } from '@/lib/request'
 import { enrichWord, type WordEnrichmentResult } from '@/lib/practice-ai-api'
 import { learningContentRepository } from '@/lib/offline'
+import { deferredPackAssetService } from '@/lib/offline/deferred-pack-asset.service'
 import { useAttemptedRequest } from '@/hooks/use-attempted-request'
 import { useCachedAudio } from '@/hooks/use-cached-audio'
 import type { DictionaryCluster, DictionaryEntry, DictionarySense } from '@/features/admin/api-dictionary'
@@ -397,6 +398,14 @@ export function LearningInsightDialog({
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
   const touchAxis = useRef<'pending' | 'horizontal' | 'vertical'>('pending')
+
+  // Native packages defer only this word's two pronunciations. Start opening
+  // the retained ZIP after the dialog is visible so the first tap shares the
+  // same in-flight work without delaying the dialog itself.
+  useEffect(() => {
+    if (!open || current?.kind !== 'word') return
+    void deferredPackAssetService.preload([current.audioUsUrl, current.audioUkUrl])
+  }, [open, current])
 
   const gotoPrev = useCallback(() => {
     if (hasPrev) onIndexChange(index - 1)
