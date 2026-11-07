@@ -32,6 +32,7 @@ interface DailyPracticeRunInput {
   initialRecallResults?: any;
   continuationResults?: any;
   remediationResults?: any;
+  attemptHistory?: any[];
   submissionStatus?: string;
   stats?: any;
 }
@@ -80,6 +81,124 @@ function toDate(value?: string | null) {
   return value ? new Date(value) : null;
 }
 
+/**
+ * A run is a projection of individual attempts, not a last-writer-wins
+ * document.  Different devices can legitimately advance different questions
+ * in the same daily run, so snapshot fields are merged monotonically here.
+ */
+function uniqueStrings(...values: unknown[]): string[] {
+  return [...new Set(values.flatMap((value) => Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []))];
+}
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).sort().join(',')}]`;
+  if (!value || typeof value !== 'object') return JSON.stringify(value);
+  return `{${Object.keys(value as Record<string, unknown>).sort().map((key) => `${JSON.stringify(key)}:${stableJson((value as any)[key])}`).join(',')}}`;
+}
+
+/**
+ * Merge a result for one item, rather than treating its enclosing JSON map as
+ * the conflict unit.  The rules are commutative/idempotent: a retry that
+ * succeeded always wins; continuation counters never move backwards; ties
+ * have a stable representative so arrival order cannot change the result.
+ */
+function mergeOneResult(previous: any, next: any, kind: 'initial' | 'continuation' | 'remediation') {
+  if (!previous) return next;
+  if (!next) return previous;
+  if (kind === 'remediation') {
+    if (Boolean(previous.resolved) !== Boolean(next.resolved)) return previous.resolved ? previous : next;
+    const previousRank = warmupScoreRank(previous.score);
+    const nextRank = warmupScoreRank(next.score);
+    if (previousRank !== nextRank) return previousRank > nextRank ? previous : next;
+    if ((previous.cycle ?? 0) !== (next.cycle ?? 0)) return (previous.cycle ?? 0) > (next.cycle ?? 0) ? previous : next;
+  }
+  if (kind === 'continuation') {
+    if ((previous.attemptCount ?? 0) !== (next.attemptCount ?? 0)) return (previous.attemptCount ?? 0) > (next.attemptCount ?? 0) ? previous : next;
+    if (previous.latestScore !== next.latestScore) return previous.latestScore === 'weak' ? previous : next;
+  }
+  if (kind === 'initial') {
+    const previousRank = warmupScoreRank(previous.score);
+    const nextRank = warmupScoreRank(next.score);
+    if (previousRank !== nextRank) return previousRank > nextRank ? previous : next;
+  }
+  return stableJson(previous) <= stableJson(next) ? previous : next;
+}
+
+function mergeResultMap(existing: unknown, incoming: unknown, kind: 'initial' | 'continuation' | 'remediation'): Record<string, unknown> {
+  const previous = existing && typeof existing === 'object' && !Array.isArray(existing) ? existing as Record<string, unknown> : {};
+  const next = incoming && typeof incoming === 'object' && !Array.isArray(incoming) ? incoming as Record<string, unknown> : {};
+  return Object.fromEntries([...new Set([...Object.keys(previous), ...Object.keys(next)])]
+    .map((itemId) => [itemId, mergeOneResult(previous[itemId], next[itemId], kind)]));
+}
+
+function mergeHistory(existing: unknown, incoming: unknown): any[] {
+  const entries = [...(Array.isArray(existing) ? existing : []), ...(Array.isArray(incoming) ? incoming : [])]
+    .filter((entry) => entry && typeof entry === 'object');
+  // New clients create UUID ids.  The content fallback preserves legacy events
+  // whose old ordinal ids collide across devices instead of silently dropping one.
+  const unique = new Map<string, any>();
+  for (const entry of entries) {
+    const key = typeof entry.id === 'string' && entry.id ? `${entry.id}:${stableJson(entry)}` : stableJson(entry);
+    unique.set(key, entry);
+  }
+  return [...unique.values()].sort((a, b) => String(a.createdAt ?? '').localeCompare(String(b.createdAt ?? '')) || stableJson(a).localeCompare(stableJson(b)));
+}
+
+function mergeStats(existing: unknown, incoming: unknown): Record<string, unknown> {
+  const oldValue = existing && typeof existing === 'object' && !Array.isArray(existing) ? existing as Record<string, unknown> : {};
+  const newValue = incoming && typeof incoming === 'object' && !Array.isArray(incoming) ? incoming as Record<string, unknown> : {};
+  const merge = (left: any, right: any): any => {
+    if (left === undefined) return right;
+    if (right === undefined) return left;
+    if (Array.isArray(left) && Array.isArray(right)) return [...new Map([...left, ...right].map((v) => [stableJson(v), v])).values()];
+    if (left && right && typeof left === 'object' && typeof right === 'object') return Object.fromEntries([...new Set([...Object.keys(left), ...Object.keys(right)])].map((key) => [key, merge(left[key], right[key])]));
+    if (typeof left === 'number' && typeof right === 'number') return Math.max(left, right);
+    return stableJson(left) <= stableJson(right) ? left : right;
+  };
+  return merge(oldValue, newValue);
+}
+
+function mergeWarmupItems(existing: unknown, incoming: unknown): any[] {
+  const byStep = new Map<string, any>();
+  for (const entry of [...(Array.isArray(existing) ? existing : []), ...(Array.isArray(incoming) ? incoming : [])]) {
+    if (!entry || typeof entry !== 'object') continue;
+    const key = String((entry as any).stepId ?? stableJson(entry));
+    const previous = byStep.get(key);
+    if (!previous) { byStep.set(key, entry); continue; }
+    // Preserve fields supplied by either device.  For two real answers to the
+    // same card choose a stable non-empty representation instead of arrival
+    // order; the complete event history remains in the run above.
+    const merged: Record<string, any> = { ...previous, ...entry };
+    for (const field of new Set([...Object.keys(previous), ...Object.keys(entry)])) {
+      const left = previous[field]; const right = entry[field];
+      if (Array.isArray(left) && Array.isArray(right)) merged[field] = [...new Map([...left, ...right].map((v) => [stableJson(v), v])).values()];
+      else if (typeof left === 'string' && typeof right === 'string') merged[field] = left && right ? (stableJson(left) <= stableJson(right) ? left : right) : (left || right);
+      else if (left && right && typeof left === 'object' && typeof right === 'object') merged[field] = { ...left, ...right };
+    }
+    // A card has one display slot, but two devices may contain different real
+    // learner answers for that slot.  Keep every variant in the record rather
+    // than pretending one of them never happened; the UI may continue to use
+    // the canonical top-level representation.
+    if (stableJson(previous) !== stableJson(entry)) {
+      const withoutVariants = (value: any) => {
+        const { _syncVariants: _ignored, ...plain } = value;
+        return plain;
+      };
+      const variants = [...(Array.isArray(previous._syncVariants) ? previous._syncVariants : [withoutVariants(previous)]), ...(Array.isArray(entry._syncVariants) ? entry._syncVariants : [withoutVariants(entry)])];
+      merged._syncVariants = [...new Map(variants.map((value) => [stableJson(value), value])).values()];
+    }
+    byStep.set(key, merged);
+  }
+  return [...byStep.values()];
+}
+
+function mergedSubmissionStatus(existing?: string | null, incoming?: string | null): string {
+  const rank: Record<string, number> = { idle: 0, dirty: 1, failed: 1, submitting: 2, synced: 3 };
+  return (rank[incoming ?? 'idle'] ?? 0) >= (rank[existing ?? 'idle'] ?? 0)
+    ? (incoming ?? 'idle')
+    : (existing ?? 'idle');
+}
+
 @Injectable()
 export class DailyPracticeService {
   constructor(private readonly prisma: PrismaService) {}
@@ -115,6 +234,7 @@ export class DailyPracticeService {
         initialRecallResults: true,
         continuationResults: true,
         remediationResults: true,
+        attemptHistory: true,
         submissionStatus: true,
         stats: true,
         createdAt: true,
@@ -194,38 +314,7 @@ export class DailyPracticeService {
 
     const clientRunId = String(body.run.clientRunId ?? body.run.id ?? '').trim();
     if (!clientRunId) throw new BadRequestException('clientRunId is required');
-    const existingRun = await (this.prisma as any).userDailyPracticeRun.findFirst({
-      where: { userId, clientRunId },
-      select: { stats: true },
-    });
-    const mergedStats = {
-      ...(existingRun?.stats && typeof existingRun.stats === 'object' && !Array.isArray(existingRun.stats) ? existingRun.stats : {}),
-      ...(body.run.stats ?? {}),
-    };
-    const runData = {
-      date: startOfDate(body.run.date),
-      mode: body.run.mode ?? 'practice',
-      scope: body.run.scope,
-      packIds: body.run.packIds ?? [],
-      scheduledItemIds: body.run.scheduledItemIds ?? [],
-      completedItemIds: body.run.completedItemIds ?? [],
-      attemptedItemIds: body.run.attemptedItemIds ?? [],
-      unresolvedItemIds: body.run.unresolvedItemIds ?? [],
-      srsAppliedItemIds: body.run.srsAppliedItemIds ?? [],
-      initialRecallResults: body.run.initialRecallResults ?? {},
-      continuationResults: body.run.continuationResults ?? {},
-      remediationResults: body.run.remediationResults ?? {},
-      submissionStatus: body.run.submissionStatus ?? 'synced',
-      stats: mergedStats,
-    };
-    // Snapshots can be emitted concurrently (attempt persistence + record
-    // persistence). A find-then-create sequence races here and loses the run.
-    // The composite unique key makes Prisma's upsert one atomic database action.
-    const run = await (this.prisma as any).userDailyPracticeRun.upsert({
-      where: { userId_clientRunId: { userId, clientRunId } },
-      create: { userId, clientRunId, ...runData },
-      update: runData,
-    });
+    const run = await this.mergeRunSnapshot(userId, clientRunId, body.run);
 
     const attempts = [...(body.attempts ?? [])].sort((a, b) =>
       (toDate(a.practicedAt)?.getTime() ?? 0) - (toDate(b.practicedAt)?.getTime() ?? 0),
@@ -270,29 +359,107 @@ export class DailyPracticeService {
 
     let warmupRecord: any = null;
     if (body.warmupRecord?.topicId && body.warmupRecord.items?.length) {
-      const warmupData = {
-          userId,
-          clientRunId,
-          topicId: body.warmupRecord.topicId,
-          packId: body.warmupRecord.packId ?? null,
-          score: body.warmupRecord.score ?? null,
-          feedback: body.warmupRecord.feedback ?? null,
-          items: body.warmupRecord.items,
-        };
-      // Same idempotency rule as the run: parallel snapshots update one record.
-      warmupRecord = await (this.prisma as any).practiceWarmupRecord.upsert({
-        where: { clientRunId },
-        create: warmupData,
-        update: warmupData,
-      });
+      warmupRecord = await this.mergeWarmupRecord(userId, clientRunId, body.warmupRecord);
     }
 
     return {
       runId: run.id,
+      // The caller applies this canonical projection immediately.  It must not
+      // wait for the cursor pull, which can legitimately have advanced past
+      // this update in the same sync pass.
+      run,
       syncedAttempts,
       itemProgresses,
       warmupRecordId: warmupRecord?.id ?? null,
     };
+  }
+
+  private async mergeRunSnapshot(userId: string, clientRunId: string, input: DailyPracticeRunInput) {
+    const select = {
+      stats: true, packIds: true, scheduledItemIds: true, completedItemIds: true,
+      attemptedItemIds: true, unresolvedItemIds: true, srsAppliedItemIds: true,
+      initialRecallResults: true, continuationResults: true, remediationResults: true,
+      attemptHistory: true, submissionStatus: true,
+    };
+    // Serializable read/merge/write is required here.  `upsert` only makes
+    // row creation atomic; it does not make two independently computed JSON
+    // merges atomic.  Retrying serialization/unique conflicts recomputes the
+    // second merge against the first committed projection.
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      try {
+        return await (this.prisma as any).$transaction(async (tx: any) => {
+          const existing = await tx.userDailyPracticeRun.findUnique({
+            where: { userId_clientRunId: { userId, clientRunId } }, select,
+          });
+          const incoming = {
+            date: startOfDate(input.date), mode: input.mode ?? 'practice', scope: input.scope,
+            packIds: input.packIds ?? [], scheduledItemIds: input.scheduledItemIds ?? [],
+            completedItemIds: input.completedItemIds ?? [], attemptedItemIds: input.attemptedItemIds ?? [],
+            unresolvedItemIds: input.unresolvedItemIds ?? [], srsAppliedItemIds: input.srsAppliedItemIds ?? [],
+            initialRecallResults: input.initialRecallResults ?? {}, continuationResults: input.continuationResults ?? {},
+            remediationResults: input.remediationResults ?? {}, attemptHistory: Array.isArray(input.attemptHistory) ? input.attemptHistory : [],
+            submissionStatus: input.submissionStatus ?? 'synced', stats: mergeStats(existing?.stats, input.stats),
+          };
+          if (!existing) return tx.userDailyPracticeRun.create({ data: { userId, clientRunId, ...incoming } });
+          const initialRecallResults = mergeResultMap(existing.initialRecallResults, incoming.initialRecallResults, 'initial');
+          const continuationResults = mergeResultMap(existing.continuationResults, incoming.continuationResults, 'continuation');
+          const remediationResults = mergeResultMap(existing.remediationResults, incoming.remediationResults, 'remediation');
+          const attemptedItemIds = uniqueStrings(existing.attemptedItemIds, incoming.attemptedItemIds, Object.keys(initialRecallResults));
+          const previousUnresolved = new Set(uniqueStrings(existing.unresolvedItemIds, incoming.unresolvedItemIds));
+          // This is a projection, not another mutable conflict register.  A
+          // winning strong/ok initial answer must remove a losing miss flag.
+          const unresolvedItemIds = attemptedItemIds.filter((id) => {
+            if (Boolean((remediationResults as any)[id]?.resolved)) return false;
+            const initial = (initialRecallResults as any)[id];
+            return initial ? initial.score === 'miss' : previousUnresolved.has(id);
+          });
+          const completedItemIds = uniqueStrings(existing.completedItemIds, incoming.completedItemIds, attemptedItemIds.filter((id) => !unresolvedItemIds.includes(id)))
+            .filter((id) => !unresolvedItemIds.includes(id));
+          return tx.userDailyPracticeRun.update({
+            where: { userId_clientRunId: { userId, clientRunId } },
+            data: {
+              ...incoming,
+              packIds: uniqueStrings(existing.packIds, incoming.packIds),
+              scheduledItemIds: uniqueStrings(existing.scheduledItemIds, incoming.scheduledItemIds),
+              attemptedItemIds, unresolvedItemIds, completedItemIds,
+              srsAppliedItemIds: uniqueStrings(existing.srsAppliedItemIds, incoming.srsAppliedItemIds),
+              initialRecallResults,
+              continuationResults,
+              remediationResults,
+              attemptHistory: mergeHistory(existing.attemptHistory, incoming.attemptHistory),
+              submissionStatus: mergedSubmissionStatus(existing.submissionStatus, incoming.submissionStatus),
+            },
+          });
+        }, { isolationLevel: 'Serializable' });
+      } catch (error: any) {
+        if (attempt === 3 || (error?.code !== 'P2034' && error?.code !== 'P2002')) throw error;
+      }
+    }
+    throw new Error('Unable to merge daily practice run');
+  }
+
+  private async mergeWarmupRecord(userId: string, clientRunId: string, input: NonNullable<Parameters<DailyPracticeService['complete']>[1]['warmupRecord']>) {
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      try {
+        return await (this.prisma as any).$transaction(async (tx: any) => {
+          const previous = await tx.practiceWarmupRecord.findUnique({
+            where: { clientRunId }, select: { id: true, items: true, score: true, feedback: true },
+          });
+          const data = {
+            userId, clientRunId, topicId: input.topicId, packId: input.packId ?? null,
+            score: Math.max(previous?.score ?? 0, input.score ?? 0) || null,
+            feedback: input.feedback || previous?.feedback || null,
+            items: mergeWarmupItems(previous?.items, input.items),
+          };
+          return previous
+            ? tx.practiceWarmupRecord.update({ where: { id: previous.id }, data })
+            : tx.practiceWarmupRecord.create({ data });
+        }, { isolationLevel: 'Serializable' });
+      } catch (error: any) {
+        if (attempt === 3 || (error?.code !== 'P2034' && error?.code !== 'P2002')) throw error;
+      }
+    }
+    throw new Error('Unable to merge warmup record');
   }
 
   private async rebuildItemProgress(userId: string, itemId: string) {

@@ -255,10 +255,12 @@ export function TodayTaskPage() {
   const [reviewDebtCount, setReviewDebtCount] = useState<number | null>(null)
   // 今日任务相关 outbox 存在未同步改动时，同步按钮显示感叹号角标。
   const [hasPendingSync, setHasPendingSync] = useState(false)
-  // 同步发现今日任务有更新时，询问用户是否立即刷新。
-  const [showTodayUpdateDialog, setShowTodayUpdateDialog] = useState(false)
+  // 抽屉内收到的远端变更只做标记；等本轮练习关闭后再安全检查，不能抢走作答焦点。
+  const [pendingTodayUpdateCheck, setPendingTodayUpdateCheck] = useState<string | null>(null)
   // 任意一次同步完成（登录 / 自动 / 手动 / 其他页面）都会更新该时间戳。
   const lastSyncedAt = useOfflineSyncStore((s) => s.lastSyncedAt)
+  // 只有 pull 实际带回当前 run，才有资格被视为“今日任务更新”。
+  const lastPulledDailyPracticeRunIds = useOfflineSyncStore((s) => s.lastPulledDailyPracticeRunIds)
   const todayState = useTodayPracticeStore()
   const reviewRoundActive = todayState.roundKind === 'mistakeRetry'
   const attemptedIds = todayState.attemptedIds
@@ -446,21 +448,31 @@ export function TodayTaskPage() {
     return () => window.clearInterval(timer)
   }, [refreshPendingSyncBadge])
 
-  // 同步完成后：本地 run 若被服务端改写（与页面当前状态不一致）→ 弹窗询问。
+  // 只记录确实拉回当前 run 的同步。其他页面、内容包等普通同步没有资格触发
+  // “今日任务更新”提示；当前设备自己的回写仍会在下一步的语义比较中被排除。
   useEffect(() => {
-    if (!lastSyncedAt) return
+    if (!lastSyncedAt || !plan?.runId || !lastPulledDailyPracticeRunIds.includes(plan.runId)) return
+    setPendingTodayUpdateCheck(plan.runId)
+  }, [lastPulledDailyPracticeRunIds, lastSyncedAt, plan?.runId])
+
+  // 抽屉内绝不重载或挂载第二个 Dialog。若期间有其他设备更新，关闭抽屉后才
+  // 比较持久化 run；可合并的远端变化自动以本地已落库的结果重建页面，无须打断
+  // 学习者。当前设备仍有待上传/提交中状态时，store 会拒绝该检查。
+  useEffect(() => {
+    if (drawerOpen || !plan?.runId) return
+    if (pendingTodayUpdateCheck !== plan.runId) return
     let cancelled = false
     void useDailyPracticeStore.getState().checkRunChangedLocally().then((changed) => {
-      if (!cancelled && changed) setShowTodayUpdateDialog(true)
+      if (cancelled) return
+      setPendingTodayUpdateCheck(null)
+      if (!changed) return
+      // The server merges daily-run snapshots and attempts monotonically, so a
+      // pulled difference with no local pending write is safe to adopt.
+      useDailyPracticeStore.getState().invalidatePlans()
+      void loadToday(targetPackId, targetDate, planMode)
     })
     return () => { cancelled = true }
-  }, [lastSyncedAt])
-
-  const applyTodayUpdate = useCallback(async () => {
-    setShowTodayUpdateDialog(false)
-    useDailyPracticeStore.getState().invalidatePlans()
-    await loadToday(targetPackId, targetDate, planMode)
-  }, [loadToday, planMode, targetDate, targetPackId])
+  }, [drawerOpen, loadToday, pendingTodayUpdateCheck, plan?.runId, planMode, targetDate, targetPackId])
 
   const handleAttempt = useCallback(async (attempt: TodayCardAttempt) => {
     try {
@@ -1932,24 +1944,6 @@ export function TodayTaskPage() {
             </Button>
             <Button className="flex-1" onClick={startWeakReviewRound}>
               {t('todayTask.startWrongReview')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── 同步发现今日任务更新 → 询问是否立即刷新 ── */}
-      <Dialog open={showTodayUpdateDialog} onOpenChange={setShowTodayUpdateDialog}>
-        <DialogContent className="!z-[10002] w-[calc(100vw-2rem)] max-w-sm rounded-2xl p-5">
-          <DialogTitle className="text-base">{t('todayTask.todayUpdateTitle')}</DialogTitle>
-          <DialogDescription className="mt-1 text-sm leading-5">
-            {t('todayTask.todayUpdateDesc')}
-          </DialogDescription>
-          <div className="flex gap-2 pt-4">
-            <Button variant="outline" className="flex-1" onClick={() => setShowTodayUpdateDialog(false)}>
-              {t('todayTask.todayUpdateLater')}
-            </Button>
-            <Button className="flex-1" onClick={applyTodayUpdate}>
-              {t('todayTask.todayUpdateNow')}
             </Button>
           </div>
         </DialogContent>

@@ -7,10 +7,13 @@ import { useFeatureFlagsStore } from '@/stores/feature-flags.store'
 import { useNotificationStore } from '@/features/notification/store'
 import { useUserStore } from '@/stores/user.store'
 import { offlineStorageService, offlineSyncService } from '@/lib/offline'
-import { refreshLearningBadgeFromTodayRun, registerLearningReminderActions, rescheduleLearningReminder } from '@/lib/native/learning-reminder'
+import { cancelLearningReminders, refreshLearningBadgeFromTodayRun, registerLearningReminderActions, rescheduleLearningReminder } from '@/lib/native/learning-reminder'
 import { isNative, revenueCat } from '@/lib/native'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { useSearchStore } from '@/stores/search.store'
+import { usePracticeActivityStore } from '@/stores/practice-activity.store'
+import { activateAccountLearningPreferences } from '@/stores/preferences.store'
+import { useThemePresetStore } from '@/stores/theme-preset.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { useLearningStore } from '@/stores/learning.store'
 import { isManagementHashRoute, useManagementHashRoute } from '@/hooks/use-management-route'
@@ -167,13 +170,25 @@ async function clearUserScopedClientData(options: { preservePersistentData?: boo
   }
   useOfflineSyncStore.getState().reset()
   useSearchStore.getState().clearHistory()
+  usePracticeActivityStore.getState().reset()
+  useThemePresetStore.getState().reset()
+  activateAccountLearningPreferences(null)
+  await cancelLearningReminders().catch((error) => {
+    console.warn('[learning-reminder] cancel on account switch failed:', error)
+  })
 }
 
 async function prepareOfflineDataForUser(userId: string) {
   const ownerId = getOfflineDataOwner()
   // Data retained after an expired session may only be reused by the same account.
   if (ownerId && ownerId !== userId) await clearUserScopedClientData()
+  activateAccountLearningPreferences(userId, { migrateCurrentDeviceValues: ownerId === userId })
   setOfflineDataOwner(userId)
+  // Foreground sync is deliberately throttled and may have already run for a
+  // previous account. Rebuild native notifications immediately for this one.
+  void rescheduleLearningReminder().catch((error) => {
+    console.warn('[learning-reminder] reschedule on account switch failed:', error)
+  })
 }
 
 function normalizeSessionResponse(raw: unknown): SessionPayload {

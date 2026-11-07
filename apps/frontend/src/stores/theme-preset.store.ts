@@ -10,7 +10,7 @@ const THEMES_CACHE_KEY = 'manyu-themes-cache';
 const THEMES_CACHE_TTL_MS = 60 * 60 * 1000; // 1 小时
 
 // ── 当前激活主题缓存（localStorage, 7 天 TTL，后台异步刷新） ──
-const ACTIVE_PRESET_CACHE_KEY = 'manyu-active-preset';
+const ACTIVE_PRESET_CACHE_KEY_PREFIX = 'manyu-active-preset:';
 
 interface ActivePresetCache {
   /** 缓存的主题完整数据 */
@@ -59,6 +59,7 @@ function findDefault(presets: ThemePreset[]): ThemePreset | null {
 interface ThemePresetStore {
   presets: ThemePreset[];
   activePreset: ThemePreset | null;
+  activeUserId: string | null;
   presetsLoaded: boolean;
   loading: boolean;
   error: string | null;
@@ -66,7 +67,7 @@ interface ThemePresetStore {
   /** 确保主题列表已加载（缓存优先） */
   ensurePresets: () => Promise<void>;
   /** 加载当前激活的主题（缓存优先，API 后台刷新） */
-  loadActivePreset: (isLoggedIn: boolean) => Promise<void>;
+  loadActivePreset: (userId?: string | null) => Promise<void>;
   /** 切换主题（乐观更新 + 本地缓存 + API 后台同步） */
   setActivePreset: (presetId: string | null) => Promise<void>;
   /** 清除 */
@@ -76,6 +77,7 @@ interface ThemePresetStore {
 export const useThemePresetStore = create<ThemePresetStore>((set, get) => ({
   presets: [],
   activePreset: null,
+  activeUserId: null,
   presetsLoaded: false,
   loading: false,
   error: null,
@@ -101,32 +103,35 @@ export const useThemePresetStore = create<ThemePresetStore>((set, get) => ({
     }
   },
 
-  loadActivePreset: async (isLoggedIn: boolean) => {
-    set({ loading: true, error: null });
+  loadActivePreset: async (userId) => {
+    // A theme is account data. Never render the previous account's cached
+    // selection while resolving a new session.
+    set({ activeUserId: userId ?? null, activePreset: null, loading: true, error: null });
 
-    // ── 第一步：读本地缓存（立即生效，0 请求） ──
-    const localActive = readCache<ActivePresetCache>(ACTIVE_PRESET_CACHE_KEY, 7 * 24 * 60 * 60 * 1000);
-    if (localActive) {
-      set({ activePreset: localActive.preset, loading: false });
+    if (!userId) {
+      set({ loading: false });
+      return;
     }
 
-    if (!isLoggedIn) {
-      // 未登录：仅用本地缓存，没有任何 API 请求
-      if (!localActive) {
-        // 本地也没缓存 → 等 presets 加载后再从中取默认
-        set({ loading: false });
-      }
-      return;
+    const cacheKey = `${ACTIVE_PRESET_CACHE_KEY_PREFIX}${userId}`;
+
+    // ── 第一步：读本地缓存（立即生效，0 请求） ──
+    const localActive = readCache<ActivePresetCache>(cacheKey, 7 * 24 * 60 * 60 * 1000);
+    if (localActive) {
+      set({ activePreset: localActive.preset, loading: false });
     }
 
     // ── 第二步：后台异步刷新远端数据 ──
     try {
       const { id } = await themeApi.getActive();
+      // A late request from an earlier account must not overwrite this account.
+      if (get().activeUserId !== userId) return;
       // 确保 presets 列表已加载，从本地列表匹配完整主题（避免传输全量数据）
       await get().ensurePresets();
+      if (get().activeUserId !== userId) return;
       const matched = get().presets.find((p) => p.id === id) ?? findDefault(get().presets);
       if (matched) {
-        writeCache(ACTIVE_PRESET_CACHE_KEY, { preset: matched });
+        writeCache(cacheKey, { preset: matched });
         set({ activePreset: matched, loading: false });
       } else {
         set({ loading: false });
@@ -148,7 +153,8 @@ export const useThemePresetStore = create<ThemePresetStore>((set, get) => ({
       : findDefault(presets);
     if (targetPreset) {
       set({ activePreset: targetPreset });
-      writeCache(ACTIVE_PRESET_CACHE_KEY, { preset: targetPreset });
+      const userId = get().activeUserId
+      if (userId) writeCache(`${ACTIVE_PRESET_CACHE_KEY_PREFIX}${userId}`, { preset: targetPreset });
     }
 
     // ── API 后台同步 ──
@@ -160,6 +166,6 @@ export const useThemePresetStore = create<ThemePresetStore>((set, get) => ({
   },
 
   reset: () => {
-    set({ presets: [], activePreset: null, presetsLoaded: false, loading: false, error: null });
+    set({ presets: [], activePreset: null, activeUserId: null, presetsLoaded: false, loading: false, error: null });
   },
 }));

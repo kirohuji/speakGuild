@@ -24,6 +24,8 @@ export interface SyncOutboxItem<TPayload = unknown> {
   clientMutationId: string
   createdAt: string
   updatedAt: string
+  /** Monotonic local revision used to acknowledge exactly one sent payload. */
+  revision?: number
   retryCount: number
   status: 'pending' | 'syncing' | 'synced' | 'failed'
   lastError?: string
@@ -60,6 +62,7 @@ export const syncOutbox = {
         ...existing,
         payload: input.payload,
         updatedAt: now,
+        revision: (existing.revision ?? 0) + 1,
         status: 'pending',
         lastError: undefined,
       }
@@ -75,6 +78,7 @@ export const syncOutbox = {
       clientMutationId: createId(),
       createdAt: now,
       updatedAt: now,
+      revision: 1,
       retryCount: 0,
       status: 'pending',
     }
@@ -92,19 +96,42 @@ export const syncOutbox = {
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   },
 
-  async markSynced(id: string): Promise<void> {
+  /**
+   * A replay works on a snapshot of an outbox row.  Do not acknowledge a row
+   * which was coalesced with a newer payload while that request was in flight.
+   */
+  async markSynced(id: string, expected?: Pick<SyncOutboxItem, 'revision' | 'updatedAt'>): Promise<boolean> {
     // 标记为已同步（而非立即删除），保留 7 天审计追溯。
     // 旧记录由 cleanup() 统一清理。
     try {
       const item = await localDb.get<SyncOutboxItem>('outbox', id)
-      if (!item) return
+      if (!item) return false
+      if (expected?.revision !== undefined) {
+        if (item.revision !== expected.revision) return false
+      } else if (expected?.updatedAt && item.updatedAt !== expected.updatedAt) return false
       await localDb.put('outbox', {
         ...item,
         status: 'synced',
         syncedAt: new Date().toISOString(),
       })
+      return true
     } catch (error) {
       console.warn('[sync-outbox] markSynced update failed:', error)
+      return false
+    }
+  },
+
+  /** True only when a coalesced payload replaced the snapshot just replayed. */
+  async hasNewerRevision(id: string, expected: Pick<SyncOutboxItem, 'revision' | 'updatedAt'>): Promise<boolean> {
+    try {
+      const item = await localDb.get<SyncOutboxItem>('outbox', id)
+      if (!item || (item.status !== 'pending' && item.status !== 'failed')) return false
+      if (expected.revision !== undefined) return item.revision !== expected.revision
+      return item.updatedAt !== expected.updatedAt
+    } catch {
+      // A local read failure is not evidence of a new payload.  Let the next
+      // foreground/background sync retry instead of spinning forever here.
+      return false
     }
   },
 
@@ -148,9 +175,12 @@ export const syncOutbox = {
     }
   },
 
-  async markFailed(id: string, error: unknown): Promise<void> {
+  async markFailed(id: string, error: unknown, expected?: Pick<SyncOutboxItem, 'revision' | 'updatedAt'>): Promise<boolean> {
     const item = await localDb.get<SyncOutboxItem>('outbox', id)
-    if (!item) return
+    if (!item) return false
+    if (expected?.revision !== undefined) {
+      if (item.revision !== expected.revision) return false
+    } else if (expected?.updatedAt && item.updatedAt !== expected.updatedAt) return false
     await localDb.put('outbox', {
       ...item,
       status: 'failed',
@@ -158,6 +188,7 @@ export const syncOutbox = {
       updatedAt: new Date().toISOString(),
       lastError: serializeError(error),
     })
+    return true
   },
 }
 

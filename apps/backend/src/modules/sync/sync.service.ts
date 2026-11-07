@@ -478,8 +478,8 @@ export class SyncService {
         },
       }) : Promise.resolve([]),
       want('practiceWarmupRecords') ? (this.prisma as any).practiceWarmupRecord.findMany({
-        where: { userId, createdAt: { gt: sinceWarmupRecord } },
-        orderBy: { createdAt: 'asc' },
+        where: { userId, updatedAt: { gt: sinceWarmupRecord } },
+        orderBy: { updatedAt: 'asc' },
         take: SyncService.PULL_PAGE_SIZE,
         select: {
           id: true,
@@ -493,6 +493,7 @@ export class SyncService {
           feedback: true,
           items: true,
           createdAt: true,
+          updatedAt: true,
         },
       }) : Promise.resolve([]),
       want('dailyPracticeRuns') ? (this.prisma as any).userDailyPracticeRun.findMany({
@@ -513,6 +514,7 @@ export class SyncService {
           initialRecallResults: true,
           continuationResults: true,
           remediationResults: true,
+          attemptHistory: true,
           submissionStatus: true,
           stats: true,
           createdAt: true,
@@ -602,7 +604,7 @@ export class SyncService {
       sceneProgresses: want('sceneProgresses') ? (maxTime(sceneProgresses, 'updatedAt') ?? cursors.sceneProgresses ?? null) : (cursors.sceneProgresses ?? null),
       chunkProgresses: want('chunkProgresses') ? (maxTime(chunkProgresses, 'updatedAt') ?? cursors.chunkProgresses ?? null) : (cursors.chunkProgresses ?? null),
       practiceSessions: want('practiceSessions') ? (maxTime(practiceSessions, 'updatedAt') ?? cursors.practiceSessions ?? null) : (cursors.practiceSessions ?? null),
-      practiceWarmupRecords: want('practiceWarmupRecords') ? (maxTime(practiceWarmupRecords, 'createdAt') ?? cursors.practiceWarmupRecords ?? null) : (cursors.practiceWarmupRecords ?? null),
+      practiceWarmupRecords: want('practiceWarmupRecords') ? (maxTime(practiceWarmupRecords, 'updatedAt') ?? cursors.practiceWarmupRecords ?? null) : (cursors.practiceWarmupRecords ?? null),
       dailyPracticeRuns: want('dailyPracticeRuns') ? (maxTime(dailyPracticeRuns, 'updatedAt') ?? cursors.dailyPracticeRuns ?? null) : (cursors.dailyPracticeRuns ?? null),
       topicSessions: want('topicSessions') ? (maxTime(topicSessions, 'updatedAt') ?? cursors.topicSessions ?? null) : (cursors.topicSessions ?? null),
       deletedExpressionItems: want('expressionItems') ? (maxTime(deletedExpressionItems, 'deletedAt') ?? cursors.deletedExpressionItems ?? null) : (cursors.deletedExpressionItems ?? null),

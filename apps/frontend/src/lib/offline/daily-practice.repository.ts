@@ -149,6 +149,9 @@ export type StoredDailyPracticeRun = {
   continuationResults: Record<string, ContinuationResult | undefined>
   remediationResults: Record<string, RemediationResult | undefined>
   attemptHistory: AttemptHistoryEntry[]
+  /** Local-only delivery cursor.  It is never sent to the server. */
+  syncedHistoryEventIds?: string[]
+  incrementalSyncReady?: boolean
   createdAt: string
   updatedAt: string
   syncStatus: 'pending' | 'synced'
@@ -212,6 +215,65 @@ function packKey(packIds: string[]) {
   return [...packIds].sort().join(',') || 'none'
 }
 
+/** Keep client reconciliation byte-for-byte deterministic with the server. */
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).sort().join(',')}]`
+  if (!value || typeof value !== 'object') return JSON.stringify(value)
+  const record = value as Record<string, unknown>
+  return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`).join(',')}}`
+}
+
+function scoreRankForMerge(score?: string | null) {
+  if (score === 'strong') return 3
+  if (score === 'ok') return 2
+  if (score === 'weak') return 1
+  return 0
+}
+
+function mergeOneResult(previous: any, next: any, kind: 'initial' | 'continuation' | 'remediation') {
+  if (!previous) return next
+  if (!next) return previous
+  if (kind === 'remediation') {
+    if (Boolean(previous.resolved) !== Boolean(next.resolved)) return previous.resolved ? previous : next
+    const [left, right] = [scoreRankForMerge(previous.score), scoreRankForMerge(next.score)]
+    if (left !== right) return left > right ? previous : next
+    if ((previous.cycle ?? 0) !== (next.cycle ?? 0)) return (previous.cycle ?? 0) > (next.cycle ?? 0) ? previous : next
+  }
+  if (kind === 'continuation') {
+    if ((previous.attemptCount ?? 0) !== (next.attemptCount ?? 0)) return (previous.attemptCount ?? 0) > (next.attemptCount ?? 0) ? previous : next
+    if (previous.latestScore !== next.latestScore) return previous.latestScore === 'weak' ? previous : next
+  }
+  if (kind === 'initial') {
+    const [left, right] = [scoreRankForMerge(previous.score), scoreRankForMerge(next.score)]
+    if (left !== right) return left > right ? previous : next
+  }
+  return stableJson(previous) <= stableJson(next) ? previous : next
+}
+
+function mergeResultMap(localValue: unknown, remoteValue: unknown, kind: 'initial' | 'continuation' | 'remediation') {
+  const local = localValue && typeof localValue === 'object' && !Array.isArray(localValue) ? localValue as Record<string, unknown> : {}
+  const remote = remoteValue && typeof remoteValue === 'object' && !Array.isArray(remoteValue) ? remoteValue as Record<string, unknown> : {}
+  return Object.fromEntries([...new Set([...Object.keys(local), ...Object.keys(remote)])]
+    .map((itemId) => [itemId, mergeOneResult(local[itemId], remote[itemId], kind)]))
+}
+
+function mergeStats(localValue: unknown, remoteValue: unknown): Record<string, unknown> {
+  const merge = (left: any, right: any): any => {
+    if (left === undefined) return right
+    if (right === undefined) return left
+    if (Array.isArray(left) && Array.isArray(right)) return [...new Map([...left, ...right].map((item) => [stableJson(item), item])).values()]
+    if (left && right && typeof left === 'object' && typeof right === 'object') {
+      return Object.fromEntries([...new Set([...Object.keys(left), ...Object.keys(right)])].map((key) => [key, merge(left[key], right[key])]))
+    }
+    if (typeof left === 'number' && typeof right === 'number') return Math.max(left, right)
+    return stableJson(left) <= stableJson(right) ? left : right
+  }
+  return merge(
+    localValue && typeof localValue === 'object' && !Array.isArray(localValue) ? localValue : {},
+    remoteValue && typeof remoteValue === 'object' && !Array.isArray(remoteValue) ? remoteValue : {},
+  )
+}
+
 function activeRunPointerId(date: string, mode: DailyPracticePlanMode, scope: DailyPracticeScope, ids: string[]) {
   return `daily-active:${date}:${mode}:${scope}:${packKey(ids)}`
 }
@@ -238,64 +300,90 @@ async function appliedReviewItemIds(runs: StoredDailyPracticeRun[]): Promise<Set
 }
 
 /** Write one server run into the local shape used by the Today state machine. */
-export async function restoreRemoteDailyPracticeRun(item: any): Promise<void> {
+export async function restoreRemoteDailyPracticeRun(item: any, acknowledgedHistoryIds: string[] = []): Promise<void> {
   const runId = typeof item?.clientRunId === 'string' ? item.clientRunId : ''
   if (!runId || runId.startsWith('activity:')) return
   const remoteUpdatedAt = toIsoString(item.updatedAt) ?? new Date().toISOString()
   const local = await localDb.get<Partial<StoredDailyPracticeRun>>('daily_practice_runs', runId)
-  // A newer local run means this device made changes the outbox has not pushed
-  // yet.  That includes retries answered after the run was already submitted:
-  // such runs keep submissionStatus 'synced' locally while the retry answers
-  // still sit in a pending outbox snapshot.  A stale remote copy (e.g. the
-  // mode-switch currentRun fetch before the outbox flush) must never wipe the
-  // newer local answer state — the outbox reconciles it on the next sync.
-  if (local?.updatedAt && local.updatedAt > remoteUpdatedAt) return
+  // Never use wall-clock ordering to reject a pull.  The response to this
+  // device's own upload is necessarily older than its local acknowledgement,
+  // yet may contain another device's merge.  Merge the two projections; the
+  // pending outbox remains the durability boundary for any local delta.
+  const union = (...values: unknown[]) => [...new Set(values.flatMap((value) => Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : []))]
+  const history = [...(Array.isArray(local?.attemptHistory) ? local.attemptHistory : []), ...(Array.isArray(item.attemptHistory) ? item.attemptHistory : [])]
+  const uniqueHistory = [...new Map(history.map((entry: any) => {
+    const content = stableJson(entry)
+    return [entry?.id ? `${entry.id}:${content}` : content, entry]
+  })).values()].sort((left: any, right: any) =>
+    String(left?.createdAt ?? '').localeCompare(String(right?.createdAt ?? '')) || stableJson(left).localeCompare(stableJson(right)))
 
   const scheduledItemIds = Array.isArray(item.scheduledItemIds) ? item.scheduledItemIds : []
   const packIds = Array.isArray(item.packIds) ? item.packIds : []
+  const mergedPackIds = union(local?.packIds, packIds)
+  const mergedScheduledItemIds = union(local?.scheduledItemIds, scheduledItemIds)
+  const initialRecallResults = mergeResultMap(local?.initialRecallResults, item.initialRecallResults, 'initial')
+  const continuationResults = mergeResultMap(local?.continuationResults, item.continuationResults, 'continuation')
+  const remediationResults = mergeResultMap(local?.remediationResults, item.remediationResults, 'remediation')
+  const attemptedItemIds = union(local?.attemptedItemIds, item.attemptedItemIds)
+  const unresolvedInput = new Set(union(local?.unresolvedItemIds, item.unresolvedItemIds))
+  const unresolvedItemIds = attemptedItemIds.filter((id) => {
+    if ((remediationResults as any)[id]?.resolved) return false
+    const initial = (initialRecallResults as any)[id]
+    // Old runs can lack the result map. Preserve their explicit unresolved
+    // state until the first modern snapshot arrives, but never retain a loser.
+    return initial ? initial.score === 'miss' : unresolvedInput.has(id)
+  })
+  const completedItemIds = union(
+    local?.completedItemIds,
+    item.completedItemIds,
+    attemptedItemIds.filter((id) => !unresolvedItemIds.includes(id)),
+  ).filter((id) => !unresolvedItemIds.includes(id))
   const date = toIsoString(item.date)?.slice(0, 10) ?? local?.date
   if (!date) return
   const mode: DailyPracticePlanMode = item.mode === 'review' ? 'review' : 'practice'
   const scope: DailyPracticeScope = item.scope === 'mixed' ? 'mixed' : 'single'
-  const packIdsKey = packKey(packIds)
+  const packIdsKey = packKey(mergedPackIds)
   await localDb.put('daily_practice_runs', {
     ...local,
     id: runId,
     date,
     mode,
     scope,
-    packIds,
+    packIds: mergedPackIds,
     packIdsKey,
-    scheduledItemIds,
-    completedItemIds: Array.isArray(item.completedItemIds) ? item.completedItemIds : [],
-    attemptedItemIds: Array.isArray(item.attemptedItemIds) ? item.attemptedItemIds : [],
-    unresolvedItemIds: Array.isArray(item.unresolvedItemIds) ? item.unresolvedItemIds : [],
-    srsAppliedItemIds: Array.isArray(item.srsAppliedItemIds) ? item.srsAppliedItemIds : [],
-    initialRecallResults: item.initialRecallResults ?? {},
-    continuationResults: item.continuationResults ?? {},
-    remediationResults: item.remediationResults ?? {},
-    attemptHistory: local?.attemptHistory ?? [],
-    dailyPracticeGoal: local?.dailyPracticeGoal ?? scheduledItemIds.length,
-    reviewBatchSize: local?.reviewBatchSize ?? scheduledItemIds.length,
+    scheduledItemIds: mergedScheduledItemIds,
+    completedItemIds,
+    attemptedItemIds,
+    unresolvedItemIds,
+    srsAppliedItemIds: union(local?.srsAppliedItemIds, item.srsAppliedItemIds),
+    initialRecallResults,
+    continuationResults,
+    remediationResults,
+    attemptHistory: uniqueHistory,
+    syncedHistoryEventIds: [...new Set([...(local?.syncedHistoryEventIds ?? []), ...(Array.isArray(item.attemptHistory) ? item.attemptHistory : []).map((entry: any) => entry?.id).filter(Boolean), ...acknowledgedHistoryIds])],
+    incrementalSyncReady: true,
+    dailyPracticeGoal: local?.dailyPracticeGoal ?? mergedScheduledItemIds.length,
+    reviewBatchSize: local?.reviewBatchSize ?? mergedScheduledItemIds.length,
     configFingerprint: local?.configFingerprint ?? `remote:${runId}`,
     createdAt: toIsoString(item.createdAt) ?? remoteUpdatedAt,
     updatedAt: remoteUpdatedAt,
-    syncStatus: 'synced',
-    submissionStatus: item.submissionStatus ?? 'synced',
+    syncStatus: local?.syncStatus === 'pending' ? 'pending' : 'synced',
+    submissionStatus: local?.submissionStatus === 'dirty' || local?.submissionStatus === 'submitting'
+      ? local.submissionStatus : (item.submissionStatus ?? 'synced'),
     activityMarked: local?.activityMarked ?? false,
-    stats: item.stats ?? local?.stats ?? {},
+    stats: mergeStats(local?.stats, item.stats),
   } satisfies StoredDailyPracticeRun)
 
-  if (date && packIds.length > 0) {
-    if (scope === 'single' && packIds.length === 1) {
+  if (date && mergedPackIds.length > 0) {
+    if (scope === 'single' && mergedPackIds.length === 1) {
       await localDb.put('daily_practice_runs', {
         id: ACTIVE_DAILY_PRACTICE_PACK_ID,
-        packId: packIds[0],
+        packId: mergedPackIds[0],
         updatedAt: remoteUpdatedAt,
       } satisfies StoredActiveDailyPracticePack)
     }
     await localDb.put('daily_practice_runs', {
-      id: activeRunPointerId(date, mode, scope, packIds),
+      id: activeRunPointerId(date, mode, scope, mergedPackIds),
       runId,
       updatedAt: remoteUpdatedAt,
     } satisfies StoredActiveRunPointer)
@@ -438,8 +526,15 @@ function createTodayRunSyncPayload(params: {
   submissionStatus: SubmissionStatus
   stats: Record<string, unknown>
 }) {
-  const unresolved = new Set(params.run.unresolvedItemIds)
-  const completedItemIds = params.run.attemptedItemIds.filter((id) => !unresolved.has(id))
+  const bootstrap = !params.run.incrementalSyncReady
+  const delivered = new Set(params.run.syncedHistoryEventIds ?? [])
+  const historyDelta = bootstrap
+    ? params.run.attemptHistory
+    : params.run.attemptHistory.filter((entry) => !delivered.has(entry.id))
+  const changedStepIds = new Set(historyDelta.map((entry) => entry.stepId))
+  const deltaMap = <T,>(map: Record<string, T | undefined>) => bootstrap
+    ? map
+    : Object.fromEntries(Object.entries(map).filter(([stepId]) => changedStepIds.has(stepId)))
   // 真实作答优先：params.records 由 recordEntry 维护为「最新在前」，直接沿用
   // 该顺序；fallback（run 派生的空 userAnswer 占位）只补缺失项，避免覆盖
   // 真实作答顺序。这样后端 items 与前端展示顺序一致（最新在前）。
@@ -449,6 +544,7 @@ function createTodayRunSyncPayload(params: {
     if (!recordsByStepId.has(record.stepId)) recordsByStepId.set(record.stepId, record)
   }
   const records = [...recordsByStepId.values()]
+  const recordDelta = bootstrap ? records : records.filter((record) => changedStepIds.has(record.stepId))
   const firstTopic = params.plan.topicStats.find((topic) => topic.scheduledTodayCount > 0) ?? params.plan.topicStats[0]
   const score = averageWarmupScore(records)
   return {
@@ -460,13 +556,16 @@ function createTodayRunSyncPayload(params: {
       scope: params.plan.scope,
       packIds: params.plan.units.map((unit) => unit.id),
       scheduledItemIds: params.plan.scheduledItemIds,
-      completedItemIds,
-      attemptedItemIds: params.run.attemptedItemIds,
-      unresolvedItemIds: params.run.unresolvedItemIds,
-      srsAppliedItemIds: params.run.srsAppliedItemIds,
-      initialRecallResults: params.run.initialRecallResults,
-      continuationResults: params.run.continuationResults,
-      remediationResults: params.run.remediationResults,
+      // Static plan metadata remains idempotent; mutable facts below are
+      // event-derived deltas, never the full daily snapshot after bootstrap.
+      completedItemIds: [],
+      attemptedItemIds: [...changedStepIds],
+      unresolvedItemIds: [],
+      srsAppliedItemIds: bootstrap ? params.run.srsAppliedItemIds : params.run.srsAppliedItemIds.filter((id) => changedStepIds.has(id)),
+      initialRecallResults: deltaMap(params.run.initialRecallResults),
+      continuationResults: deltaMap(params.run.continuationResults),
+      remediationResults: deltaMap(params.run.remediationResults),
+      attemptHistory: historyDelta,
       submissionStatus: params.submissionStatus,
       // Outbox coalescing uses this local revision to reject a slower stale
       // snapshot for the same run (for example the original all-wrong submit).
@@ -474,13 +573,13 @@ function createTodayRunSyncPayload(params: {
       stats: params.stats,
     },
     attempts: params.attempts,
-    warmupRecord: records.length > 0 && firstTopic ? {
+    warmupRecord: recordDelta.length > 0 && firstTopic ? {
       topicId: firstTopic.topicId,
       topicTitle: firstTopic.topicTitle,
       // 归属学习包：每条 item 已带 packId，取首条即可（同一记录通常同包）。
-      packId: records[0]?.packId ?? null,
-      items: records,
-      score,
+      packId: recordDelta[0]?.packId ?? null,
+      items: recordDelta,
+      score: averageWarmupScore(recordDelta) ?? score,
       feedback: null,
     } : undefined,
     localWarmupRecordId: params.localWarmupRecordId ?? null,
@@ -1342,12 +1441,6 @@ export const dailyPracticeRepository = {
       stats: {
         records: records.length,
         completed: completedIds.length,
-        attemptedItemIds: run.attemptedItemIds,
-        unresolvedItemIds: run.unresolvedItemIds,
-        srsAppliedItemIds: run.srsAppliedItemIds,
-        initialRecallResults: run.initialRecallResults,
-        continuationResults: run.continuationResults,
-        remediationResults: run.remediationResults,
       },
     })
 

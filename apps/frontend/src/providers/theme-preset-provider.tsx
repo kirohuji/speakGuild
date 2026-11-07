@@ -31,12 +31,12 @@ export function ThemePresetProvider({ children }: { children: ReactNode }) {
   const { bgmEnabled, bgmVolume } = usePreferencesStore();
   const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  const isLoggedIn = !!session?.user?.id;
+  const userId = session?.user?.id ?? null;
 
   // 加载用户激活的主题（不加载列表——列表在打开主题选择器时才请求）
   useEffect(() => {
-    store.loadActivePreset(isLoggedIn);
-  }, [isLoggedIn]);
+    void store.loadActivePreset(userId);
+  }, [userId]);
 
   // 兜底：presets 加载完后，如果 activePreset 仍为空，从列表中取默认主题
   useEffect(() => {
@@ -56,6 +56,8 @@ export function ThemePresetProvider({ children }: { children: ReactNode }) {
     const mode = resolvedTheme === 'dark' ? 'dark' : 'light';
     if (store.activePreset) {
       applyPresetColors(store.activePreset, mode);
+    } else {
+      clearPresetColors();
     }
   }, [store.activePreset, resolvedTheme]);
 

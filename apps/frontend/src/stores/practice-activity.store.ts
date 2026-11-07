@@ -15,6 +15,7 @@ type PracticeActivityState = {
   records: Record<string, PracticeActivityRecord>
   addActiveSeconds: (input: { date: string; sourceId: string; scope: PracticeActivityScope; seconds: number }) => void
   getRecord: (date: string, sourceId: string) => PracticeActivityRecord | null
+  reset: () => void
 }
 
 const MAX_ACTIVE_SECONDS_PER_SOURCE = 4 * 60 * 60
@@ -44,6 +45,9 @@ export const usePracticeActivityStore = create<PracticeActivityState>()(
       },
       getRecord(date, sourceId) {
         return get().records[recordKey(date, sourceId)] ?? null
+      },
+      reset() {
+        set({ records: {} })
       },
     }),
     {

@@ -9,6 +9,11 @@ const CANCEL_WINDOW_DAYS = 14
 const REMINDER_ID_BASE = 730_000
 
 let actionListenerRegistered = false
+let reminderScheduleGeneration = 0
+// Local notification IDs are shared across all accounts. Serialize mutation of
+// that ID range so a stale request can clean up its own write before the next
+// account schedules a replacement.
+let reminderScheduleTail: Promise<void> = Promise.resolve()
 
 export interface LearningReminderTestResult {
   scheduled: boolean
@@ -85,38 +90,64 @@ async function cancelRollingReminders() {
   await LocalNotifications.cancel({ notifications }).catch(() => undefined)
 }
 
+function withReminderScheduleLock<T>(work: () => Promise<T>): Promise<T> {
+  const previous = reminderScheduleTail
+  let release: (() => void) | undefined
+  reminderScheduleTail = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  return previous.then(work).finally(() => release?.())
+}
+
+/** Cancel every notification owned by the rolling learning-reminder window. */
+export async function cancelLearningReminders(): Promise<void> {
+  reminderScheduleGeneration += 1
+  await withReminderScheduleLock(() => cancelRollingReminders())
+}
+
 export async function rescheduleLearningReminder(): Promise<boolean> {
   if (!isNativeRuntime()) return false
 
+  const generation = ++reminderScheduleGeneration
   const { learningReminderEnabled, learningReminderTime } = usePreferencesStore.getState()
-  await cancelRollingReminders()
-  if (!learningReminderEnabled) return true
+  return withReminderScheduleLock(async () => {
+    await cancelRollingReminders()
+    if (generation !== reminderScheduleGeneration) return false
+    if (!learningReminderEnabled) return true
 
-  const time = parseReminderTime(learningReminderTime)
-  if (!time) return false
-  if (!await ensurePermission()) return false
+    const time = parseReminderTime(learningReminderTime)
+    if (!time) return false
+    if (!await ensurePermission()) return false
+    if (generation !== reminderScheduleGeneration) return false
 
-  const now = new Date()
-  const notifications = []
-  for (let offset = 0; offset < REMINDER_WINDOW_DAYS; offset++) {
-    const at = scheduleDate(offset, time)
-    if (at <= now) continue
-    if (await hasStudyActivity(at)) continue
-    notifications.push({
-      id: reminderId(at),
-      title: '今天还没练习英语',
-      body: '来完成今日任务，保持表达手感。',
-      sound: 'default',
-      interruptionLevel: 'active',
-      schedule: { at },
-      extra: { route: '/today' },
-    })
-  }
+    const now = new Date()
+    const notifications = []
+    for (let offset = 0; offset < REMINDER_WINDOW_DAYS; offset++) {
+      const at = scheduleDate(offset, time)
+      if (at <= now) continue
+      if (await hasStudyActivity(at)) continue
+      notifications.push({
+        id: reminderId(at),
+        title: '今天还没练习英语',
+        body: '来完成今日任务，保持表达手感。',
+        sound: 'default',
+        interruptionLevel: 'active',
+        schedule: { at },
+        extra: { route: '/today' },
+      })
+    }
 
-  if (notifications.length > 0) {
+    if (generation !== reminderScheduleGeneration || notifications.length === 0) return generation === reminderScheduleGeneration
     await LocalNotifications.schedule({ notifications })
-  }
-  return true
+    // schedule() is asynchronous. A switch may have invalidated this request
+    // while the native bridge was writing it; remove that stale write before
+    // releasing the ID range to the next request.
+    if (generation !== reminderScheduleGeneration) {
+      await cancelRollingReminders()
+      return false
+    }
+    return true
+  })
 }
 
 export async function cancelTodayLearningReminder() {

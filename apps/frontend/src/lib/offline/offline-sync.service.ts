@@ -152,6 +152,7 @@ async function applyWarmupRecordItem(item: any): Promise<void> {
   // 本地还有未同步的新作答（离线/错题重练刚答）时，服务端旧快照不得覆盖。
   if (existing?.syncStatus === 'pending') return
   const createdAt = toIsoString(item.createdAt) ?? new Date().toISOString()
+  const updatedAt = toIsoString(item.updatedAt) ?? createdAt
   const record = {
     id: localId,
     remoteId: item.id,
@@ -162,7 +163,7 @@ async function applyWarmupRecordItem(item: any): Promise<void> {
     feedback: item.feedback ?? null,
     items: item.items,
     createdAt,
-    updatedAt: createdAt,
+    updatedAt,
     syncStatus: 'synced',
   }
   await localDb.put('warmup_records', record)
@@ -425,6 +426,15 @@ async function replayItem(
   if (item.entityType === 'daily_practice') {
     const payload = item.payload as any
     const result = await dailyPracticeApi.complete(payload)
+    // A push response is the only pull guaranteed to contain the merge which
+    // that push just caused.  Apply it now; cursor advancement must never be
+    // relied on to deliver this reconciliation later.
+    if (result?.run) {
+      const deliveredHistoryIds = Array.isArray(payload?.run?.attemptHistory)
+        ? payload.run.attemptHistory.map((entry: any) => entry?.id).filter(Boolean)
+        : []
+      await restoreRemoteDailyPracticeRun(result.run, deliveredHistoryIds)
+    }
     await localDb.putMany(
       'daily_practice_items',
       (result.itemProgresses ?? []).map((progress) => ({ ...progress, id: progress.itemId })),
@@ -451,17 +461,9 @@ async function replayItem(
         await upsertWarmupRecordEntries({ ...next, updatedAt: existing.updatedAt ?? existing.createdAt ?? next.updatedAt })
       }
     }
-    const clientRunId = payload?.run?.clientRunId ?? item.entityId
-    const localRun = await localDb.get<any>('daily_practice_runs', clientRunId)
-    if (localRun) {
-      await localDb.put('daily_practice_runs', {
-        ...localRun,
-        syncStatus: 'synced',
-        // Snapshot replay acknowledges persistence, not completion.
-        submissionStatus: payload?.run?.submissionStatus === 'synced' ? 'synced' : localRun.submissionStatus,
-        updatedAt: new Date().toISOString(),
-      })
-    }
+    // Outbox acknowledgement happens in flush.  Do not mutate run sync state
+    // here: this request may be carrying an older payload than a snapshot
+    // coalesced into the same outbox row while the request was in flight.
     return true
   }
 
@@ -577,7 +579,12 @@ const SCOPE_PULL_TYPES: Record<Exclude<SyncScope, 'all'>, string[]> = {
 }
 
 export const offlineSyncService = {
-  async pull(userId?: string | null, types?: string[]): Promise<{ cursors: Record<string, string | null>; changed: number; deleted: number }> {
+  async pull(userId?: string | null, types?: string[]): Promise<{
+    cursors: Record<string, string | null>
+    changed: number
+    deleted: number
+    dailyPracticeRunIds: string[]
+  }> {
     const cursorKey = userSyncCursorKey(userId)
     const cursorRecord = await localDb.get<{ value?: string }>('kv', cursorKey)
     // cursors 以 JSON 对象存储在 kv 中，每种类型独立
@@ -587,6 +594,7 @@ export const offlineSyncService = {
     } catch { /* 旧格式兼容：忽略 */ }
     let totalChanged = 0
     let totalDeleted = 0
+    const dailyPracticeRunIds = new Set<string>()
     let finalCursors: Record<string, string | null> = { ...cursors }
 
     // 循环分页拉取，直到所有类型 hasMore 均为 false。
@@ -597,6 +605,9 @@ export const offlineSyncService = {
     while (true) {
       const result = await syncApi.pull(cursors, types)
       await applyUserPullChanges(result.changed, result.deleted)
+      for (const run of result.changed.dailyPracticeRuns ?? []) {
+        if (typeof run?.clientRunId === 'string' && run.clientRunId) dailyPracticeRunIds.add(run.clientRunId)
+      }
 
       totalChanged +=
         (result.changed.expressionItems?.length ?? 0) +
@@ -639,7 +650,7 @@ export const offlineSyncService = {
       })
     }
 
-    return { cursors: finalCursors, changed: totalChanged, deleted: totalDeleted }
+    return { cursors: finalCursors, changed: totalChanged, deleted: totalDeleted, dailyPracticeRunIds: [...dailyPracticeRunIds] }
   },
 
   async sync(userId?: string | null, options?: { quiet?: boolean; scope?: SyncScope }): Promise<OfflineSyncResult> {
@@ -695,6 +706,7 @@ export const offlineSyncService = {
           status: 'success',
           summary: `同步完成：上传 ${push.synced}，拉取 ${pull.changed + pull.deleted}，更新学习包 ${refreshedPacks.length}`,
           detail: result,
+          pulledDailyPracticeRunIds: pull.dailyPracticeRunIds,
         })
         return result
       } catch (error) {
@@ -868,16 +880,14 @@ export const offlineSyncService = {
             if (result.remoteItem) {
               await cacheExpressionItem(exprCtx, result.remoteItem)
             }
-            await syncOutbox.markSynced(batch[i].id)
-            synced += 1
+            if (await syncOutbox.markSynced(batch[i].id, batch[i])) synced += 1
           } else if (result?.status === 'skipped') {
-            await syncOutbox.markSynced(batch[i].id)
-            skipped += 1
+            if (await syncOutbox.markSynced(batch[i].id, batch[i])) skipped += 1
           } else if (isPermanentSyncError(result?.error)) {
             await syncOutbox.markDiscarded(batch[i].id)
             skipped += 1
           } else {
-            await syncOutbox.markFailed(batch[i].id, result?.error)
+            await syncOutbox.markFailed(batch[i].id, result?.error, batch[i])
             failed += 1
           }
         }
@@ -887,10 +897,9 @@ export const offlineSyncService = {
           try {
             const handled = await replayItem(item, exprCtx)
             if (handled) {
-              await syncOutbox.markSynced(item.id)
-              synced += 1
+              if (await syncOutbox.markSynced(item.id, item)) synced += 1
             } else {
-              await syncOutbox.markFailed(item.id, new Error('同步依赖尚未准备好'))
+              await syncOutbox.markFailed(item.id, new Error('同步依赖尚未准备好'), item)
               failed += 1
             }
           } catch (error) {
@@ -901,7 +910,7 @@ export const offlineSyncService = {
               }
               skipped += 1
             } else {
-              await syncOutbox.markFailed(item.id, error)
+              await syncOutbox.markFailed(item.id, error, item)
               failed += 1
             }
           }
@@ -922,13 +931,22 @@ export const offlineSyncService = {
         try {
           const handled = await replayItem(item, exprCtx)
           if (!handled) {
-            await syncOutbox.markFailed(item.id, new Error('同步依赖尚未准备好'))
+            await syncOutbox.markFailed(item.id, new Error('同步依赖尚未准备好'), item)
             failed += 1
             continue
           }
-          await syncOutbox.markSynced(item.id)
-          synced += 1
-          madeProgress = true
+          const acknowledged = await syncOutbox.markSynced(item.id, item)
+          if (acknowledged) {
+            synced += 1
+            madeProgress = true
+          } else if (await syncOutbox.hasNewerRevision(item.id, item)) {
+            // A write occurred while this request was in flight. Replay that
+            // newer immutable revision in this same flush, once.
+            madeProgress = true
+          }
+          // Acknowledgement storage failed without a newer revision. Do not
+          // spin on the same successful request; leave it pending for the
+          // next scheduled/manual sync.
         } catch (error) {
           if (isPermanentSyncError(error)) {
             await syncOutbox.markDiscarded(item.id)
@@ -938,7 +956,7 @@ export const offlineSyncService = {
             skipped += 1
             madeProgress = true
           } else {
-            await syncOutbox.markFailed(item.id, error)
+            await syncOutbox.markFailed(item.id, error, item)
             failed += 1
           }
         }

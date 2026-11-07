@@ -56,6 +56,7 @@ function registerFont() {
 function normalizeInlineMarkdown(value: string) {
   return value
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]+>/g, '')
     .replace(/\\([\\`*_{}[\]()#+\-.!])/g, '$1')
     .trim()
@@ -284,25 +285,36 @@ const styles = StyleSheet.create({
   table: { marginBottom: 6, borderWidth: 0.7, borderColor: '#dce5ef' },
   tableRow: { flexDirection: 'row' },
   tableHeaderRow: { backgroundColor: '#f4f9ff' },
-  tableCell: { flexGrow: 1, flexBasis: 0, minWidth: 0, paddingVertical: 5, paddingHorizontal: 6, borderRightWidth: 0.5, borderBottomWidth: 0.5, borderColor: '#dce5ef' },
+  tableCell: { flexGrow: 1, flexBasis: 0, minWidth: 0, paddingVertical: 4.5, paddingHorizontal: 6, borderRightWidth: 0.5, borderBottomWidth: 0.5, borderColor: '#dce5ef' },
   tableCellLast: { borderRightWidth: 0 },
   tableCellBottom: { borderBottomWidth: 0 },
-  tableCellText: { fontSize: 9.3, lineHeight: 1.5, color: '#5f6f82' },
-  tableHeaderText: { fontSize: 9.5, lineHeight: 1.5, fontWeight: 700, color: '#1f2d3d' },
+  tableCellText: { fontSize: 9.4, lineHeight: 1.5, color: '#5f6f82' },
+  tableHeaderText: { fontSize: 9.75, lineHeight: 1.5, fontWeight: 700, color: '#1f2d3d' },
 })
 
+function pdfInlineNodes(text: string, key: string) {
+  return text.split('\n').flatMap((line, lineIndex) => {
+    const nodes = lineIndex > 0 ? ['\n' as const] : []
+    const parts = line.split(/(\*\*[^*]+\*\*|__[^_]+__|~~[^~]+~~|`[^`]+`|\[[^\]]+\]\([^)]*\)|\*[^*]+\*|_[^_]+_)/g)
+    return [
+      ...nodes,
+      ...parts.map((part, partIndex) => {
+        const nodeKey = `${key}-${lineIndex}-${partIndex}`
+        if (!part) return null
+        if (/^\*\*[^*]+\*\*$|^__[^_]+__$/.test(part)) return <Text key={nodeKey} style={styles.inlineStrong}>{part.slice(2, -2)}</Text>
+        if (/^~~[^~]+~~$/.test(part)) return <Text key={nodeKey} style={styles.inlineStrike}>{part.slice(2, -2)}</Text>
+        if (/^`[^`]+`$/.test(part)) return <Text key={nodeKey} style={styles.inlineCode}>{part.slice(1, -1)}</Text>
+        const link = part.match(/^\[([^\]]+)\]\([^)]*\)$/)
+        if (link) return <Text key={nodeKey} style={styles.inlineLink}>{link[1]}</Text>
+        if (/^\*[^*]+\*$|^_[^_]+_$/.test(part)) return <Text key={nodeKey} style={styles.inlineEmphasis}>{part.slice(1, -1)}</Text>
+        return <Text key={nodeKey}>{part}</Text>
+      }),
+    ]
+  })
+}
+
 function InlineMarkdown({ text }: { text: string }) {
-  const parts = text.split(/(\*\*[^*]+\*\*|__[^_]+__|~~[^~]+~~|`[^`]+`|\[[^\]]+\]\([^)]*\)|\*[^*]+\*|_[^_]+_)/g)
-  return <>{parts.map((part, index) => {
-    if (!part) return null
-    if (/^\*\*[^*]+\*\*$|^__[^_]+__$/.test(part)) return <Text key={index} style={styles.inlineStrong}>{part.slice(2, -2)}</Text>
-    if (/^~~[^~]+~~$/.test(part)) return <Text key={index} style={styles.inlineStrike}>{part.slice(2, -2)}</Text>
-    if (/^`[^`]+`$/.test(part)) return <Text key={index} style={styles.inlineCode}>{part.slice(1, -1)}</Text>
-    const link = part.match(/^\[([^\]]+)\]\([^)]*\)$/)
-    if (link) return <Text key={index} style={styles.inlineLink}>{link[1]}</Text>
-    if (/^\*[^*]+\*$|^_[^_]+_$/.test(part)) return <Text key={index} style={styles.inlineEmphasis}>{part.slice(1, -1)}</Text>
-    return <Text key={index}>{part}</Text>
-  })}</>
+  return <>{pdfInlineNodes(text, 'inline')}</>
 }
 
 function PdfTable({ block }: { block: TeachingBlock }) {
@@ -316,7 +328,7 @@ function PdfTable({ block }: { block: TeachingBlock }) {
         styles.tableCell,
         columnIndex === columnCount - 1 ? styles.tableCellLast : undefined,
         rowIndex === allRows.length - 1 ? styles.tableCellBottom : undefined,
-      ]}><Text style={rowIndex === 0 ? styles.tableHeaderText : styles.tableCellText}><InlineMarkdown text={row[columnIndex] ?? ''} /></Text></View>)}
+      ]}><Text style={rowIndex === 0 ? styles.tableHeaderText : styles.tableCellText}>{pdfInlineNodes(row[columnIndex] ?? '', `${rowIndex}-${columnIndex}`)}</Text></View>)}
     </View>)}
   </View>
 }
@@ -361,22 +373,33 @@ export async function buildTeachingDocumentPdfBlob(input: { markdown: string; ti
 
 const PREVIEW_CSS = `
 .teaching-paper{box-sizing:border-box;position:relative;display:flex;flex-direction:column;width:${TEACHING_DOCUMENT_A4.widthPx}px;height:${TEACHING_DOCUMENT_A4.heightPx}px;padding:72px 44px 60px;color:#1c1917;background:#fff;font-family:"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
-.teaching-paper *{box-sizing:border-box}.teaching-paper-watermark{position:absolute;left:10%;top:43%;width:80%;transform:rotate(-28deg);text-align:center;font-size:48px;font-weight:700;color:#f4ede6;white-space:nowrap}.teaching-paper-header{position:absolute;left:44px;right:44px;top:24px;height:34px;display:flex;align-items:center;border-bottom:1px solid #e7e1da;padding-bottom:9px;color:#57534e}.teaching-paper-logo{width:27px;height:27px;object-fit:contain}.teaching-paper-brand{margin-left:9px;font-size:11px;font-weight:700}.teaching-paper-head-title{min-width:0;margin-left:auto;max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;font-size:11px;color:#78716c}.teaching-paper-body{position:relative;overflow-wrap:anywhere;word-break:break-word}.teaching-paper h1{margin:0;padding:16px 0;font-size:24px;line-height:1.35}.teaching-paper h2{margin:0;padding:12px 0;font-size:17px;line-height:1.4;color:#9a3412}.teaching-paper h3{margin:0;padding:8px 0;font-size:14px;line-height:1.45;color:#44403c}.teaching-paper .teaching-paper-body>:first-child{padding-top:8px}.teaching-paper h4{margin:6px 0 4px;font-size:13px;line-height:1.45;color:#44403c}.teaching-paper h5,.teaching-paper h6{margin:5px 0 3px;font-size:12.5px;line-height:1.45;color:#57534e}.teaching-paper p,.teaching-paper pre,.teaching-paper blockquote{white-space:pre-wrap}.teaching-paper p{margin:0 0 8px;font-size:13px;line-height:1.65}.teaching-paper .list{margin:0 0 8px 14px;font-size:12.5px}.teaching-paper blockquote{margin:0 0 8px;border-left:3px solid #fb923c;background:#faf7f2;padding:8px 12px;font-size:12.5px;line-height:1.6;color:#57534e}.teaching-paper pre{margin:0 0 8px;background:#f5f5f4;padding:11px;font:10.5px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:#44403c}.teaching-paper :not(pre)>code{border-radius:2px;background:#fef3c7;padding:1px 3px;color:#9a3412;font-size:.9em}.teaching-paper s{color:#78716c}.teaching-paper a{color:#9a3412;text-decoration:underline}.teaching-paper table{width:100%;margin:0 0 8px;border:1px solid #d6d3d1;border-collapse:collapse;font-size:12.5px;line-height:1.5}.teaching-paper th,.teaching-paper td{padding:6px 8px;vertical-align:top;border:1px solid #d6d3d1}.teaching-paper th{background:#fff7ed;color:#9a3412;font-size:13px;font-weight:700;text-align:left}.teaching-paper .rule{height:1px;margin:0 0 8px;border:0;background:#d6d3d1}.teaching-paper-footer{position:absolute;left:44px;right:44px;bottom:24px;display:flex;justify-content:space-between;border-top:1px solid #e7e1da;padding-top:9px;font-size:10px;color:#a8a29e}
+.teaching-paper *{box-sizing:border-box}.teaching-paper-watermark{position:absolute;left:10%;top:43%;width:80%;transform:rotate(-28deg);text-align:center;font-size:48px;font-weight:700;color:#f4ede6;white-space:nowrap}.teaching-paper-header{position:absolute;left:44px;right:44px;top:24px;height:34px;display:flex;align-items:center;border-bottom:1px solid #e7e1da;padding-bottom:9px;color:#57534e}.teaching-paper-logo{width:27px;height:27px;object-fit:contain}.teaching-paper-brand{margin-left:9px;font-size:11px;font-weight:700}.teaching-paper-head-title{min-width:0;margin-left:auto;max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right;font-size:11px;color:#78716c}.teaching-paper-body{position:relative;overflow-wrap:anywhere;word-break:break-word}.teaching-paper h1{margin:0;padding:16px 0;font-size:24px;line-height:1.35}.teaching-paper h2{margin:0;padding:12px 0;font-size:17px;line-height:1.4;color:#9a3412}.teaching-paper h3{margin:0;padding:8px 0;font-size:14px;line-height:1.45;color:#44403c}.teaching-paper .teaching-paper-body>:first-child{padding-top:8px}.teaching-paper h4{margin:6px 0 4px;font-size:13px;line-height:1.45;color:#44403c}.teaching-paper h5,.teaching-paper h6{margin:5px 0 3px;font-size:12.5px;line-height:1.45;color:#57534e}.teaching-paper p,.teaching-paper pre,.teaching-paper blockquote{white-space:pre-wrap}.teaching-paper p{margin:0 0 8px;font-size:13px;line-height:1.65}.teaching-paper .list{margin:0 0 8px 14px;font-size:12.5px}.teaching-paper blockquote{margin:0 0 8px;border-left:3px solid #fb923c;background:#faf7f2;padding:8px 12px;font-size:12.5px;line-height:1.6;color:#57534e}.teaching-paper pre{margin:0 0 8px;background:#f5f5f4;padding:11px;font:10.5px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:#44403c}.teaching-paper :not(pre)>code{border-radius:2px;background:#fef3c7;padding:1px 3px;color:#9a3412;font-size:.9em}.teaching-paper s{color:#78716c}.teaching-paper a{color:#9a3412;text-decoration:underline}.teaching-paper table{width:100%;margin:0 0 8px;border:1px solid #d6d3d1;border-collapse:collapse;font-size:12.5px;line-height:1.5;table-layout:fixed}.teaching-paper th,.teaching-paper td{padding:6px 8px;vertical-align:top;border:1px solid #d6d3d1;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}.teaching-paper th{background:#fff7ed;color:#9a3412;font-size:13px;font-weight:700;text-align:left}.teaching-paper .rule{height:1px;margin:0 0 8px;border:0;background:#d6d3d1}.teaching-paper-footer{position:absolute;left:44px;right:44px;bottom:24px;display:flex;justify-content:space-between;border-top:1px solid #e7e1da;padding-top:9px;font-size:10px;color:#a8a29e}
 .teaching-paper{color:#1f2d3d}.teaching-paper-watermark{color:#eaf4ff}.teaching-paper-header,.teaching-paper-footer{border-color:#dce5ef}.teaching-paper-brand,.teaching-paper h1,.teaching-paper h2,.teaching-paper h4,.teaching-paper h5,.teaching-paper h6{color:#1f2d3d}.teaching-paper-head-title,.teaching-paper-footer,.teaching-paper blockquote,.teaching-paper s{color:#5f6f82}.teaching-paper h3,.teaching-paper a{color:#002e5f}.teaching-paper p,.teaching-paper .list{color:#405063}.teaching-paper blockquote{border-left-color:#002e5f;background:#f4f9ff}.teaching-paper pre{color:#1f2d3d;background:#e8eef5}.teaching-paper :not(pre)>code{color:#002e5f;background:#eaf4ff}.teaching-paper table,.teaching-paper th,.teaching-paper td{border-color:#dce5ef}.teaching-paper th{background:#f4f9ff;color:#1f2d3d}.teaching-paper td{color:#5f6f82}.teaching-paper .rule{background:#dce5ef}
 `
 
+function previewInlineNodes(text: string, key: string) {
+  return text.split('\n').flatMap((line, lineIndex) => {
+    const nodes = lineIndex > 0 ? [<br key={`${key}-br-${lineIndex}`} />] : []
+    const parts = line.split(/(\*\*[^*]+\*\*|__[^_]+__|~~[^~]+~~|`[^`]+`|\[[^\]]+\]\([^)]*\)|\*[^*]+\*|_[^_]+_)/g)
+    return [
+      ...nodes,
+      ...parts.map((part, partIndex) => {
+        const nodeKey = `${key}-${lineIndex}-${partIndex}`
+        if (!part) return null
+        if (/^\*\*[^*]+\*\*$|^__[^_]+__$/.test(part)) return <strong key={nodeKey}>{part.slice(2, -2)}</strong>
+        if (/^~~[^~]+~~$/.test(part)) return <s key={nodeKey}>{part.slice(2, -2)}</s>
+        if (/^`[^`]+`$/.test(part)) return <code key={nodeKey}>{part.slice(1, -1)}</code>
+        const link = part.match(/^\[([^\]]+)\]\(([^)]*)\)$/)
+        if (link) return <a key={nodeKey} href={link[2]}>{link[1]}</a>
+        if (/^\*[^*]+\*$|^_[^_]+_$/.test(part)) return <em key={nodeKey}>{part.slice(1, -1)}</em>
+        return <span key={nodeKey}>{part}</span>
+      }),
+    ]
+  })
+}
+
 function PreviewInlineMarkdown({ text }: { text: string }) {
-  const parts = text.split(/(\*\*[^*]+\*\*|__[^_]+__|~~[^~]+~~|`[^`]+`|\[[^\]]+\]\([^)]*\)|\*[^*]+\*|_[^_]+_)/g)
-  return <>{parts.map((part, index) => {
-    if (!part) return null
-    if (/^\*\*[^*]+\*\*$|^__[^_]+__$/.test(part)) return <strong key={index}>{part.slice(2, -2)}</strong>
-    if (/^~~[^~]+~~$/.test(part)) return <s key={index}>{part.slice(2, -2)}</s>
-    if (/^`[^`]+`$/.test(part)) return <code key={index}>{part.slice(1, -1)}</code>
-    const link = part.match(/^\[([^\]]+)\]\(([^)]*)\)$/)
-    if (link) return <a key={index} href={link[2]}>{link[1]}</a>
-    if (/^\*[^*]+\*$|^_[^_]+_$/.test(part)) return <em key={index}>{part.slice(1, -1)}</em>
-    return part
-  })}</>
+  return <>{previewInlineNodes(text, 'preview')}</>
 }
 
 function PreviewBlock({ block }: { block: TeachingBlock }) {
@@ -387,7 +410,7 @@ function PreviewBlock({ block }: { block: TeachingBlock }) {
   if (block.kind === 'quote') return <blockquote><PreviewInlineMarkdown text={block.text} /></blockquote>
   if (block.kind === 'code') return <pre>{block.text}</pre>
   if (block.kind === 'rule') return <div className="rule" aria-hidden />
-  if (block.kind === 'table') return <table><thead><tr>{(block.headers ?? []).map((header, index) => <th key={index}><PreviewInlineMarkdown text={header} /></th>)}</tr></thead><tbody>{(block.rows ?? []).map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, columnIndex) => <td key={columnIndex}><PreviewInlineMarkdown text={cell} /></td>)}</tr>)}</tbody></table>
+  if (block.kind === 'table') return <table><thead><tr>{(block.headers ?? []).map((header, index) => <th key={index}>{previewInlineNodes(header, `h-${index}`)}</th>)}</tr></thead><tbody>{(block.rows ?? []).map((row, rowIndex) => <tr key={rowIndex}>{row.map((cell, columnIndex) => <td key={columnIndex}>{previewInlineNodes(cell, `${rowIndex}-${columnIndex}`)}</td>)}</tr>)}</tbody></table>
   return <p className={block.kind}><PreviewInlineMarkdown text={block.text} /></p>
 }
 

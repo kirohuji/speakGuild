@@ -109,6 +109,49 @@ const DEFAULT_PREFERENCES: Preferences = {
   learningReminderTime: '20:00',
 }
 
+// These values change the account's learning plan. Keep device capabilities
+// (language, network policy, installed-model choices and TTS output) shared,
+// but never carry a plan configuration from one account to another.
+const ACCOUNT_LEARNING_PREFERENCE_KEYS = [
+  'dailyGoal',
+  'dailyPracticeGoal',
+  'reviewBatchSize',
+  'dailyPracticeMixedPacks',
+  'dailyPracticeRandomOrder',
+  'dailyPracticeLastMode',
+  'learningReminderEnabled',
+  'learningReminderTime',
+] as const
+
+type AccountLearningPreferences = Pick<Preferences, typeof ACCOUNT_LEARNING_PREFERENCE_KEYS[number]>
+
+let activeAccountId: string | null = null
+
+function accountPreferencesKey(userId: string) {
+  return `manyu-account-learning-preferences:${userId}`
+}
+
+function snapshotAccountLearningPreferences(state: Preferences): AccountLearningPreferences {
+  return Object.fromEntries(ACCOUNT_LEARNING_PREFERENCE_KEYS.map((key) => [key, state[key]])) as AccountLearningPreferences
+}
+
+function readAccountLearningPreferences(userId: string): Partial<AccountLearningPreferences> | null {
+  try {
+    const raw = localStorage.getItem(accountPreferencesKey(userId))
+    return raw ? JSON.parse(raw) as Partial<AccountLearningPreferences> : null
+  } catch {
+    return null
+  }
+}
+
+function writeAccountLearningPreferences(userId: string, state: Preferences) {
+  try {
+    localStorage.setItem(accountPreferencesKey(userId), JSON.stringify(snapshotAccountLearningPreferences(state)))
+  } catch {
+    // A full/private local store must not block authentication.
+  }
+}
+
 export const usePreferencesStore = create<PreferencesStore>()(
   persist(
     (set) => ({
@@ -168,3 +211,25 @@ export const usePreferencesStore = create<PreferencesStore>()(
     }
   )
 )
+
+/** Switch only account-owned learning-plan preferences after authentication. */
+export function activateAccountLearningPreferences(userId: string | null, options: { migrateCurrentDeviceValues?: boolean } = {}): void {
+  const current = usePreferencesStore.getState()
+  if (activeAccountId && activeAccountId !== userId) {
+    writeAccountLearningPreferences(activeAccountId, current)
+  }
+  activeAccountId = userId
+  const accountPreferences = userId ? readAccountLearningPreferences(userId) : null
+  // Existing installs stored these values device-wide. Migrate them only for
+  // the known prior owner; a newly signed-in account must start from defaults.
+  const initialPreferences = accountPreferences
+    ?? (userId && options.migrateCurrentDeviceValues ? snapshotAccountLearningPreferences(current) : null)
+  usePreferencesStore.setState({
+    ...snapshotAccountLearningPreferences(DEFAULT_PREFERENCES),
+    ...initialPreferences,
+  })
+}
+
+usePreferencesStore.subscribe((state) => {
+  if (activeAccountId) writeAccountLearningPreferences(activeAccountId, state)
+})

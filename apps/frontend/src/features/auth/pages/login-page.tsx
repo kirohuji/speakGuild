@@ -24,6 +24,15 @@ import { promptSavePassword, readSavedPassword } from '@/lib/native/save-passwor
 
 type LoginMode = 'password' | 'phone-otp'
 
+const MAINLAND_PHONE_PREFIX = '+86'
+
+function toMainlandNationalNumber(raw: string) {
+  const digits = raw.replace(/\s+/g, '').replace(/\D/g, '')
+  if (digits.startsWith('0086')) return digits.slice(4)
+  if (digits.startsWith('86') && digits.length > 11) return digits.slice(2)
+  return digits
+}
+
 function getLoginErrorMessage(error: any, t: (key: string) => string): string {
   const rawMessage =
     error?.data?.message ||
@@ -114,7 +123,7 @@ export function LoginPage() {
   const handleSendPhoneOtp = async () => {
     if (!phoneNumber) { setMessage(t('auth.enterPhone')); return }
     await runAction(
-      () => sendPhoneOtp(phoneNumber),
+      () => sendPhoneOtp(`${MAINLAND_PHONE_PREFIX}${phoneNumber}`),
       t('auth.otpSent'),
       () => { startCountdown(); setOtpSent(true) },
     )
@@ -142,7 +151,7 @@ export function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={handleEmailFocus}
-                  placeholder="you@example.com"
+                  placeholder={t('auth.emailInputPlaceholder')}
                   className={cn(authInputClassName, email && 'pr-10')}
                   autoComplete="username"
                   inputMode="email"
@@ -230,13 +239,37 @@ export function LoginPage() {
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label className={authLabelClassName}>{t('auth.phoneNumber')}</Label>
-              <Input
-                value={phoneNumber}
-                onChange={(e) => { setPhoneNumber(e.target.value); resetCountdown(); setOtpSent(false) }}
-                placeholder={t('auth.phonePlaceholder')}
-                className={authInputClassName}
-                autoComplete="tel"
-              />
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-foreground">
+                  {MAINLAND_PHONE_PREFIX}
+                </span>
+                <Input
+                  value={phoneNumber}
+                  onChange={(e) => {
+                    setPhoneNumber(toMainlandNationalNumber(e.target.value))
+                    resetCountdown()
+                    setOtpSent(false)
+                  }}
+                  placeholder={t('auth.phonePlaceholder')}
+                  className={cn(authInputClassName, 'pl-12', phoneNumber && 'pr-10')}
+                  autoComplete="tel"
+                  inputMode="tel"
+                />
+                {phoneNumber && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhoneNumber('')
+                      resetCountdown()
+                      setOtpSent(false)
+                    }}
+                    className="absolute right-1.5 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    aria-label={t('auth.clearPhone')}
+                  >
+                    <X className="size-4" />
+                  </button>
+                )}
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label className={authLabelClassName}>{t('auth.verificationCode')}</Label>
@@ -268,7 +301,7 @@ export function LoginPage() {
                   async () => {
                     if (!phoneNumber.trim()) throw new Error(t('auth.enterPhone'))
                     if (!phoneOtp.trim()) throw new Error(t('auth.enterOtp'))
-                    await verifyPhoneOtp(phoneNumber, phoneOtp)
+                    await verifyPhoneOtp(`${MAINLAND_PHONE_PREFIX}${phoneNumber}`, phoneOtp)
                     const nextSession = await refreshSession({ revokeOtherSessions: true })
                     if (!nextSession?.user?.id) {
                       throw new Error(t('auth.loginFailedOtp'))
@@ -292,9 +325,7 @@ export function LoginPage() {
           }}
           className="w-full text-center text-xs font-medium text-primary transition-colors hover:text-primary/75"
         >
-          {mode === 'password'
-            ? `${t('auth.phone')}${t('auth.verificationCode')}${t('auth.login')}`
-            : t('auth.passwordLogin')}
+          {mode === 'password' ? t('auth.phoneOtpLogin') : t('auth.passwordLogin')}
         </button>
 
         <div className="flex flex-col gap-2 rounded-xl bg-muted/40 px-3 py-2.5">

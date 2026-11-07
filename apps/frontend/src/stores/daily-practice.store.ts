@@ -7,6 +7,7 @@ import {
 } from '@/lib/offline/daily-practice.repository'
 import { useWarmupSessionStore, type WarmupRecordEntry } from '@/stores/warmup-session.store'
 import { refreshLearningBadgeFromTodayRun } from '@/lib/native/learning-reminder'
+import { syncOutbox } from '@/lib/offline/sync-outbox'
 import {
   deriveTodayPractice,
   serializeTodayRunFacts,
@@ -265,19 +266,49 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
   async checkRunChangedLocally() {
     const plan = get().plan
     if (!plan) return false
-    const local = await dailyPracticeRepository.getRunFacts(plan.runId).catch(() => null)
     const current = serializeTodayRunFacts(useTodayPracticeStore.getState())
-    if (!local || !current || local.id !== current.id) return false
-    const sameArray = (a: string[] = [], b: string[] = []) =>
-      a.length === b.length && a.every((item, index) => item === b[index])
+    if (!current || current.id !== plan.runId) return false
+    // 当前设备还有未上传的快照，或正处在本地状态迁移（答题 / 提交）时，
+    // 远端回包只能作为后续同步的候选，绝不能打断练习或提示用户刷新。
+    // 这也避免了“自己的快照刚上传、服务端又回拉”造成的假更新。
+    if (current.submissionStatus === 'dirty' || current.submissionStatus === 'submitting') return false
+    const pending = await syncOutbox.listPending().catch(() => [])
+    if (pending.some((item) => item.entityType === 'daily_practice' && item.entityId === plan.runId)) return false
+    const local = await dailyPracticeRepository.getRunFacts(plan.runId).catch(() => null)
+    if (!local || local.id !== current.id) return false
+    // All run id arrays are sets.  Transport/database ordering is not a
+    // user-visible change and must never reset the page's current position.
+    const sameArray = (a: string[] = [], b: string[] = []) => {
+      const left = new Set(a)
+      const right = new Set(b)
+      return left.size === right.size && [...left].every((item) => right.has(item))
+    }
+    const sameValue = (a: unknown, b: unknown): boolean => {
+      if (Object.is(a, b)) return true
+      if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false
+      if (Array.isArray(a) || Array.isArray(b)) {
+        return Array.isArray(a) && Array.isArray(b)
+          && a.length === b.length
+          && a.every((item, index) => sameValue(item, b[index]))
+      }
+      const aRecord = a as Record<string, unknown>
+      const bRecord = b as Record<string, unknown>
+      const aKeys = Object.keys(aRecord).sort()
+      const bKeys = Object.keys(bRecord).sort()
+      return sameArray(aKeys, bKeys) && aKeys.every((key) => sameValue(aRecord[key], bRecord[key]))
+    }
     // 本地答题会同时更新 store 与本地 run（一致）；同步 pull 只改写本地 run
     // （restoreRemoteDailyPracticeRun），两者不一致即说明服务端带来了更新。
     return !(
-      sameArray(local.attemptedItemIds, current.attemptedItemIds)
+      sameArray(local.scheduledItemIds, current.scheduledItemIds)
+      && sameArray(local.attemptedItemIds, current.attemptedItemIds)
       && sameArray(local.unresolvedItemIds, current.unresolvedItemIds)
+      && sameArray(local.srsAppliedItemIds, current.srsAppliedItemIds)
       && local.submissionStatus === current.submissionStatus
-      && JSON.stringify(local.initialRecallResults) === JSON.stringify(current.initialRecallResults)
-      && JSON.stringify(local.remediationResults) === JSON.stringify(current.remediationResults)
+      && sameValue(local.initialRecallResults, current.initialRecallResults)
+      && sameValue(local.continuationResults, current.continuationResults)
+      && sameValue(local.remediationResults, current.remediationResults)
+      && sameValue(local.attemptHistory, current.attemptHistory)
     )
   },
 

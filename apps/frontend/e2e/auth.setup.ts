@@ -37,7 +37,7 @@ setup('真实登录获取 session', async ({ page }) => {
   await page.waitForTimeout(1000)
 
   // ── 2. 填写邮箱 ──
-  const emailInput = page.getByPlaceholder('you@example.com')
+  const emailInput = page.getByPlaceholder('请输入邮箱')
   await expect(emailInput).toBeVisible({ timeout: 10_000 })
   await emailInput.fill(TEST_USER.email)
 

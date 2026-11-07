@@ -18,10 +18,18 @@ interface OfflineSyncState {
   isSyncing: boolean
   currentLogId: string | null
   lastSyncedAt: string | null
+  /** 当前这次成功 pull 实际包含的今日任务 run；仅内存态，用于避免把无关同步当成任务更新。 */
+  lastPulledDailyPracticeRunIds: string[]
   lastError: string | null
   logs: OfflineSyncLogEntry[]
   begin: (summary: string) => string
-  finish: (id: string, input: { status: 'success' | 'failed'; summary: string; detail?: unknown; error?: unknown }) => void
+  finish: (id: string, input: {
+    status: 'success' | 'failed'
+    summary: string
+    detail?: unknown
+    error?: unknown
+    pulledDailyPracticeRunIds?: string[]
+  }) => void
   clearLogs: () => void
   reset: () => void
 }
@@ -46,6 +54,7 @@ export const useOfflineSyncStore = create<OfflineSyncState>()(
       isSyncing: false,
       currentLogId: null,
       lastSyncedAt: null,
+      lastPulledDailyPracticeRunIds: [],
       lastError: null,
       logs: [],
 
@@ -71,6 +80,9 @@ export const useOfflineSyncStore = create<OfflineSyncState>()(
           isSyncing: state.currentLogId === id ? false : state.isSyncing,
           currentLogId: state.currentLogId === id ? null : state.currentLogId,
           lastSyncedAt: input.status === 'success' ? finishedAt : state.lastSyncedAt,
+          lastPulledDailyPracticeRunIds: input.status === 'success'
+            ? [...new Set(input.pulledDailyPracticeRunIds ?? [])]
+            : state.lastPulledDailyPracticeRunIds,
           lastError,
           logs: autoCleanLogs(state.logs.map((item) =>
             item.id === id
@@ -96,6 +108,7 @@ export const useOfflineSyncStore = create<OfflineSyncState>()(
           isSyncing: false,
           currentLogId: null,
           lastSyncedAt: null,
+          lastPulledDailyPracticeRunIds: [],
           lastError: null,
           logs: [],
         })

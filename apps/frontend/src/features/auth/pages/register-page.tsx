@@ -138,7 +138,7 @@ export function RegisterPage() {
               <Input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder={t('auth.emailInputPlaceholder')}
                 className={authInputClassName}
                 autoComplete="email"
                 type="email"

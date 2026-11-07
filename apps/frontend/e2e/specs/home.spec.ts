@@ -57,8 +57,8 @@ test.describe('首页 - 未登录流程', () => {
     await page.goto('/#/auth/login')
     await waitForPageReady(page)
 
-    // Email 输入框 (placeholder 是硬编码的 you@example.com)
-    await expect(page.getByPlaceholder('you@example.com')).toBeVisible({ timeout: 5000 })
+    // 邮箱输入框
+    await expect(page.getByPlaceholder('请输入邮箱')).toBeVisible({ timeout: 5000 })
 
     // 密码输入框 (placeholder = "请输入密码")
     await expect(page.getByPlaceholder('请输入密码')).toBeVisible({ timeout: 5000 })

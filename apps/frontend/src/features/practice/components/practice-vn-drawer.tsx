@@ -6,7 +6,7 @@ import { Directory, Filesystem } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, setRecordDetailOverlay } from '@/components/ui/drawer'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
@@ -226,6 +226,11 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
   const document = useMemo(() => splitTeachingDocument(teachingMarkdown ?? ''), [teachingMarkdown])
   const storageKey = useMemo(() => documentStorageKey(teachingMarkdown ?? ''), [teachingMarkdown])
+  useEffect(() => {
+    if (!previewOpen) return
+    setRecordDetailOverlay(true)
+    return () => setRecordDetailOverlay(false)
+  }, [previewOpen])
   const printDate = useMemo(() => localDateKey(), [previewOpen])
   const printTitle = useMemo(() => teachingDocumentTitle(teachingMarkdown ?? '', t('practiceVn.teaching')), [t, teachingMarkdown])
   const printPages = useMemo(() => buildTeachingDocumentPages(teachingMarkdown ?? ''), [teachingMarkdown])
@@ -389,8 +394,8 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   // iOS defers that outside-dismiss to the same click that selects a heading.
   const keepDrawerOpenForToc = useCallback((event: { preventDefault: () => void; target: EventTarget | null }) => {
     const target = event.target instanceof Element ? event.target : null
-    if (tocOpen || target?.closest('[data-teaching-toc]')) event.preventDefault()
-  }, [tocOpen])
+    if (previewOpen || tocOpen || target?.closest('[data-teaching-toc], [data-teaching-preview]')) event.preventDefault()
+  }, [previewOpen, tocOpen])
   const handleTocSelect = useCallback((sectionIndex: number) => {
     setTocOpen(false)
     const tocIndex = document.toc.findIndex((item) => item.sectionIndex === sectionIndex)
@@ -525,7 +530,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
       </SheetContent>
     </Sheet>
     <Dialog open={previewOpen} onOpenChange={(next) => { if (!next && zoomPreviewPage !== null) { setZoomPreviewPage(null); return } setPreviewOpen(next) }}>
-      <DialogContent onEscapeKeyDown={(event) => { if (zoomPreviewPage !== null) { event.preventDefault(); setZoomPreviewPage(null) } }} overlayClassName="!z-[10003]" className={cn('app-surface drawer-surface [&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] !z-[10004] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 text-foreground sm:h-[92svh] sm:max-w-5xl sm:rounded-2xl', zoomPreviewPage !== null && '[&>button:last-child]:hidden')}>
+      <DialogContent data-teaching-preview="" onEscapeKeyDown={(event) => { if (zoomPreviewPage !== null) { event.preventDefault(); setZoomPreviewPage(null) } }} overlayClassName="!z-[10003]" className={cn('app-surface drawer-surface [&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] !z-[10004] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 text-foreground sm:h-[92svh] sm:max-w-5xl sm:rounded-2xl', zoomPreviewPage !== null && '[&>button:last-child]:hidden')}>
         <DialogTitle className="sr-only">{t('practiceVn.previewPdf')}</DialogTitle>
         <div className="flex shrink-0 items-center gap-3 px-4 pb-3 pr-16 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
           <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{printTitle}</p><p className="mt-0.5 text-xs text-muted-foreground">{t('practiceVn.a4Summary', { count: printPages.length })}</p></div>

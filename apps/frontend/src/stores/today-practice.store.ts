@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { createId } from '@/lib/offline/utils'
 
 export type AttemptOutcome = 'correct' | 'incorrect' | 'dontKnow'
 export type AssistanceLevel = 'none' | 'hint'
@@ -144,7 +145,9 @@ export function toPracticeRemediationSrsRating(result: RemediationResult): 'easy
 function appendHistory(state: TodayPracticeState, input: Omit<AttemptHistoryEntry, 'id' | 'createdAt'> & { now?: string }) {
   const createdAt = input.now ?? new Date().toISOString()
   const { now: _now, ...entry } = input
-  return [...state.attemptHistory, { ...entry, id: `${state.runId}:${entry.stepId}:${state.attemptHistory.length + 1}`, createdAt }]
+  // An ordinal is only unique on one device.  History is synchronized as an
+  // event set, so every event needs a device-independent identity.
+  return [...state.attemptHistory, { ...entry, id: createId('today_attempt'), createdAt }]
 }
 
 function dirty(state: TodayPracticeState): TodayPracticeState {

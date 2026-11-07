@@ -24,6 +24,9 @@ const USER_SCOPED_TABLES: TableName[] = [
   'daily_practice_items',
   'daily_practice_runs',
   'daily_practice_attempts',
+  // Draft answers and cached review sessions contain user-authored content.
+  'topic_sessions',
+  'topic_submissions',
   'outbox',
 ]
 
@@ -176,6 +179,7 @@ function clearPracticeLocalStorageKeys(): void {
     if (
       key.startsWith('guided-progress:')
       || key.startsWith('guided-session:')
+      || key.startsWith('manyu:novel-progress:')
     ) {
       localStorage.removeItem(key)
     }
@@ -186,6 +190,8 @@ function clearUserScopedLocalStorageKeys(): void {
   clearPracticeLocalStorageKeys()
   if (typeof localStorage === 'undefined') return
   localStorage.removeItem('manyu-search-history')
+  localStorage.removeItem('learning-library:last-notebook-id')
+  localStorage.removeItem('manyu:today-teaching-hint-seen')
 }
 
 export const offlineStorageService = {

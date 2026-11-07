@@ -1288,11 +1288,15 @@ model PracticeWarmupRecord {
   feedback    String?  @db.Text
   items       Json
   createdAt   DateTime @default(now())
+  // Records are a projection which can be enriched by another device after
+  // creation.  Pulling by createdAt made those updates permanently invisible.
+  updatedAt   DateTime @default(now()) @updatedAt
   clientRunId String?  @unique
 
   @@index([userId, topicId])
   @@index([userId, packId])
   @@index([userId, createdAt])
+  @@index([userId, updatedAt])
   @@map("practice_warmup_record")
 }
 
@@ -1344,6 +1348,9 @@ model UserDailyPracticeRun {
   initialRecallResults Json?
   continuationResults  Json?
   remediationResults   Json?
+  // Immutable UI attempt events.  Result maps are projections and may have
+  // one entry per item, so they cannot represent two concurrent answers.
+  attemptHistory       Json?
   submissionStatus     String   @default("idle")
   stats                Json?
   updatedAt            DateTime @updatedAt
