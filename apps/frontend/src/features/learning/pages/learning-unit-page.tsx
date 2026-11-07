@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -16,7 +16,7 @@ import { cn } from '@/lib/cn'
 import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type UnitDetail, type VocabItem } from '../api/learning-api'
 import { useLearningStore } from '@/stores/learning.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
-import { learningContentRepository } from '@/lib/offline'
+import { LEARNING_LIBRARY_CHANGED_EVENT, learningContentRepository } from '@/lib/offline'
 import { listContentPage, readTopicTeaching } from '@/lib/offline/learning-pack-read-model'
 import {
   LearningInsightDialog,
@@ -51,6 +51,11 @@ export function LearningUnitPage() {
   const loading = useLearningStore((s) => s.unitDetailLoading)
   const fetchUnitDetail = useLearningStore((s) => s.fetchUnitDetail)
   const fetchDownloadedPacks = useLearningStore((s) => s.fetchDownloadedPacks)
+  // 重装同一学习包时，内容页必须重新以学习库为准计算“已收录”。
+  const packRevision = useLearningStore((s) => {
+    const pack = s.downloadedPacks.find((item) => item.packId === unitId)
+    return pack ? `${pack.status}:${pack.version}:${pack.updatedAt}` : 'not-installed'
+  })
 
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') ?? 'vocab')
   const [prepPage, setPrepPage] = useState(() => ({
@@ -98,9 +103,8 @@ export function LearningUnitPage() {
     })
   }, [])
 
-  // 已收集文本（按需加载，各 tab 独立）
+  // 已收集文本始终来自学习库索引，而不是学习包的缓存快照。
   const [collectedTexts, setCollectedTexts] = useState<Set<string>>(new Set())
-  const loadedTabs = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     if (!unitId) return
@@ -136,19 +140,24 @@ export function LearningUnitPage() {
     return () => { cancelled = true }
   }, [activeTab, prepPage, projected, unitId])
 
-  // 切 tab 时按需加载已收集状态
-  const loadCollectedForTab = useCallback(async (tab: string) => {
-    if (loadedTabs.current.has(tab)) return
-    loadedTabs.current.add(tab)
-
-    const kind = tab === 'vocab' ? 'word' : tab === 'chunk' ? 'chunk' : tab === 'pattern' ? 'pattern' : null
-    if (!kind) return
-
-    const texts = await learningContentRepository.listExpressionTexts(kind)
-    setCollectedTexts((prev) => new Set([...prev, ...texts]))
+  const refreshCollectedTexts = useCallback(async () => {
+    const groups = await Promise.all([
+      learningContentRepository.listExpressionTexts('word'),
+      learningContentRepository.listExpressionTexts('chunk'),
+      learningContentRepository.listExpressionTexts('pattern'),
+    ])
+    setCollectedTexts(new Set(groups.flat()))
   }, [])
 
-  useEffect(() => { loadCollectedForTab(activeTab) }, [activeTab, loadCollectedForTab])
+  useEffect(() => {
+    void refreshCollectedTexts()
+  }, [packRevision, refreshCollectedTexts, unitId])
+
+  useEffect(() => {
+    const refresh = () => { void refreshCollectedTexts() }
+    window.addEventListener(LEARNING_LIBRARY_CHANGED_EVENT, refresh)
+    return () => window.removeEventListener(LEARNING_LIBRARY_CHANGED_EVENT, refresh)
+  }, [refreshCollectedTexts])
 
   // 知识点数据就绪时触发「加入学习库」引导（条件式分段，仅首次）
   useEffect(() => {
@@ -296,10 +305,9 @@ export function LearningUnitPage() {
   const handleDialogClose = useCallback((open: boolean) => {
     setDialogOpen(open)
     if (!open) {
-      loadedTabs.current.delete(activeTab)
-      void loadCollectedForTab(activeTab)
+      void refreshCollectedTexts()
     }
-  }, [activeTab, loadCollectedForTab])
+  }, [refreshCollectedTexts])
 
   const remotePage = <T,>(items: T[], total: number, page: number) => {
     const totalPages = Math.max(1, Math.ceil(total / PREP_PAGE_SIZE))

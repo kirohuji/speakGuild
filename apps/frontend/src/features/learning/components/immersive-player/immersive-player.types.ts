@@ -29,10 +29,16 @@ export type PlaybackSegment = {
   subtitle?: string | null
 }
 
+export const IMMERSIVE_PAUSE_GAP_SECONDS = [1, 2, 3, 5] as const
+
+export type ImmersivePauseGapSeconds = (typeof IMMERSIVE_PAUSE_GAP_SECONDS)[number]
+
 export type ImmersivePlaybackSettings = {
   sleepTimerMinutes: 0 | 15 | 30 | 60
   repeatPerItem: 1 | 2 | 3 | 'infinite'
   playbackRate: 0.75 | 1 | 1.25 | 1.5
+  /** 每播完一遍后的真实等待，不随倍速缩短。重复同一条、进入下一条都会停。 */
+  pauseGapSeconds: ImmersivePauseGapSeconds
   playMainText: boolean
   playMeaning: boolean
   playExample: boolean

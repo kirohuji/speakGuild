@@ -539,7 +539,11 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
 
   // ── Carousel state ──
   const [currentIdx, setCurrentIdx] = useState(0)
-  const gotoPrev = useCallback(() => setCurrentIdx(prev => Math.max(0, prev - 1)), [])
+  const gotoPrev = useCallback(() => {
+    // 用户主动回退是在回看内容，取消自动下一题及其尚未结束的倒计时。
+    setAutoNextEnabled(false)
+    setCurrentIdx(prev => Math.max(0, prev - 1))
+  }, [])
   const gotoNext = useCallback(() => setCurrentIdx(prev => Math.min(totalSteps - 1, prev + 1)), [totalSteps])
   const hasPrev = currentIdx > 0
   const hasNext = currentIdx < totalSteps - 1

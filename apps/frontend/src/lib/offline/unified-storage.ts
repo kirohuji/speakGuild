@@ -14,7 +14,7 @@
  * from '@/lib/offline' instead of importing localDb directly.
  */
 import type { TableName } from './sqlite/schema'
-import type { PageFilter, PageQuery } from './sqlite/sqlite-json-store'
+import type { NotebookExpressionPage, NotebookExpressionPageQuery, PageFilter, PageQuery } from './sqlite/sqlite-json-store'
 import { Capacitor } from '@capacitor/core'
 
 // ── Storage interface (shared by all backends) ──────────
@@ -37,6 +37,7 @@ export interface ILocalDb {
     limit: number
     offset?: number
   }): Promise<{ contentIds: string[]; total: number }>
+  listNotebookExpressionPage(query: NotebookExpressionPageQuery): Promise<NotebookExpressionPage>
   clear(storeName: TableName): Promise<void>
   deleteByIndex(storeName: TableName, columnName: string, value: string | number | null): Promise<void>
   deleteWhere<T>(storeName: TableName, predicate: (value: T & { id: string }) => boolean): Promise<void>
@@ -142,6 +143,10 @@ export const localDb: ILocalDb = {
 
   async listContentRefPage(params) {
     return (await getBackend()).listContentRefPage(params)
+  },
+
+  async listNotebookExpressionPage(query) {
+    return (await getBackend()).listNotebookExpressionPage(query)
   },
 
   async clear(storeName: TableName): Promise<void> {

@@ -1166,11 +1166,15 @@ export function TodayTaskPage() {
   const hasPrev = currentIdx > 0
   const hasNext = currentIdx < activeSteps.length - 1
   const currentStepDone = currentStep ? activeDoneIds.has(currentStep.id) : false
-  const gotoPrev = useCallback(() => setCurrentIdx((p) => {
-    const next = Math.max(0, p - 1)
-    setMachineCurrentStep(activeSteps[next]?.id ?? null)
-    return next
-  }), [activeSteps, setMachineCurrentStep])
+  const gotoPrev = useCallback(() => {
+    // 回看已完成的题目时，保留在该题比继续倒计时跳走更符合预期。
+    setAutoNextEnabled(false)
+    setCurrentIdx((p) => {
+      const next = Math.max(0, p - 1)
+      setMachineCurrentStep(activeSteps[next]?.id ?? null)
+      return next
+    })
+  }, [activeSteps, setMachineCurrentStep])
   const gotoNext = useCallback(() => setCurrentIdx((p) => {
     const next = Math.min(activeSteps.length - 1, p + 1)
     setMachineCurrentStep(activeSteps[next]?.id ?? null)

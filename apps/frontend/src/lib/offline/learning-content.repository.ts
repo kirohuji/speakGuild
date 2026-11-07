@@ -24,6 +24,15 @@ function topicPayload(value: any) {
 
 export type ExpressionEntryKind = 'word' | 'chunk' | 'pattern'
 
+/** 通知仍打开的内容页重新读取“已收录”状态。 */
+export const LEARNING_LIBRARY_CHANGED_EVENT = 'learning-library-changed'
+
+export function notifyLearningLibraryChanged() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(LEARNING_LIBRARY_CHANGED_EVENT))
+  }
+}
+
 export type ExpressionEntry = {
   id: string
   remoteId?: string | null
@@ -527,6 +536,7 @@ export const learningContentRepository = {
       updatedAt: entry.updatedAt,
       syncStatus: entry.syncStatus ?? 'pending',
     })))
+    notifyLearningLibraryChanged()
     const text = expressionText(entry)
     const outboxItem = await syncOutbox.enqueue({
       entityType: expressionEntityType(entry.kind),

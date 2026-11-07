@@ -1,5 +1,6 @@
 import { learningNotebookApi, type LearningNotebook } from '@/features/practice/api/english-practice-api'
 import { localDb } from './unified-storage'
+import { notifyLearningLibraryChanged } from './learning-content.repository'
 import type { ExpressionEntry } from './learning-content.repository'
 
 type NotebookCounts = {
@@ -14,7 +15,7 @@ type NotebookListResult = {
   allCounts: NotebookCounts
 }
 
-type LocalExpressionListRequest = {
+export type LocalExpressionListRequest = {
   notebookId: string
   type: 'word' | 'chunk' | 'scene_phrase'
   reviewState?: string
@@ -51,6 +52,11 @@ export type LocalNotebookExpression = ExpressionEntry & {
   nextReviewAt?: string | null
   vocabulary?: unknown
   contentData?: unknown
+}
+
+export type LocalExpressionPageResult = {
+  items: LocalNotebookExpression[]
+  total: number
 }
 
 type CachedNotebook = LearningNotebook & {
@@ -188,6 +194,42 @@ export const learningNotebookRepository = {
     })
   },
 
+  async listCachedExpressionPage(
+    request: LocalExpressionListRequest & { limit: number; offset?: number },
+  ): Promise<LocalExpressionPageResult> {
+    const page = await localDb.listNotebookExpressionPage({
+      notebookId: request.notebookId,
+      kind: request.type === 'scene_phrase' ? 'pattern' : request.type,
+      reviewState: request.reviewState,
+      search: request.search,
+      limit: request.limit,
+      offset: request.offset,
+    })
+    return {
+      total: page.total,
+      items: page.items.map(({ item, entry }) => {
+        const expression = entry as ExpressionEntry
+        const notebookItem = item as CachedNotebookItem
+        const snapshot = expression.contentSnapshot
+        return {
+          ...expression,
+          id: expression.remoteId ?? expression.id,
+          notebookItemId: notebookItem.remoteId ?? notebookItem.id,
+          notebookId: notebookItem.notebookId,
+          masteryStatus: notebookItem.masteryStatus,
+          reviewCount: notebookItem.reviewCount,
+          intervalDays: notebookItem.intervalDays,
+          easeFactor: notebookItem.easeFactor,
+          lapseCount: notebookItem.lapseCount,
+          lastReviewedAt: notebookItem.lastReviewedAt,
+          nextReviewAt: notebookItem.nextReviewAt,
+          vocabulary: expression.kind === 'word' ? snapshot : undefined,
+          contentData: expression.kind === 'word' ? undefined : snapshot,
+        } satisfies LocalNotebookExpression
+      }),
+    }
+  },
+
   async updateCachedNotebookItemStatus(notebookItemId: string, masteryStatus: string): Promise<void> {
     const item = await localDb.get<CachedNotebookItem>('learning_notebook_items', notebookItemId)
     if (!item) return
@@ -216,6 +258,7 @@ export const learningNotebookRepository = {
     if (!belongsToAnotherNotebook) {
       await localDb.delete('expression_entries', target.expressionEntryId)
     }
+    notifyLearningLibraryChanged()
   },
 
   async create(name: string) {

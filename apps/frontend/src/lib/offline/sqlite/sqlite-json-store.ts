@@ -9,6 +9,20 @@ export interface SqliteJsonExecutor {
   afterWrite?(): Promise<void>
 }
 
+export interface NotebookExpressionPageQuery {
+  notebookId: string
+  kind: 'word' | 'chunk' | 'pattern'
+  reviewState?: string
+  search?: string
+  limit: number
+  offset?: number
+}
+
+export interface NotebookExpressionPage {
+  items: Array<{ item: Record<string, any>; entry: Record<string, any> }>
+  total: number
+}
+
 type ColumnExtractor = [columnName: string, jsonKey: string, extract: (value: any) => any]
 
 const SQL_BATCH_SIZE = 250
@@ -475,6 +489,50 @@ export function createSqliteJsonStore(executor: SqliteJsonExecutor) {
         [scopeValue, params.kind],
       )
       return { contentIds: rows.map((row) => row.content_id), total: totals[0]?.cnt ?? 0 }
+    },
+
+    async listNotebookExpressionPage(query: NotebookExpressionPageQuery): Promise<NotebookExpressionPage> {
+      const offset = query.offset ?? 0
+      assertPageBounds(query.limit, offset)
+      const statusSql = query.reviewState
+        ? query.reviewState === 'learning'
+          ? "AND ni.mastery_status IN ('learning', 'activated')"
+          : 'AND ni.mastery_status = ?'
+        : ''
+      const searchSql = query.search?.trim() ? 'AND LOWER(ee.data) LIKE ?' : ''
+      const values: any[] = [query.notebookId]
+      if (query.reviewState && query.reviewState !== 'learning') values.push(query.reviewState)
+      values.push(query.kind)
+      if (query.search?.trim()) values.push(`%${query.search.trim().toLowerCase()}%`)
+      const baseSql = `
+        WITH deduplicated_items AS (
+          SELECT ni.*, ROW_NUMBER() OVER (
+            PARTITION BY ni.expression_entry_id
+            ORDER BY CASE WHEN ni.id LIKE 'local:%' THEN 1 ELSE 0 END, ni.updated_at DESC
+          ) AS duplicate_rank
+          FROM learning_notebook_items ni
+          WHERE ni.notebook_id = ? ${statusSql}
+        ), filtered AS (
+          SELECT di.*, ee.id AS entry_id, ee.remote_id AS entry_remote_id,
+            ee.kind AS entry_kind, ee.expression_type AS entry_type,
+            ee.sync_status AS entry_sync_status, ee.data AS entry_data,
+            ee.updated_at AS entry_updated_at
+          FROM deduplicated_items di
+          INNER JOIN expression_entries ee ON ee.id = di.expression_entry_id
+          WHERE di.duplicate_rank = 1 AND ee.kind = ? ${searchSql}
+        )`
+      const rows = await executor.queryRows<Record<string, any>>(
+        `${baseSql} SELECT * FROM filtered ORDER BY entry_updated_at DESC, entry_id ASC LIMIT ? OFFSET ?`,
+        [...values, query.limit, offset],
+      )
+      const totals = await executor.queryRows<{ cnt: number }>(`${baseSql} SELECT COUNT(*) AS cnt FROM filtered`, values)
+      return {
+        items: rows.map((row) => ({
+          item: { ...JSON.parse(row.data || '{}'), id: row.id, remoteId: row.remote_id, notebookId: row.notebook_id, expressionEntryId: row.expression_entry_id, masteryStatus: row.mastery_status, syncStatus: row.sync_status, updatedAt: row.updated_at },
+          entry: { ...JSON.parse(row.entry_data || '{}'), id: row.entry_id, remoteId: row.entry_remote_id, kind: row.entry_kind, type: row.entry_type, syncStatus: row.entry_sync_status, updatedAt: row.entry_updated_at },
+        })),
+        total: totals[0]?.cnt ?? 0,
+      }
     },
 
     async count(storeName: TableName): Promise<number> {

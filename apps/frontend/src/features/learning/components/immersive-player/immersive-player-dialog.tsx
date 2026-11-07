@@ -33,7 +33,7 @@ import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { buildPlaybackSegments } from './immersive-player.mapper'
 import { immersivePlaybackService, type ImmersivePlaybackVisualState } from './immersive-playback.service'
 import { useImmersivePlayerPreferences } from './immersive-player.store'
-import type { ImmersivePlaybackSettings, ImmersivePlayerItem, ImmersivePlayerStatus, PlaybackSegmentRole } from './immersive-player.types'
+import { IMMERSIVE_PAUSE_GAP_SECONDS, type ImmersivePlaybackSettings, type ImmersivePlayerItem, type ImmersivePlayerStatus, type PlaybackSegmentRole } from './immersive-player.types'
 
 type ImmersivePlayerDialogProps = {
   open: boolean
@@ -61,6 +61,14 @@ const SEGMENT_LABEL_KEY = {
   example: 'immersivePlayer.segment.example',
   exampleTranslation: 'immersivePlayer.segment.exampleTranslation',
 } satisfies Record<PlaybackSegmentRole, string>
+
+type GapWait = {
+  remainingMs: number
+  startedAt: number
+  timer: number
+  resolve: (continued: boolean) => void
+  runId: number
+}
 
 const EQUALIZER_BARS = [
   [0.2, 0.58, 0.88, 0], [0.3, 0.78, 1.05, 0.12], [0.18, 0.5, 0.96, 0.24],
@@ -154,6 +162,7 @@ export function ImmersivePlayerDialog({
   const runRef = useRef(0)
   const statusRef = useRef<ImmersivePlayerStatus>('idle')
   const sleepTimerRef = useRef<number | null>(null)
+  const gapWaitRef = useRef<GapWait | null>(null)
   const continueAfterIndexChangeRef = useRef(false)
   const playFromCurrentRef = useRef<(() => Promise<void>) | null>(null)
   const mediaMetadataLabels = useMemo(() => ({
@@ -181,12 +190,64 @@ export function ImmersivePlayerDialog({
     else onIndexChange(0)
   }, [hasNext, index, items.length, onIndexChange, settings.loopQueue])
 
+  const cancelGapWait = useCallback(() => {
+    const gap = gapWaitRef.current
+    if (!gap) return
+    window.clearTimeout(gap.timer)
+    gapWaitRef.current = null
+    gap.resolve(false)
+  }, [])
+
+  const pauseGapWait = useCallback(() => {
+    const gap = gapWaitRef.current
+    if (!gap) return false
+    window.clearTimeout(gap.timer)
+    gap.timer = 0
+    gap.remainingMs = Math.max(0, gap.remainingMs - (Date.now() - gap.startedAt))
+    return true
+  }, [])
+
+  const resumeGapWait = useCallback(() => {
+    const gap = gapWaitRef.current
+    if (!gap || gap.timer) return
+    if (gap.remainingMs <= 0) {
+      gapWaitRef.current = null
+      gap.resolve(runRef.current === gap.runId)
+      return
+    }
+    gap.startedAt = Date.now()
+    gap.timer = window.setTimeout(() => {
+      if (gapWaitRef.current === gap) gapWaitRef.current = null
+      gap.resolve(runRef.current === gap.runId)
+    }, gap.remainingMs)
+  }, [])
+
+  const waitForItemGap = useCallback((runId: number) => {
+    const seconds = useImmersivePlayerPreferences.getState().settings.pauseGapSeconds
+    const ms = (IMMERSIVE_PAUSE_GAP_SECONDS.includes(seconds) ? seconds : 2) * 1000
+    return new Promise<boolean>((resolve) => {
+      const gap: GapWait = {
+        remainingMs: ms,
+        startedAt: Date.now(),
+        timer: 0,
+        resolve,
+        runId,
+      }
+      gap.timer = window.setTimeout(() => {
+        if (gapWaitRef.current === gap) gapWaitRef.current = null
+        resolve(runRef.current === runId)
+      }, ms)
+      gapWaitRef.current = gap
+    })
+  }, [])
+
   const stopPlayback = useCallback(async (nextStatus: ImmersivePlayerStatus = 'idle') => {
     runRef.current += 1
+    cancelGapWait()
     setPlaybackStatus(nextStatus)
     setSegmentRole(null)
     await immersivePlaybackService.stopCurrent()
-  }, [setPlaybackStatus])
+  }, [cancelGapWait, setPlaybackStatus])
 
   const playFromCurrent = useCallback(async () => {
     if (!current) return
@@ -203,7 +264,8 @@ export function ImmersivePlayerDialog({
 
     try {
       do {
-        for (const segment of segments) {
+        for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex += 1) {
+          const segment = segments[segmentIndex]
           if (runRef.current !== runId) return
           setSegmentRole(segment.role)
           setPlaybackStatus('loading')
@@ -222,6 +284,15 @@ export function ImmersivePlayerDialog({
           )
           if (runRef.current !== runId) return
           setPlaybackStatus('playing')
+
+          const latestSettings = useImmersivePlayerPreferences.getState().settings
+          const moreInThisPass = segmentIndex < segments.length - 1
+          const willRepeat = settings.repeatPerItem === 'infinite' && latestSettings.repeatPerItem === 'infinite'
+          const willAdvance = latestSettings.autoNext && (hasNext || latestSettings.loopQueue)
+          if (moreInThisPass || willRepeat || willAdvance) {
+            const continued = await waitForItemGap(runId)
+            if (!continued || runRef.current !== runId) return
+          }
         }
       } while (
         runRef.current === runId
@@ -252,9 +323,19 @@ export function ImmersivePlayerDialog({
         toast.error(t('immersivePlayer.playFailed'))
       }
     }
-  }, [current, hasNext, index, items.length, mediaMetadataLabels, onIndexChange, setPlaybackStatus, settings, t])
+  }, [current, hasNext, index, items.length, mediaMetadataLabels, onIndexChange, setPlaybackStatus, settings, t, waitForItemGap])
 
   const togglePlay = useCallback(async () => {
+    if (status === 'playing' && gapWaitRef.current) {
+      pauseGapWait()
+      setPlaybackStatus('paused')
+      return
+    }
+    if (status === 'paused' && gapWaitRef.current) {
+      setPlaybackStatus('playing')
+      resumeGapWait()
+      return
+    }
     if (status === 'playing') {
       setPlaybackStatus('paused')
       await immersivePlaybackService.pause()
@@ -266,10 +347,15 @@ export function ImmersivePlayerDialog({
       return
     }
     await playFromCurrent()
-  }, [playFromCurrent, setPlaybackStatus, status])
+  }, [pauseGapWait, playFromCurrent, resumeGapWait, setPlaybackStatus, status])
 
   const handleRemotePlay = useCallback(() => {
     const currentStatus = statusRef.current
+    if (currentStatus === 'paused' && gapWaitRef.current) {
+      setPlaybackStatus('playing')
+      resumeGapWait()
+      return
+    }
     if (currentStatus === 'paused') {
       setPlaybackStatus('playing')
       void immersivePlaybackService.resume()
@@ -279,13 +365,18 @@ export function ImmersivePlayerDialog({
       setPlaybackStatus('loading')
       void playFromCurrentRef.current?.()
     }
-  }, [setPlaybackStatus])
+  }, [resumeGapWait, setPlaybackStatus])
 
   const handleRemotePause = useCallback(() => {
     if (statusRef.current !== 'playing') return
+    if (gapWaitRef.current) {
+      pauseGapWait()
+      setPlaybackStatus('paused')
+      return
+    }
     setPlaybackStatus('paused')
     void immersivePlaybackService.pause()
-  }, [setPlaybackStatus])
+  }, [pauseGapWait, setPlaybackStatus])
 
   const handleSettingsChange = useCallback((nextSettings: Partial<ImmersivePlaybackSettings>) => {
     updateSettings(nextSettings)
@@ -589,12 +680,19 @@ function ImmersiveSettingsDrawer({
                 onChange={(value) => onChange({ playbackRate: value as ImmersivePlaybackSettings['playbackRate'] })}
               />
             </OptionGroup>
+            <OptionGroup label={t('immersivePlayer.settings.pauseGap')}>
+              <div className="flex flex-col gap-2">
+                <SegmentedOptions
+                  value={settings.pauseGapSeconds}
+                  options={IMMERSIVE_PAUSE_GAP_SECONDS.map((value) => ({ value, label: t('immersivePlayer.settings.seconds', { count: value }) }))}
+                  onChange={(value) => onChange({ pauseGapSeconds: value })}
+                />
+                <p className="text-[11px] leading-4 text-muted-foreground">{t('immersivePlayer.settings.pauseGapHint')}</p>
+              </div>
+            </OptionGroup>
             <OptionGroup label={t('immersivePlayer.settings.playbackContent')}>
               <div className="overflow-hidden rounded-lg bg-muted/35">
                 <SwitchRow label={t('immersivePlayer.settings.playMainText')} checked={settings.playMainText} onChange={(value) => onChange({ playMainText: value })} />
-                <SwitchRow label={t('immersivePlayer.settings.playMeaning')} checked={settings.playMeaning} onChange={(value) => onChange({ playMeaning: value })} />
-                <SwitchRow label={t('immersivePlayer.settings.playExample')} checked={settings.playExample} onChange={(value) => onChange({ playExample: value })} />
-                <SwitchRow label={t('immersivePlayer.settings.playExampleTranslation')} checked={settings.playExampleTranslation} onChange={(value) => onChange({ playExampleTranslation: value })} />
               </div>
             </OptionGroup>
             <OptionGroup label={t('immersivePlayer.settings.continuousPlayback')}>

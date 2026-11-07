@@ -93,6 +93,7 @@ export function ExpressionLibraryPage() {
   // 后端分页数据
   const [result, setResult] = useState<PageResult>({ items: [], total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 0 })
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [notebookSyncing, setNotebookSyncing] = useState(false)
 
   // Dialog
@@ -159,16 +160,41 @@ export function ExpressionLibraryPage() {
 
   const refreshLocalList = useCallback(async (remote?: PageResult) => {
     if (!notebookId) return []
-    const items = await learningNotebookRepository.listCachedExpressionItems(localListRequest)
+    const page = await learningNotebookRepository.listCachedExpressionPage({
+      ...localListRequest,
+      limit: PAGE_SIZE,
+      offset: 0,
+    })
     setResult({
-      items: items as Expression[],
-      total: Math.max(remote?.total ?? 0, items.length),
+      items: page.items as Expression[],
+      total: Math.max(remote?.total ?? 0, page.total),
       page: remote?.page ?? 1,
       pageSize: remote?.pageSize ?? PAGE_SIZE,
-      totalPages: remote?.totalPages ?? 0,
+      totalPages: remote?.totalPages ?? Math.ceil(page.total / PAGE_SIZE),
     })
-    return items
+    return page.items
   }, [localListRequest, notebookId])
+
+  const loadNextPage = useCallback(async () => {
+    if (!notebookId || loading || loadingMore || result.items.length >= result.total) return
+    setLoadingMore(true)
+    try {
+      const page = await learningNotebookRepository.listCachedExpressionPage({
+        ...localListRequest,
+        limit: PAGE_SIZE,
+        offset: result.items.length,
+      })
+      setResult((current) => {
+        // 筛选条件切换期间返回的旧请求不应追加到新列表。
+        if (current.items.length !== result.items.length) return current
+        const seen = new Set(current.items.map((item) => item.id))
+        const items = [...current.items, ...(page.items as Expression[]).filter((item) => !seen.has(item.id))]
+        return { ...current, items, total: page.total, totalPages: Math.ceil(page.total / PAGE_SIZE) }
+      })
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [loading, loadingMore, localListRequest, notebookId, result.items.length, result.total])
 
   const syncThisNotebook = useCallback(async () => {
     if (!notebookId || !session?.user?.id || notebookSyncing) return
@@ -795,6 +821,7 @@ export function ExpressionLibraryPage() {
       data={virtualRows}
       className="h-full scrollbar-hide md:h-[calc(100dvh-17rem)]"
       increaseViewportBy={{ top: 360, bottom: 720 }}
+      endReached={() => { void loadNextPage() }}
       onScroll={(event) => {
         const scroller = event.currentTarget
         const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
@@ -838,7 +865,7 @@ export function ExpressionLibraryPage() {
         ),
         Footer: () => (
           <div className="py-4 text-center text-xs text-muted-foreground">
-            {t('expressionLib.totalItems', { count: result.total })}
+            {loadingMore ? <Loader2 className="mx-auto size-4 animate-spin" /> : t('expressionLib.totalItems', { count: result.total })}
           </div>
         ),
       }}
@@ -861,7 +888,7 @@ export function ExpressionLibraryPage() {
 
   return (
     <div className={cn('mx-auto max-w-2xl px-4 pt-3 md:h-auto', isMobile && 'flex h-full min-h-0 flex-col overflow-hidden pb-0', selectionMode ? 'md:pb-28' : 'md:pb-10')}>
-      <header className={cn('mb-4 flex shrink-0 items-center gap-3 transition-[margin] duration-200', headerCondensed && 'mb-2')}>
+      <header className="mb-4 flex shrink-0 items-center gap-3">
         <button
           type="button"
           onClick={() => navigate('/expressions')}
@@ -871,7 +898,7 @@ export function ExpressionLibraryPage() {
           <ArrowLeft className="size-4" />
         </button>
         <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
-          <p className={cn('text-xs text-muted-foreground transition-all duration-200', headerCondensed && 'hidden')}>{t('learningNotebooks.notebooks')}</p>
+          <p className={cn('text-xs text-muted-foreground transition-opacity duration-200', headerCondensed && 'invisible opacity-0')}>{t('learningNotebooks.notebooks')}</p>
           <h1 className="truncate text-lg font-semibold tracking-tight">{notebookName}</h1>
         </div>
         <div className="flex shrink-0 items-center gap-1">
@@ -905,7 +932,7 @@ export function ExpressionLibraryPage() {
         </div>
 
         {/* ---- 二级状态过滤 ---- */}
-        <div className={cn('mb-4 flex gap-2 overflow-x-auto transition-all duration-200', headerCondensed && 'mb-2')}>
+        <div className="mb-4 flex gap-2 overflow-x-auto">
           {filterPills.map((item) => (
             <button
               key={item.value}

@@ -85,6 +85,9 @@ export function mapInsightItemsToImmersiveItems(items: LearningInsightItem[]) {
   return items.map(mapInsightItemToImmersiveItem).filter((item) => item.title.trim())
 }
 
+/** 译文、例句、例句译文先不进入播放队列，设置里也先不露出。 */
+const INCLUDE_SECONDARY_PLAYBACK = false
+
 export function buildPlaybackSegments(item: ImmersivePlayerItem, settings: ImmersivePlaybackSettings): PlaybackSegment[] {
   const base: PlaybackSegment[] = []
   if (settings.playMainText && item.title.trim()) {
@@ -99,7 +102,7 @@ export function buildPlaybackSegments(item: ImmersivePlayerItem, settings: Immer
       subtitle: item.meaning,
     })
   }
-  if (settings.playMeaning && item.meaning?.trim()) {
+  if (INCLUDE_SECONDARY_PLAYBACK && settings.playMeaning && item.meaning?.trim()) {
     base.push({
       id: `${item.id}:meaning`,
       itemId: item.id,
@@ -110,7 +113,7 @@ export function buildPlaybackSegments(item: ImmersivePlayerItem, settings: Immer
       subtitle: item.meaning,
     })
   }
-  if (settings.playExample && item.exampleEn?.trim()) {
+  if (INCLUDE_SECONDARY_PLAYBACK && settings.playExample && item.exampleEn?.trim()) {
     base.push({
       id: `${item.id}:example`,
       itemId: item.id,
@@ -122,7 +125,7 @@ export function buildPlaybackSegments(item: ImmersivePlayerItem, settings: Immer
       subtitle: item.exampleEn.trim(),
     })
   }
-  if (settings.playExampleTranslation && item.exampleZh?.trim()) {
+  if (INCLUDE_SECONDARY_PLAYBACK && settings.playExampleTranslation && item.exampleZh?.trim()) {
     base.push({
       id: `${item.id}:exampleTranslation`,
       itemId: item.id,
