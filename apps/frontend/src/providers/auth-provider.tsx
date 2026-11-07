@@ -17,6 +17,7 @@ import { useThemePresetStore } from '@/stores/theme-preset.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { useLearningStore } from '@/stores/learning.store'
 import { isManagementHashRoute, useManagementHashRoute } from '@/hooks/use-management-route'
+import { setCurrentSessionSnapshot } from '@/providers/auth-session'
 
 const OTA_USER_ID_KEY = 'manyu-ota-user-id'
 const AUTH_SESSION_CACHE_KEY = 'manyu-auth-session-cache'
@@ -105,8 +106,6 @@ interface Session {
 
 type SessionPayload = Session | null
 
-let currentSessionSnapshot: SessionPayload = null
-
 function readCachedSession(): SessionPayload {
   if (typeof window === 'undefined') return null
   try {
@@ -131,14 +130,6 @@ function writeCachedSession(session: SessionPayload) {
   } catch {
     // ignore storage quota/private mode errors
   }
-}
-
-export function getCurrentSessionSnapshot() {
-  return currentSessionSnapshot
-}
-
-function setCurrentSessionSnapshot(session: SessionPayload) {
-  currentSessionSnapshot = session
 }
 
 function getOfflineDataOwner() {

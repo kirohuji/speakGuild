@@ -2,7 +2,7 @@ import { del, get, patch, post } from '@/lib/request'
 import { judgeWarmupTurnLocally, type WarmupTurnJudgeInput } from '@/lib/local-ai/warmup-local-judge'
 import { warmupModelManager } from '@/lib/local-ai/warmup-model-manager'
 import { usePreferencesStore } from '@/stores/preferences.store'
-import { getCurrentSessionSnapshot } from '@/providers/auth-provider'
+import { getCurrentSessionSnapshot } from '@/providers/auth-session'
 import { toast } from 'sonner'
 
 function isLocalModelHealthError(error: unknown) {

@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
-import { usePreferencesStore } from '@/stores/preferences.store'
+import { PRACTICE_BATCH_OPTIONS, usePreferencesStore } from '@/stores/preferences.store'
 import { useConfigStore } from '@/stores/config.store'
 import { AuthSettingsPanel } from '@/features/profile/components/auth-settings-panel'
 import i18n from '@/lib/i18n'
@@ -207,17 +207,21 @@ export function SettingsTab() {
             <Switch checked={localSttEnabled} onCheckedChange={setLocalSttEnabled} />
           </div>
 
-          <Separator />
+          {localSttEnabled && (
+            <>
+              <Separator />
 
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <Label>{t('settings.localSttFallback', { defaultValue: '失败时回退云端' })}</Label>
-              <p className="text-xs text-muted-foreground">
-                {t('settings.localSttFallbackHint', { defaultValue: '本地识别失败或模型未准备好时，联网状态下自动使用云端。' })}
-              </p>
-            </div>
-            <Switch checked={localSttFallbackToCloud} onCheckedChange={setLocalSttFallbackToCloud} />
-          </div>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <Label>{t('settings.localSttFallback', { defaultValue: '失败时回退云端' })}</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {t('settings.localSttFallbackHint', { defaultValue: '本地识别失败或模型未准备好时，联网状态下自动使用云端。' })}
+                  </p>
+                </div>
+                <Switch checked={localSttFallbackToCloud} onCheckedChange={setLocalSttFallbackToCloud} />
+              </div>
+            </>
+          )}
 
           <Separator />
 
@@ -244,18 +248,18 @@ export function SettingsTab() {
               onChange={(e) => setDailyPracticeGoal(Number(e.target.value))}
               className="w-48"
             >
-              <SelectItem value={10}>{t('profile.dailyGoal10')}</SelectItem>
-              <SelectItem value={20}>{t('profile.dailyGoal20')}</SelectItem>
-              <SelectItem value={30}>{t('profile.dailyGoal30')}</SelectItem>
+              {PRACTICE_BATCH_OPTIONS.map((value) => (
+                <SelectItem key={value} value={value}>{t(`profile.dailyGoal${value}`)}</SelectItem>
+              ))}
             </Select>
           </div>
 
           <div className="space-y-2">
             <Label>{t('profile.reviewBatchSize')}</Label>
             <Select value={reviewBatchSize} onChange={(e) => setReviewBatchSize(Number(e.target.value))} className="w-48">
-              <SelectItem value={10}>{t('profile.reviewBatchSizeValue', { count: 10 })}</SelectItem>
-              <SelectItem value={20}>{t('profile.reviewBatchSizeValue', { count: 20 })}</SelectItem>
-              <SelectItem value={30}>{t('profile.reviewBatchSizeValue', { count: 30 })}</SelectItem>
+              {PRACTICE_BATCH_OPTIONS.map((value) => (
+                <SelectItem key={value} value={value}>{t('profile.reviewBatchSizeValue', { count: value })}</SelectItem>
+              ))}
             </Select>
           </div>
 

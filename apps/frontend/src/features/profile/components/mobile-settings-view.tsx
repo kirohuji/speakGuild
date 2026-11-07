@@ -10,7 +10,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import { useAuth } from '@/providers/auth-provider'
-import { usePreferencesStore } from '@/stores/preferences.store'
+import { PRACTICE_BATCH_OPTIONS, usePreferencesStore } from '@/stores/preferences.store'
 import { useConfigStore } from '@/stores/config.store'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { useAppUpdateStore } from '@/stores/app-update.store'
@@ -334,7 +334,7 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
           subtitle={t(`profile.dailyGoal${dailyPracticeGoal}`)}
           right={
             <div className="flex rounded-full bg-muted p-0.5">
-              {[10, 20, 30].map((value) => (
+              {PRACTICE_BATCH_OPTIONS.map((value) => (
                 <button
                   key={value}
                   type="button"
@@ -357,7 +357,7 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
           subtitle={t('profile.reviewBatchSizeValue', { count: reviewBatchSize })}
           right={
             <div className="flex rounded-full bg-muted p-0.5">
-              {[10, 20, 30].map((value) => (
+              {PRACTICE_BATCH_OPTIONS.map((value) => (
                 <button
                   key={value}
                   type="button"
@@ -462,16 +462,18 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
             />
           }
         />
-        <IosRow
-          label={t('settings.localSttFallback', { defaultValue: '失败时回退云端' })}
-          subtitle={t('settings.localSttFallbackHint', { defaultValue: '本地识别失败或模型未准备好时，联网状态下自动使用云端。' })}
-          right={
-            <Switch
-              checked={localSttFallbackToCloud}
-              onCheckedChange={setLocalSttFallbackToCloud}
-            />
-          }
-        />
+        {localSttEnabled && (
+          <IosRow
+            label={t('settings.localSttFallback', { defaultValue: '失败时回退云端' })}
+            subtitle={t('settings.localSttFallbackHint', { defaultValue: '本地识别失败或模型未准备好时，联网状态下自动使用云端。' })}
+            right={
+              <Switch
+                checked={localSttFallbackToCloud}
+                onCheckedChange={setLocalSttFallbackToCloud}
+              />
+            }
+          />
+        )}
         <IosRow
           label={t('profile.wifiOnlyLabel')}
           last

@@ -84,6 +84,16 @@ export const DEFAULT_TTS_BACKEND: TtsBackendSettings = {
   params: { speed: 1, vol: 1, pitch: 0 },
 }
 
+export const PRACTICE_BATCH_OPTIONS = [20, 40, 60] as const
+
+function normalizePracticeBatchSize(value: number | undefined, fallback: number) {
+  if (value == null || Number.isNaN(value)) return fallback
+  if ((PRACTICE_BATCH_OPTIONS as readonly number[]).includes(value)) return value
+  if (value <= 20) return 20
+  if (value <= 40) return 40
+  return 60
+}
+
 const DEFAULT_PREFERENCES: Preferences = {
   autoPlay: false,
   bgmEnabled: false,
@@ -187,25 +197,33 @@ export const usePreferencesStore = create<PreferencesStore>()(
     }),
     {
       name: 'manyu-preferences',
-      version: 2,
+      version: 3,
       migrate: (persistedState, version) => {
         const state = persistedState as Partial<PreferencesStore>
-        if (version >= 2) return state
+        const base = version >= 2
+          ? state
+          : {
+              ...state,
+              dailyPracticeRandomOrder: state.dailyPracticeRandomOrder ?? DEFAULT_PREFERENCES.dailyPracticeRandomOrder,
+              localSttEnabled: state.localSttEnabled ?? DEFAULT_PREFERENCES.localSttEnabled,
+              localSttModelVariant: state.localSttModelVariant ?? DEFAULT_PREFERENCES.localSttModelVariant,
+              localSttFallbackToCloud: state.localSttFallbackToCloud ?? DEFAULT_PREFERENCES.localSttFallbackToCloud,
+              localAiWarmupJudgeEnabled: state.localAiWarmupJudgeEnabled ?? DEFAULT_PREFERENCES.localAiWarmupJudgeEnabled,
+              localAiWarmupModelVariant: state.localAiWarmupModelVariant ?? DEFAULT_PREFERENCES.localAiWarmupModelVariant,
+              learningReminderEnabled: DEFAULT_PREFERENCES.learningReminderEnabled,
+              learningReminderTime: !state.learningReminderTime || state.learningReminderTime === '20:30'
+                ? DEFAULT_PREFERENCES.learningReminderTime
+                : state.learningReminderTime,
+            }
+        const dailyPracticeGoal = normalizePracticeBatchSize(
+          base.dailyPracticeGoal ?? base.dailyGoal,
+          DEFAULT_PREFERENCES.dailyPracticeGoal,
+        )
         return {
-          ...state,
-          dailyGoal: state.dailyGoal ?? DEFAULT_PREFERENCES.dailyGoal,
-          dailyPracticeGoal: state.dailyPracticeGoal ?? state.dailyGoal ?? DEFAULT_PREFERENCES.dailyPracticeGoal,
-          reviewBatchSize: state.reviewBatchSize ?? DEFAULT_PREFERENCES.reviewBatchSize,
-          dailyPracticeRandomOrder: state.dailyPracticeRandomOrder ?? DEFAULT_PREFERENCES.dailyPracticeRandomOrder,
-          localSttEnabled: state.localSttEnabled ?? DEFAULT_PREFERENCES.localSttEnabled,
-          localSttModelVariant: state.localSttModelVariant ?? DEFAULT_PREFERENCES.localSttModelVariant,
-          localSttFallbackToCloud: state.localSttFallbackToCloud ?? DEFAULT_PREFERENCES.localSttFallbackToCloud,
-          localAiWarmupJudgeEnabled: state.localAiWarmupJudgeEnabled ?? DEFAULT_PREFERENCES.localAiWarmupJudgeEnabled,
-          localAiWarmupModelVariant: state.localAiWarmupModelVariant ?? DEFAULT_PREFERENCES.localAiWarmupModelVariant,
-          learningReminderEnabled: DEFAULT_PREFERENCES.learningReminderEnabled,
-          learningReminderTime: !state.learningReminderTime || state.learningReminderTime === '20:30'
-            ? DEFAULT_PREFERENCES.learningReminderTime
-            : state.learningReminderTime,
+          ...base,
+          dailyGoal: dailyPracticeGoal,
+          dailyPracticeGoal,
+          reviewBatchSize: normalizePracticeBatchSize(base.reviewBatchSize, DEFAULT_PREFERENCES.reviewBatchSize),
         }
       },
     }
@@ -224,9 +242,16 @@ export function activateAccountLearningPreferences(userId: string | null, option
   // the known prior owner; a newly signed-in account must start from defaults.
   const initialPreferences = accountPreferences
     ?? (userId && options.migrateCurrentDeviceValues ? snapshotAccountLearningPreferences(current) : null)
+  const dailyPracticeGoal = normalizePracticeBatchSize(
+    initialPreferences?.dailyPracticeGoal ?? initialPreferences?.dailyGoal,
+    DEFAULT_PREFERENCES.dailyPracticeGoal,
+  )
   usePreferencesStore.setState({
     ...snapshotAccountLearningPreferences(DEFAULT_PREFERENCES),
     ...initialPreferences,
+    dailyGoal: dailyPracticeGoal,
+    dailyPracticeGoal,
+    reviewBatchSize: normalizePracticeBatchSize(initialPreferences?.reviewBatchSize, DEFAULT_PREFERENCES.reviewBatchSize),
   })
 }
 

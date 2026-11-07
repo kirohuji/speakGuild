@@ -785,15 +785,17 @@ export function MobileStorageView() {
                     onCheckedChange={setLocalSttEnabled}
                   />
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">{t('settings.localSttFallback', { defaultValue: '失败时回退云端' })}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {t('settings.localSttFallbackHint', { defaultValue: '本地识别失败或模型未准备好时，联网状态下自动使用云端。' })}
-                    </p>
+                {localSttEnabled && (
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">{t('settings.localSttFallback', { defaultValue: '失败时回退云端' })}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t('settings.localSttFallbackHint', { defaultValue: '本地识别失败或模型未准备好时，联网状态下自动使用云端。' })}
+                      </p>
+                    </div>
+                    <Switch checked={localSttFallbackToCloud} onCheckedChange={setLocalSttFallbackToCloud} />
                   </div>
-                  <Switch checked={localSttFallbackToCloud} onCheckedChange={setLocalSttFallbackToCloud} />
-                </div>
+                )}
               </div>
             </div>
           </div>
