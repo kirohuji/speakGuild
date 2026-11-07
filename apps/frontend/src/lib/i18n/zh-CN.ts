@@ -1408,6 +1408,7 @@ const zhCN = {
       listeningProgress: '已完成听力 {{done}}/{{total}}',
       readingPercent: '阅读进度 {{percent}}%',
       manualCompletionHint: '读完可标记',
+      manualCompleted: '已完成',
       markCompleted: '标记完成',
       markCompletedDone: '已完成「{{title}}」，已释放 1 个学习位',
       markCompletedFailed: '标记完成失败，请重试',

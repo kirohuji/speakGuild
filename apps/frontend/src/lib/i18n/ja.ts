@@ -1406,6 +1406,7 @@ const ja = {
       listeningProgress: 'リスニング完了 {{done}}/{{total}}',
       readingPercent: '読書進捗 {{percent}}%',
       manualCompletionHint: '読了で完了',
+      manualCompleted: '完了',
       markCompleted: '完了にする',
       markCompletedDone: '「{{title}}」を完了し、学習枠を1つ空けました',
       markCompletedFailed: '完了としてマークできませんでした',

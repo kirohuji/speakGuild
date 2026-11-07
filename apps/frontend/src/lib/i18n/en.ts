@@ -1406,6 +1406,7 @@ const en = {
       listeningProgress: 'Listening completed {{done}}/{{total}}',
       readingPercent: 'Reading progress {{percent}}%',
       manualCompletionHint: 'Read to mark',
+      manualCompleted: 'Completed',
       markCompleted: 'All Done',
       markCompletedDone: 'Completed “{{title}}” and freed one learning slot',
       markCompletedFailed: 'Could not mark this pack as completed',

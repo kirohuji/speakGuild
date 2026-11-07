@@ -542,7 +542,7 @@ export function ImmersivePlayerDialog({
                 )}
 
                 {!hiddenText && current.insight && (
-                  <section className="rounded-lg border border-border/70 bg-muted/25 px-4 py-3">
+                  <section className="rounded-lg bg-muted/45 px-4 py-4">
                     <div className={cn('relative', hasLongInsight && !insightExpanded && 'max-h-28 overflow-hidden')}>
                       <MarkdownContent content={current.insight} />
                     </div>

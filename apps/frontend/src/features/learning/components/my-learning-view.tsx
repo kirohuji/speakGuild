@@ -487,6 +487,8 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
   const [confirmRestart, setConfirmRestart] = useState(false)
   const [restarting, setRestarting] = useState(false)
   const showCover = unit.coverImage && !imgFailed
+  const progressText = completionProgressText(t, unit)
+  const showCompletionLine = !(isCompleted && unit.completion?.kind === 'manual' && unit.completion.total <= 1)
 
   const handleRestart = useCallback(async () => {
     if (restarting) return
@@ -547,10 +549,26 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
             <span>{unit.chunkCount} {t('learning.chunks')}</span>
             <span>{unit.topicCount} {t('learning.topics')}</span>
           </div>
-          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            {isCompleted && <CheckCircle2 className="size-3.5 text-emerald-600" />}
-            <span>{completionProgressText(t, unit)}</span>
-          </div>
+          {showCompletionLine ? (
+            <div className={cn(
+              'mt-1.5 flex items-center gap-1.5 text-[11px] text-muted-foreground',
+              isCompleted && 'pr-20',
+            )}>
+              {isCompleted && <CheckCircle2 className="size-3.5 text-emerald-600" />}
+              <span>{progressText}</span>
+            </div>
+          ) : (
+            <div className="mt-2 space-y-1.5 pr-20">
+              <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                <span className="inline-flex min-w-0 items-center gap-1.5">
+                  {/* <CheckCircle2 className="size-3.5 shrink-0 text-emerald-600" />
+                  <span className="truncate">{t('learning.manualCompleted')}</span> */}
+                </span>
+                <span className="shrink-0 font-semibold tabular-nums text-foreground/75">100%</span>
+              </div>
+              <Progress value={100} className="h-1" />
+            </div>
+          )}
           {!isCompleted && unit.topics && unit.topics.length > 0 && (
             <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
               <span className="size-1 rounded-full bg-primary/40" />
@@ -566,7 +584,7 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
           type="button"
           disabled={restarting}
           onClick={() => setConfirmRestart(true)}
-          className="absolute bottom-2.5 right-2.5 inline-flex h-7 items-center gap-1 rounded-full bg-transparent px-2.5 text-[11px] font-medium text-foreground active:bg-muted disabled:opacity-50"
+          className="absolute bottom-1 right-2.5 inline-flex h-7 items-center gap-1 rounded-full bg-transparent pl-3.5 pr-2.5 text-[11px] font-medium text-foreground active:bg-muted disabled:opacity-50"
         >
           {restarting ? <Loader2 className="size-3 animate-spin" /> : <RotateCcw className="size-3" />}
           {t('learning.learnAgain')}
