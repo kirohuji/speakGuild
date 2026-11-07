@@ -461,7 +461,8 @@ export class ContentPrepareService {
   ): Promise<'updated' | 'skipped'> {
     const dict = await this.prepareVocabularyDictionary(vocabId, usageStats);
     if (dict === 'missing') return 'skipped';
-    return this.prepareVocabularyAi(vocabId, usageStats);
+    // 管理员主动富化时，始终把词典原料重写为学习版，而不是因为字段已齐全就原样保留。
+    return this.prepareVocabularyAi(vocabId, usageStats, true);
   }
 
   /**
@@ -472,6 +473,7 @@ export class ContentPrepareService {
   async prepareVocabularyAi(
     vocabId: string,
     usageStats?: AiUsageStats,
+    forceLearnerRewrite = false,
   ): Promise<'updated' | 'skipped'> {
     const vocab = await this.prisma.vocabulary.findUnique({ where: { id: vocabId } });
     const word = vocab?.word?.trim();
@@ -493,7 +495,8 @@ export class ContentPrepareService {
       examples.length < 3 ||
       !vocab.phoneticUs ||
       !vocab.phoneticUk ||
-      !validDifficulty;
+      !validDifficulty ||
+      forceLearnerRewrite;
 
     let aiResult: VocabularyAiEnrichResult | null = null;
     if (needsAi) {
@@ -508,6 +511,7 @@ export class ContentPrepareService {
             meaningExists: this.hasChinese(vocab.meaning),
             descriptionExists: !!vocab.description?.trim(),
             difficultyExists: validDifficulty,
+            forceLearnerRewrite,
           },
           usageStats ? usageCallback(usageStats) : undefined,
         );
@@ -516,16 +520,21 @@ export class ContentPrepareService {
       }
     }
 
-    // 例句：词典例句不足 3 条时用 AI 生成的原创例句补齐
-    const examplesForStore = examples.length >= 3
-      ? (vocab.examples as Prisma.InputJsonValue)
-      : (aiResult?.generatedExamples?.length ? aiResult.generatedExamples as Prisma.InputJsonValue : (vocab.examples as Prisma.InputJsonValue));
+    // 最终展示例句必须是 AI 生成的学习例句。词典例句仅在 AI 不可用时作为可恢复兜底。
+    const examplesForStore = aiResult?.generatedExamples?.length
+      ? aiResult.generatedExamples as Prisma.InputJsonValue
+      : (vocab.examples as Prisma.InputJsonValue);
+    // 同理，学习页不展示词典的全量义项；AI 未返回时才保留原内容，确保失败不丢数据。
+    const learnerDefinitionEn = aiResult?.learnerDefinitions?.length
+      ? aiResult.learnerDefinitions.join('; ')
+      : vocab.definitionEn;
 
     await this.prisma.vocabulary.update({
       where: { id: vocabId },
       data: {
         phoneticUs: vocab.phoneticUs || aiResult?.phoneticUs || '',
         phoneticUk: vocab.phoneticUk || aiResult?.phoneticUk || '',
+        definitionEn: learnerDefinitionEn,
         examples: examplesForStore,
         meaning: this.hasChinese(vocab.meaning) ? vocab.meaning : (aiResult?.meaning || vocab.meaning || ''),
         description: aiResult?.description || vocab.description || '',

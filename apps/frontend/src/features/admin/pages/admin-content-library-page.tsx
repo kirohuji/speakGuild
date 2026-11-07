@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Search, Plus, Trash2, Edit3, BookOpen, Sparkles, Loader2,
   Type, Code2, ChevronLeft, ChevronRight, Play, Pause, Upload, Globe, Volume2, Languages,
@@ -239,6 +240,50 @@ function deriveMeaning(definitionsEn: string): string {
 
 type LibraryScope = { sceneId?: string; topicId?: string }
 
+const LIBRARY_TABS = ['vocabularies', 'chunks', 'patterns'] as const
+type LibraryTab = (typeof LIBRARY_TABS)[number]
+const LIBRARY_PACKAGE_TYPES = ['foundation', 'daily', 'course', 'exam'] as const
+
+function readLibraryTab(value: string | null): LibraryTab {
+  return LIBRARY_TABS.includes(value as LibraryTab) ? value as LibraryTab : 'vocabularies'
+}
+
+function readPackageType(value: string | null): LibraryPackageTypeFilter {
+  return LIBRARY_PACKAGE_TYPES.includes(value as (typeof LIBRARY_PACKAGE_TYPES)[number])
+    ? value as LibraryPackageTypeFilter
+    : 'all'
+}
+
+type LibraryQueryPatch = {
+  tab?: LibraryTab
+  type?: LibraryPackageTypeFilter
+  category?: string | null
+  group?: string | null
+  scene?: string | null
+  topic?: string | null
+}
+
+function readHashSearchParams() {
+  const hash = window.location.hash
+  const queryIndex = hash.indexOf('?')
+  if (queryIndex >= 0) return new URLSearchParams(hash.slice(queryIndex + 1))
+  return new URLSearchParams(window.location.search)
+}
+
+function applyLibraryQuery(params: URLSearchParams, patch: LibraryQueryPatch) {
+  const apply = (key: string, value: string | null | undefined, omit?: string) => {
+    if (value === undefined) return
+    if (!value || value === omit) params.delete(key)
+    else params.set(key, value)
+  }
+  apply('tab', patch.tab, 'vocabularies')
+  apply('type', patch.type, 'all')
+  apply('category', patch.category)
+  apply('group', patch.group)
+  apply('scene', patch.scene)
+  apply('topic', patch.topic)
+}
+
 function emptyLibraryText(kind: '词汇' | '句块' | '句式', scope: LibraryScope) {
   if (scope.topicId) return `这个话题还没有绑定${kind}`
   if (scope.sceneId) return `这个学习包还没有绑定${kind}`
@@ -266,20 +311,40 @@ function useScopedLibraryLoad(
 }
 
 export function AdminContentLibraryPage() {
-  const [tab, setTab] = useState('vocabularies')
-  const [packageType, setPackageType] = useState<LibraryPackageTypeFilter>('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = readLibraryTab(searchParams.get('tab'))
+  const packageType = readPackageType(searchParams.get('type'))
+  const categoryId = searchParams.get('category')
+  const groupId = searchParams.get('group')
+  const sceneId = searchParams.get('scene')
+  const topicId = searchParams.get('topic')
+  const pendingQueryRef = useRef<LibraryQueryPatch>({})
+  const updateQuery = useCallback((patch: LibraryQueryPatch) => {
+    pendingQueryRef.current = { ...pendingQueryRef.current, ...patch }
+    const queued = { ...pendingQueryRef.current }
+    setSearchParams(() => {
+      const next = readHashSearchParams()
+      applyLibraryQuery(next, queued)
+      return next
+    }, { replace: true })
+  }, [setSearchParams])
+
+  useEffect(() => {
+    pendingQueryRef.current = {}
+  }, [searchParams])
+
   const [categories, setCategories] = useState<api.SceneCategory[]>([])
-  const [categoryId, setCategoryId] = useState<string | null>(null)
   const [groups, setGroups] = useState<PackageGroup[]>([])
-  const [groupId, setGroupId] = useState<string | null>(null)
   const [scenes, setScenes] = useState<api.Scene[]>([])
-  const [sceneId, setSceneId] = useState<string | null>(null)
   const [topics, setTopics] = useState<api.TrainingTopic[]>([])
   const [topicsLoading, setTopicsLoading] = useState(false)
-  const [topicId, setTopicId] = useState<string | null>(null)
+  const [topicsReady, setTopicsReady] = useState(false)
+  const [listsReady, setListsReady] = useState(false)
+  const [groupsReady, setGroupsReady] = useState(false)
 
   useEffect(() => {
     let cancelled = false
+    setListsReady(false)
     Promise.all([
       api.listSceneCategories(packageType === 'all' ? undefined : packageType, 'story'),
       api.listScenes(categoryId ?? undefined, packageType === 'all' ? undefined : packageType, 'story'),
@@ -291,30 +356,25 @@ export function AdminContentLibraryPage() {
       if (cancelled) return
       setCategories([])
       setScenes([])
+    }).finally(() => {
+      if (!cancelled) setListsReady(true)
     })
     return () => { cancelled = true }
   }, [packageType, categoryId])
 
   useEffect(() => {
-    contentExperienceAdminApi.listGroups().then(setGroups).catch(() => setGroups([]))
+    let cancelled = false
+    contentExperienceAdminApi.listGroups()
+      .then((items) => { if (!cancelled) setGroups(items) })
+      .catch(() => { if (!cancelled) setGroups([]) })
+      .finally(() => { if (!cancelled) setGroupsReady(true) })
+    return () => { cancelled = true }
   }, [])
-
-  useEffect(() => {
-    if (categoryId && !categories.some((category) => category.id === categoryId)) {
-      setCategoryId(null)
-    }
-  }, [categories, categoryId])
 
   const availableGroups = useMemo(() => {
     const sceneIds = new Set(scenes.map((scene) => scene.id))
     return groups.filter((group) => group.items?.some((item) => sceneIds.has(item.sceneId)))
   }, [groups, scenes])
-
-  useEffect(() => {
-    if (groupId && !availableGroups.some((group) => group.id === groupId)) {
-      setGroupId(null)
-    }
-  }, [availableGroups, groupId])
 
   const visibleScenes = useMemo(() => {
     const filtered = groupId ? scenes.filter((scene) => scene.groupId === groupId) : scenes
@@ -322,26 +382,80 @@ export function AdminContentLibraryPage() {
   }, [scenes, groupId])
 
   useEffect(() => {
-    if (sceneId && !visibleScenes.some((scene) => scene.id === sceneId)) {
-      setSceneId(null)
-      setTopicId(null)
+    const rawTab = searchParams.get('tab')
+    const rawType = searchParams.get('type')
+    const patch: LibraryQueryPatch = {}
+    if (rawTab && !LIBRARY_TABS.includes(rawTab as LibraryTab)) patch.tab = 'vocabularies'
+    if (rawType && rawType !== 'all' && !LIBRARY_PACKAGE_TYPES.includes(rawType as (typeof LIBRARY_PACKAGE_TYPES)[number])) {
+      patch.type = 'all'
     }
-  }, [visibleScenes, sceneId])
+    if (patch.tab || patch.type) updateQuery(patch)
+  }, [searchParams, updateQuery])
+
+  useEffect(() => {
+    if (!listsReady || !groupsReady) return
+    const patch: LibraryQueryPatch = {}
+    let nextGroup = groupId
+    if (categoryId && !categories.some((category) => category.id === categoryId)) {
+      patch.category = null
+    }
+    if (groupId && !availableGroups.some((group) => group.id === groupId)) {
+      patch.group = null
+      nextGroup = null
+    }
+    const scenesForGroup = nextGroup
+      ? scenes.filter((scene) => scene.groupId === nextGroup)
+      : scenes
+    if (sceneId && !scenesForGroup.some((scene) => scene.id === sceneId)) {
+      patch.scene = null
+      patch.topic = null
+    } else if (!sceneId && topicId) {
+      patch.topic = null
+    }
+    if (patch.category !== undefined || patch.group !== undefined || patch.scene !== undefined || patch.topic !== undefined) {
+      updateQuery(patch)
+    }
+  }, [
+    listsReady,
+    groupsReady,
+    categories,
+    scenes,
+    availableGroups,
+    categoryId,
+    groupId,
+    sceneId,
+    topicId,
+    updateQuery,
+  ])
 
   useEffect(() => {
     if (!sceneId) {
       setTopics([])
       setTopicsLoading(false)
+      setTopicsReady(true)
       return
     }
     let cancelled = false
+    setTopicsReady(false)
     setTopicsLoading(true)
     api.listTrainingTopics(sceneId)
       .then((items) => { if (!cancelled) setTopics(items) })
       .catch(() => { if (!cancelled) setTopics([]) })
-      .finally(() => { if (!cancelled) setTopicsLoading(false) })
+      .finally(() => {
+        if (!cancelled) {
+          setTopicsLoading(false)
+          setTopicsReady(true)
+        }
+      })
     return () => { cancelled = true }
   }, [sceneId])
+
+  useEffect(() => {
+    if (!sceneId || !topicsReady || topicsLoading) return
+    if (topicId && !topics.some((topic) => topic.id === topicId)) {
+      updateQuery({ topic: null })
+    }
+  }, [sceneId, topicId, topics, topicsReady, topicsLoading, updateQuery])
 
   const scope = useMemo<LibraryScope>(() => ({
     sceneId: sceneId ?? undefined,
@@ -355,11 +469,7 @@ export function AdminContentLibraryPage() {
   }))
 
   const clearScope = () => {
-    setPackageType('all')
-    setCategoryId(null)
-    setGroupId(null)
-    setSceneId(null)
-    setTopicId(null)
+    updateQuery({ type: 'all', category: null, group: null, scene: null, topic: null })
   }
 
   return (
@@ -369,32 +479,25 @@ export function AdminContentLibraryPage() {
       <LibraryScopeBar
         packageType={packageType}
         onPackageTypeChange={(value) => {
-          setPackageType(value)
-          setCategoryId(null)
-          setGroupId(null)
-          setSceneId(null)
-          setTopicId(null)
+          updateQuery({ type: value, category: null, group: null, scene: null, topic: null })
         }}
         categories={categories}
         categoryId={categoryId}
-        onCategoryChange={setCategoryId}
+        onCategoryChange={(id) => updateQuery({ category: id })}
         groups={groupOptions}
         groupId={groupId}
-        onGroupChange={setGroupId}
+        onGroupChange={(id) => updateQuery({ group: id })}
         scenes={visibleScenes}
         sceneId={sceneId}
-        onSceneChange={(id) => {
-          setSceneId(id)
-          setTopicId(null)
-        }}
+        onSceneChange={(id) => updateQuery({ scene: id, topic: null })}
         topics={topics}
         topicsLoading={topicsLoading}
         topicId={topicId}
-        onTopicChange={setTopicId}
+        onTopicChange={(id) => updateQuery({ topic: id })}
         onClear={clearScope}
       />
 
-      <Tabs value={tab} onValueChange={setTab}>
+      <Tabs value={tab} onValueChange={(value) => updateQuery({ tab: readLibraryTab(value) })}>
         <TabsList>
           <TabsTrigger value="vocabularies"><BookOpen className="mr-1.5 size-4" />词汇</TabsTrigger>
           <TabsTrigger value="chunks"><Type className="mr-1.5 size-4" />句块 Chunk</TabsTrigger>
@@ -1318,8 +1421,9 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
         phoneticUk: uk?.ipa,
         audioUsUrl: us?.audioUrl,
         audioUkUrl: uk?.audioUrl,
-        definitionEn: defs.join('; '),
-        partOfSpeech: pos,
+        // 字典只提供事实依据；界面上保存的是 AI 筛选后的学习版核心义项。
+        definitionEn: aiResult?.learnerDefinitions?.length ? aiResult.learnerDefinitions.join('; ') : defs.join('; '),
+        partOfSpeech: aiResult?.learnerDefinitions?.[0]?.split(':')[0]?.trim() || pos,
         examples: aiResult?.generatedExamples?.length ? aiResult.generatedExamples : examples,
       }
       if (aiResult?.description) diffFields.description = aiResult.description
@@ -1364,7 +1468,7 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
         : (form.examples ?? [])
 
       const diffFields: Record<string, any> = {
-        definitionEn: defsWithZh,
+        definitionEn: result.learnerDefinitions?.length ? result.learnerDefinitions.join('; ') : defsWithZh,
         description: result.description,
         examples: newExamples,
         meaning: result.meaning || deriveMeaning(defsWithZh),

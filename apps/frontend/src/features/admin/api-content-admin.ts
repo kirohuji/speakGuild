@@ -1031,6 +1031,7 @@ export interface AiEnrichResult {
   phoneticUs: string;
   phoneticUk: string;
   definitionTranslations: string[];
+  learnerDefinitions: string[];
   generatedExamples: { en: string; zh: string; level: string }[];
   meaning: string;
   description: string;

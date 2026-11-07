@@ -14,12 +14,16 @@ export interface VocabularyAiEnrichInput {
   meaningExists?: boolean;
   descriptionExists?: boolean;
   difficultyExists?: boolean;
+  /** 强制把词典原始内容改写为学习版内容（管理台的「词典+AI」操作使用）。 */
+  forceLearnerRewrite?: boolean;
 }
 
 export interface VocabularyAiEnrichResult {
   phoneticUs: string;
   phoneticUk: string;
   definitionTranslations: string[];
+  /** 经筛选、排序并改写后的学习版双语义项，而非词典原始义项清单。 */
+  learnerDefinitions: string[];
   generatedExamples: { en: string; zh: string; level: string }[];
   meaning: string;
   description: string;
@@ -163,7 +167,8 @@ export class AdminContentAiService {
     const descriptionExists = dto.descriptionExists ?? false;
     const difficultyExists = dto.difficultyExists ?? false;
     const phoneticsExist = !!(dto.phoneticUs && dto.phoneticUk);
-    const needExamples = dto.examples.length < 3; // 词典例句不足 3 条才需要 AI 生成
+    // 词典例句用于核实语义，不是学习材料。即使词典已有多条例句，也必须产出可学习的原创例句。
+    const needExamples = true;
     const dictExLines = dto.examples.map((e, i) => `${i + 1}. ${e.en}`).join('\n');
 
     // 仅当需要生成例句时才查询相关句块作为风格参考（减少输入 token）
@@ -195,7 +200,8 @@ export class AdminContentAiService {
       `- Description (讲解): ${descriptionExists ? 'EXISTS — return empty string' : 'MISSING — provide it'}`,
       `- Difficulty (难度): ${difficultyExists ? 'EXISTS — return empty string' : 'MISSING — provide it'}`,
       `- Phonetics (音标): ${phoneticsExist ? 'EXISTS — return empty strings' : 'MISSING — generate them'}`,
-      `- Example sentences (例句): ${needExamples ? 'MISSING — generate 3-5 new ones' : `EXISTS (${dto.examples.length} dictionary examples) — return empty array`}`,
+      `- Learner definitions (学习版释义): ALWAYS decide the appropriate number of concise bilingual entries from this word's actual learning value; do not obey a fixed count`,
+      `- Example sentences (例句): ALWAYS generate 3-4 new learner-friendly examples; dictionary examples are evidence only`,
     ].join('\n');
 
     const { text, usage } = await generateText({
@@ -227,6 +233,7 @@ Return exactly a JSON object with these fields — no markdown, no code fences, 
   "phoneticUs": "仅当音标 MISSING 时给出标准美式IPA，带 / / 斜杠，如 /ˌɪntrəˈduːs/；已存在则返回空字符串",
   "phoneticUk": "仅当音标 MISSING 时给出标准英式IPA，如 /ˌɪntrəˈdjuːs/；已存在则返回空字符串",
   "definitionTranslations": ["数组长度与 definitions 一致：仅翻译没有 [中文] 的条目（保留括号说明但需地道），已有中文的条目返回空字符串；全部已有中文时返回空数组"],
+  "learnerDefinitions": ["v.: get; receive  [得到；收到]", "v.: fetch; bring  [去取来]"],
   "generatedExamples": [
     { "en": "原创英文例句（不要照抄词典例句或参考句块，要全新创作）", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced" }
   ],
@@ -235,11 +242,18 @@ Return exactly a JSON object with these fields — no markdown, no code fences, 
   "difficulty": "仅当难度 MISSING 时提供：词汇难度等级，必须是 L1|L2|L3|L4|L5 之一：L1=基础高频（中考核心，如 apple/help）、L2=常用（高考核心，如 appointment/attitude）、L3=核心（大学四级/雅思6分，如 accommodate/derive）、L4=进阶（六级/雅思6.5-7，如 ambiguous/endeavor）、L5=低频专业（雅思7.5+/托福，如 ubiquitous/paradigm）。依据：词频、学习阶段、抽象程度。"
 }
 
-## Example Generation Rules (only when 例句 MISSING)
-- Generate 3-5 original example sentences that demonstrate the word's MAIN senses.
+## Learner-first selection rules (CRITICAL)
+- A dictionary is evidence, NOT the final lesson. Do not copy its full sense inventory, ordering, wording, labels, or examples.
+- Decide the number of senses from the word itself, not from a quota. Retain every sense that is common in modern general English AND materially helps a Chinese learner understand or use this particular word. A simple word may need one entry; a genuinely high-frequency, strongly polysemous word may need many. Do not add senses merely to achieve coverage, but never suppress a frequent, distinct, useful sense because of an arbitrary count. For a highly polysemous word such as "get", prefer everyday senses such as receive/obtain, arrive, understand, and become; omit archaic, legal, dialectal, obscure phrasal, and narrowly technical senses unless essential.
+- The learnerDefinitions field must be a short, independent learning card: one POS + one concise English gloss + one short Chinese gloss per line. Put the most common POS/sense first. Use only source-supported senses; do not invent meanings. Keep each Chinese gloss under 12 Chinese characters. Merge true near-synonyms, but preserve distinct high-value senses even if that makes the list longer.
+- Do not put explanatory sentences, usage notes, long dictionary prose, or more than two near-synonyms in a gloss. POS must be an abbreviation (n., v., adj., adv., phr., etc.), never a full word or the label other.
+
+## Example Generation Rules
+- Generate exactly 3-4 original example sentences that demonstrate the selected MAIN senses.
 - Each example must be a NEW sentence you create — do NOT copy or translate the dictionary examples.
 - If reference chunks are provided above, use them as style/level inspiration, but write completely different sentences.
-- Vary difficulty: at least one basic (A2), one intermediate (B1), one advanced (B2).
+- Write modern, concrete, natural situations a learner could plausibly say, hear, or read: daily life, school, work, travel, or ordinary relationships. Avoid literary narration, quotations, archaic constructions, and needlessly difficult surrounding vocabulary.
+- Vary difficulty: include basic (A2), intermediate (B1), and at most one advanced (B2); keep each sentence preferably 6-16 words.
 - Each example must have a natural Chinese translation.
 
 ## Phonetic Standards (only when 音标 MISSING)
@@ -247,7 +261,7 @@ Use CLEAN standard IPA inside /slashes/. Normalize /ɹ/ to /r/, syllabic consona
 
 ## Quality Principles
 1. Translations must sound like natural Chinese, not machine-translated English.
-2. The meaning field must cover EVERY sense — no merging.
+2. The meaning field must prioritize 2-4 common, useful senses; it must not try to cover every dictionary sense.
 3. Description should focus on what's HARD for Chinese learners.
 4. Generated examples must be DIVERSE — different sentence structures, contexts, and registers.
 5. NEVER put the POS label "other" into meaning. Map unclassified POS to phr.`,
@@ -261,7 +275,7 @@ Use CLEAN standard IPA inside /slashes/. Normalize /ɹ/ to /r/, syllabic consona
       result = this.parseJsonText(text);
     } catch {
       // 主调用 JSON 解析失败：降级重试一次，只要求核心字段（避免整次调用作废）
-      const retryPrompt = `为英语单词 "${dto.word}" 生成中文学习内容。\n\n义项：\n${defLines}\n\n返回 JSON（无 markdown）：\n{"meaning": "按词性分组的中文释义，POS 只能用 n./v./adj./adv./pron./prep./conj./interj./num./det./art./phr./modal v.，禁止 other（不确定用 phr.），如 n. 苹果；苹果树 / v. 结果实", "description": "80-150字中文讲解，含**核心含义：**/**用法提示：**/**易错点：**等小节，小节间空行分隔", "generatedExamples": [{"en": "原创英文例句", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced"}]}`;
+      const retryPrompt = `为英语单词 "${dto.word}" 生成面向中国 B1-B2 学习者的学习卡。词典义项仅作证据，不可完整照搬。\n\n义项：\n${defLines}\n\n请完全根据这个单词本身判断保留多少义项：保留所有现代常用、彼此独立、会帮助学习者理解或使用该词的义项。单义词可以只有一个；像 get 这样的高频多义词可以有很多。不要因数量限制删掉高价值义项，也不要加入生僻、古旧、文学、方言或狭窄专业义。每项格式“v.: concise English [简短中文]”。并写 3-4 条原创、日常、自然的短例句。返回 JSON（无 markdown）：\n{"learnerDefinitions":["v.: get; receive  [得到；收到]"], "meaning": "按词性分组的简短中文释义，保留该词高价值常用义", "description": "80-150字中文讲解", "generatedExamples": [{"en": "原创日常英文例句", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced"}]}`;
       const retry = await generateText({
         model,
         prompt: retryPrompt,
@@ -276,6 +290,7 @@ Use CLEAN standard IPA inside /slashes/. Normalize /ɹ/ to /r/, syllabic consona
       phoneticUs: result.phoneticUs ?? '',
       phoneticUk: result.phoneticUk ?? '',
       definitionTranslations: Array.isArray(result.definitionTranslations) ? result.definitionTranslations : [],
+      learnerDefinitions: this.sanitizeLearnerDefinitions(result.learnerDefinitions),
       generatedExamples: (result.generatedExamples ?? []).map((e: any) => ({
         en: e.en || '',
         zh: e.zh || '',
@@ -617,6 +632,25 @@ Raw JSON array only:
       .replace(/(^|[\s/])other\.?(?=\s|$)/gi, '$1phr.')
       .replace(/\bother\b(?=\s*[:：])/gi, 'phr.')
       .trim();
+  }
+
+  /** Prevent a malformed model response from turning a compact learning card back into a dictionary dump. */
+  private sanitizeLearnerDefinitions(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    const seen = new Set<string>();
+    return value
+      .map((item) => typeof item === 'string' ? item.replace(/\s+/g, ' ').trim() : '')
+      .filter((item) => (
+        item.length <= 140 &&
+        /^(?:n|v|adj|adv|pron|prep|conj|interj|num|det|art|phr|modal v)\.\s*:\s*.+/i.test(item) &&
+        /\[[^\]]*[\u3400-\u9fff][^\]]*\]/.test(item)
+      ))
+      .filter((item) => {
+        const key = item.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
   }
 
   async enrichChunk(
