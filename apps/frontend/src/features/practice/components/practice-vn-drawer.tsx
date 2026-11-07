@@ -505,7 +505,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
               without the aside, so the Markdown list still gets a real height. */}
           <div className="flex h-full min-h-0">
             {inlineToc && document.toc.length > 0 && <aside className="flex w-60 shrink-0 flex-col border-r border-border/45"><div className="flex shrink-0 items-center justify-between border-b border-border/45 bg-muted/35 px-3 py-2"><p className="px-1 text-xs font-semibold tracking-wide text-muted-foreground">{t('practiceVn.contents')}</p><div className="flex items-center"><button type="button" onClick={expandAllTocSections} className={cn('flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocExpanded && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label={t('practiceVn.expandAll')} aria-pressed={allTocExpanded}><ChevronsDown className="size-4" /></button><button type="button" onClick={collapseAllTocSections} className={cn('flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground', allTocCollapsed && 'bg-primary/[0.10] text-primary hover:bg-primary/[0.14] hover:text-primary')} aria-label={t('practiceVn.collapseAll')} aria-pressed={allTocCollapsed}><ChevronsUp className="size-4" /></button></div></div><TeachingToc rows={tocRows} activeSectionIndex={visibleSectionIndex} onSelect={handleTocSelect} onToggle={toggleTocSection} className="flex-1" /></aside>}
-            <div className="relative h-full min-h-0 min-w-0 flex-1 overflow-hidden">{loading ? <TeachingStatus text={t('practiceVn.loadingTeaching')} /> : teachingMarkdown ? contentReady ? <><Virtuoso ref={documentRef} scrollerRef={setScrollerRef} className="h-full" data={document.sections} restoreStateFrom={savedVirtuosoState ?? undefined} increaseViewportBy={{ top: 900, bottom: 1200 }} rangeChanged={handleRangeChanged} isScrolling={(isScrolling) => { if (!isScrolling && !restoringRef.current) persistReadingPosition() }} itemContent={(index, section) => <TeachingSectionView section={section} sectionIndex={index} />} />{restoringReadingPosition && <div className="app-surface drawer-surface absolute inset-0 z-10 flex flex-col items-center justify-center gap-3"><Loader2 className="size-5 animate-spin text-muted-foreground" /><p className="text-xs text-muted-foreground">{t('common.loading')}</p></div>}</> : <div className="px-4 pt-4"><TeachingContentPlaceholder /></div> : <TeachingStatus text={t('practiceVn.noTeaching')} />}</div>
+            <div className="relative h-full min-h-0 min-w-0 flex-1 overflow-hidden">{loading ? <TeachingStatus text={t('practiceVn.loadingTeaching')} /> : teachingMarkdown ? contentReady ? <><Virtuoso ref={documentRef} scrollerRef={setScrollerRef} className="h-full" data={document.sections} restoreStateFrom={savedVirtuosoState ?? undefined} increaseViewportBy={{ top: 900, bottom: 1200 }} rangeChanged={handleRangeChanged} isScrolling={(isScrolling) => { if (!isScrolling && !restoringRef.current) persistReadingPosition() }} itemContent={(index, section) => <TeachingSectionView section={section} sectionIndex={index} isLast={index === document.sections.length - 1} />} />{restoringReadingPosition && <div className="app-surface drawer-surface absolute inset-0 z-10 flex flex-col items-center justify-center gap-3"><Loader2 className="size-5 animate-spin text-muted-foreground" /><p className="text-xs text-muted-foreground">{t('common.loading')}</p></div>}</> : <div className="px-4 pt-4"><TeachingContentPlaceholder /></div> : <TeachingStatus text={t('practiceVn.noTeaching')} />}</div>
           </div>
         </div>
       </DrawerContent>
@@ -558,6 +558,23 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   </>
 }
 
-const TeachingSectionView = memo(function TeachingSectionView({ section, sectionIndex }: { section: TeachingSection; sectionIndex: number }) { return <section data-teaching-section-index={sectionIndex} className="px-4 py-1.5 first:pt-3 last:pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]"><MarkdownRenderer content={section.markdown} variant="teaching" /></section> })
+const TeachingSectionView = memo(function TeachingSectionView({ section, sectionIndex, isLast }: { section: TeachingSection; sectionIndex: number; isLast: boolean }) {
+  return (
+    <section
+      data-teaching-section-index={sectionIndex}
+      className={cn(
+        'px-4',
+        section.heading?.level === 1 && 'pt-4',
+        section.heading?.level === 2 && 'pt-3',
+        section.heading?.level === 3 && 'pt-2',
+        !section.heading && 'pt-1',
+        sectionIndex === 0 && 'pt-2',
+        isLast ? 'pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]' : 'pb-0',
+      )}
+    >
+      <MarkdownRenderer content={section.markdown} variant="teaching" />
+    </section>
+  )
+})
 function TeachingStatus({ text }: { text: string }) { return <div className="flex h-full items-center justify-center px-5"><p className="rounded-2xl border border-dashed border-border/70 px-4 py-8 text-center text-xs text-muted-foreground">{text}</p></div> }
 function TeachingContentPlaceholder() { return <div className="flex flex-col gap-3" aria-hidden="true"><div className="h-5 w-2/5 rounded-md bg-muted/60" /><div className="h-4 w-full rounded-md bg-muted/40" /><div className="h-4 w-[92%] rounded-md bg-muted/40" /><div className="h-4 w-[85%] rounded-md bg-muted/40" /></div> }

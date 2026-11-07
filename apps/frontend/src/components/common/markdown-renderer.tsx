@@ -96,10 +96,10 @@ export function MarkdownRenderer({ content, className, variant = 'default', head
           // 章节拆分后每个 .prose 常以标题开头；强制首子元素 mt-0，避免与 section 间距叠乘
           'text-[15px] leading-7 [&>:first-child]:!mt-0',
           'prose-headings:tracking-tight',
-          'prose-h1:mb-3 prose-h1:mt-0 prose-h1:text-2xl prose-h1:font-bold',
+          'prose-h1:mb-4 prose-h1:mt-0 prose-h1:text-2xl prose-h1:font-bold',
           // h2 去掉底部分割线；章节已按标题拆分，再加 border-b 会显得块状割裂
-          'prose-h2:my-1 prose-h2:border-none prose-h2:pb-0 prose-h2:text-lg prose-h2:font-semibold prose-h2:leading-snug',
-          'prose-h3:my-1 prose-h3:text-base prose-h3:font-semibold prose-h3:leading-snug prose-h3:text-primary',
+          'prose-h2:mb-3 prose-h2:mt-0 prose-h2:border-none prose-h2:pb-0 prose-h2:text-lg prose-h2:font-semibold prose-h2:leading-snug',
+          'prose-h3:mb-2 prose-h3:mt-0 prose-h3:text-base prose-h3:font-semibold prose-h3:leading-snug prose-h3:text-primary',
           'prose-p:my-2.5 prose-p:leading-7',
           'prose-li:my-1 prose-li:marker:text-primary/70',
           'prose-strong:font-semibold',

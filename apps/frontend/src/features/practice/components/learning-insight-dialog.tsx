@@ -1,7 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  AudioLines,
   BookOpen,
   BookmarkPlus,
   ChevronDown,
@@ -905,27 +904,34 @@ function PhoneticPill({
   isPlaying?: boolean
 }) {
   const { t } = useTranslation()
+  const canPlay = Boolean(audioUrl)
+
+  if (!canPlay) {
+    return (
+      <span className="inline-flex h-8 items-center gap-1.5 rounded-md bg-muted px-2.5 font-ipa text-xs text-muted-foreground">
+        <span className="font-sans text-[11px] font-semibold text-foreground/70">{label}</span>
+        <span>{value}</span>
+      </span>
+    )
+  }
+
   return (
-    <span className="inline-flex h-7 items-center gap-1 rounded-md bg-muted px-2 font-ipa text-[11px] text-muted-foreground">
-      <span className="font-sans text-[10px] font-semibold text-foreground/70">{label}</span>
-      <span>{value}</span>
-      {audioUrl && (
-        <button
-          type="button"
-          onClick={() => onPlay(audioUrl)}
-          className={cn(
-            'inline-flex size-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground',
-            isPlaying && 'text-primary',
-          )}
-          aria-label={t('insight.pronunciation')}
-          aria-pressed={isPlaying}
-        >
-          {isPlaying
-            ? <AudioLines className="size-3 animate-pulse" aria-hidden="true" />
-            : <Volume2 className="size-3" />}
-        </button>
+    <button
+      type="button"
+      onClick={() => onPlay(audioUrl!)}
+      aria-label={t('insight.pronunciation')}
+      aria-pressed={isPlaying}
+      className={cn(
+        'inline-flex h-8 items-center gap-1.5 rounded-md bg-muted px-2.5 font-ipa text-xs text-muted-foreground transition-colors hover:text-foreground',
       )}
-    </span>
+    >
+      <span className="font-sans text-[11px] font-semibold text-foreground/70">{label}</span>
+      <span>{value}</span>
+      <Volume2
+        className={cn('size-3.5 shrink-0', isPlaying ? 'animate-pulse text-primary' : 'text-muted-foreground')}
+        aria-hidden="true"
+      />
+    </button>
   )
 }
 
