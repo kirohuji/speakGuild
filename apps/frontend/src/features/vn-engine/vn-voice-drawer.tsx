@@ -274,7 +274,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
         showHandle={false}
-        className="mx-auto max-h-[42dvh] w-full max-w-[520px] overflow-hidden rounded-t-[10px] border-x-0 border-b-0 border-t border-border/55 !bg-background/90 px-0 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] text-foreground shadow-[0_-18px_56px_rgba(15,23,42,.18)] ![background-image:none] backdrop-blur-2xl"
+        className="mx-auto max-h-[42dvh] w-full max-w-[520px] overflow-hidden rounded-t-[10px] !bg-background/90 px-0 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] text-foreground shadow-[0_-18px_56px_rgba(15,23,42,.18)] ![background-image:none] backdrop-blur-2xl"
       >
         {/* 隐藏音频元素 */}
         <audio ref={audioRef} src={lastAudioUrlRef.current ?? undefined} preload="auto" />

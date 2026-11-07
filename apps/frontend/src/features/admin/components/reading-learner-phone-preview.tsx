@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import {
   ArrowLeft,
   BookOpen,
+  BookText,
   ChevronLeft,
   ChevronRight,
   Eye,
   FileText,
   Layers,
+  MessageSquareText,
   Search,
   Sparkles,
   Target,
@@ -89,9 +91,15 @@ function ReadingPreparePreview({ value, context, onStart }: Props & { onStart: (
             </div>
             <Tabs defaultValue={defaultTab} className="w-full">
               <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-                <TabsTrigger value="vocab" className="rounded-md text-xs">词汇 ({vocabularies.length})</TabsTrigger>
-                <TabsTrigger value="chunk" className="rounded-md text-xs">语块 ({chunks.length})</TabsTrigger>
-                <TabsTrigger value="pattern" className="rounded-md text-xs">句式 ({patterns.length})</TabsTrigger>
+                <TabsTrigger value="vocab" className="gap-1.5 rounded-md text-xs">
+                  <BookText className="size-3.5" /> 词汇 {vocabularies.length}
+                </TabsTrigger>
+                <TabsTrigger value="chunk" className="gap-1.5 rounded-md text-xs">
+                  <MessageSquareText className="size-3.5" /> 语块 {chunks.length}
+                </TabsTrigger>
+                <TabsTrigger value="pattern" className="gap-1.5 rounded-md text-xs">
+                  <Search className="size-3.5" /> 句式 {patterns.length}
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="vocab" className="mt-3"><KnowledgeList icon={<Search className="size-4" />} items={vocabularies.map((item) => ({ title: item }))} tone="cyan" emptyText="暂无绑定词汇" /></TabsContent>
               <TabsContent value="chunk" className="mt-3"><KnowledgeList icon={<Layers className="size-4" />} items={chunks.map((item) => ({ title: item }))} tone="emerald" emptyText="暂无绑定语块" /></TabsContent>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, CheckCircle2, ChevronLeft, ChevronRight, ClipboardCheck, FileText, Layers, Loader2, RotateCcw, Search, Sparkles, Target, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, BookText, CheckCircle2, ChevronLeft, ChevronRight, ClipboardCheck, FileText, Layers, Loader2, MessageSquareText, RotateCcw, Search, Sparkles, Target, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
@@ -96,9 +96,15 @@ function ReadingPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }: 
           <div className="mb-3 flex items-end justify-between gap-3 px-1"><div><h2 className="text-base font-semibold">{t('learning.readingPrep')}</h2><p className="mt-0.5 text-xs text-muted-foreground">{t('learning.readingPrepHint')}</p></div><Badge variant="outline" className="rounded-full text-[11px]">{t('learning.supportCount', { count: supportCount })}</Badge></div>
           <Tabs defaultValue={visibleVocabularies.length > 0 ? 'vocab' : visibleChunks.length > 0 ? 'chunk' : 'pattern'} className="w-full" data-mobile-route-swipe>
             <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-              <TabsTrigger value="vocab" className="rounded-md text-xs">{t('learning.vocab')} ({visibleVocabularies.length})</TabsTrigger>
-              <TabsTrigger value="chunk" className="rounded-md text-xs">{t('learning.coreChunks')} ({visibleChunks.length})</TabsTrigger>
-              <TabsTrigger value="pattern" className="rounded-md text-xs">{t('learning.patterns')} ({visiblePatterns.length})</TabsTrigger>
+              <TabsTrigger value="vocab" className="gap-1.5 rounded-md text-xs">
+                <BookText className="size-3.5" /> {t('learning.vocab')} {visibleVocabularies.length}
+              </TabsTrigger>
+              <TabsTrigger value="chunk" className="gap-1.5 rounded-md text-xs">
+                <MessageSquareText className="size-3.5" /> {t('learning.coreChunks')} {visibleChunks.length}
+              </TabsTrigger>
+              <TabsTrigger value="pattern" className="gap-1.5 rounded-md text-xs">
+                <Search className="size-3.5" /> {t('learning.patterns')} {visiblePatterns.length}
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow><ReadingKnowledgeList icon={<Search className="size-4" />} items={visibleVocabularies.map((item) => ({ title: item.word, subtitle: item.meaning }))} tone="cyan" emptyText={t('learning.noTopicVocab')} /></TabsContent>
             <TabsContent value="chunk" className="mt-3" data-mobile-gesture-allow><ReadingKnowledgeList icon={<Layers className="size-4" />} items={visibleChunks.map((item) => ({ title: item.text, subtitle: item.meaning }))} tone="emerald" emptyText={t('learning.noTopicChunks')} /></TabsContent>
@@ -129,7 +135,7 @@ function ReadingPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }: 
 function ReadingKnowledgeList({ icon, items, tone, emptyText }: { icon: React.ReactNode; items: Array<{ title: string; subtitle?: string | null }>; tone: 'cyan' | 'emerald' | 'violet'; emptyText: string }) {
   const toneClass = { cyan: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400', emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', violet: 'bg-violet-500/10 text-violet-600 dark:text-violet-400' }[tone]
   if (items.length === 0) return <p className="rounded-lg bg-muted/25 py-8 text-center text-sm text-muted-foreground">{emptyText}</p>
-  return <div className="flex flex-col gap-2">{items.map((item) => <Card key={item.title} className="border-0 bg-muted/30 shadow-none"><CardContent className="flex items-center gap-3 p-3"><span className={cn('flex size-9 shrink-0 items-center justify-center rounded-md', toneClass)}>{icon}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-foreground">{item.title}</p>{item.subtitle && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{item.subtitle}</p>}</div></CardContent></Card>)}</div>
+  return <div className="flex flex-col gap-2">{items.map((item) => <Card key={item.title} className="border-0 bg-muted/30 shadow-none ring-0 dark:ring-0"><CardContent className="flex items-center gap-3 p-3"><span className={cn('flex size-9 shrink-0 items-center justify-center rounded-md', toneClass)}>{icon}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-foreground">{item.title}</p>{item.subtitle && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{item.subtitle}</p>}</div></CardContent></Card>)}</div>
 }
 
 function ReadingHeader({ topic, unitTitle, onBack }: { topic: TrainingTopicItem; unitTitle: string; onBack: () => void }) {
@@ -369,19 +375,22 @@ function ReadingAnswerPage({
               <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{answeredCount}/{questions.length}</span>
               <div className="flex shrink-0 items-center gap-1">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon-sm"
                   disabled={currentQuestion === 0}
                   onClick={() => setCurrentQuestion((index) => Math.max(0, index - 1))}
                   aria-label={t('learning.prevQuestion')}
+                  className="border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary"
                 >
                   <ChevronLeft className="size-4" />
                 </Button>
                 {currentQuestion < questions.length - 1 ? (
                   <Button
+                    variant="ghost"
                     size="icon-sm"
                     onClick={() => setCurrentQuestion((index) => Math.min(questions.length - 1, index + 1))}
                     aria-label={t('learning.nextQuestion')}
+                    className="border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary"
                   >
                     <ChevronRight className="size-4" />
                   </Button>

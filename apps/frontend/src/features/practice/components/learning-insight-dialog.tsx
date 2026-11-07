@@ -485,14 +485,14 @@ export function LearningInsightDialog({
 
             {/* Footer - 固定在底部 */}
             <div className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
-              <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
+              <Button variant="ghost" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
                 <ChevronLeft className="size-4" /> {t('insight.prev')}
               </Button>
               <span className="text-xs text-muted-foreground">
                 {index + 1} / {items.length}
               </span>
               <div className="flex items-center gap-1.5">
-                <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
+                <Button variant="ghost" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
                   {t('insight.next')} <ChevronRight className="size-4" />
                 </Button>
                 <Button
@@ -511,8 +511,8 @@ export function LearningInsightDialog({
 
       {/* 播放列表抽屉 */}
       <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
-        <DrawerContent className={cn('h-[100dvh] w-full max-w-full overflow-hidden overscroll-contain rounded-none pt-safe !z-[10001]', isIOS() && 'pb-safe')} overlayClassName="!z-[10001]">
-          <div className="flex min-w-0 items-center justify-between gap-3 px-5 py-3">
+        <DrawerContent showHandle={false} className={cn('h-[100dvh] w-full max-w-full overflow-hidden overscroll-contain rounded-none pt-safe !z-[10001]', isIOS() && 'pb-safe')} overlayClassName="!z-[10001]">
+          <div className="flex min-w-0 items-center justify-between gap-3 px-5 pb-2 pt-1">
             <DrawerTitle className="min-w-0 truncate text-lg">{t('insight.playlist')}</DrawerTitle>
             <button
               type="button"

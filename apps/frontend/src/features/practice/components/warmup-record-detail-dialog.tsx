@@ -192,7 +192,7 @@ export function WarmupRecordDetailDialog({
           </div>
 
           <div className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
-            <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
+            <Button variant="ghost" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
               <ChevronLeft className="size-4" />
               <span className="ml-1">{t('todayTask.prevQuestion')}</span>
             </Button>
@@ -200,7 +200,7 @@ export function WarmupRecordDetailDialog({
               {total > 0 ? currentIdx + 1 : 0} / {total}
               {current?.practiceCount && current.practiceCount > 1 ? ` · ${t('todayTask.practiceTimes', { count: current.practiceCount })}` : ''}
             </span>
-            <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
+            <Button variant="ghost" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
               <span className="mr-1">{t('todayTask.nextQuestion')}</span>
               <ChevronRight className="size-4" />
             </Button>

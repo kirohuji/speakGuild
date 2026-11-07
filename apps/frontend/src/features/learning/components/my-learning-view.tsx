@@ -184,7 +184,13 @@ export function MyLearningView({
           </div>
           <div className="space-y-2.5">
             {(showAllCompleted ? completed : completed.slice(0, 3)).map((unit) => (
-              <MyUnitCard key={unit.id} unit={unit} />
+              <MyUnitCard
+                key={unit.id}
+                unit={unit}
+                isPackDownloaded={downloadedPackIdSet.has(unit.id)}
+                isPackInstalling={installingPackIdSet.has(unit.id)}
+                onDownloadPack={() => onDownloadUnitPack?.(unit.id)}
+              />
             ))}
           </div>
         </section>
@@ -478,7 +484,17 @@ function InProgressUnitCard({
   )
 }
 
-function MyUnitCard({ unit }: { unit: MyUnit }) {
+function MyUnitCard({
+  unit,
+  isPackDownloaded,
+  isPackInstalling,
+  onDownloadPack,
+}: {
+  unit: MyUnit
+  isPackDownloaded: boolean
+  isPackInstalling: boolean
+  onDownloadPack?: () => Promise<void>
+}) {
   const { t } = useTranslation()
   const pct = Math.max(0, Math.min(100, unit.completionPercent ?? 0))
   const isCompleted = unit.status === 'completed' || pct >= 100
@@ -489,6 +505,9 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
   const showCover = unit.coverImage && !imgFailed
   const progressText = completionProgressText(t, unit)
   const showCompletionLine = !(isCompleted && unit.completion?.kind === 'manual' && unit.completion.total <= 1)
+  const downloadTask = useLearningStore((state) => state.downloadTasks.find((task) => task.packId === unit.id))
+  const isPackBusy = isPackInstalling || Boolean(downloadTask && downloadTask.status !== 'done' && downloadTask.status !== 'error')
+  const needsDownload = !isPackDownloaded
 
   const handleRestart = useCallback(async () => {
     if (restarting) return
@@ -518,9 +537,14 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
     >
       <Link
         to={`/learning/units/${unit.id}`}
+        aria-disabled={needsDownload || isPackBusy}
+        onClick={(event) => {
+          if (needsDownload || isPackBusy) event.preventDefault()
+        }}
         className={cn(
           'flex min-w-0 flex-1 items-center gap-3',
           isCompleted && 'opacity-65',
+          (needsDownload || isPackBusy) && 'cursor-default',
         )}
       >
         <div className={cn(
@@ -579,7 +603,18 @@ function MyUnitCard({ unit }: { unit: MyUnit }) {
           {!isCompleted && <Progress value={pct} className="mt-2 h-1" />}
         </div>
       </Link>
-      {isCompleted ? (
+      {needsDownload && (
+        <button
+          type="button"
+          disabled={isPackBusy || !onDownloadPack}
+          onClick={() => void onDownloadPack?.()}
+          className="absolute bottom-1 right-2.5 inline-flex h-7 items-center gap-1 rounded-full bg-transparent pl-3.5 pr-2.5 text-[11px] font-medium text-foreground active:bg-muted disabled:opacity-50"
+        >
+          {isPackBusy ? <Loader2 className="size-3 animate-spin" /> : <Download className="size-3" />}
+          {isPackBusy ? t('learning.downloading') : t('learning.redownloadPack')}
+        </button>
+      )}
+      {!needsDownload && isCompleted ? (
         <button
           type="button"
           disabled={restarting}

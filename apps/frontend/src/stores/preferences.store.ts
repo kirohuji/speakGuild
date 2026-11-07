@@ -230,18 +230,7 @@ export const usePreferencesStore = create<PreferencesStore>()(
   )
 )
 
-/** Switch only account-owned learning-plan preferences after authentication. */
-export function activateAccountLearningPreferences(userId: string | null, options: { migrateCurrentDeviceValues?: boolean } = {}): void {
-  const current = usePreferencesStore.getState()
-  if (activeAccountId && activeAccountId !== userId) {
-    writeAccountLearningPreferences(activeAccountId, current)
-  }
-  activeAccountId = userId
-  const accountPreferences = userId ? readAccountLearningPreferences(userId) : null
-  // Existing installs stored these values device-wide. Migrate them only for
-  // the known prior owner; a newly signed-in account must start from defaults.
-  const initialPreferences = accountPreferences
-    ?? (userId && options.migrateCurrentDeviceValues ? snapshotAccountLearningPreferences(current) : null)
+function applyAccountLearningPreferences(initialPreferences: Partial<AccountLearningPreferences> | null) {
   const dailyPracticeGoal = normalizePracticeBatchSize(
     initialPreferences?.dailyPracticeGoal ?? initialPreferences?.dailyGoal,
     DEFAULT_PREFERENCES.dailyPracticeGoal,
@@ -253,6 +242,29 @@ export function activateAccountLearningPreferences(userId: string | null, option
     dailyPracticeGoal,
     reviewBatchSize: normalizePracticeBatchSize(initialPreferences?.reviewBatchSize, DEFAULT_PREFERENCES.reviewBatchSize),
   })
+}
+
+/** Switch only account-owned learning-plan preferences after authentication. */
+export function activateAccountLearningPreferences(userId: string | null, options: { migrateCurrentDeviceValues?: boolean } = {}): void {
+  const current = usePreferencesStore.getState()
+  const previousAccountId = activeAccountId
+  if (previousAccountId && previousAccountId !== userId) {
+    writeAccountLearningPreferences(previousAccountId, current)
+  }
+  activeAccountId = userId
+  if (!userId) {
+    // A session can expire before any account id is bound. Those device values
+    // are the only copy the next login can migrate, so leave them in place.
+    // Once an account was bound, its snapshot is already saved above.
+    if (previousAccountId) applyAccountLearningPreferences(null)
+    return
+  }
+  const accountPreferences = readAccountLearningPreferences(userId)
+  // Existing installs stored these values device-wide. Migrate them only for
+  // the known prior owner; a newly signed-in account must start from defaults.
+  const initialPreferences = accountPreferences
+    ?? (options.migrateCurrentDeviceValues ? snapshotAccountLearningPreferences(current) : null)
+  applyAccountLearningPreferences(initialPreferences)
 }
 
 usePreferencesStore.subscribe((state) => {

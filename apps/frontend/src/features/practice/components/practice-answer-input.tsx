@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2, Mic, Square, Play, Pause } from 'lucide-react'
 import { cn } from '@/lib/cn'
@@ -54,6 +54,9 @@ export function PracticeAnswerInput({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const audioUrlRef = useRef<string | null>(null)
+  const voiceGenerationRef = useRef(0)
+  const disabledRef = useRef(disabled)
+  disabledRef.current = disabled
   const playbackUrl = recordedAudioUrl === undefined ? audioUrl : recordedAudioUrl
 
   const cleanupRecording = useCallback(() => {
@@ -68,11 +71,34 @@ export function PracticeAnswerInput({
     }
   }, [])
 
-  useEffect(() => () => {
+  const invalidateVoiceCapture = useCallback(() => {
+    voiceGenerationRef.current += 1
+    const recorder = mediaRecorderRef.current
+    if (recorder) {
+      recorder.ondataavailable = null
+      recorder.onstop = null
+      if (recorder.state === 'recording') {
+        try { recorder.stop() } catch { /* already inactive */ }
+      }
+    }
     cleanupRecording()
+  }, [cleanupRecording])
+
+  useEffect(() => () => {
+    invalidateVoiceCapture()
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
     if (!onAudioChange && audioUrlRef.current?.startsWith('blob:')) URL.revokeObjectURL(audioUrlRef.current)
-  }, [cleanupRecording, onAudioChange])
+  }, [invalidateVoiceCapture, onAudioChange])
+
+  // 「我不会」、判分中、已通过都会锁住输入。锁住时必须丢掉进行中的录音，
+  // 否则麦克风会一直开着，停录按钮也被禁用，无法再关掉。
+  useLayoutEffect(() => {
+    if (!disabled) return
+    invalidateVoiceCapture()
+    setVoiceStatus('idle')
+    setElapsed(0)
+    setVoiceError('')
+  }, [disabled, invalidateVoiceCapture])
 
   const setRecordedAudioUrl = useCallback((nextUrl: string | null) => {
     const previousUrl = audioUrlRef.current
@@ -96,10 +122,16 @@ export function PracticeAnswerInput({
     }
   }, [voiceStatus])
 
-  const processAudioBlob = useCallback(async (blob: Blob, filename: string) => {
+  const isCaptureCurrent = useCallback((generation: number) => {
+    return generation === voiceGenerationRef.current && !disabledRef.current
+  }, [])
+
+  const processAudioBlob = useCallback(async (blob: Blob, filename: string, generation: number) => {
+    if (!isCaptureCurrent(generation)) return
     setVoiceStatus('processing')
     try {
       const result = await transcribeVoiceInput(blob, filename, lang)
+      if (!isCaptureCurrent(generation)) return
       const text = normalizeVoiceInputText(result.text ?? '')
 
       // Prefer the uploaded URL so playback survives question changes.
@@ -117,16 +149,18 @@ export function PracticeAnswerInput({
       setVoiceError('')
       setVoiceStatus('idle')
     } catch {
+      if (!isCaptureCurrent(generation)) return
       setVoiceError(t('profile.placement.voiceFailed'))
       setVoiceStatus('idle')
     }
-  }, [lang, onChange, setRecordedAudioUrl, t])
+  }, [isCaptureCurrent, lang, onChange, setRecordedAudioUrl, t])
 
   const startRecording = useCallback(async () => {
     if (disabled || voiceStatus !== 'idle') return
+    invalidateVoiceCapture()
+    const generation = voiceGenerationRef.current
     setVoiceError('')
     setElapsed(0)
-    cleanupRecording()
     // Revoke old audio when starting new recording
     if (audioUrlRef.current) setRecordedAudioUrl(null)
     if (audioRef.current) { audioRef.current.pause(); setIsPlaying(false) }
@@ -136,10 +170,16 @@ export function PracticeAnswerInput({
         language: lang,
         useNativeSpeechRecognition: nativeSpeechRecognitionEnabled && !localSttEnabled,
         onPartial: (partialText) => {
+          if (!isCaptureCurrent(generation)) return
           const text = normalizeVoiceInputText(partialText)
           if (text) onChange(text)
         },
       })
+
+      if (!isCaptureCurrent(generation)) {
+        await nativeSession?.cancel().catch(() => undefined)
+        return
+      }
 
       if (nativeSession) {
         nativeVoiceSessionRef.current = nativeSession
@@ -148,6 +188,10 @@ export function PracticeAnswerInput({
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      if (!isCaptureCurrent(generation)) {
+        stream.getTracks().forEach((track) => track.stop())
+        return
+      }
       streamRef.current = stream
       const mimeType = pickVoiceRecordingMimeType()
       const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
@@ -158,6 +202,10 @@ export function PracticeAnswerInput({
       }
 
       mediaRecorder.onstop = async () => {
+        if (!isCaptureCurrent(generation)) {
+          stream.getTracks().forEach((track) => track.stop())
+          return
+        }
         stream.getTracks().forEach((track) => track.stop())
         streamRef.current = null
         if (timerRef.current) {
@@ -166,19 +214,27 @@ export function PracticeAnswerInput({
         }
         const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm'
         const blob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType || mimeType || 'audio/webm' })
-        await processAudioBlob(blob, `practice-answer.${ext}`)
+        await processAudioBlob(blob, `practice-answer.${ext}`, generation)
       }
 
       mediaRecorderRef.current = mediaRecorder
       mediaRecorder.start(200)
+      if (!isCaptureCurrent(generation)) {
+        invalidateVoiceCapture()
+        return
+      }
       setVoiceStatus('recording')
     } catch (error) {
+      if (generation !== voiceGenerationRef.current) return
+      cleanupRecording()
+      if (disabledRef.current) return
       setVoiceError(getVoiceMicErrorMessage(error, t))
       setVoiceStatus('idle')
     }
-  }, [cleanupRecording, disabled, lang, localSttEnabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, setRecordedAudioUrl, t, voiceStatus])
+  }, [cleanupRecording, disabled, invalidateVoiceCapture, isCaptureCurrent, lang, localSttEnabled, nativeSpeechRecognitionEnabled, onChange, processAudioBlob, setRecordedAudioUrl, t, voiceStatus])
 
   const stopRecording = useCallback(async () => {
+    const generation = voiceGenerationRef.current
     const nativeSession = nativeVoiceSessionRef.current
     if (nativeSession) {
       nativeVoiceSessionRef.current = null
@@ -186,6 +242,7 @@ export function PracticeAnswerInput({
       try {
         if (nativeSession.kind === 'speech') {
           const result = await nativeSession.stop()
+          if (!isCaptureCurrent(generation)) return
           const text = normalizeVoiceInputText(result.text)
           if (text) {
             onChange(text)
@@ -198,8 +255,10 @@ export function PracticeAnswerInput({
         }
 
         const result = await nativeSession.stop()
-        await processAudioBlob(result.blob, result.filename)
+        if (!isCaptureCurrent(generation)) return
+        await processAudioBlob(result.blob, result.filename, generation)
       } catch {
+        if (!isCaptureCurrent(generation)) return
         setVoiceError(t('profile.placement.voiceFailed'))
         setVoiceStatus('idle')
       }
@@ -210,7 +269,7 @@ export function PracticeAnswerInput({
       mediaRecorderRef.current.stop()
       mediaRecorderRef.current = null
     }
-  }, [onChange, processAudioBlob, t])
+  }, [isCaptureCurrent, onChange, processAudioBlob, t])
 
   const isRecording = voiceStatus === 'recording'
   const isProcessing = voiceStatus === 'processing'

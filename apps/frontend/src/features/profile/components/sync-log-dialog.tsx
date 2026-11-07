@@ -106,7 +106,7 @@ export function SyncLogDialog({ open, onOpenChange }: SyncLogDialogProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 gap-1 px-2 text-xs"
+                  className="h-7 gap-1 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => p - 1)}
                 >
@@ -116,7 +116,7 @@ export function SyncLogDialog({ open, onOpenChange }: SyncLogDialogProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 gap-1 px-2 text-xs"
+                  className="h-7 gap-1 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary"
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => p + 1)}
                 >

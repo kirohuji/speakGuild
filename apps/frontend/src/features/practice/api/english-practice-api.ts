@@ -510,7 +510,7 @@ export const dailyPracticeApi = {
     post<{ items: RemoteDailyPracticeProgress[] }>('/practice/daily-practice/progress', { itemIds }),
 
   complete: (payload: any) =>
-    post<{ runId: string; syncedAttempts: string[]; itemProgresses: RemoteDailyPracticeProgress[]; warmupRecordId: string | null }>('/practice/daily-practice/complete', payload),
+    post<{ runId: string; run: any | null; syncedAttempts: string[]; itemProgresses: RemoteDailyPracticeProgress[]; warmupRecordId: string | null }>('/practice/daily-practice/complete', payload),
 
   recordActivity: (payload: {
     date: string

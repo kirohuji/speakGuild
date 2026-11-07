@@ -168,14 +168,14 @@ function CheckInCalendarDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="h-[min(88dvh,700px)] rounded-t-[28px] border-border/70 bg-background drawer-surface">
+      <DrawerContent className="h-[min(88dvh,700px)] rounded-t-[28px] bg-background drawer-surface">
         <DrawerHeader className="shrink-0 px-4 pb-2 pt-2 text-left">
           <div className="flex items-center justify-between gap-3">
             <DrawerTitle className="text-base font-semibold">{t('learning.myLearning')}</DrawerTitle>
-            <ToggleGroup type="single" value={view} onValueChange={(value) => value && setView(value as 'week' | 'month' | 'year')} variant="outline" size="sm" className="rounded-full border border-border/60 bg-muted/50 p-0.5">
-              {/* <ToggleGroupItem value="week" aria-label="周视图" className="h-7 min-w-10 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">周</ToggleGroupItem> */}
-              <ToggleGroupItem value="month" aria-label={t('learning.monthView')} className="h-7 min-w-10 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">{t('learning.monthShort')}</ToggleGroupItem>
-              <ToggleGroupItem value="year" aria-label={t('learning.yearView')} className="h-7 min-w-10 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">{t('learning.yearShort')}</ToggleGroupItem>
+            <ToggleGroup type="single" value={view} onValueChange={(value) => value && setView(value as 'week' | 'month' | 'year')} size="sm" className="rounded-full bg-muted/50 p-0.5">
+              {/* <ToggleGroupItem value="week" aria-label="周视图" className="h-7 min-w-10 border-0 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">周</ToggleGroupItem> */}
+              <ToggleGroupItem value="month" aria-label={t('learning.monthView')} className="h-7 min-w-10 border-0 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">{t('learning.monthShort')}</ToggleGroupItem>
+              <ToggleGroupItem value="year" aria-label={t('learning.yearView')} className="h-7 min-w-10 border-0 px-2 text-xs data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">{t('learning.yearShort')}</ToggleGroupItem>
             </ToggleGroup>
           </div>
         </DrawerHeader>

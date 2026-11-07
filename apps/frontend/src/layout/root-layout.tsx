@@ -198,7 +198,7 @@ export function RootLayout() {
       {!isAuthPage && showBottomNav && <BottomNav />}
       {!isAuthPage && <AppUpdateDialog />}
       <Drawer open={profileDrawerOpen} onOpenChange={setProfileDrawerOpen}>
-        <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-border/70 bg-background app-surface">
+        <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] bg-background app-surface">
           <DrawerHeader className="shrink-0 px-4 pb-1 pt-2 text-left">
             <DrawerTitle className="sr-only">{t('nav.profile')}</DrawerTitle>
           </DrawerHeader>
@@ -212,7 +212,7 @@ export function RootLayout() {
         </DrawerContent>
       </Drawer>
       <Drawer open={notificationDrawerOpen} onOpenChange={setNotificationDrawerOpen}>
-        <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-border/70 bg-background/98 app-surface">
+        <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] bg-background/98 app-surface">
           <DrawerHeader className="shrink-0 px-5 pb-3 pt-2 text-left">
             <DrawerTitle className="text-[17px] font-semibold tracking-tight">{t('notification.title')}</DrawerTitle>
           </DrawerHeader>
@@ -264,7 +264,7 @@ function MobileTopBar({
   }, [ensureUserLoaded, user?.id])
 
   return (
-    <header className="fixed right-4 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-40 flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45">
+    <header className="fixed right-4 top-[calc(0.75rem+env(safe-area-inset-top,0px))] z-40 flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl">
       {showBackgroundUpdate && (
         <button
           type="button"

@@ -102,10 +102,10 @@ export function EnglishHomePage() {
         {/* 时钟 */}
         <motion.div
           className={cn(
-            'relative z-10 flex items-baseline gap-1.5 rounded-[28px] border px-5 py-3 backdrop-blur-2xl md:px-6 md:py-3.5',
+            'relative z-10 flex items-baseline gap-1.5 rounded-[28px] px-5 py-3 backdrop-blur-2xl md:px-6 md:py-3.5',
             isDark
-              ? 'border-white/20 bg-white/[0.12] shadow-[0_24px_70px_rgba(0,0,0,.42)]'
-              : 'border-white/45 bg-white/28 shadow-[0_18px_55px_rgba(42,105,96,.16)]',
+              ? 'bg-white/[0.12] shadow-[0_24px_70px_rgba(0,0,0,.42)]'
+              : 'bg-white/28 shadow-[0_18px_55px_rgba(42,105,96,.16)]',
           )}
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -135,10 +135,10 @@ export function EnglishHomePage() {
 
         <motion.div
           className={cn(
-            'relative z-10 w-full max-w-[330px] rounded-[24px] border px-5 py-5 text-center backdrop-blur-xl md:max-w-[460px] md:px-7 md:py-6',
+            'relative z-10 w-full max-w-[330px] rounded-[24px] px-5 py-5 text-center backdrop-blur-xl md:max-w-[460px] md:px-7 md:py-6',
             isDark
-              ? 'border-white/12 bg-white/[0.06] shadow-[0_20px_60px_rgba(0,0,0,.35)]'
-              : 'border-white/20 bg-white/15 shadow-[0_16px_48px_rgba(42,105,96,.14)]',
+              ? 'bg-white/[0.06] shadow-[0_20px_60px_rgba(0,0,0,.35)]'
+              : 'bg-white/15 shadow-[0_16px_48px_rgba(42,105,96,.14)]',
           )}
           initial={{ opacity: 0, y: 18, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}

@@ -95,7 +95,7 @@ function ChunkActivationItem({
   return (
     <Card
       className={cn(
-        'border-0 shadow-none transition-colors',
+        'border-0 shadow-none ring-0 transition-colors dark:ring-0',
         expanded ? 'bg-primary/[0.06]' : 'bg-muted/30',
       )}
     >

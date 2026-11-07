@@ -739,7 +739,7 @@ export function FollowReadDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent showHandle={false} className="mx-auto max-h-[72dvh] w-full max-w-[520px] overflow-hidden rounded-t-xl border-border bg-background px-0 pb-[calc(0.8rem+env(safe-area-inset-bottom,0px))] text-foreground">
+      <DrawerContent showHandle={false} className="mx-auto max-h-[72dvh] w-full max-w-[520px] overflow-hidden rounded-t-xl bg-background px-0 pb-[calc(0.8rem+env(safe-area-inset-bottom,0px))] text-foreground">
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-muted-foreground/25" />
         <DrawerHeader className="px-4 pb-2 pt-3 text-left">
           <div className="flex items-start justify-between gap-3">

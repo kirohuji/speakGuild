@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Ear, Headphones, Info, Layers, Loader2, Mic, Pause, Play, RotateCcw, Search, Settings, Square, Target } from 'lucide-react'
+import { ArrowLeft, BookText, CheckCircle2, ChevronLeft, ChevronRight, Ear, Headphones, Info, Layers, Loader2, MessageSquareText, Mic, Pause, Play, RotateCcw, Search, Settings, Square, Target } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -110,7 +110,7 @@ function ListeningHeader({ topic, unitTitle, onBack, onSettingsOpen }: { topic: 
 function ListeningKnowledgeList({ icon, items, tone, emptyText }: { icon: React.ReactNode; items: Array<{ title: string; subtitle?: string | null }>; tone: 'cyan' | 'emerald' | 'violet'; emptyText: string }) {
   const toneClass = { cyan: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400', emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400', violet: 'bg-violet-500/10 text-violet-600 dark:text-violet-400' }[tone]
   if (items.length === 0) return <p className="rounded-lg bg-muted/25 py-8 text-center text-sm text-muted-foreground">{emptyText}</p>
-  return <div className="flex flex-col gap-2">{items.map((item) => <Card key={item.title} className="border-0 bg-muted/30 shadow-none"><CardContent className="flex items-center gap-3 p-3"><span className={cn('flex size-9 shrink-0 items-center justify-center rounded-md', toneClass)}>{icon}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-foreground">{item.title}</p>{item.subtitle && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{item.subtitle}</p>}</div></CardContent></Card>)}</div>
+  return <div className="flex flex-col gap-2">{items.map((item) => <Card key={item.title} className="border-0 bg-muted/30 shadow-none ring-0 dark:ring-0"><CardContent className="flex items-center gap-3 p-3"><span className={cn('flex size-9 shrink-0 items-center justify-center rounded-md', toneClass)}>{icon}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-foreground">{item.title}</p>{item.subtitle && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{item.subtitle}</p>}</div></CardContent></Card>)}</div>
 }
 
 function ListeningPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }: { topic: TrainingTopicItem; unitTitle: string; onBack: () => void; onOpenGuide: () => void; onStart: () => void }) {
@@ -143,9 +143,15 @@ function ListeningPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }
           </div>
           <Tabs defaultValue={visibleVocabularies.length > 0 ? 'vocab' : visibleChunks.length > 0 ? 'chunk' : 'pattern'} className="w-full" data-mobile-route-swipe>
             <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-              <TabsTrigger value="vocab" className="rounded-md text-xs">{t('learning.vocab')} ({visibleVocabularies.length})</TabsTrigger>
-              <TabsTrigger value="chunk" className="rounded-md text-xs">{t('learning.coreChunks')} ({visibleChunks.length})</TabsTrigger>
-              <TabsTrigger value="pattern" className="rounded-md text-xs">{t('learning.patterns')} ({visiblePatterns.length})</TabsTrigger>
+              <TabsTrigger value="vocab" className="gap-1.5 rounded-md text-xs">
+                <BookText className="size-3.5" /> {t('learning.vocab')} {visibleVocabularies.length}
+              </TabsTrigger>
+              <TabsTrigger value="chunk" className="gap-1.5 rounded-md text-xs">
+                <MessageSquareText className="size-3.5" /> {t('learning.coreChunks')} {visibleChunks.length}
+              </TabsTrigger>
+              <TabsTrigger value="pattern" className="gap-1.5 rounded-md text-xs">
+                <Search className="size-3.5" /> {t('learning.patterns')} {visiblePatterns.length}
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<Search className="size-4" />} items={visibleVocabularies.map((item) => ({ title: item.word, subtitle: item.meaning }))} tone="cyan" emptyText={t('learning.noTopicVocab')} /></TabsContent>
             <TabsContent value="chunk" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<Layers className="size-4" />} items={visibleChunks.map((item) => ({ title: item.text, subtitle: item.meaning }))} tone="emerald" emptyText={t('learning.noTopicChunks')} /></TabsContent>
@@ -637,12 +643,12 @@ function ListeningFooter({
         {/* 中间：上一句 / 播放 / 下一句 */}
         <div className="flex items-center justify-center gap-4">
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
             onClick={onPrev}
             disabled={disabled || !hasPrev}
             aria-label={t('learning.prevSentence')}
-            className="size-11 rounded-full"
+            className="size-11 rounded-full border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary"
           >
             <ChevronLeft className="size-5" />
           </Button>
@@ -657,12 +663,12 @@ function ListeningFooter({
             {playing ? <Pause className="size-5" /> : <Play className="size-5" />}
           </Button>
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
             onClick={onNext}
             disabled={disabled || !hasNext}
             aria-label={t('learning.nextSentence')}
-            className="size-11 rounded-full"
+            className="size-11 rounded-full border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary"
           >
             <ChevronRight className="size-5" />
           </Button>
@@ -874,7 +880,7 @@ function ListeningShadowDrawer({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
         showHandle={false}
-        className="mx-auto max-h-[62dvh] w-full max-w-[520px] overflow-hidden rounded-t-xl border-border bg-background px-0 pb-[calc(0.8rem+env(safe-area-inset-bottom,0px))] text-foreground"
+        className="mx-auto max-h-[62dvh] w-full max-w-[520px] overflow-hidden rounded-t-xl bg-background px-0 pb-[calc(0.8rem+env(safe-area-inset-bottom,0px))] text-foreground"
       >
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-muted-foreground/25" />
         <DrawerHeader className="px-4 pb-2 pt-3 text-left">

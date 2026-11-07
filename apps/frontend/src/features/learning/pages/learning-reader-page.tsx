@@ -291,7 +291,7 @@ export function LearningReaderPage() {
 
       {/* ── 设置 Drawer（底部） ── */}
       <Drawer open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DrawerContent className="mx-auto max-w-md rounded-t-[28px] border-border/70 drawer-surface bg-background text-foreground">
+        <DrawerContent className="mx-auto max-w-md rounded-t-[28px] drawer-surface bg-background text-foreground">
           <DrawerHeader className="text-left">
             <DrawerTitle className="text-base font-semibold">{t('learning.readerSettings')}</DrawerTitle>
           </DrawerHeader>
@@ -363,7 +363,7 @@ export function LearningReaderPage() {
 
       {/* ── 书籍信息 Sheet（右侧） ── */}
       <Sheet open={infoOpen} onOpenChange={setInfoOpen}>
-        <SheetContent side="right" className="w-[80vw] max-w-sm border-border/60 p-0 text-foreground">
+        <SheetContent side="right" className="w-[80vw] max-w-sm border-0 p-0 text-foreground">
           <SheetHeader className="border-b border-border/60 px-5 py-4">
             <SheetTitle className="text-base font-semibold">{t('learning.bookInfo')}</SheetTitle>
           </SheetHeader>

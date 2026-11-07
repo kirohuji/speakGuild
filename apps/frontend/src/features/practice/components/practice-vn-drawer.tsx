@@ -492,9 +492,9 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   }, [exporting, printDate, printTitle, t, teachingMarkdown])
 
   return <>
-    {!hideToggles && <button type="button" onClick={() => { closingRef.current = false; setOpen(true); void onOpen?.() }} className={cn(!plainTrigger && 'flex items-center gap-2 rounded-full border border-border/20 bg-background/60 px-3.5 py-2 text-xs font-medium text-foreground shadow-lg transition-transform active:scale-[0.97]', triggerClassName)}>{showTriggerIcon && <BookOpen className="size-3.5 text-foreground/70" />}<span>{t('practiceVn.teaching')}</span></button>}
+    {!hideToggles && <button type="button" onClick={() => { closingRef.current = false; setOpen(true); void onOpen?.() }} className={cn(!plainTrigger && 'flex items-center gap-2 rounded-full bg-muted/50 px-3.5 py-2 text-xs font-medium text-foreground transition-transform active:scale-[0.97]', triggerClassName)}>{showTriggerIcon && <BookOpen className="size-3.5 text-foreground/70" />}<span>{t('practiceVn.teaching')}</span></button>}
     <Drawer open={open} onOpenChange={onDrawerOpenChange} shouldScaleBackground={false}>
-      <DrawerContent onPointerDownOutside={keepDrawerOpenForToc} className="h-[82vh] max-h-[82vh] rounded-t-[28px] border-border/20 bg-background text-foreground shadow-[0_-12px_40px_rgba(0,0,0,.28)] contain-paint !z-[10001]" overlayClassName="!z-[10001]">
+      <DrawerContent onPointerDownOutside={keepDrawerOpenForToc} className="h-[82vh] max-h-[82vh] rounded-t-[28px] bg-background text-foreground shadow-[0_-12px_40px_rgba(0,0,0,.28)] contain-paint !z-[10001]" overlayClassName="!z-[10001]">
         <DrawerHeader className="shrink-0 border-b border-border/45 px-5 pb-3 pt-3 text-left">
           <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3">
             <div className="flex shrink-0 items-center gap-2">{!inlineToc && (document.toc.length > 0 ? <button type="button" onClick={() => setTocOpen(true)} className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14]" aria-label={t('practiceVn.contents')}><ListTree className="size-5" /></button> : <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary"><ListTree className="size-5" /></div>)}<button type="button" className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14] disabled:opacity-40" aria-label={t('practiceVn.previewPdf')} disabled={!teachingMarkdown?.trim() || loading} onClick={() => setPreviewOpen(true)}><FileText className="size-5" /></button></div>
@@ -519,7 +519,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
       <SheetContent
         side="left"
         data-teaching-toc=""
-        className="!z-[10002] flex h-[100dvh] w-[min(20rem,86vw)] max-w-none flex-col gap-0 border-border/45 p-0 text-foreground shadow-2xl [&>button]:hidden"
+        className="!z-[10002] flex h-[100dvh] w-[min(20rem,86vw)] max-w-none flex-col gap-0 border-0 p-0 text-foreground shadow-none [&>button]:hidden"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',

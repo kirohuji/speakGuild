@@ -1,19 +1,23 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { Lock, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Lock, ArrowRight, CheckCircle2, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
 import { Spinner } from '@/components/ui/spinner'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/cn'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
-import type { LearningUnitSummary } from '../api/learning-api'
+import { learningApi, type LearningUnitSummary } from '../api/learning-api'
 import { getCategoryIcon } from './category-icons'
 import { UnitCover } from './unit-cover'
 import { useLearningStore } from '@/stores/learning.store'
+import { learningRepository } from '@/lib/offline'
+import { useDailyPracticeStore } from '@/stores/daily-practice.store'
+import { toast } from 'sonner'
 
 function packageTypeLabel(t: (key: string) => string, type?: LearningUnitSummary['packageType']) {
   if (type === 'exam') return t('learning.packageTypeExam')
@@ -44,13 +48,16 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
   const navigate = useNavigate()
   const [detailOpen, setDetailOpen] = useState(false)
   const [acquiring, setAcquiring] = useState(false)
+  const [restarting, setRestarting] = useState(false)
+  const [restartAfterDownload, setRestartAfterDownload] = useState(false)
   const [topicPage, setTopicPage] = useState(1)
   const [justEnrolled, setJustEnrolled] = useState(false)
   const pageSize = 6
   const Icon = (unit.isUnlocked && !unit.isLocked) ? getCategoryIcon(unit.categoryName ?? '') : Lock
   const totalTopicPages = Math.max(1, Math.ceil((unit.topics?.length ?? 0) / pageSize))
   const pagedTopics = (unit.topics ?? []).slice((topicPage - 1) * pageSize, topicPage * pageSize)
-  const isJoinedInPlan = useLearningStore((s) => s.myUnits.some((myUnit) => myUnit.id === unit.id))
+  const planUnit = useLearningStore((s) => s.myUnits.find((myUnit) => myUnit.id === unit.id))
+  const isJoinedInPlan = Boolean(planUnit)
 
   // 下载进度
   const downloadTask = useLearningStore((s) =>
@@ -62,6 +69,10 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
   const isDownloading = downloadTask?.status === 'downloading' || downloadTask?.status === 'extracting'
   const isPackReady = Boolean(installedPack || downloadTask?.status === 'done')
   const isJoined = isJoinedInPlan && isPackReady
+  // Store summaries are account-backed and therefore remain authoritative even
+  // when the user has removed this device's downloaded package.
+  const progressUnit = planUnit ?? unit
+  const isCompleted = progressUnit.status === 'completed' || (progressUnit.completionPercent ?? 0) >= 100
   const downloadProgress = downloadTask?.progress ?? 0
 
   const handleAcquire = useCallback(async () => {
@@ -77,6 +88,45 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
     }
   }, [unit.id, unit.isUnlocked, acquiring, onEnroll])
 
+  const restartLearning = useCallback(async () => {
+    if (restarting) return
+    setRestarting(true)
+    try {
+      await learningApi.restartUnit(unit.id)
+      await learningRepository.clearPackPracticeProgress(unit.id)
+      useDailyPracticeStore.getState().invalidatePlans()
+      await useLearningStore.getState().refreshMyUnits()
+      toast.success(t('learning.learnAgainDone', { title: unit.title }))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('learning.learnAgainFailed'))
+    } finally {
+      setRestarting(false)
+    }
+  }, [restarting, t, unit.id, unit.title])
+
+  const handleRestart = useCallback(async () => {
+    if (restarting || acquiring) return
+    if (installedPack) {
+      await restartLearning()
+      return
+    }
+
+    setAcquiring(true)
+    try {
+      const enrolled = await onEnroll?.(unit.id)
+      if (enrolled) setRestartAfterDownload(true)
+    } catch {
+      // 学习计划 store 已展示具体错误。
+    } finally {
+      setAcquiring(false)
+    }
+  }, [acquiring, installedPack, onEnroll, restartLearning, restarting, unit.id])
+
+  useEffect(() => {
+    if (!restartAfterDownload || !installedPack || restarting) return
+    void restartLearning().finally(() => setRestartAfterDownload(false))
+  }, [installedPack, restartAfterDownload, restartLearning, restarting])
+
   return (
     <>
       <button
@@ -85,23 +135,51 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
           if (!unit.isUnlocked || unit.isLocked) { onMemberOpen(); return }
           setTopicPage(1); setDetailOpen(true)
         }}
-        className="flex w-full gap-3 rounded-lg bg-muted/30 p-3 text-left transition-colors hover:bg-muted/50"
+        className={cn(
+          'flex w-full gap-3 rounded-lg p-3 text-left transition-colors',
+          isCompleted
+            ? 'bg-muted/25 text-muted-foreground hover:bg-muted/35'
+            : 'bg-muted/30 hover:bg-muted/50',
+        )}
         {...rest}
       >
-        <UnitCover unit={unit} icon={Icon} />
+        <UnitCover
+          unit={unit}
+          icon={isCompleted ? CheckCircle2 : Icon}
+          className={cn(
+            isCompleted && 'from-slate-100 via-emerald-50 to-slate-100 text-emerald-600 opacity-80 dark:from-slate-900/70 dark:via-emerald-950/30 dark:to-slate-950/40',
+          )}
+        />
         <div className="min-w-0 flex-1 py-0.5">
           <div className="flex items-start gap-2">
-            <h3 className="line-clamp-1 flex-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</h3>
+            <h3 className={cn('line-clamp-1 flex-1 text-sm font-semibold leading-5', isCompleted ? 'text-muted-foreground' : 'text-foreground')}>{unit.title}</h3>
+            {isCompleted && (
+              <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">
+                {t('learning.done')}
+              </Badge>
+            )}
             {(!unit.isUnlocked || unit.isLocked) && <Lock className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />}
           </div>
           <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
           <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
             {unit.topicCount}{t('learning.topics')} · {unit.vocabCount}{t('learning.vocab')} · {unit.chunkCount}{t('learning.chunks')}
           </p>
+          {isCompleted && (
+            <div className="mt-1.5 space-y-1.5">
+              <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="size-3.5 text-emerald-600" />
+                  {t('learning.done')}
+                </span>
+                <span className="font-semibold tabular-nums text-foreground/75">100%</span>
+              </div>
+              <Progress value={100} className="h-1" />
+            </div>
+          )}
           <div className="mt-2 flex items-center gap-1.5">
             <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">{packageTypeLabel(t, unit.packageType)}</Badge>
             <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{contentModeLabel(t, unit.contentMode)}</Badge>
-            {isJoined && (
+            {!isCompleted && isJoined && (
               <Badge variant="outline" className="h-5 rounded-full border-emerald-400/50 px-2 text-[10px] text-emerald-600 dark:text-emerald-400">
                 {unit.completionPercent}%
               </Badge>
@@ -139,6 +217,12 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
                 <div className="flex flex-wrap items-center gap-1.5">
                   <Badge variant="outline" className="rounded-full text-[10px]">{packageTypeLabel(t, unit.packageType)}</Badge>
                   <Badge variant="secondary" className="rounded-full text-[10px]">{contentModeLabel(t, unit.contentMode)}</Badge>
+                  {isCompleted && (
+                    <Badge variant="outline" className="rounded-full border-emerald-400/50 text-[10px] text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="mr-1 size-3" />
+                      {t('learning.done')}
+                    </Badge>
+                  )}
                   {(!unit.isUnlocked || unit.isLocked) && <Badge variant="outline" className="rounded-full text-[10px]">{t('learning.locked')}</Badge>}
                 </div>
                 <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5 text-foreground">{unit.title}</h3>
@@ -181,6 +265,15 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
                 <Button className="w-full gap-2" variant="destructive" onClick={handleAcquire}>
                   {t('learning.downloadFailedRetry')}
                 </Button>
+              ) : isCompleted ? (
+                <Button className="w-full gap-2" disabled={acquiring || restarting} onClick={handleRestart}>
+                  {acquiring || restarting ? <Spinner data-icon="inline-start" /> : <RotateCcw className="size-4" />}
+                  {acquiring
+                    ? t('learning.downloading')
+                    : restarting
+                      ? t('learning.learnAgain')
+                      : isPackReady ? t('learning.learnAgain') : t('learning.redownloadPack')}
+                </Button>
               ) : downloadTask?.status === 'done' || justEnrolled ? (
                 <Button variant="outline" className="w-full gap-2" onClick={() => { setDetailOpen(false); navigate(`/learning/units/${unit.id}`) }}>
                   <ArrowRight className="size-4" />
@@ -209,7 +302,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
                       aria-label="上一页话题"
                       disabled={topicPage === 1}
                       onClick={() => setTopicPage((p) => Math.max(1, p - 1))}
-                      className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground disabled:opacity-35"
+                      className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/16 disabled:opacity-35"
                     >
                       <ChevronLeft className="size-3.5" />
                     </button>
@@ -219,7 +312,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
                       aria-label="下一页话题"
                       disabled={topicPage === totalTopicPages}
                       onClick={() => setTopicPage((p) => Math.min(totalTopicPages, p + 1))}
-                      className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground disabled:opacity-35"
+                      className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/16 disabled:opacity-35"
                     >
                       <ChevronRight className="size-3.5" />
                     </button>

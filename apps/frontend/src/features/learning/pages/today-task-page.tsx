@@ -216,7 +216,6 @@ export function TodayTaskPage() {
   const startMistakeRetry = useDailyPracticeStore((s) => s.startMistakeRetry)
   const setMachineCurrentStep = useDailyPracticeStore((s) => s.setCurrentStep)
   const closeSession = useDailyPracticeStore((s) => s.closeSession)
-  const syncRunSnapshot = useDailyPracticeStore((s) => s.syncRunSnapshot)
   const submitToday = useDailyPracticeStore((s) => s.submitToday)
   const dailyPracticeRandomOrder = usePreferencesStore((s) => s.dailyPracticeRandomOrder)
   const dailyPracticeLastMode = usePreferencesStore((s) => s.dailyPracticeLastMode)
@@ -751,27 +750,6 @@ export function TodayTaskPage() {
     })
   }, [plan?.steps, todayState.continuationResults, todayState.initialRecallResults, todayState.remediationResults, warmupRecords])
 
-  useEffect(() => {
-    if (!warmupRecordId || !plan || enrichedWarmupRecords.length === 0) return
-    // 已提交且不在重练中 → 不再把 synced 改回 pending
-    if (hasSubmittedToday && !reviewRoundActive) return
-    const firstTopic = plan.topicStats.find((topic) => topic.scheduledTodayCount > 0) ?? plan.topicStats[0]
-    if (!firstTopic) return
-    void (async () => {
-      // Persist the display record first, then attach that exact record to the
-      // in-progress run snapshot. This makes logout/relogin recovery complete.
-      await practiceRepository.upsertLocalWarmupRecord({
-        id: warmupRecordId,
-        topicId: firstTopic.topicId,
-        topicTitle: firstTopic.topicTitle,
-        items: enrichedWarmupRecords,
-        practicedDate: plan.date,
-        syncStatus: 'pending',
-      })
-      await syncRunSnapshot(enrichedWarmupRecords, warmupRecordId)
-    })().catch(() => undefined)
-  }, [enrichedWarmupRecords, hasSubmittedToday, plan, reviewRoundActive, syncRunSnapshot, warmupRecordId])
-
   // The record drawer is a view of durable, date-scoped data — not of the
   // currently active tab's warmup store. A mode switch resets that transient
   // store, so loading only while the drawer was open made records disappear
@@ -1284,7 +1262,7 @@ export function TodayTaskPage() {
           )}
         </div>
         {isMobile && (
-          <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45">
+          <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl">
             {/* 换一批：暂时隐藏，随机逻辑后续统一在 buildTodayPlan 内调整 */}
             <button
               type="button"
@@ -1319,10 +1297,10 @@ export function TodayTaskPage() {
           type="button"
           onClick={() => switchPlanMode('review')}
           className={cn(
-            'rounded-lg border px-3 py-2.5 text-left transition-colors active:scale-[0.98]',
+            'rounded-lg px-3 py-2.5 text-left transition-colors active:scale-[0.98]',
             plan.mode === 'review'
-              ? 'border-amber-400 bg-amber-500/10 text-foreground'
-              : 'border-border bg-muted/20 text-muted-foreground hover:bg-muted/35',
+              ? 'bg-amber-500/10 text-foreground'
+              : 'bg-muted/20 text-muted-foreground hover:bg-muted/35',
           )}
         >
           <span className="block text-sm font-semibold">{t('todayTask.todayReview')}</span>
@@ -1335,10 +1313,10 @@ export function TodayTaskPage() {
           data-spotlight="today-practice-button"
           onClick={() => switchPlanMode('practice')}
           className={cn(
-            'rounded-lg border px-3 py-2.5 text-left transition-colors active:scale-[0.98]',
+            'rounded-lg px-3 py-2.5 text-left transition-colors active:scale-[0.98]',
             plan.mode === 'practice'
-              ? 'border-blue-400 bg-blue-500/10 text-foreground'
-              : 'border-border bg-muted/20 text-muted-foreground hover:bg-muted/35',
+              ? 'bg-blue-500/10 text-foreground'
+              : 'bg-muted/20 text-muted-foreground hover:bg-muted/35',
           )}
         >
           <span className="block text-sm font-semibold">{t('todayTask.todayPractice')}</span>
@@ -1478,14 +1456,13 @@ export function TodayTaskPage() {
               {showTeachingHintIntro ? t('todayTask.teachingHintIntro') : t('todayTask.teachingHint')}
             </p>
             <div className="mt-1.5 flex min-w-0 gap-2 overflow-x-auto pb-0.5 scrollbar-none">
-              {visibleTeachingTopics.map((topic, index) => (
+              {visibleTeachingTopics.map((topic) => (
                 <button
                   key={topic.id}
                   type="button"
                   onClick={() => { void openTopicTeaching(topic.id, topic.packId) }}
                   className={cn(
-                    'inline-flex h-8 max-w-[12.5rem] shrink-0 items-center rounded-lg bg-primary/[0.08] px-3 text-[11px] font-medium text-primary transition-colors hover:bg-primary/[0.14] active:scale-[0.98]',
-                    showTeachingHintIntro && index === 0 && 'animate-pulse ring-1 ring-primary/20 motion-reduce:animate-none',
+                    'inline-flex h-8 max-w-[12.5rem] shrink-0 items-center rounded-lg bg-muted/60 px-3 text-[11px] font-medium text-foreground transition-colors hover:bg-muted active:scale-[0.98]',
                   )}
                   title={topic.title}
                 >
@@ -1537,7 +1514,7 @@ export function TodayTaskPage() {
             <Card
               key={group.type}
               className={cn(
-                'cursor-pointer border-0 bg-muted/30 shadow-none transition-all active:scale-[0.98]',
+                'cursor-pointer border-0 bg-muted/30 shadow-none ring-0 transition-all active:scale-[0.98] dark:ring-0',
                 isDone && 'opacity-60',
               )}
               onClick={() => openGroup(group)}
@@ -1637,7 +1614,7 @@ export function TodayTaskPage() {
                     topic.patternCount > 0 ? `${topic.patternCount} ${t('learning.patterns')}` : null,
                   ].filter(Boolean).join(' · ')
                   return (
-                    <div key={topic.topicId} className="group flex overflow-hidden rounded-lg bg-muted/25 transition-colors hover:bg-muted/50">
+                    <div key={topic.topicId} className="group flex overflow-hidden rounded-lg bg-accent/[0.06] transition-colors hover:bg-accent/[0.1]">
                       <div
                         role="button"
                         tabIndex={0}
@@ -1715,11 +1692,11 @@ export function TodayTaskPage() {
                     {t('common.total')} {filteredTopics.length} {t('learning.items')}
                   </span>
                   <div className="flex items-center gap-2">
-                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" disabled={topicPage <= 1} onClick={() => setTopicPage((page) => page - 1)}>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary" disabled={topicPage <= 1} onClick={() => setTopicPage((page) => page - 1)}>
                       {t('common.prevPage')}
                     </Button>
                     <span className="min-w-10 text-center text-[11px] text-muted-foreground">{topicPage}/{topicPageItems.totalPages}</span>
-                    <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" disabled={topicPage >= topicPageItems.totalPages} onClick={() => setTopicPage((page) => page + 1)}>
+                    <Button type="button" variant="ghost" size="sm" className="h-7 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary" disabled={topicPage >= topicPageItems.totalPages} onClick={() => setTopicPage((page) => page + 1)}>
                       {t('common.nextPage')}
                     </Button>
                   </div>
@@ -1762,7 +1739,7 @@ export function TodayTaskPage() {
                 <p className="min-w-0 truncate text-xs text-muted-foreground">
                   {currentMeta.label} · {currentIdx + 1}/{activeTotal}
                 </p>
-                <label className="flex shrink-0 items-center gap-1.5 rounded-full bg-background/70 px-2 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70">
+                <label className="flex shrink-0 items-center gap-1.5 rounded-full bg-muted/50 px-2 py-1 text-[11px] font-medium text-muted-foreground">
                   <span>{t('todayTask.autoNext')}</span>
                   <Switch
                     checked={autoNextEnabled}
@@ -1795,14 +1772,14 @@ export function TodayTaskPage() {
             </div>
 
             <div data-keyboard-practice-footer className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
-              <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
+              <Button variant="ghost" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
                 <ChevronLeft className="size-4" /> {t('todayTask.prevQuestion')}
               </Button>
               <span className="text-xs text-muted-foreground">
                 {currentIdx + 1} / {activeTotal}
               </span>
               <div className="flex items-center gap-1.5">
-                <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
+                <Button variant="ghost" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
                   {t('todayTask.nextQuestion')} <ChevronRight className="size-4" />
                 </Button>
                 <Button
@@ -1824,8 +1801,8 @@ export function TodayTaskPage() {
 
       {/* ── 题目列表 Drawer ── */}
       <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
-        <DrawerContent className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]">
-          <div className="flex items-center justify-between px-5 py-3">
+        <DrawerContent showHandle={false} className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]">
+          <div className="flex items-center justify-between px-5 pb-2 pt-1">
             <DrawerTitle className="text-lg">{plan.mode === 'review' ? t('todayTask.todayReviewQuestions') : t('todayTask.todayPracticeQuestions')}</DrawerTitle>
             <button
               type="button"

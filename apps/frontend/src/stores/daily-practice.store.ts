@@ -183,13 +183,13 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
         const { useLearningStore } = await import('./learning.store')
         await useLearningStore.getState().fetchMyLearning(true)
       }
-      // Keep the server copy resumable even before the final submission, using
-      // the captured plan and rich record rather than whichever tab is active.
-      await dailyPracticeRepository.syncRunSnapshot(
+      // 作答原文先落盘。入队失败可以吞掉，下次同步会按本地记录补进队列。
+      await dailyPracticeRepository.persistTodayWarmup(
         planAtAttempt,
         recordsAtAttempt,
         `today-warmup:${planAtAttempt.runId}`,
-      ).catch(() => undefined)
+      )
+      await dailyPracticeRepository.syncRunSnapshot(planAtAttempt.runId).catch(() => undefined)
     })
     return attemptChain
   },
@@ -228,7 +228,10 @@ export const useDailyPracticeStore = create<DailyPracticeState>((set, get) => ({
   async syncRunSnapshot(records = [], localWarmupRecordId?: string | null) {
     const plan = get().plan
     if (!plan) return
-    await dailyPracticeRepository.syncRunSnapshot(plan, records, localWarmupRecordId)
+    if (records.length > 0) {
+      await dailyPracticeRepository.persistTodayWarmup(plan, records, localWarmupRecordId ?? `today-warmup:${plan.runId}`)
+    }
+    await dailyPracticeRepository.syncRunSnapshot(plan.runId)
   },
 
   async submitToday(records, localWarmupRecordId) {

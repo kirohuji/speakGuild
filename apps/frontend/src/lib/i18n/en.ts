@@ -1050,7 +1050,7 @@ const en = {
       practiceSheetHint: 'Write your answer on the line',
       practiceSheetCount: '{{count}} items',
       tableEnglish: 'English', tableChinese: 'Chinese', tableAnswer: 'Answer',
-      date: 'Date', bilingualList: 'English + Chinese', bilingualListDesc: 'Two-column dictation',
+      date: 'Date', bilingualList: 'English + Chinese', bilingualListDesc: 'English with Chinese',
       tableBilingual: 'English + Chinese', exportColumns: 'Layout', oneColumn: '1 column', twoColumns: '2 columns',
     },
     practiceVn: {
@@ -1259,9 +1259,9 @@ const en = {
       emptyPatternsMastered: 'No mastered patterns',
       hintCollectPatterns: 'Click + on pattern cards during practice to collect',
       tableEnglish: 'English', tableChinese: 'Chinese', tableAnswer: 'Answer',
-      date: 'Date', bilingualList: 'English + Chinese', bilingualListDesc: 'Two-column dictation',
+      date: 'Date', bilingualList: 'English + Chinese', bilingualListDesc: 'English with Chinese',
       tableBilingual: 'English + Chinese', exportColumns: 'Layout', oneColumn: '1 column', twoColumns: '2 columns',
-      expandAll: 'Expand all', collapseAll: 'Collapse all', batchEdit: 'Bulk edit', cancelSelection: 'Cancel selection', selectAll: 'Select this list', clearSelection: 'Clear selection', selectedCount: '{{count}} selected', addToNotebook: 'Add to another notebook', changeStatus: 'Change learning status', targetNotebook: 'Add to notebook', chooseNotebook: 'Choose a notebook', orCreateNotebook: 'Or create a notebook', apply: 'Apply', batchSuccess: 'Bulk update complete', learning: 'Learning', exportPdf: 'Export PDF practice sheet', exportPreviewDescription: 'Preview the printed sheet, then use the Print button in the top right.', print: 'Print', loadingPreview: 'Preparing preview…', pdfPages: 'Pages', pdfItems: 'Practice items', pdfWords: 'Words', pdfPagesCount: '{{count}} pages', pdfWordsCount: '{{count}} words', pdfPageNumber: 'Page {{current}} / {{total}}', a4Dictation: 'A4 Dictation', a4DictationDesc: 'Test words and meanings both ways', chineseList: 'Chinese List', chineseListDesc: 'Write the English words', englishList: 'English List', englishListDesc: 'Write the meanings', shuffleExport: 'Shuffle export', exportPdfAction: 'Export PDF list', zhToEn: 'Chinese prompt · write English', enToZh: 'English prompt · write Chinese', bilingual: 'Bilingual practice', nothingToExport: 'There is nothing to export', exportBlocked: 'Allow the browser to open the print window and try again', groupByDate: 'By date', selectDateGroup: 'Select this day', unknownDate: 'Unknown date', practiceSheetHint: 'Write your answer on the line', practiceSheetCount: '{{count}} items',
+      expandAll: 'Expand all', collapseAll: 'Collapse all', batchEdit: 'Bulk edit', cancelSelection: 'Cancel selection', selectAll: 'Select this list', clearSelection: 'Clear selection', selectedCount: '{{count}} selected', addToNotebook: 'Add to another notebook', changeStatus: 'Change learning status', targetNotebook: 'Add to notebook', chooseNotebook: 'Choose a notebook', orCreateNotebook: 'Or create a notebook', apply: 'Apply', batchSuccess: 'Bulk update complete', learning: 'Learning', exportPdf: 'Export PDF practice sheet', exportPreviewDescription: 'Preview the printed sheet, then use the Print button in the top right.', print: 'Print', loadingPreview: 'Preparing preview…', zoomPreview: 'Tap a page to enlarge it', a4Summary: 'A4 word dictation · {{count}} pages', dictationMaterial: 'Word dictation', pdfPages: 'Pages', pdfItems: 'Practice items', pdfWords: 'Words', pdfPagesCount: '{{count}} pages', pdfWordsCount: '{{count}} words', pdfPageNumber: 'Page {{current}} / {{total}}', a4Dictation: 'A4 Dictation', a4DictationDesc: 'Test words and meanings both ways', chineseList: 'Chinese List', chineseListDesc: 'Write the English words', englishList: 'English List', englishListDesc: 'Write the meanings', shuffleExport: 'Shuffle export', exportPdfAction: 'Export PDF list', zhToEn: 'Chinese prompt · write English', enToZh: 'English prompt · write Chinese', bilingual: 'Bilingual practice', nothingToExport: 'There is nothing to export', exportBlocked: 'Allow the browser to open the print window and try again', groupByDate: 'By date', selectDateGroup: 'Select this day', unknownDate: 'Unknown date', practiceSheetHint: 'Write your answer on the line', practiceSheetCount: '{{count}} items',
     },
     auth: {
       login: 'Login',
@@ -1468,6 +1468,7 @@ const en = {
       quitSuccess: 'Quit successfully',
       quitFailed: 'Quit failed, please try again',
       packNeedsDownload: 'Local pack was cleared. Download it again.',
+      redownloadPack: 'Download pack again',
       fetchingPlan: 'Fetching learning plan',
       fetchingPlanHint: 'Your packs and local offline content will be restored first.',
       refreshingPlan: 'Refreshing learning plan',

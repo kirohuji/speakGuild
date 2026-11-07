@@ -85,7 +85,7 @@ export function ContentModeExperience({ unit }: { unit: UnitDetail }) {
                   onClick={() => navigate(`/learning/${unit.contentMode}/${topic.id}?unitId=${unit.id}`)}
                   className="w-full text-left"
                 >
-                  <Card className="border-0 bg-primary/[0.045] shadow-none transition-transform active:scale-[0.99]">
+                  <Card className="border-0 bg-primary/[0.045] shadow-none ring-0 transition-transform active:scale-[0.99] dark:ring-0">
                     <CardContent className="flex items-center gap-3 p-4">
                       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-sm font-semibold shadow-sm">{absoluteIndex + 1}</span>
                       <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{topic.title}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{topic.promptZh || topic.promptEn}</span></span>

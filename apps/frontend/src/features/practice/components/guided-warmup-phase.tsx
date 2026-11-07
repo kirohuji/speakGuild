@@ -716,7 +716,7 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
       <div data-keyboard-practice-header className="mb-4 grid shrink-0 grid-cols-[minmax(0,1fr)_2.25rem] items-start gap-3 px-4">
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-2">
           <p className="min-w-0 truncate text-xs text-muted-foreground">{t('practiceSession.warmupTitle')} · {currentIdx + 1}/{totalSteps}</p>
-          <label className="flex shrink-0 items-center gap-1.5 rounded-full bg-background/70 px-2 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-border/70">
+          <label className="flex shrink-0 items-center gap-1.5 rounded-full bg-muted/50 px-2 py-1 text-[11px] font-medium text-muted-foreground">
             <span>{t('todayTask.autoNext')}</span>
             <Switch
               checked={autoNextEnabled}
@@ -741,14 +741,14 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
 
       {/* Bottom nav — fixed at bottom like LearningInsightDialog */}
       <div data-keyboard-practice-footer className={cn('flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-muted/10 px-4 py-3', isIOS() && 'pb-safe')}>
-        <Button variant="outline" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1">
+        <Button variant="ghost" size="sm" onClick={gotoPrev} disabled={!hasPrev} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
           <ChevronLeft className="size-4" /> {t('insight.prev')}
         </Button>
         <span className="text-xs text-muted-foreground">
           {currentIdx + 1} / {totalSteps}
         </span>
         <div className="flex items-center gap-1.5">
-          <Button variant="outline" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1">
+          <Button variant="ghost" size="sm" onClick={gotoNext} disabled={!hasNext} className="gap-1 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
             {t('insight.next')} <ChevronRight className="size-4" />
           </Button>
           <Button
@@ -767,8 +767,8 @@ function getSimplePromptReference(prompt: SimplePromptItem, direction: 'zh_to_en
 
       {/* Playlist drawer */}
       <Drawer open={playlistOpen} onOpenChange={setPlaylistOpen}>
-        <DrawerContent className={cn('h-[80dvh] w-full max-w-full overflow-hidden rounded-t-2xl !z-[10001]', isIOS() && 'pt-safe')} overlayClassName="!z-[10001]">
-          <div className="flex min-w-0 items-center justify-between gap-3 px-5 py-3">
+        <DrawerContent showHandle={false} className="h-[80dvh] w-full max-w-full overflow-hidden rounded-t-2xl !z-[10001]" overlayClassName="!z-[10001]">
+          <div className="flex min-w-0 items-center justify-between gap-3 px-5 pb-2 pt-3">
             <DrawerTitle className="min-w-0 truncate text-lg">{t('todayTask.questionList')}</DrawerTitle>
             <button
               onClick={() => setPlaylistOpen(false)}

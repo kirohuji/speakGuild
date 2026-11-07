@@ -261,8 +261,8 @@ export function SentenceDecompositionCard({
           </div>
           <Button
             size="default"
-            variant="outline"
-            className="mt-1 gap-1.5 text-sm"
+            variant="ghost"
+            className="mt-1 gap-1.5 border-0 bg-primary/10 text-sm text-primary shadow-none hover:bg-primary/16 hover:text-primary"
             onClick={goBack}
           >
             <ChevronLeft className="size-4" />
@@ -405,8 +405,8 @@ export function SentenceDecompositionCard({
       <div className="flex gap-2">
         <Button
           size="default"
-          variant="outline"
-          className="min-h-11 flex-1 gap-1.5 text-sm"
+          variant="ghost"
+          className="min-h-11 flex-1 gap-1.5 border-0 bg-primary/10 text-sm text-primary shadow-none hover:bg-primary/16 hover:text-primary"
           onClick={goBack}
           disabled={isFirst}
         >
@@ -415,8 +415,8 @@ export function SentenceDecompositionCard({
         </Button>
         <Button
           size="default"
-          variant="outline"
-          className="min-h-11 flex-1 gap-1.5 text-sm"
+          variant="ghost"
+          className="min-h-11 flex-1 gap-1.5 border-0 bg-primary/10 text-sm text-primary shadow-none hover:bg-primary/16 hover:text-primary"
           onClick={advance}
         >
           {isLast ? t('practiceSession.decomp.complete') : t('practiceSession.decomp.nextLevel')}

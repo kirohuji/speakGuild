@@ -37,16 +37,47 @@ let fontRegistered = false
 
 function registerPracticeSheetFont() {
   if (fontRegistered || typeof window === 'undefined') return
-  const src = new URL('/fonts/NotoSansSC-Regular.ttf', window.location.href).href
+  const regularSrc = new URL('/fonts/NotoSansSC-Regular.ttf', window.location.href).href
+  const boldSrc = new URL('/fonts/NotoSansSC-Bold.otf', window.location.href).href
   Font.register({
     family: FONT_FAMILY,
     fonts: [
-      { src, fontWeight: 400 },
-      { src, fontWeight: 700 },
+      { src: regularSrc, fontWeight: 400 },
+      { src: boldSrc, fontWeight: 700 },
     ],
   })
-  Font.registerHyphenationCallback((word) => [word])
+  Font.registerHyphenationCallback((word) => {
+    if (/[㐀-鿿぀-ヿ가-힯]/u.test(word)) return Array.from(word)
+    if (word.length > 16) return word.match(/.{1,10}/gu) ?? [word]
+    return [word]
+  })
   fontRegistered = true
+}
+
+function glyphUnits(text: string) {
+  let units = 0
+  for (const char of text) units += char.charCodeAt(0) > 255 ? 1 : 0.55
+  return units
+}
+
+/** 过长释义按分号、斜杠等切段，只保留放得下一行的前半，避免行高被撑开。 */
+function clipSheetText(value: string, maxUnits: number) {
+  const text = value.replace(/\s+/g, ' ').trim()
+  if (!text || glyphUnits(text) <= maxUnits) return text
+  const firstSense = text.split(/[;；|｜/／]/).map((part) => part.trim()).find(Boolean) ?? text
+  const source = glyphUnits(firstSense) <= maxUnits
+    ? firstSense
+    : (firstSense.split(/[，,、]/).map((part) => part.trim()).find(Boolean) ?? firstSense)
+  if (glyphUnits(source) <= maxUnits) return source
+  let units = 0
+  let end = 0
+  for (const char of source) {
+    const next = units + (char.charCodeAt(0) > 255 ? 1 : 0.55)
+    if (next > maxUnits) break
+    units = next
+    end += char.length
+  }
+  return source.slice(0, end).trim()
 }
 
 function itemTexts(item: PracticeSheetItem) {
@@ -59,25 +90,25 @@ function promptFor(
   item: PracticeSheetItem,
   mode: PracticeSheetExportMode,
   columns: 1 | 2,
-  tableIndex: number,
 ) {
   const { english, chinese } = itemTexts(item)
-  if (mode === 'bilingual') {
-    if (columns === 1) return `${english} · ${chinese}`
-    return tableIndex === 0 ? english : chinese
-  }
-  return mode === 'zh-to-en' ? chinese : english
+  const wide = columns === 2 ? 16 : 34
+  const narrow = columns === 2 ? 14 : 28
+  if (mode === 'zh-to-en') return clipSheetText(chinese, wide)
+  return clipSheetText(english, narrow)
+}
+
+function answerFor(item: PracticeSheetItem, mode: PracticeSheetExportMode, columns: 1 | 2) {
+  if (mode !== 'bilingual') return ''
+  return clipSheetText(itemTexts(item).chinese, columns === 2 ? 16 : 34)
 }
 
 function promptHeaderFor(
   mode: PracticeSheetExportMode,
-  columns: 1 | 2,
-  tableIndex: number,
   labels: { bilingual: string; english: string; chinese: string },
 ) {
   if (mode === 'bilingual') {
-    if (columns === 1) return labels.bilingual
-    return tableIndex === 0 ? labels.english : labels.chinese
+    return labels.english
   }
   return mode === 'zh-to-en' ? labels.chinese : labels.english
 }
@@ -103,8 +134,9 @@ const SHEET_CSS = `
   flex-direction: column;
   width: ${PRACTICE_SHEET_A4.widthPx}px;
   height: ${PRACTICE_SHEET_A4.heightPx}px;
-  padding: 28px 32px 22px;
-  color: #111;
+  padding: 72px 44px 60px;
+  overflow: hidden;
+  color: #1f2d3d;
   background: #fff;
   font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -112,82 +144,51 @@ const SHEET_CSS = `
 .practice-sheet-watermark {
   position: absolute;
   left: 10%;
-  top: 44%;
+  top: 43%;
   width: 80%;
   transform: rotate(-28deg);
-  color: #f4ede6;
-  font-size: 46px;
+  color: #eaf4ff;
+  font-size: 48px;
   font-weight: 700;
   text-align: center;
   white-space: nowrap;
-  z-index: 2;
   pointer-events: none;
+}
+.practice-sheet-header {
+  position: absolute;
+  left: 44px;
+  right: 44px;
+  top: 24px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #dce5ef;
+  padding-bottom: 9px;
+  color: #1f2d3d;
+}
+.practice-sheet-logo { width: 27px; height: 27px; object-fit: contain; }
+.practice-sheet-brand { margin-left: 9px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.practice-sheet-head-title {
+  min-width: 0;
+  margin-left: auto;
+  max-width: 48%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  font-size: 11px;
+  color: #5f6f82;
 }
 .practice-sheet *,
 .practice-sheet *::before,
 .practice-sheet *::after { box-sizing: border-box; }
-.practice-sheet-header {
-  flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr) minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.14);
-}
-.practice-sheet-brand {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  white-space: nowrap;
-  font-size: 10px;
-  font-weight: 650;
-  color: rgba(0, 0, 0, 0.62);
-}
-.practice-sheet-brand img { width: 24px; height: 24px; object-fit: contain; }
-.practice-sheet-title-wrap { min-width: 0; text-align: center; padding: 0 4px; }
-.practice-sheet-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 650;
-  line-height: 1.45;
-}
-.practice-sheet-hint {
-  margin: 6px 0 0;
-  font-size: 11px;
-  line-height: 1.45;
-  color: rgba(0, 0, 0, 0.62);
-}
-.practice-sheet-date {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  min-height: 28px;
-  white-space: nowrap;
-  font-size: 11px;
-  line-height: 1.45;
-  color: rgba(0, 0, 0, 0.62);
-}
-.practice-sheet-date input {
-  width: 108px;
-  height: 28px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #111;
-  font: inherit;
-  line-height: 1.45;
-  outline: none;
-}
 .practice-sheet-body {
   position: relative;
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
   gap: 12px;
-  margin-top: 14px;
+  margin-top: 0;
   align-content: start;
 }
 .practice-sheet-body.is-two-cols { grid-template-columns: 1fr 1fr; }
@@ -195,45 +196,51 @@ const SHEET_CSS = `
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  font-size: 12px;
+  font-size: 13px;
 }
-.practice-sheet-table col.idx { width: 8%; }
-.practice-sheet-table col.prompt { width: 42%; }
-.practice-sheet-table col.answer { width: 42%; }
+.practice-sheet-table col.idx { width: 6%; }
+.practice-sheet-table col.prompt { width: 24%; }
+.practice-sheet-table col.answer { width: 62%; }
 .practice-sheet-table col.check { width: 8%; }
+.practice-sheet-table.is-zh-prompt col.prompt { width: 62%; }
+.practice-sheet-table.is-zh-prompt col.answer { width: 24%; }
 .practice-sheet-table th,
 .practice-sheet-table td {
-  border: 1px solid #fdba8c;
-  padding: 10px 8px;
+  border: 1px solid #dce5ef;
+  padding: 8px 8px;
   vertical-align: middle;
-  line-height: 1.45;
-  height: auto;
-  overflow: visible;
+  line-height: 1.5;
+  height: 38px;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .practice-sheet-table thead th {
-  background: #ffedd5;
+  background: #f4f9ff;
   font-weight: 650;
-  color: #111;
+  color: #1f2d3d;
 }
 .practice-sheet-table .is-center { text-align: center; }
-.practice-sheet-table .is-muted { color: rgba(0, 0, 0, 0.55); }
+.practice-sheet-table .is-muted { color: #5f6f82; }
 .practice-sheet-table .prompt-text {
   display: block;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
-  line-height: 1.45;
-  font-weight: 560;
+  line-height: 1.5;
+  font-weight: 500;
 }
 .practice-sheet-footer {
-  flex: 0 0 auto;
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  text-align: right;
-  font-size: 11px;
+  position: absolute;
+  left: 44px;
+  right: 44px;
+  bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #dce5ef;
+  padding-top: 9px;
+  font-size: 10px;
   line-height: 1.45;
-  color: rgba(0, 0, 0, 0.58);
+  color: #5f6f82;
 }
 `
 
@@ -241,72 +248,37 @@ const pdfStyles = StyleSheet.create({
   page: {
     fontFamily: FONT_FAMILY,
     fontSize: 10,
-    color: '#111111',
-    paddingTop: 18,
-    paddingBottom: 18,
-    paddingHorizontal: 18,
+    color: '#1f2d3d',
+    paddingTop: 54,
+    paddingBottom: 48,
+    paddingHorizontal: 34,
   },
   watermark: {
     position: 'absolute',
-    top: '44%',
+    top: '43%',
     left: '13%',
     width: '74%',
     textAlign: 'center',
     transform: 'rotate(-28deg)',
-    fontSize: 34,
+    fontSize: 36,
     fontWeight: 700,
-    color: '#f4ede6',
+    color: '#eaf4ff',
   },
   header: {
+    position: 'absolute',
+    top: 18,
+    left: 34,
+    right: 34,
+    height: 25,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingBottom: 10,
-    marginBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#d4d4d8',
+    borderBottomWidth: 0.7,
+    borderBottomColor: '#dce5ef',
+    paddingBottom: 7,
   },
-  headerSide: {
-    width: '22%',
-  },
-  brand: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logo: {
-    width: 18,
-    height: 18,
-    objectFit: 'contain',
-  },
-  brandText: {
-    marginLeft: 5,
-    fontSize: 7.5,
-    fontWeight: 700,
-    color: '#57534e',
-  },
-  headerCenter: {
-    width: '56%',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-  },
-  title: {
-    fontSize: 13,
-    fontWeight: 700,
-    textAlign: 'center',
-    lineHeight: 1.4,
-  },
-  hint: {
-    marginTop: 4,
-    fontSize: 9,
-    color: '#52525b',
-    textAlign: 'center',
-    lineHeight: 1.4,
-  },
-  date: {
-    fontSize: 9,
-    color: '#52525b',
-    textAlign: 'right',
-    lineHeight: 1.4,
-  },
+  logo: { width: 20, height: 20, objectFit: 'contain' },
+  brand: { marginLeft: 7, fontSize: 8.5, fontWeight: 700, color: '#1f2d3d' },
+  headerTitle: { flexGrow: 1, textAlign: 'right', fontSize: 8.5, color: '#5f6f82' },
   body: {
     flexGrow: 1,
   },
@@ -323,11 +295,11 @@ const pdfStyles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    minHeight: 24,
+    height: 28,
   },
   // 只画右/下边，首行补上边、首列补左边，避免相邻格子双边框叠粗。
   cell: {
-    borderColor: '#fdba8c',
+    borderColor: '#dce5ef',
     borderRightWidth: 1,
     borderBottomWidth: 1,
     paddingVertical: 7,
@@ -337,15 +309,17 @@ const pdfStyles = StyleSheet.create({
   cellTop: { borderTopWidth: 1 },
   cellLeft: { borderLeftWidth: 1 },
   th: {
-    backgroundColor: '#ffedd5',
+    backgroundColor: '#f4f9ff',
   },
   td: {
     backgroundColor: '#ffffff',
   },
-  idx: { width: '10%', alignItems: 'center' },
-  prompt: { width: '42%' },
-  answer: { width: '38%' },
-  check: { width: '10%', alignItems: 'center' },
+  idx: { width: '6%', alignItems: 'center' },
+  prompt: { width: '24%', alignItems: 'center' },
+  promptWide: { width: '62%' },
+  answer: { width: '62%' },
+  answerNarrow: { width: '24%', alignItems: 'center' },
+  check: { width: '8%', alignItems: 'center' },
   // NotoSansSC 不含 □，用边框画勾选框，避免 PDF 落成乱码/i。
   checkbox: {
     width: 10,
@@ -354,27 +328,35 @@ const pdfStyles = StyleSheet.create({
     borderColor: '#71717a',
   },
   cellText: {
-    fontSize: 10,
-    lineHeight: 1.35,
+    fontSize: 11,
+    lineHeight: 1.45,
   },
   cellTextMuted: {
-    fontSize: 10,
-    lineHeight: 1.35,
-    color: '#71717a',
+    fontSize: 11,
+    lineHeight: 1.45,
+    color: '#5f6f82',
   },
   cellTextStrong: {
-    fontSize: 10,
-    lineHeight: 1.35,
+    fontSize: 11,
+    lineHeight: 1.45,
     fontWeight: 700,
   },
+  centerText: {
+    textAlign: 'center',
+    width: '100%',
+  },
   footer: {
-    marginTop: 10,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#e4e4e7',
-    fontSize: 9,
-    color: '#71717a',
-    textAlign: 'right',
+    position: 'absolute',
+    bottom: 18,
+    left: 34,
+    right: 34,
+    paddingTop: 7,
+    borderTopWidth: 0.7,
+    borderTopColor: '#dce5ef',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    fontSize: 8,
+    color: '#5f6f82',
   },
 })
 
@@ -394,6 +376,7 @@ export type PracticeSheetPdfInput = {
   modeTitle: string
   hint: string
   dateValue: string
+  materialLabel: string
   labels: PracticeSheetPdfLabels
   pageNumber: (current: number, total: number) => string
 }
@@ -419,15 +402,20 @@ function PracticeSheetPdfTable({
   rowsPerColumn: number
   labels: PracticeSheetPdfLabels
 }) {
-  const header = promptHeaderFor(mode, columns, tableIndex, labels)
+  const header = promptHeaderFor(mode, labels)
+  const chinesePrompt = mode === 'zh-to-en'
   const emptyRows = Math.max(0, rowsPerColumn - tableItems.length)
   const cellStyle = (isHeader: boolean, isFirstRow: boolean, colIndex: number) => [
     pdfStyles.cell,
     isHeader ? pdfStyles.th : pdfStyles.td,
     isFirstRow ? pdfStyles.cellTop : undefined,
     colIndex === 0 ? pdfStyles.cellLeft : undefined,
-    colIndex === 0 ? pdfStyles.idx : colIndex === 1 ? pdfStyles.prompt : colIndex === 2 ? pdfStyles.answer : pdfStyles.check,
+    colIndex === 0 ? pdfStyles.idx : colIndex === 1 ? (chinesePrompt ? pdfStyles.promptWide : pdfStyles.prompt) : colIndex === 2 ? (chinesePrompt ? pdfStyles.answerNarrow : pdfStyles.answer) : pdfStyles.check,
   ]
+  const promptTextStyle = chinesePrompt ? pdfStyles.cellText : [pdfStyles.cellText, pdfStyles.centerText]
+  const promptHeaderStyle = chinesePrompt ? pdfStyles.cellTextStrong : [pdfStyles.cellTextStrong, pdfStyles.centerText]
+  const answerTextStyle = chinesePrompt ? [pdfStyles.cellText, pdfStyles.centerText] : pdfStyles.cellText
+  const answerHeaderStyle = chinesePrompt ? [pdfStyles.cellTextStrong, pdfStyles.centerText] : pdfStyles.cellTextStrong
 
   return (
     <View style={[pdfStyles.col, columns === 2 && tableIndex === 0 ? pdfStyles.colGap : undefined]}>
@@ -436,10 +424,10 @@ function PracticeSheetPdfTable({
           <Text style={pdfStyles.cellTextStrong}>#</Text>
         </View>
         <View style={cellStyle(true, true, 1)}>
-          <Text style={pdfStyles.cellTextStrong}>{header}</Text>
+          <Text style={promptHeaderStyle}>{header}</Text>
         </View>
         <View style={cellStyle(true, true, 2)}>
-          <Text style={pdfStyles.cellTextStrong}>{labels.answer}</Text>
+          <Text style={answerHeaderStyle}>{labels.answer}</Text>
         </View>
         <View style={cellStyle(true, true, 3)}>
           <View style={pdfStyles.checkbox} />
@@ -449,17 +437,18 @@ function PracticeSheetPdfTable({
       {tableItems.map((item, index) => {
         const absoluteIndex = pageIndex * itemsPerPage + (tableIndex === 0 ? index : splitAt + index)
         const { english } = itemTexts(item)
-        const prompt = promptFor(item, mode, columns, tableIndex) || english
+        const prompt = promptFor(item, mode, columns) || english
+        const answer = answerFor(item, mode, columns)
         return (
           <View key={item.id} style={pdfStyles.row} wrap={false}>
             <View style={cellStyle(false, false, 0)}>
               <Text style={pdfStyles.cellTextMuted}>{absoluteIndex + 1}</Text>
             </View>
             <View style={cellStyle(false, false, 1)}>
-              <Text style={pdfStyles.cellText}>{prompt}</Text>
+              <Text style={promptTextStyle}>{prompt}</Text>
             </View>
             <View style={cellStyle(false, false, 2)}>
-              <Text style={pdfStyles.cellText}> </Text>
+              <Text style={answerTextStyle}>{answer || ' '}</Text>
             </View>
             <View style={cellStyle(false, false, 3)}>
               <View style={pdfStyles.checkbox} />
@@ -488,6 +477,7 @@ function PracticeSheetPdfDocument({
   modeTitle,
   hint,
   dateValue,
+  materialLabel,
   labels,
   pageNumber,
   logoUrl,
@@ -497,26 +487,18 @@ function PracticeSheetPdfDocument({
   const rowsPerColumn = columns === 2 ? Math.ceil(itemsPerPage / 2) : itemsPerPage
 
   return (
-    <Document>
+    <Document title={`${notebookName} · ${modeTitle}`} author="漫语町 · ManYuDing" subject={hint}>
       {pages.map((pageItems, pageIndex) => {
         const splitAt = columns === 2 ? Math.ceil(pageItems.length / 2) : pageItems.length
         const columnGroups = splitColumns(pageItems, columns)
         return (
           <Page key={pageIndex} size="A4" style={pdfStyles.page}>
+            <Text style={pdfStyles.watermark}>漫语町 · ManYuDing</Text>
             <View style={pdfStyles.header}>
-              <View style={[pdfStyles.headerSide, pdfStyles.brand]}>
-                <Image style={pdfStyles.logo} src={logoUrl} />
-                <Text style={pdfStyles.brandText}>漫语町</Text>
-              </View>
-              <View style={pdfStyles.headerCenter}>
-                <Text style={pdfStyles.title}>{notebookName} · {modeTitle}</Text>
-                <Text style={pdfStyles.hint}>{hint}</Text>
-              </View>
-              <View style={pdfStyles.headerSide}>
-                <Text style={pdfStyles.date}>{labels.date} {dateValue}</Text>
-              </View>
+              <Image style={pdfStyles.logo} src={logoUrl} />
+              <Text style={pdfStyles.brand}>漫语町 · ManYuDing</Text>
+              <Text style={pdfStyles.headerTitle}>{notebookName}</Text>
             </View>
-
             <View style={[pdfStyles.body, columns === 2 ? pdfStyles.twoCols : undefined]}>
               {columnGroups.map((tableItems, tableIndex) => (
                 <PracticeSheetPdfTable
@@ -534,8 +516,10 @@ function PracticeSheetPdfDocument({
               ))}
             </View>
 
-            <Text fixed style={pdfStyles.watermark}>漫语町 · ManYuDing</Text>
-            <Text style={pdfStyles.footer}>{pageNumber(pageIndex + 1, pages.length)}</Text>
+            <View style={pdfStyles.footer}>
+              <Text>{dateValue} · {materialLabel}</Text>
+              <Text>{pageNumber(pageIndex + 1, pages.length)}</Text>
+            </View>
           </Page>
         )
       })}
@@ -560,6 +544,7 @@ export const PracticeSheetPage = forwardRef<HTMLElement, {
   hint: string
   dateLabel: string
   dateValue: string
+  materialLabel: string
   onDateChange: (value: string) => void
   pageNumber: string
   labels: {
@@ -576,10 +561,8 @@ export const PracticeSheetPage = forwardRef<HTMLElement, {
   mode,
   notebookName,
   modeTitle,
-  hint,
-  dateLabel,
   dateValue,
-  onDateChange,
+  materialLabel,
   pageNumber,
   labels,
 }, ref) {
@@ -593,30 +576,22 @@ export const PracticeSheetPage = forwardRef<HTMLElement, {
       ref={ref}
       className="practice-sheet"
       data-practice-sheet-page={pageIndex}
+      aria-label={`${notebookName} · ${modeTitle}`}
     >
       <style>{SHEET_CSS}</style>
       <div className="practice-sheet-watermark" aria-hidden>漫语町 · ManYuDing</div>
       <header className="practice-sheet-header">
-        <span className="practice-sheet-brand"><img src="/logo.png" alt="" />漫语町</span>
-        <div className="practice-sheet-title-wrap">
-          <h2 className="practice-sheet-title">{notebookName} · {modeTitle}</h2>
-          <p className="practice-sheet-hint">{hint}</p>
-        </div>
-        <label className="practice-sheet-date">
-          <span>{dateLabel}</span>
-          <input
-            type="date"
-            value={dateValue}
-            onChange={(event) => onDateChange(event.target.value)}
-          />
-        </label>
+        <img className="practice-sheet-logo" src="/logo.png" alt="" />
+        <span className="practice-sheet-brand">漫语町 · ManYuDing</span>
+        <span className="practice-sheet-head-title">{notebookName}</span>
       </header>
 
       <div className={columns === 2 ? 'practice-sheet-body is-two-cols' : 'practice-sheet-body'}>
         {columnGroups.map((tableItems, tableIndex) => {
           const emptyRows = Math.max(0, rowsPerColumn - tableItems.length)
+          const chinesePrompt = mode === 'zh-to-en'
           return (
-            <table key={tableIndex} className="practice-sheet-table">
+            <table key={tableIndex} className={chinesePrompt ? 'practice-sheet-table is-zh-prompt' : 'practice-sheet-table'}>
               <colgroup>
                 <col className="idx" />
                 <col className="prompt" />
@@ -626,23 +601,24 @@ export const PracticeSheetPage = forwardRef<HTMLElement, {
               <thead>
                 <tr>
                   <th className="is-center">#</th>
-                  <th>{promptHeaderFor(mode, columns, tableIndex, labels)}</th>
-                  <th>{labels.answer}</th>
+                  <th className={chinesePrompt ? undefined : 'is-center'}>{promptHeaderFor(mode, labels)}</th>
+                  <th className={chinesePrompt ? 'is-center' : undefined}>{labels.answer}</th>
                   <th className="is-center">□</th>
                 </tr>
               </thead>
               <tbody>
                 {tableItems.map((item, index) => {
                   const absoluteIndex = pageIndex * itemsPerPage + (tableIndex === 0 ? index : splitAt + index)
-                  const prompt = promptFor(item, mode, columns, tableIndex)
+                  const prompt = promptFor(item, mode, columns)
                   const { english } = itemTexts(item)
+                  const answer = answerFor(item, mode, columns)
                   return (
                     <tr key={item.id}>
                       <td className="is-center is-muted">{absoluteIndex + 1}</td>
-                      <td>
+                      <td className={chinesePrompt ? undefined : 'is-center'}>
                         <span className="prompt-text">{prompt || english}</span>
                       </td>
-                      <td />
+                      <td className={chinesePrompt ? 'is-center' : undefined}>{answer ? <span className="prompt-text">{answer}</span> : null}</td>
                       <td className="is-center is-muted">□</td>
                     </tr>
                   )
@@ -661,7 +637,7 @@ export const PracticeSheetPage = forwardRef<HTMLElement, {
         })}
       </div>
 
-      <footer className="practice-sheet-footer">{pageNumber}</footer>
+      <footer className="practice-sheet-footer"><span>{dateValue} · {materialLabel}</span><span>{pageNumber}</span></footer>
     </article>
   )
 })
@@ -686,7 +662,7 @@ export function PracticeSheetPreviewFrame({
   }), [scale])
 
   return (
-    <div className="mx-auto overflow-hidden rounded-xl bg-white shadow-[0_8px_22px_rgba(15,23,42,0.08)]" style={frameStyle}>
+    <div className="mx-auto overflow-hidden bg-white" style={frameStyle}>
       <div style={stageStyle}>{children}</div>
     </div>
   )

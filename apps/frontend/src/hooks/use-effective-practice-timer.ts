@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { dailyPracticeApi } from '@/features/practice/api/english-practice-api'
-import { usePracticeActivityStore, type PracticeActivityScope } from '@/stores/practice-activity.store'
+import { registerPracticeActivityCommitter, usePracticeActivityStore, type PracticeActivityScope } from '@/stores/practice-activity.store'
 import { localDateKey } from '@/lib/date/calendar-date'
 
 const IDLE_PAUSE_MS = 60_000
@@ -57,6 +57,20 @@ export function useEffectivePracticeTimer({
   const touch = useCallback(() => {
     lastInteractionAt.current = Date.now()
   }, [])
+
+  useEffect(() => {
+    if (!enabled || !sourceId) return
+    return registerPracticeActivityCommitter(() => {
+      const now = Date.now()
+      const elapsed = Math.floor((now - lastTickAt.current) / 1000)
+      lastTickAt.current = now
+      const activeSourceId = sourceIdRef.current
+      if (!activeSourceId || elapsed <= 0) return
+      if (document.visibilityState === 'visible' && now - lastInteractionAt.current <= idlePauseMs) {
+        addActiveSeconds({ date: localDateKey(), sourceId: activeSourceId, scope: scopeRef.current, seconds: elapsed })
+      }
+    })
+  }, [addActiveSeconds, enabled, idlePauseMs, sourceId])
 
   useEffect(() => {
     if (!enabled || !sourceId) return

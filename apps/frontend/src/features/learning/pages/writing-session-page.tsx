@@ -295,9 +295,15 @@ function WritingPreparePage({
 
           <Tabs defaultValue={visibleVocabularies.length > 0 ? 'vocab' : visibleChunks.length > 0 ? 'chunk' : 'pattern'} className="w-full" data-mobile-route-swipe>
             <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-              <TabsTrigger value="vocab" className="rounded-md text-xs">{t('learning.vocab')} ({visibleVocabularies.length})</TabsTrigger>
-              <TabsTrigger value="chunk" className="rounded-md text-xs">{t('learning.coreChunks')} ({visibleChunks.length})</TabsTrigger>
-              <TabsTrigger value="pattern" className="rounded-md text-xs">{t('learning.patterns')} ({visiblePatterns.length})</TabsTrigger>
+              <TabsTrigger value="vocab" className="gap-1.5 rounded-md text-xs">
+                <BookText className="size-3.5" /> {t('learning.vocab')} {visibleVocabularies.length}
+              </TabsTrigger>
+              <TabsTrigger value="chunk" className="gap-1.5 rounded-md text-xs">
+                <MessageSquareText className="size-3.5" /> {t('learning.coreChunks')} {visibleChunks.length}
+              </TabsTrigger>
+              <TabsTrigger value="pattern" className="gap-1.5 rounded-md text-xs">
+                <Search className="size-3.5" /> {t('learning.patterns')} {visiblePatterns.length}
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow>
               <WritingKnowledgeList
@@ -385,7 +391,7 @@ function WritingKnowledgeList({
   return (
     <div className="space-y-2">
       {items.map((item) => (
-        <Card key={item.id} className={cn('border-0 bg-muted/30 shadow-none transition-colors', expandedId === item.id && 'bg-primary/[0.06]')}>
+        <Card key={item.id} className={cn('border-0 bg-muted/30 shadow-none ring-0 transition-colors dark:ring-0', expandedId === item.id && 'bg-primary/[0.06]')}>
           <CardContent className="p-0">
             <button
               type="button"
@@ -941,10 +947,10 @@ function TranslationEditor({
 
           <section className="flex min-h-0 flex-col border-t border-border/70 bg-background shadow-[0_-8px_20px_rgba(0,0,0,0.04)]" aria-label={answerLanguage}>
             <div data-writing-translation-nav className="mx-auto flex w-full max-w-3xl shrink-0 items-center gap-2 border-b border-border/50 px-4 py-2">
-              <Button variant="outline" size="sm" className="h-8 px-2.5" disabled={activeIndex === 0} onClick={() => selectSegment(activeIndex - 1)}><ChevronLeft className="size-4" />{scope === 'article' ? t('learning.prevParagraph') : t('learning.prevSentence')}</Button>
+              <Button variant="ghost" size="sm" className="h-8 border-0 bg-primary/10 px-2.5 text-primary shadow-none hover:bg-primary/16 hover:text-primary" disabled={activeIndex === 0} onClick={() => selectSegment(activeIndex - 1)}><ChevronLeft className="size-4" />{scope === 'article' ? t('learning.prevParagraph') : t('learning.prevSentence')}</Button>
               <span className="min-w-0 flex-1 truncate text-center text-xs tabular-nums text-muted-foreground">{t('learning.completedCount', { count: answeredCount, total: segments.length })}</span>
               <div className="flex shrink-0 items-center gap-1.5">
-                {activeIndex < segments.length - 1 ? <Button variant="outline" size="sm" className="h-8 px-2.5" onClick={() => selectSegment(activeIndex + 1)}>{scope === 'article' ? t('learning.nextParagraph') : t('learning.nextSentence')}<ChevronRight className="size-4" /></Button> : <Button size="sm" className="h-8 px-3" onClick={() => save(true)} disabled={saving || !session.sessionId || answeredCount !== segments.length || !segments.length}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{t('learning.submitShort')}</Button>}
+                {activeIndex < segments.length - 1 ? <Button variant="ghost" size="sm" className="h-8 border-0 bg-primary/10 px-2.5 text-primary shadow-none hover:bg-primary/16 hover:text-primary" onClick={() => selectSegment(activeIndex + 1)}>{scope === 'article' ? t('learning.nextParagraph') : t('learning.nextSentence')}<ChevronRight className="size-4" /></Button> : <Button size="sm" className="h-8 px-3" onClick={() => save(true)} disabled={saving || !session.sessionId || answeredCount !== segments.length || !segments.length}>{saving ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}{t('learning.submitShort')}</Button>}
                 <Button variant="ghost" size="icon" className="size-8" onClick={() => setListOpen(true)} title={scope === 'article' ? t('learning.segmentList') : t('learning.sentenceList')}><ListMusic className="size-4" /></Button>
               </div>
             </div>
@@ -970,7 +976,7 @@ function TranslationEditor({
       </Drawer>
 
       <Drawer open={listOpen} onOpenChange={setListOpen}>
-        <DrawerContent className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]"><div className="flex items-center justify-between px-5 py-3"><DrawerTitle className="text-lg">{scope === 'article' ? t('learning.segmentList') : t('learning.sentenceList')}</DrawerTitle><button type="button" onClick={() => setListOpen(false)} className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground"><ChevronDown className="size-5" /></button></div><div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8"><div className="space-y-1">{segments.map((segment, index) => <button key={segment.id} type="button" onClick={() => selectSegment(index)} className={cn('flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors', activeIndex === index ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted')}><span className={cn('flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold', activeIndex === index ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>{index + 1}</span><p className="line-clamp-2 min-w-0 flex-1 text-sm leading-5">{segment.source}</p>{(answers[segment.id] ?? '').trim() && <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />}</button>)}</div></div></DrawerContent>
+        <DrawerContent showHandle={false} className="h-[100dvh] rounded-none pt-safe !z-[10001]" overlayClassName="!z-[10001]"><div className="flex items-center justify-between px-5 pb-2 pt-1"><DrawerTitle className="text-lg">{scope === 'article' ? t('learning.segmentList') : t('learning.sentenceList')}</DrawerTitle><button type="button" onClick={() => setListOpen(false)} className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground"><ChevronDown className="size-5" /></button></div><div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8"><div className="space-y-1">{segments.map((segment, index) => <button key={segment.id} type="button" onClick={() => selectSegment(index)} className={cn('flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors', activeIndex === index ? 'bg-primary/10 text-primary' : 'text-foreground hover:bg-muted')}><span className={cn('flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold', activeIndex === index ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>{index + 1}</span><p className="line-clamp-2 min-w-0 flex-1 text-sm leading-5">{segment.source}</p>{(answers[segment.id] ?? '').trim() && <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />}</button>)}</div></div></DrawerContent>
       </Drawer>
     </div>
   )
@@ -1349,7 +1355,7 @@ function DialogueEditor({
           ) : (
             <>
               {turns.length > 1 && (
-                <Button type="button" size="lg" variant="outline" onClick={() => goToTurn(currentIndex - 1)} disabled={saving || currentIndex === 0} className="shrink-0 gap-1.5 rounded-full px-4">
+                <Button type="button" size="lg" variant="ghost" onClick={() => goToTurn(currentIndex - 1)} disabled={saving || currentIndex === 0} className="shrink-0 gap-1.5 rounded-full border-0 bg-primary/10 px-4 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
                   <ChevronLeft className="size-4" />{t('learning.previousTurn', { defaultValue: '上一轮' })}
                 </Button>
               )}
@@ -1357,7 +1363,7 @@ function DialogueEditor({
                 {saving ? <Loader2 className="size-4 animate-spin" /> : <BadgeCheck className="size-4" />}{t('learning.submitFeedback')}
               </Button>
               {turns.length > 1 && (
-                <Button type="button" size="lg" variant="outline" onClick={() => goToTurn(currentIndex + 1)} disabled={saving || currentIndex === turns.length - 1} className="shrink-0 gap-1.5 rounded-full px-4">
+                <Button type="button" size="lg" variant="ghost" onClick={() => goToTurn(currentIndex + 1)} disabled={saving || currentIndex === turns.length - 1} className="shrink-0 gap-1.5 rounded-full border-0 bg-primary/10 px-4 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
                   {t('learning.nextTurn', { defaultValue: '下一轮' })}<ChevronRight className="size-4" />
                 </Button>
               )}

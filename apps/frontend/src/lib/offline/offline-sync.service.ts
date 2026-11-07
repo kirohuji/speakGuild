@@ -8,7 +8,7 @@ import { learningContentRepository } from './learning-content.repository'
 import { learningPackService } from './learning-pack.service'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { upsertWarmupRecordEntries } from './warmup-record-index'
-import { pullRemoteDailyProgress, restoreRemoteDailyPracticeRun } from './daily-practice.repository'
+import { dailyPracticeRepository, pullRemoteDailyProgress, restoreRemoteDailyPracticeRun } from './daily-practice.repository'
 import { toIsoString, errorMessage, resolveSessionId } from './utils'
 import { createLogger } from './logger'
 
@@ -669,6 +669,9 @@ export const offlineSyncService = {
     const logId = syncStore.begin('开始同步')
     const running = (async (): Promise<OfflineSyncResult> => {
       try {
+        if (!outboxTypes || outboxTypes.has('daily_practice')) {
+          await dailyPracticeRepository.requeueUnsyncedSnapshots()
+        }
         const push = await this.flush(outboxTypes)
         if (push.failed > 0) {
           const detail = { push, pull: null, refreshedPacks: [] as string[] }
@@ -680,9 +683,6 @@ export const offlineSyncService = {
             error: `${push.failed} 条待同步操作上传失败，请展开存储管理查看具体队列项。`,
           })
           return detail
-        }
-        if (push.synced > 0 && !options?.quiet) {
-          toast.success(`已同步 ${push.synced} 条离线数据`)
         }
         const pull = await this.pull(userId, pullTypes)
 
@@ -697,10 +697,6 @@ export const offlineSyncService = {
         const refreshedPacks = (!options?.scope || options.scope === 'all')
           ? await this.refreshContentUpdates()
           : []
-        if (refreshedPacks.length > 0 && !options?.quiet) {
-          toast.success(`已更新 ${refreshedPacks.length} 个离线学习包`)
-        }
-
         const result = { push, pull, refreshedPacks }
         useOfflineSyncStore.getState().finish(logId, {
           status: 'success',

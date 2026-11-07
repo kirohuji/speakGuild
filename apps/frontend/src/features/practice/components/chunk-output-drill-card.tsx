@@ -353,7 +353,7 @@ export function ChunkOutputDrillCard({
       {!isReview && (
       <div className="space-y-2">
         {status === 'passed' ? (
-          <Button className="min-h-9 w-full rounded-xl gap-1.5" size="sm" variant="outline" onClick={retryCurrent}>
+          <Button className="min-h-9 w-full gap-1.5 rounded-xl border-0 bg-foreground/10 text-foreground shadow-none hover:bg-foreground/15 hover:text-foreground" size="sm" variant="ghost" onClick={retryCurrent}>
             <Repeat2 className="size-3.5" />
             {t('practiceSession.warmupDrill.retryCurrent')}
           </Button>

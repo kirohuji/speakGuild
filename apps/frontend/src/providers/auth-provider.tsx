@@ -11,7 +11,7 @@ import { cancelLearningReminders, refreshLearningBadgeFromTodayRun, registerLear
 import { isNative, revenueCat } from '@/lib/native'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { useSearchStore } from '@/stores/search.store'
-import { usePracticeActivityStore } from '@/stores/practice-activity.store'
+import { flushPracticeActivityRecords, usePracticeActivityStore } from '@/stores/practice-activity.store'
 import { activateAccountLearningPreferences } from '@/stores/preferences.store'
 import { useThemePresetStore } from '@/stores/theme-preset.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
@@ -161,7 +161,7 @@ async function clearUserScopedClientData(options: { preservePersistentData?: boo
   }
   useOfflineSyncStore.getState().reset()
   useSearchStore.getState().clearHistory()
-  usePracticeActivityStore.getState().reset()
+  if (!options.preservePersistentData) usePracticeActivityStore.getState().reset()
   useThemePresetStore.getState().reset()
   activateAccountLearningPreferences(null)
   await cancelLearningReminders().catch((error) => {
@@ -175,6 +175,11 @@ async function prepareOfflineDataForUser(userId: string) {
   if (ownerId && ownerId !== userId) await clearUserScopedClientData()
   activateAccountLearningPreferences(userId, { migrateCurrentDeviceValues: ownerId === userId })
   setOfflineDataOwner(userId)
+  if (!ownerId || ownerId === userId) {
+    await flushPracticeActivityRecords().catch((error) => {
+      console.warn('[auth] flush practice activity failed:', error)
+    })
+  }
   // Foreground sync is deliberately throttled and may have already run for a
   // previous account. Rebuild native notifications immediately for this one.
   void rescheduleLearningReminder().catch((error) => {
@@ -384,6 +389,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // User-scoped local storage is removed on logout. Do not make logout a
     // destructive path for an interrupted Today run or any queued practice data.
     if (session?.user.id && !managementRoute) {
+      // 答题入队是异步的。先等这条链路写完本地事实，再把未交付的历史补进队列并上传。
+      const { useDailyPracticeStore } = await import('@/stores/daily-practice.store')
+      await useDailyPracticeStore.getState().waitForPendingWrites()
+      await flushPracticeActivityRecords()
       const syncResult = await offlineSyncService.sync(session.user.id)
       if (syncResult.push.failed > 0) {
         throw new Error('练习数据尚未同步，请联网后再退出登录')

@@ -223,6 +223,22 @@ function stableJson(value: unknown): string {
   return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`).join(',')}}`
 }
 
+/** Stamp pack attribution while the live plan steps are still in memory. */
+function attributeWarmupRecords(steps: ScheduledDailyPracticeItem[], records: WarmupRecordEntry[]): WarmupRecordEntry[] {
+  const stepsById = new Map(steps.map((step) => [step.itemId, step]))
+  return records.map((record) => {
+    const step = stepsById.get(record.stepId)
+    if (!step) return record
+    return {
+      ...record,
+      packId: record.packId || step.packId,
+      packTitle: record.packTitle || step.packTitle,
+      displayLabel: record.displayLabel || step.displayLabel,
+      topicTitle: record.topicTitle || step.topicTitle,
+    }
+  })
+}
+
 function scoreRankForMerge(score?: string | null) {
   if (score === 'strong') return 3
   if (score === 'ok') return 2
@@ -483,45 +499,11 @@ function averageWarmupScore(records: WarmupRecordEntry[]): number | null {
     : null
 }
 
-/**
- * The run is the source of truth for a submitted answer. UI cards also write
- * a richer warmup record, but that write happens after an attempt callback and
- * may lose a race with logout. Build a recoverable display record directly
- * from the run whenever the richer record has not arrived yet.
- */
-function fallbackWarmupRecords(plan: DailyPracticePlan, run: StoredDailyPracticeRun): WarmupRecordEntry[] {
-  const attempted = new Set(run.attemptedItemIds)
-  const unresolved = new Set(run.unresolvedItemIds)
-  return plan.steps.flatMap((step) => {
-    if (!attempted.has(step.itemId)) return []
-    const initial = run.initialRecallResults[step.itemId]
-    const prompt = step.prompt ?? {}
-    const item = step.item ?? {}
-    const passed = !unresolved.has(step.itemId)
-    return [{
-      stepId: step.itemId,
-      stepType: step.type,
-      zh: prompt.zh ?? prompt.promptZh ?? prompt.en ?? step.headerContent ?? step.label,
-      answer: prompt.answer ?? prompt.suggestedAnswer ?? item.fullSentence ?? '',
-      userAnswer: '',
-      passed,
-      feedback: passed ? '' : '答错，待重练',
-      groupTitle: step.label,
-      displayLabel: step.displayLabel,
-      packId: step.packId,
-      packTitle: step.packTitle,
-      topicTitle: step.topicTitle,
-      score: initial?.score ?? (passed ? 'ok' : 'miss'),
-    } satisfies WarmupRecordEntry]
-  })
-}
-
-/** Build the one payload shape used for both partial snapshots and completion. */
 function createTodayRunSyncPayload(params: {
-  plan: DailyPracticePlan
   run: StoredDailyPracticeRun
   attempts: DailyPracticeAttempt[]
   records: WarmupRecordEntry[]
+  topic: { topicId: string; topicTitle: string } | null
   localWarmupRecordId?: string | null
   submissionStatus: SubmissionStatus
   stats: Record<string, unknown>
@@ -535,27 +517,23 @@ function createTodayRunSyncPayload(params: {
   const deltaMap = <T,>(map: Record<string, T | undefined>) => bootstrap
     ? map
     : Object.fromEntries(Object.entries(map).filter(([stepId]) => changedStepIds.has(stepId)))
-  // 真实作答优先：params.records 由 recordEntry 维护为「最新在前」，直接沿用
-  // 该顺序；fallback（run 派生的空 userAnswer 占位）只补缺失项，避免覆盖
-  // 真实作答顺序。这样后端 items 与前端展示顺序一致（最新在前）。
+  // 作答原文只来自已经落盘的热身记录，顺序沿用「最新在前」。
   const recordsByStepId = new Map<string, WarmupRecordEntry>()
-  for (const record of params.records) recordsByStepId.set(record.stepId, record)
-  for (const record of fallbackWarmupRecords(params.plan, params.run)) {
+  for (const record of params.records) {
     if (!recordsByStepId.has(record.stepId)) recordsByStepId.set(record.stepId, record)
   }
   const records = [...recordsByStepId.values()]
   const recordDelta = bootstrap ? records : records.filter((record) => changedStepIds.has(record.stepId))
-  const firstTopic = params.plan.topicStats.find((topic) => topic.scheduledTodayCount > 0) ?? params.plan.topicStats[0]
   const score = averageWarmupScore(records)
   return {
     run: {
-      id: params.plan.runId,
-      clientRunId: params.plan.runId,
-      date: params.plan.date,
-      mode: params.plan.mode,
-      scope: params.plan.scope,
-      packIds: params.plan.units.map((unit) => unit.id),
-      scheduledItemIds: params.plan.scheduledItemIds,
+      id: params.run.id,
+      clientRunId: params.run.id,
+      date: params.run.date,
+      mode: params.run.mode,
+      scope: params.run.scope,
+      packIds: params.run.packIds,
+      scheduledItemIds: params.run.scheduledItemIds,
       // Static plan metadata remains idempotent; mutable facts below are
       // event-derived deltas, never the full daily snapshot after bootstrap.
       completedItemIds: [],
@@ -573,9 +551,9 @@ function createTodayRunSyncPayload(params: {
       stats: params.stats,
     },
     attempts: params.attempts,
-    warmupRecord: recordDelta.length > 0 && firstTopic ? {
-      topicId: firstTopic.topicId,
-      topicTitle: firstTopic.topicTitle,
+    warmupRecord: recordDelta.length > 0 && params.topic ? {
+      topicId: params.topic.topicId,
+      topicTitle: params.topic.topicTitle,
       // 归属学习包：每条 item 已带 packId，取首条即可（同一记录通常同包）。
       packId: recordDelta[0]?.packId ?? null,
       items: recordDelta,
@@ -1352,78 +1330,91 @@ export const dailyPracticeRepository = {
   },
 
   /**
-   * Persist an in-progress Today run without marking it complete. This makes
-   * logout, reinstall, and cache rebuild recoverable even before the final
-   * practice record is generated.
+   * Write the answer text before anything tries to enqueue it. Attribution
+   * uses the live plan; after this returns, sync can rebuild the payload
+   * from disk alone.
    */
-  async syncRunSnapshot(plan: DailyPracticePlan, records: WarmupRecordEntry[] = [], localWarmupRecordId?: string | null) {
-    const run = await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', plan.runId)
-    if (!run) return
-    // A record must travel with the very same snapshot that preserves the
-    // answer.  Waiting for the Today page's render effect leaves a window in
-    // which sign-out can upload the run but clear the local display record.
-    const resolvedLocalWarmupRecordId = localWarmupRecordId ?? `today-warmup:${plan.runId}`
-    // Recovery re-enqueues (e.g. loadToday after a mode switch or the manual
-    // sync reload) pass no in-memory records.  The persisted warmup record
-    // holds the learner's real answers — including retry-round answers — and
-    // must travel with the snapshot.  Without this, the payload falls back to
-    // run-derived placeholders whose userAnswer is empty, and the next outbox
-    // flush would overwrite the server record with blank answers.
-    let resolvedRecords = records
-    if (resolvedRecords.length === 0) {
-      const persisted = await practiceRepository.getLocalWarmupRecord(resolvedLocalWarmupRecordId).catch(() => null)
-      resolvedRecords = Array.isArray(persisted?.items) ? (persisted as any).items : []
+  async persistTodayWarmup(plan: DailyPracticePlan, records: WarmupRecordEntry[], localWarmupRecordId?: string | null) {
+    if (!localWarmupRecordId || records.length === 0) return null
+    const topic = plan.topicStats.find((item) => item.scheduledTodayCount > 0) ?? plan.topicStats[0]
+    if (!topic) return null
+    const attributed = attributeWarmupRecords(plan.steps, records)
+    const existing = await practiceRepository.getLocalWarmupRecord(localWarmupRecordId).catch(() => null) as { items?: WarmupRecordEntry[] } | null
+    const existingItems = Array.isArray(existing?.items) ? existing.items : []
+    const incomingIds = new Set(attributed.map((item) => item.stepId))
+    const items = [...attributed, ...existingItems.filter((item) => !incomingIds.has(item.stepId))]
+    await practiceRepository.upsertLocalWarmupRecord({
+      id: localWarmupRecordId,
+      topicId: topic.topicId,
+      topicTitle: topic.topicTitle,
+      items,
+      syncStatus: 'pending',
+    })
+    return { topicId: topic.topicId, topicTitle: topic.topicTitle, items }
+  },
+
+  /**
+   * Put any local run with undelivered history back into the outbox.
+   * The answer text is already in the warmup row; this only rebuilds the queue.
+   */
+  async requeueUnsyncedSnapshots(): Promise<void> {
+    const [runs, attempts] = await Promise.all([
+      localDb.list<StoredDailyPracticeRun>('daily_practice_runs'),
+      localDb.list<DailyPracticeAttempt>('daily_practice_attempts'),
+    ])
+    for (const run of runs) {
+      if (!run?.id || run.id === ACTIVE_DAILY_PRACTICE_PACK_ID || !Array.isArray(run.attemptHistory)) continue
+      const delivered = new Set(run.incrementalSyncReady ? (run.syncedHistoryEventIds ?? []) : [])
+      const undelivered = run.attemptHistory.some((entry) => entry?.id && !delivered.has(entry.id))
+      const pendingAttempts = attempts.some((attempt) =>
+        attempt.runId === run.id && attempt.syncStatus !== 'synced' && attempt.applyStatus === 'applied')
+      if (!undelivered && !pendingAttempts) continue
+      await this.syncRunSnapshot(run.id)
     }
-    if (resolvedRecords.length === 0) {
-      // No real answers are available at all.  If a snapshot for this run is
-      // already pending, it carries the learner's produced records — never let
-      // an empty placeholder snapshot replace it (or clobber the local record
-      // via the upsert below).
+  },
+
+  /**
+   * Enqueue one in-progress Today run from the stored run and its warmup row.
+   */
+  async syncRunSnapshot(runId: string) {
+    const run = await localDb.get<StoredDailyPracticeRun>('daily_practice_runs', runId)
+    if (!run) return
+    const localWarmupRecordId = `today-warmup:${runId}`
+    const warmup = await practiceRepository.getLocalWarmupRecord(localWarmupRecordId).catch(() => null) as {
+      topicId?: string
+      topicTitle?: string
+      items?: WarmupRecordEntry[]
+    } | null
+    const records = Array.isArray(warmup?.items) ? warmup.items : []
+    if (records.length === 0) {
+      // 没有作答原文时，不要用空记录替换队列里已经带着答案的快照。
       const pending = await syncOutbox.listPending()
       const hasPendingSnapshot = pending.some((entry) =>
-        entry.entityType === 'daily_practice' && entry.entityId === plan.runId)
+        entry.entityType === 'daily_practice' && entry.entityId === runId)
       if (hasPendingSnapshot) return
     }
     const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
     const pendingAttempts = attempts.filter((attempt) =>
-      attempt.runId === plan.runId
+      attempt.runId === runId
       && attempt.syncStatus !== 'synced'
       && attempt.applyStatus === 'applied',
     )
-    // 无真实增量时跳过入队：恢复/hydrate 路径（未显式传入 records）只在存在
-    // 新的未同步作答、或本地 warmup 记录尚未同步时才重新入队，避免每次页面
-    // 挂载都凭空造一条 pending（同步按钮出现“假感叹号”）。作答路径（显式
-    // 传入 records）始终入队，不受影响；服务端恢复的旧 run（无本地 warmup
-    // 记录）也会照常入队以补全逐题记录。
-    if (records.length === 0) {
-      const persistedWarmup = await practiceRepository
-        .getLocalWarmupRecord(resolvedLocalWarmupRecordId)
-        .catch(() => null)
-      const warmupSynced = (persistedWarmup as { syncStatus?: string } | null)?.syncStatus === 'synced'
-      if (pendingAttempts.length === 0 && warmupSynced) {
-        return
-      }
-    }
     const payload = createTodayRunSyncPayload({
-      plan, run, attempts: pendingAttempts, records: resolvedRecords, localWarmupRecordId: resolvedLocalWarmupRecordId,
-      submissionStatus: run.submissionStatus, stats: run.stats ?? {},
+      run,
+      attempts: pendingAttempts,
+      records,
+      topic: warmup?.topicId ? { topicId: warmup.topicId, topicTitle: warmup.topicTitle ?? '' } : null,
+      localWarmupRecordId,
+      submissionStatus: run.submissionStatus,
+      stats: run.stats ?? {},
     })
-    if (payload.warmupRecord) {
-      await practiceRepository.upsertLocalWarmupRecord({
-        id: resolvedLocalWarmupRecordId,
-        topicId: payload.warmupRecord.topicId,
-        topicTitle: payload.warmupRecord.topicTitle,
-        items: payload.warmupRecord.items,
-        syncStatus: 'pending',
-      })
-    }
-    // Today runs have exactly one transport: the per-run outbox entry.  Do not
-    // also send a direct request here.  The former dual path could submit two
-    // snapshots concurrently, and logout could race either request with local
-    // cleanup.  `enqueue` coalesces every newer snapshot for this run.
+    const historyDelta = payload.run.attemptHistory ?? []
+    // 入队只看历史游标。首次上传时 incrementalSyncReady 为 false，historyDelta 就是完整历史。
+    if (pendingAttempts.length === 0 && historyDelta.length === 0) return
+    // 今日任务每个 run 只有一条队列记录。enqueue 会把同一条更新成最新快照。
     await syncOutbox.enqueue({
       entityType: 'daily_practice',
-      entityId: plan.runId,
+      entityId: runId,
       operation: 'update',
       payload,
     })
@@ -1435,8 +1426,17 @@ export const dailyPracticeRepository = {
     const attempts = await localDb.list<DailyPracticeAttempt>('daily_practice_attempts')
     const pending = attempts.filter((attempt) => attempt.syncStatus !== 'synced' && attempt.runId === plan.runId && attempt.applyStatus === 'applied')
     const completedIds = run.attemptedItemIds.filter((id) => !run.unresolvedItemIds.includes(id))
+    const savedWarmup = await this.persistTodayWarmup(plan, records, localWarmupRecordId)
+    const liveTopic = plan.topicStats.find((item) => item.scheduledTodayCount > 0) ?? plan.topicStats[0]
+    const topic = savedWarmup
+      ? { topicId: savedWarmup.topicId, topicTitle: savedWarmup.topicTitle }
+      : (liveTopic ? { topicId: liveTopic.topicId, topicTitle: liveTopic.topicTitle } : null)
     const payload = createTodayRunSyncPayload({
-      plan, run, attempts: pending, records, localWarmupRecordId,
+      run,
+      attempts: pending,
+      records: savedWarmup?.items ?? attributeWarmupRecords(plan.steps, records),
+      topic,
+      localWarmupRecordId,
       submissionStatus: 'synced',
       stats: {
         records: records.length,
@@ -1448,16 +1448,6 @@ export const dailyPracticeRepository = {
       await practiceRepository.markTodayActivity(completedIds.length || records.length || 1, plan.date, plan.runId)
       run = { ...run, activityMarked: true, updatedAt: new Date().toISOString() }
       await localDb.put('daily_practice_runs', run)
-    }
-    const firstTopic = plan.topicStats.find((topic) => topic.scheduledTodayCount > 0) ?? plan.topicStats[0]
-    if (localWarmupRecordId && records.length > 0 && firstTopic) {
-      await practiceRepository.upsertLocalWarmupRecord({
-        id: localWarmupRecordId,
-        topicId: firstTopic.topicId,
-        topicTitle: firstTopic.topicTitle,
-        items: records,
-        syncStatus: 'pending',
-      })
     }
 
     // Completion is an optimistic local state transition.  It shares the same

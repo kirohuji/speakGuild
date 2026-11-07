@@ -4,7 +4,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
   Lightbulb, CheckCircle2, ChevronRight,
-  BookText, Search, BookmarkPlus, History, Settings, ChevronDown,
+  BookText, MessageSquareText, Search, BookmarkPlus, History, Settings, ChevronDown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -1030,7 +1030,7 @@ export function PracticeSessionPage() {
                   </div>
                 )}
               </div>
-              <Button variant="outline" className="mt-4 min-h-11 w-full" size="default" onClick={() => setTeachingOpen(true)}>
+              <Button variant="secondary" className="mt-4 min-h-11 w-full border-0 shadow-none" size="default" onClick={() => setTeachingOpen(true)}>
                 <BookOpen className="size-4" />
                 {t('practiceVn.teaching')}
               </Button>
@@ -1072,9 +1072,15 @@ export function PracticeSessionPage() {
 
             <Tabs value={prepTab} onValueChange={handlePrepTabChange} className="w-full" data-mobile-route-swipe>
               <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-                <TabsTrigger value="vocab" className="rounded-md text-xs">{t('learning.vocab')} ({vocabTotal})</TabsTrigger>
-                <TabsTrigger value="chunk" className="rounded-md text-xs">{t('learning.coreChunks')} ({chunkTotal})</TabsTrigger>
-                <TabsTrigger value="pattern" className="rounded-md text-xs">{t('learning.patterns')} ({patternTotal})</TabsTrigger>
+                <TabsTrigger value="vocab" className="gap-1.5 rounded-md text-xs">
+                  <BookText className="size-3.5" /> {t('learning.vocab')} {vocabTotal}
+                </TabsTrigger>
+                <TabsTrigger value="chunk" className="gap-1.5 rounded-md text-xs">
+                  <MessageSquareText className="size-3.5" /> {t('learning.coreChunks')} {chunkTotal}
+                </TabsTrigger>
+                <TabsTrigger value="pattern" className="gap-1.5 rounded-md text-xs">
+                  <Search className="size-3.5" /> {t('learning.patterns')} {patternTotal}
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow>
@@ -1086,7 +1092,7 @@ export function PracticeSessionPage() {
                         <Card
                           key={v.id}
                           className={cn(
-                            'border-0 bg-muted/30 shadow-none transition-colors',
+                            'border-0 bg-muted/30 shadow-none ring-0 transition-colors dark:ring-0',
                             isExpanded && 'bg-primary/[0.06]',
                           )}
                         >
@@ -1177,7 +1183,7 @@ export function PracticeSessionPage() {
                       const absoluteIndex = projected ? index : (prepCollapsed ? (detail.sentencePatterns ?? []).indexOf(p) : patternPageItems.startIndex + index)
                       const isExpanded = expandedPatternIdx === absoluteIndex
                       return (
-                        <Card key={`${p.pattern}-${absoluteIndex}`} className={cn('border-0 bg-muted/30 shadow-none transition-colors', isExpanded && 'bg-primary/[0.06]')}>
+                        <Card key={`${p.pattern}-${absoluteIndex}`} className={cn('border-0 bg-muted/30 shadow-none ring-0 transition-colors dark:ring-0', isExpanded && 'bg-primary/[0.06]')}>
                           <CardContent className="p-0">
                             <button
                               type="button"

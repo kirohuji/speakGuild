@@ -107,7 +107,7 @@ export function SaveToNotebookDrawer({
     <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
       <DrawerContent
         overlayClassName="!z-[10001]"
-        className="!z-[10002] flex max-h-[86svh] flex-col rounded-t-[28px] border-border bg-background drawer-surface"
+        className="!z-[10002] flex max-h-[86svh] flex-col rounded-t-[28px] bg-background drawer-surface"
       >
         <DrawerHeader className="shrink-0 px-4 pb-2 pt-2 text-left">
           <DrawerTitle>{creating ? t('learningNotebooks.createNew') : t('learningNotebooks.saveTo')}</DrawerTitle>

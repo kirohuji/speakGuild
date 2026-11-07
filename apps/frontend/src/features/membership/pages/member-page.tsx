@@ -734,7 +734,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
 
       {/* 支付弹窗 */}
       <Dialog open={payOpen} onOpenChange={setPayOpen}>
-        <DialogContent className="max-h-[88vh] w-[calc(100%-2rem)] overflow-y-auto rounded-2xl border-border/70 p-5 shadow-xl sm:max-w-md sm:p-6">
+        <DialogContent className="max-h-[88vh] w-[calc(100%-2rem)] overflow-y-auto rounded-2xl p-5 shadow-xl sm:max-w-md sm:p-6">
           <DialogHeader className="pr-6 text-left">
             <div className="flex items-start gap-3">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">

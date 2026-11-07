@@ -497,13 +497,13 @@ function WordDetailDialog({
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-border/50 px-6 py-3 bg-muted/10">
-          <Button variant="outline" size="sm" onClick={onPrev} disabled={!hasPrev} className="gap-1.5">
+          <Button variant="ghost" size="sm" onClick={onPrev} disabled={!hasPrev} className="gap-1.5 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
             <ChevronLeft className="h-4 w-4" />{t('profile.prevWord')}
           </Button>
           <span className="text-xs text-muted-foreground">
             {t('profile.addedAt', { date: new Date(entry.addedAt).toLocaleDateString(undefined, { month: 'long', day: 'numeric' }) })}
           </span>
-          <Button variant="outline" size="sm" onClick={onNext} disabled={!hasNext} className="gap-1.5">
+          <Button variant="ghost" size="sm" onClick={onNext} disabled={!hasNext} className="gap-1.5 border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
             {t('profile.nextWord')}<ChevronRight className="h-4 w-4" />
           </Button>
         </div>

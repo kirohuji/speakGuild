@@ -171,7 +171,7 @@ export function LearningPackDownloadDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-border/70 bg-background drawer-surface">
+      <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] bg-background drawer-surface">
         <DrawerHeader className="shrink-0 px-4 pb-1 pt-2 text-left">
           <DrawerTitle className="flex items-center gap-2 text-base font-semibold">
             <ListChecks className="size-4 text-primary" />

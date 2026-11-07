@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft, ChevronLeft, ChevronRight, BookOpen, BookText, MessageSquareText,
-  Target,
+  Target, Download,
   BookmarkPlus, Search, ChevronDown,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -51,6 +51,9 @@ export function LearningUnitPage() {
   const loading = useLearningStore((s) => s.unitDetailLoading)
   const fetchUnitDetail = useLearningStore((s) => s.fetchUnitDetail)
   const fetchDownloadedPacks = useLearningStore((s) => s.fetchDownloadedPacks)
+  const isEnrolled = useLearningStore((s) => s.myUnits.some((item) => item.id === unitId))
+  const downloadUnitPack = useLearningStore((s) => s.downloadUnitPack)
+  const downloadTask = useLearningStore((s) => s.downloadTasks.find((task) => task.packId === unitId))
   // 重装同一学习包时，内容页必须重新以学习库为准计算“已收录”。
   const packRevision = useLearningStore((s) => {
     const pack = s.downloadedPacks.find((item) => item.packId === unitId)
@@ -383,8 +386,20 @@ export function LearningUnitPage() {
   if (!unit && !loading) return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
       <Target className="size-12 text-muted-foreground/40" />
-      <p className="text-muted-foreground">{t('learning.unitNotFound')}</p>
-      <Button variant="outline" asChild><Link to="/learning">{t('learning.backToPlan')}</Link></Button>
+      <p className="text-center text-muted-foreground">{isEnrolled ? t('learning.packNeedsDownload') : t('learning.unitNotFound')}</p>
+      {isEnrolled ? (
+        <Button
+          onClick={() => unitId && void downloadUnitPack(unitId)}
+          disabled={Boolean(downloadTask && downloadTask.status !== 'error' && downloadTask.status !== 'done')}
+        >
+          <Download className="size-4" />
+          {downloadTask && downloadTask.status !== 'error' && downloadTask.status !== 'done'
+            ? t('learning.downloading')
+            : t('learning.redownloadPack')}
+        </Button>
+      ) : (
+        <Button variant="outline" asChild><Link to="/learning">{t('learning.backToPlan')}</Link></Button>
+      )}
     </div>
   )
 
@@ -738,7 +753,7 @@ function PrepPager({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-7 px-2 text-xs"
+          className="h-7 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary"
           disabled={currentPage <= 1}
           onClick={() => onPageChange(currentPage - 1)}
         >
@@ -751,7 +766,7 @@ function PrepPager({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-7 px-2 text-xs"
+          className="h-7 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary"
           disabled={currentPage >= totalPages}
           onClick={() => onPageChange(currentPage + 1)}
         >
@@ -796,7 +811,7 @@ function VocabPrepCard({
   }
 
   return (
-    <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors')}>
+    <Card className={cn('border-0 bg-muted/30 shadow-none ring-0 transition-colors dark:ring-0')}>
       <CardContent className="p-0">
         <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle} {...rest}>
           <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400">
@@ -858,7 +873,7 @@ function ChunkPrepCard({
   }
 
   return (
-    <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors')}>
+    <Card className={cn('border-0 bg-muted/30 shadow-none ring-0 transition-colors dark:ring-0')}>
       <CardContent className="p-0">
         <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle}>
           <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -933,7 +948,7 @@ function PatternPrepCard({
   }
 
   return (
-    <Card className={cn('border-0 bg-muted/30 shadow-none transition-colors')}>
+    <Card className={cn('border-0 bg-muted/30 shadow-none ring-0 transition-colors dark:ring-0')}>
       <CardContent className="p-0">
         <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle}>
           <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
@@ -1000,7 +1015,7 @@ function PracticeTopicCard({
 }) {
   return (
     <Card
-      className="cursor-pointer border-0 bg-accent/[0.06] shadow-none transition-colors hover:bg-accent/[0.1]"
+      className="cursor-pointer border-0 bg-accent/[0.06] shadow-none ring-0 transition-colors hover:bg-accent/[0.1] dark:ring-0"
       onClick={onStart}
       {...rest}
     >

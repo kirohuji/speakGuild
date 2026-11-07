@@ -75,7 +75,7 @@ function NotebookRow({
     : notebook.name
   return (
     <div
-      className="group relative flex min-h-[88px] w-full items-center gap-4 rounded-2xl border border-border/60 bg-card/72 px-4 py-3 text-left transition-[transform,background-color] active:scale-[0.99]"
+      className="group relative flex min-h-[88px] w-full items-center gap-4 rounded-lg bg-muted/30 px-4 py-3 text-left transition-[transform,background-color] active:scale-[0.99]"
       {...(spotlight ? { 'data-spotlight': spotlight } : {})}
     >
       <button type="button" className="absolute inset-0 rounded-2xl" onClick={onOpen}>
@@ -268,7 +268,7 @@ export function LearningNotebooksPage() {
       )}
 
       <Drawer open={mode !== null} onOpenChange={(open) => !open && setMode(null)}>
-        <DrawerContent className="rounded-t-[28px] border-border drawer-surface">
+        <DrawerContent className="rounded-t-[28px] drawer-surface">
           {(mode === 'create' || mode === 'rename') && (
             <>
               <DrawerHeader className="text-left">

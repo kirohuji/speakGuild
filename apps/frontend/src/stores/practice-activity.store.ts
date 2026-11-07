@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { dailyPracticeApi } from '@/features/practice/api/english-practice-api'
 
 export type PracticeActivityScope = 'daily' | 'dialogue' | 'learning'
 
@@ -22,6 +23,27 @@ const MAX_ACTIVE_SECONDS_PER_SOURCE = 4 * 60 * 60
 
 function recordKey(date: string, sourceId: string) {
   return `${date}:${sourceId}`
+}
+
+const activityCommitters = new Set<() => void>()
+
+/** Let an open timer fold its not-yet-ticked seconds into the store before upload. */
+export function registerPracticeActivityCommitter(commit: () => void) {
+  activityCommitters.add(commit)
+  return () => { activityCommitters.delete(commit) }
+}
+
+/** Upload every locally accumulated source. The server keeps the max per source. */
+export async function flushPracticeActivityRecords(): Promise<void> {
+  for (const commit of activityCommitters) commit()
+  const records = Object.values(usePracticeActivityStore.getState().records).filter((record) => record.activeSeconds > 0)
+  await Promise.all(records.map((record) => dailyPracticeApi.recordActivity({
+    date: record.date,
+    sourceId: record.sourceId,
+    scope: record.scope,
+    activeSeconds: record.activeSeconds,
+    questionCount: 0,
+  })))
 }
 
 export const usePracticeActivityStore = create<PracticeActivityState>()(

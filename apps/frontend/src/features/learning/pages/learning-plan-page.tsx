@@ -103,7 +103,7 @@ export function LearningPlanPage() {
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-3">
         <div className="mb-3 flex items-center justify-between">
           <div />
-          <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45">
+          <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl">
             <LearningPackDownloadStatusButton onClick={() => setDownloadDrawerOpen(true)} embedded />
             {isMobile && (
               <>
@@ -137,7 +137,7 @@ export function LearningPlanPage() {
         />
 
         <Drawer open={recordsOpen} onOpenChange={setRecordsOpen}>
-          <DrawerContent className="flex h-[95vh] max-h-[95vh] flex-col rounded-t-[28px] border-border/70 bg-background drawer-surface">
+          <DrawerContent className="flex h-[95vh] max-h-[95vh] flex-col rounded-t-[28px] bg-background drawer-surface">
             <DrawerHeader className="px-4 pb-1 pt-2 text-left">
               <DrawerTitle className="text-base font-semibold">{t('profile.records')}</DrawerTitle>
             </DrawerHeader>

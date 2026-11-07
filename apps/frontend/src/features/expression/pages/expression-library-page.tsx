@@ -6,7 +6,7 @@ import {
   BookMarked, Search, Trash2, BookOpen,
   BookText, MessageSquareText, Headphones, Layers,
   RotateCcw, CheckCheck, ArrowRightFromLine,
-  ArrowLeft, CalendarDays, Check, CheckSquare, Download, Expand, FileText, Languages, Loader2, Minimize2, Plus, RefreshCw,
+  ArrowLeft, CalendarDays, Check, CheckSquare, Download, Expand, Loader2, Minimize2, Plus, RefreshCw, X,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -130,7 +130,7 @@ export function ExpressionLibraryPage() {
   const headerScrollIntentRef = useRef({ down: 0, up: 0 })
   const [headerCondensed, setHeaderCondensed] = useState(false)
   const exportItemsPerPage = practiceSheetItemsPerPage(exportColumns)
-  const exportThumbScale = isMobile ? 0.34 : 0.42
+  const exportThumbScale = isMobile ? 0.43 : 0.58
   const exportZoomScale = isMobile ? 0.72 : 0.92
   const displayExportItems = useMemo(() => {
     if (!shuffleExport) return exportItems
@@ -140,8 +140,6 @@ export function ExpressionLibraryPage() {
     { length: Math.max(1, Math.ceil(displayExportItems.length / exportItemsPerPage)) },
     (_, index) => displayExportItems.slice(index * exportItemsPerPage, (index + 1) * exportItemsPerPage),
   ), [displayExportItems, exportItemsPerPage])
-  const exportWordCount = useMemo(() => displayExportItems.filter((item) => item.type === 'word').length, [displayExportItems])
-
   // 学习本内容是二级页，移动端只保留返回入口，避免与列表操作争夺屏幕空间。
   useEffect(() => {
     if (isMobile) setBottomNavVisible(false)
@@ -556,6 +554,7 @@ export function ExpressionLibraryPage() {
         modeTitle,
         hint: t('expressionLib.practiceSheetHint'),
         dateValue: exportDate,
+        materialLabel: t('expressionLib.dictationMaterial'),
         labels: {
           bilingual: t('expressionLib.tableBilingual'),
           english: t('expressionLib.tableEnglish'),
@@ -638,7 +637,7 @@ export function ExpressionLibraryPage() {
 
     return (
       <Card key={displayKey} className={cn(
-        'border-0 bg-muted/30 shadow-none transition-colors',
+        'border-0 bg-muted/30 shadow-none ring-0 transition-colors dark:ring-0',
         isExpanded && 'bg-primary/[0.06]',
       )}>
         <CardContent className="p-0">
@@ -856,7 +855,7 @@ export function ExpressionLibraryPage() {
       }}
       components={{
         Header: () => (
-          <div className="mb-2 flex items-center justify-between px-0 pt-0">
+          <div className="mx-2 mb-2 flex items-center justify-between px-0 pt-0">
             <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
             <button type="button" onClick={() => openImmersivePlayer(visibleDialogItems, 0)} className={cn('flex h-9 touch-manipulation items-center gap-1.5 rounded-full bg-primary/10 px-3 text-xs font-medium transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', immersiveClassName)}>
               <Headphones className="size-3.5" aria-hidden="true" /> {t('expressionLib.immersive')}
@@ -870,9 +869,9 @@ export function ExpressionLibraryPage() {
         ),
       }}
       itemContent={(_, row) => {
-        if (row.kind === 'item') return <div className="pb-2">{renderExpressionItem(row.expression, row.index)}</div>
+        if (row.kind === 'item') return <div className="mx-1 pb-2">{renderExpressionItem(row.expression, row.index)}</div>
         const groupSelected = row.ids.length > 0 && row.ids.every((id) => selectedIds.has(id))
-        return <div className="relative flex items-center justify-center py-2">
+        return <div className="relative mx-1 flex items-center justify-center py-2">
           <span className="absolute inset-x-0 h-px bg-border/70" />
           <span className="app-surface relative px-3 text-xs font-medium text-muted-foreground">{row.label}</span>
           {selectionMode && <button type="button" className="absolute right-0 pl-3 text-[11px] font-medium text-primary" onClick={() => setSelectedIds((current) => {
@@ -923,12 +922,12 @@ export function ExpressionLibraryPage() {
         <div className={cn('mb-3 flex items-center gap-2 transition-all duration-200', headerCondensed && 'hidden')}>
           <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 rounded-xl border-border/60 bg-muted/45 pl-9 text-sm shadow-none focus-visible:bg-background" placeholder={t('expressionLib.searchPlaceholder')} />
+            <Input value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 rounded-xl border-0 bg-muted/45 pl-9 text-sm shadow-none focus-visible:bg-background" placeholder={t('expressionLib.searchPlaceholder')} />
           </div>
-          <button type="button" onClick={() => setGroupByDate((value) => !value)} className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl border transition-colors', groupByDate ? 'border-primary bg-primary/10 text-primary' : 'border-border/60 bg-muted/45 text-muted-foreground active:bg-muted')} aria-label={t('expressionLib.groupByDate')} aria-pressed={groupByDate}>
+          <button type="button" onClick={() => setGroupByDate((value) => !value)} className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/20', groupByDate && 'bg-primary/20')} aria-label={t('expressionLib.groupByDate')} aria-pressed={groupByDate}>
             <CalendarDays className="size-4" />
           </button>
-          <button type="button" onClick={() => void openExportPreview()} className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-muted/45 text-muted-foreground active:bg-muted" aria-label={t('expressionLib.exportPdf')}><Download className="size-4" /></button>
+          <button type="button" onClick={() => void openExportPreview()} className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/20" aria-label={t('expressionLib.exportPdf')}><Download className="size-4" /></button>
         </div>
 
         {/* ---- 二级状态过滤 ---- */}
@@ -992,16 +991,19 @@ export function ExpressionLibraryPage() {
       </div>}
 
       <Dialog open={exportOpen} onOpenChange={(open) => { setExportOpen(open); if (!open) setZoomPreviewPage(null) }}>
-        <DialogContent className="app-surface drawer-surface [&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 text-foreground sm:h-[92svh] sm:max-w-5xl sm:rounded-2xl sm:border sm:border-border/60">
+        <DialogContent onEscapeKeyDown={(event) => { if (zoomPreviewPage !== null) { event.preventDefault(); setZoomPreviewPage(null) } }} className={cn('app-surface drawer-surface [&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 text-foreground sm:h-[92svh] sm:max-w-5xl sm:rounded-2xl', zoomPreviewPage !== null && '[&>button:last-child]:hidden')}>
           <DialogTitle className="sr-only">{t('expressionLib.exportPdf')}</DialogTitle>
-          <div className="min-h-0 flex-1 overflow-y-auto bg-muted/25 px-4 pb-5 pt-[calc(4.5rem+env(safe-area-inset-top,0px))] sm:px-8 sm:pt-5">
+          <div className="flex shrink-0 items-center gap-3 px-4 pb-3 pr-16 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">{notebookName}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t('expressionLib.a4Summary', { count: exportPages.length })}</p>
+            </div>
+            <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">A4</span>
+          </div>
+          <div className="relative z-0 min-h-0 flex-1">
+            <div className="h-full overflow-y-auto bg-muted/30 px-0 pb-5 pt-3 sm:px-4 sm:pt-4">
             {exportLoading ? <div className="flex h-full min-h-64 items-center justify-center text-sm text-muted-foreground"><Loader2 className="mr-2 size-4 animate-spin" />{t('expressionLib.loadingPreview')}</div> : (
-              <div className="mx-auto flex w-full max-w-[680px] flex-col gap-4">
-                <div className="grid grid-cols-3 divide-x divide-border/70 rounded-xl border border-border/70 bg-background text-center text-xs text-foreground">
-                  <div className="py-2"><span className="block text-[10px] text-muted-foreground">{t('expressionLib.pdfPages')}</span><strong>{t('expressionLib.pdfPagesCount', { count: exportPages.length })}</strong></div>
-                  <div className="py-2"><span className="block text-[10px] text-muted-foreground">{t('expressionLib.pdfItems')}</span><strong>{t('expressionLib.practiceSheetCount', { count: displayExportItems.length })}</strong></div>
-                  <div className="py-2"><span className="block text-[10px] text-muted-foreground">{t('expressionLib.pdfWords')}</span><strong>{t('expressionLib.pdfWordsCount', { count: exportWordCount })}</strong></div>
-                </div>
+              <div className="mx-auto flex w-full max-w-[720px] flex-col gap-4">
                 <p className="text-center text-xs text-muted-foreground">{t('expressionLib.zoomPreview')}</p>
                 {exportPages.map((pageItems, pageIndex) => {
                   const modeTitle = exportMode === 'zh-to-en'
@@ -1024,6 +1026,7 @@ export function ExpressionLibraryPage() {
                           hint={t('expressionLib.practiceSheetHint')}
                           dateLabel={t('expressionLib.date')}
                           dateValue={exportDate}
+                          materialLabel={t('expressionLib.dictationMaterial')}
                           onDateChange={setExportDate}
                           pageNumber={t('expressionLib.pdfPageNumber', { current: pageIndex + 1, total: exportPages.length })}
                           labels={{
@@ -1036,48 +1039,45 @@ export function ExpressionLibraryPage() {
                       </PracticeSheetPreviewFrame>
                       <button
                         type="button"
-                        className="absolute inset-0 z-10 rounded-xl bg-transparent"
+                        className="absolute inset-0 rounded-xl"
                         onClick={() => setZoomPreviewPage(pageIndex)}
                         aria-label={t('expressionLib.zoomPreview')}
                       />
-                      <span className="pointer-events-none absolute bottom-3 right-3 z-20 flex size-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm ring-1 ring-border/60">
-                        <Expand className="size-4" />
-                      </span>
                     </div>
                   )
                 })}
               </div>
             )}
+            </div>
+            {!exportLoading && exportPages.length > 0 && <span className="pointer-events-none absolute bottom-3 right-3 flex size-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm"><Expand /></span>}
           </div>
-          <div className="shrink-0 border-t border-border/60 bg-background px-5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-4">
-            <div className="grid grid-cols-3 gap-2">
-              {(['zh-to-en', 'en-to-zh', 'bilingual'] as ExportMode[]).map((mode) => <button key={mode} type="button" onClick={() => setExportMode(mode)} className={cn('min-h-[76px] rounded-xl border px-2 py-2 text-left transition-colors', exportMode === mode ? 'border-primary bg-primary/8 text-primary' : 'border-border/70 bg-background text-muted-foreground')}>
-                {mode === 'bilingual' ? <FileText className="size-3.5" /> : <Languages className="size-3.5" />}
-                <span className="mt-1 block text-xs font-semibold">{mode === 'zh-to-en' ? t('expressionLib.chineseList') : mode === 'en-to-zh' ? t('expressionLib.englishList') : t('expressionLib.bilingualList')}</span>
-                <span className="mt-0.5 block text-[10px] leading-3 text-muted-foreground">{mode === 'zh-to-en' ? t('expressionLib.chineseListDesc') : mode === 'en-to-zh' ? t('expressionLib.englishListDesc') : t('expressionLib.bilingualListDesc')}</span>
+          <div className="shrink-0 bg-background px-5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-4">
+            <div className="grid grid-cols-3 gap-1 rounded-xl bg-muted/55 p-1">
+              {(['zh-to-en', 'en-to-zh', 'bilingual'] as ExportMode[]).map((mode) => <button key={mode} type="button" onClick={() => setExportMode(mode)} className={cn('min-h-[76px] rounded-lg px-2 py-2 text-left transition-colors', exportMode === mode ? 'bg-primary/12 text-primary' : 'text-muted-foreground hover:bg-background/55')}>
+                <span className="block text-xs font-semibold">{mode === 'zh-to-en' ? t('expressionLib.chineseList') : mode === 'en-to-zh' ? t('expressionLib.englishList') : t('expressionLib.bilingualList')}</span>
+                <span className="mt-1 block text-[10px] leading-3 text-muted-foreground">{mode === 'zh-to-en' ? t('expressionLib.chineseListDesc') : mode === 'en-to-zh' ? t('expressionLib.englishListDesc') : t('expressionLib.bilingualListDesc')}</span>
               </button>)}
             </div>
-            <div className="mt-3 flex items-center justify-between rounded-xl border border-border/70 px-4 py-2.5">
+            <div className="mt-3 flex items-center justify-between rounded-xl bg-muted/45 px-4 py-2.5">
               <span className="text-sm font-semibold">{t('expressionLib.exportColumns')}</span>
-              <div className="flex rounded-lg bg-muted p-0.5"><button type="button" onClick={() => setExportColumns(1)} className={cn('rounded-md px-2.5 py-1 text-xs font-medium', exportColumns === 1 ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground')}>{t('expressionLib.oneColumn')}</button><button type="button" onClick={() => setExportColumns(2)} className={cn('rounded-md px-2.5 py-1 text-xs font-medium', exportColumns === 2 ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground')}>{t('expressionLib.twoColumns')}</button></div>
+              <div className="flex rounded-lg bg-background/70 p-0.5"><button type="button" onClick={() => setExportColumns(1)} className={cn('rounded-md px-2.5 py-1 text-xs font-medium', exportColumns === 1 ? 'bg-primary/12 text-primary' : 'text-muted-foreground')}>{t('expressionLib.oneColumn')}</button><button type="button" onClick={() => setExportColumns(2)} className={cn('rounded-md px-2.5 py-1 text-xs font-medium', exportColumns === 2 ? 'bg-primary/12 text-primary' : 'text-muted-foreground')}>{t('expressionLib.twoColumns')}</button></div>
             </div>
-            <div className="mt-3 flex items-center justify-between rounded-xl border border-border/70 px-4 py-3">
+            <div className="mt-3 flex items-center justify-between rounded-xl bg-muted/45 px-4 py-3">
               <span className="text-sm font-semibold">{t('expressionLib.shuffleExport')}</span>
               <Switch checked={shuffleExport} onCheckedChange={setShuffleExport} />
             </div>
-            <Button className="mt-3 h-12 w-full rounded-xl text-base font-semibold" onClick={printExportPreview} disabled={exportLoading || displayExportItems.length === 0}>{t('expressionLib.exportPdfAction')}</Button>
+            <Button className="mt-3 h-12 w-full rounded-xl text-base font-semibold shadow-none hover:shadow-none active:shadow-none" onClick={printExportPreview} disabled={exportLoading || displayExportItems.length === 0}>{t('expressionLib.exportPdfAction')}</Button>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={zoomPreviewPage !== null} onOpenChange={(open) => { if (!open) setZoomPreviewPage(null) }}>
-        <DialogContent
-          onOpenAutoFocus={(event) => event.preventDefault()}
-          className="app-surface drawer-surface [&>button:last-child]:top-[calc(0.75rem+env(safe-area-inset-top,0px))] flex h-[100svh] max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 text-foreground sm:h-[94svh] sm:max-w-6xl sm:rounded-2xl sm:border sm:border-border/60"
-        >
-          <DialogTitle className="sr-only">{t('expressionLib.zoomPreview')}</DialogTitle>
-          <div className="min-h-0 flex-1 overflow-auto bg-muted/30 px-3 pb-5 pt-[calc(4rem+env(safe-area-inset-top,0px))] sm:px-6 sm:pt-5">
-            {zoomPreviewPage !== null && exportPages[zoomPreviewPage] && (
+          {zoomPreviewPage !== null && exportPages[zoomPreviewPage] && <div className="app-surface drawer-surface absolute inset-0 z-10 flex flex-col">
+            <div className="flex shrink-0 items-center gap-3 px-4 pb-3 pr-16 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{notebookName}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{t('expressionLib.a4Summary', { count: exportPages.length })}</p>
+              </div>
+              <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">A4</span>
+            </div>
+            <Button type="button" variant="ghost" size="icon" className="absolute right-3 top-[calc(0.75rem+env(safe-area-inset-top,0px))] size-10 rounded-full" aria-label={t('common.close')} onClick={() => setZoomPreviewPage(null)}><X /></Button>
+            <div className="min-h-0 flex-1 overflow-auto bg-muted/30 px-3 pb-5 sm:px-6">
               <div className="mx-auto w-fit">
                 <PracticeSheetPreviewFrame scale={exportZoomScale}>
                   <PracticeSheetPage
@@ -1091,24 +1091,20 @@ export function ExpressionLibraryPage() {
                     hint={t('expressionLib.practiceSheetHint')}
                     dateLabel={t('expressionLib.date')}
                     dateValue={exportDate}
+                    materialLabel={t('expressionLib.dictationMaterial')}
                     onDateChange={setExportDate}
                     pageNumber={t('expressionLib.pdfPageNumber', { current: zoomPreviewPage + 1, total: exportPages.length })}
-                    labels={{
-                      bilingual: t('expressionLib.tableBilingual'),
-                      english: t('expressionLib.tableEnglish'),
-                      chinese: t('expressionLib.tableChinese'),
-                      answer: t('expressionLib.tableAnswer'),
-                    }}
+                    labels={{ bilingual: t('expressionLib.tableBilingual'), english: t('expressionLib.tableEnglish'), chinese: t('expressionLib.tableChinese'), answer: t('expressionLib.tableAnswer') }}
                   />
                 </PracticeSheetPreviewFrame>
               </div>
-            )}
-          </div>
+            </div>
+          </div>}
         </DialogContent>
       </Dialog>
 
       <Drawer open={batchOpen} onOpenChange={(open) => { setBatchOpen(open); if (!open) setBatchCreatingNotebook(false) }}>
-        <DrawerContent className="max-h-[86svh] rounded-t-[28px] border-border drawer-surface">
+        <DrawerContent className="max-h-[86svh] rounded-t-[28px] drawer-surface">
           <DrawerHeader className="text-left"><DrawerTitle>{t('expressionLib.batchEdit')}</DrawerTitle><DrawerDescription>{t('expressionLib.selectedCount', { count: selectedNotebookItemIds.length })}</DrawerDescription></DrawerHeader>
           {!batchAction ? (
             <div className="grid gap-2 px-4">

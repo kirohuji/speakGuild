@@ -586,7 +586,7 @@ export function ImmersivePlayerDialog({
               </Button>
 
               <div className="flex items-center justify-center gap-4">
-                <Button variant="outline" size="icon" onClick={() => gotoPrev(status === 'playing' || status === 'loading')} disabled={!hasPrev} aria-label={t('immersivePlayer.previous')} className="size-11 rounded-full">
+                <Button variant="ghost" size="icon" onClick={() => gotoPrev(status === 'playing' || status === 'loading')} disabled={!hasPrev} aria-label={t('immersivePlayer.previous')} className="size-11 rounded-full border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
                   <ChevronLeft className="size-5" />
                 </Button>
                 <Button
@@ -599,7 +599,7 @@ export function ImmersivePlayerDialog({
                 >
                   {status === 'loading' ? <Loader2 className="size-5 animate-spin" /> : status === 'playing' ? <Pause className="size-5" /> : <Play className="size-5" />}
                 </Button>
-                <Button variant="outline" size="icon" onClick={() => gotoNext(status === 'playing' || status === 'loading')} disabled={!hasNext && !settings.loopQueue} aria-label={t('immersivePlayer.next')} className="size-11 rounded-full">
+                <Button variant="ghost" size="icon" onClick={() => gotoNext(status === 'playing' || status === 'loading')} disabled={!hasNext && !settings.loopQueue} aria-label={t('immersivePlayer.next')} className="size-11 rounded-full border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
                   <ChevronRight className="size-5" />
                 </Button>
               </div>
@@ -725,8 +725,8 @@ function ImmersiveQueueDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className={cn('h-[100dvh] w-full max-w-full overflow-hidden overscroll-contain rounded-none pt-safe !z-[10001]', isIOS() && 'pb-safe')} overlayClassName="!z-[10001]">
-        <div className="flex min-w-0 items-center justify-between gap-3 px-5 py-3">
+      <DrawerContent showHandle={false} className={cn('h-[100dvh] w-full max-w-full overflow-hidden overscroll-contain rounded-none pt-safe !z-[10001]', isIOS() && 'pb-safe')} overlayClassName="!z-[10001]">
+        <div className="flex min-w-0 items-center justify-between gap-3 px-5 pb-2 pt-1">
           <DrawerTitle className="min-w-0 truncate text-lg">{t('immersivePlayer.queueTitle')}</DrawerTitle>
           <button type="button" onClick={() => onOpenChange(false)} aria-label={t('immersivePlayer.close')} className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <ChevronDown className="size-5" />
