@@ -137,7 +137,10 @@ function resetConnectionState() {
 }
 
 async function initializeSchema(db: SQLiteDBConnection): Promise<void> {
-  await initializeOfflineSchema((sql) => db.execute(sql))
+  await initializeOfflineSchema(
+    (sql) => db.execute(sql),
+    async (sql) => (await db.query(sql)).values ?? [],
+  )
   await getSqliteConnection().saveToStore(DB_NAME)
 }
 

@@ -400,22 +400,44 @@ export const ALL_DDL = Object.values(DDL).join(';\n') + ';'
  * does not alter an existing table, so these statements run on every open.
  */
 export const COLUMN_MIGRATIONS = [
-  `ALTER TABLE downloaded_unit_details ADD COLUMN row_kind TEXT`,
-  `ALTER TABLE downloaded_unit_details ADD COLUMN sort_order INTEGER`,
-  `ALTER TABLE offline_content_refs ADD COLUMN sort_order INTEGER`,
-  `ALTER TABLE practice_records ADD COLUMN practiced_at TEXT`,
+  { table: 'downloaded_unit_details', column: 'row_kind', sql: `ALTER TABLE downloaded_unit_details ADD COLUMN row_kind TEXT` },
+  { table: 'downloaded_unit_details', column: 'sort_order', sql: `ALTER TABLE downloaded_unit_details ADD COLUMN sort_order INTEGER` },
+  { table: 'offline_content_refs', column: 'sort_order', sql: `ALTER TABLE offline_content_refs ADD COLUMN sort_order INTEGER` },
+  { table: 'practice_records', column: 'practiced_at', sql: `ALTER TABLE practice_records ADD COLUMN practiced_at TEXT` },
 ]
 
 export function isDuplicateColumnError(error: unknown) {
-  const message = (error instanceof Error ? error.message : String(error)).toLowerCase()
+  // Capacitor SQLite native throws Error, while jeep-sqlite/web often throws
+  // a plain object such as { message: 'ExecuteSQL: ... duplicate column ...' }.
+  // String(theObject) is merely "[object Object]", which made idempotent
+  // migrations fail on every web startup.
+  const message = (() => {
+    if (error instanceof Error) return error.message
+    if (error && typeof error === 'object') {
+      const value = error as { message?: unknown; error?: unknown }
+      if (typeof value.message === 'string') return value.message
+      try { return JSON.stringify(error) } catch { /* fall through */ }
+    }
+    return String(error)
+  })().toLowerCase()
   return message.includes('duplicate column') || message.includes('already exists')
 }
 
-export async function initializeOfflineSchema(execute: (sql: string) => Promise<unknown>) {
+export async function initializeOfflineSchema(
+  execute: (sql: string) => Promise<unknown>,
+  queryRows?: (sql: string) => Promise<Array<{ name?: string }>>,
+) {
   await execute(ALL_DDL)
-  for (const sql of COLUMN_MIGRATIONS) {
+  for (const migration of COLUMN_MIGRATIONS) {
+    // jeep-sqlite logs failed execute() calls as uncaught browser errors even
+    // when their Promise rejection is handled. Inspect schema first so an
+    // existing column never causes a deliberately failing ALTER TABLE.
+    if (queryRows) {
+      const columns = await queryRows(`PRAGMA table_info("${migration.table}")`)
+      if (columns.some((column) => column.name === migration.column)) continue
+    }
     try {
-      await execute(sql)
+      await execute(migration.sql)
     } catch (error) {
       if (!isDuplicateColumnError(error)) throw error
     }
