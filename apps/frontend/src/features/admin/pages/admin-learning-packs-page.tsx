@@ -100,6 +100,7 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
   // ── List filters ──
   const [packageTypeFilter, setPackageTypeFilter] = useState<string>(isScriptMode ? 'story' : 'all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [publishFilter, setPublishFilter] = useState<'all' | 'published'>('all');
   // 所属系列（学习包分组）过滤
   const [groups, setGroups] = useState<PackageGroup[]>([]);
   const [groupFilter, setGroupFilter] = useState<string>('all');
@@ -159,14 +160,20 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
     return Array.from(map.values());
   }, [packs, scenes]);
 
-  // 按所属系列过滤场景组
+  // 按所属系列、发布状态过滤场景组
   const filteredGroupedPacks = useMemo(() => {
-    if (groupFilter === 'all') return groupedPacks;
-    const memberIds = new Set(
-      (groups.find((g) => g.id === groupFilter)?.items ?? []).map((item) => item.sceneId),
-    );
-    return groupedPacks.filter((entry) => memberIds.has(entry.scene.id));
-  }, [groupedPacks, groups, groupFilter]);
+    let entries = groupedPacks;
+    if (groupFilter !== 'all') {
+      const memberIds = new Set(
+        (groups.find((g) => g.id === groupFilter)?.items ?? []).map((item) => item.sceneId),
+      );
+      entries = entries.filter((entry) => memberIds.has(entry.scene.id));
+    }
+    if (publishFilter === 'published') {
+      entries = entries.filter((entry) => entry.versions.some((pack) => pack.status === 'published'));
+    }
+    return entries;
+  }, [groupedPacks, groups, groupFilter, publishFilter]);
 
   const availableGroups = useMemo(() => {
     const sceneIds = new Set(groupedPacks.map((entry) => entry.scene.id));
@@ -227,7 +234,7 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
   useEffect(() => { void load(); }, [load]);
 
   // 筛选条件变化时回到第一页
-  useEffect(() => { setPage(1); }, [packageTypeFilter, categoryFilter, groupFilter]);
+  useEffect(() => { setPage(1); }, [packageTypeFilter, categoryFilter, groupFilter, publishFilter]);
 
   // ── Read URL params on mount for cross-page navigation (parse from hash for HashRouter) ──
   useEffect(() => {
@@ -476,17 +483,28 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
             ))}
           </Select>
         </div>
+        <div className="flex min-w-[140px] flex-col gap-1">
+          <Select
+            value={publishFilter}
+            aria-label="按发布状态筛选"
+            onChange={(e) => setPublishFilter((e.target as HTMLSelectElement).value as 'all' | 'published')}
+          >
+            <SelectItem value="all">全部状态</SelectItem>
+            <SelectItem value="published">仅已发布</SelectItem>
+          </Select>
+        </div>
         <Button
           type="button"
           size="sm"
           variant="ghost"
           aria-label="清除筛选"
           title="清除筛选"
-          disabled={packageTypeFilter === (isScriptMode ? 'story' : 'all') && categoryFilter === 'all' && groupFilter === 'all'}
+          disabled={packageTypeFilter === (isScriptMode ? 'story' : 'all') && categoryFilter === 'all' && groupFilter === 'all' && publishFilter === 'all'}
           onClick={() => {
             setPackageTypeFilter(isScriptMode ? 'story' : 'all');
             setCategoryFilter('all');
             setGroupFilter('all');
+            setPublishFilter('all');
           }}
         >
           <X className="size-4" />

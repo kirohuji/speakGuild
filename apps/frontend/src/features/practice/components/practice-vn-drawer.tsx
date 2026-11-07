@@ -220,6 +220,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   const scrollerElementRef = useRef<HTMLElement | null>(null)
   const visibleSectionIndexRef = useRef(0)
   const lastSavedReadingProgressRef = useRef<number | null>(null)
+  const lastSavedReadingKeyRef = useRef<string | null>(null)
   const isControlled = controlledOpen !== undefined
   const open = isControlled ? controlledOpen : internalOpen
   const setOpen = isControlled ? controlledOnOpenChange! : setInternalOpen
@@ -426,7 +427,10 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
     : Math.round((visibleSectionIndex / (document.sections.length - 1)) * 100)
   const readingProgress = Math.max(sectionReadingProgress, scrollReadingProgress)
   useEffect(() => {
-    if (!open || !unitId || !topicId || lastSavedReadingProgressRef.current === readingProgress) return
+    if (!open || !unitId || !topicId) return
+    const key = `${unitId}:${topicId}`
+    if (lastSavedReadingKeyRef.current === key && lastSavedReadingProgressRef.current === readingProgress) return
+    lastSavedReadingKeyRef.current = key
     lastSavedReadingProgressRef.current = readingProgress
     void learningRepository.saveTeachingReadingProgress(unitId, topicId, readingProgress)
   }, [open, readingProgress, topicId, unitId])

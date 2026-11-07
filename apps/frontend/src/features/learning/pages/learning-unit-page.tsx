@@ -17,7 +17,7 @@ import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type Unit
 import { useLearningStore } from '@/stores/learning.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { learningContentRepository } from '@/lib/offline'
-import { listContentPage } from '@/lib/offline/learning-pack-read-model'
+import { listContentPage, readTopicTeaching } from '@/lib/offline/learning-pack-read-model'
 import {
   LearningInsightDialog,
   type LearningInsightItem,
@@ -63,6 +63,7 @@ export function LearningUnitPage() {
   const [chunkRemote, setChunkRemote] = useState<{ items: ChunkItem[]; total: number }>({ items: [], total: 0 })
   const [patternRemote, setPatternRemote] = useState<{ items: SentencePattern[]; total: number }>({ items: [], total: 0 })
   const [teachingTopic, setTeachingTopic] = useState<TrainingTopicItem | null>(null)
+  const [teachingMarkdown, setTeachingMarkdown] = useState('')
   useEffectivePracticeTimer({
     enabled: Boolean(unitId && unit?.id === unitId),
     sourceId: unitId ? `learning-unit:${unitId}` : null,
@@ -106,6 +107,20 @@ export function LearningUnitPage() {
     fetchUnitDetail(unitId)
     fetchDownloadedPacks()
   }, [unitId, fetchUnitDetail, fetchDownloadedPacks])
+
+  useEffect(() => {
+    if (!teachingTopic) {
+      setTeachingMarkdown('')
+      return
+    }
+    let cancelled = false
+    readTopicTeaching(teachingTopic.id).then((document) => {
+      if (!cancelled) setTeachingMarkdown(document?.teachingMarkdown?.trim() || teachingTopic.teachingMarkdown?.trim() || '')
+    }).catch(() => {
+      if (!cancelled) setTeachingMarkdown(teachingTopic.teachingMarkdown?.trim() || '')
+    })
+    return () => { cancelled = true }
+  }, [teachingTopic])
 
   useEffect(() => {
     if (!projected || !unitId) return
@@ -617,7 +632,7 @@ export function LearningUnitPage() {
         hideToggles
         unitId={unitId}
         topicId={teachingTopic?.id}
-        teachingMarkdown={teachingTopic?.teachingMarkdown?.trim() || ''}
+        teachingMarkdown={teachingMarkdown}
       />
       <SaveToNotebookDrawer
         open={saveDrawerOpen}
@@ -993,7 +1008,7 @@ function PracticeTopicCard({
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{topic.promptZh}</p>
           </div>
-          {topic.teachingMarkdown?.trim() && (
+          {(topic.hasTeachingDocument || topic.teachingMarkdown?.trim()) && (
             <button
               type="button"
               onClick={(event) => { event.stopPropagation(); onOpenTeaching() }}

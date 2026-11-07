@@ -76,7 +76,7 @@ export function ListeningSessionPage() {
       {phase === 'prepare'
         ? <ListeningPreparePage topic={topic} unitTitle={unit.title} onBack={() => navigate(-1)} onOpenGuide={() => setGuideOpen(true)} onStart={() => setPhase('listen')} />
         : <ListeningPlayerPage topic={topic} unitId={unit.id} unitTitle={unit.title} onClose={() => setPhase('prepare')} onPlaybackProgress={touchListeningTimer} />}
-      <PracticeVnDrawer open={guideOpen} onOpenChange={setGuideOpen} hideToggles teachingMarkdown={topic.teachingMarkdown?.trim() || topic.description?.trim() || ''} />
+      <PracticeVnDrawer open={guideOpen} onOpenChange={setGuideOpen} hideToggles unitId={unit.id} topicId={topic.id} teachingMarkdown={topic.teachingMarkdown?.trim() || topic.description?.trim() || ''} />
     </>
   )
 }

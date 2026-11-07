@@ -1043,6 +1043,8 @@ export function PracticeSessionPage() {
             hideToggles
             open={teachingOpen}
             onOpenChange={setTeachingOpen}
+            unitId={unitId ?? undefined}
+            topicId={topicId}
           />
 
           <section>

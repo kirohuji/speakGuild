@@ -233,6 +233,8 @@ export function TodayTaskPage() {
   const [typeGroupViewing, setTypeGroupViewing] = useState(false)
   const [recordsOpen, setRecordsOpen] = useState(false)
   const [teachingOpen, setTeachingOpen] = useState(false)
+  const [teachingUnitId, setTeachingUnitId] = useState<string | null>(null)
+  const [teachingTopicId, setTeachingTopicId] = useState<string | null>(null)
   const [teachingMarkdown, setTeachingMarkdown] = useState('')
   const [teachingLoading, setTeachingLoading] = useState(false)
   const [teachingAvailability, setTeachingAvailability] = useState<Record<string, boolean>>({})
@@ -836,10 +838,10 @@ export function TodayTaskPage() {
 
   const teachingTopicCandidates = useMemo(() => {
     if (!plan) return []
-    const topics = new Map<string, { id: string; title: string }>()
+    const topics = new Map<string, { id: string; title: string; packId: string }>()
     for (const step of plan.steps) {
       if (topics.has(step.topicId)) continue
-      topics.set(step.topicId, { id: step.topicId, title: step.topicTitle })
+      topics.set(step.topicId, { id: step.topicId, title: step.topicTitle, packId: step.packId })
     }
     return [...topics.values()]
   }, [plan])
@@ -930,9 +932,11 @@ export function TodayTaskPage() {
     closeSession()
   }, [closeSession])
 
-  const openTopicTeaching = useCallback(async (topicId: string) => {
+  const openTopicTeaching = useCallback(async (topicId: string, packId?: string) => {
     const requestId = teachingRequestIdRef.current + 1
     teachingRequestIdRef.current = requestId
+    setTeachingTopicId(topicId)
+    setTeachingUnitId(packId ?? null)
     setTeachingMarkdown('')
     setTeachingLoading(true)
     setTeachingOpen(true)
@@ -1462,7 +1466,7 @@ export function TodayTaskPage() {
                 <button
                   key={topic.id}
                   type="button"
-                  onClick={() => { void openTopicTeaching(topic.id) }}
+                  onClick={() => { void openTopicTeaching(topic.id, topic.packId) }}
                   className={cn(
                     'inline-flex h-8 max-w-[12.5rem] shrink-0 items-center rounded-lg bg-primary/[0.08] px-3 text-[11px] font-medium text-primary transition-colors hover:bg-primary/[0.14] active:scale-[0.98]',
                     showTeachingHintIntro && index === 0 && 'animate-pulse ring-1 ring-primary/20 motion-reduce:animate-none',
@@ -1621,11 +1625,11 @@ export function TodayTaskPage() {
                       <div
                         role="button"
                         tabIndex={0}
-                        onClick={() => { void openTopicTeaching(topic.topicId) }}
+                        onClick={() => { void openTopicTeaching(topic.topicId, topic.packId) }}
                         onKeyDown={(event) => {
                           if (event.key === 'Enter' || event.key === ' ') {
                             event.preventDefault()
-                            void openTopicTeaching(topic.topicId)
+                            void openTopicTeaching(topic.topicId, topic.packId)
                           }
                         }}
                         className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 px-3 py-3 active:scale-[0.99]"
@@ -1717,6 +1721,8 @@ export function TodayTaskPage() {
         teachingMarkdown={teachingMarkdown}
         loading={teachingLoading}
         hideToggles
+        unitId={teachingUnitId ?? undefined}
+        topicId={teachingTopicId ?? undefined}
       />
 
       <Dialog

@@ -146,7 +146,7 @@ export function WritingSessionPage() {
         />
       )}
 
-      <WritingGuide open={guideOpen} onOpenChange={setGuideOpen} topic={topic} />
+      <WritingGuide open={guideOpen} onOpenChange={setGuideOpen} topic={topic} unitId={unitId} />
     </>
   )
 }
@@ -1371,12 +1371,14 @@ function DialogueEditor({
   )
 }
 
-function WritingGuide({ open, onOpenChange, topic }: { open: boolean; onOpenChange: (open: boolean) => void; topic: TrainingTopicItem }) {
+function WritingGuide({ open, onOpenChange, topic, unitId }: { open: boolean; onOpenChange: (open: boolean) => void; topic: TrainingTopicItem; unitId: string }) {
   return (
     <PracticeVnDrawer
       open={open}
       onOpenChange={onOpenChange}
       hideToggles
+      unitId={unitId}
+      topicId={topic.id}
       teachingMarkdown={topic.teachingMarkdown?.trim() || topic.description?.trim() || ''}
     />
   )

@@ -65,7 +65,7 @@ export function ReadingSessionPage() {
       {phase === 'prepare'
         ? <ReadingPreparePage topic={topic} unitTitle={unit.title} onBack={() => navigate(-1)} onOpenGuide={() => setGuideOpen(true)} onStart={() => setPhase('answer')} />
         : <ReadingAnswerPage topic={topic} unitTitle={unit.title} onClose={() => setPhase('prepare')} onOpenGuide={() => setGuideOpen(true)} />}
-      <PracticeVnDrawer open={guideOpen} onOpenChange={setGuideOpen} hideToggles teachingMarkdown={topic.teachingMarkdown?.trim() || topic.description?.trim() || ''} />
+      <PracticeVnDrawer open={guideOpen} onOpenChange={setGuideOpen} hideToggles unitId={unitId} topicId={topic.id} teachingMarkdown={topic.teachingMarkdown?.trim() || topic.description?.trim() || ''} />
     </>
   )
 }
