@@ -13,12 +13,6 @@ function hasActiveMembership(role: string | undefined, membership: { level?: str
   return role === 'admin' || membership?.level === 'admin' || !!membership?.isActive
 }
 
-export function useHasActiveMembership() {
-  const { session } = useAuth()
-  const membership = useUserStore((state) => state.membership)
-  return hasActiveMembership(session?.user?.role, membership)
-}
-
 export function MembershipPurchaseDrawer({
   open,
   onOpenChange,

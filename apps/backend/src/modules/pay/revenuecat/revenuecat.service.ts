@@ -195,20 +195,6 @@ export class RevenueCatService {
     pendingProductId: string | null;
   } | { kind: 'empty' } | undefined> {
     try {
-      const customerResponse = await fetch(
-        `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/customers/${encodeURIComponent(userId)}`,
-        { headers: { Authorization: `Bearer ${this.apiKey}` } },
-      );
-      if (!customerResponse.ok) {
-        this.logger.warn(`RevenueCat 查询用户失败: userId=${userId}, status=${customerResponse.status}`);
-        return undefined;
-      }
-      const customer = await customerResponse.json() as any;
-      if (customer?.id !== userId) {
-        this.logger.error(`RevenueCat customer ID mismatch: requested=${userId}, received=${customer?.id ?? 'missing'}`);
-        return undefined;
-      }
-
       const response = await fetch(
         `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/customers/${encodeURIComponent(userId)}/subscriptions?limit=100`,
         { headers: { Authorization: `Bearer ${this.apiKey}` } },
@@ -562,14 +548,18 @@ export class RevenueCatService {
 
     if (isWebhook && existing?.lastEventAt && existing.lastEventAt >= params.eventAt!) return;
 
-    // A late cancellation/expiration for the replaced monthly product must not
-    // revoke a newer annual subscription. Its earlier expiration proves it is
-    // no longer the entitlement currently giving access.
+    // A late cancellation for the replaced monthly product has an earlier
+    // expiration and a different store product. A refund of the current
+    // product also expires earlier, so only the other product is ignored.
+    const replacedProduct = !!params.productId
+      && !!existing?.rcProductId
+      && params.productId !== existing.rcProductId;
     if (
       isWebhook &&
       params.status !== 'active' &&
       existing?.status === 'active' &&
-      existing.expiredAt > params.expiresAt
+      existing.expiredAt > params.expiresAt &&
+      replacedProduct
     ) return;
 
     // RC API snapshots are useful after purchase/restore, but never own the

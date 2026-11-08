@@ -160,9 +160,9 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         await revenueCat.identify(session.user.id)
         // The visible 月付/年付 choice must be the package that StoreKit purchases.
         await revenueCat.purchasePackage(billingCycle)
-        await revenueCat.refreshCustomerInfo()
         const synced = await syncRevenueCatMembership()
-        await refreshMembership().catch(() => null)
+        setCurrent(synced)
+        setCachedMembership(synced)
         if (!synced.isActive) {
           toast.message(t('member.purchasePending'))
           return
@@ -182,7 +182,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     setPayResult(null)
     setPayError(null)
     setPayOpen(true)
-  }, [billingCycle, isNativeApp, refreshMembership, session?.user.id, t])
+  }, [billingCycle, isNativeApp, session?.user.id, setCachedMembership, t])
 
   useEffect(() => {
     const onMembershipUpdated = () => { void refreshMembership().catch(() => null) }
@@ -197,7 +197,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       await revenueCat.identify(session.user.id)
       await revenueCatState.restorePurchases()
       const synced = await syncRevenueCatMembership()
-      await refreshMembership().catch(() => null)
+      setCurrent(synced)
+      setCachedMembership(synced)
       if (synced.isActive) toast.success(t('member.purchaseRestored'))
       else toast.message(t('member.noPurchaseRestored'))
     } catch (err: any) {
@@ -205,7 +206,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     } finally {
       setSubscriptionAction(null)
     }
-  }, [refreshMembership, revenueCatState, session?.user.id, t])
+  }, [revenueCatState, session?.user.id, setCachedMembership, t])
 
   const handleManageSubscription = useCallback(async () => {
     setSubscriptionAction('manage')
@@ -216,7 +217,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
       await revenueCatState.presentCustomerCenter()
       customerCenterOpened = true
       const synced = await syncRevenueCatMembership()
-      await refreshMembership().catch(() => null)
+      setCurrent(synced)
+      setCachedMembership(synced)
       if (!synced.isActive && current?.isActive) toast.message(t('member.subscriptionUpdatePending'))
     } catch (err: any) {
       if (customerCenterOpened) toast.message(t('member.subscriptionUpdatePending'))
@@ -224,7 +226,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     } finally {
       setSubscriptionAction(null)
     }
-  }, [current?.isActive, refreshMembership, revenueCatState, session?.user.id, t])
+  }, [current?.isActive, revenueCatState, session?.user.id, setCachedMembership, t])
 
   const handlePay = useCallback(async (method: 'alipay' | 'wechat') => {
     if (!payPlan) return
