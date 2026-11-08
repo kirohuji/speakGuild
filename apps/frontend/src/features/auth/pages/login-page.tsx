@@ -17,6 +17,7 @@ import {
   verifyPhoneOtp,
 } from '@/features/auth/api'
 import { applyReferral } from '@/features/referral/api'
+import { INVITE_FEATURE_ENABLED } from '@/features/referral/invite-feature'
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
 import { useCountdown } from '@/hooks/use-countdown'
@@ -82,11 +83,11 @@ export function LoginPage() {
   const initialReferralCode = new URLSearchParams(location.search).get('ref')?.trim().toUpperCase() || ''
   const [showReferralInput, setShowReferralInput] = useState(Boolean(initialReferralCode))
   const [referralInput, setReferralInput] = useState(initialReferralCode)
-  const referralCode = referralInput.trim().toUpperCase()
+  const referralCode = INVITE_FEATURE_ENABLED ? referralInput.trim().toUpperCase() : ''
   const registerPath = `/auth/register${referralCode ? `?ref=${encodeURIComponent(referralCode)}` : ''}`
 
   const navigateAfterLogin = async () => {
-    if (referralCode) {
+    if (INVITE_FEATURE_ENABLED && referralCode) {
       await applyReferral(referralCode).catch(() => null)
     }
     navigate(fromPath || '/', { replace: true })
@@ -360,6 +361,7 @@ export function LoginPage() {
           {mode === 'password' ? t('auth.phoneOtpLogin') : t('auth.passwordLogin')}
         </button>
 
+        {INVITE_FEATURE_ENABLED && (
         <div className="flex flex-col gap-2 rounded-xl bg-background px-3 py-2.5">
           <button
             type="button"
@@ -385,6 +387,7 @@ export function LoginPage() {
             />
           )}
         </div>
+        )}
 
         {/* 分割线 + 第三方登录 */}
         <p className="text-center text-xs text-muted-foreground">{t('auth.otherLogin')}</p>

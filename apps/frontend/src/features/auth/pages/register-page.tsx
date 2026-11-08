@@ -12,6 +12,7 @@ import {
 } from '@/features/auth/components/auth-page-shell'
 import { claimPromoTrial, signUpWithEmailPassword } from '@/features/auth/api'
 import { applyReferral } from '@/features/referral/api'
+import { INVITE_FEATURE_ENABLED } from '@/features/referral/invite-feature'
 import { cn } from '@/lib/cn'
 
 export function RegisterPage() {
@@ -29,7 +30,7 @@ export function RegisterPage() {
   const [message, setMessage] = useState('')
   const [success, setSuccess] = useState(false)
   const [registered, setRegistered] = useState(false)
-  const referralCode = referralInput.trim().toUpperCase()
+  const referralCode = INVITE_FEATURE_ENABLED ? referralInput.trim().toUpperCase() : ''
 
   useEffect(() => {
     if (!registered) return
@@ -52,7 +53,7 @@ export function RegisterPage() {
       setMessage('')
       await signUpWithEmailPassword(email, password, name.trim())
       await claimPromoTrial().catch(() => null)
-      if (referralCode) {
+      if (INVITE_FEATURE_ENABLED && referralCode) {
         await applyReferral(referralCode).catch(() => null)
       }
       setSuccess(true)
@@ -172,6 +173,7 @@ export function RegisterPage() {
               </p>
             )}
 
+            {INVITE_FEATURE_ENABLED && (
             <div className="flex flex-col gap-2 rounded-xl bg-background px-3 py-2.5">
               <button
                 type="button"
@@ -202,6 +204,7 @@ export function RegisterPage() {
                 </>
               )}
             </div>
+            )}
 
             <p className="text-center text-xs leading-relaxed text-muted-foreground">
               {t('auth.agreeToTerms')}

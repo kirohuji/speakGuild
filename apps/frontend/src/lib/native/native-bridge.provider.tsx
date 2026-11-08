@@ -46,6 +46,7 @@ const capabilities: NativeCapabilities = {
 const NativeBridgeContext = createContext<NativeCapabilities | null>(null);
 
 const RESUME_THROTTLE_MS = 5 * 60 * 1000; // 5 分钟
+const REVENUECAT_RESUME_THROTTLE_MS = 5 * 60 * 1000;
 
 function scheduleIdleWork(task: () => void, timeout = 2_000) {
   if (typeof requestIdleCallback !== 'undefined') {
@@ -57,6 +58,7 @@ function scheduleIdleWork(task: () => void, timeout = 2_000) {
 
 export function NativeBridgeProvider({ children }: { children: React.ReactNode }) {
   const lastResumeCheckRef = useRef(0);
+  const lastRevenueCatRefreshRef = useRef(0);
 
   useEffect(() => {
     if (!isNative()) return;
@@ -107,6 +109,30 @@ export function NativeBridgeProvider({ children }: { children: React.ReactNode }
 
       resumeHandle = await App.addListener('resume', () => {
         const now = Date.now();
+
+        // Subscription changes made in iOS Settings/Customer Center do not
+        // necessarily trigger the SDK listener while the app is backgrounded.
+        // Keep this independent from OTA's resume throttle (and dev:host's
+        // early return), otherwise the membership badge can stay stale.
+        if (now - lastRevenueCatRefreshRef.current >= REVENUECAT_RESUME_THROTTLE_MS) {
+          lastRevenueCatRefreshRef.current = now;
+          void (async () => {
+            const before = JSON.stringify(capabilities.revenueCat.getState().customerInfo?.entitlements.active ?? {});
+            await capabilities.revenueCat.refreshCustomerInfo();
+            const after = JSON.stringify(capabilities.revenueCat.getState().customerInfo?.entitlements.active ?? {});
+            if (before !== after) {
+              const [{ syncRevenueCatMembership }, { useUserStore }] = await Promise.all([
+                import('@/features/membership/api'),
+                import('@/stores/user.store'),
+              ]);
+              const membership = await syncRevenueCatMembership();
+              useUserStore.getState().setMembership(membership);
+              window.dispatchEvent(new Event('membership-updated'));
+            }
+          })().catch((err) => {
+            console.warn('[NativeBridge] RevenueCat resume refresh failed:', err);
+          });
+        }
 
         // ── dev:host: force SQLite reset + sync (no throttle) ──
         if (isDevHost) {

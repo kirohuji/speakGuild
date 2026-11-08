@@ -15,6 +15,7 @@ import { localDateKey } from '@/lib/date/calendar-date'
 import { isNative } from '@/lib/native'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { learningRepository } from '@/lib/offline/learning.repository'
+import { useMembershipPurchase } from '@/features/membership/components/membership-purchase-drawer'
 import {
   TeachingDocumentPage,
   TeachingDocumentPreviewFrame,
@@ -200,6 +201,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   const [internalOpen, setInternalOpen] = useState(false)
   const [tocOpen, setTocOpen] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
+  const { requireMembership, membershipDrawer } = useMembershipPurchase()
   const [zoomPreviewPage, setZoomPreviewPage] = useState<number | null>(null)
   const [exporting, setExporting] = useState(false)
   const [expandedTocSections, setExpandedTocSections] = useState<Set<number>>(() => new Set())
@@ -461,6 +463,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
   const collapseAllTocSections = useCallback(() => setExpandedTocSections(new Set()), [])
 
   const exportTeachingDocument = useCallback(async () => {
+    if (!requireMembership()) return
     if (!teachingMarkdown?.trim() || exporting) return
     setExporting(true)
     try {
@@ -489,7 +492,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
     } finally {
       setExporting(false)
     }
-  }, [exporting, printDate, printTitle, t, teachingMarkdown])
+  }, [exporting, printDate, printTitle, requireMembership, t, teachingMarkdown])
 
   return <>
     {!hideToggles && <button type="button" onClick={() => { closingRef.current = false; setOpen(true); void onOpen?.() }} className={cn(!plainTrigger && 'flex items-center gap-2 rounded-full bg-muted/50 px-3.5 py-2 text-xs font-medium text-foreground transition-transform active:scale-[0.97]', triggerClassName)}>{showTriggerIcon && <BookOpen className="size-3.5 text-foreground/70" />}<span>{t('practiceVn.teaching')}</span></button>}
@@ -497,7 +500,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
       <DrawerContent onPointerDownOutside={keepDrawerOpenForToc} className="h-[82vh] max-h-[82vh] rounded-t-[28px] bg-background text-foreground shadow-[0_-12px_40px_rgba(0,0,0,.28)] contain-paint !z-[10001]" overlayClassName="!z-[10001]">
         <DrawerHeader className="shrink-0 border-b border-border/45 px-5 pb-3 pt-3 text-left">
           <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3">
-            <div className="flex shrink-0 items-center gap-2">{!inlineToc && (document.toc.length > 0 ? <button type="button" onClick={() => setTocOpen(true)} className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14]" aria-label={t('practiceVn.contents')}><ListTree className="size-5" /></button> : <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary"><ListTree className="size-5" /></div>)}<button type="button" className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14] disabled:opacity-40" aria-label={t('practiceVn.previewPdf')} disabled={!teachingMarkdown?.trim() || loading} onClick={() => setPreviewOpen(true)}><FileText className="size-5" /></button></div>
+          <div className="flex shrink-0 items-center gap-2">{!inlineToc && (document.toc.length > 0 ? <button type="button" onClick={() => setTocOpen(true)} className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14]" aria-label={t('practiceVn.contents')}><ListTree className="size-5" /></button> : <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary"><ListTree className="size-5" /></div>)}<button type="button" className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/[0.09] text-primary transition-colors hover:bg-primary/[0.14] disabled:opacity-40" aria-label={t('practiceVn.previewPdf')} disabled={!teachingMarkdown?.trim() || loading} onClick={() => { if (requireMembership()) setPreviewOpen(true) }}><FileText className="size-5" /></button></div>
             <div className="min-w-0"><DrawerTitle className="text-base font-semibold tracking-tight">{t('practiceVn.teaching')}</DrawerTitle><DrawerDescription className="mt-1 text-xs">{t('practiceVn.teachingDesc')}</DrawerDescription></div>
           </div><Button type="button" variant="ghost" size="icon" className="size-10 shrink-0 rounded-full" aria-label={t('common.close')} onClick={beginClose}><X /></Button></div>
           <div className="mt-3">
@@ -560,6 +563,7 @@ export function PracticeVnDrawer({ teachingMarkdown, loading = false, onOpen, hi
         </div>}
       </DialogContent>
     </Dialog>
+    {membershipDrawer}
   </>
 }
 

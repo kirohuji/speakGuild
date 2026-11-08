@@ -431,15 +431,35 @@ model UserMembership {
   order        Order?           @relation(fields: [orderId], references: [id])
   orderId      String?          @unique
   rcCustomerId String? /// RevenueCat 用户 ID（跨端同步）
+  rcProductId String? /// 当前产生权益的商店商品 ID
+  pendingProductId String? /// 已排期、将在当前周期结束后生效的商品 ID
+  /// RevenueCat 事件的发生时间。只允许更晚的事件覆盖当前订阅快照，避免 webhook 乱序回退权益。
+  lastEventAt  DateTime?
+  /// Apple/商店原始交易标识，用于审计与排查同一订阅链路。
+  originalTransactionId String?
   startedAt    DateTime         @default(now())
   expiredAt    DateTime
   autoRenew    Boolean          @default(false)
   cancelledAt  DateTime?
+  billingIssueAt DateTime?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
   @@index([status, expiredAt])
   @@map("user_membership")
+}
+
+/// RevenueCat webhook 投递记录。eventId 是 RevenueCat 重试时保持不变的幂等键。
+model RevenueCatWebhookEvent {
+  eventId    String   @id
+  userId     String
+  eventType  String
+  eventAt    DateTime
+  payload    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([userId, eventAt])
+  @@map("revenuecat_webhook_event")
 }
 
 // ---- 文件资产域 ----

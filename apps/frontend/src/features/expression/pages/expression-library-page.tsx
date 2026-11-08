@@ -23,6 +23,7 @@ import { extractCoreUsage } from '@/lib/markdown-utils'
 import { isNative } from '@/lib/native'
 import { learningNotebookRepository, offlineSyncService } from '@/lib/offline'
 import { useAuth } from '@/providers/auth-provider'
+import { useMembershipPurchase } from '@/features/membership/components/membership-purchase-drawer'
 import type { LearningNotebook } from '@/features/practice/api/english-practice-api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -80,6 +81,7 @@ type ExportMode = PracticeSheetExportMode
 export function ExpressionLibraryPage() {
   const { t, i18n } = useTranslation()
   const { session } = useAuth()
+  const { requireMembership, membershipDrawer } = useMembershipPurchase()
   const isMobile = useIsMobile()
   const setBottomNavVisible = useLayoutStore((state) => state.setBottomNavVisible)
   const { notebookId } = useParams<{ notebookId: string }>()
@@ -387,12 +389,13 @@ export function ExpressionLibraryPage() {
   }, [])
 
   const openImmersivePlayer = useCallback((items: LearningInsightItem[], startIndex: number) => {
+    if (!requireMembership()) return
     const mappedItems = mapInsightItemsToImmersiveItems(items)
     if (mappedItems.length === 0) return
     setImmersiveItems(mappedItems)
     setImmersiveIndex(Math.min(startIndex, mappedItems.length - 1))
     setImmersiveOpen(true)
-  }, [])
+  }, [requireMembership])
 
   useEffect(() => {
     if (!deepLinkKind || !deepLinkValue || loading) return
@@ -521,6 +524,7 @@ export function ExpressionLibraryPage() {
   }, [batchAction, batchStatus, refreshLocalList, selectedNotebookItemIds, t, targetNotebookId])
 
   const openExportPreview = useCallback(async () => {
+    if (!requireMembership()) return
     if (!notebookId) return
     setExportOpen(true)
     setExportLoading(true)
@@ -537,9 +541,10 @@ export function ExpressionLibraryPage() {
     } finally {
       setExportLoading(false)
     }
-  }, [localListRequest, notebookId, t])
+  }, [localListRequest, notebookId, requireMembership, t])
 
   const printExportPreview = useCallback(async () => {
+    if (!requireMembership()) return
     if (!displayExportItems.length) return
     try {
       const modeTitle = exportMode === 'zh-to-en'
@@ -586,7 +591,7 @@ export function ExpressionLibraryPage() {
       console.warn('[expression-library] PDF export failed', error)
       toast.error(t('expressionLib.operationFailed'))
     }
-  }, [displayExportItems, exportColumns, exportDate, exportMode, notebookName, t])
+  }, [displayExportItems, exportColumns, exportDate, exportMode, notebookName, requireMembership, t])
 
   // ---- 二级状态过滤 ----
   const filterPills = [
@@ -1183,6 +1188,7 @@ export function ExpressionLibraryPage() {
         onOpenChange={setImmersiveOpen}
         onIndexChange={setImmersiveIndex}
       />
+      {membershipDrawer}
     </div>
   )
 }

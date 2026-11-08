@@ -3,9 +3,13 @@ import { PrismaService } from '../../../common/prisma/prisma.service';
 import { OpsAlertService } from '../../../common/ops/ops-alert.service';
 
 type RevenueCatWebhookEvent = {
+  id?: string;
   type?: string;
   app_user_id?: string;
+  original_app_user_id?: string;
   aliases?: string[];
+  transferred_from?: string[];
+  transferred_to?: string[];
   entitlement_id?: string;
   entitlement_ids?: string[];
   product_id?: string;
@@ -16,11 +20,27 @@ type RevenueCatWebhookEvent = {
   period_type?: string;
   environment?: string;
   store?: string;
+  event_timestamp_ms?: number;
 };
 
 type RevenueCatWebhookPayload = {
   api_version?: string;
   event?: RevenueCatWebhookEvent;
+};
+
+type MembershipState = {
+  userId: string;
+  planId: string;
+  status: 'active' | 'expired' | 'cancelled';
+  expiresAt: Date;
+  autoRenew: boolean;
+  cancelledAt: Date | null;
+  /** Undefined for an RC API snapshot: snapshots never participate in webhook ordering. */
+  eventAt?: Date;
+  originalTransactionId?: string | null;
+  productId?: string | null;
+  pendingProductId?: string | null;
+  billingIssueAt?: Date | null;
 };
 
 const ACTIVE_EVENT_TYPES = new Set([
@@ -126,47 +146,121 @@ export class RevenueCatService {
     }
   }
 
-  /** 获取用户的权益状态 */
-  async getCustomerInfo(userId: string): Promise<{
-    activeEntitlements: string[];
-    isActive: boolean;
-  } | null> {
-    if (!this.apiKey) {
-      return null;
+  /**
+   * 购买/恢复后的服务端补偿同步。使用 v2 subscriptions，避免混用旧 v1 subscriber
+   * 响应。有效权益快照永远不参与 webhook 的事件排序，避免 RC 查询传播延迟
+   * 压过真实商店事件。空结果只代表当前 API 响应没有可安全解析的权益，绝不
+   * 用来回收本地会员；退款与到期仅由带明确事件语义的 webhook 回收。
+   */
+  async syncCustomerMembership(userId: string) {
+    if (!this.apiKey || !process.env.REVENUECAT_PROJECT_ID) {
+      return { synced: false, reason: 'not-configured' as const };
     }
 
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/project/${process.env.REVENUECAT_PROJECT_ID}/customers/${userId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-          },
-        },
-      );
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const snapshot = await this.getCustomerSubscriptionSnapshot(userId);
+      if (snapshot?.kind === 'active') {
+        const plan = await this.findPlanForEntitlements(snapshot.entitlementIds);
+        if (plan && snapshot.expiresAt > new Date()) {
+          await this.prisma.$transaction((tx) => this.applyMembershipState(tx, {
+              userId,
+              planId: plan.id,
+              status: 'active',
+              expiresAt: snapshot.expiresAt,
+            autoRenew: snapshot.autoRenew,
+            cancelledAt: snapshot.cancelledAt,
+            originalTransactionId: snapshot.originalTransactionId,
+            productId: snapshot.productId,
+            pendingProductId: snapshot.pendingProductId,
+            }));
+          return { synced: true, active: true };
+        }
+      }
+      if (attempt < 2) {
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+      }
+    }
 
+    return { synced: true, active: false };
+  }
+
+  private async getCustomerSubscriptionSnapshot(userId: string): Promise<{
+    kind: 'active';
+    entitlementIds: string[];
+    expiresAt: Date;
+    autoRenew: boolean;
+    cancelledAt: Date | null;
+    originalTransactionId: string | null;
+    productId?: string;
+    pendingProductId: string | null;
+  } | { kind: 'empty' } | undefined> {
+    try {
+      const customerResponse = await fetch(
+        `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/customers/${encodeURIComponent(userId)}`,
+        { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      );
+      if (!customerResponse.ok) {
+        this.logger.warn(`RevenueCat 查询用户失败: userId=${userId}, status=${customerResponse.status}`);
+        return undefined;
+      }
+      const customer = await customerResponse.json() as any;
+      if (customer?.id !== userId) {
+        this.logger.error(`RevenueCat customer ID mismatch: requested=${userId}, received=${customer?.id ?? 'missing'}`);
+        return undefined;
+      }
+
+      const response = await fetch(
+        `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/customers/${encodeURIComponent(userId)}/subscriptions?limit=100`,
+        { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      );
       if (!response.ok) {
-        return null;
+        this.logger.warn(`RevenueCat 查询订阅失败: userId=${userId}, status=${response.status}`);
+        return undefined;
       }
 
       const data = await response.json() as any;
-      const entitlements = data?.customer?.entitlements || {};
-      const activeIds: string[] = [];
+      const subscriptions = Array.isArray(data?.items) ? data.items : [];
+      const candidates = subscriptions
+        .filter((item: any) => item?.gives_access === true)
+        .map((item: any) => {
+          const activeEntitlements = (item?.entitlements?.items ?? [])
+            .filter((entitlement: any) => entitlement?.state === 'active');
+          const entitlementIds = activeEntitlements
+            .map((entitlement: any) => entitlement?.lookup_key)
+            .filter(Boolean);
+          // subscriptions[].product_id is an RC resource ID. The matching
+          // store product lives under the active entitlement's products list.
+          const storeProductId = activeEntitlements
+            .flatMap((entitlement: any) => entitlement?.products?.items ?? [])
+            .find((product: any) => product?.id === item?.product_id)
+            ?.store_identifier;
+          const autoRenewalStatus = item?.auto_renewal_status;
+          const hasAlreadyRenewed = autoRenewalStatus === 'has_already_renewed';
+          const expiresAtMs = hasAlreadyRenewed
+            ? item?.ends_at ?? item?.current_period_ends_at
+            : item?.current_period_ends_at ?? item?.ends_at;
+          const pendingProductId = autoRenewalStatus === 'will_change_product'
+            ? item?.pending_changes?.product?.store_identifier ?? null
+            : null;
+          return {
+            entitlementIds,
+            expiresAt: typeof expiresAtMs === 'number' ? new Date(expiresAtMs) : null,
+            autoRenew: autoRenewalStatus === 'will_renew' || autoRenewalStatus === 'will_change_product' || hasAlreadyRenewed,
+            cancelledAt: autoRenewalStatus === 'will_renew' || autoRenewalStatus === 'will_change_product' || hasAlreadyRenewed ? null : new Date(),
+            originalTransactionId: item?.store_subscription_identifier != null
+              ? String(item.store_subscription_identifier)
+              : null,
+            productId: storeProductId != null ? String(storeProductId) : undefined,
+            pendingProductId,
+          };
+        })
+        .filter((item: any) => item.entitlementIds.length > 0 && item.expiresAt instanceof Date && item.expiresAt > new Date())
+        .sort((a: any, b: any) => b.expiresAt.getTime() - a.expiresAt.getTime());
 
-      for (const key of Object.keys(entitlements)) {
-        const ent = entitlements[key];
-        if (ent?.expires_date && new Date(ent.expires_date) > new Date()) {
-          activeIds.push(key);
-        }
-      }
-
-      return {
-        activeEntitlements: activeIds,
-        isActive: activeIds.length > 0,
-      };
+      return candidates[0] ? { kind: 'active' as const, ...candidates[0] } : { kind: 'empty' as const };
     } catch (error) {
-      this.logger.error('RevenueCat 查询用户信息异常', error);
-      return null;
+      this.logger.error('RevenueCat 查询订阅异常', error);
+      return undefined;
     }
   }
 
@@ -275,14 +369,22 @@ export class RevenueCatService {
 
   async handleWebhook(payload: RevenueCatWebhookPayload) {
     const event = payload?.event;
-    if (!event?.type) {
-      throw new BadRequestException('Missing RevenueCat event type');
+    if (!event?.type || !event.id || typeof event.event_timestamp_ms !== 'number') {
+      throw new BadRequestException('Missing RevenueCat event id, type, or timestamp');
     }
 
     const eventType = event.type;
-    const userId = event.app_user_id || event.aliases?.[0];
+    if (eventType === 'TRANSFER') {
+      return this.handleTransferWebhook(event);
+    }
+
+    const userId = await this.resolveKnownUserId(event);
     if (!userId) {
-      throw new BadRequestException('Missing RevenueCat app_user_id');
+      // Purchases created before identify can legitimately carry an anonymous
+      // ID. Persist the delivery for audit/dedupe but never attempt an FK write.
+      await this.recordIgnoredWebhook(event, event.app_user_id || event.aliases?.[0] || 'unknown');
+      this.logger.warn(`RevenueCat webhook ignored for unknown app user: type=${eventType}`);
+      return { success: true, ignored: true };
     }
 
     const entitlementIds = this.getEntitlementIds(event);
@@ -300,22 +402,19 @@ export class RevenueCatService {
     }
 
     if (ACTIVE_EVENT_TYPES.has(eventType)) {
-      await this.activateFromWebhook(userId, plan.id, event);
-      return { success: true };
+      return this.recordAndApplyWebhook(event, userId, () => this.activeStateFromWebhook(userId, plan.id, event));
     }
 
     if (CANCELLED_EVENT_TYPES.has(eventType)) {
-      await this.markCancelledFromWebhook(userId, plan.id, event);
-      return { success: true };
+      return this.recordAndApplyWebhook(event, userId, () => this.cancelledStateFromWebhook(userId, plan.id, event));
     }
 
     if (EXPIRED_EVENT_TYPES.has(eventType)) {
-      await this.markExpiredFromWebhook(userId, plan.id, event, eventType);
-      return { success: true };
+      return this.recordAndApplyWebhook(event, userId, () => this.expiredStateFromWebhook(userId, plan.id, event, eventType));
     }
 
     if (eventType === 'BILLING_ISSUE') {
-      await this.markBillingIssueFromWebhook(userId, plan.id, event);
+      const result = await this.recordAndApplyWebhook(event, userId, () => this.billingIssueStateFromWebhook(userId, plan.id, event));
       await this.alerts.notify({
         key: 'revenuecat-billing-issue',
         title: 'RevenueCat 订阅扣费异常',
@@ -327,7 +426,7 @@ export class RevenueCatService {
           store: event.store,
         },
       });
-      return { success: true };
+      return result;
     }
 
     this.logger.log(`RevenueCat webhook ignored: type=${eventType}, userId=${userId}`);
@@ -341,6 +440,69 @@ export class RevenueCatService {
     ].filter((item): item is string => !!item);
 
     return Array.from(new Set(ids));
+  }
+
+  private async resolveKnownUserId(event: RevenueCatWebhookEvent) {
+    const candidates = [event.app_user_id, event.original_app_user_id, ...(event.aliases ?? [])]
+      .filter((id): id is string => !!id);
+    if (candidates.length === 0) return null;
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: candidates } },
+      select: { id: true },
+    });
+    const known = new Set(users.map((user) => user.id));
+    return candidates.find((id) => known.has(id)) ?? null;
+  }
+
+  private async recordIgnoredWebhook(event: RevenueCatWebhookEvent, userId: string) {
+    try {
+      await this.prisma.revenueCatWebhookEvent.create({
+        data: { eventId: event.id!, userId, eventType: event.type!, eventAt: this.getEventDate(event), payload: event as object },
+      });
+    } catch (error: any) {
+      if (error?.code !== 'P2002') throw error;
+    }
+  }
+
+  private async handleTransferWebhook(event: RevenueCatWebhookEvent) {
+    const destinationUserId = await this.resolveKnownUserId({
+      ...event,
+      app_user_id: event.transferred_to?.[0],
+      aliases: event.transferred_to,
+    });
+    const sourceIds = event.transferred_from ?? [];
+    const eventAt = this.getEventDate(event);
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.revenueCatWebhookEvent.create({
+          data: {
+            eventId: event.id!,
+            userId: destinationUserId ?? event.transferred_to?.[0] ?? 'unknown',
+            eventType: event.type!,
+            eventAt,
+            payload: event as object,
+          },
+        });
+
+        if (sourceIds.length > 0) {
+          await tx.userMembership.updateMany({
+            where: {
+              userId: { in: sourceIds.filter((id) => id !== destinationUserId) },
+              rcCustomerId: { in: sourceIds },
+              OR: [{ lastEventAt: null }, { lastEventAt: { lt: eventAt } }],
+            },
+            data: { status: 'expired', expiredAt: eventAt, autoRenew: false, cancelledAt: eventAt, lastEventAt: eventAt },
+          });
+        }
+      });
+    } catch (error: any) {
+      if (error?.code === 'P2002') return { success: true, duplicate: true };
+      throw error;
+    }
+
+    if (destinationUserId) await this.syncCustomerMembership(destinationUserId);
+    return { success: true };
   }
 
   private async findPlanForEntitlements(entitlementIds: string[]) {
@@ -362,143 +524,161 @@ export class RevenueCatService {
     return null;
   }
 
-  private getPurchasedDate(event: RevenueCatWebhookEvent) {
-    if (typeof event.purchased_at_ms === 'number' && event.purchased_at_ms > 0) {
-      return new Date(event.purchased_at_ms);
-    }
-
-    return new Date();
+  private getEventDate(event: RevenueCatWebhookEvent) {
+    return new Date(event.event_timestamp_ms!);
   }
 
-  private async activateFromWebhook(
+  private async recordAndApplyWebhook(
+    event: RevenueCatWebhookEvent,
+    userId: string,
+    getState: () => MembershipState | null,
+  ) {
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.revenueCatWebhookEvent.create({
+          data: {
+            eventId: event.id!,
+            userId,
+            eventType: event.type!,
+            eventAt: this.getEventDate(event),
+            payload: event as object,
+          },
+        });
+        const state = getState();
+        if (state) await this.applyMembershipState(tx, state);
+      });
+      return { success: true };
+    } catch (error: any) {
+      if (error?.code === 'P2002') {
+        return { success: true, duplicate: true };
+      }
+      throw error;
+    }
+  }
+
+  private async applyMembershipState(tx: any, params: MembershipState) {
+    const existing = await tx.userMembership.findUnique({ where: { userId: params.userId } });
+    const isWebhook = !!params.eventAt;
+
+    if (isWebhook && existing?.lastEventAt && existing.lastEventAt >= params.eventAt!) return;
+
+    // A late cancellation/expiration for the replaced monthly product must not
+    // revoke a newer annual subscription. Its earlier expiration proves it is
+    // no longer the entitlement currently giving access.
+    if (
+      isWebhook &&
+      params.status !== 'active' &&
+      existing?.status === 'active' &&
+      existing.expiredAt > params.expiresAt
+    ) return;
+
+    // RC API snapshots are useful after purchase/restore, but never own the
+    // webhook clock. Do not let a briefly stale snapshot shorten access.
+    if (!isWebhook && existing?.status === 'active' && existing.expiredAt > params.expiresAt) return;
+
+    await tx.userMembership.upsert({
+        where: { userId: params.userId },
+        create: {
+          userId: params.userId,
+          planId: params.planId,
+          status: params.status,
+          rcCustomerId: params.userId,
+          expiredAt: params.expiresAt,
+          autoRenew: params.autoRenew,
+          cancelledAt: params.cancelledAt,
+          lastEventAt: params.eventAt ?? null,
+          originalTransactionId: params.originalTransactionId ?? null,
+          rcProductId: params.productId ?? null,
+          pendingProductId: params.pendingProductId ?? null,
+          billingIssueAt: params.billingIssueAt ?? null,
+        },
+        update: {
+          planId: params.planId,
+          status: params.status,
+          rcCustomerId: params.userId,
+          expiredAt: params.expiresAt,
+          autoRenew: params.autoRenew,
+          cancelledAt: params.cancelledAt,
+          ...(isWebhook ? { lastEventAt: params.eventAt } : {}),
+          ...(params.originalTransactionId ? { originalTransactionId: params.originalTransactionId } : {}),
+          ...(params.productId !== undefined ? { rcProductId: params.productId } : {}),
+          ...(params.pendingProductId !== undefined ? { pendingProductId: params.pendingProductId } : {}),
+          ...(params.billingIssueAt !== undefined ? { billingIssueAt: params.billingIssueAt } : {}),
+        },
+    });
+  }
+
+  private activeStateFromWebhook(
     userId: string,
     planId: string,
     event: RevenueCatWebhookEvent,
-  ) {
+  ): MembershipState | null {
     const now = new Date();
     const expiredAt = this.getExpirationDate(event);
 
     if (!expiredAt || expiredAt <= now) {
       this.logger.warn(`RevenueCat active event without future expiration: type=${event.type}, userId=${userId}`);
-      return;
+      return null;
     }
-
-    await this.prisma.userMembership.upsert({
-      where: { userId },
-      create: {
-        userId,
-        planId,
-        status: 'active',
-        rcCustomerId: userId,
-        startedAt: this.getPurchasedDate(event),
-        expiredAt,
-        autoRenew: true,
-      },
-      update: {
-        planId,
-        status: 'active',
-        rcCustomerId: userId,
-        expiredAt,
-        autoRenew: true,
-        cancelledAt: null,
-      },
-    });
-
-    this.logger.log(
-      `RevenueCat membership active: userId=${userId}, product=${event.product_id}, expires=${expiredAt.toISOString()}`,
-    );
+    return {
+      userId, planId, status: 'active', expiresAt: expiredAt, autoRenew: true,
+      cancelledAt: null, eventAt: this.getEventDate(event),
+      originalTransactionId: event.original_transaction_id ?? event.transaction_id ?? null,
+      productId: event.product_id ?? null,
+      pendingProductId: null,
+      billingIssueAt: null,
+    };
   }
 
-  private async markCancelledFromWebhook(userId: string, planId: string, event: RevenueCatWebhookEvent) {
+  private cancelledStateFromWebhook(userId: string, planId: string, event: RevenueCatWebhookEvent): MembershipState {
     const now = new Date();
     const expiredAt = this.getExpirationDate(event);
     const remainsActive = !!expiredAt && expiredAt > now;
 
-    await this.prisma.userMembership.upsert({
-      where: { userId },
-      create: {
-        userId,
-        planId,
-        status: remainsActive ? 'active' : 'cancelled',
-        rcCustomerId: userId,
-        expiredAt: expiredAt ?? now,
-        autoRenew: false,
-        cancelledAt: now,
-      },
-      update: {
-        planId,
-        status: remainsActive ? 'active' : 'cancelled',
-        rcCustomerId: userId,
-        expiredAt: expiredAt ?? now,
-        autoRenew: false,
-        cancelledAt: now,
-      },
-    });
-
-    this.logger.log(`RevenueCat membership cancelled: userId=${userId}, activeUntil=${expiredAt?.toISOString() ?? 'now'}`);
+    return {
+      userId, planId, status: remainsActive ? 'active' : 'cancelled', expiresAt: expiredAt ?? now,
+      autoRenew: false, cancelledAt: now, eventAt: this.getEventDate(event),
+      originalTransactionId: event.original_transaction_id ?? event.transaction_id ?? null,
+      productId: event.product_id ?? null,
+      pendingProductId: null,
+      billingIssueAt: null,
+    };
   }
 
-  private async markExpiredFromWebhook(
+  private expiredStateFromWebhook(
     userId: string,
     planId: string,
     event: RevenueCatWebhookEvent,
     eventType: string,
-  ) {
+  ): MembershipState {
     const now = new Date();
     const expiredAt = this.getExpirationDate(event) ?? now;
 
-    await this.prisma.userMembership.upsert({
-      where: { userId },
-      create: {
-        userId,
-        planId,
-        status: eventType === 'REFUND' ? 'cancelled' : 'expired',
-        rcCustomerId: userId,
-        expiredAt,
-        autoRenew: false,
-        cancelledAt: eventType === 'REFUND' ? now : null,
-      },
-      update: {
-        planId,
-        status: eventType === 'REFUND' ? 'cancelled' : 'expired',
-        rcCustomerId: userId,
-        expiredAt,
-        autoRenew: false,
-        cancelledAt: eventType === 'REFUND' ? now : undefined,
-      },
-    });
-
-    this.logger.log(`RevenueCat membership ${eventType.toLowerCase()}: userId=${userId}`);
+    return {
+      userId, planId, status: eventType === 'REFUND' ? 'cancelled' : 'expired', expiresAt: expiredAt,
+      autoRenew: false, cancelledAt: eventType === 'REFUND' ? now : null,
+      eventAt: this.getEventDate(event),
+      originalTransactionId: event.original_transaction_id ?? event.transaction_id ?? null,
+      productId: event.product_id ?? null,
+      pendingProductId: null,
+      billingIssueAt: null,
+    };
   }
 
-  private async markBillingIssueFromWebhook(userId: string, planId: string, event: RevenueCatWebhookEvent) {
+  private billingIssueStateFromWebhook(userId: string, planId: string, event: RevenueCatWebhookEvent): MembershipState {
     const now = new Date();
     const expiredAt = this.getExpirationDate(event);
 
     if (!expiredAt || expiredAt <= now) {
-      await this.markExpiredFromWebhook(userId, planId, event, 'EXPIRATION');
-      return;
+      return this.expiredStateFromWebhook(userId, planId, event, 'EXPIRATION');
     }
-
-    await this.prisma.userMembership.upsert({
-      where: { userId },
-      create: {
-        userId,
-        planId,
-        status: 'active',
-        rcCustomerId: userId,
-        expiredAt,
-        autoRenew: false,
-      },
-      update: {
-        planId,
-        status: 'active',
-        rcCustomerId: userId,
-        expiredAt,
-        autoRenew: false,
-      },
-    });
-
-    this.logger.warn(`RevenueCat billing issue: userId=${userId}, activeUntil=${expiredAt.toISOString()}`);
+    return {
+      userId, planId, status: 'active', expiresAt: expiredAt, autoRenew: false,
+      cancelledAt: null, eventAt: this.getEventDate(event),
+      originalTransactionId: event.original_transaction_id ?? event.transaction_id ?? null,
+      productId: event.product_id ?? null,
+      pendingProductId: null,
+      billingIssueAt: this.getEventDate(event),
+    };
   }
 }

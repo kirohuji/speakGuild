@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { RevenueCatService } from '../pay/revenuecat/revenuecat.service';
 
 @Injectable()
 export class MembershipService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly revenueCatService: RevenueCatService,
+  ) {}
 
   private getDisplayFeatures(level: string, features: string[]) {
     if (level !== 'standard') return features;
@@ -50,6 +54,11 @@ export class MembershipService {
         level: 'admin' as const,
         isActive: true,
         expiredAt: null,
+        autoRenew: false,
+        cancelledAt: null,
+        rcProductId: null,
+        pendingProductId: null,
+        billingIssueAt: null,
         message: '管理员拥有全部功能权限',
       };
     }
@@ -67,6 +76,11 @@ export class MembershipService {
         level: 'free',
         isActive: false,
         expiredAt: null,
+        autoRenew: false,
+        cancelledAt: null,
+        rcProductId: null,
+        pendingProductId: null,
+        billingIssueAt: null,
         message: '当前为免费版，升级会员可解锁更多功能',
       };
     }
@@ -79,8 +93,18 @@ export class MembershipService {
       isActive: true,
       expiredAt: membership.expiredAt,
       startedAt: membership.startedAt,
+      autoRenew: membership.autoRenew,
+      cancelledAt: membership.cancelledAt,
+      rcProductId: membership.rcProductId,
+      pendingProductId: membership.pendingProductId,
+      billingIssueAt: membership.billingIssueAt,
       message: `会员有效期至 ${membership.expiredAt.toLocaleDateString('zh-CN')}`,
     };
+  }
+
+  async syncRevenueCatMembership(userId: string) {
+    const sync = await this.revenueCatService.syncCustomerMembership(userId);
+    return { ...(await this.getCurrentMembership(userId)), sync };
   }
 
   getBenefits() {

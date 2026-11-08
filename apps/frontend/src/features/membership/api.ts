@@ -21,6 +21,12 @@ export interface CurrentMembership {
   isActive: boolean
   expiredAt?: string | null
   startedAt?: string | null
+  autoRenew?: boolean
+  cancelledAt?: string | null
+  rcProductId?: string | null
+  pendingProductId?: string | null
+  billingIssueAt?: string | null
+  sync?: { synced: boolean; active?: boolean; reason?: string }
   message: string
 }
 
@@ -55,6 +61,10 @@ export const getCurrentMembership = (): Promise<CurrentMembership> =>
   get('/membership/current')
 
 export const getMemberBenefits = (): Promise<MemberBenefit[]> => get('/membership/benefits')
+
+/** 服务端按当前登录用户向 RevenueCat 查询；不信任客户端 CustomerInfo。 */
+export const syncRevenueCatMembership = (): Promise<CurrentMembership> =>
+  post('/membership/revenuecat/sync')
 
 /** 创建支付订单 */
 export const createOrder = (params: {

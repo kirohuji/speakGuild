@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Check, X, Crown, Star, Zap, Shield, ChevronLeft, Sparkles, Loader2, QrCode, ExternalLink, Monitor, /* Gift */ RefreshCw, Settings } from 'lucide-react'
@@ -13,6 +13,7 @@ import {
   getMemberPlans,
   getCurrentMembership,
   getMemberBenefits,
+  syncRevenueCatMembership,
   createOrder,
   mockPayConfirm,
   type MemberPlan,
@@ -22,9 +23,10 @@ import {
 } from '@/features/membership/api'
 // import { pointsApi } from '@/features/points/api' // 积分抵扣（暂时停用），恢复时取消注释
 import { cn } from '@/lib/cn'
-import { isNative, revenueCat } from '@/lib/native'
+import { isNative, revenueCat, REVENUECAT_PRODUCT_IDS } from '@/lib/native'
 import { useRevenueCat } from '@/hooks/use-revenuecat'
 import { useUserStore } from '@/stores/user.store'
+import { useAuth } from '@/providers/auth-provider'
 
 const planIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   free: Star,
@@ -57,13 +59,31 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const [isLoading, setIsLoading] = useState(true)
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
   const [subscriptionAction, setSubscriptionAction] = useState<'restore' | 'manage' | null>(null)
+  const [purchaseLoading, setPurchaseLoading] = useState(false)
   const setCachedMembership = useUserStore((s) => s.setMembership)
+  const { session } = useAuth()
+  const purchaseInFlightRef = useRef(false)
   const revenueCatState = useRevenueCat()
 
   const isNativeApp = isNative()
   const isRevenueCatUnlimited = isNativeApp && revenueCatState.hasUnlimited
   const isAdmin = current?.level === 'admin'
-  const hasActiveMembership = isRevenueCatUnlimited || !!current?.isActive
+  // Backend remains the authority for protected features. Before its first
+  // response, retain the SDK state only to avoid a misleading initial flash.
+  const hasActiveMembership = !!current?.isActive || (!current && isRevenueCatUnlimited)
+  const selectedProductId = billingCycle === 'yearly' ? REVENUECAT_PRODUCT_IDS.yearly : REVENUECAT_PRODUCT_IDS.monthly
+  const expiryDate = current?.expiredAt ? new Date(current.expiredAt).toLocaleDateString() : ''
+  const membershipStatusText = isAdmin
+    ? t('member.adminAllFeaturesUnlocked')
+    : hasActiveMembership && current?.billingIssueAt && current?.expiredAt
+      ? t('member.billingIssueUntil', { date: expiryDate })
+      : hasActiveMembership && current?.pendingProductId === REVENUECAT_PRODUCT_IDS.monthly && current?.expiredAt
+        ? t('member.scheduledMonthlyUntil', { date: expiryDate })
+        : hasActiveMembership && current?.autoRenew === false && current?.expiredAt
+          ? t('member.subscriptionCancelledUntil', { date: expiryDate })
+          : current?.expiredAt
+            ? `${expiryDate} ${t('member.expiresSuffix')}`
+            : t('member.upgradeExperience')
 
   // 支付弹窗
   const [payOpen, setPayOpen] = useState(false)
@@ -129,15 +149,31 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
 
   const handleUpgrade = useCallback(async (plan: MemberPlan) => {
     if (isNativeApp) {
+      if (purchaseInFlightRef.current) return
+      if (!session?.user.id) {
+        toast.error(t('auth.loginPrompt'))
+        return
+      }
+      purchaseInFlightRef.current = true
+      setPurchaseLoading(true)
       try {
-        const result = await revenueCat.presentPaywallIfNeeded()
+        await revenueCat.identify(session.user.id)
+        // The visible 月付/年付 choice must be the package that StoreKit purchases.
+        await revenueCat.purchasePackage(billingCycle)
         await revenueCat.refreshCustomerInfo()
-        if (result?.result === 'PURCHASED' || result?.result === 'RESTORED') {
-          await refreshMembership(true).catch(() => null)
-          toast.success('Subscription updated')
+        const synced = await syncRevenueCatMembership()
+        await refreshMembership().catch(() => null)
+        if (!synced.isActive) {
+          toast.message(t('member.purchasePending'))
+          return
         }
+        toast.success(t('member.purchaseUpdated'))
       } catch (err: any) {
-        toast.error(err?.message || 'Unable to open RevenueCat paywall')
+        if (err?.userCancelled || err?.code === 'PURCHASE_CANCELLED_ERROR') return
+        toast.error(err?.message || t('member.purchaseFailed'))
+      } finally {
+        purchaseInFlightRef.current = false
+        setPurchaseLoading(false)
       }
       return
     }
@@ -146,32 +182,49 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     setPayResult(null)
     setPayError(null)
     setPayOpen(true)
-  }, [isNativeApp, refreshMembership])
+  }, [billingCycle, isNativeApp, refreshMembership, session?.user.id, t])
+
+  useEffect(() => {
+    const onMembershipUpdated = () => { void refreshMembership().catch(() => null) }
+    window.addEventListener('membership-updated', onMembershipUpdated)
+    return () => window.removeEventListener('membership-updated', onMembershipUpdated)
+  }, [refreshMembership])
 
   const handleRestorePurchases = useCallback(async () => {
     setSubscriptionAction('restore')
     try {
+      if (!session?.user.id) throw new Error(t('auth.loginPrompt'))
+      await revenueCat.identify(session.user.id)
       await revenueCatState.restorePurchases()
-      await refreshMembership(true).catch(() => null)
-      toast.success(t('member.purchaseRestored'))
+      const synced = await syncRevenueCatMembership()
+      await refreshMembership().catch(() => null)
+      if (synced.isActive) toast.success(t('member.purchaseRestored'))
+      else toast.message(t('member.noPurchaseRestored'))
     } catch (err: any) {
       toast.error(err?.message || t('member.restoreFailed'))
     } finally {
       setSubscriptionAction(null)
     }
-  }, [refreshMembership, revenueCatState])
+  }, [refreshMembership, revenueCatState, session?.user.id, t])
 
   const handleManageSubscription = useCallback(async () => {
     setSubscriptionAction('manage')
+    let customerCenterOpened = false
     try {
+      if (!session?.user.id) throw new Error(t('auth.loginPrompt'))
+      await revenueCat.identify(session.user.id)
       await revenueCatState.presentCustomerCenter()
+      customerCenterOpened = true
+      const synced = await syncRevenueCatMembership()
       await refreshMembership().catch(() => null)
+      if (!synced.isActive && current?.isActive) toast.message(t('member.subscriptionUpdatePending'))
     } catch (err: any) {
-      toast.error(err?.message || t('member.manageSubUnavailable'))
+      if (customerCenterOpened) toast.message(t('member.subscriptionUpdatePending'))
+      else toast.error(err?.message || t('member.manageSubUnavailable'))
     } finally {
       setSubscriptionAction(null)
     }
-  }, [refreshMembership, revenueCatState])
+  }, [current?.isActive, refreshMembership, revenueCatState, session?.user.id, t])
 
   const handlePay = useCallback(async (method: 'alipay' | 'wechat') => {
     if (!payPlan) return
@@ -231,7 +284,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         <PricingCard
           key={plan.planId}
           plan={plan}
-          isCurrent={current?.planId === plan.planId}
+          isCurrent={current?.isActive === true && current.rcProductId === selectedProductId}
+          isPurchasing={purchaseLoading}
           billingCycle={billingCycle}
           onUpgrade={() => handleUpgrade(plan)}
           compact={plans.length === 1}
@@ -337,9 +391,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                 </Badge>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                {isAdmin ? t('member.adminAllFeaturesUnlocked') : current?.expiredAt
-                  ? `${new Date(current.expiredAt).toLocaleDateString()} ${t('member.expiresSuffix')}`
-                  : t('member.upgradeExperience')}
+                {membershipStatusText}
               </p>
             </div>
           </div>
@@ -400,9 +452,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {isAdmin ? t('member.adminAllFeaturesUnlocked') : current?.expiredAt
-                        ? `${new Date(current.expiredAt).toLocaleDateString()} ${t('member.expiresSuffix')}`
-                        : t('member.upgradeMore')}
+                      {membershipStatusText}
                     </p>
                   </div>
                 </div>
@@ -580,7 +630,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                   <CompactPlanCard
                     key={plan.planId}
                     plan={plan}
-                    isCurrent={current?.planId === plan.planId}
+                    isCurrent={current?.isActive === true && current.rcProductId === selectedProductId}
+                    isPurchasing={purchaseLoading}
                     billingCycle={billingCycle}
                     onUpgrade={() => handleUpgrade(plan)}
                     compact={plans.length === 1}
@@ -924,12 +975,14 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
 function PricingCard({
   plan,
   isCurrent,
+  isPurchasing = false,
   billingCycle,
   onUpgrade,
   compact = false,
 }: {
   plan: MemberPlan
   isCurrent: boolean
+  isPurchasing?: boolean
   billingCycle: 'monthly' | 'yearly'
   onUpgrade: () => void
   compact?: boolean
@@ -990,10 +1043,10 @@ function PricingCard({
         variant={plan.level === 'free' ? 'outline' : plan.highlighted ? 'default' : 'outline'}
         size="lg"
         className="mb-4 w-full rounded-xl"
-        disabled={isCurrent || plan.level === 'free'}
+        disabled={isCurrent || plan.level === 'free' || isPurchasing}
         onClick={onUpgrade}
       >
-        {isCurrent ? t('member.currentPlan') : plan.level === 'free' ? t('member.useFree') : t('member.upgrade')}
+        {isPurchasing ? <><Loader2 className="mr-2 size-4 animate-spin" />{t('member.purchaseLoading')}</> : isCurrent ? t('member.currentPlan') : plan.level === 'free' ? t('member.useFree') : t('member.upgrade')}
       </Button>
 
       <div className="mt-auto space-y-2.5 border-t pt-4">
@@ -1052,12 +1105,14 @@ function CompactSupportCell({ value, highlighted }: { value: boolean | string; h
 function CompactPlanCard({
   plan,
   isCurrent,
+  isPurchasing = false,
   billingCycle,
   onUpgrade,
   compact = false,
 }: {
   plan: MemberPlan
   isCurrent: boolean
+  isPurchasing?: boolean
   billingCycle: 'monthly' | 'yearly'
   onUpgrade: () => void
   compact?: boolean
@@ -1071,11 +1126,12 @@ function CompactPlanCard({
   return (
     <button
       type="button"
-      onClick={isCurrent ? undefined : onUpgrade}
+      onClick={isCurrent || isPurchasing ? undefined : onUpgrade}
+      disabled={isCurrent || isPurchasing}
       className={cn(
         'group relative overflow-hidden rounded-xl px-4 py-4 text-left transition-all active:scale-[0.99]',
         compact && 'w-full',
-        isCurrent
+        isCurrent || isPurchasing
           ? 'cursor-default bg-primary/[0.10]'
           : plan.level === 'standard'
             ? 'bg-primary/[0.06] hover:bg-primary/[0.09]'
@@ -1119,7 +1175,7 @@ function CompactPlanCard({
         </div>
         {!isCurrent && (
           <span className="rounded-full bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground shadow-sm">
-            {t('member.upgrade')}
+            {isPurchasing ? <Loader2 className="size-3 animate-spin" /> : t('member.upgrade')}
           </span>
         )}
       </div>

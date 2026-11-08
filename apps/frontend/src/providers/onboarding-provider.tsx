@@ -40,8 +40,10 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
       : ''
   )
   const isTestMode = new URLSearchParams(searchStr).get('test') === '2'
-  const hasAiPlacementAssessment = (profile: UserProfile | null) =>
-    profile?.outputLevelDetail?.source === 'ai_placement_assessment'
+  const hasSettledPlacement = (profile: UserProfile | null) => {
+    const source = profile?.outputLevelDetail?.source
+    return source === 'ai_placement_assessment' || source === 'skipped_placement'
+  }
 
   // ---- 启动完整引导（Tour）：从首页开始 ----
   const startGuidance = useCallback(() => {
@@ -71,11 +73,11 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         }
 
         if (!profile.hasCompletedOnboarding) {
-          if (hasAiPlacementAssessment(profile)) {
-            // 已测评但从未完成引导：首次走完整 Tour
+          if (hasSettledPlacement(profile)) {
+            // 已测评或已跳过，但从未完成引导：首次走完整 Tour
             startGuidance()
           } else {
-            // 未测评：先弹测评，测完再走 Tour
+            // 未测评：先弹测评，测完或关闭后再走 Tour
             setPlacementProfile(profile)
             setPlacementOpen(true)
           }
@@ -93,6 +95,26 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     setPlacementOpen(false)
     startGuidance()
   }, [startGuidance])
+
+  // 关闭测评：不改等级，保持默认 L1，并记一笔跳过，避免下次再强制弹出
+  const handlePlacementDismissed = useCallback(() => {
+    setPlacementOpen(false)
+    if (!isTestMode) {
+      const level = placementProfile?.outputLevel || 'L1'
+      void updateUserProfile({
+        outputLevel: level,
+        outputLevelDetail: {
+          source: 'skipped_placement',
+          assessedAt: new Date().toISOString(),
+        },
+      })
+        .then((profile) => setCachedProfile(profile))
+        .catch(() => {
+          // 写入失败不阻塞进入应用，本次已关闭
+        })
+    }
+    startGuidance()
+  }, [isTestMode, placementProfile?.outputLevel, setCachedProfile, startGuidance])
 
   // ---- 分段引导延迟显示：tour 即时出现；segment 等页面稳定后再出现 ----
   useEffect(() => {
@@ -165,8 +187,8 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
         open={placementOpen}
         onOpenChange={setPlacementOpen}
         profile={placementProfile}
-        required
         onCompleted={handlePlacementCompleted}
+        onDismissed={handlePlacementDismissed}
       />
 
       {storeMode && overlayVisible && currentStep && (

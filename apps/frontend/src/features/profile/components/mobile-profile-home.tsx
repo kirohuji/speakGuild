@@ -19,6 +19,7 @@ import { IosRow, IosSection } from '@/features/profile/components/ios-components
 import { LearningAssessmentDialog, goalLabelMap, normalizeLearningGoals } from '@/features/profile/components/placement-assessment-dialog'
 import { FeedbackDialog } from '@/features/feedback/components/feedback-dialog'
 import { MobileInviteDrawer } from '@/features/referral/components/mobile-invite-drawer'
+import { INVITE_FEATURE_ENABLED } from '@/features/referral/invite-feature'
 import { MobileFaqDrawer } from '@/features/profile/components/mobile-faq-drawer'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { toast } from 'sonner'
@@ -140,13 +141,14 @@ export function MobileProfileHome({
         />
         <IosRow icon={IdCard} iconBg="bg-sky-400" label={t('profile.account')} onTap={() => onNavigate('account')} />
         <IosRow icon={Crown} iconBg="bg-amber-500" label={t('nav.member')} onTap={() => onNavigate('member')} />
-        <IosRow
-          icon={Gift}
-          iconBg="bg-pink-500"
-          label={t('invite.title')}
-          // subtitle="好友注册成功后，你获得 5 天会员"
-          onTap={() => setShowInviteDrawer(true)}
-        />
+        {INVITE_FEATURE_ENABLED && (
+          <IosRow
+            icon={Gift}
+            iconBg="bg-pink-500"
+            label={t('invite.title')}
+            onTap={() => setShowInviteDrawer(true)}
+          />
+        )}
         <IosRow
           icon={CircleHelp}
           iconBg="bg-accent"
@@ -224,7 +226,9 @@ export function MobileProfileHome({
         profile={userProfile}
       />
 
-      <MobileInviteDrawer open={showInviteDrawer} onOpenChange={setShowInviteDrawer} />
+      {INVITE_FEATURE_ENABLED && (
+        <MobileInviteDrawer open={showInviteDrawer} onOpenChange={setShowInviteDrawer} />
+      )}
 
       <MobileFaqDrawer
         open={showFaqDrawer}

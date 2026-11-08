@@ -1,6 +1,5 @@
 import {
   LOG_LEVEL,
-  PACKAGE_TYPE,
   Purchases,
   type CustomerInfo,
   type PurchasesOffering,
@@ -138,22 +137,12 @@ async function ensureConfigured(appUserID?: string | null): Promise<CustomerInfo
 }
 
 function findPackage(offering: PurchasesOffering, product: RevenueCatProductKey): PurchasesPackage | null {
-  if (product === 'yearly' && offering.annual) return offering.annual;
-  if (product === 'monthly' && offering.monthly) return offering.monthly;
-
   const productId = REVENUECAT_PRODUCT_IDS[product];
-  const expectedPackageType =
-    product === 'yearly'
-        ? PACKAGE_TYPE.ANNUAL
-        : PACKAGE_TYPE.MONTHLY;
+  const exactPackage = offering.availablePackages.find((pkg) => pkg.product.identifier === productId);
+  if (exactPackage) return exactPackage;
 
-  return offering.availablePackages.find((pkg) => {
-    return (
-      pkg.identifier === productId ||
-      pkg.product.identifier === productId ||
-      pkg.packageType === expectedPackageType
-    );
-  }) ?? null;
+  // Reserved RC packages are cycle-specific, unlike a broad package-type scan.
+  return product === 'yearly' ? offering.annual ?? null : offering.monthly ?? null;
 }
 
 export const revenueCat: RevenueCatAPI = {

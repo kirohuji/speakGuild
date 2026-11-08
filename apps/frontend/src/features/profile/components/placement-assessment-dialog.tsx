@@ -447,12 +447,14 @@ export function LearningAssessmentDialog({
   profile,
   required = false,
   onCompleted,
+  onDismissed,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   profile: UserProfile | null
   required?: boolean
   onCompleted?: () => void
+  onDismissed?: () => void
 }) {
   const { t } = useTranslation()
   const { session } = useAuth()
@@ -622,6 +624,8 @@ export function LearningAssessmentDialog({
   const handleConfirmExit = () => {
     confirmedRef.current = true
     setPendingClose(false)
+    if (result) onCompleted?.()
+    else onDismissed?.()
     onOpenChange(false)
   }
 
