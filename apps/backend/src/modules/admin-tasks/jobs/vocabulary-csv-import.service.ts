@@ -5,6 +5,16 @@ import { AdminTasksService } from '../admin-tasks.service';
 import { ContentPrepareService, createUsageStats, usageCallback, runConcurrent, AI_ENRICH_CONCURRENCY, type AiUsageStats } from './content-prepare.service';
 import { AdminContentAiService } from '../../admin/admin-content-ai.service';
 import { vocabularyMeaningMissingPosPrefix } from '../../admin/vocabulary-meaning.util';
+import {
+  describeTextFilter,
+  describeVocabularyFilter,
+  listChunkIds,
+  listPatternIds,
+  countVocabularyInIds,
+  listVocabularyIds,
+  type TextLibraryFilter,
+  type VocabularyLibraryFilter,
+} from './library-list-scope';
 
 interface CsvImportSummary {
   created: number;
@@ -24,11 +34,151 @@ export class VocabularyCsvImportService {
     private readonly adminContentAiService: AdminContentAiService,
   ) {}
 
+  private async libraryPayload(taskId: string) {
+    const task = await this.prisma.adminTask.findUnique({
+      where: { id: taskId },
+      select: { payload: true },
+    });
+    return (task?.payload ?? {}) as {
+      libraryFilter?: VocabularyLibraryFilter & TextLibraryFilter;
+      libraryFilterLabel?: string;
+    };
+  }
+
+  /** 按 id 分批遍历。返回 false 表示调用方要求停止（通常是任务已取消）。 */
+  private async forIdSlices(
+    ids: string[],
+    visit: (slice: string[], scanned: number) => Promise<boolean | void>,
+    size = 500,
+  ) {
+    for (let index = 0; index < ids.length; index += size) {
+      const slice = ids.slice(index, index + size);
+      const keepGoing = await visit(slice, Math.min(index + slice.length, ids.length));
+      if (keepGoing === false) return false;
+    }
+    return true;
+  }
+
+  private async vocabularyScope(taskId: string) {
+    const payload = await this.libraryPayload(taskId);
+    const ids = await listVocabularyIds(this.prisma, payload.libraryFilter);
+    const label = payload.libraryFilterLabel || await describeVocabularyFilter(this.prisma, payload.libraryFilter);
+    await this.adminTasksService.log(taskId, 'info', `筛选范围：${label}；命中 ${ids.length} 个词汇，按该结果执行（不受分页限制）`, {
+      step: 'scope',
+      meta: { libraryFilter: payload.libraryFilter ?? {}, matchedCount: ids.length },
+    });
+    return { ids, label };
+  }
+
+  private async chunkScope(taskId: string) {
+    const payload = await this.libraryPayload(taskId);
+    const ids = await listChunkIds(this.prisma, payload.libraryFilter);
+    const label = payload.libraryFilterLabel || await describeTextFilter(this.prisma, payload.libraryFilter, '句块');
+    await this.adminTasksService.log(taskId, 'info', `筛选范围：${label}；命中 ${ids.length} 个句块，按该结果执行（不受分页限制）`, {
+      step: 'scope',
+      meta: { libraryFilter: payload.libraryFilter ?? {}, matchedCount: ids.length },
+    });
+    return { ids, label };
+  }
+
+  private async patternScope(taskId: string) {
+    const payload = await this.libraryPayload(taskId);
+    const ids = await listPatternIds(this.prisma, payload.libraryFilter);
+    const label = payload.libraryFilterLabel || await describeTextFilter(this.prisma, payload.libraryFilter, '句式');
+    await this.adminTasksService.log(taskId, 'info', `筛选范围：${label}；命中 ${ids.length} 个句式，按该结果执行（不受分页限制）`, {
+      step: 'scope',
+      meta: { libraryFilter: payload.libraryFilter ?? {}, matchedCount: ids.length },
+    });
+    return { ids, label };
+  }
+
+  /**
+   * 只补齐空的讲解 / 描述。刻意调用统一的词汇 enrichVocabulary 服务，
+   * 以保证批量生成与编辑弹窗中的讲解使用完全相同的提示词、语气和质量规则。
+   */
+  async runVocabularyDescriptionEnrich(taskId: string) {
+    if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
+    const { ids: scopeIds } = await this.vocabularyScope(taskId);
+    const candidates: Array<{ id: string; word: string; definitionEn: string; meaning: string; examples: unknown; phoneticUs: string | null; phoneticUk: string | null }> = [];
+    const finishedScan = await this.forIdSlices(scopeIds, async (slice, scanned) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return false;
+      const rows = await this.prisma.vocabulary.findMany({
+        where: {
+          AND: [
+            { id: { in: slice } },
+            { definitionEn: { not: '' } },
+            { OR: [{ description: null }, { description: '' }] },
+          ],
+        },
+        select: { id: true, word: true, definitionEn: true, meaning: true, examples: true, phoneticUs: true, phoneticUk: true },
+      });
+      candidates.push(...rows.map((row) => ({
+        id: row.id, word: row.word, definitionEn: row.definitionEn ?? '', meaning: row.meaning ?? '',
+        examples: row.examples, phoneticUs: row.phoneticUs, phoneticUk: row.phoneticUk,
+      })));
+      await this.adminTasksService.setProgress(taskId, { currentStep: 'scan', totalItems: scopeIds.length, processedItems: scanned });
+    });
+    if (!finishedScan) return;
+
+    let processed = 0;
+    let enriched = 0;
+    let failed = 0;
+    const errors: Array<{ id: string; word: string; message: string }> = [];
+    const usageStats = createUsageStats();
+    await runConcurrent(candidates, AI_ENRICH_CONCURRENCY, async (candidate) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      try {
+        const result = await this.adminContentAiService.enrichVocabulary({
+          word: candidate.word,
+          definitions: candidate.definitionEn.split('; ').map((item) => item.trim()).filter(Boolean),
+          examples: (Array.isArray(candidate.examples) ? candidate.examples : [])
+            .map((item: any) => ({ en: String(item?.en ?? '').trim() })).filter((item) => item.en),
+          phoneticUs: candidate.phoneticUs || '(preserve)',
+          phoneticUk: candidate.phoneticUk || '(preserve)',
+          meaningExists: true,
+          descriptionExists: false,
+          difficultyExists: true,
+        }, usageCallback(usageStats));
+        if (!result.description?.trim()) throw new Error('AI 未返回讲解 / 描述');
+        await this.prisma.vocabulary.update({ where: { id: candidate.id }, data: { description: result.description } });
+        enriched++;
+      } catch (error: any) {
+        failed++;
+        const message = error?.message ?? 'unknown error';
+        errors.push({ id: candidate.id, word: candidate.word, message });
+        await this.adminTasksService.log(taskId, 'error', `词汇 "${candidate.word}" 讲解补齐失败：${message}`, {
+          step: 'description', meta: { id: candidate.id, word: candidate.word },
+        });
+      } finally {
+        processed++;
+        if (processed % 10 === 0 || processed === candidates.length) {
+          await this.adminTasksService.setProgress(taskId, {
+            currentStep: `description (${processed}/${candidates.length})`, totalItems: candidates.length,
+            processedItems: processed, successItems: enriched, failedItems: failed,
+          });
+        }
+      }
+    });
+    const summary = { total: candidates.length, enriched, failed, errors, usage: usageStats };
+    await this.adminTasksService.markCompleted(taskId, summary);
+    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `词汇讲解补齐完成：已补齐 ${enriched}，失败 ${failed}`, { step: 'completed', meta: summary });
+    return summary;
+  }
+
   /** Copy the preferred UK/US pronunciation from managed dictionary entries. */
   async runDictionaryPronunciationSync(taskId: string) {
     if (!await this.adminTasksService.markRunning(taskId, 'load-dictionary')) return;
 
-    const vocabularies = await this.prisma.vocabulary.findMany({ select: { id: true, word: true } });
+    const { ids: scopeIds } = await this.vocabularyScope(taskId);
+    const vocabularies: Array<{ id: string; word: string }> = [];
+    const finishedScan = await this.forIdSlices(scopeIds, async (slice) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return false;
+      vocabularies.push(...await this.prisma.vocabulary.findMany({
+        where: { id: { in: slice } },
+        select: { id: true, word: true },
+      }));
+    });
+    if (!finishedScan) return;
     const dictionaryWords = [...new Set(vocabularies.map((item) => item.word.trim().toLowerCase()).filter(Boolean))];
     await this.adminTasksService.setProgress(taskId, { currentStep: 'load-dictionary', totalItems: vocabularies.length });
     await this.adminTasksService.log(taskId, 'info', `开始同步 ${vocabularies.length} 个词汇的美式/英式音标和发音`, { step: 'load-dictionary' });
@@ -291,24 +441,21 @@ export class VocabularyCsvImportService {
     if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
 
     const candidates: Array<{ id: string; word: string }> = [];
-    let cursor: string | undefined;
     let scanned = 0;
-    const totalToScan = await this.prisma.vocabulary.count();
+    const { ids: scopeIds } = await this.vocabularyScope(taskId);
+    const totalToScan = scopeIds.length;
 
-    await this.adminTasksService.log(taskId, 'info', `开始检查全部 ${totalToScan} 个词汇的字段完整性（中文释义/讲解/例句/音标/难度）`, { step: 'scan' });
+    await this.adminTasksService.log(taskId, 'info', `开始检查筛选命中的 ${totalToScan} 个词汇的字段完整性（中文释义/讲解/例句/音标/难度）`, { step: 'scan' });
 
-    do {
-      if (await this.adminTasksService.isCanceled(taskId)) return;
+    const finishedScan = await this.forIdSlices(scopeIds, async (slice, processed) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return false;
       const rows = await this.prisma.vocabulary.findMany({
+        where: { id: { in: slice } },
         select: {
           id: true, word: true, meaning: true, description: true, examples: true,
           phoneticUs: true, phoneticUk: true, difficulty: true,
         },
-        orderBy: { id: 'asc' },
-        take: 500,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       });
-      if (rows.length === 0) break;
 
       const validDifficulty = (d?: string | null) => ['L1', 'L2', 'L3', 'L4', 'L5'].includes(d ?? '');
       for (const vocabulary of rows) {
@@ -329,11 +476,11 @@ export class VocabularyCsvImportService {
           candidates.push({ id: vocabulary.id, word: vocabulary.word });
         }
       }
-      cursor = rows.at(-1)?.id;
       await this.adminTasksService.setProgress(taskId, {
-        currentStep: 'scan', totalItems: totalToScan, processedItems: scanned, successItems: scanned,
+        currentStep: 'scan', totalItems: totalToScan, processedItems: processed, successItems: processed,
       });
-    } while (cursor);
+    });
+    if (!finishedScan) return;
 
     await this.adminTasksService.log(taskId, 'info', `检查完成：共检查 ${scanned} 个词汇，发现 ${candidates.length} 个字段缺失，将走统一词典管道补全`, {
       step: 'scan', meta: { scanned, missingEnrich: candidates.length },
@@ -454,27 +601,26 @@ export class VocabularyCsvImportService {
       missing: { meaning: boolean; description: boolean; examples: boolean };
     }> = [];
     const translationCandidates: Array<{ id: string; chunkId: string; en: string }> = [];
-    let cursor: string | undefined;
     let scanned = 0;
-    const totalToScan = await this.prisma.chunk.count();
+    const { ids: scopeIds } = await this.chunkScope(taskId);
+    const totalToScan = scopeIds.length;
 
-    await this.adminTasksService.log(taskId, 'info', `开始检查全部 ${totalToScan} 个句块的中文释义、讲解/描述、例句及例句中文翻译`, { step: 'scan' });
+    await this.adminTasksService.log(taskId, 'info', `开始检查筛选命中的 ${totalToScan} 个句块的中文释义、讲解/描述、例句及例句中文翻译`, { step: 'scan' });
 
-    do {
-      if (await this.adminTasksService.isCanceled(taskId)) return;
+    const finishedScan = await this.forIdSlices(scopeIds, async (slice, processed) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return false;
       const rows = await this.prisma.chunk.findMany({
+        where: { id: { in: slice } },
         select: { id: true, text: true, meaning: true, description: true },
-        orderBy: { id: 'asc' },
-        take: 500,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       });
-      if (rows.length === 0) break;
 
-      // 批量取本页例句，检查数量与中文翻译
-      const examples = await this.prisma.chunkExample.findMany({
-        where: { chunkId: { in: rows.map(r => r.id) } },
-        select: { id: true, chunkId: true, en: true, zh: true },
-      });
+      // 批量取本批例句，检查数量与中文翻译
+      const examples = rows.length
+        ? await this.prisma.chunkExample.findMany({
+          where: { chunkId: { in: rows.map(r => r.id) } },
+          select: { id: true, chunkId: true, en: true, zh: true },
+        })
+        : [];
       const examplesByChunk = new Map<string, typeof examples>();
       for (const ex of examples) {
         const list = examplesByChunk.get(ex.chunkId);
@@ -499,11 +645,11 @@ export class VocabularyCsvImportService {
           }
         }
       }
-      cursor = rows.at(-1)?.id;
       await this.adminTasksService.setProgress(taskId, {
-        currentStep: 'scan', totalItems: totalToScan, processedItems: scanned, successItems: scanned,
+        currentStep: 'scan', totalItems: totalToScan, processedItems: processed, successItems: processed,
       });
-    } while (cursor);
+    });
+    if (!finishedScan) return;
 
     await this.adminTasksService.log(taskId, 'info', `检查完成：共检查 ${scanned} 个句块，发现 ${candidates.length} 个缺失中文释义/讲解/例句，${translationCandidates.length} 条例句缺中文翻译`, {
       step: 'scan', meta: { scanned, missingEnrich: candidates.length, missingTranslations: translationCandidates.length },
@@ -630,24 +776,22 @@ export class VocabularyCsvImportService {
   async runChunkMeaningRewrite(taskId: string) {
     if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
 
-    const totalItems = await this.prisma.chunk.count();
+    const { ids: scopeIds } = await this.chunkScope(taskId);
+    const totalItems = scopeIds.length;
     const usageStats = createUsageStats();
     const errors: Array<{ id: string; text: string; message: string }> = [];
     let rewritten = 0;
     let failed = 0;
     let processed = 0;
-    let cursor: string | undefined;
 
-    await this.adminTasksService.log(taskId, 'info', `开始重写全部 ${totalItems} 个句块的中文释义；不会修改讲解、例句或其它字段`, { step: 'rewrite' });
-    do {
-      if (await this.adminTasksService.isCanceled(taskId)) return;
+    await this.adminTasksService.log(taskId, 'info', `开始重写筛选命中的 ${totalItems} 个句块的中文释义；不会修改讲解、例句或其它字段`, { step: 'rewrite' });
+    const finishedRewrite = await this.forIdSlices(scopeIds, async (slice) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return false;
       const rows = await this.prisma.chunk.findMany({
+        where: { id: { in: slice } },
         select: { id: true, text: true, meaning: true },
-        orderBy: { id: 'asc' },
-        take: 50,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       });
-      if (!rows.length) break;
+      if (!rows.length) return;
 
       try {
         const results = await this.adminContentAiService.enrichChunksBatch(
@@ -677,12 +821,12 @@ export class VocabularyCsvImportService {
       }
 
       processed += rows.length;
-      cursor = rows.at(-1)?.id;
       await this.adminTasksService.setProgress(taskId, {
         currentStep: `rewrite (${processed}/${totalItems})`, totalItems, processedItems: processed,
         successItems: rewritten, failedItems: failed,
       });
-    } while (cursor);
+    }, 50);
+    if (!finishedRewrite) return;
 
     const summary = { scanned: processed, rewritten, failed, errors: errors.slice(0, 20), usage: usageStats };
     await this.adminTasksService.markCompleted(taskId, summary);
@@ -701,21 +845,18 @@ export class VocabularyCsvImportService {
       missing: { meaning: boolean; description: boolean; examples: boolean };
     }> = [];
     const translationCandidates: Array<{ patternId: string; index: number; en: string }> = [];
-    let cursor: string | undefined;
     let scanned = 0;
-    const totalToScan = await this.prisma.sentencePattern.count();
+    const { ids: scopeIds } = await this.patternScope(taskId);
+    const totalToScan = scopeIds.length;
 
-    await this.adminTasksService.log(taskId, 'info', `开始检查全部 ${totalToScan} 个句型的中文释义、讲解/描述、例句及例句中文翻译`, { step: 'scan' });
+    await this.adminTasksService.log(taskId, 'info', `开始检查筛选命中的 ${totalToScan} 个句式的中文释义、讲解/描述、例句及例句中文翻译`, { step: 'scan' });
 
-    do {
-      if (await this.adminTasksService.isCanceled(taskId)) return;
+    const finishedScan = await this.forIdSlices(scopeIds, async (slice, processed) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return false;
       const rows = await this.prisma.sentencePattern.findMany({
+        where: { id: { in: slice } },
         select: { id: true, pattern: true, meaning: true, description: true, examples: true },
-        orderBy: { id: 'asc' },
-        take: 500,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       });
-      if (rows.length === 0) break;
 
       for (const sp of rows) {
         scanned++;
@@ -734,11 +875,11 @@ export class VocabularyCsvImportService {
           }
         });
       }
-      cursor = rows.at(-1)?.id;
       await this.adminTasksService.setProgress(taskId, {
-        currentStep: 'scan', totalItems: totalToScan, processedItems: scanned, successItems: scanned,
+        currentStep: 'scan', totalItems: totalToScan, processedItems: processed, successItems: processed,
       });
-    } while (cursor);
+    });
+    if (!finishedScan) return;
 
     await this.adminTasksService.log(taskId, 'info', `检查完成：共检查 ${scanned} 个句型，发现 ${candidates.length} 个缺失中文释义/讲解/例句，${translationCandidates.length} 条例句缺中文翻译`, {
       step: 'scan', meta: { scanned, missingEnrich: candidates.length, missingTranslations: translationCandidates.length },
@@ -885,21 +1026,18 @@ export class VocabularyCsvImportService {
 
     const MEANING_MAX_LEN = 60; // 超过视为冗长，需要精简
     const candidates: Array<{ id: string; word: string }> = [];
-    let cursor: string | undefined;
     let scanned = 0;
-    const totalToScan = await this.prisma.vocabulary.count();
+    const { ids: scopeIds } = await this.vocabularyScope(taskId);
+    const totalToScan = scopeIds.length;
 
-    await this.adminTasksService.log(taskId, 'info', `开始检查全部 ${totalToScan} 个词汇（例句缺中文翻译 / 释义过长）`, { step: 'scan' });
+    await this.adminTasksService.log(taskId, 'info', `开始检查筛选命中的 ${totalToScan} 个词汇（例句缺中文翻译 / 释义过长）`, { step: 'scan' });
 
-    do {
-      if (await this.adminTasksService.isCanceled(taskId)) return;
+    const finishedScan = await this.forIdSlices(scopeIds, async (slice, processed) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return false;
       const rows = await this.prisma.vocabulary.findMany({
+        where: { id: { in: slice } },
         select: { id: true, word: true, meaning: true, examples: true },
-        orderBy: { id: 'asc' },
-        take: 500,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       });
-      if (rows.length === 0) break;
 
       for (const v of rows) {
         scanned++;
@@ -910,11 +1048,11 @@ export class VocabularyCsvImportService {
           candidates.push({ id: v.id, word: v.word });
         }
       }
-      cursor = rows.at(-1)?.id;
       await this.adminTasksService.setProgress(taskId, {
-        currentStep: 'scan', totalItems: totalToScan, processedItems: scanned, successItems: scanned,
+        currentStep: 'scan', totalItems: totalToScan, processedItems: processed, successItems: processed,
       });
-    } while (cursor);
+    });
+    if (!finishedScan) return;
 
     await this.adminTasksService.log(taskId, 'info', `检查完成：共检查 ${scanned} 个词汇，发现 ${candidates.length} 个需修补（例句缺中文翻译或释义过长）`, {
       step: 'scan', meta: { scanned, missingEnrich: candidates.length },
@@ -1024,34 +1162,33 @@ export class VocabularyCsvImportService {
     if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
 
     const candidates: Array<{ id: string; word: string }> = [];
-    let cursor: string | undefined;
     let scanned = 0;
-    const totalToScan = await this.prisma.vocabulary.count({
-      where: { meaning: { contains: 'other', mode: 'insensitive' } },
-    });
+    const { ids: scopeIds } = await this.vocabularyScope(taskId);
+    const totalToScan = scopeIds.length;
 
-    await this.adminTasksService.log(taskId, 'info', `开始扫描中文释义含 other 的词汇（约 ${totalToScan} 个候选）`, { step: 'scan' });
+    await this.adminTasksService.log(taskId, 'info', `开始在筛选命中的 ${totalToScan} 个词汇中查找中文释义含 other 的记录`, { step: 'scan' });
 
-    do {
-      if (await this.adminTasksService.isCanceled(taskId)) return;
+    const finishedScan = await this.forIdSlices(scopeIds, async (slice, processed) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return false;
       const rows = await this.prisma.vocabulary.findMany({
-        where: { meaning: { contains: 'other', mode: 'insensitive' } },
+        where: {
+          AND: [
+            { id: { in: slice } },
+            { meaning: { contains: 'other', mode: 'insensitive' } },
+          ],
+        },
         select: { id: true, word: true, meaning: true },
-        orderBy: { id: 'asc' },
-        take: 500,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       });
-      if (rows.length === 0) break;
 
       for (const v of rows) {
         scanned++;
         candidates.push({ id: v.id, word: v.word });
       }
-      cursor = rows.at(-1)?.id;
       await this.adminTasksService.setProgress(taskId, {
-        currentStep: 'scan', totalItems: totalToScan, processedItems: scanned, successItems: scanned,
+        currentStep: 'scan', totalItems: totalToScan, processedItems: processed, successItems: processed,
       });
-    } while (cursor);
+    });
+    if (!finishedScan) return;
 
     await this.adminTasksService.log(taskId, 'info', `扫描完成：发现 ${candidates.length} 个需重写中文释义`, {
       step: 'scan', meta: { scanned, missingEnrich: candidates.length },
@@ -1131,7 +1268,7 @@ export class VocabularyCsvImportService {
 
     const summary = { scanned, missingEnrich: candidates.length, enriched, failed, errors, usage: usageStats };
     await this.adminTasksService.markCompleted(taskId, summary);
-    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `释义重写完成：扫描 ${scanned}，已更新 ${enriched}，失败 ${failed}`, {
+    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `释义重写完成：扫描 ${totalToScan}，已更新 ${enriched}，失败 ${failed}`, {
       step: 'completed', meta: summary,
     });
   }
@@ -1143,24 +1280,18 @@ export class VocabularyCsvImportService {
     if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
 
     const candidates: Array<{ id: string; word: string }> = [];
-    let cursor: string | undefined;
     let scanned = 0;
-    const totalToScan = await this.prisma.vocabulary.count({
-      where: { NOT: { meaning: '' } },
-    });
+    const { ids: scopeIds } = await this.vocabularyScope(taskId);
+    const totalToScan = scopeIds.length;
 
-    await this.adminTasksService.log(taskId, 'info', `开始扫描缺词性前缀的中文释义（约 ${totalToScan} 个候选）`, { step: 'scan' });
+    await this.adminTasksService.log(taskId, 'info', `开始在筛选命中的 ${totalToScan} 个词汇中查找缺词性前缀的中文释义`, { step: 'scan' });
 
-    do {
-      if (await this.adminTasksService.isCanceled(taskId)) return;
+    const finishedScan = await this.forIdSlices(scopeIds, async (slice, processed) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return false;
       const rows = await this.prisma.vocabulary.findMany({
-        where: { NOT: { meaning: '' } },
+        where: { AND: [{ id: { in: slice } }, { NOT: { meaning: '' } }] },
         select: { id: true, word: true, meaning: true },
-        orderBy: { id: 'asc' },
-        take: 500,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       });
-      if (rows.length === 0) break;
 
       for (const v of rows) {
         scanned++;
@@ -1168,11 +1299,11 @@ export class VocabularyCsvImportService {
           candidates.push({ id: v.id, word: v.word });
         }
       }
-      cursor = rows.at(-1)?.id;
       await this.adminTasksService.setProgress(taskId, {
-        currentStep: 'scan', totalItems: totalToScan, processedItems: scanned, successItems: scanned,
+        currentStep: 'scan', totalItems: totalToScan, processedItems: processed, successItems: processed,
       });
-    } while (cursor);
+    });
+    if (!finishedScan) return;
 
     await this.adminTasksService.log(taskId, 'info', `扫描完成：发现 ${candidates.length} 个缺词性前缀的中文释义`, {
       step: 'scan', meta: { scanned, missingEnrich: candidates.length },
@@ -1253,7 +1384,7 @@ export class VocabularyCsvImportService {
 
     const summary = { scanned, missingEnrich: candidates.length, enriched, failed, errors, usage: usageStats };
     await this.adminTasksService.markCompleted(taskId, summary);
-    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `缺词性前缀释义重写完成：扫描 ${scanned}，已更新 ${enriched}，失败 ${failed}`, {
+    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `缺词性前缀释义重写完成：扫描 ${totalToScan}，已更新 ${enriched}，失败 ${failed}`, {
       step: 'completed', meta: summary,
     });
   }
@@ -1272,18 +1403,14 @@ export class VocabularyCsvImportService {
       definitionEn: string;
       partOfSpeech: string;
     }> = [];
-    let cursor: string | undefined;
-    const totalItems = await this.prisma.vocabulary.count();
-
-    do {
-      if (await this.adminTasksService.isCanceled(taskId)) return;
+    const { ids: scopeIds } = await this.vocabularyScope(taskId);
+    const totalItems = scopeIds.length;
+    const finishedScan = await this.forIdSlices(scopeIds, async (slice, scanned) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return false;
       const rows = await this.prisma.vocabulary.findMany({
+        where: { id: { in: slice } },
         select: { id: true, word: true, meaning: true, definitionEn: true, partOfSpeech: true },
-        orderBy: { id: 'asc' },
-        take: 500,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       });
-      if (!rows.length) break;
       candidates.push(...rows.map((row) => ({
         id: row.id,
         word: row.word,
@@ -1291,13 +1418,13 @@ export class VocabularyCsvImportService {
         definitionEn: row.definitionEn ?? '',
         partOfSpeech: row.partOfSpeech ?? '',
       })));
-      cursor = rows.at(-1)?.id;
       await this.adminTasksService.setProgress(taskId, {
-        currentStep: 'scan', totalItems, processedItems: candidates.length,
+        currentStep: 'scan', totalItems, processedItems: scanned,
       });
-    } while (cursor);
+    });
+    if (!finishedScan) return;
 
-    await this.adminTasksService.log(taskId, 'info', `扫描完成：将检查全部 ${candidates.length} 个词汇的中文释义排序与质量`, {
+    await this.adminTasksService.log(taskId, 'info', `扫描完成：将检查筛选命中的 ${candidates.length} 个词汇的中文释义排序与质量`, {
       step: 'scan', meta: { totalItems: candidates.length },
     });
 
@@ -1391,7 +1518,73 @@ export class VocabularyCsvImportService {
       policyVersion: 1,
     };
     await this.adminTasksService.markCompleted(taskId, summary);
-    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `全部词汇释义检查完成：更新 ${updated}，保持 ${unchanged}，失败 ${failed}`, {
+    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `当前筛选释义检查完成：更新 ${updated}，保持 ${unchanged}，失败 ${failed}`, {
+      step: 'completed', meta: summary,
+    });
+    return summary;
+  }
+
+  /**
+   * 迁移旧的“词典直灌”词条。仅重写 definitionEn、meaning 与 examples，
+   * 不触碰讲解、音标/发音、难度、词性、同义词或业务关联。
+   */
+  async runLearnerContentRegenerate(taskId: string) {
+    if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
+
+    const { ids: scopeIds } = await this.vocabularyScope(taskId);
+    const totalItems = scopeIds.length;
+    const vocabularies: Array<{ id: string; word: string }> = [];
+    const finishedScan = await this.forIdSlices(scopeIds, async (slice, scanned) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return false;
+      vocabularies.push(...await this.prisma.vocabulary.findMany({
+        where: { id: { in: slice } },
+        select: { id: true, word: true },
+      }));
+      await this.adminTasksService.setProgress(taskId, {
+        currentStep: 'scan', totalItems, processedItems: scanned,
+      });
+    });
+    if (!finishedScan) return;
+
+    let processed = 0;
+    let regenerated = 0;
+    let skipped = 0;
+    let failed = 0;
+    const errors: Array<{ id: string; word: string; message: string }> = [];
+    const usageStats = createUsageStats();
+    await this.adminTasksService.setProgress(taskId, {
+      currentStep: 'regenerate-learning-content', totalItems: vocabularies.length,
+      processedItems: 0, successItems: 0, failedItems: 0,
+    });
+
+    await runConcurrent(vocabularies, AI_ENRICH_CONCURRENCY, async (vocabulary) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return;
+      try {
+        const result = await this.contentPrepareService.regenerateVocabularyLearnerContent(vocabulary.id, usageStats);
+        if (result === 'updated') regenerated++;
+        else skipped++;
+      } catch (error: any) {
+        failed++;
+        const message = error?.message ?? 'unknown error';
+        errors.push({ id: vocabulary.id, word: vocabulary.word, message });
+        await this.adminTasksService.log(taskId, 'error', `词汇 "${vocabulary.word}" 学习版重写失败：${message}`, {
+          step: 'regenerate-learning-content', meta: { id: vocabulary.id, word: vocabulary.word },
+        });
+      } finally {
+        processed++;
+        if (processed % 10 === 0 || processed === vocabularies.length) {
+          await this.adminTasksService.setProgress(taskId, {
+            currentStep: `regenerate-learning-content (${processed}/${vocabularies.length})`,
+            totalItems: vocabularies.length, processedItems: processed,
+            successItems: regenerated + skipped, failedItems: failed,
+          });
+        }
+      }
+    });
+
+    const summary = { total: vocabularies.length, regenerated, skipped, failed, errors, usage: usageStats };
+    await this.adminTasksService.markCompleted(taskId, summary);
+    await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `学习版重写完成：已生成 ${regenerated}，跳过 ${skipped}，失败 ${failed}`, {
       step: 'completed', meta: summary,
     });
     return summary;
@@ -1401,19 +1594,16 @@ export class VocabularyCsvImportService {
     if (!await this.adminTasksService.markRunning(taskId, 'scan')) return;
 
     const candidates: Array<{ id: string; word: string; definitionEn: string; meaning: string }> = [];
-    let cursor: string | undefined;
     let scanned = 0;
-    const totalToScan = await this.prisma.vocabulary.count();
+    const { ids: scopeIds } = await this.vocabularyScope(taskId);
+    const totalToScan = scopeIds.length;
 
-    do {
-      if (await this.adminTasksService.isCanceled(taskId)) return;
+    const finishedScan = await this.forIdSlices(scopeIds, async (slice, processed) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return false;
       const rows = await this.prisma.vocabulary.findMany({
+        where: { id: { in: slice } },
         select: { id: true, word: true, definitionEn: true, meaning: true },
-        orderBy: { id: 'asc' },
-        take: 500,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       });
-      if (!rows.length) break;
       for (const vocabulary of rows) {
         scanned++;
         if (vocabulary.definitionEn?.trim() && !/[\u3400-\u9fff]/.test(vocabulary.definitionEn)) {
@@ -1425,11 +1615,11 @@ export class VocabularyCsvImportService {
           });
         }
       }
-      cursor = rows.at(-1)?.id;
       await this.adminTasksService.setProgress(taskId, {
-        currentStep: 'scan', totalItems: totalToScan, processedItems: scanned, successItems: scanned,
+        currentStep: 'scan', totalItems: totalToScan, processedItems: processed, successItems: processed,
       });
-    } while (cursor);
+    });
+    if (!finishedScan) return;
 
     await this.adminTasksService.log(taskId, 'info', `扫描完成：共 ${scanned} 个词汇，发现 ${candidates.length} 个英文释义未双语`, {
       step: 'scan', meta: { scanned, candidates: candidates.length },
@@ -1519,18 +1709,20 @@ export class VocabularyCsvImportService {
       || checkpoint.currentStep?.startsWith('resume:')
     );
 
+    const { ids: scopeIds } = await this.vocabularyScope(taskId);
     const candidates: Array<{ id: string; word: string; definitionEn: string; meaning: string; difficulty: string }> = [];
-    let cursor: string | undefined;
-    do {
-      if (await this.adminTasksService.isCanceled(taskId)) return;
+    const finishedScan = await this.forIdSlices(scopeIds, async (slice) => {
+      if (await this.adminTasksService.isCanceled(taskId)) return false;
       const rows = await this.prisma.vocabulary.findMany({
-        where: { difficulty: 'L1', difficultyReviewedAt: null },
+        where: {
+          AND: [
+            { id: { in: slice } },
+            { difficulty: 'L1' },
+            { difficultyReviewedAt: null },
+          ],
+        },
         select: { id: true, word: true, definitionEn: true, meaning: true, difficulty: true },
-        orderBy: { id: 'asc' },
-        take: 500,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       });
-      if (!rows.length) break;
       candidates.push(...rows.map((row) => ({
         id: row.id,
         word: row.word,
@@ -1538,8 +1730,8 @@ export class VocabularyCsvImportService {
         meaning: row.meaning ?? '',
         difficulty: row.difficulty ?? '',
       })));
-      cursor = rows.at(-1)?.id;
-    } while (cursor);
+    });
+    if (!finishedScan) return;
 
     const processedBase = isResume ? checkpoint.successItems : 0;
     const totalItems = isResume
@@ -1674,19 +1866,23 @@ export class VocabularyCsvImportService {
       }
     }
 
-    const remaining = await this.prisma.vocabulary.count({
-      where: { difficulty: 'L1', difficultyReviewedAt: null },
-    });
-    const finalDistributionRows = await this.prisma.vocabulary.groupBy({
-      by: ['difficulty'],
-      _count: { _all: true },
+    const remaining = await countVocabularyInIds(this.prisma, scopeIds, {
+      difficulty: 'L1',
+      difficultyReviewedAt: null,
     });
     const finalDistribution = { L1: 0, L2: 0, L3: 0, L4: 0, L5: 0 };
-    for (const row of finalDistributionRows) {
-      if (row.difficulty in finalDistribution) {
-        finalDistribution[row.difficulty as keyof typeof finalDistribution] = row._count._all;
+    await this.forIdSlices(scopeIds, async (slice) => {
+      const rows = await this.prisma.vocabulary.groupBy({
+        by: ['difficulty'],
+        where: { id: { in: slice } },
+        _count: { _all: true },
+      });
+      for (const row of rows) {
+        if (row.difficulty in finalDistribution) {
+          finalDistribution[row.difficulty as keyof typeof finalDistribution] += row._count._all;
+        }
       }
-    }
+    });
     const summary = { scanned: totalItems, reviewed: updated + unchanged, updated, unchanged, failed, remaining, distribution: finalDistribution, errors: errors.slice(0, 20), usage: usageStats };
     await this.adminTasksService.markCompleted(taskId, summary);
     await this.adminTasksService.log(taskId, failed ? 'warn' : 'info', `难度复核完成：变更 ${updated}，保持 ${unchanged}，失败 ${failed}`, {

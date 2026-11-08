@@ -3,6 +3,7 @@ import { generateText } from 'ai';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { LlmProviderFactory } from '../../common/llm/llm-provider.factory';
 import { AiModelService } from '../ai-model/ai-model.service';
+import { alignDescriptionLayout } from './description-layout';
 
 export interface VocabularyAiEnrichInput {
   word: string;
@@ -297,7 +298,7 @@ Use CLEAN standard IPA inside /slashes/. Normalize /ɹ/ to /r/, syllabic consona
         level: e.level || 'intermediate',
       })),
       meaning: this.sanitizeVocabularyMeaning(result.meaning ?? ''),
-      description: result.description ?? '',
+      description: alignDescriptionLayout(result.description ?? ''),
       difficulty: ['L1', 'L2', 'L3', 'L4', 'L5'].includes(result.difficulty) ? result.difficulty : '',
     };
   }
@@ -697,7 +698,7 @@ Return exactly a JSON object — no markdown, no code fences:
     if (usage) onUsage?.(extractUsage(usage)!);
     return {
       meaning: this.sanitizeChunkMeaning(result.meaning),
-      description: result.description ?? '',
+      description: alignDescriptionLayout(result.description ?? ''),
       examples: (result.examples ?? []).map((e: any) => ({
         en: e.en || '',
         zh: e.zh || '',
@@ -755,7 +756,7 @@ Return exactly a JSON object — no markdown, no code fences:
         zh: e.zh || '',
         level: e.level || 'intermediate',
       })),
-      description: result.description ?? '',
+      description: alignDescriptionLayout(result.description ?? ''),
     };
   }
 
@@ -921,7 +922,7 @@ ${profile.rules}`;
         : kind === 'pattern'
           ? this.sanitizePatternMeaning(raw?.meaning)
           : (typeof raw?.meaning === 'string' ? raw.meaning : ''),
-      description: typeof raw?.description === 'string' ? raw.description : '',
+      description: alignDescriptionLayout(typeof raw?.description === 'string' ? raw.description : ''),
       examples: Array.isArray(raw?.examples)
         ? raw.examples
             .map((e: any) => ({

@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } fro
 import { useSearchParams } from 'react-router-dom'
 import {
   Search, Plus, Trash2, Edit3, BookOpen, Sparkles, Loader2,
-  Type, Code2, ChevronLeft, ChevronRight, Play, Pause, Upload, Globe, Volume2, Languages,
-  AlertTriangle, X, RefreshCw, ListChecks, ChevronDown, SlidersHorizontal, Wrench, Database,
+  Type, Code2, ChevronLeft, ChevronRight, Play, Pause, Upload, Globe, Volume2,
+  AlertTriangle, X, RefreshCw, ChevronDown, SlidersHorizontal, Database,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,6 +26,8 @@ import * as api from '../api-content-admin'
 import { listAiProviders, type AiProviderItem } from '../api-ai-models'
 import { DictionaryPreview } from '../components/dictionary-preview'
 import { LibraryScopeBar, type LibraryPackageTypeFilter } from '../components/library-scope-bar'
+import { LibraryFieldBatchDialog, type LibraryBatchField } from '../components/library-field-batch-dialog'
+import { alignDescriptionLayout } from '../description-layout'
 import { contentExperienceAdminApi, type PackageGroup } from '../api-content-experiences'
 import { getDictionaryEntry } from '../api-dictionary'
 import type { DictionaryEntry } from '../api-dictionary'
@@ -177,7 +179,7 @@ function LibraryActionMenu({
 
 /** Simple Markdown → HTML for description field */
 function renderMd(text: string): string {
-  return text
+  return alignDescriptionLayout(text)
     // 1. 转义 HTML
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     // 2. 行内代码 `word` → 高亮英文术语
@@ -582,6 +584,18 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
     setPage(1)
   }
 
+  const vocabularyScope: api.LibraryVocabularyScope = {
+    search: search || undefined,
+    matchType,
+    difficulty: difficulty || undefined,
+    tag: tag || undefined,
+    pronunciationStatus: pronunciationStatus || undefined,
+    qualityIssue: qualityIssue || undefined,
+    sceneId: scope.sceneId,
+    topicId: scope.topicId,
+  }
+  const filteredCount = data?.total ?? 0
+
   const openTasks = () => { window.location.hash = '#/admin/tasks' }
   const taskToast = (message: string) => toast.success(message, {
     action: { label: '查看任务', onClick: openTasks },
@@ -596,12 +610,7 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
     } catch (err: any) { toast.error(err?.message || '同步牛津标签失败') }
   }
 
-  const syncDictionaryPronunciations = async () => {
-    try {
-      await api.syncLibraryVocabularyDictionaryPronunciations()
-      taskToast('已创建词典音标与发音同步任务')
-    } catch (err: any) { toast.error(err?.message || '音标与发音同步失败') }
-  }
+  const [batchOpen, setBatchOpen] = useState(false)
 
   const fillPageExampleAudio = async () => {
     try {
@@ -617,54 +626,11 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
     } catch (err: any) { toast.error(err?.message || '创建例句音频补全任务失败') }
   }
 
-  const rewriteOtherMeanings = async () => {
+  const submitVocabularyBatch = async (mode: 'fill' | 'regenerate', fields: LibraryBatchField[]) => {
     try {
-      await api.rewriteVocabulariesMeaningOther()
-      taskToast('已创建「重写异常词性释义」任务，只更新中文释义')
-    } catch (err: any) { toast.error(err?.message || '创建释义重写任务失败') }
-  }
-
-  const rewriteMissingPosMeanings = async () => {
-    try {
-      await api.rewriteVocabulariesMeaningMissingPos()
-      taskToast('已创建「补齐词性标记」任务，只更新中文释义')
-    } catch (err: any) { toast.error(err?.message || '创建释义重写任务失败') }
-  }
-
-  const enrichBilingualDefinitions = async () => {
-    try {
-      const result = await api.enrichEnglishOnlyVocabularyDefinitions()
-      taskToast(result.reused ? '同类任务已在任务中心执行' : '已创建「补齐双语释义」任务')
-    } catch (err: any) { toast.error(err?.message || '创建双语释义富化任务失败') }
-  }
-
-  const reviewL1Difficulties = async () => {
-    try {
-      const result = await api.reclassifyVocabularyDifficulties()
-      taskToast(result.reused ? 'L1 难度复核任务已在执行' : '已创建「复核 L1 难度」任务')
-    } catch (err: any) { toast.error(err?.message || '创建 L1 难度复核任务失败') }
-  }
-
-  const repairExamplesAndMeanings = async () => {
-    try {
-      await api.polishVocabularies()
-      taskToast('已创建「修复例句与释义」任务')
-    } catch (err: any) { toast.error(err?.message || '创建修补任务失败') }
-  }
-
-  const organizeAllMeanings = async () => {
-    if (!confirm('将用 AI 检查全部词汇的中文释义，并自动写回整理结果。只修改 meaning 字段，是否继续？')) return
-    try {
-      const result = await api.reviewVocabularyMeaningPriority()
-      taskToast(result.reused ? '同类全量释义检查任务已在执行' : '已创建「整理全部中文释义」任务')
-    } catch (err: any) { toast.error(err?.message || '创建全部词汇释义检查任务失败') }
-  }
-
-  const fillMissingContent = async () => {
-    try {
-      await api.enrichVocabulariesMissingChinese()
-      taskToast('已创建「补齐缺失内容」任务')
-    } catch (err: any) { toast.error(err?.message || '创建检查任务失败') }
+      await api.enqueueLibraryFieldBatch('vocabulary', { ...vocabularyScope, mode, fields })
+      taskToast(`已创建词汇${mode === 'fill' ? '补全' : '重新生成'}任务（${filteredCount} 条）`)
+    } catch (err: any) { toast.error(err?.message || '创建批量任务失败') }
   }
 
   const importCsv = () => {
@@ -756,74 +722,16 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
                 },
               ]}
             />
-            <LibraryActionMenu
-              label="批量补全"
-              tooltip="创建后台任务来补齐缺失信息。菜单内会明确说明处理范围和会修改的字段。"
-              icon={<Wrench data-icon="inline-start" />}
-              items={[
-                {
-                  label: '补齐词典音标与单词发音',
-                  description: '扫描整个词汇库，从词典同步缺失的英/美音标与单词发音。',
-                  icon: <Volume2 />,
-                  onSelect: syncDictionaryPronunciations,
-                },
-                {
-                  label: '补齐本页例句音频',
-                  description: `仅处理当前筛选结果的第 ${page} 页，为缺少音频的例句生成发音。`,
-                  icon: <Volume2 />,
-                  onSelect: fillPageExampleAudio,
-                },
-                {
-                  label: '补齐双语英文释义',
-                  description: '扫描英文释义缺少中文翻译的词；更新英文释义与难度。',
-                  icon: <Globe />,
-                  onSelect: enrichBilingualDefinitions,
-                },
-                {
-                  label: '补齐所有缺失内容',
-                  description: '扫描整个词汇库，补齐中文释义、讲解、例句、音标和难度等缺失字段。',
-                  icon: <Sparkles />,
-                  onSelect: fillMissingContent,
-                },
-              ]}
-            />
-            <LibraryActionMenu
-              label="批量整理"
-              tooltip="对已有内容做 AI 修复或质量复核。这些操作会写回数据，并在任务中心运行。"
-              icon={<Sparkles data-icon="inline-start" />}
-              items={[
-                {
-                  label: '修正异常词性释义',
-                  description: '扫描释义含 other 的词，改写为标准词性格式；只修改中文释义。',
-                  icon: <RefreshCw />,
-                  onSelect: rewriteOtherMeanings,
-                },
-                {
-                  label: '补上缺失的词性标记',
-                  description: '为缺少 n.、v.、adj. 等前缀的释义补上词性；只修改中文释义。',
-                  icon: <Sparkles />,
-                  onSelect: rewriteMissingPosMeanings,
-                },
-                {
-                  label: '修复例句翻译与过长释义',
-                  description: '补上例句的中文翻译，并精简过长的释义。',
-                  icon: <Languages />,
-                  onSelect: repairExamplesAndMeanings,
-                },
-                {
-                  label: '整理全部中文释义',
-                  description: '全库检查：常用义优先，低频、俚语和专业义后置或精简；只修改中文释义。',
-                  icon: <ListChecks />,
-                  onSelect: organizeAllMeanings,
-                },
-                {
-                  label: '复核尚未检查的 L1 难度',
-                  description: '只检查还没复核过的 L1 词汇；成功项会被标记，之后不会重复处理。',
-                  icon: <RefreshCw />,
-                  onSelect: reviewL1Difficulties,
-                },
-              ]}
-            />
+            <ActionTooltip title="批量处理" description="勾选中文释义、讲解、例句、英文释义、音标与发音、难度，再选择补全缺失或重新生成。只改勾选的字段，并处理当前筛选的全部命中记录。">
+              <Button size="sm" variant="outline" onClick={() => setBatchOpen(true)}>
+                <Sparkles data-icon="inline-start" />批量处理
+              </Button>
+            </ActionTooltip>
+            <ActionTooltip title="补齐本页例句音频" description={`仅处理当前筛选结果的第 ${page} 页，为缺少音频的例句生成发音。`}>
+              <Button size="sm" variant="outline" onClick={() => void fillPageExampleAudio()}>
+                <Volume2 data-icon="inline-start" />本页例句音频
+              </Button>
+            </ActionTooltip>
             <LibraryActionMenu
               label="数据工具"
               tooltip="导入外部数据或同步标签；不会自动新建牛津词表中不存在的词。"
@@ -901,6 +809,14 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
         </CardContent>
       </Card>
 
+      <LibraryFieldBatchDialog
+        open={batchOpen}
+        onOpenChange={setBatchOpen}
+        title="批量处理词汇"
+        fields={['meaning', 'description', 'examples', 'definition', 'pronunciation', 'difficulty']}
+        matchedCount={filteredCount}
+        onSubmit={submitVocabularyBatch}
+      />
       <VocabularyDialog open={dialogOpen} onClose={() => setDialogOpen(false)}
         edit={editing} items={data?.items ?? []} onSaved={load} />
     </>
@@ -931,6 +847,22 @@ function ChunkTab({ scope }: { scope: LibraryScope }) {
   useScopedLibraryLoad(scope, page, setPage, load)
 
   const totalPages = data?.totalPages ?? 1
+  const textScope: api.LibraryTextScope = {
+    search: search || undefined,
+    difficulty: difficulty || undefined,
+    sceneId: scope.sceneId,
+    topicId: scope.topicId,
+  }
+  const filteredCount = data?.total ?? 0
+  const [batchOpen, setBatchOpen] = useState(false)
+  const submitBatch = async (mode: 'fill' | 'regenerate', fields: LibraryBatchField[]) => {
+    try {
+      await api.enqueueLibraryFieldBatch('chunk', { ...textScope, mode, fields })
+      toast.success(`已创建句块${mode === 'fill' ? '补全' : '重新生成'}任务（${filteredCount} 条）`, {
+        action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+      })
+    } catch (err: any) { toast.error(err?.message || '创建批量任务失败') }
+  }
 
   return (
     <>
@@ -948,28 +880,9 @@ function ChunkTab({ scope }: { scope: LibraryScope }) {
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <TooltipProvider delayDuration={250}>
-            <ActionTooltip title="重写全部中文释义" description="扫描整个句块库并重写中文释义；不会修改讲解、例句、难度或分类。任务会在后台运行。">
-              <Button size="sm" variant="outline" onClick={async () => {
-                try {
-                  await api.rewriteAllChunkChineseMeanings()
-                  toast.success('已创建句块中文释义重写任务，仅更新中文释义', {
-                    action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-                  })
-                } catch (err: any) { toast.error(err?.message || '创建中文释义重写任务失败') }
-              }}>
-                <Sparkles data-icon="inline-start" />重写全部释义
-              </Button>
-            </ActionTooltip>
-            <ActionTooltip title="补齐句块缺失内容" description="扫描整个句块库，补齐缺失的中文释义、讲解和例句；已有完整内容会保留。">
-              <Button size="sm" variant="outline" onClick={async () => {
-                try {
-                  await api.enrichChunksMissingChinese()
-                  toast.success('已创建句块中文释义、讲解与例句检查任务', {
-                    action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-                  })
-                } catch (err: any) { toast.error(err?.message || '创建检查任务失败') }
-              }}>
-                <Sparkles data-icon="inline-start" />补齐缺失内容
+            <ActionTooltip title="批量处理" description="勾选中文释义、讲解、例句，再选择补全缺失或重新生成。讲解的重新生成只对齐已有排版。处理当前筛选的全部句块。">
+              <Button size="sm" variant="outline" onClick={() => setBatchOpen(true)}>
+                <Sparkles data-icon="inline-start" />批量处理
               </Button>
             </ActionTooltip>
             <ActionTooltip title="新增句块" description="手动创建一条句块，并填写释义、讲解、例句、难度与分类。">
@@ -1026,6 +939,14 @@ function ChunkTab({ scope }: { scope: LibraryScope }) {
         </CardContent>
       </Card>
 
+      <LibraryFieldBatchDialog
+        open={batchOpen}
+        onOpenChange={setBatchOpen}
+        title="批量处理句块"
+        fields={['meaning', 'description', 'examples']}
+        matchedCount={filteredCount}
+        onSubmit={submitBatch}
+      />
       <ChunkDialog open={dialogOpen} onClose={() => setDialogOpen(false)} edit={editing} onSaved={load} />
     </>
   )
@@ -1057,6 +978,22 @@ function PatternTab({ scope }: { scope: LibraryScope }) {
   useScopedLibraryLoad(scope, page, setPage, load)
 
   const totalPages = data?.totalPages ?? 1
+  const textScope: api.LibraryTextScope = {
+    search: search || undefined,
+    difficulty: difficulty || undefined,
+    sceneId: scope.sceneId,
+    topicId: scope.topicId,
+  }
+  const filteredCount = data?.total ?? 0
+  const [batchOpen, setBatchOpen] = useState(false)
+  const submitBatch = async (mode: 'fill' | 'regenerate', fields: LibraryBatchField[]) => {
+    try {
+      await api.enqueueLibraryFieldBatch('pattern', { ...textScope, mode, fields })
+      toast.success(`已创建句式${mode === 'fill' ? '补全' : '重新生成'}任务（${filteredCount} 条）`, {
+        action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
+      })
+    } catch (err: any) { toast.error(err?.message || '创建批量任务失败') }
+  }
 
   const handleDelete = async () => {
     if (!deleteTarget || deleting) return
@@ -1089,16 +1026,9 @@ function PatternTab({ scope }: { scope: LibraryScope }) {
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <TooltipProvider delayDuration={250}>
-            <ActionTooltip title="补齐句式缺失内容" description="扫描整个句式库，补齐缺失的中文释义、讲解和例句；已有完整内容会保留。">
-              <Button size="sm" variant="outline" onClick={async () => {
-                try {
-                  await api.enrichPatternsMissingChinese()
-                  toast.success('已创建句型中文释义、讲解与例句检查任务', {
-                    action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
-                  })
-                } catch (err: any) { toast.error(err?.message || '创建检查任务失败') }
-              }}>
-                <Sparkles data-icon="inline-start" />补齐缺失内容
+            <ActionTooltip title="批量处理" description="勾选中文释义、讲解、例句，再选择补全缺失或重新生成。讲解的重新生成只对齐已有排版。处理当前筛选的全部句式。">
+              <Button size="sm" variant="outline" onClick={() => setBatchOpen(true)}>
+                <Sparkles data-icon="inline-start" />批量处理
               </Button>
             </ActionTooltip>
             <ActionTooltip title="新增句式" description="手动创建一条句式，并填写结构、释义、讲解、例句、难度与分类。">
@@ -1155,6 +1085,14 @@ function PatternTab({ scope }: { scope: LibraryScope }) {
         </CardContent>
       </Card>
 
+      <LibraryFieldBatchDialog
+        open={batchOpen}
+        onOpenChange={setBatchOpen}
+        title="批量处理句式"
+        fields={['meaning', 'description', 'examples']}
+        matchedCount={filteredCount}
+        onSubmit={submitBatch}
+      />
       <PatternDialog open={dialogOpen} onClose={() => setDialogOpen(false)} edit={editing} onSaved={load} />
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null) }}>
         <DialogContent className="max-w-sm">
@@ -1372,7 +1310,10 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
   }
 
   // 统一富化：词典条目（dictionary_entry，缓存 miss 时后台自动跑流水线生成）+ AI 补全
-  const handleDictionaryLookup = async () => {
+  const handleDictionaryLookup = async ({
+    source = '词典+AI',
+    includeDescription = true,
+  }: { source?: string; includeDescription?: boolean } = {}) => {
     if (!form.word?.trim()) return
     setDictLoading(true)
     try {
@@ -1426,11 +1367,11 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
         partOfSpeech: aiResult?.learnerDefinitions?.[0]?.split(':')[0]?.trim() || pos,
         examples: aiResult?.generatedExamples?.length ? aiResult.generatedExamples : examples,
       }
-      if (aiResult?.description) diffFields.description = aiResult.description
+      if (includeDescription && aiResult?.description) diffFields.description = aiResult.description
       diffFields.meaning = aiResult?.meaning || deriveMeaning(defs.join('; '))
       if (aiResult?.difficulty) diffFields.difficulty = aiResult.difficulty
 
-      showDiff('词典+AI', diffFields)
+      showDiff(source, diffFields)
     } catch { toast.error('词典查询失败') }
     finally { setDictLoading(false) }
   }
@@ -1903,7 +1844,7 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                 <ChevronRight className="size-4" />
               </Button>
               {/* 富化按钮：词典+AI 一键，AI 补全 */}
-              <Button variant="outline" size="sm" onClick={handleDictionaryLookup}
+              <Button variant="outline" size="sm" onClick={() => handleDictionaryLookup()}
                 disabled={dictLoading || pronunciationSyncing || !form.word?.trim()}>
                 {dictLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Globe className="mr-1 size-3.5" />}
                 {dictLoading ? '处理中...' : '词典+AI 富化'}
@@ -1913,6 +1854,13 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                 onClick={handleAiEnrich}>
                 {enriching ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <Sparkles className="mr-1 size-3.5" />}
                 AI 补全
+              </Button>
+              <Button variant="outline" size="sm"
+                title="生成学习版内容预览；确认差异后才会写入"
+                disabled={dictLoading || pronunciationSyncing || !form.word?.trim()}
+                onClick={() => handleDictionaryLookup({ source: '重生成学习版预览', includeDescription: false })}>
+                {dictLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <RefreshCw className="mr-1 size-3.5" />}
+                重生成学习版
               </Button>
             </div>
             {/* Right: cancel + save */}

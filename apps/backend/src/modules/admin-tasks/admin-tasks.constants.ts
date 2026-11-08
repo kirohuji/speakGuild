@@ -2,16 +2,27 @@ export const ADMIN_CONTENT_QUEUE = 'admin-content';
 export const VOCABULARY_IMPORT_QUEUE = 'vocabulary-csv-import';
 export const VOCABULARY_CSV_IMPORT_JOB = 'vocabulary-csv-import';
 export const VOCABULARY_MISSING_MEANING_ENRICH_JOB = 'vocabulary-missing-meaning-enrich';
+export const VOCABULARY_DESCRIPTION_ENRICH_JOB = 'vocabulary-description-enrich';
 export const VOCABULARY_POLISH_JOB = 'vocabulary-polish';
 export const VOCABULARY_MEANING_OTHER_REWRITE_JOB = 'vocabulary-meaning-other-rewrite';
 export const VOCABULARY_MEANING_POS_REWRITE_JOB = 'vocabulary-meaning-pos-rewrite';
 export const VOCABULARY_MEANING_PRIORITY_REVIEW_JOB = 'vocabulary-meaning-priority-review';
+export const VOCABULARY_LEARNER_CONTENT_REGENERATE_JOB = 'vocabulary-learner-content-regenerate';
 export const VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB = 'vocabulary-bilingual-definition-enrich';
 export const VOCABULARY_DIFFICULTY_RECLASSIFY_JOB = 'vocabulary-difficulty-reclassify';
 export const VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB = 'vocabulary-dictionary-pronunciation-sync';
 export const CHUNK_MISSING_MEANING_ENRICH_JOB = 'chunk-missing-meaning-enrich';
 export const CHUNK_MEANING_REWRITE_JOB = 'chunk-meaning-rewrite';
 export const PATTERN_MISSING_MEANING_ENRICH_JOB = 'pattern-missing-meaning-enrich';
+export const LIBRARY_FIELD_BATCH_JOB = 'library-field-batch';
+export const LIBRARY_FIELD_LABEL = {
+  meaning: '中文释义',
+  description: '讲解',
+  examples: '例句',
+  definition: '英文释义',
+  pronunciation: '音标与发音',
+  difficulty: '难度',
+} as const;
 export const CONTENT_PREPARE_JOB = 'learning-package-content-prepare';
 export const WARMUP_PIPELINE_GENERATE_JOB = 'warmup-pipeline-generate';
 export const SCENE_TOPIC_BATCH_GENERATE_JOB = 'scene-topic-batch-generate';

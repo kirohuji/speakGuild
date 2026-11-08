@@ -30,15 +30,31 @@ import { adminTasksApi, type AdminTask, type AdminTaskDetail, type AdminTaskStat
 import { listAiProviders } from '../api-ai-models';
 import { estimateDeepSeekCost } from '../deepseek-pricing';
 
+function libraryScopeText(payload: unknown) {
+  if (!payload || typeof payload !== 'object') return null
+  const record = payload as { libraryFilterLabel?: unknown; matchedCount?: unknown; mode?: unknown; fieldLabels?: unknown }
+  if (typeof record.libraryFilterLabel !== 'string' && typeof record.matchedCount !== 'number') return null
+  const label = typeof record.libraryFilterLabel === 'string' ? record.libraryFilterLabel : '未筛选（全部）'
+  const mode = record.mode === 'fill' ? '补全缺失' : record.mode === 'regenerate' ? '重新生成' : ''
+  const fields = Array.isArray(record.fieldLabels) ? record.fieldLabels.filter((item): item is string => typeof item === 'string').join('、') : ''
+  const action = [mode, fields].filter(Boolean).join(' · ')
+  const scope = typeof record.matchedCount === 'number'
+    ? `筛选：${label} · 命中 ${record.matchedCount} 条（跨分页）`
+    : `筛选：${label}`
+  return action ? `${action} · ${scope}` : scope
+}
+
 const TYPE_LABELS: Record<string, string> = {
   'warmup-pipeline-generate': '知识点练习 AI 生成',
   'scene-topic-batch-generate': '学习包批量生成（教学文档+知识点训练）',
   'learning-package-content-prepare': '学习包内容准备',
   'vocabulary-csv-import': '词汇CSV批量导入',
   'vocabulary-missing-meaning-enrich': '词汇字段检查与 AI 补全（词典+AI）',
+  'vocabulary-description-enrich': '补齐词汇讲解 / 描述',
   'vocabulary-polish': '词汇例句翻译补全与释义精简',
   'vocabulary-meaning-other-rewrite': '重写含 other 的中文释义',
   'vocabulary-meaning-pos-rewrite': '重写缺词性前缀的中文释义',
+  'vocabulary-learner-content-regenerate': '重新生成全库学习版词汇内容',
   'vocabulary-bilingual-definition-enrich': '词典+AI 富化未双语英文释义',
   'vocabulary-difficulty-reclassify': '词典+AI 检查未复核 L1 难度',
   'chunk-missing-meaning-enrich': '句块字段检查与 AI 补全',
@@ -52,6 +68,7 @@ const TYPE_LABELS: Record<string, string> = {
   'dictionary-audio-batch-generate': '词典发音批量补全',
   'dictionary-audio-migrate-to-library': '词典音频迁入资源库',
   'vocabulary-example-audio-batch-generate': '词汇例句音频批量补全',
+  'library-field-batch': '按字段批量处理',
 };
 
 const STEP_LABELS: Record<string, string> = {
@@ -660,6 +677,7 @@ export function AdminTasksPage() {
     || task.type === 'vocabulary-difficulty-reclassify'
     || task.type === 'chunk-missing-meaning-enrich'
     || task.type === 'pattern-missing-meaning-enrich'
+    || task.type === 'library-field-batch'
     || task.type === 'script-video-render'
     || task.type === 'narrative-video-render'
     || task.type === 'dictionary-pronunciation-batch-refresh'
@@ -823,6 +841,9 @@ export function AdminTasksPage() {
                           {TYPE_LABELS[task.type] ?? task.type}
                           {errors.length > 0 && <span className="ml-1.5 text-red-600">{errors.length} 个失败项</span>}
                         </p>
+                        {libraryScopeText(task.payload) && (
+                          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{libraryScopeText(task.payload)}</p>
+                        )}
                         <div className="mt-2 flex items-center gap-2">
                           <Progress value={task.progress} className="h-1.5 flex-1" />
                           <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
@@ -874,6 +895,9 @@ export function AdminTasksPage() {
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           {TYPE_LABELS[selected.type] ?? selected.type} · 创建于 {fmtDate(selected.createdAt)}
                         </p>
+                        {libraryScopeText(selected.payload) && (
+                          <p className="mt-1 text-xs text-muted-foreground">{libraryScopeText(selected.payload)}</p>
+                        )}
                       </div>
                       <StatusBadge status={selected.status} />
                     </div>

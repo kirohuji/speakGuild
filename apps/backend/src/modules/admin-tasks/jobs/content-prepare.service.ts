@@ -466,6 +466,62 @@ export class ContentPrepareService {
   }
 
   /**
+   * 仅迁移旧的词典直灌学习内容。严格只写学习卡的三项：英文释义、中文释义、例句；
+   * 讲解、音标、单词音频、难度、词性、同义词及业务关联一律保持原样。
+   */
+  async regenerateVocabularyLearnerContent(
+    vocabId: string,
+    usageStats?: AiUsageStats,
+  ): Promise<'updated' | 'skipped'> {
+    const vocab = await this.prisma.vocabulary.findUnique({ where: { id: vocabId } });
+    const word = vocab?.word?.trim();
+    if (!vocab || !word) return 'skipped';
+
+    const entry = await this.getDictionaryEntryData(word, usageStats);
+    if (!entry) return 'skipped';
+    const clusters = entry.senseClusters ?? [];
+    const definitions = clusters.flatMap((cluster) => cluster.senses).map((sense) => (
+      `${sense.partOfSpeech}: ${sense.definition}${sense.translations?.zh ? `  [${sense.translations.zh}]` : ''}`
+    ));
+    if (!definitions.length) return 'skipped';
+
+    const dictionaryExamples: { en: string }[] = [];
+    const seen = new Set<string>();
+    for (const cluster of clusters) {
+      for (const sense of cluster.senses) {
+        for (const example of sense.examples ?? []) {
+          const en = example.en?.trim();
+          if (!en || seen.has(en.toLowerCase())) continue;
+          seen.add(en.toLowerCase());
+          dictionaryExamples.push({ en });
+        }
+      }
+    }
+
+    const generated = await this.adminContentAiService.enrichVocabulary({
+      word,
+      definitions,
+      examples: dictionaryExamples,
+      // These fields are intentionally preserved by this operation. Supplying
+      // non-empty values also tells the model they are not generation targets.
+      phoneticUs: vocab.phoneticUs || '(preserve)',
+      phoneticUk: vocab.phoneticUk || '(preserve)',
+      meaningExists: false,
+      descriptionExists: true,
+      difficultyExists: true,
+      forceLearnerRewrite: true,
+    }, usageStats ? usageCallback(usageStats) : undefined);
+
+    const data: Prisma.VocabularyUpdateInput = {};
+    if (generated.learnerDefinitions.length) data.definitionEn = generated.learnerDefinitions.join('; ');
+    if (generated.meaning.trim()) data.meaning = generated.meaning;
+    if (generated.generatedExamples.length) data.examples = generated.generatedExamples as Prisma.InputJsonValue;
+    if (!Object.keys(data).length) return 'skipped';
+    await this.prisma.vocabulary.update({ where: { id: vocabId }, data });
+    return 'updated';
+  }
+
+  /**
    * 阶段二：AI 富化补漏。基于已落库的词典字段，补全：讲解（description）、
    * 例句不足 3 条时用 AI 原创例句、难度、音标缺失，中文释义 AI 兜底。
    * 词典未收录（definitionEn 为空）直接跳过。

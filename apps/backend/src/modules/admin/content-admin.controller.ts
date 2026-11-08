@@ -24,10 +24,11 @@ import {
   CreateFullVocabularyDto, UpdateFullVocabularyDto,
   CreateFullChunkDto, UpdateFullChunkDto,
   CreateSentencePatternDto, UpdateSentencePatternDto,
+  LibraryVocabularyFieldBatchDto, LibraryTextFieldBatchDto,
 } from './dto/content-library.dto';
 import { requireAuthSession } from '../auth/session.util';
 import { ContentAccessService } from './content-access.service';
-import { vocabularyMeaningMissingPosPrefix } from './vocabulary-meaning.util';
+import { queryChunkPage, queryPatternPage, queryVocabularyPage } from '../admin-tasks/jobs/library-list-scope';
 
 /** 统计训练话题 pipeline 中的练习题数（与 warmup-pipeline-generate.service 口径一致） */
 function countPipelineExercises(pipeline: any[] | undefined): number {
@@ -61,19 +62,6 @@ import { ListeningPipelineTextDto } from './dto/listening-pipeline.dto';
 import { ListeningTranscriptSegment } from '../tts/tts.service';
 import { MaterialConstraintService, type MaterialKind, type GroupSceneInfo } from '../content-experiences/material-constraint.service';
 import { SuggestTopicSupportsDto, SuggestTopicVocabsDto } from './dto/scene-admin.dto';
-
-/** 语料库按学习包 / 话题过滤：只命中话题上实际绑定的材料。 */
-function topicBindingSome(sceneId?: string, topicId?: string) {
-  const scene = sceneId?.trim();
-  const topic = topicId?.trim();
-  if (!scene && !topic) return undefined;
-  return {
-    some: {
-      ...(topic ? { topicId: topic } : {}),
-      ...(scene ? { topic: { sceneId: scene } } : {}),
-    },
-  };
-}
 
 /** 语法功能词（代词/介词/冠词/连词/助动词/虚副词/限定词等），无实际学习价值，不进入推荐 */
 const FUNCTION_WORDS = new Set([
@@ -3481,100 +3469,18 @@ ${contextBlock}
     @Query('pageSize') pageSize?: string,
   ) {
     await this.requireAdmin(req);
-    const where: any = {};
-    if (search) {
-      if (matchType === 'exact') {
-        // 精确查询：单词或释义完全匹配（忽略大小写）
-        where.OR = [
-          { word: { equals: search, mode: 'insensitive' } },
-          { meaning: { equals: search, mode: 'insensitive' } },
-        ];
-      } else {
-        // 默认模糊查询：单词或释义包含关键字
-        where.OR = [
-          { word: { contains: search, mode: 'insensitive' } },
-          { meaning: { contains: search, mode: 'insensitive' } },
-        ];
-      }
-    }
-    if (difficulty) where.difficulty = difficulty;
-    // Any missing US/UK field marks the entry as incomplete.  Empty strings
-    // are included because older CSV imports used them instead of NULL.
-    const missingPhonetic = {
-      OR: [
-        { phoneticUs: null }, { phoneticUs: '' },
-        { phoneticUk: null }, { phoneticUk: '' },
-      ],
-    };
-    const missingAudio = {
-      OR: [
-        { audioUsUrl: null }, { audioUsUrl: '' },
-        { audioUkUrl: null }, { audioUkUrl: '' },
-      ],
-    };
-    const andFilters: any[] = [];
-    if (pronunciationStatus === 'missing-phonetic') andFilters.push(missingPhonetic);
-    if (pronunciationStatus === 'missing-audio') andFilters.push(missingAudio);
-    if (pronunciationStatus === 'incomplete') andFilters.push({ OR: [missingPhonetic, missingAudio] });
-
-    // 中文释义里残留 POS 标签 other（词典/AI 未归入标准词性）
-    if (qualityIssue === 'meaning-other') {
-      andFilters.push({ meaning: { contains: 'other', mode: 'insensitive' } });
-    }
-    // 英文释义有内容但无中文 → 双语翻译未生成成功
-    if (qualityIssue === 'english-only-definition') {
-      andFilters.push({ definitionEn: { not: null } });
-      andFilters.push({ NOT: { definitionEn: '' } });
-    }
-    // 中文释义有汉字但缺少 n./v./adj. 等词性前缀
-    if (qualityIssue === 'missing-pos-prefix') {
-      andFilters.push({ NOT: { meaning: '' } });
-    }
-    const tagFilter = tag?.trim();
-    if (tagFilter) andFilters.push({ tags: { has: tagFilter } });
-    const binding = topicBindingSome(sceneId, topicId);
-    if (binding) andFilters.push({ topicVocabs: binding });
-    if (andFilters.length) where.AND = andFilters;
-
-    const p = Math.max(1, parseInt(page || '1'));
-    const ps = Math.min(100, Math.max(1, parseInt(pageSize || '20')));
-
-    // 需要内存判定的质量筛选：纯英文释义 / 释义缺词性前缀
-    if (qualityIssue === 'english-only-definition' || qualityIssue === 'missing-pos-prefix') {
-      const candidates = await this.prisma.vocabulary.findMany({
-        where,
-        select: { id: true, definitionEn: true, meaning: true },
-        orderBy: { word: 'asc' },
-      });
-      const matchedIds = candidates
-        .filter((v) => {
-          if (qualityIssue === 'english-only-definition') {
-            return !!(v.definitionEn && !/[\u3400-\u9fff]/.test(v.definitionEn));
-          }
-          return vocabularyMeaningMissingPosPrefix(v.meaning);
-        })
-        .map((v) => v.id);
-      const total = matchedIds.length;
-      const pageIds = matchedIds.slice((p - 1) * ps, p * ps);
-      const unordered = pageIds.length
-        ? await this.prisma.vocabulary.findMany({ where: { id: { in: pageIds } } })
-        : [];
-      const byId = new Map(unordered.map((item) => [item.id, item]));
-      const items = pageIds.map((id) => byId.get(id)!);
-      return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
-    }
-
-    const [items, total] = await Promise.all([
-      this.prisma.vocabulary.findMany({
-        where,
-        orderBy: { word: 'asc' },
-        skip: (p - 1) * ps,
-        take: ps,
-      }),
-      this.prisma.vocabulary.count({ where }),
-    ]);
-
-    return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
+    return queryVocabularyPage(this.prisma, {
+      search,
+      matchType: matchType === 'exact' ? 'exact' : undefined,
+      difficulty,
+      pronunciationStatus: pronunciationStatus as 'missing-phonetic' | 'missing-audio' | 'incomplete' | undefined,
+      qualityIssue: qualityIssue as 'meaning-other' | 'english-only-definition' | 'missing-pos-prefix' | undefined,
+      tag,
+      sceneId,
+      topicId,
+      page: parseInt(page || '1'),
+      pageSize: parseInt(pageSize || '20'),
+    });
   }
 
   /** 返回语料库中已出现过的过滤标签（用于管理端筛选） */
@@ -3668,75 +3574,17 @@ ${contextBlock}
     };
   }
 
-  /** 检查词汇表中缺失中文释义的记录，并创建后台 AI 富化任务。 */
-  @Post('library/vocabularies/enrich-missing-chinese')
-  async enrichVocabulariesMissingChinese(@Req() req: Request) {
+  /** 按当前筛选结果，对勾选字段做补全缺失或重新生成。 */
+  @Post('library/vocabularies/field-batch')
+  async batchVocabularyFields(@Req() req: Request, @Body() body: LibraryVocabularyFieldBatchDto) {
     await this.requireAdmin(req);
     const session = await requireAuthSession(req);
-    const task = await this.adminTasksService.enqueueVocabularyMissingMeaningEnrich((session.user as any)?.id);
-    return { code: 200, message: 'success', data: { taskId: task.id } };
-  }
-
-  /** 词汇轻量修补：例句缺中文翻译补翻译 + 中文释义过长精简（后台任务）。 */
-  @Post('library/vocabularies/polish')
-  async polishVocabularies(@Req() req: Request) {
-    await this.requireAdmin(req);
-    const session = await requireAuthSession(req);
-    const task = await this.adminTasksService.enqueueVocabularyPolish((session.user as any)?.id);
-    return { code: 200, message: 'success', data: { taskId: task.id } };
-  }
-
-  /** 只重写中文释义：扫描 meaning 含 other 的词，AI 重写 meaning（不改其他字段）。 */
-  @Post('library/vocabularies/rewrite-meaning-other')
-  async rewriteVocabulariesMeaningOther(@Req() req: Request) {
-    await this.requireAdmin(req);
-    const session = await requireAuthSession(req);
-    const task = await this.adminTasksService.enqueueVocabularyMeaningOtherRewrite((session.user as any)?.id);
-    return { code: 200, message: 'success', data: { taskId: task.id } };
-  }
-
-  /** 只重写中文释义：扫描缺词性前缀（纯中文）的词，轻量 AI 只更新 meaning。 */
-  @Post('library/vocabularies/rewrite-meaning-missing-pos')
-  async rewriteVocabulariesMeaningMissingPos(@Req() req: Request) {
-    await this.requireAdmin(req);
-    const session = await requireAuthSession(req);
-    const task = await this.adminTasksService.enqueueVocabularyMeaningPosRewrite((session.user as any)?.id);
-    return { code: 200, message: 'success', data: { taskId: task.id } };
-  }
-
-  /** 全量审查中文释义：核心常用义优先，低频/俚语/专业义后置或精简。 */
-  @Post('library/vocabularies/review-meaning-priority')
-  async reviewVocabularyMeaningPriority(@Req() req: Request) {
-    await this.requireAdmin(req);
-    const session = await requireAuthSession(req);
-    const task = await this.adminTasksService.enqueueVocabularyMeaningPriorityReview((session.user as any)?.id);
-    return { code: 200, message: 'success', data: { taskId: task.id, reused: task.reused } };
-  }
-
-  /** 词典+AI 富化纯英文释义；只写回 definitionEn 与 difficulty。 */
-  @Post('library/vocabularies/enrich-english-only-definitions')
-  async enrichEnglishOnlyVocabularyDefinitions(@Req() req: Request) {
-    await this.requireAdmin(req);
-    const session = await requireAuthSession(req);
-    const task = await this.adminTasksService.enqueueVocabularyBilingualDefinitionEnrich((session.user as any)?.id);
-    return { code: 200, message: 'success', data: { taskId: task.id, reused: task.reused } };
-  }
-
-  /** AI 复核尚未检查的 L1 词汇；写回 difficulty 与复核时间。 */
-  @Post('library/vocabularies/reclassify-difficulties')
-  async reclassifyVocabularyDifficulties(@Req() req: Request) {
-    await this.requireAdmin(req);
-    const session = await requireAuthSession(req);
-    const task = await this.adminTasksService.enqueueVocabularyDifficultyReclassify((session.user as any)?.id);
-    return { code: 200, message: 'success', data: { taskId: task.id, reused: task.reused } };
-  }
-
-  /** 创建后台任务：将内容语料库的音标/发音同步为词典管理中的首选 UK/US 发音。 */
-  @Post('library/vocabularies/sync-dictionary-pronunciations')
-  async syncLibraryVocabularyDictionaryPronunciations(@Req() req: Request) {
-    await this.requireAdmin(req);
-    const session = await requireAuthSession(req);
-    const task = await this.adminTasksService.enqueueVocabularyDictionaryPronunciationSync((session.user as any)?.id);
+    const task = await this.adminTasksService.enqueueLibraryFieldBatch((session.user as any)?.id, {
+      kind: 'vocabulary',
+      mode: body.mode,
+      fields: body.fields,
+      filter: body,
+    });
     return { code: 200, message: 'success', data: { taskId: task.id } };
   }
 
@@ -3829,21 +3677,17 @@ ${contextBlock}
     }
   }
 
-  /** 检查句块表中缺失中文释义的记录，并创建后台 AI 富化任务。 */
-  @Post('library/chunks/enrich-missing-chinese')
-  async enrichChunksMissingChinese(@Req() req: Request) {
+  /** 按当前筛选结果，对勾选的句块字段做补全缺失或重新生成。 */
+  @Post('library/chunks/field-batch')
+  async batchChunkFields(@Req() req: Request, @Body() body: LibraryTextFieldBatchDto) {
     await this.requireAdmin(req);
     const session = await requireAuthSession(req);
-    const task = await this.adminTasksService.enqueueChunkMissingMeaningEnrich((session.user as any)?.id);
-    return { code: 200, message: 'success', data: { taskId: task.id } };
-  }
-
-  /** 在任务中心异步重写全部句块中文释义；不会修改讲解、例句或其它字段。 */
-  @Post('library/chunks/rewrite-chinese-meanings')
-  async rewriteChunkChineseMeanings(@Req() req: Request) {
-    await this.requireAdmin(req);
-    const session = await requireAuthSession(req);
-    const task = await this.adminTasksService.enqueueChunkMeaningRewrite((session.user as any)?.id);
+    const task = await this.adminTasksService.enqueueLibraryFieldBatch((session.user as any)?.id, {
+      kind: 'chunk',
+      mode: body.mode,
+      fields: body.fields,
+      filter: body,
+    });
     return { code: 200, message: 'success', data: { taskId: task.id } };
   }
 
@@ -3869,7 +3713,8 @@ ${contextBlock}
   @Post('library/vocabularies/:id/enrich')
   async enrichVocabulary(@Req() req: Request, @Param('id') id: string) {
     await this.requireAdmin(req);
-    return this.contentPrepareService.prepareVocabularyFull(id);
+    await this.contentPrepareService.prepareVocabularyFull(id);
+    return this.prisma.vocabulary.findUniqueOrThrow({ where: { id } });
   }
 
   // ════════════════════════════════════════════════════════════
@@ -3887,32 +3732,11 @@ ${contextBlock}
     @Query('pageSize') pageSize?: string,
   ) {
     await this.requireManager(req);
-    const where: any = {};
-    if (search) {
-      where.OR = [
-        { text: { contains: search, mode: 'insensitive' } },
-        { meaning: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-    if (difficulty) where.difficulty = difficulty;
-    const binding = topicBindingSome(sceneId, topicId);
-    if (binding) where.topicChunks = binding;
-
-    const p = Math.max(1, parseInt(page || '1'));
-    const ps = Math.min(100, Math.max(1, parseInt(pageSize || '20')));
-
-    const [items, total] = await Promise.all([
-      this.prisma.chunk.findMany({
-        where,
-        include: { examples: { orderBy: { sortOrder: 'asc' } } },
-        orderBy: { createdAt: 'desc' },
-        skip: (p - 1) * ps,
-        take: ps,
-      }),
-      this.prisma.chunk.count({ where }),
-    ]);
-
-    return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
+    return queryChunkPage(this.prisma, {
+      search, difficulty, sceneId, topicId,
+      page: parseInt(page || '1'),
+      pageSize: parseInt(pageSize || '20'),
+    });
   }
 
   /** 获取所有已有的句块分类（去重） */
@@ -4001,12 +3825,17 @@ ${contextBlock}
   // CONTENT LIBRARY: Sentence Pattern Management
   // ════════════════════════════════════════════════════════════
 
-  /** 检查句型表中缺失中文释义的记录，并创建后台 AI 富化任务。 */
-  @Post('library/patterns/enrich-missing-chinese')
-  async enrichPatternsMissingChinese(@Req() req: Request) {
+  /** 按当前筛选结果，对勾选的句式字段做补全缺失或重新生成。 */
+  @Post('library/patterns/field-batch')
+  async batchPatternFields(@Req() req: Request, @Body() body: LibraryTextFieldBatchDto) {
     await this.requireAdmin(req);
     const session = await requireAuthSession(req);
-    const task = await this.adminTasksService.enqueuePatternMissingMeaningEnrich((session.user as any)?.id);
+    const task = await this.adminTasksService.enqueueLibraryFieldBatch((session.user as any)?.id, {
+      kind: 'pattern',
+      mode: body.mode,
+      fields: body.fields,
+      filter: body,
+    });
     return { code: 200, message: 'success', data: { taskId: task.id } };
   }
 
@@ -4021,31 +3850,11 @@ ${contextBlock}
     @Query('pageSize') pageSize?: string,
   ) {
     await this.requireManager(req);
-    const where: any = {};
-    if (search) {
-      where.OR = [
-        { pattern: { contains: search, mode: 'insensitive' } },
-        { meaning: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-    if (difficulty) where.difficulty = difficulty;
-    const binding = topicBindingSome(sceneId, topicId);
-    if (binding) where.topicPatterns = binding;
-
-    const p = Math.max(1, parseInt(page || '1'));
-    const ps = Math.min(100, Math.max(1, parseInt(pageSize || '20')));
-
-    const [items, total] = await Promise.all([
-      this.prisma.sentencePattern.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (p - 1) * ps,
-        take: ps,
-      }),
-      this.prisma.sentencePattern.count({ where }),
-    ]);
-
-    return { items, total, page: p, pageSize: ps, totalPages: Math.ceil(total / ps) };
+    return queryPatternPage(this.prisma, {
+      search, difficulty, sceneId, topicId,
+      page: parseInt(page || '1'),
+      pageSize: parseInt(pageSize || '20'),
+    });
   }
 
   /** 获取所有已有的句式分类（去重） */

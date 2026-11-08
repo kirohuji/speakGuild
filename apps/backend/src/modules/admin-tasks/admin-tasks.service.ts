@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleIni
 import { AdminTaskLogLevel, AdminTaskStatus, Prisma, ScriptWorkStatus } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, VOCABULARY_MEANING_OTHER_REWRITE_JOB, VOCABULARY_MEANING_POS_REWRITE_JOB, VOCABULARY_MEANING_PRIORITY_REVIEW_JOB, VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB, VOCABULARY_DIFFICULTY_RECLASSIFY_JOB, VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, CHUNK_MEANING_REWRITE_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB, DICTIONARY_AUDIO_MIGRATE_TO_LIBRARY_JOB, VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB } from './admin-tasks.constants';
+import { ADMIN_CONTENT_QUEUE, CONTENT_PREPARE_JOB, WARMUP_PIPELINE_GENERATE_JOB, SCENE_TOPIC_BATCH_GENERATE_JOB, VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_DESCRIPTION_ENRICH_JOB, VOCABULARY_POLISH_JOB, VOCABULARY_MEANING_OTHER_REWRITE_JOB, VOCABULARY_MEANING_POS_REWRITE_JOB, VOCABULARY_MEANING_PRIORITY_REVIEW_JOB, VOCABULARY_LEARNER_CONTENT_REGENERATE_JOB, VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB, VOCABULARY_DIFFICULTY_RECLASSIFY_JOB, VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, CHUNK_MEANING_REWRITE_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, LIBRARY_FIELD_BATCH_JOB, LIBRARY_FIELD_LABEL, SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB, FILE_ASSET_INSPECT_JOB, FILE_ASSET_CLEANUP_JOB, DICTIONARY_PRONUNCIATION_BATCH_REFRESH_JOB, DICTIONARY_AUDIO_BATCH_GENERATE_JOB, DICTIONARY_AUDIO_MIGRATE_TO_LIBRARY_JOB, VOCABULARY_EXAMPLE_AUDIO_BATCH_GENERATE_JOB } from './admin-tasks.constants';
 import { DictionaryService } from '../dictionary/dictionary.service';
 import type { PronunciationAuditFilter } from '../dictionary/dto/pronunciation-audit.dto';
 import {
@@ -11,6 +11,21 @@ import {
   type LibraryVocabularyListParams,
   type VocabularyExampleAudioItem,
 } from './jobs/vocabulary-example-audio.service';
+import {
+  countChunkMatches,
+  countPatternMatches,
+  countVocabularyInIds,
+  countVocabularyMatches,
+  describeTextFilter,
+  describeVocabularyFilter,
+  listVocabularyIds,
+  normalizeTextFilter,
+  normalizeVocabularyFilter,
+  textFilterKey,
+  vocabularyFilterKey,
+  type TextLibraryFilter,
+  type VocabularyLibraryFilter,
+} from './jobs/library-list-scope';
 
 @Injectable()
 export class AdminTasksService implements OnModuleInit {
@@ -606,104 +621,252 @@ export class AdminTasksService implements OnModuleInit {
     return { ...task, bullJobId: job.id };
   }
 
-  /** 扫描全部词汇，为缺失讲解/描述或例句的记录创建 AI 富化任务。 */
-  async enqueueVocabularyMissingMeaningEnrich(createdById?: string) {
+  private scopeTitle(base: string, label: string, count: number, unit: string) {
+    return `${base}（${label}，${count} ${unit}）`;
+  }
+
+  private async reuseScopedTask(type: string, filterKey: string, keyOf: (raw: unknown) => string) {
+    const active = await this.prisma.adminTask.findMany({
+      where: { type, status: { in: [AdminTaskStatus.queued, AdminTaskStatus.running] } },
+      orderBy: { createdAt: 'desc' },
+    });
+    return active.find((task) => keyOf((task.payload as { libraryFilter?: unknown } | null)?.libraryFilter) === filterKey) ?? null;
+  }
+
+  private async vocabularyScopeMeta(raw?: VocabularyLibraryFilter) {
+    const filter = normalizeVocabularyFilter(raw);
+    const [label, matchedCount] = await Promise.all([
+      describeVocabularyFilter(this.prisma, filter),
+      countVocabularyMatches(this.prisma, filter),
+    ]);
+    if (!matchedCount) throw new BadRequestException(`当前筛选没有命中词汇（${label}）`);
+    return {
+      filter,
+      label,
+      matchedCount,
+      payload: { libraryFilter: filter, libraryFilterLabel: label, matchedCount },
+    };
+  }
+
+  private async textScopeMeta(raw: TextLibraryFilter | undefined, kind: '句块' | '句式') {
+    const filter = normalizeTextFilter(raw);
+    const [label, matchedCount] = await Promise.all([
+      describeTextFilter(this.prisma, filter, kind),
+      kind === '句块' ? countChunkMatches(this.prisma, filter) : countPatternMatches(this.prisma, filter),
+    ]);
+    if (!matchedCount) throw new BadRequestException(`当前筛选没有命中${kind}（${label}）`);
+    return {
+      filter,
+      label,
+      matchedCount,
+      payload: { libraryFilter: filter, libraryFilterLabel: label, matchedCount },
+    };
+  }
+
+  async enqueueLibraryFieldBatch(createdById: string | undefined, input: {
+    kind: 'vocabulary' | 'chunk' | 'pattern';
+    mode: 'fill' | 'regenerate';
+    fields: string[];
+    filter?: VocabularyLibraryFilter & TextLibraryFilter;
+  }) {
+    const allowed = input.kind === 'vocabulary'
+      ? ['meaning', 'description', 'examples', 'definition', 'pronunciation', 'difficulty']
+      : ['meaning', 'description', 'examples'];
+    const fields = [...new Set(input.fields.filter((field) => allowed.includes(field)))] as Array<keyof typeof LIBRARY_FIELD_LABEL>;
+    if (!fields.length) throw new BadRequestException('请至少选择一个字段');
+    const scope = input.kind === 'vocabulary'
+      ? await this.vocabularyScopeMeta(input.filter)
+      : await this.textScopeMeta(input.filter, input.kind === 'chunk' ? '句块' : '句式');
+    const modeLabel = input.mode === 'fill' ? '补全缺失' : '重新生成';
+    const fieldLabel = fields.map((field) => LIBRARY_FIELD_LABEL[field]).join('、');
+    const unit = input.kind === 'vocabulary' ? '个词汇' : input.kind === 'chunk' ? '个句块' : '个句式';
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: LIBRARY_FIELD_BATCH_JOB,
+        title: `${modeLabel}：${fieldLabel}（${scope.label}，${scope.matchedCount} ${unit}）`,
+        targetType: input.kind,
+        createdById,
+        totalItems: scope.matchedCount,
+        payload: {
+          ...scope.payload,
+          kind: input.kind,
+          mode: input.mode,
+          fields,
+          fieldLabels: fields.map((field) => LIBRARY_FIELD_LABEL[field]),
+        } as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.vocabularyImportQueue.add(LIBRARY_FIELD_BATCH_JOB, { taskId: task.id });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', `字段批量任务已加入队列：${modeLabel} ${fieldLabel}`, { step: 'queued', meta: scope.payload });
+    return task;
+  }
+
+  /** 按当前词汇筛选结果，为缺失讲解/描述或例句的记录创建 AI 富化任务。 */
+  async enqueueVocabularyMissingMeaningEnrich(createdById?: string, filter?: VocabularyLibraryFilter) {
+    const scope = await this.vocabularyScopeMeta(filter);
     const task = await this.prisma.adminTask.create({
       data: {
         type: VOCABULARY_MISSING_MEANING_ENRICH_JOB,
-        title: '检查并 AI 富化词汇讲解/描述与例句',
+        title: this.scopeTitle('检查并 AI 富化词汇讲解/描述与例句', scope.label, scope.matchedCount, '个'),
         targetType: 'vocabulary',
         createdById,
-        payload: {} as Prisma.InputJsonValue,
+        totalItems: scope.matchedCount,
+        payload: scope.payload as Prisma.InputJsonValue,
       },
     });
 
     const job = await this.vocabularyImportQueue.add(VOCABULARY_MISSING_MEANING_ENRICH_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', '词汇讲解/描述与例句检查任务已加入 Redis 队列', { step: 'queued' });
+    await this.log(task.id, 'info', `词汇讲解/描述与例句检查已加入队列。范围：${scope.label}，命中 ${scope.matchedCount} 个（跨分页）`, {
+      step: 'queued', meta: scope.payload,
+    });
     return { ...task, bullJobId: job.id };
   }
 
-  /** 扫描全部词汇，为例句缺中文翻译 / 释义过长的记录创建轻量修补任务。 */
-  async enqueueVocabularyPolish(createdById?: string) {
+  /** 只补齐当前筛选结果里缺失的词汇讲解；与单条 AI 富化共用同一提示词和生成规范。 */
+  async enqueueVocabularyDescriptionEnrich(createdById?: string, filter?: VocabularyLibraryFilter) {
+    const scope = await this.vocabularyScopeMeta(filter);
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: VOCABULARY_DESCRIPTION_ENRICH_JOB,
+        title: this.scopeTitle('补齐词汇讲解 / 描述', scope.label, scope.matchedCount, '个'),
+        targetType: 'vocabulary',
+        createdById,
+        totalItems: scope.matchedCount,
+        payload: { ...scope.payload, field: 'description' } as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.vocabularyImportQueue.add(VOCABULARY_DESCRIPTION_ENRICH_JOB, { taskId: task.id });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', `词汇讲解 / 描述补齐已加入队列。范围：${scope.label}，命中 ${scope.matchedCount} 个（跨分页）`, {
+      step: 'queued', meta: scope.payload,
+    });
+    return { ...task, bullJobId: job.id };
+  }
+
+  /** 按当前词汇筛选结果，为例句缺中文翻译 / 释义过长的记录创建轻量修补任务。 */
+  async enqueueVocabularyPolish(createdById?: string, filter?: VocabularyLibraryFilter) {
+    const scope = await this.vocabularyScopeMeta(filter);
     const task = await this.prisma.adminTask.create({
       data: {
         type: VOCABULARY_POLISH_JOB,
-        title: '词汇例句翻译补全与释义精简',
+        title: this.scopeTitle('词汇例句翻译补全与释义精简', scope.label, scope.matchedCount, '个'),
         targetType: 'vocabulary',
         createdById,
-        payload: {} as Prisma.InputJsonValue,
+        totalItems: scope.matchedCount,
+        payload: scope.payload as Prisma.InputJsonValue,
       },
     });
 
     const job = await this.vocabularyImportQueue.add(VOCABULARY_POLISH_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', '词汇例句翻译补全与释义精简任务已加入 Redis 队列', { step: 'queued' });
+    await this.log(task.id, 'info', `词汇例句翻译补全与释义精简已加入队列。范围：${scope.label}，命中 ${scope.matchedCount} 个（跨分页）`, {
+      step: 'queued', meta: scope.payload,
+    });
     return { ...task, bullJobId: job.id };
   }
 
-  /** 只重写中文释义：扫描 meaning 含 other 的词汇，AI 重写 meaning（不改其他字段）。 */
-  async enqueueVocabularyMeaningOtherRewrite(createdById?: string) {
+  /** 只重写中文释义：在当前筛选结果中扫描 meaning 含 other 的词汇。 */
+  async enqueueVocabularyMeaningOtherRewrite(createdById?: string, filter?: VocabularyLibraryFilter) {
+    const scope = await this.vocabularyScopeMeta(filter);
     const task = await this.prisma.adminTask.create({
       data: {
         type: VOCABULARY_MEANING_OTHER_REWRITE_JOB,
-        title: '重写含 other 的中文释义',
+        title: this.scopeTitle('重写含 other 的中文释义', scope.label, scope.matchedCount, '个'),
         targetType: 'vocabulary',
         createdById,
-        payload: {} as Prisma.InputJsonValue,
+        totalItems: scope.matchedCount,
+        payload: scope.payload as Prisma.InputJsonValue,
       },
     });
 
     const job = await this.vocabularyImportQueue.add(VOCABULARY_MEANING_OTHER_REWRITE_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', '含 other 中文释义重写任务已加入 Redis 队列', { step: 'queued' });
+    await this.log(task.id, 'info', `含 other 中文释义重写已加入队列。范围：${scope.label}，命中 ${scope.matchedCount} 个（跨分页）`, {
+      step: 'queued', meta: scope.payload,
+    });
     return { ...task, bullJobId: job.id };
   }
 
-  /** 只重写中文释义：扫描缺词性前缀的纯中文释义，轻量 AI 只更新 meaning。 */
-  async enqueueVocabularyMeaningPosRewrite(createdById?: string) {
+  /** 只重写中文释义：在当前筛选结果中扫描缺词性前缀的释义。 */
+  async enqueueVocabularyMeaningPosRewrite(createdById?: string, filter?: VocabularyLibraryFilter) {
+    const scope = await this.vocabularyScopeMeta(filter);
     const task = await this.prisma.adminTask.create({
       data: {
         type: VOCABULARY_MEANING_POS_REWRITE_JOB,
-        title: '重写缺词性前缀的中文释义',
+        title: this.scopeTitle('重写缺词性前缀的中文释义', scope.label, scope.matchedCount, '个'),
         targetType: 'vocabulary',
         createdById,
-        payload: {} as Prisma.InputJsonValue,
+        totalItems: scope.matchedCount,
+        payload: scope.payload as Prisma.InputJsonValue,
       },
     });
 
     const job = await this.vocabularyImportQueue.add(VOCABULARY_MEANING_POS_REWRITE_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', '缺词性前缀中文释义重写任务已加入 Redis 队列', { step: 'queued' });
+    await this.log(task.id, 'info', `缺词性前缀中文释义重写已加入队列。范围：${scope.label}，命中 ${scope.matchedCount} 个（跨分页）`, {
+      step: 'queued', meta: scope.payload,
+    });
     return { ...task, bullJobId: job.id };
   }
 
-  /** 审查全部词汇的中文释义，优先保留并前置核心常用义项。 */
-  async enqueueVocabularyMeaningPriorityReview(createdById?: string) {
-    const active = await this.prisma.adminTask.findFirst({
-      where: {
-        type: VOCABULARY_MEANING_PRIORITY_REVIEW_JOB,
-        status: { in: [AdminTaskStatus.queued, AdminTaskStatus.running] },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  /** 审查当前筛选结果中的中文释义，优先保留并前置核心常用义项。 */
+  async enqueueVocabularyMeaningPriorityReview(createdById?: string, filter?: VocabularyLibraryFilter) {
+    const normalized = normalizeVocabularyFilter(filter);
+    const active = await this.reuseScopedTask(
+      VOCABULARY_MEANING_PRIORITY_REVIEW_JOB,
+      vocabularyFilterKey(normalized),
+      vocabularyFilterKey,
+    );
     if (active) return { ...active, reused: true };
 
-    const totalItems = await this.prisma.vocabulary.count();
+    const scope = await this.vocabularyScopeMeta(normalized);
     const task = await this.prisma.adminTask.create({
       data: {
         type: VOCABULARY_MEANING_PRIORITY_REVIEW_JOB,
-        title: '全量审查并整理词汇中文释义',
+        title: this.scopeTitle('审查并整理词汇中文释义', scope.label, scope.matchedCount, '个'),
         targetType: 'vocabulary',
         createdById,
-        totalItems,
-        payload: { scope: 'all', policyVersion: 1 } as Prisma.InputJsonValue,
+        totalItems: scope.matchedCount,
+        payload: { ...scope.payload, scope: 'filtered', policyVersion: 1 } as Prisma.InputJsonValue,
       },
     });
 
     const job = await this.vocabularyImportQueue.add(VOCABULARY_MEANING_PRIORITY_REVIEW_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', `全部 ${totalItems} 个词汇的核心释义优先级检查已加入 Redis 队列`, { step: 'queued' });
+    await this.log(task.id, 'info', `核心释义优先级检查已加入队列。范围：${scope.label}，命中 ${scope.matchedCount} 个（跨分页）`, {
+      step: 'queued', meta: scope.payload,
+    });
+    return { ...task, bullJobId: job.id, reused: false };
+  }
+
+  /** 用当前学习标准重新生成筛选命中词汇的释义与例句；用于迁移旧的词典直灌内容。 */
+  async enqueueVocabularyLearnerContentRegenerate(createdById?: string, filter?: VocabularyLibraryFilter) {
+    const normalized = normalizeVocabularyFilter(filter);
+    const active = await this.reuseScopedTask(
+      VOCABULARY_LEARNER_CONTENT_REGENERATE_JOB,
+      vocabularyFilterKey(normalized),
+      vocabularyFilterKey,
+    );
+    if (active) return { ...active, reused: true };
+
+    const scope = await this.vocabularyScopeMeta(normalized);
+    const task = await this.prisma.adminTask.create({
+      data: {
+        type: VOCABULARY_LEARNER_CONTENT_REGENERATE_JOB,
+        title: this.scopeTitle('按学习标准重新生成词汇内容', scope.label, scope.matchedCount, '个'),
+        targetType: 'vocabulary',
+        createdById,
+        totalItems: scope.matchedCount,
+        payload: { ...scope.payload, scope: 'filtered', policyVersion: 2 } as Prisma.InputJsonValue,
+      },
+    });
+    const job = await this.vocabularyImportQueue.add(VOCABULARY_LEARNER_CONTENT_REGENERATE_JOB, { taskId: task.id });
+    await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
+    await this.log(task.id, 'info', `${scope.matchedCount} 个词汇将重写为学习版核心释义与原创例句。范围：${scope.label}。讲解、音标/发音等字段保持不变`, {
+      step: 'queued', meta: scope.payload,
+    });
     return { ...task, bullJobId: job.id, reused: false };
   }
 
@@ -749,128 +912,151 @@ export class AdminTasksService implements OnModuleInit {
     }
   }
 
-  async enqueueVocabularyBilingualDefinitionEnrich(createdById?: string) {
-    const existing = await this.prisma.adminTask.findFirst({
-      where: {
-        type: VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB,
-        status: { in: [AdminTaskStatus.queued, AdminTaskStatus.running] },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async enqueueVocabularyBilingualDefinitionEnrich(createdById?: string, filter?: VocabularyLibraryFilter) {
+    const normalized = normalizeVocabularyFilter(filter);
+    const existing = await this.reuseScopedTask(
+      VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB,
+      vocabularyFilterKey(normalized),
+      vocabularyFilterKey,
+    );
     if (existing) return { ...existing, reused: true };
 
+    const scope = await this.vocabularyScopeMeta(normalized);
     const task = await this.prisma.adminTask.create({
       data: {
         type: VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB,
-        title: '词典+AI 富化未双语英文释义',
+        title: this.scopeTitle('词典+AI 富化未双语英文释义', scope.label, scope.matchedCount, '个'),
         targetType: 'vocabulary',
         createdById,
-        payload: {} as Prisma.InputJsonValue,
+        totalItems: scope.matchedCount,
+        payload: scope.payload as Prisma.InputJsonValue,
       },
     });
     const job = await this.vocabularyImportQueue.add(VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', '未双语英文释义的词典+AI 富化任务已加入 Redis 队列', { step: 'queued' });
+    await this.log(task.id, 'info', `未双语英文释义富化已加入队列。范围：${scope.label}，命中 ${scope.matchedCount} 个（跨分页）`, {
+      step: 'queued', meta: scope.payload,
+    });
     return { ...task, bullJobId: job.id, reused: false };
   }
 
-  async enqueueVocabularyDifficultyReclassify(createdById?: string) {
-    const existing = await this.prisma.adminTask.findFirst({
-      where: {
-        type: VOCABULARY_DIFFICULTY_RECLASSIFY_JOB,
-        status: { in: [AdminTaskStatus.queued, AdminTaskStatus.running] },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async enqueueVocabularyDifficultyReclassify(createdById?: string, filter?: VocabularyLibraryFilter) {
+    const normalized = normalizeVocabularyFilter(filter);
+    const existing = await this.reuseScopedTask(
+      VOCABULARY_DIFFICULTY_RECLASSIFY_JOB,
+      vocabularyFilterKey(normalized),
+      vocabularyFilterKey,
+    );
     if (existing) return { ...existing, reused: true };
 
-    const pendingCount = await this.prisma.vocabulary.count({
-      where: { difficulty: 'L1', difficultyReviewedAt: null },
+    const scope = await this.vocabularyScopeMeta(normalized);
+    const ids = await listVocabularyIds(this.prisma, scope.filter);
+    const pendingCount = await countVocabularyInIds(this.prisma, ids, {
+      difficulty: 'L1',
+      difficultyReviewedAt: null,
     });
-    if (!pendingCount) throw new BadRequestException('没有尚未复核的 L1 词汇');
+    if (!pendingCount) {
+      throw new BadRequestException(`当前筛选命中 ${scope.matchedCount} 个词汇（${scope.label}），其中没有尚未复核的 L1`);
+    }
 
     const task = await this.prisma.adminTask.create({
       data: {
         type: VOCABULARY_DIFFICULTY_RECLASSIFY_JOB,
-        title: `词典+AI 复核未检查的 L1 词汇（${pendingCount} 个）`,
+        title: this.scopeTitle('词典+AI 复核未检查的 L1 词汇', scope.label, pendingCount, '个'),
         targetType: 'vocabulary',
         createdById,
         totalItems: pendingCount,
-        payload: { scope: 'unreviewed-l1', scopeVersion: 1 } as Prisma.InputJsonValue,
+        payload: { ...scope.payload, scope: 'unreviewed-l1', scopeVersion: 1, pendingCount } as Prisma.InputJsonValue,
       },
     });
     const job = await this.vocabularyImportQueue.add(VOCABULARY_DIFFICULTY_RECLASSIFY_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', `${pendingCount} 个未复核 L1 词汇已加入难度检查队列`, { step: 'queued' });
+    await this.log(task.id, 'info', `${pendingCount} 个未复核 L1 词汇已加入难度检查队列。范围：${scope.label}，筛选命中 ${scope.matchedCount} 个`, {
+      step: 'queued', meta: { ...scope.payload, pendingCount },
+    });
     return { ...task, bullJobId: job.id, reused: false };
   }
 
-  async enqueueVocabularyDictionaryPronunciationSync(createdById?: string) {
+  async enqueueVocabularyDictionaryPronunciationSync(createdById?: string, filter?: VocabularyLibraryFilter) {
+    const scope = await this.vocabularyScopeMeta(filter);
     const task = await this.prisma.adminTask.create({
       data: {
         type: VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB,
-        title: '同步词典音标与发音',
+        title: this.scopeTitle('同步词典音标与发音', scope.label, scope.matchedCount, '个'),
         targetType: 'vocabulary',
         createdById,
-        payload: {} as Prisma.InputJsonValue,
+        totalItems: scope.matchedCount,
+        payload: scope.payload as Prisma.InputJsonValue,
       },
     });
     const job = await this.vocabularyImportQueue.add(VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', '词典音标与发音同步任务已加入 Redis 队列', { step: 'queued' });
+    await this.log(task.id, 'info', `词典音标与发音同步已加入队列。范围：${scope.label}，命中 ${scope.matchedCount} 个（跨分页）`, {
+      step: 'queued', meta: scope.payload,
+    });
     return { ...task, bullJobId: job.id };
   }
 
-  /** 扫描全部句块，为缺失中文释义、讲解/描述或例句的记录创建 AI 富化任务。 */
-  async enqueueChunkMissingMeaningEnrich(createdById?: string) {
+  /** 按当前句块筛选结果，为缺失中文释义、讲解/描述或例句的记录创建 AI 富化任务。 */
+  async enqueueChunkMissingMeaningEnrich(createdById?: string, filter?: TextLibraryFilter) {
+    const scope = await this.textScopeMeta(filter, '句块');
     const task = await this.prisma.adminTask.create({
       data: {
         type: CHUNK_MISSING_MEANING_ENRICH_JOB,
-        title: '检查并 AI 富化句块中文释义、讲解与例句',
+        title: this.scopeTitle('检查并 AI 富化句块中文释义、讲解与例句', scope.label, scope.matchedCount, '个'),
         targetType: 'chunk',
         createdById,
-        payload: {} as Prisma.InputJsonValue,
+        totalItems: scope.matchedCount,
+        payload: scope.payload as Prisma.InputJsonValue,
       },
     });
     const job = await this.vocabularyImportQueue.add(CHUNK_MISSING_MEANING_ENRICH_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', '句块中文释义、讲解与例句检查任务已加入 Redis 队列', { step: 'queued' });
+    await this.log(task.id, 'info', `句块中文释义、讲解与例句检查已加入队列。范围：${scope.label}，命中 ${scope.matchedCount} 个（跨分页）`, {
+      step: 'queued', meta: scope.payload,
+    });
     return { ...task, bullJobId: job.id };
   }
 
-  /** 重写全部句块中文释义；严格只写 meaning，不触碰讲解、例句或其它元数据。 */
-  async enqueueChunkMeaningRewrite(createdById?: string) {
-    const totalItems = await this.prisma.chunk.count();
+  /** 重写当前筛选结果中的句块中文释义；严格只写 meaning。 */
+  async enqueueChunkMeaningRewrite(createdById?: string, filter?: TextLibraryFilter) {
+    const scope = await this.textScopeMeta(filter, '句块');
     const task = await this.prisma.adminTask.create({
       data: {
         type: CHUNK_MEANING_REWRITE_JOB,
-        title: `AI 重写全部句块中文释义（${totalItems} 个）`,
+        title: this.scopeTitle('AI 重写句块中文释义', scope.label, scope.matchedCount, '个'),
         targetType: 'chunk',
         createdById,
-        totalItems,
-        payload: { scope: 'all-chunks', fields: ['meaning'] } as Prisma.InputJsonValue,
+        totalItems: scope.matchedCount,
+        payload: { ...scope.payload, fields: ['meaning'] } as Prisma.InputJsonValue,
       },
     });
     const job = await this.vocabularyImportQueue.add(CHUNK_MEANING_REWRITE_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', `已将 ${totalItems} 个句块加入中文释义重写队列；任务只更新 meaning 字段`, { step: 'queued' });
+    await this.log(task.id, 'info', `已将 ${scope.matchedCount} 个句块加入中文释义重写队列。范围：${scope.label}。任务只更新 meaning 字段`, {
+      step: 'queued', meta: scope.payload,
+    });
     return { ...task, bullJobId: job.id };
   }
 
-  /** 扫描全部句型，为缺失中文释义、讲解/描述或例句的记录创建 AI 富化任务。 */
-  async enqueuePatternMissingMeaningEnrich(createdById?: string) {
+  /** 按当前句式筛选结果，为缺失中文释义、讲解/描述或例句的记录创建 AI 富化任务。 */
+  async enqueuePatternMissingMeaningEnrich(createdById?: string, filter?: TextLibraryFilter) {
+    const scope = await this.textScopeMeta(filter, '句式');
     const task = await this.prisma.adminTask.create({
       data: {
         type: PATTERN_MISSING_MEANING_ENRICH_JOB,
-        title: '检查并 AI 富化句型中文释义、讲解与例句',
+        title: this.scopeTitle('检查并 AI 富化句型中文释义、讲解与例句', scope.label, scope.matchedCount, '个'),
         targetType: 'sentence_pattern',
         createdById,
-        payload: {} as Prisma.InputJsonValue,
+        totalItems: scope.matchedCount,
+        payload: scope.payload as Prisma.InputJsonValue,
       },
     });
     const job = await this.vocabularyImportQueue.add(PATTERN_MISSING_MEANING_ENRICH_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', '句型中文释义、讲解与例句检查任务已加入 Redis 队列', { step: 'queued' });
+    await this.log(task.id, 'info', `句型中文释义、讲解与例句检查已加入队列。范围：${scope.label}，命中 ${scope.matchedCount} 个（跨分页）`, {
+      step: 'queued', meta: scope.payload,
+    });
     return { ...task, bullJobId: job.id };
   }
 
@@ -1006,38 +1192,54 @@ export class AdminTasksService implements OnModuleInit {
     if (task.type === SCENE_TOPIC_BATCH_GENERATE_JOB && task.targetId && createdById) {
       return this.enqueueSceneTopicBatchGenerate(task.targetId, createdById);
     }
+    const libraryFilter = (task.payload as { libraryFilter?: VocabularyLibraryFilter & TextLibraryFilter } | null)?.libraryFilter;
+    if (task.type === LIBRARY_FIELD_BATCH_JOB) {
+      const payload = (task.payload ?? {}) as { kind?: 'vocabulary' | 'chunk' | 'pattern'; mode?: 'fill' | 'regenerate'; fields?: string[] };
+      return this.enqueueLibraryFieldBatch(createdById, {
+        kind: payload.kind ?? 'vocabulary',
+        mode: payload.mode === 'regenerate' ? 'regenerate' : 'fill',
+        fields: payload.fields ?? [],
+        filter: libraryFilter,
+      });
+    }
     if (task.type === VOCABULARY_MISSING_MEANING_ENRICH_JOB) {
-      return this.enqueueVocabularyMissingMeaningEnrich(createdById);
+      return this.enqueueVocabularyMissingMeaningEnrich(createdById, libraryFilter);
+    }
+    if (task.type === VOCABULARY_DESCRIPTION_ENRICH_JOB) {
+      return this.enqueueVocabularyDescriptionEnrich(createdById, libraryFilter);
     }
     if (task.type === VOCABULARY_POLISH_JOB) {
-      return this.enqueueVocabularyPolish(createdById);
+      return this.enqueueVocabularyPolish(createdById, libraryFilter);
     }
     if (task.type === VOCABULARY_MEANING_OTHER_REWRITE_JOB) {
-      return this.enqueueVocabularyMeaningOtherRewrite(createdById);
+      return this.enqueueVocabularyMeaningOtherRewrite(createdById, libraryFilter);
     }
     if (task.type === VOCABULARY_MEANING_POS_REWRITE_JOB) {
-      return this.enqueueVocabularyMeaningPosRewrite(createdById);
+      return this.enqueueVocabularyMeaningPosRewrite(createdById, libraryFilter);
     }
     if (task.type === VOCABULARY_MEANING_PRIORITY_REVIEW_JOB) {
-      return this.enqueueVocabularyMeaningPriorityReview(createdById);
+      return this.enqueueVocabularyMeaningPriorityReview(createdById, libraryFilter);
+    }
+    if (task.type === VOCABULARY_LEARNER_CONTENT_REGENERATE_JOB) {
+      return this.enqueueVocabularyLearnerContentRegenerate(createdById, libraryFilter);
     }
     if (task.type === VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB) {
-      return this.enqueueVocabularyBilingualDefinitionEnrich(createdById);
+      return this.enqueueVocabularyBilingualDefinitionEnrich(createdById, libraryFilter);
     }
     if (task.type === VOCABULARY_DIFFICULTY_RECLASSIFY_JOB) {
-      return this.enqueueVocabularyDifficultyReclassify(createdById);
+      return this.enqueueVocabularyDifficultyReclassify(createdById, libraryFilter);
     }
     if (task.type === VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB) {
-      return this.enqueueVocabularyDictionaryPronunciationSync(createdById);
+      return this.enqueueVocabularyDictionaryPronunciationSync(createdById, libraryFilter);
     }
     if (task.type === CHUNK_MISSING_MEANING_ENRICH_JOB) {
-      return this.enqueueChunkMissingMeaningEnrich(createdById);
+      return this.enqueueChunkMissingMeaningEnrich(createdById, libraryFilter);
     }
     if (task.type === CHUNK_MEANING_REWRITE_JOB) {
-      return this.enqueueChunkMeaningRewrite(createdById);
+      return this.enqueueChunkMeaningRewrite(createdById, libraryFilter);
     }
     if (task.type === PATTERN_MISSING_MEANING_ENRICH_JOB) {
-      return this.enqueuePatternMissingMeaningEnrich(createdById);
+      return this.enqueuePatternMissingMeaningEnrich(createdById, libraryFilter);
     }
     if (task.type === FILE_ASSET_INSPECT_JOB && createdById) {
       return this.enqueueFileAssetInspection(createdById, Number((task.payload as any)?.minAgeDays ?? 7));
@@ -1111,11 +1313,7 @@ export class AdminTasksService implements OnModuleInit {
     // 从 BullMQ 队列中移除任务
     if (task.bullJobId) {
       try {
-        const queue = task.type === SCRIPT_VIDEO_RENDER_JOB || task.type === NARRATIVE_VIDEO_RENDER_JOB
-          ? this.videoQueue
-          : task.type === VOCABULARY_CSV_IMPORT_JOB || task.type === VOCABULARY_MISSING_MEANING_ENRICH_JOB || task.type === VOCABULARY_POLISH_JOB || task.type === VOCABULARY_MEANING_OTHER_REWRITE_JOB || task.type === VOCABULARY_MEANING_POS_REWRITE_JOB || task.type === VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB || task.type === CHUNK_MISSING_MEANING_ENRICH_JOB || task.type === PATTERN_MISSING_MEANING_ENRICH_JOB
-            ? this.vocabularyImportQueue
-            : this.contentQueue;
+        const queue = this.getQueueForTask(task.type);
         const job = await queue.getJob(task.bullJobId);
         if (job) {
           await job.remove();
@@ -1449,7 +1647,23 @@ export class AdminTasksService implements OnModuleInit {
     if (type === SCRIPT_VIDEO_RENDER_JOB || type === NARRATIVE_VIDEO_RENDER_JOB) {
       return this.videoQueue;
     }
-    if (type === VOCABULARY_CSV_IMPORT_JOB || type === VOCABULARY_MISSING_MEANING_ENRICH_JOB || type === VOCABULARY_POLISH_JOB || type === VOCABULARY_MEANING_OTHER_REWRITE_JOB || type === VOCABULARY_MEANING_POS_REWRITE_JOB || type === VOCABULARY_MEANING_PRIORITY_REVIEW_JOB || type === VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB || type === VOCABULARY_DIFFICULTY_RECLASSIFY_JOB || type === VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB || type === CHUNK_MISSING_MEANING_ENRICH_JOB || type === PATTERN_MISSING_MEANING_ENRICH_JOB) {
+    if (
+      type === VOCABULARY_CSV_IMPORT_JOB
+      || type === VOCABULARY_MISSING_MEANING_ENRICH_JOB
+      || type === VOCABULARY_DESCRIPTION_ENRICH_JOB
+      || type === VOCABULARY_POLISH_JOB
+      || type === VOCABULARY_MEANING_OTHER_REWRITE_JOB
+      || type === VOCABULARY_MEANING_POS_REWRITE_JOB
+      || type === VOCABULARY_MEANING_PRIORITY_REVIEW_JOB
+      || type === VOCABULARY_LEARNER_CONTENT_REGENERATE_JOB
+      || type === VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB
+      || type === VOCABULARY_DIFFICULTY_RECLASSIFY_JOB
+      || type === VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB
+      || type === CHUNK_MISSING_MEANING_ENRICH_JOB
+      || type === CHUNK_MEANING_REWRITE_JOB
+      || type === PATTERN_MISSING_MEANING_ENRICH_JOB
+      || type === LIBRARY_FIELD_BATCH_JOB
+    ) {
       return this.vocabularyImportQueue;
     }
     return this.contentQueue;

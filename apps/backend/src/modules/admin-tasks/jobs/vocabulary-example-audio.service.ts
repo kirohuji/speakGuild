@@ -7,7 +7,7 @@ import {
   type VoiceGender,
 } from '../../dictionary/dictionary-audio.service';
 import { FileAssetsService } from '../../file-assets/file-assets.service';
-import { vocabularyMeaningMissingPosPrefix } from '../../admin/vocabulary-meaning.util';
+import { buildVocabularyWhere, queryVocabularyPage } from './library-list-scope';
 
 export type VocabularyExampleAudioItem = {
   vocabularyId: string;
@@ -61,106 +61,20 @@ export class VocabularyExampleAudioService {
   }
 
   buildWhere(params?: LibraryVocabularyListParams): Prisma.VocabularyWhereInput {
-    const where: Prisma.VocabularyWhereInput = {};
-    const search = params?.search?.trim();
-    if (search) {
-      if (params?.matchType === 'exact') {
-        where.OR = [
-          { word: { equals: search, mode: 'insensitive' } },
-          { meaning: { equals: search, mode: 'insensitive' } },
-        ];
-      } else {
-        where.OR = [
-          { word: { contains: search, mode: 'insensitive' } },
-          { meaning: { contains: search, mode: 'insensitive' } },
-        ];
-      }
-    }
-    if (params?.difficulty) where.difficulty = params.difficulty;
-
-    const missingPhonetic: Prisma.VocabularyWhereInput = {
-      OR: [
-        { phoneticUs: null }, { phoneticUs: '' },
-        { phoneticUk: null }, { phoneticUk: '' },
-      ],
-    };
-    const missingAudio: Prisma.VocabularyWhereInput = {
-      OR: [
-        { audioUsUrl: null }, { audioUsUrl: '' },
-        { audioUkUrl: null }, { audioUkUrl: '' },
-      ],
-    };
-    const andFilters: Prisma.VocabularyWhereInput[] = [];
-    if (params?.pronunciationStatus === 'missing-phonetic') andFilters.push(missingPhonetic);
-    if (params?.pronunciationStatus === 'missing-audio') andFilters.push(missingAudio);
-    if (params?.pronunciationStatus === 'incomplete') andFilters.push({ OR: [missingPhonetic, missingAudio] });
-    if (params?.qualityIssue === 'meaning-other') {
-      andFilters.push({ meaning: { contains: 'other', mode: 'insensitive' } });
-    }
-    if (params?.qualityIssue === 'english-only-definition') {
-      andFilters.push({ definitionEn: { not: null } });
-      andFilters.push({ NOT: { definitionEn: '' } });
-    }
-    if (params?.qualityIssue === 'missing-pos-prefix') {
-      andFilters.push({ NOT: { meaning: '' } });
-    }
-    const tag = params?.tag?.trim();
-    if (tag) andFilters.push({ tags: { has: tag } });
-    const scene = params?.sceneId?.trim();
-    const topic = params?.topicId?.trim();
-    if (scene || topic) {
-      andFilters.push({
-        topicVocabs: {
-          some: {
-            ...(topic ? { topicId: topic } : {}),
-            ...(scene ? { topic: { sceneId: scene } } : {}),
-          },
-        },
-      });
-    }
-    if (andFilters.length) where.AND = andFilters;
-    return where;
+    return buildVocabularyWhere(this.libraryFilter(params));
   }
 
   async listPage(params?: LibraryVocabularyListParams) {
-    const page = Math.max(1, params?.page || 1);
-    const pageSize = Math.min(100, Math.max(1, params?.pageSize || 20));
-    const where = this.buildWhere(params);
+    return queryVocabularyPage(this.prisma, { ...this.libraryFilter(params), page: params?.page, pageSize: params?.pageSize });
+  }
 
-    if (params?.qualityIssue === 'english-only-definition' || params?.qualityIssue === 'missing-pos-prefix') {
-      const candidates = await this.prisma.vocabulary.findMany({
-        where,
-        select: { id: true, definitionEn: true, meaning: true },
-        orderBy: { word: 'asc' },
-      });
-      const matchedIds = candidates
-        .filter((item) => {
-          if (params?.qualityIssue === 'english-only-definition') {
-            return !!(item.definitionEn && !/[\u3400-\u9fff]/.test(item.definitionEn));
-          }
-          return vocabularyMeaningMissingPosPrefix(item.meaning);
-        })
-        .map((item) => item.id);
-      const total = matchedIds.length;
-      const pageIds = matchedIds.slice((page - 1) * pageSize, page * pageSize);
-      const unordered = pageIds.length
-        ? await this.prisma.vocabulary.findMany({ where: { id: { in: pageIds } } })
-        : [];
-      const byId = new Map(unordered.map((item) => [item.id, item]));
-      const items = pageIds.map((id) => byId.get(id)!).filter(Boolean);
-      return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
-    }
-
-    const [items, total] = await Promise.all([
-      this.prisma.vocabulary.findMany({
-        where,
-        orderBy: { word: 'asc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      this.prisma.vocabulary.count({ where }),
-    ]);
-    return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+  private libraryFilter(params?: LibraryVocabularyListParams) {
+    if (!params) return undefined;
+    return {
+      ...params,
+      pronunciationStatus: params.pronunciationStatus || undefined,
+      qualityIssue: params.qualityIssue || undefined,
+    };
   }
 
   collectMissingItems(

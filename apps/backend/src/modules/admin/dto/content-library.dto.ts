@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt, IsArray } from 'class-validator';
+import { IsString, IsOptional, IsInt, IsArray, IsIn, MaxLength, ArrayMinSize } from 'class-validator';
 
 class ExampleDto {
   @IsString() en: string;
@@ -76,6 +76,38 @@ export class CreateSentencePatternDto {
   @IsOptional() slots?: any;
   @IsOptional() examples?: any;
   @IsOptional() @IsString() difficulty?: string;
+}
+
+/** 内容库批量任务使用的词汇筛选，与列表接口同一套条件。 */
+export class LibraryVocabularyScopeDto {
+  @IsOptional() @IsString() @MaxLength(200) search?: string;
+  @IsOptional() @IsIn(['fuzzy', 'exact']) matchType?: 'fuzzy' | 'exact';
+  @IsOptional() @IsString() @MaxLength(8) difficulty?: string;
+  @IsOptional() @IsIn(['missing-phonetic', 'missing-audio', 'incomplete']) pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete';
+  @IsOptional() @IsIn(['meaning-other', 'english-only-definition', 'missing-pos-prefix']) qualityIssue?: 'meaning-other' | 'english-only-definition' | 'missing-pos-prefix';
+  @IsOptional() @IsString() @MaxLength(64) tag?: string;
+  @IsOptional() @IsString() @MaxLength(64) sceneId?: string;
+  @IsOptional() @IsString() @MaxLength(64) topicId?: string;
+}
+
+/** 句块 / 句式批量任务使用的筛选，与各自列表接口同一套条件。 */
+export class LibraryTextScopeDto {
+  @IsOptional() @IsString() @MaxLength(200) search?: string;
+  @IsOptional() @IsString() @MaxLength(8) difficulty?: string;
+  @IsOptional() @IsString() @MaxLength(64) sceneId?: string;
+  @IsOptional() @IsString() @MaxLength(64) topicId?: string;
+}
+
+export class LibraryVocabularyFieldBatchDto extends LibraryVocabularyScopeDto {
+  @IsIn(['fill', 'regenerate']) mode!: 'fill' | 'regenerate';
+  @IsArray() @ArrayMinSize(1) @IsIn(['meaning', 'description', 'examples', 'definition', 'pronunciation', 'difficulty'], { each: true })
+  fields!: Array<'meaning' | 'description' | 'examples' | 'definition' | 'pronunciation' | 'difficulty'>;
+}
+
+export class LibraryTextFieldBatchDto extends LibraryTextScopeDto {
+  @IsIn(['fill', 'regenerate']) mode!: 'fill' | 'regenerate';
+  @IsArray() @ArrayMinSize(1) @IsIn(['meaning', 'description', 'examples'], { each: true })
+  fields!: Array<'meaning' | 'description' | 'examples'>;
 }
 
 export class UpdateSentencePatternDto {

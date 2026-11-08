@@ -894,6 +894,26 @@ export interface PaginatedResult<T> {
   items: T[]; total: number; page: number; pageSize: number; totalPages: number;
 }
 
+/** 与内容库词汇列表同一套筛选；后台按命中的全部记录执行，不受分页限制。 */
+export interface LibraryVocabularyScope {
+  search?: string;
+  matchType?: 'fuzzy' | 'exact';
+  difficulty?: string;
+  pronunciationStatus?: 'missing-phonetic' | 'missing-audio' | 'incomplete';
+  qualityIssue?: 'meaning-other' | 'english-only-definition' | 'missing-pos-prefix';
+  tag?: string;
+  sceneId?: string;
+  topicId?: string;
+}
+
+/** 与句块 / 句式列表同一套筛选；后台按命中的全部记录执行，不受分页限制。 */
+export interface LibraryTextScope {
+  search?: string;
+  difficulty?: string;
+  sceneId?: string;
+  topicId?: string;
+}
+
 // ─── Vocabulary ──────────────────────────────────────────────
 
 export function listLibraryVocabularies(params?: {
@@ -943,45 +963,15 @@ export function importVocabularyCsv(file: File): Promise<{ taskId: string; wordC
   });
 }
 
-/** 创建后台任务：扫描所有词汇并富化缺失的中文释义。 */
-export function enrichVocabulariesMissingChinese(): Promise<{ taskId: string }> {
-  return post('/admin/content/library/vocabularies/enrich-missing-chinese');
-}
-
-/** 创建后台任务：例句缺中文翻译补翻译 + 中文释义过长精简。 */
-export function polishVocabularies(): Promise<{ taskId: string }> {
-  return post('/admin/content/library/vocabularies/polish');
-}
-
-/** 创建后台任务：只重写 meaning 含 other 的中文释义（不改其他字段）。 */
-export function rewriteVocabulariesMeaningOther(): Promise<{ taskId: string }> {
-  return post('/admin/content/library/vocabularies/rewrite-meaning-other');
-}
-
-/** 扫描缺词性前缀的纯中文释义，轻量 AI 只重写 meaning */
-export function rewriteVocabulariesMeaningMissingPos(): Promise<{ taskId: string }> {
-  return post('/admin/content/library/vocabularies/rewrite-meaning-missing-pos');
-}
-
-/** 全量审查中文释义，只更新 meaning：核心常用义优先，受限义项后置或精简。 */
-export function reviewVocabularyMeaningPriority(): Promise<{ taskId: string; reused?: boolean }> {
-  return post('/admin/content/library/vocabularies/review-meaning-priority');
-}
-
-/** 词典+AI 富化英文释义未双语的词汇；只更新 definitionEn 与 difficulty。 */
-export function enrichEnglishOnlyVocabularyDefinitions(): Promise<{ taskId: string; reused?: boolean }> {
-  return post('/admin/content/library/vocabularies/enrich-english-only-definitions');
-}
-
-/** 词典+AI 复核尚未检查的 L1 词汇；成功后记录复核时间。 */
-export function reclassifyVocabularyDifficulties(): Promise<{ taskId: string; reused?: boolean }> {
-  return post('/admin/content/library/vocabularies/reclassify-difficulties');
-}
-
-export function syncLibraryVocabularyDictionaryPronunciations(): Promise<{
-  taskId: string;
-}> {
-  return post('/admin/content/library/vocabularies/sync-dictionary-pronunciations');
+export function enqueueLibraryFieldBatch(
+  kind: 'vocabulary' | 'chunk' | 'pattern',
+  body: (LibraryVocabularyScope | LibraryTextScope) & {
+    mode: 'fill' | 'regenerate';
+    fields: string[];
+  },
+): Promise<{ taskId: string }> {
+  const path = kind === 'vocabulary' ? 'vocabularies' : kind === 'chunk' ? 'chunks' : 'patterns';
+  return post(`/admin/content/library/${path}/field-batch`, body);
 }
 
 /** 为本页缺失音频的词汇例句创建 ENTTS 批量补全任务 */
@@ -1008,19 +998,6 @@ export function generateLibraryVocabularyExampleAudio(data: {
   bizId?: string;
 }): Promise<{ url: string; type: 'uk' | 'us'; gender: 'female' | 'male' }> {
   return post('/admin/content/library/vocabularies/example-audio/generate', data);
-}
-
-export function enrichChunksMissingChinese(): Promise<{ taskId: string }> {
-  return post('/admin/content/library/chunks/enrich-missing-chinese');
-}
-
-/** 在任务中心异步重写全部句块的中文释义；不会触碰讲解、例句或其它字段。 */
-export function rewriteAllChunkChineseMeanings(): Promise<{ taskId: string }> {
-  return post('/admin/content/library/chunks/rewrite-chinese-meanings');
-}
-
-export function enrichPatternsMissingChinese(): Promise<{ taskId: string }> {
-  return post('/admin/content/library/patterns/enrich-missing-chinese');
 }
 
 export function enrichVocabulary(id: string): Promise<VocabularyFull> {

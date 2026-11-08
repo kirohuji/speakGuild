@@ -1,13 +1,15 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_POLISH_JOB, VOCABULARY_MEANING_OTHER_REWRITE_JOB, VOCABULARY_MEANING_POS_REWRITE_JOB, VOCABULARY_MEANING_PRIORITY_REVIEW_JOB, VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB, VOCABULARY_DIFFICULTY_RECLASSIFY_JOB, VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, CHUNK_MEANING_REWRITE_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB } from '../admin-tasks.constants';
+import { VOCABULARY_IMPORT_QUEUE, VOCABULARY_CSV_IMPORT_JOB, VOCABULARY_MISSING_MEANING_ENRICH_JOB, VOCABULARY_DESCRIPTION_ENRICH_JOB, VOCABULARY_POLISH_JOB, VOCABULARY_MEANING_OTHER_REWRITE_JOB, VOCABULARY_MEANING_POS_REWRITE_JOB, VOCABULARY_MEANING_PRIORITY_REVIEW_JOB, VOCABULARY_LEARNER_CONTENT_REGENERATE_JOB, VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB, VOCABULARY_DIFFICULTY_RECLASSIFY_JOB, VOCABULARY_DICTIONARY_PRONUNCIATION_SYNC_JOB, CHUNK_MISSING_MEANING_ENRICH_JOB, CHUNK_MEANING_REWRITE_JOB, PATTERN_MISSING_MEANING_ENRICH_JOB, LIBRARY_FIELD_BATCH_JOB } from '../admin-tasks.constants';
 import { AdminTasksService } from '../admin-tasks.service';
 import { VocabularyCsvImportService } from '../jobs/vocabulary-csv-import.service';
+import { LibraryFieldBatchService } from '../jobs/library-field-batch.service';
 
 @Processor(VOCABULARY_IMPORT_QUEUE, { concurrency: 1 })
 export class VocabularyCsvImportProcessor extends WorkerHost {
   constructor(
     private readonly vocabularyCsvImportService: VocabularyCsvImportService,
+    private readonly libraryFieldBatchService: LibraryFieldBatchService,
     private readonly adminTasksService: AdminTasksService,
   ) {
     super();
@@ -24,6 +26,9 @@ export class VocabularyCsvImportProcessor extends WorkerHost {
       if (job.name === VOCABULARY_MISSING_MEANING_ENRICH_JOB) {
         return await this.vocabularyCsvImportService.runMissingChineseMeaningEnrich(job.data.taskId);
       }
+      if (job.name === VOCABULARY_DESCRIPTION_ENRICH_JOB) {
+        return await this.vocabularyCsvImportService.runVocabularyDescriptionEnrich(job.data.taskId);
+      }
       if (job.name === VOCABULARY_POLISH_JOB) {
         return await this.vocabularyCsvImportService.runVocabularyPolish(job.data.taskId);
       }
@@ -35,6 +40,9 @@ export class VocabularyCsvImportProcessor extends WorkerHost {
       }
       if (job.name === VOCABULARY_MEANING_PRIORITY_REVIEW_JOB) {
         return await this.vocabularyCsvImportService.runMeaningPriorityReview(job.data.taskId);
+      }
+      if (job.name === VOCABULARY_LEARNER_CONTENT_REGENERATE_JOB) {
+        return await this.vocabularyCsvImportService.runLearnerContentRegenerate(job.data.taskId);
       }
       if (job.name === VOCABULARY_BILINGUAL_DEFINITION_ENRICH_JOB) {
         return await this.vocabularyCsvImportService.runBilingualDefinitionEnrich(job.data.taskId);
@@ -53,6 +61,9 @@ export class VocabularyCsvImportProcessor extends WorkerHost {
       }
       if (job.name === PATTERN_MISSING_MEANING_ENRICH_JOB) {
         return await this.vocabularyCsvImportService.runPatternMissingMeaningEnrich(job.data.taskId);
+      }
+      if (job.name === LIBRARY_FIELD_BATCH_JOB) {
+        return await this.libraryFieldBatchService.run(job.data.taskId);
       }
       return null;
     } catch (error) {

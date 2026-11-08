@@ -79,7 +79,7 @@ export function LearningPackDownloadStatusButton({
     >
       <ListChecks className={cn('shrink-0', mobile || embedded ? 'size-[18px]' : 'size-4')} />
       {(tasks.length > 0 || visibleGlobalTasks.length > 0) && (
-        <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border">
+        <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-secondary shadow-none ring-0">
           {running ? (
             <Loader2 className="size-3 animate-spin text-primary" />
           ) : (
@@ -171,7 +171,7 @@ export function LearningPackDownloadDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] bg-background drawer-surface">
+      <DrawerContent className="flex h-[88svh] flex-col rounded-t-[28px] border-0 bg-background shadow-none ring-0 app-surface drawer-surface">
         <DrawerHeader className="shrink-0 px-4 pb-1 pt-2 text-left">
           <DrawerTitle className="flex items-center gap-2 text-base font-semibold">
             <ListChecks className="size-4 text-primary" />
@@ -252,7 +252,7 @@ export function LearningPackDownloadDrawer({
                     <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
                   </summary>
 
-                  <div className="border-t border-border/40 px-3.5 py-3 text-xs">
+                  <div className="px-3.5 pb-3.5 text-xs">
                     {task.status === 'error' ? (
                       <div className="space-y-2 rounded-md bg-destructive/10 p-2 text-destructive">
                         <p className="truncate px-0.5">
@@ -263,8 +263,8 @@ export function LearningPackDownloadDrawer({
                             <Button
                               type="button"
                               size="sm"
-                              variant="outline"
-                              className="h-8 gap-1.5 text-xs"
+                              variant="secondary"
+                              className="h-8 gap-1.5 border-0 text-xs shadow-none"
                               onClick={() => void downloadUnitPack(task.packId)}
                             >
                               <RotateCcw className="size-3.5" />
@@ -273,8 +273,8 @@ export function LearningPackDownloadDrawer({
                             <Button
                               type="button"
                               size="sm"
-                              variant="outline"
-                              className="h-8 gap-1.5 border-destructive/30 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              variant="secondary"
+                              className="h-8 gap-1.5 border-0 bg-destructive/10 text-xs text-destructive shadow-none hover:bg-destructive/15 hover:text-destructive"
                               onClick={() => cancelPackTask(task.packId)}
                             >
                               <Trash2 className="size-3.5" />
@@ -301,8 +301,8 @@ export function LearningPackDownloadDrawer({
                           <Button
                             type="button"
                             size="sm"
-                            variant="outline"
-                            className="mt-1 h-8 w-full rounded-full text-xs"
+                            variant="secondary"
+                            className="mt-1 h-8 w-full rounded-full border-0 text-xs shadow-none"
                             onClick={() => void resumePackTask(task.packId)}
                           >
                             {t('learning.resumeUninstall')}
@@ -310,20 +310,20 @@ export function LearningPackDownloadDrawer({
                         )}
                         {task.kind !== 'uninstall' && (task.status === 'queued' || task.status === 'downloading' || task.status === 'extracting') && (
                           <div className="grid grid-cols-2 gap-2 pt-1">
-                            <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => pausePackTask(task.packId)}>
+                            <Button type="button" size="sm" variant="secondary" className="h-8 gap-1.5 border-0 text-xs shadow-none" onClick={() => pausePackTask(task.packId)}>
                               <Pause className="size-3.5" />{t('learning.pause')}
                             </Button>
-                            <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5 border-destructive/30 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => cancelPackTask(task.packId)}>
+                            <Button type="button" size="sm" variant="secondary" className="h-8 gap-1.5 border-0 bg-destructive/10 text-xs text-destructive shadow-none hover:bg-destructive/15 hover:text-destructive" onClick={() => cancelPackTask(task.packId)}>
                               <Ban className="size-3.5" />{t('learning.terminateDownload')}
                             </Button>
                           </div>
                         )}
                         {task.kind !== 'uninstall' && task.status === 'paused' && (
                           <div className="grid grid-cols-2 gap-2 pt-1">
-                            <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => void resumePackTask(task.packId)}>
+                            <Button type="button" size="sm" variant="secondary" className="h-8 gap-1.5 border-0 text-xs shadow-none" onClick={() => void resumePackTask(task.packId)}>
                               <Play className="size-3.5" />{t('learning.resumeDownload')}
                             </Button>
-                            <Button type="button" size="sm" variant="outline" className="h-8 gap-1.5 border-destructive/30 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => cancelPackTask(task.packId)}>
+                            <Button type="button" size="sm" variant="secondary" className="h-8 gap-1.5 border-0 bg-destructive/10 text-xs text-destructive shadow-none hover:bg-destructive/15 hover:text-destructive" onClick={() => cancelPackTask(task.packId)}>
                               <Ban className="size-3.5" />{t('learning.terminateDownload')}
                             </Button>
                           </div>

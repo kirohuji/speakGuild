@@ -12,6 +12,7 @@ import { FileAssetsModule } from '../file-assets/file-assets.module';
 import { DictionaryModule } from '../dictionary/dictionary.module';
 import { ScriptVideoRenderProcessor } from './processors/script-video-render.processor';
 import { VocabularyCsvImportService } from './jobs/vocabulary-csv-import.service';
+import { LibraryFieldBatchService } from './jobs/library-field-batch.service';
 import { VocabularyCsvImportProcessor } from './processors/vocabulary-csv-import.processor';
 import { VocabularyExampleAudioService } from './jobs/vocabulary-example-audio.service';
 import { PracticeAiModule } from '../practice-ai/practice-ai.module';
@@ -72,6 +73,7 @@ import { ContentExperienceModule } from '../content-experiences/content-experien
     AdminContentAiService,
     ScriptVideoRenderProcessor,
     VocabularyCsvImportService,
+    LibraryFieldBatchService,
     VocabularyCsvImportProcessor,
     VocabularyExampleAudioService,
     WarmupPipelineGenerateService,
