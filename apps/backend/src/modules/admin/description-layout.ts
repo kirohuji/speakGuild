@@ -19,6 +19,9 @@ const ALIAS: Record<string, string> = {
 
 const ORDER = ['核心含义', '用法提示', '易错点', '常见搭配'];
 
+/** 词汇、句块、句式的讲解共用这一套排版。生成提示词和检查规范都以此为准。 */
+export const DESCRIPTION_LAYOUT_RULE = '讲解排版必须和词汇、句块、句式完全一致。轻量 Markdown，依次写全四个小节，不能省略、不能改名，也不能用句式解析、使用场景、替换练习、类似表达等别名。每个小节先写标题再直接写正文，标题只能是「**核心含义：**」「**用法提示：**」「**易错点：**」「**常见搭配：**」。冒号在加粗里面，标题结束后直接接正文，禁止再加一组 **。小节之间空一行，每一小节只有一段，段内不要换行，不要用列表或项目符号。常见搭配写成同一行，用顿号连接，英文短语放在反引号里。';
+
 const HEADING_SOURCE = Object.keys(ALIAS).sort((left, right) => right.length - left.length).join('|');
 /** 库里的标题是 **核心含义：** ，冒号在加粗里面。也接受 **核心含义**： 和纯文本「核心含义：」。 */
 const HEADING_RE = new RegExp(
@@ -26,25 +29,28 @@ const HEADING_RE = new RegExp(
   'g',
 );
 
+/** 模型常在「**标题：**」后面再写一组 **，正文开头就多出加粗。 */
+function stripStrayBold(body: string): string {
+  return body.replace(/^(?:\*\*\s*)+/, '').trim();
+}
+
 function normalizeBody(body: string): string {
-  const lines = body.split('\n').map((line) => line.trim()).filter(Boolean);
-  const blocks: string[] = [];
-  let prose = '';
-  const flush = () => {
-    if (!prose) return;
-    blocks.push(prose);
-    prose = '';
-  };
-  for (const line of lines) {
-    if (line.startsWith('- ')) {
-      flush();
-      blocks.push(line);
-      continue;
-    }
-    prose += line;
-  }
-  flush();
-  return blocks.join('\n');
+  return stripStrayBold(body)
+    .split('\n')
+    .map((line) => stripStrayBold(line.trim()).replace(/^[-*•]\s+/, '').trim())
+    .filter(Boolean)
+    .join('');
+}
+
+/** 常见搭配和单词讲解一样：同一行，顿号连接，不用列表。 */
+function flattenCollocations(body: string): string {
+  const lines = stripStrayBold(body).split('\n').map((line) => stripStrayBold(line.trim())).filter(Boolean);
+  if (!lines.some((line) => /^[-*•]\s+/.test(line))) return lines.join('');
+  const prose = lines
+    .map((line) => line.replace(/^[-*•]\s+/, '').replace(/\(([^)]*)\)/g, '（$1）').replace(/[。；;，,、]\s*$/, '').trim())
+    .filter(Boolean)
+    .join('、');
+  return prose ? (prose.endsWith('。') ? prose : `${prose}。`) : '';
 }
 
 function collapsePlain(text: string): string {
@@ -74,6 +80,14 @@ export function descriptionHasCanonicalLayout(raw: string): boolean {
   return ORDER.every((name) => Boolean(bodies.get(name)?.trim()));
 }
 
+/** 标题后多了一组 **、用了别名标题，或任一小节写成了列表。这种只需要本地重排。 */
+export function descriptionHasLayoutDefect(raw: string): boolean {
+  const text = raw.replace(/\r\n/g, '\n');
+  if (/：\*\*\s*\*\*/.test(text)) return true;
+  if (/(?:^|\n)\s*[-*•]\s+/.test(text)) return true;
+  return /(?:^|\n)\s*(?:\*\*)?\s*(?:句式解析|使用场景|替换练习|类似表达|同义词|辨析)\s*(?:[：:]\s*\*\*|\*\*\s*[：:]|[：:])/.test(text);
+}
+
 /** 把讲解收成同一套小节：核心含义 / 用法提示 / 易错点 / 常见搭配，小节之间空一行。 */
 export function alignDescriptionLayout(raw: string): string {
   const text = raw.replace(/\r\n/g, '\n').replace(/[ \t]+\n/g, '\n').trim();
@@ -94,7 +108,9 @@ export function alignDescriptionLayout(raw: string): string {
   matches.forEach((match, index) => {
     const start = (match.index ?? 0) + match[0].length;
     const end = index + 1 < matches.length ? (matches[index + 1].index ?? text.length) : text.length;
-    push(ALIAS[match[1]] ?? match[1], normalizeBody(text.slice(start, end)));
+    const name = ALIAS[match[1]] ?? match[1];
+    const body = text.slice(start, end);
+    push(name, name === '常见搭配' ? flattenCollocations(body) : normalizeBody(body));
   });
 
   const parts: string[] = [];

@@ -1,10 +1,10 @@
-import { alignDescriptionLayout, descriptionHasCanonicalLayout } from '../../admin/description-layout';
+import { alignDescriptionLayout, descriptionHasCanonicalLayout, descriptionHasLayoutDefect } from '../../admin/description-layout';
 import { vocabularyMeaningMissingPosPrefix } from '../../admin/vocabulary-meaning.util';
 
 export const VOCABULARY_SCREEN_FIELDS = ['meaning', 'description', 'examples', 'definition', 'pronunciation', 'difficulty'] as const;
 export const TEXT_SCREEN_FIELDS = ['meaning', 'description', 'examples'] as const;
 export type ScreenField = typeof VOCABULARY_SCREEN_FIELDS[number];
-export type ScreenMode = 'fill' | 'regenerate';
+export type ScreenMode = 'fill' | 'regenerate' | 'normalize';
 
 const DIFFICULTIES = new Set(['L1', 'L2', 'L3', 'L4', 'L5']);
 const hasChinese = (value?: string | null) => /[\u3400-\u9fff]/.test(value ?? '');
@@ -24,6 +24,7 @@ export function parseScreenFields(value: unknown, allowed: readonly ScreenField[
 }
 
 export function meaningNeedsWork(meaning: string | null | undefined, mode: ScreenMode, kind: 'vocabulary' | 'text'): boolean {
+  if (mode === 'normalize') return false;
   const text = meaning ?? '';
   const placeholder = isPlaceholderMeaning(text);
   if (kind === 'text') {
@@ -33,32 +34,40 @@ export function meaningNeedsWork(meaning: string | null | undefined, mode: Scree
   return mode === 'fill' ? missing : hasChinese(text) && !placeholder;
 }
 
-/** 已经写成四个标准小节的讲解，补全和重新生成都不再动。 */
+/** 检查规范：正文还在，只是标题、空行或常见搭配的排版还不是标准四段。 */
+export function descriptionNeedsNormalize(description: string | null | undefined): boolean {
+  const text = description?.trim() ?? '';
+  if (!text) return false;
+  const aligned = alignDescriptionLayout(text);
+  if (!aligned || aligned === text) return false;
+  if (descriptionHasLayoutDefect(text)) return true;
+  return !descriptionHasCanonicalLayout(text) && descriptionHasCanonicalLayout(aligned);
+}
+
+/** 补全缺失找空的或不符四段的；重新生成找已有正文；检查规范只找能本地排整齐的。 */
 export function descriptionNeedsWork(description: string | null | undefined, mode: ScreenMode, kind: 'vocabulary' | 'text'): boolean {
   const text = description?.trim() ?? '';
-  if (kind === 'text') {
-    if (mode === 'fill') return !text;
-    if (!text || descriptionHasCanonicalLayout(text)) return false;
-    return alignDescriptionLayout(text) !== text;
-  }
-  if (mode === 'fill') return !descriptionHasCanonicalLayout(text);
-  if (!text || descriptionHasCanonicalLayout(text)) return false;
-  return alignDescriptionLayout(text) !== text;
+  if (mode === 'normalize') return descriptionNeedsNormalize(text);
+  if (mode === 'fill') return kind === 'text' ? !text : !descriptionHasCanonicalLayout(text);
+  return Boolean(text);
 }
 
 export function examplesNeedWork(value: unknown, mode: ScreenMode): boolean {
+  if (mode === 'normalize') return false;
   const examples = Array.isArray(value) ? value as ExampleLike[] : [];
   const missing = examples.length === 0 || examples.some((example) => !example?.zh?.trim());
   return mode === 'fill' ? missing : examples.length > 0;
 }
 
 export function definitionNeedsWork(definitionEn: string | null | undefined, mode: ScreenMode): boolean {
+  if (mode === 'normalize') return false;
   const text = definitionEn?.trim() ?? '';
   if (!text) return false;
   return mode === 'fill' ? !hasChinese(text) : true;
 }
 
 export function difficultyNeedsWork(difficulty: string | null | undefined, mode: ScreenMode): boolean {
+  if (mode === 'normalize') return false;
   const valid = DIFFICULTIES.has(difficulty ?? '');
   return mode === 'fill' ? !valid : valid;
 }
@@ -68,6 +77,7 @@ export function pronunciationNeedsWork(
   pronunciations: unknown,
   mode: ScreenMode,
 ): boolean {
+  if (mode === 'normalize') return false;
   return Object.keys(buildPronunciationPatch(row, pronunciations, mode)).length > 0;
 }
 

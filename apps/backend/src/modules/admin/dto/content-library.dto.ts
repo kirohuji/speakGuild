@@ -88,7 +88,7 @@ export class LibraryVocabularyScopeDto {
   @IsOptional() @IsString() @MaxLength(64) tag?: string;
   @IsOptional() @IsString() @MaxLength(64) sceneId?: string;
   @IsOptional() @IsString() @MaxLength(64) topicId?: string;
-  @IsOptional() @IsIn(['fill', 'regenerate']) screenMode?: 'fill' | 'regenerate';
+  @IsOptional() @IsIn(['fill', 'regenerate', 'normalize']) screenMode?: 'fill' | 'regenerate' | 'normalize';
   @IsOptional() @IsArray() @IsIn(['meaning', 'description', 'examples', 'definition', 'pronunciation', 'difficulty'], { each: true })
   screenFields?: Array<'meaning' | 'description' | 'examples' | 'definition' | 'pronunciation' | 'difficulty'>;
 }
@@ -99,19 +99,19 @@ export class LibraryTextScopeDto {
   @IsOptional() @IsString() @MaxLength(8) difficulty?: string;
   @IsOptional() @IsString() @MaxLength(64) sceneId?: string;
   @IsOptional() @IsString() @MaxLength(64) topicId?: string;
-  @IsOptional() @IsIn(['fill', 'regenerate']) screenMode?: 'fill' | 'regenerate';
+  @IsOptional() @IsIn(['fill', 'regenerate', 'normalize']) screenMode?: 'fill' | 'regenerate' | 'normalize';
   @IsOptional() @IsArray() @IsIn(['meaning', 'description', 'examples'], { each: true })
   screenFields?: Array<'meaning' | 'description' | 'examples'>;
 }
 
 export class LibraryVocabularyFieldBatchDto extends LibraryVocabularyScopeDto {
-  @IsIn(['fill', 'regenerate']) mode!: 'fill' | 'regenerate';
+  @IsIn(['fill', 'regenerate', 'normalize']) mode!: 'fill' | 'regenerate' | 'normalize';
   @IsArray() @ArrayMinSize(1) @IsIn(['meaning', 'description', 'examples', 'definition', 'pronunciation', 'difficulty'], { each: true })
   fields!: Array<'meaning' | 'description' | 'examples' | 'definition' | 'pronunciation' | 'difficulty'>;
 }
 
 export class LibraryTextFieldBatchDto extends LibraryTextScopeDto {
-  @IsIn(['fill', 'regenerate']) mode!: 'fill' | 'regenerate';
+  @IsIn(['fill', 'regenerate', 'normalize']) mode!: 'fill' | 'regenerate' | 'normalize';
   @IsArray() @ArrayMinSize(1) @IsIn(['meaning', 'description', 'examples'], { each: true })
   fields!: Array<'meaning' | 'description' | 'examples'>;
 }

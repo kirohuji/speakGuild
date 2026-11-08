@@ -5,6 +5,7 @@ import { AdminTasksService } from '../admin-tasks.service';
 import { ContentPrepareService, createUsageStats, usageCallback, runConcurrent, AI_ENRICH_CONCURRENCY, type AiUsageStats } from './content-prepare.service';
 import { AdminContentAiService } from '../../admin/admin-content-ai.service';
 import { vocabularyMeaningMissingPosPrefix } from '../../admin/vocabulary-meaning.util';
+import { descriptionHasCanonicalLayout } from '../../admin/description-layout';
 import {
   describeTextFilter,
   describeVocabularyFilter,
@@ -139,7 +140,7 @@ export class VocabularyCsvImportService {
           descriptionExists: false,
           difficultyExists: true,
         }, usageCallback(usageStats));
-        if (!result.description?.trim()) throw new Error('AI 未返回讲解 / 描述');
+        if (!descriptionHasCanonicalLayout(result.description)) throw new Error('讲解未按标准四段排版返回');
         await this.prisma.vocabulary.update({ where: { id: candidate.id }, data: { description: result.description } });
         enriched++;
       } catch (error: any) {

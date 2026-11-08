@@ -35,7 +35,7 @@ function libraryScopeText(payload: unknown) {
   const record = payload as { libraryFilterLabel?: unknown; matchedCount?: unknown; mode?: unknown; fieldLabels?: unknown }
   if (typeof record.libraryFilterLabel !== 'string' && typeof record.matchedCount !== 'number') return null
   const label = typeof record.libraryFilterLabel === 'string' ? record.libraryFilterLabel : '未筛选（全部）'
-  const mode = record.mode === 'fill' ? '补全缺失' : record.mode === 'regenerate' ? '重新生成' : ''
+  const mode = record.mode === 'fill' ? '补全缺失' : record.mode === 'regenerate' ? '重新生成' : record.mode === 'normalize' ? '检查规范' : ''
   const fields = Array.isArray(record.fieldLabels) ? record.fieldLabels.filter((item): item is string => typeof item === 'string').join('、') : ''
   const action = [mode, fields].filter(Boolean).join(' · ')
   const scope = typeof record.matchedCount === 'number'

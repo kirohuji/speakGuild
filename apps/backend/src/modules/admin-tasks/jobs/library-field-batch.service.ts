@@ -29,7 +29,7 @@ import {
 export const VOCABULARY_BATCH_FIELDS = ['meaning', 'description', 'examples', 'definition', 'pronunciation', 'difficulty'] as const;
 export const TEXT_BATCH_FIELDS = ['meaning', 'description', 'examples'] as const;
 export type LibraryBatchField = typeof VOCABULARY_BATCH_FIELDS[number];
-export type LibraryBatchMode = 'fill' | 'regenerate';
+export type LibraryBatchMode = 'fill' | 'regenerate' | 'normalize';
 export type LibraryBatchKind = 'vocabulary' | 'chunk' | 'pattern';
 
 export const LIBRARY_FIELD_LABEL: Record<LibraryBatchField, string> = {
@@ -80,7 +80,7 @@ export class LibraryFieldBatchService {
       applyScreenedSet?: boolean;
     };
     const kind = payload.kind ?? 'vocabulary';
-    const mode = payload.mode === 'regenerate' ? 'regenerate' : 'fill';
+    const mode = payload.mode === 'regenerate' ? 'regenerate' : payload.mode === 'normalize' ? 'normalize' : 'fill';
     const fields = new Set((payload.fields ?? []).filter((field): field is LibraryBatchField => field in LIBRARY_FIELD_LABEL));
     const screenedIds = payload.applyScreenedSet
       ? (payload.targetIds ?? []).filter((id): id is string => typeof id === 'string' && id.length > 0)
@@ -269,15 +269,15 @@ export class LibraryFieldBatchService {
       try {
         const data: Prisma.VocabularyUpdateInput = {};
         const selected = (field: LibraryBatchField, needs: boolean) => fields.has(field) && (applyAll || needs);
-        if (selected('description', descriptionNeedsWork(row.description, mode, 'vocabulary')) && mode === 'regenerate') {
+        if (mode === 'normalize' && selected('description', descriptionNeedsWork(row.description, mode, 'vocabulary'))) {
           const next = alignDescriptionLayout(row.description ?? '');
           if (next && next !== row.description?.trim()) data.description = next;
         }
-        if (fields.has('pronunciation')) {
+        if (mode !== 'normalize' && fields.has('pronunciation')) {
           Object.assign(data, buildPronunciationPatch(row, dictionary.get(row.word.trim().toLowerCase()), mode));
         }
         const touchMeaning = selected('meaning', meaningNeedsWork(row.meaning, mode, 'vocabulary'));
-        const touchDescription = selected('description', descriptionNeedsWork(row.description, mode, 'vocabulary')) && mode === 'fill';
+        const touchDescription = mode !== 'normalize' && selected('description', descriptionNeedsWork(row.description, mode, 'vocabulary'));
         const touchExamples = selected('examples', examplesNeedWork(row.examples, mode));
         const touchDefinition = selected('definition', definitionNeedsWork(row.definitionEn, mode));
         const touchDifficulty = selected('difficulty', difficultyNeedsWork(row.difficulty, mode));
@@ -291,9 +291,9 @@ export class LibraryFieldBatchService {
             phoneticUk: row.phoneticUk || '(preserve)',
             meaningExists: !touchMeaning,
             descriptionExists: !touchDescription,
-            descriptionDraft: touchDescription ? row.description ?? '' : '',
+            descriptionDraft: mode === 'fill' && touchDescription ? row.description ?? '' : '',
             difficultyExists: !touchDifficulty,
-            forceLearnerRewrite: mode === 'regenerate' && (touchMeaning || touchDefinition || touchExamples),
+            forceLearnerRewrite: mode === 'regenerate' && (touchMeaning || touchDescription || touchDefinition || touchExamples),
           }, usageCallback(usage));
           if (touchMeaning && generated.meaning.trim() && !isPlaceholderMeaning(generated.meaning)) data.meaning = generated.meaning.trim();
           if (touchDescription && descriptionHasCanonicalLayout(generated.description)) data.description = generated.description.trim();
@@ -390,19 +390,19 @@ export class LibraryFieldBatchService {
         let replaceExamples: Array<{ en: string; zh: string; level: string }> | null = null;
         let patchedExamples: ExampleRow[] | null = null;
         const selected = (field: LibraryBatchField, needs: boolean) => fields.has(field) && (applyAll || needs);
-        if (selected('description', descriptionNeedsWork(row.description, mode, 'text')) && mode === 'regenerate') {
+        if (mode === 'normalize' && selected('description', descriptionNeedsWork(row.description, mode, 'text'))) {
           const next = alignDescriptionLayout(row.description ?? '');
           if (next && next !== row.description?.trim()) data.description = next;
         }
         const touchMeaning = selected('meaning', meaningNeedsWork(row.meaning, mode, 'text'));
-        const touchDescription = selected('description', descriptionNeedsWork(row.description, mode, 'text')) && mode === 'fill';
+        const touchDescription = mode !== 'normalize' && selected('description', descriptionNeedsWork(row.description, mode, 'text'));
         const touchExamples = selected('examples', examplesNeedWork(row.examples, mode));
         if (touchMeaning || touchDescription || touchExamples) {
           const generated = kind === 'chunk'
             ? await this.adminContentAiService.enrichChunk({ text: row.label, meaning: meaningForPrompt(row.meaning) }, usageCallback(usage))
             : await this.adminContentAiService.enrichPattern({ pattern: row.label, meaning: meaningForPrompt(row.meaning) }, usageCallback(usage));
           if (touchMeaning && generated.meaning.trim() && !isPlaceholderMeaning(generated.meaning)) data.meaning = generated.meaning.trim();
-          if (touchDescription && generated.description.trim()) data.description = generated.description.trim();
+          if (touchDescription && descriptionHasCanonicalLayout(generated.description)) data.description = generated.description.trim();
           if (touchExamples && generated.examples.length) {
             const next = generated.examples
               .map((example) => ({ en: example.en, zh: example.zh, level: example.level || 'intermediate' }))

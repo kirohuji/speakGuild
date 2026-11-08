@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { AdminContentAiService, VocabularyAiEnrichResult } from '../../admin/admin-content-ai.service';
+import { descriptionHasCanonicalLayout } from '../../admin/description-layout';
 import { DictionaryService } from '../../dictionary/dictionary.service';
 import { AdminTasksService } from '../admin-tasks.service';
 
@@ -593,7 +594,7 @@ export class ContentPrepareService {
         definitionEn: learnerDefinitionEn,
         examples: examplesForStore,
         meaning: this.hasChinese(vocab.meaning) ? vocab.meaning : (aiResult?.meaning || vocab.meaning || ''),
-        description: aiResult?.description || vocab.description || '',
+        description: descriptionHasCanonicalLayout(aiResult?.description ?? '') ? aiResult!.description : (vocab.description || ''),
         // 难度：已有有效值保留；缺失/无效时用 AI 判定值补齐
         difficulty: validDifficulty ? (vocab.difficulty ?? 'L3') : (aiResult?.difficulty || vocab.difficulty || 'L3'),
       },
@@ -660,7 +661,7 @@ export class ContentPrepareService {
       await tx.chunk.update({
         where: { id: chunkId },
         data: {
-          description: generated.description || chunk.description,
+          description: descriptionHasCanonicalLayout(generated.description) ? generated.description : chunk.description,
           examples: generated.examples.length
             ? { create: generated.examples.map((example, index) => ({ ...example, sortOrder: index })) }
             : undefined,
@@ -689,7 +690,7 @@ export class ContentPrepareService {
     await this.prisma.sentencePattern.update({
       where: { id: patternId },
       data: {
-        description: generated.description || pattern.description,
+        description: descriptionHasCanonicalLayout(generated.description) ? generated.description : pattern.description,
         examples: generated.examples.length ? generated.examples as Prisma.InputJsonValue : pattern.examples as Prisma.InputJsonValue,
       },
     });

@@ -26,7 +26,7 @@ import * as api from '../api-content-admin'
 import { listAiProviders, type AiProviderItem } from '../api-ai-models'
 import { DictionaryPreview } from '../components/dictionary-preview'
 import { LibraryScopeBar, type LibraryPackageTypeFilter } from '../components/library-scope-bar'
-import { LibraryFieldBatchDialog, type LibraryBatchField } from '../components/library-field-batch-dialog'
+import { LibraryFieldBatchDialog, type LibraryBatchField, type LibraryBatchMode } from '../components/library-field-batch-dialog'
 import { alignDescriptionLayout } from '../description-layout'
 import { contentExperienceAdminApi, type PackageGroup } from '../api-content-experiences'
 import { getDictionaryEntry } from '../api-dictionary'
@@ -41,6 +41,11 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 }
 
 type TtsAccent = 'us' | 'uk' | 'neutral'
+
+function batchModeText(mode: LibraryBatchMode, usage: 'badge' | 'task') {
+  if (usage === 'badge') return mode === 'fill' ? '缺失' : mode === 'normalize' ? '不规范' : '可重新生成'
+  return mode === 'fill' ? '补全' : mode === 'normalize' ? '检查规范' : '重新生成'
+}
 
 async function getActiveTtsProvider() {
   const providers = await listAiProviders()
@@ -533,7 +538,7 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
   const [tag, setTag] = useState('')
   const [availableTags, setAvailableTags] = useState<Array<{ tag: string; count: number }>>([])
   const [pronunciationStatus, setPronunciationStatus] = useState<'' | 'missing-phonetic' | 'missing-audio' | 'incomplete'>('')
-  const [screen, setScreen] = useState<{ mode: 'fill' | 'regenerate'; fields: LibraryBatchField[] } | null>(null)
+  const [screen, setScreen] = useState<{ mode: LibraryBatchMode; fields: LibraryBatchField[] } | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -576,7 +581,7 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
     meaning: '中文释义', description: '讲解', examples: '例句', definition: '英文释义', pronunciation: '音标与发音', difficulty: '难度',
   }
   const screenLabel = screen
-    ? `${screen.mode === 'fill' ? '缺失' : '可重新生成'}：${screen.fields.map((field) => screenFieldLabel[field]).join('、')}`
+    ? `${batchModeText(screen.mode, 'badge')}：${screen.fields.map((field) => screenFieldLabel[field]).join('、')}`
     : ''
 
   const vocabularyScope: api.LibraryVocabularyScope = {
@@ -623,10 +628,10 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
     } catch (err: any) { toast.error(err?.message || '创建例句音频补全任务失败') }
   }
 
-  const submitVocabularyBatch = async (mode: 'fill' | 'regenerate', fields: LibraryBatchField[]) => {
+  const submitVocabularyBatch = async (mode: LibraryBatchMode, fields: LibraryBatchField[]) => {
     try {
       await api.enqueueLibraryFieldBatch('vocabulary', { ...vocabularyScope, mode, fields })
-      taskToast(`已创建词汇${mode === 'fill' ? '补全' : '重新生成'}任务（${filteredCount} 条）`)
+      taskToast(`已创建词汇${batchModeText(mode, 'task')}任务（${filteredCount} 条）`)
     } catch (err: any) { toast.error(err?.message || '创建批量任务失败') }
   }
 
@@ -822,7 +827,7 @@ function ChunkTab({ scope }: { scope: LibraryScope }) {
   const [pageSize, setPageSize] = useState(100)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<api.ChunkFull | null>(null)
-  const [screen, setScreen] = useState<{ mode: 'fill' | 'regenerate'; fields: LibraryBatchField[] } | null>(null)
+  const [screen, setScreen] = useState<{ mode: LibraryBatchMode; fields: LibraryBatchField[] } | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -850,10 +855,10 @@ function ChunkTab({ scope }: { scope: LibraryScope }) {
   const filteredCount = data?.total ?? 0
   const [batchOpen, setBatchOpen] = useState(false)
   const [screenOpen, setScreenOpen] = useState(false)
-  const submitBatch = async (mode: 'fill' | 'regenerate', fields: LibraryBatchField[]) => {
+  const submitBatch = async (mode: LibraryBatchMode, fields: LibraryBatchField[]) => {
     try {
       await api.enqueueLibraryFieldBatch('chunk', { ...textScope, mode, fields })
-      toast.success(`已创建句块${mode === 'fill' ? '补全' : '重新生成'}任务（${filteredCount} 条）`, {
+      toast.success(`已创建句块${batchModeText(mode, 'task')}任务（${filteredCount} 条）`, {
         action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
       })
     } catch (err: any) { toast.error(err?.message || '创建批量任务失败') }
@@ -874,7 +879,7 @@ function ChunkTab({ scope }: { scope: LibraryScope }) {
           </Select>
           {screen && (
             <Badge variant="secondary" className="gap-1 pr-1">
-              {screen.mode === 'fill' ? '缺失' : '可重新生成'}：{screen.fields.map((field) => field === 'meaning' ? '中文释义' : field === 'description' ? '讲解' : '例句').join('、')}
+              {batchModeText(screen.mode, 'badge')}：{screen.fields.map((field) => field === 'meaning' ? '中文释义' : field === 'description' ? '讲解' : '例句').join('、')}
               <button type="button" className="rounded-sm p-0.5 hover:bg-muted" aria-label="清除筛查"
                 onClick={() => { setScreen(null); setPage(1) }}>
                 <X className="size-3" />
@@ -984,7 +989,7 @@ function PatternTab({ scope }: { scope: LibraryScope }) {
   const [pageSize, setPageSize] = useState(20)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<api.SentencePatternFull | null>(null)
-  const [screen, setScreen] = useState<{ mode: 'fill' | 'regenerate'; fields: LibraryBatchField[] } | null>(null)
+  const [screen, setScreen] = useState<{ mode: LibraryBatchMode; fields: LibraryBatchField[] } | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<api.SentencePatternFull | null>(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -1014,10 +1019,10 @@ function PatternTab({ scope }: { scope: LibraryScope }) {
   const filteredCount = data?.total ?? 0
   const [batchOpen, setBatchOpen] = useState(false)
   const [screenOpen, setScreenOpen] = useState(false)
-  const submitBatch = async (mode: 'fill' | 'regenerate', fields: LibraryBatchField[]) => {
+  const submitBatch = async (mode: LibraryBatchMode, fields: LibraryBatchField[]) => {
     try {
       await api.enqueueLibraryFieldBatch('pattern', { ...textScope, mode, fields })
-      toast.success(`已创建句式${mode === 'fill' ? '补全' : '重新生成'}任务（${filteredCount} 条）`, {
+      toast.success(`已创建句式${batchModeText(mode, 'task')}任务（${filteredCount} 条）`, {
         action: { label: '查看任务', onClick: () => window.location.hash = '#/admin/tasks' },
       })
     } catch (err: any) { toast.error(err?.message || '创建批量任务失败') }
@@ -1053,7 +1058,7 @@ function PatternTab({ scope }: { scope: LibraryScope }) {
           </Select>
           {screen && (
             <Badge variant="secondary" className="gap-1 pr-1">
-              {screen.mode === 'fill' ? '缺失' : '可重新生成'}：{screen.fields.map((field) => field === 'meaning' ? '中文释义' : field === 'description' ? '讲解' : '例句').join('、')}
+              {batchModeText(screen.mode, 'badge')}：{screen.fields.map((field) => field === 'meaning' ? '中文释义' : field === 'description' ? '讲解' : '例句').join('、')}
               <button type="button" className="rounded-sm p-0.5 hover:bg-muted" aria-label="清除筛查"
                 onClick={() => { setScreen(null); setPage(1) }}>
                 <X className="size-3" />

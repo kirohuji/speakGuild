@@ -3,7 +3,7 @@ import { generateText } from 'ai';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { LlmProviderFactory } from '../../common/llm/llm-provider.factory';
 import { AiModelService } from '../ai-model/ai-model.service';
-import { alignDescriptionLayout } from './description-layout';
+import { alignDescriptionLayout, DESCRIPTION_LAYOUT_RULE } from './description-layout';
 
 export interface VocabularyAiEnrichInput {
   word: string;
@@ -241,7 +241,7 @@ Return exactly a JSON object with these fields — no markdown, no code fences, 
     { "en": "原创英文例句（不要照抄词典例句或参考句块，要全新创作）", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced" }
   ],
   "meaning": "仅当中文释义 MISSING 时提供：按词性分组的简洁中文关键词。每个词性组必须以英文缩写POS前缀开头，且只能使用：n. v. adj. adv. pron. prep. conj. interj. num. det. art. phr. modal v.（禁止 other；禁止中文词性如“名词/动词”；禁止英文全词如 noun/verb；缩写必须带点号）。若词性不确定用 phr.，绝不用 other。同一词性所有义项用；连接，不同词性用 / 分隔。示例：n. 苹果；苹果树 / v. 结果实",
-  "description": "仅当讲解 MISSING 时提供：中文学习笔记，轻量 Markdown。必须依次写全四个小节，标题只能是 **核心含义：** **用法提示：** **易错点：** **常见搭配：**，不能省略、不能改名。每个小节独立成段，在下一个 **小节标题：** 之前必须空一行分隔，段内不要换行。英文用反引号。语气亲切。80-200字。",
+  "description": "仅当讲解 MISSING 时提供：${DESCRIPTION_LAYOUT_RULE} 80-200字。语气亲切。",
   "difficulty": "仅当难度 MISSING 时提供：词汇难度等级，必须是 L1|L2|L3|L4|L5 之一：L1=基础高频（中考核心，如 apple/help）、L2=常用（高考核心，如 appointment/attitude）、L3=核心（大学四级/雅思6分，如 accommodate/derive）、L4=进阶（六级/雅思6.5-7，如 ambiguous/endeavor）、L5=低频专业（雅思7.5+/托福，如 ubiquitous/paradigm）。依据：词频、学习阶段、抽象程度。"
 }
 
@@ -278,7 +278,7 @@ Use CLEAN standard IPA inside /slashes/. Normalize /ɹ/ to /r/, syllabic consona
       result = this.parseJsonText(text);
     } catch {
       // 主调用 JSON 解析失败：降级重试一次，只要求核心字段（避免整次调用作废）
-      const retryPrompt = `为英语单词 "${dto.word}" 生成面向中国 B1-B2 学习者的学习卡。词典义项仅作证据，不可完整照搬。\n\n义项：\n${defLines}\n\n请完全根据这个单词本身判断保留多少义项：保留所有现代常用、彼此独立、会帮助学习者理解或使用该词的义项。单义词可以只有一个；像 get 这样的高频多义词可以有很多。不要因数量限制删掉高价值义项，也不要加入生僻、古旧、文学、方言或狭窄专业义。每项格式“v.: concise English [简短中文]”。并写 3-4 条原创、日常、自然的短例句。返回 JSON（无 markdown）：\n{"learnerDefinitions":["v.: get; receive  [得到；收到]"], "meaning": "按词性分组的简短中文释义，保留该词高价值常用义", "description": "80-150字中文讲解", "generatedExamples": [{"en": "原创日常英文例句", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced"}]}`;
+      const retryPrompt = `为英语单词 "${dto.word}" 生成面向中国 B1-B2 学习者的学习卡。词典义项仅作证据，不可完整照搬。\n\n义项：\n${defLines}\n\n请完全根据这个单词本身判断保留多少义项：保留所有现代常用、彼此独立、会帮助学习者理解或使用该词的义项。单义词可以只有一个；像 get 这样的高频多义词可以有很多。不要因数量限制删掉高价值义项，也不要加入生僻、古旧、文学、方言或狭窄专业义。每项格式“v.: concise English [简短中文]”。并写 3-4 条原创、日常、自然的短例句。返回 JSON（无 markdown）：\n{"learnerDefinitions":["v.: get; receive  [得到；收到]"], "meaning": "按词性分组的简短中文释义，保留该词高价值常用义", "description": "${DESCRIPTION_LAYOUT_RULE}", "generatedExamples": [{"en": "原创日常英文例句", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced"}]}`;
       const retry = await generateText({
         model,
         prompt: retryPrompt,
@@ -677,7 +677,7 @@ Return exactly a JSON object — no markdown, no code fences:
 
 {
   "meaning": "仅写可直接保存到“中文释义”字段的短译法：2-16 个汉字，必要时用；分隔同义短译，如“振作起来；别灰心”。只输出译法本身，禁止写“用于…/意思是…/常用于…/语气…/口语…”等用法解释；这些内容放到 description。若无法给出可靠短译，返回空字符串。",
-  "description": "中文学习笔记，轻量 Markdown。结构按需：**核心含义：** 一句话概括这个表达的核心意思。**用法提示：** 什么场景用、语体正式/非正式、常见搭配。**易错点：** 中国学习者容易犯的错误。**类似表达：** 意思相近的其他说法（可选）。英文单词用反引号。每个小节标题前必须空一行（\n\n），段内不要换行。80-150字。语气亲切如老师。",
+  "description": "${DESCRIPTION_LAYOUT_RULE} 80-150字。语气亲切如老师。",
   "examples": [
     { "en": "原创英文例句，展示该句块在不同场景的自然用法", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced" }
   ]
@@ -733,7 +733,7 @@ Return exactly a JSON object — no markdown, no code fences:
   "examples": [
     { "en": "将每个 __ 替换成具体、有趣的单词。句子自然地道，像真人说的话。", "zh": "自然的中文翻译", "level": "basic/intermediate/advanced" }
   ],
-  "description": "中文讲解，轻量 Markdown 排版。结构：\n\n**句式解析：** 这个句型表达什么逻辑关系。\n\n**使用场景：** 口语/书面、正式/随意。\n\n**易错点：** 中国学习者常见错误。\n\n**替换练习：** 2-3个可填入 __ 的单词/短语，用 - 列表。\n\n小节间空行分隔。英文单词用反引号。语气亲切。120-200字。"
+  "description": "${DESCRIPTION_LAYOUT_RULE} 常见搭配列出可填入空位的说法。120-200字。语气亲切。"
 }
 
 ## Rules for Examples
@@ -770,7 +770,7 @@ Return exactly a JSON object — no markdown, no code fences:
     chunk: {
       kindLabel: 'Chunk',
       task: 'Given an English chunk (a reusable expression unit), fill the MISSING fields: Chinese explanation, learning notes, and example sentences.',
-      descSchema: '中文学习笔记，轻量 Markdown。结构按需：**核心含义：** 一句话概括这个表达的核心意思。**用法提示：** 什么场景用、语体正式/非正式、常见搭配。**易错点：** 中国学习者容易犯的错误。**类似表达：** 意思相近的其他说法（可选）。英文单词用反引号。每个小节标题前必须空一行，段内不要换行。80-150字。语气亲切如老师。',
+      descSchema: `${DESCRIPTION_LAYOUT_RULE} 80-150字。`,
       rules: `- Examples: 3-4 original sentences demonstrating the chunk in different contexts, each with a natural Chinese translation.
 - Vary difficulty: at least one basic (A2), one intermediate (B1).
 - Show different sentence positions and variations.
@@ -779,7 +779,7 @@ Return exactly a JSON object — no markdown, no code fences:
     pattern: {
       kindLabel: 'Pattern',
       task: 'Given an English sentence pattern with blanks (marked as __), fill the MISSING fields: example sentences and a Chinese explanation.',
-      descSchema: '中文讲解，轻量 Markdown 排版。结构：**句式解析：** 这个句型表达什么逻辑关系。**使用场景：** 口语/书面、正式/随意。**易错点：** 中国学习者常见错误。**替换练习：** 2-3个可填入 __ 的单词/短语，用 - 列表。小节间空行分隔。英文单词用反引号。语气亲切。120-200字。',
+      descSchema: `${DESCRIPTION_LAYOUT_RULE} 常见搭配列出可填入空位的说法。120-200字。`,
       rules: `- Examples: 3-4 sentences of varying difficulty (basic → intermediate → advanced), each with a natural Chinese translation.
 - Vary the vocabulary and context across examples; use vivid, specific vocabulary.
 - Each example should sound like something a native speaker would actually say.

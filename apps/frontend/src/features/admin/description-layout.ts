@@ -24,25 +24,26 @@ const HEADING_RE = new RegExp(
   'g',
 )
 
+function stripStrayBold(body: string): string {
+  return body.replace(/^(?:\*\*\s*)+/, '').trim()
+}
+
 function normalizeBody(body: string): string {
-  const lines = body.split('\n').map((line) => line.trim()).filter(Boolean)
-  const blocks: string[] = []
-  let prose = ''
-  const flush = () => {
-    if (!prose) return
-    blocks.push(prose)
-    prose = ''
-  }
-  for (const line of lines) {
-    if (line.startsWith('- ')) {
-      flush()
-      blocks.push(line)
-      continue
-    }
-    prose += line
-  }
-  flush()
-  return blocks.join('\n')
+  return stripStrayBold(body)
+    .split('\n')
+    .map((line) => stripStrayBold(line.trim()).replace(/^[-*•]\s+/, '').trim())
+    .filter(Boolean)
+    .join('')
+}
+
+function flattenCollocations(body: string): string {
+  const lines = stripStrayBold(body).split('\n').map((line) => stripStrayBold(line.trim())).filter(Boolean)
+  if (!lines.some((line) => /^[-*•]\s+/.test(line))) return lines.join('')
+  const prose = lines
+    .map((line) => line.replace(/^[-*•]\s+/, '').replace(/\(([^)]*)\)/g, '（$1）').replace(/[。；;，,、]\s*$/, '').trim())
+    .filter(Boolean)
+    .join('、')
+  return prose ? (prose.endsWith('。') ? prose : `${prose}。`) : ''
 }
 
 function collapsePlain(text: string): string {
@@ -73,7 +74,9 @@ export function alignDescriptionLayout(raw: string): string {
   matches.forEach((match, index) => {
     const start = (match.index ?? 0) + match[0].length
     const end = index + 1 < matches.length ? (matches[index + 1].index ?? text.length) : text.length
-    push(ALIAS[match[1]] ?? match[1], normalizeBody(text.slice(start, end)))
+    const name = ALIAS[match[1]] ?? match[1]
+    const body = text.slice(start, end)
+    push(name, name === '常见搭配' ? flattenCollocations(body) : normalizeBody(body))
   })
 
   const parts: string[] = []

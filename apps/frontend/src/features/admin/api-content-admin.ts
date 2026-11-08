@@ -904,7 +904,7 @@ export interface LibraryVocabularyScope {
   tag?: string;
   sceneId?: string;
   topicId?: string;
-  screenMode?: 'fill' | 'regenerate';
+  screenMode?: 'fill' | 'regenerate' | 'normalize';
   screenFields?: string[];
 }
 
@@ -914,7 +914,7 @@ export interface LibraryTextScope {
   difficulty?: string;
   sceneId?: string;
   topicId?: string;
-  screenMode?: 'fill' | 'regenerate';
+  screenMode?: 'fill' | 'regenerate' | 'normalize';
   screenFields?: string[];
 }
 
@@ -927,7 +927,7 @@ export function listLibraryVocabularies(params?: {
   tag?: string;
   sceneId?: string;
   topicId?: string;
-  screenMode?: 'fill' | 'regenerate';
+  screenMode?: 'fill' | 'regenerate' | 'normalize';
   screenFields?: string;
   page?: number; pageSize?: number
 }): Promise<PaginatedResult<VocabularyFull>> {
@@ -972,7 +972,7 @@ export function importVocabularyCsv(file: File): Promise<{ taskId: string; wordC
 export function enqueueLibraryFieldBatch(
   kind: 'vocabulary' | 'chunk' | 'pattern',
   body: (LibraryVocabularyScope | LibraryTextScope) & {
-    mode: 'fill' | 'regenerate';
+    mode: 'fill' | 'regenerate' | 'normalize';
     fields: string[];
   },
 ): Promise<{ taskId: string }> {
@@ -1050,7 +1050,7 @@ export function aiEnrichPattern(data: {
 
 export function listLibraryChunks(params?: {
   search?: string; difficulty?: string; sceneId?: string; topicId?: string;
-  screenMode?: 'fill' | 'regenerate'; screenFields?: string; page?: number; pageSize?: number
+  screenMode?: 'fill' | 'regenerate' | 'normalize'; screenFields?: string; page?: number; pageSize?: number
 }): Promise<PaginatedResult<ChunkFull>> {
   return get('/admin/content/library/chunks', params);
 }
@@ -1092,7 +1092,7 @@ export function listChunkCategories(): Promise<string[]> {
 
 export function listLibraryPatterns(params?: {
   search?: string; difficulty?: string; sceneId?: string; topicId?: string;
-  screenMode?: 'fill' | 'regenerate'; screenFields?: string; page?: number; pageSize?: number
+  screenMode?: 'fill' | 'regenerate' | 'normalize'; screenFields?: string; page?: number; pageSize?: number
 }): Promise<PaginatedResult<SentencePatternFull>> {
   return get('/admin/content/library/patterns', params);
 }

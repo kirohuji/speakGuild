@@ -667,7 +667,7 @@ export class AdminTasksService implements OnModuleInit {
 
   async enqueueLibraryFieldBatch(createdById: string | undefined, input: {
     kind: 'vocabulary' | 'chunk' | 'pattern';
-    mode: 'fill' | 'regenerate';
+    mode: 'fill' | 'regenerate' | 'normalize';
     fields: string[];
     filter?: VocabularyLibraryFilter & TextLibraryFilter;
     targetIds?: string[];
@@ -692,7 +692,7 @@ export class AdminTasksService implements OnModuleInit {
         : undefined;
     if (targetIds && !targetIds.length) throw new BadRequestException('筛查结果是空的，没有可执行的记录');
     const totalItems = targetIds?.length ?? scope.matchedCount;
-    const modeLabel = input.mode === 'fill' ? '补全缺失' : '重新生成';
+    const modeLabel = input.mode === 'fill' ? '补全缺失' : input.mode === 'normalize' ? '检查规范' : '重新生成';
     const fieldLabel = fields.map((field) => LIBRARY_FIELD_LABEL[field]).join('、');
     const unit = input.kind === 'vocabulary' ? '个词汇' : input.kind === 'chunk' ? '个句块' : '个句式';
     const task = await this.prisma.adminTask.create({
@@ -1215,13 +1215,13 @@ export class AdminTasksService implements OnModuleInit {
     if (task.type === LIBRARY_FIELD_BATCH_JOB) {
       const payload = (task.payload ?? {}) as {
         kind?: 'vocabulary' | 'chunk' | 'pattern';
-        mode?: 'fill' | 'regenerate';
+        mode?: 'fill' | 'regenerate' | 'normalize';
         fields?: string[];
         targetIds?: string[];
       };
       return this.enqueueLibraryFieldBatch(createdById, {
         kind: payload.kind ?? 'vocabulary',
-        mode: payload.mode === 'regenerate' ? 'regenerate' : 'fill',
+        mode: payload.mode === 'regenerate' ? 'regenerate' : payload.mode === 'normalize' ? 'normalize' : 'fill',
         fields: payload.fields ?? [],
         filter: libraryFilter,
         targetIds: payload.targetIds,

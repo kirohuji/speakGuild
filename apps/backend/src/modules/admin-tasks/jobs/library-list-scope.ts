@@ -102,7 +102,7 @@ export function normalizeVocabularyFilter(raw?: Partial<VocabularyLibraryFilter>
   const screenFields = parseScreenFields(source.screenFields, VOCABULARY_SCREEN_FIELDS);
   if (screenFields.length) {
     filter.screenFields = screenFields;
-    filter.screenMode = source.screenMode === 'regenerate' ? 'regenerate' : 'fill';
+    filter.screenMode = source.screenMode === 'regenerate' ? 'regenerate' : source.screenMode === 'normalize' ? 'normalize' : 'fill';
   }
   return filter;
 }
@@ -121,7 +121,7 @@ export function normalizeTextFilter(raw?: Partial<TextLibraryFilter> | null): Te
   const screenFields = parseScreenFields(source.screenFields, TEXT_SCREEN_FIELDS);
   if (screenFields.length) {
     filter.screenFields = screenFields;
-    filter.screenMode = source.screenMode === 'regenerate' ? 'regenerate' : 'fill';
+    filter.screenMode = source.screenMode === 'regenerate' ? 'regenerate' : source.screenMode === 'normalize' ? 'normalize' : 'fill';
   }
   return filter;
 }
@@ -449,7 +449,7 @@ export async function describeVocabularyFilter(
   if (filter.qualityIssue) parts.push(QUALITY_LABEL[filter.qualityIssue]);
   if (filter.screenFields?.length) {
     const names = filter.screenFields.map((field) => SCREEN_FIELD_LABEL[field]).join('、');
-    parts.push(filter.screenMode === 'regenerate' ? `筛出可重新生成：${names}` : `筛出缺失：${names}`);
+    parts.push(filter.screenMode === 'regenerate' ? `筛出可重新生成：${names}` : filter.screenMode === 'normalize' ? `筛出不规范：${names}` : `筛出缺失：${names}`);
   }
   parts.push(...await scopeNames(prisma, filter.sceneId, filter.topicId));
   return parts.length ? parts.join('，') : '未筛选（全部）';
@@ -466,7 +466,7 @@ export async function describeTextFilter(
   if (filter.difficulty) parts.push(`难度 ${filter.difficulty}`);
   if (filter.screenFields?.length) {
     const names = filter.screenFields.map((field) => SCREEN_FIELD_LABEL[field]).join('、');
-    parts.push(filter.screenMode === 'regenerate' ? `筛出可重新生成：${names}` : `筛出缺失：${names}`);
+    parts.push(filter.screenMode === 'regenerate' ? `筛出可重新生成：${names}` : filter.screenMode === 'normalize' ? `筛出不规范：${names}` : `筛出缺失：${names}`);
   }
   parts.push(...await scopeNames(prisma, filter.sceneId, filter.topicId));
   return parts.length ? parts.join('，') : `未筛选（全部${kind}）`;
