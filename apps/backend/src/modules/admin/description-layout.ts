@@ -20,8 +20,9 @@ const ALIAS: Record<string, string> = {
 const ORDER = ['核心含义', '用法提示', '易错点', '常见搭配'];
 
 const HEADING_SOURCE = Object.keys(ALIAS).sort((left, right) => right.length - left.length).join('|');
+/** 库里的标题是 **核心含义：** ，冒号在加粗里面。也接受 **核心含义**： 和纯文本「核心含义：」。 */
 const HEADING_RE = new RegExp(
-  `(?:^|\\n)\\s*\\*{0,2}\\s*(${HEADING_SOURCE})\\s*\\*{0,2}\\s*[:：]\\s*`,
+  `(?:^|\\n)\\s*(?:\\*\\*)?\\s*(${HEADING_SOURCE})\\s*(?:[：:]\\s*\\*\\*|\\*\\*\\s*[：:]|[：:])\\s*`,
   'g',
 );
 
@@ -54,11 +55,30 @@ function collapsePlain(text: string): string {
     .join('\n\n');
 }
 
+/** 四个标准小节都在，而且每节都有正文。标题按库里的 **核心含义：** 来认。 */
+export function descriptionHasCanonicalLayout(raw: string): boolean {
+  const text = raw.replace(/\r\n/g, '\n').trim();
+  if (!text) return false;
+  const re = new RegExp(
+    `(?:^|\\n)\\s*(?:\\*\\*)?\\s*(${ORDER.join('|')})\\s*(?:[：:]\\s*\\*\\*|\\*\\*\\s*[：:]|[：:])\\s*`,
+    'g',
+  );
+  const matches = [...text.matchAll(re)];
+  const bodies = new Map<string, string>();
+  matches.forEach((match, index) => {
+    const start = (match.index ?? 0) + match[0].length;
+    const end = index + 1 < matches.length ? (matches[index + 1].index ?? text.length) : text.length;
+    const body = text.slice(start, end).trim();
+    if (body) bodies.set(match[1], body);
+  });
+  return ORDER.every((name) => Boolean(bodies.get(name)?.trim()));
+}
+
 /** 把讲解收成同一套小节：核心含义 / 用法提示 / 易错点 / 常见搭配，小节之间空一行。 */
 export function alignDescriptionLayout(raw: string): string {
   const text = raw.replace(/\r\n/g, '\n').replace(/[ \t]+\n/g, '\n').trim();
   if (!text) return '';
-  const matches = [...text.matchAll(HEADING_RE)];
+  const matches = [...text.matchAll(new RegExp(HEADING_RE.source, 'g'))];
   if (!matches.length) return collapsePlain(text);
 
   const sections = new Map<string, string[]>();

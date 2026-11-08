@@ -20,7 +20,7 @@ const ALIAS: Record<string, string> = {
 const ORDER = ['核心含义', '用法提示', '易错点', '常见搭配']
 const HEADING_SOURCE = Object.keys(ALIAS).sort((left, right) => right.length - left.length).join('|')
 const HEADING_RE = new RegExp(
-  `(?:^|\\n)\\s*\\*{0,2}\\s*(${HEADING_SOURCE})\\s*\\*{0,2}\\s*[:：]\\s*`,
+  `(?:^|\\n)\\s*(?:\\*\\*)?\\s*(${HEADING_SOURCE})\\s*(?:[：:]\\s*\\*\\*|\\*\\*\\s*[：:]|[：:])\\s*`,
   'g',
 )
 

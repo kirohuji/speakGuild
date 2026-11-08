@@ -27,6 +27,7 @@ import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { extractCoreUsage } from '@/lib/markdown-utils'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
 import { CurrentTabExpandButton } from '@/features/learning/components/current-tab-expand-button'
+import { WordMeaningInline } from '@/features/learning/components/word-meaning-lines'
 
 import { PracticeTurnFeedback } from '../components/practice-turn-feedback'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
@@ -495,7 +496,7 @@ export function PracticeSessionPage() {
     const patterns: LearningInsightItem[] = detail.sentencePatterns?.length
       ? detail.sentencePatterns.map((p, i) => ({
           kind: 'pattern', id: `pattern:${i}`, pattern: p.pattern,
-          meaning: p.meaning, example: p.example, difficulty: p.difficulty, sceneName,
+          meaning: p.meaning, example: p.example, description: p.description, difficulty: p.difficulty, sceneName,
         }))
       : []
     return [...words, ...chunks, ...patterns]
@@ -1110,7 +1111,7 @@ export function PracticeSessionPage() {
                                   <p className="truncate text-sm font-semibold text-foreground">{v.word}</p>
                                   {collectedTexts.has(v.word) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('practiceSession.collectedBadge')}</Badge>}
                                 </div>
-                                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{v.meaning}</p>
+                                <WordMeaningInline meaning={v.meaning} />
                               </div>
                               <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
                             </button>
@@ -1198,12 +1199,17 @@ export function PracticeSessionPage() {
                                   <p className="truncate text-sm font-semibold text-foreground">{p.pattern}</p>
                                   {collectedTexts.has(p.pattern) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('practiceSession.collectedBadge')}</Badge>}
                                 </div>
-                                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{p.meaning}</p>
+                                <WordMeaningInline meaning={p.meaning} />
                               </div>
                               <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
                             </button>
                             {isExpanded && (
                               <div className="px-3 pb-3 pt-2">
+                                {p.description && (
+                                  <div className="mb-3 line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
+                                    <MarkdownContent content={extractCoreUsage(p.description)} />
+                                  </div>
+                                )}
                                 {p.example && <p className="text-sm leading-6 text-muted-foreground">{t('practiceSession.example')}: {p.example}</p>}
                                 <div className="flex gap-2 mt-2">
                                   <Button size="sm" variant="secondary" className="h-8 flex-1 gap-1.5 border-0 text-xs shadow-none" onClick={() => openInsight(`pattern:${absoluteIndex}`)}>

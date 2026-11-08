@@ -28,6 +28,7 @@ import { Switch } from '@/components/ui/switch'
 import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '@/lib/cn'
 import { isIOS, isNative } from '@/lib/native'
+import { WordMeaningInline, WordMeaningLines } from '@/features/learning/components/word-meaning-lines'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { buildPlaybackSegments } from './immersive-player.mapper'
 import { immersivePlaybackService, type ImmersivePlaybackVisualState } from './immersive-playback.service'
@@ -527,9 +528,7 @@ export function ImmersivePlayerDialog({
                 {!hiddenText && (
                 <div className="text-center">
                   <p className="text-xs tabular-nums text-muted-foreground">{index + 1} / {items.length}</p>
-                  {current.meaning && (
-                    <p className="mx-auto mt-5 max-w-md break-words text-xl font-bold leading-snug text-foreground">{current.meaning}</p>
-                  )}
+                  {current.meaning && <WordMeaningLines meaning={current.meaning} align="center" />}
                 </div>
                 )}
 
@@ -750,7 +749,9 @@ function ImmersiveQueueDrawer({
                   <Icon className="size-4 shrink-0" />
                   <span className="min-w-0 max-w-full overflow-hidden">
                     <span className="block truncate text-sm font-medium">{item.title}</span>
-                    <span className="block truncate text-xs text-muted-foreground">{item.meaning || item.sceneName || t(KIND_LABEL_KEY[item.kind])}</span>
+                    {item.meaning
+                      ? <WordMeaningInline meaning={item.meaning} className="mt-0" />
+                      : <span className="block truncate text-xs text-muted-foreground">{item.sceneName || t(KIND_LABEL_KEY[item.kind])}</span>}
                   </span>
                   {active ? (
                     <Badge variant="default" className="max-w-[4.5rem] shrink-0 truncate px-1.5 py-0 text-[10px]">{t('immersivePlayer.current')}</Badge>

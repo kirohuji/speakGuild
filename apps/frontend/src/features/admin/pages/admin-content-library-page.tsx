@@ -533,7 +533,7 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
   const [tag, setTag] = useState('')
   const [availableTags, setAvailableTags] = useState<Array<{ tag: string; count: number }>>([])
   const [pronunciationStatus, setPronunciationStatus] = useState<'' | 'missing-phonetic' | 'missing-audio' | 'incomplete'>('')
-  const [qualityIssue, setQualityIssue] = useState<'' | 'meaning-other' | 'english-only-definition' | 'missing-pos-prefix'>('')
+  const [screen, setScreen] = useState<{ mode: 'fill' | 'regenerate'; fields: LibraryBatchField[] } | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -556,33 +556,28 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
         difficulty,
         tag: tag || undefined,
         pronunciationStatus: pronunciationStatus || undefined,
-        qualityIssue: qualityIssue || undefined,
         sceneId: scope.sceneId,
         topicId: scope.topicId,
+        screenMode: screen?.mode,
+        screenFields: screen?.fields.join(','),
         page,
         pageSize,
       }))
     }
     catch { setData(null) }
     finally { setLoading(false) }
-  }, [search, matchType, difficulty, tag, pronunciationStatus, qualityIssue, scope.sceneId, scope.topicId, page, pageSize])
+  }, [search, matchType, difficulty, tag, pronunciationStatus, screen, scope.sceneId, scope.topicId, page, pageSize])
 
   useScopedLibraryLoad(scope, page, setPage, load)
   useEffect(() => { void loadTags() }, [loadTags])
 
   const totalPages = data?.totalPages ?? 1
-  const qualityIssueLabel = qualityIssue === 'meaning-other'
-    ? '中文释义含 other'
-    : qualityIssue === 'english-only-definition'
-      ? '英文释义未双语'
-      : qualityIssue === 'missing-pos-prefix'
-        ? '释义缺词性前缀'
-        : ''
-
-  const applyQualityIssue = (issue: typeof qualityIssue) => {
-    setQualityIssue((prev) => (prev === issue ? '' : issue))
-    setPage(1)
+  const screenFieldLabel: Record<LibraryBatchField, string> = {
+    meaning: '中文释义', description: '讲解', examples: '例句', definition: '英文释义', pronunciation: '音标与发音', difficulty: '难度',
   }
+  const screenLabel = screen
+    ? `${screen.mode === 'fill' ? '缺失' : '可重新生成'}：${screen.fields.map((field) => screenFieldLabel[field]).join('、')}`
+    : ''
 
   const vocabularyScope: api.LibraryVocabularyScope = {
     search: search || undefined,
@@ -590,9 +585,10 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
     difficulty: difficulty || undefined,
     tag: tag || undefined,
     pronunciationStatus: pronunciationStatus || undefined,
-    qualityIssue: qualityIssue || undefined,
     sceneId: scope.sceneId,
     topicId: scope.topicId,
+    screenMode: screen?.mode,
+    screenFields: screen?.fields,
   }
   const filteredCount = data?.total ?? 0
 
@@ -600,6 +596,8 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
   const taskToast = (message: string) => toast.success(message, {
     action: { label: '查看任务', onClick: openTasks },
   })
+
+  const [screenOpen, setScreenOpen] = useState(false)
 
   const syncOxfordTags = async () => {
     try {
@@ -618,7 +616,6 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
         page, pageSize, search: search || undefined, matchType,
         difficulty: difficulty || undefined, tag: tag || undefined,
         pronunciationStatus: pronunciationStatus || undefined,
-        qualityIssue: qualityIssue || undefined,
         sceneId: scope.sceneId,
         topicId: scope.topicId,
       })
@@ -682,11 +679,11 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
             <option value="missing-phonetic">缺音标（美/英任一）</option>
             <option value="missing-audio">缺发音（美/英任一）</option>
           </Select>
-          {qualityIssue && (
+          {screen && (
             <Badge variant="secondary" className="gap-1 pr-1">
-              {qualityIssueLabel}
-              <button type="button" className="rounded-sm p-0.5 hover:bg-muted" aria-label="清除质量筛选"
-                onClick={() => { setQualityIssue(''); setPage(1) }}>
+              {screenLabel}
+              <button type="button" className="rounded-sm p-0.5 hover:bg-muted" aria-label="清除筛查"
+                onClick={() => { setScreen(null); setPage(1) }}>
                 <X className="size-3" />
               </button>
             </Badge>
@@ -694,34 +691,11 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <TooltipProvider delayDuration={250}>
-            <LibraryActionMenu
-              label="筛查问题"
-              tooltip="只筛选列表，不会修改任何词汇。再次点击当前条件可取消筛选。"
-              icon={<SlidersHorizontal data-icon="inline-start" />}
-              items={[
-                {
-                  label: '筛出异常词性释义',
-                  description: '显示中文释义含 other 的词，通常表示词性还没有正确归类。仅筛选。',
-                  icon: <AlertTriangle />,
-                  active: qualityIssue === 'meaning-other',
-                  onSelect: () => applyQualityIssue('meaning-other'),
-                },
-                {
-                  label: '筛出缺少词性标记',
-                  description: '显示中文释义前没有 n.、v.、adj. 等词性标记的词。仅筛选。',
-                  icon: <AlertTriangle />,
-                  active: qualityIssue === 'missing-pos-prefix',
-                  onSelect: () => applyQualityIssue('missing-pos-prefix'),
-                },
-                {
-                  label: '筛出缺少中文的英文释义',
-                  description: '显示英文释义只有英文、还没有中文翻译的词。仅筛选。',
-                  icon: <Globe />,
-                  active: qualityIssue === 'english-only-definition',
-                  onSelect: () => applyQualityIssue('english-only-definition'),
-                },
-              ]}
-            />
+            <ActionTooltip title="筛查问题" description="和批量处理同一套字段、同一套规则。只过滤列表，不创建任务。">
+              <Button size="sm" variant="outline" onClick={() => setScreenOpen(true)}>
+                <SlidersHorizontal data-icon="inline-start" />筛查问题
+              </Button>
+            </ActionTooltip>
             <ActionTooltip title="批量处理" description="勾选中文释义、讲解、例句、英文释义、音标与发音、难度，再选择补全缺失或重新生成。只改勾选的字段，并处理当前筛选的全部命中记录。">
               <Button size="sm" variant="outline" onClick={() => setBatchOpen(true)}>
                 <Sparkles data-icon="inline-start" />批量处理
@@ -814,8 +788,20 @@ function VocabularyTab({ scope }: { scope: LibraryScope }) {
         onOpenChange={setBatchOpen}
         title="批量处理词汇"
         fields={['meaning', 'description', 'examples', 'definition', 'pronunciation', 'difficulty']}
+        fillHints={{ description: '只要不是「核心含义 / 用法提示 / 易错点 / 常见搭配」这套标准格式，就重新生成。' }}
         matchedCount={filteredCount}
+        screenedSelection={screen}
         onSubmit={submitVocabularyBatch}
+      />
+      <LibraryFieldBatchDialog
+        open={screenOpen}
+        onOpenChange={setScreenOpen}
+        title="筛查词汇问题"
+        purpose="screen"
+        fields={['meaning', 'description', 'examples', 'definition', 'pronunciation', 'difficulty']}
+        fillHints={{ description: '为空，或没有写全「核心含义 / 用法提示 / 易错点 / 常见搭配」的讲解。' }}
+        matchedCount={filteredCount}
+        onSubmit={async (mode, fields) => { setScreen({ mode, fields }); setPage(1) }}
       />
       <VocabularyDialog open={dialogOpen} onClose={() => setDialogOpen(false)}
         edit={editing} items={data?.items ?? []} onSaved={load} />
@@ -836,13 +822,19 @@ function ChunkTab({ scope }: { scope: LibraryScope }) {
   const [pageSize, setPageSize] = useState(100)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<api.ChunkFull | null>(null)
+  const [screen, setScreen] = useState<{ mode: 'fill' | 'regenerate'; fields: LibraryBatchField[] } | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
-    try { setData(await api.listLibraryChunks({ search, difficulty, sceneId: scope.sceneId, topicId: scope.topicId, page, pageSize })) }
+    try {
+      setData(await api.listLibraryChunks({
+        search, difficulty, sceneId: scope.sceneId, topicId: scope.topicId,
+        screenMode: screen?.mode, screenFields: screen?.fields.join(','), page, pageSize,
+      }))
+    }
     catch { setData(null) }
     finally { setLoading(false) }
-  }, [search, difficulty, scope.sceneId, scope.topicId, page, pageSize])
+  }, [search, difficulty, scope.sceneId, scope.topicId, screen, page, pageSize])
 
   useScopedLibraryLoad(scope, page, setPage, load)
 
@@ -852,9 +844,12 @@ function ChunkTab({ scope }: { scope: LibraryScope }) {
     difficulty: difficulty || undefined,
     sceneId: scope.sceneId,
     topicId: scope.topicId,
+    screenMode: screen?.mode,
+    screenFields: screen?.fields,
   }
   const filteredCount = data?.total ?? 0
   const [batchOpen, setBatchOpen] = useState(false)
+  const [screenOpen, setScreenOpen] = useState(false)
   const submitBatch = async (mode: 'fill' | 'regenerate', fields: LibraryBatchField[]) => {
     try {
       await api.enqueueLibraryFieldBatch('chunk', { ...textScope, mode, fields })
@@ -877,9 +872,23 @@ function ChunkTab({ scope }: { scope: LibraryScope }) {
             <option value="">全部等级</option>
             {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
           </Select>
+          {screen && (
+            <Badge variant="secondary" className="gap-1 pr-1">
+              {screen.mode === 'fill' ? '缺失' : '可重新生成'}：{screen.fields.map((field) => field === 'meaning' ? '中文释义' : field === 'description' ? '讲解' : '例句').join('、')}
+              <button type="button" className="rounded-sm p-0.5 hover:bg-muted" aria-label="清除筛查"
+                onClick={() => { setScreen(null); setPage(1) }}>
+                <X className="size-3" />
+              </button>
+            </Badge>
+          )}
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <TooltipProvider delayDuration={250}>
+            <ActionTooltip title="筛查问题" description="和批量处理同一套字段、同一套规则。只过滤列表，不创建任务。">
+              <Button size="sm" variant="outline" onClick={() => setScreenOpen(true)}>
+                <SlidersHorizontal data-icon="inline-start" />筛查问题
+              </Button>
+            </ActionTooltip>
             <ActionTooltip title="批量处理" description="勾选中文释义、讲解、例句，再选择补全缺失或重新生成。讲解的重新生成只对齐已有排版。处理当前筛选的全部句块。">
               <Button size="sm" variant="outline" onClick={() => setBatchOpen(true)}>
                 <Sparkles data-icon="inline-start" />批量处理
@@ -945,7 +954,17 @@ function ChunkTab({ scope }: { scope: LibraryScope }) {
         title="批量处理句块"
         fields={['meaning', 'description', 'examples']}
         matchedCount={filteredCount}
+        screenedSelection={screen}
         onSubmit={submitBatch}
+      />
+      <LibraryFieldBatchDialog
+        open={screenOpen}
+        onOpenChange={setScreenOpen}
+        title="筛查句块问题"
+        purpose="screen"
+        fields={['meaning', 'description', 'examples']}
+        matchedCount={filteredCount}
+        onSubmit={async (mode, fields) => { setScreen({ mode, fields }); setPage(1) }}
       />
       <ChunkDialog open={dialogOpen} onClose={() => setDialogOpen(false)} edit={editing} onSaved={load} />
     </>
@@ -965,15 +984,21 @@ function PatternTab({ scope }: { scope: LibraryScope }) {
   const [pageSize, setPageSize] = useState(20)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<api.SentencePatternFull | null>(null)
+  const [screen, setScreen] = useState<{ mode: 'fill' | 'regenerate'; fields: LibraryBatchField[] } | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<api.SentencePatternFull | null>(null)
   const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
-    try { setData(await api.listLibraryPatterns({ search, difficulty, sceneId: scope.sceneId, topicId: scope.topicId, page, pageSize })) }
+    try {
+      setData(await api.listLibraryPatterns({
+        search, difficulty, sceneId: scope.sceneId, topicId: scope.topicId,
+        screenMode: screen?.mode, screenFields: screen?.fields.join(','), page, pageSize,
+      }))
+    }
     catch { setData(null) }
     finally { setLoading(false) }
-  }, [search, difficulty, scope.sceneId, scope.topicId, page, pageSize])
+  }, [search, difficulty, scope.sceneId, scope.topicId, screen, page, pageSize])
 
   useScopedLibraryLoad(scope, page, setPage, load)
 
@@ -983,9 +1008,12 @@ function PatternTab({ scope }: { scope: LibraryScope }) {
     difficulty: difficulty || undefined,
     sceneId: scope.sceneId,
     topicId: scope.topicId,
+    screenMode: screen?.mode,
+    screenFields: screen?.fields,
   }
   const filteredCount = data?.total ?? 0
   const [batchOpen, setBatchOpen] = useState(false)
+  const [screenOpen, setScreenOpen] = useState(false)
   const submitBatch = async (mode: 'fill' | 'regenerate', fields: LibraryBatchField[]) => {
     try {
       await api.enqueueLibraryFieldBatch('pattern', { ...textScope, mode, fields })
@@ -1023,9 +1051,23 @@ function PatternTab({ scope }: { scope: LibraryScope }) {
             <option value="">全部等级</option>
             {DIFFICULTIES.map(d => <option key={d} value={d}>{d}</option>)}
           </Select>
+          {screen && (
+            <Badge variant="secondary" className="gap-1 pr-1">
+              {screen.mode === 'fill' ? '缺失' : '可重新生成'}：{screen.fields.map((field) => field === 'meaning' ? '中文释义' : field === 'description' ? '讲解' : '例句').join('、')}
+              <button type="button" className="rounded-sm p-0.5 hover:bg-muted" aria-label="清除筛查"
+                onClick={() => { setScreen(null); setPage(1) }}>
+                <X className="size-3" />
+              </button>
+            </Badge>
+          )}
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <TooltipProvider delayDuration={250}>
+            <ActionTooltip title="筛查问题" description="和批量处理同一套字段、同一套规则。只过滤列表，不创建任务。">
+              <Button size="sm" variant="outline" onClick={() => setScreenOpen(true)}>
+                <SlidersHorizontal data-icon="inline-start" />筛查问题
+              </Button>
+            </ActionTooltip>
             <ActionTooltip title="批量处理" description="勾选中文释义、讲解、例句，再选择补全缺失或重新生成。讲解的重新生成只对齐已有排版。处理当前筛选的全部句式。">
               <Button size="sm" variant="outline" onClick={() => setBatchOpen(true)}>
                 <Sparkles data-icon="inline-start" />批量处理
@@ -1091,7 +1133,17 @@ function PatternTab({ scope }: { scope: LibraryScope }) {
         title="批量处理句式"
         fields={['meaning', 'description', 'examples']}
         matchedCount={filteredCount}
+        screenedSelection={screen}
         onSubmit={submitBatch}
+      />
+      <LibraryFieldBatchDialog
+        open={screenOpen}
+        onOpenChange={setScreenOpen}
+        title="筛查句式问题"
+        purpose="screen"
+        fields={['meaning', 'description', 'examples']}
+        matchedCount={filteredCount}
+        onSubmit={async (mode, fields) => { setScreen({ mode, fields }); setPage(1) }}
       />
       <PatternDialog open={dialogOpen} onClose={() => setDialogOpen(false)} edit={editing} onSaved={load} />
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null) }}>

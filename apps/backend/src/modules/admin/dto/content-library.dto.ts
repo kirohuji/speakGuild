@@ -88,6 +88,9 @@ export class LibraryVocabularyScopeDto {
   @IsOptional() @IsString() @MaxLength(64) tag?: string;
   @IsOptional() @IsString() @MaxLength(64) sceneId?: string;
   @IsOptional() @IsString() @MaxLength(64) topicId?: string;
+  @IsOptional() @IsIn(['fill', 'regenerate']) screenMode?: 'fill' | 'regenerate';
+  @IsOptional() @IsArray() @IsIn(['meaning', 'description', 'examples', 'definition', 'pronunciation', 'difficulty'], { each: true })
+  screenFields?: Array<'meaning' | 'description' | 'examples' | 'definition' | 'pronunciation' | 'difficulty'>;
 }
 
 /** 句块 / 句式批量任务使用的筛选，与各自列表接口同一套条件。 */
@@ -96,6 +99,9 @@ export class LibraryTextScopeDto {
   @IsOptional() @IsString() @MaxLength(8) difficulty?: string;
   @IsOptional() @IsString() @MaxLength(64) sceneId?: string;
   @IsOptional() @IsString() @MaxLength(64) topicId?: string;
+  @IsOptional() @IsIn(['fill', 'regenerate']) screenMode?: 'fill' | 'regenerate';
+  @IsOptional() @IsArray() @IsIn(['meaning', 'description', 'examples'], { each: true })
+  screenFields?: Array<'meaning' | 'description' | 'examples'>;
 }
 
 export class LibraryVocabularyFieldBatchDto extends LibraryVocabularyScopeDto {

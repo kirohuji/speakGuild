@@ -18,6 +18,8 @@ import {
   countVocabularyMatches,
   describeTextFilter,
   describeVocabularyFilter,
+  listChunkIds,
+  listPatternIds,
   listVocabularyIds,
   normalizeTextFilter,
   normalizeVocabularyFilter,
@@ -668,6 +670,7 @@ export class AdminTasksService implements OnModuleInit {
     mode: 'fill' | 'regenerate';
     fields: string[];
     filter?: VocabularyLibraryFilter & TextLibraryFilter;
+    targetIds?: string[];
   }) {
     const allowed = input.kind === 'vocabulary'
       ? ['meaning', 'description', 'examples', 'definition', 'pronunciation', 'difficulty']
@@ -677,28 +680,44 @@ export class AdminTasksService implements OnModuleInit {
     const scope = input.kind === 'vocabulary'
       ? await this.vocabularyScopeMeta(input.filter)
       : await this.textScopeMeta(input.filter, input.kind === 'chunk' ? '句块' : '句式');
+    const screened = Boolean(scope.filter.screenMode && scope.filter.screenFields?.length);
+    const targetIds = input.targetIds?.length
+      ? [...new Set(input.targetIds)]
+      : screened
+        ? input.kind === 'chunk'
+          ? await listChunkIds(this.prisma, scope.filter)
+          : input.kind === 'pattern'
+            ? await listPatternIds(this.prisma, scope.filter)
+            : await listVocabularyIds(this.prisma, scope.filter)
+        : undefined;
+    if (targetIds && !targetIds.length) throw new BadRequestException('筛查结果是空的，没有可执行的记录');
+    const totalItems = targetIds?.length ?? scope.matchedCount;
     const modeLabel = input.mode === 'fill' ? '补全缺失' : '重新生成';
     const fieldLabel = fields.map((field) => LIBRARY_FIELD_LABEL[field]).join('、');
     const unit = input.kind === 'vocabulary' ? '个词汇' : input.kind === 'chunk' ? '个句块' : '个句式';
     const task = await this.prisma.adminTask.create({
       data: {
         type: LIBRARY_FIELD_BATCH_JOB,
-        title: `${modeLabel}：${fieldLabel}（${scope.label}，${scope.matchedCount} ${unit}）`,
+        title: `${modeLabel}：${fieldLabel}（${scope.label}，${totalItems} ${unit}）`,
         targetType: input.kind,
         createdById,
-        totalItems: scope.matchedCount,
+        totalItems,
         payload: {
           ...scope.payload,
+          matchedCount: totalItems,
           kind: input.kind,
           mode: input.mode,
           fields,
           fieldLabels: fields.map((field) => LIBRARY_FIELD_LABEL[field]),
+          ...(targetIds ? { targetIds, applyScreenedSet: true } : {}),
         } as Prisma.InputJsonValue,
       },
     });
     const job = await this.vocabularyImportQueue.add(LIBRARY_FIELD_BATCH_JOB, { taskId: task.id });
     await this.prisma.adminTask.update({ where: { id: task.id }, data: { bullJobId: job.id } });
-    await this.log(task.id, 'info', `字段批量任务已加入队列：${modeLabel} ${fieldLabel}`, { step: 'queued', meta: scope.payload });
+    await this.log(task.id, 'info', targetIds
+      ? `字段批量任务已加入队列：直接处理筛查结果 ${totalItems} 条，${modeLabel} ${fieldLabel}`
+      : `字段批量任务已加入队列：${modeLabel} ${fieldLabel}`, { step: 'queued', meta: scope.payload });
     return task;
   }
 
@@ -1194,12 +1213,18 @@ export class AdminTasksService implements OnModuleInit {
     }
     const libraryFilter = (task.payload as { libraryFilter?: VocabularyLibraryFilter & TextLibraryFilter } | null)?.libraryFilter;
     if (task.type === LIBRARY_FIELD_BATCH_JOB) {
-      const payload = (task.payload ?? {}) as { kind?: 'vocabulary' | 'chunk' | 'pattern'; mode?: 'fill' | 'regenerate'; fields?: string[] };
+      const payload = (task.payload ?? {}) as {
+        kind?: 'vocabulary' | 'chunk' | 'pattern';
+        mode?: 'fill' | 'regenerate';
+        fields?: string[];
+        targetIds?: string[];
+      };
       return this.enqueueLibraryFieldBatch(createdById, {
         kind: payload.kind ?? 'vocabulary',
         mode: payload.mode === 'regenerate' ? 'regenerate' : 'fill',
         fields: payload.fields ?? [],
         filter: libraryFilter,
+        targetIds: payload.targetIds,
       });
     }
     if (task.type === VOCABULARY_MISSING_MEANING_ENRICH_JOB) {
@@ -1399,6 +1424,13 @@ export class AdminTasksService implements OnModuleInit {
         ...data,
         progress,
       },
+    });
+  }
+
+  async saveRunningSummary(taskId: string, summary: unknown) {
+    await this.prisma.adminTask.updateMany({
+      where: { id: taskId, status: AdminTaskStatus.running },
+      data: { summary: summary as Prisma.InputJsonValue },
     });
   }
 

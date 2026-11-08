@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/cn'
 import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { extractCoreUsage } from '@/lib/markdown-utils'
+import { WordMeaningInline } from '@/features/learning/components/word-meaning-lines'
 import type { TopicDetail } from '../api/english-practice-api'
 
 type ChunkItem = TopicDetail['activeChunks'][number]
@@ -113,7 +114,7 @@ function ChunkActivationItem({
               <p className="truncate text-sm font-semibold text-foreground">{chunk.text}</p>
               {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
             </div>
-            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{chunk.meaning}</p>
+            <WordMeaningInline meaning={chunk.meaning} />
           </div>
           <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-90')} />
         </button>

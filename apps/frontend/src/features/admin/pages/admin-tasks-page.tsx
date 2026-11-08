@@ -76,6 +76,8 @@ const STEP_LABELS: Record<string, string> = {
   'generating-warmup': 'AI 生成练习',
   'saving-warmup': '写入练习结果',
   scan: '扫描内容',
+  filter: '过滤',
+  generate: '生成',
   vocabulary: '补全词汇',
   chunk: '补全句块',
   pattern: '补全句型',
@@ -247,8 +249,56 @@ function AiUsageCard({ task, model }: { task: AdminTask | AdminTaskDetail; model
   );
 }
 
+type FilterFieldStat = { key?: string; label?: string; passed?: number; needsWork?: number };
+type FilterSnapshot = { scanned?: number; passed?: number; needsWork?: number; fields?: FilterFieldStat[] };
+
+function readFilter(task: AdminTask | AdminTaskDetail): FilterSnapshot | null {
+  const summary = (task.summary as { filter?: FilterSnapshot } | null)?.filter;
+  if (summary && typeof summary.scanned === 'number') return summary;
+  return null;
+}
+
+function FilterStepCard({ task }: { task: AdminTask | AdminTaskDetail }) {
+  const filter = readFilter(task);
+  if (!filter) return null;
+  const fields = Array.isArray(filter.fields) ? filter.fields.filter((field) => field.label) : [];
+  return (
+    <div className="rounded-md border border-border bg-muted/20 p-3">
+      <p className="mb-2 text-xs font-medium text-muted-foreground">过滤</p>
+      <div className="grid grid-cols-3 gap-2">
+        <Metric label="已检查" value={filter.scanned ?? 0} tone="muted" />
+        <Metric label="已符合" value={filter.passed ?? 0} tone="good" />
+        <Metric label="需要处理" value={filter.needsWork ?? 0} />
+      </div>
+      {fields.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {fields.map((field) => (
+            <p key={field.key ?? field.label} className="text-xs text-muted-foreground">
+              {field.label}：已符合 {field.passed ?? 0}，需要处理 {field.needsWork ?? 0}
+            </p>
+          ))}
+        </div>
+      )}
+      <p className="mt-2 text-xs text-muted-foreground">已符合的记录不会送去生成。</p>
+    </div>
+  );
+}
+
 function SummaryPanel({ task }: { task: AdminTask }) {
   const summary = task.summary as any;
+  if (summary?.filter) {
+    if (typeof summary.updated !== 'number') return null;
+    const errors = taskErrors(task).length || summary.failed || task.failedItems;
+    return (
+      <div className="rounded-md border border-border bg-muted/20 p-3">
+        <div className="grid grid-cols-3 gap-2">
+          <Metric label="已更新" value={summary.updated ?? 0} tone="good" />
+          <Metric label="未写入" value={summary.skipped ?? 0} tone="muted" />
+          <Metric label="失败" value={errors} tone={errors ? 'bad' : 'muted'} />
+        </div>
+      </div>
+    );
+  }
   if (task.type === 'scene-topic-batch-generate' && summary) {
     const errors = (Array.isArray(summary.errors) ? summary.errors : []);
     return (
@@ -962,6 +1012,8 @@ export function AdminTasksPage() {
                     {selected.errorMessage}
                   </div>
                 )}
+
+                <FilterStepCard task={selected} />
 
                 <AiUsageCard task={selected} model={activeLlmModel} />
 

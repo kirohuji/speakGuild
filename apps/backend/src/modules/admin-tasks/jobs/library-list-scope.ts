@@ -1,6 +1,15 @@
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { vocabularyMeaningMissingPosPrefix } from '../../admin/vocabulary-meaning.util';
+import {
+  parseScreenFields,
+  textMatchesScreen,
+  vocabularyMatchesScreen,
+  TEXT_SCREEN_FIELDS,
+  VOCABULARY_SCREEN_FIELDS,
+  type ScreenField,
+  type ScreenMode,
+} from './library-field-rules';
 
 export type VocabularyLibraryFilter = {
   search?: string;
@@ -11,6 +20,8 @@ export type VocabularyLibraryFilter = {
   tag?: string;
   sceneId?: string;
   topicId?: string;
+  screenMode?: ScreenMode;
+  screenFields?: ScreenField[];
 };
 
 export type TextLibraryFilter = {
@@ -18,6 +29,8 @@ export type TextLibraryFilter = {
   difficulty?: string;
   sceneId?: string;
   topicId?: string;
+  screenMode?: ScreenMode;
+  screenFields?: ScreenField[];
 };
 
 export type LibraryPageParams = {
@@ -86,6 +99,11 @@ export function normalizeVocabularyFilter(raw?: Partial<VocabularyLibraryFilter>
   if (sceneId) filter.sceneId = sceneId;
   const topicId = trimmed(source.topicId);
   if (topicId) filter.topicId = topicId;
+  const screenFields = parseScreenFields(source.screenFields, VOCABULARY_SCREEN_FIELDS);
+  if (screenFields.length) {
+    filter.screenFields = screenFields;
+    filter.screenMode = source.screenMode === 'regenerate' ? 'regenerate' : 'fill';
+  }
   return filter;
 }
 
@@ -100,6 +118,11 @@ export function normalizeTextFilter(raw?: Partial<TextLibraryFilter> | null): Te
   if (sceneId) filter.sceneId = sceneId;
   const topicId = trimmed(source.topicId);
   if (topicId) filter.topicId = topicId;
+  const screenFields = parseScreenFields(source.screenFields, TEXT_SCREEN_FIELDS);
+  if (screenFields.length) {
+    filter.screenFields = screenFields;
+    filter.screenMode = source.screenMode === 'regenerate' ? 'regenerate' : 'fill';
+  }
   return filter;
 }
 
@@ -185,6 +208,43 @@ export function buildPatternWhere(raw?: Partial<TextLibraryFilter> | null): Pris
   return where;
 }
 
+const SCREEN_FIELD_LABEL: Record<ScreenField, string> = {
+  meaning: '中文释义',
+  description: '讲解',
+  examples: '例句',
+  definition: '英文释义',
+  pronunciation: '音标与发音',
+  difficulty: '难度',
+};
+
+function vocabularyScreen(filter: VocabularyLibraryFilter) {
+  if (!filter.screenFields?.length) return null;
+  return {
+    mode: filter.screenMode === 'regenerate' ? 'regenerate' as const : 'fill' as const,
+    fields: filter.screenFields,
+  };
+}
+
+function textScreen(filter: TextLibraryFilter) {
+  if (!filter.screenFields?.length) return null;
+  return {
+    mode: filter.screenMode === 'regenerate' ? 'regenerate' as const : 'fill' as const,
+    fields: filter.screenFields,
+  };
+}
+
+async function pronunciationByWord(prisma: PrismaService, words: string[]) {
+  const keys = [...new Set(words.map((word) => word.trim().toLowerCase()).filter(Boolean))];
+  const entries: Array<{ word: string; pronunciations: unknown }> = [];
+  for (let index = 0; index < keys.length; index += 500) {
+    entries.push(...await prisma.dictionaryEntry.findMany({
+      where: { word: { in: keys.slice(index, index + 500) } },
+      select: { word: true, pronunciations: true },
+    }));
+  }
+  return new Map(entries.map((entry) => [entry.word.toLowerCase(), entry.pronunciations]));
+}
+
 function matchesMemoryQuality(
   row: { definitionEn?: string | null; meaning?: string | null },
   qualityIssue?: VocabularyLibraryFilter['qualityIssue'],
@@ -224,59 +284,106 @@ export async function listVocabularyIds(
 ): Promise<string[]> {
   const filter = normalizeVocabularyFilter(raw);
   const where = buildVocabularyWhere(filter);
+  const screen = vocabularyScreen(filter);
   const needsMemory = filter.qualityIssue === 'english-only-definition' || filter.qualityIssue === 'missing-pos-prefix';
+  if (!needsMemory && !screen) {
+    return collectIds((cursor) => prisma.vocabulary.findMany({
+      where,
+      select: { id: true },
+      orderBy: { id: 'asc' },
+      take: 1000,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    }));
+  }
   const ids: string[] = [];
   let cursor: string | undefined;
   do {
-    if (needsMemory) {
-      const rows = await prisma.vocabulary.findMany({
-        where,
-        select: { id: true, definitionEn: true, meaning: true },
-        orderBy: { id: 'asc' },
-        take: 1000,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-      });
-      if (!rows.length) break;
-      for (const row of rows) {
-        if (matchesMemoryQuality(row, filter.qualityIssue)) ids.push(row.id);
-      }
-      cursor = rows.at(-1)?.id;
-    } else {
-      const rows = await prisma.vocabulary.findMany({
-        where,
-        select: { id: true },
-        orderBy: { id: 'asc' },
-        take: 1000,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-      });
-      if (!rows.length) break;
-      ids.push(...rows.map((row) => row.id));
-      cursor = rows.at(-1)?.id;
+    const rows = await prisma.vocabulary.findMany({
+      where,
+      select: {
+        id: true, word: true, meaning: true, description: true, examples: true, definitionEn: true,
+        phoneticUs: true, phoneticUk: true, audioUsUrl: true, audioUkUrl: true, difficulty: true,
+      },
+      orderBy: { id: 'asc' },
+      take: 500,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+    if (!rows.length) break;
+    const pronunciations = screen?.fields.includes('pronunciation')
+      ? await pronunciationByWord(prisma, rows.map((row) => row.word))
+      : new Map<string, unknown>();
+    for (const row of rows) {
+      if (!matchesMemoryQuality(row, filter.qualityIssue)) continue;
+      if (screen && !vocabularyMatchesScreen(row, screen.mode, screen.fields, pronunciations.get(row.word.trim().toLowerCase()))) continue;
+      ids.push(row.id);
     }
+    cursor = rows.at(-1)?.id;
   } while (cursor);
   return ids;
 }
 
 export async function listChunkIds(prisma: PrismaService, raw?: Partial<TextLibraryFilter> | null): Promise<string[]> {
-  const where = buildChunkWhere(raw);
-  return collectIds((cursor) => prisma.chunk.findMany({
-    where,
-    select: { id: true },
-    orderBy: { id: 'asc' },
-    take: 1000,
-    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-  }));
+  const filter = normalizeTextFilter(raw);
+  const where = buildChunkWhere(filter);
+  const screen = textScreen(filter);
+  if (!screen) {
+    return collectIds((cursor) => prisma.chunk.findMany({
+      where,
+      select: { id: true },
+      orderBy: { id: 'asc' },
+      take: 1000,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    }));
+  }
+  const ids: string[] = [];
+  let cursor: string | undefined;
+  do {
+    const rows = await prisma.chunk.findMany({
+      where,
+      select: { id: true, meaning: true, description: true, examples: { select: { zh: true } } },
+      orderBy: { id: 'asc' },
+      take: 500,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+    if (!rows.length) break;
+    for (const row of rows) {
+      if (textMatchesScreen(row, screen.mode, screen.fields)) ids.push(row.id);
+    }
+    cursor = rows.at(-1)?.id;
+  } while (cursor);
+  return ids;
 }
 
 export async function listPatternIds(prisma: PrismaService, raw?: Partial<TextLibraryFilter> | null): Promise<string[]> {
-  const where = buildPatternWhere(raw);
-  return collectIds((cursor) => prisma.sentencePattern.findMany({
-    where,
-    select: { id: true },
-    orderBy: { id: 'asc' },
-    take: 1000,
-    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-  }));
+  const filter = normalizeTextFilter(raw);
+  const where = buildPatternWhere(filter);
+  const screen = textScreen(filter);
+  if (!screen) {
+    return collectIds((cursor) => prisma.sentencePattern.findMany({
+      where,
+      select: { id: true },
+      orderBy: { id: 'asc' },
+      take: 1000,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    }));
+  }
+  const ids: string[] = [];
+  let cursor: string | undefined;
+  do {
+    const rows = await prisma.sentencePattern.findMany({
+      where,
+      select: { id: true, meaning: true, description: true, examples: true },
+      orderBy: { id: 'asc' },
+      take: 500,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+    if (!rows.length) break;
+    for (const row of rows) {
+      if (textMatchesScreen(row, screen.mode, screen.fields)) ids.push(row.id);
+    }
+    cursor = rows.at(-1)?.id;
+  } while (cursor);
+  return ids;
 }
 
 export async function countVocabularyMatches(
@@ -284,18 +391,22 @@ export async function countVocabularyMatches(
   raw?: Partial<VocabularyLibraryFilter> | null,
 ): Promise<number> {
   const filter = normalizeVocabularyFilter(raw);
-  if (filter.qualityIssue === 'english-only-definition' || filter.qualityIssue === 'missing-pos-prefix') {
+  if (filter.screenFields?.length || filter.qualityIssue === 'english-only-definition' || filter.qualityIssue === 'missing-pos-prefix') {
     return (await listVocabularyIds(prisma, filter)).length;
   }
   return prisma.vocabulary.count({ where: buildVocabularyWhere(filter) });
 }
 
 export async function countChunkMatches(prisma: PrismaService, raw?: Partial<TextLibraryFilter> | null): Promise<number> {
-  return prisma.chunk.count({ where: buildChunkWhere(raw) });
+  const filter = normalizeTextFilter(raw);
+  if (filter.screenFields?.length) return (await listChunkIds(prisma, filter)).length;
+  return prisma.chunk.count({ where: buildChunkWhere(filter) });
 }
 
 export async function countPatternMatches(prisma: PrismaService, raw?: Partial<TextLibraryFilter> | null): Promise<number> {
-  return prisma.sentencePattern.count({ where: buildPatternWhere(raw) });
+  const filter = normalizeTextFilter(raw);
+  if (filter.screenFields?.length) return (await listPatternIds(prisma, filter)).length;
+  return prisma.sentencePattern.count({ where: buildPatternWhere(filter) });
 }
 
 export async function countVocabularyInIds(
@@ -336,6 +447,10 @@ export async function describeVocabularyFilter(
   if (filter.tag) parts.push(`标签 ${filter.tag}`);
   if (filter.pronunciationStatus) parts.push(PRONUNCIATION_LABEL[filter.pronunciationStatus]);
   if (filter.qualityIssue) parts.push(QUALITY_LABEL[filter.qualityIssue]);
+  if (filter.screenFields?.length) {
+    const names = filter.screenFields.map((field) => SCREEN_FIELD_LABEL[field]).join('、');
+    parts.push(filter.screenMode === 'regenerate' ? `筛出可重新生成：${names}` : `筛出缺失：${names}`);
+  }
   parts.push(...await scopeNames(prisma, filter.sceneId, filter.topicId));
   return parts.length ? parts.join('，') : '未筛选（全部）';
 }
@@ -349,6 +464,10 @@ export async function describeTextFilter(
   const parts: string[] = [];
   if (filter.search) parts.push(`搜索「${filter.search}」`);
   if (filter.difficulty) parts.push(`难度 ${filter.difficulty}`);
+  if (filter.screenFields?.length) {
+    const names = filter.screenFields.map((field) => SCREEN_FIELD_LABEL[field]).join('、');
+    parts.push(filter.screenMode === 'regenerate' ? `筛出可重新生成：${names}` : `筛出缺失：${names}`);
+  }
   parts.push(...await scopeNames(prisma, filter.sceneId, filter.topicId));
   return parts.length ? parts.join('，') : `未筛选（全部${kind}）`;
 }
@@ -360,14 +479,23 @@ export async function queryVocabularyPage(
   const { page, pageSize } = pageWindow(params);
   const filter = normalizeVocabularyFilter(params);
   const where = buildVocabularyWhere(filter);
-  if (filter.qualityIssue === 'english-only-definition' || filter.qualityIssue === 'missing-pos-prefix') {
+  const screen = vocabularyScreen(filter);
+  const memoryQuality = filter.qualityIssue === 'english-only-definition' || filter.qualityIssue === 'missing-pos-prefix';
+  if (screen || memoryQuality) {
     const candidates = await prisma.vocabulary.findMany({
       where,
-      select: { id: true, definitionEn: true, meaning: true },
+      select: {
+        id: true, word: true, meaning: true, description: true, examples: true, definitionEn: true,
+        phoneticUs: true, phoneticUk: true, audioUsUrl: true, audioUkUrl: true, difficulty: true,
+      },
       orderBy: { word: 'asc' },
     });
+    const pronunciations = screen?.fields.includes('pronunciation')
+      ? await pronunciationByWord(prisma, candidates.map((row) => row.word))
+      : new Map<string, unknown>();
     const matchedIds = candidates
       .filter((row) => matchesMemoryQuality(row, filter.qualityIssue))
+      .filter((row) => !screen || vocabularyMatchesScreen(row, screen.mode, screen.fields, pronunciations.get(row.word.trim().toLowerCase())))
       .map((row) => row.id);
     const total = matchedIds.length;
     const pageIds = matchedIds.slice((page - 1) * pageSize, page * pageSize);
@@ -395,7 +523,19 @@ export async function queryChunkPage(
   params?: Partial<TextLibraryFilter> & LibraryPageParams,
 ) {
   const { page, pageSize } = pageWindow(params);
-  const where = buildChunkWhere(params);
+  const filter = normalizeTextFilter(params);
+  const where = buildChunkWhere(filter);
+  const screen = textScreen(filter);
+  if (screen) {
+    const candidates = await prisma.chunk.findMany({
+      where,
+      include: { examples: { orderBy: { sortOrder: 'asc' } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    const matched = candidates.filter((row) => textMatchesScreen(row, screen.mode, screen.fields));
+    const items = matched.slice((page - 1) * pageSize, page * pageSize);
+    return { items, total: matched.length, page, pageSize, totalPages: Math.ceil(matched.length / pageSize) };
+  }
   const [items, total] = await Promise.all([
     prisma.chunk.findMany({
       where,
@@ -414,7 +554,18 @@ export async function queryPatternPage(
   params?: Partial<TextLibraryFilter> & LibraryPageParams,
 ) {
   const { page, pageSize } = pageWindow(params);
-  const where = buildPatternWhere(params);
+  const filter = normalizeTextFilter(params);
+  const where = buildPatternWhere(filter);
+  const screen = textScreen(filter);
+  if (screen) {
+    const candidates = await prisma.sentencePattern.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
+    const matched = candidates.filter((row) => textMatchesScreen(row, screen.mode, screen.fields));
+    const items = matched.slice((page - 1) * pageSize, page * pageSize);
+    return { items, total: matched.length, page, pageSize, totalPages: Math.ceil(matched.length / pageSize) };
+  }
   const [items, total] = await Promise.all([
     prisma.sentencePattern.findMany({
       where,

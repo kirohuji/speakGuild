@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { WordMeaningInline } from '@/features/learning/components/word-meaning-lines'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { TopicDetail } from '../api/english-practice-api'
 
@@ -26,7 +27,7 @@ export function SentencePatternPanel({ sentencePatterns, onInspect }: SentencePa
               onClick={() => onInspect?.(index)}
             >
               <p className="font-mono text-sm text-foreground">{item.pattern}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{item.meaning}</p>
+              <WordMeaningInline meaning={item.meaning} className="mt-1" />
               {item.example && <p className="mt-1 text-xs italic text-muted-foreground">{item.example}</p>}
             </button>
           ))}

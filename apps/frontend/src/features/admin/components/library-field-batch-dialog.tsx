@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -45,6 +45,9 @@ export function LibraryFieldBatchDialog({
   title,
   fields,
   matchedCount,
+  fillHints,
+  purpose = 'execute',
+  screenedSelection,
   onSubmit,
 }: {
   open: boolean
@@ -52,11 +55,22 @@ export function LibraryFieldBatchDialog({
   title: string
   fields: LibraryBatchField[]
   matchedCount: number
+  fillHints?: Partial<Record<LibraryBatchField, string>>
+  purpose?: 'execute' | 'screen'
+  screenedSelection?: { mode: LibraryBatchMode; fields: LibraryBatchField[] } | null
   onSubmit: (mode: LibraryBatchMode, fields: LibraryBatchField[]) => Promise<void>
 }) {
   const [mode, setMode] = useState<LibraryBatchMode>('fill')
   const [selected, setSelected] = useState<LibraryBatchField[]>(fields)
   const [submitting, setSubmitting] = useState(false)
+
+  const fieldKey = fields.join(',')
+  useEffect(() => {
+    if (!open || !screenedSelection) return
+    const allowed = new Set(fieldKey.split(','))
+    setMode(screenedSelection.mode)
+    setSelected(screenedSelection.fields.filter((field) => allowed.has(field)))
+  }, [open, screenedSelection, fieldKey])
 
   const toggle = (field: LibraryBatchField) => {
     setSelected((current) => current.includes(field) ? current.filter((item) => item !== field) : [...current, field])
@@ -66,7 +80,9 @@ export function LibraryFieldBatchDialog({
     if (!selected.length || submitting) return
     const names = selected.map((field) => FIELD_COPY[field].label).join('、')
     const action = mode === 'fill' ? '补全缺失' : '重新生成'
-    if (!confirm(`将对当前筛选命中的全部 ${matchedCount} 条（跨分页）执行「${action}」：${names}。未勾选的字段不会改动。`)) return
+    if (purpose === 'execute' && !confirm(screenedSelection
+      ? `将直接处理筛查出的 ${matchedCount} 条「${action}」：${names}。这批记录不再重新过滤。`
+      : `将对当前筛选命中的全部 ${matchedCount} 条（跨分页）执行「${action}」：${names}。未勾选的字段不会改动。`)) return
     setSubmitting(true)
     try {
       await onSubmit(mode, selected)
@@ -82,7 +98,11 @@ export function LibraryFieldBatchDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            当前筛选命中 {matchedCount} 条，处理全部命中记录，不受当前页限制。先勾选字段，再选择怎么处理。
+            {purpose === 'screen'
+              ? '勾选字段后只过滤当前列表，规则和批量处理完全一致。不会创建任务，也不会改数据。'
+              : screenedSelection
+                ? `列表里这 ${matchedCount} 条已经筛好。执行时按原样带过去，不再重新过滤。`
+                : `当前筛选命中 ${matchedCount} 条，处理全部命中记录，不受当前页限制。先勾选字段，再选择怎么处理。`}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -104,7 +124,7 @@ export function LibraryFieldBatchDialog({
                   />
                   <span className="min-w-0">
                     <span className="block text-sm font-medium">{copy.label}</span>
-                    <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">{mode === 'fill' ? copy.fill : copy.regenerate}</span>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">{mode === 'fill' ? (fillHints?.[field] ?? copy.fill) : copy.regenerate}</span>
                   </span>
                 </label>
               )
@@ -114,7 +134,7 @@ export function LibraryFieldBatchDialog({
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
           <Button disabled={!selected.length || submitting} onClick={() => void submit()}>
-            {submitting ? '提交中…' : '执行'}
+            {submitting ? '提交中…' : purpose === 'screen' ? '筛查' : '执行'}
           </Button>
         </DialogFooter>
       </DialogContent>

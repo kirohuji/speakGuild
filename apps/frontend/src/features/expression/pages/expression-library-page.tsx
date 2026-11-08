@@ -16,6 +16,7 @@ import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { toast } from 'sonner'
 import { expressionApi, type MasteryStatus } from '@/features/practice/api/english-practice-api'
 import { LearningInsightDialog, type LearningInsightItem } from '@/features/practice/components/learning-insight-dialog'
+import { WordMeaningInline } from '@/features/learning/components/word-meaning-lines'
 import { ImmersivePlayerDialog, mapInsightItemsToImmersiveItems, type ImmersivePlayerItem } from '@/features/learning/components/immersive-player'
 import { cn } from '@/lib/cn'
 import { extractCoreUsage } from '@/lib/markdown-utils'
@@ -673,9 +674,7 @@ export function ExpressionLibraryPage() {
                   </Badge>
                 )}
               </div>
-              {meaning && (
-                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{meaning}</p>
-              )}
+              <WordMeaningInline meaning={meaning} />
               {isWord && expr.createdAt && (
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {t('expressionLib.collectedAt', { date: new Date(expr.createdAt).toLocaleDateString(i18n.language) })}
@@ -755,10 +754,19 @@ export function ExpressionLibraryPage() {
                   ))}
                 </div>
               )}
-              {insight?.kind === 'pattern' && insight.example && (
-                <p className="text-sm leading-6 text-muted-foreground">
-                  {t('practiceSession.example')}: {insight.example}
-                </p>
+              {insight?.kind === 'pattern' && (
+                <div className="space-y-2">
+                  {insight.description && (
+                    <div className="line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
+                      <MarkdownContent content={extractCoreUsage(insight.description)} />
+                    </div>
+                  )}
+                  {insight.example && (
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      {t('practiceSession.example')}: {insight.example}
+                    </p>
+                  )}
+                </div>
               )}
               {!insight && (
                 <p className="text-xs leading-5 text-muted-foreground">{expr.chunkText || expr.corrected || t('expressionLib.noMeaning')}</p>

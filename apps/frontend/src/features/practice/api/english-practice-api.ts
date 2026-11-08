@@ -210,6 +210,7 @@ export interface TopicDetail {
     meaning: string
     slots: string[]
     example: string
+    description?: string | null
     difficulty: string
   }> | null
 }

@@ -37,6 +37,7 @@ import { useCachedAudio } from '@/hooks/use-cached-audio'
 import type { DictionaryCluster, DictionaryEntry, DictionarySense } from '@/features/admin/api-dictionary'
 import { type TopicDetail } from '../api/english-practice-api'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
+import { WordMeaningInline, WordMeaningLines } from '@/features/learning/components/word-meaning-lines'
 import { patternSlotLabel, type PatternSlot } from '@/features/learning/lib/pattern-slot'
 
 type VocabularyInsight = {
@@ -135,30 +136,6 @@ async function lookupManagedDictionary(word: string): Promise<DictionaryEntry | 
     dictionaryCache.set(key, null)
     return null
   }
-}
-
-function posShortLabel(pos?: string | null) {
-  if (!pos) return ''
-  return POS_LABELS[pos] ?? (pos === 'adjective' ? 'adj.' : pos)
-}
-
-/** 解析 definitionEn 字段：noun: English def.  [中文释义]; verb: ... */
-function parseVocabularyDefinitions(definitionEn?: string | null) {
-  if (!definitionEn) return []
-  const results: Array<{ partOfSpeech: string; label: string; definition: string; chineseGloss: string }> = []
-  // 匹配每个词条：词性: 英文释义  [中文释义]
-  const entryRe = /(\w+):\s+(.+?)\s+\[(.+?)\](?:\s*;\s*|$)/g
-  let match: RegExpExecArray | null
-  while ((match = entryRe.exec(definitionEn)) !== null) {
-    const [, partOfSpeech, definition, chineseGloss] = match
-    results.push({
-      partOfSpeech,
-      label: posShortLabel(partOfSpeech),
-      definition: definition.trim(),
-      chineseGloss: chineseGloss.trim(),
-    })
-  }
-  return results.filter((item) => item.definition || item.chineseGloss)
 }
 
 function textOrEmpty(value: unknown) {
@@ -559,9 +536,7 @@ export function LearningInsightDialog({
                     <Icon className={cn('size-4 shrink-0', iconTone)} />
                     <span className="min-w-0 max-w-full overflow-hidden">
                       <span className="block truncate font-english text-sm font-medium">{title}</span>
-                      {item.meaning ? (
-                        <span className="block truncate text-xs text-muted-foreground">{item.meaning}</span>
-                      ) : null}
+                      <WordMeaningInline meaning={item.meaning} className="mt-0" />
                     </span>
                     {isActive ? (
                       <Badge variant="default" className="max-w-[4.5rem] shrink-0 truncate px-1.5 py-0 text-[10px]">
@@ -590,7 +565,7 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
       ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
       : 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
   const title = item.kind === 'word' ? item.word : item.kind === 'chunk' ? item.text : item.pattern
-  const subtitle = item.kind === 'word' ? item.meaning : item.meaning
+  const subtitle = item.meaning
   const label = item.kind === 'word' ? t('insight.vocabulary') : item.kind === 'chunk' ? t('insight.chunk') : t('insight.pattern')
   const isWord = item.kind === 'word'
   const hasBothPhonetics = isWord && item.phoneticUs && item.phoneticUk
@@ -607,7 +582,7 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
         <div className="min-w-0 flex-1">
           <Badge variant="secondary" className="mb-1.5">{label}</Badge>
           <h2 className="break-words font-english text-xl font-bold leading-tight text-foreground">{title}</h2>
-          {subtitle && <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{subtitle}</p>}
+          <WordMeaningLines meaning={subtitle} />
           {/* 音标：切换按钮在左，音标在右 */}
           {isWord && (item.phoneticUs || item.phoneticUk) && (
             <div className="mt-2 flex items-center gap-1.5">
@@ -660,7 +635,7 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
   const { t } = useTranslation()
   const [dictData, setDictData] = useState<DictionaryEntry | null | 'loading'>(null)
   const [enrichData, setEnrichData] = useState<WordEnrichmentResult | null | 'loading'>(null)
-  const [activeTab, setActiveTab] = useState('meaning')
+  const [activeTab, setActiveTab] = useState('description')
   const [dictionaryRequested, setDictionaryRequested] = useState(false)
   const [showUncommon, setShowUncommon] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -672,7 +647,7 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
   useEffect(() => {
     setDictData(null)
     setEnrichData(null)
-    setActiveTab('meaning')
+    setActiveTab('description')
     setDictionaryRequested(false)
     resetAttempted()
     setShowUncommon(false)
@@ -714,12 +689,6 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
   const localExamples = normalizeVocabExamples(item.examples)
   const fallbackExamples = !localExamples.length && enriched?.examples?.length ? enriched.examples : []
   const examples = localExamples.length ? localExamples : fallbackExamples
-  const definitionEntries = parseVocabularyDefinitions(item.definitionEn)
-  const meaningText = textOrEmpty(item.meaning)
-    || textOrEmpty((item as any).translation)
-    || textOrEmpty((item as any).definitionZh)
-    || textOrEmpty((item as any).zh)
-    || textOrEmpty(enriched?.chineseTranslation)
   const descriptionText = textOrEmpty(item.description)
   const dictEntry = dictData !== 'loading' ? dictData : null
 
@@ -758,7 +727,6 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
       <div className="flex shrink-0 items-center gap-2 px-5 pt-3 md:px-6">
         <div className="scrollbar-hide min-w-0 flex-1 overflow-x-auto">
         <TabsList>
-          <TabsTrigger value="meaning">{t('insight.meaning')}</TabsTrigger>
           <TabsTrigger value="description">{t('insight.explanation')}</TabsTrigger>
           <TabsTrigger value="examples">{t('insight.examples')}</TabsTrigger>
           <TabsTrigger value="dictionary">{t('insight.dictionary')}</TabsTrigger>
@@ -772,76 +740,6 @@ function WordInsight({ item, hideSave = false }: { item: VocabularyInsight; hide
         )}
       </div>
       <div className="relative min-h-0 flex-1">
-        {/* 释义 */}
-        <TabsContent value="meaning" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
-          <ScrollArea className="h-full">
-            <div className="py-4">
-              {definitionEntries.length > 0 ? (
-                <div className="space-y-3">
-                  {definitionEntries.map((definition, index) => {
-                    const zhParsed = definition.chineseGloss ? parseZhQualifiers(definition.chineseGloss) : null
-                    const qualifiers = zhParsed?.qualifiers ?? []
-                    const zhText = zhParsed?.text ?? definition.chineseGloss ?? ''
-                    return (
-                      <div key={`${definition.partOfSpeech}-${index}`} className="flex items-start gap-2">
-                        <span className="mt-0.5 shrink-0 text-right text-xs tabular-nums leading-6 text-muted-foreground/40">{index + 1}.</span>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-baseline gap-2">
-                            <span className="min-w-0 flex-1">
-                              {qualifiers.length > 0 && qualifiers.map((q) => (
-                                <span key={q} className="mr-1.5 inline-flex items-center rounded px-1 py-px text-[11px] leading-none text-muted-foreground">{q}</span>
-                              ))}
-                              <span className={cn('text-sm font-medium leading-6 text-foreground', !zhText && 'font-english')}>{zhText || definition.definition}</span>
-                            </span>
-                            {definition.label && (
-                              <span className="shrink-0 text-xs text-muted-foreground/50">{definition.label}</span>
-                            )}
-                          </div>
-                          {definition.definition && definition.chineseGloss && (
-                            <p className="mt-0.5 font-english text-xs leading-5 text-muted-foreground">{definition.definition}</p>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : enriched?.meanings?.length ? (
-                <div className="space-y-3">
-                  {enriched.meanings.slice(0, 8).map((meaning, index) => {
-                    const zhParsed = meaning.chineseGloss ? parseZhQualifiers(meaning.chineseGloss) : null
-                    const qualifiers = zhParsed?.qualifiers ?? []
-                    const zhText = zhParsed?.text ?? meaning.chineseGloss ?? ''
-                    return (
-                      <div key={`${meaning.partOfSpeech}-${index}`} className="flex items-start gap-2">
-                        <span className="mt-0.5 shrink-0 text-right text-xs tabular-nums leading-6 text-muted-foreground/40">{index + 1}.</span>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-baseline gap-2">
-                            <span className="min-w-0 flex-1">
-                              {qualifiers.length > 0 && qualifiers.map((q) => (
-                                <span key={q} className="mr-1.5 inline-flex items-center rounded px-1 py-px text-[11px] leading-none text-muted-foreground">{q}</span>
-                              ))}
-                              <span className="text-sm font-medium leading-6 text-foreground">{zhText}</span>
-                            </span>
-                            {meaning.partOfSpeech && (
-                              <span className="shrink-0 text-xs text-muted-foreground/50">{posShortLabel(meaning.partOfSpeech) || meaning.partOfSpeech}</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : meaningText ? (
-                <p className="text-sm font-medium leading-6 text-foreground">
-                  {meaningText}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground">{t('insight.noMeaning')}</p>
-              )}
-            </div>
-          </ScrollArea>
-        </TabsContent>
-
         {/* 讲解 */}
         <TabsContent value="description" className="absolute inset-0 mt-0 overflow-hidden px-5 md:px-6 data-[state=inactive]:hidden">
           <ScrollArea className="h-full">

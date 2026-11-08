@@ -66,7 +66,8 @@ const DEEPSEEK_MODELS = [
 ];
 
 const BAILIAN_MODELS = [
-  { value: 'qwen3.7-flash', label: 'Qwen3.7 Flash', hint: '阿里云百炼高速模型，适合排版/生成等日常调用。' },
+  { value: 'qwen3.7-flash', label: 'Qwen3.7 Flash', hint: '阿里云百炼高速模型，适合排版、生成等日常调用。' },
+  { value: 'qwen3.7-plus', label: 'Qwen3.7 Plus', hint: 'Qwen3.7 系列增强模型。' },
   { value: 'qwen-plus', label: 'Qwen Plus', hint: '均衡效果与成本。' },
   { value: 'qwen-max', label: 'Qwen Max', hint: '更高质量，适合复杂推理。' },
 ];
@@ -611,7 +612,7 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
         const pricing = deepseekPricingConfig(model);
         if (pricing) config.pricing = pricing;
       }
-      await updateAiProvider(item.id, { model, apiKey, baseUrl, ...(Object.keys(config).length ? { config } : {}) });
+      await updateAiProvider(item.id, { model: model.trim(), apiKey, baseUrl, ...(Object.keys(config).length ? { config } : {}) });
       setMessage('Saved');
       onSaved();
       setTimeout(() => onOpenChange(false), 450);
@@ -733,15 +734,18 @@ function ConfigDialog({ open, onOpenChange, item, onSaved }: { open: boolean; on
           ) : isBailian ? (
             <>
               <div className="space-y-2">
-                <Label>百炼模型</Label>
-                <Select value={model || 'qwen3.7-flash'} onChange={(event) => setModel(event.target.value)}>
-                  {BAILIAN_MODELS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-                  {model && !BAILIAN_MODELS.some((option) => option.value === model) && (
-                    <SelectItem value={model}>{model} (custom)</SelectItem>
-                  )}
-                </Select>
-                <Input value={model} onChange={(event) => setModel(event.target.value)} className="font-mono text-sm" placeholder="也可直接填写控制台模型名" />
-                <p className="text-[11px] text-muted-foreground">{BAILIAN_MODELS.find((option) => option.value === model)?.hint || '可填写控制台中的自定义模型名。'}</p>
+                <Label>模型名</Label>
+                <Input value={model} onChange={(event) => setModel(event.target.value)} className="font-mono text-sm" placeholder="qwen3.7-plus" />
+                <div className="flex flex-wrap gap-1.5">
+                  {BAILIAN_MODELS.map((option) => (
+                    <Button key={option.value} type="button" size="sm" variant={model.trim() === option.value ? 'secondary' : 'outline'} className="h-7 text-[11px]" onClick={() => setModel(option.value)}>
+                      {option.label}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  {BAILIAN_MODELS.find((option) => option.value === model.trim())?.hint || '填写百炼控制台里的模型名。预设之外的自定义模型也可以直接保存，例如 qwen3.7-plus。'}
+                </p>
               </div>
               <div className="space-y-2"><Label>Base URL</Label><Input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} className="font-mono text-sm" placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1" /></div>
               <div className="space-y-2"><Label>DASHSCOPE_API_KEY</Label><Input type="password" value={apiKey} onChange={(event) => setApiKey(event.target.value)} className="font-mono text-sm" placeholder="Use env var when empty" /></div>

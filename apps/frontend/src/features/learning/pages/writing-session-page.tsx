@@ -22,6 +22,7 @@ import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-n
 import { learningContentRepository } from '@/lib/offline'
 import { type ChunkItem, type SentencePattern, type TrainingTopicItem, type VocabItem } from '../api/learning-api'
 import { withoutWritingRequirements, WritingTaskCard } from '../components/writing-task-card'
+import { WordMeaningInline } from '../components/word-meaning-lines'
 import { patternSlotDescription, patternSlotLabel } from '../lib/pattern-slot'
 import { useTopicSession, type TopicSessionReviewSnapshot } from '../hooks/use-topic-session'
 import { Switch } from '@/components/ui/switch'
@@ -405,7 +406,7 @@ function WritingKnowledgeList({
                   <p className="truncate text-sm font-semibold text-foreground">{item.title}</p>
                   {item.kind === 'vocab' && item.partOfSpeech && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{item.partOfSpeech}</Badge>}
                 </div>
-                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{item.subtitle}</p>
+                <WordMeaningInline meaning={item.subtitle} />
               </div>
               <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expandedId === item.id && 'rotate-90')} />
             </button>
@@ -448,6 +449,11 @@ function WritingKnowledgeDetail({
   if (item.kind === 'pattern') {
     return (
       <div className="px-3 pb-3 pt-2">
+        {item.description && (
+          <div className="mb-3 line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
+            <MarkdownContent content={extractCoreUsage(item.description)} />
+          </div>
+        )}
         {item.example && (
           <div className="mb-3 rounded-md bg-muted/45 p-2.5">
             <p className="text-xs font-medium leading-5 text-foreground">{item.example}</p>

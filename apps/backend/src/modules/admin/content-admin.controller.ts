@@ -3465,6 +3465,8 @@ ${contextBlock}
     @Query('tag') tag?: string,
     @Query('sceneId') sceneId?: string,
     @Query('topicId') topicId?: string,
+    @Query('screenMode') screenMode?: string,
+    @Query('screenFields') screenFields?: string | string[],
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
@@ -3477,6 +3479,8 @@ ${contextBlock}
       qualityIssue: qualityIssue as 'meaning-other' | 'english-only-definition' | 'missing-pos-prefix' | undefined,
       tag,
       sceneId,
+      screenMode: screenMode === 'regenerate' ? 'regenerate' : screenMode === 'fill' ? 'fill' : undefined,
+      screenFields: (Array.isArray(screenFields) ? screenFields.join(',') : screenFields) as never,
       topicId,
       page: parseInt(page || '1'),
       pageSize: parseInt(pageSize || '20'),
@@ -3728,12 +3732,16 @@ ${contextBlock}
     @Query('difficulty') difficulty?: string,
     @Query('sceneId') sceneId?: string,
     @Query('topicId') topicId?: string,
+    @Query('screenMode') screenMode?: string,
+    @Query('screenFields') screenFields?: string | string[],
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
     await this.requireManager(req);
     return queryChunkPage(this.prisma, {
       search, difficulty, sceneId, topicId,
+      screenMode: screenMode === 'regenerate' ? 'regenerate' : screenMode === 'fill' ? 'fill' : undefined,
+      screenFields: (Array.isArray(screenFields) ? screenFields.join(',') : screenFields) as never,
       page: parseInt(page || '1'),
       pageSize: parseInt(pageSize || '20'),
     });
@@ -3846,12 +3854,16 @@ ${contextBlock}
     @Query('difficulty') difficulty?: string,
     @Query('sceneId') sceneId?: string,
     @Query('topicId') topicId?: string,
+    @Query('screenMode') screenMode?: string,
+    @Query('screenFields') screenFields?: string | string[],
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
     await this.requireManager(req);
     return queryPatternPage(this.prisma, {
       search, difficulty, sceneId, topicId,
+      screenMode: screenMode === 'regenerate' ? 'regenerate' : screenMode === 'fill' ? 'fill' : undefined,
+      screenFields: (Array.isArray(screenFields) ? screenFields.join(',') : screenFields) as never,
       page: parseInt(page || '1'),
       pageSize: parseInt(pageSize || '20'),
     });

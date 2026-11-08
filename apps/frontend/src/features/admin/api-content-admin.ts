@@ -904,6 +904,8 @@ export interface LibraryVocabularyScope {
   tag?: string;
   sceneId?: string;
   topicId?: string;
+  screenMode?: 'fill' | 'regenerate';
+  screenFields?: string[];
 }
 
 /** 与句块 / 句式列表同一套筛选；后台按命中的全部记录执行，不受分页限制。 */
@@ -912,6 +914,8 @@ export interface LibraryTextScope {
   difficulty?: string;
   sceneId?: string;
   topicId?: string;
+  screenMode?: 'fill' | 'regenerate';
+  screenFields?: string[];
 }
 
 // ─── Vocabulary ──────────────────────────────────────────────
@@ -923,6 +927,8 @@ export function listLibraryVocabularies(params?: {
   tag?: string;
   sceneId?: string;
   topicId?: string;
+  screenMode?: 'fill' | 'regenerate';
+  screenFields?: string;
   page?: number; pageSize?: number
 }): Promise<PaginatedResult<VocabularyFull>> {
   return get('/admin/content/library/vocabularies', params);
@@ -1043,7 +1049,8 @@ export function aiEnrichPattern(data: {
 // ─── Chunk ───────────────────────────────────────────────────
 
 export function listLibraryChunks(params?: {
-  search?: string; difficulty?: string; sceneId?: string; topicId?: string; page?: number; pageSize?: number
+  search?: string; difficulty?: string; sceneId?: string; topicId?: string;
+  screenMode?: 'fill' | 'regenerate'; screenFields?: string; page?: number; pageSize?: number
 }): Promise<PaginatedResult<ChunkFull>> {
   return get('/admin/content/library/chunks', params);
 }
@@ -1084,7 +1091,8 @@ export function listChunkCategories(): Promise<string[]> {
 // ─── Sentence Pattern ────────────────────────────────────────
 
 export function listLibraryPatterns(params?: {
-  search?: string; difficulty?: string; sceneId?: string; topicId?: string; page?: number; pageSize?: number
+  search?: string; difficulty?: string; sceneId?: string; topicId?: string;
+  screenMode?: 'fill' | 'regenerate'; screenFields?: string; page?: number; pageSize?: number
 }): Promise<PaginatedResult<SentencePatternFull>> {
   return get('/admin/content/library/patterns', params);
 }

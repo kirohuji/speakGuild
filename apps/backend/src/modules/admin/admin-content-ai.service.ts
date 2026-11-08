@@ -17,6 +17,8 @@ export interface VocabularyAiEnrichInput {
   difficultyExists?: boolean;
   /** 强制把词典原始内容改写为学习版内容（管理台的「词典+AI」操作使用）。 */
   forceLearnerRewrite?: boolean;
+  /** 已有但不合格式的讲解。缺失时据此改写成标准四小节，保留其中有用的内容。 */
+  descriptionDraft?: string;
 }
 
 export interface VocabularyAiEnrichResult {
@@ -223,7 +225,7 @@ ${defLines || '(none)'}
 
 Dictionary example sentences (for reference only — do NOT translate these, generate NEW ones if needed):
 ${dictExLines || '(none)'}
-${chunkRefs}
+${chunkRefs}${!descriptionExists && dto.descriptionDraft?.trim() ? `\nExisting description fails the required format. Rewrite it into the four required sections and keep its useful teaching points:\n${dto.descriptionDraft.trim()}\n` : ''}
 ## Current field status — fill ONLY the MISSING ones
 ${fieldStatus}
 
@@ -239,7 +241,7 @@ Return exactly a JSON object with these fields — no markdown, no code fences, 
     { "en": "原创英文例句（不要照抄词典例句或参考句块，要全新创作）", "zh": "自然地道的中文翻译", "level": "basic/intermediate/advanced" }
   ],
   "meaning": "仅当中文释义 MISSING 时提供：按词性分组的简洁中文关键词。每个词性组必须以英文缩写POS前缀开头，且只能使用：n. v. adj. adv. pron. prep. conj. interj. num. det. art. phr. modal v.（禁止 other；禁止中文词性如“名词/动词”；禁止英文全词如 noun/verb；缩写必须带点号）。若词性不确定用 phr.，绝不用 other。同一词性所有义项用；连接，不同词性用 / 分隔。示例：n. 苹果；苹果树 / v. 结果实",
-  "description": "仅当讲解 MISSING 时提供：中文学习笔记，轻量 Markdown。结构按需：**核心含义：**/**用法提示：**/**易错点：**/**常见搭配：**。每个小节独立成段，在下一个 **小节标题：** 之前必须空一行分隔，段内不要换行。英文用反引号。语气亲切。80-200字。",
+  "description": "仅当讲解 MISSING 时提供：中文学习笔记，轻量 Markdown。必须依次写全四个小节，标题只能是 **核心含义：** **用法提示：** **易错点：** **常见搭配：**，不能省略、不能改名。每个小节独立成段，在下一个 **小节标题：** 之前必须空一行分隔，段内不要换行。英文用反引号。语气亲切。80-200字。",
   "difficulty": "仅当难度 MISSING 时提供：词汇难度等级，必须是 L1|L2|L3|L4|L5 之一：L1=基础高频（中考核心，如 apple/help）、L2=常用（高考核心，如 appointment/attitude）、L3=核心（大学四级/雅思6分，如 accommodate/derive）、L4=进阶（六级/雅思6.5-7，如 ambiguous/endeavor）、L5=低频专业（雅思7.5+/托福，如 ubiquitous/paradigm）。依据：词频、学习阶段、抽象程度。"
 }
 

@@ -28,6 +28,7 @@ import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-n
 import { ContentModeExperience } from '../components/content-mode-experience'
 import { CurrentTabExpandButton } from '../components/current-tab-expand-button'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
+import { WordMeaningInline } from '../components/word-meaning-lines'
 import { patternSlotDescription, patternSlotLabel } from '../lib/pattern-slot'
 import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 
@@ -822,7 +823,7 @@ function VocabPrepCard({
               <p className="truncate text-sm font-semibold text-foreground">{vocab.word}</p>
               {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
             </div>
-            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{vocab.meaning}</p>
+            <WordMeaningInline meaning={vocab.meaning} />
           </div>
           <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-90')} />
         </button>
@@ -884,7 +885,7 @@ function ChunkPrepCard({
               <p className="truncate text-sm font-semibold text-foreground">{chunk.text}</p>
               {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
             </div>
-            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{chunk.meaning}</p>
+            <WordMeaningInline meaning={chunk.meaning} />
           </div>
           <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-90')} />
         </button>
@@ -959,13 +960,18 @@ function PatternPrepCard({
               <p className="truncate text-sm font-semibold text-foreground">{pattern.pattern}</p>
               {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
             </div>
-            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{pattern.meaning}</p>
+            <WordMeaningInline meaning={pattern.meaning} />
           </div>
           <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-90')} />
         </button>
 
         {expanded && (
           <div className="px-3 pb-3 pt-2">
+            {pattern.description && (
+              <div className="mb-3 line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
+                <MarkdownContent content={extractCoreUsage(pattern.description)} />
+              </div>
+            )}
             <div className="mb-3 rounded-md bg-muted/45 p-2.5">
               <p className="text-xs font-medium leading-5 text-foreground">{pattern.example}</p>
               <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{pattern.topicTitle}</p>
