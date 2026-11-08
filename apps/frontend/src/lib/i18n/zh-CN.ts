@@ -1307,7 +1307,7 @@ const zhCN = {
       sent: '已发',
       getOtp: '获取',
       loginFailed: '登录失败，请稍后重试',
-      invalidCredentials: '邮箱或密码错误',
+      invalidCredentials: '用户不存在或密码错误',
       invalidOtp: '验证码错误或已过期',
       userNotFound: '账号不存在',
       emailNotRegistered: '该邮箱尚未注册',

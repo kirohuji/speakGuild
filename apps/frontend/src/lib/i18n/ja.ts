@@ -1307,7 +1307,7 @@ const ja = {
       sent: '送信済み',
       getOtp: '取得',
       loginFailed: 'ログイン失敗、後でもう一度お試しください',
-      invalidCredentials: 'メールアドレスまたはパスワードが間違っています',
+      invalidCredentials: 'アカウントが存在しないか、パスワードが間違っています',
       invalidOtp: '認証コードが間違っているか期限切れです',
       userNotFound: 'アカウントが見つかりません',
       emailNotRegistered: 'このメールアドレスは登録されていません',

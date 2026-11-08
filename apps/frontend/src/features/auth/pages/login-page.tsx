@@ -34,6 +34,7 @@ function toMainlandNationalNumber(raw: string) {
 }
 
 function getLoginErrorMessage(error: any, t: (key: string) => string): string {
+  const code = String(error?.code || error?.data?.code || error?.response?.data?.code || '').toUpperCase()
   const rawMessage =
     error?.data?.message ||
     error?.response?.data?.message ||
@@ -42,10 +43,17 @@ function getLoginErrorMessage(error: any, t: (key: string) => string): string {
 
   const message = String(rawMessage).toLowerCase()
 
+  if (
+    code === 'INVALID_EMAIL_OR_PASSWORD' ||
+    code === 'USER_NOT_FOUND' ||
+    message.includes('invalid email') ||
+    message.includes('password') ||
+    message.includes('user not found')
+  ) {
+    return t('auth.invalidCredentials')
+  }
   if (!message) return t('auth.loginFailed')
-  if (message.includes('invalid email') || message.includes('password')) return t('auth.invalidCredentials')
   if (message.includes('otp') || message.includes('verification code')) return t('auth.invalidOtp')
-  if (message.includes('user not found')) return t('auth.userNotFound')
   if (message.includes('too many requests') || message.includes('rate limit')) return t('auth.rateLimit')
   if (message.includes('network') || message.includes('failed to fetch')) return t('auth.networkError')
   if (message.includes('email')) return t('auth.invalidEmail')
@@ -226,6 +234,18 @@ export function LoginPage() {
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.loginButton')}
             </Button>
 
+            {message && (
+              <p
+                role="alert"
+                className={cn(
+                  'rounded-xl px-4 py-3 text-center text-sm',
+                  message.includes(t('auth.success')) ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
+                )}
+              >
+                {message}
+              </p>
+            )}
+
             <div className="text-right text-xs">
               <Link to="/auth/forgot-password" className="text-muted-foreground hover:text-primary transition-colors">
                 {t('auth.forgotPasswordHint')}
@@ -314,6 +334,18 @@ export function LoginPage() {
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.verifyAndLogin')}
             </Button>
+
+            {message && (
+              <p
+                role="alert"
+                className={cn(
+                  'rounded-xl px-4 py-3 text-center text-sm',
+                  message.includes(t('auth.success')) ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
+                )}
+              >
+                {message}
+              </p>
+            )}
           </div>
         )}
 
@@ -407,14 +439,6 @@ export function LoginPage() {
           </Button>
         </div>
 
-        {message && (
-          <p className={cn(
-            'rounded-xl px-3 py-2 text-center text-xs',
-            message.includes(t('auth.success')) ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
-          )}>
-            {message}
-          </p>
-        )}
         <p className="text-center text-xs text-muted-foreground">
           {t('auth.noAccount')}
           <Link to={registerPath} className="ml-1 font-semibold text-primary hover:underline">

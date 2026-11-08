@@ -183,10 +183,10 @@ export function EnglishHomePage() {
               onClick={handleCheckIn}
               disabled={checkInLoading}
               className={cn(
-                'flex items-center gap-2 rounded-full border px-5 py-2.5 backdrop-blur-2xl transition-all active:scale-95',
+                'flex items-center gap-2 rounded-full border-0 px-5 py-2.5 backdrop-blur-2xl transition-all active:scale-95',
                 isDark
-                  ? 'border-amber-400/30 bg-amber-400/[0.12] hover:bg-amber-400/[0.20]'
-                  : 'border-amber-500/25 bg-amber-50/70 hover:bg-amber-100/80',
+                  ? 'bg-amber-400/[0.12] hover:bg-amber-400/[0.20]'
+                  : 'bg-amber-50/70 hover:bg-amber-100/80',
               )}
             >
               <Gift className="size-4 text-amber-500" />

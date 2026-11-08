@@ -17,7 +17,7 @@ import { Separator } from '@/components/ui/separator'
 function SupportHeader() {
   const { t } = useTranslation()
   return (
-    <header className="sticky top-0 z-40 border-b border-border/50 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/50">
+    <header className="sticky top-0 z-40 border-0 bg-background">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/marketing" className="flex items-center gap-2">
           <img src="/logo.png" alt={t('app.name')} className="h-7 w-auto dark:invert" />
@@ -95,7 +95,7 @@ export function SupportPage() {
                     {t('support.emailSupport')}
                   </a>
                 </Button>
-                <Button asChild variant="outline" size="lg">
+                <Button asChild variant="secondary" size="lg" className="border-0 shadow-none">
                   <Link to="/feedback">
                     {t('support.inAppFeedback')}
                     <ArrowRight className="size-4" />
@@ -104,14 +104,14 @@ export function SupportPage() {
               </div>
             </div>
 
-            <Card className="overflow-hidden rounded-2xl border-border/60 bg-card/88">
+            <Card className="overflow-hidden rounded-2xl border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
               <CardContent className="p-0">
-                <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-br from-primary/[0.10] via-background/80 to-accent/[0.08] p-6 lg:p-7">
+                <div className="relative overflow-hidden bg-muted/45 p-6 lg:p-7">
                   <div className="absolute -right-12 -top-14 size-40 rounded-full bg-primary/[0.08]" />
                   <div className="absolute -bottom-16 left-8 size-36 rounded-full bg-accent/[0.10]" />
                   <div className="relative flex items-start justify-between gap-5">
                     <div>
-                      <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1 text-[11px] font-medium text-muted-foreground shadow-sm backdrop-blur">
+                      <div className="mb-5 inline-flex items-center gap-2 rounded-full border-0 bg-background px-3 py-1 text-[11px] font-medium text-muted-foreground shadow-none">
                         <span className="size-1.5 rounded-full bg-success" />
                         {t('support.workingInProgress')}
                       </div>
@@ -123,11 +123,11 @@ export function SupportPage() {
                         z1309014381@gmail.com
                       </a>
                     </div>
-                    <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-background/80 shadow-sm ring-1 ring-border/70">
+                    <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-background shadow-none ring-0">
                       <Mail className="size-6 text-primary" />
                     </div>
                   </div>
-                  <Button asChild variant="outline-primary" size="sm" className="relative mt-6 bg-background/70">
+                  <Button asChild variant="secondary" size="sm" className="relative mt-6 border-0 bg-background shadow-none hover:bg-background">
                     <a href="mailto:z1309014381@gmail.com">
                       <Send className="size-3.5" />
                       {t('support.sendEmail')}
@@ -135,21 +135,21 @@ export function SupportPage() {
                   </Button>
                 </div>
                 <dl className="grid gap-3 p-4 text-sm sm:grid-cols-3 lg:grid-cols-1 lg:p-5 xl:grid-cols-3">
-                  <div className="rounded-xl border border-border/55 bg-muted/25 p-4">
+                  <div className="rounded-xl border-0 bg-background p-4">
                     <dt className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                       <Clock className="size-3.5" />
                       {t('support.workHours')}
                     </dt>
                     <dd className="mt-2 whitespace-pre-line font-semibold leading-snug text-foreground">{t('support.workHoursValue')}</dd>
                   </div>
-                  <div className="rounded-xl border border-border/55 bg-muted/25 p-4">
+                  <div className="rounded-xl border-0 bg-background p-4">
                     <dt className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                       <HelpCircle className="size-3.5" />
                       {t('support.estimatedReply')}
                     </dt>
                     <dd className="mt-2 font-semibold leading-snug text-foreground">{t('support.estimatedReplyValue')}</dd>
                   </div>
-                  <div className="rounded-xl border border-border/55 bg-muted/25 p-4">
+                  <div className="rounded-xl border-0 bg-background p-4">
                     <dt className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                       <ShieldCheck className="size-3.5" />
                       {t('support.serviceEntity')}
@@ -164,7 +164,7 @@ export function SupportPage() {
 
         <section className="mx-auto grid max-w-6xl gap-4 pb-12 md:grid-cols-3 lg:pb-16">
           {supportItems.map(({ icon: Icon, title, body }) => (
-            <Card key={title} className="h-full rounded-lg bg-muted/30 shadow-none transition-colors duration-300 hover:bg-muted/50 dark:ring-0">
+            <Card key={title} className="h-full rounded-lg border-0 bg-muted/30 shadow-none ring-0 transition-colors duration-300 hover:bg-muted/50 dark:ring-0">
               <CardContent className="p-5 lg:p-6">
                 <div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-background/70">
                   <Icon className="size-5 text-primary" />
@@ -187,7 +187,7 @@ export function SupportPage() {
             </div>
             <div className="grid gap-4 lg:grid-cols-3">
               {faqs.map((item) => (
-                <Card key={item.q} className="h-full rounded-lg bg-background/75 shadow-none transition-colors duration-300 hover:bg-background dark:ring-0">
+                <Card key={item.q} className="h-full rounded-lg border-0 bg-muted/30 shadow-none ring-0 transition-colors duration-300 hover:bg-muted/50 dark:ring-0">
                   <CardContent className="p-5 lg:p-6">
                     <h3 className="text-base font-bold text-foreground">{item.q}</h3>
                     <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.a}</p>
@@ -199,7 +199,7 @@ export function SupportPage() {
         </section>
 
         {showStandaloneHeader && (
-          <footer className="border-t border-border/50">
+          <footer>
             <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
               <div className="flex flex-col items-center justify-between gap-8 sm:flex-row">
                 <div>

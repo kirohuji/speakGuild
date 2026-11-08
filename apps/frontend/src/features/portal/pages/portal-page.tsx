@@ -165,14 +165,15 @@ export function PortalPage() {
                   {isLoggedIn ? t('portal.startPractice') : t('portal.startFree')}
                   <ArrowRight className="size-5" />
                 </Button>
-                <Button
-                  variant="outline"
+                {/* <Button
+                  variant="secondary"
                   size="lg"
+                  className="border-0 shadow-none"
                   onClick={() => navigate(isLoggedIn ? '/script' : '/auth/register')}
                 >
                   <Play className="size-5" />
                   {t('portal.tryScript')}
-                </Button>
+                </Button> */}
               </motion.div>
 
               {/* 平台支持 — minimals "Available For" 风格 */}
@@ -205,7 +206,7 @@ export function PortalPage() {
             >
               <div className="relative aspect-[4/3]">
                 {/* 主卡片 */}
-                <div className="absolute inset-0 rounded-2xl border border-border/80 bg-card shadow-[0_4px_32px_rgba(0,0,0,0.06)] p-8 flex flex-col justify-center">
+                <div className="absolute inset-0 flex flex-col justify-center rounded-2xl border-0 bg-muted/30 p-8 shadow-none">
                   <div className="space-y-4">
                     <div className="flex items-center gap-3">
                       <div className="size-12 rounded-xl bg-primary/[0.07] flex items-center justify-center">
@@ -236,7 +237,7 @@ export function PortalPage() {
                 </div>
 
                 {/* 浮动小卡片 */}
-                <div className="absolute -bottom-4 -right-4 rounded-xl border border-border bg-card shadow-lg px-4 py-3 flex items-center gap-3">
+                <div className="absolute -bottom-4 -right-4 flex items-center gap-3 rounded-xl border-0 bg-background px-4 py-3 shadow-none">
                   <div className="size-8 rounded-full bg-emerald-100 flex items-center justify-center">
                     <CheckCircle className="size-4 text-emerald-600" />
                   </div>
@@ -294,7 +295,7 @@ export function PortalPage() {
             {/* ── 右栏：统计数据可视化 ── */}
             <Reveal delay={0.15}>
               <div className="hidden lg:block relative">
-                <div className="rounded-2xl border border-border/60 bg-card p-10 shadow-[0_4px_32px_rgba(0,0,0,0.04)]">
+                <div className="rounded-2xl border-0 bg-muted/30 p-10 shadow-none">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-8">{t('portal.learningData')}</p>
                   <div className="space-y-8">
                     {[
@@ -323,7 +324,7 @@ export function PortalPage() {
                 </div>
 
                 {/* 浮动小卡片 */}
-                <div className="absolute -bottom-3 -left-3 rounded-xl border border-border bg-card shadow-lg px-4 py-3 flex items-center gap-3">
+                <div className="absolute -bottom-3 -left-3 flex items-center gap-3 rounded-xl border-0 bg-background px-4 py-3 shadow-none">
                   <TrendingUp className="size-4 text-emerald-500" />
                   <span className="text-xs font-medium text-foreground">{t('portal.progressFloat')}</span>
                 </div>
@@ -354,7 +355,7 @@ export function PortalPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
             {features.map((f, i) => (
               <Reveal key={f.title} delay={i * 0.05}>
-                <Card className="group h-full rounded-lg bg-muted/30 shadow-none transition-colors duration-300 hover:bg-muted/50 dark:ring-0">
+                <Card className="group h-full rounded-lg border-0 bg-muted/30 shadow-none ring-0 transition-colors duration-300 hover:bg-muted/50 dark:ring-0">
                   <CardContent className="p-5 lg:p-6">
                     <div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-background/70 transition-colors group-hover:bg-background">
                       <f.icon className="size-5 text-primary" />
@@ -391,7 +392,7 @@ export function PortalPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
             {steps.map((s, i) => (
               <Reveal key={s.num} delay={i * 0.08}>
-                <Card className="relative h-full overflow-hidden rounded-lg bg-background/75 shadow-none transition-colors duration-300 hover:bg-background dark:ring-0">
+                <Card className="relative h-full overflow-hidden rounded-lg border-0 bg-background shadow-none ring-0 transition-colors duration-300 hover:bg-background dark:ring-0">
                   <CardContent className="p-5 lg:p-6">
                     <div className="text-5xl font-extrabold text-primary/[0.12] mb-4 leading-none select-none">
                       {s.num}
@@ -428,9 +429,9 @@ export function PortalPage() {
                 </p>
 
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="lg"
-                  className="mt-8"
+                  className="mt-8 border-0 shadow-none"
                   onClick={() => navigate(isLoggedIn ? '/' : '/auth/login')}
                 >
                   {t('portal.startWhere')}
@@ -462,7 +463,7 @@ export function PortalPage() {
       {/* ═══════════════════════════════════════════════════════
           FOOTER
           ═══════════════════════════════════════════════════════ */}
-      <footer className="border-t border-border/50">
+      <footer>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-8">
             {/* Brand */}

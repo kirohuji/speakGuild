@@ -187,6 +187,25 @@ async function prepareOfflineDataForUser(userId: string) {
   })
 }
 
+function credentialErrorMessage(
+  error: { code?: string; message?: string; data?: { code?: string; message?: string } } | null | undefined,
+  fallback: string,
+) {
+  const code = String(error?.code || error?.data?.code || '').toUpperCase()
+  const message = String(error?.message || error?.data?.message || '')
+  const lower = message.toLowerCase()
+  if (
+    code === 'INVALID_EMAIL_OR_PASSWORD' ||
+    code === 'USER_NOT_FOUND' ||
+    lower.includes('invalid email or password') ||
+    lower.includes('invalid email') ||
+    lower.includes('user not found')
+  ) {
+    return fallback
+  }
+  return ''
+}
+
 function normalizeSessionResponse(raw: unknown): SessionPayload {
   if (!raw || typeof raw !== 'object') return null
 
@@ -361,13 +380,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     setIsLoading(true)
     try {
-      await authClient.signIn.email({ email, password })
+      const result = await authClient.signIn.email({ email, password })
+      const invalidCredentials = t('auth.invalidCredentials')
+      const rejected = credentialErrorMessage(result?.error, invalidCredentials)
+      if (result?.error) {
+        throw new Error(rejected || result.error.message || invalidCredentials)
+      }
       const nextSession = await refreshSession({ revokeOtherSessions: true, allowCacheFallback: false })
       if (!nextSession?.user?.id) {
-        throw new Error(t('auth.loginFailedCheckCredentials'))
+        throw new Error(invalidCredentials)
       }
     } catch (err: any) {
-      const msg = err?.data?.message || err?.message || t('auth.loginFailed')
+      const invalidCredentials = t('auth.invalidCredentials')
+      const msg = credentialErrorMessage(err, invalidCredentials) || err?.message || t('auth.loginFailed')
       setIsLoading(false)
       throw new Error(msg)
     }

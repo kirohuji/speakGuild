@@ -1307,7 +1307,7 @@ const en = {
       sent: 'Sent',
       getOtp: 'Get',
       loginFailed: 'Login failed, please try again',
-      invalidCredentials: 'Invalid email or password',
+      invalidCredentials: 'Account does not exist or the password is incorrect',
       invalidOtp: 'Invalid or expired verification code',
       userNotFound: 'Account not found',
       emailNotRegistered: 'This email is not registered',
