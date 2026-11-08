@@ -341,7 +341,7 @@ function InProgressUnitCard({
                 <h3 className="line-clamp-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</h3>
                 {isPackDownloaded && totalPracticeCount > 0 && (
                   isActivePracticePack ? (
-                    <span className="mt-1 inline-flex h-4 items-center gap-1 rounded-full border border-border/60 bg-background/85 px-1.5 text-[9px] font-medium leading-none text-muted-foreground">
+                    <span className="mt-1 inline-flex h-4 items-center gap-1 rounded-full border-0 bg-secondary px-1.5 text-[9px] font-medium leading-none text-secondary-foreground">
                       <CheckCircle2 className="size-2.5 text-primary" />
                       {t('learning.currentPracticePack')}
                     </span>

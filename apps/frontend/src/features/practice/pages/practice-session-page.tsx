@@ -4,7 +4,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
   Lightbulb, CheckCircle2, ChevronRight,
-  BookText, Search, BookmarkPlus, History, Settings, ChevronDown,
+  BookText, Search, BookmarkPlus, History, Settings, ChevronDown, TextQuote,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -1056,7 +1056,7 @@ export function PracticeSessionPage() {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="rounded-full text-[11px]">
+                <Badge variant="secondary" className="rounded-full border-0 text-[11px] shadow-none">
                   {vocabTotal + chunkTotal + patternTotal} {t('practiceSession.items')}
                 </Badge>
                 <button
@@ -1191,12 +1191,11 @@ export function PracticeSessionPage() {
                               className="flex w-full items-center gap-3 p-3 text-left"
                             >
                               <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                                <Search className="size-4" />
+                                <TextQuote className="size-4" />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <p className="truncate text-sm font-semibold text-foreground">{p.pattern}</p>
-                                  <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{p.difficulty ?? t('practiceSession.sentencePattern')}</Badge>
                                   {collectedTexts.has(p.pattern) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('practiceSession.collectedBadge')}</Badge>}
                                 </div>
                                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{p.meaning}</p>

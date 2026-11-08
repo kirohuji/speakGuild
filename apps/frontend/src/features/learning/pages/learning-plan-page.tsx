@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { parseISO, startOfDay } from 'date-fns'
 import {
   ClipboardList, ShoppingBag, Eye, Settings, CircleCheck, CircleDashed,
-  CheckCircle2, ChevronDown, Filter,
+  CheckCheck, ChevronDown, Filter,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
@@ -507,9 +507,12 @@ function PracticeRecordsContent({ active }: { active: boolean }) {
         <Popover open={filterOpen} onOpenChange={setFilterOpen}>
           <PopoverTrigger asChild>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
-              className="h-8 shrink-0 rounded-full px-2.5 text-xs"
+              className={cn(
+                'h-8 shrink-0 rounded-full border-0 px-2.5 text-xs shadow-none',
+                isFiltered && 'bg-primary/10 text-primary hover:bg-primary/15',
+              )}
               aria-label={t('profile.practiceRecords.filterAria')}
             >
               <Filter className="size-3.5" />
@@ -519,7 +522,7 @@ function PracticeRecordsContent({ active }: { active: boolean }) {
           <PopoverContent
             align="end"
             sideOffset={8}
-            className="w-52 overflow-hidden rounded-xl border border-border/70 bg-card p-1.5 text-card-foreground shadow-md"
+            className="w-52 overflow-hidden rounded-xl border-0 bg-background p-1.5 text-foreground shadow-none"
           >
             <div className="flex items-center justify-between px-2.5 pb-1.5 pt-1">
               <p className="text-xs font-semibold tracking-wide text-foreground">{t('profile.practiceRecords.filterTitle')}</p>
@@ -549,10 +552,10 @@ function PracticeRecordsContent({ active }: { active: boolean }) {
                     )}
                   >
                     <span className={cn(
-                      'flex size-4 shrink-0 items-center justify-center rounded-[5px] border transition-colors',
-                      selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background',
+                      'flex size-5 shrink-0 items-center justify-center rounded border',
+                      selected ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/45',
                     )}>
-                      {selected && <CheckCircle2 className="size-3" />}
+                      <CheckCheck className={cn('size-3.5', !selected && 'invisible')} />
                     </span>
                     <span className="flex-1">{label}</span>
                     {selected && (

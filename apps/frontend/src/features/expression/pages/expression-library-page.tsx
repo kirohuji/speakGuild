@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { localDateKey } from '@/lib/date/calendar-date'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
-  BookMarked, Search, Trash2, BookOpen,
-  BookText, MessageSquareText, Headphones, Layers,
+  BookMarked, Search, Trash2, BookOpen, BookText,
+  Headphones, MessageSquareText, TextQuote,
   RotateCcw, CheckCheck, ArrowRightFromLine,
   ArrowLeft, CalendarDays, Check, CheckSquare, Download, Expand, Loader2, Minimize2, Plus, RefreshCw, X,
 } from 'lucide-react'
@@ -627,7 +627,7 @@ export function ExpressionLibraryPage() {
       </div>
     ) : isPattern ? (
       <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
-        <Layers className="size-4" />
+        <TextQuote className="size-4" />
       </div>
     ) : (
       <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">

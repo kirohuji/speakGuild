@@ -110,10 +110,10 @@ export function MobileProfileHome({
               <Badge variant={hasActiveMembership ? 'default' : 'secondary'} className="h-5 px-1.5 text-[10px]">
                 {membershipLabel}
               </Badge>
-              <Badge variant="outline" className="h-5 gap-1 px-1.5 text-[10px] border-amber-500/30 text-amber-600">
+              <Badge variant="outline" className="h-5 gap-1 border-0 bg-amber-500/10 px-1.5 text-[10px] text-amber-600 shadow-none">
                 <Gift className="size-2.5" />{pointsBalance}
               </Badge>
-              <Badge variant="outline" className="h-5 gap-1 px-1.5 text-[10px] border-primary/25 text-primary">
+              <Badge variant="outline" className="h-5 gap-1 border-0 bg-primary/10 px-1.5 text-[10px] text-primary shadow-none">
                 {outputLevel}
               </Badge>
             </div>

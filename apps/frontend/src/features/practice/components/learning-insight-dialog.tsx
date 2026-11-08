@@ -1,19 +1,19 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  BookOpen,
+  BookText,
   BookmarkPlus,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
   FileText,
-  Layers,
+  MessageSquareText,
   ArrowLeftRight,
   ListMusic,
   Loader2,
   Save,
-  Sparkles,
+  TextQuote,
   Volume2,
   X,
 } from 'lucide-react'
@@ -534,7 +534,12 @@ export function LearningInsightDialog({
           <ScrollArea className="min-h-0 min-w-0 max-w-full flex-1 overflow-x-hidden px-4 pb-8">
             <div className="w-full max-w-full min-w-0 space-y-1 overflow-hidden">
               {items.map((item, i) => {
-                const Icon = item.kind === 'word' ? BookOpen : item.kind === 'chunk' ? Layers : Sparkles
+                const Icon = item.kind === 'word' ? BookText : item.kind === 'chunk' ? MessageSquareText : TextQuote
+                const iconTone = item.kind === 'word'
+                  ? 'text-sky-600 dark:text-sky-400'
+                  : item.kind === 'chunk'
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-violet-600 dark:text-violet-400'
                 const title =
                   item.kind === 'word' ? item.word : item.kind === 'chunk' ? item.text : item.pattern
                 const isActive = i === index
@@ -551,7 +556,7 @@ export function LearningInsightDialog({
                         : 'text-foreground hover:bg-muted',
                     )}
                   >
-                    <Icon className="size-4 shrink-0" />
+                    <Icon className={cn('size-4 shrink-0', iconTone)} />
                     <span className="min-w-0 max-w-full overflow-hidden">
                       <span className="block truncate font-english text-sm font-medium">{title}</span>
                       {item.meaning ? (
@@ -578,7 +583,12 @@ export function LearningInsightDialog({
 
 function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: () => void }) {
   const { t } = useTranslation()
-  const Icon = item.kind === 'word' ? BookOpen : item.kind === 'chunk' ? Layers : Sparkles
+  const Icon = item.kind === 'word' ? BookText : item.kind === 'chunk' ? MessageSquareText : TextQuote
+  const iconTone = item.kind === 'word'
+    ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400'
+    : item.kind === 'chunk'
+      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+      : 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
   const title = item.kind === 'word' ? item.word : item.kind === 'chunk' ? item.text : item.pattern
   const subtitle = item.kind === 'word' ? item.meaning : item.meaning
   const label = item.kind === 'word' ? t('insight.vocabulary') : item.kind === 'chunk' ? t('insight.chunk') : t('insight.pattern')
@@ -591,7 +601,7 @@ function InsightHeader({ item, onClose }: { item: LearningInsightItem; onClose: 
   return (
     <div className="shrink-0 border-b border-border/60 px-5 pb-4 pt-9 md:px-6">
       <div className="flex items-start gap-3">
-        <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <div className={cn('mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl', iconTone)}>
           <Icon className="size-[18px]" />
         </div>
         <div className="min-w-0 flex-1">

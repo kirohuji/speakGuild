@@ -5,11 +5,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  BookText,
   FileText,
-  Layers,
-  Search,
+  MessageSquareText,
   Sparkles,
-  Target,
+  TextQuote,
   X,
 } from 'lucide-react'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
@@ -85,7 +85,7 @@ function ReadingPreparePreview({ value, context, onStart }: Props & { onStart: (
                 <h2 className="text-base font-semibold">阅读准备</h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">先过一遍本课知识点，再开始作答</p>
               </div>
-              <Badge variant="outline" className="rounded-full text-[11px]">{supportCount} 项支持</Badge>
+              <Badge variant="secondary" className="rounded-full border-0 text-[11px] shadow-none">{supportCount} 项支持</Badge>
             </div>
             <Tabs defaultValue={defaultTab} className="w-full">
               <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
@@ -99,9 +99,9 @@ function ReadingPreparePreview({ value, context, onStart }: Props & { onStart: (
                   句式 {patterns.length}
                 </TabsTrigger>
               </TabsList>
-              <TabsContent value="vocab" className="mt-3"><KnowledgeList icon={<Search className="size-4" />} items={vocabularies.map((item) => ({ title: item }))} tone="cyan" emptyText="暂无绑定词汇" /></TabsContent>
-              <TabsContent value="chunk" className="mt-3"><KnowledgeList icon={<Layers className="size-4" />} items={chunks.map((item) => ({ title: item }))} tone="emerald" emptyText="暂无绑定语块" /></TabsContent>
-              <TabsContent value="pattern" className="mt-3"><KnowledgeList icon={<Target className="size-4" />} items={patterns.map((item) => ({ title: item }))} tone="violet" emptyText="暂无绑定句式" /></TabsContent>
+              <TabsContent value="vocab" className="mt-3"><KnowledgeList icon={<BookText className="size-4" />} items={vocabularies.map((item) => ({ title: item }))} tone="cyan" emptyText="暂无绑定词汇" /></TabsContent>
+              <TabsContent value="chunk" className="mt-3"><KnowledgeList icon={<MessageSquareText className="size-4" />} items={chunks.map((item) => ({ title: item }))} tone="emerald" emptyText="暂无绑定语块" /></TabsContent>
+              <TabsContent value="pattern" className="mt-3"><KnowledgeList icon={<TextQuote className="size-4" />} items={patterns.map((item) => ({ title: item }))} tone="violet" emptyText="暂无绑定句式" /></TabsContent>
             </Tabs>
           </section>
 

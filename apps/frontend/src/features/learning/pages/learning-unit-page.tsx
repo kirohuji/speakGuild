@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  ArrowLeft, ChevronLeft, ChevronRight, BookOpen, BookText, MessageSquareText,
+  ArrowLeft, ChevronLeft, ChevronRight, BookOpen, BookText, MessageSquareText, TextQuote,
   Target, Download,
   BookmarkPlus, Search, ChevronDown,
 } from 'lucide-react'
@@ -698,7 +698,7 @@ function SectionHeader({
       </div>
       <div className="flex items-center gap-2">
         {meta && (
-          <Badge variant="outline" className="shrink-0 rounded-full text-[11px]">
+          <Badge variant="secondary" className="shrink-0 rounded-full border-0 text-[11px] shadow-none">
             {meta}
           </Badge>
         )}
@@ -952,13 +952,12 @@ function PatternPrepCard({
       <CardContent className="p-0">
         <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle}>
           <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
-            <Search className="size-4" />
+            <TextQuote className="size-4" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-2">
               <p className="truncate text-sm font-semibold text-foreground">{pattern.pattern}</p>
               {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
-              <Badge variant="outline" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{pattern.difficulty}</Badge>
             </div>
             <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{pattern.meaning}</p>
           </div>

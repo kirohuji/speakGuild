@@ -44,7 +44,7 @@ export function NotificationDetailSheet({ item, open, onClose, onMarkRead }: Pro
           <DialogTitle className="sr-only">{item.title}</DialogTitle>
           <DialogDescription className="sr-only">{formattedDate}</DialogDescription>
           <div className="flex min-h-0 flex-1 flex-col">
-            <div className="shrink-0 border-b border-border/45 bg-background/95 px-4 pb-3 pt-3 backdrop-blur-xl">
+            <div className="shrink-0 px-4 pb-3 pt-3">
               <div className="flex items-center gap-2">
                 <Button
                   type="button"

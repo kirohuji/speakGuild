@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { AlertTriangle, ArrowLeft, BadgeCheck, BarChart3, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, Lightbulb, ListMusic, Loader2, MessageCircle, MessageSquareText, PenLine, RotateCcw, Save, Search, Sparkles, Volume2, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, BadgeCheck, BarChart3, BookOpen, BookText, BookmarkPlus, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, FilePenLine, Info, Languages, Lightbulb, ListMusic, Loader2, MessageCircle, MessageSquareText, PenLine, RotateCcw, Save, Search, Sparkles, TextQuote, Volume2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -288,7 +288,7 @@ function WritingPreparePage({
               <h2 className="text-base font-semibold text-foreground">{t('learning.writingPrep')}</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">{t('learning.writingPrepHint')}</p>
             </div>
-            <Badge variant="outline" className="rounded-full text-[11px]">
+            <Badge variant="secondary" className="rounded-full border-0 text-[11px] shadow-none">
               {t('learning.supportCount', { count: visibleVocabularies.length + visibleChunks.length + visiblePatterns.length })}
             </Badge>
           </div>
@@ -404,7 +404,6 @@ function WritingKnowledgeList({
                 <div className="flex min-w-0 items-center gap-2">
                   <p className="truncate text-sm font-semibold text-foreground">{item.title}</p>
                   {item.kind === 'vocab' && item.partOfSpeech && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{item.partOfSpeech}</Badge>}
-                  {item.kind === 'pattern' && item.difficulty && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{item.difficulty}</Badge>}
                 </div>
                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{item.subtitle}</p>
               </div>
@@ -431,7 +430,7 @@ function WritingKnowledgeIcon({ kind }: { kind: WritingKnowledgeItem['kind'] }) 
     chunk: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
     pattern: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
   }[kind]
-  const Icon = kind === 'vocab' ? BookText : kind === 'chunk' ? MessageSquareText : Search
+  const Icon = kind === 'vocab' ? BookText : kind === 'chunk' ? MessageSquareText : TextQuote
   return <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-md', styles)}><Icon className="size-4" /></span>
 }
 

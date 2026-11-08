@@ -1,20 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type React from 'react'
 import {
-  BookOpen,
+  BookText,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Eye,
   EyeOff,
-  Layers,
   ListMusic,
   Loader2,
   MessageSquareText,
   Pause,
   Play,
   Settings2,
-  Sparkles,
+  TextQuote,
   Timer,
   X,
 } from 'lucide-react'
@@ -44,10 +43,10 @@ type ImmersivePlayerDialogProps = {
 }
 
 const TYPE_META = {
-  word: { Icon: BookOpen, tone: 'bg-sky-500/10 text-sky-600 dark:text-sky-300' },
-  chunk: { Icon: Layers, tone: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300' },
-  pattern: { Icon: Sparkles, tone: 'bg-violet-500/10 text-violet-600 dark:text-violet-300' },
-} satisfies Record<ImmersivePlayerItem['kind'], { Icon: typeof BookOpen; tone: string }>
+  word: { Icon: BookText, tone: 'bg-sky-500/10 text-sky-600 dark:text-sky-400' },
+  chunk: { Icon: MessageSquareText, tone: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+  pattern: { Icon: TextQuote, tone: 'bg-violet-500/10 text-violet-600 dark:text-violet-400' },
+} satisfies Record<ImmersivePlayerItem['kind'], { Icon: typeof BookText; tone: string }>
 
 const KIND_LABEL_KEY = {
   word: 'immersivePlayer.kind.word',

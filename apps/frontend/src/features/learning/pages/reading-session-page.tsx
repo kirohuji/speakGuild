@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, CheckCircle2, ChevronLeft, ChevronRight, ClipboardCheck, FileText, Layers, Loader2, RotateCcw, Search, Sparkles, Target, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, BookText, CheckCircle2, ChevronLeft, ChevronRight, ClipboardCheck, FileText, Loader2, MessageSquareText, RotateCcw, Sparkles, TextQuote, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
@@ -93,7 +93,7 @@ function ReadingPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }: 
         )}
 
         <section>
-          <div className="mb-3 flex items-end justify-between gap-3 px-1"><div><h2 className="text-base font-semibold">{t('learning.readingPrep')}</h2><p className="mt-0.5 text-xs text-muted-foreground">{t('learning.readingPrepHint')}</p></div><Badge variant="outline" className="rounded-full text-[11px]">{t('learning.supportCount', { count: supportCount })}</Badge></div>
+          <div className="mb-3 flex items-end justify-between gap-3 px-1"><div><h2 className="text-base font-semibold">{t('learning.readingPrep')}</h2><p className="mt-0.5 text-xs text-muted-foreground">{t('learning.readingPrepHint')}</p></div><Badge variant="secondary" className="rounded-full border-0 text-[11px] shadow-none">{t('learning.supportCount', { count: supportCount })}</Badge></div>
           <Tabs defaultValue={visibleVocabularies.length > 0 ? 'vocab' : visibleChunks.length > 0 ? 'chunk' : 'pattern'} className="w-full" data-mobile-route-swipe>
             <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
               <TabsTrigger value="vocab" className="rounded-md text-xs">
@@ -106,9 +106,9 @@ function ReadingPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }: 
                 {t('learning.patterns')} {visiblePatterns.length}
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow><ReadingKnowledgeList icon={<Search className="size-4" />} items={visibleVocabularies.map((item) => ({ title: item.word, subtitle: item.meaning }))} tone="cyan" emptyText={t('learning.noTopicVocab')} /></TabsContent>
-            <TabsContent value="chunk" className="mt-3" data-mobile-gesture-allow><ReadingKnowledgeList icon={<Layers className="size-4" />} items={visibleChunks.map((item) => ({ title: item.text, subtitle: item.meaning }))} tone="emerald" emptyText={t('learning.noTopicChunks')} /></TabsContent>
-            <TabsContent value="pattern" className="mt-3" data-mobile-gesture-allow><ReadingKnowledgeList icon={<Target className="size-4" />} items={visiblePatterns.map((item) => ({ title: item.pattern, subtitle: item.meaning }))} tone="violet" emptyText={t('learning.noTopicPatterns')} /></TabsContent>
+            <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow><ReadingKnowledgeList icon={<BookText className="size-4" />} items={visibleVocabularies.map((item) => ({ title: item.word, subtitle: item.meaning }))} tone="cyan" emptyText={t('learning.noTopicVocab')} /></TabsContent>
+            <TabsContent value="chunk" className="mt-3" data-mobile-gesture-allow><ReadingKnowledgeList icon={<MessageSquareText className="size-4" />} items={visibleChunks.map((item) => ({ title: item.text, subtitle: item.meaning }))} tone="emerald" emptyText={t('learning.noTopicChunks')} /></TabsContent>
+            <TabsContent value="pattern" className="mt-3" data-mobile-gesture-allow><ReadingKnowledgeList icon={<TextQuote className="size-4" />} items={visiblePatterns.map((item) => ({ title: item.pattern, subtitle: item.meaning }))} tone="violet" emptyText={t('learning.noTopicPatterns')} /></TabsContent>
           </Tabs>
         </section>
 

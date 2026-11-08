@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Ear, Headphones, Info, Layers, Loader2, Mic, Pause, Play, RotateCcw, Search, Settings, Square, Target } from 'lucide-react'
+import { ArrowLeft, BookText, CheckCircle2, ChevronLeft, ChevronRight, Ear, Headphones, Info, Loader2, MessageSquareText, Mic, Pause, Play, RotateCcw, Settings, Square, TextQuote } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -139,7 +139,7 @@ function ListeningPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }
               <h2 className="text-base font-semibold text-foreground">{t('learning.listeningPrep')}</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">{t('learning.listeningPrepHint')}</p>
             </div>
-            <Badge variant="outline" className="rounded-full text-[11px]">{t('learning.supportCount', { count: supportCount })}</Badge>
+            <Badge variant="secondary" className="rounded-full border-0 text-[11px] shadow-none">{t('learning.supportCount', { count: supportCount })}</Badge>
           </div>
           <Tabs defaultValue={visibleVocabularies.length > 0 ? 'vocab' : visibleChunks.length > 0 ? 'chunk' : 'pattern'} className="w-full" data-mobile-route-swipe>
             <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
@@ -153,9 +153,9 @@ function ListeningPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }
                 {t('learning.patterns')} {visiblePatterns.length}
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<Search className="size-4" />} items={visibleVocabularies.map((item) => ({ title: item.word, subtitle: item.meaning }))} tone="cyan" emptyText={t('learning.noTopicVocab')} /></TabsContent>
-            <TabsContent value="chunk" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<Layers className="size-4" />} items={visibleChunks.map((item) => ({ title: item.text, subtitle: item.meaning }))} tone="emerald" emptyText={t('learning.noTopicChunks')} /></TabsContent>
-            <TabsContent value="pattern" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<Target className="size-4" />} items={visiblePatterns.map((item) => ({ title: item.pattern, subtitle: item.meaning }))} tone="violet" emptyText={t('learning.noTopicPatterns')} /></TabsContent>
+            <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<BookText className="size-4" />} items={visibleVocabularies.map((item) => ({ title: item.word, subtitle: item.meaning }))} tone="cyan" emptyText={t('learning.noTopicVocab')} /></TabsContent>
+            <TabsContent value="chunk" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<MessageSquareText className="size-4" />} items={visibleChunks.map((item) => ({ title: item.text, subtitle: item.meaning }))} tone="emerald" emptyText={t('learning.noTopicChunks')} /></TabsContent>
+            <TabsContent value="pattern" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<TextQuote className="size-4" />} items={visiblePatterns.map((item) => ({ title: item.pattern, subtitle: item.meaning }))} tone="violet" emptyText={t('learning.noTopicPatterns')} /></TabsContent>
           </Tabs>
         </section>
 
