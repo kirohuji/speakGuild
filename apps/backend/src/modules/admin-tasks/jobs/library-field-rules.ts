@@ -62,8 +62,8 @@ export function examplesNeedWork(value: unknown, mode: ScreenMode): boolean {
 export function definitionNeedsWork(definitionEn: string | null | undefined, mode: ScreenMode): boolean {
   if (mode === 'normalize') return false;
   const text = definitionEn?.trim() ?? '';
-  if (!text) return false;
-  return mode === 'fill' ? !hasChinese(text) : true;
+  if (mode === 'fill') return !text || !hasChinese(text);
+  return Boolean(text);
 }
 
 export function difficultyNeedsWork(difficulty: string | null | undefined, mode: ScreenMode): boolean {

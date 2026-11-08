@@ -1197,6 +1197,7 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
   // Dictionary preview
   const [dictEntry, setDictEntry] = useState<DictionaryEntry | null>(null)
   const [dictPreview, setDictPreview] = useState(false)
+  const [editDesc, setEditDesc] = useState(false)
   const [editExamples, setEditExamples] = useState(false)
 
   // Ignore a lookup that finishes after closing the dialog or switching words.
@@ -1220,6 +1221,8 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
   // Sync edit → form + index
   useEffect(() => {
     if (!open) return
+    setEditDesc(false)
+    setEditExamples(false)
     if (edit) {
       setForm(edit)
       const idx = items.findIndex(v => v.id === edit.id)
@@ -1237,6 +1240,8 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
     setCurrentIdx(next)
     setForm(items[next])
     setPendingDiff(null)
+    setEditDesc(false)
+    setEditExamples(false)
   }
 
   /** 展示 diff：对比旧值和新值，只保留有变化的字段 */
@@ -1271,6 +1276,8 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
       }
       return next
     })
+    if (key === 'description') setEditDesc(false)
+    if (key === 'examples') setEditExamples(false)
     const remaining = { ...pendingDiff.fields }
     delete remaining[key]
     if (Object.keys(remaining).length === 0) {
@@ -1294,6 +1301,8 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
       if (derived) updates.meaning = derived
     }
     setForm((prev: any) => ({ ...prev, ...updates }))
+    setEditDesc(false)
+    setEditExamples(false)
     setPendingDiff(null)
     toast.success(`${pendingDiff.source}: 已全部应用`)
   }
@@ -1370,7 +1379,8 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
   const handleDictionaryLookup = async ({
     source = '词典+AI',
     includeDescription = true,
-  }: { source?: string; includeDescription?: boolean } = {}) => {
+    descriptionDraft = '',
+  }: { source?: string; includeDescription?: boolean; descriptionDraft?: string } = {}) => {
     if (!form.word?.trim()) return
     setDictLoading(true)
     try {
@@ -1411,6 +1421,7 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
           examples: examples.map((e: any) => ({ en: e.en })),
           phoneticUs: us?.ipa,
           phoneticUk: uk?.ipa,
+          descriptionDraft: descriptionDraft || undefined,
         })
       } catch { /* AI 失败不影响词典字段 */ }
 
@@ -1763,20 +1774,28 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
             )}
           </div>
           <div>
-            <Label htmlFor="v-desc">讲解 / 描述</Label>
-            {form.description ? (
-              <div className="rounded-md border bg-muted/20 p-3 max-h-[30vh] overflow-y-auto">
-                <div className="prose prose-sm max-w-none text-muted-foreground leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: renderMd(form.description) }} />
-                <button
-                  onClick={() => setForm((f: any) => ({ ...f, description: '' }))}
-                  className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground mt-2"
-                >
-                  清除
+            <div className="flex items-center justify-between mb-1">
+              <Label htmlFor="v-desc">讲解 / 描述</Label>
+              {form.description && (
+                <button type="button" onClick={() => setEditDesc(!editDesc)}
+                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                  {editDesc ? '预览' : '编辑'}
                 </button>
+              )}
+            </div>
+            {form.description && !editDesc ? (
+              <div className="rounded-md border bg-muted/20 p-3 max-h-[30vh] overflow-y-auto">
+                <div className="text-sm text-muted-foreground leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: renderMd(form.description) }} />
+                <button type="button"
+                  onClick={() => { setForm((f: any) => ({ ...f, description: '' })); setEditDesc(false) }}
+                  className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground mt-2"
+                >清除</button>
               </div>
             ) : (
-              <Textarea id="v-desc" value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="用法、搭配、易错点（支持 Markdown）" rows={3} />
+              <Textarea id="v-desc" value={form.description ?? ''}
+                onChange={e => setForm({ ...form, description: e.target.value })}
+                rows={6} placeholder="核心含义、用法提示、易错点、常见搭配（支持 **加粗**、`代码`）" />
             )}
           </div>
 
@@ -1870,14 +1889,19 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                   if (typeof v === 'string' && v.includes('; ')) return `${v.split('; ').length} 条释义`
                   return (v || '(空)')
                 }
-                const oldDisplay = fmtDefs(val.old)
-                const newDisplay = fmtDefs(val.new)
+                const oldDisplay = key === 'description' ? (val.old || '(空)') : fmtDefs(val.old)
+                const newDisplay = key === 'description' ? (val.new || '(空)') : fmtDefs(val.new)
+                const preview = (value: unknown) => {
+                  const text = typeof value === 'string' ? value : String(value ?? '')
+                  const limit = key === 'description' ? 180 : 40
+                  return text.length > limit ? `${text.slice(0, limit)}…` : text
+                }
                 return (
-                  <div key={key} className="flex items-center gap-2 text-xs">
-                    <span className="w-20 text-muted-foreground flex-shrink-0">{label[key] || key}</span>
-                    <span className="flex-1 truncate text-muted-foreground/60 line-through">{typeof oldDisplay === 'string' ? oldDisplay.slice(0, 40) : oldDisplay}</span>
-                    <span className="text-amber-600 mx-1">→</span>
-                    <span className="flex-1 truncate font-medium">{typeof newDisplay === 'string' ? newDisplay.slice(0, 40) : newDisplay}</span>
+                  <div key={key} className="flex items-start gap-2 text-xs">
+                    <span className="w-20 text-muted-foreground flex-shrink-0 pt-0.5">{label[key] || key}</span>
+                    <span className={`flex-1 text-muted-foreground/60 line-through ${key === 'description' ? 'line-clamp-4 whitespace-pre-line' : 'truncate'}`}>{preview(oldDisplay)}</span>
+                    <span className="text-amber-600 mx-1 pt-0.5">→</span>
+                    <span className={`flex-1 font-medium ${key === 'description' ? 'line-clamp-4 whitespace-pre-line' : 'truncate'}`}>{preview(newDisplay)}</span>
                     <Button size="sm" variant="outline" className="text-xs h-6 flex-shrink-0" onClick={() => acceptField(key)}>采用</Button>
                   </div>
                 )
@@ -1913,9 +1937,13 @@ export function VocabularyDialog({ open, onClose, edit, items, onSaved }: {
                 AI 补全
               </Button>
               <Button variant="outline" size="sm"
-                title="生成学习版内容预览；确认差异后才会写入"
+                title="重新生成学习版释义、例句和讲解。确认差异后才会写入。"
                 disabled={dictLoading || pronunciationSyncing || !form.word?.trim()}
-                onClick={() => handleDictionaryLookup({ source: '重生成学习版预览', includeDescription: false })}>
+                onClick={() => handleDictionaryLookup({
+                  source: '重生成学习版预览',
+                  includeDescription: true,
+                  descriptionDraft: form.description ?? '',
+                })}>
                 {dictLoading ? <Loader2 className="mr-1 size-3.5 animate-spin" /> : <RefreshCw className="mr-1 size-3.5" />}
                 重生成学习版
               </Button>

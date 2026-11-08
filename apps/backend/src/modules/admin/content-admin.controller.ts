@@ -3655,6 +3655,7 @@ ${contextBlock}
     examples: { en: string }[];
     phoneticUs?: string;
     phoneticUk?: string;
+    descriptionDraft?: string;
   }) {
     await this.requireAdmin(req);
     try {

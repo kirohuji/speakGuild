@@ -217,10 +217,15 @@ const SCREEN_FIELD_LABEL: Record<ScreenField, string> = {
   difficulty: '难度',
 };
 
+function screenModeOf(mode: VocabularyLibraryFilter['screenMode']): ScreenMode {
+  if (mode === 'regenerate' || mode === 'normalize') return mode;
+  return 'fill';
+}
+
 function vocabularyScreen(filter: VocabularyLibraryFilter) {
   if (!filter.screenFields?.length) return null;
   return {
-    mode: filter.screenMode === 'regenerate' ? 'regenerate' as const : 'fill' as const,
+    mode: screenModeOf(filter.screenMode),
     fields: filter.screenFields,
   };
 }
@@ -228,7 +233,7 @@ function vocabularyScreen(filter: VocabularyLibraryFilter) {
 function textScreen(filter: TextLibraryFilter) {
   if (!filter.screenFields?.length) return null;
   return {
-    mode: filter.screenMode === 'regenerate' ? 'regenerate' as const : 'fill' as const,
+    mode: screenModeOf(filter.screenMode),
     fields: filter.screenFields,
   };
 }

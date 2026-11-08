@@ -27,7 +27,7 @@ const FIELD_COPY: Record<LibraryBatchField, { label: string; fill: string; regen
   },
   definition: {
     label: '英文释义',
-    fill: '给还没有中文的英文释义补上翻译。',
+    fill: '补上空白的英文释义，或给还没有中文的英文释义补上翻译。',
     regenerate: '按学习标准重写已有英文释义卡。',
     normalize: '检查规范只整理讲解排版。',
   },

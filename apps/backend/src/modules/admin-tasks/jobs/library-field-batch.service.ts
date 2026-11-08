@@ -281,7 +281,9 @@ export class LibraryFieldBatchService {
         const touchExamples = selected('examples', examplesNeedWork(row.examples, mode));
         const touchDefinition = selected('definition', definitionNeedsWork(row.definitionEn, mode));
         const touchDifficulty = selected('difficulty', difficultyNeedsWork(row.difficulty, mode));
-        if (touchMeaning || touchDescription || touchExamples || (touchDefinition && mode === 'regenerate') || touchDifficulty) {
+        const definitionText = row.definitionEn?.trim() ?? '';
+        const fillEmptyDefinition = touchDefinition && mode === 'fill' && !definitionText;
+        if (touchMeaning || touchDescription || touchExamples || (touchDefinition && mode === 'regenerate') || fillEmptyDefinition || touchDifficulty) {
           const definitions = (row.definitionEn ?? '').split('; ').map((item) => item.trim()).filter(Boolean);
           const generated = await this.adminContentAiService.enrichVocabulary({
             word: row.word,
@@ -301,7 +303,7 @@ export class LibraryFieldBatchService {
           if (touchDefinition && generated.learnerDefinitions.length) data.definitionEn = generated.learnerDefinitions.join('; ');
           if (touchDifficulty && generated.difficulty) data.difficulty = generated.difficulty;
         }
-        if (touchDefinition && mode === 'fill') {
+        if (touchDefinition && mode === 'fill' && definitionText) {
           const review = await this.adminContentAiService.reviewVocabularyDefinitionAndDifficulty({
             word: row.word,
             definitions: (row.definitionEn ?? '').split('; ').map((item) => item.trim()).filter(Boolean),

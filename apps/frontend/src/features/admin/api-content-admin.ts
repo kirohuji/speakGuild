@@ -1027,6 +1027,7 @@ export function aiEnrichVocabulary(data: {
   examples: { en: string }[];
   phoneticUs?: string;
   phoneticUk?: string;
+  descriptionDraft?: string;
 }): Promise<AiEnrichResult> {
   return post('/admin/content/library/vocabularies/ai-enrich', data);
 }
