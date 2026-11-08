@@ -446,7 +446,7 @@ export function NotificationBell({ className }: { className?: string } = {}) {
             className="flex flex-col flex-1 overflow-hidden"
           >
             <div className="flex-shrink-0 px-5 pt-3 pb-2">
-              <TabsList className="h-9 w-full bg-muted/60 p-0.5">
+              <TabsList className="h-9 w-full border-0 bg-muted/60 p-0.5">
                 {TAB_CONFIG.map(({ value, labelKey, icon: Icon }) => (
                   <TabsTrigger
                     key={value}

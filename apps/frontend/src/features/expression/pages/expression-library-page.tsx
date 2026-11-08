@@ -865,9 +865,11 @@ export function ExpressionLibraryPage() {
         Header: () => (
           <div className="mx-2 mb-2 flex items-center justify-between px-0 pt-0">
             <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
-            <button type="button" onClick={() => openImmersivePlayer(visibleDialogItems, 0)} className={cn('flex h-9 touch-manipulation items-center gap-1.5 rounded-full bg-primary/10 px-3 text-xs font-medium transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', immersiveClassName)}>
-              <Headphones className="size-3.5" aria-hidden="true" /> {t('expressionLib.immersive')}
-            </button>
+            {libraryTab === 'words' && (
+              <button type="button" onClick={() => openImmersivePlayer(visibleDialogItems, 0)} className={cn('flex h-9 touch-manipulation items-center gap-1.5 rounded-full bg-primary/10 px-3 text-xs font-medium transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', immersiveClassName)}>
+                <Headphones className="size-3.5" aria-hidden="true" /> {t('expressionLib.immersive')}
+              </button>
+            )}
           </div>
         ),
         Footer: () => (

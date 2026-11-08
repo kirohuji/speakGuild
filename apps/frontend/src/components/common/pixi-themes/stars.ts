@@ -493,13 +493,13 @@ export function setupStars(app: PIXI.Application, w: number, h: number, isDark: 
     cosmos.addChildAt(galaxy as any, 0);
   }
 
-  let cometTimer = 80 + Math.random() * 140;
+  let cometTimer = 480 + Math.random() * 720;
   let moonTimer = testMode ? 999999 : 600 + Math.random() * 800;
   const onTick = (dt: number) => {
     cosmos.rotation += 0.00006 * dt;
     cometTimer -= dt;
     if (cometTimer <= 0) {
-      cometTimer = 80 + Math.random() * 160;
+      cometTimer = 480 + Math.random() * 720;
       const comet = new Comet(w, h, isDark);
       comet.position.x -= w / 2;
       comet.position.y -= h / 2;

@@ -290,7 +290,7 @@ export function NotificationListPage({ compact = false }: { compact?: boolean })
         className={cn(compact ? 'flex min-h-0 flex-1 flex-col' : 'space-y-3')}
       >
         <div className="shrink-0">
-          <TabsList className={cn('h-10 w-full rounded-full bg-muted/60 p-0.5', compact && 'border border-border/35 bg-muted/45')}>
+          <TabsList className={cn('h-10 w-full rounded-full border-0 bg-muted/60 p-0.5', compact && 'bg-muted/45')}>
             {tabConfig.map(({ value, label, icon: Icon }) => (
               <TabsTrigger
                 key={value}

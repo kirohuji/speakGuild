@@ -1,18 +1,32 @@
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import {
-  Sun, Moon, Monitor, CheckCircle2, Volume2, VolumeX, ChevronLeft,
+  Sun, Moon, Monitor, CheckCircle2, Volume2, VolumeX, ChevronLeft, Lock,
 } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { MobilePageLoading } from '@/components/common/mobile-page-loading';
 import { cn } from '@/lib/cn';
 import { useThemePreset } from '@/providers/theme-preset-provider';
 import { useThemePresetStore } from '@/stores/theme-preset.store';
 import { usePreferencesStore } from '@/stores/preferences.store';
+import { useUserStore } from '@/stores/user.store';
+import { useAuth } from '@/providers/auth-provider';
 import type { ThemePreset } from '@/features/admin/theme-manage/api/theme-api';
+
+const MemberPage = lazy(() =>
+  import('@/features/membership/pages/member-page').then((m) => ({ default: m.MemberPage })),
+);
+
+/** 普通用户可用：默认主题、深海梦境。其余主题走会员解锁。 */
+const FREE_THEME_IDS = new Set(['theme-default', 'theme-deepsea']);
+
+function isMemberLockedTheme(preset: Pick<ThemePreset, 'id' | 'isDefault'>) {
+  return !preset.isDefault && !FREE_THEME_IDS.has(preset.id);
+}
 
 interface AppearanceDrawerProps {
   open: boolean;
@@ -50,10 +64,14 @@ export function AppearanceDrawer({ open, onOpenChange }: AppearanceDrawerProps) 
 export function AppearanceContent() {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
+  const { session } = useAuth();
   const { presets, activePreset, setActivePreset } = useThemePreset();
   const ensurePresets = useThemePresetStore((s) => s.ensurePresets);
+  const membership = useUserStore((s) => s.membership);
+  const [memberOpen, setMemberOpen] = useState(false);
 
   const { bgmEnabled, bgmVolume, setBgmEnabled, setBgmVolume } = usePreferencesStore();
+  const canUseAllThemes = session?.user?.role === 'admin' || membership?.level === 'admin' || !!membership?.isActive;
 
   // 打开主题选择器时才加载列表（缓存优先）
   useEffect(() => {
@@ -68,9 +86,13 @@ export function AppearanceContent() {
     system: t('profile.themeSystem'),
   };
 
-  const handleSelectPreset = async (id: string) => {
+  const handleSelectPreset = async (preset: ThemePreset) => {
+    if (!canUseAllThemes && isMemberLockedTheme(preset)) {
+      setMemberOpen(true);
+      return;
+    }
     try {
-      await setActivePreset(id);
+      await setActivePreset(preset.id);
     } catch {
       // 静默失败
     }
@@ -85,16 +107,20 @@ export function AppearanceContent() {
           {t('profile.immersiveTheme')}
         </p>
         <div className="grid grid-cols-2 gap-2">
-          {presets.map((preset) => (
-            <ThemePresetCard
-              key={preset.id}
-              name={preset.name}
-              isActive={activePreset?.id === preset.id}
-              onClick={() => handleSelectPreset(preset.id)}
-              lightBg={preset.lightBackground || undefined}
-              darkBg={preset.darkBackground || undefined}
-            />
-          ))}
+          {presets.map((preset) => {
+            const locked = !canUseAllThemes && isMemberLockedTheme(preset);
+            return (
+              <ThemePresetCard
+                key={preset.id}
+                name={preset.name}
+                isActive={activePreset?.id === preset.id}
+                locked={locked}
+                onClick={() => handleSelectPreset(preset)}
+                lightBg={preset.lightBackground || undefined}
+                darkBg={preset.darkBackground || undefined}
+              />
+            );
+          })}
         </div>
       </section>
 
@@ -176,6 +202,21 @@ export function AppearanceContent() {
         </div>
       </section>
 
+      <Drawer open={memberOpen} onOpenChange={setMemberOpen}>
+        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-0 bg-background">
+          <DrawerHeader className="px-4 pb-1 pt-2 text-left">
+            <DrawerTitle className="text-base font-semibold">{t('member.title')}</DrawerTitle>
+          </DrawerHeader>
+          <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+            {memberOpen && (
+              <Suspense fallback={<MobilePageLoading rows={4} />}>
+                <MemberPage compact />
+              </Suspense>
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
+
     </div>
   );
 }
@@ -185,12 +226,14 @@ export function AppearanceContent() {
 function ThemePresetCard({
   name,
   isActive,
+  locked,
   onClick,
   lightBg,
   darkBg,
 }: {
   name: string;
   isActive: boolean;
+  locked: boolean;
   onClick: () => void;
   lightBg?: string;
   darkBg?: string;
@@ -210,7 +253,7 @@ function ThemePresetCard({
       )}
     >
       {/* 双色预览 */}
-      <div className="flex h-10">
+      <div className={cn('flex h-10', locked && 'grayscale')}>
         <div
           className="flex-1"
           style={{
@@ -231,10 +274,14 @@ function ThemePresetCard({
 
       {/* 标签 */}
       <div className="flex items-center justify-center gap-1 px-1.5 py-1">
-        {isActive && <CheckCircle2 className="size-2.5 shrink-0 text-primary" />}
+        {locked ? (
+          <Lock className="size-3 shrink-0 text-muted-foreground" />
+        ) : isActive ? (
+          <CheckCircle2 className="size-2.5 shrink-0 text-primary" />
+        ) : null}
         <span className={cn(
           'truncate text-[10px] leading-tight',
-          isActive ? 'font-semibold text-primary' : 'text-muted-foreground',
+          locked ? 'text-muted-foreground' : isActive ? 'font-semibold text-primary' : 'text-muted-foreground',
         )}>
           {name}
         </span>

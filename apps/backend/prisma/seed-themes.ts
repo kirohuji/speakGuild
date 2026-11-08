@@ -342,10 +342,10 @@ export async function seedThemes(prisma: PrismaClient) {
       ],
     },
 
-    // ═══ 7. 小王子 · 星之旅 (sortOrder: 6, animation) ═══
+    // ═══ 7. 星之旅 (sortOrder: 6, animation) ═══
     {
       id: 'theme-little-prince',
-      name: '小王子 · 星之旅',
+      name: '星之旅',
       description: '金色麦田、玫瑰芬芳、星空下的漂流瓶——来自 B-612 小行星的问候',
       sortOrder: 6, isDefault: false, bgType: 'animation',
       lightColors: {

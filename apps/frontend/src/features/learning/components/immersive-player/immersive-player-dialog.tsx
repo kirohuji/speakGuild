@@ -33,7 +33,7 @@ import { MarkdownContent } from '@/features/system/components/markdown-content'
 import { buildPlaybackSegments } from './immersive-player.mapper'
 import { immersivePlaybackService, type ImmersivePlaybackVisualState } from './immersive-playback.service'
 import { useImmersivePlayerPreferences } from './immersive-player.store'
-import { IMMERSIVE_PAUSE_GAP_SECONDS, type ImmersivePlaybackSettings, type ImmersivePlayerItem, type ImmersivePlayerStatus, type PlaybackSegmentRole } from './immersive-player.types'
+import { IMMERSIVE_PAUSE_GAP_SECONDS, type ImmersivePlaybackSettings, type ImmersivePlayerItem, type ImmersivePlayerStatus } from './immersive-player.types'
 
 type ImmersivePlayerDialogProps = {
   open: boolean
@@ -54,13 +54,6 @@ const KIND_LABEL_KEY = {
   chunk: 'immersivePlayer.kind.chunk',
   pattern: 'immersivePlayer.kind.pattern',
 } satisfies Record<ImmersivePlayerItem['kind'], string>
-
-const SEGMENT_LABEL_KEY = {
-  main: 'immersivePlayer.segment.main',
-  meaning: 'immersivePlayer.segment.meaning',
-  example: 'immersivePlayer.segment.example',
-  exampleTranslation: 'immersivePlayer.segment.exampleTranslation',
-} satisfies Record<PlaybackSegmentRole, string>
 
 type GapWait = {
   remainingMs: number
@@ -156,7 +149,6 @@ export function ImmersivePlayerDialog({
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [queueOpen, setQueueOpen] = useState(false)
   const [status, setStatus] = useState<ImmersivePlayerStatus>('idle')
-  const [segmentRole, setSegmentRole] = useState<PlaybackSegmentRole | null>(null)
   const [insightExpanded, setInsightExpanded] = useState(false)
   const [visualPlayback, setVisualPlayback] = useState<ImmersivePlaybackVisualState>({ state: 'idle', media: null })
   const runRef = useRef(0)
@@ -245,7 +237,6 @@ export function ImmersivePlayerDialog({
     runRef.current += 1
     cancelGapWait()
     setPlaybackStatus(nextStatus)
-    setSegmentRole(null)
     await immersivePlaybackService.stopCurrent()
   }, [cancelGapWait, setPlaybackStatus])
 
@@ -267,7 +258,6 @@ export function ImmersivePlayerDialog({
         for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex += 1) {
           const segment = segments[segmentIndex]
           if (runRef.current !== runId) return
-          setSegmentRole(segment.role)
           setPlaybackStatus('loading')
           await immersivePlaybackService.playSegment(
             segment,
@@ -301,7 +291,6 @@ export function ImmersivePlayerDialog({
       )
 
       if (runRef.current !== runId) return
-      setSegmentRole(null)
       const latestSettings = useImmersivePlayerPreferences.getState().settings
       if (latestSettings.autoNext && (hasNext || latestSettings.loopQueue)) {
         if (!hasNext && latestSettings.loopQueue && items.length === 1) {
@@ -480,7 +469,6 @@ export function ImmersivePlayerDialog({
                   <div className="flex min-w-0 items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2">
                       <Badge variant="secondary" className="shrink-0">{t(KIND_LABEL_KEY[current.kind])}</Badge>
-                      {segmentRole && <Badge variant="outline" className="shrink-0 text-[10px]">{t(SEGMENT_LABEL_KEY[segmentRole])}</Badge>}
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5">
                       {settings.sleepTimerMinutes > 0 && (
@@ -686,11 +674,6 @@ function ImmersiveSettingsDrawer({
                   onChange={(value) => onChange({ pauseGapSeconds: value })}
                 />
                 <p className="text-[11px] leading-4 text-muted-foreground">{t('immersivePlayer.settings.pauseGapHint')}</p>
-              </div>
-            </OptionGroup>
-            <OptionGroup label={t('immersivePlayer.settings.playbackContent')}>
-              <div className="overflow-hidden rounded-lg bg-muted/35">
-                <SwitchRow label={t('immersivePlayer.settings.playMainText')} checked={settings.playMainText} onChange={(value) => onChange({ playMainText: value })} />
               </div>
             </OptionGroup>
             <OptionGroup label={t('immersivePlayer.settings.continuousPlayback')}>

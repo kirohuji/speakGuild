@@ -167,7 +167,7 @@ function TeachingToc({ rows, activeSectionIndex, onSelect, onToggle, className }
     if (sectionIndex !== undefined) tocItemRefs.current.get(sectionIndex)?.scrollIntoView({ block: 'nearest', behavior: 'auto' })
   }, [activeRowIndex, rows])
 
-  return <div className={cn('h-full overflow-y-auto overscroll-contain', className)}>
+  return <div className={cn('h-full overflow-y-auto overscroll-contain pt-2', className)}>
     {rows.map((row) => <div
       key={row.item.sectionIndex}
       ref={(element) => {

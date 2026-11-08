@@ -368,7 +368,7 @@ function WarmupRecordsContent() {
         isLoading={loading}
         emptyMessage={t('learning.noWarmupRecords')}
         onRowClick={setSelectedRecord}
-        className="min-h-0 flex-1 text-xs [&_td]:px-3 [&_td]:py-2 [&_th]:h-9 [&_th]:px-3"
+        className="min-h-0 flex-1 text-xs [&>div:first-child]:rounded-lg [&>div:first-child]:border-0 [&>div:first-child]:bg-muted/30 [&_td]:px-3 [&_td]:py-2 [&_th]:h-9 [&_th]:px-3 [&_tr]:border-0"
       />
       <Suspense fallback={null}>
         <WarmupRecordDetailDialog
@@ -578,7 +578,7 @@ function PracticeRecordsContent({ active }: { active: boolean }) {
         isLoading={isLoading}
         emptyMessage={t('profile.practiceRecords.empty')}
         onRowClick={setSelectedRecord}
-        className="min-h-0 flex-1"
+        className="min-h-0 flex-1 [&>div:first-child]:rounded-lg [&>div:first-child]:border-0 [&>div:first-child]:bg-muted/30 [&_tr]:border-0"
       />
       <PracticeRecordReadonlyReviewDrawer
         record={selectedRecord}

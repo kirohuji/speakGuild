@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import type { CreateThemePresetDto, UpdateThemePresetDto } from './dto/theme-preset.dto';
 import type { Prisma } from '@prisma/client';
@@ -7,6 +7,13 @@ type BgType = 'gradient' | 'image' | 'video' | 'animation';
 type BgAssets = { gradient?: string; image?: string; video?: string };
 
 const BG_PRIORITY: BgType[] = ['video', 'image', 'animation', 'gradient'];
+
+/** 普通用户可用的沉浸式主题：默认、深海梦境。其余需要会员。 */
+const FREE_THEME_IDS = new Set(['theme-default', 'theme-deepsea']);
+
+function isMemberLockedTheme(preset: { id: string; isDefault: boolean }) {
+  return !preset.isDefault && !FREE_THEME_IDS.has(preset.id);
+}
 
 function asAssets(value: unknown): BgAssets {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
@@ -220,15 +227,34 @@ export class ThemeManageService {
     return this.prisma.themePreset.delete({ where: { id } });
   }
 
+  /** 管理员和有效会员可以使用全部主题 */
+  private async canUseMemberThemes(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (user?.role === 'admin') return true;
+
+    const membership = await this.prisma.userMembership.findUnique({
+      where: { userId },
+      select: { status: true, expiredAt: true },
+    });
+    return membership?.status === 'active' && membership.expiredAt > new Date();
+  }
+
   /** 获取当前用户激活的主题 ID（轻量，仅返回 ID，前端从本地 presets 列表匹配完整数据） */
   async getUserThemeId(userId: string): Promise<{ id: string }> {
     const pref = await this.prisma.userPreference.findUnique({ where: { userId } });
     if (pref?.themePresetId) {
       const preset = await this.prisma.themePreset.findUnique({
         where: { id: pref.themePresetId },
-        select: { id: true, isActive: true },
+        select: { id: true, isActive: true, isDefault: true },
       });
-      if (preset?.isActive) return { id: preset.id };
+      if (preset?.isActive) {
+        if (!isMemberLockedTheme(preset) || await this.canUseMemberThemes(userId)) {
+          return { id: preset.id };
+        }
+      }
     }
     const def = await this.prisma.themePreset.findFirst({
       where: { isDefault: true, isActive: true },
@@ -250,6 +276,9 @@ export class ThemeManageService {
         where: { id: themePresetId },
       });
       if (!preset) throw new NotFoundException('主题不存在');
+      if (isMemberLockedTheme(preset) && !(await this.canUseMemberThemes(userId))) {
+        throw new ForbiddenException('该主题需要会员解锁');
+      }
     }
 
     return this.prisma.userPreference.upsert({

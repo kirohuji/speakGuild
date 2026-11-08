@@ -275,7 +275,7 @@ export function VocabOutputCard({
 
       {/* 回顾模式：直接展示参考答�?*/}
       {isReview && current.suggestedAnswer && (
-        <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-2.5">
+        <div className="rounded-lg border-0 bg-muted/30 px-3 py-2.5">
           <p className="text-[10px] text-muted-foreground mb-1">{t('practiceSession.warmupDrill.referenceAnswer')}</p>
           <p className="text-sm font-medium text-foreground">
             {highlightWords(current.suggestedAnswer, current.targetWords ?? [])}
