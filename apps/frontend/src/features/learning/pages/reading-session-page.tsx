@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookOpen, BookText, CheckCircle2, ChevronLeft, ChevronRight, ClipboardCheck, FileText, Layers, Loader2, MessageSquareText, RotateCcw, Search, Sparkles, Target, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, CheckCircle2, ChevronLeft, ChevronRight, ClipboardCheck, FileText, Layers, Loader2, RotateCcw, Search, Sparkles, Target, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
@@ -96,14 +96,14 @@ function ReadingPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }: 
           <div className="mb-3 flex items-end justify-between gap-3 px-1"><div><h2 className="text-base font-semibold">{t('learning.readingPrep')}</h2><p className="mt-0.5 text-xs text-muted-foreground">{t('learning.readingPrepHint')}</p></div><Badge variant="outline" className="rounded-full text-[11px]">{t('learning.supportCount', { count: supportCount })}</Badge></div>
           <Tabs defaultValue={visibleVocabularies.length > 0 ? 'vocab' : visibleChunks.length > 0 ? 'chunk' : 'pattern'} className="w-full" data-mobile-route-swipe>
             <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-              <TabsTrigger value="vocab" className="gap-1.5 rounded-md text-xs">
-                <BookText className="size-3.5" /> {t('learning.vocab')} {visibleVocabularies.length}
+              <TabsTrigger value="vocab" className="rounded-md text-xs">
+                {t('learning.vocab')} {visibleVocabularies.length}
               </TabsTrigger>
-              <TabsTrigger value="chunk" className="gap-1.5 rounded-md text-xs">
-                <MessageSquareText className="size-3.5" /> {t('learning.coreChunks')} {visibleChunks.length}
+              <TabsTrigger value="chunk" className="rounded-md text-xs">
+                {t('learning.coreChunks')} {visibleChunks.length}
               </TabsTrigger>
-              <TabsTrigger value="pattern" className="gap-1.5 rounded-md text-xs">
-                <Search className="size-3.5" /> {t('learning.patterns')} {visiblePatterns.length}
+              <TabsTrigger value="pattern" className="rounded-md text-xs">
+                {t('learning.patterns')} {visiblePatterns.length}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow><ReadingKnowledgeList icon={<Search className="size-4" />} items={visibleVocabularies.map((item) => ({ title: item.word, subtitle: item.meaning }))} tone="cyan" emptyText={t('learning.noTopicVocab')} /></TabsContent>

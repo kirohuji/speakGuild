@@ -283,7 +283,7 @@ export function LearningNotebooksPage() {
                   onChange={(event) => setName(event.target.value)}
                   maxLength={30}
                   autoFocus
-                  className="mt-2"
+                  className="mt-2 border-0 bg-muted/45 shadow-none"
                   placeholder={t('learningNotebooks.namePlaceholder')}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') void submitName()
@@ -291,7 +291,7 @@ export function LearningNotebooksPage() {
                 />
               </div>
               <DrawerFooter className="flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-                <Button variant="outline" className="flex-1" onClick={() => setMode(null)}>
+                <Button variant="secondary" className="flex-1 border-0 shadow-none" onClick={() => setMode(null)}>
                   {t('learningNotebooks.cancel')}
                 </Button>
                 <Button className="flex-1" onClick={() => void submitName()} disabled={submitting}>

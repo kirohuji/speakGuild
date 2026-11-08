@@ -1118,7 +1118,7 @@ export function ExpressionLibraryPage() {
           ) : batchCreatingNotebook ? (
             <div className="px-4">
               <Label htmlFor="new-notebook">{t('learningNotebooks.name')}</Label>
-              <Input id="new-notebook" value={newNotebookName} onChange={(event) => setNewNotebookName(event.target.value)} className="mt-2" maxLength={30} autoFocus placeholder={t('learningNotebooks.namePlaceholder')} />
+              <Input id="new-notebook" value={newNotebookName} onChange={(event) => setNewNotebookName(event.target.value)} className="mt-2 border-0 bg-muted/45 shadow-none" maxLength={30} autoFocus placeholder={t('learningNotebooks.namePlaceholder')} />
             </div>
           ) : (
             <div className="min-h-0 overflow-y-auto px-4">
@@ -1141,8 +1141,8 @@ export function ExpressionLibraryPage() {
           )}
           <DrawerFooter className="flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             <Button
-              variant="outline"
-              className="flex-1"
+              variant={batchCreatingNotebook ? 'secondary' : 'outline'}
+              className={cn('flex-1', batchCreatingNotebook && 'border-0 shadow-none')}
               onClick={() => batchCreatingNotebook ? setBatchCreatingNotebook(false) : batchAction ? setBatchAction(null) : setBatchOpen(false)}
             >
               {batchCreatingNotebook || batchAction ? t('learningNotebooks.back') : t('learningNotebooks.cancel')}

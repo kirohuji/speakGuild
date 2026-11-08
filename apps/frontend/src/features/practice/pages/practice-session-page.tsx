@@ -4,7 +4,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
   Lightbulb, CheckCircle2, ChevronRight,
-  BookText, MessageSquareText, Search, BookmarkPlus, History, Settings, ChevronDown,
+  BookText, Search, BookmarkPlus, History, Settings, ChevronDown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -942,7 +942,7 @@ export function PracticeSessionPage() {
 
   function renderPracticeButtons() {
     const warmupBtn = (
-      <Button className="flex-1 min-h-11" variant="outline" size="default" onClick={handleStartGuided} data-spotlight="start-guided-warmup">
+      <Button className="min-h-11 flex-1 border-0 shadow-none" variant="secondary" size="default" onClick={handleStartGuided} data-spotlight="start-guided-warmup">
         {t('practiceSession.startWarmup')}
       </Button>
     )
@@ -1072,14 +1072,14 @@ export function PracticeSessionPage() {
 
             <Tabs value={prepTab} onValueChange={handlePrepTabChange} className="w-full" data-mobile-route-swipe>
               <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-                <TabsTrigger value="vocab" className="gap-1.5 rounded-md text-xs">
-                  <BookText className="size-3.5" /> {t('learning.vocab')} {vocabTotal}
+                <TabsTrigger value="vocab" className="rounded-md text-xs">
+                  {t('learning.vocab')} {vocabTotal}
                 </TabsTrigger>
-                <TabsTrigger value="chunk" className="gap-1.5 rounded-md text-xs">
-                  <MessageSquareText className="size-3.5" /> {t('learning.coreChunks')} {chunkTotal}
+                <TabsTrigger value="chunk" className="rounded-md text-xs">
+                  {t('learning.coreChunks')} {chunkTotal}
                 </TabsTrigger>
-                <TabsTrigger value="pattern" className="gap-1.5 rounded-md text-xs">
-                  <Search className="size-3.5" /> {t('learning.patterns')} {patternTotal}
+                <TabsTrigger value="pattern" className="rounded-md text-xs">
+                  {t('learning.patterns')} {patternTotal}
                 </TabsTrigger>
               </TabsList>
 
@@ -1122,7 +1122,7 @@ export function PracticeSessionPage() {
                                   </div>
                                 )}
                                 <div className="flex gap-2 mt-2">
-                                  <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`word:${v.id}`)}>
+                                  <Button size="sm" variant="secondary" className="h-8 flex-1 gap-1.5 border-0 text-xs shadow-none" onClick={() => openInsight(`word:${v.id}`)}>
                                     <Search className="size-3.5" /> {t('learning.view')}
                                   </Button>
                                   <Button size="sm" variant={collectedTexts.has(v.word) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(v.word)} onClick={() => handleCollectWord(v.word, v.meaning)}>
@@ -1207,7 +1207,7 @@ export function PracticeSessionPage() {
                               <div className="px-3 pb-3 pt-2">
                                 {p.example && <p className="text-sm leading-6 text-muted-foreground">{t('practiceSession.example')}: {p.example}</p>}
                                 <div className="flex gap-2 mt-2">
-                                  <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={() => openInsight(`pattern:${absoluteIndex}`)}>
+                                  <Button size="sm" variant="secondary" className="h-8 flex-1 gap-1.5 border-0 text-xs shadow-none" onClick={() => openInsight(`pattern:${absoluteIndex}`)}>
                                     <Search className="size-3.5" /> {t('learning.view')}
                                   </Button>
                                   <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(p.pattern)} onClick={() => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })} data-spotlight="bookmark-btn">

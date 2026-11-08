@@ -57,7 +57,7 @@ export function NicknameEditDialog({
       }}
     >
       <DialogContent
-        className="w-[calc(100%-2rem)] max-w-sm rounded-2xl p-5 sm:p-6"
+        className="w-[calc(100%-2rem)] max-w-sm rounded-2xl border-0 p-5 shadow-none sm:p-6"
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
         <DialogHeader>
@@ -70,12 +70,13 @@ export function NicknameEditDialog({
             onChange={(e) => setName(e.target.value)}
             placeholder={t('profile.nicknamePlaceholder')}
             maxLength={20}
+            className="border-0 bg-muted/45 shadow-none"
           />
           <p className="text-right text-xs text-muted-foreground">{name.length}/20</p>
         </div>
-        <DialogFooter className="gap-2 sm:gap-2 sm:space-x-0">
-          <Button variant="outline" className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
-          <Button className="w-full sm:w-auto" onClick={handleSave} disabled={saving || !name.trim()}>
+        <DialogFooter className="flex-row justify-between gap-3 sm:justify-between sm:space-x-0">
+          <Button variant="secondary" className="min-w-0 flex-1 border-0 shadow-none" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+          <Button className="min-w-0 flex-1" onClick={handleSave} disabled={saving || !name.trim()}>
             {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
             {t('common.save')}
           </Button>

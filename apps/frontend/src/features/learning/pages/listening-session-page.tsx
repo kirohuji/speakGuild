@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, BookText, CheckCircle2, ChevronLeft, ChevronRight, Ear, Headphones, Info, Layers, Loader2, MessageSquareText, Mic, Pause, Play, RotateCcw, Search, Settings, Square, Target } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, Ear, Headphones, Info, Layers, Loader2, Mic, Pause, Play, RotateCcw, Search, Settings, Square, Target } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -143,14 +143,14 @@ function ListeningPreparePage({ topic, unitTitle, onBack, onOpenGuide, onStart }
           </div>
           <Tabs defaultValue={visibleVocabularies.length > 0 ? 'vocab' : visibleChunks.length > 0 ? 'chunk' : 'pattern'} className="w-full" data-mobile-route-swipe>
             <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-              <TabsTrigger value="vocab" className="gap-1.5 rounded-md text-xs">
-                <BookText className="size-3.5" /> {t('learning.vocab')} {visibleVocabularies.length}
+              <TabsTrigger value="vocab" className="rounded-md text-xs">
+                {t('learning.vocab')} {visibleVocabularies.length}
               </TabsTrigger>
-              <TabsTrigger value="chunk" className="gap-1.5 rounded-md text-xs">
-                <MessageSquareText className="size-3.5" /> {t('learning.coreChunks')} {visibleChunks.length}
+              <TabsTrigger value="chunk" className="rounded-md text-xs">
+                {t('learning.coreChunks')} {visibleChunks.length}
               </TabsTrigger>
-              <TabsTrigger value="pattern" className="gap-1.5 rounded-md text-xs">
-                <Search className="size-3.5" /> {t('learning.patterns')} {visiblePatterns.length}
+              <TabsTrigger value="pattern" className="rounded-md text-xs">
+                {t('learning.patterns')} {visiblePatterns.length}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow><ListeningKnowledgeList icon={<Search className="size-4" />} items={visibleVocabularies.map((item) => ({ title: item.word, subtitle: item.meaning }))} tone="cyan" emptyText={t('learning.noTopicVocab')} /></TabsContent>

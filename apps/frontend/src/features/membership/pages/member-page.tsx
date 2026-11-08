@@ -417,9 +417,9 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           <div className="grid grid-cols-2 gap-2">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="h-9 rounded-xl text-xs"
+              className="h-9 rounded-xl border-0 bg-primary/10 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary"
               onClick={handleRestorePurchases}
               disabled={subscriptionAction !== null}
             >
@@ -432,9 +432,9 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
             </Button>
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="h-9 rounded-xl text-xs"
+              className="h-9 rounded-xl border-0 bg-primary/10 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary"
               onClick={handleManageSubscription}
               disabled={subscriptionAction !== null}
             >
@@ -458,9 +458,9 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
               <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="rounded-xl"
+                  className="rounded-xl border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary"
                   onClick={handleRestorePurchases}
                   disabled={subscriptionAction !== null}
                 >
@@ -473,9 +473,9 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                 </Button>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="rounded-xl"
+                  className="rounded-xl border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary"
                   onClick={handleManageSubscription}
                   disabled={subscriptionAction !== null}
                 >

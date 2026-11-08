@@ -126,7 +126,7 @@ export function SaveToNotebookDrawer({
               placeholder={t('learningNotebooks.namePlaceholder')}
               maxLength={30}
               autoFocus
-              className="mt-2"
+              className="mt-2 border-0 bg-muted/45 shadow-none"
             />
           </div>
         ) : (
@@ -162,7 +162,7 @@ export function SaveToNotebookDrawer({
                   </button>
                 )
               })}
-              <Button type="button" variant="outline" className="justify-start" onClick={() => setCreating(true)}>
+              <Button type="button" variant="secondary" className="justify-start border-0 shadow-none" onClick={() => setCreating(true)}>
                 <Plus data-icon="inline-start" />
                 {t('learningNotebooks.createNew')}
               </Button>
@@ -173,7 +173,7 @@ export function SaveToNotebookDrawer({
         <DrawerFooter className="shrink-0 flex-row gap-3 bg-transparent pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3">
           {creating ? (
             <>
-              <Button variant="outline" className="flex-1" onClick={() => setCreating(false)}>
+              <Button variant="secondary" className="flex-1 border-0 shadow-none" onClick={() => setCreating(false)}>
                 {t('learningNotebooks.back')}
               </Button>
               <Button className="flex-1" onClick={() => void createNotebook()} disabled={submitting}>
@@ -182,7 +182,7 @@ export function SaveToNotebookDrawer({
             </>
           ) : (
             <>
-              <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+              <Button variant="secondary" className="flex-1 border-0 bg-secondary shadow-none hover:bg-secondary/80" onClick={() => onOpenChange(false)}>
                 {t('learningNotebooks.cancel')}
               </Button>
               <Button className="flex-1" onClick={() => void save()} disabled={submitting}>

@@ -133,7 +133,7 @@ function ChunkActivationItem({
             </div>
             ))}
             <div className="flex gap-2 pt-1">
-              <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={(e) => { e.stopPropagation(); onInspect() }}>
+              <Button size="sm" variant="secondary" className="h-8 flex-1 gap-1.5 border-0 text-xs shadow-none" onClick={(e) => { e.stopPropagation(); onInspect() }}>
                 <Search className="size-3.5" /> {t('learning.view')}
               </Button>
               <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={saving} onClick={collected ? onRemove : onCollect}>

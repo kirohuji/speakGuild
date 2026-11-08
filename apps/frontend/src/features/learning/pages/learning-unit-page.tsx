@@ -479,14 +479,14 @@ export function LearningUnitPage() {
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3" data-mobile-route-swipe>
           <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-            <TabsTrigger value="vocab" className="gap-1.5 rounded-md text-xs">
-              <BookText className="size-3.5" /> {t('learning.vocab')} {vocabTotal}
+            <TabsTrigger value="vocab" className="rounded-md text-xs">
+              {t('learning.vocab')} {vocabTotal}
             </TabsTrigger>
-            <TabsTrigger value="chunk" className="gap-1.5 rounded-md text-xs">
-              <MessageSquareText className="size-3.5" /> {t('learning.coreChunks')} {chunkTotal}
+            <TabsTrigger value="chunk" className="rounded-md text-xs">
+              {t('learning.coreChunks')} {chunkTotal}
             </TabsTrigger>
-            <TabsTrigger value="pattern" className="gap-1.5 rounded-md text-xs">
-              <Search className="size-3.5" /> {t('learning.patterns')} {patternTotal}
+            <TabsTrigger value="pattern" className="rounded-md text-xs">
+              {t('learning.patterns')} {patternTotal}
             </TabsTrigger>
           </TabsList>
 
@@ -835,7 +835,7 @@ function VocabPrepCard({
               </div>
             )}
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onOpen}>
+              <Button size="sm" variant="secondary" className="h-8 flex-1 gap-1.5 border-0 text-xs shadow-none" onClick={onOpen}>
                 <Search className="size-3.5" /> {t('learning.view')}
               </Button>
               <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={saving} onClick={handleClick} data-spotlight="bookmark-btn">
@@ -903,7 +903,7 @@ function ChunkPrepCard({
               </div>
             )}
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onOpen}>
+              <Button size="sm" variant="secondary" className="h-8 flex-1 gap-1.5 border-0 text-xs shadow-none" onClick={onOpen}>
                 <Search className="size-3.5" /> {t('learning.view')}
               </Button>
               <Button
@@ -979,7 +979,7 @@ function PatternPrepCard({
               </div>
             )}
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onOpen}>
+              <Button size="sm" variant="secondary" className="h-8 flex-1 gap-1.5 border-0 text-xs shadow-none" onClick={onOpen}>
                 <Search className="size-3.5" /> {t('learning.viewPattern')}
               </Button>
               <Button

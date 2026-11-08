@@ -295,14 +295,14 @@ function WritingPreparePage({
 
           <Tabs defaultValue={visibleVocabularies.length > 0 ? 'vocab' : visibleChunks.length > 0 ? 'chunk' : 'pattern'} className="w-full" data-mobile-route-swipe>
             <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-              <TabsTrigger value="vocab" className="gap-1.5 rounded-md text-xs">
-                <BookText className="size-3.5" /> {t('learning.vocab')} {visibleVocabularies.length}
+              <TabsTrigger value="vocab" className="rounded-md text-xs">
+                {t('learning.vocab')} {visibleVocabularies.length}
               </TabsTrigger>
-              <TabsTrigger value="chunk" className="gap-1.5 rounded-md text-xs">
-                <MessageSquareText className="size-3.5" /> {t('learning.coreChunks')} {visibleChunks.length}
+              <TabsTrigger value="chunk" className="rounded-md text-xs">
+                {t('learning.coreChunks')} {visibleChunks.length}
               </TabsTrigger>
-              <TabsTrigger value="pattern" className="gap-1.5 rounded-md text-xs">
-                <Search className="size-3.5" /> {t('learning.patterns')} {visiblePatterns.length}
+              <TabsTrigger value="pattern" className="rounded-md text-xs">
+                {t('learning.patterns')} {visiblePatterns.length}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow>
@@ -502,7 +502,7 @@ function WritingKnowledgeActions({
   const { t } = useTranslation()
   return (
     <div className="flex gap-2">
-      <Button size="sm" variant="outline" className="h-8 flex-1 gap-1.5 text-xs" onClick={onInspect}>
+      <Button size="sm" variant="secondary" className="h-8 flex-1 gap-1.5 border-0 text-xs shadow-none" onClick={onInspect}>
         <Search className="size-3.5" /> {t('learning.view')}
       </Button>
       <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" onClick={onCollect}>

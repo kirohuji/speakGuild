@@ -161,15 +161,16 @@ function NicknameEditDrawer({
             placeholder={t('account.nicknamePlaceholder')}
             maxLength={20}
             autoFocus
+            className="border-0 bg-muted/45 shadow-none"
           />
           <p className="mt-1.5 text-right text-[11px] text-muted-foreground">{name.length}/20</p>
         </div>
-        <DrawerFooter>
-          <Button onClick={handleSave} disabled={saving || !name.trim()}>
+        <DrawerFooter className="flex-row gap-3 bg-transparent">
+          <Button variant="secondary" className="flex-1 border-0 shadow-none" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
+          <Button className="flex-1" onClick={handleSave} disabled={saving || !name.trim()}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {t('common.save')}
           </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('common.cancel')}</Button>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

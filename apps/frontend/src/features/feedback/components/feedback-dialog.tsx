@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Send, Loader2, CheckCircle2, MessageSquare, Mail } from 'lucide-react'
+import { Send, Loader2, CheckCircle2, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -67,7 +67,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
               ? t('feedback.thanksLoggedIn', { defaultValue: '我们会认真查看您的反馈' })
               : t('feedback.thanksAnonymous', { defaultValue: '我们会在 3 个工作日内通过邮件回复您' })}
           </p>
-          <Button variant="outline" size="sm" className="mt-5" onClick={handleClose}>
+          <Button variant="secondary" size="sm" className="mt-5 border-0 shadow-none" onClick={handleClose}>
             {t('common.close', { defaultValue: '关闭' })}
           </Button>
         </div>
@@ -84,7 +84,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
                   {t('feedback.content', { defaultValue: '反馈内容' })} <span className="text-destructive">*</span>
                 </label>
                 <Textarea
-                  className="min-h-[120px] resize-none"
+                  className="min-h-[120px] resize-none border-0 bg-muted/45 shadow-none"
                   placeholder={t('feedback.contentPlaceholder', { defaultValue: '请描述您的意见或遇到的问题...' })}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -93,6 +93,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
               <div>
                 <label className="text-sm font-medium mb-1.5 block">{t('feedback.contactOptional', { defaultValue: '联系方式（选填）' })}</label>
                 <Input
+                  className="border-0 bg-muted/45 shadow-none"
                   placeholder={t('feedback.contactPlaceholder', { defaultValue: '邮箱或手机号，方便我们联系您' })}
                   value={contact}
                   onChange={(e) => setContact(e.target.value)}
@@ -108,7 +109,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    className="pl-10"
+                    className="border-0 bg-muted/45 pl-10 shadow-none"
                     type="email"
                     placeholder={t('feedback.emailPlaceholder', { defaultValue: '请输入您的邮箱地址，以便我们回复您' })}
                     value={email}
@@ -121,7 +122,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
                   {t('feedback.content', { defaultValue: '反馈内容' })} <span className="text-destructive">*</span>
                 </label>
                 <Textarea
-                  className="min-h-[120px] resize-none"
+                  className="min-h-[120px] resize-none border-0 bg-muted/45 shadow-none"
                   placeholder={t('feedback.contentPlaceholder', { defaultValue: '请描述您的意见或遇到的问题...' })}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
@@ -141,12 +142,11 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent
-        className="max-h-[calc(100dvh-2rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-2xl p-5 sm:p-6"
+        className="max-h-[calc(100dvh-2rem-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-2xl border-0 p-5 shadow-none sm:p-6"
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
+          <DialogTitle>
             {t('feedback.title', { defaultValue: '意见与反馈' })}
           </DialogTitle>
           {
