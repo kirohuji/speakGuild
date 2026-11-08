@@ -661,8 +661,8 @@ export function MobileSettingsView({ onNavigate }: { onNavigate?: (view: MobileV
           </DialogHeader>
           <DialogFooter className="flex-row justify-end gap-2 space-x-0">
             <Button
-              variant="outline"
-              className="flex-1 sm:flex-none"
+              variant="secondary"
+              className="flex-1 border-0 shadow-none sm:flex-none"
               onClick={() => setShowLogoutDialog(false)}
               disabled={logoutLoading}
             >
