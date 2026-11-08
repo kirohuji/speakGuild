@@ -92,8 +92,7 @@ export class AuthController {
 
   @Post('forgot-password')
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    // Better Auth 的 emailOTP 插件会处理 OTP 发送（开发环境打印到日志）
-    // 前端需要先调用 authClient.emailOtp.sendVerificationOtp 来触发 OTP 生成
+    // 真正发信在 Better Auth emailOTP → smtp-mailer。前端不走这个接口。
     return this.passwordService.sendResetOtp(dto.email);
   }
 

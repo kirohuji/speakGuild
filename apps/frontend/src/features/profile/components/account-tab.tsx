@@ -145,8 +145,8 @@ export function AccountTab({ desktop = false }: { desktop?: boolean }) {
     try {
       await sendEmailOtp(email)
       setVerificationSent(true)
-    } catch {
-      // ignore
+    } catch (error: any) {
+      setVerificationError(error?.message || t('auth.sendFailed'))
     } finally {
       setSendingVerification(false)
     }

@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { hashPassword } from 'better-auth/crypto';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
@@ -11,33 +12,39 @@ export class PasswordService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * 发送忘记密码 OTP
-   * 由 Better Auth 的 emailOTP 插件处理发送（开发环境打印到日志）
-   * 这里不需要额外操作，直接返回成功即可（前端已经调用了 authClient.emailOtp.sendVerificationOtp）
+   * 发送前确认邮箱已注册。未注册时 Better Auth 仍会返回成功且不发信，
+   * 这里明确告诉前端，避免页面看起来像已经发出验证码。
    */
   async sendResetOtp(email: string) {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const normalized = email.trim().toLowerCase();
+    const user = await this.prisma.user.findFirst({
+      where: { email: { equals: normalized, mode: 'insensitive' } },
+      select: { id: true },
+    });
     if (!user) {
-      // 不暴露用户是否存在，统一返回成功
-      return { message: '如果该邮箱已注册，验证码已发送' };
+      throw new NotFoundException({
+        code: 'EMAIL_NOT_REGISTERED',
+        message: '该邮箱尚未注册',
+      });
     }
-    return { message: '如果该邮箱已注册，验证码已发送' };
+    return { message: '邮箱已注册' };
   }
 
   /**
    * 通过 OTP 重置密码
-   * 前端调用 authClient.emailOtp.sendVerificationOtp({ email, type: 'forget-password' }) 发送 OTP
-   * 然后调用此接口验证 OTP 并更新密码
+   * 前端先调用 authClient.emailOtp.sendVerificationOtp({ email, type: 'forget-password' })
+   * 再调用此接口核对 verification 表中的 OTP 并更新密码
    */
   async resetPasswordByOtp(email: string, otp: string, newPassword: string) {
     if (!newPassword || newPassword.length < 8) {
       throw new BadRequestException('密码至少需要 8 位字符');
     }
 
-    // 从 verification 表查找有效的 OTP 记录
+    // Better Auth emailOTP 的 identifier 是 `forget-password-otp-<email>`，value 是 `<otp>:<attempts>`
+    const identifier = `forget-password-otp-${email}`;
     const verification = await this.prisma.verification.findFirst({
       where: {
-        identifier: email,
+        identifier,
         expiresAt: { gt: new Date() },
       },
       orderBy: { createdAt: 'desc' },
@@ -47,7 +54,18 @@ export class PasswordService {
       throw new BadRequestException('验证码已过期或不存在，请重新获取');
     }
 
-    if (verification.value !== otp) {
+    const separator = verification.value.lastIndexOf(':');
+    const storedOtp = separator === -1 ? verification.value : verification.value.slice(0, separator);
+    const attempts = separator === -1 ? 0 : Number(verification.value.slice(separator + 1));
+    if (Number.isFinite(attempts) && attempts >= 3) {
+      throw new BadRequestException('验证码错误次数过多，请重新获取');
+    }
+
+    if (storedOtp !== otp) {
+      await this.prisma.verification.update({
+        where: { id: verification.id },
+        data: { value: `${storedOtp}:${(Number.isFinite(attempts) ? attempts : 0) + 1}` },
+      });
       throw new BadRequestException('验证码错误');
     }
 
@@ -68,18 +86,16 @@ export class PasswordService {
       throw new BadRequestException('该账号使用第三方登录，无法重置密码');
     }
 
-    // 使用 bcrypt 哈希新密码
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    // 与登录校验同一套哈希（Better Auth 使用 scrypt，不能再用 bcrypt）
+    const hashedPassword = await hashPassword(newPassword);
 
-    // 更新密码并清理已使用的验证码
     await this.prisma.$transaction([
       this.prisma.account.update({
         where: { id: account.id },
         data: { password: hashedPassword },
       }),
       this.prisma.verification.deleteMany({
-        where: { identifier: email },
+        where: { identifier },
       }),
     ]);
 

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Gift, Loader2 } from 'lucide-react'
@@ -28,7 +28,14 @@ export function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [success, setSuccess] = useState(false)
+  const [registered, setRegistered] = useState(false)
   const referralCode = referralInput.trim().toUpperCase()
+
+  useEffect(() => {
+    if (!registered) return
+    const timer = window.setTimeout(() => navigate('/profile'), 3000)
+    return () => window.clearTimeout(timer)
+  }, [registered, navigate])
 
   const validate = () => {
     if (!name.trim()) { setSuccess(false); setMessage(t('auth.enterName')); return false }
@@ -44,17 +51,12 @@ export function RegisterPage() {
       setLoading(true)
       setMessage('')
       await signUpWithEmailPassword(email, password, name.trim())
-      const grants: string[] = []
-      const promoResult = await claimPromoTrial().catch(() => null)
-      if (promoResult?.granted && promoResult.days) {
-        grants.push(t('auth.newUserDays', { days: promoResult.days }))
-      }
+      await claimPromoTrial().catch(() => null)
       if (referralCode) {
         await applyReferral(referralCode).catch(() => null)
       }
-      setMessage(grants.length > 0 ? t('auth.registerSuccessWithGrant', { grants: grants.join('、') }) : t('auth.registerSuccess'))
       setSuccess(true)
-      setTimeout(() => navigate('/profile'), 1200)
+      setRegistered(true)
     } catch (error: any) {
       setSuccess(false)
       setMessage(error?.response?.data?.message || error?.message || t('auth.registerFailed'))
@@ -87,6 +89,12 @@ export function RegisterPage() {
         </p>
       )}
     >
+      {registered ? (
+        <div className="flex flex-col gap-2 py-6 text-center">
+          <p className="text-base font-semibold text-foreground">{t('auth.registerSuccess')}</p>
+          <p className="text-xs leading-5 text-muted-foreground">{t('auth.registerRedirectHint')}</p>
+        </div>
+      ) : (
       <div className="space-y-4">
             <div className="space-y-1.5">
               <Label className={authLabelClassName}>{t('auth.userName')}</Label>
@@ -202,6 +210,7 @@ export function RegisterPage() {
               <Link to="/system/privacy" className="mx-1 font-medium text-primary hover:underline">{t('auth.privacyPolicy')}</Link>
             </p>
       </div>
+      )}
     </AuthPageShell>
   )
 }

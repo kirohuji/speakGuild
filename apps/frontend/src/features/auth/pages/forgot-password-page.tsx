@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
-import { Loader2, CheckCircle2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -39,7 +39,11 @@ export function ForgotPasswordPage() {
       setMessage(t('auth.otpSent'))
     } catch (error: any) {
       setSuccess(false)
-      setMessage(error?.response?.data?.message || error?.message || t('auth.sendFailed'))
+      setMessage(
+        error?.apiCode === 'EMAIL_NOT_REGISTERED'
+          ? t('auth.emailNotRegistered')
+          : error?.response?.data?.message || error?.message || t('auth.sendFailed'),
+      )
     } finally {
       setLoading(false)
     }
@@ -75,17 +79,8 @@ export function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <AuthPageShell
-        description={t('auth.otpSentHint')}
-        className="pb-20"
-      >
-        <div className="space-y-4">
-              <div className="text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-success/10">
-                  <CheckCircle2 className="h-6 w-6 text-success" />
-                </div>
-              </div>
-
+      <AuthPageShell className="pb-20">
+        <div className="flex flex-col gap-4">
               <div className="space-y-1.5">
                 <Label className={authLabelClassName}>{t('auth.emailPlaceholder')}</Label>
                 <Input value={email} disabled className={cn(authInputClassName, 'opacity-60')} />
@@ -126,11 +121,19 @@ export function ForgotPasswordPage() {
 
               <button
                 type="button"
-                onClick={() => setSent(false)}
+                onClick={() => {
+                  setSent(false)
+                  setSuccess(false)
+                  setMessage('')
+                }}
                 className="w-full rounded-xl py-1 text-center text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
               >
                 {t('auth.resendOtp')}
               </button>
+
+              <p className="text-center text-xs leading-5 text-muted-foreground">
+                {t('auth.otpSentHint')}
+              </p>
 
               {message && (
                 <p className={cn(

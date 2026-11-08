@@ -10,11 +10,19 @@ export async function signUpWithEmailPassword(email: string, password: string, n
   return authClient.signUp.email({ email, password, name })
 }
 
+function throwIfAuthError(result: { error?: { message?: string } | null }, fallback: string) {
+  if (result?.error) {
+    throw new Error(result.error.message || fallback)
+  }
+  return result
+}
+
 export async function sendEmailOtp(email: string) {
-  return authClient.emailOtp.sendVerificationOtp({
+  const result = await authClient.emailOtp.sendVerificationOtp({
     email,
     type: 'email-verification',
   })
+  return throwIfAuthError(result, '验证码发送失败')
 }
 
 export async function verifyEmailOtp(email: string, otp: string) {
@@ -143,14 +151,21 @@ export async function revokeOtherSessions(): Promise<{ revoked: number }> {
 // ─── 忘记密码 ──────────────────────────────────────────────────
 
 export async function sendForgotPasswordOtp(email: string) {
-  return authClient.emailOtp.sendVerificationOtp({
+  await post('/auth/forgot-password', { email })
+  const result = await authClient.emailOtp.sendVerificationOtp({
     email,
     type: 'forget-password',
   })
+  return throwIfAuthError(result, '验证码发送失败')
 }
 
 export async function resetPasswordByOtp(email: string, otp: string, newPassword: string) {
-  return post('/auth/reset-password', { email, otp, newPassword })
+  const result = await authClient.emailOtp.resetPassword({
+    email,
+    otp,
+    password: newPassword,
+  })
+  return throwIfAuthError(result, '重置失败，请检查验证码')
 }
 
 // ─── 新人推广试用 ───────────────────────────────────────────────

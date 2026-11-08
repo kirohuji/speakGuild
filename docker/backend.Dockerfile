@@ -20,6 +20,8 @@ FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+# 邮箱验证码在容器运行时读取，不打进镜像。由 docker-compose 注入：
+# SMTP_HOST SMTP_PORT SMTP_SECURE SMTP_USER SMTP_PASS SMTP_FROM
 ARG NPM_REGISTRY=https://registry.npmmirror.com
 
 RUN apt-get update && apt-get install -y --no-install-recommends \

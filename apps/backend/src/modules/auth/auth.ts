@@ -4,6 +4,7 @@ import { bearer, emailOTP, phoneNumber } from 'better-auth/plugins';
 import { importPKCS8, SignJWT } from 'jose';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { TencentSmsService } from './sms/tencent-sms.service';
+import { sendVerificationEmail } from './email/smtp-mailer';
 
 const prisma = new PrismaService();
 const smsService = new TencentSmsService();
@@ -115,8 +116,10 @@ export const auth: any = betterAuth({
   plugins: [
     bearer(),
     emailOTP({
+      otpLength: 6,
+      expiresIn: 300,
       async sendVerificationOTP({ email, otp, type }) {
-        console.log(`[DEV-MOCK][Email OTP][${type}] email=${email} otp=${otp}`);
+        await sendVerificationEmail({ email, otp, type });
       },
     }),
     phoneNumber({
