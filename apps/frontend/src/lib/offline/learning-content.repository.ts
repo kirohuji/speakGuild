@@ -6,13 +6,107 @@ function includesText(value: unknown, query: string) {
   return typeof value === 'string' && value.toLowerCase().includes(query.toLowerCase())
 }
 
+function richerContent(current: any, incoming: any) {
+  if (!incoming) return current ?? null
+  if (!current) return incoming
+  return contentScore(incoming) > contentScore(current) ? incoming : current
+}
+
+function indexPackContent(items: any[], textField: string) {
+  const byId = new Map<string, any>()
+  const byText = new Map<string, any>()
+  for (const item of items) {
+    const id = String(item?.id ?? '')
+    const text = normalizeIndexText(item?.[textField])
+    if (id) byId.set(id, richerContent(byId.get(id), item))
+    if (text) byText.set(text, richerContent(byText.get(text), item))
+  }
+  return { byId, byText }
+}
+
 function uniqueById<T extends { id: string }>(items: T[]) {
-  return Array.from(new Map(items.map((item) => [item.id, item])).values())
+  const map = new Map<string, T>()
+  for (const item of items) {
+    const existing = map.get(item.id)
+    map.set(item.id, existing && contentScore(existing) > contentScore(item) ? existing : item)
+  }
+  return [...map.values()]
 }
 
 function normalizeIndexText(value: unknown) {
   return String(value ?? '').trim().toLowerCase()
 }
+
+function hasText(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
+function hasExamples(value: unknown) {
+  if (hasText(value)) return true
+  return Array.isArray(value) && value.length > 0
+}
+
+function bareContentId(value: unknown) {
+  return String(value ?? '').trim().replace(/^(word|chunk|pattern):/, '')
+}
+
+function contentScore(snapshot: unknown) {
+  if (!snapshot || typeof snapshot !== 'object') return 0
+  const record = snapshot as Record<string, unknown>
+  let score = 0
+  if (hasText(record.meaning)) score += 2
+  if (hasText(record.description)) score += 2
+  if (hasText(record.definitionEn)) score += 1
+  if (hasText(record.example)) score += 2
+  if (hasExamples(record.examples)) score += 4 + (Array.isArray(record.examples) ? record.examples.length : 1)
+  if (hasText(record.phoneticUs) || hasText(record.phoneticUk)) score += 1
+  if (hasText(record.audioUsUrl) || hasText(record.audioUkUrl)) score += 1
+  return score
+}
+
+const SNAPSHOT_FIELDS = [
+  'word', 'text', 'pattern', 'meaning', 'description', 'definitionEn', 'partOfSpeech',
+  'phoneticUs', 'phoneticUk', 'audioUsUrl', 'audioUkUrl', 'difficulty', 'example', 'slots',
+] as const
+
+/** 以更完整的一份为底，只用另一份补上仍为空的释义、例句和发音。 */
+function mergeContentSnapshot(current: any, incoming: any) {
+  if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) return current ?? null
+  if (!current || typeof current !== 'object' || Array.isArray(current)) return { ...incoming }
+  const [base, extra] = contentScore(incoming) > contentScore(current) ? [incoming, current] : [current, incoming]
+  const merged = { ...base }
+  for (const field of SNAPSHOT_FIELDS) {
+    if (!hasText(merged[field]) && hasText(extra[field])) merged[field] = extra[field]
+  }
+  if (!hasExamples(merged.examples) && hasExamples(extra.examples)) merged.examples = extra.examples
+  if ((!Array.isArray(merged.synonyms) || merged.synonyms.length === 0) && Array.isArray(extra.synonyms) && extra.synonyms.length > 0) {
+    merged.synonyms = extra.synonyms
+  }
+  return merged
+}
+
+function keepText(next?: string | null, previous?: string | null) {
+  return hasText(next) ? next : (hasText(previous) ? previous : (next ?? previous ?? null))
+}
+
+function installedContentBody(row: any) {
+  let body = row?.data && typeof row.data === 'object' ? row.data : row
+  if (
+    body?.data && typeof body.data === 'object'
+    && !hasText(body.meaning) && !hasExamples(body.examples) && !hasText(body.text) && !hasText(body.pattern)
+  ) {
+    body = body.data
+  }
+  return body && typeof body === 'object' ? { ...body, id: row?.id ?? body.id } : null
+}
+
+const INSTALLED_CONTENT_TABLE = {
+  word: 'offline_vocabularies',
+  chunk: 'offline_chunks',
+  pattern: 'offline_patterns',
+} as const
+
+const INSTALLED_TEXT_FIELD = { word: 'word', chunk: 'text', pattern: 'pattern' } as const
 
 function patternId(item: any) {
   return String(item?.id ?? item?.pattern ?? item?.text ?? '').trim()
@@ -155,13 +249,14 @@ function remoteExpressionToEntry(item: any): ExpressionEntry | null {
     : String(item.chunkText ?? item.pattern ?? item.original ?? '').trim()
   if (!text) return null
 
-  // 保留远程返回的完整内容数据：word→vocabulary, chunk→contentData, pattern→contentData。
-  const vocabSnapshot = item.vocabulary ?? item.contentData ?? item.sourceSnapshot
+  // 词库行、内容详情和收藏时保存的 sourceSnapshot 各自可能缺字段，合并后保留更完整的一份。
+  const vocabSnapshot = [item.sourceSnapshot, item.contentData, item.vocabulary]
+    .reduce((snapshot, candidate) => mergeContentSnapshot(snapshot, candidate), null)
 
   const entry = makeEntry({
     kind,
     text,
-    meaning: kind === 'word' ? item.chunkText : item.original,
+    meaning: kind === 'word' ? keepText(item.chunkText, vocabSnapshot?.meaning) : item.original,
     corrected: item.corrected,
     sceneName: item.sceneName,
     contentSnapshot: vocabSnapshot,
@@ -195,20 +290,25 @@ function createPayload(entry: ExpressionEntry) {
     sourceSnapshot: entry.sourceSnapshot,
   }
   if (entry.kind === 'word') {
-    return { word: entry.original ?? '', addedAt: new Date().toISOString(), ...source }
+    return {
+      word: entry.original ?? '',
+      meaning: keepText(entry.chunkText, entry.contentSnapshot?.meaning) ?? '',
+      addedAt: new Date().toISOString(),
+      ...source,
+    }
   }
   if (entry.kind === 'pattern') {
     return {
       pattern: entry.chunkText ?? '',
-      meaning: entry.original,
-      example: entry.corrected,
+      meaning: keepText(entry.original, entry.contentSnapshot?.meaning),
+      example: keepText(entry.corrected, entry.contentSnapshot?.example),
       sceneName: entry.sceneName,
       ...source,
     }
   }
   return {
     chunkText: entry.chunkText ?? '',
-    original: entry.original,
+    original: keepText(entry.original, entry.contentSnapshot?.meaning),
     sceneName: entry.sceneName,
     ...source,
   }
@@ -223,7 +323,7 @@ function createRequest(entry: ExpressionEntry) {
   if (entry.kind === 'word') {
     return {
       type: 'word' as const,
-      chunkText: entry.chunkText ?? '',
+      chunkText: keepText(entry.chunkText, entry.contentSnapshot?.meaning) ?? '',
       original: entry.original ?? '',
       sceneName: entry.sceneName ?? undefined,
       ...source,
@@ -233,8 +333,8 @@ function createRequest(entry: ExpressionEntry) {
     return {
       type: 'scene_phrase' as const,
       chunkText: entry.chunkText ?? '',
-      corrected: entry.corrected ?? entry.chunkText ?? '',
-      original: entry.original ?? '',
+      corrected: keepText(entry.corrected, entry.contentSnapshot?.example) ?? entry.chunkText ?? '',
+      original: keepText(entry.original, entry.contentSnapshot?.meaning) ?? '',
       sceneName: entry.sceneName ?? undefined,
       ...source,
     }
@@ -243,7 +343,7 @@ function createRequest(entry: ExpressionEntry) {
     type: 'chunk' as const,
     chunkText: entry.chunkText ?? '',
     corrected: entry.corrected ?? entry.chunkText ?? '',
-    original: entry.original ?? '',
+    original: keepText(entry.original, entry.contentSnapshot?.meaning) ?? '',
     sceneName: entry.sceneName ?? undefined,
     ...source,
   }
@@ -354,15 +454,40 @@ export const learningContentRepository = {
 
     // 收藏按稳定的内容 ID 跟随已安装学习包的新版内容。
     const sourceItems = new Map<string, any>()
-    for (const item of vocabById.values()) sourceItems.set(`word:${item.id}`, item)
-    for (const item of chunkById.values()) sourceItems.set(`chunk:${item.id}`, item)
-    for (const item of patternById.values()) sourceItems.set(`pattern:${item.id}`, item)
+    const sourceByText = new Map<string, any>()
+    const remember = (kind: ExpressionEntryKind, item: any, text: unknown) => {
+      const id = bareContentId(item?.id)
+      if (id) sourceItems.set(`${kind}:${id}`, richerContent(sourceItems.get(`${kind}:${id}`), item))
+      const normalized = normalizeIndexText(text)
+      if (normalized) sourceByText.set(`${kind}:${normalized}`, richerContent(sourceByText.get(`${kind}:${normalized}`), item))
+    }
+    for (const item of vocabById.values()) remember('word', item, item.word ?? item.text)
+    for (const item of chunkById.values()) remember('chunk', item, item.text)
+    for (const item of patternById.values()) remember('pattern', item, item.pattern ?? item.text)
     const entries = await localDb.list<ExpressionEntry>('expression_entries')
     const refreshed = entries
       .map((entry) => {
-        const snapshot = sourceItems.get(`${entry.kind}:${entry.sourceId}`)
-        return snapshot
-          ? { ...entry, contentSnapshot: snapshot, sourceSnapshot: snapshot, updatedAt: now }
+        const sourceId = bareContentId(entry.sourceId) || bareContentId(entry.contentSnapshot?.id)
+        const snapshot = richerContent(
+          sourceId ? sourceItems.get(`${entry.kind}:${sourceId}`) : null,
+          sourceByText.get(`${entry.kind}:${normalizeIndexText(expressionText(entry))}`),
+        )
+        if (!snapshot) return null
+        const contentSnapshot = mergeContentSnapshot(entry.contentSnapshot, snapshot)
+        const chunkText = entry.kind === 'word' ? keepText(entry.chunkText, contentSnapshot?.meaning) : entry.chunkText
+        const original = entry.kind === 'word' ? entry.original : keepText(entry.original, contentSnapshot?.meaning)
+        const improved = contentScore(contentSnapshot) > contentScore(entry.contentSnapshot)
+          || chunkText !== entry.chunkText
+          || original !== entry.original
+        return improved
+          ? {
+              ...entry,
+              contentSnapshot,
+              sourceSnapshot: mergeContentSnapshot(entry.sourceSnapshot, snapshot),
+              chunkText,
+              original,
+              updatedAt: now,
+            }
           : null
       })
       .filter(Boolean) as ExpressionEntry[]
@@ -414,14 +539,80 @@ export const learningContentRepository = {
   /** 从已下载的学习包中提取词汇数据 */
   async _getAllVocabularies(): Promise<any[]> {
     const indexed = await localDb.list<any>('offline_vocabularies')
-    return indexed.map((item) => ({ ...item.data, id: item.id }))
+    return indexed.map((item) => installedContentBody(item)).filter(Boolean)
   },
 
   async getVocabulary(wordOrId: string): Promise<any | null> {
     const localExpression = await this.getExpressionByText('word', wordOrId)
-    if (localExpression?.contentSnapshot) return localExpression.contentSnapshot
-    const all = await this._getAllVocabularies()
-    return all.find((item) => item.id === wordOrId || item.word?.toLowerCase() === wordOrId.toLowerCase()) ?? null
+    const pack = await this.findInstalledContent('word', localExpression?.sourceId || wordOrId, localExpression?.original || wordOrId)
+    return mergeContentSnapshot(localExpression?.contentSnapshot, pack)
+  },
+
+  /**
+   * 学习库只保存收藏关系。展示时从已下载学习包补齐释义、例句和发音，
+   * 和播放时从学习包取出音频是同一条路，不改写收藏记录。
+   */
+  async hydrateExpressionSnapshots<T extends ExpressionEntry>(entries: T[]): Promise<T[]> {
+    if (entries.length === 0) return entries
+    const wanted = {
+      word: { ids: new Set<string>(), texts: new Set<string>() },
+      chunk: { ids: new Set<string>(), texts: new Set<string>() },
+      pattern: { ids: new Set<string>(), texts: new Set<string>() },
+    }
+    for (const entry of entries) {
+      const id = bareContentId(entry.sourceId) || bareContentId(entry.contentSnapshot?.id)
+      const text = normalizeIndexText(expressionText(entry))
+      if (id) wanted[entry.kind].ids.add(id)
+      if (text) wanted[entry.kind].texts.add(text)
+    }
+
+    const loaded = await Promise.all((['word', 'chunk', 'pattern'] as const).map(async (kind) => {
+      const request = wanted[kind]
+      const byId = new Map<string, any>()
+      const byText = new Map<string, any>()
+      if (request.ids.size === 0 && request.texts.size === 0) return { byId, byText }
+      const [idRows, textRows] = await Promise.all([
+        request.ids.size > 0 ? localDb.findByIndexIn<any>(INSTALLED_CONTENT_TABLE[kind], 'id', [...request.ids]) : Promise.resolve([]),
+        request.texts.size > 0 ? localDb.findByIndexIn<any>(INSTALLED_CONTENT_TABLE[kind], 'normalized_text', [...request.texts]) : Promise.resolve([]),
+      ])
+      for (const row of [...idRows, ...textRows]) {
+        const body = installedContentBody(row)
+        if (!body) continue
+        const id = bareContentId(row?.id ?? body.id)
+        const text = normalizeIndexText(body[INSTALLED_TEXT_FIELD[kind]] ?? row?.[INSTALLED_TEXT_FIELD[kind]] ?? row?.normalizedText)
+        if (id) byId.set(id, richerContent(byId.get(id), body))
+        if (text) byText.set(text, richerContent(byText.get(text), body))
+      }
+      return { byId, byText }
+    }))
+    const packByKind = { word: loaded[0]!, chunk: loaded[1]!, pattern: loaded[2]! }
+
+    return entries.map((entry) => {
+      const packs = packByKind[entry.kind]
+      const id = bareContentId(entry.sourceId) || bareContentId(entry.contentSnapshot?.id)
+      const text = normalizeIndexText(expressionText(entry))
+      const pack = richerContent(id ? packs.byId.get(id) : null, text ? packs.byText.get(text) : null)
+      if (!pack) return entry
+      const contentSnapshot = mergeContentSnapshot(entry.contentSnapshot, pack)
+      return {
+        ...entry,
+        contentSnapshot,
+        chunkText: entry.kind === 'word' ? keepText(entry.chunkText, contentSnapshot?.meaning) : entry.chunkText,
+        original: entry.kind === 'word' ? entry.original : keepText(entry.original, contentSnapshot?.meaning),
+      }
+    })
+  },
+
+  async findInstalledContent(kind: ExpressionEntryKind, sourceId?: string | null, text?: string | null): Promise<any | null> {
+    const id = bareContentId(sourceId)
+    const normalized = normalizeIndexText(text)
+    const [idRows, textRows] = await Promise.all([
+      id ? localDb.findByIndexIn<any>(INSTALLED_CONTENT_TABLE[kind], 'id', [id]) : Promise.resolve([]),
+      normalized ? localDb.findByIndex<any>(INSTALLED_CONTENT_TABLE[kind], 'normalized_text', normalized) : Promise.resolve([]),
+    ])
+    return [...idRows, ...textRows]
+      .map((row) => installedContentBody(row))
+      .reduce((best, body) => richerContent(best, body), null)
   },
 
   async searchVocabulary(query: string): Promise<any[]> {
@@ -434,7 +625,12 @@ export const learningContentRepository = {
         sceneName: entry.sceneName,
       })
     const all = await this._getAllVocabularies()
-    return uniqueById([...expressions, ...all]).filter((item) =>
+    const { byId: packById, byText: packByText } = indexPackContent(all, 'word')
+    const merged = expressions.map((item) => mergeContentSnapshot(
+      item,
+      packById.get(bareContentId(item.id)) ?? packByText.get(normalizeIndexText(item.word)),
+    ))
+    return uniqueById([...merged, ...all]).filter((item) =>
       includesText(item.word, query) ||
       includesText(item.meaning, query) ||
       includesText(item.definitionEn, query),
@@ -457,11 +653,8 @@ export const learningContentRepository = {
 
   async getChunk(chunkId: string): Promise<any | null> {
     const localExpression = await this.getExpressionByText('chunk', chunkId)
-    if (localExpression?.contentSnapshot) return localExpression.contentSnapshot
-    const indexed = await localDb.get<any>('offline_chunks', chunkId)
-    if (!indexed) return null
-    const body = indexed.data && typeof indexed.data === 'object' ? indexed.data : indexed
-    return { ...body, id: indexed.id ?? chunkId }
+    const pack = await this.findInstalledContent('chunk', localExpression?.sourceId || chunkId, localExpression?.chunkText || chunkId)
+    return mergeContentSnapshot(localExpression?.contentSnapshot, pack)
   },
 
   async searchChunks(query: string): Promise<any[]> {
@@ -474,8 +667,13 @@ export const learningContentRepository = {
         sceneName: entry.sceneName,
       })
     const indexed = await localDb.list<any>('offline_chunks')
-    const all = indexed.map((item) => ({ ...item.data, id: item.id }))
-    return uniqueById([...expressions, ...all]).filter((item) =>
+    const all = indexed.map((item) => installedContentBody(item)).filter(Boolean)
+    const { byId: packById, byText: packByText } = indexPackContent(all, 'text')
+    const merged = expressions.map((item) => mergeContentSnapshot(
+      item,
+      packById.get(bareContentId(item.id)) ?? packByText.get(normalizeIndexText(item.text)),
+    ))
+    return uniqueById([...merged, ...all]).filter((item) =>
       includesText(item.text, query) ||
       includesText(item.meaning, query) ||
       includesText(item.description, query),
@@ -492,8 +690,13 @@ export const learningContentRepository = {
         sceneName: entry.sceneName,
       })
     const indexed = await localDb.list<any>('offline_patterns')
-    const all = indexed.map((item) => ({ ...item.data, id: item.id }))
-    return uniqueById([...expressions, ...all]).filter((item) =>
+    const all = indexed.map((item) => installedContentBody(item)).filter(Boolean)
+    const { byId: packById, byText: packByText } = indexPackContent(all, 'pattern')
+    const merged = expressions.map((item) => mergeContentSnapshot(
+      item,
+      packById.get(bareContentId(item.id)) ?? packByText.get(normalizeIndexText(item.pattern)),
+    ))
+    return uniqueById([...merged, ...all]).filter((item) =>
       includesText(item.pattern, query) ||
       includesText(item.meaning, query) ||
       includesText(item.example, query),
@@ -508,7 +711,11 @@ export const learningContentRepository = {
       ...next,
       remoteId: next.remoteId ?? existing?.remoteId ?? null,
       syncStatus: next.syncStatus ?? existing?.syncStatus ?? 'pending',
-      contentSnapshot: next.contentSnapshot ?? existing?.contentSnapshot,
+      original: keepText(next.original, existing?.original),
+      corrected: keepText(next.corrected, existing?.corrected),
+      chunkText: keepText(next.chunkText, existing?.chunkText),
+      contentSnapshot: mergeContentSnapshot(existing?.contentSnapshot, next.contentSnapshot),
+      sourceSnapshot: mergeContentSnapshot(existing?.sourceSnapshot, next.sourceSnapshot),
       createdAt: existing?.createdAt ?? next.createdAt,
       updatedAt: new Date().toISOString(),
     }
@@ -562,11 +769,15 @@ export const learningContentRepository = {
     const next = remoteExpressionToEntry(item)
     if (!next) return null
     const existing = await localDb.get<ExpressionEntry>('expression_entries', next.id)
-    // 远程数据优先（尤其是 contentSnapshot），本地只作为兜底
+    const contentSnapshot = mergeContentSnapshot(existing?.contentSnapshot, next.contentSnapshot)
     const entry: ExpressionEntry = {
       ...existing,
       ...next,
-      contentSnapshot: next.contentSnapshot ?? existing?.contentSnapshot,
+      original: keepText(next.original, existing?.original),
+      corrected: keepText(next.corrected, existing?.corrected),
+      chunkText: keepText(next.chunkText, existing?.chunkText),
+      contentSnapshot,
+      sourceSnapshot: mergeContentSnapshot(existing?.sourceSnapshot, next.sourceSnapshot),
       createdAt: existing?.createdAt ?? next.createdAt,
       updatedAt: next.updatedAt,
       syncStatus: 'synced',

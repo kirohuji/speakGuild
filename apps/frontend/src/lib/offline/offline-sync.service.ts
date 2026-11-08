@@ -476,7 +476,7 @@ async function replayItem(
       const created = await expressionApi.create({
         type: 'word',
         original: word,
-        chunkText: '',
+        chunkText: payload.meaning || payload.chunkText || '',
         notebookIds: payload.notebookIds,
         sourceType: payload.sourceType,
         sourceId: payload.sourceId,

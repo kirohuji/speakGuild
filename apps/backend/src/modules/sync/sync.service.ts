@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { hasContentText, keepRicher, looksLikeContentSnapshot, mergeContentSnapshots } from '../../common/content-snapshot';
 
 interface OutboxItem {
   id?: string;
@@ -14,12 +16,22 @@ interface OutboxItem {
 export class SyncService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private expressionSourceFields(payload: any) {
+  private expressionSourceFields(payload: any, existingSnapshot?: unknown) {
+    const incoming = payload?.sourceSnapshot;
     return {
       ...(payload?.sourceType !== undefined ? { sourceType: payload.sourceType || null } : {}),
       ...(payload?.sourceId !== undefined ? { sourceId: payload.sourceId || null } : {}),
-      ...(payload?.sourceSnapshot !== undefined ? { sourceSnapshot: payload.sourceSnapshot } : {}),
+      ...(incoming && typeof incoming === 'object'
+        ? { sourceSnapshot: mergeContentSnapshots(existingSnapshot, incoming) as Prisma.InputJsonValue }
+        : {}),
     };
+  }
+
+  private wordMeaning(payload: any) {
+    const snapshot = payload?.sourceSnapshot;
+    const snapshotMeaning = snapshot && typeof snapshot === 'object' ? snapshot.meaning : undefined;
+    const value = payload?.meaning ?? payload?.chunkText ?? snapshotMeaning;
+    return hasContentText(value) ? value.trim() : '';
   }
 
   // ══════════════════════════════════════════════════
@@ -104,15 +116,20 @@ export class SyncService {
       if (operation === 'create') {
         const existing = await this.prisma.expressionItem.findFirst({
           where: { userId, type: 'word', original: word },
-          select: { id: true },
+          select: { id: true, sourceSnapshot: true },
         });
+        const meaning = this.wordMeaning(payload);
         const created = existing
           ? await this.prisma.expressionItem.update({
               where: { id: existing.id },
-              data: { deletedAt: null, ...this.expressionSourceFields(payload) },
+              data: {
+                deletedAt: null,
+                ...(meaning ? { chunkText: meaning } : {}),
+                ...this.expressionSourceFields(payload, existing.sourceSnapshot),
+              },
             })
           : await this.prisma.expressionItem.create({
-              data: { userId, type: 'word', original: word, chunkText: '', ...this.expressionSourceFields(payload) },
+              data: { userId, type: 'word', original: word, chunkText: meaning, ...this.expressionSourceFields(payload) },
             });
         await this.setExpressionNotebooks(userId, created.id, payload?.notebookIds);
         return { handled: true, remoteId: created.id, remoteItem: created };
@@ -127,16 +144,16 @@ export class SyncService {
       if (operation === 'create') {
         const existing = await this.prisma.expressionItem.findFirst({
           where: { userId, type: 'chunk', chunkText: text },
-          select: { id: true },
+          select: { id: true, sourceSnapshot: true },
         });
         const created = existing
           ? await this.prisma.expressionItem.update({
               where: { id: existing.id },
               data: {
                 deletedAt: null,
-                original: payload?.original ?? '',
+                ...(hasContentText(payload?.original) ? { original: payload.original } : {}),
                 sceneName: payload?.sceneName,
-                ...this.expressionSourceFields(payload),
+                ...this.expressionSourceFields(payload, existing.sourceSnapshot),
               },
             })
           : await this.prisma.expressionItem.create({
@@ -162,17 +179,17 @@ export class SyncService {
       if (operation === 'create') {
         const existing = await this.prisma.expressionItem.findFirst({
           where: { userId, type: 'scene_phrase', chunkText: pattern },
-          select: { id: true },
+          select: { id: true, sourceSnapshot: true },
         });
         const created = existing
           ? await this.prisma.expressionItem.update({
               where: { id: existing.id },
               data: {
                 deletedAt: null,
-                original: payload?.meaning ?? '',
-                corrected: payload?.example ?? pattern,
+                ...(hasContentText(payload?.meaning) ? { original: payload.meaning } : {}),
+                ...(hasContentText(payload?.example) ? { corrected: payload.example } : {}),
                 sceneName: payload?.sceneName,
-                ...this.expressionSourceFields(payload),
+                ...this.expressionSourceFields(payload, existing.sourceSnapshot),
               },
             })
           : await this.prisma.expressionItem.create({
@@ -630,11 +647,18 @@ export class SyncService {
       deletedLearningNotebookItems: want('learningNotebookItems') && deletedLearningNotebookItems.length >= SyncService.PULL_PAGE_SIZE,
     };
 
+    const enrichedExpressionItems = want('expressionItems')
+      ? await this.enrichExpressionItems(expressionItems)
+      : [];
+    const enrichedNotebookItems = want('learningNotebookItems')
+      ? await this.enrichNotebookExpressionItems(learningNotebookItems)
+      : [];
+
     return {
       cursors: nextCursors,
       hasMore,
       changed: {
-        expressionItems: want('expressionItems') ? expressionItems : [],
+        expressionItems: enrichedExpressionItems,
         sceneProgresses: want('sceneProgresses') ? sceneProgresses : [],
         chunkProgresses: want('chunkProgresses') ? chunkProgresses : [],
         practiceSessions: want('practiceSessions') ? practiceSessions : [],
@@ -642,7 +666,7 @@ export class SyncService {
         dailyPracticeRuns: want('dailyPracticeRuns') ? dailyPracticeRuns : [],
         topicSessions: want('topicSessions') ? topicSessions : [],
         learningNotebooks: want('learningNotebooks') ? learningNotebooks : [],
-        learningNotebookItems: want('learningNotebookItems') ? learningNotebookItems : [],
+        learningNotebookItems: enrichedNotebookItems,
         // practiceTurns,
       },
       deleted: {
@@ -653,6 +677,56 @@ export class SyncService {
         learningNotebookItems: want('learningNotebookItems') ? deletedLearningNotebookItems.map((item) => item.id) : [],
       },
     };
+  }
+
+  private async enrichExpressionItems<T extends { id: string; type: string; original: string | null; chunkText: string | null; sourceSnapshot: unknown }>(items: T[]) {
+    if (items.length === 0) return items;
+    const words = [...new Set(items.filter((item) => item.type === 'word' && item.original?.trim()).map((item) => item.original!.trim()))];
+    const chunkTexts = [...new Set(items.filter((item) => item.type === 'chunk' && item.chunkText?.trim()).map((item) => item.chunkText!.trim()))];
+    const patterns = [...new Set(items.filter((item) => item.type === 'scene_phrase' && item.chunkText?.trim()).map((item) => item.chunkText!.trim()))];
+    const [vocabularies, chunks, sentencePatterns] = await Promise.all([
+      words.length
+        ? this.prisma.vocabulary.findMany({ where: { OR: words.map((word) => ({ word: { equals: word, mode: 'insensitive' as const } })) } })
+        : [],
+      chunkTexts.length
+        ? this.prisma.chunk.findMany({
+            where: { OR: chunkTexts.map((text) => ({ text: { equals: text, mode: 'insensitive' as const } })) },
+            include: { examples: true },
+          })
+        : [],
+      patterns.length
+        ? this.prisma.sentencePattern.findMany({ where: { OR: patterns.map((pattern) => ({ pattern: { equals: pattern, mode: 'insensitive' as const } })) } })
+        : [],
+    ]);
+    const vocabularyByWord = new Map<string, (typeof vocabularies)[number]>();
+    for (const vocab of vocabularies) vocabularyByWord.set(vocab.word.toLowerCase(), keepRicher(vocabularyByWord.get(vocab.word.toLowerCase()), vocab));
+    const chunkByText = new Map<string, (typeof chunks)[number]>();
+    for (const chunk of chunks) chunkByText.set(chunk.text.toLowerCase(), keepRicher(chunkByText.get(chunk.text.toLowerCase()), chunk));
+    const patternByText = new Map<string, (typeof sentencePatterns)[number]>();
+    for (const pattern of sentencePatterns) patternByText.set(pattern.pattern.toLowerCase(), keepRicher(patternByText.get(pattern.pattern.toLowerCase()), pattern));
+
+    return items.map((item) => {
+      const saved = looksLikeContentSnapshot(item.sourceSnapshot) ? item.sourceSnapshot : null;
+      if (item.type === 'word' && item.original) {
+        return { ...item, vocabulary: mergeContentSnapshots(vocabularyByWord.get(item.original.trim().toLowerCase()) ?? null, saved) };
+      }
+      if (item.type === 'chunk' && item.chunkText) {
+        return { ...item, contentData: mergeContentSnapshots(chunkByText.get(item.chunkText.trim().toLowerCase()) ?? null, saved) };
+      }
+      if (item.type === 'scene_phrase' && item.chunkText) {
+        return { ...item, contentData: mergeContentSnapshots(patternByText.get(item.chunkText.trim().toLowerCase()) ?? null, saved) };
+      }
+      return item;
+    });
+  }
+
+  private async enrichNotebookExpressionItems<T extends { expressionItem: { id: string; type: string; original: string | null; chunkText: string | null; sourceSnapshot: unknown } | null }>(items: T[]) {
+    const expressions = items.map((item) => item.expressionItem).filter((item): item is NonNullable<T['expressionItem']> => Boolean(item));
+    const enriched = await this.enrichExpressionItems(expressions);
+    const byId = new Map(enriched.map((item) => [item.id, item]));
+    return items.map((item) => item.expressionItem
+      ? { ...item, expressionItem: byId.get(item.expressionItem.id) ?? item.expressionItem }
+      : item);
   }
 
   // ══════════════════════════════════════════════════

@@ -3,6 +3,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { ExpressionType, Prisma } from '@prisma/client';
 import { LearningNotebookService } from './learning-notebook.service';
 import { isReviewRating, scheduleReview, type ReviewRating } from '../../common/spaced-repetition';
+import { hasContentText, keepRicher, looksLikeContentSnapshot, mergeContentSnapshots } from '../../common/content-snapshot';
 
 export type MasteryStatus = 'learning' | 'reviewing' | 'mastered';
 
@@ -112,9 +113,12 @@ export class ExpressionService {
         : [],
     ]);
 
-    const vocabularyByWord = new Map<string, typeof vocabularies[number]>(vocabularies.map(v => [v.word.toLowerCase(), v] as const));
-    const chunkByText = new Map<string, typeof chunks[number]>(chunks.map(c => [c.text.toLowerCase(), c] as const));
-    const patternByText = new Map<string, typeof patterns[number]>(patterns.map(p => [p.pattern.toLowerCase(), p] as const));
+    const vocabularyByWord = new Map<string, typeof vocabularies[number]>();
+    for (const vocab of vocabularies) keepRicherInMap(vocabularyByWord, vocab.word.toLowerCase(), vocab);
+    const chunkByText = new Map<string, typeof chunks[number]>();
+    for (const chunk of chunks) keepRicherInMap(chunkByText, chunk.text.toLowerCase(), chunk);
+    const patternByText = new Map<string, typeof patterns[number]>();
+    for (const pattern of patterns) keepRicherInMap(patternByText, pattern.pattern.toLowerCase(), pattern);
 
     const mergedItems = items.map((item) => {
       const notebookItem = item.notebookItems[0];
@@ -131,14 +135,20 @@ export class ExpressionService {
         lastReviewedAt: notebookItem!.lastReviewedAt,
         nextReviewAt: notebookItem!.nextReviewAt,
       } as any;
+      const saved = looksLikeContentSnapshot(item.sourceSnapshot) ? item.sourceSnapshot : null;
       if (item.type === 'word' && item.original) {
-        base.vocabulary = vocabularyByWord.get(item.original.trim().toLowerCase()) ?? null;
+        base.vocabulary = mergeContentSnapshots(
+          vocabularyByWord.get(item.original.trim().toLowerCase()) ?? null,
+          saved,
+        );
       } else if (item.type === 'chunk' && item.chunkText) {
-        const chunk = chunkByText.get(item.chunkText.trim().toLowerCase());
-        if (chunk) base.contentData = chunk;
+        const chunk = chunkByText.get(item.chunkText.trim().toLowerCase()) ?? null;
+        const merged = mergeContentSnapshots(chunk, saved);
+        if (merged) base.contentData = merged;
       } else if (item.type === 'scene_phrase' && item.chunkText) {
-        const pattern = patternByText.get(item.chunkText.trim().toLowerCase());
-        if (pattern) base.contentData = pattern;
+        const pattern = patternByText.get(item.chunkText.trim().toLowerCase()) ?? null;
+        const merged = mergeContentSnapshots(pattern, saved);
+        if (merged) base.contentData = merged;
       }
       return base;
     });
@@ -173,13 +183,13 @@ export class ExpressionService {
           type: data.type,
           ...(data.type === 'word' ? { original: uniqueText } : { chunkText: uniqueText }),
         },
-        select: { id: true },
+        select: { id: true, sourceSnapshot: true },
       });
       if (existing) {
         const item = await this.prisma.expressionItem.update({
           where: { id: existing.id },
           data: {
-            ...expressionData,
+            ...blankSafeExpressionUpdate(expressionData, existing.sourceSnapshot),
             deletedAt: null,
           },
         });
@@ -297,4 +307,33 @@ export class ExpressionService {
     await Promise.all(sourceItems.map((item) => this.notebooks.addExpressionToNotebooks(userId, item.expressionItemId, [notebookId])));
     return { count: sourceItems.length };
   }
+}
+
+function keepRicherInMap<T>(map: Map<string, T>, key: string, value: T) {
+  map.set(key, keepRicher(map.get(key), value));
+}
+
+function blankSafeExpressionUpdate(
+  data: {
+    type: ExpressionType;
+    original?: string;
+    corrected?: string;
+    chunkText?: string;
+    sceneName?: string;
+    sourceType?: string;
+    sourceId?: string;
+    sourceSnapshot?: Prisma.InputJsonValue;
+  },
+  existingSnapshot: Prisma.JsonValue | null,
+) {
+  const next: Record<string, unknown> = { ...data };
+  for (const field of ['chunkText', 'original', 'corrected'] as const) {
+    if (!hasContentText(next[field])) delete next[field];
+  }
+  if (looksLikeContentSnapshot(data.sourceSnapshot)) {
+    next.sourceSnapshot = mergeContentSnapshots(existingSnapshot, data.sourceSnapshot);
+  } else {
+    delete next.sourceSnapshot;
+  }
+  return next;
 }

@@ -1,7 +1,6 @@
 import { learningNotebookApi, type LearningNotebook } from '@/features/practice/api/english-practice-api'
 import { localDb } from './unified-storage'
-import { notifyLearningLibraryChanged } from './learning-content.repository'
-import type { ExpressionEntry } from './learning-content.repository'
+import { learningContentRepository, notifyLearningLibraryChanged, type ExpressionEntry } from './learning-content.repository'
 
 type NotebookCounts = {
   total: number
@@ -87,6 +86,25 @@ function summarize(notebooks: LearningNotebook[]): NotebookListResult {
   }
 }
 
+function toLibraryExpression(entry: ExpressionEntry, item: CachedNotebookItem): LocalNotebookExpression {
+  const snapshot = entry.contentSnapshot
+  return {
+    ...entry,
+    id: entry.remoteId ?? entry.id,
+    notebookItemId: item.remoteId ?? item.id,
+    notebookId: item.notebookId,
+    masteryStatus: item.masteryStatus,
+    reviewCount: item.reviewCount,
+    intervalDays: item.intervalDays,
+    easeFactor: item.easeFactor,
+    lapseCount: item.lapseCount,
+    lastReviewedAt: item.lastReviewedAt,
+    nextReviewAt: item.nextReviewAt,
+    vocabulary: entry.kind === 'word' ? snapshot : undefined,
+    contentData: entry.kind === 'word' ? undefined : snapshot,
+  }
+}
+
 function matchesLocalExpression(entry: ExpressionEntry, request: LocalExpressionListRequest) {
   const type = request.type === 'scene_phrase' ? 'scene_phrase' : request.type
   if (entry.type !== type) return false
@@ -165,28 +183,13 @@ export const learningNotebookRepository = {
       await Promise.all(staleLocalIds.map((id) => localDb.delete('learning_notebook_items', id)))
     }
 
-    const rows = [...uniqueItems.values()]
-      .map((item) => {
-        const entry = entriesById.get(item.expressionEntryId)
-        if (!entry || !matchesLocalExpression(entry, request)) return null
-        const snapshot = entry.contentSnapshot
-        return {
-          ...entry,
-          id: entry.remoteId ?? entry.id,
-          notebookItemId: item.remoteId ?? item.id,
-          notebookId: item.notebookId,
-          masteryStatus: item.masteryStatus,
-          reviewCount: item.reviewCount,
-          intervalDays: item.intervalDays,
-          easeFactor: item.easeFactor,
-          lapseCount: item.lapseCount,
-          lastReviewedAt: item.lastReviewedAt,
-          nextReviewAt: item.nextReviewAt,
-          vocabulary: entry.kind === 'word' ? snapshot : undefined,
-          contentData: entry.kind === 'word' ? undefined : snapshot,
-        } satisfies LocalNotebookExpression
-      })
-      .filter(Boolean) as LocalNotebookExpression[]
+    const pairs = [...uniqueItems.values()].flatMap((item) => {
+      const entry = entriesById.get(item.expressionEntryId)
+      if (!entry || !matchesLocalExpression(entry, request)) return []
+      return [{ item, entry }]
+    })
+    const hydrated = await learningContentRepository.hydrateExpressionSnapshots(pairs.map((pair) => pair.entry))
+    const rows = pairs.map((pair, index) => toLibraryExpression(hydrated[index] ?? pair.entry, pair.item))
 
     return rows.sort((a, b) => {
       const result = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -205,28 +208,15 @@ export const learningNotebookRepository = {
       limit: request.limit,
       offset: request.offset,
     })
+    const hydrated = await learningContentRepository.hydrateExpressionSnapshots(
+      page.items.map(({ entry }) => entry as ExpressionEntry),
+    )
     return {
       total: page.total,
-      items: page.items.map(({ item, entry }) => {
-        const expression = entry as ExpressionEntry
-        const notebookItem = item as CachedNotebookItem
-        const snapshot = expression.contentSnapshot
-        return {
-          ...expression,
-          id: expression.remoteId ?? expression.id,
-          notebookItemId: notebookItem.remoteId ?? notebookItem.id,
-          notebookId: notebookItem.notebookId,
-          masteryStatus: notebookItem.masteryStatus,
-          reviewCount: notebookItem.reviewCount,
-          intervalDays: notebookItem.intervalDays,
-          easeFactor: notebookItem.easeFactor,
-          lapseCount: notebookItem.lapseCount,
-          lastReviewedAt: notebookItem.lastReviewedAt,
-          nextReviewAt: notebookItem.nextReviewAt,
-          vocabulary: expression.kind === 'word' ? snapshot : undefined,
-          contentData: expression.kind === 'word' ? undefined : snapshot,
-        } satisfies LocalNotebookExpression
-      }),
+      items: page.items.map(({ item }, index) => toLibraryExpression(
+        hydrated[index] ?? (page.items[index]!.entry as ExpressionEntry),
+        item as CachedNotebookItem,
+      )),
     }
   },
 
