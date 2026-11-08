@@ -154,7 +154,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
           <div className="flex items-start gap-2">
             <h3 className={cn('line-clamp-1 flex-1 text-sm font-semibold leading-5', isCompleted ? 'text-muted-foreground' : 'text-foreground')}>{unit.title}</h3>
             {isCompleted && (
-              <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">
+              <Badge variant="secondary" className="h-5 shrink-0 rounded-full border-0 px-2 text-[10px] shadow-none">
                 {t('learning.done')}
               </Badge>
             )}
@@ -177,10 +177,10 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
             </div>
           )}
           <div className="mt-2 flex items-center gap-1.5">
-            <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">{packageTypeLabel(t, unit.packageType)}</Badge>
-            <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{contentModeLabel(t, unit.contentMode)}</Badge>
+            <Badge variant="secondary" className="h-5 rounded-full border-0 px-2 text-[10px] shadow-none">{packageTypeLabel(t, unit.packageType)}</Badge>
+            <Badge variant="secondary" className="h-5 rounded-full border-0 px-2 text-[10px] shadow-none">{contentModeLabel(t, unit.contentMode)}</Badge>
             {!isCompleted && isJoined && (
-              <Badge variant="outline" className="h-5 rounded-full border-emerald-400/50 px-2 text-[10px] text-emerald-600 dark:text-emerald-400">
+              <Badge className="h-5 rounded-full border-0 bg-emerald-500/10 px-2 text-[10px] text-emerald-600 shadow-none hover:bg-emerald-500/10 dark:text-emerald-400">
                 {unit.completionPercent}%
               </Badge>
             )}
@@ -215,15 +215,15 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
               <UnitCover unit={unit} icon={Icon} className="size-20" />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Badge variant="outline" className="rounded-full text-[10px]">{packageTypeLabel(t, unit.packageType)}</Badge>
-                  <Badge variant="secondary" className="rounded-full text-[10px]">{contentModeLabel(t, unit.contentMode)}</Badge>
+                  <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{packageTypeLabel(t, unit.packageType)}</Badge>
+                  <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{contentModeLabel(t, unit.contentMode)}</Badge>
                   {isCompleted && (
-                    <Badge variant="outline" className="rounded-full border-emerald-400/50 text-[10px] text-emerald-600 dark:text-emerald-400">
+                    <Badge className="rounded-full border-0 bg-emerald-500/10 text-[10px] text-emerald-600 shadow-none hover:bg-emerald-500/10 dark:text-emerald-400">
                       <CheckCircle2 className="mr-1 size-3" />
                       {t('learning.done')}
                     </Badge>
                   )}
-                  {(!unit.isUnlocked || unit.isLocked) && <Badge variant="outline" className="rounded-full text-[10px]">{t('learning.locked')}</Badge>}
+                  {(!unit.isUnlocked || unit.isLocked) && <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{t('learning.locked')}</Badge>}
                 </div>
                 <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5 text-foreground">{unit.title}</h3>
                 <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{unit.location}</p>
@@ -275,12 +275,12 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
                       : isPackReady ? t('learning.learnAgain') : t('learning.redownloadPack')}
                 </Button>
               ) : downloadTask?.status === 'done' || justEnrolled ? (
-                <Button variant="outline" className="w-full gap-2" onClick={() => { setDetailOpen(false); navigate(`/learning/units/${unit.id}`) }}>
+                <Button variant="secondary" className="w-full gap-2 border-0 shadow-none" onClick={() => { setDetailOpen(false); navigate(`/learning/units/${unit.id}`) }}>
                   <ArrowRight className="size-4" />
                   {t('learning.continue')}
                 </Button>
               ) : isJoined ? (
-                <Button variant="outline" className="w-full gap-2" onClick={() => { setDetailOpen(false); navigate(`/learning/units/${unit.id}`) }}>
+                <Button variant="secondary" className="w-full gap-2 border-0 shadow-none" onClick={() => { setDetailOpen(false); navigate(`/learning/units/${unit.id}`) }}>
                   <ArrowRight className="size-4" />
                   {t('learning.continue')}
                 </Button>
@@ -326,7 +326,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
                 <div className="space-y-1.5">
                   {pagedTopics.map((topic, index) => (
                     <div key={topic.id} className="flex min-w-0 items-center gap-3 overflow-hidden rounded-lg bg-muted/25 px-3 py-3">
-                      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                      <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold leading-none text-primary">
                         {(topicPage - 1) * pageSize + index + 1}
                       </div>
                       <div className="min-w-0 flex-1">

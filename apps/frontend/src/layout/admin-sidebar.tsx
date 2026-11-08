@@ -10,6 +10,7 @@ import {
 import { cn } from '@/lib/cn'
 import { useAuth } from '@/providers/auth-provider'
 import { CREATOR_MENU_KEYS } from '@/features/admin/management-access'
+import { FEEDBACK_STATS_CHANGED_EVENT, getFeedbackStats } from '@/features/feedback/api'
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -44,6 +45,31 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
   const currentPath = location.pathname
   const { session } = useAuth()
   const isCreator = session?.user?.role === 'creator'
+  const isAdmin = session?.user?.role === 'admin'
+  const [pendingFeedbackCount, setPendingFeedbackCount] = useState(0)
+
+  useEffect(() => {
+    if (!isAdmin) return
+    let cancelled = false
+
+    const load = async () => {
+      try {
+        const stats = await getFeedbackStats()
+        if (!cancelled) setPendingFeedbackCount(stats.pending)
+      } catch {
+        // 角标拉取失败时保留上次数字
+      }
+    }
+
+    void load()
+    const timer = window.setInterval(load, 60_000)
+    window.addEventListener(FEEDBACK_STATS_CHANGED_EVENT, load)
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+      window.removeEventListener(FEEDBACK_STATS_CHANGED_EVENT, load)
+    }
+  }, [isAdmin])
 
   const allMenuGroups: MenuGroup[] = [
     { key: 'users', label: t('admin.usersAndOps', { defaultValue: '用户与运营' }), icon: Users, items: [
@@ -122,6 +148,19 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
 
   const isItemActive = (path: string) => currentPath === path || currentPath.startsWith(path + '/')
 
+  const pendingBadge = (count: number, className?: string) => (
+    count > 0 ? (
+      <span
+        className={cn(
+          'flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground tabular-nums',
+          className,
+        )}
+      >
+        {count > 99 ? '99+' : count}
+      </span>
+    ) : null
+  )
+
   // ── 折叠模式：仅显示分组图标 ──
   if (collapsed) {
     return (
@@ -135,17 +174,22 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
               <div
                 key={group.key}
                 className="flex justify-center"
-                title={group.label}
+                title={group.key === 'users' && pendingFeedbackCount > 0
+                  ? `${group.label} · ${pendingFeedbackCount} 条待处理反馈`
+                  : group.label}
               >
-                <div
-                  className={cn(
-                    'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
-                    hasActiveChild
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
-                  )}
-                >
-                  <GroupIcon className="size-[18px]" />
+                <div className="relative">
+                  <div
+                    className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
+                      hasActiveChild
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                    )}
+                  >
+                    <GroupIcon className="size-[18px]" />
+                  </div>
+                  {group.key === 'users' && pendingBadge(pendingFeedbackCount, 'absolute -right-1 -top-1')}
                 </div>
               </div>
             )
@@ -192,6 +236,7 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
               >
                 <GroupIcon className="h-3.5 w-3.5 flex-shrink-0" />
                 <span className="flex-1 text-left">{group.label}</span>
+                {group.key === 'users' && !expanded && pendingBadge(pendingFeedbackCount)}
                 <ChevronDown
                   className={cn(
                     'h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200',
@@ -236,6 +281,7 @@ export function AdminSidebar({ onClose, collapsed = false, onToggleCollapse }: A
                           )}
                         />
                         <span className="flex-1 truncate">{item.label}</span>
+                        {item.key === 'feedbacks' && pendingBadge(pendingFeedbackCount)}
                         {item.soon && (
                           <span className="flex-shrink-0 rounded-full border border-border/60 bg-muted/50 px-1.5 py-0.5 text-[9px] text-muted-foreground">
                             即将推出

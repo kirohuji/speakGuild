@@ -30,6 +30,17 @@ export function getAllFeedbacks(params?: { status?: string; isCritical?: boolean
   return get<{ items: (FeedbackResult & { user?: { name: string; email: string } })[]; total: number }>('/feedbacks', params)
 }
 
+export const FEEDBACK_STATS_CHANGED_EVENT = 'admin-feedbacks:changed'
+
+/** 管理员待处理反馈数量，供侧边栏角标使用 */
+export function getFeedbackStats() {
+  return get<{ pending: number }>('/feedbacks/stats')
+}
+
+export function notifyFeedbackStatsChanged() {
+  window.dispatchEvent(new Event(FEEDBACK_STATS_CHANGED_EVENT))
+}
+
 export function updateFeedback(id: string, data: { status: string; adminNote?: string; isCritical?: boolean }) {
   return patch<FeedbackResult>(`/feedbacks/${id}`, data)
 }

@@ -1625,9 +1625,9 @@ export function TodayTaskPage() {
                             void openTopicTeaching(topic.topicId, topic.packId)
                           }
                         }}
-                        className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 px-3 py-3 active:scale-[0.99]"
+                        className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 px-3 py-3 active:scale-[0.99]"
                       >
-                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary">
+                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold leading-none text-primary">
                           {absoluteIndex + 1}
                         </div>
                         <div className="min-w-0 flex-1">

@@ -78,8 +78,6 @@ export function RegisterPage() {
 
   return (
     <AuthPageShell
-      backLabel={t('auth.backToLogin')}
-      onBack={() => navigate('/auth/login')}
       footer={(
         <p>
           {t('auth.hasAccount')}
@@ -90,37 +88,6 @@ export function RegisterPage() {
       )}
     >
       <div className="space-y-4">
-            <div className="flex flex-col gap-2 rounded-xl border border-primary/15 bg-primary/5 px-3 py-2.5">
-              <button
-                type="button"
-                onClick={() => setShowReferralInput((current) => !current)}
-                className="flex items-center justify-between text-left text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <Gift className="h-3.5 w-3.5" />
-                  {referralCode ? `${t('auth.inviteCode')} ${referralCode}` : t('auth.inviteCodePlaceholder')}
-                </span>
-                <span>{showReferralInput ? t('auth.collapse') : t('auth.fill')}</span>
-              </button>
-              {showReferralInput && (
-                <>
-                  <Input
-                    value={referralInput}
-                    onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
-                    placeholder={t('auth.friendInviteCode')}
-                    className={cn(authInputClassName, 'h-10 bg-background/80 text-sm uppercase')}
-                    autoCapitalize="characters"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    maxLength={16}
-                  />
-                  <p className="text-xs leading-5 text-muted-foreground">
-                    {t('auth.inviteHint')}
-                  </p>
-                </>
-              )}
-            </div>
-
             <div className="space-y-1.5">
               <Label className={authLabelClassName}>{t('auth.userName')}</Label>
               <Input
@@ -181,7 +148,7 @@ export function RegisterPage() {
 
             <Button
               size="primary-lg"
-              className="btn-cta w-full"
+              className="btn-cta w-full shadow-none hover:shadow-none"
               disabled={loading}
               onClick={onRegister}
             >
@@ -196,6 +163,37 @@ export function RegisterPage() {
                 {message}
               </p>
             )}
+
+            <div className="flex flex-col gap-2 rounded-xl bg-background px-3 py-2.5">
+              <button
+                type="button"
+                onClick={() => setShowReferralInput((current) => !current)}
+                className="flex items-center justify-between text-left text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <Gift className="h-3.5 w-3.5" />
+                  {referralCode ? `${t('auth.inviteCode')} ${referralCode}` : t('auth.inviteCodePlaceholder')}
+                </span>
+                <span>{showReferralInput ? t('auth.collapse') : t('auth.fill')}</span>
+              </button>
+              {showReferralInput && (
+                <>
+                  <Input
+                    value={referralInput}
+                    onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
+                    placeholder={t('auth.friendInviteCode')}
+                    className={cn(authInputClassName, 'h-10 text-sm uppercase')}
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    maxLength={16}
+                  />
+                  <p className="text-xs leading-5 text-muted-foreground">
+                    {t('auth.inviteHint')}
+                  </p>
+                </>
+              )}
+            </div>
 
             <p className="text-center text-xs leading-relaxed text-muted-foreground">
               {t('auth.agreeToTerms')}

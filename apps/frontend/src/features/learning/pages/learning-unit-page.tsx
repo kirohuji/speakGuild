@@ -1025,9 +1025,9 @@ function PracticeTopicCard({
       {...rest}
     >
       <CardContent className="p-4">
-        <div className="flex items-center gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent/10">
-            <span className="text-sm font-bold text-accent">{index + 1}</span>
+        <div className="flex items-center gap-3">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold leading-none text-primary">
+            {index + 1}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">

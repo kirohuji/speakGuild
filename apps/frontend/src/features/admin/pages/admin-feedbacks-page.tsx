@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectItem } from '@/components/ui/select'
-import { getAllFeedbacks, updateFeedback, replyFeedback } from '@/features/feedback/api'
+import { getAllFeedbacks, notifyFeedbackStatsChanged, updateFeedback, replyFeedback } from '@/features/feedback/api'
 import type { FeedbackResult } from '@/features/feedback/api'
 import { MarkdownEditor } from '@/components/common/markdown-editor'
 import { cn } from '@/lib/cn'
@@ -88,6 +88,7 @@ export function AdminFeedbacksPage() {
     // 本地即时更新 selected 和列表状态，不关闭弹窗
     setSelected((prev) => prev && prev.id === id ? { ...prev, status: status as FeedbackResult['status'] } : prev)
     setFeedbacks((prev) => prev.map((fb) => fb.id === id ? { ...fb, status: status as FeedbackResult['status'] } : fb))
+    notifyFeedbackStatsChanged()
   }
 
   const handleCriticalChange = async (id: string, isCritical: boolean) => {

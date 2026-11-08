@@ -354,7 +354,7 @@ function InProgressUnitCard({
                         event.stopPropagation()
                         setConfirmSwitch(true)
                       }}
-                      className="mt-1 inline-flex h-4 items-center gap-1 rounded-full border border-border/60 bg-background/85 px-1.5 text-[9px] font-medium leading-none text-muted-foreground transition-colors hover:bg-background hover:text-primary disabled:opacity-50"
+                      className="mt-1 inline-flex h-4 items-center gap-1 rounded-full border-0 bg-secondary px-1.5 text-[9px] font-medium leading-none text-secondary-foreground transition-colors hover:bg-secondary/80 disabled:opacity-50"
                     >
                       {switchingPractice ? <Loader2 className="size-2.5 animate-spin" /> : <BookOpen className="size-2.5" />}
                       {t('learning.setCurrentPracticePack')}
@@ -443,7 +443,7 @@ function InProgressUnitCard({
         )}
 
         <Dialog open={confirmSwitch} onOpenChange={setConfirmSwitch}>
-          <DialogContent className="rounded-2xl p-6 sm:mx-auto sm:max-w-xs w-[90vw]">
+          <DialogContent className="w-[90vw] rounded-2xl border-0 p-6 shadow-none sm:mx-auto sm:max-w-xs">
             <DialogHeader className="p-0">
               <DialogTitle className="text-base">{t('learning.confirmSwitchPracticePackTitle')}</DialogTitle>
               <DialogDescription className="mt-2 text-sm leading-5">
@@ -451,7 +451,7 @@ function InProgressUnitCard({
               </DialogDescription>
             </DialogHeader>
             <div className="mt-5 flex gap-3">
-              <Button variant="outline" className="flex-1 rounded-xl" disabled={switchingPractice} onClick={() => setConfirmSwitch(false)}>
+              <Button variant="secondary" className="flex-1 rounded-xl border-0 shadow-none" disabled={switchingPractice} onClick={() => setConfirmSwitch(false)}>
                 {t('common.cancel')}
               </Button>
               <Button className="flex-1 rounded-xl" disabled={switchingPractice} onClick={handleSetActivePracticePack}>
@@ -462,7 +462,7 @@ function InProgressUnitCard({
         </Dialog>
 
         <Dialog open={confirmQuit} onOpenChange={setConfirmQuit}>
-          <DialogContent className="rounded-2xl p-6 sm:mx-auto sm:max-w-xs w-[90vw]">
+          <DialogContent className="w-[90vw] rounded-2xl border-0 p-6 shadow-none sm:mx-auto sm:max-w-xs">
             <DialogHeader className="p-0">
               <DialogTitle className="text-base">{t('learning.quitConfirmTitle')}</DialogTitle>
               <DialogDescription className="mt-2 text-sm leading-5">
@@ -470,7 +470,7 @@ function InProgressUnitCard({
               </DialogDescription>
             </DialogHeader>
             <div className="mt-5 flex gap-3">
-              <Button variant="outline" className="flex-1 rounded-xl" disabled={quitting} onClick={() => setConfirmQuit(false)}>
+              <Button variant="secondary" className="flex-1 rounded-xl border-0 shadow-none" disabled={quitting} onClick={() => setConfirmQuit(false)}>
                 {t('common.cancel')}
               </Button>
               <Button variant="destructive" className="flex-1 rounded-xl" disabled={quitting} onClick={handleQuit}>

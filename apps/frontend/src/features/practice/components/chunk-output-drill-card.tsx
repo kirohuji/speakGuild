@@ -273,7 +273,7 @@ export function ChunkOutputDrillCard({
             type="button"
             onClick={skip}
             disabled={status === 'judging' || status === 'passed'}
-            className="rounded-full px-3 py-1.5 text-[11px] text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground disabled:pointer-events-none disabled:opacity-45"
+            className="rounded-full px-3 py-1.5 text-[11px] text-muted-foreground disabled:pointer-events-none disabled:opacity-45"
           >
             {t('practiceSession.warmupDrill.dontKnow')}
           </button>
@@ -282,13 +282,10 @@ export function ChunkOutputDrillCard({
 
         {/* Hint panel */}
         {hintLevel !== 'none' && (
-          <div className="rounded-lg border border-border/60 bg-muted/10 px-3 py-2.5 space-y-2">
+          <div className="space-y-2 rounded-lg border-0 bg-secondary px-3 py-2.5">
             {/* Teaching hint */}
             {teachingHint && (
-              <div className="flex items-start gap-2">
-                <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
-                <p className="text-[11px] text-foreground/80">{teachingHint}</p>
-              </div>
+              <p className="text-[11px] text-foreground/80">{teachingHint}</p>
             )}
             {/* Full answer with highlight */}
             {hintLevel === 'answer' && current.answer && (

@@ -24,6 +24,15 @@ export class FeedbackController {
     })
   }
 
+  /** 管理员侧边栏角标：待处理反馈数量 */
+  @Get('stats')
+  async stats(@Req() req: Request) {
+    const session = await requireAuthSession(req)
+    if ((session.user as any)?.role !== 'admin') throw new ForbiddenException('仅管理员可查看反馈统计')
+    const pending = await this.feedbackService.countPending()
+    return { pending }
+  }
+
   @Get('mine')
   async myFeedbacks(@Req() req: Request, @Query('page') page?: string, @Query('pageSize') pageSize?: string) {
     const session = await requireAuthSession(req)

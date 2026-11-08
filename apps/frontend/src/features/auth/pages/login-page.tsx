@@ -207,7 +207,7 @@ export function LoginPage() {
             </div>
             <Button
               size="primary-lg"
-              className="btn-cta w-full"
+              className="btn-cta w-full shadow-none hover:shadow-none"
               disabled={loading}
               onClick={() =>
                 runAction(
@@ -283,8 +283,8 @@ export function LoginPage() {
                 />
                 <Button
                   size="sm"
-                  variant="outline"
-                  className="h-11 shrink-0 rounded-xl px-3"
+                  variant="secondary"
+                  className="h-11 shrink-0 rounded-xl border border-border bg-background px-3 shadow-none hover:bg-background"
                   disabled={loading || countdown > 0}
                   onClick={handleSendPhoneOtp}
                 >
@@ -294,7 +294,7 @@ export function LoginPage() {
             </div>
             <Button
               size="primary-lg"
-              className="btn-cta w-full"
+              className="btn-cta w-full shadow-none hover:shadow-none"
               disabled={loading || !otpSent || !phoneOtp}
               onClick={() =>
                 runAction(
@@ -328,7 +328,7 @@ export function LoginPage() {
           {mode === 'password' ? t('auth.phoneOtpLogin') : t('auth.passwordLogin')}
         </button>
 
-        <div className="flex flex-col gap-2 rounded-xl bg-muted/40 px-3 py-2.5">
+        <div className="flex flex-col gap-2 rounded-xl bg-background px-3 py-2.5">
           <button
             type="button"
             onClick={() => setShowReferralInput((current) => !current)}
@@ -345,7 +345,7 @@ export function LoginPage() {
               value={referralInput}
               onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
               placeholder={t('auth.friendInviteCode')}
-              className={cn(authInputClassName, 'h-10 bg-background/80 text-sm uppercase')}
+              className={cn(authInputClassName, 'h-10 text-sm uppercase')}
               autoCapitalize="characters"
               autoCorrect="off"
               spellCheck={false}
@@ -355,20 +355,13 @@ export function LoginPage() {
         </div>
 
         {/* 分割线 + 第三方登录 */}
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-border/60" />
-          </div>
-          <div className="relative flex justify-center">
-            <span className="bg-card px-3 text-xs text-muted-foreground">{t('auth.otherLogin')}</span>
-          </div>
-        </div>
+        <p className="text-center text-xs text-muted-foreground">{t('auth.otherLogin')}</p>
 
         <div className="flex justify-center gap-2">
           <Button
-            variant="outline"
+            variant="secondary"
             size="primary-lg"
-            className="h-11 min-w-0 gap-2 rounded-xl bg-background/60 px-3 text-[#07C160]"
+            className="h-11 min-w-0 gap-2 rounded-xl border border-border bg-background px-3 text-[#07C160] shadow-none hover:bg-background hover:shadow-none"
             disabled={loading}
             onClick={() =>
               runAction(
@@ -390,9 +383,9 @@ export function LoginPage() {
           </Button>
 
           <Button
-            variant="outline"
+            variant="secondary"
             size="primary-lg"
-            className="h-11 min-w-0 gap-2 rounded-xl bg-background/60 px-3"
+            className="h-11 min-w-0 gap-2 rounded-xl border border-border bg-background px-3 shadow-none hover:bg-background hover:shadow-none"
             disabled={loading}
             onClick={() =>
               runAction(

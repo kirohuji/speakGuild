@@ -41,6 +41,10 @@ export class FeedbackService {
     return { items, total, page, pageSize }
   }
 
+  async countPending() {
+    return this.prisma.feedback.count({ where: { status: 'pending' } })
+  }
+
   async findAll(params: { status?: string; isCritical?: boolean; page?: number; pageSize?: number }) {
     const { status, isCritical, page = 1, pageSize = 20 } = params
     const where: Prisma.FeedbackWhereInput = {}

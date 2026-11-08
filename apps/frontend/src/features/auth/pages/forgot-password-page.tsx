@@ -77,8 +77,7 @@ export function ForgotPasswordPage() {
     return (
       <AuthPageShell
         description={t('auth.otpSentHint')}
-        backLabel={t('auth.backToLogin')}
-        onBack={() => navigate('/auth/login')}
+        className="pb-20"
       >
         <div className="space-y-4">
               <div className="text-center">
@@ -118,7 +117,7 @@ export function ForgotPasswordPage() {
 
               <Button
                 size="primary-lg"
-                className="btn-cta w-full"
+                className="btn-cta w-full shadow-none hover:shadow-none"
                 disabled={loading}
                 onClick={handleReset}
               >
@@ -148,9 +147,7 @@ export function ForgotPasswordPage() {
 
   return (
     <AuthPageShell
-      description={t('auth.enterEmailFirst')}
-      backLabel={t('auth.backToLogin')}
-      onBack={() => navigate('/auth/login')}
+      className="pb-20"
       footer={(
         <div>
           {t('auth.rememberPassword')}
@@ -175,7 +172,7 @@ export function ForgotPasswordPage() {
 
             <Button
               size="primary-lg"
-              className="btn-cta w-full"
+              className="btn-cta w-full shadow-none hover:shadow-none"
               disabled={loading}
               onClick={handleSendOtp}
             >
