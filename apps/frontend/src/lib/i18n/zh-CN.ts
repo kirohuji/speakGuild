@@ -1,5 +1,3 @@
-import { check } from "better-auth";
-
 const zhCN = {
   translation: {
     app: {
