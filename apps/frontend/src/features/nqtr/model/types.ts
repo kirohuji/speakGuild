@@ -34,7 +34,8 @@ export type NqtrCharacter = {
   displayName: string
   avatarUrl?: string | null
   spriteBaseUrl?: string | null
-  expressions?: Array<{ spriteUrl?: string } | Record<string, unknown>> | null
+  /** 角色库存的是 name→sprite 映射；旧数据也可能是数组。 */
+  expressions?: Record<string, string | { spriteUrl?: string; avatarUrl?: string }> | Array<{ spriteUrl?: string } | Record<string, unknown>> | null
 }
 
 export type NqtrMap = {
@@ -174,6 +175,7 @@ export type NqtrDialogueRenderProps = {
   defaultBackgroundUrl?: string
   onDismiss: () => void
   onDebugChange?: (state: NqtrDialogueDebug) => void
+  onHistoryOpenChange?: (open: boolean) => void
 }
 
 export type NqtrDialogueDebug = {

@@ -40,6 +40,14 @@ export interface LearningUnitSummary {
   categoryName?: string
   categoryIcon?: string | null
   topics: TopicSummary[]
+  /** 剧本商店使用的轻量章节目录；普通训练话题不等同于剧本章节。 */
+  scriptChapters?: Array<{
+    id: string
+    title: string
+    description?: string | null
+    difficulty: string
+    chapterName?: string
+  }>
   requiredOutputLevel: string
   requiredUserLevel: number
   isUnlocked: boolean

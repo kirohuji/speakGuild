@@ -44,8 +44,11 @@ interface VnStoryPreviewProps {
   aiEvaluationEnabled?: boolean
   /** 片段结束仍留下最后一句，不弹出整篇完成框。 */
   holdLastLine?: boolean
+  /** NQTR 等场景只支持 VN 剧场，隐藏设置里的显示模式切换。 */
+  hideDisplayMode?: boolean
   /** 片段播完后，点击对话区域时调用。 */
   onDismiss?: () => void
+  onHistoryOpenChange?: (open: boolean) => void
   className?: string
   onDebugChange?: (state: {
     isReady: boolean
@@ -103,7 +106,9 @@ export function VnStoryPreview({
   previewLayout = 'portrait',
   aiEvaluationEnabled = false,
   holdLastLine = false,
+  hideDisplayMode = false,
   onDismiss,
+  onHistoryOpenChange,
   className,
   onDebugChange,
   assetMap,
@@ -175,9 +180,16 @@ export function VnStoryPreview({
         next.expression = parsed.expression || prev.expression || 'default'
         next.position = isSpritePosition(parsed.position) ? parsed.position : prev.position
       }
+      if (
+        next.backgroundUrl === prev.backgroundUrl
+        && next.backgroundFit === prev.backgroundFit
+        && next.speaker === prev.speaker
+        && next.expression === prev.expression
+        && next.position === prev.position
+      ) return prev
       return next
     })
-  }, [story.currentTags, story.isWaiting, defaultBackgroundUrl])
+  }, [assetMap, defaultBackgroundUrl, story.currentTags, story.isWaiting])
 
   const inkLines: DialogueLine[] = useMemo(
     () => story.lines.map((line) => ({
@@ -442,7 +454,9 @@ export function VnStoryPreview({
         frameVariant={previewLayout === 'landscape' ? 'landscape' : 'portrait'}
         clearBackdrop={holdLastLine}
         hideEndedCaption={holdLastLine}
+        hideDisplayMode={hideDisplayMode}
         onDismiss={holdLastLine ? onDismiss : undefined}
+        onHistoryOpenChange={onHistoryOpenChange}
         backgroundUrl={backgroundUrl}
         backgroundFit={backgroundFit as 'cover' | 'contain' | 'stretch' | 'repeat'}
         currentLine={displayLine ? { ...displayLine, isUser: displayLine.speaker === 'You' } : null}

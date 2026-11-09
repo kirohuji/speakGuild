@@ -133,7 +133,38 @@ export async function resolveInstalledScene(packId: string, scene: StoryScene): 
 
 async function resolveUrl(packId: string, url?: string | null) {
   if (!url) return url ?? null
-  return (await resolveInstalledMedia(packId, { url })) ?? url
+  if (isInstalledPlaybackUrl(url)) return url
+  // Installed packs stay local: never fall back to asset:// or signed COS URLs.
+  return (await resolveInstalledMedia(packId, { url })) ?? null
+}
+
+async function resolveExplorationItems(packId: string, items: unknown) {
+  if (!Array.isArray(items)) return items
+  return Promise.all(items.map(async (item) => {
+    if (!item || typeof item !== 'object') return item
+    const entry = item as { imageUrl?: string | null }
+    return {
+      ...entry,
+      imageUrl: await resolveUrl(packId, entry.imageUrl),
+    }
+  }))
+}
+
+async function resolveMapEditorData(packId: string, editorData: unknown) {
+  if (!editorData || typeof editorData !== 'object') return editorData ?? null
+  const data = editorData as Record<string, unknown>
+  const next = { ...data }
+  for (const key of ['sceneInteractions', 'explorationObjects'] as const) {
+    const bag = data[key]
+    if (!bag || typeof bag !== 'object') continue
+    next[key] = Object.fromEntries(await Promise.all(
+      Object.entries(bag as Record<string, unknown>).map(async ([scope, items]) => [
+        scope,
+        await resolveExplorationItems(packId, items),
+      ]),
+    ))
+  }
+  return next
 }
 
 /** Resolve all media URLs inside an offline NQTR world bundle to local file URLs. */
@@ -146,6 +177,7 @@ export async function resolveInstalledNqtrBundle(packId: string, bundle: any) {
         backgroundUrl: await resolveUrl(packId, bundle.map.backgroundUrl),
         thumbnailUrl: await resolveUrl(packId, bundle.map.thumbnailUrl),
         icon: await resolveUrl(packId, bundle.map.icon),
+        editorData: await resolveMapEditorData(packId, bundle.map.editorData),
       }
     : null
   const locations = await Promise.all((bundle.locations ?? []).map(async (location: any) => ({
@@ -192,6 +224,8 @@ export async function resolveInstalledNqtrBundle(packId: string, bundle: any) {
         hotspotIcon: await resolveUrl(packId, bundle.chrome.hotspotIcon),
         activityIcon: await resolveUrl(packId, bundle.chrome.activityIcon),
         talkIcon: await resolveUrl(packId, bundle.chrome.talkIcon),
+        statusBadgeIcon: await resolveUrl(packId, bundle.chrome.statusBadgeIcon),
+        pinLabelIcon: await resolveUrl(packId, bundle.chrome.pinLabelIcon),
         commands: bundle.chrome.commands
           ? Object.fromEntries(await Promise.all(Object.entries(bundle.chrome.commands).map(async ([key, value]: [string, any]) => [
             key,

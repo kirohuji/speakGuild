@@ -16,6 +16,7 @@ import { getCategoryIcon } from './category-icons'
 import { LearningWeekTracker } from './week-tracker'
 import { useLearningStore } from '@/stores/learning.store'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
+import { displayLearningUnitLocation } from '../lib/learning-unit-display'
 
 const retainedCovers = new Map<string, HTMLImageElement>()
 
@@ -369,7 +370,11 @@ function InProgressUnitCard({
                 {isUninstalling ? <Loader2 className="size-5 animate-spin" /> : <X className="size-5" />}
               </button>
             </div>
-            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
+            <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+              {displayLearningUnitLocation(unit.location, unit.contentMode === 'nqtr'
+                ? t('learning.contentModeNqtr')
+                : unit.contentMode === 'story' ? t('learning.contentModeStory') : unit.categoryName)}
+            </p>
             <div className="mt-2 flex gap-3 text-[11px] text-muted-foreground">
               <span>{unit.vocabCount} {t('learning.vocab')}</span>
               <span>{unit.chunkCount} {t('learning.chunks')}</span>
@@ -567,7 +572,11 @@ function MyUnitCard({
               {isCompleted ? t('learning.done') : `${pct}%`}
             </Badge>
           </div>
-          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
+          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+            {displayLearningUnitLocation(unit.location, unit.contentMode === 'nqtr'
+              ? t('learning.contentModeNqtr')
+              : unit.contentMode === 'story' ? t('learning.contentModeStory') : unit.categoryName)}
+          </p>
           <div className="mt-2 flex gap-3 text-[11px] text-muted-foreground">
             <span>{unit.vocabCount} {t('learning.vocab')}</span>
             <span>{unit.chunkCount} {t('learning.chunks')}</span>

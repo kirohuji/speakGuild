@@ -31,6 +31,7 @@ import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-dra
 import { WordMeaningInline } from '../components/word-meaning-lines'
 import { patternSlotDescription, patternSlotLabel } from '../lib/pattern-slot'
 import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
+import { displayLearningUnitLocation } from '../lib/learning-unit-display'
 
 const PREP_PAGE_SIZE = 8
 const TOPIC_PAGE_SIZE = 8
@@ -430,7 +431,11 @@ export function LearningUnitPage() {
           <div className="min-w-0">
             <Badge variant="secondary" className="mb-2 rounded-full">{unit.category}</Badge>
             <h1 className="text-xl font-bold leading-tight text-foreground">{unit.title}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{unit.location}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {displayLearningUnitLocation(unit.location, unit.contentMode === 'nqtr'
+                ? t('learning.contentModeNqtr')
+                : unit.contentMode === 'story' ? t('learning.contentModeStory') : unit.category)}
+            </p>
           </div>
           <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <Target className="size-5" />

@@ -116,9 +116,11 @@ export function NqtrPlayPage() {
       previewLayout="portrait"
       aiEvaluationEnabled={false}
       holdLastLine
+      hideDisplayMode
       onDismiss={props.onDismiss}
       className="h-full max-h-none max-w-none rounded-none border-0 bg-transparent shadow-none"
       onDebugChange={props.onDebugChange}
+      onHistoryOpenChange={props.onHistoryOpenChange}
       assetMap={props.assetMap ?? undefined}
     />
   ), [bundle])

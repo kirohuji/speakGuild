@@ -83,6 +83,8 @@ interface VnPlayerProps {
   hideEndedCaption?: boolean
   /** 片段已经结束时，点击对话区域关闭。设置和历史不受影响。 */
   onDismiss?: () => void
+  /** NQTR 等场景只支持 VN 剧场，隐藏设置里的显示模式切换。 */
+  hideDisplayMode?: boolean
 }
 
 interface VnPlayerSettings {
@@ -194,13 +196,17 @@ export function VnPlayer({
   clearBackdrop = false,
   hideEndedCaption = false,
   onDismiss,
+  hideDisplayMode = false,
   ref,
 }: VnPlayerProps & { ref?: Ref<VnPlayerHandle> }) {
   const { t } = useTranslation()
   const [historyOpen, setHistoryOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settings, setSettings] = useState<VnPlayerSettings>(() => loadVnPlayerSettings())
-  const showUserInput = showUserInputOverride ?? settings.showUserInputInDialogue
+  const effectiveSettings = hideDisplayMode && settings.displayMode !== 'vn'
+    ? { ...settings, displayMode: 'vn' as const }
+    : settings
+  const showUserInput = showUserInputOverride ?? effectiveSettings.showUserInputInDialogue
   const [reviewLineIndex, setReviewLineIndex] = useState<number | null>(null)
   const [displayedText, setDisplayedText] = useState(currentLine?.text ?? '')
   const typewriterTimerRef = useRef<number | null>(null)
@@ -323,7 +329,7 @@ export function VnPlayer({
   }), [historyOpen, settingsOpen])
   const isTyping = !!fullText && displayedText.length < fullText.length
   const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen && reviewLineIndex === null && !isTyping
-  const canInteract = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen && settings.displayMode !== 'chat'
+  const canInteract = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen && effectiveSettings.displayMode !== 'chat'
   const canSubmitInput = reviewLineIndex === null && !!onSubmitInput && isWaiting && !activeLine?.isUser && !isEnded && choices.length === 0 && !historyOpen && !settingsOpen
 
   useEffect(() => {
@@ -356,7 +362,7 @@ export function VnPlayer({
   }
 
   // ── Chat list mode ──
-  if (settings.displayMode === 'chat') {
+  if (effectiveSettings.displayMode === 'chat') {
     return (
       <>
         <DialogueListView
@@ -395,6 +401,7 @@ export function VnPlayer({
           onOpenChange={setSettingsOpen}
           settings={settings}
           onSettingsChange={setSettings}
+          hideDisplayMode={hideDisplayMode}
         />
       </>
     )
@@ -657,6 +664,7 @@ export function VnPlayer({
         onOpenChange={setSettingsOpen}
         settings={settings}
         onSettingsChange={setSettings}
+        hideDisplayMode={hideDisplayMode}
       />
     </div>
   )
@@ -695,11 +703,13 @@ function VnSettingsDialog({
   onOpenChange,
   settings,
   onSettingsChange,
+  hideDisplayMode = false,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   settings: VnPlayerSettings
   onSettingsChange: (settings: VnPlayerSettings) => void
+  hideDisplayMode?: boolean
 }) {
   const { t } = useTranslation()
   const update = (patch: Partial<VnPlayerSettings>) => onSettingsChange({ ...settings, ...patch })
@@ -758,34 +768,38 @@ function VnSettingsDialog({
             </div>
           </div>
 
-          <Separator />
+          {!hideDisplayMode && (
+            <>
+              <Separator />
 
-          {/* Display Mode */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">{t('vnSettings.displayMode')}</Label>
-            <div className="flex rounded-lg bg-muted p-0.5">
-              <button
-                type="button"
-                className={cn(
-                  'flex-1 rounded-md py-2 text-sm font-medium transition-colors',
-                  settings.displayMode === 'vn' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-                )}
-                onClick={() => update({ displayMode: 'vn' })}
-              >
-                {t('vnSettings.displayModeVn')}
-              </button>
-              <button
-                type="button"
-                className={cn(
-                  'flex-1 rounded-md py-2 text-sm font-medium transition-colors',
-                  settings.displayMode === 'chat' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-                )}
-                onClick={() => update({ displayMode: 'chat' })}
-              >
-                {t('vnSettings.displayModeChat')}
-              </button>
-            </div>
-          </div>
+              {/* Display Mode */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">{t('vnSettings.displayMode')}</Label>
+                <div className="flex rounded-lg bg-muted p-0.5">
+                  <button
+                    type="button"
+                    className={cn(
+                      'flex-1 rounded-md py-2 text-sm font-medium transition-colors',
+                      settings.displayMode === 'vn' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                    )}
+                    onClick={() => update({ displayMode: 'vn' })}
+                  >
+                    {t('vnSettings.displayModeVn')}
+                  </button>
+                  <button
+                    type="button"
+                    className={cn(
+                      'flex-1 rounded-md py-2 text-sm font-medium transition-colors',
+                      settings.displayMode === 'chat' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                    )}
+                    onClick={() => update({ displayMode: 'chat' })}
+                  >
+                    {t('vnSettings.displayModeChat')}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
 
           <Separator />
 

@@ -86,6 +86,7 @@ import { learningRepository, practiceRepository } from '@/lib/offline'
 import { useAuth } from '@/providers/auth-provider'
 import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
 import { useCachedImage } from '@/hooks/use-cached-image'
+import { displayLearningUnitLocation } from '@/features/learning/lib/learning-unit-display'
 
 /**
  * The card artwork belongs to the learning package.  A work can additionally
@@ -115,10 +116,14 @@ function isAfterPracticeReset(createdAt: string, resetAt: string | null) {
   return !resetAt || createdAt.localeCompare(resetAt) >= 0
 }
 
-function displayScriptLocation(location: string | null | undefined, fallback: string) {
-  const value = location?.trim()
-  // `story:<id>` is an internal package reference, never presentation text.
-  return value && !/^story:[a-z0-9_-]+$/i.test(value) ? value : fallback
+function getScriptShopChapters(unit: LearningUnitSummary) {
+  // Script packages have their own chapter models. `topics` contains warm-up
+  // exercises and may legitimately be empty even when the script has chapters.
+  return unit.scriptChapters ?? unit.topics
+}
+
+function getScriptShopChapterCount(unit: LearningUnitSummary) {
+  return unit.scriptChapters?.length ?? unit.scriptCount
 }
 
 function useVideoFullscreenOrientation() {
@@ -681,7 +686,7 @@ function MineScripts({
                 </div>
                 <div className="flex flex-col gap-3">
                   <div>
-                    <p className="text-xs text-muted-foreground">{displayScriptLocation(activeUnit.location, t('scripts.pocketTheater'))}</p>
+                    <p className="text-xs text-muted-foreground">{displayLearningUnitLocation(activeUnit.location, t('scripts.pocketTheater'))}</p>
                     <h1 className="mt-1 text-2xl font-semibold tracking-tight">{activeUnit.title}</h1>
                     {activeUnit.description && (
                       <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
@@ -782,7 +787,7 @@ function MineScripts({
             {units.map((unit) => {
             const installed = installedIds.has(unit.id)
             const downloading = downloadTasks.some((task) => task.packId === unit.id && task.status !== 'error')
-            const location = displayScriptLocation(unit.location, t('scripts.immersiveTheater'))
+            const location = displayLearningUnitLocation(unit.location, t('scripts.immersiveTheater'))
 
             return (
               <div key={unit.id} className="group relative w-44 shrink-0 snap-start">
@@ -2313,9 +2318,9 @@ function ScriptShop({
                   <h3 className="line-clamp-1 flex-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</h3>
                   {unit.isLocked && <LockKeyhole className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />}
                 </div>
-                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{displayScriptLocation(unit.location, t('scripts.immersiveTheater'))}</p>
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{displayLearningUnitLocation(unit.location, t('scripts.immersiveTheater'))}</p>
                 <p className="mt-1 line-clamp-1 text-xs leading-5 text-muted-foreground">
-                  {t('scripts.unitMeta', { chapters: unit.scriptCount, words: unit.vocabCount, chunks: unit.chunkCount })}
+                  {t('scripts.unitMeta', { chapters: getScriptShopChapterCount(unit), words: unit.vocabCount, chunks: unit.chunkCount })}
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   <Badge variant="secondary" className="h-5 rounded-full border-0 px-2 text-[10px] shadow-none">{unit.isFree ? t('scripts.free') : t('scripts.member')}</Badge>
@@ -2388,15 +2393,16 @@ function ScriptShopDetail({
 }) {
   const { t } = useTranslation()
   const downloading = task?.status === 'downloading' || task?.status === 'extracting'
-  const totalPages = Math.max(1, Math.ceil(unit.topics.length / pageSize))
-  const chapters = unit.topics.slice((chapterPage - 1) * pageSize, chapterPage * pageSize)
+  const scriptChapters = getScriptShopChapters(unit)
+  const totalPages = Math.max(1, Math.ceil(scriptChapters.length / pageSize))
+  const chapters = scriptChapters.slice((chapterPage - 1) * pageSize, chapterPage * pageSize)
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
       <DialogContent className="max-h-[88vh] w-[90vw] overflow-hidden rounded-2xl p-0 sm:max-w-md">
         <DialogHeader className="sr-only">
           <DialogTitle>{unit.title}</DialogTitle>
-          <DialogDescription>{displayScriptLocation(unit.location, t('scripts.immersiveTheater'))}</DialogDescription>
+          <DialogDescription>{displayLearningUnitLocation(unit.location, t('scripts.immersiveTheater'))}</DialogDescription>
         </DialogHeader>
         <div className="flex max-h-[88vh] flex-col">
           <div className="flex gap-3 bg-muted/30 p-4">
@@ -2410,9 +2416,9 @@ function ScriptShopDetail({
                 {unit.isLocked && <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{t('scripts.locked')}</Badge>}
               </div>
               <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5">{unit.title}</h3>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{displayScriptLocation(unit.location, t('scripts.immersiveTheater'))}</p>
+              <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{displayLearningUnitLocation(unit.location, t('scripts.immersiveTheater'))}</p>
               <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                <span>{t('scripts.chaptersUnit', { count: unit.scriptCount })}</span>
+                <span>{t('scripts.chaptersUnit', { count: getScriptShopChapterCount(unit) })}</span>
                 <span>{t('scripts.wordsUnit', { count: unit.vocabCount })}</span>
                 <span>{t('scripts.chunksUnit', { count: unit.chunkCount })}</span>
               </div>
@@ -2463,7 +2469,7 @@ function ScriptShopDetail({
 
           <div className="flex items-center justify-between bg-muted/30 px-4 py-2.5">
             <p className="text-xs font-medium">{t('scripts.chapterListHeader')}</p>
-            {unit.topics.length > pageSize && (
+            {scriptChapters.length > pageSize && (
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                 <button type="button" disabled={chapterPage === 1} onClick={() => onChapterPageChange(Math.max(1, chapterPage - 1))} className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/16 disabled:opacity-35" aria-label={t('scripts.prevPage')}>
                   <ChevronLeft className="size-3.5" />

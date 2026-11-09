@@ -18,10 +18,12 @@ import { useLearningStore } from '@/stores/learning.store'
 import { learningRepository } from '@/lib/offline'
 import { useDailyPracticeStore } from '@/stores/daily-practice.store'
 import { toast } from 'sonner'
+import { displayLearningUnitLocation } from '../lib/learning-unit-display'
 
 function packageTypeLabel(t: (key: string) => string, type?: LearningUnitSummary['packageType']) {
   if (type === 'exam') return t('learning.packageTypeExam')
   if (type === 'story') return t('learning.packageTypeStory')
+  if (type === 'nqtr') return t('learning.packageTypeNqtr')
   if (type === 'course') return t('learning.packageTypeCourse')
   if (type === 'foundation') return t('learning.packageTypeFoundation')
   return t('learning.packageTypeDaily')
@@ -33,6 +35,7 @@ function contentModeLabel(t: (key: string) => string, mode?: LearningUnitSummary
   if (mode === 'listening') return t('learning.contentModeListening')
   if (mode === 'novel') return t('learning.contentModeNovel')
   if (mode === 'story') return t('learning.contentModeStory')
+  if (mode === 'nqtr') return t('learning.contentModeNqtr')
   return t('learning.contentModePractice')
 }
 
@@ -73,6 +76,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
   // when the user has removed this device's downloaded package.
   const progressUnit = planUnit ?? unit
   const isCompleted = progressUnit.status === 'completed' || (progressUnit.completionPercent ?? 0) >= 100
+  const displayLocation = displayLearningUnitLocation(unit.location, contentModeLabel(t, unit.contentMode))
   const downloadProgress = downloadTask?.progress ?? 0
 
   const handleAcquire = useCallback(async () => {
@@ -160,7 +164,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
             )}
             {(!unit.isUnlocked || unit.isLocked) && <Lock className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />}
           </div>
-          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{unit.location}</p>
+          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{displayLocation}</p>
           <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
             {unit.topicCount}{t('learning.topics')} · {unit.vocabCount}{t('learning.vocab')} · {unit.chunkCount}{t('learning.chunks')}
           </p>
@@ -208,7 +212,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
         <DialogContent className="flex max-h-[88dvh] w-[90vw] min-w-0 flex-col gap-0 overflow-y-auto overscroll-contain rounded-2xl p-0 sm:max-w-md">
           <DialogHeader className="sr-only">
             <DialogTitle>{unit.title}</DialogTitle>
-            <DialogDescription>{unit.location}</DialogDescription>
+            <DialogDescription>{displayLocation}</DialogDescription>
           </DialogHeader>
           <div className="flex min-w-0 flex-col">
             <div className="flex gap-3 bg-muted/30 p-4">
@@ -226,7 +230,7 @@ export function ShopCard({ unit, onMemberOpen, onEnroll, ...rest }: Props) {
                   {(!unit.isUnlocked || unit.isLocked) && <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{t('learning.locked')}</Badge>}
                 </div>
                 <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5 text-foreground">{unit.title}</h3>
-                <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{unit.location}</p>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{displayLocation}</p>
                 <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                   <span>{unit.vocabCount} {t('learning.vocab')}</span>
                   <span>{unit.chunkCount} {t('learning.chunks')}</span>

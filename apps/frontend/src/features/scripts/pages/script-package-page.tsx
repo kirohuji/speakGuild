@@ -28,6 +28,7 @@ import { readNqtrSaveHybrid } from '@/features/nqtr/api/nqtr-local-save'
 import { resolveNqtrChapterUnlock, type NqtrChapterProgressItem } from '@/features/nqtr/lib/nqtr-chapter-progress'
 import { resolveStoryEpisodeUnlock } from '@/features/scripts/lib/story-chapter-progress'
 import { useLearningStore } from '@/stores/learning.store'
+import { displayLearningUnitLocation } from '@/features/learning/lib/learning-unit-display'
 
 export function ScriptPackagePage() {
   const { t } = useTranslation()
@@ -145,7 +146,7 @@ export function ScriptPackagePage() {
             <ArrowLeft className="size-4" />
           </button>
           <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
-            <p className="truncate text-xs text-muted-foreground">{detail.location || t('scripts.immersiveTheater')}</p>
+            <p className="truncate text-xs text-muted-foreground">{displayLearningUnitLocation(detail.location, t('scripts.immersiveTheater'))}</p>
             <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{detail.title}</h1>
           </div>
         </div>
@@ -157,7 +158,7 @@ export function ScriptPackagePage() {
             <div className="min-w-0">
               <Badge variant="secondary" className="mb-2 rounded-full">{detail.requiredOutputLevel}</Badge>
               <h1 className="text-xl font-bold leading-tight text-foreground">{detail.title}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">{detail.location}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{displayLearningUnitLocation(detail.location, t('scripts.immersiveTheater'))}</p>
             </div>
             <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Clapperboard className="size-5" />

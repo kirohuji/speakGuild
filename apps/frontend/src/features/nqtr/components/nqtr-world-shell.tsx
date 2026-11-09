@@ -94,8 +94,14 @@ function normalizeAssetMap(assetMap?: NqtrStoryPayload['assetMap']): NqtrDialogu
 }
 
 function characterSprite(character?: NqtrCharacter) {
-  const expressions = Array.isArray(character?.expressions) ? character.expressions : []
-  for (const item of expressions) {
+  const raw = character?.expressions
+  const entries = Array.isArray(raw)
+    ? raw
+    : raw && typeof raw === 'object'
+      ? Object.values(raw)
+      : []
+  for (const item of entries) {
+    if (typeof item === 'string' && item) return item
     if (!item || typeof item !== 'object') continue
     const spriteUrl = (item as { spriteUrl?: unknown }).spriteUrl
     if (typeof spriteUrl === 'string' && spriteUrl) return spriteUrl
@@ -144,6 +150,7 @@ export function NqtrWorldShell({
   const [debug, setDebug] = useState<NqtrDialogueDebug | null>(null)
   const [hotspotsOpen, setHotspotsOpen] = useState(false)
   const [talkListOpen, setTalkListOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const [metCommitmentKeys, setMetCommitmentKeys] = useState<string[]>([])
   /** 切场景时先保留旧底，新图预载完再一起露出文字层。 */
   const [displayedBg, setDisplayedBg] = useState('')
@@ -172,12 +179,15 @@ export function NqtrWorldShell({
         && prev.history === state.history
         && prev.currentTags === state.currentTags
         && prev.choices === state.choices
-        && prev.activeBackground === state.activeBackground
+        && prev.activeBackground?.url === state.activeBackground?.url
+        && prev.activeBackground?.fit === state.activeBackground?.fit
         && prev.aiPayload === state.aiPayload
       ) return prev
       return state
     })
   }, [])
+
+  const dialogueAssetMap = useMemo(() => normalizeAssetMap(inkAssetMap), [inkAssetMap])
 
   const reset = useCallback((nextRooms: NqtrRoom[]) => {
     const entrance = nextRooms.find((item) => item.isEntrance) ?? nextRooms[0]
@@ -429,6 +439,7 @@ export function NqtrWorldShell({
     setInkJson(null)
     setInkSource('')
     setInkAssetMap(null)
+    setHistoryOpen(false)
     setPlace({ mode: 'room', roomId: talk.roomId })
   }, [metCommitmentKeys, remember, rooms, time, withChapterPass])
 
@@ -437,6 +448,7 @@ export function NqtrWorldShell({
     const nextTalk = { ...talk, token }
     closedTalk.current = null
     setDebug(null)
+    setHistoryOpen(false)
     if (!talk.scriptId) {
       closedTalk.current = token
       finishTalk(nextTalk)
@@ -537,7 +549,7 @@ export function NqtrWorldShell({
       : currentRoom.displayName)
     : (currentLocation?.displayName || '')
   const statusTimeText = `${dayLabel(time, session.gameDay)} ${formatNqtrTime(session.gameTime)}`
-  const showStatusBadge = Boolean(statusPlaceText) && sceneReady && (place.mode === 'room' || place.mode === 'talk') && !talkListOpen && !hotspotsOpen
+  const showStatusBadge = Boolean(statusPlaceText) && sceneReady && (place.mode === 'room' || place.mode === 'talk') && !talkListOpen && !hotspotsOpen && !historyOpen
 
   useEffect(() => {
     if (!backgroundUrl) {
@@ -649,11 +661,12 @@ export function NqtrWorldShell({
               token: place.talk.token,
               inkJson: inkJson ?? undefined,
               inkSource: inkSource || undefined,
-              assetMap: normalizeAssetMap(inkAssetMap),
+              assetMap: dialogueAssetMap,
               characters,
               defaultBackgroundUrl: displayedBg || backgroundUrl || undefined,
               onDismiss: () => finishTalk(place.talk),
               onDebugChange: handleDebug,
+              onHistoryOpenChange: setHistoryOpen,
             })}
           </div>
         ) : place.mode === 'map' ? (

@@ -227,6 +227,24 @@ export class LearningService {
     return asset;
   }
 
+  /** 地图编辑器里挂的探索热点图，进离线包，避免玩时再打 file-assets。 */
+  private pushExplorationEditorAssets(assets: any[], editorData: unknown) {
+    if (!editorData || typeof editorData !== 'object') return;
+    const data = editorData as Record<string, unknown>;
+    for (const key of ['sceneInteractions', 'explorationObjects'] as const) {
+      const bag = data[key];
+      if (!bag || typeof bag !== 'object') continue;
+      for (const items of Object.values(bag as Record<string, unknown>)) {
+        if (!Array.isArray(items)) continue;
+        for (const item of items) {
+          if (!item || typeof item !== 'object') continue;
+          const imageUrl = (item as { imageUrl?: unknown }).imageUrl;
+          if (typeof imageUrl === 'string') this.pushAsset(assets, imageUrl, 'icon');
+        }
+      }
+    }
+  }
+
   private isPackagedAsset(asset: any) {
     // An offline package must contain every resource used by its player.
     // Filtering out audio made a successfully installed package still depend
@@ -782,7 +800,7 @@ export class LearningService {
       },
       include: {
         category: { select: { id: true, name: true, icon: true } },
-        _count: { select: { trainingTopics: true, storyEpisodes: true, sceneVocabularies: true, sceneChunks: true } },
+        _count: { select: { trainingTopics: true, storyEpisodes: true, nqtrChapters: true, sceneVocabularies: true, sceneChunks: true } },
         sceneVocabularies: { select: { vocabularyId: true } },
         sceneChunks: { select: { chunkId: true } },
         trainingTopics: {
@@ -798,6 +816,24 @@ export class LearningService {
             _count: { select: { activeChunks: true, topicVocabs: true } },
             topicVocabs: { select: { vocabId: true } },
             activeChunks: { select: { chunkId: true } },
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+        storyEpisodes: {
+          select: {
+            id: true,
+            title: true,
+            chapterName: true,
+            description: true,
+            requiredOutputLevel: true,
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+        nqtrChapters: {
+          select: {
+            id: true,
+            title: true,
+            summary: true,
           },
           orderBy: { sortOrder: 'asc' },
         },
@@ -854,6 +890,20 @@ export class LearningService {
 
       const isUnlocked =
         freeDownloadsEnabled || (user?.userLevel ?? 1) >= scene.requiredUserLevel;
+      const scriptChapters = scene.packageType === 'nqtr'
+        ? scene.nqtrChapters.map((chapter) => ({
+            id: chapter.id,
+            title: chapter.title,
+            description: chapter.summary,
+            difficulty: scene.requiredOutputLevel,
+          }))
+        : scene.storyEpisodes.map((episode) => ({
+            id: episode.id,
+            title: episode.title,
+            description: episode.description,
+            difficulty: episode.requiredOutputLevel,
+            chapterName: episode.chapterName,
+          }));
 
       return {
         id: scene.id,
@@ -875,6 +925,7 @@ export class LearningService {
           difficulty: t.difficulty,
           suggestedDurationSec: t.suggestedDurationSec,
         })),
+        scriptChapters,
         requiredOutputLevel: scene.requiredOutputLevel,
         requiredUserLevel: scene.requiredUserLevel,
         isFree: scene.isFree,
@@ -883,7 +934,9 @@ export class LearningService {
         vocabCount,
         chunkCount,
         topicCount: scene._count.trainingTopics,
-        scriptCount: scene._count.storyEpisodes,
+        scriptCount: scene.packageType === 'nqtr'
+          ? scene._count.nqtrChapters
+          : scene._count.storyEpisodes,
         progress: prog
           ? {
               readiness: prog.readiness,
@@ -1754,10 +1807,13 @@ export class LearningService {
             id: c.id,
             name: c.name,
             displayName: c.displayName,
+            role: c.role,
+            personality: c.personality,
             avatarUrl: c.avatarUrl,
             spriteBaseUrl: c.spriteBaseUrl,
             expressions: c.expressions,
             defaultPosition: (c.defaultPosition as 'left' | 'center' | 'right') ?? 'center',
+            voiceBindings: c.voiceBindings ?? [],
           })),
         };
       }
@@ -2370,15 +2426,7 @@ export class LearningService {
         nqtrCast: {
           include: {
             character: {
-              select: {
-                id: true,
-                name: true,
-                displayName: true,
-                avatarUrl: true,
-                spriteBaseUrl: true,
-                expressions: true,
-                defaultPosition: true,
-              },
+              select: this.storyCharacterVisualSelect,
             },
           },
         },
@@ -2476,8 +2524,6 @@ export class LearningService {
       },
     });
 
-    const characters = scene.nqtrCast.map((item) => item.character);
-    this.pushCharacterVisualAssets(assets, characters);
     this.pushAsset(assets, map?.backgroundUrl, 'background');
     this.pushAsset(assets, map?.thumbnailUrl, 'thumbnail');
     this.pushAsset(assets, map?.icon, 'icon');
@@ -2495,12 +2541,15 @@ export class LearningService {
     }
 
     const inkIds = new Set<string>();
+    const characterIds = new Set<string>(scene.nqtrCast.map((item) => item.characterId));
     for (const chapter of chapters) {
+      for (const item of chapter.characters) characterIds.add(item.characterId);
       for (const activity of chapter.activities) {
         if (activity.inkScriptId) inkIds.add(activity.inkScriptId);
         this.pushAsset(assets, activity.iconUrl, 'icon');
       }
       for (const commitment of chapter.commitments) {
+        if (commitment.characterId) characterIds.add(commitment.characterId);
         if (commitment.inkScriptId) inkIds.add(commitment.inkScriptId);
         this.pushAsset(assets, commitment.imageUrl, 'sprite');
         const slotImages = commitment.slotImages && typeof commitment.slotImages === 'object'
@@ -2534,18 +2583,34 @@ export class LearningService {
         })
       : [];
     for (const script of inkScripts) {
+      if (script.characterId) characterIds.add(script.characterId);
       script.assetMap = await this.collectInkAssetMapAssets(script, assets);
     }
     const inkById = Object.fromEntries(inkScripts.map((script) => [script.id, script]));
+
+    // 出演名单 + 章节/日程/对白引用到的角色，头像/立绘/音色一并进离线包。
+    const castCharacters = scene.nqtrCast.map((item) => item.character);
+    const referencedCharacters = characterIds.size
+      ? await this.prisma.gameCharacter.findMany({
+          where: { id: { in: [...characterIds] } },
+          select: this.storyCharacterVisualSelect,
+        })
+      : [];
+    const inkCastCharacters = await this.findStoryCastCharacters(inkScripts);
+    const characters = this.mergeCharactersById(castCharacters, referencedCharacters, inkCastCharacters);
+    this.pushCharacterVisualAssets(assets, characters);
 
     const chrome = scene.nqtrChrome && typeof scene.nqtrChrome === 'object' ? scene.nqtrChrome as Record<string, any> : {};
     this.pushAsset(assets, chrome.hotspotIcon, 'icon');
     this.pushAsset(assets, chrome.activityIcon, 'icon');
     this.pushAsset(assets, chrome.talkIcon, 'icon');
+    this.pushAsset(assets, chrome.statusBadgeIcon, 'icon');
+    this.pushAsset(assets, chrome.pinLabelIcon, 'icon');
     const commands = chrome.commands && typeof chrome.commands === 'object' ? chrome.commands : {};
     for (const command of Object.values(commands) as Array<{ icon?: string }>) {
       if (typeof command?.icon === 'string') this.pushAsset(assets, command.icon, 'icon');
     }
+    this.pushExplorationEditorAssets(assets, map?.editorData);
 
     return {
       time: scene.nqtrTime ?? null,

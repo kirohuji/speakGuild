@@ -87,9 +87,11 @@ export function NqtrPackagePreview({
       previewLayout="portrait"
       aiEvaluationEnabled={aiEnabled}
       holdLastLine
+      hideDisplayMode
       onDismiss={props.onDismiss}
       className="h-full max-h-full w-full max-w-none"
       onDebugChange={props.onDebugChange}
+      onHistoryOpenChange={props.onHistoryOpenChange}
     />
   ), [aiEnabled, characters])
 
