@@ -38,4 +38,4 @@ scripts/audio-to-srt/
 scripts/audio-to-srt.ps1
 exports
 reports/
-scripts/
+/scripts/
