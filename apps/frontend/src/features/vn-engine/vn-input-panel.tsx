@@ -398,7 +398,7 @@ export function VnInputPanel({
   return (
     <div className={cn(
       variant === 'default' && 'bg-background/55 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-xl',
-      variant === 'embedded' && 'rounded-lg bg-muted/45 p-1 transition-colors focus-within:bg-muted/60',
+      variant === 'embedded' && 'bg-background',
     )}>
       {/* 隐藏的回放 audio 元素 */}
       <audio ref={audioRef} src={recordedAudioUrl ?? undefined} preload="auto" className="hidden" />
@@ -538,9 +538,8 @@ export function VnInputPanel({
                 </button>
 
                 <div className={cn(
-                  'flex min-w-0 flex-1 items-end rounded-xl',
-                  variant === 'default' ? 'gap-2 pl-2 pr-2' : 'pl-1 pr-1.5',
-                  variant === 'default' && 'bg-muted/70',
+                  'flex min-w-0 flex-1 items-end rounded-xl bg-muted/70',
+                  variant === 'default' ? 'gap-2 pl-2 pr-2' : 'pl-3 pr-2',
                 )}>
                   <textarea
                     ref={textareaRef}
@@ -605,9 +604,8 @@ export function VnInputPanel({
             </button>
 
             <div className={cn(
-              'flex min-w-0 flex-1 items-end rounded-xl',
-              variant === 'default' ? 'gap-2 pl-2 pr-2' : 'pl-1 pr-1.5',
-              variant === 'default' && 'bg-muted/70',
+              'flex min-w-0 flex-1 items-end rounded-xl bg-muted/70',
+              variant === 'default' ? 'gap-2 pl-2 pr-2' : 'pl-3 pr-2',
             )}>
               <textarea
                 ref={textareaRef}

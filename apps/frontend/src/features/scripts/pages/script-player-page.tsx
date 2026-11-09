@@ -9,9 +9,8 @@ import { VnPlayer, type VnPlayerHandle, type VnPlayerLine } from '@/features/vn-
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { type StoryEpisodePlayerData } from '@/features/learning/api/learning-api'
 import { learningRepository } from '@/lib/offline'
-import { assetCacheService } from '@/lib/offline/asset-cache.service'
+import { resolveInstalledAssetMap, resolveInstalledScene } from '@/lib/offline/installed-pack-media'
 import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
-import { cn } from '@/lib/cn'
 import { useLayoutStore } from '@/stores/layout.store'
 import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
 import { enqueueScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
@@ -89,35 +88,6 @@ export function ScriptPlayerPage() {
   )
 }
 
-async function resolveSceneAssets(scene: StoryEpisodePlayerData['scene']) {
-  if (!scene) return scene
-  const resolveUrl = (url?: string | null) => url
-    ? assetCacheService.resolve({ url, role: 'background', offlineOnly: true })
-    : Promise.resolve(url)
-  const characters = await Promise.all((scene.characters ?? []).map(async (character) => {
-    const expressions = character.expressions && typeof character.expressions === 'object'
-      ? await Promise.all(Object.entries(character.expressions).map(async ([name, value]) => {
-        if (typeof value === 'string') return [name, await resolveUrl(value)]
-        if (value && typeof value === 'object') {
-          const entry = value as { spriteUrl?: string | null; avatarUrl?: string | null }
-          return [name, {
-            ...entry,
-            spriteUrl: await resolveUrl(entry.spriteUrl),
-            avatarUrl: await resolveUrl(entry.avatarUrl),
-          }]
-        }
-        return [name, value]
-      }))
-      : []
-    return {
-      ...character,
-      spriteBaseUrl: await resolveUrl(character.spriteBaseUrl),
-      expressions: expressions.length ? Object.fromEntries(expressions) : character.expressions,
-    }
-  }))
-  return { ...scene, backgroundUrl: await resolveUrl(scene.backgroundUrl), characters }
-}
-
 function getRecordedAudioDurationMs(blob: Blob) {
   return new Promise<number>((resolve) => {
     const url = URL.createObjectURL(blob)
@@ -159,7 +129,7 @@ function InkEpisodePlayer({
   const [repeatSaving, setRepeatSaving] = useState(false)
   const [repeatFrameIndex, setRepeatFrameIndex] = useState(0)
   const [isChatMode, setIsChatMode] = useState(false)
-  const [resolvedAssetMap, setResolvedAssetMap] = useState(data.inkScript.assetMap ?? undefined)
+  const [resolvedAssetMap, setResolvedAssetMap] = useState<StoryEpisodePlayerData['inkScript']['assetMap']>()
   const [resolvedScene, setResolvedScene] = useState(data.scene)
   const [assetMapReady, setAssetMapReady] = useState(false)
   const [sceneAssetsReady, setSceneAssetsReady] = useState(false)
@@ -174,27 +144,13 @@ function InkEpisodePlayer({
   // an already-installed episode.
   useEffect(() => {
     let cancelled = false
-    const source = data.inkScript.assetMap ?? {}
-    void Promise.all(Object.entries(source).map(async ([alias, entry]) => {
-      if (!entry.signedUrl) return [alias, entry] as const
-      const localUrl = await assetCacheService.resolve({
-        url: entry.signedUrl,
-        assetId: entry.fileAssetId,
-        fileAssetId: entry.fileAssetId,
-        mimeType: entry.mimeType,
-        role: entry.type === 'audio' ? 'voice' : 'background',
-        offlineOnly: true,
-      })
-      return [alias, { ...entry, signedUrl: localUrl }] as const
-    })).then((resolvedEntries) => {
+    void resolveInstalledAssetMap(packageId, data.inkScript.assetMap).then((resolved) => {
       if (cancelled) return
-      const resolved = Object.fromEntries(resolvedEntries)
-      console.log('[script-player] resolved offline asset map', {
+      const entries = Object.values(resolved)
+      console.log('[script-player] resolved installed pack media', {
         episodeId,
-        total: resolvedEntries.length,
-        local: resolvedEntries.filter(([, entry]) => Boolean(
-          entry.signedUrl?.startsWith('capacitor://') || entry.signedUrl?.includes('/_capacitor_file_/'),
-        )).length,
+        total: entries.length,
+        local: entries.filter((entry) => Boolean(entry.signedUrl)).length,
       })
       setResolvedAssetMap(resolved)
     }).catch((error) => {
@@ -206,16 +162,16 @@ function InkEpisodePlayer({
       if (!cancelled) setAssetMapReady(true)
     })
     return () => { cancelled = true }
-  }, [data.inkScript.assetMap, episodeId])
+  }, [data.inkScript.assetMap, episodeId, packageId])
 
   useEffect(() => {
     let cancelled = false
-    void resolveSceneAssets(data.scene).then((scene) => {
+    void resolveInstalledScene(packageId, data.scene).then((scene) => {
       if (!cancelled) setResolvedScene(scene)
     }).catch((error) => console.warn('[script-player] offline scene resolution failed', { episodeId, error }))
       .finally(() => { if (!cancelled) setSceneAssetsReady(true) })
     return () => { cancelled = true }
-  }, [data.scene, episodeId])
+  }, [data.scene, episodeId, packageId])
 
   // 跟踪是否刚提交了用户输入（用于在 currentLine 中优先展示用户输入）
   const userInputJustSubmittedRef = useRef(false)
@@ -472,15 +428,15 @@ function InkEpisodePlayer({
 
   return (
     <div className="relative flex h-dvh flex-col bg-background">
-      <div className="absolute inset-x-0 top-0 z-30 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
-        <div className={cn('flex h-9 w-full max-w-[400px] items-center gap-1 rounded-full bg-background/90 px-1.5 text-foreground backdrop-blur-2xl', mode !== 'repeat' && 'shadow-lg')}>
-        <Button asChild variant="ghost" size="sm" className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground">
+      <div className="z-30 shrink-0 bg-background pt-[env(safe-area-inset-top,0px)]">
+        <div className="flex h-11 w-full items-center gap-2 px-2 text-foreground">
+        <Button asChild variant="ghost" size="sm" className="h-8 shrink-0 rounded-md px-2 text-xs font-medium text-foreground/80 shadow-none hover:bg-muted hover:text-foreground">
           <Link to={`/scripts/packages/${packageId}/episodes/${episodeId}`}>
             <ArrowLeft className="size-3.5" />
             {t('common.back')}
           </Link>
         </Button>
-        <span className="min-w-0 flex-1 truncate px-2 text-center text-xs font-medium text-foreground/70">
+        <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-foreground/70">
           {mode === 'repeat' ? t('scripts.repeatTheater') : t('scripts.vnInteractive')}
         </span>
         {isChatMode && (
@@ -489,7 +445,7 @@ function InkEpisodePlayer({
               type="button"
               aria-label={t('vnHistory.title')}
               onClick={() => vnPlayerRef.current?.toggleHistory()}
-              className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-primary/[0.16] hover:text-foreground"
+              className="flex size-8 shrink-0 items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
             >
               <History className="size-3.5" />
             </button>
@@ -497,7 +453,7 @@ function InkEpisodePlayer({
               type="button"
               aria-label={t('vnSettings.title')}
               onClick={() => vnPlayerRef.current?.toggleSettings()}
-              className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-primary/[0.16] hover:text-foreground"
+              className="flex size-8 shrink-0 items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
             >
               <Settings className="size-3.5" />
             </button>
@@ -506,16 +462,14 @@ function InkEpisodePlayer({
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="flex size-7 shrink-0 items-center justify-center rounded-full text-foreground/60 transition-colors hover:bg-primary/[0.16] hover:text-foreground"
+          className="flex size-8 shrink-0 items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
           aria-label={t('scripts.restart')}
         >
           <RotateCcw className="size-3.5" />
         </button>
         </div>
       </div>
-      <div className={mode === 'repeat'
-        ? 'min-h-0 flex-1 bg-background pt-[calc(3.5rem+env(safe-area-inset-top,0px))]'
-        : 'min-h-0 flex-1 bg-background'}>
+      <div className="min-h-0 flex-1 bg-background">
       {assetsResolving ? (
         <div className="flex h-full items-center justify-center bg-background">
           <Loader2 className="size-7 animate-spin text-primary" />
@@ -545,7 +499,7 @@ function InkEpisodePlayer({
         onAdvance={story.advanceStory}
         onChoice={story.handleChoice}
         onSubmitInput={submitInput}
-        className="h-full max-w-none rounded-none border-none"
+        className="h-full max-w-none rounded-none border-0 bg-background"
         stageClassName="min-h-0"
         hideChatTopBar
         showUserInputOverride

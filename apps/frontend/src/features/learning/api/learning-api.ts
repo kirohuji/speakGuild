@@ -251,11 +251,30 @@ export interface StoryEpisodePlayerData {
   scene?: {
     backgroundUrl?: string | null
     characters?: Array<{
+      id?: string
       name: string
       displayName?: string | null
+      role?: string | null
+      personality?: string | null
+      avatarUrl?: string | null
       spriteBaseUrl?: string | null
       expressions?: Record<string, unknown> | null
       defaultPosition?: 'left' | 'center' | 'right'
+      voiceBindings?: Array<{
+        id?: string
+        model?: string | null
+        params?: Record<string, unknown> | null
+        isDefault?: boolean
+        voiceAsset?: {
+          id?: string
+          externalVoiceId?: string
+          displayName?: string
+          language?: string | null
+          gender?: string | null
+          previewUrl?: string | null
+          provider?: { provider?: string; model?: string | null }
+        } | null
+      }>
     }>
   }
 }

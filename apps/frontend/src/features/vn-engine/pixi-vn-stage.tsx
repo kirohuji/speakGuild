@@ -60,9 +60,16 @@ async function pixiLoadableUrl(url: string): Promise<string> {
   return blobUrl
 }
 
+function isStageTextureUrl(url: string) {
+  return /^(data:|blob:|file:|capacitor:|https?:)/i.test(url)
+}
+
 /** Content URLs have no file extension, so Pixi will not pick an image parser on its own. */
 async function loadStageTexture(url: string): Promise<Texture> {
   const loadUrl = await pixiLoadableUrl(url)
+  if (!isStageTextureUrl(loadUrl)) {
+    throw new Error(`unresolved local asset: ${url}`)
+  }
   if (hasImageExtension(loadUrl)) {
     const texture = await Assets.load<Texture>(loadUrl)
     if (!texture) throw new Error(`empty texture: ${url}`)
@@ -474,7 +481,7 @@ export function PixiVnStage({
 
   return (
     <>
-      <div ref={hostRef} className="absolute inset-0 overflow-hidden bg-black" />
+      <div ref={hostRef} className="absolute inset-0 overflow-hidden bg-background" />
       {resolvedTheme === 'dark' && <div className="pointer-events-none absolute inset-0 bg-black/40" />}
     </>
   )

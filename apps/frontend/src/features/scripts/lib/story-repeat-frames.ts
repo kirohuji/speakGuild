@@ -17,16 +17,24 @@ export function buildStoryRepeatFrames(
   if (!data.inkScript.inkSource) return []
   const scene = options.scene ?? data.scene
   const characterSprites: Record<string, Record<string, string>> = {}
+  const characterAvatars: Record<string, string> = {}
   const characterPositions: Record<string, 'left' | 'center' | 'right'> = {}
   for (const character of scene?.characters ?? []) {
     const sprites: Record<string, string> = {}
     if (character.spriteBaseUrl) sprites.default = character.spriteBaseUrl
+    let avatarUrl = character.avatarUrl || undefined
     for (const [expression, value] of Object.entries(character.expressions ?? {})) {
-      const url = typeof value === 'string' ? value : (value as { spriteUrl?: string } | null)?.spriteUrl
-      if (url) sprites[expression] = url
+      if (typeof value === 'string') {
+        if (value) sprites[expression] = value
+      } else if (value && typeof value === 'object') {
+        const entry = value as { spriteUrl?: string; avatarUrl?: string }
+        if (entry.spriteUrl) sprites[expression] = entry.spriteUrl
+        if (!avatarUrl && entry.avatarUrl) avatarUrl = entry.avatarUrl
+      }
     }
     for (const name of [character.name, character.displayName].filter(Boolean) as string[]) {
       characterSprites[name] = sprites
+      if (avatarUrl) characterAvatars[name] = avatarUrl
       characterPositions[name] = character.defaultPosition ?? 'center'
     }
   }
@@ -36,6 +44,7 @@ export function buildStoryRepeatFrames(
   ), {
     defaultBackgroundUrl: scene?.backgroundUrl ?? undefined,
     characterSprites,
+    characterAvatars,
     characterPositions,
   })
 }

@@ -324,7 +324,7 @@ export function VnMixedPreviewPlayer({
 
   return (
     <div className={cn('mx-auto flex h-[78vh] max-h-[760px] w-full max-w-[420px] flex-col overflow-hidden', mobileSurface ? 'bg-background' : 'rounded-xl border', panelClass, className)}>
-      <div className={cn('relative aspect-video shrink-0 overflow-hidden bg-black', !mobileSurface && 'border-b border-white/10')}>
+      <div className={cn('relative aspect-video shrink-0 overflow-hidden', mobileSurface ? 'bg-background' : 'border-b border-white/10 bg-black')}>
         <PixiVnStage
           backgroundUrl={cachedBackgroundUrl}
           backgroundFit={activeBackground.fit || 'cover'}

@@ -83,9 +83,10 @@ function resolveAssetUrl(
   assetMap?: Record<string, { fileAssetId?: string; signedUrl?: string | null }>,
 ): string | undefined {
   if (!value) return value
-  if (assetMap) {
-    const entry = assetMap[value]
-    if (entry?.signedUrl) return entry.signedUrl
+  if (assetMap && Object.prototype.hasOwnProperty.call(assetMap, value)) {
+    // An unresolved alias is not a file path. Returning it makes the browser
+    // request `/bg_xxx` from the app origin.
+    return assetMap[value]?.signedUrl || undefined
   }
   return value
 }

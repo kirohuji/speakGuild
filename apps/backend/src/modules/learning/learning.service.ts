@@ -280,6 +280,103 @@ export class LearningService {
     return Object.fromEntries(entries.filter(([alias]) => aliases.has(alias)));
   }
 
+  private readonly storyCharacterVisualSelect = {
+    id: true,
+    name: true,
+    displayName: true,
+    role: true,
+    personality: true,
+    avatarUrl: true,
+    spriteBaseUrl: true,
+    expressions: true,
+    defaultPosition: true,
+    voiceBindings: {
+      select: {
+        id: true,
+        model: true,
+        params: true,
+        isDefault: true,
+        voiceAsset: {
+          select: {
+            id: true,
+            externalVoiceId: true,
+            displayName: true,
+            language: true,
+            gender: true,
+            previewUrl: true,
+            provider: { select: { provider: true, model: true } },
+          },
+        },
+      },
+    },
+  } as const;
+
+  /** Speakers and the chapter's selected character. Lightweight packs do not require a room NPC. */
+  private collectStoryCastKeys(scripts: Array<{ inkSource?: string | null; characterId?: string | null }>) {
+    const names = new Set<string>();
+    const ids = new Set<string>();
+    for (const script of scripts) {
+      if (script.characterId) ids.add(script.characterId);
+      const source = script.inkSource ?? '';
+      const idInSource = source.match(/^characterId:\s*(\S+)\s*$/m)?.[1];
+      if (idInSource) ids.add(idInSource);
+      for (const match of source.matchAll(/^\s*#\s*speaker:\s*(.+?)\s*$/gim)) {
+        const name = match[1].trim();
+        if (name && name.toLowerCase() !== 'you') names.add(name);
+      }
+    }
+    return { names: [...names], ids: [...ids] };
+  }
+
+  private async findStoryCastCharacters(scripts: Array<{ inkSource?: string | null; characterId?: string | null }>) {
+    const { names, ids } = this.collectStoryCastKeys(scripts);
+    if (!names.length && !ids.length) return [];
+    return this.prisma.gameCharacter.findMany({
+      where: {
+        OR: [
+          ...(ids.length ? [{ id: { in: ids } }] : []),
+          ...(names.length ? [{ name: { in: names } }, { displayName: { in: names } }] : []),
+        ],
+      },
+      select: this.storyCharacterVisualSelect,
+    });
+  }
+
+  private mergeCharactersById<T extends { id: string }>(...groups: T[][]) {
+    const byId = new Map<string, T>();
+    for (const group of groups) {
+      for (const character of group) {
+        if (!byId.has(character.id)) byId.set(character.id, character);
+      }
+    }
+    return [...byId.values()];
+  }
+
+  private pushCharacterVisualAssets(assets: any[], characters: Array<{
+    avatarUrl?: string | null
+    spriteBaseUrl?: string | null
+    expressions?: unknown
+    voiceBindings?: Array<{ voiceAsset?: { previewUrl?: string | null } | null }>
+  }>) {
+    for (const character of characters) {
+      this.pushAsset(assets, character.avatarUrl, 'thumbnail');
+      this.pushAsset(assets, character.spriteBaseUrl, 'sprite');
+      const expressions = character.expressions && typeof character.expressions === 'object'
+        ? Object.values(character.expressions as Record<string, unknown>)
+        : [];
+      for (const expression of expressions) {
+        if (typeof expression === 'string') this.pushAsset(assets, expression, 'sprite');
+        else if (expression && typeof expression === 'object') {
+          this.pushAsset(assets, (expression as { spriteUrl?: string | null }).spriteUrl, 'sprite');
+          this.pushAsset(assets, (expression as { avatarUrl?: string | null }).avatarUrl, 'thumbnail');
+        }
+      }
+      for (const binding of character.voiceBindings ?? []) {
+        this.pushAsset(assets, binding.voiceAsset?.previewUrl, 'voice');
+      }
+    }
+  }
+
   private async collectInkAssetMapAssets(inkScript: { inkSource?: string | null; inkJson?: any; assetMap?: any } | null | undefined, assets: any[]) {
     if (!inkScript) return {};
     const usedAssetMap = this.filterInkAssetMapToUsedAliases(inkScript);
@@ -939,6 +1036,7 @@ export class LearningService {
         inkSource: true,
         assetMap: true,
         version: true,
+        characterId: true,
       },
     });
     if (!inkScript?.inkJson) {
@@ -954,7 +1052,7 @@ export class LearningService {
             npcs: {
               include: {
                 character: {
-                  select: { name: true, displayName: true, spriteBaseUrl: true, expressions: true, defaultPosition: true },
+                  select: this.storyCharacterVisualSelect,
                 },
               },
             },
@@ -962,16 +1060,9 @@ export class LearningService {
         },
       },
     });
-    // Legacy story packages may not have a GameLocation row yet. Falling back
-    // to the character registry keeps authored speaker names (for example
-    // `fox`) resolvable for the player and server-side video renderer.
     const locationCharacters = gameLocation?.rooms.flatMap((room) => room.npcs.map((npc) => npc.character)) ?? [];
-    const characters = locationCharacters.length > 0
-      ? locationCharacters
-      : await this.prisma.gameCharacter.findMany({
-          select: { name: true, displayName: true, spriteBaseUrl: true, expressions: true, defaultPosition: true },
-          orderBy: { name: 'asc' },
-        });
+    const castCharacters = await this.findStoryCastCharacters([inkScript]);
+    const characters = this.mergeCharactersById(castCharacters, locationCharacters);
     const resolvedAssetMap = Object.fromEntries(await Promise.all(
       Object.entries((inkScript.assetMap ?? {}) as Record<string, any>).map(async ([alias, entry]) => {
         if (!entry || typeof entry !== 'object' || !entry.fileAssetId) return [alias, entry] as const;
@@ -996,10 +1087,19 @@ export class LearningService {
           avatarUrl: await this.resolveRenderableAssetUrl(expression.avatarUrl),
         }] as const;
       }));
+      const voiceBindings = await Promise.all((character.voiceBindings ?? []).map(async (binding) => ({
+        ...binding,
+        voiceAsset: binding.voiceAsset ? {
+          ...binding.voiceAsset,
+          previewUrl: await this.resolveRenderableAssetUrl(binding.voiceAsset.previewUrl),
+        } : binding.voiceAsset,
+      })));
       return {
         ...character,
+        avatarUrl: await this.resolveRenderableAssetUrl(character.avatarUrl),
         spriteBaseUrl: await this.resolveRenderableAssetUrl(character.spriteBaseUrl),
         expressions: Object.fromEntries(expressions),
+        voiceBindings,
       };
     }));
 
@@ -1532,7 +1632,7 @@ export class LearningService {
     const episodeInkScripts = episodeInkScriptIds.length > 0
       ? await this.prisma.inkScript.findMany({
           where: { id: { in: episodeInkScriptIds } },
-          select: { id: true, key: true, title: true, inkJson: true, inkSource: true, assetMap: true, version: true },
+          select: { id: true, key: true, title: true, inkJson: true, inkSource: true, assetMap: true, version: true, characterId: true },
         })
       : [];
     const episodeInkById = new Map(episodeInkScripts.map((script) => [script.id, script]));
@@ -1568,7 +1668,11 @@ export class LearningService {
     });
 
     const allNpcs = gameLocation?.rooms.flatMap((r) => r.npcs) ?? [];
-    const sceneCharacters = allNpcs.map((npc) => npc.character);
+    const locationCharacters = allNpcs.map((npc) => npc.character);
+    const castCharacters = this.isStoryLearningPack(unitDetail)
+      ? await this.findStoryCastCharacters(episodeInkScripts)
+      : [];
+    const sceneCharacters = this.mergeCharactersById(castCharacters, locationCharacters);
 
     // Attach scene to unitDetail (one copy, not repeated per topic)
     (unitDetail as any).scene = {
@@ -1619,20 +1723,7 @@ export class LearningService {
     // assetMap backgrounds and scene visuals.
     const packageCover = this.pushAsset(assets, unitDetail.coverImage, 'cover');
     if (packageCover) packageCover.source = 'package-cover';
-    for (const character of sceneCharacters) {
-      this.pushAsset(assets, character.avatarUrl, 'thumbnail');
-      this.pushAsset(assets, character.spriteBaseUrl, 'sprite');
-      const exps = character.expressions && typeof character.expressions === 'object'
-        ? Object.values(character.expressions as Record<string, unknown>)
-        : [];
-      for (const expr of exps) {
-        if (typeof expr === 'string') this.pushAsset(assets, expr, 'sprite');
-        else if (expr && typeof expr === 'object') {
-          this.pushAsset(assets, (expr as any).spriteUrl, 'sprite');
-          this.pushAsset(assets, (expr as any).avatarUrl, 'thumbnail');
-        }
-      }
-    }
+    this.pushCharacterVisualAssets(assets, sceneCharacters);
     // ── Resolve only story episode assetMap entries actually referenced by bg:/audio: tags ──
     for (const episode of storyEpisodePlayers) {
       if (episode.inkScript) {

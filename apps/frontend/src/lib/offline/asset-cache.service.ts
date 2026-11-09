@@ -62,6 +62,15 @@ export function isCachedPlaybackUrl(url: string) {
   return isLoadableLocalUrl(url)
 }
 
+async function readyAsset(id: string, depth = 0): Promise<LocalAsset | null> {
+  if (!id || depth > 3) return null
+  const row = await localDb.get<LocalAsset>('local_assets', id)
+  if (!row || row.status !== 'ready') return null
+  if (row.localUri) return row
+  if (row.assetId && row.assetId !== id) return readyAsset(row.assetId, depth + 1)
+  return null
+}
+
 function isLoadableLocalUrl(url: string) {
   return url.startsWith('capacitor://')
     || url.startsWith('http://localhost/_capacitor_file_')
@@ -243,6 +252,8 @@ async function putAliases(record: LocalAsset, ref: AssetRef, url: string): Promi
     ...record,
     id,
     assetId: record.id,
+    // Web keeps the image bytes on the hash row only. Alias rows are pointers.
+    ...(!isNative() ? { localUri: null, localPath: null } : {}),
   })))
 }
 
@@ -308,14 +319,15 @@ export const assetCacheService = {
       await digest(stableRemoteUrl(url)),
       ref.sha256 ?? '',
       ref.fileAssetId ?? '',
+      ref.alias ?? '',
     ].filter(Boolean))]
     let cached: LocalAsset | null = null
     let matchedKey = key
     for (const candidateId of candidateIds) {
-      const candidate = await localDb.get<LocalAsset>('local_assets', candidateId)
-      if (candidate?.status === 'ready' && candidate.localUri) {
+      const candidate = await readyAsset(candidateId)
+      if (candidate?.localUri) {
         cached = candidate
-        matchedKey = candidateId
+        matchedKey = candidate.id
         break
       }
     }
@@ -341,10 +353,8 @@ export const assetCacheService = {
       return isNative() ? toLoadableUrl(cached.localUri) : cached.localUri
     }
 
-    if (!isNative()) return url
-    // Native is intentionally local-only. Package installation is the sole
-    // explicit network-to-disk transition; normal rendering must never turn a
-    // missing cache row into an invisible COS request.
+    // Package playback is local-only on web and on device. A cache miss must
+    // not fall through to the signed URL, or the stage will fetch COS.
     if (ref.offlineOnly || isNative()) {
       console.error('[offline-assets] native resource missing; remote request blocked', {
         key,

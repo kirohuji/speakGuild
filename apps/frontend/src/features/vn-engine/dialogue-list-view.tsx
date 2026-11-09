@@ -519,25 +519,23 @@ export function DialogueListView({
 
       {/* ── Input area ── */}
       {inputFeedback && !(isWaiting && onSubmitInput) && (
-        <div className="relative z-10 px-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] pt-2" data-keyboard-lift>
-          <div className="overflow-hidden rounded-xl bg-background/75 backdrop-blur-2xl">
+        <div className="relative z-10 bg-background px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-2" data-keyboard-lift>
+          <div className="overflow-hidden rounded-lg bg-muted/30">
             {inputFeedback}
           </div>
         </div>
       )}
 
       {isWaiting && onSubmitInput && (
-        <div className="relative z-10 px-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] pt-2" data-keyboard-lift>
+        <div className="relative z-10 bg-background px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-2" data-keyboard-lift>
           <TurnGuidanceCard guidance={inputGuidance} className="mb-2 mr-0 max-w-[min(92%,360px)]" />
-          <div className="overflow-hidden rounded-xl bg-background/75 p-1.5 backdrop-blur-2xl">
-            {inputFeedback && <div className="mb-1.5 overflow-hidden rounded-lg bg-muted/30">{inputFeedback}</div>}
-            <VnInputPanel
-              variant="embedded"
-              placeholder={t('practiceVn.chatInputPlaceholder')}
-              disabled={inputDisabled}
-              onSubmit={onSubmitInput}
-            />
-          </div>
+          {inputFeedback && <div className="mb-2 overflow-hidden rounded-lg bg-muted/30">{inputFeedback}</div>}
+          <VnInputPanel
+            variant="embedded"
+            placeholder={t('practiceVn.chatInputPlaceholder')}
+            disabled={inputDisabled}
+            onSubmit={onSubmitInput}
+          />
         </div>
       )}
 
