@@ -330,8 +330,21 @@ export function NqtrPackagePreview({
     ? locationOf(place.locationId)
     : currentRoom ? locationOf(currentRoom.locationId) : undefined
   const slot = slotName(time, session.gameTime)
-  const locationHotspots = useMemo(() => {
-    if (!map || !currentLocation) return []
+  const activeHotspots = useMemo(() => {
+    if (!map) return []
+    if ((place.mode === 'room' || place.mode === 'talk') && currentRoom) {
+      return getExplorationObjects(map, `room:${currentRoom.id}`)
+        .filter((item) => !item.hidden)
+        .map((item) => ({
+          id: item.id,
+          title: item.title,
+          imageUrl: item.imageUrl,
+          x: item.x,
+          y: item.y,
+          roomId: item.interactionType === 'exit' ? item.targetRoomId : undefined,
+        }))
+    }
+    if (place.mode !== 'location' || !currentLocation) return []
     const roomPins = rooms
       .filter((room) => room.locationId === currentLocation.id)
       .map((room, index) => {
@@ -340,9 +353,16 @@ export function NqtrPackagePreview({
       })
     const interactions = getExplorationObjects(map, `location:${currentLocation.id}`)
       .filter((item) => !item.hidden)
-      .map((item) => ({ id: item.id, title: item.title, imageUrl: item.imageUrl, x: item.x, y: item.y, roomId: item.targetRoomId }))
+      .map((item) => ({
+        id: item.id,
+        title: item.title,
+        imageUrl: item.imageUrl,
+        x: item.x,
+        y: item.y,
+        roomId: item.targetRoomId,
+      }))
     return [...roomPins, ...interactions]
-  }, [currentLocation, map, rooms])
+  }, [currentLocation, currentRoom, map, place.mode, rooms])
 
   const gatedCommitments = useMemo(() => new Set(
     quests.flatMap((quest) => quest.stages.flatMap((stage) => (stage.actions ?? [])
@@ -467,10 +487,8 @@ export function NqtrPackagePreview({
     }, questsRef.current))
   }
 
-  const showHotspots = hotspotsOpen && place.mode !== 'map' && Boolean(currentLocation)
-  const background = showHotspots
-    ? currentLocation?.backgroundUrl || map?.backgroundUrl
-    : place.mode === 'map'
+  const showHotspots = hotspotsOpen && place.mode !== 'map' && Boolean(place.mode === 'location' ? currentLocation : currentRoom)
+  const background = place.mode === 'map'
     ? map?.backgroundUrl
     : place.mode === 'location'
       ? currentLocation?.backgroundUrl || map?.backgroundUrl
@@ -561,15 +579,6 @@ export function NqtrPackagePreview({
               {!map && <p className="absolute inset-x-0 top-1/2 text-center text-sm text-white/80">先在设定里绑定一张地图</p>}
               {map && !locations.length && <p className="absolute inset-x-0 top-1/2 text-center text-sm text-white/80">这张地图还没有地点</p>}
             </div>
-          ) : place.mode === 'location' && currentLocation ? (
-            <div className="absolute inset-x-0 bottom-0 z-10 flex gap-2 overflow-x-auto bg-gradient-to-t from-black/80 to-transparent p-4 pt-16">
-              {rooms.filter((room) => room.locationId === currentLocation.id).map((room) => (
-                <button key={room.id} type="button" className="min-w-28 rounded-lg border border-white/20 bg-black/70 px-3 py-2 text-left text-white hover:bg-black" onClick={() => setPlace({ mode: 'room', roomId: room.id })}>
-                  <span className="block text-sm font-medium">{room.displayName}</span>
-                  {room.isEntrance && <span className="text-[11px] text-white/70">入口</span>}
-                </button>
-              ))}
-            </div>
           ) : place.mode === 'room' && currentRoom ? (
             <>
               <div className="absolute inset-x-0 bottom-24 z-10 flex items-end justify-center gap-6 px-4">
@@ -624,7 +633,7 @@ export function NqtrPackagePreview({
           ) : null}
           {showHotspots && (
             <div className="absolute inset-0 z-20">
-              {locationHotspots.map((item) => {
+              {activeHotspots.map((item) => {
                 const icon = item.imageUrl ? resolveFileAssetUrl(item.imageUrl) : look.hotspotIcon ? resolveFileAssetUrl(look.hotspotIcon) : ''
                 return (
                   <button

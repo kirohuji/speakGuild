@@ -33,7 +33,7 @@ import type {
   LocationVisualStyle,
 } from "./exploration-map-model";
 
-extend({ AnimatedSprite, Container, Graphics, Sprite });
+extend({ AnimatedSprite, Container, Graphics, Sprite, Text: PixiText });
 
 export type ExplorationNodeKind =
   | "location"
@@ -250,8 +250,19 @@ export function ExplorationPixiCanvas({
   );
 
   useEffect(() => {
-    setCamera((current) => clampCamera(current));
-  }, [clampCamera]);
+    setCamera((current) =>
+      clampCamera(
+        props.mobilePreview ? { x: 0, y: 0, zoom: 1 } : current,
+      ),
+    );
+  }, [
+    clampCamera,
+    props.backgroundUrl,
+    props.mobilePreview,
+    props.previewOrientation,
+    worldHeight,
+    worldWidth,
+  ]);
 
   const zoomBy = useCallback(
     (factor: number) => {
@@ -264,6 +275,7 @@ export function ExplorationPixiCanvas({
   );
 
   useEffect(() => {
+    if (props.mobilePreview) return;
     const host = hostRef.current;
     if (!host) return;
     const onWheel = (event: WheelEvent) => {
@@ -306,7 +318,7 @@ export function ExplorationPixiCanvas({
   ]);
 
   useEffect(() => {
-    if (!props.focusNodeId) return;
+    if (!props.focusNodeId || props.mobilePreview) return;
     const node = renderedNodes.find((item) => item.id === props.focusNodeId);
     if (!node) return;
     const targetZoom = props.editable ? 1.35 : 1.8;
@@ -443,9 +455,9 @@ export function ExplorationPixiCanvas({
       )}
 
       {props.mobilePreview ? (
-        <div className="absolute bottom-3 right-3 z-20 flex flex-col items-end gap-1.5">
+        <div className="pointer-events-none absolute bottom-3 right-3 z-30">
           <div
-            className="pointer-events-none relative overflow-hidden rounded-lg border bg-muted shadow-md"
+            className="relative overflow-hidden rounded-lg border-2 border-white/80 bg-slate-900 shadow-lg"
             style={{ width: minimap.width, height: minimap.height }}
             role="img"
             aria-label="地图缩略图与当前视口"
@@ -467,40 +479,6 @@ export function ExplorationPixiCanvas({
               className="absolute border-2 border-primary bg-primary/10 shadow-sm"
               style={minimap.viewport}
             />
-          </div>
-          <div className="flex items-center gap-0.5 rounded-full border bg-background/85 p-0.5 shadow-md backdrop-blur">
-            <Button
-              aria-label="缩小地图"
-              size="icon"
-              variant="ghost"
-              className="size-7 rounded-full"
-              disabled={camera.zoom <= 1.001}
-              onClick={() => zoomBy(1 / 1.2)}
-            >
-              <Minus />
-            </Button>
-            <span className="w-8 text-center text-[10px] tabular-nums text-muted-foreground">
-              {Math.round(camera.zoom * 100)}%
-            </span>
-            <Button
-              aria-label="放大地图"
-              size="icon"
-              variant="ghost"
-              className="size-7 rounded-full"
-              disabled={camera.zoom >= 3.199}
-              onClick={() => zoomBy(1.2)}
-            >
-              <Plus />
-            </Button>
-            <Button
-              aria-label="重置视角"
-              size="icon"
-              variant="secondary"
-              className="size-7 rounded-full"
-              onClick={resetCamera}
-            >
-              <LocateFixed />
-            </Button>
           </div>
         </div>
       ) : null}
@@ -575,6 +553,7 @@ function ExplorationStage({
   onMaskEnd,
   onCameraChange,
   constrainCamera: clampCamera,
+  mobilePreview = false,
 }: ExplorationPixiCanvasProps & {
   viewportWidth: number;
   viewportHeight: number;
@@ -751,9 +730,10 @@ function ExplorationStage({
       <pixiGraphics
         zIndex={0}
         draw={drawFrame}
-        eventMode="static"
-        cursor="grab"
+        eventMode={mobilePreview ? "none" : "static"}
+        cursor={mobilePreview ? "default" : "grab"}
         onPointerDown={(event: FederatedPointerEvent) => {
+          if (mobilePreview) return;
           draggingWorld.current = true;
           worldDragOrigin.current = {
             pointerX: event.global.x,
@@ -826,13 +806,13 @@ function ExplorationStage({
               timeOfDay === "night"
                 ? 0x07111f
                 : timeOfDay === "golden"
-                  ? 0xff9b42
+                  ? 0xff8a1e
                   : 0xffffff;
             const alpha =
               timeOfDay === "night"
-                ? 0.32
+                ? 0.55
                 : timeOfDay === "golden"
-                  ? 0.12
+                  ? 0.34
                   : 0;
             g.rect(0, 0, worldWidth, worldHeight).fill({ color, alpha });
           }}
@@ -875,6 +855,7 @@ function ExplorationStage({
               showMaskOverlay={showMaskOverlay}
               maskKind={maskKind}
               onMaskEnd={onMaskEnd}
+              showTitle={!editable}
             />
           ))}
         </pixiContainer>
@@ -946,6 +927,10 @@ function useNodeVisualTreatment(style?: LocationVisualStyle) {
   return { colorFilter, colorTint };
 }
 
+function isHotspotMarker(kind?: ExplorationNode["kind"]) {
+  return kind === "location" || kind === "room" || kind === "learning" || kind === "character" || kind === "exit" || kind === "object";
+}
+
 function ExplorationNodeEntry(
   props: Omit<
     React.ComponentProps<typeof HotspotNode>,
@@ -974,6 +959,7 @@ function HotspotNode({
   showMaskOverlay,
   maskKind,
   onMaskEnd,
+  showTitle = false,
   onRegisterRef,
   onHoverChange,
   colorFilter,
@@ -997,6 +983,7 @@ function HotspotNode({
   showMaskOverlay: boolean;
   maskKind: "transparency" | "occlusion";
   onMaskEnd?: () => void;
+  showTitle?: boolean;
   onRegisterRef: (id: string, instance: Container | null) => void;
   onHoverChange: (id: string, hovered: boolean) => void;
   colorFilter: ColorMatrixFilter | null;
@@ -1038,11 +1025,19 @@ function HotspotNode({
   const shadowRef = useRef<Sprite>(null);
   const editingMask =
     maskKind === "occlusion" ? node.occlusionMask : node.mask;
-  const hitArea = useMemo(
-    () =>
-      new Rectangle(-node.width / 2, -node.height, node.width, node.height),
-    [node.height, node.width],
-  );
+  const hitArea = useMemo(() => {
+    if (!showTitle) {
+      return new Rectangle(-node.width / 2, -node.height, node.width, node.height);
+    }
+    const labelWidth = Math.max(node.width, 96 / viewportScale);
+    const labelHeight = 22 / viewportScale;
+    return new Rectangle(
+      -labelWidth / 2,
+      -node.height,
+      labelWidth,
+      node.height + labelHeight,
+    );
+  }, [node.height, node.width, showTitle, viewportScale]);
 
   const drawGlow = useCallback(
     (g: PixiGraphics) => {
@@ -1057,7 +1052,7 @@ function HotspotNode({
               : node.kind === "room"
                 ? 0xa78bfa
                 : 0xfbbf24;
-      if (node.kind === "location" || node.kind === "room") return;
+      if (isHotspotMarker(node.kind)) return;
       if (!texture) {
         g.roundRect(
           -node.width / 2,
@@ -1291,7 +1286,7 @@ function HotspotNode({
           draw={drawMask}
         />
       ) : null}
-      {(node.kind === "location" || node.kind === "room") && (
+      {isHotspotMarker(node.kind) && (
         <pixiGraphics
           eventMode="none"
           draw={(g: PixiGraphics) => {
@@ -1306,7 +1301,24 @@ function HotspotNode({
           }}
         />
       )}
-      {node.kind !== "location" && node.kind !== "room" && texture && (
+      {showTitle && isHotspotMarker(node.kind) && (
+        <pixiText
+          text={node.title}
+          anchor={{ x: 0.5, y: 0 }}
+          y={4 / viewportScale}
+          resolution={Math.min(window.devicePixelRatio || 1, 2)}
+          style={{
+            fontFamily: "Nunito, sans-serif",
+            fontSize: 15 / viewportScale,
+            fontWeight: "700",
+            fill: 0x111111,
+            stroke: { color: 0xffffff, width: 4 / viewportScale },
+            align: "center",
+          }}
+          eventMode="none"
+        />
+      )}
+      {!isHotspotMarker(node.kind) && texture && (
         <pixiSprite
           ref={shadowRef}
           texture={texture}
@@ -1320,7 +1332,7 @@ function HotspotNode({
           eventMode="none"
         />
       )}
-      {node.kind !== "location" && node.kind !== "room" && texture &&
+      {!isHotspotMarker(node.kind) && texture &&
       mediaType === "spritesheet" &&
       animationTextures.length > 0 ? (
         <pixiAnimatedSprite
@@ -1340,7 +1352,7 @@ function HotspotNode({
           height={node.height}
           eventMode="none"
         />
-      ) : node.kind !== "location" && node.kind !== "room" && texture ? (
+      ) : !isHotspotMarker(node.kind) && texture ? (
         <pixiSprite
           ref={spriteRef}
           texture={texture}

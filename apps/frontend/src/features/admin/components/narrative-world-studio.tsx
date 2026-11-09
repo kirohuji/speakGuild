@@ -33,7 +33,6 @@ import {
   Map,
   MapPin,
   MessageCircle,
-  Moon,
   Plus,
   Pencil,
   Route,
@@ -43,8 +42,6 @@ import {
   Smartphone,
   Send,
   Sparkles,
-  Sun,
-  Sunrise,
   Trash2,
   Undo2,
   Ungroup,
@@ -95,7 +92,7 @@ import { Select, SelectItem } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/cn";
@@ -244,8 +241,8 @@ const EMPTY_OBJECT: Omit<ExplorationObject, "id" | "roomId"> = {
   targetRoomId: "",
   x: 50,
   y: 55,
-  width: 110,
-  height: 110,
+  width: 10,
+  height: 10,
   required: false,
   hidden: false,
 };
@@ -361,6 +358,7 @@ export function NarrativeWorldStudio({
   const [tourIndex, setTourIndex] = useState(0);
   const [discovered, setDiscovered] = useState<Set<string>>(new Set());
   const [previewId, setPreviewId] = useState("");
+  const [previewTrail, setPreviewTrail] = useState<string[]>([]);
   const [maskEditing, setMaskEditing] = useState(false);
   const [maskTool, setMaskTool] = useState<MaskTool>("erase");
   const [maskLayer, setMaskLayer] = useState<MaskLayer>("transparency");
@@ -379,6 +377,7 @@ export function NarrativeWorldStudio({
     useState(false);
   const [interactionResourcesLoaded, setInteractionResourcesLoaded] =
     useState(false);
+  const interactionLoadState = useRef<'idle' | 'loading' | 'done'>('idle');
   const [previewStory, setPreviewStory] = useState<StoryData | null>(null);
   const [roleplayHistory, setRoleplayHistory] = useState<
     Array<{ speaker: "npc" | "user"; text: string }>
@@ -496,7 +495,8 @@ export function NarrativeWorldStudio({
   }, [loadInkStories, roomDialog, roomForm.roomType]);
 
   const loadInteractionResources = useCallback(async () => {
-    if (interactionResourcesLoading || interactionResourcesLoaded) return;
+    if (interactionLoadState.current !== 'idle') return;
+    interactionLoadState.current = 'loading';
     setInteractionResourcesLoading(true);
     try {
       const [nextCharacters, vocabPage, chunkPage, patternPage] =
@@ -506,30 +506,26 @@ export function NarrativeWorldStudio({
           listLibraryChunks({ page: 1, pageSize: 100 }),
           listLibraryPatterns({ page: 1, pageSize: 100 }),
         ]);
+      const extraPages = (totalPages: number) => {
+        const count = Number(totalPages);
+        if (!Number.isFinite(count) || count <= 1) return 0;
+        return Math.min(count - 1, 20);
+      };
       const [remainingVocabPages, remainingChunkPages, remainingPatternPages] =
         await Promise.all([
           Promise.all(
-            Array.from(
-              { length: Math.max(0, vocabPage.totalPages - 1) },
-              (_, index) =>
-                listLibraryVocabularies({
-                  page: index + 2,
-                  pageSize: 100,
-                }),
+            Array.from({ length: extraPages(vocabPage.totalPages) }, (_, index) =>
+              listLibraryVocabularies({ page: index + 2, pageSize: 100 }),
             ),
           ),
           Promise.all(
-            Array.from(
-              { length: Math.max(0, chunkPage.totalPages - 1) },
-              (_, index) =>
-                listLibraryChunks({ page: index + 2, pageSize: 100 }),
+            Array.from({ length: extraPages(chunkPage.totalPages) }, (_, index) =>
+              listLibraryChunks({ page: index + 2, pageSize: 100 }),
             ),
           ),
           Promise.all(
-            Array.from(
-              { length: Math.max(0, patternPage.totalPages - 1) },
-              (_, index) =>
-                listLibraryPatterns({ page: index + 2, pageSize: 100 }),
+            Array.from({ length: extraPages(patternPage.totalPages) }, (_, index) =>
+              listLibraryPatterns({ page: index + 2, pageSize: 100 }),
             ),
           ),
         ]);
@@ -546,16 +542,15 @@ export function NarrativeWorldStudio({
         ...patternPage.items,
         ...remainingPatternPages.flatMap((page) => page.items),
       ]);
+      interactionLoadState.current = 'done';
       setInteractionResourcesLoaded(true);
     } catch {
+      interactionLoadState.current = 'idle';
       toast.error("互动资源加载失败");
     } finally {
       setInteractionResourcesLoading(false);
     }
-  }, [
-    interactionResourcesLoaded,
-    interactionResourcesLoading,
-  ]);
+  }, []);
 
   useEffect(() => {
     if (objectDialog) void loadInteractionResources();
@@ -636,8 +631,8 @@ export function NarrativeWorldStudio({
         imageUrl: item.imageUrl,
         x: item.x,
         y: item.y,
-        width: item.width,
-        height: item.height,
+        width: 10,
+        height: 10,
         kind:
           item.interactionType === "character"
             ? ("character" as const)
@@ -782,6 +777,14 @@ export function NarrativeWorldStudio({
   };
 
   const goBack = () => {
+    if (!editable) {
+      setPreviewTrail((current) => [
+        level === "room"
+          ? `返回地点 · ${selectedLocation?.displayName ?? "地点"}`
+          : "返回地图",
+        ...current,
+      ].slice(0, 40));
+    }
     if (level === "room") {
       setLevel("location");
       setObjectId("");
@@ -823,7 +826,7 @@ export function NarrativeWorldStudio({
       if (level === "world") setLocationId(id);
       else if (level === "location") setRoomId(id);
     }
-    if (!editable) setFocusNodeId(id);
+    if (!editable) setFocusNodeId("");
   };
 
   const selectSceneRoot = () => {
@@ -838,9 +841,50 @@ export function NarrativeWorldStudio({
     }
   };
 
+  const notePreview = (line: string) => {
+    setPreviewTrail((current) => [line, ...current].slice(0, 40));
+  };
+
+  const backToMap = () => {
+    notePreview("打开地图");
+    setLevel("world");
+    setRoomId("");
+    setLocationId("");
+    setObjectId("");
+    setPreviewId("");
+    setFocusNodeId("");
+  };
+
+  const showPlaceHotspots = () => {
+    const location = selectedLocation ?? mapLocations.find((item) => !item.hidden && !item.disabled) ?? mapLocations[0];
+    if (!location) return;
+    notePreview(`查看热点 · ${location.displayName}`);
+    setLocationId(location.id);
+    setRoomId("");
+    setLevel("location");
+    setObjectId("");
+    setPreviewId("");
+    setFocusNodeId("");
+  };
+
   const openNode = (id: string) => {
     if (editable) return;
+    const node = nodes.find((item) => item.id === id);
     const interaction = sceneInteractions.find((item) => item.id === id);
+    if (node?.kind === "location") {
+      const location = mapLocations.find((item) => item.id === id);
+      notePreview(`进入地点 · ${location?.displayName ?? node.title}`);
+      setPreviewId("");
+      enterLocation(id);
+      return;
+    }
+    if (node?.kind === "room") {
+      const room = rooms.find((item) => item.id === id);
+      notePreview(`进入房间 · ${room?.displayName ?? node.title}`);
+      setPreviewId("");
+      enterRoom(id);
+      return;
+    }
     if (interaction?.interactionType === "exit" && interaction.targetRoomId) {
       const targetRoom = rooms.find(
         (room) =>
@@ -849,6 +893,7 @@ export function NarrativeWorldStudio({
           !room.hidden,
       );
       if (targetRoom) {
+        notePreview(`从出口进入 · ${targetRoom.displayName}`);
         setPreviewId("");
         setLocationId(targetRoom.locationId);
         enterRoom(targetRoom.id);
@@ -856,34 +901,10 @@ export function NarrativeWorldStudio({
       }
     }
     if (interaction) {
-      if (interaction.interactionType === "character") {
-        void loadInteractionResources();
-      }
-      setPreviewId(id);
+      notePreview(`点了热点 · ${interaction.title}`);
+      setPreviewId("");
       setFocusNodeId(id);
-      setRoleplayHistory(
-        interaction.interactionType === "character" &&
-          interaction.openingLine
-          ? [{ speaker: "npc", text: interaction.openingLine }]
-          : [],
-      );
-      setRoleplayCoach("");
-      if (
-        interaction.interactionType === "character" &&
-        interaction.characterMode === "ink" &&
-        interaction.inkScriptId
-      ) {
-        setPreviewStory(null);
-        void getStory(interaction.inkScriptId)
-          .then(setPreviewStory)
-          .catch(() => toast.error("Ink 剧情加载失败"));
-      } else {
-        setPreviewStory(null);
-      }
-      return;
     }
-    setPreviewId(id);
-    setFocusNodeId(id);
   };
 
   const moveNode = async (id: string, x: number, y: number) => {
@@ -2083,39 +2104,6 @@ export function NarrativeWorldStudio({
               </ToggleGroupItem>
             </ToggleGroup>
           )}
-          {!editable && (
-            <ToggleGroup
-              type="single"
-              value={timeOfDay}
-              onValueChange={(value) => value && setTimeOfDay(value as TimeOfDay)}
-              aria-label="预览光线"
-            >
-              <ToggleGroupItem value="day" aria-label="日间">
-                <Sun />
-              </ToggleGroupItem>
-              <ToggleGroupItem value="golden" aria-label="黄昏">
-                <Sunrise />
-              </ToggleGroupItem>
-              <ToggleGroupItem value="night" aria-label="夜间">
-                <Moon />
-              </ToggleGroupItem>
-            </ToggleGroup>
-          )}
-          {editable && selectedMap && (
-            <div className="flex items-center gap-2 rounded-lg border px-2.5 py-1.5">
-              <Label htmlFor="preview-node-breathing" className="text-xs">
-                预览呼吸
-              </Label>
-              <Switch
-                id="preview-node-breathing"
-                checked={nodeBreathing}
-                onCheckedChange={(checked) =>
-                  void updateNodeBreathing(checked)
-                }
-                aria-label="玩家预览自动呼吸缩放"
-              />
-            </div>
-          )}
           <Tabs
             value={editable ? "edit" : "preview"}
             onValueChange={(value) => {
@@ -2219,7 +2207,7 @@ export function NarrativeWorldStudio({
         </CardContent>
       </Card>
 
-      {level === "room" && (
+      {editable && level === "room" && (
         <div className="flex shrink-0 flex-wrap items-center gap-3 rounded-lg border border-border/60 bg-card px-3 py-2">
           <ToggleGroup
             type="single"
@@ -2253,7 +2241,14 @@ export function NarrativeWorldStudio({
       <div
         className={cn(
           "min-h-0 min-w-0 flex-1 overflow-hidden",
-          editable ? "flex gap-3" : "flex justify-center overflow-y-auto py-2",
+          editable
+            ? "flex gap-3"
+            : cn(
+                "grid gap-4",
+                previewOrientation === "landscape"
+                  ? "xl:grid-cols-[minmax(520px,760px)_minmax(0,1fr)]"
+                  : "xl:grid-cols-[minmax(360px,460px)_minmax(0,1fr)]",
+              ),
         )}
       >
         {editable && (
@@ -2351,6 +2346,7 @@ export function NarrativeWorldStudio({
                 </ScrollArea>
             </EditorDropdown>
           <EditorDropdown
+            className="order-first"
             title="属性"
             defaultOpen
             summary={
@@ -2570,66 +2566,129 @@ export function NarrativeWorldStudio({
           </div>
         )}
 
+        <div className={cn("flex min-h-0 min-w-0 flex-col", editable ? "flex-1" : "gap-3")}>
+          {!editable && (
+            <div
+              className={cn(
+                "mx-auto flex w-full flex-wrap gap-1",
+                previewOrientation === "landscape" ? "max-w-[760px]" : "max-w-[420px]",
+              )}
+            >
+              <Button size="sm" variant={level === "world" ? "default" : "outline"} onClick={backToMap}>
+                地图
+              </Button>
+              <Button size="sm" variant={level === "location" ? "default" : "outline"} onClick={showPlaceHotspots}>
+                热点
+              </Button>
+              {level !== "world" && (
+                <Button size="sm" variant="outline" onClick={goBack}>
+                  返回
+                </Button>
+              )}
+              <div className="ml-auto flex gap-1">
+                {(
+                  [
+                    ["day", "白天"],
+                    ["golden", "傍晚"],
+                    ["night", "晚上"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <Button
+                    key={value}
+                    size="sm"
+                    variant={timeOfDay === value ? "default" : "outline"}
+                    onClick={() => setTimeOfDay(value)}
+                  >
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
         <main
           className={cn(
             "min-h-0 min-w-0 max-w-full overflow-hidden",
             editable && "flex h-full min-w-0 flex-1 flex-col",
             !editable &&
               (previewOrientation === "landscape"
-                ? "w-full max-w-[860px] rounded-[1.9rem] border-[7px] border-slate-950 bg-slate-950 p-1 shadow-2xl ring-1 ring-white/10"
-                : "w-full max-w-[410px] rounded-[2.35rem] border-[8px] border-slate-950 bg-slate-950 p-1 shadow-2xl ring-1 ring-white/10"),
+                ? "relative mx-auto h-[78vh] max-h-[480px] w-full max-w-[760px] overflow-hidden rounded-lg border border-border bg-slate-950"
+                : "relative mx-auto h-[78vh] max-h-[760px] w-full max-w-[420px] overflow-hidden rounded-lg border border-border bg-slate-950"),
           )}
         >
-          <ExplorationPixiCanvas
-            key={
+          {editable ? (
+            <ExplorationPixiCanvas
+              key={`edit-${level}`}
+              className="h-full min-h-0 w-full flex-1 rounded-none border-0 bg-transparent shadow-none"
+              backgroundUrl={backgroundLayerHidden ? null : backgroundUrl}
+              nodes={nodes}
+              selectedId={selectedNodeId}
+              selectedIds={effectiveSelectedNodeIds}
+              focusNodeId={focusNodeId}
               editable
-                ? `edit-${level}`
-                : `preview-${previewOrientation}-${level}`
-            }
-            className={
-              editable
-                ? "h-full min-h-0 w-full flex-1 rounded-none border-0 bg-transparent shadow-none"
-                : undefined
-            }
-            backgroundUrl={backgroundLayerHidden ? null : backgroundUrl}
-            nodes={nodes}
-            selectedId={selectedNodeId}
-            selectedIds={editable ? effectiveSelectedNodeIds : [selectedNodeId]}
-            focusNodeId={focusNodeId}
-            editable={editable}
-            emptyLabel={
-              backgroundLayerHidden
-                ? "底图图层已隐藏"
-                : level === "world"
-                  ? "请上传世界地图底图"
-                  : level === "location"
-                    ? "请上传地点场景背景"
-                    : "请上传房间场景背景"
-            }
-            worldWidth={worldWidth}
-            worldHeight={worldHeight}
-            timeOfDay={timeOfDay}
-            nodeBreathing={nodeBreathing}
-            mobilePreview={!editable}
-            previewOrientation={previewOrientation}
-            maskEditingId={
-              editable && maskEditing && level === "world"
-                ? selectedLocation?.id
-                : undefined
-            }
-            maskBrushRadius={maskBrushSize / 100}
-            maskRestoring={maskTool === "restore"}
-            showMaskOverlay={showMaskOverlay}
-            maskKind={maskLayer}
-            onSelect={selectNode}
-            onOpen={openNode}
-            onMove={(id, x, y) => void moveNode(id, x, y)}
-            onMaskPoint={appendLocationMaskPoint}
-            onMaskEnd={() => void saveLocationMask()}
-          />
+              emptyLabel={
+                backgroundLayerHidden
+                  ? "底图图层已隐藏"
+                  : level === "world"
+                    ? "请上传世界地图底图"
+                    : level === "location"
+                      ? "请上传地点场景背景"
+                      : "请上传房间场景背景"
+              }
+              worldWidth={worldWidth}
+              worldHeight={worldHeight}
+              timeOfDay={timeOfDay}
+              nodeBreathing={false}
+              maskEditingId={
+                maskEditing && level === "world" ? selectedLocation?.id : undefined
+              }
+              maskBrushRadius={maskBrushSize / 100}
+              maskRestoring={maskTool === "restore"}
+              showMaskOverlay={showMaskOverlay}
+              maskKind={maskLayer}
+              onSelect={selectNode}
+              onOpen={openNode}
+              onMove={(id, x, y) => void moveNode(id, x, y)}
+              onMaskPoint={appendLocationMaskPoint}
+              onMaskEnd={() => void saveLocationMask()}
+            />
+          ) : (
+            <MapPlayerStage
+              backgroundUrl={backgroundLayerHidden ? null : backgroundUrl}
+              nodes={nodes}
+              timeOfDay={timeOfDay}
+              onOpen={openNode}
+            />
+          )}
+          {!editable && (
+            <div className="absolute right-3 top-3 z-30 flex items-start gap-2">
+              <Button size="sm" variant="secondary" onClick={showPlaceHotspots}>
+                热点
+              </Button>
+              <Button size="sm" variant="secondary" onClick={backToMap}>
+                地图
+              </Button>
+            </div>
+          )}
         </main>
-
-        
+        </div>
+        {!editable && (
+          <MapPreviewConsole
+            level={level}
+            place={
+              level === "room"
+                ? `${selectedLocation?.displayName ?? "地点"} / ${selectedRoom?.displayName ?? "房间"}`
+                : level === "location"
+                  ? selectedLocation?.displayName ?? "地点"
+                  : selectedMap?.displayName ?? "地图"
+            }
+            hotspotCount={nodes.length}
+            timeLabel={timeOfDay === "night" ? "晚上" : timeOfDay === "golden" ? "傍晚" : "白天"}
+            orientationLabel={previewOrientation === "landscape" ? "横屏" : "竖屏"}
+            nodes={nodes}
+            trail={previewTrail}
+            onOpen={openNode}
+          />
+        )}
       </div>
 
       <Dialog open={mapDialog} onOpenChange={setMapDialog}>
@@ -4019,15 +4078,17 @@ function EditorDropdown({
   title,
   summary,
   defaultOpen = false,
+  className,
   children,
 }: {
   title: string;
   summary?: string;
   defaultOpen?: boolean;
+  className?: string;
   children: ReactNode;
 }) {
   return (
-    <Collapsible defaultOpen={defaultOpen} className="shrink-0">
+    <Collapsible defaultOpen={defaultOpen} className={cn("shrink-0", className)}>
       <CollapsibleTrigger className="group flex h-8 w-full items-center gap-2 px-1 text-left">
         <ChevronDown className="size-3.5 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
         <span className="shrink-0 text-xs font-medium">{title}</span>
@@ -4355,7 +4416,7 @@ function Inspector({
               onAdd={onAddInteraction}
             />
             {location && (
-              <>
+              <EditorDropdown title="高阶操作" summary="大小、调色、蒙版">
               <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between gap-3">
                   <Label htmlFor="location-resource-scale">地点素材大小</Label>
@@ -4527,7 +4588,7 @@ function Inspector({
                   </Button>
                 </div>
               </div>
-              </>
+              </EditorDropdown>
             )}
           </>
         )}
@@ -4538,6 +4599,154 @@ function Inspector({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function MapPlayerStage({
+  backgroundUrl,
+  nodes,
+  timeOfDay,
+  onOpen,
+}: {
+  backgroundUrl?: string | null;
+  nodes: ExplorationNode[];
+  timeOfDay: TimeOfDay;
+  onOpen: (id: string) => void;
+}) {
+  const image = backgroundUrl ? resolveFileAssetUrl(backgroundUrl) : "";
+  const veil =
+    timeOfDay === "night"
+      ? "bg-[#07111f]/55"
+      : timeOfDay === "golden"
+        ? "bg-[#ff8a1e]/35"
+        : "";
+  const pins = nodes.filter((node) => !node.hidden && !node.layerHidden);
+  return (
+    <>
+      {image ? (
+        <img src={image} alt="" className="absolute inset-0 size-full object-cover" />
+      ) : (
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_42%),linear-gradient(180deg,#1c2836,#0d141c)]" />
+      )}
+      {veil ? <div className={cn("pointer-events-none absolute inset-0", veil)} /> : null}
+      {pins.map((node) => (
+        <button
+          key={node.id}
+          type="button"
+          className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center bg-transparent"
+          style={{ left: `${node.x}%`, top: `${node.y}%` }}
+          onClick={() => onOpen(node.id)}
+        >
+          {node.imageUrl ? (
+            <img
+              src={resolveFileAssetUrl(node.imageUrl)}
+              alt=""
+              className="size-[72px] object-contain"
+            />
+          ) : (
+            <span className="size-2.5 rounded-full border border-white bg-black" />
+          )}
+          <span
+            className="text-sm font-semibold leading-none"
+            style={{ color: "#111", WebkitTextStroke: "4px #fff", paintOrder: "stroke fill" }}
+          >
+            {node.title}
+          </span>
+        </button>
+      ))}
+      {image ? (
+        <img
+          src={image}
+          alt=""
+          className="pointer-events-none absolute bottom-3 right-3 z-30 h-16 w-24 rounded-lg border-2 border-white/80 object-cover shadow-lg"
+        />
+      ) : null}
+    </>
+  );
+}
+
+function MapPreviewConsole({
+  level,
+  place,
+  hotspotCount,
+  timeLabel,
+  orientationLabel,
+  nodes,
+  trail,
+  onOpen,
+}: {
+  level: StudioLevel;
+  place: string;
+  hotspotCount: number;
+  timeLabel: string;
+  orientationLabel: string;
+  nodes: ExplorationNode[];
+  trail: string[];
+  onOpen: (id: string) => void;
+}) {
+  const levelLabel = level === "world" ? "地图" : level === "location" ? "地点" : "房间";
+  return (
+    <aside className="min-h-0 min-w-0 overflow-hidden rounded-lg border border-border bg-background">
+      <div className="border-b border-border px-4 py-3">
+        <p className="text-sm font-semibold">实时状态</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          和总预览同一套走法。这里只看地图、地点和房间。
+        </p>
+      </div>
+      <div className="grid grid-cols-4 gap-px border-b border-border bg-border">
+        <PreviewMetric label="层级" value={levelLabel} />
+        <PreviewMetric label="位置" value={place} />
+        <PreviewMetric label="热点" value={String(hotspotCount)} />
+        <PreviewMetric label="画面" value={`${timeLabel} · ${orientationLabel}`} />
+      </div>
+      <Tabs defaultValue="hotspots">
+        <TabsList className="mx-3 mt-3 grid h-8 grid-cols-2 p-0.5">
+          <TabsTrigger value="hotspots" className="px-2 py-1 text-xs">热点</TabsTrigger>
+          <TabsTrigger value="trail" className="px-2 py-1 text-xs">走动记录</TabsTrigger>
+        </TabsList>
+        <ScrollArea className="h-[calc(78vh-150px)] max-h-[610px]">
+          <TabsContent value="hotspots" className="mt-0 space-y-2 p-3">
+            {nodes.length ? nodes.map((node) => (
+              <button
+                key={node.id}
+                type="button"
+                className="flex w-full items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 text-left hover:bg-muted"
+                onClick={() => onOpen(node.id)}
+              >
+                <span className="min-w-0 truncate text-sm">{node.title}</span>
+                <span className="shrink-0 text-[11px] text-muted-foreground">
+                  {node.kind === "location" ? "地点" : node.kind === "room" ? "房间" : node.kind === "exit" ? "出口" : "热点"}
+                </span>
+              </button>
+            )) : (
+              <p className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+                这一层还没有热点。
+              </p>
+            )}
+          </TabsContent>
+          <TabsContent value="trail" className="mt-0 space-y-2 p-3">
+            {trail.length ? trail.map((line, index) => (
+              <div key={`${line}-${index}`} className="rounded-md border border-border bg-card px-3 py-2 text-sm leading-5">
+                {line}
+              </div>
+            )) : (
+              <p className="rounded-md border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+                点左边的点，走进地点或房间。
+              </p>
+            )}
+          </TabsContent>
+        </ScrollArea>
+      </Tabs>
+    </aside>
+  );
+}
+
+function PreviewMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-background px-3 py-2">
+      <p className="text-[10px] text-muted-foreground">{label}</p>
+      <p className="truncate text-sm font-medium">{value}</p>
+    </div>
   );
 }
 
