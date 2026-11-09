@@ -27,6 +27,16 @@
   }
 }
 
+/* Ren'Py-style scene enter: soft dissolve instead of a loading spinner. */
+@keyframes vn-dissolve-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @layer base {
   /* ═══════════════════════════════════════════════════════
      漫语町 · ManYuDing 品牌配色系统

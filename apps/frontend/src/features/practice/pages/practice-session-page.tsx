@@ -15,6 +15,7 @@ import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
+import { vnTextureRuntime } from '@/features/vn-engine/vn-texture-runtime'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { practiceApi, practiceAiApi, chunkApi, expressionApi, type TopicDetail } from '../api/english-practice-api'
 import { learningContentRepository } from '@/lib/offline/learning-content.repository'
@@ -433,6 +434,8 @@ export function PracticeSessionPage() {
       backgroundUrl: activeScene?.backgroundUrl || undefined,
       backgroundFit: 'cover',
     })
+    // Prefetch GPU decode while prep UI still shows — CSS underlay covers any residual wait.
+    vnTextureRuntime.warmup([activeScene?.backgroundUrl])
   }, [activeScene?.backgroundUrl, inkJson])
 
   useEffect(() => {
@@ -1426,37 +1429,32 @@ export function PracticeSessionPage() {
           </div>
         </div>
 
-        <div className="min-h-0 flex-1">
-          {!packMediaReady ? (
-            <div className="flex h-full items-center justify-center bg-background">
-              <MobilePageLoading />
-            </div>
-          ) : (
+        <div className="min-h-0 flex-1 bg-black">
           <VnPlayerBoundary>
             <VnPlayer
               ref={vnPlayerRef}
-              className="h-full max-w-none rounded-none border-none"
+              className="h-full max-w-none rounded-none border-none bg-black"
               stageClassName="min-h-0"
               offlineOnly
-              backgroundUrl={vnVisual.backgroundUrl || activeScene?.backgroundUrl || undefined}
+              backgroundUrl={packMediaReady ? (vnVisual.backgroundUrl || activeScene?.backgroundUrl || undefined) : undefined}
               backgroundFit={vnVisual.backgroundFit}
-              currentLine={inkEnded ? null : currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc, translation: currentLine.translation, audioUrl: currentLine.audioUrl } : null}
-              history={dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc, translation: line.translation, audioUrl: line.audioUrl }))}
-              choices={inkChoices}
-              currentSpriteUrl={currentSpriteUrl}
+              currentLine={!packMediaReady || inkEnded ? null : currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc, translation: currentLine.translation, audioUrl: currentLine.audioUrl } : null}
+              history={packMediaReady ? dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc, translation: line.translation, audioUrl: line.audioUrl })) : []}
+              choices={packMediaReady ? inkChoices : []}
+              currentSpriteUrl={packMediaReady ? currentSpriteUrl : undefined}
               spriteAlt={currentCharacter?.displayName || currentCharacter?.name}
               spritePosition={spritePosition}
-              currentAvatarUrl={stateAvatarUrl || currentCharacter?.avatarUrl || undefined}
+              currentAvatarUrl={packMediaReady ? (stateAvatarUrl || currentCharacter?.avatarUrl || undefined) : undefined}
               currentAvatarAlt={currentCharacter?.displayName || currentCharacter?.name}
-              isWaiting={inkWaiting}
-              isEnded={inkEnded}
-              onSubmitInput={sendUserInput}
+              isWaiting={!packMediaReady || inkWaiting}
+              isEnded={packMediaReady && inkEnded}
+              onSubmitInput={packMediaReady ? sendUserInput : undefined}
               inputFeedback={turnFeedback ? <PracticeTurnFeedback feedback={turnFeedback} onContinue={continueDespiteFeedback} /> : null}
               inputFeedbackChat={turnFeedback ? <PracticeTurnFeedback feedback={turnFeedback} onContinue={continueDespiteFeedback} tone="chat" /> : null}
               inputGuidance={inputGuidance}
-              inputDisabled={turnFeedback?.status === 'loading' || Boolean(turnFeedback?.result?.passed)}
-              onChoice={(choiceIndex) => { setTurnFeedback(null); handleChoice(choiceIndex) }}
-              onAdvance={inkJson ? () => { setTurnFeedback(null); advanceStory() } : undefined}
+              inputDisabled={!packMediaReady || turnFeedback?.status === 'loading' || Boolean(turnFeedback?.result?.passed)}
+              onChoice={packMediaReady ? ((choiceIndex) => { setTurnFeedback(null); handleChoice(choiceIndex) }) : undefined}
+              onAdvance={packMediaReady && inkJson ? () => { setTurnFeedback(null); advanceStory() } : undefined}
               hideChatTopBar
               endedActions={(
                 <div className="flex gap-2">
@@ -1479,7 +1477,6 @@ export function PracticeSessionPage() {
               onWordInsight={handleWordInsight}
             />
           </VnPlayerBoundary>
-          )}
         </div>
 
         {/* Input area — hidden for now */}

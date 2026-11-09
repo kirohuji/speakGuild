@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, CheckCircle2, History, Loader2, RotateCcw, Settings } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, History, RotateCcw, Settings } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -10,6 +10,12 @@ import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { type StoryEpisodePlayerData } from '@/features/learning/api/learning-api'
 import { learningRepository } from '@/lib/offline'
 import { resolveInstalledAssetMap, resolveInstalledScene } from '@/lib/offline/installed-pack-media'
+import {
+  clearPreparedStoryVnEntry,
+  takePreparedStoryVnEntry,
+  type PreparedStoryVnEntry,
+} from '@/features/vn-engine/prepare-story-vn-entry'
+import { vnTextureRuntime } from '@/features/vn-engine/vn-texture-runtime'
 import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
 import { writeLocalStoryEpisodePassed } from '@/features/scripts/lib/story-chapter-progress'
 import { useLayoutStore } from '@/stores/layout.store'
@@ -32,32 +38,40 @@ export function ScriptPlayerPage() {
   const packageId = searchParams.get('packageId') ?? ''
   const mode = searchParams.get('mode') === 'repeat' ? 'repeat' : 'vn'
   const setImmersiveMode = useLayoutStore((state) => state.setImmersiveMode)
-  const [data, setData] = useState<StoryEpisodePlayerData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const preparedRef = useRef<PreparedStoryVnEntry | null>(
+    episodeId ? takePreparedStoryVnEntry(packageId, episodeId) : null,
+  )
+  const [data, setData] = useState<StoryEpisodePlayerData | null>(preparedRef.current?.data ?? null)
+  const [prepared, setPrepared] = useState<PreparedStoryVnEntry | null>(preparedRef.current)
+  const [loading, setLoading] = useState(!preparedRef.current)
   const [failed, setFailed] = useState(false)
   const completionSaved = useRef(false)
 
   useEffect(() => {
     setImmersiveMode(true)
-    return () => setImmersiveMode(false)
+    return () => {
+      setImmersiveMode(false)
+      clearPreparedStoryVnEntry()
+    }
   }, [setImmersiveMode])
 
   useEffect(() => {
     if (!episodeId) return
+    if (preparedRef.current) return
     setLoading(true)
     setFailed(false)
     learningRepository.getStoryEpisodePlayer(packageId, episodeId)
-      .then(setData)
+      .then((next) => {
+        setData(next)
+        setPrepared(null)
+      })
       .catch(() => setFailed(true))
       .finally(() => setLoading(false))
-  }, [episodeId])
+  }, [episodeId, packageId])
 
+  // Quiet black only for cold entry (no click-time prep). Prefer preparing on the episode buttons.
   if (loading) {
-    return (
-      <div className="flex h-dvh items-center justify-center bg-background">
-        <Loader2 className="size-7 animate-spin text-primary" />
-      </div>
-    )
+    return <div className="h-dvh bg-black" aria-busy="true" aria-label={t('common.loading')} />
   }
 
   if (failed || !data) {
@@ -85,6 +99,7 @@ export function ScriptPlayerPage() {
       packageId={packageId || data.episode.sceneId}
       mode={mode}
       completionSaved={completionSaved}
+      prepared={prepared}
     />
   )
 }
@@ -112,12 +127,14 @@ function InkEpisodePlayer({
   packageId,
   mode,
   completionSaved,
+  prepared,
 }: {
   data: StoryEpisodePlayerData
   episodeId: string
   packageId: string
   mode: 'vn' | 'repeat'
   completionSaved: React.MutableRefObject<boolean>
+  prepared?: PreparedStoryVnEntry | null
 }) {
   const { t } = useTranslation()
   const [userTurns, setUserTurns] = useState<VnPlayerLine[]>([])
@@ -130,20 +147,24 @@ function InkEpisodePlayer({
   const [repeatSaving, setRepeatSaving] = useState(false)
   const [repeatFrameIndex, setRepeatFrameIndex] = useState(0)
   const [isChatMode, setIsChatMode] = useState(false)
-  const [resolvedAssetMap, setResolvedAssetMap] = useState<StoryEpisodePlayerData['inkScript']['assetMap']>()
-  const [resolvedScene, setResolvedScene] = useState(data.scene)
-  const [assetMapReady, setAssetMapReady] = useState(false)
-  const [sceneAssetsReady, setSceneAssetsReady] = useState(false)
+  const [resolvedAssetMap, setResolvedAssetMap] = useState<StoryEpisodePlayerData['inkScript']['assetMap']>(
+    prepared?.assetMap,
+  )
+  const [resolvedScene, setResolvedScene] = useState(prepared?.scene ?? data.scene)
+  const [assetMapReady, setAssetMapReady] = useState(Boolean(prepared?.assetMap))
+  const [sceneAssetsReady, setSceneAssetsReady] = useState(Boolean(prepared?.scene))
   const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
   const startedAt = useRef(Date.now())
   const story = useInkStory(data.inkScript.inkJson)
   const { currentTags } = story
 
-  // The package installer stores story resources by immutable SHA-256 and
-  // creates a stable fileAssetId alias. Resolve aliases once here, before Ink
-  // tags are interpreted, so Capacitor never needs a fresh signed API URL for
-  // an already-installed episode.
+  // Prefer click-time prep; otherwise resolve installed pack aliases here.
   useEffect(() => {
+    if (prepared?.assetMap) {
+      setResolvedAssetMap(prepared.assetMap)
+      setAssetMapReady(true)
+      return
+    }
     let cancelled = false
     void resolveInstalledAssetMap(packageId, data.inkScript.assetMap).then((resolved) => {
       if (cancelled) return
@@ -155,24 +176,28 @@ function InkEpisodePlayer({
       })
       setResolvedAssetMap(resolved)
     }).catch((error) => {
-      // A package player is offline-only: do not retain a remote URL after a
-      // resolver failure, because that would silently defeat offline mode.
       console.warn('[script-player] offline asset-map resolution failed', { episodeId, error })
       if (!cancelled) setResolvedAssetMap({})
     }).finally(() => {
       if (!cancelled) setAssetMapReady(true)
     })
     return () => { cancelled = true }
-  }, [data.inkScript.assetMap, episodeId, packageId])
+  }, [data.inkScript.assetMap, episodeId, packageId, prepared?.assetMap])
 
   useEffect(() => {
+    if (prepared?.scene) {
+      setResolvedScene(prepared.scene)
+      setSceneAssetsReady(true)
+      vnTextureRuntime.warmup([prepared.backgroundUrl, prepared.spriteUrl])
+      return
+    }
     let cancelled = false
     void resolveInstalledScene(packageId, data.scene).then((scene) => {
       if (!cancelled) setResolvedScene(scene)
     }).catch((error) => console.warn('[script-player] offline scene resolution failed', { episodeId, error }))
       .finally(() => { if (!cancelled) setSceneAssetsReady(true) })
     return () => { cancelled = true }
-  }, [data.scene, episodeId, packageId])
+  }, [data.scene, episodeId, packageId, prepared?.backgroundUrl, prepared?.scene, prepared?.spriteUrl])
 
   // 跟踪是否刚提交了用户输入（用于在 currentLine 中优先展示用户输入）
   const userInputJustSubmittedRef = useRef(false)
@@ -185,7 +210,7 @@ function InkEpisodePlayer({
     expression?: string
     position?: 'left' | 'center' | 'right'
   }>({
-    backgroundUrl: undefined,
+    backgroundUrl: prepared?.backgroundUrl || resolvedScene?.backgroundUrl || undefined,
     backgroundFit: 'cover',
   })
 
@@ -210,6 +235,11 @@ function InkEpisodePlayer({
       return next
     })
   }, [currentTags, resolvedScene?.backgroundUrl, resolvedAssetMap, story.isWaiting])
+
+  // Warm the first (and later tag-driven) backgrounds before / while Pixi catches up.
+  useEffect(() => {
+    vnTextureRuntime.warmup([vnVisual.backgroundUrl || resolvedScene?.backgroundUrl])
+  }, [resolvedScene?.backgroundUrl, vnVisual.backgroundUrl])
 
   const inkLines = useMemo<VnPlayerLine[]>(
     () => story.lines.map((line) => {
@@ -472,47 +502,46 @@ function InkEpisodePlayer({
         </button>
         </div>
       </div>
-      <div className="min-h-0 flex-1 bg-background">
-      {assetsResolving ? (
-        <div className="flex h-full items-center justify-center bg-background">
-          <Loader2 className="size-7 animate-spin text-primary" />
-        </div>
-      ) : mode === 'repeat' ? (
-        <VnMixedPreviewPlayer
-          frames={repeatFrames}
-          activeIndex={repeatFrameIndex}
-          onJumpTo={setRepeatFrameIndex}
-          practiceMode
-          onComplete={(result) => void completeRepeat(result)}
-          completionSubmitting={repeatSaving}
-          onGenerateVideo={recordId ? () => void publishVideo() : undefined}
-          videoSubmitting={publishing}
-          videoQueued={videoQueued}
-          videoCompleted={videoCompleted}
-          className="h-full max-h-none max-w-none rounded-none border-0 shadow-none"
-        />
+      <div className="relative min-h-0 flex-1 bg-black">
+      {/* Ren'Py-style: black hold → dissolve images in. Never a spinner for media resolve. */}
+      {mode === 'repeat' ? (
+        assetsResolving ? null : (
+          <VnMixedPreviewPlayer
+            frames={repeatFrames}
+            activeIndex={repeatFrameIndex}
+            onJumpTo={setRepeatFrameIndex}
+            practiceMode
+            onComplete={(result) => void completeRepeat(result)}
+            completionSubmitting={repeatSaving}
+            onGenerateVideo={recordId ? () => void publishVideo() : undefined}
+            videoSubmitting={publishing}
+            videoQueued={videoQueued}
+            videoCompleted={videoCompleted}
+            className="h-full max-h-none max-w-none rounded-none border-0 shadow-none"
+          />
+        )
       ) : (
       <VnPlayer
         ref={vnPlayerRef}
-        currentLine={currentLine}
-        history={history}
-        choices={story.choices}
-        isWaiting={story.isWaiting}
-        isEnded={story.isEnded}
-        onAdvance={story.advanceStory}
-        onChoice={story.handleChoice}
-        onSubmitInput={submitInput}
-        className="h-full max-w-none rounded-none border-0 bg-background"
+        currentLine={assetsResolving ? null : currentLine}
+        history={assetsResolving ? [] : history}
+        choices={assetsResolving ? [] : story.choices}
+        isWaiting={assetsResolving || story.isWaiting}
+        isEnded={!assetsResolving && story.isEnded}
+        onAdvance={assetsResolving ? undefined : story.advanceStory}
+        onChoice={assetsResolving ? undefined : story.handleChoice}
+        onSubmitInput={assetsResolving ? undefined : submitInput}
+        className="h-full max-w-none rounded-none border-0 bg-black"
         stageClassName="min-h-0"
         hideChatTopBar
         showUserInputOverride
         offlineOnly
-        backgroundUrl={vnVisual.backgroundUrl || (resolvedScene?.backgroundUrl ?? undefined)}
+        backgroundUrl={assetsResolving ? undefined : (vnVisual.backgroundUrl || resolvedScene?.backgroundUrl || undefined)}
         backgroundFit={vnVisual.backgroundFit}
-        currentSpriteUrl={currentSpriteUrl}
+        currentSpriteUrl={assetsResolving ? undefined : currentSpriteUrl}
         spriteAlt={currentCharacter?.displayName || currentCharacter?.name}
         spritePosition={spritePosition}
-        currentAvatarUrl={stateAvatarUrl || (currentCharacter as any)?.avatarUrl || undefined}
+        currentAvatarUrl={assetsResolving ? undefined : (stateAvatarUrl || (currentCharacter as any)?.avatarUrl || undefined)}
         currentAvatarAlt={currentCharacter?.displayName || currentCharacter?.name}
         onDisplayModeChange={(displayMode) => setIsChatMode(displayMode === 'chat')}
         endedActions={(

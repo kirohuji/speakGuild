@@ -69,6 +69,8 @@ export class RevenueCatService {
   private readonly apiKey: string | undefined;
   private readonly webhookAuthorization: string | undefined;
   private readonly productInfoCache = new Map<string, { storeIdentifier: string | null; duration: string | null }>();
+  /** Kept in process only; the durable webhook deliveries remain the denominator. */
+  private readonly webhookFailures: Date[] = [];
 
   constructor(
     private readonly prisma: PrismaService,
@@ -650,6 +652,14 @@ export class RevenueCatService {
       return { success: true, ignored: true };
     }
 
+    // End-of-access events must be recorded even if RevenueCat omits an
+    // entitlement (or configuration has since changed). Returning 2xx before
+    // recording makes that delivery unrecoverable because RevenueCat stops
+    // retrying it.
+    if (EXPIRED_EVENT_TYPES.has(eventType)) {
+      return this.handleEndedWebhook(event, userId, eventType);
+    }
+
     const entitlementIds = this.getEntitlementIds(event);
     if (entitlementIds.length === 0) {
       this.logger.warn(`RevenueCat webhook ignored without entitlement: type=${eventType}, userId=${userId}`);
@@ -672,10 +682,6 @@ export class RevenueCatService {
       return this.recordAndApplyWebhook(event, userId, () => this.cancelledStateFromWebhook(userId, plan.id, event));
     }
 
-    if (EXPIRED_EVENT_TYPES.has(eventType)) {
-      return this.recordAndApplyWebhook(event, userId, () => this.expiredStateFromWebhook(userId, plan.id, event, eventType));
-    }
-
     if (eventType === 'BILLING_ISSUE') {
       const result = await this.recordAndApplyWebhook(event, userId, () => this.billingIssueStateFromWebhook(userId, plan.id, event));
       await this.alerts.notify({
@@ -694,6 +700,152 @@ export class RevenueCatService {
 
     this.logger.log(`RevenueCat webhook ignored: type=${eventType}, userId=${userId}`);
     return { success: true, ignored: true };
+  }
+
+  private async handleEndedWebhook(event: RevenueCatWebhookEvent, userId: string, eventType: string) {
+    const entitlementIds = this.getEntitlementIds(event);
+    const plan = entitlementIds.length > 0
+      ? await this.findPlanForEntitlements(entitlementIds)
+      : null;
+    const result = await this.recordAndApplyWebhook(
+      event,
+      userId,
+      () => plan ? this.expiredStateFromWebhook(userId, plan.id, event, eventType) : null,
+    );
+
+    if (!result.duplicate && !plan) {
+      await this.alerts.notify({
+        key: 'revenuecat-ended-event-unmatched',
+        title: 'RevenueCat 结束事件无法匹配会员计划',
+        severity: 'warning',
+        details: { userId, eventType, eventId: event.id, productId: event.product_id, entitlementIds },
+        throttleSeconds: 24 * 60 * 60,
+      });
+      this.logger.warn(`RevenueCat ended webhook recorded without matching plan: type=${eventType}, userId=${userId}`);
+    }
+    return result;
+  }
+
+  recordWebhookFailure() {
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+    this.webhookFailures.push(new Date());
+    while (this.webhookFailures[0]?.getTime() < cutoff) this.webhookFailures.shift();
+  }
+
+  async checkWebhookFailureRate() {
+    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    while (this.webhookFailures[0]?.getTime() < cutoff.getTime()) this.webhookFailures.shift();
+    const delivered = await this.prisma.revenueCatWebhookEvent.count({ where: { createdAt: { gte: cutoff } } });
+    const failures = this.webhookFailures.length;
+    const failureRate = failures / Math.max(delivered, 1);
+    if (failures > 0 && failureRate > 0.05) {
+      await this.alerts.notify({
+        key: 'revenuecat-webhook-failure-rate',
+        title: 'RevenueCat webhook 失败率过高',
+        severity: 'critical',
+        details: { windowHours: 24, failures, delivered, failureRate },
+        throttleSeconds: 24 * 60 * 60,
+      });
+    }
+    return { failures, delivered, failureRate };
+  }
+
+  /**
+   * Compare currently active store-backed rows with RevenueCat. This is kept
+   * separate from purchase sync: an empty or unavailable API response never
+   * takes access away.
+   */
+  async reconcileActiveMemberships() {
+    if (!this.apiKey || !process.env.REVENUECAT_PROJECT_ID) {
+      return { scanned: 0, drifted: 0, reclaimed: 0, skipped: 'not-configured' as const };
+    }
+    const now = new Date();
+    const configuredLimit = Number(process.env.REVENUECAT_RECONCILE_LIMIT || 100);
+    const configuredPauseMs = Number(process.env.REVENUECAT_RECONCILE_INTERVAL_MS || 150);
+    const limit = Number.isFinite(configuredLimit) ? Math.max(1, Math.min(configuredLimit, 500)) : 100;
+    const pauseMs = Number.isFinite(configuredPauseMs) ? Math.max(0, configuredPauseMs) : 150;
+    const autoReclaim = process.env.REVENUECAT_RECONCILE_AUTO_RECLAIM === 'true';
+    const memberships = await this.prisma.userMembership.findMany({
+      where: {
+        status: 'active',
+        expiredAt: { gt: now },
+        OR: [{ originalTransactionId: { not: null } }, { rcProductId: { not: null } }],
+      },
+      take: limit,
+      orderBy: { expiredAt: 'asc' },
+      select: { id: true, userId: true, rcCustomerId: true, originalTransactionId: true, rcProductId: true, expiredAt: true },
+    });
+    const driftedUserIds: string[] = [];
+    let reclaimed = 0;
+    for (const membership of memberships) {
+      const subscriptions = await this.loadSubscriptionsForReconciliation(membership.rcCustomerId || membership.userId);
+      if (subscriptions) {
+        const match = subscriptions.find((item) =>
+          (membership.originalTransactionId && item.storeSubscriptionIdentifier === membership.originalTransactionId)
+          || (membership.rcProductId && item.storeProductId === membership.rcProductId),
+        );
+        const hasOtherAccess = subscriptions.some((item) => item.givesAccess);
+        const endsAt = match?.endsAt ? new Date(match.endsAt) : null;
+        const endedEarly = match?.status === 'expired'
+          && match.givesAccess === false
+          && !hasOtherAccess
+          && endsAt
+          && !Number.isNaN(endsAt.getTime())
+          && membership.expiredAt.getTime() - endsAt.getTime() > 5 * 60 * 1000;
+        if (endedEarly && endsAt) {
+          driftedUserIds.push(membership.userId);
+          if (autoReclaim) {
+            const updated = await this.prisma.userMembership.updateMany({
+              where: { id: membership.id, status: 'active', expiredAt: { gt: new Date(endsAt.getTime() + 5 * 60 * 1000) } },
+              data: { status: 'expired', autoRenew: false, expiredAt: endsAt },
+            });
+            reclaimed += updated.count;
+          }
+        }
+      }
+      if (pauseMs > 0) await new Promise((resolve) => setTimeout(resolve, pauseMs));
+    }
+    if (driftedUserIds.length > 0) {
+      await this.alerts.notify({
+        key: 'revenuecat-membership-drift',
+        title: '本地会员仍有效但商店订阅已提前结束',
+        severity: 'critical',
+        details: { scanned: memberships.length, drifted: driftedUserIds.length, reclaimed, autoReclaim, userIds: driftedUserIds.slice(0, 20) },
+        throttleSeconds: 24 * 60 * 60,
+      });
+    }
+    return { scanned: memberships.length, drifted: driftedUserIds.length, reclaimed };
+  }
+
+  private async loadSubscriptionsForReconciliation(customerId: string): Promise<Array<{ status: string; givesAccess: boolean; storeSubscriptionIdentifier: string | null; storeProductId: string | null; endsAt: string | null }> | null> {
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/customers/${encodeURIComponent(customerId)}/subscriptions?limit=100`,
+        { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      );
+      if (!response.ok) {
+        this.logger.warn(`RevenueCat 对账查询失败: customerId=${customerId}, status=${response.status}`);
+        return null;
+      }
+      const data = await response.json() as any;
+      if (!Array.isArray(data?.items)) return null;
+      const subscriptions = data.items.map((item: any) => this.mapSubscription(item));
+      await Promise.all(subscriptions.map(async (subscription) => {
+        if (!subscription.storeProductId && subscription.productId) {
+          subscription.storeProductId = (await this.getProductInfo(subscription.productId))?.storeIdentifier ?? null;
+        }
+      }));
+      return subscriptions.map((item) => ({
+        status: item.status,
+        givesAccess: item.givesAccess,
+        storeSubscriptionIdentifier: item.storeSubscriptionIdentifier,
+        storeProductId: item.storeProductId,
+        endsAt: item.endsAt || item.currentPeriodEndsAt,
+      }));
+    } catch (error) {
+      this.logger.warn(`RevenueCat 对账查询异常: customerId=${customerId}`);
+      return null;
+    }
   }
 
   private getEntitlementIds(event: RevenueCatWebhookEvent) {

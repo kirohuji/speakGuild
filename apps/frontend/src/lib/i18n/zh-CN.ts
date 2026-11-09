@@ -2551,6 +2551,8 @@ const zhCN = {
       xpEarned: '获得 XP',
       notPublishedYet: '尚未发布',
       start: '开始',
+      preparingStage: '准备场景中…',
+      prepareStageFailed: '场景准备较慢，仍会进入剧场',
       workCompletedTitle: '完成《{{title}}》',
       timesSpoken: '{{count}} 次开口',
       createdSubmittedRendering: '已创建作品并提交后台渲染；完成后会自动发布到广场',

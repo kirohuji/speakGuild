@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
-import { Application, Container, Graphics, Sprite, TilingSprite } from 'pixi.js'
-import { resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
+import { Application, Container, Graphics, Sprite, Ticker, TilingSprite } from 'pixi.js'
+import { toVnDisplayUrl, vnTextureRuntime } from '@/features/vn-engine/vn-texture-runtime'
 import { isNative } from '@/lib/native/platform'
-import { loadPixiTexture } from '@/lib/pixi-texture'
 import { cn } from '@/lib/cn'
 
 export type BackgroundFit = 'cover' | 'contain' | 'stretch' | 'repeat'
 export type StageVariant = 'portrait' | 'landscape' | 'mixed'
+
+/** Ren'Py default `dissolve` is ~0.5s — images ease in; no spinner. */
+export const VN_DISSOLVE_MS = 500
 
 interface PixiVnStageProps {
   backgroundUrl?: string
@@ -84,37 +86,99 @@ const BgFitStyle: Record<BackgroundFit, string> = {
   repeat: 'auto',
 }
 
-function CssFallbackStage({
+/** Ease alpha 0→1 over duration (Ren'Py-style dissolve). */
+function dissolveDisplayObject(
+  ticker: Ticker,
+  target: { alpha: number },
+  durationMs = VN_DISSOLVE_MS,
+  from = 0,
+  to = 1,
+) {
+  target.alpha = from
+  const start = performance.now()
+  const tick = () => {
+    const t = Math.min(1, (performance.now() - start) / durationMs)
+    // Smoothstep — closer to Ren'Py's soft dissolve than linear
+    const eased = t * t * (3 - 2 * t)
+    target.alpha = from + (to - from) * eased
+    if (t >= 1) ticker.remove(tick)
+  }
+  ticker.add(tick)
+  return () => ticker.remove(tick)
+}
+
+function destroyLayer(node: Sprite | TilingSprite | null) {
+  if (!node) return
+  node.destroy({ children: true, texture: false, textureSource: false })
+}
+
+/** Instant CSS/<img> plane — WebView can paint capacitor:// before WebGL catches up. */
+function CssUnderlay({
   backgroundUrl,
   backgroundFit,
   spriteUrl,
   spritePosition,
-  stageVariant = 'portrait',
-  dialogueOverlay = true,
-  spriteBottomInset = 0,
-  spriteVerticalOffset = 0,
+  stageVariant,
+  dialogueOverlay,
+  spriteBottomInset,
+  spriteVerticalOffset,
   portraitScale,
-}: PixiVnStageProps) {
-  const { resolvedTheme } = useTheme()
+  clearBackdrop,
+  showSprite,
+  dissolveIn,
+}: {
+  backgroundUrl?: string
+  backgroundFit: BackgroundFit
+  spriteUrl?: string
+  spritePosition: 'left' | 'center' | 'right'
+  stageVariant: StageVariant
+  dialogueOverlay: boolean
+  spriteBottomInset: number
+  spriteVerticalOffset: number
+  portraitScale?: number
+  clearBackdrop: boolean
+  showSprite: boolean
+  dissolveIn?: boolean
+}) {
   const bottomInset = dialogueOverlay
     ? stageVariant === 'landscape' ? 'calc(clamp(72px,18dvh,112px)-32px)' : 'calc(clamp(148px,24dvh,196px)-32px)'
     : `${spriteBottomInset}px`
   const topInset = stageVariant === 'mixed' ? '16px' : '58px'
   const maxWidth = stageVariant === 'mixed' ? '62%' : stageVariant === 'landscape' ? '58%' : '82%'
   const scalePercent = portraitScale ?? 100
+  // Only the portrait dissolves — background snaps on (black stage underneath).
+  const [spriteVisible, setSpriteVisible] = useState(!dissolveIn || !showSprite)
+
+  useEffect(() => {
+    if (!dissolveIn || !showSprite || !spriteUrl) {
+      setSpriteVisible(Boolean(showSprite && spriteUrl) || !dissolveIn)
+      return
+    }
+    setSpriteVisible(false)
+    const id = requestAnimationFrame(() => setSpriteVisible(true))
+    return () => cancelAnimationFrame(id)
+  }, [dissolveIn, showSprite, spriteUrl])
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460]">
-      <div
-        className="absolute inset-0"
-        style={{
-          backgroundImage: backgroundUrl ? `url(${backgroundUrl})` : undefined,
-          backgroundSize: BgFitStyle[backgroundFit],
-          backgroundPosition: 'center',
-          backgroundRepeat: backgroundFit === 'repeat' ? 'repeat' : 'no-repeat',
-        }}
-      />
-      {spriteUrl && (
+    <div
+      className={cn(
+        'absolute inset-0 overflow-hidden',
+        clearBackdrop ? 'bg-transparent' : 'bg-black',
+      )}
+      aria-hidden
+    >
+      {backgroundUrl && (
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${backgroundUrl})`,
+            backgroundSize: BgFitStyle[backgroundFit],
+            backgroundPosition: 'center',
+            backgroundRepeat: backgroundFit === 'repeat' ? 'repeat' : 'no-repeat',
+          }}
+        />
+      )}
+      {showSprite && spriteUrl && (
         <div className="pointer-events-none absolute inset-x-0" style={{ bottom: `calc(${bottomInset} - ${spriteVerticalOffset}px)`, top: topInset }}>
           <img
             src={spriteUrl}
@@ -125,12 +189,36 @@ function CssFallbackStage({
               left: spritePosition === 'center' ? '50%' : spritePosition === 'right' ? '72%' : '28%',
               transform: `translateX(-50%) scale(${scalePercent / 100})`,
               transformOrigin: 'bottom center',
+              opacity: spriteVisible ? 1 : 0,
+              transition: `opacity ${VN_DISSOLVE_MS}ms ease`,
             }}
           />
         </div>
       )}
-      {resolvedTheme === 'dark' && <div className="pointer-events-none absolute inset-0 bg-black/40" />}
     </div>
+  )
+}
+
+function CssFallbackStage(props: PixiVnStageProps) {
+  const { resolvedTheme } = useTheme()
+  return (
+    <>
+      <CssUnderlay
+        backgroundUrl={toVnDisplayUrl(props.backgroundUrl)}
+        backgroundFit={props.backgroundFit}
+        spriteUrl={toVnDisplayUrl(props.spriteUrl)}
+        spritePosition={props.spritePosition}
+        stageVariant={props.stageVariant ?? 'portrait'}
+        dialogueOverlay={props.dialogueOverlay ?? true}
+        spriteBottomInset={props.spriteBottomInset ?? 0}
+        spriteVerticalOffset={props.spriteVerticalOffset ?? 0}
+        portraitScale={props.portraitScale}
+        clearBackdrop={props.clearBackdrop ?? false}
+        showSprite
+        dissolveIn
+      />
+      {resolvedTheme === 'dark' && <div className="pointer-events-none absolute inset-0 bg-black/40" />}
+    </>
   )
 }
 
@@ -146,8 +234,8 @@ export function PixiVnStage({
   portraitScale,
   clearBackdrop = false,
 }: PixiVnStageProps) {
-  const backgroundUrl = resolveDisplayAssetUrl(rawBackgroundUrl)
-  const spriteUrl = resolveDisplayAssetUrl(rawSpriteUrl)
+  const backgroundUrl = toVnDisplayUrl(rawBackgroundUrl)
+  const spriteUrl = toVnDisplayUrl(rawSpriteUrl)
   const { resolvedTheme } = useTheme()
   const hostRef = useRef<HTMLDivElement | null>(null)
   const appRef = useRef<Application | null>(null)
@@ -163,8 +251,12 @@ export function PixiVnStage({
   const portraitScaleRef = useRef(portraitScale)
   const clearBackdropRef = useRef(clearBackdrop)
   clearBackdropRef.current = clearBackdrop
+  const stopSpriteDissolveRef = useRef<(() => void) | null>(null)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
+  /** True once the current background texture is painted on the canvas. */
+  const [gpuBgReady, setGpuBgReady] = useState(!rawBackgroundUrl)
+  const [gpuSpriteReady, setGpuSpriteReady] = useState(!rawSpriteUrl)
   const layoutRafRef = useRef<number | null>(null)
 
   const layout = () => {
@@ -176,7 +268,7 @@ export function PixiVnStage({
     if (fallbackRef.current) {
       fallbackRef.current.clear()
       if (!clearBackdropRef.current) {
-        fallbackRef.current.rect(0, 0, width, height).fill(0x1a1a2e)
+        fallbackRef.current.rect(0, 0, width, height).fill(0x000000)
       }
     }
     if (bgRef.current) fitBackground(bgRef.current, width, height, backgroundFit)
@@ -199,6 +291,15 @@ export function PixiVnStage({
     })
   }
 
+  // Pin visible URLs in the shared runtime (retain + LRU).
+  useEffect(() => {
+    vnTextureRuntime.setVisible([backgroundUrl, spriteUrl])
+  }, [backgroundUrl, spriteUrl])
+
+  useEffect(() => () => {
+    vnTextureRuntime.setVisible([])
+  }, [])
+
   useEffect(() => {
     const host = hostRef.current
     if (!host) return
@@ -215,12 +316,8 @@ export function PixiVnStage({
       }
 
       const native = isNative()
-      // `resolution: 1` made the native canvas render at CSS-pixel density,
-      // then iOS/Android upscaled it on retina displays. Keep the same bounded
-      // 2x density as web: sharp portraits without the memory cost of 3x/4x.
       const devicePixelRatio = window.devicePixelRatio || 1
       const pixiResolution = Math.min(Math.max(devicePixelRatio, 1), 2)
-      console.log('[vn-stage] renderer density', { native, devicePixelRatio, pixiResolution })
 
       let app: Application
       let initOk = false
@@ -272,6 +369,7 @@ export function PixiVnStage({
       app.stage.addChild(root)
       root.addChild(fallback)
       app.canvas.className = 'absolute inset-0 h-full w-full pointer-events-none'
+      app.canvas.style.opacity = '1'
       host.appendChild(app.canvas)
       resizeObserver = new ResizeObserver(() => scheduleLayout())
       resizeObserver.observe(host)
@@ -283,6 +381,7 @@ export function PixiVnStage({
 
     return () => {
       cancelled = true
+      stopSpriteDissolveRef.current?.()
       resizeObserver?.disconnect()
       if (layoutRafRef.current !== null) {
         window.cancelAnimationFrame(layoutRafRef.current)
@@ -303,6 +402,8 @@ export function PixiVnStage({
       bgRef.current = null
       spriteRef.current = null
       setReady(false)
+      setGpuBgReady(false)
+      setGpuSpriteReady(false)
     }
   }, [])
 
@@ -312,33 +413,41 @@ export function PixiVnStage({
 
     async function loadBackground() {
       const root = rootRef.current
-      if (!root) return
+      const app = appRef.current
+      if (!root || !app) return
+
       if (!backgroundUrl) {
         if (bgRef.current) {
           root.removeChild(bgRef.current)
-          bgRef.current.destroy()
+          destroyLayer(bgRef.current)
           bgRef.current = null
         }
         layout()
+        setGpuBgReady(true)
         return
       }
 
+      // Background snaps on (black stage underneath). Only portraits dissolve.
       try {
-        const texture = await loadPixiTexture(backgroundUrl)
-        if (cancelled || !rootRef.current) return
+        const texture = await vnTextureRuntime.ensure(backgroundUrl)
+        if (cancelled || !rootRef.current || !appRef.current) return
         const newSprite = backgroundFit === 'repeat'
           ? new TilingSprite({ texture, width: 1, height: 1 })
           : new Sprite(texture)
-        if (bgRef.current) {
-          root.removeChild(bgRef.current)
-          bgRef.current.destroy()
+        newSprite.alpha = 1
+        const previous = bgRef.current
+        if (previous) {
+          root.removeChild(previous)
+          destroyLayer(previous)
         }
         bgRef.current = newSprite
         rootRef.current.addChildAt(newSprite, 1)
         layout()
+        setGpuBgReady(true)
       } catch (err) {
         console.warn('[vn-player] background load failed:', backgroundUrl, err)
         layout()
+        setGpuBgReady(true)
       }
     }
 
@@ -354,35 +463,47 @@ export function PixiVnStage({
 
     async function loadSprite() {
       const root = rootRef.current
-      if (!root) return
+      const app = appRef.current
+      if (!root || !app) return
+
       if (!spriteUrl) {
-        if (spriteRef.current) {
-          root.removeChild(spriteRef.current)
-          spriteRef.current.destroy()
-          spriteRef.current = null
+        stopSpriteDissolveRef.current?.()
+        const previous = spriteRef.current
+        if (previous) {
+          stopSpriteDissolveRef.current = dissolveDisplayObject(app.ticker, previous, VN_DISSOLVE_MS, previous.alpha, 0)
+          window.setTimeout(() => {
+            if (spriteRef.current === previous) spriteRef.current = null
+            if (previous.parent) previous.parent.removeChild(previous)
+            destroyLayer(previous)
+          }, VN_DISSOLVE_MS + 32)
         }
-        layout()
+        setGpuSpriteReady(true)
         return
       }
 
       try {
-        const texture = await loadPixiTexture(spriteUrl)
-        if (cancelled || !rootRef.current) return
+        const texture = await vnTextureRuntime.ensure(spriteUrl)
+        if (cancelled || !rootRef.current || !appRef.current) return
         const newSprite = new Sprite(texture)
-        newSprite.alpha = 0
-        if (spriteRef.current) {
-          root.removeChild(spriteRef.current)
-          spriteRef.current.destroy()
-        }
+        const previous = spriteRef.current
         spriteRef.current = newSprite
         rootRef.current.addChild(newSprite)
         layout()
-        appRef.current?.ticker.addOnce(() => {
-          if (spriteRef.current === newSprite) newSprite.alpha = 1
-        })
+        stopSpriteDissolveRef.current?.()
+        stopSpriteDissolveRef.current = dissolveDisplayObject(appRef.current.ticker, newSprite)
+        if (previous) {
+          const stopOut = dissolveDisplayObject(appRef.current.ticker, previous, VN_DISSOLVE_MS, previous.alpha, 0)
+          window.setTimeout(() => {
+            stopOut()
+            if (previous.parent) previous.parent.removeChild(previous)
+            destroyLayer(previous)
+          }, VN_DISSOLVE_MS + 32)
+        }
+        setGpuSpriteReady(true)
       } catch (err) {
         console.warn('[vn-player] sprite load failed:', spriteUrl, err)
         layout()
+        setGpuSpriteReady(true)
       }
     }
 
@@ -414,14 +535,37 @@ export function PixiVnStage({
         spriteBottomInset={spriteBottomInset}
         spriteVerticalOffset={spriteVerticalOffset}
         portraitScale={portraitScale}
+        clearBackdrop={clearBackdrop}
       />
     )
   }
 
+  const showCssSprite = Boolean(spriteUrl) && !gpuSpriteReady
+  // CSS underlay holds the bg instantly; portrait dissolves on top until GPU catches up.
+  const showUnderlay = !gpuBgReady || showCssSprite
+
   return (
     <>
-      <div ref={hostRef} className={cn('absolute inset-0 overflow-hidden', clearBackdrop ? 'bg-transparent' : 'bg-background')} />
-      {!clearBackdrop && resolvedTheme === 'dark' && <div className="pointer-events-none absolute inset-0 bg-black/40" />}
+      {showUnderlay && (
+        <CssUnderlay
+          backgroundUrl={gpuBgReady ? undefined : backgroundUrl}
+          backgroundFit={backgroundFit}
+          spriteUrl={spriteUrl}
+          spritePosition={spritePosition}
+          stageVariant={stageVariant}
+          dialogueOverlay={dialogueOverlay}
+          spriteBottomInset={spriteBottomInset}
+          spriteVerticalOffset={spriteVerticalOffset}
+          portraitScale={portraitScale}
+          clearBackdrop={clearBackdrop || gpuBgReady}
+          showSprite={showCssSprite}
+          dissolveIn
+        />
+      )}
+      <div ref={hostRef} className="absolute inset-0 overflow-hidden bg-transparent" />
+      {!clearBackdrop && resolvedTheme === 'dark' && (
+        <div className="pointer-events-none absolute inset-0 bg-black/40" />
+      )}
     </>
   )
 }

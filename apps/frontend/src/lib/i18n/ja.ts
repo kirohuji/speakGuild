@@ -2551,6 +2551,8 @@ const ja = {
       xpEarned: '獲得 XP',
       notPublishedYet: '未公開',
       start: '開始',
+      preparingStage: 'シーン準備中…',
+      prepareStageFailed: '準備に時間がかかりました。そのまま入場します',
       dateHeader: '日付',
       allTab: 'すべて',
       backToChapterList: 'チャプター一覧に戻る',

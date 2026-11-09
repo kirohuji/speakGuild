@@ -72,6 +72,7 @@ export class PayController {
       this.revenueCatService.verifyWebhookAuthorization(req.headers.authorization);
       return await this.revenueCatService.handleWebhook(body);
     } catch (error) {
+      this.revenueCatService.recordWebhookFailure();
       await this.alerts.notify({
         key: 'revenuecat-webhook-failed',
         title: 'RevenueCat webhook 处理失败',

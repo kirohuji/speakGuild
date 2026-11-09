@@ -4,13 +4,14 @@ import { PayService } from './pay.service';
 import { AlipayProvider } from './providers/alipay.provider';
 import { WechatProvider } from './providers/wechat.provider';
 import { RevenueCatService } from './revenuecat/revenuecat.service';
+import { RevenueCatReconcileJob } from './revenuecat/revenuecat-reconcile.job';
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { PointsModule } from '../points/points.module';
 
 @Module({
   imports: [PrismaModule, PointsModule],
   controllers: [PayController],
-  providers: [PayService, AlipayProvider, WechatProvider, RevenueCatService],
+  providers: [PayService, AlipayProvider, WechatProvider, RevenueCatService, RevenueCatReconcileJob],
   exports: [PayService, RevenueCatService],
 })
 export class PayModule {}

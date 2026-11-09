@@ -21,6 +21,7 @@ import { DialogueListView } from './dialogue-list-view'
 import { TappableText } from './dialogue-list-view'
 import { TurnGuidanceCard, type VnTurnGuidance } from './practice-guidance'
 import { PixiVnStage, type BackgroundFit, type StageVariant } from './pixi-vn-stage'
+import { vnTextureRuntime } from './vn-texture-runtime'
 
 export type { BackgroundFit } from './pixi-vn-stage'
 
@@ -223,6 +224,7 @@ export function VnPlayer({
     document.body.dataset.vnActive = 'true'
     return () => {
       delete document.body.dataset.vnActive
+      vnTextureRuntime.clear()
     }
   }, [])
   const autoAdvanceTimerRef = useRef<number | null>(null)
@@ -249,6 +251,11 @@ export function VnPlayer({
   // 注意：音频不使用 useCachedAssetUrl，而是直接在 effect 内 resolve，
   // 避免 cached URL 切换触发 effect 重跑导致重复播放/中断。
   const cachedAudioUrl = useCachedAssetUrl(audioUrl, displayLine?.isUser ? 'recording' : 'voice')
+
+  // Prefetch GPU decode for the live scene (CSS underlay paints first).
+  useEffect(() => {
+    vnTextureRuntime.warmup([cachedBackgroundUrl, cachedSpriteUrl])
+  }, [cachedBackgroundUrl, cachedSpriteUrl])
 
   useEffect(() => {
     window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))

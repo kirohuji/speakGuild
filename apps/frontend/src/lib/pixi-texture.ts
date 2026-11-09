@@ -1,6 +1,5 @@
 import { Capacitor } from '@capacitor/core'
 import { Assets, Texture } from 'pixi.js'
-import { getBearerToken } from '@/features/auth/client'
 import { inlineFileAssetContentUrl, resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
 import { isNative } from '@/lib/native'
 
@@ -42,6 +41,8 @@ async function materializeBlobUrl(sourceUrl: string, fetchUrl = sourceUrl): Prom
  *
  * On native, `<img>` can load `capacitor://`, but Pixi/WebGL often cannot.
  * Materialize a blob: URL from the local file bytes instead.
+ *
+ * Immersive VN should prefer `vnTextureRuntime` (CSS underlay + retain/LRU).
  */
 export async function pixiLoadableUrl(url: string): Promise<string> {
   const displayUrl = resolveDisplayAssetUrl(url) ?? url
@@ -71,11 +72,15 @@ export async function loadPixiTexture(url: string): Promise<Texture> {
   if (hasImageExtension(loadUrl)) {
     const texture = await Assets.load<Texture>(loadUrl)
     if (!texture) throw new Error(`empty texture: ${url}`)
+    texture.source.scaleMode = 'linear'
     return texture
   }
   if (Assets.cache.has(loadUrl)) {
     const cached = Assets.get<Texture>(loadUrl)
-    if (cached) return cached
+    if (cached) {
+      cached.source.scaleMode = 'linear'
+      return cached
+    }
     await Assets.unload(loadUrl)
   }
   const texture = await Assets.load<Texture>({
@@ -84,5 +89,6 @@ export async function loadPixiTexture(url: string): Promise<Texture> {
     data: { scaleMode: 'linear' },
   })
   if (!texture) throw new Error(`empty texture: ${url}`)
+  texture.source.scaleMode = 'linear'
   return texture
 }

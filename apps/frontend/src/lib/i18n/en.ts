@@ -2551,6 +2551,8 @@ const en = {
       xpEarned: 'XP Earned',
       notPublishedYet: 'Not Published',
       start: 'Start',
+      preparingStage: 'Preparing scene…',
+      prepareStageFailed: 'Scene prep was slow — entering anyway',
       dateHeader: 'Date',
       restart: 'Restart',
       allTab: 'All',

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
@@ -7,13 +7,14 @@ import {
   Clapperboard,
   Film,
   Headphones,
+  Loader2,
   LockKeyhole,
-  MessageCircle,
   Mic2,
   Play,
   Sparkles,
   UserRound,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -25,7 +26,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { type StoryEpisodeItem } from '@/features/learning/api/learning-api'
+import { prepareStoryVnEntry } from '@/features/vn-engine/prepare-story-vn-entry'
 import { resolveStoryEpisodeUnlock } from '@/features/scripts/lib/story-chapter-progress'
 import { useLearningStore } from '@/stores/learning.store'
 
@@ -36,6 +37,7 @@ export function ScriptEpisodePage() {
   const storedDetail = useLearningStore((state) => state.unitDetail)
   const loading = useLearningStore((state) => state.unitDetailLoading)
   const fetchUnitDetail = useLearningStore((state) => state.fetchUnitDetail)
+  const [preparingMode, setPreparingMode] = useState<'vn' | 'repeat' | null>(null)
 
   useEffect(() => {
     if (!packageId) return
@@ -48,6 +50,22 @@ export function ScriptEpisodePage() {
     const episodes = resolveStoryEpisodeUnlock(detail?.storyEpisodes ?? [])
     return episodes.find((item) => item.id === episodeId) ?? null
   }, [detail, episodeId])
+
+  const startMode = async (mode: 'vn' | 'repeat') => {
+    if (!detail || !episode || preparingMode) return
+    setPreparingMode(mode)
+    try {
+      await prepareStoryVnEntry({ packageId: detail.id, episodeId: episode.id })
+      navigate(`/scripts/player/${episode.id}?packageId=${detail.id}&mode=${mode}`)
+    } catch (error) {
+      console.warn('[script-episode] prepare stage failed', error)
+      toast.error(t('scripts.prepareStageFailed'))
+      // Still allow entry — player will resolve/load as before.
+      navigate(`/scripts/player/${episode.id}?packageId=${detail.id}&mode=${mode}`)
+    } finally {
+      setPreparingMode(null)
+    }
+  }
 
   if (loading && !detail) {
     return (
@@ -175,22 +193,26 @@ export function ScriptEpisodePage() {
       <section className="mb-5">
         <SectionHeader eyebrow="4" title={t('scripts.choosePracticeMode')} />
         <div className="flex flex-col gap-2">
-        <ModeCard
-          icon={Play}
-          title={t('scripts.vnModeTitle')}
-          description={t('scripts.vnModeDesc')}
-          meta={t('scripts.vnModeMeta')}
-          to={`/scripts/player/${episode.id}?packageId=${detail.id}&mode=vn`}
-          disabled={!episode.isUnlocked || !episode.inkScriptId}
-        />
-        <ModeCard
-          icon={Mic2}
-          title={t('scripts.repeatModeTitle')}
-          description={t('scripts.repeatModeDesc')}
-          meta={t('scripts.repeatModeMeta')}
-          to={`/scripts/player/${episode.id}?packageId=${detail.id}&mode=repeat`}
-          disabled={!episode.isUnlocked || !episode.inkScriptId}
-        />
+          <ModeCard
+            icon={Play}
+            title={t('scripts.vnModeTitle')}
+            description={t('scripts.vnModeDesc')}
+            meta={t('scripts.vnModeMeta')}
+            disabled={!episode.isUnlocked || !episode.inkScriptId}
+            preparing={preparingMode === 'vn'}
+            busy={preparingMode !== null}
+            onStart={() => void startMode('vn')}
+          />
+          <ModeCard
+            icon={Mic2}
+            title={t('scripts.repeatModeTitle')}
+            description={t('scripts.repeatModeDesc')}
+            meta={t('scripts.repeatModeMeta')}
+            disabled={!episode.isUnlocked || !episode.inkScriptId}
+            preparing={preparingMode === 'repeat'}
+            busy={preparingMode !== null}
+            onStart={() => void startMode('repeat')}
+          />
         </div>
       </section>
 
@@ -238,15 +260,19 @@ function ModeCard({
   title,
   description,
   meta,
-  to,
   disabled,
+  preparing,
+  busy,
+  onStart,
 }: {
   icon: typeof Play
   title: string
   description: string
   meta: string
-  to: string
   disabled: boolean
+  preparing: boolean
+  busy: boolean
+  onStart: () => void
 }) {
   const { t } = useTranslation()
 
@@ -269,11 +295,20 @@ function ModeCard({
             {t('scripts.notPublishedYet')}
           </Button>
         ) : (
-          <Button asChild size="sm" className="rounded-full">
-            <Link to={to}>
-              <Headphones data-icon="inline-start" />
-              {t('scripts.start')}
-            </Link>
+          <Button
+            size="sm"
+            className="rounded-full"
+            disabled={busy}
+            onClick={onStart}
+          >
+            {preparing ? (
+              <Loader2 className="animate-spin" aria-label={t('scripts.preparingStage')} />
+            ) : (
+              <>
+                <Headphones data-icon="inline-start" />
+                {t('scripts.start')}
+              </>
+            )}
           </Button>
         )}
       </CardFooter>
