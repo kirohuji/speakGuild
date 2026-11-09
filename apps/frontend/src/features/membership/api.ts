@@ -62,6 +62,17 @@ export const getCurrentMembership = (): Promise<CurrentMembership> =>
 
 export const getMemberBenefits = (): Promise<MemberBenefit[]> => get('/membership/benefits')
 
+export interface MembershipPurchase {
+  id: string
+  kind: 'monthly' | 'yearly' | 'gift'
+  days: number | null
+  purchasedAt: string
+  expiresAt: string | null
+}
+
+export const getMembershipPurchases = (params: { page?: number; pageSize?: number }) =>
+  get<{ list: MembershipPurchase[]; total: number; page: number; pageSize: number }>('/membership/purchases', params)
+
 /** 服务端按当前登录用户向 RevenueCat 查询；不信任客户端 CustomerInfo。 */
 export const syncRevenueCatMembership = (): Promise<CurrentMembership> =>
   post('/membership/revenuecat/sync')

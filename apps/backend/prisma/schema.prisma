@@ -156,6 +156,7 @@ model User {
   checkIns                 UserCheckIn[]
   pointTransactions        PointTransaction[]
   aiUsages                 AiUsageDaily[]
+  membershipPurchases      MembershipPurchase[]
 
   @@unique([email])
   @@index([deletionScheduledAt])
@@ -446,7 +447,23 @@ model UserMembership {
   updatedAt    DateTime         @updatedAt
 
   @@index([status, expiredAt])
+  @@index([rcCustomerId])
   @@map("user_membership")
+}
+
+/// 绑定到本地用户的会员购买。RevenueCat 订阅 ID 用来去重，避免同步重复写入。
+model MembershipPurchase {
+  id               String   @id @default(cuid())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  rcSubscriptionId String   @unique
+  kind             String
+  purchasedAt      DateTime
+  expiresAt        DateTime?
+  createdAt        DateTime @default(now())
+
+  @@index([userId, purchasedAt])
+  @@map("membership_purchase")
 }
 
 /// RevenueCat webhook 投递记录。eventId 是 RevenueCat 重试时保持不变的幂等键。

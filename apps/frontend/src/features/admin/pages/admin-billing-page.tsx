@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Receipt, Search,
   ArrowLeft, TrendingUp, DollarSign, ShoppingCart, CheckCircle2,
@@ -35,18 +35,54 @@ const methodLabels: Record<string, string> = {
 
 const storeLabels: Record<string, string> = {
   app_store: 'App Store',
+  mac_app_store: 'Mac App Store',
   play_store: 'Google Play',
+  stripe: 'Stripe',
+  amazon: 'Amazon',
   promotional: '促销',
   unknown: '未知',
+}
+
+const subscriptionStatusLabels: Record<string, string> = {
+  trialing: '试用',
+  active: '有效',
+  expired: '已过期',
+  in_grace_period: '宽限期',
+  in_billing_retry: '扣款重试',
+  paused: '已暂停',
+  unknown: '未知',
+  incomplete: '未完成',
+}
+
+const renewalLabels: Record<string, string> = {
+  will_renew: '自动续费',
+  will_not_renew: '到期后停止',
+  will_change_product: '到期后换商品',
+  will_pause: '到期后暂停',
+  requires_price_increase_consent: '待确认涨价',
+  has_already_renewed: '已完成下期扣款',
 }
 
 type BillingTab = 'local' | 'revenuecat'
 
 export function AdminBillingPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { session } = useAuth()
+  const tab: BillingTab = searchParams.get('tab') === 'revenuecat' ? 'revenuecat' : 'local'
+  const selectTab = (next: BillingTab) => {
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.set('tab', next)
+    setSearchParams(nextParams)
+  }
 
-  const [tab, setTab] = useState<BillingTab>('local')
+  useEffect(() => {
+    const current = searchParams.get('tab')
+    if (current === 'local' || current === 'revenuecat') return
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.set('tab', 'local')
+    setSearchParams(nextParams, { replace: true })
+  }, [searchParams, setSearchParams])
 
   // ── 本地订单状态 ──
   const [data, setData] = useState<AdminOrdersResult | null>(null)
@@ -181,7 +217,7 @@ export function AdminBillingPage() {
           <button
             key={key}
             type="button"
-            onClick={() => setTab(key)}
+            onClick={() => selectTab(key)}
             className={cn(
               'flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all',
               tab === key ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
@@ -427,48 +463,46 @@ export function AdminBillingPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-border bg-muted/40">
-                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">用户 ID</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">用户</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">商品</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">权益</th>
-                        <th className="hidden px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider md:table-cell">商店</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">状态</th>
-                        <th className="hidden px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider lg:table-cell">到期时间</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">续费</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">到期</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">操作</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {rcData.list.map((sub) => {
-                        const entKeys = Object.keys(sub.entitlements)
-                        const anyActive = entKeys.some((k) => sub.entitlements[k].isActive)
+                        const current = sub.subscription
                         return (
                           <tr key={sub.userId} className="transition-colors hover:bg-muted/30">
                             <td className="px-4 py-3">
-                              <p className="text-xs font-mono text-muted-foreground truncate max-w-[140px]">{sub.userId}</p>
+                              <p className="text-sm">{sub.name || sub.localEmail || sub.email || '未匹配本地用户'}</p>
+                              <p className="max-w-[160px] truncate text-xs font-mono text-muted-foreground">{sub.userId}</p>
                             </td>
                             <td className="px-4 py-3">
-                              {entKeys.length === 0 ? (
-                                <span className="text-xs text-muted-foreground">--</span>
-                              ) : (
-                                <div className="flex flex-wrap gap-1">
-                                  {entKeys.map((k) => (
-                                    <Badge key={k} variant="secondary" className="text-[10px]">{sub.entitlements[k].productId || k}</Badge>
-                                  ))}
+                              <p className="text-xs">{current?.storeProductId || current?.productId || '--'}</p>
+                              <p className="text-xs text-muted-foreground">{current ? (storeLabels[current.store] || current.store) : ''}</p>
+                            </td>
+                            <td className="px-4 py-3 text-xs">
+                              {current?.entitlementKeys.join(', ') || '--'}
+                            </td>
+                            <td className="px-4 py-3">
+                              {current ? (
+                                <div className="flex flex-wrap items-center gap-1">
+                                  <Badge variant={current.givesAccess ? 'default' : 'secondary'} className={cn('text-xs', current.givesAccess && 'bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/15')}>
+                                    {subscriptionStatusLabels[current.status] || current.status}
+                                  </Badge>
+                                  {current.environment === 'sandbox' && <Badge variant="outline" className="text-[10px]">沙盒</Badge>}
                                 </div>
-                              )}
+                              ) : <span className="text-xs text-muted-foreground">无订阅</span>}
                             </td>
-                            <td className="hidden px-4 py-3 md:table-cell">
-                              <span className="text-xs text-muted-foreground">
-                                {entKeys.length > 0 ? storeLabels[sub.entitlements[entKeys[0]].store] || sub.entitlements[entKeys[0]].store : '--'}
-                              </span>
+                            <td className="px-4 py-3 text-xs text-muted-foreground">
+                              {current ? (renewalLabels[current.autoRenewalStatus] || current.autoRenewalStatus) : '--'}
                             </td>
-                            <td className="px-4 py-3">
-                              <Badge variant={anyActive ? 'default' : 'secondary'} className={cn('text-xs', anyActive && 'bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/15')}>
-                                {anyActive ? '活跃' : '已过期'}
-                              </Badge>
-                            </td>
-                            <td className="hidden px-4 py-3 text-xs text-muted-foreground lg:table-cell">
-                              {entKeys.length > 0 && sub.entitlements[entKeys[0]].expiresDate
-                                ? formatDate(sub.entitlements[entKeys[0]].expiresDate!)
-                                : '--'}
+                            <td className="px-4 py-3 text-xs text-muted-foreground">
+                              {formatDate(current?.currentPeriodEndsAt || '')}
                             </td>
                             <td className="px-4 py-3">
                               <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => handleViewRCDetail(sub.userId)}>
@@ -493,58 +527,68 @@ export function AdminBillingPage() {
 
           {/* 订阅详情 Dialog */}
           <Dialog open={!!rcDetail} onOpenChange={(v) => { if (!v) setRcDetail(null) }}>
-            <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>RevenueCat 订阅详情</DialogTitle>
               </DialogHeader>
               {rcDetail && (
-                <div className="space-y-4 mt-2">
+                <div className="mt-2 space-y-4">
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <p className="text-xs text-muted-foreground">用户 ID</p>
-                      <p className="font-mono text-xs">{rcDetail.userId}</p>
+                      <p className="break-all font-mono text-xs">{rcDetail.userId}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-muted-foreground">原始 App User ID</p>
-                      <p className="font-mono text-xs truncate">{rcDetail.originalAppUserId || '--'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">首次出现</p>
-                      <p className="text-xs">{formatDate(rcDetail.firstSeen)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">最近活跃</p>
-                      <p className="text-xs">{formatDate(rcDetail.lastSeen)}</p>
+                      <p className="text-xs text-muted-foreground">邮箱</p>
+                      <p className="text-xs">{rcDetail.localEmail || rcDetail.email || '--'}</p>
                     </div>
                   </div>
-                  {rcDetail.managementUrl && (
-                    <a href={rcDetail.managementUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                      <ExternalLink className="h-3 w-3" />
-                      在 RevenueCat 后台查看
-                    </a>
-                  )}
                   <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">权益列表</p>
-                    {rcDetail.entitlements.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">无权益记录</p>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">订阅</p>
+                    {rcDetail.subscriptions.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">没有订阅记录</p>
                     ) : (
                       <div className="space-y-2">
-                        {rcDetail.entitlements.map((ent) => (
-                          <div key={ent.id} className="rounded-lg border border-border/60 p-3 space-y-1.5">
-                            <div className="flex items-center justify-between">
-                              <Badge variant={ent.isActive ? 'default' : 'secondary'} className={cn('text-[10px]', ent.isActive && 'bg-emerald-500/15 text-emerald-700')}>
-                                {ent.isActive ? '活跃' : '已过期'}
+                        {[...rcDetail.subscriptions].sort((a, b) => {
+                          const aTime = new Date(a.startsAt || a.currentPeriodStartsAt || 0).getTime()
+                          const bTime = new Date(b.startsAt || b.currentPeriodStartsAt || 0).getTime()
+                          return bTime - aTime
+                        }).map((item) => (
+                          <div key={item.id} className="space-y-2 rounded-lg border border-border/60 p-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge variant={item.givesAccess ? 'default' : 'secondary'} className={cn('text-[10px]', item.givesAccess && 'bg-emerald-500/15 text-emerald-700')}>
+                                {item.givesAccess ? '有权益' : '无权益'}
                               </Badge>
-                              <span className="text-[10px] text-muted-foreground">{storeLabels[ent.store] || ent.store}</span>
+                              <span className="text-xs">{subscriptionStatusLabels[item.status] || item.status}</span>
+                              <span className="text-xs text-muted-foreground">{renewalLabels[item.autoRenewalStatus] || item.autoRenewalStatus || '--'}</span>
+                              {item.environment === 'sandbox' && <Badge variant="outline" className="text-[10px]">沙盒</Badge>}
+                              {item.pendingPayment && <Badge variant="outline" className="text-[10px]">待扣款</Badge>}
                             </div>
-                            <p className="text-xs font-medium">{ent.productId}</p>
-                            <div className="grid grid-cols-2 gap-x-3 text-[11px] text-muted-foreground">
-                              <span>购买: {formatDate(ent.purchasedAt)}</span>
-                              <span>到期: {formatDate(ent.expiresDate)}</span>
+                            <p className="text-xs font-medium">{item.storeProductId || item.productId || item.id}</p>
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                              <span>商店: {storeLabels[item.store] || item.store}</span>
+                              <span>环境: {item.environment === 'sandbox' ? '沙盒' : item.environment === 'production' ? '正式' : '--'}</span>
+                              <span>购买: {formatDate(item.startsAt || '')}</span>
+                              <span>到期: {formatDate(item.currentPeriodEndsAt || item.endsAt || '')}</span>
+                              <span>交易号: {item.storeSubscriptionIdentifier || '--'}</span>
                             </div>
-                            {ent.unsubscribeDetectedAt && <p className="text-[10px] text-amber-600">取消订阅: {formatDate(ent.unsubscribeDetectedAt)}</p>}
-                            {ent.billingIssueDetectedAt && <p className="text-[10px] text-red-500">账单问题: {formatDate(ent.billingIssueDetectedAt)}</p>}
-                            {ent.isSandbox && <Badge variant="outline" className="text-[10px]">沙盒</Badge>}
+                            {item.entitlementKeys.length > 0 && (
+                              <p className="text-[11px] text-muted-foreground">权益: {item.entitlementKeys.join(', ')}</p>
+                            )}
+                            {item.pendingProductStoreId && (
+                              <p className="text-[11px] text-amber-600">到期后改为 {item.pendingProductStoreId}</p>
+                            )}
+                            {item.totalRevenueUsd && (
+                              <p className="text-[11px] text-muted-foreground">
+                                收入 ${item.totalRevenueUsd.gross.toFixed(2)}，实收 ${item.totalRevenueUsd.proceeds.toFixed(2)}
+                              </p>
+                            )}
+                            {item.managementUrl && (
+                              <a href={item.managementUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                                <ExternalLink className="h-3 w-3" />
+                                商店订阅管理
+                              </a>
+                            )}
                           </div>
                         ))}
                       </div>

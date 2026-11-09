@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Req } from '@nestjs/common';
+import { Controller, Get, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { MembershipService } from './membership.service';
 import { requireAuthSession } from '../auth/session.util';
@@ -21,6 +21,19 @@ export class MembershipController {
   @Get('benefits')
   getBenefits() {
     return this.membershipService.getBenefits();
+  }
+
+  @Get('purchases')
+  async listPurchases(
+    @Req() req: Request,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    const session = await requireAuthSession(req);
+    return this.membershipService.listPurchases(session.user.id, {
+      page: page ? Number(page) : 1,
+      pageSize: pageSize ? Number(pageSize) : 6,
+    });
   }
 
   /**

@@ -493,19 +493,73 @@ export class AdminService {
   // ─── RevenueCat 订阅查询 ─────────────────────────────────
 
   async listRCSubscribers(params: { page: number; pageSize: number }) {
-    const result = await this.revenueCatService.listSubscribers(params);
-    if (!result) {
-      return { list: [], total: 0, message: 'RevenueCat API 未配置或查询失败' };
-    }
-    return result;
+    const page = Math.max(1, params.page || 1);
+    const pageSize = Math.min(50, Math.max(1, params.pageSize || 20));
+    const where = { rcCustomerId: { not: null } };
+    const [rows, total] = await Promise.all([
+      this.prisma.userMembership.findMany({
+        where,
+        include: { user: { select: { id: true, name: true, email: true } } },
+        orderBy: { updatedAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.userMembership.count({ where }),
+    ]);
+    const list = await Promise.all(rows.map(async (row) => {
+      const detail = await this.revenueCatService.getSubscriberDetail(row.rcCustomerId || row.userId);
+      const current = detail?.subscriptions.find((item) => item.givesAccess) ?? detail?.subscriptions[0] ?? null;
+      return {
+        userId: row.user.id,
+        aliasIds: [] as string[],
+        name: row.user.name,
+        localEmail: row.user.email,
+        email: row.user.email,
+        subscription: {
+          storeProductId: current?.storeProductId || row.rcProductId,
+          productId: current?.productId ?? row.rcProductId,
+          entitlementKeys: current?.entitlementKeys ?? [],
+          status: current?.status ?? row.status,
+          givesAccess: current?.givesAccess ?? row.status === 'active',
+          autoRenewalStatus: current?.autoRenewalStatus ?? (row.autoRenew ? 'will_renew' : 'will_not_renew'),
+          environment: current?.environment ?? null,
+          currentPeriodEndsAt: current?.currentPeriodEndsAt ?? row.expiredAt.toISOString(),
+          store: current?.store ?? 'app_store',
+          pendingProductStoreId: current?.pendingProductStoreId ?? row.pendingProductId,
+        },
+      };
+    }));
+    return { list, total };
   }
 
   async getRCSubscriberDetail(userId: string) {
-    const detail = await this.revenueCatService.getSubscriberDetail(userId);
-    if (!detail) {
+    const membership = await this.prisma.userMembership.findFirst({
+      where: { OR: [{ userId }, { rcCustomerId: userId }] },
+      include: { user: { select: { id: true, name: true, email: true } } },
+    });
+    const detail = await this.revenueCatService.getSubscriberDetail(membership?.rcCustomerId || userId);
+    if (!detail && !membership) {
       throw new NotFoundException('RevenueCat 用户未找到或 API 未配置');
     }
-    return detail;
+    return {
+      ...(detail ?? {
+        userId,
+        projectId: null,
+        firstSeenAt: null,
+        lastSeenAt: null,
+        country: null,
+        platform: null,
+        platformVersion: null,
+        appVersion: null,
+        email: null,
+        activeEntitlements: [],
+        subscriptions: [],
+      }),
+      userId: membership?.user.id ?? detail?.userId ?? userId,
+      name: membership?.user.name ?? null,
+      localEmail: membership?.user.email ?? null,
+      email: membership?.user.email ?? detail?.email ?? null,
+    };
   }
 
   // ─── AI 用量查询 ──────────────────────────────────────────

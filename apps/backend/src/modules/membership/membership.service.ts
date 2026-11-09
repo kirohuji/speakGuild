@@ -107,6 +107,77 @@ export class MembershipService {
     return { ...(await this.getCurrentMembership(userId)), sync };
   }
 
+  async listPurchases(userId: string, params: { page?: number; pageSize?: number }) {
+    const pageSize = Math.min(20, Math.max(1, params.pageSize || 6));
+    const page = Math.max(1, params.page || 1);
+    const [orders, gifts, remotePurchases] = await Promise.all([
+      this.prisma.order.findMany({
+        where: { userId, status: 'paid' },
+        select: { id: true, billingCycle: true, paidAt: true, createdAt: true, plan: { select: { durationDays: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      }),
+      this.prisma.notificationTarget.findMany({
+        where: { userId, notification: { title: { in: ['新人会员已到账', '邀请奖励已到账'] } } },
+        select: { notification: { select: { id: true, content: true, createdAt: true } } },
+        orderBy: { notification: { createdAt: 'desc' } },
+        take: 50,
+      }),
+      this.revenueCatService.syncPurchaseLedger(userId),
+    ]);
+    const storedPurchases = remotePurchases ?? (await this.prisma.membershipPurchase.findMany({
+      where: { userId },
+      orderBy: { purchasedAt: 'desc' },
+      take: 100,
+    })).flatMap((purchase) => {
+      if (purchase.kind !== 'monthly' && purchase.kind !== 'yearly') return [];
+      return [{
+        id: purchase.rcSubscriptionId,
+        kind: purchase.kind,
+        purchasedAt: purchase.purchasedAt.toISOString(),
+        expiresAt: purchase.expiresAt?.toISOString() ?? null,
+      }];
+    });
+
+    const records = [
+      ...orders.map((order) => {
+        const purchasedAt = order.paidAt ?? order.createdAt;
+        const days = order.billingCycle === 'yearly' ? 365 : order.plan.durationDays;
+        return {
+          id: order.id,
+          kind: order.billingCycle === 'yearly' ? 'yearly' as const : 'monthly' as const,
+          days: null as number | null,
+          purchasedAt: purchasedAt.toISOString(),
+          expiresAt: new Date(purchasedAt.getTime() + days * 86400000).toISOString(),
+        };
+      }),
+      ...storedPurchases.map((purchase) => ({ ...purchase, days: null as number | null })),
+      ...gifts.map((gift) => {
+        const days = this.readGiftDays(gift.notification.content);
+        return {
+          id: gift.notification.id,
+          kind: 'gift' as const,
+          days,
+          purchasedAt: gift.notification.createdAt.toISOString(),
+          expiresAt: new Date(gift.notification.createdAt.getTime() + days * 86400000).toISOString(),
+        };
+      }),
+    ].sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime());
+
+    const start = (page - 1) * pageSize;
+    return {
+      list: records.slice(start, start + pageSize),
+      total: records.length,
+      page,
+      pageSize,
+    };
+  }
+
+  private readGiftDays(content: string) {
+    const matched = content.match(/(\d+)\s*天/);
+    return matched ? Number(matched[1]) : 5;
+  }
+
   getBenefits() {
     return [
       { benefitId: '1', name: 'AI 每轮评价', freeSupport: '5 次/天', standardSupport: '更多次数', advancedSupport: '更多次数' },

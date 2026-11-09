@@ -39,6 +39,7 @@ type MembershipState = {
   eventAt?: Date;
   originalTransactionId?: string | null;
   productId?: string | null;
+  rcCustomerId?: string | null;
   pendingProductId?: string | null;
   billingIssueAt?: Date | null;
 };
@@ -67,6 +68,7 @@ export class RevenueCatService {
   private readonly baseUrl = 'https://api.revenuecat.com/v2';
   private readonly apiKey: string | undefined;
   private readonly webhookAuthorization: string | undefined;
+  private readonly productInfoCache = new Map<string, { storeIdentifier: string | null; duration: string | null }>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -157,7 +159,8 @@ export class RevenueCatService {
       return { synced: false, reason: 'not-configured' as const };
     }
 
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    let active = false;
+    for (let attempt = 0; attempt < 3 && !active; attempt += 1) {
       const snapshot = await this.getCustomerSubscriptionSnapshot(userId);
       if (snapshot?.kind === 'active') {
         const plan = await this.findPlanForEntitlements(snapshot.entitlementIds);
@@ -171,9 +174,11 @@ export class RevenueCatService {
             cancelledAt: snapshot.cancelledAt,
             originalTransactionId: snapshot.originalTransactionId,
             productId: snapshot.productId,
+            rcCustomerId: snapshot.customerId || userId,
             pendingProductId: snapshot.pendingProductId,
             }));
-          return { synced: true, active: true };
+          active = true;
+          break;
         }
       }
       if (attempt < 2) {
@@ -181,7 +186,8 @@ export class RevenueCatService {
       }
     }
 
-    return { synced: true, active: false };
+    await this.syncPurchaseLedger(userId);
+    return { synced: true, active };
   }
 
   private async getCustomerSubscriptionSnapshot(userId: string): Promise<{
@@ -192,6 +198,7 @@ export class RevenueCatService {
     cancelledAt: Date | null;
     originalTransactionId: string | null;
     productId?: string;
+    customerId?: string;
     pendingProductId: string | null;
   } | { kind: 'empty' } | undefined> {
     try {
@@ -206,20 +213,23 @@ export class RevenueCatService {
 
       const data = await response.json() as any;
       const subscriptions = Array.isArray(data?.items) ? data.items : [];
-      const candidates = subscriptions
+      const candidates = (await Promise.all(subscriptions
         .filter((item: any) => item?.gives_access === true)
-        .map((item: any) => {
+        .map(async (item: any) => {
           const activeEntitlements = (item?.entitlements?.items ?? [])
             .filter((entitlement: any) => entitlement?.state === 'active');
           const entitlementIds = activeEntitlements
             .map((entitlement: any) => entitlement?.lookup_key)
             .filter(Boolean);
           // subscriptions[].product_id is an RC resource ID. The matching
-          // store product lives under the active entitlement's products list.
-          const storeProductId = activeEntitlements
+          // store product lives under the active entitlement's products list,
+          // and otherwise on the product resource itself.
+          const embeddedStoreProductId = activeEntitlements
             .flatMap((entitlement: any) => entitlement?.products?.items ?? [])
             .find((product: any) => product?.id === item?.product_id)
             ?.store_identifier;
+          const product = await this.getProductInfo(item?.product_id);
+          const storeProductId = embeddedStoreProductId ?? product?.storeIdentifier;
           const autoRenewalStatus = item?.auto_renewal_status;
           const hasAlreadyRenewed = autoRenewalStatus === 'has_already_renewed';
           const expiresAtMs = hasAlreadyRenewed
@@ -237,9 +247,10 @@ export class RevenueCatService {
               ? String(item.store_subscription_identifier)
               : null,
             productId: storeProductId != null ? String(storeProductId) : undefined,
+            customerId: item?.customer_id != null ? String(item.customer_id) : userId,
             pendingProductId,
           };
-        })
+        })))
         .filter((item: any) => item.entitlementIds.length > 0 && item.expiresAt instanceof Date && item.expiresAt > new Date())
         .sort((a: any, b: any) => b.expiresAt.getTime() - a.expiresAt.getTime());
 
@@ -250,107 +261,373 @@ export class RevenueCatService {
     }
   }
 
-  /** 列出订阅用户（分页） */
-  async listSubscribers(params: { page?: number; pageSize?: number }): Promise<{
-    list: Array<{
-      userId: string;
-      entitlements: Record<string, { productId: string; expiresDate: string | null; isActive: boolean; store: string }>;
-      firstSeen: string;
-      lastSeen: string;
-    }>;
-    total: number;
+  /**
+   * 把这个本地用户在 RevenueCat 上的订阅写成购买记录，并把 RevenueCat customer id
+   * 绑到已有会员上。购买同步和购买记录都走这里，避免再从全量客户目录里反查用户。
+   */
+  async syncPurchaseLedger(userId: string): Promise<Array<{ id: string; kind: 'monthly' | 'yearly'; purchasedAt: string; expiresAt: string | null }> | null> {
+    const loaded = await this.loadCustomerPurchases(userId);
+    if (!loaded) return null;
+
+    const { purchases, customerId } = loaded;
+    if (customerId) {
+      await this.prisma.userMembership.updateMany({
+        where: { userId },
+        data: { rcCustomerId: customerId },
+      });
+    }
+    if (purchases.length > 0) {
+      await this.prisma.$transaction(purchases.map((purchase) => this.prisma.membershipPurchase.upsert({
+        where: { rcSubscriptionId: purchase.id },
+        create: {
+          userId,
+          rcSubscriptionId: purchase.id,
+          kind: purchase.kind,
+          purchasedAt: new Date(purchase.purchasedAt),
+          expiresAt: purchase.expiresAt ? new Date(purchase.expiresAt) : null,
+        },
+        update: {
+          userId,
+          kind: purchase.kind,
+          purchasedAt: new Date(purchase.purchasedAt),
+          expiresAt: purchase.expiresAt ? new Date(purchase.expiresAt) : null,
+        },
+      })));
+    }
+    return purchases;
+  }
+
+  private async loadCustomerPurchases(userId: string): Promise<{
+    customerId: string | null;
+    purchases: Array<{ id: string; kind: 'monthly' | 'yearly'; purchasedAt: string; expiresAt: string | null }>;
   } | null> {
-    if (!this.apiKey) return null;
+    if (!this.apiKey || !process.env.REVENUECAT_PROJECT_ID) return null;
 
     try {
-      const { page = 1, pageSize = 20 } = params;
       const response = await fetch(
-        `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/customers?` +
-        new URLSearchParams({
-          limit: String(pageSize),
-          starting_after_id: '',
-        }).toString(),
-        {
-          headers: { 'Authorization': `Bearer ${this.apiKey}` },
-        },
+        `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/customers/${encodeURIComponent(userId)}/subscriptions?limit=100`,
+        { headers: { Authorization: `Bearer ${this.apiKey}` } },
       );
-
       if (!response.ok) {
-        const err = await response.text();
-        this.logger.error(`RevenueCat 查询订阅列表失败: ${response.status} ${err}`);
+        this.logger.warn(`RevenueCat 查询购买记录失败: userId=${userId}, status=${response.status}`);
         return null;
       }
 
       const data = await response.json() as any;
-      const items = (data?.items || []).map((c: any) => ({
-        userId: c.id || '',
-        entitlements: Object.fromEntries(
-          Object.entries(c.entitlements || {}).map(([key, ent]: [string, any]) => [
-            key,
-            {
-              productId: ent.product_identifier || '',
-              expiresDate: ent.expires_date || null,
-              isActive: ent.expires_date ? new Date(ent.expires_date) > new Date() : false,
-              store: ent.store || 'unknown',
-            },
-          ]),
-        ),
-        firstSeen: c.first_seen || '',
-        lastSeen: c.last_seen || '',
-      }));
-
-      const total = items.length;
+      const items = Array.isArray(data?.items) ? data.items : [];
+      const productIds = Array.from(new Set(
+        items
+          .map((item: any) => item?.product_id)
+          .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0),
+      ));
+      await Promise.all(productIds.map((productId) => this.getProductInfo(productId)));
+      const customerId = items.find((item: any) => item?.customer_id)?.customer_id ?? null;
 
       return {
-        list: items.slice((page - 1) * pageSize, page * pageSize),
-        total,
+        customerId: customerId != null ? String(customerId) : null,
+        purchases: items.flatMap((item: any) => {
+          const info = typeof item?.product_id === 'string' ? this.productInfoCache.get(item.product_id) : undefined;
+          const kind = this.cycleFromProduct(info?.storeIdentifier ?? null, info?.duration ?? null);
+          const purchasedAt = this.toIso(item?.starts_at);
+          const expiresAt = this.toIso(item?.ends_at ?? item?.current_period_ends_at);
+          if (!kind || !purchasedAt || !item?.id) return [];
+          return [{ id: String(item.id), kind, purchasedAt, expiresAt }];
+        }).sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime()),
       };
+    } catch (error) {
+      this.logger.error('RevenueCat 查询购买记录异常', error);
+      return null;
+    }
+  }
+
+  private async getProductInfo(productId: unknown) {
+    if (typeof productId !== 'string' || !productId || !this.apiKey || !process.env.REVENUECAT_PROJECT_ID) return null;
+    const cached = this.productInfoCache.get(productId);
+    if (cached) return cached;
+
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/products/${encodeURIComponent(productId)}`,
+        { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      );
+      if (!response.ok) return null;
+      const product = await response.json() as any;
+      const info = {
+        storeIdentifier: typeof product?.store_identifier === 'string' ? product.store_identifier : null,
+        duration: typeof product?.subscription?.duration === 'string' ? product.subscription.duration : null,
+      };
+      this.productInfoCache.set(productId, info);
+      return info;
+    } catch (error) {
+      this.logger.warn(`RevenueCat 查询商品失败: productId=${productId}`);
+      return null;
+    }
+  }
+
+  private cycleFromProduct(storeIdentifier: string | null, duration: string | null): 'monthly' | 'yearly' | null {
+    const id = storeIdentifier ?? '';
+    if (id.includes('yearly') || id.includes('annual') || duration === 'P1Y') return 'yearly';
+    if (id.includes('monthly') || duration === 'P1M') return 'monthly';
+    return null;
+  }
+
+  /** 列出订阅用户。v2 客户列表用游标，这里最多取 200 条后在本地分页，并为当前页补上订阅。 */
+  async listSubscribers(params: { page?: number; pageSize?: number }): Promise<{
+    list: Array<{
+      userId: string;
+      aliasIds: string[];
+      email: string | null;
+      subscription: {
+        storeProductId: string | null;
+        productId: string | null;
+        entitlementKeys: string[];
+        status: string;
+        givesAccess: boolean;
+        autoRenewalStatus: string;
+        environment: string | null;
+        currentPeriodEndsAt: string | null;
+        store: string;
+        pendingProductStoreId: string | null;
+      } | null;
+    }>;
+    total: number;
+  } | null> {
+    if (!this.apiKey || !process.env.REVENUECAT_PROJECT_ID) return null;
+
+    try {
+      const customers = await this.fetchCustomers();
+      const { page = 1, pageSize = 20 } = params;
+      const start = Math.max(0, (page - 1) * pageSize);
+      const pageItems = customers.slice(start, start + pageSize);
+      const list = await Promise.all(pageItems.map(async (customer) => {
+        const summary = this.mapCustomerSummary(customer);
+        const [subscriptions, aliasIds] = await Promise.all([
+          this.fetchCustomerSubscriptions(summary.userId),
+          this.fetchCustomerAliasIds(summary.userId),
+        ]);
+        const current = subscriptions.find((item) => item.givesAccess) ?? subscriptions[0] ?? null;
+        const relatedIds = subscriptions.flatMap((item) => [item.customerId, item.originalCustomerId]);
+        return {
+          userId: summary.userId,
+          aliasIds: Array.from(new Set([...aliasIds, ...relatedIds].filter((id): id is string => !!id && id !== summary.userId))),
+          email: summary.email,
+          subscription: current
+            ? {
+                storeProductId: current.storeProductId,
+                productId: current.productId,
+                entitlementKeys: current.entitlementKeys,
+                status: current.status,
+                givesAccess: current.givesAccess,
+                autoRenewalStatus: current.autoRenewalStatus,
+                environment: current.environment,
+                currentPeriodEndsAt: current.currentPeriodEndsAt,
+                store: current.store,
+                pendingProductStoreId: current.pendingProductStoreId,
+              }
+            : null,
+        };
+      }));
+      return { list, total: customers.length };
     } catch (error) {
       this.logger.error('RevenueCat 查询订阅列表异常', error);
       return null;
     }
   }
 
-  /** 获取单个订阅用户详情 */
-  async getSubscriberDetail(userId: string): Promise<any | null> {
-    if (!this.apiKey) return null;
+  /** 获取单个订阅用户详情，附带 v2 subscriptions。 */
+  async getSubscriberDetail(userId: string): Promise<{
+    userId: string;
+    projectId: string | null;
+    firstSeenAt: string | null;
+    lastSeenAt: string | null;
+    country: string | null;
+    platform: string | null;
+    platformVersion: string | null;
+    appVersion: string | null;
+    email: string | null;
+    activeEntitlements: Array<{ entitlementId: string; expiresAt: string | null }>;
+    subscriptions: Array<{
+      id: string;
+      status: string;
+      givesAccess: boolean;
+      pendingPayment: boolean;
+      autoRenewalStatus: string;
+      environment: string | null;
+      store: string;
+      country: string | null;
+      productId: string | null;
+      storeProductId: string | null;
+      entitlementKeys: string[];
+      startsAt: string | null;
+      currentPeriodStartsAt: string | null;
+      currentPeriodEndsAt: string | null;
+      endsAt: string | null;
+      storeSubscriptionIdentifier: string | null;
+      ownership: string | null;
+      managementUrl: string | null;
+      pendingProductStoreId: string | null;
+      totalRevenueUsd: { gross: number; commission: number; tax: number; proceeds: number } | null;
+    }>;
+  } | null> {
+    if (!this.apiKey || !process.env.REVENUECAT_PROJECT_ID) return null;
 
     try {
-      const response = await fetch(
-        `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/customers/${userId}`,
-        {
-          headers: { 'Authorization': `Bearer ${this.apiKey}` },
-        },
+      const customerResponse = await fetch(
+        `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/customers/${encodeURIComponent(userId)}`,
+        { headers: { Authorization: `Bearer ${this.apiKey}` } },
       );
+      if (!customerResponse.ok) return null;
 
-      if (!response.ok) return null;
-
-      const data = await response.json() as any;
-      const c = data?.subscriber || {};
-      const entitlements = c.entitlements || {};
-
+      const customer = await customerResponse.json() as any;
       return {
-        userId: c.app_user_id || userId,
-        originalAppUserId: c.original_app_user_id || '',
-        firstSeen: c.first_seen || '',
-        lastSeen: c.last_seen || '',
-        managementUrl: c.management_url || '',
-        entitlements: Object.entries(entitlements).map(([key, ent]: [string, any]) => ({
-          id: key,
-          productId: ent.product_identifier || '',
-          purchasedAt: ent.purchase_date || '',
-          expiresDate: ent.expires_date || '',
-          isActive: ent.expires_date ? new Date(ent.expires_date) > new Date() : false,
-          isSandbox: ent.is_sandbox || false,
-          store: ent.store || 'unknown',
-          unsubscribeDetectedAt: ent.unsubscribe_detected_at || null,
-          billingIssueDetectedAt: ent.billing_issue_detected_at || null,
-        })),
+        ...this.mapCustomerSummary(customer),
+        projectId: customer.project_id ?? null,
+        subscriptions: (await this.fetchCustomerSubscriptions(userId)).sort((a, b) => {
+          const aTime = new Date(a.startsAt || a.currentPeriodStartsAt || 0).getTime();
+          const bTime = new Date(b.startsAt || b.currentPeriodStartsAt || 0).getTime();
+          return bTime - aTime;
+        }),
       };
     } catch (error) {
       this.logger.error('RevenueCat 查询订阅详情异常', error);
       return null;
     }
+  }
+
+  private async fetchCustomerAliasIds(userId: string): Promise<string[]> {
+    if (!userId) return [];
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/customers/${encodeURIComponent(userId)}/aliases?limit=20`,
+        { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      );
+      if (!response.ok) return [];
+      const data = await response.json() as any;
+      const items = Array.isArray(data?.items) ? data.items : [];
+      return items.map((item: any) => String(item?.id ?? '')).filter((id: string) => id && id !== userId);
+    } catch {
+      return [];
+    }
+  }
+
+  private async fetchCustomerSubscriptions(userId: string) {
+    if (!userId) return [];
+    try {
+      const response = await fetch(
+        `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/customers/${encodeURIComponent(userId)}/subscriptions?limit=20`,
+        { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      );
+      if (!response.ok) return [];
+      const data = await response.json() as any;
+      const items = Array.isArray(data?.items) ? data.items : [];
+      const subscriptions = items.map((item: any) => this.mapSubscription(item));
+      await Promise.all(subscriptions.map(async (subscription) => {
+        if (subscription.storeProductId || !subscription.productId) return;
+        const product = await this.getProductInfo(subscription.productId);
+        subscription.storeProductId = product?.storeIdentifier ?? null;
+      }));
+      return subscriptions;
+    } catch {
+      return [];
+    }
+  }
+
+  private async fetchCustomers(): Promise<any[]> {
+    const items: any[] = [];
+    let startingAfter: string | undefined;
+
+    for (let page = 0; page < 2 && items.length < 200; page += 1) {
+      const query = new URLSearchParams({ limit: '100' });
+      if (startingAfter) query.set('starting_after', startingAfter);
+      const response = await fetch(
+        `${this.baseUrl}/projects/${process.env.REVENUECAT_PROJECT_ID}/customers?${query}`,
+        { headers: { Authorization: `Bearer ${this.apiKey}` } },
+      );
+      if (!response.ok) {
+        const err = await response.text();
+        this.logger.error(`RevenueCat 查询订阅列表失败: ${response.status} ${err}`);
+        if (items.length > 0) return items;
+        throw new Error(`RevenueCat customers ${response.status}`);
+      }
+      const data = await response.json() as any;
+      const batch = Array.isArray(data?.items) ? data.items : [];
+      items.push(...batch);
+      const lastId = batch[batch.length - 1]?.id;
+      if (!data?.next_page || !lastId) break;
+      startingAfter = String(lastId);
+    }
+
+    return items;
+  }
+
+  private mapCustomerSummary(customer: any) {
+    const attributes = Array.isArray(customer?.attributes?.items) ? customer.attributes.items : [];
+    const email = attributes.find((item: any) => item?.name === '$email')?.value ?? null;
+    const entitlements = Array.isArray(customer?.active_entitlements?.items)
+      ? customer.active_entitlements.items
+      : [];
+    return {
+      userId: String(customer?.id ?? ''),
+      firstSeenAt: this.toIso(customer?.first_seen_at),
+      lastSeenAt: this.toIso(customer?.last_seen_at),
+      country: customer?.last_seen_country ?? null,
+      platform: customer?.last_seen_platform ?? null,
+      platformVersion: customer?.last_seen_platform_version ?? null,
+      appVersion: customer?.last_seen_app_version ?? null,
+      email: typeof email === 'string' ? email : null,
+      activeEntitlements: entitlements.map((item: any) => ({
+        entitlementId: String(item?.entitlement_id ?? ''),
+        expiresAt: this.toIso(item?.expires_at),
+      })).filter((item: { entitlementId: string }) => item.entitlementId),
+    };
+  }
+
+  private mapSubscription(item: any) {
+    const entitlements = Array.isArray(item?.entitlements?.items) ? item.entitlements.items : [];
+    const storeProductId = entitlements
+      .flatMap((entitlement: any) => entitlement?.products?.items ?? [])
+      .find((product: any) => product?.id === item?.product_id)
+      ?.store_identifier ?? null;
+    const revenue = item?.total_revenue_in_usd;
+    return {
+      id: String(item?.id ?? ''),
+      customerId: item?.customer_id != null ? String(item.customer_id) : null,
+      originalCustomerId: item?.original_customer_id != null ? String(item.original_customer_id) : null,
+      status: String(item?.status ?? 'unknown'),
+      givesAccess: item?.gives_access === true,
+      pendingPayment: item?.pending_payment === true,
+      autoRenewalStatus: String(item?.auto_renewal_status ?? ''),
+      environment: item?.environment ?? null,
+      store: item?.store ?? 'unknown',
+      country: item?.country ?? null,
+      productId: item?.product_id ?? null,
+      storeProductId: storeProductId != null ? String(storeProductId) : null,
+      entitlementKeys: entitlements.map((entitlement: any) => entitlement?.lookup_key).filter(Boolean),
+      startsAt: this.toIso(item?.starts_at),
+      currentPeriodStartsAt: this.toIso(item?.current_period_starts_at),
+      currentPeriodEndsAt: this.toIso(item?.current_period_ends_at),
+      endsAt: this.toIso(item?.ends_at),
+      storeSubscriptionIdentifier: item?.store_subscription_identifier != null
+        ? String(item.store_subscription_identifier)
+        : null,
+      ownership: item?.ownership ?? null,
+      managementUrl: item?.management_url ?? null,
+      pendingProductStoreId: item?.auto_renewal_status === 'will_change_product'
+        ? item?.pending_changes?.product?.store_identifier ?? null
+        : null,
+      totalRevenueUsd: revenue && typeof revenue.gross === 'number'
+        ? {
+            gross: revenue.gross,
+            commission: revenue.commission ?? 0,
+            tax: revenue.tax ?? 0,
+            proceeds: revenue.proceeds ?? 0,
+          }
+        : null,
+    };
+  }
+
+  private toIso(value: unknown): string | null {
+    return typeof value === 'number' && Number.isFinite(value) ? new Date(value).toISOString() : null;
   }
 
   async handleWebhook(payload: RevenueCatWebhookPayload) {
@@ -572,7 +849,7 @@ export class RevenueCatService {
           userId: params.userId,
           planId: params.planId,
           status: params.status,
-          rcCustomerId: params.userId,
+          rcCustomerId: params.rcCustomerId || params.userId,
           expiredAt: params.expiresAt,
           autoRenew: params.autoRenew,
           cancelledAt: params.cancelledAt,
@@ -585,7 +862,7 @@ export class RevenueCatService {
         update: {
           planId: params.planId,
           status: params.status,
-          rcCustomerId: params.userId,
+          rcCustomerId: params.rcCustomerId || params.userId,
           expiredAt: params.expiresAt,
           autoRenew: params.autoRenew,
           cancelledAt: params.cancelledAt,

@@ -284,30 +284,53 @@ export async function getOrderStats() {
 
 // ─── RevenueCat 订阅查询 ────────────────────────────────────
 
-export interface RCSubscriber {
-  userId: string;
-  entitlements: Record<string, { productId: string; expiresDate: string | null; isActive: boolean; store: string }>;
-  firstSeen: string;
-  lastSeen: string;
+export interface RCSubscription {
+  id: string
+  status: string
+  givesAccess: boolean
+  pendingPayment: boolean
+  autoRenewalStatus: string
+  environment: string | null
+  store: string
+  country: string | null
+  productId: string | null
+  storeProductId: string | null
+  entitlementKeys: string[]
+  startsAt: string | null
+  currentPeriodStartsAt: string | null
+  currentPeriodEndsAt: string | null
+  endsAt: string | null
+  storeSubscriptionIdentifier: string | null
+  ownership: string | null
+  managementUrl: string | null
+  pendingProductStoreId: string | null
+  totalRevenueUsd: { gross: number; commission: number; tax: number; proceeds: number } | null
 }
 
-export interface RCSubscriberDetail {
-  userId: string;
-  originalAppUserId: string;
-  firstSeen: string;
-  lastSeen: string;
-  managementUrl: string;
-  entitlements: Array<{
-    id: string;
-    productId: string;
-    purchasedAt: string;
-    expiresDate: string;
-    isActive: boolean;
-    isSandbox: boolean;
-    store: string;
-    unsubscribeDetectedAt: string | null;
-    billingIssueDetectedAt: string | null;
-  }>;
+export interface RCSubscriptionSummary {
+  storeProductId: string | null
+  productId: string | null
+  entitlementKeys: string[]
+  status: string
+  givesAccess: boolean
+  autoRenewalStatus: string
+  environment: string | null
+  currentPeriodEndsAt: string | null
+  store: string
+  pendingProductStoreId: string | null
+}
+
+export interface RCSubscriber {
+  userId: string
+  name?: string | null
+  localEmail?: string | null
+  email: string | null
+  subscription: RCSubscriptionSummary | null
+}
+
+export interface RCSubscriberDetail extends RCSubscriber {
+  projectId: string | null
+  subscriptions: RCSubscription[]
 }
 
 export async function listRCSubscribers(params: { page?: number; pageSize?: number }) {

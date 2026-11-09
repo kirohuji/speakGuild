@@ -13,12 +13,14 @@ import {
   getMemberPlans,
   getCurrentMembership,
   getMemberBenefits,
+  getMembershipPurchases,
   syncRevenueCatMembership,
   createOrder,
   mockPayConfirm,
   type MemberPlan,
   type CurrentMembership,
   type MemberBenefit,
+  type MembershipPurchase,
   type OrderResult,
 } from '@/features/membership/api'
 // import { pointsApi } from '@/features/points/api' // 积分抵扣（暂时停用），恢复时取消注释
@@ -60,6 +62,9 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
   const [subscriptionAction, setSubscriptionAction] = useState<'restore' | 'manage' | null>(null)
   const [purchaseLoading, setPurchaseLoading] = useState(false)
+  const [purchasePage, setPurchasePage] = useState(1)
+  const [purchaseRecords, setPurchaseRecords] = useState<{ list: MembershipPurchase[]; total: number; pageSize: number } | null>(null)
+  const [purchaseListLoading, setPurchaseListLoading] = useState(true)
   const setCachedMembership = useUserStore((s) => s.setMembership)
   const { session } = useAuth()
   const purchaseInFlightRef = useRef(false)
@@ -107,6 +112,16 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const yearlyDiscount = yearlyOriginalPrice > 0
     ? (selectedPayPrice / yearlyOriginalPrice * 10).toFixed(1)
     : '10.0'
+
+  useEffect(() => {
+    let cancelled = false
+    setPurchaseListLoading(true)
+    getMembershipPurchases({ page: purchasePage, pageSize: 6 })
+      .then((result) => { if (!cancelled) setPurchaseRecords(result) })
+      .catch(() => { if (!cancelled) setPurchaseRecords({ list: [], total: 0, pageSize: 6 }) })
+      .finally(() => { if (!cancelled) setPurchaseListLoading(false) })
+    return () => { cancelled = true }
+  }, [purchasePage, current?.isActive])
 
   useEffect(() => {
     Promise.allSettled([
@@ -785,6 +800,16 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
         </Card>
       )}
 
+      <PurchaseHistory
+        compact={compact}
+        loading={purchaseListLoading}
+        records={purchaseRecords?.list ?? []}
+        page={purchasePage}
+        pageSize={purchaseRecords?.pageSize ?? 6}
+        total={purchaseRecords?.total ?? 0}
+        onPageChange={setPurchasePage}
+      />
+
       {/* 支付弹窗 */}
       <Dialog open={payOpen} onOpenChange={setPayOpen}>
         <DialogContent className="max-h-[88vh] w-[calc(100%-2rem)] overflow-y-auto rounded-2xl p-5 shadow-xl sm:max-w-md sm:p-6">
@@ -1196,5 +1221,110 @@ function CompactPlanCard({
         </ul>
       )}
     </button>
+  )
+}
+
+function PurchaseHistory({
+  compact,
+  loading,
+  records,
+  page,
+  pageSize,
+  total,
+  onPageChange,
+}: {
+  compact?: boolean
+  loading: boolean
+  records: MembershipPurchase[]
+  page: number
+  pageSize: number
+  total: number
+  onPageChange: (page: number) => void
+}) {
+  const { t, i18n } = useTranslation()
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const ordered = [...records].sort(
+    (a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime(),
+  )
+  const label = (record: MembershipPurchase) =>
+    record.kind === 'gift'
+      ? t('member.purchaseGift', { days: record.days ?? 5 })
+      : t(record.kind === 'yearly' ? 'member.yearly' : 'member.monthly')
+  const formatWhen = (value: string | null) => value
+    ? new Date(value).toLocaleString(i18n.language, {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : '--'
+
+  return (
+    <div className="space-y-2.5">
+      <p className={cn(
+        'px-0.5 font-semibold uppercase tracking-wide text-muted-foreground',
+        compact ? 'text-[10px]' : 'text-xs',
+      )}>
+        {t('member.purchaseHistory')}
+      </p>
+      <div className={cn('overflow-hidden bg-muted/30', compact ? 'rounded-xl' : 'rounded-lg')}>
+        <div className={cn(
+          'grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.1fr)_minmax(0,1.1fr)] items-center',
+          compact ? 'gap-1 bg-primary/[0.055] px-3 py-2' : 'gap-2 bg-muted/50 px-4 py-2.5',
+        )}>
+          <span className={cn('font-semibold text-muted-foreground', compact ? 'text-[10px]' : 'text-xs')}>
+            {t('member.purchaseItem')}
+          </span>
+          <span className={cn('text-center font-semibold text-muted-foreground', compact ? 'text-[10px]' : 'text-xs')}>
+            {t('member.purchaseTime')}
+          </span>
+          <span className={cn('text-center font-semibold text-muted-foreground', compact ? 'text-[10px]' : 'text-xs')}>
+            {t('member.purchaseExpires')}
+          </span>
+        </div>
+        {loading ? (
+          [1, 2, 3].map((item) => <Skeleton key={item} className="mx-3 my-2 h-6 rounded-md" />)
+        ) : records.length === 0 ? (
+          <p className="px-3 py-4 text-center text-xs text-muted-foreground">{t('member.purchaseEmpty')}</p>
+        ) : (
+          ordered.map((record, index) => (
+            <div
+              key={record.id}
+              className={cn(
+                'grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.1fr)_minmax(0,1.1fr)] items-center gap-1 px-3 py-2 text-xs',
+                !compact && 'px-4 text-sm',
+                index !== ordered.length - 1 && 'border-b border-border/30',
+              )}
+            >
+              <span className="truncate font-medium">{label(record)}</span>
+              <span className="text-center text-muted-foreground">{formatWhen(record.purchasedAt)}</span>
+              <span className="text-center text-muted-foreground">{formatWhen(record.expiresAt)}</span>
+            </div>
+          ))
+        )}
+      </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-end gap-3 text-xs text-muted-foreground">
+          <button
+            type="button"
+            disabled={page <= 1}
+            onClick={() => onPageChange(page - 1)}
+            className="disabled:opacity-40"
+          >
+            {t('member.purchasePrev')}
+          </button>
+          <span>{page}/{totalPages}</span>
+          <button
+            type="button"
+            disabled={page >= totalPages}
+            onClick={() => onPageChange(page + 1)}
+            className="disabled:opacity-40"
+          >
+            {t('member.purchaseNext')}
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
