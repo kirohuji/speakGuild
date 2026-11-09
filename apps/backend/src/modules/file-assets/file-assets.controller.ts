@@ -68,15 +68,28 @@ export class FileAssetsController {
   @Get(':id/content')
   async getStableContent(
     @Param('id') id: string,
+    @Query('inline') inline: string | undefined,
     @Res() res: Response,
   ) {
     const asset = await this.fileAssetsService.getPrivateUrlByAssetId(id);
-    res.setHeader('Cache-Control', 'private, no-store, max-age=0');
-    res.setHeader('Pragma', 'no-cache');
     // Helmet defaults to same-origin, but the frontend and API use different
     // origins in development and may also do so in native/production builds.
-    // This response only redirects to an already-authorized COS object.
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    // Pixi fetches in a worker and follows redirects. COS does not send
+    // Access-Control-Allow-Origin, so canvas loads must stay on this API.
+    if (inline === '1') {
+      const upstream = await fetch(asset.url);
+      if (!upstream.ok || !upstream.body) {
+        res.status(upstream.status || 502);
+        return res.end();
+      }
+      res.status(200);
+      res.setHeader('Content-Type', asset.mimeType || upstream.headers.get('content-type') || 'application/octet-stream');
+      res.setHeader('Cache-Control', 'private, max-age=300');
+      return Readable.fromWeb(upstream.body as any).pipe(res);
+    }
+    res.setHeader('Cache-Control', 'private, no-store, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
     return res.redirect(302, asset.url);
   }
 

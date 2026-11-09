@@ -13,6 +13,7 @@ import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
+import { resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
 import { assetCacheService } from '@/lib/offline/asset-cache.service'
 import { isNative } from '@/lib/native'
 import { VnInputPanel } from './vn-input-panel'
@@ -112,25 +113,24 @@ function sameDialogueLine(a?: VnPlayerLine | null, b?: VnPlayerLine | null) {
 }
 
 function useCachedAssetUrl(url?: string, role?: string, offlineOnly = false) {
-  const [cachedUrl, setCachedUrl] = useState(offlineOnly && url?.startsWith('http') ? undefined : url)
+  const [cachedUrl, setCachedUrl] = useState(offlineOnly && url?.startsWith('http') ? undefined : resolveDisplayAssetUrl(url))
 
   useEffect(() => {
     let cancelled = false
+    const displayUrl = resolveDisplayAssetUrl(url)
     // Do not ever mount Pixi/CSS with a remote source in package-only mode.
     if (offlineOnly && url?.startsWith('http')) {
       setCachedUrl(undefined)
     } else {
-      setCachedUrl(url)
+      setCachedUrl(displayUrl)
     }
     if (!canCacheAssetUrl(url)) return
 
     assetCacheService.resolve({ url, role, offlineOnly }).then((resolved) => {
-      if (!cancelled) {
-        setCachedUrl(resolved)
-      }
+      if (!cancelled) setCachedUrl(resolveDisplayAssetUrl(resolved) ?? displayUrl)
     }).catch((err) => {
       if (role === 'background' || role === 'sprite') console.warn('[vn-player] ❌ resolve 失败:', role, url, err)
-      if (!cancelled) setCachedUrl(offlineOnly ? undefined : url)
+      if (!cancelled) setCachedUrl(offlineOnly ? undefined : displayUrl)
     })
 
     return () => {

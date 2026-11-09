@@ -1,3 +1,5 @@
+import { isNative } from '@/lib/native/platform'
+
 const FILE_ASSET_SCHEME = 'asset://'
 
 function apiBaseUrl() {
@@ -59,11 +61,29 @@ export function getFileAssetContentUrl(assetId: string, suffix = ''): string {
   return path
 }
 
+/** Same content resource, but the API returns the bytes instead of redirecting to COS. */
+export function inlineFileAssetContentUrl(value: string): string | null {
+  const reference = parseFileAssetContentUrl(value)
+  if (!reference || typeof window === 'undefined') return null
+  const url = new URL(getFileAssetContentUrl(reference.assetId, reference.suffix))
+  url.searchParams.set('inline', '1')
+  return url.toString()
+}
+
 /** Resolve a persisted asset:// reference for img/audio/video at runtime. */
 export function resolveFileAssetUrl(value?: string | null): string {
   if (!value) return ''
   const reference = parseFileAssetReference(value)
   return reference ? getFileAssetContentUrl(reference.assetId, reference.suffix) : value
+}
+
+/**
+ * Native players keep asset:// so the local asset cache can resolve it.
+ * Browsers and Pixi have no parser for that scheme, so web uses the content URL.
+ */
+export function resolveDisplayAssetUrl(value?: string): string | undefined {
+  if (!value || isNative() || !value.startsWith(FILE_ASSET_SCHEME)) return value
+  return resolveFileAssetUrl(value)
 }
 
 function transformDeep(value: unknown, transformString: (value: string) => string): unknown {

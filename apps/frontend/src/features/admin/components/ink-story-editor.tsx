@@ -46,6 +46,7 @@ import { toast } from 'sonner'
 import { VnStoryPreview, type PreviewAiEvaluation, type PreviewLayout } from './vn-story-preview'
 import { VnLineAudioGenerator } from './vn-line-audio-generator'
 import { type GameCharacter, type GameLocationData, aiGenerateStory, translateStory, generateStoryAudio, generateTeachingMarkdown, getStoryAssets, addStoryAsset } from '../api-content-admin'
+import { resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
 import { synthesizeAsset } from '@/lib/tts-api'
 
 type Selection =
@@ -215,7 +216,7 @@ export function InkStoryEditor({
   const resolvePreviewUrl = useCallback((value: string | undefined): string | undefined => {
     if (!value) return value
     if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('blob:') || value.startsWith('data:')) return value
-    return previewUrlMapRef.current[value] || value
+    return resolveDisplayAssetUrl(previewUrlMapRef.current[value] || value)
   }, [])
 
   const scenes = useMemo(() => parseComposer(source), [source])

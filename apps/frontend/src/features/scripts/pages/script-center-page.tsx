@@ -458,7 +458,7 @@ export function ScriptCenterPage() {
     <div className="mx-auto max-w-2xl px-4 pb-28 pt-3">
       <div className="mb-3 flex items-center justify-between">
         <div />
-        <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl ring-1 ring-white/45">
+        <div className="flex items-center gap-1 rounded-full bg-background/36 p-1 backdrop-blur-2xl">
           <LearningPackDownloadStatusButton onClick={() => setDownloadOpen(true)} embedded />
           <button
             type="button"

@@ -6,6 +6,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { PixiVnStage } from '@/features/vn-engine/pixi-vn-stage'
 import { MixedPlaybackSettingsDialog, type LoopMode } from '@/components/common/playback-settings-dialog'
 import { type MixedTimelineFrame } from './vn-mixed-timeline'
+import { resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
 import { assetCacheService } from '@/lib/offline/asset-cache.service'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 
@@ -71,18 +72,19 @@ export function mixedFrameDisplayText(frame: MixedTimelineFrame) {
 }
 
 function useOfflineAssetUrl(url: string | undefined, role: 'background' | 'sprite') {
-  const [resolvedUrl, setResolvedUrl] = useState(url)
+  const [resolvedUrl, setResolvedUrl] = useState(() => resolveDisplayAssetUrl(url))
 
   useEffect(() => {
     let cancelled = false
-    setResolvedUrl(url)
+    const displayUrl = resolveDisplayAssetUrl(url)
+    setResolvedUrl(displayUrl)
     if (!url || url.startsWith('blob:') || url.startsWith('data:')) return
     void assetCacheService.resolve({ url, role })
       .then((resolved) => {
-        if (!cancelled) setResolvedUrl(resolved)
+        if (!cancelled) setResolvedUrl(resolveDisplayAssetUrl(resolved) ?? displayUrl)
       })
       .catch(() => {
-        if (!cancelled) setResolvedUrl(url)
+        if (!cancelled) setResolvedUrl(displayUrl)
       })
     return () => { cancelled = true }
   }, [role, url])
