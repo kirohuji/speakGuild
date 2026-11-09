@@ -82,7 +82,8 @@ import { useGlobalTaskStore } from '@/stores/global-task.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
 import { VnPlayer, type VnPlayerLine } from '@/features/vn-engine/vn-player'
 import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
-import { learningRepository } from '@/lib/offline'
+import { learningRepository, practiceRepository } from '@/lib/offline'
+import { useAuth } from '@/providers/auth-provider'
 import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
 import { useCachedImage } from '@/hooks/use-cached-image'
 
@@ -108,6 +109,10 @@ function ScriptCover({
       <Clapperboard className={iconClassName} />
     </span>
   )
+}
+
+function isAfterPracticeReset(createdAt: string, resetAt: string | null) {
+  return !resetAt || createdAt.localeCompare(resetAt) >= 0
 }
 
 function displayScriptLocation(location: string | null | undefined, fallback: string) {
@@ -151,6 +156,8 @@ function useVideoFullscreenOrientation() {
 
 export function ScriptCenterPage() {
   const { t } = useTranslation()
+  const { session } = useAuth()
+  const userId = session?.user?.id ?? null
   useVideoFullscreenOrientation()
   const [searchParams, setSearchParams] = useSearchParams()
   const panel = searchParams.get('panel')
@@ -170,6 +177,14 @@ export function ScriptCenterPage() {
   const [generating, setGenerating] = useState<Record<string, number>>({})
   const ignoreReplayDismissOnRecordsDrawer = useRef(false)
   const observedVideoTaskStates = useRef(new Map<string, 'running' | 'done' | 'error'>())
+  const recordsRequest = useRef(0)
+  const worksRequest = useRef(0)
+  const feedRequest = useRef(0)
+  const shopRequest = useRef(0)
+  const [recordsOwnerId, setRecordsOwnerId] = useState<string | null>(null)
+  const [worksOwnerId, setWorksOwnerId] = useState<string | null>(null)
+  const [feedOwnerId, setFeedOwnerId] = useState<string | null>(null)
+  const [shopOwnerId, setShopOwnerId] = useState<string | null>(null)
   const [works, setWorks] = useState<ScriptWork[]>([])
   // 进入“我的”Tab 必定会加载作品，初始即为 true，避免作品加载时
   // “还没有作品”空状态与骨架屏来回闪烁。
@@ -243,18 +258,25 @@ export function ScriptCenterPage() {
   }, [])
 
   const loadShop = useCallback(async () => {
+    const requestId = ++shopRequest.current
+    const ownerId = userId
     setShopLoading(true)
     try {
       const result = await learningApi.getUnits({ packageType: 'story', page: 1, pageSize: 30 })
+      if (shopRequest.current !== requestId) return
       setShopUnits(result.list)
+      setShopOwnerId(ownerId)
     } catch {
+      if (shopRequest.current !== requestId) return
       toast.error(t('scripts.shopLoadFailed'))
     } finally {
-      setShopLoading(false)
+      if (shopRequest.current === requestId) setShopLoading(false)
     }
-  }, [t])
+  }, [t, userId])
 
   const loadRecords = useCallback(async () => {
+    const requestId = ++recordsRequest.current
+    const ownerId = userId
     setRecordsLoading(true)
     try {
       const allRecords: ScriptPracticeRecord[] = []
@@ -264,15 +286,22 @@ export function ScriptCenterPage() {
         allRecords.push(...result.list)
         cursor = result.nextCursor ?? undefined
       } while (cursor)
-      setRecords(allRecords)
+      const resetAt = await practiceRepository.getPracticeDataResetAt()
+      if (recordsRequest.current !== requestId) return
+      setRecords(allRecords.filter((record) => isAfterPracticeReset(record.createdAt, resetAt)))
+      setRecordsOwnerId(ownerId)
     } catch {
+      if (recordsRequest.current !== requestId) return
       setRecords([])
+      setRecordsOwnerId(ownerId)
     } finally {
-      setRecordsLoading(false)
+      if (recordsRequest.current === requestId) setRecordsLoading(false)
     }
-  }, [])
+  }, [userId])
 
   const loadWorks = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
+    const requestId = ++worksRequest.current
+    const ownerId = userId
     if (!silent) setWorksLoading(true)
     try {
       const allWorks: ScriptWork[] = []
@@ -282,13 +311,18 @@ export function ScriptCenterPage() {
         allWorks.push(...result.list)
         cursor = result.nextCursor ?? undefined
       } while (cursor)
-      setWorks(allWorks)
+      const resetAt = await practiceRepository.getPracticeDataResetAt()
+      if (worksRequest.current !== requestId) return
+      setWorks(allWorks.filter((work) => isAfterPracticeReset(work.createdAt, resetAt)))
+      setWorksOwnerId(ownerId)
     } catch {
+      if (worksRequest.current !== requestId) return
       setWorks([])
+      setWorksOwnerId(ownerId)
     } finally {
-      if (!silent) setWorksLoading(false)
+      if (!silent && worksRequest.current === requestId) setWorksLoading(false)
     }
-  }, [])
+  }, [userId])
 
   const generateReplayVideo = useCallback(async (record: ScriptPracticeRecord) => {
     if (generating[record.id] || record.works?.some((work) => work.status === 'rendering')) return
@@ -320,19 +354,28 @@ export function ScriptCenterPage() {
   }, [generating, loadRecords, loadWorks, t])
 
   const loadFeed = useCallback(async (cursor?: string, append = false) => {
+    const requestId = append ? feedRequest.current : ++feedRequest.current
+    const ownerId = userId
     if (append) setFeedLoadingMore(true)
     else setFeedLoading(true)
     try {
       const result = await scriptCommunityApi.feed({ cursor, limit: 20 })
+      if (feedRequest.current !== requestId) return
       setFeed((current) => append ? [...current, ...result.list] : result.list)
       setFeedCursor(result.nextCursor)
+      setFeedOwnerId(ownerId)
     } catch {
-      if (!append) setFeed([])
+      if (feedRequest.current !== requestId) return
+      if (!append) {
+        setFeed([])
+        setFeedOwnerId(ownerId)
+      }
     } finally {
+      if (feedRequest.current !== requestId) return
       setFeedLoading(false)
       setFeedLoadingMore(false)
     }
-  }, [])
+  }, [userId])
 
   const updateFeedWork = useCallback((
     workId: string,
@@ -342,16 +385,40 @@ export function ScriptCenterPage() {
   }, [])
 
   useEffect(() => {
-    if (shopOpen && shopUnits.length === 0) void loadShop()
-  }, [loadShop, shopOpen, shopUnits.length])
+    recordsRequest.current += 1
+    worksRequest.current += 1
+    feedRequest.current += 1
+    shopRequest.current += 1
+    setRecords([])
+    setReplayRecord(null)
+    setWorks([])
+    setWorksLoading(true)
+    setFeed([])
+    setFeedCursor(null)
+    setShopUnits([])
+  }, [userId])
+
+  useEffect(() => {
+    if (shopOpen) void loadShop()
+  }, [loadShop, shopOpen, userId])
 
   useEffect(() => {
     if (recordsOpen) void loadRecords()
-  }, [loadRecords, recordsOpen])
+  }, [loadRecords, recordsOpen, userId])
 
   useEffect(() => {
     if (tab === 'mine') void loadWorks()
-  }, [loadWorks, tab])
+  }, [loadWorks, tab, userId])
+
+  const recordsReady = recordsOwnerId === userId
+  const worksReady = worksOwnerId === userId
+  const feedReady = feedOwnerId === userId
+  const shopReady = shopOwnerId === userId
+  const visibleRecords = useMemo(() => (recordsReady ? records : []), [records, recordsReady])
+  const visibleWorks = useMemo(() => (worksReady ? works : []), [works, worksReady])
+  const visibleFeed = useMemo(() => (feedReady ? feed : []), [feed, feedReady])
+  const visibleShopUnits = useMemo(() => (shopReady ? shopUnits : []), [shopReady, shopUnits])
+  const visibleReplay = recordsReady ? replayRecord : null
 
   // Only the task center polls rendering work. When it reports a terminal
   // state, refresh cloud-backed works and practice records exactly once.
@@ -368,14 +435,14 @@ export function ScriptCenterPage() {
   // The task drawer may be closed while a render is in progress. Keep a small
   // fallback refresh for this page so its rendering cards still become ready.
   useEffect(() => {
-    if (tab !== 'mine' || !works.some((work) => work.status === 'rendering')) return
+    if (tab !== 'mine' || !visibleWorks.some((work) => work.status === 'rendering')) return
     const timer = window.setInterval(() => void loadWorks({ silent: true }), 15_000)
     return () => window.clearInterval(timer)
-  }, [loadWorks, tab, works])
+  }, [loadWorks, tab, visibleWorks])
 
   useEffect(() => {
     if (tab === 'square') void loadFeed()
-  }, [loadFeed, tab])
+  }, [loadFeed, tab, userId])
 
   const enroll = async (unit: LearningUnitSummary) => {
     try {
@@ -446,16 +513,16 @@ export function ScriptCenterPage() {
             onOpenShop={() => setPanel('store')}
             onDownload={downloadUnitPack}
             onQuit={quitUnit}
-            works={works}
-            worksLoading={worksLoading}
+            works={visibleWorks}
+            worksLoading={worksLoading || !worksReady}
             onWorksChanged={loadWorks}
           />
         </TabsContent>
 
         <TabsContent value="square" className="mt-0">
           <SquareFeed
-            works={feed}
-            loading={feedLoading}
+            works={visibleFeed}
+            loading={feedLoading || !feedReady}
             onOpenShop={() => setPanel('store')}
             onWorkChanged={updateFeedWork}
             hasMore={Boolean(feedCursor)}
@@ -475,7 +542,7 @@ export function ScriptCenterPage() {
         open={recordsOpen}
         // A replay is a modal layer, so the underlying sheet must not react to
         // any of its pointer gestures while it is visible.
-        dismissible={!replayRecord}
+        dismissible={!visibleReplay}
         onOpenChange={(open) => {
           if (!open && ignoreReplayDismissOnRecordsDrawer.current) return
           setPanel(open ? 'records' : null)
@@ -486,17 +553,17 @@ export function ScriptCenterPage() {
             <DrawerTitle className="text-base font-semibold">{t('scripts.practiceRecords')}</DrawerTitle>
           </DrawerHeader>
           <div className="min-h-0 flex-1 overflow-hidden px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-            <RecordList records={records} loading={recordsLoading} onOpenReplay={setReplayRecord} />
+            <RecordList records={visibleRecords} loading={recordsLoading || !recordsReady} onOpenReplay={setReplayRecord} />
           </div>
         </DrawerContent>
       </Drawer>
 
       <ScriptRecordReplayDialog
-        record={replayRecord}
+        record={visibleReplay}
         onClose={closeReplay}
-        generatingProgress={replayRecord ? generating[replayRecord.id] : undefined}
-        videoQueued={Boolean(replayRecord && (
-          replayRecord.works?.some((work) => work.status === 'rendering')
+        generatingProgress={visibleReplay ? generating[visibleReplay.id] : undefined}
+        videoQueued={Boolean(visibleReplay && (
+          visibleReplay.works?.some((work) => work.status === 'rendering')
         ))}
         onGenerateVideo={generateReplayVideo}
       />
@@ -508,11 +575,11 @@ export function ScriptCenterPage() {
           </DrawerHeader>
           <div className="h-[calc(88vh-4rem)] overflow-x-hidden overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             <ScriptShop
-              units={shopUnits}
+              units={visibleShopUnits}
               ownedIds={new Set(storyUnits.map((unit) => unit.id))}
               installedIds={installedIds}
               downloadTasks={downloadTasks}
-              loading={shopLoading}
+              loading={shopLoading || !shopReady}
               onRefresh={loadShop}
               onEnroll={enroll}
               onDownload={downloadUnitPack}
@@ -1445,6 +1512,8 @@ function ScriptPublishHistoryDialog({
   title?: string
 }) {
   const { t } = useTranslation()
+  const { session } = useAuth()
+  const userId = session?.user?.id ?? null
   const resolvedTitle = title ?? t('scripts.publishLog')
   const [items, setItems] = useState<ScriptPublishHistoryItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -1455,11 +1524,15 @@ function ScriptPublishHistoryDialog({
   useEffect(() => {
     if (!open) return
     let active = true
+    setItems([])
     setLoading(true)
-    void scriptCommunityApi.publishHistory({ episodeId, page, pageSize: 8 })
-      .then((result) => {
+    void Promise.all([
+      scriptCommunityApi.publishHistory({ episodeId, page, pageSize: 8 }),
+      practiceRepository.getPracticeDataResetAt(),
+    ])
+      .then(([result, resetAt]) => {
         if (!active) return
-        setItems(result.items)
+        setItems(result.items.filter((item) => isAfterPracticeReset(item.createdAt, resetAt)))
         setTotal(result.total)
         setTotalPages(result.totalPages)
       })
@@ -1470,7 +1543,7 @@ function ScriptPublishHistoryDialog({
         if (active) setLoading(false)
       })
     return () => { active = false }
-  }, [episodeId, open, page, t])
+  }, [episodeId, open, page, t, userId])
 
   useEffect(() => {
     if (open) setPage(1)
