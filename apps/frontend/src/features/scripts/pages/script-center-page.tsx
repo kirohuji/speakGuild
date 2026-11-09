@@ -85,27 +85,43 @@ import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-previ
 import { learningRepository, practiceRepository } from '@/lib/offline'
 import { useAuth } from '@/providers/auth-provider'
 import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
-import { useCachedImage } from '@/hooks/use-cached-image'
+import { usePackDisplayUrl } from '@/hooks/use-pack-display-url'
 import { displayLearningUnitLocation } from '@/features/learning/lib/learning-unit-display'
 
 /**
- * The card artwork belongs to the learning package.  A work can additionally
- * have its own generated/uploaded cover; callers pass that URL first and use
- * the package cover only as a fallback.
+ * Package card artwork. Prefer the installed pack's local cover file; otherwise
+ * use the API content URL (same contract as learning-plan covers).
  */
 function ScriptCover({
   url,
+  packId,
   className,
   iconClassName = 'size-7',
 }: {
   url?: string | null
+  packId?: string | null
   className: string
   iconClassName?: string
 }) {
-  const { resolvedUrl } = useCachedImage(url)
-  return resolvedUrl ? (
-    <img src={resolvedUrl} alt="" className={className} />
-  ) : (
+  const resolvedUrl = usePackDisplayUrl(url, packId)
+  const [failed, setFailed] = useState(false)
+  useEffect(() => {
+    setFailed(false)
+  }, [resolvedUrl])
+
+  if (resolvedUrl && !failed) {
+    return (
+      <img
+        src={resolvedUrl}
+        alt=""
+        className={className}
+        loading="lazy"
+        onError={() => setFailed(true)}
+      />
+    )
+  }
+
+  return (
     <span className="flex size-full items-center justify-center text-muted-foreground">
       <Clapperboard className={iconClassName} />
     </span>
@@ -796,6 +812,7 @@ function MineScripts({
                     <div className="relative aspect-video overflow-hidden bg-muted/50">
                       <ScriptCover
                         url={unit.coverImage}
+                        packId={unit.id}
                         className="size-full object-cover"
                         iconClassName="size-8 text-muted-foreground"
                       />
@@ -2311,7 +2328,7 @@ function ScriptShop({
               className="flex w-full gap-3 rounded-lg bg-muted/30 p-3 text-left transition-colors hover:bg-muted/50"
             >
               <div className="flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground">
-                <ScriptCover url={unit.coverImage} className="size-full object-cover" />
+                <ScriptCover url={unit.coverImage} packId={unit.id} className="size-full object-cover" />
               </div>
               <div className="min-w-0 flex-1 py-0.5">
                 <div className="flex items-start gap-2">
@@ -2407,7 +2424,7 @@ function ScriptShopDetail({
         <div className="flex max-h-[88vh] flex-col">
           <div className="flex gap-3 bg-muted/30 p-4">
             <div className="flex aspect-square size-20 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground">
-              <ScriptCover url={unit.coverImage} className="size-full object-cover" iconClassName="size-8" />
+              <ScriptCover url={unit.coverImage} packId={unit.id} className="size-full object-cover" iconClassName="size-8" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">

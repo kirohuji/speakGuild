@@ -1,5 +1,6 @@
+import { Capacitor } from '@capacitor/core'
 import type { StoryEpisodePlayerData } from '@/features/learning/api/learning-api'
-import { fileAssetIdFromUrl } from '@/lib/file-asset-reference'
+import { fileAssetIdFromUrl, resolveFileAssetUrl } from '@/lib/file-asset-reference'
 import { OFFLINE_RESOURCE_MISSING } from '@/lib/offline/asset-cache.service'
 import { localDb } from '@/lib/offline/unified-storage'
 
@@ -7,8 +8,9 @@ import { localDb } from '@/lib/offline/unified-storage'
  * Playback for an installed learning pack.
  *
  * Identities (ink alias, asset://, file id, expired signed URL) are lookup
- * keys only. The stage, img, and audio elements receive a local file URL or
- * nothing. A miss never falls back to the network or to the alias string.
+ * keys only. The stage, img, and audio elements receive a WebView-loadable
+ * local URL (capacitor:// / data: / blob:) or nothing. A miss never falls
+ * back to the network or to the alias string.
  */
 export type InstalledAssetMap = NonNullable<StoryEpisodePlayerData['inkScript']['assetMap']>
 
@@ -29,6 +31,19 @@ type PackManifestAsset = {
 }
 
 const manifestAssets = new Map<string, Promise<PackManifestAsset[]>>()
+
+/**
+ * SQLite keeps the Filesystem `file://` URI. iOS WKWebView cannot load that
+ * scheme; Capacitor.convertFileSrc remaps it to capacitor://localhost.
+ */
+function toWebViewPlaybackUrl(url: string): string {
+  if (!url.startsWith('file:')) return url
+  try {
+    return Capacitor.convertFileSrc(url)
+  } catch {
+    return url
+  }
+}
 
 function assetFileId(asset: PackManifestAsset) {
   return asset.fileAssetId || fileAssetIdFromUrl(asset.url) || undefined
@@ -57,7 +72,9 @@ function manifestAssetFor(assets: PackManifestAsset[], identity: MediaIdentity) 
 async function playbackUrlForRow(id?: string | null): Promise<string | undefined> {
   if (!id) return undefined
   const row = await localDb.get<{ localUri?: string | null; assetId?: string | null; status?: string }>('local_assets', id)
-  if (row?.status === 'ready' && isInstalledPlaybackUrl(row.localUri)) return row.localUri
+  if (row?.status === 'ready' && isInstalledPlaybackUrl(row.localUri)) {
+    return toWebViewPlaybackUrl(row.localUri)
+  }
   if (row?.assetId && row.assetId !== id) return playbackUrlForRow(row.assetId)
   return undefined
 }
@@ -67,12 +84,29 @@ function isInstalledPlaybackUrl(url?: string | null): url is string {
   return INSTALLED_FILE_URL.test(url) || CAPACITOR_LOCAL_HTTP.test(url)
 }
 
-/** Local file URL for Pixi, img, and audio. Misses stay empty. */
+/** WebView-loadable local URL for Pixi, img, and audio. Misses stay empty. */
 export async function resolveInstalledMedia(packId: string, identity: MediaIdentity): Promise<string | undefined> {
-  if (isInstalledPlaybackUrl(identity.url)) return identity.url ?? undefined
+  if (isInstalledPlaybackUrl(identity.url)) {
+    return identity.url ? toWebViewPlaybackUrl(identity.url) : undefined
+  }
   const fileAssetId = identity.fileAssetId || fileAssetIdFromUrl(identity.url) || undefined
   const listed = manifestAssetFor(packId ? await assetsForPack(packId) : [], identity)
   return playbackUrlForRow(listed?.sha256) || playbackUrlForRow(fileAssetId)
+}
+
+/**
+ * Prefer an installed pack's local file for UI (covers, cards). Fall back to the
+ * stable content URL when the pack is not installed on this device.
+ */
+export async function resolvePackDisplayUrl(
+  url?: string | null,
+  packId?: string | null,
+): Promise<string | undefined> {
+  if (!url) return undefined
+  if (isInstalledPlaybackUrl(url)) return toWebViewPlaybackUrl(url)
+  const local = await resolveInstalledMedia(packId ?? '', { url })
+  if (local) return local
+  return resolveFileAssetUrl(url) || url
 }
 
 export async function resolveInstalledAssetMap(packId: string, assetMap?: InstalledAssetMap | null): Promise<InstalledAssetMap> {
@@ -133,7 +167,7 @@ export async function resolveInstalledScene(packId: string, scene: StoryScene): 
 
 async function resolveUrl(packId: string, url?: string | null) {
   if (!url) return url ?? null
-  if (isInstalledPlaybackUrl(url)) return url
+  if (isInstalledPlaybackUrl(url)) return toWebViewPlaybackUrl(url)
   // Installed packs stay local: never fall back to asset:// or signed COS URLs.
   return (await resolveInstalledMedia(packId, { url })) ?? null
 }

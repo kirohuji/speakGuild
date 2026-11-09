@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/cn'
 import type { LucideIcon } from 'lucide-react'
+import { usePackDisplayUrl } from '@/hooks/use-pack-display-url'
 import type { LearningUnitSummary } from '../api/learning-api'
 
 interface Props {
@@ -10,8 +11,12 @@ interface Props {
 }
 
 export function UnitCover({ unit, icon: Icon, className }: Props) {
+  const coverUrl = usePackDisplayUrl(unit.coverImage, unit.id)
   const [imgFailed, setImgFailed] = useState(false)
-  const showCover = unit.coverImage && !imgFailed
+  useEffect(() => {
+    setImgFailed(false)
+  }, [coverUrl])
+  const showCover = coverUrl && !imgFailed
 
   return (
     <div
@@ -23,7 +28,7 @@ export function UnitCover({ unit, icon: Icon, className }: Props) {
     >
       {showCover ? (
         <img
-          src={unit.coverImage!}
+          src={coverUrl}
           alt={unit.title}
           className="absolute inset-0 size-full object-cover"
           loading="lazy"

@@ -20,6 +20,11 @@ import { practiceApi, practiceAiApi, chunkApi, expressionApi, type TopicDetail }
 import { learningContentRepository } from '@/lib/offline/learning-content.repository'
 import { practiceRepository } from '@/lib/offline/practice.repository'
 import { listContentPage } from '@/lib/offline/learning-pack-read-model'
+import {
+  resolveInstalledAssetMap,
+  resolveInstalledScene,
+  type InstalledAssetMap,
+} from '@/lib/offline/installed-pack-media'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { GuidedWarmupPhase } from '../components/guided-warmup-phase'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
@@ -104,6 +109,9 @@ export function PracticeSessionPage() {
 
   // ── Practice (VN) state ──
   const [inkJson, setInkJson] = useState<Record<string, any> | null>(null)
+  const [resolvedScene, setResolvedScene] = useState<TopicDetail['scene'] | null>(null)
+  const [resolvedAssetMap, setResolvedAssetMap] = useState<InstalledAssetMap>()
+  const [packMediaReady, setPackMediaReady] = useState(false)
   const [dialogueRounds, setDialogueRounds] = useState<{ speaker: string; text: string; isNpc: boolean; translation?: string; audioUrl?: string }[]>([])
   const [practiceSessionId, setPracticeSessionId] = useState<string | null>(null)
   const [turnFeedback, setTurnFeedback] = useState<TurnFeedback | null>(null)
@@ -273,19 +281,53 @@ export function PracticeSessionPage() {
     setActivatedChunks(new Set(learnedChunkIds))
     setExpandedChunkId(detail.activeChunks[0]?.id ?? null)
 
-    const compiledInk = compilePracticeInk(detail.inkScript?.inkSource, detail.inkScript?.inkJson)
     if (!(detail as { __offlineProjection?: boolean }).__offlineProjection) {
       setTeachingMarkdown(detail.topic.teachingMarkdown || '')
     }
-    if (compiledInk) {
-      setInkJson(compiledInk)
-    } else if (detail.topic.inkScriptId) {
-      practiceRepository.getTopicInk(topicId!).then((ink) => {
-        const compiled = compilePracticeInk(ink?.inkSource, ink?.inkJson)
-        if (compiled) setInkJson(compiled)
-      }).catch(() => {})
-    }
-  }, [detail, topicId])
+
+    const packId = unitId || detail.scene.id
+    let cancelled = false
+    setPackMediaReady(false)
+
+    void (async () => {
+      try {
+        const inkRecord = detail.inkScript
+          ?? (detail.topic.inkScriptId && topicId ? await practiceRepository.getTopicInk(topicId) : null)
+        if (cancelled) return
+
+        const compiledInk = compilePracticeInk(
+          (inkRecord as { inkSource?: string | null } | null)?.inkSource ?? detail.inkScript?.inkSource,
+          (inkRecord as { inkJson?: any } | null)?.inkJson ?? detail.inkScript?.inkJson,
+        )
+        if (compiledInk) setInkJson(compiledInk)
+
+        const [scene, assetMap] = await Promise.all([
+          resolveInstalledScene(packId, detail.scene as any),
+          resolveInstalledAssetMap(
+            packId,
+            ((inkRecord as { assetMap?: InstalledAssetMap | null } | null)?.assetMap
+              ?? (detail.inkScript as { assetMap?: InstalledAssetMap | null } | undefined)?.assetMap)
+              ?? null,
+          ),
+        ])
+        if (cancelled) return
+        setResolvedScene(scene as TopicDetail['scene'])
+        setResolvedAssetMap(assetMap)
+      } catch (error) {
+        console.warn('[practice-session] offline pack media resolve failed', error)
+        if (!cancelled) {
+          setResolvedScene(detail.scene)
+          setResolvedAssetMap({})
+          const compiledInk = compilePracticeInk(detail.inkScript?.inkSource, detail.inkScript?.inkJson)
+          if (compiledInk) setInkJson(compiledInk)
+        }
+      } finally {
+        if (!cancelled) setPackMediaReady(true)
+      }
+    })()
+
+    return () => { cancelled = true }
+  }, [detail, topicId, unitId])
 
   // 句型 tab 也需要展示收藏状态，mount 时加载
   useEffect(() => {
@@ -384,23 +426,25 @@ export function PracticeSessionPage() {
     syncedInkLineCountRef.current = 0
   }, [inkJson])
 
+  const activeScene = resolvedScene ?? detail?.scene
+
   useEffect(() => {
     setVnVisual({
-      backgroundUrl: detail?.scene.backgroundUrl || undefined,
+      backgroundUrl: activeScene?.backgroundUrl || undefined,
       backgroundFit: 'cover',
     })
-  }, [detail?.scene.backgroundUrl, inkJson])
+  }, [activeScene?.backgroundUrl, inkJson])
 
   useEffect(() => {
     const tags = currentTags
     if (tags.length === 0) return
 
-    const parsed = parseVnTags(tags)
+    const parsed = parseVnTags(tags, resolvedAssetMap)
     const latestNpcLine = [...dialogueRounds].reverse().find((line) => line.isNpc && line.speaker)
 
     setVnVisual((prev) => {
       const next = {
-        backgroundUrl: parsed.bg || prev.backgroundUrl || detail?.scene.backgroundUrl || undefined,
+        backgroundUrl: parsed.bg || prev.backgroundUrl || activeScene?.backgroundUrl || undefined,
         backgroundFit: isBackgroundFit(parsed.bgFit) ? parsed.bgFit : prev.backgroundFit,
         speaker: prev.speaker,
         expression: prev.expression,
@@ -432,22 +476,25 @@ export function PracticeSessionPage() {
         return next
       })
     }
-  }, [currentTags, detail?.scene.backgroundUrl, dialogueRounds, inkWaiting])
+  }, [activeScene?.backgroundUrl, currentTags, dialogueRounds, inkWaiting, resolvedAssetMap])
 
   // Sync Ink lines to dialogue display
   useEffect(() => {
     const newLines = inkLines.slice(syncedInkLineCountRef.current)
     if (newLines.length === 0) return
     syncedInkLineCountRef.current = inkLines.length
-    const newDialogues = newLines.filter(Boolean).map((line) => ({
-      speaker: line.speaker ?? (line.tags?.includes('npc') ? fallbackNpcName : ''),
-      text: line.text,
-      isNpc: true, // All Ink lines are NPC/narration; user lines added by sendUserInput
-      translation: parseVnTags(line.tags).translation,
-      audioUrl: parseVnTags(line.tags).audio,
-    }))
+    const newDialogues = newLines.filter(Boolean).map((line) => {
+      const parsed = parseVnTags(line.tags, resolvedAssetMap)
+      return {
+        speaker: line.speaker ?? (line.tags?.includes('npc') ? fallbackNpcName : ''),
+        text: line.text,
+        isNpc: true, // All Ink lines are NPC/narration; user lines added by sendUserInput
+        translation: parsed.translation,
+        audioUrl: parsed.audio,
+      }
+    })
     setDialogueRounds((prev) => [...prev, ...newDialogues])
-  }, [inkLines, fallbackNpcName])
+  }, [fallbackNpcName, inkLines, resolvedAssetMap])
 
   // Fallback NPC greeting when no Ink script
   useEffect(() => {
@@ -1299,7 +1346,7 @@ export function PracticeSessionPage() {
   if (phase === 'practice') {
     const currentLine = dialogueRounds[dialogueRounds.length - 1]
     const canReview = inkEnded
-    const characters = detail.scene.characters ?? []
+    const characters = activeScene?.characters ?? detail.scene.characters ?? []
     const currentCharacter = characters.find((character) => {
       const speaker = vnVisual.speaker || (currentLine?.isNpc ? currentLine.speaker : undefined)
       return characterMatchesSpeaker(character, speaker)
@@ -1380,12 +1427,18 @@ export function PracticeSessionPage() {
         </div>
 
         <div className="min-h-0 flex-1">
+          {!packMediaReady ? (
+            <div className="flex h-full items-center justify-center bg-background">
+              <MobilePageLoading />
+            </div>
+          ) : (
           <VnPlayerBoundary>
             <VnPlayer
               ref={vnPlayerRef}
               className="h-full max-w-none rounded-none border-none"
               stageClassName="min-h-0"
-              backgroundUrl={vnVisual.backgroundUrl || detail.scene.backgroundUrl || undefined}
+              offlineOnly
+              backgroundUrl={vnVisual.backgroundUrl || activeScene?.backgroundUrl || undefined}
               backgroundFit={vnVisual.backgroundFit}
               currentLine={inkEnded ? null : currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc, translation: currentLine.translation, audioUrl: currentLine.audioUrl } : null}
               history={dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc, translation: line.translation, audioUrl: line.audioUrl }))}
@@ -1426,6 +1479,7 @@ export function PracticeSessionPage() {
               onWordInsight={handleWordInsight}
             />
           </VnPlayerBoundary>
+          )}
         </div>
 
         {/* Input area — hidden for now */}

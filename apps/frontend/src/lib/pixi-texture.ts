@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import { Assets, Texture } from 'pixi.js'
 import { getBearerToken } from '@/features/auth/client'
 import { inlineFileAssetContentUrl, resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
@@ -15,32 +16,46 @@ function isOwnCosUrl(url: string) {
   }
 }
 
+function isCapacitorLocalUrl(url: string) {
+  return url.startsWith('capacitor:')
+    || url.startsWith('file:')
+    || url.startsWith('http://localhost/_capacitor_file_')
+    || url.startsWith('https://localhost/_capacitor_file_')
+}
+
 const proxiedTextureUrls = new Map<string, string>()
+
+async function materializeBlobUrl(sourceUrl: string, fetchUrl = sourceUrl): Promise<string> {
+  const cached = proxiedTextureUrls.get(sourceUrl)
+  if (cached) return cached
+  const response = await fetch(fetchUrl)
+  if (!response.ok) throw new Error(`texture fetch failed: ${response.status}`)
+  const blobUrl = URL.createObjectURL(await response.blob())
+  proxiedTextureUrls.set(sourceUrl, blobUrl)
+  return blobUrl
+}
 
 /**
  * WebGL fetches pixels itself. `asset://` is not a browser scheme, and a
  * redirect to COS has no CORS header. Resolve the reference, ask our API for
- * the bytes, or proxy an already-signed COS URL. Native builds keep the
- * original local file URL.
+ * the bytes, or proxy an already-signed COS URL.
+ *
+ * On native, `<img>` can load `capacitor://`, but Pixi/WebGL often cannot.
+ * Materialize a blob: URL from the local file bytes instead.
  */
 export async function pixiLoadableUrl(url: string): Promise<string> {
   const displayUrl = resolveDisplayAssetUrl(url) ?? url
-  if (isNative()) return displayUrl
+  if (isNative()) {
+    if (!isCapacitorLocalUrl(displayUrl)) return displayUrl
+    const fetchUrl = displayUrl.startsWith('file:')
+      ? Capacitor.convertFileSrc(displayUrl)
+      : displayUrl
+    return materializeBlobUrl(displayUrl, fetchUrl)
+  }
   const inline = inlineFileAssetContentUrl(displayUrl)
   if (inline) return inline
   if (!isOwnCosUrl(displayUrl)) return displayUrl
-  const cached = proxiedTextureUrls.get(displayUrl)
-  if (cached) return cached
-  const apiBase = (import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu').replace(/\/$/, '')
-  const endpoint = `${apiBase}/file-assets/sampling/proxy?url=${encodeURIComponent(displayUrl)}`
-  const token = getBearerToken()
-  const response = await fetch(endpoint, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  })
-  if (!response.ok) throw new Error(`texture proxy failed: ${response.status}`)
-  const blobUrl = URL.createObjectURL(await response.blob())
-  proxiedTextureUrls.set(displayUrl, blobUrl)
-  return blobUrl
+  return materializeBlobUrl(displayUrl)
 }
 
 export function isPixiFetchableUrl(url: string) {

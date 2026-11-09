@@ -1,22 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { assetCacheService } from '@/lib/offline/asset-cache.service'
+import { fileAssetIdFromUrl } from '@/lib/file-asset-reference'
+import { assetCacheService, OFFLINE_RESOURCE_MISSING } from '@/lib/offline/asset-cache.service'
 import { isNative } from '@/lib/native'
 
 /**
  * Capacitor-first image URL resolution hook.
  *
- * On native (iOS/Android): resolves the image URL through assetCacheService,
- * which returns a local file:// URI (converted to capacitor://localhost) if the
- * image was pre-cached via learning pack download. Falls back to remote URL.
- *
- * On web: returns the original URL directly (browser handles caching).
- *
- * This hook follows the exact same pattern as useCachedAudio (audio playback)
- * and the VN player's useCachedAssetUrl (backgrounds/sprites).
- *
- * Usage:
- *   const { resolvedUrl } = useCachedImage(item.imageUrl)
- *   {resolvedUrl && <img src={resolvedUrl} />}
+ * On native: prefer an installed pack's local file (looked up by content URL /
+ * fileAssetId). Misses fall back to the remote content URL.
+ * On web: return the original URL directly.
  */
 export function useCachedImage(url?: string | null): { resolvedUrl: string | null; loading: boolean } {
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null)
@@ -45,18 +37,24 @@ export function useCachedImage(url?: string | null): { resolvedUrl: string | nul
 
     let cancelled = false
     setLoading(true)
+    setResolvedUrl(normalized)
 
     assetCacheService
-      .resolve({ url: normalized, role: 'warmup_image' })
+      .resolve({
+        url: normalized,
+        fileAssetId: fileAssetIdFromUrl(normalized) ?? undefined,
+        role: 'warmup_image',
+      })
       .then((resolved) => {
         if (!cancelled && mountedRef.current) {
-          setResolvedUrl(resolved)
+          setResolvedUrl(
+            !resolved || resolved === OFFLINE_RESOURCE_MISSING ? normalized : resolved,
+          )
           setLoading(false)
         }
       })
       .catch(() => {
         if (!cancelled && mountedRef.current) {
-          // Fall back to remote URL if cache resolution fails
           setResolvedUrl(normalized)
           setLoading(false)
         }

@@ -1,5 +1,6 @@
 import { Directory, Filesystem } from '@capacitor/filesystem'
 import { Capacitor } from '@capacitor/core'
+import { fileAssetIdFromUrl } from '@/lib/file-asset-reference'
 import { isNative } from '@/lib/native'
 import { localDb } from './unified-storage'
 import write_blob from 'capacitor-blob-writer'
@@ -73,6 +74,7 @@ async function readyAsset(id: string, depth = 0): Promise<LocalAsset | null> {
 
 function isLoadableLocalUrl(url: string) {
   return url.startsWith('capacitor://')
+    || url.startsWith('file:')
     || url.startsWith('http://localhost/_capacitor_file_')
     || url.startsWith('https://localhost/_capacitor_file_')
 }
@@ -306,9 +308,15 @@ export const assetCacheService = {
     if (!url) return url
     // Never hash, cache, or fetch a URL that already points at Capacitor's
     // local file handler. Re-processing it used to create a second file.
-    if (isLoadableLocalUrl(url)) return url
+    // Callers sometimes still hold the raw Filesystem file:// URI; convert
+    // that for WebView/Pixi/img unless NativeAudio asked for file://.
+    if (isLoadableLocalUrl(url)) {
+      if (ref.asFileUri) return url
+      return isNative() && url.startsWith('file:') ? toLoadableUrl(url) : url
+    }
 
     const key = await assetKey({ ...ref, url })
+    const inferredFileAssetId = ref.fileAssetId || fileAssetIdFromUrl(url) || ''
     // A previous failed on-demand record may exist under fileAssetId while the
     // package installer has already saved the exact same resource under its
     // URL/SHA alias. Probe every stable identity and only treat a *ready* row
@@ -318,7 +326,7 @@ export const assetCacheService = {
       await digest(url),
       await digest(stableRemoteUrl(url)),
       ref.sha256 ?? '',
-      ref.fileAssetId ?? '',
+      inferredFileAssetId,
       ref.alias ?? '',
     ].filter(Boolean))]
     let cached: LocalAsset | null = null
@@ -353,15 +361,24 @@ export const assetCacheService = {
       return isNative() ? toLoadableUrl(cached.localUri) : cached.localUri
     }
 
-    // Package playback is local-only on web and on device. A cache miss must
-    // not fall through to the signed URL, or the stage will fetch COS.
-    if (ref.offlineOnly || isNative()) {
-      console.error('[offline-assets] native resource missing; remote request blocked', {
+    // Package playback must stay local-only. Shop/list covers and similar
+    // non-offline callers may still show the remote content URL.
+    if (ref.offlineOnly) {
+      console.error('[offline-assets] offline package resource missing; remote request blocked', {
         key,
         requestedUrl: url,
         assetId: ref.assetId,
+        fileAssetId: inferredFileAssetId || undefined,
       })
       return OFFLINE_RESOURCE_MISSING
+    }
+    if (isNative()) {
+      console.warn('[offline-assets] native cache miss; using remote URL', {
+        key,
+        requestedUrl: url,
+        fileAssetId: inferredFileAssetId || undefined,
+      })
+      return url
     }
     console.warn('[offline-assets] resolve miss; downloading remote fallback', { key, requestedUrl: url, assetId: ref.assetId })
     return this.download({ ...ref, url })

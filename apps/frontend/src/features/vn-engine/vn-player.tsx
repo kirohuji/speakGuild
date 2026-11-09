@@ -14,7 +14,7 @@ import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/cn'
 import { resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
-import { assetCacheService } from '@/lib/offline/asset-cache.service'
+import { assetCacheService, OFFLINE_RESOURCE_MISSING } from '@/lib/offline/asset-cache.service'
 import { isNative } from '@/lib/native'
 import { VnInputPanel } from './vn-input-panel'
 import { DialogueListView } from './dialogue-list-view'
@@ -113,6 +113,11 @@ function canCacheAssetUrl(url?: string | null) {
   return !!url && !url.startsWith('blob:') && !url.startsWith('data:')
 }
 
+function usableCachedAssetUrl(resolved?: string | null, fallback?: string) {
+  if (!resolved || resolved === OFFLINE_RESOURCE_MISSING) return fallback
+  return resolveDisplayAssetUrl(resolved) ?? fallback
+}
+
 function sameDialogueLine(a?: VnPlayerLine | null, b?: VnPlayerLine | null) {
   return Boolean(a && b
     && a.text === b.text
@@ -135,7 +140,9 @@ function useCachedAssetUrl(url?: string, role?: string, offlineOnly = false) {
     if (!canCacheAssetUrl(url)) return
 
     assetCacheService.resolve({ url, role, offlineOnly }).then((resolved) => {
-      if (!cancelled) setCachedUrl(resolveDisplayAssetUrl(resolved) ?? displayUrl)
+      if (!cancelled) {
+        setCachedUrl(usableCachedAssetUrl(resolved, offlineOnly ? undefined : displayUrl))
+      }
     }).catch((err) => {
       if (role === 'background' || role === 'sprite') console.warn('[vn-player] ❌ resolve 失败:', role, url, err)
       if (!cancelled) setCachedUrl(offlineOnly ? undefined : displayUrl)
@@ -295,8 +302,9 @@ export function VnPlayer({
     let cancelled = false
 
     assetCacheService.resolve({ url: audioUrl, role: 'voice', offlineOnly }).then((resolvedUrl) => {
-      if (cancelled || !resolvedUrl) return
-      const audio = new Audio(resolvedUrl)
+      const playable = usableCachedAssetUrl(resolvedUrl, offlineOnly ? undefined : audioUrl)
+      if (cancelled || !playable) return
+      const audio = new Audio(playable)
       audio.preload = 'auto'
       playingAudioRef.current = audio
 

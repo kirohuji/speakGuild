@@ -7,7 +7,7 @@ import { PixiVnStage } from '@/features/vn-engine/pixi-vn-stage'
 import { MixedPlaybackSettingsDialog, type LoopMode } from '@/components/common/playback-settings-dialog'
 import { type MixedTimelineFrame } from './vn-mixed-timeline'
 import { resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
-import { assetCacheService } from '@/lib/offline/asset-cache.service'
+import { assetCacheService, OFFLINE_RESOURCE_MISSING } from '@/lib/offline/asset-cache.service'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
 
 // 兼容旧导入：播放设置弹窗已抽为公共组件
@@ -81,7 +81,12 @@ function useOfflineAssetUrl(url: string | undefined, role: 'background' | 'sprit
     if (!url || url.startsWith('blob:') || url.startsWith('data:')) return
     void assetCacheService.resolve({ url, role })
       .then((resolved) => {
-        if (!cancelled) setResolvedUrl(resolveDisplayAssetUrl(resolved) ?? displayUrl)
+        if (cancelled) return
+        if (!resolved || resolved === OFFLINE_RESOURCE_MISSING) {
+          setResolvedUrl(displayUrl)
+          return
+        }
+        setResolvedUrl(resolveDisplayAssetUrl(resolved) ?? displayUrl)
       })
       .catch(() => {
         if (!cancelled) setResolvedUrl(displayUrl)
