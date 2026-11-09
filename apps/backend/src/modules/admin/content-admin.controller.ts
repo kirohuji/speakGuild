@@ -50,7 +50,7 @@ import { DialogueTurnJudgeDto } from '../practice-ai/dto/english-feedback.dto';
 import { DictionaryService } from '../dictionary/dictionary.service';
 import { generateText } from 'ai';
 import { TtsService } from '../tts/tts.service';
-import { TtsProvider } from '@prisma/client';
+import { Prisma, TtsProvider } from '@prisma/client';
 import { AdminContentAiService } from './admin-content-ai.service';
 import { alignDescriptionLayout, descriptionHasCanonicalLayout, DESCRIPTION_LAYOUT_RULE } from './description-layout';
 import { AiModelService } from '../ai-model/ai-model.service';
@@ -457,7 +457,7 @@ export class ContentAdminController {
     return this.prisma.$transaction(async (tx) => {
       const scene = await tx.scene.update({
         where: { id },
-        data,
+        data: data as Prisma.SceneUncheckedUpdateInput,
       });
       if (scene.contentMode !== 'novel') {
         await Promise.all([

@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { Application, Container, Graphics, Sprite, TilingSprite } from 'pixi.js'
 import { resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
+import { isNative } from '@/lib/native/platform'
 import { loadPixiTexture } from '@/lib/pixi-texture'
+import { cn } from '@/lib/cn'
 
 export type BackgroundFit = 'cover' | 'contain' | 'stretch' | 'repeat'
 export type StageVariant = 'portrait' | 'landscape' | 'mixed'
@@ -18,6 +20,8 @@ interface PixiVnStageProps {
   /** Positive moves down; negative moves the portrait up from its stage baseline. */
   spriteVerticalOffset?: number
   portraitScale?: number
+  /** 底下已经有同一张场景图时，舞台保持透明，避免进入对白先黑一下。 */
+  clearBackdrop?: boolean
 }
 
 function fitBackground(sprite: Sprite | TilingSprite, width: number, height: number, fit: BackgroundFit) {
@@ -140,6 +144,7 @@ export function PixiVnStage({
   spriteBottomInset = 0,
   spriteVerticalOffset = 0,
   portraitScale,
+  clearBackdrop = false,
 }: PixiVnStageProps) {
   const backgroundUrl = resolveDisplayAssetUrl(rawBackgroundUrl)
   const spriteUrl = resolveDisplayAssetUrl(rawSpriteUrl)
@@ -156,6 +161,8 @@ export function PixiVnStage({
   const spriteBottomInsetRef = useRef(spriteBottomInset)
   const spriteVerticalOffsetRef = useRef(spriteVerticalOffset)
   const portraitScaleRef = useRef(portraitScale)
+  const clearBackdropRef = useRef(clearBackdrop)
+  clearBackdropRef.current = clearBackdrop
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
   const layoutRafRef = useRef<number | null>(null)
@@ -168,7 +175,9 @@ export function PixiVnStage({
 
     if (fallbackRef.current) {
       fallbackRef.current.clear()
-      fallbackRef.current.rect(0, 0, width, height).fill(0x1a1a2e)
+      if (!clearBackdropRef.current) {
+        fallbackRef.current.rect(0, 0, width, height).fill(0x1a1a2e)
+      }
     }
     if (bgRef.current) fitBackground(bgRef.current, width, height, backgroundFit)
     if (spriteRef.current) {
@@ -411,8 +420,8 @@ export function PixiVnStage({
 
   return (
     <>
-      <div ref={hostRef} className="absolute inset-0 overflow-hidden bg-background" />
-      {resolvedTheme === 'dark' && <div className="pointer-events-none absolute inset-0 bg-black/40" />}
+      <div ref={hostRef} className={cn('absolute inset-0 overflow-hidden', clearBackdrop ? 'bg-transparent' : 'bg-background')} />
+      {!clearBackdrop && resolvedTheme === 'dark' && <div className="pointer-events-none absolute inset-0 bg-black/40" />}
     </>
   )
 }

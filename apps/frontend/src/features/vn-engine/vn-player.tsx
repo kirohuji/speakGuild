@@ -77,6 +77,12 @@ interface VnPlayerProps {
   /** Installed Capacitor package: URLs must already be local; never fetch. */
   offlineOnly?: boolean
   onWordInsight?: (word: string) => void
+  /** 房间画面已经在底下，对白层不要先铺黑底。 */
+  clearBackdrop?: boolean
+  /** 片段对白结束，不显示「故事结束」。 */
+  hideEndedCaption?: boolean
+  /** 片段已经结束时，点击对话区域关闭。设置和历史不受影响。 */
+  onDismiss?: () => void
 }
 
 interface VnPlayerSettings {
@@ -185,6 +191,9 @@ export function VnPlayer({
   showUserInputOverride,
   offlineOnly = false,
   onWordInsight,
+  clearBackdrop = false,
+  hideEndedCaption = false,
+  onDismiss,
   ref,
 }: VnPlayerProps & { ref?: Ref<VnPlayerHandle> }) {
   const { t } = useTranslation()
@@ -393,7 +402,8 @@ export function VnPlayer({
 
   return (
     <div className={cn(
-      'relative mx-auto flex w-full flex-col overflow-hidden bg-black text-white',
+      'relative mx-auto flex w-full flex-col overflow-hidden text-white',
+      clearBackdrop ? 'bg-transparent' : 'bg-black',
       frameVariant === 'landscape'
         ? 'aspect-[852/393] h-auto max-h-[393px] max-w-[852px]'
         : 'h-full max-w-[520px]',
@@ -405,7 +415,7 @@ export function VnPlayer({
         aria-label={t('vnSettings.advanceDialogue')}
         className={cn(
           'relative flex-1 overflow-hidden text-left outline-none',
-          frameVariant === 'landscape' ? 'min-h-0' : 'min-h-[620px]',
+          frameVariant === 'landscape' ? 'min-h-0' : clearBackdrop ? 'min-h-0' : 'min-h-[620px]',
           (canInteract || reviewLineIndex !== null) && 'cursor-pointer',
           stageClassName,
         )}
@@ -420,7 +430,10 @@ export function VnPlayer({
             }
             return
           }
-          if (!canInteract) return
+          if (!canInteract) {
+            if (isEnded && !historyOpen && !settingsOpen) onDismiss?.()
+            return
+          }
           // 打字机播放中 → 优先跳过动画
           if (isTyping) {
             if (typewriterTimerRef.current !== null) window.clearInterval(typewriterTimerRef.current)
@@ -443,7 +456,10 @@ export function VnPlayer({
               }
               return
             }
-            if (!canInteract) return
+            if (!canInteract) {
+              if (isEnded && !historyOpen && !settingsOpen) onDismiss?.()
+              return
+            }
             if (isTyping) {
               if (typewriterTimerRef.current !== null) window.clearInterval(typewriterTimerRef.current)
               typewriterTimerRef.current = null
@@ -454,7 +470,7 @@ export function VnPlayer({
           }
         }}
       >
-        <PixiVnStage backgroundUrl={cachedBackgroundUrl} backgroundFit={backgroundFit} spriteUrl={cachedSpriteUrl} spritePosition={spritePosition} portraitScale={portraitScale} stageVariant={frameVariant} />
+        <PixiVnStage backgroundUrl={cachedBackgroundUrl} backgroundFit={backgroundFit} spriteUrl={cachedSpriteUrl} spritePosition={spritePosition} portraitScale={portraitScale} stageVariant={frameVariant} clearBackdrop={clearBackdrop} />
         {onReset && (
           <div className="absolute right-3 top-3 z-30 flex gap-2">
             <span
@@ -598,7 +614,7 @@ export function VnPlayer({
                     {settings.bilingual && displayLine.translation && (
                       <p className="text-xs l sm:rounded-2xltext-muted-foreground">{displayedTranslation}</p>
                     )}
-                    {isEnded && (
+                    {isEnded && !hideEndedCaption && (
                       <div className="flex w-full flex-col items-center gap-2 pt-4 text-center">
                         <p className="text-sm text-muted-foreground">{t('vnHistory.storyEnded')}</p>
                         {endedActions}
@@ -606,7 +622,7 @@ export function VnPlayer({
                     )}
                   </div>
                 </div>
-              ) : isEnded ? (
+              ) : isEnded && !hideEndedCaption ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                   <p className="text-center text-sm text-muted-foreground">{t('vnHistory.storyEnded')}</p>
                   {endedActions}

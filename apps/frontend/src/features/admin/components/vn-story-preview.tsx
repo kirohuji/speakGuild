@@ -42,6 +42,10 @@ interface VnStoryPreviewProps {
   defaultBackgroundUrl?: string
   previewLayout?: PreviewLayout
   aiEvaluationEnabled?: boolean
+  /** 片段结束仍留下最后一句，不弹出整篇完成框。 */
+  holdLastLine?: boolean
+  /** 片段播完后，点击对话区域时调用。 */
+  onDismiss?: () => void
   className?: string
   onDebugChange?: (state: {
     isReady: boolean
@@ -98,6 +102,8 @@ export function VnStoryPreview({
   defaultBackgroundUrl,
   previewLayout = 'portrait',
   aiEvaluationEnabled = false,
+  holdLastLine = false,
+  onDismiss,
   className,
   onDebugChange,
   assetMap,
@@ -196,7 +202,7 @@ export function VnStoryPreview({
 
   // 当前展示行：刚提交用户输入时优先展示用户输入；否则找最后一条 NPC 线
   const displayLine = useMemo(() => {
-    if (isEnded) return null
+    if (isEnded && !holdLastLine) return null
     const last = history.at(-1)
     if (userInputJustSubmittedRef.current) return last ?? null
     if (last && last.speaker !== 'You') return last
@@ -204,7 +210,7 @@ export function VnStoryPreview({
       if (history[i].speaker !== 'You') return history[i]
     }
     return last ?? null
-  }, [history, isEnded])
+  }, [history, holdLastLine, isEnded])
 
   // inkLines 变化时（advanceStory 推进了剧情），清除「刚提交」标记
   useEffect(() => {
@@ -212,8 +218,8 @@ export function VnStoryPreview({
   }, [story.lines])
 
   useEffect(() => {
-    if (isEnded && history.length > 0) setCompletionOpen(true)
-  }, [isEnded, history.length])
+    if (!holdLastLine && isEnded && history.length > 0) setCompletionOpen(true)
+  }, [holdLastLine, isEnded, history.length])
 
   const currentCharacter = useMemo(() => {
     if (characters.length === 0) return undefined
@@ -434,6 +440,9 @@ export function VnStoryPreview({
       <VnPlayer
         className={className}
         frameVariant={previewLayout === 'landscape' ? 'landscape' : 'portrait'}
+        clearBackdrop={holdLastLine}
+        hideEndedCaption={holdLastLine}
+        onDismiss={holdLastLine ? onDismiss : undefined}
         backgroundUrl={backgroundUrl}
         backgroundFit={backgroundFit as 'cover' | 'contain' | 'stretch' | 'repeat'}
         currentLine={displayLine ? { ...displayLine, isUser: displayLine.speaker === 'You' } : null}

@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import { StoryChapterStudio } from '../components/story-chapter-studio'
 import { NarrativeActivityList, NarrativeCommitmentList, NarrativeQuestList } from '../components/narrative-nqtr-registries'
 import { NqtrPackageSetup } from '../components/nqtr-package-setup'
+import { NqtrPackagePreview } from '../components/nqtr-package-preview'
 import { parseNqtrTime, type NqtrTimeSettings } from '../components/maps/nqtr-model'
 import { FileUploadField } from '../components/file-upload-field'
 import {
@@ -30,6 +31,8 @@ import {
   type SceneCategory,
 } from '../api-content-admin'
 
+type NqtrSection = 'chapters' | 'activities' | 'commitments' | 'quests' | 'setup' | 'preview'
+
 /** 剧情包工作区：只管理剧情包与章节，并引用全局角色、地图资产。 */
 export function AdminNarrativePage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -43,7 +46,7 @@ export function AdminNarrativePage() {
   const [deletingPackage, setDeletingPackage] = useState<Scene | null>(null)
   const [packageDeleting, setPackageDeleting] = useState(false)
   const [maps, setMaps] = useState<GameMapData[]>([])
-  const [nqtrSection, setNqtrSection] = useState<'chapters' | 'activities' | 'commitments' | 'quests' | 'setup'>('setup')
+  const [nqtrSection, setNqtrSection] = useState<NqtrSection>('setup')
   const [packageForm, setPackageForm] = useState({ title: '', description: '', categoryId: '', isFree: false, coverImage: '', kind: 'story' as 'story' | 'nqtr' })
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
@@ -254,8 +257,8 @@ function NqtrPackageWorkspace({
   maps: GameMapData[]
   characters: GameCharacter[]
   locations: GameLocationData[]
-  section: 'chapters' | 'activities' | 'commitments' | 'quests' | 'setup'
-  onSection: (section: 'chapters' | 'activities' | 'commitments' | 'quests' | 'setup') => void
+  section: NqtrSection
+  onSection: (section: NqtrSection) => void
   onSaved: () => Promise<void>
 }) {
   const [draftMapId, setDraftMapId] = useState(mapId ?? '')
@@ -268,6 +271,7 @@ function NqtrPackageWorkspace({
     ['activities', '行为'],
     ['commitments', '日程'],
     ['quests', '任务'],
+    ['preview', '总预览'],
   ] as const
 
   const saveSetup = async () => {
@@ -308,6 +312,14 @@ function NqtrPackageWorkspace({
       {section === 'activities' && <NarrativeActivityList sceneId={packageId} mapId={draftMapId || mapId} timeSlots={time.timeSlots} />}
       {section === 'commitments' && <NarrativeCommitmentList sceneId={packageId} mapId={draftMapId || mapId} timeSlots={time.timeSlots} />}
       {section === 'quests' && <NarrativeQuestList sceneId={packageId} mapId={draftMapId || mapId} />}
+      {section === 'preview' && (
+        <NqtrPackagePreview
+          sceneId={packageId}
+          map={maps.find((item) => item.id === (draftMapId || mapId)) ?? null}
+          time={time}
+          characters={characters}
+        />
+      )}
     </div>
   )
 }
