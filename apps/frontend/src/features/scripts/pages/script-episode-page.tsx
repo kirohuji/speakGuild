@@ -64,7 +64,7 @@ export function ScriptEpisodePage() {
       <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 px-4 text-center">
         <Film className="size-12 text-muted-foreground/40" />
         <p className="text-muted-foreground">{t('scripts.episodeNotFound')}</p>
-        <Button variant="outline" onClick={() => navigate(`/scripts/packages/${packageId}`)}>
+        <Button variant="secondary" className="rounded-full border-0 shadow-none" onClick={() => navigate(`/scripts/packages/${packageId}`)}>
           {t('scripts.backToScripts')}
         </Button>
       </div>
@@ -138,7 +138,7 @@ export function ScriptEpisodePage() {
       {episode.objectives.length > 0 && (
         <section className="mb-5">
           <SectionHeader eyebrow="2" title={t('scripts.chapterObjectives')} meta={`${episode.objectives.length} ${t('scripts.itemsUnit')}`} />
-          <Card className="border-0 bg-muted/30 shadow-none">
+          <Card className="border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
             <CardContent className="flex flex-col gap-3 p-4">
               {episode.objectives.map((objective, index) => (
                 <div key={`${objective}-${index}`} className="flex items-start gap-3">
@@ -155,20 +155,20 @@ export function ScriptEpisodePage() {
 
       <section className="mb-5">
         <SectionHeader eyebrow="3" title={t('scripts.prePerformancePreview')} meta={`${keyExpressions.length} ${t('scripts.itemsUnit')}`} />
-        <Card className="border-0 bg-muted/30 shadow-none">
-          <CardContent className="flex flex-col gap-0 p-0">
-            {keyExpressions.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-                {t('scripts.noExtraPreview')}
-              </p>
-            ) : keyExpressions.map((item, index) => (
-              <div key={`${item.primary}-${index}`} className="flex items-start justify-between gap-4 border-b border-border/50 px-4 py-3 last:border-b-0">
+        {keyExpressions.length === 0 ? (
+          <p className="rounded-lg bg-muted/25 px-4 py-8 text-center text-sm text-muted-foreground">
+            {t('scripts.noExtraPreview')}
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {keyExpressions.map((item, index) => (
+              <div key={`${item.primary}-${index}`} className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-4 py-3">
                 <p className="min-w-0 flex-1 text-sm font-medium">{item.primary}</p>
                 <p className="max-w-[45%] text-right text-xs leading-5 text-muted-foreground">{item.secondary}</p>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        )}
       </section>
 
       <section className="mb-5">
@@ -194,7 +194,7 @@ export function ScriptEpisodePage() {
       </section>
 
       {episode.record && (
-        <Card className="border-0 bg-muted/30 shadow-none">
+        <Card className="border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">{t('scripts.lastPerformance')}</CardTitle>
             <CardDescription>{t('scripts.lastPerformanceHint')}</CardDescription>
@@ -250,7 +250,7 @@ function ModeCard({
   const { t } = useTranslation()
 
   return (
-    <Card className="overflow-hidden border-0 bg-muted/30 shadow-none">
+    <Card className="overflow-hidden border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
       <CardHeader className="flex-row items-start gap-4 p-4 pb-3">
         <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Icon className="size-5" />

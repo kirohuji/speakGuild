@@ -393,7 +393,7 @@ export function VnPlayer({
 
   return (
     <div className={cn(
-      'relative mx-auto flex w-full flex-col overflow-hidden bg-black text-white sm:rounded-xl sm:border sm:border-border',
+      'relative mx-auto flex w-full flex-col overflow-hidden bg-black text-white',
       frameVariant === 'landscape'
         ? 'aspect-[852/393] h-auto max-h-[393px] max-w-[852px]'
         : 'h-full max-w-[520px]',
@@ -477,8 +477,8 @@ export function VnPlayer({
 
         {historyOpen && (
           <div className="absolute inset-0 z-40 bg-background/80 backdrop-blur-sm p-4" onClick={(event) => event.stopPropagation()}>
-            <div className="ml-auto flex h-full w-full max-w-[360px] flex-col overflow-hidden rounded-xl border border-border bg-card text-foreground shadow-2xl">
-              <div className="flex items-center justify-between border-b border-border px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
+            <div className="ml-auto flex h-full w-full max-w-[360px] flex-col overflow-hidden bg-background text-foreground">
+              <div className="flex items-center justify-between bg-muted/30 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
                 <div>
                   <p className="text-sm font-semibold text-foreground">{t('vnHistory.title')}</p>
                   <p className="text-[11px] text-muted-foreground">{t('vnHistory.count', { count: reviewTimeline.length })}</p>
@@ -495,7 +495,7 @@ export function VnPlayer({
                 {reviewTimeline.length === 0 ? (
                   <p className="py-10 text-center text-sm text-muted-foreground">{t('vnHistory.empty')}</p>
                 ) : reviewTimeline.map((line, index) => (
-                  <div key={index} className={cn('rounded-lg border px-3 py-2', line.isUser ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted/40')}>
+                  <div key={index} className={cn('rounded-lg px-3 py-2', line.isUser ? 'bg-primary/10' : 'bg-muted/40')}>
                     {line.speaker && <p className="mb-1 text-xs font-semibold text-muted-foreground">{line.speaker}</p>}
                     <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">{line.text}</p>
                   </div>
@@ -512,7 +512,7 @@ export function VnPlayer({
                 key={choice.index}
                 role="button"
                 tabIndex={0}
-                className="rounded-lg border border-border/60 bg-background/90 px-4 py-3 text-center text-sm font-medium text-foreground shadow-lg transition-colors hover:border-primary/40 hover:bg-primary/10"
+                className="rounded-lg bg-background/90 px-4 py-3 text-center text-sm font-medium text-foreground shadow-lg transition-colors hover:bg-primary/10"
                 onClick={(event) => { event.stopPropagation(); onChoice?.(choice.index) }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
@@ -533,12 +533,12 @@ export function VnPlayer({
             <TurnGuidanceCard guidance={inputGuidance} className="absolute right-4 bottom-full max-w-[min(88%,360px)]" />
           )}
           {displayLine?.speaker && (
-            <div className="absolute left-4 top-0 z-10 inline-flex h-8 max-w-[52%] -translate-y-1/2 items-center gap-1.5 rounded-full border border-primary/20 bg-background/90 px-3 shadow-[0_6px_22px_rgba(15,23,42,.09)] ring-1 ring-primary/[0.08] backdrop-blur-2xl">
+            <div className="absolute left-4 top-0 z-10 inline-flex h-8 max-w-[52%] -translate-y-1/2 items-center gap-1.5 rounded-full bg-background/90 px-3 shadow-[0_6px_22px_rgba(15,23,42,.09)] backdrop-blur-2xl">
               <span className="size-1.5 shrink-0 rounded-full bg-primary/65" />
               <span className="truncate text-xs font-semibold text-foreground/80">{displayLine.speaker}</span>
             </div>
           )}
-          <div className="absolute right-4 top-0 z-10 flex h-8 -translate-y-1/2 items-center gap-0.5 rounded-full border border-primary/20 bg-background/90 px-1 shadow-[0_6px_22px_rgba(15,23,42,.09)] ring-1 ring-primary/[0.08] backdrop-blur-2xl">
+          <div className="absolute right-4 top-0 z-10 flex h-8 -translate-y-1/2 items-center gap-0.5 rounded-full bg-background/90 px-1 shadow-[0_6px_22px_rgba(15,23,42,.09)] backdrop-blur-2xl">
             {displayLine?.isUser && cachedAudioUrl && (
               <VnIconButton
                 label={t('vnSettings.playbackRecording')}
@@ -567,7 +567,7 @@ export function VnPlayer({
             </VnIconButton>
           </div>
           <div className={cn(
-            'flex flex-col border-t border-border/55 bg-background/90 text-foreground shadow-[0_-18px_56px_rgba(15,23,42,.18)] backdrop-blur-2xl',
+            'flex flex-col bg-background/90 text-foreground shadow-[0_-18px_56px_rgba(15,23,42,.18)] backdrop-blur-2xl',
             frameVariant === 'landscape'
               ? 'min-h-[88px] max-h-[126px]'
               : inputFeedback
@@ -581,7 +581,7 @@ export function VnPlayer({
                     <img
                       src={currentAvatarUrl}
                       alt={currentAvatarAlt || displayLine.speaker || ''}
-                      className="mt-3 size-[72px] shrink-0 rounded-2xl object-cover ring-1 ring-border/70"
+                      className="mt-3 size-[72px] shrink-0 rounded-2xl object-cover"
                     />
                   )}
                   <div className={cn(

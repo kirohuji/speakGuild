@@ -397,7 +397,7 @@ export function VnInputPanel({
 
   return (
     <div className={cn(
-      variant === 'default' && 'border-t border-border/45 bg-background/55 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-xl',
+      variant === 'default' && 'bg-background/55 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] pt-2.5 backdrop-blur-xl',
       variant === 'embedded' && 'rounded-lg bg-muted/45 p-1 transition-colors focus-within:bg-muted/60',
     )}>
       {/* 隐藏的回放 audio 元素 */}
@@ -440,7 +440,7 @@ export function VnInputPanel({
                     'flex h-full flex-1 items-center justify-center gap-2 rounded-xl select-none transition-all active:scale-[0.97]',
                     voiceError
                       ? 'bg-destructive/10 ring-1 ring-destructive/30 text-destructive'
-                      : 'bg-muted/75 ring-1 ring-border/45 text-muted-foreground hover:bg-muted hover:text-foreground',
+                      : 'bg-muted/75 text-muted-foreground hover:bg-muted hover:text-foreground',
                     'disabled:opacity-40 disabled:cursor-not-allowed',
                   )}
                 >
@@ -507,7 +507,7 @@ export function VnInputPanel({
                 >
                   <Keyboard className="size-4" />
                 </button>
-                <div className="flex h-full flex-1 items-center justify-center gap-2 rounded-xl bg-muted/75 ring-1 ring-border/45">
+                <div className="flex h-full flex-1 items-center justify-center gap-2 rounded-xl bg-muted/75">
                   <Loader2 className="size-4 animate-spin text-primary" />
                   <span className="text-sm text-muted-foreground">{t('vnSettings.recognizingPending')}</span>
                 </div>
@@ -540,7 +540,7 @@ export function VnInputPanel({
                 <div className={cn(
                   'flex min-w-0 flex-1 items-end rounded-xl',
                   variant === 'default' ? 'gap-2 pl-2 pr-2' : 'pl-1 pr-1.5',
-                  variant === 'default' && 'bg-muted/70 ring-1 ring-border/45',
+                  variant === 'default' && 'bg-muted/70',
                 )}>
                   <textarea
                     ref={textareaRef}
@@ -607,7 +607,7 @@ export function VnInputPanel({
             <div className={cn(
               'flex min-w-0 flex-1 items-end rounded-xl',
               variant === 'default' ? 'gap-2 pl-2 pr-2' : 'pl-1 pr-1.5',
-              variant === 'default' && 'bg-muted/70 ring-1 ring-border/45',
+              variant === 'default' && 'bg-muted/70',
             )}>
               <textarea
                 ref={textareaRef}

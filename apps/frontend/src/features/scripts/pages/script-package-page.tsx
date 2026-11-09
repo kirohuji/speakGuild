@@ -76,7 +76,7 @@ export function ScriptPackagePage() {
       <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 px-4 text-center">
         <Clapperboard className="size-12 text-muted-foreground/40" />
         <p className="text-muted-foreground">{t('scripts.packageNotFound')}</p>
-        <Button variant="outline" onClick={() => navigate('/scripts')}>
+        <Button variant="secondary" className="rounded-full border-0 shadow-none" onClick={() => navigate('/scripts')}>
           {t('scripts.backToScripts')}
         </Button>
       </div>
@@ -254,7 +254,7 @@ function EpisodeRow({
   const { t } = useTranslation()
   const locked = !episode.isUnlocked || !installed
   const row = (
-    <Card className="border-0 bg-muted/30 shadow-none transition-colors hover:bg-muted/50">
+    <Card className="border-0 bg-muted/30 shadow-none ring-0 transition-colors hover:bg-muted/50 dark:ring-0">
       <CardHeader className="flex-row items-center gap-3 p-4">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold">
           {episode.record?.passed ? <Check className="size-4 text-primary" /> : index + 1}
@@ -290,15 +290,13 @@ function ResourceList({
     return <p className="rounded-lg bg-muted/25 px-4 py-8 text-center text-sm text-muted-foreground">{empty}</p>
   }
   return (
-    <div className="overflow-hidden rounded-lg bg-muted/30">
-      <div className="flex flex-col gap-0">
-        {items.map((item, index) => (
-          <div key={`${item.primary}-${index}`} className="flex items-start justify-between gap-4 border-b border-border/50 px-4 py-3 last:border-b-0">
-            <p className="min-w-0 flex-1 text-sm font-medium">{item.primary}</p>
-            <p className="max-w-[45%] text-right text-xs leading-5 text-muted-foreground">{item.secondary}</p>
-          </div>
-        ))}
-      </div>
+    <div className="flex flex-col gap-2">
+      {items.map((item, index) => (
+        <div key={`${item.primary}-${index}`} className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-4 py-3">
+          <p className="min-w-0 flex-1 text-sm font-medium">{item.primary}</p>
+          <p className="max-w-[45%] text-right text-xs leading-5 text-muted-foreground">{item.secondary}</p>
+        </div>
+      ))}
     </div>
   )
 }

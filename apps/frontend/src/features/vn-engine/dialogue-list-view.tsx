@@ -412,7 +412,7 @@ export function DialogueListView({
 
       {/* ── Top bar (hidden when merged into parent header) ── */}
       {!hideTopBar && (
-      <div className="absolute right-3 z-40 flex items-center gap-1 rounded-full border border-border/30 bg-background/60 px-1 shadow-lg backdrop-blur-2xl" style={{ top: 'calc(3.25rem + env(safe-area-inset-top, 0px))' }}>
+      <div className="absolute right-3 z-40 flex items-center gap-1 rounded-full bg-background/60 px-1 shadow-lg backdrop-blur-2xl" style={{ top: 'calc(3.25rem + env(safe-area-inset-top, 0px))' }}>
         {onReset && (
           <IconButton label={t('practiceSession.retry')} onClick={onReset}>
             <RotateCcw className="size-3.5" />
@@ -477,7 +477,7 @@ export function DialogueListView({
                 <button
                   key={choice.index}
                   type="button"
-                  className="rounded-lg bg-muted/65 px-3.5 py-3 text-left text-sm font-medium text-foreground ring-1 ring-border/45 transition-colors hover:bg-muted/80"
+                  className="rounded-lg bg-muted/65 px-3.5 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/80"
                   onClick={(event) => {
                     event.stopPropagation()
                     onChoice?.(choice.index)
@@ -520,7 +520,7 @@ export function DialogueListView({
       {/* ── Input area ── */}
       {inputFeedback && !(isWaiting && onSubmitInput) && (
         <div className="relative z-10 px-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] pt-2" data-keyboard-lift>
-          <div className="overflow-hidden rounded-xl border border-border/55 bg-background/75 backdrop-blur-2xl">
+          <div className="overflow-hidden rounded-xl bg-background/75 backdrop-blur-2xl">
             {inputFeedback}
           </div>
         </div>
@@ -529,7 +529,7 @@ export function DialogueListView({
       {isWaiting && onSubmitInput && (
         <div className="relative z-10 px-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom,0px))] pt-2" data-keyboard-lift>
           <TurnGuidanceCard guidance={inputGuidance} className="mb-2 mr-0 max-w-[min(92%,360px)]" />
-          <div className="overflow-hidden rounded-xl border border-border/55 bg-background/75 p-1.5 backdrop-blur-2xl">
+          <div className="overflow-hidden rounded-xl bg-background/75 p-1.5 backdrop-blur-2xl">
             {inputFeedback && <div className="mb-1.5 overflow-hidden rounded-lg bg-muted/30">{inputFeedback}</div>}
             <VnInputPanel
               variant="embedded"
@@ -544,8 +544,8 @@ export function DialogueListView({
       {/* ── History overlay ── */}
       {historyOpen && (
         <div className="absolute inset-0 z-40 bg-background/80 backdrop-blur-sm" onClick={(event) => event.stopPropagation()}>
-          <div className="ml-auto flex h-full w-full max-w-[360px] flex-col overflow-hidden rounded-xl border border-border bg-card text-foreground shadow-2xl">
-            <div className="flex items-center justify-between border-b border-border px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
+          <div className="ml-auto flex h-full w-full max-w-[360px] flex-col overflow-hidden bg-background text-foreground">
+            <div className="flex items-center justify-between bg-muted/30 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))]">
               <div>
                 <p className="text-sm font-semibold text-foreground">{t('vnHistory.title')}</p>
                 <p className="text-[11px] text-muted-foreground">{t('vnHistory.count', { count: history.length })}</p>
@@ -562,7 +562,7 @@ export function DialogueListView({
               {history.length === 0 ? (
                 <p className="py-10 text-center text-sm text-muted-foreground">{t('vnHistory.empty')}</p>
               ) : history.map((line, index) => (
-                <div key={index} className={cn('rounded-lg border px-3 py-2', line.isUser ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted/40')}>
+                <div key={index} className={cn('rounded-lg px-3 py-2', line.isUser ? 'bg-primary/10' : 'bg-muted/40')}>
                   {line.speaker && <p className="mb-1 text-xs font-semibold text-muted-foreground">{line.speaker}</p>}
                   <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">{line.text}</p>
                 </div>
@@ -653,7 +653,7 @@ function ChatBubble({
   if (!isUser) {
     return (
       <div className="flex w-full justify-start">
-        <div className="flex max-w-[88%] min-w-[140px] gap-3 rounded-lg bg-muted/65 px-3.5 py-3 ring-1 ring-border/45 backdrop-blur-sm">
+        <div className="flex max-w-[88%] min-w-[140px] gap-3 rounded-lg bg-muted/65 px-3.5 py-3 backdrop-blur-sm">
           {avatarUrl ? (
             <img
               src={avatarUrl}
@@ -708,7 +708,7 @@ function ChatBubble({
     <div className="flex w-full justify-end">
       <div className="max-w-[78%]">
         <div className={cn(
-          'relative rounded-lg bg-primary/15 px-3.5 py-2.5 text-foreground ring-1 ring-primary/20',
+          'relative rounded-lg bg-primary/15 px-3.5 py-2.5 text-foreground',
           line.audioUrl && 'pr-11',
         )}>
           {line.audioUrl && (
@@ -721,7 +721,7 @@ function ChatBubble({
                 handlePlayAudio()
               }}
               className={cn(
-                'absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-background/75 text-primary shadow-sm ring-1 ring-primary/20 backdrop-blur transition-colors hover:bg-primary/10 active:scale-95',
+                'absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-background/75 text-primary shadow-sm backdrop-blur transition-colors hover:bg-primary/10 active:scale-95',
                 audioPlaying && 'bg-primary/10',
               )}
             >

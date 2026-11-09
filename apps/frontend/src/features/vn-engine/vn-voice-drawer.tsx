@@ -305,7 +305,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
 
         <div className="space-y-2 px-4">
           <div className={cn(
-            'min-h-[52px] max-h-[82px] overflow-y-auto rounded-lg bg-muted/70 px-3 py-2 ring-1 ring-border/45 transition-colors',
+            'min-h-[52px] max-h-[82px] overflow-y-auto rounded-lg bg-muted/70 px-3 py-2 transition-colors',
             isDone && 'bg-muted/70 ring-primary/25',
           )}>
             {isProcessing ? (
@@ -330,12 +330,12 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
           </div>
 
           {error && (
-            <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            <div className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
               {error}
             </div>
           )}
 
-          <div className="rounded-lg bg-muted/70 px-2 py-1 ring-1 ring-border/45">
+          <div className="rounded-lg bg-muted/70 px-2 py-1">
             <WaveformBars active={isRecording} />
           </div>
 
@@ -348,7 +348,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
                   title={isPlaying ? t('vnSettings.pausePlayback') : t('vnSettings.playbackRecording')}
                   onClick={togglePlayback}
                   className={cn(
-                    'flex size-9 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground ring-1 ring-border/45 transition-all hover:bg-muted hover:text-foreground active:scale-95',
+                    'flex size-9 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground transition-all hover:bg-muted hover:text-foreground active:scale-95',
                     isPlaying && 'text-primary ring-primary/25',
                   )}
                 >
@@ -401,7 +401,7 @@ export function VnVoiceDrawer({ open, onOpenChange, onConfirm }: VnVoiceDrawerPr
                     title={t('vnSettings.uploadAudioFileStt')}
                     disabled={isProcessing}
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex size-9 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground ring-1 ring-border/45 transition-all hover:bg-muted hover:text-primary active:scale-95 disabled:opacity-30"
+                    className="flex size-9 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground transition-all hover:bg-muted hover:text-primary active:scale-95 disabled:opacity-30"
                   >
                     <FileAudio className="size-3.5" />
                   </button>

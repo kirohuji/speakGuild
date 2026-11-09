@@ -66,7 +66,7 @@ export function ScriptPlayerPage() {
         <p className="max-w-sm text-sm leading-6 text-muted-foreground">
           {t('scripts.episodePlayFailedDesc')}
         </p>
-        <Button asChild variant="outline" className="rounded-full">
+        <Button asChild variant="secondary" className="rounded-full border-0 shadow-none">
           <Link to={`/scripts/packages/${packageId}/episodes/${episodeId}`}>
             <ArrowLeft data-icon="inline-start" />
             {t('scripts.backToEpisode')}
@@ -472,7 +472,7 @@ function InkEpisodePlayer({
   return (
     <div className="relative flex h-dvh flex-col bg-background">
       <div className="absolute inset-x-0 top-0 z-30 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
-        <div className="flex h-9 w-full max-w-[400px] items-center gap-1 rounded-full border border-border/55 bg-background/90 px-1.5 text-foreground shadow-lg ring-1 ring-primary/[0.08] backdrop-blur-2xl">
+        <div className={cn('flex h-9 w-full max-w-[400px] items-center gap-1 rounded-full bg-background/90 px-1.5 text-foreground backdrop-blur-2xl', mode !== 'repeat' && 'shadow-lg')}>
         <Button asChild variant="ghost" size="sm" className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground">
           <Link to={`/scripts/packages/${packageId}/episodes/${episodeId}`}>
             <ArrowLeft className="size-3.5" />
@@ -564,7 +564,7 @@ function InkEpisodePlayer({
               {t('scripts.chapterComplete')}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="rounded-full" onClick={() => window.location.reload()}>
+              <Button variant="secondary" size="sm" className="rounded-full border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary" onClick={() => window.location.reload()}>
                 <RotateCcw data-icon="inline-start" />
                 {t('scripts.performAgain')}
               </Button>

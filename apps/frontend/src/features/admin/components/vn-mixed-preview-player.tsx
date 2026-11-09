@@ -271,10 +271,10 @@ export function VnMixedPreviewPlayer({
   // 管理后台保留深色预览台，移动端跟读则融入用户当前主题。
   const mobileSurface = practiceMode
   const panelClass = mobileSurface
-    ? 'border-border/60 bg-background/72 text-foreground shadow-none backdrop-blur-xl'
-    : 'border-border bg-[#0b0d12] text-white shadow-sm'
+    ? 'bg-background text-foreground shadow-none'
+    : 'border border-border bg-[#0b0d12] text-white shadow-sm'
   const toolbarClass = mobileSurface
-    ? 'border-border/60 bg-card/80'
+    ? 'bg-muted/30'
     : 'border-white/10 bg-[#0d1118]'
   const listClass = mobileSurface
     ? 'bg-background/45'
@@ -312,7 +312,7 @@ export function VnMixedPreviewPlayer({
 
   if (!activeFrame) {
     return (
-      <div className={cn('mx-auto flex h-[78vh] max-h-[760px] max-w-[420px] flex-col overflow-hidden rounded-xl border border-border bg-card', className)}>
+      <div className={cn('mx-auto flex h-[78vh] max-h-[760px] max-w-[420px] flex-col overflow-hidden rounded-xl border-0 bg-muted/30', className)}>
         <div className="flex flex-1 items-center justify-center p-8 text-center text-sm text-muted-foreground">
           当前脚本没有可预览台词
         </div>
@@ -321,8 +321,8 @@ export function VnMixedPreviewPlayer({
   }
 
   return (
-    <div className={cn('mx-auto flex h-[78vh] max-h-[760px] w-full max-w-[420px] flex-col overflow-hidden rounded-xl border', panelClass, className)}>
-      <div className="relative aspect-video shrink-0 overflow-hidden border-b border-white/10 bg-black">
+    <div className={cn('mx-auto flex h-[78vh] max-h-[760px] w-full max-w-[420px] flex-col overflow-hidden', mobileSurface ? 'bg-background' : 'rounded-xl border', panelClass, className)}>
+      <div className={cn('relative aspect-video shrink-0 overflow-hidden bg-black', !mobileSurface && 'border-b border-white/10')}>
         <PixiVnStage
           backgroundUrl={cachedBackgroundUrl}
           backgroundFit={activeBackground.fit || 'cover'}
@@ -343,7 +343,7 @@ export function VnMixedPreviewPlayer({
               <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-white">{mixedFrameDisplayText(activeFrame)}</p>
             </div>
             {missingCount > 0 && (
-              <span className="rounded border border-amber-300/30 bg-amber-300/12 px-2 py-1 text-[11px] text-amber-100">
+              <span className="rounded-full bg-amber-300/12 px-2 py-1 text-[11px] text-amber-100">
                 缺 {missingCount}
               </span>
             )}
@@ -351,7 +351,7 @@ export function VnMixedPreviewPlayer({
         </div>
       </div>
 
-      <div className={cn('border-b px-2 py-1', toolbarClass)}>
+      <div className={cn('px-2 py-1', !mobileSurface && 'border-b', toolbarClass)}>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -394,10 +394,10 @@ export function VnMixedPreviewPlayer({
               disabled={!canFollow}
               onClick={() => openFollow(activeFrame)}
               className={cn(
-                'flex h-8 shrink-0 items-center gap-1.5 rounded-md px-2.5 text-[11px] font-semibold ring-1 transition-colors disabled:cursor-not-allowed disabled:opacity-35',
+                'flex h-8 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-35',
                 mobileSurface
-                  ? 'bg-primary/10 text-primary ring-primary/20 hover:bg-primary/15'
-                  : 'bg-emerald-300/12 text-emerald-100 ring-emerald-300/22 hover:bg-emerald-300/18',
+                  ? 'bg-primary/10 text-primary hover:bg-primary/16'
+                  : 'bg-emerald-300/12 text-emerald-100 ring-1 ring-emerald-300/22 hover:bg-emerald-300/18',
               )}
             >
               <Mic className="size-3.5" />
@@ -515,7 +515,7 @@ export function VnMixedPreviewPlayer({
       </div>
 
       {practiceMode && !readOnly && (
-        <div className={cn('flex shrink-0 items-center gap-3 border-t px-3 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]', toolbarClass)}>
+        <div className={cn('flex shrink-0 items-center gap-3 px-3 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]', !mobileSurface && 'border-t', toolbarClass)}>
           <div className="min-w-0 flex-1">
             <p className={cn('text-xs font-medium', mobileSurface ? 'text-foreground' : 'text-white/80')}>跟读进度 {recordedCount}/{followableCount}</p>
             <div className={cn('mt-1.5 h-1 overflow-hidden rounded-full', mobileSurface ? 'bg-muted' : 'bg-white/10')}>
@@ -739,7 +739,7 @@ export function FollowReadDrawer({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent showHandle={false} className="mx-auto max-h-[72dvh] w-full max-w-[520px] overflow-hidden rounded-t-xl bg-background px-0 pb-[calc(0.8rem+env(safe-area-inset-bottom,0px))] text-foreground">
+      <DrawerContent showHandle={false} className="mx-auto max-h-[72dvh] w-full max-w-[520px] overflow-hidden rounded-t-[28px] border-0 bg-background px-0 pb-[calc(0.8rem+env(safe-area-inset-bottom,0px))] text-foreground drawer-surface">
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-muted-foreground/25" />
         <DrawerHeader className="px-4 pb-2 pt-3 text-left">
           <div className="flex items-start justify-between gap-3">
@@ -754,18 +754,18 @@ export function FollowReadDrawer({
         </DrawerHeader>
 
         <div className="space-y-3 px-4">
-          <div className="rounded-lg border border-border bg-muted/35 p-3">
+          <div className="rounded-lg bg-muted/30 p-3">
             <p className="text-sm font-medium leading-6 text-foreground">{frame?.text}</p>
             {frame?.translation && <p className="mt-2 text-xs leading-5 text-muted-foreground">{frame.translation}</p>}
           </div>
 
-          {error && <div className="rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</div>}
+          {error && <div className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</div>}
 
           <div className="grid grid-cols-3 gap-2">
             <Button
               type="button"
               variant="secondary"
-              className="h-10 gap-1.5"
+              className="h-10 gap-1.5 border-0 shadow-none"
               disabled={!frame?.audioUrl || recording}
               onClick={playTts}
             >
@@ -774,7 +774,7 @@ export function FollowReadDrawer({
             </Button>
             <Button
               type="button"
-              className={cn('h-10 gap-1.5', recording ? 'bg-rose-500 text-white hover:bg-rose-500/90' : 'bg-cyan-300 text-slate-950 hover:bg-cyan-200')}
+              className={cn('h-10 gap-1.5 border-0 shadow-none', recording ? 'bg-rose-500 text-white hover:bg-rose-500/90' : '')}
               onClick={recording ? stopRecording : startRecording}
             >
               {recording ? <Square className="size-3.5 fill-current" /> : <Mic className="size-3.5" />}
@@ -783,7 +783,7 @@ export function FollowReadDrawer({
             <Button
               type="button"
               variant="secondary"
-              className="h-10 gap-1.5"
+              className="h-10 gap-1.5 border-0 shadow-none"
               disabled={!recordedUrl || recording}
               onClick={playRecording}
             >

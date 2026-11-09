@@ -481,7 +481,7 @@ export function ScriptCenterPage() {
           setPanel(open ? 'records' : null)
         }}
       >
-        <DrawerContent showHandle={false} className="flex h-[95dvh] max-h-[95dvh] flex-col rounded-t-[28px] border-border/70 bg-background drawer-surface">
+        <DrawerContent showHandle={false} className="flex h-[95dvh] max-h-[95dvh] flex-col rounded-t-[28px] bg-background drawer-surface">
           <DrawerHeader className="shrink-0 px-4 pb-2 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] text-left">
             <DrawerTitle className="text-base font-semibold">{t('scripts.practiceRecords')}</DrawerTitle>
           </DrawerHeader>
@@ -502,7 +502,7 @@ export function ScriptCenterPage() {
       />
 
       <Drawer open={shopOpen} onOpenChange={(open) => setPanel(open ? 'store' : null)}>
-        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-0 bg-background">
+        <DrawerContent className="max-h-[88vh] rounded-t-[28px] border-0 bg-background drawer-surface">
           <DrawerHeader className="px-4 pb-1 pt-2 text-left">
             <DrawerTitle className="text-base font-semibold">{t('scripts.shop')}</DrawerTitle>
           </DrawerHeader>
@@ -589,7 +589,7 @@ function MineScripts({
       {activeUnit && (
         <section className="flex flex-col gap-2">
           <p className="px-1 text-xs font-medium text-muted-foreground">{t('scripts.continuePerformance')}</p>
-          <Card className="overflow-hidden border-0 bg-muted/30 shadow-none">
+          <Card className="overflow-hidden border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
             <div className="min-h-56 p-5">
               <div className="flex h-full min-h-46 flex-col justify-between gap-8">
                 <div className="flex items-start justify-between gap-3">
@@ -637,7 +637,7 @@ function MineScripts({
                         {t('scripts.downloadScript')}
                       </Button>
                     )}
-                    <Button asChild variant="outline" className="rounded-full">
+                    <Button asChild variant="secondary" className="rounded-full border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
                       <Link to={`/scripts/packages/${activeUnit.id}`}>{t('scripts.chapterList')}</Link>
                     </Button>
                   </div>
@@ -701,7 +701,7 @@ function MineScripts({
               </div>
             </div>
             <div className="mt-4 flex justify-center">
-              <Button variant="outline" size="sm" className="h-9 rounded-full px-5 text-xs" onClick={onOpenShop}>
+              <Button variant="secondary" size="sm" className="h-9 rounded-full border-0 px-5 text-xs shadow-none" onClick={onOpenShop}>
                 {t('scripts.goToShop')}
               </Button>
             </div>
@@ -715,7 +715,7 @@ function MineScripts({
 
             return (
               <div key={unit.id} className="group relative w-44 shrink-0 snap-start">
-                <Card className="w-44 shrink-0 snap-start overflow-hidden border-0 bg-muted/30 shadow-none transition-transform group-active:scale-[0.98]">
+                <Card className="w-44 shrink-0 snap-start overflow-hidden border-0 bg-muted/30 shadow-none ring-0 transition-transform group-active:scale-[0.98] dark:ring-0">
                   <Link to={`/scripts/packages/${unit.id}`} className="block">
                     <div className="relative aspect-video overflow-hidden bg-muted/50">
                       <ScriptCover
@@ -771,7 +771,7 @@ function MineScripts({
             </DialogDescription>
           </DialogHeader>
           <div className="mt-5 flex gap-3">
-            <Button variant="outline" className="flex-1 rounded-xl" disabled={deleting} onClick={() => setDeletingUnit(null)}>{t('common.cancel')}</Button>
+            <Button variant="secondary" className="flex-1 rounded-xl border-0 shadow-none" disabled={deleting} onClick={() => setDeletingUnit(null)}>{t('common.cancel')}</Button>
             <Button variant="destructive" className="flex-1 rounded-xl" disabled={deleting} onClick={() => void removeScript()}>
               {deleting && <Loader2 className="animate-spin" />}
               {t('learning.quitConfirm')}
@@ -900,7 +900,7 @@ function MyWorks({
   return (
     <div className="-mx-2 flex snap-x gap-2 overflow-x-auto px-2 pb-1">
       {latestByEpisode.map((work) => (
-        <Card key={work.id} className="w-44 shrink-0 snap-start overflow-hidden border-0 bg-muted/30 shadow-none">
+        <Card key={work.id} className="w-44 shrink-0 snap-start overflow-hidden border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
           <div className="relative aspect-video bg-muted/50">
             {work.coverUrl && <img src={work.coverUrl} alt="" className="size-full object-cover" />}
             <Badge variant="secondary" className="absolute left-2 top-2 h-5 px-2 text-[10px]">
@@ -919,8 +919,8 @@ function MyWorks({
             <div className="w-full">
               <Button
                 size="sm"
-                variant={work.status === 'rendering' || work.status === 'published' ? 'outline' : 'default'}
-                className="h-8 w-full rounded-full text-xs"
+                variant={work.status === 'rendering' || work.status === 'published' ? 'secondary' : 'default'}
+                className="h-8 w-full rounded-full border-0 text-xs shadow-none"
                 disabled={Boolean(generating[work.id])}
                 onClick={() => void togglePublish(work)}
               >
@@ -1086,21 +1086,21 @@ function WorksLibraryDialog({
           <div className="mb-3 flex shrink-0 items-center gap-2">
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 rounded-xl border-border/60 bg-muted/45 pl-9 shadow-none" placeholder={t('scripts.searchWorks')} />
+              <Input value={search} onChange={(event) => setSearch(event.target.value)} className="h-10 rounded-full border-0 bg-muted/70 pl-9 shadow-none" placeholder={t('scripts.searchWorks')} />
             </div>
-            <button type="button" onClick={() => setGroupMode('time')} className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl border', groupMode === 'time' ? 'border-primary bg-primary/10 text-primary' : 'border-border/60 bg-muted/45 text-muted-foreground')} aria-label={t('scripts.groupByTime')}>
+            <button type="button" onClick={() => setGroupMode('time')} className={cn('flex size-10 shrink-0 items-center justify-center rounded-full', groupMode === 'time' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground')} aria-label={t('scripts.groupByTime')}>
               <CalendarDays className="size-4" />
             </button>
-            <button type="button" onClick={() => setGroupMode('package')} className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl border', groupMode === 'package' ? 'border-primary bg-primary/10 text-primary' : 'border-border/60 bg-muted/45 text-muted-foreground')} aria-label={t('scripts.groupByPackage')}>
+            <button type="button" onClick={() => setGroupMode('package')} className={cn('flex size-10 shrink-0 items-center justify-center rounded-full', groupMode === 'package' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground')} aria-label={t('scripts.groupByPackage')}>
               <Layers3 className="size-4" />
             </button>
           </div>
 
           <div className="mb-3 shrink-0 overflow-x-auto">
             <div className="flex gap-2">
-              <button type="button" onClick={() => setSceneId('all')} className={cn('shrink-0 rounded-full px-3 py-1.5 text-xs font-medium', sceneId === 'all' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground')}>{t('scripts.allScripts')}</button>
+              <button type="button" onClick={() => setSceneId('all')} className={cn('shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors', sceneId === 'all' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground')}>{t('scripts.allScripts')}</button>
               {scenes.map((scene) => (
-                <button key={scene.id} type="button" onClick={() => setSceneId(scene.id)} className={cn('shrink-0 rounded-full px-3 py-1.5 text-xs font-medium', sceneId === scene.id ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground')}>{scene.title}</button>
+                <button key={scene.id} type="button" onClick={() => setSceneId(scene.id)} className={cn('shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors', sceneId === scene.id ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground')}>{scene.title}</button>
               ))}
             </div>
           </div>
@@ -1178,7 +1178,7 @@ function WorksLibraryDialog({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs"
+                  className="h-7 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary"
                   disabled={currentPage <= 1}
                   onClick={() => setPage(currentPage - 1)}
                 >
@@ -1191,7 +1191,7 @@ function WorksLibraryDialog({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs"
+                  className="h-7 border-0 bg-primary/10 px-2 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary"
                   disabled={currentPage >= totalPages}
                   onClick={() => setPage(currentPage + 1)}
                 >
@@ -1220,7 +1220,7 @@ function WorksLibraryDialog({
               </DialogDescription>
             </DialogHeader>
             <div className="mt-5 flex gap-3">
-              <Button variant="outline" className="flex-1 rounded-xl" disabled={deletingWork} onClick={() => setDeleteTarget(null)}>
+              <Button variant="secondary" className="flex-1 rounded-xl border-0 shadow-none" disabled={deletingWork} onClick={() => setDeleteTarget(null)}>
                 {t('common.cancel')}
               </Button>
               <Button variant="destructive" className="flex-1 rounded-xl" disabled={deletingWork} onClick={() => void deleteWork()}>
@@ -1354,7 +1354,7 @@ function EpisodeWorkHistoryDialog({
                             </Button>
                           )}
                           {work.status === 'published' ? (
-                            <Badge variant="outline" className="h-6 rounded-full px-2 text-[10px]">
+                            <Badge variant="secondary" className="h-6 rounded-full border-0 px-2 text-[10px] shadow-none">
                               {t('scripts.currentPublishVersion')}
                             </Badge>
                           ) : work.videoUrl ? (
@@ -1502,7 +1502,7 @@ function ScriptPublishHistoryDialog({
             <div className="max-h-[55dvh] overflow-y-auto">
               <table className="w-full table-fixed text-left">
                 <thead className="sticky top-0 z-10 bg-muted/95 text-[11px] text-muted-foreground backdrop-blur">
-                  <tr className="border-b border-border/45">
+                  <tr>
                     <th className="w-[58%] px-3 py-2 font-medium">{t('scripts.tableWork')}</th>
                     <th className="w-[42%] px-2 py-2 font-medium">{t('scripts.taskStatusHeader')}</th>
                   </tr>
@@ -1511,7 +1511,7 @@ function ScriptPublishHistoryDialog({
                   {items.map((item) => {
                     const meta = publishStatusMeta[item.status]
                     return (
-                      <tr key={item.id} className="border-b border-border/35 last:border-0">
+                      <tr key={item.id}>
                         <td className="px-3 py-2.5 align-top">
                           <p className="line-clamp-1 text-xs font-medium">{item.work?.title ?? t('scripts.deletedWork')}</p>
                           <p className="mt-0.5 line-clamp-2 text-[10px] leading-4 text-muted-foreground">
@@ -1540,12 +1540,12 @@ function ScriptPublishHistoryDialog({
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between">
-            <Button variant="ghost" size="sm" className="h-8 rounded-full text-xs" disabled={page <= 1 || loading} onClick={() => setPage((current) => current - 1)}>
+            <Button variant="ghost" size="sm" className="h-8 rounded-full border-0 bg-primary/10 px-3 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary" disabled={page <= 1 || loading} onClick={() => setPage((current) => current - 1)}>
               <ChevronLeft data-icon="inline-start" />
               {t('scripts.prevPage')}
             </Button>
             <span className="text-xs tabular-nums text-muted-foreground">{page} / {totalPages}</span>
-            <Button variant="ghost" size="sm" className="h-8 rounded-full text-xs" disabled={page >= totalPages || loading} onClick={() => setPage((current) => current + 1)}>
+            <Button variant="ghost" size="sm" className="h-8 rounded-full border-0 bg-primary/10 px-3 text-xs text-primary shadow-none hover:bg-primary/16 hover:text-primary" disabled={page >= totalPages || loading} onClick={() => setPage((current) => current + 1)}>
               {t('scripts.nextPage')}
               <ChevronRight data-icon="inline-end" />
             </Button>
@@ -1670,7 +1670,7 @@ function SquareFeed({
         <div className="flex flex-col items-center rounded-lg bg-muted/30 px-6 py-14 text-center">
           <Users className="size-10 text-muted-foreground/40" />
           <p className="mt-4 text-sm text-muted-foreground">{t('scripts.noPublicWorks')}</p>
-          <Button variant="outline" size="sm" className="mt-4 rounded-full" onClick={onOpenShop}>
+          <Button variant="secondary" size="sm" className="mt-4 rounded-full border-0 shadow-none" onClick={onOpenShop}>
             {t('scripts.goToShop')}
           </Button>
         </div>
@@ -1750,7 +1750,7 @@ function SquareWorkCard({
   const [reactionOpen, setReactionOpen] = useState(false)
 
   return (
-    <Card className="overflow-hidden border-0 bg-muted/25 shadow-none dark:ring-0">
+    <Card className="overflow-hidden border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
       <CardHeader className="flex-row items-center gap-2.5 px-3 pb-2 pt-3">
         <Avatar className="size-9">
           <AvatarImage src={work.user.image ?? undefined} alt={work.user.name} />
@@ -1845,7 +1845,7 @@ function SquareWorkCard({
               align="start"
               side="top"
               sideOffset={8}
-              className="w-[min(19rem,calc(100vw-2rem))] rounded-xl border border-border/70 bg-background p-2 shadow-lg"
+              className="w-[min(19rem,calc(100vw-2rem))] rounded-xl border-0 bg-background p-2 shadow-none"
             >
               <p className="px-2 pb-1.5 pt-1 text-[11px] font-medium text-muted-foreground">{t('scripts.sendReaction')}</p>
               <div className="grid grid-cols-2 gap-1">
@@ -1917,16 +1917,16 @@ function RecordList({
 
   return (
     <Tabs value={mode} onValueChange={setMode} className="flex h-full min-h-0 flex-col">
-      <TabsList className="mb-3 grid w-full shrink-0 grid-cols-3">
-        <TabsTrigger value="all" className="text-xs">{t('scripts.allTab')}</TabsTrigger>
-        <TabsTrigger value="vn" className="text-xs">VN</TabsTrigger>
-        <TabsTrigger value="repeat" className="text-xs">{t('scripts.repeatTab')}</TabsTrigger>
+      <TabsList className="mb-3 grid h-10 w-full shrink-0 grid-cols-3 rounded-xl bg-muted/70 p-1">
+        <TabsTrigger value="all" className="rounded-lg text-xs">{t('scripts.allTab')}</TabsTrigger>
+        <TabsTrigger value="vn" className="rounded-lg text-xs">VN</TabsTrigger>
+        <TabsTrigger value="repeat" className="rounded-lg text-xs">{t('scripts.repeatTab')}</TabsTrigger>
       </TabsList>
       <ConfigDataTable
         data={visible.slice((page - 1) * pageSize, page * pageSize)} columns={columns}
         total={visible.length} page={page} pageSize={pageSize} onPageChange={setPage}
         isLoading={loading} emptyMessage={t('scripts.noPracticeRecords')} onRowClick={onOpenReplay}
-        className="min-h-0 flex-1 text-xs [&_td]:px-3 [&_td]:py-2 [&_th]:h-9 [&_th]:px-3"
+        className="min-h-0 flex-1 text-xs [&>div:first-child]:rounded-lg [&>div:first-child]:border-0 [&>div:first-child]:bg-muted/30 [&_td]:px-3 [&_td]:py-2 [&_th]:h-9 [&_th]:px-3 [&_tr]:border-0"
       />
     </Tabs>
   )
@@ -1990,11 +1990,11 @@ function ScriptRecordReplayDialog({
           />
           {overwriteOpen && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/45 px-5 backdrop-blur-sm" onClick={() => setOverwriteOpen(false)}>
-              <div role="dialog" aria-modal="true" aria-labelledby="overwrite-video-title" className="w-full max-w-sm rounded-2xl border border-border bg-background p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+              <div role="dialog" aria-modal="true" aria-labelledby="overwrite-video-title" className="w-full max-w-sm rounded-2xl border-0 bg-background p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>
                 <h2 id="overwrite-video-title" className="text-base font-semibold">{t('scripts.overwritePrivateTitle')}</h2>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('scripts.overwritePrivateDesc')}</p>
                 <div className="mt-5 flex justify-center gap-3">
-                  <Button variant="outline" onClick={() => setOverwriteOpen(false)}>{t('common.cancel')}</Button>
+                  <Button variant="secondary" className="rounded-xl border-0 shadow-none" onClick={() => setOverwriteOpen(false)}>{t('common.cancel')}</Button>
                   <Button onClick={() => { setOverwriteOpen(false); void onGenerateVideo(record) }}>{t('scripts.regenerateOverwrite')}</Button>
                 </div>
               </div>
@@ -2012,12 +2012,12 @@ function ScriptRecordReplayDialog({
         {replayLines.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
             <p className="text-sm text-muted-foreground">{t('scripts.playbackUnavailable')}</p>
-            <Button variant="outline" onClick={onClose}>{t('common.close')}</Button>
+            <Button variant="secondary" className="rounded-full border-0 shadow-none" onClick={onClose}>{t('common.close')}</Button>
           </div>
         ) : (
           <div className="relative h-full bg-background">
             <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
-              <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full border border-border/55 bg-background/90 px-2 shadow-lg backdrop-blur-2xl">
+              <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full bg-background/90 px-2 shadow-lg backdrop-blur-2xl">
                 <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>{t('common.close')}</Button>
                 <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted-foreground">{record.episode.title} · {t('scripts.dialogueReplay')}</span>
                 <Button variant="ghost" size="sm" className="h-7 rounded-full px-2 text-xs" disabled={generatingProgress !== undefined || videoQueued} onClick={requestVideoGeneration}>
@@ -2103,7 +2103,7 @@ function ReadonlyRepeatRecordTheater({
   return (
     <div className="absolute inset-0 flex min-h-0 flex-col bg-background pt-[calc(3.5rem+env(safe-area-inset-top,0px))]">
       <div className="absolute inset-x-0 top-0 z-20 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
-        <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full border border-border/55 bg-background/90 px-2 shadow-lg backdrop-blur-2xl">
+        <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full bg-background/90 px-2 shadow-lg backdrop-blur-2xl">
           <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>{t('common.close')}</Button>
           <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted-foreground">{record.episode.title} · {t('scripts.repeatReplay')}</span>
           <Badge variant="secondary" className="h-6 text-[10px]">{t('scripts.readOnly')}</Badge>
@@ -2117,7 +2117,7 @@ function ReadonlyRepeatRecordTheater({
       ) : failed || frames.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
           <p className="text-sm text-muted-foreground">{t('scripts.repeatAssetsUnavailable')}</p>
-          <Button variant="outline" onClick={onClose}>{t('common.close')}</Button>
+          <Button variant="secondary" className="rounded-full border-0 shadow-none" onClick={onClose}>{t('common.close')}</Button>
         </div>
       ) : (
         <VnMixedPreviewPlayer
@@ -2201,7 +2201,7 @@ function ScriptShop({
           <BookOpen className="size-12 text-muted-foreground/40" />
           <p className="mt-4 text-muted-foreground">{keyword.trim() ? t('scripts.noMatchingScript') : t('scripts.noScriptAvailable')}</p>
           {!keyword.trim() && (
-            <Button variant="outline" size="sm" className="mt-4 rounded-full" onClick={() => void onRefresh()}>
+            <Button variant="secondary" size="sm" className="mt-4 rounded-full border-0 shadow-none" onClick={() => void onRefresh()}>
               {t('scripts.reload')}
             </Button>
           )}
@@ -2241,7 +2241,7 @@ function ScriptShop({
                   {t('scripts.unitMeta', { chapters: unit.scriptCount, words: unit.vocabCount, chunks: unit.chunkCount })}
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  <Badge variant="outline" className="h-5 rounded-full px-2 text-[10px]">{unit.isFree ? t('scripts.free') : t('scripts.member')}</Badge>
+                  <Badge variant="secondary" className="h-5 rounded-full border-0 px-2 text-[10px] shadow-none">{unit.isFree ? t('scripts.free') : t('scripts.member')}</Badge>
                   {/* {installed && <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">已离线</Badge>} */}
                   {(task?.status === 'downloading' || task?.status === 'extracting') && (
                     <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{Math.round(task.progress)}%</Badge>
@@ -2328,9 +2328,9 @@ function ScriptShopDetail({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <Badge variant="outline" className="rounded-full text-[10px]">{unit.isFree ? t('scripts.free') : t('scripts.member')}</Badge>
-                {unit.categoryName && <Badge variant="secondary" className="rounded-full text-[10px]">{unit.categoryName}</Badge>}
-                {unit.isLocked && <Badge variant="outline" className="rounded-full text-[10px]">{t('scripts.locked')}</Badge>}
+                <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{unit.isFree ? t('scripts.free') : t('scripts.member')}</Badge>
+                {unit.categoryName && <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{unit.categoryName}</Badge>}
+                {unit.isLocked && <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{t('scripts.locked')}</Badge>}
               </div>
               <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5">{unit.title}</h3>
               <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{displayScriptLocation(unit.location, t('scripts.immersiveTheater'))}</p>
@@ -2365,7 +2365,7 @@ function ScriptShopDetail({
             ) : task?.status === 'error' ? (
               <Button variant="destructive" className="w-full" onClick={() => void onDownload(unit.id)}>{t('scripts.downloadFailedRetry')}</Button>
             ) : installed ? (
-              <Button variant="outline" className="w-full" asChild>
+              <Button variant="secondary" className="w-full border-0 shadow-none" asChild>
                 <Link to={`/scripts/packages/${unit.id}`} onClick={onNavigate}>{t('scripts.enterScript')}</Link>
               </Button>
             ) : owned ? (
@@ -2388,9 +2388,13 @@ function ScriptShopDetail({
             <p className="text-xs font-medium">{t('scripts.chapterListHeader')}</p>
             {unit.topics.length > pageSize && (
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                <button type="button" disabled={chapterPage === 1} onClick={() => onChapterPageChange(Math.max(1, chapterPage - 1))} className="disabled:opacity-40">{t('scripts.prevPage')}</button>
-                <span>{chapterPage}/{totalPages}</span>
-                <button type="button" disabled={chapterPage === totalPages} onClick={() => onChapterPageChange(Math.min(totalPages, chapterPage + 1))} className="disabled:opacity-40">{t('scripts.nextPage')}</button>
+                <button type="button" disabled={chapterPage === 1} onClick={() => onChapterPageChange(Math.max(1, chapterPage - 1))} className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/16 disabled:opacity-35" aria-label={t('scripts.prevPage')}>
+                  <ChevronLeft className="size-3.5" />
+                </button>
+                <span className="min-w-9 text-center text-[11px] tabular-nums">{chapterPage}/{totalPages}</span>
+                <button type="button" disabled={chapterPage === totalPages} onClick={() => onChapterPageChange(Math.min(totalPages, chapterPage + 1))} className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/16 disabled:opacity-35" aria-label={t('scripts.nextPage')}>
+                  <ChevronRight className="size-3.5" />
+                </button>
               </div>
             )}
           </div>
@@ -2403,7 +2407,7 @@ function ScriptShopDetail({
                       {(chapterPage - 1) * pageSize + index + 1}
                     </div>
                     <p className="line-clamp-1 min-w-0 flex-1 text-sm font-medium">{chapter.title}</p>
-                    <Badge variant="outline" className="rounded-full text-[10px]">{chapter.difficulty}</Badge>
+                    <Badge variant="secondary" className="shrink-0 rounded-full border-0 text-[10px] shadow-none">{chapter.difficulty}</Badge>
                   </div>
                 ))}
               </div>
