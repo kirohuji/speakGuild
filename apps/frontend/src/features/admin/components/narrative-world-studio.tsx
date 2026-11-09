@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   BookOpen,
@@ -53,6 +54,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -93,6 +99,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/cn";
+import { resolveFileAssetUrl } from "@/lib/file-asset-reference";
 import { post } from "@/lib/request";
 import {
   createLocation,
@@ -152,6 +159,8 @@ import {
   updateExplorationNodeGroups,
   updateExplorationNodeLayers,
   updateRoomLayout,
+  isSceneDimensionLocked,
+  updateSceneDimensionLock,
   updateSceneDimensions,
   updateLocationMask,
   updateLocationOcclusionMask,
@@ -166,6 +175,40 @@ import {
   type SceneInteractionType,
   type ExplorationLayer,
 } from "./maps/exploration-map-model";
+
+function readMediaPixelSize(url: string) {
+  const src = resolveFileAssetUrl(url);
+  if (!src) return Promise.resolve(null);
+  const video =
+    /\.(mp4|webm|ogg|mov|m4v)(?:[?#]|$)/i.test(src) ||
+    /[#&?]media=video(?:&|$)/i.test(url);
+  return new Promise<{ width: number; height: number } | null>((resolve) => {
+    if (video) {
+      const element = document.createElement("video");
+      element.preload = "metadata";
+      element.onloadedmetadata = () => {
+        resolve(
+          element.videoWidth && element.videoHeight
+            ? { width: element.videoWidth, height: element.videoHeight }
+            : null,
+        );
+      };
+      element.onerror = () => resolve(null);
+      element.src = src;
+      return;
+    }
+    const image = new Image();
+    image.onload = () => {
+      resolve(
+        image.naturalWidth && image.naturalHeight
+          ? { width: image.naturalWidth, height: image.naturalHeight }
+          : null,
+      );
+    };
+    image.onerror = () => resolve(null);
+    image.src = src;
+  });
+}
 
 type StudioLevel = "world" | "location" | "room";
 type TimeOfDay = "day" | "golden" | "night";
@@ -289,10 +332,13 @@ function MediaUrlPreview({
 }
 
 export function NarrativeWorldStudio({
+  mapId: routeMapId,
   onLocationsChange,
 }: {
+  mapId: string;
   onLocationsChange?: (locations: GameLocationData[]) => void;
 }) {
+  const navigate = useNavigate();
   const [maps, setMaps] = useState<GameMapData[]>([]);
   const [locations, setLocations] = useState<GameLocationData[]>([]);
   const [rooms, setRooms] = useState<GameRoomData[]>([]);
@@ -389,21 +435,25 @@ export function NarrativeWorldStudio({
       setLocations(nextLocations);
       setRooms(nextRooms);
       onLocationsChange?.(nextLocations);
-      setMapId((current) =>
-        nextMaps.some((item) => item.id === current)
-          ? current
-          : (nextMaps[0]?.id ?? ""),
-      );
+      setMapId(routeMapId);
     } catch {
       toast.error("地图世界加载失败");
     } finally {
       setLoading(false);
     }
-  }, [onLocationsChange]);
+  }, [onLocationsChange, routeMapId]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    setMapId(routeMapId);
+    setLevel("world");
+    setLocationId("");
+    setRoomId("");
+    setObjectId("");
+  }, [routeMapId]);
 
   const loadInkStories = useCallback(async () => {
     if (inkStoriesLoading || inkStories.length) return;
@@ -660,6 +710,10 @@ export function NarrativeWorldStudio({
       : getSceneDimensions(selectedMap?.editorData, layerScope);
   const worldWidth = sceneDimensions.width;
   const worldHeight = sceneDimensions.height;
+  const dimensionLocked = isSceneDimensionLocked(
+    selectedMap?.editorData,
+    layerScope,
+  );
   const selectedNodeId =
     objectId ||
     (level === "world" ? locationId : level === "location" ? roomId : "");
@@ -1096,6 +1150,10 @@ export function NarrativeWorldStudio({
         return;
       }
       toast.success(url ? "当前场景底图已更新" : "当前场景底图已移除");
+      if (url && !isSceneDimensionLocked(selectedMap?.editorData, layerScope)) {
+        const size = await readMediaPixelSize(url);
+        if (size) await persistSceneDimensions(size.width, size.height, true);
+      }
     } catch {
       toast.error("场景底图保存失败");
       await load();
@@ -1138,12 +1196,15 @@ export function NarrativeWorldStudio({
     );
   };
 
-  const saveSceneDimensions = async () => {
+  const persistSceneDimensions = async (
+    width: number,
+    height: number,
+    silent = false,
+  ) => {
     if (!selectedMap) return;
-    // Apply business validation on save: clamp to 320–8192 and round to integer.
     const clamped = {
-      width: Math.max(320, Math.min(8192, Math.round(sceneDimensions.width))),
-      height: Math.max(320, Math.min(8192, Math.round(sceneDimensions.height))),
+      width: Math.max(1, Math.min(8192, Math.round(width))),
+      height: Math.max(1, Math.min(8192, Math.round(height))),
     };
     // Push clamped value back to local state so the input reflects the validated number.
     if (level === "world") {
@@ -1180,12 +1241,47 @@ export function NarrativeWorldStudio({
           ),
         );
       }
-      toast.success("场景尺寸已保存");
+      if (!silent) toast.success("场景尺寸已保存");
     } catch {
       toast.error("场景尺寸保存失败");
       await load();
     }
   };
+
+  const saveSceneDimensions = () =>
+    persistSceneDimensions(sceneDimensions.width, sceneDimensions.height);
+
+  const toggleDimensionLock = async () => {
+    if (!selectedMap) return;
+    await persistEditorData(
+      updateSceneDimensionLock(
+        selectedMap.editorData,
+        layerScope,
+        !dimensionLocked,
+      ),
+    );
+  };
+
+  useEffect(() => {
+    if (!backgroundUrl || dimensionLocked) return;
+    let cancelled = false;
+    void readMediaPixelSize(backgroundUrl).then((size) => {
+      if (
+        cancelled ||
+        !size ||
+        (size.width === sceneDimensions.width &&
+          size.height === sceneDimensions.height)
+      ) {
+        return;
+      }
+      void persistSceneDimensions(size.width, size.height, true);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // 只在换底图或解锁时对齐；手改宽高后不会立刻被盖回去。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [backgroundUrl, dimensionLocked, layerScope]);
 
   const updateNodeBreathing = async (enabled: boolean) => {
     if (!selectedMap) return;
@@ -1912,22 +2008,20 @@ export function NarrativeWorldStudio({
     );
   }
 
-  if (!maps.length) {
+  if (!selectedMap) {
     return (
       <Card className="border-dashed">
         <CardHeader className="items-center text-center">
           <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <Map />
           </div>
-          <CardTitle>创建第一个剧情世界</CardTitle>
-          <CardDescription>
-            上传世界底图，然后逐层放置地点、房间和可学习物品。
-          </CardDescription>
+          <CardTitle>找不到这张世界地图</CardTitle>
+          <CardDescription>它可能已删除，或地址里的地图编号无效。</CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center pb-8">
-          <Button onClick={() => openMapForm()}>
-            <Plus data-icon="inline-start" />
-            新建地图世界
+          <Button variant="outline" onClick={() => navigate("/admin/narrative-assets/maps")}>
+            <ArrowLeft data-icon="inline-start" />
+            返回地图列表
           </Button>
         </CardContent>
       </Card>
@@ -1935,41 +2029,26 @@ export function NarrativeWorldStudio({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-1 flex-col gap-3 overflow-hidden">
       <Card className="shrink-0 overflow-hidden border border-border/60 bg-card/95">
         <CardContent className="flex flex-wrap items-center gap-2 p-2.5">
-          <Select
-            value={mapId}
-            onChange={(event) => {
-              setMapId(event.target.value);
-              setLevel("world");
-              setLocationId("");
-              setRoomId("");
-              setObjectId("");
-            }}
-            className="h-9 w-[200px] bg-background"
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => navigate("/admin/narrative-assets/maps")}
           >
-            {maps.map((item) => (
-              <SelectItem key={item.id} value={item.id}>
-                {item.displayName}
-              </SelectItem>
-            ))}
-          </Select>
+            <ArrowLeft data-icon="inline-start" />
+            地图列表
+          </Button>
           {editable && (
-            <>
-              <Button size="sm" variant="outline" onClick={() => openMapForm()}>
-                <Plus data-icon="inline-start" />
-                新建世界
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => selectedMap && openMapForm(selectedMap)}
-              >
-                <Edit3 data-icon="inline-start" />
-                世界属性
-              </Button>
-            </>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => openMapForm(selectedMap)}
+            >
+              <Edit3 data-icon="inline-start" />
+              世界属性
+            </Button>
           )}
           <Separator orientation="vertical" className="mx-0.5 h-7" />
           {level !== "world" && (
@@ -2170,87 +2249,27 @@ export function NarrativeWorldStudio({
 
       <div
         className={cn(
-          "min-h-0 min-w-0 flex-1 gap-3 overflow-hidden",
-          editable
-            ? "grid grid-cols-[clamp(180px,17vw,220px)_minmax(0,1fr)_clamp(210px,20vw,250px)] 2xl:grid-cols-[250px_minmax(0,1fr)_280px]"
-            : "flex justify-center overflow-y-auto py-2",
+          "min-h-0 min-w-0 flex-1 overflow-hidden",
+          editable ? "flex gap-3" : "flex justify-center overflow-y-auto py-2",
         )}
       >
         {editable && (
-          <div className="flex h-full min-w-0 flex-col gap-2 overflow-y-auto pr-1">
-            <Card className="min-w-0 shrink-0 border border-border/60">
-              <CardContent className="grid grid-cols-[96px_minmax(0,1fr)] gap-2 p-2">
-                <div className="flex items-center">
-                  <ImageUploadField
-                    value={backgroundUrl ?? ""}
-                    onChange={(url) => void saveSceneBackground(url)}
-                    previewSize="md"
-                    overlayUpload
-                    allowVideo
-                    disabled={
-                      !selectedMap ||
-                      (level === "location" && !selectedLocation) ||
-                      (level === "room" && !selectedRoom)
-                    }
-                    placeholder="上传场景底图"
-                  />
-                </div>
-                <div className="grid min-w-0 grid-rows-2 gap-1.5">
-                  <div className="grid grid-cols-[30px_minmax(0,1fr)] items-center gap-1.5">
-                    <Label className="text-[10px] text-muted-foreground">宽度</Label>
-                    <Input
-                      className="h-7 px-2 text-xs tabular-nums"
-                      type="number"
-                      min={320}
-                      max={8192}
-                      value={sceneDimensions.width}
-                      onChange={(event) =>
-                        updateSceneDimensionDraft(
-                          "width",
-                          Number(event.target.value),
-                        )
-                      }
-                      onBlur={() => void saveSceneDimensions()}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") event.currentTarget.blur();
-                      }}
-                    />
-                  </div>
-                  <div className="grid grid-cols-[30px_minmax(0,1fr)] items-center gap-1.5">
-                    <Label className="text-[10px] text-muted-foreground">高度</Label>
-                    <Input
-                      className="h-7 px-2 text-xs tabular-nums"
-                      type="number"
-                      min={320}
-                      max={8192}
-                      value={sceneDimensions.height}
-                      onChange={(event) =>
-                        updateSceneDimensionDraft(
-                          "height",
-                          Number(event.target.value),
-                        )
-                      }
-                      onBlur={() => void saveSceneDimensions()}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") event.currentTarget.blur();
-                      }}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="min-w-0 shrink-0 border border-border/60">
-              <CardHeader className="p-2 pb-1">
-                <CardTitle className="text-xs">
-                  {level === "world"
-                    ? "世界场景元素"
-                    : level === "location"
-                      ? "地点场景元素"
-                      : "房间互动元素"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-2 pt-0">
-                <ScrollArea className="h-[132px]">
+          <div className="flex h-full w-[380px] shrink-0 flex-col gap-2 overflow-y-auto bg-card px-3 py-3">
+            <EditorDropdown
+              defaultOpen
+              title={
+                level === "world"
+                  ? "世界场景元素"
+                  : level === "location"
+                    ? "地点场景元素"
+                    : "房间互动元素"
+              }
+              summary={
+                nodes.find((node) => effectiveSelectedNodeIds.includes(node.id))
+                  ?.title ?? `${nodes.length} 个`
+              }
+            >
+                <ScrollArea className="h-48">
                   <div className="flex flex-col gap-0.5 pr-1">
                     <button
                       type="button"
@@ -2327,93 +2346,17 @@ export function NarrativeWorldStudio({
                     )}
                   </div>
                 </ScrollArea>
-              </CardContent>
-            </Card>
-            <LayerPanel
-              layers={layers}
-              nodes={nodes}
-              hasBackground={!!backgroundUrl}
-              activeLayerId={activeLayerId}
-              selectedCount={effectiveSelectedNodeIds.length}
-              onSelectLayer={setActiveLayerId}
-              onAdd={() => void addLayer()}
-              onDelete={() => void deleteActiveLayer()}
-              onRename={(id, name) => void updateLayer(id, { name })}
-              onToggleLock={(id, locked) =>
-                void updateLayer(id, { locked })
-              }
-              onToggleVisibility={(id, hidden) =>
-                void updateLayer(id, { hidden })
-              }
-              onMoveUp={() => void reorderActiveLayer("up")}
-              onMoveDown={() => void reorderActiveLayer("down")}
-              onAssign={() => void moveSelectionToActiveLayer()}
-              onGroup={() => void groupSelection()}
-              onUngroup={() => void ungroupSelection()}
-            />
-          </div>
-        )}
-
-        <main
-          className={cn(
-            "min-h-0 min-w-0 max-w-full overflow-hidden",
-            editable && "h-full max-h-full rounded-xl border border-border/60 bg-slate-950/95 p-1 shadow-sm",
-            !editable &&
-              (previewOrientation === "landscape"
-                ? "w-full max-w-[860px] rounded-[1.9rem] border-[7px] border-slate-950 bg-slate-950 p-1 shadow-2xl ring-1 ring-white/10"
-                : "w-full max-w-[410px] rounded-[2.35rem] border-[8px] border-slate-950 bg-slate-950 p-1 shadow-2xl ring-1 ring-white/10"),
-          )}
-        >
-          <ExplorationPixiCanvas
-            key={
-              editable
-                ? `edit-${level}`
-                : `preview-${previewOrientation}-${level}`
+            </EditorDropdown>
+          <EditorDropdown
+            title="属性"
+            defaultOpen
+            summary={
+              selectedObject?.title ??
+              selectedRoom?.displayName ??
+              selectedLocation?.displayName ??
+              "当前场景"
             }
-            className={
-              editable
-                ? "h-full min-h-0 max-h-full w-full min-w-0 max-w-full rounded-lg border-white/10 shadow-none"
-                : undefined
-            }
-            backgroundUrl={backgroundLayerHidden ? null : backgroundUrl}
-            nodes={nodes}
-            selectedId={selectedNodeId}
-            selectedIds={editable ? effectiveSelectedNodeIds : [selectedNodeId]}
-            focusNodeId={focusNodeId}
-            editable={editable}
-            emptyLabel={
-              backgroundLayerHidden
-                ? "底图图层已隐藏"
-                : level === "world"
-                  ? "请上传世界地图底图"
-                  : level === "location"
-                    ? "请上传地点场景背景"
-                    : "请上传房间场景背景"
-            }
-            worldWidth={worldWidth}
-            worldHeight={worldHeight}
-            timeOfDay={timeOfDay}
-            nodeBreathing={nodeBreathing}
-            mobilePreview={!editable}
-            previewOrientation={previewOrientation}
-            maskEditingId={
-              editable && maskEditing && level === "world"
-                ? selectedLocation?.id
-                : undefined
-            }
-            maskBrushRadius={maskBrushSize / 100}
-            maskRestoring={maskTool === "restore"}
-            showMaskOverlay={showMaskOverlay}
-            maskKind={maskLayer}
-            onSelect={selectNode}
-            onOpen={openNode}
-            onMove={(id, x, y) => void moveNode(id, x, y)}
-            onMaskPoint={appendLocationMaskPoint}
-            onMaskEnd={() => void saveLocationMask()}
-          />
-        </main>
-
-        {editable && <aside className="h-full min-w-0 overflow-y-auto pl-1">
+          >
           <Inspector
             level={level}
             map={selectedMap}
@@ -2522,7 +2465,169 @@ export function NarrativeWorldStudio({
               )
             }
           />
-        </aside>}
+          </EditorDropdown>
+            <EditorDropdown
+              title="底图"
+              summary={`${sceneDimensions.width} × ${sceneDimensions.height}`}
+            >
+              <div className="grid grid-cols-[96px_minmax(0,1fr)] gap-2">
+                <div className="flex items-center">
+                  <ImageUploadField
+                    value={backgroundUrl ?? ""}
+                    onChange={(url) => void saveSceneBackground(url)}
+                    previewSize="md"
+                    overlayUpload
+                    allowVideo
+                    disabled={
+                      !selectedMap ||
+                      (level === "location" && !selectedLocation) ||
+                      (level === "room" && !selectedRoom)
+                    }
+                    placeholder="上传场景底图"
+                  />
+                </div>
+                <div className="grid min-w-0 grid-rows-[auto_auto_auto] gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground">场景尺寸</span>
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant={dimensionLocked ? "secondary" : "ghost"}
+                      aria-label={dimensionLocked ? "解锁宽高，更换底图时按图片尺寸更新" : "锁定宽高，更换底图时保持当前尺寸"}
+                      title={dimensionLocked ? "已锁定，更换底图不会改宽高" : "未锁定，更换底图会改成图片本身的宽高"}
+                      onClick={() => void toggleDimensionLock()}
+                    >
+                      {dimensionLocked ? <LockKeyhole /> : <LockOpen />}
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-[30px_minmax(0,1fr)] items-center gap-1.5">
+                    <Label className="text-[10px] text-muted-foreground">宽度</Label>
+                    <Input
+                      className="h-7 px-2 text-xs tabular-nums"
+                      type="number"
+                      min={1}
+                      max={8192}
+                      value={sceneDimensions.width}
+                      onChange={(event) =>
+                        updateSceneDimensionDraft(
+                          "width",
+                          Number(event.target.value),
+                        )
+                      }
+                      onBlur={() => void saveSceneDimensions()}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") event.currentTarget.blur();
+                      }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-[30px_minmax(0,1fr)] items-center gap-1.5">
+                    <Label className="text-[10px] text-muted-foreground">高度</Label>
+                    <Input
+                      className="h-7 px-2 text-xs tabular-nums"
+                      type="number"
+                      min={1}
+                      max={8192}
+                      value={sceneDimensions.height}
+                      onChange={(event) =>
+                        updateSceneDimensionDraft(
+                          "height",
+                          Number(event.target.value),
+                        )
+                      }
+                      onBlur={() => void saveSceneDimensions()}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") event.currentTarget.blur();
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </EditorDropdown>
+            <LayerPanel
+              layers={layers}
+              nodes={nodes}
+              hasBackground={!!backgroundUrl}
+              activeLayerId={activeLayerId}
+              selectedCount={effectiveSelectedNodeIds.length}
+              onSelectLayer={setActiveLayerId}
+              onAdd={() => void addLayer()}
+              onDelete={() => void deleteActiveLayer()}
+              onRename={(id, name) => void updateLayer(id, { name })}
+              onToggleLock={(id, locked) =>
+                void updateLayer(id, { locked })
+              }
+              onToggleVisibility={(id, hidden) =>
+                void updateLayer(id, { hidden })
+              }
+              onMoveUp={() => void reorderActiveLayer("up")}
+              onMoveDown={() => void reorderActiveLayer("down")}
+              onAssign={() => void moveSelectionToActiveLayer()}
+              onGroup={() => void groupSelection()}
+              onUngroup={() => void ungroupSelection()}
+            />
+          </div>
+        )}
+
+        <main
+          className={cn(
+            "min-h-0 min-w-0 max-w-full overflow-hidden",
+            editable && "flex h-full min-w-0 flex-1 flex-col",
+            !editable &&
+              (previewOrientation === "landscape"
+                ? "w-full max-w-[860px] rounded-[1.9rem] border-[7px] border-slate-950 bg-slate-950 p-1 shadow-2xl ring-1 ring-white/10"
+                : "w-full max-w-[410px] rounded-[2.35rem] border-[8px] border-slate-950 bg-slate-950 p-1 shadow-2xl ring-1 ring-white/10"),
+          )}
+        >
+          <ExplorationPixiCanvas
+            key={
+              editable
+                ? `edit-${level}`
+                : `preview-${previewOrientation}-${level}`
+            }
+            className={
+              editable
+                ? "h-full min-h-0 w-full flex-1 rounded-none border-0 bg-transparent shadow-none"
+                : undefined
+            }
+            backgroundUrl={backgroundLayerHidden ? null : backgroundUrl}
+            nodes={nodes}
+            selectedId={selectedNodeId}
+            selectedIds={editable ? effectiveSelectedNodeIds : [selectedNodeId]}
+            focusNodeId={focusNodeId}
+            editable={editable}
+            emptyLabel={
+              backgroundLayerHidden
+                ? "底图图层已隐藏"
+                : level === "world"
+                  ? "请上传世界地图底图"
+                  : level === "location"
+                    ? "请上传地点场景背景"
+                    : "请上传房间场景背景"
+            }
+            worldWidth={worldWidth}
+            worldHeight={worldHeight}
+            timeOfDay={timeOfDay}
+            nodeBreathing={nodeBreathing}
+            mobilePreview={!editable}
+            previewOrientation={previewOrientation}
+            maskEditingId={
+              editable && maskEditing && level === "world"
+                ? selectedLocation?.id
+                : undefined
+            }
+            maskBrushRadius={maskBrushSize / 100}
+            maskRestoring={maskTool === "restore"}
+            showMaskOverlay={showMaskOverlay}
+            maskKind={maskLayer}
+            onSelect={selectNode}
+            onOpen={openNode}
+            onMove={(id, x, y) => void moveNode(id, x, y)}
+            onMaskPoint={appendLocationMaskPoint}
+            onMaskEnd={() => void saveLocationMask()}
+          />
+        </main>
+
+        
       </div>
 
       <Dialog open={mapDialog} onOpenChange={setMapDialog}>
@@ -3738,26 +3843,14 @@ function LayerPanel({
     setLayerNameDraft("");
   };
   return (
-    <Card className="w-full min-w-0 shrink-0 overflow-hidden border border-border/60">
-      <CardHeader className="flex flex-row items-center justify-between p-2 pb-1">
-        <div className="flex items-center gap-1.5">
-          <Layers3 className="size-3.5" />
-          <CardTitle className="text-xs">图层</CardTitle>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            size="icon-sm"
-            variant="ghost"
-            className="size-7"
-            aria-label="新增图层"
-            onClick={onAdd}
-          >
+    <EditorDropdown title="图层" summary={activeLayer?.name ?? "未选择"}>
+      <div className="mb-1 flex items-center justify-end gap-0.5">
+          <Button size="icon-xs" variant="ghost" aria-label="新增图层" title="新增图层" onClick={onAdd}>
             <Plus />
           </Button>
           <Button
-            size="icon-sm"
+            size="icon-xs"
             variant="ghost"
-            className="size-7"
             aria-label="删除当前图层"
             title="删除当前图层"
             disabled={!isCustomLayer || activeLayerLocked}
@@ -3765,11 +3858,60 @@ function LayerPanel({
           >
             <Trash2 />
           </Button>
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            aria-label="上移图层"
+            title="上移"
+            disabled={!isCustomLayer || activeLayerLocked || activeIndex >= layers.length - 1}
+            onClick={onMoveUp}
+          >
+            <ChevronUp />
+          </Button>
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            aria-label="下移图层"
+            title="下移"
+            disabled={!isCustomLayer || activeLayerLocked || activeIndex <= 2}
+            onClick={onMoveDown}
+          >
+            <ChevronDown />
+          </Button>
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            aria-label="将所选放入此层"
+            title="将所选放入此层"
+            disabled={!selectedCount || activeLayerLocked || activeLayerId === BACKGROUND_LAYER_ID}
+            onClick={onAssign}
+          >
+            <Layers3 />
+          </Button>
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            aria-label="组合"
+            title="组合"
+            disabled={selectedCount < 2 || activeLayerLocked}
+            onClick={onGroup}
+          >
+            <Group />
+          </Button>
+          <Button
+            size="icon-xs"
+            variant="ghost"
+            aria-label="取消组合"
+            title="取消组合"
+            disabled={!selectedCount || activeLayerLocked}
+            onClick={onUngroup}
+          >
+            <Ungroup />
+          </Button>
         </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-1.5 p-2 pt-0">
-        <ScrollArea className="max-h-32">
-          <div className="flex flex-col gap-0.5 pr-1">
+      <div className="flex flex-col gap-1">
+        <ScrollArea className="h-32">
+          <div className="flex flex-col pr-1">
             {[...layers].reverse().map((layer) => {
               const count =
                 layer.id === BACKGROUND_LAYER_ID
@@ -3781,7 +3923,7 @@ function LayerPanel({
                 <div
                   key={layer.id}
                   className={cn(
-                    "group flex h-8 items-center gap-0.5 rounded-md px-1 transition-colors",
+                    "group flex h-6 items-center rounded px-0.5 transition-colors",
                     layer.id === activeLayerId
                       ? "bg-secondary text-secondary-foreground"
                       : "hover:bg-muted",
@@ -3790,15 +3932,15 @@ function LayerPanel({
                 >
                   <button
                     type="button"
-                    className="flex min-w-0 flex-1 items-center gap-1.5 px-1 text-xs"
+                    className="flex min-w-0 flex-1 items-center gap-1 px-1 text-[11px]"
                     onClick={() => onSelectLayer(layer.id)}
                   >
-                    <Layers3 className="size-3.5 shrink-0" />
+                    <Layers3 className="size-3 shrink-0" />
                     {editingLayerId === layer.id ? (
                       <Input
                         autoFocus
                         value={layerNameDraft}
-                        className="h-6 min-w-0 px-1.5 text-xs"
+                        className="h-5 min-w-0 px-1 text-[11px]"
                         onClick={(event) => event.stopPropagation()}
                         onChange={(event) =>
                           setLayerNameDraft(event.target.value)
@@ -3820,15 +3962,12 @@ function LayerPanel({
                         {layer.name}
                       </span>
                     )}
-                    <Badge variant="outline" className="h-5 px-1.5 text-[9px]">
-                      {count}
-                    </Badge>
+                    <span className="text-[10px] tabular-nums text-muted-foreground">{count}</span>
                   </button>
                   {layer.system !== "background" && (
                     <Button
-                      size="icon-sm"
+                      size="icon-xs"
                       variant="ghost"
-                      className="size-6 shrink-0"
                       aria-label={`重命名${layer.name}`}
                       title="重命名"
                       onClick={() => {
@@ -3836,13 +3975,12 @@ function LayerPanel({
                         setLayerNameDraft(layer.name);
                       }}
                     >
-                      <Pencil className="size-3" />
+                      <Pencil />
                     </Button>
                   )}
                   <Button
-                    size="icon-sm"
+                    size="icon-xs"
                     variant="ghost"
-                    className="size-6 shrink-0"
                     disabled={layer.system === "background"}
                     aria-label={
                       layer.locked ? `解锁${layer.name}` : `锁定${layer.name}`
@@ -3850,16 +3988,11 @@ function LayerPanel({
                     title={layer.locked ? "解锁图层" : "锁定图层"}
                     onClick={() => onToggleLock(layer.id, !layer.locked)}
                   >
-                    {layer.locked ? (
-                      <LockKeyhole className="size-3" />
-                    ) : (
-                      <LockOpen className="size-3" />
-                    )}
+                    {layer.locked ? <LockKeyhole /> : <LockOpen />}
                   </Button>
                   <Button
-                    size="icon-sm"
+                    size="icon-xs"
                     variant="ghost"
-                    className="size-6 shrink-0"
                     aria-label={
                       layer.hidden ? `显示${layer.name}` : `隐藏${layer.name}`
                     }
@@ -3868,82 +4001,44 @@ function LayerPanel({
                       onToggleVisibility(layer.id, !layer.hidden)
                     }
                   >
-                    {layer.hidden ? (
-                      <EyeOff className="size-3" />
-                    ) : (
-                      <Eye className="size-3" />
-                    )}
+                    {layer.hidden ? <EyeOff /> : <Eye />}
                   </Button>
                 </div>
               );
             })}
           </div>
         </ScrollArea>
-        <Separator />
-        <div className="grid grid-cols-2 gap-1.5">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-[11px]"
-            disabled={
-              !isCustomLayer ||
-              activeLayerLocked ||
-              activeIndex >= layers.length - 1
-            }
-            onClick={onMoveUp}
-          >
-            <ChevronUp data-icon="inline-start" />
-            上移
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-[11px]"
-            disabled={!isCustomLayer || activeLayerLocked || activeIndex <= 2}
-            onClick={onMoveDown}
-          >
-            <ChevronDown data-icon="inline-start" />
-            下移
-          </Button>
-        </div>
-        <Button
-          size="sm"
-          variant="secondary"
-          className="h-7 px-2 text-[11px]"
-          disabled={
-            !selectedCount ||
-            activeLayerLocked ||
-            activeLayerId === BACKGROUND_LAYER_ID
-          }
-          onClick={onAssign}
-        >
-          <Layers3 data-icon="inline-start" />
-          将所选放入此层
-        </Button>
-        <div className="grid grid-cols-2 gap-1.5">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-[11px]"
-            disabled={selectedCount < 2 || activeLayerLocked}
-            onClick={onGroup}
-          >
-            <Group data-icon="inline-start" />
-            组合
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-[11px]"
-            disabled={!selectedCount || activeLayerLocked}
-            onClick={onUngroup}
-          >
-            <Ungroup data-icon="inline-start" />
-            取消组合
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </EditorDropdown>
+  );
+}
+
+function EditorDropdown({
+  title,
+  summary,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  summary?: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <Collapsible defaultOpen={defaultOpen} className="shrink-0">
+      <CollapsibleTrigger className="group flex h-8 w-full items-center gap-2 px-1 text-left">
+        <ChevronDown className="size-3.5 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+        <span className="shrink-0 text-xs font-medium">{title}</span>
+        {summary ? (
+          <span className="min-w-0 flex-1 truncate text-right text-[11px] text-muted-foreground">
+            {summary}
+          </span>
+        ) : null}
+      </CollapsibleTrigger>
+      <CollapsibleContent className="px-1 py-1">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 

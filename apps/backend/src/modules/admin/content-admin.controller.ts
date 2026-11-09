@@ -318,6 +318,7 @@ export class ContentAdminController {
         category: { select: { id: true, name: true } },
         owner: { select: { id: true, name: true, email: true } },
         _count: { select: { trainingTopics: true, storyEpisodes: true } },
+        nqtrCast: { select: { characterId: true } },
       },
     });
     if (scenes.length === 0) return scenes;
@@ -430,7 +431,7 @@ export class ContentAdminController {
         ...dto,
         // 兼容旧客户端提交的空字符串；空分类不应作为外键值写入。
         categoryId: dto.categoryId || null,
-        contentMode: dto.contentMode ?? (dto.packageType === 'story' ? 'story' : 'practice'),
+        contentMode: dto.contentMode ?? (dto.packageType === 'nqtr' ? 'nqtr' : dto.packageType === 'story' ? 'story' : 'practice'),
         ownerId: session.user.id,
     });
     return this.prisma.$transaction(async (tx) => {
@@ -446,9 +447,10 @@ export class ContentAdminController {
   async updateScene(@Req() req: Request, @Param('id') id: string, @Body() dto: UpdateSceneDto) {
     const session = await this.requireManager(req);
     await this.contentAccess.assertSceneAccess(session, id);
-    const nextContentMode = dto.contentMode ?? (dto.packageType === 'story' ? 'story' : undefined);
+    const nextContentMode = dto.contentMode ?? (dto.packageType === 'nqtr' ? 'nqtr' : dto.packageType === 'story' ? 'story' : undefined);
+    const { characterIds, ...sceneFields } = dto as UpdateSceneDto & { characterIds?: string[] };
     const data = await this.fileAssetsService.normalizePersistentAssetUrls({
-      ...dto,
+      ...sceneFields,
       ...(dto.categoryId !== undefined ? { categoryId: dto.categoryId || null } : {}),
       ...(nextContentMode ? { contentMode: nextContentMode } : {}),
     });
@@ -469,6 +471,14 @@ export class ContentAdminController {
       await this.fileAssetsService.syncPersistentAssetReferences(
         tx, session.user.id, 'scene_asset', id, scene,
       );
+      if (Array.isArray(characterIds)) {
+        await tx.sceneNqtrCharacter.deleteMany({ where: { sceneId: id } });
+        if (characterIds.length) {
+          await tx.sceneNqtrCharacter.createMany({
+            data: characterIds.filter(Boolean).map((characterId) => ({ sceneId: id, characterId })),
+          });
+        }
+      }
       return scene;
     });
   }
@@ -1948,7 +1958,7 @@ ${candidateLines}
       orderBy: { createdAt: 'asc' },
       include: {
         owner: { select: { id: true, name: true, email: true } },
-        roomNpcs: { include: { room: { select: { id: true, displayName: true, location: { select: { id: true, displayName: true } } } } } },
+        commitments: { select: { id: true, room: { select: { id: true, displayName: true, location: { select: { id: true, displayName: true } } } } } },
         voiceBindings: { include: { voiceAsset: { include: { provider: { select: { id: true, provider: true, label: true, model: true, isActive: true } } } } } },
       },
       ...(hasPagination ? { skip: (p - 1) * ps, take: ps } : {}),
@@ -2152,6 +2162,232 @@ ${candidateLines}
   }
 
   // ════════════════════════════════════════════════════════════
+  // NQTR Activity / Commitment / Quest（全局登记，不写进某一张地图）
+  // ════════════════════════════════════════════════════════════
+
+  @Get('activities')
+  async listActivities(@Req() req: Request, @Query('sceneId') sceneId?: string) {
+    await this.requireAdmin(req);
+    return this.prisma.gameActivity.findMany({
+      where: sceneId ? { sceneId } : undefined,
+      orderBy: { title: 'asc' },
+      include: { roomLinks: { select: { roomId: true } } },
+    });
+  }
+
+  @Post('activities')
+  async createActivity(@Req() req: Request, @Body() dto: any) {
+    await this.requireAdmin(req);
+    const { roomIds = [], ...fields } = dto;
+    return this.prisma.gameActivity.create({
+      data: {
+        ...this.activityFields(fields),
+        sceneId: dto.sceneId,
+        roomLinks: { create: roomIds.filter(Boolean).map((roomId: string) => ({ roomId })) },
+      },
+      include: { roomLinks: { select: { roomId: true } } },
+    });
+  }
+
+  @Patch('activities/:id')
+  async updateActivity(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
+    await this.requireAdmin(req);
+    const { roomIds, ...fields } = dto;
+    return this.prisma.$transaction(async (tx) => {
+      if (Array.isArray(roomIds)) {
+        await tx.gameRoomActivity.deleteMany({ where: { activityId: id } });
+        if (roomIds.length) {
+          await tx.gameRoomActivity.createMany({
+            data: roomIds.filter(Boolean).map((roomId: string) => ({ roomId, activityId: id })),
+          });
+        }
+      }
+      return tx.gameActivity.update({
+        where: { id },
+        data: this.activityFields(fields),
+        include: { roomLinks: { select: { roomId: true } } },
+      });
+    });
+  }
+
+  @Delete('activities/:id')
+  async deleteActivity(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.prisma.gameActivity.delete({ where: { id } });
+  }
+
+  @Get('commitments')
+  async listCommitments(@Req() req: Request, @Query('sceneId') sceneId?: string) {
+    await this.requireAdmin(req);
+    return this.prisma.gameCommitment.findMany({
+      where: sceneId ? { sceneId } : undefined,
+      orderBy: [{ startMinute: 'asc' }, { priority: 'desc' }],
+      include: {
+        character: { select: { id: true, displayName: true } },
+        room: { select: { id: true, displayName: true, location: { select: { displayName: true } } } },
+      },
+    });
+  }
+
+  @Post('commitments')
+  async createCommitment(@Req() req: Request, @Body() dto: any) {
+    await this.requireAdmin(req);
+    if (!dto.sceneId || !dto.characterId || !dto.roomId || !dto.key) {
+      throw new BadRequestException('日程缺少剧情包、角色或房间');
+    }
+    return this.prisma.gameCommitment.create({
+      data: {
+        key: String(dto.key),
+        sceneId: String(dto.sceneId),
+        characterId: String(dto.characterId),
+        roomId: String(dto.roomId),
+        startMinute: Number(dto.startMinute ?? 0),
+        endMinute: Number(dto.endMinute ?? 0),
+        priority: Number(dto.priority ?? 0),
+        trigger: dto.trigger === 'auto' ? 'auto' : 'click',
+        inkScriptId: dto.inkScriptId ? String(dto.inkScriptId) : null,
+        imageUrl: dto.imageUrl ? String(dto.imageUrl) : null,
+        slotImages: dto.slotImages ?? undefined,
+        timeFrom: dto.timeFrom == null || dto.timeFrom === '' ? null : Number(dto.timeFrom),
+        timeTo: dto.timeTo == null || dto.timeTo === '' ? null : Number(dto.timeTo),
+        questId: dto.questId ? String(dto.questId) : null,
+        questAction: dto.questAction === 'start' || dto.questAction === 'continue' ? dto.questAction : null,
+      },
+    });
+  }
+
+  @Patch('commitments/:id')
+  async updateCommitment(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
+    await this.requireAdmin(req);
+    return this.prisma.gameCommitment.update({
+      where: { id },
+      data: {
+        key: dto.key ? String(dto.key) : undefined,
+        characterId: dto.characterId ? String(dto.characterId) : undefined,
+        roomId: dto.roomId ? String(dto.roomId) : undefined,
+        startMinute: dto.startMinute == null ? undefined : Number(dto.startMinute),
+        endMinute: dto.endMinute == null ? undefined : Number(dto.endMinute),
+        priority: dto.priority == null ? undefined : Number(dto.priority),
+        trigger: dto.trigger == null ? undefined : (dto.trigger === 'auto' ? 'auto' : 'click'),
+        inkScriptId: dto.inkScriptId === undefined ? undefined : (dto.inkScriptId ? String(dto.inkScriptId) : null),
+        imageUrl: dto.imageUrl === undefined ? undefined : (dto.imageUrl ? String(dto.imageUrl) : null),
+        slotImages: dto.slotImages === undefined ? undefined : dto.slotImages,
+        timeFrom: dto.timeFrom === undefined ? undefined : (dto.timeFrom == null || dto.timeFrom === '' ? null : Number(dto.timeFrom)),
+        timeTo: dto.timeTo === undefined ? undefined : (dto.timeTo == null || dto.timeTo === '' ? null : Number(dto.timeTo)),
+        questId: dto.questId === undefined ? undefined : (dto.questId ? String(dto.questId) : null),
+        questAction: dto.questAction === undefined ? undefined : (dto.questAction === 'start' || dto.questAction === 'continue' ? dto.questAction : null),
+      },
+    });
+  }
+
+  @Delete('commitments/:id')
+  async deleteCommitment(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.prisma.gameCommitment.delete({ where: { id } });
+  }
+
+  @Get('quests')
+  async listQuests(@Req() req: Request, @Query('sceneId') sceneId?: string) {
+    await this.requireAdmin(req);
+    return this.prisma.gameQuest.findMany({
+      where: sceneId ? { sceneId } : undefined,
+      orderBy: { title: 'asc' },
+      include: {
+        stages: {
+          orderBy: { sortOrder: 'asc' },
+          include: { actions: { orderBy: { sortOrder: 'asc' } } },
+        },
+      },
+    });
+  }
+
+  @Post('quests')
+  async createQuest(@Req() req: Request, @Body() dto: any) {
+    await this.requireAdmin(req);
+    return this.prisma.$transaction(async (tx) => {
+      const quest = await tx.gameQuest.create({
+        data: { key: dto.key, title: dto.title, summary: dto.summary || null, imageUrl: dto.imageUrl || null, sceneId: dto.sceneId },
+      });
+      await this.replaceQuestStages(tx, quest.id, dto.stages ?? []);
+      return tx.gameQuest.findUniqueOrThrow({
+        where: { id: quest.id },
+        include: { stages: { orderBy: { sortOrder: 'asc' }, include: { actions: { orderBy: { sortOrder: 'asc' } } } } },
+      });
+    });
+  }
+
+  @Patch('quests/:id')
+  async updateQuest(@Req() req: Request, @Param('id') id: string, @Body() dto: any) {
+    await this.requireAdmin(req);
+    return this.prisma.$transaction(async (tx) => {
+      await tx.gameQuest.update({
+        where: { id },
+        data: { key: dto.key, title: dto.title, summary: dto.summary || null, imageUrl: dto.imageUrl || null },
+      });
+      if (Array.isArray(dto.stages)) await this.replaceQuestStages(tx, id, dto.stages);
+      return tx.gameQuest.findUniqueOrThrow({
+        where: { id },
+        include: { stages: { orderBy: { sortOrder: 'asc' }, include: { actions: { orderBy: { sortOrder: 'asc' } } } } },
+      });
+    });
+  }
+
+  @Delete('quests/:id')
+  async deleteQuest(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.prisma.gameQuest.delete({ where: { id } });
+  }
+
+  private activityFields(dto: any) {
+    return {
+      key: dto.key,
+      title: dto.title,
+      minutes: Number(dto.minutes ?? 0),
+      startMinute: dto.startMinute === '' || dto.startMinute == null ? null : Number(dto.startMinute),
+      endMinute: dto.endMinute === '' || dto.endMinute == null ? null : Number(dto.endMinute),
+      timeFrom: dto.timeFrom === '' || dto.timeFrom == null ? null : Number(dto.timeFrom),
+      timeTo: dto.timeTo === '' || dto.timeTo == null ? null : Number(dto.timeTo),
+      trigger: dto.trigger === 'auto' ? 'auto' : 'click',
+      inkScriptId: dto.inkScriptId || null,
+      iconUrl: dto.iconUrl || null,
+      availableFromDate: dto.availableFromDate === '' || dto.availableFromDate == null ? null : Number(dto.availableFromDate),
+      availableUntilDate: dto.availableUntilDate === '' || dto.availableUntilDate == null ? null : Number(dto.availableUntilDate),
+      questId: dto.questId || null,
+      questAction: dto.questAction === 'start' || dto.questAction === 'continue' ? dto.questAction : null,
+      hiddenFlag: dto.hiddenFlag || null,
+      disabledFlag: dto.disabledFlag || null,
+    };
+  }
+
+  private async replaceQuestStages(tx: any, questId: string, stages: any[]) {
+    await tx.gameQuestStage.deleteMany({ where: { questId } });
+    for (const [index, stage] of stages.entries()) {
+      await tx.gameQuestStage.create({
+        data: {
+          questId,
+          stageKey: stage.stageKey,
+          title: stage.title,
+          description: stage.description || null,
+          sortOrder: Number(stage.sortOrder ?? index),
+          deltaDays: stage.deltaDays === '' || stage.deltaDays == null ? null : Number(stage.deltaDays),
+          startNote: stage.startNote || null,
+          requiredFlags: stage.requiredFlags ?? undefined,
+          actions: {
+            create: (stage.actions ?? []).map((action: any, actionIndex: number) => ({
+              sortOrder: Number(action.sortOrder ?? actionIndex),
+              phase: action.phase === 'on_continue' ? 'on_continue' : 'on_start',
+              kind: action.kind === 'add_commitment' ? 'add_commitment' : 'add_activity',
+              activityId: action.activityId || null,
+              commitmentId: action.commitmentId || null,
+              roomId: action.roomId || null,
+            })),
+          },
+        },
+      });
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════
   // GAME MAPS + LOCATIONS + ROOMS（NQTR Navigation: Map→Location→Room）
   // ════════════════════════════════════════════════════════════
 
@@ -2166,9 +2402,6 @@ ${candidateLines}
           include: {
             rooms: {
               orderBy: { sortOrder: 'asc' },
-              include: {
-                npcs: { include: { character: true } },
-              },
             },
           },
         },
@@ -2225,9 +2458,6 @@ ${candidateLines}
         map: { select: { id: true, displayName: true } },
         rooms: {
           orderBy: { sortOrder: 'asc' },
-          include: {
-            npcs: { include: { character: true } },
-          },
         },
       },
     });
@@ -2282,7 +2512,6 @@ ${candidateLines}
       orderBy: { sortOrder: 'asc' },
       include: {
         location: { select: { id: true, displayName: true, map: { select: { id: true, displayName: true } } } },
-        npcs: { include: { character: true } },
       },
     });
   }
@@ -2322,20 +2551,6 @@ ${candidateLines}
       );
       return tx.gameRoom.delete({ where: { id } });
     });
-  }
-
-  // ─── Room NPCs ──────────────────────────────────────────────
-
-  @Post('room-npcs')
-  async addRoomNpc(@Req() req: Request, @Body() dto: { roomId: string; characterId: string; sortOrder?: number }) {
-    await this.requireAdmin(req);
-    return this.prisma.gameRoomNpc.create({ data: dto, include: { character: true } });
-  }
-
-  @Delete('room-npcs/:id')
-  async removeRoomNpc(@Req() req: Request, @Param('id') id: string) {
-    await this.requireAdmin(req);
-    return this.prisma.gameRoomNpc.delete({ where: { id } });
   }
 
   // ════════════════════════════════════════════════════════════

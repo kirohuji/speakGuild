@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
-import { Application, Assets, Container, Graphics, Sprite, Texture, TilingSprite } from 'pixi.js'
-import { getBearerToken } from '@/features/auth/client'
-import { inlineFileAssetContentUrl, resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
-import { isNative } from '@/lib/native'
+import { Application, Container, Graphics, Sprite, TilingSprite } from 'pixi.js'
+import { resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
+import { loadPixiTexture } from '@/lib/pixi-texture'
 
 export type BackgroundFit = 'cover' | 'contain' | 'stretch' | 'repeat'
 export type StageVariant = 'portrait' | 'landscape' | 'mixed'
@@ -19,75 +18,6 @@ interface PixiVnStageProps {
   /** Positive moves down; negative moves the portrait up from its stage baseline. */
   spriteVerticalOffset?: number
   portraitScale?: number
-}
-
-function hasImageExtension(url: string) {
-  return /\.(png|jpe?g|webp|gif|avif|svg)(?:[?#]|$)/i.test(url)
-}
-
-function isOwnCosUrl(url: string) {
-  try {
-    return new URL(url).hostname.endsWith('.myqcloud.com')
-  } catch {
-    return false
-  }
-}
-
-const proxiedTextureUrls = new Map<string, string>()
-
-/**
- * WebGL fetches pixels itself. A redirect to COS has no CORS header, so the
- * browser blocks it. Ask our API for the bytes, or proxy an already-signed COS URL.
- * Native builds keep the original local file URL.
- */
-async function pixiLoadableUrl(url: string): Promise<string> {
-  if (isNative()) return url
-  const inline = inlineFileAssetContentUrl(url)
-  if (inline) return inline
-  if (!isOwnCosUrl(url)) return url
-  const cached = proxiedTextureUrls.get(url)
-  if (cached) return cached
-  // This endpoint streams our own COS object and keeps the response on the API origin.
-  const apiBase = (import.meta.env.VITE_API_BASE_URL || '/api/v1/manyu').replace(/\/$/, '')
-  const endpoint = `${apiBase}/file-assets/sampling/proxy?url=${encodeURIComponent(url)}`
-  const token = getBearerToken()
-  const response = await fetch(endpoint, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  })
-  if (!response.ok) throw new Error(`texture proxy failed: ${response.status}`)
-  const blobUrl = URL.createObjectURL(await response.blob())
-  proxiedTextureUrls.set(url, blobUrl)
-  return blobUrl
-}
-
-function isStageTextureUrl(url: string) {
-  return /^(data:|blob:|file:|capacitor:|https?:)/i.test(url)
-}
-
-/** Content URLs have no file extension, so Pixi will not pick an image parser on its own. */
-async function loadStageTexture(url: string): Promise<Texture> {
-  const loadUrl = await pixiLoadableUrl(url)
-  if (!isStageTextureUrl(loadUrl)) {
-    throw new Error(`unresolved local asset: ${url}`)
-  }
-  if (hasImageExtension(loadUrl)) {
-    const texture = await Assets.load<Texture>(loadUrl)
-    if (!texture) throw new Error(`empty texture: ${url}`)
-    return texture
-  }
-  if (Assets.cache.has(loadUrl)) {
-    const cached = Assets.get<Texture>(loadUrl)
-    if (cached) return cached
-    // A previous extensionless attempt can sit in the cache with no parser.
-    await Assets.unload(loadUrl)
-  }
-  const texture = await Assets.load<Texture>({
-    src: loadUrl,
-    parser: 'texture',
-    data: { scaleMode: 'linear' },
-  })
-  if (!texture) throw new Error(`empty texture: ${url}`)
-  return texture
 }
 
 function fitBackground(sprite: Sprite | TilingSprite, width: number, height: number, fit: BackgroundFit) {
@@ -385,7 +315,7 @@ export function PixiVnStage({
       }
 
       try {
-        const texture = await loadStageTexture(backgroundUrl)
+        const texture = await loadPixiTexture(backgroundUrl)
         if (cancelled || !rootRef.current) return
         const newSprite = backgroundFit === 'repeat'
           ? new TilingSprite({ texture, width: 1, height: 1 })
@@ -427,7 +357,7 @@ export function PixiVnStage({
       }
 
       try {
-        const texture = await loadStageTexture(spriteUrl)
+        const texture = await loadPixiTexture(spriteUrl)
         if (cancelled || !rootRef.current) return
         const newSprite = new Sprite(texture)
         newSprite.alpha = 0

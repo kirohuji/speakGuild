@@ -108,7 +108,7 @@ export class EnglishPracticeService {
         backgroundUrl: true,
         rooms: {
           select: {
-            npcs: {
+            commitments: {
               include: {
                 character: {
                   select: {
@@ -122,14 +122,14 @@ export class EnglishPracticeService {
                   },
                 },
               },
-              orderBy: { sortOrder: 'asc' },
+              orderBy: { startMinute: 'asc' },
             },
           },
         },
       },
     });
-    const allNpcs = gameLocation?.rooms.flatMap((r) => r.npcs) ?? [];
-    const fallbackCharacters = allNpcs.length
+    const allCommitments = gameLocation?.rooms.flatMap((r) => r.commitments) ?? [];
+    const fallbackCharacters = allCommitments.length
       ? []
       : await this.prisma.gameCharacter.findMany({
           select: {
@@ -143,8 +143,8 @@ export class EnglishPracticeService {
           },
           orderBy: { name: 'asc' },
         });
-    const sceneCharacters = allNpcs.length
-      ? allNpcs.map((npc) => npc.character)
+    const sceneCharacters = allCommitments.length
+      ? allCommitments.map((commitment) => commitment.character)
       : fallbackCharacters;
 
     return {

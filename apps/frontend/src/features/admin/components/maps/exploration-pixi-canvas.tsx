@@ -25,6 +25,8 @@ import { LocateFixed, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/cn";
+import { resolveFileAssetUrl } from "@/lib/file-asset-reference";
+import { isPixiFetchableUrl, loadPixiTexture, pixiLoadableUrl } from "@/lib/pixi-texture";
 import type {
   ResourceMask,
   ResourceMaskPoint,
@@ -371,25 +373,48 @@ export function ExplorationPixiCanvas({
       : props.timeOfDay === "golden"
         ? "bg-amber-950"
         : "bg-sky-950";
+  const editorSurface = props.editable && !props.mobilePreview;
 
   return (
     <div
-      ref={hostRef}
       className={cn(
-        "relative overflow-hidden border shadow-inner",
-        props.mobilePreview
-          ? props.previewOrientation === "landscape"
-            ? "h-[min(480px,70vh)] min-h-[360px] rounded-[1.5rem]"
-            : "h-[min(760px,76vh)] min-h-[600px] rounded-[1.75rem]"
-          : "h-[min(760px,74vh)] min-h-[540px] rounded-2xl",
-        themeClass,
+        "flex min-h-0 min-w-0 flex-col overflow-hidden",
+        editorSurface
+          ? "h-full w-full"
+          : cn(
+              "relative border shadow-inner",
+              props.mobilePreview
+                ? props.previewOrientation === "landscape"
+                  ? "h-[min(480px,70vh)] min-h-[360px] rounded-[1.5rem]"
+                  : "h-[min(760px,76vh)] min-h-[600px] rounded-[1.75rem]"
+                : "h-[min(760px,74vh)] min-h-[540px] rounded-2xl",
+              themeClass,
+            ),
         props.className,
       )}
     >
+      <div
+        ref={hostRef}
+        className={cn(
+          "relative min-h-0 min-w-0",
+          editorSurface ? "w-full flex-1" : "absolute inset-0",
+        )}
+        style={
+          editorSurface
+            ? {
+                backgroundColor: "hsl(var(--muted) / 0.72)",
+                backgroundImage:
+                  "radial-gradient(circle, hsl(var(--muted-foreground) / 0.28) 1px, transparent 1px)",
+                backgroundSize: "18px 18px",
+              }
+            : undefined
+        }
+      >
       <div className="absolute inset-0 z-10">
         <Application
           resizeTo={hostRef as React.RefObject<HTMLElement>}
           background={props.timeOfDay === "night" ? 0x07111f : 0x10263a}
+          backgroundAlpha={editorSurface ? 0 : 1}
           antialias
           autoDensity
           resolution={Math.min(window.devicePixelRatio || 1, 2)}
@@ -409,16 +434,13 @@ export function ExplorationPixiCanvas({
         </Application>
       </div>
 
-      <div className="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2">
-        <Badge className="pointer-events-auto" variant="secondary">
-          {props.editable ? "编辑视图" : "玩家预览"}
-        </Badge>
-        {props.editable && (
-          <Badge className="pointer-events-auto" variant="outline">
-            {Math.round(camera.zoom * 100)}%
+      {!editorSurface && (
+        <div className="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2">
+          <Badge className="pointer-events-auto" variant="secondary">
+            玩家预览
           </Badge>
-        )}
-      </div>
+        </div>
+      )}
 
       {props.mobilePreview ? (
         <div className="absolute bottom-3 right-3 z-20 flex flex-col items-end gap-1.5">
@@ -435,7 +457,7 @@ export function ExplorationPixiCanvas({
                 </div>
               ) : (
                 <img
-                  src={props.backgroundUrl}
+                  src={resolveFileAssetUrl(props.backgroundUrl)}
                   alt=""
                   className="size-full object-fill"
                   aria-hidden
@@ -481,38 +503,46 @@ export function ExplorationPixiCanvas({
             </Button>
           </div>
         </div>
-      ) : (
-        <>
-          <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1 rounded-xl border bg-background/90 p-1 shadow-lg backdrop-blur">
+      ) : null}
+      </div>
+      {editorSurface && (
+        <div className="flex h-9 shrink-0 items-center justify-between gap-3 bg-card px-3">
+          <p className="min-w-0 truncate text-[11px] text-muted-foreground">
+            拖动空白处平移 · 滚轮缩放 · 拖动元素调整位置
+          </p>
+          <div className="flex shrink-0 items-center gap-1">
+            <span className="mr-1 text-[11px] tabular-nums text-muted-foreground">
+              {worldWidth} × {worldHeight}
+            </span>
             <Button
               aria-label="缩小地图"
-              size="icon"
+              size="icon-sm"
               variant="ghost"
               onClick={() => zoomBy(1 / 1.2)}
             >
               <Minus />
             </Button>
-            <Button
-              aria-label="重置视角"
-              size="icon"
-              variant="ghost"
-              onClick={resetCamera}
-            >
-              <LocateFixed />
-            </Button>
+            <span className="w-10 text-center text-[11px] tabular-nums">
+              {Math.round(camera.zoom * 100)}%
+            </span>
             <Button
               aria-label="放大地图"
-              size="icon"
+              size="icon-sm"
               variant="ghost"
               onClick={() => zoomBy(1.2)}
             >
               <Plus />
             </Button>
+            <Button
+              aria-label="重置视角"
+              size="icon-sm"
+              variant="ghost"
+              onClick={resetCamera}
+            >
+              <LocateFixed />
+            </Button>
           </div>
-          <p className="pointer-events-none absolute bottom-4 left-4 z-20 rounded-full bg-background/80 px-3 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur">
-            拖动空白处平移 · 滚轮缩放 · 拖动物件调整位置
-          </p>
-        </>
+        </div>
       )}
     </div>
   );
@@ -678,12 +708,16 @@ function ExplorationStage({
 
   const drawFrame = useCallback(
     (g: PixiGraphics) => {
-      g.clear()
-        .roundRect(0, 0, worldWidth, worldHeight, 24)
+      g.clear();
+      if (editable) {
+        g.rect(0, 0, worldWidth, worldHeight).fill({ color: 0x000000, alpha: 0.01 });
+        return;
+      }
+      g.roundRect(0, 0, worldWidth, worldHeight, 24)
         .fill({ color: 0x182131 })
         .stroke({ color: 0xffffff, alpha: 0.1, width: 2 / scale });
     },
-    [scale, worldHeight, worldWidth],
+    [editable, scale, worldHeight, worldWidth],
   );
 
   useEffect(() => {
@@ -1360,6 +1394,27 @@ function OcclusionNode({
   );
 }
 
+function watchPixiSource(url: string, load: (src: string) => Promise<void>) {
+  let cancelled = false;
+  let retained: string | null = null;
+  void (async () => {
+    const src = await pixiLoadableUrl(url);
+    if (cancelled || !isPixiFetchableUrl(src)) return;
+    retained = src;
+    retainAsset(src);
+    if (cancelled) {
+      releaseAsset(src);
+      retained = null;
+      return;
+    }
+    await load(src);
+  })().catch(() => undefined);
+  return () => {
+    cancelled = true;
+    if (retained) releaseAsset(retained);
+  };
+}
+
 function useVideoTexture(url?: string | null) {
   const [texture, setTexture] = useState<Texture | null>(null);
   useEffect(() => {
@@ -1368,28 +1423,28 @@ function useVideoTexture(url?: string | null) {
       return;
     }
     let active = true;
-    retainAsset(url);
-    void Assets.load({
-      src: url,
-      parser: "video",
-      data: {
-        autoPlay: true,
-        loop: true,
-        muted: true,
-        playsinline: true,
-        preload: true,
-        scaleMode: "linear",
-      },
-    })
-      .then((loaded) => {
+    const stop = watchPixiSource(url, async (src) => {
+      try {
+        const loaded = await Assets.load({
+          src,
+          parser: "video",
+          data: {
+            autoPlay: true,
+            loop: true,
+            muted: true,
+            playsinline: true,
+            preload: true,
+            scaleMode: "linear",
+          },
+        });
         if (active) setTexture(loaded as Texture);
-      })
-      .catch(() => {
+      } catch {
         if (active) setTexture(null);
-      });
+      }
+    });
     return () => {
       active = false;
-      releaseAsset(url);
+      stop();
     };
   }, [url]);
   return texture;
@@ -1403,24 +1458,24 @@ function useSpritesheet(url?: string | null) {
       return;
     }
     let active = true;
-    retainAsset(url);
-    void Assets.load({
-      src: url,
-      parser: "spritesheet",
-      data: {
-        cachePrefix: `${url}#`,
-        textureOptions: { scaleMode: "linear" },
-      },
-    })
-      .then((loaded) => {
+    const stop = watchPixiSource(url, async (src) => {
+      try {
+        const loaded = await Assets.load({
+          src,
+          parser: "spritesheet",
+          data: {
+            cachePrefix: `${src}#`,
+            textureOptions: { scaleMode: "linear" },
+          },
+        });
         if (active) setSpritesheet(loaded as Spritesheet);
-      })
-      .catch(() => {
+      } catch {
         if (active) setSpritesheet(null);
-      });
+      }
+    });
     return () => {
       active = false;
-      releaseAsset(url);
+      stop();
     };
   }, [url]);
   return spritesheet;
@@ -1429,28 +1484,22 @@ function useSpritesheet(url?: string | null) {
 function useTexture(url?: string | null) {
   const [texture, setTexture] = useState<Texture | null>(null);
   useEffect(() => {
-    let active = true;
     if (!url) {
       setTexture(null);
       return;
     }
-    retainAsset(url);
-    Assets.load({
-      src: url,
-      parser: "texture",
-      data: { scaleMode: "linear" },
-    })
-      .then((loaded) => {
-        if (active) {
-          setTexture(loaded as Texture);
-        }
-      })
-      .catch(() => {
+    let active = true;
+    const stop = watchPixiSource(url, async (src) => {
+      try {
+        const loaded = await loadPixiTexture(src);
+        if (active) setTexture(loaded);
+      } catch {
         if (active) setTexture(null);
-      });
+      }
+    });
     return () => {
       active = false;
-      releaseAsset(url);
+      stop();
     };
   }, [url]);
   return texture;

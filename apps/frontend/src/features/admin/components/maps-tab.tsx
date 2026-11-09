@@ -8,7 +8,6 @@ import {
   Plus,
   Sparkles,
   Trash2,
-  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -25,22 +24,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectItem } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  addRoomNpc,
   createLocation,
   createMap,
   createRoom,
   deleteLocation,
   deleteMap,
   deleteRoom,
-  listCharacters,
   listLocations,
   listMaps,
   listRooms,
-  removeRoomNpc,
   updateLocation,
   updateMap,
   updateRoom,
-  type GameCharacter,
   type GameLocationData,
   type GameMapData,
   type GameRoomData,
@@ -70,7 +65,6 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
   const [maps, setMaps] = useState<GameMapData[]>([]);
   const [locations, setLocations] = useState<GameLocationData[]>([]);
   const [rooms, setRooms] = useState<GameRoomData[]>([]);
-  const [characters, setCharacters] = useState<GameCharacter[]>([]);
   const [loading, setLoading] = useState(true);
   const [mapId, setMapId] = useState("");
   const [locationId, setLocationId] = useState("");
@@ -109,23 +103,18 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
     inkScriptId: "",
     isEntrance: false,
   });
-  const [npcDialog, setNpcDialog] = useState(false);
-  const [npcCharacterId, setNpcCharacterId] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [nextMaps, nextLocations, nextRooms, nextCharacters] =
-        await Promise.all([
+      const [nextMaps, nextLocations, nextRooms] = await Promise.all([
           listMaps(),
           listLocations(),
           listRooms(),
-          listCharacters(),
         ]);
       setMaps(nextMaps);
       setLocations(nextLocations);
       setRooms(nextRooms);
-      setCharacters(nextCharacters);
       onLocationsChange?.(nextLocations);
       setMapId((current) =>
         nextMaps.some((item) => item.id === current)
@@ -383,30 +372,6 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
       toast.error("房间删除失败");
     }
   };
-  const addNpc = async () => {
-    if (!selectedRoom || !npcCharacterId) return;
-    setSaving(true);
-    try {
-      await addRoomNpc({
-        roomId: selectedRoom.id,
-        characterId: npcCharacterId,
-      });
-      setNpcDialog(false);
-      await load();
-    } catch {
-      toast.error("NPC 添加失败");
-    } finally {
-      setSaving(false);
-    }
-  };
-  const removeNpc = async (id: string) => {
-    try {
-      await removeRoomNpc(id);
-      await load();
-    } catch {
-      toast.error("NPC 移除失败");
-    }
-  };
 
   if (loading)
     return (
@@ -606,41 +571,7 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
                 <Edit3 className="mr-1 size-4" />
                 编辑房间
               </Button>
-              <div className="rounded-lg border p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-xs font-semibold">场景 NPC</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setNpcCharacterId("");
-                      setNpcDialog(true);
-                    }}
-                  >
-                    <Plus className="size-3.5" />
-                  </Button>
-                </div>
-                {selectedRoom.npcs?.map((npc) => (
-                  <div
-                    key={npc.id}
-                    className="flex items-center gap-2 py-1.5 text-xs"
-                  >
-                    <Users className="size-3.5" />
-                    <span className="min-w-0 flex-1 truncate">
-                      {npc.character.displayName}
-                    </span>
-                    <button
-                      aria-label="移除 NPC"
-                      onClick={() => void removeNpc(npc.id)}
-                    >
-                      <Trash2 className="size-3 text-destructive" />
-                    </button>
-                  </div>
-                ))}
-                {!selectedRoom.npcs?.length && (
-                  <p className="text-xs text-muted-foreground">尚未放置 NPC</p>
-                )}
-              </div>
+              <p className="text-xs text-muted-foreground">角色何时出现，在共享资产的「日程」里登记。地图热点只负责进入地点或房间。</p>
               <Button className="w-full" variant="ghost" onClick={removeRoom}>
                 <Trash2 className="mr-1 size-4 text-destructive" />
                 删除房间
@@ -883,45 +814,6 @@ export function MapsTab({ onLocationsChange }: MapsTabProps) {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={npcDialog} onOpenChange={setNpcDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>放置 NPC</DialogTitle>
-          </DialogHeader>
-          <div>
-            <Label>选择全局角色</Label>
-            <Select
-              value={npcCharacterId}
-              onChange={(e) => setNpcCharacterId(e.target.value)}
-            >
-              <option value="">选择角色</option>
-              {characters
-                .filter(
-                  (character) =>
-                    !selectedRoom?.npcs?.some(
-                      (npc) => npc.character.id === character.id,
-                    ),
-                )
-                .map((character) => (
-                  <option key={character.id} value={character.id}>
-                    {character.displayName}
-                  </option>
-                ))}
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNpcDialog(false)}>
-              取消
-            </Button>
-            <Button
-              onClick={() => void addNpc()}
-              disabled={saving || !npcCharacterId}
-            >
-              添加 NPC
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

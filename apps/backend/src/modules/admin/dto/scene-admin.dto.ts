@@ -1,5 +1,5 @@
 import {
-  IsString, IsOptional, IsInt, IsArray, Min, Max, IsIn, IsBoolean,
+  IsString, IsOptional, IsInt, IsArray, Min, Max, IsIn, IsBoolean, IsObject,
 } from 'class-validator';
 
 export class CreateSceneCategoryDto {
@@ -35,12 +35,12 @@ export class CreateSceneDto {
   categoryId?: string;
 
   @IsOptional()
-  @IsIn(['daily', 'exam', 'story', 'course', 'foundation'])
-  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation';
+  @IsIn(['daily', 'exam', 'story', 'course', 'foundation', 'nqtr'])
+  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation' | 'nqtr';
 
   @IsOptional()
-  @IsIn(['practice', 'writing', 'reading', 'listening', 'novel', 'story'])
-  contentMode?: 'practice' | 'writing' | 'reading' | 'listening' | 'novel' | 'story';
+  @IsIn(['practice', 'writing', 'reading', 'listening', 'novel', 'story', 'nqtr'])
+  contentMode?: 'practice' | 'writing' | 'reading' | 'listening' | 'novel' | 'story' | 'nqtr';
 
   @IsString()
   title: string;
@@ -77,12 +77,12 @@ export class UpdateSceneDto {
   categoryId?: string;
 
   @IsOptional()
-  @IsIn(['daily', 'exam', 'story', 'course', 'foundation'])
-  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation';
+  @IsIn(['daily', 'exam', 'story', 'course', 'foundation', 'nqtr'])
+  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation' | 'nqtr';
 
   @IsOptional()
-  @IsIn(['practice', 'writing', 'reading', 'listening', 'novel', 'story'])
-  contentMode?: 'practice' | 'writing' | 'reading' | 'listening' | 'novel' | 'story';
+  @IsIn(['practice', 'writing', 'reading', 'listening', 'novel', 'story', 'nqtr'])
+  contentMode?: 'practice' | 'writing' | 'reading' | 'listening' | 'novel' | 'story' | 'nqtr';
 
   @IsOptional()
   @IsString()
@@ -112,6 +112,14 @@ export class UpdateSceneDto {
   @IsOptional()
   @IsString()
   coverImage?: string;
+
+  @IsOptional()
+  @IsString()
+  nqtrMapId?: string | null;
+
+  @IsOptional()
+  @IsObject()
+  nqtrTime?: Record<string, unknown>;
 }
 
 export class CreateVocabularyDto {

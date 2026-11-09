@@ -334,10 +334,10 @@ export function CharactersTab({ onCharactersChange }: CharactersTabProps) {
                   {item.voiceBindings?.length ? (
                     <Badge variant="outline" className="text-[10px]"><Volume2 className="mr-0.5 size-2.5" />{item.voiceBindings.length} 个音色</Badge>
                   ) : null}
-                  {item.roomNpcs?.length ? (
+                  {item.commitments?.length ? (
                     <Badge variant="outline" className="text-[10px]">
                       <MapPin className="mr-0.5 size-2.5" />
-                      {item.roomNpcs.length} 个房间
+                      {item.commitments.length} 条日程
                     </Badge>
                   ) : null}
                 </div>

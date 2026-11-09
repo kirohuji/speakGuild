@@ -1049,7 +1049,7 @@ export class LearningService {
         backgroundUrl: true,
         rooms: {
           select: {
-            npcs: {
+            commitments: {
               include: {
                 character: {
                   select: this.storyCharacterVisualSelect,
@@ -1060,7 +1060,7 @@ export class LearningService {
         },
       },
     });
-    const locationCharacters = gameLocation?.rooms.flatMap((room) => room.npcs.map((npc) => npc.character)) ?? [];
+    const locationCharacters = gameLocation?.rooms.flatMap((room) => room.commitments.map((commitment) => commitment.character)) ?? [];
     const castCharacters = await this.findStoryCastCharacters([inkScript]);
     const characters = this.mergeCharactersById(castCharacters, locationCharacters);
     const resolvedAssetMap = Object.fromEntries(await Promise.all(
@@ -1650,7 +1650,7 @@ export class LearningService {
         ambientUrl: true,
         rooms: {
           select: {
-            npcs: {
+            commitments: {
               include: {
                 character: {
                   select: {
@@ -1660,15 +1660,15 @@ export class LearningService {
                   },
                 },
               },
-              orderBy: { sortOrder: 'asc' },
+              orderBy: { startMinute: 'asc' },
             },
           },
         },
       },
     });
 
-    const allNpcs = gameLocation?.rooms.flatMap((r) => r.npcs) ?? [];
-    const locationCharacters = allNpcs.map((npc) => npc.character);
+    const allCommitments = gameLocation?.rooms.flatMap((r) => r.commitments) ?? [];
+    const locationCharacters = allCommitments.map((commitment) => commitment.character);
     const castCharacters = this.isStoryLearningPack(unitDetail)
       ? await this.findStoryCastCharacters(episodeInkScripts)
       : [];

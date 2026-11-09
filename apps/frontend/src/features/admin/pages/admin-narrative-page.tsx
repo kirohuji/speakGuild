@@ -10,17 +10,22 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectItem } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { StoryChapterStudio } from '../components/story-chapter-studio'
+import { NarrativeActivityList, NarrativeCommitmentList, NarrativeQuestList } from '../components/narrative-nqtr-registries'
+import { NqtrPackageSetup } from '../components/nqtr-package-setup'
+import { parseNqtrTime, type NqtrTimeSettings } from '../components/maps/nqtr-model'
 import { FileUploadField } from '../components/file-upload-field'
 import {
   listCharacters,
   listLocations,
   listScenes,
+  listMaps,
   listSceneCategories,
   createScene,
   deleteScene,
   updateScene,
   type GameCharacter,
   type GameLocationData,
+  type GameMapData,
   type Scene,
   type SceneCategory,
 } from '../api-content-admin'
@@ -37,7 +42,9 @@ export function AdminNarrativePage() {
   const [packageSaving, setPackageSaving] = useState(false)
   const [deletingPackage, setDeletingPackage] = useState<Scene | null>(null)
   const [packageDeleting, setPackageDeleting] = useState(false)
-  const [packageForm, setPackageForm] = useState({ title: '', description: '', categoryId: '', isFree: false, coverImage: '' })
+  const [maps, setMaps] = useState<GameMapData[]>([])
+  const [nqtrSection, setNqtrSection] = useState<'chapters' | 'activities' | 'commitments' | 'quests' | 'setup'>('setup')
+  const [packageForm, setPackageForm] = useState({ title: '', description: '', categoryId: '', isFree: false, coverImage: '', kind: 'story' as 'story' | 'nqtr' })
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [accessFilter, setAccessFilter] = useState('all')
@@ -51,16 +58,19 @@ export function AdminNarrativePage() {
   })
 
   const loadAssets = useCallback(async () => {
-    const [nextCharacters, nextLocations, nextPackages, nextCategories] = await Promise.all([
+    const [nextCharacters, nextLocations, storyPackages, nqtrPackages, nextCategories, nextMaps] = await Promise.all([
       listCharacters().catch(() => []),
       listLocations().catch(() => []),
       listScenes(undefined, 'story').catch(() => []),
+      listScenes(undefined, 'nqtr').catch(() => []),
       listSceneCategories().catch(() => []),
+      listMaps().catch(() => []),
     ])
     setCharacters(nextCharacters)
     setLocations(nextLocations)
-    setPackages(nextPackages)
+    setPackages([...storyPackages, ...nqtrPackages])
     setCategories(nextCategories)
+    setMaps(nextMaps)
   }, [])
 
   useEffect(() => { void loadAssets() }, [loadAssets])
@@ -79,6 +89,7 @@ export function AdminNarrativePage() {
       categoryId: item?.categoryId ?? categories[0]?.id ?? '',
       isFree: item?.isFree ?? false,
       coverImage: item?.coverImage ?? '',
+      kind: item?.packageType === 'nqtr' ? 'nqtr' : 'story',
     })
     setPackageDialogOpen(true)
   }
@@ -91,8 +102,8 @@ export function AdminNarrativePage() {
         ? await updateScene(editingPackage.id, packageForm)
         : await createScene({
           ...packageForm,
-          packageType: 'story',
-          location: `story:${Date.now().toString(36)}`,
+          packageType: packageForm.kind,
+          location: `${packageForm.kind}:${Date.now().toString(36)}`,
           requiredOutputLevel: 'L1',
           requiredUserLevel: 1,
         })
@@ -154,10 +165,23 @@ export function AdminNarrativePage() {
                   <img src={item.coverImage} alt={item.title} className="size-full object-cover" />
                 </div>
               ) : null}
-              <CardContent className="p-5"><div className="flex items-start gap-3"><div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600"><BookOpen className="size-5" /></div><div className="min-w-0 flex-1"><div className="flex items-center gap-1"><h3 className="min-w-0 flex-1 truncate font-semibold">{item.title}</h3><Button variant="ghost" size="icon" className="size-7" title="编辑剧情包" onClick={(event) => { event.stopPropagation(); openPackageDialog(item) }}><Pencil className="size-3.5" /></Button><Button variant="ghost" size="icon" className="size-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" title="删除剧情包" onClick={(event) => { event.stopPropagation(); setDeletingPackage(item) }}><Trash2 className="size-3.5" /></Button></div><p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{item.description || '尚未填写剧情包简介'}</p><p className="mt-3 text-xs text-muted-foreground">{item._count?.storyEpisodes ?? 0} 个剧集 · {item.isFree ? '免费体验' : '会员内容'}</p></div></div><Button size="sm" className="mt-4 w-full">编辑剧情</Button></CardContent>
+              <CardContent className="p-5"><div className="flex items-start gap-3"><div className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600"><BookOpen className="size-5" /></div><div className="min-w-0 flex-1"><div className="flex items-center gap-1"><h3 className="min-w-0 flex-1 truncate font-semibold">{item.title}</h3><Button variant="ghost" size="icon" className="size-7" title="编辑剧情包" onClick={(event) => { event.stopPropagation(); openPackageDialog(item) }}><Pencil className="size-3.5" /></Button><Button variant="ghost" size="icon" className="size-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" title="删除剧情包" onClick={(event) => { event.stopPropagation(); setDeletingPackage(item) }}><Trash2 className="size-3.5" /></Button></div><p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{item.description || '尚未填写剧情包简介'}</p><p className="mt-3 text-xs text-muted-foreground">{item.packageType === 'nqtr' ? 'NQTR 探索' : '轻量剧情'} · {item._count?.storyEpisodes ?? 0} 个剧集 · {item.isFree ? '免费体验' : '会员内容'}</p></div></div><Button size="sm" className="mt-4 w-full">编辑剧情</Button></CardContent>
             </Card>
           ))}</div> : <div className="rounded-xl border border-dashed py-16 text-center"><BookOpen className="mx-auto size-10 text-muted-foreground/25" /><p className="mt-3 text-sm font-medium">{packages.length ? '没有匹配的剧情包' : '还没有剧情包'}</p><p className="mt-1 text-xs text-muted-foreground">{packages.length ? '尝试调整搜索或筛选条件。' : '点击右上角新建第一本剧情包。'}</p></div>}
         </div>
+      ) : selectedPackage.packageType === 'nqtr' ? (
+        <NqtrPackageWorkspace
+          packageId={selectedPackage.id}
+          mapId={selectedPackage.nqtrMapId}
+          timeSettings={selectedPackage.nqtrTime}
+          characterIds={selectedPackage.nqtrCast?.map((item) => item.characterId) ?? []}
+          maps={maps}
+          characters={characters}
+          locations={locations}
+          section={nqtrSection}
+          onSection={setNqtrSection}
+          onSaved={loadAssets}
+        />
       ) : <StoryChapterStudio
         packageId={selectedPackage.id}
         locations={locations}
@@ -170,6 +194,7 @@ export function AdminNarrativePage() {
           <div className="space-y-4">
             <div><Label>剧情包名称</Label><Input value={packageForm.title} onChange={(event) => setPackageForm({ ...packageForm, title: event.target.value })} placeholder="例如：漫语町奇遇记" /></div>
             <div><Label>剧情分类</Label><Select value={packageForm.categoryId} onChange={(event) => setPackageForm({ ...packageForm, categoryId: event.target.value })}><option value="">选择分类</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</Select>{!categories.length && <p className="mt-1 text-xs text-destructive">当前没有可用的内容分类。</p>}</div>
+            <div><Label>剧情包类型</Label><Select value={packageForm.kind} onChange={(event) => setPackageForm({ ...packageForm, kind: event.target.value === 'nqtr' ? 'nqtr' : 'story' })} disabled={Boolean(editingPackage)}><SelectItem value="story">轻量剧情</SelectItem><SelectItem value="nqtr">NQTR 探索</SelectItem></Select></div>
             <div><Label>剧情简介</Label><Textarea rows={5} value={packageForm.description} onChange={(event) => setPackageForm({ ...packageForm, description: event.target.value })} placeholder="世界观、玩家身份、核心冲突和主要输出体验……" /></div>
             <div>
               <Label>封面图片</Label>
@@ -206,6 +231,83 @@ export function AdminNarrativePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+function NqtrPackageWorkspace({
+  packageId,
+  mapId,
+  timeSettings,
+  characterIds,
+  maps,
+  characters,
+  locations,
+  section,
+  onSection,
+  onSaved,
+}: {
+  packageId: string
+  mapId?: string | null
+  timeSettings?: NqtrTimeSettings | null
+  characterIds: string[]
+  maps: GameMapData[]
+  characters: GameCharacter[]
+  locations: GameLocationData[]
+  section: 'chapters' | 'activities' | 'commitments' | 'quests' | 'setup'
+  onSection: (section: 'chapters' | 'activities' | 'commitments' | 'quests' | 'setup') => void
+  onSaved: () => Promise<void>
+}) {
+  const [draftMapId, setDraftMapId] = useState(mapId ?? '')
+  const [draftCharacters, setDraftCharacters] = useState(characterIds)
+  const [time, setTime] = useState<NqtrTimeSettings>(() => parseNqtrTime(timeSettings))
+  const [saving, setSaving] = useState(false)
+  const sections = [
+    ['setup', '设定'],
+    ['chapters', '对白章节'],
+    ['activities', '行为'],
+    ['commitments', '日程'],
+    ['quests', '任务'],
+  ] as const
+
+  const saveSetup = async () => {
+    setSaving(true)
+    try {
+      await updateScene(packageId, { nqtrMapId: draftMapId || null, characterIds: draftCharacters, nqtrTime: time })
+      await onSaved()
+      toast.success('剧情包设定已保存')
+    } catch {
+      toast.error('剧情包设定保存失败')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="flex min-h-0 flex-col gap-4">
+      <div className="flex flex-wrap gap-2">
+        {sections.map(([key, label]) => (
+          <Button key={key} variant={section === key ? 'default' : 'outline'} onClick={() => onSection(key)}>{label}</Button>
+        ))}
+      </div>
+      {section === 'setup' && (
+        <NqtrPackageSetup
+          maps={maps}
+          characters={characters}
+          mapId={draftMapId}
+          characterIds={draftCharacters}
+          time={time}
+          saving={saving}
+          onMapId={setDraftMapId}
+          onCharacterIds={setDraftCharacters}
+          onTime={setTime}
+          onSave={() => void saveSetup()}
+        />
+      )}
+      {section === 'chapters' && <StoryChapterStudio packageId={packageId} locations={locations} characters={characters.filter((character) => draftCharacters.includes(character.id) || !draftCharacters.length)} />}
+      {section === 'activities' && <NarrativeActivityList sceneId={packageId} mapId={draftMapId || mapId} timeSlots={time.timeSlots} />}
+      {section === 'commitments' && <NarrativeCommitmentList sceneId={packageId} mapId={draftMapId || mapId} timeSlots={time.timeSlots} />}
+      {section === 'quests' && <NarrativeQuestList sceneId={packageId} mapId={draftMapId || mapId} />}
     </div>
   )
 }

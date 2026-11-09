@@ -1,4 +1,5 @@
 import { get, post, patch, del as _delete } from '@/lib/request'
+import type { NqtrTimeSettings } from './components/maps/nqtr-model'
 
 export interface PreviewDialogueTurnResult {
   intent: string
@@ -81,8 +82,8 @@ export async function deleteSceneCategory(id: string): Promise<void> {
 export interface Scene {
   id: string
   categoryId: string | null
-  packageType: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
-  contentMode: 'practice' | 'writing' | 'reading' | 'listening' | 'novel' | 'story'
+  packageType: 'daily' | 'exam' | 'story' | 'course' | 'foundation' | 'nqtr'
+  contentMode: 'practice' | 'writing' | 'reading' | 'listening' | 'novel' | 'story' | 'nqtr'
   title: string
   location: string | null
   description: string | null
@@ -90,6 +91,9 @@ export interface Scene {
   requiredOutputLevel: string
   requiredUserLevel: number
   isFree: boolean
+  nqtrMapId?: string | null
+  nqtrTime?: NqtrTimeSettings | null
+  nqtrCast?: { characterId: string }[]
   category?: { id: string; name: string } | null
   /** 所属学习包组与组内顺序（层 1 顺序约束字段） */
   groupId?: string | null
@@ -238,7 +242,7 @@ export async function createScene(data: Partial<Scene>): Promise<Scene> {
   return post('/admin/content/scenes', data)
 }
 
-export async function updateScene(id: string, data: Partial<Scene>): Promise<Scene> {
+export async function updateScene(id: string, data: Partial<Scene> & { characterIds?: string[] }): Promise<Scene> {
   return patch(`/admin/content/scenes/${id}`, data)
 }
 
@@ -513,7 +517,7 @@ export interface GameCharacter {
   expressions?: any
   defaultPosition?: string | null
   voiceBindings?: CharacterVoiceBinding[]
-  roomNpcs?: { room: { id: string; displayName: string; location: { id: string; displayName: string } } }[]
+  commitments?: { id: string; room: { id: string; displayName: string; location: { id: string; displayName: string } } }[]
   owner?: { id: string; name: string; email: string } | null
 }
 
@@ -705,17 +709,6 @@ export async function updateRoom(id: string, data: Partial<GameRoomData>): Promi
 export async function deleteRoom(id: string): Promise<void> {
   return _delete(`/admin/content/rooms/${id}`)
 }
-
-// ─── Room NPCs ──────────────────────────────────────────────
-
-export async function addRoomNpc(data: { roomId: string; characterId: string; sortOrder?: number }): Promise<any> {
-  return post('/admin/content/room-npcs', data)
-}
-
-export async function removeRoomNpc(id: string): Promise<void> {
-  return _delete(`/admin/content/room-npcs/${id}`)
-}
-
 
 // ─── Stories / Ink Scripts (故事管理) ──────────────────────────
 
@@ -1266,4 +1259,114 @@ export async function listeningPipelineFromAudio(audioFile: File | Blob, languag
     headers: { 'Content-Type': 'multipart/form-data' },
     timeout: 300_000,
   }) as any
+}
+
+export interface NqtrActivity {
+  id: string
+  key: string
+  title: string
+  minutes: number
+  startMinute?: number | null
+  endMinute?: number | null
+  timeFrom?: number | null
+  timeTo?: number | null
+  trigger: 'click' | 'auto'
+  inkScriptId?: string | null
+  iconUrl?: string | null
+  availableFromDate?: number | null
+  availableUntilDate?: number | null
+  questId?: string | null
+  questAction?: 'start' | 'continue' | null
+  hiddenFlag?: string | null
+  disabledFlag?: string | null
+  roomLinks?: { roomId: string }[]
+}
+
+export interface NqtrCommitment {
+  id: string
+  key: string
+  characterId: string
+  roomId: string
+  startMinute: number
+  endMinute: number
+  timeFrom?: number | null
+  timeTo?: number | null
+  priority: number
+  trigger: 'click' | 'auto'
+  inkScriptId?: string | null
+  imageUrl?: string | null
+  slotImages?: Record<string, string> | null
+  questId?: string | null
+  questAction?: 'start' | 'continue' | null
+  character?: { id: string; displayName: string }
+  room?: { id: string; displayName: string; location?: { displayName: string } | null }
+}
+
+export interface NqtrQuestStageAction {
+  id?: string
+  sortOrder?: number
+  kind: 'add_activity' | 'add_commitment'
+  phase?: 'on_start' | 'on_continue'
+  activityId?: string | null
+  commitmentId?: string | null
+  roomId?: string | null
+}
+
+export interface NqtrQuestStage {
+  id?: string
+  stageKey: string
+  title: string
+  description?: string | null
+  sortOrder?: number
+  deltaDays?: number | null
+  startNote?: string | null
+  actions?: NqtrQuestStageAction[]
+}
+
+export interface NqtrQuest {
+  id: string
+  key: string
+  title: string
+  summary?: string | null
+  imageUrl?: string | null
+  stages: NqtrQuestStage[]
+}
+
+export function listActivities(sceneId: string): Promise<NqtrActivity[]> {
+  return get('/admin/content/activities', { sceneId })
+}
+export function createActivity(data: Partial<NqtrActivity> & { roomIds?: string[] }): Promise<NqtrActivity> {
+  return post('/admin/content/activities', data)
+}
+export function updateActivity(id: string, data: Partial<NqtrActivity> & { roomIds?: string[] }): Promise<NqtrActivity> {
+  return patch(`/admin/content/activities/${id}`, data)
+}
+export function deleteActivity(id: string): Promise<void> {
+  return _delete(`/admin/content/activities/${id}`)
+}
+
+export function listCommitments(sceneId: string): Promise<NqtrCommitment[]> {
+  return get('/admin/content/commitments', { sceneId })
+}
+export function createCommitment(data: Partial<NqtrCommitment>): Promise<NqtrCommitment> {
+  return post('/admin/content/commitments', data)
+}
+export function updateCommitment(id: string, data: Partial<NqtrCommitment>): Promise<NqtrCommitment> {
+  return patch(`/admin/content/commitments/${id}`, data)
+}
+export function deleteCommitment(id: string): Promise<void> {
+  return _delete(`/admin/content/commitments/${id}`)
+}
+
+export function listQuests(sceneId: string): Promise<NqtrQuest[]> {
+  return get('/admin/content/quests', { sceneId })
+}
+export function createQuest(data: Partial<NqtrQuest>): Promise<NqtrQuest> {
+  return post('/admin/content/quests', data)
+}
+export function updateQuest(id: string, data: Partial<NqtrQuest>): Promise<NqtrQuest> {
+  return patch(`/admin/content/quests/${id}`, data)
+}
+export function deleteQuest(id: string): Promise<void> {
+  return _delete(`/admin/content/quests/${id}`)
 }

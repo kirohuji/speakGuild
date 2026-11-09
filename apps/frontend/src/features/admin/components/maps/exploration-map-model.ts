@@ -118,6 +118,7 @@ export type ExplorationEditorData = {
   explorationNodeLayers?: Record<string, string>;
   explorationNodeGroups?: Record<string, string>;
   sceneDimensions?: Record<string, SceneDimensions>;
+  dimensionLocks?: Record<string, boolean>;
   preview?: {
     timeOfDay?: "day" | "golden" | "night";
     initialZoom?: number;
@@ -139,6 +140,26 @@ export function getSceneDimensions(
   return {
     width: storedWidth != null ? Math.max(1, Number(storedWidth)) : fallback.width,
     height: storedHeight != null ? Math.max(1, Number(storedHeight)) : fallback.height,
+  };
+}
+
+export function isSceneDimensionLocked(editorData: any, scope: string) {
+  return Boolean(editorData?.dimensionLocks?.[scope]);
+}
+
+export function updateSceneDimensionLock(
+  editorData: any,
+  scope: string,
+  locked: boolean,
+): ExplorationEditorData {
+  const current = (editorData ?? {}) as ExplorationEditorData;
+  return {
+    ...current,
+    version: 4,
+    dimensionLocks: {
+      ...(current.dimensionLocks ?? {}),
+      [scope]: locked,
+    },
   };
 }
 

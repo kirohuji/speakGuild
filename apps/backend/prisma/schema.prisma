@@ -763,7 +763,15 @@ model Scene {
   requiredOutputLevel String                   @default("L1")
   requiredUserLevel   Int                      @default(1)
   isFree              Boolean                  @default(false) // 免费用户可访问
-  coverImage          String? // 学习包封面图 URL
+  coverImage          String?
+  nqtrMap             GameMap?                 @relation("NqtrPackageMap", fields: [nqtrMapId], references: [id], onDelete: SetNull)
+  nqtrMapId           String?
+  /// Pixi-VN timeTracker.initialize 的同一套设定：一天的起止、星期、以及任意多个时段。
+  nqtrTime            Json?
+  nqtrCast            SceneNqtrCharacter[]
+  nqtrActivities      GameActivity[]
+  nqtrCommitments     GameCommitment[]
+  nqtrQuests          GameQuest[]
   groupId             String? // 所属学习包组（null = 未入组，无顺序约束）
   group               PackageGroup?            @relation(fields: [groupId], references: [id])
   sortOrder           Int                      @default(0) // 组内学习顺序，从 0 开始
@@ -792,6 +800,18 @@ model Scene {
   @@map("scene")
 }
 
+/// NQTR 剧情包绑定的出演角色。角色本体仍在共享角色库。
+model SceneNqtrCharacter {
+  scene       Scene         @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId     String
+  character   GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterId String
+
+  @@id([sceneId, characterId])
+  @@index([characterId])
+  @@map("scene_nqtr_character")
+}
+
 enum ContentMode {
   practice
   writing
@@ -799,6 +819,7 @@ enum ContentMode {
   listening
   novel
   story
+  nqtr
 }
 
 enum PackageGroupStatus {
@@ -992,6 +1013,7 @@ enum LearningPackageType {
   story
   course
   foundation
+  nqtr
 }
 
 enum TrainingTopicType {
@@ -1841,7 +1863,8 @@ model GameCharacter {
   spriteBaseUrl      String?
   expressions        Json?
   defaultPosition    String?
-  roomNpcs           GameRoomNpc[]
+  commitments        GameCommitment[]
+  nqtrCast           SceneNqtrCharacter[]
   explorationRecords ExplorationRecord[]
   voiceBindings      CharacterVoiceBinding[]
   owner              User?                   @relation("GameCharacterOwner", fields: [ownerId], references: [id], onDelete: Restrict)
@@ -1909,6 +1932,7 @@ model GameMap {
   height              Int            @default(1080)
   editorData          Json?
   locations           GameLocation[]
+  nqtrScenes          Scene[]                @relation("NqtrPackageMap")
   requiredOutputLevel String         @default("L1")
   requiredChapterId   String?
   disabled            Boolean        @default(false)
@@ -1969,7 +1993,9 @@ model GameRoom {
   isEntrance          Boolean             @default(false)
   disabled            Boolean             @default(false)
   hidden              Boolean             @default(false)
-  npcs                GameRoomNpc[]
+  roomActivities      GameRoomActivity[]
+  commitments         GameCommitment[]
+  stageActions        GameQuestStageAction[]
   explorationRecords  ExplorationRecord[]
   inkScriptId         String?
   requiredOutputLevel String              @default("L1")
@@ -1981,24 +2007,7 @@ model GameRoom {
   @@map("game_room")
 }
 
-// ──── NQTR Routine: NPC 绑定到 Room ────
-
-model GameRoomNpc {
-  id              String        @id @default(cuid())
-  room            GameRoom      @relation(fields: [roomId], references: [id])
-  roomId          String
-  character       GameCharacter @relation(fields: [characterId], references: [id])
-  characterId     String
-  schedule        Json?
-  defaultGreeting String?
-  inkTalkScriptId String?
-  sortOrder       Int           @default(0)
-
-  @@unique([roomId, characterId])
-  @@map("game_room_npc")
-}
-
-// ──── Ink 叙事脚本 & 游戏存档 ────
+// ──── NQTR：角色出现由 GameCommitment 决定，一条日程一个时间段 ────
 
 model InkScript {
   id                String         @id @default(cuid())
@@ -2067,6 +2076,12 @@ model GameSave {
   currentRoomId     String?
   visitedRoomIds    String[] @default([])
   flags             Json?
+  /// 游戏内第几天，从 1 开始。与现实游玩时长 playTimeSeconds 无关。
+  gameDay           Int      @default(1)
+  /// 与时段、行为耗时同一单位的当前时间。18.30 表示 18:30。
+  gameTime         Float    @default(8)
+  /// { [questKey]: { stageKey, status, startedOnDay } }
+  questProgress     Json?
   saveName          String   @default("自动存档")
   playTimeSeconds   Int      @default(0)
   slot              Int      @default(1)
@@ -2076,6 +2091,147 @@ model GameSave {
   @@unique([userId, slot])
   @@index([userId, updatedAt(sort: Desc)])
   @@map("game_save")
+}
+
+/// 全局玩家行为。同一行为可挂到多间房，执行时跳到 inkScriptId。
+model GameActivity {
+  id           String                 @id @default(cuid())
+  key          String                 @unique
+  title        String
+  /// 执行后推进的时间，与 timeSlots.startTime 同一单位。0.30 表示 30 分钟。
+  minutes      Float                  @default(0)
+  startMinute  Int?
+  endMinute    Int?
+  trigger      String                 @default("click")
+  inkScriptId  String?
+  iconUrl      String?
+  /// dateScheduling：从第几天起出现，到第几天消失。空表示不限制。
+  availableFromDate  Int?
+  availableUntilDate Int?
+  /// timeSlot.from / timeSlot.to，与游戏时钟同一单位。from 大于 to 表示跨过一天结束。
+  timeFrom     Float?
+  timeTo       Float?
+  quest        GameQuest?             @relation("ActivityQuest", fields: [questId], references: [id], onDelete: SetNull)
+  questId      String?
+  /// start：执行后领取任务。continue：执行后完成当前阶段。
+  questAction  String?
+  hiddenFlag   String?
+  disabledFlag String?
+  scene        Scene                  @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId      String
+  roomLinks    GameRoomActivity[]
+  stageActions GameQuestStageAction[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@index([sceneId])
+  @@index([questId])
+  @@map("game_activity")
+}
+
+/// 房间引用哪些行为。行为定义在 GameActivity，不写在房间上。
+model GameRoomActivity {
+  room       GameRoom     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId     String
+  activity   GameActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activityId String
+
+  @@id([roomId, activityId])
+  @@index([activityId])
+  @@map("game_room_activity")
+}
+
+/// 一条日程只属于一个角色和一间房，外加一个时间段。同一时刻一个角色只应有一条生效。
+model GameCommitment {
+  id           String                 @id @default(cuid())
+  key          String                 @unique
+  character    GameCharacter          @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterId  String
+  room         GameRoom               @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId       String
+  startMinute  Int
+  endMinute    Int
+  priority     Int                    @default(0)
+  trigger      String                 @default("click")
+  inkScriptId  String?
+  imageUrl     String?
+  /// 各时段立绘。键是时段名称，值是图片地址。
+  slotImages   Json?
+  timeFrom     Float?
+  timeTo       Float?
+  quest        GameQuest?             @relation("CommitmentQuest", fields: [questId], references: [id], onDelete: SetNull)
+  questId      String?
+  questAction  String?
+  scene        Scene                  @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId      String
+  stageActions GameQuestStageAction[]
+  createdAt    DateTime               @default(now())
+
+  @@index([sceneId])
+  @@index([roomId])
+  @@index([characterId])
+  @@index([questId])
+  @@map("game_commitment")
+}
+
+/// 全局任务，不从属于某张地图。阶段开始时再把行为或日程挂到房间。
+model GameQuest {
+  id        String           @id @default(cuid())
+  key       String           @unique
+  title     String
+  summary   String?          @db.Text
+  imageUrl  String?
+  scene     Scene            @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId   String
+  stages    GameQuestStage[]
+  activities GameActivity[]  @relation("ActivityQuest")
+  commitments GameCommitment[] @relation("CommitmentQuest")
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([sceneId])
+  @@map("game_quest")
+}
+
+model GameQuestStage {
+  id            String                 @id @default(cuid())
+  quest         GameQuest              @relation(fields: [questId], references: [id], onDelete: Cascade)
+  questId       String
+  stageKey      String
+  title         String
+  description   String?                @db.Text
+  sortOrder     Int                    @default(0)
+  /// 进入本阶段前还要经过的游戏天数。
+  deltaDays     Int?
+  /// 天数未到时给玩家看的说明。
+  startNote     String?
+  requiredFlags Json?
+  actions       GameQuestStageAction[]
+  createdAt     DateTime               @default(now())
+
+  @@unique([questId, stageKey])
+  @@index([questId, sortOrder])
+  @@map("game_quest_stage")
+}
+
+/// 阶段开始时对房间做的事：挂上一个行为，或启用一条日程。对白仍在行为或日程的 inkScriptId。
+model GameQuestStageAction {
+  id           String          @id @default(cuid())
+  stage        GameQuestStage  @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  stageId      String
+  sortOrder    Int             @default(0)
+  /// on_start：阶段开始时挂上。on_continue：阶段完成时执行。
+  phase        String          @default("on_start")
+  kind         String
+  activity     GameActivity?   @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activityId   String?
+  commitment   GameCommitment? @relation(fields: [commitmentId], references: [id], onDelete: Cascade)
+  commitmentId String?
+  room         GameRoom?       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId       String?
+
+  @@index([stageId, sortOrder])
+  @@map("game_quest_stage_action")
 }
 
 model ExplorationRecord {
