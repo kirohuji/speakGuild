@@ -85,8 +85,18 @@ export interface AdminUserDetail extends AdminUser {
     status: string;
     startedAt: string | null;
     expiredAt: string | null;
+    autoRenew: boolean;
+    cancelledAt: string | null;
+    rcProductId: string | null;
+    pendingProductId: string | null;
     plan: { id: string; name: string; level: string } | null;
   } | null;
+  membershipPurchases?: Array<{
+    id: string;
+    kind: string;
+    purchasedAt: string;
+    expiresAt: string | null;
+  }>;
   _count: {
     practiceSessions: number;
     storyRecords: number;
@@ -168,13 +178,26 @@ export interface AdminMember {
   status: 'active' | 'expired' | 'cancelled';
   startedAt: string;
   expiredAt: string;
+  autoRenew: boolean;
+  cancelledAt: string | null;
   rcCustomerId: string | null;
+  rcProductId: string | null;
+  pendingProductId: string | null;
   user: { id: string; email: string; name: string; username: string | null };
   plan: { id: string; name: string; level: string };
+  order: { billingCycle: string; paymentMethod: 'alipay' | 'wechat'; paidAt: string | null; amount: number } | null;
+}
+
+export interface AdminMemberPurchase {
+  id: string;
+  kind: string;
+  purchasedAt: string;
+  expiresAt: string | null;
 }
 
 export interface AdminMemberDetail extends AdminMember {
   orders: AdminOrder[];
+  purchases: AdminMemberPurchase[];
 }
 
 export interface AdminMembersResult {

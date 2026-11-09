@@ -25,7 +25,7 @@ import {
 } from '@/features/membership/api'
 // import { pointsApi } from '@/features/points/api' // 积分抵扣（暂时停用），恢复时取消注释
 import { cn } from '@/lib/cn'
-import { isNative, revenueCat, REVENUECAT_PRODUCT_IDS } from '@/lib/native'
+import { isNative, revenueCat, REVENUECAT_PRODUCT_IDS, REVENUECAT_UNLIMITED_ENTITLEMENT_ID } from '@/lib/native'
 import { useRevenueCat } from '@/hooks/use-revenuecat'
 import { useUserStore } from '@/stores/user.store'
 import { useAuth } from '@/providers/auth-provider'
@@ -210,13 +210,16 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     try {
       if (!session?.user.id) throw new Error(t('auth.loginPrompt'))
       await revenueCat.identify(session.user.id)
-      await revenueCatState.restorePurchases()
+      const restored = await revenueCatState.restorePurchases()
+      const restoredActive = !!restored?.entitlements.active[REVENUECAT_UNLIMITED_ENTITLEMENT_ID]?.isActive
       const synced = await syncRevenueCatMembership()
       setCurrent(synced)
       setCachedMembership(synced)
-      if (synced.isActive) toast.success(t('member.purchaseRestored'))
+      if (restoredActive && synced.isActive) toast.success(t('member.purchaseRestored'))
+      else if (restoredActive) toast.message(t('member.purchasePending'))
       else toast.message(t('member.noPurchaseRestored'))
     } catch (err: any) {
+      if (err?.userCancelled || err?.code === 'PURCHASE_CANCELLED_ERROR') return
       toast.error(err?.message || t('member.restoreFailed'))
     } finally {
       setSubscriptionAction(null)

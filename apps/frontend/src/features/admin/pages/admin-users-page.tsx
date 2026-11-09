@@ -89,6 +89,15 @@ const platformLabel = (platform: string | null | undefined) => {
   return platform || '未知平台';
 };
 
+const billingCycleLabel = (productId: string | null | undefined, kind?: string | null) => {
+  const value = productId || kind || '';
+  if (value.includes('yearly')) return '年费';
+  if (value.includes('monthly')) return '月费';
+  if (kind === 'gift') return '赠送';
+  if (!value) return '赠送';
+  return value;
+};
+
 const versionWithBuild = (version: string | null | undefined, build: string | null | undefined) => {
   if (!version && !build) return '暂无';
   if (version && build) return `v${version} (${build})`;
@@ -506,13 +515,16 @@ function UserRow({
     setDetailLoading(true);
     setLearningOverview(null);
     setLoginHistory(null);
+    setAiUsage(null);
     try {
-      const [d, overview, history] = await Promise.all([
+      const [d, overview, history, usage] = await Promise.all([
         getUserDetail(user.id),
         getUserLearningOverview(user.id).catch(() => null),
         getUserLoginHistory(user.id, { page: 1, pageSize: 10 }).catch(() => null),
+        getUserAiUsage(user.id).catch(() => null),
       ]);
       setDetail(d);
+      setAiUsage(usage);
       setOtaEnabled(Boolean(d.mobileOtaTester?.enabled));
       setOtaChannel(d.mobileOtaTester?.channel || 'production');
       setOtaPlatform(d.mobileOtaTester?.platform || '');
@@ -758,12 +770,30 @@ function UserRow({
                   </div>
 
                   {detail.membership ? (
-                    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-3">
-                      <p className="text-sm font-medium text-amber-700">{detail.membership.plan?.name || '会员'}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                    <div className="space-y-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-amber-700">{detail.membership.plan?.name || '会员'}</p>
+                        <Badge variant="outline" className="text-[10px]">
+                          {billingCycleLabel(detail.membership.rcProductId)}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
                         {detail.membership.status === 'active' ? '生效中' : detail.membership.status === 'expired' ? '已过期' : '已取消'}
-                        {detail.membership.expiredAt ? ` · ${fmtDateTime(detail.membership.expiredAt)}` : ''}
+                        {detail.membership.rcProductId ? ` · ${detail.membership.autoRenew ? '自动续费' : '到期停止'}` : ''}
                       </p>
+                      <p className="text-xs text-muted-foreground">到期 {fmtDateTime(detail.membership.expiredAt)}</p>
+                      {detail.membership.pendingProductId && (
+                        <p className="text-xs text-amber-700">到期后改{billingCycleLabel(detail.membership.pendingProductId)}</p>
+                      )}
+                      {(detail.membershipPurchases ?? []).length > 0 && (
+                        <div className="space-y-1 border-t border-amber-500/20 pt-2">
+                          {(detail.membershipPurchases ?? []).map((purchase) => (
+                            <p key={purchase.id} className="text-[11px] text-muted-foreground">
+                              {billingCycleLabel(null, purchase.kind)} · 购买 {fmtDateTime(purchase.purchasedAt)}
+                            </p>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="rounded-lg bg-background px-3 py-3">

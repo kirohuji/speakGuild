@@ -116,8 +116,17 @@ export class AdminService {
             status: true,
             startedAt: true,
             expiredAt: true,
+            autoRenew: true,
+            cancelledAt: true,
+            rcProductId: true,
+            pendingProductId: true,
             plan: { select: { id: true, name: true, level: true } },
           },
+        },
+        membershipPurchases: {
+          select: { id: true, kind: true, purchasedAt: true, expiresAt: true },
+          orderBy: { purchasedAt: 'desc' },
+          take: 5,
         },
         mobileOtaTester: true,
         sessions: {
@@ -374,6 +383,7 @@ export class AdminService {
             select: { id: true, email: true, name: true, username: true },
           },
           plan: { select: { id: true, name: true, level: true } },
+          order: { select: { billingCycle: true, paymentMethod: true, paidAt: true, amount: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -393,6 +403,7 @@ export class AdminService {
           select: { id: true, email: true, name: true, username: true },
         },
         plan: true,
+        order: { select: { billingCycle: true, paymentMethod: true, paidAt: true, amount: true } },
       },
     });
 
@@ -400,13 +411,20 @@ export class AdminService {
       throw new NotFoundException('该用户暂无会员记录');
     }
 
-    const orders = await this.prisma.order.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: 20,
-    });
+    const [orders, purchases] = await Promise.all([
+      this.prisma.order.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      }),
+      this.prisma.membershipPurchase.findMany({
+        where: { userId },
+        orderBy: { purchasedAt: 'desc' },
+        take: 20,
+      }),
+    ]);
 
-    return { ...membership, orders };
+    return { ...membership, orders, purchases };
   }
 
   async cancelMembership(userId: string) {

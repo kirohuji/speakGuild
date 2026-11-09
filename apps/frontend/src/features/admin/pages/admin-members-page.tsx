@@ -20,6 +20,25 @@ import {
 import { useAuth } from '@/providers/auth-provider'
 import { AdminPagination } from '@/features/admin/components/admin-pagination'
 
+function billingCycleLabel(productId: string | null | undefined, orderCycle?: string | null) {
+  const value = productId || orderCycle || ''
+  if (value.includes('yearly')) return '年费'
+  if (value.includes('monthly')) return '月费'
+  if (!value) return '赠送'
+  return value
+}
+
+function formatDateTime(value: string | null | undefined) {
+  if (!value) return '--'
+  return new Date(value).toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export function AdminMembersPage() {
   const navigate = useNavigate()
   const { session } = useAuth()
@@ -182,8 +201,9 @@ export function AdminMembersPage() {
                   <tr className="border-b border-border bg-muted/40">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">用户</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">套餐</th>
-                    <th className="hidden px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider sm:table-cell">状态</th>
-                    <th className="hidden px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider md:table-cell">到期时间</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">周期</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">状态</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">到期时间</th>
                     <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">操作</th>
                   </tr>
                 </thead>
@@ -269,16 +289,29 @@ function MemberRow({ member, onRefresh }: { member: AdminMember; onRefresh: () =
             {member.plan.name}
           </Badge>
         </td>
-        <td className="hidden px-4 py-3 sm:table-cell">
-          <Badge
-            variant={isActive ? 'default' : 'secondary'}
-            className={cn('text-xs', isActive && 'bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/15')}
-          >
-            {isActive ? '生效中' : member.status === 'cancelled' ? '已取消' : '已过期'}
-          </Badge>
+        <td className="px-4 py-3">
+          <p className="text-sm">{billingCycleLabel(member.rcProductId, member.order?.billingCycle)}</p>
+          {member.pendingProductId && (
+            <p className="text-xs text-amber-600">到期后改{billingCycleLabel(member.pendingProductId)}</p>
+          )}
         </td>
-        <td className="hidden px-4 py-3 text-sm text-muted-foreground md:table-cell">
-          {new Date(member.expiredAt).toLocaleDateString('zh-CN')}
+        <td className="px-4 py-3">
+          <div className="flex flex-wrap items-center gap-1">
+            <Badge
+              variant={isActive ? 'default' : 'secondary'}
+              className={cn('text-xs', isActive && 'bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/15')}
+            >
+              {isActive ? '生效中' : member.status === 'cancelled' ? '已取消' : '已过期'}
+            </Badge>
+            {member.rcProductId && (
+              <Badge variant="outline" className="text-[10px]">
+                {member.autoRenew ? '自动续费' : '到期停止'}
+              </Badge>
+            )}
+          </div>
+        </td>
+        <td className="px-4 py-3 text-sm text-muted-foreground">
+          {formatDateTime(member.expiredAt)}
         </td>
         <td className="px-4 py-3 text-right">
           <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={(e) => { e.stopPropagation(); openDetail() }}>
@@ -330,14 +363,55 @@ function MemberRow({ member, onRefresh }: { member: AdminMember; onRefresh: () =
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <span className="text-muted-foreground">套餐</span>
                   <span className="font-medium">{detail.plan.name}</span>
+                  <span className="text-muted-foreground">周期</span>
+                  <span>{billingCycleLabel(detail.rcProductId, detail.order?.billingCycle)}</span>
+                  <span className="text-muted-foreground">续费</span>
+                  <span>{detail.rcProductId ? (detail.autoRenew ? '自动续费' : '到期停止') : '--'}</span>
                   <span className="text-muted-foreground">开通时间</span>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                    {new Date(detail.startedAt).toLocaleDateString('zh-CN')}
+                    {formatDateTime(detail.startedAt)}
                   </span>
                   <span className="text-muted-foreground">到期时间</span>
-                  <span>{new Date(detail.expiredAt).toLocaleDateString('zh-CN')}</span>
+                  <span>{formatDateTime(detail.expiredAt)}</span>
+                  {detail.pendingProductId && (
+                    <>
+                      <span className="text-muted-foreground">到期后</span>
+                      <span>改为{billingCycleLabel(detail.pendingProductId)}</span>
+                    </>
+                  )}
+                  {detail.cancelledAt && (
+                    <>
+                      <span className="text-muted-foreground">取消时间</span>
+                      <span>{formatDateTime(detail.cancelledAt)}</span>
+                    </>
+                  )}
+                  {detail.rcProductId && (
+                    <>
+                      <span className="text-muted-foreground">商品</span>
+                      <span className="break-all text-xs">{detail.rcProductId}</span>
+                    </>
+                  )}
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium">购买记录</p>
+                {(detail.purchases ?? []).length === 0 ? (
+                  <p className="text-xs text-muted-foreground">暂无购买记录</p>
+                ) : (
+                  <div className="divide-y divide-border rounded-xl border">
+                    {(detail.purchases ?? []).map((purchase) => (
+                      <div key={purchase.id} className="grid grid-cols-3 gap-2 p-3 text-xs">
+                        <span className="font-medium">
+                          {purchase.kind === 'yearly' ? '年费' : purchase.kind === 'monthly' ? '月费' : '赠送'}
+                        </span>
+                        <span className="text-muted-foreground">购买 {formatDateTime(purchase.purchasedAt)}</span>
+                        <span className="text-muted-foreground">到期 {formatDateTime(purchase.expiresAt)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* 订单记录 */}
