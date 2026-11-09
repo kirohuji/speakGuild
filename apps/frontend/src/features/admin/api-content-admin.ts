@@ -1,4 +1,4 @@
-import { get, post, patch, del as _delete } from '@/lib/request'
+import { get, post, patch, put, del as _delete } from '@/lib/request'
 import type { NqtrChrome, NqtrTimeSettings } from './components/maps/nqtr-model'
 
 export interface PreviewDialogueTurnResult {
@@ -1321,6 +1321,7 @@ export interface NqtrQuestStage {
   sortOrder?: number
   deltaDays?: number | null
   startNote?: string | null
+  requiredFlags?: Record<string, string | number | boolean> | null
   actions?: NqtrQuestStageAction[]
 }
 
@@ -1333,8 +1334,8 @@ export interface NqtrQuest {
   stages: NqtrQuestStage[]
 }
 
-export function listActivities(sceneId: string): Promise<NqtrActivity[]> {
-  return get('/admin/content/activities', { sceneId })
+export function listActivities(sceneId: string, chapterId?: string): Promise<NqtrActivity[]> {
+  return get('/admin/content/activities', { sceneId, ...(chapterId ? { chapterId } : {}) })
 }
 export function createActivity(data: Partial<NqtrActivity> & { roomIds?: string[] }): Promise<NqtrActivity> {
   return post('/admin/content/activities', data)
@@ -1346,8 +1347,8 @@ export function deleteActivity(id: string): Promise<void> {
   return _delete(`/admin/content/activities/${id}`)
 }
 
-export function listCommitments(sceneId: string): Promise<NqtrCommitment[]> {
-  return get('/admin/content/commitments', { sceneId })
+export function listCommitments(sceneId: string, chapterId?: string): Promise<NqtrCommitment[]> {
+  return get('/admin/content/commitments', { sceneId, ...(chapterId ? { chapterId } : {}) })
 }
 export function createCommitment(data: Partial<NqtrCommitment>): Promise<NqtrCommitment> {
   return post('/admin/content/commitments', data)
@@ -1359,8 +1360,8 @@ export function deleteCommitment(id: string): Promise<void> {
   return _delete(`/admin/content/commitments/${id}`)
 }
 
-export function listQuests(sceneId: string): Promise<NqtrQuest[]> {
-  return get('/admin/content/quests', { sceneId })
+export function listQuests(sceneId: string, chapterId?: string): Promise<NqtrQuest[]> {
+  return get('/admin/content/quests', { sceneId, ...(chapterId ? { chapterId } : {}) })
 }
 export function createQuest(data: Partial<NqtrQuest>): Promise<NqtrQuest> {
   return post('/admin/content/quests', data)
@@ -1370,4 +1371,56 @@ export function updateQuest(id: string, data: Partial<NqtrQuest>): Promise<NqtrQ
 }
 export function deleteQuest(id: string): Promise<void> {
   return _delete(`/admin/content/quests/${id}`)
+}
+
+export interface NqtrChapter {
+  id: string
+  sceneId: string
+  sortOrder: number
+  title: string
+  summary?: string | null
+  characters: { characterId: string }[]
+  locations: { locationId: string }[]
+}
+
+export function listNqtrChapters(sceneId: string): Promise<NqtrChapter[]> {
+  return get('/admin/content/nqtr-chapters', { sceneId })
+}
+export function createNqtrChapter(data: { sceneId: string; title: string; summary?: string; characterIds?: string[]; locationIds?: string[] }): Promise<NqtrChapter> {
+  return post('/admin/content/nqtr-chapters', data)
+}
+export function updateNqtrChapter(id: string, data: { title?: string; summary?: string | null; characterIds?: string[]; locationIds?: string[] }): Promise<NqtrChapter> {
+  return patch(`/admin/content/nqtr-chapters/${id}`, data)
+}
+export function deleteNqtrChapter(id: string): Promise<void> {
+  return _delete(`/admin/content/nqtr-chapters/${id}`)
+}
+
+export interface NqtrSave {
+  id: string
+  sceneId: string | null
+  chapterId: string | null
+  slot: number
+  gameDay: number
+  gameTime: number
+  currentMapId: string | null
+  currentLocationId: string | null
+  currentRoomId: string | null
+  visitedRoomIds: string[]
+  flags: Record<string, string | number | boolean> | null
+  questProgress: Record<string, { stageKey: string; status: string; startedOnDay?: number }> | null
+  inkState: unknown
+  runtime: {
+    enabledCommitmentIds?: string[]
+    attached?: { activityId: string; roomId: string }[]
+    applied?: string[]
+    metCommitmentKeys?: string[]
+  } | null
+}
+
+export function readNqtrSave(sceneId: string, slot = 1): Promise<NqtrSave | null> {
+  return get('/nqtr/saves', { sceneId, slot })
+}
+export function writeNqtrSave(data: Omit<NqtrSave, 'id'> & { sceneId: string }): Promise<NqtrSave> {
+  return put('/nqtr/saves', data)
 }

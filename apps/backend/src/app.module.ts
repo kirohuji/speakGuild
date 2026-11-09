@@ -35,6 +35,7 @@ import { HealthModule } from './modules/health/health.module';
 import { ScriptCommunityModule } from './modules/script-community/script-community.module';
 import { AdminTasksModule } from './modules/admin-tasks/admin-tasks.module';
 import { ContentExperienceModule } from './modules/content-experiences/content-experience.module';
+import { NqtrModule } from './modules/nqtr/nqtr.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { ContentExperienceModule } from './modules/content-experiences/content-e
     ScriptCommunityModule,
     AdminTasksModule,
     ContentExperienceModule,
+    NqtrModule,
   ],
   providers: [
     {

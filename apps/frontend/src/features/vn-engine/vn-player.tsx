@@ -528,7 +528,7 @@ export function VnPlayer({
                 key={choice.index}
                 role="button"
                 tabIndex={0}
-                className="rounded-lg bg-background/90 px-4 py-3 text-center text-sm font-medium text-foreground shadow-lg transition-colors hover:bg-primary/10"
+                className="rounded-lg bg-background/90 px-4 py-3 text-center text-sm font-medium text-foreground shadow-lg"
                 onClick={(event) => { event.stopPropagation(); onChoice?.(choice.index) }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {

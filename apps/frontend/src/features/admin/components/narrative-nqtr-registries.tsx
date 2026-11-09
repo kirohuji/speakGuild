@@ -110,7 +110,7 @@ function InkSelect({ value, stories, onChange }: { value: string; stories: Story
   )
 }
 
-export function NarrativeActivityList({ sceneId, mapId, timeSlots = [] }: { sceneId: string; mapId?: string | null; timeSlots?: NqtrTimeSlot[] }) {
+export function NarrativeActivityList({ sceneId, mapId, chapterId, timeSlots = [] }: { sceneId: string; mapId?: string | null; chapterId?: string; timeSlots?: NqtrTimeSlot[] }) {
   const { rooms, stories } = useNqtrOptions()
   const visibleRooms = mapId ? rooms.filter((room) => room.location?.map?.id === mapId) : rooms
   const [items, setItems] = useState<NqtrActivity[]>([])
@@ -120,10 +120,10 @@ export function NarrativeActivityList({ sceneId, mapId, timeSlots = [] }: { scen
   const [form, setForm] = useState({ title: '', minutes: 1, timeFrom: null as number | null, timeTo: null as number | null, trigger: 'click', inkScriptId: '', iconUrl: '', availableFromDate: '' as number | '', availableUntilDate: '' as number | '', questId: '', questAction: '', roomIds: [] as string[] })
 
   const load = useCallback(async () => {
-    const [nextItems, nextQuests] = await Promise.all([listActivities(sceneId), listQuests(sceneId)])
+    const [nextItems, nextQuests] = await Promise.all([listActivities(sceneId, chapterId), listQuests(sceneId, chapterId)])
     setItems(nextItems)
     setQuests(nextQuests)
-  }, [sceneId])
+  }, [chapterId, sceneId])
   useEffect(() => { void load().catch(() => toast.error('行为加载失败')) }, [load])
 
   const openCreate = () => {
@@ -153,6 +153,7 @@ export function NarrativeActivityList({ sceneId, mapId, timeSlots = [] }: { scen
     const payload = {
       ...form,
       sceneId,
+      chapterId,
       key: editing?.key ?? slugKey(form.title, 'activity'),
       inkScriptId: form.inkScriptId || null,
       iconUrl: form.iconUrl || null,
@@ -254,7 +255,7 @@ export function NarrativeActivityList({ sceneId, mapId, timeSlots = [] }: { scen
   )
 }
 
-export function NarrativeCommitmentList({ sceneId, mapId, timeSlots = [] }: { sceneId: string; mapId?: string | null; timeSlots?: NqtrTimeSlot[] }) {
+export function NarrativeCommitmentList({ sceneId, mapId, chapterId, timeSlots = [] }: { sceneId: string; mapId?: string | null; chapterId?: string; timeSlots?: NqtrTimeSlot[] }) {
   const { characters, rooms, stories } = useNqtrOptions()
   const visibleRooms = mapId ? rooms.filter((room) => room.location?.map?.id === mapId) : rooms
   const [items, setItems] = useState<NqtrCommitment[]>([])
@@ -264,10 +265,10 @@ export function NarrativeCommitmentList({ sceneId, mapId, timeSlots = [] }: { sc
   const [form, setForm] = useState({ characterId: '', roomId: '', timeFrom: null as number | null, timeTo: null as number | null, priority: 0, trigger: 'click', inkScriptId: '', imageUrl: '', slotImages: {} as Record<string, string>, questId: '', questAction: '' })
 
   const load = useCallback(async () => {
-    const [nextItems, nextQuests] = await Promise.all([listCommitments(sceneId), listQuests(sceneId)])
+    const [nextItems, nextQuests] = await Promise.all([listCommitments(sceneId, chapterId), listQuests(sceneId, chapterId)])
     setItems(nextItems)
     setQuests(nextQuests)
-  }, [sceneId])
+  }, [chapterId, sceneId])
   useEffect(() => { void load().catch(() => toast.error('日程加载失败')) }, [load])
 
   const openCreate = () => {
@@ -297,6 +298,7 @@ export function NarrativeCommitmentList({ sceneId, mapId, timeSlots = [] }: { sc
     const payload = {
       ...form,
       sceneId,
+      chapterId,
       key: editing?.key ?? slugKey(`${character?.displayName ?? 'npc'}_${form.timeFrom ?? 0}`, 'commitment'),
       inkScriptId: form.inkScriptId || null,
       imageUrl: form.imageUrl || null,
@@ -404,7 +406,7 @@ const emptyStage = (): NqtrQuestStage => ({
   actions: [],
 })
 
-export function NarrativeQuestList({ sceneId, mapId }: { sceneId: string; mapId?: string | null }) {
+export function NarrativeQuestList({ sceneId, mapId, chapterId }: { sceneId: string; mapId?: string | null; chapterId?: string }) {
   const { rooms } = useNqtrOptions()
   const visibleRooms = mapId ? rooms.filter((room) => room.location?.map?.id === mapId) : rooms
   const [items, setItems] = useState<NqtrQuest[]>([])
@@ -418,11 +420,11 @@ export function NarrativeQuestList({ sceneId, mapId }: { sceneId: string; mapId?
   const [stages, setStages] = useState<NqtrQuestStage[]>([])
 
   const load = useCallback(async () => {
-    const [nextQuests, nextActivities, nextCommitments] = await Promise.all([listQuests(sceneId), listActivities(sceneId), listCommitments(sceneId)])
+    const [nextQuests, nextActivities, nextCommitments] = await Promise.all([listQuests(sceneId, chapterId), listActivities(sceneId, chapterId), listCommitments(sceneId, chapterId)])
     setItems(nextQuests)
     setActivities(nextActivities)
     setCommitments(nextCommitments)
-  }, [sceneId])
+  }, [chapterId, sceneId])
   useEffect(() => { void load().catch(() => toast.error('任务加载失败')) }, [load])
 
   const openCreate = () => {
@@ -448,6 +450,7 @@ export function NarrativeQuestList({ sceneId, mapId }: { sceneId: string; mapId?
       summary,
       imageUrl: imageUrl || null,
       sceneId,
+      chapterId,
       stages: stages.map((stage, index) => ({ ...stage, sortOrder: index, stageKey: stage.stageKey || slugKey(stage.title, 'stage') })),
     }
     if (editing) await updateQuest(editing.id, payload)

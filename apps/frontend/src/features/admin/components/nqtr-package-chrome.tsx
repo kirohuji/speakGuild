@@ -104,6 +104,26 @@ export function NqtrPackageChrome({
           </div>
         </section>
 
+        <Separator />
+
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-sm font-semibold">对话</h3>
+            <p className="text-xs text-muted-foreground">房间右下角。点开后列出当前可以手动搭话的角色。到点自动出现的角色仍站在画面上。</p>
+          </div>
+          <div className="grid items-start gap-6 sm:grid-cols-[minmax(0,1fr)_180px]">
+            <div className="flex flex-col gap-2">
+              <Label>图标</Label>
+              <ImageUploadField value={look.talkIcon} onChange={(talkIcon) => onChange({ ...look, talkIcon })} placeholder="上传对话图标" previewSize="sm" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="talk-size">大小</Label>
+              <Input id="talk-size" type="number" min={16} value={look.talkIconSize} onChange={(event) => onChange({ ...look, talkIconSize: Number(event.target.value) || look.talkIconSize })} />
+              <p className="text-xs text-muted-foreground">像素，最小 16</p>
+            </div>
+          </div>
+        </section>
+
         <Button className="w-fit" disabled={saving} onClick={onSave}>{saving ? '保存中…' : '保存外观'}</Button>
       </CardContent>
     </Card>

@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Loader2, Map as MapIcon, MapPin } from 'lucide-react'
+import { Loader2, Map as MapIcon, MapPin, MessageCircle, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Card, CardContent } from '@/components/ui/card'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -14,6 +17,8 @@ import {
   listLocations,
   listQuests,
   listRooms,
+  readNqtrSave,
+  writeNqtrSave,
   type GameCharacter,
   type GameLocationData,
   type GameMapData,
@@ -35,6 +40,7 @@ type Talk = {
   spend: number
   questId: string | null
   questAction: 'start' | 'continue' | null
+  metKey?: string
 }
 
 type Place =
@@ -49,6 +55,7 @@ type Session = {
   attached: { activityId: string; roomId: string }[]
   enabledCommitmentIds: string[]
   questProgress: QuestProgress
+  flags: Record<string, string | number | boolean>
   applied: string[]
   log: string[]
 }
@@ -72,6 +79,7 @@ function freshSession(time: NqtrTimeSettings): Session {
     attached: [],
     enabledCommitmentIds: [],
     questProgress: {},
+    flags: {},
     applied: [],
     log: ['试玩开始'],
   }
@@ -118,9 +126,11 @@ function pushLog(session: Session, line: string): Session {
   return { ...session, log: [line, ...session.log].slice(0, 40) }
 }
 
-function stageReady(stage: NqtrQuestStage, startedOnDay: number, gameDay: number) {
-  if (!stage.deltaDays) return true
-  return gameDay >= startedOnDay + stage.deltaDays
+function stageReady(stage: NqtrQuestStage, startedOnDay: number, gameDay: number, flags: Record<string, string | number | boolean>) {
+  if (stage.deltaDays && gameDay < startedOnDay + stage.deltaDays) return false
+  const required = stage.requiredFlags
+  if (!required || typeof required !== 'object' || Array.isArray(required)) return true
+  return Object.entries(required).every(([key, value]) => flags[key] === value)
 }
 
 function applyActions(session: Session, stage: NqtrQuestStage, phase: 'on_start' | 'on_continue') {
@@ -149,7 +159,7 @@ function syncStages(session: Session, quests: NqtrQuest[]) {
     if (!stage) continue
     const key = `${quest.key}:${stage.stageKey}:on_start`
     if (next.applied.includes(key)) continue
-    if (!stageReady(stage, progress.startedOnDay ?? next.gameDay, next.gameDay)) continue
+    if (!stageReady(stage, progress.startedOnDay ?? next.gameDay, next.gameDay, next.flags)) continue
     next = applyActions(next, stage, 'on_start')
     next = { ...next, applied: [...next.applied, key] }
     next = pushLog(next, `${quest.title} 进入「${stage.title || stage.stageKey}」`)
@@ -178,7 +188,7 @@ function applyQuest(session: Session, quests: NqtrQuest[], questId: string | nul
   const index = stages.findIndex((item) => item.stageKey === progress.stageKey)
   const current = stages[index]
   if (!current) return session
-  if (!stageReady(current, progress.startedOnDay ?? session.gameDay, session.gameDay)) {
+  if (!stageReady(current, progress.startedOnDay ?? session.gameDay, session.gameDay, session.flags)) {
     return pushLog(session, `${quest.title} 的「${current.title}」天数还没到`)
   }
   const continueKey = `${quest.key}:${current.stageKey}:on_continue`
@@ -234,12 +244,16 @@ export function NqtrPackagePreview({
   time,
   chrome,
   characters,
+  chapterId,
+  chapterLocationIds = [],
 }: {
   sceneId: string
   map: GameMapData | null
   time: NqtrTimeSettings
   chrome: NqtrChrome
   characters: GameCharacter[]
+  chapterId?: string
+  chapterLocationIds?: string[]
 }) {
   const look = parseNqtrChrome(chrome)
   const [loading, setLoading] = useState(true)
@@ -255,6 +269,8 @@ export function NqtrPackagePreview({
   const [debug, setDebug] = useState<PreviewDebug | null>(null)
   const [aiEnabled, setAiEnabled] = useState(false)
   const [hotspotsOpen, setHotspotsOpen] = useState(false)
+  const [talkListOpen, setTalkListOpen] = useState(false)
+  const [metCommitmentKeys, setMetCommitmentKeys] = useState<string[]>([])
   const questsRef = useRef(quests)
   const closedTalk = useRef<string | null>(null)
   const autoFired = useRef(new Set<string>())
@@ -291,13 +307,14 @@ export function NqtrPackagePreview({
       const [nextLocations, nextRooms, nextActivities, nextCommitments, nextQuests] = await Promise.all([
         map ? listLocations(map.id) : Promise.resolve([]),
         listRooms(),
-        listActivities(sceneId),
-        listCommitments(sceneId),
-        listQuests(sceneId),
+        listActivities(sceneId, chapterId),
+        listCommitments(sceneId, chapterId),
+        listQuests(sceneId, chapterId),
       ])
-      const locationIds = new Set(nextLocations.map((item) => item.id))
-      setLocations(nextLocations.filter((item) => !item.hidden && !item.disabled))
-      setRooms(nextRooms.filter((item) => locationIds.has(item.locationId) && !item.hidden && !item.disabled))
+      const openLocations = new Set(chapterLocationIds)
+      const visibleLocations = nextLocations.filter((item) => !item.hidden && !item.disabled && (!openLocations.size || openLocations.has(item.id)))
+      setLocations(visibleLocations)
+      setRooms(nextRooms.filter((item) => visibleLocations.some((location) => location.id === item.locationId) && !item.hidden && !item.disabled))
       setActivities(nextActivities)
       setCommitments(nextCommitments)
       setQuests(nextQuests)
@@ -306,7 +323,7 @@ export function NqtrPackagePreview({
     } finally {
       setLoading(false)
     }
-  }, [map, sceneId])
+  }, [chapterId, chapterLocationIds.join(','), map, sceneId])
 
   useEffect(() => { void load() }, [load])
 
@@ -314,6 +331,7 @@ export function NqtrPackagePreview({
     const entrance = nextRooms.find((item) => item.isEntrance) ?? nextRooms[0]
     autoFired.current = new Set()
     closedTalk.current = null
+    setMetCommitmentKeys([])
     setSession(freshSession(time))
     setInkJson(null)
     setInkSource('')
@@ -321,7 +339,34 @@ export function NqtrPackagePreview({
     setPlace(entrance ? { mode: 'room', roomId: entrance.id } : { mode: 'map' })
   }, [time])
 
-  useEffect(() => { if (!loading) reset(rooms) }, [loading, rooms, reset])
+  useEffect(() => {
+    if (loading) return
+    let cancelled = false
+    void readNqtrSave(sceneId).then((save) => {
+      if (cancelled) return
+      if (!save) {
+        reset(rooms)
+        return
+      }
+      const sameChapter = !chapterId || save.chapterId === chapterId
+      setSession({
+        gameDay: save.gameDay,
+        gameTime: save.gameTime,
+        attached: sameChapter ? save.runtime?.attached ?? [] : [],
+        enabledCommitmentIds: sameChapter ? save.runtime?.enabledCommitmentIds ?? [] : [],
+        questProgress: (save.questProgress ?? {}) as QuestProgress,
+        flags: save.flags ?? {},
+        applied: sameChapter ? save.runtime?.applied ?? [] : [],
+        log: ['已读档'],
+      })
+      setMetCommitmentKeys(sameChapter ? save.runtime?.metCommitmentKeys ?? [] : [])
+      autoFired.current = new Set()
+      if (sameChapter && save.currentRoomId) setPlace({ mode: 'room', roomId: save.currentRoomId })
+      else if (sameChapter && save.currentLocationId) setPlace({ mode: 'location', locationId: save.currentLocationId })
+      else setPlace({ mode: 'map' })
+    }).catch(() => reset(rooms))
+    return () => { cancelled = true }
+  }, [chapterId, loading, reset, rooms, sceneId])
 
   const roomOf = useCallback((roomId: string) => rooms.find((item) => item.id === roomId), [rooms])
   const locationOf = useCallback((locationId: string) => locations.find((item) => item.id === locationId), [locations])
@@ -399,16 +444,44 @@ export function NqtrPackagePreview({
     return [...byCharacter.values()]
   }, [commitments, currentRoom, gatedCommitments, session.enabledCommitmentIds, session.gameTime])
 
+  const remember = useCallback((next: Session, met: string[], roomId: string | null, locationId: string | null) => {
+    if (!chapterId) return Promise.resolve()
+    return writeNqtrSave({
+      sceneId,
+      chapterId,
+      slot: 1,
+      gameDay: next.gameDay,
+      gameTime: next.gameTime,
+      currentMapId: map?.id ?? null,
+      currentLocationId: locationId,
+      currentRoomId: roomId,
+      visitedRoomIds: roomId ? [roomId] : [],
+      flags: next.flags,
+      questProgress: next.questProgress,
+      inkState: null,
+      runtime: {
+        enabledCommitmentIds: next.enabledCommitmentIds,
+        attached: next.attached,
+        applied: next.applied,
+        metCommitmentKeys: met,
+      },
+    })
+  }, [chapterId, map?.id, sceneId])
+
   const finishTalk = useCallback((talk: Talk) => {
+    const met = talk.metKey && !metCommitmentKeys.includes(talk.metKey) ? [...metCommitmentKeys, talk.metKey] : metCommitmentKeys
+    if (talk.metKey) setMetCommitmentKeys(met)
     setSession((prev) => {
       let next = applyQuest(prev, questsRef.current, talk.questId, talk.questAction)
       next = addSpent(next, talk.spend, time)
-      return syncStages(next, questsRef.current)
+      next = syncStages(next, questsRef.current)
+      void remember(next, met, talk.roomId, null).catch(() => toast.error('进度保存失败'))
+      return next
     })
     setInkJson(null)
     setInkSource('')
     setPlace({ mode: 'room', roomId: talk.roomId })
-  }, [time])
+  }, [metCommitmentKeys, remember, time])
 
   const openTalk = useCallback(async (talk: Omit<Talk, 'token'>) => {
     const token = `${Date.now().toString(36)}`
@@ -466,6 +539,7 @@ export function NqtrPackagePreview({
       spend: time.defaultTimeSpent,
       questId: autoCommitment.questId ?? null,
       questAction: autoCommitment.questAction ?? null,
+      metKey: `commitment:${autoCommitment.id}:${session.gameDay}:${slot}`,
     })
   }, [characters, openTalk, place, session.gameDay, slot, time.defaultTimeSpent, visibleActivities, visibleCommitments])
 
@@ -496,30 +570,38 @@ export function NqtrPackagePreview({
   const backgroundUrl = background ? resolveFileAssetUrl(background) : ''
 
   const activeQuests = quests.filter((quest) => session.questProgress[quest.key])
+  const inkOpen = place.mode === 'talk'
+  const hideChrome = talkListOpen || inkOpen || hotspotsOpen
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(360px,460px)_minmax(0,1fr)]">
       <div className="min-w-0 space-y-3">
+        {!talkListOpen && !inkOpen && (
         <div className="mx-auto flex w-full max-w-[420px] flex-wrap items-center gap-1.5">
-          <Badge variant="secondary">{map?.displayName || '未绑定地图'}</Badge>
-          <Badge variant="secondary">{dayLabel(time, session.gameDay)} · {slot} · {formatNqtrTime(session.gameTime)}</Badge>
+          {!hotspotsOpen && <Badge variant="secondary">{map?.displayName || '未绑定地图'}</Badge>}
+          {!hotspotsOpen && <Badge variant="secondary">{dayLabel(time, session.gameDay)} · {slot} · {formatNqtrTime(session.gameTime)}</Badge>}
           <div className="flex w-full flex-wrap gap-1">
-            {place.mode !== 'map' && <Button size="sm" variant="outline" onClick={() => { setHotspotsOpen(false); setPlace({ mode: 'map' }) }}>地图</Button>}
+            {!hotspotsOpen && place.mode !== 'map' && <Button size="sm" variant="outline" onClick={() => { setHotspotsOpen(false); setPlace({ mode: 'map' }) }}>地图</Button>}
             {place.mode !== 'map' && <Button size="sm" variant="outline" onClick={() => setHotspotsOpen((open) => !open)}>热点</Button>}
-            {place.mode === 'talk' && <Button size="sm" variant="outline" onClick={() => { if (debug?.isEnded) finishTalk(place.talk); else { closedTalk.current = place.talk.token; setPlace({ mode: 'room', roomId: place.roomId }) } }}>{debug?.isEnded ? '关闭对白' : '返回房间'}</Button>}
-            {place.mode === 'location' && <Button size="sm" variant="outline" onClick={() => setPlace({ mode: 'map' })}>返回</Button>}
-            <Button size="sm" variant="outline" onClick={jumpSlot}>下一时段</Button>
-            <Button size="sm" variant="outline" onClick={jumpDay}>下一天</Button>
-            <Button size="sm" variant="outline" onClick={() => reset(rooms)}>重置</Button>
+            {!hotspotsOpen && place.mode === 'location' && <Button size="sm" variant="outline" onClick={() => setPlace({ mode: 'map' })}>返回</Button>}
+            {!hotspotsOpen && <Button size="sm" variant="outline" onClick={jumpSlot}>下一时段</Button>}
+            {!hotspotsOpen && <Button size="sm" variant="outline" onClick={jumpDay}>下一天</Button>}
+            {!hotspotsOpen && <Button size="sm" variant="outline" onClick={() => { reset(rooms); const fresh = freshSession(time); void remember(fresh, [], null, null).catch(() => toast.error('进度保存失败')) }}>重置</Button>}
+            {!hotspotsOpen && <Button size="sm" variant="outline" onClick={() => {
+              const roomId = place.mode === 'room' || place.mode === 'talk' ? place.roomId : null
+              const locationId = place.mode === 'location' ? place.locationId : null
+              void remember(session, metCommitmentKeys, roomId, locationId).then(() => toast.success('进度已保存')).catch(() => toast.error('进度保存失败'))
+            }}>保存进度</Button>}
           </div>
         </div>
+        )}
         <div className="relative mx-auto h-[78vh] max-h-[760px] w-full max-w-[420px] overflow-hidden rounded-lg border border-border bg-slate-950">
           {backgroundUrl ? (
             <img src={backgroundUrl} alt="" className="absolute inset-0 size-full object-cover" />
           ) : (
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_42%),linear-gradient(180deg,#1c2836,#0d141c)]" />
           )}
-          {place.mode !== 'map' && (
+          {place.mode !== 'map' && !talkListOpen && !inkOpen && (
             <div className="absolute right-3 top-3 z-30 flex items-start gap-2">
               <CommandIcon
                 chrome={look}
@@ -527,12 +609,14 @@ export function NqtrPackagePreview({
                 label="热点"
                 onClick={() => setHotspotsOpen((open) => !open)}
               />
+              {!hotspotsOpen && (
               <CommandIcon
                 chrome={look}
                 command="map"
                 label="地图"
                 onClick={() => { setHotspotsOpen(false); setPlace({ mode: 'map' }) }}
               />
+              )}
             </div>
           )}
 
@@ -582,14 +666,14 @@ export function NqtrPackagePreview({
           ) : place.mode === 'room' && currentRoom ? (
             <>
               <div className="absolute inset-x-0 bottom-24 z-10 flex items-end justify-center gap-6 px-4">
-                {visibleCommitments.map((item) => {
+                {visibleCommitments.filter((item) => item.trigger === 'auto' && !metCommitmentKeys.includes(`commitment:${item.id}:${session.gameDay}:${slot}`)).map((item) => {
                   const character = characters.find((entry) => entry.id === item.characterId)
                   const image = characterImage(character, item, slot)
                   return (
                     <button
                       key={item.id}
                       type="button"
-                      className="group flex max-w-40 flex-col items-center"
+                      className="group flex max-w-40 flex-col items-center bg-transparent"
                       onClick={() => void openTalk({
                         roomId: currentRoom.id,
                         scriptId: item.inkScriptId ?? '',
@@ -597,15 +681,16 @@ export function NqtrPackagePreview({
                         spend: time.defaultTimeSpent,
                         questId: item.questId ?? null,
                         questAction: item.questAction ?? null,
+                        metKey: `commitment:${item.id}:${session.gameDay}:${slot}`,
                       })}
                     >
                       {image ? <img src={image} alt="" className="max-h-[42vh] object-contain drop-shadow-xl transition-transform group-hover:-translate-y-1" /> : <span className="flex size-24 items-center justify-center rounded-full bg-white/90 text-lg font-semibold">{(character?.displayName || '?').slice(0, 1)}</span>}
-                      <span className="mt-1 rounded-full bg-black/70 px-2 py-0.5 text-xs text-white">{character?.displayName ?? '角色'}{item.trigger === 'auto' ? ' · 自动' : ''}</span>
                     </button>
                   )
                 })}
               </div>
-              <div className="absolute inset-x-0 bottom-0 z-10 flex gap-3 overflow-x-auto p-4">
+              {!hideChrome && (
+              <div className="absolute inset-x-0 bottom-0 z-10 flex gap-3 overflow-x-auto p-4 pr-20">
                 {visibleActivities.map((activity) => {
                   const icon = activity.iconUrl ? resolveFileAssetUrl(activity.iconUrl) : look.activityIcon ? resolveFileAssetUrl(look.activityIcon) : ''
                   return (
@@ -628,9 +713,74 @@ export function NqtrPackagePreview({
                   )
                 })}
               </div>
-              <p className="absolute left-3 top-3 z-10 rounded-full bg-black/60 px-2 py-1 text-xs text-white">{currentLocation?.displayName} / {currentRoom.displayName}</p>
+              )}
+              {!hideChrome && <p className="absolute left-3 top-3 z-10 rounded-full bg-black/60 px-2 py-1 text-xs text-white">{currentLocation?.displayName} / {currentRoom.displayName}</p>}
             </>
           ) : null}
+          {place.mode === 'room' && currentRoom && !hideChrome && (
+            <button
+              type="button"
+              aria-label="对话"
+              className="absolute bottom-4 right-4 z-30 bg-transparent"
+              onClick={() => setTalkListOpen(true)}
+            >
+              {look.talkIcon
+                ? <img src={resolveFileAssetUrl(look.talkIcon)} alt="" className="object-contain" style={{ width: look.talkIconSize, height: look.talkIconSize }} />
+                : <MessageCircle className="text-white drop-shadow" style={{ width: look.talkIconSize, height: look.talkIconSize }} />}
+            </button>
+          )}
+          {talkListOpen && place.mode === 'room' && currentRoom && (
+            <div className="absolute inset-0 z-40 flex justify-end bg-background/80 p-4 backdrop-blur-sm" onClick={() => setTalkListOpen(false)}>
+              <Card className="flex h-full w-full max-w-[360px] flex-col overflow-hidden" onClick={(event) => event.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                  <div>
+                    <p className="text-sm font-semibold">对话</p>
+                    <p className="text-xs text-muted-foreground">点一个角色开始搭话</p>
+                  </div>
+                  <Button size="icon" variant="ghost" aria-label="关闭" onClick={() => setTalkListOpen(false)}>
+                    <X />
+                  </Button>
+                </div>
+                <ScrollArea className="min-h-0 flex-1">
+                  <CardContent className="flex flex-col gap-2 p-4">
+                    {visibleCommitments.filter((item) => item.trigger !== 'auto' || metCommitmentKeys.includes(`commitment:${item.id}:${session.gameDay}:${slot}`)).length ? visibleCommitments.filter((item) => item.trigger !== 'auto' || metCommitmentKeys.includes(`commitment:${item.id}:${session.gameDay}:${slot}`)).map((item) => {
+                      const character = characters.find((entry) => entry.id === item.characterId)
+                      const name = character?.displayName ?? '角色'
+                      const avatar = character?.avatarUrl ? resolveFileAssetUrl(character.avatarUrl) : ''
+                      return (
+                        <Button
+                          key={item.id}
+                          type="button"
+                          variant="ghost"
+                          className="h-auto justify-start gap-3 px-3 py-2"
+                          onClick={() => {
+                            setTalkListOpen(false)
+                            void openTalk({
+                              roomId: currentRoom.id,
+                              scriptId: item.inkScriptId ?? '',
+                              label: name,
+                              spend: time.defaultTimeSpent,
+                              questId: item.questId ?? null,
+                              questAction: item.questAction ?? null,
+                            })
+                          }}
+                        >
+                          <Avatar>
+                            {avatar ? <AvatarImage src={avatar} alt="" /> : null}
+                            <AvatarFallback>{name.slice(0, 1)}</AvatarFallback>
+                          </Avatar>
+                          <span className="min-w-0 text-left">
+                            <span className="block truncate text-sm font-semibold">{name}</span>
+                            <span className="block truncate text-xs font-normal text-muted-foreground">发呆</span>
+                          </span>
+                        </Button>
+                      )
+                    }) : <p className="py-10 text-center text-sm text-muted-foreground">现在没有可以搭话的人。</p>}
+                  </CardContent>
+                </ScrollArea>
+              </Card>
+            </div>
+          )}
           {showHotspots && (
             <div className="absolute inset-0 z-20">
               {activeHotspots.map((item) => {

@@ -2166,10 +2166,10 @@ ${candidateLines}
   // ════════════════════════════════════════════════════════════
 
   @Get('activities')
-  async listActivities(@Req() req: Request, @Query('sceneId') sceneId?: string) {
+  async listActivities(@Req() req: Request, @Query('sceneId') sceneId?: string, @Query('chapterId') chapterId?: string) {
     await this.requireAdmin(req);
     return this.prisma.gameActivity.findMany({
-      where: sceneId ? { sceneId } : undefined,
+      where: { ...(sceneId ? { sceneId } : {}), ...(chapterId ? { chapterId } : {}) },
       orderBy: { title: 'asc' },
       include: { roomLinks: { select: { roomId: true } } },
     });
@@ -2217,10 +2217,10 @@ ${candidateLines}
   }
 
   @Get('commitments')
-  async listCommitments(@Req() req: Request, @Query('sceneId') sceneId?: string) {
+  async listCommitments(@Req() req: Request, @Query('sceneId') sceneId?: string, @Query('chapterId') chapterId?: string) {
     await this.requireAdmin(req);
     return this.prisma.gameCommitment.findMany({
-      where: sceneId ? { sceneId } : undefined,
+      where: { ...(sceneId ? { sceneId } : {}), ...(chapterId ? { chapterId } : {}) },
       orderBy: [{ startMinute: 'asc' }, { priority: 'desc' }],
       include: {
         character: { select: { id: true, displayName: true } },
@@ -2252,6 +2252,7 @@ ${candidateLines}
         timeTo: dto.timeTo == null || dto.timeTo === '' ? null : Number(dto.timeTo),
         questId: dto.questId ? String(dto.questId) : null,
         questAction: dto.questAction === 'start' || dto.questAction === 'continue' ? dto.questAction : null,
+        chapterId: dto.chapterId ? String(dto.chapterId) : null,
       },
     });
   }
@@ -2276,6 +2277,7 @@ ${candidateLines}
         timeTo: dto.timeTo === undefined ? undefined : (dto.timeTo == null || dto.timeTo === '' ? null : Number(dto.timeTo)),
         questId: dto.questId === undefined ? undefined : (dto.questId ? String(dto.questId) : null),
         questAction: dto.questAction === undefined ? undefined : (dto.questAction === 'start' || dto.questAction === 'continue' ? dto.questAction : null),
+        chapterId: dto.chapterId === undefined ? undefined : (dto.chapterId ? String(dto.chapterId) : null),
       },
     });
   }
@@ -2287,10 +2289,10 @@ ${candidateLines}
   }
 
   @Get('quests')
-  async listQuests(@Req() req: Request, @Query('sceneId') sceneId?: string) {
+  async listQuests(@Req() req: Request, @Query('sceneId') sceneId?: string, @Query('chapterId') chapterId?: string) {
     await this.requireAdmin(req);
     return this.prisma.gameQuest.findMany({
-      where: sceneId ? { sceneId } : undefined,
+      where: { ...(sceneId ? { sceneId } : {}), ...(chapterId ? { chapterId } : {}) },
       orderBy: { title: 'asc' },
       include: {
         stages: {
@@ -2306,7 +2308,7 @@ ${candidateLines}
     await this.requireAdmin(req);
     return this.prisma.$transaction(async (tx) => {
       const quest = await tx.gameQuest.create({
-        data: { key: dto.key, title: dto.title, summary: dto.summary || null, imageUrl: dto.imageUrl || null, sceneId: dto.sceneId },
+        data: { key: dto.key, title: dto.title, summary: dto.summary || null, imageUrl: dto.imageUrl || null, sceneId: dto.sceneId, chapterId: dto.chapterId || null },
       });
       await this.replaceQuestStages(tx, quest.id, dto.stages ?? []);
       return tx.gameQuest.findUniqueOrThrow({
@@ -2338,6 +2340,78 @@ ${candidateLines}
     return this.prisma.gameQuest.delete({ where: { id } });
   }
 
+  @Get('nqtr-chapters')
+  async listNqtrChapters(@Req() req: Request, @Query('sceneId') sceneId?: string) {
+    await this.requireAdmin(req);
+    if (!sceneId) throw new BadRequestException('缺少剧情包');
+    return this.prisma.nqtrChapter.findMany({
+      where: { sceneId },
+      orderBy: { sortOrder: 'asc' },
+      include: {
+        characters: { select: { characterId: true } },
+        locations: { select: { locationId: true } },
+      },
+    });
+  }
+
+  @Post('nqtr-chapters')
+  async createNqtrChapter(@Req() req: Request, @Body() dto: { sceneId?: string; title?: string; summary?: string; characterIds?: string[]; locationIds?: string[] }) {
+    await this.requireAdmin(req);
+    if (!dto.sceneId || !dto.title?.trim()) throw new BadRequestException('章节缺少剧情包或名称');
+    const count = await this.prisma.nqtrChapter.count({ where: { sceneId: dto.sceneId } });
+    return this.prisma.nqtrChapter.create({
+      data: {
+        sceneId: dto.sceneId,
+        title: dto.title.trim(),
+        summary: dto.summary?.trim() || null,
+        sortOrder: count,
+        characters: { create: (dto.characterIds ?? []).filter(Boolean).map((characterId) => ({ characterId })) },
+        locations: { create: (dto.locationIds ?? []).filter(Boolean).map((locationId) => ({ locationId })) },
+      },
+      include: {
+        characters: { select: { characterId: true } },
+        locations: { select: { locationId: true } },
+      },
+    });
+  }
+
+  @Patch('nqtr-chapters/:id')
+  async updateNqtrChapter(@Req() req: Request, @Param('id') id: string, @Body() dto: { title?: string; summary?: string | null; sortOrder?: number; characterIds?: string[]; locationIds?: string[] }) {
+    await this.requireAdmin(req);
+    return this.prisma.$transaction(async (tx) => {
+      if (Array.isArray(dto.characterIds)) {
+        await tx.nqtrChapterCharacter.deleteMany({ where: { chapterId: id } });
+        if (dto.characterIds.length) {
+          await tx.nqtrChapterCharacter.createMany({ data: dto.characterIds.filter(Boolean).map((characterId) => ({ chapterId: id, characterId })) });
+        }
+      }
+      if (Array.isArray(dto.locationIds)) {
+        await tx.nqtrChapterLocation.deleteMany({ where: { chapterId: id } });
+        if (dto.locationIds.length) {
+          await tx.nqtrChapterLocation.createMany({ data: dto.locationIds.filter(Boolean).map((locationId) => ({ chapterId: id, locationId })) });
+        }
+      }
+      return tx.nqtrChapter.update({
+        where: { id },
+        data: {
+          title: dto.title?.trim() || undefined,
+          summary: dto.summary === undefined ? undefined : (dto.summary?.trim() || null),
+          sortOrder: dto.sortOrder == null ? undefined : Number(dto.sortOrder),
+        },
+        include: {
+          characters: { select: { characterId: true } },
+          locations: { select: { locationId: true } },
+        },
+      });
+    });
+  }
+
+  @Delete('nqtr-chapters/:id')
+  async deleteNqtrChapter(@Req() req: Request, @Param('id') id: string) {
+    await this.requireAdmin(req);
+    return this.prisma.nqtrChapter.delete({ where: { id } });
+  }
+
   private activityFields(dto: any) {
     return {
       key: dto.key,
@@ -2356,6 +2430,7 @@ ${candidateLines}
       questAction: dto.questAction === 'start' || dto.questAction === 'continue' ? dto.questAction : null,
       hiddenFlag: dto.hiddenFlag || null,
       disabledFlag: dto.disabledFlag || null,
+      ...(dto.chapterId !== undefined ? { chapterId: dto.chapterId || null } : {}),
     };
   }
 

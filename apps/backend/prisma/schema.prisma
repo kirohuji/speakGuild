@@ -774,6 +774,8 @@ model Scene {
   nqtrActivities      GameActivity[]
   nqtrCommitments     GameCommitment[]
   nqtrQuests          GameQuest[]
+  nqtrChapters        NqtrChapter[]
+  gameSaves           GameSave[]
   groupId             String? // 所属学习包组（null = 未入组，无顺序约束）
   group               PackageGroup?            @relation(fields: [groupId], references: [id])
   sortOrder           Int                      @default(0) // 组内学习顺序，从 0 开始
@@ -1867,6 +1869,7 @@ model GameCharacter {
   defaultPosition    String?
   commitments        GameCommitment[]
   nqtrCast           SceneNqtrCharacter[]
+  nqtrChapters       NqtrChapterCharacter[]
   explorationRecords ExplorationRecord[]
   voiceBindings      CharacterVoiceBinding[]
   owner              User?                   @relation("GameCharacterOwner", fields: [ownerId], references: [id], onDelete: Restrict)
@@ -1968,6 +1971,7 @@ model GameLocation {
   scene               Scene?              @relation(fields: [sceneId], references: [id])
   rooms               GameRoom[]
   explorationRecords  ExplorationRecord[]
+  nqtrChapters        NqtrChapterLocation[]
   requiredOutputLevel String              @default("L1")
   requiredSceneIds    String[]            @default([])
   requiredFlags       Json?
@@ -2077,6 +2081,7 @@ model GameSave {
   currentLocationId String?
   currentRoomId     String?
   visitedRoomIds    String[] @default([])
+  /// 整局都带着的标记。键是作者起的名字，值只能是布尔、数字或字符串。换章不丢。
   flags             Json?
   /// 游戏内第几天，从 1 开始。与现实游玩时长 playTimeSeconds 无关。
   gameDay           Int      @default(1)
@@ -2084,13 +2089,19 @@ model GameSave {
   gameTime         Float    @default(8)
   /// { [questKey]: { stageKey, status, startedOnDay } }
   questProgress     Json?
+  /// 本章运行时才有的进度：已启用的日程、临时挂上的行为、已经执行过的阶段动作。
+  runtime           Json?
+  scene             Scene?   @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId           String?
+  chapter           NqtrChapter? @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  chapterId         String?
   saveName          String   @default("自动存档")
   playTimeSeconds   Int      @default(0)
   slot              Int      @default(1)
   updatedAt         DateTime @updatedAt
   createdAt         DateTime @default(now())
 
-  @@unique([userId, slot])
+  @@unique([userId, sceneId, slot])
   @@index([userId, updatedAt(sort: Desc)])
   @@map("game_save")
 }
@@ -2121,12 +2132,15 @@ model GameActivity {
   disabledFlag String?
   scene        Scene                  @relation(fields: [sceneId], references: [id], onDelete: Cascade)
   sceneId      String
+  chapter      NqtrChapter?           @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  chapterId    String?
   roomLinks    GameRoomActivity[]
   stageActions GameQuestStageAction[]
   createdAt    DateTime               @default(now())
   updatedAt    DateTime               @updatedAt
 
   @@index([sceneId])
+  @@index([chapterId])
   @@index([questId])
   @@map("game_activity")
 }
@@ -2166,10 +2180,13 @@ model GameCommitment {
   questAction  String?
   scene        Scene                  @relation(fields: [sceneId], references: [id], onDelete: Cascade)
   sceneId      String
+  chapter      NqtrChapter?           @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  chapterId    String?
   stageActions GameQuestStageAction[]
   createdAt    DateTime               @default(now())
 
   @@index([sceneId])
+  @@index([chapterId])
   @@index([roomId])
   @@index([characterId])
   @@index([questId])
@@ -2185,6 +2202,8 @@ model GameQuest {
   imageUrl  String?
   scene     Scene            @relation(fields: [sceneId], references: [id], onDelete: Cascade)
   sceneId   String
+  chapter   NqtrChapter?     @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  chapterId String?
   stages    GameQuestStage[]
   activities GameActivity[]  @relation("ActivityQuest")
   commitments GameCommitment[] @relation("CommitmentQuest")
@@ -2192,7 +2211,51 @@ model GameQuest {
   updatedAt DateTime         @updatedAt
 
   @@index([sceneId])
+  @@index([chapterId])
   @@map("game_quest")
+}
+
+/// 互动剧情包里的一章。地图和素材仍属于剧情包，本章只选用人物、地点，并拥有自己的日程、行为、任务。
+model NqtrChapter {
+  id           String                 @id @default(cuid())
+  scene        Scene                  @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId      String
+  sortOrder    Int                    @default(0)
+  title        String
+  summary      String?                @db.Text
+  characters   NqtrChapterCharacter[]
+  locations    NqtrChapterLocation[]
+  activities   GameActivity[]
+  commitments  GameCommitment[]
+  quests       GameQuest[]
+  saves        GameSave[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@index([sceneId, sortOrder])
+  @@map("nqtr_chapter")
+}
+
+model NqtrChapterCharacter {
+  chapter     NqtrChapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapterId   String
+  character   GameCharacter @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterId String
+
+  @@id([chapterId, characterId])
+  @@index([characterId])
+  @@map("nqtr_chapter_character")
+}
+
+model NqtrChapterLocation {
+  chapter    NqtrChapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapterId  String
+  location   GameLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId String
+
+  @@id([chapterId, locationId])
+  @@index([locationId])
+  @@map("nqtr_chapter_location")
 }
 
 model GameQuestStage {

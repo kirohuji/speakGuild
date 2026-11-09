@@ -13,7 +13,7 @@ import { StoryChapterStudio } from '../components/story-chapter-studio'
 import { NarrativeActivityList, NarrativeCommitmentList, NarrativeQuestList } from '../components/narrative-nqtr-registries'
 import { NqtrPackageSetup } from '../components/nqtr-package-setup'
 import { NqtrPackagePreview } from '../components/nqtr-package-preview'
-import { NqtrPackageChrome } from '../components/nqtr-package-chrome'
+import { NqtrChapterStudio } from '../components/nqtr-chapter-studio'
 import { parseNqtrTime, parseNqtrChrome, type NqtrChrome, type NqtrTimeSettings } from '../components/maps/nqtr-model'
 import { FileUploadField } from '../components/file-upload-field'
 import {
@@ -26,13 +26,14 @@ import {
   deleteScene,
   updateScene,
   type GameCharacter,
+  type NqtrChapter,
   type GameLocationData,
   type GameMapData,
   type Scene,
   type SceneCategory,
 } from '../api-content-admin'
 
-type NqtrSection = 'chapters' | 'activities' | 'commitments' | 'quests' | 'setup' | 'preview' | 'chrome'
+type NqtrSection = 'segments' | 'chapters' | 'activities' | 'commitments' | 'quests' | 'setup' | 'preview' | 'chrome'
 
 /** 剧情包工作区：只管理剧情包与章节，并引用全局角色、地图资产。 */
 export function AdminNarrativePage() {
@@ -269,9 +270,15 @@ function NqtrPackageWorkspace({
   const [draftCharacters, setDraftCharacters] = useState(characterIds)
   const [time, setTime] = useState<NqtrTimeSettings>(() => parseNqtrTime(timeSettings))
   const [chrome, setChrome] = useState<NqtrChrome>(() => parseNqtrChrome(chromeSettings))
+  const [chapters, setChapters] = useState<NqtrChapter[]>([])
+  const [chapterId, setChapterId] = useState('')
   const [saving, setSaving] = useState(false)
+  const rememberChapters = useCallback((next: NqtrChapter[]) => setChapters(next), [])
+  const rememberChapter = useCallback((id: string) => setChapterId(id), [])
+  const chapter = chapters.find((item) => item.id === chapterId)
   const sections = [
     ['setup', '设定'],
+    ['segments', '章节'],
     ['chapters', '对白章节'],
     ['activities', '行为'],
     ['commitments', '日程'],
@@ -327,10 +334,20 @@ function NqtrPackageWorkspace({
           onSave={() => void saveSetup()}
         />
       )}
+      {section === 'segments' && (
+        <NqtrChapterStudio
+          sceneId={packageId}
+          characters={characters.filter((character) => draftCharacters.includes(character.id) || !draftCharacters.length)}
+          locations={locations.filter((location) => !draftMapId && !mapId || location.mapId === (draftMapId || mapId))}
+          chapterId={chapterId}
+          onChapterId={rememberChapter}
+          onChapters={rememberChapters}
+        />
+      )}
       {section === 'chapters' && <StoryChapterStudio packageId={packageId} locations={locations} characters={characters.filter((character) => draftCharacters.includes(character.id) || !draftCharacters.length)} />}
-      {section === 'activities' && <NarrativeActivityList sceneId={packageId} mapId={draftMapId || mapId} timeSlots={time.timeSlots} />}
-      {section === 'commitments' && <NarrativeCommitmentList sceneId={packageId} mapId={draftMapId || mapId} timeSlots={time.timeSlots} />}
-      {section === 'quests' && <NarrativeQuestList sceneId={packageId} mapId={draftMapId || mapId} />}
+      {section === 'activities' && <NarrativeActivityList sceneId={packageId} mapId={draftMapId || mapId} chapterId={chapterId} timeSlots={time.timeSlots} />}
+      {section === 'commitments' && <NarrativeCommitmentList sceneId={packageId} mapId={draftMapId || mapId} chapterId={chapterId} timeSlots={time.timeSlots} />}
+      {section === 'quests' && <NarrativeQuestList sceneId={packageId} mapId={draftMapId || mapId} chapterId={chapterId} />}
       {section === 'preview' && (
         <NqtrPackagePreview
           sceneId={packageId}
@@ -338,6 +355,8 @@ function NqtrPackageWorkspace({
           time={time}
           chrome={chrome}
           characters={characters}
+          chapterId={chapterId}
+          chapterLocationIds={chapter?.locations.map((item) => item.locationId) ?? []}
         />
       )}
       {section === 'chrome' && (

@@ -72,6 +72,8 @@ export type NqtrChrome = {
   locationIconSize: number
   activityIcon: string
   activityIconSize: number
+  talkIcon: string
+  talkIconSize: number
 }
 
 export const NQTR_COMMANDS: { key: NqtrCommandKey; label: string; hint: string }[] = [
@@ -89,6 +91,8 @@ export function defaultNqtrChrome(): NqtrChrome {
     locationIconSize: 72,
     activityIcon: '',
     activityIconSize: 56,
+    talkIcon: '',
+    talkIconSize: 48,
   }
 }
 
@@ -116,6 +120,8 @@ export function parseNqtrChrome(value: unknown): NqtrChrome {
     locationIconSize: size(raw.locationIconSize, fallback.locationIconSize),
     activityIcon: typeof raw.activityIcon === 'string' ? raw.activityIcon : '',
     activityIconSize: size(raw.activityIconSize, fallback.activityIconSize),
+    talkIcon: typeof raw.talkIcon === 'string' ? raw.talkIcon : '',
+    talkIconSize: size(raw.talkIconSize, fallback.talkIconSize),
   }
 }
 
