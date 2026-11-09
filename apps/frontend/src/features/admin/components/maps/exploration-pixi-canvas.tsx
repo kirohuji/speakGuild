@@ -854,6 +854,7 @@ function ExplorationStage({
               worldWidth={worldWidth}
               worldHeight={worldHeight}
               onSelect={onSelect}
+              selected={selectedNodeIds.has(node.id)}
               onOpen={onOpen}
               onRegisterRef={registerNodeRef}
               onHoverChange={(nodeId, hovered) => {
@@ -977,6 +978,7 @@ function HotspotNode({
   onHoverChange,
   colorFilter,
   colorTint,
+  selected = false,
 }: {
   node: ExplorationNode;
   editable: boolean;
@@ -999,6 +1001,7 @@ function HotspotNode({
   onHoverChange: (id: string, hovered: boolean) => void;
   colorFilter: ColorMatrixFilter | null;
   colorTint: number;
+  selected?: boolean;
 }) {
   const ref = useRef<Container>(null);
   const mediaType =
@@ -1054,6 +1057,7 @@ function HotspotNode({
               : node.kind === "room"
                 ? 0xa78bfa
                 : 0xfbbf24;
+      if (node.kind === "location" || node.kind === "room") return;
       if (!texture) {
         g.roundRect(
           -node.width / 2,
@@ -1064,6 +1068,15 @@ function HotspotNode({
         )
           .fill({ color: node.disabled ? 0x475569 : accent, alpha: 0.88 })
           .stroke({ color: 0xffffff, alpha: 0.7, width: 2 / viewportScale });
+      }
+      if (selected) {
+        g.roundRect(
+          -node.width / 2 - 4,
+          -node.height - 4,
+          node.width + 8,
+          node.height + 8,
+          10,
+        ).stroke({ color: 0x38bdf8, width: 2 / viewportScale });
       }
       if (node.required) {
         g.circle(node.width / 2 - 7, -node.height + 7, 9)
@@ -1079,6 +1092,7 @@ function HotspotNode({
       node.width,
       texture,
       viewportScale,
+      selected,
     ],
   );
 
@@ -1277,7 +1291,22 @@ function HotspotNode({
           draw={drawMask}
         />
       ) : null}
-      {texture && (
+      {(node.kind === "location" || node.kind === "room") && (
+        <pixiGraphics
+          eventMode="none"
+          draw={(g: PixiGraphics) => {
+            g.clear();
+            const radius = Math.min(node.width, node.height) / 2;
+            g.circle(0, -radius, Math.max(0.5, radius - 0.5))
+              .fill(0x111111)
+              .stroke({ width: 1, color: 0xffffff });
+            if (selected) {
+              g.circle(0, -radius, radius + 4).stroke({ width: 2, color: 0x38bdf8 });
+            }
+          }}
+        />
+      )}
+      {node.kind !== "location" && node.kind !== "room" && texture && (
         <pixiSprite
           ref={shadowRef}
           texture={texture}
@@ -1291,7 +1320,7 @@ function HotspotNode({
           eventMode="none"
         />
       )}
-      {texture &&
+      {node.kind !== "location" && node.kind !== "room" && texture &&
       mediaType === "spritesheet" &&
       animationTextures.length > 0 ? (
         <pixiAnimatedSprite
@@ -1311,7 +1340,7 @@ function HotspotNode({
           height={node.height}
           eventMode="none"
         />
-      ) : texture ? (
+      ) : node.kind !== "location" && node.kind !== "room" && texture ? (
         <pixiSprite
           ref={spriteRef}
           texture={texture}

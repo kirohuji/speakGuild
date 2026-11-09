@@ -120,6 +120,10 @@ export class UpdateSceneDto {
   @IsOptional()
   @IsObject()
   nqtrTime?: Record<string, unknown>;
+
+  @IsOptional()
+  @IsObject()
+  nqtrChrome?: Record<string, unknown>;
 }
 
 export class CreateVocabularyDto {

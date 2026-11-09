@@ -261,6 +261,8 @@ const OBJECT_KIND_LABELS: Record<ExplorationObjectKind, string> = {
 };
 
 const LOCATION_RESOURCE_BASE_SIZE = 80;
+const LOCATION_RESOURCE_MIN_SIZE = 10;
+const LOCATION_RESOURCE_MIN_SCALE = LOCATION_RESOURCE_MIN_SIZE / LOCATION_RESOURCE_BASE_SIZE;
 
 function SceneElementIcon({ node }: { node: ExplorationNode }) {
   if (node.kind === "location") return <MapPin className="shrink-0" />;
@@ -661,8 +663,8 @@ export function NarrativeWorldStudio({
         imageUrl: location.icon,
         x: location.posX || 50,
         y: location.posY || 50,
-        width: Math.max(80, location.iconWidth ?? 150),
-        height: Math.max(80, location.iconHeight ?? 120),
+        width: location.iconWidth ?? LOCATION_RESOURCE_MIN_SIZE,
+        height: location.iconHeight ?? LOCATION_RESOURCE_MIN_SIZE,
         mask: getLocationMask(selectedMap, location.id),
         occlusionMask: getLocationOcclusionMask(selectedMap, location.id),
         visualStyle: getLocationVisualStyle(selectedMap, location.id),
@@ -1010,11 +1012,11 @@ export function NarrativeWorldStudio({
 
   const getLocationSize = (location: GameLocationData, scale: number) => {
     const currentWidth = Math.max(
-      LOCATION_RESOURCE_BASE_SIZE,
+      LOCATION_RESOURCE_MIN_SIZE,
       location.iconWidth ?? LOCATION_RESOURCE_BASE_SIZE,
     );
     const currentHeight = Math.max(
-      LOCATION_RESOURCE_BASE_SIZE,
+      LOCATION_RESOURCE_MIN_SIZE,
       location.iconHeight ?? LOCATION_RESOURCE_BASE_SIZE,
     );
     const ratio = currentWidth / Math.max(currentHeight, 1);
@@ -1609,8 +1611,8 @@ export function NarrativeWorldStudio({
           name: makeExplorationKey(locationForm.displayName, "location"),
           posX: 50,
           posY: 55,
-          iconWidth: 160,
-          iconHeight: 130,
+          iconWidth: 10,
+          iconHeight: 10,
           requiredOutputLevel: "L1",
           sortOrder: mapLocations.length,
         });
@@ -2032,14 +2034,6 @@ export function NarrativeWorldStudio({
     <div className="flex h-full min-h-0 flex-1 flex-col gap-3 overflow-hidden">
       <Card className="shrink-0 overflow-hidden border border-border/60 bg-card/95">
         <CardContent className="flex flex-wrap items-center gap-2 p-2.5">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => navigate("/admin/narrative-assets/maps")}
-          >
-            <ArrowLeft data-icon="inline-start" />
-            地图列表
-          </Button>
           {editable && (
             <Button
               size="sm"
@@ -2213,6 +2207,15 @@ export function NarrativeWorldStudio({
               </PopoverContent>
             </Popover>
           )}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="ml-auto"
+            onClick={() => navigate("/admin/narrative-assets/maps")}
+          >
+            <ArrowLeft data-icon="inline-start" />
+            地图列表
+          </Button>
         </CardContent>
       </Card>
 
@@ -2312,7 +2315,7 @@ export function NarrativeWorldStudio({
                         className={cn(
                           "flex h-7 w-full items-center gap-1.5 rounded-md px-2 text-left text-xs transition-colors [&_svg]:size-3.5",
                           effectiveSelectedNodeIds.includes(node.id)
-                            ? "bg-primary text-primary-foreground"
+                            ? "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-1 ring-offset-card"
                             : "hover:bg-muted",
                           node.layerHidden && "opacity-45",
                         )}
@@ -2380,11 +2383,10 @@ export function NarrativeWorldStudio({
                 ? Math.min(
                     5,
                     Math.max(
-                      1,
+                      LOCATION_RESOURCE_MIN_SCALE,
                       Math.max(
                         selectedLocation.iconWidth ?? LOCATION_RESOURCE_BASE_SIZE,
                         selectedLocation.iconHeight ?? LOCATION_RESOURCE_BASE_SIZE,
-                        LOCATION_RESOURCE_BASE_SIZE,
                       ) / LOCATION_RESOURCE_BASE_SIZE,
                     ),
                   )
@@ -4052,8 +4054,7 @@ function InteractionPropertyPanel({
   onAdd: () => void;
 }) {
   return (
-    <div className="rounded-xl border border-border/70 bg-muted/25 p-3">
-      <div className="flex items-start justify-between gap-3">
+    <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <Sparkles className="size-3.5 text-amber-500" />
@@ -4077,7 +4078,6 @@ function InteractionPropertyPanel({
           <Plus data-icon="inline-start" />
           添加
         </Button>
-      </div>
     </div>
   );
 }
@@ -4309,16 +4309,16 @@ function Inspector({
         ? room?.icon
         : object?.imageUrl;
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden border-0 shadow-none">
       {image && (
-        <div className="h-36 bg-muted">
+        <div className="h-24 bg-muted">
           <MediaUrlPreview
             url={image}
-            className="size-full object-contain p-3"
+            className="size-full object-contain p-2"
           />
         </div>
       )}
-      <CardHeader>
+      <CardHeader className="gap-1 px-0 pb-2 pt-3">
         <div className="flex items-center gap-2">
           <Badge variant="secondary">
             {level === "world"
@@ -4327,12 +4327,25 @@ function Inspector({
                 ? "房间"
                 : "探索物品"}
           </Badge>
-          {object?.required && <Badge>必做</Badge>}
+          <CardTitle className="text-sm">{title}</CardTitle>
         </div>
-        <CardTitle className="text-base">{title}</CardTitle>
-        <CardDescription>{description || "暂无说明"}</CardDescription>
+        {description && <CardDescription className="line-clamp-2 text-xs">{description}</CardDescription>}
       </CardHeader>
-      <CardContent className="flex flex-col gap-3">
+      <CardContent className="flex flex-col gap-4 px-0">
+        <div className="grid grid-cols-2 gap-2">
+          <Button size="sm" onClick={onEnter}>
+            <BookOpen data-icon="inline-start" />
+            进入下一层编辑
+          </Button>
+          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={onDelete}>
+            <Trash2 data-icon="inline-start" />
+            删除
+          </Button>
+          <Button size="sm" variant="ghost" className="col-span-2 justify-start" onClick={onEdit}>
+            <Edit3 data-icon="inline-start" />
+            编辑属性
+          </Button>
+        </div>
         {level === "world" && (
           <>
             <p className="text-xs text-muted-foreground">{roomCount} 个房间</p>
@@ -4343,14 +4356,14 @@ function Inspector({
             />
             {location && (
               <>
-              <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3">
+              <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between gap-3">
                   <Label htmlFor="location-resource-scale">地点素材大小</Label>
                   <Badge variant="outline">{locationScale.toFixed(1)}×</Badge>
                 </div>
                 <Slider
                   id="location-resource-scale"
-                  min={1}
+                  min={LOCATION_RESOURCE_MIN_SCALE}
                   max={5}
                   step={0.1}
                   value={[locationScale]}
@@ -4363,23 +4376,23 @@ function Inspector({
                   aria-label="地点素材显示倍率"
                 />
                 <div className="flex justify-between text-[11px] text-muted-foreground">
-                  <span>1×</span>
+                  <span>{LOCATION_RESOURCE_MIN_SIZE}</span>
                   <span>
                     {Math.max(
-                      LOCATION_RESOURCE_BASE_SIZE,
+                      LOCATION_RESOURCE_MIN_SIZE,
                       location.iconWidth ?? LOCATION_RESOURCE_BASE_SIZE,
                     )}{" "}
                     ×{" "}
                     {Math.max(
-                      LOCATION_RESOURCE_BASE_SIZE,
+                      LOCATION_RESOURCE_MIN_SIZE,
                       location.iconHeight ?? LOCATION_RESOURCE_BASE_SIZE,
                     )}
                   </span>
-                  <span>5×</span>
+                  <span>{LOCATION_RESOURCE_BASE_SIZE * 5}</span>
                 </div>
               </div>
               {visualStyle && (
-                <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3">
+                <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-1.5">
                       <Button
@@ -4404,7 +4417,7 @@ function Inspector({
                   <VisualSlider label="阴影" value={visualStyle.shadowOpacity} min={0} max={0.6} step={0.01} format={(v) => `${Math.round(v * 100)}%`} onChange={(value) => onVisualStyleChange({ ...visualStyle, shadowOpacity: value })} onCommit={(value) => onVisualStyleCommit({ ...visualStyle, shadowOpacity: value })} />
                 </div>
               )}
-              <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-3">
+              <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between gap-3">
                   <Label>地点蒙版</Label>
                   <Badge variant="outline">{maskPointCount} 笔</Badge>
@@ -4462,7 +4475,7 @@ function Inspector({
                     退出蒙版编辑
                   </Button>
                 )}
-                <div className="flex items-center justify-between gap-3 rounded-md border bg-background p-2.5">
+                <div className="flex items-center justify-between gap-3">
                   <div className="flex flex-col gap-0.5">
                     <Label htmlFor="show-mask-overlay">
                       显示{maskLayer === "occlusion" ? "蓝色" : "红色"}蒙版
@@ -4519,29 +4532,10 @@ function Inspector({
           </>
         )}
         {level === "location" && (
-          <>
-            <p className="text-xs text-muted-foreground">
-              {objectCount} 个场景互动
-            </p>
-            <InteractionPropertyPanel
-              count={interactionCount}
-              ownerName={room?.displayName}
-              onAdd={onAddInteraction}
-            />
-          </>
+          <p className="text-xs text-muted-foreground">
+            {objectCount} 个场景互动
+          </p>
         )}
-        <Button onClick={onEnter}>
-          <BookOpen data-icon="inline-start" />
-          进入下一层编辑
-        </Button>
-        <Button variant="outline" onClick={onEdit}>
-          <Edit3 data-icon="inline-start" />
-          编辑属性
-        </Button>
-        <Button variant="ghost" onClick={onDelete}>
-          <Trash2 data-icon="inline-start" />
-          删除
-        </Button>
       </CardContent>
     </Card>
   );

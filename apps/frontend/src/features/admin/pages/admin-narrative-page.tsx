@@ -13,7 +13,8 @@ import { StoryChapterStudio } from '../components/story-chapter-studio'
 import { NarrativeActivityList, NarrativeCommitmentList, NarrativeQuestList } from '../components/narrative-nqtr-registries'
 import { NqtrPackageSetup } from '../components/nqtr-package-setup'
 import { NqtrPackagePreview } from '../components/nqtr-package-preview'
-import { parseNqtrTime, type NqtrTimeSettings } from '../components/maps/nqtr-model'
+import { NqtrPackageChrome } from '../components/nqtr-package-chrome'
+import { parseNqtrTime, parseNqtrChrome, type NqtrChrome, type NqtrTimeSettings } from '../components/maps/nqtr-model'
 import { FileUploadField } from '../components/file-upload-field'
 import {
   listCharacters,
@@ -31,7 +32,7 @@ import {
   type SceneCategory,
 } from '../api-content-admin'
 
-type NqtrSection = 'chapters' | 'activities' | 'commitments' | 'quests' | 'setup' | 'preview'
+type NqtrSection = 'chapters' | 'activities' | 'commitments' | 'quests' | 'setup' | 'preview' | 'chrome'
 
 /** 剧情包工作区：只管理剧情包与章节，并引用全局角色、地图资产。 */
 export function AdminNarrativePage() {
@@ -177,6 +178,7 @@ export function AdminNarrativePage() {
           packageId={selectedPackage.id}
           mapId={selectedPackage.nqtrMapId}
           timeSettings={selectedPackage.nqtrTime}
+          chromeSettings={selectedPackage.nqtrChrome}
           characterIds={selectedPackage.nqtrCast?.map((item) => item.characterId) ?? []}
           maps={maps}
           characters={characters}
@@ -242,6 +244,7 @@ function NqtrPackageWorkspace({
   packageId,
   mapId,
   timeSettings,
+  chromeSettings,
   characterIds,
   maps,
   characters,
@@ -253,6 +256,7 @@ function NqtrPackageWorkspace({
   packageId: string
   mapId?: string | null
   timeSettings?: NqtrTimeSettings | null
+  chromeSettings?: NqtrChrome | null
   characterIds: string[]
   maps: GameMapData[]
   characters: GameCharacter[]
@@ -264,6 +268,7 @@ function NqtrPackageWorkspace({
   const [draftMapId, setDraftMapId] = useState(mapId ?? '')
   const [draftCharacters, setDraftCharacters] = useState(characterIds)
   const [time, setTime] = useState<NqtrTimeSettings>(() => parseNqtrTime(timeSettings))
+  const [chrome, setChrome] = useState<NqtrChrome>(() => parseNqtrChrome(chromeSettings))
   const [saving, setSaving] = useState(false)
   const sections = [
     ['setup', '设定'],
@@ -272,7 +277,21 @@ function NqtrPackageWorkspace({
     ['commitments', '日程'],
     ['quests', '任务'],
     ['preview', '总预览'],
+    ['chrome', '外观'],
   ] as const
+
+  const saveChrome = async () => {
+    setSaving(true)
+    try {
+      await updateScene(packageId, { nqtrChrome: chrome })
+      await onSaved()
+      toast.success('外观已保存')
+    } catch {
+      toast.error('外观保存失败')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const saveSetup = async () => {
     setSaving(true)
@@ -317,7 +336,16 @@ function NqtrPackageWorkspace({
           sceneId={packageId}
           map={maps.find((item) => item.id === (draftMapId || mapId)) ?? null}
           time={time}
+          chrome={chrome}
           characters={characters}
+        />
+      )}
+      {section === 'chrome' && (
+        <NqtrPackageChrome
+          chrome={chrome}
+          saving={saving}
+          onChange={setChrome}
+          onSave={() => void saveChrome()}
         />
       )}
     </div>

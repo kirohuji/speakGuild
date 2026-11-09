@@ -392,18 +392,19 @@ export function getRoomLayout(
   index: number,
 ): RoomLayout {
   const stored = map?.editorData?.explorationScenes?.[locationId]?.[roomId];
+  const legacyDefault = stored?.width === 180 && stored?.height === 120;
   return stored && typeof stored === "object"
     ? {
         x: stored.x ?? 24,
         y: stored.y ?? 28,
-        width: stored.width ?? 180,
-        height: stored.height ?? 120,
+        width: legacyDefault ? 10 : (stored.width ?? 10),
+        height: legacyDefault ? 10 : (stored.height ?? 10),
       }
     : {
         x: 22 + (index % 3) * 28,
         y: 28 + Math.floor(index / 3) * 30,
-        width: 180,
-        height: 120,
+        width: 10,
+        height: 10,
       };
 }
 

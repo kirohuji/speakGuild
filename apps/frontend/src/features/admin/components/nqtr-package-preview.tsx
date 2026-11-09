@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Loader2, Map as MapIcon, RotateCcw } from 'lucide-react'
+import { Loader2, Map as MapIcon, MapPin } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -24,7 +24,8 @@ import {
   type NqtrQuestStage,
 } from '../api-content-admin'
 import { VnStoryPreview } from './vn-story-preview'
-import { formatNqtrTime, type NqtrTimeSettings, type QuestProgress } from './maps/nqtr-model'
+import { formatNqtrTime, parseNqtrChrome, type NqtrChrome, type NqtrCommandKey, type NqtrTimeSettings, type QuestProgress } from './maps/nqtr-model'
+import { getExplorationObjects, getRoomLayout } from './maps/exploration-map-model'
 
 type Talk = {
   token: string
@@ -231,13 +232,16 @@ export function NqtrPackagePreview({
   sceneId,
   map,
   time,
+  chrome,
   characters,
 }: {
   sceneId: string
   map: GameMapData | null
   time: NqtrTimeSettings
+  chrome: NqtrChrome
   characters: GameCharacter[]
 }) {
+  const look = parseNqtrChrome(chrome)
   const [loading, setLoading] = useState(true)
   const [locations, setLocations] = useState<GameLocationData[]>([])
   const [rooms, setRooms] = useState<GameRoomData[]>([])
@@ -250,6 +254,7 @@ export function NqtrPackagePreview({
   const [inkSource, setInkSource] = useState('')
   const [debug, setDebug] = useState<PreviewDebug | null>(null)
   const [aiEnabled, setAiEnabled] = useState(false)
+  const [hotspotsOpen, setHotspotsOpen] = useState(false)
   const questsRef = useRef(quests)
   const closedTalk = useRef<string | null>(null)
   const autoFired = useRef(new Set<string>())
@@ -325,6 +330,19 @@ export function NqtrPackagePreview({
     ? locationOf(place.locationId)
     : currentRoom ? locationOf(currentRoom.locationId) : undefined
   const slot = slotName(time, session.gameTime)
+  const locationHotspots = useMemo(() => {
+    if (!map || !currentLocation) return []
+    const roomPins = rooms
+      .filter((room) => room.locationId === currentLocation.id)
+      .map((room, index) => {
+        const layout = getRoomLayout(map, currentLocation.id, room.id, index)
+        return { id: room.id, title: room.displayName, imageUrl: room.icon, x: layout.x, y: layout.y, roomId: room.id }
+      })
+    const interactions = getExplorationObjects(map, `location:${currentLocation.id}`)
+      .filter((item) => !item.hidden)
+      .map((item) => ({ id: item.id, title: item.title, imageUrl: item.imageUrl, x: item.x, y: item.y, roomId: item.targetRoomId }))
+    return [...roomPins, ...interactions]
+  }, [currentLocation, map, rooms])
 
   const gatedCommitments = useMemo(() => new Set(
     quests.flatMap((quest) => quest.stages.flatMap((stage) => (stage.actions ?? [])
@@ -449,7 +467,10 @@ export function NqtrPackagePreview({
     }, questsRef.current))
   }
 
-  const background = place.mode === 'map'
+  const showHotspots = hotspotsOpen && place.mode !== 'map' && Boolean(currentLocation)
+  const background = showHotspots
+    ? currentLocation?.backgroundUrl || map?.backgroundUrl
+    : place.mode === 'map'
     ? map?.backgroundUrl
     : place.mode === 'location'
       ? currentLocation?.backgroundUrl || map?.backgroundUrl
@@ -465,13 +486,13 @@ export function NqtrPackagePreview({
           <Badge variant="secondary">{map?.displayName || '未绑定地图'}</Badge>
           <Badge variant="secondary">{dayLabel(time, session.gameDay)} · {slot} · {formatNqtrTime(session.gameTime)}</Badge>
           <div className="flex w-full flex-wrap gap-1">
-            {place.mode !== 'map' && <Button size="sm" variant="outline" onClick={() => setPlace({ mode: 'map' })}><MapIcon className="size-3.5" />地图</Button>}
+            {place.mode !== 'map' && <Button size="sm" variant="outline" onClick={() => { setHotspotsOpen(false); setPlace({ mode: 'map' }) }}>地图</Button>}
+            {place.mode !== 'map' && <Button size="sm" variant="outline" onClick={() => setHotspotsOpen((open) => !open)}>热点</Button>}
             {place.mode === 'talk' && <Button size="sm" variant="outline" onClick={() => { if (debug?.isEnded) finishTalk(place.talk); else { closedTalk.current = place.talk.token; setPlace({ mode: 'room', roomId: place.roomId }) } }}>{debug?.isEnded ? '关闭对白' : '返回房间'}</Button>}
-            {place.mode === 'room' && currentRoom && <Button size="sm" variant="outline" onClick={() => setPlace({ mode: 'location', locationId: currentRoom.locationId })}>地点</Button>}
             {place.mode === 'location' && <Button size="sm" variant="outline" onClick={() => setPlace({ mode: 'map' })}>返回</Button>}
             <Button size="sm" variant="outline" onClick={jumpSlot}>下一时段</Button>
             <Button size="sm" variant="outline" onClick={jumpDay}>下一天</Button>
-            <Button size="sm" variant="outline" onClick={() => reset(rooms)}><RotateCcw className="size-3.5" />重置</Button>
+            <Button size="sm" variant="outline" onClick={() => reset(rooms)}>重置</Button>
           </div>
         </div>
         <div className="relative mx-auto h-[78vh] max-h-[760px] w-full max-w-[420px] overflow-hidden rounded-lg border border-border bg-slate-950">
@@ -479,6 +500,22 @@ export function NqtrPackagePreview({
             <img src={backgroundUrl} alt="" className="absolute inset-0 size-full object-cover" />
           ) : (
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_42%),linear-gradient(180deg,#1c2836,#0d141c)]" />
+          )}
+          {place.mode !== 'map' && (
+            <div className="absolute right-3 top-3 z-30 flex items-start gap-2">
+              <CommandIcon
+                chrome={look}
+                command="place"
+                label="热点"
+                onClick={() => setHotspotsOpen((open) => !open)}
+              />
+              <CommandIcon
+                chrome={look}
+                command="map"
+                label="地图"
+                onClick={() => { setHotspotsOpen(false); setPlace({ mode: 'map' }) }}
+              />
+            </div>
           )}
 
           {loading ? (
@@ -501,17 +538,26 @@ export function NqtrPackagePreview({
             </div>
           ) : place.mode === 'map' ? (
             <div className="absolute inset-0 z-10">
-              {locations.map((location) => (
-                <button
-                  key={location.id}
-                  type="button"
-                  className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/30 bg-black/70 px-3 py-1.5 text-sm text-white shadow-lg hover:bg-black"
-                  style={{ left: `${location.posX}%`, top: `${location.posY}%` }}
-                  onClick={() => setPlace({ mode: 'location', locationId: location.id })}
-                >
-                  {location.displayName}
-                </button>
-              ))}
+              {locations.map((location) => {
+                const icon = location.icon ? resolveFileAssetUrl(location.icon) : ''
+                return (
+                  <button
+                    key={location.id}
+                    type="button"
+                    className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center bg-transparent"
+                    style={{ left: `${location.posX}%`, top: `${location.posY}%` }}
+                    onClick={() => setPlace({ mode: 'location', locationId: location.id })}
+                  >
+                    {icon ? <img src={icon} alt="" className="object-contain" style={{ width: look.locationIconSize, height: look.locationIconSize }} /> : null}
+                    <span
+                      className="text-sm font-semibold leading-none"
+                      style={{ color: '#111', WebkitTextStroke: '4px #fff', paintOrder: 'stroke fill' }}
+                    >
+                      {location.displayName}
+                    </span>
+                  </button>
+                )
+              })}
               {!map && <p className="absolute inset-x-0 top-1/2 text-center text-sm text-white/80">先在设定里绑定一张地图</p>}
               {map && !locations.length && <p className="absolute inset-x-0 top-1/2 text-center text-sm text-white/80">这张地图还没有地点</p>}
             </div>
@@ -552,7 +598,7 @@ export function NqtrPackagePreview({
               </div>
               <div className="absolute inset-x-0 bottom-0 z-10 flex gap-3 overflow-x-auto p-4">
                 {visibleActivities.map((activity) => {
-                  const icon = activity.iconUrl ? resolveFileAssetUrl(activity.iconUrl) : ''
+                  const icon = activity.iconUrl ? resolveFileAssetUrl(activity.iconUrl) : look.activityIcon ? resolveFileAssetUrl(look.activityIcon) : ''
                   return (
                     <button
                       key={activity.id}
@@ -568,7 +614,7 @@ export function NqtrPackagePreview({
                         questAction: activity.questAction ?? null,
                       })}
                     >
-                      {icon ? <img src={icon} alt="" className="size-14 object-contain" /> : <span className="size-14" />}
+                      {icon ? <img src={icon} alt="" className="object-contain" style={{ width: look.activityIconSize, height: look.activityIconSize }} /> : <span style={{ width: look.activityIconSize, height: look.activityIconSize }} />}
                     </button>
                   )
                 })}
@@ -576,6 +622,29 @@ export function NqtrPackagePreview({
               <p className="absolute left-3 top-3 z-10 rounded-full bg-black/60 px-2 py-1 text-xs text-white">{currentLocation?.displayName} / {currentRoom.displayName}</p>
             </>
           ) : null}
+          {showHotspots && (
+            <div className="absolute inset-0 z-20">
+              {locationHotspots.map((item) => {
+                const icon = item.imageUrl ? resolveFileAssetUrl(item.imageUrl) : look.hotspotIcon ? resolveFileAssetUrl(look.hotspotIcon) : ''
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center bg-transparent"
+                    style={{ left: `${item.x}%`, top: `${item.y}%` }}
+                    onClick={() => {
+                      if (!item.roomId) return
+                      setHotspotsOpen(false)
+                      setPlace({ mode: 'room', roomId: item.roomId })
+                    }}
+                  >
+                    {icon ? <img src={icon} alt="" className="object-contain" style={{ width: look.locationIconSize, height: look.locationIconSize }} /> : null}
+                    <span className="text-sm font-semibold leading-none" style={{ color: '#111', WebkitTextStroke: '4px #fff', paintOrder: 'stroke fill' }}>{item.title}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -668,6 +737,36 @@ export function NqtrPackagePreview({
       </aside>
     </div>
   )
+}
+
+function CommandIcon({
+  chrome,
+  command,
+  label,
+  onClick,
+  className,
+}: {
+  chrome: NqtrChrome
+  command: NqtrCommandKey
+  label: string
+  onClick: () => void
+  className?: string
+}) {
+  const style = chrome.commands[command]
+  const icon = style.icon ? resolveFileAssetUrl(style.icon) : ''
+  const Fallback = COMMAND_FALLBACK[command]
+  return (
+    <button type="button" aria-label={label} title={label} className={`bg-transparent ${className ?? ''}`} onClick={onClick}>
+      {icon
+        ? <img src={icon} alt="" style={{ width: style.size, height: style.size }} className="object-contain" />
+        : <Fallback className="text-white drop-shadow" style={{ width: style.size, height: style.size }} />}
+    </button>
+  )
+}
+
+const COMMAND_FALLBACK = {
+  map: MapIcon,
+  place: MapPin,
 }
 
 function Metric({ label, value }: { label: string; value: string }) {

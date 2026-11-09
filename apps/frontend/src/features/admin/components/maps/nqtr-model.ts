@@ -61,6 +61,64 @@ export function formatNqtrTime(time: number) {
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
 }
 
+/** 画面右上角两个图标，以及热点、行为的显示尺寸。 */
+export type NqtrCommandKey = 'map' | 'place'
+
+export type NqtrCommandStyle = { icon: string; size: number }
+
+export type NqtrChrome = {
+  commands: Record<NqtrCommandKey, NqtrCommandStyle>
+  hotspotIcon: string
+  locationIconSize: number
+  activityIcon: string
+  activityIconSize: number
+}
+
+export const NQTR_COMMANDS: { key: NqtrCommandKey; label: string; hint: string }[] = [
+  { key: 'map', label: '地图', hint: '画面右上角。点开整张世界地图。' },
+  { key: 'place', label: '热点', hint: '和地图按钮并排。点开后显示当前地点的全部热点。' },
+]
+
+export function defaultNqtrChrome(): NqtrChrome {
+  return {
+    commands: {
+      map: { icon: '', size: 40 },
+      place: { icon: '', size: 40 },
+    },
+    hotspotIcon: '',
+    locationIconSize: 72,
+    activityIcon: '',
+    activityIconSize: 56,
+  }
+}
+
+export function parseNqtrChrome(value: unknown): NqtrChrome {
+  const fallback = defaultNqtrChrome()
+  if (!value || typeof value !== 'object') return fallback
+  const raw = value as Partial<NqtrChrome> & { mapButtonIcon?: string; mapButtonSize?: number; commands?: Partial<Record<string, Partial<NqtrCommandStyle>>> }
+  const size = (input: unknown, next: number) => {
+    const number = Number(input)
+    return Number.isFinite(number) && number >= 16 ? number : next
+  }
+  const commands = { ...fallback.commands }
+  for (const item of NQTR_COMMANDS) {
+    const stored = raw.commands?.[item.key]
+    const legacyIcon = item.key === 'map' ? raw.mapButtonIcon : undefined
+    const legacySize = item.key === 'map' ? raw.mapButtonSize : undefined
+    commands[item.key] = {
+      icon: typeof stored?.icon === 'string' ? stored.icon : typeof legacyIcon === 'string' ? legacyIcon : '',
+      size: size(stored?.size ?? legacySize, fallback.commands[item.key].size),
+    }
+  }
+  return {
+    commands,
+    hotspotIcon: typeof raw.hotspotIcon === 'string' ? raw.hotspotIcon : '',
+    locationIconSize: size(raw.locationIconSize, fallback.locationIconSize),
+    activityIcon: typeof raw.activityIcon === 'string' ? raw.activityIcon : '',
+    activityIconSize: size(raw.activityIconSize, fallback.activityIconSize),
+  }
+}
+
 /** 全局行为。房间只保存对它的引用。 */
 export type NqtrTrigger = "click" | "auto";
 

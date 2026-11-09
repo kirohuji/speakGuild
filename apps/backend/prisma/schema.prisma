@@ -768,6 +768,8 @@ model Scene {
   nqtrMapId           String?
   /// Pixi-VN timeTracker.initialize 的同一套设定：一天的起止、星期、以及任意多个时段。
   nqtrTime            Json?
+  /// 总预览里地图按钮、地点标记、行为图标的图和大小。
+  nqtrChrome          Json?
   nqtrCast            SceneNqtrCharacter[]
   nqtrActivities      GameActivity[]
   nqtrCommitments     GameCommitment[]

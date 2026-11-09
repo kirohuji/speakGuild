@@ -1,5 +1,5 @@
 import { get, post, patch, del as _delete } from '@/lib/request'
-import type { NqtrTimeSettings } from './components/maps/nqtr-model'
+import type { NqtrChrome, NqtrTimeSettings } from './components/maps/nqtr-model'
 
 export interface PreviewDialogueTurnResult {
   intent: string
@@ -93,6 +93,7 @@ export interface Scene {
   isFree: boolean
   nqtrMapId?: string | null
   nqtrTime?: NqtrTimeSettings | null
+  nqtrChrome?: NqtrChrome | null
   nqtrCast?: { characterId: string }[]
   category?: { id: string; name: string } | null
   /** 所属学习包组与组内顺序（层 1 顺序约束字段） */
