@@ -1,6 +1,6 @@
 import {
   isInProgressLearningUnit,
-  isStoryLearningUnit,
+  isScriptLearningUnit,
   learningApi,
   MAX_CONCURRENT_LEARNING_UNITS,
   type LearningUnitSummary,
@@ -394,7 +394,7 @@ export const learningRepository = {
 
   async enrollUnit(unitId: string, unit?: LearningUnitSummary | UnitDetail | null): Promise<void> {
     const alreadyEnrolled = await localDb.get<MyUnit>('my_learning_units', unitId)
-    if (!alreadyEnrolled && !(unit && isStoryLearningUnit(unit))) {
+    if (!alreadyEnrolled && !(unit && isScriptLearningUnit(unit))) {
       const localUnits = await localDb.list<MyUnit>('my_learning_units').catch(() => [])
       const inProgressCount = localUnits.filter(isInProgressLearningUnit).length
       if (inProgressCount >= MAX_CONCURRENT_LEARNING_UNITS) {

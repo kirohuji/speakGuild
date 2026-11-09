@@ -93,7 +93,7 @@ function useNqtrOptions() {
       listRooms(),
       listStories({ scope: 'narrative', page: 1, pageSize: 100 }),
     ]).then(([nextCharacters, nextRooms, nextStories]) => {
-      setCharacters(Array.isArray(nextCharacters) ? nextCharacters : nextCharacters.items)
+      setCharacters(Array.isArray(nextCharacters) ? nextCharacters : (nextCharacters as { items?: GameCharacter[] }).items ?? [])
       setRooms(nextRooms)
       setStories(nextStories.items)
     }).catch(() => toast.error('引用数据加载失败'))
@@ -164,8 +164,8 @@ export function NarrativeActivityList({ sceneId, mapId, chapterId, timeSlots = [
       startMinute: form.timeFrom == null ? null : nqtrTimeToMinutes(form.timeFrom),
       endMinute: form.timeTo == null ? null : nqtrTimeToMinutes(form.timeTo),
     }
-    if (editing) await updateActivity(editing.id, payload)
-    else await createActivity(payload)
+    if (editing) await updateActivity(editing.id, payload as any)
+    else await createActivity(payload as any)
     setOpen(false)
     await load()
     toast.success('行为已保存')
@@ -307,8 +307,8 @@ export function NarrativeCommitmentList({ sceneId, mapId, chapterId, timeSlots =
       startMinute: form.timeFrom == null ? 0 : nqtrTimeToMinutes(form.timeFrom),
       endMinute: form.timeTo == null ? 0 : nqtrTimeToMinutes(form.timeTo),
     }
-    if (editing) await updateCommitment(editing.id, payload)
-    else await createCommitment(payload)
+    if (editing) await updateCommitment(editing.id, payload as any)
+    else await createCommitment(payload as any)
     setOpen(false)
     await load()
     toast.success('日程已保存')

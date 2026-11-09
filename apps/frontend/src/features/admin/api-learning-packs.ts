@@ -4,7 +4,7 @@ const LEARNING_PACK_BUILD_TIMEOUT_MS = 10 * 60_000;
 const LEARNING_PACK_MUTATION_TIMEOUT_MS = 2 * 60_000;
 
 export type LearningPackStatus = 'draft' | 'building' | 'published' | 'failed';
-export type LearningPackType = 'daily' | 'exam' | 'story' | 'course' | 'foundation';
+export type LearningPackType = 'daily' | 'exam' | 'story' | 'course' | 'foundation' | 'nqtr';
 
 export interface LearningPackSceneOption {
   id: string;

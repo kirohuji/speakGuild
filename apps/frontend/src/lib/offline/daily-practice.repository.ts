@@ -629,7 +629,7 @@ async function loadPracticeUnit(unitId: string): Promise<UnitDetail | null> {
     if (!ready) return null
     summary = await readUnitSummary(unitId)
   }
-  if (!summary || summary.contentMode === 'story' || (summary.practiceItemCount ?? 0) === 0) return null
+  if (!summary || summary.contentMode === 'story' || summary.contentMode === 'nqtr' || (summary.practiceItemCount ?? 0) === 0) return null
   return readPracticeSource(unitId) as Promise<UnitDetail | null>
 }
 
@@ -654,7 +654,7 @@ async function loadCandidateUnits(scope: DailyPracticeScope, targetPackId?: stri
 
   const summaries = await Promise.all(eligibleIds.map(async (id) => ({ id, summary: await readUnitSummary(id) })))
   const readyIds = summaries
-    .filter((item) => item.summary && item.summary.contentMode !== 'story' && (item.summary.practiceItemCount ?? 0) > 0)
+    .filter((item) => item.summary && item.summary.contentMode !== 'story' && item.summary.contentMode !== 'nqtr' && (item.summary.practiceItemCount ?? 0) > 0)
     .map((item) => item.id)
   for (const item of summaries) {
     if (!item.summary) void ensurePackProjection(item.id).catch(() => {})

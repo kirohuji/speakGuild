@@ -3,7 +3,7 @@ import type { PatternSlot } from '../lib/pattern-slot'
 
 const LEARNING_PACK_DOWNLOAD_TIMEOUT_MS = 10 * 60_000
 
-export type ContentMode = 'practice' | 'writing' | 'reading' | 'listening' | 'novel' | 'story'
+export type ContentMode = 'practice' | 'writing' | 'reading' | 'listening' | 'novel' | 'story' | 'nqtr'
 export type TopicActivityType = 'practice' | 'writing' | 'reading' | 'listening'
 export type LearningUnitStatus = 'not_started' | 'in_progress' | 'completed'
 export type LearningCompletionKind = 'practice' | 'reading' | 'writing' | 'listening' | 'novel' | 'manual'
@@ -30,7 +30,7 @@ export interface TopicSummary {
 
 export interface LearningUnitSummary {
   id: string
-  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
+  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation' | 'nqtr'
   contentMode?: ContentMode
   title: string
   location: string
@@ -150,7 +150,7 @@ export interface TrainingTopicItem {
 
 export interface UnitDetail {
   id: string
-  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
+  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation' | 'nqtr'
   contentMode?: ContentMode
   title: string
   location: string
@@ -177,12 +177,22 @@ export interface UnitDetail {
   trainingTopics: TrainingTopicItem[]
   firstEpisode: { id: string; title: string; chapterTitle: string; episodeOrder: number; description: string | null; requiredOutputLevel: string } | null
   storyEpisodes?: StoryEpisodeItem[]
+  nqtrChapters?: Array<{
+    id: string
+    title: string
+    summary?: string | null
+    sortOrder?: number
+    passed?: boolean
+    isUnlocked?: boolean
+  }>
   vocabCount: number
   chunkCount: number
   topicCount: number
   scriptCount: number
   /** 仅存在于下载包中的章节播放数据；线上详情接口不会返回该字段。 */
   offlineStoryEpisodePlayers?: StoryEpisodePlayerData[]
+  /** 仅存在于下载包中的 NQTR 世界数据。 */
+  offlineNqtrBundle?: Record<string, unknown> | null
   /** 仅存在于下载包中的小说包数据（metadata/toc/epubAssetId）；线上详情接口不会返回该字段。 */
   novelPackage?: {
     id: string
@@ -282,7 +292,7 @@ export interface StoryEpisodePlayerData {
 /** 用户正在学习的单元（从 my-units 接口返回） */
 export interface MyUnit {
   id: string
-  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation'
+  packageType?: 'daily' | 'exam' | 'story' | 'course' | 'foundation' | 'nqtr'
   contentMode?: ContentMode
   title: string
   location: string
@@ -321,13 +331,28 @@ export function isStoryLearningUnit(unit: {
   return unit.packageType === 'story' || unit.contentMode === 'story'
 }
 
+export function isNqtrLearningUnit(unit: {
+  packageType?: string | null
+  contentMode?: string | null
+}) {
+  return unit.packageType === 'nqtr' || unit.contentMode === 'nqtr'
+}
+
+/** 剧本 Tab 产品线：轻量剧情包 + NQTR 互动剧情包。 */
+export function isScriptLearningUnit(unit: {
+  packageType?: string | null
+  contentMode?: string | null
+}) {
+  return isStoryLearningUnit(unit) || isNqtrLearningUnit(unit)
+}
+
 export function isInProgressLearningUnit(unit: {
   packageType?: string | null
   contentMode?: string | null
   completionPercent?: number | null
   status?: LearningUnitStatus | null
 }) {
-  return !isStoryLearningUnit(unit) && (unit.status ? unit.status === 'in_progress' : (unit.completionPercent ?? 0) < 100)
+  return !isScriptLearningUnit(unit) && (unit.status ? unit.status === 'in_progress' : (unit.completionPercent ?? 0) < 100)
 }
 
 export interface TagInfo {
@@ -335,7 +360,7 @@ export interface TagInfo {
   icon: string | null
 }
 
-export type LearningPackageType = 'daily' | 'exam' | 'story' | 'course' | 'foundation'
+export type LearningPackageType = 'daily' | 'exam' | 'story' | 'course' | 'foundation' | 'nqtr'
 
 export interface ListeningTranscriptWord {
   token: string

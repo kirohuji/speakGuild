@@ -53,12 +53,17 @@ function statusLabel(status: LearningPackStatus) {
   return { draft: '草稿', building: '生成中', published: '已发布', failed: '失败' }[status];
 }
 
-function packageTypeLabel(type?: LearningPackType) {
+function packageTypeLabel(type?: LearningPackType | string) {
   if (type === 'exam') return '考试备考';
-  if (type === 'story') return '故事';
+  if (type === 'story') return '轻量剧情';
+  if (type === 'nqtr') return 'NQTR 互动';
   if (type === 'course') return '专项提升';
   if (type === 'foundation') return '基础学习';
   return '日常应用';
+}
+
+function isScriptPackType(type?: string | null) {
+  return type === 'story' || type === 'nqtr';
 }
 
 const PACKAGE_TYPE_FILTERS: Array<{ id: LearningPackType; label: string }> = [
@@ -66,6 +71,12 @@ const PACKAGE_TYPE_FILTERS: Array<{ id: LearningPackType; label: string }> = [
   { id: 'daily', label: '日常应用' },
   { id: 'course', label: '专项提升' },
   { id: 'exam', label: '考试备考' },
+];
+
+const SCRIPT_TYPE_FILTERS: Array<{ id: 'all' | 'story' | 'nqtr'; label: string }> = [
+  { id: 'all', label: '全部剧本' },
+  { id: 'story', label: '轻量剧情' },
+  { id: 'nqtr', label: 'NQTR 互动' },
 ];
 
 function saveBlob(buffer: ArrayBuffer, filename: string) {
@@ -98,7 +109,7 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
   const [pendingReviewSceneIds, setPendingReviewSceneIds] = useState<Set<string>>(new Set());
 
   // ── List filters ──
-  const [packageTypeFilter, setPackageTypeFilter] = useState<string>(isScriptMode ? 'story' : 'all');
+  const [packageTypeFilter, setPackageTypeFilter] = useState<string>(isScriptMode ? 'all' : 'all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [publishFilter, setPublishFilter] = useState<'all' | 'published'>('all');
   // 所属系列（学习包分组）过滤
@@ -120,7 +131,7 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
   const [createTitle, setCreateTitle] = useState('');
   const [generating, setGenerating] = useState(false);
   // Dialog filters
-  const [dialogPackageType, setDialogPackageType] = useState<string>(isScriptMode ? 'story' : 'daily');
+  const [dialogPackageType, setDialogPackageType] = useState<string>(isScriptMode ? 'all' : 'daily');
   const [dialogCategoryId, setDialogCategoryId] = useState<string>('all');
   const [dialogCategories, setDialogCategories] = useState<SceneCategory[]>([]);
 
@@ -199,9 +210,13 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
     setLoading(true);
     try {
       const listParams: any = { pageSize: 200 };
-      if (isScriptMode) listParams.packageType = 'story';
-      else if (packageTypeFilter !== 'all') listParams.packageType = packageTypeFilter;
-      else listParams.excludePackageType = 'story';
+      if (isScriptMode) {
+        listParams.packageType = packageTypeFilter === 'all' ? 'story,nqtr' : packageTypeFilter;
+      } else if (packageTypeFilter !== 'all') {
+        listParams.packageType = packageTypeFilter;
+      } else {
+        listParams.excludePackageType = 'story';
+      }
       if (categoryFilter !== 'all') listParams.categoryId = categoryFilter;
 
       const [packResult, sceneResult, groupResult] = await Promise.all([
@@ -216,8 +231,8 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
       setPacks(packResult.list);
       setGroups(groupResult);
       const visibleScenes = sceneResult.filter((scene) =>
-        (isScriptMode ? scene.packageType === 'story' : scene.packageType !== 'story')
-        && (isScriptMode || packageTypeFilter === 'all' || scene.packageType === packageTypeFilter)
+        (isScriptMode ? isScriptPackType(scene.packageType) : !isScriptPackType(scene.packageType))
+        && (packageTypeFilter === 'all' || scene.packageType === packageTypeFilter)
         && (categoryFilter === 'all' || scene.categoryId === categoryFilter),
       );
       setScenes(visibleScenes);
@@ -242,13 +257,28 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
     const params = new URLSearchParams(hashQuery)
     const pt = params.get('packageType')
     const cid = params.get('categoryId')
-    if (pt && !isScriptMode && pt !== 'story') setPackageTypeFilter(pt)
+    if (pt && (isScriptMode ? isScriptPackType(pt) : !isScriptPackType(pt))) setPackageTypeFilter(pt)
     if (cid) setCategoryFilter(cid)
   }, [isScriptMode])
 
   // ── Cascading filters ──
   useEffect(() => {
-    listSceneCategories(isScriptMode ? 'story' : packageTypeFilter !== 'all' ? packageTypeFilter as any : undefined)
+    const categoryPackageType = isScriptMode
+      ? (packageTypeFilter === 'all' ? undefined : packageTypeFilter)
+      : (packageTypeFilter !== 'all' ? packageTypeFilter : undefined)
+    // 剧本线「全部」时合并 story + nqtr 主题；学习包「全部」仍走后端默认排除剧本线。
+    if (isScriptMode && packageTypeFilter === 'all') {
+      void Promise.all([
+        listSceneCategories('story' as any).catch(() => [] as SceneCategory[]),
+        listSceneCategories('nqtr' as any).catch(() => [] as SceneCategory[]),
+      ]).then(([storyCats, nqtrCats]) => {
+        const merged = new Map<string, SceneCategory>()
+        for (const item of [...storyCats, ...nqtrCats]) merged.set(item.id, item)
+        setCategories([...merged.values()])
+      })
+      return
+    }
+    listSceneCategories(categoryPackageType as any)
       .then(setCategories).catch(() => {});
   }, [packageTypeFilter, isScriptMode]);
   useEffect(() => {
@@ -263,8 +293,22 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
 
   // Dialog cascading
   useEffect(() => {
-    listSceneCategories(isScriptMode ? 'story' : dialogPackageType !== 'all' ? dialogPackageType as any : undefined)
-      .then(setDialogCategories).catch(() => {});
+    if (isScriptMode && dialogPackageType === 'all') {
+      void Promise.all([
+        listSceneCategories('story' as any).catch(() => [] as SceneCategory[]),
+        listSceneCategories('nqtr' as any).catch(() => [] as SceneCategory[]),
+      ]).then(([storyCats, nqtrCats]) => {
+        const merged = new Map<string, SceneCategory>()
+        for (const item of [...storyCats, ...nqtrCats]) merged.set(item.id, item)
+        setDialogCategories([...merged.values()])
+      })
+      return
+    }
+    listSceneCategories(
+      isScriptMode
+        ? (dialogPackageType as any)
+        : dialogPackageType !== 'all' ? dialogPackageType as any : undefined,
+    ).then(setDialogCategories).catch(() => {});
   }, [dialogPackageType, isScriptMode]);
   useEffect(() => { setDialogCategoryId('all'); }, [dialogPackageType]);
 
@@ -272,9 +316,10 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
   const dialogScenes = useMemo(() => {
     return scenes.filter((s) => {
       if (dialogPackageType !== 'all' && s.packageType !== dialogPackageType) return false;
+      if (dialogCategoryId !== 'all' && s.categoryId !== dialogCategoryId) return false;
       return true;
     });
-  }, [scenes, dialogPackageType]);
+  }, [scenes, dialogPackageType, dialogCategoryId]);
 
   const selectedCreateScene = useMemo(
     () => dialogScenes.find((s) => s.id === createSceneId) ?? null,
@@ -284,7 +329,7 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
   const openCreateDialog = () => {
     setCreateVersion('');
     setCreateTitle('');
-    setDialogPackageType(isScriptMode ? 'story' : packageTypeFilter !== 'all' ? packageTypeFilter : 'daily');
+    setDialogPackageType(isScriptMode ? (packageTypeFilter === 'all' ? 'all' : packageTypeFilter) : packageTypeFilter !== 'all' ? packageTypeFilter : 'daily');
     // Init first scene
     const filtered = scenes.filter((s) =>
       (packageTypeFilter !== 'all' ? s.packageType === packageTypeFilter : true)
@@ -441,23 +486,29 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
 
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-3">
-        {!isScriptMode && (
-          <div className="flex min-w-[140px] flex-col gap-1">
-            <Select
-              value={packageTypeFilter}
-              onChange={(e) => {
-                setPackageTypeFilter((e.target as HTMLSelectElement).value);
-                setCategoryFilter('all');
-                setGroupFilter('all');
-              }}
-            >
-              <SelectItem value="all">全部类型</SelectItem>
-              {PACKAGE_TYPE_FILTERS.map((item) => (
+        <div className="flex min-w-[140px] flex-col gap-1">
+          <Select
+            value={packageTypeFilter}
+            onChange={(e) => {
+              setPackageTypeFilter((e.target as HTMLSelectElement).value);
+              setCategoryFilter('all');
+              setGroupFilter('all');
+            }}
+          >
+            {isScriptMode ? (
+              SCRIPT_TYPE_FILTERS.map((item) => (
                 <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>
-              ))}
-            </Select>
-          </div>
-        )}
+              ))
+            ) : (
+              <>
+                <SelectItem value="all">全部类型</SelectItem>
+                {PACKAGE_TYPE_FILTERS.map((item) => (
+                  <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>
+                ))}
+              </>
+            )}
+          </Select>
+        </div>
         <div className="flex min-w-[200px] flex-1 flex-col gap-1">
           <Select
             value={categoryFilter}
@@ -499,9 +550,9 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
           variant="ghost"
           aria-label="清除筛选"
           title="清除筛选"
-          disabled={packageTypeFilter === (isScriptMode ? 'story' : 'all') && categoryFilter === 'all' && groupFilter === 'all' && publishFilter === 'all'}
+          disabled={packageTypeFilter === 'all' && categoryFilter === 'all' && groupFilter === 'all' && publishFilter === 'all'}
           onClick={() => {
-            setPackageTypeFilter(isScriptMode ? 'story' : 'all');
+            setPackageTypeFilter('all');
             setCategoryFilter('all');
             setGroupFilter('all');
             setPublishFilter('all');
@@ -583,7 +634,9 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
                             {isAdmin && scene.owner && <div className="text-xs text-muted-foreground">创作者：{scene.owner.name || scene.owner.email}</div>}
                             <div className="text-xs text-muted-foreground">
                               {isScriptMode
-                                ? `${scene.readyEpisodeCount ?? 0}/${scene.episodeCount ?? 0} 个章节已完成剧本`
+                                ? scene.packageType === 'nqtr'
+                                  ? `${scene.episodeCount ?? 0} 个互动章节`
+                                  : `${scene.readyEpisodeCount ?? 0}/${scene.episodeCount ?? 0} 个章节已完成剧本`
                                 : scene.id}
                             </div>
                           </td>
@@ -707,18 +760,24 @@ export function AdminLearningPacksPage({ mode = 'learning' }: AdminLearningPacks
             <DialogDescription>选择一个{unitLabel}生成离线版本；生成后由你确认发布，不会影响当前线上版本。</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
-            <div className={cn('grid gap-3', !isScriptMode && 'grid-cols-2')}>
-              {!isScriptMode && (
-                <div className="space-y-2">
-                  <Label>一级分类</Label>
-                  <Select value={dialogPackageType} onChange={(e) => setDialogPackageType((e.target as HTMLSelectElement).value)}>
-                    <SelectItem value="all">全部一级分类</SelectItem>
-                    {PACKAGE_TYPE_FILTERS.map((item) => (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>一级分类</Label>
+                <Select value={dialogPackageType} onChange={(e) => setDialogPackageType((e.target as HTMLSelectElement).value)}>
+                  {isScriptMode ? (
+                    SCRIPT_TYPE_FILTERS.map((item) => (
                       <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>
-                    ))}
-                  </Select>
-                </div>
-              )}
+                    ))
+                  ) : (
+                    <>
+                      <SelectItem value="all">全部一级分类</SelectItem>
+                      {PACKAGE_TYPE_FILTERS.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>{item.label}</SelectItem>
+                      ))}
+                    </>
+                  )}
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label>二级分类</Label>
                 <Select value={dialogCategoryId} onChange={(e) => setDialogCategoryId((e.target as HTMLSelectElement).value)}>

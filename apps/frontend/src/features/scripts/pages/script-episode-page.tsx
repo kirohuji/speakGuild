@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { type StoryEpisodeItem } from '@/features/learning/api/learning-api'
+import { resolveStoryEpisodeUnlock } from '@/features/scripts/lib/story-chapter-progress'
 import { useLearningStore } from '@/stores/learning.store'
 
 export function ScriptEpisodePage() {
@@ -43,10 +44,10 @@ export function ScriptEpisodePage() {
 
   const detail = storedDetail?.id === packageId ? storedDetail : null
 
-  const episode = useMemo(
-    () => detail?.storyEpisodes?.find((item) => item.id === episodeId) ?? null,
-    [detail, episodeId],
-  )
+  const episode = useMemo(() => {
+    const episodes = resolveStoryEpisodeUnlock(detail?.storyEpisodes ?? [])
+    return episodes.find((item) => item.id === episodeId) ?? null
+  }, [detail, episodeId])
 
   if (loading && !detail) {
     return (

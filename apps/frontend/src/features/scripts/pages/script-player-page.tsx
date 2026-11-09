@@ -11,6 +11,7 @@ import { type StoryEpisodePlayerData } from '@/features/learning/api/learning-ap
 import { learningRepository } from '@/lib/offline'
 import { resolveInstalledAssetMap, resolveInstalledScene } from '@/lib/offline/installed-pack-media'
 import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
+import { writeLocalStoryEpisodePassed } from '@/features/scripts/lib/story-chapter-progress'
 import { useLayoutStore } from '@/stores/layout.store'
 import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
 import { enqueueScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
@@ -286,6 +287,7 @@ function InkEpisodePlayer({
   useEffect(() => {
     if (!story.isEnded || completionSaved.current) return
     completionSaved.current = true
+    writeLocalStoryEpisodePassed(episodeId)
     void scriptCommunityApi.completeRecord(episodeId, {
       mode,
       durationSec: Math.max(1, Math.round((Date.now() - startedAt.current) / 1000)),
@@ -387,6 +389,7 @@ function InkEpisodePlayer({
         Object.entries(recordings).map(async ([frameIndex, blob]) => [frameIndex, await getRecordedAudioDurationMs(blob)] as const),
       ))
       const recordingAssetIds = [...new Set(Object.values(recordingAssets))]
+      writeLocalStoryEpisodePassed(episodeId)
       const record = await scriptCommunityApi.completeRecord(episodeId, {
         mode: 'repeat',
         durationSec: Math.max(1, Math.round((Date.now() - startedAt.current) / 1000)),

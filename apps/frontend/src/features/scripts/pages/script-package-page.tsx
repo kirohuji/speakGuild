@@ -5,25 +5,17 @@ import {
   ArrowLeft,
   BookOpen,
   Check,
-  CheckCircle2,
   ChevronRight,
   Clapperboard,
-  Clock3,
   Download,
-  Film,
   Loader2,
   LockKeyhole,
-  MessageSquareText,
   Play,
-  Quote,
-  Sparkles,
-  Users,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -31,7 +23,10 @@ import {
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { type StoryEpisodeItem } from '@/features/learning/api/learning-api'
+import { isNqtrLearningUnit, type StoryEpisodeItem } from '@/features/learning/api/learning-api'
+import { readNqtrSaveHybrid } from '@/features/nqtr/api/nqtr-local-save'
+import { resolveNqtrChapterUnlock, type NqtrChapterProgressItem } from '@/features/nqtr/lib/nqtr-chapter-progress'
+import { resolveStoryEpisodeUnlock } from '@/features/scripts/lib/story-chapter-progress'
 import { useLearningStore } from '@/stores/learning.store'
 
 export function ScriptPackagePage() {
@@ -52,9 +47,11 @@ export function ScriptPackagePage() {
     void fetchUnitDetail(packageId)
   }, [fetchUnitDetail, packageId])
 
-  const detail = storedDetail?.id === packageId && storedDetail.packageType === 'story'
+  const detail = storedDetail?.id === packageId
+    && (storedDetail.packageType === 'story' || storedDetail.packageType === 'nqtr' || storedDetail.contentMode === 'nqtr')
     ? storedDetail
     : null
+  const isNqtr = detail ? isNqtrLearningUnit(detail) : false
 
   useEffect(() => {
     void fetchDownloadedPacks().catch(() => undefined)
@@ -63,10 +60,62 @@ export function ScriptPackagePage() {
   const installed = downloadedPacks.some((pack) => pack.packId === packageId && pack.status === 'installed')
   const updateAvailable = availablePackUpdates.some((update) => update.packId === packageId)
   const downloading = downloadTasks.some((task) => task.packId === packageId && task.status !== 'error')
-  const episodes = detail?.storyEpisodes ?? []
-  const completed = episodes.filter((episode) => episode.record?.passed).length
-  const progress = episodes.length > 0 ? (completed / episodes.length) * 100 : 0
-  const nextEpisode = episodes.find((episode) => episode.isUnlocked && !episode.record?.passed) ?? episodes[0]
+  const episodes = useMemo(
+    () => resolveStoryEpisodeUnlock(detail?.storyEpisodes ?? []),
+    [detail?.storyEpisodes],
+  )
+  const [nqtrChapters, setNqtrChapters] = useState<Array<NqtrChapterProgressItem & { passed: boolean; isUnlocked: boolean }>>([])
+  const [resumeChapterId, setResumeChapterId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isNqtr || !packageId || !detail) {
+      setNqtrChapters([])
+      setResumeChapterId(null)
+      return
+    }
+    let cancelled = false
+    const base = (detail.nqtrChapters ?? []).map((chapter) => ({
+      id: chapter.id,
+      title: chapter.title,
+      summary: chapter.summary ?? null,
+      sortOrder: chapter.sortOrder ?? 0,
+    }))
+    void readNqtrSaveHybrid(packageId)
+      .then((save) => {
+        if (cancelled) return
+        const unlocked = resolveNqtrChapterUnlock(base, save)
+        setNqtrChapters(unlocked)
+        const resume = save?.chapterId
+          ? unlocked.find((chapter) => chapter.id === save.chapterId && chapter.isUnlocked)
+          : null
+        setResumeChapterId(resume?.id ?? null)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setNqtrChapters(resolveNqtrChapterUnlock(base, null))
+          setResumeChapterId(null)
+        }
+      })
+    return () => { cancelled = true }
+  }, [detail, isNqtr, packageId])
+
+  const chapters = isNqtr ? nqtrChapters : episodes
+  const completed = isNqtr
+    ? nqtrChapters.filter((chapter) => chapter.passed).length
+    : episodes.filter((episode) => episode.record?.passed).length
+  const progress = chapters.length > 0 ? (completed / chapters.length) * 100 : 0
+  const nextEpisode = !isNqtr
+    ? (episodes.find((episode) => episode.isUnlocked && !episode.record?.passed) ?? null)
+    : null
+  const nextChapter = isNqtr
+    ? (
+      (resumeChapterId ? nqtrChapters.find((chapter) => chapter.id === resumeChapterId) : null)
+      ?? nqtrChapters.find((chapter) => chapter.isUnlocked && !chapter.passed)
+      ?? nqtrChapters.find((chapter) => chapter.isUnlocked)
+      ?? null
+    )
+    : null
+  const continueNqtr = Boolean(resumeChapterId)
 
   // 与学习计划详情一致：命中同一包的离线缓存时不再闪出加载骨架。
   if (loading && !detail) return <PackageSkeleton />
@@ -118,17 +167,17 @@ export function ScriptPackagePage() {
       </div>
 
       <section className="mb-5">
-        <SectionHeader eyebrow="1" title={t('scripts.storySummary')} meta={`${episodes.length} ${t('scripts.chapterUnit')}`} />
+        <SectionHeader eyebrow="1" title={t('scripts.storySummary')} meta={`${chapters.length} ${t('scripts.chapterUnit')}`} />
         <div className="rounded-lg bg-muted/30 p-4">
           <div className="flex items-start justify-between gap-3">
             <p className="text-sm leading-6 text-muted-foreground">
               {detail.description || t('scripts.defaultDescription')}
             </p>
-            {/* <Badge variant="secondary" className="shrink-0">{installed ? '已离线' : '未下载'}</Badge> */}
+            {isNqtr ? <Badge variant="secondary" className="shrink-0">NQTR</Badge> : null}
           </div>
           <div className="mt-4 flex items-center gap-3">
             <Progress value={progress} className="h-1.5 flex-1" />
-            <span className="text-xs tabular-nums text-muted-foreground">{completed}/{episodes.length}</span>
+            <span className="text-xs tabular-nums text-muted-foreground">{completed}/{chapters.length}</span>
           </div>
           <div className="mt-4">
             {!installed || updateAvailable ? (
@@ -140,11 +189,18 @@ export function ScriptPackagePage() {
                 {downloading ? <Loader2 className="animate-spin" data-icon="inline-start" /> : <Download data-icon="inline-start" />}
                 {downloading ? t('scripts.preparingOffline') : updateAvailable ? t('learning.packUpdateAvailable') : t('scripts.downloadScript')}
               </Button>
+            ) : isNqtr && nextChapter ? (
+              <Button asChild className="w-full">
+                <Link to={`/scripts/nqtr/${detail.id}?chapterId=${nextChapter.id}`}>
+                  <Play data-icon="inline-start" />
+                  {continueNqtr || completed > 0 ? t('scripts.continueNextChapter') : t('scripts.startStory')}
+                </Link>
+              </Button>
             ) : nextEpisode ? (
               <Button asChild className="w-full">
                 <Link to={`/scripts/packages/${detail.id}/episodes/${nextEpisode.id}`}>
                   <Play data-icon="inline-start" />
-                  {nextEpisode.record ? t('scripts.continueNextChapter') : t('scripts.startStory')}
+                  {nextEpisode.record?.passed === false || completed > 0 ? t('scripts.continueNextChapter') : t('scripts.startStory')}
                 </Link>
               </Button>
             ) : null}
@@ -195,15 +251,23 @@ export function ScriptPackagePage() {
       </section>
 
       <section className="mb-5">
-        <SectionHeader eyebrow="3" title={t('scripts.chapterPractice')} meta={`${completed}/${episodes.length}`} />
+        <SectionHeader eyebrow="3" title={t('scripts.chapterPractice')} meta={`${completed}/${chapters.length}`} />
         <div className="flex flex-col gap-2">
-          {episodes.length === 0 ? (
+          {chapters.length === 0 ? (
             <div className="flex flex-col items-center rounded-lg bg-muted/30 px-6 py-12 text-center">
               <BookOpen className="size-10 text-muted-foreground/40" />
               <p className="mt-4 text-sm text-muted-foreground">{t('scripts.chaptersArranging')}</p>
               <p className="mt-1 text-xs text-muted-foreground/60">{t('scripts.chaptersArrangingHint')}</p>
             </div>
-          ) : episodes.map((episode, index) => (
+          ) : isNqtr ? nqtrChapters.map((chapter, index) => (
+            <NqtrChapterRow
+              key={chapter.id}
+              chapter={chapter}
+              index={index}
+              packageId={detail.id}
+              installed={installed}
+            />
+          )) : episodes.map((episode, index) => (
             <EpisodeRow
               key={episode.id}
               episode={episode}
@@ -238,6 +302,38 @@ function SectionHeader({
       {meta && <span className="text-xs text-muted-foreground">{meta}</span>}
     </div>
   )
+}
+
+function NqtrChapterRow({
+  chapter,
+  index,
+  packageId,
+  installed,
+}: {
+  chapter: NqtrChapterProgressItem & { passed: boolean; isUnlocked: boolean }
+  index: number
+  packageId: string
+  installed: boolean
+}) {
+  const { t } = useTranslation()
+  const locked = !chapter.isUnlocked || !installed
+  const row = (
+    <Card className="border-0 bg-muted/30 shadow-none ring-0 transition-colors hover:bg-muted/50 dark:ring-0">
+      <CardHeader className="flex-row items-center gap-3 p-4">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold">
+          {chapter.passed ? <Check className="size-4 text-primary" /> : index + 1}
+        </div>
+        <div className="min-w-0 flex-1">
+          <CardTitle className="truncate text-sm">{chapter.title}</CardTitle>
+          {chapter.summary ? <CardDescription className="mt-1 line-clamp-2 text-xs">{chapter.summary}</CardDescription> : null}
+          <p className="mt-1 text-xs text-muted-foreground">{t('scripts.vnInteractive')}</p>
+        </div>
+        {locked ? <LockKeyhole className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />}
+      </CardHeader>
+    </Card>
+  )
+  if (locked) return row
+  return <Link to={`/scripts/nqtr/${packageId}?chapterId=${chapter.id}`}>{row}</Link>
 }
 
 function EpisodeRow({

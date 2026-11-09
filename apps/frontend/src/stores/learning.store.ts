@@ -3,7 +3,7 @@ import { Network } from '@capacitor/network'
 import {
   learningApi,
   isInProgressLearningUnit,
-  isStoryLearningUnit,
+  isScriptLearningUnit,
   MAX_CONCURRENT_LEARNING_UNITS,
   type LearningUnitSummary,
   type LearningPackageType,
@@ -327,9 +327,9 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
     const packTitle = title ?? sourceUnit?.title ?? unitId
 
     const alreadyEnrolled = state.myUnits.some((unit) => unit.id === unitId)
-    const isStory = sourceUnit ? isStoryLearningUnit(sourceUnit) : false
+    const isScript = sourceUnit ? isScriptLearningUnit(sourceUnit) : false
     const inProgressCount = state.myUnits.filter(isInProgressLearningUnit).length
-    if (!alreadyEnrolled && !isStory && inProgressCount >= MAX_CONCURRENT_LEARNING_UNITS) {
+    if (!alreadyEnrolled && !isScript && inProgressCount >= MAX_CONCURRENT_LEARNING_UNITS) {
       toast.error(i18n.t('learning.concurrentUnitLimit'))
       return false
     }

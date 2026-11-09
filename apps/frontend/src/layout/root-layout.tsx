@@ -58,7 +58,8 @@ export function RootLayout() {
     pathname.startsWith('/learning/listening/') ||
     pathname.startsWith('/practice/session/') ||
     pathname.startsWith('/scripts/packages/') ||
-    pathname.startsWith('/scripts/player/')
+    pathname.startsWith('/scripts/player/') ||
+    pathname.startsWith('/scripts/nqtr/')
   const isExpressionNotebookDetail = /^\/expressions\/[^/]+$/.test(pathname)
   const isLoggedIn = !!session
   const showBottomNav = bottomNavVisible && !immersiveMode && !isLearningSubPage

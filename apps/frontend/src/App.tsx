@@ -60,6 +60,7 @@ const ScriptCenterPage = lazy(() => import('@/features/scripts/pages/script-cent
 const ScriptPackagePage = lazy(() => import('@/features/scripts/pages/script-package-page').then(m => ({ default: m.ScriptPackagePage })))
 const ScriptEpisodePage = lazy(() => import('@/features/scripts/pages/script-episode-page').then(m => ({ default: m.ScriptEpisodePage })))
 const ScriptPlayerPage = lazy(() => import('@/features/scripts/pages/script-player-page').then(m => ({ default: m.ScriptPlayerPage })))
+const NqtrPlayPage = lazy(() => import('@/features/nqtr/pages/nqtr-play-page').then(m => ({ default: m.NqtrPlayPage })))
 
 function PageLoader() {
   return <div className="flex min-h-[100dvh] items-center justify-center bg-background text-sm text-muted-foreground">Loading...</div>
@@ -132,6 +133,7 @@ export default function App() {
                 <Route path="/scripts/packages/:packageId" element={<ScriptPackagePage />} />
                 <Route path="/scripts/packages/:packageId/episodes/:episodeId" element={<ScriptEpisodePage />} />
                 <Route path="/scripts/player/:episodeId" element={<ScriptPlayerPage />} />
+                <Route path="/scripts/nqtr/:packageId" element={<NqtrPlayPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/account" element={isNative() ? <AccountPage /> : <Navigate to="/" replace />} />
                 <Route path="/member" element={<MemberPage />} />

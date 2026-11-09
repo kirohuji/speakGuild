@@ -130,3 +130,82 @@ export async function resolveInstalledScene(packId: string, scene: StoryScene): 
     characters,
   }
 }
+
+async function resolveUrl(packId: string, url?: string | null) {
+  if (!url) return url ?? null
+  return (await resolveInstalledMedia(packId, { url })) ?? url
+}
+
+/** Resolve all media URLs inside an offline NQTR world bundle to local file URLs. */
+export async function resolveInstalledNqtrBundle(packId: string, bundle: any) {
+  if (!bundle) return bundle
+  const characters = await Promise.all((bundle.characters ?? []).map((character: StoryCharacter) => resolveCharacterMedia(packId, character)))
+  const map = bundle.map
+    ? {
+        ...bundle.map,
+        backgroundUrl: await resolveUrl(packId, bundle.map.backgroundUrl),
+        thumbnailUrl: await resolveUrl(packId, bundle.map.thumbnailUrl),
+        icon: await resolveUrl(packId, bundle.map.icon),
+      }
+    : null
+  const locations = await Promise.all((bundle.locations ?? []).map(async (location: any) => ({
+    ...location,
+    icon: await resolveUrl(packId, location.icon),
+    backgroundUrl: await resolveUrl(packId, location.backgroundUrl),
+    bgmUrl: await resolveUrl(packId, location.bgmUrl),
+    ambientUrl: await resolveUrl(packId, location.ambientUrl),
+  })))
+  const rooms = await Promise.all((bundle.rooms ?? []).map(async (room: any) => ({
+    ...room,
+    icon: await resolveUrl(packId, room.icon),
+    backgroundUrl: await resolveUrl(packId, room.backgroundUrl),
+    bgmUrl: await resolveUrl(packId, room.bgmUrl),
+    ambientUrl: await resolveUrl(packId, room.ambientUrl),
+  })))
+  const chapters = await Promise.all((bundle.chapters ?? []).map(async (chapter: any) => ({
+    ...chapter,
+    activities: await Promise.all((chapter.activities ?? []).map(async (activity: any) => ({
+      ...activity,
+      iconUrl: await resolveUrl(packId, activity.iconUrl),
+    }))),
+    commitments: await Promise.all((chapter.commitments ?? []).map(async (commitment: any) => {
+      const slotImages = commitment.slotImages && typeof commitment.slotImages === 'object'
+        ? Object.fromEntries(await Promise.all(Object.entries(commitment.slotImages).map(async ([key, value]) => [
+          key,
+          typeof value === 'string' ? await resolveUrl(packId, value) : value,
+        ])))
+        : commitment.slotImages
+      return {
+        ...commitment,
+        imageUrl: await resolveUrl(packId, commitment.imageUrl),
+        slotImages,
+      }
+    })),
+    quests: await Promise.all((chapter.quests ?? []).map(async (quest: any) => ({
+      ...quest,
+      imageUrl: await resolveUrl(packId, quest.imageUrl),
+    }))),
+  })))
+  const chrome = bundle.chrome && typeof bundle.chrome === 'object'
+    ? {
+        ...bundle.chrome,
+        hotspotIcon: await resolveUrl(packId, bundle.chrome.hotspotIcon),
+        activityIcon: await resolveUrl(packId, bundle.chrome.activityIcon),
+        talkIcon: await resolveUrl(packId, bundle.chrome.talkIcon),
+        commands: bundle.chrome.commands
+          ? Object.fromEntries(await Promise.all(Object.entries(bundle.chrome.commands).map(async ([key, value]: [string, any]) => [
+            key,
+            { ...value, icon: await resolveUrl(packId, value?.icon) },
+          ])))
+          : bundle.chrome.commands,
+      }
+    : bundle.chrome
+  const inkScripts: Record<string, any> = {}
+  for (const [id, script] of Object.entries(bundle.inkScripts ?? {})) {
+    inkScripts[id] = {
+      ...(script as object),
+      assetMap: await resolveInstalledAssetMap(packId, (script as any)?.assetMap),
+    }
+  }
+  return { ...bundle, map, locations, rooms, characters, chapters, chrome, inkScripts }
+}

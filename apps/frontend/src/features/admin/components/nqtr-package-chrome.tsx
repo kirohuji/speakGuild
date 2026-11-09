@@ -26,7 +26,7 @@ export function NqtrPackageChrome({
     <Card>
       <CardHeader>
         <CardTitle>外观</CardTitle>
-        <CardDescription>只给画面上的图标配图。上面那排文字按钮不用配。热点和行为的图仍用各自的资源，这里只改大小。</CardDescription>
+        <CardDescription>给画面图标、时间地点牌、地图/热点名牌配图。上面那排文字按钮不用配。行为图标仍可用各自资源，这里只改默认图和大小。</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-8">
         {NQTR_COMMANDS.map((item, index) => (
@@ -68,18 +68,41 @@ export function NqtrPackageChrome({
 
         <section className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <h3 className="text-sm font-semibold">热点标记</h3>
-            <p className="text-xs text-muted-foreground">点右上角「热点」之后，出现在地点上的房间和互动。某个热点自己有图时用它自己的，没有就用这里的图。</p>
+            <h3 className="text-sm font-semibold">地点与热点名牌</h3>
+            <p className="text-xs text-muted-foreground">大地图上的地点，以及点开「热点」后的房间/互动点。底板用这张图，黑字居中；文字越长，底板会略微拉宽。</p>
           </div>
           <div className="grid items-start gap-6 sm:grid-cols-[minmax(0,1fr)_180px]">
             <div className="flex flex-col gap-2">
-              <Label>图标</Label>
-              <ImageUploadField value={look.hotspotIcon} onChange={(hotspotIcon) => onChange({ ...look, hotspotIcon })} placeholder="上传热点标记" previewSize="sm" />
+              <Label>底板图</Label>
+              <ImageUploadField
+                value={look.pinLabelIcon}
+                onChange={(pinLabelIcon) => onChange({ ...look, pinLabelIcon, hotspotIcon: pinLabelIcon })}
+                placeholder="上传地点/热点名牌底板"
+                previewSize="sm"
+              />
             </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="hotspot-size">大小</Label>
-              <Input id="hotspot-size" type="number" min={16} value={look.locationIconSize} onChange={(event) => onChange({ ...look, locationIconSize: Number(event.target.value) || look.locationIconSize })} />
-              <p className="text-xs text-muted-foreground">像素，最小 16</p>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="pin-label-height">高</Label>
+                <Input
+                  id="pin-label-height"
+                  type="number"
+                  min={16}
+                  value={look.pinLabelHeight}
+                  onChange={(event) => onChange({ ...look, pinLabelHeight: Number(event.target.value) || look.pinLabelHeight })}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="pin-label-min-width">最小宽</Label>
+                <Input
+                  id="pin-label-min-width"
+                  type="number"
+                  min={16}
+                  value={look.pinLabelMinWidth}
+                  onChange={(event) => onChange({ ...look, pinLabelMinWidth: Number(event.target.value) || look.pinLabelMinWidth })}
+                />
+                <p className="text-xs text-muted-foreground">像素；实际宽度随文字变长</p>
+              </div>
             </div>
           </div>
         </section>
@@ -120,6 +143,49 @@ export function NqtrPackageChrome({
               <Label htmlFor="talk-size">大小</Label>
               <Input id="talk-size" type="number" min={16} value={look.talkIconSize} onChange={(event) => onChange({ ...look, talkIconSize: Number(event.target.value) || look.talkIconSize })} />
               <p className="text-xs text-muted-foreground">像素，最小 16</p>
+            </div>
+          </div>
+        </section>
+
+        <Separator />
+
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-sm font-semibold">时间地点牌</h3>
+            <p className="text-xs text-muted-foreground">房间和 VN 对话左上角。底板用这里的图，文字居中：第一行时间，第二行地点。</p>
+          </div>
+          <div className="grid items-start gap-6 sm:grid-cols-[minmax(0,1fr)_180px]">
+            <div className="flex flex-col gap-2">
+              <Label>底板图</Label>
+              <ImageUploadField
+                value={look.statusBadgeIcon}
+                onChange={(statusBadgeIcon) => onChange({ ...look, statusBadgeIcon })}
+                placeholder="上传时间地点底板"
+                previewSize="sm"
+              />
+            </div>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="status-badge-width">宽</Label>
+                <Input
+                  id="status-badge-width"
+                  type="number"
+                  min={16}
+                  value={look.statusBadgeWidth}
+                  onChange={(event) => onChange({ ...look, statusBadgeWidth: Number(event.target.value) || look.statusBadgeWidth })}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="status-badge-height">高</Label>
+                <Input
+                  id="status-badge-height"
+                  type="number"
+                  min={16}
+                  value={look.statusBadgeHeight}
+                  onChange={(event) => onChange({ ...look, statusBadgeHeight: Number(event.target.value) || look.statusBadgeHeight })}
+                />
+                <p className="text-xs text-muted-foreground">像素，最小 16</p>
+              </div>
             </div>
           </div>
         </section>

@@ -13,6 +13,7 @@ import { StoryChapterStudio } from '../components/story-chapter-studio'
 import { NarrativeActivityList, NarrativeCommitmentList, NarrativeQuestList } from '../components/narrative-nqtr-registries'
 import { NqtrPackageSetup } from '../components/nqtr-package-setup'
 import { NqtrPackagePreview } from '../components/nqtr-package-preview'
+import { NqtrPackageChrome } from '../components/nqtr-package-chrome'
 import { NqtrChapterStudio } from '../components/nqtr-chapter-studio'
 import { parseNqtrTime, parseNqtrChrome, type NqtrChrome, type NqtrTimeSettings } from '../components/maps/nqtr-model'
 import { FileUploadField } from '../components/file-upload-field'
@@ -22,6 +23,7 @@ import {
   listScenes,
   listMaps,
   listSceneCategories,
+  listNqtrChapters,
   createScene,
   deleteScene,
   updateScene,
@@ -275,6 +277,15 @@ function NqtrPackageWorkspace({
   const [saving, setSaving] = useState(false)
   const rememberChapters = useCallback((next: NqtrChapter[]) => setChapters(next), [])
   const rememberChapter = useCallback((id: string) => setChapterId(id), [])
+  useEffect(() => {
+    let cancelled = false
+    void listNqtrChapters(packageId).then((next) => {
+      if (cancelled) return
+      setChapters(next)
+      setChapterId((current) => current && next.some((item) => item.id === current) ? current : (next[0]?.id ?? ''))
+    }).catch(() => toast.error('章节加载失败'))
+    return () => { cancelled = true }
+  }, [packageId])
   const chapter = chapters.find((item) => item.id === chapterId)
   const sections = [
     ['setup', '设定'],

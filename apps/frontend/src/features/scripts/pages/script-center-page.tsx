@@ -208,7 +208,7 @@ export function ScriptCenterPage() {
   const onboardingCompletedSegments = useOnboardingStore((state) => state.completedSegments)
 
   const storyUnits = useMemo(
-    () => myUnits.filter((unit) => unit.packageType === 'story'),
+    () => myUnits.filter((unit) => unit.packageType === 'story' || unit.packageType === 'nqtr' || unit.contentMode === 'nqtr'),
     [myUnits],
   )
 
@@ -262,9 +262,13 @@ export function ScriptCenterPage() {
     const ownerId = userId
     setShopLoading(true)
     try {
-      const result = await learningApi.getUnits({ packageType: 'story', page: 1, pageSize: 30 })
+      const [storyResult, nqtrResult] = await Promise.all([
+        learningApi.getUnits({ packageType: 'story', page: 1, pageSize: 30 }),
+        learningApi.getUnits({ packageType: 'nqtr', page: 1, pageSize: 30 }),
+      ])
+      const merged = [...(storyResult.list ?? []), ...(nqtrResult.list ?? [])]
       if (shopRequest.current !== requestId) return
-      setShopUnits(result.list)
+      setShopUnits(merged)
       setShopOwnerId(ownerId)
     } catch {
       if (shopRequest.current !== requestId) return

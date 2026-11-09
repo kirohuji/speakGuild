@@ -700,7 +700,7 @@ export class LearningService {
                 learningPackages: { some: { status: 'published', fileAssetId: { not: null } } },
               }
             : {
-                packageType: { not: 'story' },
+                packageType: { notIn: ['story', 'nqtr'] },
                 learningPackages: { some: { status: 'published', fileAssetId: { not: null } } },
               },
         },
@@ -752,7 +752,10 @@ export class LearningService {
     if (packageType) {
       sceneWhere.packageType = packageType;
     } else if (excludePackageType) {
-      sceneWhere.packageType = { not: excludePackageType };
+      // 学习计划商店排除整条剧本线（轻量 story + NQTR）
+      sceneWhere.packageType = {
+        notIn: excludePackageType === 'story' ? ['story', 'nqtr'] : [excludePackageType],
+      };
     }
     if (search) {
       sceneWhere.title = { contains: search, mode: 'insensitive' };
@@ -1537,13 +1540,16 @@ export class LearningService {
 
       storyEpisodes: scene.storyEpisodes.map((episode, index) => {
         const record = episode.records[0] ?? null;
+        const previousPassed =
+          index === 0 || Boolean(scene.storyEpisodes[index - 1]?.records[0]?.passed);
         const prerequisiteSatisfied =
-          episode.prerequisiteEpisodeIds.length === 0 ||
-          episode.prerequisiteEpisodeIds.every((requiredId) =>
-            scene.storyEpisodes.some((candidate) =>
-              candidate.id === requiredId && candidate.records[0]?.passed,
-            ),
-          );
+          episode.prerequisiteEpisodeIds.length > 0
+            ? episode.prerequisiteEpisodeIds.every((requiredId) =>
+                scene.storyEpisodes.some((candidate) =>
+                  candidate.id === requiredId && candidate.records[0]?.passed,
+                ),
+              )
+            : previousPassed;
 
         return {
           id: episode.id,
@@ -1563,7 +1569,6 @@ export class LearningService {
           isUnlocked:
             Boolean(record?.passed) ||
             episode.isPreview ||
-            (index === 0 && episode.prerequisiteEpisodeIds.length === 0) ||
             prerequisiteSatisfied,
           vocabularies: episode.vocabularies.map((item) => item.vocabulary),
           chunks: episode.chunks.map((item) => item.chunk),
@@ -1735,6 +1740,26 @@ export class LearningService {
     for (const topic of topics) {
       if (topic.inkScript) {
         topic.inkScript.assetMap = await this.collectInkAssetMapAssets(topic.inkScript, assets);
+      }
+    }
+
+    let offlineNqtrBundle: any = null;
+    if (this.isNqtrLearningPack(unitDetail)) {
+      offlineNqtrBundle = await this.buildOfflineNqtrBundle(unitId, assets);
+      (unitDetail as any).offlineNqtrBundle = offlineNqtrBundle;
+      if (offlineNqtrBundle?.characters?.length) {
+        (unitDetail as any).scene = {
+          ...((unitDetail as any).scene ?? { id: unitDetail.id, title: unitDetail.title }),
+          characters: offlineNqtrBundle.characters.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            displayName: c.displayName,
+            avatarUrl: c.avatarUrl,
+            spriteBaseUrl: c.spriteBaseUrl,
+            expressions: c.expressions,
+            defaultPosition: (c.defaultPosition as 'left' | 'center' | 'right') ?? 'center',
+          })),
+        };
       }
     }
 
@@ -1919,6 +1944,13 @@ export class LearningService {
 
     await this.attachFileAssetIdentities(assets);
 
+    const nqtrChapterIds = Array.isArray(offlineNqtrBundle?.chapters)
+      ? offlineNqtrBundle.chapters.map((chapter: any) => chapter.id)
+      : [];
+    const nqtrInkIds = offlineNqtrBundle?.inkScripts
+      ? Object.keys(offlineNqtrBundle.inkScripts)
+      : [];
+
     return {
       manifest: {
         packId: unitDetail.id,
@@ -1933,14 +1965,17 @@ export class LearningService {
         chunks: [...allChunkIds],
         sentencePatterns: unitDetail.sentencePatterns.map((item: any) => item.pattern),
         storyEpisodes: storyEpisodes.map((episode) => episode.id),
+        nqtrChapters: nqtrChapterIds,
         inkScripts: [
           ...topics.map((t) => t.inkScript?.id),
           ...storyEpisodePlayers.map((episode) => episode.inkScript?.id),
+          ...nqtrInkIds,
         ].filter(Boolean),
         assets,
       },
       unitDetail: leanUnitDetail,
       topicDetails,
+      offlineNqtrBundle,
     };
   }
 
@@ -1963,6 +1998,14 @@ export class LearningService {
     };
 
     addJson('content/scene.json', source.unitDetail);
+    if ((source as any).offlineNqtrBundle) {
+      addJson('content/nqtr.json', (source as any).offlineNqtrBundle);
+      for (const script of Object.values(((source as any).offlineNqtrBundle.inkScripts ?? {}) as Record<string, any>)) {
+        if (!script?.id && !script?.key) continue;
+        const key = script.key || script.id;
+        addJson(`content/inks/${safeFilePart(key)}.json`, script);
+      }
+    }
 
     const vocabIndex = new Map<string, any>();
     const chunkIndex = new Map<string, any>();
@@ -2307,6 +2350,225 @@ export class LearningService {
     return scene.packageType === 'story' || scene.contentMode === 'story';
   }
 
+  private isNqtrLearningPack(scene: { packageType?: string | null; contentMode?: string | null }) {
+    return scene.packageType === 'nqtr' || scene.contentMode === 'nqtr';
+  }
+
+  /** 剧本线：轻量剧情包 + NQTR，都不占用「同时 3 个学习包」名额。 */
+  private isScriptLearningPack(scene: { packageType?: string | null; contentMode?: string | null }) {
+    return this.isStoryLearningPack(scene) || this.isNqtrLearningPack(scene);
+  }
+
+  private async buildOfflineNqtrBundle(sceneId: string, assets: any[]) {
+    const scene = await this.prisma.scene.findUnique({
+      where: { id: sceneId },
+      select: {
+        id: true,
+        nqtrMapId: true,
+        nqtrTime: true,
+        nqtrChrome: true,
+        nqtrCast: {
+          include: {
+            character: {
+              select: {
+                id: true,
+                name: true,
+                displayName: true,
+                avatarUrl: true,
+                spriteBaseUrl: true,
+                expressions: true,
+                defaultPosition: true,
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!scene) return null;
+
+    const map = scene.nqtrMapId
+      ? await this.prisma.gameMap.findUnique({
+          where: { id: scene.nqtrMapId },
+          select: {
+            id: true,
+            name: true,
+            displayName: true,
+            backgroundUrl: true,
+            thumbnailUrl: true,
+            icon: true,
+            width: true,
+            height: true,
+            editorData: true,
+          },
+        })
+      : null;
+
+    const locations = map
+      ? await this.prisma.gameLocation.findMany({
+          where: { mapId: map.id },
+          orderBy: { sortOrder: 'asc' },
+          select: {
+            id: true,
+            mapId: true,
+            name: true,
+            displayName: true,
+            description: true,
+            posX: true,
+            posY: true,
+            icon: true,
+            iconWidth: true,
+            iconHeight: true,
+            backgroundUrl: true,
+            bgmUrl: true,
+            ambientUrl: true,
+            locationType: true,
+            disabled: true,
+            hidden: true,
+            sortOrder: true,
+          },
+        })
+      : [];
+
+    const locationIds = locations.map((item) => item.id);
+    const rooms = locationIds.length
+      ? await this.prisma.gameRoom.findMany({
+          where: { locationId: { in: locationIds } },
+          orderBy: { sortOrder: 'asc' },
+          select: {
+            id: true,
+            locationId: true,
+            name: true,
+            displayName: true,
+            description: true,
+            backgroundUrl: true,
+            bgmUrl: true,
+            ambientUrl: true,
+            icon: true,
+            roomType: true,
+            isEntrance: true,
+            disabled: true,
+            hidden: true,
+            inkScriptId: true,
+            sortOrder: true,
+          },
+        })
+      : [];
+
+    const chapters = await this.prisma.nqtrChapter.findMany({
+      where: { sceneId },
+      orderBy: { sortOrder: 'asc' },
+      include: {
+        characters: { select: { characterId: true } },
+        locations: { select: { locationId: true } },
+        activities: {
+          include: { roomLinks: { select: { roomId: true } } },
+          orderBy: { title: 'asc' },
+        },
+        commitments: { orderBy: [{ startMinute: 'asc' }, { priority: 'desc' }] },
+        quests: {
+          include: {
+            stages: {
+              orderBy: { sortOrder: 'asc' },
+              include: { actions: { orderBy: { sortOrder: 'asc' } } },
+            },
+          },
+        },
+      },
+    });
+
+    const characters = scene.nqtrCast.map((item) => item.character);
+    this.pushCharacterVisualAssets(assets, characters);
+    this.pushAsset(assets, map?.backgroundUrl, 'background');
+    this.pushAsset(assets, map?.thumbnailUrl, 'thumbnail');
+    this.pushAsset(assets, map?.icon, 'icon');
+    for (const location of locations) {
+      this.pushAsset(assets, location.backgroundUrl, 'background');
+      this.pushAsset(assets, location.icon, 'icon');
+      this.pushAsset(assets, location.bgmUrl, 'bgm');
+      this.pushAsset(assets, location.ambientUrl, 'sfx');
+    }
+    for (const room of rooms) {
+      this.pushAsset(assets, room.backgroundUrl, 'background');
+      this.pushAsset(assets, room.icon, 'icon');
+      this.pushAsset(assets, room.bgmUrl, 'bgm');
+      this.pushAsset(assets, room.ambientUrl, 'sfx');
+    }
+
+    const inkIds = new Set<string>();
+    for (const chapter of chapters) {
+      for (const activity of chapter.activities) {
+        if (activity.inkScriptId) inkIds.add(activity.inkScriptId);
+        this.pushAsset(assets, activity.iconUrl, 'icon');
+      }
+      for (const commitment of chapter.commitments) {
+        if (commitment.inkScriptId) inkIds.add(commitment.inkScriptId);
+        this.pushAsset(assets, commitment.imageUrl, 'sprite');
+        const slotImages = commitment.slotImages && typeof commitment.slotImages === 'object'
+          ? Object.values(commitment.slotImages as Record<string, unknown>)
+          : [];
+        for (const url of slotImages) {
+          if (typeof url === 'string') this.pushAsset(assets, url, 'sprite');
+        }
+      }
+      for (const quest of chapter.quests) {
+        this.pushAsset(assets, quest.imageUrl, 'thumbnail');
+      }
+    }
+    for (const room of rooms) {
+      if (room.inkScriptId) inkIds.add(room.inkScriptId);
+    }
+
+    const inkScripts = inkIds.size
+      ? await this.prisma.inkScript.findMany({
+          where: { id: { in: [...inkIds] } },
+          select: {
+            id: true,
+            key: true,
+            title: true,
+            inkJson: true,
+            inkSource: true,
+            assetMap: true,
+            version: true,
+            characterId: true,
+          },
+        })
+      : [];
+    for (const script of inkScripts) {
+      script.assetMap = await this.collectInkAssetMapAssets(script, assets);
+    }
+    const inkById = Object.fromEntries(inkScripts.map((script) => [script.id, script]));
+
+    const chrome = scene.nqtrChrome && typeof scene.nqtrChrome === 'object' ? scene.nqtrChrome as Record<string, any> : {};
+    this.pushAsset(assets, chrome.hotspotIcon, 'icon');
+    this.pushAsset(assets, chrome.activityIcon, 'icon');
+    this.pushAsset(assets, chrome.talkIcon, 'icon');
+    const commands = chrome.commands && typeof chrome.commands === 'object' ? chrome.commands : {};
+    for (const command of Object.values(commands) as Array<{ icon?: string }>) {
+      if (typeof command?.icon === 'string') this.pushAsset(assets, command.icon, 'icon');
+    }
+
+    return {
+      time: scene.nqtrTime ?? null,
+      chrome: scene.nqtrChrome ?? null,
+      map,
+      locations,
+      rooms,
+      characters,
+      chapters: chapters.map((chapter) => ({
+        id: chapter.id,
+        title: chapter.title,
+        summary: chapter.summary,
+        sortOrder: chapter.sortOrder,
+        characterIds: chapter.characters.map((item) => item.characterId),
+        locationIds: chapter.locations.map((item) => item.locationId),
+        activities: chapter.activities,
+        commitments: chapter.commitments,
+        quests: chapter.quests,
+      })),
+      inkScripts: inkById,
+    };
+  }
+
   async startUnit(userId: string, unitId: string) {
     await this.assertLearningPackAccess(userId, unitId, { allowExistingProgress: true });
     const scene = await this.prisma.scene.findUnique({
@@ -2320,10 +2582,10 @@ export class LearningService {
       where: { userId_sceneId: { userId, sceneId: unitId } },
     });
 
-    if (!existing && !this.isStoryLearningPack(scene)) {
+    if (!existing && !this.isScriptLearningPack(scene)) {
       const currentUnits = await this.getMyLearningUnits(userId);
       const existingCount = currentUnits.filter((unit) =>
-        !this.isStoryLearningPack(unit) && unit.status === 'in_progress').length;
+        !this.isScriptLearningPack(unit) && unit.status === 'in_progress').length;
       if (existingCount >= this.MAX_CONCURRENT_UNITS) {
         throw new ConflictException({
           code: 'LEARNING_UNIT_LIMIT_REACHED',

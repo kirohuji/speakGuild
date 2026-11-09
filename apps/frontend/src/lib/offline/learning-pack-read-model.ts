@@ -169,6 +169,13 @@ export function buildPackReadModel(unitDetail: any, topicDetails: any[]): PackRe
     prerequisites: unitDetail?.prerequisites ?? [],
     firstEpisode: unitDetail?.firstEpisode ?? null,
     storyEpisodes: unitDetail?.storyEpisodes ?? [],
+    nqtrChapters: (unitDetail?.offlineNqtrBundle?.chapters ?? []).map((chapter: any) => ({
+      id: chapter.id,
+      title: chapter.title,
+      summary: chapter.summary ?? null,
+      sortOrder: chapter.sortOrder ?? 0,
+    })),
+    offlineNqtrBundle: unitDetail?.offlineNqtrBundle ?? null,
     novelPackage: unitDetail?.novelPackage ?? null,
     scriptCount: unitDetail?.scriptCount ?? 0,
     vocabCount,
@@ -190,6 +197,7 @@ export function buildPackReadModel(unitDetail: any, topicDetails: any[]): PackRe
     sortOrder: 0,
     scene: unitDetail?.scene ?? null,
     offlineStoryEpisodePlayers: unitDetail?.offlineStoryEpisodePlayers ?? [],
+    offlineNqtrBundle: unitDetail?.offlineNqtrBundle ?? null,
   }
 
   return {
@@ -274,6 +282,8 @@ function summaryToShell(summary: any, cards: any[]): UnitDetail & { __offlinePro
     progress: null,
     firstEpisode: summary.firstEpisode ?? null,
     storyEpisodes: summary.storyEpisodes ?? [],
+    nqtrChapters: summary.nqtrChapters ?? [],
+    offlineNqtrBundle: summary.offlineNqtrBundle ?? null,
     novelPackage: summary.novelPackage ?? undefined,
     scriptCount: summary.scriptCount ?? 0,
     vocabCount: summary.vocabCount ?? 0,
@@ -461,6 +471,8 @@ export async function readStoredUnitDetail(unitId: string) {
     id: unitId,
     scene: scene?.scene ?? null,
     offlineStoryEpisodePlayers: scene?.offlineStoryEpisodePlayers ?? [],
+    offlineNqtrBundle: scene?.offlineNqtrBundle ?? summary?.offlineNqtrBundle ?? null,
+    nqtrChapters: summary?.nqtrChapters ?? [],
   }
 }
 

@@ -26,8 +26,15 @@ export class LearningPackAdminService {
     const where: any = {};
     if (params.ownerId) where.scene = { ownerId: params.ownerId };
     if (params.sceneId) where.sceneId = params.sceneId;
-    if (params.packageType) where.type = params.packageType;
-    else if (params.excludePackageType) where.type = { not: params.excludePackageType };
+    if (params.packageType) {
+      const types = params.packageType.split(',').map((item) => item.trim()).filter(Boolean);
+      where.type = types.length > 1 ? { in: types } : types[0];
+    } else if (params.excludePackageType) {
+      // 学习包管理排除整条剧本线（轻量 story + NQTR）
+      where.type = {
+        notIn: params.excludePackageType === 'story' ? ['story', 'nqtr'] : [params.excludePackageType],
+      };
+    }
     if (params.categoryId) where.scene = { ...(where.scene ?? {}), categoryId: params.categoryId };
     if (params.status) where.status = params.status;
 
@@ -61,6 +68,7 @@ export class LearningPackAdminService {
         updatedAt: true,
         owner: { select: { id: true, name: true, email: true } },
         storyEpisodes: { select: { inkScriptId: true, updatedAt: true } },
+        nqtrChapters: { select: { id: true, updatedAt: true } },
       },
     });
     const inkScriptIds = Array.from(new Set(
@@ -79,22 +87,29 @@ export class LearningPackAdminService {
     );
 
     return scenes.map((scene: any) => {
+      const isNqtr = scene.packageType === 'nqtr';
       const timestamps = [
         scene.updatedAt,
-        ...scene.storyEpisodes.flatMap((episode: any) => [
-          episode.updatedAt,
-          episode.inkScriptId ? inkScriptUpdatedAt.get(episode.inkScriptId) : undefined,
-        ]),
+        ...(isNqtr
+          ? (scene.nqtrChapters ?? []).map((chapter: any) => chapter.updatedAt)
+          : scene.storyEpisodes.flatMap((episode: any) => [
+              episode.updatedAt,
+              episode.inkScriptId ? inkScriptUpdatedAt.get(episode.inkScriptId) : undefined,
+            ])),
       ].filter(Boolean) as Date[];
+      const chapterCount = isNqtr ? (scene.nqtrChapters?.length ?? 0) : scene.storyEpisodes.length;
+      const readyCount = isNqtr
+        ? chapterCount
+        : scene.storyEpisodes.filter((episode: any) => episode.inkScriptId).length;
       return {
         id: scene.id,
         title: scene.title,
         location: scene.location,
         categoryId: scene.categoryId,
         packageType: scene.packageType,
-        episodeCount: scene.storyEpisodes.length,
-        readyEpisodeCount: scene.storyEpisodes.filter((episode: any) => episode.inkScriptId).length,
-        contentUpdatedAt: new Date(Math.max(...timestamps.map((value) => value.getTime()))),
+        episodeCount: chapterCount,
+        readyEpisodeCount: readyCount,
+        contentUpdatedAt: new Date(Math.max(...timestamps.map((value) => value.getTime()), 0)),
         owner: scene.owner,
       };
     });
@@ -343,12 +358,13 @@ export class LearningPackAdminService {
       select: {
         title: true,
         contentMode: true,
+        nqtrMapId: true,
         novelPackage: { select: { id: true, epubAssetId: true, toc: true } },
         trainingTopics: {
           orderBy: { sortOrder: 'asc' },
           select: { title: true, activityType: true, contentConfig: true, mediaAssetId: true, transcript: true },
         },
-        _count: { select: { storyEpisodes: true } },
+        _count: { select: { storyEpisodes: true, nqtrChapters: true } },
       },
     });
     if (!scene) throw new NotFoundException('学习单元不存在');
@@ -360,6 +376,11 @@ export class LearningPackAdminService {
     }
     if (scene.contentMode === 'story') {
       if (scene._count.storyEpisodes === 0) throw new BadRequestException('剧情包至少需要一个章节');
+      return;
+    }
+    if (scene.contentMode === 'nqtr') {
+      if (!scene.nqtrMapId) throw new BadRequestException('互动剧情包需要绑定一张地图');
+      if (scene._count.nqtrChapters === 0) throw new BadRequestException('互动剧情包至少需要一个章节');
       return;
     }
     if (scene.contentMode === 'practice') return;

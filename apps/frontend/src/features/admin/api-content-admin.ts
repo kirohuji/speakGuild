@@ -1396,31 +1396,5 @@ export function deleteNqtrChapter(id: string): Promise<void> {
   return _delete(`/admin/content/nqtr-chapters/${id}`)
 }
 
-export interface NqtrSave {
-  id: string
-  sceneId: string | null
-  chapterId: string | null
-  slot: number
-  gameDay: number
-  gameTime: number
-  currentMapId: string | null
-  currentLocationId: string | null
-  currentRoomId: string | null
-  visitedRoomIds: string[]
-  flags: Record<string, string | number | boolean> | null
-  questProgress: Record<string, { stageKey: string; status: string; startedOnDay?: number }> | null
-  inkState: unknown
-  runtime: {
-    enabledCommitmentIds?: string[]
-    attached?: { activityId: string; roomId: string }[]
-    applied?: string[]
-    metCommitmentKeys?: string[]
-  } | null
-}
-
-export function readNqtrSave(sceneId: string, slot = 1): Promise<NqtrSave | null> {
-  return get('/nqtr/saves', { sceneId, slot })
-}
-export function writeNqtrSave(data: Omit<NqtrSave, 'id'> & { sceneId: string }): Promise<NqtrSave> {
-  return put('/nqtr/saves', data)
-}
+export type { NqtrSave, NqtrSaveWrite } from '@/features/nqtr/api/nqtr-save-api'
+export { readNqtrSave, writeNqtrSave } from '@/features/nqtr/api/nqtr-save-api'
