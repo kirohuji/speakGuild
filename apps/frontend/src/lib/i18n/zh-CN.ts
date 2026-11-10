@@ -1519,6 +1519,7 @@ const zhCN = {
       packTaskWaiting: '等待开始',
       packTaskPausedInBackground: '应用已进入后台',
       packTaskPausedFromLastRun: '上次任务已暂停',
+      packTaskStepPreparing: '准备安装',
       packTaskStepDownloadingPack: '下载学习包',
       packTaskStepParsingPack: '解析压缩包',
       packTaskStepReadingManifest: '读取清单',

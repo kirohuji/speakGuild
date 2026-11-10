@@ -59,6 +59,7 @@ function packTaskStepLabel(step: string, kind: DownloadTask['kind'] = 'download'
     if (step === 'paused') return i18n.t('learning.packTaskPaused')
     return i18n.t('learning.packTaskUninstalling')
   }
+  if (step === 'preparing') return i18n.t('learning.packTaskStepPreparing')
   if (step === 'downloading') return i18n.t('learning.packTaskStepDownloadingPack')
   if (step === 'parsing') return i18n.t('learning.packTaskStepParsingPack')
   if (step === 'reading_manifest') return i18n.t('learning.packTaskStepReadingManifest')
@@ -472,9 +473,16 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
   },
 
   async downloadUnitPack(unitId) {
+    reclaimOrphanedDownloadTasks()
     const state = getState()
-    if (state.packInstallingIds.includes(unitId)) return
-    if (state.downloadTasks.some((task) => task.packId === unitId && task.status !== 'error')) return
+    // Live workers own the pack; orphaned downloading/extracting rows are
+    // reclaimed above so a stuck 0% task can be restarted without a full reload.
+    if (activePackTaskIds.has(unitId) || activePackTaskControllers.has(unitId)) return
+    const existing = state.downloadTasks.find((task) => task.packId === unitId)
+    if (existing && existing.status !== 'error' && existing.status !== 'paused') {
+      if (existing.status === 'queued') processDownloadQueue()
+      return
+    }
     if (!state.myUnits.some((unit) => unit.id === unitId)) {
       toast.error(i18n.t('learning.downloadRequiresEnrollment'))
       return
@@ -484,6 +492,7 @@ export const useLearningStore = create<LearningStore>()((set, getState) => ({
       state.myUnits.find((unit) => unit.id === unitId)?.title ??
       state.shopUnits.find((unit) => unit.id === unitId)?.title ??
       state.downloadedPacks.find((pack) => pack.packId === unitId)?.title ??
+      existing?.title ??
       unitId
 
     enqueueDownloadTask(unitId, unitTitle)
@@ -621,9 +630,38 @@ function enqueueDownloadTask(packId: string, title: string) {
 
 let isProcessingQueue = false
 
+/** Re-queue tasks that claim to be running but have no live worker (tab refresh / aborted hang). */
+function reclaimOrphanedDownloadTasks() {
+  const state = useLearningStore.getState()
+  let changed = false
+  const nextTasks = state.downloadTasks.map((task) => {
+    if ((task.kind ?? 'download') === 'uninstall') return task
+    if (task.status !== 'downloading' && task.status !== 'extracting') return task
+    if (activePackTaskIds.has(task.packId) || activePackTaskControllers.has(task.packId)) return task
+    changed = true
+    return {
+      ...task,
+      status: 'queued' as const,
+      progress: 0,
+      step: undefined,
+      stepLabel: undefined,
+      currentItem: undefined,
+      current: undefined,
+      total: undefined,
+      error: undefined,
+    }
+  })
+  if (changed) useLearningStore.setState({ downloadTasks: nextTasks })
+}
+
 async function processDownloadQueue() {
   if (isProcessingQueue) return
   isProcessingQueue = true
+  try {
+    reclaimOrphanedDownloadTasks()
+  } catch (error) {
+    console.warn('[learning-store] failed to reclaim orphaned pack tasks', error)
+  }
   const state = useLearningStore.getState()
 
   // Mobile package installation is intentionally a single FIFO queue. It keeps
@@ -728,7 +766,25 @@ async function processDownloadQueue() {
     }, 3000)
   } catch (error: any) {
     const cancelled = activePackTaskControllers.get(next.packId)?.signal.aborted || error?.name === 'AbortError' || error?.code === 'ERR_CANCELED'
-    if (cancelled) return
+    if (cancelled) {
+      // pause* actions usually flip status first; if abort wins the race, do not
+      // leave the task forever stuck in downloading/extracting at 0%.
+      useLearningStore.setState((s) => ({
+        downloadTasks: s.downloadTasks.map((t) =>
+          t.packId === next.packId && (t.status === 'downloading' || t.status === 'extracting' || t.status === 'queued')
+            ? {
+                ...t,
+                status: 'paused' as const,
+                pausedFrom: t.status === 'queued' ? 'downloading' : t.status,
+                step: 'paused',
+                stepLabel: i18n.t('learning.packTaskPaused'),
+              }
+            : t,
+        ),
+        packInstallingIds: s.packInstallingIds.filter((id) => id !== next.packId),
+      }))
+      return
+    }
     console.error(`[learning-store] ❌ 下载失败: ${next.title}`, error)
     const activeTask = useLearningStore.getState().downloadTasks.find((task) => task.packId === next.packId)
     const connectionType = await Network.getStatus().then((status) => status.connectionType).catch(() => 'unknown')

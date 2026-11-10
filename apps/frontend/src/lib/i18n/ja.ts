@@ -1518,6 +1518,7 @@ const ja = {
       packTaskWaiting: '開始待ち',
       packTaskPausedInBackground: 'アプリがバックグラウンドに移動しました',
       packTaskPausedFromLastRun: '前回のタスクは一時停止中',
+      packTaskStepPreparing: 'インストール準備中',
       packTaskStepDownloadingPack: '教材をダウンロード中',
       packTaskStepParsingPack: '圧縮ファイルを解析中',
       packTaskStepReadingManifest: 'マニフェストを読み込み中',

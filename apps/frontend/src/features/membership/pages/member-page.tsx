@@ -23,6 +23,12 @@ import {
   type MembershipPurchase,
   type OrderResult,
 } from '@/features/membership/api'
+import {
+  readMemberCatalogCache,
+  writeMemberCatalogCache,
+  sameMemberBenefits,
+  sameMemberPlans,
+} from '@/features/membership/member-catalog-cache'
 // import { pointsApi } from '@/features/points/api' // 积分抵扣（暂时停用），恢复时取消注释
 import { cn } from '@/lib/cn'
 import { isNative, revenueCat, REVENUECAT_PRODUCT_IDS, REVENUECAT_UNLIMITED_ENTITLEMENT_ID } from '@/lib/native'
@@ -35,15 +41,21 @@ const planIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   standard: Crown,
 }
 
+const FALLBACK_BENEFIT_COUNT = 6
+
 export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const setCachedMembership = useUserStore((s) => s.setMembership)
   const cachedMembership = useUserStore((s) => s.membership)
-  const [plans, setPlans] = useState<MemberPlan[]>([])
+  const [plans, setPlans] = useState<MemberPlan[]>(() => readMemberCatalogCache()?.plans ?? [])
   const [current, setCurrent] = useState<CurrentMembership | null>(cachedMembership)
-  const [benefits, setBenefits] = useState<MemberBenefit[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [benefits, setBenefits] = useState<MemberBenefit[]>(() => readMemberCatalogCache()?.benefits ?? [])
+  /** True until the first network catalog response arrives (skeleton only when cache miss). */
+  const [isLoading, setIsLoading] = useState(() => {
+    const cached = readMemberCatalogCache()
+    return !(cached?.plans?.length || cached?.benefits?.length)
+  })
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
   const [subscriptionAction, setSubscriptionAction] = useState<'restore' | 'manage' | null>(null)
   const [purchaseLoading, setPurchaseLoading] = useState(false)
@@ -110,6 +122,7 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
 
   useEffect(() => {
     let cancelled = false
+
     Promise.allSettled([
       getMemberPlans(),
       getCurrentMembership(),
@@ -118,24 +131,32 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     ]).then(
       ([plansRes, curRes, benRes]) => {
         if (cancelled) return
-        if (plansRes.status === 'fulfilled') setPlans(plansRes.value)
+        const nextPlans = plansRes.status === 'fulfilled' ? plansRes.value : null
         if (curRes.status === 'fulfilled') {
           setCurrent(curRes.value)
           setCachedMembership(curRes.value)
         }
         // if (ptsRes.status === 'fulfilled') setPointsBalance(ptsRes.value.points) // 积分抵扣（暂时停用）
-        if (benRes.status === 'fulfilled' && benRes.value.length > 0) {
-          setBenefits(benRes.value)
-        } else {
-          setBenefits([
-            { benefitId: '1', name: t('member.fallbackBenefit1'), freeSupport: t('member.fallbackFree1'), standardSupport: t('member.moreQuota'), advancedSupport: t('member.moreQuota') },
-            { benefitId: '2', name: t('member.fallbackBenefit2'), freeSupport: t('member.fallbackFree2'), standardSupport: t('member.moreQuota'), advancedSupport: t('member.moreQuota') },
-            { benefitId: '3', name: t('member.fallbackBenefit3'), freeSupport: t('member.fallbackFree3'), standardSupport: t('member.fullAccess'), advancedSupport: t('member.fullAccess') },
-            { benefitId: '4', name: t('member.fallbackBenefit4'), freeSupport: t('member.fallbackFree4'), standardSupport: t('member.moreTopics'), advancedSupport: t('member.moreTopics') },
-            { benefitId: '5', name: t('member.fallbackBenefit5'), freeSupport: false, standardSupport: true, advancedSupport: true },
-            { benefitId: '6', name: t('member.fallbackBenefit6'), freeSupport: t('member.fallbackFree6'), standardSupport: t('member.moreStorage'), advancedSupport: t('member.moreStorage') },
-          ])
-        }
+        const nextBenefits =
+          benRes.status === 'fulfilled' && benRes.value.length > 0
+            ? benRes.value
+            : ([
+                { benefitId: '1', name: t('member.fallbackBenefit1'), freeSupport: t('member.fallbackFree1'), standardSupport: t('member.moreQuota'), advancedSupport: t('member.moreQuota') },
+                { benefitId: '2', name: t('member.fallbackBenefit2'), freeSupport: t('member.fallbackFree2'), standardSupport: t('member.moreQuota'), advancedSupport: t('member.moreQuota') },
+                { benefitId: '3', name: t('member.fallbackBenefit3'), freeSupport: t('member.fallbackFree3'), standardSupport: t('member.fullAccess'), advancedSupport: t('member.fullAccess') },
+                { benefitId: '4', name: t('member.fallbackBenefit4'), freeSupport: t('member.fallbackFree4'), standardSupport: t('member.moreTopics'), advancedSupport: t('member.moreTopics') },
+                { benefitId: '5', name: t('member.fallbackBenefit5'), freeSupport: false, standardSupport: true, advancedSupport: true },
+                { benefitId: '6', name: t('member.fallbackBenefit6'), freeSupport: t('member.fallbackFree6'), standardSupport: t('member.moreStorage'), advancedSupport: t('member.moreStorage') },
+              ] satisfies MemberBenefit[])
+
+        // Keep previous references when payload is unchanged to avoid layout flicker.
+        setPlans((prev) => (nextPlans && !sameMemberPlans(prev, nextPlans) ? nextPlans : prev))
+        setBenefits((prev) => (sameMemberBenefits(prev, nextBenefits) ? prev : nextBenefits))
+
+        writeMemberCatalogCache({
+          plans: nextPlans ?? readMemberCatalogCache()?.plans ?? [],
+          benefits: nextBenefits,
+        })
         setIsLoading(false)
       }
     )
@@ -286,9 +307,12 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     }
   }, [payResult, refreshMembership, t])
 
-  const plansContent = isLoading ? (
+  const showPlansSkeleton = isLoading && plans.length === 0
+  const showBenefitsSkeleton = isLoading && benefits.length === 0
+
+  const plansContent = showPlansSkeleton ? (
     <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
-      {[1, 2].map((i) => <Skeleton key={i} className="h-[280px] rounded-xl" />)}
+      {[1, 2].map((i) => <Skeleton key={i} className="h-[280px] rounded-xl bg-muted/60" />)}
     </div>
   ) : plans.length === 0 ? (
     <div className="rounded-xl border py-12 text-center text-sm text-muted-foreground">
@@ -314,10 +338,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
     </div>
   )
 
-  const benefitsContent = isLoading ? (
-    <div className="space-y-2">
-      {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-11 rounded-lg" />)}
-    </div>
+  const benefitsContent = showBenefitsSkeleton ? (
+    <BenefitsTableSkeleton compact={compact} rows={FALLBACK_BENEFIT_COUNT} />
   ) : benefits.length === 0 ? (
     <div className="rounded-xl border py-10 text-center text-sm text-muted-foreground">
       {t('common.empty')}
@@ -639,8 +661,8 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                 ? 'block'
                 : 'grid grid-cols-2 gap-2'
             )}>
-              {isLoading ? (
-                <Skeleton className="h-[168px] rounded-2xl" />
+              {showPlansSkeleton ? (
+                <Skeleton className="h-[168px] rounded-2xl bg-muted/60" />
               ) : plans.length === 0 ? (
                 <div className="col-span-2 rounded-xl border py-10 text-center text-sm text-muted-foreground">
                   {t('common.empty')}
@@ -694,28 +716,32 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
                 <CardTitle className="text-base">{t('member.benefitTitle')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="overflow-hidden rounded-lg bg-muted/30">
-                  <div className="grid grid-cols-3 items-center gap-2 bg-muted/50 px-4 py-2.5">
-                    <span className="text-xs font-semibold text-muted-foreground">{t('member.benefitColItem')}</span>
-                    <span className="text-center text-xs font-semibold text-muted-foreground">{t('member.benefitColUser')}</span>
-                    <span className="text-center text-xs font-semibold text-purple-500">{t('member.benefitColAdmin')}</span>
-                  </div>
-                  {benefits.map((item, idx) => (
-                    <div
-                      key={item.benefitId}
-                      className={cn(
-                        'grid grid-cols-3 items-center gap-2 px-4 py-3 text-sm transition-colors hover:bg-muted/30',
-                        idx !== benefits.length - 1 && 'border-b border-border/50'
-                      )}
-                    >
-                      <span className="font-medium">{item.name}</span>
-                      <SupportCell value={item.freeSupport} />
-                      <div className="flex justify-center">
-                        <Check className="size-4 text-purple-500" />
-                      </div>
+                {showBenefitsSkeleton ? (
+                  <BenefitsTableSkeleton compact={false} rows={FALLBACK_BENEFIT_COUNT} />
+                ) : (
+                  <div className="overflow-hidden rounded-lg bg-muted/30">
+                    <div className="grid grid-cols-3 items-center gap-2 bg-muted/50 px-4 py-2.5">
+                      <span className="text-xs font-semibold text-muted-foreground">{t('member.benefitColItem')}</span>
+                      <span className="text-center text-xs font-semibold text-muted-foreground">{t('member.benefitColUser')}</span>
+                      <span className="text-center text-xs font-semibold text-purple-500">{t('member.benefitColAdmin')}</span>
                     </div>
-                  ))}
-                </div>
+                    {benefits.map((item, idx) => (
+                      <div
+                        key={item.benefitId}
+                        className={cn(
+                          'grid grid-cols-3 items-center gap-2 px-4 py-3 text-sm transition-colors hover:bg-muted/30',
+                          idx !== benefits.length - 1 && 'border-b border-border/50'
+                        )}
+                      >
+                        <span className="font-medium">{item.name}</span>
+                        <SupportCell value={item.freeSupport} />
+                        <div className="flex justify-center">
+                          <Check className="size-4 text-purple-500" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -1090,6 +1116,68 @@ function PricingCard({
           ))}
         </ul>
       </div>
+    </div>
+  )
+}
+
+function BenefitsTableSkeleton({
+  compact,
+  rows,
+}: {
+  compact: boolean
+  rows: number
+}) {
+  const { t } = useTranslation()
+
+  if (compact) {
+    return (
+      <div className="overflow-hidden rounded-xl bg-muted/30">
+        <div className="grid grid-cols-2 items-center gap-1 bg-primary/[0.055] px-3 py-2">
+          <span className="text-[10px] font-semibold text-muted-foreground">{t('member.compactBenefit')}</span>
+          <span className="text-center text-[10px] font-semibold text-muted-foreground">{t('member.benefitItem')}</span>
+        </div>
+        {Array.from({ length: rows }, (_, idx) => (
+          <div
+            key={idx}
+            className={cn(
+              'grid grid-cols-2 items-center gap-1 px-3 py-2',
+              idx !== rows - 1 && 'border-b border-border/30',
+            )}
+          >
+            <Skeleton className="h-3.5 w-[72%] rounded-md bg-muted/70" />
+            <div className="flex justify-center">
+              <Skeleton className="h-3.5 w-10 rounded-md bg-muted/70" />
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div className="overflow-hidden rounded-lg bg-muted/30">
+      <div className="grid grid-cols-3 items-center gap-2 bg-muted/50 px-4 py-2.5">
+        <span className="text-xs font-semibold text-muted-foreground">{t('member.columns.benefit')}</span>
+        <span className="text-center text-xs font-semibold text-muted-foreground">{t('member.columns.free')}</span>
+        <span className="text-center text-xs font-semibold text-muted-foreground">{t('member.memberTitle')}</span>
+      </div>
+      {Array.from({ length: rows }, (_, idx) => (
+        <div
+          key={idx}
+          className={cn(
+            'grid grid-cols-3 items-center gap-2 px-4 py-3',
+            idx !== rows - 1 && 'border-b border-border/50',
+          )}
+        >
+          <Skeleton className="h-4 w-[70%] rounded-md bg-muted/70" />
+          <div className="flex justify-center">
+            <Skeleton className="h-4 w-12 rounded-md bg-muted/70" />
+          </div>
+          <div className="flex justify-center">
+            <Skeleton className="h-4 w-12 rounded-md bg-primary/15" />
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

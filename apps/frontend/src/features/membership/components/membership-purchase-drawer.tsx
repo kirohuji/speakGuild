@@ -1,14 +1,10 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
-import { MobileListSkeleton } from '@/components/common/mobile-page-loading'
+import { MemberPage } from '@/features/membership/pages/member-page'
 import { useAuth } from '@/providers/auth-provider'
 import { useUserStore } from '@/stores/user.store'
 import { cn } from '@/lib/cn'
-
-const MemberPage = lazy(() =>
-  import('@/features/membership/pages/member-page').then((module) => ({ default: module.MemberPage })),
-)
 
 function hasActiveMembership(role: string | undefined, membership: { level?: string; isActive?: boolean } | null) {
   return role === 'admin' || membership?.level === 'admin' || !!membership?.isActive
@@ -22,12 +18,13 @@ export function MembershipPurchaseDrawer({
   onOpenChange: (open: boolean) => void
 }) {
   const { t } = useTranslation()
-  // Keep the page mounted after the first open so reopening does not flash
-  // header-only content or refetch from a cold remount.
+  // Keep content mounted after the first open so reopen does not cold-remount.
+  // Set synchronously while opening so the first paint already includes MemberPage
+  // (useEffect would leave a header-only frame).
   const [contentReady, setContentReady] = useState(false)
-  useEffect(() => {
-    if (open) setContentReady(true)
-  }, [open])
+  if (open && !contentReady) {
+    setContentReady(true)
+  }
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
@@ -38,9 +35,7 @@ export function MembershipPurchaseDrawer({
         <div className="min-h-0 overflow-y-auto px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
           {contentReady && (
             <div className={cn(!open && 'hidden')} aria-hidden={!open}>
-              <Suspense fallback={<MobileListSkeleton rows={4} showHeader={false} className="py-2" />}>
-                <MemberPage compact />
-              </Suspense>
+              <MemberPage compact />
             </div>
           )}
         </div>

@@ -449,6 +449,7 @@ function operationJournalId(packId: string) {
 }
 
 const PACK_GC_ID_PREFIX = 'learning-pack-gc:'
+const PACK_GC_INDEX_ID = 'learning-pack-gc-index'
 
 type PackGcJobStatus = 'pending' | 'running'
 
@@ -462,25 +463,93 @@ interface PackGcJob {
   status: PackGcJobStatus
 }
 
+interface PackGcIndex {
+  id: typeof PACK_GC_INDEX_ID
+  packIds: string[]
+  updatedAt: string
+}
+
 function packGcJobId(packId: string) {
   return `${PACK_GC_ID_PREFIX}${packId}`
 }
 
+async function readPackGcIndex(): Promise<string[]> {
+  const index = await localDb.get<PackGcIndex>('kv', PACK_GC_INDEX_ID)
+  return Array.isArray(index?.packIds) ? [...new Set(index.packIds.filter(Boolean))] : []
+}
+
+async function writePackGcIndex(packIds: string[]): Promise<void> {
+  await localDb.put<PackGcIndex>('kv', {
+    id: PACK_GC_INDEX_ID,
+    packIds: [...new Set(packIds.filter(Boolean))],
+    updatedAt: new Date().toISOString(),
+  })
+}
+
+/**
+ * List GC jobs without scanning every kv row on the hot path.
+ * Full-table kv scans hydrate huge pack-operation journals and can freeze the
+ * install queue at 0% before the first download progress event.
+ */
 async function listPackGcJobs(): Promise<PackGcJob[]> {
-  return (await localDb.list<PackGcJob>('kv'))
-    .filter((item) => typeof item?.id === 'string' && item.id.startsWith(PACK_GC_ID_PREFIX))
+  const index = await localDb.get<PackGcIndex>('kv', PACK_GC_INDEX_ID)
+  // Missing index => one-time legacy rebuild. Present empty index => no jobs,
+  // and must NOT fall back to listing all kv rows (journals are huge).
+  if (!index) {
+    const legacy = (await localDb.list<PackGcJob>('kv')).filter((item) => (
+      typeof item?.id === 'string'
+      && item.id.startsWith(PACK_GC_ID_PREFIX)
+      && item.id !== PACK_GC_INDEX_ID
+      && typeof item.packId === 'string'
+    ))
+    await writePackGcIndex(legacy.map((job) => job.packId))
+    return legacy
+  }
+
+  const packIds = Array.isArray(index.packIds) ? [...new Set(index.packIds.filter(Boolean))] : []
+  const jobs: PackGcJob[] = []
+  const livingIds: string[] = []
+  for (const packId of packIds) {
+    const job = await localDb.get<PackGcJob>('kv', packGcJobId(packId))
+    if (job?.packId) {
+      jobs.push(job)
+      livingIds.push(packId)
+    }
+  }
+  if (livingIds.length !== packIds.length) await writePackGcIndex(livingIds)
+  return jobs
 }
 
 async function putPackGcJob(job: PackGcJob): Promise<void> {
   await localDb.put('kv', job)
+  const packIds = await readPackGcIndex()
+  if (!packIds.includes(job.packId)) await writePackGcIndex([...packIds, job.packId])
 }
 
 async function deletePackGcJob(packId: string): Promise<void> {
   await localDb.delete('kv', packGcJobId(packId))
+  const packIds = await readPackGcIndex()
+  if (packIds.includes(packId)) await writePackGcIndex(packIds.filter((id) => id !== packId))
 }
 
 async function getPackGcJob(packId: string): Promise<PackGcJob | null> {
   return (await localDb.get<PackGcJob>('kv', packGcJobId(packId))) ?? null
+}
+
+async function ensurePackGcJobFromUninstallJournal(packId: string): Promise<void> {
+  const existingJob = await getPackGcJob(packId)
+  if (existingJob) return
+  const journal = await localDb.get<PackOperationJournal>('kv', operationJournalId(packId))
+  if (!journal || journal.kind !== 'uninstall' || journal.phase !== 'committing') return
+  await putPackGcJob({
+    id: packGcJobId(packId),
+    packId,
+    filesToRemove: [],
+    version: journal.snapshot.pack?.version,
+    title: journal.snapshot.pack?.title,
+    createdAt: new Date().toISOString(),
+    status: 'pending',
+  })
 }
 
 let packGcDrainPromise: Promise<void> | null = null
@@ -538,9 +607,12 @@ async function awaitPackGcBeforeInstall(packId: string): Promise<void> {
   if (!(await hasBlockingState())) return
 
   logger.info(`[install:${packId}] waiting for pending pack GC`)
+  // Committing uninstall journals without a GC row used to make drain a no-op
+  // and then hard-fail install; always materialize a job first.
+  await ensurePackGcJobFromUninstallJournal(packId)
   await drainPackGcQueueInternal()
   if (await hasBlockingState()) {
-    // Force one more pass in case a job was enqueued mid-drain.
+    await ensurePackGcJobFromUninstallJournal(packId)
     await drainPackGcQueueInternal()
   }
   if (await hasBlockingState()) {
@@ -643,7 +715,18 @@ async function snapshotPackState(packId: string): Promise<PackStateSnapshot> {
 async function beginPackOperation(packId: string, kind: PackOperationKind): Promise<void> {
   const id = operationJournalId(packId)
   const existing = await localDb.get<PackOperationJournal>('kv', id)
-  if (existing) await restorePackOperation(existing)
+  if (existing) {
+    // Never restore a committed uninstall: that rewrites the pack the GC is
+    // deleting and can stall install before the first progress callback.
+    if (existing.kind === 'uninstall' && existing.phase === 'committing') {
+      await ensurePackGcJobFromUninstallJournal(packId)
+      await drainPackGcQueueInternal()
+      const stillThere = await localDb.get<PackOperationJournal>('kv', id)
+      if (stillThere) await localDb.delete('kv', id)
+    } else {
+      await restorePackOperation(existing)
+    }
+  }
   const now = new Date().toISOString()
   await localDb.put<PackOperationJournal>('kv', {
     id,
@@ -820,8 +903,12 @@ export const learningPackService = {
       platform: Capacitor.getPlatform(),
       isNative: Capacitor.isNativePlatform(),
     })
+    // Emit progress before GC/journal work so the task UI does not sit at 0%
+    // with "等待开始" while SQLite cleanup runs.
+    onProgress?.('preparing', 2, { label: '准备安装' })
     await awaitPackGcBeforeInstall(unitId)
     throwIfAborted(signal)
+    onProgress?.('preparing', 4, { label: '准备安装' })
     const previous = await localDb.get<InstalledLearningPack>('downloaded_packs', unitId)
     await beginPackOperation(unitId, previous ? 'update' : 'install')
     try {

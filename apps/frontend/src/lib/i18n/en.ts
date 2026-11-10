@@ -1520,6 +1520,7 @@ const en = {
       packTaskWaiting: 'Waiting to start',
       packTaskPausedInBackground: 'App moved to background',
       packTaskPausedFromLastRun: 'Previous task paused',
+      packTaskStepPreparing: 'Preparing install',
       packTaskStepDownloadingPack: 'Downloading pack',
       packTaskStepParsingPack: 'Parsing package',
       packTaskStepReadingManifest: 'Reading manifest',
