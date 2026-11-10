@@ -288,7 +288,12 @@ export function VnStoryPreview({
         }
       }
     }
-    return flattenComposerToTimeline(resolveTimelineAssetAliases(parseComposer(inkSource), assetMap), {
+    return flattenComposerToTimeline(resolveTimelineAssetAliases(
+      parseComposer(inkSource),
+      assetMap,
+      // Video export goes to Remotion without browser cookies — keep signed URLs.
+      { audioMode: previewLayout === 'video' ? 'render' : 'playback' },
+    ), {
       characterSprites: sprites,
       characterAvatars: avatars,
       characterPositions: positions,

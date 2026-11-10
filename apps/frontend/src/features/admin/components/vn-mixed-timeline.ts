@@ -1,4 +1,5 @@
 import { type BackgroundFit } from '@/features/vn-engine/pixi-vn-stage'
+import { resolveAudioAssetUrl, type AudioAssetResolveMode } from '@/features/practice/lib/practice-session-utils'
 import { type CharacterSpriteMap } from './vn-story-preview'
 import { type ComposerItem, type ComposerScene } from './composer-parser'
 
@@ -53,7 +54,7 @@ interface TimelineContext {
   onDefaultBranch: boolean
 }
 
-export type TimelineAssetMap = Record<string, { signedUrl?: string | null }>
+export type TimelineAssetMap = Record<string, { signedUrl?: string | null; fileAssetId?: string }>
 
 /**
  * Ink source stores media as stable aliases (for example `bg_cafe`), while
@@ -64,10 +65,12 @@ export type TimelineAssetMap = Record<string, { signedUrl?: string | null }>
 export function resolveTimelineAssetAliases(
   scenes: ComposerScene[],
   assetMap?: TimelineAssetMap,
+  options?: { audioMode?: AudioAssetResolveMode },
 ): ComposerScene[] {
   if (!assetMap || Object.keys(assetMap).length === 0) return scenes
+  const audioMode = options?.audioMode ?? 'playback'
 
-  const resolve = (value?: string) => {
+  const resolveImage = (value?: string) => {
     if (!value) return value
     // A known alias without a resolved URL is a cache/package error, not a
     // relative web path. Returning the alias made Capacitor try `/bg_xxx` and
@@ -79,12 +82,16 @@ export function resolveTimelineAssetAliases(
   return scenes.map((scene) => ({
     ...scene,
     items: scene.items.map((item) => {
-      if (item.type === 'background') return { ...item, url: resolve(item.url) || '' }
-      if (item.type === 'line') return { ...item, audioUrl: resolve(item.audioUrl) }
-      if (item.type === 'wait') return { ...item, defaultAnswerAudioUrl: resolve(item.defaultAnswerAudioUrl) }
+      if (item.type === 'background') return { ...item, url: resolveImage(item.url) || '' }
+      if (item.type === 'line') return { ...item, audioUrl: resolveAudioAssetUrl(item.audioUrl, assetMap, { mode: audioMode }) }
+      if (item.type === 'wait') return { ...item, defaultAnswerAudioUrl: resolveAudioAssetUrl(item.defaultAnswerAudioUrl, assetMap, { mode: audioMode }) }
       return { ...item }
     }),
   }))
+}
+
+export function isUserMixedFrame(frame: Pick<MixedTimelineFrame, 'kind'>) {
+  return frame.kind === 'choice' || frame.kind === 'userInput'
 }
 
 function normalizeTarget(target?: string) {

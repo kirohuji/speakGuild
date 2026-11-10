@@ -2,7 +2,7 @@ import {
   estimateMixedFrameDuration,
   type LoopMode,
 } from './vn-mixed-preview-player'
-import { type MixedTimelineFrame } from './vn-mixed-timeline'
+import { isUserMixedFrame, type MixedTimelineFrame } from './vn-mixed-timeline'
 
 export const NQTR_VIDEO_FPS = 30
 export const NQTR_VIDEO_WIDTH = 1920
@@ -39,9 +39,15 @@ export function buildNqtrVideoTimeline(
   let cursor = 0
 
   const timelineFrames = frames.map((frame) => {
-    const userRecordingUrl = options.userRecordings?.[frame.index]
-    const resolvedAudioUrl = userRecordingUrl || frame.audioUrl
-    const audioSource = userRecordingUrl ? 'userRecording' : frame.audioUrl ? 'tts' : 'none'
+    // Default: learner lines prefer user recording; character lines prefer TTS.
+    // If a character has no TTS, optional learner dubbing fills the gap.
+    const recordingUrl = options.userRecordings?.[frame.index]
+    const resolvedAudioUrl = isUserMixedFrame(frame)
+      ? (recordingUrl || frame.audioUrl)
+      : (frame.audioUrl || recordingUrl)
+    const audioSource = isUserMixedFrame(frame)
+      ? (recordingUrl ? 'userRecording' : frame.audioUrl ? 'tts' : 'none')
+      : (frame.audioUrl ? 'tts' : recordingUrl ? 'userRecording' : 'none')
     const durationFrames = Math.max(1, Math.round((estimateMixedFrameDuration(frame) / 1000) * fps))
     const startFrame = cursor
     const endFrame = startFrame + durationFrames

@@ -886,7 +886,7 @@ async function generateAndPublishExistingWork(
   try {
   const player = await learningApi.getStoryEpisodePlayer(work.episodeId)
   if (!player.inkScript.inkSource) throw new Error(i18n.t('scripts.scriptIncomplete'))
-  const frames = buildStoryRepeatFrames(player)
+  const frames = buildStoryRepeatFrames(player, { audioMode: 'render' })
   const task = await enqueueScriptVideoRender({
     workId: work.id,
     frames,

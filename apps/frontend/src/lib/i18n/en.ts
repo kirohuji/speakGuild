@@ -2590,7 +2590,7 @@ const en = {
       renderQueued: 'Submitted for background generation',
       renderSubmitted: 'Submitted for background rendering (task {{taskId}})',
       renderSubmittedHint: 'Work created and submitted for background rendering; publish it manually from My Works when done.',
-      repeatAllLinesRequired: 'A practice record is created only after you finish reading all lines',
+      repeatAllLinesRequired: 'A practice record is created only after you finish reading your own lines',
       repeatAssetsUnavailable: 'The local theater assets needed for this repeat session are unavailable.',
       repeatHistoryTab: 'Repeat History',
       repeatRecordTitle: 'Repeat Practice Records',

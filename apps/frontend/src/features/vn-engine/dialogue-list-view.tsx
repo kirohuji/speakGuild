@@ -651,7 +651,10 @@ function ChatBubble({
   if (!isUser) {
     return (
       <div className="flex w-full justify-start">
-        <div className="flex max-w-[88%] min-w-[140px] gap-3 rounded-lg bg-muted/65 px-3.5 py-3 backdrop-blur-sm">
+        <div className={cn(
+          'relative flex max-w-[88%] min-w-[140px] gap-3 rounded-lg bg-muted/65 px-3.5 py-3 backdrop-blur-sm',
+          line.audioUrl && 'pr-11',
+        )}>
           {avatarUrl ? (
             <img
               src={avatarUrl}
@@ -675,33 +678,18 @@ function ChatBubble({
               <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">{displayedTranslation}</p>
             )}
           </div>
+          {line.audioUrl && (
+            <LineAudioButton
+              audioUrl={line.audioUrl}
+              label={t('practiceSession.warmupDrill.playAudio')}
+            />
+          )}
         </div>
       </div>
     )
   }
 
   // ── User bubble: simple right-aligned message ──
-  const [audioPlaying, setAudioPlaying] = useState(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-
-  const handlePlayAudio = () => {
-    if (!line.audioUrl) return
-    if (audioPlaying && audioRef.current) {
-      audioRef.current.pause()
-      return
-    }
-    const audio = new Audio(line.audioUrl)
-    audioRef.current = audio
-    audio.onplay = () => setAudioPlaying(true)
-    audio.onpause = () => setAudioPlaying(false)
-    audio.onended = () => { setAudioPlaying(false); audioRef.current = null }
-    audio.play().catch(() => setAudioPlaying(false))
-  }
-
-  useEffect(() => () => {
-    audioRef.current?.pause()
-  }, [])
-
   return (
     <div className="flex w-full justify-end">
       <div className="max-w-[78%]">
@@ -710,21 +698,10 @@ function ChatBubble({
           line.audioUrl && 'pr-11',
         )}>
           {line.audioUrl && (
-            <button
-              type="button"
-              aria-label={t('vnSettings.playbackRecording')}
-              title={t('vnSettings.playbackRecording')}
-              onClick={(event) => {
-                event.stopPropagation()
-                handlePlayAudio()
-              }}
-              className={cn(
-                'absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-background/75 text-primary shadow-sm backdrop-blur transition-colors hover:bg-primary/10 active:scale-95',
-                audioPlaying && 'bg-primary/10',
-              )}
-            >
-              <Volume2 className={cn('size-3.5', audioPlaying && 'animate-pulse')} />
-            </button>
+            <LineAudioButton
+              audioUrl={line.audioUrl}
+              label={t('vnSettings.playbackRecording')}
+            />
           )}
           <p className="whitespace-pre-wrap leading-relaxed" style={{ fontSize }}>
             {displayedText}
@@ -740,6 +717,46 @@ function ChatBubble({
         )}
       </div>
     </div>
+  )
+}
+
+function LineAudioButton({ audioUrl, label }: { audioUrl: string; label: string }) {
+  const [audioPlaying, setAudioPlaying] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  const handlePlayAudio = () => {
+    if (audioPlaying && audioRef.current) {
+      audioRef.current.pause()
+      return
+    }
+    const audio = new Audio(audioUrl)
+    audioRef.current = audio
+    audio.onplay = () => setAudioPlaying(true)
+    audio.onpause = () => setAudioPlaying(false)
+    audio.onended = () => { setAudioPlaying(false); audioRef.current = null }
+    audio.play().catch(() => setAudioPlaying(false))
+  }
+
+  useEffect(() => () => {
+    audioRef.current?.pause()
+  }, [])
+
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={(event) => {
+        event.stopPropagation()
+        handlePlayAudio()
+      }}
+      className={cn(
+        'absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-background/75 text-primary shadow-sm backdrop-blur transition-colors hover:bg-primary/10 active:scale-95',
+        audioPlaying && 'bg-primary/10',
+      )}
+    >
+      <Volume2 className={cn('size-3.5', audioPlaying && 'animate-pulse')} />
+    </button>
   )
 }
 

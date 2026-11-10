@@ -100,9 +100,24 @@ export class ScriptCommunityService {
       }))
       : []
     const recordingUrls = new Map(recordingsByFrame.filter((entry): entry is readonly [number, { url: string; durationMs: number }] => Boolean(entry)))
+    const audioLocks = (recordSnapshot.audioLocks && typeof recordSnapshot.audioLocks === 'object')
+      ? recordSnapshot.audioLocks as Record<string, 'tts' | 'recording'>
+      : {}
     const framesWithRecordingAudio = frames.map((frame: any) => {
-      const recording = recordingUrls.get(Number(frame?.index))
-      return recording
+      // Priority: explicit theatre lock → default (user=recording, NPC=TTS) →
+      // if a character frame has no TTS, fall back to optional learner dubbing.
+      const index = Number(frame?.index)
+      const isUserLine = frame?.kind === 'choice' || frame?.kind === 'userInput'
+      const recording = recordingUrls.get(index)
+      const ttsUrl = frame?.resolvedAudioUrl || frame?.audioUrl
+      const hasTts = Boolean(ttsUrl)
+      const lock = audioLocks[String(index)] ?? (audioLocks as Record<number, 'tts' | 'recording'>)[index]
+      let useRecording = false
+      if (lock === 'recording' && recording) useRecording = true
+      else if (lock === 'tts') useRecording = !hasTts && Boolean(recording)
+      else if (isUserLine) useRecording = Boolean(recording)
+      else useRecording = !hasTts && Boolean(recording)
+      return useRecording && recording
         ? {
             ...frame,
             resolvedAudioUrl: recording.url,

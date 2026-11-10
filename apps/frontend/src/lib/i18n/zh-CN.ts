@@ -2607,7 +2607,7 @@ const zhCN = {
       speakingCount: '{{count}} 次开口',
       renderSubmitted: '已提交后台渲染（任务 {{taskId}}）',
       renderSubmittedHint: '已创建作品并提交后台渲染；完成后可在我的作品中手动发布到广场',
-      repeatAllLinesRequired: '完成全部台词跟读后，才会生成练习记录',
+      repeatAllLinesRequired: '完成自己的台词跟读后，才会生成练习记录',
       repeatSaved: '跟读演出已保存',
       repeatSaveFailed: '跟读记录保存失败，请重试',
       restart: '重新开始',

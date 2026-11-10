@@ -2,12 +2,12 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { AdminTaskStatus, FileAssetGroup, ScriptWorkStatus } from '@prisma/client';
 import { bundle } from '@remotion/bundler';
-import { renderMedia, selectComposition } from '@remotion/renderer';
+import { ensureBrowser, renderMedia, selectComposition } from '@remotion/renderer';
 import type { Job } from 'bullmq';
 import { readFile, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
+import { platform, tmpdir } from 'node:os';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { FileAssetsService } from '../../file-assets/file-assets.service';
 import { AdminTasksService } from '../admin-tasks.service';
@@ -17,6 +17,7 @@ import { SCRIPT_VIDEO_QUEUE, SCRIPT_VIDEO_RENDER_JOB, NARRATIVE_VIDEO_RENDER_JOB
 @Processor(SCRIPT_VIDEO_QUEUE, { concurrency: 1 })
 export class ScriptVideoRenderProcessor extends WorkerHost {
   private bundleUrl?: Promise<string>;
+  private browserReady?: Promise<string | undefined>;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -38,19 +39,35 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
     const configuredExecutable = process.env.REMOTION_CHROME_EXECUTABLE?.trim();
     if (configuredExecutable) return configuredExecutable;
 
-    const executableRelativePath = join(
+    const winRelativePath = join(
       '.cache',
       'remotion',
       'chrome-149-win64',
       'chrome-headless-shell-win64',
       'chrome-headless-shell.exe',
     );
+    const macCandidates = [
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    ];
     const localCandidates = [
-      join(process.cwd(), executableRelativePath),
-      join(process.cwd(), '..', '..', executableRelativePath),
+      join(process.cwd(), winRelativePath),
+      join(process.cwd(), '..', '..', winRelativePath),
+      ...(platform() === 'darwin' ? macCandidates : []),
     ];
 
     return localCandidates.find((candidate) => existsSync(candidate));
+  }
+
+  private async resolveBrowserExecutable() {
+    this.browserReady ??= (async () => {
+      const local = this.getBrowserExecutable();
+      if (local) return local;
+      // On macOS/Linux without a pinned binary, let Remotion download/cache Chromium.
+      await ensureBrowser();
+      return undefined;
+    })();
+    return this.browserReady;
   }
 
   async process(job: Job<any>) {
@@ -62,7 +79,7 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
     const output = join(tmpdir(), `script-video-${taskId}.mp4`);
     try {
       if (await this.tasks.isCanceled(taskId)) return { canceled: true };
-      const browserExecutable = this.getBrowserExecutable();
+      const browserExecutable = await this.resolveBrowserExecutable();
       if (!await this.tasks.markRunning(taskId, 'bundling')) return { canceled: true };
       await this.prisma.adminTask.updateMany({
         where: { id: taskId, status: { not: 'canceled' } },
@@ -74,6 +91,13 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
         data: { progress: 6, currentStep: 'initializing-renderer' },
       });
       const inputProps = { timeline: { frames, durationInFrames: frames.at(-1)?.endFrame ?? 30, fps: 30 } };
+      console.log('[script-video] initializing renderer', {
+        taskId,
+        workId,
+        frameCount: frames?.length ?? 0,
+        browserExecutable: browserExecutable || 'remotion-default',
+        sampleAudio: frames?.[0]?.resolvedAudioUrl || frames?.[0]?.audioUrl,
+      });
       const composition = await selectComposition({ serveUrl, id: 'ScriptVideo', inputProps, browserExecutable });
       await this.prisma.adminTask.updateMany({
         where: { id: taskId, status: { not: 'canceled' } },
@@ -164,11 +188,29 @@ export class ScriptVideoRenderProcessor extends WorkerHost {
     const output = join(tmpdir(), `narrative-video-${taskId}.mp4`);
     try {
       if (await this.tasks.isCanceled(taskId)) return { canceled: true };
-      const browserExecutable = this.getBrowserExecutable();
+      const browserExecutable = await this.resolveBrowserExecutable();
       if (!await this.tasks.markRunning(taskId, 'bundling')) return { canceled: true };
+      await this.prisma.adminTask.updateMany({
+        where: { id: taskId, status: { not: 'canceled' } },
+        data: { progress: 2, currentStep: 'bundling' },
+      });
       const serveUrl = await this.getBundle();
+      await this.prisma.adminTask.updateMany({
+        where: { id: taskId, status: { not: 'canceled' } },
+        data: { progress: 6, currentStep: 'initializing-renderer' },
+      });
       const inputProps = { timeline: { frames, durationInFrames: frames.at(-1)?.endFrame ?? 30, fps: 30 } };
+      console.log('[narrative-video] initializing renderer', {
+        taskId,
+        frameCount: frames?.length ?? 0,
+        browserExecutable: browserExecutable || 'remotion-default',
+        sampleAudio: frames?.[0]?.resolvedAudioUrl || frames?.[0]?.audioUrl,
+      });
       const composition = await selectComposition({ serveUrl, id: 'ScriptVideo', inputProps, browserExecutable });
+      await this.prisma.adminTask.updateMany({
+        where: { id: taskId, status: { not: 'canceled' } },
+        data: { progress: 10, currentStep: 'rendering' },
+      });
       let lastProgress = -1;
       await renderMedia({
         serveUrl,

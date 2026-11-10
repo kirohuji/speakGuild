@@ -119,6 +119,21 @@ function usableCachedAssetUrl(resolved?: string | null, fallback?: string) {
   return resolveDisplayAssetUrl(resolved) ?? fallback
 }
 
+/** Local pack / same-origin content URLs stay usable even when offlineOnly blocks COS. */
+function isOfflineSafePlaybackUrl(url?: string | null) {
+  if (!url) return false
+  if (/^(data:|blob:|file:|capacitor:|asset:)/i.test(url)) return true
+  if (/^https?:\/\/localhost\/_capacitor_file_/i.test(url)) return true
+  try {
+    const parsed = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://manyu.local')
+    if (parsed.pathname.includes('/file-assets/') && parsed.pathname.endsWith('/content')) return true
+    if (typeof window !== 'undefined' && parsed.origin === window.location.origin) return true
+  } catch {
+    return false
+  }
+  return false
+}
+
 function sameDialogueLine(a?: VnPlayerLine | null, b?: VnPlayerLine | null) {
   return Boolean(a && b
     && a.text === b.text
@@ -127,13 +142,15 @@ function sameDialogueLine(a?: VnPlayerLine | null, b?: VnPlayerLine | null) {
 }
 
 function useCachedAssetUrl(url?: string, role?: string, offlineOnly = false) {
-  const [cachedUrl, setCachedUrl] = useState(offlineOnly && url?.startsWith('http') ? undefined : resolveDisplayAssetUrl(url))
+  const allowRemoteFallback = !offlineOnly || isOfflineSafePlaybackUrl(url)
+  const [cachedUrl, setCachedUrl] = useState(allowRemoteFallback ? resolveDisplayAssetUrl(url) : undefined)
 
   useEffect(() => {
     let cancelled = false
     const displayUrl = resolveDisplayAssetUrl(url)
-    // Do not ever mount Pixi/CSS with a remote source in package-only mode.
-    if (offlineOnly && url?.startsWith('http')) {
+    const allowFallback = !offlineOnly || isOfflineSafePlaybackUrl(url)
+    // Package mode: only mount local / same-origin content URLs, never COS.
+    if (!allowFallback && url?.startsWith('http')) {
       setCachedUrl(undefined)
     } else {
       setCachedUrl(displayUrl)
@@ -142,11 +159,11 @@ function useCachedAssetUrl(url?: string, role?: string, offlineOnly = false) {
 
     assetCacheService.resolve({ url, role, offlineOnly }).then((resolved) => {
       if (!cancelled) {
-        setCachedUrl(usableCachedAssetUrl(resolved, offlineOnly ? undefined : displayUrl))
+        setCachedUrl(usableCachedAssetUrl(resolved, allowFallback ? displayUrl : undefined))
       }
     }).catch((err) => {
       if (role === 'background' || role === 'sprite') console.warn('[vn-player] ❌ resolve 失败:', role, url, err)
-      if (!cancelled) setCachedUrl(offlineOnly ? undefined : displayUrl)
+      if (!cancelled) setCachedUrl(allowFallback ? displayUrl : undefined)
     })
 
     return () => {
@@ -248,9 +265,9 @@ export function VnPlayer({
   const audioUrl = displayLine?.audioUrl
   const cachedBackgroundUrl = useCachedAssetUrl(backgroundUrl, 'background', offlineOnly)
   const cachedSpriteUrl = useCachedAssetUrl(currentSpriteUrl, 'sprite', offlineOnly)
-  // 注意：音频不使用 useCachedAssetUrl，而是直接在 effect 内 resolve，
-  // 避免 cached URL 切换触发 effect 重跑导致重复播放/中断。
-  const cachedAudioUrl = useCachedAssetUrl(audioUrl, displayLine?.isUser ? 'recording' : 'voice')
+  // Button / manual replay uses the cached URL; autoplay resolves separately so
+  // cache URL swaps don't restart the clip mid-play.
+  const cachedAudioUrl = useCachedAssetUrl(audioUrl, displayLine?.isUser ? 'recording' : 'voice', offlineOnly)
 
   // Prefetch GPU decode for the live scene (CSS underlay paints first).
   useEffect(() => {
@@ -307,9 +324,10 @@ export function VnPlayer({
     }
 
     let cancelled = false
+    const allowFallback = !offlineOnly || isOfflineSafePlaybackUrl(audioUrl)
 
     assetCacheService.resolve({ url: audioUrl, role: 'voice', offlineOnly }).then((resolvedUrl) => {
-      const playable = usableCachedAssetUrl(resolvedUrl, offlineOnly ? undefined : audioUrl)
+      const playable = usableCachedAssetUrl(resolvedUrl, allowFallback ? audioUrl : undefined)
       if (cancelled || !playable) return
       const audio = new Audio(playable)
       audio.preload = 'auto'
@@ -577,9 +595,9 @@ export function VnPlayer({
             </div>
           )}
           <div className="absolute right-4 top-0 z-10 flex h-8 -translate-y-1/2 items-center gap-0.5 rounded-full bg-background/90 px-1 shadow-[0_6px_22px_rgba(15,23,42,.09)] backdrop-blur-2xl">
-            {displayLine?.isUser && cachedAudioUrl && (
+            {cachedAudioUrl && (
               <VnIconButton
-                label={t('vnSettings.playbackRecording')}
+                label={displayLine?.isUser ? t('vnSettings.playbackRecording') : t('practiceSession.warmupDrill.playAudio')}
                 onClick={() => {
                   const audio = new Audio(cachedAudioUrl)
                   audio.play().catch(() => {})

@@ -311,8 +311,9 @@ function InkEpisodePlayer({
     () => buildStoryRepeatFrames(data, { assetMap: resolvedAssetMap, scene: resolvedScene }),
     [data, resolvedAssetMap, resolvedScene],
   )
-  // Remotion runs on the server and must never receive Capacitor file URLs.
-  const renderFrames = useMemo(() => buildStoryRepeatFrames(data), [data])
+  // Remotion runs on the server: never Capacitor file URLs, and keep signed audio
+  // URLs (not cookie-bound content?inline=1) so headless Chrome can fetch them.
+  const renderFrames = useMemo(() => buildStoryRepeatFrames(data, { audioMode: 'render' }), [data])
 
   useEffect(() => {
     if (!story.isEnded || completionSaved.current) return
@@ -387,10 +388,12 @@ function InkEpisodePlayer({
     recordedCount,
     totalCount,
     recordings,
+    audioLocks,
   }: {
     recordedCount: number
     totalCount: number
     recordings: Record<number, Blob>
+    audioLocks?: Record<number, 'tts' | 'recording'>
   }) => {
     if (repeatSaving || completionSaved.current) return
     if (recordedCount < totalCount) {
@@ -433,6 +436,7 @@ function InkEpisodePlayer({
           recordedLineCount: recordedCount,
           recordingAssets,
           recordingDurationsMs,
+          audioLocks: audioLocks && Object.keys(audioLocks).length > 0 ? audioLocks : undefined,
           dialogue: repeatFrames.map((frame) => ({
             speaker: frame.kind === 'choice' || frame.kind === 'userInput' ? t('learning.speakerMe') : frame.speaker,
             text: frame.text,

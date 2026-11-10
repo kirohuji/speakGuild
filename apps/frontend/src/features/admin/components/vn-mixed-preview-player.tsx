@@ -1,14 +1,48 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CheckCircle2, Film, Loader2, Mic, Pause, Play, RotateCcw, Settings, Square, Volume2 } from 'lucide-react'
+import { CheckCircle2, CircleDot, Film, Loader2, Lock, Mic, Pause, Play, RotateCcw, Settings, Square, Volume2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { PixiVnStage } from '@/features/vn-engine/pixi-vn-stage'
 import { MixedPlaybackSettingsDialog, type LoopMode } from '@/components/common/playback-settings-dialog'
-import { type MixedTimelineFrame } from './vn-mixed-timeline'
+import { isUserMixedFrame, type MixedTimelineFrame } from './vn-mixed-timeline'
 import { resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
 import { assetCacheService, OFFLINE_RESOURCE_MISSING } from '@/lib/offline/asset-cache.service'
 import { startBestNativeVoiceInput, type NativeVoiceInputSession } from '@/lib/native/vn-voice-input'
+
+type FrameAudioSource = 'tts' | 'recording'
+
+function defaultAudioSource(frame: MixedTimelineFrame, hasRecording: boolean): FrameAudioSource | null {
+  if (isUserMixedFrame(frame)) {
+    // Learner lines: own recording is required; TTS is only a rare fallback.
+    if (hasRecording) return 'recording'
+    if (frame.audioUrl) return 'tts'
+    return null
+  }
+  // Character lines: TTS first; learner dubbing is optional and fills missing TTS.
+  if (frame.audioUrl) return 'tts'
+  if (hasRecording) return 'recording'
+  return null
+}
+
+function isRequiredFollowFrame(frame: MixedTimelineFrame) {
+  return isUserMixedFrame(frame) && Boolean(frame.text) && frame.kind !== 'missingInput'
+}
+
+function resolveFramePlaybackUrl(
+  frame: MixedTimelineFrame,
+  recordingUrls: Record<number, string>,
+  audioLocks: Record<number, FrameAudioSource>,
+): string | undefined {
+  const recording = recordingUrls[frame.index]
+  const locked = audioLocks[frame.index]
+  if (locked === 'tts' && frame.audioUrl) return frame.audioUrl
+  if (locked === 'recording' && recording) return recording
+  const preferred = defaultAudioSource(frame, Boolean(recording))
+  if (preferred === 'recording') return recording
+  if (preferred === 'tts') return frame.audioUrl
+  return undefined
+}
 
 // 兼容旧导入：播放设置弹窗已抽为公共组件
 export { MixedPlaybackSettingsDialog }
@@ -22,7 +56,13 @@ interface VnMixedPreviewPlayerProps {
   practiceMode?: boolean
   /** Keeps the full theatre and playback controls, but removes recording actions. */
   readOnly?: boolean
-  onComplete?: (result: { recordedCount: number; totalCount: number; recordings: Record<number, Blob> }) => void
+  onComplete?: (result: {
+    recordedCount: number
+    totalCount: number
+    recordings: Record<number, Blob>
+    /** Theatre locks also guide video audio when both TTS and recording exist. */
+    audioLocks?: Record<number, 'tts' | 'recording'>
+  }) => void
   completionSubmitting?: boolean
   /** Persisted recording URLs used by history replay. Keys are timeline frame indexes. */
   initialRecordingUrls?: Record<number, string>
@@ -130,11 +170,14 @@ export function VnMixedPreviewPlayer({
   const [followOpen, setFollowOpen] = useState(false)
   const [followFrame, setFollowFrame] = useState<MixedTimelineFrame | null>(null)
   const [recordingUrls, setRecordingUrls] = useState<Record<number, string>>(initialRecordingUrls ?? {})
+  const [audioLocks, setAudioLocks] = useState<Record<number, FrameAudioSource>>({})
   const [playingRecordingIndex, setPlayingRecordingIndex] = useState<number | null>(null)
+  const [playingTtsIndex, setPlayingTtsIndex] = useState<number | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const timerRef = useRef<number | null>(null)
   const recordingAudioRef = useRef<HTMLAudioElement | null>(null)
+  const ttsPreviewRef = useRef<HTMLAudioElement | null>(null)
   const recordingUrlsRef = useRef<Record<number, string>>({})
   const recordingBlobsRef = useRef<Record<number, Blob>>({})
 
@@ -171,10 +214,22 @@ export function VnMixedPreviewPlayer({
     setPlayingRecordingIndex(null)
   }, [])
 
+  const clearTtsPreview = useCallback(() => {
+    const audio = ttsPreviewRef.current
+    if (audio) {
+      audio.pause()
+      audio.removeAttribute('src')
+      ttsPreviewRef.current = null
+    }
+    setPlayingTtsIndex(null)
+  }, [])
+
   const jumpToFrame = useCallback((index: number) => {
     clearPlayback()
+    clearTtsPreview()
+    clearRecordingPlayback()
     onJumpTo(index)
-  }, [clearPlayback, onJumpTo])
+  }, [clearPlayback, clearRecordingPlayback, clearTtsPreview, onJumpTo])
 
   useEffect(() => {
     itemRefs.current[activeIndex]?.scrollIntoView({ block: 'center', behavior: 'smooth' })
@@ -183,7 +238,8 @@ export function VnMixedPreviewPlayer({
   useEffect(() => () => {
     clearPlayback()
     clearRecordingPlayback()
-  }, [clearPlayback, clearRecordingPlayback])
+    clearTtsPreview()
+  }, [clearPlayback, clearRecordingPlayback, clearTtsPreview])
 
   useEffect(() => {
     recordingUrlsRef.current = recordingUrls
@@ -232,10 +288,9 @@ export function VnMixedPreviewPlayer({
       timerRef.current = window.setTimeout(moveNext, baseDelay + gapSeconds * 1000)
     }
 
-    // A saved follow-reading record should play the learner's own voice from
-    // the main playback button as well as from each individual line. TTS is
-    // only a fallback for legacy/missing recordings.
-    const playbackUrl = readOnly ? recordingUrls[activeFrame.index] || activeFrame.audioUrl : activeFrame.audioUrl
+    // Character lines prefer TTS; learner lines prefer the user's recording.
+    // Per-line locks override that default for theatre playback only.
+    const playbackUrl = resolveFramePlaybackUrl(activeFrame, recordingUrls, audioLocks)
     if (playbackUrl) {
       const audio = new Audio(playbackUrl)
       audioRef.current = audio
@@ -247,7 +302,7 @@ export function VnMixedPreviewPlayer({
     }
 
     return () => clearPlayback()
-  }, [activeFrame, activeIndex, clearPlayback, frames.length, gapSeconds, loopIndex, loopMode, onJumpTo, playing, readOnly, recordingUrls])
+  }, [activeFrame, activeIndex, audioLocks, clearPlayback, frames.length, gapSeconds, loopIndex, loopMode, onJumpTo, playing, recordingUrls])
 
   const togglePlaying = () => {
     if (playing) {
@@ -265,15 +320,56 @@ export function VnMixedPreviewPlayer({
     if (!canFollowFrame(frame)) return
     clearPlayback()
     clearRecordingPlayback()
+    clearTtsPreview()
     setPlaying(false)
     onJumpTo(frame.index)
     setFollowFrame(frame)
     setFollowOpen(true)
   }
 
+  const effectiveSource = (frame: MixedTimelineFrame): FrameAudioSource | null => {
+    const locked = audioLocks[frame.index]
+    if (locked === 'tts' && frame.audioUrl) return 'tts'
+    if (locked === 'recording' && recordingUrls[frame.index]) return 'recording'
+    return defaultAudioSource(frame, Boolean(recordingUrls[frame.index]))
+  }
+
+  const lockAudioSource = (frameIndex: number, source: FrameAudioSource) => {
+    setAudioLocks((prev) => ({ ...prev, [frameIndex]: source }))
+  }
+
+  const clearAudioLock = (frameIndex: number) => {
+    setAudioLocks((prev) => {
+      if (!prev[frameIndex]) return prev
+      const next = { ...prev }
+      delete next[frameIndex]
+      return next
+    })
+  }
+
+  const playPreferredFrame = (frame: MixedTimelineFrame) => {
+    const url = resolveFramePlaybackUrl(frame, recordingUrls, audioLocks)
+    const source = effectiveSource(frame)
+    if (!url || !source) {
+      jumpToFrame(frame.index)
+      return
+    }
+    if (source === 'recording') playRecordedFrame(frame.index, url)
+    else playTtsFrame(frame.index, url)
+  }
+
   const canFollow = canFollowFrame(activeFrame)
-  const followableCount = useMemo(() => frames.filter((frame) => canFollowFrame(frame)).length, [frames])
-  const recordedCount = Object.keys(recordingUrls).length
+  // Only "我" lines are required. Character dubbing is optional bonus.
+  const requiredFrames = useMemo(() => frames.filter((frame) => isRequiredFollowFrame(frame)), [frames])
+  const requiredCount = requiredFrames.length
+  const requiredRecordedCount = useMemo(
+    () => requiredFrames.filter((frame) => Boolean(recordingUrls[frame.index])).length,
+    [recordingUrls, requiredFrames],
+  )
+  const optionalRecordedCount = useMemo(
+    () => frames.filter((frame) => !isUserMixedFrame(frame) && Boolean(recordingUrls[frame.index])).length,
+    [frames, recordingUrls],
+  )
   // 管理后台保留深色预览台，移动端跟读则融入用户当前主题。
   const mobileSurface = practiceMode
   const panelClass = mobileSurface
@@ -301,6 +397,7 @@ export function VnMixedPreviewPlayer({
     }
     setPlaying(false)
     clearPlayback()
+    clearTtsPreview()
     clearRecordingPlayback()
     onJumpTo(frameIndex)
     const audio = new Audio(url)
@@ -311,6 +408,29 @@ export function VnMixedPreviewPlayer({
       setPlayingRecordingIndex(null)
     }
     audio.onplay = () => setPlayingRecordingIndex(frameIndex)
+    audio.onpause = clearIfCurrent
+    audio.onended = clearIfCurrent
+    audio.play().catch(clearIfCurrent)
+  }
+
+  const playTtsFrame = (frameIndex: number, url: string) => {
+    if (playingTtsIndex === frameIndex) {
+      clearTtsPreview()
+      return
+    }
+    setPlaying(false)
+    clearPlayback()
+    clearRecordingPlayback()
+    clearTtsPreview()
+    onJumpTo(frameIndex)
+    const audio = new Audio(url)
+    ttsPreviewRef.current = audio
+    const clearIfCurrent = () => {
+      if (ttsPreviewRef.current !== audio) return
+      ttsPreviewRef.current = null
+      setPlayingTtsIndex(null)
+    }
+    audio.onplay = () => setPlayingTtsIndex(frameIndex)
     audio.onpause = clearIfCurrent
     audio.onended = clearIfCurrent
     audio.play().catch(clearIfCurrent)
@@ -369,7 +489,11 @@ export function VnMixedPreviewPlayer({
                   : videoCompleted
                     ? '演出视频已生成并发布'
                     : playing
-                ? (readOnly && recordingUrls[activeFrame.index] ? '用户录音结束后自动推进' : activeFrame.audioUrl ? 'TTS 结束后自动推进' : '按文本时长自动推进')
+                ? (effectiveSource(activeFrame) === 'recording'
+                  ? '用户录音结束后自动推进'
+                  : effectiveSource(activeFrame) === 'tts'
+                    ? 'TTS 结束后自动推进'
+                    : '按文本时长自动推进')
                 : `间隔 ${gapSeconds}s · ${loopMode === 'infinite' ? '无限循环' : `循环 ${loopMode} 次`}`}
             </p>
             {playing && (
@@ -435,18 +559,27 @@ export function VnMixedPreviewPlayer({
             const active = frame.index === activeIndex
             const isMissing = frame.kind === 'missingInput'
             const recordedUrl = recordingUrls[frame.index]
+            const preferred = effectiveSource(frame)
+            const lockedSource = audioLocks[frame.index]
+            const canChooseLock = Boolean(frame.audioUrl && recordedUrl)
+            const iconBtn = (activeSource: boolean) => cn(
+              'flex size-7 items-center justify-center rounded-full transition-colors',
+              activeSource
+                ? (mobileSurface ? 'bg-primary/12 text-primary' : 'bg-white/10 text-cyan-100')
+                : (mobileSurface ? 'text-muted-foreground hover:bg-primary/10 hover:text-primary' : 'text-white/34 hover:bg-white/8 hover:text-cyan-100'),
+            )
             return (
               <div
                 key={frame.index}
                 ref={(node) => { itemRefs.current[frame.index] = node }}
                 className={cn(
-                  'grid w-full grid-cols-[minmax(0,1fr)_32px] items-start gap-2 px-1 py-2 transition-colors',
+                  'grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-2 px-1 py-2 transition-colors',
                   active && (mobileSurface ? 'rounded-xl bg-primary/8 px-2 text-primary' : 'text-cyan-100'),
                 )}
               >
                 <button
                   type="button"
-                  onClick={() => jumpToFrame(frame.index)}
+                  onClick={() => playPreferredFrame(frame)}
                   className="min-w-0 text-left"
                 >
                   <span className="flex items-center justify-between gap-2">
@@ -470,34 +603,100 @@ export function VnMixedPreviewPlayer({
                     <span className={cn('mt-1 block text-xs leading-5', active ? (mobileSurface ? 'text-primary/70' : 'text-cyan-100/55') : (mobileSurface ? 'text-muted-foreground' : 'text-white/35'))}>{frame.translation}</span>
                   )}
                 </button>
-                <div className="flex flex-col items-center gap-1">
+                <div className="mt-1 flex flex-col items-end gap-0.5">
                   {!readOnly && (
                     <button
                       type="button"
                       disabled={!canFollowFrame(frame)}
                       onClick={() => openFollow(frame)}
                       className={cn(
-                        'mt-2 flex size-7 items-center justify-center rounded-full transition-colors',
+                        'flex size-7 items-center justify-center rounded-full transition-colors',
                         canFollowFrame(frame)
                           ? mobileSurface ? 'text-muted-foreground hover:bg-primary/10 hover:text-primary' : 'text-white/34 hover:bg-white/8 hover:text-emerald-100'
                           : mobileSurface ? 'cursor-not-allowed text-muted-foreground/30' : 'cursor-not-allowed text-white/10',
                         active && canFollowFrame(frame) && (mobileSurface ? 'text-primary' : 'text-emerald-100'),
                       )}
-                      title="跟读"
+                      title="跟读录音"
                     >
-                    <Mic className="size-3.5" />
+                      <Mic className="size-3.5" />
                     </button>
                   )}
-                    {recordedUrl && (
-                    <button
-                      type="button"
-                      onClick={() => playRecordedFrame(frame.index, recordedUrl)}
-                      className={cn('flex size-7 items-center justify-center rounded-full transition-colors', mobileSurface ? 'text-primary hover:bg-primary/10' : 'text-cyan-100 hover:bg-white/8')}
-                      title="回放录音"
-                    >
-                      {playingRecordingIndex === frame.index ? <Pause className="size-3.5 fill-current" /> : <Play className="ml-0.5 size-3.5 fill-current" />}
-                    </button>
-                    )}
+                  {frame.audioUrl && (
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => playTtsFrame(frame.index, frame.audioUrl!)}
+                        className={iconBtn(preferred === 'tts')}
+                        title="播放 TTS"
+                      >
+                        {playingTtsIndex === frame.index ? <Pause className="size-3.5 fill-current" /> : <Volume2 className="size-3.5" />}
+                      </button>
+                      {canChooseLock && preferred === 'tts' && (
+                        <button
+                          type="button"
+                          onClick={() => clearAudioLock(frame.index)}
+                          className={cn(
+                            'flex size-7 items-center justify-center rounded-full transition-colors',
+                            mobileSurface ? 'text-muted-foreground/45 hover:bg-muted hover:text-muted-foreground' : 'text-white/28 hover:bg-white/8 hover:text-white/50',
+                          )}
+                          title={lockedSource === 'tts' ? '当前使用 TTS（点击恢复默认）' : '当前使用 TTS'}
+                        >
+                          <CircleDot className="size-3.5" />
+                        </button>
+                      )}
+                      {canChooseLock && preferred !== 'tts' && (
+                        <button
+                          type="button"
+                          onClick={() => lockAudioSource(frame.index, 'tts')}
+                          className={cn(
+                            'flex size-7 items-center justify-center rounded-full transition-colors',
+                            mobileSurface ? 'text-amber-600 hover:bg-amber-500/10' : 'text-amber-200 hover:bg-white/8',
+                          )}
+                          title="锁定为 TTS"
+                        >
+                          <Lock className="size-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {recordedUrl && (
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => playRecordedFrame(frame.index, recordedUrl)}
+                        className={iconBtn(preferred === 'recording')}
+                        title="回放录音"
+                      >
+                        {playingRecordingIndex === frame.index ? <Pause className="size-3.5 fill-current" /> : <Play className="ml-0.5 size-3.5 fill-current" />}
+                      </button>
+                      {canChooseLock && preferred === 'recording' && (
+                        <button
+                          type="button"
+                          onClick={() => clearAudioLock(frame.index)}
+                          className={cn(
+                            'flex size-7 items-center justify-center rounded-full transition-colors',
+                            mobileSurface ? 'text-muted-foreground/45 hover:bg-muted hover:text-muted-foreground' : 'text-white/28 hover:bg-white/8 hover:text-white/50',
+                          )}
+                          title={lockedSource === 'recording' ? '当前使用用户录音（点击恢复默认）' : '当前使用用户录音'}
+                        >
+                          <CircleDot className="size-3.5" />
+                        </button>
+                      )}
+                      {canChooseLock && preferred !== 'recording' && (
+                        <button
+                          type="button"
+                          onClick={() => lockAudioSource(frame.index, 'recording')}
+                          className={cn(
+                            'flex size-7 items-center justify-center rounded-full transition-colors',
+                            mobileSurface ? 'text-amber-600 hover:bg-amber-500/10' : 'text-amber-200 hover:bg-white/8',
+                          )}
+                          title="锁定为用户录音"
+                        >
+                          <Lock className="size-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )
@@ -508,16 +707,24 @@ export function VnMixedPreviewPlayer({
       {practiceMode && !readOnly && (
         <div className={cn('flex shrink-0 items-center gap-3 px-3 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom,0px))]', !mobileSurface && 'border-t', toolbarClass)}>
           <div className="min-w-0 flex-1">
-            <p className={cn('text-xs font-medium', mobileSurface ? 'text-foreground' : 'text-white/80')}>跟读进度 {recordedCount}/{followableCount}</p>
+            <p className={cn('text-xs font-medium', mobileSurface ? 'text-foreground' : 'text-white/80')}>
+              跟读进度 {requiredRecordedCount}/{requiredCount}
+              {optionalRecordedCount > 0 ? ` · 角色加录 ${optionalRecordedCount}` : ''}
+            </p>
             <div className={cn('mt-1.5 h-1 overflow-hidden rounded-full', mobileSurface ? 'bg-muted' : 'bg-white/10')}>
-              <div className={cn('h-full rounded-full transition-all', mobileSurface ? 'bg-primary' : 'bg-emerald-300')} style={{ width: `${followableCount ? (recordedCount / followableCount) * 100 : 0}%` }} />
+              <div className={cn('h-full rounded-full transition-all', mobileSurface ? 'bg-primary' : 'bg-emerald-300')} style={{ width: `${requiredCount ? (requiredRecordedCount / requiredCount) * 100 : 0}%` }} />
             </div>
           </div>
           <Button
             type="button"
             size="sm"
-            disabled={completionSubmitting || followableCount === 0 || recordedCount < followableCount}
-            onClick={() => onComplete?.({ recordedCount, totalCount: followableCount, recordings: { ...recordingBlobsRef.current } })}
+            disabled={completionSubmitting || requiredCount === 0 || requiredRecordedCount < requiredCount}
+            onClick={() => onComplete?.({
+              recordedCount: requiredRecordedCount,
+              totalCount: requiredCount,
+              recordings: { ...recordingBlobsRef.current },
+              audioLocks: { ...audioLocks },
+            })}
             className={cn('h-8 shrink-0 px-3 text-xs', mobileSurface ? '' : 'bg-emerald-300 text-slate-950 hover:bg-emerald-200')}
           >
             {completionSubmitting ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}

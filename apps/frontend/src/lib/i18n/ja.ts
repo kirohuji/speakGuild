@@ -2589,7 +2589,7 @@ const ja = {
       renderQueued: 'バックグラウンド生成に送信しました',
       renderSubmitted: 'バックグラウンドレンダリングに送信しました（タスク {{taskId}}）',
       renderSubmittedHint: '作品を作成し、バックグラウンドレンダリングに送信しました。完了後は「マイ作品」から手動で公開できます',
-      repeatAllLinesRequired: 'すべての台詞のリピートを完了すると、練習記録が作成されます',
+      repeatAllLinesRequired: '自分の台詞のリピートを完了すると、練習記録が作成されます',
       repeatAssetsUnavailable: 'このリピートに必要なローカルシアターリソースを読み込めません。',
       repeatHistoryTab: 'リピート練習履歴',
       repeatRecordTitle: 'リピート練習記録',

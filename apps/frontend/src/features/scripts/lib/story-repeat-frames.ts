@@ -12,6 +12,8 @@ export function buildStoryRepeatFrames(
   options: {
     assetMap?: StoryEpisodePlayerData['inkScript']['assetMap']
     scene?: StoryEpisodePlayerData['scene']
+    /** Remotion must keep signed/public audio URLs, not cookie-bound content proxies. */
+    audioMode?: 'playback' | 'render'
   } = {},
 ) {
   if (!data.inkScript.inkSource) return []
@@ -41,6 +43,7 @@ export function buildStoryRepeatFrames(
   return flattenComposerToTimeline(resolveTimelineAssetAliases(
     parseComposer(data.inkScript.inkSource),
     options.assetMap ?? data.inkScript.assetMap,
+    { audioMode: options.audioMode ?? 'playback' },
   ), {
     defaultBackgroundUrl: scene?.backgroundUrl ?? undefined,
     characterSprites,

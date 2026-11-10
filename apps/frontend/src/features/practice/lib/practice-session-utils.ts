@@ -1,4 +1,5 @@
 import { compileInk } from '@/features/admin/components/ink-compiler'
+import { fileAssetIdFromUrl, getFileAssetContentUrl } from '@/lib/file-asset-reference'
 import type { TopicDetail } from '../api/english-practice-api'
 
 export function compilePracticeInk(inkSource?: string | null, fallbackJson?: Record<string, any> | null) {
@@ -58,7 +59,16 @@ function decodeTagValue(value?: string) {
   }
 }
 
-export function parseVnTags(tags: string[], assetMap?: Record<string, { fileAssetId?: string; signedUrl?: string | null }>) {
+type VnAssetMapEntry = { fileAssetId?: string; signedUrl?: string | null }
+type VnAssetMap = Record<string, VnAssetMapEntry>
+
+function isLocalPlaybackUrl(url?: string | null) {
+  if (!url) return false
+  return /^(data:|blob:|file:|capacitor:)/i.test(url)
+    || /^https?:\/\/localhost\/_capacitor_file_/i.test(url)
+}
+
+export function parseVnTags(tags: string[], assetMap?: VnAssetMap) {
   const speaker = tags.find((t) => t.startsWith('speaker:'))?.replace('speaker:', '').trim()
   const expression = tags.find((t) => t.startsWith('expression:'))?.replace('expression:', '').trim()
   const rawAudio = decodeTagValue(tags.find((t) => t.startsWith('audio:'))?.replace('audio:', '').trim())
@@ -67,8 +77,8 @@ export function parseVnTags(tags: string[], assetMap?: Record<string, { fileAsse
   const position = tags.find((t) => t.startsWith('position:'))?.replace('position:', '').trim()
   const translation = decodeTagValue(tags.find((t) => t.startsWith('translation:'))?.replace('translation:', '').trim())
 
-  // Resolve aliases to signed URLs through assetMap
-  const audio = resolveAssetUrl(rawAudio, assetMap)
+  // Resolve aliases through assetMap (audio prefers MIME-safe content proxy).
+  const audio = resolveAudioAssetUrl(rawAudio, assetMap)
   const bg = resolveAssetUrl(rawBg, assetMap)
 
   return { speaker, expression, audio, bg, bgFit, position, translation }
@@ -80,7 +90,7 @@ export function parseVnTags(tags: string[], assetMap?: Record<string, { fileAsse
  */
 function resolveAssetUrl(
   value: string | undefined,
-  assetMap?: Record<string, { fileAssetId?: string; signedUrl?: string | null }>,
+  assetMap?: VnAssetMap,
 ): string | undefined {
   if (!value) return value
   if (assetMap && Object.prototype.hasOwnProperty.call(assetMap, value)) {
@@ -88,6 +98,42 @@ function resolveAssetUrl(
     // request `/bg_xxx` from the app origin.
     return assetMap[value]?.signedUrl || undefined
   }
+  return value
+}
+
+export type AudioAssetResolveMode = 'playback' | 'render'
+
+/**
+ * Audio aliases must become a playable URL.
+ * - playback: prefer local pack, else same-origin content?inline=1 (MIME-safe for HTMLAudio)
+ * - render: prefer signed/public URLs Remotion can fetch without browser cookies
+ */
+export function resolveAudioAssetUrl(
+  value: string | undefined,
+  assetMap?: VnAssetMap,
+  options?: { mode?: AudioAssetResolveMode },
+): string | undefined {
+  if (!value) return value
+  const mode = options?.mode ?? 'playback'
+  if (assetMap && Object.prototype.hasOwnProperty.call(assetMap, value)) {
+    const entry = assetMap[value]
+    if (entry?.signedUrl && isLocalPlaybackUrl(entry.signedUrl)) return entry.signedUrl
+    if (mode === 'render') {
+      if (entry?.signedUrl) return entry.signedUrl
+      if (entry?.fileAssetId) return getFileAssetContentUrl(entry.fileAssetId, '?inline=1')
+      return undefined
+    }
+    if (entry?.fileAssetId) return getFileAssetContentUrl(entry.fileAssetId, '?inline=1')
+    if (entry?.signedUrl) {
+      const id = fileAssetIdFromUrl(entry.signedUrl)
+      if (id) return getFileAssetContentUrl(id, '?inline=1')
+      return entry.signedUrl
+    }
+    return undefined
+  }
+  if (mode === 'render') return value
+  const id = fileAssetIdFromUrl(value)
+  if (id) return getFileAssetContentUrl(id, '?inline=1')
   return value
 }
 
