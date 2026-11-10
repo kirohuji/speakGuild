@@ -1735,8 +1735,9 @@ ${candidateLines}
       where: { id },
       include: {
         scene: true,
-        vocabularies: { include: { vocabulary: true } },
-        chunks: { include: { chunk: true } },
+        vocabularies: { include: { vocabulary: true }, orderBy: { sortOrder: 'asc' } },
+        chunks: { include: { chunk: true }, orderBy: { sortOrder: 'asc' } },
+        sentencePatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' } },
       },
     });
     if (!episode) return null;
@@ -1760,13 +1761,14 @@ ${candidateLines}
       passMinDialogues: episode.minimumTurnCount,
       coreVocabularies: episode.vocabularies.map((item) => ({ ...item, vocab: item.vocabulary })),
       coreChunks: episode.chunks,
+      corePatterns: episode.sentencePatterns.map((item) => ({ ...item, pattern: item.pattern })),
     };
   }
 
   @Post('script-episodes')
   async createScriptEpisode(@Req() req: Request, @Body() dto: CreateScriptEpisodeDto) {
     const session = await this.requireManager(req);
-    const { vocabIds, chunkIds, ...rest } = dto;
+    const { vocabIds, chunkIds, patternIds, ...rest } = dto;
     await this.contentAccess.assertSceneAccess(session, rest.sceneId);
     const episode = await this.prisma.storyEpisode.create({
       data: {
@@ -1798,12 +1800,17 @@ ${candidateLines}
     });
     if (vocabIds?.length) {
       await this.prisma.storyEpisodeVocabulary.createMany({
-        data: vocabIds.map((vocabId) => ({ episodeId: episode.id, vocabId })),
+        data: vocabIds.map((vocabId, index) => ({ episodeId: episode.id, vocabId, sortOrder: index })),
       });
     }
     if (chunkIds?.length) {
       await this.prisma.storyEpisodeChunk.createMany({
-        data: chunkIds.map((chunkId) => ({ episodeId: episode.id, chunkId })),
+        data: chunkIds.map((chunkId, index) => ({ episodeId: episode.id, chunkId, sortOrder: index })),
+      });
+    }
+    if (patternIds?.length) {
+      await this.prisma.storyEpisodeSentencePattern.createMany({
+        data: patternIds.map((patternId, index) => ({ episodeId: episode.id, patternId, sortOrder: index })),
       });
     }
     return episode;
@@ -1814,7 +1821,7 @@ ${candidateLines}
     const session = await this.requireManager(req);
     const current = await this.prisma.storyEpisode.findUniqueOrThrow({ where: { id }, select: { sceneId: true } });
     await this.contentAccess.assertSceneAccess(session, current.sceneId);
-    const { vocabIds, chunkIds, ...rest } = dto;
+    const { vocabIds, chunkIds, patternIds, ...rest } = dto;
     if (rest.sceneId !== undefined) await this.contentAccess.assertSceneAccess(session, rest.sceneId);
     const data: any = {};
     if (rest.chapterId !== undefined) data.chapterKey = rest.chapterId;
@@ -1846,7 +1853,7 @@ ${candidateLines}
       await this.prisma.storyEpisodeVocabulary.deleteMany({ where: { episodeId: id } });
       if (vocabIds.length > 0) {
         await this.prisma.storyEpisodeVocabulary.createMany({
-          data: vocabIds.map((vocabId) => ({ episodeId: id, vocabId })),
+          data: vocabIds.map((vocabId, index) => ({ episodeId: id, vocabId, sortOrder: index })),
         });
       }
     }
@@ -1854,7 +1861,15 @@ ${candidateLines}
       await this.prisma.storyEpisodeChunk.deleteMany({ where: { episodeId: id } });
       if (chunkIds.length > 0) {
         await this.prisma.storyEpisodeChunk.createMany({
-          data: chunkIds.map((chunkId) => ({ episodeId: id, chunkId })),
+          data: chunkIds.map((chunkId, index) => ({ episodeId: id, chunkId, sortOrder: index })),
+        });
+      }
+    }
+    if (patternIds) {
+      await this.prisma.storyEpisodeSentencePattern.deleteMany({ where: { episodeId: id } });
+      if (patternIds.length > 0) {
+        await this.prisma.storyEpisodeSentencePattern.createMany({
+          data: patternIds.map((patternId, index) => ({ episodeId: id, patternId, sortOrder: index })),
         });
       }
     }
@@ -2340,43 +2355,103 @@ ${candidateLines}
     return this.prisma.gameQuest.delete({ where: { id } });
   }
 
+  private nqtrChapterInclude() {
+    return {
+      characters: { select: { characterId: true } },
+      locations: { select: { locationId: true } },
+      vocabularies: {
+        orderBy: { sortOrder: 'asc' as const },
+        include: { vocabulary: true },
+      },
+      chunks: {
+        orderBy: { sortOrder: 'asc' as const },
+        include: { chunk: true },
+      },
+      sentencePatterns: {
+        orderBy: { sortOrder: 'asc' as const },
+        include: { pattern: true },
+      },
+    };
+  }
+
+  private mapNqtrChapter(chapter: any) {
+    return {
+      ...chapter,
+      coreVocabularies: (chapter.vocabularies ?? []).map((item: any) => ({
+        ...item,
+        vocab: item.vocabulary,
+      })),
+      coreChunks: chapter.chunks ?? [],
+      corePatterns: (chapter.sentencePatterns ?? []).map((item: any) => ({
+        ...item,
+        pattern: item.pattern,
+      })),
+    };
+  }
+
   @Get('nqtr-chapters')
   async listNqtrChapters(@Req() req: Request, @Query('sceneId') sceneId?: string) {
     await this.requireAdmin(req);
     if (!sceneId) throw new BadRequestException('缺少剧情包');
-    return this.prisma.nqtrChapter.findMany({
+    const chapters = await this.prisma.nqtrChapter.findMany({
       where: { sceneId },
       orderBy: { sortOrder: 'asc' },
-      include: {
-        characters: { select: { characterId: true } },
-        locations: { select: { locationId: true } },
-      },
+      include: this.nqtrChapterInclude(),
     });
+    return chapters.map((chapter) => this.mapNqtrChapter(chapter));
   }
 
   @Post('nqtr-chapters')
-  async createNqtrChapter(@Req() req: Request, @Body() dto: { sceneId?: string; title?: string; summary?: string; characterIds?: string[]; locationIds?: string[] }) {
+  async createNqtrChapter(@Req() req: Request, @Body() dto: {
+    sceneId?: string;
+    title?: string;
+    summary?: string;
+    teachingMarkdown?: string | null;
+    characterIds?: string[];
+    locationIds?: string[];
+    vocabIds?: string[];
+    chunkIds?: string[];
+    patternIds?: string[];
+  }) {
     await this.requireAdmin(req);
     if (!dto.sceneId || !dto.title?.trim()) throw new BadRequestException('章节缺少剧情包或名称');
     const count = await this.prisma.nqtrChapter.count({ where: { sceneId: dto.sceneId } });
-    return this.prisma.nqtrChapter.create({
+    const chapter = await this.prisma.nqtrChapter.create({
       data: {
         sceneId: dto.sceneId,
         title: dto.title.trim(),
         summary: dto.summary?.trim() || null,
+        teachingMarkdown: dto.teachingMarkdown?.trim() || null,
         sortOrder: count,
         characters: { create: (dto.characterIds ?? []).filter(Boolean).map((characterId) => ({ characterId })) },
         locations: { create: (dto.locationIds ?? []).filter(Boolean).map((locationId) => ({ locationId })) },
+        vocabularies: {
+          create: [...new Set(dto.vocabIds ?? [])].filter(Boolean).map((vocabId, index) => ({ vocabId, sortOrder: index })),
+        },
+        chunks: {
+          create: [...new Set(dto.chunkIds ?? [])].filter(Boolean).map((chunkId, index) => ({ chunkId, sortOrder: index })),
+        },
+        sentencePatterns: {
+          create: [...new Set(dto.patternIds ?? [])].filter(Boolean).map((patternId, index) => ({ patternId, sortOrder: index })),
+        },
       },
-      include: {
-        characters: { select: { characterId: true } },
-        locations: { select: { locationId: true } },
-      },
+      include: this.nqtrChapterInclude(),
     });
+    return this.mapNqtrChapter(chapter);
   }
 
   @Patch('nqtr-chapters/:id')
-  async updateNqtrChapter(@Req() req: Request, @Param('id') id: string, @Body() dto: { title?: string; summary?: string | null; sortOrder?: number; characterIds?: string[]; locationIds?: string[] }) {
+  async updateNqtrChapter(@Req() req: Request, @Param('id') id: string, @Body() dto: {
+    title?: string;
+    summary?: string | null;
+    teachingMarkdown?: string | null;
+    sortOrder?: number;
+    characterIds?: string[];
+    locationIds?: string[];
+    vocabIds?: string[];
+    chunkIds?: string[];
+    patternIds?: string[];
+  }) {
     await this.requireAdmin(req);
     return this.prisma.$transaction(async (tx) => {
       if (Array.isArray(dto.characterIds)) {
@@ -2391,18 +2466,44 @@ ${candidateLines}
           await tx.nqtrChapterLocation.createMany({ data: dto.locationIds.filter(Boolean).map((locationId) => ({ chapterId: id, locationId })) });
         }
       }
-      return tx.nqtrChapter.update({
+      if (Array.isArray(dto.vocabIds)) {
+        await tx.nqtrChapterVocabulary.deleteMany({ where: { chapterId: id } });
+        const vocabIds = [...new Set(dto.vocabIds.filter(Boolean))];
+        if (vocabIds.length) {
+          await tx.nqtrChapterVocabulary.createMany({
+            data: vocabIds.map((vocabId, index) => ({ chapterId: id, vocabId, sortOrder: index })),
+          });
+        }
+      }
+      if (Array.isArray(dto.chunkIds)) {
+        await tx.nqtrChapterChunk.deleteMany({ where: { chapterId: id } });
+        const chunkIds = [...new Set(dto.chunkIds.filter(Boolean))];
+        if (chunkIds.length) {
+          await tx.nqtrChapterChunk.createMany({
+            data: chunkIds.map((chunkId, index) => ({ chapterId: id, chunkId, sortOrder: index })),
+          });
+        }
+      }
+      if (Array.isArray(dto.patternIds)) {
+        await tx.nqtrChapterSentencePattern.deleteMany({ where: { chapterId: id } });
+        const patternIds = [...new Set(dto.patternIds.filter(Boolean))];
+        if (patternIds.length) {
+          await tx.nqtrChapterSentencePattern.createMany({
+            data: patternIds.map((patternId, index) => ({ chapterId: id, patternId, sortOrder: index })),
+          });
+        }
+      }
+      const chapter = await tx.nqtrChapter.update({
         where: { id },
         data: {
           title: dto.title?.trim() || undefined,
           summary: dto.summary === undefined ? undefined : (dto.summary?.trim() || null),
+          teachingMarkdown: dto.teachingMarkdown === undefined ? undefined : (dto.teachingMarkdown?.trim() || null),
           sortOrder: dto.sortOrder == null ? undefined : Number(dto.sortOrder),
         },
-        include: {
-          characters: { select: { characterId: true } },
-          locations: { select: { locationId: true } },
-        },
+        include: this.nqtrChapterInclude(),
       });
+      return this.mapNqtrChapter(chapter);
     });
   }
 
@@ -3564,8 +3665,7 @@ ${dialogueTexts}
 
   /**
    * AI 生成教学文档（Markdown）
-   * 根据绑定话题的教学目标、句块、词汇，以及已生成的故事剧本，
-   * 用 DeepSeek 生成一份面向学员的练习助手教学文档。
+   * 优先用绑定话题的知识点；剧情包未绑话题时，改用章节词块/句型 + 剧本对白。
    */
   @Post('stories/:id/generate-teaching')
   async generateTeachingMarkdown(@Req() req: Request, @Param('id') id: string) {
@@ -3576,7 +3676,6 @@ ${dialogueTexts}
       const llmConfig = await this.aiModelService.getLlmConfig();
       if (!llmConfig.apiKey) throw new Error('LLM API Key 未配置');
 
-      // 获取故事及话题完整信息
       const story = await this.prisma.inkScript.findUnique({
         where: { id },
         include: {
@@ -3593,55 +3692,102 @@ ${dialogueTexts}
 
       if (!story) throw new Error('故事不存在');
       const topic = story.trainingTopic;
-      if (!topic) throw new Error('故事未绑定训练话题');
+      const episode = story.episodeId
+        ? await this.prisma.storyEpisode.findUnique({
+            where: { id: story.episodeId },
+            include: {
+              vocabularies: { include: { vocabulary: true }, orderBy: { sortOrder: 'asc' }, take: 20 },
+              chunks: { include: { chunk: { include: { examples: { take: 2, orderBy: { sortOrder: 'asc' } } } } }, orderBy: { sortOrder: 'asc' }, take: 20 },
+              sentencePatterns: { include: { pattern: true }, orderBy: { sortOrder: 'asc' }, take: 20 },
+            },
+          })
+        : null;
 
-      // 构建上下文
       const parts: string[] = [];
 
-      parts.push(`## 话题信息`);
-      parts.push(`- 标题: ${topic.title}`);
-      if (topic.description) parts.push(`- 描述: ${topic.description}`);
-      if (topic.promptZh) parts.push(`- 训练目标: ${topic.promptZh}`);
-      if (topic.promptEn) parts.push(`- 训练目标（英文）: ${topic.promptEn}`);
-      if (topic.knowledgePoints) parts.push(`- 知识点: ${topic.knowledgePoints}`);
-      parts.push(`- 难度: ${topic.difficulty}`);
+      if (topic) {
+        parts.push(`## 话题信息`);
+        parts.push(`- 标题: ${topic.title}`);
+        if (topic.description) parts.push(`- 描述: ${topic.description}`);
+        if (topic.promptZh) parts.push(`- 训练目标: ${topic.promptZh}`);
+        if (topic.promptEn) parts.push(`- 训练目标（英文）: ${topic.promptEn}`);
+        if (topic.knowledgePoints) parts.push(`- 知识点: ${topic.knowledgePoints}`);
+        parts.push(`- 难度: ${topic.difficulty}`);
 
-      if (topic.activeChunks?.length > 0) {
-        parts.push(`\n## 句块（实用表达）`);
-        for (const tc of topic.activeChunks) {
-          parts.push(`- **${tc.chunk.text}** — ${tc.chunk.meaning}`);
-          if (tc.chunk.examples?.length) {
-            for (const ex of tc.chunk.examples) {
-              parts.push(`  - 例: ${ex.en} → ${ex.zh || ''}`);
+        if (topic.activeChunks?.length > 0) {
+          parts.push(`\n## 句块（实用表达）`);
+          for (const tc of topic.activeChunks) {
+            parts.push(`- **${tc.chunk.text}** — ${tc.chunk.meaning}`);
+            if (tc.chunk.examples?.length) {
+              for (const ex of tc.chunk.examples) {
+                parts.push(`  - 例: ${ex.en} → ${ex.zh || ''}`);
+              }
             }
           }
         }
-      }
 
-      if (topic.topicVocabs?.length > 0) {
-        parts.push(`\n## 核心词汇`);
-        for (const tv of topic.topicVocabs) {
-          parts.push(`- **${tv.vocab.word}** — ${tv.vocab.meaning || ''}`);
+        if (topic.topicVocabs?.length > 0) {
+          parts.push(`\n## 核心词汇`);
+          for (const tv of topic.topicVocabs) {
+            parts.push(`- **${tv.vocab.word}** — ${tv.vocab.meaning || ''}`);
+          }
         }
-      }
 
-      if (topic.topicPatterns?.length > 0) {
-        parts.push(`\n## 句式`);
-        for (const tp of topic.topicPatterns) {
-          parts.push(`- \`${tp.pattern.pattern}\` — ${tp.pattern.meaning || ''}`);
+        if (topic.topicPatterns?.length > 0) {
+          parts.push(`\n## 句式`);
+          for (const tp of topic.topicPatterns) {
+            parts.push(`- \`${tp.pattern.pattern}\` — ${tp.pattern.meaning || ''}`);
+          }
         }
+      } else if (episode) {
+        parts.push(`## 章节信息`);
+        parts.push(`- 标题: ${episode.title}`);
+        if (episode.chapterName) parts.push(`- 章节: ${episode.chapterName}`);
+        if (episode.description) parts.push(`- 简介: ${episode.description}`);
+        if (episode.objectives?.length) {
+          parts.push(`- 沟通目标:`);
+          for (const objective of episode.objectives) parts.push(`  - ${objective}`);
+        }
+        parts.push(`- 角色: ${episode.characterName || '未设置'}（${episode.characterRole || '未设置'}）`);
+        parts.push(`- 输出等级: ${episode.requiredOutputLevel}`);
+
+        if (episode.chunks.length > 0) {
+          parts.push(`\n## 句块（实用表达）`);
+          for (const item of episode.chunks) {
+            parts.push(`- **${item.chunk.text}** — ${item.chunk.meaning}`);
+            if (item.chunk.examples?.length) {
+              for (const ex of item.chunk.examples) {
+                parts.push(`  - 例: ${ex.en} → ${ex.zh || ''}`);
+              }
+            }
+          }
+        }
+
+        if (episode.vocabularies.length > 0) {
+          parts.push(`\n## 核心词汇`);
+          for (const item of episode.vocabularies) {
+            parts.push(`- **${item.vocabulary.word}** — ${item.vocabulary.meaning || ''}`);
+          }
+        }
+
+        if (episode.sentencePatterns.length > 0) {
+          parts.push(`\n## 句式`);
+          for (const item of episode.sentencePatterns) {
+            parts.push(`- \`${item.pattern.pattern}\` — ${item.pattern.meaning || ''}`);
+          }
+        }
+      } else {
+        parts.push(`## 故事信息`);
+        parts.push(`- 标题: ${story.title}`);
+        parts.push(`- 类型: ${story.scriptType}`);
       }
 
-      // 从故事中提取对白示例（取前几条有 speaker 的行）
       const dialogueExcerpts: string[] = [];
       if (story.inkSource) {
-        const lines = story.inkSource.split('\n');
-        let inDialogue = false;
-        for (const line of lines) {
+        for (const line of story.inkSource.split('\n')) {
           const trimmed = line.trim();
           if (/^===/.test(trimmed)) {
             dialogueExcerpts.push(`\n**${trimmed}**`);
-            inDialogue = true;
           } else if (trimmed.match(/^[A-Za-z]+[^:：]{0,20}[:：]/) && !trimmed.startsWith('//') && !trimmed.startsWith('#')) {
             dialogueExcerpts.push(`> ${trimmed}`);
           }
@@ -3650,6 +3796,10 @@ ${dialogueTexts}
       if (dialogueExcerpts.length > 0) {
         parts.push(`\n## 故事对话节选`);
         parts.push(dialogueExcerpts.join('\n'));
+      }
+
+      if (parts.length <= 2 && dialogueExcerpts.length === 0) {
+        throw new Error('故事内容不足，请先编写剧情或补充章节知识点后再生成');
       }
 
       const contextBlock = parts.join('\n');
@@ -3661,13 +3811,13 @@ ${dialogueTexts}
       for (let attempt = 0; attempt < 2; attempt += 1) {
         const { text } = await generateText({
           model,
-          prompt: `你是一名英语学习教学设计专家。请根据以下话题信息和故事对话，为面向中国英语学习者的「练习助手」撰写一份教学文档（Markdown 格式）。
+          prompt: `你是一名英语学习教学设计专家。请根据以下章节/话题信息和故事对话，为面向中国英语学习者的「练习助手」撰写一份教学文档（Markdown 格式）。
 
-这份文档会展示在练习页顶部，是学习者开始练习前的**老师讲课**，而不是知识点清单。
+这份文档会展示在章节详情或练习页，是学习者开始练习前的**老师讲课**，而不是知识点清单。
 
 ## 最重要的一条原则（务必理解）
 
-学习者在本页的其他区域已经能看到本话题绑定的**单词、句型、句块完整列表**，所以教学文档绝不能再罗列一遍：
+学习者在本页的其他区域已经能看到本章节/话题的**单词、句型、句块完整列表**，所以教学文档绝不能再罗列一遍：
 
 - 禁止出现「核心词汇」「实用表达」这类纯清单小节，禁止只写 \`word — 释义\` 这种条目式内容；
 - 你的任务是**把这些知识点讲懂、讲透**：每个知识点讲清楚「是什么 → 怎么用（结构/搭配）→ 什么时候用（场景）→ 例句 → 容易错在哪」；

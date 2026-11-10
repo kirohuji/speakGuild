@@ -1263,6 +1263,71 @@ export class LearningService {
           orderBy: { sortOrder: 'asc' },
           include: { pattern: true },
         },
+        nqtrChapters: {
+          orderBy: { sortOrder: 'asc' },
+          select: {
+            id: true,
+            title: true,
+            summary: true,
+            teachingMarkdown: true,
+            sortOrder: true,
+            vocabularies: {
+              orderBy: { sortOrder: 'asc' },
+              select: {
+                vocabulary: {
+                  select: {
+                    id: true,
+                    word: true,
+                    meaning: true,
+                    partOfSpeech: true,
+                    phoneticUs: true,
+                    phoneticUk: true,
+                    audioUsUrl: true,
+                    audioUkUrl: true,
+                    definitionEn: true,
+                    synonyms: true,
+                    examples: true,
+                    description: true,
+                    difficulty: true,
+                  },
+                },
+              },
+            },
+            chunks: {
+              orderBy: { sortOrder: 'asc' },
+              select: {
+                chunk: {
+                  select: {
+                    id: true,
+                    text: true,
+                    meaning: true,
+                    description: true,
+                    category: true,
+                    difficulty: true,
+                    examples: { orderBy: { sortOrder: 'asc' } },
+                  },
+                },
+              },
+            },
+            sentencePatterns: {
+              orderBy: { sortOrder: 'asc' },
+              select: {
+                pattern: {
+                  select: {
+                    id: true,
+                    pattern: true,
+                    meaning: true,
+                    category: true,
+                    description: true,
+                    slots: true,
+                    examples: true,
+                    difficulty: true,
+                  },
+                },
+              },
+            },
+          },
+        },
         storyEpisodes: {
           orderBy: { sortOrder: 'asc' },
           select: {
@@ -1431,6 +1496,50 @@ export class LearningService {
       }
     }
 
+    for (const chapter of scene.nqtrChapters) {
+      for (const item of chapter.vocabularies) {
+        const v = item.vocabulary;
+        if (!vocabMap.has(v.id)) {
+          vocabMap.set(v.id, {
+            id: v.id,
+            word: v.word,
+            meaning: v.meaning,
+            partOfSpeech: v.partOfSpeech,
+            phoneticUs: v.phoneticUs,
+            phoneticUk: v.phoneticUk,
+            audioUsUrl: v.audioUsUrl,
+            audioUkUrl: v.audioUkUrl,
+            definitionEn: v.definitionEn,
+            synonyms: v.synonyms,
+            examples: v.examples,
+            description: v.description,
+            difficulty: v.difficulty,
+          });
+        }
+      }
+      for (const item of chapter.chunks) {
+        const c = item.chunk;
+        if (!chunkMap.has(c.id)) {
+          chunkMap.set(c.id, {
+            id: c.id,
+            text: c.text,
+            meaning: c.meaning,
+            description: c.description,
+            category: c.category,
+            difficulty: c.difficulty,
+            examples: c.examples,
+          });
+        }
+      }
+      for (const item of chapter.sentencePatterns) {
+        sentencePatterns.push({
+          ...item.pattern,
+          topicId: chapter.id,
+          topicTitle: chapter.title,
+        });
+      }
+    }
+
     const vocabularies = [...vocabMap.values()];
     const chunks = [...chunkMap.values()];
 
@@ -1535,6 +1644,8 @@ export class LearningService {
         title: t.title,
         description: t.description,
         teachingMarkdown: t.teachingMarkdown,
+        hasTeachingDocument: Boolean(t.teachingMarkdown?.trim()),
+        inkScriptId: t.inkScriptId,
         promptEn: t.promptEn,
         promptZh: t.promptZh,
         difficulty: t.difficulty,
@@ -1590,50 +1701,87 @@ export class LearningService {
           }
         : null,
 
-      storyEpisodes: scene.storyEpisodes.map((episode, index) => {
-        const record = episode.records[0] ?? null;
-        const previousPassed =
-          index === 0 || Boolean(scene.storyEpisodes[index - 1]?.records[0]?.passed);
-        const prerequisiteSatisfied =
-          episode.prerequisiteEpisodeIds.length > 0
-            ? episode.prerequisiteEpisodeIds.every((requiredId) =>
-                scene.storyEpisodes.some((candidate) =>
-                  candidate.id === requiredId && candidate.records[0]?.passed,
-                ),
-              )
-            : previousPassed;
+      storyEpisodes: await (async () => {
+        const inkIds = scene.storyEpisodes
+          .map((episode) => episode.inkScriptId)
+          .filter((value): value is string => Boolean(value));
+        const teachingByInkId = new Map<string, string>();
+        if (inkIds.length > 0) {
+          const scripts = await this.prisma.inkScript.findMany({
+            where: { id: { in: inkIds } },
+            select: { id: true, teachingMarkdown: true },
+          });
+          for (const script of scripts) {
+            if (script.teachingMarkdown?.trim()) {
+              teachingByInkId.set(script.id, script.teachingMarkdown);
+            }
+          }
+        }
 
-        return {
-          id: episode.id,
-          chapterKey: episode.chapterKey,
-          chapterName: episode.chapterName,
-          sortOrder: episode.sortOrder,
-          title: episode.title,
-          description: episode.description,
-          requiredOutputLevel: episode.requiredOutputLevel,
-          requiredUserLevel: episode.requiredUserLevel,
-          objectives: episode.objectives,
-          characterName: episode.characterName,
-          characterRole: episode.characterRole,
-          inkScriptId: episode.inkScriptId,
-          isPreview: episode.isPreview,
-          prerequisiteEpisodeIds: episode.prerequisiteEpisodeIds,
-          isUnlocked:
-            Boolean(record?.passed) ||
-            episode.isPreview ||
-            prerequisiteSatisfied,
-          vocabularies: episode.vocabularies.map((item) => item.vocabulary),
-          chunks: episode.chunks.map((item) => item.chunk),
-          sentencePatterns: episode.sentencePatterns.map((item) => item.pattern),
-          record,
-        };
-      }),
+        return scene.storyEpisodes.map((episode, index) => {
+          const record = episode.records[0] ?? null;
+          const previousPassed =
+            index === 0 || Boolean(scene.storyEpisodes[index - 1]?.records[0]?.passed);
+          const prerequisiteSatisfied =
+            episode.prerequisiteEpisodeIds.length > 0
+              ? episode.prerequisiteEpisodeIds.every((requiredId) =>
+                  scene.storyEpisodes.some((candidate) =>
+                    candidate.id === requiredId && candidate.records[0]?.passed,
+                  ),
+                )
+              : previousPassed;
+          const teachingMarkdown = episode.inkScriptId
+            ? teachingByInkId.get(episode.inkScriptId) ?? null
+            : null;
+
+          return {
+            id: episode.id,
+            chapterKey: episode.chapterKey,
+            chapterName: episode.chapterName,
+            sortOrder: episode.sortOrder,
+            title: episode.title,
+            description: episode.description,
+            requiredOutputLevel: episode.requiredOutputLevel,
+            requiredUserLevel: episode.requiredUserLevel,
+            objectives: episode.objectives,
+            characterName: episode.characterName,
+            characterRole: episode.characterRole,
+            inkScriptId: episode.inkScriptId,
+            teachingMarkdown,
+            hasTeachingDocument: Boolean(teachingMarkdown?.trim()),
+            isPreview: episode.isPreview,
+            prerequisiteEpisodeIds: episode.prerequisiteEpisodeIds,
+            isUnlocked:
+              Boolean(record?.passed) ||
+              episode.isPreview ||
+              prerequisiteSatisfied,
+            vocabularies: episode.vocabularies.map((item) => item.vocabulary),
+            chunks: episode.chunks.map((item) => item.chunk),
+            sentencePatterns: episode.sentencePatterns.map((item) => item.pattern),
+            record,
+          };
+        });
+      })(),
+
+      nqtrChapters: scene.nqtrChapters.map((chapter) => ({
+        id: chapter.id,
+        title: chapter.title,
+        summary: chapter.summary,
+        teachingMarkdown: chapter.teachingMarkdown ?? null,
+        hasTeachingDocument: Boolean(chapter.teachingMarkdown?.trim()),
+        sortOrder: chapter.sortOrder,
+        vocabularies: chapter.vocabularies.map((item) => item.vocabulary),
+        chunks: chapter.chunks.map((item) => item.chunk),
+        sentencePatterns: chapter.sentencePatterns.map((item) => item.pattern),
+      })),
 
       // 元信息
       vocabCount: vocabularies.length,
       chunkCount: chunks.length,
       topicCount: scene.trainingTopics.length,
-      scriptCount: scene.storyEpisodes.length,
+      scriptCount: scene.packageType === 'nqtr' || scene.contentMode === 'nqtr'
+        ? scene.nqtrChapters.length
+        : scene.storyEpisodes.length,
     };
   }
 
@@ -1689,7 +1837,17 @@ export class LearningService {
     const episodeInkScripts = episodeInkScriptIds.length > 0
       ? await this.prisma.inkScript.findMany({
           where: { id: { in: episodeInkScriptIds } },
-          select: { id: true, key: true, title: true, inkJson: true, inkSource: true, assetMap: true, version: true, characterId: true },
+          select: {
+            id: true,
+            key: true,
+            title: true,
+            inkJson: true,
+            inkSource: true,
+            teachingMarkdown: true,
+            assetMap: true,
+            version: true,
+            characterId: true,
+          },
         })
       : [];
     const episodeInkById = new Map(episodeInkScripts.map((script) => [script.id, script]));
@@ -2622,6 +2780,8 @@ export class LearningService {
         id: chapter.id,
         title: chapter.title,
         summary: chapter.summary,
+        teachingMarkdown: chapter.teachingMarkdown ?? null,
+        hasTeachingDocument: Boolean(chapter.teachingMarkdown?.trim()),
         sortOrder: chapter.sortOrder,
         characterIds: chapter.characters.map((item) => item.characterId),
         locationIds: chapter.locations.map((item) => item.locationId),

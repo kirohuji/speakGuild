@@ -173,6 +173,8 @@ export function buildPackReadModel(unitDetail: any, topicDetails: any[]): PackRe
       id: chapter.id,
       title: chapter.title,
       summary: chapter.summary ?? null,
+      teachingMarkdown: chapter.teachingMarkdown ?? null,
+      hasTeachingDocument: Boolean(chapter.hasTeachingDocument || chapter.teachingMarkdown?.trim()),
       sortOrder: chapter.sortOrder ?? 0,
     })),
     offlineNqtrBundle: unitDetail?.offlineNqtrBundle ?? null,

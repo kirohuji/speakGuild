@@ -16,13 +16,12 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  CardContent,
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
 import { isNqtrLearningUnit, type StoryEpisodeItem } from '@/features/learning/api/learning-api'
 import { readNqtrSaveHybrid } from '@/features/nqtr/api/nqtr-local-save'
 import { resolveNqtrChapterUnlock, type NqtrChapterProgressItem } from '@/features/nqtr/lib/nqtr-chapter-progress'
@@ -67,6 +66,15 @@ export function ScriptPackagePage() {
   )
   const [nqtrChapters, setNqtrChapters] = useState<Array<NqtrChapterProgressItem & { passed: boolean; isUnlocked: boolean }>>([])
   const [resumeChapterId, setResumeChapterId] = useState<string | null>(null)
+  const [teachingOpen, setTeachingOpen] = useState(false)
+  const [teachingMarkdown, setTeachingMarkdown] = useState('')
+
+  const openTeaching = (markdown?: string | null) => {
+    const next = markdown?.trim() || ''
+    if (!next) return
+    setTeachingMarkdown(next)
+    setTeachingOpen(true)
+  }
 
   useEffect(() => {
     if (!isNqtr || !packageId || !detail) {
@@ -79,6 +87,8 @@ export function ScriptPackagePage() {
       id: chapter.id,
       title: chapter.title,
       summary: chapter.summary ?? null,
+      teachingMarkdown: chapter.teachingMarkdown ?? null,
+      hasTeachingDocument: Boolean(chapter.hasTeachingDocument || chapter.teachingMarkdown?.trim()),
       sortOrder: chapter.sortOrder ?? 0,
     }))
     void readNqtrSaveHybrid(packageId)
@@ -267,6 +277,7 @@ export function ScriptPackagePage() {
               index={index}
               packageId={detail.id}
               installed={installed}
+              onOpenTeaching={() => openTeaching(chapter.teachingMarkdown)}
             />
           )) : episodes.map((episode, index) => (
             <EpisodeRow
@@ -275,10 +286,19 @@ export function ScriptPackagePage() {
               index={index}
               packageId={detail.id}
               installed={installed}
+              onOpenTeaching={() => openTeaching(episode.teachingMarkdown)}
             />
           ))}
         </div>
       </section>
+
+      <PracticeVnDrawer
+        open={teachingOpen}
+        onOpenChange={setTeachingOpen}
+        hideToggles
+        unitId={detail.id}
+        teachingMarkdown={teachingMarkdown}
+      />
     </div>
   )
 }
@@ -310,27 +330,40 @@ function NqtrChapterRow({
   index,
   packageId,
   installed,
+  onOpenTeaching,
 }: {
   chapter: NqtrChapterProgressItem & { passed: boolean; isUnlocked: boolean }
   index: number
   packageId: string
   installed: boolean
+  onOpenTeaching: () => void
 }) {
   const { t } = useTranslation()
   const locked = !chapter.isUnlocked || !installed
+  const hasTeaching = Boolean(chapter.hasTeachingDocument || chapter.teachingMarkdown?.trim())
   const row = (
     <Card className="border-0 bg-muted/30 shadow-none ring-0 transition-colors hover:bg-muted/50 dark:ring-0">
-      <CardHeader className="flex-row items-center gap-3 p-4">
+      <CardContent className="flex items-center gap-3 p-4">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold">
           {chapter.passed ? <Check className="size-4 text-primary" /> : index + 1}
         </div>
         <div className="min-w-0 flex-1">
-          <CardTitle className="truncate text-sm">{chapter.title}</CardTitle>
-          {chapter.summary ? <CardDescription className="mt-1 line-clamp-2 text-xs">{chapter.summary}</CardDescription> : null}
+          <p className="truncate text-sm font-medium text-foreground">{chapter.title}</p>
+          {chapter.summary ? <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{chapter.summary}</p> : null}
           <p className="mt-1 text-xs text-muted-foreground">{t('scripts.vnInteractive')}</p>
         </div>
+        {hasTeaching && (
+          <button
+            type="button"
+            onClick={(event) => { event.preventDefault(); event.stopPropagation(); onOpenTeaching() }}
+            className="flex size-8 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground active:scale-[0.92]"
+            aria-label={t('practiceVn.teaching')}
+          >
+            <BookOpen className="size-4" />
+          </button>
+        )}
         {locked ? <LockKeyhole className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />}
-      </CardHeader>
+      </CardContent>
     </Card>
   )
   if (locked) return row
@@ -342,33 +375,46 @@ function EpisodeRow({
   index,
   packageId,
   installed,
+  onOpenTeaching,
 }: {
   episode: StoryEpisodeItem
   index: number
   packageId: string
   installed: boolean
+  onOpenTeaching: () => void
 }) {
   const { t } = useTranslation()
   const locked = !episode.isUnlocked || !installed
+  const hasTeaching = Boolean(episode.hasTeachingDocument || episode.teachingMarkdown?.trim())
   const row = (
     <Card className="border-0 bg-muted/30 shadow-none ring-0 transition-colors hover:bg-muted/50 dark:ring-0">
-      <CardHeader className="flex-row items-center gap-3 p-4">
+      <CardContent className="flex items-center gap-3 p-4">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold">
           {episode.record?.passed ? <Check className="size-4 text-primary" /> : index + 1}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <CardDescription className="truncate text-xs">{episode.chapterName}</CardDescription>
+            <p className="truncate text-xs text-muted-foreground">{episode.chapterName}</p>
             {episode.isPreview && <Badge variant="secondary">{t('scripts.preview')}</Badge>}
           </div>
-          <CardTitle className="mt-1 truncate text-sm">{episode.title}</CardTitle>
+          <p className="mt-1 truncate text-sm font-medium text-foreground">{episode.title}</p>
           <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
             <span>{episode.characterName}</span>
             <span>{t('scripts.storyObjectives', { count: episode.objectives.length })}</span>
           </div>
         </div>
+        {hasTeaching && (
+          <button
+            type="button"
+            onClick={(event) => { event.preventDefault(); event.stopPropagation(); onOpenTeaching() }}
+            className="flex size-8 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground active:scale-[0.92]"
+            aria-label={t('practiceVn.teaching')}
+          >
+            <BookOpen className="size-4" />
+          </button>
+        )}
         {locked ? <LockKeyhole className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />}
-      </CardHeader>
+      </CardContent>
     </Card>
   )
 

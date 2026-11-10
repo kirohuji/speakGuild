@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BookOpen, Check, FilePlus2, Loader2, Pencil, Plus, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -13,15 +13,25 @@ import {
   createStory,
   getScriptEpisode,
   getStory,
+  listLibraryChunks,
+  listLibraryPatterns,
+  listLibraryVocabularies,
   listScriptEpisodes,
   updateScriptEpisode,
   updateStory,
+  type ChunkFull,
   type GameCharacter,
   type GameLocationData,
+  type SentencePatternFull,
   type StoryData,
   type StoryEpisode,
+  type VocabularyFull,
 } from '../api-content-admin'
-import { InkStoryEditor } from './ink-story-editor'
+import {
+  InkStoryEditor,
+  type ChapterMaterialItem,
+  type ChapterMaterialKind,
+} from './ink-story-editor'
 
 interface StoryChapterStudioProps {
   packageId: string
@@ -31,6 +41,26 @@ interface StoryChapterStudioProps {
 
 function storyKey(chapter: StoryEpisode) {
   return `story.${chapter.sceneId}.${chapter.chapterId}`
+}
+
+function toVocabItem(item: VocabularyFull | { id: string; word: string; meaning: string }): ChapterMaterialItem {
+  return { id: item.id, primary: item.word, secondary: item.meaning }
+}
+
+function toChunkItem(item: ChunkFull | { id: string; text: string; meaning: string }): ChapterMaterialItem {
+  return { id: item.id, primary: item.text, secondary: item.meaning }
+}
+
+function toPatternItem(item: SentencePatternFull | { id: string; pattern: string; meaning?: string | null }): ChapterMaterialItem {
+  return { id: item.id, primary: item.pattern, secondary: item.meaning ?? null }
+}
+
+function mergeMaterialItems(selected: ChapterMaterialItem[], candidates: ChapterMaterialItem[]) {
+  const map = new Map<string, ChapterMaterialItem>()
+  ;[...selected, ...candidates].forEach((item) => {
+    if (!map.has(item.id)) map.set(item.id, item)
+  })
+  return [...map.values()]
 }
 
 export function StoryChapterStudio({ packageId, characters, locations }: StoryChapterStudioProps) {
@@ -46,16 +76,54 @@ export function StoryChapterStudio({ packageId, characters, locations }: StoryCh
   const [createForm, setCreateForm] = useState({ name: '', description: '', order: 1 })
   const [chapterForm, setChapterForm] = useState({ name: '', description: '', order: 1 })
 
+  const [selectedVocabIds, setSelectedVocabIds] = useState<string[]>([])
+  const [selectedChunkIds, setSelectedChunkIds] = useState<string[]>([])
+  const [selectedPatternIds, setSelectedPatternIds] = useState<string[]>([])
+  const [vocabItems, setVocabItems] = useState<ChapterMaterialItem[]>([])
+  const [chunkItems, setChunkItems] = useState<ChapterMaterialItem[]>([])
+  const [patternItems, setPatternItems] = useState<ChapterMaterialItem[]>([])
+  const [materialQueries, setMaterialQueries] = useState<Record<ChapterMaterialKind, string>>({
+    pattern: '',
+    chunk: '',
+    vocab: '',
+  })
+  const [materialsSaving, setMaterialsSaving] = useState(false)
+  const materialSearchSeq = useRef({ pattern: 0, chunk: 0, vocab: 0 })
+  const selectedIdsRef = useRef({ vocab: selectedVocabIds, chunk: selectedChunkIds, pattern: selectedPatternIds })
+  selectedIdsRef.current = { vocab: selectedVocabIds, chunk: selectedChunkIds, pattern: selectedPatternIds }
+
+  const syncMaterialsFromEpisode = useCallback((episode: StoryEpisode | null) => {
+    const vocabs = (episode?.coreVocabularies ?? [])
+      .map((item) => item.vocab ? toVocabItem(item.vocab) : item.vocabId ? { id: item.vocabId, primary: item.vocabId, secondary: null } : null)
+      .filter(Boolean) as ChapterMaterialItem[]
+    const chunks = (episode?.coreChunks ?? [])
+      .map((item) => item.chunk ? toChunkItem(item.chunk) : item.chunkId ? { id: item.chunkId, primary: item.chunkId, secondary: null } : null)
+      .filter(Boolean) as ChapterMaterialItem[]
+    const patterns = (episode?.corePatterns ?? [])
+      .map((item) => item.pattern ? toPatternItem(item.pattern) : item.patternId ? { id: item.patternId, primary: item.patternId, secondary: null } : null)
+      .filter(Boolean) as ChapterMaterialItem[]
+
+    setSelectedVocabIds(vocabs.map((item) => item.id))
+    setSelectedChunkIds(chunks.map((item) => item.id))
+    setSelectedPatternIds(patterns.map((item) => item.id))
+    setVocabItems(vocabs)
+    setChunkItems(chunks)
+    setPatternItems(patterns)
+    setMaterialQueries({ pattern: '', chunk: '', vocab: '' })
+  }, [])
+
   const loadChapters = useCallback(async (selectId?: string) => {
     setLoading(true)
     try {
       const items = await listScriptEpisodes(packageId)
       setChapters(items)
       const target = items.find((item) => item.id === selectId) ?? items[0]
-      setSelected(target ? await getScriptEpisode(target.id) : null)
+      const detail = target ? await getScriptEpisode(target.id) : null
+      setSelected(detail)
+      syncMaterialsFromEpisode(detail)
       setStory(null)
     } finally { setLoading(false) }
-  }, [packageId])
+  }, [packageId, syncMaterialsFromEpisode])
 
   useEffect(() => { void loadChapters() }, [loadChapters])
 
@@ -66,13 +134,91 @@ export function StoryChapterStudio({ packageId, characters, locations }: StoryCh
     getStory(selected.inkScriptId).then(setStory).catch(() => setStory(null))
   }, [selected])
 
+  useEffect(() => {
+    const materialKind: ChapterMaterialKind = 'pattern'
+    const query = materialQueries.pattern.trim()
+    const seq = ++materialSearchSeq.current[materialKind]
+    const timer = setTimeout(() => {
+      void (async () => {
+        if (!query) {
+          if (seq !== materialSearchSeq.current[materialKind]) return
+          setPatternItems((current) => current.filter((item) => selectedIdsRef.current.pattern.includes(item.id)))
+          return
+        }
+        try {
+          const result = await listLibraryPatterns({ search: query, page: 1, pageSize: 30 })
+          if (seq !== materialSearchSeq.current[materialKind]) return
+          setPatternItems((current) => mergeMaterialItems(
+            current.filter((item) => selectedIdsRef.current.pattern.includes(item.id)),
+            result.items.map(toPatternItem),
+          ))
+        } catch { /* keep shelf */ }
+      })()
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [materialQueries.pattern])
+
+  useEffect(() => {
+    const materialKind: ChapterMaterialKind = 'chunk'
+    const query = materialQueries.chunk.trim()
+    const seq = ++materialSearchSeq.current[materialKind]
+    const timer = setTimeout(() => {
+      void (async () => {
+        if (!query) {
+          if (seq !== materialSearchSeq.current[materialKind]) return
+          setChunkItems((current) => current.filter((item) => selectedIdsRef.current.chunk.includes(item.id)))
+          return
+        }
+        try {
+          const result = await listLibraryChunks({ search: query, page: 1, pageSize: 30 })
+          if (seq !== materialSearchSeq.current[materialKind]) return
+          setChunkItems((current) => mergeMaterialItems(
+            current.filter((item) => selectedIdsRef.current.chunk.includes(item.id)),
+            result.items.map(toChunkItem),
+          ))
+        } catch { /* keep shelf */ }
+      })()
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [materialQueries.chunk])
+
+  useEffect(() => {
+    const materialKind: ChapterMaterialKind = 'vocab'
+    const query = materialQueries.vocab.trim()
+    const seq = ++materialSearchSeq.current[materialKind]
+    const timer = setTimeout(() => {
+      void (async () => {
+        if (!query) {
+          if (seq !== materialSearchSeq.current[materialKind]) return
+          setVocabItems((current) => current.filter((item) => selectedIdsRef.current.vocab.includes(item.id)))
+          return
+        }
+        try {
+          const result = await listLibraryVocabularies({ search: query, page: 1, pageSize: 30 })
+          if (seq !== materialSearchSeq.current[materialKind]) return
+          setVocabItems((current) => mergeMaterialItems(
+            current.filter((item) => selectedIdsRef.current.vocab.includes(item.id)),
+            result.items.map(toVocabItem),
+          ))
+        } catch { /* keep shelf */ }
+      })()
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [materialQueries.vocab])
+
   const filtered = useMemo(() => chapters.filter((item) =>
     !search || `${item.chapterTitle} ${item.description ?? ''}`.toLowerCase().includes(search.toLowerCase()),
   ), [chapters, search])
 
   const selectChapter = async (item: StoryEpisode) => {
-    try { setSelected(await getScriptEpisode(item.id)) }
-    catch { setSelected(item) }
+    try {
+      const detail = await getScriptEpisode(item.id)
+      setSelected(detail)
+      syncMaterialsFromEpisode(detail)
+    } catch {
+      setSelected(item)
+      syncMaterialsFromEpisode(item)
+    }
   }
 
   const openCreate = () => {
@@ -127,6 +273,50 @@ export function StoryChapterStudio({ packageId, characters, locations }: StoryCh
       setEditOpen(false)
     } catch { toast.error('章节保存失败') }
     finally { setSavingChapter(false) }
+  }
+
+  const persistMaterials = async (next: {
+    vocabIds: string[]
+    chunkIds: string[]
+    patternIds: string[]
+  }) => {
+    if (!selected) return
+    setMaterialsSaving(true)
+    try {
+      await updateScriptEpisode(selected.id, next)
+      const detail = await getScriptEpisode(selected.id)
+      setSelected(detail)
+      // Keep local shelf candidates; only refresh selection from server truth.
+      setSelectedVocabIds((detail.coreVocabularies ?? []).map((item) => item.vocab?.id ?? item.vocabId!).filter(Boolean))
+      setSelectedChunkIds((detail.coreChunks ?? []).map((item) => item.chunk?.id ?? item.chunkId!).filter(Boolean))
+      setSelectedPatternIds((detail.corePatterns ?? []).map((item) => item.pattern?.id ?? item.patternId!).filter(Boolean))
+    } catch {
+      toast.error('语言材料保存失败')
+      syncMaterialsFromEpisode(selected)
+    } finally {
+      setMaterialsSaving(false)
+    }
+  }
+
+  const toggleMaterial = (kind: ChapterMaterialKind, id: string) => {
+    const nextVocabIds = kind === 'vocab'
+      ? (selectedVocabIds.includes(id) ? selectedVocabIds.filter((item) => item !== id) : [...selectedVocabIds, id])
+      : selectedVocabIds
+    const nextChunkIds = kind === 'chunk'
+      ? (selectedChunkIds.includes(id) ? selectedChunkIds.filter((item) => item !== id) : [...selectedChunkIds, id])
+      : selectedChunkIds
+    const nextPatternIds = kind === 'pattern'
+      ? (selectedPatternIds.includes(id) ? selectedPatternIds.filter((item) => item !== id) : [...selectedPatternIds, id])
+      : selectedPatternIds
+
+    setSelectedVocabIds(nextVocabIds)
+    setSelectedChunkIds(nextChunkIds)
+    setSelectedPatternIds(nextPatternIds)
+    void persistMaterials({
+      vocabIds: nextVocabIds,
+      chunkIds: nextChunkIds,
+      patternIds: nextPatternIds,
+    })
   }
 
   const saveStory = async (data: {
@@ -187,7 +377,43 @@ export function StoryChapterStudio({ packageId, characters, locations }: StoryCh
         <main className="min-w-0 p-4">
           {!selected ? <div className="flex h-full flex-col items-center justify-center text-muted-foreground"><BookOpen className="size-9 opacity-25" /><p className="mt-3 text-sm">新建章节后，在这里编写剧情</p></div> : <>
             <div className="mb-4 flex items-center gap-2"><Badge variant="outline">第 {selected.episodeOrder} 章</Badge><span className="text-sm font-semibold">{selected.chapterTitle}</span>{!story && <Badge variant="secondary" className="ml-auto">尚未编写剧情</Badge>}</div>
-            <InkStoryEditor storyId={story?.id} initialSource={story?.inkSource ?? undefined} initialKey={story?.key ?? storyKey(selected)} initialTitle={selected.chapterTitle} locations={locations} characters={characters} onSave={saveStory} saving={savingStory} />
+            <InkStoryEditor
+              storyId={story?.id}
+              initialSource={story?.inkSource ?? undefined}
+              initialKey={story?.key ?? storyKey(selected)}
+              initialTitle={selected.chapterTitle}
+              initialTeachingMarkdown={story?.teachingMarkdown}
+              locations={locations}
+              characters={characters}
+              chapterMaterials={{
+                patterns: patternItems,
+                chunks: chunkItems,
+                vocabs: vocabItems,
+                selectedPatternIds,
+                selectedChunkIds,
+                selectedVocabIds,
+                queries: materialQueries,
+                onQueryChange: (kind, query) => setMaterialQueries((current) => ({ ...current, [kind]: query })),
+                onToggle: toggleMaterial,
+                saving: materialsSaving,
+              }}
+              onSave={saveStory}
+              onSaveTeachingMarkdown={async (teachingMarkdown) => {
+                if (!story?.id) {
+                  toast.error('请先保存章节剧情，再编写教学文档')
+                  throw new Error('story missing')
+                }
+                try {
+                  const saved = await updateStory(story.id, { teachingMarkdown })
+                  setStory(saved)
+                  toast.success('教学文档已保存')
+                } catch {
+                  toast.error('教学文档保存失败')
+                  throw new Error('teaching save failed')
+                }
+              }}
+              saving={savingStory}
+            />
           </>}
         </main>
 

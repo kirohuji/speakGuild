@@ -5,6 +5,8 @@ export type NqtrChapterProgressItem = {
   id: string
   title: string
   summary?: string | null
+  teachingMarkdown?: string | null
+  hasTeachingDocument?: boolean
   sortOrder?: number
   passed?: boolean
   isUnlocked?: boolean

@@ -186,20 +186,34 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId, worksp
   }, [closeEditor, editingStory?.trainingTopic?.scene?.id, load])
 
   const handleSaveTeachingMarkdown = useCallback(async (teachingMarkdown: string) => {
-    const topic = editingStory?.trainingTopic
-    if (!topic) throw new Error('当前故事尚未绑定训练话题')
+    if (!editingStory?.id) throw new Error('当前故事尚未保存')
     try {
-      const updated = await updateTrainingTopic(topic.id, { teachingMarkdown })
-      if (!('id' in updated)) throw new Error('保存被引用校验拦截')
-      setEditingStory((current) => current ? {
-        ...current,
-        trainingTopic: { ...topic, teachingMarkdown: updated.teachingMarkdown ?? teachingMarkdown },
-      } : current)
+      const saved = await updateStory(editingStory.id, { teachingMarkdown })
+      const topic = editingStory.trainingTopic
+      if (topic) {
+        const updatedTopic = await updateTrainingTopic(topic.id, { teachingMarkdown }).catch(() => null)
+        setEditingStory((current) => current ? {
+          ...current,
+          ...saved,
+          teachingMarkdown: saved.teachingMarkdown ?? teachingMarkdown,
+          trainingTopic: {
+            ...topic,
+            teachingMarkdown: (updatedTopic && 'id' in updatedTopic ? updatedTopic.teachingMarkdown : null) ?? teachingMarkdown,
+          },
+        } : current)
+      } else {
+        setEditingStory((current) => current ? {
+          ...current,
+          ...saved,
+          teachingMarkdown: saved.teachingMarkdown ?? teachingMarkdown,
+        } : current)
+      }
       toast.success('教学文档已保存')
     } catch {
       toast.error('教学文档保存失败')
+      throw new Error('teaching save failed')
     }
-  }, [editingStory?.trainingTopic])
+  }, [editingStory])
 
   const getLocationName = (id?: string | null) =>
     locations.find((l) => l.id === id)?.displayName ?? null
@@ -334,6 +348,7 @@ export function StoryWorkshopTab({ locations, characters, initialStoryId, worksp
           initialSource={editingStory?.inkSource ?? undefined}
           initialKey={editingStory?.key ?? ''}
           initialTitle={editingStory?.title ?? ''}
+          initialTeachingMarkdown={editingStory?.teachingMarkdown ?? editingStory?.trainingTopic?.teachingMarkdown}
           locations={locations}
           characters={characters}
           trainingTopic={editingStory?.trainingTopic}

@@ -177,6 +177,11 @@ export class CreateScriptEpisodeDto {
   chunkIds?: string[];
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  patternIds?: string[];
+
+  @IsOptional()
   isPreview?: boolean;
 }
 
@@ -282,6 +287,11 @@ export class UpdateScriptEpisodeDto {
   @IsArray()
   @IsString({ each: true })
   chunkIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  patternIds?: string[];
 
   @IsOptional()
   isPreview?: boolean;

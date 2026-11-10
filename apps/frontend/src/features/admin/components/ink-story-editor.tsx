@@ -21,6 +21,7 @@ import {
   Volume2,
   Loader2,
   Play,
+  Search,
   X,
   UserCircle,
   Smartphone,
@@ -91,6 +92,27 @@ interface VnPreviewDebugState {
   missingDefaultAnswerCount?: number
 }
 
+export type ChapterMaterialKind = 'pattern' | 'chunk' | 'vocab'
+
+export interface ChapterMaterialItem {
+  id: string
+  primary: string
+  secondary?: string | null
+}
+
+export interface ChapterMaterialsProps {
+  patterns: ChapterMaterialItem[]
+  chunks: ChapterMaterialItem[]
+  vocabs: ChapterMaterialItem[]
+  selectedPatternIds: string[]
+  selectedChunkIds: string[]
+  selectedVocabIds: string[]
+  onToggle: (kind: ChapterMaterialKind, id: string) => void
+  onQueryChange: (kind: ChapterMaterialKind, query: string) => void
+  queries: Record<ChapterMaterialKind, string>
+  saving?: boolean
+}
+
 interface InkStoryEditorProps {
   storyId?: string
   initialSource?: string
@@ -101,6 +123,10 @@ interface InkStoryEditorProps {
   locations?: GameLocationData[]
   characters?: GameCharacter[]
   trainingTopic?: { id: string; title: string; teachingMarkdown?: string | null } | null
+  /** 剧情包可直接挂在 InkScript 上，不必绑定训练话题。 */
+  initialTeachingMarkdown?: string | null
+  /** 章节语言材料货架（句型 / 句块 / 单词），对齐学习包教学文档侧栏。 */
+  chapterMaterials?: ChapterMaterialsProps
   onSaveTeachingMarkdown?: (teachingMarkdown: string) => void | Promise<void>
   onSave?: (data: {
     key: string
@@ -113,6 +139,90 @@ interface InkStoryEditorProps {
   saving?: boolean
   readOnly?: boolean
   className?: string
+}
+
+export function ChapterMaterialShelf({
+  title,
+  count,
+  query,
+  onQueryChange,
+  items,
+  selectedIds,
+  onToggle,
+}: {
+  title: string
+  count: number
+  query: string
+  onQueryChange: (value: string) => void
+  items: ChapterMaterialItem[]
+  selectedIds: string[]
+  onToggle: (id: string) => void
+}) {
+  return (
+    <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex shrink-0 items-center justify-between gap-1.5 px-2 py-1.5">
+        <div className="flex min-w-0 items-center gap-1">
+          <p className="truncate text-[11px] font-semibold">{title}</p>
+          <Badge variant="secondary" className="h-4 shrink-0 px-1 text-[8px]">{count}</Badge>
+        </div>
+      </div>
+      <div className="shrink-0 px-1.5 pb-1.5">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2 top-1/2 size-3 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            className="h-6 px-6 text-[10px]"
+            placeholder={`搜索并添加${title}`}
+          />
+          {query && (
+            <button
+              type="button"
+              aria-label={`清除${title}查询`}
+              onClick={() => onQueryChange('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3" />
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-1.5 pb-1.5">
+        <div className="flex flex-col gap-0.5">
+          {items.map((item) => {
+            const selected = selectedIds.includes(item.id)
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onToggle(item.id)}
+                className={cn(
+                  'group flex w-full min-w-0 flex-col gap-0.5 rounded-md border px-1.5 py-1 text-left transition-colors',
+                  selected ? 'border-primary/25 bg-primary/[0.05]' : 'border-border/60 bg-background hover:border-primary/30 hover:bg-muted/40',
+                )}
+              >
+                <span className="flex w-full min-w-0 items-start gap-1.5">
+                  <span className={cn(
+                    'mt-0.5 flex size-3.5 shrink-0 items-center justify-center rounded-full border',
+                    selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground',
+                  )}>
+                    {selected ? <CheckCircle2 className="size-2" /> : <Plus className="size-2" />}
+                  </span>
+                  <span className="min-w-0 flex-1 overflow-hidden">
+                    <span className="block truncate text-[10px] font-medium leading-[0.875rem]">{item.primary}</span>
+                    {item.secondary && <span className="block truncate text-[9px] leading-[0.875rem] text-muted-foreground">{item.secondary}</span>}
+                  </span>
+                </span>
+              </button>
+            )
+          })}
+          {!items.length && (
+            <p className="py-4 text-center text-[9px] text-muted-foreground">{query ? '没有匹配项' : `搜索库中内容以添加${title}`}</p>
+          )}
+        </div>
+      </div>
+    </section>
+  )
 }
 
 const syntaxHint =
@@ -169,6 +279,8 @@ export function InkStoryEditor({
   locations = [],
   characters = [],
   trainingTopic,
+  initialTeachingMarkdown,
+  chapterMaterials,
   onSaveTeachingMarkdown,
   onSave,
   saving = false,
@@ -187,7 +299,10 @@ export function InkStoryEditor({
   const [previewAssetMap, setPreviewAssetMap] = useState<Record<string, { fileAssetId?: string; signedUrl?: string | null }>>({})
   const previewUrlMapRef = useRef<Record<string, string>>({}) // alias → signed URL for inline img preview
   const [previewLayout, setPreviewLayout] = useState<PreviewLayout>(() => loadPreviewLayout())
-  const [teachingMarkdown, setTeachingMarkdown] = useState(trainingTopic?.teachingMarkdown ?? '')
+  const teachingEditable = Boolean(onSaveTeachingMarkdown) && !readOnly
+  const [teachingMarkdown, setTeachingMarkdown] = useState(
+    initialTeachingMarkdown ?? trainingTopic?.teachingMarkdown ?? '',
+  )
   const [teachingSaving, setTeachingSaving] = useState(false)
   const [aiGenerating, setAiGenerating] = useState(false)
   const [aiTranslating, setAiTranslating] = useState(false)
@@ -327,8 +442,8 @@ export function InkStoryEditor({
   }, [initialSource, initialKey, initialTitle, initialLocationId, initialCharacterId])
 
   useEffect(() => {
-    setTeachingMarkdown(trainingTopic?.teachingMarkdown ?? '')
-  }, [trainingTopic?.id, trainingTopic?.teachingMarkdown])
+    setTeachingMarkdown(initialTeachingMarkdown ?? trainingTopic?.teachingMarkdown ?? '')
+  }, [initialTeachingMarkdown, trainingTopic?.id, trainingTopic?.teachingMarkdown])
 
   useEffect(() => {
     setCompileResult(compileInk(sourceWithMeta()))
@@ -1362,44 +1477,109 @@ export function InkStoryEditor({
         </TabsContent>
 
         <TabsContent value="teaching" className="mt-0">
-          <div className="rounded-lg border border-border bg-card">
+          <div className={cn('rounded-lg border border-border bg-card', chapterMaterials && 'overflow-hidden')}>
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
               <div>
                 <p className="text-sm font-semibold">练习助手教学文档</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {trainingTopic
-                    ? `绑定话题：${trainingTopic.title}。用户点击练习页顶部“教学”按钮后会看到这篇文档。`
-                    : '当前故事尚未绑定训练话题。请先在场景管理中绑定话题，再回来编写教学文档。'}
+                    ? `绑定话题：${trainingTopic.title}。学员在练习页或章节详情可打开这篇文档。`
+                    : teachingEditable
+                      ? '文档保存在本剧本上，无需绑定训练话题。右侧可绑定本章单词 / 句型 / 句块。'
+                      : '请先保存剧情，再编写教学文档。'}
                 </p>
               </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={handleAiGenerateTeaching}
-                disabled={!storyId || teachingAiGenerating}
-                className="h-8 gap-1.5"
-              >
-                {teachingAiGenerating ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
-                AI 生成
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => void handleSaveTeachingMarkdown()}
-                disabled={!trainingTopic || !onSaveTeachingMarkdown || teachingSaving}
-              >
-                <Save className="size-3.5" />{teachingSaving ? '保存中...' : '保存教学文档'}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                {chapterMaterials?.saving && (
+                  <Badge variant="secondary" className="h-7 gap-1 text-[10px]">
+                    <Loader2 className="size-3 animate-spin" />材料保存中
+                  </Badge>
+                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleAiGenerateTeaching}
+                  disabled={!storyId || teachingAiGenerating}
+                  className="h-8 gap-1.5"
+                >
+                  {teachingAiGenerating ? <Loader2 className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
+                  AI 生成
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => void handleSaveTeachingMarkdown()}
+                  disabled={!teachingEditable || teachingSaving}
+                >
+                  <Save className="size-3.5" />{teachingSaving ? '保存中...' : '保存教学文档'}
+                </Button>
+              </div>
             </div>
-            <div className="p-4">
-              <MarkdownEditor
-                value={teachingMarkdown}
-                onChange={setTeachingMarkdown}
-                height={560}
-                disabled={!trainingTopic || readOnly}
-                placeholder="## 这个场景怎么说&#10;&#10;先说明来意，再补充关键信息。"
-              />
+            <div className={cn(chapterMaterials ? 'grid min-h-[560px] lg:grid-cols-[minmax(0,1fr)_280px]' : 'p-4')}>
+              <div className={cn(chapterMaterials && 'border-b border-border p-4 lg:border-b-0 lg:border-r')}>
+                <MarkdownEditor
+                  value={teachingMarkdown}
+                  onChange={setTeachingMarkdown}
+                  height={560}
+                  disabled={!teachingEditable}
+                  placeholder="## 这个场景怎么说&#10;&#10;先说明来意，再补充关键信息。"
+                />
+              </div>
+              {chapterMaterials && (
+                <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-muted/10">
+                  <div className="shrink-0 border-b border-border px-2 py-2">
+                    <p className="text-xs font-semibold">当前语言材料</p>
+                    <p className="mt-0.5 text-[9px] leading-[0.875rem] text-muted-foreground">搜索库中内容即可添加；点击已选项可移除，会立即保存到本章。</p>
+                  </div>
+                  <Tabs defaultValue="pattern" className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                    <TabsList className="grid h-8 w-full shrink-0 grid-cols-3 rounded-none border-b border-border bg-muted/30 p-0.5">
+                      <TabsTrigger value="pattern" className="h-7 gap-1 px-1 text-[10px]">
+                        句型 <Badge variant="secondary" className="h-4 px-1 text-[8px]">{chapterMaterials.selectedPatternIds.length}</Badge>
+                      </TabsTrigger>
+                      <TabsTrigger value="chunk" className="h-7 gap-1 px-1 text-[10px]">
+                        句块 <Badge variant="secondary" className="h-4 px-1 text-[8px]">{chapterMaterials.selectedChunkIds.length}</Badge>
+                      </TabsTrigger>
+                      <TabsTrigger value="vocab" className="h-7 gap-1 px-1 text-[10px]">
+                        单词 <Badge variant="secondary" className="h-4 px-1 text-[8px]">{chapterMaterials.selectedVocabIds.length}</Badge>
+                      </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="pattern" className="mt-0 min-h-0 min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col">
+                      <ChapterMaterialShelf
+                        title="句型"
+                        count={chapterMaterials.selectedPatternIds.length}
+                        query={chapterMaterials.queries.pattern}
+                        onQueryChange={(query) => chapterMaterials.onQueryChange('pattern', query)}
+                        items={chapterMaterials.patterns}
+                        selectedIds={chapterMaterials.selectedPatternIds}
+                        onToggle={(id) => chapterMaterials.onToggle('pattern', id)}
+                      />
+                    </TabsContent>
+                    <TabsContent value="chunk" className="mt-0 min-h-0 min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col">
+                      <ChapterMaterialShelf
+                        title="句块"
+                        count={chapterMaterials.selectedChunkIds.length}
+                        query={chapterMaterials.queries.chunk}
+                        onQueryChange={(query) => chapterMaterials.onQueryChange('chunk', query)}
+                        items={chapterMaterials.chunks}
+                        selectedIds={chapterMaterials.selectedChunkIds}
+                        onToggle={(id) => chapterMaterials.onToggle('chunk', id)}
+                      />
+                    </TabsContent>
+                    <TabsContent value="vocab" className="mt-0 min-h-0 min-w-0 flex-1 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col">
+                      <ChapterMaterialShelf
+                        title="单词"
+                        count={chapterMaterials.selectedVocabIds.length}
+                        query={chapterMaterials.queries.vocab}
+                        onQueryChange={(query) => chapterMaterials.onQueryChange('vocab', query)}
+                        items={chapterMaterials.vocabs}
+                        selectedIds={chapterMaterials.selectedVocabIds}
+                        onToggle={(id) => chapterMaterials.onToggle('vocab', id)}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </aside>
+              )}
             </div>
           </div>
         </TabsContent>

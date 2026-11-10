@@ -1097,6 +1097,7 @@ model Chunk {
   storyEpisodeChunks StoryEpisodeChunk[]
   topicChunks        TrainingTopicChunk[]
   sceneChunks        SceneChunk[]
+  nqtrChapterChunks  NqtrChapterChunk[]
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
 
@@ -1130,6 +1131,7 @@ model Vocabulary {
   storyEpisodeVocabularies StoryEpisodeVocabulary[]
   topicVocabs              TrainingTopicVocab[]
   sceneVocabularies        SceneVocabulary[]
+  nqtrChapterVocabularies  NqtrChapterVocabulary[]
 
   @@unique([word])
   @@index([difficulty, difficultyReviewedAt])
@@ -1269,6 +1271,7 @@ model SentencePattern {
   topicPatterns        TrainingTopicSentencePattern[]
   storyEpisodePatterns StoryEpisodeSentencePattern[]
   scenePatterns        SceneSentencePattern[]
+  nqtrChapterPatterns  NqtrChapterSentencePattern[]
 
   @@unique([pattern])
   @@index([updatedAt])
@@ -2022,6 +2025,8 @@ model InkScript {
   scriptType        String         @default("episode")
   inkJson           Json?
   inkSource         String?        @db.Text
+  /// 剧情包教学文档：不强制绑定 TrainingTopic，学员在章节详情可直接打开。
+  teachingMarkdown  String?        @db.Text
   episodeId         String?
   locationId        String?
   roomId            String?
@@ -2217,23 +2222,64 @@ model GameQuest {
 
 /// 互动剧情包里的一章。地图和素材仍属于剧情包，本章只选用人物、地点，并拥有自己的日程、行为、任务。
 model NqtrChapter {
-  id           String                 @id @default(cuid())
-  scene        Scene                  @relation(fields: [sceneId], references: [id], onDelete: Cascade)
-  sceneId      String
-  sortOrder    Int                    @default(0)
-  title        String
-  summary      String?                @db.Text
-  characters   NqtrChapterCharacter[]
-  locations    NqtrChapterLocation[]
-  activities   GameActivity[]
-  commitments  GameCommitment[]
-  quests       GameQuest[]
-  saves        GameSave[]
-  createdAt    DateTime               @default(now())
-  updatedAt    DateTime               @updatedAt
+  id                String                       @id @default(cuid())
+  scene             Scene                        @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  sceneId           String
+  sortOrder         Int                          @default(0)
+  title             String
+  summary           String?                      @db.Text
+  /// 本章教学文档，学员进入章节前可阅读。
+  teachingMarkdown  String?                      @db.Text
+  characters        NqtrChapterCharacter[]
+  locations         NqtrChapterLocation[]
+  vocabularies      NqtrChapterVocabulary[]
+  chunks            NqtrChapterChunk[]
+  sentencePatterns  NqtrChapterSentencePattern[]
+  activities        GameActivity[]
+  commitments       GameCommitment[]
+  quests            GameQuest[]
+  saves             GameSave[]
+  createdAt         DateTime                     @default(now())
+  updatedAt         DateTime                     @updatedAt
 
   @@index([sceneId, sortOrder])
   @@map("nqtr_chapter")
+}
+
+model NqtrChapterVocabulary {
+  id        String      @id @default(cuid())
+  chapter   NqtrChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapterId String
+  vocabulary Vocabulary @relation(fields: [vocabId], references: [id])
+  vocabId   String
+  sortOrder Int         @default(0)
+
+  @@unique([chapterId, vocabId])
+  @@map("nqtr_chapter_vocab")
+}
+
+model NqtrChapterChunk {
+  id        String      @id @default(cuid())
+  chapter   NqtrChapter @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapterId String
+  chunk     Chunk       @relation(fields: [chunkId], references: [id])
+  chunkId   String
+  sortOrder Int         @default(0)
+
+  @@unique([chapterId, chunkId])
+  @@map("nqtr_chapter_chunk")
+}
+
+model NqtrChapterSentencePattern {
+  id        String          @id @default(cuid())
+  chapter   NqtrChapter     @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapterId String
+  pattern   SentencePattern @relation(fields: [patternId], references: [id])
+  patternId String
+  sortOrder Int             @default(0)
+
+  @@unique([chapterId, patternId])
+  @@map("nqtr_chapter_sentence_pattern")
 }
 
 model NqtrChapterCharacter {

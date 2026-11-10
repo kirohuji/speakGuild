@@ -682,8 +682,8 @@ function MineScripts({
         <section className="flex flex-col gap-2">
           <p className="px-1 text-xs font-medium text-muted-foreground">{t('scripts.continuePerformance')}</p>
           <Card className="overflow-hidden border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
-            <div className="min-h-56 p-5">
-              <div className="flex h-full min-h-46 flex-col justify-between gap-8">
+            <div className="p-4">
+              <div className="flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-3">
                   {/* <Badge variant="secondary">
                     {installedIds.has(activeUnit.id) ? '已离线' : '等待下载'}
@@ -694,18 +694,18 @@ function MineScripts({
                   <button
                     type="button"
                     onClick={() => setDeletingUnit(activeUnit)}
-                    className="-mr-2 -mt-2 flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                    className="-mr-1 -mt-1 flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
                     aria-label={`${t('learning.quitUnit')} ${activeUnit.title}`}
                   >
-                    <Trash2 className="size-4" />
+                    <Trash2 className="size-3.5" />
                   </button>
                 </div>
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2.5">
                   <div>
                     <p className="text-xs text-muted-foreground">{displayLearningUnitLocation(activeUnit.location, t('scripts.pocketTheater'))}</p>
-                    <h1 className="mt-1 text-2xl font-semibold tracking-tight">{activeUnit.title}</h1>
+                    <h1 className="mt-0.5 text-xl font-semibold tracking-tight">{activeUnit.title}</h1>
                     {activeUnit.description && (
-                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                      <p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">
                         {activeUnit.description}
                       </p>
                     )}

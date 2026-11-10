@@ -138,6 +138,7 @@ export interface TrainingTopicItem {
   description?: string | null
   teachingMarkdown?: string | null
   hasTeachingDocument?: boolean
+  inkScriptId?: string | null
   promptEn: string
   promptZh: string
   difficulty: string
@@ -189,6 +190,8 @@ export interface UnitDetail {
     id: string
     title: string
     summary?: string | null
+    teachingMarkdown?: string | null
+    hasTeachingDocument?: boolean
     sortOrder?: number
     passed?: boolean
     isUnlocked?: boolean
@@ -223,6 +226,8 @@ export interface StoryEpisodeItem {
   characterName: string
   characterRole: string
   inkScriptId?: string | null
+  teachingMarkdown?: string | null
+  hasTeachingDocument?: boolean
   isPreview: boolean
   prerequisiteEpisodeIds: string[]
   isUnlocked: boolean

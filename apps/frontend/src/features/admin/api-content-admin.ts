@@ -447,6 +447,7 @@ export interface StoryEpisode {
   scene?: { id: string; title: string }
   coreChunks?: { id: string; chunkId?: string; chunk?: Chunk }[]
   coreVocabularies?: { id: string; vocabId?: string; vocab?: Vocabulary }[]
+  corePatterns?: { id: string; patternId?: string; pattern?: SentencePatternFull }[]
   _count?: { records: number; dialogues: number }
 }
 
@@ -720,6 +721,7 @@ export interface StoryData {
   scriptType: string
   inkJson: any
   inkSource?: string | null
+  teachingMarkdown?: string | null
   episodeId?: string | null
   locationId?: string | null
   characterId?: string | null
@@ -1379,17 +1381,40 @@ export interface NqtrChapter {
   sortOrder: number
   title: string
   summary?: string | null
+  teachingMarkdown?: string | null
   characters: { characterId: string }[]
   locations: { locationId: string }[]
+  coreChunks?: { id: string; chunkId?: string; chunk?: Chunk }[]
+  coreVocabularies?: { id: string; vocabId?: string; vocab?: Vocabulary }[]
+  corePatterns?: { id: string; patternId?: string; pattern?: SentencePatternFull }[]
 }
 
 export function listNqtrChapters(sceneId: string): Promise<NqtrChapter[]> {
   return get('/admin/content/nqtr-chapters', { sceneId })
 }
-export function createNqtrChapter(data: { sceneId: string; title: string; summary?: string; characterIds?: string[]; locationIds?: string[] }): Promise<NqtrChapter> {
+export function createNqtrChapter(data: {
+  sceneId: string
+  title: string
+  summary?: string
+  teachingMarkdown?: string | null
+  characterIds?: string[]
+  locationIds?: string[]
+  vocabIds?: string[]
+  chunkIds?: string[]
+  patternIds?: string[]
+}): Promise<NqtrChapter> {
   return post('/admin/content/nqtr-chapters', data)
 }
-export function updateNqtrChapter(id: string, data: { title?: string; summary?: string | null; characterIds?: string[]; locationIds?: string[] }): Promise<NqtrChapter> {
+export function updateNqtrChapter(id: string, data: {
+  title?: string
+  summary?: string | null
+  teachingMarkdown?: string | null
+  characterIds?: string[]
+  locationIds?: string[]
+  vocabIds?: string[]
+  chunkIds?: string[]
+  patternIds?: string[]
+}): Promise<NqtrChapter> {
   return patch(`/admin/content/nqtr-chapters/${id}`, data)
 }
 export function deleteNqtrChapter(id: string): Promise<void> {

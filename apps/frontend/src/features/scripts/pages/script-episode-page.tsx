@@ -3,16 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
+  BookOpen,
   CheckCircle2,
   Clapperboard,
   Film,
-  Headphones,
   Loader2,
-  LockKeyhole,
   Mic2,
   Play,
-  Sparkles,
-  UserRound,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -26,8 +23,11 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
 import { prepareStoryVnEntry } from '@/features/vn-engine/prepare-story-vn-entry'
 import { resolveStoryEpisodeUnlock } from '@/features/scripts/lib/story-chapter-progress'
+import { readTopicTeaching } from '@/lib/offline/learning-pack-read-model'
 import { useLearningStore } from '@/stores/learning.store'
 
 export function ScriptEpisodePage() {
@@ -38,6 +38,8 @@ export function ScriptEpisodePage() {
   const loading = useLearningStore((state) => state.unitDetailLoading)
   const fetchUnitDetail = useLearningStore((state) => state.fetchUnitDetail)
   const [preparingMode, setPreparingMode] = useState<'vn' | 'repeat' | null>(null)
+  const [teachingOpen, setTeachingOpen] = useState(false)
+  const [teachingMarkdown, setTeachingMarkdown] = useState('')
 
   useEffect(() => {
     if (!packageId) return
@@ -51,6 +53,54 @@ export function ScriptEpisodePage() {
     return episodes.find((item) => item.id === episodeId) ?? null
   }, [detail, episodeId])
 
+  const teachingTopic = useMemo(() => {
+    if (!detail || !episode) return null
+    const topics = detail.trainingTopics ?? []
+    const byInk = episode.inkScriptId
+      ? topics.find((topic) => topic.inkScriptId === episode.inkScriptId)
+      : null
+    if (byInk) return byInk
+    return topics.find((topic) => topic.hasTeachingDocument || Boolean(topic.teachingMarkdown?.trim())) ?? null
+  }, [detail, episode])
+
+  const hasTeachingDocument = Boolean(
+    episode?.hasTeachingDocument
+    || episode?.teachingMarkdown?.trim()
+    || teachingTopic?.hasTeachingDocument
+    || teachingTopic?.teachingMarkdown?.trim(),
+  )
+
+  useEffect(() => {
+    if (!episode) {
+      setTeachingMarkdown('')
+      return
+    }
+    const episodeTeaching = episode.teachingMarkdown?.trim() || ''
+    if (episodeTeaching) {
+      setTeachingMarkdown(episodeTeaching)
+      return
+    }
+    if (!teachingTopic) {
+      setTeachingMarkdown('')
+      return
+    }
+    let cancelled = false
+    readTopicTeaching(teachingTopic.id)
+      .then((document) => {
+        if (!cancelled) {
+          setTeachingMarkdown(
+            document?.teachingMarkdown?.trim()
+            || teachingTopic.teachingMarkdown?.trim()
+            || '',
+          )
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setTeachingMarkdown(teachingTopic.teachingMarkdown?.trim() || '')
+      })
+    return () => { cancelled = true }
+  }, [episode, teachingTopic])
+
   const startMode = async (mode: 'vn' | 'repeat') => {
     if (!detail || !episode || preparingMode) return
     setPreparingMode(mode)
@@ -60,7 +110,6 @@ export function ScriptEpisodePage() {
     } catch (error) {
       console.warn('[script-episode] prepare stage failed', error)
       toast.error(t('scripts.prepareStageFailed'))
-      // Still allow entry — player will resolve/load as before.
       navigate(`/scripts/player/${episode.id}?packageId=${detail.id}&mode=${mode}`)
     } finally {
       setPreparingMode(null)
@@ -90,11 +139,12 @@ export function ScriptEpisodePage() {
     )
   }
 
-  const keyExpressions = [
-    ...episode.chunks.map((item) => ({ primary: item.text, secondary: item.meaning })),
-    ...episode.sentencePatterns.map((item) => ({ primary: item.pattern, secondary: item.meaning })),
-    ...episode.vocabularies.map((item) => ({ primary: item.word, secondary: item.meaning })),
-  ].slice(0, 8)
+  const vocabCount = episode.vocabularies.length
+  const chunkCount = episode.chunks.length
+  const patternCount = episode.sentencePatterns.length
+  const expressionTotal = vocabCount + chunkCount + patternCount
+  const modeDisabled = !episode.isUnlocked || !episode.inkScriptId
+  const hasObjectives = episode.objectives.length > 0
 
   return (
     <div className="mx-auto max-w-2xl px-4 pb-24 pt-3 md:pt-4">
@@ -139,22 +189,21 @@ export function ScriptEpisodePage() {
           <p className="text-sm leading-6 text-muted-foreground">
             {episode.description || t('scripts.defaultEpisodeDesc')}
           </p>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-lg bg-background/55 p-3">
-              <div className="flex items-center gap-2 text-muted-foreground"><UserRound className="size-4" /><span className="text-xs">{t('scripts.chapterRole')}</span></div>
-              <p className="mt-2 text-sm font-semibold">{episode.characterName}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{episode.characterRole}</p>
-            </div>
-            <div className="rounded-lg bg-background/55 p-3">
-              <div className="flex items-center gap-2 text-muted-foreground"><Sparkles className="size-4" /><span className="text-xs">{t('scripts.chapterContent')}</span></div>
-              <p className="mt-2 text-sm font-semibold">{t('scripts.coreExpressionsCount', { count: keyExpressions.length })}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{t('scripts.vnAndRepeatHint')}</p>
-            </div>
-          </div>
+          {hasTeachingDocument && (
+            <Button
+              variant="secondary"
+              className="mt-4 min-h-11 w-full border-0 shadow-none"
+              size="default"
+              onClick={() => setTeachingOpen(true)}
+            >
+              <BookOpen className="size-4" />
+              {t('practiceVn.teaching')}
+            </Button>
+          )}
         </div>
       </section>
 
-      {episode.objectives.length > 0 && (
+      {hasObjectives && (
         <section className="mb-5">
           <SectionHeader eyebrow="2" title={t('scripts.chapterObjectives')} meta={`${episode.objectives.length} ${t('scripts.itemsUnit')}`} />
           <Card className="border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
@@ -173,32 +222,58 @@ export function ScriptEpisodePage() {
       )}
 
       <section className="mb-5">
-        <SectionHeader eyebrow="3" title={t('scripts.prePerformancePreview')} meta={`${keyExpressions.length} ${t('scripts.itemsUnit')}`} />
-        {keyExpressions.length === 0 ? (
-          <p className="rounded-lg bg-muted/25 px-4 py-8 text-center text-sm text-muted-foreground">
-            {t('scripts.noExtraPreview')}
-          </p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {keyExpressions.map((item, index) => (
-              <div key={`${item.primary}-${index}`} className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-4 py-3">
-                <p className="min-w-0 flex-1 text-sm font-medium">{item.primary}</p>
-                <p className="max-w-[45%] text-right text-xs leading-5 text-muted-foreground">{item.secondary}</p>
-              </div>
-            ))}
-          </div>
-        )}
+        <SectionHeader
+          eyebrow={hasObjectives ? '3' : '2'}
+          title={t('scripts.prePerformancePreview')}
+          meta={`${expressionTotal} ${t('scripts.itemsUnit')}`}
+        />
+        <Tabs defaultValue="vocab" className="space-y-3">
+          <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
+            <TabsTrigger value="vocab" className="rounded-md text-xs">{t('scripts.tabVocab')} {vocabCount}</TabsTrigger>
+            <TabsTrigger value="chunks" className="rounded-md text-xs">{t('scripts.tabChunks')} {chunkCount}</TabsTrigger>
+            <TabsTrigger value="patterns" className="rounded-md text-xs">{t('scripts.tabPatterns')} {patternCount}</TabsTrigger>
+          </TabsList>
+          <TabsContent value="vocab" className="mt-0">
+            <ResourceList
+              empty={t('scripts.noVocab')}
+              items={episode.vocabularies.map((item) => ({
+                primary: item.word,
+                secondary: item.meaning,
+              }))}
+            />
+          </TabsContent>
+          <TabsContent value="chunks" className="mt-0">
+            <ResourceList
+              empty={t('scripts.noChunks')}
+              items={episode.chunks.map((item) => ({
+                primary: item.text,
+                secondary: item.meaning,
+              }))}
+            />
+          </TabsContent>
+          <TabsContent value="patterns" className="mt-0">
+            <ResourceList
+              empty={t('scripts.noPatterns')}
+              items={episode.sentencePatterns.map((item) => ({
+                primary: item.pattern,
+                secondary: item.meaning,
+              }))}
+            />
+          </TabsContent>
+        </Tabs>
       </section>
 
       <section className="mb-5">
-        <SectionHeader eyebrow="4" title={t('scripts.choosePracticeMode')} />
-        <div className="flex flex-col gap-2">
+        <SectionHeader
+          eyebrow={hasObjectives ? '4' : '3'}
+          title={t('scripts.choosePracticeMode')}
+        />
+        <div className="grid grid-cols-2 gap-2">
           <ModeCard
             icon={Play}
             title={t('scripts.vnModeTitle')}
             description={t('scripts.vnModeDesc')}
-            meta={t('scripts.vnModeMeta')}
-            disabled={!episode.isUnlocked || !episode.inkScriptId}
+            disabled={modeDisabled}
             preparing={preparingMode === 'vn'}
             busy={preparingMode !== null}
             onStart={() => void startMode('vn')}
@@ -207,8 +282,7 @@ export function ScriptEpisodePage() {
             icon={Mic2}
             title={t('scripts.repeatModeTitle')}
             description={t('scripts.repeatModeDesc')}
-            meta={t('scripts.repeatModeMeta')}
-            disabled={!episode.isUnlocked || !episode.inkScriptId}
+            disabled={modeDisabled}
             preparing={preparingMode === 'repeat'}
             busy={preparingMode !== null}
             onStart={() => void startMode('repeat')}
@@ -216,19 +290,14 @@ export function ScriptEpisodePage() {
         </div>
       </section>
 
-      {episode.record && (
-        <Card className="border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">{t('scripts.lastPerformance')}</CardTitle>
-            <CardDescription>{t('scripts.lastPerformanceHint')}</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-3 gap-2">
-            <Metric label={t('scripts.turnsSpoken')} value={episode.record.turnCount} />
-            <Metric label={t('scripts.expressionsUsed')} value={episode.record.usedChunkCount} />
-            <Metric label={t('scripts.xpEarned')} value={episode.record.xpEarned} />
-          </CardContent>
-        </Card>
-      )}
+      <PracticeVnDrawer
+        open={teachingOpen}
+        onOpenChange={setTeachingOpen}
+        hideToggles
+        unitId={detail.id}
+        topicId={teachingTopic?.id}
+        teachingMarkdown={teachingMarkdown}
+      />
     </div>
   )
 }
@@ -259,7 +328,6 @@ function ModeCard({
   icon: Icon,
   title,
   description,
-  meta,
   disabled,
   preparing,
   busy,
@@ -268,7 +336,6 @@ function ModeCard({
   icon: typeof Play
   title: string
   description: string
-  meta: string
   disabled: boolean
   preparing: boolean
   busy: boolean
@@ -277,37 +344,32 @@ function ModeCard({
   const { t } = useTranslation()
 
   return (
-    <Card className="overflow-hidden border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
-      <CardHeader className="flex-row items-start gap-4 p-4 pb-3">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Icon className="size-5" />
+    <Card className="flex h-full flex-col overflow-hidden border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
+      <CardHeader className="flex flex-1 flex-col items-start gap-3 p-3 pb-2">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Icon className="size-4" />
         </div>
-        <div className="min-w-0 flex-1">
-          <CardTitle className="text-base">{title}</CardTitle>
-          <CardDescription className="mt-1">{description}</CardDescription>
+        <div className="min-w-0">
+          <CardTitle className="text-sm leading-5">{title}</CardTitle>
+          <CardDescription className="mt-1 line-clamp-3 text-[11px] leading-4">{description}</CardDescription>
         </div>
       </CardHeader>
-      <CardFooter className="justify-between gap-3 px-4 pb-4">
-        <span className="text-xs text-muted-foreground">{meta}</span>
+      <CardFooter className="mt-auto px-3 pb-3 pt-1">
         {disabled ? (
-          <Button size="sm" variant="secondary" className="rounded-full" disabled>
-            <LockKeyhole data-icon="inline-start" />
-            {t('scripts.notPublishedYet')}
+          <Button size="sm" variant="secondary" className="h-8 w-full rounded-full px-2 text-xs" disabled>
+            {t('scripts.locked')}
           </Button>
         ) : (
           <Button
             size="sm"
-            className="rounded-full"
+            className="h-8 w-full rounded-full text-xs"
             disabled={busy}
             onClick={onStart}
           >
             {preparing ? (
               <Loader2 className="animate-spin" aria-label={t('scripts.preparingStage')} />
             ) : (
-              <>
-                <Headphones data-icon="inline-start" />
-                {t('scripts.start')}
-              </>
+              t('scripts.start')
             )}
           </Button>
         )}
@@ -316,11 +378,24 @@ function ModeCard({
   )
 }
 
-function Metric({ label, value }: { label: string; value: number }) {
+function ResourceList({
+  items,
+  empty,
+}: {
+  items: Array<{ primary: string; secondary: string }>
+  empty: string
+}) {
+  if (items.length === 0) {
+    return <p className="rounded-lg bg-muted/25 px-4 py-8 text-center text-sm text-muted-foreground">{empty}</p>
+  }
   return (
-    <div className="rounded-xl bg-muted/45 p-3 text-center">
-      <p className="text-base font-semibold">{value}</p>
-      <p className="mt-0.5 text-[11px] text-muted-foreground">{label}</p>
+    <div className="flex flex-col gap-2">
+      {items.map((item, index) => (
+        <div key={`${item.primary}-${index}`} className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-4 py-3">
+          <p className="min-w-0 flex-1 text-sm font-medium">{item.primary}</p>
+          <p className="max-w-[45%] text-right text-xs leading-5 text-muted-foreground">{item.secondary}</p>
+        </div>
+      ))}
     </div>
   )
 }
