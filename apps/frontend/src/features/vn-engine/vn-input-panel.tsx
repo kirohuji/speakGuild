@@ -437,14 +437,14 @@ export function VnInputPanel({
                   disabled={isDisabled}
                   onClick={handleStartRecording}
                   className={cn(
-                    'flex h-full flex-1 items-center justify-center gap-2 rounded-xl select-none transition-all active:scale-[0.97]',
+                    'flex h-9 flex-1 items-center justify-center gap-2 rounded-xl border-0 select-none transition-all active:scale-[0.97]',
                     voiceError
-                      ? 'bg-destructive/10 ring-1 ring-destructive/30 text-destructive'
-                      : 'bg-muted/75 text-muted-foreground hover:bg-muted hover:text-foreground',
+                      ? 'bg-destructive/10 text-destructive'
+                      : 'bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground',
                     'disabled:opacity-40 disabled:cursor-not-allowed',
                   )}
                 >
-                  <Mic className="size-5" />
+                  <Mic className="size-4" />
                   <span className="text-sm font-medium">
                     {voiceError || t('vnSettings.tapToRecord')}
                   </span>
@@ -475,8 +475,8 @@ export function VnInputPanel({
                 </button>
                 <div
                   className={cn(
-                    'flex h-full flex-1 items-center justify-between gap-2 rounded-xl px-3 select-none',
-                    'bg-rose-50 dark:bg-rose-950/25 ring-1 ring-rose-200 dark:ring-rose-800/40',
+                    'flex h-9 flex-1 items-center justify-between gap-2 rounded-xl border-0 px-3 select-none',
+                    'bg-rose-50 dark:bg-rose-950/25',
                   )}
                 >
                   <span className="flex items-center gap-2">
@@ -507,7 +507,7 @@ export function VnInputPanel({
                 >
                   <Keyboard className="size-4" />
                 </button>
-                <div className="flex h-full flex-1 items-center justify-center gap-2 rounded-xl bg-muted/75">
+                <div className="flex h-9 flex-1 items-center justify-center gap-2 rounded-xl border-0 bg-muted/70">
                   <Loader2 className="size-4 animate-spin text-primary" />
                   <span className="text-sm text-muted-foreground">{t('vnSettings.recognizingPending')}</span>
                 </div>

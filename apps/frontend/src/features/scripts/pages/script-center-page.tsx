@@ -29,6 +29,7 @@ import {
   Search,
   ShoppingBag,
   SmilePlus,
+  Sparkles,
   Trash2,
   Users,
 } from 'lucide-react'
@@ -56,7 +57,9 @@ import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PracticeAnalysisPanel } from '@/features/practice/components/practice-analysis-panel'
 import {
   learningApi,
   type LearningUnitSummary,
@@ -649,6 +652,10 @@ export function ScriptCenterPage() {
           visibleReplay.works?.some((work) => work.status === 'rendering')
         ))}
         onGenerateVideo={generateReplayVideo}
+        onRecordUpdated={(next) => {
+          setReplayRecord(next)
+          setRecords((current) => current.map((item) => item.id === next.id ? next : item))
+        }}
       />
 
       <Drawer open={shopOpen} onOpenChange={(open) => setPanel(open ? 'store' : null)}>
@@ -2266,12 +2273,14 @@ function ScriptRecordReplayDialog({
   onGenerateVideo,
   generatingProgress,
   videoQueued,
+  onRecordUpdated,
 }: {
   record: ScriptPracticeRecord | null
   onClose: () => void
   onGenerateVideo: (record: ScriptPracticeRecord) => Promise<void>
   generatingProgress?: number
   videoQueued: boolean
+  onRecordUpdated?: (record: ScriptPracticeRecord) => void
 }) {
   const { t } = useTranslation()
   const replayLines = useMemo<VnPlayerLine[]>(
@@ -2284,8 +2293,17 @@ function ScriptRecordReplayDialog({
   )
   const [lineIndex, setLineIndex] = useState(0)
   const [overwriteOpen, setOverwriteOpen] = useState(false)
+  const [view, setView] = useState<'replay' | 'analysis'>('replay')
+  const [analysisLoading, setAnalysisLoading] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState<Record<string, unknown> | null>(
+    record?.resultSnapshot?.aiAnalysis ?? null,
+  )
 
-  useEffect(() => setLineIndex(0), [record?.id])
+  useEffect(() => {
+    setLineIndex(0)
+    setView('replay')
+    setAnalysisResult(record?.resultSnapshot?.aiAnalysis ?? null)
+  }, [record?.id, record?.resultSnapshot?.aiAnalysis])
 
   if (!record) return null
   const publishedWork = record.works?.some((work) => work.status === 'published') ?? false
@@ -2297,6 +2315,37 @@ function ScriptRecordReplayDialog({
     }
     if (hasExistingVideo && !videoQueued) setOverwriteOpen(true)
     else void onGenerateVideo(record)
+  }
+  const ensureAiAnalysis = async () => {
+    if (analysisResult || analysisLoading) return
+    setAnalysisLoading(true)
+    try {
+      const result = await scriptCommunityApi.analyzeRecord(record.id)
+      setAnalysisResult(result.analysis ?? null)
+      if (result.analysis) {
+        const nextRecord: ScriptPracticeRecord = {
+          ...record,
+          resultSnapshot: {
+            ...(record.resultSnapshot ?? {}),
+            aiAnalysis: result.analysis,
+            aiAnalysisRaw: result.raw,
+            aiAnalysisError: null,
+          },
+          score: typeof result.analysis.overallScore === 'number'
+            ? Math.round(Number(result.analysis.overallScore))
+            : record.score,
+        }
+        onRecordUpdated?.(nextRecord)
+        toast.success(t('learning.aiEvaluationDone'))
+      } else {
+        toast.error(t('learning.aiReviewPending'))
+      }
+    } catch (error: any) {
+      toast.error(error?.message || t('practiceSession.aiEvalUnavailable'))
+      setView('replay')
+    } finally {
+      setAnalysisLoading(false)
+    }
   }
   const isEnded = replayLines.length > 0 && lineIndex >= replayLines.length
   const currentLine = isEnded ? null : replayLines[lineIndex] ?? null
@@ -2347,23 +2396,46 @@ function ScriptRecordReplayDialog({
             <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
               <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full bg-background/90 px-2 shadow-lg backdrop-blur-2xl">
                 <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>{t('common.close')}</Button>
-                <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted-foreground">{record.episode.title} · {t('scripts.dialogueReplay')}</span>
-                <Button variant="ghost" size="sm" className="h-7 rounded-full px-2 text-xs" disabled={generatingProgress !== undefined || videoQueued} onClick={requestVideoGeneration}>
-                  {videoQueued ? t('scripts.submitted') : generatingProgress === undefined ? t('scripts.generatingVideo') : t('scripts.submitting')}
-                </Button>
+                <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted-foreground">
+                  {record.episode.title} · {view === 'analysis' ? t('scripts.aiReviewTab') : t('scripts.dialogueReplay')}
+                </span>
+                <div className="flex items-center gap-1.5 pr-0.5">
+                  <Sparkles className={cn('size-3.5', view === 'analysis' ? 'text-primary' : 'text-muted-foreground')} />
+                  <Switch
+                    checked={view === 'analysis'}
+                    onCheckedChange={(checked) => {
+                      setView(checked ? 'analysis' : 'replay')
+                      if (checked) void ensureAiAnalysis()
+                    }}
+                    aria-label={t('learning.toggleAiReview')}
+                    title={view === 'analysis' ? t('scripts.dialogueReplay') : t('scripts.aiReviewTab')}
+                  />
+                </div>
               </div>
             </div>
-            <VnPlayer
-              className="h-full max-w-none rounded-none border-none"
-              stageClassName="min-h-0"
-              currentLine={currentLine}
-              history={replayLines.slice(0, Math.min(lineIndex, replayLines.length))}
-              isEnded={isEnded}
-              onAdvance={() => setLineIndex((current) => Math.min(current + 1, replayLines.length))}
-              showHistoryButton={false}
-              showUserInputOverride
-              endedActions={<Button size="sm" className="rounded-full" onClick={onClose}>{t('scripts.finishReplay')}</Button>}
-            />
+            {view === 'analysis' ? (
+              <div className="h-full overflow-y-auto px-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-16">
+                <PracticeAnalysisPanel
+                  analysis={analysisResult as any}
+                  loading={analysisLoading}
+                  topicTitle={record.episode.title}
+                  readOnly
+                  onBack={() => setView('replay')}
+                />
+              </div>
+            ) : (
+              <VnPlayer
+                className="h-full max-w-none rounded-none border-none"
+                stageClassName="min-h-0"
+                currentLine={currentLine}
+                history={replayLines.slice(0, Math.min(lineIndex, replayLines.length))}
+                isEnded={isEnded}
+                onAdvance={() => setLineIndex((current) => Math.min(current + 1, replayLines.length))}
+                showHistoryButton={false}
+                showUserInputOverride
+                endedActions={<Button size="sm" className="rounded-full" onClick={onClose}>{t('scripts.finishReplay')}</Button>}
+              />
+            )}
           </div>
         )}
       </DialogContent>

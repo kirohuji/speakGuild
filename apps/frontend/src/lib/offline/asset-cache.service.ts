@@ -306,6 +306,9 @@ export const assetCacheService = {
   async resolve(ref: AssetRef): Promise<string> {
     const url = normalizeUrl(ref.url)
     if (!url) return url
+    // Inline payloads and temporary object URLs are already local — never
+    // hash them as package assets or mark them as offline cache misses.
+    if (url.startsWith('data:') || url.startsWith('blob:')) return url
     // Never hash, cache, or fetch a URL that already points at Capacitor's
     // local file handler. Re-processing it used to create a second file.
     // Callers sometimes still hold the raw Filesystem file:// URI; convert

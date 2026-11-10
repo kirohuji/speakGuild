@@ -14,6 +14,7 @@ import { PrismaService } from '../../common/prisma/prisma.service'
 import { FileAssetsService } from '../file-assets/file-assets.service'
 import { LearningService } from '../learning/learning.service'
 import { AdminTasksService } from '../admin-tasks/admin-tasks.service'
+import { EnglishPracticeAiService } from '../practice-ai/english-practice-ai.service'
 import {
   CompleteScriptPracticeDto,
   CreateScriptWorkDto,
@@ -43,11 +44,44 @@ type FeedWork = Prisma.ScriptWorkGetPayload<{ include: typeof feedInclude }>
 // 签名 URL 用 7 天档，与 FileAssetsService.getAssetLongLivedUrl 一致，避免隔天打开时 403。
 const SCRIPT_ASSET_URL_EXPIRES_SECONDS = 7 * 24 * 3600
 
+function dialogueToPracticeTurns(
+  dialogue: Array<{ speaker?: string; text?: string; isUser?: boolean }>,
+) {
+  const turns: Array<{
+    round: number
+    npcText: string
+    userText: string
+    objectivesCompleted: string[]
+    chunksUsed: string[]
+  }> = []
+  let pendingNpc: string[] = []
+  let round = 0
+  for (const line of dialogue) {
+    const text = typeof line?.text === 'string' ? line.text.trim() : ''
+    if (!text) continue
+    if (line.isUser) {
+      round += 1
+      turns.push({
+        round,
+        npcText: pendingNpc.join('\n') || '(opening)',
+        userText: text,
+        objectivesCompleted: [],
+        chunksUsed: [],
+      })
+      pendingNpc = []
+    } else {
+      pendingNpc.push(text)
+    }
+  }
+  return turns
+}
+
 @Injectable()
 export class ScriptCommunityService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly learningService: LearningService,
+    private readonly practiceAi: EnglishPracticeAiService,
     private readonly fileAssetsService: FileAssetsService,
     private readonly adminTasksService: AdminTasksService,
   ) {}
@@ -448,6 +482,100 @@ export class ScriptCommunityService {
     const hasMore = items.length > take
     const list = hasMore ? items.slice(0, take) : items
     return { list, nextCursor: hasMore ? list.at(-1)?.id ?? null : null }
+  }
+
+  async analyzeRecord(userId: string, recordId: string) {
+    const record = await this.prisma.scriptPracticeRecord.findFirst({
+      where: { id: recordId, userId, status: 'completed' },
+      include: {
+        episode: {
+          select: {
+            id: true,
+            title: true,
+            chapterName: true,
+            characterName: true,
+            objectives: true,
+            scene: {
+              select: {
+                id: true,
+                title: true,
+                location: true,
+                description: true,
+                category: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
+    })
+    if (!record) throw new NotFoundException('练习记录不存在')
+
+    const snapshot = (record.resultSnapshot && typeof record.resultSnapshot === 'object')
+      ? record.resultSnapshot as Record<string, any>
+      : {}
+    if (snapshot.aiAnalysis) {
+      return { analysis: snapshot.aiAnalysis, raw: snapshot.aiAnalysisRaw ?? undefined }
+    }
+
+    const dialogue = Array.isArray(snapshot.dialogue) ? snapshot.dialogue : []
+    const turns = dialogueToPracticeTurns(dialogue)
+    if (turns.length === 0) {
+      throw new BadRequestException('这次练习没有可评估的用户台词')
+    }
+
+    const sessionLike = {
+      id: record.id,
+      topicId: record.episodeId,
+      topicSnapshot: {
+        title: record.episode.title,
+        promptEn: record.episode.title,
+        promptZh: record.episode.chapterName,
+        description: `剧本练习 · ${record.mode === 'vn' ? 'VN 互动' : '跟读剧场'}`,
+        knowledgePoints: '',
+        difficulty: '',
+      },
+      sceneSnapshot: {
+        title: record.episode.scene.title,
+        category: record.episode.scene.category?.name ?? '',
+        location: record.episode.scene.location ?? '',
+        description: record.episode.scene.description ?? '',
+      },
+      objectivesSnapshot: Array.isArray(record.episode.objectives) ? record.episode.objectives : [],
+      chunksSnapshot: [],
+      vocabSnapshot: [],
+      sentencePatternsSnapshot: [],
+      turns,
+    }
+
+    try {
+      const result = await this.practiceAi.summarizePracticeSession(sessionLike, userId)
+      const nextSnapshot = {
+        ...snapshot,
+        aiAnalysis: result.analysis,
+        aiAnalysisRaw: result.raw,
+        aiAnalysisError: null,
+      }
+      await this.prisma.scriptPracticeRecord.update({
+        where: { id: record.id },
+        data: {
+          resultSnapshot: nextSnapshot as Prisma.InputJsonValue,
+          score: typeof result.analysis?.overallScore === 'number'
+            ? Math.round(result.analysis.overallScore)
+            : record.score,
+        },
+      })
+      return result
+    } catch (error: any) {
+      const nextSnapshot = {
+        ...snapshot,
+        aiAnalysisError: error?.message || '分析失败',
+      }
+      await this.prisma.scriptPracticeRecord.update({
+        where: { id: record.id },
+        data: { resultSnapshot: nextSnapshot as Prisma.InputJsonValue },
+      })
+      throw error
+    }
   }
 
   async createWork(userId: string, dto: CreateScriptWorkDto) {

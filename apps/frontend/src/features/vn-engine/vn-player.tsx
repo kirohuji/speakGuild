@@ -253,9 +253,16 @@ export function VnPlayer({
   const currentLineIndex = currentLine
     ? reviewTimeline.findLastIndex((line) => sameDialogueLine(line, currentLine))
     : Math.max(reviewTimeline.length - 1, 0)
-  const lineIndex = reviewLineIndex ?? Math.max(currentLineIndex, 0)
+  // Ended is a virtual round AFTER the last dialogue line. Live cursor sits on
+  // that slot (index === length) so "上一轮" can land on the real last turn —
+  // including when that turn is the user's answer.
+  const liveCursorIndex = isEnded
+    ? reviewTimeline.length
+    : Math.max(currentLineIndex, 0)
+  const lineIndex = reviewLineIndex ?? liveCursorIndex
   const reviewLine = reviewLineIndex !== null ? reviewTimeline[reviewLineIndex] : null
-  const activeLine = reviewLine ?? currentLine
+  // Live ended slot has no dialogue of its own — only end actions.
+  const activeLine = reviewLine ?? (isEnded ? null : currentLine)
   const displayLine = activeLine?.isUser && reviewLineIndex === null && !showUserInput ? null : activeLine
   const fullText = displayLine?.text ?? ''
   const fullTranslation = displayLine?.translation ?? ''
@@ -326,8 +333,7 @@ export function VnPlayer({
     let cancelled = false
     const allowFallback = !offlineOnly || isOfflineSafePlaybackUrl(audioUrl)
 
-    assetCacheService.resolve({ url: audioUrl, role: 'voice', offlineOnly }).then((resolvedUrl) => {
-      const playable = usableCachedAssetUrl(resolvedUrl, allowFallback ? audioUrl : undefined)
+    const playResolved = (playable: string) => {
       if (cancelled || !playable) return
       const audio = new Audio(playable)
       audio.preload = 'auto'
@@ -340,7 +346,16 @@ export function VnPlayer({
           console.warn('[VnPlayer] Audio play failed:', err.message)
         }
       })
-    })
+    }
+
+    // data:/blob: audio is already playable — never send it through offline cache.
+    if (!canCacheAssetUrl(audioUrl)) {
+      playResolved(audioUrl)
+    } else {
+      assetCacheService.resolve({ url: audioUrl, role: 'voice', offlineOnly }).then((resolvedUrl) => {
+        playResolved(usableCachedAssetUrl(resolvedUrl, allowFallback ? audioUrl : undefined) ?? '')
+      })
+    }
 
     return () => {
       cancelled = true
@@ -364,6 +379,20 @@ export function VnPlayer({
   const canAdvance = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen && reviewLineIndex === null && !isTyping
   const canInteract = !!onAdvance && !isEnded && !isWaiting && choices.length === 0 && !historyOpen && !settingsOpen && effectiveSettings.displayMode !== 'chat'
   const canSubmitInput = reviewLineIndex === null && !!onSubmitInput && isWaiting && !activeLine?.isUser && !isEnded && choices.length === 0 && !historyOpen && !settingsOpen
+  // End actions live only on the virtual ended round, not while reviewing lines.
+  const showEndedUi = isEnded && reviewLineIndex === null
+  const canStepPrevious = isEnded && reviewLineIndex === null
+    ? reviewTimeline.length > 0
+    : lineIndex > 0
+
+  const stepReviewForward = () => {
+    if (reviewLineIndex === null) return false
+    const next = reviewLineIndex + 1
+    // Past the last dialogue line → leave review. If ended, that returns to the
+    // virtual ended round; otherwise back to the live current line.
+    setReviewLineIndex(next >= reviewTimeline.length ? null : next)
+    return true
+  }
 
   useEffect(() => {
     if (autoAdvanceTimerRef.current !== null) window.clearTimeout(autoAdvanceTimerRef.current)
@@ -390,7 +419,11 @@ export function VnPlayer({
   }, [canAdvance, displayLine, choices.length, isEnded, onAdvance])
 
   const goToPreviousLine = () => {
-    if (lineIndex <= 0) return
+    if (!canStepPrevious) return
+    if (isEnded && reviewLineIndex === null) {
+      setReviewLineIndex(reviewTimeline.length - 1)
+      return
+    }
     setReviewLineIndex(lineIndex - 1)
   }
 
@@ -408,6 +441,7 @@ export function VnPlayer({
           currentAvatarAlt={currentAvatarAlt}
           isWaiting={isWaiting}
           isEnded={isEnded}
+          hideEndedCaption={hideEndedCaption}
           onAdvance={onAdvance}
           onChoice={onChoice}
           onSubmitInput={onSubmitInput}
@@ -460,16 +494,8 @@ export function VnPlayer({
           stageClassName,
         )}
         onClick={() => {
-          // 回顾模式：每点一次前进一行，走到最新行才退出回顾
-          if (reviewLineIndex !== null) {
-            const next = reviewLineIndex + 1
-            if (next >= reviewTimeline.length) {
-              setReviewLineIndex(null)
-            } else {
-              setReviewLineIndex(next)
-            }
-            return
-          }
+          // 回顾模式：每点一次前进一行；越过最后一句回到 live（含结束虚拟轮）
+          if (stepReviewForward()) return
           if (!canInteract) {
             if (isEnded && !historyOpen && !settingsOpen) onDismiss?.()
             return
@@ -486,16 +512,7 @@ export function VnPlayer({
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault()
-            // 回顾模式：每按一次前进一行，走到最新行才退出回顾
-            if (reviewLineIndex !== null) {
-              const next = reviewLineIndex + 1
-              if (next >= reviewTimeline.length) {
-                setReviewLineIndex(null)
-              } else {
-                setReviewLineIndex(next)
-              }
-              return
-            }
+            if (stepReviewForward()) return
             if (!canInteract) {
               if (isEnded && !historyOpen && !settingsOpen) onDismiss?.()
               return
@@ -608,7 +625,7 @@ export function VnPlayer({
             )}
             <VnIconButton
               label={t('vnHistory.prevLine')}
-              disabled={lineIndex <= 0}
+              disabled={!canStepPrevious}
               onClick={goToPreviousLine}
             >
               <SkipBack className="size-3.5" />
@@ -643,7 +660,6 @@ export function VnPlayer({
                   <div className={cn(
                     'min-w-0 space-y-2 pt-2',
                     currentAvatarUrl && !displayLine.isUser ? 'ml-3' : '',
-                    isEnded && 'w-full',
                   )}>
                     <p className="whitespace-pre-wrap font-medium leading-relaxed text-foreground" style={{ fontSize: settings.fontSize }}>
                       <TappableText text={displayedText} onWordDetail={onWordInsight} />
@@ -652,19 +668,15 @@ export function VnPlayer({
                       )}
                     </p>
                     {settings.bilingual && displayLine.translation && (
-                      <p className="text-xs l sm:rounded-2xltext-muted-foreground">{displayedTranslation}</p>
-                    )}
-                    {isEnded && !hideEndedCaption && (
-                      <div className="flex w-full flex-col items-center gap-2 pt-4 text-center">
-                        <p className="text-sm text-muted-foreground">{t('vnHistory.storyEnded')}</p>
-                        {endedActions}
-                      </div>
+                      <p className="text-xs text-muted-foreground">{displayedTranslation}</p>
                     )}
                   </div>
                 </div>
-              ) : isEnded && !hideEndedCaption ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                  <p className="text-center text-sm text-muted-foreground">{t('vnHistory.storyEnded')}</p>
+              ) : showEndedUi ? (
+                <div className="absolute inset-0 flex w-full flex-col items-stretch justify-center gap-3 px-4">
+                  {!hideEndedCaption && (
+                    <p className="text-center text-sm text-muted-foreground">{t('vnHistory.storyEnded')}</p>
+                  )}
                   {endedActions}
                 </div>
               ) : isWaiting ? (

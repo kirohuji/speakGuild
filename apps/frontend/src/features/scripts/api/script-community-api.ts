@@ -19,6 +19,9 @@ export interface ScriptPracticeRecord {
   resultSnapshot?: {
     dialogue?: Array<{ speaker?: string; text: string; isUser?: boolean }>
     recordingAssets?: Record<string, string>
+    aiAnalysis?: Record<string, unknown> | null
+    aiAnalysisRaw?: string | null
+    aiAnalysisError?: string | null
   } | null
   episode: {
     id: string
@@ -127,6 +130,12 @@ export const scriptCommunityApi = {
 
   myRecords: (params?: { mode?: ScriptPracticeMode; cursor?: string; limit?: number }) =>
     get<CursorResult<ScriptPracticeRecord>>('/scripts/records/mine', params),
+
+  analyzeRecord: (recordId: string) =>
+    post<{ analysis: Record<string, unknown> | null; raw?: string; error?: string }>(
+      `/scripts/records/${recordId}/analyze`,
+      {},
+    ),
 
   createWork: (data: {
     recordId: string

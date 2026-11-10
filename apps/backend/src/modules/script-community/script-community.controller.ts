@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpException, Param, Patch, Post, Put, Query, Req } from '@nestjs/common'
 import type { Request } from 'express'
 import { requireAuthSession } from '../auth/session.util'
+import { AiQuotaService } from '../../common/ai-quota/ai-quota.service'
 import {
   CompleteScriptPracticeDto,
   CreateScriptWorkDto,
@@ -13,7 +14,10 @@ import { ScriptCommunityService } from './script-community.service'
 
 @Controller('scripts')
 export class ScriptCommunityController {
-  constructor(private readonly service: ScriptCommunityService) {}
+  constructor(
+    private readonly service: ScriptCommunityService,
+    private readonly quotaService: AiQuotaService,
+  ) {}
 
   @Post('episodes/:episodeId/records')
   async completeRecord(
@@ -38,6 +42,19 @@ export class ScriptCommunityController {
       cursor,
       limit: Number(limit) || 20,
     })
+  }
+
+  @Post('records/:recordId/analyze')
+  async analyzeRecord(@Req() req: Request, @Param('recordId') recordId: string) {
+    const session = await requireAuthSession(req)
+    const check = await this.quotaService.checkAndDeduct(session.user.id, 'summary')
+    if (!check.allowed) {
+      throw new HttpException(
+        { code: 403, message: check.message, data: { canExchange: true, exchangeCost: check.exchangeCost } },
+        403,
+      )
+    }
+    return this.service.analyzeRecord(session.user.id, recordId)
   }
 
   @Post('works')

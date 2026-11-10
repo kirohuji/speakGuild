@@ -285,6 +285,7 @@ interface DialogueListViewProps {
   currentAvatarAlt?: string
   isWaiting?: boolean
   isEnded?: boolean
+  hideEndedCaption?: boolean
   onAdvance?: () => void
   onChoice?: (index: number) => void
   onSubmitInput?: (text: string) => void | Promise<void>
@@ -327,6 +328,7 @@ export function DialogueListView({
   currentAvatarAlt,
   isWaiting = false,
   isEnded = false,
+  hideEndedCaption = false,
   onAdvance,
   onChoice,
   onSubmitInput,
@@ -508,7 +510,9 @@ export function DialogueListView({
           {/* Ended state */}
           {isEnded && (
             <div className="flex flex-col items-center gap-3 py-6">
-              <p className="text-center text-sm text-muted-foreground">{t('vnHistory.storyEnded')}</p>
+              {!hideEndedCaption && (
+                <p className="text-center text-sm text-muted-foreground">{t('vnHistory.storyEnded')}</p>
+              )}
               {endedActions}
             </div>
           )}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, CheckCircle2, History, RotateCcw, Settings } from 'lucide-react'
+import { ArrowLeft, Film, History, RotateCcw, Settings, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
@@ -22,6 +22,7 @@ import { useLayoutStore } from '@/stores/layout.store'
 import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
 import { enqueueScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
 import { buildStoryRepeatFrames } from '@/features/scripts/lib/story-repeat-frames'
+import { PracticeAnalysisPanel } from '@/features/practice/components/practice-analysis-panel'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
 import { createFileReference, uploadFileToCosAndComplete } from '@/features/file-assets/api'
 import {
@@ -145,6 +146,9 @@ function InkEpisodePlayer({
   const [repeatSaving, setRepeatSaving] = useState(false)
   const [repeatFrameIndex, setRepeatFrameIndex] = useState(0)
   const [isChatMode, setIsChatMode] = useState(false)
+  const [analysisOpen, setAnalysisOpen] = useState(false)
+  const [analysisLoading, setAnalysisLoading] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState<Record<string, unknown> | null>(null)
   const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
   const startedAt = useRef(Date.now())
   const story = useInkStory(data.inkScript.inkJson)
@@ -200,18 +204,21 @@ function InkEpisodePlayer({
     () => combined.map(({ speaker, text, isUser }) => ({ speaker, text, isUser })),
     [combined],
   )
-  // 刚提交用户输入时，优先展示用户输入；否则展示最后一条 NPC 线
+  // Live dialogue line for the VN stage:
+  // - Ended: always the real last timeline turn (user answer included), so the
+  //   player's review model can step End → last user/NPC without gaps.
+  // - Just submitted: flash the user's answer before the next NPC line arrives.
+  // - Otherwise: last NPC line (user answers are reviewed via 上一轮).
   const currentLine = useMemo(() => {
+    if (story.isEnded) return combined.at(-1) ?? null
     if (userInputJustSubmittedRef.current) return combined.at(-1) ?? null
-    // 普通模式：找最后一条非用户线
     for (let i = combined.length - 1; i >= 0; i--) {
       if (!combined[i].isUser) return combined[i]
     }
     return combined.at(-1) ?? null
-  }, [combined])
-  // VnPlayer receives the complete chronological timeline, including the
-  // current line, so its shared "previous dialogue" control can step back to
-  // a user's immediately preceding answer instead of skipping it.
+  }, [combined, story.isEnded])
+  // Complete chronological timeline (NPC + user). VnPlayer treats "ended" as a
+  // virtual slot after this list.
   const history = combined
 
   // ── 角色与立绘解析（与练习 VN 相同逻辑）──
@@ -319,6 +326,27 @@ function InkEpisodePlayer({
     // 不调 advanceStory — 让用户点「继续」后再推进，先展示输入内容
   }
 
+  const requestAiAnalysis = async () => {
+    if (!recordId || analysisLoading) return
+    if (analysisResult) {
+      setAnalysisOpen(true)
+      return
+    }
+    setAnalysisOpen(true)
+    setAnalysisLoading(true)
+    try {
+      const result = await scriptCommunityApi.analyzeRecord(recordId)
+      setAnalysisResult(result.analysis ?? null)
+      if (!result.analysis) toast.error(t('learning.aiReviewPending'))
+      else toast.success(t('learning.aiEvaluationDone'))
+    } catch (error: any) {
+      toast.error(error?.message || t('practiceSession.aiEvalUnavailable'))
+      setAnalysisOpen(false)
+    } finally {
+      setAnalysisLoading(false)
+    }
+  }
+
   const completeRepeat = async ({
     recordedCount,
     totalCount,
@@ -398,47 +426,54 @@ function InkEpisodePlayer({
     }
   }
 
+  const showEndedChrome = mode === 'vn' && !assetsResolving && story.isEnded
+
   return (
     <div className="relative flex h-dvh flex-col bg-background">
       <div className="z-30 shrink-0 bg-background pt-[env(safe-area-inset-top,0px)]">
-        <div className="flex h-11 w-full items-center gap-2 px-2 text-foreground">
-        <Button asChild variant="ghost" size="sm" className="h-8 shrink-0 rounded-md px-2 text-xs font-medium text-foreground/80 shadow-none hover:bg-muted hover:text-foreground">
-          <Link to={`/scripts/packages/${packageId}/episodes/${episodeId}`}>
+        <div className="relative flex h-11 w-full items-center gap-2 px-2 text-foreground">
+        <Button asChild variant="ghost" size="sm" className="relative z-10 h-8 shrink-0 rounded-md px-2 text-xs font-medium text-foreground/80 shadow-none hover:bg-muted hover:text-foreground">
+          <Link to={showEndedChrome ? `/scripts/packages/${packageId}` : `/scripts/packages/${packageId}/episodes/${episodeId}`}>
             <ArrowLeft className="size-3.5" />
-            {t('common.back')}
+            {showEndedChrome ? t('scripts.backToChapterList') : t('common.back')}
           </Link>
         </Button>
-        <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-foreground/70">
+        <span className="pointer-events-none absolute inset-x-0 truncate px-16 text-center text-xs font-medium text-foreground/70">
           {mode === 'repeat' ? t('scripts.repeatTheater') : t('scripts.vnInteractive')}
         </span>
-        {isChatMode && (
-          <>
-            <button
+        <div className="relative z-10 ml-auto flex shrink-0 items-center gap-1">
+          {showEndedChrome ? (
+            <Button
               type="button"
-              aria-label={t('vnHistory.title')}
-              onClick={() => vnPlayerRef.current?.toggleHistory()}
-              className="flex size-8 shrink-0 items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+              variant="ghost"
+              size="sm"
+              className="h-8 rounded-md px-2 text-xs font-medium text-foreground/80 shadow-none hover:bg-muted hover:text-foreground"
+              onClick={() => window.location.reload()}
             >
-              <History className="size-3.5" />
-            </button>
-            <button
-              type="button"
-              aria-label={t('vnSettings.title')}
-              onClick={() => vnPlayerRef.current?.toggleSettings()}
-              className="flex size-8 shrink-0 items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <Settings className="size-3.5" />
-            </button>
-          </>
-        )}
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          className="flex size-8 shrink-0 items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
-          aria-label={t('scripts.restart')}
-        >
-          <RotateCcw className="size-3.5" />
-        </button>
+              <RotateCcw className="size-3.5" />
+              {t('scripts.performAgain')}
+            </Button>
+          ) : isChatMode ? (
+            <>
+              <button
+                type="button"
+                aria-label={t('vnHistory.title')}
+                onClick={() => vnPlayerRef.current?.toggleHistory()}
+                className="flex size-8 shrink-0 items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <History className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                aria-label={t('vnSettings.title')}
+                onClick={() => vnPlayerRef.current?.toggleSettings()}
+                className="flex size-8 shrink-0 items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <Settings className="size-3.5" />
+              </button>
+            </>
+          ) : null}
+        </div>
         </div>
       </div>
       <div className="relative min-h-0 flex-1 bg-background">
@@ -484,28 +519,18 @@ function InkEpisodePlayer({
         currentAvatarUrl={assetsResolving ? undefined : (stateAvatarUrl || (currentCharacter as any)?.avatarUrl || undefined)}
         currentAvatarAlt={currentCharacter?.displayName || currentCharacter?.name}
         onDisplayModeChange={(displayMode) => setIsChatMode(displayMode === 'chat')}
+        hideEndedCaption
         endedActions={(
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <CheckCircle2 className="size-4 text-primary" />
-              {t('scripts.chapterComplete')}
-            </div>
-            <div className="flex gap-2">
-              <Button variant="secondary" size="sm" className="rounded-full border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary" onClick={() => window.location.reload()}>
-                <RotateCcw data-icon="inline-start" />
-                {t('scripts.performAgain')}
-              </Button>
-              <Button asChild size="sm" className="rounded-full">
-                <Link to={`/scripts/packages/${packageId}`}>{t('scripts.backToChapterList')}</Link>
-              </Button>
-            </div>
+          <div className="mx-auto flex flex-col items-center gap-2.5">
             <Button
+              type="button"
               size="sm"
-              variant="ghost"
-              className="rounded-full"
+              variant="secondary"
+              className="h-8 rounded-full border-0 bg-primary/10 px-4 text-xs font-medium text-primary shadow-none hover:bg-primary/16 hover:text-primary disabled:bg-primary/6 disabled:text-primary/45"
               disabled={!recordId || publishing || videoQueued || videoCompleted}
               onClick={() => void publishVideo()}
             >
+              <Film data-icon="inline-start" className={publishing ? 'animate-pulse' : undefined} />
               {videoCompleted
                 ? t('scripts.videoReadyToPublish')
                 : videoQueued
@@ -516,9 +541,36 @@ function InkEpisodePlayer({
                     ? t('scripts.generateVideoAndPublish')
                     : t('scripts.savingRecord')}
             </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              className="h-8 rounded-full border-0 bg-primary/10 px-4 text-xs font-medium text-primary shadow-none hover:bg-primary/16 hover:text-primary disabled:bg-primary/6 disabled:text-primary/45"
+              disabled={!recordId || analysisLoading}
+              onClick={() => void requestAiAnalysis()}
+            >
+              <Sparkles data-icon="inline-start" />
+              {analysisLoading
+                ? t('common.loading')
+                : analysisResult
+                  ? t('learning.viewAiReview')
+                  : t('scripts.requestAiReview')}
+            </Button>
           </div>
         )}
       />
+      )}
+      {analysisOpen && (
+        <div className="absolute inset-0 z-40 overflow-y-auto bg-background px-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3">
+          <PracticeAnalysisPanel
+            analysis={analysisResult as any}
+            loading={analysisLoading}
+            topicTitle={data.episode.title}
+            readOnly
+            onBack={() => setAnalysisOpen(false)}
+            onRestart={() => window.location.reload()}
+          />
+        </div>
       )}
       </div>
     </div>
