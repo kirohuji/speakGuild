@@ -123,7 +123,6 @@ export function VnMixedPreviewPlayer({
   const cachedBackgroundUrl = useOfflineAssetUrl(activeBackground.url, 'background')
   const cachedSpriteUrl = useOfflineAssetUrl(activeFrame?.sprite.url, 'sprite')
   const itemRefs = useRef<Record<number, HTMLDivElement | null>>({})
-  const missingCount = useMemo(() => frames.filter((frame) => frame.kind === 'missingInput').length, [frames])
   const [playing, setPlaying] = useState(false)
   const [gapSeconds, setGapSeconds] = useState(1)
   const [loopMode, setLoopMode] = useState<LoopMode>('1')
@@ -341,21 +340,6 @@ export function VnMixedPreviewPlayer({
           spriteVerticalOffset={practiceMode ? 24 : 0}
           portraitScale={activeFrame.portraitScale}
         />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/78 via-black/34 to-transparent px-4 pb-3 pt-10">
-          <div className="flex items-end justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-[11px] font-semibold text-white/55">
-                {activeFrame.speaker || mixedFrameLabel(activeFrame)}
-              </p>
-              <p className="mt-1 line-clamp-2 text-sm font-semibold leading-5 text-white">{mixedFrameDisplayText(activeFrame)}</p>
-            </div>
-            {missingCount > 0 && (
-              <span className="rounded-full bg-amber-300/12 px-2 py-1 text-[11px] text-amber-100">
-                缺 {missingCount}
-              </span>
-            )}
-          </div>
-        </div>
       </div>
 
       <div className={cn('px-2 py-1', !mobileSurface && 'border-b', toolbarClass)}>

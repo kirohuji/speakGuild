@@ -40,6 +40,11 @@ type ParamValues = Record<string, string | number | boolean>
 interface VnLineAudioGeneratorProps {
   text: string
   audioUrl?: string
+  /**
+   * Optional alias → signed/content URL resolver (story assetMap aliases like `audio_xxx`).
+   * Without this, only `asset://` / absolute URLs are playable.
+   */
+  resolveUrl?: (audioUrl: string) => string | undefined
   speaker?: string
   characterTtsProvider?: string | null
   characterTtsVoice?: string | null
@@ -64,6 +69,7 @@ interface VnLineAudioGeneratorProps {
 export function VnLineAudioGenerator({
   text,
   audioUrl,
+  resolveUrl,
   speaker,
   characterTtsProvider,
   characterTtsVoice,
@@ -89,6 +95,11 @@ export function VnLineAudioGenerator({
   const [voiceId, setVoiceId] = useState(ttsBackend.voiceId ?? '')
   const [params, setParams] = useState<ParamValues>(ttsBackend.params ?? {})
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const playableSrc = useMemo(() => {
+    if (!audioUrl) return ''
+    const resolved = resolveUrl?.(audioUrl) || resolveFileAssetUrl(audioUrl)
+    return resolved || ''
+  }, [audioUrl, resolveUrl])
 
   useEffect(() => {
     getTtsParamsSchema().then(setSchemas).catch(() => undefined)
@@ -144,11 +155,14 @@ export function VnLineAudioGenerator({
   }, [currentModelSchema])
 
   const play = () => {
-    if (!audioUrl) return
+    if (!playableSrc) return
     audioRef.current?.pause()
-    const audio = new Audio(resolveFileAssetUrl(audioUrl))
+    const audio = new Audio(playableSrc)
     audioRef.current = audio
-    void audio.play()
+    void audio.play().catch((err) => {
+      console.warn('[vn-line-audio] play failed', { audioUrl, playableSrc, err })
+      setError('音频播放失败，请检查资源地址')
+    })
   }
 
   const generate = async () => {
@@ -302,8 +316,8 @@ export function VnLineAudioGenerator({
         )}
       </div>}
 
-      {!configOnly && audioUrl && (
-        <audio controls src={resolveFileAssetUrl(audioUrl)} className="h-9 w-full" />
+      {!configOnly && playableSrc && (
+        <audio key={playableSrc} controls src={playableSrc} className="h-9 w-full" />
       )}
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>

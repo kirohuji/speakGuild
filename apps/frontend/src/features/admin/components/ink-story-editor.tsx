@@ -46,7 +46,12 @@ import { toast } from 'sonner'
 import { VnStoryPreview, type PreviewAiEvaluation, type PreviewLayout } from './vn-story-preview'
 import { VnLineAudioGenerator } from './vn-line-audio-generator'
 import { type GameCharacter, type GameLocationData, aiGenerateStory, translateStory, generateStoryAudio, generateTeachingMarkdown, getStoryAssets, addStoryAsset } from '../api-content-admin'
-import { resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
+import {
+  fileAssetIdFromUrl,
+  getFileAssetContentUrl,
+  inlineFileAssetContentUrl,
+  resolveDisplayAssetUrl,
+} from '@/lib/file-asset-reference'
 import { synthesizeAsset } from '@/lib/tts-api'
 
 type Selection =
@@ -218,6 +223,34 @@ export function InkStoryEditor({
     if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('blob:') || value.startsWith('data:')) return value
     return resolveDisplayAssetUrl(previewUrlMapRef.current[value] || value)
   }, [])
+
+  /**
+   * Audio playback must not rely on extension-less COS signed URLs — browsers
+   * throw NotSupportedError when MIME can't be sniffed. Prefer the same-origin
+   * content proxy with `inline=1` so the API sends the stored mimeType.
+   */
+  const resolveAudioPlaybackUrl = useCallback((value: string | undefined): string | undefined => {
+    if (!value) return value
+    const entry = previewAssetMap[value]
+    if (entry?.fileAssetId) {
+      return getFileAssetContentUrl(entry.fileAssetId, '?inline=1')
+    }
+    const mapped = previewUrlMapRef.current[value]
+    const candidate = mapped || value
+    const assetId = fileAssetIdFromUrl(candidate)
+    if (assetId) return getFileAssetContentUrl(assetId, '?inline=1')
+    const inline = inlineFileAssetContentUrl(candidate)
+    if (inline) return inline
+    if (
+      candidate.startsWith('http://')
+      || candidate.startsWith('https://')
+      || candidate.startsWith('blob:')
+      || candidate.startsWith('data:')
+    ) {
+      return candidate
+    }
+    return resolveDisplayAssetUrl(candidate)
+  }, [previewAssetMap])
 
   const scenes = useMemo(() => parseComposer(source), [source])
   const selectedScene = scenes[selection.sceneIndex] ?? scenes[0]
@@ -1009,6 +1042,7 @@ export function InkStoryEditor({
                     <VnLineAudioGenerator
                       text={selectedItem.text}
                       audioUrl={selectedItem.audioUrl}
+                      resolveUrl={resolveAudioPlaybackUrl}
                       speaker={selectedItem.speaker}
                       characterTtsProvider={selectedLineVoice?.voiceAsset.provider.provider}
                       characterTtsVoice={selectedLineVoice?.voiceAsset.externalVoiceId}
@@ -1023,9 +1057,18 @@ export function InkStoryEditor({
                         const alias = `audio_${Date.now().toString(36)}`
                         try {
                           const result = await addStoryAsset(storyId, { alias, fileAssetId: assetId, type: 'audio' })
-                          const signedUrl = (result.entry as any)?.signedUrl || url
+                          const playable = getFileAssetContentUrl(assetId, '?inline=1')
+                          const signedUrl = (result.entry as any)?.signedUrl || playable || url
                           previewUrlMapRef.current[alias] = signedUrl
-                          setPreviewAssetMap((prev) => ({ ...prev, [alias]: { fileAssetId: assetId, signedUrl } }))
+                          setPreviewAssetMap((prev) => ({
+                            ...prev,
+                            [alias]: {
+                              fileAssetId: assetId,
+                              type: 'audio',
+                              mimeType: (result.entry as any)?.mimeType || 'audio/mpeg',
+                              signedUrl,
+                            },
+                          }))
                           updateSelectedItem({ audioUrl: alias })
                         } catch { /* keep raw URL */ }
                       }}
