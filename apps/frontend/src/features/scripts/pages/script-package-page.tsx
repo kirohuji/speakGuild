@@ -186,7 +186,7 @@ export function ScriptPackagePage() {
             <ArrowLeft className="size-4" />
           </button>
           <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
-            <p className="truncate text-xs text-muted-foreground">{displayLearningUnitLocation(detail.location, t('scripts.immersiveTheater'))}</p>
+            <p className="truncate text-xs text-muted-foreground">{displayLearningUnitLocation(detail.location, isNqtr ? t('scripts.immersiveTheater') : t('scripts.spokenScript'))}</p>
             <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{detail.title}</h1>
           </div>
         </div>
@@ -198,7 +198,7 @@ export function ScriptPackagePage() {
             <div className="min-w-0">
               <Badge variant="secondary" className="mb-2 rounded-full">{detail.requiredOutputLevel}</Badge>
               <h1 className="text-xl font-bold leading-tight text-foreground">{detail.title}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">{displayLearningUnitLocation(detail.location, t('scripts.immersiveTheater'))}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{displayLearningUnitLocation(detail.location, isNqtr ? t('scripts.immersiveTheater') : t('scripts.spokenScript'))}</p>
             </div>
             <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Clapperboard className="size-5" />
@@ -214,7 +214,9 @@ export function ScriptPackagePage() {
             <p className="text-sm leading-6 text-muted-foreground">
               {detail.description || t('scripts.defaultDescription')}
             </p>
-            {isNqtr ? <Badge variant="secondary" className="shrink-0">NQTR</Badge> : null}
+            <Badge variant="secondary" className="shrink-0">
+              {isNqtr ? t('scripts.immersiveTheater') : t('scripts.spokenScript')}
+            </Badge>
           </div>
           <div className="mt-4 flex items-center gap-3">
             <Progress value={progress} className="h-1.5 flex-1" />

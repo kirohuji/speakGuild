@@ -66,7 +66,11 @@ export function MixedPlaybackSettingsDialog({
   const { t } = useTranslation()
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[90vw] max-w-sm rounded-2xl">
+      <DialogContent
+        // Above fullscreen practice-record replay (z-70/71) and similar shells.
+        overlayClassName="z-[80]"
+        className="z-[81] w-[90vw] max-w-sm rounded-2xl"
+      >
         <DialogHeader>
           <DialogTitle>{t('audio.playbackSettings')}</DialogTitle>
           <DialogDescription>{t('audio.playbackSettingsDesc')}</DialogDescription>

@@ -26,6 +26,7 @@ import {
   LockKeyhole,
   Maximize2,
   Play,
+  RotateCcw,
   Search,
   ShoppingBag,
   SmilePlus,
@@ -81,11 +82,16 @@ import { useLearningStore } from '@/stores/learning.store'
 import { cn } from '@/lib/cn'
 import { enqueueScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
 import { buildStoryRepeatFrames } from '@/features/scripts/lib/story-repeat-frames'
+import { ScriptRecordVnReplay } from '@/features/scripts/components/script-record-vn-replay'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
-import { VnPlayer, type VnPlayerLine } from '@/features/vn-engine/vn-player'
+import {
+  prepareStoryVnEntry,
+  type PreparedStoryVnEntry,
+} from '@/features/vn-engine/prepare-story-vn-entry'
+import { useInstalledVnMedia } from '@/features/vn-engine/use-installed-vn-media'
 import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
-import { learningRepository, practiceRepository } from '@/lib/offline'
+import { practiceRepository } from '@/lib/offline'
 import { useAuth } from '@/providers/auth-provider'
 import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
 import { usePackDisplayUrl } from '@/hooks/use-pack-display-url'
@@ -133,6 +139,21 @@ function ScriptCover({
 
 function isAfterPracticeReset(createdAt: string, resetAt: string | null) {
   return !resetAt || createdAt.localeCompare(resetAt) >= 0
+}
+
+function isNqtrScriptUnit(unit: Pick<LearningUnitSummary, 'packageType' | 'contentMode'>) {
+  return unit.packageType === 'nqtr' || unit.contentMode === 'nqtr'
+}
+
+function scriptPackageTypeLabel(
+  unit: Pick<LearningUnitSummary, 'packageType' | 'contentMode'>,
+  t: (key: string) => string,
+  options?: { shop?: boolean },
+) {
+  if (isNqtrScriptUnit(unit)) {
+    return options?.shop ? t('scripts.immersivePlot') : t('scripts.immersiveTheater')
+  }
+  return t('scripts.spokenScript')
 }
 
 function getScriptShopChapters(unit: LearningUnitSummary) {
@@ -880,7 +901,7 @@ function MineScripts({
             const installed = installedIds.has(unit.id)
             const downloading = downloadTasks.some((task) => task.packId === unit.id && task.status !== 'error' && task.status !== 'done')
             const blocked = !installed || downloading
-            const location = displayLearningUnitLocation(unit.location, t('scripts.immersiveTheater'))
+            const location = displayLearningUnitLocation(unit.location, scriptPackageTypeLabel(unit, t))
 
             return (
               <div key={unit.id} className="group relative w-44 shrink-0 snap-start">
@@ -901,7 +922,7 @@ function MineScripts({
                         iconClassName="size-8 text-muted-foreground"
                       />
                       <Badge variant="secondary" className="absolute left-3 top-3">
-                        {t('scripts.chapters', { count: unit.scriptCount })}
+                        {scriptPackageTypeLabel(unit, t)}
                       </Badge>
                       {!installed && (
                         <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-background/80 px-2.5 py-1.5 backdrop-blur-sm">
@@ -938,7 +959,7 @@ function MineScripts({
                     <CardHeader className="p-2.5 pb-2">
                       <CardTitle className="truncate text-sm">{unit.title}</CardTitle>
                       <CardDescription className="truncate text-xs">
-                        {location}
+                        {t('scripts.chapters', { count: unit.scriptCount })} · {location}
                       </CardDescription>
                     </CardHeader>
                   </Link>
@@ -2283,25 +2304,17 @@ function ScriptRecordReplayDialog({
   onRecordUpdated?: (record: ScriptPracticeRecord) => void
 }) {
   const { t } = useTranslation()
-  const replayLines = useMemo<VnPlayerLine[]>(
-    () => record?.resultSnapshot?.dialogue?.map((line) => ({
-      speaker: line.speaker,
-      text: line.text,
-      isUser: line.isUser,
-    })) ?? [],
-    [record],
-  )
-  const [lineIndex, setLineIndex] = useState(0)
   const [overwriteOpen, setOverwriteOpen] = useState(false)
   const [view, setView] = useState<'replay' | 'analysis'>('replay')
+  const [replayNonce, setReplayNonce] = useState(0)
   const [analysisLoading, setAnalysisLoading] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<Record<string, unknown> | null>(
     record?.resultSnapshot?.aiAnalysis ?? null,
   )
 
   useEffect(() => {
-    setLineIndex(0)
     setView('replay')
+    setReplayNonce(0)
     setAnalysisResult(record?.resultSnapshot?.aiAnalysis ?? null)
   }, [record?.id, record?.resultSnapshot?.aiAnalysis])
 
@@ -2347,8 +2360,19 @@ function ScriptRecordReplayDialog({
       setAnalysisLoading(false)
     }
   }
-  const isEnded = replayLines.length > 0 && lineIndex >= replayLines.length
-  const currentLine = isEnded ? null : replayLines[lineIndex] ?? null
+
+  const overwriteDialog = overwriteOpen ? (
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/45 px-5 backdrop-blur-sm" onClick={() => setOverwriteOpen(false)}>
+      <div role="dialog" aria-modal="true" aria-labelledby="overwrite-video-title" className="w-full max-w-sm rounded-2xl border-0 bg-background p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>
+        <h2 id="overwrite-video-title" className="text-base font-semibold">{t('scripts.overwritePrivateTitle')}</h2>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('scripts.overwritePrivateDesc')}</p>
+        <div className="mt-5 flex justify-center gap-3">
+          <Button variant="secondary" className="rounded-xl border-0 shadow-none" onClick={() => setOverwriteOpen(false)}>{t('common.cancel')}</Button>
+          <Button onClick={() => { setOverwriteOpen(false); void onGenerateVideo(record) }}>{t('scripts.regenerateOverwrite')}</Button>
+        </div>
+      </div>
+    </div>
+  ) : null
 
   if (record.mode === 'repeat') {
     return (
@@ -2356,8 +2380,11 @@ function ScriptRecordReplayDialog({
         <DialogContent
           overlayClassName="z-[70] bg-background"
           className="left-0 top-0 z-[71] h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden"
+          aria-describedby={undefined}
         >
-          <DialogHeader className="sr-only"><DialogTitle>{t('scripts.repeatRecordTitle')}</DialogTitle></DialogHeader>
+          <DialogHeader className="sr-only">
+            <DialogTitle>{t('scripts.repeatRecordTitle')}</DialogTitle>
+          </DialogHeader>
           <ReadonlyRepeatRecordTheater
             record={record}
             onClose={onClose}
@@ -2365,18 +2392,7 @@ function ScriptRecordReplayDialog({
             videoSubmitting={generatingProgress !== undefined}
             videoQueued={videoQueued}
           />
-          {overwriteOpen && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/45 px-5 backdrop-blur-sm" onClick={() => setOverwriteOpen(false)}>
-              <div role="dialog" aria-modal="true" aria-labelledby="overwrite-video-title" className="w-full max-w-sm rounded-2xl border-0 bg-background p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>
-                <h2 id="overwrite-video-title" className="text-base font-semibold">{t('scripts.overwritePrivateTitle')}</h2>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{t('scripts.overwritePrivateDesc')}</p>
-                <div className="mt-5 flex justify-center gap-3">
-                  <Button variant="secondary" className="rounded-xl border-0 shadow-none" onClick={() => setOverwriteOpen(false)}>{t('common.cancel')}</Button>
-                  <Button onClick={() => { setOverwriteOpen(false); void onGenerateVideo(record) }}>{t('scripts.regenerateOverwrite')}</Button>
-                </div>
-              </div>
-            </div>
-          )}
+          {overwriteDialog}
         </DialogContent>
       </Dialog>
     )
@@ -2384,60 +2400,85 @@ function ScriptRecordReplayDialog({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent overlayClassName="z-[70]" className="left-0 top-0 z-[71] h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden">
-        <DialogHeader className="sr-only"><DialogTitle>{t('scripts.replayDialogTitle')}</DialogTitle></DialogHeader>
-        {replayLines.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
-            <p className="text-sm text-muted-foreground">{t('scripts.playbackUnavailable')}</p>
-            <Button variant="secondary" className="rounded-full border-0 shadow-none" onClick={onClose}>{t('common.close')}</Button>
-          </div>
-        ) : (
-          <div className="relative h-full bg-background">
-            <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
-              <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full bg-background/90 px-2 shadow-lg backdrop-blur-2xl">
-                <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>{t('common.close')}</Button>
-                <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted-foreground">
+      <DialogContent
+        overlayClassName="z-[70]"
+        className="left-0 top-0 z-[71] h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 overflow-hidden rounded-none border-0 p-0 [&>button]:hidden"
+        aria-describedby={undefined}
+      >
+        <DialogHeader className="sr-only">
+          <DialogTitle>{t('scripts.replayDialogTitle')}</DialogTitle>
+        </DialogHeader>
+        <div className="relative h-full bg-background">
+          <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
+            <div className="flex h-9 w-full max-w-[440px] items-center gap-1.5 rounded-full bg-background/90 px-2 shadow-none backdrop-blur-2xl">
+              <Button variant="ghost" size="sm" className="h-7 shrink-0 rounded-full px-2.5 text-xs" onClick={onClose}>{t('common.close')}</Button>
+              <div className="flex min-w-0 flex-1 items-center justify-center gap-1 px-1">
+                <span className="min-w-0 truncate text-center text-xs font-medium text-muted-foreground">
                   {record.episode.title} · {view === 'analysis' ? t('scripts.aiReviewTab') : t('scripts.dialogueReplay')}
                 </span>
-                <div className="flex items-center gap-1.5 pr-0.5">
-                  <Sparkles className={cn('size-3.5', view === 'analysis' ? 'text-primary' : 'text-muted-foreground')} />
-                  <Switch
-                    checked={view === 'analysis'}
-                    onCheckedChange={(checked) => {
-                      setView(checked ? 'analysis' : 'replay')
-                      if (checked) void ensureAiAnalysis()
-                    }}
-                    aria-label={t('learning.toggleAiReview')}
-                    title={view === 'analysis' ? t('scripts.dialogueReplay') : t('scripts.aiReviewTab')}
-                  />
-                </div>
+                {view === 'replay' && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-7 shrink-0 rounded-full text-foreground/80"
+                    onClick={() => setReplayNonce((current) => current + 1)}
+                    aria-label={t('scripts.restart')}
+                    title={t('scripts.restart')}
+                  >
+                    <RotateCcw className="size-3.5" />
+                  </Button>
+                )}
               </div>
-            </div>
-            {view === 'analysis' ? (
-              <div className="h-full overflow-y-auto px-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-16">
-                <PracticeAnalysisPanel
-                  analysis={analysisResult as any}
-                  loading={analysisLoading}
-                  topicTitle={record.episode.title}
-                  readOnly
-                  onBack={() => setView('replay')}
+              <div className="flex shrink-0 items-center gap-1 pr-0.5">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="size-7 shrink-0 rounded-full text-foreground/80"
+                  disabled={publishedWork || generatingProgress !== undefined || videoQueued}
+                  onClick={requestVideoGeneration}
+                  aria-label={t('scripts.generateVideo')}
+                  title={
+                    videoQueued
+                      ? t('scripts.renderQueued')
+                      : generatingProgress !== undefined
+                        ? t('scripts.submittingVideoTask')
+                        : t('scripts.generateVideo')
+                  }
+                >
+                  <Film className={cn('size-3.5', generatingProgress !== undefined && 'animate-pulse')} />
+                </Button>
+                <Sparkles className={cn('size-3.5', view === 'analysis' ? 'text-primary' : 'text-muted-foreground')} />
+                <Switch
+                  checked={view === 'analysis'}
+                  onCheckedChange={(checked) => {
+                    setView(checked ? 'analysis' : 'replay')
+                    if (checked) void ensureAiAnalysis()
+                  }}
+                  aria-label={t('learning.toggleAiReview')}
+                  title={view === 'analysis' ? t('scripts.dialogueReplay') : t('scripts.aiReviewTab')}
                 />
               </div>
-            ) : (
-              <VnPlayer
-                className="h-full max-w-none rounded-none border-none"
-                stageClassName="min-h-0"
-                currentLine={currentLine}
-                history={replayLines.slice(0, Math.min(lineIndex, replayLines.length))}
-                isEnded={isEnded}
-                onAdvance={() => setLineIndex((current) => Math.min(current + 1, replayLines.length))}
-                showHistoryButton={false}
-                showUserInputOverride
-                endedActions={<Button size="sm" className="rounded-full" onClick={onClose}>{t('scripts.finishReplay')}</Button>}
-              />
-            )}
+            </div>
           </div>
-        )}
+          {view === 'analysis' ? (
+            <div className="h-full overflow-y-auto px-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-16">
+              <PracticeAnalysisPanel
+                analysis={analysisResult as any}
+                loading={analysisLoading}
+                topicTitle={record.episode.title}
+                readOnly
+                onBack={() => setView('replay')}
+              />
+            </div>
+          ) : (
+            <div className="h-full pt-[calc(3.5rem+env(safe-area-inset-top,0px))]">
+              <ScriptRecordVnReplay key={replayNonce} record={record} onClose={onClose} />
+            </div>
+          )}
+          {overwriteDialog}
+        </div>
       </DialogContent>
     </Dialog>
   )
@@ -2458,31 +2499,38 @@ function ReadonlyRepeatRecordTheater({
 }) {
   const { t } = useTranslation()
   const [data, setData] = useState<StoryEpisodePlayerData | null>(null)
+  const [preparedAssetMap, setPreparedAssetMap] = useState<PreparedStoryVnEntry['assetMap'] | null>(null)
+  const [preparedScene, setPreparedScene] = useState<PreparedStoryVnEntry['scene'] | null>(null)
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [recordingUrls, setRecordingUrls] = useState<Record<number, string>>({})
+  const packageId = record.episode.scene.id
 
   useEffect(() => {
     let alive = true
     setLoading(true)
     setFailed(false)
     setData(null)
+    setPreparedAssetMap(null)
+    setPreparedScene(null)
     setActiveIndex(0)
-    // The repository selects the installed package on Capacitor. It only
-    // uses the network on web, matching the live theatre's data contract.
-    void learningRepository.getStoryEpisodePlayer(record.episode.scene.id, record.episodeId)
-      .then((player) => {
-        console.log('[repeat-record] theatre player loaded', { episodeId: record.episodeId, framesSource: player.inkScript.inkSource ? 'ink-source' : 'missing' })
-        if (alive) setData(player)
+    // Same click-time prep as live repeat theatre — resolves installed URLs
+    // before frames are built, so aliases never reach Pixi/audio.
+    void prepareStoryVnEntry({ packageId, episodeId: record.episodeId })
+      .then((prepared) => {
+        if (!alive) return
+        setData(prepared.data)
+        setPreparedAssetMap(prepared.assetMap)
+        setPreparedScene(prepared.scene)
       })
       .catch((error) => {
-        console.error('[repeat-record] theatre player load failed', { packageId: record.episode.scene.id, episodeId: record.episodeId, error })
+        console.error('[repeat-record] prepareStoryVnEntry failed', { packageId, episodeId: record.episodeId, error })
         if (alive) setFailed(true)
       })
       .finally(() => { if (alive) setLoading(false) })
     return () => { alive = false }
-  }, [record.episode.scene.id, record.episodeId])
+  }, [packageId, record.episodeId])
 
   useEffect(() => {
     let alive = true
@@ -2498,18 +2546,46 @@ function ReadonlyRepeatRecordTheater({
     return () => { alive = false }
   }, [record.id, record.resultSnapshot])
 
-  const frames = useMemo(() => data ? buildStoryRepeatFrames(data) : [], [data])
+  const { mediaReady, assetMap, scene } = useInstalledVnMedia({
+    packageId,
+    revision: record.episodeId,
+    rawAssetMap: data?.inkScript.assetMap,
+    rawScene: data?.scene,
+    preparedAssetMap,
+    preparedScene,
+  })
+
+  const frames = useMemo(() => {
+    if (!data || !mediaReady) return []
+    return buildStoryRepeatFrames(data, {
+      assetMap,
+      scene: (scene as StoryEpisodePlayerData['scene']) ?? data.scene,
+    })
+  }, [assetMap, data, mediaReady, scene])
 
   return (
     <div className="absolute inset-0 flex min-h-0 flex-col bg-background pt-[calc(3.5rem+env(safe-area-inset-top,0px))]">
       <div className="absolute inset-x-0 top-0 z-20 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
-        <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full bg-background/90 px-2 shadow-lg backdrop-blur-2xl">
+        <div className="flex h-9 w-full max-w-[400px] items-center gap-2 rounded-full bg-background/90 px-2 shadow-none backdrop-blur-2xl">
           <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={onClose}>{t('common.close')}</Button>
-          <span className="min-w-0 flex-1 truncate text-center text-xs font-medium text-muted-foreground">{record.episode.title} · {t('scripts.repeatReplay')}</span>
+          <div className="flex min-w-0 flex-1 items-center justify-center gap-1 px-1">
+            <span className="min-w-0 truncate text-center text-xs font-medium text-muted-foreground">{record.episode.title} · {t('scripts.repeatReplay')}</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="size-7 shrink-0 rounded-full text-foreground/80"
+              onClick={() => setActiveIndex(0)}
+              aria-label={t('scripts.restart')}
+              title={t('scripts.restart')}
+            >
+              <RotateCcw className="size-3.5" />
+            </Button>
+          </div>
           <Badge variant="secondary" className="h-6 text-[10px]">{t('scripts.readOnly')}</Badge>
         </div>
       </div>
-      {loading ? (
+      {loading || (data && !mediaReady) ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
           <Loader2 className="size-7 animate-spin text-primary" />
           <p className="text-sm">{t('scripts.loadingRepeatTheater')}</p>
@@ -2564,16 +2640,24 @@ function ScriptShop({
 }) {
   const { t } = useTranslation()
   const [keyword, setKeyword] = useState('')
+  const [packageFilter, setPackageFilter] = useState<'all' | 'story' | 'nqtr'>('all')
   const [selectedUnit, setSelectedUnit] = useState<LearningUnitSummary | null>(null)
   const [descExpanded, setDescExpanded] = useState(false)
   const [chapterPage, setChapterPage] = useState(1)
   const [acquiringId, setAcquiringId] = useState<string | null>(null)
   const focusedUnitIdRef = useRef<string | null>(null)
   const pageSize = 6
+  const packageTypeTabs = [
+    { id: 'all' as const, label: t('scripts.allPackageTypes') },
+    { id: 'story' as const, label: t('scripts.spokenScript') },
+    { id: 'nqtr' as const, label: t('scripts.immersivePlot') },
+  ]
   const filteredUnits = units.filter((unit) => {
+    if (packageFilter === 'story' && isNqtrScriptUnit(unit)) return false
+    if (packageFilter === 'nqtr' && !isNqtrScriptUnit(unit)) return false
     const query = keyword.trim().toLocaleLowerCase()
     if (!query) return true
-    return [unit.title, unit.location, unit.description]
+    return [unit.title, unit.location, unit.description, scriptPackageTypeLabel(unit, t, { shop: true })]
       .some((value) => value?.toLocaleLowerCase().includes(query))
   })
 
@@ -2596,14 +2680,35 @@ function ScriptShop({
   }, [focusUnitId, loading, t, units])
 
   const search = (
-    <div className="relative mb-3 mt-1">
-      <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        value={keyword}
-        onChange={(event) => setKeyword(event.target.value)}
-        placeholder={t('scripts.searchScript')}
-        className="h-11 rounded-full border-0 bg-muted/70 pl-9 text-sm"
-      />
+    <div className="space-y-3 pb-1">
+      <div className="relative mt-1">
+        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={keyword}
+          onChange={(event) => setKeyword(event.target.value)}
+          placeholder={t('scripts.searchScript')}
+          className="h-11 rounded-full border-0 bg-muted/70 pl-9 text-sm"
+        />
+      </div>
+      <div className="scrollbar-hide overflow-x-auto">
+        <div className="flex w-max gap-2 pb-1">
+          {packageTypeTabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setPackageFilter(tab.id)}
+              className={cn(
+                'rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors',
+                packageFilter === tab.id
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-muted text-muted-foreground',
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   )
 
@@ -2622,8 +2727,8 @@ function ScriptShop({
         {search}
         <div className="flex flex-col items-center py-16 text-center">
           <BookOpen className="size-12 text-muted-foreground/40" />
-          <p className="mt-4 text-muted-foreground">{keyword.trim() ? t('scripts.noMatchingScript') : t('scripts.noScriptAvailable')}</p>
-          {!keyword.trim() && (
+          <p className="mt-4 text-muted-foreground">{keyword.trim() || packageFilter !== 'all' ? t('scripts.noMatchingScript') : t('scripts.noScriptAvailable')}</p>
+          {!keyword.trim() && packageFilter === 'all' && (
             <Button variant="secondary" size="sm" className="mt-4 rounded-full border-0 shadow-none" onClick={() => void onRefresh()}>
               {t('scripts.reload')}
             </Button>
@@ -2640,6 +2745,7 @@ function ScriptShop({
         {filteredUnits.map((unit) => {
           const installed = installedIds.has(unit.id)
           const task = downloadTasks.find((item) => item.packId === unit.id)
+          const packageLabel = scriptPackageTypeLabel(unit, t, { shop: true })
           return (
             <button
               key={unit.id}
@@ -2659,13 +2765,13 @@ function ScriptShop({
                   <h3 className="line-clamp-1 flex-1 text-sm font-semibold leading-5 text-foreground">{unit.title}</h3>
                   {unit.isLocked && <LockKeyhole className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />}
                 </div>
-                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{displayLearningUnitLocation(unit.location, t('scripts.immersiveTheater'))}</p>
+                <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{displayLearningUnitLocation(unit.location, packageLabel)}</p>
                 <p className="mt-1 line-clamp-1 text-xs leading-5 text-muted-foreground">
                   {t('scripts.unitMeta', { chapters: getScriptShopChapterCount(unit), words: unit.vocabCount, chunks: unit.chunkCount })}
                 </p>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <Badge variant="secondary" className="h-5 rounded-full border-0 px-2 text-[10px] shadow-none">{packageLabel}</Badge>
                   <Badge variant="secondary" className="h-5 rounded-full border-0 px-2 text-[10px] shadow-none">{unit.isFree ? t('scripts.free') : t('scripts.member')}</Badge>
-                  {/* {installed && <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">已离线</Badge>} */}
                   {(task?.status === 'downloading' || task?.status === 'extracting') && (
                     <Badge variant="secondary" className="h-5 rounded-full px-2 text-[10px]">{Math.round(task.progress)}%</Badge>
                   )}
@@ -2749,7 +2855,7 @@ function ScriptShopDetail({
       <DialogContent className="max-h-[88vh] w-[90vw] overflow-hidden rounded-2xl p-0 sm:max-w-md">
         <DialogHeader className="sr-only">
           <DialogTitle>{unit.title}</DialogTitle>
-          <DialogDescription>{displayLearningUnitLocation(unit.location, t('scripts.immersiveTheater'))}</DialogDescription>
+          <DialogDescription>{displayLearningUnitLocation(unit.location, scriptPackageTypeLabel(unit, t, { shop: true }))}</DialogDescription>
         </DialogHeader>
         <div className="flex max-h-[88vh] flex-col">
           <div className="flex gap-3 bg-muted/30 p-4">
@@ -2758,12 +2864,13 @@ function ScriptShopDetail({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
+                <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{scriptPackageTypeLabel(unit, t, { shop: true })}</Badge>
                 <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{unit.isFree ? t('scripts.free') : t('scripts.member')}</Badge>
                 {unit.categoryName && <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{unit.categoryName}</Badge>}
                 {unit.isLocked && <Badge variant="secondary" className="rounded-full border-0 text-[10px] shadow-none">{t('scripts.locked')}</Badge>}
               </div>
               <h3 className="mt-2 line-clamp-2 text-base font-bold leading-5">{unit.title}</h3>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{displayLearningUnitLocation(unit.location, t('scripts.immersiveTheater'))}</p>
+              <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">{displayLearningUnitLocation(unit.location, scriptPackageTypeLabel(unit, t, { shop: true }))}</p>
               <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                 <span>{t('scripts.chaptersUnit', { count: getScriptShopChapterCount(unit) })}</span>
                 <span>{t('scripts.wordsUnit', { count: unit.vocabCount })}</span>

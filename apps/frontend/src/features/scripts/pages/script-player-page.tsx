@@ -538,7 +538,7 @@ function InkEpisodePlayer({
                 : publishing
                   ? t('scripts.submittingVideoTask')
                   : recordId
-                    ? t('scripts.generateVideoAndPublish')
+                    ? t('scripts.generateVideo')
                     : t('scripts.savingRecord')}
             </Button>
             <Button

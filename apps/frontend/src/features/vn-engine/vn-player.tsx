@@ -761,7 +761,11 @@ function VnSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm rounded-2xl w-[90vw]">
+      <DialogContent
+        // Above fullscreen practice-record replay (z-70/71) and similar shells.
+        overlayClassName="z-[80]"
+        className="z-[81] max-w-sm rounded-2xl w-[90vw]"
+      >
         <DialogHeader>
           <DialogTitle>{t('vnSettings.title')}</DialogTitle>
           <DialogDescription>{t('vnSettings.description')}</DialogDescription>

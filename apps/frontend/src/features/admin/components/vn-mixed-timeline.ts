@@ -71,18 +71,20 @@ export function resolveTimelineAssetAliases(
   const audioMode = options?.audioMode ?? 'playback'
 
   const resolveImage = (value?: string) => {
-    if (!value) return value
-    // A known alias without a resolved URL is a cache/package error, not a
-    // relative web path. Returning the alias made Capacitor try `/bg_xxx` and
-    // hid the real diagnostic from the local-only asset resolver.
-    return Object.prototype.hasOwnProperty.call(assetMap, value)
-      ? assetMap[value]?.signedUrl || ''
-      : value
+    if (!value) return ''
+    // Never return Ink aliases — they are identity keys, not browser paths.
+    // Live VN resolves via parseVnTags/resolveVnImageUrl the same way.
+    if (Object.prototype.hasOwnProperty.call(assetMap, value)) {
+      const signed = assetMap[value]?.signedUrl
+      return signed && /^(data:|blob:|file:|capacitor:|https?:)/i.test(signed) ? signed : ''
+    }
+    if (/^(data:|blob:|file:|capacitor:|https?:)/i.test(value)) return value
+    return ''
   }
   return scenes.map((scene) => ({
     ...scene,
     items: scene.items.map((item) => {
-      if (item.type === 'background') return { ...item, url: resolveImage(item.url) || '' }
+      if (item.type === 'background') return { ...item, url: resolveImage(item.url) }
       if (item.type === 'line') return { ...item, audioUrl: resolveAudioAssetUrl(item.audioUrl, assetMap, { mode: audioMode }) }
       if (item.type === 'wait') return { ...item, defaultAnswerAudioUrl: resolveAudioAssetUrl(item.defaultAnswerAudioUrl, assetMap, { mode: audioMode }) }
       return { ...item }

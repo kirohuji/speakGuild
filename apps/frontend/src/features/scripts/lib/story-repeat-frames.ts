@@ -1,6 +1,7 @@
 import { type StoryEpisodePlayerData } from '@/features/learning/api/learning-api'
 import { parseComposer } from '@/features/admin/components/composer-parser'
 import { flattenComposerToTimeline, resolveTimelineAssetAliases } from '@/features/admin/components/vn-mixed-timeline'
+import { isPlayableMediaUrl } from '@/features/vn-engine/vn-media-url'
 
 /**
  * Builds the single source of truth for repeat-theatre and Remotion frames.
@@ -36,17 +37,25 @@ export function buildStoryRepeatFrames(
     }
     for (const name of [character.name, character.displayName].filter(Boolean) as string[]) {
       characterSprites[name] = sprites
-      if (avatarUrl) characterAvatars[name] = avatarUrl
+      if (avatarUrl && isPlayableMediaUrl(avatarUrl)) characterAvatars[name] = avatarUrl
       characterPositions[name] = character.defaultPosition ?? 'center'
     }
   }
+  const playableSprites = Object.fromEntries(
+    Object.entries(characterSprites).map(([name, sprites]) => [
+      name,
+      Object.fromEntries(
+        Object.entries(sprites).filter(([, url]) => isPlayableMediaUrl(url)),
+      ),
+    ]),
+  )
   return flattenComposerToTimeline(resolveTimelineAssetAliases(
     parseComposer(data.inkScript.inkSource),
     options.assetMap ?? data.inkScript.assetMap,
     { audioMode: options.audioMode ?? 'playback' },
   ), {
-    defaultBackgroundUrl: scene?.backgroundUrl ?? undefined,
-    characterSprites,
+    defaultBackgroundUrl: isPlayableMediaUrl(scene?.backgroundUrl) ? scene?.backgroundUrl : undefined,
+    characterSprites: playableSprites,
     characterAvatars,
     characterPositions,
   })
