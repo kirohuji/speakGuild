@@ -707,21 +707,37 @@ export class RevenueCatService {
     const plan = entitlementIds.length > 0
       ? await this.findPlanForEntitlements(entitlementIds)
       : null;
+    // Refund/expiration payloads sometimes omit entitlements. Fall back to the
+    // local membership plan so a matching product can still revoke access;
+    // applyMembershipState keeps ignoring replaced older products.
+    const existing = plan
+      ? null
+      : await this.prisma.userMembership.findUnique({
+          where: { userId },
+          select: { planId: true },
+        });
+    const planId = plan?.id ?? existing?.planId ?? null;
     const result = await this.recordAndApplyWebhook(
       event,
       userId,
-      () => plan ? this.expiredStateFromWebhook(userId, plan.id, event, eventType) : null,
+      () => planId ? this.expiredStateFromWebhook(userId, planId, event, eventType) : null,
     );
 
     if (!result.duplicate && !plan) {
-      await this.alerts.notify({
-        key: 'revenuecat-ended-event-unmatched',
-        title: 'RevenueCat 结束事件无法匹配会员计划',
-        severity: 'warning',
-        details: { userId, eventType, eventId: event.id, productId: event.product_id, entitlementIds },
-        throttleSeconds: 24 * 60 * 60,
-      });
-      this.logger.warn(`RevenueCat ended webhook recorded without matching plan: type=${eventType}, userId=${userId}`);
+      if (!planId) {
+        await this.alerts.notify({
+          key: 'revenuecat-ended-event-unmatched',
+          title: 'RevenueCat 结束事件无法匹配会员计划',
+          severity: 'warning',
+          details: { userId, eventType, eventId: event.id, productId: event.product_id, entitlementIds },
+          throttleSeconds: 24 * 60 * 60,
+        });
+        this.logger.warn(`RevenueCat ended webhook recorded without matching plan: type=${eventType}, userId=${userId}`);
+      } else {
+        this.logger.warn(
+          `RevenueCat ended webhook used local plan fallback: type=${eventType}, userId=${userId}, planId=${planId}, entitlements=${entitlementIds.join(',') || '(none)'}`,
+        );
+      }
     }
     return result;
   }
