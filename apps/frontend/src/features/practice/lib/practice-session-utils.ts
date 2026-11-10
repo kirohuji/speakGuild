@@ -1,4 +1,10 @@
 import { compileInk } from '@/features/admin/components/ink-compiler'
+import {
+  isPlayableMediaUrl,
+  isVnAssetAlias,
+  resolveVnImageUrl,
+  type VnAssetMap,
+} from '@/features/vn-engine/vn-media-url'
 import { fileAssetIdFromUrl, getFileAssetContentUrl } from '@/lib/file-asset-reference'
 import type { TopicDetail } from '../api/english-practice-api'
 
@@ -59,15 +65,6 @@ function decodeTagValue(value?: string) {
   }
 }
 
-type VnAssetMapEntry = { fileAssetId?: string; signedUrl?: string | null }
-type VnAssetMap = Record<string, VnAssetMapEntry>
-
-function isLocalPlaybackUrl(url?: string | null) {
-  if (!url) return false
-  return /^(data:|blob:|file:|capacitor:)/i.test(url)
-    || /^https?:\/\/localhost\/_capacitor_file_/i.test(url)
-}
-
 export function parseVnTags(tags: string[], assetMap?: VnAssetMap) {
   const speaker = tags.find((t) => t.startsWith('speaker:'))?.replace('speaker:', '').trim()
   const expression = tags.find((t) => t.startsWith('expression:'))?.replace('expression:', '').trim()
@@ -79,26 +76,9 @@ export function parseVnTags(tags: string[], assetMap?: VnAssetMap) {
 
   // Resolve aliases through assetMap (audio prefers MIME-safe content proxy).
   const audio = resolveAudioAssetUrl(rawAudio, assetMap)
-  const bg = resolveAssetUrl(rawBg, assetMap)
+  const bg = resolveVnImageUrl(rawBg, assetMap)
 
   return { speaker, expression, audio, bg, bgFit, position, translation }
-}
-
-/**
- * 通过 assetMap 解析别名 → 签名 URL。
- * 非别名（URL 等）在 assetMap 中查不到，直接原样返回。
- */
-function resolveAssetUrl(
-  value: string | undefined,
-  assetMap?: VnAssetMap,
-): string | undefined {
-  if (!value) return value
-  if (assetMap && Object.prototype.hasOwnProperty.call(assetMap, value)) {
-    // An unresolved alias is not a file path. Returning it makes the browser
-    // request `/bg_xxx` from the app origin.
-    return assetMap[value]?.signedUrl || undefined
-  }
-  return value
 }
 
 export type AudioAssetResolveMode = 'playback' | 'render'
@@ -107,19 +87,20 @@ export type AudioAssetResolveMode = 'playback' | 'render'
  * Audio aliases must become a playable URL.
  * - playback: prefer local pack, else same-origin content?inline=1 (MIME-safe for HTMLAudio)
  * - render: prefer signed/public URLs Remotion can fetch without browser cookies
+ * Unresolved aliases never fall through as relative paths.
  */
 export function resolveAudioAssetUrl(
   value: string | undefined,
   assetMap?: VnAssetMap,
   options?: { mode?: AudioAssetResolveMode },
 ): string | undefined {
-  if (!value) return value
+  if (!value) return undefined
   const mode = options?.mode ?? 'playback'
   if (assetMap && Object.prototype.hasOwnProperty.call(assetMap, value)) {
     const entry = assetMap[value]
-    if (entry?.signedUrl && isLocalPlaybackUrl(entry.signedUrl)) return entry.signedUrl
+    if (entry?.signedUrl && isPlayableMediaUrl(entry.signedUrl)) return entry.signedUrl
     if (mode === 'render') {
-      if (entry?.signedUrl) return entry.signedUrl
+      if (entry?.signedUrl && isPlayableMediaUrl(entry.signedUrl)) return entry.signedUrl
       if (entry?.fileAssetId) return getFileAssetContentUrl(entry.fileAssetId, '?inline=1')
       return undefined
     }
@@ -127,14 +108,15 @@ export function resolveAudioAssetUrl(
     if (entry?.signedUrl) {
       const id = fileAssetIdFromUrl(entry.signedUrl)
       if (id) return getFileAssetContentUrl(id, '?inline=1')
-      return entry.signedUrl
+      return isPlayableMediaUrl(entry.signedUrl) ? entry.signedUrl : undefined
     }
     return undefined
   }
-  if (mode === 'render') return value
+  if (isPlayableMediaUrl(value)) return value
   const id = fileAssetIdFromUrl(value)
   if (id) return getFileAssetContentUrl(id, '?inline=1')
-  return value
+  if (isVnAssetAlias(value)) return undefined
+  return mode === 'render' && isPlayableMediaUrl(value) ? value : undefined
 }
 
 export function isBackgroundFit(value?: string): value is 'cover' | 'contain' | 'stretch' | 'repeat' {

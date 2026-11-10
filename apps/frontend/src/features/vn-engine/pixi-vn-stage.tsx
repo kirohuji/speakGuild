@@ -375,6 +375,16 @@ export function PixiVnStage({
       resizeObserver.observe(host)
       layout()
       setReady(true)
+
+      // Browser Pixi DevTools cannot auto-detect an imperative Application.
+      if (import.meta.env.DEV) {
+        void import('@pixi/devtools')
+          .then(({ initDevtools }) => {
+            if (cancelled || appRef.current !== app) return
+            return initDevtools({ app })
+          })
+          .catch(() => { /* ignore missing/optional devtools */ })
+      }
     }
 
     void init()

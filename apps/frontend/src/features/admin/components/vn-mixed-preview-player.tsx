@@ -459,6 +459,7 @@ export function VnMixedPreviewPlayer({
           spriteBottomInset={8}
           spriteVerticalOffset={practiceMode ? 24 : 0}
           portraitScale={activeFrame.portraitScale}
+          clearBackdrop={practiceMode}
         />
       </div>
 

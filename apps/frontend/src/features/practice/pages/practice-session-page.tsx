@@ -15,17 +15,14 @@ import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
 import { VnPlayer, type VnPlayerHandle } from '@/features/vn-engine/vn-player'
-import { vnTextureRuntime } from '@/features/vn-engine/vn-texture-runtime'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
+import { useInstalledVnMedia } from '@/features/vn-engine/use-installed-vn-media'
+import { useVnTagVisuals } from '@/features/vn-engine/use-vn-tag-visuals'
 import { practiceApi, practiceAiApi, chunkApi, expressionApi, type TopicDetail } from '../api/english-practice-api'
 import { learningContentRepository } from '@/lib/offline/learning-content.repository'
 import { practiceRepository } from '@/lib/offline/practice.repository'
 import { listContentPage } from '@/lib/offline/learning-pack-read-model'
-import {
-  resolveInstalledAssetMap,
-  resolveInstalledScene,
-  type InstalledAssetMap,
-} from '@/lib/offline/installed-pack-media'
+import { type InstalledAssetMap } from '@/lib/offline/installed-pack-media'
 import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { GuidedWarmupPhase } from '../components/guided-warmup-phase'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
@@ -48,8 +45,6 @@ import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import {
   characterMatchesSpeaker,
   compilePracticeInk,
-  isBackgroundFit,
-  isSpritePosition,
   paginateItems,
   parseVnTags,
   readInputNodeId,
@@ -110,9 +105,8 @@ export function PracticeSessionPage() {
 
   // ── Practice (VN) state ──
   const [inkJson, setInkJson] = useState<Record<string, any> | null>(null)
-  const [resolvedScene, setResolvedScene] = useState<TopicDetail['scene'] | null>(null)
-  const [resolvedAssetMap, setResolvedAssetMap] = useState<InstalledAssetMap>()
-  const [packMediaReady, setPackMediaReady] = useState(false)
+  const [packInkAssetMap, setPackInkAssetMap] = useState<InstalledAssetMap | null>(null)
+  const [packInkSourceReady, setPackInkSourceReady] = useState(false)
   const [dialogueRounds, setDialogueRounds] = useState<{ speaker: string; text: string; isNpc: boolean; translation?: string; audioUrl?: string }[]>([])
   const [practiceSessionId, setPracticeSessionId] = useState<string | null>(null)
   const [turnFeedback, setTurnFeedback] = useState<TurnFeedback | null>(null)
@@ -168,14 +162,6 @@ export function PracticeSessionPage() {
   const handleVnDisplayModeChange = useCallback((displayMode: 'vn' | 'chat') => {
     setIsChatMode(displayMode === 'chat')
   }, [])
-  const [vnVisual, setVnVisual] = useState<{
-    backgroundUrl?: string
-    backgroundFit: 'cover' | 'contain' | 'stretch' | 'repeat'
-    speaker?: string
-    expression?: string
-    position?: 'left' | 'center' | 'right'
-  }>({ backgroundFit: 'cover' })
-
   // ── Immersive mode (hide layout chrome during practice) ──
   const setImmersiveMode = useLayoutStore((s) => s.setImmersiveMode)
   const [guidedOpen, setGuidedOpen] = useState(false)
@@ -273,7 +259,7 @@ export function PracticeSessionPage() {
     fetchTopicDetail(topicId).finally(() => setLoading(false))
   }, [topicId, fetchTopicDetail])
 
-  // detail 加载完成后做后处理
+  // detail 加载完成后做后处理（Ink 编译 + assetMap 源准备；本地媒体解析交给 useInstalledVnMedia）
   useEffect(() => {
     if (!detail) return
     const learnedChunkIds = detail.activeChunks
@@ -286,9 +272,9 @@ export function PracticeSessionPage() {
       setTeachingMarkdown(detail.topic.teachingMarkdown || '')
     }
 
-    const packId = unitId || detail.scene.id
     let cancelled = false
-    setPackMediaReady(false)
+    setPackInkSourceReady(false)
+    setPackInkAssetMap(null)
 
     void (async () => {
       try {
@@ -302,33 +288,39 @@ export function PracticeSessionPage() {
         )
         if (compiledInk) setInkJson(compiledInk)
 
-        const [scene, assetMap] = await Promise.all([
-          resolveInstalledScene(packId, detail.scene as any),
-          resolveInstalledAssetMap(
-            packId,
-            ((inkRecord as { assetMap?: InstalledAssetMap | null } | null)?.assetMap
-              ?? (detail.inkScript as { assetMap?: InstalledAssetMap | null } | undefined)?.assetMap)
-              ?? null,
-          ),
-        ])
-        if (cancelled) return
-        setResolvedScene(scene as TopicDetail['scene'])
-        setResolvedAssetMap(assetMap)
+        const nextMap = (
+          (inkRecord as { assetMap?: InstalledAssetMap | null } | null)?.assetMap
+          ?? (detail.inkScript as { assetMap?: InstalledAssetMap | null } | undefined)?.assetMap
+          ?? null
+        )
+        setPackInkAssetMap(nextMap)
       } catch (error) {
-        console.warn('[practice-session] offline pack media resolve failed', error)
+        console.warn('[practice-session] ink prepare failed', error)
         if (!cancelled) {
-          setResolvedScene(detail.scene)
-          setResolvedAssetMap({})
           const compiledInk = compilePracticeInk(detail.inkScript?.inkSource, detail.inkScript?.inkJson)
           if (compiledInk) setInkJson(compiledInk)
+          setPackInkAssetMap(
+            (detail.inkScript as { assetMap?: InstalledAssetMap | null } | undefined)?.assetMap ?? null,
+          )
         }
       } finally {
-        if (!cancelled) setPackMediaReady(true)
+        if (!cancelled) setPackInkSourceReady(true)
       }
     })()
 
     return () => { cancelled = true }
   }, [detail, topicId, unitId])
+
+  const practicePackageId = packInkSourceReady && detail
+    ? (unitId || detail.scene.id)
+    : ''
+  const { mediaReady: packMediaReady, assetMap: resolvedAssetMap, scene: resolvedScene } = useInstalledVnMedia({
+    packageId: practicePackageId,
+    revision: `${topicId || ''}:${practicePackageId}:${packInkSourceReady ? '1' : '0'}`,
+    rawAssetMap: packInkAssetMap,
+    rawScene: detail?.scene,
+  })
+  const activeScene = (resolvedScene as TopicDetail['scene'] | null) ?? detail?.scene
 
   // 句型 tab 也需要展示收藏状态，mount 时加载
   useEffect(() => {
@@ -423,63 +415,41 @@ export function PracticeSessionPage() {
     { onExternalFunction: handleExternalFn },
   )
 
+  const latestNpcSpeaker = useMemo(
+    () => [...dialogueRounds].reverse().find((line) => line.isNpc && line.speaker)?.speaker,
+    [dialogueRounds],
+  )
+  const vnVisual = useVnTagVisuals({
+    currentTags,
+    mediaReady: packMediaReady,
+    assetMap: resolvedAssetMap,
+    sceneBackgroundUrl: activeScene?.backgroundUrl,
+    isWaiting: inkWaiting,
+    fallbackSpeaker: latestNpcSpeaker,
+  })
+
   useEffect(() => {
     syncedInkLineCountRef.current = 0
   }, [inkJson])
 
-  const activeScene = resolvedScene ?? detail?.scene
-
-  useEffect(() => {
-    setVnVisual({
-      backgroundUrl: activeScene?.backgroundUrl || undefined,
-      backgroundFit: 'cover',
-    })
-    // Prefetch GPU decode while prep UI still shows — CSS underlay covers any residual wait.
-    vnTextureRuntime.warmup([activeScene?.backgroundUrl])
-  }, [activeScene?.backgroundUrl, inkJson])
-
+  // Parse #input hint tags for the PracticeVnDrawer (visuals come from useVnTagVisuals).
   useEffect(() => {
     const tags = currentTags
     if (tags.length === 0) return
-
-    const parsed = parseVnTags(tags, resolvedAssetMap)
-    const latestNpcLine = [...dialogueRounds].reverse().find((line) => line.isNpc && line.speaker)
-
-    setVnVisual((prev) => {
-      const next = {
-        backgroundUrl: parsed.bg || prev.backgroundUrl || activeScene?.backgroundUrl || undefined,
-        backgroundFit: isBackgroundFit(parsed.bgFit) ? parsed.bgFit : prev.backgroundFit,
-        speaker: prev.speaker,
-        expression: prev.expression,
-        position: prev.position,
-      }
-      // isWaiting 时 tags 属于 pending 行（用户输入后才显示），
-      // 此时不应更新 speaker/expression/position，避免立绘提前切换
-      if (!inkWaiting) {
-        next.speaker = parsed.speaker || latestNpcLine?.speaker || prev.speaker
-        next.expression = parsed.expression || prev.expression || 'default'
-        next.position = isSpritePosition(parsed.position) ? parsed.position : prev.position
-      }
-      return next
-    })
-
-    // Parse #input hint tags for the PracticeVnDrawer
     const hintText = readTagValue(tags, 'hint:')
     const objectiveText = readTagValue(tags, 'objective:')
     const chunkTexts = readListTags(tags, 'chunks:')
-
-    if (hintText || objectiveText || chunkTexts.length > 0) {
-      setAiHints((prev) => {
-        const next = [...prev]
-        if (objectiveText) next.push({ type: 'pattern' as const, text: objectiveText })
-        if (hintText) next.push({ type: 'pattern' as const, text: hintText })
-        for (const c of chunkTexts) {
-          if (!next.some((h) => h.text === c)) next.push({ type: 'chunk' as const, text: c })
-        }
-        return next
-      })
-    }
-  }, [activeScene?.backgroundUrl, currentTags, dialogueRounds, inkWaiting, resolvedAssetMap])
+    if (!hintText && !objectiveText && chunkTexts.length === 0) return
+    setAiHints((prev) => {
+      const next = [...prev]
+      if (objectiveText) next.push({ type: 'pattern' as const, text: objectiveText })
+      if (hintText) next.push({ type: 'pattern' as const, text: hintText })
+      for (const c of chunkTexts) {
+        if (!next.some((h) => h.text === c)) next.push({ type: 'chunk' as const, text: c })
+      }
+      return next
+    })
+  }, [currentTags])
 
   // Sync Ink lines to dialogue display
   useEffect(() => {
@@ -487,7 +457,7 @@ export function PracticeSessionPage() {
     if (newLines.length === 0) return
     syncedInkLineCountRef.current = inkLines.length
     const newDialogues = newLines.filter(Boolean).map((line) => {
-      const parsed = parseVnTags(line.tags, resolvedAssetMap)
+      const parsed = parseVnTags(line.tags, packMediaReady ? resolvedAssetMap : undefined)
       return {
         speaker: line.speaker ?? (line.tags?.includes('npc') ? fallbackNpcName : ''),
         text: line.text,
@@ -497,7 +467,7 @@ export function PracticeSessionPage() {
       }
     })
     setDialogueRounds((prev) => [...prev, ...newDialogues])
-  }, [fallbackNpcName, inkLines, resolvedAssetMap])
+  }, [fallbackNpcName, inkLines, packMediaReady, resolvedAssetMap])
 
   // Fallback NPC greeting when no Ink script
   useEffect(() => {
@@ -1436,7 +1406,7 @@ export function PracticeSessionPage() {
               className="h-full max-w-none rounded-none border-none bg-black"
               stageClassName="min-h-0"
               offlineOnly
-              backgroundUrl={packMediaReady ? (vnVisual.backgroundUrl || activeScene?.backgroundUrl || undefined) : undefined}
+              backgroundUrl={packMediaReady ? vnVisual.backgroundUrl : undefined}
               backgroundFit={vnVisual.backgroundFit}
               currentLine={!packMediaReady || inkEnded ? null : currentLine ? { speaker: currentLine.speaker, text: currentLine.text, isUser: !currentLine.isNpc, translation: currentLine.translation, audioUrl: currentLine.audioUrl } : null}
               history={packMediaReady ? dialogueRounds.map((line) => ({ speaker: line.speaker, text: line.text, isUser: !line.isNpc, translation: line.translation, audioUrl: line.audioUrl })) : []}

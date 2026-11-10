@@ -9,13 +9,13 @@ import { VnPlayer, type VnPlayerHandle, type VnPlayerLine } from '@/features/vn-
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { type StoryEpisodePlayerData } from '@/features/learning/api/learning-api'
 import { learningRepository } from '@/lib/offline'
-import { resolveInstalledAssetMap, resolveInstalledScene } from '@/lib/offline/installed-pack-media'
 import {
   clearPreparedStoryVnEntry,
   takePreparedStoryVnEntry,
   type PreparedStoryVnEntry,
 } from '@/features/vn-engine/prepare-story-vn-entry'
-import { vnTextureRuntime } from '@/features/vn-engine/vn-texture-runtime'
+import { useInstalledVnMedia } from '@/features/vn-engine/use-installed-vn-media'
+import { useVnTagVisuals } from '@/features/vn-engine/use-vn-tag-visuals'
 import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
 import { writeLocalStoryEpisodePassed } from '@/features/scripts/lib/story-chapter-progress'
 import { useLayoutStore } from '@/stores/layout.store'
@@ -26,8 +26,6 @@ import { useGlobalTaskStore } from '@/stores/global-task.store'
 import { createFileReference, uploadFileToCosAndComplete } from '@/features/file-assets/api'
 import {
   parseVnTags,
-  isBackgroundFit,
-  isSpritePosition,
   characterMatchesSpeaker,
 } from '@/features/practice/lib/practice-session-utils'
 
@@ -69,9 +67,9 @@ export function ScriptPlayerPage() {
       .finally(() => setLoading(false))
   }, [episodeId, packageId])
 
-  // Quiet black only for cold entry (no click-time prep). Prefer preparing on the episode buttons.
+  // Theme-colored hold while cold-loading (no click-time prep). Prefer preparing on the episode buttons.
   if (loading) {
-    return <div className="h-dvh bg-black" aria-busy="true" aria-label={t('common.loading')} />
+    return <div className="h-dvh bg-background" aria-busy="true" aria-label={t('common.loading')} />
   }
 
   if (failed || !data) {
@@ -147,103 +145,34 @@ function InkEpisodePlayer({
   const [repeatSaving, setRepeatSaving] = useState(false)
   const [repeatFrameIndex, setRepeatFrameIndex] = useState(0)
   const [isChatMode, setIsChatMode] = useState(false)
-  const [resolvedAssetMap, setResolvedAssetMap] = useState<StoryEpisodePlayerData['inkScript']['assetMap']>(
-    prepared?.assetMap,
-  )
-  const [resolvedScene, setResolvedScene] = useState(prepared?.scene ?? data.scene)
-  const [assetMapReady, setAssetMapReady] = useState(Boolean(prepared?.assetMap))
-  const [sceneAssetsReady, setSceneAssetsReady] = useState(Boolean(prepared?.scene))
   const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
   const startedAt = useRef(Date.now())
   const story = useInkStory(data.inkScript.inkJson)
   const { currentTags } = story
 
-  // Prefer click-time prep; otherwise resolve installed pack aliases here.
-  useEffect(() => {
-    if (prepared?.assetMap) {
-      setResolvedAssetMap(prepared.assetMap)
-      setAssetMapReady(true)
-      return
-    }
-    let cancelled = false
-    void resolveInstalledAssetMap(packageId, data.inkScript.assetMap).then((resolved) => {
-      if (cancelled) return
-      const entries = Object.values(resolved)
-      console.log('[script-player] resolved installed pack media', {
-        episodeId,
-        total: entries.length,
-        local: entries.filter((entry) => Boolean(entry.signedUrl)).length,
-      })
-      setResolvedAssetMap(resolved)
-    }).catch((error) => {
-      console.warn('[script-player] offline asset-map resolution failed', { episodeId, error })
-      if (!cancelled) setResolvedAssetMap({})
-    }).finally(() => {
-      if (!cancelled) setAssetMapReady(true)
-    })
-    return () => { cancelled = true }
-  }, [data.inkScript.assetMap, episodeId, packageId, prepared?.assetMap])
-
-  useEffect(() => {
-    if (prepared?.scene) {
-      setResolvedScene(prepared.scene)
-      setSceneAssetsReady(true)
-      vnTextureRuntime.warmup([prepared.backgroundUrl, prepared.spriteUrl])
-      return
-    }
-    let cancelled = false
-    void resolveInstalledScene(packageId, data.scene).then((scene) => {
-      if (!cancelled) setResolvedScene(scene)
-    }).catch((error) => console.warn('[script-player] offline scene resolution failed', { episodeId, error }))
-      .finally(() => { if (!cancelled) setSceneAssetsReady(true) })
-    return () => { cancelled = true }
-  }, [data.scene, episodeId, packageId, prepared?.backgroundUrl, prepared?.scene, prepared?.spriteUrl])
+  const { mediaReady, assetMap: resolvedAssetMap, scene: resolvedScene } = useInstalledVnMedia({
+    packageId,
+    revision: episodeId,
+    rawAssetMap: data.inkScript.assetMap,
+    rawScene: data.scene,
+    preparedAssetMap: prepared?.assetMap,
+    preparedScene: prepared?.scene,
+  })
+  const vnVisual = useVnTagVisuals({
+    currentTags,
+    mediaReady,
+    assetMap: resolvedAssetMap,
+    sceneBackgroundUrl: (resolvedScene as { backgroundUrl?: string | null } | null)?.backgroundUrl,
+    isWaiting: story.isWaiting,
+    initialBackgroundUrl: prepared?.backgroundUrl,
+  })
 
   // 跟踪是否刚提交了用户输入（用于在 currentLine 中优先展示用户输入）
   const userInputJustSubmittedRef = useRef(false)
 
-  // ── VN 视觉状态（与练习 VN 相同逻辑）──
-  const [vnVisual, setVnVisual] = useState<{
-    backgroundUrl?: string
-    backgroundFit?: 'cover' | 'contain' | 'stretch' | 'repeat'
-    speaker?: string
-    expression?: string
-    position?: 'left' | 'center' | 'right'
-  }>({
-    backgroundUrl: prepared?.backgroundUrl || resolvedScene?.backgroundUrl || undefined,
-    backgroundFit: 'cover',
-  })
-
-  useEffect(() => {
-    const tags = currentTags
-    if (tags.length === 0) return
-    const parsed = parseVnTags(tags, resolvedAssetMap)
-    setVnVisual((prev) => {
-      const next = {
-        backgroundUrl: parsed.bg || prev.backgroundUrl || (resolvedScene?.backgroundUrl ?? undefined),
-        backgroundFit: isBackgroundFit(parsed.bgFit) ? parsed.bgFit : prev.backgroundFit,
-        speaker: prev.speaker,
-        expression: prev.expression,
-        position: prev.position,
-      }
-      // isWaiting 时 tags 属于 pending 行，不更新立绘状态
-      if (!story.isWaiting) {
-        next.speaker = parsed.speaker || prev.speaker
-        next.expression = parsed.expression || prev.expression || 'default'
-        next.position = isSpritePosition(parsed.position) ? parsed.position : prev.position
-      }
-      return next
-    })
-  }, [currentTags, resolvedScene?.backgroundUrl, resolvedAssetMap, story.isWaiting])
-
-  // Warm the first (and later tag-driven) backgrounds before / while Pixi catches up.
-  useEffect(() => {
-    vnTextureRuntime.warmup([vnVisual.backgroundUrl || resolvedScene?.backgroundUrl])
-  }, [resolvedScene?.backgroundUrl, vnVisual.backgroundUrl])
-
   const inkLines = useMemo<VnPlayerLine[]>(
     () => story.lines.map((line) => {
-      const parsed = parseVnTags(line.tags, resolvedAssetMap)
+      const parsed = parseVnTags(line.tags, mediaReady ? resolvedAssetMap : undefined)
       return {
         speaker: line.speaker,
         text: line.text,
@@ -251,7 +180,7 @@ function InkEpisodePlayer({
         audioUrl: parsed.audio,
       }
     }),
-    [story.lines, resolvedAssetMap],
+    [mediaReady, resolvedAssetMap, story.lines],
   )
 
   // inkLines 变化时（advanceStory 推进了剧情），清除「刚提交」标记
@@ -286,7 +215,10 @@ function InkEpisodePlayer({
   const history = combined
 
   // ── 角色与立绘解析（与练习 VN 相同逻辑）──
-  const characters = useMemo(() => resolvedScene?.characters ?? [], [resolvedScene?.characters])
+  const characters = useMemo(
+    () => (resolvedScene as { characters?: any[] } | null)?.characters ?? [],
+    [resolvedScene],
+  )
   const currentCharacter = useMemo(() => {
     const speaker = vnVisual.speaker || (currentLine?.speaker && !currentLine.isUser ? currentLine.speaker : undefined)
     return characters.find((c) => characterMatchesSpeaker(c as any, speaker))
@@ -305,10 +237,13 @@ function InkEpisodePlayer({
     ? stateSpriteUrl || currentCharacter.spriteBaseUrl || undefined
     : undefined
   const spritePosition = (vnVisual.position || currentCharacter?.defaultPosition || 'center') as 'left' | 'center' | 'right'
-  const assetsResolving = !assetMapReady || !sceneAssetsReady
+  const assetsResolving = !mediaReady
 
   const repeatFrames = useMemo(
-    () => buildStoryRepeatFrames(data, { assetMap: resolvedAssetMap, scene: resolvedScene }),
+    () => buildStoryRepeatFrames(data, {
+      assetMap: resolvedAssetMap,
+      scene: (resolvedScene as StoryEpisodePlayerData['scene']) ?? data.scene,
+    }),
     [data, resolvedAssetMap, resolvedScene],
   )
   // Remotion runs on the server: never Capacitor file URLs, and keep signed audio
@@ -506,8 +441,8 @@ function InkEpisodePlayer({
         </button>
         </div>
       </div>
-      <div className="relative min-h-0 flex-1 bg-black">
-      {/* Ren'Py-style: black hold → dissolve images in. Never a spinner for media resolve. */}
+      <div className="relative min-h-0 flex-1 bg-background">
+      {/* Theme hold → dissolve images in. Never a spinner for media resolve. */}
       {mode === 'repeat' ? (
         assetsResolving ? null : (
           <VnMixedPreviewPlayer
@@ -535,12 +470,13 @@ function InkEpisodePlayer({
         onAdvance={assetsResolving ? undefined : story.advanceStory}
         onChoice={assetsResolving ? undefined : story.handleChoice}
         onSubmitInput={assetsResolving ? undefined : submitInput}
-        className="h-full max-w-none rounded-none border-0 bg-black"
+        className="h-full max-w-none rounded-none border-0 bg-background"
         stageClassName="min-h-0"
         hideChatTopBar
         showUserInputOverride
+        clearBackdrop
         offlineOnly
-        backgroundUrl={assetsResolving ? undefined : (vnVisual.backgroundUrl || resolvedScene?.backgroundUrl || undefined)}
+        backgroundUrl={assetsResolving ? undefined : vnVisual.backgroundUrl}
         backgroundFit={vnVisual.backgroundFit}
         currentSpriteUrl={assetsResolving ? undefined : currentSpriteUrl}
         spriteAlt={currentCharacter?.displayName || currentCharacter?.name}
