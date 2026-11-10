@@ -132,7 +132,36 @@ export class RenderScriptWorkDto {
 }
 
 export class ScriptReactionDto {
-  @IsIn(['太棒了', '发音真自然', '剧情感拉满', '我也在练', '继续加油', '学到了'])
+  @IsIn([
+    // zh-CN
+    '🤩 也太会了吧',
+    '🎤 发音拿捏了',
+    '🎭 戏精附体',
+    '🐣 同款选手报到',
+    '🔥 再来亿遍',
+    '✨ 学废我了',
+    // en
+    '🤩 So good!',
+    '🎤 Nailed the vibe',
+    '🎭 Main character energy',
+    '🐣 Same practice squad',
+    '🔥 One more round!',
+    '✨ Brain go brrr',
+    // ja
+    '🤩 天才すぎ',
+    '🎤 発音きもちいい',
+    '🎭 役者オーラ',
+    '🐣 同じの練習中',
+    '🔥 もう一回！',
+    '✨ 学んじゃった',
+    // legacy zh-CN (still stored on older works)
+    '太棒了',
+    '发音真自然',
+    '剧情感拉满',
+    '我也在练',
+    '继续加油',
+    '学到了',
+  ])
   reaction!: string
 }
 

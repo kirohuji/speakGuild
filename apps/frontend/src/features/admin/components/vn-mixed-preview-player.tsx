@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CheckCircle2, CircleDot, Film, Loader2, Lock, Mic, Pause, Play, RotateCcw, Settings, Square, Volume2 } from 'lucide-react'
+import { AudioLines, CheckCircle2, Eraser, Film, Loader2, Mic, Pause, Play, Settings, Square, Volume2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
@@ -338,15 +338,6 @@ export function VnMixedPreviewPlayer({
     setAudioLocks((prev) => ({ ...prev, [frameIndex]: source }))
   }
 
-  const clearAudioLock = (frameIndex: number) => {
-    setAudioLocks((prev) => {
-      if (!prev[frameIndex]) return prev
-      const next = { ...prev }
-      delete next[frameIndex]
-      return next
-    })
-  }
-
   const playPreferredFrame = (frame: MixedTimelineFrame) => {
     const url = resolveFramePlaybackUrl(frame, recordingUrls, audioLocks)
     const source = effectiveSource(frame)
@@ -384,11 +375,29 @@ export function VnMixedPreviewPlayer({
 
   const saveRecordingUrl = useCallback((frameIndex: number, url: string, blob: Blob) => {
     setRecordingUrls((prev) => {
-      if (prev[frameIndex]) URL.revokeObjectURL(prev[frameIndex])
+      if (prev[frameIndex] && prev[frameIndex] !== url) URL.revokeObjectURL(prev[frameIndex])
       return { ...prev, [frameIndex]: url }
     })
     recordingBlobsRef.current[frameIndex] = blob
   }, [])
+
+  const clearRecordingUrl = useCallback((frameIndex: number) => {
+    setRecordingUrls((prev) => {
+      if (!prev[frameIndex]) return prev
+      if (isObjectUrl(prev[frameIndex])) URL.revokeObjectURL(prev[frameIndex])
+      const next = { ...prev }
+      delete next[frameIndex]
+      return next
+    })
+    delete recordingBlobsRef.current[frameIndex]
+    setAudioLocks((prev) => {
+      if (prev[frameIndex] !== 'recording') return prev
+      const next = { ...prev }
+      delete next[frameIndex]
+      return next
+    })
+    if (playingRecordingIndex === frameIndex) clearRecordingPlayback()
+  }, [clearRecordingPlayback, playingRecordingIndex])
 
   const playRecordedFrame = (frameIndex: number, url: string) => {
     if (playingRecordingIndex === frameIndex) {
@@ -561,57 +570,77 @@ export function VnMixedPreviewPlayer({
             const isMissing = frame.kind === 'missingInput'
             const recordedUrl = recordingUrls[frame.index]
             const preferred = effectiveSource(frame)
-            const lockedSource = audioLocks[frame.index]
-            const canChooseLock = Boolean(frame.audioUrl && recordedUrl)
-            const iconBtn = (activeSource: boolean) => cn(
-              'flex size-7 items-center justify-center rounded-full transition-colors',
-              activeSource
-                ? (mobileSurface ? 'bg-primary/12 text-primary' : 'bg-white/10 text-cyan-100')
-                : (mobileSurface ? 'text-muted-foreground hover:bg-primary/10 hover:text-primary' : 'text-white/34 hover:bg-white/8 hover:text-cyan-100'),
+            const hasTts = Boolean(frame.audioUrl)
+            const hasRecording = Boolean(recordedUrl)
+            const hasBothSources = hasTts && hasRecording
+            const segmentBtn = (selected: boolean) => cn(
+              'flex h-6 min-w-8 items-center justify-center rounded-md px-2.5 transition-colors',
+              selected
+                ? 'bg-primary/25 text-primary'
+                : (mobileSurface ? 'text-muted-foreground hover:bg-muted hover:text-foreground' : 'text-white/34 hover:bg-white/8 hover:text-white/70'),
             )
             return (
               <div
                 key={frame.index}
                 ref={(node) => { itemRefs.current[frame.index] = node }}
                 className={cn(
-                  'grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-2 px-1 py-2 transition-colors',
+                  'w-full px-1 py-2 transition-colors',
                   active && (mobileSurface ? 'rounded-xl bg-primary/8 px-2 text-primary' : 'text-cyan-100'),
                 )}
               >
-                <button
-                  type="button"
-                  onClick={() => playPreferredFrame(frame)}
-                  className="min-w-0 text-left"
-                >
-                  <span className="flex items-center justify-between gap-2">
-                    <span className={cn(
-                      'truncate text-[11px] font-semibold',
-                      active ? (mobileSurface ? 'text-primary' : 'text-cyan-100') : (mobileSurface ? 'text-muted-foreground' : 'text-white/42'),
-                    )}>
-                      {mixedFrameLabel(frame)}
-                    </span>
-                  </span>
+                <div className="flex items-center gap-2">
                   <span className={cn(
-                    'mt-1 block whitespace-pre-wrap text-sm leading-5',
-                    active
-                      ? (mobileSurface ? 'font-semibold text-foreground' : 'font-semibold text-cyan-50')
-                      : isMissing ? (mobileSurface ? 'text-amber-700 dark:text-amber-300' : 'text-amber-100')
-                        : (mobileSurface ? 'text-foreground/82' : 'text-white/70'),
+                    'max-w-[40%] truncate text-base font-semibold leading-6',
+                    active ? (mobileSurface ? 'text-primary' : 'text-cyan-100') : (mobileSurface ? 'text-muted-foreground' : 'text-white/42'),
                   )}>
-                    {mixedFrameDisplayText(frame)}
+                    {mixedFrameLabel(frame)}
                   </span>
-                  {frame.translation && (
-                    <span className={cn('mt-1 block text-xs leading-5', active ? (mobileSurface ? 'text-primary/70' : 'text-cyan-100/55') : (mobileSurface ? 'text-muted-foreground' : 'text-white/35'))}>{frame.translation}</span>
+                  {(hasTts || hasRecording) && (
+                    <div
+                      className={cn(
+                        'flex shrink-0 items-center rounded-md p-0.5',
+                        hasBothSources
+                          ? (mobileSurface ? 'bg-muted' : 'bg-white/10')
+                          : 'bg-transparent',
+                      )}
+                      role={hasBothSources ? 'group' : undefined}
+                      aria-label={hasBothSources ? '音源选择' : undefined}
+                    >
+                      {hasTts && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (hasBothSources) lockAudioSource(frame.index, 'tts')
+                            playTtsFrame(frame.index, frame.audioUrl!)
+                          }}
+                          className={segmentBtn(preferred === 'tts')}
+                          title={hasBothSources ? (preferred === 'tts' ? '播放 TTS（当前选用）' : '选用并播放 TTS') : '播放 TTS'}
+                        >
+                          {playingTtsIndex === frame.index ? <Pause className="size-3 fill-current" /> : <Volume2 className="size-3" />}
+                        </button>
+                      )}
+                      {hasRecording && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (hasBothSources) lockAudioSource(frame.index, 'recording')
+                            playRecordedFrame(frame.index, recordedUrl!)
+                          }}
+                          className={segmentBtn(preferred === 'recording')}
+                          title={hasBothSources ? (preferred === 'recording' ? '回放录音（当前选用）' : '选用并回放录音') : '回放录音'}
+                        >
+                          {playingRecordingIndex === frame.index ? <Pause className="size-3 fill-current" /> : <AudioLines className="size-3" />}
+                        </button>
+                      )}
+                    </div>
                   )}
-                </button>
-                <div className="mt-1 flex flex-col items-end gap-0.5">
                   {!readOnly && (
                     <button
                       type="button"
                       disabled={!canFollowFrame(frame)}
                       onClick={() => openFollow(frame)}
                       className={cn(
-                        'flex size-7 items-center justify-center rounded-full transition-colors',
+                        'ml-auto flex h-6 min-w-8 shrink-0 items-center justify-center rounded-md px-2 transition-colors',
                         canFollowFrame(frame)
                           ? mobileSurface ? 'text-muted-foreground hover:bg-primary/10 hover:text-primary' : 'text-white/34 hover:bg-white/8 hover:text-emerald-100'
                           : mobileSurface ? 'cursor-not-allowed text-muted-foreground/30' : 'cursor-not-allowed text-white/10',
@@ -622,83 +651,25 @@ export function VnMixedPreviewPlayer({
                       <Mic className="size-3.5" />
                     </button>
                   )}
-                  {frame.audioUrl && (
-                    <div className="flex items-center gap-0.5">
-                      <button
-                        type="button"
-                        onClick={() => playTtsFrame(frame.index, frame.audioUrl!)}
-                        className={iconBtn(preferred === 'tts')}
-                        title="播放 TTS"
-                      >
-                        {playingTtsIndex === frame.index ? <Pause className="size-3.5 fill-current" /> : <Volume2 className="size-3.5" />}
-                      </button>
-                      {canChooseLock && preferred === 'tts' && (
-                        <button
-                          type="button"
-                          onClick={() => clearAudioLock(frame.index)}
-                          className={cn(
-                            'flex size-7 items-center justify-center rounded-full transition-colors',
-                            mobileSurface ? 'text-muted-foreground/45 hover:bg-muted hover:text-muted-foreground' : 'text-white/28 hover:bg-white/8 hover:text-white/50',
-                          )}
-                          title={lockedSource === 'tts' ? '当前使用 TTS（点击恢复默认）' : '当前使用 TTS'}
-                        >
-                          <CircleDot className="size-3.5" />
-                        </button>
-                      )}
-                      {canChooseLock && preferred !== 'tts' && (
-                        <button
-                          type="button"
-                          onClick={() => lockAudioSource(frame.index, 'tts')}
-                          className={cn(
-                            'flex size-7 items-center justify-center rounded-full transition-colors',
-                            mobileSurface ? 'text-amber-600 hover:bg-amber-500/10' : 'text-amber-200 hover:bg-white/8',
-                          )}
-                          title="锁定为 TTS"
-                        >
-                          <Lock className="size-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  {recordedUrl && (
-                    <div className="flex items-center gap-0.5">
-                      <button
-                        type="button"
-                        onClick={() => playRecordedFrame(frame.index, recordedUrl)}
-                        className={iconBtn(preferred === 'recording')}
-                        title="回放录音"
-                      >
-                        {playingRecordingIndex === frame.index ? <Pause className="size-3.5 fill-current" /> : <Play className="ml-0.5 size-3.5 fill-current" />}
-                      </button>
-                      {canChooseLock && preferred === 'recording' && (
-                        <button
-                          type="button"
-                          onClick={() => clearAudioLock(frame.index)}
-                          className={cn(
-                            'flex size-7 items-center justify-center rounded-full transition-colors',
-                            mobileSurface ? 'text-muted-foreground/45 hover:bg-muted hover:text-muted-foreground' : 'text-white/28 hover:bg-white/8 hover:text-white/50',
-                          )}
-                          title={lockedSource === 'recording' ? '当前使用用户录音（点击恢复默认）' : '当前使用用户录音'}
-                        >
-                          <CircleDot className="size-3.5" />
-                        </button>
-                      )}
-                      {canChooseLock && preferred !== 'recording' && (
-                        <button
-                          type="button"
-                          onClick={() => lockAudioSource(frame.index, 'recording')}
-                          className={cn(
-                            'flex size-7 items-center justify-center rounded-full transition-colors',
-                            mobileSurface ? 'text-amber-600 hover:bg-amber-500/10' : 'text-amber-200 hover:bg-white/8',
-                          )}
-                          title="锁定为用户录音"
-                        >
-                          <Lock className="size-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  )}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => playPreferredFrame(frame)}
+                  className="mt-1 w-full min-w-0 text-left"
+                >
+                  <span className={cn(
+                    'block whitespace-pre-wrap text-sm leading-6',
+                    active
+                      ? (mobileSurface ? 'font-semibold text-foreground' : 'font-semibold text-cyan-50')
+                      : isMissing ? (mobileSurface ? 'text-amber-700 dark:text-amber-300' : 'text-amber-100')
+                        : (mobileSurface ? 'text-foreground/82' : 'text-white/70'),
+                  )}>
+                    {mixedFrameDisplayText(frame)}
+                  </span>
+                  {frame.translation && (
+                    <span className={cn('mt-1 block text-[13px] leading-5', active ? (mobileSurface ? 'text-primary/70' : 'text-cyan-100/55') : (mobileSurface ? 'text-muted-foreground' : 'text-white/35'))}>{frame.translation}</span>
+                  )}
+                </button>
               </div>
             )
           })}
@@ -741,7 +712,9 @@ export function VnMixedPreviewPlayer({
           if (!open) setFollowFrame(null)
         }}
         frame={followFrame}
+        initialRecordingUrl={followFrame ? recordingUrls[followFrame.index] ?? null : null}
         onRecordingReady={saveRecordingUrl}
+        onRecordingClear={clearRecordingUrl}
       />
       <MixedPlaybackSettingsDialog
         open={settingsOpen}
@@ -759,12 +732,16 @@ export function FollowReadDrawer({
   open,
   onOpenChange,
   frame,
+  initialRecordingUrl = null,
   onRecordingReady,
+  onRecordingClear,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   frame: MixedTimelineFrame | null
+  initialRecordingUrl?: string | null
   onRecordingReady: (frameIndex: number, url: string, blob: Blob) => void
+  onRecordingClear?: (frameIndex: number) => void
 }) {
   const [recording, setRecording] = useState(false)
   const [elapsed, setElapsed] = useState(0)
@@ -777,6 +754,7 @@ export function FollowReadDrawer({
   const nativeSessionRef = useRef<NativeVoiceInputSession | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const recordedUrlRef = useRef<string | null>(null)
+  const ownsRecordedUrlRef = useRef(false)
   const ttsAudioRef = useRef<HTMLAudioElement | null>(null)
   const recordingAudioRef = useRef<HTMLAudioElement | null>(null)
   const startedAtRef = useRef(0)
@@ -805,12 +783,25 @@ export function FollowReadDrawer({
       setRecording(false)
       setElapsed(0)
       setError('')
+      if (ownsRecordedUrlRef.current && isObjectUrl(recordedUrlRef.current)) {
+        URL.revokeObjectURL(recordedUrlRef.current)
+      }
+      recordedUrlRef.current = null
+      ownsRecordedUrlRef.current = false
+      setRecordedUrl(null)
+      return
     }
-  }, [cleanupAudio, cleanupRecording, open])
+    recordedUrlRef.current = initialRecordingUrl
+    ownsRecordedUrlRef.current = false
+    setRecordedUrl(initialRecordingUrl)
+  }, [cleanupAudio, cleanupRecording, initialRecordingUrl, open])
 
   useEffect(() => () => {
     cleanupRecording()
     cleanupAudio()
+    if (ownsRecordedUrlRef.current && isObjectUrl(recordedUrlRef.current)) {
+      URL.revokeObjectURL(recordedUrlRef.current)
+    }
   }, [cleanupAudio, cleanupRecording])
 
   useEffect(() => {
@@ -853,9 +844,13 @@ export function FollowReadDrawer({
       }
       recorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || mimeType || 'audio/webm' })
-        recordedUrlRef.current = URL.createObjectURL(blob)
-        setRecordedUrl(recordedUrlRef.current)
-        if (frame) onRecordingReady(frame.index, recordedUrlRef.current, blob)
+        if (ownsRecordedUrlRef.current && isObjectUrl(recordedUrlRef.current)) URL.revokeObjectURL(recordedUrlRef.current)
+        const url = URL.createObjectURL(blob)
+        recordedUrlRef.current = url
+        // Parent stores this URL after onRecordingReady; drawer must not revoke it.
+        ownsRecordedUrlRef.current = false
+        setRecordedUrl(url)
+        if (frame) onRecordingReady(frame.index, url, blob)
         cleanupRecording()
       }
       recorderRef.current = recorder
@@ -882,8 +877,9 @@ export function FollowReadDrawer({
         }
         const result = await nativeSession.stop()
         const url = result.playbackUrl || URL.createObjectURL(result.blob)
-        if (isObjectUrl(recordedUrlRef.current)) URL.revokeObjectURL(recordedUrlRef.current)
+        if (ownsRecordedUrlRef.current && isObjectUrl(recordedUrlRef.current)) URL.revokeObjectURL(recordedUrlRef.current)
         recordedUrlRef.current = url
+        ownsRecordedUrlRef.current = false
         setRecordedUrl(url)
         if (frame) onRecordingReady(frame.index, url, result.blob)
         console.log('[repeat-vn] native microphone recording stopped', {
@@ -923,13 +919,16 @@ export function FollowReadDrawer({
     audio.play().catch(() => setPlayingRecording(false))
   }, [cleanupAudio, recordedUrl])
 
-  const resetRecording = useCallback(() => {
+  const clearRecording = useCallback(() => {
     cleanupAudio()
-    if (isObjectUrl(recordedUrlRef.current)) URL.revokeObjectURL(recordedUrlRef.current)
+    // Parent owns handed-off blob URLs and revokes them in onRecordingClear.
+    if (ownsRecordedUrlRef.current && isObjectUrl(recordedUrlRef.current)) URL.revokeObjectURL(recordedUrlRef.current)
     recordedUrlRef.current = null
+    ownsRecordedUrlRef.current = false
     setRecordedUrl(null)
     setElapsed(0)
-  }, [cleanupAudio])
+    if (frame) onRecordingClear?.(frame.index)
+  }, [cleanupAudio, frame, onRecordingClear])
 
   const formatElapsed = (ms: number) => {
     const seconds = Math.floor(ms / 1000)
@@ -946,9 +945,22 @@ export function FollowReadDrawer({
               <DrawerTitle className="text-sm font-semibold text-foreground">跟读检查</DrawerTitle>
               <p className="mt-1 truncate text-xs text-muted-foreground">{frame?.speaker || '旁白'}</p>
             </div>
-            <span className={cn('rounded px-2 py-1 text-[11px]', recording ? 'bg-rose-500/10 text-rose-700' : 'bg-muted text-muted-foreground')}>
-              {recording ? formatElapsed(elapsed) : recordedUrl ? '已录音' : '待录音'}
-            </span>
+            <div className="flex shrink-0 items-center gap-1.5">
+              {recordedUrl && !recording && (
+                <button
+                  type="button"
+                  onClick={clearRecording}
+                  className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  title="清空录音"
+                  aria-label="清空录音"
+                >
+                  <Eraser className="size-3.5" />
+                </button>
+              )}
+              <span className={cn('rounded px-2 py-1 text-[11px]', recording ? 'bg-rose-500/10 text-rose-700' : 'bg-muted text-muted-foreground')}>
+                {recording ? formatElapsed(elapsed) : recordedUrl ? '已录音' : '待录音'}
+              </span>
+            </div>
           </div>
         </DrawerHeader>
 
@@ -986,21 +998,10 @@ export function FollowReadDrawer({
               disabled={!recordedUrl || recording}
               onClick={playRecording}
             >
-              {playingRecording ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
+              {playingRecording ? <Pause className="size-3.5" /> : <AudioLines className="size-3.5" />}
               回放
             </Button>
           </div>
-
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={!recordedUrl || recording}
-            onClick={resetRecording}
-            className="h-9 w-full gap-1.5 text-muted-foreground hover:text-foreground"
-          >
-            <RotateCcw className="size-3.5" />
-            重录
-          </Button>
         </div>
       </DrawerContent>
     </Drawer>

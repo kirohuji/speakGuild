@@ -142,12 +142,66 @@ export function buildPackReadModel(unitDetail: any, topicDetails: any[]): PackRe
     }
   })
 
-  const vocabCount = new Set(topics.flatMap((source) => (source.vocabularies ?? []).map((item) => item?.id).filter(Boolean))).size
-    || (unitDetail?.vocabularies?.length ?? 0)
-  const chunkCount = new Set(topics.flatMap((source) => (source.activeChunks ?? []).map((item) => item?.id).filter(Boolean))).size
-    || (unitDetail?.chunks?.length ?? 0)
-  const patternCount = new Set(topics.flatMap((source) => (source.sentencePatterns ?? []).map((item) => item?.id ?? item?.pattern).filter(Boolean))).size
-    || (unitDetail?.sentencePatterns?.length ?? 0)
+  // Mirror topic cards: chapter/episode shells keep counts only; expression
+  // bodies are read later via listContentPage({ topicId }).
+  const leanChapterShell = (chapter: any) => {
+    const vocabularies = chapter?.vocabularies ?? []
+    const chunks = chapter?.chunks ?? []
+    const patterns = chapter?.sentencePatterns ?? []
+    const {
+      vocabularies: _v,
+      chunks: _c,
+      sentencePatterns: _p,
+      ...rest
+    } = chapter ?? {}
+    return {
+      ...rest,
+      hasTeachingDocument: Boolean(chapter?.hasTeachingDocument || chapter?.teachingMarkdown?.trim()),
+      vocabCount: vocabularies.length,
+      chunkCount: chunks.length,
+      patternCount: patterns.length,
+      vocabularies: [],
+      chunks: [],
+      sentencePatterns: [],
+    }
+  }
+
+  const rawStoryEpisodes = unitDetail?.storyEpisodes ?? []
+  const rawNqtrChapters = unitDetail?.nqtrChapters
+    ?? (unitDetail?.offlineNqtrBundle?.chapters ?? [])
+  const storyEpisodes = rawStoryEpisodes.map(leanChapterShell)
+  const nqtrChapters = rawNqtrChapters.map(leanChapterShell)
+
+  // Package-level counts come from child sources only (topics + chapters),
+  // matching learning-plan aggregation — not a second copy on unitDetail.
+  const isNovel = unitDetail?.contentMode === 'novel'
+  const chapterVocabIds = [
+    ...rawStoryEpisodes.flatMap((episode: any) => (episode.vocabularies ?? []).map((item: any) => item?.id).filter(Boolean)),
+    ...rawNqtrChapters.flatMap((chapter: any) => (chapter.vocabularies ?? []).map((item: any) => item?.id).filter(Boolean)),
+  ]
+  const chapterChunkIds = [
+    ...rawStoryEpisodes.flatMap((episode: any) => (episode.chunks ?? []).map((item: any) => item?.id).filter(Boolean)),
+    ...rawNqtrChapters.flatMap((chapter: any) => (chapter.chunks ?? []).map((item: any) => item?.id).filter(Boolean)),
+  ]
+  const chapterPatternIds = [
+    ...rawStoryEpisodes.flatMap((episode: any) => (episode.sentencePatterns ?? []).map((item: any) => item?.id ?? item?.pattern).filter(Boolean)),
+    ...rawNqtrChapters.flatMap((chapter: any) => (chapter.sentencePatterns ?? []).map((item: any) => item?.id ?? item?.pattern).filter(Boolean)),
+  ]
+  const vocabCount = new Set([
+    ...topics.flatMap((source) => (source.vocabularies ?? []).map((item) => item?.id).filter(Boolean)),
+    ...(isNovel ? (unitDetail?.vocabularies ?? []).map((item: any) => item?.id).filter(Boolean) : []),
+    ...chapterVocabIds,
+  ]).size
+  const chunkCount = new Set([
+    ...topics.flatMap((source) => (source.activeChunks ?? []).map((item) => item?.id).filter(Boolean)),
+    ...(isNovel ? (unitDetail?.chunks ?? []).map((item: any) => item?.id).filter(Boolean) : []),
+    ...chapterChunkIds,
+  ]).size
+  const patternCount = new Set([
+    ...topics.flatMap((source) => (source.sentencePatterns ?? []).map((item) => item?.id ?? item?.pattern).filter(Boolean)),
+    ...(isNovel ? (unitDetail?.sentencePatterns ?? []).map((item: any) => item?.id ?? item?.pattern).filter(Boolean) : []),
+    ...chapterPatternIds,
+  ]).size
 
   const summary = {
     id: unitSummaryId(unitId),
@@ -168,15 +222,8 @@ export function buildPackReadModel(unitDetail: any, topicDetails: any[]): PackRe
     requiredUserLevel: unitDetail?.requiredUserLevel ?? 0,
     prerequisites: unitDetail?.prerequisites ?? [],
     firstEpisode: unitDetail?.firstEpisode ?? null,
-    storyEpisodes: unitDetail?.storyEpisodes ?? [],
-    nqtrChapters: (unitDetail?.offlineNqtrBundle?.chapters ?? []).map((chapter: any) => ({
-      id: chapter.id,
-      title: chapter.title,
-      summary: chapter.summary ?? null,
-      teachingMarkdown: chapter.teachingMarkdown ?? null,
-      hasTeachingDocument: Boolean(chapter.hasTeachingDocument || chapter.teachingMarkdown?.trim()),
-      sortOrder: chapter.sortOrder ?? 0,
-    })),
+    storyEpisodes,
+    nqtrChapters,
     offlineNqtrBundle: unitDetail?.offlineNqtrBundle ?? null,
     novelPackage: unitDetail?.novelPackage ?? null,
     scriptCount: unitDetail?.scriptCount ?? 0,

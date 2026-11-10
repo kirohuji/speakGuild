@@ -1354,6 +1354,15 @@ export class LearningService {
                     word: true,
                     meaning: true,
                     partOfSpeech: true,
+                    phoneticUs: true,
+                    phoneticUk: true,
+                    audioUsUrl: true,
+                    audioUkUrl: true,
+                    definitionEn: true,
+                    synonyms: true,
+                    examples: true,
+                    description: true,
+                    difficulty: true,
                   },
                 },
               },
@@ -1366,6 +1375,10 @@ export class LearningService {
                     id: true,
                     text: true,
                     meaning: true,
+                    description: true,
+                    category: true,
+                    difficulty: true,
+                    examples: { orderBy: { sortOrder: 'asc' } },
                   },
                 },
               },
@@ -1378,6 +1391,11 @@ export class LearningService {
                     id: true,
                     pattern: true,
                     meaning: true,
+                    category: true,
+                    description: true,
+                    slots: true,
+                    examples: true,
+                    difficulty: true,
                   },
                 },
               },
@@ -1417,6 +1435,7 @@ export class LearningService {
     const vocabMap = new Map<string, any>();
     const chunkMap = new Map<string, any>();
     const sentencePatterns: any[] = [];
+    const patternIds = new Set<string>();
 
     for (const item of scene.contentMode === 'novel' ? scene.sceneVocabularies : []) {
       const v = item.vocabulary;
@@ -1448,8 +1467,17 @@ export class LearningService {
         examples: c.examples,
       });
     }
+    const pushPattern = (pattern: any, topicId: string, topicTitle: string) => {
+      const id = typeof pattern?.id === 'string' ? pattern.id : '';
+      if (id) {
+        if (patternIds.has(id)) return;
+        patternIds.add(id);
+      }
+      sentencePatterns.push({ ...pattern, topicId, topicTitle });
+    };
+
     for (const item of scene.contentMode === 'novel' ? scene.scenePatterns : []) {
-      sentencePatterns.push({ ...item.pattern, topicId: '', topicTitle: scene.title });
+      pushPattern(item.pattern, '', scene.title);
     }
 
     for (const topic of scene.trainingTopics) {
@@ -1488,11 +1516,7 @@ export class LearningService {
         }
       }
       for (const tp of topic.topicPatterns) {
-        sentencePatterns.push({
-          ...tp.pattern,
-          topicId: topic.id,
-          topicTitle: topic.title,
-        });
+        pushPattern(tp.pattern, topic.id, topic.title);
       }
     }
 
@@ -1532,11 +1556,48 @@ export class LearningService {
         }
       }
       for (const item of chapter.sentencePatterns) {
-        sentencePatterns.push({
-          ...item.pattern,
-          topicId: chapter.id,
-          topicTitle: chapter.title,
-        });
+        pushPattern(item.pattern, chapter.id, chapter.title);
+      }
+    }
+
+    // 剧情章节材料汇总到包级列表，供剧情包详情「剧中表达」展示。
+    for (const episode of scene.storyEpisodes) {
+      for (const item of episode.vocabularies) {
+        const v = item.vocabulary;
+        if (!vocabMap.has(v.id)) {
+          vocabMap.set(v.id, {
+            id: v.id,
+            word: v.word,
+            meaning: v.meaning,
+            partOfSpeech: v.partOfSpeech,
+            phoneticUs: v.phoneticUs,
+            phoneticUk: v.phoneticUk,
+            audioUsUrl: v.audioUsUrl,
+            audioUkUrl: v.audioUkUrl,
+            definitionEn: v.definitionEn,
+            synonyms: v.synonyms,
+            examples: v.examples,
+            description: v.description,
+            difficulty: v.difficulty,
+          });
+        }
+      }
+      for (const item of episode.chunks) {
+        const c = item.chunk;
+        if (!chunkMap.has(c.id)) {
+          chunkMap.set(c.id, {
+            id: c.id,
+            text: c.text,
+            meaning: c.meaning,
+            description: c.description,
+            category: c.category,
+            difficulty: c.difficulty,
+            examples: c.examples,
+          });
+        }
+      }
+      for (const item of episode.sentencePatterns) {
+        pushPattern(item.pattern, episode.id, episode.chapterName || episode.title);
       }
     }
 
@@ -2090,12 +2151,30 @@ export class LearningService {
       };
     }
 
-    // Topic-based packs rebuild knowledge from topicDetails. Novel packs have no
-    // topics, so their Scene-level knowledge must remain in the offline detail.
+    // Practice / story / nqtr packs keep knowledge on child records (topics /
+    // episodes / chapters). The installed package rebuilds the package-level
+    // expression list from the content index — same as learning-plan packs.
+    // Only novel packs keep Scene-level knowledge on the unit detail itself.
     const { vocabularies: unitVocabs, chunks: unitChunks, sentencePatterns: unitPatterns, trainingTopics: _tt, ...unitBase } = unitDetail as any;
-    const leanUnitDetail = unitDetail.contentMode === 'novel'
-      ? { ...unitBase, vocabularies: unitVocabs, chunks: unitChunks, sentencePatterns: unitPatterns, trainingTopics: [] }
+    const keepUnitKnowledge = unitDetail.contentMode === 'novel';
+    const leanUnitDetail = keepUnitKnowledge
+      ? {
+          ...unitBase,
+          vocabularies: unitVocabs,
+          chunks: unitChunks,
+          sentencePatterns: unitPatterns,
+          trainingTopics: [],
+        }
       : unitBase;
+
+    const chapterVocabularies = [
+      ...((unitDetail as any).storyEpisodes ?? []).flatMap((episode: any) => episode.vocabularies ?? []),
+      ...((unitDetail as any).nqtrChapters ?? []).flatMap((chapter: any) => chapter.vocabularies ?? []),
+    ];
+    const chapterChunks = [
+      ...((unitDetail as any).storyEpisodes ?? []).flatMap((episode: any) => episode.chunks ?? []),
+      ...((unitDetail as any).nqtrChapters ?? []).flatMap((chapter: any) => chapter.chunks ?? []),
+    ];
 
     // Vocabulary pronunciation is a primary offline-learning interaction.
     // Keep both accents: the client lets learners switch between US and UK
@@ -2103,7 +2182,8 @@ export class LearningService {
     // a network request in the native app.
     const packagedVocabularies = [
       ...topicDetails.flatMap((topicDetail) => topicDetail.vocabularies ?? []),
-      ...(unitDetail.contentMode === 'novel' ? (unitVocabs ?? []) : []),
+      ...(keepUnitKnowledge ? (unitVocabs ?? []) : []),
+      ...chapterVocabularies,
     ];
     const pronunciationMigrations = new Map<string, Promise<string | null>>();
     const resolvePronunciation = (vocabulary: any, field: 'audioUsUrl' | 'audioUkUrl') => {
@@ -2132,8 +2212,12 @@ export class LearningService {
       }));
     }
 
-    const totalVocabs = topicDetails.reduce((sum, td) => sum + (td.vocabularies?.length ?? 0), 0);
-    const totalChunks = topicDetails.reduce((sum, td) => sum + (td.activeChunks?.length ?? 0), 0);
+    const totalVocabs = topicDetails.reduce((sum, td) => sum + (td.vocabularies?.length ?? 0), 0)
+      + chapterVocabularies.length
+      + (keepUnitKnowledge ? (unitVocabs?.length ?? 0) : 0);
+    const totalChunks = topicDetails.reduce((sum, td) => sum + (td.activeChunks?.length ?? 0), 0)
+      + chapterChunks.length
+      + (keepUnitKnowledge ? (unitChunks?.length ?? 0) : 0);
     const versions = [
       ...topics.map((t) => t.inkScript?.version ?? 1),
       ...storyEpisodePlayers.map((episode) => episode.inkScript?.version ?? 1),
@@ -2143,17 +2227,19 @@ export class LearningService {
     ];
     const version = versions.reduce((sum, v) => sum + Number(v || 0), 1);
 
-    // manifest IDs from per-topic data
+    // manifest IDs from child content sources (topics / chapters / novel unit)
     const allVocabIds = new Set<string>();
     const allChunkIds = new Set<string>();
     for (const td of topicDetails) {
       for (const v of td.vocabularies ?? []) allVocabIds.add(v.id);
       for (const c of td.activeChunks ?? []) allChunkIds.add(c.id);
     }
-    if (unitDetail.contentMode === 'novel') {
+    if (keepUnitKnowledge) {
       for (const v of unitVocabs ?? []) if (v?.id) allVocabIds.add(v.id);
       for (const c of unitChunks ?? []) if (c?.id) allChunkIds.add(c.id);
     }
+    for (const v of chapterVocabularies) if (v?.id) allVocabIds.add(v.id);
+    for (const c of chapterChunks) if (c?.id) allChunkIds.add(c.id);
 
     await this.attachFileAssetIdentities(assets);
 

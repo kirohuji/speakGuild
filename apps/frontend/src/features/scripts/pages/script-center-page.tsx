@@ -17,6 +17,7 @@ import {
   Clock3,
   Download,
   Film,
+  Footprints,
   Heart,
   History,
   Image,
@@ -28,7 +29,6 @@ import {
   Search,
   ShoppingBag,
   SmilePlus,
-  Sparkles,
   Trash2,
   Users,
 } from 'lucide-react'
@@ -187,6 +187,8 @@ export function ScriptCenterPage() {
   const [recordsOpen, setRecordsOpen] = useState(panel === 'records')
   const [downloadOpen, setDownloadOpen] = useState(false)
   const [publishHistoryOpen, setPublishHistoryOpen] = useState(false)
+  const [practiceSameWork, setPracticeSameWork] = useState<ScriptWork | null>(null)
+  const [shopFocus, setShopFocus] = useState<{ unitId: string; episodeId: string } | null>(null)
   const [shopUnits, setShopUnits] = useState<LearningUnitSummary[]>([])
   const [shopLoading, setShopLoading] = useState(false)
   const [records, setRecords] = useState<ScriptPracticeRecord[]>([])
@@ -263,9 +265,21 @@ export function ScriptCenterPage() {
   const setPanel = useCallback((next: 'store' | 'records' | null) => {
     const params = new URLSearchParams(searchParams)
     if (next) params.set('panel', next)
-    else params.delete('panel')
+    else {
+      params.delete('panel')
+      setShopFocus(null)
+    }
     setSearchParams(params, { replace: true })
   }, [searchParams, setSearchParams])
+
+  const openPracticeSameInShop = useCallback((work: ScriptWork) => {
+    setShopFocus({
+      unitId: work.episode.scene.id,
+      episodeId: work.episode.id,
+    })
+    setPracticeSameWork(null)
+    setPanel('store')
+  }, [setPanel])
 
   const closeReplay = useCallback(() => {
     // Vaul listens at the document level. When the full-screen dialog is
@@ -549,6 +563,7 @@ export function ScriptCenterPage() {
             works={visibleFeed}
             loading={feedLoading || !feedReady}
             onOpenShop={() => setPanel('store')}
+            onPracticeSame={setPracticeSameWork}
             onWorkChanged={updateFeedWork}
             hasMore={Boolean(feedCursor)}
             loadingMore={feedLoadingMore}
@@ -556,6 +571,49 @@ export function ScriptCenterPage() {
           />
         </TabsContent>
       </Tabs>
+
+      <Drawer open={Boolean(practiceSameWork)} onOpenChange={(open) => { if (!open) setPracticeSameWork(null) }}>
+        <DrawerContent className="rounded-t-[28px] border-0 bg-background drawer-surface">
+          <DrawerHeader className="px-4 pb-1 pt-2 text-left">
+            <DrawerTitle className="text-base font-semibold">{t('scripts.practiceSameTitle')}</DrawerTitle>
+          </DrawerHeader>
+          {practiceSameWork && (
+            <div className="flex flex-col gap-4 px-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+              <p className="text-sm text-muted-foreground">{t('scripts.practiceSameHint')}</p>
+              <div className="flex gap-3 rounded-xl bg-muted/40 p-3">
+                <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-muted-foreground">
+                  {practiceSameWork.coverUrl || practiceSameWork.episode.scene.coverImage ? (
+                    <img
+                      src={practiceSameWork.coverUrl ?? practiceSameWork.episode.scene.coverImage ?? undefined}
+                      alt=""
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <Clapperboard className="size-5" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{practiceSameWork.episode.scene.title}</p>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {practiceSameWork.episode.chapterName} · {practiceSameWork.episode.title}
+                  </p>
+                  <Badge variant="secondary" className="mt-2 h-5 rounded-full px-2 text-[10px]">
+                    {practiceSameWork.kind === 'progress_card'
+                      ? t('scripts.learningProgress')
+                      : practiceSameWork.kind === 'vn_video'
+                        ? t('scripts.workKindVn')
+                        : t('scripts.workKindRepeat')}
+                  </Badge>
+                </div>
+              </div>
+              <Button className="w-full" onClick={() => openPracticeSameInShop(practiceSameWork)}>
+                <ShoppingBag data-icon="inline-start" />
+                {t('scripts.practiceSameGoShop')}
+              </Button>
+            </div>
+          )}
+        </DrawerContent>
+      </Drawer>
 
       <LearningPackDownloadDrawer open={downloadOpen} onOpenChange={setDownloadOpen} />
       <ScriptPublishHistoryDialog
@@ -605,6 +663,8 @@ export function ScriptCenterPage() {
               installedIds={installedIds}
               downloadTasks={downloadTasks}
               loading={shopLoading || !shopReady}
+              focusUnitId={shopFocus?.unitId}
+              focusEpisodeId={shopFocus?.episodeId}
               onRefresh={loadShop}
               onEnroll={enroll}
               onDownload={downloadUnitPack}
@@ -678,16 +738,16 @@ function MineScripts({
   // 不再整页返回，避免隐藏“我的作品”等独立数据，也避免空状态与内容来回切换闪烁。
   return (
     <div className="flex flex-col gap-6" data-spotlight="first-script-card">
-      {activeUnit && (
+      {activeUnit && (() => {
+        const activeInstalled = installedIds.has(activeUnit.id)
+        const activeDownloading = downloadTasks.some((task) => task.packId === activeUnit.id && task.status !== 'error' && task.status !== 'done')
+        return (
         <section className="flex flex-col gap-2">
           <p className="px-1 text-xs font-medium text-muted-foreground">{t('scripts.continuePerformance')}</p>
           <Card className="overflow-hidden border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
             <div className="p-4">
               <div className="flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-3">
-                  {/* <Badge variant="secondary">
-                    {installedIds.has(activeUnit.id) ? '已离线' : '等待下载'}
-                  </Badge> */}
                   <span className="text-xs font-medium text-muted-foreground">
                     {Math.round(activeUnit.completionPercent)}%
                   </span>
@@ -701,7 +761,7 @@ function MineScripts({
                   </button>
                 </div>
                 <div className="flex flex-col gap-2.5">
-                  <div>
+                  <div className={cn(!activeInstalled && 'opacity-70')}>
                     <p className="text-xs text-muted-foreground">{displayLearningUnitLocation(activeUnit.location, t('scripts.pocketTheater'))}</p>
                     <h1 className="mt-0.5 text-xl font-semibold tracking-tight">{activeUnit.title}</h1>
                     {activeUnit.description && (
@@ -711,34 +771,43 @@ function MineScripts({
                     )}
                   </div>
                   <Progress value={activeUnit.completionPercent} className="h-1.5" />
-                  <div className="flex gap-2">
-                    {installedIds.has(activeUnit.id) ? (
+                  {!activeInstalled ? (
+                    <div className="flex items-center justify-between gap-3 rounded-md bg-muted/20 px-3 py-2">
+                      <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                        {activeDownloading ? t('scripts.preparingOffline') : t('scripts.packNeedsDownload')}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 shrink-0 rounded-full px-0 text-foreground hover:bg-muted"
+                        disabled={activeDownloading}
+                        onClick={() => void onDownload(activeUnit.id)}
+                        aria-label={t('scripts.downloadScript')}
+                      >
+                        {activeDownloading ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
                       <Button asChild className="flex-1 rounded-full">
                         <Link to={`/scripts/packages/${activeUnit.id}`}>
                           <Play data-icon="inline-start" />
                           {t('scripts.continueStory')}
                         </Link>
                       </Button>
-                    ) : (
-                      <Button
-                        className="flex-1 rounded-full"
-                        disabled={downloadTasks.some((task) => task.packId === activeUnit.id && task.status !== 'error')}
-                        onClick={() => void onDownload(activeUnit.id)}
-                      >
-                        <Download data-icon="inline-start" />
-                        {t('scripts.downloadScript')}
+                      <Button asChild variant="secondary" className="rounded-full border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
+                        <Link to={`/scripts/packages/${activeUnit.id}`}>{t('scripts.chapterList')}</Link>
                       </Button>
-                    )}
-                    <Button asChild variant="secondary" className="rounded-full border-0 bg-primary/10 text-primary shadow-none hover:bg-primary/16 hover:text-primary">
-                      <Link to={`/scripts/packages/${activeUnit.id}`}>{t('scripts.chapterList')}</Link>
-                    </Button>
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </Card>
         </section>
-      )}
+        )
+      })()}
 
       {/* <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between px-1">
@@ -802,13 +871,21 @@ function MineScripts({
           <div className="-mx-2 flex snap-x gap-2 overflow-x-auto px-2 pb-1">
             {units.map((unit) => {
             const installed = installedIds.has(unit.id)
-            const downloading = downloadTasks.some((task) => task.packId === unit.id && task.status !== 'error')
+            const downloading = downloadTasks.some((task) => task.packId === unit.id && task.status !== 'error' && task.status !== 'done')
+            const blocked = !installed || downloading
             const location = displayLearningUnitLocation(unit.location, t('scripts.immersiveTheater'))
 
             return (
               <div key={unit.id} className="group relative w-44 shrink-0 snap-start">
                 <Card className="w-44 shrink-0 snap-start overflow-hidden border-0 bg-muted/30 shadow-none ring-0 transition-transform group-active:scale-[0.98] dark:ring-0">
-                  <Link to={`/scripts/packages/${unit.id}`} className="block">
+                  <Link
+                    to={`/scripts/packages/${unit.id}`}
+                    aria-disabled={blocked}
+                    onClick={(event) => {
+                      if (blocked) event.preventDefault()
+                    }}
+                    className={cn('block', blocked && 'cursor-default opacity-70')}
+                  >
                     <div className="relative aspect-video overflow-hidden bg-muted/50">
                       <ScriptCover
                         url={unit.coverImage}
@@ -819,6 +896,37 @@ function MineScripts({
                       <Badge variant="secondary" className="absolute left-3 top-3">
                         {t('scripts.chapters', { count: unit.scriptCount })}
                       </Badge>
+                      {!installed && (
+                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-background/80 px-2.5 py-1.5 backdrop-blur-sm">
+                          <p className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">
+                            {downloading ? t('scripts.preparingOffline') : t('scripts.packNeedsDownload')}
+                          </p>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            className={cn(
+                              'flex size-7 shrink-0 items-center justify-center rounded-full text-foreground',
+                              downloading ? 'opacity-60' : 'hover:bg-muted',
+                            )}
+                            aria-label={t('scripts.downloadScript')}
+                            onClick={(event) => {
+                              event.preventDefault()
+                              event.stopPropagation()
+                              if (!downloading) void onDownload(unit.id)
+                            }}
+                            onKeyDown={(event) => {
+                              if (downloading) return
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault()
+                                event.stopPropagation()
+                                void onDownload(unit.id)
+                              }
+                            }}
+                          >
+                            {downloading ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <CardHeader className="p-2.5 pb-2">
                       <CardTitle className="truncate text-sm">{unit.title}</CardTitle>
@@ -827,19 +935,6 @@ function MineScripts({
                       </CardDescription>
                     </CardHeader>
                   </Link>
-                  {!installed && (
-                    <CardFooter className="p-2.5 pt-0">
-                      <Button
-                        size="sm"
-                        className="h-8 w-full rounded-lg text-xs"
-                        disabled={downloading}
-                        onClick={() => void onDownload(unit.id)}
-                      >
-                        {downloading ? <Loader2 className="animate-spin" /> : <Download data-icon="inline-start" />}
-                        {t('scripts.downloadScript')}
-                      </Button>
-                    </CardFooter>
-                  )}
                 </Card>
               <button
                 type="button"
@@ -1009,6 +1104,8 @@ function MyWorks({
             <CardDescription className="truncate text-xs">{t('scripts.chapterLabel', { name: work.episode.chapterName })}</CardDescription>
           </CardHeader>
           <CardFooter className="px-2.5 pb-2.5">
+            {/* Temporarily hide generate/regenerate video; keep publish/unpublish/cancel only. */}
+            {(work.videoUrl || work.status === 'rendering' || work.status === 'published' || generating[work.id]) ? (
             <div className="w-full">
               <Button
                 size="sm"
@@ -1023,6 +1120,7 @@ function MyWorks({
               </Button>
               {generating[work.id] && <Progress value={generating[work.id]} className="mt-1.5 h-1" />}
             </div>
+            ) : null}
           </CardFooter>
         </Card>
       ))}
@@ -1493,6 +1591,7 @@ function EpisodeWorkHistoryDialog({
         }] : []}
         plugins={[Video]}
         controller={{ closeOnBackdropClick: false, closeOnPullDown: false, closeOnPullUp: false }}
+        video={{ controls: true, playsInline: true, controlsList: 'nodownload' }}
         styles={{
           toolbar: {
             top: 'env(safe-area-inset-top, 0px)',
@@ -1678,6 +1777,7 @@ function SquareFeed({
   works,
   loading,
   onOpenShop,
+  onPracticeSame,
   onWorkChanged,
   hasMore,
   loadingMore,
@@ -1686,6 +1786,7 @@ function SquareFeed({
   works: ScriptWork[]
   loading: boolean
   onOpenShop: () => void
+  onPracticeSame: (work: ScriptWork) => void
   onWorkChanged: (workId: string, updater: (work: ScriptWork) => ScriptWork) => void
   hasMore: boolean
   loadingMore: boolean
@@ -1693,7 +1794,44 @@ function SquareFeed({
 }) {
   const { t } = useTranslation()
   const [previewWork, setPreviewWork] = useState<ScriptWork | null>(null)
+  const [previewStartAt, setPreviewStartAt] = useState(0)
+  const [inlinePlayingId, setInlinePlayingId] = useState<string | null>(null)
   const [pendingActions, setPendingActions] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    if (!previewWork?.videoUrl) return
+    const startAt = previewStartAt
+    let cancelled = false
+    let attempts = 0
+
+    const seekVideo = (video: HTMLVideoElement) => {
+      const apply = () => {
+        if (cancelled) return
+        if (startAt > 0 && Number.isFinite(startAt)) {
+          try { video.currentTime = startAt } catch { /* ignore seek errors */ }
+        }
+        void video.play().catch(() => undefined)
+      }
+      if (video.readyState >= 1) apply()
+      else video.addEventListener('loadedmetadata', apply, { once: true })
+    }
+
+    const findAndSeek = () => {
+      if (cancelled) return
+      const video = document.querySelector('.yarl__slide_current video, .yarl__video_container video') as HTMLVideoElement | null
+      if (video) {
+        seekVideo(video)
+        return
+      }
+      if (attempts++ < 30) window.setTimeout(findAndSeek, 50)
+    }
+
+    const timer = window.setTimeout(findAndSeek, 0)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [previewStartAt, previewWork])
 
   const toggleLike = async (work: ScriptWork) => {
     const actionKey = `${work.id}:like`
@@ -1786,7 +1924,15 @@ function SquareFeed({
             <div className="pb-3">
               <SquareWorkCard
                 work={work}
-                onOpen={() => setPreviewWork(work)}
+                playing={inlinePlayingId === work.id}
+                onPlay={() => setInlinePlayingId(work.id)}
+                onStop={() => setInlinePlayingId((current) => current === work.id ? null : current)}
+                onFullscreen={(startAt) => {
+                  setPreviewStartAt(startAt)
+                  setInlinePlayingId(null)
+                  setPreviewWork(work)
+                }}
+                onPracticeSame={() => onPracticeSame(work)}
                 onLike={() => void toggleLike(work)}
                 onReaction={(reaction) => void toggleReaction(work, reaction)}
                 likePending={pendingActions.has(`${work.id}:like`)}
@@ -1805,7 +1951,10 @@ function SquareFeed({
       )}
       <Lightbox
         open={Boolean(previewWork?.videoUrl)}
-        close={() => setPreviewWork(null)}
+        close={() => {
+          setPreviewWork(null)
+          setPreviewStartAt(0)
+        }}
         plugins={[Video]}
         controller={{ closeOnBackdropClick: false, closeOnPullDown: false, closeOnPullUp: false }}
         styles={{
@@ -1820,10 +1969,11 @@ function SquareFeed({
           type: 'video',
           width: 1280,
           height: 720,
+          autoPlay: true,
           poster: previewWork.coverUrl ?? undefined,
           sources: [{ src: previewWork.videoUrl, type: previewWork.videoMimeType ?? 'video/mp4' }],
         }] : []}
-        video={{ controls: true, playsInline: true }}
+        video={{ controls: true, playsInline: true, autoPlay: true, controlsList: 'nodownload' }}
         render={{ buttonPrev: () => null, buttonNext: () => null }}
       />
     </div>
@@ -1832,14 +1982,22 @@ function SquareFeed({
 
 function SquareWorkCard({
   work,
-  onOpen,
+  playing,
+  onPlay,
+  onStop,
+  onFullscreen,
+  onPracticeSame,
   onLike,
   onReaction,
   likePending,
   reactionPending,
 }: {
   work: ScriptWork
-  onOpen: () => void
+  playing: boolean
+  onPlay: () => void
+  onStop: () => void
+  onFullscreen: (startAt: number) => void
+  onPracticeSame: () => void
   onLike: () => void
   onReaction: (reaction: string) => void
   likePending: boolean
@@ -1847,6 +2005,46 @@ function SquareWorkCard({
 }) {
   const { t } = useTranslation()
   const [reactionOpen, setReactionOpen] = useState(false)
+  const [paused, setPaused] = useState(false)
+  const [frameReady, setFrameReady] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    if (!playing) {
+      setPaused(false)
+      setFrameReady(false)
+    }
+  }, [playing])
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+    if (!playing) {
+      video.pause()
+      if (video.currentTime !== 0) video.currentTime = 0
+      return
+    }
+    if (paused) {
+      video.pause()
+      return
+    }
+    void video.play().catch(() => undefined)
+  }, [paused, playing])
+
+  const markFrameReady = useCallback((video: HTMLVideoElement) => {
+    const reveal = () => {
+      // Wait one paint after the decoded frame so the first black buffer never flashes through.
+      window.requestAnimationFrame(() => setFrameReady(true))
+    }
+    if (typeof video.requestVideoFrameCallback === 'function') {
+      video.requestVideoFrameCallback(() => reveal())
+      return
+    }
+    reveal()
+  }, [])
+
+  const buffering = playing && !paused && !frameReady
+  const showPlayButton = (!playing || paused) && !buffering
 
   return (
     <Card className="overflow-hidden border-0 bg-muted/30 shadow-none ring-0 dark:ring-0">
@@ -1865,27 +2063,60 @@ function SquareWorkCard({
       </CardHeader>
 
       {work.videoUrl ? (
-        <button
-          type="button"
-          onClick={onOpen}
-          className="group relative mx-3 block w-[calc(100%-1.5rem)] overflow-hidden rounded-xl bg-foreground/90 text-left"
-          aria-label={t('scripts.fullscreenView', { title: work.title })}
-        >
+        <div className="relative mx-3 overflow-hidden rounded-xl bg-muted">
+          {/* Theme base stays under the video so the browser's native black video surface never peeks through. */}
+          <div className="aspect-[2/1] max-h-52 w-full bg-muted" />
           {work.coverUrl ? (
-            <img src={work.coverUrl} alt="" className="aspect-[2/1] max-h-52 w-full object-cover" />
-          ) : (
-            <div className="aspect-[2/1] max-h-52 w-full bg-muted-foreground/20" />
-          )}
-          <span className="absolute inset-0 bg-black/10 transition-colors group-active:bg-black/20" />
-          <span className="absolute inset-0 flex items-center justify-center">
-            <span className="flex size-11 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm">
-              <Play className="ml-0.5 size-5 fill-current" />
-            </span>
-          </span>
-          <span className="absolute bottom-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm">
+            <img
+              src={work.coverUrl}
+              alt=""
+              className="pointer-events-none absolute inset-0 size-full object-cover"
+            />
+          ) : null}
+          <video
+            ref={videoRef}
+            src={work.videoUrl}
+            className={cn(
+              'absolute inset-0 size-full bg-muted object-cover',
+              frameReady ? 'opacity-100' : 'opacity-0',
+            )}
+            playsInline
+            preload="metadata"
+            onPlaying={(event) => markFrameReady(event.currentTarget)}
+            onEnded={onStop}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              if (!playing) {
+                onPlay()
+                return
+              }
+              if (buffering) return
+              setPaused((value) => !value)
+            }}
+            className="absolute inset-0 z-[1] flex items-center justify-center"
+            aria-label={t('scripts.playVideo', { title: work.title })}
+          >
+            {buffering ? (
+              <span className="flex size-11 items-center justify-center rounded-full bg-background/80 text-foreground shadow-sm backdrop-blur-sm">
+                <Loader2 className="size-5 animate-spin" />
+              </span>
+            ) : showPlayButton ? (
+              <span className="flex size-11 items-center justify-center rounded-full bg-background/80 text-foreground shadow-sm backdrop-blur-sm">
+                <Play className="ml-0.5 size-5 fill-current" />
+              </span>
+            ) : null}
+          </button>
+          <button
+            type="button"
+            onClick={() => onFullscreen(videoRef.current?.currentTime ?? 0)}
+            className="absolute bottom-2 right-2 z-10 flex size-7 items-center justify-center rounded-full bg-background/80 text-foreground shadow-sm backdrop-blur-sm"
+            aria-label={t('scripts.fullscreenView', { title: work.title })}
+          >
             <Maximize2 className="size-3.5" />
-          </span>
-        </button>
+          </button>
+        </div>
       ) : (
         <div className="relative mx-3 flex min-h-24 items-end overflow-hidden rounded-xl bg-background/70 p-3">
           {work.coverUrl && <img src={work.coverUrl} alt="" className="absolute inset-0 size-full object-cover" />}
@@ -1967,11 +2198,9 @@ function SquareWorkCard({
               </div>
             </PopoverContent>
           </Popover>
-          <Button asChild size="sm" variant="ghost" className="h-8 rounded-full px-2.5">
-            <Link to={`/scripts/packages/${work.episode.scene.id}/episodes/${work.episode.id}`}>
-              <Sparkles data-icon="inline-start" />
-              {t('scripts.practiceSame')}
-            </Link>
+          <Button size="sm" variant="ghost" className="h-8 rounded-full px-2.5" onClick={onPracticeSame}>
+            <Footprints data-icon="inline-start" />
+            {t('scripts.practiceSame')}
           </Button>
         </div>
       </CardContent>
@@ -2242,6 +2471,8 @@ function ScriptShop({
   installedIds,
   downloadTasks,
   loading,
+  focusUnitId,
+  focusEpisodeId,
   onRefresh,
   onEnroll,
   onDownload,
@@ -2252,6 +2483,8 @@ function ScriptShop({
   installedIds: Set<string>
   downloadTasks: Array<{ packId: string; status: string; progress: number }>
   loading: boolean
+  focusUnitId?: string | null
+  focusEpisodeId?: string | null
   onRefresh: () => Promise<void>
   onEnroll: (unit: LearningUnitSummary) => Promise<void>
   onDownload: (id: string) => Promise<void>
@@ -2263,6 +2496,7 @@ function ScriptShop({
   const [descExpanded, setDescExpanded] = useState(false)
   const [chapterPage, setChapterPage] = useState(1)
   const [acquiringId, setAcquiringId] = useState<string | null>(null)
+  const focusedUnitIdRef = useRef<string | null>(null)
   const pageSize = 6
   const filteredUnits = units.filter((unit) => {
     const query = keyword.trim().toLocaleLowerCase()
@@ -2270,6 +2504,24 @@ function ScriptShop({
     return [unit.title, unit.location, unit.description]
       .some((value) => value?.toLocaleLowerCase().includes(query))
   })
+
+  useEffect(() => {
+    if (!focusUnitId) {
+      focusedUnitIdRef.current = null
+      return
+    }
+    if (loading) return
+    if (focusedUnitIdRef.current === focusUnitId) return
+    const target = units.find((unit) => unit.id === focusUnitId)
+    focusedUnitIdRef.current = focusUnitId
+    if (!target) {
+      toast.error(t('scripts.packageNotFound'))
+      return
+    }
+    setSelectedUnit(target)
+    setDescExpanded(false)
+    setChapterPage(1)
+  }, [focusUnitId, loading, t, units])
 
   const search = (
     <div className="relative mb-3 mt-1">
@@ -2362,6 +2614,7 @@ function ScriptShop({
           chapterPage={chapterPage}
           pageSize={pageSize}
           acquiring={acquiringId === selectedUnit.id}
+          focusEpisodeId={selectedUnit.id === focusUnitId ? focusEpisodeId : null}
           onDescriptionToggle={() => setDescExpanded((value) => !value)}
           onChapterPageChange={setChapterPage}
           onClose={() => setSelectedUnit(null)}
@@ -2386,6 +2639,7 @@ function ScriptShopDetail({
   chapterPage,
   pageSize,
   acquiring,
+  focusEpisodeId,
   onDescriptionToggle,
   onChapterPageChange,
   onClose,
@@ -2401,6 +2655,7 @@ function ScriptShopDetail({
   chapterPage: number
   pageSize: number
   acquiring: boolean
+  focusEpisodeId?: string | null
   onDescriptionToggle: () => void
   onChapterPageChange: (page: number) => void
   onClose: () => void
@@ -2413,6 +2668,9 @@ function ScriptShopDetail({
   const scriptChapters = getScriptShopChapters(unit)
   const totalPages = Math.max(1, Math.ceil(scriptChapters.length / pageSize))
   const chapters = scriptChapters.slice((chapterPage - 1) * pageSize, chapterPage * pageSize)
+  const enterPath = focusEpisodeId
+    ? `/scripts/packages/${unit.id}/episodes/${focusEpisodeId}`
+    : `/scripts/packages/${unit.id}`
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
@@ -2466,7 +2724,7 @@ function ScriptShopDetail({
               <Button variant="destructive" className="w-full" onClick={() => void onDownload(unit.id)}>{t('scripts.downloadFailedRetry')}</Button>
             ) : installed ? (
               <Button variant="secondary" className="w-full border-0 shadow-none" asChild>
-                <Link to={`/scripts/packages/${unit.id}`} onClick={onNavigate}>{t('scripts.enterScript')}</Link>
+                <Link to={enterPath} onClick={onNavigate}>{t('scripts.enterScript')}</Link>
               </Button>
             ) : owned ? (
               <Button className="w-full" onClick={() => void onDownload(unit.id)}>

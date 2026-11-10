@@ -195,9 +195,23 @@ export interface UnitDetail {
     sortOrder?: number
     passed?: boolean
     isUnlocked?: boolean
+    vocabularies?: VocabItem[]
+    chunks?: Array<Pick<ChunkItem, 'id' | 'text' | 'meaning'> & Partial<Pick<ChunkItem, 'description' | 'category' | 'difficulty' | 'examples' | 'masteryStatus'>>>
+    sentencePatterns?: Array<Pick<SentencePattern, 'pattern' | 'meaning'> & {
+      id: string
+      example?: string
+      description?: string | null
+      slots?: SentencePattern['slots']
+      examples?: unknown
+      difficulty?: string
+      topicId?: string
+      topicTitle?: string
+    }>
   }>
   vocabCount: number
   chunkCount: number
+  /** 离线投影壳上的句型总数；非投影详情请用 sentencePatterns.length。 */
+  patternCount?: number
   topicCount: number
   scriptCount: number
   /** 仅存在于下载包中的章节播放数据；线上详情接口不会返回该字段。 */
@@ -231,9 +245,22 @@ export interface StoryEpisodeItem {
   isPreview: boolean
   prerequisiteEpisodeIds: string[]
   isUnlocked: boolean
-  vocabularies: Array<Pick<VocabItem, 'id' | 'word' | 'meaning' | 'partOfSpeech'>>
-  chunks: Array<Pick<ChunkItem, 'id' | 'text' | 'meaning'>>
-  sentencePatterns: Array<Pick<SentencePattern, 'pattern' | 'meaning'> & { id: string; example?: string }>
+  vocabularies: VocabItem[]
+  chunks: Array<Pick<ChunkItem, 'id' | 'text' | 'meaning'> & Partial<Pick<ChunkItem, 'description' | 'category' | 'difficulty' | 'examples' | 'masteryStatus'>>>
+  sentencePatterns: Array<Pick<SentencePattern, 'pattern' | 'meaning'> & {
+    id: string
+    example?: string
+    description?: string | null
+    slots?: SentencePattern['slots']
+    examples?: unknown
+    difficulty?: string
+    topicId?: string
+    topicTitle?: string
+  }>
+  /** 离线投影壳上的章节材料计数；正文经 listContentPage({ topicId }) 读取。 */
+  vocabCount?: number
+  chunkCount?: number
+  patternCount?: number
   record: {
     id: string
     passed: boolean

@@ -4,13 +4,12 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
   Lightbulb, CheckCircle2, ChevronRight,
-  BookText, Search, BookmarkPlus, History, Settings, ChevronDown, TextQuote,
+  History, Settings, ChevronDown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { toast } from 'sonner'
 import { cn } from '@/lib/cn'
@@ -23,18 +22,13 @@ import { learningContentRepository } from '@/lib/offline/learning-content.reposi
 import { practiceRepository } from '@/lib/offline/practice.repository'
 import { listContentPage } from '@/lib/offline/learning-pack-read-model'
 import { type InstalledAssetMap } from '@/lib/offline/installed-pack-media'
-import { ChunkActivationPanel } from '../components/chunk-activation-panel'
 import { GuidedWarmupPhase } from '../components/guided-warmup-phase'
 import { LearningInsightDialog, type LearningInsightItem } from '../components/learning-insight-dialog'
-import { MarkdownContent } from '@/features/system/components/markdown-content'
-import { extractCoreUsage } from '@/lib/markdown-utils'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
-import { CurrentTabExpandButton } from '@/features/learning/components/current-tab-expand-button'
-import { WordMeaningInline } from '@/features/learning/components/word-meaning-lines'
+import { ExpressionPrepSection } from '@/features/learning/components/expression-prep-section'
 
 import { PracticeTurnFeedback } from '../components/practice-turn-feedback'
 import { PracticeVnDrawer } from '../components/practice-vn-drawer'
-import { PrepPager } from '../components/prep-pager'
 import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
 import { VnPlayerBoundary } from '../components/vn-player-boundary'
 import { useLayoutStore } from '@/stores/layout.store'
@@ -45,7 +39,6 @@ import { MarkdownRenderer } from '@/components/common/markdown-renderer'
 import {
   characterMatchesSpeaker,
   compilePracticeInk,
-  paginateItems,
   parseVnTags,
   readInputNodeId,
   readListTags,
@@ -53,7 +46,6 @@ import {
 } from '../lib/practice-session-utils'
 import {
   PASSED_FEEDBACK_LINGER_MS,
-  PREP_PAGE_SIZE,
   type Phase,
   type TurnFeedback,
 } from '../types/practice-session'
@@ -82,12 +74,7 @@ export function PracticeSessionPage() {
 
   // ── Prepare state ──
   const [activatedChunks, setActivatedChunks] = useState<Set<string>>(new Set())
-  const [expandedChunkId, setExpandedChunkId] = useState<string | null>(null)
-  const [expandedVocabId, setExpandedVocabId] = useState<string | null>(null)
-  const [expandedPatternIdx, setExpandedPatternIdx] = useState<number | null>(null)
-  const [prepPage, setPrepPage] = useState({ vocab: 1, chunk: 1, pattern: 1 })
   const [runtimePipeline, setRuntimePipeline] = useState<any[] | null>(null)
-  const [remotePrep, setRemotePrep] = useState<{ kind: 'vocab' | 'chunk' | 'pattern'; items: any[]; total: number }>({ kind: 'vocab', items: [], total: 0 })
   const [insightIndex, setInsightIndex] = useState(0)
   const [insightOpen, setInsightOpen] = useState(false)
   const [fallbackInsightItem, setFallbackInsightItem] = useState<LearningInsightItem | null>(null)
@@ -266,7 +253,6 @@ export function PracticeSessionPage() {
       .filter((chunk) => chunk.masteryStatus !== 'not_learned')
       .map((chunk) => chunk.id)
     setActivatedChunks(new Set(learnedChunkIds))
-    setExpandedChunkId(detail.activeChunks[0]?.id ?? null)
 
     if (!(detail as { __offlineProjection?: boolean }).__offlineProjection) {
       setTeachingMarkdown(detail.topic.teachingMarkdown || '')
@@ -329,39 +315,53 @@ export function PracticeSessionPage() {
     })
   }, [])
 
-  // 按 tab 懒加载：vocab → word, chunk → chunk
-  const [prepTab, setPrepTab] = useState('vocab')
   const [prepCollapsed, setPrepCollapsed] = useState(true)
+  const [prepMaterials, setPrepMaterials] = useState<{
+    vocabularies: TopicDetail['vocabularies']
+    chunks: TopicDetail['activeChunks']
+    patterns: NonNullable<TopicDetail['sentencePatterns']>
+  }>({ vocabularies: [], chunks: [], patterns: [] })
   useEffect(() => {
-    if (!projected || !topicId) return
-    const kind = prepTab === 'chunk' ? 'chunk' : prepTab === 'pattern' ? 'pattern' : 'vocab'
-    const page = prepPage[kind]
+    if (!detail) {
+      setPrepMaterials({ vocabularies: [], chunks: [], patterns: [] })
+      return
+    }
+    if (!projected || !topicId) {
+      setPrepMaterials({
+        vocabularies: detail.vocabularies ?? [],
+        chunks: detail.activeChunks ?? [],
+        patterns: detail.sentencePatterns ?? [],
+      })
+      return
+    }
     let cancelled = false
-    listContentPage({ topicId, kind, page, pageSize: PREP_PAGE_SIZE }).then((result) => {
-      if (!cancelled) setRemotePrep({ kind, items: result.items, total: result.total })
-    }).catch(() => {})
+    Promise.all([
+      listContentPage({ topicId, kind: 'vocab', page: 1, pageSize: 500 }),
+      listContentPage({ topicId, kind: 'chunk', page: 1, pageSize: 500 }),
+      listContentPage({ topicId, kind: 'pattern', page: 1, pageSize: 500 }),
+    ]).then(([vocab, chunk, pattern]) => {
+      if (cancelled) return
+      setPrepMaterials({
+        vocabularies: vocab.items as TopicDetail['vocabularies'],
+        chunks: chunk.items as TopicDetail['activeChunks'],
+        patterns: pattern.items as NonNullable<TopicDetail['sentencePatterns']>,
+      })
+    }).catch(() => {
+      if (cancelled) return
+      setPrepMaterials({
+        vocabularies: detail.vocabularies ?? [],
+        chunks: detail.activeChunks ?? [],
+        patterns: detail.sentencePatterns ?? [],
+      })
+    })
     return () => { cancelled = true }
-  }, [prepPage, prepTab, projected, topicId])
+  }, [detail, projected, topicId])
   useEffect(() => {
     if (!teachingOpen || !projected || !topicId) return
     practiceRepository.getTopicDocument(topicId).then((document) => {
       setTeachingMarkdown(document?.teachingMarkdown || '')
     }).catch(() => {})
   }, [projected, teachingOpen, topicId])
-  const loadedPrepTabs = useRef<Set<string>>(new Set())
-  useEffect(() => {
-    if (loadedPrepTabs.current.has(prepTab)) return
-    loadedPrepTabs.current.add(prepTab)
-    if (prepTab === 'vocab') {
-      learningContentRepository.listExpressionTexts('word').then((texts) => {
-        setCollectedTexts((prev) => new Set([...prev, ...texts]))
-      })
-    } else if (prepTab === 'chunk') {
-      learningContentRepository.listExpressionTexts('chunk').then((texts) => {
-        setCollectedTexts((prev) => new Set([...prev, ...texts]))
-      })
-    }
-  }, [prepTab])
 
   // ==================== Ink Story Hook ====================
   const handleExternalFn = useCallback((name: string, args: any[]) => {
@@ -527,13 +527,6 @@ export function PracticeSessionPage() {
     [insightItems, fallbackInsightItem],
   )
 
-  const openInsight = useCallback((id: string) => {
-    const idx = insightItems.findIndex((item) => item.id === id)
-    if (idx < 0) return
-    setInsightIndex(idx)
-    setInsightOpen(true)
-  }, [insightItems])
-
   /** VN 对话中长按单词 → 打开单词详情 dialog */
   const handleWordInsight = useCallback((word: string) => {
     const lower = word.toLowerCase()
@@ -555,21 +548,6 @@ export function PracticeSessionPage() {
     setInsightIndex(insightItems.length)
     setInsightOpen(true)
   }, [insightItems])
-
-  const handleCollectWord = useCallback((word: string, meaning: string) => {
-    setPendingSave({ kind: 'word', word, meaning })
-    setSaveDrawerOpen(true)
-  }, [])
-
-  const handleCollectPattern = useCallback((pattern: { pattern: string; meaning?: string; example?: string; sceneName?: string }) => {
-    setPendingSave({ kind: 'pattern', item: pattern })
-    setSaveDrawerOpen(true)
-  }, [])
-
-  const handleCollectChunk = useCallback((chunk: TopicDetail['activeChunks'][number]) => {
-    setPendingSave({ kind: 'chunk', item: chunk })
-    setSaveDrawerOpen(true)
-  }, [])
 
   const savePendingToNotebooks = useCallback(async (notebookIds: string[]) => {
     if (!pendingSave) return
@@ -626,47 +604,9 @@ export function PracticeSessionPage() {
     setPendingSave(null)
   }, [detail, pendingSave, t])
 
-  const topicCounts = detail?.topic as { vocabCount?: number; chunkCount?: number; patternCount?: number; practiceItemIds?: string[] } | undefined
-  const vocabTotal = projected ? (topicCounts?.vocabCount ?? remotePrep.total) : (detail?.vocabularies.length ?? 0)
-  const chunkTotal = projected ? (topicCounts?.chunkCount ?? 0) : (detail?.activeChunks.length ?? 0)
-  const patternTotal = projected ? (topicCounts?.patternCount ?? 0) : (detail?.sentencePatterns?.length ?? 0)
-  const vocabPageItems = useMemo(
-    () => projected && remotePrep.kind === 'vocab'
-      ? { items: remotePrep.items, startIndex: (prepPage.vocab - 1) * PREP_PAGE_SIZE, totalPages: Math.max(1, Math.ceil((topicCounts?.vocabCount || remotePrep.total) / PREP_PAGE_SIZE)), currentPage: prepPage.vocab }
-      : paginateItems(detail?.vocabularies ?? [], prepPage.vocab, PREP_PAGE_SIZE),
-    [detail?.vocabularies, prepPage.vocab, projected, remotePrep.items, remotePrep.kind, remotePrep.total, topicCounts?.vocabCount],
-  )
-  const chunkPageItems = useMemo(
-    () => projected && remotePrep.kind === 'chunk'
-      ? { items: remotePrep.items, startIndex: (prepPage.chunk - 1) * PREP_PAGE_SIZE, totalPages: Math.max(1, Math.ceil(chunkTotal / PREP_PAGE_SIZE)), currentPage: prepPage.chunk }
-      : paginateItems(detail?.activeChunks ?? [], prepPage.chunk, PREP_PAGE_SIZE),
-    [chunkTotal, detail?.activeChunks, prepPage.chunk, projected, remotePrep.items, remotePrep.kind],
-  )
-  const patternPageItems = useMemo(
-    () => projected && remotePrep.kind === 'pattern'
-      ? { items: remotePrep.items, startIndex: (prepPage.pattern - 1) * PREP_PAGE_SIZE, totalPages: Math.max(1, Math.ceil(patternTotal / PREP_PAGE_SIZE)), currentPage: prepPage.pattern }
-      : paginateItems(detail?.sentencePatterns ?? [], prepPage.pattern, PREP_PAGE_SIZE),
-    [detail?.sentencePatterns, patternTotal, prepPage.pattern, projected, remotePrep.items, remotePrep.kind],
-  )
-  const currentPrepTabCount = prepTab === 'vocab'
-    ? vocabTotal
-    : prepTab === 'chunk'
-      ? chunkTotal
-      : patternTotal
-
-  const changePrepPage = useCallback((kind: keyof typeof prepPage, page: number) => {
-    setPrepPage((current) => ({ ...current, [kind]: page }))
-    if (kind === 'vocab') setExpandedVocabId(null)
-    if (kind === 'chunk') setExpandedChunkId(null)
-    if (kind === 'pattern') setExpandedPatternIdx(null)
-  }, [])
-
-  const handlePrepTabChange = useCallback((value: string) => {
-    setPrepTab(value)
-    setExpandedVocabId(null)
-    setExpandedChunkId(null)
-    setExpandedPatternIdx(null)
-  }, [])
+  const vocabTotal = prepMaterials.vocabularies.length
+  const chunkTotal = prepMaterials.chunks.length
+  const patternTotal = prepMaterials.patterns.length
 
   // ==================== Practice: Send Input ====================
   const sendUserInput = useCallback(async (text: string, audioUrl?: string) => {
@@ -957,7 +897,7 @@ export function PracticeSessionPage() {
 
   const canShowPractice = !flagsLoaded || scriptPracticeEnabled
   const hasWarmup = projected
-    ? (topicCounts?.practiceItemIds?.length ?? 0) > 0
+    ? warmupItems.length > 0
     : Boolean(detail?.topic?.metadata?.outputTraining?.enabled && detail?.topic?.metadata?.outputTraining?.pipeline?.length > 0)
   const hasExamples = detail?.activeChunks?.some(c => c.examples?.length)
 
@@ -1051,7 +991,7 @@ export function PracticeSessionPage() {
                   </div>
                 )}
               </div>
-              <Button variant="secondary" className="mt-4 min-h-11 w-full border-0 shadow-none" size="default" onClick={() => setTeachingOpen(true)}>
+              <Button variant="outline-primary" className="mt-4 min-h-11 w-full shadow-none" size="default" onClick={() => setTeachingOpen(true)}>
                 <BookOpen className="size-4" />
                 {t('practiceVn.teaching')}
               </Button>
@@ -1091,181 +1031,16 @@ export function PracticeSessionPage() {
               </div>
             </div>
 
-            <Tabs value={prepTab} onValueChange={handlePrepTabChange} className="w-full" data-mobile-route-swipe>
-              <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-                <TabsTrigger value="vocab" className="rounded-md text-xs">
-                  {t('learning.vocab')} {vocabTotal}
-                </TabsTrigger>
-                <TabsTrigger value="chunk" className="rounded-md text-xs">
-                  {t('learning.coreChunks')} {chunkTotal}
-                </TabsTrigger>
-                <TabsTrigger value="pattern" className="rounded-md text-xs">
-                  {t('learning.patterns')} {patternTotal}
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="vocab" className="mt-3" data-mobile-gesture-allow>
-                {vocabTotal > 0 ? (
-                  <div className="space-y-2">
-                    {(prepCollapsed ? (projected ? vocabPageItems.items : detail.vocabularies).slice(0, 2) : vocabPageItems.items).map((v) => {
-                      const isExpanded = expandedVocabId === v.id
-                      return (
-                        <Card
-                          key={v.id}
-                          className={cn(
-                            'border-0 bg-muted/30 shadow-none ring-0 transition-colors dark:ring-0',
-                            isExpanded && 'bg-primary/[0.06]',
-                          )}
-                        >
-                          <CardContent className="p-0">
-                            <button
-                              type="button"
-                              onClick={() => setExpandedVocabId((prev) => (prev === v.id ? null : v.id))}
-                              className="flex w-full items-center gap-3 p-3 text-left"
-                            >
-                              <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400">
-                                <BookText className="size-4" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <p className="truncate text-sm font-semibold text-foreground">{v.word}</p>
-                                  {collectedTexts.has(v.word) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('practiceSession.collectedBadge')}</Badge>}
-                                </div>
-                                <WordMeaningInline meaning={v.meaning} />
-                              </div>
-                              <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
-                            </button>
-                            {isExpanded && (
-                              <div className="px-3 pb-3 pt-2">
-                                {v.description && (
-                                  <div className="mb-3 line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
-                                    <MarkdownContent content={extractCoreUsage(v.description)} />
-                                  </div>
-                                )}
-                                <div className="flex gap-2 mt-2">
-                                  <Button size="sm" variant="secondary" className="h-8 flex-1 gap-1.5 border-0 text-xs shadow-none" onClick={() => openInsight(`word:${v.id}`)}>
-                                    <Search className="size-3.5" /> {t('learning.view')}
-                                  </Button>
-                                  <Button size="sm" variant={collectedTexts.has(v.word) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(v.word)} onClick={() => handleCollectWord(v.word, v.meaning)}>
-                                    <BookmarkPlus className="size-3.5" /> {savingTexts.has(v.word) ? t('learning.processing') : collectedTexts.has(v.word) ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
-                                  </Button>
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-                    {!prepCollapsed && (
-                    <PrepPager
-                      currentPage={vocabPageItems.currentPage}
-                      totalPages={vocabPageItems.totalPages}
-                      totalItems={vocabTotal}
-                      onPageChange={(page) => changePrepPage('vocab', page)}
-                    />
-                    )}
-                  </div>
-                ) : (
-                  <p className="rounded-lg bg-muted/25 py-8 text-center text-sm text-muted-foreground">{t('practiceSession.noVocab')}</p>
-                )}
-              </TabsContent>
-
-              <TabsContent value="chunk" className="mt-3" data-mobile-gesture-allow>
-                <ChunkActivationPanel
-                  chunks={prepCollapsed ? (projected ? chunkPageItems.items : detail.activeChunks).slice(0, 2) : chunkPageItems.items}
-                  totalCount={chunkTotal}
-                  collectedCount={(projected ? chunkPageItems.items : detail.activeChunks).filter((chunk) => collectedTexts.has(chunk.text)).length}
-                  activatedIds={activatedChunks}
-                  collectedTexts={collectedTexts}
-                  savingTexts={savingTexts}
-                  expandedId={expandedChunkId}
-                  onActivate={activateChunk}
-                  onExpand={setExpandedChunkId}
-                  onInspect={(chunkId) => openInsight(`chunk:${chunkId}`)}
-                  onCollect={handleCollectChunk}
-                  onRemove={(chunk) => handleCollectChunk(chunk)}
-                />
-                {!prepCollapsed && (
-                <div className="mt-2">
-                  <PrepPager
-                    currentPage={chunkPageItems.currentPage}
-                    totalPages={chunkPageItems.totalPages}
-                    totalItems={chunkTotal}
-                    onPageChange={(page) => changePrepPage('chunk', page)}
-                  />
-                </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="pattern" className="mt-3" data-mobile-gesture-allow>
-                {patternTotal > 0 ? (
-                  <div className="space-y-2">
-                    {(prepCollapsed ? (projected ? patternPageItems.items : (detail.sentencePatterns ?? [])).slice(0, 2) : patternPageItems.items).map((p, index) => {
-                      const absoluteIndex = projected ? index : (prepCollapsed ? (detail.sentencePatterns ?? []).indexOf(p) : patternPageItems.startIndex + index)
-                      const isExpanded = expandedPatternIdx === absoluteIndex
-                      return (
-                        <Card key={`${p.pattern}-${absoluteIndex}`} className={cn('border-0 bg-muted/30 shadow-none ring-0 transition-colors dark:ring-0', isExpanded && 'bg-primary/[0.06]')}>
-                          <CardContent className="p-0">
-                            <button
-                              type="button"
-                              onClick={() => setExpandedPatternIdx((prev) => (prev === absoluteIndex ? null : absoluteIndex))}
-                              className="flex w-full items-center gap-3 p-3 text-left"
-                            >
-                              <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                                <TextQuote className="size-4" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <p className="truncate text-sm font-semibold text-foreground">{p.pattern}</p>
-                                  {collectedTexts.has(p.pattern) && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('practiceSession.collectedBadge')}</Badge>}
-                                </div>
-                                <WordMeaningInline meaning={p.meaning} />
-                              </div>
-                              <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', isExpanded && 'rotate-90')} />
-                            </button>
-                            {isExpanded && (
-                              <div className="px-3 pb-3 pt-2">
-                                {p.description && (
-                                  <div className="mb-3 line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
-                                    <MarkdownContent content={extractCoreUsage(p.description)} />
-                                  </div>
-                                )}
-                                {p.example && <p className="text-sm leading-6 text-muted-foreground">{t('practiceSession.example')}: {p.example}</p>}
-                                <div className="flex gap-2 mt-2">
-                                  <Button size="sm" variant="secondary" className="h-8 flex-1 gap-1.5 border-0 text-xs shadow-none" onClick={() => openInsight(`pattern:${absoluteIndex}`)}>
-                                    <Search className="size-3.5" /> {t('learning.view')}
-                                  </Button>
-                                  <Button size="sm" variant={collectedTexts.has(p.pattern) ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={savingTexts.has(p.pattern)} onClick={() => handleCollectPattern({ pattern: p.pattern, meaning: p.meaning, example: p.example, sceneName: detail?.scene.title })} data-spotlight="bookmark-btn">
-                                    <BookmarkPlus className="size-3.5" /> {savingTexts.has(p.pattern) ? t('learning.processing') : collectedTexts.has(p.pattern) ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
-                                  </Button>
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-                    {!prepCollapsed && (
-                    <PrepPager
-                      currentPage={patternPageItems.currentPage}
-                      totalPages={patternPageItems.totalPages}
-                      totalItems={patternTotal}
-                      onPageChange={(page) => changePrepPage('pattern', page)}
-                    />
-                    )}
-                  </div>
-                ) : (
-                  <p className="rounded-lg bg-muted/25 py-8 text-center text-sm text-muted-foreground">{t('learning.noPatterns')}</p>
-                )}
-              </TabsContent>
-            </Tabs>
-
-            {prepCollapsed && (
-              <CurrentTabExpandButton
-                itemCount={currentPrepTabCount}
-                onExpand={() => setPrepCollapsed(false)}
-              />
-            )}
+            <ExpressionPrepSection
+              vocabularies={prepMaterials.vocabularies}
+              chunks={prepMaterials.chunks}
+              patterns={prepMaterials.patterns}
+              sceneName={detail.scene.title}
+              collapsed={prepCollapsed}
+              onCollapsedChange={setPrepCollapsed}
+              collapsible
+              onChunkExpand={activateChunk}
+            />
           </section>
 
           <section className="rounded-lg bg-accent/[0.06] p-4">

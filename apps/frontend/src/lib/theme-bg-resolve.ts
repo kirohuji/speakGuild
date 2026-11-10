@@ -111,6 +111,35 @@ export function resolveThemeBackground(
   return null;
 }
 
+/**
+ * 解析可写入 `--app-bg-image` 的 CSS 背景（跳过 Pixi animation）。
+ * 动画主题通常同时启用 gradient 作为非首页页面的回退层。
+ */
+export function resolveAppSurfaceBackground(
+  preset: ThemePreset | null | undefined,
+  mode: 'light' | 'dark',
+): ResolvedThemeBackground | null {
+  if (!preset) return null;
+
+  const types = normalizeBgTypes(preset);
+  const assets = normalizeBgAssets(preset, mode);
+  // video 不能作为 CSS background-image；app-surface 只吃 image / gradient
+  const cssTypes: ThemeBgType[] = ['image', 'gradient'];
+
+  for (const type of cssTypes) {
+    if (!types.includes(type)) continue;
+    const src = assetFor(type, assets);
+    if (!src) continue;
+    return { type, src };
+  }
+
+  // 即使未显式勾选 CSS 类型，也尽量用可用资源做表面回退
+  if (assets.image?.trim()) return { type: 'image', src: assets.image.trim() };
+  if (assets.gradient?.trim()) return { type: 'gradient', src: assets.gradient.trim() };
+
+  return null;
+}
+
 /** 从启用类型 + 资源推导主 bgType / 兼容背景字符串（写回旧字段） */
 export function deriveLegacyBackgroundFields(
   bgTypes: ThemeBgType[],

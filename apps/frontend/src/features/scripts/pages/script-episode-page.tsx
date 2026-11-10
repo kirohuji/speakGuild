@@ -23,8 +23,8 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
+import { ExpressionPrepSection } from '@/features/learning/components/expression-prep-section'
 import { prepareStoryVnEntry } from '@/features/vn-engine/prepare-story-vn-entry'
 import { resolveStoryEpisodeUnlock } from '@/features/scripts/lib/story-chapter-progress'
 import { readTopicTeaching } from '@/lib/offline/learning-pack-read-model'
@@ -47,6 +47,7 @@ export function ScriptEpisodePage() {
   }, [fetchUnitDetail, packageId])
 
   const detail = storedDetail?.id === packageId ? storedDetail : null
+  const projected = Boolean((detail as { __offlineProjection?: boolean } | null)?.__offlineProjection)
 
   const episode = useMemo(() => {
     const episodes = resolveStoryEpisodeUnlock(detail?.storyEpisodes ?? [])
@@ -139,9 +140,15 @@ export function ScriptEpisodePage() {
     )
   }
 
-  const vocabCount = episode.vocabularies.length
-  const chunkCount = episode.chunks.length
-  const patternCount = episode.sentencePatterns.length
+  const vocabCount = projected
+    ? (episode.vocabCount ?? episode.vocabularies.length)
+    : episode.vocabularies.length
+  const chunkCount = projected
+    ? (episode.chunkCount ?? episode.chunks.length)
+    : episode.chunks.length
+  const patternCount = projected
+    ? (episode.patternCount ?? episode.sentencePatterns.length)
+    : episode.sentencePatterns.length
   const expressionTotal = vocabCount + chunkCount + patternCount
   const modeDisabled = !episode.isUnlocked || !episode.inkScriptId
   const hasObjectives = episode.objectives.length > 0
@@ -191,8 +198,8 @@ export function ScriptEpisodePage() {
           </p>
           {hasTeachingDocument && (
             <Button
-              variant="secondary"
-              className="mt-4 min-h-11 w-full border-0 shadow-none"
+              variant="outline-primary"
+              className="mt-4 min-h-11 w-full shadow-none"
               size="default"
               onClick={() => setTeachingOpen(true)}
             >
@@ -227,40 +234,22 @@ export function ScriptEpisodePage() {
           title={t('scripts.prePerformancePreview')}
           meta={`${expressionTotal} ${t('scripts.itemsUnit')}`}
         />
-        <Tabs defaultValue="vocab" className="space-y-3">
-          <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-            <TabsTrigger value="vocab" className="rounded-md text-xs">{t('scripts.tabVocab')} {vocabCount}</TabsTrigger>
-            <TabsTrigger value="chunks" className="rounded-md text-xs">{t('scripts.tabChunks')} {chunkCount}</TabsTrigger>
-            <TabsTrigger value="patterns" className="rounded-md text-xs">{t('scripts.tabPatterns')} {patternCount}</TabsTrigger>
-          </TabsList>
-          <TabsContent value="vocab" className="mt-0">
-            <ResourceList
-              empty={t('scripts.noVocab')}
-              items={episode.vocabularies.map((item) => ({
-                primary: item.word,
-                secondary: item.meaning,
-              }))}
-            />
-          </TabsContent>
-          <TabsContent value="chunks" className="mt-0">
-            <ResourceList
-              empty={t('scripts.noChunks')}
-              items={episode.chunks.map((item) => ({
-                primary: item.text,
-                secondary: item.meaning,
-              }))}
-            />
-          </TabsContent>
-          <TabsContent value="patterns" className="mt-0">
-            <ResourceList
-              empty={t('scripts.noPatterns')}
-              items={episode.sentencePatterns.map((item) => ({
-                primary: item.pattern,
-                secondary: item.meaning,
-              }))}
-            />
-          </TabsContent>
-        </Tabs>
+        <ExpressionPrepSection
+          vocabularies={projected ? undefined : episode.vocabularies}
+          chunks={projected ? undefined : episode.chunks}
+          patterns={projected ? undefined : episode.sentencePatterns}
+          contentSource={projected ? {
+            topicId: episode.id,
+            totals: {
+              vocab: vocabCount,
+              chunk: chunkCount,
+              pattern: patternCount,
+            },
+          } : undefined}
+          sceneName={detail.title}
+          defaultCollapsed
+          collapsible
+        />
       </section>
 
       <section className="mb-5">
@@ -378,24 +367,3 @@ function ModeCard({
   )
 }
 
-function ResourceList({
-  items,
-  empty,
-}: {
-  items: Array<{ primary: string; secondary: string }>
-  empty: string
-}) {
-  if (items.length === 0) {
-    return <p className="rounded-lg bg-muted/25 px-4 py-8 text-center text-sm text-muted-foreground">{empty}</p>
-  }
-  return (
-    <div className="flex flex-col gap-2">
-      {items.map((item, index) => (
-        <div key={`${item.primary}-${index}`} className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-4 py-3">
-          <p className="min-w-0 flex-1 text-sm font-medium">{item.primary}</p>
-          <p className="max-w-[45%] text-right text-xs leading-5 text-muted-foreground">{item.secondary}</p>
-        </div>
-      ))}
-    </div>
-  )
-}

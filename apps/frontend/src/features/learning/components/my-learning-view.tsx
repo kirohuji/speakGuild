@@ -335,7 +335,7 @@ function InProgressUnitCard({
           }}
           className={cn(
             'flex gap-3 transition-opacity',
-            (needsDownload || isPackBusy) && 'cursor-default opacity-55',
+            (needsDownload || isPackBusy) && 'cursor-default opacity-70',
           )}
         >
           <div className="relative flex aspect-square size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-sky-100 via-emerald-50 to-amber-100 text-primary dark:from-sky-950/50 dark:via-emerald-950/30 dark:to-amber-950/40">
@@ -405,14 +405,12 @@ function InProgressUnitCard({
 
         {showPackAction && (
           <div className={cn(
-            'mt-3 flex items-center justify-between gap-3 rounded-md border px-3 py-2',
-            isTaskError
-              ? 'border-destructive/25 bg-destructive/[0.06]'
-              : 'border-amber-500/20 bg-amber-500/[0.06]',
+            'mt-3 flex items-center justify-between gap-3 rounded-md px-3 py-2',
+            isTaskError ? 'bg-destructive/10' : 'bg-muted/20',
           )}>
             <p className={cn(
               'min-w-0 flex-1 truncate text-xs',
-              isTaskError ? 'text-destructive' : 'text-amber-700 dark:text-amber-300',
+              isTaskError ? 'text-destructive' : 'text-muted-foreground',
             )}>{packActionText}</p>
             <Button
               type="button"
@@ -423,7 +421,7 @@ function InProgressUnitCard({
                 'h-8 shrink-0 rounded-full px-2',
                 isTaskError
                   ? 'text-destructive hover:bg-destructive/10 hover:text-destructive'
-                  : 'text-amber-700 hover:bg-amber-500/10 hover:text-amber-800 dark:text-amber-300 dark:hover:text-amber-200',
+                  : 'text-foreground hover:bg-muted hover:text-foreground',
                 isPackBusy || isPaused || isTaskError ? 'min-w-14 gap-1.5' : 'w-8 px-0',
               )}
               aria-label={isTaskError ? t('learning.downloadFailedRetry') : isPaused ? packActionText : isPackBusy ? t('learning.packDownloading') : t('learning.downloadPack')}

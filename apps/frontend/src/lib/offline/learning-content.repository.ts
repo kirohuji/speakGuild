@@ -404,21 +404,54 @@ export const learningContentRepository = {
     }
 
     const referenced = new Set(refs.map((ref) => `${ref.kind}:${ref.contentId}`))
-    for (const vocab of unitDetail?.vocabularies ?? []) {
-      if (!vocab?.id) continue
-      vocabById.set(vocab.id, vocab)
-      if (!referenced.has(`vocab:${vocab.id}`)) pushRef('vocab', vocab.id, null)
+    const indexUnitScoped = (
+      vocabularies: any[] | undefined,
+      chunks: any[] | undefined,
+      patterns: any[] | undefined,
+      scopeId: string | null,
+    ) => {
+      for (const vocab of vocabularies ?? []) {
+        if (!vocab?.id) continue
+        // Prefer the first copy (usually unit-level after pronunciation migration).
+        if (!vocabById.has(vocab.id)) vocabById.set(vocab.id, vocab)
+        if (!referenced.has(`vocab:${vocab.id}`)) {
+          pushRef('vocab', vocab.id, scopeId)
+          referenced.add(`vocab:${vocab.id}`)
+        }
+      }
+      for (const chunk of chunks ?? []) {
+        if (!chunk?.id) continue
+        if (!chunkById.has(chunk.id)) chunkById.set(chunk.id, chunk)
+        if (!referenced.has(`chunk:${chunk.id}`)) {
+          pushRef('chunk', chunk.id, scopeId)
+          referenced.add(`chunk:${chunk.id}`)
+        }
+      }
+      for (const pattern of patterns ?? []) {
+        const id = patternId(pattern)
+        if (!id) continue
+        if (!patternById.has(id)) patternById.set(id, { ...pattern, id })
+        if (!referenced.has(`pattern:${id}`)) {
+          pushRef('pattern', id, scopeId)
+          referenced.add(`pattern:${id}`)
+        }
+      }
     }
-    for (const chunk of unitDetail?.chunks ?? []) {
-      if (!chunk?.id) continue
-      chunkById.set(chunk.id, chunk)
-      if (!referenced.has(`chunk:${chunk.id}`)) pushRef('chunk', chunk.id, null)
+
+    // Novel packs keep Scene-level knowledge on the unit detail.
+    // Story / NQTR packs mirror learning-plan topics: materials live on chapters
+    // and are indexed with topicId = chapter/episode id for package+chapter pages.
+    if (unitDetail?.contentMode === 'novel') {
+      indexUnitScoped(unitDetail?.vocabularies, unitDetail?.chunks, unitDetail?.sentencePatterns, null)
     }
-    for (const pattern of unitDetail?.sentencePatterns ?? []) {
-      const id = patternId(pattern)
-      if (!id) continue
-      patternById.set(id, { ...pattern, id })
-      if (!referenced.has(`pattern:${id}`)) pushRef('pattern', id, null)
+
+    for (const episode of unitDetail?.storyEpisodes ?? []) {
+      if (!episode?.id) continue
+      indexUnitScoped(episode.vocabularies, episode.chunks, episode.sentencePatterns, episode.id)
+    }
+    for (const chapter of unitDetail?.nqtrChapters ?? []) {
+      if (!chapter?.id) continue
+      indexUnitScoped(chapter.vocabularies, chapter.chunks, chapter.sentencePatterns, chapter.id)
     }
 
     console.log(`[content-index] 📊 索引统计: ${vocabById.size} 词汇, ${chunkById.size} 语块, ${patternById.size} 句型, ${refs.length} 引用记录`)

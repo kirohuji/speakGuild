@@ -3,6 +3,7 @@ import {
   AbsoluteFill,
   Audio,
   Composition,
+  Img,
   interpolate,
   registerRoot,
   Sequence,
@@ -29,8 +30,10 @@ const ScriptVideo = ({ timeline }: Props) => {
     ?? timeline.frames.at(-1);
   if (!active) return <AbsoluteFill style={{ backgroundColor: '#090b10' }} />;
   const progress = Math.max(0, Math.min(1, (current - active.startFrame) / Math.max(1, active.durationFrames)));
-  const opacity = interpolate(progress, [0, .12, .88, 1], [0, 1, 1, .82], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  // Keep opening readable: avoid a fully transparent first beat that looks like a black flash.
+  const opacity = interpolate(progress, [0, .08, .88, 1], [.92, 1, 1, .82], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
   const position = active.sprite?.position === 'left' ? '28%' : active.sprite?.position === 'right' ? '72%' : '50%';
+  const backgroundFit = active.background?.fit === 'stretch' ? 'fill' : active.background?.fit ?? 'cover';
   return (
     <AbsoluteFill style={{ overflow: 'hidden', backgroundColor: '#090b10', color: 'white' }}>
       {timeline.frames.map((item) => item.resolvedAudioUrl ? (
@@ -40,12 +43,28 @@ const ScriptVideo = ({ timeline }: Props) => {
       ) : null)}
       <AbsoluteFill>
         {active.background?.url
-          ? <img src={active.background.url} style={{ width: '100%', height: '100%', objectFit: active.background.fit === 'stretch' ? 'fill' : active.background.fit ?? 'cover' }} />
+          ? (
+            <Img
+              src={active.background.url}
+              style={{ width: '100%', height: '100%', objectFit: backgroundFit }}
+            />
+          )
           : <div style={{ width: '100%', height: '100%', backgroundColor: '#111827' }} />}
       </AbsoluteFill>
-      {active.kind !== 'choice' && active.sprite?.url && (
-        <img src={active.sprite.url} style={{ position: 'absolute', bottom: 0, left: position, transform: 'translateX(-50%)', maxHeight: '93%', maxWidth: '62%', objectFit: 'contain' }} />
-      )}
+      {active.kind !== 'choice' && active.sprite?.url ? (
+        <Img
+          src={active.sprite.url}
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: position,
+            transform: 'translateX(-50%)',
+            maxHeight: '93%',
+            maxWidth: '62%',
+            objectFit: 'contain',
+          }}
+        />
+      ) : null}
       <div style={{ position: 'absolute', insetInline: 0, bottom: 0, padding: '64px 64px 40px', opacity, background: 'linear-gradient(to top, rgba(0,0,0,.78), rgba(0,0,0,.34), transparent)' }}>
         <div style={{ fontSize: 60, fontWeight: 700, color: 'rgba(255,255,255,.55)', textShadow: '0 2px 8px rgba(0,0,0,.8)' }}>{active.speaker || '对白'}</div>
         <div style={{ marginTop: 8, whiteSpace: 'pre-wrap', fontSize: 60, fontWeight: 700, lineHeight: 1.18, textShadow: '0 2px 8px rgba(0,0,0,.8)' }}>{active.text || ''}</div>

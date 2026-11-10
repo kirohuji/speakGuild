@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  ArrowLeft, ChevronLeft, ChevronRight, BookOpen, BookText, MessageSquareText, TextQuote,
+  ArrowLeft, ChevronLeft, ChevronRight, BookOpen,
   Target, Download,
-  BookmarkPlus, Search, ChevronDown,
+  ChevronDown,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -22,14 +22,16 @@ import {
   LearningInsightDialog,
   type LearningInsightItem,
 } from '@/features/practice/components/learning-insight-dialog'
-import { MarkdownContent } from '@/features/system/components/markdown-content'
-import { extractCoreUsage } from '@/lib/markdown-utils'
 import { SaveToNotebookDrawer } from '@/features/expression/components/save-to-notebook-drawer'
 import { ContentModeExperience } from '../components/content-mode-experience'
 import { CurrentTabExpandButton } from '../components/current-tab-expand-button'
+import {
+  ChunkPrepCard,
+  EmptyPrepState,
+  PatternPrepCard,
+  VocabPrepCard,
+} from '../components/expression-prep-section'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
-import { WordMeaningInline } from '../components/word-meaning-lines'
-import { patternSlotDescription, patternSlotLabel } from '../lib/pattern-slot'
 import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 import { displayLearningUnitLocation } from '../lib/learning-unit-display'
 
@@ -792,224 +794,6 @@ function UnitMetric({ label, value }: { label: string; value: string }) {
   )
 }
 
-function VocabPrepCard({
-  vocab,
-  collected,
-  expanded,
-  onToggle,
-  onOpen,
-  onCollect,
-  ...rest
-}: {
-  vocab: VocabItem
-  collected: boolean
-  expanded: boolean
-  onToggle: () => void
-  onOpen: () => void
-  onCollect: () => void
-} & Record<string, any>) {
-  const { t } = useTranslation()
-  const [saving, setSaving] = useState(false)
-  const handleClick = () => {
-    setSaving(true)
-    const action = onCollect()
-    Promise.resolve(action).finally(() => setSaving(false))
-  }
-
-  return (
-    <Card className={cn('border-0 bg-muted/30 shadow-none ring-0 transition-colors dark:ring-0')}>
-      <CardContent className="p-0">
-        <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle} {...rest}>
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400">
-            <BookText className="size-4" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-2">
-              <p className="truncate text-sm font-semibold text-foreground">{vocab.word}</p>
-              {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
-            </div>
-            <WordMeaningInline meaning={vocab.meaning} />
-          </div>
-          <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-90')} />
-        </button>
-
-        {expanded && (
-          <div className="px-3 pb-3 pt-2">
-            {vocab.description && (
-              <div className="mb-3 line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
-                <MarkdownContent content={extractCoreUsage(vocab.description)} />
-              </div>
-            )}
-            <div className="flex gap-2">
-              <Button size="sm" variant="secondary" className="h-8 flex-1 gap-1.5 border-0 text-xs shadow-none" onClick={onOpen}>
-                <Search className="size-3.5" /> {t('learning.view')}
-              </Button>
-              <Button size="sm" variant={collected ? 'secondary' : 'default'} className="h-8 flex-1 gap-1.5 text-xs" disabled={saving} onClick={handleClick} data-spotlight="bookmark-btn">
-                <BookmarkPlus className="size-3.5" /> {saving ? t('learning.processing') : collected ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
-              </Button>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-function ChunkPrepCard({
-  chunk,
-  collected,
-  expanded,
-  onToggle,
-  onOpen,
-  onCollect,
-}: {
-  chunk: ChunkItem
-  collected: boolean
-  expanded: boolean
-  onToggle: () => void
-  onOpen: () => void
-  onCollect: () => void
-}) {
-  const { t } = useTranslation()
-  const [saving, setSaving] = useState(false)
-  const handleClick = () => {
-    setSaving(true)
-    const action = onCollect()
-    Promise.resolve(action).finally(() => setSaving(false))
-  }
-
-  return (
-    <Card className={cn('border-0 bg-muted/30 shadow-none ring-0 transition-colors dark:ring-0')}>
-      <CardContent className="p-0">
-        <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle}>
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <MessageSquareText className="size-4" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-2">
-              <p className="truncate text-sm font-semibold text-foreground">{chunk.text}</p>
-              {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
-            </div>
-            <WordMeaningInline meaning={chunk.meaning} />
-          </div>
-          <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-90')} />
-        </button>
-
-        {expanded && (
-          <div className="px-3 pb-3 pt-2">
-            {chunk.description && (
-              <div className="mb-3 line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
-                <MarkdownContent content={extractCoreUsage(chunk.description)} />
-              </div>
-            )}
-            {chunk.examples[0] && (
-              <div className="mb-3 rounded-md bg-muted/45 p-2.5">
-                <p className="text-xs font-medium leading-5 text-foreground">{chunk.examples[0].en}</p>
-                <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{chunk.examples[0].zh}</p>
-              </div>
-            )}
-            <div className="flex gap-2">
-              <Button size="sm" variant="secondary" className="h-8 flex-1 gap-1.5 border-0 text-xs shadow-none" onClick={onOpen}>
-                <Search className="size-3.5" /> {t('learning.view')}
-              </Button>
-              <Button
-                size="sm"
-                variant={collected ? 'secondary' : 'default'}
-                className="h-8 flex-1 gap-1.5 text-xs"
-                disabled={saving}
-                onClick={handleClick}
-              >
-                <BookmarkPlus className="size-3.5" />
-                {saving ? t('learning.processing') : collected ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
-              </Button>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-function PatternPrepCard({
-  pattern,
-  collected,
-  expanded,
-  onToggle,
-  onOpen,
-  onCollect,
-}: {
-  pattern: SentencePattern
-  collected: boolean
-  expanded: boolean
-  onToggle: () => void
-  onOpen: () => void
-  onCollect: () => void
-}) {
-  const { t } = useTranslation()
-  const [saving, setSaving] = useState(false)
-  const handleClick = () => {
-    setSaving(true)
-    const action = onCollect()
-    Promise.resolve(action).finally(() => setSaving(false))
-  }
-
-  return (
-    <Card className={cn('border-0 bg-muted/30 shadow-none ring-0 transition-colors dark:ring-0')}>
-      <CardContent className="p-0">
-        <button type="button" className="flex w-full items-center gap-3 p-3 text-left" onClick={onToggle}>
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400">
-            <TextQuote className="size-4" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-2">
-              <p className="truncate text-sm font-semibold text-foreground">{pattern.pattern}</p>
-              {collected && <Badge variant="secondary" className="h-5 shrink-0 rounded-full px-2 text-[10px]">{t('learning.collected')}</Badge>}
-            </div>
-            <WordMeaningInline meaning={pattern.meaning} />
-          </div>
-          <ChevronRight className={cn('size-4 shrink-0 text-muted-foreground transition-transform', expanded && 'rotate-90')} />
-        </button>
-
-        {expanded && (
-          <div className="px-3 pb-3 pt-2">
-            {pattern.description && (
-              <div className="mb-3 line-clamp-3 text-xs leading-5 text-muted-foreground [&_h1]:text-sm [&_h2]:text-xs [&_h3]:text-xs [&_h4]:hidden [&_h5]:hidden [&_h6]:hidden [&_p]:my-0">
-                <MarkdownContent content={extractCoreUsage(pattern.description)} />
-              </div>
-            )}
-            <div className="mb-3 rounded-md bg-muted/45 p-2.5">
-              <p className="text-xs font-medium leading-5 text-foreground">{pattern.example}</p>
-              <p className="mt-1 text-[11px] leading-4 text-muted-foreground">{pattern.topicTitle}</p>
-            </div>
-            {(pattern.slots ?? []).length > 0 && (
-              <div className="mb-3 flex flex-wrap gap-1.5">
-                {pattern.slots.map((slot, index) => (
-                  <Badge key={index} title={patternSlotDescription(slot)} variant="secondary" className="rounded-full px-2 text-[10px]">{patternSlotLabel(slot)}</Badge>
-                ))}
-              </div>
-            )}
-            <div className="flex gap-2">
-              <Button size="sm" variant="secondary" className="h-8 flex-1 gap-1.5 border-0 text-xs shadow-none" onClick={onOpen}>
-                <Search className="size-3.5" /> {t('learning.viewPattern')}
-              </Button>
-              <Button
-                size="sm"
-                variant={collected ? 'secondary' : 'default'}
-                className="h-8 flex-1 gap-1.5 text-xs"
-                disabled={saving}
-                onClick={handleClick}
-              >
-                <BookmarkPlus className="size-3.5" />
-                {saving ? t('learning.processing') : collected ? t('learning.alreadyAdded') : t('learning.addToLibrary')}
-              </Button>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
 function PracticeTopicCard({
   topic,
   index,
@@ -1067,10 +851,3 @@ function PracticeTopicCard({
   )
 }
 
-function EmptyPrepState({ label }: { label: string }) {
-  return (
-    <div className="rounded-lg bg-muted/25 px-4 py-8 text-center text-sm text-muted-foreground">
-      {label}
-    </div>
-  )
-}

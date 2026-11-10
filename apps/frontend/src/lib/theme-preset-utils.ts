@@ -1,5 +1,5 @@
 import type { ThemePreset } from '@/features/admin/theme-manage/api/theme-api';
-import { resolveThemeBackground } from '@/lib/theme-bg-resolve';
+import { resolveAppSurfaceBackground } from '@/lib/theme-bg-resolve';
 
 /**
  * CSS 变量键名映射：ThemePreset 中的 color key → CSS 自定义属性名
@@ -128,10 +128,10 @@ export function applyPresetColors(
     }
   }
 
-  // 设置沉浸式背景 CSS 变量（按优先级解析后的主背景）
-  const resolved = resolveThemeBackground(preset, mode);
-  if (resolved?.src && (resolved.type === 'gradient' || resolved.type === 'image' || resolved.type === 'video')) {
-    root.style.setProperty('--app-bg-image', resolved.src);
+  // 非首页 `.app-surface` 用 CSS 背景；Pixi animation 主题走其 gradient/image 回退层
+  const surfaceBg = resolveAppSurfaceBackground(preset, mode);
+  if (surfaceBg?.src) {
+    root.style.setProperty('--app-bg-image', surfaceBg.src);
   } else {
     root.style.removeProperty('--app-bg-image');
   }

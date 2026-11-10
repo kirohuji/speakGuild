@@ -41,4 +41,60 @@ describe('buildPackReadModel', () => {
     }]))
     expect(summary?.practiceItemIds.length).toBeGreaterThan(0)
   })
+
+  it('aggregates story / nqtr chapter materials like learning-plan topics', () => {
+    const model = buildPackReadModel(
+      {
+        id: 'story-1',
+        title: '咖啡馆',
+        packageType: 'story',
+        contentMode: 'story',
+        // unit-level arrays must NOT inflate story package counts
+        vocabularies: [{ id: 'pack-word' }],
+        chunks: [{ id: 'pack-chunk' }],
+        sentencePatterns: [{ id: 'pack-pattern', pattern: 'I would like...' }],
+        storyEpisodes: [
+          {
+            id: 'ep-1',
+            title: '进门',
+            vocabularies: [{ id: 'ep-word' }, { id: 'shared-word' }],
+            chunks: [{ id: 'ep-chunk' }],
+            sentencePatterns: [{ id: 'ep-pattern', pattern: 'Could you...' }],
+          },
+        ],
+        nqtrChapters: [
+          {
+            id: 'ch-1',
+            title: '首日',
+            vocabularies: [{ id: 'nqtr-word' }, { id: 'shared-word' }],
+            chunks: [{ id: 'nqtr-chunk' }],
+            sentencePatterns: [{ id: 'nqtr-pattern', pattern: 'Shall we...' }],
+          },
+        ],
+      },
+      [],
+    )
+
+    const summary = model.rows.find((row) => row.id === unitSummaryId('story-1'))
+    expect(summary?.vocabCount).toBe(3)
+    expect(summary?.chunkCount).toBe(2)
+    expect(summary?.patternCount).toBe(2)
+    // chapter shells mirror topic cards: counts only, empty bodies
+    expect(summary?.storyEpisodes?.[0]).toMatchObject({
+      id: 'ep-1',
+      vocabCount: 2,
+      chunkCount: 1,
+      patternCount: 1,
+      vocabularies: [],
+      chunks: [],
+      sentencePatterns: [],
+    })
+    expect(summary?.nqtrChapters?.[0]).toMatchObject({
+      id: 'ch-1',
+      vocabCount: 2,
+      chunkCount: 1,
+      patternCount: 1,
+      vocabularies: [],
+    })
+  })
 })

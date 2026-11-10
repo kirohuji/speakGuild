@@ -20,8 +20,8 @@ import {
 } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PracticeVnDrawer } from '@/features/practice/components/practice-vn-drawer'
+import { ExpressionPrepSection } from '@/features/learning/components/expression-prep-section'
 import { isNqtrLearningUnit, type StoryEpisodeItem } from '@/features/learning/api/learning-api'
 import { readNqtrSaveHybrid } from '@/features/nqtr/api/nqtr-local-save'
 import { resolveNqtrChapterUnlock, type NqtrChapterProgressItem } from '@/features/nqtr/lib/nqtr-chapter-progress'
@@ -36,6 +36,7 @@ export function ScriptPackagePage() {
   const storedDetail = useLearningStore((state) => state.unitDetail)
   const loading = useLearningStore((state) => state.unitDetailLoading)
   const fetchUnitDetail = useLearningStore((state) => state.fetchUnitDetail)
+  const myUnits = useLearningStore((state) => state.myUnits)
   const downloadedPacks = useLearningStore((state) => state.downloadedPacks)
   const availablePackUpdates = useLearningStore((state) => state.availablePackUpdates)
   const downloadTasks = useLearningStore((state) => state.downloadTasks)
@@ -51,15 +52,21 @@ export function ScriptPackagePage() {
     && (storedDetail.packageType === 'story' || storedDetail.packageType === 'nqtr' || storedDetail.contentMode === 'nqtr')
     ? storedDetail
     : null
+  const projected = Boolean((detail as { __offlineProjection?: boolean } | null)?.__offlineProjection)
+  const patternCount = projected
+    ? ((detail as { patternCount?: number } | null)?.patternCount ?? 0)
+    : (detail?.sentencePatterns?.length ?? 0)
+  const expressionTotal = (detail?.vocabCount ?? 0) + (detail?.chunkCount ?? 0) + patternCount
   const isNqtr = detail ? isNqtrLearningUnit(detail) : false
 
   useEffect(() => {
     void fetchDownloadedPacks().catch(() => undefined)
   }, [fetchDownloadedPacks])
 
+  const ownedUnit = myUnits.find((unit) => unit.id === packageId) ?? null
   const installed = downloadedPacks.some((pack) => pack.packId === packageId && pack.status === 'installed')
   const updateAvailable = availablePackUpdates.some((update) => update.packId === packageId)
-  const downloading = downloadTasks.some((task) => task.packId === packageId && task.status !== 'error')
+  const downloading = downloadTasks.some((task) => task.packId === packageId && task.status !== 'error' && task.status !== 'done')
   const episodes = useMemo(
     () => resolveStoryEpisodeUnlock(detail?.storyEpisodes ?? []),
     [detail?.storyEpisodes],
@@ -132,6 +139,29 @@ export function ScriptPackagePage() {
   if (loading && !detail) return <PackageSkeleton />
 
   if (!detail) {
+    // 已拥有但未安装：与学习计划一致，引导下载，而不是当成「不存在」。
+    if (ownedUnit && !installed) {
+      return (
+        <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 px-4 text-center">
+          <Clapperboard className="size-12 text-muted-foreground/40" />
+          <div className="space-y-1">
+            <p className="text-base font-semibold text-foreground">{ownedUnit.title}</p>
+            <p className="text-sm text-muted-foreground">{t('scripts.packNeedsDownload')}</p>
+          </div>
+          <Button
+            className="rounded-full"
+            disabled={downloading}
+            onClick={() => packageId && void downloadUnitPack(packageId)}
+          >
+            {downloading ? <Loader2 className="animate-spin" data-icon="inline-start" /> : <Download data-icon="inline-start" />}
+            {downloading ? t('scripts.preparingOffline') : t('scripts.downloadScript')}
+          </Button>
+          <Button variant="secondary" className="rounded-full border-0 shadow-none" onClick={() => navigate('/scripts')}>
+            {t('scripts.backToScripts')}
+          </Button>
+        </div>
+      )
+    }
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-2xl flex-col items-center justify-center gap-4 px-4 text-center">
         <Clapperboard className="size-12 text-muted-foreground/40" />
@@ -223,42 +253,24 @@ export function ScriptPackagePage() {
         <SectionHeader
           eyebrow="2"
           title={t('scripts.inStoryExpressions')}
-          meta={`${detail.vocabCount + detail.chunkCount + detail.sentencePatterns.length} ${t('scripts.itemsUnit')}`}
+          meta={`${expressionTotal} ${t('scripts.itemsUnit')}`}
         />
-        <Tabs defaultValue="vocab" className="space-y-3">
-          <TabsList className="grid h-10 w-full grid-cols-3 rounded-lg bg-muted/70 p-1">
-            <TabsTrigger value="vocab" className="rounded-md text-xs">{t('scripts.tabVocab')} {detail.vocabCount}</TabsTrigger>
-            <TabsTrigger value="chunks" className="rounded-md text-xs">{t('scripts.tabChunks')} {detail.chunkCount}</TabsTrigger>
-            <TabsTrigger value="patterns" className="rounded-md text-xs">{t('scripts.tabPatterns')} {detail.sentencePatterns.length}</TabsTrigger>
-          </TabsList>
-          <TabsContent value="vocab" className="mt-0">
-            <ResourceList
-              empty={t('scripts.noVocab')}
-              items={detail.vocabularies.slice(0, 12).map((item) => ({
-                primary: item.word,
-                secondary: item.meaning,
-              }))}
-            />
-          </TabsContent>
-          <TabsContent value="chunks" className="mt-0">
-            <ResourceList
-              empty={t('scripts.noChunks')}
-              items={detail.chunks.slice(0, 12).map((item) => ({
-                primary: item.text,
-                secondary: item.meaning,
-              }))}
-            />
-          </TabsContent>
-          <TabsContent value="patterns" className="mt-0">
-            <ResourceList
-              empty={t('scripts.noPatterns')}
-              items={detail.sentencePatterns.slice(0, 12).map((item) => ({
-                primary: item.pattern,
-                secondary: item.meaning,
-              }))}
-            />
-          </TabsContent>
-        </Tabs>
+        <ExpressionPrepSection
+          vocabularies={projected ? undefined : detail.vocabularies}
+          chunks={projected ? undefined : detail.chunks}
+          patterns={projected ? undefined : detail.sentencePatterns}
+          contentSource={projected ? {
+            unitId: detail.id,
+            totals: {
+              vocab: detail.vocabCount,
+              chunk: detail.chunkCount,
+              pattern: patternCount,
+            },
+          } : undefined}
+          sceneName={detail.title}
+          defaultCollapsed
+          collapsible
+        />
       </section>
 
       <section className="mb-5">
@@ -420,28 +432,6 @@ function EpisodeRow({
 
   if (locked) return row
   return <Link to={`/scripts/packages/${packageId}/episodes/${episode.id}`}>{row}</Link>
-}
-
-function ResourceList({
-  items,
-  empty,
-}: {
-  items: Array<{ primary: string; secondary: string }>
-  empty: string
-}) {
-  if (items.length === 0) {
-    return <p className="rounded-lg bg-muted/25 px-4 py-8 text-center text-sm text-muted-foreground">{empty}</p>
-  }
-  return (
-    <div className="flex flex-col gap-2">
-      {items.map((item, index) => (
-        <div key={`${item.primary}-${index}`} className="flex items-start justify-between gap-4 rounded-lg bg-muted/30 px-4 py-3">
-          <p className="min-w-0 flex-1 text-sm font-medium">{item.primary}</p>
-          <p className="max-w-[45%] text-right text-xs leading-5 text-muted-foreground">{item.secondary}</p>
-        </div>
-      ))}
-    </div>
-  )
 }
 
 function PackageSkeleton() {
