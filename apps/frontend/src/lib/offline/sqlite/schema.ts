@@ -19,7 +19,7 @@
 export const DB_NAME = 'speakguild_offline'
 
 /** Increment this when schema changes; triggers onUpgrade. */
-export const DB_VERSION = 14
+export const DB_VERSION = 15
 
 /** All table names in the database. */
 export const TABLE_NAMES = [
@@ -38,6 +38,8 @@ export const TABLE_NAMES = [
   'offline_content_refs',
   'user_progress',
   'practice_records',
+  'script_practice_records',
+  'script_works',
   'warmup_records',
   'warmup_record_entries',
   'daily_activity',
@@ -211,6 +213,34 @@ export const DDL: Record<TableName, string> = {
       status TEXT,
       sync_status TEXT,
       practiced_at TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  script_practice_records: `
+    CREATE TABLE IF NOT EXISTS script_practice_records (
+      id TEXT PRIMARY KEY NOT NULL,
+      remote_id TEXT,
+      episode_id TEXT,
+      mode TEXT,
+      status TEXT,
+      sync_status TEXT,
+      client_mutation_id TEXT,
+      created_at TEXT,
+      data TEXT NOT NULL DEFAULT '{}',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `,
+  script_works: `
+    CREATE TABLE IF NOT EXISTS script_works (
+      id TEXT PRIMARY KEY NOT NULL,
+      remote_id TEXT,
+      episode_id TEXT,
+      record_id TEXT,
+      kind TEXT,
+      status TEXT,
+      sync_status TEXT,
+      created_at TEXT,
       data TEXT NOT NULL DEFAULT '{}',
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     )
@@ -497,6 +527,16 @@ export const INDEXES = [
   `CREATE INDEX IF NOT EXISTS idx_practice_records_type ON practice_records (record_type)`,
   `CREATE INDEX IF NOT EXISTS idx_practice_records_status ON practice_records (status)`,
   `CREATE INDEX IF NOT EXISTS idx_practice_records_sync_status ON practice_records (sync_status)`,
+  `CREATE INDEX IF NOT EXISTS idx_script_practice_records_remote_id ON script_practice_records (remote_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_script_practice_records_episode_id ON script_practice_records (episode_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_script_practice_records_sync_status ON script_practice_records (sync_status)`,
+  `CREATE INDEX IF NOT EXISTS idx_script_practice_records_client_mutation_id ON script_practice_records (client_mutation_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_script_practice_records_created_at ON script_practice_records (created_at, id)`,
+  `CREATE INDEX IF NOT EXISTS idx_script_works_remote_id ON script_works (remote_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_script_works_episode_id ON script_works (episode_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_script_works_record_id ON script_works (record_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_script_works_status ON script_works (status)`,
+  `CREATE INDEX IF NOT EXISTS idx_script_works_created_at ON script_works (created_at, id)`,
   `CREATE INDEX IF NOT EXISTS idx_warmup_entries_record_id ON warmup_record_entries (record_id)`,
   `CREATE INDEX IF NOT EXISTS idx_warmup_entries_step_id ON warmup_record_entries (step_id)`,
   `CREATE INDEX IF NOT EXISTS idx_warmup_entries_practiced_date ON warmup_record_entries (practiced_date)`,

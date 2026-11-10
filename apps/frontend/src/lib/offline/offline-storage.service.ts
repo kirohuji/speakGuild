@@ -18,6 +18,8 @@ const USER_SCOPED_TABLES: TableName[] = [
   'learning_notebook_items',
   'user_progress',
   'practice_records',
+  'script_practice_records',
+  'script_works',
   'warmup_records',
   'warmup_record_entries',
   'daily_activity',
@@ -187,6 +189,8 @@ function clearPracticeLocalStorageKeys(): void {
       key.startsWith('guided-progress:')
       || key.startsWith('guided-session:')
       || key.startsWith('manyu:novel-progress:')
+      || key.startsWith('nqtr-save:')
+      || key.startsWith('story-episode-passed:')
     ) {
       localStorage.removeItem(key)
     }

@@ -12,6 +12,8 @@ export type SyncEntityType =
   | 'topic_session'
   | 'topic_submission'
   | 'novel_progress'
+  | 'script_practice_record'
+  | 'nqtr_save'
 
 export type SyncOperation = 'create' | 'update' | 'delete' | 'complete' | 'snapshot'
 

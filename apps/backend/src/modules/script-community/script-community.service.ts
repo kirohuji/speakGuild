@@ -354,6 +354,19 @@ export class ScriptCommunityService {
   async completeRecord(userId: string, episodeId: string, dto: CompleteScriptPracticeDto) {
     const player = await this.learningService.getStoryEpisodePlayer(userId, episodeId)
     const recordingAssetIds = [...new Set(dto.recordingAssetIds ?? [])]
+    const clientMutationId = dto.clientMutationId?.trim() || undefined
+    if (clientMutationId) {
+      const existing = await this.prisma.scriptPracticeRecord.findUnique({
+        where: { userId_clientMutationId: { userId, clientMutationId } },
+      })
+      if (existing) {
+        return {
+          ...existing,
+          sceneId: player.episode.sceneId,
+          sceneTitle: player.episode.sceneTitle,
+        }
+      }
+    }
     await Promise.all([
       this.assertOwnedAsset(userId, dto.audioAssetId),
       this.assertOwnedAsset(userId, dto.videoAssetId),
@@ -361,7 +374,20 @@ export class ScriptCommunityService {
     ])
 
     const now = new Date()
-    return this.prisma.$transaction(async (tx) => {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+      if (clientMutationId) {
+        const raced = await tx.scriptPracticeRecord.findUnique({
+          where: { userId_clientMutationId: { userId, clientMutationId } },
+        })
+        if (raced) {
+          return {
+            ...raced,
+            sceneId: player.episode.sceneId,
+            sceneTitle: player.episode.sceneTitle,
+          }
+        }
+      }
       const record = await tx.scriptPracticeRecord.create({
         data: {
           userId,
@@ -375,6 +401,7 @@ export class ScriptCommunityService {
           completedObjectiveCount: dto.completedObjectiveCount ?? 0,
           score: dto.score,
           resultSnapshot: dto.resultSnapshot as Prisma.InputJsonValue | undefined,
+          clientMutationId,
           audioAssetId: dto.audioAssetId,
           videoAssetId: dto.videoAssetId,
           completedAt: now,
@@ -445,7 +472,22 @@ export class ScriptCommunityService {
         sceneId: player.episode.sceneId,
         sceneTitle: player.episode.sceneTitle,
       }
-    })
+      })
+    } catch (error: any) {
+      if (clientMutationId && error?.code === 'P2002') {
+        const existing = await this.prisma.scriptPracticeRecord.findUnique({
+          where: { userId_clientMutationId: { userId, clientMutationId } },
+        })
+        if (existing) {
+          return {
+            ...existing,
+            sceneId: player.episode.sceneId,
+            sceneTitle: player.episode.sceneTitle,
+          }
+        }
+      }
+      throw error
+    }
   }
 
   async myRecords(

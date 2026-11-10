@@ -6,7 +6,7 @@ import { useConfigStore } from '@/stores/config.store'
 import { useFeatureFlagsStore } from '@/stores/feature-flags.store'
 import { useNotificationStore } from '@/features/notification/store'
 import { useUserStore } from '@/stores/user.store'
-import { offlineStorageService, offlineSyncService } from '@/lib/offline'
+import { offlineStorageService, offlineSyncService, scriptRepository } from '@/lib/offline'
 import { cancelLearningReminders, refreshLearningBadgeFromTodayRun, registerLearningReminderActions, rescheduleLearningReminder } from '@/lib/native/learning-reminder'
 import { isNative, revenueCat } from '@/lib/native'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
@@ -284,6 +284,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // the interrupted run from the previous login has been pulled.
         await offlineSyncService.sync(nextSession.user.id).catch((error) => {
           console.warn('[auth] initial offline restore failed; retained local data:', error)
+        })
+        // Script caches refresh in the background so login is not blocked on pagination.
+        void Promise.all([
+          scriptRepository.refreshMyRecords(),
+          scriptRepository.refreshMyWorks(),
+        ]).catch((error) => {
+          console.warn('[auth] script cache refresh failed; will retry on page open:', error)
         })
       }
       setCurrentSessionSnapshot(nextSession)

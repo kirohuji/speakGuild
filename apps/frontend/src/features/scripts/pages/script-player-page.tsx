@@ -17,7 +17,7 @@ import {
 import { useInstalledVnMedia } from '@/features/vn-engine/use-installed-vn-media'
 import { useVnTagVisuals } from '@/features/vn-engine/use-vn-tag-visuals'
 import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
-import { writeLocalStoryEpisodePassed } from '@/features/scripts/lib/story-chapter-progress'
+import { scriptRepository } from '@/lib/offline'
 import { useLayoutStore } from '@/stores/layout.store'
 import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
 import { enqueueScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
@@ -260,8 +260,7 @@ function InkEpisodePlayer({
   useEffect(() => {
     if (!story.isEnded || completionSaved.current) return
     completionSaved.current = true
-    writeLocalStoryEpisodePassed(episodeId)
-    void scriptCommunityApi.completeRecord(episodeId, {
+    void scriptRepository.completePractice(episodeId, {
       mode,
       durationSec: Math.max(1, Math.round((Date.now() - startedAt.current) / 1000)),
       turnCount: mode === 'vn' ? userTurns.length : 0,
@@ -273,13 +272,25 @@ function InkEpisodePlayer({
         mode,
         dialogue: dialogueSnapshot,
       },
-    }).then((record) => {
-      setRecordId(record.id)
+    }, {
+      episode: {
+        id: data.episode.id,
+        title: data.episode.title,
+        chapterName: data.episode.chapterName,
+        characterName: data.episode.characterName,
+        scene: {
+          id: data.episode.sceneId,
+          title: data.episode.sceneTitle,
+        },
+      },
+    }).then(({ record, pending }) => {
+      if (!pending) setRecordId(record.id)
+      else toast.error(t('scripts.recordSyncFailed'))
     }).catch(() => {
       completionSaved.current = false
       toast.error(t('scripts.recordSyncFailed'))
     })
-  }, [completionSaved, data.episode.objectives.length, data.inkScript.id, data.inkScript.version, dialogueSnapshot, episodeId, inkLines.length, mode, story.isEnded, t, userTurns.length])
+  }, [completionSaved, data.episode, data.inkScript.id, data.inkScript.version, dialogueSnapshot, episodeId, inkLines.length, mode, story.isEnded, t, userTurns.length])
 
   const publishVideo = async () => {
     if (!recordId || publishing || videoQueued) return
@@ -385,8 +396,7 @@ function InkEpisodePlayer({
         Object.entries(recordings).map(async ([frameIndex, blob]) => [frameIndex, await getRecordedAudioDurationMs(blob)] as const),
       ))
       const recordingAssetIds = [...new Set(Object.values(recordingAssets))]
-      writeLocalStoryEpisodePassed(episodeId)
-      const record = await scriptCommunityApi.completeRecord(episodeId, {
+      const { record, pending } = await scriptRepository.completePractice(episodeId, {
         mode: 'repeat',
         durationSec: Math.max(1, Math.round((Date.now() - startedAt.current) / 1000)),
         turnCount: 0,
@@ -409,7 +419,22 @@ function InkEpisodePlayer({
         audioAssetId: recordingAssetIds[0],
         recordingAssetIds,
         recordingBatchId,
+      }, {
+        episode: {
+          id: data.episode.id,
+          title: data.episode.title,
+          chapterName: data.episode.chapterName,
+          characterName: data.episode.characterName,
+          scene: {
+            id: data.episode.sceneId,
+            title: data.episode.sceneTitle,
+          },
+        },
       })
+      if (pending) {
+        toast.error(t('scripts.repeatSaveFailed'))
+        return
+      }
       setRecordId(record.id)
       toast.success(t('scripts.repeatSaved'))
     } catch (error) {

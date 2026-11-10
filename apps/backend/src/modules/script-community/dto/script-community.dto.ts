@@ -78,6 +78,11 @@ export class CompleteScriptPracticeDto {
   @IsOptional()
   @IsString()
   videoAssetId?: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  clientMutationId?: string
 }
 
 export class CreateScriptWorkDto {

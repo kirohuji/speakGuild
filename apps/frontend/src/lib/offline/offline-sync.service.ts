@@ -1,11 +1,14 @@
 import { learningApi } from '@/features/learning/api/learning-api'
 import { practiceApi, expressionApi, dailyPracticeApi } from '@/features/practice/api/english-practice-api'
+import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
+import { writeNqtrSave } from '@/features/nqtr/api/nqtr-save-api'
 import { toast } from 'sonner'
 import { syncApi } from './sync-api'
 import { localDb } from './unified-storage'
 import { syncOutbox, type SyncEntityType, type SyncOutboxItem } from './sync-outbox'
 import { learningContentRepository } from './learning-content.repository'
 import { learningPackService } from './learning-pack.service'
+import { scriptRepository } from './script.repository'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { upsertWarmupRecordEntries } from './warmup-record-index'
 import { dailyPracticeRepository, pullRemoteDailyProgress, restoreRemoteDailyPracticeRun } from './daily-practice.repository'
@@ -558,6 +561,37 @@ async function replayItem(
       })
       return true
     }
+  }
+
+  if (item.entityType === 'script_practice_record' && item.operation === 'create') {
+    const payload = item.payload as {
+      episodeId: string
+      data: Parameters<typeof scriptCommunityApi.completeRecord>[1]
+      localId?: string
+    }
+    const remote = await scriptCommunityApi.completeRecord(payload.episodeId, payload.data)
+    await scriptRepository.applySyncedPracticeRecord({
+      localId: payload.localId,
+      clientMutationId: payload.data.clientMutationId,
+      record: {
+        ...remote,
+        episode: remote.episode ?? {
+          id: payload.episodeId,
+          title: '',
+          chapterName: '',
+          characterName: '',
+          scene: { id: '', title: '' },
+        },
+        works: remote.works ?? [],
+      },
+    })
+    return true
+  }
+
+  if (item.entityType === 'nqtr_save' && (item.operation === 'update' || item.operation === 'create')) {
+    const payload = item.payload as Parameters<typeof writeNqtrSave>[0]
+    await writeNqtrSave(payload)
+    return true
   }
 
   return false

@@ -120,11 +120,12 @@ export const scriptCommunityApi = {
       usedChunkCount?: number
       completedObjectiveCount?: number
       score?: number
-    resultSnapshot?: Record<string, unknown>
-    audioAssetId?: string
-    recordingAssetIds?: string[]
-    recordingBatchId?: string
+      resultSnapshot?: Record<string, unknown>
+      audioAssetId?: string
+      recordingAssetIds?: string[]
+      recordingBatchId?: string
       videoAssetId?: string
+      clientMutationId?: string
     },
   ) => post<ScriptPracticeRecord>(`/scripts/episodes/${episodeId}/records`, data),
 

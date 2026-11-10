@@ -1669,6 +1669,8 @@ model ScriptPracticeRecord {
   completedObjectiveCount Int                  @default(0)
   score                   Int?
   resultSnapshot          Json?
+  /// Client-generated idempotency key for offline outbox replay. NULL rows are unique-exempt in Postgres.
+  clientMutationId        String?
   audioAsset              FileAsset?           @relation("ScriptRecordAudio", fields: [audioAssetId], references: [id], onDelete: Restrict)
   audioAssetId            String?
   videoAsset              FileAsset?           @relation("ScriptRecordVideo", fields: [videoAssetId], references: [id], onDelete: Restrict)
@@ -1678,6 +1680,7 @@ model ScriptPracticeRecord {
   updatedAt               DateTime             @updatedAt
   works                   ScriptWork[]
 
+  @@unique([userId, clientMutationId])
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, mode, createdAt(sort: Desc)])
   @@index([episodeId, status])

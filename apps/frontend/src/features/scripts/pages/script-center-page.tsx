@@ -92,7 +92,7 @@ import {
 } from '@/features/vn-engine/prepare-story-vn-entry'
 import { useInstalledVnMedia } from '@/features/vn-engine/use-installed-vn-media'
 import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
-import { practiceRepository } from '@/lib/offline'
+import { practiceRepository, scriptRepository } from '@/lib/offline'
 import { useAuth } from '@/providers/auth-provider'
 import { getFileAssetPrivateUrl } from '@/features/file-assets/api'
 import { usePackDisplayUrl } from '@/hooks/use-pack-display-url'
@@ -381,20 +381,28 @@ export function ScriptCenterPage() {
     const ownerId = userId
     setRecordsLoading(true)
     try {
-      const allRecords: ScriptPracticeRecord[] = []
-      let cursor: string | undefined
-      do {
-        const result = await scriptCommunityApi.myRecords({ limit: 50, cursor })
-        allRecords.push(...result.list)
-        cursor = result.nextCursor ?? undefined
-      } while (cursor)
+      const cached = await scriptRepository.listMyRecords()
       const resetAt = await practiceRepository.getPracticeDataResetAt()
       if (recordsRequest.current !== requestId) return
-      setRecords(allRecords.filter((record) => isAfterPracticeReset(record.createdAt, resetAt)))
+      setRecords(cached.filter((record) => isAfterPracticeReset(record.createdAt, resetAt)))
+      setRecordsOwnerId(ownerId)
+      setRecordsLoading(false)
+
+      const refreshed = await scriptRepository.refreshMyRecords()
+      if (recordsRequest.current !== requestId) return
+      setRecords(refreshed.filter((record) => isAfterPracticeReset(record.createdAt, resetAt)))
       setRecordsOwnerId(ownerId)
     } catch {
       if (recordsRequest.current !== requestId) return
-      setRecords([])
+      try {
+        const cached = await scriptRepository.listMyRecords()
+        const resetAt = await practiceRepository.getPracticeDataResetAt()
+        if (recordsRequest.current !== requestId) return
+        setRecords(cached.filter((record) => isAfterPracticeReset(record.createdAt, resetAt)))
+      } catch {
+        if (recordsRequest.current !== requestId) return
+        setRecords([])
+      }
       setRecordsOwnerId(ownerId)
     } finally {
       if (recordsRequest.current === requestId) setRecordsLoading(false)
@@ -406,20 +414,28 @@ export function ScriptCenterPage() {
     const ownerId = userId
     if (!silent) setWorksLoading(true)
     try {
-      const allWorks: ScriptWork[] = []
-      let cursor: string | undefined
-      do {
-        const result = await scriptCommunityApi.myWorks({ limit: 50, cursor })
-        allWorks.push(...result.list)
-        cursor = result.nextCursor ?? undefined
-      } while (cursor)
+      const cached = await scriptRepository.listMyWorks()
       const resetAt = await practiceRepository.getPracticeDataResetAt()
       if (worksRequest.current !== requestId) return
-      setWorks(allWorks.filter((work) => isAfterPracticeReset(work.createdAt, resetAt)))
+      setWorks(cached.filter((work) => isAfterPracticeReset(work.createdAt, resetAt)))
+      setWorksOwnerId(ownerId)
+      if (!silent) setWorksLoading(false)
+
+      const refreshed = await scriptRepository.refreshMyWorks()
+      if (worksRequest.current !== requestId) return
+      setWorks(refreshed.filter((work) => isAfterPracticeReset(work.createdAt, resetAt)))
       setWorksOwnerId(ownerId)
     } catch {
       if (worksRequest.current !== requestId) return
-      setWorks([])
+      try {
+        const cached = await scriptRepository.listMyWorks()
+        const resetAt = await practiceRepository.getPracticeDataResetAt()
+        if (worksRequest.current !== requestId) return
+        setWorks(cached.filter((work) => isAfterPracticeReset(work.createdAt, resetAt)))
+      } catch {
+        if (worksRequest.current !== requestId) return
+        setWorks([])
+      }
       setWorksOwnerId(ownerId)
     } finally {
       if (!silent && worksRequest.current === requestId) setWorksLoading(false)
@@ -436,6 +452,7 @@ export function ScriptCenterPage() {
         title: t('scripts.workCompletedTitle', { title: record.episode.title }),
         caption: `${record.mode === 'repeat' ? t('scripts.repeatTheater') : t('scripts.vnInteractive')} · ${t('scripts.timesSpoken', { count: record.mode === 'repeat' ? record.lineCount : record.turnCount })}`,
       })
+      await scriptRepository.upsertWork(work)
       await generateAndPublishExistingWork(work, (progress) => {
         setGenerating((current) => ({ ...current, [record.id]: progress }))
       })

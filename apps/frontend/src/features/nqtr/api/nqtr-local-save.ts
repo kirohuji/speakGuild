@@ -1,5 +1,6 @@
 import { readNqtrSave, writeNqtrSave } from './nqtr-save-api'
 import type { NqtrSave, NqtrSaveWrite } from '../model/types'
+import { syncOutbox } from '@/lib/offline/sync-outbox'
 
 type LocalNqtrSave = NqtrSave & {
   /** 本机写入时间，用于后台和云端合并时判断谁更新。 */
@@ -23,6 +24,10 @@ function parseTime(value?: string | null) {
   if (!value) return 0
   const time = Date.parse(value)
   return Number.isFinite(time) ? time : 0
+}
+
+function nqtrOutboxEntityId(sceneId: string, slot = 1) {
+  return `${sceneId}:${slot}`
 }
 
 export function readLocalNqtrSave(sceneId: string, slot = 1): LocalNqtrSave | null {
@@ -91,13 +96,20 @@ export async function readNqtrSaveHybrid(sceneId: string, slot = 1): Promise<Nqt
   return null
 }
 
-/** Local-first write: persist immediately, sync cloud in the background. */
+/** Local-first write: persist immediately; cloud failure enters outbox instead of silent drop. */
 export async function writeNqtrSaveHybrid(data: NqtrSaveWrite): Promise<NqtrSave> {
   const local = writeLocalNqtrSave(data)
   void writeNqtrSave(data)
     .then((cloud) => {
       mirrorCloudSave({ ...cloud, updatedAt: (cloud as NqtrSave & { updatedAt?: string }).updatedAt }, data.sceneId)
     })
-    .catch(() => undefined)
+    .catch(() => {
+      void syncOutbox.enqueue({
+        entityType: 'nqtr_save',
+        entityId: nqtrOutboxEntityId(data.sceneId, data.slot ?? 1),
+        operation: 'update',
+        payload: data,
+      })
+    })
   return local
 }
