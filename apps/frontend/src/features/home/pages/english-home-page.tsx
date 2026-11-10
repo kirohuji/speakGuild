@@ -13,6 +13,7 @@ import { cn } from '@/lib/cn'
 import { ImmersiveBackground } from '@/components/common/immersive-background'
 import { SpecialBanner } from '@/features/notification/components/special-banner'
 import { useHomeStore } from '@/stores/home.store'
+import { useOnboardingStore } from '@/stores/onboarding.store'
 import { toast } from 'sonner'
 import { useIsMobile } from '@/hooks/use-mobile'
 
@@ -65,6 +66,13 @@ export function EnglishHomePage() {
     fetchCheckInStatus()
     fetchSpecialNotifications()
   }, [fetchDailySentence, fetchCheckInStatus, fetchSpecialNotifications])
+
+  const onboardingCompletedSegments = useOnboardingStore((s) => s.completedSegments)
+  useEffect(() => {
+    if (checkInStatus && !checkInStatus.checkedIn) {
+      useOnboardingStore.getState().tryStartSegment('home-checkin')
+    }
+  }, [checkInStatus, onboardingCompletedSegments])
 
   const handleCheckIn = async () => {
     try {
@@ -182,6 +190,7 @@ export function EnglishHomePage() {
               type="button"
               onClick={handleCheckIn}
               disabled={checkInLoading}
+              data-spotlight="home-checkin"
               className={cn(
                 'flex items-center gap-2 rounded-full border-0 px-5 py-2.5 backdrop-blur-2xl transition-all active:scale-95',
                 isDark

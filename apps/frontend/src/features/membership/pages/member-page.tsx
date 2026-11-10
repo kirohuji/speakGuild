@@ -41,7 +41,7 @@ const planIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   standard: Crown,
 }
 
-const FALLBACK_BENEFIT_COUNT = 6
+const FALLBACK_BENEFIT_COUNT = 7
 
 export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
   const { t } = useTranslation()
@@ -141,12 +141,13 @@ export function MemberPage({ compact = false }: { compact?: boolean } = {}) {
           benRes.status === 'fulfilled' && benRes.value.length > 0
             ? benRes.value
             : ([
-                { benefitId: '1', name: t('member.fallbackBenefit1'), freeSupport: t('member.fallbackFree1'), standardSupport: t('member.moreQuota'), advancedSupport: t('member.moreQuota') },
-                { benefitId: '2', name: t('member.fallbackBenefit2'), freeSupport: t('member.fallbackFree2'), standardSupport: t('member.moreQuota'), advancedSupport: t('member.moreQuota') },
-                { benefitId: '3', name: t('member.fallbackBenefit3'), freeSupport: t('member.fallbackFree3'), standardSupport: t('member.fullAccess'), advancedSupport: t('member.fullAccess') },
-                { benefitId: '4', name: t('member.fallbackBenefit4'), freeSupport: t('member.fallbackFree4'), standardSupport: t('member.moreTopics'), advancedSupport: t('member.moreTopics') },
-                { benefitId: '5', name: t('member.fallbackBenefit5'), freeSupport: false, standardSupport: true, advancedSupport: true },
-                { benefitId: '6', name: t('member.fallbackBenefit6'), freeSupport: t('member.fallbackFree6'), standardSupport: t('member.moreStorage'), advancedSupport: t('member.moreStorage') },
+                { benefitId: '1', name: t('member.fallbackBenefit1'), freeSupport: t('member.fallbackFree1'), standardSupport: t('member.unlimitedQuota'), advancedSupport: t('member.unlimitedQuota') },
+                { benefitId: '2', name: t('member.fallbackBenefit2'), freeSupport: t('member.fallbackFree2'), standardSupport: t('member.unlimitedQuota'), advancedSupport: t('member.unlimitedQuota') },
+                { benefitId: '3', name: t('member.fallbackBenefit3'), freeSupport: t('member.fallbackFree3'), standardSupport: t('member.allTopics'), advancedSupport: t('member.allTopics') },
+                { benefitId: '4', name: t('member.fallbackBenefit4'), freeSupport: t('member.fallbackFree4'), standardSupport: t('member.fullAccess'), advancedSupport: t('member.fullAccess') },
+                { benefitId: '5', name: t('member.fallbackBenefit5'), freeSupport: t('member.fallbackFree5'), standardSupport: t('member.allThemes'), advancedSupport: t('member.allThemes') },
+                { benefitId: '6', name: t('member.fallbackBenefit6'), freeSupport: false, standardSupport: true, advancedSupport: true },
+                { benefitId: '7', name: t('member.fallbackBenefit7'), freeSupport: false, standardSupport: true, advancedSupport: true },
               ] satisfies MemberBenefit[])
 
         // Keep previous references when payload is unchanged to avoid layout flicker.

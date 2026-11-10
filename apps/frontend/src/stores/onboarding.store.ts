@@ -93,6 +93,19 @@ export const ONBOARDING_SEGMENTS: OnboardingSegment[] = [
     ],
   },
   {
+    id: 'unit-start-practice',
+    steps: [
+      {
+        id: 'unit-start-practice',
+        route: '/learning/units/',
+        targetSelector: '[data-spotlight="start-vn-practice"]',
+        titleKey: 'onboarding.unitStartPracticeTitle',
+        descKey: 'onboarding.unitStartPracticeDesc',
+        clickToAdvance: true,
+      },
+    ],
+  },
+  {
     id: 'today-practice',
     steps: [
       {
@@ -102,6 +115,32 @@ export const ONBOARDING_SEGMENTS: OnboardingSegment[] = [
         titleKey: 'onboarding.todayTitle',
         descKey: 'onboarding.todayDesc',
         clickToAdvance: true,
+      },
+    ],
+  },
+  {
+    id: 'today-records',
+    steps: [
+      {
+        id: 'today-records',
+        route: '/today',
+        targetSelector: '[data-spotlight="today-records"]',
+        titleKey: 'onboarding.todayRecordsTitle',
+        descKey: 'onboarding.todayRecordsDesc',
+        clickToAdvance: false,
+      },
+    ],
+  },
+  {
+    id: 'today-teaching',
+    steps: [
+      {
+        id: 'today-teaching',
+        route: '/today',
+        targetSelector: '[data-spotlight="today-teaching"]',
+        titleKey: 'onboarding.todayTeachingTitle',
+        descKey: 'onboarding.todayTeachingDesc',
+        clickToAdvance: false,
       },
     ],
   },
@@ -127,6 +166,123 @@ export const ONBOARDING_SEGMENTS: OnboardingSegment[] = [
         targetSelector: '[data-spotlight="scripts-shop-button"]',
         titleKey: 'onboarding.scriptsTitle',
         descKey: 'onboarding.scriptsDesc',
+        clickToAdvance: false,
+      },
+    ],
+  },
+  {
+    id: 'scripts-first-card',
+    steps: [
+      {
+        id: 'scripts-first-card',
+        route: '/scripts',
+        targetSelector: '[data-spotlight="first-script-card"]',
+        titleKey: 'onboarding.scriptsFirstCardTitle',
+        descKey: 'onboarding.scriptsFirstCardDesc',
+        clickToAdvance: false,
+      },
+    ],
+  },
+  {
+    id: 'scripts-records',
+    steps: [
+      {
+        id: 'scripts-records',
+        route: '/scripts',
+        targetSelector: '[data-spotlight="scripts-records"]',
+        titleKey: 'onboarding.scriptsRecordsTitle',
+        descKey: 'onboarding.scriptsRecordsDesc',
+        clickToAdvance: false,
+      },
+    ],
+  },
+  {
+    id: 'home-checkin',
+    steps: [
+      {
+        id: 'home-checkin',
+        route: '/',
+        targetSelector: '[data-spotlight="home-checkin"]',
+        titleKey: 'onboarding.homeCheckinTitle',
+        descKey: 'onboarding.homeCheckinDesc',
+        clickToAdvance: true,
+      },
+    ],
+  },
+  {
+    id: 'practice-warmup',
+    steps: [
+      {
+        id: 'practice-warmup',
+        route: '/practice/session/',
+        targetSelector: '[data-spotlight="start-guided-warmup"]',
+        titleKey: 'onboarding.practiceWarmupTitle',
+        descKey: 'onboarding.practiceWarmupDesc',
+        clickToAdvance: true,
+      },
+    ],
+  },
+  {
+    id: 'practice-vn-start',
+    steps: [
+      {
+        id: 'practice-vn-start',
+        route: '/practice/session/',
+        targetSelector: '[data-spotlight="start-vn-practice"]',
+        titleKey: 'onboarding.practiceVnStartTitle',
+        descKey: 'onboarding.practiceVnStartDesc',
+        clickToAdvance: true,
+      },
+    ],
+  },
+  {
+    id: 'expression-immersive',
+    steps: [
+      {
+        id: 'expression-immersive',
+        route: '/expressions/',
+        targetSelector: '[data-spotlight="expression-immersive"]',
+        titleKey: 'onboarding.expressionImmersiveTitle',
+        descKey: 'onboarding.expressionImmersiveDesc',
+        clickToAdvance: false,
+      },
+    ],
+  },
+  {
+    id: 'expression-export-pdf',
+    steps: [
+      {
+        id: 'expression-export-pdf',
+        route: '/expressions/',
+        targetSelector: '[data-spotlight="expression-export-pdf"]',
+        titleKey: 'onboarding.expressionExportPdfTitle',
+        descKey: 'onboarding.expressionExportPdfDesc',
+        clickToAdvance: false,
+      },
+    ],
+  },
+  {
+    id: 'appearance-themes',
+    steps: [
+      {
+        id: 'appearance-themes',
+        route: '/profile',
+        targetSelector: '[data-spotlight="appearance-themes"]',
+        titleKey: 'onboarding.appearanceThemesTitle',
+        descKey: 'onboarding.appearanceThemesDesc',
+        clickToAdvance: false,
+      },
+    ],
+  },
+  {
+    id: 'member-benefits',
+    steps: [
+      {
+        id: 'member-benefits',
+        route: '/profile',
+        targetSelector: '[data-spotlight="member-benefits"]',
+        titleKey: 'onboarding.memberBenefitsTitle',
+        descKey: 'onboarding.memberBenefitsDesc',
         clickToAdvance: false,
       },
     ],

@@ -16,7 +16,7 @@ import { cn } from '@/lib/cn'
 import { resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
 import { assetCacheService, OFFLINE_RESOURCE_MISSING } from '@/lib/offline/asset-cache.service'
 import { isNative } from '@/lib/native'
-import { VnInputPanel } from './vn-input-panel'
+import { VnInputPanel, type VnInputRecording } from './vn-input-panel'
 import { DialogueListView } from './dialogue-list-view'
 import { TappableText } from './dialogue-list-view'
 import { TurnGuidanceCard, type VnTurnGuidance } from './practice-guidance'
@@ -59,7 +59,7 @@ interface VnPlayerProps {
   isEnded?: boolean
   onAdvance?: () => void
   onChoice?: (index: number) => void
-  onSubmitInput?: (text: string, audioUrl?: string) => void | Promise<void>
+  onSubmitInput?: (text: string, audioUrl?: string, recording?: VnInputRecording) => void | Promise<void>
   inputFeedback?: ReactNode
   inputFeedbackChat?: ReactNode
   inputGuidance?: VnTurnGuidance

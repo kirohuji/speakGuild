@@ -1,4 +1,5 @@
 import { del, get, patch, post, put } from '@/lib/request'
+import { type PerformedStoryTurn } from '@/features/scripts/lib/performed-story-timeline'
 
 export type ScriptPracticeMode = 'vn' | 'repeat'
 export type ScriptWorkKind = 'vn_video' | 'repeat_video' | 'progress_card'
@@ -17,8 +18,10 @@ export interface ScriptPracticeRecord {
   completedAt: string | null
   createdAt: string
   resultSnapshot?: {
-    dialogue?: Array<{ speaker?: string; text: string; isUser?: boolean }>
+    dialogue?: PerformedStoryTurn[]
+    performedTimeline?: PerformedStoryTurn[]
     recordingAssets?: Record<string, string>
+    recordingDurationsMs?: Record<string, number>
     aiAnalysis?: Record<string, unknown> | null
     aiAnalysisRaw?: string | null
     aiAnalysisError?: string | null

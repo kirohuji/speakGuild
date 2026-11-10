@@ -8,7 +8,7 @@ import { LearningAssessmentDialog } from '@/features/profile/components/placemen
 import { SpotlightOverlay } from '@/components/common/spotlight-overlay'
 
 // 分段引导触发后延迟显示：等页面渲染稳定、用户看清当前内容后再出现，避免"页面一闪就被遮罩"
-const SEGMENT_SHOW_DELAY_MS = 1000
+const SEGMENT_SHOW_DELAY_MS = 500
 
 interface OnboardingProviderProps {
   children: ReactNode
@@ -173,7 +173,12 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     if (storeMode !== 'segment' || !storeActiveSegmentId) return
     const segment = ONBOARDING_SEGMENTS.find((s) => s.id === storeActiveSegmentId)
     if (!segment || !segment.steps[0]) return
-    if (!location.pathname.startsWith(segment.steps[0].route)) {
+    const route = segment.steps[0].route
+    // `/` must be exact — startsWith('/') matches every path
+    const stillOnPage = route === '/'
+      ? location.pathname === '/'
+      : location.pathname.startsWith(route)
+    if (!stillOnPage) {
       storeCancel()
     }
   }, [location.pathname, storeMode, storeActiveSegmentId, storeCancel])

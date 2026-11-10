@@ -6,9 +6,10 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { VnPlayer, type VnPlayerHandle, type VnPlayerLine } from '@/features/vn-engine/vn-player'
+import { type VnInputRecording } from '@/features/vn-engine/vn-input-panel'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
 import { type StoryEpisodePlayerData } from '@/features/learning/api/learning-api'
-import { learningRepository } from '@/lib/offline'
+import { learningRepository, offlineSyncService } from '@/lib/offline'
 import {
   clearPreparedStoryVnEntry,
   takePreparedStoryVnEntry,
@@ -18,6 +19,12 @@ import { useInstalledVnMedia } from '@/features/vn-engine/use-installed-vn-media
 import { useVnTagVisuals } from '@/features/vn-engine/use-vn-tag-visuals'
 import { scriptCommunityApi } from '@/features/scripts/api/script-community-api'
 import { scriptRepository } from '@/lib/offline'
+import {
+  SCRIPT_PRACTICE_SYNCED_EVENT,
+  SCRIPT_PRACTICE_SYNC_FAILED_EVENT,
+  type ScriptPracticeSyncFailedEventDetail,
+  type ScriptPracticeSyncedEventDetail,
+} from '@/lib/offline/script.repository'
 import { useLayoutStore } from '@/stores/layout.store'
 import { VnMixedPreviewPlayer } from '@/features/admin/components/vn-mixed-preview-player'
 import { enqueueScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
@@ -29,6 +36,11 @@ import {
   parseVnTags,
   characterMatchesSpeaker,
 } from '@/features/practice/lib/practice-session-utils'
+import {
+  buildPerformedStoryFrames,
+  buildRepeatDialogueSnapshot,
+  type PerformedStoryTurn,
+} from '@/features/scripts/lib/performed-story-timeline'
 
 export function ScriptPlayerPage() {
   const { t } = useTranslation()
@@ -120,6 +132,11 @@ function getRecordedAudioDurationMs(blob: Blob) {
   })
 }
 
+type LivePerformedStoryTurn = PerformedStoryTurn & {
+  audioUrl?: string
+  recording?: VnInputRecording
+}
+
 function InkEpisodePlayer({
   data,
   episodeId,
@@ -136,8 +153,11 @@ function InkEpisodePlayer({
   prepared?: PreparedStoryVnEntry | null
 }) {
   const { t } = useTranslation()
-  const [userTurns, setUserTurns] = useState<VnPlayerLine[]>([])
+  const [performedTurns, setPerformedTurns] = useState<LivePerformedStoryTurn[]>([])
   const [recordId, setRecordId] = useState<string | null>(null)
+  const [recordSyncStatus, setRecordSyncStatus] = useState<'idle' | 'saving' | 'pending' | 'synced' | 'failed'>('idle')
+  const [saveRetryNonce, setSaveRetryNonce] = useState(0)
+  const pendingMutationIdRef = useRef<string | null>(null)
   const [publishing, setPublishing] = useState(false)
   const [videoQueued, setVideoQueued] = useState(false)
   const [videoCompleted, setVideoCompleted] = useState(false)
@@ -173,6 +193,7 @@ function InkEpisodePlayer({
 
   // 跟踪是否刚提交了用户输入（用于在 currentLine 中优先展示用户输入）
   const userInputJustSubmittedRef = useRef(false)
+  const capturedInkLineCountRef = useRef(0)
 
   const inkLines = useMemo<VnPlayerLine[]>(
     () => story.lines.map((line) => {
@@ -187,22 +208,33 @@ function InkEpisodePlayer({
     [mediaReady, resolvedAssetMap, story.lines],
   )
 
+  useEffect(() => {
+    const start = capturedInkLineCountRef.current
+    if (inkLines.length <= start) return
+    const appended = inkLines.slice(start).map((line): LivePerformedStoryTurn => ({
+      speaker: line.speaker,
+      text: line.text,
+      isUser: false,
+      audioUrl: line.audioUrl,
+    }))
+    capturedInkLineCountRef.current = inkLines.length
+    setPerformedTurns((current) => [...current, ...appended])
+  }, [inkLines])
+
   // inkLines 变化时（advanceStory 推进了剧情），清除「刚提交」标记
   useEffect(() => {
     userInputJustSubmittedRef.current = false
   }, [inkLines])
-  const combined = useMemo(() => {
-    const result: VnPlayerLine[] = []
-    const maxLen = Math.max(inkLines.length, userTurns.length)
-    for (let i = 0; i < maxLen; i++) {
-      if (i < inkLines.length) result.push(inkLines[i])
-      if (i < userTurns.length) result.push(userTurns[i])
-    }
-    return result
-  }, [inkLines, userTurns])
+  const combined = useMemo<VnPlayerLine[]>(() => performedTurns.map((turn) => ({
+    speaker: turn.speaker,
+    text: turn.text,
+    isUser: turn.isUser,
+    audioUrl: turn.audioUrl,
+  })), [performedTurns])
+  const userTurns = useMemo(() => performedTurns.filter((turn) => turn.isUser), [performedTurns])
   const dialogueSnapshot = useMemo(
-    () => combined.map(({ speaker, text, isUser }) => ({ speaker, text, isUser })),
-    [combined],
+    () => performedTurns.map(({ speaker, text, isUser, originalText }) => ({ speaker, text, isUser, originalText })),
+    [performedTurns],
   )
   // Live dialogue line for the VN stage:
   // - Ended: always the real last timeline turn (user answer included), so the
@@ -256,41 +288,130 @@ function InkEpisodePlayer({
   // Remotion runs on the server: never Capacitor file URLs, and keep signed audio
   // URLs (not cookie-bound content?inline=1) so headless Chrome can fetch them.
   const renderFrames = useMemo(() => buildStoryRepeatFrames(data, { audioMode: 'render' }), [data])
+  const performedRenderFrames = useMemo(
+    () => buildPerformedStoryFrames(renderFrames, dialogueSnapshot),
+    [dialogueSnapshot, renderFrames],
+  )
 
   useEffect(() => {
-    if (!story.isEnded || completionSaved.current) return
+    const handleSynced = (event: Event) => {
+      const detail = (event as CustomEvent<ScriptPracticeSyncedEventDetail>).detail
+      if (!detail?.record?.id || detail.clientMutationId !== pendingMutationIdRef.current) return
+      pendingMutationIdRef.current = null
+      setRecordId(detail.record.id)
+      setRecordSyncStatus('synced')
+      toast.success(t('scripts.recordSyncCompleted'))
+    }
+    const handleSyncFailed = (event: Event) => {
+      const detail = (event as CustomEvent<ScriptPracticeSyncFailedEventDetail>).detail
+      if (detail?.clientMutationId !== pendingMutationIdRef.current) return
+      setRecordSyncStatus('failed')
+    }
+    window.addEventListener(SCRIPT_PRACTICE_SYNCED_EVENT, handleSynced)
+    window.addEventListener(SCRIPT_PRACTICE_SYNC_FAILED_EVENT, handleSyncFailed)
+    return () => {
+      window.removeEventListener(SCRIPT_PRACTICE_SYNCED_EVENT, handleSynced)
+      window.removeEventListener(SCRIPT_PRACTICE_SYNC_FAILED_EVENT, handleSyncFailed)
+    }
+  }, [t])
+
+  useEffect(() => {
+    const capturedNpcLineCount = performedTurns.filter((turn) => !turn.isUser).length
+    if (
+      mode !== 'vn'
+      || !story.isEnded
+      || completionSaved.current
+      || capturedNpcLineCount < inkLines.length
+    ) return
     completionSaved.current = true
-    void scriptRepository.completePractice(episodeId, {
-      mode,
-      durationSec: Math.max(1, Math.round((Date.now() - startedAt.current) / 1000)),
-      turnCount: mode === 'vn' ? userTurns.length : 0,
-      lineCount: mode === 'repeat' ? inkLines.length : 0,
-      completedObjectiveCount: data.episode.objectives.length,
-      resultSnapshot: {
-        inkScriptId: data.inkScript.id,
-        inkScriptVersion: data.inkScript.version,
-        mode,
-        dialogue: dialogueSnapshot,
-      },
-    }, {
-      episode: {
-        id: data.episode.id,
-        title: data.episode.title,
-        chapterName: data.episode.chapterName,
-        characterName: data.episode.characterName,
-        scene: {
-          id: data.episode.sceneId,
-          title: data.episode.sceneTitle,
+    setRecordSyncStatus('saving')
+    void (async () => {
+      const recordingBatchId = `vn-${episodeId}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+      const recordedTurns = performedTurns
+        .map((turn, frameIndex) => ({ turn, frameIndex }))
+        .filter((entry): entry is { turn: LivePerformedStoryTurn & { recording: VnInputRecording }; frameIndex: number } => Boolean(entry.turn.recording))
+      const uploaded = await Promise.all(recordedTurns.map(async ({ turn, frameIndex }) => {
+        const recording = turn.recording
+        const file = new File([recording.blob], recording.filename, { type: recording.blob.type || 'audio/webm' })
+        const asset = await uploadFileToCosAndComplete({ file, group: 'user_recording' })
+        await createFileReference(asset.id, 'script_practice_upload', recordingBatchId)
+        return {
+          frameIndex,
+          assetId: asset.id,
+          durationMs: await getRecordedAudioDurationMs(recording.blob),
+        }
+      }))
+      const recordingAssets = Object.fromEntries(uploaded.map((item) => [item.frameIndex, item.assetId]))
+      const recordingDurationsMs = Object.fromEntries(uploaded.map((item) => [item.frameIndex, item.durationMs]))
+      const performedTimeline = dialogueSnapshot.map((turn, frameIndex) => ({
+        ...turn,
+        recorded: Boolean(recordingAssets[String(frameIndex)]),
+        recordingFrameIndex: recordingAssets[String(frameIndex)] ? frameIndex : undefined,
+        recordingDurationMs: recordingDurationsMs[String(frameIndex)],
+      }))
+      const recordingAssetIds = [...new Set(Object.values(recordingAssets))]
+      const { record, pending, clientMutationId } = await scriptRepository.completePractice(episodeId, {
+        mode: 'vn',
+        durationSec: Math.max(1, Math.round((Date.now() - startedAt.current) / 1000)),
+        turnCount: userTurns.length,
+        lineCount: performedTimeline.length,
+        completedObjectiveCount: data.episode.objectives.length,
+        resultSnapshot: {
+          inkScriptId: data.inkScript.id,
+          inkScriptVersion: data.inkScript.version,
+          mode: 'vn',
+          dialogue: performedTimeline,
+          performedTimeline,
+          recordingAssets,
+          recordingDurationsMs,
         },
-      },
-    }).then(({ record, pending }) => {
-      if (!pending) setRecordId(record.id)
-      else toast.error(t('scripts.recordSyncFailed'))
-    }).catch(() => {
+        audioAssetId: recordingAssetIds[0],
+        recordingAssetIds,
+        recordingBatchId: recordingAssetIds.length > 0 ? recordingBatchId : undefined,
+      }, {
+        episode: {
+          id: data.episode.id,
+          title: data.episode.title,
+          chapterName: data.episode.chapterName,
+          characterName: data.episode.characterName,
+          scene: {
+            id: data.episode.sceneId,
+            title: data.episode.sceneTitle,
+          },
+        },
+      })
+      if (pending) {
+        pendingMutationIdRef.current = clientMutationId
+        setRecordSyncStatus('pending')
+        toast.info(t('scripts.recordWaitingSync'))
+      } else {
+        setRecordId(record.id)
+        setRecordSyncStatus('synced')
+      }
+    })().catch((error) => {
       completionSaved.current = false
+      setRecordSyncStatus('failed')
+      console.error('[script-vn] practice record save failed', { episodeId, error })
       toast.error(t('scripts.recordSyncFailed'))
     })
-  }, [completionSaved, data.episode, data.inkScript.id, data.inkScript.version, dialogueSnapshot, episodeId, inkLines.length, mode, story.isEnded, t, userTurns.length])
+  }, [completionSaved, data.episode, data.inkScript.id, data.inkScript.version, dialogueSnapshot, episodeId, inkLines.length, mode, performedTurns, saveRetryNonce, story.isEnded, t, userTurns.length])
+
+  const retryRecordSync = async () => {
+    setRecordSyncStatus('saving')
+    if (!pendingMutationIdRef.current) {
+      completionSaved.current = false
+      setSaveRetryNonce((current) => current + 1)
+      return
+    }
+    try {
+      const result = await offlineSyncService.sync(undefined, { quiet: true })
+      if (pendingMutationIdRef.current && result.push.failed === 0) {
+        setRecordSyncStatus('pending')
+      }
+    } catch {
+      setRecordSyncStatus('failed')
+    }
+  }
 
   const publishVideo = async () => {
     if (!recordId || publishing || videoQueued) return
@@ -308,7 +429,7 @@ function InkEpisodePlayer({
       startGlobalTask({ id: taskId, kind: 'script_video', title: t('scripts.performanceVideo', { title: data.episode.title }) })
       const task = await enqueueScriptVideoRender({
         workId: work.id,
-        frames: renderFrames,
+        frames: mode === 'vn' ? performedRenderFrames : renderFrames,
       })
       setVideoCompleted(false)
       setVideoQueued(true)
@@ -328,13 +449,33 @@ function InkEpisodePlayer({
     }
   }
 
-  const submitInput = async (text: string) => {
+  const submitInput = async (text: string, audioUrl?: string, recording?: VnInputRecording) => {
     const value = text.trim()
     if (!value) return
-    setUserTurns((current) => [...current, { speaker: t('learning.speakerMe'), text: value, isUser: true }])
+    setPerformedTurns((current) => [...current, {
+      speaker: t('learning.speakerMe'),
+      text: value,
+      isUser: true,
+      audioUrl,
+      recording,
+    }])
     userInputJustSubmittedRef.current = true
     story.resumeAfterInput(value)
     // 不调 advanceStory — 让用户点「继续」后再推进，先展示输入内容
+  }
+
+  const chooseStoryBranch = (index: number) => {
+    const choice = story.choices.find((item) => item.index === index)
+    if (choice?.text?.trim()) {
+      setPerformedTurns((current) => [...current, {
+        speaker: t('learning.speakerMe'),
+        text: choice.text.trim(),
+        originalText: choice.text.trim(),
+        isUser: true,
+      }])
+      userInputJustSubmittedRef.current = true
+    }
+    story.handleChoice(index)
   }
 
   const requestAiAnalysis = async () => {
@@ -396,7 +537,14 @@ function InkEpisodePlayer({
         Object.entries(recordings).map(async ([frameIndex, blob]) => [frameIndex, await getRecordedAudioDurationMs(blob)] as const),
       ))
       const recordingAssetIds = [...new Set(Object.values(recordingAssets))]
-      const { record, pending } = await scriptRepository.completePractice(episodeId, {
+      const performedTimeline = buildRepeatDialogueSnapshot(
+        repeatFrames,
+        recordingAssets,
+        recordingDurationsMs,
+        t('learning.speakerMe'),
+      )
+      setRecordSyncStatus('saving')
+      const { record, pending, clientMutationId } = await scriptRepository.completePractice(episodeId, {
         mode: 'repeat',
         durationSec: Math.max(1, Math.round((Date.now() - startedAt.current) / 1000)),
         turnCount: 0,
@@ -410,11 +558,8 @@ function InkEpisodePlayer({
           recordingAssets,
           recordingDurationsMs,
           audioLocks: audioLocks && Object.keys(audioLocks).length > 0 ? audioLocks : undefined,
-          dialogue: repeatFrames.map((frame) => ({
-            speaker: frame.kind === 'choice' || frame.kind === 'userInput' ? t('learning.speakerMe') : frame.speaker,
-            text: frame.text,
-            isUser: frame.kind === 'choice' || frame.kind === 'userInput',
-          })),
+          dialogue: performedTimeline,
+          performedTimeline,
         },
         audioAssetId: recordingAssetIds[0],
         recordingAssetIds,
@@ -432,13 +577,17 @@ function InkEpisodePlayer({
         },
       })
       if (pending) {
-        toast.error(t('scripts.repeatSaveFailed'))
+        pendingMutationIdRef.current = clientMutationId
+        setRecordSyncStatus('pending')
+        toast.info(t('scripts.recordWaitingSync'))
         return
       }
       setRecordId(record.id)
+      setRecordSyncStatus('synced')
       toast.success(t('scripts.repeatSaved'))
     } catch (error) {
       completionSaved.current = false
+      setRecordSyncStatus('failed')
       console.error('[repeat-vn] practice record save failed', {
         episodeId,
         recordedCount,
@@ -528,7 +677,7 @@ function InkEpisodePlayer({
         isWaiting={assetsResolving || story.isWaiting}
         isEnded={!assetsResolving && story.isEnded}
         onAdvance={assetsResolving ? undefined : story.advanceStory}
-        onChoice={assetsResolving ? undefined : story.handleChoice}
+        onChoice={assetsResolving ? undefined : chooseStoryBranch}
         onSubmitInput={assetsResolving ? undefined : submitInput}
         className="h-full max-w-none rounded-none border-0 bg-background"
         stageClassName="min-h-0"
@@ -547,6 +696,20 @@ function InkEpisodePlayer({
         hideEndedCaption
         endedActions={(
           <div className="mx-auto flex flex-col items-center gap-2.5">
+            {recordSyncStatus !== 'idle' && recordSyncStatus !== 'synced' && (
+              <p className="text-center text-xs text-muted-foreground" role="status" aria-live="polite">
+                {recordSyncStatus === 'pending'
+                  ? t('scripts.recordWaitingSync')
+                  : recordSyncStatus === 'failed'
+                    ? t('scripts.recordSyncFailed')
+                    : t('scripts.savingRecord')}
+              </p>
+            )}
+            {recordSyncStatus === 'failed' && (
+              <Button type="button" size="sm" variant="ghost" onClick={() => void retryRecordSync()}>
+                {t('scripts.retryRecordSync')}
+              </Button>
+            )}
             <Button
               type="button"
               size="sm"
@@ -564,7 +727,9 @@ function InkEpisodePlayer({
                   ? t('scripts.submittingVideoTask')
                   : recordId
                     ? t('scripts.generateVideo')
-                    : t('scripts.savingRecord')}
+                    : recordSyncStatus === 'pending'
+                      ? t('scripts.recordWaitingSyncShort')
+                      : t('scripts.savingRecord')}
             </Button>
             <Button
               type="button"

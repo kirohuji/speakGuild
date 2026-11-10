@@ -13,6 +13,7 @@ import { useThemePreset } from '@/providers/theme-preset-provider';
 import { useThemePresetStore } from '@/stores/theme-preset.store';
 import { usePreferencesStore } from '@/stores/preferences.store';
 import { useUserStore } from '@/stores/user.store';
+import { useOnboardingStore } from '@/stores/onboarding.store';
 import { useAuth } from '@/providers/auth-provider';
 import type { ThemePreset } from '@/features/admin/theme-manage/api/theme-api';
 import { MembershipPurchaseDrawer } from '@/features/membership/components/membership-purchase-drawer';
@@ -69,6 +70,10 @@ export function AppearanceContent() {
   const { bgmEnabled, bgmVolume, setBgmEnabled, setBgmVolume } = usePreferencesStore();
   const canUseAllThemes = session?.user?.role === 'admin' || membership?.level === 'admin' || !!membership?.isActive;
 
+  useEffect(() => {
+    useOnboardingStore.getState().tryStartSegment('appearance-themes');
+  }, []);
+
   // 打开主题选择器时才加载列表（缓存优先）
   useEffect(() => {
     ensurePresets();
@@ -98,7 +103,7 @@ export function AppearanceContent() {
     <div className="space-y-4">
 
       {/* ═══ 1. 沉浸式主题套装 ═══ */}
-      <section>
+      <section data-spotlight="appearance-themes">
         <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
           {t('profile.immersiveTheme')}
         </p>

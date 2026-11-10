@@ -13,11 +13,12 @@ export class MembershipService {
     if (level !== 'standard') return features;
 
     return [
-      'AI 评价与复盘次数更多',
+      'AI 评价与复盘不限次数',
+      '全部主题化练习',
       '完整剧本模式',
-      '更多主题化练习',
-      '练习完成后的自由练习模式',
-      '更多表达库收纳空间',
+      '全部沉浸式外观主题',
+      '表达库沉浸听练',
+      '学习资料 PDF 导出',
     ];
   }
 
@@ -180,12 +181,13 @@ export class MembershipService {
 
   getBenefits() {
     return [
-      { benefitId: '1', name: 'AI 每轮评价', freeSupport: '5 次/天', standardSupport: '更多次数', advancedSupport: '更多次数' },
-      { benefitId: '2', name: 'AI 完成复盘', freeSupport: '1 次/天', standardSupport: '更多次数', advancedSupport: '更多次数' },
-      { benefitId: '3', name: '剧本模式', freeSupport: '体验剧集', standardSupport: '完整开放', advancedSupport: '完整开放' },
-      { benefitId: '4', name: '主题化练习', freeSupport: '基础主题', standardSupport: '更多主题', advancedSupport: '更多主题' },
-      { benefitId: '5', name: '完成后自由练习', freeSupport: false, standardSupport: true, advancedSupport: true },
-      { benefitId: '6', name: '表达库容量', freeSupport: '基础容量', standardSupport: '更多收纳', advancedSupport: '更多收纳' },
+      { benefitId: '1', name: 'AI 每轮评价', freeSupport: '5 次/天', standardSupport: '不限次数', advancedSupport: '不限次数' },
+      { benefitId: '2', name: 'AI 完成复盘', freeSupport: '1 次/天', standardSupport: '不限次数', advancedSupport: '不限次数' },
+      { benefitId: '3', name: '主题化练习', freeSupport: '免费主题包', standardSupport: '全部主题包', advancedSupport: '全部主题包' },
+      { benefitId: '4', name: '剧本模式', freeSupport: '体验剧集', standardSupport: '完整开放', advancedSupport: '完整开放' },
+      { benefitId: '5', name: '沉浸式外观主题', freeSupport: '默认 + 深海', standardSupport: '全部主题', advancedSupport: '全部主题' },
+      { benefitId: '6', name: '表达库沉浸听练', freeSupport: false, standardSupport: true, advancedSupport: true },
+      { benefitId: '7', name: '学习资料 PDF 导出', freeSupport: false, standardSupport: true, advancedSupport: true },
     ];
   }
 }

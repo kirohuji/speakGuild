@@ -1,6 +1,6 @@
 import type { MemberBenefit, MemberPlan } from '@/features/membership/api'
 
-const CACHE_KEY = 'manyu-member-catalog:v1'
+const CACHE_KEY = 'manyu-member-catalog:v2'
 
 export interface MemberCatalogCache {
   plans: MemberPlan[]

@@ -57,11 +57,12 @@ async function seedMembershipPlans() {
     data: {
       name: '漫语会员', level: 'standard', price: 1900, yearlyPrice: 19800, period: 'month', durationDays: 30,
       features: [
-        'AI 评价与复盘次数更多',
+        'AI 评价与复盘不限次数',
+        '全部主题化练习',
         '完整剧本模式',
-        '更多主题化练习',
-        '练习完成后的自由练习模式',
-        '更多表达库收纳空间',
+        '全部沉浸式外观主题',
+        '表达库沉浸听练',
+        '学习资料 PDF 导出',
       ],
       sortOrder: 1, highlighted: true, revenueCatEntitlementId: 'pro_member',
     },

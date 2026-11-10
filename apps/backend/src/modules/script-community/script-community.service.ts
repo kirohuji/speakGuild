@@ -45,7 +45,15 @@ type FeedWork = Prisma.ScriptWorkGetPayload<{ include: typeof feedInclude }>
 const SCRIPT_ASSET_URL_EXPIRES_SECONDS = 7 * 24 * 3600
 
 function dialogueToPracticeTurns(
-  dialogue: Array<{ speaker?: string; text?: string; isUser?: boolean }>,
+  dialogue: Array<{
+    speaker?: string
+    text?: string
+    isUser?: boolean
+    originalText?: string
+    recorded?: boolean
+    recordingFrameIndex?: number
+    recordingDurationMs?: number
+  }>,
 ) {
   const turns: Array<{
     round: number
@@ -53,20 +61,32 @@ function dialogueToPracticeTurns(
     userText: string
     objectivesCompleted: string[]
     chunksUsed: string[]
+    originalText?: string
+    recordingFrameIndex?: number
+    recordingDurationMs?: number
+    evaluationPriority: 'primary' | 'supplemental'
   }> = []
   let pendingNpc: string[] = []
   let round = 0
   for (const line of dialogue) {
     const text = typeof line?.text === 'string' ? line.text.trim() : ''
     if (!text) continue
-    if (line.isUser) {
+    const learnerTurn = Boolean(line.isUser || line.recorded)
+    if (learnerTurn) {
       round += 1
+      const originalText = typeof line.originalText === 'string' && line.originalText.trim()
+        ? line.originalText.trim()
+        : text
       turns.push({
         round,
-        npcText: pendingNpc.join('\n') || '(opening)',
+        npcText: pendingNpc.join('\n') || `Target line: ${originalText}`,
         userText: text,
         objectivesCompleted: [],
         chunksUsed: [],
+        originalText,
+        recordingFrameIndex: Number.isInteger(line.recordingFrameIndex) ? line.recordingFrameIndex : undefined,
+        recordingDurationMs: typeof line.recordingDurationMs === 'number' ? line.recordingDurationMs : undefined,
+        evaluationPriority: line.isUser ? 'primary' : 'supplemental',
       })
       pendingNpc = []
     } else {

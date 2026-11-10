@@ -83,6 +83,10 @@ import { useLearningStore } from '@/stores/learning.store'
 import { cn } from '@/lib/cn'
 import { enqueueScriptVideoRender } from '@/features/scripts/lib/request-script-video-render'
 import { buildStoryRepeatFrames } from '@/features/scripts/lib/story-repeat-frames'
+import {
+  buildPerformedStoryFrames,
+  type PerformedStoryTurn,
+} from '@/features/scripts/lib/performed-story-timeline'
 import { ScriptRecordVnReplay } from '@/features/scripts/components/script-record-vn-replay'
 import { useGlobalTaskStore } from '@/stores/global-task.store'
 import { useOnboardingStore } from '@/stores/onboarding.store'
@@ -298,12 +302,23 @@ export function ScriptCenterPage() {
     [myUnits],
   )
 
-  // 剧本页加载完成即触发，目标是始终存在的“剧本商店”入口；无剧本数据时也能看到引导。
+  // 剧本页：先商店入口，再首卡 / 练习记录
   useEffect(() => {
-    if (!myLoading) {
+    if (myLoading) return
+    if (!onboardingCompletedSegments['scripts']) {
       useOnboardingStore.getState().tryStartSegment('scripts')
+      return
     }
-  }, [myLoading, onboardingCompletedSegments])
+    if (
+      tab === 'mine'
+      && storyUnits.length > 0
+      && !onboardingCompletedSegments['scripts-first-card']
+    ) {
+      useOnboardingStore.getState().tryStartSegment('scripts-first-card')
+      return
+    }
+    useOnboardingStore.getState().tryStartSegment('scripts-records')
+  }, [myLoading, tab, storyUnits.length, onboardingCompletedSegments])
   const installedIds = useMemo(
     () => new Set(downloadedPacks.filter((pack) => pack.status === 'installed').map((pack) => pack.packId)),
     [downloadedPacks],
@@ -594,6 +609,7 @@ export function ScriptCenterPage() {
           <button
             type="button"
             onClick={() => setPanel('records')}
+            data-spotlight="scripts-records"
             className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
             aria-label={t('scripts.practiceRecords')}
           >
@@ -1097,7 +1113,11 @@ async function generateAndPublishExistingWork(
   try {
   const player = await learningApi.getStoryEpisodePlayer(work.episodeId)
   if (!player.inkScript.inkSource) throw new Error(i18n.t('scripts.scriptIncomplete'))
-  const frames = buildStoryRepeatFrames(player, { audioMode: 'render' })
+  const authoredFrames = buildStoryRepeatFrames(player, { audioMode: 'render' })
+  const snapshot = work.renderPayload?.resultSnapshot as { performedTimeline?: PerformedStoryTurn[] } | undefined
+  const frames = Array.isArray(snapshot?.performedTimeline) && snapshot.performedTimeline.length > 0
+    ? buildPerformedStoryFrames(authoredFrames, snapshot.performedTimeline)
+    : authoredFrames
   const task = await enqueueScriptVideoRender({
     workId: work.id,
     frames,

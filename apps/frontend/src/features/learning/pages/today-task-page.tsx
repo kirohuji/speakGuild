@@ -388,13 +388,6 @@ export function TodayTaskPage() {
     }
   }, [plan?.date, plan?.mode, plan?.runId])
 
-  // 今日计划就绪时触发「每日练习」引导（条件式分段，仅首次）
-  useEffect(() => {
-    if (plan && plan.steps.length > 0) {
-      useOnboardingStore.getState().tryStartSegment('today-practice')
-    }
-  }, [plan, onboardingCompletedSegments])
-
   useEffect(() => {
     if (!localAiWarmupJudgeEnabled) return
     if (!drawerOpen) return
@@ -865,6 +858,22 @@ export function TodayTaskPage() {
     [teachingTopicCandidates, teachingAvailability],
   )
 
+  // 今日计划就绪时触发分段引导：先练入口，再记录 / 教学
+  useEffect(() => {
+    if (!plan) return
+    if (plan.steps.length > 0 && !onboardingCompletedSegments['today-practice']) {
+      useOnboardingStore.getState().tryStartSegment('today-practice')
+      return
+    }
+    if (isMobile && !onboardingCompletedSegments['today-records']) {
+      useOnboardingStore.getState().tryStartSegment('today-records')
+      return
+    }
+    if (teachingTopics.length > 0) {
+      useOnboardingStore.getState().tryStartSegment('today-teaching')
+    }
+  }, [plan, isMobile, teachingTopics.length, onboardingCompletedSegments])
+
   const visibleTeachingTopics = showAllTeachingTopics
     ? teachingTopics
     : teachingTopics.slice(0, 3)
@@ -1285,6 +1294,7 @@ export function TodayTaskPage() {
             <button
               type="button"
               onClick={(e) => { e.currentTarget.blur(); setRecordsOpen(true) }}
+              data-spotlight="today-records"
               className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background/45 hover:text-foreground"
               aria-label={t('todayTask.practiceRecords')}
             >
@@ -1454,7 +1464,11 @@ export function TodayTaskPage() {
           )}
         </div>
         {teachingTopics.length > 0 && (
-          <section className="mt-3 border-t border-border/45 pt-2.5" aria-label={t('todayTask.teachingSectionAria')}>
+          <section
+            className="mt-3 border-t border-border/45 pt-2.5"
+            aria-label={t('todayTask.teachingSectionAria')}
+            data-spotlight="today-teaching"
+          >
             <p className="text-[10px] leading-4 text-muted-foreground">
               {showTeachingHintIntro ? t('todayTask.teachingHintIntro') : t('todayTask.teachingHint')}
             </p>

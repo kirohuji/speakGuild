@@ -8,7 +8,7 @@ import { localDb } from './unified-storage'
 import { syncOutbox, type SyncEntityType, type SyncOutboxItem } from './sync-outbox'
 import { learningContentRepository } from './learning-content.repository'
 import { learningPackService } from './learning-pack.service'
-import { scriptRepository } from './script.repository'
+import { emitPracticeSyncFailed, scriptRepository } from './script.repository'
 import { useOfflineSyncStore } from '@/stores/offline-sync.store'
 import { upsertWarmupRecordEntries } from './warmup-record-index'
 import { dailyPracticeRepository, pullRemoteDailyProgress, restoreRemoteDailyPracticeRun } from './daily-practice.repository'
@@ -987,6 +987,9 @@ export const offlineSyncService = {
             madeProgress = true
           } else {
             await syncOutbox.markFailed(item.id, error, item)
+            if (item.entityType === 'script_practice_record') {
+              emitPracticeSyncFailed({ clientMutationId: item.entityId, error: errorMessage(error) })
+            }
             failed += 1
           }
         }

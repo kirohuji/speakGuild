@@ -170,13 +170,14 @@ export function SpotlightOverlay({
     // 稍微延迟一下等 DOM 渲染
     const timeout = setTimeout(tryFind, 150)
 
-    window.addEventListener('scroll', updatePosition, { passive: true })
+    // Nested scroll containers (e.g. <main>) don't bubble scroll to window
+    document.addEventListener('scroll', updatePosition, { passive: true, capture: true })
     window.addEventListener('resize', updatePosition)
 
     return () => {
       clearTimeout(timeout)
       cancelAnimationFrame(rafRef.current)
-      window.removeEventListener('scroll', updatePosition)
+      document.removeEventListener('scroll', updatePosition, { capture: true })
       window.removeEventListener('resize', updatePosition)
     }
   }, [step.targetSelector, updatePosition])

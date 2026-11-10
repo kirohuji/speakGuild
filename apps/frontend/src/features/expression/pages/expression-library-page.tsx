@@ -32,6 +32,7 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, D
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
 import { useLayoutStore } from '@/stores/layout.store'
+import { useOnboardingStore } from '@/stores/onboarding.store'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Virtuoso } from 'react-virtuoso'
 import { Directory, Filesystem } from '@capacitor/filesystem'
@@ -329,6 +330,16 @@ export function ExpressionLibraryPage() {
       window.removeEventListener('touchend', onTouchEnd)
     }
   }, [handleLibraryTabChange, libraryTab])
+
+  const onboardingCompletedSegments = useOnboardingStore((s) => s.completedSegments)
+  useEffect(() => {
+    if (loading || result.items.length === 0) return
+    if (libraryTab === 'words' && !onboardingCompletedSegments['expression-immersive']) {
+      useOnboardingStore.getState().tryStartSegment('expression-immersive')
+      return
+    }
+    useOnboardingStore.getState().tryStartSegment('expression-export-pdf')
+  }, [loading, result.items.length, libraryTab, onboardingCompletedSegments])
 
   // ---- dialog ----
   const apiType = libraryTab === 'words' ? 'word' : libraryTab === 'pattern' ? 'scene_phrase' : 'chunk'
@@ -871,7 +882,12 @@ export function ExpressionLibraryPage() {
           <div className="mx-2 mb-2 flex items-center justify-between px-0 pt-0">
             <span className="text-xs text-muted-foreground">{t('expressionLib.tapToExpand')}</span>
             {libraryTab === 'words' && (
-              <button type="button" onClick={() => openImmersivePlayer(visibleDialogItems, 0)} className={cn('flex h-9 touch-manipulation items-center gap-1.5 rounded-full bg-primary/10 px-3 text-xs font-medium transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', immersiveClassName)}>
+              <button
+                type="button"
+                onClick={() => openImmersivePlayer(visibleDialogItems, 0)}
+                data-spotlight="expression-immersive"
+                className={cn('flex h-9 touch-manipulation items-center gap-1.5 rounded-full bg-primary/10 px-3 text-xs font-medium transition-colors hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40', immersiveClassName)}
+              >
                 <Headphones className="size-3.5" aria-hidden="true" /> {t('expressionLib.immersive')}
               </button>
             )}
@@ -942,7 +958,7 @@ export function ExpressionLibraryPage() {
           <button type="button" onClick={() => setGroupByDate((value) => !value)} className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/20', groupByDate && 'bg-primary/20')} aria-label={t('expressionLib.groupByDate')} aria-pressed={groupByDate}>
             <CalendarDays className="size-4" />
           </button>
-          <button type="button" onClick={() => void openExportPreview()} className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/20" aria-label={t('expressionLib.exportPdf')}><Download className="size-4" /></button>
+          <button type="button" onClick={() => void openExportPreview()} data-spotlight="expression-export-pdf" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:bg-primary/20" aria-label={t('expressionLib.exportPdf')}><Download className="size-4" /></button>
         </div>
 
         {/* ---- 二级状态过滤 ---- */}

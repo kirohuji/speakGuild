@@ -9,6 +9,20 @@ import { localDb } from './unified-storage'
 import { syncOutbox } from './sync-outbox'
 import { createId } from './utils'
 
+export const SCRIPT_PRACTICE_SYNCED_EVENT = 'manyu:script-practice-synced'
+export const SCRIPT_PRACTICE_SYNC_FAILED_EVENT = 'manyu:script-practice-sync-failed'
+
+export type ScriptPracticeSyncedEventDetail = {
+  clientMutationId?: string
+  localId?: string
+  record: ScriptPracticeRecord
+}
+
+export type ScriptPracticeSyncFailedEventDetail = {
+  clientMutationId: string
+  error?: string
+}
+
 export type ScriptCompletePayload = {
   mode: ScriptPracticeMode
   durationSec?: number
@@ -85,6 +99,16 @@ async function putWorkCacheRow(work: ScriptWork): Promise<void> {
     updatedAt: new Date().toISOString(),
   }
   await localDb.put('script_works', row)
+}
+
+function emitPracticeSynced(detail: ScriptPracticeSyncedEventDetail) {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent<ScriptPracticeSyncedEventDetail>(SCRIPT_PRACTICE_SYNCED_EVENT, { detail }))
+}
+
+export function emitPracticeSyncFailed(detail: ScriptPracticeSyncFailedEventDetail) {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent<ScriptPracticeSyncFailedEventDetail>(SCRIPT_PRACTICE_SYNC_FAILED_EVENT, { detail }))
 }
 
 function buildOptimisticRecord(
@@ -205,7 +229,7 @@ export const scriptRepository = {
     episodeId: string,
     data: ScriptCompletePayload,
     displayHint?: ScriptCompleteDisplayHint,
-  ): Promise<{ record: ScriptPracticeRecord; pending: boolean }> {
+  ): Promise<{ record: ScriptPracticeRecord; pending: boolean; clientMutationId: string }> {
     const clientMutationId = data.clientMutationId?.trim() || createId()
     const payload: ScriptCompletePayload = { ...data, clientMutationId }
     const optimistic = buildOptimisticRecord(episodeId, payload, clientMutationId, displayHint)
@@ -235,7 +259,8 @@ export const scriptRepository = {
         updatedAt: new Date().toISOString(),
       })
       writeLocalStoryEpisodePassed(episodeId)
-      return { record: cachedRecord, pending: false }
+      emitPracticeSynced({ clientMutationId, localId, record: cachedRecord })
+      return { record: cachedRecord, pending: false, clientMutationId }
     } catch {
       await putPracticeCacheRow({
         id: optimistic.id,
@@ -257,7 +282,7 @@ export const scriptRepository = {
         payload: { episodeId, data: payload, localId: optimistic.id },
       })
       writeLocalStoryEpisodePassed(episodeId)
-      return { record: optimistic, pending: true }
+      return { record: optimistic, pending: true, clientMutationId }
     }
   },
 
@@ -282,5 +307,10 @@ export const scriptRepository = {
       updatedAt: new Date().toISOString(),
     })
     writeLocalStoryEpisodePassed(input.record.episodeId)
+    emitPracticeSynced({
+      clientMutationId: input.clientMutationId,
+      localId: input.localId,
+      record: input.record,
+    })
   },
 }

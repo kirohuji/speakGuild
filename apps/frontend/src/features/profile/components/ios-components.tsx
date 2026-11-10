@@ -12,6 +12,7 @@ export function IosRow({
   last = false,
   onTap,
   right,
+  spotlight,
 }: {
   iconBg?: string
   icon?: React.ComponentType<{ className?: string }>
@@ -21,6 +22,7 @@ export function IosRow({
   last?: boolean
   onTap?: () => void
   right?: React.ReactNode
+  spotlight?: string
 }) {
   const inner = (
     <div className={cn(
@@ -47,11 +49,16 @@ export function IosRow({
   )
 
   return onTap ? (
-    <button type="button" onClick={onTap} className="w-full text-left">
+    <button
+      type="button"
+      onClick={onTap}
+      className="w-full text-left"
+      {...(spotlight ? { 'data-spotlight': spotlight } : {})}
+    >
       {inner}
     </button>
   ) : (
-    <div>{inner}</div>
+    <div {...(spotlight ? { 'data-spotlight': spotlight } : {})}>{inner}</div>
   )
 }
 

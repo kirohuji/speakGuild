@@ -1319,10 +1319,23 @@ Rules:
             chunksUsed: turn.judgement.chunksUsed,
           })}`
         : '';
-      return `轮次 ${turn.round}:\n  NPC: ${turn.npcText}\n  用户: ${turn.userText}\n  inputNodeId: ${turn.inputNodeId ?? 'N/A'}\n  已完成目标: ${(turn.objectivesCompleted ?? []).join(', ') || '无'}\n  已用 Chunk: ${(turn.chunksUsed ?? []).join(', ') || '无'}${judgement}`;
+      const evaluationPriority = turn.evaluationPriority === 'supplemental'
+        ? '\n  点评优先级: 补充点评（NPC 跟读）'
+        : turn.evaluationPriority === 'primary'
+          ? '\n  点评优先级: 重点点评（用户角色）'
+          : '';
+      const originalText = typeof turn.originalText === 'string' && turn.originalText.trim()
+        ? `\n  原句: ${turn.originalText.trim()}`
+        : '';
+      const recordingMetadata = Number.isInteger(turn.recordingFrameIndex)
+        ? `\n  录音帧: ${turn.recordingFrameIndex}\n  录音时长: ${turn.recordingDurationMs ?? 0}ms`
+        : '';
+      return `轮次 ${turn.round}:${evaluationPriority}${originalText}\n  NPC: ${turn.npcText}\n  用户: ${turn.userText}${recordingMetadata}\n  inputNodeId: ${turn.inputNodeId ?? 'N/A'}\n  已完成目标: ${(turn.objectivesCompleted ?? []).join(', ') || '无'}\n  已用 Chunk: ${(turn.chunksUsed ?? []).join(', ') || '无'}${judgement}`;
     }).join('\n\n') || '无对话';
 
-    const system = `你是一位专业的英语口语教练。你只评估用户输出，不评价 NPC 台词。你需要结合练习话题、场景、目标 chunk、词汇、句型和对话上下文做复盘。
+    const system = `你是一位专业的英语口语教练。你只评估学习者实际练习过的输出，不评价仅作为上下文、没有录音的 NPC 台词。你需要结合练习话题、场景、目标 chunk、词汇、句型和对话上下文做复盘。
+
+标记为“重点点评（用户角色）”的轮次是核心，必须优先评价；标记为“补充点评（NPC 跟读）”的轮次可以提供简短附加建议，但不得稀释核心用户台词的总结和改进建议。录音帧与时长只是练习证据，不能据此虚构发音结论。
 
 重要：你必须逐轮分析用户的每一句话，不能只看最后一轮。整体评价要覆盖用户在整个对话过程中的表现和进步。
 

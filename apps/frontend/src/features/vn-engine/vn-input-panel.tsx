@@ -53,8 +53,13 @@ type VoiceStatus = 'idle' | 'recording' | 'processing' | 'done'
 interface VnInputPanelProps {
   disabled?: boolean
   placeholder?: string
-  onSubmit: (text: string, audioUrl?: string) => void | Promise<void>
+  onSubmit: (text: string, audioUrl?: string, recording?: VnInputRecording) => void | Promise<void>
   variant?: 'default' | 'embedded'
+}
+
+export interface VnInputRecording {
+  blob: Blob
+  filename: string
 }
 
 export function VnInputPanel({
@@ -77,6 +82,7 @@ export function VnInputPanel({
   const [voiceStatus, setVoiceStatus] = useState<VoiceStatus>('idle')
   const [transcribedText, setTranscribedText] = useState('')
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null)
+  const [inputRecording, setInputRecording] = useState<VnInputRecording | null>(null)
   const [elapsed, setElapsed] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [voiceError, setVoiceError] = useState<string | null>(null)
@@ -119,6 +125,7 @@ export function VnInputPanel({
         setTranscribedText(transcribed)
         setText(transcribed)
         setRecordedAudioUrl(result.audioUrl ?? fallbackAudioUrl)
+        setInputRecording({ blob, filename })
         setVoiceStatus('done')
       } else {
         setVoiceError(t('profile.placement.voiceNoContent'))
@@ -170,6 +177,7 @@ export function VnInputPanel({
     cleanupRecording()
     setIsPlaying(false)
     setRecordedAudioUrl(null)
+    setInputRecording(null)
     setTranscribedText('')
 
     try {
@@ -235,6 +243,7 @@ export function VnInputPanel({
             setTranscribedText(transcribed)
             setText(transcribed)
             setRecordedAudioUrl(null)
+            setInputRecording(null)
             setVoiceStatus('done')
           } else {
             setVoiceError(t('profile.placement.voiceNoContent'))
@@ -268,6 +277,7 @@ export function VnInputPanel({
     setVoiceStatus('idle')
     setTranscribedText('')
     setRecordedAudioUrl(null)
+    setInputRecording(null)
     setVoiceError(null)
     setElapsed(0)
     setIsPlaying(false)
@@ -279,16 +289,17 @@ export function VnInputPanel({
     if (!finalText || isDisabled) return
     setSubmitting(true)
     try {
-      await onSubmit(finalText, recordedAudioUrl ?? undefined)
+      await onSubmit(finalText, recordedAudioUrl ?? undefined, inputRecording ?? undefined)
       setText('')
       setTranscribedText('')
       setRecordedAudioUrl(null)
+      setInputRecording(null)
       setVoiceStatus('idle')
       setVoiceError(null)
     } finally {
       setSubmitting(false)
     }
-  }, [text, isDisabled, onSubmit, recordedAudioUrl])
+  }, [text, isDisabled, onSubmit, recordedAudioUrl, inputRecording])
 
   // ── 回放 ──
   const togglePlayback = useCallback(() => {
@@ -348,6 +359,7 @@ export function VnInputPanel({
     setText('')
     cleanupRecording()
     setRecordedAudioUrl(null)
+    setInputRecording(null)
     setTranscribedText('')
 
     // 保存本地 blob 供回放
@@ -362,6 +374,7 @@ export function VnInputPanel({
         setTranscribedText(transcribed)
         setText(transcribed)
         setRecordedAudioUrl(result.audioUrl ?? localAudioUrlRef.current)
+        setInputRecording({ blob: file, filename: file.name })
         setVoiceStatus('done')
       } else {
         setVoiceError(t('vnSettings.noVoiceDetected'))

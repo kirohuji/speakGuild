@@ -33,6 +33,7 @@ import { PracticeAnalysisPanel } from '../components/practice-analysis-panel'
 import { VnPlayerBoundary } from '../components/vn-player-boundary'
 import { useLayoutStore } from '@/stores/layout.store'
 import { usePracticeStore } from '@/stores/practice.store'
+import { useOnboardingStore } from '@/stores/onboarding.store'
 import { useFeatureFlagsStore } from '@/stores/feature-flags.store'
 import { useEffectivePracticeTimer } from '@/hooks/use-effective-practice-timer'
 import { MarkdownRenderer } from '@/components/common/markdown-renderer'
@@ -238,6 +239,32 @@ export function PracticeSessionPage() {
         items: (c.examples ?? []).map((e: any) => ({ zh: e.zh, answer: e.en })),
       }))
   }, [detail, projected, runtimePipeline])
+
+  const onboardingCompletedSegments = useOnboardingStore((s) => s.completedSegments)
+  useEffect(() => {
+    if (phase !== 'prepare' || !detail || loading) return
+    const hasWarmup = projected
+      ? warmupItems.length > 0
+      : Boolean(detail.topic?.metadata?.outputTraining?.enabled && detail.topic?.metadata?.outputTraining?.pipeline?.length > 0)
+    const canShowPractice = !flagsLoaded || scriptPracticeEnabled
+
+    if (hasWarmup && !onboardingCompletedSegments['practice-warmup']) {
+      useOnboardingStore.getState().tryStartSegment('practice-warmup')
+      return
+    }
+    if (canShowPractice) {
+      useOnboardingStore.getState().tryStartSegment('practice-vn-start')
+    }
+  }, [
+    phase,
+    detail,
+    loading,
+    projected,
+    warmupItems.length,
+    flagsLoaded,
+    scriptPracticeEnabled,
+    onboardingCompletedSegments,
+  ])
 
   // ==================== Load Data ====================
   useEffect(() => {
@@ -908,7 +935,7 @@ export function PracticeSessionPage() {
       </Button>
     )
     const practiceBtn = (
-      <Button className="flex-1 min-h-11 bg-accent text-accent-foreground hover:bg-accent/85" size="default" onClick={handleStartPractice}>
+      <Button className="flex-1 min-h-11 bg-accent text-accent-foreground hover:bg-accent/85" size="default" onClick={handleStartPractice} data-spotlight="start-vn-practice">
         <Play className="mr-1.5 size-4" /> {t('practiceSession.startPractice')}
       </Button>
     )

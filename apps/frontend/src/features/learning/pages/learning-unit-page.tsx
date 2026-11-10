@@ -166,7 +166,7 @@ export function LearningUnitPage() {
     return () => window.removeEventListener(LEARNING_LIBRARY_CHANGED_EVENT, refresh)
   }, [refreshCollectedTexts])
 
-  // 知识点数据就绪时触发「加入学习库」引导（条件式分段，仅首次）
+  // 知识点 / 练习话题就绪时触发分段引导（先收藏，再开练）
   useEffect(() => {
     if (!unit) return
     const hasKnowledge = projected
@@ -176,10 +176,17 @@ export function LearningUnitPage() {
         unit.chunks.length > 0 ||
         (unit.sentencePatterns?.length ?? 0) > 0
       )
-    if (hasKnowledge) {
+    const contentMode = unit.contentMode ?? (unit.packageType === 'story' ? 'story' : 'practice')
+    const hasTopics = contentMode === 'practice' && unit.trainingTopics.length > 0
+
+    if (hasKnowledge && !onboardingCompletedSegments['unit-save-to-library']) {
       useOnboardingStore.getState().tryStartSegment('unit-save-to-library')
+      return
     }
-  }, [unit, onboardingCompletedSegments])
+    if (hasTopics) {
+      useOnboardingStore.getState().tryStartSegment('unit-start-practice')
+    }
+  }, [unit, projected, onboardingCompletedSegments])
 
   const requestSave = useCallback((value: NonNullable<typeof pendingSave>) => {
     setPendingSave(value)

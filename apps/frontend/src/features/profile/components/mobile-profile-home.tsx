@@ -48,6 +48,10 @@ export function MobileProfileHome({
   const [showAssessmentDialog, setShowAssessmentDialog] = useState(false)
 
   useEffect(() => {
+    useOnboardingStore.getState().tryStartSegment('member-benefits')
+  }, [])
+
+  useEffect(() => {
     if (session?.user?.id) {
       void ensureUserLoaded(session.user.id)
     }
@@ -140,7 +144,7 @@ export function MobileProfileHome({
           onTap={() => setShowAssessmentDialog(true)}
         />
         <IosRow icon={IdCard} iconBg="bg-sky-400" label={t('profile.account')} onTap={() => onNavigate('account')} />
-        <IosRow icon={Crown} iconBg="bg-amber-500" label={t('nav.member')} onTap={() => onNavigate('member')} />
+        <IosRow icon={Crown} iconBg="bg-amber-500" label={t('nav.member')} onTap={() => onNavigate('member')} spotlight="member-benefits" />
         {INVITE_FEATURE_ENABLED && (
           <IosRow
             icon={Gift}
