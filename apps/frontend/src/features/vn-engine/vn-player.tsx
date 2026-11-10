@@ -272,6 +272,7 @@ export function VnPlayer({
   const audioUrl = displayLine?.audioUrl
   const cachedBackgroundUrl = useCachedAssetUrl(backgroundUrl, 'background', offlineOnly)
   const cachedSpriteUrl = useCachedAssetUrl(currentSpriteUrl, 'sprite', offlineOnly)
+  const cachedAvatarUrl = useCachedAssetUrl(currentAvatarUrl, 'avatar', offlineOnly)
   // Button / manual replay uses the cached URL; autoplay resolves separately so
   // cache URL swaps don't restart the clip mid-play.
   const cachedAudioUrl = useCachedAssetUrl(audioUrl, displayLine?.isUser ? 'recording' : 'voice', offlineOnly)
@@ -437,7 +438,7 @@ export function VnPlayer({
           currentLine={currentLine}
           history={reviewTimeline}
           choices={choices}
-          currentAvatarUrl={currentAvatarUrl}
+          currentAvatarUrl={cachedAvatarUrl}
           currentAvatarAlt={currentAvatarAlt}
           isWaiting={isWaiting}
           isEnded={isEnded}
@@ -650,16 +651,16 @@ export function VnPlayer({
             <div className="min-h-0 flex-1 overflow-y-auto relative">
               {displayLine ? (
                 <div className="flex min-h-full items-start py-3 pl-4 pr-4">
-                  {currentAvatarUrl && !displayLine.isUser && (
+                  {cachedAvatarUrl && !displayLine.isUser && (
                     <img
-                      src={currentAvatarUrl}
+                      src={cachedAvatarUrl}
                       alt={currentAvatarAlt || displayLine.speaker || ''}
                       className="mt-3 size-[72px] shrink-0 rounded-2xl object-cover"
                     />
                   )}
                   <div className={cn(
                     'min-w-0 space-y-2 pt-2',
-                    currentAvatarUrl && !displayLine.isUser ? 'ml-3' : '',
+                    cachedAvatarUrl && !displayLine.isUser ? 'ml-3' : '',
                   )}>
                     <p className="whitespace-pre-wrap font-medium leading-relaxed text-foreground" style={{ fontSize: settings.fontSize }}>
                       <TappableText text={displayedText} onWordDetail={onWordInsight} />
@@ -673,7 +674,7 @@ export function VnPlayer({
                   </div>
                 </div>
               ) : showEndedUi ? (
-                <div className="absolute inset-0 flex w-full flex-col items-stretch justify-center gap-3 px-4">
+                <div className="absolute inset-0 flex w-full flex-col items-center justify-center gap-3 px-4">
                   {!hideEndedCaption && (
                     <p className="text-center text-sm text-muted-foreground">{t('vnHistory.storyEnded')}</p>
                   )}

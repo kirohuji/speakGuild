@@ -5,6 +5,8 @@ import { ArrowLeft, Film, History, RotateCcw, Settings, Sparkles } from 'lucide-
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
+import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/cn'
 import { VnPlayer, type VnPlayerHandle, type VnPlayerLine } from '@/features/vn-engine/vn-player'
 import { type VnInputRecording } from '@/features/vn-engine/vn-input-panel'
 import { useInkStory } from '@/features/vn-engine/use-ink-story'
@@ -613,20 +615,37 @@ function InkEpisodePlayer({
           </Link>
         </Button>
         <span className="pointer-events-none absolute inset-x-0 truncate px-16 text-center text-xs font-medium text-foreground/70">
-          {mode === 'repeat' ? t('scripts.repeatTheater') : t('scripts.vnInteractive')}
+          {mode === 'repeat'
+            ? t('scripts.repeatTheater')
+            : analysisOpen
+              ? `${data.episode.title} · ${t('scripts.aiReviewTab')}`
+              : t('scripts.vnInteractive')}
         </span>
         <div className="relative z-10 ml-auto flex shrink-0 items-center gap-1">
           {showEndedChrome ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-8 rounded-md px-2 text-xs font-medium text-foreground/80 shadow-none hover:bg-muted hover:text-foreground"
-              onClick={() => window.location.reload()}
-            >
-              <RotateCcw className="size-3.5" />
-              {t('scripts.performAgain')}
-            </Button>
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 rounded-md px-2 text-xs font-medium text-foreground/80 shadow-none hover:bg-muted hover:text-foreground"
+                onClick={() => window.location.reload()}
+              >
+                <RotateCcw className="size-3.5" />
+                {t('scripts.performAgain')}
+              </Button>
+              <Sparkles className={cn('size-3.5', analysisOpen ? 'text-primary' : 'text-muted-foreground')} />
+              <Switch
+                checked={analysisOpen}
+                disabled={!recordId || analysisLoading}
+                onCheckedChange={(checked) => {
+                  if (checked) void requestAiAnalysis()
+                  else setAnalysisOpen(false)
+                }}
+                aria-label={t('learning.toggleAiReview')}
+                title={analysisOpen ? t('scripts.dialogueReplay') : t('scripts.aiReviewTab')}
+              />
+            </>
           ) : isChatMode ? (
             <>
               <button
@@ -730,21 +749,6 @@ function InkEpisodePlayer({
                     : recordSyncStatus === 'pending'
                       ? t('scripts.recordWaitingSyncShort')
                       : t('scripts.savingRecord')}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              className="h-8 rounded-full border-0 bg-primary/10 px-4 text-xs font-medium text-primary shadow-none hover:bg-primary/16 hover:text-primary disabled:bg-primary/6 disabled:text-primary/45"
-              disabled={!recordId || analysisLoading}
-              onClick={() => void requestAiAnalysis()}
-            >
-              <Sparkles data-icon="inline-start" />
-              {analysisLoading
-                ? t('common.loading')
-                : analysisResult
-                  ? t('learning.viewAiReview')
-                  : t('scripts.requestAiReview')}
             </Button>
           </div>
         )}

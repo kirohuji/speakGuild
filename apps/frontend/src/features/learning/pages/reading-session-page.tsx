@@ -314,7 +314,7 @@ function ReadingAnswerPage({
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><BookOpen className="size-4" /></span>
           <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Badge variant="secondary" className="h-5 px-1.5 text-[10px]">{t('learning.readingPractice')}</Badge><span className="truncate text-[11px] text-muted-foreground">{topic.difficulty}</span></div><h1 className="truncate text-base font-bold leading-snug">{topic.title}</h1><p className="truncate text-[11px] text-muted-foreground">{unitTitle}</p></div>
           {hasCompletedAttempt && (
-            <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-border/60 bg-background/80 py-1 pl-2 pr-1 shadow-sm">
+            <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-muted/30 py-1 pl-2 pr-1">
               <Sparkles className={cn('size-3.5 transition-colors', view === 'analysis' ? 'text-primary' : 'text-muted-foreground')} />
               <Switch
                 checked={view === 'analysis'}
@@ -507,22 +507,22 @@ function ReadingAnalysisPanel({ analysis, error, onClose }: { analysis: Record<s
 
   return (
     <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-      <div className="mx-auto max-w-2xl space-y-4 px-4 py-5 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
-        <div className="flex items-center gap-4 rounded-xl bg-muted/30 p-5">
-          <div className={cn('flex size-[72px] shrink-0 flex-col items-center justify-center rounded-xl bg-background/70', score >= 80 ? 'text-green-600' : score >= 60 ? 'text-amber-600' : 'text-destructive')}>
+      <div className="mx-auto flex max-w-2xl flex-col gap-3 px-4 py-5 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
+        <section className="flex items-center gap-4 rounded-xl bg-muted/20 p-5">
+          <div className={cn('flex size-[72px] shrink-0 flex-col items-center justify-center rounded-xl bg-background/50', score >= 80 ? 'text-green-600' : score >= 60 ? 'text-amber-600' : 'text-destructive')}>
             <span className="text-3xl font-bold leading-none">{score}</span>
             <span className="mt-1 text-[10px] font-medium">{t('learning.totalScore')}</span>
           </div>
           <div className="min-w-0">
             {analysis.summary && <p className="text-sm leading-6 text-foreground">{analysis.summary}</p>}
           </div>
-        </div>
+        </section>
         {qByQ.length > 0 && (
-          <div className="rounded-xl bg-muted/30 p-4">
+          <section className="rounded-xl bg-muted/20 p-4">
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><Sparkles className="size-4 text-primary" />{t('learning.questionByQuestion')}</h3>
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3">
               {qByQ.map((item: any) => (
-                <div key={item.index} className="rounded-lg bg-background/60 p-3">
+                <div key={item.index} className="rounded-lg bg-background/50 p-3">
                   <div className="flex items-start gap-2">
                     {item.isCorrect ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-green-500" /> : <X className="mt-0.5 size-4 shrink-0 text-destructive" />}
                     <div className="min-w-0">
@@ -534,29 +534,29 @@ function ReadingAnalysisPanel({ analysis, error, onClose }: { analysis: Record<s
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         )}
-        <div className="rounded-xl bg-muted/30 p-4">
+        <section className="rounded-xl bg-muted/20 p-4">
           {strengths.length > 0 && (
             <div className="mb-3">
               <h3 className="mb-2 text-sm font-semibold text-green-700 dark:text-green-400">{t('learning.strengthsTitle')}</h3>
-              <ul className="space-y-1">{strengths.map((s: string) => <li key={s} className="text-xs text-muted-foreground">→ {s}</li>)}</ul>
+              <ul className="flex flex-col gap-1">{strengths.map((s: string) => <li key={s} className="text-xs text-muted-foreground">→ {s}</li>)}</ul>
             </div>
           )}
           {improvements.length > 0 && (
             <div>
               <h3 className="mb-2 text-sm font-semibold text-amber-700 dark:text-amber-400">{t('learning.improvementsTitle')}</h3>
-              <ul className="space-y-1">{improvements.map((s: string) => <li key={s} className="text-xs text-muted-foreground">→ {s}</li>)}</ul>
+              <ul className="flex flex-col gap-1">{improvements.map((s: string) => <li key={s} className="text-xs text-muted-foreground">→ {s}</li>)}</ul>
             </div>
           )}
-        </div>
+        </section>
         {analysis.nextStepSuggestion && (
-          <div className="rounded-xl bg-primary/[0.04] p-4">
+          <section className="rounded-xl bg-primary/[0.06] p-4">
             <h3 className="mb-1 text-sm font-semibold text-primary">{t('learning.nextStepSuggestion')}</h3>
             <p className="text-sm leading-6 text-muted-foreground">{analysis.nextStepSuggestion}</p>
-          </div>
+          </section>
         )}
-        <Button variant="outline" className="w-full" onClick={onClose}>{t('learning.backToPack')}</Button>
+        <Button variant="secondary" className="w-full border-0 shadow-none" onClick={onClose}>{t('learning.backToPack')}</Button>
       </div>
     </main>
   )

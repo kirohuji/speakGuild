@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { parseISO, startOfDay } from 'date-fns'
 import {
   ClipboardList, ShoppingBag, Eye, Settings, CircleCheck, CircleDashed,
-  CheckCheck, ChevronDown, Filter,
+  CheckCheck, ChevronDown, Filter, Sparkles,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -593,7 +594,7 @@ function PracticeRecordReadonlyReviewDrawer({
   const [topicDetail, setTopicDetail] = useState<TopicDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [lineIndex, setLineIndex] = useState(0)
-  const [showAnalysis, setShowAnalysis] = useState(false)
+  const [view, setView] = useState<'replay' | 'analysis'>('replay')
 
   useEffect(() => {
     if (!open || !record?.sessionId) return
@@ -601,7 +602,7 @@ function PracticeRecordReadonlyReviewDrawer({
     setSession(null)
     setTopicDetail(null)
     setLineIndex(0)
-    setShowAnalysis(false)
+    setView('replay')
     Promise.all([
       practiceRepository.getPracticeSessionForReview(record.sessionId),
       practiceRepository.getTopicDetail(record.topicId).catch(() => null),
@@ -617,11 +618,10 @@ function PracticeRecordReadonlyReviewDrawer({
   const replayLines = useMemo(() => (session?.turns ?? []).flatMap((turn) => [
     { line: { speaker: topicDetail?.scene.title || 'NPC', text: turn.npcText } satisfies VnPlayerLine },
     { line: { speaker: t('learning.speakerMe'), text: turn.userText, isUser: true } satisfies VnPlayerLine, turn },
-  ]), [session?.turns, topicDetail?.scene.title])
+  ]), [session?.turns, t, topicDetail?.scene.title])
   const currentReplayLine = replayLines[lineIndex]
   const isEnded = replayLines.length > 0 && lineIndex >= replayLines.length
   const score = Number(session?.analysisResult?.overallScore ?? record?.score ?? 0)
-  const passed = score > 70
   const character = topicDetail?.scene.characters?.[0]
   const expressions = character?.expressions && typeof character.expressions === 'object'
     ? character.expressions as Record<string, string | { spriteUrl?: string }>
@@ -629,6 +629,10 @@ function PracticeRecordReadonlyReviewDrawer({
   const defaultState = expressions.default
   const spriteUrl = (typeof defaultState === 'string' ? defaultState : defaultState?.spriteUrl) || character?.spriteBaseUrl || undefined
   const vnPlayerRef = useRef<VnPlayerHandle | null>(null)
+  const hasAnalysis = Boolean(session?.analysisResult)
+  const titleLabel = view === 'analysis'
+    ? t('scripts.aiReviewTab')
+    : t('scripts.dialogueReplay')
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -641,80 +645,97 @@ function PracticeRecordReadonlyReviewDrawer({
         ) : !session ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
             <p className="text-sm text-muted-foreground">{t('profile.reviewLoadFailed')}</p>
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
+            <Button variant="secondary" size="sm" className="border-0 shadow-none" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
           </div>
-        ) : showAnalysis ? (
-          <div className="h-full overflow-y-auto">
-            <div className="mx-auto max-w-2xl px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] pt-[calc(1rem+env(safe-area-inset-top,0px))]">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <Button variant="ghost" size="sm" onClick={() => setShowAnalysis(false)}>{t('profile.reviewBackToChat')}</Button>
-                <Badge variant={passed ? 'default' : 'secondary'} className={cn('rounded-full', passed && 'bg-emerald-600 hover:bg-emerald-600')}>
-                  {score > 0 ? `${score} ${t('profile.reviewScoreUnit')} · ${passed ? t('profile.reviewScorePassed') : t('profile.reviewScoreRetry')}` : t('profile.reviewScorePending')}
-                </Badge>
-                <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
-              </div>
-              {session.analysisResult ? (
-                <Suspense fallback={<MobilePageLoading rows={3} />}>
-                  <PracticeAnalysisPanel analysis={session.analysisResult} loading={false} readOnly />
-                </Suspense>
-              ) : (
-                <p className="rounded-lg bg-muted/30 px-4 py-10 text-center text-sm text-muted-foreground">{t('profile.reviewNoAnalysis')}</p>
-              )}
-            </div>
-          </div>
-        ) : replayLines.length === 0 ? (
+        ) : replayLines.length === 0 && !hasAnalysis ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
             <p className="text-sm text-muted-foreground">{t('profile.reviewNoReplay')}</p>
-            {session.analysisResult && <Button size="sm" onClick={() => setShowAnalysis(true)}>{t('profile.reviewViewAnalysis')}</Button>}
-            <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
+            <Button variant="secondary" size="sm" className="border-0 shadow-none" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
           </div>
         ) : (
           <div className="relative h-full">
             <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2">
-              <div className="flex h-9 w-full max-w-[440px] items-center gap-2 rounded-full border border-border/55 bg-background/90 px-2 text-foreground shadow-lg backdrop-blur-2xl">
-                <Button variant="ghost" size="sm" className="h-7 rounded-full px-2.5 text-xs" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
-                <div className="min-w-0 flex-1 text-center">
-                  <p className="truncate text-xs font-semibold">{t('profile.reviewReadonlyHeader')} · {record?.questionText}</p>
+              <div className="flex h-9 w-full max-w-[440px] items-center gap-1.5 rounded-full bg-background/90 px-2 text-foreground shadow-none backdrop-blur-2xl">
+                <Button variant="ghost" size="sm" className="relative z-10 h-7 shrink-0 rounded-full px-2.5 text-xs shadow-none" onClick={() => onOpenChange(false)}>{t('common.close')}</Button>
+                <span className="pointer-events-none absolute inset-x-0 truncate px-20 text-center text-xs font-medium text-muted-foreground">
+                  {record?.questionText} · {titleLabel}
+                </span>
+                <div className="relative z-10 ml-auto flex shrink-0 items-center gap-1.5 pr-0.5">
+                  {score > 0 && view === 'replay' && (
+                    <Badge variant="secondary" className="h-6 rounded-full border-0 px-2 text-[10px] shadow-none">
+                      {score} {t('profile.reviewScoreUnit')}
+                    </Badge>
+                  )}
+                  {view === 'replay' && (
+                    <button
+                      type="button"
+                      className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      onClick={() => vnPlayerRef.current?.toggleSettings()}
+                      aria-label={t('profile.settings')}
+                    >
+                      <Settings className="size-3.5" />
+                    </button>
+                  )}
+                  <Sparkles className={cn('size-3.5', view === 'analysis' ? 'text-primary' : 'text-muted-foreground')} />
+                  <Switch
+                    checked={view === 'analysis'}
+                    onCheckedChange={(checked) => setView(checked ? 'analysis' : 'replay')}
+                    disabled={!hasAnalysis && view === 'replay'}
+                    aria-label={t('learning.toggleAiReview')}
+                    title={view === 'analysis' ? t('scripts.dialogueReplay') : t('scripts.aiReviewTab')}
+                  />
                 </div>
-                <Badge variant={passed ? 'default' : 'secondary'} className={cn('h-6 rounded-full px-2 text-[10px]', passed && 'bg-emerald-600 hover:bg-emerald-600')}>
-                  {score > 0 ? `${score} ${t('profile.reviewScoreUnit')}` : t('profile.reviewBadge')}
-                </Badge>
-                <button
-                  type="button"
-                  className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  onClick={() => vnPlayerRef.current?.toggleSettings()}
-                  aria-label={t('profile.settings')}
-                >
-                  <Settings className="size-3.5" />
-                </button>
               </div>
             </div>
-            <Suspense fallback={<MobilePageLoading rows={4} minHeightClassName="min-h-full" />}>
-            <VnPlayer
-              ref={vnPlayerRef}
-              className="h-full max-w-none rounded-none border-none"
-              stageClassName="min-h-0"
-              showUserInputOverride
-              hideChatTopBar
-              backgroundUrl={topicDetail?.scene.backgroundUrl || undefined}
-              currentLine={isEnded ? null : currentReplayLine?.line ?? null}
-              history={replayLines.slice(0, Math.min(lineIndex, replayLines.length)).map((item) => item.line)}
-              currentSpriteUrl={spriteUrl}
-              spritePosition={character?.defaultPosition || 'center'}
-              currentAvatarUrl={character?.avatarUrl || undefined}
-              currentAvatarAlt={character?.displayName || character?.name}
-              isEnded={isEnded}
-              onAdvance={() => setLineIndex((current) => Math.min(current + 1, replayLines.length))}
-              inputFeedback={currentReplayLine?.turn ? <PracticeReplayFeedback turn={currentReplayLine.turn} /> : null}
-              inputFeedbackChat={currentReplayLine?.turn ? <PracticeReplayFeedback turn={currentReplayLine.turn} compact /> : null}
-              showHistoryButton={false}
-              endedActions={(
-                <Button size="sm" className="h-8 rounded-full px-4 text-xs" onClick={() => setShowAnalysis(true)}>
-                  {t('profile.reviewViewAnalysis')}
-                </Button>
-              )}
-            />
-            </Suspense>
+            {view === 'analysis' ? (
+              <div className="h-full overflow-y-auto px-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-16">
+                {session.analysisResult ? (
+                  <Suspense fallback={<MobilePageLoading rows={3} />}>
+                    <PracticeAnalysisPanel analysis={session.analysisResult} loading={false} readOnly />
+                  </Suspense>
+                ) : (
+                  <p className="rounded-xl bg-muted/20 px-4 py-10 text-center text-sm text-muted-foreground">{t('profile.reviewNoAnalysis')}</p>
+                )}
+              </div>
+            ) : replayLines.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+                <p className="text-sm text-muted-foreground">{t('profile.reviewNoReplay')}</p>
+                {hasAnalysis && (
+                  <Button size="sm" className="border-0 shadow-none" onClick={() => setView('analysis')}>
+                    {t('profile.reviewViewAnalysis')}
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <Suspense fallback={<MobilePageLoading rows={4} minHeightClassName="min-h-full" />}>
+                <VnPlayer
+                  ref={vnPlayerRef}
+                  className="h-full max-w-none rounded-none border-none"
+                  stageClassName="min-h-0"
+                  showUserInputOverride
+                  hideChatTopBar
+                  backgroundUrl={topicDetail?.scene.backgroundUrl || undefined}
+                  currentLine={isEnded ? null : currentReplayLine?.line ?? null}
+                  history={replayLines.slice(0, Math.min(lineIndex, replayLines.length)).map((item) => item.line)}
+                  currentSpriteUrl={spriteUrl}
+                  spritePosition={character?.defaultPosition || 'center'}
+                  currentAvatarUrl={character?.avatarUrl || undefined}
+                  currentAvatarAlt={character?.displayName || character?.name}
+                  isEnded={isEnded}
+                  onAdvance={() => setLineIndex((current) => Math.min(current + 1, replayLines.length))}
+                  inputFeedback={currentReplayLine?.turn ? <PracticeReplayFeedback turn={currentReplayLine.turn} /> : null}
+                  inputFeedbackChat={currentReplayLine?.turn ? <PracticeReplayFeedback turn={currentReplayLine.turn} compact /> : null}
+                  showHistoryButton={false}
+                  endedActions={hasAnalysis ? (
+                    <div className="mx-auto flex items-center justify-center">
+                      <Button size="sm" className="h-8 rounded-full border-0 px-4 text-xs shadow-none" onClick={() => setView('analysis')}>
+                        {t('profile.reviewViewAnalysis')}
+                      </Button>
+                    </div>
+                  ) : undefined}
+                />
+              </Suspense>
+            )}
           </div>
         )}
       </DrawerContent>
@@ -735,9 +756,9 @@ function PracticeReplayFeedback({
 
   return (
     <div className={cn(
-      'border-t text-foreground backdrop-blur-xl',
+      'text-foreground backdrop-blur-xl',
       compact ? 'px-3 py-2.5' : 'px-4 py-3 pb-safe',
-      judgement.passed ? 'border-emerald-500/25 bg-emerald-500/[0.08]' : 'border-amber-500/25 bg-amber-500/[0.08]',
+      judgement.passed ? 'bg-emerald-500/[0.08]' : 'bg-amber-500/[0.08]',
     )}>
       <div className="flex items-center gap-2 text-xs font-semibold">
         {judgement.passed ? <CircleCheck className="size-3.5 text-emerald-500" /> : <CircleDashed className="size-3.5 text-amber-500" />}
@@ -747,7 +768,7 @@ function PracticeReplayFeedback({
       {(judgement.chunksUsed ?? turn.chunksUsed).length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
           {(judgement.chunksUsed ?? turn.chunksUsed).map((chunk) => (
-            <Badge key={chunk} variant="outline" className="rounded-full bg-background/60 px-2 text-[10px]">{chunk}</Badge>
+            <Badge key={chunk} variant="secondary" className="rounded-full border-0 bg-background/50 px-2 text-[10px] shadow-none">{chunk}</Badge>
           ))}
         </div>
       )}

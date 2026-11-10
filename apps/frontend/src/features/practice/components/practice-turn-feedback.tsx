@@ -46,8 +46,8 @@ export function PracticeTurnFeedback({
   return (
     <div className={cn(
       isChat
-        ? cn('rounded-lg bg-muted/65 text-foreground ring-1 ring-border/45', isPassed && !isRetry ? 'px-2.5 py-1.5' : 'px-3 py-2.5')
-        : cn('border-t border-border/45 bg-background/72 px-3 pb-safe text-foreground backdrop-blur-xl', isPassed && !isRetry ? 'py-1.5' : 'py-2'),
+        ? cn('rounded-lg bg-muted/40 text-foreground', isPassed && !isRetry ? 'px-2.5 py-1.5' : 'px-3 py-2.5')
+        : cn('bg-background/72 px-3 pb-safe text-foreground backdrop-blur-xl', isPassed && !isRetry ? 'py-1.5' : 'py-2'),
     )}>
       <div className="mb-2 flex items-center gap-2">
         <div className={cn('flex size-6 shrink-0 items-center justify-center rounded-full', isChat ? 'bg-background/70' : 'bg-muted/70')}>
@@ -112,7 +112,7 @@ export function PracticeTurnFeedback({
                 <ChevronDown className="size-3" />
                 {t('practiceVn.viewExplanation')}
               </summary>
-              <div className="mt-1.5 space-y-1 rounded bg-background/90 p-2 leading-4 text-foreground/80 ring-1 ring-border/35">
+              <div className="mt-1.5 space-y-1 rounded bg-background/90 p-2 leading-4 text-foreground/80">
                 <p><span className="text-muted-foreground">{t('practiceVn.objective')}：</span>{feedback.objective || t('practiceVn.defaultObjective')}</p>
                 {feedback.hint && <p><span className="text-muted-foreground">{t('practiceVn.hint')}：</span>{feedback.hint}</p>}
                 <p><span className="text-muted-foreground">{t('practiceVn.reference')}：</span>{example || t('practiceVn.defaultReference')}</p>

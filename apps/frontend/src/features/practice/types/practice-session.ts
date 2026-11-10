@@ -1,4 +1,4 @@
-export type Phase = 'prepare' | 'guided' | 'practice' | 'analysis'
+export type Phase = 'prepare' | 'guided' | 'practice'
 export const PASSED_FEEDBACK_LINGER_MS = 1500
 export const PREP_PAGE_SIZE = 8
 

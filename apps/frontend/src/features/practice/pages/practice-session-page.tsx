@@ -4,11 +4,12 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, BookOpen, Play, Info,
   Lightbulb, CheckCircle2, ChevronRight,
-  History, Settings, ChevronDown,
+  History, Settings, ChevronDown, Sparkles,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { MobilePageLoading } from '@/components/common/mobile-page-loading'
 import { toast } from 'sonner'
@@ -124,6 +125,7 @@ export function PracticeSessionPage() {
   // ── Analysis state ──
   const [analysisResult, setAnalysisResult] = useState<any>(null)
   const [analysisLoading, setAnalysisLoading] = useState(false)
+  const [practiceView, setPracticeView] = useState<'play' | 'analysis'>('play')
 
   // ── History dialog visibility (hide drawer toggles when open) ──
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
@@ -425,6 +427,9 @@ export function PracticeSessionPage() {
     setUsedChunks(new Set())
     setAiHints([])
     setTurnFeedback(null)
+    setAnalysisResult(null)
+    setAnalysisLoading(false)
+    setPracticeView('play')
     setRestartKey((k) => k + 1)
   }, [])
 
@@ -850,17 +855,13 @@ export function PracticeSessionPage() {
 
   const startAnalysis = useCallback(async () => {
     if (!topicId || !detail) return
-    if (analysisResult) {
-      setPhase('analysis')
-      return
-    }
-    setPhase('analysis')
+    setPracticeView('analysis')
+    if (analysisResult || analysisLoading) return
     setAnalysisLoading(true)
     try {
       if (!practiceSessionId) {
         console.warn('[practice-session] ⚠️ startAnalysis 时 practiceSessionId 为 null，无法分析')
         setAnalysisResult({ summary: t('practiceSession.noSessionRecords') })
-        setAnalysisLoading(false)
         return
       }
       const res = await practiceRepository.completeSession(practiceSessionId).then(() => practiceRepository.analyzeSession(practiceSessionId))
@@ -870,7 +871,7 @@ export function PracticeSessionPage() {
     } finally {
       setAnalysisLoading(false)
     }
-  }, [topicId, detail, analysisResult, practiceSessionId])
+  }, [topicId, detail, analysisResult, analysisLoading, practiceSessionId, t])
 
   const saveAnalysisExpression = useCallback(async (data: {
     type: string
@@ -904,6 +905,7 @@ export function PracticeSessionPage() {
     lastRetryFocusRef.current = {}
     setAnalysisResult(null)
     setAnalysisLoading(false)
+    setPracticeView('play')
     setRestartKey((k) => k + 1)
     setPhase('prepare')
   }
@@ -1144,39 +1146,46 @@ export function PracticeSessionPage() {
     return (<>
       <div className="app-surface relative flex h-dvh flex-col">
         {/* Floating minimal top bar */}
-        <div className="absolute inset-x-0 top-0 z-30 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
-          <div className="flex h-9 w-full max-w-[400px] items-center gap-1 rounded-full border border-border/55 bg-background/90 px-1.5 text-foreground shadow-lg ring-1 ring-primary/[0.08] backdrop-blur-2xl">
+        <div className="absolute inset-x-0 top-0 z-40 flex justify-center px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top,0px))]">
+          <div className="relative flex h-9 w-full max-w-[400px] items-center gap-1 rounded-full bg-background/90 px-1.5 text-foreground shadow-none backdrop-blur-2xl">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
-              if (analysisResult) {
+              if (analysisResult || practiceView === 'analysis') {
                 goBackToScene()
               } else {
                 setConfirmAbandonOpen(true)
               }
             }}
-            className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground"
+            className="relative z-10 h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" /> {t('practiceSession.back')}
           </Button>
 
-          {/* Teaching button now in prepare phase — hidden here */}
+          <span className="pointer-events-none absolute inset-x-0 truncate px-20 text-center text-xs font-medium text-foreground/70">
+            {detail.topic.title}
+            {canReview ? ` · ${practiceView === 'analysis' ? t('scripts.aiReviewTab') : t('scripts.dialogueReplay')}` : ''}
+          </span>
 
+          <div className="relative z-10 ml-auto flex shrink-0 items-center gap-1">
           {canReview && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={startAnalysis}
-              className="h-7 shrink-0 rounded-full px-2.5 text-xs font-medium text-foreground/80 shadow-none hover:bg-primary/[0.16] hover:text-foreground"
-            >
-              <CheckCircle2 className="size-3.5" />
-              {t('practiceSession.review')}
-            </Button>
+            <>
+              <Sparkles className={cn('size-3.5', practiceView === 'analysis' ? 'text-primary' : 'text-muted-foreground')} />
+              <Switch
+                checked={practiceView === 'analysis'}
+                onCheckedChange={(checked) => {
+                  if (checked) void startAnalysis()
+                  else setPracticeView('play')
+                }}
+                aria-label={t('learning.toggleAiReview')}
+                title={practiceView === 'analysis' ? t('scripts.dialogueReplay') : t('scripts.aiReviewTab')}
+              />
+            </>
           )}
 
           {/* History & Settings — only in chat mode */}
-          {isChatMode && (
+          {isChatMode && practiceView === 'play' && (
           <>
           <button
             type="button"
@@ -1199,8 +1208,21 @@ export function PracticeSessionPage() {
           </>
           )}
           </div>
+          </div>
         </div>
 
+        {practiceView === 'analysis' ? (
+          <div className="min-h-0 flex-1 overflow-y-auto bg-background px-3 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-[calc(3.5rem+env(safe-area-inset-top,0px))]">
+            <PracticeAnalysisPanel
+              analysis={analysisResult}
+              loading={analysisLoading}
+              topicTitle={detail.topic.title}
+              onBack={() => setPracticeView('play')}
+              onRestart={resetPractice}
+              onSaveExpression={saveAnalysisExpression}
+            />
+          </div>
+        ) : (
         <div className="min-h-0 flex-1 bg-black">
           <VnPlayerBoundary>
             <VnPlayer
@@ -1229,15 +1251,15 @@ export function PracticeSessionPage() {
               onAdvance={packMediaReady && inkJson ? () => { setTurnFeedback(null); advanceStory() } : undefined}
               hideChatTopBar
               endedActions={(
-                <div className="flex gap-2">
-                  <Button type="button" size="sm" className="h-8 rounded-full px-4 text-xs" onClick={startAnalysis}>
+                <div className="mx-auto flex items-center justify-center gap-2">
+                  <Button type="button" size="sm" className="h-8 rounded-full border-0 px-4 text-xs shadow-none" onClick={() => void startAnalysis()}>
                     {t('practiceSession.viewReview')}
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
-                    className="h-8 rounded-full border-border/60 bg-background/70 px-4 text-xs text-foreground hover:bg-muted hover:text-foreground"
+                    className="h-8 rounded-full border-0 bg-background/70 px-4 text-xs text-foreground shadow-none hover:bg-muted hover:text-foreground"
                     onClick={restartPractice}
                   >
                     {t('practiceSession.retry')}
@@ -1250,9 +1272,7 @@ export function PracticeSessionPage() {
             />
           </VnPlayerBoundary>
         </div>
-
-        {/* Input area — hidden for now */}
-        <div className="hidden" />
+        )}
 
       </div>
       <LearningInsightDialog
@@ -1265,13 +1285,13 @@ export function PracticeSessionPage() {
 
       {/* 中途退出确认 */}
       <Dialog open={confirmAbandonOpen} onOpenChange={setConfirmAbandonOpen}>
-        <DialogContent className="max-w-sm rounded-2xl w-[90vw]">
+        <DialogContent className="max-w-sm rounded-2xl border-0 w-[90vw] shadow-none">
           <DialogHeader>
             <DialogTitle>{t('practiceSession.abandonTitle')}</DialogTitle>
             <DialogDescription>{t('practiceSession.abandonDesc')}</DialogDescription>
           </DialogHeader>
           <DialogFooter className="!flex-row justify-center gap-2">
-            <Button variant="outline" onClick={() => setConfirmAbandonOpen(false)}>{t('practiceSession.continuePractice')}</Button>
+            <Button variant="secondary" className="border-0 shadow-none" onClick={() => setConfirmAbandonOpen(false)}>{t('practiceSession.continuePractice')}</Button>
             <Button
               onClick={() => {
                 setConfirmAbandonOpen(false)
@@ -1284,66 +1304,6 @@ export function PracticeSessionPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
-    )
-  }
-
-  // ==================== Phase: Analysis ====================
-  if (phase === 'analysis') {
-    return (<>
-      <div className="mx-auto max-w-2xl px-4 pb-24 pt-3 md:pt-4">
-        {/* Header */}
-        <div className="mb-4 flex min-h-10 items-center gap-3 md:hidden">
-          <button
-            type="button"
-            onClick={goBackToScene}
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"
-            aria-label={t('practiceSession.back')}
-          >
-            <ArrowLeft className="size-4" />
-          </button>
-          <div className="flex min-h-10 min-w-0 flex-1 flex-col justify-center">
-            <p className="truncate text-xs text-muted-foreground">{detail.scene.category} · {detail.scene.title}</p>
-            <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">{detail.topic.title}</h1>
-          </div>
-          <Badge variant="secondary" className="shrink-0">{detail.topic.difficulty}</Badge>
-        </div>
-        <div className="mb-4 hidden items-center gap-3 md:flex">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="size-5" />
-          </Button>
-          <div className="flex-1">
-            <p className="text-xs text-muted-foreground">{detail.scene.category} · {detail.scene.title}</p>
-            <h1 className="text-lg font-bold text-foreground">{detail.topic.title}</h1>
-          </div>
-          <Badge variant="secondary">{detail.topic.difficulty}</Badge>
-        </div>
-
-        {/* Phase indicator */}
-        <div className="mb-3 flex items-center gap-3 rounded-lg bg-green-500/10 px-3.5 py-3">
-          <CheckCircle2 className="size-5 text-green-500" />
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">{t('practiceSession.reviewTitle')}</p>
-            <p className="text-xs text-muted-foreground">{t('practiceSession.reviewSubtitle')}</p>
-          </div>
-        </div>
-
-        <PracticeAnalysisPanel
-          analysis={analysisResult}
-          loading={analysisLoading}
-          topicTitle={detail.topic.title}
-          onBack={goBackToScene}
-          onRestart={resetPractice}
-          onSaveExpression={saveAnalysisExpression}
-        />
-      </div>
-      <LearningInsightDialog
-        items={allInsightItems}
-        index={Math.min(insightIndex, Math.max(allInsightItems.length - 1, 0))}
-        open={insightOpen}
-        onOpenChange={setInsightOpen}
-        onIndexChange={setInsightIndex}
-      />
     </>
     )
   }
