@@ -5,6 +5,8 @@
  * Callers must only hand playable URLs to <img>, <audio>, or Pixi.
  */
 
+import { fileAssetIdFromUrl, getFileAssetContentUrl, resolveDisplayAssetUrl } from '@/lib/file-asset-reference'
+
 export type VnAssetMapEntry = {
   fileAssetId?: string
   signedUrl?: string | null
@@ -29,6 +31,7 @@ export function isPlayableMediaUrl(url?: string | null): url is string {
 export function isVnAssetAlias(value?: string | null): boolean {
   if (!value) return false
   if (PLAYABLE_URL.test(value) || CAPACITOR_LOCAL_HTTP.test(value)) return false
+  if (value.startsWith('asset://')) return false
   if (/^(bg_|audio_)[a-z0-9_]+$/i.test(value)) return true
   // Bare token with no scheme and no path — treat as unresolved alias.
   if (!/^[a-z][a-z0-9+.-]*:/i.test(value) && !value.includes('/') && !value.startsWith('//')) {
@@ -39,17 +42,29 @@ export function isVnAssetAlias(value?: string | null): boolean {
 
 /**
  * Resolve a background / image tag value to a playable URL.
- * Map hits without a playable signedUrl, and unresolved aliases, become undefined.
+ * Accepts ink aliases (via assetMap), asset:// refs, and plain http(s) URLs.
+ * Unresolved aliases never fall through as relative browser paths.
  */
 export function resolveVnImageUrl(
   value: string | undefined,
   assetMap?: VnAssetMap | null,
 ): string | undefined {
   if (!value) return undefined
+
   if (assetMap && Object.prototype.hasOwnProperty.call(assetMap, value)) {
-    const signed = assetMap[value]?.signedUrl
-    return isPlayableMediaUrl(signed) ? signed : undefined
+    const entry = assetMap[value]
+    if (isPlayableMediaUrl(entry?.signedUrl)) return entry!.signedUrl!
+    if (entry?.fileAssetId) return getFileAssetContentUrl(entry.fileAssetId)
+    const signedId = fileAssetIdFromUrl(entry?.signedUrl)
+    if (signedId) return getFileAssetContentUrl(signedId)
+    return undefined
   }
+
   if (isPlayableMediaUrl(value)) return value
-  return undefined
+
+  const assetId = fileAssetIdFromUrl(value)
+  if (assetId) return getFileAssetContentUrl(assetId)
+
+  const displayed = resolveDisplayAssetUrl(value)
+  return isPlayableMediaUrl(displayed) ? displayed : undefined
 }

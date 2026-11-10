@@ -56,7 +56,19 @@ export function ImageUploadField({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    setPreviewUrl(resolveFileAssetUrl(value))
+    if (!value) {
+      setPreviewUrl('')
+      return
+    }
+    const resolved = resolveFileAssetUrl(value)
+    // asset:// / http(s) resolve fine. Ink aliases like bg_xxx are not URLs —
+    // keep the upload-time preview instead of replacing it with the bare alias.
+    if (
+      resolved !== value
+      || /^(https?:|blob:|data:|asset:)/i.test(value)
+    ) {
+      setPreviewUrl(resolved)
+    }
   }, [value])
 
   const handleUpload = async (file: File) => {
@@ -73,8 +85,11 @@ export function ImageUploadField({
         file.type.startsWith('video/') ? '#media=video' : '',
       )
       setPreviewUrl(resolveFileAssetUrl(assetRef))
-      onUploaded?.(assetRef, asset.id)
-      onChange?.(assetRef)
+      // When onUploaded is provided it owns persistence (e.g. register alias then
+      // write bg_xxx). Calling onChange afterwards would overwrite that value
+      // with asset:// and break VN preview / pack resolution.
+      if (onUploaded) onUploaded(assetRef, asset.id)
+      else onChange?.(assetRef)
     } catch (err) {
       console.warn('Upload failed, falling back to URL input:', err)
       // Don't clear — user can still enter URL manually

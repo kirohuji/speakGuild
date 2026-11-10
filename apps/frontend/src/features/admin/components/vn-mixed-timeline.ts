@@ -1,6 +1,6 @@
 import { type BackgroundFit } from '@/features/vn-engine/pixi-vn-stage'
+import { resolveVnImageUrl } from '@/features/vn-engine/vn-media-url'
 import { resolveAudioAssetUrl, type AudioAssetResolveMode } from '@/features/practice/lib/practice-session-utils'
-import { isPlayableMediaUrl } from '@/features/vn-engine/vn-media-url'
 import { type CharacterSpriteMap } from './vn-story-preview'
 import { type ComposerItem, type ComposerScene } from './composer-parser'
 
@@ -72,17 +72,9 @@ export function resolveTimelineAssetAliases(
   const audioMode = options?.audioMode ?? 'playback'
 
   const resolveImage = (value?: string) => {
-    if (!value) return ''
     // Never return Ink aliases — they are identity keys, not browser paths.
     // Live VN resolves via parseVnTags/resolveVnImageUrl the same way.
-    // Empty maps must still strip aliases; early-returning raw scenes used to
-    // leak `bg_*` into MixedTimelineFrame.background.url.
-    if (Object.prototype.hasOwnProperty.call(map, value)) {
-      const signed = map[value]?.signedUrl
-      return isPlayableMediaUrl(signed) ? signed : ''
-    }
-    if (isPlayableMediaUrl(value)) return value
-    return ''
+    return resolveVnImageUrl(value, map) || ''
   }
   return scenes.map((scene) => ({
     ...scene,
